@@ -1072,16 +1072,21 @@
       const n = () => { const pl = pool(g); return pl.list.concat(withTail || trending ? pl.tail : []).filter((p) => inPos(p, pos) && teamOK(p) && !(hide && drafted.has(p.id)) && (!trending || sample(p) >= trendMin(g))).length; };
       return trending ? withWindow(trendWin(g), n) : n();
     };
-    const make = (pos) => {
-      const b = el("button", "postab"); b.type = "button"; b.setAttribute("role", "tab");
-      b.setAttribute("aria-selected", String(pos === state.pos)); b.dataset.pos = pos;
-      b.textContent = TAB_LABEL[pos] || pos; b.append(el("small", null, count(pos)));
-      b.addEventListener("click", () => { state.pos = pos; state.expanded = null; ensureSortValid(); savePrefs(); render(); });
-      return b;
-    };
-    HIT_TABS.forEach((p) => box.append(make(p)));
-    box.append(el("span", "sep"));
-    PIT_TABS.forEach((p) => box.append(make(p)));
+    // one pill instead of a strip of tabs: the row stays short whatever the position is called
+    const label = (pos) => `${TAB_LABEL[pos] || pos} · ${count(pos)}`;
+    const pill = el("label", "pill postabpill");
+    pill.append(el("span", "pill-text", label(state.pos)));
+    pill.insertAdjacentHTML("beforeend", '<svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>');
+    const sel = el("select"); sel.setAttribute("aria-label", "Position");
+    for (const [name, list] of [["Hitters", HIT_TABS], ["Pitchers", PIT_TABS]]) {
+      const g = el("optgroup"); g.label = name;
+      for (const pos of list) { const o = el("option", null, label(pos)); o.value = pos; g.append(o); }
+      sel.append(g);
+    }
+    sel.value = state.pos;
+    sel.addEventListener("change", (e) => { const pos = e.target.value; if (pos === state.pos) return; state.pos = pos; state.expanded = null; ensureSortValid(); savePrefs(); render(); });
+    pill.append(sel);
+    box.append(pill);
   }
   function ensureSortValid() {
     const keys = new Set(allFor(groupFor(state.pos)).map((m) => m.key));
@@ -1740,9 +1745,11 @@
     if (DS.noStatcast) card.append(el("p", "note", DS.tracked > 0.05
       ? `Only some ${DS.levelName} parks track pitches (the Florida State League): velocity, zone / chase and exit-velocity numbers cover those games only.`
       : `No pitch tracking at this level (${DS.levelName}): velocity, extension, zone / chase and exit-velocity numbers aren't available — strikes, swings, whiffs and batted-ball types come from the play-by-play.`));
+    const FOLD_P = new Set(DATA.meta.pitcherCardFold || []), folded = [];
     CARD_P.forEach((grp, gi) => {
+      const isFold = FOLD_P.has(grp.group);
       const box = el("section", "hgroup");
-      box.append(el("h4", null, grp.group));
+      if (!isFold) box.append(el("h4", null, grp.group));    // a folded group is titled by its own toggle
       const meters = el("div", "meters");
       if (grp.group === "Results") meters.classList.add("results");
       const metrics = DS.hist ? grp.metrics.filter((m) => metricValue(m, pv, st) != null) : grp.metrics;
@@ -1764,9 +1771,11 @@
         } else meters.append(row);
       }
       box.append(meters);
-      cols[gi < left ? 0 : 1].append(box);
+      if (isFold) folded.push([grp.group, box]); else cols[gi < left ? 0 : 1].append(box);
     });
     const grid = el("div", "hgroups"); grid.append(...cols); card.append(grid);
+    // the expected / contact numbers sit under the card, out of the way until you ask for them
+    for (const [title, box] of folded) card.append(foldSection("pgrp:" + title, title, () => box));
     if (st && st.ukbb) card.append(foldSection("ukbb", "Underlying K% and BB%", () => renderUnderlyingKBB(pv, st, true)));
     if (pv.ctx.bbl && K().bbw) card.append(foldSection("luck", "Batted-ball luck", () => renderLuckTable(p, pv, true)));
     card.dataset.notes = (`Every percentile is against ${DS.level === "MLB" ? "all" : DS.levelName} pitchers with ${refMin(g)}+ batters faced ${DS.hist ? "that" : "this"} season, starters and relievers together. ERA is official (per-game earned runs from MLB game logs inside date windows; not available in a handedness split). FIP = (13·HR + 3·(BB+HBP) − 2·K) / IP + ${K().fipC}; SIERA is Swartz's 2011 formula shifted ${K().sieraShift >= 0 ? "+" : ""}${K().sieraShift} so the league averages its ${K().lgERA} ERA. Fastball velo averages four-seamers and sinkers. Lower ERA / FIP / SIERA / BB%, Z-Contact% and contact quality allowed count as better.`);
@@ -2342,12 +2351,12 @@
   function flash(msg) { state.flash = msg; render(); clearTimeout(flashTimer); flashTimer = setTimeout(() => { state.flash = ""; render(); }, 4000); }
   function saveCurrent() {
     const cur = currentSetName(); if (!cur) return saveAs();
-    state.rankSets[cur] = snapshot(); setsChanged(); flash(`Saved “${cur}”`);
+    state.rankSets[cur] = snapshot(); save(LS.sets, state.rankSets); flash(`Saved “${cur}”`);
   }
   function saveAs() {
     const cur = currentSetName();
     ask(cur ? "Save a copy as…" : "Save these rankings", "Every tab's order, tiers and tier names, under one name. You'll find it under Saved rankings here and under Draft from on the Draft page.", (name) => {
-      const write = () => { state.rankSets[name] = snapshot(); setsChanged(); state.currentSet = name; savePrefs(); flash(`Saved “${name}”`); };
+      const write = () => { state.rankSets[name] = snapshot(); save(LS.sets, state.rankSets); state.currentSet = name; savePrefs(); flash(`Saved “${name}”`); };
       if (state.rankSets[name] && name !== cur) ask(`Replace “${name}”?`, "A saved set already has that name; its rankings will be overwritten.", write); else write();
     }, { value: cur ? `${cur} copy` : `Rankings ${new Date().toISOString().slice(0, 10)}`, placeholder: "Set name", button: "Save" });
   }
@@ -2368,7 +2377,7 @@
     ask(`Rename “${old}”`, "", (name) => {
       if (name === old) { render(); return; }
       if (state.rankSets[name]) { flash(`“${name}” already exists`); return; }
-      state.rankSets[name] = state.rankSets[old]; delete state.rankSets[old]; setsChanged();
+      state.rankSets[name] = state.rankSets[old]; delete state.rankSets[old]; save(LS.sets, state.rankSets);
       if (state.currentSet === old) state.currentSet = name;
       if (state.draftOrder === "set:" + old) state.draftOrder = "set:" + name;
       savePrefs(); flash(`Renamed to “${name}”`);
@@ -2376,7 +2385,7 @@
   }
   function deleteSet(name) {
     ask(`Delete “${name}”?`, "The saved set is removed; your working rankings stay as they are.", () => {
-      delete state.rankSets[name]; setsChanged({ allowEmpty: true });
+      delete state.rankSets[name]; save(LS.sets, state.rankSets, { allowEmpty: true });
       if (state.currentSet === name) state.currentSet = null;
       if (state.draftOrder === "set:" + name) state.draftOrder = "board";
       savePrefs(); flash(`Deleted “${name}”`);
@@ -2431,71 +2440,6 @@
   // Rankings reach the phone through the site itself: on the computer "Send to my phone" writes shared.json
   // beside the site files and publishes, and any device loads it from the lists panel. No account, and nothing
   // that can write to your lists without you pressing Load.
-  let sharedCache = null, sharedTried = false, sharePending = false, shareState = "";
-  // Saving a list on the computer sends it on: shared.json is written beside the site files and published, so the
-  // phone picks it up on its own. If a publish is already running the send waits for it (sharePending) rather
-  // than being dropped. Nothing here can run from the phone — only a machine serving the site can write the file.
-  async function pushShared(quiet) {
-    if (!window.DRAFT_LOCAL || !Object.keys(state.rankSets).length) return;
-    try {
-      const r = await fetch("/api/rankings", { method: "POST", body: JSON.stringify({ sets: state.rankSets }) });
-      const j = await r.json();
-      if (!j.ok) throw new Error(j.error || "couldn't write the file");
-      const pub = await (await fetch("/api/publish", { method: "POST" })).json();
-      if (!pub.ok) { sharePending = true; shareState = "waiting for the publish that's running"; }
-      else { sharePending = false; shareState = "sending to your phone…"; }
-    } catch (e) { shareState = "not sent — " + e.message; }
-    if (!quiet && state.panel === "lists") renderListsPanel();
-  }
-  // every saved-list change goes through here, so the phone copy never falls behind
-  function setsChanged(opts) { save(LS.sets, state.rankSets, opts); pushShared(true); }
-  function sharedRankings(then) {
-    if (sharedTried) return sharedCache;
-    sharedTried = true;
-    fetch(vsrc("shared.json"), { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => { sharedCache = j && j.sets && Object.keys(j.sets).length ? j : null; if (takeShared() && state.mode === "rankings") render(); if (then) then(); })
-      .catch(() => {});
-    return null;
-  }
-  // what arrived: a list this device has never seen, or a newer copy of one it has. A list edited here more
-  // recently is left alone, and nothing else in the browser is touched.
-  function takeShared() {
-    if (!sharedCache || window.DRAFT_LOCAL) return false;
-    const got = [];
-    for (const [name, set] of Object.entries(sharedCache.sets)) {
-      const mine = state.rankSets[name];
-      if (mine && !(String(set.saved || "") > String(mine.saved || ""))) continue;
-      state.rankSets[name] = set; got.push(name);
-    }
-    if (!got.length) return false;
-    save(LS.sets, state.rankSets);
-    shareState = `${got.join(", ")} — from your computer`;
-    return true;
-  }
-  function renderSharedSec() {
-    const sec = el("div", "psec");
-    sec.append(el("h4", null, "Your computer and your phone"));
-    const shared = sharedCache || sharedRankings(() => { if (state.panel === "lists") renderListsPanel(); });
-    if (window.DRAFT_LOCAL) {
-      sec.append(el("p", "note", `Saving a list here sends it to your phone by itself — it goes out with the site and lands a minute or two later.${shareState ? " " + shareState[0].toUpperCase() + shareState.slice(1) + "." : ""}`));
-      const sb = el("button", "btn btn-quiet", "Send them now"); sb.type = "button";
-      sb.disabled = !Object.keys(state.rankSets).length;
-      sb.title = sb.disabled ? "Save a list first" : "Send every saved list across right now";
-      sb.addEventListener("click", async () => { sb.disabled = true; sb.textContent = "Sending…"; await pushShared(); });
-      sec.append(sb);
-    } else if (shared) {
-      const names = Object.keys(shared.sets).sort();
-      sec.append(el("p", "note", `Your computer last sent ${names.join(", ")} on ${fmtDate(String(shared.saved).slice(0, 10))}. They arrive here on their own — a list you have not seen is added, and a newer copy replaces an older one. The copy it replaces stays in this browser's backup.`));
-      const b = el("button", "btn btn-quiet", "Take them again"); b.type = "button";
-      b.addEventListener("click", () => {
-        for (const n of names) state.rankSets[n] = shared.sets[n];
-        save(LS.sets, state.rankSets); flash(`Loaded ${names.join(", ")}`);
-      });
-      sec.append(b);
-    } else sec.append(el("p", "note", "Nothing sent from your computer yet. Save a list there and it turns up here on its own."));
-    return sec;
-  }
   // the lists popup: pick a saved list, or save / rename / delete / export the one that's open
   function renderListsPanel() {
     parkControls();
@@ -2532,7 +2476,6 @@
     if (cur) row.append(mk("Save as…", () => { saveAs(); back(); }, true), mk("Rename", () => { renameSet(cur); back(); }, true), mk("Delete", () => { deleteSet(cur); back(); }, true));
     row.append(mk("New list", () => { newList(); closePanel(); }, true, !cur && !working));
     act.append(row);
-    w.append(renderSharedSec());
     const io = el("p", "note"); const ex = el("button", "linkbtn", "Export"); ex.type = "button"; ex.addEventListener("click", exportSets);
     const im = el("button", "linkbtn", "Import"); im.type = "button"; im.addEventListener("click", () => { importSets(); back(); });
     io.append(ex, " every list as text for another device · ", im, " text exported elsewhere"); act.append(io);
@@ -3647,11 +3590,7 @@
     const poll = async () => {
       try { st = await (await fetch("/api/status", { cache: "no-store" })).json(); } catch { return; }
       show(st);
-      if (wasRunning && !st.running) {
-        if (sharePending) { sharePending = false; setTimeout(() => pushShared(true), 500); }   // a save that waited its turn
-        if (!st.exit && st.job === "update") setTimeout(() => location.reload(), 800);
-        return;
-      }
+      if (wasRunning && !st.running) { if (!st.exit && st.job === "update") setTimeout(() => location.reload(), 800); return; }
       wasRunning = st.running;
       if (st.running) setTimeout(poll, 2000);
     };
@@ -3668,5 +3607,4 @@
 
 
   readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); migrateTierOrder(); render(); setTb(); watchBuild();
-  setTimeout(() => sharedRankings(), 1500);     // lists sent from the computer land here on their own
 })();

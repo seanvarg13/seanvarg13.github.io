@@ -1649,3 +1649,18 @@ body.modal-open header.top { z-index: 60; }
    out of the way the list's name and Save still sit against the right edge */
 :root:not([data-view="mobile"]) .setbar.editing #ranktools { flex: 0 1 auto; min-width: 0; }
 :root:not([data-view="mobile"]) .setbar.editing #listsbtn { margin-left: auto; }
+
+/* One button, one size: "Hide filters" and "Filters" sit in the same box so nothing shifts when it toggles,
+   and on the Rankings page it is as tall as the grey bar beside it. */
+.tbhide, .tbfoldbtn {
+  width: 124px; height: 34px; min-height: 0; padding: 0; gap: 4px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.setrow > .tbhide { height: auto; align-self: stretch; }
+:root[data-view="mobile"] .tbhide, :root[data-view="mobile"] .tbfoldbtn { width: 42px; height: 32px; min-height: 0; padding: 0; }
+:root[data-view="mobile"] .setrow > .tbhide { height: 32px; align-self: center; }   /* the phone's bar is two lines: don't stretch a 42px button down it */
+
+/* the position is a pill now, not a strip of tabs */
+.postabpill { min-width: 168px; height: 34px; }
+.postabpill .pill-text { font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+:root[data-view="mobile"] .postabpill { min-width: 150px; height: 36px; }
