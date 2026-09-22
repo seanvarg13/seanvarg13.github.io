@@ -1038,9 +1038,14 @@
   // the split bar at the top of an open card
   function renderSplitBar(p, opts = {}) {
     const bar = el("div", "splitbar");
+    if (opts.head !== false) bar.append(renderSplitHead(p));
+    if (state.cardTools) bar.append(renderSplitPanel(p));
+    return bar;
+  }
+  // the button and what's in effect — it sits in the card's filter row
+  function renderSplitHead(p) {
     const pit = p.type === "P";
-    if (opts.head !== false) {
-      // folded by default: a button with what's in effect; open it to change splits and dates
+    {
       const head = el("div", "splithead");
       const b = el("button", "btn btn-quiet tbtn", "Splits & dates"); b.type = "button"; b.setAttribute("aria-expanded", String(state.cardTools));
       b.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = !state.cardTools; savePrefs(); render(); });
@@ -1051,9 +1056,13 @@
       b.classList.toggle("on", bits.length > 0);
       head.append(b, el("span", "tsum", bits.length ? bits.join(" · ") : "full season · all splits"));
       if (state.daysLoading) head.append(el("span", "winnote", "Loading game-by-game data…"));
-      bar.append(head);
-      if (!state.cardTools) return bar;
+      return head;
     }
+  }
+  // the block that drops below the filter row once it is opened: handedness, venue and dates
+  function renderSplitPanel(p) {
+    const bar = el("div", "splitopen");
+    const pit = p.type === "P";
     const seg = (name, opts, cur, set) => {
       const g = el("div", "seg"); g.setAttribute("role", "group"); g.setAttribute("aria-label", name);
       for (const [v, l] of opts) {
@@ -1769,24 +1778,27 @@
     return plate;
   }
   // season chips for the popup (from the search index): the same player in another year
+  // the card's pinned top: the plate, then the filter row (and its panel when open) — returns them as one block
+  function cardTop(...parts) { const top = el("div", "cardtop"); for (const x of parts) top.append(...(Array.isArray(x) ? x : [x])); return top; }
   function renderSeasonChips(p0) {
     const wrap = el("div", "xseasons mchips");
     ensureIndex();
     const entry = indexReady() ? window.DRAFT_INDEX.players.find((e) => e.id === p0.id) : null;
-    if (!entry) { wrap.append(el("span", "winnote", indexReady() ? "" : "Loading seasons…")); wrap.append(renderSplitBar(p0)); return wrap; }
+    if (!entry) { wrap.append(el("span", "winnote", indexReady() ? "" : "Loading seasons…")); wrap.append(filters()); return out(wrap); }
     const curKey = state.cardDs || CUR.key;
-    const filters = () => renderSplitBar(p0);          // Splits & dates lives up here, beside the season pickers
+    const filters = () => renderSplitHead(p0);         // Splits & dates lives up here, beside the season pickers
+    const out = (row) => (state.cardTools ? [row, renderSplitPanel(p0)] : [row]);
     wrap.append(el("span", "splbl", "Season"));
     const goTo = (key) => { state.cardDs = key === CUR.key ? null : key; state.cardWin = { from: "", to: "", last: "" }; render(); };
     if (isMulti(curKey)) {   // a combined span: say so, and offer the seasons that make it up
       const mp = parseMulti(curKey), mine = entry.s.filter((sv) => sv[2] === p0.type && mp.members.includes(sv[0]));
       wrap.append(pillSelect(`${yearSpan(mp.years)} combined`, [[curKey, `${yearSpan(mp.years)} combined`], ...mine.map((sv) => [sv[0], `${sv[1]}${kindTag(sv[0])} · ${sv[5]}`])], curKey, (k) => { if (k !== curKey) goTo(k); }, "Season"));
       wrap.append(filters());
-      return wrap;
+      return out(wrap);
     }
     wrap.append(renderSeasonPicker(entry.s.filter((sv) => sv[2] === p0.type), curKey, goTo));
     wrap.append(filters());
-    return wrap;
+    return out(wrap);
   }
   function renderAddPos(p) {
     const box = el("div", "addpos");
@@ -1925,15 +1937,14 @@
     const dsKey = state.cardDs || CUR.key;
     if (dsKey !== CUR.key) ensureHist(dsKey);
     const ds = histDataset(dsKey);
-    if (!ds) { body.append(renderPlate(p0, { rank: "–" }, "H", "H"), renderSeasonChips(p0), el("p", "note", `Loading ${dsKey.startsWith("mlb-") ? dsKey.slice(4) : dsKey.replace("aaa-", "") + " Triple-A"} season…`)); return; }
+    if (!ds) { body.append(cardTop(renderPlate(p0, { rank: "–" }, "H", "H"), renderSeasonChips(p0)), el("p", "note", `Loading ${dsKey.startsWith("mlb-") ? dsKey.slice(4) : dsKey.replace("aaa-", "") + " Triple-A"} season…`)); return; }
     withDataset(ds, () => withWindow(state.cardWin, () => withSplit(state.split, () => {
       const p = ds.players.find((q) => q.id === p0.id && q.type === p0.type) || p0;
       const g = ds === CUR ? groupFor(state.pos) : (p.type === "H" ? "H" : p.primary);
       const ref = ds === CUR ? refFor(g) : g;
-      if (needsRows() && !DS.ready()) { DS.load(); body.append(renderPlate(p, { rank: "–" }, g, ref), renderSeasonChips(p0)); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); body.append(c); return; }
+      if (needsRows() && !DS.ready()) { DS.load(); body.append(cardTop(renderPlate(p, { rank: "–" }, g, ref), renderSeasonChips(p0))); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); body.append(c); return; }
       const st = ref === g ? (pool(g).stats.get(p.type + p.id) || rankIn(g, p)) : rankIn(ref, p);
-      body.append(renderPlate(p, st, g, ref));
-      body.append(renderSeasonChips(p0));
+      body.append(cardTop(renderPlate(p, st, g, ref), renderSeasonChips(p0)));
       body.append(renderCard(p, metricsFor(g), st, g, ref, { noSplitBar: true }));
     })));
   }
@@ -2867,12 +2878,11 @@
     } else head.append(el("span", "xmeta", type === "P" ? "Pitching" : "Hitting"));
     const curP = DATA.players.find((q) => q.id === entry.id && q.type === type);
     if (curP) head.append(renderStarControl(curP));
-    box.append(head);
     const chips = el("div", "xseasons");
     chips.append(el("span", "splbl", "Season"));
     chips.append(renderSeasonPicker(ofType, cur[0], (key) => { state.x = { id: entry.id, type, ds: key }; savePrefs(); render(); }));
-    chips.append(renderSplitBar({ type }));            // same row as the popup card's
-    box.append(chips);
+    chips.append(renderSplitHead({ type }));           // same row as the popup card's
+    box.append(cardTop(head, chips, state.cardTools ? renderSplitPanel({ type }) : []));
     // the card, drawn against that season's dataset
     const key = cur[0];
     if (!state.x.ds || state.x.ds !== key || state.x.type !== type) state.x = { id: entry.id, type, ds: key };

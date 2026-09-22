@@ -1508,9 +1508,7 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 :root[data-view="mobile"] .meter.sub .bub { width: 20px; height: 20px; font-size: 10px; }
 
 /* the headshot plate stays put while the card scrolls, so you always know whose numbers these are */
-.mplate { position: sticky; top: 0; z-index: 5; }
 .modal-close { z-index: 7; }
-:root[data-view="mobile"] .mplate { top: var(--header-h, 0px); }
 :root[data-view="mobile"] .modal-panel:has(.mplate) .modal-close { position: fixed; top: calc(var(--header-h, 0px) + 8px); right: 8px; }
 
 /* Nothing shows above the pinned plate: the breathing room at rest is the panel's margin, not the modal's padding,
@@ -1530,3 +1528,49 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 .spick .pill.kindpill { min-width: 152px; }
 :root[data-view="mobile"] .spick .pill.kindpill { min-width: 132px; }
 :root[data-view="mobile"] .mchips .splitbar, :root[data-view="mobile"] .xseasons .splitbar { flex-basis: 100%; }
+
+/* The card's top block — plate, filter row and (when open) the filter panel — stays pinned as one piece.
+   The row carries the secondary surface and the panel the deep brand colour, so all three read apart. */
+.cardtop { position: sticky; top: 0; z-index: 5; }
+.mplate { position: relative; top: auto; }
+:root[data-view="mobile"] .cardtop, #xboard .cardtop { top: var(--header-h, 0px); }
+.mchips, .xseasons { background: var(--surface-2); border-bottom: 1px solid var(--hair); }
+.splitopen {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+  padding: 10px 22px; background: var(--accent); color: var(--accent-ink); border-bottom: 1px solid var(--rule);
+}
+.splitopen .to, .splitopen .winnote, .splitopen .splitwarn, .splitopen .tsum { color: var(--accent-ink); }
+.splitopen .splitwarn { opacity: 0.9; }
+.splitopen .linkbtn { color: var(--accent-ink); text-decoration-color: var(--accent-ink); }
+.splitopen .datesbar input, .splitopen .lastin { background: var(--surface); color: var(--ink); border-color: var(--surface); }
+.splitopen .datesbar { flex-basis: auto; }
+/* the phone: a tighter plate and row, so the pinned block leaves room for the numbers */
+:root[data-view="mobile"] .mplate { padding: 8px 44px 8px 10px; gap: 8px; }
+:root[data-view="mobile"] .mplate .mug { width: 68px; height: 68px; margin: -4px 0 -6px; }
+:root[data-view="mobile"] .mplate h2 { font-size: 18px; }
+:root[data-view="mobile"] .mplate .mline { font-size: 12px; margin-top: 2px; }
+:root[data-view="mobile"] .mplate .mrank { font-size: 11.5px; margin-top: 2px; }
+:root[data-view="mobile"] .mplate .mrank b { font-size: 15px; }
+:root[data-view="mobile"] .mplate .starbox .btn { min-height: 26px; height: 26px; font-size: 11px; padding: 0 8px; }
+:root[data-view="mobile"] .mchips, :root[data-view="mobile"] .xseasons { padding: 6px 10px; row-gap: 6px; }
+:root[data-view="mobile"] .splitopen { padding: 8px 10px; gap: 6px 8px; }
+.splitopen .lastin { width: 64px; }
+:root[data-view="mobile"] .splitopen .lastin { width: 54px; }
+:root[data-view="mobile"] .splitopen .datesbar { flex-basis: 100%; }
+
+/* The searched player's page wears the same plate as the popup card, so the two read as one thing */
+.xhead { background: var(--accent-2); color: var(--accent-2-ink); border-bottom: 3px solid var(--rule); padding: 12px 22px 10px; align-items: center; }
+.xhead h2, #xboard .xhead h2 { color: var(--accent-2-ink); }
+.xhead .xmeta { color: var(--accent-2-dim); }
+.xhead .mug { border: 0; box-shadow: none; }
+.xhead .starbtn { border-color: var(--on-fill-line); background: var(--on-fill-wash); color: var(--accent-2-ink); }
+.xhead .starbtn.on { background: var(--on-fill-wash-2); }
+.xhead .starnote { color: var(--accent-2-dim); }
+.xhead .segbtn { color: var(--accent-2-ink); border-color: var(--on-fill-line); background: var(--on-fill-wash); }
+.xhead .segbtn[aria-pressed="true"] { background: var(--on-fill-wash-2); }
+:root[data-view="mobile"] .xhead { padding: 8px 10px; gap: 6px 10px; }
+:root[data-view="mobile"] .xhead h2 { font-size: 19px; }
+:root[data-view="mobile"] .xhead .mug { width: 60px; height: 60px; }
+.splitopen .datesbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.splitopen .lastrow { display: flex; align-items: center; gap: 6px; }
+:root[data-view="mobile"] .splitopen .lastrow { flex-basis: 100%; }
