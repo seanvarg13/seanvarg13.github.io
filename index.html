@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sean's Site</title>
+<meta name="theme-color" content="#7bafd4">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Sean's Site">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="styles.css">
+<script src="defaults.js"></script>
+<script src="themes.js"></script>
+</head>
+<body>
+<header class="top">
+  <a class="wordmark" href="#draftmode"><span class="wordmark-year">Sean's</span> Site</a>
+  <nav class="modes" aria-label="Page">
+    <a href="#draftmode" data-mode="draftmode">Draft Mode</a>
+    <a href="#trending" data-mode="trending">Trending Players</a>
+    <a href="#leaderboard" data-mode="leaderboard">Leaderboard</a>
+    <a href="#compare" data-mode="compare">Compare</a>
+    <a href="#fantasy" data-mode="fantasy">Fantasy</a>
+    <a href="#appearance" data-mode="appearance" class="modes-aux" title="Colours and type">Appearance</a>
+  </nav>
+  <div class="gsearch" id="gsearch">
+    <label class="sr" for="gq">Find a player</label>
+    <input id="gq" type="search" autocomplete="off" placeholder="Find a player…">
+    <ul class="addlist xlist" id="glist" hidden></ul>
+  </div>
+  <div class="stamp" id="stamp"></div>
+  <div class="updater" id="updater" hidden>
+    <label class="field"><span>Through</span><input type="date" id="upend"></label>
+    <button type="button" class="btn" id="upbtn">Update data</button>
+    <button type="button" class="btn btn-quiet" id="pubbtn" title="Push the current data to your Netlify link">Publish</button>
+    <a class="publink" id="publink" target="_blank" rel="noopener" hidden></a>
+    <span class="uplog" id="uplog"></span>
+  </div>
+</header>
+
+<main class="wrap">
+  <nav class="subnav" id="subnav" aria-label="Draft Mode pages" hidden>
+    <a href="#draftmode" data-sub="draftmode">Draft Mode</a>
+    <a href="#rankings" data-sub="rankings">Rankings</a>
+    <a href="#draft" data-sub="draft">Draft board</a>
+    <a href="#eligibility" data-sub="eligibility">Eligibility</a>
+  </nav>
+  <section class="hub" id="hub" hidden></section>
+  <section class="toolbar" aria-label="Filters">
+    <div class="setbar" id="setbar" hidden>
+      <button type="button" class="btn btn-quiet tbtn" id="listsbtn">Rankings list</button>
+      <span class="setstatus" id="setstatus"></span>
+      <label class="setlbl" for="setpick" hidden>Rankings list</label>
+      <select id="setpick" class="setpick" hidden></select>
+      <span class="setbtns" hidden>
+        <button type="button" class="btn" id="ranksave">Save…</button>
+        <button type="button" class="btn btn-quiet" id="ranksaveas" hidden>Save as…</button>
+        <button type="button" class="btn btn-quiet" id="ranknew">New list</button>
+        <button type="button" class="btn btn-quiet" id="rankrename" hidden>Rename</button>
+        <button type="button" class="btn btn-quiet" id="rankdelete" hidden>Delete</button>
+        <span class="setlinks"><button type="button" class="linkbtn" id="rankexport" title="Copy every list as text for another browser">Export</button> · <button type="button" class="linkbtn" id="rankimport" title="Paste text exported from another browser">Import</button></span>
+      </span>
+    </div>
+    <div class="tabrow" id="tabrow">
+      <div class="tabstrip">
+        <div class="postabs" id="postabs" role="tablist" aria-label="Position"></div>
+        <label class="search">
+          <span class="sr">Search players</span>
+          <input id="search" type="search" placeholder="Search name" autocomplete="off">
+        </label>
+        <button type="button" class="btn btn-quiet tbtn" id="teambtn" title="Only one league, division or team">Team</button>
+        <button type="button" class="unadd teamclear" id="teamclear" title="Remove the team filter" hidden>×</button>
+      </div>
+      <button type="button" class="tbhide" id="tbhide" title="Tuck the filters away (a slim bar stays at the top to bring them back)">▴<span> Hide filters</span></button>
+    </div>
+    <div class="toolrow">
+    <div class="tools">
+      <button type="button" class="btn btn-quiet tbtn" id="statsbtn">Included stats</button>
+      <button type="button" class="btn btn-quiet tbtn" id="splitsbtn">Splits &amp; dates</button>
+      <button type="button" class="btn btn-quiet tbtn" id="tablebtn">Table</button>
+      <span class="tsum" id="tsum"></span>
+      <span class="winnote" id="winnote"></span>
+    </div>
+    <div id="park" hidden>
+      <label class="field" id="sortfield">
+        <span>Sort by</span>
+        <select id="sort"></select>
+      </label>
+      <span class="field daterange" id="daterange">
+        <span>Dates</span>
+        <label class="sr" for="dfrom">From</label><input type="date" id="dfrom" title="Blank = season start">
+        <span>to</span>
+        <label class="sr" for="dto">To</label><input type="date" id="dto" title="Blank = season end">
+        <button type="button" class="unadd" id="dclear" title="Full season" hidden>×</button>
+      </span>
+      <label class="field" id="daysfield"><span>Last</span><input type="number" id="ddays" min="0" inputmode="numeric" placeholder="all"><span>days</span></label>
+      <label class="field" id="lastfield"><span>Last</span><input type="number" id="dlast" class="lastin" min="0" inputmode="numeric" placeholder="all" title="Each player's most recent N plate appearances (innings for pitchers), through the To date"><span id="dlastunit">PA</span></label>
+      <label class="field" id="minfield">
+        <span id="minlabel">Min PA</span>
+        <input id="min" type="number" min="0" step="10" inputmode="numeric">
+      </label>
+      <label class="field" id="reffield" hidden>
+        <span>Rank vs</span>
+        <select id="ref"></select>
+      </label>
+      <span class="lbsplit" id="lbsplit"></span>
+      <label class="field" id="trendnfield"><span>Last</span><input type="number" id="trendn" min="1" inputmode="numeric"></label>
+      <div class="seg" id="trendunit" role="group" aria-label="Span unit"></div>
+      <label class="field" id="trendminfield"><span>At least</span><input type="number" id="trendmin" min="0" inputmode="numeric"><span id="trendminunit">PA in that span</span></label>
+    </div>
+    <div class="drafttools" id="ranktools" hidden>
+      <span class="chip" id="rankcount">Big board order</span>
+      <div class="seg" id="rankview" role="group" aria-label="Tiers or list" hidden></div>
+      <button type="button" class="btn btn-quiet tbtn" id="rankstars" hidden>☆ Starred</button>
+      <button type="button" class="btn" id="rankedit">Edit rankings</button>
+      <button type="button" class="btn" id="rankmove" hidden disabled>Move to tier…</button>
+      <button type="button" class="btn" id="rankuntier" hidden disabled>Remove from tier</button>
+      <button type="button" class="btn btn-quiet" id="rankclear" hidden>Clear selection</button>
+      <button type="button" class="btn" id="rankaddtier" hidden>+ Add tier</button>
+      <button type="button" class="btn btn-quiet" id="rankreset" hidden>Reset tab</button>
+    </div>
+    <div class="drafttools" id="lbtools" hidden>
+      <span class="spick" id="lbseason"></span>
+    </div>
+    <div class="drafttools" id="trendtools" hidden>
+      <span class="chip" id="trendchip">Trending</span>
+      <span class="winnote" id="trendnote"></span>
+    </div>
+    <div class="drafttools" id="drafttools" hidden>
+      <span class="chip" id="draftcount">0 drafted</span>
+      <label class="field"><span>Draft from</span>
+        <select id="draftorder"></select>
+      </label>
+      <div class="seg" id="draftview" role="group" aria-label="Tiers or list" hidden></div>
+      <button type="button" class="btn btn-quiet tbtn" id="draftstars" hidden>☆ Starred</button>
+      <button type="button" class="btn" id="undo" disabled>Undo last</button>
+      <label class="toggle"><input type="checkbox" id="showdrafted"> <span>Show drafted</span></label>
+      <button type="button" class="btn btn-quiet" id="reset">Reset board</button>
+    </div>
+    </div>
+    <div class="tbfold" id="tbfold" hidden>
+      <button type="button" class="tbfoldbtn" id="tbfoldbtn" title="Show the filters">▾ Filters</button>
+      <span class="tbfoldsum" id="tbfoldsum"></span>
+    </div>
+  </section>
+
+  <section class="xboard" id="xboard" hidden></section>
+
+  <section class="toolbar xtoolbar" id="ctoolbar" hidden>
+    <div class="xsearch">
+      <label class="sr" for="cq">Add a player to compare</label>
+      <input id="cq" type="search" autocomplete="off" placeholder="Add a player to compare…">
+      <ul class="addlist xlist" id="clist" hidden></ul>
+    </div>
+    <div class="seg" id="ctype" role="group" aria-label="Hitting or pitching"></div>
+    <div id="csplit"></div>
+    <button type="button" class="btn btn-quiet tbtn" id="cstats">Choose stats</button>
+    <button type="button" class="btn btn-quiet" id="cclear">Clear</button>
+  </section>
+  <section class="xboard" id="cboard" hidden></section>
+  <section class="xboard" id="eboard" hidden></section>
+  <section class="xboard aboard" id="pboard" hidden></section>
+  <section class="xboard fboard" id="fboard" hidden></section>
+
+  <section class="board" id="board" aria-live="polite">
+    <div class="pager" id="pagertop" hidden></div>
+    <div class="board-scroll" id="bscroll">
+      <div class="colwrap" id="colwrap"><div class="colhead" id="colhead"></div></div>
+      <ol class="rows" id="rows"></ol>
+    </div>
+    <div class="pager" id="pagerbot" hidden></div>
+    <p class="empty" id="empty" hidden>No players match.</p>
+  </section>
+
+  <footer class="notes" id="notes"></footer>
+</main>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-back" id="modal-back"></div>
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <button type="button" class="modal-close" id="modal-close" aria-label="Close" title="Close (changes in a settings panel are not kept)">×</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
