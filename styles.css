@@ -1664,3 +1664,24 @@ body.modal-open header.top { z-index: 60; }
 .postabpill { min-width: 168px; height: 34px; }
 .postabpill .pill-text { font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
 :root[data-view="mobile"] .postabpill { min-width: 150px; height: 36px; }
+
+/* A card read against something else: the comparison's value and the difference sit in a fourth column, and its
+   percentile shows on the same bar as a hollow bubble. */
+.meter.cmp, .hcard .meter.cmp { grid-template-columns: 138px minmax(70px, 1fr) 72px 92px; }
+:root[data-view="mobile"] .meter.cmp, :root[data-view="mobile"] .hcard .meter.cmp { grid-template-columns: 84px minmax(36px, 1fr) 56px 70px; gap: 5px; }
+.cmpval { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.cmpval .cv { color: var(--ink-2); font-size: 12.5px; }
+.cmpval .dlt { font-size: 11px; color: var(--muted); font-weight: 700; }
+.cmpval .dlt.up { color: var(--accent-2-text, var(--accent)); }
+.cmpval .dlt.down { color: var(--red, #c8102e); }
+:root[data-view="mobile"] .cmpval .cv { font-size: 11.5px; }
+:root[data-view="mobile"] .cmpval .dlt { font-size: 10.5px; }
+.meter .bub.ghost {
+  background: var(--surface) !important; color: var(--ink-2);
+  border: 2px solid var(--ink-2); box-shadow: 0 0 0 2px var(--surface); opacity: 0.9; z-index: 2;
+}
+.cmpnote { margin: -4px 0 10px; font-weight: 600; color: var(--ink-2); }
+.cmpnote .cmpkey { font-weight: 400; color: var(--muted); }
+.cmppill.on { border-color: var(--accent-2); }
+.mchips .cmppill, .xseasons .cmppill { background: var(--surface); border-color: var(--surface); }
+.mchips .cmppill.on, .xseasons .cmppill.on { background: var(--accent-2); border-color: var(--accent-2); color: var(--accent-2-ink); }

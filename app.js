@@ -219,7 +219,8 @@
     tiers: load(LS.tiers, {}),       // tier members per tab: {ALL: [["H1", "H2"], ["H5"]]} — independent of the rank order
     tierView: prefs.tierView || "tiers",
     panelTab: prefs.panelTab || "stats",           // which tab the Stats & filters popup opens on
-    rankSort: !!prefs.rankSort,                    // Rankings: a stat sort running inside the tiers           // Rankings / Draft: "tiers" groups the list by tier, "list" is the raw order
+    rankSort: !!prefs.rankSort,                    // Rankings: a stat sort running inside the tiers
+    cardCmp: prefs.cardCmp || "",                  // a card's comparison: "s:<season>", "h:L", "v:home", "d:30", "n:100"           // Rankings / Draft: "tiers" groups the list by tier, "list" is the raw order
     tierNames: load(LS.tierNames, {}),   // optional tier names per tab: {ALL: ["Elite", "Studs"]}
     rankSets: load(LS.sets, {}),     // saved sets: {name: {ranks, tiers, tierNames, saved}}
     currentSet: prefs.currentSet || null,          // the saved list the working rankings were opened from (Save writes back to it)
@@ -244,7 +245,7 @@
     if (oldRoles) { for (const [id, r] of Object.entries(oldRoles)) { const l = state.extraPos[id] || (state.extraPos[id] = []); if (!l.includes(r)) l.push(r); } changed = true; }
     if (changed) { save(LS.extraPos, state.extraPos); try { localStorage.removeItem(LS.extra); localStorage.removeItem(LS.roles); } catch {} }
   })();
-  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl }); }
+  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cardCmp: state.cardCmp, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl }); }
   const draftedIds = () => new Set(state.drafted.map((d) => d.id));
 
   /* ---------- date window ---------- */
@@ -1135,6 +1136,22 @@
       if (state.cardWin.from || state.cardWin.to || lastN(state.cardWin)) bits.push(withWindow(state.cardWin, () => winLabel(p.type)));
       b.classList.toggle("on", bits.length > 0);
       head.append(b);
+      // read this card against another of his seasons, the other side of a split, or a recent stretch
+      const groups = p.id != null ? cmpChoices(p) : [];
+      if (groups.length) {
+        const cur = state.cardCmp;
+        const pill = el("label", "pill cmppill" + (cur ? " on" : ""));
+        pill.append(el("span", "pill-text", cur ? `vs ${cmpLabelOf(p, cur) || "…"}` : mob ? "Compare" : "Compare to…"));
+        pill.insertAdjacentHTML("beforeend", '<svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>');
+        const sel = el("select"); sel.setAttribute("aria-label", "Compare this card with");
+        const o0 = el("option", null, "Nothing — just this"); o0.value = ""; sel.append(o0);
+        for (const [name, list] of groups) { const gg = el("optgroup"); gg.label = name; for (const [v, l] of list) { const o = el("option", null, l); o.value = v; gg.append(o); } sel.append(gg); }
+        sel.value = cur && [...sel.options].some((o) => o.value === cur) ? cur : "";
+        sel.addEventListener("click", (e) => e.stopPropagation());
+        sel.addEventListener("change", (e) => { state.cardCmp = e.target.value; savePrefs(); render(); });
+        pill.append(sel);
+        head.append(pill);
+      }
       if (bits.length || !mob) head.append(el("span", "tsum", bits.length ? bits.join(" · ") : "full season · all splits"));
       if (state.daysLoading) head.append(el("span", "winnote", "Loading game-by-game data…"));
       return head;
@@ -1520,7 +1537,51 @@
 
   // a metric's value for display: season / window values live on V(p).m, pool-derived ones (underlying ERA) on the stats
   const metricValue = (m, pv, st) => (m.key === "ukb" ? (st ? st.ukb : null) : m.key === "uera" ? (st ? st.uera : null) : pv.m[m.key]);
-  function meterRow(m, v, pct) {
+  // Compare a card with something else: another of his seasons, the other side of a split, or a stretch of games.
+  // The card's own numbers stay put; the comparison rides beside them with the difference.
+  function cmpChoices(p) {
+    const pit = p.type === "P", groups = [];
+    ensureIndex();
+    const entry = indexReady() ? window.DRAFT_INDEX.players.find((e) => e.id === p.id) : null;
+    const mine = entry ? entry.s.filter((sv) => sv[2] === p.type && sv[0] !== DS.key) : [];
+    if (mine.length) groups.push(["His other seasons", mine.slice(0, 14).map((sv) => ["s:" + sv[0], `${sv[1]}${kindTag(sv[0])}${keyLevel(sv[0]) ? " " + keyLevel(sv[0]) : ""} · ${sv[5]}`])]);
+    const sp = [];
+    for (const [v, l] of [["L", pit ? "vs LHB" : "vs LHP"], ["R", pit ? "vs RHB" : "vs RHP"]]) if (state.split.hand !== v) sp.push(["h:" + v, l]);
+    for (const [v, l] of [["home", "Home"], ["away", "Away"]]) if (state.split.venue !== v) sp.push(["v:" + v, l]);
+    if (sp.length) groups.push(["Splits", sp]);
+    if (DS.days) groups.push(["Stretches", [...[7, 14, 30].map((d) => ["d:" + d, `Last ${d} days`]),
+                                            ...(pit ? [15, 30] : [50, 100]).map((k) => ["n:" + k, `Last ${k} ${pit ? "IP" : "PA"}`])]]);
+    return groups;
+  }
+  const cmpLabelOf = (p, c) => { for (const [, list] of cmpChoices(p)) for (const [v, l] of list) if (v === c) return l; return ""; };
+  function cardCompare(p, g) {
+    const c = state.cardCmp; if (!c) return null;
+    const kind = c.slice(0, 1), v = c.slice(2), label = cmpLabelOf(p, c) || v;
+    const read = (gg) => {
+      if (needsRows() && !DS.ready()) { DS.load(); return { label, loading: true }; }
+      const pv2 = V(p), st2 = rankIn(gg, p);
+      return { label, pv: pv2, m: pv2.m, st: st2 };
+    };
+    if (kind === "s") {
+      const ds2 = histDataset(v);
+      if (!ds2) { ensureHist(v); return { label, loading: true }; }
+      return withDataset(ds2, () => withWindow({ from: "", to: "", last: "" }, () => withSplit({ hand: "all", venue: "all" }, () => {
+        const p2 = ds2.players.find((q) => q.id === p.id && q.type === p.type);
+        if (!p2) return { label, none: true };
+        if (needsRows() && !DS.ready()) { DS.load(); return { label, loading: true }; }
+        const g2 = p2.type === "H" ? "H" : p2.primary;
+        const pv2 = V(p2), st2 = pool(g2).stats.get(p2.type + p2.id) || rankIn(g2, p2);
+        return { label, pv: pv2, m: pv2.m, st: st2 };
+      })));
+    }
+    if (kind === "h" || kind === "v") {
+      const split = kind === "h" ? { hand: v, venue: state.split.venue } : { hand: state.split.hand, venue: v };
+      return withWindow(state.cardWin, () => withSplit(split, () => read(g)));
+    }
+    const win = kind === "d" ? { from: addDays(seasonLast(), -(Number(v) - 1)), to: "", last: "" } : { from: "", to: "", last: v };
+    return withWindow(win, () => withSplit(state.split, () => read(g)));
+  }
+  function meterRow(m, v, pct, cmp) {
     const row = el("div", "meter");
     row.append(el("div", "lbl", m.label));
     const track = el("div", "track");
@@ -1529,12 +1590,31 @@
       const fill = el("div", "fill"); fill.style.width = pct + "%"; fill.style.background = s.bg; track.append(fill);
       const bub = el("div", "bub", pct); bub.style.left = pct + "%"; bub.style.background = s.bg; track.append(bub);
     }
+    if (cmp && cmp.pct != null) { const b2 = el("div", "bub ghost", cmp.pct); b2.style.left = cmp.pct + "%"; track.append(b2); }
     row.append(track);
     row.append(el("div", "val", v == null ? "–" : fmt(v, m)));
     row.title = `${m.label}: ${v == null ? "n/a" : fmt(v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}`;
+    if (cmp) {
+      const cell = el("div", "cmpval");
+      cell.append(el("span", "cv", cmp.v == null ? "–" : fmt(cmp.v, m)));
+      if (v != null && cmp.v != null) {
+        const d = Math.round((v - cmp.v) * 1000) / 1000, even = Math.abs(d) < (m.dec === 3 ? 0.0005 : m.dec === 2 ? 0.005 : 0.05);
+        const better = m.hib === false ? d < 0 : d > 0;
+        cell.append(el("span", "dlt" + (even ? "" : better ? " up" : " down"), even ? "even" : (d > 0 ? "+" : "−") + fmt(Math.abs(d), { dec: m.dec, unit: "" })));
+      }
+      row.append(cell); row.classList.add("cmp");
+      row.title += ` · ${cmp.label}: ${cmp.v == null ? "n/a" : fmt(cmp.v, m)}`;
+    }
     return row;
   }
 
+  function renderCmpNote(cmp, ref) {
+    const p = el("p", "note cmpnote");
+    if (cmp.loading) p.append(`Loading ${cmp.label}…`);
+    else if (cmp.none) p.append(`No ${cmp.label} to compare against.`);
+    else p.append(`Second column: ${cmp.label}`, el("span", "cmpkey", " · value, then the difference from it"));
+    return p;
+  }
   function renderHitterCard(p, st, g, ref, opts = {}) {
     const card = el("div", "card hcard");
     if (!opts.noSplitBar) card.append(renderSplitBar(p));
@@ -1542,6 +1622,8 @@
     if (!opts.noStrip) card.append(renderStrip(p, pv));
     card.append(el("h3", null, `Percentile rank · ${viewLabel(p.type)} · ${poolPhrase(ref)} (${pool(ref).ref.length})`));
     const cols = [el("div", "hcol"), el("div", "hcol")];
+    const cmp = cardCompare(p, g), cw = (mm) => (cmp && cmp.m ? { v: metricValue(mm, cmp.pv, cmp.st), pct: cmp.st ? cmp.st.pct[mm.key] : null, label: cmp.label } : null);
+    if (cmp) card.append(renderCmpNote(cmp, ref));
     const leftH = DATA.meta.hitterCardLeft || 2;
     if (DS.noStatcast) card.append(el("p", "note", DS.tracked > 0.05
       ? `Only some ${DS.levelName} parks track pitches (${Math.round(100 * DS.tracked)}% of balls in play, the Florida State League): exit velocity, barrels, xwOBA and zone numbers cover those games only, and bat speed isn't tracked. Hitters rank by wOBA here.`
@@ -1554,7 +1636,7 @@
       if (!metrics.length) return;
       let prev = null;
       for (const m of metrics) {
-        const row = meterRow(m, pv.m[m.key], st.pct[m.key]);
+        const row = meterRow(m, pv.m[m.key], st.pct[m.key], cw(m));
         if (prev && RULE_H.has(m.key)) row.classList.add("ruled");      // the peak-EV block sits under a dotted rule
         prev = m;
         if (SUB[m.key]) {
@@ -1563,7 +1645,7 @@
           t.addEventListener("click", (e) => { e.stopPropagation(); state.open[m.key] = !isOpen; savePrefs(); render(); });
           row.querySelector(".lbl").append(t);
           meters.append(row);
-          if (isOpen) for (const sm of SUB[m.key]) { if (DS.hist && pv.m[sm.key] == null) continue; const r = meterRow(sm, pv.m[sm.key], st.pct[sm.key]); r.classList.add("sub"); meters.append(r); }
+          if (isOpen) for (const sm of SUB[m.key]) { if (DS.hist && pv.m[sm.key] == null) continue; const r = meterRow(sm, pv.m[sm.key], st.pct[sm.key], cw(sm)); r.classList.add("sub"); meters.append(r); }
         } else meters.append(row);
       }
       box.append(meters);
@@ -1741,6 +1823,8 @@
     if (!opts.noStrip) card.append(renderStrip(p, pv));
     card.append(el("h3", null, `Percentile rank · ${viewLabel(p.type)} · ${poolPhrase(ref)} (${pool(ref).ref.length})`));
     const cols = [el("div", "hcol"), el("div", "hcol")];
+    const cmp = cardCompare(p, g), cw = (mm) => (cmp && cmp.m ? { v: metricValue(mm, cmp.pv, cmp.st), pct: cmp.st ? cmp.st.pct[mm.key] : null, label: cmp.label } : null);
+    if (cmp) card.append(renderCmpNote(cmp, ref));
     const left = DATA.meta.pitcherCardLeft || 2;
     if (DS.noStatcast) card.append(el("p", "note", DS.tracked > 0.05
       ? `Only some ${DS.levelName} parks track pitches (the Florida State League): velocity, zone / chase and exit-velocity numbers cover those games only.`
@@ -1756,7 +1840,7 @@
       if (!metrics.length) return;
       let seenEra = false;
       for (const m of metrics) {
-        const row = meterRow(m, metricValue(m, pv, st), st.pct[m.key]);
+        const row = meterRow(m, metricValue(m, pv, st), st.pct[m.key], cw(m));
         if (grp.group === "Results" && seenEra && m.key === "nera") row.classList.add("after-era");
         if (m.key === "era") seenEra = true;
         const subs = (SUB_P[m.key] || []).filter((sm) => !DS.hist || metricValue(sm, pv, st) != null);
@@ -1767,7 +1851,7 @@
           t.addEventListener("click", (e) => { e.stopPropagation(); state.open[ok] = !isOpen; savePrefs(); render(); });
           row.querySelector(".lbl").append(t);
           meters.append(row);
-          if (isOpen) for (const sm of subs) { const r = meterRow(sm, pv.m[sm.key], st.pct[sm.key]); r.classList.add("sub"); meters.append(r); }
+          if (isOpen) for (const sm of subs) { const r = meterRow(sm, pv.m[sm.key], st.pct[sm.key], cw(sm)); r.classList.add("sub"); meters.append(r); }
         } else meters.append(row);
       }
       box.append(meters);
