@@ -326,11 +326,6 @@ button { cursor: pointer; }
 .meter .lbl { display: flex; align-items: center; gap: 4px; }
 .fold { border: 0; background: var(--surface-2); color: var(--ink-2); width: 18px; height: 18px; border-radius: 4px; padding: 0; font-size: 11px; line-height: 1; }
 .fold:hover { background: var(--accent); color: var(--accent-ink); }
-.meter.sub { grid-template-columns: 138px minmax(80px, 200px) 72px; }
-.meter.sub .lbl { padding-left: 18px; color: var(--muted); font-size: 12.5px; }
-.meter.sub .track { height: 9px; }
-.meter.sub .bub { min-width: 22px; height: 17px; font-size: 10.5px; }
-@media (max-width: 900px) { .meter.sub { grid-template-columns: 96px minmax(80px, 200px) 66px; } }
 .pbelow { display: grid; grid-template-columns: minmax(200px, 0.6fr) minmax(0, 1.4fr); gap: 18px 32px; margin-top: 18px; align-items: start; }
 .pbelow .cmp { margin-top: 0; }
 .pbelow.solo { grid-template-columns: 1fr; }
@@ -422,7 +417,6 @@ button { cursor: pointer; }
 .cgrid .chead .cmeta { font-size: 11.5px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
 .cgrid .cgroup { grid-column: 1 / -1; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: 0.01em; color: var(--ink); border-bottom: 2.5px solid var(--ink); padding: 18px 0 2px; line-height: 1.1; }
 .cgrid .clbl { font-size: 13px; color: var(--ink-2); text-align: right; padding-right: 6px; }
-.cgrid .clbl.sub { color: var(--muted); font-size: 12px; }
 .ccell { display: grid; grid-template-columns: 1fr 70px; gap: 8px; align-items: center; }
 .ccell .track { position: relative; height: 13px; background: var(--surface-2); border-radius: 7px; }
 .ccell .track::after { display: none; }
@@ -801,10 +795,6 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 @media (min-width: 901px) { header.top { flex-wrap: wrap; } .wordmark { white-space: nowrap; } .gsearch { flex: 0 1 240px; min-width: 150px; } .stamp { flex: none; white-space: nowrap; } .modes { flex: none; } .updater { flex: 1 0 100%; order: 9; } }
 
 /* fold-out rows read as secondary: italic, lighter */
-.meter.sub .lbl, .meter.sub .val { font-style: italic; color: var(--muted); font-weight: 400; }
-.meter.sub .track { opacity: 0.85; }
-.cgrid .clbl.sub { font-style: italic; color: var(--muted); }
-.cgrid .clbl.sub ~ .ccell .val { font-style: italic; }
 
 .lbsplit { display: inline-flex; gap: 8px; flex-wrap: wrap; }
 
@@ -1166,12 +1156,9 @@ body.modal-open { position: fixed; inset: 0; width: 100%; overflow: hidden; }
 
 /* card rows: labels stay on one line (fold-out rows are indented less, and give up a little bar width) */
 .meter .lbl { white-space: nowrap; }
-.meter.sub { grid-template-columns: 138px minmax(70px, 200px) 72px; }
-.meter.sub .lbl { padding-left: 12px; }
-@media (max-width: 900px) { .meter.sub { grid-template-columns: 104px minmax(60px, 200px) 60px; } .hcard .meter { grid-template-columns: 104px minmax(60px, 200px) 60px; } }
+@media (max-width: 900px) { .hcard .meter { grid-template-columns: 104px minmax(60px, 200px) 60px; } }
 :root[data-view="mobile"] .meter, :root[data-view="mobile"] .hcard .meter, :root[data-view="mobile"] .meter.sub { grid-template-columns: 96px minmax(40px, 1fr) 66px; gap: 6px; font-size: 12.5px; }
 :root[data-view="mobile"] .meter .val { font-size: 12px; text-align: right; white-space: nowrap; }
-:root[data-view="mobile"] .meter.sub .lbl { padding-left: 10px; font-size: 12px; }
 :root[data-view="mobile"] .meter .lbl { font-size: 12.5px; }
 
 /* percentile bubbles: white numerals */
@@ -1271,8 +1258,6 @@ body.modal-open { position: fixed; inset: 0; width: 100%; overflow: hidden; }
 .rank, .rankctl, .who, .act, .ftable td.n, .ftable td.who { z-index: 2; }
 .ftable th.n { width: 34px; min-width: 34px; }
 .rawseg { margin: 4px 0 8px; }
-.rawstats tr.sub td { color: var(--muted); font-style: italic; }
-.rawstats tr.sub td.l:first-child { padding-left: 18px; }
 .rawstats .fold { margin-left: 2px; }
 
 /* phone: the toolbar pins at the top like the Mac's, but compact; the column header pins right under it */
@@ -1476,7 +1461,6 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 .meters .meter { min-height: 32px; padding: 3px 0; }
 .meters .meter:not(:last-child) { border-bottom: 1px dashed var(--rail); }
 .hcard .meter { grid-template-columns: 138px minmax(90px, 1fr) 76px; }
-.hcard .meter.sub { grid-template-columns: 138px minmax(90px, 1fr) 76px; }
 .meter .track { height: 22px; border-radius: 3px; border: 0; background: var(--surface-2); }
 .meter .fill { border-radius: 3px; min-width: 8px; }
 .meter .track { margin-right: 15px; }        /* room for a 100th-percentile bubble, so it never sits on the value */
@@ -1485,13 +1469,9 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
   width: 27px; height: 27px; min-width: 0; padding: 0; border-radius: 50%;
   font-size: 12px; box-shadow: 0 0 0 2px var(--surface);
 }
-.meter.sub .track { height: 17px; }
-.meter.sub .bub { width: 22px; height: 22px; font-size: 10.5px; }
 :root[data-view="mobile"] .meters .meter { min-height: 28px; }
 :root[data-view="mobile"] .meter .track { height: 19px; }
 :root[data-view="mobile"] .meter .bub { width: 24px; height: 24px; font-size: 11px; }
-:root[data-view="mobile"] .meter.sub .track { height: 15px; }
-:root[data-view="mobile"] .meter.sub .bub { width: 20px; height: 20px; font-size: 10px; }
 
 /* the headshot plate stays put while the card scrolls, so you always know whose numbers these are */
 .modal-close { z-index: 7; }
