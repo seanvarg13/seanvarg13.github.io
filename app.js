@@ -218,7 +218,8 @@
     ranks: load(LS.ranks, {}),       // manual rankings per tab: {ALL: ["H670541", ...], SS: [...], SP: [...]}
     tiers: load(LS.tiers, {}),       // tier members per tab: {ALL: [["H1", "H2"], ["H5"]]} — independent of the rank order
     tierView: prefs.tierView || "tiers",
-    panelTab: prefs.panelTab || "stats",           // which tab the Stats & filters popup opens on           // Rankings / Draft: "tiers" groups the list by tier, "list" is the raw order
+    panelTab: prefs.panelTab || "stats",           // which tab the Stats & filters popup opens on
+    rankSort: !!prefs.rankSort,                    // Rankings: a stat sort running inside the tiers           // Rankings / Draft: "tiers" groups the list by tier, "list" is the raw order
     tierNames: load(LS.tierNames, {}),   // optional tier names per tab: {ALL: ["Elite", "Studs"]}
     rankSets: load(LS.sets, {}),     // saved sets: {name: {ranks, tiers, tierNames, saved}}
     currentSet: prefs.currentSet || null,          // the saved list the working rankings were opened from (Save writes back to it)
@@ -243,7 +244,7 @@
     if (oldRoles) { for (const [id, r] of Object.entries(oldRoles)) { const l = state.extraPos[id] || (state.extraPos[id] = []); if (!l.includes(r)) l.push(r); } changed = true; }
     if (changed) { save(LS.extraPos, state.extraPos); try { localStorage.removeItem(LS.extra); localStorage.removeItem(LS.roles); } catch {} }
   })();
-  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl }); }
+  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl }); }
   const draftedIds = () => new Set(state.drafted.map((d) => d.id));
 
   /* ---------- date window ---------- */
@@ -868,7 +869,14 @@
     const order = src ? src.ranks[state.pos] : null;
     if (order && order.length) {
       const idx = new Map(order.map((k, i) => [k, i]));
-      out = out.map((p, i) => [p, idx.has(p.type + p.id) ? idx.get(p.type + p.id) : order.length + i]).sort((a, b) => a[1] - b[1]).map((x) => x[0]);
+      if (!opts.all && statSorted()) {
+        // sorting a ranked tab by a stat: the tiers stay put and the players inside each one follow the stat,
+        // the untiered behind them. `out` is already in stat order, so keeping that order inside each tier is
+        // all it takes — and nobody's rank number moves, because those come from the list above (opts.all).
+        const tIdx = tierIndex(tierLists(state.pos, src)), T = (src.tiers[state.pos] || []).length;
+        const tOf = showTiers() ? (p) => { const k = p.type + p.id; return tIdx.has(k) ? tIdx.get(k) : T; } : () => 0;
+        out = out.map((p, i) => [p, i]).sort((a, b) => tOf(a[0]) - tOf(b[0]) || a[1] - b[1]).map((x) => x[0]);
+      } else out = out.map((p, i) => [p, idx.has(p.type + p.id) ? idx.get(p.type + p.id) : order.length + i]).sort((a, b) => a[1] - b[1]).map((x) => x[0]);
     }
     return { list: out, stats, g, ref, manual: !!(order && order.length) };
   }
@@ -1206,7 +1214,7 @@
     const mobile = document.documentElement.dataset.view === "mobile";
     h.style.setProperty("--rankw", editing ? (mobile ? (hasTiers ? "108px" : "72px") : hasTiers ? "190px" : "134px") : mobile ? "30px" : "44px");
     h.append(el("div", "h", editing ? (hasTiers ? "Rank · tier" : "My rank") : mobile ? "Rk" : "Rank"), el("div", "h left", ref === g ? "Player" : `Player · ranked vs ${POOL_NAME[ref]}`));
-    const head = (key, label, title) => { const h = customOrder() ? Object.assign(el("div", "h", label), { title }) : sortButton(key, label, title); if (/^[a-z]/.test(label)) h.classList.add("lc"); return h; };
+    const head = (key, label, title) => { const h = editing ? Object.assign(el("div", "h", label), { title }) : sortButton(key, label, title); if (/^[a-z]/.test(label)) h.classList.add("lc"); return h; };
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
     for (const k of ["year", "age"]) h.style.setProperty("--pre" + (k === "year" ? 1 : 2), preOn(k) ? "var(--prew, 64px)" : "0px");
     for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const hb = on ? head(c.key, c.label, c.key === "year" ? "Season" : "Age that season") : el("div", "h"); hb.classList.add("pre"); if (!on) hb.classList.add("off"); h.append(hb); }
@@ -1220,10 +1228,16 @@
     if (state.mode === "draft") h.append(el("div", "h", ""));
   }
   function sortButton(key, label, title) {
-    const b = el("button", "h", label); b.type = "button"; b.title = title;
-    if (state.sort === key) b.setAttribute("aria-sort", state.dir === "asc" ? "ascending" : "descending");
+    const ranked = customOrder(), on = state.sort === key && (!ranked || state.rankSort);
+    const b = el("button", "h", label); b.type = "button";
+    b.title = ranked ? `${title} — sorts inside each tier; click again to reverse, once more for your own order` : title;
+    if (on) b.setAttribute("aria-sort", state.dir === "asc" ? "ascending" : "descending");
     b.addEventListener("click", () => {
-      if (state.sort === key) state.dir = state.dir === "desc" ? "asc" : "desc"; else { state.sort = key; state.dir = key === "name" ? "asc" : "desc"; }
+      // on a ranked tab the same heading cycles best-first, worst-first, then back to the order you set
+      if (on && ranked && state.dir === "asc") { state.rankSort = false; savePrefs(); render(); return; }
+      if (on) state.dir = state.dir === "desc" ? "asc" : "desc";
+      else { state.sort = key; state.dir = key === "name" ? "asc" : "desc"; }
+      if (ranked) state.rankSort = true;
       savePrefs(); render();
     });
     return b;
@@ -2192,7 +2206,9 @@
     w.append(panelTabs("stats"));
     // sort by: the same select the header clicks drive
     const sortRow = el("div", "prow"), sf = $("sortfield"); sf.hidden = customOrder(); sortRow.append(sf); w.append(sortRow);
-    if (customOrder()) w.append(el("p", "note", "This tab has a saved order of its own, so it isn't sorted by a stat — the order is the order."));
+    if (customOrder()) w.append(el("p", "note", statSorted()
+      ? `This tab has an order of its own. Sorting by ${(allFor(g).find((m) => m.key === state.sort) || { label: state.sort }).label} is reading it a different way: the tiers stay put, the players inside each one follow the stat, and nobody's rank number moves. Click that column heading twice more for your own order back.`
+      : "This tab has an order of its own, so the order is the order. Click any column heading to read it by that stat instead — the tiers stay put and the players inside them reorder, with their rank numbers unchanged."));
     w.append(el("p", "note", `Tick the stats to show on ${{ rankings: "Rankings", draft: "the Draft board", trending: "Trending", leaderboard: "the Leaderboard" }[state.mode] || "this page"}${state.mode === "leaderboard" ? "; the value shows in each cell, coloured by its percentile" : ""}. Clicking a column heading on the board also sorts by it.`));
     const drawOrder = () => {};                       // the column order lives in the Table panel
     const groups = (pit ? CARD_P : CARD).map((grp) => ({ group: grp.group, metrics: grp.metrics.flatMap((m) => [m, ...((pit ? SUB_P : SUB)[m.key] || [])]) }));
@@ -2263,6 +2279,13 @@
     $("rankuntier").hidden = !state.editRanks; $("rankuntier").disabled = !state.selKeys.some((k) => idx.has(k));
     renderViewSeg("rankview", tn > 0);
     $("rankreset").disabled = !(n || tn);
+    const sc = $("ranksortclear"), byStat = statSorted();
+    sc.hidden = !byStat;
+    if (byStat) {
+      const m = allFor(groupFor(state.pos)).find((x) => x.key === state.sort);
+      sc.textContent = `By ${SHORT[state.sort] || (m && m.label) || state.sort}${state.dir === "asc" ? " ↑" : ""} ×`;
+      sc.title = "Back to your own order inside each tier";
+    }
   }
   /* saved sets: the working rankings can be opened from a set, edited, and saved back to it without renaming */
   const deep = (o) => JSON.parse(JSON.stringify(o));
@@ -2360,8 +2383,12 @@
   // the list bar: which saved list is open (a picker), whether it's saved, and Save / Save as / New / Rename / Delete
   function renderSetBar() {
     const bar = $("setbar"); bar.hidden = state.mode !== "rankings";
-    // Hide filters rides on the toolbar's first row — the same corner the Filters button comes back in
-    const home = bar.hidden ? $("tabrow") : bar;
+    $("setrow").hidden = bar.hidden;
+    // Hide filters rides on the toolbar's first row — beside the grey bar, not in it
+    const home = bar.hidden ? $("tabrow") : $("setrow");
+    const tools = $("ranktools"), toolHome = bar.hidden ? $("toolrow") : bar;     // editing belongs on the bar that stays
+    if (!toolHome) return;
+    if (tools.parentNode !== toolHome) toolHome.append(tools);
     if ($("tbhide").parentNode !== home) home.append($("tbhide"));
     const hb = $("tbhide"), folded = !!state.tbFold;
     hb.textContent = folded ? "▾" : "▴";
@@ -3411,6 +3438,7 @@
     const reset = el("button", "btn btn-quiet", "Reset to defaults"); reset.type = "button"; reset.addEventListener("click", () => { state.tbl = { heat: false, band: true, sortHl: true, density: "comfortable", numbers: "auto" }; apply(); });
     row.append(done, reset); w.append(row); body.append(w);
   }
+  $("ranksortclear").addEventListener("click", () => { state.rankSort = false; savePrefs(); render(); });
   $("optsbtn").addEventListener("click", () => openPanel(PANEL_TABS.some(([k]) => k === state.panelTab) ? state.panelTab : "stats"));
   $("listsbtn").addEventListener("click", () => openPanel("lists"));
   $("ddays").addEventListener("change", (e) => { const n = Math.max(0, Math.round(Number(e.target.value) || 0)); state.win = n ? { from: daysBack(n), to: "", last: "", days: n } : { from: "", to: "", last: "" }; state.expanded = null; render(); });
@@ -3435,6 +3463,9 @@
     return null;
   }
   const manualOrder = () => !!orderSource();
+  // A ranked tab can still be read by a stat: the tiers hold, the order inside them follows the column, and the
+  // rank numbers don't move. Editing ranks turns it off — dragging needs the real order under it.
+  const statSorted = () => !!(customOrder() && state.rankSort && !state.editRanks);
   // a tab with a saved order of its own: column sorting is off there, the order is the order
   const customOrder = () => { const s = orderSource(); return !!(s && (s.ranks[state.pos] || []).length); };
   window.addEventListener("hashchange", () => { readMode(); state.expanded = null; render(); });
