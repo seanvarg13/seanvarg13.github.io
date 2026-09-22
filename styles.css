@@ -1484,3 +1484,31 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 .teampanel .teambtn2 b { display: inline-block; min-width: 38px; }
 .teampanel .teambtn2 span { opacity: 0.75; font-weight: 500; }
 :root[data-view="mobile"] .teampanel .teamgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* Percentile bars, Savant-style: a tall solid bar with a ringed circle at its end, dashed rules between rows */
+.meters { gap: 0; }
+.meters .meter { min-height: 32px; padding: 3px 0; }
+.meters .meter:not(:last-child) { border-bottom: 1px dashed var(--rail); }
+.hcard .meter { grid-template-columns: 138px minmax(90px, 1fr) 76px; }
+.hcard .meter.sub { grid-template-columns: 138px minmax(90px, 1fr) 76px; }
+.meter .track { height: 22px; border-radius: 3px; border: 0; background: var(--surface-2); }
+.meter .fill { border-radius: 3px; min-width: 8px; }
+.meter .track { margin-right: 15px; }        /* room for a 100th-percentile bubble, so it never sits on the value */
+.meter .track::after { top: 0; bottom: 0; background: var(--surface); opacity: 0.55; }   /* the halfway mark, over the fill */
+.meter .bub {
+  width: 27px; height: 27px; min-width: 0; padding: 0; border-radius: 50%;
+  font-size: 12px; box-shadow: 0 0 0 2px var(--surface);
+}
+.meter.sub .track { height: 17px; }
+.meter.sub .bub { width: 22px; height: 22px; font-size: 10.5px; }
+:root[data-view="mobile"] .meters .meter { min-height: 28px; }
+:root[data-view="mobile"] .meter .track { height: 19px; }
+:root[data-view="mobile"] .meter .bub { width: 24px; height: 24px; font-size: 11px; }
+:root[data-view="mobile"] .meter.sub .track { height: 15px; }
+:root[data-view="mobile"] .meter.sub .bub { width: 20px; height: 20px; font-size: 10px; }
+
+/* the headshot plate stays put while the card scrolls, so you always know whose numbers these are */
+.mplate { position: sticky; top: 0; z-index: 5; }
+.modal-close { z-index: 7; }
+:root[data-view="mobile"] .mplate { top: var(--header-h, 0px); }
+:root[data-view="mobile"] .modal-panel:has(.mplate) .modal-close { position: fixed; top: calc(var(--header-h, 0px) + 8px); right: 8px; }
