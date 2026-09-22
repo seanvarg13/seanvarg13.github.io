@@ -1630,3 +1630,21 @@ body.modal-open header.top { z-index: 60; }
 
 /* the chip that says a ranked tab is being read by a stat */
 .ranksorted { font-size: 11px; }
+
+/* A fold-out row sits indented under the row it opened from — otherwise it reads like a stat of its own */
+.meter.sub .lbl { padding-left: 18px; }
+:root[data-view="mobile"] .meter.sub .lbl { padding-left: 10px; }
+.cgrid .clbl.sub { padding-left: 14px; }
+.rawstats tr.sub td.l:first-child { padding-left: 18px; }
+
+/* The rankings bar is one row: editing on the left, the list's name and Save over on the right, and the
+   status text between them takes whatever is left (it truncates rather than pushing anything to a new line). */
+:root:not([data-view="mobile"]) .setrow > .setbar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+:root:not([data-view="mobile"]) .setrow > .setbar::-webkit-scrollbar { display: none; }
+:root:not([data-view="mobile"]) .setbar #ranktools { order: -1; flex: 0 0 auto; flex-wrap: nowrap; min-width: 0; }
+:root:not([data-view="mobile"]) .setbar #setstatus { order: 1; margin-left: auto; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:root:not([data-view="mobile"]) .setbar #listsbtn { order: 2; flex: none; }
+:root:not([data-view="mobile"]) .setbar #setsave { order: 3; flex: none; }
+/* editing brings eight controls with it: they take a second line rather than sliding off the end */
+:root:not([data-view="mobile"]) .setrow > .setbar.editing { flex-wrap: wrap; overflow-x: visible; }
+:root:not([data-view="mobile"]) .setbar.editing #ranktools { order: 1; flex: 1 1 100%; flex-wrap: wrap; }

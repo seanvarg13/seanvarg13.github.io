@@ -1754,9 +1754,10 @@
         if (m.key === "era") seenEra = true;
         const subs = (SUB_P[m.key] || []).filter((sm) => !DS.hist || metricValue(sm, pv, st) != null);
         if (subs.length) {
-          const isOpen = !!state.open["p:" + m.key];
+          const ok = `p${gi}:${m.key}`;       // Whiff% and Strike% each sit in two groups — one fold state apiece
+          const isOpen = !!state.open[ok];
           const t = el("button", "fold", isOpen ? "▾" : "▸"); t.type = "button"; t.title = `${isOpen ? "Hide" : "Show"} ${subs.map((x) => x.label).join(" / ")}`; t.setAttribute("aria-expanded", String(isOpen));
-          t.addEventListener("click", (e) => { e.stopPropagation(); state.open["p:" + m.key] = !isOpen; savePrefs(); render(); });
+          t.addEventListener("click", (e) => { e.stopPropagation(); state.open[ok] = !isOpen; savePrefs(); render(); });
           row.querySelector(".lbl").append(t);
           meters.append(row);
           if (isOpen) for (const sm of subs) { const r = meterRow(sm, pv.m[sm.key], st.pct[sm.key]); r.classList.add("sub"); meters.append(r); }
@@ -2390,6 +2391,7 @@
     if (!toolHome) return;
     if (tools.parentNode !== toolHome) toolHome.append(tools);
     if ($("tbhide").parentNode !== home) home.append($("tbhide"));
+    bar.classList.toggle("editing", !!state.editRanks);     // editing needs a second line; reading it doesn't
     const hb = $("tbhide"), folded = !!state.tbFold;
     hb.textContent = folded ? "▾" : "▴";
     hb.append(Object.assign(el("span"), { textContent: folded ? " Filters" : " Hide filters" }));
