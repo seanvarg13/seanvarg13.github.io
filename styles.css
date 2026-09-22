@@ -1581,3 +1581,21 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
    under the header and the card's pinned block stops at its lower edge. */
 body.modal-open header.top { z-index: 60; }
 :root:not([data-view="mobile"]) .modal { padding-top: var(--header-h, 0px); }   /* the card's pinned block stops at the bar: a scrollport's own padding already insets what sticks to it */
+
+/* Hide filters and bring them back from the same corner: one control that stays put whether the
+   filters are open or tucked away, at the right-hand end of the toolbar's top row either way. */
+.tbfold { justify-content: flex-end; }
+.tbfoldsum { flex: 1 1 auto; text-align: left; }
+.tbhide, .tbfoldbtn {
+  flex: none; margin-left: auto; order: 2;
+  border: 1px solid var(--btn-line, var(--hair)); background: transparent; color: var(--ink-2);
+  font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 4px 9px; border-radius: 5px; white-space: nowrap; cursor: pointer; min-height: 24px;
+}
+.tbhide:hover, .tbfoldbtn:hover { background: var(--btn); border-color: var(--btn); color: var(--btn-ink); }
+:root[data-view="mobile"] .tbhide, :root[data-view="mobile"] .tbfoldbtn { min-height: 32px; padding: 0 10px; font-size: 12px; }
+:root[data-view="mobile"] .tbhide span, :root[data-view="mobile"] .tbfoldbtn span { display: none; }
+.setbar { position: relative; padding-right: 128px; }          /* the rankings-list row is the first row there, so the button sits on it */
+.setbar > .tbhide { position: absolute; top: 6px; right: 8px; margin: 0; }
+:root[data-view="mobile"] .setbar { padding-right: 44px; }
+:root[data-view="mobile"] .setbar > .tbhide { top: 3px; right: 6px; }

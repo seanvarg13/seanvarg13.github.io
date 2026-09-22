@@ -2232,7 +2232,11 @@
   }
   // the list bar: which saved list is open (a picker), whether it's saved, and Save / Save as / New / Rename / Delete
   function renderSetBar() {
-    const bar = $("setbar"); bar.hidden = state.mode !== "rankings"; if (bar.hidden) return;
+    const bar = $("setbar"); bar.hidden = state.mode !== "rankings";
+    // Hide filters rides on the toolbar's first row — the same corner the Filters button comes back in
+    const home = bar.hidden ? $("tabrow") : bar;
+    if ($("tbhide").parentNode !== home) home.append($("tbhide"));
+    if (bar.hidden) return;
     const cur = currentSetName(), dirty = cur ? setDirty() : false, working = hasWorking();
     const names = Object.keys(state.rankSets).sort((x, y) => x.localeCompare(y));
     const sel = $("setpick"); sel.innerHTML = "";
