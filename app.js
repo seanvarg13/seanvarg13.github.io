@@ -11,6 +11,36 @@
   const SHORT = { pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
                tiers: "draft2027.tiers", tierNames: "draft2027.tierNames", sets: "draft2027.rankSets", extraPos: "draft2027.extraPos", stars: "draft2027.stars" };
+  // Storage that cannot lose a saved list. A value that will not parse is left exactly where it is — its raw
+  // text is kept under <key>.corrupt and nothing may write to that key again this session, so a half-written
+  // key is never replaced by a fresh empty one. The saved lists also keep a rolling backup of the last good
+  // copy, and a write that would blank them is refused unless it is a deliberate delete.
+  const badKeys = new Set();
+  const BAK = LS.sets + ".bak";
+  let saveErr = "";
+  function load(k, fb) {
+    let v = null;
+    try { v = localStorage.getItem(k); } catch { return fb; }
+    if (v == null || v === "") return fb;
+    try { return JSON.parse(v); } catch {
+      badKeys.add(k);
+      try { if (localStorage.getItem(k + ".corrupt") == null) localStorage.setItem(k + ".corrupt", v); } catch {}
+      return fb;
+    }
+  }
+  const noSets = (v) => !v || typeof v !== "object" || !Object.keys(v).length;
+  function save(k, v, opts = {}) {
+    if (badKeys.has(k)) return;
+    try {
+      if (k === LS.sets) {
+        const had = localStorage.getItem(k), next = JSON.stringify(v);
+        if (noSets(v) && !opts.allowEmpty && had && had !== "{}") return;      // an accident, not a delete
+        if (had && had !== "{}" && had !== next) localStorage.setItem(BAK, had);
+      }
+      localStorage.setItem(k, JSON.stringify(v));
+      saveErr = "";
+    } catch { saveErr = k; }     /* private mode, or the browser is full */
+  }
   // MLB teams by league and division (the codes the data uses; the A's were OAK through 2024)
   const DIVS = { "AL East": ["BAL", "BOS", "NYY", "TB", "TOR"], "AL Central": ["CWS", "CLE", "DET", "KC", "MIN"], "AL West": ["ATH", "HOU", "LAA", "SEA", "TEX"],
                  "NL East": ["ATL", "MIA", "NYM", "PHI", "WSH"], "NL Central": ["CHC", "CIN", "MIL", "PIT", "STL"], "NL West": ["AZ", "COL", "LAD", "SD", "SF"] };
@@ -212,8 +242,6 @@
     if (oldRoles) { for (const [id, r] of Object.entries(oldRoles)) { const l = state.extraPos[id] || (state.extraPos[id] = []); if (!l.includes(r)) l.push(r); } changed = true; }
     if (changed) { save(LS.extraPos, state.extraPos); try { localStorage.removeItem(LS.extra); localStorage.removeItem(LS.roles); } catch {} }
   })();
-  function load(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
-  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode etc. */ } }
   function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl }); }
   const draftedIds = () => new Set(state.drafted.map((d) => d.id));
 
@@ -1219,8 +1247,13 @@
     // pages: a new list (tab, search, sort, window, season…) starts back at page 1
     const sig = [state.mode, state.pos, state.q, state.sort, state.dir, JSON.stringify(state.min), JSON.stringify(listWin()), listDs, JSON.stringify(listSplit), customOrder(), state.tierView, list.length].join("|");
     if (sig !== state.pageSig) { state.pageSig = sig; state.page = 1; }
-    const pg = pageWindow(list.length);
-    const onPage = (i) => i >= pg.start && i < pg.end;
+    // Paging follows the order the rows are actually shown in: grouped by tier, not raw list order — so a
+    // tier's players stay together and a page break lands between tiers.
+    const grouped = !!(src && tiers.length);
+    const at = new Map(); const runs = [];
+    if (grouped) { let seq = 0; for (const rows of groups) { runs.push([seq, seq + rows.length]); for (const [, i] of rows) at.set(i, seq++); } }
+    const pg = pageWindow(list.length, grouped ? runs : null);
+    const onPage = (i) => { const d = grouped ? at.get(i) : i; return d != null && d >= pg.start && d < pg.end; };
     renderPager($("pagertop"), list.length, pg); renderPager($("pagerbot"), list.length, pg);
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
     const emitRow = (p, i, rows, j) => {          // rows / j: the displayed section and his place in it (▲ ▼ swap with neighbours)
@@ -1368,11 +1401,31 @@
   }
   // ---- pages ----
   const PAGE_SIZES = [25, 50, 100, 0];
-  function pageWindow(total) {
-    const size = state.pageSize || 0, pages = size ? Math.max(1, Math.ceil(total / size)) : 1;
+  // `runs` (optional) are the [start, end) spans the rows are shown in — the tiers. Given them, a page holds
+  // as many whole tiers as fit rather than a fixed count, so a tier is never split across two pages; a tier
+  // longer than the page size gets a page of its own.
+  function pageWindow(total, runs) {
+    const size = state.pageSize || 0;
+    let starts = [0];
+    if (size && runs && runs.length) {
+      starts = []; let filled = 0;
+      for (const [rs, re] of runs) {
+        const n = re - rs;
+        if (!n) continue;
+        if (!starts.length || filled + n > size) { starts.push(rs); filled = 0; }   // this tier starts a page
+        if (n > size) {                                                             // too big for one page: break inside it
+          for (let s = rs + size; s < re; s += size) starts.push(s);
+          filled = n % size || size;
+        } else filled += n;
+      }
+      if (!starts.length) starts = [0];
+    } else if (size) {
+      for (let s = size; s < total; s += size) starts.push(s);
+    }
+    const pages = starts.length;
     if (state.page > pages) state.page = pages; if (state.page < 1) state.page = 1;
-    const start = size ? (state.page - 1) * size : 0;
-    return { size, pages, page: state.page, start, end: size ? Math.min(total, start + size) : total };
+    const start = starts[state.page - 1];
+    return { size, pages, page: state.page, start, end: state.page < pages ? starts[state.page] : total };
   }
   // a pager bar: "1–50 of 597", first / previous / page numbers / next / last, and rows-per-page
   function renderPager(box, total, pg, onChange) {
@@ -1887,7 +1940,7 @@
   }
   function renderTextModal() {
     const modal = $("modal"), body = $("modal-body"), tm = state.textModal;
-    modal.hidden = false; document.body.classList.add("modal-open"); parkControls(); body.innerHTML = "";
+    modal.hidden = false; lockPage(true); parkControls(); body.innerHTML = "";
     const w = el("div", "textmodal");
     const h2 = el("h2", null, tm.title); h2.id = "modal-title"; w.append(h2);
     if (tm.hint) w.append(el("p", "note", tm.hint));
@@ -1917,7 +1970,7 @@
     const full = visiblePlayers({ all: true }).list;
     const keys = full.map((q) => q.type + q.id).filter((k) => state.selKeys.includes(k));
     if (!keys.length) { state.tierPick = null; modal.hidden = true; return; }
-    modal.hidden = false; document.body.classList.add("modal-open"); parkControls(); body.innerHTML = "";
+    modal.hidden = false; lockPage(true); parkControls(); body.innerHTML = "";
     const w = el("div", "textmodal tierpick");
     const who = keys.map((k) => full.find((q) => q.type + q.id === k).name);
     const h2 = el("h2", null, keys.length === 1 ? `Move ${who[0]} to a tier` : `Move ${keys.length} players to a tier`); h2.id = "modal-title"; w.append(h2);
@@ -1944,6 +1997,26 @@
     const cb = el("button", "btn btn-quiet", "Cancel"); cb.type = "button"; cb.addEventListener("click", () => { state.tierPick = null; render(); });
     row.append(cb); w.append(row); body.append(w);
   }
+  // body.modal-open pins the page (needed on iOS so the card, not the page, takes the scroll) and the page comes
+  // back exactly where it was. The position MUST be read before the class lands: position: fixed collapses
+  // scrollY to 0, so anything that looks afterwards (a MutationObserver did) only ever sees the top of the page.
+  // On the phone the card is a page of its own instead: the list hides, the card starts at the top, and the
+  // list comes back at its old place on close.
+  let lockedY = 0;
+  function lockPage(on) {
+    const body = document.body;
+    if (on && !body.dataset.locked) {
+      lockedY = window.scrollY || document.documentElement.scrollTop || 0;
+      body.dataset.locked = "1";
+      body.classList.add("modal-open");
+      if (mobileView()) window.scrollTo(0, 0); else body.style.top = `-${lockedY}px`;
+    } else if (!on && body.dataset.locked) {
+      delete body.dataset.locked;
+      body.classList.remove("modal-open");
+      body.style.top = "";
+      window.scrollTo(0, lockedY);
+    } else body.classList.toggle("modal-open", !!on);
+  }
   function renderModal() {
     if (state.textModal) { renderTextModal(); return; }
     if (state.tierPick && state.mode === "rankings" && state.editRanks && state.selKeys.length) { renderTierPick(); return; }
@@ -1962,7 +2035,7 @@
     const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy"].includes(state.mode);
     const src = state.cardDs && histDataset(state.cardDs) ? histDataset(state.cardDs).players : DATA.players;
     const p0 = key && listMode ? (src.find((q) => q.type + q.id === key) || DATA.players.find((q) => q.type + q.id === key)) : null;
-    modal.hidden = !p0; document.body.classList.toggle("modal-open", !!p0);
+    modal.hidden = !p0; lockPage(!!p0);
     parkControls(); body.innerHTML = "";
     if (!p0) return;
     // which season: the current one (list pool + Rank vs apply) or another year from the chips
@@ -2059,7 +2132,7 @@
   // the Leaderboard's column picker: every card metric, grouped as on the card
   function renderColPick() {
     parkControls();                                   // the shared controls must be out of the modal before it is cleared
-    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; document.body.classList.add("modal-open"); body.innerHTML = "";
+    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; lockPage(true); body.innerHTML = "";
     const g = groupFor(state.pos), pit = isPitcherGroup(g), key = pit ? "P" : "H";
     const w = el("div", "textmodal colpick");
     const h2 = el("h2", null, `Included stats · ${pit ? "pitchers" : "hitters"}`); h2.id = "modal-title"; w.append(h2);
@@ -2224,7 +2297,7 @@
   }
   function deleteSet(name) {
     ask(`Delete “${name}”?`, "The saved set is removed; your working rankings stay as they are.", () => {
-      delete state.rankSets[name]; save(LS.sets, state.rankSets);
+      delete state.rankSets[name]; save(LS.sets, state.rankSets, { allowEmpty: true });
       if (state.currentSet === name) state.currentSet = null;
       if (state.draftOrder === "set:" + name) state.draftOrder = "board";
       savePrefs(); flash(`Deleted “${name}”`);
@@ -2250,6 +2323,13 @@
     else if (cur) { const s = state.rankSets[cur]; st.textContent = `Saved${s.saved ? " " + fmtDate(s.saved.slice(0, 10)) : ""} — every tab's order and tiers`; st.classList.add("ok"); }
     else if (working) { st.textContent = "Not saved yet — Save… keeps this list under a name"; st.classList.add("dirty"); }
     else st.textContent = "Order a tab, then Save… to keep it as a list";
+    const sv = $("setsave");
+    sv.textContent = cur ? "Save" : "Save…";
+    sv.disabled = cur ? !dirty : !working;
+    sv.classList.toggle("on", cur ? dirty : working);
+    sv.title = cur ? (dirty ? `Save your changes to “${cur}”` : `“${cur}” is up to date`)
+                   : working ? "Keep this list under a name" : "Order a tab first, then this keeps it as a named list";
+    if (saveErr) { st.textContent = "This browser wouldn't store the change — use Export to keep a copy"; st.className = "setstatus dirty"; }
     $("ranksave").textContent = cur ? "Save" : "Save…"; $("ranksave").disabled = cur ? !dirty : !working;
     $("ranksave").title = cur ? (dirty ? `Save changes to “${cur}”` : `“${cur}” is up to date`) : working ? "Save this list under a name" : "Nothing to save yet";
     $("ranksaveas").hidden = !cur; $("rankrename").hidden = !cur; $("rankdelete").hidden = !cur;
@@ -2260,7 +2340,7 @@
   // the lists popup: pick a saved list, or save / rename / delete / export the one that's open
   function renderListsPanel() {
     parkControls();
-    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; document.body.classList.add("modal-open"); body.innerHTML = "";
+    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; lockPage(true); body.innerHTML = "";
     const cur = currentSetName(), dirty = cur ? setDirty() : false, working = hasWorking();
     const names = Object.keys(state.rankSets).sort((x, y) => x.localeCompare(y));
     const w = el("div", "textmodal panel lists");
@@ -2275,16 +2355,26 @@
       b.addEventListener("click", () => { if (n !== cur) openSet(n); closePanel(); });
       ul.append(b);
     }
+    const bak = load(BAK, {}), lost = Object.keys(bak).filter((n) => !state.rankSets[n]);
+    if (lost.length) {
+      const p = el("p", "note");
+      const b = el("button", "linkbtn", `Restore ${lost.length} list${lost.length > 1 ? "s" : ""}`); b.type = "button";
+      b.addEventListener("click", () => { for (const n of lost) state.rankSets[n] = bak[n]; save(LS.sets, state.rankSets); flash(`Restored ${lost.join(", ")}`); renderListsPanel(); });
+      p.append(b, ` from this browser's backup: ${lost.join(", ")}`);
+      sec.append(p);
+    }
     sec.append(ul); w.append(sec);
+    const back = () => { if (!state.textModal) renderListsPanel(); };     // a question is up: leave its dialog alone
     const act = el("div", "psec"); act.append(el("h4", null, cur ? `“${cur}”` : "This list"));
     const row = el("div", "fbtns");
+    // a question (Save as…, Rename, Delete) puts its own dialog up — redrawing the panel here would wipe it
     const mk = (label, fn, quiet, dis) => { const b = el("button", quiet ? "btn btn-quiet" : "btn", label); b.type = "button"; b.disabled = !!dis; b.addEventListener("click", () => { fn(); }); return b; };
-    row.append(mk(cur ? "Save" : "Save…", () => { saveCurrent(); renderListsPanel(); }, false, cur ? !dirty : !working));
-    if (cur) row.append(mk("Save as…", () => { saveAs(); renderListsPanel(); }, true), mk("Rename", () => { renameSet(cur); renderListsPanel(); }, true), mk("Delete", () => { deleteSet(cur); renderListsPanel(); }, true));
+    row.append(mk(cur ? "Save" : "Save…", () => { saveCurrent(); back(); }, false, cur ? !dirty : !working));
+    if (cur) row.append(mk("Save as…", () => { saveAs(); back(); }, true), mk("Rename", () => { renameSet(cur); back(); }, true), mk("Delete", () => { deleteSet(cur); back(); }, true));
     row.append(mk("New list", () => { newList(); closePanel(); }, true, !cur && !working));
     act.append(row);
     const io = el("p", "note"); const ex = el("button", "linkbtn", "Export"); ex.type = "button"; ex.addEventListener("click", exportSets);
-    const im = el("button", "linkbtn", "Import"); im.type = "button"; im.addEventListener("click", () => { importSets(); renderListsPanel(); });
+    const im = el("button", "linkbtn", "Import"); im.type = "button"; im.addEventListener("click", () => { importSets(); back(); });
     io.append(ex, " every list as text for another device · ", im, " text exported elsewhere"); act.append(io);
     w.append(act);
     const done = el("div", "row"); const d = el("button", "btn", "Done"); d.type = "button"; d.addEventListener("click", () => closePanel()); done.append(d); w.append(done);
@@ -2361,8 +2451,11 @@
   }
   function renderChrome() {
     const navMode = DRAFT_GROUP.includes(state.mode) ? "draftmode" : state.mode;
-    document.querySelectorAll(".modes a").forEach((a) => { if (a.dataset.mode === navMode) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
-    document.querySelectorAll("#subnav a").forEach((a) => { if (a.dataset.sub === state.mode) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+    document.querySelectorAll(".modes [data-mode]").forEach((a) => { if (a.dataset.mode === navMode) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+    // the four Draft Mode pages live in the header's own dropdown, so they cost no second row
+    const inGroup = DRAFT_GROUP.includes(state.mode), msel = $("modesel");
+    msel.value = inGroup ? state.mode : "draftmode";
+    $("modeseltxt").textContent = inGroup ? [...msel.options].find((o) => o.value === state.mode).textContent : "Draft Mode";
     document.title = { draft: "Sean's Site · Draft board", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", appearance: "Sean's Site · Appearance", fantasy: "Sean's Site · Fantasy points" }[state.mode] || "Sean's Site";
     const m = DATA.meta;
     const thr = new Date(m.through + "T12:00:00"); $("stamp").innerHTML = `through <b>${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</b>`; $("stamp").title = `${m.season} Statcast through ${m.through} (built ${m.built})`;
@@ -2391,10 +2484,9 @@
     const T = state.tbl; document.body.dataset.heat = T.heat ? "on" : "off"; document.body.dataset.band = T.band ? "on" : "off"; document.body.dataset.sorthl = T.sortHl ? "on" : "off"; document.body.dataset.density = T.density;
     $("ctoolbar").hidden = !compare; $("cboard").hidden = !compare;
     $("eboard").hidden = !elig;
-    $("subnav").hidden = !DRAFT_GROUP.includes(state.mode);
     document.querySelector(".toolbar:not(.xtoolbar)").hidden = other; $("board").hidden = other; $("drafttools").hidden = true; $("ranktools").hidden = true; $("setbar").hidden = true; $("lbtools").hidden = true;
     renderChrome();
-    if (state.textModal) { renderTextModal(); } else if (other) { $("modal").hidden = true; document.body.classList.remove("modal-open"); parkControls(); $("modal-body").innerHTML = ""; }
+    if (state.textModal) { renderTextModal(); } else if (other) { $("modal").hidden = true; lockPage(false); parkControls(); $("modal-body").innerHTML = ""; }
     if (hub) { renderHub(); return; }
     if (appear) { renderAppearance(); return; }
     if (fant) { renderFantasy(); renderModal(); return; }
@@ -3079,7 +3171,7 @@
   const cmpKeys = (type) => new Set(state.cmpCols[type] || cmpAll(type));
   function renderCmpPick() {
     parkControls();
-    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; document.body.classList.add("modal-open"); body.innerHTML = "";
+    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; lockPage(true); body.innerHTML = "";
     const type = state.cmp.type, pit = type === "P";
     const w = el("div", "textmodal colpick");
     const h2 = el("h2", null, `Stats to compare · ${pit ? "pitchers" : "hitters"}`); h2.id = "modal-title"; w.append(h2);
@@ -3137,7 +3229,7 @@
   // "Team" panel: one league, one division or one team
   function renderTeamPanel() {
     parkControls();
-    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; document.body.classList.add("modal-open"); body.innerHTML = "";
+    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; lockPage(true); body.innerHTML = "";
     const w = el("div", "textmodal panel teampanel");
     const h2 = el("h2", null, "Team"); h2.id = "modal-title"; w.append(h2);
     const f = state.teamF, is = (kind, v) => !!f && f.kind === kind && f.v === v;
@@ -3177,7 +3269,7 @@
   }
   function renderSplitsPanel() {
     parkControls();
-    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; document.body.classList.add("modal-open"); body.innerHTML = "";
+    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; lockPage(true); body.innerHTML = "";
     const g = groupFor(state.pos), pit = isPitcherGroup(g), unit = pit ? "IP" : "PA", trending = state.mode === "trending";
     const w = el("div", "textmodal panel");
     const h2 = el("h2", null, "Splits & dates"); h2.id = "modal-title"; w.append(h2);
@@ -3225,7 +3317,7 @@
   // "Table" panel: how the list is drawn
   function renderTablePanel() {
     parkControls();
-    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; document.body.classList.add("modal-open"); body.innerHTML = "";
+    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; lockPage(true); body.innerHTML = "";
     const g = groupFor(state.pos), T = state.tbl;
     const w = el("div", "textmodal panel");
     const h2 = el("h2", null, "Table"); h2.id = "modal-title"; w.append(h2);
@@ -3321,6 +3413,7 @@
   $("ref").addEventListener("change", (e) => { state.ref = e.target.value; state.expanded = null; savePrefs(); render(); });
   $("rankreset").addEventListener("click", () => ask(`Reset ${TAB_LABEL[state.pos] || state.pos}?`, "Back to big-board order, tiers and tier names cleared on this tab.", () => { delete state.ranks[state.pos]; delete state.tiers[state.pos]; delete state.tierNames[state.pos]; save(LS.ranks, state.ranks); save(LS.tiers, state.tiers); save(LS.tierNames, state.tierNames); render(); }));
   $("ranksave").addEventListener("click", saveCurrent);
+  $("setsave").addEventListener("click", saveCurrent);
   $("ranksaveas").addEventListener("click", saveAs);
   $("setpick").addEventListener("change", (e) => { const v = e.target.value; if (v === "new") newList(); else openSet(v.slice(4)); renderSetBar(); });
   $("ranknew").addEventListener("click", newList);
@@ -3336,6 +3429,7 @@
   $("rankuntier").addEventListener("click", () => { if (state.selKeys.length) moveSelectionToTier(0); });
   $("draftorder").addEventListener("change", (e) => { state.draftOrder = e.target.value; savePrefs(); render(); });
   const closeModal = () => { if (state.textModal) { state.textModal = null; render(); return; } if (state.panel || state.colPick) { closePanel(true); return; } if (state.tierPick) { state.tierPick = null; render(); return; } if (state.expanded) { state.expanded = null; render(); } };
+  $("modesel").addEventListener("change", (e) => { location.hash = "#" + e.target.value; });
   $("modal-close").addEventListener("click", closeModal);
   $("modal-back").addEventListener("click", closeModal);
   $("undo").addEventListener("click", undoLast);
@@ -3404,18 +3498,6 @@
     pub.addEventListener("click", () => start("/api/publish"));
   })();
 
-  // body.modal-open pins the page (needed on iOS so the card, not the page, takes the scroll); keep the page's place
-  // On the phone the card is a page of its own instead: the list hides, the page scrolls to the top, and comes back on close.
-  let lockedY = 0;
-  new MutationObserver(() => {
-    const open = document.body.classList.contains("modal-open");
-    if (open && !document.body.dataset.locked) {
-      lockedY = window.scrollY; document.body.dataset.locked = "1";
-      if (mobileView()) window.scrollTo(0, 0); else document.body.style.top = `-${lockedY}px`;
-    } else if (!open && document.body.dataset.locked) {
-      delete document.body.dataset.locked; document.body.style.top = ""; window.scrollTo(0, lockedY);
-    }
-  }).observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
   readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); render(); setTb(); watchBuild();
 })();
