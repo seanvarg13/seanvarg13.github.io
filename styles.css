@@ -1611,3 +1611,8 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 :root[data-view="mobile"] .mplate .hstrip .hchip b, :root[data-view="mobile"] .xhead .hstrip .hchip b { font-size: 14px; }
 /* the searched player's page runs edge to edge on the phone, like the popup card */
 :root[data-view="mobile"] #xboard { margin-inline: -10px; border-inline: 0; border-radius: 0; }
+/* the searched player's page is the popup card, minus the × — same edges, same paddings */
+:root[data-view="mobile"] #xboard { border: 0; box-shadow: none; }
+:root[data-view="mobile"] .xboard .card.hcard { padding: 10px 12px 18px; }
+:root[data-view="mobile"] .xhead { padding: 8px 10px; }
+:root[data-view="mobile"] .xboard .xseasons { padding: 6px 10px; }
