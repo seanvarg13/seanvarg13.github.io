@@ -287,6 +287,26 @@
   // the hosted copy versions every file it serves (window.DRAFT_BUILD), so a changed file is fetched at once
   // instead of being served from the phone's cache; anywhere else the map is absent and the plain name is used
   const vsrc = (src) => { const v = window.DRAFT_BUILD && window.DRAFT_BUILD[src]; return v ? src + "?v=" + v : src; };
+  // A home-screen app can keep serving the page it saved days ago, so the hosted copy carries a build id and a
+  // build.json beside it: on load, and whenever the app comes back to the front, we ask the server which build is
+  // current and reload once if it has moved on. Reloading through a fresh URL is what gets past the saved copy.
+  function watchBuild() {
+    const id = window.DRAFT_BUILD_ID;
+    if (!id || !window.fetch || location.protocol === "file:") return;
+    const check = () => fetch("build.json?t=" + Date.now(), { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!j || !j.build || j.build === id) return;
+        let seen = null;
+        try { seen = sessionStorage.getItem("draft2027.build"); } catch {}
+        if (seen === j.build) return;                       // already reloaded for this one: never loop
+        try { sessionStorage.setItem("draft2027.build", j.build); } catch {}
+        location.replace(location.pathname + "?b=" + j.build + location.hash);
+      })
+      .catch(() => {});
+    check();
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) check(); });
+  }
   function ensureDays() {
     if (daysReady() || state.daysLoading) return;
     state.daysLoading = true;
@@ -677,17 +697,14 @@
     const lvPill = pillSelect(`${lvl(cur[0])} · ${sampleTxt(cur)}`, lv.map((sv) => [sv[0], `${lvl(sv[0])} · ${sampleTxt(sv)}`]), cur[0], (k) => onPick(k), "Level");
     lvPill.classList.add("lvl"); if (lv.length === 1) lvPill.classList.add("solo");
     box.append(lvPill);
-    // regular season / spring training / postseason, where this year and level has them
+    // regular season / spring training / postseason, where this year and level has them — one pill, not a strip
     const kinds = seasons.filter((sv) => keyBase(sv[0]) === keyBase(cur[0]));
     if (kinds.length > 1) {
-      const seg = el("div", "seg kindseg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Games");
-      for (const [k, l] of KINDS) {
-        const sv = kinds.find((x) => keyKind(x[0]) === k); if (!sv) continue;
-        const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(sv[0] === cur[0]));
-        b.addEventListener("click", (e) => { e.stopPropagation(); if (sv[0] !== cur[0]) onPick(sv[0]); });
-        seg.append(b);
-      }
-      box.append(seg);
+      const opts = [];
+      for (const [k, l] of KINDS) { const sv = kinds.find((x) => keyKind(x[0]) === k); if (sv) opts.push([sv[0], l]); }
+      const label = (KINDS.find(([k]) => k === keyKind(cur[0])) || KINDS[0])[1];
+      const kp = pillSelect(label, opts, cur[0], (k) => { if (k !== cur[0]) onPick(k); }, "Games");
+      kp.classList.add("kindpill"); box.append(kp);
     }
     return box;
   }
@@ -1019,10 +1036,10 @@
     sel.value = state.ref;
   }
   // the split bar at the top of an open card
-  function renderSplitBar(p) {
+  function renderSplitBar(p, opts = {}) {
     const bar = el("div", "splitbar");
     const pit = p.type === "P";
-    {
+    if (opts.head !== false) {
       // folded by default: a button with what's in effect; open it to change splits and dates
       const head = el("div", "splithead");
       const b = el("button", "btn btn-quiet tbtn", "Splits & dates"); b.type = "button"; b.setAttribute("aria-expanded", String(state.cardTools));
@@ -1393,9 +1410,9 @@
     return row;
   }
 
-  function renderHitterCard(p, st, g, ref) {
+  function renderHitterCard(p, st, g, ref, opts = {}) {
     const card = el("div", "card hcard");
-    card.append(renderSplitBar(p));
+    if (!opts.noSplitBar) card.append(renderSplitBar(p));
     const pv = V(p);
     const strip = el("div", "hstrip");
     const chip = (k, v) => { const c = el("span", "hchip"); c.append(el("b", null, v), " ", k); strip.append(c); };
@@ -1592,15 +1609,15 @@
       + `K% and BB% come from the official counts; ${H ? "wOBA, xwOBA and Whiff%" : "FIP, SIERA, Whiff% and Strike%"} from this site where that season and level is built (MLB from 2015, Triple-A from 2022, the lower levels from 2021). Combined lines average those by ${H ? "PA" : "batters faced"}.`));
     return box;
   }
-  function renderCard(p, ms, st, g, ref) {
-    const card = p.type === "H" ? renderHitterCard(p, st, g, ref) : renderPitcherCard(p, ms, st, g, ref);
+  function renderCard(p, ms, st, g, ref, opts = {}) {
+    const card = p.type === "H" ? renderHitterCard(p, st, g, ref, opts) : renderPitcherCard(p, ms, st, g, ref, opts);
     if (state.mode !== "compare") card.append(foldSection("raw", "Season stats", () => renderRawStats(p, true)));
     if (card.dataset.notes) card.append(el("p", "note cardnotes", card.dataset.notes));
     return card;
   }
-  function renderPitcherCard(p, ms, st, g, ref) {
+  function renderPitcherCard(p, ms, st, g, ref, opts = {}) {
     const card = el("div", "card hcard");
-    card.append(renderSplitBar(p));
+    if (!opts.noSplitBar) card.append(renderSplitBar(p));
     const pv = V(p);
     const strip = el("div", "hstrip");
     const chip = (k, v) => { const c = el("span", "hchip"); c.append(el("b", null, v), " ", k); strip.append(c); };
@@ -1756,16 +1773,19 @@
     const wrap = el("div", "xseasons mchips");
     ensureIndex();
     const entry = indexReady() ? window.DRAFT_INDEX.players.find((e) => e.id === p0.id) : null;
-    if (!entry) { wrap.append(el("span", "winnote", indexReady() ? "" : "Loading seasons…")); return wrap; }
+    if (!entry) { wrap.append(el("span", "winnote", indexReady() ? "" : "Loading seasons…")); wrap.append(renderSplitBar(p0)); return wrap; }
     const curKey = state.cardDs || CUR.key;
+    const filters = () => renderSplitBar(p0);          // Splits & dates lives up here, beside the season pickers
     wrap.append(el("span", "splbl", "Season"));
     const goTo = (key) => { state.cardDs = key === CUR.key ? null : key; state.cardWin = { from: "", to: "", last: "" }; render(); };
     if (isMulti(curKey)) {   // a combined span: say so, and offer the seasons that make it up
       const mp = parseMulti(curKey), mine = entry.s.filter((sv) => sv[2] === p0.type && mp.members.includes(sv[0]));
       wrap.append(pillSelect(`${yearSpan(mp.years)} combined`, [[curKey, `${yearSpan(mp.years)} combined`], ...mine.map((sv) => [sv[0], `${sv[1]}${kindTag(sv[0])} · ${sv[5]}`])], curKey, (k) => { if (k !== curKey) goTo(k); }, "Season"));
+      wrap.append(filters());
       return wrap;
     }
     wrap.append(renderSeasonPicker(entry.s.filter((sv) => sv[2] === p0.type), curKey, goTo));
+    wrap.append(filters());
     return wrap;
   }
   function renderAddPos(p) {
@@ -1910,11 +1930,11 @@
       const p = ds.players.find((q) => q.id === p0.id && q.type === p0.type) || p0;
       const g = ds === CUR ? groupFor(state.pos) : (p.type === "H" ? "H" : p.primary);
       const ref = ds === CUR ? refFor(g) : g;
-      if (needsRows() && !DS.ready()) { DS.load(); body.append(renderPlate(p, { rank: "–" }, g, ref), renderSeasonChips(p0)); const c = el("div", "card"); c.append(renderSplitBar(p), el("p", "note", "Loading game-by-game data…")); body.append(c); return; }
+      if (needsRows() && !DS.ready()) { DS.load(); body.append(renderPlate(p, { rank: "–" }, g, ref), renderSeasonChips(p0)); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); body.append(c); return; }
       const st = ref === g ? (pool(g).stats.get(p.type + p.id) || rankIn(g, p)) : rankIn(ref, p);
       body.append(renderPlate(p, st, g, ref));
       body.append(renderSeasonChips(p0));
-      body.append(renderCard(p, metricsFor(g), st, g, ref));
+      body.append(renderCard(p, metricsFor(g), st, g, ref, { noSplitBar: true }));
     })));
   }
 
@@ -2851,6 +2871,7 @@
     const chips = el("div", "xseasons");
     chips.append(el("span", "splbl", "Season"));
     chips.append(renderSeasonPicker(ofType, cur[0], (key) => { state.x = { id: entry.id, type, ds: key }; savePrefs(); render(); }));
+    chips.append(renderSplitBar({ type }));            // same row as the popup card's
     box.append(chips);
     // the card, drawn against that season's dataset
     const key = cur[0];
@@ -2862,10 +2883,10 @@
     withDataset(ds, () => withWindow(state.cardWin, () => withSplit(state.split, () => {
       const p = ds.players.find((q) => q.id === entry.id && q.type === type);
       if (!p) { box.append(el("p", "xempty", "No card for that season.")); return; }
-      if (needsDays() && !DS.ready()) { DS.load(); const c = el("div", "card"); c.append(renderSplitBar(p), el("p", "note", "Loading game-by-game data…")); box.append(c); return; }
+      if (needsDays() && !DS.ready()) { DS.load(); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); box.append(c); return; }
       const g = p.type === "H" ? "H" : p.primary;
       const st = pool(g).stats.get(p.type + p.id) || rankIn(g, p);
-      box.append(renderCard(p, metricsFor(g), st, g, g));
+      box.append(renderCard(p, metricsFor(g), st, g, g, { noSplitBar: true }));
     })));
   }
   // a player is primarily a pitcher if he has pitching seasons and never a real hitting season (100+ PA)
@@ -3364,5 +3385,5 @@
     }
   }).observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
-  readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); render(); setTb();
+  readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); render(); setTb(); watchBuild();
 })();

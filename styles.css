@@ -1520,3 +1520,13 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 .modal-panel { margin-top: 28px; }
 @media (max-width: 900px) { .modal-panel { margin-top: 12px; } }
 :root[data-view="mobile"] .modal-panel { margin-top: 0; overflow: visible; }
+
+/* The season row carries the filters too: season / level / games pills on the left, Splits & dates beside them,
+   and the controls wrap underneath when it is opened — so the card starts with the numbers. */
+.mchips, .xseasons { row-gap: 8px; }
+.mchips .splitbar, .xseasons .splitbar { flex: 1 1 auto; margin-bottom: 0; gap: 8px 12px; }
+.mchips .splithead, .xseasons .splithead { flex: 0 1 auto; }
+.mchips .splitbar .datesbar, .xseasons .splitbar .datesbar { flex-basis: 100%; }
+.spick .pill.kindpill { min-width: 152px; }
+:root[data-view="mobile"] .spick .pill.kindpill { min-width: 132px; }
+:root[data-view="mobile"] .mchips .splitbar, :root[data-view="mobile"] .xseasons .splitbar { flex-basis: 100%; }
