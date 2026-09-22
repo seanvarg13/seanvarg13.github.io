@@ -284,10 +284,13 @@
   const refSample = (p) => (p.type === "P" ? p.bf : p.pa);   // the full-season count that qualifies a player for the reference population
   const needsDays = () => winRequested() || splitActive();
   const daysReady = () => DS.ready();
+  // the hosted copy versions every file it serves (window.DRAFT_BUILD), so a changed file is fetched at once
+  // instead of being served from the phone's cache; anywhere else the map is absent and the plain name is used
+  const vsrc = (src) => { const v = window.DRAFT_BUILD && window.DRAFT_BUILD[src]; return v ? src + "?v=" + v : src; };
   function ensureDays() {
     if (daysReady() || state.daysLoading) return;
     state.daysLoading = true;
-    const sc = document.createElement("script"); sc.src = "days.js";
+    const sc = document.createElement("script"); sc.src = vsrc("days.js");
     sc.onload = () => { state.daysLoading = false; valCache.clear(); poolCache.clear(); rankCache.clear(); render(); };
     sc.onerror = () => { state.daysLoading = false; state.daysFailed = true; render(); };
     document.head.append(sc);
@@ -298,7 +301,7 @@
   function ensureScript(src, isReady) {
     if (isReady() || loading.has(src) || failed.has(src)) return;
     loading.add(src);
-    const sc = document.createElement("script"); sc.src = src;
+    const sc = document.createElement("script"); sc.src = vsrc(src);
     sc.onload = () => { loading.delete(src); valCache.clear(); poolCache.clear(); rankCache.clear(); render(); if (state.gq) renderGlobalSearch(); };
     sc.onerror = () => { loading.delete(src); failed.add(src); render(); };
     document.head.append(sc);
