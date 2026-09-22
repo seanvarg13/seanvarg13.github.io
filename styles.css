@@ -1484,3 +1484,25 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 .teampanel .teambtn2 b { display: inline-block; min-width: 38px; }
 .teampanel .teambtn2 span { opacity: 0.75; font-weight: 500; }
 :root[data-view="mobile"] .teampanel .teamgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* Savant-style percentile sliders: a thin rail, a coloured bubble at the percentile, the value at the right */
+.savlist { display: grid; gap: 3px; max-width: 660px; margin: 2px 0 4px; }
+.srow { display: grid; grid-template-columns: 150px minmax(110px, 1fr) 66px; gap: 12px; align-items: center; min-height: 30px; font-size: 13.5px; }
+.srow .slbl { color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.srow .strack { position: relative; height: 4px; background: var(--rail); border-radius: 2px; margin: 0 15px; }
+.srow .sbub {
+  position: absolute; top: 50%; left: 0; transform: translate(-50%, -50%);
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.srow .sval { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.srow.na .strack { opacity: 0.5; }
+.srow.na .sval { color: var(--muted); font-weight: 500; }
+.srow.ruled { border-top: 1px solid var(--rail); margin-top: 9px; padding-top: 11px; }
+:root[data-view="mobile"] .savlist { max-width: none; }
+:root[data-view="mobile"] .srow { grid-template-columns: 104px minmax(56px, 1fr) 56px; gap: 8px; font-size: 12.5px; min-height: 28px; }
+:root[data-view="mobile"] .srow .slbl { white-space: normal; line-height: 1.15; }
+:root[data-view="mobile"] .srow .sbub { width: 25px; height: 25px; font-size: 10.5px; }
+:root[data-view="mobile"] .srow .strack { margin: 0 13px; }
+@media (max-width: 900px) { :root:not([data-view="mobile"]) .srow { grid-template-columns: 116px minmax(60px, 1fr) 60px; } }

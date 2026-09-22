@@ -1355,6 +1355,41 @@
     return row;
   }
 
+  // Baseball Savant's percentile sliders: a thin rail with a coloured bubble at the percentile and the value at
+  // the right. The headline set only — every stat the site has is in the "All stats" fold-out underneath.
+  // Pitchers open with Whiff% and Strike%, then a rule, then the rest (Sean's one change to Savant's order).
+  const SAV_H = ["xwoba", "xba", "xslg", "ev", "brl", "hh", "bs", "osw", "whf", "k", "bb"];
+  const SAV_H_NOX = ["woba", "ba", "slg"];                 // levels without tracking lead with the real ones
+  const SAV_P = ["whf", "strk", "era", "nera", "siera", "fip", "kbb", "ukb", "k", "bb", "osw", "ev", "brl", "hh", "gb", "fbv", "ext"];
+  const SAV_P_RULE = "era";                                // the line break after Whiff% / Strike%
+  function savRow(m, v, pct) {
+    const row = el("div", "srow");
+    row.append(el("div", "slbl", m.label));
+    const track = el("div", "strack");
+    if (pct != null) {
+      const c = pctStyle(pct);
+      const bub = el("div", "sbub", pct); bub.style.left = pct + "%"; bub.style.background = c.bg; bub.style.color = c.fg;
+      track.append(bub);
+    } else row.classList.add("na");
+    row.append(track, el("div", "sval", v == null ? "–" : fmt(v, m)));
+    row.title = `${m.label}: ${v == null ? "n/a" : fmt(v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}`;
+    return row;
+  }
+  function renderSavList(p, pv, st, g) {
+    const box = el("div", "savlist");
+    const all = allFor(g), defs = new Map(all.map((m) => [m.key, m]));
+    let keys = p.type === "H" ? (pv.m.xwoba == null ? [...SAV_H_NOX, ...SAV_H] : SAV_H) : SAV_P;
+    for (const k of keys) {
+      const m = defs.get(k); if (!m) continue;
+      const v = metricValue(m, pv, st), pct = st.pct[k];
+      if (v == null && pct == null) continue;                        // a stat this level doesn't track
+      const row = savRow(m, v, pct);
+      if (k === SAV_P_RULE && p.type === "P") row.classList.add("ruled");
+      box.append(row);
+    }
+    return box;
+  }
+
   function renderHitterCard(p, st, g, ref) {
     const card = el("div", "card hcard");
     card.append(renderSplitBar(p));
@@ -1395,7 +1430,9 @@
       box.append(meters);
       cols[gi < leftH ? 0 : 1].append(box);
     });
-    const grid = el("div", "hgroups"); grid.append(...cols); card.append(grid);
+    card.append(renderSavList(p, pv, st, g));
+    const grid = el("div", "hgroups"); grid.append(...cols);
+    card.append(foldSection("allstats", "All stats", () => grid));
     card.dataset.notes = `${HEAD.label} = ${DATA.meta.scoreNote.H}. Bat speed is averaged over competitive swings (Savant's number for the full season). Strike% and Swing% are the hitter's own rates — lower Strike% and O-Swing%, Whiff% and K% count as better. Every percentile is ${poolPhrase(ref)}.`;
     return card;
   }
@@ -1600,7 +1637,9 @@
       box.append(meters);
       cols[gi < left ? 0 : 1].append(box);
     });
-    const grid = el("div", "hgroups"); grid.append(...cols); card.append(grid);
+    card.append(renderSavList(p, pv, st, g));
+    const grid = el("div", "hgroups"); grid.append(...cols);
+    card.append(foldSection("allstats", "All stats", () => grid));
     if (st && st.ukbb) card.append(foldSection("ukbb", "Underlying K% and BB%", () => renderUnderlyingKBB(pv, st, true)));
     if (pv.ctx.bbl && K().bbw) card.append(foldSection("luck", "Batted-ball luck", () => renderLuckTable(p, pv, true)));
     card.dataset.notes = (`Every percentile is against ${DS.level === "MLB" ? "all" : DS.levelName} pitchers with ${refMin(g)}+ batters faced ${DS.hist ? "that" : "this"} season, starters and relievers together. ERA is official (per-game earned runs from MLB game logs inside date windows; not available in a handedness split). FIP = (13·HR + 3·(BB+HBP) − 2·K) / IP + ${K().fipC}; SIERA is Swartz's 2011 formula shifted ${K().sieraShift >= 0 ? "+" : ""}${K().sieraShift} so the league averages its ${K().lgERA} ERA. Fastball velo averages four-seamers and sinkers. Lower ERA / FIP / SIERA / BB%, Z-Contact% and contact quality allowed count as better.`);
