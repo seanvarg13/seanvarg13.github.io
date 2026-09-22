@@ -1448,11 +1448,15 @@
       for (const [rs, re] of runs) {
         const n = re - rs;
         if (!n) continue;
-        if (!starts.length || filled + n > size) { starts.push(rs); filled = 0; }   // this tier starts a page
-        if (n > size) {                                                             // too big for one page: break inside it
-          for (let s = rs + size; s < re; s += size) starts.push(s);
-          filled = n % size || size;
-        } else filled += n;
+        // A tier that would fit on a page of its own is never cut in two: it starts a fresh page instead. A tier
+        // longer than a page has to be split wherever it falls, so it just carries on filling the page it's on —
+        // otherwise one short tier would end the page early and leave the rest of it blank.
+        if (starts.length && filled && n <= size && filled + n > size) { starts.push(rs); filled = 0; }
+        if (!starts.length) starts.push(rs);
+        const room = size - filled;
+        if (n <= room) { filled += n; continue; }
+        for (let pos = rs + room; pos < re; pos += size) starts.push(pos);
+        filled = re - starts[starts.length - 1];
       }
       if (!starts.length) starts = [0];
     } else if (size) {
