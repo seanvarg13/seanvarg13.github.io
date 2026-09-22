@@ -1422,7 +1422,7 @@ body[data-density="compact"] .meta { font-size: 11px; }
 #tbfold { display: flex; align-items: center; gap: 10px; min-height: 30px; min-width: 0; }
 .tbfoldbtn { flex: none; border: 1px solid var(--btn-line, var(--hair)); background: var(--btn, var(--surface-2)); color: var(--btn-ink, var(--ink)); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; cursor: pointer; padding: 5px 10px; border-radius: 6px; }
 .tbfoldsum { font-size: 12px; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-body.tb-folded .toolbar:not(.xtoolbar) > :not(.tbfold) { display: none !important; }
+body.tb-folded .toolbar:not(.xtoolbar) > :not(.tbfold):not(#setbar) { display: none !important; }
 body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 :root[data-view="mobile"] .tbfoldbtn { min-height: 30px; padding: 0 9px; font-size: 11.5px; }
 
@@ -1612,3 +1612,14 @@ body.modal-open header.top { z-index: 60; }
 .modes .modesel .chev { flex: none; width: 9px; height: 6px; opacity: 0.85; }
 .modes .modesel select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; margin: 0; padding: 0; border: 0; }
 .modes .modesel .modesel-txt { white-space: nowrap; }
+
+/* One popup for Included stats / Splits & dates / Table, with its three tabs across the top */
+.ptabs { display: flex; flex-wrap: wrap; gap: 6px; margin: -2px 0 14px; }
+.ptab {
+  flex: none; border: 1px solid var(--btn-line, var(--hair)); background: transparent; color: var(--ink-2);
+  font-family: var(--display); font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 0 12px; min-height: 30px; border-radius: 3px; cursor: pointer; white-space: nowrap;
+}
+.ptab:hover { background: var(--accent-wash); color: var(--accent); }
+.ptab.on { background: var(--btn); border-color: var(--btn); color: var(--btn-ink); }
+:root[data-view="mobile"] .ptab { font-size: 11px; padding: 0 10px; min-height: 32px; }

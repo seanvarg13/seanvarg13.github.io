@@ -217,7 +217,8 @@
     extraPos: load(LS.extraPos, {}), // positions you've added to a player's eligibility: {id: ["2B", "SP"]}
     ranks: load(LS.ranks, {}),       // manual rankings per tab: {ALL: ["H670541", ...], SS: [...], SP: [...]}
     tiers: load(LS.tiers, {}),       // tier members per tab: {ALL: [["H1", "H2"], ["H5"]]} — independent of the rank order
-    tierView: prefs.tierView || "tiers",           // Rankings / Draft: "tiers" groups the list by tier, "list" is the raw order
+    tierView: prefs.tierView || "tiers",
+    panelTab: prefs.panelTab || "stats",           // which tab the Stats & filters popup opens on           // Rankings / Draft: "tiers" groups the list by tier, "list" is the raw order
     tierNames: load(LS.tierNames, {}),   // optional tier names per tab: {ALL: ["Elite", "Studs"]}
     rankSets: load(LS.sets, {}),     // saved sets: {name: {ranks, tiers, tierNames, saved}}
     currentSet: prefs.currentSet || null,          // the saved list the working rankings were opened from (Save writes back to it)
@@ -242,7 +243,7 @@
     if (oldRoles) { for (const [id, r] of Object.entries(oldRoles)) { const l = state.extraPos[id] || (state.extraPos[id] = []); if (!l.includes(r)) l.push(r); } changed = true; }
     if (changed) { save(LS.extraPos, state.extraPos); try { localStorage.removeItem(LS.extra); localStorage.removeItem(LS.roles); } catch {} }
   })();
-  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl }); }
+  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl }); }
   const draftedIds = () => new Set(state.drafted.map((d) => d.id));
 
   /* ---------- date window ---------- */
@@ -898,9 +899,10 @@
     const tiers = tierLists(), idx = tierIndex(tiers), rest = fullOrder().filter((q) => q !== k);   // the order without him
     if (t.head) {                                          // tier header / empty-tier box: join that tier, at its top
       const tier = Number(t.el.dataset.tier);
-      const first = rest.find((q) => (tier < tiers.length ? idx.get(q) === tier : !idx.has(q)));
       setTier([k], tier < tiers.length ? tier + 1 : 0, true);
-      if (first) setRank(k, rest.indexOf(first) + 1, true);
+      const after = fullOrder().filter((q) => q !== k), idx2 = tierIndex(tierLists());   // the order with his new tier
+      const first = after.find((q) => (tier < tiers.length ? idx2.get(q) === tier : !idx2.has(q)));
+      if (first) setRank(k, after.indexOf(first) + 1, true);
       render(); return;
     }
     const key = t.el.dataset.key; if (!key || key === k) return;
@@ -928,9 +930,28 @@
   const tierLists = (tab = state.pos, src) => ((src || state).tiers[tab] || []).map((l) => l.slice());
   const tierIndex = (tiers) => { const m = new Map(); tiers.forEach((l, t) => l.forEach((k) => m.set(k, t))); return m; };
   const showTiers = () => state.tierView !== "list";
+  // Tier first, rank second. A player's tier decides where he sits on the board; his rank only orders him inside
+  // it. Keeping the stored order in that shape is what makes the rank numbers read 1, 2, 3… straight down the
+  // page: put a player in a tier and his number travels with him.
+  function byTier(order, tiers) {
+    const idx = new Map(); (tiers || []).forEach((l, t) => (l || []).forEach((k) => idx.set(k, t)));
+    if (!idx.size) return order;
+    const seen = new Set(order), extra = [];
+    for (const l of tiers || []) for (const k of l || []) if (!seen.has(k)) { seen.add(k); extra.push(k); }
+    const all = order.concat(extra), at = new Map(all.map((k, i) => [k, i])), T = (tiers || []).length;
+    const tOf = (k) => (idx.has(k) ? idx.get(k) : T);
+    return all.slice().sort((a, b) => tOf(a) - tOf(b) || at.get(a) - at.get(b));
+  }
+  function tierSort(tab = state.pos) {
+    const tiers = state.tiers[tab]; if (!tiers || !tiers.length) return false;
+    const full = fullOrderFor(tab, state.ranks[tab] || []), out = byTier(full, tiers);
+    if (out.length === full.length && out.every((k, i) => k === full[i])) return false;
+    state.ranks[tab] = out; save(LS.ranks, state.ranks); return true;
+  }
   function saveTiers(tiers) {
     if (tiers.length) state.tiers[state.pos] = tiers; else delete state.tiers[state.pos];
     save(LS.tiers, state.tiers); state.flash = "";
+    tierSort(state.pos);                     // a tier change reshuffles the order it belongs to
   }
   const fullOrder = () => visiblePlayers({ all: true }).list.map((p) => p.type + p.id);
   // the rank order for a tab: its saved order first, then everyone else in big-board order
@@ -996,7 +1017,8 @@
     const full = fullOrder(); const from = full.indexOf(key); if (from < 0) return;
     full.splice(from, 1);
     full.splice(Math.max(0, Math.min(full.length, rank - 1)), 0, key);
-    state.ranks[state.pos] = full; save(LS.ranks, state.ranks); state.flash = ""; if (!quiet) render();
+    state.ranks[state.pos] = full; save(LS.ranks, state.ranks); state.flash = "";
+    if (!quiet) { tierSort(); render(); }     // quiet = mid-drag: the caller sets his tier next, then sorts
   }
   // tiers were stored as sizes over the rank order ([5, 7]); convert to member lists once (needs the pools, so it
   // runs right before the first render). Also used for imported blocks from older copies of the site.
@@ -1010,6 +1032,20 @@
     }
     return out;
   };
+  // one pass over lists made before the order followed the tiers
+  function migrateTierOrder() {
+    if (load("draft2027.tiersFmt", 1) >= 4) return;
+    let changed = false;
+    for (const tab of Object.keys(state.tiers)) if (tierSort(tab)) changed = true;
+    for (const st of Object.values(state.rankSets)) {
+      for (const tab of Object.keys(st.tiers || {})) {
+        const out = byTier(((st.ranks || {})[tab] || []).slice(), st.tiers[tab]);
+        if (out.length) { st.ranks = st.ranks || {}; st.ranks[tab] = out; changed = true; }
+      }
+    }
+    if (changed) { save(LS.ranks, state.ranks); save(LS.sets, state.rankSets); }
+    save("draft2027.tiersFmt", 4);
+  }
   function migrateTiersToMembers() {
     if (load("draft2027.tiersFmt", 1) >= 3) return;
     state.tiers = sizesToMembers(state.ranks, state.tiers);
@@ -2130,12 +2166,26 @@
     }
   }
   // the Leaderboard's column picker: every card metric, grouped as on the card
+  // The three table panels are one popup with three tabs — one button on the toolbar instead of three, which
+  // leaves the rank tools room to sit on the row rather than scrolling off it.
+  const PANEL_TABS = [["stats", "Included stats"], ["splits", "Splits & dates"], ["table", "Table"]];
+  function panelTabs(cur) {
+    const row = el("div", "ptabs"); row.setAttribute("role", "tablist");
+    for (const [k, label] of PANEL_TABS) {
+      const b = el("button", "ptab" + (k === cur ? " on" : ""), label); b.type = "button";
+      b.setAttribute("aria-selected", String(k === cur));
+      b.addEventListener("click", () => { if (k === cur) return; state.panel = k; state.panelTab = k; state.colPick = k === "stats"; savePrefs(); render(); });
+      row.append(b);
+    }
+    return row;
+  }
   function renderColPick() {
     parkControls();                                   // the shared controls must be out of the modal before it is cleared
     const modal = $("modal"), body = $("modal-body"); modal.hidden = false; lockPage(true); body.innerHTML = "";
     const g = groupFor(state.pos), pit = isPitcherGroup(g), key = pit ? "P" : "H";
     const w = el("div", "textmodal colpick");
     const h2 = el("h2", null, `Included stats · ${pit ? "pitchers" : "hitters"}`); h2.id = "modal-title"; w.append(h2);
+    w.append(panelTabs("stats"));
     // sort by: the same select the header clicks drive
     const sortRow = el("div", "prow"), sf = $("sortfield"); sf.hidden = customOrder(); sortRow.append(sf); w.append(sortRow);
     if (customOrder()) w.append(el("p", "note", "This tab has a saved order of its own, so it isn't sorted by a stat — the order is the order."));
@@ -2309,6 +2359,10 @@
     // Hide filters rides on the toolbar's first row — the same corner the Filters button comes back in
     const home = bar.hidden ? $("tabrow") : bar;
     if ($("tbhide").parentNode !== home) home.append($("tbhide"));
+    const hb = $("tbhide"), folded = !!state.tbFold;
+    hb.textContent = folded ? "▾" : "▴";
+    hb.append(Object.assign(el("span"), { textContent: folded ? " Filters" : " Hide filters" }));
+    hb.title = folded ? "Show the filters again" : "Tuck the filters away (the rankings list bar stays)";
     if (bar.hidden) return;
     const cur = currentSetName(), dirty = cur ? setDirty() : false, working = hasWorking();
     const names = Object.keys(state.rankSets).sort((x, y) => x.localeCompare(y));
@@ -3204,26 +3258,26 @@
     const sortSel = $("sort"), opt = sortSel.options[sortSel.selectedIndex];
     const stats = [customOrder() ? "my order" : opt ? `by ${opt.textContent.replace(/ pctl$/, "")}` : "", `${colsFor(g).length} stats`].filter(Boolean).join(" · ");
     const mob = document.documentElement.dataset.view === "mobile";
-    $("statsbtn").textContent = mob ? "Stats" : "Included stats"; $("statsbtn").title = stats;
-    $("splitsbtn").textContent = mob ? "Splits" : "Splits & dates";
+    $("optsbtn").textContent = mob ? "Stats" : "Stats & filters"; $("optsbtn").title = `${stats} · splits, dates and the table's look`;
     const bits = [];
     if (state.mode === "leaderboard") { if (state.lbSplit.hand !== "all") bits.push(`vs ${state.lbSplit.hand}H${pit ? "B" : "P"}`); if (state.lbSplit.venue !== "all") bits.push(state.lbSplit.venue); }
     if (state.mode === "trending") { const t = trendCfg(); bits.push(t.unit === "days" ? `last ${t.days} days` : `last ${t[t.unit]} ${unit}`); bits.push(`${trendMin()}+ ${unit} in span`); }
     else { const w = winIdx(); if (w) bits.push(state.win.days ? `last ${state.win.days} days` : winLabel()); bits.push(`${state.min[g]}+ ${unit}`); }
     if (state.mode === "leaderboard" && lbKey() !== CUR.key) { const ds = histDataset(lbKey()); if (ds && (ds.refPA < 100 || ds.minScale > 1)) bits.push(`(${withDataset(ds, () => effMin(g))}+ ${ds.multi && !ds.each ? "over the span" : "here"})`); }
     const active = state.mode === "leaderboard" ? (state.lbSplit.hand !== "all" || state.lbSplit.venue !== "all" || winRequested()) : state.mode === "trending" ? true : winRequested();
-    $("splitsbtn").classList.toggle("on", !!active); $("statsbtn").classList.toggle("on", !customOrder() && state.sort !== "score");
+    $("optsbtn").classList.toggle("on", !!active || (!customOrder() && state.sort !== "score"));
+    $("tsum").hidden = state.editRanks;              // editing ranks: the row belongs to the tier tools
     $("tsum").textContent = [stats, ...bits].join(" · ");
     $("teambtn").textContent = teamLabel(state.teamF); $("teambtn").classList.toggle("on", !!state.teamF); $("teamclear").hidden = !state.teamF;
     if (state.teamF) bits.unshift(state.teamF.kind === "team" ? (TEAM_NAMES[state.teamF.v] || state.teamF.v) : state.teamF.v);
     // the folded bar: what's in effect, in one line
     document.body.classList.toggle("tb-folded", !!state.tbFold);
-    $("tbfold").hidden = !state.tbFold;
+    $("tbfold").hidden = !state.tbFold || !$("setbar").hidden;   // Rankings keeps its list bar, and the button with it
     const tab = state.pos === "ALL" ? "All hitters" : state.pos === "ALLP" ? "All pitchers" : state.pos;
     const where = state.mode === "leaderboard" && lbKey() !== CUR.key ? (histDataset(lbKey()) || {}).label || "" : "";
     $("tbfoldsum").textContent = [tab, where, stats, ...bits].filter(Boolean).join(" · ");
   }
-  $("tbhide").addEventListener("click", () => { state.tbFold = true; savePrefs(); render(); });
+  $("tbhide").addEventListener("click", () => { state.tbFold = !state.tbFold; savePrefs(); render(); });
   $("teambtn").addEventListener("click", () => openPanel("team"));
   $("teamclear").addEventListener("click", () => { state.teamF = null; state.expanded = null; savePrefs(); render(); });
   // "Team" panel: one league, one division or one team
@@ -3273,6 +3327,7 @@
     const g = groupFor(state.pos), pit = isPitcherGroup(g), unit = pit ? "IP" : "PA", trending = state.mode === "trending";
     const w = el("div", "textmodal panel");
     const h2 = el("h2", null, "Splits & dates"); h2.id = "modal-title"; w.append(h2);
+    w.append(panelTabs("splits"));
     if (state.mode === "leaderboard") { const sec = el("div", "psec"); sec.append(el("h4", null, "Splits")); sec.append($("lbsplit")); w.append(sec); }
     if (trending) {
       const sec = el("div", "psec"); sec.append(el("h4", null, "Span")); const row = el("div", "prow"); row.append($("trendnfield"), $("trendunit")); sec.append(row);
@@ -3321,6 +3376,7 @@
     const g = groupFor(state.pos), T = state.tbl;
     const w = el("div", "textmodal panel");
     const h2 = el("h2", null, "Table"); h2.id = "modal-title"; w.append(h2);
+    w.append(panelTabs("table"));
     const apply = () => { savePrefs(); render(); renderTablePanel(); };
     const toggle = (label, hint, key) => { const l = el("label", "toggle trow"); const c = el("input"); c.type = "checkbox"; c.checked = !!T[key]; c.addEventListener("change", () => { T[key] = c.checked; apply(); }); const t = el("span"); t.append(el("b", null, label)); if (hint) t.append(el("small", null, hint)); l.append(c, t); return l; };
     const sec = el("div", "psec"); sec.append(el("h4", null, "Look"));
@@ -3351,9 +3407,7 @@
     const reset = el("button", "btn btn-quiet", "Reset to defaults"); reset.type = "button"; reset.addEventListener("click", () => { state.tbl = { heat: false, band: true, sortHl: true, density: "comfortable", numbers: "auto" }; apply(); });
     row.append(done, reset); w.append(row); body.append(w);
   }
-  $("tablebtn").addEventListener("click", () => openPanel("table"));
-  $("statsbtn").addEventListener("click", () => openPanel("stats"));
-  $("splitsbtn").addEventListener("click", () => openPanel("splits"));
+  $("optsbtn").addEventListener("click", () => openPanel(PANEL_TABS.some(([k]) => k === state.panelTab) ? state.panelTab : "stats"));
   $("listsbtn").addEventListener("click", () => openPanel("lists"));
   $("ddays").addEventListener("change", (e) => { const n = Math.max(0, Math.round(Number(e.target.value) || 0)); state.win = n ? { from: daysBack(n), to: "", last: "", days: n } : { from: "", to: "", last: "" }; state.expanded = null; render(); });
   $("ddays").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
@@ -3499,5 +3553,5 @@
   })();
 
 
-  readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); render(); setTb(); watchBuild();
+  readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); migrateTierOrder(); render(); setTb(); watchBuild();
 })();
