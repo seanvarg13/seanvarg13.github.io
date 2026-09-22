@@ -1300,6 +1300,41 @@
       });
     } else { const rows = list.map((p, i) => [p, i]); rows.forEach(([p, i], j) => { if (onPage(i)) emitRow(p, i, rows, j); }); }
     ol.append(frag);
+    fitNameCol();
+  }
+  // The name column is as wide as the widest name on the page, so every row's stats start in the same place.
+  // Each row is its own grid, so a single long name would otherwise push that row's columns out of line; the
+  // measured width becomes the column's minimum (it still stretches to fill whatever the stats leave over).
+  let measureCtx = null;
+  function textWidth(text, font) {
+    measureCtx = measureCtx || document.createElement("canvas").getContext("2d");
+    measureCtx.font = font;
+    return measureCtx.measureText(text).width;
+  }
+  function fitNameCol() {
+    const board = $("board"), first = $("rows").querySelector(".who");
+    if (!first) { board.style.removeProperty("--namew"); return; }
+    const cs = getComputedStyle(first), pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    const fontOf = (n) => { const c = getComputedStyle(n); return `${c.fontStyle} ${c.fontWeight} ${c.fontSize} ${c.fontFamily}`; };
+    const nameFont = fontOf(first.querySelector(".name"));
+    let w = 0;
+    for (const who of $("rows").querySelectorAll(".who")) {
+      const nm = who.querySelector(".name");
+      let own = nm ? textWidth(nm.textContent, nameFont) : 0;
+      const meta = who.querySelector(".meta");                     // team · position · PA, laid out as a flex row
+      if (meta) {
+        const gap = parseFloat(getComputedStyle(meta).columnGap) || 0;
+        let line = 0, n = 0;
+        for (const part of meta.children) { line += part.offsetWidth; n++; }
+        own = Math.max(own, line + Math.max(0, n - 1) * gap);
+      }
+      w = Math.max(w, own);
+    }
+    const head = $("colhead").children[1];                          // "Player", or "Player · ranked vs …"
+    if (head && head.textContent) w = Math.max(w, textWidth(head.textContent, fontOf(head)));
+    const mobile = document.documentElement.dataset.view === "mobile";
+    const lo = mobile ? 142 : 180, hi = mobile ? 230 : 460;
+    board.style.setProperty("--namew", Math.min(hi, Math.max(lo, Math.ceil(w + pad + 2))) + "px");
   }
   // ---- pages ----
   const PAGE_SIZES = [25, 50, 100, 0];

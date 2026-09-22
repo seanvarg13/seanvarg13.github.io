@@ -215,7 +215,7 @@ button { cursor: pointer; }
 /* shared grid for header + rows */
 .grid {
   display: grid;
-  grid-template-columns: var(--rankw, 44px) minmax(180px, 1fr) var(--pre1, 0px) var(--pre2, 0px) 56px repeat(var(--n), var(--colw, 42px)) var(--act, 0px);
+  grid-template-columns: var(--rankw, 44px) minmax(var(--namew, 180px), 1fr) var(--pre1, 0px) var(--pre2, 0px) 56px repeat(var(--n), var(--colw, 42px)) var(--act, 0px);
   column-gap: 6px; align-items: center;
 }
 .colhead {
@@ -1029,7 +1029,7 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 .ftable th.who, .ftable td.who { left: 40px; }
 /* phone: the same table, scaled down — rank · name pinned, chips in fixed columns, no per-row wrapping */
 :root[data-view="mobile"] .board-scroll { max-height: calc(100dvh - 16px); }
-:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) 142px var(--pre1, 0px) var(--pre2, 0px) 50px repeat(var(--n), 46px) var(--act, 0px); }
+:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) minmax(var(--namew, 142px), 1fr) var(--pre1, 0px) var(--pre2, 0px) 50px repeat(var(--n), 46px) var(--act, 0px); }
 :root[data-view="mobile"] .colhead { padding: 5px 6px; }
 :root[data-view="mobile"] .colhead .h { font-size: 9.5px; letter-spacing: 0.02em; padding: 0 2px; }
 :root[data-view="mobile"] .colhead button.h { padding: 3px 0; }
@@ -1318,12 +1318,12 @@ body.modal-open { position: fixed; inset: 0; width: 100%; overflow: hidden; }
 /* the wheel over a table scrolls the page (the boxes only own sideways scrolling) */
 .board-scroll, .fscroll, .colwrap, .fhead-clip { overscroll-behavior-y: auto; }
 /* lists: a little more air, values in roomier chips, the name column capped so few stats don't stretch it */
-.grid { grid-template-columns: var(--rankw, 44px) minmax(180px, 300px) var(--pre1, 0px) var(--pre2, 0px) 56px repeat(var(--n), var(--colw, 42px)) var(--act, 0px) minmax(0, 1fr); }
+.grid { grid-template-columns: var(--rankw, 44px) minmax(var(--namew, 180px), 300px) var(--pre1, 0px) var(--pre2, 0px) 56px repeat(var(--n), var(--colw, 42px)) var(--act, 0px) minmax(0, 1fr); }
 .row-main { padding: 8px 12px; }
 .pct { margin: 0 4px; height: 26px; }
 .score { margin: 0 4px; }
 .colhead { padding-top: 8px; padding-bottom: 8px; }
-:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) 142px var(--pre1, 0px) var(--pre2, 0px) 50px repeat(var(--n), 46px) var(--act, 0px) minmax(0, 1fr); }
+:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) minmax(var(--namew, 142px), 1fr) var(--pre1, 0px) var(--pre2, 0px) 50px repeat(var(--n), 46px) var(--act, 0px) minmax(0, 1fr); }
 :root[data-view="mobile"] .row-main { padding: 4px 6px; }
 :root[data-view="mobile"] .pct { margin: 0 2px; height: 24px; }
 
@@ -1409,8 +1409,8 @@ body[data-density="compact"] .pct { height: 22px; font-size: 11.5px; }
 body[data-density="compact"] .name { font-size: 13px; }
 body[data-density="compact"] .meta { font-size: 11px; }
 /* the name column fills whatever the stats leave (Savant): no cap, no filler */
-.grid { grid-template-columns: var(--rankw, 44px) minmax(180px, 1fr) var(--pre1, 0px) var(--pre2, 0px) 56px repeat(var(--n), var(--colw, 42px)) var(--act, 0px); }
-:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) minmax(142px, 1fr) var(--pre1, 0px) var(--pre2, 0px) 50px repeat(var(--n), 46px) var(--act, 0px); }
+.grid { grid-template-columns: var(--rankw, 44px) minmax(var(--namew, 180px), 1fr) var(--pre1, 0px) var(--pre2, 0px) 56px repeat(var(--n), var(--colw, 42px)) var(--act, 0px); }
+:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) minmax(var(--namew, 142px), 1fr) var(--pre1, 0px) var(--pre2, 0px) 50px repeat(var(--n), 46px) var(--act, 0px); }
 .trow { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; }
 .trow b { display: block; font-size: 13px; }
 .trow small { display: block; color: var(--muted); font-size: 12px; }
@@ -1419,7 +1419,7 @@ body[data-density="compact"] .meta { font-size: 11px; }
 /* stats never squeeze: fixed, roomy columns — more stats make the table wider (scroll sideways), not tighter */
 .pct { margin: 0 6px; }
 .score { margin: 0 6px; margin-left: 18px; }
-:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) minmax(142px, 1fr) var(--pre1, 0px) var(--pre2, 0px) 54px repeat(var(--n), 54px) var(--act, 0px); }
+:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) minmax(var(--namew, 142px), 1fr) var(--pre1, 0px) var(--pre2, 0px) 54px repeat(var(--n), 54px) var(--act, 0px); }
 :root[data-view="mobile"] .pct { margin: 0 3px; }
 .search { flex: 1 1 180px; }
 
