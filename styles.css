@@ -1512,3 +1512,11 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 .modal-close { z-index: 7; }
 :root[data-view="mobile"] .mplate { top: var(--header-h, 0px); }
 :root[data-view="mobile"] .modal-panel:has(.mplate) .modal-close { position: fixed; top: calc(var(--header-h, 0px) + 8px); right: 8px; }
+
+/* Nothing shows above the pinned plate: the breathing room at rest is the panel's margin, not the modal's padding,
+   so once the card scrolls the plate sits flush against the top edge. On the phone the panel must not clip its
+   overflow either — an ancestor that clips stops position: sticky from working in Safari. */
+.modal { padding-top: 0; }
+.modal-panel { margin-top: 28px; }
+@media (max-width: 900px) { .modal-panel { margin-top: 12px; } }
+:root[data-view="mobile"] .modal-panel { margin-top: 0; overflow: visible; }
