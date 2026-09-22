@@ -669,6 +669,8 @@
   // game type of a dataset key: "" regular season, "spring", "post"  (mlb-2026 · mlb-2026-spring · mlb-2025-post)
   const KINDS = [["", "Regular season"], ["spring", "Spring training"], ["post", "Postseason"]];
   const KIND_SHORT = { "": "", spring: "Spring", post: "Postseason" };
+  const KIND_TINY = { "": "Regular", spring: "Spring", post: "Post" };            // the phone's filter row
+  const mobileView = () => document.documentElement.dataset.view === "mobile";
   const keyKind = (key) => { const parts = key.split("-"); return parts.length > 2 && (parts[2] === "spring" || parts[2] === "post") ? parts[2] : ""; };
   const keyBase = (key) => key.split("-").slice(0, 2).join("-");                       // the year-level key without the game type
   const kindTag = (key) => (KIND_SHORT[keyKind(key)] ? " " + KIND_SHORT[keyKind(key)] : "");
@@ -702,7 +704,7 @@
     if (kinds.length > 1) {
       const opts = [];
       for (const [k, l] of KINDS) { const sv = kinds.find((x) => keyKind(x[0]) === k); if (sv) opts.push([sv[0], l]); }
-      const label = (KINDS.find(([k]) => k === keyKind(cur[0])) || KINDS[0])[1];
+      const label = mobileView() ? KIND_TINY[keyKind(cur[0])] : (KINDS.find(([k]) => k === keyKind(cur[0])) || KINDS[0])[1];
       const kp = pillSelect(label, opts, cur[0], (k) => { if (k !== cur[0]) onPick(k); }, "Games");
       kp.classList.add("kindpill"); box.append(kp);
     }
@@ -1047,14 +1049,16 @@
     const pit = p.type === "P";
     {
       const head = el("div", "splithead");
-      const b = el("button", "btn btn-quiet tbtn", "Splits & dates"); b.type = "button"; b.setAttribute("aria-expanded", String(state.cardTools));
+      const mob = mobileView();
+      const b = el("button", "btn btn-quiet tbtn", mob ? "Splits" : "Splits & dates"); b.type = "button"; b.title = "Splits & dates"; b.setAttribute("aria-expanded", String(state.cardTools));
       b.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = !state.cardTools; savePrefs(); render(); });
       const bits = [];
       if (state.split.hand !== "all") bits.push(`vs ${state.split.hand}H${pit ? "B" : "P"}`);
       if (state.split.venue !== "all") bits.push(state.split.venue);
       if (state.cardWin.from || state.cardWin.to || lastN(state.cardWin)) bits.push(withWindow(state.cardWin, () => winLabel(p.type)));
       b.classList.toggle("on", bits.length > 0);
-      head.append(b, el("span", "tsum", bits.length ? bits.join(" · ") : "full season · all splits"));
+      head.append(b);
+      if (bits.length || !mob) head.append(el("span", "tsum", bits.length ? bits.join(" · ") : "full season · all splits"));
       if (state.daysLoading) head.append(el("span", "winnote", "Loading game-by-game data…"));
       return head;
     }
@@ -1796,7 +1800,7 @@
       wrap.append(filters());
       return out(wrap);
     }
-    wrap.append(renderSeasonPicker(entry.s.filter((sv) => sv[2] === p0.type), curKey, goTo));
+    wrap.append(renderSeasonPicker(entry.s.filter((sv) => sv[2] === p0.type), curKey, goTo, mobileView()));
     wrap.append(filters());
     return out(wrap);
   }
@@ -2880,7 +2884,7 @@
     if (curP) head.append(renderStarControl(curP));
     const chips = el("div", "xseasons");
     chips.append(el("span", "splbl", "Season"));
-    chips.append(renderSeasonPicker(ofType, cur[0], (key) => { state.x = { id: entry.id, type, ds: key }; savePrefs(); render(); }));
+    chips.append(renderSeasonPicker(ofType, cur[0], (key) => { state.x = { id: entry.id, type, ds: key }; savePrefs(); render(); }, mobileView()));
     chips.append(renderSplitHead({ type }));           // same row as the popup card's
     box.append(cardTop(head, chips, state.cardTools ? renderSplitPanel({ type }) : []));
     // the card, drawn against that season's dataset
@@ -3384,7 +3388,6 @@
   // body.modal-open pins the page (needed on iOS so the card, not the page, takes the scroll); keep the page's place
   // On the phone the card is a page of its own instead: the list hides, the page scrolls to the top, and comes back on close.
   let lockedY = 0;
-  const mobileView = () => document.documentElement.dataset.view === "mobile";
   new MutationObserver(() => {
     const open = document.body.classList.contains("modal-open");
     if (open && !document.body.dataset.locked) {
