@@ -384,10 +384,6 @@ button { cursor: pointer; }
 .xlist { right: auto; left: 0; width: 100%; max-width: none; }
 .xlist .addhit b { display: block; }
 .xboard { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; box-shadow: var(--shadow); overflow: clip; }
-.xhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; padding: 14px 16px 6px; }
-.xhead h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 30px; line-height: 1; letter-spacing: 0.01em; }
-.xhead .xmeta { color: var(--muted); font-size: 13px; }
-.xhead .seg { margin-left: auto; }
 .xseasons { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 16px 12px; border-bottom: 1px solid var(--hair); }
 .xseason { border: 1px solid var(--hair); background: var(--surface); border-radius: 999px; padding: 4px 12px; font-size: 13px; color: var(--ink-2); display: inline-flex; gap: 6px; align-items: baseline; }
 .xseason b { font-family: var(--display); font-size: 16px; font-weight: 600; color: var(--ink); letter-spacing: 0.03em; }
@@ -437,8 +433,6 @@ button { cursor: pointer; }
 .cempty { padding: 40px 16px; text-align: center; color: var(--muted); }
 .unadd.big { width: 20px; height: 20px; font-size: 14px; }
 /* explore header headshot */
-.xhead .mug { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; object-position: top; background: var(--surface-2); border: 2px solid var(--hair); }
-.xhead .mug.initials { display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 22px; color: var(--ink-2); }
 
 /* ---------- player popup ---------- */
 .modal { position: fixed; inset: 0; z-index: 50; overflow-y: auto; padding: 28px 16px 40px; display: grid; justify-items: center; align-content: start; }
@@ -639,7 +633,6 @@ header.top {
 .splitwarn { border-radius: 2px; }
 .addpos .tag { border-radius: 2px; }
 .xboard { border-radius: 0; box-shadow: none; }
-.xhead h2 { text-transform: uppercase; font-size: 26px; letter-spacing: 0.03em; color: var(--accent); }
 .cgrid .cgroup { color: var(--accent); text-transform: uppercase; font-size: 15px; letter-spacing: 0.06em; border-bottom-color: var(--accent); }
 .cgrid .plate { border-radius: 2px; box-shadow: none; border: 1px solid var(--hair); }
 .cgrid .chead .pill { border-radius: 2px; }
@@ -723,7 +716,7 @@ header.top {
 .hgroup h4 { color: var(--accent-2-text); border-bottom-color: var(--accent-2-text); }
 .card h3 { color: var(--accent); }
 .cgrid .cgroup { color: var(--accent-2-text); border-bottom-color: var(--accent-2-text); }
-.xhead h2, .textmodal h2 { color: var(--accent); }
+.textmodal h2 { color: var(--accent); }
 .mplate .mug { box-shadow: 0 0 0 3px var(--accent-2); }
 .xseason[aria-pressed="true"] { background: var(--btn); border-color: var(--btn); color: var(--btn-ink); }
 .xseason[aria-pressed="true"] b { color: var(--btn-ink); }
@@ -775,8 +768,6 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 .mplate .addpos .unadd { background: var(--on-fill-wash-2); color: var(--accent-2-ink); }
 .modal-close { background: var(--on-fill-wash-2); color: var(--accent-2-ink); }
 .modal-close:hover { background: var(--accent-2-ink); color: var(--accent-2); }
-.xhead h2 { color: var(--accent-2-text); }
-.xhead .mug { border-color: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-2); }
 .cgrid .plate { border-color: var(--accent-2); background: var(--accent-wash); }
 .cgrid .chead .mug { box-shadow: 0 0 0 2px var(--accent-2); }
 
@@ -859,7 +850,6 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 :root[data-view="mobile"] .mplate { padding: 12px 48px 10px 12px; gap: 10px; }
 :root[data-view="mobile"] .mplate h2 { font-size: 21px; }
 :root[data-view="mobile"] .mplate .mug { width: 88px; height: 88px; margin: -8px 0 -10px; }
-:root[data-view="mobile"] .xhead .mug { width: 64px; height: 64px; }
 :root[data-view="mobile"] .card { grid-template-columns: minmax(0, 1fr); padding-left: 12px; padding-right: 12px; max-width: 100vw; overflow-x: clip; }
 :root[data-view="mobile"] .card > *, :root[data-view="mobile"] .hgroups > *, :root[data-view="mobile"] .pbelow > * { min-width: 0; }
 :root[data-view="mobile"] .rawscroll, :root[data-view="mobile"] .luck, :root[data-view="mobile"] .ukbb { overflow-x: auto; max-width: 100%; }
@@ -912,9 +902,8 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 @media (min-width: 901px) { .modes a.modes-aux { margin-left: 4px; } }
 
 /* ---------- headshots: MLB cut-out portraits, no circle crop ---------- */
-.mplate .mug, .xhead .mug, .cgrid .chead .mug, .erow .mug { border-radius: 0; object-fit: contain; object-position: center bottom; background: transparent; border: 0; box-shadow: none; }
+.mplate .mug, .cgrid .chead .mug, .erow .mug { border-radius: 0; object-fit: contain; object-position: center bottom; background: transparent; border: 0; box-shadow: none; }
 .mplate .mug { width: 112px; height: 112px; align-self: flex-end; margin: -14px 0 -16px; }      /* shoulders sit on the plate's bottom rule */
-.xhead .mug { width: 80px; height: 80px; align-self: flex-end; margin-bottom: -6px; }
 .cgrid .chead .mug { width: 88px; height: 88px; }
 .erow .mug { width: 44px; height: 44px; }
 .mug.initials { border-radius: 50%; }                                                          /* the no-photo fallback keeps its circle */
@@ -1234,10 +1223,7 @@ body.modal-open { position: fixed; inset: 0; width: 100%; overflow: hidden; }
 .starbox { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; }
 .starbtn { border: 1px solid var(--on-fill-line); background: var(--on-fill-wash); color: var(--accent-2-ink); border-radius: 3px; height: 30px; padding: 0 10px; font: inherit; font-weight: 700; font-size: 12px; cursor: pointer; }
 .starbtn.on { background: var(--on-fill-wash-2); }
-.xhead .starbtn { border-color: var(--btn-line); background: var(--surface); color: var(--accent); }
-.xhead .starbtn.on { background: var(--accent-wash); }
 .starnote { font-size: 12.5px; color: var(--accent-2-dim); max-width: 520px; }
-.xhead .starnote { color: var(--ink-2); }
 .starpanel { flex-basis: 100%; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: var(--surface); color: var(--ink); border: 1px solid var(--hair); border-radius: 3px; max-width: 560px; }
 .starpanel .field select { height: 32px; max-width: 100%; }
 .starpanel textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--hair); border-radius: 3px; padding: 8px; font: inherit; font-size: 13px; resize: vertical; background: var(--surface); color: var(--ink); }
@@ -1558,19 +1544,6 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 :root[data-view="mobile"] .splitopen .lastin { width: 54px; }
 :root[data-view="mobile"] .splitopen .datesbar { flex-basis: 100%; }
 
-/* The searched player's page wears the same plate as the popup card, so the two read as one thing */
-.xhead { background: var(--accent-2); color: var(--accent-2-ink); border-bottom: 3px solid var(--rule); padding: 12px 22px 10px; align-items: center; }
-.xhead h2, #xboard .xhead h2 { color: var(--accent-2-ink); }
-.xhead .xmeta { color: var(--accent-2-dim); }
-.xhead .mug { border: 0; box-shadow: none; }
-.xhead .starbtn { border-color: var(--on-fill-line); background: var(--on-fill-wash); color: var(--accent-2-ink); }
-.xhead .starbtn.on { background: var(--on-fill-wash-2); }
-.xhead .starnote { color: var(--accent-2-dim); }
-.xhead .segbtn { color: var(--accent-2-ink); border-color: var(--on-fill-line); background: var(--on-fill-wash); }
-.xhead .segbtn[aria-pressed="true"] { background: var(--on-fill-wash-2); }
-:root[data-view="mobile"] .xhead { padding: 8px 10px; gap: 6px 10px; }
-:root[data-view="mobile"] .xhead h2 { font-size: 19px; }
-:root[data-view="mobile"] .xhead .mug { width: 60px; height: 60px; }
 .splitopen .datesbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .splitopen .lastrow { display: flex; align-items: center; gap: 6px; }
 :root[data-view="mobile"] .splitopen .lastrow { flex-basis: 100%; }
@@ -1602,17 +1575,29 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 :root[data-view="mobile"] .mchips .tsum, :root[data-view="mobile"] .xseasons .tsum { white-space: nowrap; font-size: 11px; }
 
 /* The counting stats ride on the plate now, beside the headshot */
-.mplate .hstrip, .xhead .hstrip { margin: 4px 0 0; gap: 4px 14px; color: var(--accent-2-dim); flex-basis: 100%; }
-.mplate .hstrip .hchip b, .xhead .hstrip .hchip b { color: var(--accent-2-ink); font-size: 16px; }
-.mplate .mrank .vlabel, .xhead .xmeta { color: var(--accent-2-dim); }
-.xhead { flex-wrap: wrap; }
-.xhead .hstrip { font-size: 12.5px; }
-:root[data-view="mobile"] .mplate .hstrip, :root[data-view="mobile"] .xhead .hstrip { gap: 3px 10px; font-size: 11.5px; }
-:root[data-view="mobile"] .mplate .hstrip .hchip b, :root[data-view="mobile"] .xhead .hstrip .hchip b { font-size: 14px; }
+.mplate .hstrip { margin: 4px 0 0; gap: 4px 14px; color: var(--accent-2-dim); flex-basis: 100%; font-size: 12.5px; }
+.mplate .hstrip .hchip b { color: var(--accent-2-ink); font-size: 16px; }
+.mplate .mrank .vlabel { color: var(--accent-2-dim); }
+:root[data-view="mobile"] .mplate .hstrip { gap: 3px 10px; font-size: 11.5px; }
+:root[data-view="mobile"] .mplate .hstrip .hchip b { font-size: 14px; }
 /* the searched player's page runs edge to edge on the phone, like the popup card */
 :root[data-view="mobile"] #xboard { margin-inline: -10px; border-inline: 0; border-radius: 0; }
 /* the searched player's page is the popup card, minus the × — same edges, same paddings */
 :root[data-view="mobile"] #xboard { border: 0; box-shadow: none; }
 :root[data-view="mobile"] .xboard .card.hcard { padding: 10px 12px 18px; }
-:root[data-view="mobile"] .xhead { padding: 8px 10px; }
 :root[data-view="mobile"] .xboard .xseasons { padding: 6px 10px; }
+
+/* ---------- the popup card and a player's own page are one thing ---------- */
+/* Both are built from the same plate, filter row and panel; the page simply has no × on it. The page's box must
+   not clip its overflow, or Safari stops the block from pinning. */
+:root[data-view="mobile"] #xboard { overflow: visible; }
+:root:not([data-view="mobile"]) #xboard .card.hcard { padding: 14px 22px 22px; }   /* the popup panel's paddings, so the card reads the same */
+:root[data-view="mobile"] .modal-panel { border-top: 0; }    /* the header's own rule is the only line above the plate */
+.mplate .seg { flex: none; }
+.mplate .segbtn { color: var(--accent-2-ink); border-color: var(--on-fill-line); background: var(--on-fill-wash); }
+.mplate .segbtn[aria-pressed="true"] { background: var(--on-fill-wash-2); }
+
+/* The site header stays above an open card, so the player search is usable from a popup too: the popup starts
+   under the header and the card's pinned block stops at its lower edge. */
+body.modal-open header.top { z-index: 60; }
+:root:not([data-view="mobile"]) .modal { padding-top: var(--header-h, 0px); }   /* the card's pinned block stops at the bar: a scrollport's own padding already insets what sticks to it */

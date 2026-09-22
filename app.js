@@ -1766,6 +1766,27 @@
     }
     return strip;
   }
+  // a two-way player reads either way: the same switch on the popup card and on his own page
+  function typeSeg(p) {
+    ensureIndex();
+    const entry = indexReady() ? window.DRAFT_INDEX.players.find((e) => e.id === p.id) : null;
+    if (!entry || new Set(entry.s.map((sv) => sv[2])).size < 2) return null;
+    const seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Hitting or pitching");
+    for (const [t, l] of [["H", "Hitting"], ["P", "Pitching"]]) {
+      const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(t === p.type));
+      b.addEventListener("click", (e) => { e.stopPropagation(); if (t !== p.type) goType(p, entry, t); });
+      seg.append(b);
+    }
+    return seg;
+  }
+  function goType(p, entry, t) {
+    const cur = entry.s.find((sv) => sv[2] === p.type && sv[0] === (state.mode === "player" ? state.x.ds : state.cardDs || CUR.key));
+    const first = (cur && entry.s.find((sv) => sv[2] === t && sv[1] === cur[1])) || entry.s.find((sv) => sv[2] === t);
+    if (state.mode === "player") { state.x = { id: entry.id, type: t, ds: first[0] }; savePrefs(); render(); return; }
+    const ds = (state.cardDs && histDataset(state.cardDs)) || CUR;      // in a popup: the other half of the same season, when this list has it
+    if (ds.players.some((q) => q.id === p.id && q.type === t)) { state.expanded = t + p.id; render(); return; }
+    state.expanded = null; state.x = { id: entry.id, type: t, ds: first[0] }; savePrefs(); location.hash = "#player/" + entry.id;
+  }
   function renderPlate(p, st, g, ref) {
     const plate = el("div", "mplate");
     plate.append(headshot(p.id, p.name));
@@ -1776,6 +1797,7 @@
     if (st.pct) txt.append(renderStrip(p, v));
     const r = el("div", "mrank");
     if (st.pct) r.append(el("span", "vlabel", viewLabel(p.type)));
+    const ts = typeSeg(p); if (ts) r.append(ts);
     txt.append(r);
     txt.append(renderStarControl(p));
     plate.append(txt);
@@ -1790,16 +1812,16 @@
   // season chips for the popup (from the search index): the same player in another year
   // the card's pinned top: the plate, then the filter row (and its panel when open) — returns them as one block
   function cardTop(...parts) { const top = el("div", "cardtop"); for (const x of parts) top.append(...(Array.isArray(x) ? x : [x])); return top; }
-  function renderSeasonChips(p0) {
+  function renderSeasonChips(p0, opts = {}) {
     const wrap = el("div", "xseasons mchips");
     ensureIndex();
-    const entry = indexReady() ? window.DRAFT_INDEX.players.find((e) => e.id === p0.id) : null;
-    if (!entry) { wrap.append(el("span", "winnote", indexReady() ? "" : "Loading seasons…")); wrap.append(filters()); return out(wrap); }
-    const curKey = state.cardDs || CUR.key;
     const filters = () => renderSplitHead(p0);         // Splits & dates lives up here, beside the season pickers
     const out = (row) => (state.cardTools ? [row, renderSplitPanel(p0)] : [row]);
+    const entry = indexReady() ? window.DRAFT_INDEX.players.find((e) => e.id === p0.id) : null;
+    if (!entry) { wrap.append(el("span", "winnote", indexReady() ? "" : "Loading seasons…")); wrap.append(filters()); return out(wrap); }
+    const curKey = opts.curKey || state.cardDs || CUR.key;
     wrap.append(el("span", "splbl", "Season"));
-    const goTo = (key) => { state.cardDs = key === CUR.key ? null : key; state.cardWin = { from: "", to: "", last: "" }; render(); };
+    const goTo = opts.goTo || ((key) => { state.cardDs = key === CUR.key ? null : key; state.cardWin = { from: "", to: "", last: "" }; render(); });
     if (isMulti(curKey)) {   // a combined span: say so, and offer the seasons that make it up
       const mp = parseMulti(curKey), mine = entry.s.filter((sv) => sv[2] === p0.type && mp.members.includes(sv[0]));
       wrap.append(pillSelect(`${yearSpan(mp.years)} combined`, [[curKey, `${yearSpan(mp.years)} combined`], ...mine.map((sv) => [sv[0], `${sv[1]}${kindTag(sv[0])} · ${sv[5]}`])], curKey, (k) => { if (k !== curKey) goTo(k); }, "Season"));
@@ -2368,7 +2390,7 @@
     $("subnav").hidden = !DRAFT_GROUP.includes(state.mode);
     document.querySelector(".toolbar:not(.xtoolbar)").hidden = other; $("board").hidden = other; $("drafttools").hidden = true; $("ranktools").hidden = true; $("setbar").hidden = true; $("lbtools").hidden = true;
     renderChrome();
-    if (state.textModal) { renderTextModal(); } else if (other) { $("modal").hidden = true; document.body.classList.remove("modal-open"); }
+    if (state.textModal) { renderTextModal(); } else if (other) { $("modal").hidden = true; document.body.classList.remove("modal-open"); parkControls(); $("modal-body").innerHTML = ""; }
     if (hub) { renderHub(); return; }
     if (appear) { renderAppearance(); return; }
     if (fant) { renderFantasy(); renderModal(); return; }
@@ -2873,41 +2895,26 @@
     const type = types.includes(x.type) ? x.type : primaryType(entry);
     const ofType = entry.s.filter((sv) => sv[2] === type);
     const cur = ofType.find((sv) => sv[0] === x.ds) || ofType[0];
-    const head = el("div", "xhead");
-    head.append(headshot(entry.id, entry.name));
-    head.append(el("h2", null, entry.name));
-    const meta = el("span", "xmeta", `${cur[5]} · ${seasonTag(cur)}`); head.append(meta);
-    if (types.length > 1) {
-      const seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Hitting or pitching");
-      for (const [t, l] of [["H", "Hitting"], ["P", "Pitching"]]) {
-        const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(t === type));
-        b.addEventListener("click", () => { if (t !== type) { const first = entry.s.find((sv) => sv[2] === t && sv[1] === cur[1]) || entry.s.find((sv) => sv[2] === t); state.x = { id: entry.id, type: t, ds: first[0] }; savePrefs(); render(); } });
-        seg.append(b);
-      }
-      head.append(seg);
-    } else head.append(el("span", "xmeta", type === "P" ? "Pitching" : "Hitting"));
-    const curP = DATA.players.find((q) => q.id === entry.id && q.type === type);
-    if (curP) head.append(renderStarControl(curP));
-    const chips = el("div", "xseasons");
-    chips.append(el("span", "splbl", "Season"));
-    chips.append(renderSeasonPicker(ofType, cur[0], (key) => { state.x = { id: entry.id, type, ds: key }; savePrefs(); render(); }, mobileView()));
-    chips.append(renderSplitHead({ type }));           // same row as the popup card's
-    box.append(cardTop(head, chips, state.cardTools ? renderSplitPanel({ type }) : []));
-    // the card, drawn against that season's dataset
     const key = cur[0];
     if (!state.x.ds || state.x.ds !== key || state.x.type !== type) state.x = { id: entry.id, type, ds: key };
+    // his page is the popup card without the ×: the same pinned plate, the same filter row, the same panel
+    const chips = (p) => renderSeasonChips(p, { curKey: key, goTo: (k) => { state.x = { id: entry.id, type, ds: k }; state.cardWin = { from: "", to: "", last: "" }; savePrefs(); render(); } });
+    const stub = () => {        // while the season loads: the plate with what the index knows
+      const plate = el("div", "mplate"); plate.append(headshot(entry.id, entry.name));
+      const txt = el("div"); txt.append(el("h2", null, entry.name), el("div", "mline", `${cur[5]} · ${seasonTag(cur)}`));
+      plate.append(txt); return plate;
+    };
     ensureHist(key);
     const ds = histDataset(key);
     renderXDates(ds);
-    if (!ds) { box.append(el("p", "xempty", failed.has(`hist/${key}.js`) ? `hist/${key}.js is missing — run build_history.py` : `Loading ${key.startsWith("mlb-") ? key.slice(4) : key.replace("aaa-", "") + " Triple-A"} season…`)); return; }
+    if (!ds) { box.append(cardTop(stub(), chips({ id: entry.id, type }))); box.append(el("p", "xempty", failed.has(`hist/${key}.js`) ? `hist/${key}.js is missing — run build_history.py` : `Loading ${key.startsWith("mlb-") ? key.slice(4) : key.replace("aaa-", "") + " Triple-A"} season…`)); return; }
     withDataset(ds, () => withWindow(state.cardWin, () => withSplit(state.split, () => {
       const p = ds.players.find((q) => q.id === entry.id && q.type === type);
-      if (!p) { box.append(el("p", "xempty", "No card for that season.")); return; }
-      if (needsDays() && !DS.ready()) { DS.load(); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); box.append(c); return; }
+      if (!p) { box.append(cardTop(stub(), chips({ id: entry.id, type }))); box.append(el("p", "xempty", "No card for that season.")); return; }
       const g = p.type === "H" ? "H" : p.primary;
+      if (needsRows() && !DS.ready()) { DS.load(); box.append(cardTop(renderPlate(p, { rank: "–" }, g, g), chips(p))); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); box.append(c); return; }
       const st = pool(g).stats.get(p.type + p.id) || rankIn(g, p);
-      meta.textContent = `${p.team} · ${posLabel(p)}${p.type === "P" ? " · " + p.throws + "HP" : p.bats ? " · " + p.bats : ""} · ${dsSeason()}${p.age != null ? " · age " + p.age : ""}`;
-      head.append(renderStrip(p, V(p)));                // the counting stats sit up on the plate
+      box.append(cardTop(renderPlate(p, st, g, g), chips(p)));
       box.append(renderCard(p, metricsFor(g), st, g, g, { noSplitBar: true, noStrip: true }));
     })));
   }
@@ -2939,7 +2946,7 @@
   function renderGlobalSearch() {
     renderSearchList($("glist"), state.gq, (e) => {
       const t = primaryType(e), first = e.s.find((sv) => sv[2] === t);
-      state.x = { id: e.id, type: t, ds: first[0] }; state.gq = ""; $("gq").value = ""; $("gq").blur();
+      state.x = { id: e.id, type: t, ds: first[0] }; state.expanded = null; state.gq = ""; $("gq").value = ""; $("gq").blur();
       state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };   // a searched player always opens on his full season
       renderSearchList($("glist"), "", () => {});                      // close the list of hits
       savePrefs(); location.hash = "#player/" + e.id; if (state.mode === "player") render();
