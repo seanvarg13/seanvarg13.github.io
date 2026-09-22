@@ -2264,8 +2264,9 @@
     $("ranktools").hidden = !on;
     if (!on) return;
     const n = (state.ranks[state.pos] || []).length, tn = (state.tiers[state.pos] || []).length;
-    const tabLabel = TAB_LABEL[state.pos] || state.pos, tierTxt = tn ? ` · ${tn} tier${tn === 1 ? "" : "s"}` : "";
-    $("rankcount").textContent = n || tn ? `${tabLabel}${tierTxt}` : `${tabLabel} · model order`;
+    const tabLabel = TAB_LABEL[state.pos] || state.pos;
+    $("rankcount").textContent = tabLabel;                    // the tab, nothing else — the row is short on room
+    $("rankcount").title = n || tn ? `${tabLabel}${tn ? ` · ${tn} tier${tn === 1 ? "" : "s"}` : ""} · your own order` : `${tabLabel} · the model's order`;
     $("rankedit").textContent = state.editRanks ? "Done editing" : "Edit rankings";
     const ns0 = Object.keys(listStars()).length; $("rankstars").textContent = state.starOnly ? `★ Starred only (${ns0})` : `☆ Starred (${ns0})`; $("rankstars").classList.toggle("on", state.starOnly); $("rankstars").hidden = !ns0 && !state.starOnly;
     $("rankedit").classList.toggle("btn-quiet", state.editRanks);
@@ -2341,12 +2342,12 @@
   function flash(msg) { state.flash = msg; render(); clearTimeout(flashTimer); flashTimer = setTimeout(() => { state.flash = ""; render(); }, 4000); }
   function saveCurrent() {
     const cur = currentSetName(); if (!cur) return saveAs();
-    state.rankSets[cur] = snapshot(); save(LS.sets, state.rankSets); flash(`Saved “${cur}”`);
+    state.rankSets[cur] = snapshot(); setsChanged(); flash(`Saved “${cur}”`);
   }
   function saveAs() {
     const cur = currentSetName();
     ask(cur ? "Save a copy as…" : "Save these rankings", "Every tab's order, tiers and tier names, under one name. You'll find it under Saved rankings here and under Draft from on the Draft page.", (name) => {
-      const write = () => { state.rankSets[name] = snapshot(); save(LS.sets, state.rankSets); state.currentSet = name; savePrefs(); flash(`Saved “${name}”`); };
+      const write = () => { state.rankSets[name] = snapshot(); setsChanged(); state.currentSet = name; savePrefs(); flash(`Saved “${name}”`); };
       if (state.rankSets[name] && name !== cur) ask(`Replace “${name}”?`, "A saved set already has that name; its rankings will be overwritten.", write); else write();
     }, { value: cur ? `${cur} copy` : `Rankings ${new Date().toISOString().slice(0, 10)}`, placeholder: "Set name", button: "Save" });
   }
@@ -2367,7 +2368,7 @@
     ask(`Rename “${old}”`, "", (name) => {
       if (name === old) { render(); return; }
       if (state.rankSets[name]) { flash(`“${name}” already exists`); return; }
-      state.rankSets[name] = state.rankSets[old]; delete state.rankSets[old]; save(LS.sets, state.rankSets);
+      state.rankSets[name] = state.rankSets[old]; delete state.rankSets[old]; setsChanged();
       if (state.currentSet === old) state.currentSet = name;
       if (state.draftOrder === "set:" + old) state.draftOrder = "set:" + name;
       savePrefs(); flash(`Renamed to “${name}”`);
@@ -2375,7 +2376,7 @@
   }
   function deleteSet(name) {
     ask(`Delete “${name}”?`, "The saved set is removed; your working rankings stay as they are.", () => {
-      delete state.rankSets[name]; save(LS.sets, state.rankSets, { allowEmpty: true });
+      delete state.rankSets[name]; setsChanged({ allowEmpty: true });
       if (state.currentSet === name) state.currentSet = null;
       if (state.draftOrder === "set:" + name) state.draftOrder = "board";
       savePrefs(); flash(`Deleted “${name}”`);
@@ -2421,52 +2422,78 @@
     $("ranksave").title = cur ? (dirty ? `Save changes to “${cur}”` : `“${cur}” is up to date`) : working ? "Save this list under a name" : "Nothing to save yet";
     $("ranksaveas").hidden = !cur; $("rankrename").hidden = !cur; $("rankdelete").hidden = !cur;
     $("ranknew").disabled = !cur && !working; $("ranknew").title = cur ? `Close “${cur}” and start a fresh, empty list` : "Clear the working list and start over";
-    $("listsbtn").textContent = cur ? `Rankings list: ${cur}` : working ? "Rankings list: unsaved" : "Rankings lists";
+    $("listsbtn").textContent = state.editRanks ? (cur || (working ? "Unsaved list" : "Rankings lists"))
+      : cur ? `Rankings list: ${cur}` : working ? "Rankings list: unsaved" : "Rankings lists";
+    $("listsbtn").title = cur ? `“${cur}” — open, rename, save a copy or start another` : "Your saved rankings lists";
+    st.hidden = state.editRanks && !state.flash;              // editing needs the width more than the wording
     $("listsbtn").classList.toggle("on", !!cur);
   }
   // Rankings reach the phone through the site itself: on the computer "Send to my phone" writes shared.json
   // beside the site files and publishes, and any device loads it from the lists panel. No account, and nothing
   // that can write to your lists without you pressing Load.
-  let sharedCache = null, sharedTried = false;
+  let sharedCache = null, sharedTried = false, sharePending = false, shareState = "";
+  // Saving a list on the computer sends it on: shared.json is written beside the site files and published, so the
+  // phone picks it up on its own. If a publish is already running the send waits for it (sharePending) rather
+  // than being dropped. Nothing here can run from the phone — only a machine serving the site can write the file.
+  async function pushShared(quiet) {
+    if (!window.DRAFT_LOCAL || !Object.keys(state.rankSets).length) return;
+    try {
+      const r = await fetch("/api/rankings", { method: "POST", body: JSON.stringify({ sets: state.rankSets }) });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || "couldn't write the file");
+      const pub = await (await fetch("/api/publish", { method: "POST" })).json();
+      if (!pub.ok) { sharePending = true; shareState = "waiting for the publish that's running"; }
+      else { sharePending = false; shareState = "sending to your phone…"; }
+    } catch (e) { shareState = "not sent — " + e.message; }
+    if (!quiet && state.panel === "lists") renderListsPanel();
+  }
+  // every saved-list change goes through here, so the phone copy never falls behind
+  function setsChanged(opts) { save(LS.sets, state.rankSets, opts); pushShared(true); }
   function sharedRankings(then) {
     if (sharedTried) return sharedCache;
     sharedTried = true;
     fetch(vsrc("shared.json"), { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((j) => { sharedCache = j && j.sets && Object.keys(j.sets).length ? j : null; if (then) then(); })
+      .then((j) => { sharedCache = j && j.sets && Object.keys(j.sets).length ? j : null; if (takeShared() && state.mode === "rankings") render(); if (then) then(); })
       .catch(() => {});
     return null;
+  }
+  // what arrived: a list this device has never seen, or a newer copy of one it has. A list edited here more
+  // recently is left alone, and nothing else in the browser is touched.
+  function takeShared() {
+    if (!sharedCache || window.DRAFT_LOCAL) return false;
+    const got = [];
+    for (const [name, set] of Object.entries(sharedCache.sets)) {
+      const mine = state.rankSets[name];
+      if (mine && !(String(set.saved || "") > String(mine.saved || ""))) continue;
+      state.rankSets[name] = set; got.push(name);
+    }
+    if (!got.length) return false;
+    save(LS.sets, state.rankSets);
+    shareState = `${got.join(", ")} — from your computer`;
+    return true;
   }
   function renderSharedSec() {
     const sec = el("div", "psec");
     sec.append(el("h4", null, "Your computer and your phone"));
     const shared = sharedCache || sharedRankings(() => { if (state.panel === "lists") renderListsPanel(); });
-    if (shared) {
+    if (window.DRAFT_LOCAL) {
+      sec.append(el("p", "note", `Saving a list here sends it to your phone by itself — it goes out with the site and lands a minute or two later.${shareState ? " " + shareState[0].toUpperCase() + shareState.slice(1) + "." : ""}`));
+      const sb = el("button", "btn btn-quiet", "Send them now"); sb.type = "button";
+      sb.disabled = !Object.keys(state.rankSets).length;
+      sb.title = sb.disabled ? "Save a list first" : "Send every saved list across right now";
+      sb.addEventListener("click", async () => { sb.disabled = true; sb.textContent = "Sending…"; await pushShared(); });
+      sec.append(sb);
+    } else if (shared) {
       const names = Object.keys(shared.sets).sort();
-      sec.append(el("p", "note", `Published ${fmtDate(String(shared.saved).slice(0, 10))} from your computer: ${names.join(", ")}. Loading replaces a list here that has the same name — the copy it replaces stays in this browser's backup.`));
-      const b = el("button", "btn", `Load ${names.length} list${names.length === 1 ? "" : "s"}`); b.type = "button";
+      sec.append(el("p", "note", `Your computer last sent ${names.join(", ")} on ${fmtDate(String(shared.saved).slice(0, 10))}. They arrive here on their own — a list you have not seen is added, and a newer copy replaces an older one. The copy it replaces stays in this browser's backup.`));
+      const b = el("button", "btn btn-quiet", "Take them again"); b.type = "button";
       b.addEventListener("click", () => {
         for (const n of names) state.rankSets[n] = shared.sets[n];
         save(LS.sets, state.rankSets); flash(`Loaded ${names.join(", ")}`);
       });
       sec.append(b);
-    } else sec.append(el("p", "note", "Nothing sent from your computer yet."));
-    if (window.DRAFT_LOCAL) {
-      const sb = el("button", "btn btn-quiet", "Send to my phone"); sb.type = "button";
-      sb.disabled = !Object.keys(state.rankSets).length;
-      sb.title = sb.disabled ? "Save a list first" : "Publish these lists with the site, so your phone can load them";
-      sb.addEventListener("click", async () => {
-        sb.disabled = true; sb.textContent = "Sending…";
-        try {
-          const r = await fetch("/api/rankings", { method: "POST", body: JSON.stringify({ sets: state.rankSets }) });
-          const j = await r.json();
-          if (!j.ok) throw new Error(j.error || "couldn't write the file");
-          const pub = await (await fetch("/api/publish", { method: "POST" })).json();
-          flash(pub.ok ? "Sent — on your phone once the publish finishes (a minute or two)" : `Saved — press Publish to send it (${pub.error})`);
-        } catch (e) { flash("Couldn't send — " + e.message); }
-      });
-      sec.append(sb);
-    }
+    } else sec.append(el("p", "note", "Nothing sent from your computer yet. Save a list there and it turns up here on its own."));
     return sec;
   }
   // the lists popup: pick a saved list, or save / rename / delete / export the one that's open
@@ -3620,7 +3647,11 @@
     const poll = async () => {
       try { st = await (await fetch("/api/status", { cache: "no-store" })).json(); } catch { return; }
       show(st);
-      if (wasRunning && !st.running) { if (!st.exit && st.job === "update") setTimeout(() => location.reload(), 800); return; }
+      if (wasRunning && !st.running) {
+        if (sharePending) { sharePending = false; setTimeout(() => pushShared(true), 500); }   // a save that waited its turn
+        if (!st.exit && st.job === "update") setTimeout(() => location.reload(), 800);
+        return;
+      }
       wasRunning = st.running;
       if (st.running) setTimeout(poll, 2000);
     };
@@ -3637,4 +3668,5 @@
 
 
   readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); migrateTierOrder(); render(); setTb(); watchBuild();
+  setTimeout(() => sharedRankings(), 1500);     // lists sent from the computer land here on their own
 })();

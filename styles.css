@@ -1645,6 +1645,7 @@ body.modal-open header.top { z-index: 60; }
 :root:not([data-view="mobile"]) .setbar #setstatus { order: 1; margin-left: auto; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 :root:not([data-view="mobile"]) .setbar #listsbtn { order: 2; flex: none; }
 :root:not([data-view="mobile"]) .setbar #setsave { order: 3; flex: none; }
-/* editing brings eight controls with it: they take a second line rather than sliding off the end */
-:root:not([data-view="mobile"]) .setrow > .setbar.editing { flex-wrap: wrap; overflow-x: visible; }
-:root:not([data-view="mobile"]) .setbar.editing #ranktools { order: 1; flex: 1 1 100%; flex-wrap: wrap; }
+/* editing stays on the one row too: the labels shorten instead of the bar growing, and with the status text
+   out of the way the list's name and Save still sit against the right edge */
+:root:not([data-view="mobile"]) .setbar.editing #ranktools { flex: 0 1 auto; min-width: 0; }
+:root:not([data-view="mobile"]) .setbar.editing #listsbtn { margin-left: auto; }
