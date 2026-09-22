@@ -2424,6 +2424,51 @@
     $("listsbtn").textContent = cur ? `Rankings list: ${cur}` : working ? "Rankings list: unsaved" : "Rankings lists";
     $("listsbtn").classList.toggle("on", !!cur);
   }
+  // Rankings reach the phone through the site itself: on the computer "Send to my phone" writes shared.json
+  // beside the site files and publishes, and any device loads it from the lists panel. No account, and nothing
+  // that can write to your lists without you pressing Load.
+  let sharedCache = null, sharedTried = false;
+  function sharedRankings(then) {
+    if (sharedTried) return sharedCache;
+    sharedTried = true;
+    fetch(vsrc("shared.json"), { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { sharedCache = j && j.sets && Object.keys(j.sets).length ? j : null; if (then) then(); })
+      .catch(() => {});
+    return null;
+  }
+  function renderSharedSec() {
+    const sec = el("div", "psec");
+    sec.append(el("h4", null, "Your computer and your phone"));
+    const shared = sharedCache || sharedRankings(() => { if (state.panel === "lists") renderListsPanel(); });
+    if (shared) {
+      const names = Object.keys(shared.sets).sort();
+      sec.append(el("p", "note", `Published ${fmtDate(String(shared.saved).slice(0, 10))} from your computer: ${names.join(", ")}. Loading replaces a list here that has the same name — the copy it replaces stays in this browser's backup.`));
+      const b = el("button", "btn", `Load ${names.length} list${names.length === 1 ? "" : "s"}`); b.type = "button";
+      b.addEventListener("click", () => {
+        for (const n of names) state.rankSets[n] = shared.sets[n];
+        save(LS.sets, state.rankSets); flash(`Loaded ${names.join(", ")}`);
+      });
+      sec.append(b);
+    } else sec.append(el("p", "note", "Nothing sent from your computer yet."));
+    if (window.DRAFT_LOCAL) {
+      const sb = el("button", "btn btn-quiet", "Send to my phone"); sb.type = "button";
+      sb.disabled = !Object.keys(state.rankSets).length;
+      sb.title = sb.disabled ? "Save a list first" : "Publish these lists with the site, so your phone can load them";
+      sb.addEventListener("click", async () => {
+        sb.disabled = true; sb.textContent = "Sending…";
+        try {
+          const r = await fetch("/api/rankings", { method: "POST", body: JSON.stringify({ sets: state.rankSets }) });
+          const j = await r.json();
+          if (!j.ok) throw new Error(j.error || "couldn't write the file");
+          const pub = await (await fetch("/api/publish", { method: "POST" })).json();
+          flash(pub.ok ? "Sent — on your phone once the publish finishes (a minute or two)" : `Saved — press Publish to send it (${pub.error})`);
+        } catch (e) { flash("Couldn't send — " + e.message); }
+      });
+      sec.append(sb);
+    }
+    return sec;
+  }
   // the lists popup: pick a saved list, or save / rename / delete / export the one that's open
   function renderListsPanel() {
     parkControls();
@@ -2460,6 +2505,7 @@
     if (cur) row.append(mk("Save as…", () => { saveAs(); back(); }, true), mk("Rename", () => { renameSet(cur); back(); }, true), mk("Delete", () => { deleteSet(cur); back(); }, true));
     row.append(mk("New list", () => { newList(); closePanel(); }, true, !cur && !working));
     act.append(row);
+    w.append(renderSharedSec());
     const io = el("p", "note"); const ex = el("button", "linkbtn", "Export"); ex.type = "button"; ex.addEventListener("click", exportSets);
     const im = el("button", "linkbtn", "Import"); im.type = "button"; im.addEventListener("click", () => { importSets(); back(); });
     io.append(ex, " every list as text for another device · ", im, " text exported elsewhere"); act.append(io);
