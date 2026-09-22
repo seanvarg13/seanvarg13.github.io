@@ -1600,3 +1600,14 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 :root[data-view="mobile"] .spick .pill.kindpill { min-width: 0; }
 :root[data-view="mobile"] .mchips .splithead .btn, :root[data-view="mobile"] .xseasons .splithead .btn { min-height: 28px; height: 28px; font-size: 11px; padding: 0 9px; white-space: nowrap; }
 :root[data-view="mobile"] .mchips .tsum, :root[data-view="mobile"] .xseasons .tsum { white-space: nowrap; font-size: 11px; }
+
+/* The counting stats ride on the plate now, beside the headshot */
+.mplate .hstrip, .xhead .hstrip { margin: 4px 0 0; gap: 4px 14px; color: var(--accent-2-dim); flex-basis: 100%; }
+.mplate .hstrip .hchip b, .xhead .hstrip .hchip b { color: var(--accent-2-ink); font-size: 16px; }
+.mplate .mrank .vlabel, .xhead .xmeta { color: var(--accent-2-dim); }
+.xhead { flex-wrap: wrap; }
+.xhead .hstrip { font-size: 12.5px; }
+:root[data-view="mobile"] .mplate .hstrip, :root[data-view="mobile"] .xhead .hstrip { gap: 3px 10px; font-size: 11.5px; }
+:root[data-view="mobile"] .mplate .hstrip .hchip b, :root[data-view="mobile"] .xhead .hstrip .hchip b { font-size: 14px; }
+/* the searched player's page runs edge to edge on the phone, like the popup card */
+:root[data-view="mobile"] #xboard { margin-inline: -10px; border-inline: 0; border-radius: 0; }

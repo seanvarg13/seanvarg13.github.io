@@ -1427,13 +1427,7 @@
     const card = el("div", "card hcard");
     if (!opts.noSplitBar) card.append(renderSplitBar(p));
     const pv = V(p);
-    const strip = el("div", "hstrip");
-    const chip = (k, v) => { const c = el("span", "hchip"); c.append(el("b", null, v), " ", k); strip.append(c); };
-    chip("PA", pv.pa); chip("AB", pv.ab);
-    if (pv.ctx.BBE || pv.ctx.BIP == null) chip("BBE", pv.ctx.BBE); else chip("BIP", pv.ctx.BIP);
-    const gH = pv.ctx.G != null ? pv.ctx.G : careerG(p);
-    if (gH != null) chip("G", gH);
-    card.append(strip);
+    if (!opts.noStrip) card.append(renderStrip(p, pv));
     card.append(el("h3", null, `Percentile rank · ${viewLabel(p.type)} · ${poolPhrase(ref)} (${pool(ref).ref.length})`));
     const cols = [el("div", "hcol"), el("div", "hcol")];
     const leftH = DATA.meta.hitterCardLeft || 2;
@@ -1632,11 +1626,7 @@
     const card = el("div", "card hcard");
     if (!opts.noSplitBar) card.append(renderSplitBar(p));
     const pv = V(p);
-    const strip = el("div", "hstrip");
-    const chip = (k, v) => { const c = el("span", "hchip"); c.append(el("b", null, v), " ", k); strip.append(c); };
-    chip("IP", fmtIP(pv.ip)); chip("BF", pv.bf);
-    chip("G / GS", `${pv.g} / ${pv.gs}`); chip("pitches", pv.ctx.Pitches);
-    card.append(strip);
+    if (!opts.noStrip) card.append(renderStrip(p, pv));
     card.append(el("h3", null, `Percentile rank · ${viewLabel(p.type)} · ${poolPhrase(ref)} (${pool(ref).ref.length})`));
     const cols = [el("div", "hcol"), el("div", "hcol")];
     const left = DATA.meta.pitcherCardLeft || 2;
@@ -1761,6 +1751,21 @@
   }
 
   /* ---------- player popup (Rankings / Draft / Trending) ---------- */
+  // the season's counting stats: PA / AB / balls in play / games, or IP / BF / G-GS / pitches
+  function renderStrip(p, pv) {
+    const strip = el("div", "hstrip");
+    const chip = (k, v) => { const c = el("span", "hchip"); c.append(el("b", null, v), " ", k); strip.append(c); };
+    if (p.type === "P") {
+      chip("IP", fmtIP(pv.ip)); chip("BF", pv.bf);
+      chip("G / GS", `${pv.g} / ${pv.gs}`); chip("pitches", pv.ctx.Pitches);
+    } else {
+      chip("PA", pv.pa); chip("AB", pv.ab);
+      if (pv.ctx.BBE || pv.ctx.BIP == null) chip("BBE", pv.ctx.BBE); else chip("BIP", pv.ctx.BIP);
+      const gH = pv.ctx.G != null ? pv.ctx.G : careerG(p);
+      if (gH != null) chip("G", gH);
+    }
+    return strip;
+  }
   function renderPlate(p, st, g, ref) {
     const plate = el("div", "mplate");
     plate.append(headshot(p.id, p.name));
@@ -1768,8 +1773,9 @@
     const h2 = el("h2", null, p.name); h2.id = "modal-title"; txt.append(h2);
     txt.append(el("div", "mline", `${p.team} · ${posLabel(p)}${p.type === "P" ? " · " + p.throws + "HP" : p.bats ? " · " + p.bats : ""} · ${dsSeason()}${p.age != null ? " · age " + p.age : ""}`));
     const v = V(p);
+    if (st.pct) txt.append(renderStrip(p, v));
     const r = el("div", "mrank");
-    if (st.pct) r.append(el("b", null, p.type === "P" ? fmtIP(v.ip) + " IP" : v.pa + " PA"), el("span", null, ` · ${viewLabel(p.type)}`));
+    if (st.pct) r.append(el("span", "vlabel", viewLabel(p.type)));
     txt.append(r);
     txt.append(renderStarControl(p));
     plate.append(txt);
@@ -1949,7 +1955,7 @@
       if (needsRows() && !DS.ready()) { DS.load(); body.append(cardTop(renderPlate(p, { rank: "–" }, g, ref), renderSeasonChips(p0))); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); body.append(c); return; }
       const st = ref === g ? (pool(g).stats.get(p.type + p.id) || rankIn(g, p)) : rankIn(ref, p);
       body.append(cardTop(renderPlate(p, st, g, ref), renderSeasonChips(p0)));
-      body.append(renderCard(p, metricsFor(g), st, g, ref, { noSplitBar: true }));
+      body.append(renderCard(p, metricsFor(g), st, g, ref, { noSplitBar: true, noStrip: true }));
     })));
   }
 
@@ -2870,7 +2876,7 @@
     const head = el("div", "xhead");
     head.append(headshot(entry.id, entry.name));
     head.append(el("h2", null, entry.name));
-    head.append(el("span", "xmeta", `${cur[5]} · ${seasonTag(cur)}`));
+    const meta = el("span", "xmeta", `${cur[5]} · ${seasonTag(cur)}`); head.append(meta);
     if (types.length > 1) {
       const seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Hitting or pitching");
       for (const [t, l] of [["H", "Hitting"], ["P", "Pitching"]]) {
@@ -2900,7 +2906,9 @@
       if (needsDays() && !DS.ready()) { DS.load(); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); box.append(c); return; }
       const g = p.type === "H" ? "H" : p.primary;
       const st = pool(g).stats.get(p.type + p.id) || rankIn(g, p);
-      box.append(renderCard(p, metricsFor(g), st, g, g, { noSplitBar: true }));
+      meta.textContent = `${p.team} · ${posLabel(p)}${p.type === "P" ? " · " + p.throws + "HP" : p.bats ? " · " + p.bats : ""} · ${dsSeason()}${p.age != null ? " · age " + p.age : ""}`;
+      head.append(renderStrip(p, V(p)));                // the counting stats sit up on the plate
+      box.append(renderCard(p, metricsFor(g), st, g, g, { noSplitBar: true, noStrip: true }));
     })));
   }
   // a player is primarily a pitcher if he has pitching seasons and never a real hitting season (100+ PA)
