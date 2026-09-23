@@ -188,6 +188,7 @@
     mode: "rankings",
     posAlso: Array.isArray(prefs.posAlso) ? prefs.posAlso : [],
     ptab: prefs.ptab || "",
+    pbtab: prefs.pbtab || "",
     pos: prefs.pos || "ALL",
     q: "",
     sort: prefs.sort || "score",
@@ -272,7 +273,7 @@
     if (oldRoles) { for (const [id, r] of Object.entries(oldRoles)) { const l = state.extraPos[id] || (state.extraPos[id] = []); if (!l.includes(r)) l.push(r); } changed = true; }
     if (changed) { save(LS.extraPos, state.extraPos); try { localStorage.removeItem(LS.extra); localStorage.removeItem(LS.roles); } catch {} }
   })();
-  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, posAlso: state.posAlso, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, ptab: state.ptab, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, xmodel: state.xmodel }); }
+  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, posAlso: state.posAlso, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, ptab: state.ptab, pbtab: state.pbtab, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, xmodel: state.xmodel }); }
   const draftedIds = () => new Set(state.drafted.map((d) => d.id));
   /* ---------- expected stats: which model xwOBA comes from ---------- */
   // "sav": Statcast's exit velocity + launch angle (Savant's published xwOBA for a full season).
@@ -3162,17 +3163,13 @@
     document.body.classList.toggle("playerwide", !!pg && !mobileView());
     const root = document.documentElement;
     if (!pg || mobileView()) { root.style.removeProperty("--ppage-top"); return; }
+    // the boxes run from under the header to the bottom of the window, the way Savant's fill the screen; the site's
+    // notes sit below the fold rather than eating into them
     const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
-    const ft = document.querySelector("footer.notes");
-    const fh = ft ? Math.round(ft.getBoundingClientRect().height) + 16 : 0;
     root.style.setProperty("--ppage-vh", Math.round(vh) + "px");
-    let take = Math.round(Math.max(0, pg.getBoundingClientRect().top) + 14 + fh);
-    root.style.setProperty("--ppage-top", take + "px");
-    for (let i = 0; i < 2; i++) {                    // whatever else the page carries (margins, the notes' spacing)
-      const over = root.scrollHeight - vh;
-      if (over <= 1) break;
-      take += over; root.style.setProperty("--ppage-top", take + "px");
-    }
+    const bar = document.querySelector("#xboard .pbelow2 .btabs");
+    const bh = bar ? Math.round(bar.getBoundingClientRect().height) + 22 : 0;   // the tab strip stays on screen
+    root.style.setProperty("--ppage-top", Math.round(Math.max(0, pg.getBoundingClientRect().top) + 12 + bh) + "px");
   }
   function setCardTop() {
     const t = document.querySelector("#xboard .cardtop, #modal-body .cardtop");
@@ -3805,12 +3802,8 @@
       }
       const ts = typeSeg(p); if (ts) box.append(paRow("Side", ts));
     }
-    box.append(renderSplitPanel(p));                    // handedness, venue, the expected model and the date boxes
     box.append(paRow("Sample", renderStrip(p, V(p))));
-    const cmp = el("button", "btn btn-quiet tbtn" + (state.cmp2.on ? " on" : ""), state.cmp2.on ? "Close comparison" : "Compare two sides");
-    cmp.type = "button";
-    cmp.addEventListener("click", () => { state.cmp2.on = !state.cmp2.on; savePrefs(); render(); });
-    const acts = el("div", "pacts"); acts.append(cmp, renderStarControl(p));
+    const acts = el("div", "pacts"); acts.append(renderStarControl(p));
     if (state.mode === "draft") {
       const drafted = draftedIds().has(p.id);
       const d = el("button", "btn btn-quiet tbtn", drafted ? "Undo draft" : "Draft"); d.type = "button";
@@ -3821,6 +3814,40 @@
     return box;
   }
   const paRow = (label, node) => { const r = el("div", "parow"); r.append(el("span", "palbl", label), node); return r; };
+  const BTABS = [["splits", "Splits & Dates"], ["compare", "Compare"], ["stats", "Season Stats"]];
+  function renderBelow(p) {
+    const sec = el("section", "pbelow2");
+    const pick = BTABS.some(([k]) => k === state.pbtab) ? state.pbtab : "splits";
+    const bar = el("div", "btabs"); bar.setAttribute("role", "tablist");
+    for (const [k, lab] of BTABS) {
+      const b = el("button", "btab" + (k === pick ? " on" : ""), lab); b.type = "button";
+      b.setAttribute("aria-selected", String(k === pick));
+      b.addEventListener("click", () => { if (k !== pick) { state.pbtab = k; savePrefs(); render(); } });
+      bar.append(b);
+    }
+    sec.append(bar);
+    const body = el("div", "btabbody");
+    if (pick === "splits") body.append(renderSplitPanel(p));
+    else if (pick === "compare") {
+      const row = el("div", "pacts");
+      const on = el("button", "btn btn-quiet tbtn" + (state.cmp2.on ? " on" : ""), state.cmp2.on ? "Close comparison" : "Compare two sides");
+      on.type = "button";
+      on.addEventListener("click", () => { state.cmp2.on = !state.cmp2.on; savePrefs(); render(); });
+      row.append(on);
+      if (state.cmp2.on) {
+        const set = el("button", "btn btn-quiet tbtn", "Set up comparison"); set.type = "button";
+        set.addEventListener("click", () => { state.panel = "cmp2"; render(); });
+        row.append(set);
+      }
+      body.append(row);
+      body.append(el("p", "note", state.cmp2.on
+        ? "The two sides are on the right. “Set up comparison” changes the season, split and dates on each, and which stats sit on the grid."
+        : "Put two sides of this player next to each other — different seasons, splits or stretches of games, each ranked against its own season."));
+    } else body.append(renderRawStats(p, true));
+    sec.append(body);
+    return sec;
+  }
+
   // the runs of games this player has in this season: regular, postseason, spring
   function seasonKinds(p, entry, cur) {
     const year = cur.match(/(\d{4})/), lvl = cur.split("-")[0];
@@ -4029,7 +4056,7 @@
         CB.append(panelHead(dsSeason(), "Comparison", viewLabel(p.type)));
         const h3 = card.querySelector(":scope > h3"); if (h3) h3.remove();   // the panel's band already says so
         const cbb = el("div", "pscroll"); cbb.append(card); CB.append(cbb);
-        cp.append(CA, CB); box.append(cp); sizePPage(); return;
+        cp.append(CA, CB); box.append(cp); box.append(renderBelow(p)); sizePPage(); return;
       }
       const page = el("div", "ppage");                        // no pinned row: Player apps carries the season and the filters
       const A = el("div", "pcol pcolA"), B = el("div", "pcol pcolB"), C = el("div", "pcol pcolC");
@@ -4051,6 +4078,7 @@
       const notes = card.querySelector(".cardnotes"); if (notes) cbody.append(notes);
       C.append(cbody);
       page.append(A, B, C); box.append(page);
+      box.append(renderBelow(p));
       sizePPage();
     })));
   }

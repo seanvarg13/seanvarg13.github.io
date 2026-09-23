@@ -1939,7 +1939,7 @@ body.navopen header.top { z-index: 300; }   /* a nav menu is open: the header ou
 /* ---- the player page: bio, percentiles and the rest, three panels across ---- */
 /* three equal boxes across the whole window, each as tall as the tallest of them */
 body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: min(6vw, 96px); }
-.ppage { display: grid; gap: 12px; align-items: stretch; margin-top: 12px;
+.ppage { display: grid; gap: 12px; align-items: stretch; margin-top: 8px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   height: calc(var(--ppage-vh, 100dvh) - var(--ppage-top, 240px)); min-height: 460px; }
 .pcol { min-width: 0; min-height: 0; display: flex; flex-direction: column;
@@ -2068,3 +2068,30 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .papps .hstrip { margin: 0; gap: 3px 12px; font-size: 11.5px; }
 .papps .hstrip .hchip b { font-size: 14px; }
 .papps .starbox { margin-top: 0; }
+
+/* the panels fill their box the way Savant's do: the bars share the spare height, the chart sits at the foot */
+.pcolB .pscroll, .pcolC .pscroll { display: flex; flex-direction: column; }
+.pctbox { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.ppage .pctbox .meters { flex: 1 1 auto; align-content: space-between; }
+.ppage .pctbox .meters .meter { max-height: 54px; }
+.pcolC .ptabbody { display: flex; flex-direction: column; }
+.pcolC .rollbox { margin-top: auto; }
+.pcolC .note { margin-top: 10px; }
+
+/* the strip under the three boxes: Savant hangs its tabs there, and the panels open beneath them */
+.pbelow2 { margin: 12px 0 18px; }
+.btabs { display: flex; justify-content: center; gap: 0; }
+.btab { height: 40px; padding: 0 30px; border: 1px solid var(--accent-2); border-right: 0; background: var(--surface);
+  color: var(--accent-2-text); font: inherit; font-family: var(--display); font-weight: 700; font-size: 12.5px;
+  letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
+.btab:first-child { border-radius: 3px 0 0 3px; }
+.btab:last-child { border-right: 1px solid var(--accent-2); border-radius: 0 3px 3px 0; }
+.btab:hover { background: var(--accent-wash); }
+.btab.on { background: var(--band); color: var(--band-ink); border-color: var(--band); }
+.btabbody { margin-top: 14px; padding: 14px 16px; background: var(--surface);
+  border: 1px solid var(--accent-2); border-radius: 3px; }
+.btabbody .splitopen { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+  margin: 0; padding: 0; border: 0; background: none; }
+.btabbody .rawstats { margin: 0; }
+.btabbody .note { margin: 10px 0 0; font-size: 12px; color: var(--muted); max-width: 70ch; }
+:root[data-view="mobile"] .btab { flex: 1 1 0; padding: 0 6px; font-size: 10.5px; letter-spacing: 0.02em; }
