@@ -3755,7 +3755,8 @@
     const lines = (rawLines(p) || []).filter((l) => l.mlb).sort((x, y) => y.season - x.season);
     if (!lines.length) { box.append(el("p", "note", "No MLB seasons on record.")); return box; }
     const fmtv = (k, v) => (v == null ? "–" : ["AVG", "OBP", "SLG", "OPS"].includes(k) ? fmtX(v)
-                            : ["ERA", "WHIP"].includes(k) ? Number(v).toFixed(2) : String(v));
+                            : ["ERA", "WHIP"].includes(k) ? Number(v).toFixed(2)
+                            : typeof v === "number" ? v.toLocaleString("en-US") : String(v));
     const t = el("table");
     t.append(colgroup([58, ...cols.map(() => null)]));
     const hr = el("tr");
@@ -3763,7 +3764,7 @@
     const th = el("thead"); th.append(hr); t.append(th);
     const tb = el("tbody");
     const cur = state.x.ds || CUR.key;
-    for (const l of lines.slice(0, 3)) {              // Savant keeps the card short: the recent seasons, then the total
+    for (const l of lines.slice(0, 3).reverse()) {    // Savant keeps the card short: three seasons, oldest first, then the total
       const tr = el("tr");
       if (`mlb-${l.season}` === cur) tr.classList.add("here");
       tr.addEventListener("click", () => { state.x = { id: p.id, type: p.type, ds: `mlb-${l.season}` }; state.cardWin = { from: "", to: "", last: "" }; savePrefs(); render(); });
