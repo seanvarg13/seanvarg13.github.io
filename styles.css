@@ -1939,13 +1939,13 @@ body.navopen header.top { z-index: 300; }   /* a nav menu is open: the header ou
 /* ---- the player page: bio, percentiles and the rest, three panels across ---- */
 /* three equal boxes across the whole window, each as tall as the tallest of them */
 body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: min(6vw, 96px); }
-.ppage { display: grid; gap: 12px; align-items: stretch; margin-top: 8px;
+.ppage { display: grid; gap: 12px; align-items: stretch; margin-top: 20px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   height: calc(var(--ppage-vh, 100dvh) - var(--ppage-top, 240px)); min-height: 460px; }
 .pcol { min-width: 0; min-height: 0; display: flex; flex-direction: column;
   background: var(--surface); border: 1px solid var(--accent-2); border-radius: 3px; overflow: hidden; }
 .pcol > * { flex: none; }
-.pscroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 12px; }
+.pscroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: auto; padding: 4px 16px 12px; }
 .ppage .pcolC .note { font-size: 11px; color: var(--muted); margin: 8px 0 0; }
 .pcolA .rawstats { margin-top: 0; }
 
