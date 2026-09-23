@@ -1860,3 +1860,42 @@ body.modal-open header.top { z-index: 60; }
 .cmpgrid .ccorner, .cmpgrid .chead { padding-left: 8px; padding-right: 8px; margin-left: -8px; margin-right: -8px; }
 .cmpgrid .chead { box-shadow: 0 8px 10px -8px rgba(0, 0, 0, 0.25); }
 :root:not([data-view="mobile"]) .cmpgrid { justify-content: center; }
+
+/* ---- uERA and batted-ball luck: proper tables — a banded head, striped rows, the diff as a chip ---- */
+.tblcard { margin: 6px 0 8px; border: 1px solid var(--hair); border-radius: 10px; overflow: clip; background: var(--surface); }
+.tblcard table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.tblcard thead th { background: var(--band); color: var(--band-ink); font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase; text-align: right; padding: 7px 12px; border-bottom: 2px solid var(--accent-2); white-space: nowrap; }
+.tblcard thead th.l { text-align: left; }
+.tblcard tbody td { text-align: right; padding: 8px 12px; border-bottom: 1px solid var(--hair); color: var(--ink); }
+.tblcard tbody tr:last-child td { border-bottom: 0; }
+.tblcard tbody tr:nth-child(even) td { background: var(--stripe); }
+.tblcard tbody tr:hover td { background: var(--hover); }
+.tblcard td.l { text-align: left; }
+.tblcard td.l b { display: block; font-size: 13.5px; color: var(--ink); }
+.tblcard td.l small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; margin-top: 2px; max-width: 46ch; }
+.tblcard td.exp { color: var(--accent-2-text); font-weight: 700; }        /* the expected column is the point of the table */
+.tblcard td.dcell { padding-right: 10px; }
+/* the head strip: the one number the table is about, then the real one beside it */
+.tblhead { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 9px 12px;
+  background: var(--accent-wash); border-bottom: 1px solid var(--hair); font-size: 13px; }
+.tblhead b { font-size: 15px; color: var(--ink); letter-spacing: 0.01em; }
+.tblhead .tsub { color: var(--ink-2); }
+.tblhead .tsep { color: var(--muted); }
+.chip2 { display: inline-block; min-width: 46px; padding: 2px 9px; border-radius: 999px; font-weight: 700; font-size: 12px; text-align: center; }
+.chip2.lucky { background: var(--accent-wash); color: var(--accent-2-text); box-shadow: inset 0 0 0 1px var(--accent-2); }
+.chip2.unlucky { background: rgba(200, 16, 46, 0.12); color: var(--red, #c8102e); box-shadow: inset 0 0 0 1px rgba(200, 16, 46, 0.45); }
+.chip2.even { background: var(--surface-2); color: var(--muted); box-shadow: inset 0 0 0 1px var(--hair); }
+.tblhead .chip2 { font-size: 12px; }
+:root[data-view="mobile"] .tblcard { overflow-x: auto; }
+:root[data-view="mobile"] .tblcard table { min-width: 340px; }
+:root[data-view="mobile"] .tblcard td.l small { max-width: 34ch; }
+.tblcard td.own { font-weight: 700; }
+.tblcard td.lg { color: var(--ink-2); }
+
+/* ---- desktop: a popup or player card fits the window and scrolls inside itself, so it never drifts ---- */
+:root[data-view="desktop"] .modal { overflow: hidden; align-content: center; padding: 20px 16px; }
+:root[data-view="desktop"] .modal-panel { display: flex; flex-direction: column; max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); }
+:root[data-view="desktop"] #modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+/* the card's own pinned plate and the comparison's frozen heads now stick to the panel, not the page */
+:root[data-view="desktop"] #modal-body .cardtop { top: 0; }

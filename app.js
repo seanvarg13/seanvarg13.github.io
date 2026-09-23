@@ -8,7 +8,7 @@
   const HIT_TABS = ["ALL", "C", "1B", "2B", "3B", "SS", "OF", "DH"];
   const PIT_TABS = ["ALLP", "SP", "RP"];
   const TAB_LABEL = { ALL: "All hitters", ALLP: "All pitchers" };
-  const SHORT = { pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
+  const SHORT = { pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xws: "xwOBA", xwd: "dxwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
                tiers: "draft2027.tiers", tierNames: "draft2027.tierNames", sets: "draft2027.rankSets", extraPos: "draft2027.extraPos", stars: "draft2027.stars" };
   // Storage that cannot lose a saved list. A value that will not parse is left exactly where it is — its raw
@@ -203,7 +203,7 @@
     tbFold: !!prefs.tbFold,
     teamF: prefs.teamF || null,                    // {kind: "lg" | "div" | "team", v} — only that league, division or team                        // filters tucked away behind a slim bar (it stays pinned, so they can come back from anywhere)   // Year / Age columns right after the name ("auto": Year when the list spans seasons)
     lbSplit: { hand: "all", venue: "all" },       // Leaderboard: vs L / R and home / away (session only, like the card's)
-    lb: Object.assign({ H: ["woba", "ev", "brl", "hh", "pull", "air", "gb", "zsw", "osw", "whf", "k", "bb"],
+    lb: Object.assign({ H: ["woba", "xws", "xwd", "ev", "brl", "hh", "pull", "air", "gb", "zsw", "osw", "whf", "k", "bb"],
                         P: ["whf", "strk", "gb", "pu", "wsgp", "k", "bb", "kbb", "ukb", "era", "nera", "uera", "siera", "fip", "fbv"] }, prefs.lb || {}),   // Leaderboard columns
     open: prefs.open || {},          // which fold-out rows are expanded, e.g. {air: true}
     cmp: Object.assign({ type: "H", players: [] }, prefs.cmp || {}),   // Compare page: [{id, ds}]
@@ -232,6 +232,7 @@
   if (state.lb.P.includes("nera") && !state.lb.P.includes("uera")) state.lb.P.splice(state.lb.P.indexOf("nera") + 1, 0, "uera");     // uERA back 2026-09-21
   if (state.lb.P.includes("kbb") && !state.lb.P.includes("ukb")) state.lb.P.splice(state.lb.P.indexOf("kbb") + 1, 0, "ukb");       // added 2026-09-21
   if (state.lb.P.includes("gb") && !state.lb.P.includes("wsgp")) state.lb.P.splice(state.lb.P.indexOf("gb") + 1, 0, "wsgp");       // WSGP added 2026-09-23
+  if (state.lb.H.includes("woba") && !state.lb.H.includes("xws") && !state.lb.H.includes("xwd")) state.lb.H.splice(state.lb.H.indexOf("woba") + 1, 0, "xws", "xwd");   // both models 2026-09-23
   let poolVersion = 0;               // bumps when eligibility changes, so cached pools rebuild
   // tiers used to be stored as break ranks ([5, 12]); convert to sizes ([5, 7]) once
   const breaksToSizes = (t) => { const out = {}; for (const [tab, br] of Object.entries(t || {})) { const b = br.slice().sort((x, y) => x - y); out[tab] = b.map((v, i) => v - (i ? b[i - 1] : 0)); } return out; };
@@ -442,8 +443,10 @@
     if (m._full && m._xm === state.xmodel) return m;
     if (m._sav === undefined) m._sav = seasonXwSav(p) ?? null;    // stash Statcast's before the directional one can overwrite it
     // Air% is every ball in play that isn't a ground ball (fly balls, line drives and popups); Center% closes the spray split
+    const xd = seasonXwDir(p) ?? null;                             // the directional model, re-anchored to this season
     const out = Object.assign({}, m, {
-      xwoba: xDir() ? seasonXwDir(p) : m._sav,
+      xwoba: xDir() ? xd : m._sav,
+      xws: m._sav, xwd: xd,
       zmo: m.zmo !== undefined ? m.zmo : m.zsw == null || m.osw == null ? null : Math.round(10 * (m.zsw - m.osw)) / 10,
       con: m.con !== undefined ? m.con : m.whf == null ? null : Math.round(10 * (100 - m.whf)) / 10,
       air: m.gb != null ? Math.round(10 * (100 - m.gb)) / 10 : m.air,
@@ -526,6 +529,8 @@
       } else {
         const bden = t.bbt || t.bbe;                      // batted-ball type / direction: every typed ball in play (older files: tracked BBE)
         const noEV = DS.tracked != null && DS.tracked < 0.05;
+        const xwSav = t.xden ? Math.round(1000 * t.xnum / t.xden) / 1000 : null;
+        const xwDir = hasDir && t.wden && dirInfo().ok ? Math.round(1000 * dirInfo().scale * t.dnum / t.wden) / 1000 : null;
         const evn = t.evn || t.bbe, bipn = t.bip || t.bbe;   // EV-eligible balls (no bunts) and all balls in play; older files carry tracked BBE only
         v = { m: { ev: evn ? Math.round(10 * t.evsum / evn) / 10 : null, brl: rate(t.brl, bipn), pull: rate(t.pullair, bden), air: rate(bden - (t.gbh || 0), bden),
                    oppo: t.oppn === undefined ? null : rate(t.oppn, bden), cent: t.oppn === undefined ? null : rate(bden - (t.pulln || 0) - (t.oppn || 0), bden),
@@ -533,8 +538,7 @@
                    ba: t.h === undefined || !t.ab ? null : Math.round(1000 * t.h / t.ab) / 1000, slg: t.tb === undefined || !t.ab ? null : Math.round(1000 * t.tb / t.ab) / 1000,
                    xba: t.xbsum === undefined || !t.ab ? null : Math.round(1000 * t.xbsum / t.ab) / 1000, xslg: t.xssum === undefined || !t.ab ? null : Math.round(1000 * t.xssum / t.ab) / 1000,
                    osw: rate(t.osw, t.opit), zsw: rate(t.zsw, t.zpit), zcon: rate(t.zcon, t.zsw), ocon: rate(t.ocon, t.osw), whf: rate(t.whf, t.sw),
-                   xwoba: noEV ? null : xDir() ? (hasDir && t.wden && dirInfo().ok ? Math.round(1000 * dirInfo().scale * t.dnum / t.wden) / 1000 : null)
-                                                : (t.xden ? Math.round(1000 * t.xnum / t.xden) / 1000 : null),   // exit velocity + launch angle, or the directional model
+                   xwoba: noEV ? null : xDir() ? xwDir : xwSav, xws: noEV ? null : xwSav, xwd: noEV ? null : xwDir,   // exit velocity + launch angle, and the directional model
                    woba: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null,
                    bs: t.bsn ? Math.round(10 * t.bssum / t.bsn) / 10 : null,
                    zmo: t.zpit && t.opit ? Math.round(10 * (100 * t.zsw / t.zpit - 100 * t.osw / t.opit)) / 10 : null,
@@ -2028,6 +2032,20 @@
     const box = el("div", "luck ukbb"), ik = st && st.ukbb;
     if (!noHead) box.append(el("h3", null, "Underlying K% and BB%"));
     if (!ik) { box.append(el("p", "note", "Needs Whiff% and Strike% against the season's population.")); return box; }
+    const card = el("div", "tblcard");
+    // the headline: what the process says the ERA should have been, against the ERA he actually has
+    if (st.uera != null) {
+      const hd = el("div", "tblhead");
+      hd.append(el("b", null, `uERA ${st.uera.toFixed(2)}`));
+      if (st.pct.uera != null) hd.append(el("span", "tsub", `${ordinal(st.pct.uera)} percentile`));
+      if (pv.m.era != null) {
+        const gap = Math.round(100 * (pv.m.era - st.uera)) / 100;
+        hd.append(el("span", "tsep", "·"), el("span", "tsub", `ERA ${pv.m.era.toFixed(2)}`),
+                  el("span", "chip2 " + (Math.abs(gap) < 0.25 ? "even" : gap > 0 ? "unlucky" : "lucky"),
+                     Math.abs(gap) < 0.25 ? "in line" : `${Math.abs(gap).toFixed(2)} ${gap > 0 ? "above" : "below"}`));
+      }
+      card.append(hd);
+    }
     const table = el("table", "ukbbt"), thead = el("thead"), tr = el("tr");
     for (const h of ["", "Expected", "Actual", "Diff"]) tr.append(el("th", h === "" ? "l" : null, h));
     thead.append(tr); table.append(thead);
@@ -2036,18 +2054,20 @@
     const rows = [["K%", pv.m.whf == null ? "" : `from Whiff% ${pv.m.whf.toFixed(1)}${st.pct.whf == null ? "" : " · " + ordinal(st.pct.whf) + " pctl"}`, ik.k, pv.m.k, true, false],
                   ["BB%", pv.m.strk == null ? "" : `from Strike% ${pv.m.strk.toFixed(1)}${st.pct.strk == null ? "" : " · " + ordinal(st.pct.strk) + " pctl"}`, ik.bb, pv.m.bb, false, false],
                   ["K−BB%", "", st.ukb, pv.m.kbb, true, false],
-                  ["ERA", "uERA: those rates, his ground balls and popups, the rest of his air balls split line drive / fly ball at the league's rate, every ball in play at league value", st.uera, pv.m.era, false, true]];
+                  ["ERA", "those rates, every ball in play at its league value", st.uera, pv.m.era, false, true]];
     for (const [what, cap, exp, act, hib, isEra] of rows) {
       const r = el("tr"); const d = act == null || exp == null ? null : (isEra ? Math.round(100 * (act - exp)) / 100 : Math.round(10 * (act - exp)) / 10);
       const good = d == null ? null : hib ? d > 0 : d < 0;
       const fv = (x) => (x == null ? "–" : isEra ? x.toFixed(2) : x.toFixed(1) + "%");
       const lc = el("td", "l"); lc.append(el("b", null, what)); if (cap) lc.append(el("small", null, cap));
-      r.append(lc, el("td", null, fv(exp)), el("td", null, fv(act)),
-               el("td", d == null ? null : Math.abs(d) < (isEra ? 0.25 : 1) ? "even" : good ? "lucky" : "unlucky", d == null ? "–" : (d > 0 ? "+" : "") + (isEra ? d.toFixed(2) : d.toFixed(1))));
+      const dc = el("td", "dcell");
+      dc.append(el("span", "chip2 " + (d == null ? "even" : Math.abs(d) < (isEra ? 0.25 : 1) ? "even" : good ? "lucky" : "unlucky"),
+                   d == null ? "–" : (d > 0 ? "+" : "") + (isEra ? d.toFixed(2) : d.toFixed(1))));
+      r.append(lc, el("td", "exp", fv(exp)), el("td", null, fv(act)), dc);
       tbody.append(r);
     }
-    table.append(tbody); box.append(table);
-    box.append(el("p", "note", "Expected K% is his whiff rate; expected BB% is the walk rate at his Strike% percentile. Blue diff: results beat the process; red: they trail it."));
+    table.append(tbody); card.append(table); box.append(card);
+    box.append(el("p", "note", "Expected K% is his whiff rate; expected BB% is the walk rate at his Strike% percentile. uERA puts those two rates on the batted balls he allowed — his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate, every ball in play worth the league's average for its type. Blue diff: results beat the process; red: they trail it."));
     return box;
   }
   function renderLuckTable(p, pv, noHead) {
@@ -2056,13 +2076,15 @@
     const n = Object.values(bbl).reduce((s, x) => s + (x[0] || 0), 0);
     const head = el("h3", null, "Batted-ball luck");
     if (!noHead) box.append(head);
+    const card = el("div", "tblcard");
     const era = pv.m.era, nera = pv.m.nera;
     if (era != null && nera != null) {
       const diff = Math.round(100 * (era - nera)) / 100;
-      const line = el("p", "luckline");
-      line.append(el("b", null, `ERA ${era.toFixed(2)}`), " vs ", el("b", null, `luck-neutral ${nera.toFixed(2)}`), " — ",
-                  el("span", diff < -0.15 ? "lucky" : diff > 0.15 ? "unlucky" : "even", diff < -0.15 ? `${Math.abs(diff).toFixed(2)} runs of good luck` : diff > 0.15 ? `${diff.toFixed(2)} runs of bad luck` : "about what his contact deserved"));
-      box.append(line);
+      const hd = el("div", "tblhead");
+      hd.append(el("b", null, `Luck-neutral ${nera.toFixed(2)}`), el("span", "tsep", "·"), el("span", "tsub", `ERA ${era.toFixed(2)}`),
+                el("span", "chip2 " + (diff < -0.15 ? "lucky" : diff > 0.15 ? "unlucky" : "even"),
+                   diff < -0.15 ? `${Math.abs(diff).toFixed(2)} runs of good luck` : diff > 0.15 ? `${diff.toFixed(2)} runs of bad luck` : "about what his contact deserved"));
+      card.append(hd);
     }
     const table = el("table"), thead = el("thead"), tr = el("tr");
     for (const h of ["Type", "BIP", "Share", "wOBA allowed", "League", "Diff"]) tr.append(el("th", h === "Type" ? "l" : null, h));
@@ -2071,13 +2093,13 @@
     for (const t of ["gb", "ld", "fb", "pu"]) {
       const [cnt, w] = bbl[t] || [0, null], lg = c.bbw[t];
       const row = el("tr");
-      row.append(el("td", "l", names[t]), el("td", null, cnt), el("td", null, n ? (100 * cnt / n).toFixed(1) + "%" : "–"), el("td", null, w == null ? "–" : fmtX(w)), el("td", null, fmtX(lg)));
+      row.append(el("td", "l", names[t]), el("td", null, cnt), el("td", null, n ? (100 * cnt / n).toFixed(1) + "%" : "–"), el("td", "own", w == null ? "–" : fmtX(w)), el("td", "lg", fmtX(lg)));
       const d = w == null ? null : Math.round(1000 * (w - lg));
-      const dc = el("td", d == null ? null : d > 15 ? "unlucky" : d < -15 ? "lucky" : null, d == null ? "–" : (d > 0 ? "+" : "") + d);
+      const dc = el("td", "dcell");
+      dc.append(el("span", "chip2 " + (d == null ? "even" : d > 15 ? "unlucky" : d < -15 ? "lucky" : "even"), d == null ? "–" : (d > 0 ? "+" : "") + d));
       row.append(dc); tbody.append(row);
     }
-    table.append(tbody);
-    const scroll = el("div", "rawscroll"); scroll.append(table); box.append(scroll);
+    table.append(tbody); card.append(table); box.append(card);
     box.append(el("p", "note", `Luck-neutral ERA gives every ball in play the league's average wOBA for its type (ground ball ${fmtX(c.bbw.gb)}, line drive ${fmtX(c.bbw.ld)}, fly ball ${fmtX(c.bbw.fb)}, popup ${fmtX(c.bbw.pu)}) — so BABIP and HR/FB luck wash out while strikeouts, walks and a ground-ball profile keep their value — then puts that expected wOBA on the ERA scale around the league's ${c.lgERA} (wOBA scale ${c.wobaScale}, ${c.pa9} PA per nine). Diff is his wOBA allowed minus the league's, in points; red means the type has hurt him more than it should.`));
     return box;
   }
@@ -2488,7 +2510,7 @@
     }
     w.append(grid);
     const row = el("div", "row");
-    const all = el("button", "btn btn-quiet", "Reset to defaults"); all.type = "button"; all.addEventListener("click", () => { if (state.mode === "leaderboard") state.lb[key] = key === "P" ? ["whf", "strk", "gb", "pu", "wsgp", "k", "bb", "kbb", "ukb", "era", "nera", "uera", "siera", "fip", "fbv"] : ["woba", "ev", "brl", "hh", "pull", "air", "gb", "zsw", "osw", "whf", "k", "bb"]; else if (state.cols[state.mode]) delete state.cols[state.mode][key]; savePrefs(); render(); });
+    const all = el("button", "btn btn-quiet", "Reset to defaults"); all.type = "button"; all.addEventListener("click", () => { if (state.mode === "leaderboard") state.lb[key] = key === "P" ? ["whf", "strk", "gb", "pu", "wsgp", "k", "bb", "kbb", "ukb", "era", "nera", "uera", "siera", "fip", "fbv"] : ["woba", "xws", "xwd", "ev", "brl", "hh", "pull", "air", "gb", "zsw", "osw", "whf", "k", "bb"]; else if (state.cols[state.mode]) delete state.cols[state.mode][key]; savePrefs(); render(); });
     const done = el("button", "btn", "Done"); done.type = "button"; done.addEventListener("click", () => closePanel(false));
     const cancel = el("button", "btn btn-quiet", "Cancel"); cancel.type = "button"; cancel.title = "Close without keeping these changes"; cancel.addEventListener("click", () => closePanel(true));
     row.append(done, cancel, all); w.append(row); body.append(w);
@@ -2873,6 +2895,8 @@
     nera: "Luck-neutral ERA: his actual batted balls, each re-scored at what that type of ball is worth league-wide, so the bounces come out.",
     uera: "Underlying ERA: what his whiff, strike and batted-ball rates say his ERA should be. Strikeouts come in at his Whiff%, walks at the walk rate his Strike% percentile implies, his ground-ball and popup shares stand, and the air balls that are left are split into line drives and fly balls at the league's rate — then every ball in play is worth the league's average for its type.",
     ukb: "Underlying K-BB%: the same idea for K-BB% — his whiff and strike rates translated into the strikeout and walk rates they usually produce.",
+    xws: "xwOBA as Statcast computes it: every ball in play is worth what balls hit at that exit velocity and launch angle have been worth, plus his real strikeouts, walks and hit-by-pitches. Direction is ignored — a 100 mph fly ball counts the same pulled or the other way.",
+    xwd: "dxwOBA, the directional model: the same idea, but each ball in play is also scored on where it went (pull angle and spray angle) along with his sprint speed. Pulled balls in the air are worth far more than the same ball hit the other way, which is what Statcast's version misses; re-anchored each season so the league average matches the league's real wOBA.",
     wsgp: "WSGP: the average of his Whiff%, Strike%, GB% and Popup% percentiles — the four rates he owns outright, before a fielder touches the ball or a run scores. 50 is an average pitcher in all four. The bar beside it ranks that average against the pool, so a pitcher who is good at all four can rank above his own average.",
     fbv: "Average velocity of his four-seamers and sinkers.",
     ext: "How far off the rubber he releases the ball. More extension makes the same velocity play up.",
