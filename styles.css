@@ -1735,7 +1735,7 @@ body.modal-open header.top { z-index: 60; }
 .modes .modesel.open { color: var(--accent-2-ink); background: var(--on-fill-wash); }
 .modemenu { position: fixed; z-index: 200; display: none; min-width: 178px; margin: 0; padding: 4px; list-style: none;
             background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22); }
-.modesel.open .modemenu, .modemenu.open { display: block; }
+.modesel.open .modemenu { display: block; }
 .modemenu li { margin: 0; padding: 0; }
 .modes .modesel .modemenu li a {
   display: block; min-height: 0; margin: 0; padding: 9px 12px; border: 0; border-radius: 3px; background: none;
@@ -1934,3 +1934,23 @@ body.modal-open header.top { z-index: 60; }
 :root[data-view="mobile"] .pop { max-width: none; }
 :root[data-view="mobile"] .tbtns { gap: 4px; }
 :root[data-view="mobile"] .tbtns .tbtn { padding: 0 8px; font-size: 12px; }
+body.navopen header.top { z-index: 300; }   /* a nav menu is open: the header outranks everything on the page */
+
+/* ---- the player page: bio, percentiles and the rest, three panels across ---- */
+.ppage { display: grid; gap: 14px; align-items: start; margin-top: 10px;
+  grid-template-columns: minmax(230px, 272px) minmax(420px, 1.35fr) minmax(300px, 1fr); }
+.ppage .pcolB h3 { font-size: 11px; letter-spacing: 0.05em; line-height: 1.5; margin: 0 0 10px; }
+.ppage .pcolC .note { font-size: 11.5px; color: var(--muted); margin: 0; }
+.pcol { min-width: 0; }
+.pcolA, .pcolC { display: flex; flex-direction: column; gap: 10px; }
+.pcolA .mplate, .pcolC > .fold-sec, .pcolA > .fold-sec {
+  background: var(--surface); border: 1px solid var(--accent-2); border-radius: 10px; }
+.pcolA .mplate { padding: 14px; flex-wrap: wrap; }
+.pcolA > .fold-sec, .pcolC > .fold-sec { padding: 4px 12px 8px; }
+.pcolB { padding: 14px 16px 16px; background: var(--surface); border: 1px solid var(--accent-2); border-radius: 10px; }
+.ppage .hgroups { grid-template-columns: minmax(0, 1fr); max-width: none; }
+.ppage .hcol, .ppage .hgroup { min-width: 0; }
+.ppage .meter { grid-template-columns: 96px minmax(0, 1fr) 62px; }   /* the track gives way to the column, never the value */
+.ppage .meters { padding-top: 2px; }
+.pcolC .cardnotes { margin: 0; }
+:root[data-view="mobile"] .ppage { grid-template-columns: 1fr; }

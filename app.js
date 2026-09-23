@@ -147,8 +147,13 @@
   const SUB = DATA.meta.hitterSub || {};      // fold-out breakdown rows under a card metric (Air% -> FB%, LD%)
   const RULE_H = new Set(DATA.meta.hitterCardRules || ["ev90"]);   // hitter card rows that start a ruled-off block
   const SUB_P = DATA.meta.pitcherSub || {};   // pitcher fold-outs (K-BB% -> K%, BB% …)
-  const ALL_H = union([...CARD, { metrics: Object.values(SUB).flat() }], DATA.meta.hitterMetrics);
-  const ALL_P = union([...CARD_P, { metrics: Object.values(SUB_P).flat() }], DATA.meta.pitcherMetrics);
+  // stats the card doesn't lead with but the player page's third panel does — percentiles are computed for them too
+  const SIDE_H = [{ key: "pullp", label: "Pull%", hib: true, dec: 1, unit: "%" }, { key: "cent", label: "Cent%", hib: true, dec: 1, unit: "%" },
+                  { key: "oppo", label: "Oppo%", hib: true, dec: 1, unit: "%" }, { key: "npull", label: "Non-pull%", hib: true, dec: 1, unit: "%" },
+                  { key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "strk", label: "Strike%", hib: false, dec: 1, unit: "%" }];
+  const SIDE_P = [{ key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }];
+  const ALL_H = union([...CARD, { metrics: Object.values(SUB).flat() }, { metrics: SIDE_H }], DATA.meta.hitterMetrics);
+  const ALL_P = union([...CARD_P, { metrics: Object.values(SUB_P).flat() }, { metrics: SIDE_P }], DATA.meta.pitcherMetrics);
   const allFor = (g) => (g === "H" ? ALL_H : ALL_P);
   // Swartz's SIERA (2011) plus this season's shift
   function siera(k, bb, gb, fb, pu, pa) {
@@ -1881,7 +1886,7 @@
   }
   // a card section that folds: a heading with an arrow; the body only when open (remembered per section)
   function foldSection(key, title, build, open0) {
-    const sec = el("section", "fold-sec");
+    const sec = el("section", "fold-sec"); sec.dataset.key = key;
     const isOpen = state.open[key] != null ? !!state.open[key] : !!open0;
     const h = el("button", "foldhead", ""); h.type = "button"; h.setAttribute("aria-expanded", String(isOpen));
     h.append(el("span", "arrow", isOpen ? "▾" : "▸"), " ", title);
@@ -3651,6 +3656,27 @@
 
   /* ---------- Explore: any player, any season ---------- */
   function renderXDates() {}
+  const EXTRA_H = [["Spray", ["pullp", "cent", "oppo", "npull", "pull"]],
+                   ["Contact rates", ["zcon", "ocon", "zsw", "osw", "zmo", "swing", "strk"]],
+                   ["Batted-ball types", ["gb", "ld", "fb", "pu", "air"]],
+                   ["Contact quality", ["hh", "ss", "ev90", "maxev", "bs"]]];
+  const EXTRA_P = [["Underlying", ["uk", "ubb", "ukb", "uera", "mera", "nera", "siera", "fip"]],
+                   ["Plate discipline", ["zone", "osw", "zcon", "csw", "swstr", "swing"]],
+                   ["Contact allowed", ["ev", "hh", "brl", "gb", "pu"]]];
+  // one fold-out per group, each a stack of the same percentile meters the card uses
+  function extraSections(p, st, g) {
+    const pv = V(p), all = allFor(g), out = [];
+    for (const [title, keys] of (p.type === "H" ? EXTRA_H : EXTRA_P)) {
+      const ms = keys.map((k) => all.find((m) => m.key === k)).filter((m) => m && metricValue(m, pv, st) != null);
+      if (!ms.length) continue;
+      out.push(foldSection("xsec:" + title, title, () => {
+        const box = el("div", "meters");
+        for (const m of ms) box.append(meterRow(m, metricValue(m, pv, st), st.pct[m.key]));
+        return box;
+      }, true));
+    }
+    return out;
+  }
   function renderExplore() {
     ensureIndex();
     const box = $("xboard"); box.innerHTML = "";
@@ -3683,8 +3709,20 @@
       const g = p.type === "H" ? "H" : p.primary;
       if (needsRows() && !DS.ready()) { DS.load(); box.append(cardTop(renderPlate(p, { rank: "–" }, g, g), chips(p))); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); box.append(c); return; }
       const st = pool(g).stats.get(p.type + p.id) || rankIn(g, p);
-      box.append(cardTop(renderPlate(p, st, g, g), chips(p)));
-      box.append(renderCard(p, metricsFor(g), st, g, g, { noSplitBar: true, noStrip: true }));
+      const card = renderCard(p, metricsFor(g), st, g, g, { noSplitBar: true, noStrip: true });
+      if (state.cmp2.on) { box.append(cardTop(renderPlate(p, st, g, g), chips(p))); box.append(card); return; }
+      box.append(cardTop(chips(p)));                          // the pinned row keeps the season, the splits and Compare
+      const page = el("div", "ppage");
+      const A = el("div", "pcol pcolA"), B = el("div", "pcol pcolB"), C = el("div", "pcol pcolC");
+      A.append(renderPlate(p, st, g, g));
+      A.append(foldSection("xraw", "Season stats", () => renderRawStats(p, true), true));
+      const head = card.querySelector("h3"); if (head) B.append(head);
+      const groups = card.querySelector(".hgroups"); if (groups) B.append(groups);
+      C.append(...extraSections(p, st, g));
+      for (const n of [...card.querySelectorAll(":scope > .note")]) C.append(n);   // the long explanations ride at the bottom
+      for (const f of [...card.querySelectorAll(":scope > .fold-sec")]) { if (f.dataset.key !== "raw") C.append(f); }
+      const notes = card.querySelector(".cardnotes"); if (notes) C.append(notes);
+      page.append(A, B, C); box.append(page);
     })));
   }
   // a player is primarily a pitcher if he has pitching seasons and never a real hitting season (100+ PA)
@@ -4225,12 +4263,9 @@
   (function navMenus() {
     const canHover = () => matchMedia("(hover: hover) and (pointer: fine)").matches;
     let open = null, shut = null;
-    // each menu is moved onto <body> the first time it opens: inside the header it sat in the header's own stacking
-    // context, which on a phone left it behind the page instead of over it
-    const menuOf = new Map();
     // fixed, so the mobile nav's own sideways scroll can't clip it; clamped to the window
     const place = (wrap) => {
-      const menu = menuOf.get(wrap), r = wrap.getBoundingClientRect();
+      const menu = wrap.querySelector(".modemenu"), r = wrap.getBoundingClientRect();
       menu.style.top = Math.round(r.bottom) + "px";
       menu.style.left = "0px";
       menu.style.left = Math.round(Math.max(6, Math.min(r.left, innerWidth - menu.offsetWidth - 6))) + "px";
@@ -4238,24 +4273,21 @@
     const show = (wrap) => {
       clearTimeout(shut);
       if (open && open !== wrap) hide(open);
-      const menu = menuOf.get(wrap);
-      if (menu.parentNode !== document.body) document.body.append(menu);
-      menu.classList.add("open");
+      document.body.classList.add("navopen");     // lifts the header over the page while a menu is down
       wrap.classList.add("open");
       wrap.querySelector(".modesel-btn").setAttribute("aria-expanded", "true");
       open = wrap; place(wrap);
     };
     const hide = (wrap) => {
       if (!wrap) return;
-      const menu = menuOf.get(wrap); if (menu) menu.classList.remove("open");
       wrap.classList.remove("open");
+      document.body.classList.remove("navopen");
       wrap.querySelector(".modesel-btn").setAttribute("aria-expanded", "false");
       if (open === wrap) open = null;
     };
     const hideSoon = () => { clearTimeout(shut); shut = setTimeout(() => hide(open), 160); };   // room to cross the gap
     for (const G of NAV_GROUPS) {
       const wrap = $(G.sel), btn = wrap.querySelector(".modesel-btn"), menu = $(G.menu);
-      menuOf.set(wrap, menu);
       wrap.addEventListener("mouseenter", () => { if (canHover()) show(wrap); });
       wrap.addEventListener("mouseleave", hideSoon);
       menu.addEventListener("mouseenter", () => clearTimeout(shut));
