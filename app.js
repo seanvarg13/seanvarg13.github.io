@@ -2071,17 +2071,18 @@
       r.append(lc, el("td", "exp", fv(exp)), el("td", null, fv(act)), dc);
       tbody.append(r);
     }
-    table.append(tbody); card.append(table); box.append(card);
+    table.append(tbody); card.append(table);
     const pl0 = refKey && pool(refKey).sorted.ldAir;
     const mix = renderBBMix(pv, st, refKey);
-    if (mix) box.append(mix);
+    const row = el("div", "uerarow"); row.append(card); if (mix) row.append(mix);
+    box.append(row);
     const from = (v, pct) => (v == null ? "" : ` (${v.toFixed(1)}%${pct == null ? "" : ", " + ordinal(pct)}）`.replace("）", ")"));
     box.append(el("p", "note", `Expected K% is his whiff rate${from(pv.m.whf, st.pct.whf)}; expected BB% is the walk rate at his Strike% percentile${from(pv.m.strk, st.pct.strk)}. uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. The percentile bars rank the rates uERA uses, so the line-drive and fly-ball bars are both really his air-ball rate — fewer counts as better. Blue diff: results beat the process; red: they trail it.`));
     return box;
   }
   // a percentile bar small enough to live in a table cell — same colours and maths as the card's meters
   function minibar(pct) {
-    const cell = el("td", "barcell");
+    const cell = el("div", "barcell");
     if (pct == null) { cell.append(el("span", "lg", "–")); return cell; }
     const track = el("div", "minitrack"), s = pctStyle(pct);
     const fill = el("div", "minifill"); fill.style.width = bubLeft(pct); fill.style.background = s.bg;
@@ -2114,23 +2115,16 @@
       pl.sorted.eld = ld.sort((x, y) => x - y); pl.sorted.efb = fb.sort((x, y) => x - y);
     }
     const pctOf = (arr, v) => (arr && arr.length ? insertPct(arr, -v) : null);
-    const box = el("div", "tblcard board bbmix");
-    const hd = el("div", "tblhead");
-    hd.append(el("b", null, "Batted-ball mix"), el("span", "tsub", `${tot} balls in play`));
-    box.append(hd);
-    const table = el("table"), thead = el("thead"), tr = el("tr");
-    table.append(colgroup([100, 66, 80, 150]));
-    for (const h of ["Type", "Share", "uERA uses", "Percentile"]) tr.append(el("th", h === "Type" ? "l" : null, h));
-    thead.append(tr); table.append(thead);
-    const tbody = el("tbody");
-    const rows = [["Ground balls", sh.gb, sh.gb, st.pct.gb], ["Line drives", sh.ld, air * la, pctOf(pl && pl.sorted.eld, air * la)],
-                  ["Fly balls", sh.fb, air * (1 - la), pctOf(pl && pl.sorted.efb, air * (1 - la))], ["Popups", sh.pu, sh.pu, st.pct.pu]];
-    for (const [what, share, used, pct] of rows) {
-      const r = el("tr");
-      r.append(el("td", "l", what), el("td", "own", share.toFixed(1) + "%"), el("td", "exp", used.toFixed(1) + "%"), minibar(pct));
-      tbody.append(r);
+    const box = el("div", "mixcol");
+    box.append(el("div", "mixhead", "Batted-ball mix"));
+    const rows = [["Ground balls", sh.gb, st.pct.gb], ["Line drives", air * la, pctOf(pl && pl.sorted.eld, air * la)],
+                  ["Fly balls", air * (1 - la), pctOf(pl && pl.sorted.efb, air * (1 - la))], ["Popups", sh.pu, st.pct.pu]];
+    for (const [what, rate, pct] of rows) {
+      const r = el("div", "mixrow");
+      r.append(el("div", "mlbl", what), minibar(pct), el("div", "mval", rate.toFixed(1) + "%"));
+      box.append(r);
     }
-    table.append(tbody); box.append(table);
+    box.append(el("div", "mixfoot", `${tot} balls in play`));
     return box;
   }
   function renderLuckTable(p, pv, noHead) {

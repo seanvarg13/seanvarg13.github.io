@@ -1863,8 +1863,14 @@ body.modal-open header.top { z-index: 60; }
 
 /* ---- uERA and batted-ball luck: the leaderboard's own table, rigid columns and all ---- */
 .tblcard { margin: 6px 0 8px; width: max-content; max-width: 100%; }
-.tblcard.bbmix { margin-top: 14px; }   /* its own small table under the uERA one, with a gap */
-.tblcard td.barcell { padding: 3px 10px; }
+/* the batted-ball mix rides beside the uERA table: a label, a small bar, the rate uERA uses */
+.uerarow { display: flex; flex-wrap: wrap; gap: 4px 22px; align-items: flex-start; }
+.mixcol { margin: 10px 0 8px; }
+.mixhead { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+.mixrow { display: grid; grid-template-columns: 78px 124px 46px; align-items: center; gap: 8px; height: 27px; }
+.mixrow .mlbl { font-size: 12px; color: var(--ink-2); text-align: right; }
+.mixrow .mval { font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.mixfoot { font-size: 11px; color: var(--muted); margin-top: 3px; text-align: right; }
 .minitrack { --bub: 20px; position: relative; height: 20px; border-radius: 10px; background: var(--pctrack, var(--surface-2)); box-shadow: inset 0 0 0 1px var(--hair); }
 .minifill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 10px; }
 .minibub { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; border-radius: 50%;
