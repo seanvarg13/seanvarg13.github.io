@@ -180,6 +180,7 @@
   const state = {
     mode: "rankings",
     posAlso: Array.isArray(prefs.posAlso) ? prefs.posAlso : [],
+    ptab: prefs.ptab || "",
     pos: prefs.pos || "ALL",
     q: "",
     sort: prefs.sort || "score",
@@ -264,7 +265,7 @@
     if (oldRoles) { for (const [id, r] of Object.entries(oldRoles)) { const l = state.extraPos[id] || (state.extraPos[id] = []); if (!l.includes(r)) l.push(r); } changed = true; }
     if (changed) { save(LS.extraPos, state.extraPos); try { localStorage.removeItem(LS.extra); localStorage.removeItem(LS.roles); } catch {} }
   })();
-  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, posAlso: state.posAlso, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, xmodel: state.xmodel }); }
+  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, posAlso: state.posAlso, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, ptab: state.ptab, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, xmodel: state.xmodel }); }
   const draftedIds = () => new Set(state.drafted.map((d) => d.id));
   /* ---------- expected stats: which model xwOBA comes from ---------- */
   // "sav": Statcast's exit velocity + launch angle (Savant's published xwOBA for a full season).
@@ -3687,39 +3688,117 @@
   // the middle panel: Savant's own percentile list, in Savant's order, flat and without group headings.
   // Savant's hitters run xwOBA, xBA, xSLG, EV, Barrel%, Hard-Hit%, LA Sweet-Spot%, Bat speed, Chase%, Whiff%, K%, BB%
   // (its run values, fielding and sprint speed have no counterpart here); wOBA and dxwOBA ride beside xwOBA.
-  const SAVANT_H = ["xwd", "dxba", "dxslg", "ev", "brl", "hh", "ss", "bs", "osw", "whf", "k", "bb"];
+  const SAVANT_H = ["EXPW", "EXPB", "EXPS", "ev", "brl", "hh", "ss", "bs", "osw", "whf", "k", "bb"];
+  // the three expected stats follow whichever model is switched on, and are always named plainly
+  const expKeys = () => (xDir() ? { EXPW: "xwd", EXPB: "dxba", EXPS: "dxslg" } : { EXPW: "xws", EXPB: "xba", EXPS: "xslg" });
+  const PCT_LABEL = { xwd: "xwOBA", xws: "xwOBA", dxba: "xBA", xba: "xBA", dxslg: "xSLG", xslg: "xSLG" };
   // what to show instead when a stat isn't there: Savant's own number for a season built before the
   // directional BA / SLG models, and the real result at a level with no batted-ball tracking (A, AA)
-  const PCT_FALL = { xwd: ["xws", "woba"], dxba: ["xba", "ba"], dxslg: ["xslg", "slg"] };
+  const PCT_FALL = { xwd: ["xws", "woba"], xws: ["woba"], dxba: ["xba", "ba"], xba: ["ba"], dxslg: ["xslg", "slg"], xslg: ["slg"] };
   // an untracked level (A, AA) fills the expected stats with the real result, which would read as a model number
   const NEEDS_EV = new Set(["xwd", "xws", "dxba", "dxslg", "xba", "xslg", "ev", "brl", "hh", "ss", "bs"]);
   // Savant's pitchers run xERA, fastball velo, fastball / curve spin, avg EV, Chase%, Whiff%, K%, BB%, Barrel%,
   // Hard-Hit%, GB%, Extension — uERA stands in for xERA, and spin isn't collected here.
   const SAVANT_P = ["uera", "fbv", "ev", "osw", "whf", "k", "bb", "brl", "hh", "gb", "ext"];
-  // the third panel: everything the middle one doesn't lead with, one dropdown per group
-  const EXTRA_H = [["Batted-ball types", ["gb", "ld", "fb", "pu", "air"]],
-                   ["Spray", ["pullp", "cent", "oppo", "npull", "pull"]],
-                   ["Plate discipline", ["osw", "zsw", "zmo", "swing", "strk"]],
-                   ["Contact rates", ["whf", "zcon", "ocon"]],
-                   ["Contact quality", ["hh", "ss", "ev90", "maxev", "bs"]]];
-  const EXTRA_P = [["Run prevention", ["era", "kbb", "nera", "mera", "siera", "fip"]],
-                   ["Strikeouts and walks", ["uk", "ubb", "ukb", "wsgp", "csw", "swstr"]],
-                   ["Plate discipline", ["strk", "zone", "osw", "swing", "zcon"]],
-                   ["Batted ball", ["gb", "pu", "ev", "hh", "brl"]]];
-  // one fold-out per group, each a stack of the same percentile meters the card uses
+  // the third panel: four tabs of everything the middle one doesn't lead with. Each tab is a list of blocks,
+  // and a block break is a rule across the bars — the batted-ball tab reads air / ground, then the four types,
+  // then pull air.
+  const EXTRA_H = [["Plate discipline", [["zsw", "osw", "zmo", "swing"]]],
+                   ["Contact", [["zcon", "ocon", "whf"]]],
+                   ["Batted ball", [["air", "gb"], ["ld", "fb", "gb", "pu"], ["pull", "pullp", "cent", "oppo"]]],
+                   ["Contact quality", [["ev", "brl", "hh", "bs", "ev90", "maxev"]]]];
+  const EXTRA_P = [["Run prevention", [["era", "kbb"], ["nera", "mera", "siera", "fip"]]],
+                   ["K and BB", [["uk", "ubb", "ukb"], ["wsgp", "csw", "swstr"]]],
+                   ["Plate discipline", [["strk", "zone", "osw", "swing", "zcon"]]],
+                   ["Batted ball", [["gb", "pu"], ["ev", "hh", "brl"]]]];
+  const extraTabs = (p) => (p.type === "H" ? EXTRA_H : EXTRA_P);
   function extraSections(p, st, g) {
-    const pv = V(p), all = allFor(g), out = [];
-    for (const [title, keys] of (p.type === "H" ? EXTRA_H : EXTRA_P)) {
+    const pv = V(p), all = allFor(g), tabs = extraTabs(p), out = [];
+    const live = tabs.filter(([, blocks]) => blocks.some((keys) => keys.some((k) => {
+      const m = all.find((x) => x.key === k); return m && metricValue(m, pv, st) != null; })));
+    if (!live.length) return out;
+    const pick = live.some(([t]) => t === state.ptab) ? state.ptab : live[0][0];
+    const bar = el("div", "ptabs xtabs"); bar.setAttribute("role", "tablist");
+    for (const [title] of live) {
+      const b = el("button", "ptab" + (title === pick ? " on" : ""), title); b.type = "button";
+      b.setAttribute("aria-selected", String(title === pick));
+      b.addEventListener("click", () => { if (title !== pick) { state.ptab = title; savePrefs(); render(); } });
+      bar.append(b);
+    }
+    out.push(bar);
+    const body = el("div", "ptabbody");
+    for (const keys of live.find(([t]) => t === pick)[1]) {
       const ms = keys.map((k) => all.find((m) => m.key === k)).filter((m) => m && metricValue(m, pv, st) != null);
       if (!ms.length) continue;
-      const first = !out.length;                      // one group open to start, so the box fills a screen and no more
-      out.push(foldSection("xsec:" + title, title, () => {
-        const box = el("div", "meters");
-        for (const m of ms) box.append(meterRow(m, metricValue(m, pv, st), st.pct[m.key]));
-        return box;
-      }, first));
+      const box = el("div", "meters");
+      for (const m of ms) box.append(meterRow(m, metricValue(m, pv, st), st.pct[m.key]));
+      body.append(box);
     }
+    out.push(body);
     return out;
+  }
+
+  // Savant's rolling line: expected wOBA over a trailing window of plate appearances, across the whole season
+  const ROLL_PA = 100;
+  function renderRolling(p, ref) {
+    if (p.type !== "H" || DS.noStatcast) return null;
+    const f = DF.H, iPA = f.indexOf("pa"), dir = xDir();
+    const iN = f.indexOf(dir ? "dnum" : "xnum"), iD = f.indexOf(dir ? "wden" : "xden");
+    if (iPA < 0 || iN < 0 || iD < 0) return null;
+    const sp = SPLIT, hand = sp.hand === "L" ? 0 : sp.hand === "R" ? 1 : -1, home = sp.venue === "home" ? 1 : sp.venue === "away" ? 0 : -1;
+    const by = new Map();
+    for (const row of rowsOf(p)) {
+      if ((hand >= 0 && row[1] !== hand) || (home >= 0 && row[2] !== home)) continue;
+      const e = by.get(row[0]) || [0, 0, 0];
+      e[0] += row[iPA] || 0; e[1] += row[iN] || 0; e[2] += row[iD] || 0;
+      by.set(row[0], e);
+    }
+    const days = [...by.keys()].sort((x, y) => x - y);
+    if (!days.length) return null;
+    const scale = dir ? (dirInfo().ok ? dirInfo().scale : null) : 1;
+    if (scale == null) return null;
+    const pts = [];
+    let lo = 0, pa = 0, num = 0, den = 0;
+    for (let j = 0; j < days.length; j++) {
+      const d = by.get(days[j]); pa += d[0]; num += d[1]; den += d[2];
+      while (lo < j && pa - by.get(days[lo])[0] >= ROLL_PA) { const o = by.get(days[lo]); pa -= o[0]; num -= o[1]; den -= o[2]; lo++; }
+      if (pa >= ROLL_PA && den > 0) pts.push([days[j], scale * num / den]);
+    }
+    if (pts.length < 3) return null;
+    const lg = leagueX(ref);
+    const box = el("div", "rollbox");
+    box.append(el("div", "rollhd", `${ROLL_PA} PA rolling ${dir ? "dxwOBA" : "xwOBA"}`));
+    box.append(rollChart(pts, lg));
+    return box;
+  }
+  // the pool's own average of whichever expected model is on, for the dashed league line
+  function leagueX(ref) {
+    const arr = (pool(ref).sorted || {})[xDir() ? "xwd" : "xws"];
+    if (!arr || !arr.length) return null;
+    return arr.reduce((a, b) => a + b, 0) / arr.length;
+  }
+  function rollChart(pts, lg) {
+    const W = 300, H = 96, L = 26, R = 6, T = 8, B = 12;
+    const ys = pts.map((q) => q[1]);
+    let y0 = Math.min(0.24, Math.floor(Math.min(...ys) * 20) / 20), y1 = Math.max(0.42, Math.ceil(Math.max(...ys) * 20) / 20);
+    if (lg != null) { y0 = Math.min(y0, lg - 0.02); y1 = Math.max(y1, lg + 0.02); }
+    const x0 = pts[0][0], x1 = pts[pts.length - 1][0] || 1;
+    const px = (d) => L + (W - L - R) * (x1 === x0 ? 0.5 : (d - x0) / (x1 - x0));
+    const py = (v) => T + (H - T - B) * (1 - (v - y0) / (y1 - y0));
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("class", "rollsvg");
+    const mk = (t, at) => { const n = document.createElementNS(ns, t); for (const k in at) n.setAttribute(k, at[k]); return n; };
+    for (let v = Math.ceil(y0 * 10) / 10; v <= y1 + 1e-9; v += 0.1) {
+      svg.append(mk("line", { x1: L, x2: W - R, y1: py(v), y2: py(v), class: "rgrid" }));
+      const t = mk("text", { x: L - 4, y: py(v) + 3, class: "rtick" }); t.textContent = v.toFixed(3).slice(1); svg.append(t);
+    }
+    if (lg != null) {
+      svg.append(mk("line", { x1: L, x2: W - R, y1: py(lg), y2: py(lg), class: "rlg" }));
+      const t = mk("text", { x: W - R, y: py(lg) - 3, class: "rlglbl" }); t.textContent = "LG AVG"; svg.append(t);
+    }
+    svg.append(mk("path", { d: pts.map((q, i) => `${i ? "L" : "M"}${px(q[0]).toFixed(1)} ${py(q[1]).toFixed(1)}`).join(" "), class: "rline" }));
+    return svg;
   }
   // the middle panel: one header, then every stat as a bar — no group headings inside it
   function renderPctPanel(p, st, g, ref, col) {
@@ -3728,16 +3807,32 @@
     const body = el("div", "pscroll pctbox");
     const meters = el("div", "meters");
     const noEV = DS.tracked != null && DS.tracked < 0.05;
+    const exp = expKeys();
     const val = (k) => { const m = all.find((x) => x.key === k); if (!m || (noEV && NEEDS_EV.has(k))) return null; const v = metricValue(m, pv, st); return v == null ? null : { m, v, k }; };
+    meters.append(pctScale());
     for (const key0 of (p.type === "H" ? SAVANT_H : SAVANT_P)) {
-      let got = val(key0);
-      for (const alt of (!got && PCT_FALL[key0]) || []) { got = val(alt); if (got) break; }
+      const start = exp[key0] || key0;
+      let got = val(start);
+      for (const alt of (!got && PCT_FALL[start]) || []) { got = val(alt); if (got) break; }
       if (!got) continue;
-      meters.append(meterRow(got.m, got.v, st.pct[got.k]));
+      const m = PCT_LABEL[got.k] ? Object.assign({}, got.m, { label: PCT_LABEL[got.k] }) : got.m;
+      meters.append(meterRow(m, got.v, st.pct[got.k]));
     }
     body.append(meters);
     body.append(el("p", "pctfoot", `${poolPhrase(ref)} (${pool(ref).ref.length})`));
     col.append(body);
+  }
+  // Savant's scale strip: POOR at the left of the track, AVERAGE at its middle, GREAT at its right
+  function pctScale() {
+    const row = el("div", "meter pctscale");
+    row.append(el("div", "lbl"));
+    const t = el("div", "track");
+    for (const [at, name] of [[0, "Poor"], [50, "Average"], [100, "Great"]]) {
+      const s = el("div", "sc p" + at); s.append(el("i", null, name), el("b", null, "▲"));
+      t.append(s);
+    }
+    row.append(t, el("div", "val"));
+    return row;
   }
   // every panel wears the same band: a title, and the split it's showing beside it
   function panelHead(title, sub) {
@@ -3824,6 +3919,7 @@
       C.append(panelHead(p.type === "H" ? "More hitting stats" : "More pitching stats"));
       const cbody = el("div", "pscroll");
       cbody.append(...extraSections(p, st, g));
+      const roll = renderRolling(p, g); if (roll) cbody.append(roll);
       for (const n of [...card.querySelectorAll(":scope > .note")]) cbody.append(n);   // the long explanations ride at the bottom
       for (const f of [...card.querySelectorAll(":scope > .fold-sec")]) {   // the card's grouped fold repeats the panels above it
         if (f.dataset.key !== "raw" && !f.dataset.key.startsWith("pgrp:")) cbody.append(f); }

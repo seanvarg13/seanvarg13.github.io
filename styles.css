@@ -1990,12 +1990,28 @@ body.navopen header.top { z-index: 300; }   /* a nav menu is open: the header ou
 .pctbox .pctfoot { margin: 9px 0 0; font-size: 10.5px; color: var(--muted); }
 .ppage .hgroups { grid-template-columns: minmax(0, 1fr); max-width: none; }
 .ppage .hcol, .ppage .hgroup { min-width: 0; }
-/* tighter bars than the popup card's: three columns of them have to fit one window */
-.ppage .meter, .ppage .hcard .meter { grid-template-columns: minmax(0, 1fr) minmax(56px, 1.3fr) 52px; gap: 8px; font-size: 12px; }
+/* the bars Savant draws: a full-width light track, the fill from the left edge, a round marker at its end,
+   a dashed rule under each row, and the poor / average / great scale over the top of the first one */
+.ppage .meter, .ppage .hcard .meter { grid-template-columns: minmax(0, 1fr) minmax(56px, 1.45fr) 56px; gap: 8px; font-size: 12px; }
 .ppage .meter .lbl { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; text-align: right; }
-.ppage .meters .meter { min-height: 26px; padding: 2px 0; }
-.ppage .meter .track { --bub: 21px; height: 17px; }
-.ppage .meter .bub { font-size: 10.5px; box-shadow: 0 0 0 2px var(--surface); }
+.ppage .meters .meter { min-height: 30px; padding: 3px 0; }
+.ppage .meter .track { --bub: 23px; height: 19px; border-radius: 2px; }
+.ppage .meter .fill { border-radius: 2px 0 0 2px; min-width: 3px; }
+.ppage .meter .track::after { opacity: 0.75; }
+.ppage .meter .bub { font-size: 11px; font-weight: 700; box-shadow: 0 0 0 2px var(--surface); }
+.ppage .meter .val { font-weight: 600; }
+.ppage .meters .meter.pctscale { min-height: 0; padding: 0 0 3px; border-bottom: 0; }
+.pctscale .track { height: auto; background: none; border: 0; overflow: visible; display: block; }
+.pctscale .track::after { display: none; }
+.pctscale .sc { position: absolute; bottom: 0; display: flex; flex-direction: column; align-items: center; line-height: 1; }
+.pctscale .sc i { font-style: normal; font-size: 8.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
+.pctscale .sc b { font-size: 7px; margin-top: 1px; }
+.pctscale .p0 { left: 0; align-items: flex-start; } .pctscale .p0 b { margin-left: 1px; }
+.pctscale .p50 { left: 50%; transform: translateX(-50%); }
+.pctscale .p100 { right: 0; align-items: flex-end; } .pctscale .p100 b { margin-right: 1px; }
+.pctscale .p0 i, .pctscale .p0 b { color: var(--lo); }
+.pctscale .p50 i, .pctscale .p50 b { color: var(--muted); }
+.pctscale .p100 i, .pctscale .p100 b { color: var(--hi); }
 .ppage .meters { gap: 0; padding-top: 0; }
 .ppage .fold-sec { margin-top: 6px; }
 .ppage .fold-sec:first-child { margin-top: 0; }
@@ -2006,3 +2022,18 @@ body.navopen header.top { z-index: 300; }   /* a nav menu is open: the header ou
 :root[data-view="mobile"] .ppage { grid-template-columns: 1fr; height: auto; min-height: 0; }
 :root[data-view="mobile"] .pcol { overflow: visible; }
 :root[data-view="mobile"] .pscroll { overflow: visible; }
+
+/* the third panel's tab strip and the rolling line under it */
+.ppage .ptabs.xtabs { gap: 4px; margin: 0 0 8px; }
+.ppage .ptabs.xtabs .ptab { font-size: 10.5px; padding: 0 8px; height: 24px; letter-spacing: 0.03em; }
+.ppage .ptabbody .meters + .meters { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--rule); }
+.rollbox { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--rule); }
+.rollhd { font-family: var(--display); font-weight: 700; font-size: 11.5px; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--accent-2-text); margin-bottom: 6px; }
+.rollsvg { display: block; width: 100%; height: auto; overflow: visible; }
+.rollsvg .rgrid { stroke: var(--hair); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
+.rollsvg .rlg { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
+.rollsvg .rline { fill: none; stroke: var(--hi); stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.rollsvg .rtick { fill: var(--muted); font-size: 8px; text-anchor: end; font-variant-numeric: tabular-nums; }
+.rollsvg .rlglbl { fill: var(--muted); font-size: 7.5px; text-anchor: end; letter-spacing: 0.06em; }
+.ppage .meter .val { white-space: nowrap; }
