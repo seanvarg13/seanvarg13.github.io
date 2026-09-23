@@ -1940,31 +1940,32 @@ body.navopen header.top { z-index: 300; }   /* a nav menu is open: the header ou
 /* three equal boxes across the whole window, each as tall as the tallest of them */
 body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: min(6vw, 96px); }
 .ppage { display: grid; gap: 12px; align-items: stretch; margin-top: 12px;
-  grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.pcol { min-width: 0; display: flex; flex-direction: column;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  height: calc(var(--ppage-vh, 100dvh) - var(--ppage-top, 240px)); min-height: 460px; }
+.pcol { min-width: 0; min-height: 0; display: flex; flex-direction: column;
   background: var(--surface); border: 1px solid var(--accent-2); border-radius: 3px; overflow: hidden; }
 .pcol > * { flex: none; }
-.pscroll { flex: 1 1 auto; min-height: 0; padding: 4px 16px 12px; }
+.pscroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 12px; }
 .ppage .pcolC .note { font-size: 11px; color: var(--muted); margin: 8px 0 0; }
 .pcolA .rawstats { margin-top: 0; }
 
 /* the player card, the way Savant draws it: his action shot as a banner, the cut-out over it, the rest centred */
 .splate { position: relative; text-align: center; padding: 0 14px 12px; background: var(--surface);
   border-bottom: 1px solid var(--rule); }
-.splate .sbanner { height: 146px; margin: 0 -14px; background-size: cover; background-position: 50% 18%;
+.splate .sbanner { height: 124px; margin: 0 -14px; background-size: cover; background-position: 50% 18%;
   background-repeat: no-repeat; background-color: var(--surface-2); }
 .splate .mug { display: block; width: 80px; height: 80px; margin: -46px auto 0; position: relative;
   border-radius: 50%; object-fit: cover; object-position: top; background: var(--surface);
   border: 3px solid var(--surface); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25); }
 .splate .mug.initials { display: grid; place-items: center; font-family: var(--display); font-weight: 700;
   font-size: 26px; color: var(--ink-2); background: var(--surface-2); }
-.splate h2 { margin: 7px 0 0; font-family: var(--display); font-weight: 500; font-size: 30px; line-height: 1.08;
+.splate h2 { margin: 6px 0 0; font-family: var(--display); font-weight: 500; font-size: 30px; line-height: 1.08;
   letter-spacing: 0; color: var(--ink); }
 .splate .steam { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 5px;
   font-size: 14px; color: var(--ink-2); }
 .splate .slogo { width: 19px; height: 19px; flex: none; }
 .splate .sbio { margin-top: 5px; font-size: 12px; color: var(--ink-2); }
-.splate .sdraft { margin-top: 4px; font-size: 12px; color: var(--muted); }
+.splate .sdraft { margin-top: 3px; font-size: 11.5px; color: var(--muted); }
 .splate .sdraft b { color: var(--ink-2); font-weight: 700; }
 :root[data-view="mobile"] .splate .sbanner { height: 140px; }
 :root[data-view="mobile"] .splate h2 { font-size: 23px; }
@@ -2010,7 +2011,9 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .ppage .rawstats table { font-size: 11.5px; }
 .ppage .meters { padding-top: 2px; }
 .pcolC .cardnotes { margin: 0; }
-:root[data-view="mobile"] .ppage { grid-template-columns: 1fr; }
+:root[data-view="mobile"] .ppage { grid-template-columns: 1fr; height: auto; min-height: 0; }
+:root[data-view="mobile"] .pcol { overflow: visible; }
+:root[data-view="mobile"] .pscroll { overflow: visible; }
 
 /* the third panel's tab strip and the rolling line under it */
 .ppage .ptabs.xtabs { gap: 4px; margin: 0 0 8px; flex-wrap: nowrap; }
@@ -2029,11 +2032,12 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .ppage .meter .val { white-space: nowrap; }
 
 /* the card's season table: one row per MLB season, every cell coloured by its percentile */
-.heatcard { width: 100%; margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--rule); }
+.heatcard { width: 100%; max-width: none; margin: 9px 0 0; padding-top: 9px; border-top: 1px solid var(--rule);
+  border-left: 0; border-right: 0; border-bottom: 0; border-radius: 0; box-shadow: none; background: none; }
 .heatcard table { width: 100%; font-size: 12px; }
 .heatcard thead th { padding: 3px 2px; font-size: 11px; font-weight: 700; letter-spacing: 0; text-transform: none;
   background: none; color: var(--ink); border: 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }
-.heatcard tbody td { padding: 3px 2px; font-size: 11.5px; font-weight: 400; border: 0; background: none; color: var(--ink); }
+.heatcard tbody td { padding: 2px 2px; font-size: 11.5px; font-weight: 400; border: 0; background: none; color: var(--ink); }
 .heatcard tbody tr { cursor: pointer; }
 .heatcard tbody tr:nth-child(even) td { background: none; }
 .heatcard tbody tr.here td { font-weight: 700; }
@@ -2044,14 +2048,16 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .heatcard td.l, .heatcard th.l { text-align: center; }
 
 /* Player apps: the season, the run of games, the splits, the dates, the model and Compare */
-.pappshd { font-family: var(--display); font-weight: 400; font-size: 18px; letter-spacing: 0; color: var(--ink);
-  text-align: center; margin: 12px 0 9px; padding-top: 11px; border-top: 1px solid var(--rule); }
-.papps { display: flex; flex-direction: column; gap: 5px; }
-.parow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.palbl { flex: none; min-width: 46px; font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+.pappshd { font-family: var(--display); font-weight: 400; font-size: 17px; letter-spacing: 0; color: var(--ink);
+  text-align: center; margin: 9px 0 7px; padding-top: 9px; border-top: 1px solid var(--rule); }
+.papps { display: flex; flex-direction: column; gap: 3px; }
+.parow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.palbl { flex: none; min-width: 42px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
   text-transform: uppercase; color: var(--muted); }
-.papps .splitopen { display: flex; flex-direction: column; align-items: flex-start; gap: 5px;
+.papps .splitopen { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 6px;
   margin: 0; padding: 0; border: 0; background: none; }
+.papps .splitopen > * { flex: none; }
+.papps .carddates, .papps .splitopen .carddates { gap: 4px 6px; }
 .papps .seg { flex-wrap: wrap; }
 .papps .segbtn { font-size: 10.5px; padding: 0 7px; height: 24px; }
 .papps .tbtn { height: 26px; font-size: 11px; }

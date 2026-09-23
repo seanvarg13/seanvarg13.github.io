@@ -3154,10 +3154,24 @@
 
   // the comparison's column heads stick under the card's pinned plate, so they need its height
   let cardRO = null, cardEl = null;
-  // the three panels are as tall as the tallest of them and no taller — the page runs the full width of the window
+  // the page runs the full width of the window and fits its height: the boxes take what the header, the page's own
+  // margins and the notes footer leave, and anything longer scrolls inside its own panel
   function sizePPage() {
     const pg = document.querySelector("#xboard .ppage");
     document.body.classList.toggle("playerwide", !!pg && !mobileView());
+    const root = document.documentElement;
+    if (!pg || mobileView()) { root.style.removeProperty("--ppage-top"); return; }
+    const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+    const ft = document.querySelector("footer.notes");
+    const fh = ft ? Math.round(ft.getBoundingClientRect().height) + 16 : 0;
+    root.style.setProperty("--ppage-vh", Math.round(vh) + "px");
+    let take = Math.round(Math.max(0, pg.getBoundingClientRect().top) + 14 + fh);
+    root.style.setProperty("--ppage-top", take + "px");
+    for (let i = 0; i < 2; i++) {                    // whatever else the page carries (margins, the notes' spacing)
+      const over = root.scrollHeight - vh;
+      if (over <= 1) break;
+      take += over; root.style.setProperty("--ppage-top", take + "px");
+    }
   }
   function setCardTop() {
     const t = document.querySelector("#xboard .cardtop, #modal-body .cardtop");
@@ -3736,7 +3750,7 @@
   const SAV_H = ["PA", "AB", "R", "H", "HR", "SB", "AVG", "OBP", "SLG", "OPS"];
   const SAV_P = ["W", "L", "ERA", "G", "GS", "SV", "IP", "K", "BB", "WHIP"];
   function renderSeasonHeat(p) {
-    const box = el("div", "tblcard board heatcard");
+    const box = el("div", "tblcard heatcard");
     ensureScript("hist/career.js", careerReady);
     if (!careerReady()) { box.append(el("p", "note", "Loading career stats…")); return box; }
     const H = p.type === "H", cols = H ? SAV_H : SAV_P;
@@ -4023,7 +4037,7 @@
       abody.append(renderSeasonHeat(p));
       abody.append(el("div", "pappshd", "Player Apps"));
       abody.append(renderPlayerApps(p, goTo));
-      abody.append(foldSection("xraw", "Full season stats", () => renderRawStats(p, true)));
+
       A.append(abody);
       renderPctPanel(p, st, g, g, B);
       C.append(panelHead(dsSeason(), p.type === "H" ? "Advanced Metrics" : "Advanced Pitching"));
