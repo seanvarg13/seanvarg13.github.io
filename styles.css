@@ -1755,3 +1755,30 @@ body.modal-open header.top { z-index: 60; }
    overlap. Anywhere it fits (a normal laptop width, with the short edit labels) it stays on one row. */
 :root:not([data-view="mobile"]) .setrow > .setbar.editing { flex-wrap: wrap; overflow-x: visible; row-gap: 6px; }
 :root:not([data-view="mobile"]) .setbar.editing #ranktools { flex: 0 1 auto; min-width: max-content; }
+
+/* A comparison column's heading: season, split and dates, stacked over the sample line */
+.cmpctl { display: grid; gap: 5px; margin: 4px 0 5px; }
+.cmpsel {
+  width: 100%; min-width: 0; height: 28px; padding: 0 22px 0 8px; border: 1px solid var(--hair); border-radius: 2px;
+  background: var(--surface); color: var(--ink); font: 600 12px/1 var(--body); cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 12px) 12px, calc(100% - 8px) 12px; background-size: 4px 4px, 4px 4px; background-repeat: no-repeat;
+}
+.cmpsel:hover, .cmpsel:focus { border-color: var(--accent-2); }
+.cmpdates { display: flex; align-items: center; gap: 3px; }
+.cmpdate {
+  flex: 1 1 0; min-width: 0; height: 26px; padding: 0 4px; border: 1px solid var(--hair); border-radius: 2px;
+  background: var(--surface); color: var(--ink); font: 500 11px/1 var(--body);
+}
+.cmpdate:hover, .cmpdate:focus { border-color: var(--accent-2); }
+.cmpdash { color: var(--muted); font-size: 11px; }
+.cmpgrid .chead .plate { text-align: left; }
+.cmpgrid .chead .cmeta { justify-content: flex-start; font-size: 11px; }
+:root[data-view="mobile"] .cmpsel { height: 26px; font-size: 11px; padding-right: 18px; }
+:root[data-view="mobile"] .cmpdate { height: 24px; font-size: 10px; padding: 0 2px; }
+/* the phone has room for one date box per line, and the plate must never push the grid wider */
+.cmpgrid .chead, .cmpgrid .chead .plate, .cmpctl { min-width: 0; }
+:root[data-view="mobile"] .cmpdates { flex-wrap: wrap; gap: 4px; }
+:root[data-view="mobile"] .cmpdates .cmpdate { flex: 1 1 100%; }
+:root[data-view="mobile"] .cmpdash { display: none; }

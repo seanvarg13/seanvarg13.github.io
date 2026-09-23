@@ -221,7 +221,8 @@
     tierView: prefs.tierView || "tiers",
     panelTab: prefs.panelTab || "stats",           // which tab the Stats & filters popup opens on
     rankSort: !!prefs.rankSort,                    // Rankings: a stat sort running inside the tiers
-    cardCmp: prefs.cardCmp || "",                  // a card's comparison: "s:<season>", "h:L", "v:home", "d:30", "n:100"           // Rankings / Draft: "tiers" groups the list by tier, "list" is the raw order
+    // a card's comparison: two sides, each with its own season, split and date range
+    cmp2: Object.assign({ on: false }, prefs.cmp2 || {}),           // Rankings / Draft: "tiers" groups the list by tier, "list" is the raw order
     tierNames: load(LS.tierNames, {}),   // optional tier names per tab: {ALL: ["Elite", "Studs"]}
     rankSets: load(LS.sets, {}),     // saved sets: {name: {ranks, tiers, tierNames, saved}}
     currentSet: prefs.currentSet || null,          // the saved list the working rankings were opened from (Save writes back to it)
@@ -246,7 +247,7 @@
     if (oldRoles) { for (const [id, r] of Object.entries(oldRoles)) { const l = state.extraPos[id] || (state.extraPos[id] = []); if (!l.includes(r)) l.push(r); } changed = true; }
     if (changed) { save(LS.extraPos, state.extraPos); try { localStorage.removeItem(LS.extra); localStorage.removeItem(LS.roles); } catch {} }
   })();
-  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cardCmp: state.cardCmp, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, xmodel: state.xmodel }); }
+  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, xmodel: state.xmodel }); }
   const draftedIds = () => new Set(state.drafted.map((d) => d.id));
   /* ---------- expected stats: which model xwOBA comes from ---------- */
   // "sav": Statcast's exit velocity + launch angle (Savant's published xwOBA for a full season).
@@ -1171,23 +1172,12 @@
       if (state.cardWin.from || state.cardWin.to || lastN(state.cardWin)) bits.push(withWindow(state.cardWin, () => winLabel(p.type)));
       b.classList.toggle("on", bits.length > 0);
       head.append(b);
-      // read this card against another of his seasons, the other side of a split, or a recent stretch
-      const groups = p.id != null ? cmpChoices(p) : [];
-      if (groups.length) {
-        const cur = state.cardCmp;
-        const pill = el("label", "pill cmppill" + (cur ? " on" : ""));
-        const curLbl = cur ? cmpLabelOf(p, cur) || "…" : "";
-        pill.append(el("span", "pill-text", cur ? (/^vs /i.test(curLbl) ? curLbl : `vs ${curLbl}`) : mob ? "Compare" : "Compare to…"));
-        pill.insertAdjacentHTML("beforeend", '<svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>');
-        const sel = el("select"); sel.setAttribute("aria-label", "Compare this card with");
-        const o0 = el("option", null, "Nothing — just this"); o0.value = ""; sel.append(o0);
-        for (const [name, list] of groups) { const gg = el("optgroup"); gg.label = name; for (const [v, l] of list) { const o = el("option", null, l); o.value = v; gg.append(o); } sel.append(gg); }
-        sel.value = cur && [...sel.options].some((o) => o.value === cur) ? cur : "";
-        sel.addEventListener("click", (e) => e.stopPropagation());
-        sel.addEventListener("change", (e) => { state.cardCmp = e.target.value; savePrefs(); render(); });
-        pill.append(sel);
-        head.append(pill);
-      }
+      // a comparison opens as its own view on the card: two columns, each one set by hand
+      const cb = el("button", "btn btn-quiet tbtn" + (state.cmp2.on ? " on" : ""), state.cmp2.on ? (mob ? "Close" : "Close comparison") : "Compare");
+      cb.type = "button";
+      cb.title = state.cmp2.on ? "Back to the card" : "Compare two sides of this player — season, split and dates on each";
+      cb.addEventListener("click", (e) => { e.stopPropagation(); state.cmp2.on = !state.cmp2.on; savePrefs(); render(); });
+      head.append(cb);
       if (bits.length || !mob) head.append(el("span", "tsum", bits.length ? bits.join(" · ") : "full season · all splits"));
       if (state.daysLoading) head.append(el("span", "winnote", "Loading game-by-game data…"));
       return head;
@@ -1581,47 +1571,57 @@
   const metricValue = (m, pv, st) => (m.key === "ukb" ? (st ? st.ukb : null) : m.key === "uera" ? (st ? st.uera : null) : pv.m[m.key]);
   // Compare a card with something else: another of his seasons, the other side of a split, or a stretch of games.
   // The card's own numbers stay put; the comparison rides beside them with the difference.
-  function cmpChoices(p) {
-    const pit = p.type === "P", groups = [];
+  /* ---------- a card's comparison: two sides of the same player, each set by hand ---------- */
+  // hand and venue ride in one control, so a side costs three selects instead of four
+  const CMP_SPLITS = (pit) => {
+    const L = pit ? "vs LHB" : "vs LHP", R = pit ? "vs RHB" : "vs RHP";
+    return [["all|all", "All"], ["L|all", L], ["R|all", R], ["all|home", "Home"], ["all|away", "Away"],
+            ["L|home", L + " · home"], ["L|away", L + " · away"], ["R|home", R + " · home"], ["R|away", R + " · away"]];
+  };
+  const cmpSide = (k) => (state.cmp2[k] || (state.cmp2[k] = { ds: "", hand: "all", venue: "all", from: "", to: "" }));
+  // one side's numbers: that season, that split, those dates — ranked against that season's own league
+  function cmpSideData(p, c) {
+    const key = c.ds || DS.key;
+    const ds2 = key === CUR.key ? CUR : (ensureHist(key), histDataset(key));
+    if (!ds2) return { loading: true };
+    return withDataset(ds2, () => {
+      const p2 = ds2.players.find((q) => q.id === p.id && q.type === p.type);
+      if (!p2) return { none: true };
+      return withWindow({ from: c.from || "", to: c.to || "", last: "" }, () => withSplit({ hand: c.hand || "all", venue: c.venue || "all" }, () => {
+        if (needsRows() && !DS.ready()) { DS.load(); return { loading: true }; }
+        const g2 = p2.type === "H" ? "H" : p2.primary;
+        return { pv: V(p2), st: pool(g2).stats.get(p2.type + p2.id) || rankIn(g2, p2), g: g2, ds: ds2 };
+      }));
+    });
+  }
+  // the three controls that head a column: season, split, date range
+  function cmpControls(p, k) {
+    const c = cmpSide(k), pit = p.type === "P", here = DS.key, hereLabel = DS.label;
+    const box = el("div", "cmpctl");
     ensureIndex();
     const entry = indexReady() ? window.DRAFT_INDEX.players.find((e) => e.id === p.id) : null;
-    const mine = entry ? entry.s.filter((sv) => sv[2] === p.type && sv[0] !== DS.key) : [];
-    if (mine.length) groups.push(["His other seasons", mine.slice(0, 14).map((sv) => ["s:" + sv[0], `${sv[1]}${kindTag(sv[0])}${keyLevel(sv[0]) ? " " + keyLevel(sv[0]) : ""} · ${sv[5]}`])]);
-    const sp = [];
-    for (const [v, l] of [["L", pit ? "vs LHB" : "vs LHP"], ["R", pit ? "vs RHB" : "vs RHP"]]) if (state.split.hand !== v) sp.push(["h:" + v, l]);
-    for (const [v, l] of [["home", "Home"], ["away", "Away"]]) if (state.split.venue !== v) sp.push(["v:" + v, l]);
-    if (sp.length) groups.push(["Splits", sp]);
-    if (DS.days) groups.push(["Stretches", [...[7, 14, 30].map((d) => ["d:" + d, `Last ${d} days`]),
-                                            ...(pit ? [15, 30] : [50, 100]).map((k) => ["n:" + k, `Last ${k} ${pit ? "IP" : "PA"}`])]]);
-    return groups;
-  }
-  const cmpLabelOf = (p, c) => { for (const [, list] of cmpChoices(p)) for (const [v, l] of list) if (v === c) return l; return ""; };
-  function cardCompare(p, g) {
-    const c = state.cardCmp; if (!c) return null;
-    const kind = c.slice(0, 1), v = c.slice(2), label = cmpLabelOf(p, c) || v;
-    const read = (gg) => {
-      if (needsRows() && !DS.ready()) { DS.load(); return { label, loading: true }; }
-      const pv2 = V(p), st2 = rankIn(gg, p);
-      return { label, pv: pv2, m: pv2.m, st: st2 };
-    };
-    if (kind === "s") {
-      const ds2 = histDataset(v);
-      if (!ds2) { ensureHist(v); return { label, loading: true }; }
-      return withDataset(ds2, () => withWindow({ from: "", to: "", last: "" }, () => withSplit({ hand: "all", venue: "all" }, () => {
-        const p2 = ds2.players.find((q) => q.id === p.id && q.type === p.type);
-        if (!p2) return { label, none: true };
-        if (needsRows() && !DS.ready()) { DS.load(); return { label, loading: true }; }
-        const g2 = p2.type === "H" ? "H" : p2.primary;
-        const pv2 = V(p2), st2 = pool(g2).stats.get(p2.type + p2.id) || rankIn(g2, p2);
-        return { label, pv: pv2, m: pv2.m, st: st2 };
-      })));
+    const seasons = entry ? entry.s.filter((sv) => sv[2] === p.type) : [];
+    const ssel = el("select", "cmpsel"); ssel.setAttribute("aria-label", "Season");
+    for (const sv of seasons) { const o = el("option", null, `${sv[1]}${kindTag(sv[0])}${keyLevel(sv[0]) ? " " + keyLevel(sv[0]) : ""}`); o.value = sv[0]; ssel.append(o); }
+    if (![...ssel.options].some((o) => o.value === (c.ds || here))) { const o = el("option", null, hereLabel); o.value = here; ssel.prepend(o); }
+    ssel.value = c.ds || here;
+    // a date range belongs to the season it was set in, so changing the year clears it
+    ssel.addEventListener("change", (e) => { c.ds = e.target.value; c.from = ""; c.to = ""; savePrefs(); render(); });
+    const psel = el("select", "cmpsel"); psel.setAttribute("aria-label", "Split");
+    for (const [v, l] of CMP_SPLITS(pit)) { const o = el("option", null, l); o.value = v; psel.append(o); }
+    psel.value = `${c.hand || "all"}|${c.venue || "all"}`;
+    psel.addEventListener("change", (e) => { const [h, vn] = e.target.value.split("|"); c.hand = h; c.venue = vn; savePrefs(); render(); });
+    const dates = el("div", "cmpdates");
+    const mk = (f, title) => { const i = el("input", "cmpdate"); i.type = "date"; i.value = c[f] || ""; i.title = title;
+      i.addEventListener("change", (e) => { c[f] = e.target.value; savePrefs(); render(); }); return i; };
+    dates.append(mk("from", "From — blank is the season's first game"), el("span", "cmpdash", "–"), mk("to", "To — blank is the season's last game"));
+    if (c.from || c.to) {
+      const x = el("button", "unadd", "×"); x.type = "button"; x.title = "Whole season";
+      x.addEventListener("click", () => { c.from = ""; c.to = ""; savePrefs(); render(); });
+      dates.append(x);
     }
-    if (kind === "h" || kind === "v") {
-      const split = kind === "h" ? { hand: v, venue: state.split.venue } : { hand: state.split.hand, venue: v };
-      return withWindow(state.cardWin, () => withSplit(split, () => read(g)));
-    }
-    const win = kind === "d" ? { from: addDays(seasonLast(), -(Number(v) - 1)), to: "", last: "" } : { from: "", to: "", last: v };
-    return withWindow(win, () => withSplit(state.split, () => read(g)));
+    box.append(ssel, psel, dates);
+    return box;
   }
   function meterRow(m, v, pct, cmp) {
     const row = el("div", "meter");
@@ -1650,13 +1650,6 @@
     return row;
   }
 
-  function renderCmpNote(cmp, ref) {
-    const p = el("p", "note cmpnote");
-    if (cmp.loading) p.append(`Loading ${cmp.label}…`);
-    else if (cmp.none) p.append(`No ${cmp.label} to compare against.`);
-    else p.append(`Second column: ${cmp.label}`, el("span", "cmpkey", " · value, then the difference from it"));
-    return p;
-  }
   const sideSample = (p, v) => (!v ? "" : p.type === "P" ? fmtIP(v.ip) + " IP" : v.pa + " PA");
   // Savant's comparison layout: the stat labels down the left, one column of bars per side
   function renderCmpGrid(sides, groups, SUBS, foldKey) {
@@ -1666,7 +1659,8 @@
     grid.append(el("div", "ccorner"));
     for (const s of sides) {
       const hd = el("div", "chead"), plate = el("div", "plate");
-      plate.append(el("h3", null, s.label));
+      if (s.label) plate.append(el("h3", null, s.label));
+      if (s.ctl) plate.append(s.ctl);
       const meta = el("div", "cmeta"); if (s.sub) meta.append(el("span", null, s.sub));
       plate.append(meta); hd.append(plate); grid.append(hd);
     }
@@ -1706,27 +1700,28 @@
     wrap.append(grid);
     return wrap;
   }
-  // the two sides of a card comparison: the card as it is set, and whatever the pill picked
-  function cmpSides(p, pv, st, cmp) {
-    return [
-      { label: viewLabel(p.type) || "Full season", sub: [sideSample(p, pv), DS.label].filter(Boolean).join(" · "), v: pv, st },
-      { label: cmp.label, sub: sideSample(p, cmp.pv), v: cmp.pv, st: cmp.st },
-    ];
+  // both columns of a card comparison: the controls are the heading, the sample line sits under them
+  function cmpSides(p) {
+    return ["a", "b"].map((k) => {
+      const d = cmpSideData(p, cmpSide(k));
+      return { ctl: cmpControls(p, k), v: d.pv, st: d.st,
+               sub: d.loading ? "Loading…" : d.none ? "didn't play" : sideSample(p, d.pv) };
+    });
   }
   function renderHitterCard(p, st, g, ref, opts = {}) {
     const card = el("div", "card hcard");
     if (!opts.noSplitBar) card.append(renderSplitBar(p));
     const pv = V(p);
     if (!opts.noStrip) card.append(renderStrip(p, pv));
-    card.append(el("h3", null, `Percentile rank · ${viewLabel(p.type)} · ${poolPhrase(ref)} (${pool(ref).ref.length})`));
-    const cols = [el("div", "hcol"), el("div", "hcol")];
-    const cmp = cardCompare(p, g), cw = () => null;
-    if (cmp && !cmp.m) card.append(renderCmpNote(cmp, ref));
-    if (cmp && cmp.m) {
-      card.append(renderCmpGrid(cmpSides(p, pv, st, cmp), CARD, SUB, (gi, k) => k));
-      card.dataset.notes = `Both columns are ${poolPhrase(ref)} — a past season against that season's own league. ${HEAD.label} = ${DATA.meta.scoreNote.H}.`;
+    if (state.cmp2.on) {
+      card.append(el("h3", null, "Comparison · pick a season, a split and a date range for each side"));
+      card.append(renderCmpGrid(cmpSides(p), CARD, SUB, (gi, k) => k));
+      card.dataset.notes = `Each column is ranked against its own season's qualifiers on their numbers in the same split and date range. ${HEAD.label} = ${DATA.meta.scoreNote.H}.`;
       return card;
     }
+    card.append(el("h3", null, `Percentile rank · ${viewLabel(p.type)} · ${poolPhrase(ref)} (${pool(ref).ref.length})`));
+    const cols = [el("div", "hcol"), el("div", "hcol")];
+    const cw = () => null;
     const leftH = DATA.meta.hitterCardLeft || 2;
     if (DS.noStatcast) card.append(el("p", "note", DS.tracked > 0.05
       ? `Only some ${DS.levelName} parks track pitches (${Math.round(100 * DS.tracked)}% of balls in play, the Florida State League): exit velocity, barrels, xwOBA and zone numbers cover those games only, and bat speed isn't tracked. Hitters rank by wOBA here.`
@@ -1924,15 +1919,15 @@
     if (!opts.noSplitBar) card.append(renderSplitBar(p));
     const pv = V(p);
     if (!opts.noStrip) card.append(renderStrip(p, pv));
-    card.append(el("h3", null, `Percentile rank · ${viewLabel(p.type)} · ${poolPhrase(ref)} (${pool(ref).ref.length})`));
-    const cols = [el("div", "hcol"), el("div", "hcol")];
-    const cmp = cardCompare(p, g), cw = () => null;
-    if (cmp && !cmp.m) card.append(renderCmpNote(cmp, ref));
-    if (cmp && cmp.m) {
-      card.append(renderCmpGrid(cmpSides(p, pv, st, cmp), CARD_P, SUB_P, (gi, k) => `p${gi}:${k}`));
-      card.dataset.notes = `Both columns are against ${DS.level === "MLB" ? "all" : DS.levelName} pitchers with ${refMin(g)}+ batters faced that season.`;
+    if (state.cmp2.on) {
+      card.append(el("h3", null, "Comparison · pick a season, a split and a date range for each side"));
+      card.append(renderCmpGrid(cmpSides(p), CARD_P, SUB_P, (gi, k) => `p${gi}:${k}`));
+      card.dataset.notes = `Each column is ranked against its own season's pitchers with ${refMin(g)}+ batters faced, on their numbers in the same split and date range.`;
       return card;
     }
+    card.append(el("h3", null, `Percentile rank · ${viewLabel(p.type)} · ${poolPhrase(ref)} (${pool(ref).ref.length})`));
+    const cols = [el("div", "hcol"), el("div", "hcol")];
+    const cw = () => null;
     const left = DATA.meta.pitcherCardLeft || 2;
     if (DS.noStatcast) card.append(el("p", "note", DS.tracked > 0.05
       ? `Only some ${DS.levelName} parks track pitches (the Florida State League): velocity, zone / chase and exit-velocity numbers cover those games only.`
@@ -2627,7 +2622,11 @@
     $("listsbtn").textContent = state.editRanks ? (cur || (working ? "Unsaved list" : "Rankings lists"))
       : cur ? `Rankings list: ${cur}` : working ? "Rankings list: unsaved" : "Rankings lists";
     $("listsbtn").title = cur ? `“${cur}” — open, rename, save a copy or start another` : "Your saved rankings lists";
-    st.hidden = state.editRanks && !state.flash;              // editing needs the width more than the wording
+    // editing needs the whole row: the list name and Save step aside so the tier buttons never wrap to a
+    // second line (the list is still there when you press Done editing, and nothing is lost meanwhile)
+    st.hidden = state.editRanks && !state.flash;
+    $("listsbtn").hidden = state.editRanks;
+    sv.hidden = state.editRanks;
     $("listsbtn").classList.toggle("on", !!cur);
   }
   // Rankings reach the phone through the site itself: on the computer "Send to my phone" writes shared.json
