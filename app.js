@@ -2076,8 +2076,19 @@
     const mix = renderBBMix(pv, st, refKey);
     if (mix) box.append(mix);
     const from = (v, pct) => (v == null ? "" : ` (${v.toFixed(1)}%${pct == null ? "" : ", " + ordinal(pct)}）`.replace("）", ")"));
-    box.append(el("p", "note", `Expected K% is his whiff rate${from(pv.m.whf, st.pct.whf)}; expected BB% is the walk rate at his Strike% percentile${from(pv.m.strk, st.pct.strk)}. uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. Percentiles count fewer line drives and fly balls as better. Blue diff: results beat the process; red: they trail it.`));
+    box.append(el("p", "note", `Expected K% is his whiff rate${from(pv.m.whf, st.pct.whf)}; expected BB% is the walk rate at his Strike% percentile${from(pv.m.strk, st.pct.strk)}. uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. The percentile bars rank the rates uERA uses, so the line-drive and fly-ball bars are both really his air-ball rate — fewer counts as better. Blue diff: results beat the process; red: they trail it.`));
     return box;
+  }
+  // a percentile bar small enough to live in a table cell — same colours and maths as the card's meters
+  function minibar(pct) {
+    const cell = el("td", "barcell");
+    if (pct == null) { cell.append(el("span", "lg", "–")); return cell; }
+    const track = el("div", "minitrack"), s = pctStyle(pct);
+    const fill = el("div", "minifill"); fill.style.width = bubLeft(pct); fill.style.background = s.bg;
+    const bub = el("div", "minibub", pct); bub.style.left = bubLeft(pct); bub.style.background = s.bg;
+    track.append(fill, bub); cell.append(track);
+    cell.title = ordinal(pct) + " percentile";
+    return cell;
   }
   function renderBBMix(pv, st, refKey) {
     const bbl = (pv.ctx || {}).bbl;
@@ -2090,16 +2101,17 @@
     const pl = refKey ? pool(refKey) : null;
     const la = pl && pl.sorted.ldAir != null ? pl.sorted.ldAir : (air ? sh.ld / air : 0);
     // line-drive and fly-ball shares aren't card metrics, so rank them here against the same pool (fewer = better)
-    if (pl && !pl.sorted.ldsh) {
+    if (pl && !pl.sorted.eld) {
       const ld = [], fb = [];
       for (const q of pl.ref) {
         const b = (V(q).ctx || {}).bbl;
         if (!b) continue;
         const t = (b.gb || [0])[0] + (b.ld || [0])[0] + (b.fb || [0])[0] + (b.pu || [0])[0];
         if (!t) continue;
-        ld.push(-100 * (b.ld || [0])[0] / t); fb.push(-100 * (b.fb || [0])[0] / t);
+        const qa = 100 * ((b.ld || [0])[0] + (b.fb || [0])[0]) / t;
+        ld.push(-qa * la); fb.push(-qa * (1 - la));
       }
-      pl.sorted.ldsh = ld.sort((x, y) => x - y); pl.sorted.fbsh = fb.sort((x, y) => x - y);
+      pl.sorted.eld = ld.sort((x, y) => x - y); pl.sorted.efb = fb.sort((x, y) => x - y);
     }
     const pctOf = (arr, v) => (arr && arr.length ? insertPct(arr, -v) : null);
     const box = el("div", "tblcard board bbmix");
@@ -2107,16 +2119,15 @@
     hd.append(el("b", null, "Batted-ball mix"), el("span", "tsub", `${tot} balls in play`));
     box.append(hd);
     const table = el("table"), thead = el("thead"), tr = el("tr");
-    table.append(colgroup([104, 72, 58, 84]));
-    for (const h of ["Type", "Share", "Pctl", "uERA uses"]) tr.append(el("th", h === "Type" ? "l" : null, h));
+    table.append(colgroup([100, 66, 80, 150]));
+    for (const h of ["Type", "Share", "uERA uses", "Percentile"]) tr.append(el("th", h === "Type" ? "l" : null, h));
     thead.append(tr); table.append(thead);
     const tbody = el("tbody");
-    const rows = [["Ground balls", sh.gb, st.pct.gb, sh.gb], ["Line drives", sh.ld, pctOf(pl && pl.sorted.ldsh, sh.ld), air * la],
-                  ["Fly balls", sh.fb, pctOf(pl && pl.sorted.fbsh, sh.fb), air * (1 - la)], ["Popups", sh.pu, st.pct.pu, sh.pu]];
-    for (const [what, share, pct, used] of rows) {
+    const rows = [["Ground balls", sh.gb, sh.gb, st.pct.gb], ["Line drives", sh.ld, air * la, pctOf(pl && pl.sorted.eld, air * la)],
+                  ["Fly balls", sh.fb, air * (1 - la), pctOf(pl && pl.sorted.efb, air * (1 - la))], ["Popups", sh.pu, sh.pu, st.pct.pu]];
+    for (const [what, share, used, pct] of rows) {
       const r = el("tr");
-      r.append(el("td", "l", what), el("td", "own", share.toFixed(1) + "%"),
-               el("td", pct == null ? "lg" : null, pct == null ? "–" : String(pct)), el("td", "exp", used.toFixed(1) + "%"));
+      r.append(el("td", "l", what), el("td", "own", share.toFixed(1) + "%"), el("td", "exp", used.toFixed(1) + "%"), minibar(pct));
       tbody.append(r);
     }
     table.append(tbody); box.append(table);
