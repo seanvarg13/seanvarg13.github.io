@@ -460,10 +460,6 @@
     return Object.assign({}, m, { fb: Math.round(10 * (m.air - m.ld - (m.pu || 0))) / 10 });
   }
   const rate = (a, b, dec = 1) => (b > 0 ? Math.round((100 * a / b) * 10 ** dec) / 10 ** dec : null);
-  // WSGP: the plain average of Whiff%, Strike%, GB% and Popup% — the four rates that are the pitcher's own,
-  // before a ball is fielded or a run scores. Derived, so it works the same on a season, a split or a date range.
-  const wsgpOf = (m) => (m == null || m.whf == null || m.strk == null || m.gb == null || m.pu == null ? null
-                         : Math.round(250 * (m.whf + m.strk + m.gb + m.pu)) / 1000);
   const valCache = new Map();
   // a player's numbers for the active window: metric values, sample (AB or IP), context stats
   function V(p) {
@@ -551,7 +547,6 @@
               ctx: { wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, "K%": rate(t.k, t.pa), "BB%": rate(t.bb, t.pa), BBE: bipn, BIP: t.bbt || null, G: games } };
       }
     }
-    if (p.type === "P" && v.m && v.m.wsgp === undefined) v.m.wsgp = wsgpOf(v.m);
     valCache.set(key, v);
     return v;
   }
@@ -614,6 +609,11 @@
     }
     return out;
   }
+  // WSGP: the average of his Whiff%, Strike%, GB% and Popup% percentiles — the four rates that are his own,
+  // before a ball is fielded or a run scores. Percentiles are against whichever pool is in effect, so a split,
+  // a date range and a past season each rank him among that pool's pitchers.
+  const wsgpFrom = (whf, strk, gb, pu) => (whf == null || strk == null || gb == null || pu == null ? null
+                                           : Math.round(10 * (whf + strk + gb + pu) / 4) / 10);
   // u(K-BB%): the K% his whiff rate implies minus the BB% his Strike% percentile implies
   const quantile = (arr, p) => { if (!arr || !arr.length) return null; const pos = (p / 100) * (arr.length - 1), lo = Math.floor(pos); return arr[lo] + (arr[Math.min(lo + 1, arr.length - 1)] - arr[lo]) * (pos - lo); };
   // the K% his whiff rate implies and the BB% his Strike% percentile implies (as shares of PA), or null
@@ -697,6 +697,10 @@
       const ues = list.map((p) => stats.get(p.type + p.id).uera), uep = percentiles(ues.map((x) => (x == null ? null : -x)));
       list.forEach((p, i) => { stats.get(p.type + p.id).pct.uera = uep[i]; });
       sorted.uera = ues.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
+      const wss = list.map((_, i) => wsgpFrom(pct.whf[i], pct.strk[i], pct.gb && pct.gb[i], pct.pu && pct.pu[i]));
+      const wsp = percentiles(wss);
+      list.forEach((p, i) => { const s = stats.get(p.type + p.id); s.wsgp = wss[i]; s.pct.wsgp = wsp[i]; });
+      sorted.wsgp = wss.filter((x) => x != null).sort((a, b) => a - b);
     }
     const scores = score.slice().sort((a, b) => a - b);
     if (g === "H") { sorted.zmo = zmoVals.filter((v) => v != null).sort((a, b) => a - b); sorted.blend = rawBlend.slice().sort((a, b) => a - b); }
@@ -731,7 +735,9 @@
     pct.ukb = ukb == null || !pl.sorted.ukb ? null : insertPct(pl.sorted.ukb, ukb);
     const uera = pl.sorted.uera ? underlyingERA(V(p), pct.strk, pl.sorted) : null;
     pct.uera = uera == null || !pl.sorted.uera ? null : insertPct(pl.sorted.uera, -uera);
-    return { pct, score, scorePct: Math.round(score), rank: above + 1, outside: true, ukbb, ukb, uera };
+    const wsgp = wsgpFrom(pct.whf, pct.strk, pct.gb, pct.pu);
+    pct.wsgp = wsgp == null || !pl.sorted.wsgp ? null : insertPct(pl.sorted.wsgp, wsgp);
+    return { pct, score, scorePct: Math.round(score), rank: above + 1, outside: true, ukbb, ukb, uera, wsgp };
   }
 
   // percentile of x if it were inserted into the sorted ascending array (ties share the mean rank)
@@ -917,6 +923,7 @@
       if (key === "age") return p.age ?? 0;
       if (key === "year") return Number(seasonOf(p)) || 0;
       if (key === "ukb") return st(p).ukb;
+      if (key === "wsgp") return st(p).wsgp;
       if (key === "uera") { const u = st(p).uera; return u == null ? null : -u; }
       const mm = sortMetric, v = V(p).m[key];
       if (mm && v != null) return mm.hib === false ? -v : v;       // oriented so "desc" is always best first
@@ -1599,7 +1606,8 @@
   }
 
   // a metric's value for display: season / window values live on V(p).m, pool-derived ones (underlying ERA) on the stats
-  const metricValue = (m, pv, st) => (m.key === "ukb" ? (st ? st.ukb : null) : m.key === "uera" ? (st ? st.uera : null) : pv.m[m.key]);
+  const metricValue = (m, pv, st) => (m.key === "ukb" ? (st ? st.ukb : null) : m.key === "uera" ? (st ? st.uera : null)
+                                      : m.key === "wsgp" ? (st ? st.wsgp : null) : pv.m[m.key]);
   // Compare a card with something else: another of his seasons, the other side of a split, or a stretch of games.
   // The card's own numbers stay put; the comparison rides beside them with the difference.
   /* ---------- a card's comparison: two sides of the same player, each set by hand ---------- */
@@ -2865,7 +2873,7 @@
     nera: "Luck-neutral ERA: his actual batted balls, each re-scored at what that type of ball is worth league-wide, so the bounces come out.",
     uera: "Underlying ERA: what his whiff, strike and batted-ball rates say his ERA should be. Strikeouts come in at his Whiff%, walks at the walk rate his Strike% percentile implies, his ground-ball and popup shares stand, and the air balls that are left are split into line drives and fly balls at the league's rate — then every ball in play is worth the league's average for its type.",
     ukb: "Underlying K-BB%: the same idea for K-BB% — his whiff and strike rates translated into the strikeout and walk rates they usually produce.",
-    wsgp: "WSGP: the straight average of his Whiff%, Strike%, GB% and Popup% — the four rates he owns outright, before a fielder touches the ball or a run scores. The four sit on different scales, so the number itself is only useful against other pitchers: read the percentile beside it.",
+    wsgp: "WSGP: the average of his Whiff%, Strike%, GB% and Popup% percentiles — the four rates he owns outright, before a fielder touches the ball or a run scores. 50 is an average pitcher in all four. The bar beside it ranks that average against the pool, so a pitcher who is good at all four can rank above his own average.",
     fbv: "Average velocity of his four-seamers and sinkers.",
     ext: "How far off the rubber he releases the ball. More extension makes the same velocity play up.",
   };
