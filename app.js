@@ -3169,7 +3169,10 @@
     root.style.setProperty("--ppage-vh", Math.round(vh) + "px");
     const bar = document.querySelector("#xboard .pbelow2 .btabs");
     const bh = bar ? Math.round(bar.getBoundingClientRect().height) + 22 : 0;   // the tab strip stays on screen
-    root.style.setProperty("--ppage-top", Math.round(Math.max(0, pg.getBoundingClientRect().top) + 12 + bh) + "px");
+    // where the boxes start in the DOCUMENT, not the viewport: measuring the viewport while the page is scrolled
+    // reads a smaller number every time and the boxes grow with each render
+    const top = pg.getBoundingClientRect().top + (window.scrollY || 0);
+    root.style.setProperty("--ppage-top", Math.round(Math.max(0, top) + 12 + bh) + "px");
   }
   function setCardTop() {
     const t = document.querySelector("#xboard .cardtop, #modal-body .cardtop");
@@ -3758,7 +3761,7 @@
                             : ["ERA", "WHIP"].includes(k) ? Number(v).toFixed(2)
                             : typeof v === "number" ? v.toLocaleString("en-US") : String(v));
     const t = el("table");
-    t.append(colgroup([58, ...cols.map(() => null)]));
+    t.append(colgroup([74, ...cols.map(() => null)]));
     const hr = el("tr");
     for (const h of ["", ...cols]) hr.append(el("th", null, h));
     const th = el("thead"); th.append(hr); t.append(th);
@@ -3987,18 +3990,31 @@
     row.append(t, el("div", "val"));
     return row;
   }
+  // a word of the title that is also a picker: the word itself is the button, and the list drops under it
+  let HSEL = null;                                     // which title picker is open, if any
   function headSelect(cur, opts, onPick, cls) {
     const w = el("span", "hsel " + (cls || ""));
     const hit = (opts.find((o) => o[0] === cur) || [cur, String(cur)]);
-    w.append(el("span", "hsl", hit[1]));
-    const sel = el("select");
-    sel.setAttribute("aria-label", cls === "yr" ? "Season" : "Level");
-    for (const [v, l] of opts) { const o = el("option", null, l); o.value = v; if (v === cur) o.selected = true; sel.append(o); }
-    sel.addEventListener("change", (e) => onPick(e.target.value));
-    w.append(sel);
-    if (opts.length < 2) w.classList.add("solo");
+    const btn = el("button", "hsl", hit[1]); btn.type = "button";
+    if (opts.length < 2) { w.classList.add("solo"); btn.disabled = true; w.append(btn); return w; }
+    btn.setAttribute("aria-haspopup", "listbox");
+    btn.setAttribute("aria-expanded", String(HSEL === cls));
+    btn.setAttribute("aria-label", cls === "yr" ? "Season" : "Level");
+    btn.addEventListener("click", (e) => { e.stopPropagation(); HSEL = HSEL === cls ? null : cls; render(); });
+    w.append(btn);
+    if (HSEL === cls) {
+      const m = el("div", "hmenu"); m.setAttribute("role", "listbox");
+      for (const [v, l] of opts) {
+        const b = el("button", "hmi" + (v === cur ? " on" : ""), l); b.type = "button";
+        b.addEventListener("click", (e) => { e.stopPropagation(); HSEL = null; if (v !== cur) onPick(v); else render(); });
+        m.append(b);
+      }
+      w.append(m);
+    }
     return w;
   }
+  document.addEventListener("click", () => { if (HSEL) { HSEL = null; render(); } });
+  document.addEventListener("keydown", (e) => { if (HSEL && e.key === "Escape") { HSEL = null; render(); } });
   // every panel is titled the way Savant titles one: the year in bold, the rest beside it, centred, over a dotted rule
   function panelHead(lead, rest, sub) {
     const wrap = el("div", "pchead");
