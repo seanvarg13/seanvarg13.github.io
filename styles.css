@@ -1862,40 +1862,39 @@ body.modal-open header.top { z-index: 60; }
 :root:not([data-view="mobile"]) .cmpgrid { justify-content: center; }
 
 /* ---- uERA and batted-ball luck: the leaderboard's own table, rigid columns and all ---- */
-.tblcard { margin: 6px 0 8px; }
-.tblcard table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
-.tblcard thead th { background: var(--band); color: var(--band-ink); font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
-  text-transform: uppercase; text-align: right; padding: 8px 10px; border-bottom: 2px solid var(--accent-2); white-space: nowrap; }
+.tblcard { margin: 6px 0 8px; width: max-content; max-width: 100%; }
+.tblcard table { width: auto; table-layout: fixed; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }   /* auto + a colgroup = the table is exactly as wide as its columns */
+.tblcard thead th { background: var(--band); color: var(--band-ink); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; text-align: right; padding: 6px 10px; border-bottom: 2px solid var(--accent-2); white-space: nowrap; }
 .tblcard thead th.l { text-align: left; }
-.tblcard tbody td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--hair); color: var(--ink); font-size: 12.5px; font-weight: 600; }
+.tblcard tbody td { text-align: right; padding: 5px 10px; border-bottom: 1px solid var(--hair); color: var(--ink); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
 .tblcard tbody tr:last-child td { border-bottom: 0; }
 .tblcard tbody tr:nth-child(even) td { background: var(--stripe); }
 .tblcard tbody tr:hover td { background: var(--hover); }
 .tblcard td.l { text-align: left; font-weight: 400; }
-.tblcard td.l b { display: block; font-size: 13px; font-weight: 700; color: var(--ink); }
-.tblcard td.l small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; margin-top: 2px; }
+.tblcard td.l b { font-size: 12.5px; font-weight: 700; color: var(--ink); }
 .tblcard td.exp { color: var(--accent-2-text); }          /* the expected column is the point of the table */
 .tblcard td.own { font-weight: 700; }
 .tblcard td.lg { color: var(--ink-2); font-weight: 400; }
 /* the head strip: the one number the table is about, then the real one beside it */
-.tblhead { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 9px 12px;
+.tblhead { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 8px; padding: 6px 10px;
   background: var(--accent-wash); border-bottom: 1px solid var(--hair); font-size: 13px; }
-.tblhead b { font-size: 15px; color: var(--ink); letter-spacing: 0.01em; }
+.tblhead b { font-size: 14px; color: var(--ink); letter-spacing: 0.01em; }
 .tblhead .tsub { color: var(--ink-2); }
 .tblhead .tsep { color: var(--muted); }
-.chip2 { display: inline-block; min-width: 46px; padding: 2px 8px; border-radius: 2px; font-weight: 700; font-size: 12px; text-align: center; }
+.chip2 { display: inline-block; min-width: 42px; padding: 1px 7px; border-radius: 2px; font-weight: 700; font-size: 11.5px; text-align: center; }
 .chip2.lucky { background: var(--accent-wash); color: var(--accent-2-text); box-shadow: inset 0 0 0 1px var(--accent-2); }
 .chip2.unlucky { background: rgba(200, 16, 46, 0.12); color: var(--red, #c8102e); box-shadow: inset 0 0 0 1px rgba(200, 16, 46, 0.45); }
 .chip2.even { background: var(--surface-2); color: var(--muted); box-shadow: inset 0 0 0 1px var(--hair); }
-:root[data-view="mobile"] .tblcard { overflow-x: auto; }
-:root[data-view="mobile"] .tblcard table { min-width: 340px; }
+:root[data-view="mobile"] .tblcard { overflow-x: auto; width: auto; }
+:root[data-view="mobile"] .tblcard table { width: 100%; min-width: 340px; }
 
 /* ---- desktop: a popup or player card fits the window and scrolls inside itself, so it never drifts ---- */
 :root:not([data-view="mobile"]) .modal { display: flex; align-items: center; justify-content: center; overflow: hidden;
   padding: 20px 16px; padding-top: calc(var(--header-h, 0px) + 20px); }   /* the header stays above a popup, so the popup lives under it */
 /* three caps, because any one of them can be the honest one: the measured window (--modal-max, set in JS),
    the flex parent's own box, and vh as the last resort if the variable never lands */
-:root:not([data-view="mobile"]) .modal-panel { display: flex; flex-direction: column; flex: 0 1 auto;
+:root:not([data-view="mobile"]) .modal-panel { display: flex; flex-direction: column; flex: 0 1 auto; margin: 0;   /* the old 28px top margin would centre off by half of it */
   max-height: calc(100vh - 40px); max-height: min(100%, var(--modal-max, calc(100dvh - 40px))); }
 :root:not([data-view="mobile"]) #modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 /* the card's own pinned plate and the comparison's frozen heads now stick to the panel, not the page */

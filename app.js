@@ -2053,20 +2053,18 @@
       card.append(hd);
     }
     const table = el("table", "ukbbt"), thead = el("thead"), tr = el("tr");
-    table.append(colgroup([null, 96, 96, 96]));
+    table.append(colgroup([104, 88, 88, 84]));
     for (const h of ["", "Expected", "Actual", "Diff"]) tr.append(el("th", h === "" ? "l" : null, h));
     thead.append(tr); table.append(thead);
     const tbody = el("tbody");
     // [label, caption (what drives the expectation), expected, actual, higher-is-better, isEra]
-    const rows = [["K%", pv.m.whf == null ? "" : `from Whiff% ${pv.m.whf.toFixed(1)}${st.pct.whf == null ? "" : " · " + ordinal(st.pct.whf) + " pctl"}`, ik.k, pv.m.k, true, false],
-                  ["BB%", pv.m.strk == null ? "" : `from Strike% ${pv.m.strk.toFixed(1)}${st.pct.strk == null ? "" : " · " + ordinal(st.pct.strk) + " pctl"}`, ik.bb, pv.m.bb, false, false],
-                  ["K−BB%", "", st.ukb, pv.m.kbb, true, false],
-                  ["ERA", "those rates, every ball in play at its league value", st.uera, pv.m.era, false, true]];
-    for (const [what, cap, exp, act, hib, isEra] of rows) {
+    const rows = [["K%", ik.k, pv.m.k, true, false], ["BB%", ik.bb, pv.m.bb, false, false],
+                  ["K−BB%", st.ukb, pv.m.kbb, true, false], ["ERA", st.uera, pv.m.era, false, true]];
+    for (const [what, exp, act, hib, isEra] of rows) {
       const r = el("tr"); const d = act == null || exp == null ? null : (isEra ? Math.round(100 * (act - exp)) / 100 : Math.round(10 * (act - exp)) / 10);
       const good = d == null ? null : hib ? d > 0 : d < 0;
       const fv = (x) => (x == null ? "–" : isEra ? x.toFixed(2) : x.toFixed(1) + "%");
-      const lc = el("td", "l"); lc.append(el("b", null, what)); if (cap) lc.append(el("small", null, cap));
+      const lc = el("td", "l"); lc.append(el("b", null, what));
       const dc = el("td", "dcell");
       dc.append(el("span", "chip2 " + (d == null ? "even" : Math.abs(d) < (isEra ? 0.25 : 1) ? "even" : good ? "lucky" : "unlucky"),
                    d == null ? "–" : (d > 0 ? "+" : "") + (isEra ? d.toFixed(2) : d.toFixed(1))));
@@ -2074,7 +2072,8 @@
       tbody.append(r);
     }
     table.append(tbody); card.append(table); box.append(card);
-    box.append(el("p", "note", "Expected K% is his whiff rate; expected BB% is the walk rate at his Strike% percentile. uERA puts those two rates on the batted balls he allowed — his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate, every ball in play worth the league's average for its type. Blue diff: results beat the process; red: they trail it."));
+    const from = (v, pct) => (v == null ? "" : ` (${v.toFixed(1)}%${pct == null ? "" : ", " + ordinal(pct)}）`.replace("）", ")"));
+    box.append(el("p", "note", `Expected K% is his whiff rate${from(pv.m.whf, st.pct.whf)}; expected BB% is the walk rate at his Strike% percentile${from(pv.m.strk, st.pct.strk)}. uERA puts those two rates on the batted balls he allowed — his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate, every ball in play worth the league's average for its type. Blue diff: results beat the process; red: they trail it.`));
     return box;
   }
   function renderLuckTable(p, pv, noHead) {
@@ -2094,7 +2093,7 @@
       card.append(hd);
     }
     const table = el("table"), thead = el("thead"), tr = el("tr");
-    table.append(colgroup([null, 72, 78, 104, 84, 84]));
+    table.append(colgroup([104, 60, 66, 92, 74, 76]));
     for (const h of ["Type", "BIP", "Share", "wOBA allowed", "League", "Diff"]) tr.append(el("th", h === "Type" ? "l" : null, h));
     thead.append(tr); table.append(thead);
     const tbody = el("tbody");
