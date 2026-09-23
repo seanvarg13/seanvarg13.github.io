@@ -860,6 +860,12 @@
   /* ---------- formatting ---------- */
   function fmt(v, m) { return m.dec === 3 ? fmtX(v) : m.dec === 2 ? v.toFixed(2) : m.unit === "%" ? v.toFixed(1) + "%" : v.toFixed(1) + (m.unit ? " " + m.unit : ""); }
   const fmtX = (x) => (x == null || x < 0 ? "–" : x.toFixed(3).replace(/^0/, ""));
+  // fixed column widths, the way the board's grid rows are fixed: null = take whatever is left
+  function colgroup(widths) {
+    const cg = el("colgroup");
+    for (const w of widths) { const c = el("col"); if (w) c.style.width = w + "px"; cg.append(c); }
+    return cg;
+  }
   function fmtIP(ip) { const w = Math.floor(ip + 1e-6), t = Math.round((ip - w) * 3); return t === 3 ? `${w + 1}.0` : `${w}.${t}`; }
   function ordinal(n) { const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
   const sampleLabel = (g) => (isPitcherGroup(g) ? "IP" : "PA");
@@ -2032,7 +2038,7 @@
     const box = el("div", "luck ukbb"), ik = st && st.ukbb;
     if (!noHead) box.append(el("h3", null, "Underlying K% and BB%"));
     if (!ik) { box.append(el("p", "note", "Needs Whiff% and Strike% against the season's population.")); return box; }
-    const card = el("div", "tblcard");
+    const card = el("div", "tblcard board");
     // the headline: what the process says the ERA should have been, against the ERA he actually has
     if (st.uera != null) {
       const hd = el("div", "tblhead");
@@ -2047,6 +2053,7 @@
       card.append(hd);
     }
     const table = el("table", "ukbbt"), thead = el("thead"), tr = el("tr");
+    table.append(colgroup([null, 96, 96, 96]));
     for (const h of ["", "Expected", "Actual", "Diff"]) tr.append(el("th", h === "" ? "l" : null, h));
     thead.append(tr); table.append(thead);
     const tbody = el("tbody");
@@ -2076,7 +2083,7 @@
     const n = Object.values(bbl).reduce((s, x) => s + (x[0] || 0), 0);
     const head = el("h3", null, "Batted-ball luck");
     if (!noHead) box.append(head);
-    const card = el("div", "tblcard");
+    const card = el("div", "tblcard board");
     const era = pv.m.era, nera = pv.m.nera;
     if (era != null && nera != null) {
       const diff = Math.round(100 * (era - nera)) / 100;
@@ -2087,6 +2094,7 @@
       card.append(hd);
     }
     const table = el("table"), thead = el("thead"), tr = el("tr");
+    table.append(colgroup([null, 72, 78, 104, 84, 84]));
     for (const h of ["Type", "BIP", "Share", "wOBA allowed", "League", "Diff"]) tr.append(el("th", h === "Type" ? "l" : null, h));
     thead.append(tr); table.append(thead);
     const tbody = el("tbody");
@@ -2967,8 +2975,9 @@
   // a popup is never taller than the window it sits in: measure the visible viewport rather than trust vh,
   // which a page-zoom, a forced viewport width or a browser's own chrome can each put out of step
   function sizeModal() {
-    const vv = window.visualViewport;
-    const h = Math.round(Math.max(200, (vv ? vv.height : window.innerHeight) - 40));
+    const vv = window.visualViewport, hd = document.querySelector("header.top");
+    const top = mobileView() || !hd ? 0 : Math.round(hd.getBoundingClientRect().height);   // the header paints over a popup, so it eats that much
+    const h = Math.round(Math.max(200, (vv ? vv.height : window.innerHeight) - top - 40));
     document.documentElement.style.setProperty("--modal-max", h + "px");
   }
   function render() { renderNow(); setCardTop(); sizeModal(); }
