@@ -640,6 +640,20 @@
     const A = adj || sorted.kbbAdj || { k: 0, bb: 0 };
     return { k: Math.round(10 * Math.max(0, k + A.k)) / 10, bb: Math.round(10 * Math.max(0, bb + A.bb)) / 10 };
   }
+  // Mix ERA: the ERA his batted-ball distribution alone is worth. Every ball in play takes the league's value for its
+  // type (his ground-ball and popup shares as they are, the air balls that are left split at the league's line-drive
+  // rate), and the strikeout and walk rates are held at the pool's, so this is the mix and nothing else — 4.15 is an
+  // average distribution, lower is a better one.
+  function mixERA(pv, sorted) {
+    const c = K(), bbl = (pv.ctx || {}).bbl, lg = sorted.mixLg;
+    if (!c.bbw || !bbl || !lg) return null;
+    const cnt = { gb: (bbl.gb || [0])[0], ld: (bbl.ld || [0])[0], fb: (bbl.fb || [0])[0], pu: (bbl.pu || [0])[0] };
+    const tot = cnt.gb + cnt.ld + cnt.fb + cnt.pu;
+    if (!tot) return null;
+    const air = (cnt.ld + cnt.fb) / tot, la = sorted.ldAir != null ? sorted.ldAir : 0.5;
+    const per = (cnt.gb / tot) * c.bbw.gb + (cnt.pu / tot) * c.bbw.pu + air * (la * c.bbw.ld + (1 - la) * c.bbw.fb);
+    return Math.round(100 * (c.lgERA + (per - lg.per) * lg.bip * c.pa9 / c.wobaScale)) / 100;
+  }
   // underlying ERA: his uK% and uBB% put on the batted balls he allowed, every ball in play worth the league's value
   // for its type — his ground-ball and popup shares stand, the air balls that are left are split into line drives and
   // fly balls at the population's ratio. Luck-neutral ERA on top of process-implied K and BB.
@@ -701,9 +715,19 @@
     const sorted = {};
     for (const m of allFor(g)) sorted[m.key] = list.map((p) => { const x = V(p).m[m.key]; return x == null ? null : m.hib ? x : -x; }).filter((v) => v != null).sort((a, b) => a - b);
     if (isPitcherGroup(g) && pct.whf && pct.strk) {                  // underlying ERA for the population, then its percentiles
-      let ldN = 0, fbN = 0;
-      for (const p of list) { const b = (V(p).ctx || {}).bbl; if (b) { ldN += (b.ld || [0])[0]; fbN += (b.fb || [0])[0]; } }
+      let ldN = 0, fbN = 0, gbN = 0, puN = 0, paN = 0;
+      for (const p of list) {
+        const v = V(p), b = (v.ctx || {}).bbl;
+        if (!b) continue;
+        ldN += (b.ld || [0])[0]; fbN += (b.fb || [0])[0]; gbN += (b.gb || [0])[0]; puN += (b.pu || [0])[0];
+        paN += v.ctx.PAw || 0;
+      }
       sorted.ldAir = ldN + fbN ? ldN / (ldN + fbN) : null;             // the population's line-drive share of air balls
+      const bipN = gbN + ldN + fbN + puN, cK = K();
+      if (bipN && paN && cK.bbw) {                                     // the pool's own mix, the yardstick Mix ERA is measured against
+        const la = sorted.ldAir, airV = la * cK.bbw.ld + (1 - la) * cK.bbw.fb;
+        sorted.mixLg = { per: (gbN / bipN) * cK.bbw.gb + (puN / bipN) * cK.bbw.pu + ((ldN + fbN) / bipN) * airV, bip: bipN / paN };
+      }
       let n = 0, dk = 0, dbb = 0;                                      // re-centre the fits on this pool's own K% and BB%
       list.forEach((p, i) => {
         const pv = V(p), raw = impliedKBB(pv, pct.strk[i], sorted, { k: 0, bb: 0 });
@@ -717,6 +741,7 @@
         s.uk = s.ukbb ? s.ukbb.k : null; s.ubb = s.ukbb ? s.ukbb.bb : null;
         s.ukb = s.ukbb ? Math.round(10 * (s.ukbb.k - s.ukbb.bb)) / 10 : null;
         s.uera = underlyingERA(V(p), s.ukbb, sorted);
+        s.mera = mixERA(V(p), sorted);
       });
       const ukbs = list.map((p) => stats.get(p.type + p.id).ukb), ukp = percentiles(ukbs);
       const uks = list.map((p) => stats.get(p.type + p.id).uk), ubbs = list.map((p) => stats.get(p.type + p.id).ubb);
@@ -725,6 +750,9 @@
       sorted.ukb = ukbs.filter((x) => x != null).sort((a, b) => a - b);
       sorted.uk = uks.filter((x) => x != null).sort((a, b) => a - b);
       sorted.ubb = ubbs.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
+      const mers = list.map((p) => stats.get(p.type + p.id).mera), mep = percentiles(mers.map((x) => (x == null ? null : -x)));
+      list.forEach((p, i) => { stats.get(p.type + p.id).pct.mera = mep[i]; });
+      sorted.mera = mers.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
       const ues = list.map((p) => stats.get(p.type + p.id).uera), uep = percentiles(ues.map((x) => (x == null ? null : -x)));
       list.forEach((p, i) => { stats.get(p.type + p.id).pct.uera = uep[i]; });
       sorted.uera = ues.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
@@ -768,10 +796,12 @@
     pct.ubb = ukbb && pl.sorted.ubb ? insertPct(pl.sorted.ubb, -ukbb.bb) : null;
     const uera = pl.sorted.uera ? underlyingERA(V(p), ukbb, pl.sorted) : null;
     pct.uera = uera == null || !pl.sorted.uera ? null : insertPct(pl.sorted.uera, -uera);
+    const mera = mixERA(V(p), pl.sorted);
+    pct.mera = mera == null || !pl.sorted.mera ? null : insertPct(pl.sorted.mera, -mera);
     const wsgp = wsgpFrom(pct.whf, pct.strk, pct.gb, pct.pu);
     pct.wsgp = wsgp == null || !pl.sorted.wsgp ? null : insertPct(pl.sorted.wsgp, wsgp);
     return { pct, score, scorePct: Math.round(score), rank: above + 1, outside: true, ukbb, ukb,
-             uk: ukbb ? ukbb.k : null, ubb: ukbb ? ukbb.bb : null, uera, wsgp };
+             uk: ukbb ? ukbb.k : null, ubb: ukbb ? ukbb.bb : null, uera, mera, wsgp };
   }
 
   // percentile of x if it were inserted into the sorted ascending array (ties share the mean rank)
@@ -964,6 +994,7 @@
       if (key === "year") return Number(seasonOf(p)) || 0;
       if (key === "ukb") return st(p).ukb;
       if (key === "uk") return st(p).uk;
+      if (key === "mera") { const v = st(p).mera; return v == null ? null : -v; }
       if (key === "ubb") { const v = st(p).ubb; return v == null ? null : -v; }
       if (key === "wsgp") return st(p).wsgp;
       if (key === "uera") { const u = st(p).uera; return u == null ? null : -u; }
@@ -1650,7 +1681,7 @@
   // a metric's value for display: season / window values live on V(p).m, pool-derived ones (underlying ERA) on the stats
   const metricValue = (m, pv, st) => (m.key === "ukb" ? (st ? st.ukb : null) : m.key === "uera" ? (st ? st.uera : null)
                                       : m.key === "wsgp" ? (st ? st.wsgp : null) : m.key === "uk" ? (st ? st.uk : null)
-                                      : m.key === "ubb" ? (st ? st.ubb : null) : pv.m[m.key]);
+                                      : m.key === "ubb" ? (st ? st.ubb : null) : m.key === "mera" ? (st ? st.mera : null) : pv.m[m.key]);
   // Compare a card with something else: another of his seasons, the other side of a split, or a stretch of games.
   // The card's own numbers stay put; the comparison rides beside them with the difference.
   /* ---------- a card's comparison: two sides of the same player, each set by hand ---------- */
@@ -2106,7 +2137,7 @@
     }
     table.append(tbody); card.append(table);
     const pl0 = refKey && pool(refKey).sorted.ldAir;
-    const mix = renderBBMix(pv, st, refKey);
+    const mix = renderBBMix(pv, st, refKey, st.mera);
     const row = el("div", "uerarow"); row.append(card); if (mix) row.append(mix);
     box.append(row);
     const from = (v, pct) => (v == null ? "" : ` (${v.toFixed(1)}%${pct == null ? "" : ", " + ordinal(pct)}）`.replace("）", ")"));
@@ -2124,7 +2155,7 @@
     cell.title = ordinal(pct) + " percentile";
     return cell;
   }
-  function renderBBMix(pv, st, refKey) {
+  function renderBBMix(pv, st, refKey, mera) {
     const bbl = (pv.ctx || {}).bbl;
     if (!bbl || !K().bbw) return null;
     const cnt = { gb: (bbl.gb || [0])[0], ld: (bbl.ld || [0])[0], fb: (bbl.fb || [0])[0], pu: (bbl.pu || [0])[0] };
@@ -2157,7 +2188,7 @@
       r.append(el("div", "mlbl", what), minibar(pct), el("div", "mval", rate.toFixed(1) + "%"));
       box.append(r);
     }
-    box.append(el("div", "mixfoot", `${tot} balls in play`));
+    box.append(el("div", "mixfoot", `${tot} balls in play${mera == null ? "" : " · Mix ERA " + mera.toFixed(2)}`));
     return box;
   }
   function renderLuckTable(p, pv, noHead) {
@@ -2990,6 +3021,7 @@
     ubb: "uBB%: the walk rate his process implies — 53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%. Strike% does most of the work; for a fixed strike rate, getting those strikes inside the zone rather than on chases means slightly more walks.",
     xws: "xwOBA as Statcast computes it: every ball in play is worth what balls hit at that exit velocity and launch angle have been worth, plus his real strikeouts, walks and hit-by-pitches. Direction is ignored — a 100 mph fly ball counts the same pulled or the other way.",
     xwd: "dxwOBA, the directional model: the same idea, but each ball in play is also scored on where it went (pull angle and spray angle) along with his sprint speed. Pulled balls in the air are worth far more than the same ball hit the other way, which is what Statcast's version misses; re-anchored each season so the league average matches the league's real wOBA.",
+    mera: "Mix ERA: the ERA his batted-ball distribution alone is worth. Every ball in play is priced at the league's average for its type — his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate — and the strikeout and walk rates are held at the league's, so nothing but where the ball goes moves it. 4.15 is an average mix; lower is a better one. A ground ball is worth .228 and an air ball .524, so this is mostly a ground-ball and popup stat.",
     wsgp: "WSGP: the average of his Whiff%, Strike%, GB% and Popup% percentiles — the four rates he owns outright, before a fielder touches the ball or a run scores. 50 is an average pitcher in all four. The bar beside it ranks that average against the pool, so a pitcher who is good at all four can rank above his own average.",
     fbv: "Average velocity of his four-seamers and sinkers.",
     ext: "How far off the rubber he releases the ball. More extension makes the same velocity play up.",
