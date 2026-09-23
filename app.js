@@ -2026,7 +2026,7 @@
     const grid = el("div", "hgroups"); grid.append(...cols); card.append(grid);
     // the expected / contact numbers sit under the card, out of the way until you ask for them
     for (const [title, box] of folded) card.append(foldSection("pgrp:" + title, title, () => box));
-    if (st && st.ukbb) card.append(foldSection("ukbb", "Underlying K% and BB%", () => renderUnderlyingKBB(pv, st, true)));
+    if (st && st.ukbb) card.append(foldSection("ukbb", "Underlying K% and BB%", () => renderUnderlyingKBB(pv, st, true, ref)));
     if (pv.ctx.bbl && K().bbw) card.append(foldSection("luck", "Batted-ball luck", () => renderLuckTable(p, pv, true)));
     card.dataset.notes = (`Every percentile is against ${DS.level === "MLB" ? "all" : DS.levelName} pitchers with ${refMin(g)}+ batters faced ${DS.hist ? "that" : "this"} season, starters and relievers together. ERA is official (per-game earned runs from MLB game logs inside date windows; not available in a handedness split). FIP = (13·HR + 3·(BB+HBP) − 2·K) / IP + ${K().fipC}; SIERA is Swartz's 2011 formula shifted ${K().sieraShift >= 0 ? "+" : ""}${K().sieraShift} so the league averages its ${K().lgERA} ERA. Fastball velo averages four-seamers and sinkers. Lower ERA / FIP / SIERA / BB%, Z-Contact% and contact quality allowed count as better.`);
     return card;
@@ -2034,7 +2034,7 @@
 
   // luck-neutral ERA breakdown: what each batted-ball type actually produced against him vs the league average
   // what his whiff rate and strike rate say the K% and BB% should be, next to the real ones
-  function renderUnderlyingKBB(pv, st, noHead) {
+  function renderUnderlyingKBB(pv, st, noHead, refKey) {
     const box = el("div", "luck ukbb"), ik = st && st.ukbb;
     if (!noHead) box.append(el("h3", null, "Underlying K% and BB%"));
     if (!ik) { box.append(el("p", "note", "Needs Whiff% and Strike% against the season's population.")); return box; }
@@ -2043,7 +2043,7 @@
     if (st.uera != null) {
       const hd = el("div", "tblhead");
       hd.append(el("b", null, `uERA ${st.uera.toFixed(2)}`));
-      if (st.pct.uera != null) hd.append(el("span", "tsub", `${ordinal(st.pct.uera)} percentile`));
+      if (st.pct.uera != null) hd.append(el("span", "tsub", `${ordinal(st.pct.uera)} pctl`));
       if (pv.m.era != null) {
         const gap = Math.round(100 * (pv.m.era - st.uera)) / 100;
         hd.append(el("span", "tsep", "·"), el("span", "tsub", `ERA ${pv.m.era.toFixed(2)}`),
@@ -2072,8 +2072,54 @@
       tbody.append(r);
     }
     table.append(tbody); card.append(table); box.append(card);
+    const pl0 = refKey && pool(refKey).sorted.ldAir;
+    const mix = renderBBMix(pv, st, refKey);
+    if (mix) box.append(mix);
     const from = (v, pct) => (v == null ? "" : ` (${v.toFixed(1)}%${pct == null ? "" : ", " + ordinal(pct)}）`.replace("）", ")"));
-    box.append(el("p", "note", `Expected K% is his whiff rate${from(pv.m.whf, st.pct.whf)}; expected BB% is the walk rate at his Strike% percentile${from(pv.m.strk, st.pct.strk)}. uERA puts those two rates on the batted balls he allowed — his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate, every ball in play worth the league's average for its type. Blue diff: results beat the process; red: they trail it.`));
+    box.append(el("p", "note", `Expected K% is his whiff rate${from(pv.m.whf, st.pct.whf)}; expected BB% is the walk rate at his Strike% percentile${from(pv.m.strk, st.pct.strk)}. uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. Percentiles count fewer line drives and fly balls as better. Blue diff: results beat the process; red: they trail it.`));
+    return box;
+  }
+  function renderBBMix(pv, st, refKey) {
+    const bbl = (pv.ctx || {}).bbl;
+    if (!bbl || !K().bbw) return null;
+    const cnt = { gb: (bbl.gb || [0])[0], ld: (bbl.ld || [0])[0], fb: (bbl.fb || [0])[0], pu: (bbl.pu || [0])[0] };
+    const tot = cnt.gb + cnt.ld + cnt.fb + cnt.pu;
+    if (!tot) return null;
+    const sh = { gb: 100 * cnt.gb / tot, ld: 100 * cnt.ld / tot, fb: 100 * cnt.fb / tot, pu: 100 * cnt.pu / tot };
+    const air = sh.ld + sh.fb;
+    const pl = refKey ? pool(refKey) : null;
+    const la = pl && pl.sorted.ldAir != null ? pl.sorted.ldAir : (air ? sh.ld / air : 0);
+    // line-drive and fly-ball shares aren't card metrics, so rank them here against the same pool (fewer = better)
+    if (pl && !pl.sorted.ldsh) {
+      const ld = [], fb = [];
+      for (const q of pl.ref) {
+        const b = (V(q).ctx || {}).bbl;
+        if (!b) continue;
+        const t = (b.gb || [0])[0] + (b.ld || [0])[0] + (b.fb || [0])[0] + (b.pu || [0])[0];
+        if (!t) continue;
+        ld.push(-100 * (b.ld || [0])[0] / t); fb.push(-100 * (b.fb || [0])[0] / t);
+      }
+      pl.sorted.ldsh = ld.sort((x, y) => x - y); pl.sorted.fbsh = fb.sort((x, y) => x - y);
+    }
+    const pctOf = (arr, v) => (arr && arr.length ? insertPct(arr, -v) : null);
+    const box = el("div", "tblcard board bbmix");
+    const hd = el("div", "tblhead");
+    hd.append(el("b", null, "Batted-ball mix"), el("span", "tsub", `${tot} balls in play`));
+    box.append(hd);
+    const table = el("table"), thead = el("thead"), tr = el("tr");
+    table.append(colgroup([104, 72, 58, 84]));
+    for (const h of ["Type", "Share", "Pctl", "uERA uses"]) tr.append(el("th", h === "Type" ? "l" : null, h));
+    thead.append(tr); table.append(thead);
+    const tbody = el("tbody");
+    const rows = [["Ground balls", sh.gb, st.pct.gb, sh.gb], ["Line drives", sh.ld, pctOf(pl && pl.sorted.ldsh, sh.ld), air * la],
+                  ["Fly balls", sh.fb, pctOf(pl && pl.sorted.fbsh, sh.fb), air * (1 - la)], ["Popups", sh.pu, st.pct.pu, sh.pu]];
+    for (const [what, share, pct, used] of rows) {
+      const r = el("tr");
+      r.append(el("td", "l", what), el("td", "own", share.toFixed(1) + "%"),
+               el("td", pct == null ? "lg" : null, pct == null ? "–" : String(pct)), el("td", "exp", used.toFixed(1) + "%"));
+      tbody.append(r);
+    }
+    table.append(tbody); box.append(table);
     return box;
   }
   function renderLuckTable(p, pv, noHead) {
@@ -2089,7 +2135,7 @@
       const hd = el("div", "tblhead");
       hd.append(el("b", null, `Luck-neutral ${nera.toFixed(2)}`), el("span", "tsep", "·"), el("span", "tsub", `ERA ${era.toFixed(2)}`),
                 el("span", "chip2 " + (diff < -0.15 ? "lucky" : diff > 0.15 ? "unlucky" : "even"),
-                   diff < -0.15 ? `${Math.abs(diff).toFixed(2)} runs of good luck` : diff > 0.15 ? `${diff.toFixed(2)} runs of bad luck` : "about what his contact deserved"));
+                   diff < -0.15 ? `${Math.abs(diff).toFixed(2)} lucky` : diff > 0.15 ? `${diff.toFixed(2)} unlucky` : "as deserved"));
       card.append(hd);
     }
     const table = el("table"), thead = el("thead"), tr = el("tr");

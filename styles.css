@@ -1863,6 +1863,7 @@ body.modal-open header.top { z-index: 60; }
 
 /* ---- uERA and batted-ball luck: the leaderboard's own table, rigid columns and all ---- */
 .tblcard { margin: 6px 0 8px; width: max-content; max-width: 100%; }
+.tblcard.bbmix { margin-top: 14px; }   /* its own small table under the uERA one, with a gap */
 .tblcard table { width: auto; table-layout: fixed; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }   /* auto + a colgroup = the table is exactly as wide as its columns */
 .tblcard thead th { background: var(--band); color: var(--band-ink); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em;
   text-transform: uppercase; text-align: center; padding: 6px 10px; white-space: nowrap;
@@ -1877,6 +1878,7 @@ body.modal-open header.top { z-index: 60; }
 .tblcard td.lg { color: var(--ink-2); font-weight: 400; }
 /* the head strip: the one number the table is about, then the real one beside it */
 .tblhead { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 8px; padding: 6px 10px;
+  width: 0; min-width: 100%;   /* the strip stretches to the table but never makes the card wider than it */
   background: var(--accent-wash); border-bottom: 1px solid var(--hair); font-size: 13px; }
 .tblhead b { font-size: 14px; color: var(--ink); letter-spacing: 0.01em; }
 .tblhead .tsub { color: var(--ink-2); }
