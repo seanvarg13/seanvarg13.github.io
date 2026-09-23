@@ -3147,23 +3147,10 @@
 
   // the comparison's column heads stick under the card's pinned plate, so they need its height
   let cardRO = null, cardEl = null;
-  // the three panels fill the window and scroll inside themselves, so the page itself never scrolls
+  // the three panels are as tall as the tallest of them and no taller — the page runs the full width of the window
   function sizePPage() {
-    const pg = document.querySelector("#xboard .ppage"); if (!pg) return;
-    if (mobileView()) { document.documentElement.style.removeProperty("--ppage-top"); return; }
-    const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
-    const top = pg.getBoundingClientRect().top;      // whatever the pinned row and the header leave
-    const ft = document.querySelector("footer.notes");    // the site's notes sit under it and must fit too
-    const fh = ft ? Math.round(ft.getBoundingClientRect().height) + 16 : 0;
-    const root = document.documentElement;
-    if (vh) root.style.setProperty("--ppage-vh", Math.round(vh) + "px");
-    let take = Math.round(Math.max(0, top) + 14 + fh);
-    root.style.setProperty("--ppage-top", take + "px");
-    for (let i = 0; i < 2; i++) {                    // whatever else the page carries (margins, the notes' own spacing)
-      const over = root.scrollHeight - (vh || window.innerHeight);
-      if (over <= 1) break;
-      take += over; root.style.setProperty("--ppage-top", take + "px");
-    }
+    const pg = document.querySelector("#xboard .ppage");
+    document.body.classList.toggle("playerwide", !!pg && !mobileView());
   }
   function setCardTop() {
     const t = document.querySelector("#xboard .cardtop, #modal-body .cardtop");
@@ -3703,13 +3690,13 @@
   // the third panel: four tabs of everything the middle one doesn't lead with. Each tab is a list of blocks,
   // and a block break is a rule across the bars — the batted-ball tab reads air / ground, then the four types,
   // then pull air.
-  const EXTRA_H = [["Plate discipline", [["zsw", "osw", "zmo", "swing"]]],
+  const EXTRA_H = [["Discipline", [["zsw", "osw", "zmo", "swing"]]],
                    ["Contact", [["zcon", "ocon", "whf"]]],
                    ["Batted ball", [["air", "gb"], ["ld", "fb", "gb", "pu"], ["pull", "pullp", "cent", "oppo"]]],
-                   ["Contact quality", [["ev", "brl", "hh", "bs", "ev90", "maxev"]]]];
-  const EXTRA_P = [["Run prevention", [["era", "kbb"], ["nera", "mera", "siera", "fip"]]],
+                   ["Quality", [["ev", "brl", "hh", "bs", "ev90", "maxev"]]]];
+  const EXTRA_P = [["Run prev.", [["era", "kbb"], ["nera", "mera", "siera", "fip"]]],
                    ["K and BB", [["uk", "ubb", "ukb"], ["wsgp", "csw", "swstr"]]],
-                   ["Plate discipline", [["strk", "zone", "osw", "swing", "zcon"]]],
+                   ["Discipline", [["strk", "zone", "osw", "swing", "zcon"]]],
                    ["Batted ball", [["gb", "pu"], ["ev", "hh", "brl"]]]];
   const extraTabs = (p) => (p.type === "H" ? EXTRA_H : EXTRA_P);
   function extraSections(p, st, g) {
@@ -3738,46 +3725,38 @@
     return out;
   }
 
-  /* ---------- the card's season table: every MLB season as one row, each cell coloured by its percentile ---------- */
-  const cardsReady = () => !!window.DRAFT_CARDS;
-  // the columns hist/cards.js carries, in the order build_history writes them (CARD_H / CARD_P)
-  const CELL_H = [["woba", "wOBA", 3], ["xws", "xwOBA", 3], ["xwd", "xwOBA", 3], ["k", "K%", 1], ["bb", "BB%", 1],
-                  ["ev", "EV", 1], ["brl", "Brl%", 1], ["pull", "Pull air", 1]];
-  const CELL_P = [["era", "ERA", 2], ["fip", "FIP", 2], ["k", "K%", 1], ["bb", "BB%", 1], ["whf", "Whiff%", 1],
-                  ["gb", "GB%", 1], ["brl", "Brl%", 1]];
-  // which of those columns the table shows: the directional and Statcast xwOBA never appear together
-  const cardCols = (H) => (H ? CELL_H.filter((c) => c[0] !== (xDir() ? "xws" : "xwd")) : CELL_P);
+  /* ---------- the card's season table: the plain counting line Savant puts under the photo ---------- */
+  const SAV_H = ["PA", "AB", "R", "H", "HR", "SB", "AVG", "OBP", "SLG", "OPS"];
+  const SAV_P = ["W", "L", "ERA", "G", "GS", "SV", "IP", "K", "BB", "WHIP"];
   function renderSeasonHeat(p) {
-    ensureScript("hist/cards.js", cardsReady);
-    const rec = cardsReady() ? (window.DRAFT_CARDS[String(p.id)] || {})[p.type] : null;
     const box = el("div", "tblcard board heatcard");
-    if (!rec) { box.append(el("p", "note", cardsReady() ? "No MLB seasons built for him yet." : "Loading seasons…")); return box; }
-    ensureIndex();
-    const entry = indexReady() ? window.DRAFT_INDEX.players.find((e) => e.id === p.id) : null;
-    const H = p.type === "H", cols = cardCols(H), spec = H ? CELL_H : CELL_P;
-    const keys = Object.keys(rec).sort((x, y) => Number(y.split("-")[1]) - Number(x.split("-")[1]));
+    ensureScript("hist/career.js", careerReady);
+    if (!careerReady()) { box.append(el("p", "note", "Loading career stats…")); return box; }
+    const H = p.type === "H", cols = H ? SAV_H : SAV_P;
+    const lines = (rawLines(p) || []).filter((l) => l.mlb).sort((x, y) => y.season - x.season);
+    if (!lines.length) { box.append(el("p", "note", "No MLB seasons on record.")); return box; }
+    const fmtv = (k, v) => (v == null ? "–" : ["AVG", "OBP", "SLG", "OPS"].includes(k) ? fmtX(v)
+                            : ["ERA", "WHIP"].includes(k) ? Number(v).toFixed(2) : String(v));
     const t = el("table");
-    t.append(colgroup([40, 36, 34, ...cols.map(() => null)]));
+    t.append(colgroup([58, ...cols.map(() => null)]));
     const hr = el("tr");
-    for (const h of ["Season", "Team", H ? "PA" : "IP", ...cols.map((c) => c[1])]) hr.append(el("th", null, h));
+    for (const h of ["Season", ...cols]) hr.append(el("th", null, h));
     const th = el("thead"); th.append(hr); t.append(th);
     const tb = el("tbody");
-    for (const k of keys) {
-      const sv = entry ? entry.s.find((x) => x[0] === k && x[2] === p.type) : null;
-      const flat = rec[k], tr = el("tr");
-      if (k === (state.x.ds || CUR.key)) tr.classList.add("here");
-      const go = () => { state.x = { id: p.id, type: p.type, ds: k }; state.cardWin = { from: "", to: "", last: "" }; savePrefs(); render(); };
-      tr.addEventListener("click", go); tr.title = "Open that season";
-      tr.append(el("td", "l", k.split("-")[1]), el("td", "l", sv ? sv[5] : "–"), el("td", "l", sv ? String(sv[4]) : "–"));
-      for (const c of cols) {
-        const i = spec.findIndex((x) => x[0] === c[0]);
-        const v = flat[2 * i], pct = flat[2 * i + 1], td = el("td");
-        td.textContent = v == null ? "–" : c[2] === 3 ? fmtX(v) : c[2] === 2 ? v.toFixed(2) : v.toFixed(1);
-        if (pct != null) { paint(td, pct); td.title = `${c[1]} ${td.textContent} · ${ordinal(pct)} pctl`; }
-        tr.append(td);
-      }
+    const cur = state.x.ds || CUR.key;
+    for (const l of lines) {
+      const tr = el("tr");
+      if (`mlb-${l.season}` === cur) tr.classList.add("here");
+      tr.addEventListener("click", () => { state.x = { id: p.id, type: p.type, ds: `mlb-${l.season}` }; state.cardWin = { from: "", to: "", last: "" }; savePrefs(); render(); });
+      tr.title = "Open that season";
+      tr.append(el("td", "l", String(l.season)));
+      for (const k of cols) tr.append(el("td", null, fmtv(k, l.c[k])));
       tb.append(tr);
     }
+    const tot = combineLines(H, lines), sum = el("tr", "cartot");
+    sum.append(el("td", "l", `${lines.length} Season${lines.length > 1 ? "s" : ""}`));
+    for (const k of cols) sum.append(el("td", null, fmtv(k, tot[k])));
+    tb.append(sum);
     t.append(tb); box.append(t);
     return box;
   }
@@ -3805,10 +3784,18 @@
       const ts = typeSeg(p); if (ts) box.append(paRow("Side", ts));
     }
     box.append(renderSplitPanel(p));                    // handedness, venue, the expected model and the date boxes
+    box.append(paRow("Sample", renderStrip(p, V(p))));
     const cmp = el("button", "btn btn-quiet tbtn" + (state.cmp2.on ? " on" : ""), state.cmp2.on ? "Close comparison" : "Compare two sides");
     cmp.type = "button";
     cmp.addEventListener("click", () => { state.cmp2.on = !state.cmp2.on; savePrefs(); render(); });
-    box.append(paRow("Compare", cmp));
+    const acts = el("div", "pacts"); acts.append(cmp, renderStarControl(p));
+    if (state.mode === "draft") {
+      const drafted = draftedIds().has(p.id);
+      const d = el("button", "btn btn-quiet tbtn", drafted ? "Undo draft" : "Draft"); d.type = "button";
+      d.addEventListener("click", () => { drafted ? undraft(p.id) : draft(p); });
+      acts.append(d);
+    }
+    box.append(paRow("Actions", acts));
     return box;
   }
   const paRow = (label, node) => { const r = el("div", "parow"); r.append(el("span", "palbl", label), node); return r; };
@@ -3922,38 +3909,40 @@
     if (sub) hd.append(el("span", "pctsub", "· " + sub));
     return hd;
   }
-  // the left panel, the way Savant draws it: the club's colour, the player's action shot behind, the cut-out in front
+  // his height, weight and bat/throw from MLB's own record — one small request per player, cached for the session
+  const BIO = new Map();
+  function bio(id) {
+    if (BIO.has(id)) return BIO.get(id);
+    BIO.set(id, null);
+    fetch(`https://statsapi.mlb.com/api/v1/people/${id}`).then((r) => r.json()).then((j) => {
+      const q = (j.people || [])[0]; if (!q) return;
+      BIO.set(id, { ht: q.height, wt: q.weight, age: q.currentAge,
+                    bats: (q.batSide || {}).code, throws: (q.pitchHand || {}).code,
+                    pos: (q.primaryPosition || {}).abbreviation });
+      if (state.mode === "player") render();
+    }).catch(() => {});
+    return null;
+  }
+  // the left panel, the way Savant draws it: his action shot as a banner, the cut-out over it, the rest centred
   function renderSavantPlate(p, st, g) {
-    const t = teamCode(p.team), col = TEAM_COL[t], tid = TEAM_ID[t];
-    const plate = el("div", "splate"); if (col) plate.style.setProperty("--tcol", col);
-    const back = el("div", "sback");
+    const t = teamCode(p.team), tid = TEAM_ID[t], b = bio(p.id);
+    const plate = el("div", "splate");
+    const back = el("div", "sbanner");
     back.style.backgroundImage = `url("https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:action:hero:current.png/w_900,q_auto:good/v1/people/${p.id}/action/hero/current")`;
     plate.append(back);
-    const row = el("div", "srow");
-    row.append(headshot(p.id, p.name));
-    const id = el("div", "sid");
-    const h2 = el("h2", null, p.name); h2.id = "modal-title"; id.append(h2);
+    plate.append(headshot(p.id, p.name));
+    const h2 = el("h2", null, p.name); h2.id = "modal-title"; plate.append(h2);
     const tm = el("div", "steam");
+    tm.append(el("span", null, `${posLabel(p)} | ${TEAM_NAMES[t] || p.team}`));
     if (tid) { const lg = el("img", "slogo"); lg.alt = ""; lg.loading = "lazy"; lg.src = `https://www.mlbstatic.com/team-logos/${tid}.svg`; lg.addEventListener("error", () => lg.remove()); tm.append(lg); }
-    tm.append(el("span", null, `${p.team}${TEAM_NAMES[t] ? " · " + TEAM_NAMES[t] : ""}`));
-    id.append(tm);
-    id.append(el("div", "sbio", [posLabel(p), p.type === "P" ? p.throws + "HP" : p.bats ? "B: " + p.bats : "",
-                                 p.age != null ? "Age " + p.age : "", dsSeason()].filter(Boolean).join("  ·  ")));
-    row.append(id);
-    plate.append(row);
-    const bot = el("div", "sbot");                       // the dark band under the photo: counting stats, then the controls
-    const v = V(p);
-    if (st.pct) bot.append(renderStrip(p, v));
-    const foot = el("div", "sfoot");
-    const ts = typeSeg(p); if (ts) foot.append(ts);
-    foot.append(renderStarControl(p));
-    if (state.mode === "draft") {
-      const drafted = draftedIds().has(p.id);
-      const b = el("button", "draftbtn", drafted ? "Undo draft" : "Draft"); b.type = "button";
-      b.addEventListener("click", () => { drafted ? undraft(p.id) : draft(p); });
-      foot.append(b);
-    }
-    bot.append(foot); plate.append(bot);
+    plate.append(tm);
+    const bat = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
+    const bits = [];
+    if (bat || thr) bits.push(`Bats/Throws: ${bat || "?"}/${thr || "?"}`);
+    if (b && b.ht) bits.push(`${b.ht}${b.wt ? " " + b.wt + " lbs" : ""}`);
+    const age = (b && b.age) != null ? b.age : p.age;
+    if (age != null) bits.push(`Age: ${age}`);
+    plate.append(el("div", "sbio", bits.join("  |  ")));
     return plate;
   }
   function renderExplore() {
