@@ -618,25 +618,34 @@
   // a date range and a past season each rank him among that pool's pitchers.
   const wsgpFrom = (whf, strk, gb, pu) => (whf == null || strk == null || gb == null || pu == null ? null
                                            : Math.round(10 * (whf + strk + gb + pu) / 4) / 10);
-  // u(K-BB%): the K% his whiff rate implies minus the BB% his Strike% percentile implies
   const quantile = (arr, p) => { if (!arr || !arr.length) return null; const pos = (p / 100) * (arr.length - 1), lo = Math.floor(pos); return arr[lo] + (arr[Math.min(lo + 1, arr.length - 1)] - arr[lo]) * (pos - lo); };
-  // the K% his whiff rate implies and the BB% his Strike% percentile implies (as shares of PA), or null
-  function impliedKBB(pv, pctS, sorted) {
-    if (pv.m.whf == null || pctS == null || !sorted.bb) return null;
-    const kp = pv.m.whf / 100;                                       // implied K%: his whiff rate, as is
-    const bbp = -quantile(sorted.bb, pctS) / 100;                    // implied BB% (sorted.bb holds -BB%)
-    if (kp == null || bbp == null || Number.isNaN(kp) || Number.isNaN(bbp)) return null;
-    return { k: Math.round(1000 * kp) / 10, bb: Math.round(1000 * bbp) / 10 };
+  // uK% and uBB%: what his process rates say the strikeout and walk rates should be. Both are least-squares fits over
+  // every 300+ BF pitcher-season 2015-2026, chosen by leave-one-season-out error (and confirmed by training through
+  // 2025 and scoring 2026 alone):
+  //   uK%  = -16.87 + 0.606·Whiff% + 0.855·CSW%                            RMSE 2.06  (the old "uK% = Whiff%": 3.41, and 2.5 points high)
+  //   uBB% =  53.67 + 0.136·Whiff% - 0.890·Strike% + 0.160·Zone%           RMSE 1.36  (the old Strike%-percentile map: 1.42)
+  // CSW% is what carries the K% fit past the whiff rate: it counts called strikes, which is how a pitcher reaches two
+  // strikes at all. Both are then re-centred on the pool in effect (sorted.kbbAdj), so the league's expected rate
+  // equals the league's real one in that season, split or date range.
+  const KFIT = { c: -16.87, whf: 0.606, csw: 0.855 }, BBFIT = { c: 53.67, whf: 0.136, strk: -0.890, zone: 0.160 };
+  function impliedKBB(pv, pctS, sorted, adj) {
+    const m = pv.m;
+    if (m.whf == null) return null;
+    // a level with no pitch tracking reports Zone% as 0 rather than null, so both fits check for a real number
+    const k = m.csw ? KFIT.c + KFIT.whf * m.whf + KFIT.csw * m.csw : m.whf;          // no called-strike data: the whiff rate, as before
+    const bb = m.strk && m.zone ? BBFIT.c + BBFIT.whf * m.whf + BBFIT.strk * m.strk + BBFIT.zone * m.zone
+             : (pctS != null && sorted.bb ? -quantile(sorted.bb, pctS) : null);       // ditto: the old percentile map
+    if (bb == null || Number.isNaN(k) || Number.isNaN(bb)) return null;
+    const A = adj || sorted.kbbAdj || { k: 0, bb: 0 };
+    return { k: Math.round(10 * Math.max(0, k + A.k)) / 10, bb: Math.round(10 * Math.max(0, bb + A.bb)) / 10 };
   }
-  // underlying ERA: what his ERA looks like with strikeouts at his whiff rate, walks at the walk rate his strike rate implies,
-  // and every ball in play worth the league's value for its type — with his air balls split into line drives and fly balls
-  // at the population's ratio (his own ground-ball and pop-up shares stand). Luck-neutral ERA on top of process-implied K and BB.
-  function underlyingERA(pv, pctS, sorted) {
+  // underlying ERA: his uK% and uBB% put on the batted balls he allowed, every ball in play worth the league's value
+  // for its type — his ground-ball and popup shares stand, the air balls that are left are split into line drives and
+  // fly balls at the population's ratio. Luck-neutral ERA on top of process-implied K and BB.
+  function underlyingERA(pv, ik, sorted) {
     const c = K(), ctx = pv.ctx || {}, bbl = ctx.bbl;
-    if (!c.bbw || c.wbb == null || !bbl || pctS == null || !ctx.PAw || !sorted.bb || pv.m.whf == null) return null;
-    const kp = pv.m.whf / 100;                                       // expected K%: his whiff rate
-    const bbp = -quantile(sorted.bb, pctS) / 100;                    // expected BB%: the walk rate at his Strike% percentile
-    if (Number.isNaN(kp) || Number.isNaN(bbp)) return null;
+    if (!c.bbw || c.wbb == null || !bbl || !ctx.PAw || !ik) return null;
+    const kp = ik.k / 100, bbp = ik.bb / 100;
     const pa = ctx.PAw, hbp = ctx.HBP || 0;
     const counts = ["gb", "ld", "fb", "pu"].map((t) => (bbl[t] || [0])[0]), tot = counts.reduce((a, n) => a + n, 0);
     if (!tot) return null;
@@ -694,10 +703,27 @@
       let ldN = 0, fbN = 0;
       for (const p of list) { const b = (V(p).ctx || {}).bbl; if (b) { ldN += (b.ld || [0])[0]; fbN += (b.fb || [0])[0]; } }
       sorted.ldAir = ldN + fbN ? ldN / (ldN + fbN) : null;             // the population's line-drive share of air balls
-      list.forEach((p, i) => { const s = stats.get(p.type + p.id); s.ukbb = impliedKBB(V(p), pct.strk[i], sorted); s.ukb = s.ukbb ? Math.round(10 * (s.ukbb.k - s.ukbb.bb)) / 10 : null; s.uera = underlyingERA(V(p), pct.strk[i], sorted); });
+      let n = 0, dk = 0, dbb = 0;                                      // re-centre the fits on this pool's own K% and BB%
+      list.forEach((p, i) => {
+        const pv = V(p), raw = impliedKBB(pv, pct.strk[i], sorted, { k: 0, bb: 0 });
+        if (!raw || pv.m.k == null || pv.m.bb == null) return;
+        dk += pv.m.k - raw.k; dbb += pv.m.bb - raw.bb; n++;
+      });
+      sorted.kbbAdj = n ? { k: dk / n, bb: dbb / n } : { k: 0, bb: 0 };
+      list.forEach((p, i) => {
+        const s = stats.get(p.type + p.id);
+        s.ukbb = impliedKBB(V(p), pct.strk[i], sorted, sorted.kbbAdj);
+        s.uk = s.ukbb ? s.ukbb.k : null; s.ubb = s.ukbb ? s.ukbb.bb : null;
+        s.ukb = s.ukbb ? Math.round(10 * (s.ukbb.k - s.ukbb.bb)) / 10 : null;
+        s.uera = underlyingERA(V(p), s.ukbb, sorted);
+      });
       const ukbs = list.map((p) => stats.get(p.type + p.id).ukb), ukp = percentiles(ukbs);
-      list.forEach((p, i) => { stats.get(p.type + p.id).pct.ukb = ukp[i]; });
+      const uks = list.map((p) => stats.get(p.type + p.id).uk), ubbs = list.map((p) => stats.get(p.type + p.id).ubb);
+      const ukpc = percentiles(uks), ubpc = percentiles(ubbs.map((x) => (x == null ? null : -x)));
+      list.forEach((p, i) => { const s = stats.get(p.type + p.id); s.pct.ukb = ukp[i]; s.pct.uk = ukpc[i]; s.pct.ubb = ubpc[i]; });
       sorted.ukb = ukbs.filter((x) => x != null).sort((a, b) => a - b);
+      sorted.uk = uks.filter((x) => x != null).sort((a, b) => a - b);
+      sorted.ubb = ubbs.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
       const ues = list.map((p) => stats.get(p.type + p.id).uera), uep = percentiles(ues.map((x) => (x == null ? null : -x)));
       list.forEach((p, i) => { stats.get(p.type + p.id).pct.uera = uep[i]; });
       sorted.uera = ues.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
@@ -737,11 +763,14 @@
     const ukbb = pl.sorted.ukb ? impliedKBB(V(p), pct.strk, pl.sorted) : null;
     const ukb = ukbb ? Math.round(10 * (ukbb.k - ukbb.bb)) / 10 : null;
     pct.ukb = ukb == null || !pl.sorted.ukb ? null : insertPct(pl.sorted.ukb, ukb);
-    const uera = pl.sorted.uera ? underlyingERA(V(p), pct.strk, pl.sorted) : null;
+    pct.uk = ukbb && pl.sorted.uk ? insertPct(pl.sorted.uk, ukbb.k) : null;
+    pct.ubb = ukbb && pl.sorted.ubb ? insertPct(pl.sorted.ubb, -ukbb.bb) : null;
+    const uera = pl.sorted.uera ? underlyingERA(V(p), ukbb, pl.sorted) : null;
     pct.uera = uera == null || !pl.sorted.uera ? null : insertPct(pl.sorted.uera, -uera);
     const wsgp = wsgpFrom(pct.whf, pct.strk, pct.gb, pct.pu);
     pct.wsgp = wsgp == null || !pl.sorted.wsgp ? null : insertPct(pl.sorted.wsgp, wsgp);
-    return { pct, score, scorePct: Math.round(score), rank: above + 1, outside: true, ukbb, ukb, uera, wsgp };
+    return { pct, score, scorePct: Math.round(score), rank: above + 1, outside: true, ukbb, ukb,
+             uk: ukbb ? ukbb.k : null, ubb: ukbb ? ukbb.bb : null, uera, wsgp };
   }
 
   // percentile of x if it were inserted into the sorted ascending array (ties share the mean rank)
@@ -933,6 +962,8 @@
       if (key === "age") return p.age ?? 0;
       if (key === "year") return Number(seasonOf(p)) || 0;
       if (key === "ukb") return st(p).ukb;
+      if (key === "uk") return st(p).uk;
+      if (key === "ubb") { const v = st(p).ubb; return v == null ? null : -v; }
       if (key === "wsgp") return st(p).wsgp;
       if (key === "uera") { const u = st(p).uera; return u == null ? null : -u; }
       const mm = sortMetric, v = V(p).m[key];
@@ -1617,7 +1648,8 @@
 
   // a metric's value for display: season / window values live on V(p).m, pool-derived ones (underlying ERA) on the stats
   const metricValue = (m, pv, st) => (m.key === "ukb" ? (st ? st.ukb : null) : m.key === "uera" ? (st ? st.uera : null)
-                                      : m.key === "wsgp" ? (st ? st.wsgp : null) : pv.m[m.key]);
+                                      : m.key === "wsgp" ? (st ? st.wsgp : null) : m.key === "uk" ? (st ? st.uk : null)
+                                      : m.key === "ubb" ? (st ? st.ubb : null) : pv.m[m.key]);
   // Compare a card with something else: another of his seasons, the other side of a split, or a stretch of games.
   // The card's own numbers stay put; the comparison rides beside them with the difference.
   /* ---------- a card's comparison: two sides of the same player, each set by hand ---------- */
@@ -2077,7 +2109,7 @@
     const row = el("div", "uerarow"); row.append(card); if (mix) row.append(mix);
     box.append(row);
     const from = (v, pct) => (v == null ? "" : ` (${v.toFixed(1)}%${pct == null ? "" : ", " + ordinal(pct)}）`.replace("）", ")"));
-    box.append(el("p", "note", `Expected K% is his whiff rate${from(pv.m.whf, st.pct.whf)}; expected BB% is the walk rate at his Strike% percentile${from(pv.m.strk, st.pct.strk)}. uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. The percentile bars rank the rates uERA uses, so the line-drive and fly-ball bars are both really his air-ball rate — fewer counts as better. Blue diff: results beat the process; red: they trail it.`));
+    box.append(el("p", "note", `Expected K% is −16.87 + 0.606·Whiff% + 0.855·CSW%${from(pv.m.whf, st.pct.whf)}; expected BB% is 53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%. Both are least-squares fits over every 300+ BF pitcher-season since 2015, re-centred so the pool's expected rates match its real ones — they land within about 2.1 and 1.4 points of the real K% and BB%, against 3.4 for the old "expected K% = Whiff%". uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. The percentile bars rank the rates uERA uses, so the line-drive and fly-ball bars are both really his air-ball rate — fewer counts as better. Blue diff: results beat the process; red: they trail it.`));
     return box;
   }
   // a percentile bar small enough to live in a table cell — same colours and maths as the card's meters
@@ -2952,7 +2984,9 @@
     siera: "Skill-interactive ERA: FIP's inputs plus how he uses the ground, shifted so the league averages its real ERA.",
     nera: "Luck-neutral ERA: his actual batted balls, each re-scored at what that type of ball is worth league-wide, so the bounces come out.",
     uera: "Underlying ERA: what his whiff, strike and batted-ball rates say his ERA should be. Strikeouts come in at his Whiff%, walks at the walk rate his Strike% percentile implies, his ground-ball and popup shares stand, and the air balls that are left are split into line drives and fly balls at the league's rate — then every ball in play is worth the league's average for its type.",
-    ukb: "Underlying K-BB%: the same idea for K-BB% — his whiff and strike rates translated into the strikeout and walk rates they usually produce.",
+    ukb: "Underlying K-BB%: uK% minus uBB% — what his swing-and-miss and strike-throwing say the gap should be, with the results taken out of it.",
+    uk: "uK%: the strikeout rate his process implies — −16.87 + 0.606·Whiff% + 0.855·CSW%, fitted on every 300+ BF pitcher-season since 2015 and re-centred on the pool in front of you. CSW% is in there because called strikes are how a pitcher reaches two strikes; whiffs alone overstate K% by about 2.5 points.",
+    ubb: "uBB%: the walk rate his process implies — 53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%. Strike% does most of the work; for a fixed strike rate, getting those strikes inside the zone rather than on chases means slightly more walks.",
     xws: "xwOBA as Statcast computes it: every ball in play is worth what balls hit at that exit velocity and launch angle have been worth, plus his real strikeouts, walks and hit-by-pitches. Direction is ignored — a 100 mph fly ball counts the same pulled or the other way.",
     xwd: "dxwOBA, the directional model: the same idea, but each ball in play is also scored on where it went (pull angle and spray angle) along with his sprint speed. Pulled balls in the air are worth far more than the same ball hit the other way, which is what Statcast's version misses; re-anchored each season so the league average matches the league's real wOBA.",
     wsgp: "WSGP: the average of his Whiff%, Strike%, GB% and Popup% percentiles — the four rates he owns outright, before a fielder touches the ball or a run scores. 50 is an average pitcher in all four. The bar beside it ranks that average against the pool, so a pitcher who is good at all four can rank above his own average.",
