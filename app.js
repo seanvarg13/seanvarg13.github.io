@@ -622,17 +622,19 @@
   // uK% and uBB%: what his process rates say the strikeout and walk rates should be. Both are least-squares fits over
   // every 300+ BF pitcher-season 2015-2026, chosen by leave-one-season-out error (and confirmed by training through
   // 2025 and scoring 2026 alone):
-  //   uK%  = -16.87 + 0.606·Whiff% + 0.855·CSW%                            RMSE 2.06  (the old "uK% = Whiff%": 3.41, and 2.5 points high)
+  //   uK%  = -25.81 + 0.955·Whiff% + 0.383·Strike%                        RMSE 2.24  (the old "uK% = Whiff%": 3.41, and 2.5 points high)
   //   uBB% =  53.67 + 0.136·Whiff% - 0.890·Strike% + 0.160·Zone%           RMSE 1.36  (the old Strike%-percentile map: 1.42)
-  // CSW% is what carries the K% fit past the whiff rate: it counts called strikes, which is how a pitcher reaches two
-  // strikes at all. Both are then re-centred on the pool in effect (sorted.kbbAdj), so the league's expected rate
-  // equals the league's real one in that season, split or date range.
-  const KFIT = { c: -16.87, whf: 0.606, csw: 0.855 }, BBFIT = { c: 53.67, whf: 0.136, strk: -0.890, zone: 0.160 };
+  // Whiff% is how often they miss, Strike% is how often he gets to two strikes to make it count; the two are nearly
+  // independent (r = .10), so the coefficients barely move from season to season (SD .03 and .07). A CSW% term fits
+  // a little tighter (RMSE 2.06) but leans on a stat that is itself mostly whiffs, and it wanders more year to year.
+  // Both fits are then re-centred on the pool in effect (sorted.kbbAdj), so the league's expected rate equals the
+  // league's real one in that season, split or date range.
+  const KFIT = { c: -25.81, whf: 0.955, strk: 0.383 }, BBFIT = { c: 53.67, whf: 0.136, strk: -0.890, zone: 0.160 };
   function impliedKBB(pv, pctS, sorted, adj) {
     const m = pv.m;
     if (m.whf == null) return null;
     // a level with no pitch tracking reports Zone% as 0 rather than null, so both fits check for a real number
-    const k = m.csw ? KFIT.c + KFIT.whf * m.whf + KFIT.csw * m.csw : m.whf;          // no called-strike data: the whiff rate, as before
+    const k = m.strk ? KFIT.c + KFIT.whf * m.whf + KFIT.strk * m.strk : m.whf;       // no strike data: the whiff rate, as before
     const bb = m.strk && m.zone ? BBFIT.c + BBFIT.whf * m.whf + BBFIT.strk * m.strk + BBFIT.zone * m.zone
              : (pctS != null && sorted.bb ? -quantile(sorted.bb, pctS) : null);       // ditto: the old percentile map
     if (bb == null || Number.isNaN(k) || Number.isNaN(bb)) return null;
@@ -2109,7 +2111,7 @@
     const row = el("div", "uerarow"); row.append(card); if (mix) row.append(mix);
     box.append(row);
     const from = (v, pct) => (v == null ? "" : ` (${v.toFixed(1)}%${pct == null ? "" : ", " + ordinal(pct)}）`.replace("）", ")"));
-    box.append(el("p", "note", `Expected K% is −16.87 + 0.606·Whiff% + 0.855·CSW%${from(pv.m.whf, st.pct.whf)}; expected BB% is 53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%. Both are least-squares fits over every 300+ BF pitcher-season since 2015, re-centred so the pool's expected rates match its real ones — they land within about 2.1 and 1.4 points of the real K% and BB%, against 3.4 for the old "expected K% = Whiff%". uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. The percentile bars rank the rates uERA uses, so the line-drive and fly-ball bars are both really his air-ball rate — fewer counts as better. Blue diff: results beat the process; red: they trail it.`));
+    box.append(el("p", "note", `Expected K% is −25.81 + 0.955·Whiff% + 0.383·Strike%${from(pv.m.whf, st.pct.whf)}; expected BB% is 53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%. Both are least-squares fits over every 300+ BF pitcher-season since 2015, re-centred so the pool's expected rates match its real ones — they land within about 2.1 and 1.4 points of the real K% and BB%, against 3.4 for the old "expected K% = Whiff%". uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. The percentile bars rank the rates uERA uses, so the line-drive and fly-ball bars are both really his air-ball rate — fewer counts as better. Blue diff: results beat the process; red: they trail it.`));
     return box;
   }
   // a percentile bar small enough to live in a table cell — same colours and maths as the card's meters
@@ -2985,7 +2987,7 @@
     nera: "Luck-neutral ERA: his actual batted balls, each re-scored at what that type of ball is worth league-wide, so the bounces come out.",
     uera: "Underlying ERA: what his whiff, strike and batted-ball rates say his ERA should be. Strikeouts come in at his Whiff%, walks at the walk rate his Strike% percentile implies, his ground-ball and popup shares stand, and the air balls that are left are split into line drives and fly balls at the league's rate — then every ball in play is worth the league's average for its type.",
     ukb: "Underlying K-BB%: uK% minus uBB% — what his swing-and-miss and strike-throwing say the gap should be, with the results taken out of it.",
-    uk: "uK%: the strikeout rate his process implies — −16.87 + 0.606·Whiff% + 0.855·CSW%, fitted on every 300+ BF pitcher-season since 2015 and re-centred on the pool in front of you. CSW% is in there because called strikes are how a pitcher reaches two strikes; whiffs alone overstate K% by about 2.5 points.",
+    uk: "uK%: the strikeout rate his process implies — −25.81 + 0.955·Whiff% + 0.383·Strike%, fitted on every 300+ BF pitcher-season since 2015 and re-centred on the pool in front of you. Strike% is in there because missing bats only becomes strikeouts if he gets to two strikes; whiffs alone overstate K% by about 2.5 points.",
     ubb: "uBB%: the walk rate his process implies — 53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%. Strike% does most of the work; for a fixed strike rate, getting those strikes inside the zone rather than on chases means slightly more walks.",
     xws: "xwOBA as Statcast computes it: every ball in play is worth what balls hit at that exit velocity and launch angle have been worth, plus his real strikeouts, walks and hit-by-pitches. Direction is ignored — a 100 mph fly ball counts the same pulled or the other way.",
     xwd: "dxwOBA, the directional model: the same idea, but each ball in play is also scored on where it went (pull angle and spray angle) along with his sprint speed. Pulled balls in the air are worth far more than the same ball hit the other way, which is what Statcast's version misses; re-anchored each season so the league average matches the league's real wOBA.",
