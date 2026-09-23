@@ -2964,7 +2964,14 @@
       if (cardRO) cardRO.observe(t);
     }
   }
-  function render() { renderNow(); setCardTop(); }
+  // a popup is never taller than the window it sits in: measure the visible viewport rather than trust vh,
+  // which a page-zoom, a forced viewport width or a browser's own chrome can each put out of step
+  function sizeModal() {
+    const vv = window.visualViewport;
+    const h = Math.round(Math.max(200, (vv ? vv.height : window.innerHeight) - 40));
+    document.documentElement.style.setProperty("--modal-max", h + "px");
+  }
+  function render() { renderNow(); setCardTop(); sizeModal(); }
   function renderNow() {
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = state.mode === "draftmode" || home, appear = state.mode === "appearance", fant = state.mode === "fantasy", other = player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
@@ -4047,6 +4054,9 @@
     window.addEventListener("resize", () => hide(open));
     window.addEventListener("scroll", () => { if (open) place(open); }, { passive: true });
   })();
+  sizeModal();
+  window.addEventListener("resize", sizeModal);
+  if (window.visualViewport) { window.visualViewport.addEventListener("resize", sizeModal); window.visualViewport.addEventListener("scroll", sizeModal); }
   $("modal-close").addEventListener("click", closeModal);
   $("modal-back").addEventListener("click", closeModal);
   $("undo").addEventListener("click", undoLast);

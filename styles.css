@@ -1894,8 +1894,11 @@ body.modal-open header.top { z-index: 60; }
 .tblcard td.lg { color: var(--ink-2); }
 
 /* ---- desktop: a popup or player card fits the window and scrolls inside itself, so it never drifts ---- */
-:root[data-view="desktop"] .modal { overflow: hidden; align-content: center; padding: 20px 16px; }
-:root[data-view="desktop"] .modal-panel { display: flex; flex-direction: column; max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); }
-:root[data-view="desktop"] #modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+:root:not([data-view="mobile"]) .modal { display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px 16px; }
+/* three caps, because any one of them can be the honest one: the measured window (--modal-max, set in JS),
+   the flex parent's own box, and vh as the last resort if the variable never lands */
+:root:not([data-view="mobile"]) .modal-panel { display: flex; flex-direction: column; flex: 0 1 auto;
+  max-height: calc(100vh - 40px); max-height: min(100%, var(--modal-max, calc(100dvh - 40px))); }
+:root:not([data-view="mobile"]) #modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 /* the card's own pinned plate and the comparison's frozen heads now stick to the panel, not the page */
-:root[data-view="desktop"] #modal-body .cardtop { top: 0; }
+:root:not([data-view="mobile"]) #modal-body .cardtop { top: 0; }
