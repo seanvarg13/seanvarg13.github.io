@@ -1855,3 +1855,8 @@ body.modal-open header.top { z-index: 60; }
 :root[data-view="mobile"] .cmpwrap { overflow: visible; padding: 4px 0 2px; justify-content: stretch; touch-action: auto; }
 :root[data-view="mobile"] .cmpgrid .ccorner, :root[data-view="mobile"] .cmpgrid .chead { position: sticky; margin: 0; padding: 4px 0 6px; background: var(--surface); }
 :root[data-view="mobile"] .cmpgrid .cgroup { width: auto; }
+
+/* the pinned heading row has to be opaque across the column gaps too, or rows show through it as they pass */
+.cmpgrid .ccorner, .cmpgrid .chead { padding-left: 8px; padding-right: 8px; margin-left: -8px; margin-right: -8px; }
+.cmpgrid .chead { box-shadow: 0 8px 10px -8px rgba(0, 0, 0, 0.25); }
+:root:not([data-view="mobile"]) .cmpgrid { justify-content: center; }

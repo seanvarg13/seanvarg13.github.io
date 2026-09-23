@@ -403,16 +403,38 @@
     for (const r of DS.rows(p)) { xn += r[xi]; xd += r[di]; }
     return xd ? Math.round(1000 * xn / xd) / 1000 : m.xwoba;
   }
-  // the directional model's season number, straight from the file (or summed from its own rows)
+  // The directional model scales its predictions by the league's mean wOBA on contact, and the model's own
+  // average isn't exactly 1, so a season's dxwOBA lands a few points off the real scale (+.009 in 2026, −.007
+  // in 2015). One factor per season puts the league's dxwOBA back on its league wOBA; it is a single positive
+  // multiplier, so every ordering and every percentile is untouched. A file whose xwoba_dir is just its wOBA
+  // (the minor-league builds never run the model) has no directional numbers at all, and says so.
+  const dirCache = new Map();
+  function dirInfo() {
+    const k = DS.key;
+    if (dirCache.has(k)) return dirCache.get(k);
+    let w = 0, d = 0, n = 0, same = 0;
+    for (const p of DS.players) {
+      if (p.type !== "H") continue;
+      const m = p.m, pa = p.pa || 0;
+      if (!pa || m.woba == null || m.xwoba_dir == null) continue;
+      w += m.woba * pa; d += m.xwoba_dir * pa; n++;
+      if (Math.abs(m.xwoba_dir - m.woba) < 0.0006) same++;
+    }
+    const ok = n >= 20 && d > 0 && same < 0.9 * n && !(DS.tracked != null && DS.tracked < 0.05);
+    const info = { ok, scale: ok ? w / d : 1 };
+    dirCache.set(k, info);
+    return info;
+  }
+  // the directional model's season number, re-anchored (or summed from its own rows)
   function seasonXwDir(p) {
-    const m = p.m;
-    if (DS.tracked != null && DS.tracked < 0.05) return null;     // no batted-ball tracking (A / AA): nothing for the model to score
-    if (m.xwoba_dir != null) return m.xwoba_dir;
+    const m = p.m, I = dirInfo();
+    if (!I.ok) return null;
+    if (m.xwoba_dir != null) return Math.round(1000 * m.xwoba_dir * I.scale) / 1000;
     const f = DF.H, di = f.indexOf("dnum"), wi = f.indexOf("wden");
     if (di < 0) return null;
     let dn = 0, wd = 0;
     for (const r of DS.rows(p)) { if (r[di] === undefined) continue; dn += r[di]; wd += r[wi]; }
-    return wd ? Math.round(1000 * dn / wd) / 1000 : null;
+    return wd ? Math.round(1000 * I.scale * dn / wd) / 1000 : null;
   }
   function seasonHitterM(p) {
     const m = p.m;
@@ -510,7 +532,7 @@
                    ba: t.h === undefined || !t.ab ? null : Math.round(1000 * t.h / t.ab) / 1000, slg: t.tb === undefined || !t.ab ? null : Math.round(1000 * t.tb / t.ab) / 1000,
                    xba: t.xbsum === undefined || !t.ab ? null : Math.round(1000 * t.xbsum / t.ab) / 1000, xslg: t.xssum === undefined || !t.ab ? null : Math.round(1000 * t.xssum / t.ab) / 1000,
                    osw: rate(t.osw, t.opit), zsw: rate(t.zsw, t.zpit), zcon: rate(t.zcon, t.zsw), ocon: rate(t.ocon, t.osw), whf: rate(t.whf, t.sw),
-                   xwoba: noEV ? null : xDir() ? (hasDir && t.wden ? Math.round(1000 * t.dnum / t.wden) / 1000 : null)
+                   xwoba: noEV ? null : xDir() ? (hasDir && t.wden && dirInfo().ok ? Math.round(1000 * dirInfo().scale * t.dnum / t.wden) / 1000 : null)
                                                 : (t.xden ? Math.round(1000 * t.xnum / t.xden) / 1000 : null),   // exit velocity + launch angle, or the directional model
                    woba: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null,
                    bs: t.bsn ? Math.round(10 * t.bssum / t.bsn) / 10 : null,
