@@ -3815,7 +3815,7 @@
     return box;
   }
   const paRow = (label, node) => { const r = el("div", "parow"); r.append(el("span", "palbl", label), node); return r; };
-  const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["advanced", "Advanced"], ["splits", "Splits & Dates"]];
+  const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["advanced", "Advanced Stats"]];
   function renderBelow(p) {
     const sec = el("section", "pbelow2");
     const pick = BTABS.some(([k]) => k === state.pbtab) ? state.pbtab : "compare";
@@ -3828,8 +3828,7 @@
     }
     sec.append(bar);
     const body = el("div", "btabbody");
-    if (pick === "splits") body.append(renderSplitPanel(p));
-    else if (pick === "compare") {
+    if (pick === "compare") {
       const row = el("div", "pacts");
       const on = el("button", "btn btn-quiet tbtn" + (state.cmp2.on ? " on" : ""), state.cmp2.on ? "Close comparison" : "Compare two sides");
       on.type = "button";

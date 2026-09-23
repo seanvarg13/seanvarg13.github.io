@@ -2069,11 +2069,8 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .papps .hstrip .hchip b { font-size: 14px; }
 .papps .starbox { margin-top: 0; }
 
-/* the panels fill their box the way Savant's do: the bars share the spare height, the chart sits at the foot */
-.pcolB .pscroll, .pcolC .pscroll { display: flex; flex-direction: column; }
-.pctbox { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
-.ppage .pctbox .meters { flex: 1 1 auto; align-content: space-between; }
-.ppage .pctbox .meters .meter { max-height: 54px; }
+/* the bars keep their own spacing at the top of the panel; the chart sits at the foot of the third one */
+.pcolC .pscroll { display: flex; flex-direction: column; }
 .pcolC .ptabbody { display: flex; flex-direction: column; }
 .pcolC .rollbox { margin-top: auto; }
 .pcolC .note { margin-top: 10px; }
