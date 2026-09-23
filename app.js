@@ -219,7 +219,7 @@
     ranks: load(LS.ranks, {}),       // manual rankings per tab: {ALL: ["H670541", ...], SS: [...], SP: [...]}
     tiers: load(LS.tiers, {}),       // tier members per tab: {ALL: [["H1", "H2"], ["H5"]]} — independent of the rank order
     tierView: prefs.tierView || "tiers",
-    panelTab: prefs.panelTab || "stats",           // which tab the Stats & filters popup opens on
+    panelTab: prefs.panelTab || "filters",         // which tab the Filters popup opens on
     rankSort: !!prefs.rankSort,                    // Rankings: a stat sort running inside the tiers
     // a card's comparison: two sides, each with its own season, split and date range
     cmp2: Object.assign({ on: false }, prefs.cmp2 || {}),           // Rankings / Draft: "tiers" groups the list by tier, "list" is the raw order
@@ -1164,8 +1164,11 @@
     {
       const head = el("div", "splithead");
       const mob = mobileView();
-      const b = el("button", "btn btn-quiet tbtn", mob ? "Splits" : "Splits & dates"); b.type = "button"; b.title = "Splits & dates"; b.setAttribute("aria-expanded", String(state.cardTools));
-      b.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = !state.cardTools; savePrefs(); render(); });
+      const inCmp = state.cmp2.on;
+      const b = el("button", "btn btn-quiet tbtn", inCmp ? (mob ? "Set up" : "Set up comparison") : mob ? "Splits" : "Splits & dates");
+      b.type = "button"; b.title = inCmp ? "Which stats, and what each side is based on" : "Splits & dates";
+      if (!inCmp) b.setAttribute("aria-expanded", String(state.cardTools));
+      b.addEventListener("click", (e) => { e.stopPropagation(); if (inCmp) { state.panel = "cmp2"; render(); return; } state.cardTools = !state.cardTools; savePrefs(); render(); });
       const bits = [];
       if (state.split.hand !== "all") bits.push(`vs ${state.split.hand}H${pit ? "B" : "P"}`);
       if (state.split.venue !== "all") bits.push(state.split.venue);
@@ -1650,9 +1653,10 @@
     return row;
   }
 
+  let cardNow = null;                 // the player whose card is on screen and the dataset it was drawn in
   const sideSample = (p, v) => (!v ? "" : p.type === "P" ? fmtIP(v.ip) + " IP" : v.pa + " PA");
   // Savant's comparison layout: the stat labels down the left, one column of bars per side
-  function renderCmpGrid(sides, groups, SUBS, foldKey) {
+  function renderCmpGrid(sides, groups, SUBS, foldKey, type) {
     const wrap = el("div", "cwrap cmpwrap");
     const grid = el("div", "cgrid cmpgrid");
     grid.style.setProperty("--np", sides.length);
@@ -1678,13 +1682,14 @@
       d.title = `${s.label} — ${m.label}: ${v == null ? "n/a" : fmt(v, m)} (${pct == null ? "n/a" : ordinal(pct) + " pctl"})`;
       return d;
     };
+    const chosen = cmpKeys(type);
     groups.forEach((grp, gi) => {
-      const metrics = grp.metrics.filter((m) => sides.some((s) => s.v && metricValue(m, s.v, s.st) != null));
+      const metrics = grp.metrics.filter((m) => chosen.has(m.key) && sides.some((s) => s.v && metricValue(m, s.v, s.st) != null));
       if (!metrics.length) return;
       grid.append(el("div", "cgroup", grp.group));
       for (const m of metrics) {
         const lbl = el("div", "clbl", m.label);
-        const subs = (SUBS[m.key] || []).filter((sm) => sides.some((s) => s.v && metricValue(sm, s.v, s.st) != null));
+        const subs = (SUBS[m.key] || []).filter((sm) => chosen.has(sm.key) && sides.some((s) => s.v && metricValue(sm, s.v, s.st) != null));
         const ok = foldKey(gi, m.key), isOpen = !!state.open[ok];
         if (subs.length) {
           const t = el("button", "fold", isOpen ? "▾" : "▸"); t.type = "button"; t.setAttribute("aria-expanded", String(isOpen));
@@ -1700,22 +1705,33 @@
     wrap.append(grid);
     return wrap;
   }
-  // both columns of a card comparison: the controls are the heading, the sample line sits under them
+  // what a side is set to, in words — the column heading
+  function cmpSideLabel(p, c) {
+    const key = c.ds || DS.key, ds2 = key === CUR.key ? CUR : histDataset(key);
+    const bits = [ds2 ? ds2.label : key];
+    const pit = p.type === "P";
+    if (c.hand && c.hand !== "all") bits.push(`vs ${c.hand}H${pit ? "B" : "P"}`);
+    if (c.venue && c.venue !== "all") bits.push(c.venue);
+    if (c.from || c.to) bits.push(`${c.from ? fmtDate(c.from) : "start"} – ${c.to ? fmtDate(c.to) : "end"}`);
+    return bits.join(" · ");
+  }
+  // both columns of a card comparison: a heading, the sample line, and the bars
   function cmpSides(p) {
     return ["a", "b"].map((k) => {
-      const d = cmpSideData(p, cmpSide(k));
-      return { ctl: cmpControls(p, k), v: d.pv, st: d.st,
+      const c = cmpSide(k), d = cmpSideData(p, c);
+      return { label: cmpSideLabel(p, c), v: d.pv, st: d.st,
                sub: d.loading ? "Loading…" : d.none ? "didn't play" : sideSample(p, d.pv) };
     });
   }
   function renderHitterCard(p, st, g, ref, opts = {}) {
+    cardNow = { p, ds: DS };
     const card = el("div", "card hcard");
     if (!opts.noSplitBar) card.append(renderSplitBar(p));
     const pv = V(p);
     if (!opts.noStrip) card.append(renderStrip(p, pv));
     if (state.cmp2.on) {
       card.append(el("h3", null, "Comparison · pick a season, a split and a date range for each side"));
-      card.append(renderCmpGrid(cmpSides(p), CARD, SUB, (gi, k) => k));
+      card.append(renderCmpGrid(cmpSides(p), CARD, SUB, (gi, k) => k, "H"));
       card.dataset.notes = `Each column is ranked against its own season's qualifiers on their numbers in the same split and date range. ${HEAD.label} = ${DATA.meta.scoreNote.H}.`;
       return card;
     }
@@ -1915,13 +1931,14 @@
     return card;
   }
   function renderPitcherCard(p, ms, st, g, ref, opts = {}) {
+    cardNow = { p, ds: DS };
     const card = el("div", "card hcard");
     if (!opts.noSplitBar) card.append(renderSplitBar(p));
     const pv = V(p);
     if (!opts.noStrip) card.append(renderStrip(p, pv));
     if (state.cmp2.on) {
       card.append(el("h3", null, "Comparison · pick a season, a split and a date range for each side"));
-      card.append(renderCmpGrid(cmpSides(p), CARD_P, SUB_P, (gi, k) => `p${gi}:${k}`));
+      card.append(renderCmpGrid(cmpSides(p), CARD_P, SUB_P, (gi, k) => `p${gi}:${k}`, "P"));
       card.dataset.notes = `Each column is ranked against its own season's pitchers with ${refMin(g)}+ batters faced, on their numbers in the same split and date range.`;
       return card;
     }
@@ -2272,12 +2289,14 @@
     if (state.textModal) { renderTextModal(); return; }
     if (state.tierPick && state.mode === "rankings" && state.editRanks && state.selKeys.length) { renderTierPick(); return; }
     const listNow = ["rankings", "draft", "trending", "leaderboard"].includes(state.mode);
+    if (state.panel === "filters" && listNow) { renderFilterPanel(); return; }
     if (state.panel === "splits" && listNow) { renderSplitsPanel(); return; }
     if (state.panel === "stats" && listNow) { renderColPick(); return; }
     if (state.panel === "table" && listNow) { renderTablePanel(); return; }
     if (state.panel === "team" && listNow) { renderTeamPanel(); return; }
     if (state.panel === "lists" && state.mode === "rankings") { renderListsPanel(); return; }
     if (state.panel === "cmpstats" && state.mode === "compare") { renderCmpPick(); return; }
+    if (state.panel === "cmp2" && state.cmp2.on && cardNow) { renderCmpPanel(); return; }
     if (state.panel) { state.panel = null; parkControls(); }
     state.colPick = false;
     state.tierPick = null;
@@ -2326,7 +2345,7 @@
   }
   const lbMulti = () => state.mode === "leaderboard" && isMulti(lbKey());
   function renderLbTools() {
-    const on = state.mode === "leaderboard"; $("lbtools").hidden = !on; if (!on) return;
+    const on = state.mode === "leaderboard"; $("lbtools").hidden = true; if (!on) return;   // the season pickers live in the Filters popup
     const g = groupFor(state.pos);
     // splits: vs L / R and home / away
     const pit = isPitcherGroup(g), sp = $("lbsplit"); sp.innerHTML = "";
@@ -2383,7 +2402,7 @@
   // the Leaderboard's column picker: every card metric, grouped as on the card
   // The three table panels are one popup with three tabs — one button on the toolbar instead of three, which
   // leaves the rank tools room to sit on the row rather than scrolling off it.
-  const PANEL_TABS = [["stats", "Included stats"], ["splits", "Splits & dates"], ["table", "Table"]];
+  const PANEL_TABS = [["filters", "Filters"], ["stats", "Included stats"], ["splits", "Splits & dates"], ["table", "Table"]];
   function panelTabs(cur) {
     const row = el("div", "ptabs"); row.setAttribute("role", "tablist");
     for (const [k, label] of PANEL_TABS) {
@@ -2583,17 +2602,10 @@
   function renderSetBar() {
     const bar = $("setbar"); bar.hidden = state.mode !== "rankings";
     $("setrow").hidden = bar.hidden;
-    // Hide filters rides on the toolbar's first row — beside the grey bar, not in it
-    const home = bar.hidden ? $("tabrow") : $("setrow");
     const tools = $("ranktools"), toolHome = bar.hidden ? $("toolrow") : bar;     // editing belongs on the bar that stays
     if (!toolHome) return;
     if (tools.parentNode !== toolHome) toolHome.append(tools);
-    if ($("tbhide").parentNode !== home) home.append($("tbhide"));
     bar.classList.toggle("editing", !!state.editRanks);     // editing needs a second line; reading it doesn't
-    const hb = $("tbhide"), folded = !!state.tbFold;
-    hb.textContent = folded ? "▾" : "▴";
-    hb.append(Object.assign(el("span"), { textContent: folded ? " Filters" : " Hide filters" }));
-    hb.title = folded ? "Show the filters again" : "Tuck the filters away (the rankings list bar stays)";
     if (bar.hidden) return;
     const cur = currentSetName(), dirty = cur ? setDirty() : false, working = hasWorking();
     const names = Object.keys(state.rankSets).sort((x, y) => x.localeCompare(y));
@@ -2779,6 +2791,68 @@
     }
     box.append(el("p", "note", `Data: ${m.season} Statcast through ${m.through}, built ${m.built}. ${xDir() ? "Expected stats: the directional model." : "Expected stats: Statcast's exit-velocity and launch-angle model."}`));
   }
+  /* ---------- Stat glossary: one box per stat, the way Savant's glossary reads ---------- */
+  const GLOSS = {
+    woba: "Weighted on-base average: every way of reaching base, each weighted by what it is actually worth. About .320 is league average, .400 is a star.",
+    ba: "Batting average — hits per at-bat.",
+    slg: "Slugging — total bases per at-bat.",
+    xwoba: "Expected wOBA: what his contact should have been worth, scored from the exit velocity and launch angle of every ball in play. Strikeouts and walks count as themselves.",
+    xba: "Expected batting average — the same model, scored as hits per at-bat.",
+    xslg: "Expected slugging — the same model, scored as total bases per at-bat.",
+    ev: "Average exit velocity off the bat, bunts excluded.",
+    brl: "Barrels per ball in play. A barrel is the exit-velocity-and-angle combination that has historically produced at least a .500 average and 1.500 slugging.",
+    hh: "Hard-Hit%: balls in play hit at 95 mph or more.",
+    ss: "Sweet-Spot%: balls in play launched between 8° and 32°, the window line drives live in.",
+    ev90: "His 90th-percentile exit velocity — the top of his range rather than his average, so it moves less with weak contact.",
+    maxev: "The hardest ball he hit all season.",
+    bs: "Average bat speed over competitive swings (bunts and check swings dropped).",
+    osw: "O-Swing%: how often he swings at pitches outside the zone. Lower is better for a hitter, higher for a pitcher.",
+    zsw: "Z-Swing%: how often he swings at pitches inside the zone.",
+    zmo: "Zone swing rate minus chase rate: how well he separates strikes from balls. High is a disciplined, aggressive hitter.",
+    bb: "Walks per plate appearance.",
+    whf: "Whiffs per swing. Lower is better for a hitter, higher for a pitcher.",
+    zcon: "Z-Contact%: contact per swing at pitches in the zone.",
+    ocon: "O-Contact%: contact per swing at pitches outside the zone.",
+    k: "Strikeouts per plate appearance (per batter faced for a pitcher).",
+    con: "Contact per swing — the other side of Whiff%.",
+    air: "Air%: balls in play that aren't ground balls — line drives, fly balls and popups.",
+    fb: "Fly balls per ball in play.",
+    ld: "Line drives per ball in play.",
+    pu: "Popups per ball in play. For a pitcher these are nearly automatic outs.",
+    gb: "Ground balls per ball in play.",
+    pull: "Pull Air%: balls hit in the air to his pull side, per ball in play. This is where home-run power shows up before the home runs do.",
+    pullp: "Every ball in play hit to his pull side, on the ground or in the air.",
+    oppo: "Balls in play hit the other way.",
+    cent: "Balls in play hit up the middle.",
+    npull: "Everything not pulled — centre and opposite field together.",
+    strk: "Strikes per pitch, called and swung at. For a pitcher, higher is better; for a hitter it means he is being attacked in the zone.",
+    swing: "Swings per pitch seen.",
+    swstr: "Swinging strikes per pitch — whiffs measured against everything he throws, not just swings.",
+    csw: "Called strikes plus whiffs per pitch: the one number that folds putting it where they won't swing together with making them miss.",
+    zone: "Pitches in the strike zone, per pitch.",
+    kbb: "Strikeout rate minus walk rate — the cleanest single read on a pitcher.",
+    era: "Earned runs per nine innings, from official game logs.",
+    fip: "Fielding-independent pitching: strikeouts, walks, hit batters and home runs only, scaled to look like an ERA.",
+    siera: "Skill-interactive ERA: FIP's inputs plus how he uses the ground, shifted so the league averages its real ERA.",
+    nera: "Luck-neutral ERA: his actual batted balls, each re-scored at what that type of ball is worth league-wide, so the bounces come out.",
+    uera: "Underlying ERA: what his whiff, strike and contact-quality rates say his ERA should be.",
+    ukb: "Underlying K-BB%: the same idea for K-BB% — his whiff and strike rates translated into the strikeout and walk rates they usually produce.",
+    fbv: "Average velocity of his four-seamers and sinkers.",
+    ext: "How far off the rubber he releases the ball. More extension makes the same velocity play up.",
+  };
+  function renderGlossary() {
+    const box = el("div", "glossary");
+    const g = groupFor(state.pos), pit = isPitcherGroup(g);
+    const groups = pit ? CARD_P : CARD, SUBS = pit ? SUB_P : SUB, seen = new Set();
+    for (const grp of groups) for (const m of grp.metrics) for (const x of [m, ...(SUBS[m.key] || [])]) {
+      if (seen.has(x.key) || !GLOSS[x.key]) continue;
+      seen.add(x.key);
+      const d = el("div", "gitem");
+      d.append(el("b", null, x.label), el("p", null, GLOSS[x.key]));
+      box.append(d);
+    }
+    return box;
+  }
   function renderChrome() {
     const grp = NAV_GROUPS.find((G) => G.modes.includes(state.mode));
     const navMode = grp ? grp.key : state.mode;
@@ -2800,17 +2874,21 @@
     const l1 = el("div"); l1.append("Percentiles run 0–100 within the pool", scale, "blue is cold, red is hot. O-Swing% and Whiff% (for hitters) are flipped so 100 is always the best. Click a column heading to sort by it; click a player for the full card.");
     notes.append(l1);
     notes.append(renderViewSwitch());
-    notes.append(Object.assign(el("div"), { innerHTML: `<b>Eligibility</b> — a hitter is listed at every position where he played ${ESPN.posGames}+ games this season, counting MLB and minor-league games together (ESPN's rule for call-ups), OF combined, DH counts; pitchers are SP with ${ESPN.spIP}+ IP as a starter and RP with ${ESPN.rpIP}+ IP in relief. Add anything ESPN gives him that the games don't from his card. <b>Pools</b> — every hitter percentile is measured against hitters with <b>${REF_PA}+ PA</b> on the season, any position; every pitcher percentile against pitchers with <b>${REF_PA}+ batters faced</b>, starters and relievers together. That population never changes — a date range or split only changes the numbers being compared — and the <b>Min PA / Min IP</b> boxes only set who is listed: a player under the bar is placed against that same population rather than reshaping it.` }));
-    notes.append(Object.assign(el("div"), { innerHTML: `<b>xwOBA</b> — ${m.scoreNote.H}. <b>Expected stats</b> (Stats &amp; filters ▸ Splits &amp; dates, or the Splits block on any hitter's card) switches the whole site between that and <b>dxwOBA</b>, the directional model: exit velocity, launch angle, spray and pull angle and the batter's sprint speed, so where he hit the ball counts too. It is summed from the same day-by-day rows, so windows and splits follow it, and it is blank where batted balls aren't tracked (A and AA). xBA and xSLG are Statcast's in both — the directional model scores wOBA only. The one currently in use is ${xDir() ? "<b>directional (dxwOBA)</b>" : "<b>Statcast (xwOBA)</b>"}. <b>Batted-ball definitions</b> follow Savant's leaderboards: BBE is every ball in play, Avg EV / 90th% / max EV skip bunts, Barrel%, Hard-Hit% and Sweet-Spot% are per ball in play. Seasons before 2020 have a few percent of untracked balls that Savant's public feed fills with placeholder values, so an Avg EV there can sit a tenth or two off the leaderboard.` }));
-    notes.append(Object.assign(el("div"), { innerHTML: `<b>Splits</b> — open a player and pick vs LHP / RHP (vs LHB / RHB for pitchers) and home / away at the top of his card. His card is redrawn from those plate appearances and ranked against the season's qualifiers on their numbers in the same split; the list itself stays unsplit. Pitcher IP in a handedness split is the outs recorded against that side. <b>Dates</b> — type a from and/or to date (a blank side means the season's start or end) and every stat and percentile is recomputed from those games only. Who qualifies never changes: the comparison group is always the players who meet the season bar (hitters ${REF_PA}+ PA, pitchers ${REF_PA}+ batters faced), each measured on his own numbers in that range — even a very short one. Past seasons work the same once their day-by-day file loads. Inside a window, Air% and Pull Air% come from Statcast batted-ball data (pull = spray angle beyond ${m.pullLine}°, which tracks Savant within about half a point); the full-season view uses Savant's published numbers.` }));
-    notes.append(Object.assign(el("div"), { innerHTML: `<b>Eligibility</b> — hitters: ${ESPN.posGames}+ games at a position in ${m.season} (outfield combined, DH counts). Pitchers: SP with ${ESPN.spIP}+ innings as a starter, RP with ${ESPN.rpIP}+ innings in relief — either or both; stats are always the full season. Add any position from a player's card; the <b>Eligibility</b> page lists what you've added.` }));
-    notes.append(Object.assign(el("div"), { innerHTML: `<b>Hitters</b> rank by ${m.scoreNote.H}; the colour is its percentile in the pool. <b>Skills blend</b> (in the Sort menu and on each card) is the ${m.scoreNote.blend}. <b>Pitcher score</b> — ${m.scoreNote.P}.` }));
-    notes.append(Object.assign(el("div"), { innerHTML: `<b>Position for 2027</b> — on a pitcher's card, switch SP / RP to move him to the other list and pool (a reliever expected to start next year, say). It's remembered in this browser and shows on his row as "SP (was RP)".` }));
-    notes.append(Object.assign(el("div"), { innerHTML: `Air% and Pull Air% use Baseball Savant's batted-ball direction; everything else is computed from pitch-level Statcast. AB and IP are official MLB totals. Built ${m.built}.` }));
-    if (state.mode === "rankings") notes.append(Object.assign(el("div"), { innerHTML: `<b>Rankings</b> — the model's order until you touch a tab (sort by any column, or pick a sort up top), then your own order, one list per tab, plus tiers that are separate from the order: a tier holds whoever you put in it and lists them by rank, so tier 1 can be ranks 1, 2, 3, 5 while rank 4 sits at the top of <b>Not tiered</b>. <b>Tiers / List</b> switches between the tiered view and the raw order. Press <b>Edit rankings</b> to change anything: tick players (click, Cmd/Ctrl-click, Shift-click for a range), then <b>Move…</b> puts them in a tier (or a new one) and <b>Untier</b> sends them back to Not tiered. The rank box, ▲ ▼ and dragging change the order; dragging into another tier's section also moves him there. <b>Add tier</b> adds an empty tier at the bottom; with a player ticked it becomes <b>+ Tier below</b> — a boundary right under him, splitting his tier (or cutting a tier off the top of Not tiered). <b>+ tier above</b> on any tier header slots an empty tier in there. ✎ gives a tier a nickname; × removes it. Outside edit mode, clicking a player opens his card. Players you haven't touched follow the big board beneath the ones you have; everyone under the Min PA / IP box is listed after them (most playing time first, PA in amber) so nobody is missing but small samples never push a qualifier around. The bar at the top says which list you're editing: pick a saved list from the menu to open it, <b>Save</b> writes your changes back to it, <b>Save as…</b> keeps a copy under a new name, and <b>New list</b> closes it and starts fresh from the model's order. Rename and Delete act on the open list; Export / Import move lists between browsers as text. The Draft page can draft from your working rankings or any saved set (Draft from).` }));
-    if (state.mode === "leaderboard") notes.append(Object.assign(el("div"), { innerHTML: `<b>Leaderboard</b> — every hitter or pitcher over the Min PA / IP box, for any season and level you pick (MLB from 2015, the minors from 2021), with the stats you choose (<b>Columns…</b>). The vs-L / R and home / away toggles redraw every number and percentile from those plate appearances only (the comparison group stays the season's qualifiers on their numbers in the same split); ERA needs full games, so it's blank in a handedness split. Each cell shows the number, coloured by where it ranks among the season's qualifiers; click a heading to sort, click it again to flip. Dates and Last-N work here too, and the position tabs narrow the list.` }));
-    if (state.mode === "trending") notes.append(Object.assign(el("div"), { innerHTML: `<b>Trending</b> — who's hot right now. The position tabs use the same eligibility as everywhere else (${ESPN.posGames}+ games at a position this season, plus anything you've added). Hitters are ordered by ${HEAD.label} over each player's last N plate appearances (or the last N days); pitchers by the average of their Whiff% and Strike% percentiles over their last N innings (or days), with K%, BB%, ERA, SIERA and GB% for that span alongside. Full-season minimums don't apply here — <b>at least</b> sets how much playing time a player needs inside the span to be listed. The chips show the actual number, coloured by where it ranks among the season's qualifiers on their numbers in the same span. Click a player for his card over that span.` }));
-    if (state.mode === "draft") notes.append(Object.assign(el("div"), { innerHTML: `<b>Draft mode</b> — <b>Draft from</b> picks the order: the big board, your working rankings, or any set you saved on the Rankings page (tiers included). Drafted players are saved in this browser, so you can close the tab and come back mid-draft. “Show drafted” keeps them on the board, dimmed.` }));
+    const prose = [];
+    prose.push(Object.assign(el("div"), { innerHTML: `<b>Eligibility</b> — a hitter is listed at every position where he played ${ESPN.posGames}+ games this season, counting MLB and minor-league games together (ESPN's rule for call-ups), OF combined, DH counts; pitchers are SP with ${ESPN.spIP}+ IP as a starter and RP with ${ESPN.rpIP}+ IP in relief. Add anything ESPN gives him that the games don't from his card. <b>Pools</b> — every hitter percentile is measured against hitters with <b>${REF_PA}+ PA</b> on the season, any position; every pitcher percentile against pitchers with <b>${REF_PA}+ batters faced</b>, starters and relievers together. That population never changes — a date range or split only changes the numbers being compared — and the <b>Min PA / Min IP</b> boxes only set who is listed: a player under the bar is placed against that same population rather than reshaping it.` }));
+    prose.push(Object.assign(el("div"), { innerHTML: `<b>xwOBA</b> — ${m.scoreNote.H}. <b>Expected stats</b> (Stats &amp; filters ▸ Splits &amp; dates, or the Splits block on any hitter's card) switches the whole site between that and <b>dxwOBA</b>, the directional model: exit velocity, launch angle, spray and pull angle and the batter's sprint speed, so where he hit the ball counts too. It is summed from the same day-by-day rows, so windows and splits follow it, and it is blank where batted balls aren't tracked (A and AA). xBA and xSLG are Statcast's in both — the directional model scores wOBA only. The one currently in use is ${xDir() ? "<b>directional (dxwOBA)</b>" : "<b>Statcast (xwOBA)</b>"}. <b>Batted-ball definitions</b> follow Savant's leaderboards: BBE is every ball in play, Avg EV / 90th% / max EV skip bunts, Barrel%, Hard-Hit% and Sweet-Spot% are per ball in play. Seasons before 2020 have a few percent of untracked balls that Savant's public feed fills with placeholder values, so an Avg EV there can sit a tenth or two off the leaderboard.` }));
+    prose.push(Object.assign(el("div"), { innerHTML: `<b>Splits</b> — open a player and pick vs LHP / RHP (vs LHB / RHB for pitchers) and home / away at the top of his card. His card is redrawn from those plate appearances and ranked against the season's qualifiers on their numbers in the same split; the list itself stays unsplit. Pitcher IP in a handedness split is the outs recorded against that side. <b>Dates</b> — type a from and/or to date (a blank side means the season's start or end) and every stat and percentile is recomputed from those games only. Who qualifies never changes: the comparison group is always the players who meet the season bar (hitters ${REF_PA}+ PA, pitchers ${REF_PA}+ batters faced), each measured on his own numbers in that range — even a very short one. Past seasons work the same once their day-by-day file loads. Inside a window, Air% and Pull Air% come from Statcast batted-ball data (pull = spray angle beyond ${m.pullLine}°, which tracks Savant within about half a point); the full-season view uses Savant's published numbers.` }));
+    prose.push(Object.assign(el("div"), { innerHTML: `<b>Eligibility</b> — hitters: ${ESPN.posGames}+ games at a position in ${m.season} (outfield combined, DH counts). Pitchers: SP with ${ESPN.spIP}+ innings as a starter, RP with ${ESPN.rpIP}+ innings in relief — either or both; stats are always the full season. Add any position from a player's card; the <b>Eligibility</b> page lists what you've added.` }));
+    prose.push(Object.assign(el("div"), { innerHTML: `<b>Hitters</b> rank by ${m.scoreNote.H}; the colour is its percentile in the pool. <b>Skills blend</b> (in the Sort menu and on each card) is the ${m.scoreNote.blend}. <b>Pitcher score</b> — ${m.scoreNote.P}.` }));
+    prose.push(Object.assign(el("div"), { innerHTML: `<b>Position for 2027</b> — on a pitcher's card, switch SP / RP to move him to the other list and pool (a reliever expected to start next year, say). It's remembered in this browser and shows on his row as "SP (was RP)".` }));
+    prose.push(Object.assign(el("div"), { innerHTML: `Air% and Pull Air% use Baseball Savant's batted-ball direction; everything else is computed from pitch-level Statcast. AB and IP are official MLB totals. Built ${m.built}.` }));
+    if (state.mode === "rankings") prose.push(Object.assign(el("div"), { innerHTML: `<b>Rankings</b> — the model's order until you touch a tab (sort by any column, or pick a sort up top), then your own order, one list per tab, plus tiers that are separate from the order: a tier holds whoever you put in it and lists them by rank, so tier 1 can be ranks 1, 2, 3, 5 while rank 4 sits at the top of <b>Not tiered</b>. <b>Tiers / List</b> switches between the tiered view and the raw order. Press <b>Edit rankings</b> to change anything: tick players (click, Cmd/Ctrl-click, Shift-click for a range), then <b>Move…</b> puts them in a tier (or a new one) and <b>Untier</b> sends them back to Not tiered. The rank box, ▲ ▼ and dragging change the order; dragging into another tier's section also moves him there. <b>Add tier</b> adds an empty tier at the bottom; with a player ticked it becomes <b>+ Tier below</b> — a boundary right under him, splitting his tier (or cutting a tier off the top of Not tiered). <b>+ tier above</b> on any tier header slots an empty tier in there. ✎ gives a tier a nickname; × removes it. Outside edit mode, clicking a player opens his card. Players you haven't touched follow the big board beneath the ones you have; everyone under the Min PA / IP box is listed after them (most playing time first, PA in amber) so nobody is missing but small samples never push a qualifier around. The bar at the top says which list you're editing: pick a saved list from the menu to open it, <b>Save</b> writes your changes back to it, <b>Save as…</b> keeps a copy under a new name, and <b>New list</b> closes it and starts fresh from the model's order. Rename and Delete act on the open list; Export / Import move lists between browsers as text. The Draft page can draft from your working rankings or any saved set (Draft from).` }));
+    if (state.mode === "leaderboard") prose.push(Object.assign(el("div"), { innerHTML: `<b>Leaderboard</b> — every hitter or pitcher over the Min PA / IP box, for any season and level you pick (MLB from 2015, the minors from 2021), with the stats you choose (<b>Columns…</b>). The vs-L / R and home / away toggles redraw every number and percentile from those plate appearances only (the comparison group stays the season's qualifiers on their numbers in the same split); ERA needs full games, so it's blank in a handedness split. Each cell shows the number, coloured by where it ranks among the season's qualifiers; click a heading to sort, click it again to flip. Dates and Last-N work here too, and the position tabs narrow the list.` }));
+    if (state.mode === "trending") prose.push(Object.assign(el("div"), { innerHTML: `<b>Trending</b> — who's hot right now. The position tabs use the same eligibility as everywhere else (${ESPN.posGames}+ games at a position this season, plus anything you've added). Hitters are ordered by ${HEAD.label} over each player's last N plate appearances (or the last N days); pitchers by the average of their Whiff% and Strike% percentiles over their last N innings (or days), with K%, BB%, ERA, SIERA and GB% for that span alongside. Full-season minimums don't apply here — <b>at least</b> sets how much playing time a player needs inside the span to be listed. The chips show the actual number, coloured by where it ranks among the season's qualifiers on their numbers in the same span. Click a player for his card over that span.` }));
+    if (state.mode === "draft") prose.push(Object.assign(el("div"), { innerHTML: `<b>Draft mode</b> — <b>Draft from</b> picks the order: the big board, your working rankings, or any set you saved on the Rankings page (tiers included). Drafted players are saved in this browser, so you can close the tab and come back mid-draft. “Show drafted” keeps them on the board, dimmed.` }));
+    // the wall of explanation is two fold-outs now: one box per stat, then how the page itself works
+    notes.append(foldSection("glossary", "Stat glossary", renderGlossary));
+    notes.append(foldSection("pagehelp", "How this page works", () => { const b = el("div", "prose"); b.append(...prose); return b; }));
   }
 
   function render() {
@@ -2826,7 +2904,7 @@
     if (hub) { home ? renderHome() : renderHub(); return; }
     if (appear) { renderAppearance(); return; }
     if (fant) { renderFantasy(); renderModal(); return; }
-    if (player) { renderExplore(); return; }
+    if (player) { renderExplore(); if (state.panel === "cmp2" && state.cmp2.on && cardNow) renderCmpPanel(); return; }   // his own page has no modal of its own
     if (compare) { renderCompare(); renderModal(); return; }
     if (elig) { renderEligibility(); return; }
     const listRender = () => {
@@ -3540,7 +3618,7 @@
     const sortSel = $("sort"), opt = sortSel.options[sortSel.selectedIndex];
     const stats = [customOrder() ? "my order" : opt ? `by ${opt.textContent.replace(/ pctl$/, "")}` : "", `${colsFor(g).length} stats`].filter(Boolean).join(" · ");
     const mob = document.documentElement.dataset.view === "mobile";
-    $("optsbtn").textContent = mob ? "Stats" : "Stats & filters"; $("optsbtn").title = `${stats} · splits, dates and the table's look`;
+    $("optsbtn").textContent = "Filters"; $("optsbtn").title = "Position, search, team, stats, splits, dates and the table's look";
     const bits = [];
     if (state.mode === "leaderboard") { if (state.lbSplit.hand !== "all") bits.push(`vs ${state.lbSplit.hand}H${pit ? "B" : "P"}`); if (state.lbSplit.venue !== "all") bits.push(state.lbSplit.venue); }
     if (state.mode === "trending") { const t = trendCfg(); bits.push(t.unit === "days" ? `last ${t.days} days` : `last ${t[t.unit]} ${unit}`); bits.push(`${trendMin()}+ ${unit} in span`); }
@@ -3550,17 +3628,14 @@
     const active = state.mode === "leaderboard" ? (state.lbSplit.hand !== "all" || state.lbSplit.venue !== "all" || winRequested()) : state.mode === "trending" ? true : winRequested();
     $("optsbtn").classList.toggle("on", !!active || (!customOrder() && state.sort !== "score"));
     $("tsum").hidden = state.editRanks;              // editing ranks: the row belongs to the tier tools
-    $("tsum").textContent = [stats, ...bits].join(" · ");
     $("teambtn").textContent = teamLabel(state.teamF); $("teambtn").classList.toggle("on", !!state.teamF); $("teamclear").hidden = !state.teamF;
-    if (state.teamF) bits.unshift(state.teamF.kind === "team" ? (TEAM_NAMES[state.teamF.v] || state.teamF.v) : state.teamF.v);
-    // the folded bar: what's in effect, in one line
-    document.body.classList.toggle("tb-folded", !!state.tbFold);
-    $("tbfold").hidden = !state.tbFold || !$("setbar").hidden;   // Rankings keeps its list bar, and the button with it
-    const tab = state.pos === "ALL" ? "All hitters" : state.pos === "ALLP" ? "All pitchers" : state.pos;
+    // the one visible line: the tab, the season if it isn't this one, the team filter, then everything in effect
+    const tab = TAB_LABEL[state.pos] || state.pos;
     const where = state.mode === "leaderboard" && lbKey() !== CUR.key ? (histDataset(lbKey()) || {}).label || "" : "";
-    $("tbfoldsum").textContent = [tab, where, stats, ...bits].filter(Boolean).join(" · ");
+    if (state.teamF) bits.unshift(state.teamF.kind === "team" ? (TEAM_NAMES[state.teamF.v] || state.teamF.v) : state.teamF.v);
+    if (state.q) bits.unshift(`“${state.q}”`);
+    $("tsum").textContent = [tab, where, stats, ...bits].filter(Boolean).join(" · ");
   }
-  $("tbhide").addEventListener("click", () => { state.tbFold = !state.tbFold; savePrefs(); render(); });
   $("teambtn").addEventListener("click", () => openPanel("team"));
   $("teamclear").addEventListener("click", () => { state.teamF = null; state.expanded = null; savePrefs(); render(); });
   // "Team" panel: one league, one division or one team
@@ -3594,15 +3669,85 @@
     const clear = el("button", "btn btn-quiet", "Clear"); clear.type = "button"; clear.disabled = !f; clear.addEventListener("click", () => set(null));
     row.append(done, cancel, clear); w.append(row); body.append(w);
   }
-  $("tbfoldbtn").addEventListener("click", () => { state.tbFold = false; savePrefs(); render(); });
   // the two toolbar panels: "Included stats" (sort + columns) and "Splits & dates" (splits, window, minimum)
-  const PARKED = ["sortfield", "daterange", "daysfield", "lastfield", "minfield", "reffield", "lbsplit", "trendnfield", "trendunit", "trendminfield"];
+  const PARKED = ["postabs", "searchbox", "teamctl", "lbseason", "sortfield", "daterange", "daysfield", "lastfield",
+                  "minfield", "reffield", "lbsplit", "trendnfield", "trendunit", "trendminfield"];
   function parkControls() { const park = $("park"); for (const id of PARKED) { const n = $(id); if (n && n.parentNode !== park) park.append(n); } }
   const PANEL_KEYS = ["sort", "dir", "lb", "cols", "win", "min", "lbSplit", "trend", "pre", "teamF"];
   function openPanel(name) { state.panelSnap = JSON.stringify(Object.fromEntries(PANEL_KEYS.map((k) => [k, state[k]]))); state.panel = name; state.colPick = name === "stats"; render(); }
   function closePanel(cancel) {
     if (cancel && state.panelSnap && (state.panel === "stats" || state.panel === "splits" || state.panel === "team")) { const snap = JSON.parse(state.panelSnap); for (const k of PANEL_KEYS) state[k] = snap[k]; savePrefs(); poolsChanged(); }
     state.panelSnap = null; state.panel = null; state.colPick = false; state.expanded = null; parkControls(); render();
+  }
+  // "Set up comparison": the stats on the grid, and what each side is based on — the same box that used to
+  // sit over each column, now with room to breathe
+  function renderCmpPanel() { withDataset(cardNow ? cardNow.ds : DS, () => renderCmpPanelIn()); }
+  function renderCmpPanelIn() {
+    if (!cardNow) { state.panel = null; render(); return; }
+    const p = cardNow.p;
+    parkControls();
+    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; lockPage(true); body.innerHTML = "";
+    const type = p.type, pit = type === "P";
+    const w = el("div", "textmodal panel cmppanel");
+    const h2 = el("h2", null, "Set up comparison"); h2.id = "modal-title"; w.append(h2);
+    const sides = el("div", "cmpsides");
+    for (const [k, title] of [["a", "Left side"], ["b", "Right side"]]) {
+      const box = el("div", "plate cmpbox");
+      box.append(el("h3", null, title));
+      box.append(cmpControls(p, k));
+      box.append(el("div", "cmeta", cmpSideLabel(p, cmpSide(k))));
+      sides.append(box);
+    }
+    const s1 = el("div", "psec"); s1.append(el("h4", null, "The two sides")); s1.append(sides);
+    s1.append(el("p", "note", "Season, split and date range, one set each. Changing a side's season clears its dates."));
+    w.append(s1);
+    const s2 = el("div", "psec"); s2.append(el("h4", null, `Stats on the grid · ${pit ? "pitchers" : "hitters"}`));
+    const cur = cmpKeys(type);
+    const setKeys = (keys) => { state.cmpCols[type] = keys; savePrefs(); };
+    const grid = el("div", "colgrid"), seen = new Set();
+    for (const grp of (pit ? CARD_P : CARD)) {
+      const sec = el("div", "colgroup"); sec.append(el("h4", null, grp.group));
+      for (const m of grp.metrics) for (const x of [m, ...((pit ? SUB_P : SUB)[m.key] || [])]) {
+        if (seen.has(x.key)) continue; seen.add(x.key);
+        const l = el("label", "toggle" + (x === m ? "" : " subt")); const c = el("input"); c.type = "checkbox"; c.checked = cur.has(x.key);
+        c.addEventListener("change", () => { const now = cmpKeys(type); if (c.checked) now.add(x.key); else now.delete(x.key); setKeys(cmpAll(type).filter((kk) => now.has(kk))); render(); });
+        l.append(c, " ", x.label); sec.append(l);
+      }
+      grid.append(sec);
+    }
+    s2.append(grid); w.append(s2);
+    const row = el("div", "row");
+    const done = el("button", "btn", "Done"); done.type = "button"; done.addEventListener("click", () => { state.panel = null; parkControls(); render(); });
+    const all = el("button", "btn btn-quiet", "Every stat"); all.type = "button"; all.addEventListener("click", () => { delete state.cmpCols[type]; savePrefs(); render(); });
+    const none = el("button", "btn btn-quiet", "None"); none.type = "button"; none.addEventListener("click", () => { setKeys([]); render(); });
+    row.append(done, all, none); w.append(row); body.append(w);
+  }
+  // "Filters" panel: everything that narrows the list — position, name, team, season, sort, pool
+  function renderFilterPanel() {
+    parkControls();
+    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; lockPage(true); body.innerHTML = "";
+    const g = groupFor(state.pos), pit = isPitcherGroup(g);
+    const w = el("div", "textmodal panel");
+    const h2 = el("h2", null, "Filters"); h2.id = "modal-title"; w.append(h2);
+    w.append(panelTabs("filters"));
+    const sec = (title, ...nodes) => { const b = el("div", "psec"); b.append(el("h4", null, title)); const r = el("div", "prow"); r.append(...nodes); b.append(r); return b; };
+    w.append(sec("Position", $("postabs")));
+    w.append(sec("Player", $("searchbox"), $("teamctl")));
+    if (state.mode === "leaderboard") w.append(sec("Season and level", $("lbseason")));
+    const sf = $("sortfield"), sorting = !customOrder();
+    if (sorting || pit) {
+      const b = el("div", "psec"); b.append(el("h4", null, "Order"));
+      const r = el("div", "prow"); if (sorting) r.append(sf); if (pit) r.append($("reffield"));
+      b.append(r);
+      if (pit) b.append(el("p", "note", "Rank vs sets the pool a pitcher's percentiles are measured against — his own (starters or relievers) or all pitchers."));
+      w.append(b);
+    }
+    const row = el("div", "row");
+    const done = el("button", "btn", "Done"); done.type = "button"; done.addEventListener("click", () => closePanel(false));
+    const clear = el("button", "btn btn-quiet", "Clear"); clear.type = "button"; clear.title = "Name and team";
+    clear.addEventListener("click", () => { state.q = ""; $("search").value = ""; state.teamF = null; state.expanded = null; savePrefs(); render(); });
+    row.append(done, clear); w.append(row); body.append(w);
+    renderTabs(); renderSortSelect(); renderRef(); renderLbTools();
   }
   function renderSplitsPanel() {
     parkControls();
@@ -3702,7 +3847,7 @@
     row.append(done, reset); w.append(row); body.append(w);
   }
   $("ranksortclear").addEventListener("click", () => { state.rankSort = false; savePrefs(); render(); });
-  $("optsbtn").addEventListener("click", () => openPanel(PANEL_TABS.some(([k]) => k === state.panelTab) ? state.panelTab : "stats"));
+  $("optsbtn").addEventListener("click", () => openPanel(PANEL_TABS.some(([k]) => k === state.panelTab) ? state.panelTab : "filters"));
   $("listsbtn").addEventListener("click", () => openPanel("lists"));
   $("ddays").addEventListener("change", (e) => { const n = Math.max(0, Math.round(Number(e.target.value) || 0)); state.win = n ? { from: daysBack(n), to: "", last: "", days: n } : { from: "", to: "", last: "" }; state.expanded = null; render(); });
   $("ddays").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });

@@ -1782,3 +1782,50 @@ body.modal-open header.top { z-index: 60; }
 :root[data-view="mobile"] .cmpdates { flex-wrap: wrap; gap: 4px; }
 :root[data-view="mobile"] .cmpdates .cmpdate { flex: 1 1 100%; }
 :root[data-view="mobile"] .cmpdash { display: none; }
+
+/* ---------- Colour, not grey: the table dressing follows the scheme ----------
+   The column head wears the scheme's band (the same navy/accent the site header uses), the board and the
+   bars around it are outlined in the accent rather than a neutral hairline, and the strips above and below
+   the rows take an accent wash. Every colour here is a theme token, so a scheme swap carries it all. */
+.colhead { background: var(--band); color: var(--band-ink); border-bottom: 2px solid var(--accent-2); }
+.colhead .h, .colhead button.h { color: var(--band-dim); }
+.colhead button.h:hover { color: var(--band-ink); background: rgba(255, 255, 255, 0.1); }
+.colhead button.h[aria-sort] { color: var(--band-ink); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--accent-2); text-decoration-thickness: 2px; }
+.colhead .h.left { color: var(--band-ink); }
+.board { border: 1px solid var(--accent-2); }
+.setbar, .pager, .tbfold { background: var(--accent-wash); border-color: var(--accent-2); }
+.pager { color: var(--ink-2); border-bottom: 1px solid var(--accent-2); }
+.pager:last-child { border-bottom: 0; border-top: 1px solid var(--accent-2); }
+.tierhead { border-left: 4px solid var(--accent-2); }
+
+/* Everything that narrows the list is one popup now, so the parked controls have to look at home in it */
+.panel .psec .postabs { display: block; }
+.panel .psec .postabpill { display: inline-flex; }
+.panel .psec .search { flex: 1 1 200px; min-width: 160px; }
+.panel .psec .search input { width: 100%; }
+.panel .psec .teamctl { display: inline-flex; align-items: center; gap: 4px; }
+.panel .psec .spick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.toolbar .tools { align-items: center; }
+
+/* Comparison: the two side boxes live in the Set up popup now, and the bars on the card stay short
+   enough that the eye can cross from one column to the other */
+.cmpsides { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.cmpbox { padding: 10px 12px; }
+.cmpbox h3 { margin: 0 0 6px; font-family: var(--display); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.cmpbox .cmeta { font-size: 11.5px; color: var(--muted); }
+.cmppanel .colgrid { max-height: 42vh; overflow: auto; }
+:root:not([data-view="mobile"]) .cmpgrid { grid-template-columns: 148px repeat(var(--np), minmax(0, 320px)); justify-content: start; column-gap: 24px; }
+.cmpgrid .chead .plate { padding: 6px 10px; }
+.cmpgrid .chead h3 { font-size: 13px; }
+
+/* The stat glossary: one box per stat, and the page's own explanation folded away under it */
+.notes .fold-sec { margin-top: 10px; }
+.notes .foldhead { font-family: var(--display); font-weight: 700; font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); background: none; border: 0; padding: 6px 0; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.notes .foldhead:hover { color: var(--accent-2-text); }
+.glossary { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin: 6px 0 4px; }
+.gitem { padding: 10px 12px; background: var(--surface); border: 1px solid var(--hair); border-top: 3px solid var(--accent-2); }
+.gitem b { display: block; font-family: var(--display); font-size: 13.5px; color: var(--accent); letter-spacing: 0.02em; }
+.gitem p { margin: 4px 0 0; font-size: 12px; line-height: 1.45; color: var(--ink-2); }
+.notes .prose { display: grid; gap: 8px; margin: 4px 0 2px; }
+.cmpbox { background: var(--accent-wash); border: 1px solid var(--hair); }
+:root[data-view="mobile"] .glossary { grid-template-columns: 1fr; }
