@@ -1735,7 +1735,7 @@ body.modal-open header.top { z-index: 60; }
 .modes .modesel.open { color: var(--accent-2-ink); background: var(--on-fill-wash); }
 .modemenu { position: fixed; z-index: 200; display: none; min-width: 178px; margin: 0; padding: 4px; list-style: none;
             background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22); }
-.modesel.open .modemenu { display: block; }
+.modesel.open .modemenu, .modemenu.open { display: block; }
 .modemenu li { margin: 0; padding: 0; }
 .modes .modesel .modemenu li a {
   display: block; min-height: 0; margin: 0; padding: 9px 12px; border: 0; border-radius: 3px; background: none;
@@ -1911,3 +1911,26 @@ body.modal-open header.top { z-index: 60; }
 :root:not([data-view="mobile"]) #modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 /* the card's own pinned plate and the comparison's frozen heads now stick to the panel, not the page */
 :root:not([data-view="mobile"]) #modal-body .cardtop { top: 0; }
+
+/* ---- the toolbar's five dropdowns: a button each, the panel hanging under it (never a page-wide popup) ---- */
+.tbtns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tbtns .tbtn.open { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
+.pop { position: fixed; z-index: 120; overflow: auto; overscroll-behavior: contain;
+  background: var(--surface); border: 1px solid var(--accent-2); border-radius: 10px; box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+  min-width: 300px; max-width: min(720px, calc(100vw - 16px)); }
+.pop[hidden] { display: none; }
+.pop-close { position: absolute; top: 6px; right: 8px; z-index: 2; width: 26px; height: 26px; border-radius: 6px;
+  border: 1px solid var(--hair); background: var(--surface); color: var(--ink-2); font-size: 17px; line-height: 1; padding: 0; }
+.pop-close:hover { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
+.pop-body { padding: 10px 12px 12px; }
+.pop-body .textmodal { max-width: none; padding: 0; background: none; border: 0; box-shadow: none; }
+.pop-body h2 { font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.pop-body .psec { margin-bottom: 10px; }
+.posgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 10px; }
+.poschk { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+.poschk:hover { background: var(--hover); }
+.poschk.on { background: var(--accent-wash); font-weight: 700; }
+.poschk .pcount { margin-left: auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+:root[data-view="mobile"] .pop { max-width: none; }
+:root[data-view="mobile"] .tbtns { gap: 4px; }
+:root[data-view="mobile"] .tbtns .tbtn { padding: 0 8px; font-size: 12px; }

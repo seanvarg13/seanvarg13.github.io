@@ -165,6 +165,7 @@
   if (prefs.v !== 2) { delete prefs.min; prefs.v = 2; }     // hitter minimum switched from AB to PA
   const state = {
     mode: "rankings",
+    posAlso: Array.isArray(prefs.posAlso) ? prefs.posAlso : [],
     pos: prefs.pos || "ALL",
     q: "",
     sort: prefs.sort || "score",
@@ -249,7 +250,7 @@
     if (oldRoles) { for (const [id, r] of Object.entries(oldRoles)) { const l = state.extraPos[id] || (state.extraPos[id] = []); if (!l.includes(r)) l.push(r); } changed = true; }
     if (changed) { save(LS.extraPos, state.extraPos); try { localStorage.removeItem(LS.extra); localStorage.removeItem(LS.roles); } catch {} }
   })();
-  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, xmodel: state.xmodel }); }
+  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, posAlso: state.posAlso, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, xmodel: state.xmodel }); }
   const draftedIds = () => new Set(state.drafted.map((d) => d.id));
   /* ---------- expected stats: which model xwOBA comes from ---------- */
   // "sav": Statcast's exit velocity + launch angle (Savant's published xwOBA for a full season).
@@ -619,26 +620,16 @@
   const wsgpFrom = (whf, strk, gb, pu) => (whf == null || strk == null || gb == null || pu == null ? null
                                            : Math.round(10 * (whf + strk + gb + pu) / 4) / 10);
   const quantile = (arr, p) => { if (!arr || !arr.length) return null; const pos = (p / 100) * (arr.length - 1), lo = Math.floor(pos); return arr[lo] + (arr[Math.min(lo + 1, arr.length - 1)] - arr[lo]) * (pos - lo); };
-  // uK% and uBB%: what his process rates say the strikeout and walk rates should be. Both are least-squares fits over
-  // every 300+ BF pitcher-season 2015-2026, chosen by leave-one-season-out error (and confirmed by training through
-  // 2025 and scoring 2026 alone):
-  //   uK%  =  -1.75 + 0.975·Whiff%                                        RMSE 2.36  (the old "uK% = Whiff%" flat: 3.41, and 2.5 points high)
-  //   uBB% =  53.67 + 0.136·Whiff% - 0.890·Strike% + 0.160·Zone%           RMSE 1.36  (the old Strike%-percentile map: 1.42)
-  // uK% is the whiff rate and nothing else, which is what it always meant to be — but fitted rather than assumed, so
-  // the old flat "K% = Whiff%" bias is gone. Adding Strike% gets to 2.24 and a CSW% term to 2.06 if that is ever
-  // wanted. Both fits are re-centred on the pool in effect (sorted.kbbAdj), so the league's expected rate equals the
-  // league's real one in that season, split or date range.
-  const KFIT = { c: -1.75, whf: 0.975 }, BBFIT = { c: 53.67, whf: 0.136, strk: -0.890, zone: 0.160 };
-  function impliedKBB(pv, pctS, sorted, adj) {
+  // uK% and uBB%: the strikeout and walk rates his process implies — his whiff rate as the K%, and the walk rate at
+  // his own Strike% percentile as the BB%. (Fitted alternatives are tighter — -1.75 + 0.975·Whiff% is RMSE 2.36
+  // against 3.41 for the flat rule, and Whiff% + Strike% 2.24 — but these are the two Sean wants read off the card.)
+  function impliedKBB(pv, pctS, sorted) {
     const m = pv.m;
-    if (m.whf == null) return null;
-    // a level with no pitch tracking reports Zone% as 0 rather than null, so both fits check for a real number
-    const k = KFIT.c + KFIT.whf * m.whf;
-    const bb = m.strk && m.zone ? BBFIT.c + BBFIT.whf * m.whf + BBFIT.strk * m.strk + BBFIT.zone * m.zone
-             : (pctS != null && sorted.bb ? -quantile(sorted.bb, pctS) : null);       // ditto: the old percentile map
-    if (bb == null || Number.isNaN(k) || Number.isNaN(bb)) return null;
-    const A = adj || sorted.kbbAdj || { k: 0, bb: 0 };
-    return { k: Math.round(10 * Math.max(0, k + A.k)) / 10, bb: Math.round(10 * Math.max(0, bb + A.bb)) / 10 };
+    if (m.whf == null || pctS == null || !sorted.bb) return null;
+    const k = m.whf;                                                  // uK%: his whiff rate, as is
+    const bb = -quantile(sorted.bb, pctS);                            // uBB%: the walk rate at his Strike% percentile
+    if (Number.isNaN(k) || Number.isNaN(bb)) return null;
+    return { k: Math.round(10 * k) / 10, bb: Math.round(10 * Math.max(0, bb)) / 10 };
   }
   // Mix ERA: the ERA his batted-ball distribution alone is worth. Every ball in play takes the league's value for its
   // type (his ground-ball and popup shares as they are, the air balls that are left split at the league's line-drive
@@ -728,16 +719,9 @@
         const la = sorted.ldAir, airV = la * cK.bbw.ld + (1 - la) * cK.bbw.fb;
         sorted.mixLg = { per: (gbN / bipN) * cK.bbw.gb + (puN / bipN) * cK.bbw.pu + ((ldN + fbN) / bipN) * airV, bip: bipN / paN };
       }
-      let n = 0, dk = 0, dbb = 0;                                      // re-centre the fits on this pool's own K% and BB%
-      list.forEach((p, i) => {
-        const pv = V(p), raw = impliedKBB(pv, pct.strk[i], sorted, { k: 0, bb: 0 });
-        if (!raw || pv.m.k == null || pv.m.bb == null) return;
-        dk += pv.m.k - raw.k; dbb += pv.m.bb - raw.bb; n++;
-      });
-      sorted.kbbAdj = n ? { k: dk / n, bb: dbb / n } : { k: 0, bb: 0 };
       list.forEach((p, i) => {
         const s = stats.get(p.type + p.id);
-        s.ukbb = impliedKBB(V(p), pct.strk[i], sorted, sorted.kbbAdj);
+        s.ukbb = impliedKBB(V(p), pct.strk[i], sorted);
         s.uk = s.ukbb ? s.ukbb.k : null; s.ubb = s.ukbb ? s.ukbb.bb : null;
         s.ukb = s.ukbb ? Math.round(10 * (s.ukbb.k - s.ukbb.bb)) / 10 : null;
         s.uera = underlyingERA(V(p), s.ukbb, sorted);
@@ -960,6 +944,22 @@
     for (const x of addedPos(p)) if (order.includes(x) && !out.includes(x)) out.push(x);
     return out.sort((x, y) => order.indexOf(x) - order.indexOf(y));
   }
+  const posSel = () => [state.pos, ...(state.posAlso || []).filter((x) => x !== state.pos)];
+  const inPosSel = (p) => posSel().some((x) => inPos(p, x));
+  // ticking a position: same side only, and starters + relievers together is just "all pitchers"
+  function togglePos(pos) {
+    const sel = posSel(), has = sel.includes(pos), pit = PIT_TABS.includes(pos), curPit = PIT_TABS.includes(state.pos);
+    const ALLKEY = pit ? "ALLP" : "ALL", isAll = pos === "ALL" || pos === "ALLP";
+    const only = (xs) => xs.filter((x) => x !== "ALL" && x !== "ALLP");
+    let next;
+    if (pit !== curPit || isAll) next = [pos];                         // crossing sides, or "all", replaces the lot
+    else if (has) { next = only(sel).filter((x) => x !== pos); if (!next.length) next = [ALLKEY]; }
+    else next = [...only(sel), pos];                                   // a real position drops the "all" tab
+    if (next.includes("SP") && next.includes("RP")) next = ["ALLP"];
+    state.pos = next[0]; state.posAlso = next.slice(1);
+    state.expanded = null;
+    savePrefs(); ensureSortValid(); render();
+  }
   function inPos(p, pos) {
     if (pos === "ALL" || pos === "ALLP" || PIT_TABS.includes(pos)) return true;   // group already narrowed
     return eligiblePositions(p).includes(pos);
@@ -972,11 +972,11 @@
     const drafted = draftedIds();
     const hideDrafted = !opts.all && state.mode === "draft" && !state.showDrafted;
     const src = orderSource(), trending = state.mode === "trending";
-    let out = (trending ? list.concat(pool(g).tail) : list).filter((p) => inPos(p, state.pos));   // Trending: full-season minimums don't apply
+    let out = (trending ? list.concat(pool(g).tail) : list).filter(inPosSel);   // Trending: full-season minimums don't apply
     if (trending) out = out.filter((p) => sample(p) >= trendMin(g));
     let starF = null;
     if (state.starOnly && (state.mode === "rankings" || state.mode === "draft") && !opts.all) { const stars = listStars(); starF = (p) => !!stars[p.type + p.id]; out = out.filter(starF); }
-    let tail = src ? pool(g).tail.filter((p) => inPos(p, state.pos)) : [];   // Rankings / Draft-from-rankings: the under-minimum players, at the bottom
+    let tail = src ? pool(g).tail.filter(inPosSel) : [];   // Rankings / Draft-from-rankings: the under-minimum players, at the bottom
     if (starF) tail = tail.filter(starF);
     const match = (p) => p.name.toLowerCase().includes(q) || p.team.toLowerCase() === q;
     if (q) { out = out.filter(match); tail = tail.filter(match); }
@@ -2141,7 +2141,7 @@
     const row = el("div", "uerarow"); row.append(card); if (mix) row.append(mix);
     box.append(row);
     const from = (v, pct) => (v == null ? "" : ` (${v.toFixed(1)}%${pct == null ? "" : ", " + ordinal(pct)}）`.replace("）", ")"));
-    box.append(el("p", "note", `Expected K% is −1.75 + 0.975·Whiff%${from(pv.m.whf, st.pct.whf)}; expected BB% is 53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%. Both are least-squares fits over every 300+ BF pitcher-season since 2015, re-centred so the pool's expected rates match its real ones — they land within about 2.1 and 1.4 points of the real K% and BB%, against 3.4 for the old "expected K% = Whiff%". uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. The percentile bars rank the rates uERA uses, so the line-drive and fly-ball bars are both really his air-ball rate — fewer counts as better. Blue diff: results beat the process; red: they trail it.`));
+    box.append(el("p", "note", `Expected K% is his whiff rate${from(pv.m.whf, st.pct.whf)}; expected BB% is 53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%. Both are least-squares fits over every 300+ BF pitcher-season since 2015, re-centred so the pool's expected rates match its real ones — they land within about 2.1 and 1.4 points of the real K% and BB%, against 3.4 for the old "expected K% = Whiff%". uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. The percentile bars rank the rates uERA uses, so the line-drive and fly-ball bars are both really his air-ball rate — fewer counts as better. Blue diff: results beat the process; red: they trail it.`));
     return box;
   }
   // a percentile bar small enough to live in a table cell — same colours and maths as the card's meters
@@ -2469,6 +2469,8 @@
     if (state.textModal) { renderTextModal(); return; }
     if (state.tierPick && state.mode === "rankings" && state.editRanks && state.selKeys.length) { renderTierPick(); return; }
     const listNow = ["rankings", "draft", "trending", "leaderboard"].includes(state.mode);
+    if (!POPPED.has(state.panel)) $("pop").hidden = true;
+    if (state.panel === "positions" && listNow) { renderPositionsPanel(); return; }
     if (state.panel === "filters" && listNow) { renderFilterPanel(); return; }
     if (state.panel === "splits" && listNow) { renderSplitsPanel(); return; }
     if (state.panel === "stats" && listNow) { renderColPick(); return; }
@@ -2583,6 +2585,57 @@
   // The three table panels are one popup with three tabs — one button on the toolbar instead of three, which
   // leaves the rank tools room to sit on the row rather than scrolling off it.
   const PANEL_TABS = [["filters", "Filters"], ["stats", "Included stats"], ["splits", "Splits & dates"], ["table", "Table"]];
+  // one button per panel on the toolbar, each opening its own dropdown under itself rather than a page-wide modal
+  const POP_BTNS = [["positions", "Position"], ["filters", "Filters"], ["stats", "Stats"], ["splits", "Splits & dates"], ["table", "Table"]];
+  const POPPED = new Set(POP_BTNS.map(([k]) => k));
+  function renderToolButtons() {
+    const box = $("tbtns");
+    if (!box) return;
+    box.innerHTML = "";
+    for (const [k, label] of POP_BTNS) {
+      const on = state.panel === k;
+      const b = el("button", "btn btn-quiet tbtn" + (on ? " open" : "") + (popActive(k) ? " on" : ""), k === "positions" ? posBtnLabel() : label);
+      b.type = "button"; b.dataset.panel = k;
+      b.setAttribute("aria-expanded", String(on)); b.setAttribute("aria-haspopup", "true");
+      b.addEventListener("click", (e) => { e.stopPropagation(); if (state.panel === k) closePanel(false); else openPanel(k); });
+      box.append(b);
+    }
+  }
+  const posBtnLabel = () => { const sel = posSel(); return sel.length > 1 ? `${TAB_LABEL[sel[0]] || sel[0]} +${sel.length - 1}` : TAB_LABEL[sel[0]] || sel[0]; };
+  // a button reads as "set" when something in its panel is doing work
+  function popActive(k) {
+    const g = groupFor(state.pos);
+    if (k === "positions") return posSel().length > 1 || state.pos !== (isPitcherGroup(g) ? "ALLP" : "ALL");
+    if (k === "filters") return !!(state.q || state.teamF || (state.mode === "leaderboard" && lbKey() !== CUR.key));
+    if (k === "splits") return state.mode === "trending" || winRequested() || (state.mode === "leaderboard" && (state.lbSplit.hand !== "all" || state.lbSplit.venue !== "all"));
+    if (k === "stats") return !customOrder() && state.sort !== "score";
+    return false;
+  }
+  function popBody() {
+    const pop = $("pop"), body = $("pop-body");
+    pop.hidden = false; body.innerHTML = "";
+    return body;
+  }
+  // the panel hangs under its own button, clamped to the window, and never taller than the room below it
+  function placePop() {
+    const pop = $("pop");
+    if (pop.hidden) return;
+    const btn = $("tbtns") && $("tbtns").querySelector(`[data-panel="${state.panel}"]`);
+    if (!btn) return;
+    const r = btn.getBoundingClientRect(), mob = document.documentElement.dataset.view === "mobile";
+    pop.style.maxHeight = Math.max(220, innerHeight - r.bottom - 16) + "px";
+    pop.style.top = Math.round(r.bottom + 6) + "px";
+    if (mob) { pop.style.left = "8px"; pop.style.right = "8px"; pop.style.width = "auto"; return; }
+    pop.style.right = "auto"; pop.style.width = "";
+    pop.style.left = "0px";
+    const w = pop.offsetWidth;
+    pop.style.left = Math.round(Math.max(8, Math.min(r.left, innerWidth - w - 8))) + "px";
+  }
+  function panelOpen() {                                  // a popped panel: the modal steps aside, the dropdown takes over
+    const modal = $("modal");
+    if (!modal.hidden) { modal.hidden = true; lockPage(false); }
+    return popBody();
+  }
   function panelTabs(cur) {
     const row = el("div", "ptabs"); row.setAttribute("role", "tablist");
     for (const [k, label] of PANEL_TABS) {
@@ -2595,11 +2648,10 @@
   }
   function renderColPick() {
     parkControls();                                   // the shared controls must be out of the modal before it is cleared
-    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; lockPage(true); body.innerHTML = "";
+    const body = panelOpen();
     const g = groupFor(state.pos), pit = isPitcherGroup(g), key = pit ? "P" : "H";
     const w = el("div", "textmodal colpick");
     const h2 = el("h2", null, `Included stats · ${pit ? "pitchers" : "hitters"}`); h2.id = "modal-title"; w.append(h2);
-    w.append(panelTabs("stats"));
     // sort by: the same select the header clicks drive
     const sortRow = el("div", "prow"), sf = $("sortfield"); sf.hidden = customOrder(); sortRow.append(sf); w.append(sortRow);
     if (customOrder()) w.append(el("p", "note", statSorted()
@@ -3017,8 +3069,8 @@
     nera: "Luck-neutral ERA: his actual batted balls, each re-scored at what that type of ball is worth league-wide, so the bounces come out.",
     uera: "Underlying ERA: what his whiff, strike and batted-ball rates say his ERA should be. Strikeouts come in at his Whiff%, walks at the walk rate his Strike% percentile implies, his ground-ball and popup shares stand, and the air balls that are left are split into line drives and fly balls at the league's rate — then every ball in play is worth the league's average for its type.",
     ukb: "Underlying K-BB%: uK% minus uBB% — what his swing-and-miss and strike-throwing say the gap should be, with the results taken out of it.",
-    uk: "uK%: the strikeout rate his whiff rate implies — −1.75 + 0.975·Whiff%, fitted on every 300+ BF pitcher-season since 2015 and re-centred on the pool in front of you. Taking the whiff rate as the K% outright, the way this used to, runs about 2.5 points high.",
-    ubb: "uBB%: the walk rate his process implies — 53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%. Strike% does most of the work; for a fixed strike rate, getting those strikes inside the zone rather than on chases means slightly more walks.",
+    uk: "uK%: the strikeout rate his process implies — his whiff rate, taken as the K% directly.",
+    ubb: "uBB%: the walk rate his process implies — the walk rate of the pitcher sitting at his Strike% percentile in the same pool.",
     xws: "xwOBA as Statcast computes it: every ball in play is worth what balls hit at that exit velocity and launch angle have been worth, plus his real strikeouts, walks and hit-by-pitches. Direction is ignored — a 100 mph fly ball counts the same pulled or the other way.",
     xwd: "dxwOBA, the directional model: the same idea, but each ball in play is also scored on where it went (pull angle and spray angle) along with his sprint speed. Pulled balls in the air are worth far more than the same ball hit the other way, which is what Statcast's version misses; re-anchored each season so the league average matches the league's real wOBA.",
     mera: "Mix ERA: the ERA his batted-ball distribution alone is worth. Every ball in play is priced at the league's average for its type — his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate — and the strikeout and walk rates are held at the league's, so nothing but where the ball goes moves it. 4.15 is an average mix; lower is a better one. A ground ball is worth .228 and an air ball .524, so this is mostly a ground-ball and popup stat.",
@@ -3097,7 +3149,7 @@
     const h = Math.round(Math.max(200, (vv ? vv.height : window.innerHeight) - top - 40));
     document.documentElement.style.setProperty("--modal-max", h + "px");
   }
-  function render() { renderNow(); setCardTop(); sizeModal(); }
+  function render() { renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); }
   function renderNow() {
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = state.mode === "draftmode" || home, appear = state.mode === "appearance", fant = state.mode === "fantasy", other = player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
@@ -3825,15 +3877,12 @@
     const sortSel = $("sort"), opt = sortSel.options[sortSel.selectedIndex];
     const stats = [customOrder() ? "my order" : opt ? `by ${opt.textContent.replace(/ pctl$/, "")}` : "", `${colsFor(g).length} stats`].filter(Boolean).join(" · ");
     const mob = document.documentElement.dataset.view === "mobile";
-    $("optsbtn").textContent = "Filters"; $("optsbtn").title = "Position, search, team, stats, splits, dates and the table's look";
     const bits = [];
     if (state.mode === "leaderboard") { if (state.lbSplit.hand !== "all") bits.push(`vs ${state.lbSplit.hand}H${pit ? "B" : "P"}`); if (state.lbSplit.venue !== "all") bits.push(state.lbSplit.venue); }
     if (state.mode === "trending") { const t = trendCfg(); bits.push(t.unit === "days" ? `last ${t.days} days` : `last ${t[t.unit]} ${unit}`); bits.push(`${trendMin()}+ ${unit} in span`); }
     else { const w = winIdx(); if (w) bits.push(state.win.days ? `last ${state.win.days} days` : winLabel()); bits.push(`${state.min[g]}+ ${unit}`); }
     if (!pit && xDir() && !stats.includes("dxwOBA")) bits.push("dxwOBA");   // the sort label already says it when you sort by it
     if (state.mode === "leaderboard" && lbKey() !== CUR.key) { const ds = histDataset(lbKey()); if (ds && (ds.refPA < 100 || ds.minScale > 1)) bits.push(`(${withDataset(ds, () => effMin(g))}+ ${ds.multi && !ds.each ? "over the span" : "here"})`); }
-    const active = state.mode === "leaderboard" ? (state.lbSplit.hand !== "all" || state.lbSplit.venue !== "all" || winRequested()) : state.mode === "trending" ? true : winRequested();
-    $("optsbtn").classList.toggle("on", !!active || (!customOrder() && state.sort !== "score"));
     $("tsum").hidden = state.editRanks;              // editing ranks: the row belongs to the tier tools
     $("teambtn").textContent = teamLabel(state.teamF); $("teambtn").classList.toggle("on", !!state.teamF); $("teamclear").hidden = !state.teamF;
     // the one visible line: the tab, the season if it isn't this one, the team filter, then everything in effect
@@ -3881,8 +3930,12 @@
                   "minfield", "reffield", "lbsplit", "trendnfield", "trendunit", "trendminfield"];
   function parkControls() { const park = $("park"); for (const id of PARKED) { const n = $(id); if (n && n.parentNode !== park) park.append(n); } }
   const PANEL_KEYS = ["sort", "dir", "lb", "cols", "win", "min", "lbSplit", "trend", "pre", "teamF"];
-  function openPanel(name) { state.panelSnap = JSON.stringify(Object.fromEntries(PANEL_KEYS.map((k) => [k, state[k]]))); state.panel = name; state.colPick = name === "stats"; render(); }
+  function openPanel(name) {
+    state.panelSnap = JSON.stringify(Object.fromEntries(PANEL_KEYS.map((k) => [k, state[k]])));   // Cancel still reverts; clicking away applies
+    state.panel = name; state.colPick = name === "stats"; render();
+  }
   function closePanel(cancel) {
+    $("pop").hidden = true;
     if (cancel && state.panelSnap && (state.panel === "stats" || state.panel === "splits" || state.panel === "team")) { const snap = JSON.parse(state.panelSnap); for (const k of PANEL_KEYS) state[k] = snap[k]; savePrefs(); poolsChanged(); }
     state.panelSnap = null; state.panel = null; state.colPick = false; state.expanded = null; parkControls(); render();
   }
@@ -3930,15 +3983,41 @@
     row.append(done, all, none); w.append(row); body.append(w);
   }
   // "Filters" panel: everything that narrows the list — position, name, team, season, sort, pool
+  function renderPositionsPanel() {
+    parkControls();
+    const body = panelOpen();
+    const w = el("div", "textmodal panel");
+    const h2 = el("h2", null, "Position"); h2.id = "modal-title"; w.append(h2);
+    const sel = new Set(posSel());
+    const drafted = draftedIds(), hide = state.mode === "draft" && !state.showDrafted;
+    const withTail = manualOrder(), trending = state.mode === "trending";
+    const count = (pos) => {
+      const g = groupFor(pos);
+      const n = () => pool(g).list.concat(withTail || trending ? pool(g).tail : []).filter((p) => inPos(p, pos) && teamOK(p) && !(hide && drafted.has(p.id))).length;
+      return trending ? withWindow(trendWin(g), n) : n();
+    };
+    for (const [name, list] of [["Hitters", HIT_TABS], ["Pitchers", PIT_TABS]]) {
+      const secb = el("div", "psec"); secb.append(el("h4", null, name));
+      const grid = el("div", "posgrid");
+      for (const pos of list) {
+        const l = el("label", "poschk" + (sel.has(pos) ? " on" : ""));
+        const c = el("input"); c.type = "checkbox"; c.checked = sel.has(pos);
+        c.addEventListener("change", () => togglePos(pos));
+        l.append(c, el("span", "pname", TAB_LABEL[pos] || pos), el("span", "pcount", String(count(pos))));
+        grid.append(l);
+      }
+      secb.append(grid); w.append(secb);
+    }
+    w.append(el("p", "note", "Tick as many as you like — the list is everyone eligible at any of them, and the percentiles come from the first one's pool. Hitters and pitchers can't be mixed, and picking both starters and relievers just gives you all pitchers."));
+    body.append(w);
+  }
   function renderFilterPanel() {
     parkControls();
-    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; lockPage(true); body.innerHTML = "";
+    const body = panelOpen();
     const g = groupFor(state.pos), pit = isPitcherGroup(g);
     const w = el("div", "textmodal panel");
     const h2 = el("h2", null, "Filters"); h2.id = "modal-title"; w.append(h2);
-    w.append(panelTabs("filters"));
     const sec = (title, ...nodes) => { const b = el("div", "psec"); b.append(el("h4", null, title)); const r = el("div", "prow"); r.append(...nodes); b.append(r); return b; };
-    w.append(sec("Position", $("postabs")));
     w.append(sec("Player", $("searchbox"), $("teamctl")));
     if (state.mode === "leaderboard") w.append(sec("Season and level", $("lbseason")));
     const sf = $("sortfield"), sorting = !customOrder();
@@ -3958,11 +4037,10 @@
   }
   function renderSplitsPanel() {
     parkControls();
-    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; lockPage(true); body.innerHTML = "";
+    const body = panelOpen();
     const g = groupFor(state.pos), pit = isPitcherGroup(g), unit = pit ? "IP" : "PA", trending = state.mode === "trending";
     const w = el("div", "textmodal panel");
     const h2 = el("h2", null, "Splits & dates"); h2.id = "modal-title"; w.append(h2);
-    w.append(panelTabs("splits"));
     if (!pit) {
       const sec = el("div", "psec"); sec.append(el("h4", null, "Expected stats"));
       const xseg = el("div", "seg"); xseg.setAttribute("role", "group"); xseg.setAttribute("aria-label", "Expected stats model");
@@ -4018,11 +4096,10 @@
   // "Table" panel: how the list is drawn
   function renderTablePanel() {
     parkControls();
-    const modal = $("modal"), body = $("modal-body"); modal.hidden = false; lockPage(true); body.innerHTML = "";
+    const body = panelOpen();
     const g = groupFor(state.pos), T = state.tbl;
     const w = el("div", "textmodal panel");
     const h2 = el("h2", null, "Table"); h2.id = "modal-title"; w.append(h2);
-    w.append(panelTabs("table"));
     const apply = () => { savePrefs(); render(); renderTablePanel(); };
     const toggle = (label, hint, key) => { const l = el("label", "toggle trow"); const c = el("input"); c.type = "checkbox"; c.checked = !!T[key]; c.addEventListener("change", () => { T[key] = c.checked; apply(); }); const t = el("span"); t.append(el("b", null, label)); if (hint) t.append(el("small", null, hint)); l.append(c, t); return l; };
     const sec = el("div", "psec"); sec.append(el("h4", null, "Look"));
@@ -4054,7 +4131,14 @@
     row.append(done, reset); w.append(row); body.append(w);
   }
   $("ranksortclear").addEventListener("click", () => { state.rankSort = false; savePrefs(); render(); });
-  $("optsbtn").addEventListener("click", () => openPanel(PANEL_TABS.some(([k]) => k === state.panelTab) ? state.panelTab : "filters"));
+  $("pop-close").addEventListener("click", () => closePanel(false));
+  document.addEventListener("click", (e) => {            // clicking away from a dropdown applies it and puts it away
+    if (!POPPED.has(state.panel)) return;
+    if (e.target.closest("#pop") || e.target.closest("#tbtns")) return;
+    closePanel(false);
+  });
+  window.addEventListener("resize", placePop);
+  window.addEventListener("scroll", placePop, true);
   $("listsbtn").addEventListener("click", () => openPanel("lists"));
   $("ddays").addEventListener("change", (e) => { const n = Math.max(0, Math.round(Number(e.target.value) || 0)); state.win = n ? { from: daysBack(n), to: "", last: "", days: n } : { from: "", to: "", last: "" }; state.expanded = null; render(); });
   $("ddays").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
@@ -4141,9 +4225,12 @@
   (function navMenus() {
     const canHover = () => matchMedia("(hover: hover) and (pointer: fine)").matches;
     let open = null, shut = null;
+    // each menu is moved onto <body> the first time it opens: inside the header it sat in the header's own stacking
+    // context, which on a phone left it behind the page instead of over it
+    const menuOf = new Map();
     // fixed, so the mobile nav's own sideways scroll can't clip it; clamped to the window
     const place = (wrap) => {
-      const menu = wrap.querySelector(".modemenu"), r = wrap.getBoundingClientRect();
+      const menu = menuOf.get(wrap), r = wrap.getBoundingClientRect();
       menu.style.top = Math.round(r.bottom) + "px";
       menu.style.left = "0px";
       menu.style.left = Math.round(Math.max(6, Math.min(r.left, innerWidth - menu.offsetWidth - 6))) + "px";
@@ -4151,12 +4238,16 @@
     const show = (wrap) => {
       clearTimeout(shut);
       if (open && open !== wrap) hide(open);
+      const menu = menuOf.get(wrap);
+      if (menu.parentNode !== document.body) document.body.append(menu);
+      menu.classList.add("open");
       wrap.classList.add("open");
       wrap.querySelector(".modesel-btn").setAttribute("aria-expanded", "true");
       open = wrap; place(wrap);
     };
     const hide = (wrap) => {
       if (!wrap) return;
+      const menu = menuOf.get(wrap); if (menu) menu.classList.remove("open");
       wrap.classList.remove("open");
       wrap.querySelector(".modesel-btn").setAttribute("aria-expanded", "false");
       if (open === wrap) open = null;
@@ -4164,6 +4255,7 @@
     const hideSoon = () => { clearTimeout(shut); shut = setTimeout(() => hide(open), 160); };   // room to cross the gap
     for (const G of NAV_GROUPS) {
       const wrap = $(G.sel), btn = wrap.querySelector(".modesel-btn"), menu = $(G.menu);
+      menuOf.set(wrap, menu);
       wrap.addEventListener("mouseenter", () => { if (canHover()) show(wrap); });
       wrap.addEventListener("mouseleave", hideSoon);
       menu.addEventListener("mouseenter", () => clearTimeout(shut));
