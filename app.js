@@ -815,6 +815,7 @@
     colorCache.set(p, s);
     return s;
   }
+  const bubLeft = (p) => `calc(var(--bub) / 2 + (100% - var(--bub)) * ${Math.max(0, Math.min(100, p)) / 100})`;
   function paint(node, pct) { const s = pctStyle(pct); if (s) { node.style.background = s.bg; node.style.color = s.fg; } }
 
   /* ---------- formatting ---------- */
@@ -1627,10 +1628,9 @@
     const track = el("div", "track");
     if (pct != null) {
       const s = pctStyle(pct);
-      const fill = el("div", "fill"); fill.style.width = pct + "%"; fill.style.background = s.bg; track.append(fill);
-      const bub = el("div", "bub", pct); bub.style.left = pct + "%"; bub.style.background = s.bg; track.append(bub);
+      const bub = el("div", "bub", pct); bub.style.left = bubLeft(pct); bub.style.background = s.bg; track.append(bub);
     }
-    if (cmp && cmp.pct != null) { const b2 = el("div", "bub ghost", cmp.pct); b2.style.left = cmp.pct + "%"; track.append(b2); }
+    if (cmp && cmp.pct != null) { const b2 = el("div", "bub ghost", cmp.pct); b2.style.left = bubLeft(cmp.pct); track.append(b2); }
     row.append(track);
     row.append(el("div", "val", v == null ? "–" : fmt(v, m)));
     row.title = `${m.label}: ${v == null ? "n/a" : fmt(v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}`;
@@ -2405,10 +2405,11 @@
     $("rankedit").classList.toggle("btn-quiet", state.editRanks);
     $("rankaddtier").hidden = !state.editRanks; $("rankreset").hidden = !state.editRanks;
     const bottom = state.editRanks && selBottom(), bp = bottom && DATA.players.find((q) => q.type + q.id === bottom);
-    $("rankaddtier").textContent = bp ? `+ Tier below ${bp.name.split(" ").slice(-1)[0]}` : "+ Add tier";
+    $("rankaddtier").textContent = bp ? "+ Tier below" : "+ Add tier";
     $("rankaddtier").title = bp ? `New tier boundary right below ${bp.name}: he and everyone above him in his section stay together, the players below him become the next tier` : "Add an empty tier at the bottom";
     const ns = state.selKeys.length;
-    $("rankmove").hidden = !state.editRanks; $("rankmove").disabled = !ns; $("rankmove").textContent = ns ? `Move ${ns} to tier…` : "Move to tier…";
+    $("rankmove").hidden = !state.editRanks; $("rankmove").disabled = !ns; $("rankmove").textContent = ns ? `Move ${ns}…` : "Move…";
+    $("rankmove").title = ns ? `Put the ${ns} ticked player${ns === 1 ? "" : "s"} in a tier, or in a new one` : "Tick players first, then put them in a tier";
     $("rankclear").hidden = !state.editRanks || !ns;
     const idx = tierIndex(tierLists());
     $("rankuntier").hidden = !state.editRanks; $("rankuntier").disabled = !state.selKeys.some((k) => idx.has(k));
@@ -2739,7 +2740,7 @@
     notes.append(Object.assign(el("div"), { innerHTML: `<b>Hitters</b> rank by ${m.scoreNote.H}; the colour is its percentile in the pool. <b>Skills blend</b> (in the Sort menu and on each card) is the ${m.scoreNote.blend}. <b>Pitcher score</b> — ${m.scoreNote.P}.` }));
     notes.append(Object.assign(el("div"), { innerHTML: `<b>Position for 2027</b> — on a pitcher's card, switch SP / RP to move him to the other list and pool (a reliever expected to start next year, say). It's remembered in this browser and shows on his row as "SP (was RP)".` }));
     notes.append(Object.assign(el("div"), { innerHTML: `Air% and Pull Air% use Baseball Savant's batted-ball direction; everything else is computed from pitch-level Statcast. AB and IP are official MLB totals. Built ${m.built}.` }));
-    if (state.mode === "rankings") notes.append(Object.assign(el("div"), { innerHTML: `<b>Rankings</b> — the model's order until you touch a tab (sort by any column, or pick a sort up top), then your own order, one list per tab, plus tiers that are separate from the order: a tier holds whoever you put in it and lists them by rank, so tier 1 can be ranks 1, 2, 3, 5 while rank 4 sits at the top of <b>Not tiered</b>. <b>Tiers / List</b> switches between the tiered view and the raw order. Press <b>Edit rankings</b> to change anything: tick players (click, Cmd/Ctrl-click, Shift-click for a range), then <b>Move to tier…</b> puts them in a tier (or a new one) and <b>Remove from tier</b> sends them back to Not tiered. The rank box, ▲ ▼ and dragging change the order; dragging into another tier's section also moves him there. <b>Add tier</b> adds an empty tier at the bottom; with a player ticked it becomes <b>Tier below him</b> — a boundary right under him, splitting his tier (or cutting a tier off the top of Not tiered). <b>+ tier above</b> on any tier header slots an empty tier in there. ✎ gives a tier a nickname; × removes it. Outside edit mode, clicking a player opens his card. Players you haven't touched follow the big board beneath the ones you have; everyone under the Min PA / IP box is listed after them (most playing time first, PA in amber) so nobody is missing but small samples never push a qualifier around. The bar at the top says which list you're editing: pick a saved list from the menu to open it, <b>Save</b> writes your changes back to it, <b>Save as…</b> keeps a copy under a new name, and <b>New list</b> closes it and starts fresh from the model's order. Rename and Delete act on the open list; Export / Import move lists between browsers as text. The Draft page can draft from your working rankings or any saved set (Draft from).` }));
+    if (state.mode === "rankings") notes.append(Object.assign(el("div"), { innerHTML: `<b>Rankings</b> — the model's order until you touch a tab (sort by any column, or pick a sort up top), then your own order, one list per tab, plus tiers that are separate from the order: a tier holds whoever you put in it and lists them by rank, so tier 1 can be ranks 1, 2, 3, 5 while rank 4 sits at the top of <b>Not tiered</b>. <b>Tiers / List</b> switches between the tiered view and the raw order. Press <b>Edit rankings</b> to change anything: tick players (click, Cmd/Ctrl-click, Shift-click for a range), then <b>Move…</b> puts them in a tier (or a new one) and <b>Untier</b> sends them back to Not tiered. The rank box, ▲ ▼ and dragging change the order; dragging into another tier's section also moves him there. <b>Add tier</b> adds an empty tier at the bottom; with a player ticked it becomes <b>+ Tier below</b> — a boundary right under him, splitting his tier (or cutting a tier off the top of Not tiered). <b>+ tier above</b> on any tier header slots an empty tier in there. ✎ gives a tier a nickname; × removes it. Outside edit mode, clicking a player opens his card. Players you haven't touched follow the big board beneath the ones you have; everyone under the Min PA / IP box is listed after them (most playing time first, PA in amber) so nobody is missing but small samples never push a qualifier around. The bar at the top says which list you're editing: pick a saved list from the menu to open it, <b>Save</b> writes your changes back to it, <b>Save as…</b> keeps a copy under a new name, and <b>New list</b> closes it and starts fresh from the model's order. Rename and Delete act on the open list; Export / Import move lists between browsers as text. The Draft page can draft from your working rankings or any saved set (Draft from).` }));
     if (state.mode === "leaderboard") notes.append(Object.assign(el("div"), { innerHTML: `<b>Leaderboard</b> — every hitter or pitcher over the Min PA / IP box, for any season and level you pick (MLB from 2015, the minors from 2021), with the stats you choose (<b>Columns…</b>). The vs-L / R and home / away toggles redraw every number and percentile from those plate appearances only (the comparison group stays the season's qualifiers on their numbers in the same split); ERA needs full games, so it's blank in a handedness split. Each cell shows the number, coloured by where it ranks among the season's qualifiers; click a heading to sort, click it again to flip. Dates and Last-N work here too, and the position tabs narrow the list.` }));
     if (state.mode === "trending") notes.append(Object.assign(el("div"), { innerHTML: `<b>Trending</b> — who's hot right now. The position tabs use the same eligibility as everywhere else (${ESPN.posGames}+ games at a position this season, plus anything you've added). Hitters are ordered by ${HEAD.label} over each player's last N plate appearances (or the last N days); pitchers by the average of their Whiff% and Strike% percentiles over their last N innings (or days), with K%, BB%, ERA, SIERA and GB% for that span alongside. Full-season minimums don't apply here — <b>at least</b> sets how much playing time a player needs inside the span to be listed. The chips show the actual number, coloured by where it ranks among the season's qualifiers on their numbers in the same span. Click a player for his card over that span.` }));
     if (state.mode === "draft") notes.append(Object.assign(el("div"), { innerHTML: `<b>Draft mode</b> — <b>Draft from</b> picks the order: the big board, your working rankings, or any set you saved on the Rankings page (tiers included). Drafted players are saved in this browser, so you can close the tab and come back mid-draft. “Show drafted” keeps them on the board, dimmed.` }));
@@ -3404,7 +3405,7 @@
       if (!col.st) { d.classList.add("na"); d.append(el("div", "track"), el("div", "val", "–")); return d; }
       const v = metricValue(m, col.v, col.st), pct = col.st.pct[m.key];
       const track = el("div", "track");
-      if (pct != null) { const s = pctStyle(pct); const f = el("div", "fill"); f.style.width = pct + "%"; f.style.background = s.bg; track.append(f); const b = el("div", "bub", pct); b.style.left = pct + "%"; b.style.background = s.bg; track.append(b); }
+      if (pct != null) { const s = pctStyle(pct); const b = el("div", "bub", pct); b.style.left = bubLeft(pct); b.style.background = s.bg; track.append(b); }
       else d.classList.add("na");
       d.append(track, el("div", "val", v == null ? "–" : fmt(v, m)));
       d.title = `${col.entry.name} ${col.cur[1]} — ${m.label}: ${v == null ? "n/a" : fmt(v, m)} (${pct == null ? "n/a" : ordinal(pct) + " pctl"})`;

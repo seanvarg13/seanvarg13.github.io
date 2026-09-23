@@ -38,9 +38,9 @@
   --rule: #13294b;
   --stripe-line: transparent;
   --accent-wash: rgba(123, 175, 212, 0.24);
-  --lo: #2a78d6;      /* percentile: cold */
-  --mid: #d9dee5;     /* percentile: 50th */
-  --hi: #e34948;      /* percentile: hot  */
+  --lo: #325aa1;      /* percentile: cold — Savant's blue */
+  --mid: #b3b3b3;     /* percentile: 50th — a solid grey, not a tint, so the ends carry */
+  --hi: #d22d49;      /* percentile: hot  — Savant's red */
   --shadow: 0 1px 2px rgba(19, 41, 75, 0.06), 0 8px 24px rgba(19, 41, 75, 0.07);
   --display: "Helvetica Neue", Helvetica, Arial, sans-serif;     /* themes.js swaps these for the chosen font */
   --body: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -66,9 +66,9 @@
     --accent-2-text: #9cc6e8;
     --on-fill-line: rgba(15, 33, 61, 0.35);
     --accent-wash: rgba(123, 175, 212, 0.22);
-    --lo: #3987e5;
-    --mid: #3a4557;
-    --hi: #e66767;
+    --lo: #4a86dd;
+    --mid: #6a7382;
+    --hi: #e2455c;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 }
@@ -92,9 +92,9 @@
   --accent-2-text: #9cc6e8;
   --on-fill-line: rgba(15, 33, 61, 0.35);
   --accent-wash: rgba(123, 175, 212, 0.22);
-  --lo: #3987e5;
-  --mid: #3a4557;
-  --hi: #e66767;
+  --lo: #4a86dd;
+  --mid: #6a7382;
+  --hi: #e2455c;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
@@ -1456,22 +1456,33 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 .teampanel .teambtn2 span { opacity: 0.75; font-weight: 500; }
 :root[data-view="mobile"] .teampanel .teamgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-/* Percentile bars, Savant-style: a tall solid bar with a ringed circle at its end, dashed rules between rows */
-.meters { gap: 0; }
-.meters .meter { min-height: 32px; padding: 3px 0; }
-.meters .meter:not(:last-child) { border-bottom: 1px dashed var(--rail); }
+/* Percentile bars, Baseball Savant style: a thin grey rule with one big colour-coded circle sitting on it.
+   No fill under the circle, no halfway tick and no rules between rows — where the circle sits and how
+   saturated it is carry the whole number. --bub is the circle's diameter and app.js places the circle from
+   it, half a diameter in from each end, so a 0 or a 100 still sits on the line instead of hanging off it. */
+.meters { gap: 4px; }
+.meters .meter { min-height: 36px; padding: 0; }
+.meters .meter.sub { min-height: 32px; }
 .hcard .meter { grid-template-columns: 138px minmax(90px, 1fr) 76px; }
-.meter .track { height: 22px; border-radius: 3px; border: 0; background: var(--surface-2); }
-.meter .fill { border-radius: 3px; min-width: 8px; }
-.meter .track { margin-right: 15px; }        /* room for a 100th-percentile bubble, so it never sits on the value */
-.meter .track::after { top: 0; bottom: 0; background: var(--surface); opacity: 0.55; }   /* the halfway mark, over the fill */
+.meter .track { --bub: 30px; height: 4px; margin-right: 0; border: 0; border-radius: 2px; background: var(--rail); overflow: visible; }
+.meter .track::after { display: none; }
+.meter .fill { display: none; }
 .meter .bub {
-  width: 27px; height: 27px; min-width: 0; padding: 0; border-radius: 50%;
-  font-size: 12px; box-shadow: 0 0 0 2px var(--surface);
+  width: var(--bub); height: var(--bub); min-width: 0; padding: 0; border-radius: 50%;
+  font-size: 13.5px; font-weight: 700; letter-spacing: -0.02em; box-shadow: none;
 }
-:root[data-view="mobile"] .meters .meter { min-height: 28px; }
-:root[data-view="mobile"] .meter .track { height: 19px; }
-:root[data-view="mobile"] .meter .bub { width: 24px; height: 24px; font-size: 11px; }
+.meter .bub.ghost { border: 2px solid var(--ink-2); box-shadow: none; font-size: 12.5px; }
+.meters .meter.sub .track { --bub: 26px; }
+.meters .meter.sub .bub { font-size: 12.5px; }
+:root[data-view="mobile"] .meters .meter { min-height: 32px; }
+:root[data-view="mobile"] .meters .meter.sub { min-height: 30px; }
+:root[data-view="mobile"] .meter .track { --bub: 26px; }
+:root[data-view="mobile"] .meter .bub { font-size: 12.5px; }
+/* the Compare page's cells, one size down */
+.ccell { min-height: 32px; }
+.ccell .track { --bub: 26px; height: 4px; border-radius: 2px; background: var(--rail); }
+.ccell .fill { display: none; }
+.ccell .bub { width: var(--bub); height: var(--bub); min-width: 0; padding: 0; border-radius: 50%; font-size: 12.5px; box-shadow: none; }
 
 /* the headshot plate stays put while the card scrolls, so you always know whose numbers these are */
 .modal-close { z-index: 7; }
@@ -1712,3 +1723,13 @@ body.modal-open header.top { z-index: 60; }
 .modes .modesel .modemenu li a:hover, .modes .modesel .modemenu li a:focus-visible { background: var(--accent-wash); color: var(--ink); }
 .modes .modesel .modemenu li a[aria-current="page"] { background: var(--accent-2); color: var(--accent-2-ink); }
 :root[data-view="mobile"] .modes .modesel .modemenu li a { padding: 11px 14px; font-size: 14px; }
+
+/* The rankings bar stays one row while it fits. When edit mode brings more buttons than the width can
+   hold, the group wraps to its own line instead of drawing over the list name and Save (#ranktools has
+   its own nowrap row, so without this its buttons overflowed straight across them). */
+/* The bar is a single nowrap row (above), and #ranktools was allowed to shrink inside it — but that group
+   is itself nowrap, so once edit mode's buttons stopped fitting they spilled straight across the list name
+   and Save. max-content stops the squeeze, and while editing the bar may take a second line rather than
+   overlap. Anywhere it fits (a normal laptop width, with the short edit labels) it stays on one row. */
+:root:not([data-view="mobile"]) .setrow > .setbar.editing { flex-wrap: wrap; overflow-x: visible; row-gap: 6px; }
+:root:not([data-view="mobile"]) .setbar.editing #ranktools { flex: 0 1 auto; min-width: max-content; }
