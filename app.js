@@ -2718,10 +2718,11 @@
     // the draft, fantasy and leaderboard pages live in the header's own dropdowns, so they cost no second row
     const mobNav = document.documentElement.dataset.view === "mobile";
     for (const G of NAV_GROUPS) {
-      const sel = $(G.sel), here = G.modes.includes(state.mode);
-      sel.value = here ? state.mode : G.key;
-      const opt = here ? [...sel.options].find((o) => o.value === state.mode) : null;
-      $(G.txt).textContent = opt ? opt.textContent : mobNav ? G.short : G.label;
+      $(G.txt).textContent = mobNav ? G.short : G.label;      // the opener names the menu; it is never a page itself
+      for (const a of $(G.menu).querySelectorAll("a")) {
+        if (a.getAttribute("href") === "#" + state.mode) a.setAttribute("aria-current", "page");
+        else a.removeAttribute("aria-current");
+      }
     }
     document.title = { draft: "Sean's Site · Draft board", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", appearance: "Sean's Site · Appearance", fantasy: "Sean's Site · Fantasy points" }[state.mode] || "Sean's Site";
     const m = DATA.meta;
@@ -3641,8 +3642,8 @@
   /* ---------- wiring ---------- */
   // the header's two dropdowns: the draft + fantasy pages, and the two leaderboards
   const NAV_GROUPS = [
-    { key: "draftmode", sel: "modesel", txt: "modeseltxt", label: "Draft & Fantasy", short: "Draft", modes: ["draftmode", "rankings", "draft", "eligibility", "fantasy"] },
-    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending"] },
+    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Draft & Fantasy", short: "Draft", modes: ["draftmode", "rankings", "draft", "eligibility", "fantasy"] },
+    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending"] },
   ];
   function readMode() {
     const h = location.hash.replace("#", "");
@@ -3716,7 +3717,49 @@
   $("rankuntier").addEventListener("click", () => { if (state.selKeys.length) moveSelectionToTier(0); });
   $("draftorder").addEventListener("change", (e) => { state.draftOrder = e.target.value; savePrefs(); render(); });
   const closeModal = () => { if (state.textModal) { state.textModal = null; render(); return; } if (state.panel || state.colPick) { closePanel(true); return; } if (state.tierPick) { state.tierPick = null; render(); return; } if (state.expanded) { state.expanded = null; render(); } };
-  for (const G of NAV_GROUPS) $(G.sel).addEventListener("change", (e) => { location.hash = "#" + e.target.value; });
+  /* ---------- the header's two menus: open on hover with a mouse, on a tap without one ---------- */
+  (function navMenus() {
+    const canHover = () => matchMedia("(hover: hover) and (pointer: fine)").matches;
+    let open = null, shut = null;
+    // fixed, so the mobile nav's own sideways scroll can't clip it; clamped to the window
+    const place = (wrap) => {
+      const menu = wrap.querySelector(".modemenu"), r = wrap.getBoundingClientRect();
+      menu.style.top = Math.round(r.bottom) + "px";
+      menu.style.left = "0px";
+      menu.style.left = Math.round(Math.max(6, Math.min(r.left, innerWidth - menu.offsetWidth - 6))) + "px";
+    };
+    const show = (wrap) => {
+      clearTimeout(shut);
+      if (open && open !== wrap) hide(open);
+      wrap.classList.add("open");
+      wrap.querySelector(".modesel-btn").setAttribute("aria-expanded", "true");
+      open = wrap; place(wrap);
+    };
+    const hide = (wrap) => {
+      if (!wrap) return;
+      wrap.classList.remove("open");
+      wrap.querySelector(".modesel-btn").setAttribute("aria-expanded", "false");
+      if (open === wrap) open = null;
+    };
+    const hideSoon = () => { clearTimeout(shut); shut = setTimeout(() => hide(open), 160); };   // room to cross the gap
+    for (const G of NAV_GROUPS) {
+      const wrap = $(G.sel), btn = wrap.querySelector(".modesel-btn"), menu = $(G.menu);
+      wrap.addEventListener("mouseenter", () => { if (canHover()) show(wrap); });
+      wrap.addEventListener("mouseleave", hideSoon);
+      menu.addEventListener("mouseenter", () => clearTimeout(shut));
+      btn.addEventListener("click", (e) => { e.preventDefault(); if (wrap.classList.contains("open") && !canHover()) hide(wrap); else show(wrap); });
+      btn.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") { e.preventDefault(); show(wrap); const a = menu.querySelector("a"); if (a) a.focus(); }
+      });
+      menu.addEventListener("click", () => hide(wrap));
+      wrap.addEventListener("focusout", (e) => { if (!wrap.contains(e.relatedTarget)) hide(wrap); });
+    }
+    document.addEventListener("click", (e) => { if (open && !open.contains(e.target)) hide(open); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && open) { const b = open.querySelector(".modesel-btn"); hide(open); b.focus(); } });
+    window.addEventListener("hashchange", () => hide(open));
+    window.addEventListener("resize", () => hide(open));
+    window.addEventListener("scroll", () => { if (open) place(open); }, { passive: true });
+  })();
   $("modal-close").addEventListener("click", closeModal);
   $("modal-back").addEventListener("click", closeModal);
   $("undo").addEventListener("click", undoLast);

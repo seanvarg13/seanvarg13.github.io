@@ -1614,7 +1614,8 @@ body.modal-open header.top { z-index: 60; }
 /* The Draft Mode pages are a dropdown on the header item itself, so they cost no second row */
 .modes .modesel { position: relative; gap: 7px; cursor: pointer; text-decoration: none; }
 .modes .modesel .chev { flex: none; width: 9px; height: 6px; opacity: 0.85; }
-.modes .modesel select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; margin: 0; padding: 0; border: 0; }
+.modes .modesel .modesel-btn { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; background: none; color: transparent; font: inherit; cursor: pointer; -webkit-appearance: none; appearance: none; }
+.modes .modesel .modesel-btn:focus-visible { outline: 2px solid currentColor; outline-offset: -3px; }
 .modes .modesel .modesel-txt { white-space: nowrap; }
 
 /* One popup for Included stats / Splits & dates / Table, with its three tabs across the top */
@@ -1692,3 +1693,22 @@ body.modal-open header.top { z-index: 60; }
 .hub .hubsec:first-of-type { margin-top: 4px; }
 :root[data-view="mobile"] .hub .hubsec { margin: 16px 0 8px; font-size: 11.5px; }
 .hub .hubgrid.one { grid-template-columns: minmax(260px, 360px); }
+
+/* ---------- Header menus (Savant-style): the opener is a menu, not a page ----------
+   The list is position: fixed so the mobile nav's own sideways scroll can't clip it; app.js
+   places it under the opener. Specificity has to clear the .modes a nav-tab rules above. */
+.modes .modesel .chev { transition: transform 0.12s ease; }
+.modes .modesel.open .chev { transform: rotate(180deg); }
+.modes .modesel.open { color: var(--accent-2-ink); background: var(--on-fill-wash); }
+.modemenu { position: fixed; z-index: 200; display: none; min-width: 178px; margin: 0; padding: 4px; list-style: none;
+            background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22); }
+.modesel.open .modemenu { display: block; }
+.modemenu li { margin: 0; padding: 0; }
+.modes .modesel .modemenu li a {
+  display: block; min-height: 0; margin: 0; padding: 9px 12px; border: 0; border-radius: 3px; background: none;
+  color: var(--ink); font-size: 13px; font-weight: 600; letter-spacing: 0.01em; text-transform: none;
+  text-decoration: none; white-space: nowrap; opacity: 1;
+}
+.modes .modesel .modemenu li a:hover, .modes .modesel .modemenu li a:focus-visible { background: var(--accent-wash); color: var(--ink); }
+.modes .modesel .modemenu li a[aria-current="page"] { background: var(--accent-2); color: var(--accent-2-ink); }
+:root[data-view="mobile"] .modes .modesel .modemenu li a { padding: 11px 14px; font-size: 14px; }
