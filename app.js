@@ -57,6 +57,13 @@
                      LAA: "#BA0021", SEA: "#0C2C56", TEX: "#003278", ATL: "#13274F", MIA: "#0077C8", NYM: "#002D72",
                      PHI: "#BA0C2F", WSH: "#14225A", CHC: "#0E3386", CIN: "#C6011F", MIL: "#12284B", PIT: "#27251F",
                      STL: "#C41E3A", AZ: "#A71930", COL: "#333366", LAD: "#005A9C", SD: "#2F241D", SF: "#27251F" };
+  const TEAM_CITY = { BAL: "Baltimore", BOS: "Boston", NYY: "New York", TB: "Tampa Bay", TOR: "Toronto", CWS: "Chicago",
+                      CLE: "Cleveland", DET: "Detroit", KC: "Kansas City", MIN: "Minnesota", ATH: "", HOU: "Houston",
+                      LAA: "Los Angeles", SEA: "Seattle", TEX: "Texas", ATL: "Atlanta", MIA: "Miami", NYM: "New York",
+                      PHI: "Philadelphia", WSH: "Washington", CHC: "Chicago", CIN: "Cincinnati", MIL: "Milwaukee",
+                      PIT: "Pittsburgh", STL: "St. Louis", AZ: "Arizona", COL: "Colorado", LAD: "Los Angeles",
+                      SD: "San Diego", SF: "San Francisco" };
+  const TEAM_FULL = Object.fromEntries(Object.entries(TEAM_NAMES).map(([k, v]) => [k, `${TEAM_CITY[k] ? TEAM_CITY[k] + " " : ""}${v}`]));
   const teamCode = (t) => TEAM_ALIAS[t] || t;
   const teamsIn = (f) => (f.kind === "team" ? [f.v] : f.kind === "div" ? DIVS[f.v] || [] : Object.entries(DIVS).filter(([d]) => d.startsWith(f.v)).flatMap(([, t]) => t));
   const teamOK = (p) => { const f = state.teamF; if (!f) return true; return teamsIn(f).includes(teamCode(p.team)); };
@@ -3740,7 +3747,7 @@
     const t = el("table");
     t.append(colgroup([58, ...cols.map(() => null)]));
     const hr = el("tr");
-    for (const h of ["Season", ...cols]) hr.append(el("th", null, h));
+    for (const h of ["", ...cols]) hr.append(el("th", null, h));
     const th = el("thead"); th.append(hr); t.append(th);
     const tb = el("tbody");
     const cur = state.x.ds || CUR.key;
@@ -3836,7 +3843,7 @@
     if (pts.length < 3) return null;
     const lg = leagueX(ref);
     const box = el("div", "rollbox");
-    box.append(el("div", "rollhd", `${ROLL_PA} PA rolling ${dir ? "dxwOBA" : "xwOBA"}`));
+    box.append(panelHead(`${ROLL_PA} PAs`, `Rolling ${dir ? "dxwOBA" : "xwOBA"}`));
     box.append(rollChart(pts, lg));
     return box;
   }
@@ -3872,7 +3879,7 @@
   // the middle panel: one header, then every stat as a bar — no group headings inside it
   function renderPctPanel(p, st, g, ref, col) {
     const pv = V(p), all = allFor(g);
-    col.append(panelHead(`${dsSeason()} Percentile Rankings`, viewLabel(p.type)));
+    col.append(panelHead(dsSeason(), `${DS.level} Percentile Rankings`));
     const body = el("div", "pscroll pctbox");
     const meters = el("div", "meters");
     const noEV = DS.tracked != null && DS.tracked < 0.05;
@@ -3888,7 +3895,8 @@
       meters.append(meterRow(m, got.v, st.pct[got.k]));
     }
     body.append(meters);
-    body.append(el("p", "pctfoot", `${poolPhrase(ref)} (${pool(ref).ref.length})`));
+    const vl = viewLabel(p.type);
+    body.append(el("p", "pctfoot", `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`));
     col.append(body);
   }
   // Savant's scale strip: POOR at the left of the track, AVERAGE at its middle, GREAT at its right
@@ -3903,22 +3911,30 @@
     row.append(t, el("div", "val"));
     return row;
   }
-  // every panel wears the same band: a title, and the split it's showing beside it
-  function panelHead(title, sub) {
-    const hd = el("div", "pcthd"); hd.append(el("b", null, title));
-    if (sub) hd.append(el("span", "pctsub", "· " + sub));
-    return hd;
+  // every panel is titled the way Savant titles one: the year in bold, the rest beside it, centred, over a dotted rule
+  function panelHead(lead, rest, sub) {
+    const wrap = el("div", "pchead");
+    const hd = el("div", "pcthd");
+    if (lead) hd.append(el("b", null, lead));
+    if (rest) hd.append(document.createTextNode((lead ? " " : "") + rest));
+    wrap.append(hd);
+    if (sub) wrap.append(el("div", "pctsub", sub));
+    wrap.append(el("div", "pcdots"));
+    return wrap;
   }
   // his height, weight and bat/throw from MLB's own record — one small request per player, cached for the session
   const BIO = new Map();
   function bio(id) {
     if (BIO.has(id)) return BIO.get(id);
     BIO.set(id, null);
-    fetch(`https://statsapi.mlb.com/api/v1/people/${id}`).then((r) => r.json()).then((j) => {
+    fetch(`https://statsapi.mlb.com/api/v1/people/${id}?hydrate=draft`).then((r) => r.json()).then((j) => {
       const q = (j.people || [])[0]; if (!q) return;
+      const d = (q.drafts || [])[0];
       BIO.set(id, { ht: q.height, wt: q.weight, age: q.currentAge,
                     bats: (q.batSide || {}).code, throws: (q.pitchHand || {}).code,
-                    pos: (q.primaryPosition || {}).abbreviation });
+                    pos: (q.primaryPosition || {}).abbreviation,
+                    draft: d && d.isDrafted ? { year: d.year, rd: d.pickRound, no: d.pickNumber,
+                                                team: (d.team || {}).name, school: (d.school || {}).name } : null });
       if (state.mode === "player") render();
     }).catch(() => {});
     return null;
@@ -3933,7 +3949,7 @@
     plate.append(headshot(p.id, p.name));
     const h2 = el("h2", null, p.name); h2.id = "modal-title"; plate.append(h2);
     const tm = el("div", "steam");
-    tm.append(el("span", null, `${posLabel(p)} | ${TEAM_NAMES[t] || p.team}`));
+    tm.append(el("span", null, `${posLabel(p)} | ${TEAM_FULL[t] || TEAM_NAMES[t] || p.team}`));
     if (tid) { const lg = el("img", "slogo"); lg.alt = ""; lg.loading = "lazy"; lg.src = `https://www.mlbstatic.com/team-logos/${tid}.svg`; lg.addEventListener("error", () => lg.remove()); tm.append(lg); }
     plate.append(tm);
     const bat = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
@@ -3943,6 +3959,15 @@
     const age = (b && b.age) != null ? b.age : p.age;
     if (age != null) bits.push(`Age: ${age}`);
     plate.append(el("div", "sbio", bits.join("  |  ")));
+    const d = b && b.draft;
+    if (d) {                                            // the draft line, the way Savant writes it
+      const line = el("div", "sdraft");
+      line.append("Draft: ", el("b", null, String(d.year)), " | Rd. ", el("b", null, String(d.rd)),
+                  ", No. ", el("b", null, String(d.no)));
+      if (d.team) line.append(", ", el("b", null, d.team));
+      if (d.school) line.append(" | ", el("b", null, d.school));
+      plate.append(line);
+    }
     return plate;
   }
   function renderExplore() {
@@ -3984,9 +4009,9 @@
         const CA = el("div", "pcol pcolA"), CB = el("div", "pcol pcolB");
         CA.append(renderSavantPlate(p, st, g));
         const cab = el("div", "pscroll");
-        cab.append(renderSeasonHeat(p), el("div", "pappshd", "Player apps"), renderPlayerApps(p, goTo));
+        cab.append(renderSeasonHeat(p), el("div", "pappshd", "Player Apps"), renderPlayerApps(p, goTo));
         CA.append(cab);
-        CB.append(panelHead("Comparison", viewLabel(p.type)));
+        CB.append(panelHead(dsSeason(), "Comparison", viewLabel(p.type)));
         const h3 = card.querySelector(":scope > h3"); if (h3) h3.remove();   // the panel's band already says so
         const cbb = el("div", "pscroll"); cbb.append(card); CB.append(cbb);
         cp.append(CA, CB); box.append(cp); sizePPage(); return;
@@ -3996,12 +4021,12 @@
       A.append(renderSavantPlate(p, st, g));
       const abody = el("div", "pscroll");
       abody.append(renderSeasonHeat(p));
-      abody.append(el("div", "pappshd", "Player apps"));
+      abody.append(el("div", "pappshd", "Player Apps"));
       abody.append(renderPlayerApps(p, goTo));
       abody.append(foldSection("xraw", "Full season stats", () => renderRawStats(p, true)));
       A.append(abody);
       renderPctPanel(p, st, g, g, B);
-      C.append(panelHead(p.type === "H" ? "More hitting stats" : "More pitching stats"));
+      C.append(panelHead(dsSeason(), p.type === "H" ? "Advanced Metrics" : "Advanced Pitching"));
       const cbody = el("div", "pscroll");
       cbody.append(...extraSections(p, st, g));
       const roll = renderRolling(p, g); if (roll) cbody.append(roll);
