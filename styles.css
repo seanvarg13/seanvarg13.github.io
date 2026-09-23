@@ -2037,3 +2037,28 @@ body.navopen header.top { z-index: 300; }   /* a nav menu is open: the header ou
 .rollsvg .rtick { fill: var(--muted); font-size: 8px; text-anchor: end; font-variant-numeric: tabular-nums; }
 .rollsvg .rlglbl { fill: var(--muted); font-size: 7.5px; text-anchor: end; letter-spacing: 0.06em; }
 .ppage .meter .val { white-space: nowrap; }
+
+/* the card's season table: one row per MLB season, every cell coloured by its percentile */
+.heatcard { width: 100%; margin: 0 0 4px; }
+.heatcard table { width: 100%; font-size: 11.5px; }
+.heatcard thead th { padding: 4px 2px; font-size: 8.5px; letter-spacing: 0; white-space: normal; line-height: 1.15; }
+.heatcard tbody td { padding: 3px 2px; font-size: 11px; font-weight: 600; }
+.heatcard tbody tr { cursor: pointer; }
+.heatcard tbody tr.here td.l { font-weight: 800; color: var(--accent-2-text); }
+.heatcard tbody tr:hover td.l { background: var(--hover); }
+.heatcard tbody tr:hover td { filter: brightness(1.06); }
+
+/* Player apps: the season, the run of games, the splits, the dates, the model and Compare */
+.pappshd { font-family: var(--display); font-weight: 700; font-size: 11px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--accent-2-text); margin: 12px 0 6px; padding-top: 8px; border-top: 1px solid var(--rule); }
+.papps { display: flex; flex-direction: column; gap: 7px; }
+.parow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.palbl { flex: none; min-width: 52px; font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--muted); }
+.papps .splitopen { display: flex; flex-direction: column; align-items: flex-start; gap: 7px;
+  margin: 0; padding: 0; border: 0; background: none; }
+.papps .seg { flex-wrap: wrap; }
+.papps .segbtn { font-size: 10.5px; padding: 0 7px; height: 24px; }
+.papps .tbtn { height: 26px; font-size: 11px; }
+:root:not([data-view="mobile"]) .ppage.cmp2page { grid-template-columns: minmax(250px, 340px) minmax(0, 1fr); }
+.cmp2page .pcolB .card { padding: 0; background: none; border: 0; grid-template-columns: minmax(0, 1fr); }

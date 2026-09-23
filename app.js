@@ -3738,6 +3738,88 @@
     return out;
   }
 
+  /* ---------- the card's season table: every MLB season as one row, each cell coloured by its percentile ---------- */
+  const cardsReady = () => !!window.DRAFT_CARDS;
+  // the columns hist/cards.js carries, in the order build_history writes them (CARD_H / CARD_P)
+  const CELL_H = [["woba", "wOBA", 3], ["xws", "xwOBA", 3], ["xwd", "xwOBA", 3], ["k", "K%", 1], ["bb", "BB%", 1],
+                  ["ev", "EV", 1], ["brl", "Brl%", 1], ["pull", "Pull air", 1]];
+  const CELL_P = [["era", "ERA", 2], ["fip", "FIP", 2], ["k", "K%", 1], ["bb", "BB%", 1], ["whf", "Whiff%", 1],
+                  ["gb", "GB%", 1], ["brl", "Brl%", 1]];
+  // which of those columns the table shows: the directional and Statcast xwOBA never appear together
+  const cardCols = (H) => (H ? CELL_H.filter((c) => c[0] !== (xDir() ? "xws" : "xwd")) : CELL_P);
+  function renderSeasonHeat(p) {
+    ensureScript("hist/cards.js", cardsReady);
+    const rec = cardsReady() ? (window.DRAFT_CARDS[String(p.id)] || {})[p.type] : null;
+    const box = el("div", "tblcard board heatcard");
+    if (!rec) { box.append(el("p", "note", cardsReady() ? "No MLB seasons built for him yet." : "Loading seasons…")); return box; }
+    ensureIndex();
+    const entry = indexReady() ? window.DRAFT_INDEX.players.find((e) => e.id === p.id) : null;
+    const H = p.type === "H", cols = cardCols(H), spec = H ? CELL_H : CELL_P;
+    const keys = Object.keys(rec).sort((x, y) => Number(y.split("-")[1]) - Number(x.split("-")[1]));
+    const t = el("table");
+    t.append(colgroup([40, 36, 34, ...cols.map(() => null)]));
+    const hr = el("tr");
+    for (const h of ["Season", "Team", H ? "PA" : "IP", ...cols.map((c) => c[1])]) hr.append(el("th", null, h));
+    const th = el("thead"); th.append(hr); t.append(th);
+    const tb = el("tbody");
+    for (const k of keys) {
+      const sv = entry ? entry.s.find((x) => x[0] === k && x[2] === p.type) : null;
+      const flat = rec[k], tr = el("tr");
+      if (k === (state.x.ds || CUR.key)) tr.classList.add("here");
+      const go = () => { state.x = { id: p.id, type: p.type, ds: k }; state.cardWin = { from: "", to: "", last: "" }; savePrefs(); render(); };
+      tr.addEventListener("click", go); tr.title = "Open that season";
+      tr.append(el("td", "l", k.split("-")[1]), el("td", "l", sv ? sv[5] : "–"), el("td", "l", sv ? String(sv[4]) : "–"));
+      for (const c of cols) {
+        const i = spec.findIndex((x) => x[0] === c[0]);
+        const v = flat[2 * i], pct = flat[2 * i + 1], td = el("td");
+        td.textContent = v == null ? "–" : c[2] === 3 ? fmtX(v) : c[2] === 2 ? v.toFixed(2) : v.toFixed(1);
+        if (pct != null) { paint(td, pct); td.title = `${c[1]} ${td.textContent} · ${ordinal(pct)} pctl`; }
+        tr.append(td);
+      }
+      tb.append(tr);
+    }
+    t.append(tb); box.append(t);
+    return box;
+  }
+
+  /* ---------- Player apps: everything that changes what the page is showing, in one box ---------- */
+  // the season and the run of games, then the split / date / model panel the card has always had, then Compare
+  function renderPlayerApps(p, goTo) {
+    const box = el("div", "papps");
+    ensureIndex();
+    const entry = indexReady() ? window.DRAFT_INDEX.players.find((e) => e.id === p.id) : null;
+    const cur = state.x.ds || CUR.key;
+    if (entry) {
+      const mine = entry.s.filter((sv) => sv[2] === p.type);
+      if (mine.length > 1) box.append(paRow("Season", renderSeasonPicker(mine, cur, goTo, true)));
+      const kinds = seasonKinds(p, entry, cur);
+      if (kinds.length > 1) {
+        const seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Run of games");
+        for (const [k, lab] of kinds) {
+          const b = el("button", "segbtn small", lab); b.type = "button"; b.setAttribute("aria-pressed", String(k === cur));
+          b.addEventListener("click", () => { if (k !== cur) goTo(k); });
+          seg.append(b);
+        }
+        box.append(paRow("Games", seg));
+      }
+      const ts = typeSeg(p); if (ts) box.append(paRow("Side", ts));
+    }
+    box.append(renderSplitPanel(p));                    // handedness, venue, the expected model and the date boxes
+    const cmp = el("button", "btn btn-quiet tbtn" + (state.cmp2.on ? " on" : ""), state.cmp2.on ? "Close comparison" : "Compare two sides");
+    cmp.type = "button";
+    cmp.addEventListener("click", () => { state.cmp2.on = !state.cmp2.on; savePrefs(); render(); });
+    box.append(paRow("Compare", cmp));
+    return box;
+  }
+  const paRow = (label, node) => { const r = el("div", "parow"); r.append(el("span", "palbl", label), node); return r; };
+  // the runs of games this player has in this season: regular, postseason, spring
+  function seasonKinds(p, entry, cur) {
+    const year = cur.match(/(\d{4})/), lvl = cur.split("-")[0];
+    if (!year) return [];
+    const want = [[`${lvl}-${year[1]}`, "Regular"], [`${lvl}-${year[1]}-post`, "Postseason"], [`${lvl}-${year[1]}-spring`, "Spring"]];
+    return want.filter(([k]) => entry.s.some((sv) => sv[0] === k && sv[2] === p.type));
+  }
+
   // Savant's rolling line: expected wOBA over a trailing window of plate appearances, across the whole season
   const ROLL_PA = 100;
   function renderRolling(p, ref) {
@@ -3907,13 +3989,27 @@
       if (needsRows() && !DS.ready()) { DS.load(); box.append(cardTop(renderPlate(p, { rank: "–" }, g, g), chips(p))); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); box.append(c); return; }
       const st = pool(g).stats.get(p.type + p.id) || rankIn(g, p);
       const card = renderCard(p, metricsFor(g), st, g, g, { noSplitBar: true, noStrip: true });
-      if (state.cmp2.on) { box.append(cardTop(renderPlate(p, st, g, g), chips(p))); box.append(card); return; }
-      box.append(cardTop(chips(p)));                          // the pinned row keeps the season, the splits and Compare
-      const page = el("div", "ppage");
+      const goTo = (k) => { state.x = { id: entry.id, type, ds: k }; state.cardWin = { from: "", to: "", last: "" }; savePrefs(); render(); };
+      if (state.cmp2.on) {                                    // comparing: the card box, then the two sides — no third panel
+        const cp = el("div", "ppage cmp2page");
+        const CA = el("div", "pcol pcolA"), CB = el("div", "pcol pcolB");
+        CA.append(renderSavantPlate(p, st, g));
+        const cab = el("div", "pscroll");
+        cab.append(renderSeasonHeat(p), el("div", "pappshd", "Player apps"), renderPlayerApps(p, goTo));
+        CA.append(cab);
+        CB.append(panelHead("Comparison", viewLabel(p.type)));
+        const h3 = card.querySelector(":scope > h3"); if (h3) h3.remove();   // the panel's band already says so
+        const cbb = el("div", "pscroll"); cbb.append(card); CB.append(cbb);
+        cp.append(CA, CB); box.append(cp); sizePPage(); return;
+      }
+      const page = el("div", "ppage");                        // no pinned row: Player apps carries the season and the filters
       const A = el("div", "pcol pcolA"), B = el("div", "pcol pcolB"), C = el("div", "pcol pcolC");
       A.append(renderSavantPlate(p, st, g));
       const abody = el("div", "pscroll");
-      abody.append(renderRawStats(p, true));
+      abody.append(renderSeasonHeat(p));
+      abody.append(el("div", "pappshd", "Player apps"));
+      abody.append(renderPlayerApps(p, goTo));
+      abody.append(foldSection("xraw", "Full season stats", () => renderRawStats(p, true)));
       A.append(abody);
       renderPctPanel(p, st, g, g, B);
       C.append(panelHead(p.type === "H" ? "More hitting stats" : "More pitching stats"));
