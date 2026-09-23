@@ -3763,7 +3763,7 @@
     const th = el("thead"); th.append(hr); t.append(th);
     const tb = el("tbody");
     const cur = state.x.ds || CUR.key;
-    for (const l of lines) {
+    for (const l of lines.slice(0, 3)) {              // Savant keeps the card short: the recent seasons, then the total
       const tr = el("tr");
       if (`mlb-${l.season}` === cur) tr.classList.add("here");
       tr.addEventListener("click", () => { state.x = { id: p.id, type: p.type, ds: `mlb-${l.season}` }; state.cardWin = { from: "", to: "", last: "" }; savePrefs(); render(); });
@@ -3772,7 +3772,7 @@
       for (const k of cols) tr.append(el("td", null, fmtv(k, l.c[k])));
       tb.append(tr);
     }
-    const tot = combineLines(H, lines), sum = el("tr", "cartot");
+    const tot = combineLines(H, lines), sum = el("tr", "cartot");   // the total is every season, not just the three
     sum.append(el("td", "l", `${lines.length} Season${lines.length > 1 ? "s" : ""}`));
     for (const k of cols) sum.append(el("td", null, fmtv(k, tot[k])));
     tb.append(sum);
@@ -3802,6 +3802,7 @@
       }
       const ts = typeSeg(p); if (ts) box.append(paRow("Side", ts));
     }
+    box.append(renderSplitPanel(p));                    // handedness, venue, the expected model and the date boxes
     box.append(paRow("Sample", renderStrip(p, V(p))));
     const acts = el("div", "pacts"); acts.append(renderStarControl(p));
     if (state.mode === "draft") {
@@ -3814,10 +3815,10 @@
     return box;
   }
   const paRow = (label, node) => { const r = el("div", "parow"); r.append(el("span", "palbl", label), node); return r; };
-  const BTABS = [["splits", "Splits & Dates"], ["compare", "Compare"], ["stats", "Season Stats"]];
+  const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["advanced", "Advanced"], ["splits", "Splits & Dates"]];
   function renderBelow(p) {
     const sec = el("section", "pbelow2");
-    const pick = BTABS.some(([k]) => k === state.pbtab) ? state.pbtab : "splits";
+    const pick = BTABS.some(([k]) => k === state.pbtab) ? state.pbtab : "compare";
     const bar = el("div", "btabs"); bar.setAttribute("role", "tablist");
     for (const [k, lab] of BTABS) {
       const b = el("button", "btab" + (k === pick ? " on" : ""), lab); b.type = "button";
@@ -3843,9 +3844,25 @@
       body.append(el("p", "note", state.cmp2.on
         ? "The two sides are on the right. “Set up comparison” changes the season, split and dates on each, and which stats sit on the grid."
         : "Put two sides of this player next to each other — different seasons, splits or stretches of games, each ranked against its own season."));
+    } else if (pick === "advanced") {
+      const secs = belowAdvanced();
+      if (secs.length) body.append(...secs);
+      else body.append(el("p", "note", "Nothing extra for this season — the expected and batted-ball tables need pitch-level data."));
     } else body.append(renderRawStats(p, true));
     sec.append(body);
     return sec;
+  }
+  // the card's own fold-outs (expected & contact, underlying K% and BB%, batted-ball luck) and its notes
+  let belowCard = null;
+  function belowAdvanced() {
+    const card = belowCard; if (!card) return [];
+    const out = [];
+    const groups = card.querySelector(".hgroups");     // every card group at once, which no panel above shows in full
+    if (groups) out.push(groups);
+    out.push(...[...card.querySelectorAll(":scope > .fold-sec")].filter((f) => f.dataset.key !== "raw"));
+    for (const n of card.querySelectorAll(":scope > .note")) out.push(n);
+    const notes = card.querySelector(".cardnotes"); if (notes) out.push(notes);
+    return out;
   }
 
   // the runs of games this player has in this season: regular, postseason, spring
@@ -4015,6 +4032,7 @@
   function renderExplore() {
     ensureIndex();
     const box = $("xboard"); box.innerHTML = "";
+    belowCard = null;                                   // the Advanced tab fills from this render's card, never a stale one
     const x = state.x;
     if (!indexReady()) { box.append(el("p", "xempty", failed.has("hist/index.js") ? "The player index (hist/index.js) hasn't been built yet." : "Loading…")); return; }
     const entry = x.id != null ? window.DRAFT_INDEX.players.find((e) => e.id === x.id) : null;
@@ -4072,10 +4090,9 @@
       const cbody = el("div", "pscroll");
       cbody.append(...extraSections(p, st, g));
       const roll = renderRolling(p, g); if (roll) cbody.append(roll);
-      for (const n of [...card.querySelectorAll(":scope > .note")]) cbody.append(n);   // the long explanations ride at the bottom
       for (const f of [...card.querySelectorAll(":scope > .fold-sec")]) {   // the card's grouped fold repeats the panels above it
-        if (f.dataset.key !== "raw" && !f.dataset.key.startsWith("pgrp:")) cbody.append(f); }
-      const notes = card.querySelector(".cardnotes"); if (notes) cbody.append(notes);
+        if (f.dataset.key.startsWith("pgrp:")) f.remove(); }
+      belowCard = card;                                  // the rest of it fills the Advanced tab below
       C.append(cbody);
       page.append(A, B, C); box.append(page);
       box.append(renderBelow(p));
