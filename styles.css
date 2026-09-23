@@ -1829,3 +1829,29 @@ body.modal-open header.top { z-index: 60; }
 .notes .prose { display: grid; gap: 8px; margin: 4px 0 2px; }
 .cmpbox { background: var(--accent-wash); border: 1px solid var(--hair); }
 :root[data-view="mobile"] .glossary { grid-template-columns: 1fr; }
+
+/* ---------- Comparison: condensed, with the two side boxes pinned ----------
+   Shorter bars, the value right beside the bar it belongs to and in full-strength ink, tighter rows, and the
+   heading boxes frozen under the card's own pinned plate (--cardtop-h, measured after every render). */
+:root:not([data-view="mobile"]) .cmpgrid { grid-template-columns: 124px repeat(var(--np), minmax(0, 236px)); column-gap: 16px; }
+.cmpgrid { row-gap: 2px; }
+.cmpwrap { padding: 4px 0 2px; }
+.cmpgrid .cgroup { font-size: 12px; padding: 12px 0 1px; border-bottom-width: 2px; }
+.cmpgrid .clbl { font-size: 12px; padding-right: 4px; }
+.cmpgrid .ccell { min-height: 26px; grid-template-columns: 1fr auto; gap: 7px; }
+.cmpgrid .ccell .track { --bub: 24px; height: 18px; }
+.cmpgrid .ccell .bub { font-size: 11.5px; box-shadow: 0 0 0 2px var(--surface); }
+.cmpgrid .ccell .val { min-width: 42px; color: var(--ink); font-weight: 600; font-size: 12px; }
+.cmpgrid .ccorner, .cmpgrid .chead { position: sticky; top: var(--cardtop-h, 0px); z-index: 3; background: var(--surface); }
+.cmpgrid .chead { padding: 4px 0 6px; }
+.cmpgrid .ccorner { background: var(--surface); }
+#xboard .cmpgrid .ccorner, #xboard .cmpgrid .chead,
+:root[data-view="mobile"] .cmpgrid .ccorner, :root[data-view="mobile"] .cmpgrid .chead { top: calc(var(--header-h, 0px) + var(--cardtop-h, 0px)); }
+.cmpgrid .plate { padding: 5px 9px; }
+.cmpgrid .chead h3 { font-size: 12.5px; }
+.cmpgrid .chead .cmeta { font-size: 10.5px; }
+/* the phone's Compare-page rules make these static and put the grid in a sideways scroller — a card's
+   comparison fits the screen, so it keeps the pinned heads instead */
+:root[data-view="mobile"] .cmpwrap { overflow: visible; padding: 4px 0 2px; justify-content: stretch; touch-action: auto; }
+:root[data-view="mobile"] .cmpgrid .ccorner, :root[data-view="mobile"] .cmpgrid .chead { position: sticky; margin: 0; padding: 4px 0 6px; background: var(--surface); }
+:root[data-view="mobile"] .cmpgrid .cgroup { width: auto; }

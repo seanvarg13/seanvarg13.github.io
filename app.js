@@ -1730,7 +1730,7 @@
     const pv = V(p);
     if (!opts.noStrip) card.append(renderStrip(p, pv));
     if (state.cmp2.on) {
-      card.append(el("h3", null, "Comparison · pick a season, a split and a date range for each side"));
+      card.append(el("h3", null, "Comparison · “Set up comparison” changes the two sides and which stats are here"));
       card.append(renderCmpGrid(cmpSides(p), CARD, SUB, (gi, k) => k, "H"));
       card.dataset.notes = `Each column is ranked against its own season's qualifiers on their numbers in the same split and date range. ${HEAD.label} = ${DATA.meta.scoreNote.H}.`;
       return card;
@@ -1937,7 +1937,7 @@
     const pv = V(p);
     if (!opts.noStrip) card.append(renderStrip(p, pv));
     if (state.cmp2.on) {
-      card.append(el("h3", null, "Comparison · pick a season, a split and a date range for each side"));
+      card.append(el("h3", null, "Comparison · “Set up comparison” changes the two sides and which stats are here"));
       card.append(renderCmpGrid(cmpSides(p), CARD_P, SUB_P, (gi, k) => `p${gi}:${k}`, "P"));
       card.dataset.notes = `Each column is ranked against its own season's pitchers with ${refMin(g)}+ batters faced, on their numbers in the same split and date range.`;
       return card;
@@ -2891,7 +2891,20 @@
     notes.append(foldSection("pagehelp", "How this page works", () => { const b = el("div", "prose"); b.append(...prose); return b; }));
   }
 
-  function render() {
+  // the comparison's column heads stick under the card's pinned plate, so they need its height
+  let cardRO = null, cardEl = null;
+  function setCardTop() {
+    const t = document.querySelector("#xboard .cardtop, #modal-body .cardtop");
+    const put = () => document.documentElement.style.setProperty("--cardtop-h", t ? Math.round(t.getBoundingClientRect().height) + "px" : "0px");
+    put();
+    if (t !== cardEl && window.ResizeObserver) {      // it reflows on its own when the window narrows
+      if (cardRO) cardRO.disconnect();
+      cardEl = t; cardRO = t ? new ResizeObserver(put) : null;
+      if (cardRO) cardRO.observe(t);
+    }
+  }
+  function render() { renderNow(); setCardTop(); }
+  function renderNow() {
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = state.mode === "draftmode" || home, appear = state.mode === "appearance", fant = state.mode === "fantasy", other = player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
