@@ -2054,7 +2054,7 @@
     }
     const table = el("table", "ukbbt"), thead = el("thead"), tr = el("tr");
     table.append(colgroup([104, 88, 88, 84]));
-    for (const h of ["", "Expected", "Actual", "Diff"]) tr.append(el("th", h === "" ? "l" : null, h));
+    for (const h of ["Stat", "Expected", "Actual", "Diff"]) tr.append(el("th", h === "Stat" ? "l" : null, h));
     thead.append(tr); table.append(thead);
     const tbody = el("tbody");
     // [label, caption (what drives the expectation), expected, actual, higher-is-better, isEra]

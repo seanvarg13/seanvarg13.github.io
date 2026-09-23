@@ -1865,13 +1865,12 @@ body.modal-open header.top { z-index: 60; }
 .tblcard { margin: 6px 0 8px; width: max-content; max-width: 100%; }
 .tblcard table { width: auto; table-layout: fixed; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }   /* auto + a colgroup = the table is exactly as wide as its columns */
 .tblcard thead th { background: var(--band); color: var(--band-ink); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em;
-  text-transform: uppercase; text-align: right; padding: 6px 10px; border-bottom: 2px solid var(--accent-2); white-space: nowrap; }
-.tblcard thead th.l { text-align: left; }
-.tblcard tbody td { text-align: right; padding: 5px 10px; border-bottom: 1px solid var(--hair); color: var(--ink); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
-.tblcard tbody tr:last-child td { border-bottom: 0; }
+  text-transform: uppercase; text-align: center; padding: 6px 10px; white-space: nowrap;
+  border: 1px solid var(--accent-2); border-bottom-width: 2px; }
+.tblcard tbody td { text-align: center; padding: 5px 10px; border: 1px solid var(--hair); color: var(--ink); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
 .tblcard tbody tr:nth-child(even) td { background: var(--stripe); }
 .tblcard tbody tr:hover td { background: var(--hover); }
-.tblcard td.l { text-align: left; font-weight: 400; }
+.tblcard td.l, .tblcard th.l { text-align: center; font-weight: 700; }   /* beats the old .luck td.l left-align */
 .tblcard td.l b { font-size: 12.5px; font-weight: 700; color: var(--ink); }
 .tblcard td.exp { color: var(--accent-2-text); }          /* the expected column is the point of the table */
 .tblcard td.own { font-weight: 700; }
