@@ -1685,3 +1685,10 @@ body.modal-open header.top { z-index: 60; }
 .cmppill.on { border-color: var(--accent-2); }
 .mchips .cmppill, .xseasons .cmppill { background: var(--surface); border-color: var(--surface); }
 .mchips .cmppill.on, .xseasons .cmppill.on { background: var(--accent-2); border-color: var(--accent-2); color: var(--accent-2-ink); }
+
+/* ---------- Home: section headings above each grid of cards ---------- */
+.hub .hubsec { display: flex; align-items: center; gap: 10px; margin: 24px 0 10px; font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.hub .hubsec::after { content: ""; flex: 1; height: 1px; background: var(--hair); }
+.hub .hubsec:first-of-type { margin-top: 4px; }
+:root[data-view="mobile"] .hub .hubsec { margin: 16px 0 8px; font-size: 11.5px; }
+.hub .hubgrid.one { grid-template-columns: minmax(260px, 360px); }

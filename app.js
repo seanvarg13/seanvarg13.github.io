@@ -210,6 +210,7 @@
     cmpCols: prefs.cmpCols || {},              // Compare: chosen stats per type {H: [keys], P: [keys]}; missing = every card stat
     rawMode: prefs.rawMode || "mlb",           // Season by season: "mlb" | "milb" | "all"
     tbl: Object.assign({ heat: false, band: true, sortHl: true, density: "comfortable", numbers: "auto", breaks: {} }, prefs.tbl || {}),   // Table features; breaks: {"mode:H": [keys with a rule after them]}
+    xmodel: prefs.xmodel === "dir" ? "dir" : "sav",   // expected stats: Statcast's EV + launch angle, or the directional (spray-angle) model
     cq: "",
     showDrafted: !!prefs.showDrafted,
     expanded: null,
@@ -245,8 +246,27 @@
     if (oldRoles) { for (const [id, r] of Object.entries(oldRoles)) { const l = state.extraPos[id] || (state.extraPos[id] = []); if (!l.includes(r)) l.push(r); } changed = true; }
     if (changed) { save(LS.extraPos, state.extraPos); try { localStorage.removeItem(LS.extra); localStorage.removeItem(LS.roles); } catch {} }
   })();
-  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cardCmp: state.cardCmp, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl }); }
+  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cardCmp: state.cardCmp, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, xmodel: state.xmodel }); }
   const draftedIds = () => new Set(state.drafted.map((d) => d.id));
+  /* ---------- expected stats: which model xwOBA comes from ---------- */
+  // "sav": Statcast's exit velocity + launch angle (Savant's published xwOBA for a full season).
+  // "dir": the directional model — exit velocity, launch angle, spray and pull angle and the batter's sprint
+  // speed — summed from the same day-by-day rows, so it follows any window or split. xBA and xSLG have no
+  // directional counterpart (the model scores wOBA only) and stay Statcast's in both.
+  const xDir = () => state.xmodel === "dir";
+  const XM_NOTE = {
+    sav: "Statcast's xwOBA: exit velocity and launch angle. Savant's published number for a full season; rebuilt from pitch data inside a window or split.",
+    dir: "Directional xwOBA (dxwOBA): a model over exit velocity, launch angle, spray and pull angle and the batter's sprint speed, so where he hit it counts too. Blank where batted balls aren't tracked (A and AA).",
+  };
+  function applyXModel() {
+    const lab = xDir() ? "dxwOBA" : "xwOBA";
+    for (const mm of [HEAD, ...ALL_H]) if (mm.key === "xwoba") mm.label = lab;
+    valCache.clear(); poolCache.clear(); rankCache.clear();
+  }
+  function setXModel(v) {
+    if (state.xmodel === v) return;
+    state.xmodel = v; savePrefs(); applyXModel(); render();
+  }
 
   /* ---------- date window ---------- */
   const DF = { H: DATA.meta.dayFields.H, P: DATA.meta.dayFields.P };
@@ -362,7 +382,7 @@
   const ensureHist = (key) => (key === CUR.key ? ensureDays() : isMulti(key) ? multiDataset(key) : ensureScript(`hist/${key}.js`, () => !!(window.DRAFT_HIST && window.DRAFT_HIST[key])));
   const needsRows = () => needsDays() || !!DS.aggregate;   // a combined span always sums rows, window or not
   const ensureView = () => { if (needsRows() && !DS.ready()) DS.load(); };   // fetch whatever the current view needs
-  const viewKey = () => DS.key + ":" + winKey() + ":" + SPLIT.hand + ":" + SPLIT.venue;
+  const viewKey = () => DS.key + ":" + winKey() + ":" + SPLIT.hand + ":" + SPLIT.venue + ":" + state.xmodel;
   const splitLabel = () => {
     const parts = [];
     if (SPLIT.hand !== "all") parts.push("vs " + SPLIT.hand + "H" + (isPitcherGroup(groupFor(state.pos)) ? "B" : "P"));
@@ -374,7 +394,7 @@
   // fill derived hitter metrics that older data files may lack
   // season xwOBA = Savant's number; a file built while the headline was the directional model gets it rebuilt
   // from its own rows (EV + launch angle numerator)
-  function seasonXw(p) {
+  function seasonXwSav(p) {
     const m = p.m;
     if (m.xwoba_dir !== undefined) return m.xwoba;
     if (m.xwoba_sav != null) return m.xwoba_sav;
@@ -382,19 +402,31 @@
     for (const r of DS.rows(p)) { xn += r[xi]; xd += r[di]; }
     return xd ? Math.round(1000 * xn / xd) / 1000 : m.xwoba;
   }
+  // the directional model's season number, straight from the file (or summed from its own rows)
+  function seasonXwDir(p) {
+    const m = p.m;
+    if (DS.tracked != null && DS.tracked < 0.05) return null;     // no batted-ball tracking (A / AA): nothing for the model to score
+    if (m.xwoba_dir != null) return m.xwoba_dir;
+    const f = DF.H, di = f.indexOf("dnum"), wi = f.indexOf("wden");
+    if (di < 0) return null;
+    let dn = 0, wd = 0;
+    for (const r of DS.rows(p)) { if (r[di] === undefined) continue; dn += r[di]; wd += r[wi]; }
+    return wd ? Math.round(1000 * dn / wd) / 1000 : null;
+  }
   function seasonHitterM(p) {
     const m = p.m;
-    if (m._full) return m;
+    if (m._full && m._xm === state.xmodel) return m;
+    if (m._sav === undefined) m._sav = seasonXwSav(p) ?? null;    // stash Statcast's before the directional one can overwrite it
     // Air% is every ball in play that isn't a ground ball (fly balls, line drives and popups); Center% closes the spray split
     const out = Object.assign({}, m, {
-      xwoba: seasonXw(p),
+      xwoba: xDir() ? seasonXwDir(p) : m._sav,
       zmo: m.zmo !== undefined ? m.zmo : m.zsw == null || m.osw == null ? null : Math.round(10 * (m.zsw - m.osw)) / 10,
       con: m.con !== undefined ? m.con : m.whf == null ? null : Math.round(10 * (100 - m.whf)) / 10,
       air: m.gb != null ? Math.round(10 * (100 - m.gb)) / 10 : m.air,
       cent: m.cent !== undefined ? m.cent : m.pullp != null && m.oppo != null ? Math.round(10 * (100 - m.pullp - m.oppo)) / 10 : null,
       oppo: m.oppo !== undefined ? m.oppo : null,
       npull: m.pullp != null ? Math.round(10 * (100 - m.pullp)) / 10 : null,
-      _full: true,
+      _full: true, _xm: state.xmodel,
     });
     p.m = out;                                                    // computed once per player
     return out;
@@ -420,8 +452,8 @@
       const hand = SPLIT.hand === "all" ? -1 : SPLIT.hand === "R" ? 1 : 0;
       const home = SPLIT.venue === "all" ? -1 : SPLIT.venue === "home" ? 1 : 0;
       const dayset = new Set(), gsset = new Set(), evs = [];
-      const ei = f.indexOf("evs");
-      let hasEvs = false, lo = w.lo;
+      const ei = f.indexOf("evs"), dni = f.indexOf("dnum");
+      let hasEvs = false, hasDir = false, lo = w.lo;
       if (w.last) {   // trailing window: the fewest most-recent game days that reach N PA (hitters) / N IP (pitchers)
         const si = f.indexOf(p.type === "P" ? "outs" : "pa"), need = p.type === "P" ? 3 * w.last : w.last, byDay = new Map();
         for (const row of rowsOf(p)) { if (row[0] > w.hi || (hand >= 0 && row[1] !== hand) || (home >= 0 && row[2] !== home)) continue; byDay.set(row[0], (byDay.get(row[0]) || 0) + row[si]); }
@@ -434,6 +466,7 @@
         f.forEach((k, i) => { if (i >= 3 && k !== "gs" && k !== "evs" && row[i] !== undefined) t[k] += row[i]; });   // older files lack trailing fields
         if (p.type === "P" && row[f.indexOf("gs")]) gsset.add(row[0]);
         if (ei >= 0 && Array.isArray(row[ei])) { hasEvs = true; for (const e of row[ei]) evs.push(e); }
+        if (dni >= 0 && row[dni] !== undefined) hasDir = true;
       }
       evs.sort((x, y) => x - y);
       const q90 = hasEvs && evs.length ? (() => { const pos = 0.9 * (evs.length - 1), lo = Math.floor(pos); return Math.round(10 * (evs[lo] + (evs[Math.min(lo + 1, evs.length - 1)] - evs[lo]) * (pos - lo))) / 10; })() : null;
@@ -476,7 +509,8 @@
                    ba: t.h === undefined || !t.ab ? null : Math.round(1000 * t.h / t.ab) / 1000, slg: t.tb === undefined || !t.ab ? null : Math.round(1000 * t.tb / t.ab) / 1000,
                    xba: t.xbsum === undefined || !t.ab ? null : Math.round(1000 * t.xbsum / t.ab) / 1000, xslg: t.xssum === undefined || !t.ab ? null : Math.round(1000 * t.xssum / t.ab) / 1000,
                    osw: rate(t.osw, t.opit), zsw: rate(t.zsw, t.zpit), zcon: rate(t.zcon, t.zsw), ocon: rate(t.ocon, t.osw), whf: rate(t.whf, t.sw),
-                   xwoba: t.xden && !noEV ? Math.round(1000 * t.xnum / t.xden) / 1000 : null,      // xwOBA: exit velocity + launch angle
+                   xwoba: noEV ? null : xDir() ? (hasDir && t.wden ? Math.round(1000 * t.dnum / t.wden) / 1000 : null)
+                                                : (t.xden ? Math.round(1000 * t.xnum / t.xden) / 1000 : null),   // exit velocity + launch angle, or the directional model
                    woba: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null,
                    bs: t.bsn ? Math.round(10 * t.bssum / t.bsn) / 10 : null,
                    zmo: t.zpit && t.opit ? Math.round(10 * (100 * t.zsw / t.zpit - 100 * t.osw / t.opit)) / 10 : null,
@@ -1172,6 +1206,12 @@
     };
     bar.append(seg("Handedness", [["all", pit ? "All batters" : "All pitchers"], ["L", pit ? "vs LHB" : "vs LHP"], ["R", pit ? "vs RHB" : "vs RHP"]], state.split.hand, (v) => (state.split.hand = v)));
     bar.append(seg("Venue", [["all", "Home + away"], ["home", "Home"], ["away", "Away"]], state.split.venue, (v) => (state.split.venue = v)));
+    if (!pit) {
+      const xs = seg("Expected stats", [["sav", "Statcast xwOBA"], ["dir", "Directional xwOBA"]], state.xmodel,
+                     (v) => { state.xmodel = v; savePrefs(); applyXModel(); });
+      [...xs.children].forEach((b, i) => (b.title = XM_NOTE[i ? "dir" : "sav"]));
+      bar.append(xs);
+    }
     if (state.mode !== "compare") bar.append(renderCardDates(p));
     if (state.daysLoading && state.mode === "compare") bar.append(el("span", "winnote", "Loading game-by-game data…"));
     if (state.split.hand !== "all" || state.split.venue !== "all") {
@@ -2634,16 +2674,56 @@
     }
     box.append(grid);
     const m = DATA.meta;
-    box.append(el("p", "note", `Data: ${m.season} Statcast through ${m.through}. Trending Players, the Leaderboard and Compare live in the top bar; type a name at the top right to open any player's card.`));
+    box.append(el("p", "note", `Data: ${m.season} Statcast through ${m.through}. The Leaderboards and Compare live in the top bar; type a name at the top right to open any player's card.`));
+  }
+  // the front door: every page on the site, grouped by what you came to do
+  const HOME_SECS = [
+    ["Draft day", [
+      ["#rankings", "Rankings", "Your board. Start from the model's order, sort by any stat, then drag, type ranks or tick players into tiers — and save as many lists as you like.", "Open Rankings"],
+      ["#draft", "Draft board", "For the draft itself. Pick the list to draft from, mark players as they go, and the board keeps only who's left — tiers intact, saved in this browser mid-draft.", "Open Draft board"],
+      ["#eligibility", "Eligibility", "Who counts where. ESPN's rules run automatically (20+ games at a position, MLB and minors together; SP / RP by innings), plus anything you've added yourself.", "Open Eligibility"],
+      ["#draftmode", "Draft Mode", "The three pages above, with what each one is for.", "Open Draft Mode"],
+    ]],
+    ["Look things up", [
+      ["#leaderboard", "Leaderboard", "Every hitter or pitcher over your minimum, for any season and level — MLB from 2015, the minors from 2021 — with the stats you pick, plus splits, date ranges and last-N.", "Open Leaderboard"],
+      ["#trending", "Trending Players", "Who's hot right now: hitters over their last N plate appearances or days, pitchers over their last N innings, ranked against the season's qualifiers on the same span.", "Open Trending"],
+      ["#compare", "Compare", "Players side by side on the same stats — each on his own season, split or window.", "Open Compare"],
+      ["#fantasy", "Fantasy points", "ESPN scoring with your categories and point values: what every player is worth, and what changing the settings would do to the board.", "Open Fantasy"],
+    ]],
+    ["Set up", [
+      ["#appearance", "Appearance", "Colours, type and the mobile / desktop layout. Every device follows the site default until you pick something on it.", "Open Appearance"],
+    ]],
+  ];
+  function renderHome() {
+    const box = $("hub"); box.innerHTML = "";
+    const m = DATA.meta;
+    box.append(el("h2", null, "Sean's Site"),
+               el("p", "hublead", `Statcast hitting and pitching for ${m.season}, through ${m.through}. Pick a page below — or type a name in the search box up top to open any player's card from anywhere.`));
+    for (const [title, cards] of HOME_SECS) {
+      box.append(el("h3", "hubsec", title));
+      const grid = el("div", "hubgrid" + (cards.length === 1 ? " one" : ""));
+      for (const [href, name, blurb, cta] of cards) {
+        const c = el("a", "hubcard"); c.href = href;
+        c.append(el("h3", null, name), el("p", null, blurb), el("span", "btn", cta));
+        grid.append(c);
+      }
+      box.append(grid);
+    }
+    box.append(el("p", "note", `Data: ${m.season} Statcast through ${m.through}, built ${m.built}. ${xDir() ? "Expected stats: the directional model." : "Expected stats: Statcast's exit-velocity and launch-angle model."}`));
   }
   function renderChrome() {
-    const navMode = DRAFT_GROUP.includes(state.mode) ? "draftmode" : state.mode;
+    const grp = NAV_GROUPS.find((G) => G.modes.includes(state.mode));
+    const navMode = grp ? grp.key : state.mode;
     document.querySelectorAll(".modes [data-mode]").forEach((a) => { if (a.dataset.mode === navMode) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
-    // the four Draft Mode pages live in the header's own dropdown, so they cost no second row
-    const inGroup = DRAFT_GROUP.includes(state.mode), msel = $("modesel");
-    msel.value = inGroup ? state.mode : "draftmode";
-    $("modeseltxt").textContent = inGroup ? [...msel.options].find((o) => o.value === state.mode).textContent : "Draft Mode";
-    document.title = { draft: "Sean's Site · Draft board", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", appearance: "Sean's Site · Appearance", fantasy: "Sean's Site · Fantasy points" }[state.mode] || "Sean's Site";
+    // the draft, fantasy and leaderboard pages live in the header's own dropdowns, so they cost no second row
+    const mobNav = document.documentElement.dataset.view === "mobile";
+    for (const G of NAV_GROUPS) {
+      const sel = $(G.sel), here = G.modes.includes(state.mode);
+      sel.value = here ? state.mode : G.key;
+      const opt = here ? [...sel.options].find((o) => o.value === state.mode) : null;
+      $(G.txt).textContent = opt ? opt.textContent : mobNav ? G.short : G.label;
+    }
+    document.title = { draft: "Sean's Site · Draft board", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", appearance: "Sean's Site · Appearance", fantasy: "Sean's Site · Fantasy points" }[state.mode] || "Sean's Site";
     const m = DATA.meta;
     const thr = new Date(m.through + "T12:00:00"); $("stamp").innerHTML = `through <b>${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</b>`; $("stamp").title = `${m.season} Statcast through ${m.through} (built ${m.built})`;
     const notes = $("notes"); notes.innerHTML = "";
@@ -2652,7 +2732,7 @@
     notes.append(l1);
     notes.append(renderViewSwitch());
     notes.append(Object.assign(el("div"), { innerHTML: `<b>Eligibility</b> — a hitter is listed at every position where he played ${ESPN.posGames}+ games this season, counting MLB and minor-league games together (ESPN's rule for call-ups), OF combined, DH counts; pitchers are SP with ${ESPN.spIP}+ IP as a starter and RP with ${ESPN.rpIP}+ IP in relief. Add anything ESPN gives him that the games don't from his card. <b>Pools</b> — every hitter percentile is measured against hitters with <b>${REF_PA}+ PA</b> on the season, any position; every pitcher percentile against pitchers with <b>${REF_PA}+ batters faced</b>, starters and relievers together. That population never changes — a date range or split only changes the numbers being compared — and the <b>Min PA / Min IP</b> boxes only set who is listed: a player under the bar is placed against that same population rather than reshaping it.` }));
-    notes.append(Object.assign(el("div"), { innerHTML: `<b>xwOBA</b> — ${m.scoreNote.H}. The directional (spray-angle) model's number is kept in the data as <code>xwoba_dir</code>. <b>Batted-ball definitions</b> follow Savant's leaderboards: BBE is every ball in play, Avg EV / 90th% / max EV skip bunts, Barrel%, Hard-Hit% and Sweet-Spot% are per ball in play. Seasons before 2020 have a few percent of untracked balls that Savant's public feed fills with placeholder values, so an Avg EV there can sit a tenth or two off the leaderboard.` }));
+    notes.append(Object.assign(el("div"), { innerHTML: `<b>xwOBA</b> — ${m.scoreNote.H}. <b>Expected stats</b> (Stats &amp; filters ▸ Splits &amp; dates, or the Splits block on any hitter's card) switches the whole site between that and <b>dxwOBA</b>, the directional model: exit velocity, launch angle, spray and pull angle and the batter's sprint speed, so where he hit the ball counts too. It is summed from the same day-by-day rows, so windows and splits follow it, and it is blank where batted balls aren't tracked (A and AA). xBA and xSLG are Statcast's in both — the directional model scores wOBA only. The one currently in use is ${xDir() ? "<b>directional (dxwOBA)</b>" : "<b>Statcast (xwOBA)</b>"}. <b>Batted-ball definitions</b> follow Savant's leaderboards: BBE is every ball in play, Avg EV / 90th% / max EV skip bunts, Barrel%, Hard-Hit% and Sweet-Spot% are per ball in play. Seasons before 2020 have a few percent of untracked balls that Savant's public feed fills with placeholder values, so an Avg EV there can sit a tenth or two off the leaderboard.` }));
     notes.append(Object.assign(el("div"), { innerHTML: `<b>Splits</b> — open a player and pick vs LHP / RHP (vs LHB / RHB for pitchers) and home / away at the top of his card. His card is redrawn from those plate appearances and ranked against the season's qualifiers on their numbers in the same split; the list itself stays unsplit. Pitcher IP in a handedness split is the outs recorded against that side. <b>Dates</b> — type a from and/or to date (a blank side means the season's start or end) and every stat and percentile is recomputed from those games only. Who qualifies never changes: the comparison group is always the players who meet the season bar (hitters ${REF_PA}+ PA, pitchers ${REF_PA}+ batters faced), each measured on his own numbers in that range — even a very short one. Past seasons work the same once their day-by-day file loads. Inside a window, Air% and Pull Air% come from Statcast batted-ball data (pull = spray angle beyond ${m.pullLine}°, which tracks Savant within about half a point); the full-season view uses Savant's published numbers.` }));
     notes.append(Object.assign(el("div"), { innerHTML: `<b>Eligibility</b> — hitters: ${ESPN.posGames}+ games at a position in ${m.season} (outfield combined, DH counts). Pitchers: SP with ${ESPN.spIP}+ innings as a starter, RP with ${ESPN.rpIP}+ innings in relief — either or both; stats are always the full season. Add any position from a player's card; the <b>Eligibility</b> page lists what you've added.` }));
     notes.append(Object.assign(el("div"), { innerHTML: `<b>Hitters</b> rank by ${m.scoreNote.H}; the colour is its percentile in the pool. <b>Skills blend</b> (in the Sort menu and on each card) is the ${m.scoreNote.blend}. <b>Pitcher score</b> — ${m.scoreNote.P}.` }));
@@ -2665,7 +2745,7 @@
   }
 
   function render() {
-    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", hub = state.mode === "draftmode", appear = state.mode === "appearance", fant = state.mode === "fantasy", other = player || compare || elig || hub || appear || fant;
+    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = state.mode === "draftmode" || home, appear = state.mode === "appearance", fant = state.mode === "fantasy", other = player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
     const T = state.tbl; document.body.dataset.heat = T.heat ? "on" : "off"; document.body.dataset.band = T.band ? "on" : "off"; document.body.dataset.sorthl = T.sortHl ? "on" : "off"; document.body.dataset.density = T.density;
@@ -2674,7 +2754,7 @@
     document.querySelector(".toolbar:not(.xtoolbar)").hidden = other; $("board").hidden = other; $("drafttools").hidden = true; $("ranktools").hidden = true; $("setbar").hidden = true; $("lbtools").hidden = true;
     renderChrome();
     if (state.textModal) { renderTextModal(); } else if (other) { $("modal").hidden = true; lockPage(false); parkControls(); $("modal-body").innerHTML = ""; }
-    if (hub) { renderHub(); return; }
+    if (hub) { home ? renderHome() : renderHub(); return; }
     if (appear) { renderAppearance(); return; }
     if (fant) { renderFantasy(); renderModal(); return; }
     if (player) { renderExplore(); return; }
@@ -3396,6 +3476,7 @@
     if (state.mode === "leaderboard") { if (state.lbSplit.hand !== "all") bits.push(`vs ${state.lbSplit.hand}H${pit ? "B" : "P"}`); if (state.lbSplit.venue !== "all") bits.push(state.lbSplit.venue); }
     if (state.mode === "trending") { const t = trendCfg(); bits.push(t.unit === "days" ? `last ${t.days} days` : `last ${t[t.unit]} ${unit}`); bits.push(`${trendMin()}+ ${unit} in span`); }
     else { const w = winIdx(); if (w) bits.push(state.win.days ? `last ${state.win.days} days` : winLabel()); bits.push(`${state.min[g]}+ ${unit}`); }
+    if (!pit && xDir() && !stats.includes("dxwOBA")) bits.push("dxwOBA");   // the sort label already says it when you sort by it
     if (state.mode === "leaderboard" && lbKey() !== CUR.key) { const ds = histDataset(lbKey()); if (ds && (ds.refPA < 100 || ds.minScale > 1)) bits.push(`(${withDataset(ds, () => effMin(g))}+ ${ds.multi && !ds.each ? "over the span" : "here"})`); }
     const active = state.mode === "leaderboard" ? (state.lbSplit.hand !== "all" || state.lbSplit.venue !== "all" || winRequested()) : state.mode === "trending" ? true : winRequested();
     $("optsbtn").classList.toggle("on", !!active || (!customOrder() && state.sort !== "score"));
@@ -3461,6 +3542,17 @@
     const w = el("div", "textmodal panel");
     const h2 = el("h2", null, "Splits & dates"); h2.id = "modal-title"; w.append(h2);
     w.append(panelTabs("splits"));
+    if (!pit) {
+      const sec = el("div", "psec"); sec.append(el("h4", null, "Expected stats"));
+      const xseg = el("div", "seg"); xseg.setAttribute("role", "group"); xseg.setAttribute("aria-label", "Expected stats model");
+      for (const [v, l] of [["sav", "Statcast"], ["dir", "Directional"]]) {
+        const b = el("button", "segbtn", l); b.type = "button"; b.title = XM_NOTE[v]; b.setAttribute("aria-pressed", String(state.xmodel === v));
+        b.addEventListener("click", () => { setXModel(v); renderSplitsPanel(); });
+        xseg.append(b);
+      }
+      sec.append(xseg, el("p", "note", XM_NOTE[state.xmodel] + " It applies everywhere on the site — the board, the cards and every leaderboard — and xBA and xSLG stay Statcast's either way."));
+      w.append(sec);
+    }
     if (state.mode === "leaderboard") { const sec = el("div", "psec"); sec.append(el("h4", null, "Splits")); sec.append($("lbsplit")); w.append(sec); }
     if (trending) {
       const sec = el("div", "psec"); sec.append(el("h4", null, "Span")); const row = el("div", "prow"); row.append($("trendnfield"), $("trendunit")); sec.append(row);
@@ -3547,13 +3639,17 @@
   $("ddays").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
 
   /* ---------- wiring ---------- */
-  const DRAFT_GROUP = ["draftmode", "rankings", "draft", "eligibility"];
+  // the header's two dropdowns: the draft + fantasy pages, and the two leaderboards
+  const NAV_GROUPS = [
+    { key: "draftmode", sel: "modesel", txt: "modeseltxt", label: "Draft & Fantasy", short: "Draft", modes: ["draftmode", "rankings", "draft", "eligibility", "fantasy"] },
+    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending"] },
+  ];
   function readMode() {
     const h = location.hash.replace("#", "");
     const pm = h.match(/^player\/(\d+)$/);
     if (pm) { state.mode = "player"; const id = Number(pm[1]); if (state.x.id !== id) { state.x = { id, type: null, ds: null }; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; } return; }
     if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["points", "advanced", "whatif", "settings"].includes(v) ? v : "points"; return; }
-    state.mode = ["draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "draftmode", "appearance"].includes(h) ? h : h === "explore" ? "player" : "draftmode";
+    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "draftmode", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {
@@ -3620,7 +3716,7 @@
   $("rankuntier").addEventListener("click", () => { if (state.selKeys.length) moveSelectionToTier(0); });
   $("draftorder").addEventListener("change", (e) => { state.draftOrder = e.target.value; savePrefs(); render(); });
   const closeModal = () => { if (state.textModal) { state.textModal = null; render(); return; } if (state.panel || state.colPick) { closePanel(true); return; } if (state.tierPick) { state.tierPick = null; render(); return; } if (state.expanded) { state.expanded = null; render(); } };
-  $("modesel").addEventListener("change", (e) => { location.hash = "#" + e.target.value; });
+  for (const G of NAV_GROUPS) $(G.sel).addEventListener("change", (e) => { location.hash = "#" + e.target.value; });
   $("modal-close").addEventListener("click", closeModal);
   $("modal-back").addEventListener("click", closeModal);
   $("undo").addEventListener("click", undoLast);
@@ -3690,5 +3786,5 @@
   })();
 
 
-  readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); migrateTierOrder(); render(); setTb(); watchBuild();
+  readTokens(); readMode(); applyXModel(); ensureSortValid(); migrateTiersToMembers(); migrateTierOrder(); render(); setTb(); watchBuild();
 })();

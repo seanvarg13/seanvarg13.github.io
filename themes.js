@@ -27,6 +27,11 @@ window.DRAFT_THEMES = (function () {
       light: { accent: "#0c2340", "accent-2": "#4b92db", ...onDark("#0c2340"), "accent-2-dim": W + "0.9)", "accent-2-text": "#4b92db", pop: "#0c2340", rule: "#0c2340", "stripe-line": "#c8102e", "accent-wash": "rgba(75, 146, 219, 0.16)", ink: "#0c2340", "ink-2": "#35465f", hover: "#e9f1f9", band: "#0c2340" },
       dark: { accent: "#8dc0ee", "accent-2-ink": "#071427", "accent-2-dim": "rgba(7, 20, 39, 0.85)", "on-fill-line": "rgba(7, 20, 39, 0.35)", "tab-ink": "#071427", "accent-2-text": "#8dc0ee", pop: "#071427", rule: "#071427", ink: "#edf3fa", "ink-2": "#b7c5d8", hover: "#1b2b45", "accent-wash": "rgba(75, 146, 219, 0.2)" },
     },
+    "titans-unc": {
+      name: "Titans · Carolina", blurb: "Tennessee in Carolina blue — Titans navy type, the red stripe, UNC blue across the banner.",
+      light: { accent: "#0c2340", "accent-2": "#7bafd4", ...onLight("#0c2340", "rgba(12, 35, 64, 0.85)"), "accent-2-text": "#4b9cd3", pop: "#ffffff", rule: "#0c2340", "stripe-line": "#c8102e", "accent-wash": "rgba(123, 175, 212, 0.24)", ink: "#0c2340", "ink-2": "#35465f", hover: "#eaf2f9", band: "#0c2340" },
+      dark: { accent: "#9cc6e8", "accent-2-ink": "#071427", "accent-2-dim": "rgba(7, 20, 39, 0.85)", "on-fill-line": "rgba(7, 20, 39, 0.35)", "tab-ink": "#071427", "accent-2-text": "#9cc6e8", pop: "#071427", rule: "#071427", ink: "#edf3fa", "ink-2": "#b7c5d8", hover: "#1b2b45", "accent-wash": "rgba(123, 175, 212, 0.22)" },
+    },
     purple: {
       name: "Purple", blurb: "Deep purple carries the site, lavender is the highlight.",
       light: { accent: "#3b1d6e", "accent-2": "#5b2d8e", ...onDark(), "accent-2-text": "#6b3fa0", pop: "#c9b3e8", rule: "#c9b3e8", "stripe-line": "transparent", "accent-wash": "rgba(140, 100, 190, 0.16)", ink: "#241a33", "ink-2": "#4a3f5c", hover: "#f1ecf8", band: "#3b1d6e" },

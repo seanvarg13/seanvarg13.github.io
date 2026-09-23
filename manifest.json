@@ -2,7 +2,7 @@
   "name": "Sean's Site",
   "short_name": "Sean's Site",
   "description": "Fantasy baseball draft rankings, player cards, trends and leaderboards.",
-  "start_url": "./index.html#draftmode",
+  "start_url": "./index.html#home",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
