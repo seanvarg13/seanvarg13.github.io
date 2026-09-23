@@ -856,7 +856,7 @@
     pill.append(sel); return pill;
   }
   // Year + Level pickers for one player's seasons (index rows [key, season, type, role, sample, team] of one type)
-  function renderSeasonPicker(seasons, curKey, onPick, compact) {
+  function renderSeasonPicker(seasons, curKey, onPick, compact, o = {}) {
     const box = el("div", "spick");
     const cur = seasons.find((sv) => sv[0] === curKey) || seasons[0]; if (!cur) return box;
     const years = [...new Set(seasons.map((sv) => sv[1]))].sort((x, y) => y - x);
@@ -866,13 +866,14 @@
       const opts = inYear(Number(y)); const same = opts.find((sv) => levelOf(sv[0]) === levelOf(cur[0])) || opts[0]; onPick(same[0]);
     }, "Season"));
     const lv = inYear(cur[1]).filter((sv) => keyKind(sv[0]) === keyKind(cur[0]) || keyBase(sv[0]) !== keyBase(cur[0]) && !keyKind(sv[0]));
-    const lvl = (k) => `${LEVELS[levelOf(k)] || levelOf(k)}${kindTag(k)}`;
-    const lvPill = pillSelect(`${lvl(cur[0])} · ${sampleTxt(cur)}`, lv.map((sv) => [sv[0], `${lvl(sv[0])} · ${sampleTxt(sv)}`]), cur[0], (k) => onPick(k), "Level");
+    const lvl = (k) => `${LEVELS[levelOf(k)] || levelOf(k)}${o.levelOnly ? "" : kindTag(k)}`;
+    const txt = (sv) => (o.levelOnly ? lvl(sv[0]) : `${lvl(sv[0])} · ${sampleTxt(sv)}`);   // just the level, when the games pill is elsewhere
+    const lvPill = pillSelect(txt(cur), lv.map((sv) => [sv[0], txt(sv)]), cur[0], (k) => onPick(k), "Level");
     lvPill.classList.add("lvl"); if (lv.length === 1) lvPill.classList.add("solo");
     box.append(lvPill);
     // regular season / spring training / postseason, where this year and level has them — one pill, not a strip
     const kinds = seasons.filter((sv) => keyBase(sv[0]) === keyBase(cur[0]));
-    if (kinds.length > 1) {
+    if (kinds.length > 1 && !o.noKind) {
       const opts = [];
       for (const [k, l] of KINDS) { const sv = kinds.find((x) => keyKind(x[0]) === k); if (sv) opts.push([sv[0], l]); }
       const label = mobileView() ? KIND_TINY[keyKind(cur[0])] : (KINDS.find(([k]) => k === keyKind(cur[0])) || KINDS[0])[1];
@@ -3791,7 +3792,7 @@
     const cur = state.x.ds || CUR.key;
     if (entry) {
       const mine = entry.s.filter((sv) => sv[2] === p.type);
-      if (mine.length > 1) box.append(paRow("Season", renderSeasonPicker(mine, cur, goTo, true)));
+      if (mine.length > 1) box.append(paRow("Season", renderSeasonPicker(mine, cur, goTo, true, { noKind: true, levelOnly: true })));
       const kinds = seasonKinds(p, entry, cur);
       if (kinds.length > 1) {
         const seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Run of games");
@@ -3824,7 +3825,7 @@
   function seasonKinds(p, entry, cur) {
     const year = cur.match(/(\d{4})/), lvl = cur.split("-")[0];
     if (!year) return [];
-    const want = [[`${lvl}-${year[1]}`, "Regular"], [`${lvl}-${year[1]}-post`, "Postseason"], [`${lvl}-${year[1]}-spring`, "Spring"]];
+    const want = [[`${lvl}-${year[1]}`, "Regular season"], [`${lvl}-${year[1]}-post`, "Postseason"], [`${lvl}-${year[1]}-spring`, "Spring training"]];
     return want.filter(([k]) => entry.s.some((sv) => sv[0] === k && sv[2] === p.type));
   }
 
