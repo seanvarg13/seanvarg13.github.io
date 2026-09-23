@@ -552,6 +552,7 @@
                    npull: rate(bden - (t.pulln || 0), bden),
                    ba: t.h === undefined || !t.ab ? null : Math.round(1000 * t.h / t.ab) / 1000, slg: t.tb === undefined || !t.ab ? null : Math.round(1000 * t.tb / t.ab) / 1000,
                    xba: t.xbsum === undefined || !t.ab ? null : Math.round(1000 * t.xbsum / t.ab) / 1000, xslg: t.xssum === undefined || !t.ab ? null : Math.round(1000 * t.xssum / t.ab) / 1000,
+                   dxba: t.dbsum === undefined || !t.ab ? null : Math.round(1000 * t.dbsum / t.ab) / 1000, dxslg: t.dssum === undefined || !t.ab ? null : Math.round(1000 * t.dssum / t.ab) / 1000,
                    osw: rate(t.osw, t.opit), zsw: rate(t.zsw, t.zpit), zcon: rate(t.zcon, t.zsw), ocon: rate(t.ocon, t.osw), whf: rate(t.whf, t.sw),
                    xwoba: noEV ? null : xDir() ? xwDir : xwSav, xws: noEV ? null : xwSav, xwd: noEV ? null : xwDir,   // exit velocity + launch angle, and the directional model
                    woba: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null,
@@ -3145,6 +3146,24 @@
 
   // the comparison's column heads stick under the card's pinned plate, so they need its height
   let cardRO = null, cardEl = null;
+  // the three panels fill the window and scroll inside themselves, so the page itself never scrolls
+  function sizePPage() {
+    const pg = document.querySelector("#xboard .ppage"); if (!pg) return;
+    if (mobileView()) { document.documentElement.style.removeProperty("--ppage-top"); return; }
+    const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+    const top = pg.getBoundingClientRect().top;      // whatever the pinned row and the header leave
+    const ft = document.querySelector("footer.notes");    // the site's notes sit under it and must fit too
+    const fh = ft ? Math.round(ft.getBoundingClientRect().height) + 16 : 0;
+    const root = document.documentElement;
+    if (vh) root.style.setProperty("--ppage-vh", Math.round(vh) + "px");
+    let take = Math.round(Math.max(0, top) + 14 + fh);
+    root.style.setProperty("--ppage-top", take + "px");
+    for (let i = 0; i < 2; i++) {                    // whatever else the page carries (margins, the notes' own spacing)
+      const over = root.scrollHeight - (vh || window.innerHeight);
+      if (over <= 1) break;
+      take += over; root.style.setProperty("--ppage-top", take + "px");
+    }
+  }
   function setCardTop() {
     const t = document.querySelector("#xboard .cardtop, #modal-body .cardtop");
     const put = () => document.documentElement.style.setProperty("--cardtop-h", t ? Math.round(t.getBoundingClientRect().height) + "px" : "0px");
@@ -3163,7 +3182,7 @@
     const h = Math.round(Math.max(200, (vv ? vv.height : window.innerHeight) - top - 40));
     document.documentElement.style.setProperty("--modal-max", h + "px");
   }
-  function render() { renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); }
+  function render() { renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage(); }
   function renderNow() {
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = state.mode === "draftmode" || home, appear = state.mode === "appearance", fant = state.mode === "fantasy", other = player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
@@ -3668,7 +3687,12 @@
   // the middle panel: Savant's own percentile list, in Savant's order, flat and without group headings.
   // Savant's hitters run xwOBA, xBA, xSLG, EV, Barrel%, Hard-Hit%, LA Sweet-Spot%, Bat speed, Chase%, Whiff%, K%, BB%
   // (its run values, fielding and sprint speed have no counterpart here); wOBA and dxwOBA ride beside xwOBA.
-  const SAVANT_H = ["woba", "xws", "xwd", "xba", "xslg", "ev", "brl", "hh", "ss", "bs", "osw", "whf", "k", "bb"];
+  const SAVANT_H = ["xwd", "dxba", "dxslg", "ev", "brl", "hh", "ss", "bs", "osw", "whf", "k", "bb"];
+  // what to show instead when a stat isn't there: Savant's own number for a season built before the
+  // directional BA / SLG models, and the real result at a level with no batted-ball tracking (A, AA)
+  const PCT_FALL = { xwd: ["xws", "woba"], dxba: ["xba", "ba"], dxslg: ["xslg", "slg"] };
+  // an untracked level (A, AA) fills the expected stats with the real result, which would read as a model number
+  const NEEDS_EV = new Set(["xwd", "xws", "dxba", "dxslg", "xba", "xslg", "ev", "brl", "hh", "ss", "bs"]);
   // Savant's pitchers run xERA, fastball velo, fastball / curve spin, avg EV, Chase%, Whiff%, K%, BB%, Barrel%,
   // Hard-Hit%, GB%, Extension — uERA stands in for xERA, and spin isn't collected here.
   const SAVANT_P = ["uera", "fbv", "ev", "osw", "whf", "k", "bb", "brl", "hh", "gb", "ext"];
@@ -3688,30 +3712,38 @@
     for (const [title, keys] of (p.type === "H" ? EXTRA_H : EXTRA_P)) {
       const ms = keys.map((k) => all.find((m) => m.key === k)).filter((m) => m && metricValue(m, pv, st) != null);
       if (!ms.length) continue;
+      const first = !out.length;                      // one group open to start, so the box fills a screen and no more
       out.push(foldSection("xsec:" + title, title, () => {
         const box = el("div", "meters");
         for (const m of ms) box.append(meterRow(m, metricValue(m, pv, st), st.pct[m.key]));
         return box;
-      }, true));
+      }, first));
     }
     return out;
   }
   // the middle panel: one header, then every stat as a bar — no group headings inside it
-  function renderPctPanel(p, st, g, ref) {
-    const pv = V(p), all = allFor(g), box = el("div", "pctbox");
-    const hd = el("div", "pcthd");
-    hd.append(el("b", null, `${dsSeason()} Percentile Rankings`));
-    const vl = viewLabel(p.type); if (vl) hd.append(el("span", "pctsub", "· " + vl));
-    box.append(hd);
+  function renderPctPanel(p, st, g, ref, col) {
+    const pv = V(p), all = allFor(g);
+    col.append(panelHead(`${dsSeason()} Percentile Rankings`, viewLabel(p.type)));
+    const body = el("div", "pscroll pctbox");
     const meters = el("div", "meters");
-    for (const key of (p.type === "H" ? SAVANT_H : SAVANT_P)) {
-      const m = all.find((x) => x.key === key); if (!m) continue;
-      const v = metricValue(m, pv, st); if (v == null) continue;
-      meters.append(meterRow(m, v, st.pct[key]));
+    const noEV = DS.tracked != null && DS.tracked < 0.05;
+    const val = (k) => { const m = all.find((x) => x.key === k); if (!m || (noEV && NEEDS_EV.has(k))) return null; const v = metricValue(m, pv, st); return v == null ? null : { m, v, k }; };
+    for (const key0 of (p.type === "H" ? SAVANT_H : SAVANT_P)) {
+      let got = val(key0);
+      for (const alt of (!got && PCT_FALL[key0]) || []) { got = val(alt); if (got) break; }
+      if (!got) continue;
+      meters.append(meterRow(got.m, got.v, st.pct[got.k]));
     }
-    box.append(meters);
-    box.append(el("p", "pctfoot", `${poolPhrase(ref)} (${pool(ref).ref.length})`));
-    return box;
+    body.append(meters);
+    body.append(el("p", "pctfoot", `${poolPhrase(ref)} (${pool(ref).ref.length})`));
+    col.append(body);
+  }
+  // every panel wears the same band: a title, and the split it's showing beside it
+  function panelHead(title, sub) {
+    const hd = el("div", "pcthd"); hd.append(el("b", null, title));
+    if (sub) hd.append(el("span", "pctsub", "· " + sub));
+    return hd;
   }
   // the left panel, the way Savant draws it: the club's colour, the player's action shot behind, the cut-out in front
   function renderSavantPlate(p, st, g) {
@@ -3785,14 +3817,20 @@
       const page = el("div", "ppage");
       const A = el("div", "pcol pcolA"), B = el("div", "pcol pcolB"), C = el("div", "pcol pcolC");
       A.append(renderSavantPlate(p, st, g));
-      A.append(foldSection("xraw", "Season stats", () => renderRawStats(p, true), true));
-      B.append(renderPctPanel(p, st, g, g));
-      C.append(...extraSections(p, st, g));
-      for (const n of [...card.querySelectorAll(":scope > .note")]) C.append(n);   // the long explanations ride at the bottom
+      const abody = el("div", "pscroll");
+      abody.append(renderRawStats(p, true));
+      A.append(abody);
+      renderPctPanel(p, st, g, g, B);
+      C.append(panelHead(p.type === "H" ? "More hitting stats" : "More pitching stats"));
+      const cbody = el("div", "pscroll");
+      cbody.append(...extraSections(p, st, g));
+      for (const n of [...card.querySelectorAll(":scope > .note")]) cbody.append(n);   // the long explanations ride at the bottom
       for (const f of [...card.querySelectorAll(":scope > .fold-sec")]) {   // the card's grouped fold repeats the panels above it
-        if (f.dataset.key !== "raw" && !f.dataset.key.startsWith("pgrp:")) C.append(f); }
-      const notes = card.querySelector(".cardnotes"); if (notes) C.append(notes);
+        if (f.dataset.key !== "raw" && !f.dataset.key.startsWith("pgrp:")) cbody.append(f); }
+      const notes = card.querySelector(".cardnotes"); if (notes) cbody.append(notes);
+      C.append(cbody);
       page.append(A, B, C); box.append(page);
+      sizePPage();
     })));
   }
   // a player is primarily a pitcher if he has pitching seasons and never a real hitting season (100+ PA)
@@ -4376,6 +4414,7 @@
   })();
   sizeModal();
   window.addEventListener("resize", sizeModal);
+  window.addEventListener("resize", sizePPage);
   if (window.visualViewport) { window.visualViewport.addEventListener("resize", sizeModal); window.visualViewport.addEventListener("scroll", sizeModal); }
   $("modal-close").addEventListener("click", closeModal);
   $("modal-back").addEventListener("click", closeModal);

@@ -1937,26 +1937,26 @@ body.modal-open header.top { z-index: 60; }
 body.navopen header.top { z-index: 300; }   /* a nav menu is open: the header outranks everything on the page */
 
 /* ---- the player page: bio, percentiles and the rest, three panels across ---- */
-.ppage { display: grid; gap: 14px; align-items: start; margin-top: 10px;
-  grid-template-columns: minmax(250px, 304px) minmax(420px, 1.3fr) minmax(300px, 1fr); }
-.ppage .pcolB h3 { font-size: 11px; letter-spacing: 0.05em; line-height: 1.5; margin: 0 0 10px; }
-.ppage .pcolC .note { font-size: 11.5px; color: var(--muted); margin: 0; }
-.pcol { min-width: 0; }
-.pcolA, .pcolC { display: flex; flex-direction: column; gap: 10px; }
-.pcolC > .fold-sec, .pcolA > .fold-sec {
-  background: var(--surface); border: 1px solid var(--accent-2); border-radius: 10px; }
-.pcolA > .fold-sec, .pcolC > .fold-sec { padding: 4px 12px 8px; }
-.pcolB { padding: 14px 16px 16px; background: var(--surface); border: 1px solid var(--accent-2); border-radius: 10px; }
+/* three equal boxes that fill what's left of the window; each scrolls inside itself, the page doesn't */
+.ppage { display: grid; gap: 10px; align-items: stretch; margin-top: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  height: calc(var(--ppage-vh, 100dvh) - var(--ppage-top, 220px)); min-height: 430px; }
+.pcol { min-width: 0; min-height: 0; display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--accent-2); border-radius: 3px; overflow: hidden; }
+.pcol > * { flex: none; }
+.pscroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px 12px 12px; }
+.ppage .pcolC .note { font-size: 11px; color: var(--muted); margin: 8px 0 0; }
+.pcolA .rawstats { margin-top: 0; }
 
 /* the player card, the way Savant draws it: the club's colour, his action shot behind, the cut-out in front */
-.splate { position: relative; overflow: hidden; border-radius: 10px; color: #fff;
-  background: var(--tcol, #12284b); border: 1px solid var(--accent-2); padding: 14px 14px 12px; }
+.splate { position: relative; overflow: hidden; color: #fff;
+  background: var(--tcol, #12284b); border-bottom: 1px solid var(--accent-2); padding: 12px 12px 10px; }
 .splate > .sback, .splate > .sveil { position: absolute; inset: 0; z-index: 0; }
 .splate > .sback { background-size: cover; background-position: 72% 8%; background-repeat: no-repeat; opacity: 0.45; }
 .splate > .sveil { background: linear-gradient(94deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.5) 40%, rgba(0, 0, 0, 0.7) 100%); }
 .splate > .sbot { position: relative; z-index: 1; }
 .splate > .srow { position: relative; z-index: 2; }
-.splate .sbot { margin: 12px -14px -12px; padding: 9px 14px 11px; background: rgba(0, 0, 0, 0.42); }
+.splate .sbot { margin: 10px -12px -10px; padding: 8px 12px 9px; background: rgba(0, 0, 0, 0.42); }
 .splate .srow { display: flex; align-items: flex-end; gap: 12px; }
 .splate .mug { width: 106px; height: 106px; margin-bottom: -9px; flex: none; object-fit: contain; object-position: bottom center;
   border: 0; border-radius: 0; background: none; box-shadow: none; filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.5)); }
@@ -1983,17 +1983,26 @@ body.navopen header.top { z-index: 300; }   /* a nav menu is open: the header ou
 :root[data-view="mobile"] .splate h2 { font-size: 21px; }
 
 /* the middle panel: one banner, then every stat as a bar — no headings inside */
-.pctbox .pcthd { display: flex; align-items: baseline; gap: 4px 10px; flex-wrap: wrap;
-  margin: -14px -16px 10px; padding: 9px 16px; border-radius: 9px 9px 0 0;
+.pcol > .pcthd { display: flex; align-items: baseline; gap: 3px 8px; flex-wrap: wrap; padding: 8px 12px;
   background: var(--band); color: var(--band-ink); border-bottom: 1px solid var(--accent-2); }
-.pctbox .pcthd b { font-family: var(--display); font-size: 14px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
-.pctbox .pctsub { font-size: 11px; letter-spacing: 0.03em; color: var(--band-dim); }
-.pctbox .pctfoot { margin: 10px 0 0; font-size: 11px; color: var(--muted); }
+.pcol > .pcthd b { font-family: var(--display); font-size: 13px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.pcol > .pcthd .pctsub { font-size: 10.5px; letter-spacing: 0.03em; color: var(--band-dim); }
+.pctbox .pctfoot { margin: 9px 0 0; font-size: 10.5px; color: var(--muted); }
 .ppage .hgroups { grid-template-columns: minmax(0, 1fr); max-width: none; }
 .ppage .hcol, .ppage .hgroup { min-width: 0; }
-.ppage .meter { grid-template-columns: 108px minmax(0, 1fr) 62px; }  /* the track gives way to the column, never the value */
-.ppage .meter .lbl { min-width: 0; }
-.ppage .pctbox .meters { gap: 7px; }
+/* tighter bars than the popup card's: three columns of them have to fit one window */
+.ppage .meter, .ppage .hcard .meter { grid-template-columns: minmax(0, 1fr) minmax(56px, 1.3fr) 52px; gap: 8px; font-size: 12px; }
+.ppage .meter .lbl { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; text-align: right; }
+.ppage .meters .meter { min-height: 26px; padding: 2px 0; }
+.ppage .meter .track { --bub: 21px; height: 17px; }
+.ppage .meter .bub { font-size: 10.5px; box-shadow: 0 0 0 2px var(--surface); }
+.ppage .meters { gap: 0; padding-top: 0; }
+.ppage .fold-sec { margin-top: 6px; }
+.ppage .fold-sec:first-child { margin-top: 0; }
+.ppage .foldhead { font-size: 11.5px; padding: 5px 0; letter-spacing: 0.05em; }
+.ppage .rawstats table { font-size: 11.5px; }
 .ppage .meters { padding-top: 2px; }
 .pcolC .cardnotes { margin: 0; }
-:root[data-view="mobile"] .ppage { grid-template-columns: 1fr; }
+:root[data-view="mobile"] .ppage { grid-template-columns: 1fr; height: auto; min-height: 0; }
+:root[data-view="mobile"] .pcol { overflow: visible; }
+:root[data-view="mobile"] .pscroll { overflow: visible; }
