@@ -3788,8 +3788,6 @@
     const entry = indexReady() ? window.DRAFT_INDEX.players.find((e) => e.id === p.id) : null;
     const cur = state.x.ds || CUR.key;
     if (entry) {
-      const mine = entry.s.filter((sv) => sv[2] === p.type);
-      if (mine.length > 1) box.append(paRow("Season", renderSeasonPicker(mine, cur, goTo, true, { noKind: true, levelOnly: true })));
       const kinds = seasonKinds(p, entry, cur);
       if (kinds.length > 1) {
         const seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Run of games");
@@ -3935,9 +3933,9 @@
     return svg;
   }
   // the middle panel: one header, then every stat as a bar — no group headings inside it
-  function renderPctPanel(p, st, g, ref, col) {
+  function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
-    col.append(panelHead(dsSeason(), `${DS.level} Percentile Rankings`));
+    col.append(panelHead(...pctTitle(p, nav)));
     const body = el("div", "pscroll pctbox");
     const meters = el("div", "meters");
     const noEV = DS.tracked != null && DS.tracked < 0.05;
@@ -3957,6 +3955,25 @@
     body.append(el("p", "pctfoot", `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`));
     col.append(body);
   }
+  // "2026 MLB Percentile Rankings", with the year and the level as the pickers for the whole page
+  function pctTitle(p, nav) {
+    const plain = [dsSeason(), `${DS.level} Percentile Rankings`];
+    if (!nav || !nav.entry) return plain;
+    const mine = nav.entry.s.filter((sv) => sv[2] === p.type);
+    const cur = mine.find((sv) => sv[0] === nav.cur); if (!cur) return plain;
+    const years = [...new Set(mine.map((sv) => sv[1]))].sort((x, y) => y - x);
+    const inYear = (y) => mine.filter((sv) => sv[1] === y && keyKind(sv[0]) === keyKind(cur[0]))
+                              .sort((x, z) => LEVEL_ORDER.indexOf(levelOf(x[0])) - LEVEL_ORDER.indexOf(levelOf(z[0])));
+    const yr = headSelect(String(cur[1]), years.map((y) => [String(y), String(y)]), (y) => {
+      const opts = inYear(Number(y)); if (!opts.length) return;
+      const same = opts.find((sv) => levelOf(sv[0]) === levelOf(cur[0])) || opts[0];
+      if (same[0] !== cur[0]) nav.goTo(same[0]);
+    }, "yr");
+    const lvls = inYear(cur[1]);
+    const lv = headSelect(cur[0], lvls.map((sv) => [sv[0], LEVELS[levelOf(sv[0])] || levelOf(sv[0])]),
+                          (k) => { if (k !== cur[0]) nav.goTo(k); }, "lv");
+    return [yr, [lv, " Percentile Rankings"]];
+  }
   // Savant's scale strip: POOR at the left of the track, AVERAGE at its middle, GREAT at its right
   function pctScale() {
     const row = el("div", "meter pctscale");
@@ -3969,12 +3986,24 @@
     row.append(t, el("div", "val"));
     return row;
   }
+  function headSelect(cur, opts, onPick, cls) {
+    const w = el("span", "hsel " + (cls || ""));
+    const hit = (opts.find((o) => o[0] === cur) || [cur, String(cur)]);
+    w.append(el("span", "hsl", hit[1]));
+    const sel = el("select");
+    sel.setAttribute("aria-label", cls === "yr" ? "Season" : "Level");
+    for (const [v, l] of opts) { const o = el("option", null, l); o.value = v; if (v === cur) o.selected = true; sel.append(o); }
+    sel.addEventListener("change", (e) => onPick(e.target.value));
+    w.append(sel);
+    if (opts.length < 2) w.classList.add("solo");
+    return w;
+  }
   // every panel is titled the way Savant titles one: the year in bold, the rest beside it, centred, over a dotted rule
   function panelHead(lead, rest, sub) {
     const wrap = el("div", "pchead");
     const hd = el("div", "pcthd");
-    if (lead) hd.append(el("b", null, lead));
-    if (rest) hd.append(document.createTextNode((lead ? " " : "") + rest));
+    if (lead) hd.append(typeof lead === "string" ? el("b", null, lead) : lead);
+    if (rest) { hd.append(document.createTextNode(lead ? " " : "")); for (const r of (Array.isArray(rest) ? rest : [rest])) hd.append(typeof r === "string" ? document.createTextNode(r) : r); }
     wrap.append(hd);
     if (sub) wrap.append(el("div", "pctsub", sub));
     wrap.append(el("div", "pcdots"));
@@ -4084,7 +4113,7 @@
       abody.append(renderPlayerApps(p, goTo));
 
       A.append(abody);
-      renderPctPanel(p, st, g, g, B);
+      renderPctPanel(p, st, g, g, B, { entry, cur: key, goTo });
       C.append(panelHead(dsSeason(), p.type === "H" ? "Advanced Metrics" : "Advanced Pitching"));
       const cbody = el("div", "pscroll");
       cbody.append(...extraSections(p, st, g));
