@@ -38,6 +38,8 @@
   --rule: #13294b;
   --stripe-line: transparent;
   --accent-wash: rgba(123, 175, 212, 0.24);
+  --pctrack: #d9e8e3;  /* the unfilled part of a percentile bar */
+  --pctrule: #bed8d1;  /* the dashed rule between bars */
   --lo: #325aa1;      /* percentile: cold — Savant's blue */
   --mid: #b3b3b3;     /* percentile: 50th — a solid grey, not a tint, so the ends carry */
   --hi: #d22d49;      /* percentile: hot  — Savant's red */
@@ -66,6 +68,8 @@
     --accent-2-text: #9cc6e8;
     --on-fill-line: rgba(15, 33, 61, 0.35);
     --accent-wash: rgba(123, 175, 212, 0.22);
+    --pctrack: #2c3b39;
+    --pctrule: #3a4f4b;
     --lo: #4a86dd;
     --mid: #6a7382;
     --hi: #e2455c;
@@ -92,6 +96,8 @@
   --accent-2-text: #9cc6e8;
   --on-fill-line: rgba(15, 33, 61, 0.35);
   --accent-wash: rgba(123, 175, 212, 0.22);
+  --pctrack: #2c3b39;
+  --pctrule: #3a4f4b;
   --lo: #4a86dd;
   --mid: #6a7382;
   --hi: #e2455c;
@@ -1456,33 +1462,49 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 .teampanel .teambtn2 span { opacity: 0.75; font-weight: 500; }
 :root[data-view="mobile"] .teampanel .teamgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-/* Percentile bars, Baseball Savant style: a thin grey rule with one big colour-coded circle sitting on it.
-   No fill under the circle, no halfway tick and no rules between rows — where the circle sits and how
-   saturated it is carry the whole number. --bub is the circle's diameter and app.js places the circle from
-   it, half a diameter in from each end, so a 0 or a 100 still sits on the line instead of hanging off it. */
-.meters { gap: 4px; }
-.meters .meter { min-height: 36px; padding: 0; }
-.meters .meter.sub { min-height: 32px; }
+/* Percentile bars, Baseball Savant style: a thick bar filled from the left to the percentile over a pale
+   remainder, a white-ringed circle sitting at the end of the fill, a faint halfway tick and a dashed rule
+   between rows. --bub is the circle's diameter, and the fill and the circle share bubLeft(), so the circle
+   always sits exactly at the fill's end and a 0 or a 100 still lands on the bar instead of off it. */
+.meters { gap: 0; }
+.meters .meter { min-height: 40px; padding: 4px 0; }
+.meters .meter:not(:last-child) { border-bottom: 1px dashed var(--pctrule); }
+.meters .meter.sub { min-height: 34px; }
 .hcard .meter { grid-template-columns: 138px minmax(90px, 1fr) 76px; }
-.meter .track { --bub: 30px; height: 4px; margin-right: 0; border: 0; border-radius: 2px; background: var(--rail); overflow: visible; }
-.meter .track::after { display: none; }
-.meter .fill { display: none; }
+.meter .lbl { justify-content: flex-end; text-align: right; }
+.meter .track { --bub: 30px; height: 24px; margin-right: 0; border: 0; border-radius: 3px; background: var(--pctrack); overflow: visible; }
+.meter .track::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--surface); opacity: 0.5; }
+.meter .fill { display: block; left: 0; top: 0; bottom: 0; border-radius: 3px 0 0 3px; min-width: 0; }
 .meter .bub {
   width: var(--bub); height: var(--bub); min-width: 0; padding: 0; border-radius: 50%;
-  font-size: 13.5px; font-weight: 700; letter-spacing: -0.02em; box-shadow: none;
+  font-size: 13.5px; font-weight: 700; letter-spacing: -0.02em; box-shadow: 0 0 0 3px var(--surface); z-index: 2;
 }
-.meter .bub.ghost { border: 2px solid var(--ink-2); box-shadow: none; font-size: 12.5px; }
-.meters .meter.sub .track { --bub: 26px; }
+.meter .bub.ghost { border: 2px solid var(--ink-2); box-shadow: 0 0 0 3px var(--surface); font-size: 12.5px; }
+.meters .meter.sub .track { --bub: 26px; height: 20px; }
 .meters .meter.sub .bub { font-size: 12.5px; }
-:root[data-view="mobile"] .meters .meter { min-height: 32px; }
-:root[data-view="mobile"] .meters .meter.sub { min-height: 30px; }
-:root[data-view="mobile"] .meter .track { --bub: 26px; }
+:root[data-view="mobile"] .meters .meter { min-height: 36px; }
+:root[data-view="mobile"] .meters .meter.sub { min-height: 32px; }
+:root[data-view="mobile"] .meter .track { --bub: 26px; height: 20px; }
 :root[data-view="mobile"] .meter .bub { font-size: 12.5px; }
-/* the Compare page's cells, one size down */
-.ccell { min-height: 32px; }
-.ccell .track { --bub: 26px; height: 4px; border-radius: 2px; background: var(--rail); }
-.ccell .fill { display: none; }
-.ccell .bub { width: var(--bub); height: var(--bub); min-width: 0; padding: 0; border-radius: 50%; font-size: 12.5px; box-shadow: none; }
+/* Compare page cells and the card's own comparison grid, one size down */
+.ccell { min-height: 34px; }
+.ccell .track { --bub: 26px; height: 20px; border-radius: 3px; background: var(--pctrack); }
+.ccell .track::after { content: ""; display: block; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--surface); opacity: 0.5; }
+.ccell .fill { display: block; border-radius: 3px 0 0 3px; min-width: 0; }
+.ccell .bub { width: var(--bub); height: var(--bub); min-width: 0; padding: 0; border-radius: 50%; font-size: 12.5px; font-weight: 700; box-shadow: 0 0 0 3px var(--surface); z-index: 2; }
+
+/* A card's comparison: the same grid the Compare page uses, two columns of one player */
+.cmpwrap { display: block; padding: 10px 0 4px; overflow: visible; }
+.cmpgrid { width: 100%; grid-template-columns: 132px repeat(var(--np), minmax(0, 1fr)); column-gap: 18px; }
+.cmpgrid .ccorner, .cmpgrid .chead { position: static; margin: 0; padding: 0; background: none; }
+.cmpgrid .plate { padding: 6px 10px; text-align: center; }
+.cmpgrid .chead h3 { margin: 0; font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase; }
+.cmpgrid .chead .cmeta { justify-content: center; }
+.cmpgrid .cgroup { font-size: 13px; padding-top: 14px; }
+:root[data-view="mobile"] .cmpgrid { grid-template-columns: 84px repeat(var(--np), minmax(0, 1fr)); column-gap: 8px; }
+:root[data-view="mobile"] .cmpgrid .clbl { font-size: 11.5px; padding-right: 3px; }
+:root[data-view="mobile"] .cmpgrid .ccell { grid-template-columns: 1fr 44px; gap: 4px; }
+:root[data-view="mobile"] .cmpgrid .chead h3 { font-size: 13px; }
 
 /* the headshot plate stays put while the card scrolls, so you always know whose numbers these are */
 .modal-close { z-index: 7; }

@@ -1176,7 +1176,8 @@
       if (groups.length) {
         const cur = state.cardCmp;
         const pill = el("label", "pill cmppill" + (cur ? " on" : ""));
-        pill.append(el("span", "pill-text", cur ? `vs ${cmpLabelOf(p, cur) || "…"}` : mob ? "Compare" : "Compare to…"));
+        const curLbl = cur ? cmpLabelOf(p, cur) || "…" : "";
+        pill.append(el("span", "pill-text", cur ? (/^vs /i.test(curLbl) ? curLbl : `vs ${curLbl}`) : mob ? "Compare" : "Compare to…"));
         pill.insertAdjacentHTML("beforeend", '<svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>');
         const sel = el("select"); sel.setAttribute("aria-label", "Compare this card with");
         const o0 = el("option", null, "Nothing — just this"); o0.value = ""; sel.append(o0);
@@ -1628,6 +1629,7 @@
     const track = el("div", "track");
     if (pct != null) {
       const s = pctStyle(pct);
+      const fill = el("div", "fill"); fill.style.width = bubLeft(pct); fill.style.background = s.bg; track.append(fill);
       const bub = el("div", "bub", pct); bub.style.left = bubLeft(pct); bub.style.background = s.bg; track.append(bub);
     }
     if (cmp && cmp.pct != null) { const b2 = el("div", "bub ghost", cmp.pct); b2.style.left = bubLeft(cmp.pct); track.append(b2); }
@@ -1655,6 +1657,62 @@
     else p.append(`Second column: ${cmp.label}`, el("span", "cmpkey", " · value, then the difference from it"));
     return p;
   }
+  const sideSample = (p, v) => (!v ? "" : p.type === "P" ? fmtIP(v.ip) + " IP" : v.pa + " PA");
+  // Savant's comparison layout: the stat labels down the left, one column of bars per side
+  function renderCmpGrid(sides, groups, SUBS, foldKey) {
+    const wrap = el("div", "cwrap cmpwrap");
+    const grid = el("div", "cgrid cmpgrid");
+    grid.style.setProperty("--np", sides.length);
+    grid.append(el("div", "ccorner"));
+    for (const s of sides) {
+      const hd = el("div", "chead"), plate = el("div", "plate");
+      plate.append(el("h3", null, s.label));
+      const meta = el("div", "cmeta"); if (s.sub) meta.append(el("span", null, s.sub));
+      plate.append(meta); hd.append(plate); grid.append(hd);
+    }
+    const cell = (m, s) => {
+      const d = el("div", "ccell");
+      const v = s.v ? metricValue(m, s.v, s.st) : null, pct = s.st ? s.st.pct[m.key] : null;
+      const track = el("div", "track");
+      if (pct != null) {
+        const c = pctStyle(pct);
+        const f = el("div", "fill"); f.style.width = bubLeft(pct); f.style.background = c.bg;
+        const b = el("div", "bub", pct); b.style.left = bubLeft(pct); b.style.background = c.bg;
+        track.append(f, b);
+      } else d.classList.add("na");
+      d.append(track, el("div", "val", v == null ? "–" : fmt(v, m)));
+      d.title = `${s.label} — ${m.label}: ${v == null ? "n/a" : fmt(v, m)} (${pct == null ? "n/a" : ordinal(pct) + " pctl"})`;
+      return d;
+    };
+    groups.forEach((grp, gi) => {
+      const metrics = grp.metrics.filter((m) => sides.some((s) => s.v && metricValue(m, s.v, s.st) != null));
+      if (!metrics.length) return;
+      grid.append(el("div", "cgroup", grp.group));
+      for (const m of metrics) {
+        const lbl = el("div", "clbl", m.label);
+        const subs = (SUBS[m.key] || []).filter((sm) => sides.some((s) => s.v && metricValue(sm, s.v, s.st) != null));
+        const ok = foldKey(gi, m.key), isOpen = !!state.open[ok];
+        if (subs.length) {
+          const t = el("button", "fold", isOpen ? "▾" : "▸"); t.type = "button"; t.setAttribute("aria-expanded", String(isOpen));
+          t.title = `${isOpen ? "Hide" : "Show"} ${subs.map((x) => x.label).join(" / ")}`;
+          t.addEventListener("click", (e) => { e.stopPropagation(); state.open[ok] = !isOpen; savePrefs(); render(); });
+          lbl.append(t);
+        }
+        grid.append(lbl);
+        for (const s of sides) grid.append(cell(m, s));
+        if (isOpen) for (const sm of subs) { grid.append(el("div", "clbl sub", sm.label)); for (const s of sides) grid.append(cell(sm, s)); }
+      }
+    });
+    wrap.append(grid);
+    return wrap;
+  }
+  // the two sides of a card comparison: the card as it is set, and whatever the pill picked
+  function cmpSides(p, pv, st, cmp) {
+    return [
+      { label: viewLabel(p.type) || "Full season", sub: [sideSample(p, pv), DS.label].filter(Boolean).join(" · "), v: pv, st },
+      { label: cmp.label, sub: sideSample(p, cmp.pv), v: cmp.pv, st: cmp.st },
+    ];
+  }
   function renderHitterCard(p, st, g, ref, opts = {}) {
     const card = el("div", "card hcard");
     if (!opts.noSplitBar) card.append(renderSplitBar(p));
@@ -1662,8 +1720,13 @@
     if (!opts.noStrip) card.append(renderStrip(p, pv));
     card.append(el("h3", null, `Percentile rank · ${viewLabel(p.type)} · ${poolPhrase(ref)} (${pool(ref).ref.length})`));
     const cols = [el("div", "hcol"), el("div", "hcol")];
-    const cmp = cardCompare(p, g), cw = (mm) => (cmp && cmp.m ? { v: metricValue(mm, cmp.pv, cmp.st), pct: cmp.st ? cmp.st.pct[mm.key] : null, label: cmp.label } : null);
-    if (cmp) card.append(renderCmpNote(cmp, ref));
+    const cmp = cardCompare(p, g), cw = () => null;
+    if (cmp && !cmp.m) card.append(renderCmpNote(cmp, ref));
+    if (cmp && cmp.m) {
+      card.append(renderCmpGrid(cmpSides(p, pv, st, cmp), CARD, SUB, (gi, k) => k));
+      card.dataset.notes = `Both columns are ${poolPhrase(ref)} — a past season against that season's own league. ${HEAD.label} = ${DATA.meta.scoreNote.H}.`;
+      return card;
+    }
     const leftH = DATA.meta.hitterCardLeft || 2;
     if (DS.noStatcast) card.append(el("p", "note", DS.tracked > 0.05
       ? `Only some ${DS.levelName} parks track pitches (${Math.round(100 * DS.tracked)}% of balls in play, the Florida State League): exit velocity, barrels, xwOBA and zone numbers cover those games only, and bat speed isn't tracked. Hitters rank by wOBA here.`
@@ -1863,8 +1926,13 @@
     if (!opts.noStrip) card.append(renderStrip(p, pv));
     card.append(el("h3", null, `Percentile rank · ${viewLabel(p.type)} · ${poolPhrase(ref)} (${pool(ref).ref.length})`));
     const cols = [el("div", "hcol"), el("div", "hcol")];
-    const cmp = cardCompare(p, g), cw = (mm) => (cmp && cmp.m ? { v: metricValue(mm, cmp.pv, cmp.st), pct: cmp.st ? cmp.st.pct[mm.key] : null, label: cmp.label } : null);
-    if (cmp) card.append(renderCmpNote(cmp, ref));
+    const cmp = cardCompare(p, g), cw = () => null;
+    if (cmp && !cmp.m) card.append(renderCmpNote(cmp, ref));
+    if (cmp && cmp.m) {
+      card.append(renderCmpGrid(cmpSides(p, pv, st, cmp), CARD_P, SUB_P, (gi, k) => `p${gi}:${k}`));
+      card.dataset.notes = `Both columns are against ${DS.level === "MLB" ? "all" : DS.levelName} pitchers with ${refMin(g)}+ batters faced that season.`;
+      return card;
+    }
     const left = DATA.meta.pitcherCardLeft || 2;
     if (DS.noStatcast) card.append(el("p", "note", DS.tracked > 0.05
       ? `Only some ${DS.levelName} parks track pitches (the Florida State League): velocity, zone / chase and exit-velocity numbers cover those games only.`
@@ -3405,7 +3473,7 @@
       if (!col.st) { d.classList.add("na"); d.append(el("div", "track"), el("div", "val", "–")); return d; }
       const v = metricValue(m, col.v, col.st), pct = col.st.pct[m.key];
       const track = el("div", "track");
-      if (pct != null) { const s = pctStyle(pct); const b = el("div", "bub", pct); b.style.left = bubLeft(pct); b.style.background = s.bg; track.append(b); }
+      if (pct != null) { const s = pctStyle(pct); const f = el("div", "fill"); f.style.width = bubLeft(pct); f.style.background = s.bg; track.append(f); const b = el("div", "bub", pct); b.style.left = bubLeft(pct); b.style.background = s.bg; track.append(b); }
       else d.classList.add("na");
       d.append(track, el("div", "val", v == null ? "–" : fmt(v, m)));
       d.title = `${col.entry.name} ${col.cur[1]} — ${m.label}: ${v == null ? "n/a" : fmt(v, m)} (${pct == null ? "n/a" : ordinal(pct) + " pctl"})`;
