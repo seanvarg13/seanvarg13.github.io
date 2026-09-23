@@ -48,6 +48,15 @@
   const TEAM_NAMES = { BAL: "Orioles", BOS: "Red Sox", NYY: "Yankees", TB: "Rays", TOR: "Blue Jays", CWS: "White Sox", CLE: "Guardians", DET: "Tigers", KC: "Royals", MIN: "Twins",
                        ATH: "Athletics", HOU: "Astros", LAA: "Angels", SEA: "Mariners", TEX: "Rangers", ATL: "Braves", MIA: "Marlins", NYM: "Mets", PHI: "Phillies", WSH: "Nationals",
                        CHC: "Cubs", CIN: "Reds", MIL: "Brewers", PIT: "Pirates", STL: "Cardinals", AZ: "D-backs", COL: "Rockies", LAD: "Dodgers", SD: "Padres", SF: "Giants" };
+  // MLB's own team ids (for the logo) and each club's primary colour (the player card's ground)
+  const TEAM_ID = { BAL: 110, BOS: 111, NYY: 147, TB: 139, TOR: 141, CWS: 145, CLE: 114, DET: 116, KC: 118, MIN: 142,
+                    ATH: 133, HOU: 117, LAA: 108, SEA: 136, TEX: 140, ATL: 144, MIA: 146, NYM: 121, PHI: 143, WSH: 120,
+                    CHC: 112, CIN: 113, MIL: 158, PIT: 134, STL: 138, AZ: 109, COL: 115, LAD: 119, SD: 135, SF: 137 };
+  const TEAM_COL = { BAL: "#DF4601", BOS: "#BD3039", NYY: "#0C2340", TB: "#092C5C", TOR: "#134A8E", CWS: "#27251F",
+                     CLE: "#00385D", DET: "#0C2340", KC: "#004687", MIN: "#002B5C", ATH: "#003831", HOU: "#002D62",
+                     LAA: "#BA0021", SEA: "#0C2C56", TEX: "#003278", ATL: "#13274F", MIA: "#0077C8", NYM: "#002D72",
+                     PHI: "#BA0C2F", WSH: "#14225A", CHC: "#0E3386", CIN: "#C6011F", MIL: "#12284B", PIT: "#27251F",
+                     STL: "#C41E3A", AZ: "#A71930", COL: "#333366", LAD: "#005A9C", SD: "#2F241D", SF: "#27251F" };
   const teamCode = (t) => TEAM_ALIAS[t] || t;
   const teamsIn = (f) => (f.kind === "team" ? [f.v] : f.kind === "div" ? DIVS[f.v] || [] : Object.entries(DIVS).filter(([d]) => d.startsWith(f.v)).flatMap(([, t]) => t));
   const teamOK = (p) => { const f = state.teamF; if (!f) return true; return teamsIn(f).includes(teamCode(p.team)); };
@@ -3656,13 +3665,23 @@
 
   /* ---------- Explore: any player, any season ---------- */
   function renderXDates() {}
-  const EXTRA_H = [["Spray", ["pullp", "cent", "oppo", "npull", "pull"]],
-                   ["Contact rates", ["zcon", "ocon", "zsw", "osw", "zmo", "swing", "strk"]],
-                   ["Batted-ball types", ["gb", "ld", "fb", "pu", "air"]],
+  // the middle panel: Savant's own percentile list, in Savant's order, flat and without group headings.
+  // Savant's hitters run xwOBA, xBA, xSLG, EV, Barrel%, Hard-Hit%, LA Sweet-Spot%, Bat speed, Chase%, Whiff%, K%, BB%
+  // (its run values, fielding and sprint speed have no counterpart here); wOBA and dxwOBA ride beside xwOBA.
+  const SAVANT_H = ["woba", "xws", "xwd", "xba", "xslg", "ev", "brl", "hh", "ss", "bs", "osw", "whf", "k", "bb"];
+  // Savant's pitchers run xERA, fastball velo, fastball / curve spin, avg EV, Chase%, Whiff%, K%, BB%, Barrel%,
+  // Hard-Hit%, GB%, Extension — uERA stands in for xERA, and spin isn't collected here.
+  const SAVANT_P = ["uera", "fbv", "ev", "osw", "whf", "k", "bb", "brl", "hh", "gb", "ext"];
+  // the third panel: everything the middle one doesn't lead with, one dropdown per group
+  const EXTRA_H = [["Batted-ball types", ["gb", "ld", "fb", "pu", "air"]],
+                   ["Spray", ["pullp", "cent", "oppo", "npull", "pull"]],
+                   ["Plate discipline", ["osw", "zsw", "zmo", "swing", "strk"]],
+                   ["Contact rates", ["whf", "zcon", "ocon"]],
                    ["Contact quality", ["hh", "ss", "ev90", "maxev", "bs"]]];
-  const EXTRA_P = [["Underlying", ["uk", "ubb", "ukb", "uera", "mera", "nera", "siera", "fip"]],
-                   ["Plate discipline", ["zone", "osw", "zcon", "csw", "swstr", "swing"]],
-                   ["Contact allowed", ["ev", "hh", "brl", "gb", "pu"]]];
+  const EXTRA_P = [["Run prevention", ["era", "kbb", "nera", "mera", "siera", "fip"]],
+                   ["Strikeouts and walks", ["uk", "ubb", "ukb", "wsgp", "csw", "swstr"]],
+                   ["Plate discipline", ["strk", "zone", "osw", "swing", "zcon"]],
+                   ["Batted ball", ["gb", "pu", "ev", "hh", "brl"]]];
   // one fold-out per group, each a stack of the same percentile meters the card uses
   function extraSections(p, st, g) {
     const pv = V(p), all = allFor(g), out = [];
@@ -3676,6 +3695,57 @@
       }, true));
     }
     return out;
+  }
+  // the middle panel: one header, then every stat as a bar — no group headings inside it
+  function renderPctPanel(p, st, g, ref) {
+    const pv = V(p), all = allFor(g), box = el("div", "pctbox");
+    const hd = el("div", "pcthd");
+    hd.append(el("b", null, `${dsSeason()} Percentile Rankings`));
+    const vl = viewLabel(p.type); if (vl) hd.append(el("span", "pctsub", "· " + vl));
+    box.append(hd);
+    const meters = el("div", "meters");
+    for (const key of (p.type === "H" ? SAVANT_H : SAVANT_P)) {
+      const m = all.find((x) => x.key === key); if (!m) continue;
+      const v = metricValue(m, pv, st); if (v == null) continue;
+      meters.append(meterRow(m, v, st.pct[key]));
+    }
+    box.append(meters);
+    box.append(el("p", "pctfoot", `${poolPhrase(ref)} (${pool(ref).ref.length})`));
+    return box;
+  }
+  // the left panel, the way Savant draws it: the club's colour, the player's action shot behind, the cut-out in front
+  function renderSavantPlate(p, st, g) {
+    const t = teamCode(p.team), col = TEAM_COL[t], tid = TEAM_ID[t];
+    const plate = el("div", "splate"); if (col) plate.style.setProperty("--tcol", col);
+    const back = el("div", "sback");
+    back.style.backgroundImage = `url("https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:action:hero:current.png/w_900,q_auto:good/v1/people/${p.id}/action/hero/current")`;
+    plate.append(back);
+    const row = el("div", "srow");
+    row.append(headshot(p.id, p.name));
+    const id = el("div", "sid");
+    const h2 = el("h2", null, p.name); h2.id = "modal-title"; id.append(h2);
+    const tm = el("div", "steam");
+    if (tid) { const lg = el("img", "slogo"); lg.alt = ""; lg.loading = "lazy"; lg.src = `https://www.mlbstatic.com/team-logos/${tid}.svg`; lg.addEventListener("error", () => lg.remove()); tm.append(lg); }
+    tm.append(el("span", null, `${p.team}${TEAM_NAMES[t] ? " · " + TEAM_NAMES[t] : ""}`));
+    id.append(tm);
+    id.append(el("div", "sbio", [posLabel(p), p.type === "P" ? p.throws + "HP" : p.bats ? "B: " + p.bats : "",
+                                 p.age != null ? "Age " + p.age : "", dsSeason()].filter(Boolean).join("  ·  ")));
+    row.append(id);
+    plate.append(row);
+    const bot = el("div", "sbot");                       // the dark band under the photo: counting stats, then the controls
+    const v = V(p);
+    if (st.pct) bot.append(renderStrip(p, v));
+    const foot = el("div", "sfoot");
+    const ts = typeSeg(p); if (ts) foot.append(ts);
+    foot.append(renderStarControl(p));
+    if (state.mode === "draft") {
+      const drafted = draftedIds().has(p.id);
+      const b = el("button", "draftbtn", drafted ? "Undo draft" : "Draft"); b.type = "button";
+      b.addEventListener("click", () => { drafted ? undraft(p.id) : draft(p); });
+      foot.append(b);
+    }
+    bot.append(foot); plate.append(bot);
+    return plate;
   }
   function renderExplore() {
     ensureIndex();
@@ -3714,13 +3784,13 @@
       box.append(cardTop(chips(p)));                          // the pinned row keeps the season, the splits and Compare
       const page = el("div", "ppage");
       const A = el("div", "pcol pcolA"), B = el("div", "pcol pcolB"), C = el("div", "pcol pcolC");
-      A.append(renderPlate(p, st, g, g));
+      A.append(renderSavantPlate(p, st, g));
       A.append(foldSection("xraw", "Season stats", () => renderRawStats(p, true), true));
-      const head = card.querySelector("h3"); if (head) B.append(head);
-      const groups = card.querySelector(".hgroups"); if (groups) B.append(groups);
+      B.append(renderPctPanel(p, st, g, g));
       C.append(...extraSections(p, st, g));
       for (const n of [...card.querySelectorAll(":scope > .note")]) C.append(n);   // the long explanations ride at the bottom
-      for (const f of [...card.querySelectorAll(":scope > .fold-sec")]) { if (f.dataset.key !== "raw") C.append(f); }
+      for (const f of [...card.querySelectorAll(":scope > .fold-sec")]) {   // the card's grouped fold repeats the panels above it
+        if (f.dataset.key !== "raw" && !f.dataset.key.startsWith("pgrp:")) C.append(f); }
       const notes = card.querySelector(".cardnotes"); if (notes) C.append(notes);
       page.append(A, B, C); box.append(page);
     })));

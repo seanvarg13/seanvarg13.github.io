@@ -1938,19 +1938,62 @@ body.navopen header.top { z-index: 300; }   /* a nav menu is open: the header ou
 
 /* ---- the player page: bio, percentiles and the rest, three panels across ---- */
 .ppage { display: grid; gap: 14px; align-items: start; margin-top: 10px;
-  grid-template-columns: minmax(230px, 272px) minmax(420px, 1.35fr) minmax(300px, 1fr); }
+  grid-template-columns: minmax(250px, 304px) minmax(420px, 1.3fr) minmax(300px, 1fr); }
 .ppage .pcolB h3 { font-size: 11px; letter-spacing: 0.05em; line-height: 1.5; margin: 0 0 10px; }
 .ppage .pcolC .note { font-size: 11.5px; color: var(--muted); margin: 0; }
 .pcol { min-width: 0; }
 .pcolA, .pcolC { display: flex; flex-direction: column; gap: 10px; }
-.pcolA .mplate, .pcolC > .fold-sec, .pcolA > .fold-sec {
+.pcolC > .fold-sec, .pcolA > .fold-sec {
   background: var(--surface); border: 1px solid var(--accent-2); border-radius: 10px; }
-.pcolA .mplate { padding: 14px; flex-wrap: wrap; }
 .pcolA > .fold-sec, .pcolC > .fold-sec { padding: 4px 12px 8px; }
 .pcolB { padding: 14px 16px 16px; background: var(--surface); border: 1px solid var(--accent-2); border-radius: 10px; }
+
+/* the player card, the way Savant draws it: the club's colour, his action shot behind, the cut-out in front */
+.splate { position: relative; overflow: hidden; border-radius: 10px; color: #fff;
+  background: var(--tcol, #12284b); border: 1px solid var(--accent-2); padding: 14px 14px 12px; }
+.splate > .sback, .splate > .sveil { position: absolute; inset: 0; z-index: 0; }
+.splate > .sback { background-size: cover; background-position: 72% 8%; background-repeat: no-repeat; opacity: 0.45; }
+.splate > .sveil { background: linear-gradient(94deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.5) 40%, rgba(0, 0, 0, 0.7) 100%); }
+.splate > .sbot { position: relative; z-index: 1; }
+.splate > .srow { position: relative; z-index: 2; }
+.splate .sbot { margin: 12px -14px -12px; padding: 9px 14px 11px; background: rgba(0, 0, 0, 0.42); }
+.splate .srow { display: flex; align-items: flex-end; gap: 12px; }
+.splate .mug { width: 106px; height: 106px; margin-bottom: -9px; flex: none; object-fit: contain; object-position: bottom center;
+  border: 0; border-radius: 0; background: none; box-shadow: none; filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.5)); }
+.splate .mug.initials { display: grid; place-items: center; font-family: var(--display); font-weight: 700;
+  font-size: 30px; color: #fff; background: rgba(255, 255, 255, 0.14); border-radius: 50%; }
+.splate .sid { min-width: 0; padding-bottom: 2px; }
+.splate h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 23px; line-height: 1.04;
+  letter-spacing: 0.015em; text-transform: uppercase; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+.splate .steam { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12.5px; font-weight: 700;
+  letter-spacing: 0.03em; color: rgba(255, 255, 255, 0.92); }
+.splate .slogo { width: 22px; height: 22px; flex: none; }
+.splate .sbio { margin-top: 3px; font-size: 11.5px; letter-spacing: 0.02em; color: rgba(255, 255, 255, 0.76); }
+.splate .hstrip { margin: 0; gap: 4px 14px; color: rgba(255, 255, 255, 0.72); font-size: 12px; }
+.splate .hstrip .hchip b { color: #fff; font-size: 16px; }
+.splate .sfoot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.splate .starbox { margin-top: 0; }
+.splate .starbtn { border-color: rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.14); color: #fff; }
+.splate .starbtn.on { background: rgba(255, 255, 255, 0.28); }
+.splate .starnote { color: rgba(255, 255, 255, 0.78); }
+.splate .segbtn { border-color: rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.1); color: #fff; }
+.splate .segbtn[aria-pressed="true"] { background: rgba(255, 255, 255, 0.34); color: #fff; }
+.splate .draftbtn { margin-left: auto; }
+:root[data-view="mobile"] .splate .mug { width: 84px; height: 84px; }
+:root[data-view="mobile"] .splate h2 { font-size: 21px; }
+
+/* the middle panel: one banner, then every stat as a bar — no headings inside */
+.pctbox .pcthd { display: flex; align-items: baseline; gap: 4px 10px; flex-wrap: wrap;
+  margin: -14px -16px 10px; padding: 9px 16px; border-radius: 9px 9px 0 0;
+  background: var(--band); color: var(--band-ink); border-bottom: 1px solid var(--accent-2); }
+.pctbox .pcthd b { font-family: var(--display); font-size: 14px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.pctbox .pctsub { font-size: 11px; letter-spacing: 0.03em; color: var(--band-dim); }
+.pctbox .pctfoot { margin: 10px 0 0; font-size: 11px; color: var(--muted); }
 .ppage .hgroups { grid-template-columns: minmax(0, 1fr); max-width: none; }
 .ppage .hcol, .ppage .hgroup { min-width: 0; }
-.ppage .meter { grid-template-columns: 96px minmax(0, 1fr) 62px; }   /* the track gives way to the column, never the value */
+.ppage .meter { grid-template-columns: 108px minmax(0, 1fr) 62px; }  /* the track gives way to the column, never the value */
+.ppage .meter .lbl { min-width: 0; }
+.ppage .pctbox .meters { gap: 7px; }
 .ppage .meters { padding-top: 2px; }
 .pcolC .cardnotes { margin: 0; }
 :root[data-view="mobile"] .ppage { grid-template-columns: 1fr; }
