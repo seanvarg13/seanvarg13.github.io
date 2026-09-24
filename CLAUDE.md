@@ -315,9 +315,10 @@ is deploy-limited.
   Triple-A still falls back to Statcast's xBA/xSLG (no directional models in the minors).
 * **The uERA note in `app.js` is stale** (§4). It describes a fitted regression that was replaced by the simple
   `impliedKBB` rule. One sentence of user-facing copy; Sean should decide the wording.
-* **The middle panel has 12 bars to Savant's 17.** Run values, fielding (OAA), sprint speed and spin are not in
-  this data. Acknowledged gap, not a bug.
-* **The third panel is the advanced-metric tabs, not Savant's spray chart.** Deliberate.
+* **The percentile sections have no run values, fielding (OAA), sprint speed or spin.** Not in this data.
+  Acknowledged gap, not a bug.
+* **A popup card is the player page** (`playerView()` in `app.js` builds both), so a change to one is a change to the
+  other.
 * `hist/` files built before a field was appended to `HITTER_DAY`/`PITCHER_DAY` lack it; `app.js` checks
   `indexOf(...) < 0` before using one. Keep doing that.
 * Spring training has little tracking (many parks are not instrumented), so EV-based stats are thin there.

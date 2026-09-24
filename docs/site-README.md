@@ -326,78 +326,57 @@ keeps it honest: crossing between hitters and pitchers replaces the selection, t
 keyed to that nesting — and `body.navopen header.top { z-index: 300 }` lifts the whole header over the page while one
 is open, which is what keeps them from painting behind it on a phone.
 
-**The player page is three panels**, laid out the way Baseball Savant lays out its own (`.ppage`, built in
-`renderExplore`). The pinned row with the season, the splits and Compare runs full width; under it:
+**The player page** (built by `playerView()`, which `renderExplore` and the popup card both call) is, top to bottom:
 
-- **Left — the player card** (`renderSavantPlate`, `.splate`), then his season table, then Player apps. The card is
-  Savant's: his MLB action shot as a full-bleed banner, his circular headshot overlapping its bottom edge, then
-  centred under it the name, `POS | Club` with the team logo (`mlbstatic.com/team-logos/<id>.svg`, ids in `TEAM_ID`),
-  `Bats/Throws | height weight | Age`, and the draft line (`Draft: 2024 | Rd. 1, No. 19, New York Mets | Oklahoma
-  State`). Height, weight and the draft come from one small cached request to
-  `statsapi.mlb.com/api/v1/people/<id>?hydrate=draft` per player (`bio()`), which re-renders when it lands.
+- **The title** (`pageTitle()`): "**2026** MLB Percentiles", centred, Savant's. The year and the level are the season
+  pickers for the whole page (`titleSelect()`): each is a bold word over a dotted rule with a native `<select>` laid
+  invisibly on top, so clicking it opens the browser's own list, the way Savant's does. It is not pinned; it scrolls
+  away and the plate under it stays.
+- **The pinned plate** (`playerHead()`, `.phead`): the blue plate from edge to edge of the window — cut-out headshot,
+  name, team / position / age, the sample (PA · AB · BBE · G, or IP · BF · G/GS · pitches), "full season" and Star.
+  Its right-hand side is one labelled grid of filters: **Games** (regular season / spring / postseason), **From**,
+  **To** and **Last PA** (or IP) across the top, then the toggles — **Pitchers** (vs LHP / RHP; Batters for a
+  pitcher), **Home / away** and, for hitters, **Expected stats** (Statcast / Directional xwOBA). The toggles are solid
+  buttons on the band, so no colour scheme can wash them out. On a phone all of it folds behind one **Splits & dates**
+  button, so the pinned block is one row of filters until it is opened.
+- **The percentile sections** (`renderPctPanel`): two columns of headed sections, drawn with Savant's chart code
+  (`pctSvg`). Hitters (`PCT_COLS_H`): Results (wOBA, xwOBA, xBA, xSLG — the expected three follow the xwOBA switch),
+  Batted-Ball Quality, then Swing Decisions (Z-Swing%, O-Swing%, BB%), Contact and Batted-Ball Distribution.
+  Pitchers (`PCT_COLS_P`): Whiffs and Strikes, Swing & Miss, Zone & Chase, then Results (K-BB%, ERA), Batted Ball
+  (GB%, Popup%, Mix ERA) and Stuff. On a desktop the box takes the page's whole width and both columns are drawn at
+  one scale, the largest at which the taller one still fits the box (`pctChart`'s `fit`), so type, bars and circles
+  grow together; a phone draws them at their real size. A chart starts at the size its column had last time
+  (`pctLast`): drawn at a guess and resized a moment later, everything under it shifted and, near the foot of the
+  page, the browser pulled the window up — which is what threw a phone's page upward on every tap of a tab.
+- **The tabs** (`renderBelow`, `state.pbtab`): **Compare**, **Season Stats**, **Rolling**, and for pitchers **nERA**
+  and **uERA**. Clicking the open tab closes it and leaves just the strip (`pbtab: "none"`), with the page's notes
+  under it. After any tab is picked, `anchorTabs()` puts the strip back exactly where it was on the screen, padding
+  the page under it when what's below got shorter, so nothing jumps.
+  - **Compare** turns on the two-side comparison and opens it here, under the stats (`cmpCard`). Its grid is the
+    page's own sections for both sides (`cmpPageGrid`), and **Set up comparison** picks each side's season, split and
+    dates and which stats sit on the grid — the page's, by section, plus anything from **More stats**, which lands as a
+    plain row under "Added" (`state.cmp2.pick`). Nothing folds out.
+  - **Season Stats** (`renderSeasonTable`) is the plain line, the way Savant's player page prints it: every MLB
+    season (G PA AB R H 2B 3B HR RBI SB BB SO AVG OBP SLG OPS; W L ERA G GS SV IP H HR BB SO WHIP for a pitcher)
+    and a career row. A player with no MLB time gets his minor-league seasons, one line per level.
+  - **Rolling** is `renderRolling()`: xwOBA over a hitter's last N PA (K−BB% for a pitcher), 25 to 300. On a phone
+    the plot runs from the left edge (no bar column to line up with).
+  - **nERA** is the batted-ball luck table (`renderLuckBox`). **uERA** is the uERA table (`renderUeraBox`) and, beside
+    it, the batted-ball mix (`renderMixBox`): his GB / LD / FB / Popup shares, each one's rank among the season's
+    pitchers in the direction that helps him (more grounders and popups, fewer liners and fly balls), the mix uERA
+    actually prices (**uERA uses**: his ground-ball and popup shares, the rest of his air balls split at the league's
+    line-drive ratio) and the league's wOBA for each type, with Mix ERA in the heading.
 
-  Under it, `renderSeasonHeat()` draws the plain counting line Savant puts there, laid out the same way: one rule
-  above the header, a hairline under it, no cell borders, seasons oldest-first and right-aligned, and a shaded
-  career row. It shows his three most recent MLB seasons and then a career row totalling all of them: PA, AB, R, H, HR, SB, AVG, OBP, SLG, OPS for a hitter (`SAV_H`), W / L / ERA / G / GS / SV / IP / K /
-  BB / WHIP for a pitcher (`SAV_P`), off `rawLines()` and `combineLines()`. Clicking a row opens that season.
+`sizePPage()` puts `body.playerwide` on while a player page is open, which lifts the site's 1240px cap off `.wrap`
+and `.top` and leaves `min(6vw, 96px)` on each side — Savant's own proportion — then sizes the percentile box to run
+from under the pinned plate to the bottom of the window, less the tab strip so that strip stays on screen. It measures
+where the box starts in the **document** (`rect.top + scrollY`), not the viewport: reading the viewport while the page
+is scrolled gives a smaller number every time and the box grows with each render. On a phone the height cap is lifted.
 
-  Then **Player apps** (`renderPlayerApps`): the year and the level as two pills (`renderSeasonPicker` with
-  `{noKind: true, levelOnly: true}` — the first picks the season, the second MLB / Triple-A / Double-A / A+ / A for
-  that season), the run of games below them as its own split (regular season / postseason / spring training, from
-  `seasonKinds()`), the hitting / pitching switch, the split-and-date panel (`renderSplitPanel`), the sample line and
-  Star / Draft. This replaces the pinned row
-  the page used to carry, so the three panels start at the top the way Savant's do.
-- **Middle — one flat percentile list** (`renderPctPanel`, `.pctbox`), with a single banner header ("2026 Percentile
-  Rankings") and no group headings inside it. The stats are Savant's own, in Savant's order: `SAVANT_H` is dxwOBA,
-  dxBA, dxSLG, Avg EV, Barrel%, Hard-Hit%, LA Sweet-Spot%, Bat speed, Chase (O-Swing)%, Whiff%, K%, BB%, and
-  `SAVANT_P` is xERA (uERA here), fastball velo, Avg EV, Chase%, Whiff%, K%, BB%, Barrel%, Hard-Hit%, GB%,
-  Extension. Its title is the page's navigation: `pctTitle()` builds "**2026** MLB Percentile Rankings" with the year
-  and the level as `headSelect()` pickers — a native `<select>` laid invisibly over text that reads as part of the
-  heading — so changing either moves the whole page to that season. The word itself is the button and the list drops
-  under it in a bordered, rounded panel (`HSEL`, `.hmenu`), the way Savant's does; a document click or Escape closes
-  it.
-  The bars are drawn the way Savant draws them — a full-width light track, the fill from the left edge, a
-  round marker at its end, a dashed rule under each row, and a poor / average / great scale over the first bar
-  (`pctScale()`); the three expected stats follow whichever model is switched on (`expKeys()`) and are always named
-  plainly. Savant's run values, fielding, sprint speed and spin have no counterpart in this data. `PCT_FALL` gives
-  each expected stat a chain to fall back down — dxwOBA to xwOBA to wOBA, dxBA to xBA to BA — so a season built
-  before the directional BA / SLG models, or a level with no batted-ball tracking (A, AA, in `NEEDS_EV`), shows the
-  real result instead of a blank row.
-- **Right — the rest, under four tabs on one row** (`extraSections`): `EXTRA_H` (Discipline, Contact, Batted ball,
-  Quality) and `EXTRA_P` (Run prev., K and BB, Discipline, Batted ball). Each tab is a list of
-  blocks and a block break draws a rule across the bars, so the batted-ball tab reads air / ground, then the four
-  types, then the spray. Under the tabs sits `renderRolling()` — Savant's rolling line, expected wOBA over a
-  trailing 100 plate appearances across the whole season, walked day by day off the same day rows with a
-  two-pointer, with the pool's own average as the dashed LG AVG line. It follows whichever expected model is on.
-
-**Under the boxes**, `renderBelow()` hangs the same centred strip of tabs Savant hangs there (`BTABS`,
-`state.pbtab`): **Compare** (turn the two-side comparison on, and Set up comparison once it is — turning it on drops
-the third panel and gives the comparison the whole right-hand side, `.cmp2page`), **Season Stats** (the full
-`renderRawStats` table with its MLB / MiLB / All levels switch) and **Advanced Stats** (`belowAdvanced()` — every
-card group at once, then the card's own fold-outs: Underlying K% and BB%, Batted-ball luck, and the card notes).
-The splits and dates stay up in Player apps rather than down here.
-
-The three panels are exactly the same width (`repeat(3, minmax(0, 1fr))`) and the same height. `sizePPage()` puts
-`body.playerwide` on while a player page is open, which lifts the site's 1240px cap off `.wrap` and `.top` and
-leaves `min(6vw, 96px)` on each side — Savant's own proportion — then sizes the boxes to run from under the header
-to the bottom of the window, less the height of the tab strip so that strip stays on screen. It measures where the
-boxes start in the **document** (`rect.top + scrollY`), not the viewport: reading the viewport while the page is
-scrolled gives a smaller number every time and the boxes grow with each render. The site's own notes
-sit below the fold rather than eating into the boxes. A panel whose content is longer (a card with eleven seasons on
-it) scrolls inside its own `.pscroll`, which hands the wheel back to the page (`overscroll-behavior: auto`) once it
-has run out, so the page still scrolls with the pointer over a box. The bars keep their own spacing at the top of
-the middle panel; in the right one the rolling chart is pushed to the foot so it anchors the box.
-
-**The chrome is Savant's too.** A panel has no coloured band: `panelHead(lead, rest, sub)` centres a title with the
-year in bold and the rest regular, over the little dotted rule (`.pcdots`, a repeating radial gradient). The season
-table is borderless — a plain bold header row over a rule, no cell borders, no striping, one shaded career row. The
-name is set large and light, the club by its full name (`TEAM_FULL`, built from `TEAM_CITY` + `TEAM_NAMES`), and
-"Player Apps" is a centred mixed-case heading rather than the site's usual uppercase label.
-
-The page reuses the card's renderer and moves its pieces into the columns, so the card in a popup is unchanged.
-Stats these groups need that aren't card metrics (Pull%, Cent%, Oppo%, Non-pull%, Swing%, Strike%) are added to the
-percentile set as `SIDE_H` / `SIDE_P`, so they get bars like everything else. On a phone the three panels stack and
-the height cap is lifted.
+**A popup card is the player's page** — `renderModal` calls the same `playerView()`, ranked in the list's own pool,
+in a panel with an ×. On a desktop the panel is up to 1500px wide and as tall as the window allows, and `sizePPage()`
+fits its percentile box to the panel the same way; on a phone it floats over the list, 8px in from the edges and under
+the site header, and scrolls inside itself (`.modal.pcard`, `body.cardpop`) while the list stays where it was.
 
 The first toolbar row is the positions, the name search and **Team** (one league, one division or one team; × or Clear
 removes it — the tab counts follow). Everything else sits on the second row, which scrolls sideways when it runs out
