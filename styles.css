@@ -1898,10 +1898,6 @@ body.modal-open header.top { z-index: 60; }
 .mixrow .mlbl { font-size: 12px; color: var(--ink-2); text-align: right; }
 .mixrow .mval { font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
 .mixfoot { font-size: 11px; color: var(--muted); margin-top: 3px; text-align: right; }
-.minitrack { --bub: 20px; position: relative; height: 20px; border-radius: 10px; background: var(--pctrack, var(--surface-2)); box-shadow: inset 0 0 0 1px var(--hair); }
-.minifill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 10px; }
-.minibub { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; border-radius: 50%;
-  display: grid; place-items: center; font-size: 10.5px; font-weight: 700; color: #fff; box-shadow: 0 0 0 2px var(--surface); }
 .tblcard table { width: auto; table-layout: fixed; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }   /* auto + a colgroup = the table is exactly as wide as its columns */
 .tblcard thead th { background: var(--band); color: var(--band-ink); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em;
   text-transform: uppercase; text-align: center; padding: 6px 10px; white-space: nowrap;
@@ -2138,50 +2134,42 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .btabbody .hgroup h4 { margin: 0 0 4px; }
 .btabbody .meter { grid-template-columns: 150px minmax(60px, 1fr) 64px; }
 
-/* ---- Percentile bars, a 1:1 copy of Baseball Savant's ----
-   Savant draws its chart as one drawing that scales with its width, so this does the same: every size below is a
-   multiple of --u, 1/995 of the chart's width, with each number measured off Savant's own chart. A row is 64u:
-   a 54u bar with a 13u line for the rest of it, a 48u circle in a 5.5u white ring whose centre runs from 26u in (0)
-   to the bar's right end (100), 5u ticks at the poor / average / great marks, 32u condensed type, and a 2u dashed
-   rule under the label (214u) and the value (81u) only. Columns: 347u label, 552u bar, 96u value. */
-.meters { container-type: inline-size; }
-.meters > * { --u: calc(100cqw / 995); }
-:root:root .meters .meter { min-height: calc(var(--u) * 64); height: auto; padding: 0; margin: 0; border: 0; column-gap: 0; gap: 0;
-  grid-template-columns: calc(var(--u) * 347) minmax(0, 1fr) calc(var(--u) * 96); align-items: center;
-  font-family: "Roboto Condensed", var(--body); font-size: calc(var(--u) * 32.4); line-height: 1; }
-:root:root .meters .meter.cmp { grid-template-columns: calc(var(--u) * 300) minmax(0, 1fr) calc(var(--u) * 96) calc(var(--u) * 140); }
+/* ---- Percentile bars: every one on the site is Savant's, in the same pixels as the player page's chart ----
+   The bar (svTrack in app.js): 20px tall over a 5px line, filled from the left to its circle, 2px white ticks at 30%,
+   a 20px circle in a 2px ring of the page colour with 12px bold white numerals (10px for a 100). */
+:root:root .svtrack { position: relative; height: 20px; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 0; overflow: visible;
+  box-shadow: none; background: linear-gradient(var(--svline), var(--svline)) left center / 100% 5px no-repeat; }
+:root:root .svtrack::after { display: none; }
+:root:root .svtrack.none { opacity: 0.35; }
+:root:root .svtrack .fill { position: absolute; left: 0; top: 0; bottom: 0; min-width: 0; border-radius: 0; box-shadow: none; }
+:root:root .svtrack .tk { position: absolute; top: 0; bottom: 0; width: 2px; height: auto; background: #ffffff; opacity: 0.3; transform: none;
+  z-index: 1; pointer-events: none; }
+:root:root .svtrack .bub { position: absolute; top: 50%; width: 22px; height: 22px; min-width: 0; margin: -11px 0 0 -11px; padding: 1px 0 0;
+  box-sizing: border-box; border: 2px solid var(--surface); border-radius: 50%; transform: none; box-shadow: none; z-index: 2;
+  display: grid; place-items: center; color: #ffffff; text-shadow: none; letter-spacing: 0; font-variant-numeric: normal;
+  font-family: "Roboto Condensed", var(--body); font-size: 12px; font-weight: 700; line-height: 1; }
+:root:root .svtrack .bub.c3 { font-size: 10px; }
+:root:root .svtrack .bub.ghost { background: var(--surface); color: var(--svtext); box-shadow: inset 0 0 0 1.5px var(--svtext); }
+/* a row of them, laid out as Savant lays out its chart: a row every 23px, the label's right edge 5px from the bar,
+   the value in the 35px after it, 12px grey type, and a 1px dashed teal rule over every row but the first, under
+   the label's last 80px and the value's last 30px only */
+:root:root .meters .meter { min-height: 23px; height: auto; margin: 0; padding: 3px 0 0; border: 0; gap: 0; column-gap: 0;
+  grid-template-columns: 125px minmax(0, 1fr) 35px; align-items: center;
+  font-family: "Roboto Condensed", var(--body); font-size: 12px; line-height: 1; }
+:root:root .meters .meter.cmp { grid-template-columns: 110px minmax(0, 1fr) 35px 70px; }
 :root:root .meters .meter.ruled { border-top: 2px dotted var(--rail); }
 :root:root .meters .meter > .lbl, :root:root .meters .meter > .val { align-self: stretch; display: flex; align-items: center; min-width: 0;
-  color: var(--svtext); font-size: inherit; font-weight: 400; letter-spacing: 0; padding-bottom: 0; }
-:root:root .meters .meter > .lbl { justify-content: flex-end; text-align: right; padding-left: 0; padding-right: calc(var(--u) * 16); overflow: visible; }
-:root:root .meters .meter.sub > .lbl { padding-left: calc(var(--u) * 30); }
+  color: var(--svtext); font-size: 12px; font-weight: 400; letter-spacing: 0; padding: 0; background: none; }
+:root:root .meters .meter > .lbl { justify-content: flex-end; text-align: right; padding-right: 5px; overflow: visible; }
+:root:root .meters .meter.sub > .lbl { padding-left: 12px; }
 :root:root .meters .meter > .lbl .lt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-:root:root .meters .meter > .val { justify-content: flex-end; white-space: nowrap; font-variant-numeric: normal;
-  padding-left: calc(var(--u) * 15); padding-right: calc(var(--u) * 3); }
-:root:root .meters .meter:not(:last-child) > .lbl {
-  background: repeating-linear-gradient(to right, var(--svrule) 0 calc(var(--u) * 15.5), transparent calc(var(--u) * 15.5) calc(var(--u) * 25))
-              right calc(var(--u) * 16) bottom / calc(var(--u) * 214) calc(var(--u) * 2) no-repeat; }
-:root:root .meters .meter:not(:last-child) > .val {
-  background: repeating-linear-gradient(to right, var(--svrule) 0 calc(var(--u) * 15.5), transparent calc(var(--u) * 15.5) calc(var(--u) * 25))
-              right bottom / calc(var(--u) * 81) calc(var(--u) * 2) no-repeat; }
-:root:root .meters .meter .track { position: relative; height: calc(var(--u) * 54); margin: 0; border: 0; border-radius: 0; overflow: visible;
-  background: linear-gradient(var(--svline), var(--svline)) left center / 100% calc(var(--u) * 13) no-repeat; }
-:root:root .meters .meter .track::after { display: none; }
-:root:root .meters .meter .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0; min-width: 0;
-  box-shadow: inset calc(var(--u) * 1.5) calc(var(--u) * -1.5) 0 rgba(0, 0, 0, 0.07), inset calc(var(--u) * -1.5) 0 0 rgba(0, 0, 0, 0.07); }
-:root:root .meters .meter .tk { position: absolute; top: 50%; height: calc(var(--u) * 13); width: calc(var(--u) * 5);
-  transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.28); z-index: 1; pointer-events: none; }
-:root:root .meters .meter .tk.on { height: 100%; }
-:root:root .meters .meter .bub { position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 2;
-  width: calc(var(--u) * 48); height: calc(var(--u) * 48); min-width: 0; padding: 0; border: 0; border-radius: 50%;
-  display: grid; place-items: center;
-  box-shadow: inset calc(var(--u) * -1.5) calc(var(--u) * -1.5) calc(var(--u) * 1.5) rgba(0, 0, 0, 0.12), 0 0 0 calc(var(--u) * 5.5) var(--surface);
-  color: #ffffff; text-shadow: 0 0 calc(var(--u) * 1.5) rgba(0, 0, 0, 0.5);
-  font-family: "Roboto Condensed", var(--body); font-size: calc(var(--u) * 33); font-weight: 700;
-  line-height: 1; letter-spacing: 0; font-variant-numeric: normal; }
-:root:root .meters .meter .bub.c3 { font-size: calc(var(--u) * 27); letter-spacing: -0.02em; }
-:root:root .meters .meter .bub.ghost { background: var(--surface) !important; color: var(--ink-2); border: calc(var(--u) * 3) solid var(--ink-2);
-  box-shadow: 0 0 0 calc(var(--u) * 3) var(--surface); font-size: calc(var(--u) * 27); }
+:root:root .meters .meter > .val { justify-content: flex-end; white-space: nowrap; font-variant-numeric: normal; }
+:root:root .meters .meter + .meter > .lbl, :root:root .meters .meter + .meter > .val { margin-top: -3px; padding-top: 3px; }
+:root:root .meters .meter + .meter > .lbl {
+  background: repeating-linear-gradient(to left, var(--svrule) 0 6px, transparent 6px 9px) right 5px top 1px / 80px 1px no-repeat; }
+:root:root .meters .meter + .meter > .val {
+  background: repeating-linear-gradient(to right, var(--svrule) 0 6px, transparent 6px 9px) right top 1px / 30px 1px no-repeat; }
+:root:root .meters .meter > .svtrack { align-self: center; }
 /* the panel: Savant's thin teal frame */
 .pcol { container-type: inline-size; border: 1px solid var(--svframe); border-radius: 0; }
 /* every panel's title is Savant's, in its own fixed sizes: 18px condensed charcoal, 8px from the top, the year bold
@@ -2191,8 +2179,10 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .pchead + .pscroll { padding-top: 0; }
 .pcthd { font-family: "Roboto Condensed", var(--display); font-size: 18px; font-weight: 400; line-height: 1.428571;
   color: var(--svtitle); letter-spacing: 0; }
-.pcthd b, .pcthd .hsel.yr .hsl { font-weight: 700; }
-.pcthd > :first-child { display: inline-block; vertical-align: top; height: 28.5px; border-bottom: 3px dotted var(--svdots); }
+.pcthd b, .pcthd .hsel .hsl { font-weight: 700; }
+/* the year and, beside it, the level: both pickers wear Savant's bold word over a 3px dotted teal rule */
+.pcthd > :first-child, .pcthd > .hsel { display: inline-block; vertical-align: top; height: 28.5px; border-bottom: 3px dotted var(--svdots); }
+.pcthd > .hsel:not(:first-child) { margin-left: 3px; }   /* its own rule, not one run on from the year's */
 .pchead .pcdots, .pchead .pctsub:empty { display: none; }
 .pchead .pctsub { font-size: 11px; margin-top: 4px; }
 .pctbox { padding: 0; }
