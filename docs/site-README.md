@@ -35,7 +35,7 @@ Open `index.html` directly in a browser — no server or build step needed.
 Pitcher tabs: **Rank vs** measures everyone on the tab against the starter pool, reliever
 pool, or all pitchers.
 
-**Percentile bars** are drawn the way Baseball Savant draws them: a 24px bar filled from the left to the
+**Percentile bars** are the site's own, styled after Baseball Savant's: a 24px bar filled from the left to the
 percentile over a pale remainder (`--pctrack`), a white-ringed circle carrying the number at the end of the
 fill, a faint halfway tick and a dashed rule (`--pctrule`) between rows, with the stat labels right-aligned
 into the bars. The ramp is Savant's: `--lo` #325aa1 through a solid `--mid` #b3b3b3 to `--hi` #d22d49.
@@ -345,8 +345,8 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
 - **The title** (`pageTitle()`), in the plate and pinned with it: "**2026 MLB Percentiles**", bold, in the name's ink.
   The year and the level are the season pickers for the whole page (`titleSelect()`): each is a word over a dotted
   rule.
-- **The percentile sections** (`renderPctPanel`): two columns of headed sections, drawn with Savant's chart code
-  (`pctSvg`). Hitters (`PCT_COLS_H`): Results (wOBA, xwOBA, xBA, xSLG — the expected three the directional model's),
+- **The percentile sections** (`renderPctPanel`): two columns of headed sections, drawn by the site's own SVG
+  code (`pctSvg`) in the style of Savant's charts. Hitters (`PCT_COLS_H`): Results (wOBA, xwOBA, xBA, xSLG — the expected three the directional model's),
   Batted-Ball Quality, then Swing Decisions (Z-Swing%, O-Swing%, BB%), Contact and Batted-Ball Distribution.
   Pitchers (`PCT_COLS_P`): Whiffs and Strikes, Swing & Miss, Zone & Chase (BB%, Strike%, Zone%, Chase%), then Results
   (K-BB%, ERA), Batted Ball (GB%, Popup%, Mix ERA) and Stuff. His uERA table and batted-ball mix live in the uERA tab

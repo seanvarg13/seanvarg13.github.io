@@ -926,7 +926,7 @@
     colorCache.set(p, s);
     return s;
   }
-  // the player card's bars use Savant's own colour scale, the one in its chart's code: #3661AD at the 5th percentile,
+  // the player card's bars use a colour scale matched to the one Savant's bars show (our own code, same stops): #3661AD at the 5th percentile,
   // #b4cfd1 from the 45th to the 55th, #D82129 at the 95th, clamped past them and blended in Lab space (d3's
   // interpolateLab), with each circle its bar's colour darkened a fifth of a step (d3's darker(0.2)) — exact to the unit
   const LAB = (() => {
@@ -3821,7 +3821,7 @@
 
   /* ---------- Explore: any player, any season ---------- */
   function renderXDates() {}
-  // the middle panel: Savant's own percentile list, in Savant's order, flat and without group headings.
+  // the middle panel: the same stats Savant's percentile list shows, in its order, flat and without group headings.
   // Savant's hitters run xwOBA, xBA, xSLG, EV, Barrel%, Hard-Hit%, LA Sweet-Spot%, Bat speed, Chase%, Whiff%, K%, BB%
   // (its run values, fielding and sprint speed have no counterpart here). All three expected stats are the directional model's.
   const SAVANT_H = ["EXPW", "EXPB", "EXPS", "ev", "brl", "hh", "ss", "bs", "osw", "whf", "k", "bb"];
@@ -3850,7 +3850,7 @@
                    ["K and BB", [["uk", "ubb", "ukb"], ["wsgp", "csw", "swstr"]]],
                    ["Discipline", [["strk", "zone", "osw", "swing", "zcon"]]],
                    ["Batted ball", [["gb", "pu"], ["ev", "hh", "brl"]]]];
-  // the pitchers' right box, for now: Savant's own pitcher percentile bars (the ones this data has), under headings
+  // the pitchers' right box, for now: the pitcher percentile stats Savant shows (the ones this data has), under headings
   const EXTRA_P_SAV = [["Stuff", [["fbv", "ext"]]],
                        ["Plate Discipline", [["osw", "whf", "k", "bb"]]],
                        ["Batted Ball", [["ev", "brl", "hh", "gb"]]]];
@@ -4526,7 +4526,7 @@
     }).catch(() => {});
     return null;
   }
-  // the left panel, the way Savant draws it: his action shot as a banner, the cut-out over it, the rest centred
+  // the left panel, laid out after Savant's: his action shot as a banner, the cut-out over it, the rest centred
   function renderSavantPlate(p, st, g) {
     const t = teamCode(p.team), tid = TEAM_ID[t], b = bio(p.id);
     const plate = el("div", "splate");
