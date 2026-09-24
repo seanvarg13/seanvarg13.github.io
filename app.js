@@ -4739,14 +4739,17 @@
     const top = el("div", "cardtop phead"), plate = renderPlate(p, st, g, g), mob = mobileView();
     const F = el("div", "phfilt");
     const star = plate.querySelector(":scope > div > .starbox"), mr = plate.querySelector(".mrank"), h2 = plate.querySelector("h2");
-    if (mob && star && h2) {                             // Star by the name: just the ☆ / ★, so the name keeps its line
-      const nm = el("div", "phname"); h2.replaceWith(nm); nm.append(h2, star);
-      const sb = star.querySelector(".starbtn");
-      if (sb) { sb.setAttribute("aria-label", sb.textContent.trim()); sb.textContent = sb.classList.contains("on") ? "★" : "☆"; sb.classList.add("staricon"); }
-      const note = star.querySelector(".starnote"); if (note) note.remove();          // the note is in the button's title
-      const panel = star.querySelector(".starpanel"); if (panel) nm.after(panel);    // an open Star panel gets the full width
-    }
-    else if (star && mr) mr.append(star);                // Star beside "full season": one line shorter
+    // the headshot in a framed tile with the Star button under it, on a desktop and a phone alike (an open Star panel
+    // goes under his lines, where it has the room)
+    const mug = plate.querySelector(":scope > .mug");
+    if (mug) {
+      const col = el("div", "phmug"); mug.replaceWith(col); col.append(mug);
+      if (star) {
+        const note = star.querySelector(".starnote"); if (note) note.remove();          // the note is in the button's title
+        const panel = star.querySelector(".starpanel"); if (panel) (h2 ? h2.parentElement : plate).append(panel);
+        col.append(star);
+      }
+    } else if (star && mr) mr.append(star);
     const title = pageTitle(p, o);
     const finish = () => {                               // put the pieces where this layout wants them
       if (mob) { if (F.childNodes.length) plate.append(F); plate.append(title); }

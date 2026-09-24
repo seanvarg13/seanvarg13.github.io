@@ -2464,3 +2464,24 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
    stands off the list or the pattern behind it */
 .modal.pcard .modal-panel, :root:not([data-view="mobile"]) .modal.pcard .modal-panel, :root[data-view="mobile"] .modal.pcard .modal-panel {
   border-radius: 0; border: 2px solid var(--rule); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38), 0 3px 8px rgba(0, 0, 0, 0.22); }
+/* The headshot in a framed tile (Sean picked it from four): square, the card's navy outline and hard offset shadow,
+   a light wash behind the cut-out, and the Star button under it */
+.phmug, .phleft > .phmug { flex: none; display: flex; flex-direction: column; align-items: center; gap: 8px; align-self: flex-start; }   /* top, so an open Star panel doesn't drag it down */
+.phmug .starbox { margin: 0; }
+:root .phead .mplate .mug, :root[data-view="mobile"] .phead .mplate .mug, :root:not([data-view="mobile"]) .phead .mplate .mug {
+  width: 116px; height: 116px; margin: 0; align-self: auto; box-sizing: border-box; border-radius: 0; padding-top: 6px;
+  object-fit: contain; object-position: center bottom; border: 2px solid var(--rule);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, var(--accent-2)), color-mix(in srgb, var(--surface) 70%, var(--accent-2)));
+  box-shadow: 3px 3px 0 color-mix(in srgb, var(--rule) 35%, transparent); }
+:root .phead .mplate .mug.initials { display: grid; place-items: center; padding: 0; font-size: 34px; color: var(--ink-2); }
+:root[data-view="mobile"] .phead .mplate .mug { width: 92px; height: 92px; }
+:root[data-view="mobile"] .phead .mplate .mug.initials { font-size: 28px; }
+
+/* Every header button — the site's nav and the card's own (Star, Filters) — wears the card's look: square corners, a
+   navy outline and a small hard shadow */
+.modes a, .modes .modesel, :root:not([data-view="mobile"]) .modes a, :root:not([data-view="mobile"]) .modes .modesel,
+:root[data-view="mobile"] .modes a, :root[data-view="mobile"] .modes .modesel, .phead .starbtn, .phead .phtoggle, .phead .mplate .btn {
+  border: 2px solid var(--rule); border-radius: 0; box-shadow: 2px 2px 0 color-mix(in srgb, var(--rule) 40%, transparent), 0 3px 8px rgba(0, 0, 0, 0.18); }
+.modes a[aria-current="page"], .modes .modesel[aria-current="page"], :root:not([data-view="mobile"]) .modes a[aria-current="page"],
+:root:not([data-view="mobile"]) .modes .modesel[aria-current="page"], :root[data-view="mobile"] .modes a[aria-current="page"],
+:root[data-view="mobile"] .modes .modesel[aria-current="page"] { border-color: var(--rule); }
