@@ -4180,7 +4180,7 @@
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%" };
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
-    col.append(panelHead(...pctTitle(p, nav)));
+    if (!nav) col.append(panelHead(...pctTitle(p, nav)));   // his page says the season in its header instead
     const body = el("div", "pscroll pctbox");
     const noEV = DS.tracked != null && DS.tracked < 0.05;
     const exp = expKeys();
@@ -4419,14 +4419,18 @@
     if (!state.x.ds || state.x.ds !== key || state.x.type !== type) state.x = { id: entry.id, type, ds: key };
     // his page is the popup card without the ×: the same pinned plate, the same filter row, the same panel
     const chips = (p) => renderSeasonChips(p, { curKey: key, goTo: (k) => { state.x = { id: entry.id, type, ds: k }; state.cardWin = { from: "", to: "", last: "" }; savePrefs(); render(); } });
-    // the pinned header: Savant's plate on the left (action shot, cut-out, bio, draft); the sample the page is built
-    // on and the season / level / splits row on the right
+    // the pinned header: the blue plate (cut-out, name, sample, Star) with the season in its empty right-hand side,
+    // and under that every filter — season / level / game type, the split toggles and the dates. On a phone the
+    // toggles stay behind the Splits button so the pinned header doesn't eat the screen
     const phead = (p, st, g) => {
-      const top = el("div", "cardtop phead"), R = el("div", "pheadR");
-      const r1 = el("div", "phrow"); r1.append(sampleLine(p, V(p)));
-      const acts = el("div", "phacts"); const ts = typeSeg(p); if (ts) acts.append(ts); acts.append(renderStarControl(p));
-      r1.append(acts); R.append(r1, ...chips(p));
-      top.append(renderSavantPlate(p, st, g), R); return top;
+      const top = el("div", "cardtop phead"), plate = renderPlate(p, st, g, g), mob = mobileView();
+      const F = el("div", "phfilt");
+      const yr = el("div", "phyear"); yr.append(el("b", null, dsSeason()), " " + DS.level); F.append(yr);
+      const row = chips(p)[0];
+      if (!mob) { const sb = row.querySelector(".splithead > .btn"); if (sb) sb.remove(); }
+      F.append(row);
+      if (!mob || state.cardTools) F.append(renderSplitPanel(p));
+      plate.append(F); top.append(plate); return top;
     };
     const stub = () => {        // while the season loads: the plate with what the index knows
       const plate = el("div", "mplate"); plate.append(headshot(entry.id, entry.name));
@@ -4460,7 +4464,6 @@
       const page = el("div", "ppage");
       const B = el("div", "pcol pcolB"), C = el("div", "pcol pcolC");
       renderPctPanel(p, st, g, g, B, { entry, cur: key, goTo });
-      C.append(panelHead(dsSeason(), p.type === "H" ? "Advanced Metrics" : "Advanced Pitching"));
       const cbody = el("div", "pscroll");
       cbody.append(...extraSections(p, st, g));
       for (const f of [...card.querySelectorAll(":scope > .fold-sec")]) {   // the card's grouped fold repeats the panels above it
