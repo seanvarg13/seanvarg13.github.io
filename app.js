@@ -161,10 +161,10 @@
   // every metric that needs a percentile: the card groups plus the row bubbles
   const union = (card, row) => { const seen = new Map(); for (const g of card) for (const m of g.metrics) if (!seen.has(m.key)) seen.set(m.key, m); for (const m of row) if (!seen.has(m.key)) seen.set(m.key, m); return [...seen.values()]; };
   const SUB = DATA.meta.hitterSub || {};      // fold-out breakdown rows under a card metric (Air% -> FB%, LD%)
-  // Batted-ball distribution, everywhere it is drawn: Air% (line drives and fly balls, never popups), Pull Air%, Pull%
-  // and Popup% as four plain rows. The Air% fold-out goes: its popup row is now a row of its own.
-  const BB_DIST = [{ key: "air", label: "Air%", hib: true, dec: 1, unit: "%" }, { key: "pull", label: "Pull Air%", hib: true, dec: 1, unit: "%" },
-                   { key: "pullp", label: "Pull%", hib: true, dec: 1, unit: "%" }, { key: "pu", label: "Popup%", hib: false, dec: 1, unit: "%" }];
+  // Batted-ball distribution, everywhere it is drawn: Air% (line drives and fly balls, never popups), Popup%, GB%,
+  // then Pull Air%, as four plain rows. The Air% fold-out goes: its popup and ground-ball rows are rows of their own.
+  const BB_DIST = [{ key: "air", label: "Air%", hib: true, dec: 1, unit: "%" }, { key: "pu", label: "Popup%", hib: false, dec: 1, unit: "%" },
+                   { key: "gb", label: "GB%", hib: false, dec: 1, unit: "%" }, { key: "pull", label: "Pull Air%", hib: true, dec: 1, unit: "%" }];
   for (const g of CARD) if (/batted-ball distribution/i.test(g.group)) g.metrics = BB_DIST.map((m) => ({ ...m }));
   delete SUB.air; delete SUB.pull;
   const RULE_H = new Set(DATA.meta.hitterCardRules || ["ev90"]);   // hitter card rows that start a ruled-off block
@@ -3784,7 +3784,7 @@
   // and a block break is a rule across the bars; the batted-ball tab is the site's batted-ball distribution.
   const EXTRA_H = [["Discipline", [["zsw", "osw", "swing"]]],
                    ["Contact", [["zcon", "ocon", "whf"]]],
-                   ["Batted ball", [["air", "pull", "pullp", "pu"]]],
+                   ["Batted ball", [["air", "pu", "gb", "pull"]]],
                    ["Quality", [["ev", "brl", "hh", "bs", "ev90", "maxev"]]]];
   const EXTRA_P = [["Run prev.", [["era", "kbb"], ["nera", "mera", "siera", "fip"]]],
                    ["K and BB", [["uk", "ubb", "ukb"], ["wsgp", "csw", "swstr"]]],
