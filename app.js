@@ -2099,7 +2099,7 @@
     if (!careerReady()) { box.append(el("p", "note", failed.has("hist/career.js") ? "hist/career.js hasn't been built — run build_career.py" : "Loading career stats…")); return box; }
     // kept simple (Sean): PA, HR and the slash line for a hitter; IP, ERA and the four rates a pitcher owns for a pitcher
     const H = p.type === "H", cols = H ? ["PA", "HR", "AVG", "OBP", "SLG", "OPS"] : ["IP", "ERA", "K%", "BB%", "GB%", "Popup%"];
-    const colsMLB = H ? cols : ["IP", "ERA", "uERA", "K%", "BB%", "GB%", "Popup%"];   // uERA in the majors (Sean)
+    const colsMLB = H ? cols : [...cols, "uERA"];   // uERA in the majors, the last column (Sean)
     const idx = cols.map((k) => (H ? RAW_H : RAW_P).indexOf(k));
     const pct = (n, d) => (n == null || !d ? null : 100 * n / d);
     // GB% / Popup%: career.js carries them from its next build; until then, from the season's own file if it's loaded
@@ -2120,6 +2120,7 @@
     const want = new Set();
     const uera = (season) => {
       const k = season === DATA.meta.season ? CUR.key : "mlb-" + season, ds = histDataset(k);
+      if (season < 2015 || (!ds && failed.has(`hist/${k}.js`))) return null;   // no Statcast before 2015: no uERA to work out
       if (!ds) { want.add(k); return undefined; }                 // undefined: still loading
       const q = ds.players.find((x) => x.id === p.id && x.type === "P"); if (!q) return null;
       return withDataset(ds, () => withWindow(NOWIN, () => withSplit({ hand: "all", venue: "all" }, () => {
@@ -2154,8 +2155,10 @@
         const tm = el("td", "l tm", team || ""); if (team && team.length > 14) tm.title = team; row.append(tm);   // a club's full name on hover
         for (const k of tc) {
           if (k === "uERA") {                                    // the year's uERA, coloured by its percentile among that season's pitchers
-            const u = r.club ? null : uera(r.season), td = el("td", "uera", u === undefined ? "…" : fmtv(k, u && u.v));
-            if (u && u.pct != null) { paint(td, u.pct); td.title = `uERA ${u.v.toFixed(2)} · ${ordinal(u.pct)} pctl among ${r.season} pitchers`; }
+            // the colour sits on a chip inside the cell, as a leaderboard's sorted column does, not the whole cell (Sean)
+            const u = r.club ? null : uera(r.season), td = el("td", "uera"), chip = el("span", "uchip", u === undefined ? "…" : fmtv(k, u && u.v));
+            if (u && u.pct != null) { paint(chip, u.pct); chip.classList.add("on"); td.title = `uERA ${u.v.toFixed(2)} · ${ordinal(u.pct)} pctl among ${r.season} pitchers`; }
+            td.append(chip);
             row.append(td); continue;
           }
           row.append(el("td", null, fmtv(k, val(r, k))));

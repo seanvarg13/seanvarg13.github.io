@@ -2591,6 +2591,11 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .rawstats.simple td.tm { max-width: 64px; }
 .rawstats th.lc { text-transform: none; }                /* "uERA" keeps its small u under the capitalised headings */
 .rawstats td.uera { font-weight: 700; }
+/* the heat colour is a rounded chip inside the cell, sized like the leaderboard's sorted-column pill */
+.rawstats td.uera { padding-top: 3px; padding-bottom: 3px; }
+.rawstats .uchip { display: inline-block; min-width: 3.6em; padding: 3px 6px; border-radius: 4px; text-align: center; box-sizing: border-box; }
+:root[data-view="mobile"] .rawstats .uchip { min-width: 0; padding: 2px 3px; letter-spacing: -0.01em; }
+:root[data-view="mobile"] .rawstats.simple.pit td.uera { padding-left: 2px; padding-right: 0; }
 /* a pitcher's tables carry two more columns (uERA; GB% / Popup% in the minors): a phone tightens the cells a touch */
 :root[data-view="mobile"] .rawstats.simple.pit th, :root[data-view="mobile"] .rawstats.simple.pit td { padding-left: 2.5px; padding-right: 2.5px; font-size: 12px; }
 :root[data-view="mobile"] .rawstats.simple.pit th { font-size: 10px; letter-spacing: 0; }
