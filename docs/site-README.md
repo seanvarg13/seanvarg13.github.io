@@ -344,7 +344,9 @@ is open, which is what keeps them from painting behind it on a phone.
   Pitchers (`PCT_COLS_P`): Whiffs and Strikes, Swing & Miss, Zone & Chase (BB%, Strike%, Zone%, Chase%), then Results
   (K-BB%, ERA), Batted Ball (GB%, Popup%, Mix ERA) and Stuff. His uERA table and batted-ball mix live in the uERA tab
   on a desktop and a phone alike (for a day they sat in a right-hand third beside a desktop's bars; Sean wanted them
-  back in the tabs). On a desktop the box takes the page's whole width and both columns are drawn at
+  back in the tabs). On a desktop the box is a fixed 860px (`--pbox-w`), centred, so it hugs its two chart columns instead of
+  leaving a blank sixth of the window each side; the tabs under it take the same width, and a popup is only a little
+  wider (940px, its title on its own row under the headshot and filters). Both columns are drawn at
   one scale, the largest at which the taller one still fits the box (`pctChart`'s `fit`), so type, bars and circles
   grow together; a phone draws them at their real size. A chart starts at the size its column had last time
   (`pctLast`): drawn at a guess and resized a moment later, everything under it shifted and, near the foot of the
