@@ -1998,6 +1998,7 @@ body.playerwide #xboard { overflow: visible; }         /* the header runs past t
 body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px) - 1px); }
 .phead .mplate { flex-wrap: wrap; padding: 10px min(6vw, 96px); gap: 22px; align-items: center; }
 .phead .mplate .mug { width: 112px; height: 112px; }
+:root:not([data-view="mobile"]) .phead .mplate .mug { margin: -8px 0 0; }   /* the shoulders stop short of the band's bottom stripes */
 .phead .mplate h2 { font-size: 24px; }
 .phead .mplate .mline { margin-top: 2px; }
 .phead .mplate .hstrip { margin: 4px 0; }
@@ -2008,7 +2009,7 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px) - 1px);
 .phgrid { display: grid; grid-template-columns: repeat(6, max-content); gap: 6px 10px; justify-content: end;
   padding: 8px 10px; background: rgba(0, 0, 0, 0.12); border-radius: 3px; }
 .phf { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.phf.wide { grid-column: span 2; }
+.phf.w2 { grid-column: span 2; }
 .phcap { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--band-ink); opacity: 0.8; }
 .phf .pill { width: 100%; min-width: 0; height: 28px; margin: 0; }
 .phf .pill:first-child { min-width: 84px; }
@@ -2038,7 +2039,8 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px) - 1px);
 :root[data-view="mobile"] .phead .hchip b { font-size: 14px; }
 :root[data-view="mobile"] .phfilt { margin-left: 0; flex-basis: 100%; align-items: stretch; }
 :root[data-view="mobile"] .phgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 8px; gap: 6px 8px; }
-:root[data-view="mobile"] .phf.wide, :root[data-view="mobile"] .phtoggle { grid-column: 1 / -1; }
+:root[data-view="mobile"] .phf.w2 { grid-column: auto; }
+:root[data-view="mobile"] .phf.mfull, :root[data-view="mobile"] .phtoggle { grid-column: 1 / -1; }
 :root[data-view="mobile"] .phf input[type="date"] { -webkit-appearance: none; appearance: none; padding: 0 4px; font-size: 12px; min-width: 0; }
 :root[data-view="mobile"] .phf .lastin { width: 100%; }
 :root[data-view="mobile"] .phsum { justify-content: flex-start; }
@@ -2309,7 +2311,7 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px) - 1px);
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB { grid-column: 2 / span 2; }
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolC { grid-column: 4 / span 2; }
-:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB.wide { grid-column: 2 / span 4; }
+:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB.wide { grid-column: 1 / -1; }   /* the sections take the page's whole width */
 .pctcols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; align-items: start; }
 :root[data-view="mobile"] .pctcols { grid-template-columns: minmax(0, 1fr); }
 .pctsample { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; padding: 2px 20px 6px; font-family: "Roboto Condensed", var(--body); }
@@ -2335,3 +2337,44 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px) - 1px);
 .svpct .svnum { fill: #ffffff; font-weight: 700; text-anchor: middle; }
 .svpct .svnum.c3 { font-size: 10px; }
 .pctbox .pctfoot { display: none; }
+
+/* the page's title, Savant's: "2026 MLB Percentiles", centred over the plate, the year and the level each a word with
+   a dotted rule under it that opens the browser's own list */
+.ptitle { text-align: center; padding: 14px 12px 12px; }
+.pthd { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 400; line-height: 1.25; letter-spacing: 0;
+  text-transform: none; color: var(--ink); }
+.pthd b, .pthd .tsel.yr .tsl { font-weight: 800; }
+.tsel { position: relative; display: inline-block; }
+.tsel .tsl { display: inline-block; padding-bottom: 6px; background-image: radial-gradient(circle, var(--accent-2) 1.5px, transparent 1.7px);
+  background-size: 9px 4px; background-repeat: repeat-x; background-position: left bottom; }
+.tsel.solo .tsl { background: none; padding-bottom: 0; }
+.tsel select { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; font-size: 16px; }
+.tsel:hover .tsl, .tsel:focus-within .tsl { color: var(--accent-2-text); }
+:root[data-view="mobile"] .ptitle { padding: 10px 12px 8px; }
+:root[data-view="mobile"] .pthd { font-size: 19px; }
+/* uERA's batted-ball mix: each share's rank in the chart's own circle */
+.rankchip { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: #fff;
+  font-family: "Roboto Condensed", var(--body); font-size: 11px; font-weight: 700; box-shadow: 0 0 0 2px var(--surface); }
+.rankchip.c3 { font-size: 9.5px; }
+.mixbox .note { margin: 8px 0 0; font-size: 11px; color: var(--muted); }
+.rawstats.simple .rawscroll { margin-top: 0; }
+.btab .lc { text-transform: none; }
+/* ---- a popup player card: his page in a panel, not the whole screen ---- */
+:root:not([data-view="mobile"]) .modal.pcard .modal-panel { width: min(1500px, 94vw); height: min(100%, var(--modal-max, calc(100dvh - 40px))); border-radius: 6px; }
+.modal.pcard .phead .mplate { padding-inline: 22px; }
+.modal.pcard .ptitle { padding-inline: 56px; }                        /* clear of the × */
+.modal.pcard .pbelow2 { margin-inline: 16px; }
+.modal.pcard .ppage { margin-inline: 16px; }
+:root[data-view="mobile"] body.modal-open.cardpop { position: fixed; inset: 0; width: 100%; overflow: hidden; }
+:root[data-view="mobile"] body.modal-open.cardpop main { display: block; }
+:root[data-view="mobile"] .modal.pcard { position: fixed; inset: 0; z-index: 50; display: block; padding: 0; overflow: hidden; touch-action: auto; }
+:root[data-view="mobile"] .modal.pcard .modal-back { display: block; }
+:root[data-view="mobile"] .modal.pcard .modal-panel { position: absolute; left: 8px; right: 8px; top: calc(var(--header-h, 0px) + 8px); bottom: 8px;
+  width: auto; min-height: 0; margin: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--hair); border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35); }
+:root[data-view="mobile"] .modal.pcard #modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+:root[data-view="mobile"] .modal.pcard #modal-body .cardtop { top: 0; }
+:root[data-view="mobile"] .modal.pcard .modal-panel .modal-close { position: absolute; top: 6px; right: 6px; }
+:root[data-view="mobile"] .modal.pcard .ppage { margin-inline: 0; padding-inline: 0; }   /* the panel is narrower than the phone: the chart gets all of it */
+:root[data-view="mobile"] .modal.pcard .pctbox { padding-inline: 4px; }
+:root[data-view="mobile"] .modal.pcard .pbelow2 { margin-inline: 6px; }
