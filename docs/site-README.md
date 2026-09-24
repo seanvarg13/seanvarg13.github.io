@@ -335,10 +335,10 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
   (the tile, his lines, the filters box), which keeps it short. the blue plate from edge to edge of the window. On a desktop it is
   three columns with equal outer ones, so the middle sits over the middle of the page: the cut-out headshot, name,
   team / position / age, the sample (PA · AB · BBE · G, or IP · BF · G/GS · pitches), "full season" and Star on the
-  left; the season's title (below) dead centre; and on the right one labelled grid of filters — **From**, **To** and
-  **Last PA** (or IP), then **Pitchers** (All / vs LHP / vs RHP, tight buttons under From; Batters for a pitcher) and
-  **Home / away** (Both / Home / Away) under To and Last. Under 1300px wide the three don't fit, so the title takes
-  its own centred row under the other two. The toggles are solid buttons on the
+  left, and the season's title (below) centred in the room to their right: one short row. The filters — **From**, **To**,
+  **Last PA** (or IP), **Pitchers** (All / vs LHP / vs RHP; Batters for a pitcher) and **Home / away** — sit behind a
+  **Filters** button beside "full season", as on a phone: on a desktop it drops a panel under the button (`.phpop`) that a
+  click outside or Escape shuts. The toggles are solid buttons on the
   band, so no colour scheme can wash them out. On a phone the plate is laid out tighter: the Star is a ☆ beside the name (by the popup's ×),
   the filters fold behind one **Filters** button beside "full season", and the season's title (below) sits at the foot
   of the plate, pinned with it.

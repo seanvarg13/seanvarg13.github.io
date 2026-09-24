@@ -4760,20 +4760,22 @@
       else {
         const left = el("div", "phleft"); left.append(...plate.childNodes);
         const mid = el("div", "phmid"); mid.append(title);
-        plate.append(left, mid, F);
+        plate.append(left, mid);
+        if (!F.classList.contains("phpop") && F.childNodes.length) { plate.append(F); plate.classList.add("phright"); }   // season chips: on the right
       }
       top.append(plate); return top;
     };
     if (!o.entry || isMulti(o.key)) { F.append(...renderSeasonChips(p, { curKey: o.key, goTo: o.pick })); return finish(); }
     const grid = el("div", "phgrid");
     const cell = (cap, cls, ...kids) => { const c = el("div", "phf" + (cls ? " " + cls : "")); c.append(el("span", "phcap", cap), ...kids.filter(Boolean)); grid.append(c); return c; };
-    const open = !mob || state.cardTools;
-    if (mob) {                                         // the phone's Filters button, beside "full season"
-      const b = el("button", "starbtn phtoggle" + (open ? " on" : ""), "Filters");
-      b.type = "button"; b.setAttribute("aria-expanded", String(open));
-      b.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = !state.cardTools; savePrefs(); render(); });
-      (mr || plate).append(b);
-    }
+    // the Filters button beside "full season", on a desktop too: a phone opens them into the plate, a desktop in a
+    // panel hung under the button, so the plate itself stays one short row
+    const open = !!state.cardTools;
+    const b = el("button", "starbtn phtoggle" + (open ? " on" : ""), "Filters");
+    b.type = "button"; b.setAttribute("aria-expanded", String(open));
+    b.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = !state.cardTools; savePrefs(); render(); });
+    const tog = el("span", "phtog"); tog.append(b); (mr || plate).append(tog);
+    if (!mob) { F.classList.add("phpop"); tog.append(F); }
     let warn = null;
     if (open) {
       const sp = renderSplitPanel(p), seg = (n) => sp.querySelector(`.seg[aria-label="${n}"]`);
@@ -5385,6 +5387,15 @@
   window.addEventListener("resize", sizeModal);
   window.addEventListener("resize", sizePPage);
   if (window.visualViewport) { window.visualViewport.addEventListener("resize", sizeModal); window.visualViewport.addEventListener("scroll", sizeModal); }
+  // a desktop's Filters panel shuts on a click anywhere outside it (or its button), or on Escape
+  document.addEventListener("click", (e) => {
+    if (!state.cardTools || mobileView() || !document.querySelector(".phpop")) return;
+    if (e.target.closest(".phpop, .phtoggle, .ddmenu") || !e.target.isConnected) return;
+    state.cardTools = false; savePrefs(); render();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && state.cardTools && !mobileView() && document.querySelector(".phpop")) { e.stopImmediatePropagation(); state.cardTools = false; savePrefs(); render(); }
+  }, true);
   $("modal-close").addEventListener("click", closeModal);
   $("modal-back").addEventListener("click", closeModal);
   $("undo").addEventListener("click", undoLast);
