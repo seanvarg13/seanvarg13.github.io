@@ -1994,16 +1994,48 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 :root[data-view="mobile"] .splate .sbanner { height: 140px; }
 :root[data-view="mobile"] .splate h2 { font-size: 23px; }
 /* the player page's pinned header: the blue plate, with the season and every filter in its right-hand side */
-.phead .mplate { flex-wrap: wrap; padding-right: 22px; }
-.phfilt { margin-left: auto; flex: 0 1 auto; max-width: 64%; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.phead .mplate { flex-wrap: wrap; padding: 16px 22px; gap: 22px; align-items: center; }
+.phead .mplate .mug { width: 132px; height: 132px; }
+.phfilt { margin-left: auto; flex: 0 1 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
 .phyear { font-family: var(--display); font-size: 22px; color: var(--band-ink); letter-spacing: 0.02em; line-height: 1; }
 .phyear b { font-size: 40px; font-weight: 700; }
-.phfilt .xseasons, .phfilt .splitopen { background: transparent; border: 0; padding: 0; margin: 0; justify-content: flex-end; }
-.phfilt .splitopen { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.phfilt .tsum { color: var(--band-ink); opacity: 0.85; }
-:root[data-view="mobile"] .phfilt { margin-left: 0; flex-basis: 100%; max-width: none; align-items: stretch; gap: 6px; }
+/* every filter is a labelled box in one grid: a small caption over each control, three across */
+.phgrid { display: grid; grid-template-columns: repeat(3, max-content); gap: 8px 12px; justify-content: end;
+  padding: 10px 12px; background: rgba(0, 0, 0, 0.12); border-radius: 3px; }
+.phf { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.phcap { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--band-ink); opacity: 0.75; }
+.phf .pill { width: 100%; min-width: 0; height: 30px; margin: 0; }
+.phf .seg { display: flex; }
+.phf .seg .segbtn { flex: 1 1 auto; height: 30px; }
+.phf input[type="date"], .phf .lastin { height: 30px; width: 100%; min-width: 0; box-sizing: border-box; padding: 0 8px; font: inherit; font-size: 13px;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--surface); border-radius: 2px; }
+.phf input:disabled { opacity: 0.55; }
+.phlast { display: flex; gap: 6px; align-items: center; }
+.phlast .unadd { color: var(--band-ink); }
+.phstatic { display: flex; align-items: center; height: 30px; padding: 0 10px; font-size: 13px; font-weight: 600;
+  color: var(--band-ink); border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 2px; }
+.phtop { display: flex; align-items: flex-end; justify-content: flex-end; gap: 16px; width: 100%; }
+:root[data-view="mobile"] .phgap { display: none; }
+:root[data-view="mobile"] .phead .mplate > div:nth-child(2) { flex: 1 1 0; min-width: 0; }
+:root[data-view="mobile"] .phtop { justify-content: flex-start; }
+:root[data-view="mobile"] .phead .hstrip { gap: 2px 10px; font-size: 11px; margin-bottom: 4px; }
+:root[data-view="mobile"] .phead .hchip { white-space: nowrap; }
+:root[data-view="mobile"] .phead .hchip b { font-size: 14px; }
+.phsum { display: flex; flex-wrap: wrap; justify-content: flex-end; padding-bottom: 4px; gap: 4px 10px; font-size: 12px; color: var(--band-ink); }
+.phsum .tsum, .phsum .winnote { color: var(--band-ink); opacity: 0.85; }
+.phsum .splitwarn .linkbtn { color: inherit; }
+:root[data-view="mobile"] .phead .mplate { padding: 10px 12px; gap: 10px 14px; }
+:root[data-view="mobile"] .phead .mplate .mug { width: 96px; height: 96px; margin: 0; }
+:root[data-view="mobile"] .phfilt { margin-left: 0; flex-basis: 100%; align-items: stretch; gap: 6px; }
 :root[data-view="mobile"] .phyear { display: none; }
-:root[data-view="mobile"] .phfilt .xseasons, :root[data-view="mobile"] .phfilt .splitopen { justify-content: flex-start; }
+:root[data-view="mobile"] .phgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 8px; gap: 6px 8px; }
+:root[data-view="mobile"] .phf.wide, :root[data-view="mobile"] .phtoggle { grid-column: 1 / -1; }
+:root[data-view="mobile"] .phf input[type="date"] { -webkit-appearance: none; appearance: none; padding: 0 4px; font-size: 12px; }
+:root[data-view="mobile"] .phsum { justify-content: flex-start; }
+/* a pitcher's uERA and luck-neutral ERA tables, side by side in their own tab */
+.eratab { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 40px; }
+:root[data-view="mobile"] .eratab { grid-template-columns: minmax(0, 1fr); }
+.cmpbelow { margin-top: 14px; }
 /* the stats sit straight on the page: no box round them */
 .ppage:not(.cmp2page) > .pcol { border: 0; background: transparent; }
 
@@ -2268,7 +2300,7 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB { grid-column: 2 / span 2; }
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolC { grid-column: 4 / span 2; }
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB.wide { grid-column: 2 / span 4; }
-.pctcols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 12px; align-items: start; }
+.pctcols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; align-items: start; }
 :root[data-view="mobile"] .pctcols { grid-template-columns: minmax(0, 1fr); }
 .pctsample { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; padding: 2px 20px 6px; font-family: "Roboto Condensed", var(--body); }
 .pctsample .pslbl { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--svtext); margin-right: -4px; }
