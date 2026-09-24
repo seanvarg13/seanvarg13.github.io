@@ -1,1 +1,1 @@
-window.DRAFT_DEFAULTS = {"scheme": "unc", "font": "system", "theme": "system", "view": "auto"};
+window.DRAFT_DEFAULTS = {"scheme": "unc", "font": "savant", "theme": "system", "view": "auto"};

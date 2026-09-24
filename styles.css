@@ -40,12 +40,21 @@
   --accent-wash: rgba(123, 175, 212, 0.24);
   --pctrack: #d9e8e3;  /* the unfilled part of a percentile bar */
   --pctrule: #bed8d1;  /* the dashed rule between bars */
+  --svline: #c7dcdc;   /* Savant: the thin line the rest of a percentile bar runs along */
+  --svrule: #399098;   /* Savant: the dashed rule under a bar's label and value */
+  --svtext: #666666;   /* Savant: the grey its labels and values are set in */
+  --svframe: #4499aa;  /* Savant: the teal frame round each panel */
+  --svsec: #399098;    /* Savant: the rule under a section heading */
+  --svdots: #4499aa;   /* Savant: the dots under a panel title's year */
+  --svpoor: #3a62a8; --svavg: #b8d3cd; --svgreat: #d41c23;   /* Savant: POOR / AVERAGE / GREAT */
+  --svhead: #000000;   /* Savant: the black of its section names */
+  --svtitle: #333333;  /* Savant: the charcoal of its panel titles */
   --lo: #325aa1;      /* percentile: cold — Savant's blue */
   --mid: #b3b3b3;     /* percentile: 50th — a solid grey, not a tint, so the ends carry */
   --hi: #d22d49;      /* percentile: hot  — Savant's red */
   --shadow: 0 1px 2px rgba(19, 41, 75, 0.06), 0 8px 24px rgba(19, 41, 75, 0.07);
-  --display: "Helvetica Neue", Helvetica, Arial, sans-serif;     /* themes.js swaps these for the chosen font */
-  --body: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --display: "Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif;   /* Savant's type, the site's only font */
+  --body: "Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -70,6 +79,15 @@
     --accent-wash: rgba(123, 175, 212, 0.22);
     --pctrack: #2c3b39;
     --pctrule: #3a4f4b;
+    --svline: #34504d;
+    --svrule: #4d7f84;
+    --svtext: #b9c3c2;
+    --svframe: #4f9fad;
+    --svhead: #e8eeee;
+    --svtitle: #e3e8e8;
+    --svsec: #4f9fad;
+    --svdots: #5fb0bd;
+    --svpoor: #6f95d6; --svavg: #8fb3ad; --svgreat: #f0555b;
     --lo: #4a86dd;
     --mid: #6a7382;
     --hi: #e2455c;
@@ -98,6 +116,15 @@
   --accent-wash: rgba(123, 175, 212, 0.22);
   --pctrack: #2c3b39;
   --pctrule: #3a4f4b;
+  --svline: #34504d;
+  --svrule: #4d7f84;
+  --svtext: #b9c3c2;
+  --svframe: #4f9fad;
+  --svhead: #e8eeee;
+  --svtitle: #e3e8e8;
+  --svsec: #4f9fad;
+  --svdots: #5fb0bd;
+  --svpoor: #6f95d6; --svavg: #8fb3ad; --svgreat: #f0555b;
   --lo: #4a86dd;
   --mid: #6a7382;
   --hi: #e2455c;
@@ -1871,10 +1898,6 @@ body.modal-open header.top { z-index: 60; }
 .mixrow .mlbl { font-size: 12px; color: var(--ink-2); text-align: right; }
 .mixrow .mval { font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
 .mixfoot { font-size: 11px; color: var(--muted); margin-top: 3px; text-align: right; }
-.minitrack { --bub: 20px; position: relative; height: 20px; border-radius: 10px; background: var(--pctrack, var(--surface-2)); box-shadow: inset 0 0 0 1px var(--hair); }
-.minifill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 10px; }
-.minibub { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; border-radius: 50%;
-  display: grid; place-items: center; font-size: 10.5px; font-weight: 700; color: #fff; box-shadow: 0 0 0 2px var(--surface); }
 .tblcard table { width: auto; table-layout: fixed; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }   /* auto + a colgroup = the table is exactly as wide as its columns */
 .tblcard thead th { background: var(--band); color: var(--band-ink); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em;
   text-transform: uppercase; text-align: center; padding: 6px 10px; white-space: nowrap;
@@ -2005,18 +2028,6 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .ppage .meter .track::after { opacity: 0.75; }
 .ppage .meter .bub { font-size: 12px; font-weight: 700; box-shadow: 0 0 0 2px var(--surface); }
 .ppage .meter .val { font-weight: 600; }
-.ppage .meters .meter.pctscale { min-height: 0; padding: 0 0 3px; border-bottom: 0; }
-.pctscale .track { height: auto; background: none; border: 0; overflow: visible; display: block; }
-.pctscale .track::after { display: none; }
-.pctscale .sc { position: absolute; bottom: 0; display: flex; flex-direction: column; align-items: center; line-height: 1; }
-.pctscale .sc i { font-style: normal; font-size: 9.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
-.pctscale .sc b { font-size: 7.5px; margin-top: 2px; }
-.pctscale .p0 { left: 0; align-items: flex-start; } .pctscale .p0 b { margin-left: 1px; }
-.pctscale .p50 { left: 50%; transform: translateX(-50%); }
-.pctscale .p100 { right: 0; align-items: flex-end; } .pctscale .p100 b { margin-right: 1px; }
-.pctscale .p0 i, .pctscale .p0 b { color: var(--lo); }
-.pctscale .p50 i, .pctscale .p50 b { color: var(--muted); }
-.pctscale .p100 i, .pctscale .p100 b { color: var(--hi); }
 .ppage .meters { gap: 0; padding-top: 0; }
 .ppage .fold-sec { margin-top: 6px; }
 .ppage .fold-sec:first-child { margin-top: 0; }
@@ -2025,6 +2036,18 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .ppage .meters { padding-top: 2px; }
 .pcolC .cardnotes { margin: 0; }
 :root[data-view="mobile"] .ppage { grid-template-columns: 1fr; height: auto; min-height: 0; }
+/* on the phone the player page runs edge to edge, but its boxes keep a 12px white margin from the screen's sides */
+:root[data-view="mobile"] .ppage { padding-inline: 12px; }
+:root[data-view="mobile"] .pbelow2 { margin-inline: 12px; }
+/* and the narrower card still fits the season table whole, down to a 360px phone */
+:root[data-view="mobile"] .pcolA .pscroll { padding-inline: 10px; }
+:root[data-view="mobile"] .pcolA .heatcard table { min-width: 0; }
+:root[data-view="mobile"] .pcolA .heatcard col:first-child { width: 58px !important; }   /* beats the 74px the colgroup sets inline */
+:root[data-view="mobile"] .pcolA .heatcard thead th, :root[data-view="mobile"] .pcolA .heatcard tbody td { padding-inline: 2px; font-size: 11px; }
+@media (max-width: 385px) {
+  :root[data-view="mobile"] .pcolA .heatcard col:first-child { width: 50px !important; }
+  :root[data-view="mobile"] .pcolA .heatcard thead th, :root[data-view="mobile"] .pcolA .heatcard tbody td { padding-inline: 1px; font-size: 10px; }
+}
 :root[data-view="mobile"] .pcol { overflow: visible; }
 :root[data-view="mobile"] .pscroll { overflow: visible; }
 
@@ -2033,26 +2056,36 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .ppage .ptabs.xtabs .ptab { flex: 1 1 0; min-width: 0; font-size: 10px; padding: 0 4px; height: 25px;
   letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ppage .ptabbody .meters + .meters { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--rule); }
-.rollbox { margin-top: 10px; padding-top: 4px; border-top: 1px solid var(--rule); }
-/* pinned to the foot of the advanced box: the tabs above it scroll, this stays put */
-.pcol > .rollbox { margin: 0; padding: 0 16px 12px; }
-.pcol > .rollbox .pchead { padding-top: 10px; }
-.uerabox .ubt { width: 100%; border-collapse: collapse; margin-top: 4px; font-variant-numeric: tabular-nums; }
-.uerabox .ubt th { padding: 2px 3px 4px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
-  color: var(--muted); text-align: right; border-bottom: 1px solid var(--hair); }
-.uerabox .ubt td { padding: 4px 3px; font-size: 12.5px; text-align: right; border: 0; }
-.uerabox .ubt td.l, .uerabox .ubt th.l { text-align: left; padding-left: 2px; font-weight: 700; }
+/* the rolling line under the Advanced panel's bars, set like them (see rollSvg in app.js) */
+.rollbox { margin-top: 14px; }
+/* pinned to the foot of the Advanced box: the tabs above it scroll, this stays put */
+.pcol > .rollbox { flex: none; margin: 0; padding: 10px 16px 12px; }
+:root[data-view="mobile"] .pcol > .rollbox { padding: 6px 12px 12px; }
+.uerabox .ubt { width: 100%; border-collapse: collapse; font-family: "Roboto Condensed", var(--body); }
+.uerabox .ubt th { padding: 2px 3px 5px; font-size: 12px; font-weight: 400; color: var(--svtext); text-align: right;
+  border-bottom: 1px dashed var(--svrule); }
+.uerabox .ubt td { padding: 5px 3px; font-size: 13px; color: var(--ink); text-align: right; border: 0; }
+.uerabox .ubt tbody tr + tr td { border-top: 1px dashed var(--svline); }
+.uerabox .ubt td.l, .uerabox .ubt th.l { text-align: left; padding-left: 0; }
+.uerabox .ubt td.l { color: var(--svtext); }
 .uerabox .ubt td.exp { font-weight: 700; }
-.uerabox .ubt .chip2 { min-width: 36px; font-size: 11px; }
-.rollhd { font-family: var(--display); font-weight: 700; font-size: 11.5px; letter-spacing: 0.05em;
-  text-transform: uppercase; color: var(--accent-2-text); margin-bottom: 6px; }
-.rollsvg { display: block; width: 100%; height: auto; overflow: visible; }
-.rollsvg .rgrid { stroke: var(--hair); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
-.rollsvg .rlg { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
-.rollsvg .rline { fill: none; stroke: var(--hi); stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.rollsvg .rtick { fill: var(--muted); font-size: 8px; text-anchor: end; font-variant-numeric: tabular-nums; }
-.rollsvg .rlglbl { fill: var(--muted); font-size: 7.5px; text-anchor: start; letter-spacing: 0.06em; }
-.rollsvg .raxis { stroke: var(--ink-2); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.uerabox .ubt .chip2 { min-width: 38px; font-size: 12px; }
+.rollhd { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 0 0 4px 0;
+  border-bottom: 2px solid var(--svsec); margin-bottom: 6px; font-family: "Roboto Condensed", var(--body); }
+.rollhd .rollname { font-size: 16px; font-weight: 700; color: var(--svhead); }
+.rollhd .rollsub { font-size: 12px; color: var(--svtext); }
+.rollchart { width: 100%; }
+.rollsvg { display: block; width: 100%; height: auto; overflow: visible; font-family: "Roboto Condensed", var(--body); }
+.rollsvg text { font-size: 12px; fill: var(--svtext); dominant-baseline: middle; font-variant-numeric: normal; }
+.rollsvg .rtick, .rollsvg .rnow { text-anchor: end; }
+.rollsvg .rnow { font-weight: 700; fill: var(--ink); }
+.rollsvg .rmon { text-anchor: start; }
+.rollsvg .rlglbl { text-anchor: end; font-size: 10px; letter-spacing: 0.04em; }
+.rollsvg .raxis { stroke: var(--svtext); stroke-width: 1; }
+.rollsvg .rgrid { stroke: var(--svline); stroke-width: 1; }
+.rollsvg .rlg { stroke: var(--svrule); stroke-width: 1; stroke-dasharray: 6 3; }
+.rollsvg .rline { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.rollsvg .rdot { stroke: var(--surface); stroke-width: 2; }
 .ppage .meter .val { white-space: nowrap; }
 
 /* the card's season table: one row per MLB season, every cell coloured by its percentile */
@@ -2073,26 +2106,36 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .heatcard td.l, .heatcard th.l { text-align: left; padding-left: 2px; }
 .heatcard tbody tr.cartot td { padding-top: 4px; padding-bottom: 4px; }
 
-/* Player apps: the season, the run of games, the splits, the dates, the model and Compare */
+/* Player apps: every filter on a row of its own, a column of labels down the left and the controls lined up after it */
 .pappshd { font-family: var(--display); font-weight: 400; font-size: 17px; letter-spacing: 0; color: var(--ink);
-  text-align: center; margin: 9px 0 7px; padding-top: 9px; border-top: 1px solid var(--rule); }
-.papps { display: flex; flex-direction: column; gap: 3px; }
-.parow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.palbl { flex: none; min-width: 42px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
-  text-transform: uppercase; color: var(--muted); }
-.papps .splitopen { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 6px;
-  margin: 0; padding: 0; border: 0; background: none; }
-.papps .splitopen > * { flex: none; }
-.papps .carddates, .papps .splitopen .carddates { gap: 4px 6px; }
-.papps .seg { flex-wrap: wrap; }
-.papps .segbtn { font-size: 10.5px; padding: 0 7px; height: 24px; }
-.papps .tbtn { height: 26px; font-size: 11px; }
+  text-align: center; margin: 9px 0 10px; padding-top: 9px; border-top: 1px solid var(--rule); }
+.papps { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 8px 10px; }
+.papps .parow { display: contents; }
+.papps .palbl { min-width: 0; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--svtext); }
+.papps .parow > :not(.palbl) { min-width: 0; justify-self: start; }
+.papps .seg { display: inline-flex; flex-wrap: nowrap; max-width: 100%; }
+.papps .segbtn { font-size: 11px; padding: 0 9px; height: 28px; min-height: 28px; white-space: nowrap; }
+/* the date boxes and the Last box: plain bordered fields on the card's own white, never the band's white-on-colour */
+.papps .datesbar, .papps .lastrow { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; margin: 0; padding: 0; }
+.papps .datesbar .to, .papps .lastrow .to { color: var(--svtext); font-size: 12px; }
+.papps .datesbar input[type="date"], .papps .lastin { height: 28px; min-width: 0; border: 1px solid var(--hair); border-radius: 4px;
+  background: var(--surface); color: var(--ink); padding: 0 6px; font: 400 13px/1 "Roboto Condensed", var(--body); }
+.papps .datesbar input[type="date"] { width: 124px; }
+.papps .lastin { width: 64px; }
+.papps .datesbar input:disabled, .papps .lastin:disabled { opacity: 0.45; }
+.papps .unadd { height: 28px; }
+.papps .splitwarn { grid-column: 1 / -1; font-size: 12px; color: var(--svtext); }
+.papps .tbtn { height: 28px; font-size: 11px; }
+:root[data-view="mobile"] .papps { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
+:root[data-view="mobile"] .papps .datesbar input[type="date"], :root[data-view="mobile"] .papps .lastin { font-size: 16px; height: 34px; }   /* 16px: iOS won't zoom */
+:root[data-view="mobile"] .papps .datesbar input[type="date"] { width: auto; flex: 1 1 0; -webkit-appearance: none; appearance: none; text-align: left; }
+:root[data-view="mobile"] .papps .datesbar { width: 100%; }
+:root[data-view="mobile"] .papps .parow > .datesbar { justify-self: stretch; }
+:root[data-view="mobile"] .papps .segbtn { height: 32px; min-height: 32px; font-size: 11px; padding: 0 10px; }
 :root:not([data-view="mobile"]) .ppage.cmp2page { grid-template-columns: minmax(250px, 340px) minmax(0, 1fr); }
 .cmp2page .pcolB .card { padding: 0; background: none; border: 0; grid-template-columns: minmax(0, 1fr); }
 
 .pacts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.papps .hstrip { margin: 0; gap: 3px 12px; font-size: 11.5px; }
-.papps .hstrip .hchip b { font-size: 14px; }
 .papps .starbox { margin-top: 0; }
 
 /* the bars keep their own spacing at the top of the panel; the chart sits at the foot of the third one */
@@ -2120,3 +2163,74 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .btabbody .hgroups { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px 32px; max-width: none; }
 .btabbody .hgroup h4 { margin: 0 0 4px; }
 .btabbody .meter { grid-template-columns: 150px minmax(60px, 1fr) 64px; }
+
+/* ---- Percentile bars: every one on the site is Savant's, in the same pixels as the player page's chart ----
+   The bar (svTrack in app.js): 20px tall over a 5px line, filled from the left to its circle, 2px white ticks at 30%,
+   a 20px circle in a 2px ring of the page colour with 12px bold white numerals (10px for a 100). */
+:root:root .svtrack { position: relative; height: 20px; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 0; overflow: visible;
+  box-shadow: none; background: linear-gradient(var(--svline), var(--svline)) left center / 100% 5px no-repeat; }
+:root:root .svtrack::after { display: none; }
+:root:root .svtrack.none { opacity: 0.35; }
+:root:root .svtrack .fill { position: absolute; left: 0; top: 0; bottom: 0; min-width: 0; border-radius: 0; box-shadow: none; }
+:root:root .svtrack .tk { position: absolute; top: 0; bottom: 0; width: 2px; height: auto; background: #ffffff; opacity: 0.3; transform: none;
+  z-index: 1; pointer-events: none; }
+:root:root .svtrack .bub { position: absolute; top: 50%; width: 22px; height: 22px; min-width: 0; margin: -11px 0 0 -11px; padding: 1px 0 0;
+  box-sizing: border-box; border: 2px solid var(--surface); border-radius: 50%; transform: none; box-shadow: none; z-index: 2;
+  display: grid; place-items: center; color: #ffffff; text-shadow: none; letter-spacing: 0; font-variant-numeric: normal;
+  font-family: "Roboto Condensed", var(--body); font-size: 12px; font-weight: 700; line-height: 1; }
+:root:root .svtrack .bub.c3 { font-size: 10px; }
+:root:root .svtrack .bub.ghost { background: var(--surface); color: var(--svtext); box-shadow: inset 0 0 0 1.5px var(--svtext); }
+/* a row of them, laid out as Savant lays out its chart: a row every 23px, the label's right edge 5px from the bar,
+   the value in the 35px after it, 12px grey type, and a 1px dashed teal rule over every row but the first, under
+   the label's last 80px and the value's last 30px only */
+:root:root .meters .meter { min-height: 23px; height: auto; margin: 0; padding: 3px 0 0; border: 0; gap: 0; column-gap: 0;
+  grid-template-columns: 125px minmax(0, 1fr) 35px; align-items: center;
+  font-family: "Roboto Condensed", var(--body); font-size: 12px; line-height: 1; }
+:root:root .meters .meter.cmp { grid-template-columns: 110px minmax(0, 1fr) 35px 70px; }
+:root:root .meters .meter.ruled { border-top: 2px dotted var(--rail); }
+:root:root .meters .meter > .lbl, :root:root .meters .meter > .val { align-self: stretch; display: flex; align-items: center; min-width: 0;
+  color: var(--svtext); font-size: 12px; font-weight: 400; letter-spacing: 0; padding: 0; background: none; }
+:root:root .meters .meter > .lbl { justify-content: flex-end; text-align: right; padding-right: 5px; overflow: visible; }
+:root:root .meters .meter.sub > .lbl { padding-left: 12px; }
+:root:root .meters .meter > .lbl .lt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:root:root .meters .meter > .val { justify-content: flex-end; white-space: nowrap; font-variant-numeric: normal; }
+:root:root .meters .meter + .meter > .lbl, :root:root .meters .meter + .meter > .val { margin-top: -3px; padding-top: 3px; }
+:root:root .meters .meter + .meter > .lbl {
+  background: repeating-linear-gradient(to left, var(--svrule) 0 6px, transparent 6px 9px) right 5px top 1px / 80px 1px no-repeat; }
+:root:root .meters .meter + .meter > .val {
+  background: repeating-linear-gradient(to right, var(--svrule) 0 6px, transparent 6px 9px) right top 1px / 30px 1px no-repeat; }
+:root:root .meters .meter > .svtrack { align-self: center; }
+/* the panel: Savant's thin teal frame */
+.pcol { container-type: inline-size; border: 1px solid var(--svframe); border-radius: 0; }
+/* every panel's title is Savant's, in its own fixed sizes: 18px condensed charcoal, 8px from the top, the year bold
+   with a 3px dotted teal rule under it; the percentile chart starts right under it, the other panels 20px lower */
+.pchead { padding: 8.5px 12px 20px; text-align: center; }   /* Savant's 8px, plus the half pixel its compare icon drops the line */
+.pchead:has(+ .pctbox) { padding-bottom: 0; min-height: 37.4px; }
+.pchead + .pscroll { padding-top: 0; }
+.pcthd { font-family: "Roboto Condensed", var(--display); font-size: 18px; font-weight: 400; line-height: 1.428571;
+  color: var(--svtitle); letter-spacing: 0; }
+.pcthd b, .pcthd .hsel .hsl { font-weight: 700; }
+/* the year and, beside it, the level: both pickers wear Savant's bold word over a 3px dotted teal rule */
+.pcthd > :first-child, .pcthd > .hsel { display: inline-block; vertical-align: top; height: 28.5px; border-bottom: 3px dotted var(--svdots); }
+.pcthd > .hsel:not(:first-child) { margin-left: 3px; }   /* its own rule, not one run on from the year's */
+.pchead .pcdots, .pchead .pctsub:empty { display: none; }
+.pchead .pctsub { font-size: 11px; margin-top: 4px; }
+.pctbox { padding: 0; }
+/* the percentile chart itself is one SVG drawn to Savant's numbers (see pctSvg in app.js); these are only its inks */
+.svchart { width: 100%; }
+.svpct { display: block; width: 100%; height: auto; overflow: visible; font-family: "Roboto Condensed", var(--body); }
+.svpct text { font-size: 12px; dominant-baseline: middle; }
+.svpct .svscale { dominant-baseline: auto; }
+.svpct .svsecname { font-size: 16px; font-weight: 700; fill: var(--svhead); dominant-baseline: auto; }
+.svpct .svsample { dominant-baseline: auto; }
+.svpct .svsample .svsv { font-size: 16px; font-weight: 700; fill: var(--svhead); }
+.svpct .svsample .svsu { font-size: 12px; fill: var(--svtext); }
+.svpct .svsecrule { fill: var(--svsec); }
+.svpct .svline { fill: var(--svline); }
+.svpct .svtick { fill: #ffffff; opacity: 0.3; }
+.svpct .svlbl { fill: var(--svtext); }
+.svpct .svdash { fill: none; stroke: var(--svrule); stroke-width: 1; stroke-dasharray: 6 3; }
+.svpct .svbulb { stroke: var(--surface); stroke-width: 2; }
+.svpct .svnum { fill: #ffffff; font-weight: 700; text-anchor: middle; }
+.svpct .svnum.c3 { font-size: 10px; }
+.pctbox .pctfoot { display: none; }

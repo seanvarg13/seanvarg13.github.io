@@ -161,6 +161,12 @@
   // every metric that needs a percentile: the card groups plus the row bubbles
   const union = (card, row) => { const seen = new Map(); for (const g of card) for (const m of g.metrics) if (!seen.has(m.key)) seen.set(m.key, m); for (const m of row) if (!seen.has(m.key)) seen.set(m.key, m); return [...seen.values()]; };
   const SUB = DATA.meta.hitterSub || {};      // fold-out breakdown rows under a card metric (Air% -> FB%, LD%)
+  // Batted-ball distribution, everywhere it is drawn: Air% (line drives and fly balls, never popups), Pull Air%, Pull%
+  // and Popup% as four plain rows. The Air% fold-out goes: its popup row is now a row of its own.
+  const BB_DIST = [{ key: "air", label: "Air%", hib: true, dec: 1, unit: "%" }, { key: "pull", label: "Pull Air%", hib: true, dec: 1, unit: "%" },
+                   { key: "pullp", label: "Pull%", hib: true, dec: 1, unit: "%" }, { key: "pu", label: "Popup%", hib: false, dec: 1, unit: "%" }];
+  for (const g of CARD) if (/batted-ball distribution/i.test(g.group)) g.metrics = BB_DIST.map((m) => ({ ...m }));
+  delete SUB.air; delete SUB.pull;
   const RULE_H = new Set(DATA.meta.hitterCardRules || ["ev90"]);   // hitter card rows that start a ruled-off block
   const SUB_P = DATA.meta.pitcherSub || {};   // pitcher fold-outs (K-BB% -> K%, BB% …)
   // stats the card doesn't lead with but the player page's third panel does — percentiles are computed for them too
@@ -466,14 +472,14 @@
     const m = p.m;
     if (m._full && m._xm === state.xmodel) return m;
     if (m._sav === undefined) m._sav = seasonXwSav(p) ?? null;    // stash Statcast's before the directional one can overwrite it
-    // Air% is every ball in play that isn't a ground ball (fly balls, line drives and popups); Center% closes the spray split
+    // Air% is line drives and fly balls (never popups, which have their own row); Center% closes the spray split
     const xd = seasonXwDir(p) ?? null;                             // the directional model, re-anchored to this season
     const out = Object.assign({}, m, {
       xwoba: xDir() ? xd : m._sav,
       xws: m._sav, xwd: xd,
       zmo: m.zmo !== undefined ? m.zmo : m.zsw == null || m.osw == null ? null : Math.round(10 * (m.zsw - m.osw)) / 10,
       con: m.con !== undefined ? m.con : m.whf == null ? null : Math.round(10 * (100 - m.whf)) / 10,
-      air: m.gb != null ? Math.round(10 * (100 - m.gb)) / 10 : m.air,
+      air: m.ld != null && m.fb != null ? Math.round(10 * (m.ld + m.fb)) / 10 : m.gb != null && m.pu != null ? Math.round(10 * (100 - m.gb - m.pu)) / 10 : m.air,
       cent: m.cent !== undefined ? m.cent : m.pullp != null && m.oppo != null ? Math.round(10 * (100 - m.pullp - m.oppo)) / 10 : null,
       oppo: m.oppo !== undefined ? m.oppo : null,
       npull: m.pullp != null ? Math.round(10 * (100 - m.pullp)) / 10 : null,
@@ -556,7 +562,8 @@
         const xwSav = t.xden ? Math.round(1000 * t.xnum / t.xden) / 1000 : null;
         const xwDir = hasDir && t.wden && dirInfo().ok ? Math.round(1000 * dirInfo().scale * t.dnum / t.wden) / 1000 : null;
         const evn = t.evn || t.bbe, bipn = t.bip || t.bbe;   // EV-eligible balls (no bunts) and all balls in play; older files carry tracked BBE only
-        v = { m: { ev: evn ? Math.round(10 * t.evsum / evn) / 10 : null, brl: rate(t.brl, bipn), pull: rate(t.pullair, bden), air: rate(bden - (t.gbh || 0), bden),
+        v = { m: { ev: evn ? Math.round(10 * t.evsum / evn) / 10 : null, brl: rate(t.brl, bipn), pull: rate(t.pullair, bden),
+                   air: rate(t.air !== undefined ? (DS.airNoPU ? t.air : t.air - (t.puh || 0)) : bden - (t.gbh || 0) - (t.puh || 0), bden),   // line drives + fly balls: popups are never air
                    oppo: t.oppn === undefined ? null : rate(t.oppn, bden), cent: t.oppn === undefined ? null : rate(bden - (t.pulln || 0) - (t.oppn || 0), bden),
                    npull: rate(bden - (t.pulln || 0), bden),
                    ba: t.h === undefined || !t.ab ? null : Math.round(1000 * t.h / t.ab) / 1000, slg: t.tb === undefined || !t.ab ? null : Math.round(1000 * t.tb / t.ab) / 1000,
@@ -923,7 +930,50 @@
     colorCache.set(p, s);
     return s;
   }
-  const bubLeft = (p) => `calc(var(--bub) / 2 + (100% - var(--bub)) * ${Math.max(0, Math.min(100, p)) / 100})`;
+  // the player card's bars use Savant's own colour scale, the one in its chart's code: #3661AD at the 5th percentile,
+  // #b4cfd1 from the 45th to the 55th, #D82129 at the 95th, clamped past them and blended in Lab space (d3's
+  // interpolateLab), with each circle its bar's colour darkened a fifth of a step (d3's darker(0.2)) — exact to the unit
+  const LAB = (() => {
+    const Xn = 0.96422, Zn = 0.82521, t0 = 4 / 29, t1 = 6 / 29, t2 = 3 * t1 * t1, t3 = t1 * t1 * t1;
+    const to = (hex) => {
+      const [r, g, b] = [1, 3, 5].map((i) => { const x = parseInt(hex.slice(i, i + 2), 16) / 255; return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; });
+      const f = (t) => (t > t3 ? Math.cbrt(t) : t / t2 + t0), grey = r === g && g === b;
+      const y = f(0.2225045 * r + 0.7168786 * g + 0.0606169 * b);
+      const x = grey ? y : f((0.4360747 * r + 0.3850649 * g + 0.1430804 * b) / Xn), z = grey ? y : f((0.0139322 * r + 0.0971045 * g + 0.7141733 * b) / Zn);
+      return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
+    };
+    const from = ([l, a, bb]) => {
+      const g = (t) => (t > t1 ? t * t * t : t2 * (t - t0)), o = (x) => Math.max(0, Math.min(255, Math.round(255 * (x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055))));
+      let y = (l + 16) / 116, x = y + a / 500, z = y - bb / 200; x = Xn * g(x); y = g(y); z = Zn * g(z);
+      return [o(3.1338561 * x - 1.6168667 * y - 0.4906146 * z), o(-0.9787684 * x + 1.9161415 * y + 0.0334540 * z), o(0.0719453 * x - 0.2289914 * y + 1.4052427 * z)];
+    };
+    return { to, from };
+  })();
+  const SAVANT = [[5, LAB.to("#3661ad")], [45, LAB.to("#b4cfd1")], [55, LAB.to("#b4cfd1")], [95, LAB.to("#d82129")]];
+  const savantCache = new Map();
+  function savantStyle(p) {
+    p = Math.max(5, Math.min(95, p));
+    if (savantCache.has(p)) return savantCache.get(p);
+    let i = 1; while (i < SAVANT.length - 1 && SAVANT[i][0] < p) i++;
+    const [p0, c0] = SAVANT[i - 1], [p1, c1] = SAVANT[i], t = (p - p0) / (p1 - p0);
+    const c = LAB.from(c0.map((v, k) => v + (c1[k] - v) * t)), dk = 0.7 ** 0.2;
+    const s = { bg: `rgb(${c.join(",")})`, bub: `rgb(${c.map((v) => Math.round(v * dk)).join(",")})` };
+    savantCache.set(p, s);
+    return s;
+  }
+  // Every percentile bar on the site is Savant's bar, in Savant's pixels (the same numbers the player page's chart
+  // is drawn with, see pctSvg): a 20px bar from 10px (0th) to the track's full width (100th) over a 5px line, 2px
+  // ticks at 11px, the middle and 13px from the end, and a 20px circle in a 2px white ring centred on the bar's end.
+  const svAt = (p) => `calc(10px + (100% - 10px) * ${Math.max(0, Math.min(100, p)) / 100})`;
+  function svTrack(pct, ghost) {
+    const t = el("div", "track svtrack" + (pct == null ? " none" : ""));
+    let s = null;
+    if (pct != null) { s = savantStyle(pct); const f = el("div", "fill"); f.style.width = svAt(pct); f.style.background = s.bg; t.append(f); }
+    for (const x of ["11px", `calc(${svAt(50)} - 1px)`, "calc(100% - 13px)"]) { const tk = el("i", "tk"); tk.style.left = x; t.append(tk); }
+    if (ghost != null) { const g = el("div", "bub ghost" + (ghost >= 100 ? " c3" : ""), ghost); g.style.left = svAt(ghost); t.append(g); }
+    if (pct != null) { const b = el("div", "bub" + (pct >= 100 ? " c3" : ""), pct); b.style.left = svAt(pct); b.style.background = s.bub; t.append(b); }
+    return t;
+  }
   function paint(node, pct) { const s = pctStyle(pct); if (s) { node.style.background = s.bg; node.style.color = s.fg; } }
 
   /* ---------- formatting ---------- */
@@ -1351,6 +1401,7 @@
     return bar;
   }
   // the card's own Dates control (presets + custom range); season-level past seasons have it disabled
+  const touchScreen = () => matchMedia("(pointer: coarse)").matches;
   function renderCardDates(p) {
     const box = el("div", "datesbar");
     const can = !!DS.days;
@@ -1359,7 +1410,11 @@
       const i = el("input"); i.type = "date"; i.min = seasonFirst(); i.max = seasonLast(); i.value = state.cardWin[k] || "";
       i.setAttribute("aria-label", k); i.disabled = !can; i.title = can ? (k === "from" ? "Blank = season start" : "Blank = season end") : "Day-by-day data isn't built for this season";
       i.addEventListener("click", (e) => e.stopPropagation());
-      i.addEventListener("change", (e) => { state.cardWin[k] = e.target.value; if (k === "from" && e.target.value) state.cardWin.last = ""; if (state.cardWin.from && state.cardWin.to && state.cardWin.from > state.cardWin.to) state.cardWin[k === "from" ? "to" : "from"] = e.target.value; render(); });
+      const apply = (val) => { state.cardWin[k] = val; if (k === "from" && val) state.cardWin.last = ""; if (state.cardWin.from && state.cardWin.to && state.cardWin.from > state.cardWin.to) state.cardWin[k === "from" ? "to" : "from"] = val; render(); };
+      // a phone's date picker fires "change" the moment it opens (iOS fills in today); redrawing then would pull the box
+      // out from under the picker and shut it, so on a touch screen the date is applied when the box is left instead
+      i.addEventListener("change", (e) => { if (touchScreen() && document.activeElement === i) { i.dataset.pending = "1"; return; } apply(e.target.value); });
+      i.addEventListener("blur", () => { if (i.dataset.pending) { delete i.dataset.pending; if (i.value !== (state.cardWin[k] || "")) apply(i.value); } });
       if (k === "from" && lastN(state.cardWin)) { i.disabled = true; i.title = "Clear Last to use a start date"; }
       if (k === "to") box.append(el("span", "to", "to"));
       box.append(i);
@@ -1763,16 +1818,10 @@
   }
   function meterRow(m, v, pct, cmp) {
     const row = el("div", "meter");
-    row.append(el("div", "lbl", m.label));
-    const track = el("div", "track");
-    if (pct != null) {
-      const s = pctStyle(pct);
-      const fill = el("div", "fill"); fill.style.width = bubLeft(pct); fill.style.background = s.bg; track.append(fill);
-      const bub = el("div", "bub", pct); bub.style.left = bubLeft(pct); bub.style.background = s.bg; track.append(bub);
-    }
-    if (cmp && cmp.pct != null) { const b2 = el("div", "bub ghost", cmp.pct); b2.style.left = bubLeft(cmp.pct); track.append(b2); }
+    const lbl = el("div", "lbl"); lbl.append(el("span", "lt", m.label)); row.append(lbl);
+    const track = svTrack(pct, cmp && cmp.pct != null ? cmp.pct : null);
     row.append(track);
-    row.append(el("div", "val", v == null ? "–" : fmt(v, m)));
+    row.append(el("div", "val", v == null ? "–" : fmt(v, { ...m, unit: "" })));   // bare numbers, the way Savant prints them: 10.9, 91.9
     row.title = `${m.label}: ${v == null ? "n/a" : fmt(v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}`;
     if (cmp) {
       const cell = el("div", "cmpval");
@@ -1806,13 +1855,8 @@
     const cell = (m, s) => {
       const d = el("div", "ccell");
       const v = s.v ? metricValue(m, s.v, s.st) : null, pct = s.st ? s.st.pct[m.key] : null;
-      const track = el("div", "track");
-      if (pct != null) {
-        const c = pctStyle(pct);
-        const f = el("div", "fill"); f.style.width = bubLeft(pct); f.style.background = c.bg;
-        const b = el("div", "bub", pct); b.style.left = bubLeft(pct); b.style.background = c.bg;
-        track.append(f, b);
-      } else d.classList.add("na");
+      const track = svTrack(pct);
+      if (pct == null) d.classList.add("na");
       d.append(track, el("div", "val", v == null ? "–" : fmt(v, m)));
       d.title = `${s.label} — ${m.label}: ${v == null ? "n/a" : fmt(v, m)} (${pct == null ? "n/a" : ordinal(pct) + " pctl"})`;
       return d;
@@ -2169,14 +2213,11 @@
     box.append(el("p", "note", `Expected K% is his whiff rate${from(pv.m.whf, st.pct.whf)}; expected BB% is 53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%. Both are least-squares fits over every 300+ BF pitcher-season since 2015, re-centred so the pool's expected rates match its real ones — they land within about 2.1 and 1.4 points of the real K% and BB%, against 3.4 for the old "expected K% = Whiff%". uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. The percentile bars rank the rates uERA uses, so the line-drive and fly-ball bars are both really his air-ball rate — fewer counts as better. Blue diff: results beat the process; red: they trail it.`));
     return box;
   }
-  // a percentile bar small enough to live in a table cell — same colours and maths as the card's meters
+  // a percentile bar in a table cell: the same Savant bar as every other one
   function minibar(pct) {
     const cell = el("div", "barcell");
     if (pct == null) { cell.append(el("span", "lg", "–")); return cell; }
-    const track = el("div", "minitrack"), s = pctStyle(pct);
-    const fill = el("div", "minifill"); fill.style.width = bubLeft(pct); fill.style.background = s.bg;
-    const bub = el("div", "minibub", pct); bub.style.left = bubLeft(pct); bub.style.background = s.bg;
-    track.append(fill, bub); cell.append(track);
+    cell.append(svTrack(pct));
     cell.title = ordinal(pct) + " percentile";
     return cell;
   }
@@ -2278,18 +2319,21 @@
 
   /* ---------- player popup (Rankings / Draft / Trending) ---------- */
   // the season's counting stats: PA / AB / balls in play / games, or IP / BF / G-GS / pitches
+  // the playing time behind a line of numbers: [value, unit] pairs — PA, AB, BBE, G for a hitter; IP, BF, G / GS, pitches
+  function sampleParts(p, pv) {
+    const out = [];
+    if (p.type === "P") out.push([fmtIP(pv.ip), "IP"], [pv.bf, "BF"], [`${pv.g} / ${pv.gs}`, "G / GS"], [pv.ctx.Pitches, "pitches"]);
+    else {
+      out.push([pv.pa, "PA"], [pv.ab, "AB"]);
+      if (pv.ctx.BBE || pv.ctx.BIP == null) out.push([pv.ctx.BBE, "BBE"]); else out.push([pv.ctx.BIP, "BIP"]);
+      const gH = pv.ctx.G != null ? pv.ctx.G : careerG(p);
+      if (gH != null) out.push([gH, "G"]);
+    }
+    return out.filter(([v]) => v != null && v !== "");
+  }
   function renderStrip(p, pv) {
     const strip = el("div", "hstrip");
-    const chip = (k, v) => { const c = el("span", "hchip"); c.append(el("b", null, v), " ", k); strip.append(c); };
-    if (p.type === "P") {
-      chip("IP", fmtIP(pv.ip)); chip("BF", pv.bf);
-      chip("G / GS", `${pv.g} / ${pv.gs}`); chip("pitches", pv.ctx.Pitches);
-    } else {
-      chip("PA", pv.pa); chip("AB", pv.ab);
-      if (pv.ctx.BBE || pv.ctx.BIP == null) chip("BBE", pv.ctx.BBE); else chip("BIP", pv.ctx.BIP);
-      const gH = pv.ctx.G != null ? pv.ctx.G : careerG(p);
-      if (gH != null) chip("G", gH);
-    }
+    for (const [v, k] of sampleParts(p, pv)) { const c = el("span", "hchip"); c.append(el("b", null, String(v)), " ", k); strip.append(c); }
     return strip;
   }
   // a two-way player reads either way: the same switch on the popup card and on his own page
@@ -3072,7 +3116,7 @@
     ocon: "O-Contact%: contact per swing at pitches outside the zone.",
     k: "Strikeouts per plate appearance (per batter faced for a pitcher).",
     con: "Contact per swing — the other side of Whiff%.",
-    air: "Air%: balls in play that aren't ground balls — line drives, fly balls and popups.",
+    air: "Air%: line drives and fly balls per ball in play. Popups don't count: they have their own row.",
     fb: "Fly balls per ball in play.",
     ld: "Line drives per ball in play.",
     pu: "Popups per ball in play. For a pitcher these are nearly automatic outs.",
@@ -3192,7 +3236,29 @@
     const h = Math.round(Math.max(200, (vv ? vv.height : window.innerHeight) - top - 40));
     document.documentElement.style.setProperty("--modal-max", h + "px");
   }
-  function render() { renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage(); }
+  let holdScroll = null, lastPlayerId = null;        // scroll still owed to a player's page (see keepScroll)
+  function render() {
+    const keep = keepScroll();
+    renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage();
+    keep();
+  }
+  // A player's page is rebuilt on every pick (a season, a level, a tab, a filter). Rebuilt, it is briefly short and the
+  // window snaps to the top, and its panels' own scrollers start over. On the same player, put them all back; if the
+  // page is still loading and too short to reach that point, hold on to it for the next redraw, until the reader scrolls.
+  ["wheel", "touchmove", "keydown"].forEach((t) => window.addEventListener(t, () => { holdScroll = null; }, { passive: true }));
+  function keepScroll() {
+    const id = state.mode === "player" ? state.x.id : null;
+    const panes = () => [...document.querySelectorAll("#xboard .ppage .pscroll")];
+    const was = document.body.dataset.mode === "player" && lastPlayerId === id && id != null;
+    const want = was ? (holdScroll && holdScroll.id === id ? holdScroll : { id, y: window.scrollY, panes: panes().map((e) => e.scrollTop) }) : null;
+    lastPlayerId = id;
+    return () => {
+      if (!want) { holdScroll = null; return; }
+      if (Math.abs(window.scrollY - want.y) > 1) window.scrollTo(0, want.y);
+      panes().forEach((e, i) => { if (want.panes[i]) e.scrollTop = want.panes[i]; });
+      holdScroll = window.scrollY < want.y - 1 ? want : null;
+    };
+  }
   function renderNow() {
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = state.mode === "draftmode" || home, appear = state.mode === "appearance", fant = state.mode === "fantasy", other = player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
@@ -3700,21 +3766,24 @@
   const SAVANT_H = ["EXPW", "EXPB", "EXPS", "ev", "brl", "hh", "ss", "bs", "osw", "whf", "k", "bb"];
   // the three expected stats follow whichever model is switched on, and are always named plainly
   const expKeys = () => (xDir() ? { EXPW: "xwd", EXPB: "dxba", EXPS: "dxslg" } : { EXPW: "xws", EXPB: "xba", EXPS: "xslg" });
-  const PCT_LABEL = { xwd: "xwOBA", xws: "xwOBA", dxba: "xBA", xba: "xBA", dxslg: "xSLG", xslg: "xSLG" };
+  const PCT_LABEL = { xwd: "xwOBA", xws: "xwOBA", dxba: "xBA", xba: "xBA", dxslg: "xSLG", xslg: "xSLG",
+                      // and the rest under the names Savant prints beside its bars
+                      ev: "Avg Exit Velo", brl: "Barrel %", hh: "Hard-Hit %", ss: "LA Sweet-Spot %", bs: "Bat Speed",
+                      osw: "Chase %", whf: "Whiff %", k: "K %", bb: "BB %", fbv: "Fastball Velo", gb: "GB %", ext: "Extension",
+                      mera: "Mix ERA", strk: "Strike %", pu: "Popup %" };
   // what to show instead when a stat isn't there: Savant's own number for a season built before the
   // directional BA / SLG models, and the real result at a level with no batted-ball tracking (A, AA)
   const PCT_FALL = { xwd: ["xws", "woba"], xws: ["woba"], dxba: ["xba", "ba"], xba: ["ba"], dxslg: ["xslg", "slg"], xslg: ["slg"] };
   // an untracked level (A, AA) fills the expected stats with the real result, which would read as a model number
   const NEEDS_EV = new Set(["xwd", "xws", "dxba", "dxslg", "xba", "xslg", "ev", "brl", "hh", "ss", "bs"]);
-  // Savant's pitchers run xERA, fastball velo, fastball / curve spin, avg EV, Chase%, Whiff%, K%, BB%, Barrel%,
-  // Hard-Hit%, GB%, Extension — uERA stands in for xERA, and spin isn't collected here.
-  const SAVANT_P = ["uera", "fbv", "ev", "osw", "whf", "k", "bb", "brl", "hh", "gb", "ext"];
+  // the pitchers' list is the site's own: uERA, Mix ERA (what his batted-ball mix is worth), Whiff%, Strike%, GB%,
+  // Popup%, then fastball velo and extension
+  const SAVANT_P = ["uera", "mera", "whf", "strk", "gb", "pu", "fbv", "ext"];
   // the third panel: four tabs of everything the middle one doesn't lead with. Each tab is a list of blocks,
-  // and a block break is a rule across the bars — the batted-ball tab reads air / ground, then the four types,
-  // then pull air.
-  const EXTRA_H = [["Discipline", [["zsw", "osw", "zmo", "swing"]]],
+  // and a block break is a rule across the bars; the batted-ball tab is the site's batted-ball distribution.
+  const EXTRA_H = [["Discipline", [["zsw", "osw"]]],
                    ["Contact", [["zcon", "ocon", "whf"]]],
-                   ["Batted ball", [["air", "gb", "pull"], ["ld", "fb", "gb", "pu"]]],
+                   ["Batted ball", [["air", "pull", "pullp", "pu"]]],
                    ["Quality", [["ev", "brl", "hh", "bs", "ev90", "maxev"]]]];
   const EXTRA_P = [["Run prev.", [["era", "kbb"], ["nera", "mera", "siera", "fip"]]],
                    ["K and BB", [["uk", "ubb", "ukb"], ["wsgp", "csw", "swstr"]]],
@@ -3804,8 +3873,21 @@
       }
       const ts = typeSeg(p); if (ts) box.append(paRow("Side", ts));
     }
-    box.append(renderSplitPanel(p));                    // handedness, venue, the expected model and the date boxes
-    box.append(paRow("Sample", renderStrip(p, V(p))));
+    // the split panel's pieces, each on its own labelled row: handedness, venue, the expected model, dates, last N
+    const sp = renderSplitPanel(p), part = (sel) => sp.querySelector(sel);
+    const hand = part('.seg[aria-label="Handedness"]'), venue = part('.seg[aria-label="Venue"]'), xm = part('.seg[aria-label="Expected stats"]');
+    if (hand) box.append(paRow("Hand", hand));
+    if (venue) box.append(paRow("Venue", venue));
+    if (xm) box.append(paRow("xwOBA", xm));
+    const db = part(".datesbar");
+    if (db) {
+      const lr = db.querySelector(".lastrow");
+      for (const t of [...db.querySelectorAll(".to")]) if (t.textContent === "Dates" || t.textContent === "Last") t.remove();
+      if (lr) lr.remove();
+      box.append(paRow("Dates", db));
+      if (lr) box.append(paRow("Last", lr));
+    }
+    const warn = part(".splitwarn"); if (warn) box.append(warn);
     const acts = el("div", "pacts"); acts.append(renderStarControl(p));
     if (state.mode === "draft") {
       const drafted = draftedIds().has(p.id);
@@ -3813,7 +3895,7 @@
       d.addEventListener("click", () => { drafted ? undraft(p.id) : draft(p); });
       acts.append(d);
     }
-    box.append(paRow("Actions", acts));
+    box.append(paRow("", acts));
     return box;
   }
   const paRow = (label, node) => { const r = el("div", "parow"); r.append(el("span", "palbl", label), node); return r; };
@@ -3903,10 +3985,11 @@
     if (pts.length < 3) return null;
     const lg = leagueX(ref);
     const arr = (pool(ref).sorted || {})[dir ? "xwd" : "xws"];        // colour the line the way the bars are coloured
-    const col = arr && arr.length ? (v) => pctStyle(insertPct(arr, v)).bg : null;
+    const col = arr && arr.length ? (v) => savantStyle(insertPct(arr, v)).bg : null;
     const box = el("div", "rollbox");
-    box.append(panelHead(`${ROLL_PA} PAs`, `Rolling ${dir ? "dxwOBA" : "xwOBA"}`));
-    box.append(rollChart(pts, lg, col));
+    const hd = el("div", "rollhd");                    // a section heading like the percentile panel's: bold name on the teal rule
+    hd.append(el("span", "rollname", `Rolling ${dir ? "dxwOBA" : "xwOBA"}`), el("span", "rollsub", `every ${ROLL_PA} PA`));
+    box.append(hd, rollChart(pts, lg, col));
     return box;
   }
   // the pool's own average of whichever expected model is on, for the dashed league line
@@ -3915,47 +3998,77 @@
     if (!arr || !arr.length) return null;
     return arr.reduce((a, b) => a + b, 0) / arr.length;
   }
-  let rollN = 0;
+  // The rolling line, laid out on the bars above it: its y labels right-aligned where their labels end (120px in),
+  // the plot across the bar column, the league line's value and his latest in the value column, 12px grey type,
+  // month labels under it. Drawn at its real width (redrawn when the panel resizes), so nothing in it is scaled.
+  let rollRO = null, rollN = 0;
   function rollChart(pts, lg, col) {
-    const W = 300, H = 96, L = 26, R = 32, T = 8, B = 12;   // room at the right for Savant's LG AVG label, outside the plot
+    const host = el("div", "rollchart");
+    const draw = () => {
+      const W = Math.max(260, Math.round(host.getBoundingClientRect().width) || 360);
+      if (host.dataset.w === String(W) && host.firstChild) return;
+      host.dataset.w = String(W);
+      host.replaceChildren(rollSvg(pts, lg, col, W));
+    };
+    host.append(rollSvg(pts, lg, col, 360));
+    if (window.ResizeObserver) { if (rollRO) rollRO.disconnect(); rollRO = new ResizeObserver(draw); rollRO.observe(host); }
+    return host;
+  }
+  // x walks the game days he played, not the calendar (Savant's way): a month on the injured list is a step, not a
+  // long flat run. Months are labelled under their first game.
+  function rollSvg(pts, lg, col, W) {
+    const H = 132, L = 125, R = W - 40, T = 8, B = H - 22;
     const ys = pts.map((q) => q[1]);
     let y0 = Math.min(0.24, Math.floor(Math.min(...ys) * 20) / 20), y1 = Math.max(0.42, Math.ceil(Math.max(...ys) * 20) / 20);
     if (lg != null) { y0 = Math.min(y0, lg - 0.02); y1 = Math.max(y1, lg + 0.02); }
-    const N = pts.length - 1;                                 // Savant walks the plate appearances, not the calendar:
-    const px = (i) => L + (W - L - R) * (N ? i / N : 0.5);    // a month on the injured list is a gap in the line, not a flat run
-    const py = (v) => T + (H - T - B) * (1 - (v - y0) / (y1 - y0));
-    const ns = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(ns, "svg");
-    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("class", "rollsvg");
-    const mk = (t, at) => { const n = document.createElementNS(ns, t); for (const k in at) n.setAttribute(k, at[k]); return n; };
-    for (let v = Math.ceil(y0 * 10) / 10; v <= y1 + 1e-9; v += 0.1) {
-      svg.append(mk("line", { x1: L, x2: W - R, y1: py(v), y2: py(v), class: "rgrid" }));
-      const t = mk("text", { x: L - 4, y: py(v) + 3, class: "rtick" }); t.textContent = v.toFixed(3).slice(1); svg.append(t);
+    const N = pts.length - 1;
+    const px = (i) => L + (R - L) * (N ? i / N : 0.5);
+    const py = (v) => T + (B - T) * (1 - (v - y0) / (y1 - y0));
+    const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
+    const svg = mk("svg", { class: "rollsvg", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Rolling xwOBA" });
+    const step = y1 - y0 > 0.25 ? 0.1 : 0.05;
+    for (let v = Math.ceil(y0 / step - 1e-9) * step; v <= y1 + 1e-9; v += step) {
+      svg.append(mk("line", { class: "rgrid", x1: L, x2: R, y1: py(v), y2: py(v) }));
+      svg.append(mk("text", { class: "rtick", x: L - 5, y: py(v) }, v.toFixed(3).slice(1)));
     }
-    svg.append(mk("line", { x1: L, x2: L, y1: T, y2: H - B, class: "raxis" }));
-    if (lg != null) {
-      svg.append(mk("line", { x1: L, x2: W - R, y1: py(lg), y2: py(lg), class: "rlg" }));
-      const t = mk("text", { x: W - R + 4, y: py(lg) + 2.5, class: "rlglbl" }); t.textContent = "LG AVG"; svg.append(t);
+    svg.append(mk("line", { class: "raxis", x1: L, x2: L, y1: T, y2: B }));
+    const days = seasonDays(), MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const mons = [];
+    pts.forEach((q, i) => {
+      const ds = days && days[q[0]]; if (!ds) return;
+      const mo = Number(ds.slice(5, 7)) - 1;
+      if (!mons.length || mons[mons.length - 1][2] !== mo) mons.push([px(i), MON[mo], mo]);
+    });
+    mons.forEach(([x, name], i) => {                    // a label too close to the next one (a partial first month) is left out
+      if ((mons[i + 1] && mons[i + 1][0] - x < 30) || x > R - 16) return;
+      svg.append(mk("text", { class: "rmon", x, y: H - 5 }, name));
+    });
+    if (lg != null) {                                   // the league line, labelled outside the plot where the values sit
+      svg.append(mk("line", { class: "rlg", x1: L, x2: R, y1: py(lg), y2: py(lg) }));
+      svg.append(mk("text", { class: "rlglbl", x: W, y: py(lg) - 6 }, "LG AVG"));
+      svg.append(mk("text", { class: "rtick", x: W, y: py(lg) + 7 }, lg.toFixed(3).slice(1)));
     }
-    let stroke = null;
-    if (col) {                                            // one gradient stop per point: the line reads like the bars do
-      const id = "rg" + ++rollN, g = mk("linearGradient", { id, gradientUnits: "userSpaceOnUse", x1: L, y1: 0, x2: W - R, y2: 0 });
-      const span = (W - L - R) || 1;
+    let stroke = savantStyle(95).bg;
+    if (col) {                                          // one gradient stop per point: the line reads like the bars do
+      const id = "rg" + ++rollN, g = mk("linearGradient", { id, gradientUnits: "userSpaceOnUse", x1: L, y1: 0, x2: R, y2: 0 });
+      const span = (R - L) || 1;
       pts.forEach((q, i) => g.append(mk("stop", { offset: (100 * (px(i) - L) / span).toFixed(2) + "%", "stop-color": col(q[1]) })));
       const defs = mk("defs"); defs.append(g); svg.append(defs);
       stroke = `url(#${id})`;
     }
-    const line = mk("path", { d: pts.map((q, i) => `${i ? "L" : "M"}${px(i).toFixed(1)} ${py(q[1]).toFixed(1)}`).join(" "), class: "rline" });
-    if (stroke) line.setAttribute("stroke", stroke);
-    svg.append(line);
+    svg.append(mk("path", { class: "rline", stroke, d: pts.map((q, i) => `${i ? "L" : "M"}${px(i).toFixed(1)} ${py(q[1]).toFixed(1)}`).join(" ") }));
+    const last = pts[N], lc = col ? col(last[1]) : savantStyle(95).bg;
+    svg.append(mk("circle", { class: "rdot", cx: px(N), cy: py(last[1]), r: 3.5, fill: lc }));
     return svg;
   }
-  // the pitcher's version of the same bottom panel: what his process says the ERA should be, against what it is
+  // the pitcher's version of the same foot panel: what his process says the ERA should be, against what it is
   function renderUeraBox(p, st) {
     if (p.type !== "P" || !st || st.uera == null || !st.ukbb) return null;
     const pv = V(p), ik = st.ukbb;
     const box = el("div", "rollbox uerabox");
-    box.append(panelHead("uERA", st.uera.toFixed(2), st.pct.uera == null ? null : `${ordinal(st.pct.uera)} percentile`));
+    const hd = el("div", "rollhd");
+    hd.append(el("span", "rollname", `uERA ${st.uera.toFixed(2)}`), el("span", "rollsub", st.pct.uera == null ? "" : `${ordinal(st.pct.uera)} percentile`));
+    box.append(hd);
     const t = el("table", "ubt");
     t.append(colgroup([null, 60, 60, 56]));
     const hr = el("tr");
@@ -3982,22 +4095,23 @@
     const pv = V(p), all = allFor(g);
     col.append(panelHead(...pctTitle(p, nav)));
     const body = el("div", "pscroll pctbox");
-    const meters = el("div", "meters");
     const noEV = DS.tracked != null && DS.tracked < 0.05;
     const exp = expKeys();
     const val = (k) => { const m = all.find((x) => x.key === k); if (!m || (noEV && NEEDS_EV.has(k))) return null; const v = metricValue(m, pv, st); return v == null ? null : { m, v, k }; };
-    meters.append(pctScale());
+    const rows = [];
     for (const key0 of (p.type === "H" ? SAVANT_H : SAVANT_P)) {
       const start = exp[key0] || key0;
       let got = val(start);
       for (const alt of (!got && PCT_FALL[start]) || []) { got = val(alt); if (got) break; }
       if (!got) continue;
       const m = PCT_LABEL[got.k] ? Object.assign({}, got.m, { label: PCT_LABEL[got.k] }) : got.m;
-      meters.append(meterRow(m, got.v, st.pct[got.k]));
+      const pct = st.pct[got.k];
+      rows.push({ label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null,
+                  tip: `${m.label}: ${fmt(got.v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}` });
     }
-    body.append(meters);
+    body.append(pctChart([{ title: p.type === "H" ? "Batting" : "Pitching", sample: sampleParts(p, pv), rows }]));
     const vl = viewLabel(p.type);
-    body.append(el("p", "pctfoot", `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`));
+    col.title = `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`;   // Savant prints no footer: the pool is in the hover
     col.append(body);
   }
   // "2026 MLB Percentile Rankings", with the year and the level as the pickers for the whole page
@@ -4019,17 +4133,87 @@
                           (k) => { if (k !== cur[0]) nav.goTo(k); }, "lv");
     return [yr, [lv, " Percentile Rankings"]];
   }
-  // Savant's scale strip: POOR at the left of the track, AVERAGE at its middle, GREAT at its right
-  function pctScale() {
-    const row = el("div", "meter pctscale");
-    row.append(el("div", "lbl"));
-    const t = el("div", "track");
-    for (const [at, name] of [[0, "Poor"], [50, "Average"], [100, "Great"]]) {
-      const s = el("div", "sc p" + at); s.append(el("i", null, name), el("b", null, "▲"));
-      t.append(s);
+  // Savant's percentile chart, drawn the way its own code draws it (one SVG, D3's numbers). The drawing is as wide
+  // as its box and 20 in from each side (Savant never goes under 400 and shrinks instead; here every bar on the site
+  // stays one size). Each section is a 16px bold name 40 in (where Savant's silhouette ends; the silhouette is left
+  // out) on a 2px teal rule 34 down; a row every 23, the bar 85 in from the labels and as wide as what's left after
+  // the labels (40 + 85) and the values (35), running from 10 (0th) to its full width (100th) over a 5-tall line;
+  // ticks at 12, the middle and 12 from the end, a 10-radius circle with a 2px white ring centred on the bar's end,
+  // 12px type throughout (10px for a 100), and dashed rules above every row but the first, under label and value only
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  let pctRO = null;
+  function pctChart(groups) {
+    const host = el("div", "svchart");
+    const draw = () => {
+      const bw = host.getBoundingClientRect().width;
+      const W = Math.max(300, Math.round(bw) || 400);   // drawn at its real size, like every other bar (Savant shrinks under 400)
+      if (host.dataset.w === String(W) && host.firstChild) return;
+      host.dataset.w = String(W);
+      host.replaceChildren(pctSvg(groups, W));
+    };
+    host.append(pctSvg(groups, 400));
+    if (window.ResizeObserver) {
+      if (pctRO) pctRO.disconnect();
+      pctRO = new ResizeObserver(draw); pctRO.observe(host);
     }
-    row.append(t, el("div", "val"));
-    return row;
+    return host;
+  }
+  function pctSvg(groups, W) {
+    const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
+    const r6 = W - 40, bar = r6 - 40 - 85 - 35;                  // the rule's width, the bar's width
+    const x = (p) => 10 + (bar - 10) * Math.max(0, Math.min(100, p)) / 100;
+    const root = mk("g", { transform: "translate(20,10)" });
+    let y = 0;
+    groups.forEach((g, gi) => {
+      const first = gi === 0, G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
+      G.append(mk("rect", { class: "svsecrule", x: 0, y: 34, width: r6, height: 2 }));
+      if (g.sample && g.sample.length) {                 // the playing time where Savant names the section: bold numbers, grey units
+        const t = mk("text", { class: "svsample", x: 0, y: 28 });
+        g.sample.forEach(([v, u], i) => {
+          t.append(mk("tspan", { class: "svsv", dx: i ? 14 : 0 }, String(v)), mk("tspan", { class: "svsu", dx: 4 }, u));
+        });
+        t.append(mk("title", {}, g.title));
+        G.append(t);
+      } else G.append(mk("text", { class: "svsecname", x: 40, y: 28 }, g.title));
+      if (first) {                                               // POOR / AVERAGE / GREAT, each arrow over its tick
+        const S = mk("g", { transform: "translate(125,54)" });
+        const tri = (cx) => `M${cx},2L${cx - 3},8L${cx + 3},8Z`;
+        const c0 = savantStyle(0).bg, c50 = savantStyle(50).bg, c100 = savantStyle(100).bg;
+        S.append(mk("path", { d: tri(12), fill: c0 }), mk("path", { d: tri(x(50)), fill: c50 }), mk("path", { d: tri(bar - 12), fill: c100 }));
+        S.append(mk("text", { class: "svscale", fill: c0 }, "POOR"),
+                 mk("text", { class: "svscale", x: x(50), "text-anchor": "middle", fill: c50 }, "AVERAGE"),
+                 mk("text", { class: "svscale", x: x(100), "text-anchor": "end", fill: c100 }, "GREAT"));
+        G.append(S);
+      }
+      const R = mk("g", { transform: `translate(40,${44 + (first ? 20 : 0)})` });
+      g.rows.forEach((r, i) => {
+        const M = mk("g", { class: "svrow", transform: `translate(0,${i * 23})` });
+        M.append(mk("title", {}, r.tip));
+        const on = r.pct != null, s = on ? savantStyle(r.pct) : null;
+        const B = mk("g", { transform: "translate(85,0)", opacity: on ? 1 : 0.35 });
+        B.append(mk("rect", { class: "svline", width: bar, height: 5, y: 7.5 }));
+        if (on) B.append(mk("rect", { width: x(r.pct), height: 20, y: 0, fill: s.bg }));
+        for (const tx of [x(50) - 1, 11, bar - 13]) B.append(mk("rect", { class: "svtick", width: 2, height: 20, x: tx }));
+        M.append(B);
+        M.append(mk("text", { class: "svlbl", x: 80, y: 10, "text-anchor": "end" }, r.label));
+        M.append(mk("text", { class: "svlbl", x: 85 + bar + 35, y: 10, "text-anchor": "end" }, r.value));
+        if (i) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + 35},-1.5` }));
+        if (on) {
+          const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
+          C.append(mk("circle", { class: "svbulb", r: 10, fill: s.bub }));
+          C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : ""), y: 1 }, r.pct));
+          M.append(C);
+        }
+        R.append(M);
+      });
+      G.append(R);
+      root.append(G);
+      y += g.rows.length * 23 + 34 + 10 + (first ? 20 : 0);
+    });
+    const H = y + 20;
+    const svg = mk("svg", { class: "svpct", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Percentile rankings" });
+    svg.append(root);
+    return svg;
   }
   // a word of the title that is also a picker: the word itself is the button, and the list drops under it
   let HSEL = null;                                     // which title picker is open, if any
@@ -4179,7 +4363,7 @@
         if (f.dataset.key.startsWith("pgrp:")) f.remove(); }
       belowCard = card;                                  // the rest of it fills the Advanced tab below
       C.append(cbody);
-      const foot = p.type === "H" ? renderRolling(p, g) : renderUeraBox(p, st);   // pinned to the bottom of the box: the tabs scroll, this never does
+      const foot = p.type === "H" ? renderRolling(p, g) : renderUeraBox(p, st);   // pinned to the foot of the box: the tabs scroll, this never does
       if (foot) C.append(foot);
       page.append(A, B, C); box.append(page);
       box.append(renderBelow(p));
@@ -4305,11 +4489,10 @@
     const groups = type === "H" ? CARD : CARD_P;
     const cell = (m, col) => {
       const d = el("div", "ccell");
-      if (!col.st) { d.classList.add("na"); d.append(el("div", "track"), el("div", "val", "–")); return d; }
+      if (!col.st) { d.classList.add("na"); d.append(svTrack(null), el("div", "val", "–")); return d; }
       const v = metricValue(m, col.v, col.st), pct = col.st.pct[m.key];
-      const track = el("div", "track");
-      if (pct != null) { const s = pctStyle(pct); const f = el("div", "fill"); f.style.width = bubLeft(pct); f.style.background = s.bg; track.append(f); const b = el("div", "bub", pct); b.style.left = bubLeft(pct); b.style.background = s.bg; track.append(b); }
-      else d.classList.add("na");
+      const track = svTrack(pct);
+      if (pct == null) d.classList.add("na");
       d.append(track, el("div", "val", v == null ? "–" : fmt(v, m)));
       d.title = `${col.entry.name} ${col.cur[1]} — ${m.label}: ${v == null ? "n/a" : fmt(v, m)} (${pct == null ? "n/a" : ordinal(pct) + " pctl"})`;
       return d;
