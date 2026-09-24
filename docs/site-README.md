@@ -345,6 +345,9 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
 - **The title** (`pageTitle()`), in the plate and pinned with it: "**2026 MLB Percentiles**", bold, in the name's ink.
   The year and the level are the season pickers for the whole page (`titleSelect()`): each is a word over a dotted
   rule.
+- **Percentile bars, two looks** (Appearance ▸ Percentile bars, `state.bars`, per device): **Savant charts** (the
+  default, below) or **Classic meters**, the older look — `meterRow()` rows with a pale rounded track, a big white-ringed
+  bubble, the value bold with its unit, dashed rules between rows and the pool under the sections (`.pctclassic`).
 - **The percentile sections** (`renderPctPanel`): two columns of headed sections, drawn by the site's own SVG
   code (`pctSvg`) in the style of Savant's charts. Hitters (`PCT_COLS_H`): Results (wOBA, xwOBA, xBA, xSLG — the expected three the directional model's),
   Batted-Ball Quality, then Swing Decisions (Z-Swing%, O-Swing%, BB%), Contact and Batted-Ball Distribution.
