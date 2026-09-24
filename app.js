@@ -1788,7 +1788,7 @@
     const track = el("div", "track");
     if (pct != null) {
       const s = savantStyle(pct);
-      const fill = el("div", "fill"); fill.style.width = svLeft(pct); fill.style.background = s.bg; track.append(fill);
+      const fill = el("div", "fill"); fill.style.width = `max(0px, ${svLeft(pct)} - var(--u) * 29.5)`; fill.style.background = s.bg; track.append(fill);
       const bub = el("div", "bub" + (pct >= 100 ? " c3" : ""), pct); bub.style.left = svLeft(pct); bub.style.background = s.bub; track.append(bub);
     }
     // the ticks run the bar's full height where the fill has reached them, and only across the thin line past it

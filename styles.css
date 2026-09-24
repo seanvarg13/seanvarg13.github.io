@@ -2167,14 +2167,17 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 :root:root .meters .meter .track { position: relative; height: calc(var(--u) * 54); margin: 0; border: 0; border-radius: 0; overflow: visible;
   background: linear-gradient(var(--svline), var(--svline)) left center / 100% calc(var(--u) * 13) no-repeat; }
 :root:root .meters .meter .track::after { display: none; }
-:root:root .meters .meter .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0; min-width: 0; }
+:root:root .meters .meter .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0; min-width: 0;
+  box-shadow: inset calc(var(--u) * 1.5) calc(var(--u) * -1.5) 0 rgba(0, 0, 0, 0.07), inset calc(var(--u) * -1.5) 0 0 rgba(0, 0, 0, 0.07); }
 :root:root .meters .meter .tk { position: absolute; top: 50%; height: calc(var(--u) * 13); width: calc(var(--u) * 5);
   transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.28); z-index: 1; pointer-events: none; }
 :root:root .meters .meter .tk.on { height: 100%; }
 :root:root .meters .meter .bub { position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 2;
   width: calc(var(--u) * 48); height: calc(var(--u) * 48); min-width: 0; padding: 0; border: 0; border-radius: 50%;
-  display: grid; place-items: center; box-shadow: 0 0 0 calc(var(--u) * 5.5) var(--surface);
-  color: #ffffff; text-shadow: none; font-family: "Roboto Condensed", var(--body); font-size: calc(var(--u) * 33); font-weight: 700;
+  display: grid; place-items: center;
+  box-shadow: inset calc(var(--u) * -1.5) calc(var(--u) * -1.5) calc(var(--u) * 1.5) rgba(0, 0, 0, 0.12), 0 0 0 calc(var(--u) * 5.5) var(--surface);
+  color: #ffffff; text-shadow: 0 0 calc(var(--u) * 1.5) rgba(0, 0, 0, 0.5);
+  font-family: "Roboto Condensed", var(--body); font-size: calc(var(--u) * 33); font-weight: 700;
   line-height: 1; letter-spacing: 0; font-variant-numeric: normal; }
 :root:root .meters .meter .bub.c3 { font-size: calc(var(--u) * 27); letter-spacing: -0.02em; }
 :root:root .meters .meter .bub.ghost { background: var(--surface) !important; color: var(--ink-2); border: calc(var(--u) * 3) solid var(--ink-2);
