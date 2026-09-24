@@ -24,8 +24,9 @@ SEASON_START = f"{SEASON}-03-01"
 # ---- pools & eligibility -------------------------------------------------------------------
 GAME_TYPES = {"R"}           # Statcast game types to keep: R regular season; S spring; F/D/L/W postseason (build_history sets these)
 API_GAME_TYPE = "R"          # the MLB Stats API game type for official AB / IP / ERA (R, S or P)
-MIN_PA_HITTER = 20           # floor for shipping a hitter in data.js (the page applies the user's Min AB)
-MIN_BF_PITCHER = 20          # floor for shipping a pitcher (the page applies the user's Min IP)
+MIN_PA_HITTER = 1            # floor for shipping a hitter in data.js: everyone who played, so a call-up's page is there
+MIN_BF_PITCHER = 1           # (was 20 — a 12-BF debut start left River Ryan off the site); the page applies Min AB / IP
+CONST_MIN_BF = 20            # the league constants are still derived from pitchers with a real sample
 STARTER_SHARE = 0.5          # GS / G at or above this = SP, else RP
 WOBA_SCALE = 1.25            # runs per PA per point of wOBA (FanGraphs' yearly value sits at 1.2-1.3)
 BB_TYPES = ["gb", "ld", "fb", "pu"]   # batted-ball types for the luck-neutral ERA (untyped balls in play use the BIP average)
@@ -913,7 +914,7 @@ def main():
     days = {day: i for i, day in enumerate(days_list)}
     days_h, days_p = daily(d, days)
     hitters = build_hitters(hit, sav, people, days_h, xw, bsp)
-    consts = league_constants(pit[pit.BF >= MIN_BF_PITCHER], people)
+    consts = league_constants(pit[pit.BF >= CONST_MIN_BF], people)
     log(f"  league ERA {consts['lgERA']}, FIP constant {consts['fipC']}, SIERA shift {consts['sieraShift']}")
     pitchers = build_pitchers(pit, people, days_p, consts)
     meta = {

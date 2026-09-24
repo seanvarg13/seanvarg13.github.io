@@ -2589,3 +2589,22 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .rawstats.simple td.tm { max-width: 74px; }
 .rawstats .lvtag { font-size: 0.85em; font-weight: 700; color: var(--accent-2-text); }
 :root[data-view="mobile"] .rawstats.simple td.tm { max-width: 64px; }
+/* Season Stats by year: a year that opens (▸) is clickable; its levels and clubs sit indented under it */
+.rawstats tr.haskids { cursor: pointer; }
+.rawstats tr.haskids:hover td { background: color-mix(in srgb, var(--accent-2) 10%, transparent); }
+.rawstats .yrtog { border: 0; background: none; padding: 0 5px 0 0; margin: 0; font: inherit; font-size: 0.8em; color: var(--accent-2-text); cursor: pointer; }
+.rawstats tr.sub td { font-size: 0.92em; color: var(--ink-2); background: color-mix(in srgb, var(--accent-2) 6%, transparent); }
+.rawstats tr.sub td:nth-child(2), .rawstats tr.sub td.tm { padding-left: 14px; }
+.rawstats tr.sub2 td.tm { padding-left: 26px; }
+:root[data-view="mobile"] .rawstats tr.sub td.tm { padding-left: 8px; }
+:root[data-view="mobile"] .rawstats tr.sub2 td.tm { padding-left: 14px; }
+:root[data-view="mobile"] .rawstats.simple th, :root[data-view="mobile"] .rawstats.simple td { padding-left: 3px; padding-right: 3px; font-size: 12px; }
+:root[data-view="mobile"] .rawstats.simple td.tm { max-width: 50px; }
+:root[data-view="mobile"] .rawstats .yrtog { padding-right: 2px; }
+/* a phone: the level(s) as a small line under the year, so the year column stays narrow and the club gets the room */
+:root[data-view="mobile"] .rawstats .lvtag { display: block; font-size: 10px; line-height: 1.2; letter-spacing: 0.02em; }
+:root[data-view="mobile"] .rawstats tr.sub .lvtag { display: inline; font-size: 11px; }
+:root[data-view="mobile"] .rawstats.simple td.tm { max-width: 64px; }
+:root[data-view="mobile"] .rawstats.simple.pit td.tm { max-width: 50px; }
+:root[data-view="mobile"] .rawstats.simple.pit th, :root[data-view="mobile"] .rawstats.simple.pit td { padding-left: 2px; padding-right: 2px; }
+:root[data-view="mobile"] .rawstats tr.sub td.tm, :root[data-view="mobile"] .rawstats tr.sub2 td.tm { padding-left: 2px; }

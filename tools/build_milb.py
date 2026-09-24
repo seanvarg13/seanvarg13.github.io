@@ -310,15 +310,16 @@ def build_season(year: int, level: str = "aaa"):
     daily_h, daily_p = bd.daily(d, days)
     g = d[d["bbt"]].groupby("batter")
     sav = pd.DataFrame({"Air_pct": 100 * g["air"].mean(), "PullAir_pct": 100 * g["pullair"].mean()})
-    hit_ids = hit[hit.PA >= bd.MIN_PA_HITTER].index
-    pit_ids = pit[pit.BF >= bd.MIN_BF_PITCHER].index
+    floor = getattr(bd, "CONST_MIN_BF", 20)                  # the minors keep a real floor: MLB ships everyone, not them
+    hit_ids = hit[hit.PA >= max(bd.MIN_PA_HITTER, floor)].index
+    pit_ids = pit[pit.BF >= max(bd.MIN_BF_PITCHER, floor)].index
     people = milb_people(sorted(set(hit_ids) | set(pit_ids)), year)
     empty = pd.Series(dtype=float)
     hitters = bd.build_hitters(hit, sav, people, rows_h, empty, empty)
     if tracked < 0.05:                                      # nothing tracked: an "xwOBA" would just be K/BB outcomes
         for h in hitters:
             h["m"]["xwoba"] = None
-    consts = bd.league_constants(pit[pit.BF >= bd.MIN_BF_PITCHER], people)
+    consts = bd.league_constants(pit[pit.BF >= floor], people)
     pitchers = bd.build_pitchers(pit, people, rows_p, consts)
     for q in pitchers:
         for r in rows_p.get(q["id"], []):
