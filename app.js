@@ -194,7 +194,7 @@
     mode: "rankings",
     posAlso: Array.isArray(prefs.posAlso) ? prefs.posAlso : [],
     ptab: prefs.ptab || "",
-    rollPA: [50, 100, 150, 200, 250, 300].includes(prefs.rollPA) ? prefs.rollPA : 100,
+    rollPA: prefs.rollPA >= 25 && prefs.rollPA <= 300 && prefs.rollPA % 25 === 0 ? prefs.rollPA : 100,
     pbtab: prefs.pbtab || "",
     pos: prefs.pos || "ALL",
     q: "",
@@ -3959,94 +3959,97 @@
   }
 
   // Savant's rolling line: expected wOBA over a trailing window of plate appearances, across the whole season
-  const ROLL_OPTS = [50, 100, 150, 200, 250, 300];        // the rolling window, in plate appearances
+  const ROLL_OPTS = Array.from({ length: 12 }, (_, i) => 25 * (i + 1));   // the rolling window: 25 to 300 PA
+  // The rolling line under the percentile bars: xwOBA over a hitter's last N plate appearances, K−BB% over the last N
+  // batters a pitcher faced. Days are the unit (a day's PAs move in and out together), so a window holds at least N.
+  // Each point keeps the season PA count its window ends on and the day, for the hover.
   function renderRolling(p, ref) {
-    if (p.type !== "H" || DS.noStatcast) return null;
-    const N = state.rollPA || 100;
-    const f = DF.H, iPA = f.indexOf("pa"), dir = xDir();
-    const iN = f.indexOf(dir ? "dnum" : "xnum"), iD = f.indexOf(dir ? "wden" : "xden");
-    if (iPA < 0 || iN < 0 || iD < 0) return null;
+    const H = p.type === "H";
+    if (H && DS.noStatcast) return null;
+    const N = state.rollPA || 100, f = DF[p.type], dir = xDir();
+    const ix = (k) => f.indexOf(k);
+    const cols = H ? [ix("pa"), ix(dir ? "dnum" : "xnum"), ix(dir ? "wden" : "xden")] : [ix("bf"), ix("k"), ix("bb")];
+    if (cols.some((i) => i < 0)) return null;
+    const scale = H ? (dir ? (dirInfo().ok ? dirInfo().scale : null) : 1) : 1;
+    if (scale == null) return null;
     const sp = SPLIT, hand = sp.hand === "L" ? 0 : sp.hand === "R" ? 1 : -1, home = sp.venue === "home" ? 1 : sp.venue === "away" ? 0 : -1;
     const by = new Map();
     for (const row of rowsOf(p)) {
       if ((hand >= 0 && row[1] !== hand) || (home >= 0 && row[2] !== home)) continue;
       const e = by.get(row[0]) || [0, 0, 0];
-      e[0] += row[iPA] || 0; e[1] += row[iN] || 0; e[2] += row[iD] || 0;
+      for (let k = 0; k < 3; k++) e[k] += row[cols[k]] || 0;
       by.set(row[0], e);
     }
     const days = [...by.keys()].sort((x, y) => x - y);
     if (!days.length) return null;
-    const scale = dir ? (dirInfo().ok ? dirInfo().scale : null) : 1;
-    if (scale == null) return null;
+    const val = H ? (a, b, c) => (c > 0 ? scale * b / c : null) : (a, b, c) => (a > 0 ? 100 * (b - c) / a : null);
     const pts = [];
-    let lo = 0, pa = 0, num = 0, den = 0;
+    let lo = 0, n = 0, x = 0, y = 0, total = 0;
     for (let j = 0; j < days.length; j++) {
-      const d = by.get(days[j]); pa += d[0]; num += d[1]; den += d[2];
-      while (lo < j && pa - by.get(days[lo])[0] >= N) { const o = by.get(days[lo]); pa -= o[0]; num -= o[1]; den -= o[2]; lo++; }
-      if (pa >= N && den > 0) pts.push([days[j], scale * num / den]);
+      const d = by.get(days[j]); n += d[0]; x += d[1]; y += d[2]; total += d[0];
+      while (lo < j && n - by.get(days[lo])[0] >= N) { const o = by.get(days[lo]); n -= o[0]; x -= o[1]; y -= o[2]; lo++; }
+      const v = n >= N ? val(n, x, y) : null;
+      if (v != null) pts.push({ day: days[j], v, end: total, from: total - n + 1 });
     }
-    const lg = leagueX(ref);
-    const arr = (pool(ref).sorted || {})[dir ? "xwd" : "xws"];        // colour the line the way the bars are coloured
+    const key = H ? (dir ? "xwd" : "xws") : "kbb";
+    const arr = (pool(ref).sorted || {})[key];         // the league line and the colours come from the same pool as the bars
+    const lg = arr && arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
     const col = arr && arr.length ? (v) => savantStyle(insertPct(arr, v)).bg : null;
+    const spec = H ? { name: "xwOBA", fmt: (v) => v.toFixed(3).slice(1), tick: (v) => v.toFixed(3).slice(1), floor: [0.24, 0.42], pad: 0.02, steps: [0.05, 0.1] }
+                   : { name: "K−BB%", fmt: (v) => v.toFixed(1) + "%", tick: (v) => Math.round(v) + "%", floor: [0, 25], pad: 2, steps: [5, 10] };
     const box = el("div", "rollbox");
     const hd = el("div", "rollhd");                    // a section heading like the percentile panel's: bold name on the teal rule
-    const pick = el("div", "seg rollseg"); pick.setAttribute("role", "group"); pick.setAttribute("aria-label", "Rolling window, PA");
-    for (const n of ROLL_OPTS) {
-      const b = el("button", "segbtn small", String(n)); b.type = "button"; b.setAttribute("aria-pressed", String(n === N));
-      b.title = `Every ${n} plate appearances`;
-      b.addEventListener("click", (e) => { e.stopPropagation(); if (n !== N) { state.rollPA = n; savePrefs(); render(); } });
-      pick.append(b);
-    }
-    hd.append(el("span", "rollname", "Rolling xwOBA"), el("span", "rollsub", "PA"), pick);
+    const sel = el("select", "rollsel"); sel.setAttribute("aria-label", "Rolling window, plate appearances");
+    for (const o of ROLL_OPTS) { const op = el("option", null, String(o)); op.value = String(o); sel.append(op); }
+    sel.value = String(N);
+    sel.addEventListener("click", (e) => e.stopPropagation());
+    sel.addEventListener("change", (e) => { state.rollPA = Number(e.target.value) || 100; savePrefs(); render(); });
+    const win = el("label", "rollwin"); win.append("last ", sel, " PA");
+    hd.append(el("span", "rollname", `Rolling ${spec.name}`), win);
     box.append(hd);
     if (pts.length < 3) { box.append(el("p", "note rollnone", `Not enough plate appearances yet for a ${N}-PA window.`)); return box; }
-    box.append(rollChart(pts, lg, col));
+    box.append(rollChart(pts, lg, col, spec, N));
     return box;
-  }
-  // the pool's own average of whichever expected model is on, for the dashed league line
-  function leagueX(ref) {
-    const arr = (pool(ref).sorted || {})[xDir() ? "xwd" : "xws"];
-    if (!arr || !arr.length) return null;
-    return arr.reduce((a, b) => a + b, 0) / arr.length;
   }
   // The rolling line, laid out on the bars above it: its y labels right-aligned where their labels end (120px in),
   // the plot across the bar column, the league line's value and his latest in the value column, 12px grey type,
   // month labels under it. Drawn at its real width (redrawn when the panel resizes), so nothing in it is scaled.
   let rollRO = null, rollN = 0;
-  function rollChart(pts, lg, col) {
+  function rollChart(pts, lg, col, spec, N) {
     const host = el("div", "rollchart");
-    const draw = () => {
-      const W = Math.max(260, Math.round(host.getBoundingClientRect().width) || 360);
-      if (host.dataset.w === String(W) && host.firstChild) return;
-      host.dataset.w = String(W);
-      host.replaceChildren(rollSvg(pts, lg, col, W));
-    };
-    host.append(rollSvg(pts, lg, col, 360));
-    if (window.ResizeObserver) { if (rollRO) rollRO.disconnect(); rollRO = new ResizeObserver(draw); rollRO.observe(host); }
+    const tip = el("div", "rolltip"); tip.hidden = true;
+    const draw = (W) => { host.dataset.w = String(W); host.replaceChildren(rollSvg(pts, lg, col, spec, N, W, tip), tip); };
+    draw(360);
+    if (window.ResizeObserver) {
+      if (rollRO) rollRO.disconnect();
+      rollRO = new ResizeObserver(() => { const W = Math.max(260, Math.round(host.getBoundingClientRect().width) || 360); if (host.dataset.w !== String(W)) draw(W); });
+      rollRO.observe(host);
+    }
     return host;
   }
   // x walks the game days he played, not the calendar (Savant's way): a month on the injured list is a step, not a
-  // long flat run. Months are labelled under their first game.
-  function rollSvg(pts, lg, col, W) {
+  // long flat run. Months are labelled under their first game. Point at the line (or touch it) for the value there.
+  function rollSvg(pts, lg, col, spec, NW, W, tip) {
     const H = 132, L = 125, R = W - 40, T = 8, B = H - 22;
-    const ys = pts.map((q) => q[1]);
-    let y0 = Math.min(0.24, Math.floor(Math.min(...ys) * 20) / 20), y1 = Math.max(0.42, Math.ceil(Math.max(...ys) * 20) / 20);
-    if (lg != null) { y0 = Math.min(y0, lg - 0.02); y1 = Math.max(y1, lg + 0.02); }
+    const ys = pts.map((q) => q.v), st = spec.steps[0];
+    let y0 = Math.min(spec.floor[0], Math.floor(Math.min(...ys) / st) * st), y1 = Math.max(spec.floor[1], Math.ceil(Math.max(...ys) / st) * st);
+    if (lg != null) { y0 = Math.min(y0, lg - spec.pad); y1 = Math.max(y1, lg + spec.pad); }
     const N = pts.length - 1;
     const px = (i) => L + (R - L) * (N ? i / N : 0.5);
     const py = (v) => T + (B - T) * (1 - (v - y0) / (y1 - y0));
     const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
-    const svg = mk("svg", { class: "rollsvg", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Rolling xwOBA" });
-    const step = y1 - y0 > 0.25 ? 0.1 : 0.05;
+    const svg = mk("svg", { class: "rollsvg", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": `Rolling ${spec.name}` });
+    const step = (y1 - y0) / st > 5 ? spec.steps[1] : st;
     for (let v = Math.ceil(y0 / step - 1e-9) * step; v <= y1 + 1e-9; v += step) {
       svg.append(mk("line", { class: "rgrid", x1: L, x2: R, y1: py(v), y2: py(v) }));
-      svg.append(mk("text", { class: "rtick", x: L - 5, y: py(v) }, v.toFixed(3).slice(1)));
+      svg.append(mk("text", { class: "rtick", x: L - 5, y: py(v) }, spec.tick(v)));
     }
     svg.append(mk("line", { class: "raxis", x1: L, x2: L, y1: T, y2: B }));
     const days = seasonDays(), MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const dateOf = (d) => { const ds = days && days[d]; return ds ? `${MON[Number(ds.slice(5, 7)) - 1]} ${Number(ds.slice(8, 10))}` : ""; };
     const mons = [];
     pts.forEach((q, i) => {
-      const ds = days && days[q[0]]; if (!ds) return;
+      const ds = days && days[q.day]; if (!ds) return;
       const mo = Number(ds.slice(5, 7)) - 1;
       if (!mons.length || mons[mons.length - 1][2] !== mo) mons.push([px(i), MON[mo], mo]);
     });
@@ -4057,19 +4060,39 @@
     if (lg != null) {                                   // the league line, labelled outside the plot where the values sit
       svg.append(mk("line", { class: "rlg", x1: L, x2: R, y1: py(lg), y2: py(lg) }));
       svg.append(mk("text", { class: "rlglbl", x: W, y: py(lg) - 6 }, "LG AVG"));
-      svg.append(mk("text", { class: "rtick", x: W, y: py(lg) + 7 }, lg.toFixed(3).slice(1)));
+      svg.append(mk("text", { class: "rtick", x: W, y: py(lg) + 7 }, spec.fmt(lg)));
     }
     let stroke = savantStyle(95).bg;
     if (col) {                                          // one gradient stop per point: the line reads like the bars do
       const id = "rg" + ++rollN, g = mk("linearGradient", { id, gradientUnits: "userSpaceOnUse", x1: L, y1: 0, x2: R, y2: 0 });
       const span = (R - L) || 1;
-      pts.forEach((q, i) => g.append(mk("stop", { offset: (100 * (px(i) - L) / span).toFixed(2) + "%", "stop-color": col(q[1]) })));
+      pts.forEach((q, i) => g.append(mk("stop", { offset: (100 * (px(i) - L) / span).toFixed(2) + "%", "stop-color": col(q.v) })));
       const defs = mk("defs"); defs.append(g); svg.append(defs);
       stroke = `url(#${id})`;
     }
-    svg.append(mk("path", { class: "rline", stroke, d: pts.map((q, i) => `${i ? "L" : "M"}${px(i).toFixed(1)} ${py(q[1]).toFixed(1)}`).join(" ") }));
-    const last = pts[N], lc = col ? col(last[1]) : savantStyle(95).bg;
-    svg.append(mk("circle", { class: "rdot", cx: px(N), cy: py(last[1]), r: 3.5, fill: lc }));
+    svg.append(mk("path", { class: "rline", stroke, d: pts.map((q, i) => `${i ? "L" : "M"}${px(i).toFixed(1)} ${py(q.v).toFixed(1)}`).join(" ") }));
+    const last = pts[N];
+    svg.append(mk("circle", { class: "rdot", cx: px(N), cy: py(last.v), r: 3.5, fill: col ? col(last.v) : stroke }));
+    // the hover: a guide line and a ringed dot on the nearest point, and a note of the value and the PAs it covers
+    const guide = mk("line", { class: "rguide", x1: 0, x2: 0, y1: T, y2: B, visibility: "hidden" });
+    const hot = mk("circle", { class: "rhot", r: 5, visibility: "hidden" });
+    svg.append(guide, hot);
+    const show = (e) => {
+      const r = svg.getBoundingClientRect(); if (!r.width) return;
+      const x = (e.clientX - r.left) * (W / r.width);
+      const i = Math.max(0, Math.min(N, Math.round(N ? ((x - L) / (R - L)) * N : 0))), q = pts[i];
+      guide.setAttribute("x1", px(i)); guide.setAttribute("x2", px(i)); guide.setAttribute("visibility", "visible");
+      hot.setAttribute("cx", px(i)); hot.setAttribute("cy", py(q.v)); hot.setAttribute("fill", col ? col(q.v) : savantStyle(95).bg); hot.setAttribute("visibility", "visible");
+      tip.replaceChildren(el("b", null, `${spec.fmt(q.v)} ${spec.name}`), el("span", null, `PA ${q.from}–${q.end} (${q.end - q.from + 1} PA)`), el("span", null, `through ${dateOf(q.day)}`));
+      tip.hidden = false;
+      const left = (px(i) / W) * r.width, top = (py(q.v) / H) * r.height;
+      tip.style.left = Math.max(0, Math.min(r.width - tip.offsetWidth, left - tip.offsetWidth / 2)) + "px";
+      tip.style.top = Math.max(0, top - tip.offsetHeight - 10) + "px";
+    };
+    const hide = () => { guide.setAttribute("visibility", "hidden"); hot.setAttribute("visibility", "hidden"); tip.hidden = true; };
+    svg.addEventListener("pointermove", show);
+    svg.addEventListener("pointerdown", show);
+    svg.addEventListener("pointerleave", hide);
     return svg;
   }
   // the pitcher's version of the same foot panel: what his process says the ERA should be, against what it is
@@ -4351,7 +4374,7 @@
         const CA = el("div", "pcol pcolA"), CB = el("div", "pcol pcolB");
         CA.append(renderSavantPlate(p, st, g));
         const cab = el("div", "pscroll");
-        cab.append(renderSeasonHeat(p), el("div", "pappshd", "Player Apps"), renderPlayerApps(p, goTo));
+        cab.append(renderSeasonHeat(p), el("div", "pappshd", "Filters"), renderPlayerApps(p, goTo));
         CA.append(cab);
         CB.append(panelHead(dsSeason(), "Comparison", viewLabel(p.type)));
         const h3 = card.querySelector(":scope > h3"); if (h3) h3.remove();   // the panel's band already says so
@@ -4363,7 +4386,7 @@
       A.append(renderSavantPlate(p, st, g));
       const abody = el("div", "pscroll");
       abody.append(renderSeasonHeat(p));
-      abody.append(el("div", "pappshd", "Player Apps"));
+      abody.append(el("div", "pappshd", "Filters"));
       abody.append(renderPlayerApps(p, goTo));
 
       A.append(abody);
@@ -4375,8 +4398,8 @@
         if (f.dataset.key.startsWith("pgrp:")) f.remove(); }
       belowCard = card;                                  // the rest of it fills the Advanced tab below
       C.append(cbody);
-      const foot = p.type === "H" ? renderRolling(p, g) : renderUeraBox(p, st);   // pinned to the foot of the percentile box
-      if (foot) B.append(foot);
+      const roll = renderRolling(p, g); if (roll) B.append(roll);     // pinned to the foot of the percentile box
+      const ub = renderUeraBox(p, st); if (ub) C.append(ub);          // a pitcher's uERA box sits at the foot of the right one
       page.append(A, B, C); box.append(page);
       box.append(renderBelow(p));
       sizePPage();
