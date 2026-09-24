@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installs (or re-installs) the 5:30 am daily update as a launchd agent for this user, then checks that
+# Installs (or re-installs) the daily update as a launchd agent for this user, then checks that
 # macOS lets it read this folder (Desktop is privacy-protected: python3 needs Full Disk Access once).
 #     bash install_schedule.sh            # install / update, then probe
 #     bash install_schedule.sh remove     # turn it off
@@ -8,6 +8,10 @@ set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
 PY=/Library/Frameworks/Python.framework/Versions/3.14/bin/python3     # the python3 that has pybaseball
 LABEL=com.seanvargas.draftboard
+# The job STARTS at 4:45 so the site is LIVE by 5:30: the MLB build and first publish take ~25 min, the Pages
+# deploy a couple more. (It used to start at 5:30, which put the day's numbers up closer to 6.)
+HOUR=4
+MINUTE=45
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
 if [ "$1" = "remove" ]; then rm -f "$PLIST"; echo "removed $LABEL"; exit 0; fi
@@ -21,7 +25,7 @@ cat > "$PLIST" <<PL
   <key>ProgramArguments</key>
   <array><string>$PY</string><string>$HERE/daily_update.py</string></array>
   <key>StartCalendarInterval</key>
-  <dict><key>Hour</key><integer>5</integer><key>Minute</key><integer>30</integer></dict>
+  <dict><key>Hour</key><integer>$HOUR</integer><key>Minute</key><integer>$MINUTE</integer></dict>
   <key>StandardOutPath</key><string>$HOME/Library/Logs/draftboard.out</string>
   <key>StandardErrorPath</key><string>$HOME/Library/Logs/draftboard.err</string>
   <key>EnvironmentVariables</key>
@@ -30,7 +34,7 @@ cat > "$PLIST" <<PL
 </plist>
 PL
 launchctl bootstrap "gui/$(id -u)" "$PLIST"
-echo "installed: $LABEL runs daily_update.py every day at 5:30 am (asleep then? it runs when the Mac next wakes)"
+echo "installed: $LABEL runs daily_update.py every day at $HOUR:$MINUTE am, live by ~5:15 (asleep then? it runs when the Mac next wakes)"
 
 # probe: can launchd's python3 read this folder?
 PROBE=$HOME/Library/LaunchAgents/$LABEL.probe.plist

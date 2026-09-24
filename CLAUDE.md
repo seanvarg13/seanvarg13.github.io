@@ -247,8 +247,10 @@ Not mirrored, on purpose: `github_site.json` / `netlify_site.json` (account conf
 
 ## 6. The schedule, and how publishing works
 
-**`tools/daily_update.py`, every morning at 5:30** (launchd agent `com.seanvargas.draftboard`, installed by
-`install_schedule.sh`; if the Mac is asleep it runs at the next wake). In order:
+**`tools/daily_update.py`, every morning at 4:45** so the site is live by 5:30 (launchd agent
+`com.seanvargas.draftboard`, installed by `install_schedule.sh`, whose `HOUR`/`MINUTE` set it; if the Mac is asleep it
+runs at the next wake). Changing the time needs `bash install_schedule.sh` run once on the Mac — syncing the script
+alone does not re-register the agent. In order:
 
 1. `sync_tools.py` — adopt anything edited in this repo
 2. `build_data.py --end <yesterday>` (MLB)

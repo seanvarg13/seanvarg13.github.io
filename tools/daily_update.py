@@ -4,7 +4,8 @@ career/season-by-season files (GitHub Pages, or Netlify without a GitHub token).
 Publishes twice: once as soon as the MLB build is done (about 25 minutes in, so the site is current early),
 then again after the minors, fantasy and history index finish.
 
-Run by launchd every morning at 5:30 (install_schedule.sh) — or by hand:  python3 daily_update.py
+Run by launchd every morning at 4:45 (install_schedule.sh), so the day's numbers are live by 5:30 — or by hand:
+    python3 daily_update.py
 Log: logs/daily.log (one file per day, 30 days kept). Off days are cheap: nothing new to download.
 """
 import datetime as dt, glob, os, re, subprocess, sys, time
