@@ -40,15 +40,15 @@
   --accent-wash: rgba(123, 175, 212, 0.24);
   --pctrack: #d9e8e3;  /* the unfilled part of a percentile bar */
   --pctrule: #bed8d1;  /* the dashed rule between bars */
-  --svline: #c8dad8;   /* Savant: the thin line the rest of a percentile bar runs along */
-  --svrule: #50888e;   /* Savant: the dashed rule under a bar's label and value */
-  --svtext: #646464;   /* Savant: the grey its labels and values are set in */
-  --svframe: #4494a3;  /* Savant: the teal frame round each panel */
-  --svsec: #3f8c91;    /* Savant: the rule under a section heading */
-  --svdots: #4699aa;   /* Savant: the dots under a panel title's year */
+  --svline: #c7dcdc;   /* Savant: the thin line the rest of a percentile bar runs along */
+  --svrule: #399098;   /* Savant: the dashed rule under a bar's label and value */
+  --svtext: #666666;   /* Savant: the grey its labels and values are set in */
+  --svframe: #4499aa;  /* Savant: the teal frame round each panel */
+  --svsec: #399098;    /* Savant: the rule under a section heading */
+  --svdots: #4499aa;   /* Savant: the dots under a panel title's year */
   --svpoor: #3a62a8; --svavg: #b8d3cd; --svgreat: #d41c23;   /* Savant: POOR / AVERAGE / GREAT */
-  --svhead: #111111;   /* Savant: the black of its section names and silhouettes */
-  --svtitle: #303030;  /* Savant: the charcoal of its panel titles */
+  --svhead: #000000;   /* Savant: the black of its section names and silhouettes */
+  --svtitle: #333333;  /* Savant: the charcoal of its panel titles */
   --lo: #325aa1;      /* percentile: cold — Savant's blue */
   --mid: #b3b3b3;     /* percentile: 50th — a solid grey, not a tint, so the ends carry */
   --hi: #d22d49;      /* percentile: hot  — Savant's red */
@@ -2032,18 +2032,6 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .ppage .meter .track::after { opacity: 0.75; }
 .ppage .meter .bub { font-size: 12px; font-weight: 700; box-shadow: 0 0 0 2px var(--surface); }
 .ppage .meter .val { font-weight: 600; }
-.ppage .meters .meter.pctscale { min-height: 0; padding: 0 0 3px; border-bottom: 0; }
-.pctscale .track { height: auto; background: none; border: 0; overflow: visible; display: block; }
-.pctscale .track::after { display: none; }
-.pctscale .sc { position: absolute; bottom: 0; display: flex; flex-direction: column; align-items: center; line-height: 1; }
-.pctscale .sc i { font-style: normal; font-size: 9.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
-.pctscale .sc b { font-size: 7.5px; margin-top: 2px; }
-.pctscale .p0 { left: 0; align-items: flex-start; } .pctscale .p0 b { margin-left: 1px; }
-.pctscale .p50 { left: 50%; transform: translateX(-50%); }
-.pctscale .p100 { right: 0; align-items: flex-end; } .pctscale .p100 b { margin-right: 1px; }
-.pctscale .p0 i, .pctscale .p0 b { color: var(--lo); }
-.pctscale .p50 i, .pctscale .p50 b { color: var(--muted); }
-.pctscale .p100 i, .pctscale .p100 b { color: var(--hi); }
 .ppage .meters { gap: 0; padding-top: 0; }
 .ppage .fold-sec { margin-top: 6px; }
 .ppage .fold-sec:first-child { margin-top: 0; }
@@ -2182,43 +2170,33 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 :root:root .meters .meter .bub.c3 { font-size: calc(var(--u) * 27); letter-spacing: -0.02em; }
 :root:root .meters .meter .bub.ghost { background: var(--surface) !important; color: var(--ink-2); border: calc(var(--u) * 3) solid var(--ink-2);
   box-shadow: 0 0 0 calc(var(--u) * 3) var(--surface); font-size: calc(var(--u) * 27); }
-/* the POOR / AVERAGE / GREAT strip: 50u tall, the words' tops 5u down, the arrows' bottoms 3u up */
-:root:root .meters .meter.pctscale { min-height: 0; height: calc(var(--u) * 50); }
-:root:root .meters .meter.pctscale > .lbl, :root:root .meters .meter.pctscale > .val { background: none; }
-:root:root .meters .meter.pctscale .track { height: 100%; align-self: stretch; background: none; }
-.pctscale .sc { display: none; }
-.pctscale .sw { position: absolute; top: calc(var(--u) * 1); font-size: calc(var(--u) * 32.4); line-height: 1; font-weight: 400;
-  letter-spacing: 0; text-transform: uppercase; white-space: nowrap; }
-.pctscale .sw.p0 { left: calc(var(--u) * 2); color: var(--svpoor); }
-.pctscale .sw.p50 { transform: translateX(-50%); color: var(--svavg); }
-.pctscale .sw.p100 { right: calc(var(--u) * 4); color: var(--svgreat); }
-.pctscale .arr { position: absolute; bottom: calc(var(--u) * 3); width: calc(var(--u) * 11); height: calc(var(--u) * 12);
-  transform: translateX(-50%); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-.pctscale .arr.p0 { background: var(--svpoor); }
-.pctscale .arr.p50 { background: var(--svavg); }
-.pctscale .arr.p100 { background: var(--svgreat); }
-/* the section heading: a 71 x 108u silhouette standing 14u through a 4u rule, the bold name's baseline 17u above it */
-.meters .svsec { position: relative; display: block; height: calc(var(--u) * 96); margin: 0 0 calc(var(--u) * 24); padding: 0;
-  border-bottom: calc(var(--u) * 4.5) solid var(--svsec); color: var(--svhead); }
-.meters .svsec + .meter.pctscale { margin-top: 0; }
-.meters .svsec .svicon { position: absolute; left: calc(var(--u) * 20); bottom: calc(var(--u) * -14); width: calc(var(--u) * 71); height: calc(var(--u) * 108); margin: 0; }
-.meters .svsec .svicon svg { display: block; width: 100%; height: 100%; }
-.meters .svsec .svname { position: absolute; left: calc(var(--u) * 114); bottom: calc(var(--u) * 17 - 0.1585em); padding: 0;
-  font-family: "Roboto Condensed", var(--display); font-size: calc(var(--u) * 45); font-weight: 700; line-height: 1; }
-/* the panel: a thin teal frame; the title's charcoal 53u type with the year bold, 7 dots under the year alone.
-   --pu is 1/1101 of the panel's inside width, so the chart inside it is exactly 995pu = 995u wide. */
+/* the panel: Savant's thin teal frame */
 .pcol { container-type: inline-size; border: 1px solid var(--svframe); border-radius: 0; }
-.pcol > * { --pu: calc(100cqw / 1101); }
-.pchead { padding: calc(var(--pu) * 28) calc(var(--pu) * 12) calc(var(--pu) * 55.6); text-align: center; }
+/* every panel's title is Savant's, in its own fixed sizes: 18px condensed charcoal, 8px from the top, the year bold
+   with a 3px dotted teal rule under it; the percentile chart starts right under it, the other panels 20px lower */
+.pchead { padding: 8.5px 12px 20px; text-align: center; }   /* Savant's 8px, plus the half pixel its compare icon drops the line */
+.pchead:has(+ .pctbox) { padding-bottom: 0; min-height: 37.4px; }
 .pchead + .pscroll { padding-top: 0; }
-.pcthd { font-family: "Roboto Condensed", var(--display); font-size: calc(var(--pu) * 53.4); font-weight: 400; line-height: 1;
+.pcthd { font-family: "Roboto Condensed", var(--display); font-size: 18px; font-weight: 400; line-height: 1.428571;
   color: var(--svtitle); letter-spacing: 0; }
 .pcthd b, .pcthd .hsel.yr .hsl { font-weight: 700; }
-.pcthd > :first-child { position: relative; }
-.pcthd > :first-child::after { content: ""; position: absolute; left: calc(var(--pu) * -2); top: calc(var(--pu) * 67); width: calc(var(--pu) * 106);
-  height: calc(var(--pu) * 7); background: repeating-linear-gradient(to right, var(--svdots) 0 calc(var(--pu) * 7), transparent calc(var(--pu) * 7) calc(var(--pu) * 16.5));
-  pointer-events: none; }
+.pcthd > :first-child { display: inline-block; vertical-align: top; height: 28.5px; border-bottom: 3px dotted var(--svdots); }
 .pchead .pcdots, .pchead .pctsub:empty { display: none; }
-.pchead .pctsub { font-size: calc(var(--pu) * 30); margin-top: calc(var(--pu) * 30); }
-.pctbox { padding-inline: calc(var(--pu) * 55) calc(var(--pu) * 51); padding-bottom: calc(var(--pu) * 30); }
+.pchead .pctsub { font-size: 11px; margin-top: 4px; }
+.pctbox { padding: 0; }
+/* the percentile chart itself is one SVG drawn to Savant's numbers (see pctSvg in app.js); these are only its inks */
+.svchart { width: 100%; }
+.svpct { display: block; width: 100%; height: auto; overflow: visible; font-family: "Roboto Condensed", var(--body); }
+.svpct text { font-size: 12px; dominant-baseline: middle; }
+.svpct .svscale { dominant-baseline: auto; }
+.svpct .svsecname { font-size: 16px; font-weight: 700; fill: var(--svhead); dominant-baseline: auto; }
+.svpct .svsil { color: var(--svhead); fill: currentColor; }
+.svpct .svsecrule { fill: var(--svsec); }
+.svpct .svline { fill: var(--svline); }
+.svpct .svtick { fill: #ffffff; opacity: 0.3; }
+.svpct .svlbl { fill: var(--svtext); }
+.svpct .svdash { fill: none; stroke: var(--svrule); stroke-width: 1; stroke-dasharray: 6 3; }
+.svpct .svbulb { stroke: var(--surface); stroke-width: 2; }
+.svpct .svnum { fill: #ffffff; font-weight: 700; text-anchor: middle; }
+.svpct .svnum.c3 { font-size: 10px; }
 .pctbox .pctfoot { display: none; }

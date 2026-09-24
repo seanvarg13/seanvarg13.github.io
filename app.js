@@ -924,20 +924,34 @@
     return s;
   }
   const bubLeft = (p) => `calc(var(--bub) / 2 + (100% - var(--bub)) * ${Math.max(0, Math.min(100, p)) / 100})`;
-  // the player card's bars use Savant's own colours, read off its percentile chart: blue through a pale blue-grey
-  // and a warm grey at the middle to red, with the circle a shade darker than its bar and always white numerals
-  const SAVANT = [[0, [48, 86, 169]], [11, [78, 112, 178]], [12, [80, 115, 180]], [38, [158, 187, 202]], [41, [168, 195, 206]],
-                  [49, [179, 207, 210]], [58, [190, 197, 195]], [59, [189, 193, 190]], [69, [207, 157, 147]], [70, [208, 154, 143]],
-                  [72, [210, 146, 133]], [73, [211, 143, 130]], [82, [216, 107, 92]], [90, [216, 70, 62]], [92, [216, 58, 51]],
-                  [93, [215, 51, 51]], [97, [214, 34, 41]], [100, [214, 34, 41]]];
+  // the player card's bars use Savant's own colour scale, the one in its chart's code: #3661AD at the 5th percentile,
+  // #b4cfd1 from the 45th to the 55th, #D82129 at the 95th, clamped past them and blended in Lab space (d3's
+  // interpolateLab), with each circle its bar's colour darkened a fifth of a step (d3's darker(0.2)) — exact to the unit
+  const LAB = (() => {
+    const Xn = 0.96422, Zn = 0.82521, t0 = 4 / 29, t1 = 6 / 29, t2 = 3 * t1 * t1, t3 = t1 * t1 * t1;
+    const to = (hex) => {
+      const [r, g, b] = [1, 3, 5].map((i) => { const x = parseInt(hex.slice(i, i + 2), 16) / 255; return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; });
+      const f = (t) => (t > t3 ? Math.cbrt(t) : t / t2 + t0), grey = r === g && g === b;
+      const y = f(0.2225045 * r + 0.7168786 * g + 0.0606169 * b);
+      const x = grey ? y : f((0.4360747 * r + 0.3850649 * g + 0.1430804 * b) / Xn), z = grey ? y : f((0.0139322 * r + 0.0971045 * g + 0.7141733 * b) / Zn);
+      return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
+    };
+    const from = ([l, a, bb]) => {
+      const g = (t) => (t > t1 ? t * t * t : t2 * (t - t0)), o = (x) => Math.max(0, Math.min(255, Math.round(255 * (x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055))));
+      let y = (l + 16) / 116, x = y + a / 500, z = y - bb / 200; x = Xn * g(x); y = g(y); z = Zn * g(z);
+      return [o(3.1338561 * x - 1.6168667 * y - 0.4906146 * z), o(-0.9787684 * x + 1.9161415 * y + 0.0334540 * z), o(0.0719453 * x - 0.2289914 * y + 1.4052427 * z)];
+    };
+    return { to, from };
+  })();
+  const SAVANT = [[5, LAB.to("#3661ad")], [45, LAB.to("#b4cfd1")], [55, LAB.to("#b4cfd1")], [95, LAB.to("#d82129")]];
   const savantCache = new Map();
   function savantStyle(p) {
-    p = Math.max(0, Math.min(100, p));
+    p = Math.max(5, Math.min(95, p));
     if (savantCache.has(p)) return savantCache.get(p);
     let i = 1; while (i < SAVANT.length - 1 && SAVANT[i][0] < p) i++;
     const [p0, c0] = SAVANT[i - 1], [p1, c1] = SAVANT[i], t = (p - p0) / (p1 - p0);
-    const c = c0.map((v, k) => Math.round(v + (c1[k] - v) * t));
-    const s = { bg: `rgb(${c.join(",")})`, bub: `rgb(${c.map((v) => Math.round(v * 0.94)).join(",")})` };
+    const c = LAB.from(c0.map((v, k) => v + (c1[k] - v) * t)), dk = 0.7 ** 0.2;
+    const s = { bg: `rgb(${c.join(",")})`, bub: `rgb(${c.map((v) => Math.round(v * dk)).join(",")})` };
     savantCache.set(p, s);
     return s;
   }
@@ -3967,20 +3981,21 @@
     const pv = V(p), all = allFor(g);
     col.append(panelHead(...pctTitle(p, nav)));
     const body = el("div", "pscroll pctbox");
-    const meters = el("div", "meters");
     const noEV = DS.tracked != null && DS.tracked < 0.05;
     const exp = expKeys();
     const val = (k) => { const m = all.find((x) => x.key === k); if (!m || (noEV && NEEDS_EV.has(k))) return null; const v = metricValue(m, pv, st); return v == null ? null : { m, v, k }; };
-    meters.append(pctSection(p.type), pctScale());
+    const rows = [];
     for (const key0 of (p.type === "H" ? SAVANT_H : SAVANT_P)) {
       const start = exp[key0] || key0;
       let got = val(start);
       for (const alt of (!got && PCT_FALL[start]) || []) { got = val(alt); if (got) break; }
       if (!got) continue;
       const m = PCT_LABEL[got.k] ? Object.assign({}, got.m, { label: PCT_LABEL[got.k] }) : got.m;
-      meters.append(meterRow(m, got.v, st.pct[got.k]));
+      const pct = st.pct[got.k];
+      rows.push({ label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null,
+                  tip: `${m.label}: ${fmt(got.v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}` });
     }
-    body.append(meters);
+    body.append(pctChart([{ title: p.type === "H" ? "Batting" : "Pitching", icon: p.type === "H" ? "H" : "P", rows }]));
     const vl = viewLabel(p.type);
     col.title = `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`;   // Savant prints no footer: the pool is in the hover
     col.append(body);
@@ -4006,29 +4021,93 @@
   }
   // Savant's section heading: a black silhouette standing on a teal rule, the section's name beside it
   const SIL = {
-    H: '<circle cx="18" cy="7" r="4"/><path d="M17 11 15 25M17 13l5-2 3-6M16 14l5-1M15 25l-5 7-5 7M15 25l6 6 0 8" fill="none" stroke="currentColor" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M25 7 31 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
-    P: '<circle cx="19" cy="6" r="4"/><path d="M18 10 15 23M18 12l5-3 3-6M17 13l-6 4M15 23l6 7 4 8M15 23l-6 6-6 1" fill="none" stroke="currentColor" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>',
+    // a batter set to hit, the bat cocked up over his back shoulder
+    H: '<circle cx="21" cy="6.5" r="4.3"/>' +
+       '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">' +
+       '<path d="M20.5 11.5 17.5 23" stroke-width="6.5"/><path d="M20 14 25.5 15 27 10.5M19.5 14.5 24 11" stroke-width="3.4"/>' +
+       '<path d="M17.5 23 12 30.5 7 38.5M17.5 23 23 30 23 38.5" stroke-width="4.6"/><path d="M5 39h5M21.5 39h5" stroke-width="2.4"/></g>' +
+       '<path d="M26 11.5 37.6 0.4 39 1.8 28.2 13.2Z"/>',
+    // a pitcher striding through his delivery, the ball hand back and the glove out front
+    P: '<circle cx="25" cy="7.5" r="4.3"/>' +
+       '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">' +
+       '<path d="M23.5 12.5 16.5 22.5" stroke-width="6.5"/><path d="M22 14.5 14 12.5 9 6" stroke-width="3.4"/><path d="M22.5 15.5 29.5 18 32.5 15" stroke-width="3.4"/>' +
+       '<path d="M16.5 22.5 25 28.5 28 37.5M16.5 22.5 9 29 1.5 31.5" stroke-width="4.6"/><path d="M27 38.5h5.5" stroke-width="2.4"/></g>' +
+       '<circle cx="33.5" cy="14" r="3"/>',
   };
-  function pctSection(type) {
-    const h = el("div", "svsec");
-    const ic = el("span", "svicon"); ic.innerHTML = `<svg viewBox="0 0 32 40" aria-hidden="true" fill="currentColor">${SIL[type === "H" ? "H" : "P"]}</svg>`;
-    h.append(ic, el("span", "svname", type === "H" ? "Batting" : "Pitching"));
-    return h;
+  // Savant's percentile chart, drawn the way its own code draws it (one SVG, D3's numbers): the drawing is
+  // max(400, box width) units wide and 20 in from each side; each section is a 40px silhouette and 16px bold name on
+  // a 2px teal rule 34 down; a row every 23, the bar 85 in from the labels and as wide as what's left after the
+  // labels (40 + 85) and the values (35), running from 10 (0th) to its full width (100th), a 5-tall line under it,
+  // ticks at 12, the middle and 12 from the end, a 10-radius circle with a 2px white ring centred on the bar's end,
+  // 12px type throughout (10px for a 100), and dashed rules above every row but the first, under label and value only
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  let pctRO = null;
+  function pctChart(groups) {
+    const host = el("div", "svchart");
+    const draw = () => {
+      const bw = host.getBoundingClientRect().width;
+      const W = Math.max(400, Math.round(bw) || 400);
+      if (host.dataset.w === String(W) && host.firstChild) return;
+      host.dataset.w = String(W);
+      host.replaceChildren(pctSvg(groups, W));
+    };
+    host.append(pctSvg(groups, 400));
+    if (window.ResizeObserver) {
+      if (pctRO) pctRO.disconnect();
+      pctRO = new ResizeObserver(draw); pctRO.observe(host);
+    }
+    return host;
   }
-  // Savant's scale strip: POOR at the left of the track, AVERAGE at its middle, GREAT at its right
-  function pctScale() {
-    const row = el("div", "meter pctscale");
-    row.append(el("div", "lbl"));
-    const t = el("div", "track");
-    // POOR starts at the bar's left edge, AVERAGE is centred on its tick, GREAT ends at the bar's right end;
-    // each arrow sits on its own tick
-    SV_TICKS.forEach((at, i) => {
-      const name = ["Poor", "Average", "Great"][i], cls = ["p0", "p50", "p100"][i];
-      const w = el("span", "sw " + cls, name); if (i === 1) w.style.left = svLeft(at); t.append(w);
-      const a = el("i", "arr " + cls); a.style.left = svLeft(at); t.append(a);
+  function pctSvg(groups, W) {
+    const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
+    const r6 = W - 40, bar = r6 - 40 - 85 - 35;                  // the rule's width, the bar's width
+    const x = (p) => 10 + (bar - 10) * Math.max(0, Math.min(100, p)) / 100;
+    const root = mk("g", { transform: "translate(20,10)" });
+    let y = 0;
+    groups.forEach((g, gi) => {
+      const first = gi === 0, G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
+      const ic = mk("svg", { x: 0, y: 0, width: 40, height: 40, viewBox: "0 0 40 40", class: "svsil" }); ic.innerHTML = SIL[g.icon]; G.append(ic);
+      G.append(mk("rect", { class: "svsecrule", x: 0, y: 34, width: r6, height: 2 }));
+      G.append(mk("text", { class: "svsecname", x: 40, y: 28 }, g.title));
+      if (first) {                                               // POOR / AVERAGE / GREAT, each arrow over its tick
+        const S = mk("g", { transform: "translate(125,54)" });
+        const tri = (cx) => `M${cx},2L${cx - 3},8L${cx + 3},8Z`;
+        const c0 = savantStyle(0).bg, c50 = savantStyle(50).bg, c100 = savantStyle(100).bg;
+        S.append(mk("path", { d: tri(12), fill: c0 }), mk("path", { d: tri(x(50)), fill: c50 }), mk("path", { d: tri(bar - 12), fill: c100 }));
+        S.append(mk("text", { class: "svscale", fill: c0 }, "POOR"),
+                 mk("text", { class: "svscale", x: x(50), "text-anchor": "middle", fill: c50 }, "AVERAGE"),
+                 mk("text", { class: "svscale", x: x(100), "text-anchor": "end", fill: c100 }, "GREAT"));
+        G.append(S);
+      }
+      const R = mk("g", { transform: `translate(40,${44 + (first ? 20 : 0)})` });
+      g.rows.forEach((r, i) => {
+        const M = mk("g", { class: "svrow", transform: `translate(0,${i * 23})` });
+        M.append(mk("title", {}, r.tip));
+        const on = r.pct != null, s = on ? savantStyle(r.pct) : null;
+        const B = mk("g", { transform: "translate(85,0)", opacity: on ? 1 : 0.35 });
+        B.append(mk("rect", { class: "svline", width: bar, height: 5, y: 7.5 }));
+        if (on) B.append(mk("rect", { width: x(r.pct), height: 20, y: 0, fill: s.bg }));
+        for (const tx of [x(50) - 1, 11, bar - 13]) B.append(mk("rect", { class: "svtick", width: 2, height: 20, x: tx }));
+        M.append(B);
+        M.append(mk("text", { class: "svlbl", x: 80, y: 10, "text-anchor": "end" }, r.label));
+        M.append(mk("text", { class: "svlbl", x: 85 + bar + 35, y: 10, "text-anchor": "end" }, r.value));
+        if (i) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + 35},-1.5` }));
+        if (on) {
+          const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
+          C.append(mk("circle", { class: "svbulb", r: 10, fill: s.bub }));
+          C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : ""), y: 1 }, r.pct));
+          M.append(C);
+        }
+        R.append(M);
+      });
+      G.append(R);
+      root.append(G);
+      y += g.rows.length * 23 + 34 + 10 + (first ? 20 : 0);
     });
-    row.append(t, el("div", "val"));
-    return row;
+    const H = y + 20;
+    const svg = mk("svg", { class: "svpct", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Percentile rankings" });
+    svg.append(root);
+    return svg;
   }
   // a word of the title that is also a picker: the word itself is the button, and the list drops under it
   let HSEL = null;                                     // which title picker is open, if any
