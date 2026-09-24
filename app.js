@@ -4611,8 +4611,9 @@
   // o: { p, st, g, ref, entry (his search-index row), key (the season shown), pick(key) }
   function playerView(box, o) {
     const { p, st, g, ref } = o;
-    box.append(playerHead(p, st, g, o));
-    box.append(pageTitle(p, o));
+    const head = playerHead(p, st, g, o), title = pageTitle(p, o);
+    if (mobileView()) { head.querySelector(".mplate").append(title); box.append(head); }   // a phone pins the title with the plate
+    else box.append(head, title);
     const page = el("div", "ppage");
     const B = el("div", "pcol pcolB wide");                   // one box, two columns of sections, for hitters and pitchers
     renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
@@ -4740,21 +4741,29 @@
     return hd;
   }
   // the pinned header: the blue plate (cut-out, name, sample, Star), and in its right-hand side the filters — the dates
-  // and the split toggles. On a phone they all fold behind one Splits & dates button, so the pinned header stays short
+  // and the split toggles. On a phone they fold behind one Filters button beside "full season" (the Star goes up by the
+  // name), so the pinned header stays short and still has room for the season's title at its foot
   function playerHead(p, st, g, o) {
     const top = el("div", "cardtop phead"), plate = renderPlate(p, st, g, g), mob = mobileView();
     const F = el("div", "phfilt");
-    const star = plate.querySelector(":scope > div > .starbox"), mr = plate.querySelector(".mrank");
-    if (star && mr) mr.append(star);                     // Star beside "full season": one line shorter
+    const star = plate.querySelector(":scope > div > .starbox"), mr = plate.querySelector(".mrank"), h2 = plate.querySelector("h2");
+    if (mob && star && h2) {                             // Star by the name: just the ☆ / ★, so the name keeps its line
+      const nm = el("div", "phname"); h2.replaceWith(nm); nm.append(h2, star);
+      const sb = star.querySelector(".starbtn");
+      if (sb) { sb.setAttribute("aria-label", sb.textContent.trim()); sb.textContent = sb.classList.contains("on") ? "★" : "☆"; sb.classList.add("staricon"); }
+      const note = star.querySelector(".starnote"); if (note) note.remove();          // the note is in the button's title
+      const panel = star.querySelector(".starpanel"); if (panel) nm.after(panel);    // an open Star panel gets the full width
+    }
+    else if (star && mr) mr.append(star);                // Star beside "full season": one line shorter
     if (!o.entry || isMulti(o.key)) { F.append(...renderSeasonChips(p, { curKey: o.key, goTo: o.pick })); plate.append(F); top.append(plate); return top; }
     const grid = el("div", "phgrid");
     const cell = (cap, cls, ...kids) => { const c = el("div", "phf" + (cls ? " " + cls : "")); c.append(el("span", "phcap", cap), ...kids.filter(Boolean)); grid.append(c); return c; };
     const open = !mob || state.cardTools;
-    if (mob) {
-      const b = el("button", "btn btn-quiet tbtn phtoggle" + (open ? " on" : ""), open ? "Hide splits & dates" : "Splits & dates");
+    if (mob) {                                         // the phone's Filters button, beside "full season"
+      const b = el("button", "starbtn phtoggle" + (open ? " on" : ""), "Filters");
       b.type = "button"; b.setAttribute("aria-expanded", String(open));
       b.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = !state.cardTools; savePrefs(); render(); });
-      grid.append(b);
+      (mr || plate).append(b);
     }
     let warn = null;
     if (open) {
@@ -4772,12 +4781,13 @@
       if (p.type === "H") cell("Expected stats", "w2 mfull", seg("Expected stats"));
       warn = sp.querySelector(".splitwarn");
     }
-    F.append(grid);
+    if (open) F.append(grid);
     const sum = el("div", "phsum");                     // only when something needs saying: a split in force, days loading
     if (warn) sum.append(warn);
     if (state.daysLoading) sum.append(el("span", "winnote", "Loading game-by-game data…"));
     if (sum.childNodes.length) F.append(sum);
-    plate.append(F); top.append(plate); return top;
+    if (F.childNodes.length) plate.append(F);
+    top.append(plate); return top;
   }
   // a player is primarily a pitcher if he has pitching seasons and never a real hitting season (100+ PA)
   function primaryType(entry) {
