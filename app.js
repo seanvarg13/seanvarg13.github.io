@@ -3714,7 +3714,7 @@
   // then pull air.
   const EXTRA_H = [["Discipline", [["zsw", "osw", "zmo", "swing"]]],
                    ["Contact", [["zcon", "ocon", "whf"]]],
-                   ["Batted ball", [["air", "gb"], ["ld", "fb", "gb", "pu"], ["pull", "pullp", "cent", "oppo"]]],
+                   ["Batted ball", [["air", "gb", "pull"], ["ld", "fb", "gb", "pu"]]],
                    ["Quality", [["ev", "brl", "hh", "bs", "ev90", "maxev"]]]];
   const EXTRA_P = [["Run prev.", [["era", "kbb"], ["nera", "mera", "siera", "fip"]]],
                    ["K and BB", [["uk", "ubb", "ukb"], ["wsgp", "csw", "swstr"]]],
@@ -3902,9 +3902,11 @@
     }
     if (pts.length < 3) return null;
     const lg = leagueX(ref);
+    const arr = (pool(ref).sorted || {})[dir ? "xwd" : "xws"];        // colour the line the way the bars are coloured
+    const col = arr && arr.length ? (v) => pctStyle(insertPct(arr, v)).bg : null;
     const box = el("div", "rollbox");
     box.append(panelHead(`${ROLL_PA} PAs`, `Rolling ${dir ? "dxwOBA" : "xwOBA"}`));
-    box.append(rollChart(pts, lg));
+    box.append(rollChart(pts, lg, col));
     return box;
   }
   // the pool's own average of whichever expected model is on, for the dashed league line
@@ -3913,13 +3915,14 @@
     if (!arr || !arr.length) return null;
     return arr.reduce((a, b) => a + b, 0) / arr.length;
   }
-  function rollChart(pts, lg) {
-    const W = 300, H = 96, L = 26, R = 6, T = 8, B = 12;
+  let rollN = 0;
+  function rollChart(pts, lg, col) {
+    const W = 300, H = 96, L = 26, R = 32, T = 8, B = 12;   // room at the right for Savant's LG AVG label, outside the plot
     const ys = pts.map((q) => q[1]);
     let y0 = Math.min(0.24, Math.floor(Math.min(...ys) * 20) / 20), y1 = Math.max(0.42, Math.ceil(Math.max(...ys) * 20) / 20);
     if (lg != null) { y0 = Math.min(y0, lg - 0.02); y1 = Math.max(y1, lg + 0.02); }
-    const x0 = pts[0][0], x1 = pts[pts.length - 1][0] || 1;
-    const px = (d) => L + (W - L - R) * (x1 === x0 ? 0.5 : (d - x0) / (x1 - x0));
+    const N = pts.length - 1;                                 // Savant walks the plate appearances, not the calendar:
+    const px = (i) => L + (W - L - R) * (N ? i / N : 0.5);    // a month on the injured list is a gap in the line, not a flat run
     const py = (v) => T + (H - T - B) * (1 - (v - y0) / (y1 - y0));
     const ns = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(ns, "svg");
@@ -3929,12 +3932,50 @@
       svg.append(mk("line", { x1: L, x2: W - R, y1: py(v), y2: py(v), class: "rgrid" }));
       const t = mk("text", { x: L - 4, y: py(v) + 3, class: "rtick" }); t.textContent = v.toFixed(3).slice(1); svg.append(t);
     }
+    svg.append(mk("line", { x1: L, x2: L, y1: T, y2: H - B, class: "raxis" }));
     if (lg != null) {
       svg.append(mk("line", { x1: L, x2: W - R, y1: py(lg), y2: py(lg), class: "rlg" }));
-      const t = mk("text", { x: W - R, y: py(lg) - 3, class: "rlglbl" }); t.textContent = "LG AVG"; svg.append(t);
+      const t = mk("text", { x: W - R + 4, y: py(lg) + 2.5, class: "rlglbl" }); t.textContent = "LG AVG"; svg.append(t);
     }
-    svg.append(mk("path", { d: pts.map((q, i) => `${i ? "L" : "M"}${px(q[0]).toFixed(1)} ${py(q[1]).toFixed(1)}`).join(" "), class: "rline" }));
+    let stroke = null;
+    if (col) {                                            // one gradient stop per point: the line reads like the bars do
+      const id = "rg" + ++rollN, g = mk("linearGradient", { id, gradientUnits: "userSpaceOnUse", x1: L, y1: 0, x2: W - R, y2: 0 });
+      const span = (W - L - R) || 1;
+      pts.forEach((q, i) => g.append(mk("stop", { offset: (100 * (px(i) - L) / span).toFixed(2) + "%", "stop-color": col(q[1]) })));
+      const defs = mk("defs"); defs.append(g); svg.append(defs);
+      stroke = `url(#${id})`;
+    }
+    const line = mk("path", { d: pts.map((q, i) => `${i ? "L" : "M"}${px(i).toFixed(1)} ${py(q[1]).toFixed(1)}`).join(" "), class: "rline" });
+    if (stroke) line.setAttribute("stroke", stroke);
+    svg.append(line);
     return svg;
+  }
+  // the pitcher's version of the same bottom panel: what his process says the ERA should be, against what it is
+  function renderUeraBox(p, st) {
+    if (p.type !== "P" || !st || st.uera == null || !st.ukbb) return null;
+    const pv = V(p), ik = st.ukbb;
+    const box = el("div", "rollbox uerabox");
+    box.append(panelHead("uERA", st.uera.toFixed(2), st.pct.uera == null ? null : `${ordinal(st.pct.uera)} percentile`));
+    const t = el("table", "ubt");
+    t.append(colgroup([null, 60, 60, 56]));
+    const hr = el("tr");
+    for (const h of ["", "Exp", "Act", "Diff"]) hr.append(el("th", h ? null : "l", h));
+    const th = el("thead"); th.append(hr); t.append(th);
+    const tb = el("tbody");
+    const rows = [["K%", ik.k, pv.m.k, true, false], ["BB%", ik.bb, pv.m.bb, false, false],
+                  ["K−BB%", st.ukb, pv.m.kbb, true, false], ["ERA", st.uera, pv.m.era, false, true]];
+    for (const [what, exp, act, hib, isEra] of rows) {
+      const d = act == null || exp == null ? null : (isEra ? Math.round(100 * (act - exp)) / 100 : Math.round(10 * (act - exp)) / 10);
+      const good = d == null ? null : hib ? d > 0 : d < 0;
+      const fv = (x) => (x == null ? "–" : isEra ? x.toFixed(2) : x.toFixed(1));
+      const r = el("tr"), dc = el("td", "dcell");
+      dc.append(el("span", "chip2 " + (d == null || Math.abs(d) < (isEra ? 0.25 : 1) ? "even" : good ? "lucky" : "unlucky"),
+                   d == null ? "–" : (d > 0 ? "+" : "") + fv(d)));
+      r.append(el("td", "l", what), el("td", "exp", fv(exp)), el("td", null, fv(act)), dc);
+      tb.append(r);
+    }
+    t.append(tb); box.append(t);
+    return box;
   }
   // the middle panel: one header, then every stat as a bar — no group headings inside it
   function renderPctPanel(p, st, g, ref, col, nav) {
@@ -4134,11 +4175,12 @@
       C.append(panelHead(dsSeason(), p.type === "H" ? "Advanced Metrics" : "Advanced Pitching"));
       const cbody = el("div", "pscroll");
       cbody.append(...extraSections(p, st, g));
-      const roll = renderRolling(p, g); if (roll) cbody.append(roll);
       for (const f of [...card.querySelectorAll(":scope > .fold-sec")]) {   // the card's grouped fold repeats the panels above it
         if (f.dataset.key.startsWith("pgrp:")) f.remove(); }
       belowCard = card;                                  // the rest of it fills the Advanced tab below
       C.append(cbody);
+      const foot = p.type === "H" ? renderRolling(p, g) : renderUeraBox(p, st);   // pinned to the bottom of the box: the tabs scroll, this never does
+      if (foot) C.append(foot);
       page.append(A, B, C); box.append(page);
       box.append(renderBelow(p));
       sizePPage();

@@ -2034,6 +2034,16 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
   letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ppage .ptabbody .meters + .meters { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--rule); }
 .rollbox { margin-top: 10px; padding-top: 4px; border-top: 1px solid var(--rule); }
+/* pinned to the foot of the advanced box: the tabs above it scroll, this stays put */
+.pcol > .rollbox { margin: 0; padding: 0 16px 12px; }
+.pcol > .rollbox .pchead { padding-top: 10px; }
+.uerabox .ubt { width: 100%; border-collapse: collapse; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.uerabox .ubt th { padding: 2px 3px 4px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--muted); text-align: right; border-bottom: 1px solid var(--hair); }
+.uerabox .ubt td { padding: 4px 3px; font-size: 12.5px; text-align: right; border: 0; }
+.uerabox .ubt td.l, .uerabox .ubt th.l { text-align: left; padding-left: 2px; font-weight: 700; }
+.uerabox .ubt td.exp { font-weight: 700; }
+.uerabox .ubt .chip2 { min-width: 36px; font-size: 11px; }
 .rollhd { font-family: var(--display); font-weight: 700; font-size: 11.5px; letter-spacing: 0.05em;
   text-transform: uppercase; color: var(--accent-2-text); margin-bottom: 6px; }
 .rollsvg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -2041,7 +2051,8 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .rollsvg .rlg { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
 .rollsvg .rline { fill: none; stroke: var(--hi); stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .rollsvg .rtick { fill: var(--muted); font-size: 8px; text-anchor: end; font-variant-numeric: tabular-nums; }
-.rollsvg .rlglbl { fill: var(--muted); font-size: 7.5px; text-anchor: end; letter-spacing: 0.06em; }
+.rollsvg .rlglbl { fill: var(--muted); font-size: 7.5px; text-anchor: start; letter-spacing: 0.06em; }
+.rollsvg .raxis { stroke: var(--ink-2); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .ppage .meter .val { white-space: nowrap; }
 
 /* the card's season table: one row per MLB season, every cell coloured by its percentile */
@@ -2087,7 +2098,6 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 /* the bars keep their own spacing at the top of the panel; the chart sits at the foot of the third one */
 .pcolC .pscroll { display: flex; flex-direction: column; }
 .pcolC .ptabbody { display: flex; flex-direction: column; }
-.pcolC .rollbox { margin-top: auto; }
 .pcolC .note { margin-top: 10px; }
 
 /* the strip under the three boxes: Savant hangs its tabs there, and the panels open beneath them */
