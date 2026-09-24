@@ -1364,7 +1364,7 @@
       cb.type = "button";
       cb.title = state.cmp2.on ? "Back to the card" : "Compare two sides of this player — season, split and dates on each";
       cb.addEventListener("click", (e) => { e.stopPropagation(); state.cmp2.on = !state.cmp2.on; savePrefs(); render(); });
-      head.append(cb);
+      if (state.mode !== "player") head.append(cb);          // the player page compares from its tab strip below
       if (bits.length || !mob) head.append(el("span", "tsum", bits.length ? bits.join(" · ") : "full season · all splits"));
       if (state.daysLoading) head.append(el("span", "winnote", "Loading game-by-game data…"));
       return head;
@@ -4173,7 +4173,7 @@
   // EXPW / EXPB / EXPS follow the xwOBA switch, as everywhere.
   const PCT_COLS_H = [[["Outcomes", ["woba", "xws", "xwd"]], ["Expected Stats", ["EXPW", "EXPB", "EXPS"]],
                        ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],
-                      [["Swing Decisions", ["zsw", "osw", "zmo", "swing", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],
+                      [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],
                        ["Batted-Ball Distribution", ["air", "pu", "gb", "pull"]]]];
   const OUTCOME_LABEL = { woba: "wOBA", xws: "xwOBA", xwd: "dxwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
@@ -4197,7 +4197,6 @@
                tip: `${m.label}: ${fmt(got.v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}` };
     };
     pctROs.forEach((ro) => ro.disconnect()); pctROs = [];
-    body.append(sampleLine(p, pv));                     // the playing time behind every bar below, above both columns
     if (p.type === "H") {
       const cols = el("div", "pctcols");
       for (const sections of PCT_COLS_H) {
@@ -4420,6 +4419,15 @@
     if (!state.x.ds || state.x.ds !== key || state.x.type !== type) state.x = { id: entry.id, type, ds: key };
     // his page is the popup card without the ×: the same pinned plate, the same filter row, the same panel
     const chips = (p) => renderSeasonChips(p, { curKey: key, goTo: (k) => { state.x = { id: entry.id, type, ds: k }; state.cardWin = { from: "", to: "", last: "" }; savePrefs(); render(); } });
+    // the pinned header: Savant's plate on the left (action shot, cut-out, bio, draft); the sample the page is built
+    // on and the season / level / splits row on the right
+    const phead = (p, st, g) => {
+      const top = el("div", "cardtop phead"), R = el("div", "pheadR");
+      const r1 = el("div", "phrow"); r1.append(sampleLine(p, V(p)));
+      const acts = el("div", "phacts"); const ts = typeSeg(p); if (ts) acts.append(ts); acts.append(renderStarControl(p));
+      r1.append(acts); R.append(r1, ...chips(p));
+      top.append(renderSavantPlate(p, st, g), R); return top;
+    };
     const stub = () => {        // while the season loads: the plate with what the index knows
       const plate = el("div", "mplate"); plate.append(headshot(entry.id, entry.name));
       const txt = el("div"); txt.append(el("h2", null, entry.name), el("div", "mline", `${cur[5]} · ${seasonTag(cur)}`));
@@ -4438,26 +4446,19 @@
       const card = renderCard(p, metricsFor(g), st, g, g, { noSplitBar: true, noStrip: true });
       const goTo = (k) => { state.x = { id: entry.id, type, ds: k }; state.cardWin = { from: "", to: "", last: "" }; savePrefs(); render(); };
       if (state.cmp2.on) {                                    // comparing: the card box, then the two sides — no third panel
+        box.append(phead(p, st, g));
         const cp = el("div", "ppage cmp2page");
-        const CA = el("div", "pcol pcolA"), CB = el("div", "pcol pcolB");
-        CA.append(renderSavantPlate(p, st, g));
-        const cab = el("div", "pscroll");
-        cab.append(renderSeasonHeat(p), el("div", "pappshd", "Filters"), renderPlayerApps(p, goTo));
-        CA.append(cab);
+        const CB = el("div", "pcol pcolB");
         CB.append(panelHead(dsSeason(), "Comparison", viewLabel(p.type)));
         const h3 = card.querySelector(":scope > h3"); if (h3) h3.remove();   // the panel's band already says so
         const cbb = el("div", "pscroll"); cbb.append(card); CB.append(cbb);
-        cp.append(CA, CB); box.append(cp); box.append(renderBelow(p)); sizePPage(); return;
+        cp.append(CB); box.append(cp); box.append(renderBelow(p)); sizePPage(); return;
       }
-      const page = el("div", "ppage");                        // no pinned row: Player apps carries the season and the filters
-      const A = el("div", "pcol pcolA"), B = el("div", "pcol pcolB"), C = el("div", "pcol pcolC");
-      A.append(renderSavantPlate(p, st, g));
-      const abody = el("div", "pscroll");
-      abody.append(renderSeasonHeat(p));
-      abody.append(el("div", "pappshd", "Filters"));
-      abody.append(renderPlayerApps(p, goTo));
-
-      A.append(abody);
+      // the pinned plate and filter row across the top, as the card always had; the boxes sit under them at the
+      // widths they had beside the old left-hand box, centred
+      box.append(phead(p, st, g));
+      const page = el("div", "ppage");
+      const B = el("div", "pcol pcolB"), C = el("div", "pcol pcolC");
       renderPctPanel(p, st, g, g, B, { entry, cur: key, goTo });
       C.append(panelHead(dsSeason(), p.type === "H" ? "Advanced Metrics" : "Advanced Pitching"));
       const cbody = el("div", "pscroll");
@@ -4469,8 +4470,8 @@
       const foot = p.type === "P" ? renderLuckBox(p) : null;   // a pitcher's batted-ball luck, pinned to the foot of the percentile box
       if (foot) B.append(foot);
       const ub = renderUeraBox(p, st); if (ub) C.append(ub);          // a pitcher's uERA box sits at the foot of the right one
-      if (p.type === "H") { B.classList.add("wide"); page.append(A, B); }   // a hitter's percentile box spans both right-hand columns
-      else page.append(A, B, C);
+      if (p.type === "H") { B.classList.add("wide"); page.append(B); }   // a hitter's percentile box is two boxes wide
+      else page.append(B, C);
       box.append(page);
       box.append(renderBelow(p));
       sizePPage();

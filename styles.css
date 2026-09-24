@@ -1874,6 +1874,8 @@ body.modal-open header.top { z-index: 60; }
 .cmpgrid .ccorner { background: var(--surface); }
 #xboard .cmpgrid .ccorner, #xboard .cmpgrid .chead,
 :root[data-view="mobile"] .cmpgrid .ccorner, :root[data-view="mobile"] .cmpgrid .chead { top: calc(var(--header-h, 0px) + var(--cardtop-h, 0px)); }
+/* on the desktop player page the grid scrolls inside its own box, so its heads pin to that box's top */
+:root:not([data-view="mobile"]) #xboard .ppage .cmpgrid .ccorner, :root:not([data-view="mobile"]) #xboard .ppage .cmpgrid .chead { top: 0; }
 .cmpgrid .plate { padding: 5px 9px; }
 .cmpgrid .chead h3 { font-size: 12.5px; }
 .cmpgrid .chead .cmeta { font-size: 10.5px; }
@@ -1991,6 +1993,31 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .splate .sdraft b { color: var(--ink-2); font-weight: 700; }
 :root[data-view="mobile"] .splate .sbanner { height: 140px; }
 :root[data-view="mobile"] .splate h2 { font-size: 23px; }
+/* the player page's pinned header: that plate on the left, the sample and the filter row on the right */
+.phead { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(0, 2fr); background: var(--surface);
+  border: 1px solid var(--accent-2); border-radius: 3px; overflow: hidden; }
+.phead .splate { padding-bottom: 12px; border-right: 1px solid var(--rule); }
+.phead .splate .sbanner { height: 92px; }
+.phead .splate .mug { width: 72px; height: 72px; margin-top: -40px; }
+.phead .splate h2 { font-size: 26px; margin-top: 4px; }
+.pheadR { display: flex; flex-direction: column; min-width: 0; }
+.pheadR .phrow { flex: 1 1 auto; display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px; padding: 14px 22px; }
+.pheadR .pctsample { margin: 0; padding: 0; flex: 1 1 auto; }
+.pheadR .pctsample .psv b { font-size: 30px; }
+.pheadR .pctsample .psu { font-size: 14px; }
+.pheadR .pctsample .pslbl { font-size: 11px; }
+.pheadR .phacts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pheadR .phacts .starbox { margin: 0; }
+.pheadR .xseasons, .pheadR .splitopen { border-radius: 0; }
+:root[data-view="mobile"] .phead { grid-template-columns: minmax(0, 1fr); border-radius: 0; border-inline: 0; }
+:root[data-view="mobile"] .phead .splate { border-right: 0; padding: 0 10px 6px; }
+:root[data-view="mobile"] .phead .splate .sbanner { height: 58px; margin: 0 -10px; }
+:root[data-view="mobile"] .phead .splate .mug { width: 54px; height: 54px; margin-top: -30px; }
+:root[data-view="mobile"] .phead .splate h2 { font-size: 21px; margin-top: 2px; }
+:root[data-view="mobile"] .phead .splate .steam { font-size: 12.5px; margin-top: 2px; }
+:root[data-view="mobile"] .phead .splate .sbio, :root[data-view="mobile"] .phead .splate .sdraft { font-size: 10.5px; margin-top: 1px; }
+:root[data-view="mobile"] .pheadR .phrow { padding: 4px 10px 6px; gap: 6px 10px; border-top: 1px solid var(--rule); }
+:root[data-view="mobile"] .pheadR .pctsample .psv b { font-size: 17px; }
 
 /* the middle panel: one banner, then every stat as a bar — no headings inside */
 .pchead { text-align: center; padding: 12px 12px 0; }
@@ -2161,7 +2188,7 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 :root[data-view="mobile"] .papps .datesbar { width: 100%; }
 :root[data-view="mobile"] .papps .parow > .datesbar { justify-self: stretch; }
 :root[data-view="mobile"] .papps .segbtn { height: 32px; min-height: 32px; font-size: 11px; padding: 0 10px; }
-:root:not([data-view="mobile"]) .ppage.cmp2page { grid-template-columns: minmax(250px, 340px) minmax(0, 1fr); }
+:root:not([data-view="mobile"]) .ppage.cmp2page { grid-template-columns: minmax(0, 1fr); }
 .cmp2page .pcolB .card { padding: 0; background: none; border: 0; grid-template-columns: minmax(0, 1fr); }
 
 .pacts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
@@ -2247,7 +2274,12 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .pctbox { padding: 0; }
 /* a hitter's percentile box takes both right-hand columns; its two columns sit one box-gap apart, so each is exactly
    one box wide and every bar keeps its length */
-.ppage > .pcolB.wide { grid-column: span 2; }
+/* the plate and filter row are pinned above now, so no left-hand box: six columns put the percentile box (and a
+   pitcher's second box) at exactly the widths they had beside it, centred under the header */
+:root:not([data-view="mobile"]) .ppage:not(.cmp2page) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB { grid-column: 2 / span 2; }
+:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolC { grid-column: 4 / span 2; }
+:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB.wide { grid-column: 2 / span 4; }
 .pctcols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 12px; align-items: start; }
 :root[data-view="mobile"] .pctcols { grid-template-columns: minmax(0, 1fr); }
 .pctsample { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; padding: 2px 20px 6px; font-family: "Roboto Condensed", var(--body); }
