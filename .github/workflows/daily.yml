@@ -1,0 +1,115 @@
+# The daily update, on GitHub's machines instead of Sean's Mac: every morning at 4:45 New York time, whether or not
+# the Mac is on. tools/cloud_daily.py does the work (the same build scripts the Mac runs, from tools/).
+#
+# Two crons because GitHub's schedule is in UTC and New York moves an hour twice a year: 8:45 UTC is 4:45 in summer
+# (EDT), 9:45 UTC is 4:45 in winter (EST). The first step lets only the right one through. GitHub can start a
+# scheduled run a few minutes late at busy times; the MLB publish lands ~25 minutes after it starts.
+#
+# tools/cloud.json {"daily": true} is the switch: while it is false the schedule does nothing (the Mac still
+# publishes) and only a manual run (Actions -> Daily update -> Run workflow) builds.
+name: Daily update
+
+on:
+  schedule:
+    - cron: "45 8 * * *"
+    - cron: "45 9 * * *"
+  workflow_dispatch:
+    inputs:
+      steps:
+        description: "mlb, minors, or mlb,minors"
+        default: "mlb,minors"
+      rescore:
+        description: "rebuild past seasons instead (e.g. 2015 2016 … 2025); blank for the daily run"
+        default: ""
+      dry:
+        description: "build but don't publish"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Is it 4:45 in New York, and is the cloud switched on?
+        id: gate
+        run: |
+          go=true
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            zone=$(TZ=America/New_York date +%Z)          # EDT or EST
+            want="45 8 * * *"; [ "$zone" = "EST" ] && want="45 9 * * *"
+            [ "${{ github.event.schedule }}" = "$want" ] || { echo "not this cron in $zone"; go=false; }
+            if [ "$go" = true ] && ! python3 -c "import json,sys; sys.exit(0 if json.load(open('tools/cloud.json')).get('daily') else 1)"; then
+              echo "tools/cloud.json has the cloud off — the Mac publishes"; go=false
+            fi
+          fi
+          echo "go=$go" >> "$GITHUB_OUTPUT"
+
+      - name: Models and the versions they were saved with (from the "models" release)
+        if: steps.gate.outputs.go == 'true'
+        id: models
+        run: |
+          mkdir -p ../model-workspace
+          gh release download models -R "$GITHUB_REPOSITORY" -D ../model-workspace --clobber
+          ls -la ../model-workspace
+          for m in v3_dir v3_ba v3_slg; do test -s ../model-workspace/$m.joblib || { echo "::error::$m.joblib is missing from the models release"; exit 1; }; done
+          py=$(python3 -c "import json; print(json.load(open('../model-workspace/versions.json'))['python'])")
+          echo "python=$py" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-python@v5
+        if: steps.gate.outputs.go == 'true'
+        with:
+          python-version: ${{ steps.models.outputs.python }}
+
+      - name: Packages (pinned to what the models were pickled with)
+        if: steps.gate.outputs.go == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pins=$(python -c "import json; v=json.load(open('../model-workspace/versions.json')); print(' '.join(f'{k}=={x}' for k, x in v['packages'].items()))")
+          echo "pins: $pins"
+          python -m pip install $pins pybaseball requests pyarrow
+
+      - name: Restore the download caches
+        if: steps.gate.outputs.go == 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.pybaseball/cache
+            .cache
+          key: data-cache-${{ github.run_id }}
+          restore-keys: data-cache-
+
+      - name: Build and publish
+        if: steps.gate.outputs.go == 'true'
+        run: |
+          git config user.name "Sean's Site (GitHub Actions)"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          args=""
+          if [ -n "${{ inputs.rescore }}" ]; then args="--rescore ${{ inputs.rescore }}";
+          elif [ -n "${{ inputs.steps }}" ]; then args="--steps ${{ inputs.steps }}"; fi
+          [ "${{ inputs.dry }}" = "true" ] && args="$args --dry"
+          python tools/cloud_daily.py $args
+
+      - name: Save the download caches (even after a failure, so tomorrow starts warm)
+        if: always() && steps.gate.outputs.go == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.pybaseball/cache
+            .cache
+          key: data-cache-${{ github.run_id }}

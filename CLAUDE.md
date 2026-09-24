@@ -18,8 +18,18 @@ This repo is **two things at once**:
    at the repo root are what GitHub Pages serves. They are *build output* mirrored from a Mac.
 2. **A mirror of the build scripts**, under `tools/`. Those are the real source of the data pipeline.
 
-The site is **not built by GitHub Actions**. Everything is built on Sean's Mac (Statcast downloads, models,
-publishing) at `~/Desktop/Fantasy Baseball/`. There is no CI here, and nothing in this repo runs on its own.
+**The daily update is moving to GitHub Actions** so it runs whether or not the Mac is on:
+`.github/workflows/daily.yml` runs `tools/cloud_daily.py` at 4:45 New York time — the same build scripts from
+`tools/`, the same steps as the Mac's `daily_update.py`, published as a plain commit on top of `main` (never a
+force-push), with the download caches kept between runs. `tools/cloud.json` is the switch: `{"daily": true}` =
+the cloud publishes and the Mac's job and publisher stand down (they read the file from `main`); `false` = the Mac
+publishes and the schedule does nothing (a manual run still works: Actions → Daily update → Run workflow, with
+optional `steps`, `rescore` years and `dry`). The directional models are not in the repo: the Mac's publisher
+uploads `model-workspace/*.joblib` and `versions.json` (the Python + package versions they were pickled with) to the
+repo's **`models` release**, which the workflow downloads and pins against. Retraining a model is still a Mac job;
+publishing it is automatic (the next Mac publish uploads changed files, even with the cloud on).
+
+Until the switch is flipped, everything is built on Sean's Mac at `~/Desktop/Fantasy Baseball/` as described below.
 
 ### The round trip — how an edit you make here actually takes effect
 

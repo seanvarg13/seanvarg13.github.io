@@ -45,6 +45,11 @@ FILES = {
     "tools/serve.py": os.path.join(HERE, "serve.py"),
     "tools/sync_tools.py": os.path.join(HERE, "sync_tools.py"),
     "tools/install_schedule.sh": os.path.join(HERE, "install_schedule.sh"),
+    # the GitHub Actions daily update: it lives only in the repo, but the Mac's publish rebuilds main from this folder,
+    # so these ride along (unchanged) or its next push would delete them
+    "tools/cloud_daily.py": os.path.join(HERE, "cloud_daily.py"),
+    "tools/cloud.json": os.path.join(HERE, "cloud.json"),
+    ".github/workflows/daily.yml": os.path.join(HERE, "github-workflow-daily.yml"),
     "tools/models/model3.py": os.path.join(MODELS, "model3.py"),
     "tools/models/model_bs.py": os.path.join(MODELS, "model_bs.py"),
     # the front end: the repo's root copies are the site itself, published byte for byte from this folder, so an

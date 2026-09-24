@@ -58,6 +58,23 @@ def publish():
 
 
 run("sync_tools.py")      # adopt any script edited on GitHub before anything is built with it
+
+
+def cloud_publishes():
+    """GitHub Actions runs the daily update once tools/cloud.json on main says so; then this Mac stands down."""
+    try:
+        import json, urllib.request
+        with urllib.request.urlopen("https://raw.githubusercontent.com/seanvarg13/seanvarg13.github.io/main/tools/cloud.json", timeout=20) as r:
+            return bool(json.load(r).get("daily"))
+    except Exception:                                   # noqa: BLE001 — unreachable: carry on as before
+        return False
+
+
+if cloud_publishes():
+    say("--- GitHub Actions runs the daily update now (tools/cloud.json); this Mac only uploads the models")
+    run("publish_github.py")                            # uploads changed models, then stands down
+    say(f"=== {dt.datetime.now():%F %T} done (cloud)")
+    sys.exit(0)
 ok = run("build_data.py", "--end", end)
 if ok:
     # the minor-league scrape takes another hour or more; put the MLB numbers on the site now rather than

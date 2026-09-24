@@ -1,1 +1,5 @@
 .DS_Store
+# the cloud daily run (tools/cloud_daily.py) stages the build scripts at the root and caches downloads beside them
+/build_*.py
+__pycache__/
+.cache/
