@@ -1993,44 +1993,54 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .splate .sdraft b { color: var(--ink-2); font-weight: 700; }
 :root[data-view="mobile"] .splate .sbanner { height: 140px; }
 :root[data-view="mobile"] .splate h2 { font-size: 23px; }
-/* the player page's pinned header: the blue plate, with the season and every filter in its right-hand side */
-.phead .mplate { flex-wrap: wrap; padding: 16px 22px; gap: 22px; align-items: center; }
-.phead .mplate .mug { width: 132px; height: 132px; }
-.phfilt { margin-left: auto; flex: 0 1 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-.phyear { font-family: var(--display); font-size: 22px; color: var(--band-ink); letter-spacing: 0.02em; line-height: 1; }
-.phyear b { font-size: 40px; font-weight: 700; }
-/* every filter is a labelled box in one grid: a small caption over each control, three across */
-.phgrid { display: grid; grid-template-columns: repeat(3, max-content); gap: 8px 12px; justify-content: end;
-  padding: 10px 12px; background: rgba(0, 0, 0, 0.12); border-radius: 3px; }
-.phf { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.phcap { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--band-ink); opacity: 0.75; }
-.phf .pill { width: 100%; min-width: 0; height: 30px; margin: 0; }
+/* the player page's pinned header: the blue plate edge to edge, every filter in its right-hand side */
+body.playerwide #xboard { overflow: visible; }         /* the header runs past the page box to the window's edges */
+body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px) - 1px); }
+.phead .mplate { flex-wrap: wrap; padding: 10px min(6vw, 96px); gap: 22px; align-items: center; }
+.phead .mplate .mug { width: 112px; height: 112px; }
+.phead .mplate h2 { font-size: 24px; }
+.phead .mplate .mline { margin-top: 2px; }
+.phead .mplate .hstrip { margin: 4px 0; }
+.phead .mplate .mrank { margin-top: 2px; }
+.phead .mplate .mrank .starbox { margin: 0; }
+.phfilt { margin-left: auto; flex: 0 1 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+/* every filter is a labelled box in one grid: season, level, games and the dates across, the toggles under them */
+.phgrid { display: grid; grid-template-columns: repeat(6, max-content); gap: 6px 10px; justify-content: end;
+  padding: 8px 10px; background: rgba(0, 0, 0, 0.12); border-radius: 3px; }
+.phf { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.phf.wide { grid-column: span 2; }
+.phcap { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--band-ink); opacity: 0.8; }
+.phf .pill { width: 100%; min-width: 0; height: 28px; margin: 0; }
+.phf .pill:first-child { min-width: 84px; }
 .phf .seg { display: flex; }
-.phf .seg .segbtn { flex: 1 1 auto; height: 30px; }
-.phf input[type="date"], .phf .lastin { height: 30px; width: 100%; min-width: 0; box-sizing: border-box; padding: 0 8px; font: inherit; font-size: 13px;
+.phf .seg .segbtn { flex: 1 1 auto; height: 28px; padding: 0 10px; }
+/* toggles on the band: solid, the way every other control on it is, so no scheme can wash them out to white on white */
+.mplate .seg { background: var(--surface); border-color: var(--surface); }
+.mplate .segbtn { color: var(--ink); background: var(--surface); border-color: var(--hair); }
+.mplate .segbtn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.phf input[type="date"], .phf .lastin { height: 28px; width: 100%; min-width: 0; box-sizing: border-box; padding: 0 8px; font: inherit; font-size: 13px;
   background: var(--surface); color: var(--ink); border: 1px solid var(--surface); border-radius: 2px; }
+.phf input[type="date"] { min-width: 132px; }
+.phf .lastin { width: 72px; }
 .phf input:disabled { opacity: 0.55; }
 .phlast { display: flex; gap: 6px; align-items: center; }
 .phlast .unadd { color: var(--band-ink); }
-.phstatic { display: flex; align-items: center; height: 30px; padding: 0 10px; font-size: 13px; font-weight: 600;
-  color: var(--band-ink); border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 2px; }
-.phtop { display: flex; align-items: flex-end; justify-content: flex-end; gap: 16px; width: 100%; }
-:root[data-view="mobile"] .phgap { display: none; }
+.phstatic { display: flex; align-items: center; height: 28px; padding: 0 10px; font-size: 13px; font-weight: 600;
+  color: var(--band-ink); border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 2px; white-space: nowrap; }
+.phsum { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 10px; font-size: 12px; color: var(--band-ink); }
+.phsum .winnote { color: var(--band-ink); opacity: 0.85; }
+.phsum .splitwarn .linkbtn { color: inherit; }
+:root[data-view="mobile"] .phead .mplate { padding: 10px 12px; gap: 8px 14px; }
+:root[data-view="mobile"] .phead .mplate .mug { width: 84px; height: 84px; margin: 0; }
 :root[data-view="mobile"] .phead .mplate > div:nth-child(2) { flex: 1 1 0; min-width: 0; }
-:root[data-view="mobile"] .phtop { justify-content: flex-start; }
 :root[data-view="mobile"] .phead .hstrip { gap: 2px 10px; font-size: 11px; margin-bottom: 4px; }
 :root[data-view="mobile"] .phead .hchip { white-space: nowrap; }
 :root[data-view="mobile"] .phead .hchip b { font-size: 14px; }
-.phsum { display: flex; flex-wrap: wrap; justify-content: flex-end; padding-bottom: 4px; gap: 4px 10px; font-size: 12px; color: var(--band-ink); }
-.phsum .tsum, .phsum .winnote { color: var(--band-ink); opacity: 0.85; }
-.phsum .splitwarn .linkbtn { color: inherit; }
-:root[data-view="mobile"] .phead .mplate { padding: 10px 12px; gap: 10px 14px; }
-:root[data-view="mobile"] .phead .mplate .mug { width: 96px; height: 96px; margin: 0; }
-:root[data-view="mobile"] .phfilt { margin-left: 0; flex-basis: 100%; align-items: stretch; gap: 6px; }
-:root[data-view="mobile"] .phyear { display: none; }
+:root[data-view="mobile"] .phfilt { margin-left: 0; flex-basis: 100%; align-items: stretch; }
 :root[data-view="mobile"] .phgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 8px; gap: 6px 8px; }
 :root[data-view="mobile"] .phf.wide, :root[data-view="mobile"] .phtoggle { grid-column: 1 / -1; }
-:root[data-view="mobile"] .phf input[type="date"] { -webkit-appearance: none; appearance: none; padding: 0 4px; font-size: 12px; }
+:root[data-view="mobile"] .phf input[type="date"] { -webkit-appearance: none; appearance: none; padding: 0 4px; font-size: 12px; min-width: 0; }
+:root[data-view="mobile"] .phf .lastin { width: 100%; }
 :root[data-view="mobile"] .phsum { justify-content: flex-start; }
 /* a pitcher's uERA and luck-neutral ERA tables, side by side in their own tab */
 .eratab { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 40px; }
@@ -2325,3 +2335,6 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .svpct .svnum { fill: #ffffff; font-weight: 700; text-anchor: middle; }
 .svpct .svnum.c3 { font-size: 10px; }
 .pctbox .pctfoot { display: none; }
+/* the player page's bars keep the width the chart gave them: 212 across on a desktop, 166 on a phone */
+:root:root .ppage .pmeters .meter { grid-template-columns: minmax(0, 1fr) 212px 35px; }
+:root:root[data-view="mobile"] .ppage .pmeters .meter { grid-template-columns: minmax(0, 1fr) 166px 35px; }
