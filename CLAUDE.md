@@ -302,7 +302,8 @@ is deploy-limited.
 * **Changes apply to mobile and desktop** unless he names one. `:root[data-view="mobile"]` overrides live at the
   end of `styles.css`. Position-sticky breaks on iOS under clipped ancestors — do not reach for it.
 * **The player page's box height is locked.** "the height is perfect now, don't ever change unless i absolutely
-  specify." `sizePPage()` sets `--ppage-top` from the page's offset **in the document** (`rect.top + scrollY`),
+  specify." Since the page became a card (§8) it takes the card's height (`sizePPage()`'s `#modal-body` branch); the
+  `#xboard` branch below only runs if the page is ever drawn outside the modal again. `sizePPage()` sets `--ppage-top` from the page's offset **in the document** (`rect.top + scrollY`),
   not the viewport — measuring the viewport while the page is scrolled reads smaller every render and the boxes
   grow ~84px each time. That bug has been fixed twice; do not reintroduce it.
 * Code style: dense, comment *why* not *what*, prose comments in Sean's voice, no ceremony. `app.js` is one IIFE
@@ -324,8 +325,10 @@ is deploy-limited.
   `impliedKBB` rule. One sentence of user-facing copy; Sean should decide the wording.
 * **The percentile sections have no run values, fielding (OAA), sprint speed or spin.** Not in this data.
   Acknowledged gap, not a bug.
-* **A popup card is the player page** (`playerView()` in `app.js` builds both), so a change to one is a change to the
-  other.
+* **The player page is a popup card** (Sean, 24 Sep 2026: "identical in every measure"): `renderExplore()` opens his
+  card in the site's one `#modal` via `showPageCard()`, with classes `pagecard` (no ×) and `pagebg` (a pinstripe pattern
+  in the theme's `--accent-2` / `--rule` / `--stripe-line` instead of the dimmed list). Same element, classes and
+  `playerView()` as a card off a list, so a change to one is a change to the other.
 * `hist/` files built before a field was appended to `HITTER_DAY`/`PITCHER_DAY` lack it; `app.js` checks
   `indexOf(...) < 0` before using one. Keep doing that.
 * Spring training has little tracking (many parks are not instrumented), so EV-based stats are thin there.

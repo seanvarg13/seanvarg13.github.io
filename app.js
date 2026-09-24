@@ -3286,11 +3286,12 @@
   }
   let holdScroll = null, lastPlayerId = null;        // scroll still owed to a player's page (see keepScroll)
   function render() {
-    const keep = keepScroll(), mb = $("modal-body"), open = !$("modal").hidden ? state.expanded : null, mtop = mb ? mb.scrollTop : 0;
+    const cardKey = () => (state.mode === "player" ? "x" + state.x.id : state.expanded);   // his page is a card too
+    const keep = keepScroll(), mb = $("modal-body"), open = !$("modal").hidden ? cardKey() : null, mtop = mb ? mb.scrollTop : 0;
     renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage(); ddSync();
     if (ddOpen && !ddOpen.trig.isConnected) ddClose();   // a list whose opener was redrawn away
     keep();
-    if (open && open === state.expanded && !$("modal").hidden && mb.scrollTop !== mtop) mb.scrollTop = mtop;   // the same card, redrawn
+    if (open && open === cardKey() && !$("modal").hidden && mb.scrollTop !== mtop) mb.scrollTop = mtop;   // the same card, redrawn
   }
   // A player's page is rebuilt on every pick (a season, a level, a tab, a filter). Rebuilt, it is briefly short and the
   // window snaps to the top, and its panels' own scrollers start over. On the same player, put them all back; if the
@@ -3310,7 +3311,7 @@
     };
   }
   function renderNow() {
-    $("modal").classList.remove("pcard"); document.body.classList.remove("cardpop");   // set again below if a player card is up
+    $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = state.mode === "draftmode" || home, appear = state.mode === "appearance", fant = state.mode === "fantasy", other = player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
@@ -3323,7 +3324,11 @@
     if (hub) { home ? renderHome() : renderHub(); return; }
     if (appear) { renderAppearance(); return; }
     if (fant) { renderFantasy(); renderModal(); return; }
-    if (player) { renderExplore(); if (state.panel === "cmp2" && state.cmp2.on && cardNow) renderCmpPanel(); return; }   // his own page has no modal of its own
+    if (player) {                                        // his page is a card of its own (showPageCard); a settings panel takes its place, over the pattern
+      renderExplore();
+      if (state.panel === "cmp2" && state.cmp2.on && cardNow) { $("modal").classList.remove("pcard", "pagecard"); renderCmpPanel(); }
+      return;
+    }
     if (compare) { renderCompare(); renderModal(); return; }
     if (elig) { renderEligibility(); return; }
     const listRender = () => {
@@ -4588,9 +4593,16 @@
       const g = p.type === "H" ? "H" : p.primary;
       if (needsRows() && !DS.ready()) { DS.load(); box.append(cardTop(renderPlate(p, { rank: "–" }, g, g), chips(p))); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); box.append(c); return; }
       const st = pool(g).stats.get(p.type + p.id) || rankIn(g, p);
-      playerView(box, { p, st, g, ref: g, entry, key, pick: goTo });
-      sizePPage();
+      showPageCard((mb) => playerView(mb, { p, st, g, ref: g, entry, key, pick: goTo }));
     })));
+  }
+  // His page IS his popup card — the same element, classes and code, so the two can't drift apart — only with no × and
+  // the theme's pattern behind it where a card would have a list. Sean: "identical in every measure".
+  function showPageCard(fill) {
+    const modal = $("modal"), mb = $("modal-body");
+    modal.classList.add("pcard", "pagecard", "pagebg"); document.body.classList.add("cardpop");   // cardpop before the lock, as for a card
+    modal.hidden = false; lockPage(true); parkControls(); mb.innerHTML = "";
+    fill(mb);
   }
   // Everything under a player's name, the same on his page and in a popup card: the season as the title (its year and
   // level the pickers), the pinned plate with the filters, the percentile sections, and the tabs under them.

@@ -2453,3 +2453,10 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root:not([data-view="mobile"]) .modal.pcard .phead .mplate { padding-inline: 58px; }   /* even sides round the centred title; the × sits in the right one */
 /* a popup is only as wide as its charts, so its plate always takes the two-row layout: the title on its own centred row */
 :root:not([data-view="mobile"]) .modal.pcard .phead .mplate { grid-template-columns: 1fr auto; grid-template-areas: "left right" "mid mid"; row-gap: 8px; }
+
+/* A player's own page is his popup card (showPageCard in app.js), with no × and, where a card has the list dimmed behind
+   it, a regular pattern in the theme's colours: the band's blue with pinstripes of the rule's navy and the header's stripe */
+.modal.pagecard .modal-close { display: none; }
+.modal.pagebg .modal-back, :root[data-view="mobile"] .modal.pagebg .modal-back { display: block; background-color: var(--accent-2);
+  background-image: repeating-linear-gradient(135deg, transparent 0 18px, color-mix(in srgb, var(--rule) 30%, transparent) 18px 21px,
+                    transparent 21px 39px, color-mix(in srgb, var(--stripe-line) 45%, transparent) 39px 40px, transparent 40px 42px); }
