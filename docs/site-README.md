@@ -43,8 +43,8 @@ into the bars. The ramp is Savant's: `--lo` #325aa1 through a solid `--mid` #b3b
 and the circle share `bubLeft()` in `app.js`, so the circle always sits exactly at the fill's end and a 0 or
 a 100 still lands on the bar instead of hanging off it.
 
-**Hitter cards** show grouped percentile meters — Outcomes (wOBA, xwOBA and dxwOBA side by side, with xBA / xSLG
-folded out under xwOBA), Batted-ball quality
+**Hitter cards** show grouped percentile meters — Outcomes (wOBA and xwOBA side by side, with xBA / xSLG
+folded out under xwOBA — all three the directional model's), Batted-ball quality
 (Avg EV and Barrel%, with Hard-Hit%, Sweet-Spot%, 90th% / max EV and bat speed folded out under
 Barrel%), Swing decisions, Contact, Batted-ball distribution (Air% and Pull Air%, with FB% / LD% /
 Popup% / GB% under Air%) — all recomputed for the active date window (`evs` per-day lists feed
@@ -100,12 +100,11 @@ the theme tokens, so it recolours with the scheme like the rest of the tables. u
 the note under the table: his ground-ball and popup shares as they are, the air balls that are left split into line
 drives and fly balls at the league's rate, every ball in play worth the league's average for its type.
 
-**Both expected models at once.** `xws` is always Statcast's xwOBA and `xwd` is always the directional model, so
-either or both can sit on the Leaderboard, on any table's columns, in a comparison, or on the card — they are ordinary
-card metrics with their own percentiles. The toggle-driven `xwoba` key stays what it always was: the headline the
-hitter Score, the sort menu and the row bubbles use. In `V()` the window branch computes `xwSav` and `xwDir` once and
-hands out all three keys; `seasonHitterM()` does the same for a full season (`m._sav` is stashed so the directional
-value can never overwrite it).
+**One expected model.** Statcast's xwOBA left the site on 24 Sep 2026 ("get rid of statcast xwoba completely"):
+`xwd` (labelled **xwOBA**), `dxba` (**xBA**) and `dxslg` (**xSLG**) are the directional model's, and the `xwoba` key the
+hitter Score, the sort menu and the row bubbles use is the same number. The build still writes Savant's `xws` row and
+its xBA / xSLG fold-out into `data.js`; `app.js` drops them at load and relabels the three. Statcast's xBA / xSLG are
+used only to stand in, under those names, for an MLB season not yet rescored for the directional ones.
 
 **Comparing a card.** **Compare** on a card's filter row turns the card into a comparison and nothing else: two
 columns of percentile bars for the same player. While it is open the **Splits & dates** button becomes **Set up
@@ -123,13 +122,10 @@ the left, using the same `.cgrid` as the Compare page. Changing a column's seaso
 range belongs to the season it was set in. Every group is in the grid, including the ones that normally fold away
 below the card. **Close comparison** goes back to the card.
 
-**Hitters** rank by xwOBA, and **Expected stats** switches which model that is, for the whole site at once:
-
-- **Statcast** (default) — exit velocity + launch angle: Savant's published number for a full season, rebuilt
-  from pitch-level data inside a window or split.
-- **Directional** — the spray-angle model in `../model-workspace/v2_dir.joblib` (exit velocity, launch angle,
-  spray and pull angle, the batter's sprint speed), so where he hit the ball counts. It shows as **dxwOBA**
-  everywhere the label appears.
+**Hitters** rank by xwOBA, and xwOBA is the directional model: the spray-angle model in
+`../model-workspace/v3_dir.joblib` (exit velocity, launch angle, spray and pull angle, the batter's sprint speed), so
+where he hit the ball counts. There is no Statcast option any more — the Expected stats switch and `state.xmodel`
+are gone.
 
 The model scales its predictions by the league's mean wOBA on contact, and its own average prediction isn't
 exactly 1, so a raw season of dxwOBA lands a few points off the real scale (+.009 in 2026, −.007 in 2015).
@@ -143,13 +139,13 @@ On the 2026 board, dxwOBA tracks wOBA far more closely than Statcast's does (r .
 qualifiers, and .860 against .777 for the top third by Pull Air%), while Statcast's is a shade better at
 predicting *next* season's wOBA (pooled r .522 against .503 over 2023→24, 24→25 and 25→26).
 
-The switch lives in **Stats & filters ▸ Splits & dates** on any hitter list and in the **Splits** block on any
-hitter's card (`state.xmodel`, saved in prefs). Both come from the same day rows — `dnum` / `wden` for the
-directional model, `xnum` / `xden` for Statcast's — so windows, splits, the trending spans, the percentile
-pools, the board order and card comparisons all follow the choice; `applyXModel()` swaps the label on the
-shared metric objects and clears the value, pool and rank caches, and `viewKey()` carries the model so nothing
-stale survives. Directional is blank where batted balls aren't tracked (A and AA, `tracked < 5%`). Season files
-also carry the plain `xwoba_dir` per player.
+It comes from the day rows (`dnum` / `wden`), so windows, splits, the trending spans, the percentile pools, the
+board order and card comparisons all use it. It is blank in the minors — `build_milb.py` stubs the xwOBA model out
+there (it needs MLB sprint speeds) — so `wobaHead()` hands the hitters' headline and rank to wOBA, the Leaderboard
+drops its own wOBA column so it isn't shown twice, and the player page has no xwOBA row. The directional xBA / xSLG
+models do run in the minors (sprint speed missing), so Triple-A and the tracked A parks show them; BA and SLG stand
+in where nothing is tracked (AA). The hitter lists don't offer xwOBA as a column or a sort of its own (`HEAD_DUP`):
+the headline column already is it. Season files also carry the plain `xwoba_dir` per player.
 
 **dxBA and dxSLG** (`model-workspace/model_bs.py` -> `v3_ba.joblib`, `v3_slg.joblib`) are the same recipe with
 the other two targets a batted ball can have: whether it goes for a hit, and how many bases. Same six features,
@@ -158,8 +154,9 @@ back when scoring), so a pulled fly ball is priced by the shift rules in force n
 a percent of the real 2026 league rate in sample (level .998 and 1.002). `directional_bs()` in `build_data.py`
 scores every tracked ball in play that counts as an at-bat, keeps the real result on an untracked one, and sums
 per day into `dbsum` / `dssum` — two more fields on the end of `HITTER_DAY`, so older files still read — which
-divide by AB to give `dxba` and `dxslg`. They fold out under dxwOBA on the card and lead the player page's middle
-panel. Seasons built before these models fall back to Statcast's xBA / xSLG. The wOBA skills blend is still available as a sort and on each card.
+divide by AB to give `dxba` and `dxslg`. They fold out under xwOBA on the card, as xBA and xSLG, and lead the
+player page's Results. An MLB season built before these models shows Statcast's xBA / xSLG under those names until
+it is rescored. The wOBA skills blend is still available as a sort and on each card.
 **Position for 2027** on a pitcher's card moves him between SP and RP.
 
 **Splits**: on an open player card — vs LHP / RHP (vs LHB / RHB for pitchers) and home / away.
@@ -331,10 +328,10 @@ is open, which is what keeps them from painting behind it on a phone.
 - **The pinned plate** (`playerHead()`, `.phead`): the blue plate from edge to edge of the window. On a desktop it is
   three columns with equal outer ones, so the middle sits over the middle of the page: the cut-out headshot, name,
   team / position / age, the sample (PA · AB · BBE · G, or IP · BF · G/GS · pitches), "full season" and Star on the
-  left; the season's title (below) dead centre, with a hitter's **Statcast / Directional xwOBA** switch under it; and
-  on the right one labelled grid of filters — **From**, **To** and **Last PA** (or IP), then **Pitchers** (All / vs
-  LHP / vs RHP; Batters for a pitcher) and **Home / away** (Both / Home / Away). Under 1300px wide the three don't fit,
-  so the title and the switch take their own centred row under the other two. The toggles are solid buttons on the
+  left; the season's title (below) dead centre; and on the right one labelled grid of filters — **From**, **To** and
+  **Last PA** (or IP), then **Pitchers** (All / vs LHP / vs RHP, tight buttons under From; Batters for a pitcher) and
+  **Home / away** (Both / Home / Away) under To and Last. Under 1300px wide the three don't fit, so the title takes
+  its own centred row under the other two. The toggles are solid buttons on the
   band, so no colour scheme can wash them out. On a phone the plate is laid out tighter: the Star is a ☆ beside the name (by the popup's ×),
   the filters fold behind one **Filters** button beside "full season", and the season's title (below) sits at the foot
   of the plate, pinned with it.
@@ -342,12 +339,12 @@ is open, which is what keeps them from painting behind it on a phone.
   The year and the level are the season pickers for the whole page (`titleSelect()`): each is a word over a dotted
   rule.
 - **The percentile sections** (`renderPctPanel`): two columns of headed sections, drawn with Savant's chart code
-  (`pctSvg`). Hitters (`PCT_COLS_H`): Results (wOBA, xwOBA, xBA, xSLG — the expected three follow the xwOBA switch),
+  (`pctSvg`). Hitters (`PCT_COLS_H`): Results (wOBA, xwOBA, xBA, xSLG — the expected three the directional model's),
   Batted-Ball Quality, then Swing Decisions (Z-Swing%, O-Swing%, BB%), Contact and Batted-Ball Distribution.
   Pitchers (`PCT_COLS_P`): Whiffs and Strikes, Swing & Miss, Zone & Chase (BB%, Strike%, Zone%, Chase%), then Results
-  (K-BB%, ERA), Batted Ball (GB%, Popup%, Mix ERA) and Stuff. On a desktop a pitcher's sections take the left
-  two-thirds and the right third carries his uERA table and batted-ball mix (`.pcolC.pright`), so the uERA tab is a
-  phone's only. On a desktop the box takes the page's whole width and both columns are drawn at
+  (K-BB%, ERA), Batted Ball (GB%, Popup%, Mix ERA) and Stuff. His uERA table and batted-ball mix live in the uERA tab
+  on a desktop and a phone alike (for a day they sat in a right-hand third beside a desktop's bars; Sean wanted them
+  back in the tabs). On a desktop the box takes the page's whole width and both columns are drawn at
   one scale, the largest at which the taller one still fits the box (`pctChart`'s `fit`), so type, bars and circles
   grow together; a phone draws them at their real size. A chart starts at the size its column had last time
   (`pctLast`): drawn at a guess and resized a moment later, everything under it shifted and, near the foot of the
@@ -442,7 +439,7 @@ season line (G, PA, AB, H, R, HR, RBI, SB, BB, K, AVG/OBP/SLG/OPS; pitchers G, G
 QS), by position / role, for 2026 and the two seasons before. **Per opportunity**: points per game, per PA, per AB,
 per 600 PA; pitchers per IP, per start, per relief appearance, QS%. **What if**: pitchers with K and BB at their
 underlying rates (uK% = Whiff%, uBB% from Strike% percentile), ER at luck-neutral ERA, hits at Savant xBA — and the
-rank at the role that would give; hitters with H / TB at Savant xBA / xSLG, points per game at a starter's PA/G and a
+rank at the role that would give; hitters with H / TB at the directional xBA / xSLG, points per game at a starter's PA/G and a
 full starter's PA at their position (top teams × lineup slots by PA), and the rank at the position that would give.
 Data: `build_fantasy.py` (part of Update / the daily job) -> `fantasy.js`; `python3 build_fantasy.py 2025 2024` for
 past years -> `hist/fantasy-YYYY.js`.

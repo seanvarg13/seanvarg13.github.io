@@ -119,7 +119,7 @@ last publish, the Mac keeps its copy and the repo's lands in `logs/tools-conflic
 | **Statcast (pitch level)** | every pitch: `description`, `zone`, `type`, `bb_type`, `launch_speed`, `launch_angle`, `hc_x/hc_y`, `release_speed`, `release_extension`, `bat_speed`, `woba_value`, `woba_denom`, `events`, `stand`, `p_throws`, `inning_topbot` | `pybaseball.statcast()` month by month, cached in `~/.pybaseball`. Spring/postseason go straight at Savant's `statcast_search/csv` day by day (pybaseball clips those dates), cached under `draft-site/.cache/savant` |
 | **Savant batted-ball leaderboard** | `air_rate`, `pull_air_rate` → **Air%** and **Pull Air%** as Savant reports them | `leaderboard/batted-ball?type=batter&year=…&csv=true` |
 | **Savant bat-tracking leaderboard** | `avg_bat_speed` | `leaderboard/bat-tracking?…&csv=true` |
-| **Savant expected stats** | `est_woba`, `est_ba`, `est_slg` → the Statcast xwOBA/xBA/xSLG the site shows beside its own | `leaderboard/expected_statistics?type=batter&year=…&csv=true` |
+| **Savant expected stats** | `est_woba`, `est_ba`, `est_slg` → Statcast's xwOBA/xBA/xSLG; not shown any more, only the stand-in for xBA/xSLG on a past season not yet rescored | `leaderboard/expected_statistics?type=batter&year=…&csv=true` |
 | **Savant sprint speed** | `sprint_speed`, a feature of all three directional models | `pybaseball.statcast_sprint_speed(min_opp=5)` |
 | **MLB Stats API** | names, teams, positions, games by position, official AB/IP/ERA/earned runs, per-game logs, bio + draft (`people/<id>?hydrate=draft`), minor-league lines | `statsapi.mlb.com/api/v1/...` |
 | **Savant minors search** | Triple-A Statcast; AA/A+/A come from Gameday play-by-play (calls, batted-ball type and location, no tracking outside FSL parks) | `build_milb.py`, cached under `.cache/milb` |
@@ -173,13 +173,15 @@ EV ≥ 95. Sweet-spot is 9-31° full credit and 8° / 32° half credit (the roun
 bunts, as Savant's do. Bat speed averages **competitive swings** — everything at or above the hitter's own 10th
 percentile swing speed, which is Savant's roughly-hardest-90% rule.
 
-**xwOBA, two of them.** The site carries Savant's `est_woba` (**xwOBA**) *and* its own **dxwOBA** ("directional
-xwOBA"), and the player page has a **Statcast xwOBA / Directional xwOBA** toggle that switches every expected
-number, bar and chart on the page at once.
+**xwOBA is the directional model, and only that** (Sean, 24 Sep 2026: "get rid of statcast xwoba completely").
+Everywhere the site says xwOBA, xBA or xSLG — the headline, the rank, the leaderboards, the cards, the player page,
+the rolling chart, the fantasy xPts — it means Sean's model (`xwd` / `dxba` / `dxslg` in `app.js`; the old
+Statcast/Directional toggle and the `xws` column are gone). The build still carries Savant's `est_woba`/`est_ba`/
+`est_slg`, but only as the stand-in for xBA/xSLG on a past season not yet rescored for them.
 
 * Savant's xwOBA prices a batted ball by exit velocity and launch angle (plus sprint speed on weak contact) and
   is deliberately blind to *direction*. That under-prices a pulled fly ball and over-prices a hard ball hit the
-  other way, which is exactly the effect Sean's hitting model is about.
+  other way, which is exactly the effect Sean's hitting model is about — and why it was dropped.
 * **dxwOBA** (`model-workspace/v3_dir.joblib`, trained by `tools/models/model3.py`) is a
   `HistGradientBoostingRegressor(max_iter=1200, learning_rate=0.04, max_leaf_nodes=63, min_samples_leaf=150,
   l2_regularization=1.0, early_stopping=True, validation_fraction=0.1)` over
@@ -232,9 +234,12 @@ percentiles.
 a date window or split; the Min PA box only controls who is *listed*. Pitchers use the Min IP pool. Percentiles
 count ties at half (`insertPct`), and lower-is-better metrics are stored negated in the sorted arrays.
 
-**Fallbacks.** Levels without tracking (A/AA, and anything with `tracked < 5%`) fall back down a chain:
-dxwOBA → xwOBA → wOBA, dxBA → xBA → BA, dxSLG → xSLG → SLG (`PCT_FALL` in `app.js`). Older `hist/` files that
-predate the directional rescore show Statcast's numbers instead.
+**Fallbacks.** The minors have no directional xwOBA (`build_milb.py` stubs that model out — it needs MLB sprint
+speeds), so there the hitters' headline and rank are wOBA and the player page has no xwOBA row. The directional
+xBA/xSLG models do run in the minors (with sprint speed missing); where nothing is tracked (AA, `tracked < 5%`) they
+fall back to BA/SLG (`PCT_FALL` in `app.js`). Past MLB seasons whose `hist/` file predates the xBA/xSLG rescore show
+Statcast's xBA/xSLG under those names until it runs (their xwOBA is already directional); the minors never show
+Statcast's.
 
 ---
 
@@ -313,7 +318,8 @@ is deploy-limited.
 * **Historical rescore — scheduled.** Sean said go (25 Sep 2026). `daily_update.py` now ends with a self-checking
   step: after the final publish it rebuilds every past MLB season whose `hist/mlb-YYYY.js` has no numeric `dxba`
   (`build_history.py <years>`, then `build_career.py`, then publishes). ~2 hours the first time, a no-op after.
-  Triple-A still falls back to Statcast's xBA/xSLG (no directional models in the minors).
+  Until it has run, those seasons show Statcast's xBA/xSLG under the site's names. The minors have no directional
+  xwOBA, so their lists lead with wOBA.
 * **The uERA note in `app.js` is stale** (§4). It describes a fitted regression that was replaced by the simple
   `impliedKBB` rule. One sentence of user-facing copy; Sean should decide the wording.
 * **The percentile sections have no run values, fielding (OAA), sprint speed or spin.** Not in this data.
