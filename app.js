@@ -4173,10 +4173,10 @@
   // EXPW / EXPB / EXPS follow the xwOBA switch, as everywhere.
   const PCT_COLS_H = [[["Outcomes", ["woba", "xws", "xwd"]], ["Expected Stats", ["EXPW", "EXPB", "EXPS"]],
                        ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],
-                      [["Swing Decisions", ["zsw", "osw", "swing", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],
+                      [["Swing Decisions", ["zsw", "osw", "zmo", "swing", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],
                        ["Batted-Ball Distribution", ["air", "pu", "gb", "pull"]]]];
   const OUTCOME_LABEL = { woba: "wOBA", xws: "xwOBA", xwd: "dxwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
-                          maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
+                          maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%" };
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
