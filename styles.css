@@ -2505,3 +2505,29 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 .modal.pcard #modal-body > .cardtop { flex: none; position: relative; top: auto; }
 .cardscroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 :root .modal .cardscroll .cmpgrid .ccorner, :root .modal .cardscroll .cmpgrid .chead { top: 0; }   /* pinned to the scroller's own top now */
+/* A desktop's plate is one short row now: the tile and his lines on the left, the season's title centred in the room to
+   their right, and the filters in a panel that drops from the Filters button (Sean: "reduce the height of the header") */
+:root:not([data-view="mobile"]) .phead .mplate, :root:not([data-view="mobile"]) .modal.pcard .phead .mplate {
+  grid-template-columns: auto 1fr; grid-template-areas: "left mid"; align-items: center; row-gap: 0; }
+:root:not([data-view="mobile"]) .phead .mplate.phright { grid-template-columns: auto 1fr auto; grid-template-areas: "left mid right"; }
+:root:not([data-view="mobile"]) .phead .phmid { flex-direction: row; justify-content: center; align-self: center; }
+@media (max-width: 1300px) {
+  :root:not([data-view="mobile"]) .phead .mplate { grid-template-columns: auto 1fr; grid-template-areas: "left mid"; }
+}
+:root:not([data-view="mobile"]) .phead .mplate .mrank { margin-top: 6px; }
+.phtog { position: relative; display: inline-flex; }
+.phead .mrank .phtoggle { height: 26px; padding: 0 10px; font-size: 11.5px; }
+.phead .phtoggle.on { background: var(--tab-fill); color: var(--tab-ink); }
+.phfilt.phpop { position: absolute; top: calc(100% + 8px); left: 0; z-index: 30; margin: 0; padding: 12px; width: max-content;
+  background: var(--accent-2); border: 2px solid var(--rule); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38), 0 3px 8px rgba(0, 0, 0, 0.22);
+  align-items: stretch; }
+.phfilt.phpop:empty { display: none; }
+.phfilt.phpop .phgrid { justify-content: start; }
+:root:not([data-view="mobile"]) .modal.pcard #modal-body > .cardtop { z-index: 5; overflow: visible; }
+:root:not([data-view="mobile"]) .phead, :root:not([data-view="mobile"]) .phead .mplate { overflow: visible; }
+/* his lines sit centred beside the headshot, never starting level with (or above) the tile's top edge */
+:root:not([data-view="mobile"]) .phleft { align-items: center; align-self: center; }
+:root:not([data-view="mobile"]) .phleft > div:not(.phmug) { align-self: center; }
+/* the dotted rule under the year / level: whole dots spread evenly across the word, so the last one is never sliced in
+   half at the word's end (it read as a glitch) */
+.tsl, .phead .tsel:not(.solo) .tsl { background-repeat: space no-repeat; background-size: 8px 4px; background-position: left bottom; }
