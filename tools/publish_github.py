@@ -108,6 +108,57 @@ def repo_bytes():
     return size
 
 
+MODELS = os.path.join(os.path.dirname(HERE), "model-workspace")
+
+
+def upload_models(sess, info):
+    """Put the directional models on the repo's "models" release, where the GitHub Actions daily run fetches them
+    (.github/workflows/daily.yml), with the Python and package versions they were pickled under so the cloud
+    installs the same ones. Only files that changed since the last upload are sent."""
+    import importlib.metadata as md, platform
+    o, r = info["owner"], info["repo"]
+    rel = sess.get(f"{API}/repos/{o}/{r}/releases/tags/models")
+    if rel.status_code == 404:
+        rel = sess.post(f"{API}/repos/{o}/{r}/releases", json={"tag_name": "models", "name": "Models for the daily build",
+            "body": "The directional xwOBA / xBA / xSLG models (model-workspace/*.joblib) and versions.json, uploaded by the "
+                    "Mac's publisher. The GitHub Actions daily update downloads them; nothing here is part of the site.",
+            "target_commitish": "main"})
+    rel.raise_for_status()
+    rel = rel.json()
+    have = {a["name"]: a for a in rel.get("assets", [])}
+    versions = {"python": ".".join(platform.python_version_tuple()[:2]),
+                "packages": {p: md.version(p) for p in ("scikit-learn", "numpy", "pandas", "scipy", "joblib")}}
+    vpath = os.path.join(MODELS, "versions.json")
+    with open(vpath, "w") as f:
+        json.dump(versions, f, indent=1, sort_keys=True)
+    for name in ("v3_dir.joblib", "v3_ba.joblib", "v3_slg.joblib", "versions.json"):
+        path = os.path.join(MODELS, name)
+        if not os.path.exists(path):
+            continue
+        size, old = os.path.getsize(path), have.get(name)
+        if old and old.get("size") == size and name != "versions.json":
+            continue
+        if old and name == "versions.json":
+            cur = sess.get(old["browser_download_url"])
+            if cur.ok and cur.content == open(path, "rb").read():
+                continue
+        if old:
+            sess.delete(f"{API}/repos/{o}/{r}/releases/assets/{old['id']}")
+        with open(path, "rb") as f:
+            up = sess.post(f"https://uploads.github.com/repos/{o}/{r}/releases/{rel['id']}/assets?name={name}",
+                           data=f, headers={"Content-Type": "application/octet-stream"})
+        say(f"  models release: uploaded {name} ({size / 1e6:.1f} MB)" if up.ok else f"  (models upload {name}: {up.status_code})")
+
+
+def cloud_publishes(info):
+    """True once GitHub Actions runs the daily update (tools/cloud.json on main): then this Mac stands down."""
+    try:
+        r = requests.get(f"https://raw.githubusercontent.com/{info['owner']}/{info['repo']}/main/tools/cloud.json", timeout=20)
+        return bool(r.ok and r.json().get("daily"))
+    except Exception:                                   # noqa: BLE001 — unreachable: keep publishing as before
+        return False
+
+
 def main():
     name = sys.argv[sys.argv.index("--repo") + 1] if "--repo" in sys.argv else None
     squash = "--squash" in sys.argv
@@ -115,6 +166,13 @@ def main():
     sess = requests.Session()
     sess.headers.update({"Authorization": "Bearer " + tok, "Accept": "application/vnd.github+json", "User-Agent": "draft-board-publish"})
     info = repo_info(sess, name)
+    try:
+        upload_models(sess, info)
+    except Exception as e:                                 # noqa: BLE001 — never block a publish on this
+        say(f"  (models upload skipped: {type(e).__name__}: {e})")
+    if cloud_publishes(info) and "--force" not in sys.argv:
+        say("GitHub Actions publishes the site now (tools/cloud.json) — not pushing from this Mac. --force overrides.")
+        return
 
     try:                                                   # a script edited on GitHub is taken first, so this push
         import sync_tools                                  # does not put the old copy back over it
