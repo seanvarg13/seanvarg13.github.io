@@ -1384,12 +1384,8 @@
     bar.append(seg("Venue", [["all", "Home + away"], ["home", "Home"], ["away", "Away"]], state.split.venue, (v) => (state.split.venue = v)));
     if (state.mode !== "compare") bar.append(renderCardDates(p));
     if (state.daysLoading && state.mode === "compare") bar.append(el("span", "winnote", "Loading game-by-game data…"));
-    if (state.split.hand !== "all" || state.split.venue !== "all") {
-      const warn = el("span", "splitwarn");
-      warn.append(`Showing ${[state.split.hand !== "all" ? "vs " + state.split.hand + "H" + (pit ? "B" : "P") : "", state.split.venue !== "all" ? state.split.venue : ""].filter(Boolean).join(" · ")} — not the full season. `);
-      const r = el("button", "linkbtn", "Show all"); r.type = "button"; r.addEventListener("click", (e) => { e.stopPropagation(); state.split = { hand: "all", venue: "all" }; render(); });
-      warn.append(r); bar.append(warn);
-    }
+    // no "Showing vs LHP — not the full season · Show all" line any more (Sean: "just get rid of that"): the lit toggle
+    // and the sample line on the plate already say a split is on
     return bar;
   }
   // the card's own Dates control (presets + custom range); season-level past seasons have it disabled
