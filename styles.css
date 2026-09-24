@@ -2541,3 +2541,9 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 /* a desktop's toolbar row centred in its gap: the same room under the header's stripe (2px of the padding) as above the
    list's box */
 :root:not([data-view="mobile"]) .toolbar:not(.xtoolbar) { padding-top: 12px; padding-bottom: 10px; }
+/* Every box casts a shadow (Sean: "basically every box i want it to have a shadow"): the lists, the pages' own boxes,
+   the tab panels under a player card and the home tiles take the card's softer cousin; the toolbar buttons match the
+   header's. A box nested in one of these (the fantasy table's scroller) is left flat so shadows don't double up */
+:root { --box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18), 0 2px 5px rgba(0, 0, 0, 0.12); }
+.board, section.xboard, .btabbody, .hubcard, .eadder, .sitedef { box-shadow: var(--box-shadow); }
+.tbtns button, .tbtns .btn { box-shadow: 2px 2px 0 color-mix(in srgb, var(--rule) 30%, transparent), 0 3px 8px rgba(0, 0, 0, 0.14); }
