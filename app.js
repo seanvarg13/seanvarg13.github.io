@@ -4612,9 +4612,12 @@
     page.append(B);
     // only what's under the plate scrolls (Sean: "the scrolling only involves the non header parts"), so a flick or a
     // phone's rubber-band never moves the plate or opens a gap above it
-    const sc = el("div", "cardscroll"); sc.append(page, renderBelow(p, { st, g, ref }));
+    const sc = el("div", "cardscroll"); sc.append(page, renderBelow(p, { st, g, ref }), creditLine());
     box.append(sc);
   }
+  // Where the numbers and photos come from, and what the site is for: at the foot of every page and every card
+  const CREDIT = "Data: MLB Stats API and Baseball Savant (MLB Advanced Media). Player photos: MLB. Not affiliated with or endorsed by MLB or Baseball Savant. A personal project for personal, non-commercial use only.";
+  const creditLine = () => el("p", "credit", CREDIT);
   // the card's scroller: its body under the plate, else (a settings panel) the modal body itself
   const cardSc = () => { const mb = $("modal-body"); return (mb && mb.querySelector(":scope > .cardscroll")) || mb; };
   // Savant's dropdown, the one list every picker on the site opens: a white box inside a heavy dark rule hung straight
@@ -5465,5 +5468,6 @@
   })();
 
 
+  document.querySelector("main.wrap").after(creditLine());   // the page's own foot, under every page
   readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); migrateTierOrder(); render(); setTb(); watchBuild();
 })();
