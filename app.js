@@ -3982,7 +3982,7 @@
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
   function renderBelow(p, o = {}) {
     const sec = el("section", "pbelow2");
-    const tabs = p.type === "P" ? [...BTABS, ...BTABS_P] : BTABS;
+    const tabs = p.type !== "P" ? BTABS : mobileView() ? [...BTABS, ...BTABS_P] : [...BTABS, ...BTABS_P.filter(([k]) => k !== "uera")];   // a desktop shows uERA beside the bars
     const pick = state.pbtab === "none" ? null : tabs.some(([k]) => k === state.pbtab) ? state.pbtab : "compare";
     const g = o.g || (p.type === "H" ? "H" : p.primary), ref = o.ref || g;
     const bar = el("div", "btabs"); bar.setAttribute("role", "tablist");
@@ -4071,7 +4071,7 @@
       const start = exp[k0] || k0;
       for (const k of [start, ...(PCT_FALL[start] || [])]) {
         const m = all.find((x) => x.key === k);
-        if (m && has(m)) { const lab = OUTCOME_LABEL[k0] || PCT_LABEL[k]; return lab ? Object.assign({}, m, { label: lab }) : m; }
+        if (m && has(m)) { const lab = (type === "P" ? OUTCOME_LABEL_P : OUTCOME_LABEL)[k0] || PCT_LABEL[k]; return lab ? Object.assign({}, m, { label: lab }) : m; }
       }
       return null;
     };
@@ -4338,11 +4338,12 @@
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],
                        ["Batted-Ball Distribution", ["air", "pu", "gb", "pull"]]]];
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
-  const PCT_COLS_P = [[["Whiffs and Strikes", ["whf", "strk"]], ["Swing & Miss", ["k", "whf"]], ["Zone & Chase", ["bb", "strk"]]],
+  const PCT_COLS_P = [[["Whiffs and Strikes", ["whf", "strk"]], ["Swing & Miss", ["k", "whf"]], ["Zone & Chase", ["bb", "strk", "zone", "osw"]]],
                       [["Results", ["kbb", "era"]], ["Batted Ball", ["gb", "pu", "mera"]], ["Stuff", ["fbv", "ext"]]]];
   const OUTCOME_LABEL = { woba: "wOBA", xws: "xwOBA", xwd: "dxwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%" };
+  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%" });   // a pitcher's O-Swing% is his chase rate
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
     if (!nav) col.append(panelHead(...pctTitle(p, nav)));   // his page says the season in its header instead
@@ -4365,7 +4366,7 @@
     {
       const cols = el("div", "pctcols"), sets = [];
       for (const sections of (p.type === "H" ? PCT_COLS_H : PCT_COLS_P)) {
-        const groups = sections.map(([title, keys]) => ({ title, rows: keys.map((k) => row(k, OUTCOME_LABEL)).filter(Boolean) })).filter((x) => x.rows.length);
+        const groups = sections.map(([title, keys]) => ({ title, rows: keys.map((k) => row(k, p.type === "P" ? OUTCOME_LABEL_P : OUTCOME_LABEL)).filter(Boolean) })).filter((x) => x.rows.length);
         if (groups.length) sets.push(groups);
       }
       sets.forEach((gs, i) => cols.append(pctChart(gs, i)));
@@ -4611,13 +4612,20 @@
   // o: { p, st, g, ref, entry (his search-index row), key (the season shown), pick(key) }
   function playerView(box, o) {
     const { p, st, g, ref } = o;
-    const head = playerHead(p, st, g, o), title = pageTitle(p, o);
-    if (mobileView()) { head.querySelector(".mplate").append(title); box.append(head); }   // a phone pins the title with the plate
-    else box.append(head, title);
+    box.append(playerHead(p, st, g, o));
     const page = el("div", "ppage");
     const B = el("div", "pcol pcolB wide");                   // one box, two columns of sections, for hitters and pitchers
     renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
     page.append(B);
+    if (p.type === "P" && !mobileView()) {                    // a pitcher's desktop page: the sections go left, uERA takes the right
+      const ub = renderUeraBox(p, st), mx = renderMixBox(p, g);
+      if (ub || mx) {
+        B.classList.add("pleft");
+        const C = el("div", "pcol pcolC pright"), cb = el("div", "pscroll");
+        if (ub) cb.append(ub); if (mx) cb.append(mx);
+        C.append(cb); page.append(C);
+      }
+    }
     box.append(page);
     box.append(renderBelow(p, { st, g, ref }));
   }
@@ -4740,9 +4748,10 @@
     hd.append(t);
     return hd;
   }
-  // the pinned header: the blue plate (cut-out, name, sample, Star), and in its right-hand side the filters — the dates
-  // and the split toggles. On a phone they fold behind one Filters button beside "full season" (the Star goes up by the
-  // name), so the pinned header stays short and still has room for the season's title at its foot
+  // The pinned header, the blue plate. A desktop lays it out in three: the cut-out and his lines on the left, the
+  // season's title dead centre (with the xwOBA switch under it for a hitter), and the filters — the dates and the split
+  // toggles — on the right. On a phone the filters fold behind one Filters button beside "full season", the Star goes up
+  // by the name, and the title sits across the plate's foot.
   function playerHead(p, st, g, o) {
     const top = el("div", "cardtop phead"), plate = renderPlate(p, st, g, g), mob = mobileView();
     const F = el("div", "phfilt");
@@ -4755,7 +4764,17 @@
       const panel = star.querySelector(".starpanel"); if (panel) nm.after(panel);    // an open Star panel gets the full width
     }
     else if (star && mr) mr.append(star);                // Star beside "full season": one line shorter
-    if (!o.entry || isMulti(o.key)) { F.append(...renderSeasonChips(p, { curKey: o.key, goTo: o.pick })); plate.append(F); top.append(plate); return top; }
+    const title = pageTitle(p, o);
+    const finish = (xseg) => {                           // put the pieces where this layout wants them
+      if (mob) { if (F.childNodes.length) plate.append(F); plate.append(title); }
+      else {
+        const left = el("div", "phleft"); left.append(...plate.childNodes);
+        const mid = el("div", "phmid"); mid.append(title); if (xseg) mid.append(xseg);
+        plate.append(left, mid, F);
+      }
+      top.append(plate); return top;
+    };
+    if (!o.entry || isMulti(o.key)) { F.append(...renderSeasonChips(p, { curKey: o.key, goTo: o.pick })); return finish(null); }
     const grid = el("div", "phgrid");
     const cell = (cap, cls, ...kids) => { const c = el("div", "phf" + (cls ? " " + cls : "")); c.append(el("span", "phcap", cap), ...kids.filter(Boolean)); grid.append(c); return c; };
     const open = !mob || state.cardTools;
@@ -4765,20 +4784,22 @@
       b.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = !state.cardTools; savePrefs(); render(); });
       (mr || plate).append(b);
     }
-    let warn = null;
+    let warn = null, xseg = null;
     if (open) {
       const sp = renderSplitPanel(p), seg = (n) => sp.querySelector(`.seg[aria-label="${n}"]`);
       const db = sp.querySelector(".datesbar");
       if (db) {
         const [d0, d1] = db.querySelectorAll('input[type="date"]');
-        cell("From", "w2", d0); cell("To", "w2", d1);
+        cell("From", "", d0); cell("To", "", d1);
         const lw = el("div", "phlast"); lw.append(db.querySelector(".lastin"));
         const x = db.querySelector(".unadd"); if (x) lw.append(x);
-        cell(`Last ${p.type === "P" ? "IP" : "PA"}`, "w2", lw);
+        cell(`Last ${p.type === "P" ? "IP" : "PA"}`, "", lw);
       }
-      cell(p.type === "P" ? "Batters" : "Pitchers", "w2 mfull", seg("Handedness"));
-      cell("Home / away", "w2 mfull", seg("Venue"));
-      if (p.type === "H") cell("Expected stats", "w2 mfull", seg("Expected stats"));
+      const hand = seg("Handedness"), venue = seg("Venue");
+      if (!mob) { hand.firstChild.textContent = "All"; venue.firstChild.textContent = "Both"; }   // short enough for the plate's right third; the captions say which
+      cell(p.type === "P" ? "Batters" : "Pitchers", "w2 mfull", hand);
+      cell("Home / away", "mfull", venue);
+      if (p.type === "H") { const xs = seg("Expected stats"); if (mob) cell("Expected stats", "mfull", xs); else xseg = xs; }   // a desktop puts it under the title
       warn = sp.querySelector(".splitwarn");
     }
     if (open) F.append(grid);
@@ -4786,8 +4807,7 @@
     if (warn) sum.append(warn);
     if (state.daysLoading) sum.append(el("span", "winnote", "Loading game-by-game data…"));
     if (sum.childNodes.length) F.append(sum);
-    if (F.childNodes.length) plate.append(F);
-    top.append(plate); return top;
+    return finish(xseg);
   }
   // a player is primarily a pitcher if he has pitching seasons and never a real hitting season (100+ PA)
   function primaryType(entry) {
@@ -5064,7 +5084,7 @@
     w.append(s1);
     const s2 = el("div", "psec"); s2.append(el("h4", null, `Stats on the grid · ${pit ? "pitchers" : "hitters"}`));
     const cur = cmpPick(type), all = allFor(pit ? p.primary : "H"), exp = expKeys();
-    const label = (k) => { const m = all.find((x) => x.key === (exp[k] || k)); return OUTCOME_LABEL[k] || PCT_LABEL[exp[k] || k] || (m ? m.label : k); };
+    const label = (k) => { const m = all.find((x) => x.key === (exp[k] || k)); return (pit ? OUTCOME_LABEL_P : OUTCOME_LABEL)[k] || PCT_LABEL[exp[k] || k] || (m ? m.label : k); };
     const setPick = (keys) => { state.cmp2.pick = Object.assign({}, state.cmp2.pick, { [type]: keys }); savePrefs(); render(); };
     const grid = el("div", "colgrid"), seen = new Set();
     const group = (title, keys) => {
