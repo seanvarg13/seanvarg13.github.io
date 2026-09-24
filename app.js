@@ -4059,7 +4059,6 @@
     svg.append(mk("path", { class: "rline", stroke, d: pts.map((q, i) => `${i ? "L" : "M"}${px(i).toFixed(1)} ${py(q[1]).toFixed(1)}`).join(" ") }));
     const last = pts[N], lc = col ? col(last[1]) : savantStyle(95).bg;
     svg.append(mk("circle", { class: "rdot", cx: px(N), cy: py(last[1]), r: 3.5, fill: lc }));
-    svg.append(mk("text", { class: "rnow", x: px(N) - 7, y: py(last[1]) - 11 }, last[1].toFixed(3).slice(1)));
     return svg;
   }
   // the pitcher's version of the same foot panel: what his process says the ERA should be, against what it is
