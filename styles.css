@@ -2547,3 +2547,34 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root { --box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18), 0 2px 5px rgba(0, 0, 0, 0.12); }
 .board, section.xboard, .btabbody, .hubcard, .eadder, .sitedef { box-shadow: var(--box-shadow); }
 .tbtns button, .tbtns .btn { box-shadow: 2px 2px 0 color-mix(in srgb, var(--rule) 30%, transparent), 0 3px 8px rgba(0, 0, 0, 0.14); }
+/* "Classic meters" (Appearance ▸ Percentile bars): the older look — a pale rounded track, the fill in the percentile's
+   colour with a round end, a white midline, a big white-ringed bubble, the value bold with its unit, and roomy rows
+   between dashed teal rules. Scoped hard (:root:root … .pctclassic) to win over the chart-style track rules */
+.pctclassic { column-gap: 56px; }
+.pctclassic .pctccol { min-width: 0; }
+.pctclassic .xsec + .xsec { margin-top: 18px; }
+.pctclassic .sechd { border-bottom: 2px solid color-mix(in srgb, var(--accent-2) 70%, var(--rule)); padding-bottom: 6px; margin-bottom: 4px; }
+.pctclassic .sechd .secname { font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-2-text); }
+.pctclassic .meters { gap: 0; }
+:root:root .pctclassic .meter { grid-template-columns: minmax(84px, 0.9fr) minmax(120px, 2.4fr) 70px; gap: 16px; min-height: 0; align-items: center;
+  padding: 10px 0; border-bottom: 1px dashed color-mix(in srgb, var(--accent-2-text) 45%, transparent); font-size: 15px; }
+:root:root .pctclassic .meter:last-child { border-bottom: 0; }
+:root:root .pctclassic .meter .lbl { text-align: right; color: var(--ink-2); }
+:root:root .pctclassic .meter .svtrack { height: 26px; border-radius: 6px; background: color-mix(in srgb, var(--accent-2) 14%, var(--surface)); }
+:root:root .pctclassic .meter .svtrack .tk { display: none; }
+:root:root .pctclassic .meter .svtrack::after { content: ""; display: block; position: absolute; left: 50%; top: 0; bottom: 0; width: 1.5px; background: rgba(255, 255, 255, 0.85); z-index: 1; }
+:root:root .pctclassic .meter .svtrack .fill { border-radius: 6px; }
+:root:root .pctclassic .meter .svtrack .bub { width: 34px; height: 34px; margin: -17px 0 0 -17px; padding: 0; font-size: 14px; font-weight: 700; line-height: 34px;
+  display: grid; place-items: center; box-shadow: 0 0 0 3px #ffffff, 0 1px 3px rgba(0, 0, 0, 0.25); z-index: 2; }
+:root:root .pctclassic .meter .svtrack .bub.c3 { font-size: 12px; }
+:root:root .pctclassic .meter .val { font-weight: 700; font-size: 16px; color: var(--ink); text-align: right; white-space: nowrap; }
+.pctfoot { margin: 14px 0 4px; text-align: center; font-size: 12.5px; color: var(--muted); }
+:root:root[data-view="mobile"] .pctclassic .meter { grid-template-columns: minmax(60px, 0.8fr) minmax(96px, 2.2fr) 62px; gap: 10px; font-size: 13.5px; padding: 8px 0; }
+:root:root[data-view="mobile"] .pctclassic .meter .val { font-size: 14px; }
+/* classic rows: no chart-style dash stubs under the label and value (the row's own dashed rule is the separator), and
+   labels at reading size */
+:root:root .pctclassic .meters .meter > .lbl, :root:root .pctclassic .meters .meter > .val { background: none; margin-top: 0; padding-top: 0; }
+:root:root .pctclassic .meters .meter > .lbl { font-size: 15px; color: var(--ink-2); padding-right: 0; }
+:root:root .pctclassic .meters .meter > .val { font-size: 16px; font-weight: 700; color: var(--ink); }
+:root:root[data-view="mobile"] .pctclassic .meters .meter > .lbl { font-size: 13.5px; }
+:root:root[data-view="mobile"] .pctclassic .meters .meter > .val { font-size: 14px; }

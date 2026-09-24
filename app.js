@@ -245,7 +245,8 @@
     cmp: Object.assign({ type: "H", players: [] }, prefs.cmp || {}),   // Compare page: [{id, ds}]
     cmpCols: prefs.cmpCols || {},              // Compare: chosen stats per type {H: [keys], P: [keys]}; missing = every card stat
     rawMode: prefs.rawMode || "mlb",           // Season by season: "mlb" | "milb" | "all"
-    tbl: Object.assign({ heat: false, band: true, sortHl: true, density: "comfortable", numbers: "auto", breaks: {} }, prefs.tbl || {}),   // Table features; breaks: {"mode:H": [keys with a rule after them]}
+    tbl: Object.assign({ heat: false, band: true, sortHl: true, density: "comfortable", numbers: "auto", breaks: {} }, prefs.tbl || {}),
+    bars: prefs.bars === "classic" ? "classic" : "savant",   // the player card's percentile bars: Savant's charts, or the older meter rows   // Table features; breaks: {"mode:H": [keys with a rule after them]}
     cq: "",
     showDrafted: !!prefs.showDrafted,
     expanded: null,
@@ -285,7 +286,7 @@
     if (oldRoles) { for (const [id, r] of Object.entries(oldRoles)) { const l = state.extraPos[id] || (state.extraPos[id] = []); if (!l.includes(r)) l.push(r); } changed = true; }
     if (changed) { save(LS.extraPos, state.extraPos); try { localStorage.removeItem(LS.extra); localStorage.removeItem(LS.roles); } catch {} }
   })();
-  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, posAlso: state.posAlso, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, ptab: state.ptab, rollPA: state.rollPA, pbtab: state.pbtab, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl }); }
+  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, posAlso: state.posAlso, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, ptab: state.ptab, rollPA: state.rollPA, pbtab: state.pbtab, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, bars: state.bars }); }
   const draftedIds = () => new Set(state.drafted.map((d) => d.id));
   // Expected stats are one model, the directional one: xwOBA over exit velocity, launch angle, spray and pull angle and
   // the batter's sprint speed, summed from the same day-by-day rows so it follows any window or split, and xBA / xSLG
@@ -3772,6 +3773,14 @@
     }
     box.append(def);
 
+    // the player card's percentile bars: Savant's charts or the older meter rows, this device's choice
+    box.append(el("h3", "asub", "Percentile bars"));
+    { const seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Percentile bars");
+      for (const [v, l] of [["savant", "Savant charts"], ["classic", "Classic meters"]]) {
+        const b = el("button", "segbtn", l); b.type = "button"; b.setAttribute("aria-pressed", String(state.bars === v));
+        b.addEventListener("click", () => { state.bars = v; savePrefs(); render(); }); seg.append(b);
+      }
+      box.append(seg, el("p", "note", "How the bars on a player's page and popup card are drawn. Open any player to see it.")); }
     // colour schemes: each card is a miniature of the banner, a button, a tier head and the chips in that scheme
     box.append(el("h3", "asub", "Color scheme"));
     const sg = el("div", "schemes");
@@ -4372,8 +4381,21 @@
         const groups = sections.map(([title, keys]) => ({ title, rows: keys.map((k) => row(k, p.type === "P" ? OUTCOME_LABEL_P : OUTCOME_LABEL)).filter(Boolean) })).filter((x) => x.rows.length);
         if (groups.length) sets.push(groups);
       }
-      sets.forEach((gs, i) => cols.append(pctChart(gs, i)));
+      if (state.bars === "classic") {                // the older look: a heading per section over plain meter rows (Appearance)
+        cols.classList.add("pctclassic");
+        for (const gs of sets) {
+          const c = el("div", "pctccol");
+          for (const g of gs) {
+            const sec = el("section", "xsec"), hd = el("div", "sechd"); hd.append(el("span", "secname", g.title)); sec.append(hd);
+            const box = el("div", "meters");
+            for (const r of g.rows) { const row = meterRow(Object.assign({}, r.m, { label: r.label }), r.v, r.pct); if (r.v != null) row.querySelector(".val").textContent = fmt(r.v, r.m); box.append(row); }   // the value with its unit, as it was
+            sec.append(box); c.append(sec);
+          }
+          cols.append(c);
+        }
+      } else sets.forEach((gs, i) => cols.append(pctChart(gs, i)));
       body.append(cols);
+      if (state.bars === "classic") { const vl0 = viewLabel(p.type); body.append(el("p", "pctfoot", `${vl0 || "full season"} · ${poolPhrase(ref)} (${pool(ref).ref.length})`)); }
     }
     const vl = viewLabel(p.type);
     col.title = `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`;   // Savant prints no footer: the pool is in the hover
