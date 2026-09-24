@@ -333,8 +333,9 @@ is open, which is what keeps them from painting behind it on a phone.
   Its right-hand side is one labelled grid of filters: **From**, **To** and **Last PA** (or IP) across the top, then
   the toggles — **Pitchers** (vs LHP / RHP; Batters for a pitcher), **Home / away** and, for hitters, **Expected
   stats** (Statcast / Directional xwOBA). The toggles are solid buttons on the band, so no colour scheme can wash them
-  out. On a phone all of it folds behind one **Splits & dates** button, so the pinned block is one row of filters until
-  it is opened.
+  out. On a phone the plate is laid out tighter: the Star is a ☆ beside the name (by the popup's ×),
+  the filters fold behind one **Filters** button beside "full season", and the season's title (below) sits at the foot
+  of the plate, pinned with it.
 - **The title** (`pageTitle()`), under the plate: "**2026** MLB Percentiles", centred, Savant's. The year and the level
   are the season pickers for the whole page (`titleSelect()`): each is a bold word over a dotted rule. It is not
   pinned; it scrolls away under the plate.

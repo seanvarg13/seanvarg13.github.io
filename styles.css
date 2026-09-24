@@ -2412,3 +2412,14 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .modal.pcard .pbelow2 { margin-inline: 6px; }
 /* on the band a pressed box keeps its white (the site's hover wash is see-through, which reads as blue there) */
 .mplate .ddbox:hover, .mplate .ddbox:focus, .mplate .ddbox.ddon { background: var(--surface); border-color: var(--ddline); }
+/* the phone's plate: the Star up by the name, Filters beside "full season", and the season's title pinned at its foot */
+.phname { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.phname h2 { min-width: 0; }
+.phname .starbox { flex: none; margin: 0; }
+:root[data-view="mobile"] .phead .mrank { margin-top: 4px; }
+:root[data-view="mobile"] .phead .ptitle { flex-basis: 100%; padding: 4px 0 0; }
+:root[data-view="mobile"] .phead .pthd { color: var(--band-ink); font-size: 19px; font-weight: 400; text-transform: none; letter-spacing: 0; }
+:root[data-view="mobile"] .phead .tsel:not(.solo) .tsl { background-image: radial-gradient(circle, var(--band-ink) 1.5px, transparent 1.7px); }
+.phname .starbtn.staricon { width: 34px; padding: 0; font-size: 18px; line-height: 1; }
+:root[data-view="mobile"] .phead .mrank .phtoggle { height: 30px; padding: 0 12px; }
+:root[data-view="mobile"] .phead .tsl:hover, :root[data-view="mobile"] .phead .tsl.ddon { color: var(--band-ink); opacity: 0.8; }
