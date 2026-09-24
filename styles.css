@@ -2315,6 +2315,12 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB { grid-column: 2 / span 2; }
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolC { grid-column: 4 / span 2; }
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB.wide { grid-column: 2 / span 4; }
+/* ...but that left a sixth of the window blank on each side of it. The box now hugs its two chart columns: a fixed width
+   keeps every bar the length it had, and the tabs and their panels under it take the same width */
+:root { --pbox-w: 860px; }
+:root:not([data-view="mobile"]) .ppage:not(.cmp2page) { grid-template-columns: minmax(0, 1fr); width: min(100%, var(--pbox-w)); margin-inline: auto; }
+:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB.wide { grid-column: 1 / -1; }
+:root:not([data-view="mobile"]) .pbelow2 { width: min(100%, var(--pbox-w)); margin-inline: auto; }
 .pctcols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; align-items: start; }
 :root[data-view="mobile"] .pctcols { grid-template-columns: minmax(0, 1fr); }
 .pctsample { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; padding: 2px 20px 6px; font-family: "Roboto Condensed", var(--body); }
@@ -2394,7 +2400,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 .rawstats.simple .rawscroll { margin-top: 0; }
 .btab .lc { text-transform: none; }
 /* ---- a popup player card: his page in a panel, not the whole screen ---- */
-:root:not([data-view="mobile"]) .modal.pcard .modal-panel { width: min(1500px, 94vw); height: min(100%, var(--modal-max, calc(100dvh - 40px))); border-radius: 6px; }
+:root:not([data-view="mobile"]) .modal.pcard .modal-panel { width: min(940px, 94vw); height: min(100%, var(--modal-max, calc(100dvh - 40px))); border-radius: 6px; }
 .modal.pcard .phead .mplate { padding-inline: 22px; }
 .modal.pcard .phead .mplate { padding-right: 58px; }                 /* the × sits over the plate's top right */
 .modal.pcard .pbelow2 { margin-inline: 16px; }
@@ -2445,3 +2451,5 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 }
 :root:not([data-view="mobile"]) .phead .phfilt { justify-self: end; margin-left: 0; }
 :root:not([data-view="mobile"]) .modal.pcard .phead .mplate { padding-inline: 58px; }   /* even sides round the centred title; the × sits in the right one */
+/* a popup is only as wide as its charts, so its plate always takes the two-row layout: the title on its own centred row */
+:root:not([data-view="mobile"]) .modal.pcard .phead .mplate { grid-template-columns: 1fr auto; grid-template-areas: "left right" "mid mid"; row-gap: 8px; }
