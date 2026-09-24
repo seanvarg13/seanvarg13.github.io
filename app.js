@@ -3748,7 +3748,7 @@
   // the middle panel: Savant's own percentile list, in Savant's order, flat and without group headings.
   // Savant's hitters run xwOBA, xBA, xSLG, EV, Barrel%, Hard-Hit%, LA Sweet-Spot%, Bat speed, Chase%, Whiff%, K%, BB%
   // (its run values, fielding and sprint speed have no counterpart here); wOBA and dxwOBA ride beside xwOBA.
-  const SAVANT_H = ["EXPW", "EXPB", "EXPS", "ev", "brl", "hh", "ss", "bs", "osw", "whf", "k", "bb"];
+  const SAVANT_H = ["EXPW", "EXPB", "EXPS", "ev", "brl", "hh", "ss", "bs", "sq", "osw", "whf", "k", "bb"];
   // the three expected stats follow whichever model is switched on, and are always named plainly
   const expKeys = () => (xDir() ? { EXPW: "xwd", EXPB: "dxba", EXPS: "dxslg" } : { EXPW: "xws", EXPB: "xba", EXPS: "xslg" });
   const PCT_LABEL = { xwd: "xwOBA", xws: "xwOBA", dxba: "xBA", xba: "xBA", dxslg: "xSLG", xslg: "xSLG",
@@ -3990,6 +3990,46 @@
     svg.append(mk("path", { d: pts.map((q, i) => `${i ? "L" : "M"}${px(q[0]).toFixed(1)} ${py(q[1]).toFixed(1)}`).join(" "), class: "rline" }));
     return svg;
   }
+  // Squared-Up %, the share of a hitter's swings that reach 80% of the exit velocity his bat and the pitch allowed.
+  // It needs each swing's bat speed, pitch speed and exit velocity, which the site's day files don't keep, so it
+  // comes from Savant's own bat-tracking leaderboard (open to other sites) once per season per visit. Savant's number
+  // is the full regular season's, so the row shows only there: MLB, regular season, no date window or split, 2023 on.
+  const SQ = new Map();                               // season -> Map(player id -> squared-up per swing, %), or "loading"
+  function squaredUp(season) {
+    const got = SQ.get(season);
+    if (got) return got === "loading" || got === "failed" ? null : got;
+    SQ.set(season, "loading");
+    const url = `https://baseballsavant.mlb.com/leaderboard/bat-tracking?type=batter&seasonStart=${season}&seasonEnd=${season}&gameType=Regular&minSwings=1&minGroupSwings=1&csv=true`;
+    fetch(url).then((r) => (r.ok ? r.text() : Promise.reject(r.status))).then((txt) => {
+      const lines = txt.replace(/^\uFEFF/, "").split(/\r?\n/).filter(Boolean);
+      const cols = (lines.shift() || "").split(",").map((c) => c.replace(/"/g, ""));
+      const iId = cols.indexOf("id"), iSq = cols.indexOf("squared_up_per_swing");
+      if (iId < 0 || iSq < 0) throw new Error("columns");
+      const m = new Map();
+      for (const ln of lines) {
+        const f = ln.match(/("[^"]*"|[^,]*)(,|$)/g).map((x) => x.replace(/,$/, "").replace(/"/g, ""));
+        const v = parseFloat(f[iSq]); if (!isNaN(v)) m.set(Number(f[iId]), Math.round(1000 * v) / 10);
+      }
+      SQ.set(season, m); render();
+    }).catch(() => SQ.set(season, "failed"));
+    return null;
+  }
+  const sqPctCache = new Map();
+  function squaredUpRow(p, ref) {
+    if (p.type !== "H" || DS.level !== "MLB" || DS.kind || DS.season < 2023 || needsDays() || isMulti(DS.key || "")) return null;
+    const m = squaredUp(DS.season); if (!m || !m.has(p.id)) return null;
+    const v = m.get(p.id), list = pool(ref).ref;
+    const key = DS.season + ":" + list.length + ":" + (list[0] ? list[0].id : "");
+    let c = sqPctCache.get(key);
+    if (!c) {
+      const vals = list.map((q) => (m.has(q.id) ? m.get(q.id) : null));
+      c = { ids: new Map(list.map((q, i) => [q.id, i])), pct: percentiles(vals), sorted: vals.filter((x) => x != null).sort((a, b) => a - b) };
+      sqPctCache.set(key, c);
+    }
+    const i = c.ids.get(p.id), pct = i != null && c.pct[i] != null ? c.pct[i] : insertPct(c.sorted, v);
+    return { label: "Squared-Up %", value: v.toFixed(1), pct,
+             tip: `Squared-Up %: ${v.toFixed(1)}% of swings (Savant, full season) · ${ordinal(pct)} pctl` };
+  }
   // the middle panel: one header, then every stat as a bar — no group headings inside it
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
@@ -4000,6 +4040,7 @@
     const val = (k) => { const m = all.find((x) => x.key === k); if (!m || (noEV && NEEDS_EV.has(k))) return null; const v = metricValue(m, pv, st); return v == null ? null : { m, v, k }; };
     const rows = [];
     for (const key0 of (p.type === "H" ? SAVANT_H : SAVANT_P)) {
+      if (key0 === "sq") { const r = squaredUpRow(p, ref); if (r) rows.push(r); continue; }
       const start = exp[key0] || key0;
       let got = val(start);
       for (const alt of (!got && PCT_FALL[start]) || []) { got = val(alt); if (got) break; }
