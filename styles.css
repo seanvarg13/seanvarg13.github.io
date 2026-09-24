@@ -1994,8 +1994,8 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 :root[data-view="mobile"] .splate .sbanner { height: 140px; }
 :root[data-view="mobile"] .splate h2 { font-size: 23px; }
 /* the player page's pinned header: the blue plate edge to edge, every filter in its right-hand side */
-body.playerwide #xboard { overflow: visible; }         /* the header runs past the page box to the window's edges */
-body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px) - 1px); }
+body.playerwide #xboard { overflow: visible; border: 0; box-shadow: none; }   /* no outline round the page, as on a phone; the header runs to the window's edges */
+body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .phead .mplate { flex-wrap: wrap; padding: 10px min(6vw, 96px); gap: 22px; align-items: center; }
 .phead .mplate .mug { width: 112px; height: 112px; }
 :root:not([data-view="mobile"]) .phead .mplate .mug { margin: -8px 0 0; }   /* the shoulders stop short of the band's bottom stripes */
