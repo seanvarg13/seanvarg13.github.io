@@ -49,33 +49,18 @@ window.DRAFT_THEMES = (function () {
     },
   };
 
+  // one font, the one Baseball Savant sets nearly all of its text in, on desktop and phone alike
+  // (index.html loads it up front, so the page never paints in a fallback first)
+  const SAVANT_FONT = '"Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif';
   const F = {
-    system: { name: "Helvetica / system", blurb: "The Savant look — Helvetica Neue on a Mac and iPhone.", google: null,
-              display: '"Helvetica Neue", Helvetica, Arial, sans-serif', body: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
-    nunito: { name: "Nunito", blurb: "Rounded and soft; Nunito Sans for the rows.", google: "family=Nunito:wght@600;700;800&family=Nunito+Sans:wght@300;400;600;700",
-              display: '"Nunito", "Nunito Sans", "Segoe UI", system-ui, sans-serif', body: '"Nunito Sans", "Nunito", "Segoe UI", system-ui, sans-serif' },
-    figtree: { name: "Figtree", blurb: "Friendly geometric, a touch crisper than Nunito.", google: "family=Figtree:wght@400;500;600;700;800",
-               display: '"Figtree", system-ui, sans-serif', body: '"Figtree", system-ui, sans-serif' },
-    inter: { name: "Inter", blurb: "The screen workhorse; very even, very legible.", google: "family=Inter:wght@400;500;600;700",
-             display: '"Inter", system-ui, sans-serif', body: '"Inter", system-ui, sans-serif' },
-    source: { name: "Source Sans 3", blurb: "Adobe's humanist sans; light and open at small sizes.", google: "family=Source+Sans+3:wght@400;600;700",
-              display: '"Source Sans 3", system-ui, sans-serif', body: '"Source Sans 3", system-ui, sans-serif' },
-    plex: { name: "IBM Plex Sans", blurb: "A little more character in the letterforms; great numerals.", google: "family=IBM+Plex+Sans:wght@400;500;600;700",
-            display: '"IBM Plex Sans", system-ui, sans-serif', body: '"IBM Plex Sans", system-ui, sans-serif' },
-    roboto: { name: "Roboto", blurb: "Android's default; compact and neutral.", google: "family=Roboto:wght@400;500;700",
-              display: '"Roboto", system-ui, sans-serif', body: '"Roboto", system-ui, sans-serif' },
-    lato: { name: "Lato", blurb: "Warm and slightly rounded; a classic for dashboards.", google: "family=Lato:wght@400;700;900",
-            display: '"Lato", system-ui, sans-serif', body: '"Lato", system-ui, sans-serif' },
-    barlow: { name: "Barlow", blurb: "Slightly condensed and sporty — jersey-number energy.", google: "family=Barlow:wght@400;500;600;700",
-              display: '"Barlow", system-ui, sans-serif', body: '"Barlow", system-ui, sans-serif' },
-    oswald: { name: "Oswald + Source Sans", blurb: "Condensed headline face for the banner and tiers, Source Sans for the rows.", google: "family=Oswald:wght@500;600;700&family=Source+Sans+3:wght@400;600;700",
-              display: '"Oswald", "Arial Narrow", system-ui, sans-serif', body: '"Source Sans 3", system-ui, sans-serif' },
+    savant: { name: "Roboto Condensed", blurb: "Baseball Savant's type — the same on every page and every device.", google: null,
+              display: SAVANT_FONT, body: SAVANT_FONT },
   };
 
   const LS = { scheme: "draft2027.scheme", font: "draft2027.font", theme: "draft2027.theme", view: "draft2027.view" };
-  const DEFAULTS = Object.assign({ scheme: "unc", font: "system", theme: "system", view: "auto" }, window.DRAFT_DEFAULTS || {});
+  const DEFAULTS = Object.assign({ scheme: "unc", font: "savant", theme: "system", view: "auto" }, window.DRAFT_DEFAULTS || {});
   if (!S[DEFAULTS.scheme]) DEFAULTS.scheme = "unc";
-  if (!F[DEFAULTS.font]) DEFAULTS.font = "system";
+  if (!F[DEFAULTS.font]) DEFAULTS.font = "savant";
   const get = (k) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } };
   const put = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } };
   const root = document.documentElement;
@@ -114,6 +99,7 @@ window.DRAFT_THEMES = (function () {
   function preloadFonts() {
     if (document.getElementById("fontpreview")) return;
     const fams = Object.values(F).filter((f) => f.google).map((f) => f.google).join("&");
+    if (!fams) return;
     const l = document.createElement("link"); l.id = "fontpreview"; l.rel = "stylesheet";
     l.href = "https://fonts.googleapis.com/css2?" + fams + "&display=swap";
     document.head.appendChild(l);

@@ -40,12 +40,21 @@
   --accent-wash: rgba(123, 175, 212, 0.24);
   --pctrack: #d9e8e3;  /* the unfilled part of a percentile bar */
   --pctrule: #bed8d1;  /* the dashed rule between bars */
+  --svline: #c7dcdc;   /* Savant: the thin line the rest of a percentile bar runs along */
+  --svrule: #399098;   /* Savant: the dashed rule under a bar's label and value */
+  --svtext: #666666;   /* Savant: the grey its labels and values are set in */
+  --svframe: #4499aa;  /* Savant: the teal frame round each panel */
+  --svsec: #399098;    /* Savant: the rule under a section heading */
+  --svdots: #4499aa;   /* Savant: the dots under a panel title's year */
+  --svpoor: #3a62a8; --svavg: #b8d3cd; --svgreat: #d41c23;   /* Savant: POOR / AVERAGE / GREAT */
+  --svhead: #000000;   /* Savant: the black of its section names */
+  --svtitle: #333333;  /* Savant: the charcoal of its panel titles */
   --lo: #325aa1;      /* percentile: cold — Savant's blue */
   --mid: #b3b3b3;     /* percentile: 50th — a solid grey, not a tint, so the ends carry */
   --hi: #d22d49;      /* percentile: hot  — Savant's red */
   --shadow: 0 1px 2px rgba(19, 41, 75, 0.06), 0 8px 24px rgba(19, 41, 75, 0.07);
-  --display: "Helvetica Neue", Helvetica, Arial, sans-serif;     /* themes.js swaps these for the chosen font */
-  --body: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --display: "Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif;   /* Savant's type, the site's only font */
+  --body: "Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -70,6 +79,15 @@
     --accent-wash: rgba(123, 175, 212, 0.22);
     --pctrack: #2c3b39;
     --pctrule: #3a4f4b;
+    --svline: #34504d;
+    --svrule: #4d7f84;
+    --svtext: #b9c3c2;
+    --svframe: #4f9fad;
+    --svhead: #e8eeee;
+    --svtitle: #e3e8e8;
+    --svsec: #4f9fad;
+    --svdots: #5fb0bd;
+    --svpoor: #6f95d6; --svavg: #8fb3ad; --svgreat: #f0555b;
     --lo: #4a86dd;
     --mid: #6a7382;
     --hi: #e2455c;
@@ -98,6 +116,15 @@
   --accent-wash: rgba(123, 175, 212, 0.22);
   --pctrack: #2c3b39;
   --pctrule: #3a4f4b;
+  --svline: #34504d;
+  --svrule: #4d7f84;
+  --svtext: #b9c3c2;
+  --svframe: #4f9fad;
+  --svhead: #e8eeee;
+  --svtitle: #e3e8e8;
+  --svsec: #4f9fad;
+  --svdots: #5fb0bd;
+  --svpoor: #6f95d6; --svavg: #8fb3ad; --svgreat: #f0555b;
   --lo: #4a86dd;
   --mid: #6a7382;
   --hi: #e2455c;
@@ -2005,18 +2032,6 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .ppage .meter .track::after { opacity: 0.75; }
 .ppage .meter .bub { font-size: 12px; font-weight: 700; box-shadow: 0 0 0 2px var(--surface); }
 .ppage .meter .val { font-weight: 600; }
-.ppage .meters .meter.pctscale { min-height: 0; padding: 0 0 3px; border-bottom: 0; }
-.pctscale .track { height: auto; background: none; border: 0; overflow: visible; display: block; }
-.pctscale .track::after { display: none; }
-.pctscale .sc { position: absolute; bottom: 0; display: flex; flex-direction: column; align-items: center; line-height: 1; }
-.pctscale .sc i { font-style: normal; font-size: 9.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
-.pctscale .sc b { font-size: 7.5px; margin-top: 2px; }
-.pctscale .p0 { left: 0; align-items: flex-start; } .pctscale .p0 b { margin-left: 1px; }
-.pctscale .p50 { left: 50%; transform: translateX(-50%); }
-.pctscale .p100 { right: 0; align-items: flex-end; } .pctscale .p100 b { margin-right: 1px; }
-.pctscale .p0 i, .pctscale .p0 b { color: var(--lo); }
-.pctscale .p50 i, .pctscale .p50 b { color: var(--muted); }
-.pctscale .p100 i, .pctscale .p100 b { color: var(--hi); }
 .ppage .meters { gap: 0; padding-top: 0; }
 .ppage .fold-sec { margin-top: 6px; }
 .ppage .fold-sec:first-child { margin-top: 0; }
@@ -2025,6 +2040,18 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .ppage .meters { padding-top: 2px; }
 .pcolC .cardnotes { margin: 0; }
 :root[data-view="mobile"] .ppage { grid-template-columns: 1fr; height: auto; min-height: 0; }
+/* on the phone the player page runs edge to edge, but its boxes keep a 12px white margin from the screen's sides */
+:root[data-view="mobile"] .ppage { padding-inline: 12px; }
+:root[data-view="mobile"] .pbelow2 { margin-inline: 12px; }
+/* and the narrower card still fits the season table whole, down to a 360px phone */
+:root[data-view="mobile"] .pcolA .pscroll { padding-inline: 10px; }
+:root[data-view="mobile"] .pcolA .heatcard table { min-width: 0; }
+:root[data-view="mobile"] .pcolA .heatcard col:first-child { width: 58px !important; }   /* beats the 74px the colgroup sets inline */
+:root[data-view="mobile"] .pcolA .heatcard thead th, :root[data-view="mobile"] .pcolA .heatcard tbody td { padding-inline: 2px; font-size: 11px; }
+@media (max-width: 385px) {
+  :root[data-view="mobile"] .pcolA .heatcard col:first-child { width: 50px !important; }
+  :root[data-view="mobile"] .pcolA .heatcard thead th, :root[data-view="mobile"] .pcolA .heatcard tbody td { padding-inline: 1px; font-size: 10px; }
+}
 :root[data-view="mobile"] .pcol { overflow: visible; }
 :root[data-view="mobile"] .pscroll { overflow: visible; }
 
@@ -2110,3 +2137,77 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .btabbody .hgroups { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px 32px; max-width: none; }
 .btabbody .hgroup h4 { margin: 0 0 4px; }
 .btabbody .meter { grid-template-columns: 150px minmax(60px, 1fr) 64px; }
+
+/* ---- Percentile bars, a 1:1 copy of Baseball Savant's ----
+   Savant draws its chart as one drawing that scales with its width, so this does the same: every size below is a
+   multiple of --u, 1/995 of the chart's width, with each number measured off Savant's own chart. A row is 64u:
+   a 54u bar with a 13u line for the rest of it, a 48u circle in a 5.5u white ring whose centre runs from 26u in (0)
+   to the bar's right end (100), 5u ticks at the poor / average / great marks, 32u condensed type, and a 2u dashed
+   rule under the label (214u) and the value (81u) only. Columns: 347u label, 552u bar, 96u value. */
+.meters { container-type: inline-size; }
+.meters > * { --u: calc(100cqw / 995); }
+:root:root .meters .meter { min-height: calc(var(--u) * 64); height: auto; padding: 0; margin: 0; border: 0; column-gap: 0; gap: 0;
+  grid-template-columns: calc(var(--u) * 347) minmax(0, 1fr) calc(var(--u) * 96); align-items: center;
+  font-family: "Roboto Condensed", var(--body); font-size: calc(var(--u) * 32.4); line-height: 1; }
+:root:root .meters .meter.cmp { grid-template-columns: calc(var(--u) * 300) minmax(0, 1fr) calc(var(--u) * 96) calc(var(--u) * 140); }
+:root:root .meters .meter.ruled { border-top: 2px dotted var(--rail); }
+:root:root .meters .meter > .lbl, :root:root .meters .meter > .val { align-self: stretch; display: flex; align-items: center; min-width: 0;
+  color: var(--svtext); font-size: inherit; font-weight: 400; letter-spacing: 0; padding-bottom: 0; }
+:root:root .meters .meter > .lbl { justify-content: flex-end; text-align: right; padding-left: 0; padding-right: calc(var(--u) * 16); overflow: visible; }
+:root:root .meters .meter.sub > .lbl { padding-left: calc(var(--u) * 30); }
+:root:root .meters .meter > .lbl .lt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:root:root .meters .meter > .val { justify-content: flex-end; white-space: nowrap; font-variant-numeric: normal;
+  padding-left: calc(var(--u) * 15); padding-right: calc(var(--u) * 3); }
+:root:root .meters .meter:not(:last-child) > .lbl {
+  background: repeating-linear-gradient(to right, var(--svrule) 0 calc(var(--u) * 15.5), transparent calc(var(--u) * 15.5) calc(var(--u) * 25))
+              right calc(var(--u) * 16) bottom / calc(var(--u) * 214) calc(var(--u) * 2) no-repeat; }
+:root:root .meters .meter:not(:last-child) > .val {
+  background: repeating-linear-gradient(to right, var(--svrule) 0 calc(var(--u) * 15.5), transparent calc(var(--u) * 15.5) calc(var(--u) * 25))
+              right bottom / calc(var(--u) * 81) calc(var(--u) * 2) no-repeat; }
+:root:root .meters .meter .track { position: relative; height: calc(var(--u) * 54); margin: 0; border: 0; border-radius: 0; overflow: visible;
+  background: linear-gradient(var(--svline), var(--svline)) left center / 100% calc(var(--u) * 13) no-repeat; }
+:root:root .meters .meter .track::after { display: none; }
+:root:root .meters .meter .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0; min-width: 0;
+  box-shadow: inset calc(var(--u) * 1.5) calc(var(--u) * -1.5) 0 rgba(0, 0, 0, 0.07), inset calc(var(--u) * -1.5) 0 0 rgba(0, 0, 0, 0.07); }
+:root:root .meters .meter .tk { position: absolute; top: 50%; height: calc(var(--u) * 13); width: calc(var(--u) * 5);
+  transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.28); z-index: 1; pointer-events: none; }
+:root:root .meters .meter .tk.on { height: 100%; }
+:root:root .meters .meter .bub { position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 2;
+  width: calc(var(--u) * 48); height: calc(var(--u) * 48); min-width: 0; padding: 0; border: 0; border-radius: 50%;
+  display: grid; place-items: center;
+  box-shadow: inset calc(var(--u) * -1.5) calc(var(--u) * -1.5) calc(var(--u) * 1.5) rgba(0, 0, 0, 0.12), 0 0 0 calc(var(--u) * 5.5) var(--surface);
+  color: #ffffff; text-shadow: 0 0 calc(var(--u) * 1.5) rgba(0, 0, 0, 0.5);
+  font-family: "Roboto Condensed", var(--body); font-size: calc(var(--u) * 33); font-weight: 700;
+  line-height: 1; letter-spacing: 0; font-variant-numeric: normal; }
+:root:root .meters .meter .bub.c3 { font-size: calc(var(--u) * 27); letter-spacing: -0.02em; }
+:root:root .meters .meter .bub.ghost { background: var(--surface) !important; color: var(--ink-2); border: calc(var(--u) * 3) solid var(--ink-2);
+  box-shadow: 0 0 0 calc(var(--u) * 3) var(--surface); font-size: calc(var(--u) * 27); }
+/* the panel: Savant's thin teal frame */
+.pcol { container-type: inline-size; border: 1px solid var(--svframe); border-radius: 0; }
+/* every panel's title is Savant's, in its own fixed sizes: 18px condensed charcoal, 8px from the top, the year bold
+   with a 3px dotted teal rule under it; the percentile chart starts right under it, the other panels 20px lower */
+.pchead { padding: 8.5px 12px 20px; text-align: center; }   /* Savant's 8px, plus the half pixel its compare icon drops the line */
+.pchead:has(+ .pctbox) { padding-bottom: 0; min-height: 37.4px; }
+.pchead + .pscroll { padding-top: 0; }
+.pcthd { font-family: "Roboto Condensed", var(--display); font-size: 18px; font-weight: 400; line-height: 1.428571;
+  color: var(--svtitle); letter-spacing: 0; }
+.pcthd b, .pcthd .hsel.yr .hsl { font-weight: 700; }
+.pcthd > :first-child { display: inline-block; vertical-align: top; height: 28.5px; border-bottom: 3px dotted var(--svdots); }
+.pchead .pcdots, .pchead .pctsub:empty { display: none; }
+.pchead .pctsub { font-size: 11px; margin-top: 4px; }
+.pctbox { padding: 0; }
+/* the percentile chart itself is one SVG drawn to Savant's numbers (see pctSvg in app.js); these are only its inks */
+.svchart { width: 100%; }
+.svpct { display: block; width: 100%; height: auto; overflow: visible; font-family: "Roboto Condensed", var(--body); }
+.svpct text { font-size: 12px; dominant-baseline: middle; }
+.svpct .svscale { dominant-baseline: auto; }
+.svpct .svsecname { font-size: 16px; font-weight: 700; fill: var(--svhead); dominant-baseline: auto; }
+.svpct .svsecrule { fill: var(--svsec); }
+.svpct .svline { fill: var(--svline); }
+.svpct .svtick { fill: #ffffff; opacity: 0.3; }
+.svpct .svlbl { fill: var(--svtext); }
+.svpct .svdash { fill: none; stroke: var(--svrule); stroke-width: 1; stroke-dasharray: 6 3; }
+.svpct .svbulb { stroke: var(--surface); stroke-width: 2; }
+.svpct .svnum { fill: #ffffff; font-weight: 700; text-anchor: middle; }
+.svpct .svnum.c3 { font-size: 10px; }
+.pctbox .pctfoot { display: none; }
