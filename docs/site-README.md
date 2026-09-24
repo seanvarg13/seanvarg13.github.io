@@ -328,22 +328,26 @@ is open, which is what keeps them from painting behind it on a phone.
 
 **The player page** (built by `playerView()`, which `renderExplore` and the popup card both call) is, top to bottom:
 
-- **The pinned plate** (`playerHead()`, `.phead`): the blue plate from edge to edge of the window — cut-out headshot,
-  name, team / position / age, the sample (PA · AB · BBE · G, or IP · BF · G/GS · pitches), "full season" and Star.
-  Its right-hand side is one labelled grid of filters: **From**, **To** and **Last PA** (or IP) across the top, then
-  the toggles — **Pitchers** (vs LHP / RHP; Batters for a pitcher), **Home / away** and, for hitters, **Expected
-  stats** (Statcast / Directional xwOBA). The toggles are solid buttons on the band, so no colour scheme can wash them
-  out. On a phone the plate is laid out tighter: the Star is a ☆ beside the name (by the popup's ×),
+- **The pinned plate** (`playerHead()`, `.phead`): the blue plate from edge to edge of the window. On a desktop it is
+  three columns with equal outer ones, so the middle sits over the middle of the page: the cut-out headshot, name,
+  team / position / age, the sample (PA · AB · BBE · G, or IP · BF · G/GS · pitches), "full season" and Star on the
+  left; the season's title (below) dead centre, with a hitter's **Statcast / Directional xwOBA** switch under it; and
+  on the right one labelled grid of filters — **From**, **To** and **Last PA** (or IP), then **Pitchers** (All / vs
+  LHP / vs RHP; Batters for a pitcher) and **Home / away** (Both / Home / Away). Under 1300px wide the three don't fit,
+  so the title and the switch take their own centred row under the other two. The toggles are solid buttons on the
+  band, so no colour scheme can wash them out. On a phone the plate is laid out tighter: the Star is a ☆ beside the name (by the popup's ×),
   the filters fold behind one **Filters** button beside "full season", and the season's title (below) sits at the foot
   of the plate, pinned with it.
-- **The title** (`pageTitle()`), under the plate: "**2026** MLB Percentiles", centred, Savant's. The year and the level
-  are the season pickers for the whole page (`titleSelect()`): each is a bold word over a dotted rule. It is not
-  pinned; it scrolls away under the plate.
+- **The title** (`pageTitle()`), in the plate and pinned with it: "**2026 MLB Percentiles**", bold, in the name's ink.
+  The year and the level are the season pickers for the whole page (`titleSelect()`): each is a word over a dotted
+  rule.
 - **The percentile sections** (`renderPctPanel`): two columns of headed sections, drawn with Savant's chart code
   (`pctSvg`). Hitters (`PCT_COLS_H`): Results (wOBA, xwOBA, xBA, xSLG — the expected three follow the xwOBA switch),
   Batted-Ball Quality, then Swing Decisions (Z-Swing%, O-Swing%, BB%), Contact and Batted-Ball Distribution.
-  Pitchers (`PCT_COLS_P`): Whiffs and Strikes, Swing & Miss, Zone & Chase, then Results (K-BB%, ERA), Batted Ball
-  (GB%, Popup%, Mix ERA) and Stuff. On a desktop the box takes the page's whole width and both columns are drawn at
+  Pitchers (`PCT_COLS_P`): Whiffs and Strikes, Swing & Miss, Zone & Chase (BB%, Strike%, Zone%, Chase%), then Results
+  (K-BB%, ERA), Batted Ball (GB%, Popup%, Mix ERA) and Stuff. On a desktop a pitcher's sections take the left
+  two-thirds and the right third carries his uERA table and batted-ball mix (`.pcolC.pright`), so the uERA tab is a
+  phone's only. On a desktop the box takes the page's whole width and both columns are drawn at
   one scale, the largest at which the taller one still fits the box (`pctChart`'s `fit`), so type, bars and circles
   grow together; a phone draws them at their real size. A chart starts at the size its column had last time
   (`pctLast`): drawn at a guess and resized a moment later, everything under it shifted and, near the foot of the
