@@ -3317,13 +3317,17 @@
   const FCATS = {
     H: [["TB", "Total bases"], ["H", "Hits"], ["1B", "Singles"], ["2B", "Doubles"], ["3B", "Triples"], ["HR", "Home runs"], ["XBH", "Extra-base hits"],
         ["R", "Runs"], ["RBI", "RBI"], ["BB", "Walks"], ["IBB", "Intentional walks"], ["HBP", "Hit by pitch"], ["K", "Strikeouts"], ["SB", "Stolen bases"],
-        ["CS", "Caught stealing"], ["GIDP", "Grounded into DP"], ["SF", "Sacrifice flies"], ["SH", "Sacrifice bunts"], ["E", "Errors"], ["AB", "At bats"],
-        ["PA", "Plate appearances"], ["OUT", "Outs (AB − H)"], ["G", "Games played"]],
-    P: [["IP", "Innings pitched (per inning: ⅓ per out)"], ["OUT", "Outs recorded"], ["K", "Strikeouts"], ["W", "Wins"], ["L", "Losses"], ["SV", "Saves"],
-        ["HD", "Holds"], ["BS", "Blown saves"], ["ER", "Earned runs"], ["R", "Runs allowed"], ["H", "Hits allowed"], ["HR", "Home runs allowed"],
+        ["CS", "Caught stealing"], ["SBN", "Net stolen bases (SB − CS)"], ["GIDP", "Grounded into DP"], ["SF", "Sacrifice flies"], ["SH", "Sacrifice bunts"],
+        ["GSHR", "Grand slam home runs"], ["CYC", "Hitting for the cycle"], ["GWRBI", "Game-winning RBI"],
+        ["E", "Errors"], ["A", "Assists"], ["PO", "Putouts"], ["OFA", "Outfield assists"], ["DPT", "Double plays turned"],
+        ["AB", "At bats"], ["PA", "Plate appearances"], ["OUT", "Outs (AB − H)"], ["G", "Games played"]],
+    P: [["IP", "Innings pitched (per inning: ⅓ per out)"], ["OUT", "Outs recorded"], ["K", "Strikeouts"], ["W", "Wins"], ["L", "Losses"],
+        ["RW", "Relief wins"], ["RL", "Relief losses"], ["SV", "Saves"], ["HD", "Holds"], ["SVHD", "Saves + holds"], ["BS", "Blown saves"],
+        ["SVO", "Save opportunities"], ["GF", "Games finished"], ["ER", "Earned runs"], ["R", "Runs allowed"], ["H", "Hits allowed"],
+        ["TB", "Total bases allowed"], ["HR", "Home runs allowed"],
         ["BB", "Walks issued"], ["IBB", "Intentional walks"], ["HBP", "Hit batters"], ["QS", "Quality starts (6+ IP, ≤ 3 ER)"], ["CG", "Complete games"],
         ["SHO", "Shutouts"], ["NH", "No-hitters"], ["PG", "Perfect games"], ["WP", "Wild pitches"], ["BK", "Balks"], ["PK", "Pickoffs"], ["BF", "Batters faced"],
-        ["GS", "Games started"], ["G", "Games pitched"]],
+        ["GIDP", "Double plays induced"], ["NP", "Pitches thrown"], ["GS", "Games started"], ["G", "Games pitched"]],
   };
   const ESPN_PRESET = { id: "espn", name: "ESPN standard", builtin: true, teams: 10,
                         w: { H: { TB: 1, R: 1, RBI: 1, SB: 1, BB: 1, K: -1 }, P: { IP: 3, W: 2, L: -2, HD: 2, SV: 5, ER: -2, H: -1, K: 1, BB: -1 } } };
@@ -3346,12 +3350,13 @@
   function fHit(F, id) {
     const a = F.hitters[id]; if (!a) return null;
     const o = {}; F.hk.forEach((k, i) => { o[k] = a[i] || 0; });
-    o["1B"] = o.H - o["2B"] - o["3B"] - o.HR; o.XBH = o["2B"] + o["3B"] + o.HR; o.OUT = o.AB - o.H;
+    o["1B"] = o.H - o["2B"] - o["3B"] - o.HR; o.XBH = o["2B"] + o["3B"] + o.HR; o.OUT = o.AB - o.H; o.SBN = o.SB - o.CS;
     return o;
   }
   function fGame(F, row) {
     const o = {}; F.gk.forEach((k, i) => { o[k] = row[i] || 0; });
-    o.IP = o.OUTS / 3; o.OUT = o.OUTS; o.G = 1;
+    o.IP = o.OUTS / 3; o.OUT = o.OUTS; o.G = 1; o.SVHD = o.SV + o.HD;
+    o.RW = !o.GS && o.W ? 1 : 0; o.RL = !o.GS && o.L ? 1 : 0;
     o.QS = o.GS && o.OUTS >= 18 && o.ER <= 3 ? 1 : 0;
     o.NH = o.CG && o.H === 0 ? 1 : 0; o.PG = o.NH && o.BB === 0 && o.HBP === 0 ? 1 : 0;
     return o;
@@ -3362,6 +3367,7 @@
     o.IP = o.OUTS / 3; o.OUT = o.OUTS;
     o.games = r.g.map((g) => fGame(F, g));
     o.QS = sum(o.games, "QS"); o.NH = sum(o.games, "NH"); o.PG = sum(o.games, "PG");
+    o.SVHD = o.SV + o.HD; o.RW = sum(o.games, "RW"); o.RL = sum(o.games, "RL");
     return o;
   }
   const fPts = (w, o) => Object.entries(w || {}).reduce((s, [k, v]) => s + (Number(v) || 0) * (o[k] || 0), 0);
@@ -4181,8 +4187,8 @@
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],
                        ["Batted-Ball Distribution", ["air", "pu", "gb", "pull"]]]];
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
-  const PCT_COLS_P = [[["Whiffs and Strikes", ["whf", "strk"]], ["Swing & Miss", ["k", "whf", "csw"]], ["Zone & Chase", ["bb", "strk"]]],
-                      [["Results", ["kbb", "era"]], ["Batted Ball", ["gb", "pu", "mera"]], ["Process Score", ["wsgp"]], ["Stuff", ["fbv", "ext"]]]];
+  const PCT_COLS_P = [[["Whiffs and Strikes", ["whf", "strk"]], ["Swing & Miss", ["k", "whf"]], ["Zone & Chase", ["bb", "strk"]]],
+                      [["Results", ["kbb", "era"]], ["Batted Ball", ["gb", "pu", "mera"]], ["Stuff", ["fbv", "ext"]]]];
   const OUTCOME_LABEL = { woba: "wOBA", xws: "xwOBA", xwd: "dxwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%" };
@@ -4201,18 +4207,36 @@
       const lab = (labels && labels[key0]) || PCT_LABEL[got.k];
       const m = lab ? Object.assign({}, got.m, { label: lab }) : got.m;
       const pct = st.pct[got.k];
-      return { label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null,
+      return { m, v: got.v, k: got.k, label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null,
                tip: `${m.label}: ${fmt(got.v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}` };
     };
     pctROs.forEach((ro) => ro.disconnect()); pctROs = [];
-    {
-      const cols = el("div", "pctcols");
-      for (const sections of (p.type === "H" ? PCT_COLS_H : PCT_COLS_P)) {
-        const groups = sections.map(([title, keys]) => ({ title, rows: keys.map((k) => row(k, OUTCOME_LABEL)).filter(Boolean) })).filter((x) => x.rows.length);
-        if (groups.length) cols.append(pctChart(groups));
+    // the card's own bars (label, bar, value, and the ▸ that opens a stat's parts), at the chart's size
+    const SUBS = p.type === "H" ? SUB : SUB_P;
+    const cols = el("div", "pctcols pmeters");
+    (p.type === "H" ? PCT_COLS_H : PCT_COLS_P).forEach((sections, ci) => {
+      const col = el("div", "hcol");
+      for (const [title, keys] of sections) {
+        const rows = keys.map((k) => row(k, OUTCOME_LABEL)).filter(Boolean); if (!rows.length) continue;
+        const box = el("section", "hgroup"); box.append(el("h4", null, title));
+        const meters = el("div", "meters");
+        for (const r of rows) {
+          const mr = meterRow(r.m, r.v, r.pct);
+          const subs = (SUBS[r.k] || []).filter((sm) => metricValue(sm, pv, st) != null);
+          meters.append(mr);
+          if (!subs.length) continue;
+          const ok = `pp${ci}:${title}:${r.k}`, isOpen = !!state.open[ok];     // a stat in two sections folds in each on its own
+          const t = el("button", "fold", isOpen ? "▾" : "▸"); t.type = "button"; t.title = `${isOpen ? "Hide" : "Show"} ${subs.map((x) => x.label).join(" / ")}`;
+          t.setAttribute("aria-expanded", String(isOpen));
+          t.addEventListener("click", (e) => { e.stopPropagation(); state.open[ok] = !isOpen; savePrefs(); render(); });
+          mr.querySelector(".lbl").append(t);
+          if (isOpen) for (const sm of subs) { const sr = meterRow(sm, metricValue(sm, pv, st), st.pct[sm.key]); sr.classList.add("sub"); meters.append(sr); }
+        }
+        box.append(meters); col.append(box);
       }
-      body.append(cols);
-    }
+      cols.append(col);
+    });
+    body.append(cols);
     const vl = viewLabel(p.type);
     col.title = `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`;   // Savant prints no footer: the pool is in the hover
     col.append(body);
@@ -4430,8 +4454,8 @@
     const phead = (p, st, g) => {
       const top = el("div", "cardtop phead"), plate = renderPlate(p, st, g, g), mob = mobileView();
       const F = el("div", "phfilt");
-      const yr = el("div", "phyear"); yr.append(el("b", null, dsSeason()), " " + DS.level);
-      const hrow = el("div", "phtop"); hrow.append(yr); F.append(hrow);
+      const star = plate.querySelector(":scope > div > .starbox"), mr = plate.querySelector(".mrank");
+      if (star && mr) mr.append(star);                     // Star beside "full season": one line shorter
       if (isMulti(key)) { F.append(...chips(p)); plate.append(F); top.append(plate); return top; }
       const pick = (k) => { state.x = { id: entry.id, type, ds: k }; state.cardWin = { from: "", to: "", last: "" }; savePrefs(); render(); };
       const grid = el("div", "phgrid");
@@ -4448,10 +4472,6 @@
       let warn = null;
       if (open) {
         const sp = renderSplitPanel(p), seg = (n) => sp.querySelector(`.seg[aria-label="${n}"]`);
-        cell(p.type === "P" ? "Batters" : "Pitchers", "wide", seg("Handedness"));
-        cell("Home / away", "wide", seg("Venue"));
-        if (p.type === "H") cell("Expected stats", "wide", seg("Expected stats"));
-        else grid.append(el("div", "phf phgap"));        // keeps the dates on a row of their own
         const db = sp.querySelector(".datesbar");
         if (db) {
           const [d0, d1] = db.querySelectorAll('input[type="date"]');
@@ -4460,13 +4480,16 @@
           const x = db.querySelector(".unadd"); if (x) lw.append(x);
           cell(`Last ${p.type === "P" ? "IP" : "PA"}`, "", lw);
         }
+        cell(p.type === "P" ? "Batters" : "Pitchers", "wide", seg("Handedness"));
+        cell("Home / away", "wide", seg("Venue"));
+        if (p.type === "H") cell("Expected stats", "wide", seg("Expected stats"));
         warn = sp.querySelector(".splitwarn");
       }
       F.append(grid);
-      const sh = renderSplitHead(p), sum = el("div", "phsum");
-      for (const n of sh.querySelectorAll(".tsum, .winnote")) sum.append(n);
+      const sum = el("div", "phsum");                     // only when something needs saying: a split in force, days loading
       if (warn) sum.append(warn);
-      if (sum.childNodes.length) hrow.prepend(sum);         // "full season · all splits" beside the year
+      if (state.daysLoading) sum.append(el("span", "winnote", "Loading game-by-game data…"));
+      if (sum.childNodes.length) F.append(sum);
       plate.append(F); top.append(plate); return top;
     };
     const stub = () => {        // while the season loads: the plate with what the index knows
