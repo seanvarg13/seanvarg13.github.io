@@ -1993,31 +1993,19 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .splate .sdraft b { color: var(--ink-2); font-weight: 700; }
 :root[data-view="mobile"] .splate .sbanner { height: 140px; }
 :root[data-view="mobile"] .splate h2 { font-size: 23px; }
-/* the player page's pinned header: that plate on the left, the sample and the filter row on the right */
-.phead { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(0, 2fr); background: var(--surface);
-  border: 1px solid var(--accent-2); border-radius: 3px; overflow: hidden; }
-.phead .splate { padding-bottom: 12px; border-right: 1px solid var(--rule); }
-.phead .splate .sbanner { height: 92px; }
-.phead .splate .mug { width: 72px; height: 72px; margin-top: -40px; }
-.phead .splate h2 { font-size: 26px; margin-top: 4px; }
-.pheadR { display: flex; flex-direction: column; min-width: 0; }
-.pheadR .phrow { flex: 1 1 auto; display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px; padding: 14px 22px; }
-.pheadR .pctsample { margin: 0; padding: 0; flex: 1 1 auto; }
-.pheadR .pctsample .psv b { font-size: 30px; }
-.pheadR .pctsample .psu { font-size: 14px; }
-.pheadR .pctsample .pslbl { font-size: 11px; }
-.pheadR .phacts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.pheadR .phacts .starbox { margin: 0; }
-.pheadR .xseasons, .pheadR .splitopen { border-radius: 0; }
-:root[data-view="mobile"] .phead { grid-template-columns: minmax(0, 1fr); border-radius: 0; border-inline: 0; }
-:root[data-view="mobile"] .phead .splate { border-right: 0; padding: 0 10px 6px; }
-:root[data-view="mobile"] .phead .splate .sbanner { height: 58px; margin: 0 -10px; }
-:root[data-view="mobile"] .phead .splate .mug { width: 54px; height: 54px; margin-top: -30px; }
-:root[data-view="mobile"] .phead .splate h2 { font-size: 21px; margin-top: 2px; }
-:root[data-view="mobile"] .phead .splate .steam { font-size: 12.5px; margin-top: 2px; }
-:root[data-view="mobile"] .phead .splate .sbio, :root[data-view="mobile"] .phead .splate .sdraft { font-size: 10.5px; margin-top: 1px; }
-:root[data-view="mobile"] .pheadR .phrow { padding: 4px 10px 6px; gap: 6px 10px; border-top: 1px solid var(--rule); }
-:root[data-view="mobile"] .pheadR .pctsample .psv b { font-size: 17px; }
+/* the player page's pinned header: the blue plate, with the season and every filter in its right-hand side */
+.phead .mplate { flex-wrap: wrap; padding-right: 22px; }
+.phfilt { margin-left: auto; flex: 0 1 auto; max-width: 64%; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.phyear { font-family: var(--display); font-size: 22px; color: var(--band-ink); letter-spacing: 0.02em; line-height: 1; }
+.phyear b { font-size: 40px; font-weight: 700; }
+.phfilt .xseasons, .phfilt .splitopen { background: transparent; border: 0; padding: 0; margin: 0; justify-content: flex-end; }
+.phfilt .splitopen { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.phfilt .tsum { color: var(--band-ink); opacity: 0.85; }
+:root[data-view="mobile"] .phfilt { margin-left: 0; flex-basis: 100%; max-width: none; align-items: stretch; gap: 6px; }
+:root[data-view="mobile"] .phyear { display: none; }
+:root[data-view="mobile"] .phfilt .xseasons, :root[data-view="mobile"] .phfilt .splitopen { justify-content: flex-start; }
+/* the stats sit straight on the page: no box round them */
+.ppage:not(.cmp2page) > .pcol { border: 0; background: transparent; }
 
 /* the middle panel: one banner, then every stat as a bar — no headings inside */
 .pchead { text-align: center; padding: 12px 12px 0; }
