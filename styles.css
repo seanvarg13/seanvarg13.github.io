@@ -2608,3 +2608,5 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .rawstats.simple.pit td.tm { max-width: 50px; }
 :root[data-view="mobile"] .rawstats.simple.pit th, :root[data-view="mobile"] .rawstats.simple.pit td { padding-left: 2px; padding-right: 2px; }
 :root[data-view="mobile"] .rawstats tr.sub td.tm, :root[data-view="mobile"] .rawstats tr.sub2 td.tm { padding-left: 2px; }
+.rawstats th.lc { text-transform: none; }                /* "uERA" keeps its small u under the capitalised headings */
+.rawstats td.uera { font-weight: 700; }
