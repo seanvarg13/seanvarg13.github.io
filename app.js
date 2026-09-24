@@ -3901,7 +3901,7 @@
     return box;
   }
   const paRow = (label, node) => { const r = el("div", "parow"); r.append(el("span", "palbl", label), node); return r; };
-  const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["advanced", "Advanced Stats"]];
+  const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["advanced", "Advanced Stats"], ["rolling", "Rolling"]];
   function renderBelow(p) {
     const sec = el("section", "pbelow2");
     const pick = BTABS.some(([k]) => k === state.pbtab) ? state.pbtab : "compare";
@@ -3929,6 +3929,9 @@
       body.append(el("p", "note", state.cmp2.on
         ? "The two sides are on the right. “Set up comparison” changes the season, split and dates on each, and which stats sit on the grid."
         : "Put two sides of this player next to each other — different seasons, splits or stretches of games, each ranked against its own season."));
+    } else if (pick === "rolling") {                  // xwOBA over a hitter's last N PA, K−BB% over a pitcher's last N batters
+      const roll = renderRolling(p, p.type === "H" ? "H" : p.primary);
+      body.append(roll || el("p", "note", "No game-by-game data for this season, so there's no rolling line."));
     } else if (pick === "advanced") {
       const secs = belowAdvanced();
       if (secs.length) body.append(...secs);
@@ -4168,10 +4171,13 @@
   // A hitter's percentile box is two columns of headed sections, the card's own groups plus the expected three —
   // wide enough (it takes the right-hand box's place too) that every bar keeps the length it has in one column.
   // EXPW / EXPB / EXPS follow the xwOBA switch, as everywhere.
-  const PCT_COLS_H = [[["Outcomes", ["woba", "xws", "xwd"]], ["Expected Stats", ["EXPW", "EXPB", "EXPS"]], ["Batted-Ball Quality", ["ev", "brl"]]],
-                      [["Swing Decisions", ["osw", "bb"]], ["Contact", ["whf", "k"]], ["Batted-Ball Distribution", ["air", "pu", "gb", "pull"]]]];
-  const OUTCOME_LABEL = { woba: "wOBA", xws: "xwOBA", xwd: "dxwOBA", ev: "Avg EV", brl: "Barrel%", osw: "O-Swing%", bb: "BB%", whf: "Whiff%", k: "K%",
-                          air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%" };
+  const PCT_COLS_H = [[["Outcomes", ["woba", "xws", "xwd"]], ["Expected Stats", ["EXPW", "EXPB", "EXPS"]],
+                       ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],
+                      [["Swing Decisions", ["zsw", "osw", "swing", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],
+                       ["Batted-Ball Distribution", ["air", "pu", "gb", "pull"]]]];
+  const OUTCOME_LABEL = { woba: "wOBA", xws: "xwOBA", xwd: "dxwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
+                          maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
+                          whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%" };
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
     col.append(panelHead(...pctTitle(p, nav)));
@@ -4460,7 +4466,7 @@
         if (f.dataset.key.startsWith("pgrp:")) f.remove(); }
       belowCard = card;                                  // the rest of it fills the Advanced tab below
       C.append(cbody);
-      const foot = p.type === "H" ? renderRolling(p, g) : renderLuckBox(p);   // pinned to the foot of the percentile box
+      const foot = p.type === "P" ? renderLuckBox(p) : null;   // a pitcher's batted-ball luck, pinned to the foot of the percentile box
       if (foot) B.append(foot);
       const ub = renderUeraBox(p, st); if (ub) C.append(ub);          // a pitcher's uERA box sits at the foot of the right one
       if (p.type === "H") { B.classList.add("wide"); page.append(A, B); }   // a hitter's percentile box spans both right-hand columns
