@@ -2460,3 +2460,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 .modal.pagebg .modal-back, :root[data-view="mobile"] .modal.pagebg .modal-back { display: block; background-color: var(--accent-2);
   background-image: repeating-linear-gradient(135deg, transparent 0 18px, color-mix(in srgb, var(--rule) 30%, transparent) 18px 21px,
                     transparent 21px 39px, color-mix(in srgb, var(--stripe-line) 45%, transparent) 39px 40px, transparent 40px 42px); }
+/* the card (a popup and his page alike): hard square corners, an outline in the rule's navy and a deeper shadow, so it
+   stands off the list or the pattern behind it */
+.modal.pcard .modal-panel, :root:not([data-view="mobile"]) .modal.pcard .modal-panel, :root[data-view="mobile"] .modal.pcard .modal-panel {
+  border-radius: 0; border: 2px solid var(--rule); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38), 0 3px 8px rgba(0, 0, 0, 0.22); }
