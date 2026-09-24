@@ -159,6 +159,32 @@ def cloud_publishes(info):
         return False
 
 
+def reconcile_with_main(tok, sync_tools):
+    """Bring down every mirrored file that main has newer than this Mac (sync_tools' rules, read through git).
+    Returns False when main can't be read at all."""
+    if not os.path.isdir(os.path.join(DEPLOY, ".git")):
+        try:                                               # first publish from this folder: the API pull is all there is
+            sync_tools.pull()
+        except Exception as e:                             # noqa: BLE001
+            say(f"  (tools pull skipped: {type(e).__name__}: {e})")
+        return True
+    if git(*auth_args(tok), "fetch", "-q", "origin", "main", check=False, stderr=subprocess.DEVNULL):
+        return False
+    listing = git("ls-tree", "-r", "FETCH_HEAD", capture=True)
+    remote = {}
+    for line in listing.splitlines():                      # "<mode> blob <sha>\t<path>"
+        meta, _, path = line.partition("\t")
+        parts = meta.split()
+        if len(parts) == 3 and parts[1] == "blob" and path in sync_tools.FILES:
+            remote[path] = parts[2]
+    if not remote:
+        return False
+    getter = lambda rel: subprocess.run(["git", "-C", DEPLOY, "show", f"FETCH_HEAD:{rel}"], check=True,   # noqa: E731
+                                        stdout=subprocess.PIPE).stdout
+    sync_tools.pull(source=(remote, getter))
+    return True
+
+
 def main():
     name = sys.argv[sys.argv.index("--repo") + 1] if "--repo" in sys.argv else None
     squash = "--squash" in sys.argv
@@ -174,11 +200,14 @@ def main():
         say("GitHub Actions publishes the site now (tools/cloud.json) — not pushing from this Mac. --force overrides.")
         return
 
-    try:                                                   # a script edited on GitHub is taken first, so this push
-        import sync_tools                                  # does not put the old copy back over it
-        sync_tools.pull()
-    except Exception as e:                                 # noqa: BLE001
-        say(f"  (tools pull skipped: {type(e).__name__}: {e})")
+    # Whatever was edited on GitHub is taken first, so this push can't put an old copy back over it. It is read through
+    # git (the same connection the push uses), not the API: on 24 Sep 2026 the API pull failed quietly and a publish
+    # force-pushed this Mac's morning copies of app.js / styles.css / themes.js over a day of edits made on GitHub, and
+    # deleted the cloud workflow files it had never received. If git can't read main, nothing is pushed.
+    import sync_tools
+    if not reconcile_with_main(tok, sync_tools):
+        sys.exit("publish stopped: couldn't read the repo's main branch, so pushing could overwrite newer files there. "
+                 "Nothing was pushed; the next publish tries again.")
     sync()
     with open(os.path.join(DEPLOY, ".nojekyll"), "w") as f:      # serve the files as they are (no Jekyll pass)
         f.write("")

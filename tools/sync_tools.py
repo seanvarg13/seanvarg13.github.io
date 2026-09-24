@@ -159,19 +159,32 @@ def mirror_out(deploy):
     return seen
 
 
-def pull(dry=False):
-    """Bring down whatever was edited in the repo since the last publish. Returns the list of files adopted."""
-    try:
-        info = repo()
-    except OSError:
-        say("sync_tools: no github_site.json yet — nothing to pull")
-        return []
+# The site's own files. The site is edited on GitHub now (Sean's chat works there), so when this Mac's copy and the
+# repo's have both moved since the last publish, the repo's wins for these (the Mac's goes to logs/tools-conflicts/).
+SITE_FILES = ("app.js", "styles.css", "themes.js")
+
+
+def pull(dry=False, source=None):
+    """Bring down whatever was edited in the repo since the last publish. Returns the list of files adopted.
+    source: (remote shas by repo path, fetch(repo path) -> bytes) read some other way than the API — the publisher
+    passes git's own view of main, so a failing API call can never let it push old copies over new ones."""
+    info = None
+    if source is None:
+        try:
+            info = repo()
+        except OSError:
+            say("sync_tools: no github_site.json yet — nothing to pull")
+            return []
     base, took, kept = state(), [], []
-    try:
-        remote = remote_shas(info)
-    except Exception as e:                                        # noqa: BLE001 — never block a build on this
-        say(f"sync_tools: could not reach GitHub ({type(e).__name__}: {e}) — using the local scripts")
-        return []
+    if source is not None:
+        remote, getter = source
+    else:
+        try:
+            remote = remote_shas(info)
+        except Exception as e:                                    # noqa: BLE001 — never block a build on this
+            say(f"sync_tools: could not reach GitHub ({type(e).__name__}: {e}) — using the local scripts")
+            return []
+        getter = lambda rel: fetch(info, rel)                    # noqa: E731
     if not remote:
         say(f"sync_tools: the repo has no tools/ on {BRANCH} yet — nothing to pull")
         return []
@@ -186,19 +199,25 @@ def pull(dry=False):
             continue
         b = base.get(rel) or SEED_BASE.get(rel)
         if local is not None and lsha != b and rsha != b:          # edited in both places since the last publish
-            data = fetch(info, rel)
             out = os.path.join(HERE, "logs", "tools-conflicts", stamp)
             os.makedirs(out, exist_ok=True)
-            with open(os.path.join(out, os.path.basename(rel)), "wb") as f:
-                f.write(data)
-            say(f"sync_tools: !! {rel} was edited here AND in the repo — keeping the local one; "
-                f"the repo's copy is in logs/tools-conflicts/{stamp}/")
-            kept.append(rel)
-            continue
+            if rel in SITE_FILES:                                  # the site: the repo's copy wins, this Mac's is kept aside
+                if not dry:
+                    shutil.copy2(dst, os.path.join(out, os.path.basename(rel)))
+                say(f"sync_tools: !! {rel} was edited here AND in the repo — taking the repo's (the site is edited on "
+                    f"GitHub); this Mac's copy is in logs/tools-conflicts/{stamp}/")
+            else:
+                data = getter(rel)
+                with open(os.path.join(out, os.path.basename(rel)), "wb") as f:
+                    f.write(data)
+                say(f"sync_tools: !! {rel} was edited here AND in the repo — keeping the local one; "
+                    f"the repo's copy is in logs/tools-conflicts/{stamp}/")
+                kept.append(rel)
+                continue
         if local is not None and rsha == b:                        # only this Mac moved: the next publish pushes it
             kept.append(rel)
             continue
-        data = fetch(info, rel)                                    # the repo moved on (or we have no copy): adopt it
+        data = getter(rel)                                         # the repo moved on (or we have no copy): adopt it
         if rel.endswith(".py"):
             try:
                 compile(data.decode("utf-8"), rel, "exec")

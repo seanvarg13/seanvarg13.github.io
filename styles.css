@@ -40,12 +40,21 @@
   --accent-wash: rgba(123, 175, 212, 0.24);
   --pctrack: #d9e8e3;  /* the unfilled part of a percentile bar */
   --pctrule: #bed8d1;  /* the dashed rule between bars */
+  --svline: #c7dcdc;   /* Savant: the thin line the rest of a percentile bar runs along */
+  --svrule: #399098;   /* Savant: the dashed rule under a bar's label and value */
+  --svtext: #666666;   /* Savant: the grey its labels and values are set in */
+  --svframe: #4499aa;  /* Savant: the teal frame round each panel */
+  --svsec: #399098;    /* Savant: the rule under a section heading */
+  --svdots: #4499aa;   /* Savant: the dots under a panel title's year */
+  --svpoor: #3a62a8; --svavg: #b8d3cd; --svgreat: #d41c23;   /* Savant: POOR / AVERAGE / GREAT */
+  --svhead: #000000;   /* Savant: the black of its section names */
+  --svtitle: #333333;  /* Savant: the charcoal of its panel titles */
   --lo: #325aa1;      /* percentile: cold — Savant's blue */
   --mid: #b3b3b3;     /* percentile: 50th — a solid grey, not a tint, so the ends carry */
   --hi: #d22d49;      /* percentile: hot  — Savant's red */
   --shadow: 0 1px 2px rgba(19, 41, 75, 0.06), 0 8px 24px rgba(19, 41, 75, 0.07);
-  --display: "Helvetica Neue", Helvetica, Arial, sans-serif;     /* themes.js swaps these for the chosen font */
-  --body: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --display: "Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif;   /* Savant's type, the site's only font */
+  --body: "Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -70,6 +79,15 @@
     --accent-wash: rgba(123, 175, 212, 0.22);
     --pctrack: #2c3b39;
     --pctrule: #3a4f4b;
+    --svline: #34504d;
+    --svrule: #4d7f84;
+    --svtext: #b9c3c2;
+    --svframe: #4f9fad;
+    --svhead: #e8eeee;
+    --svtitle: #e3e8e8;
+    --svsec: #4f9fad;
+    --svdots: #5fb0bd;
+    --svpoor: #6f95d6; --svavg: #8fb3ad; --svgreat: #f0555b;
     --lo: #4a86dd;
     --mid: #6a7382;
     --hi: #e2455c;
@@ -98,6 +116,15 @@
   --accent-wash: rgba(123, 175, 212, 0.22);
   --pctrack: #2c3b39;
   --pctrule: #3a4f4b;
+  --svline: #34504d;
+  --svrule: #4d7f84;
+  --svtext: #b9c3c2;
+  --svframe: #4f9fad;
+  --svhead: #e8eeee;
+  --svtitle: #e3e8e8;
+  --svsec: #4f9fad;
+  --svdots: #5fb0bd;
+  --svpoor: #6f95d6; --svavg: #8fb3ad; --svgreat: #f0555b;
   --lo: #4a86dd;
   --mid: #6a7382;
   --hi: #e2455c;
@@ -1733,18 +1760,19 @@ body.modal-open header.top { z-index: 60; }
 .modes .modesel .chev { transition: transform 0.12s ease; }
 .modes .modesel.open .chev { transform: rotate(180deg); }
 .modes .modesel.open { color: var(--accent-2-ink); background: var(--on-fill-wash); }
-.modemenu { position: fixed; z-index: 200; display: none; min-width: 178px; margin: 0; padding: 4px; list-style: none;
-            background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22); }
-.modesel.open .modemenu { display: block; }
+/* the list itself is Savant's, like every dropdown on the player page: a white box in a heavy dark rule, the pages
+   in large type. It sits on the page, outside the header (app.js moves it there), so nothing can clip or cover it. */
+.modemenu { position: fixed; z-index: 1000; display: none; min-width: 150px; margin: 0; padding: 2px 0; list-style: none;
+            background: var(--surface); border: 3px solid var(--ddline); border-radius: 3px; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12); }
+.modemenu.show { display: block; }
 .modemenu li { margin: 0; padding: 0; }
-.modes .modesel .modemenu li a {
-  display: block; min-height: 0; margin: 0; padding: 9px 12px; border: 0; border-radius: 3px; background: none;
-  color: var(--ink); font-size: 13px; font-weight: 600; letter-spacing: 0.01em; text-transform: none;
-  text-decoration: none; white-space: nowrap; opacity: 1;
+.modemenu li a {
+  display: block; margin: 0; padding: 1px 12px; border: 0; background: none; color: var(--ink);
+  font-family: var(--display); font-size: 19px; font-weight: 400; line-height: 1.45; letter-spacing: 0; text-transform: none;
+  text-decoration: none; white-space: nowrap;
 }
-.modes .modesel .modemenu li a:hover, .modes .modesel .modemenu li a:focus-visible { background: var(--accent-wash); color: var(--ink); }
-.modes .modesel .modemenu li a[aria-current="page"] { background: var(--accent-2); color: var(--accent-2-ink); }
-:root[data-view="mobile"] .modes .modesel .modemenu li a { padding: 11px 14px; font-size: 14px; }
+.modemenu li a:hover, .modemenu li a:focus-visible { background: var(--hover); outline: none; }
+.modemenu li a[aria-current="page"] { font-weight: 700; }
 
 /* The rankings bar stays one row while it fits. When edit mode brings more buttons than the width can
    hold, the group wraps to its own line instead of drawing over the list name and Save (#ranktools has
@@ -1847,6 +1875,8 @@ body.modal-open header.top { z-index: 60; }
 .cmpgrid .ccorner { background: var(--surface); }
 #xboard .cmpgrid .ccorner, #xboard .cmpgrid .chead,
 :root[data-view="mobile"] .cmpgrid .ccorner, :root[data-view="mobile"] .cmpgrid .chead { top: calc(var(--header-h, 0px) + var(--cardtop-h, 0px)); }
+/* on the desktop player page the grid scrolls inside its own box, so its heads pin to that box's top */
+:root:not([data-view="mobile"]) #xboard .ppage .cmpgrid .ccorner, :root:not([data-view="mobile"]) #xboard .ppage .cmpgrid .chead { top: 0; }
 .cmpgrid .plate { padding: 5px 9px; }
 .cmpgrid .chead h3 { font-size: 12.5px; }
 .cmpgrid .chead .cmeta { font-size: 10.5px; }
@@ -1871,10 +1901,6 @@ body.modal-open header.top { z-index: 60; }
 .mixrow .mlbl { font-size: 12px; color: var(--ink-2); text-align: right; }
 .mixrow .mval { font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
 .mixfoot { font-size: 11px; color: var(--muted); margin-top: 3px; text-align: right; }
-.minitrack { --bub: 20px; position: relative; height: 20px; border-radius: 10px; background: var(--pctrack, var(--surface-2)); box-shadow: inset 0 0 0 1px var(--hair); }
-.minifill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 10px; }
-.minibub { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; border-radius: 50%;
-  display: grid; place-items: center; font-size: 10.5px; font-weight: 700; color: #fff; box-shadow: 0 0 0 2px var(--surface); }
 .tblcard table { width: auto; table-layout: fixed; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }   /* auto + a colgroup = the table is exactly as wide as its columns */
 .tblcard thead th { background: var(--band); color: var(--band-ink); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em;
   text-transform: uppercase; text-align: center; padding: 6px 10px; white-space: nowrap;
@@ -1949,7 +1975,7 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .ppage .pcolC .note { font-size: 11px; color: var(--muted); margin: 8px 0 0; }
 .pcolA .rawstats { margin-top: 0; }
 
-/* the player card, the way Savant draws it: his action shot as a banner, the cut-out over it, the rest centred */
+/* the player card, laid out after Savant's: his action shot as a banner, the cut-out over it, the rest centred */
 .splate { position: relative; text-align: center; padding: 0 14px 10px; background: var(--surface); }
 .splate .sbanner { height: 124px; margin: 0 -14px; background-size: cover; background-position: 50% 18%;
   background-repeat: no-repeat; background-color: var(--surface-2); }
@@ -1968,6 +1994,65 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .splate .sdraft b { color: var(--ink-2); font-weight: 700; }
 :root[data-view="mobile"] .splate .sbanner { height: 140px; }
 :root[data-view="mobile"] .splate h2 { font-size: 23px; }
+/* the player page's pinned header: the blue plate edge to edge, every filter in its right-hand side */
+body.playerwide #xboard { overflow: visible; border: 0; box-shadow: none; }   /* no outline round the page, as on a phone; the header runs to the window's edges */
+body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
+.phead .mplate { flex-wrap: wrap; padding: 10px min(6vw, 96px); gap: 22px; align-items: center; }
+.phead .mplate .mug { width: 112px; height: 112px; }
+:root:not([data-view="mobile"]) .phead .mplate .mug { margin: -8px 0 0; }   /* the shoulders stop short of the band's bottom stripes */
+.phead .mplate h2 { font-size: 24px; }
+.phead .mplate .mline { margin-top: 2px; }
+.phead .mplate .hstrip { margin: 4px 0; }
+.phead .mplate .mrank { margin-top: 2px; }
+.phead .mplate .mrank .starbox { margin: 0; }
+.phfilt { margin-left: auto; flex: 0 1 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+/* every filter is a labelled box in one grid: season, level, games and the dates across, the toggles under them */
+.phgrid { display: grid; grid-template-columns: repeat(3, max-content); gap: 6px 10px; justify-content: end;
+  padding: 8px 10px; background: rgba(0, 0, 0, 0.12); border-radius: 3px; }
+.phf { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.phf.w2 { grid-column: span 2; }
+.phf.hand .seg .segbtn { padding: 0 7px; }                      /* vs LHP / RHP: tight, so the filter box stays short */
+.phcap { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--band-ink); opacity: 0.8; }
+.phf .pill { width: 100%; min-width: 0; height: 28px; margin: 0; }
+.phf .pill:first-child { min-width: 84px; }
+.phf .seg { display: flex; }
+.phf .seg .segbtn { flex: 1 1 auto; height: 28px; padding: 0 10px; }
+/* toggles on the band: solid, the way every other control on it is, so no scheme can wash them out to white on white */
+.mplate .seg { background: var(--surface); border-color: var(--surface); }
+.mplate .segbtn { color: var(--ink); background: var(--surface); border-color: var(--hair); }
+.mplate .segbtn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.phf input[type="date"], .phf .lastin { height: 28px; width: 100%; min-width: 0; box-sizing: border-box; padding: 0 8px; font: inherit; font-size: 13px;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--surface); border-radius: 2px; }
+.phf input[type="date"] { min-width: 126px; }
+.phf .lastin { width: 72px; }
+.phf input:disabled { opacity: 0.55; }
+.phlast { display: flex; gap: 6px; align-items: center; }
+.phlast .unadd { color: var(--band-ink); }
+.phstatic { display: flex; align-items: center; height: 28px; padding: 0 10px; font-size: 13px; font-weight: 600;
+  color: var(--band-ink); border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 2px; white-space: nowrap; }
+.phsum { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 10px; font-size: 12px; color: var(--band-ink); }
+.phsum .winnote { color: var(--band-ink); opacity: 0.85; }
+.phsum .splitwarn .linkbtn { color: inherit; }
+:root[data-view="mobile"] .phead .mplate { padding: 10px 12px; gap: 8px 14px; }
+:root[data-view="mobile"] .phead .mplate .mug { width: 84px; height: 84px; margin: 0; }
+:root[data-view="mobile"] .phead .mplate > div:nth-child(2) { flex: 1 1 0; min-width: 0; }
+:root[data-view="mobile"] .phead .hstrip { gap: 2px 10px; font-size: 11px; margin-bottom: 4px; }
+:root[data-view="mobile"] .phead .hchip { white-space: nowrap; }
+:root[data-view="mobile"] .phead .hchip b { font-size: 14px; }
+:root[data-view="mobile"] .phfilt { margin-left: 0; flex-basis: 100%; align-items: stretch; }
+:root[data-view="mobile"] .phgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 8px; gap: 6px 8px; }
+:root[data-view="mobile"] .phf.w2 { grid-column: auto; }
+:root[data-view="mobile"] .phf.mfull, :root[data-view="mobile"] .phtoggle { grid-column: 1 / -1; }
+:root[data-view="mobile"] .phf input[type="date"] { -webkit-appearance: none; appearance: none; padding: 0 4px; font-size: 12px; min-width: 0; }
+:root[data-view="mobile"] .phf .lastin { width: 100%; }
+:root[data-view="mobile"] .phsum { justify-content: flex-start; }
+/* a pitcher's uERA and luck-neutral ERA tables, side by side in their own tab */
+.eratab { display: grid; grid-template-columns: repeat(2, minmax(0, 440px)); justify-content: center; gap: 16px 48px; }
+.btabbody > .uerabox { max-width: 520px; margin-inline: auto; }          /* nERA: a table, not the page's width */
+:root[data-view="mobile"] .eratab { grid-template-columns: minmax(0, 1fr); }
+.cmpbelow { margin-top: 14px; }
+/* the stats sit straight on the page: no box round them */
+.ppage:not(.cmp2page) > .pcol { border: 0; background: transparent; }
 
 /* the middle panel: one banner, then every stat as a bar — no headings inside */
 .pchead { text-align: center; padding: 12px 12px 0; }
@@ -1995,7 +2080,7 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .pctbox .pctfoot { margin: 9px 0 0; font-size: 10.5px; color: var(--muted); text-align: center; }
 .ppage .hgroups { grid-template-columns: minmax(0, 1fr); max-width: none; }
 .ppage .hcol, .ppage .hgroup { min-width: 0; }
-/* the bars Savant draws: a full-width light track, the fill from the left edge, a round marker at its end,
+/* bars styled after Savant's: a full-width light track, the fill from the left edge, a round marker at its end,
    a dashed rule under each row, and the poor / average / great scale over the top of the first one */
 .ppage .meter, .ppage .hcard .meter { grid-template-columns: minmax(0, 1fr) minmax(60px, 1.5fr) 56px; gap: 10px; font-size: 12.5px; }
 .ppage .meter .lbl { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; text-align: right; }
@@ -2005,18 +2090,6 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .ppage .meter .track::after { opacity: 0.75; }
 .ppage .meter .bub { font-size: 12px; font-weight: 700; box-shadow: 0 0 0 2px var(--surface); }
 .ppage .meter .val { font-weight: 600; }
-.ppage .meters .meter.pctscale { min-height: 0; padding: 0 0 3px; border-bottom: 0; }
-.pctscale .track { height: auto; background: none; border: 0; overflow: visible; display: block; }
-.pctscale .track::after { display: none; }
-.pctscale .sc { position: absolute; bottom: 0; display: flex; flex-direction: column; align-items: center; line-height: 1; }
-.pctscale .sc i { font-style: normal; font-size: 9.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
-.pctscale .sc b { font-size: 7.5px; margin-top: 2px; }
-.pctscale .p0 { left: 0; align-items: flex-start; } .pctscale .p0 b { margin-left: 1px; }
-.pctscale .p50 { left: 50%; transform: translateX(-50%); }
-.pctscale .p100 { right: 0; align-items: flex-end; } .pctscale .p100 b { margin-right: 1px; }
-.pctscale .p0 i, .pctscale .p0 b { color: var(--lo); }
-.pctscale .p50 i, .pctscale .p50 b { color: var(--muted); }
-.pctscale .p100 i, .pctscale .p100 b { color: var(--hi); }
 .ppage .meters { gap: 0; padding-top: 0; }
 .ppage .fold-sec { margin-top: 6px; }
 .ppage .fold-sec:first-child { margin-top: 0; }
@@ -2025,6 +2098,18 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .ppage .meters { padding-top: 2px; }
 .pcolC .cardnotes { margin: 0; }
 :root[data-view="mobile"] .ppage { grid-template-columns: 1fr; height: auto; min-height: 0; }
+/* on the phone the player page runs edge to edge, but its boxes keep a 12px white margin from the screen's sides */
+:root[data-view="mobile"] .ppage { padding-inline: 12px; }
+:root[data-view="mobile"] .pbelow2 { margin-inline: 12px; }
+/* and the narrower card still fits the season table whole, down to a 360px phone */
+:root[data-view="mobile"] .pcolA .pscroll { padding-inline: 10px; }
+:root[data-view="mobile"] .pcolA .heatcard table { min-width: 0; }
+:root[data-view="mobile"] .pcolA .heatcard col:first-child { width: 58px !important; }   /* beats the 74px the colgroup sets inline */
+:root[data-view="mobile"] .pcolA .heatcard thead th, :root[data-view="mobile"] .pcolA .heatcard tbody td { padding-inline: 2px; font-size: 11px; }
+@media (max-width: 385px) {
+  :root[data-view="mobile"] .pcolA .heatcard col:first-child { width: 50px !important; }
+  :root[data-view="mobile"] .pcolA .heatcard thead th, :root[data-view="mobile"] .pcolA .heatcard tbody td { padding-inline: 1px; font-size: 10px; }
+}
 :root[data-view="mobile"] .pcol { overflow: visible; }
 :root[data-view="mobile"] .pscroll { overflow: visible; }
 
@@ -2033,66 +2118,115 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .ppage .ptabs.xtabs .ptab { flex: 1 1 0; min-width: 0; font-size: 10px; padding: 0 4px; height: 25px;
   letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ppage .ptabbody .meters + .meters { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--rule); }
-.rollbox { margin-top: 10px; padding-top: 4px; border-top: 1px solid var(--rule); }
-/* pinned to the foot of the advanced box: the tabs above it scroll, this stays put */
-.pcol > .rollbox { margin: 0; padding: 0 16px 12px; }
-.pcol > .rollbox .pchead { padding-top: 10px; }
-.uerabox .ubt { width: 100%; border-collapse: collapse; margin-top: 4px; font-variant-numeric: tabular-nums; }
-.uerabox .ubt th { padding: 2px 3px 4px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
-  color: var(--muted); text-align: right; border-bottom: 1px solid var(--hair); }
-.uerabox .ubt td { padding: 4px 3px; font-size: 12.5px; text-align: right; border: 0; }
-.uerabox .ubt td.l, .uerabox .ubt th.l { text-align: left; padding-left: 2px; font-weight: 700; }
+/* the rolling line under the Advanced panel's bars, set like them (see rollSvg in app.js) */
+.rollbox { margin-top: 14px; }
+/* pinned to the foot of the Advanced box: the tabs above it scroll, this stays put */
+.pcol > .rollbox { flex: none; margin: 0; padding: 10px 16px 12px; }
+:root[data-view="mobile"] .pcol > .rollbox { padding: 6px 12px 12px; }
+.uerabox .ubt { width: 100%; border-collapse: collapse; font-family: "Roboto Condensed", var(--body); }
+.uerabox .ubt th { padding: 2px 3px 5px; font-size: 12px; font-weight: 400; color: var(--svtext); text-align: right;
+  border-bottom: 1px dashed var(--svrule); }
+.uerabox .ubt td { padding: 5px 3px; font-size: 13px; color: var(--ink); text-align: right; border: 0; }
+.uerabox .ubt tbody tr + tr td { border-top: 1px dashed var(--svline); }
+.uerabox .ubt td.l, .uerabox .ubt th.l { text-align: left; padding-left: 0; }
+.uerabox .ubt td.l { color: var(--svtext); }
 .uerabox .ubt td.exp { font-weight: 700; }
-.uerabox .ubt .chip2 { min-width: 36px; font-size: 11px; }
-.rollhd { font-family: var(--display); font-weight: 700; font-size: 11.5px; letter-spacing: 0.05em;
-  text-transform: uppercase; color: var(--accent-2-text); margin-bottom: 6px; }
-.rollsvg { display: block; width: 100%; height: auto; overflow: visible; }
-.rollsvg .rgrid { stroke: var(--hair); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
-.rollsvg .rlg { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
-.rollsvg .rline { fill: none; stroke: var(--hi); stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.rollsvg .rtick { fill: var(--muted); font-size: 8px; text-anchor: end; font-variant-numeric: tabular-nums; }
-.rollsvg .rlglbl { fill: var(--muted); font-size: 7.5px; text-anchor: start; letter-spacing: 0.06em; }
-.rollsvg .raxis { stroke: var(--ink-2); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.uerabox .ubt .chip2 { min-width: 38px; font-size: 12px; }
+.rollhd { display: flex; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 8px; padding: 0 0 4px 0;
+  border-bottom: 2px solid var(--svsec); margin-bottom: 6px; font-family: "Roboto Condensed", var(--body); }
+.rollhd .rollname { font-size: 16px; font-weight: 700; color: var(--svhead); }
+.rollhd .rollsub { font-size: 12px; color: var(--svtext); margin-left: auto; }
+.rollhd .rollwin { margin-left: auto; font-size: 12px; color: var(--svtext); display: inline-flex; align-items: center; gap: 4px; }
+.rollhd .rollsel { height: 24px; padding: 0 4px; border: 1px solid var(--hair); border-radius: 4px; background: var(--surface); color: var(--ink);
+  font: 700 12px/1 "Roboto Condensed", var(--body); }
+:root[data-view="mobile"] .rollhd .rollsel { font-size: 16px; height: 30px; }   /* 16px: iOS won't zoom */
+.rollchart { position: relative; }
+/* the rolling line: a 160px plot (a touch over the old 132) and the strip under it the hover note sits in */
+.rollbox .rollchart { height: 204px; }
+.rollchart > .rollsvg { position: absolute; top: 0; left: 0; }
+.rollsvg { touch-action: pan-y; cursor: crosshair; }
+.rollsvg .rguide { stroke: var(--svtext); stroke-width: 1; stroke-dasharray: 2 2; pointer-events: none; }
+.rollsvg .rhot { stroke: var(--surface); stroke-width: 2; pointer-events: none; }
+.rolltip { position: absolute; z-index: 3; pointer-events: none; display: grid; gap: 1px; padding: 5px 8px; white-space: nowrap;
+  background: var(--surface); border: 1px solid var(--svframe); border-radius: 3px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  font: 400 11.5px/1.25 "Roboto Condensed", var(--body); color: var(--svtext); }
+.rolltip b { font-size: 13px; color: var(--ink); }
+.rolltip[hidden] { display: none; }
+.rollhd .rollseg { flex: none; }
+.rollhd .rollseg .segbtn { height: 22px; min-height: 22px; padding: 0 6px; font-size: 11px; letter-spacing: 0; }
+.rollbox .rollnone { margin: 6px 0 0; font-size: 12px; color: var(--svtext); }
+/* the right box: every section at once, each under the same heading the middle box uses */
+.xsec + .xsec { margin-top: 16px; }
+.sechd { padding: 0 0 4px; margin-bottom: 6px; border-bottom: 2px solid var(--svsec); font-family: "Roboto Condensed", var(--body); }
+.sechd .secname { font-size: 16px; font-weight: 700; color: var(--svhead); }
+.xsec .meters + .meters { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--rule); }
+.rollchart { width: 100%; }
+.rollsvg { display: block; width: 100%; height: auto; overflow: visible; font-family: "Roboto Condensed", var(--body); }
+.rollsvg text { font-size: 12px; fill: var(--svtext); dominant-baseline: middle; font-variant-numeric: normal; }
+.rollsvg .rtick, .rollsvg .rnow { text-anchor: end; }
+.rollsvg .rnow { font-weight: 700; fill: var(--ink); }
+.rollsvg .rmon { text-anchor: start; }
+.rollsvg .rlglbl { text-anchor: end; font-size: 10px; letter-spacing: 0.04em; }
+.rollsvg .raxis { stroke: var(--svtext); stroke-width: 1; }
+.rollsvg .rgrid { stroke: var(--svline); stroke-width: 1; }
+.rollsvg .rlg { stroke: var(--svrule); stroke-width: 1; stroke-dasharray: 6 3; }
+.rollsvg .rline { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.rollsvg .rdot { stroke: var(--surface); stroke-width: 2; }
 .ppage .meter .val { white-space: nowrap; }
 
-/* the card's season table: one row per MLB season, every cell coloured by its percentile */
-.heatcard { width: 100%; max-width: none; margin: 10px 0 0; padding-top: 10px;
-  border: 0; border-top: 2px solid var(--ink-2); border-radius: 0; box-shadow: none; background: none; }
-.heatcard table { width: 100%; font-size: 12px; }
-.heatcard thead th { padding: 2px 3px 5px; font-size: 11.5px; font-weight: 700; letter-spacing: 0; text-transform: none;
-  text-align: right; background: none; color: var(--ink); border: 0; border-bottom: 1px solid var(--hair); white-space: nowrap; }
-.heatcard tbody td { padding: 3px 3px; font-size: 11.5px; font-weight: 400; text-align: right;
-  border: 0; background: none; color: var(--ink); }
+/* the card's season table, sized to match Savant's: Roboto Condensed 12.8px in #333, bold headings between two
+   1px black rules, 18px rows with no padding, the season on screen in pale yellow, the career line on grey */
+.heatcard { width: 100%; max-width: none; margin: 8px 0 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: none; }
+.heatcard table { width: 100%; table-layout: auto; border-collapse: collapse; font: 400 12.8px/18.3px "Roboto Condensed", var(--body); color: var(--svtitle); }   /* columns sized to their numbers, as Savant's are */
+.heatcard thead th { padding: 4px 3px; font-size: 12.8px; font-weight: 700; line-height: 18.3px; letter-spacing: 0; text-transform: none;
+  text-align: right; background: var(--surface); color: var(--svtitle); border: 0; border-top: 1px solid var(--svhead); border-bottom: 1px solid var(--svhead); white-space: nowrap; }
+.heatcard tbody td { padding: 0 3px; height: 18.3px; font-size: 12.8px; line-height: 18.3px; font-weight: 400; text-align: right;
+  border: 0; background: none; color: var(--svtitle); white-space: nowrap; }
 .heatcard tbody tr { cursor: pointer; }
 .heatcard tbody tr:nth-child(even) td { background: none; }
-.heatcard tbody tr.here td { font-weight: 700; }
+.heatcard tbody tr.here td { background: #fdfbc8; }
 .heatcard tbody tr:hover td { background: var(--hover); }
-.heatcard tbody tr.cartot td { background: var(--stripe); font-weight: 700; }
-.heatcard tbody tr.cartot td.l { font-size: 10.5px; letter-spacing: 0; white-space: nowrap; }
+.heatcard tbody tr.cartot td { background: #c2c2c2; font-weight: 700; color: #333333; }
 .heatcard tbody tr.cartot { cursor: default; }
-.heatcard td.l, .heatcard th.l { text-align: left; padding-left: 2px; }
-.heatcard tbody tr.cartot td { padding-top: 4px; padding-bottom: 4px; }
+.heatcard td.l, .heatcard th.l { text-align: left; padding-left: 2px; font-weight: 400; }
+.heatcard tbody tr.cartot td.l { font-weight: 700; }
+:root[data-theme="dark"] .heatcard tbody tr.here td { background: rgba(253, 251, 200, 0.16); }
+:root[data-theme="dark"] .heatcard tbody tr.cartot td { background: #4a4a4a; color: #eeeeee; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .heatcard tbody tr.here td { background: rgba(253, 251, 200, 0.16); }
+  :root:not([data-theme="light"]) .heatcard tbody tr.cartot td { background: #4a4a4a; color: #eeeeee; }
+}
 
-/* Player apps: the season, the run of games, the splits, the dates, the model and Compare */
+/* Player apps: every filter on a row of its own, a column of labels down the left and the controls lined up after it */
 .pappshd { font-family: var(--display); font-weight: 400; font-size: 17px; letter-spacing: 0; color: var(--ink);
-  text-align: center; margin: 9px 0 7px; padding-top: 9px; border-top: 1px solid var(--rule); }
-.papps { display: flex; flex-direction: column; gap: 3px; }
-.parow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.palbl { flex: none; min-width: 42px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
-  text-transform: uppercase; color: var(--muted); }
-.papps .splitopen { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 6px;
-  margin: 0; padding: 0; border: 0; background: none; }
-.papps .splitopen > * { flex: none; }
-.papps .carddates, .papps .splitopen .carddates { gap: 4px 6px; }
-.papps .seg { flex-wrap: wrap; }
-.papps .segbtn { font-size: 10.5px; padding: 0 7px; height: 24px; }
-.papps .tbtn { height: 26px; font-size: 11px; }
-:root:not([data-view="mobile"]) .ppage.cmp2page { grid-template-columns: minmax(250px, 340px) minmax(0, 1fr); }
+  text-align: center; margin: 12px 0 10px; }
+.papps { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 8px 10px; }
+.papps .parow { display: contents; }
+.papps .palbl { min-width: 0; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--svtext); }
+.papps .parow > :not(.palbl) { min-width: 0; justify-self: start; }
+.papps .seg { display: inline-flex; flex-wrap: nowrap; max-width: 100%; }
+.papps .segbtn { font-size: 11px; padding: 0 9px; height: 28px; min-height: 28px; white-space: nowrap; }
+/* the date boxes and the Last box: plain bordered fields on the card's own white, never the band's white-on-colour */
+.papps .datesbar, .papps .lastrow { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; margin: 0; padding: 0; }
+.papps .datesbar .to, .papps .lastrow .to { color: var(--svtext); font-size: 12px; }
+.papps .datesbar input[type="date"], .papps .lastin { height: 28px; min-width: 0; border: 1px solid var(--hair); border-radius: 4px;
+  background: var(--surface); color: var(--ink); padding: 0 6px; font: 400 13px/1 "Roboto Condensed", var(--body); }
+.papps .datesbar input[type="date"] { width: 124px; }
+.papps .lastin { width: 64px; }
+.papps .datesbar input:disabled, .papps .lastin:disabled { opacity: 0.45; }
+.papps .unadd { height: 28px; }
+.papps .splitwarn { grid-column: 1 / -1; font-size: 12px; color: var(--svtext); }
+.papps .tbtn { height: 28px; font-size: 11px; }
+:root[data-view="mobile"] .papps { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
+:root[data-view="mobile"] .papps .datesbar input[type="date"], :root[data-view="mobile"] .papps .lastin { font-size: 16px; height: 34px; }   /* 16px: iOS won't zoom */
+:root[data-view="mobile"] .papps .datesbar input[type="date"] { width: auto; flex: 1 1 0; -webkit-appearance: none; appearance: none; text-align: left; }
+:root[data-view="mobile"] .papps .datesbar { width: 100%; }
+:root[data-view="mobile"] .papps .parow > .datesbar { justify-self: stretch; }
+:root[data-view="mobile"] .papps .segbtn { height: 32px; min-height: 32px; font-size: 11px; padding: 0 10px; }
+:root:not([data-view="mobile"]) .ppage.cmp2page { grid-template-columns: minmax(0, 1fr); }
 .cmp2page .pcolB .card { padding: 0; background: none; border: 0; grid-template-columns: minmax(0, 1fr); }
 
 .pacts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.papps .hstrip { margin: 0; gap: 3px 12px; font-size: 11.5px; }
-.papps .hstrip .hchip b { font-size: 14px; }
 .papps .starbox { margin-top: 0; }
 
 /* the bars keep their own spacing at the top of the panel; the chart sits at the foot of the third one */
@@ -2120,3 +2254,296 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .btabbody .hgroups { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px 32px; max-width: none; }
 .btabbody .hgroup h4 { margin: 0 0 4px; }
 .btabbody .meter { grid-template-columns: 150px minmax(60px, 1fr) 64px; }
+
+/* ---- Percentile bars: every one on the site is Savant's, in the same pixels as the player page's chart ----
+   The bar (svTrack in app.js): 20px tall over a 5px line, filled from the left to its circle, 2px white ticks at 30%,
+   a 20px circle in a 2px ring of the page colour with 12px bold white numerals (10px for a 100). */
+:root:root .svtrack { position: relative; height: 20px; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 0; overflow: visible;
+  box-shadow: none; background: linear-gradient(var(--svline), var(--svline)) left center / 100% 5px no-repeat; }
+:root:root .svtrack::after { display: none; }
+:root:root .svtrack.none { opacity: 0.35; }
+:root:root .svtrack .fill { position: absolute; left: 0; top: 0; bottom: 0; min-width: 0; border-radius: 0; box-shadow: none; }
+:root:root .svtrack .tk { position: absolute; top: 0; bottom: 0; width: 2px; height: auto; background: #ffffff; opacity: 0.3; transform: none;
+  z-index: 1; pointer-events: none; }
+:root:root .svtrack .bub { position: absolute; top: 50%; width: 22px; height: 22px; min-width: 0; margin: -11px 0 0 -11px; padding: 1px 0 0;
+  box-sizing: border-box; border: 2px solid var(--surface); border-radius: 50%; transform: none; box-shadow: none; z-index: 2;
+  display: grid; place-items: center; color: #ffffff; text-shadow: none; letter-spacing: 0; font-variant-numeric: normal;
+  font-family: "Roboto Condensed", var(--body); font-size: 12px; font-weight: 700; line-height: 1; }
+:root:root .svtrack .bub.c3 { font-size: 10px; }
+:root:root .svtrack .bub.ghost { background: var(--surface); color: var(--svtext); box-shadow: inset 0 0 0 1.5px var(--svtext); }
+/* a row of them, laid out as Savant lays out its chart: a row every 23px, the label's right edge 5px from the bar,
+   the value in the 35px after it, 12px grey type, and a 1px dashed teal rule over every row but the first, under
+   the label's last 80px and the value's last 30px only */
+:root:root .meters .meter { min-height: 23px; height: auto; margin: 0; padding: 3px 0 0; border: 0; gap: 0; column-gap: 0;
+  grid-template-columns: 125px minmax(0, 1fr) 35px; align-items: center;
+  font-family: "Roboto Condensed", var(--body); font-size: 12px; line-height: 1; }
+:root:root .meters .meter.cmp { grid-template-columns: 110px minmax(0, 1fr) 35px 70px; }
+:root:root .meters .meter.ruled { border-top: 2px dotted var(--rail); }
+:root:root .meters .meter > .lbl, :root:root .meters .meter > .val { align-self: stretch; display: flex; align-items: center; min-width: 0;
+  color: var(--svtext); font-size: 12px; font-weight: 400; letter-spacing: 0; padding: 0; background: none; }
+:root:root .meters .meter > .lbl { justify-content: flex-end; text-align: right; padding-right: 5px; overflow: visible; }
+:root:root .meters .meter.sub > .lbl { padding-left: 12px; }
+:root:root .meters .meter > .lbl .lt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:root:root .meters .meter > .val { justify-content: flex-end; white-space: nowrap; font-variant-numeric: normal; }
+:root:root .meters .meter + .meter > .lbl, :root:root .meters .meter + .meter > .val { margin-top: -3px; padding-top: 3px; }
+:root:root .meters .meter + .meter > .lbl {
+  background: repeating-linear-gradient(to left, var(--svrule) 0 6px, transparent 6px 9px) right 5px top 1px / 80px 1px no-repeat; }
+:root:root .meters .meter + .meter > .val {
+  background: repeating-linear-gradient(to right, var(--svrule) 0 6px, transparent 6px 9px) right top 1px / 30px 1px no-repeat; }
+:root:root .meters .meter > .svtrack { align-self: center; }
+/* the panel: Savant's thin teal frame */
+.pcol { container-type: inline-size; border: 1px solid var(--svframe); border-radius: 0; }
+/* every panel's title is Savant's, in its own fixed sizes: 18px condensed charcoal, 8px from the top, the year bold
+   with a 3px dotted teal rule under it; the percentile chart starts right under it, the other panels 20px lower */
+.pchead { padding: 8.5px 12px 20px; text-align: center; }   /* Savant's 8px, plus the half pixel its compare icon drops the line */
+.pchead:has(+ .pctbox) { padding-bottom: 0; min-height: 37.4px; }
+.pchead + .pscroll { padding-top: 0; }
+.pcthd { font-family: "Roboto Condensed", var(--display); font-size: 18px; font-weight: 400; line-height: 1.428571;
+  color: var(--svtitle); letter-spacing: 0; }
+.pcthd b, .pcthd .hsel .hsl { font-weight: 700; }
+/* the year and, beside it, the level: both pickers wear Savant's bold word over a 3px dotted teal rule */
+.pcthd > :first-child, .pcthd > .hsel { display: inline-block; vertical-align: top; height: 28.5px; border-bottom: 3px dotted var(--svdots); }
+.pcthd > .hsel:not(:first-child) { margin-left: 3px; }   /* its own rule, not one run on from the year's */
+.pchead .pcdots, .pchead .pctsub:empty { display: none; }
+.pchead .pctsub { font-size: 11px; margin-top: 4px; }
+.pctbox { padding: 0; }
+/* a hitter's percentile box takes both right-hand columns; its two columns sit one box-gap apart, so each is exactly
+   one box wide and every bar keeps its length */
+/* the plate and filter row are pinned above now, so no left-hand box: six columns put the percentile box (and a
+   pitcher's second box) at exactly the widths they had beside it, centred under the header */
+:root:not([data-view="mobile"]) .ppage:not(.cmp2page) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB { grid-column: 2 / span 2; }
+:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolC { grid-column: 4 / span 2; }
+:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB.wide { grid-column: 2 / span 4; }
+/* ...but that left a sixth of the window blank on each side of it. The box now hugs its two chart columns: a fixed width
+   keeps every bar the length it had, and the tabs and their panels under it take the same width */
+:root { --pbox-w: 860px; }
+:root:not([data-view="mobile"]) .ppage:not(.cmp2page) { grid-template-columns: minmax(0, 1fr); width: min(100%, var(--pbox-w)); margin-inline: auto; }
+:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB.wide { grid-column: 1 / -1; }
+:root:not([data-view="mobile"]) .pbelow2 { width: min(100%, var(--pbox-w)); margin-inline: auto; }
+.pctcols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; align-items: start; }
+:root[data-view="mobile"] .pctcols { grid-template-columns: minmax(0, 1fr); }
+.pctsample { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; padding: 2px 20px 6px; font-family: "Roboto Condensed", var(--body); }
+.pctsample .pslbl { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--svtext); margin-right: -4px; }
+.pctsample b { font-size: 16px; font-weight: 700; color: var(--svhead); }
+.pctsample .psu { font-size: 12px; color: var(--svtext); }
+/* the percentile chart itself is one SVG drawn to Savant's numbers (see pctSvg in app.js); these are only its inks */
+.svchart { width: 100%; }
+.svpct { display: block; width: 100%; height: auto; overflow: visible; font-family: "Roboto Condensed", var(--body); }
+.svpct text { font-size: 12px; dominant-baseline: middle; }
+.svpct .svscale { dominant-baseline: auto; }
+.svpct .svsecname { font-size: 15px; font-weight: 700; letter-spacing: 0.08em; fill: var(--accent-2-text); dominant-baseline: auto; }
+.svpct .svsample { dominant-baseline: auto; }
+.svpct .svsample .svslbl { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; fill: var(--svtext); }
+.svpct .svsample .svsv { font-size: 16px; font-weight: 700; fill: var(--svhead); }
+.svpct .svsample .svsu { font-size: 12px; fill: var(--svtext); }
+.svpct .svsecrule { fill: var(--accent-2); }
+.svpct .svline { fill: var(--svline); }
+.svpct .svtick { fill: #ffffff; opacity: 0.3; }
+.svpct .svlbl { fill: var(--svtext); }
+.svpct .svdash { fill: none; stroke: var(--svrule); stroke-width: 1; stroke-dasharray: 6 3; }
+.svpct .svbulb { stroke: var(--surface); stroke-width: 2; }
+.svpct .svnum { fill: #ffffff; font-weight: 700; text-anchor: middle; }
+.svpct .svnum.c3 { font-size: 10px; }
+.pctbox .pctfoot { display: none; }
+
+/* the page's title, Savant's: "2026 MLB Percentiles", centred under the plate, the year and the level each a bold
+   word with a dotted rule under it that opens Savant's list */
+.ptitle { text-align: center; padding: 16px 12px 0; }
+.pthd { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 400; line-height: 1.25; letter-spacing: 0;
+  text-transform: none; color: var(--ink); }
+.pthd b, .pthd .tsel.yr .tsl { font-weight: 800; }
+.pthd { font-weight: 700; }
+.tsl { display: inline-block; margin: 0; padding: 0 0 6px; border: 0; font: inherit; color: inherit; letter-spacing: inherit; cursor: pointer;
+  background: radial-gradient(circle, var(--accent-2) 1.5px, transparent 1.7px) left bottom / 9px 4px repeat-x; }
+.tsel.solo .tsl { background: none; padding-bottom: 0; cursor: default; }
+.tsl:hover, .tsl.ddon { color: var(--accent-2-text); }
+/* Savant's dropdown list: under what was clicked, a white box in a heavy dark rule, the choices in large type */
+:root { --ddline: #43616b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ddline: #9ab8c2; } }
+:root[data-theme="dark"] { --ddline: #9ab8c2; }
+.dd { position: relative; display: inline-block; max-width: 100%; vertical-align: baseline; }
+/* the list is placed on the page (fixed, over everything) under its opener by app.js — see ddOpenOn */
+.ddmenu { position: fixed; z-index: 1000; max-height: min(50vh, 420px); overflow-y: auto; margin: 0;
+  padding: 2px 0; background: var(--surface); border: 3px solid var(--ddline); border-radius: 3px; text-align: left;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12); overscroll-behavior: contain; }
+.ddh { padding: 6px 12px 2px; font-family: var(--body); font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted); }
+/* a select that opens Savant's list: the select stays, hidden, behind a box (or the pill it sits in) */
+.ddnative { display: none !important; }
+.pill select.ddinpill { pointer-events: none; }
+button.pill { font-family: inherit; text-align: left; }
+.ddbox.ddsel { min-width: 96px; }
+.ddi { display: block; width: 100%; margin: 0; padding: 1px 12px; border: 0; background: none; cursor: pointer; text-align: left;
+  font-family: var(--display); font-size: 19px; font-weight: 400; line-height: 1.45; letter-spacing: 0; text-transform: none;
+  color: var(--ink); white-space: nowrap; }
+.ddi:hover, .ddi:focus-visible { background: var(--hover); outline: none; }
+/* the filters' white box as a button: the choice and a chevron */
+button.pill.ddbox { font-family: inherit; text-align: left; }
+.phf .dd { display: block; }
+.phf .dd .ddbox { width: 100%; }
+.rollwin .dd .ddbox.rollsel { height: 24px; min-width: 52px; padding: 0 6px 0 8px; gap: 6px; border: 1px solid var(--hair); border-radius: 4px;
+  font: 700 12px/1 "Roboto Condensed", var(--body); }
+.cmpctl .dd { display: block; }
+.cmpctl .ddbox.cmpbox { width: 100%; height: 28px; border-color: var(--hair); font: 600 12px/1 var(--body); }
+:root[data-view="mobile"] .rollwin .dd .ddbox.rollsel { height: 30px; font-size: 15px; }
+:root[data-view="mobile"] .cmpctl .ddbox.cmpbox { height: 26px; font-size: 11px; }
+:root[data-view="mobile"] .ptitle { padding: 12px 12px 0; }
+:root[data-view="mobile"] .pthd { font-size: 19px; }
+/* the batted-ball mix: type, Savant's bar, his rate, the league's wOBA on the type */
+.mixgrid { display: grid; grid-template-columns: 84px minmax(0, 1fr) 46px 54px; align-items: center; column-gap: 10px; row-gap: 9px;
+  font-family: "Roboto Condensed", var(--body); padding-top: 2px; }
+.mixgrid .mh { font-size: 12px; color: var(--svtext); text-align: right; }
+.mixgrid .ml { font-size: 13px; color: var(--svtext); white-space: nowrap; }
+.mixgrid .mv { font-size: 13px; color: var(--ink); text-align: right; }
+.mixgrid .mv.lg { color: var(--svtext); }
+.rawstats.simple .rawscroll { margin-top: 0; }
+.btab .lc { text-transform: none; }
+/* ---- a popup player card: his page in a panel, not the whole screen ---- */
+:root:not([data-view="mobile"]) .modal.pcard .modal-panel { width: min(940px, 94vw); height: min(100%, var(--modal-max, calc(100dvh - 40px))); border-radius: 6px; }
+.modal.pcard .phead .mplate { padding-inline: 22px; }
+.modal.pcard .phead .mplate { padding-right: 58px; }                 /* the × sits over the plate's top right */
+.modal.pcard .pbelow2 { margin-inline: 16px; }
+.modal.pcard .ppage { margin-inline: 16px; }
+:root[data-view="mobile"] body.modal-open.cardpop { position: fixed; inset: 0; width: 100%; overflow: hidden; }
+:root[data-view="mobile"] body.modal-open.cardpop main { display: block; }
+:root[data-view="mobile"] .modal.pcard { position: fixed; inset: 0; z-index: 50; display: block; padding: 0; overflow: hidden; touch-action: auto; }
+:root[data-view="mobile"] .modal.pcard .modal-back { display: block; }
+:root[data-view="mobile"] .modal.pcard .modal-panel { position: absolute; left: 8px; right: 8px; top: calc(var(--header-h, 0px) + 8px); bottom: 8px;
+  width: auto; min-height: 0; margin: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--hair); border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35); }
+:root[data-view="mobile"] .modal.pcard #modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+:root[data-view="mobile"] .modal.pcard #modal-body .cardtop { top: 0; }
+:root[data-view="mobile"] .modal.pcard .modal-panel .modal-close { position: absolute; top: 6px; right: 6px; }
+:root[data-view="mobile"] .modal.pcard .ppage { margin-inline: 0; padding-inline: 0; }   /* the panel is narrower than the phone: the chart gets all of it */
+:root[data-view="mobile"] .modal.pcard .pctbox { padding-inline: 4px; }
+:root[data-view="mobile"] .modal.pcard .pbelow2 { margin-inline: 6px; }
+/* on the band a pressed box keeps its white (the site's hover wash is see-through, which reads as blue there) */
+.mplate .ddbox:hover, .mplate .ddbox:focus, .mplate .ddbox.ddon { background: var(--surface); border-color: var(--ddline); }
+/* the phone's plate: the Star up by the name, Filters beside "full season", and the season's title pinned at its foot */
+.phname { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.phname h2 { min-width: 0; }
+.phname .starbox { flex: none; margin: 0; }
+:root[data-view="mobile"] .phead .mrank { margin-top: 4px; }
+:root[data-view="mobile"] .phead .ptitle { flex-basis: 100%; padding: 4px 0 0; }
+.phead .ptitle { padding: 0; }
+.phead .pthd { color: var(--accent-2-ink); font-weight: 700; text-transform: none; letter-spacing: 0; }   /* on the plate, in the name's ink */
+.phead .tsel:not(.solo) .tsl { background-image: radial-gradient(circle, var(--accent-2-ink) 1.5px, transparent 1.7px); }
+.phead .tsl:hover, .phead .tsl.ddon { color: var(--accent-2-ink); opacity: 0.8; }
+:root[data-view="mobile"] .phead .ptitle { padding-top: 4px; }
+:root[data-view="mobile"] .phead .pthd { font-size: 19px; }
+:root[data-view="mobile"] .modal.pcard .phead .mplate { padding-left: 12px; }          /* as on the phone's page */
+:root[data-view="mobile"] .modal.pcard .phead .ptitle { flex-basis: calc(100% + 46px); margin-right: -46px; }   /* centred on the card: the 58px kept clear for the × isn't the title's */
+.phname .starbtn.staricon { width: 34px; padding: 0; font-size: 18px; line-height: 1; }
+:root[data-view="mobile"] .phead .mrank .phtoggle { height: 30px; padding: 0 12px; }
+/* a desktop's plate in three: the cut-out and his lines, the season's title dead centre, the filters on the right —
+   equal outer columns, so the title sits over the middle of the page */
+:root:not([data-view="mobile"]) .phead .mplate { display: grid; grid-template-columns: 1fr auto 1fr; grid-template-areas: "left mid right";
+  align-items: center; column-gap: 22px; }
+.phleft { grid-area: left; display: flex; align-items: center; gap: 22px; min-width: 0; align-self: stretch; }
+.phleft > div { align-self: center; min-width: 0; }
+.phmid { grid-area: mid; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+:root:not([data-view="mobile"]) .phead .phfilt { grid-area: right; }
+/* a narrower window can't fit the three across: the title takes its own centred row under them */
+@media (max-width: 1300px) {
+  :root:not([data-view="mobile"]) .phead .mplate { grid-template-columns: 1fr auto; grid-template-areas: "left right" "mid mid"; row-gap: 8px; }
+  :root:not([data-view="mobile"]) .phmid { flex-direction: row; justify-content: center; gap: 18px; }
+}
+:root:not([data-view="mobile"]) .phead .phfilt { justify-self: end; margin-left: 0; }
+:root:not([data-view="mobile"]) .modal.pcard .phead .mplate { padding-inline: 58px; }   /* even sides round the centred title; the × sits in the right one */
+/* a popup is only as wide as its charts, so its plate always takes the two-row layout: the title on its own centred row */
+:root:not([data-view="mobile"]) .modal.pcard .phead .mplate { grid-template-columns: 1fr auto; grid-template-areas: "left right" "mid mid"; row-gap: 8px; }
+
+/* A player's own page is his popup card (showPageCard in app.js), with no × and, where a card has the list dimmed behind
+   it, a regular pattern in the theme's colours: the band's blue with pinstripes of the rule's navy and the header's stripe */
+.modal.pagecard .modal-close { display: none; }
+.modal.pagebg .modal-back, :root[data-view="mobile"] .modal.pagebg .modal-back { display: block; background-color: var(--accent-2);
+  background-image: repeating-linear-gradient(135deg, transparent 0 18px, color-mix(in srgb, var(--rule) 30%, transparent) 18px 21px,
+                    transparent 21px 39px, color-mix(in srgb, var(--stripe-line) 45%, transparent) 39px 40px, transparent 40px 42px); }
+/* the card (a popup and his page alike): hard square corners, an outline in the rule's navy and a deeper shadow, so it
+   stands off the list or the pattern behind it */
+.modal.pcard .modal-panel, :root:not([data-view="mobile"]) .modal.pcard .modal-panel, :root[data-view="mobile"] .modal.pcard .modal-panel {
+  border-radius: 0; border: 2px solid var(--rule); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38), 0 3px 8px rgba(0, 0, 0, 0.22); }
+/* The headshot in a framed tile (Sean picked it from four): square, the card's navy outline and hard offset shadow,
+   a light wash behind the cut-out, and the Star button under it */
+.phmug, .phleft > .phmug { flex: none; display: flex; flex-direction: column; align-items: center; gap: 8px; align-self: flex-start; }   /* top, so an open Star panel doesn't drag it down */
+.phmug .starbox { margin: 0; }
+:root .phead .mplate .mug, :root[data-view="mobile"] .phead .mplate .mug, :root:not([data-view="mobile"]) .phead .mplate .mug {
+  width: 116px; height: 116px; margin: 0; align-self: auto; box-sizing: border-box; border-radius: 0; padding-top: 6px;
+  object-fit: contain; object-position: center bottom; border: 2px solid var(--rule);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, var(--accent-2)), color-mix(in srgb, var(--surface) 70%, var(--accent-2)));
+  box-shadow: 3px 3px 0 color-mix(in srgb, var(--rule) 35%, transparent); }
+:root .phead .mplate .mug.initials { display: grid; place-items: center; padding: 0; font-size: 34px; color: var(--ink-2); }
+:root[data-view="mobile"] .phead .mplate .mug { width: 92px; height: 92px; }
+:root[data-view="mobile"] .phead .mplate .mug.initials { font-size: 28px; }
+
+/* Every header button — the site's nav and the card's own (Star, Filters) — wears the card's look: square corners, a
+   navy outline and a small hard shadow */
+.modes a, .modes .modesel, :root:not([data-view="mobile"]) .modes a, :root:not([data-view="mobile"]) .modes .modesel,
+:root[data-view="mobile"] .modes a, :root[data-view="mobile"] .modes .modesel, .phead .starbtn, .phead .phtoggle, .phead .mplate .btn {
+  border: 2px solid var(--rule); border-radius: 0; box-shadow: 2px 2px 0 color-mix(in srgb, var(--rule) 40%, transparent), 0 3px 8px rgba(0, 0, 0, 0.18); }
+.modes a[aria-current="page"], .modes .modesel[aria-current="page"], :root:not([data-view="mobile"]) .modes a[aria-current="page"],
+:root:not([data-view="mobile"]) .modes .modesel[aria-current="page"], :root[data-view="mobile"] .modes a[aria-current="page"],
+:root[data-view="mobile"] .modes .modesel[aria-current="page"] { border-color: var(--rule); }
+/* A shorter plate (Sean: "make the header smaller"): everything rides at the top instead of centring on the tallest
+   piece — his lines, the tile and the filters box — and the tile and its Star are a size down */
+:root .phead .mplate .mug, :root:not([data-view="mobile"]) .phead .mplate .mug { width: 96px; height: 96px; }
+:root[data-view="mobile"] .phead .mplate .mug { width: 74px; height: 74px; padding-top: 4px; }
+.phmug, .phleft > .phmug { gap: 6px; }
+.phmug .starbtn { height: 26px; padding: 0 9px; font-size: 11.5px; }
+:root:not([data-view="mobile"]) .phead .mplate { align-items: start; padding-top: 8px; padding-bottom: 8px; row-gap: 4px; }
+:root:not([data-view="mobile"]) .phleft { align-items: flex-start; align-self: start; }
+:root:not([data-view="mobile"]) .phleft > div { align-self: flex-start; }
+:root:not([data-view="mobile"]) .phead .phfilt { align-self: start; }
+:root[data-view="mobile"] .phead .mplate { align-items: flex-start; padding-top: 8px; padding-bottom: 6px; row-gap: 4px; }
+:root[data-view="mobile"] .phead .mplate > div { align-self: flex-start; }
+:root[data-view="mobile"] .phead .ptitle { padding-top: 0; }
+/* A card (a popup and his page alike) scrolls only under its plate: the modal body is a column that doesn't scroll, the
+   plate keeps its place at the top, and .cardscroll takes the rest and scrolls on its own */
+.modal.pcard #modal-body, :root:not([data-view="mobile"]) .modal.pcard #modal-body, :root[data-view="mobile"] .modal.pcard #modal-body {
+  display: flex; flex-direction: column; overflow: hidden; }
+.modal.pcard #modal-body > .cardtop { flex: none; position: relative; top: auto; }
+.cardscroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+:root .modal .cardscroll .cmpgrid .ccorner, :root .modal .cardscroll .cmpgrid .chead { top: 0; }   /* pinned to the scroller's own top now */
+/* A desktop's plate is one short row now: the tile and his lines on the left, the season's title centred in the room to
+   their right, and the filters in a panel that drops from the Filters button (Sean: "reduce the height of the header") */
+:root:not([data-view="mobile"]) .phead .mplate, :root:not([data-view="mobile"]) .modal.pcard .phead .mplate {
+  grid-template-columns: auto 1fr; grid-template-areas: "left mid"; align-items: center; row-gap: 0; }
+:root:not([data-view="mobile"]) .phead .mplate.phright { grid-template-columns: auto 1fr auto; grid-template-areas: "left mid right"; }
+:root:not([data-view="mobile"]) .phead .phmid { flex-direction: row; justify-content: center; align-self: center; }
+@media (max-width: 1300px) {
+  :root:not([data-view="mobile"]) .phead .mplate { grid-template-columns: auto 1fr; grid-template-areas: "left mid"; }
+}
+:root:not([data-view="mobile"]) .phead .mplate .mrank { margin-top: 6px; }
+.phtog { position: relative; display: inline-flex; }
+.phead .mrank .phtoggle { height: 26px; padding: 0 10px; font-size: 11.5px; }
+.phead .phtoggle.on { background: var(--tab-fill); color: var(--tab-ink); }
+.phfilt.phpop { position: absolute; top: calc(100% + 8px); left: 0; z-index: 30; margin: 0; padding: 12px; width: max-content;
+  background: var(--accent-2); border: 2px solid var(--rule); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38), 0 3px 8px rgba(0, 0, 0, 0.22);
+  align-items: stretch; }
+.phfilt.phpop:empty { display: none; }
+.phfilt.phpop .phgrid { justify-content: start; }
+:root:not([data-view="mobile"]) .modal.pcard #modal-body > .cardtop { z-index: 5; overflow: visible; }
+:root:not([data-view="mobile"]) .phead, :root:not([data-view="mobile"]) .phead .mplate { overflow: visible; }
+/* his lines sit centred beside the headshot, never starting level with (or above) the tile's top edge */
+:root:not([data-view="mobile"]) .phleft { align-items: center; align-self: center; }
+:root:not([data-view="mobile"]) .phleft > div:not(.phmug) { align-self: center; }
+/* the dotted rule under the year / level: whole dots spread evenly across the word, so the last one is never sliced in
+   half at the word's end (it read as a glitch) */
+.tsl, .phead .tsel:not(.solo) .tsl { background-repeat: space no-repeat; background-size: 8px 4px; background-position: left bottom; }
+/* the sources and personal-use line at the foot of every page and card */
+.credit { margin: 18px auto 22px; padding: 0 16px; max-width: 860px; font-size: 11px; line-height: 1.45; color: var(--muted); text-align: center; }
+.cardscroll .credit { margin: 8px auto 16px; }
+/* a phone's toolbar started 2px under the header, and the header's stripe hangs 2px below it: the buttons sat right
+   against it. Room above them (the fantasy page's own bar too) */
+:root[data-view="mobile"] .toolbar:not(.xtoolbar) { padding-top: 10px; }
+:root[data-view="mobile"] #fboard > :first-child { margin-top: 6px; }
+/* a desktop's toolbar row centred in its gap: the same room under the header's stripe (2px of the padding) as above the
+   list's box */
+:root:not([data-view="mobile"]) .toolbar:not(.xtoolbar) { padding-top: 12px; padding-bottom: 10px; }
+/* Every box casts a shadow (Sean: "basically every box i want it to have a shadow"): the lists, the pages' own boxes,
+   the tab panels under a player card and the home tiles take the card's softer cousin; the toolbar buttons match the
+   header's. A box nested in one of these (the fantasy table's scroller) is left flat so shadows don't double up */
+:root { --box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18), 0 2px 5px rgba(0, 0, 0, 0.12); }
+.board, section.xboard, .btabbody, .hubcard, .eadder, .sitedef { box-shadow: var(--box-shadow); }
+.tbtns button, .tbtns .btn { box-shadow: 2px 2px 0 color-mix(in srgb, var(--rule) 30%, transparent), 0 3px 8px rgba(0, 0, 0, 0.14); }
