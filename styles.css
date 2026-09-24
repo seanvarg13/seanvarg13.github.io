@@ -53,8 +53,8 @@
   --mid: #b3b3b3;     /* percentile: 50th — a solid grey, not a tint, so the ends carry */
   --hi: #d22d49;      /* percentile: hot  — Savant's red */
   --shadow: 0 1px 2px rgba(19, 41, 75, 0.06), 0 8px 24px rgba(19, 41, 75, 0.07);
-  --display: "Helvetica Neue", Helvetica, Arial, sans-serif;     /* themes.js swaps these for the chosen font */
-  --body: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --display: "Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif;   /* Savant's type, the site's only font */
+  --body: "Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
