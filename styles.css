@@ -47,7 +47,7 @@
   --svsec: #399098;    /* Savant: the rule under a section heading */
   --svdots: #4499aa;   /* Savant: the dots under a panel title's year */
   --svpoor: #3a62a8; --svavg: #b8d3cd; --svgreat: #d41c23;   /* Savant: POOR / AVERAGE / GREAT */
-  --svhead: #000000;   /* Savant: the black of its section names and silhouettes */
+  --svhead: #000000;   /* Savant: the black of its section names */
   --svtitle: #333333;  /* Savant: the charcoal of its panel titles */
   --lo: #325aa1;      /* percentile: cold — Savant's blue */
   --mid: #b3b3b3;     /* percentile: 50th — a solid grey, not a tint, so the ends carry */
@@ -2202,7 +2202,6 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .svpct text { font-size: 12px; dominant-baseline: middle; }
 .svpct .svscale { dominant-baseline: auto; }
 .svpct .svsecname { font-size: 16px; font-weight: 700; fill: var(--svhead); dominant-baseline: auto; }
-.svpct .svsil { color: var(--svhead); fill: currentColor; }
 .svpct .svsecrule { fill: var(--svsec); }
 .svpct .svline { fill: var(--svline); }
 .svpct .svtick { fill: #ffffff; opacity: 0.3; }

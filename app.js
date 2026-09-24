@@ -3995,7 +3995,7 @@
       rows.push({ label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null,
                   tip: `${m.label}: ${fmt(got.v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}` });
     }
-    body.append(pctChart([{ title: p.type === "H" ? "Batting" : "Pitching", icon: p.type === "H" ? "H" : "P", rows }]));
+    body.append(pctChart([{ title: p.type === "H" ? "Batting" : "Pitching", rows }]));
     const vl = viewLabel(p.type);
     col.title = `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`;   // Savant prints no footer: the pool is in the hover
     col.append(body);
@@ -4019,25 +4019,10 @@
                           (k) => { if (k !== cur[0]) nav.goTo(k); }, "lv");
     return [yr, [lv, " Percentile Rankings"]];
   }
-  // Savant's section heading: a black silhouette standing on a teal rule, the section's name beside it
-  const SIL = {
-    // a batter set to hit, the bat cocked up over his back shoulder
-    H: '<circle cx="21" cy="6.5" r="4.3"/>' +
-       '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">' +
-       '<path d="M20.5 11.5 17.5 23" stroke-width="6.5"/><path d="M20 14 25.5 15 27 10.5M19.5 14.5 24 11" stroke-width="3.4"/>' +
-       '<path d="M17.5 23 12 30.5 7 38.5M17.5 23 23 30 23 38.5" stroke-width="4.6"/><path d="M5 39h5M21.5 39h5" stroke-width="2.4"/></g>' +
-       '<path d="M26 11.5 37.6 0.4 39 1.8 28.2 13.2Z"/>',
-    // a pitcher striding through his delivery, the ball hand back and the glove out front
-    P: '<circle cx="25" cy="7.5" r="4.3"/>' +
-       '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">' +
-       '<path d="M23.5 12.5 16.5 22.5" stroke-width="6.5"/><path d="M22 14.5 14 12.5 9 6" stroke-width="3.4"/><path d="M22.5 15.5 29.5 18 32.5 15" stroke-width="3.4"/>' +
-       '<path d="M16.5 22.5 25 28.5 28 37.5M16.5 22.5 9 29 1.5 31.5" stroke-width="4.6"/><path d="M27 38.5h5.5" stroke-width="2.4"/></g>' +
-       '<circle cx="33.5" cy="14" r="3"/>',
-  };
   // Savant's percentile chart, drawn the way its own code draws it (one SVG, D3's numbers): the drawing is
-  // max(400, box width) units wide and 20 in from each side; each section is a 40px silhouette and 16px bold name on
-  // a 2px teal rule 34 down; a row every 23, the bar 85 in from the labels and as wide as what's left after the
-  // labels (40 + 85) and the values (35), running from 10 (0th) to its full width (100th), a 5-tall line under it,
+  // max(400, box width) units wide and 20 in from each side; each section is a 16px bold name 40 in (where Savant's
+  // silhouette ends; the silhouette itself is left out) on a 2px teal rule 34 down; a row every 23, the bar 85 in
+  // from the labels and as wide as what's left after the labels (40 + 85) and the values (35), running from 10 (0th) to its full width (100th), a 5-tall line under it,
   // ticks at 12, the middle and 12 from the end, a 10-radius circle with a 2px white ring centred on the bar's end,
   // 12px type throughout (10px for a 100), and dashed rules above every row but the first, under label and value only
   const SVG_NS = "http://www.w3.org/2000/svg";
@@ -4066,7 +4051,6 @@
     let y = 0;
     groups.forEach((g, gi) => {
       const first = gi === 0, G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
-      const ic = mk("svg", { x: 0, y: 0, width: 40, height: 40, viewBox: "0 0 40 40", class: "svsil" }); ic.innerHTML = SIL[g.icon]; G.append(ic);
       G.append(mk("rect", { class: "svsecrule", x: 0, y: 34, width: r6, height: 2 }));
       G.append(mk("text", { class: "svsecname", x: 40, y: 28 }, g.title));
       if (first) {                                               // POOR / AVERAGE / GREAT, each arrow over its tick
