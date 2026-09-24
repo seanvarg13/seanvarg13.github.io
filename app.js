@@ -194,6 +194,7 @@
     mode: "rankings",
     posAlso: Array.isArray(prefs.posAlso) ? prefs.posAlso : [],
     ptab: prefs.ptab || "",
+    rollPA: [50, 100, 150, 200, 250, 300].includes(prefs.rollPA) ? prefs.rollPA : 100,
     pbtab: prefs.pbtab || "",
     pos: prefs.pos || "ALL",
     q: "",
@@ -279,7 +280,7 @@
     if (oldRoles) { for (const [id, r] of Object.entries(oldRoles)) { const l = state.extraPos[id] || (state.extraPos[id] = []); if (!l.includes(r)) l.push(r); } changed = true; }
     if (changed) { save(LS.extraPos, state.extraPos); try { localStorage.removeItem(LS.extra); localStorage.removeItem(LS.roles); } catch {} }
   })();
-  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, posAlso: state.posAlso, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, ptab: state.ptab, pbtab: state.pbtab, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, xmodel: state.xmodel }); }
+  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, posAlso: state.posAlso, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, ptab: state.ptab, rollPA: state.rollPA, pbtab: state.pbtab, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, xmodel: state.xmodel }); }
   const draftedIds = () => new Set(state.drafted.map((d) => d.id));
   /* ---------- expected stats: which model xwOBA comes from ---------- */
   // "sav": Statcast's exit velocity + launch angle (Savant's published xwOBA for a full season).
@@ -3789,30 +3790,31 @@
                    ["K and BB", [["uk", "ubb", "ukb"], ["wsgp", "csw", "swstr"]]],
                    ["Discipline", [["strk", "zone", "osw", "swing", "zcon"]]],
                    ["Batted ball", [["gb", "pu"], ["ev", "hh", "brl"]]]];
-  const extraTabs = (p) => (p.type === "H" ? EXTRA_H : EXTRA_P);
+  // the pitchers' right box, for now: Savant's own pitcher percentile bars (the ones this data has), under headings
+  const EXTRA_P_SAV = [["Stuff", [["fbv", "ext"]]],
+                       ["Plate Discipline", [["osw", "whf", "k", "bb"]]],
+                       ["Batted Ball", [["ev", "brl", "hh", "gb"]]]];
+  const extraTabs = (p) => (p.type === "H" ? EXTRA_H : EXTRA_P_SAV);
+  // the right box: every section at once, each under a bold heading on the teal rule, the way the middle box heads its own
   function extraSections(p, st, g) {
-    const pv = V(p), all = allFor(g), tabs = extraTabs(p), out = [];
-    const live = tabs.filter(([, blocks]) => blocks.some((keys) => keys.some((k) => {
-      const m = all.find((x) => x.key === k); return m && metricValue(m, pv, st) != null; })));
-    if (!live.length) return out;
-    const pick = live.some(([t]) => t === state.ptab) ? state.ptab : live[0][0];
-    const bar = el("div", "ptabs xtabs"); bar.setAttribute("role", "tablist");
-    for (const [title] of live) {
-      const b = el("button", "ptab" + (title === pick ? " on" : ""), title); b.type = "button";
-      b.setAttribute("aria-selected", String(title === pick));
-      b.addEventListener("click", () => { if (title !== pick) { state.ptab = title; savePrefs(); render(); } });
-      bar.append(b);
+    const pv = V(p), all = allFor(g), out = [];
+    for (const [title, blocks] of extraTabs(p)) {
+      const bodies = [];
+      for (const keys of blocks) {
+        const ms = keys.map((k) => all.find((m) => m.key === k)).filter((m) => m && metricValue(m, pv, st) != null);
+        if (!ms.length) continue;
+        const box = el("div", "meters");
+        for (const m0 of ms) {
+          const m = p.type === "P" && PCT_LABEL[m0.key] ? Object.assign({}, m0, { label: PCT_LABEL[m0.key] }) : m0;
+          box.append(meterRow(m, metricValue(m0, pv, st), st.pct[m0.key]));
+        }
+        bodies.push(box);
+      }
+      if (!bodies.length) continue;
+      const sec = el("section", "xsec");
+      const hd = el("div", "sechd"); hd.append(el("span", "secname", title)); sec.append(hd, ...bodies);
+      out.push(sec);
     }
-    out.push(bar);
-    const body = el("div", "ptabbody");
-    for (const keys of live.find(([t]) => t === pick)[1]) {
-      const ms = keys.map((k) => all.find((m) => m.key === k)).filter((m) => m && metricValue(m, pv, st) != null);
-      if (!ms.length) continue;
-      const box = el("div", "meters");
-      for (const m of ms) box.append(meterRow(m, metricValue(m, pv, st), st.pct[m.key]));
-      body.append(box);
-    }
-    out.push(body);
     return out;
   }
 
@@ -3957,9 +3959,10 @@
   }
 
   // Savant's rolling line: expected wOBA over a trailing window of plate appearances, across the whole season
-  const ROLL_PA = 100;
+  const ROLL_OPTS = [50, 100, 150, 200, 250, 300];        // the rolling window, in plate appearances
   function renderRolling(p, ref) {
     if (p.type !== "H" || DS.noStatcast) return null;
+    const N = state.rollPA || 100;
     const f = DF.H, iPA = f.indexOf("pa"), dir = xDir();
     const iN = f.indexOf(dir ? "dnum" : "xnum"), iD = f.indexOf(dir ? "wden" : "xden");
     if (iPA < 0 || iN < 0 || iD < 0) return null;
@@ -3979,17 +3982,25 @@
     let lo = 0, pa = 0, num = 0, den = 0;
     for (let j = 0; j < days.length; j++) {
       const d = by.get(days[j]); pa += d[0]; num += d[1]; den += d[2];
-      while (lo < j && pa - by.get(days[lo])[0] >= ROLL_PA) { const o = by.get(days[lo]); pa -= o[0]; num -= o[1]; den -= o[2]; lo++; }
-      if (pa >= ROLL_PA && den > 0) pts.push([days[j], scale * num / den]);
+      while (lo < j && pa - by.get(days[lo])[0] >= N) { const o = by.get(days[lo]); pa -= o[0]; num -= o[1]; den -= o[2]; lo++; }
+      if (pa >= N && den > 0) pts.push([days[j], scale * num / den]);
     }
-    if (pts.length < 3) return null;
     const lg = leagueX(ref);
     const arr = (pool(ref).sorted || {})[dir ? "xwd" : "xws"];        // colour the line the way the bars are coloured
     const col = arr && arr.length ? (v) => savantStyle(insertPct(arr, v)).bg : null;
     const box = el("div", "rollbox");
     const hd = el("div", "rollhd");                    // a section heading like the percentile panel's: bold name on the teal rule
-    hd.append(el("span", "rollname", `Rolling ${dir ? "dxwOBA" : "xwOBA"}`), el("span", "rollsub", `every ${ROLL_PA} PA`));
-    box.append(hd, rollChart(pts, lg, col));
+    const pick = el("div", "seg rollseg"); pick.setAttribute("role", "group"); pick.setAttribute("aria-label", "Rolling window, PA");
+    for (const n of ROLL_OPTS) {
+      const b = el("button", "segbtn small", String(n)); b.type = "button"; b.setAttribute("aria-pressed", String(n === N));
+      b.title = `Every ${n} plate appearances`;
+      b.addEventListener("click", (e) => { e.stopPropagation(); if (n !== N) { state.rollPA = n; savePrefs(); render(); } });
+      pick.append(b);
+    }
+    hd.append(el("span", "rollname", "Rolling xwOBA"), el("span", "rollsub", "PA"), pick);
+    box.append(hd);
+    if (pts.length < 3) { box.append(el("p", "note rollnone", `Not enough plate appearances yet for a ${N}-PA window.`)); return box; }
+    box.append(rollChart(pts, lg, col));
     return box;
   }
   // the pool's own average of whichever expected model is on, for the dashed league line
@@ -4109,7 +4120,7 @@
       rows.push({ label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null,
                   tip: `${m.label}: ${fmt(got.v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}` });
     }
-    body.append(pctChart([{ title: p.type === "H" ? "Batting" : "Pitching", sample: sampleParts(p, pv), rows }]));
+    body.append(pctChart([{ title: p.type === "H" ? "Hitting Percentiles" : "Pitching Percentiles", sample: sampleParts(p, pv), rows }]));
     const vl = viewLabel(p.type);
     col.title = `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`;   // Savant prints no footer: the pool is in the hover
     col.append(body);
@@ -4164,17 +4175,18 @@
     const x = (p) => 10 + (bar - 10) * Math.max(0, Math.min(100, p)) / 100;
     const root = mk("g", { transform: "translate(20,10)" });
     let y = 0;
+    const smp = groups[0] && groups[0].sample;
+    if (smp && smp.length) {                                     // the playing time behind every bar below, labelled as such
+      const t = mk("text", { class: "svsample", x: 0, y: 14 });
+      t.append(mk("tspan", { class: "svslbl" }, "SAMPLE"));
+      smp.forEach(([v, u], i) => t.append(mk("tspan", { class: "svsv", dx: i ? 12 : 10 }, String(v)), mk("tspan", { class: "svsu", dx: 3 }, u)));
+      root.append(t);
+      y = 24;
+    }
     groups.forEach((g, gi) => {
       const first = gi === 0, G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
       G.append(mk("rect", { class: "svsecrule", x: 0, y: 34, width: r6, height: 2 }));
-      if (g.sample && g.sample.length) {                 // the playing time where Savant names the section: bold numbers, grey units
-        const t = mk("text", { class: "svsample", x: 0, y: 28 });
-        g.sample.forEach(([v, u], i) => {
-          t.append(mk("tspan", { class: "svsv", dx: i ? 14 : 0 }, String(v)), mk("tspan", { class: "svsu", dx: 4 }, u));
-        });
-        t.append(mk("title", {}, g.title));
-        G.append(t);
-      } else G.append(mk("text", { class: "svsecname", x: 40, y: 28 }, g.title));
+      G.append(mk("text", { class: "svsecname", x: 0, y: 28 }, g.title));
       if (first) {                                               // POOR / AVERAGE / GREAT, each arrow over its tick
         const S = mk("g", { transform: "translate(125,54)" });
         const tri = (cx) => `M${cx},2L${cx - 3},8L${cx + 3},8Z`;
@@ -4363,8 +4375,8 @@
         if (f.dataset.key.startsWith("pgrp:")) f.remove(); }
       belowCard = card;                                  // the rest of it fills the Advanced tab below
       C.append(cbody);
-      const foot = p.type === "H" ? renderRolling(p, g) : renderUeraBox(p, st);   // pinned to the foot of the box: the tabs scroll, this never does
-      if (foot) C.append(foot);
+      const foot = p.type === "H" ? renderRolling(p, g) : renderUeraBox(p, st);   // pinned to the foot of the percentile box
+      if (foot) B.append(foot);
       page.append(A, B, C); box.append(page);
       box.append(renderBelow(p));
       sizePPage();

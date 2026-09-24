@@ -2070,10 +2070,18 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .uerabox .ubt td.l { color: var(--svtext); }
 .uerabox .ubt td.exp { font-weight: 700; }
 .uerabox .ubt .chip2 { min-width: 38px; font-size: 12px; }
-.rollhd { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 0 0 4px 0;
+.rollhd { display: flex; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 8px; padding: 0 0 4px 0;
   border-bottom: 2px solid var(--svsec); margin-bottom: 6px; font-family: "Roboto Condensed", var(--body); }
 .rollhd .rollname { font-size: 16px; font-weight: 700; color: var(--svhead); }
-.rollhd .rollsub { font-size: 12px; color: var(--svtext); }
+.rollhd .rollsub { font-size: 12px; color: var(--svtext); margin-left: auto; }
+.rollhd .rollseg { flex: none; }
+.rollhd .rollseg .segbtn { height: 22px; min-height: 22px; padding: 0 6px; font-size: 11px; letter-spacing: 0; }
+.rollbox .rollnone { margin: 6px 0 0; font-size: 12px; color: var(--svtext); }
+/* the right box: every section at once, each under the same heading the middle box uses */
+.xsec + .xsec { margin-top: 16px; }
+.sechd { padding: 0 0 4px; margin-bottom: 6px; border-bottom: 2px solid var(--svsec); font-family: "Roboto Condensed", var(--body); }
+.sechd .secname { font-size: 16px; font-weight: 700; color: var(--svhead); }
+.xsec .meters + .meters { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--rule); }
 .rollchart { width: 100%; }
 .rollsvg { display: block; width: 100%; height: auto; overflow: visible; font-family: "Roboto Condensed", var(--body); }
 .rollsvg text { font-size: 12px; fill: var(--svtext); dominant-baseline: middle; font-variant-numeric: normal; }
@@ -2223,6 +2231,7 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .svpct .svscale { dominant-baseline: auto; }
 .svpct .svsecname { font-size: 16px; font-weight: 700; fill: var(--svhead); dominant-baseline: auto; }
 .svpct .svsample { dominant-baseline: auto; }
+.svpct .svsample .svslbl { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; fill: var(--svtext); }
 .svpct .svsample .svsv { font-size: 16px; font-weight: 700; fill: var(--svhead); }
 .svpct .svsample .svsu { font-size: 12px; fill: var(--svtext); }
 .svpct .svsecrule { fill: var(--svsec); }
