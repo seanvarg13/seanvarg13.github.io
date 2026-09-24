@@ -2011,6 +2011,7 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
   padding: 8px 10px; background: rgba(0, 0, 0, 0.12); border-radius: 3px; }
 .phf { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .phf.w2 { grid-column: span 2; }
+.phf.hand .seg .segbtn { padding: 0 7px; }                      /* vs LHP / RHP: tight, so the filter box stays short */
 .phcap { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--band-ink); opacity: 0.8; }
 .phf .pill { width: 100%; min-width: 0; height: 28px; margin: 0; }
 .phf .pill:first-child { min-width: 84px; }
@@ -2429,24 +2430,18 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .modal.pcard .phead .ptitle { flex-basis: calc(100% + 46px); margin-right: -46px; }   /* centred on the card: the 58px kept clear for the × isn't the title's */
 .phname .starbtn.staricon { width: 34px; padding: 0; font-size: 18px; line-height: 1; }
 :root[data-view="mobile"] .phead .mrank .phtoggle { height: 30px; padding: 0 12px; }
-/* a desktop's plate in three: the cut-out and his lines, the season's title dead centre (the xwOBA switch under it for a
-   hitter), the filters on the right — equal outer columns, so the title sits over the middle of the page */
+/* a desktop's plate in three: the cut-out and his lines, the season's title dead centre, the filters on the right —
+   equal outer columns, so the title sits over the middle of the page */
 :root:not([data-view="mobile"]) .phead .mplate { display: grid; grid-template-columns: 1fr auto 1fr; grid-template-areas: "left mid right";
   align-items: center; column-gap: 22px; }
 .phleft { grid-area: left; display: flex; align-items: center; gap: 22px; min-width: 0; align-self: stretch; }
 .phleft > div { align-self: center; min-width: 0; }
 .phmid { grid-area: mid; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 :root:not([data-view="mobile"]) .phead .phfilt { grid-area: right; }
-/* a narrower window can't fit the three across: the title takes its own centred row under them, the switch beside it */
+/* a narrower window can't fit the three across: the title takes its own centred row under them */
 @media (max-width: 1300px) {
   :root:not([data-view="mobile"]) .phead .mplate { grid-template-columns: 1fr auto; grid-template-areas: "left right" "mid mid"; row-gap: 8px; }
   :root:not([data-view="mobile"]) .phmid { flex-direction: row; justify-content: center; gap: 18px; }
 }
-.phmid .seg .segbtn { height: 26px; padding: 0 10px; font-size: 10.5px; }
 :root:not([data-view="mobile"]) .phead .phfilt { justify-self: end; margin-left: 0; }
 :root:not([data-view="mobile"]) .modal.pcard .phead .mplate { padding-inline: 58px; }   /* even sides round the centred title; the × sits in the right one */
-/* a pitcher's desktop page: the sections on the left two-thirds, uERA and his batted-ball mix on the right third */
-:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB.wide.pleft { grid-column: 1 / span 4; }
-:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolC.pright { grid-column: 5 / span 2; }
-.pcolC.pright .pscroll { display: flex; flex-direction: column; gap: 16px; padding-top: 14px; }
-.pcolC.pright .rollbox { margin: 0; }
