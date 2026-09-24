@@ -297,9 +297,10 @@ is deploy-limited.
 
 ## 8. Open to-dos and known issues
 
-* **Historical rescore not run.** `v3_ba.joblib` / `v3_slg.joblib` exist and 2026 uses them, but 2015-2025 and
-  Triple-A still fall back to Statcast's xBA/xSLG on the player page. Fixing it means re-running
-  `build_history.py <years>` (~2 hours) on the Mac. Offered several times; Sean has not said go.
+* **Historical rescore — scheduled.** Sean said go (25 Sep 2026). `daily_update.py` now ends with a self-checking
+  step: after the final publish it rebuilds every past MLB season whose `hist/mlb-YYYY.js` has no numeric `dxba`
+  (`build_history.py <years>`, then `build_career.py`, then publishes). ~2 hours the first time, a no-op after.
+  Triple-A still falls back to Statcast's xBA/xSLG (no directional models in the minors).
 * **The uERA note in `app.js` is stale** (§4). It describes a fitted regression that was replaced by the simple
   `impliedKBB` rule. One sentence of user-facing copy; Sean should decide the wording.
 * **The middle panel has 12 bars to Savant's 17.** Run values, fielding (OAA), sprint speed and spin are not in
