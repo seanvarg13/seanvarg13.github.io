@@ -923,7 +923,6 @@
     colorCache.set(p, s);
     return s;
   }
-  const bubLeft = (p) => `calc(var(--bub) / 2 + (100% - var(--bub)) * ${Math.max(0, Math.min(100, p)) / 100})`;
   // the player card's bars use Savant's own colour scale, the one in its chart's code: #3661AD at the 5th percentile,
   // #b4cfd1 from the 45th to the 55th, #D82129 at the 95th, clamped past them and blended in Lab space (d3's
   // interpolateLab), with each circle its bar's colour darkened a fifth of a step (d3's darker(0.2)) — exact to the unit
@@ -955,10 +954,19 @@
     savantCache.set(p, s);
     return s;
   }
-  // Savant's own geometry: the circle's centre runs from one radius in from the bar's left edge (0) to the bar's
-  // right end (100), and the fill stops under that centre. --u is 1/995 of the chart's width (see styles.css).
-  const svLeft = (p) => `calc(var(--u) * 26 + (100% - var(--u) * 26) * ${Math.max(0, Math.min(100, p)) / 100})`;
-  const SV_TICKS = [1.1, 50, 93.8];                   // where Savant's poor / average / great ticks and arrows fall
+  // Every percentile bar on the site is Savant's bar, in Savant's pixels (the same numbers the player page's chart
+  // is drawn with, see pctSvg): a 20px bar from 10px (0th) to the track's full width (100th) over a 5px line, 2px
+  // ticks at 11px, the middle and 13px from the end, and a 20px circle in a 2px white ring centred on the bar's end.
+  const svAt = (p) => `calc(10px + (100% - 10px) * ${Math.max(0, Math.min(100, p)) / 100})`;
+  function svTrack(pct, ghost) {
+    const t = el("div", "track svtrack" + (pct == null ? " none" : ""));
+    let s = null;
+    if (pct != null) { s = savantStyle(pct); const f = el("div", "fill"); f.style.width = svAt(pct); f.style.background = s.bg; t.append(f); }
+    for (const x of ["11px", `calc(${svAt(50)} - 1px)`, "calc(100% - 13px)"]) { const tk = el("i", "tk"); tk.style.left = x; t.append(tk); }
+    if (ghost != null) { const g = el("div", "bub ghost" + (ghost >= 100 ? " c3" : ""), ghost); g.style.left = svAt(ghost); t.append(g); }
+    if (pct != null) { const b = el("div", "bub" + (pct >= 100 ? " c3" : ""), pct); b.style.left = svAt(pct); b.style.background = s.bub; t.append(b); }
+    return t;
+  }
   function paint(node, pct) { const s = pctStyle(pct); if (s) { node.style.background = s.bg; node.style.color = s.fg; } }
 
   /* ---------- formatting ---------- */
@@ -1799,15 +1807,7 @@
   function meterRow(m, v, pct, cmp) {
     const row = el("div", "meter");
     const lbl = el("div", "lbl"); lbl.append(el("span", "lt", m.label)); row.append(lbl);
-    const track = el("div", "track");
-    if (pct != null) {
-      const s = savantStyle(pct);
-      const fill = el("div", "fill"); fill.style.width = `max(0px, ${svLeft(pct)} - var(--u) * 29.5)`; fill.style.background = s.bg; track.append(fill);
-      const bub = el("div", "bub" + (pct >= 100 ? " c3" : ""), pct); bub.style.left = svLeft(pct); bub.style.background = s.bub; track.append(bub);
-    }
-    // the ticks run the bar's full height where the fill has reached them, and only across the thin line past it
-    for (const at of SV_TICKS) { const tk = el("i", "tk" + (pct != null && at <= pct ? " on" : "")); tk.style.left = svLeft(at); track.append(tk); }
-    if (cmp && cmp.pct != null) { const b2 = el("div", "bub ghost", cmp.pct); b2.style.left = svLeft(cmp.pct); track.append(b2); }
+    const track = svTrack(pct, cmp && cmp.pct != null ? cmp.pct : null);
     row.append(track);
     row.append(el("div", "val", v == null ? "–" : fmt(v, { ...m, unit: "" })));   // bare numbers, the way Savant prints them: 10.9, 91.9
     row.title = `${m.label}: ${v == null ? "n/a" : fmt(v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}`;
@@ -1843,13 +1843,8 @@
     const cell = (m, s) => {
       const d = el("div", "ccell");
       const v = s.v ? metricValue(m, s.v, s.st) : null, pct = s.st ? s.st.pct[m.key] : null;
-      const track = el("div", "track");
-      if (pct != null) {
-        const c = pctStyle(pct);
-        const f = el("div", "fill"); f.style.width = bubLeft(pct); f.style.background = c.bg;
-        const b = el("div", "bub", pct); b.style.left = bubLeft(pct); b.style.background = c.bg;
-        track.append(f, b);
-      } else d.classList.add("na");
+      const track = svTrack(pct);
+      if (pct == null) d.classList.add("na");
       d.append(track, el("div", "val", v == null ? "–" : fmt(v, m)));
       d.title = `${s.label} — ${m.label}: ${v == null ? "n/a" : fmt(v, m)} (${pct == null ? "n/a" : ordinal(pct) + " pctl"})`;
       return d;
@@ -2206,14 +2201,11 @@
     box.append(el("p", "note", `Expected K% is his whiff rate${from(pv.m.whf, st.pct.whf)}; expected BB% is 53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%. Both are least-squares fits over every 300+ BF pitcher-season since 2015, re-centred so the pool's expected rates match its real ones — they land within about 2.1 and 1.4 points of the real K% and BB%, against 3.4 for the old "expected K% = Whiff%". uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. The percentile bars rank the rates uERA uses, so the line-drive and fly-ball bars are both really his air-ball rate — fewer counts as better. Blue diff: results beat the process; red: they trail it.`));
     return box;
   }
-  // a percentile bar small enough to live in a table cell — same colours and maths as the card's meters
+  // a percentile bar in a table cell: the same Savant bar as every other one
   function minibar(pct) {
     const cell = el("div", "barcell");
     if (pct == null) { cell.append(el("span", "lg", "–")); return cell; }
-    const track = el("div", "minitrack"), s = pctStyle(pct);
-    const fill = el("div", "minifill"); fill.style.width = bubLeft(pct); fill.style.background = s.bg;
-    const bub = el("div", "minibub", pct); bub.style.left = bubLeft(pct); bub.style.background = s.bg;
-    track.append(fill, bub); cell.append(track);
+    cell.append(svTrack(pct));
     cell.title = ordinal(pct) + " percentile";
     return cell;
   }
@@ -3229,7 +3221,29 @@
     const h = Math.round(Math.max(200, (vv ? vv.height : window.innerHeight) - top - 40));
     document.documentElement.style.setProperty("--modal-max", h + "px");
   }
-  function render() { renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage(); }
+  let holdScroll = null, lastPlayerId = null;        // scroll still owed to a player's page (see keepScroll)
+  function render() {
+    const keep = keepScroll();
+    renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage();
+    keep();
+  }
+  // A player's page is rebuilt on every pick (a season, a level, a tab, a filter). Rebuilt, it is briefly short and the
+  // window snaps to the top, and its panels' own scrollers start over. On the same player, put them all back; if the
+  // page is still loading and too short to reach that point, hold on to it for the next redraw, until the reader scrolls.
+  ["wheel", "touchmove", "keydown"].forEach((t) => window.addEventListener(t, () => { holdScroll = null; }, { passive: true }));
+  function keepScroll() {
+    const id = state.mode === "player" ? state.x.id : null;
+    const panes = () => [...document.querySelectorAll("#xboard .ppage .pscroll")];
+    const was = document.body.dataset.mode === "player" && lastPlayerId === id && id != null;
+    const want = was ? (holdScroll && holdScroll.id === id ? holdScroll : { id, y: window.scrollY, panes: panes().map((e) => e.scrollTop) }) : null;
+    lastPlayerId = id;
+    return () => {
+      if (!want) { holdScroll = null; return; }
+      if (Math.abs(window.scrollY - want.y) > 1) window.scrollTo(0, want.y);
+      panes().forEach((e, i) => { if (want.panes[i]) e.scrollTop = want.panes[i]; });
+      holdScroll = window.scrollY < want.y - 1 ? want : null;
+    };
+  }
   function renderNow() {
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = state.mode === "draftmode" || home, appear = state.mode === "appearance", fant = state.mode === "fantasy", other = player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
@@ -4019,10 +4033,11 @@
                           (k) => { if (k !== cur[0]) nav.goTo(k); }, "lv");
     return [yr, [lv, " Percentile Rankings"]];
   }
-  // Savant's percentile chart, drawn the way its own code draws it (one SVG, D3's numbers): the drawing is
-  // max(400, box width) units wide and 20 in from each side; each section is a 16px bold name 40 in (where Savant's
-  // silhouette ends; the silhouette itself is left out) on a 2px teal rule 34 down; a row every 23, the bar 85 in
-  // from the labels and as wide as what's left after the labels (40 + 85) and the values (35), running from 10 (0th) to its full width (100th), a 5-tall line under it,
+  // Savant's percentile chart, drawn the way its own code draws it (one SVG, D3's numbers). The drawing is as wide
+  // as its box and 20 in from each side (Savant never goes under 400 and shrinks instead; here every bar on the site
+  // stays one size). Each section is a 16px bold name 40 in (where Savant's silhouette ends; the silhouette is left
+  // out) on a 2px teal rule 34 down; a row every 23, the bar 85 in from the labels and as wide as what's left after
+  // the labels (40 + 85) and the values (35), running from 10 (0th) to its full width (100th) over a 5-tall line;
   // ticks at 12, the middle and 12 from the end, a 10-radius circle with a 2px white ring centred on the bar's end,
   // 12px type throughout (10px for a 100), and dashed rules above every row but the first, under label and value only
   const SVG_NS = "http://www.w3.org/2000/svg";
@@ -4031,7 +4046,7 @@
     const host = el("div", "svchart");
     const draw = () => {
       const bw = host.getBoundingClientRect().width;
-      const W = Math.max(400, Math.round(bw) || 400);
+      const W = Math.max(300, Math.round(bw) || 400);   // drawn at its real size, like every other bar (Savant shrinks under 400)
       if (host.dataset.w === String(W) && host.firstChild) return;
       host.dataset.w = String(W);
       host.replaceChildren(pctSvg(groups, W));
@@ -4366,11 +4381,10 @@
     const groups = type === "H" ? CARD : CARD_P;
     const cell = (m, col) => {
       const d = el("div", "ccell");
-      if (!col.st) { d.classList.add("na"); d.append(el("div", "track"), el("div", "val", "–")); return d; }
+      if (!col.st) { d.classList.add("na"); d.append(svTrack(null), el("div", "val", "–")); return d; }
       const v = metricValue(m, col.v, col.st), pct = col.st.pct[m.key];
-      const track = el("div", "track");
-      if (pct != null) { const s = pctStyle(pct); const f = el("div", "fill"); f.style.width = bubLeft(pct); f.style.background = s.bg; track.append(f); const b = el("div", "bub", pct); b.style.left = bubLeft(pct); b.style.background = s.bg; track.append(b); }
-      else d.classList.add("na");
+      const track = svTrack(pct);
+      if (pct == null) d.classList.add("na");
       d.append(track, el("div", "val", v == null ? "–" : fmt(v, m)));
       d.title = `${col.entry.name} ${col.cur[1]} — ${m.label}: ${v == null ? "n/a" : fmt(v, m)} (${pct == null ? "n/a" : ordinal(pct) + " pctl"})`;
       return d;
