@@ -376,7 +376,8 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
     "2 levels" / "3 levels" and opens to each. Hitters: **PA HR AVG OBP SLG OPS**. Pitchers: **IP ERA K% BB% GB%
     Popup%**, plus **uERA** as the last MLB column (K% / BB% per batter faced). uERA is worked out on the page against
     that season's pitchers — opening the table fetches each MLB year's `hist/mlb-YYYY.js` — and shows on a chip
-    coloured by the year's uERA percentile (inset like a leaderboard's sorted-column pill, not the whole cell; none
+    coloured by the year's uERA percentile in the percentile bars' own colours (`paintBar`: Savant's scale, or the heat
+    scale under Classic meters) (inset like a leaderboard's sorted-column pill, not the whole cell; none
     before 2015, which has no Statcast); the career uERA is innings-weighted. GB% / Popup% come from career.js /
     minors.js (appended to each line by `build_career.py`), else from the season's own file when it's loaded; a
     club's line in a traded season shows none, and a minor-league year total has them only when every level does.

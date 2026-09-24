@@ -972,6 +972,14 @@
     return t;
   }
   function paint(node, pct) { const s = pctStyle(pct); if (s) { node.style.background = s.bg; node.style.color = s.fg; } }
+  // a percentile coloured as the player card's bars colour it: Savant's scale for the charts, the heat scale under
+  // Classic meters (Sean: the Season Stats uERA chip matches the sliders), with dark or white text, whichever reads
+  function paintBar(node, pct) {
+    if (pct == null) return;
+    if (state.bars === "classic") return paint(node, pct);
+    const bg = savantStyle(pct).bg, c = bg.match(/\d+/g).map(Number), dark = [21, 24, 26];
+    node.style.background = bg; node.style.color = contrast(c, dark) >= contrast(c, [255, 255, 255]) ? "rgb(21,24,26)" : "#fff";
+  }
 
   /* ---------- formatting ---------- */
   function fmt(v, m) { return m.dec === 3 ? fmtX(v) : m.dec === 2 ? v.toFixed(2) : m.unit === "%" ? v.toFixed(1) + "%" : v.toFixed(1) + (m.unit ? " " + m.unit : ""); }
@@ -2156,7 +2164,7 @@
           if (k === "uERA") {                                    // the year's uERA, coloured by its percentile among that season's pitchers
             // the colour sits on a chip inside the cell, as a leaderboard's sorted column does, not the whole cell (Sean)
             const u = r.club ? null : uera(r.season), td = el("td", "uera"), chip = el("span", "uchip", u === undefined ? "…" : fmtv(k, u && u.v));
-            if (u && u.pct != null) { paint(chip, u.pct); chip.classList.add("on"); td.title = `uERA ${u.v.toFixed(2)} · ${ordinal(u.pct)} pctl among ${r.season} pitchers`; }
+            if (u && u.pct != null) { paintBar(chip, u.pct); chip.classList.add("on"); td.title = `uERA ${u.v.toFixed(2)} · ${ordinal(u.pct)} pctl among ${r.season} pitchers`; }
             td.append(chip);
             row.append(td); continue;
           }
