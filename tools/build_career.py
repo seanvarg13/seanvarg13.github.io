@@ -150,7 +150,8 @@ def main():
         out_rows = []
         for r in rows:
             m = ours_m.get((pid, r[0], t, r[1]))
-            adv = None if not m else ([m.get("woba"), m.get("xwoba"), m.get("whf")] if t == "H" else [m.get("fip"), m.get("siera"), m.get("whf"), m.get("strk")])
+            adv = None if not m else ([m.get("woba"), m.get("xwoba"), m.get("whf")] if t == "H" else [m.get("fip"), m.get("siera"), m.get("whf"), m.get("strk"),
+                                                                                                      m.get("gb"), m.get("pu")])   # appended: GB% / Popup% for the minors' season table
             out_rows.append(list(r) + [adv])
         return out_rows
     with ThreadPoolExecutor(max_workers=8) as ex:
