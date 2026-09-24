@@ -2058,6 +2058,18 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .ppage .ptabbody .meters + .meters { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--rule); }
 /* the rolling line under the Advanced panel's bars, set like them (see rollSvg in app.js) */
 .rollbox { margin-top: 14px; }
+/* pinned to the foot of the Advanced box: the tabs above it scroll, this stays put */
+.pcol > .rollbox { flex: none; margin: 0; padding: 10px 16px 12px; }
+:root[data-view="mobile"] .pcol > .rollbox { padding: 6px 12px 12px; }
+.uerabox .ubt { width: 100%; border-collapse: collapse; font-family: "Roboto Condensed", var(--body); }
+.uerabox .ubt th { padding: 2px 3px 5px; font-size: 12px; font-weight: 400; color: var(--svtext); text-align: right;
+  border-bottom: 1px dashed var(--svrule); }
+.uerabox .ubt td { padding: 5px 3px; font-size: 13px; color: var(--ink); text-align: right; border: 0; }
+.uerabox .ubt tbody tr + tr td { border-top: 1px dashed var(--svline); }
+.uerabox .ubt td.l, .uerabox .ubt th.l { text-align: left; padding-left: 0; }
+.uerabox .ubt td.l { color: var(--svtext); }
+.uerabox .ubt td.exp { font-weight: 700; }
+.uerabox .ubt .chip2 { min-width: 38px; font-size: 12px; }
 .rollhd { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 0 0 4px 0;
   border-bottom: 2px solid var(--svsec); margin-bottom: 6px; font-family: "Roboto Condensed", var(--body); }
 .rollhd .rollname { font-size: 16px; font-weight: 700; color: var(--svhead); }
@@ -2068,7 +2080,8 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .rollsvg .rtick, .rollsvg .rnow { text-anchor: end; }
 .rollsvg .rnow { font-weight: 700; fill: var(--ink); }
 .rollsvg .rmon { text-anchor: start; }
-.rollsvg .rlglbl { text-anchor: start; font-size: 10px; letter-spacing: 0.04em; }
+.rollsvg .rlglbl { text-anchor: end; font-size: 10px; letter-spacing: 0.04em; }
+.rollsvg .raxis { stroke: var(--svtext); stroke-width: 1; }
 .rollsvg .rgrid { stroke: var(--svline); stroke-width: 1; }
 .rollsvg .rlg { stroke: var(--svrule); stroke-width: 1; stroke-dasharray: 6 3; }
 .rollsvg .rline { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }

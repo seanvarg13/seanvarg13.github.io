@@ -3984,10 +3984,12 @@
     }
     if (pts.length < 3) return null;
     const lg = leagueX(ref);
+    const arr = (pool(ref).sorted || {})[dir ? "xwd" : "xws"];        // colour the line the way the bars are coloured
+    const col = arr && arr.length ? (v) => savantStyle(insertPct(arr, v)).bg : null;
     const box = el("div", "rollbox");
     const hd = el("div", "rollhd");                    // a section heading like the percentile panel's: bold name on the teal rule
     hd.append(el("span", "rollname", `Rolling ${dir ? "dxwOBA" : "xwOBA"}`), el("span", "rollsub", `every ${ROLL_PA} PA`));
-    box.append(hd, rollChart(pts, lg));
+    box.append(hd, rollChart(pts, lg, col));
     return box;
   }
   // the pool's own average of whichever expected model is on, for the dashed league line
@@ -3999,26 +4001,28 @@
   // The rolling line, laid out on the bars above it: its y labels right-aligned where their labels end (120px in),
   // the plot across the bar column, the league line's value and his latest in the value column, 12px grey type,
   // month labels under it. Drawn at its real width (redrawn when the panel resizes), so nothing in it is scaled.
-  let rollRO = null;
-  function rollChart(pts, lg) {
+  let rollRO = null, rollN = 0;
+  function rollChart(pts, lg, col) {
     const host = el("div", "rollchart");
     const draw = () => {
       const W = Math.max(260, Math.round(host.getBoundingClientRect().width) || 360);
       if (host.dataset.w === String(W) && host.firstChild) return;
       host.dataset.w = String(W);
-      host.replaceChildren(rollSvg(pts, lg, W));
+      host.replaceChildren(rollSvg(pts, lg, col, W));
     };
-    host.append(rollSvg(pts, lg, 360));
+    host.append(rollSvg(pts, lg, col, 360));
     if (window.ResizeObserver) { if (rollRO) rollRO.disconnect(); rollRO = new ResizeObserver(draw); rollRO.observe(host); }
     return host;
   }
-  function rollSvg(pts, lg, W) {
-    const H = 132, L = 125, R = W - 35, T = 8, B = H - 22;
+  // x walks the game days he played, not the calendar (Savant's way): a month on the injured list is a step, not a
+  // long flat run. Months are labelled under their first game.
+  function rollSvg(pts, lg, col, W) {
+    const H = 132, L = 125, R = W - 40, T = 8, B = H - 22;
     const ys = pts.map((q) => q[1]);
     let y0 = Math.min(0.24, Math.floor(Math.min(...ys) * 20) / 20), y1 = Math.max(0.42, Math.ceil(Math.max(...ys) * 20) / 20);
     if (lg != null) { y0 = Math.min(y0, lg - 0.02); y1 = Math.max(y1, lg + 0.02); }
-    const x0 = pts[0][0], x1 = pts[pts.length - 1][0] || 1;
-    const px = (d) => L + (R - L) * (x1 === x0 ? 0.5 : (d - x0) / (x1 - x0));
+    const N = pts.length - 1;
+    const px = (i) => L + (R - L) * (N ? i / N : 0.5);
     const py = (v) => T + (B - T) * (1 - (v - y0) / (y1 - y0));
     const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
     const svg = mk("svg", { class: "rollsvg", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Rolling xwOBA" });
@@ -4027,27 +4031,65 @@
       svg.append(mk("line", { class: "rgrid", x1: L, x2: R, y1: py(v), y2: py(v) }));
       svg.append(mk("text", { class: "rtick", x: L - 5, y: py(v) }, v.toFixed(3).slice(1)));
     }
+    svg.append(mk("line", { class: "raxis", x1: L, x2: L, y1: T, y2: B }));
     const days = seasonDays(), MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const mons = [];                                    // a month's name under its first day on the chart
-    for (let d = x0, lastM = null; d <= x1; d++) {
-      const ds = days && days[d]; if (!ds) continue;
+    const mons = [];
+    pts.forEach((q, i) => {
+      const ds = days && days[q[0]]; if (!ds) return;
       const mo = Number(ds.slice(5, 7)) - 1;
-      if (mo !== lastM) { mons.push([Math.max(L, px(d)), MON[mo]]); lastM = mo; }
-    }
+      if (!mons.length || mons[mons.length - 1][2] !== mo) mons.push([px(i), MON[mo], mo]);
+    });
     mons.forEach(([x, name], i) => {                    // a label too close to the next one (a partial first month) is left out
-      if ((mons[i + 1] && mons[i + 1][0] - x < 30) || x > R - 20) return;
+      if ((mons[i + 1] && mons[i + 1][0] - x < 30) || x > R - 16) return;
       svg.append(mk("text", { class: "rmon", x, y: H - 5 }, name));
     });
-    if (lg != null) {
+    if (lg != null) {                                   // the league line, labelled outside the plot where the values sit
       svg.append(mk("line", { class: "rlg", x1: L, x2: R, y1: py(lg), y2: py(lg) }));
-      svg.append(mk("text", { class: "rlglbl", x: L + 2, y: py(lg) - 7 }, "LG AVG"));
+      svg.append(mk("text", { class: "rlglbl", x: W, y: py(lg) - 6 }, "LG AVG"));
+      svg.append(mk("text", { class: "rtick", x: W, y: py(lg) + 7 }, lg.toFixed(3).slice(1)));
     }
-    const line = savantStyle(95).bg, last = pts[pts.length - 1];
-    svg.append(mk("path", { class: "rline", stroke: line, d: pts.map((q, i) => `${i ? "L" : "M"}${px(q[0]).toFixed(1)} ${py(q[1]).toFixed(1)}`).join(" ") }));
-    svg.append(mk("circle", { class: "rdot", cx: px(last[0]), cy: py(last[1]), r: 3.5, fill: line }));
-    svg.append(mk("text", { class: "rnow", x: W, y: py(last[1]) }, last[1].toFixed(3).slice(1)));
-    if (lg != null && Math.abs(py(lg) - py(last[1])) > 13) svg.append(mk("text", { class: "rtick", x: W, y: py(lg) }, lg.toFixed(3).slice(1)));
+    let stroke = savantStyle(95).bg;
+    if (col) {                                          // one gradient stop per point: the line reads like the bars do
+      const id = "rg" + ++rollN, g = mk("linearGradient", { id, gradientUnits: "userSpaceOnUse", x1: L, y1: 0, x2: R, y2: 0 });
+      const span = (R - L) || 1;
+      pts.forEach((q, i) => g.append(mk("stop", { offset: (100 * (px(i) - L) / span).toFixed(2) + "%", "stop-color": col(q[1]) })));
+      const defs = mk("defs"); defs.append(g); svg.append(defs);
+      stroke = `url(#${id})`;
+    }
+    svg.append(mk("path", { class: "rline", stroke, d: pts.map((q, i) => `${i ? "L" : "M"}${px(i).toFixed(1)} ${py(q[1]).toFixed(1)}`).join(" ") }));
+    const last = pts[N], lc = col ? col(last[1]) : savantStyle(95).bg;
+    svg.append(mk("circle", { class: "rdot", cx: px(N), cy: py(last[1]), r: 3.5, fill: lc }));
+    svg.append(mk("text", { class: "rnow", x: px(N) - 7, y: py(last[1]) - 11 }, last[1].toFixed(3).slice(1)));
     return svg;
+  }
+  // the pitcher's version of the same foot panel: what his process says the ERA should be, against what it is
+  function renderUeraBox(p, st) {
+    if (p.type !== "P" || !st || st.uera == null || !st.ukbb) return null;
+    const pv = V(p), ik = st.ukbb;
+    const box = el("div", "rollbox uerabox");
+    const hd = el("div", "rollhd");
+    hd.append(el("span", "rollname", `uERA ${st.uera.toFixed(2)}`), el("span", "rollsub", st.pct.uera == null ? "" : `${ordinal(st.pct.uera)} percentile`));
+    box.append(hd);
+    const t = el("table", "ubt");
+    t.append(colgroup([null, 60, 60, 56]));
+    const hr = el("tr");
+    for (const h of ["", "Exp", "Act", "Diff"]) hr.append(el("th", h ? null : "l", h));
+    const th = el("thead"); th.append(hr); t.append(th);
+    const tb = el("tbody");
+    const rows = [["K%", ik.k, pv.m.k, true, false], ["BB%", ik.bb, pv.m.bb, false, false],
+                  ["K−BB%", st.ukb, pv.m.kbb, true, false], ["ERA", st.uera, pv.m.era, false, true]];
+    for (const [what, exp, act, hib, isEra] of rows) {
+      const d = act == null || exp == null ? null : (isEra ? Math.round(100 * (act - exp)) / 100 : Math.round(10 * (act - exp)) / 10);
+      const good = d == null ? null : hib ? d > 0 : d < 0;
+      const fv = (x) => (x == null ? "–" : isEra ? x.toFixed(2) : x.toFixed(1));
+      const r = el("tr"), dc = el("td", "dcell");
+      dc.append(el("span", "chip2 " + (d == null || Math.abs(d) < (isEra ? 0.25 : 1) ? "even" : good ? "lucky" : "unlucky"),
+                   d == null ? "–" : (d > 0 ? "+" : "") + fv(d)));
+      r.append(el("td", "l", what), el("td", "exp", fv(exp)), el("td", null, fv(act)), dc);
+      tb.append(r);
+    }
+    t.append(tb); box.append(t);
+    return box;
   }
   // the middle panel: one header, then every stat as a bar — no group headings inside it
   function renderPctPanel(p, st, g, ref, col, nav) {
@@ -4318,11 +4360,12 @@
       C.append(panelHead(dsSeason(), p.type === "H" ? "Advanced Metrics" : "Advanced Pitching"));
       const cbody = el("div", "pscroll");
       cbody.append(...extraSections(p, st, g));
-      const roll = renderRolling(p, g); if (roll) cbody.append(roll);
       for (const f of [...card.querySelectorAll(":scope > .fold-sec")]) {   // the card's grouped fold repeats the panels above it
         if (f.dataset.key.startsWith("pgrp:")) f.remove(); }
       belowCard = card;                                  // the rest of it fills the Advanced tab below
       C.append(cbody);
+      const foot = p.type === "H" ? renderRolling(p, g) : renderUeraBox(p, st);   // pinned to the foot of the box: the tabs scroll, this never does
+      if (foot) C.append(foot);
       page.append(A, B, C); box.append(page);
       box.append(renderBelow(p));
       sizePPage();

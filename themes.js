@@ -49,11 +49,12 @@ window.DRAFT_THEMES = (function () {
     },
   };
 
-  // one font, the one Baseball Savant sets nearly all of its text in, on desktop and phone alike
-  // (index.html loads it up front, so the page never paints in a fallback first)
+  // one font, the one Baseball Savant sets nearly all of its text in, on desktop and phone alike. This file loads
+  // it (in <head>, before the page paints) rather than index.html, whose template lives on the Mac and isn't synced.
   const SAVANT_FONT = '"Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif';
   const F = {
-    savant: { name: "Roboto Condensed", blurb: "Baseball Savant's type — the same on every page and every device.", google: null,
+    savant: { name: "Roboto Condensed", blurb: "Baseball Savant's type — the same on every page and every device.",
+              google: "family=Roboto+Condensed:ital,wght@0,100..900;1,100..900",
               display: SAVANT_FONT, body: SAVANT_FONT },
   };
 
