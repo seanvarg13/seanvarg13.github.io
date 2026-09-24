@@ -323,7 +323,9 @@ keeps it honest: crossing between hitters and pitchers replaces the selection, t
 keyed to that nesting — and `body.navopen header.top { z-index: 300 }` lifts the whole header over the page while one
 is open, which is what keeps them from painting behind it on a phone.
 
-**The player page** (built by `playerView()`, which `renderExplore` and the popup card both call) is, top to bottom:
+**The player page** is the popup card itself: `renderExplore()` opens it in the site's `#modal` through
+`showPageCard()`, with no × (`.pagecard`) and a pinstripe pattern in the theme's colours behind it (`.pagebg`) where a card
+off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
 
 - **The pinned plate** (`playerHead()`, `.phead`): the blue plate from edge to edge of the window. On a desktop it is
   three columns with equal outer ones, so the middle sits over the middle of the page: the cut-out headshot, name,
