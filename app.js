@@ -2144,14 +2144,13 @@
     let table = (rows, minors) => {
       const t = el("table"), thead = el("thead"), tr = el("tr");
       const tc = minors ? cols : colsMLB;
-      const lvCol = minors && !mobileView();                // a phone puts the level beside the year: one column fewer to fit
-      for (const h of ["Season", ...(lvCol ? ["Level"] : []), "Team", ...tc]) tr.append(el("th", ["Season", "Level", "Team"].includes(h) ? "l" : h === "uERA" ? "lc" : null, h));
+      // the minors show the level where the majors show the club (Sean: the minor-league club isn't what he's after)
+      for (const h of ["Season", minors ? "Level" : "Team", ...tc]) tr.append(el("th", ["Season", "Level", "Team"].includes(h) ? "l" : h === "uERA" ? "lc" : null, h));
       thead.append(tr); t.append(thead);
       const tbody = el("tbody");
       const draw = (r, seasonTxt, level, team, cls) => {
         const row = el("tr", cls || null);
-        const sc = el("td", "l", seasonTxt); if (minors && !lvCol && level) sc.append(" ", el("span", "lvtag" + (level.includes("/") ? " multi" : ""), level)); row.append(sc);
-        if (lvCol) row.append(el("td", "l", level || ""));
+        row.append(el("td", "l", seasonTxt));
         const tm = el("td", "l tm", team || ""); if (team && team.length > 14) tm.title = team; row.append(tm);   // a club's full name on hover
         for (const k of tc) {
           if (k === "uERA") {                                    // the year's uERA, coloured by its percentile among that season's pitchers
@@ -2206,7 +2205,7 @@
     }
     const mlbItems = mlb.map((l) => {
       const cs = clubs[l.season] || [];
-      return { r: l, level: "", team: cs.length > 1 ? `${cs.length} teams` : l.team, kids: cs.length > 1 ? cs.map((c) => ({ r: c, level: "", team: c.team })) : [] };
+      return { r: l, level: "", team: cs.length > 1 ? "TOT" : l.team, kids: cs.length > 1 ? cs.map((c) => ({ r: c, level: "", team: c.team })) : [] };
     });
     // the minors: per year, per level — the level's own total when he had two clubs there (the API's club-less line)
     const years = new Map();
@@ -2220,14 +2219,10 @@
         const line = tot || (teams.length === 1 ? Object.assign({}, teams[0], { club: false }) : { season, level, team: "", c: combineLines(H, teams), mlb: false });
         return { level, line, clubs: teams.length > 1 ? teams : [] };
       });
-      const nTeams = lv.reduce((n, x) => n + Math.max(1, x.clubs.length), 0);
-      const r = lv.length === 1 ? lv[0].line : yearTotal(season, lv);
-      const kids = [];
-      for (const x of lv) {
-        if (lv.length > 1) kids.push({ r: x.line, level: x.level, team: x.clubs.length > 1 ? `${x.clubs.length} teams` : x.line.team });
-        if (x.clubs.length > 1) for (const c of x.clubs) kids.push({ r: c, level: lv.length > 1 ? "" : x.level, team: c.team, deep: lv.length > 1 });
-      }
-      return { r, level: lv.map((x) => x.level).join("/"), team: lv.length === 1 && lv[0].clubs.length <= 1 ? lv[0].line.team : `${nTeams} teams`, kids };
+      // one row a year: its level, or "2 levels" opening to each (never the clubs, and never a second line in the row)
+      const r = lv.length === 1 ? Object.assign({}, lv[0].line, { club: false }) : yearTotal(season, lv);
+      const kids = lv.length > 1 ? lv.map((x) => ({ r: Object.assign({}, x.line, { club: false }), level: x.level, team: x.level })) : [];
+      return { r, level: "", team: lv.length === 1 ? lv[0].level : `${lv.length} levels`, kids };
     });
     if (mlb.length) { if (milb.length || !window.DRAFT_MINORS) box.append(el("h4", "rawhd", "MLB")); box.append(table(mlbItems, false)); }
     if (want.size) { box.append(el("p", "note", "Loading each season for uERA…")); for (const k of want) ensureHist(k); }
