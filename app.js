@@ -3716,7 +3716,10 @@
   const SAVANT_H = ["EXPW", "EXPB", "EXPS", "ev", "brl", "hh", "ss", "bs", "osw", "whf", "k", "bb"];
   // the three expected stats follow whichever model is switched on, and are always named plainly
   const expKeys = () => (xDir() ? { EXPW: "xwd", EXPB: "dxba", EXPS: "dxslg" } : { EXPW: "xws", EXPB: "xba", EXPS: "xslg" });
-  const PCT_LABEL = { xwd: "xwOBA", xws: "xwOBA", dxba: "xBA", xba: "xBA", dxslg: "xSLG", xslg: "xSLG" };
+  const PCT_LABEL = { xwd: "xwOBA", xws: "xwOBA", dxba: "xBA", xba: "xBA", dxslg: "xSLG", xslg: "xSLG",
+                      // and the rest under the names Savant prints beside its bars
+                      ev: "Avg Exit Velo", brl: "Barrel %", hh: "Hard-Hit %", ss: "LA Sweet-Spot %", bs: "Bat Speed",
+                      osw: "Chase %", whf: "Whiff %", k: "K %", bb: "BB %", fbv: "Fastball Velo", gb: "GB %", ext: "Extension" };
   // what to show instead when a stat isn't there: Savant's own number for a season built before the
   // directional BA / SLG models, and the real result at a level with no batted-ball tracking (A, AA)
   const PCT_FALL = { xwd: ["xws", "woba"], xws: ["woba"], dxba: ["xba", "ba"], xba: ["ba"], dxslg: ["xslg", "slg"], xslg: ["slg"] };
@@ -3961,7 +3964,7 @@
     const noEV = DS.tracked != null && DS.tracked < 0.05;
     const exp = expKeys();
     const val = (k) => { const m = all.find((x) => x.key === k); if (!m || (noEV && NEEDS_EV.has(k))) return null; const v = metricValue(m, pv, st); return v == null ? null : { m, v, k }; };
-    meters.append(pctScale());
+    meters.append(pctSection(p.type), pctScale());
     for (const key0 of (p.type === "H" ? SAVANT_H : SAVANT_P)) {
       const start = exp[key0] || key0;
       let got = val(start);
@@ -3972,7 +3975,7 @@
     }
     body.append(meters);
     const vl = viewLabel(p.type);
-    body.append(el("p", "pctfoot", `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`));
+    col.title = `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`;   // Savant prints no footer: the pool is in the hover
     col.append(body);
   }
   // "2026 MLB Percentile Rankings", with the year and the level as the pickers for the whole page
@@ -3993,6 +3996,17 @@
     const lv = headSelect(cur[0], lvls.map((sv) => [sv[0], LEVELS[levelOf(sv[0])] || levelOf(sv[0])]),
                           (k) => { if (k !== cur[0]) nav.goTo(k); }, "lv");
     return [yr, [lv, " Percentile Rankings"]];
+  }
+  // Savant's section heading: a black silhouette standing on a teal rule, the section's name beside it
+  const SIL = {
+    H: '<circle cx="18" cy="7" r="4"/><path d="M17 11 15 25M17 13l5-2 3-6M16 14l5-1M15 25l-5 7-5 7M15 25l6 6 0 8" fill="none" stroke="currentColor" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M25 7 31 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+    P: '<circle cx="19" cy="6" r="4"/><path d="M18 10 15 23M18 12l5-3 3-6M17 13l-6 4M15 23l6 7 4 8M15 23l-6 6-6 1" fill="none" stroke="currentColor" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  };
+  function pctSection(type) {
+    const h = el("div", "svsec");
+    const ic = el("span", "svicon"); ic.innerHTML = `<svg viewBox="0 0 32 40" aria-hidden="true" fill="currentColor">${SIL[type === "H" ? "H" : "P"]}</svg>`;
+    h.append(ic, el("span", "svname", type === "H" ? "Batting" : "Pitching"));
+    return h;
   }
   // Savant's scale strip: POOR at the left of the track, AVERAGE at its middle, GREAT at its right
   function pctScale() {

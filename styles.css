@@ -43,6 +43,9 @@
   --svline: #c9dbdb;   /* Savant: the thin line the rest of a percentile bar runs along */
   --svrule: #98d3d5;   /* Savant: the dashed rule under a bar's label and value */
   --svtext: #5f6060;   /* Savant: the grey its labels and values are set in */
+  --svframe: #4291a0;  /* Savant: the teal frame round each panel, its dots and its section rules */
+  --svhead: #111111;   /* Savant: the black of its section names and silhouettes */
+  --svtitle: #313231;  /* Savant: the charcoal of its panel titles */
   --lo: #325aa1;      /* percentile: cold — Savant's blue */
   --mid: #b3b3b3;     /* percentile: 50th — a solid grey, not a tint, so the ends carry */
   --hi: #d22d49;      /* percentile: hot  — Savant's red */
@@ -76,6 +79,9 @@
     --svline: #34504d;
     --svrule: #3f6663;
     --svtext: #b9c3c2;
+    --svframe: #4f9fad;
+    --svhead: #e8eeee;
+    --svtitle: #e3e8e8;
     --lo: #4a86dd;
     --mid: #6a7382;
     --hi: #e2455c;
@@ -107,6 +113,9 @@
   --svline: #34504d;
   --svrule: #3f6663;
   --svtext: #b9c3c2;
+  --svframe: #4f9fad;
+  --svhead: #e8eeee;
+  --svtitle: #e3e8e8;
   --lo: #4a86dd;
   --mid: #6a7382;
   --hi: #e2455c;
@@ -2166,3 +2175,22 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .pctscale .p0 i, .pctscale .p0 b { color: #3961ac; }
 .pctscale .p50 i, .pctscale .p50 b { color: #9fc4c6; }
 .pctscale .p100 i, .pctscale .p100 b { color: #d5242d; }
+
+/* ---- the rest of Savant's percentile panel: the frame, the title, the section heading ---- */
+.pcol { border: 1.5px solid var(--svframe); border-radius: 0; }
+.pchead { padding: 14px 12px 4px; }
+.pcthd { font-family: "Roboto Condensed", var(--display); font-size: 22px; font-weight: 400; color: var(--svtitle); letter-spacing: 0; }
+.pcthd b, .pcthd .hsel.yr .hsl { font-weight: 700; }
+/* the dotted rule sits under the year only, starting at its left edge, the way Savant draws it */
+.pcthd > :first-child { position: relative; }
+.pcthd > :first-child::after { content: ""; position: absolute; left: 0; top: calc(100% + 3px); width: 36px; height: 2.5px;
+  background: repeating-linear-gradient(to right, var(--svframe) 0 2.5px, transparent 2.5px 5.2px); pointer-events: none; }
+.pcthd > .hsel.yr > .hmenu { z-index: 41; }
+.pchead .pcdots { visibility: hidden; height: 3px; margin-top: 4px; }
+.pctbox .pctfoot { display: none; }
+.svsec { display: flex; align-items: flex-end; gap: 10px; margin: 6px 0 4px; padding: 0 0 2px 2px;
+  border-bottom: 2px solid var(--svframe); color: var(--svhead); }
+.svsec .svicon { display: block; width: 32px; height: 42px; margin-bottom: -2px; flex: none; }
+.svsec .svicon svg { display: block; width: 100%; height: 100%; }
+.svsec .svname { font-family: "Roboto Condensed", var(--display); font-size: 20px; font-weight: 700; line-height: 1; padding-bottom: 4px; }
+.svsec + .meter.pctscale { margin-top: 12px; }
