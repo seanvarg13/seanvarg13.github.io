@@ -40,6 +40,9 @@
   --accent-wash: rgba(123, 175, 212, 0.24);
   --pctrack: #d9e8e3;  /* the unfilled part of a percentile bar */
   --pctrule: #bed8d1;  /* the dashed rule between bars */
+  --svline: #c9dbdb;   /* Savant: the thin line the rest of a percentile bar runs along */
+  --svrule: #98d3d5;   /* Savant: the dashed rule under a bar's label and value */
+  --svtext: #5f6060;   /* Savant: the grey its labels and values are set in */
   --lo: #325aa1;      /* percentile: cold — Savant's blue */
   --mid: #b3b3b3;     /* percentile: 50th — a solid grey, not a tint, so the ends carry */
   --hi: #d22d49;      /* percentile: hot  — Savant's red */
@@ -70,6 +73,9 @@
     --accent-wash: rgba(123, 175, 212, 0.22);
     --pctrack: #2c3b39;
     --pctrule: #3a4f4b;
+    --svline: #34504d;
+    --svrule: #3f6663;
+    --svtext: #b9c3c2;
     --lo: #4a86dd;
     --mid: #6a7382;
     --hi: #e2455c;
@@ -98,6 +104,9 @@
   --accent-wash: rgba(123, 175, 212, 0.22);
   --pctrack: #2c3b39;
   --pctrule: #3a4f4b;
+  --svline: #34504d;
+  --svrule: #3f6663;
+  --svtext: #b9c3c2;
   --lo: #4a86dd;
   --mid: #6a7382;
   --hi: #e2455c;
@@ -2110,3 +2119,50 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .btabbody .hgroups { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px 32px; max-width: none; }
 .btabbody .hgroup h4 { margin: 0 0 4px; }
 .btabbody .meter { grid-template-columns: 150px minmax(60px, 1fr) 64px; }
+
+/* ---- Percentile bars, drawn the way Baseball Savant draws them ----
+   A solid bar filled from the left, the rest of the row just a thin pale line, a white-ringed circle at the end
+   of the fill (a shade darker than the bar, white numerals), faint ticks at the poor / average / great marks,
+   tight rows, and a dashed rule under the label and the value only — never across the bar. */
+.meters .meter { min-height: 26px; padding: 0; column-gap: 10px; border-bottom: 0; font-family: "Roboto Condensed", var(--body); }
+.meters .meter.sub { min-height: 24px; }
+.meters .meter:not(:last-child) { border-bottom: 0; }
+.meters .meter .lbl, .meters .meter .val { align-self: stretch; display: flex; align-items: center; min-width: 0;
+  color: var(--svtext); font-weight: 400; font-size: 13.5px; letter-spacing: 0; }
+.meters .meter .lbl { justify-content: flex-end; text-align: right; overflow: visible; }
+.meters .meter .lbl .lt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meters .meter .val { justify-content: flex-end; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.meters .meter:not(:last-child) > .lbl, .meters .meter:not(:last-child) > .val {
+  background: linear-gradient(to left, var(--svrule) 0 6px, transparent 6px 9px) right bottom / 9px 1px repeat-x; }
+.meters .meter .track { --bub: 24px; height: 17px; border: 0; border-radius: 0; overflow: visible;
+  background: linear-gradient(var(--svline), var(--svline)) left center / 100% 4px no-repeat; }
+.meters .meter .track::after { display: none; }
+.meters .meter .fill { border-radius: 0; min-width: 0; }
+.meters .meter .tk { position: absolute; top: 0; bottom: 0; width: 1px; margin-left: -0.5px; background: #ffffff;
+  opacity: 0.45; z-index: 1; pointer-events: none; }
+.meters .meter .bub { width: var(--bub); height: var(--bub); min-width: 0; padding: 0; border-radius: 50%;
+  color: #ffffff; text-shadow: none; font-family: "Roboto Condensed", var(--body); font-size: 13px; font-weight: 700;
+  letter-spacing: -0.01em; box-shadow: 0 0 0 2.5px var(--surface); z-index: 2; }
+.meters .meter .bub.ghost { color: var(--ink-2); font-size: 12px; }
+.meters .meter.sub .track { --bub: 22px; height: 15px; }
+.meters .meter.sub .bub { font-size: 12px; }
+.meters .meter.sub .lbl, .meters .meter.sub .val { font-size: 12.5px; }
+:root[data-view="mobile"] .meters .meter { min-height: 25px; }
+:root[data-view="mobile"] .meters .meter.sub { min-height: 23px; }
+:root[data-view="mobile"] .meters .meter .track { --bub: 23px; height: 16px; }
+:root[data-view="mobile"] .meters .meter.sub .track { --bub: 21px; height: 14px; }
+:root[data-view="mobile"] .meters .meter .bub { font-size: 12.5px; }
+:root[data-view="mobile"] .meters .meter .lbl, :root[data-view="mobile"] .meters .meter .val { font-size: 13px; }
+.ppage .meters .meter { min-height: 26px; padding: 0; }
+.ppage .meters .meter .track { --bub: 24px; height: 17px; border-radius: 0; }
+/* the POOR / AVERAGE / GREAT strip: each word centred over its tick with the arrow under it, in Savant's colours */
+.ppage .meters .meter.pctscale, .meters .meter.pctscale { min-height: 0; padding: 0 0 4px; }
+.meters .meter.pctscale > .lbl, .meters .meter.pctscale > .val { background: none; }
+.meters .meter.pctscale .track { height: 28px; background: none; }
+.pctscale .sc, .pctscale .p0, .pctscale .p100 { transform: translateX(-50%); right: auto; align-items: center; }
+.pctscale .p0 b, .pctscale .p100 b { margin: 0; }
+.pctscale .sc i { font-style: normal; font-size: 13px; font-weight: 400; letter-spacing: 0; text-transform: uppercase; }
+.pctscale .sc b { font-size: 9px; margin-top: 1px; }
+.pctscale .p0 i, .pctscale .p0 b { color: #3961ac; }
+.pctscale .p50 i, .pctscale .p50 b { color: #9fc4c6; }
+.pctscale .p100 i, .pctscale .p100 b { color: #d5242d; }

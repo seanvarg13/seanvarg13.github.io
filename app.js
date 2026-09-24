@@ -924,6 +924,21 @@
     return s;
   }
   const bubLeft = (p) => `calc(var(--bub) / 2 + (100% - var(--bub)) * ${Math.max(0, Math.min(100, p)) / 100})`;
+  // the player card's bars use Savant's own colours, read off its percentile chart: blue through a pale blue-grey
+  // and a warm grey at the middle to red, with the circle a shade darker than its bar and always white numerals
+  const SAVANT = [[0, [50, 90, 161]], [11, [78, 112, 178]], [38, [158, 187, 202]], [49, [179, 207, 210]], [58, [190, 197, 195]],
+                  [70, [208, 154, 143]], [82, [216, 107, 92]], [90, [216, 70, 62]], [93, [215, 51, 51]], [97, [214, 34, 41]], [100, [213, 31, 38]]];
+  const savantCache = new Map();
+  function savantStyle(p) {
+    p = Math.max(0, Math.min(100, p));
+    if (savantCache.has(p)) return savantCache.get(p);
+    let i = 1; while (i < SAVANT.length - 1 && SAVANT[i][0] < p) i++;
+    const [p0, c0] = SAVANT[i - 1], [p1, c1] = SAVANT[i], t = (p - p0) / (p1 - p0);
+    const c = c0.map((v, k) => Math.round(v + (c1[k] - v) * t));
+    const s = { bg: `rgb(${c.join(",")})`, bub: `rgb(${c.map((v) => Math.round(v * 0.94)).join(",")})` };
+    savantCache.set(p, s);
+    return s;
+  }
   function paint(node, pct) { const s = pctStyle(pct); if (s) { node.style.background = s.bg; node.style.color = s.fg; } }
 
   /* ---------- formatting ---------- */
@@ -1763,16 +1778,17 @@
   }
   function meterRow(m, v, pct, cmp) {
     const row = el("div", "meter");
-    row.append(el("div", "lbl", m.label));
+    const lbl = el("div", "lbl"); lbl.append(el("span", "lt", m.label)); row.append(lbl);
     const track = el("div", "track");
+    for (const at of [0, 50, 100]) { const tk = el("i", "tk"); tk.style.left = bubLeft(at); track.append(tk); }   // Savant's poor / average / great ticks
     if (pct != null) {
-      const s = pctStyle(pct);
+      const s = savantStyle(pct);
       const fill = el("div", "fill"); fill.style.width = bubLeft(pct); fill.style.background = s.bg; track.append(fill);
-      const bub = el("div", "bub", pct); bub.style.left = bubLeft(pct); bub.style.background = s.bg; track.append(bub);
+      const bub = el("div", "bub", pct); bub.style.left = bubLeft(pct); bub.style.background = s.bub; track.append(bub);
     }
     if (cmp && cmp.pct != null) { const b2 = el("div", "bub ghost", cmp.pct); b2.style.left = bubLeft(cmp.pct); track.append(b2); }
     row.append(track);
-    row.append(el("div", "val", v == null ? "–" : fmt(v, m)));
+    row.append(el("div", "val", v == null ? "–" : fmt(v, { ...m, unit: "" })));   // bare numbers, the way Savant prints them: 10.9, 91.9
     row.title = `${m.label}: ${v == null ? "n/a" : fmt(v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}`;
     if (cmp) {
       const cell = el("div", "cmpval");
@@ -3984,7 +4000,7 @@
     row.append(el("div", "lbl"));
     const t = el("div", "track");
     for (const [at, name] of [[0, "Poor"], [50, "Average"], [100, "Great"]]) {
-      const s = el("div", "sc p" + at); s.append(el("i", null, name), el("b", null, "▲"));
+      const s = el("div", "sc p" + at); s.style.left = bubLeft(at); s.append(el("i", null, name), el("b", null, "▲"));
       t.append(s);
     }
     row.append(t, el("div", "val"));
