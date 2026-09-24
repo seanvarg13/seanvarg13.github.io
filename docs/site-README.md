@@ -372,8 +372,11 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
   - **Season Stats** (`renderSeasonTable`) is kept simple: every MLB season and a career row, **PA HR AVG OBP SLG OPS**
     for a hitter and **IP ERA K% BB% GB% Popup%** for a pitcher (K% / BB% per batter faced). GB% and Popup% come from
     `hist/career.js` (`build_career.py` appends them to each pitching season); a file built before that falls back to
-    the season's own data when it is loaded, and the career row shows them only once every season has them. A player
-    with no MLB time gets his minor-league seasons, one line per level.
+    the season's own data when it is loaded, and the career row shows them only once every season has them. Under the
+    MLB table, a **Minor leagues** table (`hist/minors.js`, loaded on demand) lists every minor-league line, one per level
+    (a line with no club is his total across two at that level); a phone puts the level beside the year, long club
+    names are trimmed (the full name on hover), and a pitcher's minor-league lines skip GB% / Popup% (no batted-ball
+    types there).
   - **Rolling** is `renderRolling()`: xwOBA over a hitter's last N PA (K−BB% for a pitcher), 25 to 300. On a phone
     the plot runs from the left edge (no bar column to line up with).
   - **nERA** is the batted-ball luck table (`renderLuckBox`). **uERA** is the uERA table (`renderUeraBox`) and, beside
