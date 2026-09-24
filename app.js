@@ -2599,7 +2599,11 @@
     if (!ds) { body.append(cardTop(renderPlate(p0, { rank: "–" }, "H", "H"), renderSeasonChips(p0)), el("p", "note", `Loading ${dsKey.startsWith("mlb-") ? dsKey.slice(4) : dsKey.replace("aaa-", "") + " Triple-A"} season…`)); return; }
     withDataset(ds, () => withWindow(state.cardWin, () => withSplit(state.split, () => {
       const p = ds.players.find((q) => q.id === p0.id && q.type === p0.type) || p0;
-      const g = ds === CUR ? groupFor(state.pos) : (p.type === "H" ? "H" : p.primary);
+      // ranked in the list's pool only when the card came off that list and it's his kind of list: the fantasy page has its
+      // own hitters / pitchers switch, so there state.pos is whatever the Leaderboard was left on (a pitcher tab would rank
+      // a hitter against pitchers)
+      const gl = groupFor(state.pos), own = p.type === "H" ? "H" : p.primary;
+      const g = ds === CUR && state.mode !== "fantasy" && isPitcherGroup(gl) === (p.type === "P") ? gl : own;
       const ref = ds === CUR ? refFor(g) : g;
       if (needsRows() && !DS.ready()) { DS.load(); body.append(cardTop(renderPlate(p, { rank: "–" }, g, ref), renderSeasonChips(p0))); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); body.append(c); return; }
       const st = ref === g ? (pool(g).stats.get(p.type + p.id) || rankIn(g, p)) : rankIn(ref, p);
@@ -4412,7 +4416,7 @@
   }
   function pctSvg(groups, W) {
     const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
-    const r6 = W - 40, bar = r6 - 40 - 85 - 35;                  // the rule's width, the bar's width
+    const r6 = W - 40, VW = W < 420 ? 41 : 45, bar = r6 - 40 - 85 - VW;   // the rule's width, the value column (room for "118.5" beside a 100 bubble; a phone's bar can't spare as much), the bar's width
     const x = (p) => 10 + (bar - 10) * Math.max(0, Math.min(100, p)) / 100;
     const root = mk("g", { transform: "translate(20,10)" });
     let y = 0;
@@ -4449,8 +4453,8 @@
         for (const tx of [x(50) - 1, 11, bar - 13]) B.append(mk("rect", { class: "svtick", width: 2, height: 20, x: tx }));
         M.append(B);
         M.append(mk("text", { class: "svlbl", x: 80, y: 10, "text-anchor": "end" }, r.label));
-        M.append(mk("text", { class: "svlbl", x: 85 + bar + 35, y: 10, "text-anchor": "end" }, r.value));
-        if (i) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + 35},-1.5` }));
+        M.append(mk("text", { class: "svlbl", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));
+        if (i) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + VW},-1.5` }));
         if (on) {
           const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
           C.append(mk("circle", { class: "svbulb", r: 10, fill: s.bub }));
