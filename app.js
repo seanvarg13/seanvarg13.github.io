@@ -3242,7 +3242,7 @@
     if (mp) {                                           // in a popup card: from under the plate to the panel's foot, less the tab strip
       if (mobileView()) mp.style.height = "";
       else {
-        const mb = $("modal-body"), bar = mb.querySelector(".pbelow2 .btabs");
+        const mb = cardSc(), bar = mb.querySelector(".pbelow2 .btabs");
         const top = mp.getBoundingClientRect().top - mb.getBoundingClientRect().top + mb.scrollTop;
         mp.style.height = Math.max(360, Math.round(mb.clientHeight - top - (bar ? bar.getBoundingClientRect().height + 22 : 0) - 12)) + "px";
       }
@@ -3283,11 +3283,11 @@
   let holdScroll = null, lastPlayerId = null;        // scroll still owed to a player's page (see keepScroll)
   function render() {
     const cardKey = () => (state.mode === "player" ? "x" + state.x.id : state.expanded);   // his page is a card too
-    const keep = keepScroll(), mb = $("modal-body"), open = !$("modal").hidden ? cardKey() : null, mtop = mb ? mb.scrollTop : 0;
+    const keep = keepScroll(), mb = cardSc(), open = !$("modal").hidden ? cardKey() : null, mtop = mb ? mb.scrollTop : 0;
     renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage(); ddSync();
     if (ddOpen && !ddOpen.trig.isConnected) ddClose();   // a list whose opener was redrawn away
     keep();
-    if (open && open === cardKey() && !$("modal").hidden && mb.scrollTop !== mtop) mb.scrollTop = mtop;   // the same card, redrawn
+    const sc = cardSc(); if (open && open === cardKey() && !$("modal").hidden && sc && sc.scrollTop !== mtop) sc.scrollTop = mtop;   // the same card, redrawn
   }
   // A player's page is rebuilt on every pick (a season, a level, a tab, a filter). Rebuilt, it is briefly short and the
   // window snaps to the top, and its panels' own scrollers start over. On the same player, put them all back; if the
@@ -4023,7 +4023,7 @@
       const bar = document.querySelector(inPop ? "#modal-body .pbelow2 .btabs" : "#xboard .pbelow2 .btabs"); if (!bar) return;
       const sec = bar.closest(".pbelow2"), delta = bar.getBoundingClientRect().top - y0;
       if (Math.abs(delta) < 1) return;
-      const sc = inPop ? $("modal-body") : null;
+      const sc = inPop ? cardSc() : null;
       const scrolls = sc && sc.scrollHeight > sc.clientHeight + 1 && getComputedStyle(sc).overflowY !== "visible";
       const pos = scrolls ? sc.scrollTop : window.scrollY;
       const max = scrolls ? sc.scrollHeight - sc.clientHeight : document.documentElement.scrollHeight - window.innerHeight;
@@ -4610,9 +4610,13 @@
     const B = el("div", "pcol pcolB wide");                   // one box, two columns of sections, for hitters and pitchers
     renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
     page.append(B);
-    box.append(page);
-    box.append(renderBelow(p, { st, g, ref }));
+    // only what's under the plate scrolls (Sean: "the scrolling only involves the non header parts"), so a flick or a
+    // phone's rubber-band never moves the plate or opens a gap above it
+    const sc = el("div", "cardscroll"); sc.append(page, renderBelow(p, { st, g, ref }));
+    box.append(sc);
   }
+  // the card's scroller: its body under the plate, else (a settings panel) the modal body itself
+  const cardSc = () => { const mb = $("modal-body"); return (mb && mb.querySelector(":scope > .cardscroll")) || mb; };
   // Savant's dropdown, the one list every picker on the site opens: a white box inside a heavy dark rule hung straight
   // under what was clicked, the choices in large type — never the browser's list or the phone's wheel. It lives on the
   // page itself (fixed, above everything), so no sideways-scrolling strip, popup or pinned header can clip it or sit on
