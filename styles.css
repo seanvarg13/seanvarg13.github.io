@@ -2531,3 +2531,6 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 /* the dotted rule under the year / level: whole dots spread evenly across the word, so the last one is never sliced in
    half at the word's end (it read as a glitch) */
 .tsl, .phead .tsel:not(.solo) .tsl { background-repeat: space no-repeat; background-size: 8px 4px; background-position: left bottom; }
+/* the sources and personal-use line at the foot of every page and card */
+.credit { margin: 18px auto 22px; padding: 0 16px; max-width: 860px; font-size: 11px; line-height: 1.45; color: var(--muted); text-align: center; }
+.cardscroll .credit { margin: 8px auto 16px; }
