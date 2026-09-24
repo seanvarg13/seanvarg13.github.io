@@ -369,15 +369,17 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
     page's own sections for both sides (`cmpPageGrid`), and **Set up comparison** picks each side's season, split and
     dates and which stats sit on the grid — the page's, by section, plus anything from **More stats**, which lands as a
     plain row under "Added" (`state.cmp2.pick`). Nothing folds out.
-  - **Season Stats** (`renderSeasonTable`), the look Sean picked: an **MLB** table (one row per season, a combined
-    "TOT" line for a two-club year, and a career row) over a **Minor leagues** table (every minor-league line, one per
-    level and club, newest first; a line with no club is his total at a level, labelled Total). Hitters: **PA HR AVG
-    OBP SLG OPS**. Pitchers: **IP ERA uERA K% BB% GB% Popup%** in the majors, the same less uERA in the minors (K% / BB%
-    per batter faced). **uERA** is worked out on the page against that season's pitchers — opening the table fetches
-    each MLB year's `hist/mlb-YYYY.js` — and its cell is heat-mapped by the year's uERA percentile; the career uERA is
-    innings-weighted. GB% / Popup% come from career.js / minors.js (appended to each line by `build_career.py`), else
-    from the season's own file when it's loaded; a single club's line at a level that has a Total shows none. A phone
-    puts the level beside the year and trims club names.
+  - **Season Stats** (`renderSeasonTable`), the look Sean picked: an **MLB** table (one row per season and a career
+    row) over a **Minor leagues** table (one row per year, newest first). A year with more than one club or level has
+    a ▸ that opens it (`SEASON_OPEN`): a traded MLB season opens to each club's line (`HT`/`PT` in career.js, kept by
+    `build_career.py`), a minor-league year to each level, and a level with two clubs to those clubs. Hitters: **PA HR
+    AVG OBP SLG OPS**. Pitchers: **IP ERA uERA K% BB% GB% Popup%** in the majors, the same less uERA in the minors
+    (K% / BB% per batter faced). **uERA** is worked out on the page against that season's pitchers — opening the table
+    fetches each MLB year's `hist/mlb-YYYY.js` — and its cell is heat-mapped by the year's uERA percentile; the career
+    uERA is innings-weighted. GB% / Popup% come from career.js / minors.js (appended to each line by
+    `build_career.py`), else from the season's own file when it's loaded; a single club's line shows none, and a
+    minor-league year total has them only when every level does. A phone puts the level beside the year (under it for
+    a year across levels) and trims club names.
   - **Rolling** is `renderRolling()`: xwOBA over a hitter's last N PA (K−BB% for a pitcher), 25 to 300. On a phone
     the plot runs from the left edge (no bar column to line up with).
   - **nERA** is the batted-ball luck table (`renderLuckBox`). **uERA** is the uERA table (`renderUeraBox`) and, beside

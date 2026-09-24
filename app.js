@@ -2127,31 +2127,52 @@
         return st && st.uera != null ? { v: st.uera, pct: st.pct.uera } : null;
       })));
     };
+    const teams0 = (ls) => ls.filter((l) => l.team).length > 1;   // a club's line is one slice of a level he played for two at
+    // a year's total across levels: the lines added up; GB% / Popup% only when every level has them
+    const yearTotal = (season, lv) => {
+      const c = combineLines(H, lv.map((x) => x.line));
+      if (!H) for (const k of ["GB%", "Popup%"]) {
+        const vs = lv.map((x) => [val(x.line, k), Number(x.line.c.BF) || 0]);
+        c.adv[k === "GB%" ? "gb" : "pu"] = vs.every(([v, w]) => v != null && w) ? vs.reduce((s0, [v, w]) => s0 + v * w, 0) / vs.reduce((s0, [, w]) => s0 + w, 0) : null;
+      }
+      return { season, level: "", team: "", c, mlb: false, total: true };
+    };
     // the API's older level names, as the levels are called now
     const lvName = (l) => ({ "A(Adv)": "A+", "A(Full)": "A", "A(Short)": "A-", ROK: "Rk" }[l] || l);
     // one table: his MLB seasons with a career row, or his minor-league lines (a Level column, one row per level)
-    const table = (rows, minors) => {
+    let table = (rows, minors) => {
       const t = el("table"), thead = el("thead"), tr = el("tr");
       const tc = minors ? cols : colsMLB;
       const lvCol = minors && !mobileView();                // a phone puts the level beside the year: one column fewer to fit
       for (const h of ["Season", ...(lvCol ? ["Level"] : []), "Team", ...tc]) tr.append(el("th", ["Season", "Level", "Team"].includes(h) ? "l" : h === "uERA" ? "lc" : null, h));
       thead.append(tr); t.append(thead);
       const tbody = el("tbody");
-      for (const r of rows) {
-        const row = el("tr"); if (!minors && r.season === DS.season) row.classList.add("cur");
-        const sc = el("td", "l", String(r.season)); if (minors && !lvCol) sc.append(" ", el("span", "lvtag", lvName(r.level))); row.append(sc);
-        if (lvCol) row.append(el("td", "l", lvName(r.level)));
-        const tm = el("td", "l tm", r.team || (minors ? "Total" : "")); if (minors && r.team) tm.title = r.team; row.append(tm);   // a club's full name on hover; no club = his line across two at that level
+      const draw = (r, seasonTxt, level, team, cls) => {
+        const row = el("tr", cls || null);
+        const sc = el("td", "l", seasonTxt); if (minors && !lvCol && level) sc.append(" ", el("span", "lvtag" + (level.includes("/") ? " multi" : ""), level)); row.append(sc);
+        if (lvCol) row.append(el("td", "l", level || ""));
+        const tm = el("td", "l tm", team || ""); if (team && team.length > 14) tm.title = team; row.append(tm);   // a club's full name on hover
         for (const k of tc) {
           if (k === "uERA") {                                    // the year's uERA, coloured by its percentile among that season's pitchers
-            const u = uera(r.season), td = el("td", "uera", u === undefined ? "…" : fmtv(k, u && u.v));
+            const u = r.club ? null : uera(r.season), td = el("td", "uera", u === undefined ? "…" : fmtv(k, u && u.v));
             if (u && u.pct != null) { paint(td, u.pct); td.title = `uERA ${u.v.toFixed(2)} · ${ordinal(u.pct)} pctl among ${r.season} pitchers`; }
             row.append(td); continue;
           }
           row.append(el("td", null, fmtv(k, val(r, k))));
         }
-        tbody.append(row);
+        tbody.append(row); return row;
+      };
+      // one row a year; a year split across levels or clubs opens (▸) to them (Sean: condensed, with a drop-down)
+      for (const it of rows) {
+        const r = it.r, k0 = key + (minors ? ":m" : ":") + r.season, open = it.kids.length > 0 && SEASON_OPEN.has(k0);
+        const row = draw(r, String(r.season), it.level, it.team, (!minors && r.season === DS.season ? "cur" : "") + (it.kids.length ? " haskids" : "") + (open ? " open" : ""));
+        if (!it.kids.length) continue;
+        const btn = el("button", "yrtog", open ? "▾" : "▸"); btn.type = "button"; btn.setAttribute("aria-expanded", String(open)); btn.title = open ? "Hide the split" : "Show each level and club";
+        row.firstChild.prepend(btn);
+        row.addEventListener("click", () => { if (SEASON_OPEN.has(k0)) SEASON_OPEN.delete(k0); else SEASON_OPEN.add(k0); render(); });
+        if (open) for (const c of it.kids) draw(c.r, "", c.level, c.team, "sub" + (c.deep ? " sub2" : ""));
       }
+      rows = rows.map((it) => it.r);                             // the career row below reads the years' own lines
       if (!minors) {
         const rec = window.DRAFT_CAREER[String(p.id)], career = rec ? rec[p.type + "C"] : null;
         if (career) {
@@ -2172,15 +2193,47 @@
     ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS);
     const LV = ["AAA", "AA", "A+", "A", "A-", "Rk"];
     const milb = window.DRAFT_MINORS ? lines.filter((l) => !l.mlb && !l.combo).sort((a, b) => b.season - a.season || LV.indexOf(lvName(a.level)) - LV.indexOf(lvName(b.level))) : [];
-    const withTotal = new Set(milb.filter((l) => !l.team).map((l) => l.season + "|" + lvName(l.level)));
-    milb.forEach((l) => { if (l.team && withTotal.has(l.season + "|" + lvName(l.level))) l.club = true; });
-    if (mlb.length) { if (milb.length || !window.DRAFT_MINORS) box.append(el("h4", "rawhd", "MLB")); box.append(table(mlb, false)); }
+    const key = p.type + p.id, keysMLB = H ? RAW_H : RAW_P;
+    // MLB: a two-club year's combined line, opening to each club's (career.js's HT / PT rows)
+    const rec = window.DRAFT_CAREER[String(p.id)], clubs = {};
+    for (const r of (rec && rec[p.type + "T"]) || []) {
+      const c = {}; keysMLB.forEach((k, i) => { c[k] = r[2 + i]; });
+      const ex = r.slice(2 + keysMLB.length); if (H) { c.HBP = ex[0] || 0; c.SF = ex[1] || 0; } else { c.ER = ex[0]; c.BF = ex[1]; }
+      (clubs[r[0]] = clubs[r[0]] || []).push({ season: r[0], level: "MLB", team: r[1], c, mlb: true, club: true });
+    }
+    const mlbItems = mlb.map((l) => {
+      const cs = clubs[l.season] || [];
+      return { r: l, level: "", team: cs.length > 1 ? `${cs.length} teams` : l.team, kids: cs.length > 1 ? cs.map((c) => ({ r: c, level: "", team: c.team })) : [] };
+    });
+    // the minors: per year, per level — the level's own total when he had two clubs there (the API's club-less line)
+    const years = new Map();
+    for (const l of milb) {
+      const lv = lvName(l.level), y = years.get(l.season) || years.set(l.season, new Map()).get(l.season);
+      (y.get(lv) || y.set(lv, []).get(lv)).push(l);
+    }
+    const milbItems = [...years].sort((a, b) => b[0] - a[0]).map(([season, byLv]) => {
+      const lv = [...byLv].sort((a, b) => LV.indexOf(a[0]) - LV.indexOf(b[0])).map(([level, ls]) => {
+        const tot = ls.find((l) => !l.team), teams = ls.filter((l) => l.team).map((l) => Object.assign({}, l, { club: teams0(ls) }));
+        const line = tot || (teams.length === 1 ? Object.assign({}, teams[0], { club: false }) : { season, level, team: "", c: combineLines(H, teams), mlb: false });
+        return { level, line, clubs: teams.length > 1 ? teams : [] };
+      });
+      const nTeams = lv.reduce((n, x) => n + Math.max(1, x.clubs.length), 0);
+      const r = lv.length === 1 ? lv[0].line : yearTotal(season, lv);
+      const kids = [];
+      for (const x of lv) {
+        if (lv.length > 1) kids.push({ r: x.line, level: x.level, team: x.clubs.length > 1 ? `${x.clubs.length} teams` : x.line.team });
+        if (x.clubs.length > 1) for (const c of x.clubs) kids.push({ r: c, level: lv.length > 1 ? "" : x.level, team: c.team, deep: lv.length > 1 });
+      }
+      return { r, level: lv.map((x) => x.level).join("/"), team: lv.length === 1 && lv[0].clubs.length <= 1 ? lv[0].line.team : `${nTeams} teams`, kids };
+    });
+    if (mlb.length) { if (milb.length || !window.DRAFT_MINORS) box.append(el("h4", "rawhd", "MLB")); box.append(table(mlbItems, false)); }
     if (want.size) { box.append(el("p", "note", "Loading each season for uERA…")); for (const k of want) ensureHist(k); }
     if (!window.DRAFT_MINORS) { if (!failed.has("hist/minors.js")) box.append(el("p", "note", "Loading minor-league seasons…")); else if (!mlb.length) box.append(el("p", "note", "No seasons on record.")); return box; }
-    if (milb.length) { box.append(el("h4", "rawhd", "Minor leagues")); box.append(table(milb, true)); }
+    if (milb.length) { box.append(el("h4", "rawhd", "Minor leagues")); box.append(table(milbItems, true)); }
     if (!mlb.length && !milb.length) box.append(el("p", "note", "No seasons on record."));
     return box;
   }
+  const SEASON_OPEN = new Set();                          // the years opened in a Season Stats table (this visit)
   function renderCard(p, ms, st, g, ref, opts = {}) {
     const card = p.type === "H" ? renderHitterCard(p, st, g, ref, opts) : renderPitcherCard(p, ms, st, g, ref, opts);
     if (state.mode !== "compare") card.append(foldSection("raw", "Season stats", () => renderRawStats(p, true)));

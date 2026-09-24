@@ -2595,3 +2595,13 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .rawstats.simple.pit th, :root[data-view="mobile"] .rawstats.simple.pit td { padding-left: 2.5px; padding-right: 2.5px; font-size: 12px; }
 :root[data-view="mobile"] .rawstats.simple.pit th { font-size: 10px; letter-spacing: 0; }
 :root[data-view="mobile"] .rawstats.simple.pit td.tm { max-width: 56px; }
+/* Season Stats drop-downs: a year split across levels or clubs opens (▸); its lines sit under it, lightly shaded */
+.rawstats tr.haskids { cursor: pointer; }
+.rawstats .yrtog { border: 0; background: none; padding: 0 4px 0 0; margin: 0; font: inherit; font-size: 0.8em; color: var(--accent-2-text); cursor: pointer; }
+.rawstats tr.sub td { background: color-mix(in srgb, var(--accent-2) 7%, transparent); color: var(--ink-2); font-weight: 400; }
+.rawstats tr.sub td.tm { padding-left: 12px; }
+.rawstats tr.sub2 td.tm { padding-left: 20px; }
+:root[data-view="mobile"] .rawstats tr.sub td.tm, :root[data-view="mobile"] .rawstats tr.sub2 td.tm { padding-left: 6px; }
+:root[data-view="mobile"] .rawstats .lvtag { font-size: 0.72em; }
+/* a year across levels ("AAA/AA") stacks its tag under the year on a phone, or the table runs a few px wide */
+:root[data-view="mobile"] .rawstats .lvtag.multi { display: block; line-height: 1.1; }
