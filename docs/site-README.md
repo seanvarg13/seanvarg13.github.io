@@ -329,7 +329,10 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
 
 - **The pinned plate** (`playerHead()`, `.phead`). The headshot sits in a square framed tile (the card's navy outline, a
   light wash behind the cut-out, a hard offset shadow) with the **Star** button under it (`.phmug`), on a desktop and a phone
-  alike; every header button, the site's nav included, has the same square navy outline and shadow. the blue plate from edge to edge of the window. On a desktop it is
+  alike; every header button, the site's nav included, has the same square navy outline and shadow.
+  The plate never scrolls: `playerView()` puts everything under it in `.cardscroll`, the card's only scroller (`cardSc()`
+  in `app.js`), so a flick or a phone's rubber-band moves the stats and never the plate. Its pieces ride at the top of it
+  (the tile, his lines, the filters box), which keeps it short. the blue plate from edge to edge of the window. On a desktop it is
   three columns with equal outer ones, so the middle sits over the middle of the page: the cut-out headshot, name,
   team / position / age, the sample (PA · AB · BBE · G, or IP · BF · G/GS · pitches), "full season" and Star on the
   left; the season's title (below) dead centre; and on the right one labelled grid of filters — **From**, **To** and

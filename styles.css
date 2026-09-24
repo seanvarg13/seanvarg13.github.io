@@ -2485,3 +2485,23 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 .modes a[aria-current="page"], .modes .modesel[aria-current="page"], :root:not([data-view="mobile"]) .modes a[aria-current="page"],
 :root:not([data-view="mobile"]) .modes .modesel[aria-current="page"], :root[data-view="mobile"] .modes a[aria-current="page"],
 :root[data-view="mobile"] .modes .modesel[aria-current="page"] { border-color: var(--rule); }
+/* A shorter plate (Sean: "make the header smaller"): everything rides at the top instead of centring on the tallest
+   piece — his lines, the tile and the filters box — and the tile and its Star are a size down */
+:root .phead .mplate .mug, :root:not([data-view="mobile"]) .phead .mplate .mug { width: 96px; height: 96px; }
+:root[data-view="mobile"] .phead .mplate .mug { width: 74px; height: 74px; padding-top: 4px; }
+.phmug, .phleft > .phmug { gap: 6px; }
+.phmug .starbtn { height: 26px; padding: 0 9px; font-size: 11.5px; }
+:root:not([data-view="mobile"]) .phead .mplate { align-items: start; padding-top: 8px; padding-bottom: 8px; row-gap: 4px; }
+:root:not([data-view="mobile"]) .phleft { align-items: flex-start; align-self: start; }
+:root:not([data-view="mobile"]) .phleft > div { align-self: flex-start; }
+:root:not([data-view="mobile"]) .phead .phfilt { align-self: start; }
+:root[data-view="mobile"] .phead .mplate { align-items: flex-start; padding-top: 8px; padding-bottom: 6px; row-gap: 4px; }
+:root[data-view="mobile"] .phead .mplate > div { align-self: flex-start; }
+:root[data-view="mobile"] .phead .ptitle { padding-top: 0; }
+/* A card (a popup and his page alike) scrolls only under its plate: the modal body is a column that doesn't scroll, the
+   plate keeps its place at the top, and .cardscroll takes the rest and scrolls on its own */
+.modal.pcard #modal-body, :root:not([data-view="mobile"]) .modal.pcard #modal-body, :root[data-view="mobile"] .modal.pcard #modal-body {
+  display: flex; flex-direction: column; overflow: hidden; }
+.modal.pcard #modal-body > .cardtop { flex: none; position: relative; top: auto; }
+.cardscroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+:root .modal .cardscroll .cmpgrid .ccorner, :root .modal .cardscroll .cmpgrid .chead { top: 0; }   /* pinned to the scroller's own top now */
