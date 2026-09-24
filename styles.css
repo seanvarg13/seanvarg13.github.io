@@ -1760,18 +1760,19 @@ body.modal-open header.top { z-index: 60; }
 .modes .modesel .chev { transition: transform 0.12s ease; }
 .modes .modesel.open .chev { transform: rotate(180deg); }
 .modes .modesel.open { color: var(--accent-2-ink); background: var(--on-fill-wash); }
-.modemenu { position: fixed; z-index: 200; display: none; min-width: 178px; margin: 0; padding: 4px; list-style: none;
-            background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22); }
-.modesel.open .modemenu { display: block; }
+/* the list itself is Savant's, like every dropdown on the player page: a white box in a heavy dark rule, the pages
+   in large type. It sits on the page, outside the header (app.js moves it there), so nothing can clip or cover it. */
+.modemenu { position: fixed; z-index: 1000; display: none; min-width: 150px; margin: 0; padding: 2px 0; list-style: none;
+            background: var(--surface); border: 3px solid var(--ddline); border-radius: 3px; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12); }
+.modemenu.show { display: block; }
 .modemenu li { margin: 0; padding: 0; }
-.modes .modesel .modemenu li a {
-  display: block; min-height: 0; margin: 0; padding: 9px 12px; border: 0; border-radius: 3px; background: none;
-  color: var(--ink); font-size: 13px; font-weight: 600; letter-spacing: 0.01em; text-transform: none;
-  text-decoration: none; white-space: nowrap; opacity: 1;
+.modemenu li a {
+  display: block; margin: 0; padding: 1px 12px; border: 0; background: none; color: var(--ink);
+  font-family: var(--display); font-size: 19px; font-weight: 400; line-height: 1.45; letter-spacing: 0; text-transform: none;
+  text-decoration: none; white-space: nowrap;
 }
-.modes .modesel .modemenu li a:hover, .modes .modesel .modemenu li a:focus-visible { background: var(--accent-wash); color: var(--ink); }
-.modes .modesel .modemenu li a[aria-current="page"] { background: var(--accent-2); color: var(--accent-2-ink); }
-:root[data-view="mobile"] .modes .modesel .modemenu li a { padding: 11px 14px; font-size: 14px; }
+.modemenu li a:hover, .modemenu li a:focus-visible { background: var(--hover); outline: none; }
+.modemenu li a[aria-current="page"] { font-weight: 700; }
 
 /* The rankings bar stays one row while it fits. When edit mode brings more buttons than the width can
    hold, the group wraps to its own line instead of drawing over the list name and Save (#ranktools has
@@ -2348,17 +2349,23 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .tsl { display: inline-block; margin: 0; padding: 0 0 6px; border: 0; font: inherit; color: inherit; letter-spacing: inherit; cursor: pointer;
   background: radial-gradient(circle, var(--accent-2) 1.5px, transparent 1.7px) left bottom / 9px 4px repeat-x; }
 .tsel.solo .tsl { background: none; padding-bottom: 0; cursor: default; }
-.tsl:hover, .tsel.open .tsl { color: var(--accent-2-text); }
+.tsl:hover, .tsl.ddon { color: var(--accent-2-text); }
 /* Savant's dropdown list: under what was clicked, a white box in a heavy dark rule, the choices in large type */
 :root { --ddline: #43616b; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ddline: #9ab8c2; } }
 :root[data-theme="dark"] { --ddline: #9ab8c2; }
 .dd { position: relative; display: inline-block; max-width: 100%; vertical-align: baseline; }
-.ddmenu { position: absolute; top: 100%; left: 0; z-index: 70; min-width: 100%; max-height: min(50vh, 420px); overflow-y: auto;
-  margin-top: 1px; padding: 2px 0; background: var(--surface); border: 3px solid var(--ddline); border-radius: 3px; text-align: left;
+/* the list is placed on the page (fixed, over everything) under its opener by app.js — see ddOpenOn */
+.ddmenu { position: fixed; z-index: 1000; max-height: min(50vh, 420px); overflow-y: auto; margin: 0;
+  padding: 2px 0; background: var(--surface); border: 3px solid var(--ddline); border-radius: 3px; text-align: left;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12); overscroll-behavior: contain; }
-.ddmenu[hidden] { display: none; }
-.dd.ddright .ddmenu { left: auto; right: 0; }
+.ddh { padding: 6px 12px 2px; font-family: var(--body); font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted); }
+/* a select that opens Savant's list: the select stays, hidden, behind a box (or the pill it sits in) */
+.ddnative { display: none !important; }
+.pill select.ddinpill { pointer-events: none; }
+button.pill { font-family: inherit; text-align: left; }
+.ddbox.ddsel { min-width: 96px; }
 .ddi { display: block; width: 100%; margin: 0; padding: 1px 12px; border: 0; background: none; cursor: pointer; text-align: left;
   font-family: var(--display); font-size: 19px; font-weight: 400; line-height: 1.45; letter-spacing: 0; text-transform: none;
   color: var(--ink); white-space: nowrap; }
@@ -2404,4 +2411,4 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .modal.pcard .pctbox { padding-inline: 4px; }
 :root[data-view="mobile"] .modal.pcard .pbelow2 { margin-inline: 6px; }
 /* on the band a pressed box keeps its white (the site's hover wash is see-through, which reads as blue there) */
-.mplate .ddbox:hover, .mplate .ddbox:focus, .mplate .dd.open .ddbox { background: var(--surface); border-color: var(--ddline); }
+.mplate .ddbox:hover, .mplate .ddbox:focus, .mplate .ddbox.ddon { background: var(--surface); border-color: var(--ddline); }

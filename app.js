@@ -866,14 +866,15 @@
   const keyBase = (key) => key.split("-").slice(0, 2).join("-");                       // the year-level key without the game type
   const kindTag = (key) => (KIND_SHORT[keyKind(key)] ? " " + KIND_SHORT[keyKind(key)] : "");
   // a select drawn as a pill (the native chevron collides with text in Safari, so the real select sits invisibly on top)
+  // the filters' white box with a chevron; clicking it opens Savant's list (ddOpenOn) of its options
   function pillSelect(text, options, value, onChange, aria) {
-    const pill = el("label", "pill");
+    const pill = el("button", "pill"); pill.type = "button"; pill.setAttribute("aria-label", `${aria}: ${text}`);
     pill.append(el("span", "pill-text", text));
     pill.insertAdjacentHTML("beforeend", '<svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>');
-    const sel = el("select"); sel.setAttribute("aria-label", aria);
-    for (const [v, l] of options) { const o = el("option", null, l); o.value = v; sel.append(o); }
-    sel.value = value; sel.addEventListener("click", (e) => e.stopPropagation()); sel.addEventListener("change", (e) => onChange(e.target.value));
-    pill.append(sel); return pill;
+    if (options.length < 2) { pill.classList.add("solo"); return pill; }
+    pill.setAttribute("aria-haspopup", "listbox"); pill.setAttribute("aria-expanded", "false");
+    pill.addEventListener("click", (e) => { e.stopPropagation(); ddOpenOn(pill, options, value, (v) => onChange(String(v)), { keyboard: e.detail === 0 }); });
+    return pill;
   }
   // Year + Level pickers for one player's seasons (index rows [key, season, type, role, sample, team] of one type)
   function renderSeasonPicker(seasons, curKey, onPick, compact, o = {}) {
@@ -1317,6 +1318,7 @@
     }
     sel.value = state.pos;
     sel.addEventListener("change", (e) => { const pos = e.target.value; if (pos === state.pos) return; state.pos = pos; state.expanded = null; ensureSortValid(); savePrefs(); render(); });
+    queueMicrotask(() => ddSelect(sel));                  // once it's in its pill
     pill.append(sel);
     box.append(pill);
   }
@@ -1767,7 +1769,7 @@
     const sel = el("select");
     for (const n of PAGE_SIZES) { const o = el("option", null, n ? String(n) : "All"); o.value = String(n); if (n === (state.pageSize || 0)) o.selected = true; sel.append(o); }
     sel.addEventListener("change", () => setSize(Number(sel.value)));
-    sz.append(sel); box.append(sz);
+    sz.append(sel); box.append(sz); ddSelect(sel);
   }
 
   // a metric's value for display: season / window values live on V(p).m, pool-derived ones (underlying ERA) on the stats
@@ -2462,7 +2464,7 @@
       for (const x of opts) { const o = el("option", null, x); o.value = x; sel.append(o); }
       sel.addEventListener("click", (e) => e.stopPropagation());
       sel.addEventListener("change", (e) => { if (e.target.value) { addPos(p, e.target.value); render(); } });
-      box.append(sel);
+      box.append(sel); ddSelect(sel);
     }
     return box;
   }
@@ -2898,7 +2900,7 @@
       const rm = el("button", "btn btn-quiet", "Remove star"); rm.type = "button"; rm.disabled = !starsOf(sel.value)[key]; rm.addEventListener("click", () => { setStar(sel.value, key, null); state.starOpen = null; render(); });
       const cx = el("button", "btn btn-quiet", "Cancel"); cx.type = "button"; cx.addEventListener("click", () => { state.starOpen = null; render(); });
       row.append(sv, rm, cx);
-      const lbl = el("label", "field"); lbl.append(el("span", null, "On list"), sel);
+      const lbl = el("label", "field"); lbl.append(el("span", null, "On list"), sel); ddSelect(sel);
       panel.append(lbl, ta, row);
       box.append(panel);
     }
@@ -3303,7 +3305,8 @@
   let holdScroll = null, lastPlayerId = null;        // scroll still owed to a player's page (see keepScroll)
   function render() {
     const keep = keepScroll(), mb = $("modal-body"), open = !$("modal").hidden ? state.expanded : null, mtop = mb ? mb.scrollTop : 0;
-    renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage();
+    renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage(); ddSync();
+    if (ddOpen && !ddOpen.trig.isConnected) ddClose();   // a list whose opener was redrawn away
     keep();
     if (open && open === state.expanded && !$("modal").hidden && mb.scrollTop !== mtop) mb.scrollTop = mtop;   // the same card, redrawn
   }
@@ -3511,7 +3514,7 @@
     const sel = el("select");
     for (const p of fpresets()) { const o = el("option", null, p.name); o.value = p.id; if (p.id === fpreset().id) o.selected = true; sel.append(o); }
     sel.addEventListener("change", () => { fstore.current = sel.value; fsave(); renderFantasy(); });
-    pre.append(sel); bar.append(pre);
+    pre.append(sel); bar.append(pre); ddSelect(sel);
     const edit = el("button", "btn btn-quiet", "Edit scoring"); edit.type = "button"; edit.addEventListener("click", () => { location.hash = "#fantasy/settings"; }); bar.append(edit);
     bar.append(pillSelect(y, FYEARS.map((yy) => [yy, yy]), y, (yy) => { f.year = yy; fUi(); renderFantasy(); }, "Season"));
     const seg = el("div", "seg"); seg.setAttribute("role", "group");
@@ -4617,38 +4620,89 @@
     box.append(page);
     box.append(renderBelow(p, { st, g, ref }));
   }
-  // Savant's dropdown, used by every picker on the player page: the list hangs straight under what was clicked — a
-  // white box inside a heavy dark rule, the choices in large type — instead of the browser's list or the phone's
-  // wheel. Opening it touches nothing else on the page (no redraw); a pick, a click anywhere else or Escape closes it.
-  let ddOpen = null;
+  // Savant's dropdown, the one list every picker on the site opens: a white box inside a heavy dark rule hung straight
+  // under what was clicked, the choices in large type — never the browser's list or the phone's wheel. It lives on the
+  // page itself (fixed, above everything), so no sideways-scrolling strip, popup or pinned header can clip it or sit on
+  // it. A pick, a click anywhere else or Escape closes it; it follows its opener if the page scrolls.
+  // opts: [value, label] pairs; a [null, label] pair is a heading (an <optgroup>'s name).
+  let ddOpen = null;                                   // { trig, menu, right }
   function ddClose() {
     if (!ddOpen) return;
-    const [w, t] = ddOpen; ddOpen = null;
-    const m = w.querySelector(":scope > .ddmenu"); if (m) m.hidden = true;
-    w.classList.remove("open"); t.setAttribute("aria-expanded", "false");
+    const { trig, menu } = ddOpen; ddOpen = null;
+    menu.remove(); trig.classList.remove("ddon"); trig.setAttribute("aria-expanded", "false");
   }
-  document.addEventListener("click", ddClose);
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") ddClose(); });
-  function ddList(trigger, opts, cur, onPick, cls) {
-    const w = el("span", "dd" + (cls ? " " + cls : ""));
-    w.append(trigger);
-    if (opts.length < 2) { w.classList.add("solo"); trigger.disabled = true; return w; }
-    const menu = el("div", "ddmenu"); menu.setAttribute("role", "listbox"); menu.hidden = true;
+  function ddPlace() {
+    if (!ddOpen) return;
+    const { trig, menu, right } = ddOpen, r = trig.getBoundingClientRect();
+    if (!trig.isConnected || (!r.width && !r.height)) { ddClose(); return; }   // its opener went with a redraw
+    menu.style.minWidth = Math.round(r.width) + "px";
+    const w = menu.offsetWidth, h = menu.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
+    const left = Math.max(6, Math.min(right ? r.right - w : r.left, vw - w - 6));
+    const top = r.bottom + h + 6 > vh && r.top - h - 1 > 6 ? r.top - h - 1 : r.bottom + 1;   // no room under it: over it
+    menu.style.left = Math.round(left) + "px"; menu.style.top = Math.round(top) + "px";
+  }
+  function ddOpenOn(trig, opts, cur, onPick, o = {}) {
+    const was = ddOpen && ddOpen.trig === trig; ddClose(); if (was) return;
+    const menu = el("div", "ddmenu"); menu.setAttribute("role", "listbox");
     for (const [v, l] of opts) {
+      if (v === null) { menu.append(el("div", "ddh", l)); continue; }
       const on = String(v) === String(cur), b = el("button", "ddi" + (on ? " on" : ""), l);
       b.type = "button"; b.setAttribute("role", "option"); b.setAttribute("aria-selected", String(on));
       b.addEventListener("click", (e) => { e.stopPropagation(); ddClose(); if (!on) onPick(v); });
       menu.append(b);
     }
+    menu.addEventListener("click", (e) => e.stopPropagation());
+    document.body.append(menu);
+    ddOpen = { trig, menu, right: !!o.right };
+    trig.classList.add("ddon"); trig.setAttribute("aria-expanded", "true");
+    ddPlace();
+    const on = menu.querySelector(".ddi.on"); if (on && menu.scrollHeight > menu.clientHeight) menu.scrollTop = on.offsetTop - 4;
+    const first = on || menu.querySelector(".ddi"); if (first && o.keyboard) first.focus();
+  }
+  document.addEventListener("click", ddClose);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") ddClose(); });
+  window.addEventListener("scroll", (e) => { if (ddOpen && !ddOpen.menu.contains(e.target)) ddPlace(); }, { passive: true, capture: true });
+  window.addEventListener("resize", ddPlace);
+  // a trigger and its list, for a picker built here: the title's words, the rolling window, a comparison side
+  function ddList(trigger, opts, cur, onPick, cls) {
+    const w = el("span", "dd" + (cls ? " " + cls : ""));
+    w.append(trigger);
+    if (opts.length < 2) { w.classList.add("solo"); trigger.disabled = true; return w; }
     trigger.setAttribute("aria-haspopup", "listbox"); trigger.setAttribute("aria-expanded", "false");
-    trigger.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const was = ddOpen && ddOpen[0] === w; ddClose(); if (was) return;
-      menu.hidden = false; w.classList.add("open"); trigger.setAttribute("aria-expanded", "true"); ddOpen = [w, trigger];
-      const on = menu.querySelector(".ddi.on"); if (on && menu.scrollHeight > menu.clientHeight) menu.scrollTop = on.offsetTop - 4;
-    });
-    w.append(menu);
+    trigger.addEventListener("click", (e) => { e.stopPropagation(); ddOpenOn(trigger, opts, cur, onPick, { right: w.classList.contains("ddright"), keyboard: e.detail === 0 }); });
     return w;
+  }
+  // Any native <select> gets the same list: the select stays in the page, hidden, as the source of truth (its value,
+  // its "change" listeners); a box shows its choice — or the pill it sits in stays the button — and a pick sets the
+  // value and fires "change" the way the select itself would
+  const ddSels = new Set();
+  function ddSelect(sel) {
+    if (!sel || sel.dataset.dd) return;
+    sel.dataset.dd = "1"; sel.tabIndex = -1;
+    const pill = sel.closest(".pill"), trig = pill || ddBox("", "ddsel");
+    if (pill) { sel.classList.add("ddinpill"); pill.tabIndex = 0; pill.setAttribute("role", "button"); }
+    else { sel.classList.add("ddnative"); sel.after(trig); }
+    const items = () => [...sel.children].flatMap((c) => (c.tagName === "OPTGROUP" ? [[null, c.label], ...[...c.children].map((x) => [x.value, x.textContent])] : [[c.value, c.textContent]]));
+    const open = (e) => {
+      e.preventDefault(); e.stopPropagation(); if (sel.disabled) return;
+      ddOpenOn(trig, items(), sel.value, (v) => { sel.value = v; sel.dispatchEvent(new Event("change", { bubbles: true })); ddSync(); }, { keyboard: e.type === "keydown" || e.detail === 0 });
+    };
+    trig.addEventListener("click", open);
+    if (pill) pill.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") open(e); });
+    ddSels.add([sel, trig, !pill]);
+    if (!pill) ddFill(sel, trig);
+  }
+  function ddFill(sel, trig) {
+    const o = sel.options[sel.selectedIndex];
+    trig.querySelector(".pill-text").textContent = o ? o.textContent : "";
+    trig.hidden = sel.hidden; trig.disabled = sel.disabled;
+  }
+  function ddSync() {                                  // the boxes show what their selects hold now
+    for (const it of ddSels) {
+      const [sel, trig, own] = it;
+      if (sel.isConnected) { sel.dataset.ddOn = "1"; if (own) ddFill(sel, trig); }
+      else if (sel.dataset.ddOn) ddSels.delete(it);   // it was on the page and a redraw took it away (one built but not yet placed is kept)
+    }
   }
   // a dropdown's button in the white box the filters use: the choice, then a chevron
   function ddBox(text, cls) {
@@ -5267,14 +5321,19 @@
   $("rankclear").addEventListener("click", () => { state.selKeys = []; state.selAnchor = null; render(); });
   $("rankuntier").addEventListener("click", () => { if (state.selKeys.length) moveSelectionToTier(0); });
   $("draftorder").addEventListener("change", (e) => { state.draftOrder = e.target.value; savePrefs(); render(); });
+  for (const id of ["sort", "ref", "draftorder", "setpick"]) ddSelect($(id));   // the page's own selects open Savant's list too
   const closeModal = () => { if (state.textModal) { state.textModal = null; render(); return; } if (state.panel || state.colPick) { closePanel(true); return; } if (state.tierPick) { state.tierPick = null; render(); return; } if (state.expanded) { state.expanded = null; render(); } };
   /* ---------- the header's two menus: open on hover with a mouse, on a tap without one ---------- */
   (function navMenus() {
     const canHover = () => matchMedia("(hover: hover) and (pointer: fine)").matches;
     let open = null, shut = null;
-    // fixed, so the mobile nav's own sideways scroll can't clip it; clamped to the window
+    // Each list lives on the page itself, not inside the header: on a phone the nav row scrolls sideways, and Safari
+    // clips a menu inside it to that one row, so the page looked like it was covering the menu. Out here nothing can
+    // clip it or sit on it. It is placed under its opener, clamped to the window.
+    const menuOf = (wrap) => $(NAV_GROUPS.find((G) => G.sel === wrap.id).menu);
+    for (const G of NAV_GROUPS) document.body.append($(G.menu));
     const place = (wrap) => {
-      const menu = wrap.querySelector(".modemenu"), r = wrap.getBoundingClientRect();
+      const menu = menuOf(wrap), r = wrap.getBoundingClientRect();
       menu.style.top = Math.round(r.bottom) + "px";
       menu.style.left = "0px";
       menu.style.left = Math.round(Math.max(6, Math.min(r.left, innerWidth - menu.offsetWidth - 6))) + "px";
@@ -5283,31 +5342,33 @@
       clearTimeout(shut);
       if (open && open !== wrap) hide(open);
       document.body.classList.add("navopen");     // lifts the header over the page while a menu is down
-      wrap.classList.add("open");
+      wrap.classList.add("open"); menuOf(wrap).classList.add("show");
       wrap.querySelector(".modesel-btn").setAttribute("aria-expanded", "true");
       open = wrap; place(wrap);
     };
     const hide = (wrap) => {
       if (!wrap) return;
-      wrap.classList.remove("open");
+      wrap.classList.remove("open"); menuOf(wrap).classList.remove("show");
       document.body.classList.remove("navopen");
       wrap.querySelector(".modesel-btn").setAttribute("aria-expanded", "false");
       if (open === wrap) open = null;
     };
-    const hideSoon = () => { clearTimeout(shut); shut = setTimeout(() => hide(open), 160); };   // room to cross the gap
+    const hideSoon = () => { if (!canHover()) return; clearTimeout(shut); shut = setTimeout(() => hide(open), 160); };   // room to cross the gap; a touch screen closes by tap
     for (const G of NAV_GROUPS) {
       const wrap = $(G.sel), btn = wrap.querySelector(".modesel-btn"), menu = $(G.menu);
       wrap.addEventListener("mouseenter", () => { if (canHover()) show(wrap); });
       wrap.addEventListener("mouseleave", hideSoon);
       menu.addEventListener("mouseenter", () => clearTimeout(shut));
+      menu.addEventListener("mouseleave", hideSoon);
       btn.addEventListener("click", (e) => { e.preventDefault(); if (wrap.classList.contains("open") && !canHover()) hide(wrap); else show(wrap); });
       btn.addEventListener("keydown", (e) => {
         if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") { e.preventDefault(); show(wrap); const a = menu.querySelector("a"); if (a) a.focus(); }
       });
       menu.addEventListener("click", () => hide(wrap));
-      wrap.addEventListener("focusout", (e) => { if (!wrap.contains(e.relatedTarget)) hide(wrap); });
+      const away = (e) => { if (!wrap.contains(e.relatedTarget) && !menu.contains(e.relatedTarget)) hide(wrap); };
+      wrap.addEventListener("focusout", away); menu.addEventListener("focusout", away);
     }
-    document.addEventListener("click", (e) => { if (open && !open.contains(e.target)) hide(open); });
+    document.addEventListener("click", (e) => { if (open && !open.contains(e.target) && !menuOf(open).contains(e.target)) hide(open); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && open) { const b = open.querySelector(".modesel-btn"); hide(open); b.focus(); } });
     window.addEventListener("hashchange", () => hide(open));
     window.addEventListener("resize", () => hide(open));
