@@ -40,12 +40,15 @@
   --accent-wash: rgba(123, 175, 212, 0.24);
   --pctrack: #d9e8e3;  /* the unfilled part of a percentile bar */
   --pctrule: #bed8d1;  /* the dashed rule between bars */
-  --svline: #c9dbdb;   /* Savant: the thin line the rest of a percentile bar runs along */
-  --svrule: #98d3d5;   /* Savant: the dashed rule under a bar's label and value */
-  --svtext: #5f6060;   /* Savant: the grey its labels and values are set in */
-  --svframe: #4291a0;  /* Savant: the teal frame round each panel, its dots and its section rules */
+  --svline: #c8dad8;   /* Savant: the thin line the rest of a percentile bar runs along */
+  --svrule: #50888e;   /* Savant: the dashed rule under a bar's label and value */
+  --svtext: #646464;   /* Savant: the grey its labels and values are set in */
+  --svframe: #4494a3;  /* Savant: the teal frame round each panel */
+  --svsec: #3f8c91;    /* Savant: the rule under a section heading */
+  --svdots: #4699aa;   /* Savant: the dots under a panel title's year */
+  --svpoor: #3a62a8; --svavg: #b8d3cd; --svgreat: #d41c23;   /* Savant: POOR / AVERAGE / GREAT */
   --svhead: #111111;   /* Savant: the black of its section names and silhouettes */
-  --svtitle: #313231;  /* Savant: the charcoal of its panel titles */
+  --svtitle: #303030;  /* Savant: the charcoal of its panel titles */
   --lo: #325aa1;      /* percentile: cold — Savant's blue */
   --mid: #b3b3b3;     /* percentile: 50th — a solid grey, not a tint, so the ends carry */
   --hi: #d22d49;      /* percentile: hot  — Savant's red */
@@ -77,11 +80,14 @@
     --pctrack: #2c3b39;
     --pctrule: #3a4f4b;
     --svline: #34504d;
-    --svrule: #3f6663;
+    --svrule: #4d7f84;
     --svtext: #b9c3c2;
     --svframe: #4f9fad;
     --svhead: #e8eeee;
     --svtitle: #e3e8e8;
+    --svsec: #4f9fad;
+    --svdots: #5fb0bd;
+    --svpoor: #6f95d6; --svavg: #8fb3ad; --svgreat: #f0555b;
     --lo: #4a86dd;
     --mid: #6a7382;
     --hi: #e2455c;
@@ -111,11 +117,14 @@
   --pctrack: #2c3b39;
   --pctrule: #3a4f4b;
   --svline: #34504d;
-  --svrule: #3f6663;
+  --svrule: #4d7f84;
   --svtext: #b9c3c2;
   --svframe: #4f9fad;
   --svhead: #e8eeee;
   --svtitle: #e3e8e8;
+  --svsec: #4f9fad;
+  --svdots: #5fb0bd;
+  --svpoor: #6f95d6; --svavg: #8fb3ad; --svgreat: #f0555b;
   --lo: #4a86dd;
   --mid: #6a7382;
   --hi: #e2455c;
@@ -2129,68 +2138,84 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .btabbody .hgroup h4 { margin: 0 0 4px; }
 .btabbody .meter { grid-template-columns: 150px minmax(60px, 1fr) 64px; }
 
-/* ---- Percentile bars, drawn the way Baseball Savant draws them ----
-   A solid bar filled from the left, the rest of the row just a thin pale line, a white-ringed circle at the end
-   of the fill (a shade darker than the bar, white numerals), faint ticks at the poor / average / great marks,
-   tight rows, and a dashed rule under the label and the value only — never across the bar. */
-.meters .meter { min-height: 26px; padding: 0; column-gap: 10px; border-bottom: 0; font-family: "Roboto Condensed", var(--body); }
-.meters .meter.sub { min-height: 24px; }
-.meters .meter:not(:last-child) { border-bottom: 0; }
-.meters .meter .lbl, .meters .meter .val { align-self: stretch; display: flex; align-items: center; min-width: 0;
-  color: var(--svtext); font-weight: 400; font-size: 13.5px; letter-spacing: 0; }
-.meters .meter .lbl { justify-content: flex-end; text-align: right; overflow: visible; }
-.meters .meter .lbl .lt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.meters .meter .val { justify-content: flex-end; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.meters .meter:not(:last-child) > .lbl, .meters .meter:not(:last-child) > .val {
-  background: linear-gradient(to left, var(--svrule) 0 6px, transparent 6px 9px) right bottom / 9px 1px repeat-x; }
-.meters .meter .track { --bub: 24px; height: 17px; border: 0; border-radius: 0; overflow: visible;
-  background: linear-gradient(var(--svline), var(--svline)) left center / 100% 4px no-repeat; }
-.meters .meter .track::after { display: none; }
-.meters .meter .fill { border-radius: 0; min-width: 0; }
-.meters .meter .tk { position: absolute; top: 0; bottom: 0; width: 1px; margin-left: -0.5px; background: #ffffff;
-  opacity: 0.45; z-index: 1; pointer-events: none; }
-.meters .meter .bub { width: var(--bub); height: var(--bub); min-width: 0; padding: 0; border-radius: 50%;
-  color: #ffffff; text-shadow: none; font-family: "Roboto Condensed", var(--body); font-size: 13px; font-weight: 700;
-  letter-spacing: -0.01em; box-shadow: 0 0 0 2.5px var(--surface); z-index: 2; }
-.meters .meter .bub.ghost { color: var(--ink-2); font-size: 12px; }
-.meters .meter.sub .track { --bub: 22px; height: 15px; }
-.meters .meter.sub .bub { font-size: 12px; }
-.meters .meter.sub .lbl, .meters .meter.sub .val { font-size: 12.5px; }
-:root[data-view="mobile"] .meters .meter { min-height: 25px; }
-:root[data-view="mobile"] .meters .meter.sub { min-height: 23px; }
-:root[data-view="mobile"] .meters .meter .track { --bub: 23px; height: 16px; }
-:root[data-view="mobile"] .meters .meter.sub .track { --bub: 21px; height: 14px; }
-:root[data-view="mobile"] .meters .meter .bub { font-size: 12.5px; }
-:root[data-view="mobile"] .meters .meter .lbl, :root[data-view="mobile"] .meters .meter .val { font-size: 13px; }
-.ppage .meters .meter { min-height: 26px; padding: 0; }
-.ppage .meters .meter .track { --bub: 24px; height: 17px; border-radius: 0; }
-/* the POOR / AVERAGE / GREAT strip: each word centred over its tick with the arrow under it, in Savant's colours */
-.ppage .meters .meter.pctscale, .meters .meter.pctscale { min-height: 0; padding: 0 0 4px; }
-.meters .meter.pctscale > .lbl, .meters .meter.pctscale > .val { background: none; }
-.meters .meter.pctscale .track { height: 28px; background: none; }
-.pctscale .sc, .pctscale .p0, .pctscale .p100 { transform: translateX(-50%); right: auto; align-items: center; }
-.pctscale .p0 b, .pctscale .p100 b { margin: 0; }
-.pctscale .sc i { font-style: normal; font-size: 13px; font-weight: 400; letter-spacing: 0; text-transform: uppercase; }
-.pctscale .sc b { font-size: 9px; margin-top: 1px; }
-.pctscale .p0 i, .pctscale .p0 b { color: #3961ac; }
-.pctscale .p50 i, .pctscale .p50 b { color: #9fc4c6; }
-.pctscale .p100 i, .pctscale .p100 b { color: #d5242d; }
-
-/* ---- the rest of Savant's percentile panel: the frame, the title, the section heading ---- */
-.pcol { border: 1.5px solid var(--svframe); border-radius: 0; }
-.pchead { padding: 14px 12px 4px; }
-.pcthd { font-family: "Roboto Condensed", var(--display); font-size: 22px; font-weight: 400; color: var(--svtitle); letter-spacing: 0; }
+/* ---- Percentile bars, a 1:1 copy of Baseball Savant's ----
+   Savant draws its chart as one drawing that scales with its width, so this does the same: every size below is a
+   multiple of --u, 1/995 of the chart's width, with each number measured off Savant's own chart. A row is 64u:
+   a 54u bar with a 13u line for the rest of it, a 48u circle in a 5.5u white ring whose centre runs from 26u in (0)
+   to the bar's right end (100), 5u ticks at the poor / average / great marks, 32u condensed type, and a 2u dashed
+   rule under the label (214u) and the value (81u) only. Columns: 347u label, 552u bar, 96u value. */
+.meters { container-type: inline-size; }
+.meters > * { --u: calc(100cqw / 995); }
+:root:root .meters .meter { min-height: calc(var(--u) * 64); height: auto; padding: 0; margin: 0; border: 0; column-gap: 0; gap: 0;
+  grid-template-columns: calc(var(--u) * 347) minmax(0, 1fr) calc(var(--u) * 96); align-items: center;
+  font-family: "Roboto Condensed", var(--body); font-size: calc(var(--u) * 32.4); line-height: 1; }
+:root:root .meters .meter.cmp { grid-template-columns: calc(var(--u) * 300) minmax(0, 1fr) calc(var(--u) * 96) calc(var(--u) * 140); }
+:root:root .meters .meter.ruled { border-top: 2px dotted var(--rail); }
+:root:root .meters .meter > .lbl, :root:root .meters .meter > .val { align-self: stretch; display: flex; align-items: center; min-width: 0;
+  color: var(--svtext); font-size: inherit; font-weight: 400; letter-spacing: 0; padding-bottom: 0; }
+:root:root .meters .meter > .lbl { justify-content: flex-end; text-align: right; padding-left: 0; padding-right: calc(var(--u) * 16); overflow: visible; }
+:root:root .meters .meter.sub > .lbl { padding-left: calc(var(--u) * 30); }
+:root:root .meters .meter > .lbl .lt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:root:root .meters .meter > .val { justify-content: flex-end; white-space: nowrap; font-variant-numeric: normal;
+  padding-left: calc(var(--u) * 15); padding-right: calc(var(--u) * 3); }
+:root:root .meters .meter:not(:last-child) > .lbl {
+  background: repeating-linear-gradient(to right, var(--svrule) 0 calc(var(--u) * 15.5), transparent calc(var(--u) * 15.5) calc(var(--u) * 25))
+              right calc(var(--u) * 16) bottom / calc(var(--u) * 214) calc(var(--u) * 2) no-repeat; }
+:root:root .meters .meter:not(:last-child) > .val {
+  background: repeating-linear-gradient(to right, var(--svrule) 0 calc(var(--u) * 15.5), transparent calc(var(--u) * 15.5) calc(var(--u) * 25))
+              right bottom / calc(var(--u) * 81) calc(var(--u) * 2) no-repeat; }
+:root:root .meters .meter .track { position: relative; height: calc(var(--u) * 54); margin: 0; border: 0; border-radius: 0; overflow: visible;
+  background: linear-gradient(var(--svline), var(--svline)) left center / 100% calc(var(--u) * 13) no-repeat; }
+:root:root .meters .meter .track::after { display: none; }
+:root:root .meters .meter .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0; min-width: 0; }
+:root:root .meters .meter .tk { position: absolute; top: 50%; height: calc(var(--u) * 13); width: calc(var(--u) * 5);
+  transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.28); z-index: 1; pointer-events: none; }
+:root:root .meters .meter .tk.on { height: 100%; }
+:root:root .meters .meter .bub { position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 2;
+  width: calc(var(--u) * 48); height: calc(var(--u) * 48); min-width: 0; padding: 0; border: 0; border-radius: 50%;
+  display: grid; place-items: center; box-shadow: 0 0 0 calc(var(--u) * 5.5) var(--surface);
+  color: #ffffff; text-shadow: none; font-family: "Roboto Condensed", var(--body); font-size: calc(var(--u) * 33); font-weight: 700;
+  line-height: 1; letter-spacing: 0; font-variant-numeric: normal; }
+:root:root .meters .meter .bub.c3 { font-size: calc(var(--u) * 27); letter-spacing: -0.02em; }
+:root:root .meters .meter .bub.ghost { background: var(--surface) !important; color: var(--ink-2); border: calc(var(--u) * 3) solid var(--ink-2);
+  box-shadow: 0 0 0 calc(var(--u) * 3) var(--surface); font-size: calc(var(--u) * 27); }
+/* the POOR / AVERAGE / GREAT strip: 50u tall, the words' tops 5u down, the arrows' bottoms 3u up */
+:root:root .meters .meter.pctscale { min-height: 0; height: calc(var(--u) * 50); }
+:root:root .meters .meter.pctscale > .lbl, :root:root .meters .meter.pctscale > .val { background: none; }
+:root:root .meters .meter.pctscale .track { height: 100%; align-self: stretch; background: none; }
+.pctscale .sc { display: none; }
+.pctscale .sw { position: absolute; top: calc(var(--u) * 1); font-size: calc(var(--u) * 32.4); line-height: 1; font-weight: 400;
+  letter-spacing: 0; text-transform: uppercase; white-space: nowrap; }
+.pctscale .sw.p0 { left: calc(var(--u) * 2); color: var(--svpoor); }
+.pctscale .sw.p50 { transform: translateX(-50%); color: var(--svavg); }
+.pctscale .sw.p100 { right: calc(var(--u) * 4); color: var(--svgreat); }
+.pctscale .arr { position: absolute; bottom: calc(var(--u) * 3); width: calc(var(--u) * 11); height: calc(var(--u) * 12);
+  transform: translateX(-50%); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.pctscale .arr.p0 { background: var(--svpoor); }
+.pctscale .arr.p50 { background: var(--svavg); }
+.pctscale .arr.p100 { background: var(--svgreat); }
+/* the section heading: a 71 x 108u silhouette standing 14u through a 4u rule, the bold name's baseline 17u above it */
+.meters .svsec { position: relative; display: block; height: calc(var(--u) * 96); margin: 0 0 calc(var(--u) * 24); padding: 0;
+  border-bottom: calc(var(--u) * 4.5) solid var(--svsec); color: var(--svhead); }
+.meters .svsec + .meter.pctscale { margin-top: 0; }
+.meters .svsec .svicon { position: absolute; left: calc(var(--u) * 20); bottom: calc(var(--u) * -14); width: calc(var(--u) * 71); height: calc(var(--u) * 108); margin: 0; }
+.meters .svsec .svicon svg { display: block; width: 100%; height: 100%; }
+.meters .svsec .svname { position: absolute; left: calc(var(--u) * 114); bottom: calc(var(--u) * 17 - 0.1585em); padding: 0;
+  font-family: "Roboto Condensed", var(--display); font-size: calc(var(--u) * 45); font-weight: 700; line-height: 1; }
+/* the panel: a thin teal frame; the title's charcoal 53u type with the year bold, 7 dots under the year alone.
+   --pu is 1/1101 of the panel's inside width, so the chart inside it is exactly 995pu = 995u wide. */
+.pcol { container-type: inline-size; border: 1px solid var(--svframe); border-radius: 0; }
+.pcol > * { --pu: calc(100cqw / 1101); }
+.pchead { padding: calc(var(--pu) * 28) calc(var(--pu) * 12) calc(var(--pu) * 55.6); text-align: center; }
+.pchead + .pscroll { padding-top: 0; }
+.pcthd { font-family: "Roboto Condensed", var(--display); font-size: calc(var(--pu) * 53.4); font-weight: 400; line-height: 1;
+  color: var(--svtitle); letter-spacing: 0; }
 .pcthd b, .pcthd .hsel.yr .hsl { font-weight: 700; }
-/* the dotted rule sits under the year only, starting at its left edge, the way Savant draws it */
 .pcthd > :first-child { position: relative; }
-.pcthd > :first-child::after { content: ""; position: absolute; left: 0; top: calc(100% + 3px); width: 36px; height: 2.5px;
-  background: repeating-linear-gradient(to right, var(--svframe) 0 2.5px, transparent 2.5px 5.2px); pointer-events: none; }
-.pcthd > .hsel.yr > .hmenu { z-index: 41; }
-.pchead .pcdots { visibility: hidden; height: 3px; margin-top: 4px; }
+.pcthd > :first-child::after { content: ""; position: absolute; left: calc(var(--pu) * -2); top: calc(var(--pu) * 67); width: calc(var(--pu) * 106);
+  height: calc(var(--pu) * 7); background: repeating-linear-gradient(to right, var(--svdots) 0 calc(var(--pu) * 7), transparent calc(var(--pu) * 7) calc(var(--pu) * 16.5));
+  pointer-events: none; }
+.pchead .pcdots, .pchead .pctsub:empty { display: none; }
+.pchead .pctsub { font-size: calc(var(--pu) * 30); margin-top: calc(var(--pu) * 30); }
+.pctbox { padding-inline: calc(var(--pu) * 55) calc(var(--pu) * 51); padding-bottom: calc(var(--pu) * 30); }
 .pctbox .pctfoot { display: none; }
-.svsec { display: flex; align-items: flex-end; gap: 10px; margin: 6px 0 4px; padding: 0 0 2px 2px;
-  border-bottom: 2px solid var(--svframe); color: var(--svhead); }
-.svsec .svicon { display: block; width: 32px; height: 42px; margin-bottom: -2px; flex: none; }
-.svsec .svicon svg { display: block; width: 100%; height: 100%; }
-.svsec .svname { font-family: "Roboto Condensed", var(--display); font-size: 20px; font-weight: 700; line-height: 1; padding-bottom: 4px; }
-.svsec + .meter.pctscale { margin-top: 12px; }

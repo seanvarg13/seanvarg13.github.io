@@ -926,8 +926,10 @@
   const bubLeft = (p) => `calc(var(--bub) / 2 + (100% - var(--bub)) * ${Math.max(0, Math.min(100, p)) / 100})`;
   // the player card's bars use Savant's own colours, read off its percentile chart: blue through a pale blue-grey
   // and a warm grey at the middle to red, with the circle a shade darker than its bar and always white numerals
-  const SAVANT = [[0, [50, 90, 161]], [11, [78, 112, 178]], [38, [158, 187, 202]], [49, [179, 207, 210]], [58, [190, 197, 195]],
-                  [70, [208, 154, 143]], [82, [216, 107, 92]], [90, [216, 70, 62]], [93, [215, 51, 51]], [97, [214, 34, 41]], [100, [213, 31, 38]]];
+  const SAVANT = [[0, [48, 86, 169]], [11, [78, 112, 178]], [12, [80, 115, 180]], [38, [158, 187, 202]], [41, [168, 195, 206]],
+                  [49, [179, 207, 210]], [58, [190, 197, 195]], [59, [189, 193, 190]], [69, [207, 157, 147]], [70, [208, 154, 143]],
+                  [72, [210, 146, 133]], [73, [211, 143, 130]], [82, [216, 107, 92]], [90, [216, 70, 62]], [92, [216, 58, 51]],
+                  [93, [215, 51, 51]], [97, [214, 34, 41]], [100, [214, 34, 41]]];
   const savantCache = new Map();
   function savantStyle(p) {
     p = Math.max(0, Math.min(100, p));
@@ -939,6 +941,10 @@
     savantCache.set(p, s);
     return s;
   }
+  // Savant's own geometry: the circle's centre runs from one radius in from the bar's left edge (0) to the bar's
+  // right end (100), and the fill stops under that centre. --u is 1/995 of the chart's width (see styles.css).
+  const svLeft = (p) => `calc(var(--u) * 26 + (100% - var(--u) * 26) * ${Math.max(0, Math.min(100, p)) / 100})`;
+  const SV_TICKS = [1.1, 50, 93.8];                   // where Savant's poor / average / great ticks and arrows fall
   function paint(node, pct) { const s = pctStyle(pct); if (s) { node.style.background = s.bg; node.style.color = s.fg; } }
 
   /* ---------- formatting ---------- */
@@ -1780,13 +1786,14 @@
     const row = el("div", "meter");
     const lbl = el("div", "lbl"); lbl.append(el("span", "lt", m.label)); row.append(lbl);
     const track = el("div", "track");
-    for (const at of [0, 50, 100]) { const tk = el("i", "tk"); tk.style.left = bubLeft(at); track.append(tk); }   // Savant's poor / average / great ticks
     if (pct != null) {
       const s = savantStyle(pct);
-      const fill = el("div", "fill"); fill.style.width = bubLeft(pct); fill.style.background = s.bg; track.append(fill);
-      const bub = el("div", "bub", pct); bub.style.left = bubLeft(pct); bub.style.background = s.bub; track.append(bub);
+      const fill = el("div", "fill"); fill.style.width = svLeft(pct); fill.style.background = s.bg; track.append(fill);
+      const bub = el("div", "bub" + (pct >= 100 ? " c3" : ""), pct); bub.style.left = svLeft(pct); bub.style.background = s.bub; track.append(bub);
     }
-    if (cmp && cmp.pct != null) { const b2 = el("div", "bub ghost", cmp.pct); b2.style.left = bubLeft(cmp.pct); track.append(b2); }
+    // the ticks run the bar's full height where the fill has reached them, and only across the thin line past it
+    for (const at of SV_TICKS) { const tk = el("i", "tk" + (pct != null && at <= pct ? " on" : "")); tk.style.left = svLeft(at); track.append(tk); }
+    if (cmp && cmp.pct != null) { const b2 = el("div", "bub ghost", cmp.pct); b2.style.left = svLeft(cmp.pct); track.append(b2); }
     row.append(track);
     row.append(el("div", "val", v == null ? "–" : fmt(v, { ...m, unit: "" })));   // bare numbers, the way Savant prints them: 10.9, 91.9
     row.title = `${m.label}: ${v == null ? "n/a" : fmt(v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}`;
@@ -4013,10 +4020,13 @@
     const row = el("div", "meter pctscale");
     row.append(el("div", "lbl"));
     const t = el("div", "track");
-    for (const [at, name] of [[0, "Poor"], [50, "Average"], [100, "Great"]]) {
-      const s = el("div", "sc p" + at); s.style.left = bubLeft(at); s.append(el("i", null, name), el("b", null, "▲"));
-      t.append(s);
-    }
+    // POOR starts at the bar's left edge, AVERAGE is centred on its tick, GREAT ends at the bar's right end;
+    // each arrow sits on its own tick
+    SV_TICKS.forEach((at, i) => {
+      const name = ["Poor", "Average", "Great"][i], cls = ["p0", "p50", "p100"][i];
+      const w = el("span", "sw " + cls, name); if (i === 1) w.style.left = svLeft(at); t.append(w);
+      const a = el("i", "arr " + cls); a.style.left = svLeft(at); t.append(a);
+    });
     row.append(t, el("div", "val"));
     return row;
   }
