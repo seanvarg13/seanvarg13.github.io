@@ -2534,3 +2534,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 /* the sources and personal-use line at the foot of every page and card */
 .credit { margin: 18px auto 22px; padding: 0 16px; max-width: 860px; font-size: 11px; line-height: 1.45; color: var(--muted); text-align: center; }
 .cardscroll .credit { margin: 8px auto 16px; }
+/* a phone's toolbar started 2px under the header, and the header's stripe hangs 2px below it: the buttons sat right
+   against it. Room above them (the fantasy page's own bar too) */
+:root[data-view="mobile"] .toolbar:not(.xtoolbar) { padding-top: 10px; }
+:root[data-view="mobile"] #fboard > :first-child { margin-top: 6px; }
