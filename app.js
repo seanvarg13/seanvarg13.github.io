@@ -3782,7 +3782,7 @@
   const SAVANT_P = ["uera", "mera", "whf", "strk", "gb", "pu", "fbv", "ext"];
   // the third panel: four tabs of everything the middle one doesn't lead with. Each tab is a list of blocks,
   // and a block break is a rule across the bars; the batted-ball tab is the site's batted-ball distribution.
-  const EXTRA_H = [["Discipline", [["zsw", "osw"]]],
+  const EXTRA_H = [["Discipline", [["zsw", "osw", "swing"]]],
                    ["Contact", [["zcon", "ocon", "whf"]]],
                    ["Batted ball", [["air", "pull", "pullp", "pu"]]],
                    ["Quality", [["ev", "brl", "hh", "bs", "ev90", "maxev"]]]];
@@ -3820,7 +3820,7 @@
 
   /* ---------- the card's season table: the plain counting line Savant puts under the photo ---------- */
   const SAV_H = ["PA", "AB", "R", "H", "HR", "SB", "AVG", "OBP", "SLG", "OPS"];
-  const SAV_P = ["W", "L", "ERA", "G", "GS", "SV", "IP", "K", "BB", "WHIP"];
+  const SAV_P = ["W", "L", "ERA", "G", "GS", "SV", "IP", "K", "WHIP"];   // Savant's nine (K is headed SO)
   function renderSeasonHeat(p) {
     const box = el("div", "tblcard heatcard");
     ensureScript("hist/career.js", careerReady);
@@ -3832,9 +3832,9 @@
                             : ["ERA", "WHIP"].includes(k) ? Number(v).toFixed(2)
                             : typeof v === "number" ? v.toLocaleString("en-US") : String(v));
     const t = el("table");
-    t.append(colgroup([74, ...cols.map(() => null)]));
+    t.append(colgroup([66, ...cols.map(() => null)]));
     const hr = el("tr");
-    for (const h of ["", ...cols]) hr.append(el("th", null, h));
+    for (const h of ["", ...cols]) hr.append(el("th", h ? null : "l", h === "K" ? "SO" : h));   // Savant heads strikeouts SO
     const th = el("thead"); th.append(hr); t.append(th);
     const tb = el("tbody");
     const cur = state.x.ds || CUR.key;
@@ -4015,22 +4015,25 @@
   // the plot across the bar column, the league line's value and his latest in the value column, 12px grey type,
   // month labels under it. Drawn at its real width (redrawn when the panel resizes), so nothing in it is scaled.
   let rollRO = null, rollN = 0;
+  const ROLL_TIP = 44;                                 // the strip under the plot the hover note sits in, clear of the line
   function rollChart(pts, lg, col, spec, N) {
     const host = el("div", "rollchart");
     const tip = el("div", "rolltip"); tip.hidden = true;
-    const draw = (W) => { host.dataset.w = String(W); host.replaceChildren(rollSvg(pts, lg, col, spec, N, W, tip), tip); };
-    draw(360);
+    // the chart takes whatever height the box has left under the bars (at least 150px of plot), measured as drawn
+    const size = () => { const r = host.getBoundingClientRect(); return [Math.max(260, Math.round(r.width) || 360), Math.max(150, Math.round(r.height - ROLL_TIP) || 170)]; };
+    const draw = ([W, H]) => { host.dataset.sz = W + "x" + H; host.replaceChildren(rollSvg(pts, lg, col, spec, N, W, H, tip), tip); };
+    draw([360, 170]);
     if (window.ResizeObserver) {
       if (rollRO) rollRO.disconnect();
-      rollRO = new ResizeObserver(() => { const W = Math.max(260, Math.round(host.getBoundingClientRect().width) || 360); if (host.dataset.w !== String(W)) draw(W); });
+      rollRO = new ResizeObserver(() => { const z = size(); if (host.dataset.sz !== z[0] + "x" + z[1]) draw(z); });
       rollRO.observe(host);
     }
     return host;
   }
   // x walks the game days he played, not the calendar (Savant's way): a month on the injured list is a step, not a
   // long flat run. Months are labelled under their first game. Point at the line (or touch it) for the value there.
-  function rollSvg(pts, lg, col, spec, NW, W, tip) {
-    const H = 132, L = 125, R = W - 40, T = 8, B = H - 22;
+  function rollSvg(pts, lg, col, spec, NW, W, H, tip) {
+    const L = 125, R = W - 40, T = 8, B = H - 22;
     const ys = pts.map((q) => q.v), st = spec.steps[0];
     let y0 = Math.min(spec.floor[0], Math.floor(Math.min(...ys) / st) * st), y1 = Math.max(spec.floor[1], Math.ceil(Math.max(...ys) / st) * st);
     if (lg != null) { y0 = Math.min(y0, lg - spec.pad); y1 = Math.max(y1, lg + spec.pad); }
@@ -4083,11 +4086,11 @@
       const i = Math.max(0, Math.min(N, Math.round(N ? ((x - L) / (R - L)) * N : 0))), q = pts[i];
       guide.setAttribute("x1", px(i)); guide.setAttribute("x2", px(i)); guide.setAttribute("visibility", "visible");
       hot.setAttribute("cx", px(i)); hot.setAttribute("cy", py(q.v)); hot.setAttribute("fill", col ? col(q.v) : savantStyle(95).bg); hot.setAttribute("visibility", "visible");
-      tip.replaceChildren(el("b", null, `${spec.fmt(q.v)} ${spec.name}`), el("span", null, `PA ${q.from}–${q.end} (${q.end - q.from + 1} PA)`), el("span", null, `through ${dateOf(q.day)}`));
+      tip.replaceChildren(el("b", null, `${spec.fmt(q.v)} ${spec.name}`), el("span", null, `PA ${q.from}–${q.end} (${q.end - q.from + 1} PA) · through ${dateOf(q.day)}`));
       tip.hidden = false;
-      const left = (px(i) / W) * r.width, top = (py(q.v) / H) * r.height;
+      const left = (px(i) / W) * r.width;                // under the plot, following the pointer across: never over the line
       tip.style.left = Math.max(0, Math.min(r.width - tip.offsetWidth, left - tip.offsetWidth / 2)) + "px";
-      tip.style.top = Math.max(0, top - tip.offsetHeight - 10) + "px";
+      tip.style.top = (r.height + 2) + "px";
     };
     const hide = () => { guide.setAttribute("visibility", "hidden"); hot.setAttribute("visibility", "hidden"); tip.hidden = true; };
     svg.addEventListener("pointermove", show);

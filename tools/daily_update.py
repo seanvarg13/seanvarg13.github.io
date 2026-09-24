@@ -7,7 +7,7 @@ then again after the minors, fantasy and history index finish.
 Run by launchd every morning at 5:30 (install_schedule.sh) — or by hand:  python3 daily_update.py
 Log: logs/daily.log (one file per day, 30 days kept). Off days are cheap: nothing new to download.
 """
-import datetime as dt, glob, os, subprocess, sys, time
+import datetime as dt, glob, os, re, subprocess, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(HERE)
@@ -74,5 +74,33 @@ ok = (ok
 if ok:
     say(f"--- everything through {end} built")
     ok = publish()
+
+
+def unscored_seasons():
+    """Past MLB seasons whose file has no directional xBA yet (built before the dxBA / dxSLG models existed)."""
+    out = []
+    for y in range(2015, int(year)):
+        path = os.path.join("hist", f"mlb-{y}.js")
+        try:
+            with open(path) as f:
+                text = f.read()
+        except OSError:
+            continue
+        if not re.search(r'"dxba":\s*0?\.\d', text):
+            out.append(str(y))
+    return out
+
+
+# Once, then never again: rebuild any past season still missing directional xBA / xSLG, so the player page's
+# expected stats are the site's own model in every year rather than Statcast's before 2026. About two hours for
+# all of 2015-2025, so it runs after today's site is already published; a season that fails is simply tried again
+# tomorrow. Once every season has them this finds nothing and costs nothing.
+if ok:
+    todo = unscored_seasons()
+    if todo:
+        say(f"--- rescoring {len(todo)} past season(s) with the directional xBA / xSLG models: {' '.join(todo)}")
+        if run("build_history.py", *todo) and run("build_career.py"):
+            say("--- rescore built; publishing it")
+            ok = publish()
 say(f"=== {dt.datetime.now():%F %T} {'done' if ok else 'FAILED'}")
 sys.exit(0 if ok else 1)
