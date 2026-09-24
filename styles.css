@@ -2040,6 +2040,18 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .ppage .meters { padding-top: 2px; }
 .pcolC .cardnotes { margin: 0; }
 :root[data-view="mobile"] .ppage { grid-template-columns: 1fr; height: auto; min-height: 0; }
+/* on the phone the player page runs edge to edge, but its boxes keep a 12px white margin from the screen's sides */
+:root[data-view="mobile"] .ppage { padding-inline: 12px; }
+:root[data-view="mobile"] .pbelow2 { margin-inline: 12px; }
+/* and the narrower card still fits the season table whole, down to a 360px phone */
+:root[data-view="mobile"] .pcolA .pscroll { padding-inline: 10px; }
+:root[data-view="mobile"] .pcolA .heatcard table { min-width: 0; }
+:root[data-view="mobile"] .pcolA .heatcard col:first-child { width: 58px !important; }   /* beats the 74px the colgroup sets inline */
+:root[data-view="mobile"] .pcolA .heatcard thead th, :root[data-view="mobile"] .pcolA .heatcard tbody td { padding-inline: 2px; font-size: 11px; }
+@media (max-width: 385px) {
+  :root[data-view="mobile"] .pcolA .heatcard col:first-child { width: 50px !important; }
+  :root[data-view="mobile"] .pcolA .heatcard thead th, :root[data-view="mobile"] .pcolA .heatcard tbody td { padding-inline: 1px; font-size: 10px; }
+}
 :root[data-view="mobile"] .pcol { overflow: visible; }
 :root[data-view="mobile"] .pscroll { overflow: visible; }
 
