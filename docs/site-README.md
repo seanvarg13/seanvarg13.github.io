@@ -328,17 +328,16 @@ is open, which is what keeps them from painting behind it on a phone.
 
 **The player page** (built by `playerView()`, which `renderExplore` and the popup card both call) is, top to bottom:
 
-- **The title** (`pageTitle()`): "**2026** MLB Percentiles", centred, Savant's. The year and the level are the season
-  pickers for the whole page (`titleSelect()`): each is a bold word over a dotted rule with a native `<select>` laid
-  invisibly on top, so clicking it opens the browser's own list, the way Savant's does. It is not pinned; it scrolls
-  away and the plate under it stays.
 - **The pinned plate** (`playerHead()`, `.phead`): the blue plate from edge to edge of the window — cut-out headshot,
   name, team / position / age, the sample (PA · AB · BBE · G, or IP · BF · G/GS · pitches), "full season" and Star.
-  Its right-hand side is one labelled grid of filters: **Games** (regular season / spring / postseason), **From**,
-  **To** and **Last PA** (or IP) across the top, then the toggles — **Pitchers** (vs LHP / RHP; Batters for a
-  pitcher), **Home / away** and, for hitters, **Expected stats** (Statcast / Directional xwOBA). The toggles are solid
-  buttons on the band, so no colour scheme can wash them out. On a phone all of it folds behind one **Splits & dates**
-  button, so the pinned block is one row of filters until it is opened.
+  Its right-hand side is one labelled grid of filters: **From**, **To** and **Last PA** (or IP) across the top, then
+  the toggles — **Pitchers** (vs LHP / RHP; Batters for a pitcher), **Home / away** and, for hitters, **Expected
+  stats** (Statcast / Directional xwOBA). The toggles are solid buttons on the band, so no colour scheme can wash them
+  out. On a phone all of it folds behind one **Splits & dates** button, so the pinned block is one row of filters until
+  it is opened.
+- **The title** (`pageTitle()`), under the plate: "**2026** MLB Percentiles", centred, Savant's. The year and the level
+  are the season pickers for the whole page (`titleSelect()`): each is a bold word over a dotted rule. It is not
+  pinned; it scrolls away under the plate.
 - **The percentile sections** (`renderPctPanel`): two columns of headed sections, drawn with Savant's chart code
   (`pctSvg`). Hitters (`PCT_COLS_H`): Results (wOBA, xwOBA, xBA, xSLG — the expected three follow the xwOBA switch),
   Batted-Ball Quality, then Swing Decisions (Z-Swing%, O-Swing%, BB%), Contact and Batted-Ball Distribution.
@@ -372,6 +371,15 @@ and `.top` and leaves `min(6vw, 96px)` on each side — Savant's own proportion 
 from under the pinned plate to the bottom of the window, less the tab strip so that strip stays on screen. It measures
 where the box starts in the **document** (`rect.top + scrollY`), not the viewport: reading the viewport while the page
 is scrolled gives a smaller number every time and the box grows with each render. On a phone the height cap is lifted.
+
+**Every dropdown on the page is Savant's** (`ddList()`): the title's year and level, the rolling window, and each
+side's season and split in Set up comparison. Clicking one hangs a list straight under it — a white box inside a heavy
+dark rule (`--ddline`), the choices in large type — instead of the browser's list or the phone's wheel. Opening it
+redraws nothing; a pick, a click anywhere else or Escape closes it (`ddClose`).
+
+**The site is regular season only.** Spring-training and postseason datasets can still be built (`build_history.py
+spring …` / `post …`), but `indexReady()` takes them out of the search index the moment it loads, so no season picker
+anywhere offers one, and a season remembered from before falls back to the regular season.
 
 **A popup card is the player's page** — `renderModal` calls the same `playerView()`, ranked in the list's own pool,
 in a panel with an ×. On a desktop the panel is up to 1500px wide and as tall as the window allows, and `sizePPage()`

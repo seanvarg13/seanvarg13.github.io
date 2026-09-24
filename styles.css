@@ -2045,7 +2045,8 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px) - 1px);
 :root[data-view="mobile"] .phf .lastin { width: 100%; }
 :root[data-view="mobile"] .phsum { justify-content: flex-start; }
 /* a pitcher's uERA and luck-neutral ERA tables, side by side in their own tab */
-.eratab { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 40px; }
+.eratab { display: grid; grid-template-columns: repeat(2, minmax(0, 440px)); justify-content: center; gap: 16px 48px; }
+.btabbody > .uerabox { max-width: 520px; margin-inline: auto; }          /* nERA: a table, not the page's width */
 :root[data-view="mobile"] .eratab { grid-template-columns: minmax(0, 1fr); }
 .cmpbelow { margin-top: 14px; }
 /* the stats sit straight on the page: no box round them */
@@ -2311,7 +2312,7 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px) - 1px);
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB { grid-column: 2 / span 2; }
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolC { grid-column: 4 / span 2; }
-:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB.wide { grid-column: 1 / -1; }   /* the sections take the page's whole width */
+:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB.wide { grid-column: 2 / span 4; }
 .pctcols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; align-items: start; }
 :root[data-view="mobile"] .pctcols { grid-template-columns: minmax(0, 1fr); }
 .pctsample { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; padding: 2px 20px 6px; font-family: "Roboto Condensed", var(--body); }
@@ -2338,31 +2339,55 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px) - 1px);
 .svpct .svnum.c3 { font-size: 10px; }
 .pctbox .pctfoot { display: none; }
 
-/* the page's title, Savant's: "2026 MLB Percentiles", centred over the plate, the year and the level each a word with
-   a dotted rule under it that opens the browser's own list */
-.ptitle { text-align: center; padding: 14px 12px 12px; }
+/* the page's title, Savant's: "2026 MLB Percentiles", centred under the plate, the year and the level each a bold
+   word with a dotted rule under it that opens Savant's list */
+.ptitle { text-align: center; padding: 16px 12px 0; }
 .pthd { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 400; line-height: 1.25; letter-spacing: 0;
   text-transform: none; color: var(--ink); }
 .pthd b, .pthd .tsel.yr .tsl { font-weight: 800; }
-.tsel { position: relative; display: inline-block; }
-.tsel .tsl { display: inline-block; padding-bottom: 6px; background-image: radial-gradient(circle, var(--accent-2) 1.5px, transparent 1.7px);
-  background-size: 9px 4px; background-repeat: repeat-x; background-position: left bottom; }
-.tsel.solo .tsl { background: none; padding-bottom: 0; }
-.tsel select { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; font-size: 16px; }
-.tsel:hover .tsl, .tsel:focus-within .tsl { color: var(--accent-2-text); }
-:root[data-view="mobile"] .ptitle { padding: 10px 12px 8px; }
+.tsl { display: inline-block; margin: 0; padding: 0 0 6px; border: 0; font: inherit; color: inherit; letter-spacing: inherit; cursor: pointer;
+  background: radial-gradient(circle, var(--accent-2) 1.5px, transparent 1.7px) left bottom / 9px 4px repeat-x; }
+.tsel.solo .tsl { background: none; padding-bottom: 0; cursor: default; }
+.tsl:hover, .tsel.open .tsl { color: var(--accent-2-text); }
+/* Savant's dropdown list: under what was clicked, a white box in a heavy dark rule, the choices in large type */
+:root { --ddline: #43616b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ddline: #9ab8c2; } }
+:root[data-theme="dark"] { --ddline: #9ab8c2; }
+.dd { position: relative; display: inline-block; max-width: 100%; vertical-align: baseline; }
+.ddmenu { position: absolute; top: 100%; left: 0; z-index: 70; min-width: 100%; max-height: min(50vh, 420px); overflow-y: auto;
+  margin-top: 1px; padding: 2px 0; background: var(--surface); border: 3px solid var(--ddline); border-radius: 3px; text-align: left;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12); overscroll-behavior: contain; }
+.ddmenu[hidden] { display: none; }
+.dd.ddright .ddmenu { left: auto; right: 0; }
+.ddi { display: block; width: 100%; margin: 0; padding: 1px 12px; border: 0; background: none; cursor: pointer; text-align: left;
+  font-family: var(--display); font-size: 19px; font-weight: 400; line-height: 1.45; letter-spacing: 0; text-transform: none;
+  color: var(--ink); white-space: nowrap; }
+.ddi:hover, .ddi:focus-visible { background: var(--hover); outline: none; }
+/* the filters' white box as a button: the choice and a chevron */
+button.pill.ddbox { font-family: inherit; text-align: left; }
+.phf .dd { display: block; }
+.phf .dd .ddbox { width: 100%; }
+.rollwin .dd .ddbox.rollsel { height: 24px; min-width: 52px; padding: 0 6px 0 8px; gap: 6px; border: 1px solid var(--hair); border-radius: 4px;
+  font: 700 12px/1 "Roboto Condensed", var(--body); }
+.cmpctl .dd { display: block; }
+.cmpctl .ddbox.cmpbox { width: 100%; height: 28px; border-color: var(--hair); font: 600 12px/1 var(--body); }
+:root[data-view="mobile"] .rollwin .dd .ddbox.rollsel { height: 30px; font-size: 15px; }
+:root[data-view="mobile"] .cmpctl .ddbox.cmpbox { height: 26px; font-size: 11px; }
+:root[data-view="mobile"] .ptitle { padding: 12px 12px 0; }
 :root[data-view="mobile"] .pthd { font-size: 19px; }
-/* uERA's batted-ball mix: each share's rank in the chart's own circle */
-.rankchip { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: #fff;
-  font-family: "Roboto Condensed", var(--body); font-size: 11px; font-weight: 700; box-shadow: 0 0 0 2px var(--surface); }
-.rankchip.c3 { font-size: 9.5px; }
-.mixbox .note { margin: 8px 0 0; font-size: 11px; color: var(--muted); }
+/* the batted-ball mix: type, Savant's bar, his rate, the league's wOBA on the type */
+.mixgrid { display: grid; grid-template-columns: 84px minmax(0, 1fr) 46px 54px; align-items: center; column-gap: 10px; row-gap: 9px;
+  font-family: "Roboto Condensed", var(--body); padding-top: 2px; }
+.mixgrid .mh { font-size: 12px; color: var(--svtext); text-align: right; }
+.mixgrid .ml { font-size: 13px; color: var(--svtext); white-space: nowrap; }
+.mixgrid .mv { font-size: 13px; color: var(--ink); text-align: right; }
+.mixgrid .mv.lg { color: var(--svtext); }
 .rawstats.simple .rawscroll { margin-top: 0; }
 .btab .lc { text-transform: none; }
 /* ---- a popup player card: his page in a panel, not the whole screen ---- */
 :root:not([data-view="mobile"]) .modal.pcard .modal-panel { width: min(1500px, 94vw); height: min(100%, var(--modal-max, calc(100dvh - 40px))); border-radius: 6px; }
 .modal.pcard .phead .mplate { padding-inline: 22px; }
-.modal.pcard .ptitle { padding-inline: 56px; }                        /* clear of the × */
+.modal.pcard .phead .mplate { padding-right: 58px; }                 /* the × sits over the plate's top right */
 .modal.pcard .pbelow2 { margin-inline: 16px; }
 .modal.pcard .ppage { margin-inline: 16px; }
 :root[data-view="mobile"] body.modal-open.cardpop { position: fixed; inset: 0; width: 100%; overflow: hidden; }
@@ -2378,3 +2403,5 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px) - 1px);
 :root[data-view="mobile"] .modal.pcard .ppage { margin-inline: 0; padding-inline: 0; }   /* the panel is narrower than the phone: the chart gets all of it */
 :root[data-view="mobile"] .modal.pcard .pctbox { padding-inline: 4px; }
 :root[data-view="mobile"] .modal.pcard .pbelow2 { margin-inline: 6px; }
+/* on the band a pressed box keeps its white (the site's hover wash is see-through, which reads as blue there) */
+.mplate .ddbox:hover, .mplate .ddbox:focus, .mplate .dd.open .ddbox { background: var(--surface); border-color: var(--ddline); }

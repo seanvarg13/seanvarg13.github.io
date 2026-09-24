@@ -411,7 +411,18 @@
     sc.onerror = () => { loading.delete(src); failed.add(src); render(); };
     document.head.append(sc);
   }
-  const indexReady = () => !!window.DRAFT_INDEX;
+  // The site is regular season only: spring-training and postseason datasets may still be built, but they're taken
+  // out of the index the moment it arrives, so no season picker anywhere ever offers one
+  const indexReady = () => {
+    const ix = window.DRAFT_INDEX; if (!ix) return false;
+    if (!ix.regularOnly) {
+      ix.regularOnly = true;
+      if (Array.isArray(ix.seasons)) ix.seasons = ix.seasons.filter((k) => !keyKind(k));
+      for (const e of ix.players || []) e.s = e.s.filter((sv) => !keyKind(sv[0]));
+      ix.players = (ix.players || []).filter((e) => e.s.length);
+    }
+    return true;
+  };
   const ensureIndex = () => ensureScript("hist/index.js", indexReady);
   const ensureHist = (key) => (key === CUR.key ? ensureDays() : isMulti(key) ? multiDataset(key) : ensureScript(`hist/${key}.js`, () => !!(window.DRAFT_HIST && window.DRAFT_HIST[key])));
   const needsRows = () => needsDays() || !!DS.aggregate;   // a combined span always sums rows, window or not
@@ -1795,16 +1806,13 @@
     ensureIndex();
     const entry = indexReady() ? window.DRAFT_INDEX.players.find((e) => e.id === p.id) : null;
     const seasons = entry ? entry.s.filter((sv) => sv[2] === p.type) : [];
-    const ssel = el("select", "cmpsel"); ssel.setAttribute("aria-label", "Season");
-    for (const sv of seasons) { const o = el("option", null, `${sv[1]}${kindTag(sv[0])}${keyLevel(sv[0]) ? " " + keyLevel(sv[0]) : ""}`); o.value = sv[0]; ssel.append(o); }
-    if (![...ssel.options].some((o) => o.value === (c.ds || here))) { const o = el("option", null, hereLabel); o.value = here; ssel.prepend(o); }
-    ssel.value = c.ds || here;
+    const sopts = seasons.map((sv) => [sv[0], `${sv[1]}${kindTag(sv[0])}${keyLevel(sv[0]) ? " " + keyLevel(sv[0]) : ""}`]);
+    if (!sopts.some(([v]) => v === (c.ds || here))) sopts.unshift([here, hereLabel]);
+    const scur = c.ds || here, slab = (sopts.find(([v]) => v === scur) || [scur, hereLabel])[1];
     // a date range belongs to the season it was set in, so changing the year clears it
-    ssel.addEventListener("change", (e) => { c.ds = e.target.value; c.from = ""; c.to = ""; savePrefs(); render(); });
-    const psel = el("select", "cmpsel"); psel.setAttribute("aria-label", "Split");
-    for (const [v, l] of CMP_SPLITS(pit)) { const o = el("option", null, l); o.value = v; psel.append(o); }
-    psel.value = `${c.hand || "all"}|${c.venue || "all"}`;
-    psel.addEventListener("change", (e) => { const [h, vn] = e.target.value.split("|"); c.hand = h; c.venue = vn; savePrefs(); render(); });
+    const ssel = ddList(ddBox(slab, "cmpbox"), sopts, scur, (v) => { c.ds = v; c.from = ""; c.to = ""; savePrefs(); render(); }, "ddwide");
+    const popts = CMP_SPLITS(pit), pcur = `${c.hand || "all"}|${c.venue || "all"}`;
+    const psel = ddList(ddBox((popts.find(([v]) => v === pcur) || popts[0])[1], "cmpbox"), popts, pcur, (v) => { const [h, vn] = v.split("|"); c.hand = h; c.venue = vn; savePrefs(); render(); }, "ddwide");
     const dates = el("div", "cmpdates");
     const mk = (f, title) => { const i = el("input", "cmpdate"); i.type = "date"; i.value = c[f] || ""; i.title = title;
       i.addEventListener("change", (e) => { c[f] = e.target.value; savePrefs(); render(); }); return i; };
@@ -2602,7 +2610,8 @@
     modal.hidden = !p0; lockPage(!!p0);
     parkControls(); body.innerHTML = "";
     if (!p0) return;
-    // which season: the current one (list pool + Rank vs apply) or another year from the chips
+    // which season: the current one (list pool + Rank vs apply) or another year from the chips (regular seasons only)
+    if (state.cardDs && keyKind(state.cardDs)) state.cardDs = null;
     const dsKey = state.cardDs || CUR.key;
     if (dsKey !== CUR.key) ensureHist(dsKey);
     const ds = histDataset(dsKey);
@@ -2636,7 +2645,7 @@
   // the Leaderboard's dataset: one season, or the span from the season picked to "to"
   const keyYear = (key) => Number(key.split("-")[1]);
   function lbKey() {
-    const base = state.lbDs || CUR.key; if (!state.lbTo) return base;
+    const base = state.lbDs && !keyKind(state.lbDs) ? state.lbDs : CUR.key; if (!state.lbTo) return base;
     const y = keyYear(base); if (!(state.lbTo > y)) return base;
     return multiKey(levelOf(base), y, state.lbTo, keyKind(base), state.lbEach);
   }
@@ -4123,12 +4132,8 @@
                    : { name: "K−BB%", fmt: (v) => v.toFixed(1) + "%", tick: (v) => Math.round(v) + "%", floor: [0, 25], pad: 2, steps: [5, 10] };
     const box = el("div", "rollbox");
     const hd = el("div", "rollhd");                    // a section heading like the percentile panel's: bold name on the teal rule
-    const sel = el("select", "rollsel"); sel.setAttribute("aria-label", "Rolling window, plate appearances");
-    for (const o of ROLL_OPTS) { const op = el("option", null, String(o)); op.value = String(o); sel.append(op); }
-    sel.value = String(N);
-    sel.addEventListener("click", (e) => e.stopPropagation());
-    sel.addEventListener("change", (e) => { state.rollPA = Number(e.target.value) || 100; savePrefs(); render(); });
-    const win = el("label", "rollwin"); win.append("last ", sel, " PA");
+    const sel = ddList(ddBox(String(N), "rollsel"), ROLL_OPTS.map((o) => [String(o), String(o)]), String(N), (v) => { state.rollPA = Number(v) || 100; savePrefs(); render(); }, "ddright");
+    const win = el("span", "rollwin"); win.append("last ", sel, " PA");
     hd.append(el("span", "rollname", `Rolling ${spec.name}`), win);
     box.append(hd);
     if (pts.length < 3) { box.append(el("p", "note rollnone", `Not enough plate appearances yet for a ${N}-PA window.`)); return box; }
@@ -4288,10 +4293,9 @@
     t.append(tb); box.append(t);
     return box;
   }
-  // uERA's batted-ball side: his mix, where each share of it ranks among the season's pitchers in the direction that
-  // helps him (more grounders and popups, fewer line drives and fly balls), and the mix uERA actually prices — his
-  // ground-ball and popup shares as they are, the rest of his air balls split into liners and fly balls at the
-  // league's ratio, every type at the league's wOBA for it
+  // uERA's batted-ball side: his mix as percentile bars — each type, where his rate of it ranks among the season's
+  // pitchers in the direction that helps him (more grounders and popups, fewer line drives and fly balls), the rate
+  // itself, and what the league's hitters do on that type (wOBA)
   function renderMixBox(p, g) {
     const pv = V(p), c = K(), pl = pool(g);
     if (p.type !== "P" || !c || !c.bbw) return null;
@@ -4304,33 +4308,22 @@
     };
     const mine = shares(p); if (!mine) return null;
     const others = pl.ref.map(shares).filter(Boolean);
-    const la = pl.sorted && pl.sorted.ldAir != null ? pl.sorted.ldAir : null, air = mine.ld + mine.fb;
-    const used = { gb: mine.gb, pu: mine.pu, ld: la == null ? mine.ld : air * la, fb: la == null ? mine.fb : air * (1 - la) };
+    const la = pl.sorted && pl.sorted.ldAir != null ? pl.sorted.ldAir : null;
     const box = el("div", "rollbox uerabox mixbox");
     const hd = el("div", "rollhd");
     hd.append(el("span", "rollname", "Batted-ball mix"));
-    const me = pl.stats.get(p.type + p.id); const mera = me && me.mera != null ? me.mera : mixERA(pv, pl.sorted || {});
+    const me = pl.stats.get(p.type + p.id), mera = me && me.mera != null ? me.mera : mixERA(pv, pl.sorted || {});
     if (mera != null) hd.append(el("span", "rollsub", `Mix ERA ${mera.toFixed(2)}`));
     box.append(hd);
-    box.title = `uERA keeps his ground-ball and popup shares and splits the rest of his air balls into line drives and fly balls at the league's ratio${la == null ? "" : ` (${Math.round(100 * la)}% line drives)`}, so a line-drive-heavy mix isn't held against him — putting the ball in the air is. Rank is his percentile among the season's pitchers, 100 = best: more ground balls and popups, fewer line drives and fly balls.`;
-    const t = el("table", "ubt");
-    t.append(colgroup([null, 58, 50, 70, 60]));
-    const hr = el("tr");
-    for (const h of ["", "Share", "Rank", "uERA uses", "Lg wOBA"]) hr.append(el("th", h ? null : "l", h));
-    const th = el("thead"); th.append(hr); t.append(th);
-    const tb = el("tbody");
+    box.title = `Each bar is where his rate ranks among the season's pitchers, 100 = best: more ground balls and popups, fewer line drives and fly balls. uERA keeps his ground-ball and popup shares and splits the rest of his air balls into line drives and fly balls at the league's ratio${la == null ? "" : ` (${Math.round(100 * la)}% line drives)`}, then prices every type at the league's wOBA for it.`;
+    const grid = el("div", "mixgrid");
+    grid.append(el("span"), el("span"), el("span", "mh", "Rate"), el("span", "mh", "Lg wOBA"));
     for (const k of T) {
       const arr = others.map((o) => dir[k] * o[k]).sort((a, b) => a - b);
       const pct = arr.length ? insertPct(arr, dir[k] * mine[k]) : null;
-      const rc = el("td", "dcell");
-      if (pct != null) { const chip = el("span", "rankchip" + (pct >= 100 ? " c3" : ""), String(pct)); chip.style.background = savantStyle(pct).bub; rc.append(chip); }
-      else rc.append("–");
-      const r = el("tr");
-      r.append(el("td", "l", names[k]), el("td", null, mine[k].toFixed(1) + "%"), rc, el("td", "exp", used[k].toFixed(1) + "%"), el("td", null, fmtX(c.bbw[k])));
-      tb.append(r);
+      grid.append(el("span", "ml", names[k]), svTrack(pct), el("span", "mv", mine[k].toFixed(1) + "%"), el("span", "mv lg", fmtX(c.bbw[k])));
     }
-    t.append(tb); box.append(t);
-    box.append(el("p", "note", `uERA keeps his ground-ball and popup shares and splits his other air balls into line drives and fly balls at the league's ratio${la == null ? "" : ` (${Math.round(100 * la)}% liners)`}, so a line-drive-heavy mix isn't held against him — putting the ball in the air is. Rank is among the season's pitchers, 100 = best.`));
+    box.append(grid);
     return box;
   }
   // the middle panel: one header, then every stat as a bar — no group headings inside it
@@ -4372,15 +4365,7 @@
         const groups = sections.map(([title, keys]) => ({ title, rows: keys.map((k) => row(k, OUTCOME_LABEL)).filter(Boolean) })).filter((x) => x.rows.length);
         if (groups.length) sets.push(groups);
       }
-      // on a desktop both columns share one scale: the largest at which the taller of them still fits the box's height
-      const tall = Math.max(1, ...sets.map(pctSvgH));
-      const fit = (W) => {
-        if (mobileView() || !body.isConnected || !body.closest(".ppage")) return 1;
-        const cs = getComputedStyle(body), avail = body.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 6;
-        return Math.max(1, Math.min(1.8, avail / tall, W / 360));
-      };
-      fit.box = body;
-      sets.forEach((gs, i) => cols.append(pctChart(gs, fit, i)));
+      sets.forEach((gs, i) => cols.append(pctChart(gs, i)));
       body.append(cols);
     }
     const vl = viewLabel(p.type);
@@ -4421,29 +4406,25 @@
   // 12px type throughout (10px for a 100), and dashed rules above every row but the first, under label and value only
   const SVG_NS = "http://www.w3.org/2000/svg";
   let pctROs = [];                                   // one per chart on the page; let go of at each redraw
-  // fit(W): the scale to show it at. A phone draws it at its real size; a desktop draws it narrower and shows it at the
-  // width it has, so type, bars and circles all grow together until the tallest column fills its box
   // A chart isn't on the page yet when it's first drawn, so it starts at the size its column had last time: drawn at a
   // guess and resized a moment later, everything under it would shift — and near the foot of the page the browser
   // would pull the window up to fit, which is what threw a phone's page upward on every tap of a tab.
   const pctLast = [];
-  function pctChart(groups, fit, slot = 0) {
+  function pctChart(groups, slot = 0) {
     const host = el("div", "svchart");
     const draw = () => {
       const bw = host.getBoundingClientRect().width;
       const W = Math.max(300, Math.round(bw) || 400);   // drawn at its real size, like every other bar (Savant shrinks under 400)
-      const k = fit ? fit(W) : 1, tag = W + ":" + k.toFixed(3);
-      if (host.dataset.w === tag && host.firstChild) return;
-      host.dataset.w = tag; pctLast[slot] = [W, k];
-      host.replaceChildren(pctSvg(groups, Math.round(W / k)));
+      if (host.dataset.w === String(W) && host.firstChild) return;
+      host.dataset.w = String(W); pctLast[slot] = W;
+      host.replaceChildren(pctSvg(groups, W));
     };
-    const [W0, k0] = pctLast[slot] || [400, 1];
-    host.dataset.w = W0 + ":" + k0.toFixed(3);
-    host.append(pctSvg(groups, Math.round(W0 / k0)));
-    if (window.ResizeObserver) { const ro = new ResizeObserver(draw); ro.observe(host); if (fit && fit.box) ro.observe(fit.box); pctROs.push(ro); }
+    const W0 = pctLast[slot] || 400;
+    host.dataset.w = String(W0);
+    host.append(pctSvg(groups, W0));
+    if (window.ResizeObserver) { const ro = new ResizeObserver(draw); ro.observe(host); pctROs.push(ro); }
     return host;
   }
-  const pctSvgH = (groups) => Number(pctSvg(groups, 400).getAttribute("viewBox").split(" ")[3]);
   function pctSvg(groups, W) {
     const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
     const r6 = W - 40, bar = r6 - 40 - 85 - 35;                  // the rule's width, the bar's width
@@ -4627,8 +4608,8 @@
   // o: { p, st, g, ref, entry (his search-index row), key (the season shown), pick(key) }
   function playerView(box, o) {
     const { p, st, g, ref } = o;
-    box.append(pageTitle(p, o));
     box.append(playerHead(p, st, g, o));
+    box.append(pageTitle(p, o));
     const page = el("div", "ppage");
     const B = el("div", "pcol pcolB wide");                   // one box, two columns of sections, for hitters and pitchers
     renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
@@ -4636,24 +4617,54 @@
     box.append(page);
     box.append(renderBelow(p, { st, g, ref }));
   }
-  // a word of the title that is also a picker, the way Savant's is: the word in bold over a dotted rule, and the
-  // browser's own list when it's clicked (a native select laid invisibly over the word)
-  function titleSelect(cur, opts, onPick, aria) {
-    const w = el("span", "tsel" + (opts.length < 2 ? " solo" : ""));
-    const hit = opts.find((x) => x[0] === cur) || [cur, String(cur)];
-    w.append(el("span", "tsl", hit[1]));
-    if (opts.length > 1) {
-      const sel = el("select"); sel.setAttribute("aria-label", aria);
-      for (const [v, l] of opts) { const op = el("option", null, l); op.value = v; sel.append(op); }
-      sel.value = cur;
-      sel.addEventListener("click", (e) => e.stopPropagation());
-      sel.addEventListener("change", () => { if (sel.value !== cur) onPick(sel.value); });
-      w.append(sel);
+  // Savant's dropdown, used by every picker on the player page: the list hangs straight under what was clicked — a
+  // white box inside a heavy dark rule, the choices in large type — instead of the browser's list or the phone's
+  // wheel. Opening it touches nothing else on the page (no redraw); a pick, a click anywhere else or Escape closes it.
+  let ddOpen = null;
+  function ddClose() {
+    if (!ddOpen) return;
+    const [w, t] = ddOpen; ddOpen = null;
+    const m = w.querySelector(":scope > .ddmenu"); if (m) m.hidden = true;
+    w.classList.remove("open"); t.setAttribute("aria-expanded", "false");
+  }
+  document.addEventListener("click", ddClose);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") ddClose(); });
+  function ddList(trigger, opts, cur, onPick, cls) {
+    const w = el("span", "dd" + (cls ? " " + cls : ""));
+    w.append(trigger);
+    if (opts.length < 2) { w.classList.add("solo"); trigger.disabled = true; return w; }
+    const menu = el("div", "ddmenu"); menu.setAttribute("role", "listbox"); menu.hidden = true;
+    for (const [v, l] of opts) {
+      const on = String(v) === String(cur), b = el("button", "ddi" + (on ? " on" : ""), l);
+      b.type = "button"; b.setAttribute("role", "option"); b.setAttribute("aria-selected", String(on));
+      b.addEventListener("click", (e) => { e.stopPropagation(); ddClose(); if (!on) onPick(v); });
+      menu.append(b);
     }
+    trigger.setAttribute("aria-haspopup", "listbox"); trigger.setAttribute("aria-expanded", "false");
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const was = ddOpen && ddOpen[0] === w; ddClose(); if (was) return;
+      menu.hidden = false; w.classList.add("open"); trigger.setAttribute("aria-expanded", "true"); ddOpen = [w, trigger];
+      const on = menu.querySelector(".ddi.on"); if (on && menu.scrollHeight > menu.clientHeight) menu.scrollTop = on.offsetTop - 4;
+    });
+    w.append(menu);
     return w;
   }
-  // "2026 MLB Percentiles", centred over the page (it scrolls away; the plate under it stays): the year and the level
-  // are where the season is picked
+  // a dropdown's button in the white box the filters use: the choice, then a chevron
+  function ddBox(text, cls) {
+    const b = el("button", "pill ddbox" + (cls ? " " + cls : "")); b.type = "button";
+    b.append(el("span", "pill-text", text));
+    b.insertAdjacentHTML("beforeend", '<svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>');
+    return b;
+  }
+  // a word of the title that is also a picker, the way Savant's is: the word in bold over a dotted rule
+  function titleSelect(cur, opts, onPick, aria) {
+    const hit = opts.find((x) => x[0] === cur) || [cur, String(cur)];
+    const t = el("button", "tsl", hit[1]); t.type = "button"; t.setAttribute("aria-label", `${aria}: ${hit[1]}`);
+    return ddList(t, opts, cur, onPick, "tsel");
+  }
+  // "2026 MLB Percentiles", centred under the pinned plate (it scrolls away under it): the year and the level are
+  // where the season is picked
   function pageTitle(p, o) {
     const hd = el("div", "ptitle"), t = el("h2", "pthd");
     const kind = DS.kind ? " " + KIND_SHORT[DS.kind] : "";
@@ -4674,9 +4685,8 @@
     hd.append(t);
     return hd;
   }
-  // the pinned header: the blue plate (cut-out, name, sample, Star), and in its right-hand side the filters — the games
-  // (regular season / spring / postseason), the dates and the split toggles. On a phone they all fold behind one
-  // Splits & dates button, so the pinned header stays short
+  // the pinned header: the blue plate (cut-out, name, sample, Star), and in its right-hand side the filters — the dates
+  // and the split toggles. On a phone they all fold behind one Splits & dates button, so the pinned header stays short
   function playerHead(p, st, g, o) {
     const top = el("div", "cardtop phead"), plate = renderPlate(p, st, g, g), mob = mobileView();
     const F = el("div", "phfilt");
@@ -4694,13 +4704,11 @@
     }
     let warn = null;
     if (open) {
-      const kp = renderSeasonPicker(o.entry.s.filter((sv) => sv[2] === p.type), o.key, o.pick, mob, { levelOnly: true }).querySelector(".kindpill");
-      cell("Games", "w2 mfull", kp || el("span", "phstatic", (KINDS.find(([k]) => k === keyKind(o.key)) || KINDS[0])[1]));
       const sp = renderSplitPanel(p), seg = (n) => sp.querySelector(`.seg[aria-label="${n}"]`);
       const db = sp.querySelector(".datesbar");
       if (db) {
         const [d0, d1] = db.querySelectorAll('input[type="date"]');
-        cell("From", "", d0); cell("To", "", d1);
+        cell("From", "w2", d0); cell("To", "w2", d1);
         const lw = el("div", "phlast"); lw.append(db.querySelector(".lastin"));
         const x = db.querySelector(".unadd"); if (x) lw.append(x);
         cell(`Last ${p.type === "P" ? "IP" : "PA"}`, "w2", lw);
