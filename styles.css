@@ -2335,6 +2335,3 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px) - 1px);
 .svpct .svnum { fill: #ffffff; font-weight: 700; text-anchor: middle; }
 .svpct .svnum.c3 { font-size: 10px; }
 .pctbox .pctfoot { display: none; }
-/* the player page's bars keep the width the chart gave them: 212 across on a desktop, 166 on a phone */
-:root:root .ppage .pmeters .meter { grid-template-columns: minmax(0, 1fr) 212px 35px; }
-:root:root[data-view="mobile"] .ppage .pmeters .meter { grid-template-columns: minmax(0, 1fr) 166px 35px; }

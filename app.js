@@ -4211,32 +4211,14 @@
                tip: `${m.label}: ${fmt(got.v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}` };
     };
     pctROs.forEach((ro) => ro.disconnect()); pctROs = [];
-    // the card's own bars (label, bar, value, and the ▸ that opens a stat's parts), at the chart's size
-    const SUBS = p.type === "H" ? SUB : SUB_P;
-    const cols = el("div", "pctcols pmeters");
-    (p.type === "H" ? PCT_COLS_H : PCT_COLS_P).forEach((sections, ci) => {
-      const col = el("div", "hcol");
-      for (const [title, keys] of sections) {
-        const rows = keys.map((k) => row(k, OUTCOME_LABEL)).filter(Boolean); if (!rows.length) continue;
-        const box = el("section", "hgroup"); box.append(el("h4", null, title));
-        const meters = el("div", "meters");
-        for (const r of rows) {
-          const mr = meterRow(r.m, r.v, r.pct);
-          const subs = (SUBS[r.k] || []).filter((sm) => metricValue(sm, pv, st) != null);
-          meters.append(mr);
-          if (!subs.length) continue;
-          const ok = `pp${ci}:${title}:${r.k}`, isOpen = !!state.open[ok];     // a stat in two sections folds in each on its own
-          const t = el("button", "fold", isOpen ? "▾" : "▸"); t.type = "button"; t.title = `${isOpen ? "Hide" : "Show"} ${subs.map((x) => x.label).join(" / ")}`;
-          t.setAttribute("aria-expanded", String(isOpen));
-          t.addEventListener("click", (e) => { e.stopPropagation(); state.open[ok] = !isOpen; savePrefs(); render(); });
-          mr.querySelector(".lbl").append(t);
-          if (isOpen) for (const sm of subs) { const sr = meterRow(sm, metricValue(sm, pv, st), st.pct[sm.key]); sr.classList.add("sub"); meters.append(sr); }
-        }
-        box.append(meters); col.append(box);
+    {
+      const cols = el("div", "pctcols");
+      for (const sections of (p.type === "H" ? PCT_COLS_H : PCT_COLS_P)) {
+        const groups = sections.map(([title, keys]) => ({ title, rows: keys.map((k) => row(k, OUTCOME_LABEL)).filter(Boolean) })).filter((x) => x.rows.length);
+        if (groups.length) cols.append(pctChart(groups));
       }
-      cols.append(col);
-    });
-    body.append(cols);
+      body.append(cols);
+    }
     const vl = viewLabel(p.type);
     col.title = `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`;   // Savant prints no footer: the pool is in the hover
     col.append(body);
