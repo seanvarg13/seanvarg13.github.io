@@ -372,10 +372,15 @@ from under the pinned plate to the bottom of the window, less the tab strip so t
 where the box starts in the **document** (`rect.top + scrollY`), not the viewport: reading the viewport while the page
 is scrolled gives a smaller number every time and the box grows with each render. On a phone the height cap is lifted.
 
-**Every dropdown on the page is Savant's** (`ddList()`): the title's year and level, the rolling window, and each
-side's season and split in Set up comparison. Clicking one hangs a list straight under it — a white box inside a heavy
-dark rule (`--ddline`), the choices in large type — instead of the browser's list or the phone's wheel. Opening it
-redraws nothing; a pick, a click anywhere else or Escape closes it (`ddClose`).
+**Every dropdown on the site is Savant's** (`ddOpenOn()`): a list hung straight under what was clicked — a white box
+inside a heavy dark rule (`--ddline`), the choices in large type — instead of the browser's list or the phone's wheel.
+The list is placed on the page itself (fixed, above everything), so no popup, pinned header or sideways-scrolling strip
+can clip it or cover it; it follows its opener if the page scrolls, and a pick, a click anywhere else or Escape closes
+it. The player page's pickers are built with `ddList()`; the filter pills (`pillSelect()`) open it directly; and any
+native `<select>` (Sort by, Rank vs, Draft from, the rankings list, Per page, Add position, the Star list, Scoring) is
+kept in the page, hidden, as the source of truth behind a box (`ddSelect()`), so its value and "change" listeners work
+as before. The header's **Draft & Fantasy** and **Leaderboards** menus use the same look and are moved out of the header
+onto the page, because on a phone Safari clipped them to the nav row's sideways scroll.
 
 **The site is regular season only.** Spring-training and postseason datasets can still be built (`build_history.py
 spring …` / `post …`), but `indexReady()` takes them out of the search index the moment it loads, so no season picker
