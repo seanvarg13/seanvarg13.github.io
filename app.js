@@ -2097,14 +2097,14 @@
     ensureScript("hist/career.js", careerReady);
     if (!careerReady()) { box.append(el("p", "note", failed.has("hist/career.js") ? "hist/career.js hasn't been built — run build_career.py" : "Loading career stats…")); return box; }
     // kept simple (Sean): PA, HR and the slash line for a hitter; IP, ERA and the four rates a pitcher owns for a pitcher
-    const H = p.type === "H", cols = H ? ["PA", "HR", "AVG", "OBP", "SLG", "OPS"] : ["IP", "ERA", "SO%", "BB%", "GB%", "Popup%"];
+    const H = p.type === "H", cols = H ? ["PA", "HR", "AVG", "OBP", "SLG", "OPS"] : ["IP", "ERA", "K%", "BB%", "GB%", "Popup%"];
     const idx = cols.map((k) => (H ? RAW_H : RAW_P).indexOf(k));
     const pct = (n, d) => (n == null || !d ? null : 100 * n / d);
     // GB% / Popup%: career.js carries them from its next build; until then, from the season's own file if it's loaded
     const seasonM = (season) => { const ds = histDataset(season === DATA.meta.season ? CUR.key : "mlb-" + season); const q = ds && ds.players.find((x) => x.id === p.id && x.type === "P"); return q ? q.m : null; };
     const val = (r, k) => {
-      if (H || !["SO%", "BB%", "GB%", "Popup%"].includes(k)) return r.c[k];
-      if (k === "SO%") return pct(r.c.K, r.c.BF); if (k === "BB%") return pct(r.c.BB, r.c.BF);
+      if (H || !["K%", "BB%", "GB%", "Popup%"].includes(k)) return r.c[k];
+      if (k === "K%") return pct(r.c.K, r.c.BF); if (k === "BB%") return pct(r.c.BB, r.c.BF);
       const a = r.c.adv || {}, key = k === "GB%" ? "gb" : "pu";
       if (a[key] != null) return a[key];
       const m = r.mlb ? seasonM(r.season) : null; return m ? m[key] : null;
@@ -2138,7 +2138,7 @@
         // the rates over the career: strikeouts and walks per batter faced; GB% / Popup% weighted by each season's BF
         const sum = (f) => rows.reduce((t, r) => t + (f(r) || 0), 0), bf = sum((r) => r.c.BF);
         const wavg = (k) => { let n = 0, d = 0; for (const r of rows) { if (!r.c.BF) continue; const v = val(r, k); if (v == null) return null; n += v * r.c.BF; d += r.c.BF; } return d ? n / d : null; };   // only with every season in it
-        const cv = (k, j) => (H || idx[j] >= 0 ? career[idx[j]] : k === "SO%" ? pct(sum((r) => r.c.K), bf) : k === "BB%" ? pct(sum((r) => r.c.BB), bf) : wavg(k));
+        const cv = (k, j) => (H || idx[j] >= 0 ? career[idx[j]] : k === "K%" ? pct(sum((r) => r.c.K), bf) : k === "BB%" ? pct(sum((r) => r.c.BB), bf) : wavg(k));
         const row = el("tr", "career"); row.append(el("td", "l", "Career"), el("td", "l", `${rows.length} yr`)); cols.forEach((k, j) => row.append(el("td", null, fmtv(k, cv(k, j))))); tbody.append(row);
       }
     }

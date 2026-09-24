@@ -367,7 +367,7 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
     dates and which stats sit on the grid — the page's, by section, plus anything from **More stats**, which lands as a
     plain row under "Added" (`state.cmp2.pick`). Nothing folds out.
   - **Season Stats** (`renderSeasonTable`) is kept simple: every MLB season and a career row, **PA HR AVG OBP SLG OPS**
-    for a hitter and **IP ERA SO% BB% GB% Popup%** for a pitcher (SO% / BB% per batter faced). GB% and Popup% come from
+    for a hitter and **IP ERA K% BB% GB% Popup%** for a pitcher (K% / BB% per batter faced). GB% and Popup% come from
     `hist/career.js` (`build_career.py` appends them to each pitching season); a file built before that falls back to
     the season's own data when it is loaded, and the career row shows them only once every season has them. A player
     with no MLB time gets his minor-league seasons, one line per level.

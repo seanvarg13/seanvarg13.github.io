@@ -2538,3 +2538,6 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
    against it. Room above them (the fantasy page's own bar too) */
 :root[data-view="mobile"] .toolbar:not(.xtoolbar) { padding-top: 10px; }
 :root[data-view="mobile"] #fboard > :first-child { margin-top: 6px; }
+/* a desktop's toolbar row centred in its gap: the same room under the header's stripe (2px of the padding) as above the
+   list's box */
+:root:not([data-view="mobile"]) .toolbar:not(.xtoolbar) { padding-top: 12px; padding-bottom: 10px; }
