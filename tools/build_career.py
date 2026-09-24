@@ -129,7 +129,8 @@ def main():
                     for r in rows:
                         m = ours.get((p["id"], r[0], t))
                         r.append(None if not m else ([m.get("woba"), m.get("xwoba")] if t == "H"
-                                                     else [m.get("fip"), m.get("siera"), m.get("k"), m.get("bb"), m.get("kbb"), m.get("whf"), m.get("strk")]))
+                                                     else [m.get("fip"), m.get("siera"), m.get("k"), m.get("bb"), m.get("kbb"), m.get("whf"), m.get("strk"),
+                                                           m.get("gb"), m.get("pu")]))   # appended: the card's simple season table shows GB% / Popup%
                     rec[t] = rows
             if rec:
                 out[str(p["id"])] = rec
