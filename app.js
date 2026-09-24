@@ -4098,6 +4098,43 @@
     svg.addEventListener("pointerleave", hide);
     return svg;
   }
+  // a pitcher's foot of the middle box: batted-ball luck, set like the uERA box — luck-neutral ERA against the real
+  // one in the heading, then what each batted-ball type has cost him against what it costs the league
+  function renderLuckBox(p) {
+    const pv = V(p), c = K(), bbl = pv.ctx && pv.ctx.bbl;
+    if (p.type !== "P" || !bbl || !c || !c.bbw) return null;
+    const names = { gb: "Ground balls", ld: "Line drives", fb: "Fly balls", pu: "Popups" };
+    const n = Object.values(bbl).reduce((s, x) => s + (x[0] || 0), 0);
+    const box = el("div", "rollbox uerabox luckbox");
+    const hd = el("div", "rollhd");
+    const era = pv.m.era, nera = pv.m.nera;
+    hd.append(el("span", "rollname", nera == null ? "Batted-ball luck" : `Luck-neutral ERA ${nera.toFixed(2)}`));
+    if (era != null && nera != null) {
+      const diff = Math.round(100 * (era - nera)) / 100, sub = el("span", "rollsub");
+      sub.append(`ERA ${era.toFixed(2)} `, el("span", "chip2 " + (diff < -0.15 ? "lucky" : diff > 0.15 ? "unlucky" : "even"),
+                 diff < -0.15 ? `${Math.abs(diff).toFixed(2)} lucky` : diff > 0.15 ? `${diff.toFixed(2)} unlucky` : "as deserved"));
+      hd.append(sub);
+    }
+    box.append(hd);
+    box.title = `Luck-neutral ERA gives every ball in play the league's average wOBA for its type (ground ball ${fmtX(c.bbw.gb)}, line drive ${fmtX(c.bbw.ld)}, fly ball ${fmtX(c.bbw.fb)}, popup ${fmtX(c.bbw.pu)}), so BABIP and HR/FB luck wash out while strikeouts, walks and a ground-ball profile keep their value. Diff is his wOBA allowed minus the league's, in points; red means the type has hurt him more than it should.`;
+    const t = el("table", "ubt");
+    t.append(colgroup([null, 44, 54, 56, 50, 54]));
+    const hr = el("tr");
+    for (const h of ["", "BIP", "Share", "wOBA", "Lg", "Diff"]) hr.append(el("th", h ? null : "l", h));
+    const th = el("thead"); th.append(hr); t.append(th);
+    const tb = el("tbody");
+    for (const k of ["gb", "ld", "fb", "pu"]) {
+      const [cnt, w] = bbl[k] || [0, null], lg = c.bbw[k];
+      const d = w == null ? null : Math.round(1000 * (w - lg));
+      const r = el("tr"), dc = el("td", "dcell");
+      dc.append(el("span", "chip2 " + (d == null ? "even" : d > 15 ? "unlucky" : d < -15 ? "lucky" : "even"), d == null ? "–" : (d > 0 ? "+" : "") + d));
+      r.append(el("td", "l", names[k]), el("td", null, String(cnt)), el("td", null, n ? (100 * cnt / n).toFixed(1) + "%" : "–"),
+               el("td", "exp", w == null ? "–" : fmtX(w)), el("td", null, fmtX(lg)), dc);
+      tb.append(r);
+    }
+    t.append(tb); box.append(t);
+    return box;
+  }
   // the pitcher's version of the same foot panel: what his process says the ERA should be, against what it is
   function renderUeraBox(p, st) {
     if (p.type !== "P" || !st || st.uera == null || !st.ukbb) return null;
@@ -4401,7 +4438,8 @@
         if (f.dataset.key.startsWith("pgrp:")) f.remove(); }
       belowCard = card;                                  // the rest of it fills the Advanced tab below
       C.append(cbody);
-      const roll = renderRolling(p, g); if (roll) B.append(roll);     // pinned to the foot of the percentile box
+      const foot = p.type === "H" ? renderRolling(p, g) : renderLuckBox(p);   // pinned to the foot of the percentile box
+      if (foot) B.append(foot);
       const ub = renderUeraBox(p, st); if (ub) C.append(ub);          // a pitcher's uERA box sits at the foot of the right one
       page.append(A, B, C); box.append(page);
       box.append(renderBelow(p));
