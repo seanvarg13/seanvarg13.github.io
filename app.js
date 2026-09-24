@@ -4165,6 +4165,13 @@
     return box;
   }
   // the middle panel: one header, then every stat as a bar — no group headings inside it
+  // A hitter's percentile box is two columns of headed sections, the card's own groups plus the expected three —
+  // wide enough (it takes the right-hand box's place too) that every bar keeps the length it has in one column.
+  // EXPW / EXPB / EXPS follow the xwOBA switch, as everywhere.
+  const PCT_COLS_H = [[["Outcomes", ["woba", "xws", "xwd"]], ["Expected Stats", ["EXPW", "EXPB", "EXPS"]], ["Batted-Ball Quality", ["ev", "brl"]]],
+                      [["Swing Decisions", ["osw", "bb"]], ["Contact", ["whf", "k"]], ["Batted-Ball Distribution", ["air", "pu", "gb", "pull"]]]];
+  const OUTCOME_LABEL = { woba: "wOBA", xws: "xwOBA", xwd: "dxwOBA", ev: "Avg EV", brl: "Barrel%", osw: "O-Swing%", bb: "BB%", whf: "Whiff%", k: "K%",
+                          air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%" };
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
     col.append(panelHead(...pctTitle(p, nav)));
@@ -4172,21 +4179,39 @@
     const noEV = DS.tracked != null && DS.tracked < 0.05;
     const exp = expKeys();
     const val = (k) => { const m = all.find((x) => x.key === k); if (!m || (noEV && NEEDS_EV.has(k))) return null; const v = metricValue(m, pv, st); return v == null ? null : { m, v, k }; };
-    const rows = [];
-    for (const key0 of (p.type === "H" ? SAVANT_H : SAVANT_P)) {
+    const row = (key0, labels) => {
       const start = exp[key0] || key0;
       let got = val(start);
       for (const alt of (!got && PCT_FALL[start]) || []) { got = val(alt); if (got) break; }
-      if (!got) continue;
-      const m = PCT_LABEL[got.k] ? Object.assign({}, got.m, { label: PCT_LABEL[got.k] }) : got.m;
+      if (!got) return null;
+      const lab = (labels && labels[key0]) || PCT_LABEL[got.k];
+      const m = lab ? Object.assign({}, got.m, { label: lab }) : got.m;
       const pct = st.pct[got.k];
-      rows.push({ label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null,
-                  tip: `${m.label}: ${fmt(got.v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}` });
+      return { label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null,
+               tip: `${m.label}: ${fmt(got.v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}` };
+    };
+    pctROs.forEach((ro) => ro.disconnect()); pctROs = [];
+    body.append(sampleLine(p, pv));                     // the playing time behind every bar below, above both columns
+    if (p.type === "H") {
+      const cols = el("div", "pctcols");
+      for (const sections of PCT_COLS_H) {
+        const groups = sections.map(([title, keys]) => ({ title, rows: keys.map((k) => row(k, OUTCOME_LABEL)).filter(Boolean) })).filter((x) => x.rows.length);
+        if (groups.length) cols.append(pctChart(groups));
+      }
+      body.append(cols);
+    } else {
+      const rows = SAVANT_P.map((k) => row(k)).filter(Boolean);
+      body.append(pctChart([{ title: "Pitching Percentiles", rows }]));
     }
-    body.append(pctChart([{ title: p.type === "H" ? "Hitting Percentiles" : "Pitching Percentiles", sample: sampleParts(p, pv), rows }]));
     const vl = viewLabel(p.type);
     col.title = `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`;   // Savant prints no footer: the pool is in the hover
     col.append(body);
+  }
+  function sampleLine(p, pv) {
+    const d = el("div", "pctsample");
+    d.append(el("span", "pslbl", "Sample"));
+    for (const [v, u] of sampleParts(p, pv)) { const c = el("span", "psv"); c.append(el("b", null, String(v)), " ", el("span", "psu", u)); d.append(c); }
+    return d;
   }
   // "2026 MLB Percentile Rankings", with the year and the level as the pickers for the whole page
   function pctTitle(p, nav) {
@@ -4215,7 +4240,7 @@
   // ticks at 12, the middle and 12 from the end, a 10-radius circle with a 2px white ring centred on the bar's end,
   // 12px type throughout (10px for a 100), and dashed rules above every row but the first, under label and value only
   const SVG_NS = "http://www.w3.org/2000/svg";
-  let pctRO = null;
+  let pctROs = [];                                   // one per chart on the page; let go of at each redraw
   function pctChart(groups) {
     const host = el("div", "svchart");
     const draw = () => {
@@ -4226,10 +4251,7 @@
       host.replaceChildren(pctSvg(groups, W));
     };
     host.append(pctSvg(groups, 400));
-    if (window.ResizeObserver) {
-      if (pctRO) pctRO.disconnect();
-      pctRO = new ResizeObserver(draw); pctRO.observe(host);
-    }
+    if (window.ResizeObserver) { const ro = new ResizeObserver(draw); ro.observe(host); pctROs.push(ro); }
     return host;
   }
   function pctSvg(groups, W) {
@@ -4249,7 +4271,7 @@
     groups.forEach((g, gi) => {
       const first = gi === 0, G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
       G.append(mk("rect", { class: "svsecrule", x: 0, y: 34, width: r6, height: 2 }));
-      G.append(mk("text", { class: "svsecname", x: 0, y: 28 }, g.title));
+      G.append(mk("text", { class: "svsecname", x: 0, y: 28 }, g.title.toUpperCase()));
       if (first) {                                               // POOR / AVERAGE / GREAT, each arrow over its tick
         const S = mk("g", { transform: "translate(125,54)" });
         const tri = (cx) => `M${cx},2L${cx - 3},8L${cx + 3},8Z`;
@@ -4441,7 +4463,9 @@
       const foot = p.type === "H" ? renderRolling(p, g) : renderLuckBox(p);   // pinned to the foot of the percentile box
       if (foot) B.append(foot);
       const ub = renderUeraBox(p, st); if (ub) C.append(ub);          // a pitcher's uERA box sits at the foot of the right one
-      page.append(A, B, C); box.append(page);
+      if (p.type === "H") { B.classList.add("wide"); page.append(A, B); }   // a hitter's percentile box spans both right-hand columns
+      else page.append(A, B, C);
+      box.append(page);
       box.append(renderBelow(p));
       sizePPage();
     })));

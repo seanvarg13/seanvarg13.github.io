@@ -2245,17 +2245,26 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
 .pchead .pcdots, .pchead .pctsub:empty { display: none; }
 .pchead .pctsub { font-size: 11px; margin-top: 4px; }
 .pctbox { padding: 0; }
+/* a hitter's percentile box takes both right-hand columns; its two columns sit one box-gap apart, so each is exactly
+   one box wide and every bar keeps its length */
+.ppage > .pcolB.wide { grid-column: span 2; }
+.pctcols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 12px; align-items: start; }
+:root[data-view="mobile"] .pctcols { grid-template-columns: minmax(0, 1fr); }
+.pctsample { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; padding: 2px 20px 6px; font-family: "Roboto Condensed", var(--body); }
+.pctsample .pslbl { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--svtext); margin-right: -4px; }
+.pctsample b { font-size: 16px; font-weight: 700; color: var(--svhead); }
+.pctsample .psu { font-size: 12px; color: var(--svtext); }
 /* the percentile chart itself is one SVG drawn to Savant's numbers (see pctSvg in app.js); these are only its inks */
 .svchart { width: 100%; }
 .svpct { display: block; width: 100%; height: auto; overflow: visible; font-family: "Roboto Condensed", var(--body); }
 .svpct text { font-size: 12px; dominant-baseline: middle; }
 .svpct .svscale { dominant-baseline: auto; }
-.svpct .svsecname { font-size: 16px; font-weight: 700; fill: var(--svhead); dominant-baseline: auto; }
+.svpct .svsecname { font-size: 15px; font-weight: 700; letter-spacing: 0.08em; fill: var(--accent-2-text); dominant-baseline: auto; }
 .svpct .svsample { dominant-baseline: auto; }
 .svpct .svsample .svslbl { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; fill: var(--svtext); }
 .svpct .svsample .svsv { font-size: 16px; font-weight: 700; fill: var(--svhead); }
 .svpct .svsample .svsu { font-size: 12px; fill: var(--svtext); }
-.svpct .svsecrule { fill: var(--svsec); }
+.svpct .svsecrule { fill: var(--accent-2); }
 .svpct .svline { fill: var(--svline); }
 .svpct .svtick { fill: #ffffff; opacity: 0.3; }
 .svpct .svlbl { fill: var(--svtext); }
