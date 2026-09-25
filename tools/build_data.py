@@ -160,9 +160,13 @@ def log(*a):
 # ============================================================================================
 # 1. Statcast
 # ============================================================================================
-def savant_search_days(start: str, end: str, game_types) -> pd.DataFrame:
+FRESH_DAYS = 3        # the last days before --end are always re-read from Savant (see load_statcast)
+
+
+def savant_search_days(start: str, end: str, game_types, fresh: bool = False) -> pd.DataFrame:
     """Pitch-level rows straight from Savant's search, one day at a time (spring training and the postseason:
-    pybaseball's statcast() clips its dates to the regular season). Cached per day under .cache/savant."""
+    pybaseball's statcast() clips its dates to the regular season). Cached per day under .cache/savant — but never an
+    empty day, which may only be a day Savant hasn't posted yet. fresh=True skips the cache (the last few days)."""
     cache = Path(__file__).resolve().parent / ".cache" / "savant"
     cache.mkdir(parents=True, exist_ok=True)
     gt = "".join(f"{t}%7C" for t in sorted(game_types))
@@ -170,7 +174,7 @@ def savant_search_days(start: str, end: str, game_types) -> pd.DataFrame:
     for day in pd.date_range(start, end):
         ds = str(day.date())
         f = cache / f"{ds}-{''.join(sorted(game_types))}.csv.gz"
-        if f.exists():
+        if f.exists() and not fresh:
             d = pd.read_csv(f, low_memory=False)
         else:
             url = ("https://baseballsavant.mlb.com/statcast_search/csv?all=true&hfPT=&hfAB=&hfGT=" + gt +
@@ -186,7 +190,8 @@ def savant_search_days(start: str, end: str, game_types) -> pd.DataFrame:
             else:
                 continue
             d = pd.read_csv(io.StringIO(r.text), low_memory=False) if r.text.strip() else pd.DataFrame()
-            d.to_csv(f, index=False, compression="gzip")
+            if len(d):
+                d.to_csv(f, index=False, compression="gzip")
         if len(d):
             out.append(d)
     log(f"  savant search: {sum(len(x) for x in out):,} pitches over {len(out)} days")
@@ -226,6 +231,18 @@ def load_statcast(end: str) -> pd.DataFrame:
         for d in chunks:
             out.append(d[[c for c in COLS if c in d.columns]])
     d = pd.concat(out, ignore_index=True)
+    # The last few days come straight from Savant, uncached. pybaseball caches every day it fetches for a year, empty
+    # or not, so a day asked for before Savant posted it stayed empty for good: the cloud's first run (25 Sep 2026, 6:32
+    # am) cached 24 Sep before its games were up, and the site sat at the 23rd. Re-reading the last FRESH_DAYS every run
+    # also picks up Savant's overnight corrections to them.
+    lo = str((pd.Timestamp(end) - pd.Timedelta(days=FRESH_DAYS - 1)).date())
+    new = savant_search_days(max(lo, SEASON_START), end, GAME_TYPES, fresh=True)
+    if len(new):
+        new = new[[c for c in COLS if c in new.columns]]
+        if pd.api.types.is_datetime64_any_dtype(d["game_date"]):
+            new["game_date"] = pd.to_datetime(new["game_date"])
+        got = set(new["game_date"].astype(str).str[:10])           # only days Savant sent replace the cached ones:
+        d = pd.concat([d[~d["game_date"].astype(str).str[:10].isin(got)], new], ignore_index=True)   # a failed fetch keeps its copy
     d = d[(d["game_date"].astype(str) <= end) & (d["game_type"].isin(GAME_TYPES))]   # regular season by default
     log(f"  {len(d):,} pitches, {d.game_date.min()} .. {d.game_date.max()}")
     return d
