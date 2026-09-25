@@ -372,8 +372,8 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
   - **Season Stats** (`renderSeasonTable`), the look Sean picked: one table, so every column lines up — an **MLB**
     section (Season, Team, one row per season and a career row) over a **Minor leagues** section (Season, **Level** —
     no clubs, Sean isn't after them — one row a year, newest first), each under a heading row and its own header row.
-    Every row is one line tall. A traded MLB season reads **TOT** and a minor-league year at several levels "2 levels"
-    / "3 levels"; the ▸ beside that label (not the year) opens it (`SEASON_OPEN`) to each club's line (`HT`/`PT` in
+    Every row is one line tall. A traded MLB season reads **TOT** and a minor-league year at several levels just "–" (so
+    the column stays a club's width); the ▸ beside that label (not the year) opens it (`SEASON_OPEN`) to each club's line (`HT`/`PT` in
     career.js, kept by `build_career.py`) or each level's. Hitters: **PA HR AVG OBP SLG OPS**. Pitchers: **IP ERA K%
     BB% GB% Popup% uERA** (K% / BB% per batter faced). **uERA** is worked out on the page — opening the table fetches
     each year's MLB season file — and shows on a chip coloured by its percentile in the percentile bars' own colours
