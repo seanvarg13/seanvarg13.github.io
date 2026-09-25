@@ -2182,7 +2182,7 @@
       if (both) { const hr = el("tr", "hdrow"), th = el("th", "l"); th.colSpan = 2 + tc.length; th.append(el("span", "rawhd", minors ? "Minor leagues" : "MLB")); hr.append(th); tbody.append(hr); }
       // the minors show the level where the majors show the club (Sean: the minor-league club isn't what he's after)
       const tr = el("tr", "colhd");
-      for (const h of ["Season", minors ? "Level" : "Team", ...tc]) tr.append(el("th", ["Season", "Level", "Team"].includes(h) ? "l" : h === "uERA" ? "lc" : null, h));
+      for (const h of ["Season", minors ? "Level" : "Team", ...tc]) tr.append(el("th", ["Season", "Level", "Team"].includes(h) ? "l" : h === "uERA" ? "lc" : null, h === "Popup%" ? "PU%" : h));   // PU%: a narrower head, more room between columns (Sean)
       tbody.append(tr);
       const draw = (r, seasonTxt, level, team, cls) => {
         const row = el("tr", cls || null);
