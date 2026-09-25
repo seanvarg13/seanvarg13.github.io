@@ -385,7 +385,8 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
     2021 on, the shift at each step with the promoted pitcher's lower-level rate first pulled toward his league by its
     reliability, chained A → A+ → AA → AAA → MLB), then uERA is worked out on those rates against that season's MLB
     starters or relievers (by his GS share, with the league's HBP rate), so it reads and colours on the MLB scale. A
-    "2 levels" year is the innings-weighted mix, only when every level has one; Rookie ball and short-season A have no
+    year at several levels is the innings-weighted mix of the levels that have one, when they cover 80% of its innings
+    (a stint under a level file's 20-batter floor has no rates; GB% / PU% follow the same rule by batters faced); Rookie ball and short-season A have no
     translation. GB% / Popup% come from career.js / minors.js (appended to each line by `build_career.py`), else from
     the season's own file when it's loaded.
   - **Rolling** is `renderRolling()`: xwOBA over a hitter's last N PA (K−BB% for a pitcher), 25 to 300. On a phone

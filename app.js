@@ -2138,10 +2138,14 @@
     };
     // the minors' uERA is an MLB equivalent: his Whiff%, Strike%, GB% and Popup% at a level, carried up to the majors
     // by MILB_X, then uERA worked out on them against that season's MLB pitchers — so it reads, and is coloured, on
-    // the same scale as the MLB rows. A year at two levels is the innings-weighted mix, only when every level has one.
+    // the same scale as the MLB rows. A year at two levels is the innings-weighted mix of the levels that have one.
+    // A level with no rates (a stint under the level file's 20-batter floor, or Rookie ball) sits out of a year's mix;
+    // the year still gets one when the levels that have them cover 80% of its innings (Sean: 75 of Pérez's 77 in 2022)
+    const hasRates = (l) => !!MILB_X[lvName(l.level)] && ["whf", "strk", "gb", "pu"].every((k) => (l.c.adv || {})[k] != null);
+    const covers = (all, some, w) => { const t = all.reduce((n, l) => n + w(l), 0); return some.length > 0 && t > 0 && some.reduce((n, l) => n + w(l), 0) >= 0.8 * t; };
     const milbU = (r) => {
-      const parts = r.parts || [r], season = r.season;
-      if (season < 2015 || parts.some((l) => !MILB_X[lvName(l.level)] || ["whf", "strk", "gb", "pu"].some((k) => (l.c.adv || {})[k] == null))) return null;
+      const all = r.parts || [r], season = r.season, parts = all.filter(hasRates);
+      if (season < 2015 || !covers(all, parts, (l) => ipNum(l.c.IP) || 0)) return null;
       const k = season === DATA.meta.season ? CUR.key : "mlb-" + season, ds = histDataset(k);
       if (!ds && failed.has(`hist/${k}.js`)) return null;
       if (!ds) { want.add(k); return undefined; }
@@ -2162,12 +2166,12 @@
       })));
     };
     const teams0 = (ls) => ls.filter((l) => l.team).length > 1;   // a club's line is one slice of a level he played for two at
-    // a year's total across levels: the lines added up; GB% / Popup% only when every level has them
+    // a year's total across levels: the lines added up; GB% / Popup% from the levels that have them, if they cover 80%
     const yearTotal = (season, lv) => {
       const c = combineLines(H, lv.map((x) => x.line));
       if (!H) for (const k of ["GB%", "Popup%"]) {
-        const vs = lv.map((x) => [val(x.line, k), Number(x.line.c.BF) || 0]);
-        c.adv[k === "GB%" ? "gb" : "pu"] = vs.every(([v, w]) => v != null && w) ? vs.reduce((s0, [v, w]) => s0 + v * w, 0) / vs.reduce((s0, [, w]) => s0 + w, 0) : null;
+        const vs = lv.map((x) => [val(x.line, k), Number(x.line.c.BF) || 0]), ok = vs.filter(([v, w]) => v != null && w);   // the levels that have it, when they cover 80% of his batters
+        c.adv[k === "GB%" ? "gb" : "pu"] = ok.length && ok.reduce((n, [, w]) => n + w, 0) >= 0.8 * vs.reduce((n, [, w]) => n + w, 0) ? ok.reduce((s0, [v, w]) => s0 + v * w, 0) / ok.reduce((s0, [, w]) => s0 + w, 0) : null;
       }
       return { season, level: "", team: "", c, mlb: false, total: true, parts: lv.map((x) => x.line) };
     };
