@@ -2593,6 +2593,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 /* the heat colour is a rounded chip inside the cell, sized like the leaderboard's sorted-column pill */
 .rawstats td.uera { padding-top: 3px; padding-bottom: 3px; }
 .rawstats .uchip { display: inline-block; min-width: 3.6em; padding: 3px 6px; border-radius: 4px; text-align: center; box-sizing: border-box; }
+.rawstats .uchip.on { text-shadow: 0 0 2px rgba(0, 0, 0, 0.35); }   /* white text stays readable on the pale middle of the scale */
 :root[data-view="mobile"] .rawstats .uchip { min-width: 0; padding: 1px 4px; font-size: 0.95em; }
 :root[data-view="mobile"] .rawstats.simple.pit td.uera { padding: 4px 2px 4px 4px; }
 :root[data-view="mobile"] .rawstats .yrtog { padding-right: 2px; }
