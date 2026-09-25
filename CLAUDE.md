@@ -201,14 +201,13 @@ Statcast/Directional toggle and the `xws` column are gone). The build still carr
   daily job, and the `.joblib` files are not in this repo (too large, and nothing here can run them).
 
 **uK% / uBB% / uERA** (pitchers, computed in `app.js`, not in the build):
-* **uK%** = his Whiff%, as is. **uBB%** = the walk rate at his own Strike% percentile (`impliedKBB`, ~line 650).
+* **uK%** = `−26.975 + 0.933·Whiff% + 0.409·Strike%` (`UK`, fitted over every 100+ BF pitcher-season 2015-2026 bar
+  2020; Whiff% as is ran 2.5 points high). **uBB%** = the walk rate at his own Strike% percentile (`impliedKBB`).
 * **uERA** (`underlyingERA`) puts those two rates on the balls he actually allowed: his ground-ball and popup
   shares stand, the air balls left over are split into line drives and fly balls at the *population's* ratio, and
   every ball in play is then worth the league's average wOBA for its type (`consts.bbw`). The resulting wOBA is
   put on the ERA scale as `lgERA + (xw − lgwOBA) / wobaScale · pa9`. So a high line-drive rate never punishes
   him, but putting the ball in the air does.
-* ⚠️ The explanatory note under that table in `app.js` (~line 2169) still describes an **older** fitted recipe
-  ("53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%"). The code does not do that any more. See §8.
 
 **MLB-equivalent uERA** (the minors' rows in Season Stats, `milbU` / `MILB_X` in `app.js`): the level's Whiff%,
 Strike%, GB% and Popup% shifted up to the majors by a fixed table per level, then uERA against that season's MLB pool.
@@ -327,8 +326,6 @@ is deploy-limited.
   (`build_history.py <years>`, then `build_career.py`, then publishes). ~2 hours the first time, a no-op after.
   Until it has run, those seasons show Statcast's xBA/xSLG under the site's names. The minors have no directional
   xwOBA, so their lists lead with wOBA.
-* **The uERA note in `app.js` is stale** (§4). It describes a fitted regression that was replaced by the simple
-  `impliedKBB` rule. One sentence of user-facing copy; Sean should decide the wording.
 * **The percentile sections have no run values, fielding (OAA), sprint speed or spin.** Not in this data.
   Acknowledged gap, not a bug.
 * **The player page is a popup card** (Sean, 24 Sep 2026: "identical in every measure"): `renderExplore()` opens his
