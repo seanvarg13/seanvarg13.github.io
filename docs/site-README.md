@@ -361,8 +361,8 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
   grow together; a phone draws them at their real size. A chart starts at the size its column had last time
   (`pctLast`): drawn at a guess and resized a moment later, everything under it shifted and, near the foot of the
   page, the browser pulled the window up — which is what threw a phone's page upward on every tap of a tab.
-- **The tabs** (`renderBelow`, `state.pbtab`): **Compare**, **Season Stats**, **Rolling**, and for pitchers **nERA**
-  and **uERA**. Clicking the open tab closes it and leaves just the strip (`pbtab: "none"`), with the page's notes
+- **The tabs** (`renderBelow`, `state.pbtab`): **Compare**, **Season Stats**, **Rolling**, **Fantasy**, and for
+  pitchers **nERA** and **uERA**. Clicking the open tab closes it and leaves just the strip (`pbtab: "none"`), with the page's notes
   under it. After any tab is picked, `anchorTabs()` puts the strip back exactly where it was on the screen, padding
   the page under it when what's below got shorter, so nothing jumps.
   - **Compare** turns on the two-side comparison and opens it here, under the stats (`cmpCard`). Its grid is the
@@ -389,6 +389,13 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
     (a stint under a level file's 20-batter floor has no rates; GB% / PU% follow the same rule by batters faced); Rookie ball and short-season A have no
     translation. GB% / Popup% come from career.js / minors.js (appended to each line by `build_career.py`), else from
     the season's own file when it's loaded.
+  - **Fantasy** (`renderFantasyTab`): his points under a saved scoring preset — the picker lists the fantasy page's
+    presets and shares its choice (`fstore.current`), with a link to edit them. Tiles for the season total and points
+    per game (ranked among every hitter / pitcher, and per game among those past the fantasy page's minimum), games,
+    and for a pitcher who has both started and relieved, points per start and per relief outing. Then the categories
+    the preset scores with his count, the weight, the points and the per-game share, and for a pitcher his game log
+    (`fantasy.js`'s per-game rows, newest first, the last ten or all). Hitters have season lines only in fantasy.js, so
+    no game log. The card's season when fantasy.js covers it (the last three MLB seasons), otherwise the current one.
   - **Rolling** is `renderRolling()`: xwOBA over a hitter's last N PA (K−BB% for a pitcher), 25 to 300. On a phone
     the plot runs from the left edge (no bar column to line up with).
   - **nERA** is the batted-ball luck table (`renderLuckBox`). **uERA** is the uERA table (`renderUeraBox`) and, beside

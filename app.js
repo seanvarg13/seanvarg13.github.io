@@ -4126,7 +4126,91 @@
     return box;
   }
   const paRow = (label, node) => { const r = el("div", "parow"); r.append(el("span", "palbl", label), node); return r; };
-  const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["rolling", "Rolling"]];
+  // The Fantasy tab: his points under a saved scoring preset (the fantasy page's own, and the choice is shared with it)
+  // — the season total, per game (per start and per relief outing for a pitcher), where he ranks, which categories the
+  // points come from, and a pitcher's game-by-game log. MLB seasons fantasy.js covers only; a hitter has no game log.
+  const FANT_OPEN = new Set();
+  const outsIP = (outs) => `${Math.floor(outs / 3)}.${outs % 3}`;   // innings the way a box score writes them                              // pitchers whose whole game log is showing (this visit)
+  function renderFantasyTab(p) {
+    const box = el("div", "rollbox uerabox fantbox");
+    const y = DS.level === "MLB" && FYEARS.includes(String(DS.season)) ? String(DS.season) : String(DATA.meta.season);
+    fEnsure(y);
+    const F = fData(y), grp = p.type === "H" ? "H" : "P";
+    // the scoring picker: every saved preset, the same choice as the fantasy page
+    const top = el("div", "fanttop"), lab = el("label", "field"), sel = el("select");
+    for (const q of fpresets()) { const o = el("option", null, q.name); o.value = q.id; if (q.id === fpreset().id) o.selected = true; sel.append(o); }
+    sel.addEventListener("change", () => { fstore.current = sel.value; fsave(); render(); });
+    lab.append(el("span", null, "Scoring"), sel); top.append(lab);
+    const ed = el("a", "fantedit", "Edit scoring"); ed.href = "#fantasy/settings"; top.append(ed);
+    box.append(top); ddSelect(sel);
+    if (!F) { box.append(el("p", "note", failed.has(fFile(y)) ? `No fantasy stats for ${y}.` : "Loading fantasy stats…")); return box; }
+    const o = grp === "H" ? fHit(F, p.id) : fPit(F, p.id);
+    if (!o || !o.G) { box.append(el("p", "note", `No ${y} MLB games for him.`)); return box; }
+    const pre = fpreset(), w = pre.w[grp] || {}, tot = fPts(w, o);
+    const hd = el("div", "rollhd");
+    hd.append(el("span", "rollname", `${f1(tot)} pts`), el("span", "rollsub", `${y} · ${pre.name}` + (y !== String(DS.season) ? " (fantasy covers the last three MLB seasons)" : "")));
+    box.append(hd);
+    // where he ranks: the season total among every hitter / pitcher, per game among those past the fantasy page's minimum
+    const rows = fRows(y, grp);
+    const rank = (vals, v) => (vals.length ? `${ordinal(rankOf(vals, v))} of ${vals.length}` : "");
+    const tiles = el("div", "fanttiles");
+    const tile = (big, small, sub) => { const t = el("div", "fanttile"); t.append(el("b", null, big), el("span", null, small)); if (sub) t.append(el("i", null, sub)); tiles.append(t); };
+    const ppg = tot / o.G;
+    tile(f1(tot), "season points", rows ? rank(rows.map((r) => r.pts), tot) : "");
+    const qual = rows ? rows.filter(fMinOK) : [];
+    tile(f2(ppg), "points per game", rows && qual.some((r) => r.p.id === p.id) ? rank(qual.map((r) => r.pts / r.o.G), ppg) : "");
+    tile(String(o.G), grp === "H" ? "games" : `games · ${o.GS} GS`, grp === "H" ? `${o.PA} PA` : `${outsIP(o.OUTS)} IP`);
+    if (grp === "P") {                                   // per start and per relief outing, when he has had both
+      const st = o.games.filter((g) => g.GS), rl = o.games.filter((g) => !g.GS);
+      if (st.length && rl.length) tile(f2(st.reduce((a, g) => a + fPts(w, g), 0) / st.length), "points per start", `${st.length} starts`);
+      if (st.length && rl.length) tile(f2(rl.reduce((a, g) => a + fPts(w, g), 0) / rl.length), "points per relief outing", `${rl.length} outings`);
+    }
+    box.append(tiles);
+    // where the points come from: each category the preset scores, his count, the weight, the points
+    const lbl = Object.fromEntries(FCATS[grp]);
+    const cats = Object.entries(w).filter(([k, v]) => Number(v) && o[k]).map(([k, v]) => [k, Number(v), o[k] || 0, Number(v) * (o[k] || 0)])
+      .sort((a, b) => Math.abs(b[3]) - Math.abs(a[3]));
+    const t = el("table", "ubt fantcats"), th = el("thead"), hr = el("tr");
+    for (const h of ["Category", "Stat", "×", "Pts", "Per game"]) hr.append(el("th", h === "Category" ? "l" : null, h));
+    th.append(hr); t.append(th);
+    const tb = el("tbody");
+    for (const [k, v, n, pts] of cats) {
+      const r = el("tr");
+      r.append(el("td", "l", (lbl[k] || k).replace(/ \(.*\)$/, "")), el("td", null, k === "IP" ? outsIP(o.OUTS) : String(Math.round(n * 10) / 10)),
+               el("td", "fw", (v > 0 ? "" : "−") + Math.abs(v)), el("td", "fp" + (pts < 0 ? " neg" : ""), f1(pts)), el("td", null, f2(pts / o.G)));
+      tb.append(r);
+    }
+    const tr = el("tr", "ftot"); tr.append(el("td", "l", "Total"), el("td"), el("td"), el("td", "fp", f1(tot)), el("td", null, f2(ppg))); tb.append(tr);
+    t.append(tb); box.append(t);
+    // a pitcher's game log, newest first: the last ten, or every game on request
+    if (grp === "P" && o.games.length) {
+      const miss = Object.keys(w).filter((k) => Number(w[k]) && o.games[0][k] === undefined && !["IP", "OUT", "G", "SVHD", "RW", "RL", "QS", "NH", "PG"].includes(k));
+      const all = FANT_OPEN.has(p.id), games = o.games.slice().reverse(), show = all ? games : games.slice(0, 10);
+      box.append(el("h4", "fanth", "Game log"));
+      const gt = el("table", "ubt fantlog"), gh = el("thead"), ghr = el("tr");
+      for (const h of ["Date", "", "IP", "K", "ER", "H", "BB", "Dec", "Pts"]) ghr.append(el("th", h === "Date" ? "l" : null, h));
+      gh.append(ghr); gt.append(gh);
+      const gb = el("tbody");
+      for (const g of show) {
+        const d = String(g.date), iso = `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`, pts = fPts(w, g);
+        const dec = [g.W && "W", g.L && "L", g.SV && "SV", g.HD && "HD", g.BS && "BS"].filter(Boolean).join(" ");
+        const r = el("tr");
+        r.append(el("td", "l", fmtDate(iso)), el("td", "fgs", g.GS ? "GS" : ""), el("td", null, outsIP(g.OUTS)),
+                 el("td", null, String(g.K)), el("td", null, String(g.ER)), el("td", null, String(g.H)), el("td", null, String(g.BB)),
+                 el("td", "fdec", dec), el("td", "fp" + (pts < 0 ? " neg" : ""), f1(pts)));
+        gb.append(r);
+      }
+      gt.append(gb); box.append(gt);
+      if (games.length > 10) {
+        const more = el("button", "btn btn-quiet tbtn", all ? "Show the last ten" : `Show all ${games.length} games`); more.type = "button";
+        more.addEventListener("click", () => { if (all) FANT_OPEN.delete(p.id); else FANT_OPEN.add(p.id); render(); });
+        box.append(more);
+      }
+      if (miss.length) box.append(el("p", "note", `${miss.map((k) => lbl[k] || k).join(", ")} count in the season total but aren't in the per-game log.`));
+    }
+    return box;
+  }
+  const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["rolling", "Rolling"], ["fantasy", "Fantasy"]];
   const BTABS_P = [["nera", "nERA"], ["uera", "uERA"]];                 // a pitcher's two ERAs, one tab each
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
@@ -4170,6 +4254,8 @@
     } else if (pick === "rolling") {                  // xwOBA over a hitter's last N PA, K−BB% over a pitcher's last N batters
       const roll = renderRolling(p, ref);
       body.append(roll || el("p", "note", "No game-by-game data for this season, so there's no rolling line."));
+    } else if (pick === "fantasy") {
+      body.append(renderFantasyTab(p));
     } else if (pick === "nera") {
       body.append(renderLuckBox(p) || el("p", "note", "Luck-neutral ERA needs batted-ball data for this season."));
     } else if (pick === "uera") {
