@@ -2261,7 +2261,7 @@
       // one row a year: its level, or "2 levels" opening to each (never the clubs, and never a second line in the row)
       const r = lv.length === 1 ? Object.assign({}, lv[0].line, { club: false }) : yearTotal(season, lv);
       const kids = lv.length > 1 ? lv.map((x) => ({ r: Object.assign({}, x.line, { club: false }), level: x.level, team: x.level })) : [];
-      return { r, level: "", team: lv.length === 1 ? lv[0].level : `${lv.length} levels`, kids };
+      return { r, level: "", team: lv.length === 1 ? lv[0].level : "–", kids };   // a year at several levels: just the ▸ and a dash, so the column stays as narrow as a club's (Sean)
     });
     both = mlb.length > 0 && (milb.length > 0 || !window.DRAFT_MINORS);
     if (mlb.length) section(mlbItems, false);
