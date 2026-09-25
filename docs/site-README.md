@@ -58,12 +58,12 @@ table column.
 ERA, SIERA, FIP, Avg EV, Hard-Hit% and Barrel%. Groups named in `meta.pitcherCardFold` ride below as a fold-out instead of in a column.
 
 **uK% and uBB%** are what his process rates say the strikeout and walk rates should be, and they are what uERA is
-built on: uK% is his Whiff% taken as the K% directly, and uBB% is the walk rate of the pitcher at his Strike%
-percentile in the same pool. Both are ordinary card metrics (`uk`, `ubb`) alongside u(K-BB%) and uERA, so they can
-sit on any table. Fitted alternatives are measurably tighter — against actual K%, `-1.75 + 0.975·Whiff%` is RMSE 2.36
-and `-25.81 + 0.955·Whiff% + 0.383·Strike%` is 2.24, against 3.41 for the flat rule, and for walks
-`53.67 + 0.136·Whiff% - 0.890·Strike% + 0.160·Zone%` is 1.36 against 1.42 — and the working is in the session notes
-if they are ever wanted back.
+built on. uK% is fitted on his Whiff% and Strike%: `-26.975 + 0.933·Whiff% + 0.409·Strike%` (`UK` in `app.js`; Sean,
+25 Sep 2026), least squares over every 100+ BF pitcher-season 2015-2026 bar 2020, weighted by BF. It sits within half
+a point of the league's real K% every season and misses a pitcher's by ~2.6; Whiff% taken as the K% directly — the
+old rule — ran 2.5 points high and missed by 3.4, and 2 × SwStr% + 1 did no better. uBB% is the walk rate of the
+pitcher at his Strike% percentile in the same pool. Both are ordinary card metrics (`uk`, `ubb`) alongside u(K-BB%)
+and uERA, so they can sit on any table.
 
 **WSGP** is the average of a pitcher's Whiff%, Strike%, GB% and Popup% **percentiles** — the four rates that belong
 to him before a fielder touches the ball or a run scores. Like u(K-BB%) and uERA it is pool-derived, not a rate on
@@ -467,7 +467,7 @@ any of ESPN's categories, plus league size). **Points** ranks every hitter / pit
 season line (G, PA, AB, H, R, HR, RBI, SB, BB, K, AVG/OBP/SLG/OPS; pitchers G, GS, IP, W, L, SV, HD, K, ERA, WHIP, K/9,
 QS), by position / role, for 2026 and the two seasons before. **Per opportunity**: points per game, per PA, per AB,
 per 600 PA; pitchers per IP, per start, per relief appearance, QS%. **What if**: pitchers with K and BB at their
-underlying rates (uK% = Whiff%, uBB% from Strike% percentile), ER at luck-neutral ERA, hits at Savant xBA — and the
+underlying rates (uK% fitted on Whiff% and Strike%, uBB% from Strike% percentile), ER at luck-neutral ERA, hits at Savant xBA — and the
 rank at the role that would give; hitters with H / TB at the directional xBA / xSLG, points per game at a starter's PA/G and a
 full starter's PA at their position (top teams × lineup slots by PA), and the rank at the position that would give.
 Data: `build_fantasy.py` (part of Update / the daily job) -> `fantasy.js`; `python3 build_fantasy.py 2025 2024` for

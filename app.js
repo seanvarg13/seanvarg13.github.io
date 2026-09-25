@@ -647,13 +647,15 @@
   const wsgpFrom = (whf, strk, gb, pu) => (whf == null || strk == null || gb == null || pu == null ? null
                                            : Math.round(10 * (whf + strk + gb + pu) / 4) / 10);
   const quantile = (arr, p) => { if (!arr || !arr.length) return null; const pos = (p / 100) * (arr.length - 1), lo = Math.floor(pos); return arr[lo] + (arr[Math.min(lo + 1, arr.length - 1)] - arr[lo]) * (pos - lo); };
-  // uK% and uBB%: the strikeout and walk rates his process implies — his whiff rate as the K%, and the walk rate at
-  // his own Strike% percentile as the BB%. (Fitted alternatives are tighter — -1.75 + 0.975·Whiff% is RMSE 2.36
-  // against 3.41 for the flat rule, and Whiff% + Strike% 2.24 — but these are the two Sean wants read off the card.)
+  // uK% and uBB%: the strikeout and walk rates his process implies. uK% is fitted on his Whiff% and Strike% (Sean,
+  // 25 Sep 2026): every 100+ BF pitcher-season 2015-2026 bar 2020, weighted by BF — within half a point of the league's
+  // real K% every season and ~2.6 points of a pitcher's, where Whiff% as is ran 2.5 points high and missed by 3.4
+  // (2 × SwStr% + 1 was no better). uBB% is the walk rate at his own Strike% percentile.
+  const UK = { c: -26.975, whf: 0.933, strk: 0.409 };
   function impliedKBB(pv, pctS, sorted) {
     const m = pv.m;
-    if (m.whf == null || pctS == null || !sorted.bb) return null;
-    const k = m.whf;                                                  // uK%: his whiff rate, as is
+    if (m.whf == null || m.strk == null || pctS == null || !sorted.bb) return null;
+    const k = Math.max(0, UK.c + UK.whf * m.whf + UK.strk * m.strk);   // uK%: whiffs, nudged by how often he's in the zone and ahead
     const bb = -quantile(sorted.bb, pctS);                            // uBB%: the walk rate at his Strike% percentile
     if (Number.isNaN(k) || Number.isNaN(bb)) return null;
     return { k: Math.round(10 * k) / 10, bb: Math.round(10 * Math.max(0, bb)) / 10 };
@@ -2391,7 +2393,7 @@
     const row = el("div", "uerarow"); row.append(card); if (mix) row.append(mix);
     box.append(row);
     const from = (v, pct) => (v == null ? "" : ` (${v.toFixed(1)}%${pct == null ? "" : ", " + ordinal(pct)}）`.replace("）", ")"));
-    box.append(el("p", "note", `Expected K% is his whiff rate${from(pv.m.whf, st.pct.whf)}; expected BB% is 53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%. Both are least-squares fits over every 300+ BF pitcher-season since 2015, re-centred so the pool's expected rates match its real ones — they land within about 2.1 and 1.4 points of the real K% and BB%, against 3.4 for the old "expected K% = Whiff%". uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. The percentile bars rank the rates uERA uses, so the line-drive and fly-ball bars are both really his air-ball rate — fewer counts as better. Blue diff: results beat the process; red: they trail it.`));
+    box.append(el("p", "note", `Expected K% is −27.0 + 0.933·Whiff% + 0.409·Strike% (his Whiff%${from(pv.m.whf, st.pct.whf)}, Strike%${from(pv.m.strk, st.pct.strk)}), a fit over every 100+ BF pitcher-season since 2015 that lands within about 2.6 points of a pitcher's real K%, against 3.4 for Whiff% as is; expected BB% is the walk rate at his Strike% percentile. uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. The percentile bars rank the rates uERA uses, so the line-drive and fly-ball bars are both really his air-ball rate — fewer counts as better. Blue diff: results beat the process; red: they trail it.`));
     return box;
   }
   // a percentile bar in a table cell: the same Savant bar as every other one
@@ -3327,9 +3329,9 @@
     fip: "Fielding-independent pitching: strikeouts, walks, hit batters and home runs only, scaled to look like an ERA.",
     siera: "Skill-interactive ERA: FIP's inputs plus how he uses the ground, shifted so the league averages its real ERA.",
     nera: "Luck-neutral ERA: his actual batted balls, each re-scored at what that type of ball is worth league-wide, so the bounces come out.",
-    uera: "Underlying ERA: what his whiff, strike and batted-ball rates say his ERA should be. Strikeouts come in at his Whiff%, walks at the walk rate his Strike% percentile implies, his ground-ball and popup shares stand, and the air balls that are left are split into line drives and fly balls at the league's rate — then every ball in play is worth the league's average for its type.",
+    uera: "Underlying ERA: what his whiff, strike and batted-ball rates say his ERA should be. Strikeouts come in at the rate his Whiff% and Strike% imply, walks at the walk rate his Strike% percentile implies, his ground-ball and popup shares stand, and the air balls that are left are split into line drives and fly balls at the league's rate — then every ball in play is worth the league's average for its type.",
     ukb: "Underlying K-BB%: uK% minus uBB% — what his swing-and-miss and strike-throwing say the gap should be, with the results taken out of it.",
-    uk: "uK%: the strikeout rate his process implies — his whiff rate, taken as the K% directly.",
+    uk: "uK%: the strikeout rate his process implies — fitted on his Whiff% and Strike% (−27.0 + 0.933·Whiff% + 0.409·Strike%).",
     ubb: "uBB%: the walk rate his process implies — the walk rate of the pitcher sitting at his Strike% percentile in the same pool.",
     xwd: "Expected wOBA, the directional model — see xwOBA.",
     mera: "Mix ERA: the ERA his batted-ball distribution alone is worth. Every ball in play is priced at the league's average for its type — his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate — and the strikeout and walk rates are held at the league's, so nothing but where the ball goes moves it. 4.15 is an average mix; lower is a better one. A ground ball is worth .228 and an air ball .524, so this is mostly a ground-ball and popup stat.",
@@ -3605,7 +3607,7 @@
   const fInPos = (p, pos) => pos === "ALL" || pos === "ALLP" || fPos(p).includes(pos);
   const fMinOK = (r) => (r.p.type === "H" ? r.o.PA >= state.f.minH : r.o.IP >= state.f.minP);
 
-  // luck-neutral lines. Pitchers: K and BB from his underlying rates (uK% = Whiff%, uBB% = BB% at his Strike% percentile),
+  // luck-neutral lines. Pitchers: K and BB from his underlying rates (uK% fitted on Whiff% and Strike%, uBB% = BB% at his Strike% percentile),
   // ER from luck-neutral ERA, hits allowed from Savant xBA (there is no directional model for pitchers). Hitters: hits and
   // total bases from the directional xBA / xSLG (Savant's for a season not yet rescored), with the
   // extra-base mix scaled to hit both; everything else (R, RBI, SB, BB, K) as it happened.
@@ -3810,7 +3812,7 @@
     if (!shown.length) wrap.append(el("p", "xempty", "No players match."));
     const wtxt = Object.entries(P.w[f.grp]).filter(([, v]) => Number(v)).map(([k, v]) => `${k} ${v > 0 ? "+" : ""}${v}`).join(", ");
     note.textContent = `${P.name}: ${wtxt || "no categories scored"}. ${y} official season stats through ${F.through}; ${shown.length} ${f.grp === "H" ? "hitters" : "pitchers"} with ${f.grp === "H" ? state.f.minH + "+ PA" : state.f.minP + "+ IP"}` +
-      (f.view === "whatif" ? (f.grp === "P" ? ". uPts: strikeouts and walks at his underlying rates (uK% = Whiff%, uBB% = the walk rate at his Strike% percentile), earned runs at his luck-neutral ERA, hits allowed at his Savant xBA; wins, saves, holds and quality starts as they happened. Per-start numbers scale each start by the same ratios."
+      (f.view === "whatif" ? (f.grp === "P" ? ". uPts: strikeouts and walks at his underlying rates (uK% fitted on Whiff% and Strike%, uBB% = the walk rate at his Strike% percentile), earned runs at his luck-neutral ERA, hits allowed at his Savant xBA; wins, saves, holds and quality starts as they happened. Per-start numbers scale each start by the same ratios."
         : `. xPts: hits and total bases at his xBA / xSLG (the directional model; extra-base mix scaled to hit both) over his actual plate appearances; runs, RBI, walks, strikeouts and steals as they happened. Starter workload = the top ${teams} × lineup slots at the position by PA (OF 3), their average PA and PA per game.`) : ".");
   }
 
