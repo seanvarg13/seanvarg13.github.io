@@ -58,12 +58,12 @@ table column.
 ERA, SIERA, FIP, Avg EV, Hard-Hit% and Barrel%. Groups named in `meta.pitcherCardFold` ride below as a fold-out instead of in a column.
 
 **uK% and uBB%** are what his process rates say the strikeout and walk rates should be, and they are what uERA is
-built on: uK% is his Whiff% taken as the K% directly, and uBB% is the walk rate of the pitcher at his Strike%
-percentile in the same pool. Both are ordinary card metrics (`uk`, `ubb`) alongside u(K-BB%) and uERA, so they can
-sit on any table. Fitted alternatives are measurably tighter — against actual K%, `-1.75 + 0.975·Whiff%` is RMSE 2.36
-and `-25.81 + 0.955·Whiff% + 0.383·Strike%` is 2.24, against 3.41 for the flat rule, and for walks
-`53.67 + 0.136·Whiff% - 0.890·Strike% + 0.160·Zone%` is 1.36 against 1.42 — and the working is in the session notes
-if they are ever wanted back.
+built on. uK% is fitted on his Whiff% and Strike%: `-26.975 + 0.933·Whiff% + 0.409·Strike%` (`UK` in `app.js`; Sean,
+25 Sep 2026), least squares over every 100+ BF pitcher-season 2015-2026 bar 2020, weighted by BF. It sits within half
+a point of the league's real K% every season and misses a pitcher's by ~2.6; Whiff% taken as the K% directly — the
+old rule — ran 2.5 points high and missed by 3.4, and 2 × SwStr% + 1 did no better. uBB% is the walk rate of the
+pitcher at his Strike% percentile in the same pool. Both are ordinary card metrics (`uk`, `ubb`) alongside u(K-BB%)
+and uERA, so they can sit on any table.
 
 **WSGP** is the average of a pitcher's Whiff%, Strike%, GB% and Popup% **percentiles** — the four rates that belong
 to him before a fielder touches the ball or a run scores. Like u(K-BB%) and uERA it is pool-derived, not a rate on
@@ -345,6 +345,9 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
 - **The title** (`pageTitle()`), in the plate and pinned with it: "**2026 MLB Percentiles**", bold, in the name's ink.
   The year and the level are the season pickers for the whole page (`titleSelect()`): each is a word over a dotted
   rule.
+- **Percentile bars, two looks** (Appearance ▸ Percentile bars, `state.bars`, per device): **Savant charts** (the
+  default, below) or **Classic meters**, the older look — `meterRow()` rows with a pale rounded track, a big white-ringed
+  bubble, the value bold with its unit, dashed rules between rows and the pool under the sections (`.pctclassic`).
 - **The percentile sections** (`renderPctPanel`): two columns of headed sections, drawn by the site's own SVG
   code (`pctSvg`) in the style of Savant's charts. Hitters (`PCT_COLS_H`): Results (wOBA, xwOBA, xBA, xSLG — the expected three the directional model's),
   Batted-Ball Quality, then Swing Decisions (Z-Swing%, O-Swing%, BB%), Contact and Batted-Ball Distribution.
@@ -366,11 +369,26 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
     page's own sections for both sides (`cmpPageGrid`), and **Set up comparison** picks each side's season, split and
     dates and which stats sit on the grid — the page's, by section, plus anything from **More stats**, which lands as a
     plain row under "Added" (`state.cmp2.pick`). Nothing folds out.
-  - **Season Stats** (`renderSeasonTable`) is kept simple: every MLB season and a career row, **PA HR AVG OBP SLG OPS**
-    for a hitter and **IP ERA K% BB% GB% Popup%** for a pitcher (K% / BB% per batter faced). GB% and Popup% come from
-    `hist/career.js` (`build_career.py` appends them to each pitching season); a file built before that falls back to
-    the season's own data when it is loaded, and the career row shows them only once every season has them. A player
-    with no MLB time gets his minor-league seasons, one line per level.
+  - **Season Stats** (`renderSeasonTable`), the look Sean picked: one table, so every column lines up — an **MLB**
+    section (Season, Team, one row per season and a career row) over a **Minor leagues** section (Season, **Level** —
+    no clubs, Sean isn't after them — one row a year, newest first), each under a heading row and its own header row.
+    Every row is one line tall. A traded MLB season reads **TOT** and a minor-league year at several levels just "–" (so
+    the column stays a club's width); the ▸ beside that label (not the year) opens it (`SEASON_OPEN`) to each club's line (`HT`/`PT` in
+    career.js, kept by `build_career.py`) or each level's. Hitters: **PA HR AVG OBP SLG OPS**. Pitchers: **IP ERA K%
+    BB% GB% Popup% uERA** (K% / BB% per batter faced; Popup% is headed PU% to
+    leave room between the columns). **uERA** is worked out on the page — opening the table fetches
+    each year's MLB season file — and shows on a chip coloured by its percentile in the percentile bars' own colours
+    (`paintBar`: Savant's scale, or the heat scale under Classic meters), inset like a leaderboard's sorted-column pill;
+    none before 2015 (no Statcast). The career uERA is innings-weighted.
+    In the minors it is an **MLB-equivalent uERA** (`milbU`): the level's Whiff%, Strike%, GB% and Popup% are carried up
+    to the majors by `MILB_X` (fitted by `tools/models/milb_translate.py`: the same pitchers at two levels in a season,
+    2021 on, the shift at each step with the promoted pitcher's lower-level rate first pulled toward his league by its
+    reliability, chained A → A+ → AA → AAA → MLB), then uERA is worked out on those rates against that season's MLB
+    starters or relievers (by his GS share, with the league's HBP rate), so it reads and colours on the MLB scale. A
+    year at several levels is the innings-weighted mix of the levels that have one, when they cover 80% of its innings
+    (a stint under a level file's 20-batter floor has no rates; GB% / PU% follow the same rule by batters faced); Rookie ball and short-season A have no
+    translation. GB% / Popup% come from career.js / minors.js (appended to each line by `build_career.py`), else from
+    the season's own file when it's loaded.
   - **Rolling** is `renderRolling()`: xwOBA over a hitter's last N PA (K−BB% for a pitcher), 25 to 300. On a phone
     the plot runs from the left edge (no bar column to line up with).
   - **nERA** is the batted-ball luck table (`renderLuckBox`). **uERA** is the uERA table (`renderUeraBox`) and, beside
@@ -449,7 +467,7 @@ any of ESPN's categories, plus league size). **Points** ranks every hitter / pit
 season line (G, PA, AB, H, R, HR, RBI, SB, BB, K, AVG/OBP/SLG/OPS; pitchers G, GS, IP, W, L, SV, HD, K, ERA, WHIP, K/9,
 QS), by position / role, for 2026 and the two seasons before. **Per opportunity**: points per game, per PA, per AB,
 per 600 PA; pitchers per IP, per start, per relief appearance, QS%. **What if**: pitchers with K and BB at their
-underlying rates (uK% = Whiff%, uBB% from Strike% percentile), ER at luck-neutral ERA, hits at Savant xBA — and the
+underlying rates (uK% fitted on Whiff% and Strike%, uBB% from Strike% percentile), ER at luck-neutral ERA, hits at Savant xBA — and the
 rank at the role that would give; hitters with H / TB at the directional xBA / xSLG, points per game at a starter's PA/G and a
 full starter's PA at their position (top teams × lineup slots by PA), and the rank at the position that would give.
 Data: `build_fantasy.py` (part of Update / the daily job) -> `fantasy.js`; `python3 build_fantasy.py 2025 2024` for

@@ -52,6 +52,10 @@ FILES = {
     ".github/workflows/daily.yml": os.path.join(HERE, "github-workflow-daily.yml"),
     "tools/models/model3.py": os.path.join(MODELS, "model3.py"),
     "tools/models/model_bs.py": os.path.join(MODELS, "model_bs.py"),
+    # repo-only files the Mac never edits: they ride along so a publish from here can't delete them (25 Sep 2026,
+    # when one did — .gitignore is what keeps the cloud run's staged scripts out of its commit)
+    "tools/models/milb_translate.py": os.path.join(MODELS, "milb_translate.py"),
+    ".gitignore": os.path.join(HERE, "repo.gitignore"),
     # the front end: the repo's root copies are the site itself, published byte for byte from this folder, so an
     # edit made on GitHub comes down here like a script does and the next publish sends it back up unchanged.
     # index.html is left out on purpose: the published one is stamped, so it never equals the template here.
@@ -159,9 +163,10 @@ def mirror_out(deploy):
     return seen
 
 
-# The site's own files. The site is edited on GitHub now (Sean's chat works there), so when this Mac's copy and the
-# repo's have both moved since the last publish, the repo's wins for these (the Mac's goes to logs/tools-conflicts/).
-SITE_FILES = ("app.js", "styles.css", "themes.js")
+# The site's own files, and its two manuals. They are edited on GitHub now (Sean's chat works there), so when this
+# Mac's copy and the repo's have both moved since the last publish, the repo's wins for these (the Mac's goes to
+# logs/tools-conflicts/). The README joined on 25 Sep 2026, after a publish put a days-old copy back over it.
+SITE_FILES = ("app.js", "styles.css", "themes.js", "docs/site-README.md", "CLAUDE.md")
 
 
 def pull(dry=False, source=None):
