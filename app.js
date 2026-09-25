@@ -2107,7 +2107,7 @@
     if (!careerReady()) { box.append(el("p", "note", failed.has("hist/career.js") ? "hist/career.js hasn't been built — run build_career.py" : "Loading career stats…")); return box; }
     // kept simple (Sean): PA, HR and the slash line for a hitter; IP, ERA and the four rates a pitcher owns for a pitcher
     const H = p.type === "H", cols = H ? ["PA", "HR", "AVG", "OBP", "SLG", "OPS"] : ["IP", "ERA", "K%", "BB%", "GB%", "Popup%"];
-    const colsMLB = H ? cols : [...cols, "uERA"];   // uERA in the majors, the last column (Sean)
+    const colsMLB = H ? cols : [...cols, "uERA"];   // uERA the last column; in the minors it's the MLB-equivalent (Sean)
     const idx = cols.map((k) => (H ? RAW_H : RAW_P).indexOf(k));
     const pct = (n, d) => (n == null || !d ? null : 100 * n / d);
     // GB% / Popup%: career.js carries them from its next build; until then, from the season's own file if it's loaded
@@ -2136,6 +2136,31 @@
         return st && st.uera != null ? { v: st.uera, pct: st.pct.uera } : null;
       })));
     };
+    // the minors' uERA is an MLB equivalent: his Whiff%, Strike%, GB% and Popup% at a level, carried up to the majors
+    // by MILB_X, then uERA worked out on them against that season's MLB pitchers — so it reads, and is coloured, on
+    // the same scale as the MLB rows. A year at two levels is the innings-weighted mix, only when every level has one.
+    const milbU = (r) => {
+      const parts = r.parts || [r], season = r.season;
+      if (season < 2015 || parts.some((l) => !MILB_X[lvName(l.level)] || ["whf", "strk", "gb", "pu"].some((k) => (l.c.adv || {})[k] == null))) return null;
+      const k = season === DATA.meta.season ? CUR.key : "mlb-" + season, ds = histDataset(k);
+      if (!ds && failed.has(`hist/${k}.js`)) return null;
+      if (!ds) { want.add(k); return undefined; }
+      const G = parts.reduce((n, l) => n + (Number(l.c.G) || 0), 0), GS = parts.reduce((n, l) => n + (Number(l.c.GS) || 0), 0), g = GS * 2 >= G ? "SP" : "RP";
+      return withDataset(ds, () => withWindow(NOWIN, () => withSplit({ hand: "all", venue: "all" }, () => {
+        const pl = pool(g); if (!pl.sorted.uera) return null;
+        let n = 0, d = 0;
+        for (const l of parts) {
+          const x = MILB_X[lvName(l.level)], a = l.c.adv, ip = ipNum(l.c.IP) || 0;
+          const whf = Math.max(0, a.whf + x.whf), strk = Math.max(0, a.strk + x.strk), gb = Math.max(0, a.gb + x.gb), pu = Math.max(0, Math.min(100 - gb, a.pu + x.pu));
+          const q = { id: `x${p.id}:${season}:${lvName(l.level)}`, type: "P", primary: g, ip, bf: l.c.BF, m: { whf, strk, gb, pu },
+                      ctx: { PAw: 100, HBP: 100 * lgHBP(pl), bbl: { gb: [gb], pu: [pu], ld: [100 - gb - pu], fb: [0] } } };
+          const st = placeIn(pl, g, q); if (!st || st.uera == null) return null;
+          n += st.uera * (ip || 1); d += ip || 1;
+        }
+        const v = n / d;
+        return { v, pct: insertPct(pl.sorted.uera, -v), g };
+      })));
+    };
     const teams0 = (ls) => ls.filter((l) => l.team).length > 1;   // a club's line is one slice of a level he played for two at
     // a year's total across levels: the lines added up; GB% / Popup% only when every level has them
     const yearTotal = (season, lv) => {
@@ -2144,18 +2169,21 @@
         const vs = lv.map((x) => [val(x.line, k), Number(x.line.c.BF) || 0]);
         c.adv[k === "GB%" ? "gb" : "pu"] = vs.every(([v, w]) => v != null && w) ? vs.reduce((s0, [v, w]) => s0 + v * w, 0) / vs.reduce((s0, [, w]) => s0 + w, 0) : null;
       }
-      return { season, level: "", team: "", c, mlb: false, total: true };
+      return { season, level: "", team: "", c, mlb: false, total: true, parts: lv.map((x) => x.line) };
     };
     // the API's older level names, as the levels are called now
     const lvName = (l) => ({ "A(Adv)": "A+", "A(Full)": "A", "A(Short)": "A-", ROK: "Rk" }[l] || l);
-    // one table: his MLB seasons with a career row, or his minor-league lines (a Level column, one row per level)
-    let table = (rows, minors) => {
-      const t = el("table"), thead = el("thead"), tr = el("tr");
-      const tc = minors ? cols : colsMLB;
+    // one table for both: his MLB seasons with a career row, then his minor-league years, each under its own heading
+    // and header row — one table so every column lines up from the majors to the minors (Sean)
+    const t = el("table"), tc = colsMLB;
+    let both = false;                                    // headings only when there are both sections
+    const section = (rows, minors) => {
+      const tbody = el("tbody", minors ? "milb" : "mlb");
+      if (both) { const hr = el("tr", "hdrow"), th = el("th", "l"); th.colSpan = 2 + tc.length; th.append(el("span", "rawhd", minors ? "Minor leagues" : "MLB")); hr.append(th); tbody.append(hr); }
       // the minors show the level where the majors show the club (Sean: the minor-league club isn't what he's after)
+      const tr = el("tr", "colhd");
       for (const h of ["Season", minors ? "Level" : "Team", ...tc]) tr.append(el("th", ["Season", "Level", "Team"].includes(h) ? "l" : h === "uERA" ? "lc" : null, h));
-      thead.append(tr); t.append(thead);
-      const tbody = el("tbody");
+      tbody.append(tr);
       const draw = (r, seasonTxt, level, team, cls) => {
         const row = el("tr", cls || null);
         row.append(el("td", "l", seasonTxt));
@@ -2163,8 +2191,12 @@
         for (const k of tc) {
           if (k === "uERA") {                                    // the year's uERA, coloured by its percentile among that season's pitchers
             // the colour sits on a chip inside the cell, as a leaderboard's sorted column does, not the whole cell (Sean)
-            const u = r.club ? null : uera(r.season), td = el("td", "uera"), chip = el("span", "uchip", u === undefined ? "…" : fmtv(k, u && u.v));
-            if (u && u.pct != null) { paintBar(chip, u.pct); chip.classList.add("on"); td.title = `uERA ${u.v.toFixed(2)} · ${ordinal(u.pct)} pctl among ${r.season} pitchers`; }
+            const u = r.club ? null : minors ? milbU(r) : uera(r.season), td = el("td", "uera"), chip = el("span", "uchip", u === undefined ? "…" : fmtv(k, u && u.v));
+            if (u && u.pct != null) {
+              paintBar(chip, u.pct); chip.classList.add("on");
+              td.title = minors ? `MLB-equivalent uERA ${u.v.toFixed(2)}: his rates carried up to the majors · would be ${ordinal(u.pct)} pctl among ${r.season} MLB ${u.g === "SP" ? "starters" : "relievers"}`
+                                : `uERA ${u.v.toFixed(2)} · ${ordinal(u.pct)} pctl among ${r.season} pitchers`;
+            }
             td.append(chip);
             row.append(td); continue;
           }
@@ -2178,7 +2210,7 @@
         const row = draw(r, String(r.season), it.level, it.team, (!minors && r.season === DS.season ? "cur" : "") + (it.kids.length ? " haskids" : "") + (open ? " open" : ""));
         if (!it.kids.length) continue;
         const btn = el("button", "yrtog", open ? "▾" : "▸"); btn.type = "button"; btn.setAttribute("aria-expanded", String(open)); btn.title = open ? "Hide the split" : "Show each level and club";
-        row.firstChild.prepend(btn);
+        row.children[1].prepend(btn);                             // beside "TOT" / "2 levels", not the year (Sean)
         row.addEventListener("click", () => { if (SEASON_OPEN.has(k0)) SEASON_OPEN.delete(k0); else SEASON_OPEN.add(k0); render(); });
         if (open) for (const c of it.kids) draw(c.r, "", c.level, c.team, "sub" + (c.deep ? " sub2" : ""));
       }
@@ -2196,7 +2228,6 @@
         }
       }
       t.append(tbody);
-      const scroll = el("div", "rawscroll"); scroll.append(t); return scroll;
     };
     // his MLB seasons first, then every minor-league line under them (Sean: the minors too, not only for a prospect)
     const lines = rawLines(p) || [], mlb = lines.filter((l) => l.mlb).sort((a, b) => b.season - a.season);
@@ -2232,14 +2263,23 @@
       const kids = lv.length > 1 ? lv.map((x) => ({ r: Object.assign({}, x.line, { club: false }), level: x.level, team: x.level })) : [];
       return { r, level: "", team: lv.length === 1 ? lv[0].level : `${lv.length} levels`, kids };
     });
-    if (mlb.length) { if (milb.length || !window.DRAFT_MINORS) box.append(el("h4", "rawhd", "MLB")); box.append(table(mlbItems, false)); }
+    both = mlb.length > 0 && (milb.length > 0 || !window.DRAFT_MINORS);
+    if (mlb.length) section(mlbItems, false);
+    if (milb.length) section(milbItems, true);
+    if (mlb.length || milb.length) { const scroll = el("div", "rawscroll"); scroll.append(t); box.append(scroll); }
     if (want.size) { box.append(el("p", "note", "Loading each season for uERA…")); for (const k of want) ensureHist(k); }
     if (!window.DRAFT_MINORS) { if (!failed.has("hist/minors.js")) box.append(el("p", "note", "Loading minor-league seasons…")); else if (!mlb.length) box.append(el("p", "note", "No seasons on record.")); return box; }
-    if (milb.length) { box.append(el("h4", "rawhd", "Minor leagues")); box.append(table(milbItems, true)); }
     if (!mlb.length && !milb.length) box.append(el("p", "note", "No seasons on record."));
     return box;
   }
   const SEASON_OPEN = new Set();                          // the years opened in a Season Stats table (this visit)
+  // a minor-league level's Whiff%, Strike%, GB% and Popup% carried up to the majors (points added), fitted by
+  // tools/models/milb_translate.py on every pitcher who worked at two levels in a season, 2021-2026, chained
+  const MILB_X = { AAA: { whf: -3.54, strk: 0.67, gb: -2.12, pu: 0.2 }, AA: { whf: -6.51, strk: -1.77, gb: -2.42, pu: -0.37 },
+                   "A+": { whf: -8.47, strk: -2.6, gb: -4.38, pu: -0.73 }, A: { whf: -10.69, strk: -3.13, gb: -6.81, pu: -0.38 } };
+  // the pool's hit-by-pitch rate, which an MLB-equivalent line takes as its own (the minors' lines don't carry HBP)
+  const hbpCache = new WeakMap();
+  const lgHBP = (pl) => { if (!hbpCache.has(pl)) { let h = 0, n = 0; for (const q of pl.ref) { h += q.ctx.HBP || 0; n += q.ctx.PAw || 0; } hbpCache.set(pl, n ? h / n : 0.01); } return hbpCache.get(pl); };
   function renderCard(p, ms, st, g, ref, opts = {}) {
     const card = p.type === "H" ? renderHitterCard(p, st, g, ref, opts) : renderPitcherCard(p, ms, st, g, ref, opts);
     if (state.mode !== "compare") card.append(foldSection("raw", "Season stats", () => renderRawStats(p, true)));
