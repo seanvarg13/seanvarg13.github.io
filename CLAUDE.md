@@ -29,7 +29,10 @@ uploads `model-workspace/*.joblib` and `versions.json` (the Python + package ver
 repo's **`models` release**, which the workflow downloads and pins against. Retraining a model is still a Mac job;
 publishing it is automatic (the next Mac publish uploads changed files, even with the cloud on).
 
-Until the switch is flipped, everything is built on Sean's Mac at `~/Desktop/Fantasy Baseball/` as described below.
+**The switch is on (25 Sep 2026)**: a dry run and a real run matched the Mac's build (same players, same league
+constants, 99.5% of values identical — the rest Statcast corrections the Mac's cache predates), so GitHub Actions
+publishes every morning and the Mac's job stands down. The Mac setup below is still how the models are retrained and
+uploaded, and the fallback if the switch is ever set back to `false`.
 
 ### The round trip — how an edit you make here actually takes effect
 
