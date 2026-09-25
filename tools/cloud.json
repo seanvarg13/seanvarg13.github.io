@@ -1,1 +1,1 @@
-{"daily": false, "note": "true = GitHub Actions runs the daily update (.github/workflows/daily.yml) and the Mac's job stands down; false = the Mac publishes"}
+{"daily": true, "note": "true = GitHub Actions runs the daily update (.github/workflows/daily.yml) and the Mac's job stands down; false = the Mac publishes"}
