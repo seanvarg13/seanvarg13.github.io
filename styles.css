@@ -2594,10 +2594,11 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 .rawstats td.uera { padding-top: 3px; padding-bottom: 3px; }
 .rawstats .uchip { display: inline-block; min-width: 3.6em; padding: 3px 6px; border-radius: 4px; text-align: center; box-sizing: border-box; }
 :root[data-view="mobile"] .rawstats .uchip { min-width: 0; padding: 1px 4px; font-size: 0.95em; }
-:root[data-view="mobile"] .rawstats.simple.pit td.uera { padding: 4px 3px 4px 5px; }
+:root[data-view="mobile"] .rawstats.simple.pit td.uera { padding: 4px 2px 4px 4px; }
+:root[data-view="mobile"] .rawstats .yrtog { padding-right: 2px; }
 /* a pitcher's tables carry two more columns (uERA; GB% / Popup% in the minors): a phone tightens the cells a touch */
-:root[data-view="mobile"] .rawstats.simple.pit th, :root[data-view="mobile"] .rawstats.simple.pit td { padding-left: 2.5px; padding-right: 2.5px; font-size: 12px; }
-:root[data-view="mobile"] .rawstats.simple.pit th { font-size: 10px; letter-spacing: 0; }
+:root[data-view="mobile"] .rawstats.simple.pit th, :root[data-view="mobile"] .rawstats.simple.pit td { padding-left: 2px; padding-right: 2px; font-size: 11.5px; }
+:root[data-view="mobile"] .rawstats.simple.pit th { font-size: 9.5px; letter-spacing: 0; }
 :root[data-view="mobile"] .rawstats.simple.pit td.tm { max-width: 56px; }
 /* Season Stats drop-downs: a year split across levels or clubs opens (▸); its lines sit under it, lightly shaded */
 .rawstats tr.haskids { cursor: pointer; }
@@ -2608,3 +2609,8 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .rawstats tr.sub td.tm, :root[data-view="mobile"] .rawstats tr.sub2 td.tm { padding-left: 6px; }
 /* every Season Stats row is one line tall, the minors' as the majors' (Sean: never taller) */
 .rawstats.simple td { white-space: nowrap; }
+/* Season Stats is one table: "MLB" and "Minor leagues" are heading rows inside it, so the columns line up */
+.rawstats tr.hdrow th { border-bottom: 0; padding: 16px 0 4px; text-align: left; }
+.rawstats tr.hdrow:first-child th { padding-top: 0; }
+.rawstats tr.hdrow .rawhd { display: block; margin: 0; }
+.rawstats tr.haskids td.tm { overflow: visible; }

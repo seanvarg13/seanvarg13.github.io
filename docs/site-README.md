@@ -369,18 +369,24 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
     page's own sections for both sides (`cmpPageGrid`), and **Set up comparison** picks each side's season, split and
     dates and which stats sit on the grid — the page's, by section, plus anything from **More stats**, which lands as a
     plain row under "Added" (`state.cmp2.pick`). Nothing folds out.
-  - **Season Stats** (`renderSeasonTable`), the look Sean picked: an **MLB** table (Season, Team, one row per season
-    and a career row) over a **Minor leagues** table (Season, **Level** — no clubs, Sean isn't after them — one row a
-    year, newest first). Every row is one line tall. A traded MLB season reads **TOT** and opens (▸, `SEASON_OPEN`) to
-    each club's line (`HT`/`PT` in career.js, kept by `build_career.py`); a minor-league year at several levels reads
-    "2 levels" / "3 levels" and opens to each. Hitters: **PA HR AVG OBP SLG OPS**. Pitchers: **IP ERA K% BB% GB%
-    Popup%**, plus **uERA** as the last MLB column (K% / BB% per batter faced). uERA is worked out on the page against
-    that season's pitchers — opening the table fetches each MLB year's `hist/mlb-YYYY.js` — and shows on a chip
-    coloured by the year's uERA percentile in the percentile bars' own colours (`paintBar`: Savant's scale, or the heat
-    scale under Classic meters) (inset like a leaderboard's sorted-column pill, not the whole cell; none
-    before 2015, which has no Statcast); the career uERA is innings-weighted. GB% / Popup% come from career.js /
-    minors.js (appended to each line by `build_career.py`), else from the season's own file when it's loaded; a
-    club's line in a traded season shows none, and a minor-league year total has them only when every level does.
+  - **Season Stats** (`renderSeasonTable`), the look Sean picked: one table, so every column lines up — an **MLB**
+    section (Season, Team, one row per season and a career row) over a **Minor leagues** section (Season, **Level** —
+    no clubs, Sean isn't after them — one row a year, newest first), each under a heading row and its own header row.
+    Every row is one line tall. A traded MLB season reads **TOT** and a minor-league year at several levels "2 levels"
+    / "3 levels"; the ▸ beside that label (not the year) opens it (`SEASON_OPEN`) to each club's line (`HT`/`PT` in
+    career.js, kept by `build_career.py`) or each level's. Hitters: **PA HR AVG OBP SLG OPS**. Pitchers: **IP ERA K%
+    BB% GB% Popup% uERA** (K% / BB% per batter faced). **uERA** is worked out on the page — opening the table fetches
+    each year's MLB season file — and shows on a chip coloured by its percentile in the percentile bars' own colours
+    (`paintBar`: Savant's scale, or the heat scale under Classic meters), inset like a leaderboard's sorted-column pill;
+    none before 2015 (no Statcast). The career uERA is innings-weighted.
+    In the minors it is an **MLB-equivalent uERA** (`milbU`): the level's Whiff%, Strike%, GB% and Popup% are carried up
+    to the majors by `MILB_X` (fitted by `tools/models/milb_translate.py`: the same pitchers at two levels in a season,
+    2021 on, the shift at each step with the promoted pitcher's lower-level rate first pulled toward his league by its
+    reliability, chained A → A+ → AA → AAA → MLB), then uERA is worked out on those rates against that season's MLB
+    starters or relievers (by his GS share, with the league's HBP rate), so it reads and colours on the MLB scale. A
+    "2 levels" year is the innings-weighted mix, only when every level has one; Rookie ball and short-season A have no
+    translation. GB% / Popup% come from career.js / minors.js (appended to each line by `build_career.py`), else from
+    the season's own file when it's loaded.
   - **Rolling** is `renderRolling()`: xwOBA over a hitter's last N PA (K−BB% for a pitcher), 25 to 300. On a phone
     the plot runs from the left edge (no bar column to line up with).
   - **nERA** is the batted-ball luck table (`renderLuckBox`). **uERA** is the uERA table (`renderUeraBox`) and, beside

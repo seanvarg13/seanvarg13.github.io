@@ -210,6 +210,11 @@ Statcast/Directional toggle and the `xws` column are gone). The build still carr
 * ⚠️ The explanatory note under that table in `app.js` (~line 2169) still describes an **older** fitted recipe
   ("53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%"). The code does not do that any more. See §8.
 
+**MLB-equivalent uERA** (the minors' rows in Season Stats, `milbU` / `MILB_X` in `app.js`): the level's Whiff%,
+Strike%, GB% and Popup% shifted up to the majors by a fixed table per level, then uERA against that season's MLB pool.
+The table comes from `tools/models/milb_translate.py` (same-season pairs at two levels, 2021 on, reliability-corrected
+shifts, chained to MLB); re-run it by hand and paste the printed `MILB_X` when it goes stale.
+
 **Mix ERA** (`mixERA`): the ERA his batted-ball distribution *alone* is worth — same league-value-per-type
 machinery, but K% and BB% held at the pool's, so it is the mix and nothing else. ~4.15 is average, lower is
 better.
@@ -255,6 +260,7 @@ Statcast's.
 | `tools/serve.py` | local dev server |
 | `tools/install_schedule.sh` | installs/removes the launchd agent |
 | `tools/models/model3.py`, `model_bs.py` | the directional models' training scripts, in `model-workspace/` |
+| `tools/models/milb_translate.py` | fits `MILB_X` (the minors-to-MLB rate shifts) from `hist/`; repo only, run by hand |
 
 Not mirrored, on purpose: `github_site.json` / `netlify_site.json` (account config), `~/.github_token`,
 `.cache/`, `logs/`, `*.joblib`, `pa_all.parquet`.
