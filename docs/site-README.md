@@ -35,7 +35,7 @@ Open `index.html` directly in a browser — no server or build step needed.
 Pitcher tabs: **Rank vs** measures everyone on the tab against the starter pool, reliever
 pool, or all pitchers.
 
-**Percentile bars** are drawn the way Baseball Savant draws them: a 24px bar filled from the left to the
+**Percentile bars** are the site's own, styled after Baseball Savant's: a 24px bar filled from the left to the
 percentile over a pale remainder (`--pctrack`), a white-ringed circle carrying the number at the end of the
 fill, a faint halfway tick and a dashed rule (`--pctrule`) between rows, with the stat labels right-aligned
 into the bars. The ramp is Savant's: `--lo` #325aa1 through a solid `--mid` #b3b3b3 to `--hi` #d22d49.
@@ -43,8 +43,8 @@ into the bars. The ramp is Savant's: `--lo` #325aa1 through a solid `--mid` #b3b
 and the circle share `bubLeft()` in `app.js`, so the circle always sits exactly at the fill's end and a 0 or
 a 100 still lands on the bar instead of hanging off it.
 
-**Hitter cards** show grouped percentile meters — Outcomes (wOBA, xwOBA and dxwOBA side by side, with xBA / xSLG
-folded out under xwOBA), Batted-ball quality
+**Hitter cards** show grouped percentile meters — Outcomes (wOBA and xwOBA side by side, with xBA / xSLG
+folded out under xwOBA — all three the directional model's), Batted-ball quality
 (Avg EV and Barrel%, with Hard-Hit%, Sweet-Spot%, 90th% / max EV and bat speed folded out under
 Barrel%), Swing decisions, Contact, Batted-ball distribution (Air% and Pull Air%, with FB% / LD% /
 Popup% / GB% under Air%) — all recomputed for the active date window (`evs` per-day lists feed
@@ -100,12 +100,11 @@ the theme tokens, so it recolours with the scheme like the rest of the tables. u
 the note under the table: his ground-ball and popup shares as they are, the air balls that are left split into line
 drives and fly balls at the league's rate, every ball in play worth the league's average for its type.
 
-**Both expected models at once.** `xws` is always Statcast's xwOBA and `xwd` is always the directional model, so
-either or both can sit on the Leaderboard, on any table's columns, in a comparison, or on the card — they are ordinary
-card metrics with their own percentiles. The toggle-driven `xwoba` key stays what it always was: the headline the
-hitter Score, the sort menu and the row bubbles use. In `V()` the window branch computes `xwSav` and `xwDir` once and
-hands out all three keys; `seasonHitterM()` does the same for a full season (`m._sav` is stashed so the directional
-value can never overwrite it).
+**One expected model.** Statcast's xwOBA left the site on 24 Sep 2026 ("get rid of statcast xwoba completely"):
+`xwd` (labelled **xwOBA**), `dxba` (**xBA**) and `dxslg` (**xSLG**) are the directional model's, and the `xwoba` key the
+hitter Score, the sort menu and the row bubbles use is the same number. The build still writes Savant's `xws` row and
+its xBA / xSLG fold-out into `data.js`; `app.js` drops them at load and relabels the three. Statcast's xBA / xSLG are
+used only to stand in, under those names, for an MLB season not yet rescored for the directional ones.
 
 **Comparing a card.** **Compare** on a card's filter row turns the card into a comparison and nothing else: two
 columns of percentile bars for the same player. While it is open the **Splits & dates** button becomes **Set up
@@ -123,13 +122,10 @@ the left, using the same `.cgrid` as the Compare page. Changing a column's seaso
 range belongs to the season it was set in. Every group is in the grid, including the ones that normally fold away
 below the card. **Close comparison** goes back to the card.
 
-**Hitters** rank by xwOBA, and **Expected stats** switches which model that is, for the whole site at once:
-
-- **Statcast** (default) — exit velocity + launch angle: Savant's published number for a full season, rebuilt
-  from pitch-level data inside a window or split.
-- **Directional** — the spray-angle model in `../model-workspace/v2_dir.joblib` (exit velocity, launch angle,
-  spray and pull angle, the batter's sprint speed), so where he hit the ball counts. It shows as **dxwOBA**
-  everywhere the label appears.
+**Hitters** rank by xwOBA, and xwOBA is the directional model: the spray-angle model in
+`../model-workspace/v3_dir.joblib` (exit velocity, launch angle, spray and pull angle, the batter's sprint speed), so
+where he hit the ball counts. There is no Statcast option any more — the Expected stats switch and `state.xmodel`
+are gone.
 
 The model scales its predictions by the league's mean wOBA on contact, and its own average prediction isn't
 exactly 1, so a raw season of dxwOBA lands a few points off the real scale (+.009 in 2026, −.007 in 2015).
@@ -143,13 +139,13 @@ On the 2026 board, dxwOBA tracks wOBA far more closely than Statcast's does (r .
 qualifiers, and .860 against .777 for the top third by Pull Air%), while Statcast's is a shade better at
 predicting *next* season's wOBA (pooled r .522 against .503 over 2023→24, 24→25 and 25→26).
 
-The switch lives in **Stats & filters ▸ Splits & dates** on any hitter list and in the **Splits** block on any
-hitter's card (`state.xmodel`, saved in prefs). Both come from the same day rows — `dnum` / `wden` for the
-directional model, `xnum` / `xden` for Statcast's — so windows, splits, the trending spans, the percentile
-pools, the board order and card comparisons all follow the choice; `applyXModel()` swaps the label on the
-shared metric objects and clears the value, pool and rank caches, and `viewKey()` carries the model so nothing
-stale survives. Directional is blank where batted balls aren't tracked (A and AA, `tracked < 5%`). Season files
-also carry the plain `xwoba_dir` per player.
+It comes from the day rows (`dnum` / `wden`), so windows, splits, the trending spans, the percentile pools, the
+board order and card comparisons all use it. It is blank in the minors — `build_milb.py` stubs the xwOBA model out
+there (it needs MLB sprint speeds) — so `wobaHead()` hands the hitters' headline and rank to wOBA, the Leaderboard
+drops its own wOBA column so it isn't shown twice, and the player page has no xwOBA row. The directional xBA / xSLG
+models do run in the minors (sprint speed missing), so Triple-A and the tracked A parks show them; BA and SLG stand
+in where nothing is tracked (AA). The hitter lists don't offer xwOBA as a column or a sort of its own (`HEAD_DUP`):
+the headline column already is it. Season files also carry the plain `xwoba_dir` per player.
 
 **dxBA and dxSLG** (`model-workspace/model_bs.py` -> `v3_ba.joblib`, `v3_slg.joblib`) are the same recipe with
 the other two targets a batted ball can have: whether it goes for a hit, and how many bases. Same six features,
@@ -158,8 +154,9 @@ back when scoring), so a pulled fly ball is priced by the shift rules in force n
 a percent of the real 2026 league rate in sample (level .998 and 1.002). `directional_bs()` in `build_data.py`
 scores every tracked ball in play that counts as an at-bat, keeps the real result on an untracked one, and sums
 per day into `dbsum` / `dssum` — two more fields on the end of `HITTER_DAY`, so older files still read — which
-divide by AB to give `dxba` and `dxslg`. They fold out under dxwOBA on the card and lead the player page's middle
-panel. Seasons built before these models fall back to Statcast's xBA / xSLG. The wOBA skills blend is still available as a sort and on each card.
+divide by AB to give `dxba` and `dxslg`. They fold out under xwOBA on the card, as xBA and xSLG, and lead the
+player page's Results. An MLB season built before these models shows Statcast's xBA / xSLG under those names until
+it is rescored. The wOBA skills blend is still available as a sort and on each card.
 **Position for 2027** on a pitcher's card moves him between SP and RP.
 
 **Splits**: on an open player card — vs LHP / RHP (vs LHB / RHB for pitchers) and home / away.
@@ -272,8 +269,6 @@ a line in `GLOSS`), and **How this page works** for the eligibility / pools / sp
 | `manifest.json`, `icons/` | home-screen app on a phone (name, icon, standalone window) |
 | `build_career.py` | season-by-season + career stats table -> `hist/career.js` |
 | `serve.py`      | local server with the Update button |
-| `sync_tools.py` | keeps these scripts and the copies in the GitHub repo's `tools/` in step (see "The scripts live in the repo too") |
-| `CLAUDE.md`     | the handoff doc that ships in the repo: how the site is built, where every number comes from, the schedule, the conventions |
 
 ## Spring training and postseason
 
@@ -328,78 +323,86 @@ keeps it honest: crossing between hitters and pitchers replaces the selection, t
 keyed to that nesting — and `body.navopen header.top { z-index: 300 }` lifts the whole header over the page while one
 is open, which is what keeps them from painting behind it on a phone.
 
-**The player page is three panels**, laid out the way Baseball Savant lays out its own (`.ppage`, built in
-`renderExplore`). The pinned row with the season, the splits and Compare runs full width; under it:
+**The player page** is the popup card itself: `renderExplore()` opens it in the site's `#modal` through
+`showPageCard()`, with no × (`.pagecard`) and a pinstripe pattern in the theme's colours behind it (`.pagebg`) where a card
+off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
 
-- **Left — the player card** (`renderSavantPlate`, `.splate`), then his season table, then Player apps. The card is
-  Savant's: his MLB action shot as a full-bleed banner, his circular headshot overlapping its bottom edge, then
-  centred under it the name, `POS | Club` with the team logo (`mlbstatic.com/team-logos/<id>.svg`, ids in `TEAM_ID`),
-  `Bats/Throws | height weight | Age`, and the draft line (`Draft: 2024 | Rd. 1, No. 19, New York Mets | Oklahoma
-  State`). Height, weight and the draft come from one small cached request to
-  `statsapi.mlb.com/api/v1/people/<id>?hydrate=draft` per player (`bio()`), which re-renders when it lands.
+- **The pinned plate** (`playerHead()`, `.phead`). The headshot sits in a square framed tile (the card's navy outline, a
+  light wash behind the cut-out, a hard offset shadow) with the **Star** button under it (`.phmug`), on a desktop and a phone
+  alike; every header button, the site's nav included, has the same square navy outline and shadow.
+  The plate never scrolls: `playerView()` puts everything under it in `.cardscroll`, the card's only scroller (`cardSc()`
+  in `app.js`), so a flick or a phone's rubber-band moves the stats and never the plate. Its pieces ride at the top of it
+  (the tile, his lines, the filters box), which keeps it short. the blue plate from edge to edge of the window. On a desktop it is
+  three columns with equal outer ones, so the middle sits over the middle of the page: the cut-out headshot, name,
+  team / position / age, the sample (PA · AB · BBE · G, or IP · BF · G/GS · pitches), "full season" and Star on the
+  left, and the season's title (below) centred in the room to their right: one short row. The filters — **From**, **To**,
+  **Last PA** (or IP), **Pitchers** (All / vs LHP / vs RHP; Batters for a pitcher) and **Home / away** — sit behind a
+  **Filters** button beside "full season", as on a phone: on a desktop it drops a panel under the button (`.phpop`) that a
+  click outside or Escape shuts. The toggles are solid buttons on the
+  band, so no colour scheme can wash them out. On a phone the plate is laid out tighter: the Star is a ☆ beside the name (by the popup's ×),
+  the filters fold behind one **Filters** button beside "full season", and the season's title (below) sits at the foot
+  of the plate, pinned with it.
+- **The title** (`pageTitle()`), in the plate and pinned with it: "**2026 MLB Percentiles**", bold, in the name's ink.
+  The year and the level are the season pickers for the whole page (`titleSelect()`): each is a word over a dotted
+  rule.
+- **The percentile sections** (`renderPctPanel`): two columns of headed sections, drawn by the site's own SVG
+  code (`pctSvg`) in the style of Savant's charts. Hitters (`PCT_COLS_H`): Results (wOBA, xwOBA, xBA, xSLG — the expected three the directional model's),
+  Batted-Ball Quality, then Swing Decisions (Z-Swing%, O-Swing%, BB%), Contact and Batted-Ball Distribution.
+  Pitchers (`PCT_COLS_P`): Whiffs and Strikes, Swing & Miss, Zone & Chase (BB%, Strike%, Zone%, Chase%), then Results
+  (K-BB%, ERA), Batted Ball (GB%, Popup%, Mix ERA) and Stuff. His uERA table and batted-ball mix live in the uERA tab
+  on a desktop and a phone alike (for a day they sat in a right-hand third beside a desktop's bars; Sean wanted them
+  back in the tabs). On a desktop the box is a fixed 860px (`--pbox-w`), centred, so it hugs its two chart columns instead of
+  leaving a blank sixth of the window each side; the tabs under it take the same width, and a popup is only a little
+  wider (940px, its title on its own row under the headshot and filters). Both columns are drawn at
+  one scale, the largest at which the taller one still fits the box (`pctChart`'s `fit`), so type, bars and circles
+  grow together; a phone draws them at their real size. A chart starts at the size its column had last time
+  (`pctLast`): drawn at a guess and resized a moment later, everything under it shifted and, near the foot of the
+  page, the browser pulled the window up — which is what threw a phone's page upward on every tap of a tab.
+- **The tabs** (`renderBelow`, `state.pbtab`): **Compare**, **Season Stats**, **Rolling**, and for pitchers **nERA**
+  and **uERA**. Clicking the open tab closes it and leaves just the strip (`pbtab: "none"`), with the page's notes
+  under it. After any tab is picked, `anchorTabs()` puts the strip back exactly where it was on the screen, padding
+  the page under it when what's below got shorter, so nothing jumps.
+  - **Compare** turns on the two-side comparison and opens it here, under the stats (`cmpCard`). Its grid is the
+    page's own sections for both sides (`cmpPageGrid`), and **Set up comparison** picks each side's season, split and
+    dates and which stats sit on the grid — the page's, by section, plus anything from **More stats**, which lands as a
+    plain row under "Added" (`state.cmp2.pick`). Nothing folds out.
+  - **Season Stats** (`renderSeasonTable`) is kept simple: every MLB season and a career row, **PA HR AVG OBP SLG OPS**
+    for a hitter and **IP ERA K% BB% GB% Popup%** for a pitcher (K% / BB% per batter faced). GB% and Popup% come from
+    `hist/career.js` (`build_career.py` appends them to each pitching season); a file built before that falls back to
+    the season's own data when it is loaded, and the career row shows them only once every season has them. A player
+    with no MLB time gets his minor-league seasons, one line per level.
+  - **Rolling** is `renderRolling()`: xwOBA over a hitter's last N PA (K−BB% for a pitcher), 25 to 300. On a phone
+    the plot runs from the left edge (no bar column to line up with).
+  - **nERA** is the batted-ball luck table (`renderLuckBox`). **uERA** is the uERA table (`renderUeraBox`) and, beside
+    it, the batted-ball mix (`renderMixBox`): his GB / LD / FB / Popup shares, each one's rank among the season's
+    pitchers in the direction that helps him (more grounders and popups, fewer liners and fly balls), the mix uERA
+    actually prices (**uERA uses**: his ground-ball and popup shares, the rest of his air balls split at the league's
+    line-drive ratio) and the league's wOBA for each type, with Mix ERA in the heading.
 
-  Under it, `renderSeasonHeat()` draws the plain counting line Savant puts there, laid out the same way: one rule
-  above the header, a hairline under it, no cell borders, seasons oldest-first and right-aligned, and a shaded
-  career row. It shows his three most recent MLB seasons and then a career row totalling all of them: PA, AB, R, H, HR, SB, AVG, OBP, SLG, OPS for a hitter (`SAV_H`), W / L / ERA / G / GS / SV / IP / K /
-  BB / WHIP for a pitcher (`SAV_P`), off `rawLines()` and `combineLines()`. Clicking a row opens that season.
+`sizePPage()` puts `body.playerwide` on while a player page is open, which lifts the site's 1240px cap off `.wrap`
+and `.top` and leaves `min(6vw, 96px)` on each side — Savant's own proportion — then sizes the percentile box to run
+from under the pinned plate to the bottom of the window, less the tab strip so that strip stays on screen. It measures
+where the box starts in the **document** (`rect.top + scrollY`), not the viewport: reading the viewport while the page
+is scrolled gives a smaller number every time and the box grows with each render. On a phone the height cap is lifted.
 
-  Then **Player apps** (`renderPlayerApps`): the year and the level as two pills (`renderSeasonPicker` with
-  `{noKind: true, levelOnly: true}` — the first picks the season, the second MLB / Triple-A / Double-A / A+ / A for
-  that season), the run of games below them as its own split (regular season / postseason / spring training, from
-  `seasonKinds()`), the hitting / pitching switch, the split-and-date panel (`renderSplitPanel`), the sample line and
-  Star / Draft. This replaces the pinned row
-  the page used to carry, so the three panels start at the top the way Savant's do.
-- **Middle — one flat percentile list** (`renderPctPanel`, `.pctbox`), with a single banner header ("2026 Percentile
-  Rankings") and no group headings inside it. The stats are Savant's own, in Savant's order: `SAVANT_H` is dxwOBA,
-  dxBA, dxSLG, Avg EV, Barrel%, Hard-Hit%, LA Sweet-Spot%, Bat speed, Chase (O-Swing)%, Whiff%, K%, BB%, and
-  `SAVANT_P` is xERA (uERA here), fastball velo, Avg EV, Chase%, Whiff%, K%, BB%, Barrel%, Hard-Hit%, GB%,
-  Extension. Its title is the page's navigation: `pctTitle()` builds "**2026** MLB Percentile Rankings" with the year
-  and the level as `headSelect()` pickers — a native `<select>` laid invisibly over text that reads as part of the
-  heading — so changing either moves the whole page to that season. The word itself is the button and the list drops
-  under it in a bordered, rounded panel (`HSEL`, `.hmenu`), the way Savant's does; a document click or Escape closes
-  it.
-  The bars are drawn the way Savant draws them — a full-width light track, the fill from the left edge, a
-  round marker at its end, a dashed rule under each row, and a poor / average / great scale over the first bar
-  (`pctScale()`); the three expected stats follow whichever model is switched on (`expKeys()`) and are always named
-  plainly. Savant's run values, fielding, sprint speed and spin have no counterpart in this data. `PCT_FALL` gives
-  each expected stat a chain to fall back down — dxwOBA to xwOBA to wOBA, dxBA to xBA to BA — so a season built
-  before the directional BA / SLG models, or a level with no batted-ball tracking (A, AA, in `NEEDS_EV`), shows the
-  real result instead of a blank row.
-- **Right — the rest, under four tabs on one row** (`extraSections`): `EXTRA_H` (Discipline, Contact, Batted ball,
-  Quality) and `EXTRA_P` (Run prev., K and BB, Discipline, Batted ball). Each tab is a list of
-  blocks and a block break draws a rule across the bars, so the batted-ball tab reads air / ground, then the four
-  types, then the spray. Under the tabs sits `renderRolling()` — Savant's rolling line, expected wOBA over a
-  trailing 100 plate appearances across the whole season, walked day by day off the same day rows with a
-  two-pointer, with the pool's own average as the dashed LG AVG line. It follows whichever expected model is on.
+**Every dropdown on the site is Savant's** (`ddOpenOn()`): a list hung straight under what was clicked — a white box
+inside a heavy dark rule (`--ddline`), the choices in large type — instead of the browser's list or the phone's wheel.
+The list is placed on the page itself (fixed, above everything), so no popup, pinned header or sideways-scrolling strip
+can clip it or cover it; it follows its opener if the page scrolls, and a pick, a click anywhere else or Escape closes
+it. The player page's pickers are built with `ddList()`; the filter pills (`pillSelect()`) open it directly; and any
+native `<select>` (Sort by, Rank vs, Draft from, the rankings list, Per page, Add position, the Star list, Scoring) is
+kept in the page, hidden, as the source of truth behind a box (`ddSelect()`), so its value and "change" listeners work
+as before. The header's **Draft & Fantasy** and **Leaderboards** menus use the same look and are moved out of the header
+onto the page, because on a phone Safari clipped them to the nav row's sideways scroll.
 
-**Under the boxes**, `renderBelow()` hangs the same centred strip of tabs Savant hangs there (`BTABS`,
-`state.pbtab`): **Compare** (turn the two-side comparison on, and Set up comparison once it is — turning it on drops
-the third panel and gives the comparison the whole right-hand side, `.cmp2page`), **Season Stats** (the full
-`renderRawStats` table with its MLB / MiLB / All levels switch) and **Advanced Stats** (`belowAdvanced()` — every
-card group at once, then the card's own fold-outs: Underlying K% and BB%, Batted-ball luck, and the card notes).
-The splits and dates stay up in Player apps rather than down here.
+**The site is regular season only.** Spring-training and postseason datasets can still be built (`build_history.py
+spring …` / `post …`), but `indexReady()` takes them out of the search index the moment it loads, so no season picker
+anywhere offers one, and a season remembered from before falls back to the regular season.
 
-The three panels are exactly the same width (`repeat(3, minmax(0, 1fr))`) and the same height. `sizePPage()` puts
-`body.playerwide` on while a player page is open, which lifts the site's 1240px cap off `.wrap` and `.top` and
-leaves `min(6vw, 96px)` on each side — Savant's own proportion — then sizes the boxes to run from under the header
-to the bottom of the window, less the height of the tab strip so that strip stays on screen. It measures where the
-boxes start in the **document** (`rect.top + scrollY`), not the viewport: reading the viewport while the page is
-scrolled gives a smaller number every time and the boxes grow with each render. The site's own notes
-sit below the fold rather than eating into the boxes. A panel whose content is longer (a card with eleven seasons on
-it) scrolls inside its own `.pscroll`, which hands the wheel back to the page (`overscroll-behavior: auto`) once it
-has run out, so the page still scrolls with the pointer over a box. The bars keep their own spacing at the top of
-the middle panel; in the right one the rolling chart is pushed to the foot so it anchors the box.
-
-**The chrome is Savant's too.** A panel has no coloured band: `panelHead(lead, rest, sub)` centres a title with the
-year in bold and the rest regular, over the little dotted rule (`.pcdots`, a repeating radial gradient). The season
-table is borderless — a plain bold header row over a rule, no cell borders, no striping, one shaded career row. The
-name is set large and light, the club by its full name (`TEAM_FULL`, built from `TEAM_CITY` + `TEAM_NAMES`), and
-"Player Apps" is a centred mixed-case heading rather than the site's usual uppercase label.
-
-The page reuses the card's renderer and moves its pieces into the columns, so the card in a popup is unchanged.
-Stats these groups need that aren't card metrics (Pull%, Cent%, Oppo%, Non-pull%, Swing%, Strike%) are added to the
-percentile set as `SIDE_H` / `SIDE_P`, so they get bars like everything else. On a phone the three panels stack and
-the height cap is lifted.
+**A popup card is the player's page** — `renderModal` calls the same `playerView()`, ranked in the list's own pool,
+in a panel with an ×. On a desktop the panel is up to 1500px wide and as tall as the window allows, and `sizePPage()`
+fits its percentile box to the panel the same way; on a phone it floats over the list, 8px in from the edges and under
+the site header, and scrolls inside itself (`.modal.pcard`, `body.cardpop`) while the list stays where it was.
 
 The first toolbar row is the positions, the name search and **Team** (one league, one division or one team; × or Clear
 removes it — the tab counts follow). Everything else sits on the second row, which scrolls sideways when it runs out
@@ -447,35 +450,10 @@ season line (G, PA, AB, H, R, HR, RBI, SB, BB, K, AVG/OBP/SLG/OPS; pitchers G, G
 QS), by position / role, for 2026 and the two seasons before. **Per opportunity**: points per game, per PA, per AB,
 per 600 PA; pitchers per IP, per start, per relief appearance, QS%. **What if**: pitchers with K and BB at their
 underlying rates (uK% = Whiff%, uBB% from Strike% percentile), ER at luck-neutral ERA, hits at Savant xBA — and the
-rank at the role that would give; hitters with H / TB at Savant xBA / xSLG, points per game at a starter's PA/G and a
+rank at the role that would give; hitters with H / TB at the directional xBA / xSLG, points per game at a starter's PA/G and a
 full starter's PA at their position (top teams × lineup slots by PA), and the rank at the position that would give.
 Data: `build_fantasy.py` (part of Update / the daily job) -> `fantasy.js`; `python3 build_fantasy.py 2025 2024` for
 past years -> `hist/fantasy-YYYY.js`.
-
-## The scripts live in the repo too
-
-The published repo (`seanvarg13/seanvarg13.github.io`) is the only thing an assistant working away from this Mac can
-see, so every build script is mirrored into it under `tools/`, with `CLAUDE.md` at the root explaining the pipeline
-and `docs/site-README.md` carrying this file. `publish.sync()` sends them up with each publish; they are not part of
-the site and never touch the build id.
-
-`sync_tools.py` makes it a round trip rather than a snapshot. It runs first in the 5:30 job and again at the top of
-every publish, and decides per file against `.tools-mirror.json` (each file's git blob sha as of the last publish):
-
-| repo vs local | what happens |
-|---|---|
-| the same | nothing |
-| local matches the last publish | the repo moved on — **its copy is taken here** |
-| repo matches the last publish | this Mac moved on — keep it; the next publish pushes it |
-| both moved | keep the local file, drop the repo's copy in `logs/tools-conflicts/`, and say so loudly |
-
-A pulled `.py` has to compile before it is installed and whatever it replaces is kept in `logs/tools-backup/`, so a
-bad edit pushed from anywhere cannot take the daily build down. `python3 sync_tools.py --dry` shows what the repo
-would change without writing anything. Nothing outside the `FILES` map at the top of the script is ever read from
-the repo or written here, and no token or account file is mirrored.
-
-`app.js`, `styles.css` and `index.html` are **not** in that map: the publisher force-pushes them, so an edit made in
-the repo would be reverted at the next publish. Front-end changes still happen here.
 
 ## Hosting (a real link, on your phone)
 

@@ -130,7 +130,7 @@ Everything is fetched anonymously — no API keys anywhere in this pipeline.
 
 | script | writes | notes |
 |---|---|---|
-| `build_data.py [--end DATE]` | `data.js`, `days.js` | the current season. ~1-2 min on a warm cache. All the knobs (`SEASON`, `GAME_TYPES`, `DEFAULT_MIN`, `REF_MIN_PA`, `PULL_LINE`, metric lists, card layout, score weights) are constants at the top |
+| `build_data.py [--end DATE]` | `data.js`, `days.js` | the current season. Every MLB player who played ships (`MIN_PA_HITTER` / `MIN_BF_PITCHER` = 1, since 24 Sep 2026 — a 12-BF start had left River Ryan off the site); league constants still come from 20+ BF (`CONST_MIN_BF`), and the minors keep a 20 floor. ~1-2 min on a warm cache. All the knobs (`SEASON`, `GAME_TYPES`, `DEFAULT_MIN`, `REF_MIN_PA`, `PULL_LINE`, metric lists, card layout, score weights) are constants at the top |
 | `build_history.py [years…]` | `hist/mlb-YYYY.js` (+ days) | re-runs `build_data.py` season by season for 2015-2025. `build_history.py index` rebuilds `hist/index.js` (the search index). `spring 2026 2025` / `post 2025 2024` build those game types as their own datasets — but the site is regular
 season only now: `indexReady()` in `app.js` drops them from the index, so nothing offers them. Rows are player × handedness × venue — no date dimension, so past seasons have splits but not date windows |
 | `build_milb.py [aaa|aa|ap|a] [year]` | `hist/<level>-YYYY.js` | Triple-A has real Statcast; lower levels have batted-ball type and location only. **No bat speed, no directional xwOBA** in the minors (the model needs MLB sprint speeds) |
@@ -201,14 +201,18 @@ Statcast/Directional toggle and the `xws` column are gone). The build still carr
   daily job, and the `.joblib` files are not in this repo (too large, and nothing here can run them).
 
 **uK% / uBB% / uERA** (pitchers, computed in `app.js`, not in the build):
-* **uK%** = his Whiff%, as is. **uBB%** = the walk rate at his own Strike% percentile (`impliedKBB`, ~line 650).
+* **uK%** = `−26.975 + 0.933·Whiff% + 0.409·Strike%` (`UK`, fitted over every 100+ BF pitcher-season 2015-2026 bar
+  2020; Whiff% as is ran 2.5 points high). **uBB%** = the walk rate at his own Strike% percentile (`impliedKBB`).
 * **uERA** (`underlyingERA`) puts those two rates on the balls he actually allowed: his ground-ball and popup
   shares stand, the air balls left over are split into line drives and fly balls at the *population's* ratio, and
   every ball in play is then worth the league's average wOBA for its type (`consts.bbw`). The resulting wOBA is
   put on the ERA scale as `lgERA + (xw − lgwOBA) / wobaScale · pa9`. So a high line-drive rate never punishes
   him, but putting the ball in the air does.
-* ⚠️ The explanatory note under that table in `app.js` (~line 2169) still describes an **older** fitted recipe
-  ("53.67 + 0.136·Whiff% − 0.890·Strike% + 0.160·Zone%"). The code does not do that any more. See §8.
+
+**MLB-equivalent uERA** (the minors' rows in Season Stats, `milbU` / `MILB_X` in `app.js`): the level's Whiff%,
+Strike%, GB% and Popup% shifted up to the majors by a fixed table per level, then uERA against that season's MLB pool.
+The table comes from `tools/models/milb_translate.py` (same-season pairs at two levels, 2021 on, reliability-corrected
+shifts, chained to MLB); re-run it by hand and paste the printed `MILB_X` when it goes stale.
 
 **Mix ERA** (`mixERA`): the ERA his batted-ball distribution *alone* is worth — same league-value-per-type
 machinery, but K% and BB% held at the pool's, so it is the mix and nothing else. ~4.15 is average, lower is
@@ -255,6 +259,7 @@ Statcast's.
 | `tools/serve.py` | local dev server |
 | `tools/install_schedule.sh` | installs/removes the launchd agent |
 | `tools/models/model3.py`, `model_bs.py` | the directional models' training scripts, in `model-workspace/` |
+| `tools/models/milb_translate.py` | fits `MILB_X` (the minors-to-MLB rate shifts) from `hist/`; repo only, run by hand |
 
 Not mirrored, on purpose: `github_site.json` / `netlify_site.json` (account config), `~/.github_token`,
 `.cache/`, `logs/`, `*.joblib`, `pa_all.parquet`.
@@ -321,8 +326,6 @@ is deploy-limited.
   (`build_history.py <years>`, then `build_career.py`, then publishes). ~2 hours the first time, a no-op after.
   Until it has run, those seasons show Statcast's xBA/xSLG under the site's names. The minors have no directional
   xwOBA, so their lists lead with wOBA.
-* **The uERA note in `app.js` is stale** (§4). It describes a fitted regression that was replaced by the simple
-  `impliedKBB` rule. One sentence of user-facing copy; Sean should decide the wording.
 * **The percentile sections have no run values, fielding (OAA), sprint speed or spin.** Not in this data.
   Acknowledged gap, not a bug.
 * **The player page is a popup card** (Sean, 24 Sep 2026: "identical in every measure"): `renderExplore()` opens his

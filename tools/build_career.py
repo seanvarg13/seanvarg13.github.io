@@ -125,6 +125,12 @@ def main():
                     for r in rows:
                         if r[0] not in by or r[1] == "TOT":
                             by[r[0]] = r
+                    # and, beside them, each club's own line in a season with a combined one (the card's Season Stats
+                    # opens a two-club year to show them); a separate key, so older copies of the page still read rows
+                    multi = {k for k, r in by.items() if r[1] == "TOT"}
+                    clubs = [list(r) for r in rows if r[0] in multi and r[1] != "TOT"]
+                    if clubs:
+                        rec[t + "T"] = sorted(clubs, key=lambda r: (r[0], r[1]))
                     rows = [by[k] for k in sorted(by)]
                     for r in rows:
                         m = ours.get((p["id"], r[0], t))
@@ -144,7 +150,8 @@ def main():
         out_rows = []
         for r in rows:
             m = ours_m.get((pid, r[0], t, r[1]))
-            adv = None if not m else ([m.get("woba"), m.get("xwoba"), m.get("whf")] if t == "H" else [m.get("fip"), m.get("siera"), m.get("whf"), m.get("strk")])
+            adv = None if not m else ([m.get("woba"), m.get("xwoba"), m.get("whf")] if t == "H" else [m.get("fip"), m.get("siera"), m.get("whf"), m.get("strk"),
+                                                                                                      m.get("gb"), m.get("pu")])   # appended: GB% / Popup% for the minors' season table
             out_rows.append(list(r) + [adv])
         return out_rows
     with ThreadPoolExecutor(max_workers=8) as ex:
