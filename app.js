@@ -2193,7 +2193,7 @@
             // the colour sits on a chip inside the cell, as a leaderboard's sorted column does, not the whole cell (Sean)
             const u = r.club ? null : minors ? milbU(r) : uera(r.season), td = el("td", "uera"), chip = el("span", "uchip", u === undefined ? "…" : fmtv(k, u && u.v));
             if (u && u.pct != null) {
-              paintBar(chip, u.pct); chip.classList.add("on");
+              paintBar(chip, u.pct); chip.style.color = "#fff"; chip.classList.add("on");   // white on every colour (Sean)
               td.title = minors ? `MLB-equivalent uERA ${u.v.toFixed(2)}: his rates carried up to the majors · would be ${ordinal(u.pct)} pctl among ${r.season} MLB ${u.g === "SP" ? "starters" : "relievers"}`
                                 : `uERA ${u.v.toFixed(2)} · ${ordinal(u.pct)} pctl among ${r.season} pitchers`;
             }
