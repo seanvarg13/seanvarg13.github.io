@@ -375,7 +375,8 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
     Every row is one line tall. A traded MLB season reads **TOT** and a minor-league year at several levels just "–" (so
     the column stays a club's width); the ▸ beside that label (not the year) opens it (`SEASON_OPEN`) to each club's line (`HT`/`PT` in
     career.js, kept by `build_career.py`) or each level's. Hitters: **PA HR AVG OBP SLG OPS**. Pitchers: **IP ERA K%
-    BB% GB% Popup% uERA** (K% / BB% per batter faced). **uERA** is worked out on the page — opening the table fetches
+    BB% GB% Popup% uERA** (K% / BB% per batter faced; Popup% is headed PU% to
+    leave room between the columns). **uERA** is worked out on the page — opening the table fetches
     each year's MLB season file — and shows on a chip coloured by its percentile in the percentile bars' own colours
     (`paintBar`: Savant's scale, or the heat scale under Classic meters), inset like a leaderboard's sorted-column pill;
     none before 2015 (no Statcast). The career uERA is innings-weighted.

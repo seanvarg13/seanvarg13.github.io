@@ -2598,8 +2598,8 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .rawstats.simple.pit td.uera { padding: 4px 2px 4px 4px; }
 :root[data-view="mobile"] .rawstats .yrtog { padding-right: 2px; }
 /* a pitcher's tables carry two more columns (uERA; GB% / Popup% in the minors): a phone tightens the cells a touch */
-:root[data-view="mobile"] .rawstats.simple.pit th, :root[data-view="mobile"] .rawstats.simple.pit td { padding-left: 2px; padding-right: 2px; font-size: 11.5px; }
-:root[data-view="mobile"] .rawstats.simple.pit th { font-size: 9.5px; letter-spacing: 0; }
+:root[data-view="mobile"] .rawstats.simple.pit th, :root[data-view="mobile"] .rawstats.simple.pit td { padding-left: 4px; padding-right: 4px; font-size: 11.5px; }
+:root[data-view="mobile"] .rawstats.simple.pit th { font-size: 10px; letter-spacing: 0; }
 :root[data-view="mobile"] .rawstats.simple.pit td.tm { max-width: 56px; }
 /* Season Stats drop-downs: a year split across levels or clubs opens (▸); its lines sit under it, lightly shaded */
 .rawstats tr.haskids { cursor: pointer; }
