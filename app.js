@@ -649,7 +649,8 @@
                    ev90: q90, maxev: hasEvs && evs.length ? evs[evs.length - 1] : null,
                    hh: rate(t.hh, bipn), ss: rate(t.ss, bipn), strk: rate(t.strk, t.pit), swing: rate(t.sw, t.pit), k: rate(t.k, t.pa), bb: rate(t.bb, t.pa) },
               sample: t.pa, ab: t.ab, pa: t.pa,
-              ctx: { wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, "K%": rate(t.k, t.pa), "BB%": rate(t.bb, t.pa), BBE: bipn, BIP: t.bbt || null, G: games } };
+              ctx: { wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, "K%": rate(t.k, t.pa), "BB%": rate(t.bb, t.pa), BBE: bipn, BIP: t.bbt || null, G: games,
+                     mix: t.mxgb === undefined ? null : MIX_B.map(([k]) => t[k] || 0), mixsum: t.mixsum, mixn: t.mixn } };
       }
     }
     valCache.set(key, v);
@@ -4321,14 +4322,57 @@
     }
     return box;
   }
+  // The Mix tab (hitters): his Mix wOBA taken apart — his share of each bucket as a percentile bar against the season's
+  // qualifiers (more of the buckets worth more than the league's average ball counts as better), the league's wOBA on
+  // that bucket heat-mapped from the cheapest to the dearest, and at the bottom the weighted average of those values
+  // over his balls: what his average ball in play is worth by where and how he hits it.
+  const MIX_B = [["mxgb", "gb", "Ground balls"], ["mxpu", "pu", "Popups"], ["mxldp", "ld_p", "Line drives, pulled"], ["mxldc", "ld_c", "Line drives, center"],
+                 ["mxldo", "ld_o", "Line drives, oppo"], ["mxfbp", "fb_p", "Fly balls, pulled"], ["mxfbc", "fb_c", "Fly balls, center"],
+                 ["mxfbo", "fb_o", "Fly balls, oppo"], ["mxx", "x", "Air, no direction"]];     // build_data.MIX_COLS order
+  function renderMixTab(p, g) {
+    const x = K().mix, pv = V(p), pl = pool(g);
+    const cnt = (q) => { const c = V(q).ctx && V(q).ctx.mix; if (!c) return null; const n = c.reduce((a, b) => a + b, 0); return n ? { c, n } : null; };
+    const mine = cnt(p);
+    if (!x || !x.v || !mine) return el("p", "note", "The batted-ball mix is built from this season's data on — this season's file doesn't have it yet.");
+    const val = (b) => (b === "x" ? ((x.v.ld_x || 0) + (x.v.fb_x || 0)) / 2 : x.v[b]);
+    const others = pl.ref.map(cnt).filter(Boolean);
+    const avg = (o) => o.c.reduce((a, n, i) => a + n * (val(MIX_B[i][1]) || 0), 0) / o.n;   // his average ball's league value
+    const box = el("div", "rollbox uerabox mixbox mixtab");
+    const hd = el("div", "rollhd"), mw = pv.m.mixw, st = pl.stats.get(p.type + p.id);
+    hd.append(el("span", "rollname", mw == null ? "Batted-ball mix" : `Mix wOBA ${fmtX(mw)}`));
+    if (st && st.pct && st.pct.mixw != null) hd.append(el("span", "rollsub", `${ordinal(st.pct.mixw)} percentile`));
+    box.append(hd);
+    const grid = el("div", "mixgrid mixgrid5");
+    grid.append(el("span"), el("span"), el("span", "mh", "Share"), el("span", "mh", "Lg wOBA"));
+    const vals = MIX_B.map(([, b]) => val(b)).filter((v) => v != null), lo = Math.min(...vals), hi = Math.max(...vals);
+    const rows = MIX_B.map(([k, b, name], i) => ({ i, b, name, v: val(b) })).filter((r) => r.v != null && (r.b !== "x" || mine.c[r.i]))
+      .sort((a, b) => b.v - a.v);                                  // dearest bucket first
+    for (const r of rows) {
+      const share = 100 * mine.c[r.i] / mine.n, dir = r.v >= x.lg ? 1 : -1;
+      const arr = others.map((o) => dir * 100 * o.c[r.i] / o.n).sort((a, b) => a - b);
+      const lgc = el("span", "mv lg"), chip = el("span", "uchip", fmtX(r.v));
+      paintBar(chip, hi > lo ? Math.round(100 * (r.v - lo) / (hi - lo)) : 50); chip.style.color = "#fff"; lgc.append(chip);
+      grid.append(el("span", "ml", r.name), svTrack(arr.length ? insertPct(arr, dir * share) : null), el("span", "mv", share.toFixed(1) + "%"), lgc);
+    }
+    // the bottom line: the league's wOBA weighted by his shares, ranked among the qualifiers and heat-mapped by that rank
+    const me = avg(mine), arr = others.map(avg).sort((a, b) => a - b), pct = arr.length ? insertPct(arr, me) : null;
+    const tot = el("span", "mv lg"), chip = el("span", "uchip", fmtX(me));
+    paintBar(chip, pct); chip.style.color = "#fff"; tot.append(chip);
+    const lab = el("span", "ml mtot", "Weighted league wOBA"), n = el("span", "mv mn", String(mine.n)); n.title = `${mine.n} balls in play`;
+    grid.append(el("span", "mdiv"), lab, svTrack(pct), n, tot);
+    box.append(grid);
+    box.append(el("p", "note", `Each bar: where his share of that kind of ball ranks among ${pl.ref.length} qualifiers — more of the buckets worth more than the league's average ball (${fmtX(x.lg)}) is better, more of the rest is worse. Lg wOBA: what the league does on it, red the dearest. The bottom line is those values weighted by his shares — his average ball in play by where and how he hits it; Mix wOBA puts that on the wOBA scale with walks and strikeouts at the league's rates.`));
+    return box;
+  }
   const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["rolling", "Rolling"], ["fantasy", "Fantasy"]];
+  const BTABS_H = [["mix", "Mix"]];                                      // a hitter's batted-ball mix
   const BTABS_P = [["nera", "nERA"], ["uera", "uERA"]];                 // a pitcher's two ERAs, one tab each
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
   function renderBelow(p, o = {}) {
     const sec = el("section", "pbelow2");
-    const tabs = p.type === "P" ? [...BTABS, ...BTABS_P] : BTABS;
+    const tabs = p.type === "P" ? [...BTABS, ...BTABS_P] : [...BTABS, ...BTABS_H];
     const pick = state.pbtab === "none" ? null : tabs.some(([k]) => k === state.pbtab) ? state.pbtab : "compare";
     const g = o.g || (p.type === "H" ? "H" : p.primary), ref = o.ref || g;
     const bar = el("div", "btabs"); bar.setAttribute("role", "tablist");
@@ -4365,6 +4409,8 @@
     } else if (pick === "rolling") {                  // xwOBA over a hitter's last N PA, K−BB% over a pitcher's last N batters
       const roll = renderRolling(p, ref);
       body.append(roll || el("p", "note", "No game-by-game data for this season, so there's no rolling line."));
+    } else if (pick === "mix") {
+      body.append(renderMixTab(p, ref));
     } else if (pick === "fantasy") {
       body.append(renderFantasyTab(p));
     } else if (pick === "nera") {
