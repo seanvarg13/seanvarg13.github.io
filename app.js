@@ -5002,11 +5002,52 @@
   // a pitcher's foot of the middle box: batted-ball luck, set like the uERA box — luck-neutral ERA against the real
   // one in the heading, then what each batted-ball type has cost him against what it costs the league
   // Stuff: his arsenal pitch by pitch — shape, the model's whiff / ground-ball / popup chances beside what happened, and
-  // the grades. Season numbers (the arsenal isn't split by day); the overall line follows any window or split.
+  // the grades. The season's table (ctx.arsenal) until the card has a window or split, then arsenalView's sums.
   const PITCH_NAME = { FF: "Four-seam", SI: "Sinker", FC: "Cutter", SL: "Slider", ST: "Sweeper", SV: "Slurve", CU: "Curveball", KC: "Knuckle curve",
                        CS: "Slow curve", CH: "Changeup", FS: "Splitter", FO: "Forkball", SC: "Screwball", KN: "Knuckleball", EP: "Eephus", FA: "Fastball" };
   const ARSENAL = DATA.meta.arsenalFields || ["pt", "n", "velo", "ivb", "hb", "spin", "xwhf", "xgb", "xpu", "whfp", "bbp", "stuffp", "whf", "gb", "pu", "sw", "bip"];
-  let STUFF_VS = "type";   // the Stuff tab's per-pitch grades: against the league's pitches of the same type, or all pitches
+  let STUFF_VS = "type";
+  // The arsenal through the card's dates and splits (Sean, 26 Sep 2026: a reliever's pitches should show when the card is
+  // set to As RP). hist/ars-<season>.js holds each pitcher's pitch types game by game — graded pitches and the summed
+  // model chances, shape and outcomes (meta.arsDayFields) — loaded the first time the Stuff tab is open with a window
+  // or split. Returns rows shaped like ctx.arsenal's, "loading" while the file comes, or null to use the season table.
+  const ARS_F = DATA.meta.arsDayFields || ["day", "hand", "home", "gs", "pt", "n", "w", "g", "p", "velo", "ivb", "hb", "spin", "spn", "sw", "wh", "bip", "gb", "pu"];
+  const arsKey = () => (DS.multi ? null : DS.key);
+  const arsReady = (k) => !!(window.DRAFT_ARS && window.DRAFT_ARS[k]);
+  function arsenalView(p) {
+    if (!(winRequested() || splitActive())) return null;
+    const k = arsKey(); if (!k) return null;
+    const file = `hist/ars-${k.replace(/^mlb-/, "")}.js`;
+    if (!arsReady(k)) { if (failed.has(file)) return null; ensureScript(file, () => arsReady(k)); return "loading"; }
+    const rows = window.DRAFT_ARS[k]["P" + p.id]; if (!rows) return null;
+    const w = winIdx() || (winRequested() ? null : { lo: 0, hi: 1e9 });
+    if (!w) return "loading";                                         // a past season's day rows are still on their way
+    const hand = SPLIT.hand === "all" ? -1 : SPLIT.hand === "R" ? 1 : 0, home = SPLIT.venue === "all" ? -1 : SPLIT.venue === "home" ? 1 : 0;
+    const role = roleOf(SPLIT) === "all" ? -1 : roleOf(SPLIT) === "sp" ? 1 : 0;
+    const ok = (day, h, v, gs) => (hand < 0 || h === hand) && (home < 0 || v === home) && (role < 0 || gs === role);
+    let lo = w.lo;
+    if (w.last) {   // "last N IP": the same most-recent days the card's numbers use (his day rows' outs)
+      const f = DF.P, oi = f.indexOf("outs"), gi = f.indexOf("gs"), byDay = new Map();
+      for (const r of rowsOf(p)) if (r[0] <= w.hi && ok(r[0], r[1], r[2], r[gi] ? 1 : 0)) byDay.set(r[0], (byDay.get(r[0]) || 0) + r[oi]);
+      let acc = 0; lo = w.hi + 1;
+      for (const d of [...byDay.keys()].sort((x, y) => y - x)) { acc += byDay.get(d); lo = d; if (acc >= 3 * w.last) break; }
+    }
+    const I = Object.fromEntries(ARS_F.map((f, i) => [f, i])), sum = new Map();
+    for (const r of rows) {
+      if (r[0] < lo || r[0] > w.hi || !ok(r[0], r[I.hand], r[I.home], r[I.gs])) continue;
+      const t = sum.get(r[I.pt]) || Object.fromEntries(ARS_F.slice(5).map((f) => [f, 0]));
+      for (const f of ARS_F.slice(5)) t[f] += r[I[f]];
+      sum.set(r[I.pt], t);
+    }
+    const sc = K().stuff, r1 = (x) => Math.round(10 * x) / 10;
+    return [...sum.entries()].filter(([, t]) => t.n > 0).sort((a, b) => b[1].n - a[1].n).map(([pt, t]) => {
+      const [wp, bp] = sc ? stuffParts(sc, 100 * t.w / t.n, t.g / t.n, t.p / t.n, K().lgERA) : [null, null];
+      return { pt, n: t.n, velo: t.velo / t.n, ivb: t.ivb / t.n, hb: t.hb / t.n, spin: t.spn ? Math.round(t.spin / t.spn) : null,
+               xwhf: 100 * t.w / t.n, xgb: 100 * t.g / t.n, xpu: 100 * t.p / t.n, whfp: wp == null ? null : r1(wp), bbp: bp == null ? null : r1(bp),
+               stuffp: wp == null ? null : r1(wp + bp - 100), whf: t.sw ? 100 * t.wh / t.sw : null, gb: t.bip ? 100 * t.gb / t.bip : null,
+               pu: t.bip ? 100 * t.pu / t.bip : null, sw: t.sw, bip: t.bip };
+    });
+  }   // the Stuff tab's per-pitch grades: against the league's pitches of the same type, or all pitches
   const plusStyle = (v) => pctStyle(Math.max(1, Math.min(99, Math.round(50 + 2.2 * (v - 100)))));   // 100 = the middle of the scale
   function renderStuffTab(p) {
     const box = el("div", "rollbox uerabox stuffbox");
@@ -5017,7 +5058,10 @@
               el("span", "rollsub", m.stuff == null ? "no pitch-tracking grades for this season yet" : `Whiff+ ${Math.round(m.swhf)} · Batted-ball+ ${Math.round(m.sbb)}` + (viewLabel(p.type) && viewLabel(p.type) !== "full season" ? ` · ${viewLabel(p.type)}` : "")));
     box.append(hd);
     if (!rows.length) { box.append(el("p", "note", "The arsenal table comes with the next build of this season's data.")); return box; }
-    const R0 = rows.map((a) => Object.fromEntries(ARSENAL.map((k, i) => [k, a[i]])));
+    const av = arsenalView(p), filtered = Array.isArray(av);
+    if (av === "loading") box.append(el("p", "note", "Loading his pitches game by game…"));
+    else if (av && !av.length) { box.append(el("p", "note", "No graded pitches in this selection.")); return box; }
+    const R0 = filtered ? av : rows.map((a) => Object.fromEntries(ARSENAL.map((k, i) => [k, a[i]])));
     const tot = R0.reduce((s, r) => s + r.n, 0), R = R0.filter((r) => r.n >= 15);   // a pitch he's thrown a handful of times isn't graded on its own
     // a pitch against its own kind: the league's average grades for that pitch type are subtracted, so 100 = an average
     // four-seamer for a four-seamer (Sean, 26 Sep 2026); "all pitches" keeps every pitch on the one scale
@@ -5060,14 +5104,15 @@
     const wx = (k) => (tot ? R0.reduce((s, r) => s + (r[k] || 0) * r.n, 0) / tot : null);
     const act = (k, d) => { const n = R0.reduce((s, r) => s + (r[d] || 0), 0); return n ? R0.reduce((s, r) => s + (r[k] || 0) * (r[d] || 0), 0) / n : null; };
     // an older build's headline still has Strike+ inside it: rebuild Stuff+ from its two halves so the row adds up
+    const mv = filtered ? m : s0;                                   // a window / split: the card's own (filtered) grades
     const tv = vsType && relSum.n ? { t: relSum.t / relSum.n, w: relSum.w / relSum.n, b: relSum.b / relSum.n }
-                                  : { t: s0.swhf == null ? s0.stuff : s0.swhf + s0.sbb - 100, w: s0.swhf, b: s0.sbb };
+                                  : { t: mv.swhf == null ? mv.stuff : mv.swhf + mv.sbb - 100, w: mv.swhf, b: mv.sbb };
     trt.append(el("td", "l", "All pitches"), el("td", null, String(tot)), el("td"), el("td"), el("td"), el("td"), cellPlus(tv.t, "sp"),
                cellPlus(tv.w), cellPlus(tv.b), pair(wx("xwhf"), act("whf", "sw")), pair(wx("xgb"), act("gb", "bip")), pair(wx("xpu"), act("pu", "bip")));
     tb.append(trt); t.append(tb);
     const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
     box.append(el("p", "note", (vsType ? "Each pitch is graded against the league's pitches of its type — 100 is an average four-seamer for a four-seamer, an average slider for a slider — and the All pitches row averages those by how often he throws each. The headline Stuff+ is against all pitches, so pitchers compare on one scale. " : "Every pitch on one scale: 100 is the league's average pitch of any kind, the scale the headline uses. ") +
-      "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball — never where it was thrown. Each point is 1% of runs; whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened. The table is his season; the headline follows the card's dates and splits."));
+      "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball — never where it was thrown. Each point is 1% of runs; whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened. The table and the headline follow the card's dates and splits."));
     return box;
   }
   function renderLuckBox(p) {

@@ -241,7 +241,7 @@ Pitching+ / Location+ were built and dropped the same day** (Sean: "i just dont 
 strike model mostly restated the Strike% already on the card; don't bring them back unasked. Whiffs carry more weight because their spread
 is bigger (SD 8.4 vs 4.9 in 2026). Checks on 2026 with a 2025 fit: whiff AUC .64; pitcher xWhiff vs actual Whiff% r .67,
 xGB vs GB% r .75; Stuff+ half-to-half r .91 (actual Whiff% .72). Day rows carry `stn/stw/stg/stp` so windows and splits
-re-derive it; `ctx.arsenal` holds the per-pitch table (`meta.arsenalFields`). A failure in the step costs only the grades.
+re-derive it; `ctx.arsenal` holds the per-pitch table (`meta.arsenalFields`); with a window or split the Stuff tab's table re-sums `hist/ars-<season>.js` instead (`arsenal_daily` / `arsenalView`: pitcher × day × hand × venue × pitch type, started flag included, ~8 MB, loaded only then — Sean, 26 Sep 2026). A failure in the step costs only the grades.
 
 **Mix ERA** (`mixERA`): the ERA his batted-ball distribution *alone* is worth — same league-value-per-type
 machinery, but K% and BB% held at the pool's, so it is the mix and nothing else. ~4.15 is average, lower is
