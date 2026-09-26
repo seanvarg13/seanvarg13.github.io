@@ -337,6 +337,9 @@ is deploy-limited.
   `playerView()` as a card off a list, so a change to one is a change to the other.
 * `hist/` files built before a field was appended to `HITTER_DAY`/`PITCHER_DAY` lack it; `app.js` checks
   `indexOf(...) < 0` before using one. Keep doing that.
+* **Saved settings sync through a secret gist** (Sean, 26 Sep 2026): fantasy presets, stars, drafted, rankings, tiers
+  and ranking sets (`SYNC_KEYS` in `app.js`) — Appearance ▸ Sync across devices, a gist-only GitHub key per device.
+  Anything new that should follow him between devices goes in `SYNC_KEYS`; per-device UI state and Appearance don't.
 * Spring training has little tracking (many parks are not instrumented), so EV-based stats are thin there.
 
 ## 9. Things only Sean can do

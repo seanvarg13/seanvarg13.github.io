@@ -507,7 +507,16 @@ them between the Mac and the phone.
 **On an iPhone as an app**: open the link in Safari -> Share -> **Add to Home Screen**. It gets its own
 icon and opens full-screen without the Safari bars (the page ships a web-app manifest and apple-touch-icon).
 The home-screen copy has its own storage, so its rankings lists, drafted players and Appearance choices are
-separate from Safari's — use Export / Import to move lists.
+separate from Safari's — connect each one to **Sync** (below) and they share them.
+
+**Sync across devices** (Appearance ▸ Sync across devices; `syncNow()` near the top of `app.js`): the fantasy scoring
+presets, stars, drafted players, rankings, tiers and saved ranking sets (`SYNC_KEYS`) are kept in a secret gist on
+Sean's GitHub, `sean-site-sync.json` in the gist described "Sean's Site: saved settings (synced by the site)". Each
+device is connected once with a GitHub key that has **gist** access only (it can't touch the site), stored in that
+browser (`draft2027.sync`). The site pulls when it opens and whenever it comes back to the front, and pushes a few
+seconds after anything is saved. Per key, against what was last synced: changed on one side takes that side; changed on
+both (or on a device's first connect), the fantasy presets are merged by id and keyed lists by key, this device
+winning a clash. A pull that changes anything reloads the page once. Appearance stays per device.
 
 **Appearance** (header link): colour scheme — Carolina blue (default), Carolina navy, Titans, Titans · Carolina
 (Titans navy and the red stripe, with Carolina blue on the banner instead of Titans blue), Purple,
