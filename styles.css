@@ -2654,3 +2654,18 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .mixgrid.mixgrid5 { grid-template-columns: 104px minmax(0, 1fr) 42px 50px; column-gap: 6px; }
 :root[data-view="mobile"] .mixgrid.mixgrid5 .ml { font-size: 11.5px; white-space: normal; line-height: 1.15; }
 :root[data-view="mobile"] .mixtab .uchip { min-width: 0; padding: 1px 4px; font-size: 12px; }
+/* The site's header buttons (Sean, 26 Sep 2026): navy with white text and a white outline, the same on every page and
+   device; the chevrons follow the text colour */
+.modes a, .modes .modesel, :root:not([data-view="mobile"]) .modes a, :root:not([data-view="mobile"]) .modes .modesel,
+:root[data-view="mobile"] .modes a, :root[data-view="mobile"] .modes .modesel,
+.modes a[aria-current="page"], .modes .modesel[aria-current="page"], :root:not([data-view="mobile"]) .modes a[aria-current="page"],
+:root:not([data-view="mobile"]) .modes .modesel[aria-current="page"], :root[data-view="mobile"] .modes a[aria-current="page"],
+:root[data-view="mobile"] .modes .modesel[aria-current="page"] { background: var(--rule); color: #fff; border-color: #fff; }
+.modes a:hover, .modes .modesel:hover, :root:not([data-view="mobile"]) .modes a:hover, :root:not([data-view="mobile"]) .modes .modesel:hover,
+:root[data-view="mobile"] .modes a:hover, :root[data-view="mobile"] .modes .modesel:hover { background: color-mix(in srgb, var(--rule) 85%, #fff); color: #fff; }
+/* A phone's toolbar: the buttons centred between the header's stripe and the list (8px each side; the stripe hangs 2px
+   into the top), and the bar runs the full width of the screen — its white ground covers the list scrolling under it
+   right to the edges, and the buttons scroll off the screen's sides instead of a narrower box's */
+:root[data-view="mobile"] .toolbar:not(.xtoolbar) { padding-top: 10px; padding-bottom: 8px; margin-inline: -10px; padding-inline: 0; border-bottom: 0; }
+:root[data-view="mobile"] .toolbar:not(.xtoolbar) > * { padding-inline: 10px; }
+:root[data-view="mobile"] .toolbar:not(.xtoolbar) .toolrow { scroll-padding-inline: 10px; }
