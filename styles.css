@@ -2669,3 +2669,13 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .toolbar:not(.xtoolbar) { padding-top: 10px; padding-bottom: 8px; margin-inline: -10px; padding-inline: 0; border-bottom: 0; }
 :root[data-view="mobile"] .toolbar:not(.xtoolbar) > * { padding-inline: 10px; }
 :root[data-view="mobile"] .toolbar:not(.xtoolbar) .toolrow { scroll-padding-inline: 10px; }
+/* The toolbar's buttons (All hitters · Filters · Stats · Splits & dates · Table) in the header buttons' format: navy,
+   white text, a white outline. The open panel's button flips to white on navy so it still shows which one is open; one
+   with a filter in force (.on) is a lighter navy */
+.tbtns .tbtn, :root[data-view="mobile"] .tbtns .tbtn { background: var(--rule); color: #fff; border: 2px solid #fff; border-radius: 0; }
+.tbtns .tbtn:hover { background: color-mix(in srgb, var(--rule) 85%, #fff); color: #fff; }
+.tbtns .tbtn.on { background: color-mix(in srgb, var(--rule) 72%, var(--accent-2)); color: #fff; }
+.tbtns .tbtn.open, .tbtns .tbtn.open:hover { background: #fff; color: var(--rule); border-color: var(--rule); }
+.tbtns .tbtn svg, .tbtns .tbtn .chev { color: inherit; stroke: currentColor; }
+:root[data-view="mobile"] .tbtns .tbtn.on { background: color-mix(in srgb, var(--rule) 72%, var(--accent-2)); color: #fff; }
+:root[data-view="mobile"] .tbtns .tbtn.open, :root[data-view="mobile"] .tbtns .tbtn.open:hover { background: #fff; color: var(--rule); border-color: var(--rule); }
