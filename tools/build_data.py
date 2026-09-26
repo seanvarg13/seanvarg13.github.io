@@ -834,6 +834,51 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
     return pack(h, HITTER_DAY), pack(q, PITCHER_DAY)
 
 
+# a pitcher's arsenal day by day, so the Stuff tab's table follows the card's dates and splits: one row per
+# game day x batter hand x venue x pitch type (fields = meta.arsDayFields), in hist/ars-<key>.js — its own file, loaded
+# only when the Stuff tab is open with a window or split (it's ~8 MB a season; days.js is big enough). Sums, so
+# any set of rows adds up: graded pitches, the model's whiff / grounder / popup chances, velocity, break and spin
+# (spin over spn pitches that had it), swings, whiffs, balls in play, grounders and popups that actually happened.
+ARS_DAY = ["day", "hand", "home", "gs", "pt", "n", "w", "g", "p", "velo", "ivb", "hb", "spin", "spn", "sw", "wh", "bip", "gb", "pu"]
+
+
+def write_arsenal_days(key: str, rows: dict, out_dir: Path | None = None) -> None:
+    if not rows:
+        return
+    out = (out_dir or HERE / "hist") / f"ars-{key.split('-', 1)[1]}.js"
+    out.parent.mkdir(exist_ok=True)
+    out.write_text(f'window.DRAFT_ARS = window.DRAFT_ARS || {{}};\nwindow.DRAFT_ARS["{key}"] = '
+                   + json.dumps({f"P{k}": v for k, v in rows.items()}, separators=(",", ":")) + ";\n")
+
+
+def arsenal_daily(d: pd.DataFrame, days: dict) -> dict:
+    if "st_n" not in d.columns or not d["st_n"].any():
+        return {}
+    first = d.sort_values("at_bat_number").groupby(["game_pk", "inning_topbot"]).head(1)
+    starters = set(zip(first["pitcher"], first["game_date"]))
+    x = d[d["st_n"] > 0]
+    L = x["p_throws"].eq("L").to_numpy()
+    num = lambda c: pd.to_numeric(x[c], errors="coerce").astype(float)
+    spin = num("release_spin_rate")
+    y = pd.DataFrame({"pitcher": x["pitcher"], "game_date": x["game_date"], "bhand": x["bhand"], "phome": x["phome"], "pt": x["pitch_type"],
+                      "n": x["st_n"], "w": x["st_w"], "g": x["st_g"], "p": x["st_p"], "velo": num("release_speed"),
+                      "ivb": 12 * num("pfx_z"), "hb": 12 * num("pfx_x") * np.where(L, 1, -1), "spin": spin.fillna(0), "spn": spin.notna().astype(int),
+                      "sw": x["description"].isin(SWING).astype(int), "wh": x["description"].isin(WHIFF).astype(int),
+                      "bip": x["bb_type"].isin(STUFF_BB.keys()).astype(int), "gb": x["bb_type"].eq("ground_ball").astype(int),
+                      "pu": x["bb_type"].eq("popup").astype(int)})
+    q = y.groupby(["pitcher", "game_date", "bhand", "phome", "pt"]).sum(numeric_only=True)
+    out = {}
+    for (pid, date, hand, home, pt), r in q.iterrows():
+        day = str(date)[:10]
+        if day not in days:
+            continue
+        out.setdefault(int(pid), []).append([days[day], int(hand), int(home), 1 if (pid, date) in starters else 0, pt, int(r.n),
+                                             round(float(r.w), 2), round(float(r.g), 2), round(float(r.p), 2), round(float(r.velo), 1),
+                                             round(float(r.ivb), 1), round(float(r.hb), 1), int(round(r.spin)), int(r.spn),
+                                             int(r.sw), int(r.wh), int(r.bip), int(r.gb), int(r.pu)])
+    return out
+
+
 # ============================================================================================
 # 2. Savant batted-ball leaderboard (Air%, Pull Air%)
 # ============================================================================================
@@ -1223,7 +1268,7 @@ def main():
         "pitcherCardFold": PITCHER_CARD_FOLD,
         "pitcherSub": {k: [{"key": kk, "label": l, "hib": h, "dec": dc, "unit": u} for kk, l, h, dc, u in v] for k, v in PITCHER_SUB.items()},
         "consts": consts,
-        "arsenalFields": STUFF_ARSENAL,
+        "arsenalFields": STUFF_ARSENAL, "arsDayFields": ARS_DAY,
         "scoreNote": {
             "H": "xwOBA (Statcast expected wOBA from exit velocity and launch angle); the full season uses Savant's "
                  "published number, date windows and splits rebuild it from pitch-level data to within about .001",
@@ -1241,6 +1286,10 @@ def main():
     for k in pit_ids:
         games = people.get(k, {}).get("games") or []
         days_out[f"P{k}:er"] = [[days[dt], home, er] for dt, home, er in games if dt in days]
+    try:
+        write_arsenal_days(f"mlb-{SEASON}", {k: v for k, v in arsenal_daily(d, days).items() if k in pit_ids})
+    except Exception as e:                                  # noqa: BLE001 — the per-day arsenal is a nicety; the table then stays season-long
+        log(f"  !! arsenal by day skipped: {type(e).__name__}: {e}")
     (HERE / "days.js").write_text("window.DRAFT_DAYS = " + json.dumps(days_out, separators=(",", ":")) + ";\n")
     log(f"    data.js {(HERE / 'data.js').stat().st_size / 1e6:.1f} MB, days.js {(HERE / 'days.js').stat().st_size / 1e6:.1f} MB")
     log(f"OK  {len(hitters)} hitters, {len(pitchers)} pitchers -> data.js  ({time.time()-t0:.0f}s)")

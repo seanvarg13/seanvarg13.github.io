@@ -108,6 +108,10 @@ def build_season(year: int, kind: str = "reg"):
                     + json.dumps(ds, separators=(",", ":")) + ";\n")
     hid = {h["id"] for h in hitters}; pid = {q["id"] for q in pitchers}
     daily = {**{f"H{k}": v for k, v in daily_h.items() if k in hid}, **{f"P{k}": v for k, v in daily_p.items() if k in pid}}
+    try:                                                   # the Stuff tab's arsenal by day, its own file (build_data.arsenal_daily)
+        bd.write_arsenal_days(key, {k: v for k, v in bd.arsenal_daily(d, days).items() if k in pid}, OUT)
+    except Exception as e:                                 # noqa: BLE001
+        bd.log(f"  !! arsenal by day skipped: {type(e).__name__}: {e}")
     dpath = OUT / f"days-{year}{K['suffix']}.js"
     dpath.write_text(f'window.DRAFT_HIST_DAYS = window.DRAFT_HIST_DAYS || {{}};\nwindow.DRAFT_HIST_DAYS["{key}"] = '
                      + json.dumps(daily, separators=(",", ":")) + ";\n")
