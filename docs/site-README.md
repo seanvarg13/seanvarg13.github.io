@@ -345,14 +345,13 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
 - **The title** (`pageTitle()`), in the plate and pinned with it: "**2026 MLB Percentiles**", bold, in the name's ink.
   The year and the level are the season pickers for the whole page (`titleSelect()`): each is a word over a dotted
   rule.
-- **Mix wOBA** (`mixw`, the last bar under Batted-Ball Distribution; Sean, 26 Sep 2026) — the hitters' Mix ERA: what
-  a hitter's batted-ball distribution alone is worth. Every typed ball in play takes the dataset's average wOBA for its
-  bucket — ground ball, popup, and line drives and fly balls each pulled / straightaway / the other way (`PULL_LINE`),
-  a ball with no direction its type's average — and walks and strikeouts are held at the league's rates:
-  `w + f · (his average bucket value − the league's)`, with `consts.mix = {w: league wOBA, f: typed BIP per wOBA PA,
-  lg: league value per ball, v: the buckets}` from `pitch_flags()`. Day rows carry `mixsum` / `mixn`, so windows and
-  splits re-derive it; a season built before 26 Sep 2026 has no bar. About .315 is average; this season a pulled fly
-  ball is worth ~.85, one to center ~.29, one the other way ~.21.
+- **Mix wOBA** (`mixw`, the last bar under Batted-Ball Distribution; Sean, 26 Sep 2026) — what a hitter's batted-ball
+  distribution alone is worth, **per ball in play**. Every typed ball in play (bunts out) takes the dataset's average
+  wOBA for its bucket — ground ball, popup, and line drives and fly balls each pulled / straightaway / the other way
+  (`PULL_LINE`), a ball with no direction its type's average — and Mix wOBA is the average over his. Walks and strikeouts
+  don't enter it (Sean). `consts.mix = {lg: the league's average ball, v: the buckets}` from `pitch_flags()`; day rows
+  carry `mixsum` / `mixn`, so windows and splits re-derive it. About .365 is average; this season a pulled fly ball is
+  worth ~.85, one to center ~.28, one the other way ~.22.
 - **Percentile bars, two looks** (Appearance ▸ Percentile bars, `state.bars`, per device): **Savant charts** (the
   default, below) or **Classic meters**, the older look — `meterRow()` rows with a pale rounded track, a big white-ringed
   bubble, the value bold with its unit, dashed rules between rows and the pool under the sections (`.pctclassic`).
@@ -401,9 +400,9 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
     pulled line drives, line drives oppo / center, fly balls center, ground balls, fly balls oppo, popups (and air balls
     with no direction when he has any) — each with a percentile bar for his share of it among the season's qualifiers
     (a bucket worth more than the league's average ball counts higher-is-better, the rest lower-is-better), the share,
-    and the league's wOBA on it on a heat chip from the cheapest (blue) to the dearest (red). Below a rule, the
-    **weighted league wOBA**: those values weighted by his shares, his average ball in play by where and how he hits
-    it, with its percentile bar and a chip coloured by that percentile. Counts come from `ctx.mix` (a season) or the
+    and the league's wOBA on it on a heat chip from the cheapest (blue) to the dearest (red). Below a rule,
+    **Mix wOBA**: those values weighted by his shares, his average ball in play by where and how he hits it, with its
+    percentile bar and a chip coloured by that percentile. Counts come from `ctx.mix` (a season) or the
     `mx*` day fields (a window or split), in `build_data.MIX_COLS` order.
   - **Fantasy** (`renderFantasyTab`): his points under a saved scoring preset — the picker lists the fantasy page's
     presets and shares its choice (`fstore.current`), with a link to edit them. Tiles for the season total and points
