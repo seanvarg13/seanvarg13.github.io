@@ -7,6 +7,7 @@ outfield assists, double plays).
 
     python3 build_fantasy.py                 # the current season -> fantasy.js
     python3 build_fantasy.py 2025 2024       # past seasons -> hist/fantasy-YYYY.js (players from hist/mlb-YYYY.js)
+    python3 build_fantasy.py lines           # every past season's lines, 2015 on -> hist/fantasy-lines.js (the card's by-season table)
 
 Output: window.DRAFT_FANTASY["YYYY"] = {season, through, hk, pk, gk, hgk, hitters: {id: [...hk]}, pitchers: {id: {s: [...pk],
 g: [[...gk], ...]}}, hg: {id: [[...hgk], ...]}, xh: {id: [xba, xslg, xwoba]}, xp: {id: [xba, xslg, xwoba, xera]}}. Game-log rows
@@ -199,18 +200,9 @@ def savant_expected(kind, season):
     return out
 
 
-def build(season, current):
-    if current:
-        data = load_js(HERE / "data.js", "window.DRAFT_DATA = ")
-        players, through = data["players"], data["meta"]["through"]
-    else:
-        ds = load_js(HERE / "hist" / f"mlb-{season}.js", f'window.DRAFT_HIST["mlb-{season}"] = ')
-        players, through = ds["players"], f"{season} season"
-    hit_ids = sorted({p["id"] for p in players if p["type"] == "H"})
-    pit_ids = sorted({p["id"] for p in players if p["type"] == "P"})
+def season_lines(season, hit_ids, pit_ids):
+    """Every player's official season line: hitters {id: [...HK]} (the bonus columns zero), pitchers {id: {s: [...PK], g: []}}."""
     ids = sorted(set(hit_ids) | set(pit_ids))
-    log(f"{season}: {len(hit_ids)} hitters, {len(pit_ids)} pitchers")
-
     hitters, pitchers = {}, {}
     for i in range(0, len(ids), 80):
         chunk = ids[i:i + 80]
@@ -238,6 +230,23 @@ def build(season, current):
                 elif grp == "pitching" and p["id"] in pit_ids:
                     pitchers[str(p["id"])] = {"s": [ival(st, k) for k in P_API], "g": []}
         log(f"  season stats {min(i + 80, len(ids))}/{len(ids)}")
+
+    return hitters, pitchers
+
+
+def build(season, current):
+    if current:
+        data = load_js(HERE / "data.js", "window.DRAFT_DATA = ")
+        players, through = data["players"], data["meta"]["through"]
+    else:
+        ds = load_js(HERE / "hist" / f"mlb-{season}.js", f'window.DRAFT_HIST["mlb-{season}"] = ')
+        players, through = ds["players"], f"{season} season"
+    hit_ids = sorted({p["id"] for p in players if p["type"] == "H"})
+    pit_ids = sorted({p["id"] for p in players if p["type"] == "P"})
+    ids = sorted(set(hit_ids) | set(pit_ids))
+    log(f"{season}: {len(hit_ids)} hitters, {len(pit_ids)} pitchers")
+
+    hitters, pitchers = season_lines(season, hit_ids, pit_ids)
 
     for i in range(0, len(pit_ids), 60):
         chunk = pit_ids[i:i + 60]
@@ -293,8 +302,53 @@ def build(season, current):
     log(f"OK {season}: {len(hitters)} hitters, {len(pitchers)} pitchers -> {path.relative_to(HERE)} ({path.stat().st_size / 1e6:.1f} MB)")
 
 
+def lines(years):
+    """hist/fantasy-lines.js: every past season's official lines, small enough for a player's Fantasy tab to show his
+    points year by year under any scoring (no game logs, so no per-start points; cycles and game-winning RBI are left
+    at zero, grand slams are in). Pitchers carry QS, NH, PG, RW and RL from their game logs after the PK fields."""
+    out = {"hk": HK, "pk": PK + ["QS", "NH", "PG", "RW", "RL"], "years": {}}
+    for season in years:
+        ds = load_js(HERE / "hist" / f"mlb-{season}.js", f'window.DRAFT_HIST["mlb-{season}"] = ')
+        hit_ids = sorted({p["id"] for p in ds["players"] if p["type"] == "H"})
+        pit_ids = sorted({p["id"] for p in ds["players"] if p["type"] == "P"})
+        log(f"{season}: {len(hit_ids)} hitters, {len(pit_ids)} pitchers")
+        hitters, pitchers = season_lines(season, hit_ids, pit_ids)
+        try:
+            for pid, n in grand_slams(hit_ids, season).items():
+                if str(pid) in hitters:
+                    hitters[str(pid)][HK.index("GSHR")] = n
+        except (Exception, SystemExit) as e:          # noqa: BLE001
+            log(f"  !! GSHR skipped: {e}")
+        extra = {}
+        for i in range(0, len(pit_ids), 60):
+            url = ("https://statsapi.mlb.com/api/v1/people?personIds=" + ",".join(map(str, pit_ids[i:i + 60])) +
+                   f"&hydrate=stats(group=[pitching],type=[gameLog],season={season})")
+            for p in get(url).get("people", []):
+                e = [0, 0, 0, 0, 0]
+                for st in p.get("stats", []):
+                    for sp in st["splits"]:
+                        if sp.get("gameType", "R") != "R":
+                            continue
+                        g = sp["stat"]; gs = ival(g, "gamesStarted"); outs = ival(g, "outs"); er = ival(g, "earnedRuns")
+                        nh = ival(g, "completeGames") and not ival(g, "hits")
+                        e[0] += int(bool(gs and outs >= 18 and er <= 3)); e[1] += int(bool(nh))
+                        e[2] += int(bool(nh and not ival(g, "baseOnBalls") and not ival(g, "hitBatsmen")))
+                        e[3] += int(bool(not gs and ival(g, "wins"))); e[4] += int(bool(not gs and ival(g, "losses")))
+                extra[str(p["id"])] = e
+        trimz = lambda r: trim(list(r))
+        out["years"][str(season)] = {"hitters": {k: trimz(v) for k, v in hitters.items()},
+                                     "pitchers": {k: trimz(v["s"] + extra.get(k, [0] * 5)) for k, v in pitchers.items()}}
+        log(f"  {season}: {len(hitters)} hitters, {len(pitchers)} pitchers")
+    path = HERE / "hist" / "fantasy-lines.js"
+    path.write_text("window.DRAFT_FANTASY_LINES = " + json.dumps(out, separators=(",", ":")) + ";\n")
+    log(f"OK lines {years[0]}-{years[-1]} -> {path.relative_to(HERE)} ({path.stat().st_size / 1e6:.2f} MB)")
+
+
 if __name__ == "__main__":
     cur = load_js(HERE / "data.js", "window.DRAFT_DATA = ")["meta"]["season"]
+    if sys.argv[1:2] == ["lines"]:
+        lines([int(a) for a in sys.argv[2:]] or list(range(2015, cur)))
+        sys.exit(0)
     years = [int(a) for a in sys.argv[1:]] or [cur]
     for y in years:
         build(y, y == cur)
