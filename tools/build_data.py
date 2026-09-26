@@ -79,6 +79,7 @@ COLS = ["game_date", "game_type", "game_pk", "batter", "pitcher", "stand", "p_th
         "inning", "inning_topbot", "at_bat_number", "outs_when_up", "woba_value", "woba_denom",
         "estimated_woba_using_speedangle", "estimated_ba_using_speedangle", "estimated_slg_using_speedangle",
         "bat_speed", "pitch_type", "release_speed", "release_extension", "des"]
+MIX = None          # the batted-ball mix's league values for the dataset being built (set by pitch_flags)
 PULL_LINE = 16      # spray angle (deg toward the pull side) beyond which a ball is "pulled"; 16 matches Savant's Pull Air% best
 AIR_TYPES = {"fly_ball", "line_drive", "popup"}
 OUTS = {"strikeout": 1, "strikeout_double_play": 2, "field_out": 1, "force_out": 1, "grounded_into_double_play": 2,
@@ -91,7 +92,7 @@ NON_AB = {"walk", "intent_walk", "hit_by_pitch", "sac_fly", "sac_fly_double_play
 # row's exit velocities (bbe and avg EV derive from it)
 HITTER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", "osw", "zcon", "ocon", "brl",
               "air", "pullair", "pa", "ab", "bb", "k", "wnum", "wden", "xnum", "xden", "hh", "ss", "strk", "bsn", "bssum",
-              "bbe", "evsum", "dnum", "pulln", "ld", "gbh", "puh", "evs", "bbt", "bip", "evn", "oppn", "h", "tb", "xbsum", "xssum", "dbsum", "dssum"]   # dnum = directional-xwOBA numerator; evs = that row's exit velocities (no bunts); trailing fields (older files lack them): bbt = typed balls in play, bip = all balls in play, evn = EV-eligible (tracked, no bunt)
+              "bbe", "evsum", "dnum", "pulln", "ld", "gbh", "puh", "evs", "bbt", "bip", "evn", "oppn", "h", "tb", "xbsum", "xssum", "dbsum", "dssum", "mixsum", "mixn"]   # mixsum / mixn = batted-ball mix value (Mix wOBA); dnum = directional-xwOBA numerator; evs = that row's exit velocities (no bunts); trailing fields (older files lack them): bbt = typed balls in play, bip = all balls in play, evn = EV-eligible (tracked, no bunt)
 # The hitter card, grouped. key, label, higher-is-better, decimals, unit. Keys not in HITTER_METRICS are card-only.
 HITTER_CARD = [
     ("Outcomes",             [("woba", "wOBA", True, 3, ""), ("xws", "xwOBA", True, 3, ""), ("xwd", "dxwOBA", True, 3, "")]),
@@ -278,6 +279,33 @@ def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
     d["gbh"] = bbt & d["bb_type"].eq("ground_ball")
     d["puh"] = bbt & d["bb_type"].eq("popup")
     d["fbh"] = bbt & d["bb_type"].eq("fly_ball")
+    # Mix wOBA (Sean, 26 Sep 2026): each typed ball in play worth the dataset's average wOBA for its bucket — ground
+    # ball, popup, and line drives and fly balls each split pulled / straightaway / the other way — so a hitter's mix is
+    # priced by what the league does on it, not by how hard he hit it. Direction matters most in the air, which is the
+    # whole point: a pulled fly ball is worth far more than one the other way. No direction on a ball → its type's value.
+    dirn = np.where(pull_angle > PULL_LINE, "p", np.where(pull_angle < -PULL_LINE, "o", np.where(np.isnan(pull_angle), "x", "c")))
+    bt = d["bb_type"].fillna("")
+    kind = np.select([bt.eq("ground_ball"), bt.eq("popup"), bt.eq("line_drive"), bt.eq("fly_ball")], ["gb", "pu", "ld", "fb"], "")
+    d["mixb"] = np.where(np.isin(kind, ["ld", "fb"]), np.char.add(np.char.add(kind.astype(str), "_"), dirn.astype(str)), kind)
+    ev_ = d["events"].fillna("")
+    fin = d["bbt"] & ev_.ne("") & ~ev_.isin(EXCLUDE) & d["mixb"].ne("")      # the PA-ending ball in play, sacrifice bunts out
+    wv = pd.to_numeric(d["woba_value"], errors="coerce").fillna(0.0).where(~ev_.isin(ZERO_NUM), 0.0)
+    val = wv[fin].groupby(d["mixb"][fin]).mean()
+    for t in ("ld", "fb"):                                        # a ball with no direction: its type's average
+        typ = fin & pd.Series(kind == t, index=d.index)
+        if typ.any():
+            val[f"{t}_x"] = float(wv[typ].mean())
+    per = float(wv[fin].mean()) if fin.any() else 0.0
+    pa_ = ev_.ne("") & ~ev_.isin(EXCLUDE)
+    wden_ = pd.to_numeric(d["woba_denom"], errors="coerce").fillna(0.0).where(~ev_.isin(ZERO_NUM), 1.0).where(pa_, 0.0)
+    wnum_ = pd.to_numeric(d["woba_value"], errors="coerce").fillna(0.0).where(~ev_.isin(ZERO_NUM), 0.0).where(pa_, 0.0)
+    den = float(wden_.sum())
+    global MIX
+    MIX = {"lg": round(per, 4), "f": round(float(fin.sum()) / den, 4) if den else 0.0,
+           "w": round(float(wnum_.sum()) / den, 4) if den else 0.0,
+           "v": {k: round(float(v), 4) for k, v in val.items()}}
+    d["mixn"] = fin.astype(int)
+    d["mixv"] = d["mixb"].map(MIX["v"]).where(fin, 0.0).fillna(0.0)
     bunt = d["des"].astype(str).str.contains("bunt", case=False) | d["events"].astype(str).str.contains("bunt")
     d["bunt"] = bunt
     d["evb"] = bbe & ~bunt                                  # EV-eligible: tracked and not a bunt (Savant's Avg EV skips bunts)
@@ -349,6 +377,7 @@ def hitter_metrics(d: pd.DataFrame) -> pd.DataFrame:
     f["maxEV"] = bb.max()
     f["HH"] = g["hardhit"].sum(); f["SS"] = g["sweetspot"].sum(); f["Strikes"] = g["strike"].sum()
     f["BSn"] = g["comp"].sum(); f["BSsum"] = g["bs"].sum()
+    f["MixSum"] = g["mixv"].sum() if "mixv" in d.columns else 0.0; f["MixN"] = g["mixn"].sum() if "mixn" in d.columns else 0
     f["Pulln"] = g["pull"].sum(); f["LDn"] = g["ld"].sum(); f["GBh"] = g["gbh"].sum(); f["PUh"] = g["puh"].sum(); f["Oppn"] = g["oppo"].sum()
     r = pd.DataFrame(index=f.index)
     r["avg_EV"] = f.avg_EV
@@ -375,6 +404,7 @@ def hitter_metrics(d: pd.DataFrame) -> pd.DataFrame:
     r["ZContact_pct"] = 100 * f.ZCon / f.ZSw.replace(0, np.nan)
     r["OContact_pct"] = 100 * f.OCon / f.OSw.replace(0, np.nan)
     r["Whiff_pct"] = 100 * f.Whiffs / f.Swings.replace(0, np.nan)
+    r["MixSum"], r["MixN"] = f.MixSum, f.MixN
     r["BBE"] = f.BIP                                                 # batted-ball events as Savant counts them: every ball in play
     r["BBT"] = f.BBT
     r["bats"] = g["stand"].agg(lambda s: "S" if s.nunique() > 1 else s.iloc[0])
@@ -562,7 +592,9 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
               air=("air", "sum"), pullair=("pullair", "sum"), hh=("hardhit", "sum"), ss=("sweetspot", "sum"),
               strk=("strike", "sum"), bsn=("comp", "sum"), bssum=("bs", "sum"), bbe=("bbe", "sum"), evsum=("ev", "sum"),
               pulln=("pull", "sum"), ld=("ld", "sum"), gbh=("gbh", "sum"), puh=("puh", "sum"), bbt=("bbt", "sum"),
-              bip=("bip", "sum"), evn=("evb", "sum"), oppn=("oppo", "sum"))
+              bip=("bip", "sum"), evn=("evb", "sum"), oppn=("oppo", "sum"),
+              mixsum=("mixv", "sum"), mixn=("mixn", "sum"))
+    h["mixsum"] = h["mixsum"].round(4)
     h["evs"] = d[d["evb"]].groupby(HK)["launch_speed"].agg(lambda x: [round(float(v), 1) for v in x])
     hp = p.groupby(HK).agg(pa=("pa", "sum"), ab=("ab", "sum"), bb=("is_bb", "sum"),
                            k=("is_k", "sum"), wnum=("wnum", "sum"), wden=("wden", "sum"),
@@ -791,6 +823,9 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
         m["xwoba_sav"] = round(float(xw[pid]), 3) if pid in xw.index and pd.notna(xw[pid]) else None
         m["xwoba"] = m["xwoba_sav"] if m["xwoba_sav"] is not None else (round(xn / xd, 3) if xd else None)   # EV + launch angle
         m["woba"] = None if pd.isna(r.wOBA) else round(float(r.wOBA), 3)
+        # Mix wOBA: his batted-ball mix at the league's values, walks and strikeouts held at the league's rates
+        mn = float(r.get("MixN", 0) or 0)
+        m["mixw"] = round(MIX["w"] + MIX["f"] * (float(r.MixSum) / mn - MIX["lg"]), 3) if MIX and mn else None
         ab_ = float(r.AB) if pd.notna(r.AB) else 0.0
         m["ba"] = None if pd.isna(r.BA) else round(float(r.BA), 3)
         m["slg"] = None if pd.isna(r.SLG) else round(float(r.SLG), 3)
@@ -842,6 +877,8 @@ def league_constants(pit: pd.DataFrame, people: dict) -> dict:
                     "pa9": round(float(9 * pit.BF.sum() / (pit.outs.sum() / 3)), 2),
                     "wbb": round(float(pit.wUBB.sum() / max(1, pit.nUBB.sum())), 3),      # wOBA value of a walk / a hit by pitch
                     "whbp": round(float(pit.wHBP.sum() / max(1, pit.HBP.sum())), 3)})
+    if MIX:
+        out["mix"] = MIX                                          # Mix wOBA's league values (the page re-derives it in a window)
     return out
 
 

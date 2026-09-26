@@ -345,6 +345,14 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
 - **The title** (`pageTitle()`), in the plate and pinned with it: "**2026 MLB Percentiles**", bold, in the name's ink.
   The year and the level are the season pickers for the whole page (`titleSelect()`): each is a word over a dotted
   rule.
+- **Mix wOBA** (`mixw`, the first bar under Batted-Ball Distribution; Sean, 26 Sep 2026) — the hitters' Mix ERA: what
+  a hitter's batted-ball distribution alone is worth. Every typed ball in play takes the dataset's average wOBA for its
+  bucket — ground ball, popup, and line drives and fly balls each pulled / straightaway / the other way (`PULL_LINE`),
+  a ball with no direction its type's average — and walks and strikeouts are held at the league's rates:
+  `w + f · (his average bucket value − the league's)`, with `consts.mix = {w: league wOBA, f: typed BIP per wOBA PA,
+  lg: league value per ball, v: the buckets}` from `pitch_flags()`. Day rows carry `mixsum` / `mixn`, so windows and
+  splits re-derive it; a season built before 26 Sep 2026 has no bar. About .315 is average; this season a pulled fly
+  ball is worth ~.85, one to center ~.29, one the other way ~.21.
 - **Percentile bars, two looks** (Appearance ▸ Percentile bars, `state.bars`, per device): **Savant charts** (the
   default, below) or **Classic meters**, the older look — `meterRow()` rows with a pale rounded track, a big white-ringed
   bubble, the value bold with its unit, dashed rules between rows and the pool under the sections (`.pctclassic`).

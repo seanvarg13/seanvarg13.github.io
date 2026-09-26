@@ -13,6 +13,9 @@ on:
   schedule:
     - cron: "45 8 * * *"
     - cron: "45 9 * * *"
+    - cron: "17 10 * * *"
+    - cron: "47 11 * * *"
+    - cron: "17 13 * * *"
   workflow_dispatch:
     inputs:
       steps:
@@ -51,11 +54,26 @@ jobs:
         run: |
           go=true
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            zone=$(TZ=America/New_York date +%Z)          # EDT or EST
-            want="45 8 * * *"; [ "$zone" = "EST" ] && want="45 9 * * *"
-            [ "${{ github.event.schedule }}" = "$want" ] || { echo "not this cron in $zone"; go=false; }
-            if [ "$go" = true ] && ! python3 -c "import json,sys; sys.exit(0 if json.load(open('tools/cloud.json')).get('daily') else 1)"; then
+            # GitHub starts scheduled runs late when it's busy — hours late, some mornings (25 Sep 2026: the 4:45 run
+            # began at 10:10). So there are backup times above, and every scheduled run just asks: is it past 4:45 in
+            # New York, and is today's update not live yet? The first one that finds it missing does it; the rest stand down.
+            if ! python3 -c "import json,sys; sys.exit(0 if json.load(open('tools/cloud.json')).get('daily') else 1)"; then
               echo "tools/cloud.json has the cloud off — the Mac publishes"; go=false
+            else
+              go=$(python3 - <<'PY'
+          import datetime as dt, json, zoneinfo
+          ny = dt.datetime.now(zoneinfo.ZoneInfo("America/New_York"))
+          raw = open("data.js").read(); m = json.loads(raw[raw.index("= {") + 2:].rstrip().rstrip(";"))["meta"]
+          yday = (ny.date() - dt.timedelta(days=1)).isoformat()
+          built = m.get("built", "")                       # the build's UTC time, "YYYY-MM-DD HH:MM"
+          now_utc = dt.datetime.now(dt.timezone.utc)
+          early = (ny.hour, ny.minute) < (4, 40)
+          done = m.get("through", "") >= yday or (built[:10] == now_utc.date().isoformat() and built[11:13] >= "13")
+          # (an off day never reaches yesterday; a build after 13:00 UTC today counts as done so the backups stop)
+          print("false" if early or done else "true")
+          PY
+              )
+              echo "New York $(TZ=America/New_York date '+%H:%M') · data through $(grep -o '"through": *"[^"]*"' data.js | head -1) → go=$go"
             fi
           fi
           echo "go=$go" >> "$GITHUB_OUTPUT"
