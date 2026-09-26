@@ -95,7 +95,7 @@ NON_AB = {"walk", "intent_walk", "hit_by_pitch", "sac_fly", "sac_fly_double_play
 HITTER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", "osw", "zcon", "ocon", "brl",
               "air", "pullair", "pa", "ab", "bb", "k", "wnum", "wden", "xnum", "xden", "hh", "ss", "strk", "bsn", "bssum",
               "bbe", "evsum", "dnum", "pulln", "ld", "gbh", "puh", "evs", "bbt", "bip", "evn", "oppn", "h", "tb", "xbsum", "xssum", "dbsum", "dssum", "mixsum", "mixn",
-              "mxgb", "mxpu", "mxldp", "mxldc", "mxldo", "mxfbp", "mxfbc", "mxfbo", "mxx"]   # mixsum / mixn = batted-ball mix value (Mix wOBA), mx* = its balls by bucket (mxx: air, no direction); dnum = directional-xwOBA numerator; evs = that row's exit velocities (no bunts); trailing fields (older files lack them): bbt = typed balls in play, bip = all balls in play, evn = EV-eligible (tracked, no bunt)
+              "mxgb", "mxpu", "mxldp", "mxldc", "mxldo", "mxfbp", "mxfbc", "mxfbo", "mxx", "hr"]   # hr: home runs (the fantasy page splits his official line by hand with these); mixsum / mixn = batted-ball mix value (Mix wOBA), mx* = its balls by bucket (mxx: air, no direction); dnum = directional-xwOBA numerator; evs = that row's exit velocities (no bunts); trailing fields (older files lack them): bbt = typed balls in play, bip = all balls in play, evn = EV-eligible (tracked, no bunt)
 # The hitter card, grouped. key, label, higher-is-better, decimals, unit. Keys not in HITTER_METRICS are card-only.
 HITTER_CARD = [
     ("Outcomes",             [("woba", "wOBA", True, 3, ""), ("xws", "xwOBA", True, 3, ""), ("xwd", "dxwOBA", True, 3, "")]),
@@ -118,7 +118,7 @@ HITTER_SUB = {"woba": [("ba", "BA", True, 3, ""), ("slg", "SLG", True, 3, "")],
 PITCHER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "strk", "bip", "gb", "bf", "k", "bb", "outs", "wnum", "wden", "gs",
                "cs", "zpit", "opit", "zsw", "osw", "zcon", "hr", "hbp", "fbt", "pu", "bbe", "brl", "hh", "evsum",
                "fbn", "fbv", "extn", "exts",
-               "ld", "wbip", "wgb", "wld", "wfb", "wpu", "evn"]   # luck-neutral ERA inputs: line drives, wOBA numerator on balls in play and by type; evn = EV-eligible balls (no bunts)
+               "ld", "wbip", "wgb", "wld", "wfb", "wpu", "evn", "h"]   # h: hits allowed (fantasy splits by hand); luck-neutral ERA inputs: line drives, wOBA numerator on balls in play and by type; evn = EV-eligible balls (no bunts)
 # per-game earned runs (from MLB game logs) ride along as "P<id>:er" rows: [day, home, er]
 FASTBALLS = {"FF", "SI", "FT"}
 PITCHER_CARD = [
@@ -617,7 +617,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                            k=("is_k", "sum"), wnum=("wnum", "sum"), wden=("wden", "sum"),
                            xnum=("xnum", "sum"), xden=("xden", "sum"), dnum=("dnum", "sum"),
                            h=("is_hit", "sum"), tb=("tb", "sum"), xbsum=("xbsum", "sum"), xssum=("xssum", "sum"),
-                           dbsum=("dbsum", "sum"), dssum=("dssum", "sum"))
+                           dbsum=("dbsum", "sum"), dssum=("dssum", "sum"), hr=("is_hr", "sum"))
     h = h.join(hp, how="left")
     h["evs"] = h["evs"].apply(lambda v: v if isinstance(v, list) else [])
     h = h.fillna(0)
@@ -633,7 +633,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
     starters = set(zip(first["pitcher"], first["game_date"]))
     qp = p.groupby(PK).agg(bf=("pa", "size"), k=("is_k", "sum"), bb=("is_bb", "sum"),
                            outs=("outs", "sum"), wnum=("wnum", "sum"), wden=("wden", "sum"),
-                           hr=("is_hr", "sum"), hbp=("is_hbp", "sum"),
+                           hr=("is_hr", "sum"), hbp=("is_hbp", "sum"), h=("is_hit", "sum"),
                            ld=("t_ld", "sum"), wbip=("w_bip", "sum"), wgb=("w_gb", "sum"), wld=("w_ld", "sum"), wfb=("w_fb", "sum"), wpu=("w_pu", "sum"))
     q = q.join(qp, how="left").fillna(0)
     q["gs"] = [1 if (key[0], key[1]) in starters else 0 for key in q.index]

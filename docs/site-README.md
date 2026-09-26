@@ -3,8 +3,8 @@
 Fantasy baseball draft rankings built on 2026 Statcast skill percentiles.
 
 **Home** — `index.html#home` (the default route and the wordmark's link): every page on the site as a card,
-in three groups — Draft day, Look things up, Set up. The header carries **Home**, a **Draft & Fantasy**
-menu (Draft Mode, Rankings, Draft board, Eligibility, Fantasy points), a **Leaderboards** menu
+in three groups — Draft day, Look things up, Set up. The header carries **Home**, a **Fantasy**
+menu (Draft Mode, Rankings, Draft board, Eligibility, Fantasy leaderboard, Fantasy trending, Scoring settings), a **Leaderboards** menu
 (Leaderboard, Trending Players), **Compare** and **Appearance**; `NAV_GROUPS` in `app.js` holds the two
 menus and `HOME_SECS` the home page's cards.
 
@@ -319,7 +319,7 @@ dropdown; everything else (Team, Rankings lists, the card's comparison) still us
 keeps it honest: crossing between hitters and pitchers replaces the selection, ticking a real position drops the
 "all" tab, unticking the last one falls back to "all", and SP + RP together collapses to ALLP.
 
-**The header's own dropdowns** (Draft & Fantasy, Leaderboards) stay where they are in the DOM — their styling is
+**The header's own dropdowns** (Fantasy, Leaderboards) stay where they are in the DOM — their styling is
 keyed to that nesting — and `body.navopen header.top { z-index: 300 }` lifts the whole header over the page while one
 is open, which is what keeps them from painting behind it on a phone.
 
@@ -433,7 +433,7 @@ can clip it or cover it; it follows its opener if the page scrolls, and a pick, 
 it. The player page's pickers are built with `ddList()`; the filter pills (`pillSelect()`) open it directly; and any
 native `<select>` (Sort by, Rank vs, Draft from, the rankings list, Per page, Add position, the Star list, Scoring) is
 kept in the page, hidden, as the source of truth behind a box (`ddSelect()`), so its value and "change" listeners work
-as before. The header's **Draft & Fantasy** and **Leaderboards** menus use the same look and are moved out of the header
+as before. The header's **Fantasy** and **Leaderboards** menus use the same look and are moved out of the header
 onto the page, because on a phone Safari clipped them to the nav row's sideways scroll.
 
 **The site is regular season only.** Spring-training and postseason datasets can still be built (`build_history.py
@@ -485,16 +485,43 @@ with the list (Save / open / export). On Rankings and the Draft board, starred p
 
 ## Fantasy points
 
-`#fantasy` — ESPN-style points scoring. **Scoring settings** holds presets (ESPN standard built in; make your own from
-any of ESPN's categories, plus league size). **Points** ranks every hitter / pitcher by the preset with the official
-season line (G, PA, AB, H, R, HR, RBI, SB, BB, K, AVG/OBP/SLG/OPS; pitchers G, GS, IP, W, L, SV, HD, K, ERA, WHIP, K/9,
-QS), by position / role, for 2026 and the two seasons before. **Per opportunity**: points per game, per PA, per AB,
-per 600 PA; pitchers per IP, per start, per relief appearance, QS%. **What if**: pitchers with K and BB at their
-underlying rates (uK% fitted on Whiff% and Strike%, uBB% from Strike% percentile), ER at luck-neutral ERA, hits at Savant xBA — and the
-rank at the role that would give; hitters with H / TB at the directional xBA / xSLG, points per game at a starter's PA/G and a
-full starter's PA at their position (top teams × lineup slots by PA), and the rank at the position that would give.
-Data: `build_fantasy.py` (part of Update / the daily job) -> `fantasy.js`; `python3 build_fantasy.py 2025 2024` for
-past years -> `hist/fantasy-YYYY.js`.
+`#fantasy` — ESPN-style points scoring, the header's **Fantasy** menu (renamed from "Draft & Fantasy", 26 Sep 2026; it
+still holds Draft Mode, Rankings, Draft board and Eligibility). **Scoring settings** holds presets (ESPN standard built
+in; make your own from any of ESPN's categories, plus league size). Every view covers 2026 and the two seasons before,
+by position / role, with the scoring picked at the top.
+
+- **Leaderboard** (`#fantasy/leaders`): total points, per game (per appearance for pitchers), per AB and per PA
+  (hitters), per start, per relief appearance and per IP (pitchers), and **per week** — points over the Monday-to-Sunday
+  weeks he played in, so a pitcher who works more often gets credit that per start misses. Filters: **From / To**
+  dates, **vs LHP / RHP** (vs LHB / RHB), **Home / Away**, and **Actual / Expected / Both** (hitters) or **Actual /
+  Luck-neutral / Underlying / All three** (pitchers). The Min PA / IP box is a full-season number, like the site's own
+  leaderboard: a range or split changes the numbers, not who is listed.
+- **Trending** (`#fantasy/trending`): the same columns over each hitter's last N PA or last N days (pitchers: last N IP
+  or last N days), plus his season points per game and **Trend** (the window's per game minus the season's). Min here
+  is playing time inside the window.
+- **What if**: unchanged — xPts / uPts, points at a starter's PA per game at the position, and the rank that would give.
+
+How the numbers are made (`fLeadRows` in `app.js`):
+- Everything is summed from the **official game logs** in `fantasy.js` (hitters' and pitchers', with home / away on
+  every game), so a date range is the real box-score line. Grand slams have no game log and are pro-rated by homers.
+- **Handedness** isn't in a box score (a game has both), so each game's line is shared out by that day's Statcast plate
+  appearances against each side: hits by hits, total bases by total bases, homers by homers, runs and RBI by wOBA
+  production, steals by times on base, everything else by PA (pitchers: batters faced; K / BB / HBP / HR / hits / outs
+  by their own). vs L plus vs R adds back to the whole. Per game in a hand split counts the games he faced that side.
+- **Expected hitter points (xPts)**: hits and total bases at his directional xBA / xSLG over the same at bats (extra-base
+  mix scaled to hit both); runs and RBI moved by his xwOBA ÷ wOBA (production drives both, and the model can't place
+  runners; clamped to 0.5–2×); walks, strikeouts and steals as they happened. Over a range or split the rates are his
+  Statcast rates over the same games.
+- **Pitchers, two ways.** Luck-neutral (**nPts**): K and BB as they happened, earned runs at his luck-neutral ERA, hits /
+  homers / total bases moved by what his balls in play were worth at league value for their type against what they
+  produced. Underlying (**uPts**): on top of that, K and BB at his uK% / uBB% over the same batters faced, earned runs at
+  his uERA, hits scaled to the balls in play those rates leave. Wins, saves, holds and quality starts stay as they
+  happened; per start spreads each category over his starts by the same ratios. In a range or split his uK% / uBB% /
+  uERA come from his rates there, placed in the full season's pool.
+
+Data: `build_fantasy.py` (part of the daily job) -> `fantasy.js`; `python3 build_fantasy.py 2025 2024` for past years
+-> `hist/fantasy-YYYY.js`. Game-log rows drop trailing zeros. `build_data.py`'s day rows carry `hr` (hitters) and `h`
+(pitchers) at the end for the hand split; older files fall back to extra-base hits / balls in play.
 
 ## Hosting (a real link, on your phone)
 
