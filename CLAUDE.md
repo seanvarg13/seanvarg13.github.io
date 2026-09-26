@@ -221,7 +221,8 @@ shifts, chained to MLB); re-run it by hand and paste the printed `MILB_X` when i
 
 **Mix wOBA** (`mixw`, hitters; built in `pitch_flags()` / `build_hitters`, re-derived from `mixsum` / `mixn` day
 fields in a window): the average over his balls in play (bunts out) of the dataset's wOBA for each ball's bucket (GB,
-LD and FB each pulled, straightaway or oppo, and PU). Per ball in play — walks and strikeouts don't enter it (Sean,
+PU, and LD / FB each pulled, straightaway or oppo — ground balls are one bucket on purpose: by direction they tracked
+handedness and speed, not the mix). Per ball in play — walks and strikeouts don't enter it (Sean,
 26 Sep 2026). Past seasons get it when rebuilt.
 
 **Mix ERA** (`mixERA`): the ERA his batted-ball distribution *alone* is worth — same league-value-per-type
