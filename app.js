@@ -1550,12 +1550,17 @@
     if (document.activeElement !== inp) inp.value = state.min[g];
     inp.step = isPitcherGroup(g) ? 5 : 10;
   }
+  const FROZEN_MODES = ["leaderboard", "trending", "rankings", "draft"];
   function renderColhead() {
     const g = groupFor(state.pos), ref = refFor(g);
     const ms = colsFor(g), trending = state.mode === "trending";
     const h = $("colhead"); h.innerHTML = ""; h.className = "colhead grid";
-    { const wrapEl = $("colwrap"), bs = $("bscroll"), board = $("board");   // the header sits above the scroll box and sticks to the screen
-      if (wrapEl.parentNode !== board) board.insertBefore(wrapEl, bs); }
+    { const wrapEl = $("colwrap"), bs = $("bscroll"), board = $("board");
+      // the list pages' card stands still and its rows' box scrolls both ways, so the header rides inside that box, stuck
+      // to its top — one scroller, nothing to keep in step (a header synced from scroll events trailed the rows on an
+      // iPhone, Sean 26 Sep 2026). Anywhere the page itself scrolls it sits above the box and sticks to the screen.
+      if (FROZEN_MODES.includes(state.mode)) { if (wrapEl.parentNode !== bs) bs.insertBefore(wrapEl, bs.firstChild); }
+      else if (wrapEl.parentNode !== board) board.insertBefore(wrapEl, bs); }
     h.style.setProperty("--n", ms.length); h.style.setProperty("--act", state.mode === "draft" ? "78px" : "0px"); h.style.setProperty("--colw", trending || ms.some((m) => m.showValue) ? "72px" : "56px");
     const editing = state.mode === "rankings" && state.editRanks, hasTiers = editing && (state.tiers[state.pos] || []).length;
     const mobile = document.documentElement.dataset.view === "mobile";
@@ -6276,7 +6281,7 @@
 
   // phone: the column header lives above the scroll box; keep it aligned with the rows sideways (either can be dragged)
   { let syncing = false;
-    const pair = (a, b) => a.addEventListener("scroll", () => { if (syncing) return; syncing = true; b.scrollLeft = a.scrollLeft; syncing = false; }, { passive: true });
+    const pair = (a, b) => a.addEventListener("scroll", () => { if (syncing || $("colwrap").parentNode === $("bscroll")) return; syncing = true; b.scrollLeft = a.scrollLeft; syncing = false; }, { passive: true });
     pair($("bscroll"), $("colwrap")); pair($("colwrap"), $("bscroll")); }
 
   // keep the sticky column header just under the sticky toolbar
