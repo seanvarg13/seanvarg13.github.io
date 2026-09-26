@@ -1145,7 +1145,8 @@ body.modal-open { position: fixed; inset: 0; width: 100%; overflow: hidden; }
 :root[data-view="mobile"] .who { box-shadow: none; border-right: 1px solid var(--hair); }
 :root[data-view="mobile"] .ftable td.who, :root[data-view="mobile"] .ftable th.who { box-shadow: none; border-right: 1px solid var(--hair); }
 :root[data-view="mobile"] .board-scroll, :root[data-view="mobile"] .fscroll { -webkit-overflow-scrolling: auto; }
-:root[data-view="mobile"] .row-main:hover, :root[data-view="mobile"] .row:nth-child(even) .row-main:hover { background: inherit; }
+:root[data-view="mobile"] .row:nth-child(odd) .row-main:hover { background: var(--surface); }   /* a tapped row keeps :hover on a phone: */
+:root[data-view="mobile"] .row:nth-child(even) .row-main:hover { background: var(--stripe); }   /* never "inherit" — that's see-through, and the stats slid under the frozen name showed through it */
 :root[data-view="mobile"] .row:nth-child(even) .row-main { background: var(--stripe); }
 :root[data-view="mobile"] .row:nth-child(odd) .row-main { background: var(--surface); }
 
@@ -2802,3 +2803,7 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
 .modal.pagebg .modal-back::after,
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"])::after {
   background: var(--accent-2); opacity: 1; -webkit-mask: var(--swirl-b); mask: var(--swirl-b); }
+/* the list pages' column header rides inside the rows' box (renderColhead), stuck to its top and as wide as the rows,
+   so up-and-down and sideways it moves with them in the one scroller */
+body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board-scroll > .colwrap, :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board-scroll > .colwrap { position: sticky; top: 0; z-index: 5;
+  overflow: visible; width: max-content; min-width: 100%; transform: none; touch-action: auto; }
