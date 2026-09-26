@@ -5025,10 +5025,15 @@
       tb.append(tr);
     }
     const s0 = p.m || {}, trt = el("tr", "ftot");
-    trt.append(el("td", "l", "All pitches"), el("td", null, String(tot)), el("td"), el("td"), el("td"), el("td"), cellPlus(s0.stuff, "sp"), cellPlus(s0.swhf), cellPlus(s0.sbb), el("td"), el("td"), el("td"));
+    // his whole arsenal: each pitch's x-rates weighted by how often he throws it; the actual rates under them are his
+    // real totals (whiffs per swing, grounders and popups per ball in play)
+    const wx = (k) => (tot ? R0.reduce((s, r) => s + (r[k] || 0) * r.n, 0) / tot : null);
+    const act = (k, d) => { const n = R0.reduce((s, r) => s + (r[d] || 0), 0); return n ? R0.reduce((s, r) => s + (r[k] || 0) * (r[d] || 0), 0) / n : null; };
+    trt.append(el("td", "l", "All pitches"), el("td", null, String(tot)), el("td"), el("td"), el("td"), el("td"), cellPlus(s0.stuff, "sp"), cellPlus(s0.swhf), cellPlus(s0.sbb),
+               pair(wx("xwhf"), act("whf", "sw")), pair(wx("xgb"), act("gb", "bip")), pair(wx("xpu"), act("pu", "bip")));
     tb.append(trt); t.append(tb);
     const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
-    box.append(el("p", "note", "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball — never where it was thrown. 100 is league average; each point is 1% of runs. Whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened. The table is his season; the headline follows the card's dates and splits."));
+    box.append(el("p", "note", "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball — never where it was thrown. 100 is league average; each point is 1% of runs. Whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened; the All pitches row weighs each pitch by how often he throws it. The table is his season; the headline follows the card's dates and splits."));
     return box;
   }
   function renderLuckBox(p) {
