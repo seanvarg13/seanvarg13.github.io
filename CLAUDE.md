@@ -340,7 +340,7 @@ is deploy-limited.
 * **The percentile sections have no run values, fielding (OAA), sprint speed or spin.** Not in this data.
   Acknowledged gap, not a bug.
 * **The player page is a popup card** (Sean, 24 Sep 2026: "identical in every measure"): `renderExplore()` opens his
-  card in the site's one `#modal` via `showPageCard()`, with classes `pagecard` (no ×) and `pagebg` (light blue with a square-spiral
+  card in the site's one `#modal` via `showPageCard()`, with classes `pagecard` (no ×) and `pagebg` (navy with an unbroken light-blue square-spiral
   pattern — Sean, 26 Sep 2026: "I don't really like the slant design" — masked in the theme's colours, instead of the dimmed list). Same element, classes and
   `playerView()` as a card off a list, so a change to one is a change to the other.
 * `hist/` files built before a field was appended to `HITTER_DAY`/`PITCHER_DAY` lack it; `app.js` checks
