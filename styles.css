@@ -2763,12 +2763,4 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
 :root[data-view="mobile"] .infomodal { max-height: calc(100dvh - 60px); padding: 14px; }
 :root[data-view="mobile"] main.wrap > .notes { font-size: 11px; gap: 6px; margin-top: 6px; }
 :root[data-view="mobile"] .notesbtns .btn { padding: 6px 4px; font-size: 11px; white-space: nowrap; min-height: 0; }
-/* The site's header buttons, again (Sean, 26 Sep 2026): white, a light-blue outline and dark-blue text, whatever the
-   scheme calls navy; hovering washes them light blue. The chevrons follow the text colour. */
-.modes a, .modes .modesel, :root:not([data-view="mobile"]) .modes a, :root:not([data-view="mobile"]) .modes .modesel,
-:root[data-view="mobile"] .modes a, :root[data-view="mobile"] .modes .modesel,
-.modes a[aria-current="page"], .modes .modesel[aria-current="page"], :root:not([data-view="mobile"]) .modes a[aria-current="page"],
-:root:not([data-view="mobile"]) .modes .modesel[aria-current="page"], :root[data-view="mobile"] .modes a[aria-current="page"],
-:root[data-view="mobile"] .modes .modesel[aria-current="page"] { background: #fff; color: var(--band); border-color: color-mix(in srgb, var(--accent-2-text) 72%, #fff); }
-.modes a:hover, .modes .modesel:hover, :root:not([data-view="mobile"]) .modes a:hover, :root:not([data-view="mobile"]) .modes .modesel:hover,
-:root[data-view="mobile"] .modes a:hover, :root[data-view="mobile"] .modes .modesel:hover { background: color-mix(in srgb, var(--accent-2-text) 18%, #fff); color: var(--band); }
+.phf.w3 { grid-column: 1 / -1; justify-self: end; }

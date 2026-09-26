@@ -167,8 +167,9 @@
                  players: h.players, consts: h.consts, refPA: h.refPA, airNoPU: !!h.airNoPU, days: h.days || null,
                  er: (p) => (daily() && daily()[p.type + p.id + ":er"]) || [] };
     // split rows (hand x venue) are inline; per-day rows come from hist/days-<season>.js when a date range is set
-    ds.rows = (p) => (winRequested() ? (daily() ? daily()[p.type + p.id] : null) : h.rows[p.type + p.id]) || [];
-    ds.ready = () => !winRequested() || !!daily();
+    const byDay = () => winRequested() || roleOf(SPLIT) !== "all";     // a role split needs each day's "started" flag
+    ds.rows = (p) => (byDay() ? (daily() ? daily()[p.type + p.id] : null) : h.rows[p.type + p.id]) || [];
+    ds.ready = () => !byDay() || !!daily();
     ds.load = () => { if (h.days) ensureScript(`hist/${h.daysFile || `days-${h.season}.js`}`, () => !!daily()); };
     return ds;
   }
@@ -422,7 +423,9 @@
   let SPLIT = NONE;
   function withSplit(sp, fn) { const prev = SPLIT; SPLIT = sp; try { return fn(); } finally { SPLIT = prev; } }
   // game-by-game split rows live in days.js and load the first time a window or split is chosen
-  const splitActive = () => SPLIT.hand !== "all" || SPLIT.venue !== "all";
+  // role: a pitcher's starts or relief outings only (Sean, 26 Sep 2026) — each day row says whether he started that day
+  const roleOf = (sp) => (sp.role === "sp" || sp.role === "rp" ? sp.role : "all");
+  const splitActive = () => SPLIT.hand !== "all" || SPLIT.venue !== "all" || roleOf(SPLIT) !== "all";
   // pool minimum in effect: the tab's Min PA / IP, always judged on the FULL season (a date range or split only
   // changes the numbers being compared, never who qualifies)
   // the Min PA / IP box is a full-season number; spring training and postseason sets (tiny refPA) scale it down
@@ -493,11 +496,12 @@
   const ensureHist = (key) => (key === CUR.key ? ensureDays() : isMulti(key) ? multiDataset(key) : ensureScript(`hist/${key}.js`, () => !!(window.DRAFT_HIST && window.DRAFT_HIST[key])));
   const needsRows = () => needsDays() || !!DS.aggregate;   // a combined span always sums rows, window or not
   const ensureView = () => { if (needsRows() && !DS.ready()) DS.load(); };   // fetch whatever the current view needs
-  const viewKey = () => DS.key + ":" + winKey() + ":" + SPLIT.hand + ":" + SPLIT.venue;
+  const viewKey = () => DS.key + ":" + winKey() + ":" + SPLIT.hand + ":" + SPLIT.venue + ":" + roleOf(SPLIT);
   const splitLabel = () => {
     const parts = [];
     if (SPLIT.hand !== "all") parts.push("vs " + SPLIT.hand + "H" + (isPitcherGroup(groupFor(state.pos)) ? "B" : "P"));
     if (SPLIT.venue !== "all") parts.push(SPLIT.venue === "home" ? "home" : "away");
+    if (roleOf(SPLIT) !== "all") parts.push(roleOf(SPLIT) === "sp" ? "as SP" : "as RP");
     return parts.join(" · ");
   };
   const viewLabel = (type) => [winLabel(type), splitLabel()].filter(Boolean).join(" · ");
@@ -576,17 +580,19 @@
       const f = DF[p.type], t = {}; f.forEach((k) => (t[k] = 0));
       const hand = SPLIT.hand === "all" ? -1 : SPLIT.hand === "R" ? 1 : 0;
       const home = SPLIT.venue === "all" ? -1 : SPLIT.venue === "home" ? 1 : 0;
+      const role = p.type !== "P" || roleOf(SPLIT) === "all" ? -1 : roleOf(SPLIT) === "sp" ? 1 : 0, gsi = DF.P.indexOf("gs");
+      const roleOK = (row) => role < 0 || (row[gsi] ? 1 : 0) === role;
       const dayset = new Set(), gsset = new Set(), evs = [];
       const ei = f.indexOf("evs"), dni = f.indexOf("dnum");
       let hasEvs = false, hasDir = false, lo = w.lo;
       if (w.last) {   // trailing window: the fewest most-recent game days that reach N PA (hitters) / N IP (pitchers)
         const si = f.indexOf(p.type === "P" ? "outs" : "pa"), need = p.type === "P" ? 3 * w.last : w.last, byDay = new Map();
-        for (const row of rowsOf(p)) { if (row[0] > w.hi || (hand >= 0 && row[1] !== hand) || (home >= 0 && row[2] !== home)) continue; byDay.set(row[0], (byDay.get(row[0]) || 0) + row[si]); }
+        for (const row of rowsOf(p)) { if (row[0] > w.hi || (hand >= 0 && row[1] !== hand) || (home >= 0 && row[2] !== home) || !roleOK(row)) continue; byDay.set(row[0], (byDay.get(row[0]) || 0) + row[si]); }
         let acc = 0; lo = w.hi + 1;
         for (const d of [...byDay.keys()].sort((x, y) => y - x)) { acc += byDay.get(d); lo = d; if (acc >= need) break; }
       }
       for (const row of rowsOf(p)) {
-        if (row[0] < lo || row[0] > w.hi || (hand >= 0 && row[1] !== hand) || (home >= 0 && row[2] !== home)) continue;
+        if (row[0] < lo || row[0] > w.hi || (hand >= 0 && row[1] !== hand) || (home >= 0 && row[2] !== home) || !roleOK(row)) continue;
         dayset.add(row[0]);
         f.forEach((k, i) => { if (i >= 3 && k !== "gs" && k !== "evs" && row[i] !== undefined) t[k] += row[i]; });   // older files lack trailing fields
         if (p.type === "P" && row[f.indexOf("gs")]) gsset.add(row[0]);
@@ -595,14 +601,15 @@
       }
       evs.sort((x, y) => x - y);
       const q90 = hasEvs && evs.length ? (() => { const pos = 0.9 * (evs.length - 1), lo = Math.floor(pos); return Math.round(10 * (evs[lo] + (evs[Math.min(lo + 1, evs.length - 1)] - evs[lo]) * (pos - lo))) / 10; })() : null;
-      const games = DS.hist ? (p.ctx.G ?? null) : dayset.size;
+      const games = DS.hist && role < 0 ? (p.ctx.G ?? null) : dayset.size;
       if (p.type === "P") {
-        const ip = t.outs / 3, gs = DS.hist ? p.ctx.GS : gsset.size;
+        const ip = t.outs / 3, gs = DS.hist && role < 0 ? p.ctx.GS : gsset.size;
         // earned runs come from the game logs (per game, so only when no handedness split)
         let er = null;
         const erLog = hand < 0 ? DS.er(p) : [];
-        if (hand < 0 && (!DS.hist || erLog.length)) { er = 0; for (const [d, h, e] of erLog) if (d >= lo && d <= w.hi && (home < 0 || h === home)) er += e; }
-        else if (DS.hist && hand < 0 && home < 0) er = p.ctx.ER ?? null;
+        const startDays = role < 0 ? null : new Set(rowsOf(p).filter((row) => row[gsi]).map((row) => row[0]));   // a role split keeps his starts' (or relief days') runs
+        if (hand < 0 && (!DS.hist || erLog.length)) { er = 0; for (const [d, h, e] of erLog) if (d >= lo && d <= w.hi && (home < 0 || h === home) && (!startDays || startDays.has(d) === (role === 1))) er += e; }
+        else if (DS.hist && hand < 0 && home < 0 && role < 0) er = p.ctx.ER ?? null;
         const r2 = (x) => (x == null ? null : Math.round(100 * x) / 100);
         const wi = f.indexOf("wbip"), c = K();
         const hasBB = !!(c.bbw && wi >= 0 && rowsOf(p).some((row) => row[wi] !== undefined));   // files built before the field lack it
@@ -1441,6 +1448,7 @@
       const bits = [];
       if (state.split.hand !== "all") bits.push(`vs ${state.split.hand}H${pit ? "B" : "P"}`);
       if (state.split.venue !== "all") bits.push(state.split.venue);
+      if (pit && roleOf(state.split) !== "all") bits.push(roleOf(state.split) === "sp" ? "as SP" : "as RP");
       if (state.cardWin.from || state.cardWin.to || lastN(state.cardWin)) bits.push(withWindow(state.cardWin, () => winLabel(p.type)));
       b.classList.toggle("on", bits.length > 0);
       head.append(b);
@@ -1455,6 +1463,8 @@
       return head;
     }
   }
+  // a pitcher who both started and relieved this season gets the SP / RP split
+  const bothRoles = (p) => { const c = p.ctx || {}; return (c.GS || 0) > 0 && (c.G || 0) > (c.GS || 0); };
   // the block that drops below the filter row once it is opened: handedness, venue and dates
   function renderSplitPanel(p) {
     const bar = el("div", "splitopen");
@@ -1470,6 +1480,7 @@
     };
     bar.append(seg("Handedness", [["all", pit ? "All batters" : "All pitchers"], ["L", pit ? "vs LHB" : "vs LHP"], ["R", pit ? "vs RHB" : "vs RHP"]], state.split.hand, (v) => (state.split.hand = v)));
     bar.append(seg("Venue", [["all", "Home + away"], ["home", "Home"], ["away", "Away"]], state.split.venue, (v) => (state.split.venue = v)));
+    if (pit && bothRoles(p)) bar.append(seg("Role", [["all", "SP + RP"], ["sp", "As SP"], ["rp", "As RP"]], roleOf(state.split), (v) => (state.split.role = v)));
     if (state.mode !== "compare") bar.append(renderCardDates(p));
     if (state.daysLoading && state.mode === "compare") bar.append(el("span", "winnote", "Loading game-by-game data…"));
     // no "Showing vs LHP — not the full season · Show all" line any more (Sean: "just get rid of that"): the lit toggle
@@ -5510,6 +5521,8 @@
       if (!mob) { hand.firstChild.textContent = "All"; venue.firstChild.textContent = "Both"; }   // short enough for the plate's right third; the captions say which
       cell(p.type === "P" ? "Batters" : "Pitchers", "hand mfull", hand);      // under From, its buttons tight
       cell("Home / away", "w2 mfull", venue);                                   // under To and Last
+      const role = seg("Role");                                                 // a swingman: his starts or relief outings
+      if (role) { if (!mob) role.firstChild.textContent = "Both"; cell("Starts / relief", "w3 mfull", role); }
       warn = sp.querySelector(".splitwarn");
     }
     if (open) F.append(grid);
