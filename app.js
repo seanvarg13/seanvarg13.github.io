@@ -6075,7 +6075,9 @@
   $("pop-close").addEventListener("click", () => closePanel(false));
   document.addEventListener("click", (e) => {            // clicking away from a dropdown applies it and puts it away
     if (!POPPED.has(state.panel)) return;
-    if (e.target.closest("#pop") || e.target.closest("#tbtns")) return;
+    // the path recorded when the click happened: a click that redraws the panel (Date range, a split) has already
+    // removed its own button by now, so asking the button where it lives would read as a click outside
+    if (e.composedPath().some((n) => n.id === "pop" || n.id === "tbtns") || !e.target.isConnected) return;
     closePanel(false);
   });
   window.addEventListener("resize", placePop);
