@@ -2776,3 +2776,6 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
 :root[data-scheme="titans"][data-view="mobile"] .phead .mplate .btn:not(.on),
 :root[data-scheme="titans"] .btab:not(.on), :root[data-scheme="titans"] .btab:not(.on):first-child, :root[data-scheme="titans"] .btab:not(.on):last-child,
 :root[data-scheme="titans"][data-view="mobile"] .btab:not(.on) { border-color: var(--stripe-line); }
+/* Titans: the player card itself (his page and a popup alike) is outlined in the same red */
+:root[data-scheme="titans"] .modal.pcard .modal-panel, :root[data-scheme="titans"]:not([data-view="mobile"]) .modal.pcard .modal-panel,
+:root[data-scheme="titans"][data-view="mobile"] .modal.pcard .modal-panel { border-color: var(--stripe-line); }
