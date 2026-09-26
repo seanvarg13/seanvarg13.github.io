@@ -2779,3 +2779,9 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
 /* Titans: the player card itself (his page and a popup alike) is outlined in the same red */
 :root[data-scheme="titans"] .modal.pcard .modal-panel, :root[data-scheme="titans"]:not([data-view="mobile"]) .modal.pcard .modal-panel,
 :root[data-scheme="titans"][data-view="mobile"] .modal.pcard .modal-panel { border-color: var(--stripe-line); }
+/* the Stuff tab: his arsenal graded pitch by pitch; each x-rate carries what actually happened under it */
+.stuffscroll { overflow-x: auto; }
+.uerabox .ubt.stufft td.plus { font-weight: 700; text-align: center; min-width: 44px; }
+.uerabox .ubt.stufft td.plus.sp { font-size: 14px; }
+.uerabox .ubt.stufft td.xa b { display: block; font-weight: 600; }
+.uerabox .ubt.stufft td.xa i { display: block; font-style: normal; font-size: 11px; color: var(--svtext); }

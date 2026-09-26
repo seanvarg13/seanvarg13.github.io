@@ -525,6 +525,15 @@ lines only (~1 MB), for the player card's **Fantasy ▸ By season** table — po
 pitchers) each year under the chosen scoring, plus a total. Cycles and game-winning RBI count zero before this season. Game-log rows drop trailing zeros. `build_data.py`'s day rows carry `hr` (hitters) and `h`
 (pitchers) at the end for the hand split; older files fall back to extra-base hits / balls in play.
 
+## Stuff+ (pitchers)
+
+A pitch graded on what the ball does, not where it goes: velocity, spin, movement, release, extension, arm angle and its
+gap to his fastball. Two models, retrained at every build on this season and last — how often a swing misses it, and
+whether contact is a grounder, a popup or an air ball — combined the way uERA weighs them, so whiffs count the most.
+100 is average; each point is 1% of runs. On the card: **Stuff+** in the Stuff section (fold-outs **Whiff+** and
+**Batted-ball+**), and a **Stuff** tab with his arsenal pitch by pitch — use, velocity, IVB, HB, spin, the three grades,
+and the model's whiff / ground-ball / popup rates with what actually happened under each. Past seasons get it when rebuilt.
+
 ## Hosting (a real link, on your phone)
 
 It is a static site, so any host works. The built-in way is **GitHub Pages** (free, no publishing quota — Netlify's
