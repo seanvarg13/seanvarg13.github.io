@@ -2764,3 +2764,15 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
 :root[data-view="mobile"] main.wrap > .notes { font-size: 11px; gap: 6px; margin-top: 6px; }
 :root[data-view="mobile"] .notesbtns .btn { padding: 6px 4px; font-size: 11px; white-space: nowrap; min-height: 0; }
 .phf.w3 { grid-column: 1 / -1; justify-self: end; }
+.uerabox .ubt.fantyrs tr.fcur td { background: var(--accent-wash); font-weight: 700; }   /* the season the tab is showing */
+/* Titans: the header buttons are outlined in the banner stripe's red (Sean, 26 Sep 2026) */
+:root[data-scheme="titans"] .modes a, :root[data-scheme="titans"] .modes .modesel,
+:root[data-scheme="titans"]:not([data-view="mobile"]) .modes a, :root[data-scheme="titans"]:not([data-view="mobile"]) .modes .modesel,
+:root[data-scheme="titans"][data-view="mobile"] .modes a, :root[data-scheme="titans"][data-view="mobile"] .modes .modesel { border-color: var(--stripe-line); }
+/* ...and every other navy button that wore a white outline — the card's Star and Filters, the tabs under the
+   percentiles — takes the same red (a lit one keeps its navy outline on white) */
+:root[data-scheme="titans"] .phead .starbtn:not(.on), :root[data-scheme="titans"] .phead .phtoggle:not(.on), :root[data-scheme="titans"] .phead .mplate .btn:not(.on),
+:root[data-scheme="titans"][data-view="mobile"] .phead .starbtn:not(.on), :root[data-scheme="titans"][data-view="mobile"] .phead .phtoggle:not(.on),
+:root[data-scheme="titans"][data-view="mobile"] .phead .mplate .btn:not(.on),
+:root[data-scheme="titans"] .btab:not(.on), :root[data-scheme="titans"] .btab:not(.on):first-child, :root[data-scheme="titans"] .btab:not(.on):last-child,
+:root[data-scheme="titans"][data-view="mobile"] .btab:not(.on) { border-color: var(--stripe-line); }

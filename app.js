@@ -4545,6 +4545,47 @@
   // points come from, and a pitcher's game-by-game log. MLB seasons fantasy.js covers only; a hitter has no game log.
   const FANT_OPEN = new Set();
   const outsIP = (outs) => `${Math.floor(outs / 3)}.${outs % 3}`;   // innings the way a box score writes them                              // pitchers whose whole game log is showing (this visit)
+  // his points season by season under the same scoring: this season from fantasy.js, every earlier one (2015 on) from
+  // hist/fantasy-lines.js — official season lines only, so cycles and game-winning RBI count zero there (Sean, 26 Sep 2026)
+  function fLineObj(L, grp, arr) {
+    const o = {}; (grp === "H" ? L.hk : L.pk).forEach((k, i) => { o[k] = arr[i] || 0; });
+    if (grp === "H") { o["1B"] = o.H - o["2B"] - o["3B"] - o.HR; o.XBH = o["2B"] + o["3B"] + o.HR; o.OUT = o.AB - o.H; o.SBN = o.SB - o.CS; }
+    else { o.IP = o.OUTS / 3; o.OUT = o.OUTS; o.SVHD = o.SV + o.HD; }
+    return o;
+  }
+  function renderFantasySeasons(p, grp, w, y) {
+    const wrap = el("div", "fantseasons");
+    wrap.append(el("h4", "fanth", "By season"));
+    ensureScript("hist/fantasy-lines.js", () => !!window.DRAFT_FANTASY_LINES);
+    const L = window.DRAFT_FANTASY_LINES, cur = String(DATA.meta.season), rows = [];
+    const Fc = fData(cur); if (!Fc) fEnsure(cur);
+    const now = Fc && (grp === "H" ? fHit(Fc, p.id) : fPit(Fc, p.id));
+    if (now && now.G) rows.push([cur, now]);
+    if (L) for (const yy of Object.keys(L.years).sort().reverse()) { const a = L.years[yy][grp === "H" ? "hitters" : "pitchers"][p.id]; if (a) { const o = fLineObj(L, grp, a); if (o.G) rows.push([yy, o]); } }
+    if (!rows.length) { wrap.append(el("p", "note", L ? "No MLB seasons to show." : failed.has("hist/fantasy-lines.js") ? "Past seasons aren't built yet." : "Loading past seasons…")); return wrap; }
+    const t = el("table", "ubt fantyrs"), th = el("thead"), hr = el("tr");
+    const heads = grp === "H" ? ["Season", "G", "PA", "Pts", "Pts/G"] : ["Season", "G", "GS", "IP", "Pts", "Pts/G"];
+    for (const h of heads) hr.append(el("th", h === "Season" ? "l" : null, h));
+    th.append(hr); t.append(th);
+    const tb = el("tbody");
+    let tp = 0, tg = 0;
+    for (const [yy, o] of rows) {
+      const pts = fPts(w, o), r = el("tr", yy === y ? "fcur" : null); tp += pts; tg += o.G;
+      r.append(el("td", "l", yy), el("td", null, String(o.G)));
+      if (grp === "H") r.append(el("td", null, String(o.PA)));
+      else r.append(el("td", null, String(o.GS)), el("td", null, outsIP(o.OUTS)));
+      r.append(el("td", "fp" + (pts < 0 ? " neg" : ""), f1(pts)), el("td", null, f2(pts / o.G)));
+      tb.append(r);
+    }
+    if (rows.length > 1) {
+      const r = el("tr", "ftot"); r.append(el("td", "l", "Total"), el("td", null, String(tg)));
+      if (grp === "H") r.append(el("td")); else r.append(el("td"), el("td"));
+      r.append(el("td", "fp", f1(tp)), el("td", null, f2(tp / tg))); tb.append(r);
+    }
+    t.append(tb); wrap.append(t);
+    if (L && rows.some(([yy]) => yy !== cur)) wrap.append(el("p", "note", "Past seasons are scored from the official season line: cycles and game-winning RBI aren't in it, so they count zero there; per-start points need game logs, so they're this season only."));
+    return wrap;
+  }
   function renderFantasyTab(p) {
     const box = el("div", "rollbox uerabox fantbox");
     const y = DS.level === "MLB" && FYEARS.includes(String(DS.season)) ? String(DS.season) : String(DATA.meta.season);
@@ -4596,6 +4637,7 @@
     }
     const tr = el("tr", "ftot"); tr.append(el("td", "l", "Total"), el("td"), el("td"), el("td", "fp", f1(tot)), el("td", null, f2(ppg))); tb.append(tr);
     t.append(tb); box.append(t);
+    box.append(renderFantasySeasons(p, grp, w, y));
     // a pitcher's game log, newest first: the last ten, or every game on request
     if (grp === "P" && o.games.length) {
       const miss = Object.keys(w).filter((k) => Number(w[k]) && o.games[0][k] === undefined && !["IP", "OUT", "G", "SVHD", "RW", "RL", "QS", "NH", "PG"].includes(k));

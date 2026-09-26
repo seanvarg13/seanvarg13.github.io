@@ -520,7 +520,9 @@ How the numbers are made (`fLeadRows` in `app.js`):
   uERA come from his rates there, placed in the full season's pool.
 
 Data: `build_fantasy.py` (part of the daily job) -> `fantasy.js`; `python3 build_fantasy.py 2025 2024` for past years
--> `hist/fantasy-YYYY.js`. Game-log rows drop trailing zeros. `build_data.py`'s day rows carry `hr` (hitters) and `h`
+-> `hist/fantasy-YYYY.js`. `python3 build_fantasy.py lines` -> `hist/fantasy-lines.js`: every season 2015 on as official season
+lines only (~1 MB), for the player card's **Fantasy ▸ By season** table — points and points per game (per appearance for
+pitchers) each year under the chosen scoring, plus a total. Cycles and game-winning RBI count zero before this season. Game-log rows drop trailing zeros. `build_data.py`'s day rows carry `hr` (hitters) and `h`
 (pitchers) at the end for the hand split; older files fall back to extra-base hits / balls in play.
 
 ## Hosting (a real link, on your phone)
