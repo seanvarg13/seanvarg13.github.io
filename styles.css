@@ -2721,3 +2721,30 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"]) main.wrap > .toolbar { background: var(--surface); }
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"]) .notes { padding-inline: 4px; }
 :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"]) main.wrap { margin: 10px 6px 18px; }
+
+/* ...and the card stands still (Sean, 26 Sep 2026): it fills the screen from under the header to a gap at the bottom,
+   the page itself never scrolls, and inside it the filters, the pager and the column header are frozen — only the rows
+   move (up and down in the rows' own box; sideways the header follows them as before). The notes and the bottom pager
+   stay at the card's foot, the notes in a short box of their own. */
+html:has(body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"])), body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]), :root:not([data-view="mobile"]):has(body[data-mode="fantasy"]), :root:not([data-view="mobile"]) body[data-mode="fantasy"] { height: 100dvh; overflow: hidden; }
+body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) main.wrap, :root:not([data-view="mobile"]) body[data-mode="fantasy"] main.wrap { height: calc(100dvh - var(--header-h, 64px) - 36px); margin-block: 18px; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 10px; }
+:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) main.wrap { height: calc(100dvh - var(--header-h, 64px) - 20px); margin-block: 10px; }
+body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"]) main.wrap > * { flex: none; }
+body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) main.wrap > .toolbar, :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) main.wrap > .toolbar { position: static; }
+body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) main.wrap > .board { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board > * { flex: none; }
+body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .colwrap, :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .colwrap { position: static; }
+body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board > .board-scroll, :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board > .board-scroll { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; overscroll-behavior: contain; }
+body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) main.wrap > .notes, :root:not([data-view="mobile"]) body[data-mode="fantasy"] main.wrap > .notes { max-height: 4.8em; overflow-y: auto; margin-top: 8px; }
+body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"]) main.wrap > .notes:empty { display: none; }
+/* Fantasy: the same, its table's own header row frozen at the top of the table's box */
+:root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) main.wrap > .fboard { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding-bottom: 0; }
+:root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) .fboard > * { flex: none; }
+:root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) .fboard > .ftable-wrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+:root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) .ftable-wrap > * { flex: none; }
+:root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) .ftable-wrap > .fscroll { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; overscroll-behavior: contain; }
+:root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) .ftable-wrap > .fhead { display: none; }
+:root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) .ftable thead th { position: sticky; top: 0; z-index: 3; }
+:root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) .ftable thead th.n, :root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) .ftable thead th.who { z-index: 5; }
+:root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) .fboard > .fnote { max-height: 4.8em; overflow-y: auto; margin: 8px 0 0; }
+:root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) .ftable thead th.who { display: table-cell; vertical-align: middle; }   /* a flex th won't stick */
