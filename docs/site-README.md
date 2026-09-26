@@ -369,8 +369,8 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
   grow together; a phone draws them at their real size. A chart starts at the size its column had last time
   (`pctLast`): drawn at a guess and resized a moment later, everything under it shifted and, near the foot of the
   page, the browser pulled the window up — which is what threw a phone's page upward on every tap of a tab.
-- **The tabs** (`renderBelow`, `state.pbtab`): **Compare**, **Season Stats**, **Rolling**, **Fantasy**, and for
-  pitchers **nERA** and **uERA**. Clicking the open tab closes it and leaves just the strip (`pbtab: "none"`), with the page's notes
+- **The tabs** (`renderBelow`, `state.pbtab`): **Compare**, **Season Stats**, **Rolling**, **Fantasy**, then **Mix**
+  for hitters and **nERA** and **uERA** for pitchers. Clicking the open tab closes it and leaves just the strip (`pbtab: "none"`), with the page's notes
   under it. After any tab is picked, `anchorTabs()` puts the strip back exactly where it was on the screen, padding
   the page under it when what's below got shorter, so nothing jumps.
   - **Compare** turns on the two-side comparison and opens it here, under the stats (`cmpCard`). Its grid is the
@@ -397,6 +397,14 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
     (a stint under a level file's 20-batter floor has no rates; GB% / PU% follow the same rule by batters faced); Rookie ball and short-season A have no
     translation. GB% / Popup% come from career.js / minors.js (appended to each line by `build_career.py`), else from
     the season's own file when it's loaded.
+  - **Mix** (hitters, `renderMixTab`): his Mix wOBA taken apart. One row per bucket, dearest first — pulled fly balls,
+    pulled line drives, line drives oppo / center, fly balls center, ground balls, fly balls oppo, popups (and air balls
+    with no direction when he has any) — each with a percentile bar for his share of it among the season's qualifiers
+    (a bucket worth more than the league's average ball counts higher-is-better, the rest lower-is-better), the share,
+    and the league's wOBA on it on a heat chip from the cheapest (blue) to the dearest (red). Below a rule, the
+    **weighted league wOBA**: those values weighted by his shares, his average ball in play by where and how he hits
+    it, with its percentile bar and a chip coloured by that percentile. Counts come from `ctx.mix` (a season) or the
+    `mx*` day fields (a window or split), in `build_data.MIX_COLS` order.
   - **Fantasy** (`renderFantasyTab`): his points under a saved scoring preset — the picker lists the fantasy page's
     presets and shares its choice (`fstore.current`), with a link to edit them. Tiles for the season total and points
     per game (ranked among every hitter / pitcher, and per game among those past the fantasy page's minimum), games,
