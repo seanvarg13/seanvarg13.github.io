@@ -345,7 +345,7 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
 - **The title** (`pageTitle()`), in the plate and pinned with it: "**2026 MLB Percentiles**", bold, in the name's ink.
   The year and the level are the season pickers for the whole page (`titleSelect()`): each is a word over a dotted
   rule.
-- **Mix wOBA** (`mixw`, the first bar under Batted-Ball Distribution; Sean, 26 Sep 2026) — the hitters' Mix ERA: what
+- **Mix wOBA** (`mixw`, the last bar under Batted-Ball Distribution; Sean, 26 Sep 2026) — the hitters' Mix ERA: what
   a hitter's batted-ball distribution alone is worth. Every typed ball in play takes the dataset's average wOBA for its
   bucket — ground ball, popup, and line drives and fly balls each pulled / straightaway / the other way (`PULL_LINE`),
   a ball with no direction its type's average — and walks and strikeouts are held at the league's rates:

@@ -4120,7 +4120,7 @@
   // and a block break is a rule across the bars; the batted-ball tab is the site's batted-ball distribution.
   const EXTRA_H = [["Discipline", [["zsw", "osw", "swing"]]],
                    ["Contact", [["zcon", "ocon", "whf"]]],
-                   ["Batted ball", [["mixw", "air", "pu", "gb", "pull"]]],
+                   ["Batted ball", [["air", "pu", "gb", "pull", "mixw"]]],
                    ["Quality", [["ev", "brl", "hh", "bs", "ev90", "maxev"]]]];
   const EXTRA_P = [["Run prev.", [["era", "kbb"], ["nera", "mera", "siera", "fip"]]],
                    ["K and BB", [["uk", "ubb", "ukb"], ["wsgp", "csw", "swstr"]]],
@@ -4684,7 +4684,7 @@
   const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],
                        ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],
-                       ["Batted-Ball Distribution", ["mixw", "air", "pu", "gb", "pull"]]]];
+                       ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]]]];
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
   const PCT_COLS_P = [[["Whiffs and Strikes", ["whf", "strk"]], ["Swing & Miss", ["k", "whf"]], ["Zone & Chase", ["bb", "strk", "zone", "osw"]]],
                       [["Results", ["kbb", "era"]], ["Batted Ball", ["gb", "pu", "mera"]], ["Stuff", ["fbv", "ext"]]]];
