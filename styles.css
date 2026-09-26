@@ -2807,3 +2807,8 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
    so up-and-down and sideways it moves with them in the one scroller */
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board-scroll > .colwrap, :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board-scroll > .colwrap { position: sticky; top: 0; z-index: 5;
   overflow: visible; width: max-content; min-width: 100%; transform: none; touch-action: auto; }
+/* belt and braces for the frozen rank / name cells (they take their row's colour through "inherit"): the row itself
+   carries the same solid colour, so no state of the row — a phone's stuck :hover included — can leave them see-through */
+.rows > .row { background: var(--surface); }
+.rows > .row:nth-child(even) { background: var(--stripe); }
+body[data-band="off"] .rows > .row:nth-child(even) { background: var(--surface); }
