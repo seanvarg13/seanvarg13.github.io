@@ -4328,15 +4328,22 @@
   // over his balls: what his average ball in play is worth by where and how he hits it.
   const MIX_B = [["mxgb", "gb", "Ground balls"], ["mxpu", "pu", "Popups"], ["mxldp", "ld_p", "Line drives, pulled"], ["mxldc", "ld_c", "Line drives, center"],
                  ["mxldo", "ld_o", "Line drives, oppo"], ["mxfbp", "fb_p", "Fly balls, pulled"], ["mxfbc", "fb_c", "Fly balls, center"],
-                 ["mxfbo", "fb_o", "Fly balls, oppo"], ["mxx", "x", "Air, no direction"]];     // build_data.MIX_COLS order
+                 ["mxfbo", "fb_o", "Fly balls, oppo"], ["mxx", "x", "No direction"], ["mxgbp", "gb_p", "Ground balls, pulled"],
+                 ["mxgbc", "gb_c", "Ground balls, center"], ["mxgbo", "gb_o", "Ground balls, oppo"]];   // build_data.MIX_COLS order; mxgb = all ground balls
   function renderMixTab(p, g) {
     const x = K().mix, pv = V(p), pl = pool(g);
-    const cnt = (q) => { const c = V(q).ctx && V(q).ctx.mix; if (!c) return null; const n = c.reduce((a, b) => a + b, 0); return n ? { c, n } : null; };
+    const cnt = (q) => {                                           // his balls by bucket; n counts each ball once (mxgb is the ground balls' total)
+      const c = V(q).ctx && V(q).ctx.mix; if (!c) return null;
+      const n = c.slice(0, 9).reduce((a, b) => a + (b || 0), 0); return n ? { c: c.map((v) => v || 0), n } : null;
+    };
     const mine = cnt(p);
     if (!x || !x.v || !mine) return el("p", "note", "The batted-ball mix is built from this season's data on — this season's file doesn't have it yet.");
-    const val = (b) => (b === "x" ? ((x.v.ld_x || 0) + (x.v.fb_x || 0)) / 2 : x.v[b]);
+    // ground balls by direction when the file has them (26 Sep 2026 on), else the one ground-ball row
+    const gbDir = mine.c.length > 9 && x.v.gb_p != null, skip = gbDir ? "mxgb" : null;
+    const use = MIX_B.map(([k], i) => i < mine.c.length && k !== skip && !(k.startsWith("mxgb") && k !== "mxgb" && !gbDir));
+    const val = (b) => (b === "x" ? x.v.x ?? ((x.v.ld_x || 0) + (x.v.fb_x || 0)) / 2 : b === "gb" ? x.v.gb ?? x.v.gb_x : x.v[b]);
     const others = pl.ref.map(cnt).filter(Boolean);
-    const avg = (o) => o.c.reduce((a, n, i) => a + n * (val(MIX_B[i][1]) || 0), 0) / o.n;   // his average ball's league value
+    const avg = (o) => o.c.reduce((a, n, i) => a + (use[i] ? n * (val(MIX_B[i][1]) || 0) : 0), 0) / o.n;   // his average ball's league value
     const box = el("div", "rollbox uerabox mixbox mixtab");
     const hd = el("div", "rollhd"), mw = pv.m.mixw, st = pl.stats.get(p.type + p.id);
     hd.append(el("span", "rollname", "Batted-ball mix"), el("span", "rollsub", `${mine.n} balls in play, no bunts`));
@@ -4344,7 +4351,7 @@
     const grid = el("div", "mixgrid mixgrid5");
     grid.append(el("span"), el("span"), el("span", "mh", "Share"), el("span", "mh", "Lg wOBA"));
     const vals = MIX_B.map(([, b]) => val(b)).filter((v) => v != null), lo = Math.min(...vals), hi = Math.max(...vals);
-    const rows = MIX_B.map(([k, b, name], i) => ({ i, b, name, v: val(b) })).filter((r) => r.v != null && (r.b !== "x" || mine.c[r.i]))
+    const rows = MIX_B.map(([k, b, name], i) => ({ i, b, name, v: val(b) })).filter((r) => use[r.i] && r.v != null && (r.b !== "x" || mine.c[r.i]))
       .sort((a, b) => b.v - a.v);                                  // dearest bucket first
     for (const r of rows) {
       const share = 100 * mine.c[r.i] / mine.n, dir = r.v >= x.lg ? 1 : -1;
@@ -4354,7 +4361,9 @@
       grid.append(el("span", "ml", r.name), svTrack(arr.length ? insertPct(arr, dir * share) : null), el("span", "mv", share.toFixed(1) + "%"), lgc);
     }
     // the bottom line, Mix wOBA: the league's wOBA weighted by his shares, ranked among the qualifiers and heat-mapped by that rank
-    const me = avg(mine), arr = others.map(avg).sort((a, b) => a - b), pct = arr.length ? insertPct(arr, me) : null;
+    // the bar's own number and percentile, so the tab and the Batted-Ball Distribution bar always agree
+    const arr = others.map(avg).sort((a, b) => a - b), me = pv.m.mixw ?? avg(mine);
+    const pct = st && st.pct && st.pct.mixw != null ? st.pct.mixw : arr.length ? insertPct(arr, me) : null;
     const tot = el("span", "mv lg"), chip = el("span", "uchip", fmtX(me));
     paintBar(chip, pct); chip.style.color = "#fff"; tot.append(chip);
     grid.append(el("span", "mdiv"), el("span", "ml mtot", "Mix wOBA"), svTrack(pct), el("span", "mv mn", pct == null ? "" : ordinal(pct)), tot);

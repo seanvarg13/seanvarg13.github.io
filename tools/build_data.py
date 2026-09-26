@@ -79,8 +79,8 @@ COLS = ["game_date", "game_type", "game_pk", "batter", "pitcher", "stand", "p_th
         "inning", "inning_topbot", "at_bat_number", "outs_when_up", "woba_value", "woba_denom",
         "estimated_woba_using_speedangle", "estimated_ba_using_speedangle", "estimated_slg_using_speedangle",
         "bat_speed", "pitch_type", "release_speed", "release_extension", "des"]
-MIX_COLS = {"mxgb": "gb", "mxpu": "pu", "mxldp": "ld_p", "mxldc": "ld_c", "mxldo": "ld_o", "mxfbp": "fb_p", "mxfbc": "fb_c",
-            "mxfbo": "fb_o", "mxx": "x"}
+MIX_COLS = {"mxgb": "gb*", "mxpu": "pu", "mxldp": "ld_p", "mxldc": "ld_c", "mxldo": "ld_o", "mxfbp": "fb_p", "mxfbc": "fb_c",
+            "mxfbo": "fb_o", "mxx": "x", "mxgbp": "gb_p", "mxgbc": "gb_c", "mxgbo": "gb_o"}   # gb* = every ground ball, x = no direction
 MIX = None          # the batted-ball mix's league values for the dataset being built (set by pitch_flags)
 PULL_LINE = 16      # spray angle (deg toward the pull side) beyond which a ball is "pulled"; 16 matches Savant's Pull Air% best
 AIR_TYPES = {"fly_ball", "line_drive", "popup"}
@@ -95,7 +95,7 @@ NON_AB = {"walk", "intent_walk", "hit_by_pitch", "sac_fly", "sac_fly_double_play
 HITTER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", "osw", "zcon", "ocon", "brl",
               "air", "pullair", "pa", "ab", "bb", "k", "wnum", "wden", "xnum", "xden", "hh", "ss", "strk", "bsn", "bssum",
               "bbe", "evsum", "dnum", "pulln", "ld", "gbh", "puh", "evs", "bbt", "bip", "evn", "oppn", "h", "tb", "xbsum", "xssum", "dbsum", "dssum", "mixsum", "mixn",
-              "mxgb", "mxpu", "mxldp", "mxldc", "mxldo", "mxfbp", "mxfbc", "mxfbo", "mxx"]   # mixsum / mixn = batted-ball mix value (Mix wOBA), mx* = its balls by bucket (x: air, no direction); dnum = directional-xwOBA numerator; evs = that row's exit velocities (no bunts); trailing fields (older files lack them): bbt = typed balls in play, bip = all balls in play, evn = EV-eligible (tracked, no bunt)
+              "mxgb", "mxpu", "mxldp", "mxldc", "mxldo", "mxfbp", "mxfbc", "mxfbo", "mxx", "mxgbp", "mxgbc", "mxgbo"]   # mixsum / mixn = batted-ball mix value (Mix wOBA), mx* = its balls by bucket (mxgb every ground ball, split by direction in mxgbp/c/o; mxx no direction); dnum = directional-xwOBA numerator; evs = that row's exit velocities (no bunts); trailing fields (older files lack them): bbt = typed balls in play, bip = all balls in play, evn = EV-eligible (tracked, no bunt)
 # The hitter card, grouped. key, label, higher-is-better, decimals, unit. Keys not in HITTER_METRICS are card-only.
 HITTER_CARD = [
     ("Outcomes",             [("woba", "wOBA", True, 3, ""), ("xws", "xwOBA", True, 3, ""), ("xwd", "dxwOBA", True, 3, "")]),
@@ -283,19 +283,20 @@ def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
     d["puh"] = bbt & d["bb_type"].eq("popup")
     d["fbh"] = bbt & d["bb_type"].eq("fly_ball")
     # Mix wOBA (Sean, 26 Sep 2026): each typed ball in play (bunts out) worth the dataset's average wOBA for its bucket — ground
-    # ball, popup, and line drives and fly balls each split pulled / straightaway / the other way — so a hitter's mix is
+    # balls, line drives and fly balls each split pulled / straightaway / the other way, and popups — so a hitter's mix is
     # priced by what the league does on it, not by how hard he hit it. Direction matters most in the air, which is the
     # whole point: a pulled fly ball is worth far more than one the other way. No direction on a ball → its type's value.
     dirn = np.where(pull_angle > PULL_LINE, "p", np.where(pull_angle < -PULL_LINE, "o", np.where(np.isnan(pull_angle), "x", "c")))
     bt = d["bb_type"].fillna("")
     kind = np.select([bt.eq("ground_ball"), bt.eq("popup"), bt.eq("line_drive"), bt.eq("fly_ball")], ["gb", "pu", "ld", "fb"], "")
-    d["mixb"] = np.where(np.isin(kind, ["ld", "fb"]), np.char.add(np.char.add(kind.astype(str), "_"), dirn.astype(str)), kind)
+    # ground balls split by direction too (Sean): a pulled grounder finds holes a rolled-over one to the other side doesn't
+    d["mixb"] = np.where(np.isin(kind, ["gb", "ld", "fb"]), np.char.add(np.char.add(kind.astype(str), "_"), dirn.astype(str)), kind)
     ev_ = d["events"].fillna("")
     bunt_ = d["des"].astype(str).str.contains("bunt", case=False) | ev_.str.contains("bunt")
     fin = d["bbt"] & ev_.ne("") & ~ev_.isin(EXCLUDE) & d["mixb"].ne("") & ~bunt_   # the PA-ending ball in play, no bunts
     wv = pd.to_numeric(d["woba_value"], errors="coerce").fillna(0.0).where(~ev_.isin(ZERO_NUM), 0.0)
     val = wv[fin].groupby(d["mixb"][fin]).mean()
-    for t in ("ld", "fb"):                                        # a ball with no direction: its type's average
+    for t in ("gb", "ld", "fb"):                                  # a ball with no direction: its type's average
         typ = fin & pd.Series(kind == t, index=d.index)
         if typ.any():
             val[f"{t}_x"] = float(wv[typ].mean())
@@ -309,10 +310,13 @@ def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
            "w": round(float(wnum_.sum()) / den, 4) if den else 0.0,
            "v": {k: round(float(v), 4) for k, v in val.items()}}
     d["mixn"] = fin.astype(int)
+    xs = d["mixb"].str.endswith("_x")
     for col, b in MIX_COLS.items():                               # each bucket's balls, for the Mix tab's shares
-        hit = d["mixb"].isin(["ld_x", "fb_x"]) if b == "x" else d["mixb"].eq(b)
+        hit = xs if b == "x" else d["mixb"].str.startswith("gb_") if b == "gb*" else d["mixb"].eq(b)
         d[col] = (fin & hit).astype(int)
     d["mixv"] = d["mixb"].map(MIX["v"]).where(fin, 0.0).fillna(0.0)
+    if (fin & xs).any():                                          # the no-direction row: what those balls are priced at
+        MIX["v"]["x"] = round(float(d["mixv"][fin & xs].mean()), 4)
     bunt = d["des"].astype(str).str.contains("bunt", case=False) | d["events"].astype(str).str.contains("bunt")
     d["bunt"] = bunt
     d["evb"] = bbe & ~bunt                                  # EV-eligible: tracked and not a bunt (Savant's Avg EV skips bunts)
