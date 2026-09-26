@@ -346,6 +346,10 @@ is deploy-limited.
 * **The list pages share the pattern** (Sean, 26 Sep 2026): Leaderboard, Trending, Rankings, Draft board, Fantasy,
   Eligibility and Compare put the same navy + spiral pattern behind the page (`body[data-mode=…]::before`, fixed) and
   gather `main.wrap` — filters, table, notes — into one white card with the player card's outline and shadow.
+  The card **stands still** (Sean: "I don't want the white box itself to scroll at all"): it fills the screen from under
+  the header to an 18px gap (10px on the phone), the page never scrolls, and only the rows' box (`.board-scroll`, Fantasy
+  `.fscroll`) moves — filters, pager and column header frozen above it. On the phone, Fantasy keeps the page scroll (its
+  filters would leave the table no room).
 * `hist/` files built before a field was appended to `HITTER_DAY`/`PITCHER_DAY` lack it; `app.js` checks
   `indexOf(...) < 0` before using one. Keep doing that.
 * **Fantasy Leaderboard / Trending** (Sean, 26 Sep 2026): the header menu is now just "Fantasy". Points total, per game,
