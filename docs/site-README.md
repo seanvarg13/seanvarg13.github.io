@@ -536,6 +536,11 @@ whether contact is a grounder, a popup or an air ball — combined the way uERA 
 and the model's whiff / strike / ground-ball / popup rates with what actually happened under each; each pitch graded
 **vs its pitch type** (100 = an average four-seamer for a four-seamer) or **vs all pitches**. Past seasons get it when rebuilt.
 
+**Pitching+ and Location+.** Pitching+ is the same three models with where the pitch crossed the plate and the count
+added — what each pitch earned where he threw it. Location+ = Pitching+ − Stuff+ + 100: what his command adds to (above
+100) or costs (below) his stuff. Both sit in the card's **Pitching** section and as columns on the Stuff tab (a pitch
+needs 40 thrown before its location grades show). The models train on this season and the two before.
+
 ## Hosting (a real link, on your phone)
 
 It is a static site, so any host works. The built-in way is **GitHub Pages** (free, no publishing quota — Netlify's
