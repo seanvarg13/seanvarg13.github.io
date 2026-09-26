@@ -246,7 +246,7 @@ moved into the popup while it is open (`PARKED` / `parkControls()`), so their li
 
 ## Stat glossary
 
-The wall of explanation under every list is two fold-outs: **Stat glossary**, one box per stat for whichever side
+The explanation under every list is two buttons at the foot of the card (right of the colour key) that open a window each: **Stat glossary**, one box per stat for whichever side
 of the ball the tab is on (`GLOSS` in `app.js` keyed by metric, drawn from the card groups so a new stat only needs
 a line in `GLOSS`), and **How this page works** for the eligibility / pools / splits / dates prose.
 
