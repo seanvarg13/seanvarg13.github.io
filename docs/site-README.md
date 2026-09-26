@@ -528,11 +528,13 @@ pitchers) each year under the chosen scoring, plus a total. Cycles and game-winn
 ## Stuff+ (pitchers)
 
 A pitch graded on what the ball does, not where it goes: velocity, spin, movement, release, extension, arm angle and its
-gap to his fastball. Two models, retrained at every build on this season and last — how often a swing misses it, and
+gap to his fastball. Three models, retrained at every build on this season and last — how often a swing misses it, how
+often it's a strike of any kind (called, swinging, foul, in play — which also carries walk avoidance, as uBB% does), and
 whether contact is a grounder, a popup or an air ball — combined the way uERA weighs them, so whiffs count the most.
-100 is average; each point is 1% of runs. On the card: **Stuff+** in the Stuff section (fold-outs **Whiff+** and
-**Batted-ball+**), and a **Stuff** tab with his arsenal pitch by pitch — use, velocity, IVB, HB, spin, the three grades,
-and the model's whiff / ground-ball / popup rates with what actually happened under each. Past seasons get it when rebuilt.
+100 is average; each point is 1% of runs. On the card: **Stuff+** in the Stuff section (fold-outs **Whiff+**,
+**Strike+** and **Batted-ball+**), and a **Stuff** tab with his arsenal pitch by pitch — use, velocity, IVB, HB, spin, the three grades,
+and the model's whiff / strike / ground-ball / popup rates with what actually happened under each; each pitch graded
+**vs its pitch type** (100 = an average four-seamer for a four-seamer) or **vs all pitches**. Past seasons get it when rebuilt.
 
 ## Hosting (a real link, on your phone)
 
