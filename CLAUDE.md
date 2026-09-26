@@ -21,7 +21,9 @@ This repo is **two things at once**:
 **The daily update is moving to GitHub Actions** so it runs whether or not the Mac is on:
 `.github/workflows/daily.yml` runs `tools/cloud_daily.py` at 4:45 New York time — the same build scripts from
 `tools/`, the same steps as the Mac's `daily_update.py`, published as a plain commit on top of `main` (never a
-force-push), with the download caches kept between runs. `tools/cloud.json` is the switch: `{"daily": true}` =
+force-push), with the download caches kept between runs. GitHub starts scheduled runs late on busy mornings (hours, sometimes), so the workflow has backup times
+through the morning and each scheduled run only goes if it is past 4:40 in New York and `data.js` isn't through
+yesterday yet. `tools/cloud.json` is the switch: `{"daily": true}` =
 the cloud publishes and the Mac's job and publisher stand down (they read the file from `main`); `false` = the Mac
 publishes and the schedule does nothing (a manual run still works: Actions → Daily update → Run workflow, with
 optional `steps`, `rescore` years and `dry`). The directional models are not in the repo: the Mac's publisher
@@ -216,6 +218,11 @@ Statcast/Directional toggle and the `xws` column are gone). The build still carr
 Strike%, GB% and Popup% shifted up to the majors by a fixed table per level, then uERA against that season's MLB pool.
 The table comes from `tools/models/milb_translate.py` (same-season pairs at two levels, 2021 on, reliability-corrected
 shifts, chained to MLB); re-run it by hand and paste the printed `MILB_X` when it goes stale.
+
+**Mix wOBA** (`mixw`, hitters; built in `pitch_flags()` / `build_hitters`, re-derived from `mixsum` / `mixn` day
+fields in a window): every typed ball in play at the dataset's average wOBA for its bucket (GB, PU, and LD / FB each
+pulled, straightaway or oppo), walks and strikeouts at the league's rates — the hitters' Mix ERA. Past seasons get it
+when rebuilt.
 
 **Mix ERA** (`mixERA`): the ERA his batted-ball distribution *alone* is worth — same league-value-per-type
 machinery, but K% and BB% held at the pool's, so it is the mix and nothing else. ~4.15 is average, lower is

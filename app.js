@@ -248,7 +248,11 @@
   // stats the card doesn't lead with but the player page's third panel does — percentiles are computed for them too
   const SIDE_H = [{ key: "pullp", label: "Pull%", hib: true, dec: 1, unit: "%" }, { key: "cent", label: "Cent%", hib: true, dec: 1, unit: "%" },
                   { key: "oppo", label: "Oppo%", hib: true, dec: 1, unit: "%" }, { key: "npull", label: "Non-pull%", hib: true, dec: 1, unit: "%" },
-                  { key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "strk", label: "Strike%", hib: false, dec: 1, unit: "%" }];
+                  { key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "strk", label: "Strike%", hib: false, dec: 1, unit: "%" },
+                  { key: "mixw", label: "Mix wOBA", hib: true, dec: 3, unit: "" }];
+  // Mix wOBA: his batted balls at the league's value for each (type × pulled / straightaway / the other way), walks and
+  // strikeouts at the league's rates — what his batted-ball distribution alone is worth (the hitters' Mix ERA)
+  const mixW = (sum, n) => { const x = K().mix; return x && n ? Math.round(1000 * (x.w + x.f * (sum / n - x.lg))) / 1000 : null; };
   const SIDE_P = [{ key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }];
   const ALL_H = union([...CARD, { metrics: Object.values(SUB).flat() }, { metrics: SIDE_H }], DATA.meta.hitterMetrics);
   const ALL_P = union([...CARD_P, { metrics: Object.values(SUB_P).flat() }, { metrics: SIDE_P }], DATA.meta.pitcherMetrics);
@@ -640,6 +644,7 @@
                    zmo: t.zpit && t.opit ? Math.round(10 * (100 * t.zsw / t.zpit - 100 * t.osw / t.opit)) / 10 : null,
                    con: t.sw ? Math.round(10 * (100 - 100 * t.whf / t.sw)) / 10 : null,
                    pullp: rate(t.pulln, bden), ld: rate(t.ld, bden), gb: rate(t.gbh, bden), pu: rate(t.puh, bden),
+                   mixw: t.mixn === undefined ? null : mixW(t.mixsum, t.mixn),
                    fb: rate((DS.airNoPU ? t.air : t.air - (t.puh || 0)) - t.ld, bden),
                    ev90: q90, maxev: hasEvs && evs.length ? evs[evs.length - 1] : null,
                    hh: rate(t.hh, bipn), ss: rate(t.ss, bipn), strk: rate(t.strk, t.pit), swing: rate(t.sw, t.pit), k: rate(t.k, t.pa), bb: rate(t.bb, t.pa) },
@@ -3387,6 +3392,7 @@
     gb: "Ground balls per ball in play.",
     pull: "Pull Air%: balls hit in the air to his pull side, per ball in play. This is where home-run power shows up before the home runs do.",
     pullp: "Every ball in play hit to his pull side, on the ground or in the air.",
+    mixw: "Mix wOBA: what his batted-ball distribution alone is worth. Every ball in play takes the league's average wOBA for its type and direction — ground balls, popups, and line drives and fly balls each pulled, straightaway or the other way — with walks and strikeouts at the league's rates. So it rewards the mix (pulled air balls above all), not how hard he hit them. About .315 is average.",
     oppo: "Balls in play hit the other way.",
     cent: "Balls in play hit up the middle.",
     npull: "Everything not pulled — centre and opposite field together.",
@@ -4114,7 +4120,7 @@
   // and a block break is a rule across the bars; the batted-ball tab is the site's batted-ball distribution.
   const EXTRA_H = [["Discipline", [["zsw", "osw", "swing"]]],
                    ["Contact", [["zcon", "ocon", "whf"]]],
-                   ["Batted ball", [["air", "pu", "gb", "pull"]]],
+                   ["Batted ball", [["mixw", "air", "pu", "gb", "pull"]]],
                    ["Quality", [["ev", "brl", "hh", "bs", "ev90", "maxev"]]]];
   const EXTRA_P = [["Run prev.", [["era", "kbb"], ["nera", "mera", "siera", "fip"]]],
                    ["K and BB", [["uk", "ubb", "ukb"], ["wsgp", "csw", "swstr"]]],
@@ -4678,11 +4684,11 @@
   const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],
                        ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],
-                       ["Batted-Ball Distribution", ["air", "pu", "gb", "pull"]]]];
+                       ["Batted-Ball Distribution", ["mixw", "air", "pu", "gb", "pull"]]]];
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
   const PCT_COLS_P = [[["Whiffs and Strikes", ["whf", "strk"]], ["Swing & Miss", ["k", "whf"]], ["Zone & Chase", ["bb", "strk", "zone", "osw"]]],
                       [["Results", ["kbb", "era"]], ["Batted Ball", ["gb", "pu", "mera"]], ["Stuff", ["fbv", "ext"]]]];
-  const OUTCOME_LABEL = { woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
+  const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%" };
   const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%" });   // a pitcher's O-Swing% is his chase rate
