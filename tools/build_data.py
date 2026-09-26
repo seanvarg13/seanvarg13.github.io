@@ -289,11 +289,14 @@ def stuff_features(d: pd.DataFrame) -> pd.DataFrame:
     f["relx"], f["relz"] = num("release_pos_x") * np.where(L, 1, -1), num("release_pos_z")
     f["ext"], f["arm"] = num("release_extension"), num("arm_angle")
     f["same"] = (d["stand"] == d["p_throws"]).astype(float)
-    # against his primary fastball: his most-thrown four-seamer, sinker or cutter in this data
+    # against his primary fastball that season: his most-thrown four-seamer, sinker or cutter (per season, so a
+    # training set spanning years compares each pitch with the fastball he had then)
+    yr = pd.to_datetime(d["game_date"]).dt.year.to_numpy()
     fb = d["pitch_type"].isin(["FF", "SI", "FC"]) & f.velo.notna() & f.ivb.notna()
-    x = pd.DataFrame({"pitcher": d["pitcher"], "pt": d["pitch_type"], "velo": f.velo, "ivb": f.ivb, "hb": f.hb})[fb]
-    top = x.groupby(["pitcher", "pt"]).size().reset_index(name="n").sort_values("n").groupby("pitcher").tail(1)
-    ref = x.merge(top[["pitcher", "pt"]], on=["pitcher", "pt"]).groupby("pitcher")[["velo", "ivb", "hb"]].mean().reindex(d["pitcher"].to_numpy())
+    x = pd.DataFrame({"pitcher": d["pitcher"], "yr": yr, "pt": d["pitch_type"], "velo": f.velo, "ivb": f.ivb, "hb": f.hb})[fb]
+    top = x.groupby(["pitcher", "yr", "pt"]).size().reset_index(name="n").sort_values("n").groupby(["pitcher", "yr"]).tail(1)
+    ref = (x.merge(top[["pitcher", "yr", "pt"]], on=["pitcher", "yr", "pt"]).groupby(["pitcher", "yr"])[["velo", "ivb", "hb"]].mean()
+           .reindex(pd.MultiIndex.from_arrays([d["pitcher"].to_numpy(), yr])))
     f["dvelo"], f["divb"], f["dhb"] = f.velo.to_numpy() - ref.velo.to_numpy(), f.ivb.to_numpy() - ref.ivb.to_numpy(), f.hb.to_numpy() - ref.hb.to_numpy()
     f.loc[f.pt.isna() | f.velo.isna() | f.ivb.isna()] = np.nan                        # untracked or unclassed: no grade
     return f
