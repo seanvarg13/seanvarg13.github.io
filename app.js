@@ -1652,7 +1652,7 @@
     if (grouped) { let seq = 0; for (const rows of groups) { runs.push([seq, seq + rows.length]); for (const [, i] of rows) at.set(i, seq++); } }
     const pg = pageWindow(list.length, grouped ? runs : null);
     const onPage = (i) => { const d = grouped ? at.get(i) : i; return d != null && d >= pg.start && d < pg.end; };
-    renderPager($("pagertop"), list.length, pg); renderPager($("pagerbot"), list.length, pg);
+    renderPager($("pagertop"), list.length, pg);   // no pager under the rows: the card stands still, so the top one is always in view (Sean)
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
     const emitRow = (p, i, rows, j) => {          // rows / j: the displayed section and his place in it (▲ ▼ swap with neighbours)
       const st = stats.get(p.type + p.id);
@@ -4177,7 +4177,9 @@
     const pg = pageWindow(shown.length);
     const pagerTop = el("div", "pager"), pagerBot = el("div", "pager");
     const redraw = () => renderFTable(box);
-    renderPager(pagerTop, shown.length, pg, redraw); renderPager(pagerBot, shown.length, pg, redraw);
+    renderPager(pagerTop, shown.length, pg, redraw);
+    // a pager under the rows only where the page itself scrolls (Fantasy on a phone); elsewhere the top one never leaves view
+    if (mobileView()) renderPager(pagerBot, shown.length, pg, redraw);
     wrap.append(pagerTop);
     const table = el("table", "ftable"), thead = el("thead"), tr = el("tr");
     tr.append(el("th", "n", document.documentElement.dataset.view === "mobile" ? "Rk" : "Rank"), el("th", "who", "Player"));
@@ -4204,7 +4206,7 @@
       tbody.append(trr);
     });
     table.append(tbody);
-    const scroll = el("div", "fscroll"); scroll.append(table); wrap.append(scroll, pagerBot);
+    const scroll = el("div", "fscroll"); scroll.append(table); wrap.append(scroll); if (mobileView()) wrap.append(pagerBot);
     fFloatHead(wrap, scroll, table);
     if (!shown.length) wrap.append(el("p", "xempty", "No players match."));
     const wtxt = Object.entries(P.w[f.grp]).filter(([, v]) => Number(v)).map(([k, v]) => `${k} ${v > 0 ? "+" : ""}${v}`).join(", ");
