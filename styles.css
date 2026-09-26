@@ -2695,3 +2695,13 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 .btab.on, .btab.on:hover, :root[data-view="mobile"] .btab.on { background: #fff; color: var(--rule); border-color: var(--rule); }
 /* on the white page the toolbar buttons' outline is the scheme's light blue, not white (Sean) */
 .tbtns .tbtn, :root[data-view="mobile"] .tbtns .tbtn, .tbtns .tbtn.on, :root[data-view="mobile"] .tbtns .tbtn.on { border-color: var(--accent-2); }
+
+/* Fantasy Leaderboard / Trending filters: dates or the trailing window, hand, venue, actual vs expected */
+.ffilters { padding-top: 0; }
+.ffilters .field input[type="date"] { height: 32px; border: 1px solid var(--hair); background: var(--surface); border-radius: 2px; padding: 0 8px; font-size: 13px; color: var(--ink); }
+:root[data-view="mobile"] .ffilters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+:root[data-view="mobile"] .ffilters .field { display: flex; flex-direction: column; align-items: stretch; gap: 2px; min-width: 0; }
+:root[data-view="mobile"] .ffilters .field input { width: 100%; min-width: 0; height: 38px; font-size: 16px; }
+:root[data-view="mobile"] .ffilters .seg { grid-column: 1 / -1; display: flex; }
+:root[data-view="mobile"] .ffilters .seg .segbtn { flex: 1 1 0; padding: 8px 4px; white-space: nowrap; }
+:root[data-view="mobile"] .ffilters .linkbtn { grid-column: 1 / -1; justify-self: start; }

@@ -3339,7 +3339,7 @@
       ["#leaderboard", "Leaderboard", "Every hitter or pitcher over your minimum, for any season and level — MLB from 2015, the minors from 2021 — with the stats you pick, plus splits, date ranges and last-N.", "Open Leaderboard"],
       ["#trending", "Trending Players", "Who's hot right now: hitters over their last N plate appearances or days, pitchers over their last N innings, ranked against the season's qualifiers on the same span.", "Open Trending"],
       ["#compare", "Compare", "Players side by side on the same stats — each on his own season, split or window.", "Open Compare"],
-      ["#fantasy", "Fantasy points", "ESPN scoring with your categories and point values: what every player is worth, and what changing the settings would do to the board.", "Open Fantasy"],
+      ["#fantasy", "Fantasy points", "Your scoring on every player: totals, per game, per at bat, per start and per week; expected points from xwOBA (hitters) and luck-neutral / underlying ERA (pitchers); any dates, vs LHP / RHP, home / away, and who's trending.", "Open Fantasy"],
     ]],
     ["Set up", [
       ["#appearance", "Appearance", "Colours, type and the mobile / desktop layout. Every device follows the site default until you pick something on it.", "Open Appearance"],
@@ -3443,7 +3443,7 @@
         else a.removeAttribute("aria-current");
       }
     }
-    document.title = { draft: "Sean's Site · Draft board", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", appearance: "Sean's Site · Appearance", fantasy: "Sean's Site · Fantasy points" }[state.mode] || "Sean's Site";
+    document.title = { draft: "Sean's Site · Draft board", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", appearance: "Sean's Site · Appearance", fantasy: "Sean's Site · Fantasy" }[state.mode] || "Sean's Site";
     const m = DATA.meta;
     const thr = new Date(m.through + "T12:00:00"); $("stamp").innerHTML = `through <b>${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</b>`; $("stamp").title = `${m.season} Statcast through ${m.through} (built ${m.built})`;
     const notes = $("notes"); notes.innerHTML = "";
@@ -3624,7 +3624,10 @@
   const fpresets = () => [ESPN_PRESET, ...fstore.presets];
   const fpreset = () => fpresets().find((p) => p.id === fstore.current) || ESPN_PRESET;
   const NOWIN = { from: "", to: "", last: "" };
-  state.f = Object.assign({ view: "points", grp: "H", pos: "ALL", year: String(DATA.meta.season), q: "", sort: null, dir: "desc", minH: 100, minP: 20, edit: null }, fstore.ui);
+  state.f = Object.assign({ view: "leaders", grp: "H", pos: "ALL", year: String(DATA.meta.season), q: "", sort: null, dir: "desc", minH: 100, minP: 20, edit: null,
+                            win: { from: "", to: "", last: "" }, hand: "all", venue: "all", basis: { H: "act", P: "act" },
+                            tr: { H: { unit: "pa", n: 100 }, P: { unit: "days", n: 30 } }, tmin: { H: 20, P: 5 } }, fstore.ui);
+  if (!["leaders", "trending", "whatif", "settings"].includes(state.f.view)) state.f.view = "leaders";   // the old Points / Per opportunity pages
   const FYEARS = [DATA.meta.season, DATA.meta.season - 1, DATA.meta.season - 2].map(String);
 
   const fData = (y) => window.DRAFT_FANTASY && window.DRAFT_FANTASY[y];
@@ -3717,6 +3720,245 @@
   }
   const rankOf = (vals, v, higher = true) => vals.filter((x) => x != null && (higher ? x > v : x < v)).length + 1;
 
+  // ----- Leaderboard and Trending: any date range, vs LHP / RHP, home / away; per game, AB, start, week; expected points -----
+  // Everything is summed from the official game logs (fantasy.js), so a range is the real box-score line. Home / away is
+  // on every game. Handedness isn't — a game has both — so each game's line is shared out by that day's Statcast rows
+  // against each hand: hits by his hits vs that side, total bases by total bases, runs and RBI by his wOBA production,
+  // steals by times on base, the rest by plate appearances (pitchers: batters faced). The two sides add back to the whole.
+  const isoOf = (n) => { const s = String(n); return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`; };
+  const ymdOf = (iso) => (iso ? Number(iso.replace(/-/g, "")) : 0);
+  const weekOf = (n) => Math.floor((Date.UTC(Math.floor(n / 1e4), Math.floor(n / 100) % 100 - 1, n % 100) / 864e5 + 3) / 7);   // Monday to Sunday
+  const FSH = { H: { PA: "pa", AB: "ab", H: "h", TB: "tb", HR: "hr", "2B": "xb", "3B": "xb", R: "wnum", RBI: "wnum", GWRBI: "wnum", BB: "bb", IBB: "bb", K: "k", SB: "ob", CS: "ob" },
+                P: { OUTS: "outs", BF: "bf", AB: "bf", K: "k", BB: "bb", IBB: "bb", HBP: "hbp", HR: "hr", H: "h", TB: "h", ER: "wnum", R: "wnum" } };
+  const FKEEP = new Set(["date", "HOME", "G", "GS"]);
+  function fGamesOf(F, grp, id) {
+    if (grp === "P") { const r = F.pitchers[id]; return r && F.gk.includes("HOME") ? r.g.map((g) => fGame(F, g)) : null; }
+    const rows = F.hg && F.hg[id]; if (!rows) return null;
+    return rows.map((row) => {
+      const o = { G: 1 }; F.hgk.forEach((k, i) => { o[k] = row[i] || 0; });
+      o.CYC = o.H - o["2B"] - o["3B"] - o.HR > 0 && o["2B"] && o["3B"] && o.HR ? 1 : 0;
+      return o;
+    });
+  }
+  function fDerive(o, grp) {
+    if (grp === "H") { o["1B"] = o.H - o["2B"] - o["3B"] - o.HR; o.XBH = o["2B"] + o["3B"] + o.HR; o.OUT = o.AB - o.H; o.SBN = o.SB - o.CS; }
+    else { o.IP = o.OUTS / 3; o.OUT = o.OUTS; o.SVHD = o.SV + o.HD; }
+    return o;
+  }
+  function fSum(games, grp) {
+    const o = {}; for (const g of games) for (const k in g) if (k !== "date" && k !== "HOME") o[k] = (o[k] || 0) + g[k];
+    for (const k of (grp === "H" ? ["G", "PA", "AB", "H", "TB", "R", "RBI", "BB", "K", "SB", "CS", "2B", "3B", "HR"] : ["G", "GS", "OUTS", "SV", "HD", "BF", "K", "BB", "H", "ER"])) o[k] = o[k] || 0;
+    return fDerive(o, grp);
+  }
+  // his Statcast rows summed per game day: {yyyymmdd: {a: every hand, s: the chosen hand}}; key 0 when the file has no dates
+  function fDayShares(ds, p, hand) {
+    const hv = hand === "R" ? 1 : 0, f = DF[p.type], ix = (k) => f.indexOf(k);
+    const keys = p.type === "P" ? ["bf", "outs", "k", "bb", "hbp", "hr", "h", "wnum", "wbip"] : ["pa", "ab", "h", "tb", "hr", "bb", "k", "wnum"];
+    const dated = !!ds.days;
+    const rows = withDataset(ds, () => withWindow(dated ? { from: ds.days[0], to: "", last: "" } : NOWIN, () => ds.rows(p))) || [];
+    const out = new Map();
+    for (const row of rows) {
+      const d = dated ? ymdOf(ds.days[row[0]]) : 0;
+      let e = out.get(d); if (!e) { e = { a: {}, s: {} }; out.set(d, e); }
+      for (const k of keys) { const i = ix(k); if (i < 0 || row[i] === undefined) continue; e.a[k] = (e.a[k] || 0) + row[i]; if (row[1] === hv) e.s[k] = (e.s[k] || 0) + row[i]; }
+    }
+    for (const e of out.values()) for (const t of [e.a, e.s]) {
+      t.xb = (t.tb || 0) - (t.h || 0); t.ob = (t.h || 0) + (t.bb || 0);
+      if (p.type === "P" && t.h === undefined) t.h = t.wbip;          // files built before hits were on the rows
+      if (t.hr === undefined) t.hr = p.type === "P" ? t.h : t.xb;
+    }
+    return out;
+  }
+  function fHandScale(games, grp, shares) {
+    const base = grp === "H" ? "pa" : "bf", map = FSH[grp], out = [];
+    for (const g of games) {
+      const sh = shares.get(shares.has(0) ? 0 : g.date); if (!sh) continue;
+      const bs = sh.a[base] ? (sh.s[base] || 0) / sh.a[base] : 0;
+      if (!bs) continue;                                                // never faced that side that day
+      const n = Object.assign({}, g);
+      for (const k in g) {
+        if (FKEEP.has(k) || !g[k]) continue;
+        const c = map[k], a = c && sh.a[c];
+        n[k] = g[k] * (a ? (sh.s[c] || 0) / a : bs);
+      }
+      out.push(grp === "P" ? fDerive(n, "P") : n);
+    }
+    return out;
+  }
+  // his window: date range and venue, then the hand split, then (Trending) the fewest latest games that reach N PA / IP
+  function fWindow(games, grp, spec, shares) {
+    let g = games.filter((x) => (spec.venue === "all" || x.HOME === (spec.venue === "home" ? 1 : 0)) && (!spec.lo || x.date >= spec.lo) && (!spec.hi || x.date <= spec.hi));
+    if (spec.hand !== "all") g = fHandScale(g, grp, shares);
+    if (spec.last) {
+      const k = grp === "H" ? "PA" : "OUTS", need = grp === "H" ? spec.last : 3 * spec.last, pick = [];
+      let acc = 0;
+      for (let i = g.length - 1; i >= 0 && acc < need; i--) { pick.push(g[i]); acc += g[i][k]; }
+      g = pick.reverse();
+    }
+    return g;
+  }
+  // hits and total bases at his expected rates over the same at bats, the extra-base mix scaled to hit both
+  function fXHits(o, xba, xslg) {
+    const xH = xba * o.AB, xTB = xslg * o.AB;
+    const s1 = o["1B"], xb = o.XBH, tbx = 2 * o["2B"] + 3 * o["3B"] + 4 * o.HR;
+    let f = tbx !== xb ? (xTB - xH) / (tbx - xb) : 1, g = s1 ? (xH - f * xb) / s1 : 1;
+    f = Math.max(0, f); g = Math.max(0, g);
+    return Object.assign({}, o, { H: xH, TB: xTB, "1B": g * s1, "2B": f * o["2B"], "3B": f * o["3B"], HR: f * o.HR, XBH: f * xb, OUT: o.AB - xH, GSHR: f * (o.GSHR || 0) });
+  }
+  // Expected hitter points: hits and total bases from the directional xBA / xSLG; runs and RBI moved by his xwOBA over his
+  // wOBA (run production follows the quality of the whole line, and the model can't place runners); walks, strikeouts
+  // and steals as they happened
+  function fXLine(o, pv) {
+    const m = pv.m; if (m.dxba == null || m.dxslg == null || !o.AB) return null;
+    const n = fXHits(o, m.dxba, m.dxslg);
+    const rr = m.xwd != null && m.woba ? Math.min(2, Math.max(0.5, m.xwd / m.woba)) : 1;
+    n.R = o.R * rr; n.RBI = o.RBI * rr; n.GWRBI = (o.GWRBI || 0) * rr;
+    n.why = { xba: m.dxba, xslg: m.dxslg, xw: m.xwd, woba: m.woba, rr };
+    return n;
+  }
+  // a pitcher's expected line spread back over his games (so per start still works): each category scaled by the
+  // window's ratio; a category he had none of is shared out by outs
+  function fSpread(o, n, games) {
+    const keys = Object.keys(n).filter((k) => k !== "why" && typeof n[k] === "number" && n[k] !== o[k]);
+    return games.map((g) => {
+      const x = Object.assign({}, g);
+      for (const k of keys) x[k] = o[k] ? g[k] * n[k] / o[k] : (o.OUTS ? n[k] * g.OUTS / o.OUTS : 0);
+      x.R = g.R + (x.ER - g.ER);
+      return x;
+    });
+  }
+  // Pitchers, two ways. Luck-neutral (nPts): strikeouts and walks as they happened, earned runs at his luck-neutral ERA,
+  // hits / homers / total bases moved by what his balls in play were worth at league value for their type against what
+  // they actually produced. Underlying (uPts): on top of that, strikeouts and walks at uK% / uBB% over the same batters,
+  // earned runs at his uERA, and hits scaled to the balls in play those rates leave.
+  function fPLines(o, pv, u) {
+    const c = K(), bbl = (pv.ctx || {}).bbl;
+    let br = 1;
+    if (bbl && c.bbw) {
+      let act = 0, neu = 0;
+      for (const t of ["gb", "ld", "fb", "pu"]) { const [cnt, w] = bbl[t] || [0, null]; if (!cnt || w == null) continue; act += cnt * w; neu += cnt * c.bbw[t]; }
+      if (act > 0) br = neu / act;
+    }
+    const nera = pv.m.nera;
+    const N = nera == null || !o.IP ? null : Object.assign({}, o, { ER: nera * o.IP / 9, H: o.H * br, HR: o.HR * br, TB: (o.TB || 0) * br });
+    if (N) { N.R = o.R + N.ER - o.ER; N.why = { nera, br }; }
+    let U = null;
+    if (u && u.ukbb && u.uera != null && o.BF && o.IP) {
+      const k = u.ukbb.k / 100 * o.BF, bb = u.ukbb.bb / 100 * o.BF, hbp = o.HBP || 0;
+      const bip = Math.max(1, o.BF - o.K - o.BB - hbp), bipU = Math.max(0, o.BF - k - bb - hbp), hf = br * bipU / bip;
+      U = Object.assign({}, o, { K: k, BB: bb, ER: u.uera * o.IP / 9, H: o.H * hf, HR: o.HR * hf, TB: (o.TB || 0) * hf });
+      U.R = o.R + U.ER - o.ER; U.why = { uk: u.ukbb.k, ubb: u.ukbb.bb, uera: u.uera };
+    }
+    return { N, U };
+  }
+  const fSpec = () => {
+    const f = state.f, tr = f.view === "trending", t = tr ? f.tr[f.grp] : null;
+    return { lo: tr ? 0 : ymdOf(f.win.from), hi: tr ? 0 : ymdOf(f.win.to), hand: f.hand, venue: f.venue,
+             last: tr && t.unit !== "days" ? Math.max(1, Math.round(Number(t.n) || 1)) : 0, days: tr && t.unit === "days" ? Math.max(1, Math.round(Number(t.n) || 1)) : 0 };
+  };
+  const fFiltered = (spec) => !!(spec.lo || spec.hi || spec.last || spec.days || spec.hand !== "all" || spec.venue !== "all");
+  const fLeadCache = new Map();
+  // every player's line for the Leaderboard / Trending view in effect: {rows} or {wait: "why"}
+  function fLeadRows(y, grp) {
+    const F = fData(y), ds = histDataset(fDsKey(y)); if (!F || !ds) return { wait: "Loading…" };
+    const spec = fSpec(), filt = fFiltered(spec), P = fpreset(), w = P.w[grp];
+    if (grp === "H" && !F.hg) return { wait: `The ${y} fantasy file predates game logs — it is rebuilt by the next fantasy build.` };
+    if (grp === "P" && !F.gk.includes("HOME")) return { wait: `The ${y} fantasy file predates home / away game logs — it is rebuilt by the next fantasy build.` };
+    if (spec.days) { const end = ds.days ? ds.days[ds.days.length - 1] : String(F.through).slice(0, 10); spec.lo = ymdOf(addDays(/^\d{4}-/.test(end) ? end : `${y}-11-30`, 1 - spec.days)); }
+    if (filt && ds.days) { const ready = withDataset(ds, () => withWindow({ from: ds.days[0], to: "", last: "" }, () => ds.ready())); if (!ready) { withDataset(ds, () => withWindow({ from: ds.days[0], to: "", last: "" }, () => ds.load())); return { wait: "Loading the game-by-game file…" }; } }
+    const sig = [y, grp, JSON.stringify(spec), JSON.stringify(w), state.f.view, ds.key, !!window.DRAFT_DAYS].join("|");
+    if (fLeadCache.has(sig)) return fLeadCache.get(sig);
+    const out = [];
+    withDataset(ds, () => {
+      const plS = grp === "P" ? withWindow(NOWIN, () => withSplit(NONE, () => pool("P"))) : null;
+      const common = { from: spec.lo ? isoOf(spec.lo) : "", to: spec.hi ? isoOf(spec.hi) : "", last: "" };
+      for (const p of ds.players) {
+        if (p.type !== grp) continue;
+        const S = grp === "H" ? fHit(F, p.id) : fPit(F, p.id), all = fGamesOf(F, grp, p.id);
+        if (!S || !all) continue;
+        const games = filt ? fWindow(all, grp, spec, spec.hand !== "all" ? fDayShares(ds, p, spec.hand) : null) : all;
+        if (!games.length) continue;
+        let o;
+        if (!filt) o = Object.assign({}, S);
+        else {                                                   // season-only categories (grand slams; older files' extras) pro-rated
+          o = fSum(games, grp);
+          const base = grp === "H" ? "PA" : "OUTS";
+          for (const k in S) if (o[k] === undefined && typeof S[k] === "number") { const b = k === "GSHR" ? "HR" : base; o[k] = S[b] ? S[k] * (o[b] || 0) / S[b] : 0; }
+          fDerive(o, grp);
+          if (grp === "P") { o.QS = sum(games, "QS"); o.RW = sum(games, "RW"); o.RL = sum(games, "RL"); o.NH = sum(games, "NH"); o.PG = sum(games, "PG"); }
+        }
+        const r = { p, o, S, games, weeks: new Set(games.map((g) => weekOf(g.date))).size, pts: fPts(w, o) };
+        if (spec.last || spec.days) { r.szn = S.G ? fPts(w, S) / S.G : null; }
+        // his Statcast line over the same games, for the expected numbers
+        const win = spec.last || spec.days ? { from: isoOf(games[0].date), to: "", last: "" } : common;
+        const sp = { hand: spec.hand, venue: spec.venue };
+        const pv = withWindow(filt ? win : NOWIN, () => withSplit(filt ? sp : NONE, () => V(p)));
+        if (grp === "H") {
+          const x = fXLine(o, pv); r.x = x ? { o: x, pts: fPts(w, x) } : null;
+        } else {
+          r.starts = games.filter((g) => g.GS); r.relief = games.filter((g) => !g.GS);
+          r.ptsS = r.starts.reduce((s, g) => s + fPts(w, g), 0); r.ptsR = r.relief.reduce((s, g) => s + fPts(w, g), 0);
+          let u = null;
+          if (!filt) { const st = plS.stats.get("P" + p.id); if (st) u = { ukbb: st.ukbb, uera: st.uera }; }
+          else if (pv.m.strk != null && plS.sorted.strk) { const ik = impliedKBB(pv, insertPct(plS.sorted.strk, pv.m.strk), plS.sorted); u = { ukbb: ik, uera: underlyingERA(pv, ik, plS.sorted) }; }
+          const { N, U } = fPLines(o, pv, u);
+          for (const [key, L] of [["n", N], ["u", U]]) {
+            if (!L) { r[key] = null; continue; }
+            const gs = fSpread(o, L, games), st = gs.filter((g) => g.GS);
+            r[key] = { o: L, pts: fPts(w, L), ptsS: st.reduce((s, g) => s + fPts(w, g), 0) };
+          }
+        }
+        out.push(r);
+      }
+    });
+    const res = { rows: out, spec };
+    fLeadCache.set(sig, res);
+    if (fLeadCache.size > 12) fLeadCache.delete(fLeadCache.keys().next().value);
+    return res;
+  }
+  function fLeadCols(grp, basis, trending) {
+    const num = (get, fmt, opts = {}) => Object.assign({ get, fmt, num: true }, opts);
+    const f3 = (x) => (x == null ? "–" : x.toFixed(3));
+    const o = (k, fmt = f0) => num((r) => r.o[k], fmt);
+    const ln = (r, b) => (b ? r[b] : r);                         // the actual line, or an expected one
+    const pre = { "": "", x: "x", n: "n", u: "u" };
+    const tot = (b) => [`${pre[b]}Pts`, num((r) => (ln(r, b) ? ln(r, b).pts : null), f1, { paint: true })];
+    const perG = (b) => [`${pre[b]}Pts/G`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.o.G) : null), f2, { paint: true, title: grp === "P" ? "Points per appearance" : "Points per game" })];
+    const perAB = (b) => [`${pre[b]}Pts/AB`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.o.AB) : null), f3, { paint: true })];
+    const perPA = (b) => [`${pre[b]}Pts/PA`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.o.PA) : null), f3, { paint: true })];
+    const perWk = (b) => [`${pre[b]}Pts/Wk`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.weeks) : null), f1, { paint: true, title: "Points per week he played (Monday to Sunday weeks with at least one game)" })];
+    const perGS = (b) => [`${pre[b]}Pts/GS`, num((r) => (ln(r, b) && r.starts.length ? ln(r, b).ptsS / r.starts.length : null), f2, { paint: true, title: "Points per start" })];
+    const perIP = (b) => [`${pre[b]}Pts/IP`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.o.IP) : null), f2, { paint: true })];
+    const delta = (b) => ["Δ", num((r) => (r[b] ? r[b].pts - r.pts : null), fDelta, { paint: true, title: "Expected points minus actual" })];
+    const arrow = (lab, k, b, dec = 0) => [lab, { get: (r) => `${dec ? r.o[k].toFixed(dec) : Math.round(r.o[k])} → ${r[b] ? (dec ? r[b].o[k].toFixed(dec) : f0(r[b].o[k])) : "–"}` }];
+    const why = (lab, b, k, fmt, opts) => [lab, num((r) => (r[b] ? r[b].o.why[k] : null), fmt, opts)];
+    const wk = ["Wks", num((r) => r.weeks, f0, { title: "Weeks with at least one game" })];
+    const cols = [];
+    if (grp === "H") {
+      const line = [["G", o("G")], ["PA", o("PA")], ["AB", o("AB")]];
+      if (basis === "x") cols.push(tot("x"), perG("x"), perAB("x"), perWk("x"), tot(""), delta("x"), arrow("H → xH", "H", "x"), arrow("TB → xTB", "TB", "x"),
+        arrow("R → xR", "R", "x"), arrow("RBI → xRBI", "RBI", "x"), why("xBA", "x", "xba", (x) => fmtX(x)), why("xSLG", "x", "xslg", (x) => fmtX(x)),
+        why("xwOBA", "x", "xw", (x) => fmtX(x)), why("wOBA", "x", "woba", (x) => fmtX(x)), ...line);
+      else if (basis === "both") cols.push(tot(""), tot("x"), delta("x"), perG(""), perG("x"), perAB(""), perAB("x"), perWk(""), perWk("x"), ...line, wk);
+      else cols.push(tot(""), perG(""), perAB(""), perPA(""), perWk(""), ...line, wk, ["R", o("R")], ["HR", o("HR")], ["RBI", o("RBI")], ["SB", o("SB")], ["BB", o("BB")], ["K", o("K")],
+        ["AVG", num((r) => div(r.o.H, r.o.AB), (x) => fmtX(x))], ["OBP", num((r) => div(r.o.H + r.o.BB + r.o.HBP, r.o.AB + r.o.BB + r.o.HBP + r.o.SF), (x) => fmtX(x))],
+        ["SLG", num((r) => div(r.o.TB, r.o.AB), (x) => fmtX(x))]);
+    } else {
+      const line = [["G", o("G")], ["GS", o("GS")], ["IP", num((r) => r.o.IP, (x) => fmtIP(x))]];
+      if (basis === "n") cols.push(tot("n"), perG("n"), perGS("n"), perIP("n"), perWk("n"), tot(""), delta("n"), arrow("H → nH", "H", "n"), arrow("ER → nER", "ER", "n"),
+        ["ERA", num((r) => div(r.o.ER * 9, r.o.IP), f2, { low: true })], why("nERA", "n", "nera", f2, { low: true }), ...line);
+      else if (basis === "u") cols.push(tot("u"), perG("u"), perGS("u"), perIP("u"), perWk("u"), tot(""), delta("u"), arrow("K → uK", "K", "u"), arrow("BB → uBB", "BB", "u"),
+        arrow("ER → uER", "ER", "u"), why("uK%", "u", "uk", f1), why("uBB%", "u", "ubb", f1, { low: true }), why("uERA", "u", "uera", f2, { low: true }), ...line);
+      else if (basis === "all") cols.push(tot(""), tot("n"), tot("u"), perG(""), perG("n"), perG("u"), perGS(""), perGS("n"), perGS("u"), perWk(""), perWk("n"), perWk("u"), ...line);
+      else cols.push(tot(""), perG(""), perGS(""), ["Pts/RP", num((r) => (r.relief.length ? r.ptsR / r.relief.length : null), f2, { paint: true, title: "Points per relief appearance" })],
+        perIP(""), perWk(""), ...line, wk, ["W", o("W")], ["SV", o("SV")], ["HD", o("HD")], ["K", o("K", f0)], ["BB", o("BB", f0)], ["H", o("H", f0)], ["ER", o("ER", f0)],
+        ["ERA", num((r) => div(r.o.ER * 9, r.o.IP), f2, { low: true })], ["WHIP", num((r) => div(r.o.H + r.o.BB, r.o.IP), f2, { low: true })], ["QS", o("QS", f0)]);
+    }
+    if (trending) cols.splice(2, 0, ["Szn Pts/G", num((r) => r.szn, f2, { title: "Points per game over his whole season" })],
+      ["Trend", num((r) => (r.szn == null ? null : div(r.pts, r.o.G) - r.szn), (x) => (x == null ? "–" : (x >= 0 ? "+" : "") + x.toFixed(2)), { paint: true, title: "Points per game in the window minus his season rate" })]);
+    return cols.map(([label, c]) => Object.assign({ label }, c));
+  }
+
   // ----- page -----
   function renderFantasy() {
     const box = $("fboard"); box.innerHTML = "";
@@ -3724,7 +3966,7 @@
     fEnsure(y);
     // sub-nav
     const nav = el("nav", "subnav fsubnav");
-    for (const [v, l] of [["points", "Points"], ["advanced", "Per opportunity"], ["whatif", "What if"], ["settings", "Scoring settings"]]) {
+    for (const [v, l] of [["leaders", "Leaderboard"], ["trending", "Trending"], ["whatif", "What if"], ["settings", "Scoring settings"]]) {
       const a = el("a", null, l); a.href = `#fantasy/${v}`; if (v === f.view) a.setAttribute("aria-current", "page"); nav.append(a);
     }
     box.append(nav);
@@ -3747,11 +3989,13 @@
     const q = el("input"); q.type = "search"; q.placeholder = "Search name or team"; q.value = f.q; q.className = "fq";
     q.addEventListener("input", () => { f.q = q.value; renderFTable(box); });
     bar.append(q);
+    const tr = f.view === "trending";
     const mn = el("label", "field"); mn.append(el("span", null, f.grp === "H" ? "Min PA" : "Min IP"));
-    const mi = el("input"); mi.type = "number"; mi.min = 0; mi.step = f.grp === "H" ? 10 : 5; mi.value = f.grp === "H" ? f.minH : f.minP; mi.inputMode = "numeric";
-    mi.addEventListener("change", () => { if (f.grp === "H") f.minH = Math.max(0, Number(mi.value) || 0); else f.minP = Math.max(0, Number(mi.value) || 0); fUi(); renderFTable(box); });
+    const mi = el("input"); mi.type = "number"; mi.min = 0; mi.step = f.grp === "H" ? (tr ? 5 : 10) : tr ? 1 : 5; mi.value = tr ? f.tmin[f.grp] : f.grp === "H" ? f.minH : f.minP; mi.inputMode = "numeric";
+    mi.addEventListener("change", () => { const v = Math.max(0, Number(mi.value) || 0); if (tr) f.tmin[f.grp] = v; else if (f.grp === "H") f.minH = v; else f.minP = v; fUi(); renderFTable(box); });
     mn.append(mi); bar.append(mn);
     box.append(bar);
+    if (f.view === "leaders" || tr) box.append(fFilterBar(box));
     // position tabs
     const tabs = el("div", "postabs ftabs"); tabs.setAttribute("role", "tablist");
     const tabList = f.grp === "H" ? HIT_TABS : PIT_TABS;
@@ -3765,7 +4009,53 @@
     box.append(el("p", "note fnote"));
     renderFTable(box);
   }
-  const fUi = () => { fstore.ui = { view: state.f.view, grp: state.f.grp, pos: state.f.pos, year: state.f.year, minH: state.f.minH, minP: state.f.minP }; fsave(); };
+  const fUi = () => { const f = state.f; fstore.ui = { view: f.view, grp: f.grp, pos: f.pos, year: f.year, minH: f.minH, minP: f.minP, win: f.win, hand: f.hand, venue: f.venue, basis: f.basis, tr: f.tr, tmin: f.tmin }; fsave(); };
+  // the Leaderboard / Trending filter row: dates (or the trailing window), vs LHP / RHP, home / away, actual or expected
+  function fFilterBar(box) {
+    const f = state.f, pit = f.grp === "P", row = el("div", "fbar ffilters");
+    const redo = () => { f.sort = null; fUi(); renderFantasy(); };
+    const seg = (aria, opts, cur, set) => {
+      const s = el("div", "seg"); s.setAttribute("role", "group"); s.setAttribute("aria-label", aria);
+      for (const [v, l] of opts) { const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(v === cur)); b.addEventListener("click", () => { if (v !== cur) { set(v); redo(); } }); s.append(b); }
+      return s;
+    };
+    if (f.view === "trending") {
+      const t = f.tr[f.grp];
+      row.append(seg("Window", pit ? [["ip", "Last N IP"], ["days", "Last N days"]] : [["pa", "Last N PA"], ["days", "Last N days"]], t.unit, (v) => { t.unit = v; t.n = v === "days" ? 14 : pit ? 30 : 100; }));
+      const lab = el("label", "field"); lab.append(el("span", null, t.unit === "days" ? "Days" : pit ? "IP" : "PA"));
+      const ni = el("input"); ni.type = "number"; ni.min = 1; ni.inputMode = "numeric"; ni.value = t.n;
+      ni.addEventListener("change", () => { t.n = Math.max(1, Math.round(Number(ni.value) || 1)); fUi(); renderFTable(box); });
+      lab.append(ni); row.append(lab);
+    } else {
+      const ds = histDataset(fDsKey(f.year)), days = ds && ds.days;
+      for (const [k, l] of [["from", "From"], ["to", "To"]]) {
+        const lab = el("label", "field fdate"); lab.append(el("span", null, l));
+        const i = el("input"); i.type = "date"; i.value = f.win[k] || ""; i.min = days ? days[0] : `${f.year}-03-01`; i.max = days ? days[days.length - 1] : `${f.year}-11-30`;
+        i.addEventListener("change", () => { f.win[k] = i.value || ""; fUi(); renderFTable(box); });
+        lab.append(i); row.append(lab);
+      }
+      if (f.win.from || f.win.to) { const c = el("button", "linkbtn", "Full season"); c.type = "button"; c.addEventListener("click", () => { f.win = { from: "", to: "", last: "" }; redo(); }); row.append(c); }
+    }
+    row.append(seg("Handedness", [["all", "All"], ["L", pit ? "vs LHB" : "vs LHP"], ["R", pit ? "vs RHB" : "vs RHP"]], f.hand, (v) => { f.hand = v; }));
+    row.append(seg("Venue", [["all", "All"], ["home", "Home"], ["away", "Away"]], f.venue, (v) => { f.venue = v; }));
+    row.append(seg("Points", pit ? [["act", "Actual"], ["n", "Luck-neutral"], ["u", "Underlying"], ["all", "All three"]] : [["act", "Actual"], ["x", "Expected"], ["both", "Both"]],
+                   f.basis[f.grp], (v) => { f.basis[f.grp] = v; }));
+    return row;
+  }
+  function fLeadNote(P, wtxt, y, F, spec, n) {
+    const f = state.f, pit = f.grp === "P", fmtN = (d) => fmtDate(isoOf(d));
+    const win = spec.last ? `each ${pit ? "pitcher" : "hitter"}'s last ${spec.last} ${pit ? "IP" : "PA"}` : spec.days ? `the last ${spec.days} days (since ${fmtN(spec.lo)})`
+      : spec.lo || spec.hi ? `${spec.lo ? fmtN(spec.lo) : "opening day"} – ${spec.hi ? fmtN(spec.hi) : "the latest game"}` : "the full season";
+    const split = [spec.hand !== "all" ? `vs ${spec.hand}H${pit ? "B" : "P"}` : "", spec.venue !== "all" ? spec.venue : ""].filter(Boolean).join(", ");
+    const parts = [`${P.name}: ${wtxt || "no categories scored"}.`,
+      `${y} official game logs through ${F.through}, ${win}${split ? ", " + split : ""}; ${n} ${pit ? "pitchers" : "hitters"} with ${f.view === "trending" ? `${f.tmin[f.grp]}+ ${pit ? "IP" : "PA"} in it` : `${pit ? f.minP : f.minH}+ ${pit ? "IP" : "PA"} on the season`}.`,
+      "Per week = points over the Monday-to-Sunday weeks he played in (at least one game)."];
+    if (spec.hand !== "all") parts.push(`Handedness isn't in a box score, so each game's line is shared out by that day's Statcast plate appearances against each side (hits by hits, total bases by total bases, runs and RBI by wOBA production, steals by times on base, the rest by ${pit ? "batters faced" : "plate appearances"}); per game counts the games he faced that side.`);
+    if (!pit && f.basis.H !== "act") parts.push("Expected (xPts): hits and total bases at his directional xBA / xSLG over the same at bats, the extra-base mix scaled to hit both; runs and RBI moved by his xwOBA ÷ wOBA (production drives both, and the model can't place runners); walks, strikeouts and steals as they happened.");
+    if (pit && f.basis.P !== "act") parts.push("Luck-neutral (nPts): strikeouts and walks as they happened, earned runs at his luck-neutral ERA, hits / homers / total bases moved by what his balls in play were worth at league value for their type against what they produced. Underlying (uPts): the same, with strikeouts and walks at his uK% / uBB% and earned runs at his uERA, hits scaled to the balls in play those rates leave. Wins, saves, holds and quality starts as they happened; per start spreads each category over his starts by the same ratios.");
+    if (f.view === "trending") parts.push("Trend = points per game in the window minus his season rate.");
+    return parts.join(" ");
+  }
 
   function fColumns(view, grp) {
     const P = fpreset(), teams = P.teams || 10;
@@ -3773,16 +4063,7 @@
     const cols = [];
     if (grp === "H") {
       const o = (k, fmt = f0) => num((r) => r.o[k], fmt);
-      if (view === "points") cols.push(
-        ["Pts", num((r) => r.pts, f1, { paint: true })], ["Pts/G", num((r) => div(r.pts, r.o.G), f2, { paint: true })],
-        ["G", o("G")], ["PA", o("PA")], ["AB", o("AB")], ["H", o("H")], ["R", o("R")], ["HR", o("HR")], ["RBI", o("RBI")], ["SB", o("SB")], ["BB", o("BB")], ["K", o("K")],
-        ["AVG", num((r) => div(r.o.H, r.o.AB), (x) => fmtX(x))], ["OBP", num((r) => { const d = r.o.AB + r.o.BB + r.o.HBP + r.o.SF; return div(r.o.H + r.o.BB + r.o.HBP, d); }, (x) => fmtX(x))],
-        ["SLG", num((r) => div(r.o.TB, r.o.AB), (x) => fmtX(x))], ["OPS", num((r) => { const d = r.o.AB + r.o.BB + r.o.HBP + r.o.SF; const obp = div(r.o.H + r.o.BB + r.o.HBP, d), slg = div(r.o.TB, r.o.AB); return obp == null || slg == null ? null : obp + slg; }, (x) => fmtX(x))]);
-      else if (view === "advanced") cols.push(
-        ["Pts", num((r) => r.pts, f1, { paint: true })], ["Pts/G", num((r) => div(r.pts, r.o.G), f2, { paint: true })],
-        ["Pts/PA", num((r) => div(r.pts, r.o.PA), (x) => (x == null ? "–" : x.toFixed(3)), { paint: true })], ["Pts/AB", num((r) => div(r.pts, r.o.AB), (x) => (x == null ? "–" : x.toFixed(3)), { paint: true })],
-        ["Pts per 600 PA", num((r) => (r.o.PA ? r.pts / r.o.PA * 600 : null), f0, { paint: true })], ["PA/G", num((r) => div(r.o.PA, r.o.G), f2)], ["G", o("G")], ["PA", o("PA")], ["AB", o("AB")]);
-      else cols.push(
+      cols.push(
         ["Pts", num((r) => r.pts, f1)], ["xPts", num((r) => r.npts, f1, { paint: true, title: "Points with hits and total bases at his expected (xBA / xSLG) rates, same PA" })], ["Δ", num((r) => (r.npts == null ? null : r.npts - r.pts), fDelta, { paint: true })],
         ["Pts/PA", num((r) => div(r.pts, r.o.PA), (x) => (x == null ? "–" : x.toFixed(3)))], ["xPts/PA", num((r) => div(r.npts, r.o.PA), (x) => (x == null ? "–" : x.toFixed(3)), { paint: true })],
         ["Pts/G", num((r) => div(r.pts, r.o.G), f2)], ["xPts/G at starter PA", num((r) => r.xpg, f2, { paint: true, title: `Expected points per game if he got the plate appearances per game of a starter at his position (top ${teams} × lineup slots by PA)` })],
@@ -3792,16 +4073,7 @@
         ["xBA", num((r) => (r.n ? r.n.why.xba : null), (x) => fmtX(x))], ["xSLG", num((r) => (r.n ? r.n.why.xslg : null), (x) => fmtX(x))], ["PA", o("PA")], ["G", o("G")]);
     } else {
       const o = (k, fmt = f0) => num((r) => r.o[k], fmt);
-      if (view === "points") cols.push(
-        ["Pts", num((r) => r.pts, f1, { paint: true })], ["Pts/G", num((r) => div(r.pts, r.o.G), f2, { paint: true })],
-        ["G", o("G")], ["GS", o("GS")], ["IP", num((r) => r.o.IP, (x) => fmtIP(x))], ["W", o("W")], ["L", o("L")], ["SV", o("SV")], ["HD", o("HD")], ["K", o("K")], ["BB", o("BB")], ["H", o("H")], ["ER", o("ER")],
-        ["ERA", num((r) => div(r.o.ER * 9, r.o.IP), f2, { low: true })], ["WHIP", num((r) => div(r.o.H + r.o.BB, r.o.IP), f2, { low: true })], ["K/9", num((r) => div(r.o.K * 9, r.o.IP), f2)], ["QS", o("QS")]);
-      else if (view === "advanced") cols.push(
-        ["Pts", num((r) => r.pts, f1, { paint: true })], ["Pts/G", num((r) => div(r.pts, r.o.G), f2, { paint: true })], ["Pts/IP", num((r) => div(r.pts, r.o.IP), f2, { paint: true })],
-        ["Pts/start", num((r) => div(r.ptsS, r.starts.length), f2, { paint: true })], ["Pts/relief app", num((r) => div(r.ptsR, r.relief.length), f2, { paint: true })],
-        ["IP/start", num((r) => div(sum(r.starts, "IP"), r.starts.length), f2)], ["QS", o("QS")], ["QS%", num((r) => (r.o.GS ? 100 * r.o.QS / r.o.GS : null), (x) => (x == null ? "–" : x.toFixed(0) + "%"))],
-        ["Pts as SP", num((r) => r.ptsS, f1)], ["Pts as RP", num((r) => r.ptsR, f1)], ["GS", o("GS")], ["G", o("G")], ["IP", num((r) => r.o.IP, (x) => fmtIP(x))]);
-      else cols.push(
+      cols.push(
         ["Pts", num((r) => r.pts, f1)], ["uPts", num((r) => r.npts, f1, { paint: true, title: "Points with K and BB at his underlying rates, ER at his luck-neutral ERA and hits allowed at his xBA" })], ["Δ", num((r) => (r.npts == null ? null : r.npts - r.pts), fDelta, { paint: true })],
         ["Rank", num((r) => r.rank, f0, { title: "Rank at the role by actual points", low: true })], ["What-if rank", num((r) => r.xrank, f0, { title: "Rank at the role by underlying points", low: true })],
         ["Pts/start", num((r) => div(r.ptsS, r.starts.length), f2)], ["uPts/start", num((r) => (r.n ? div(r.n.ptsS, r.starts.length) : null), f2, { paint: true })],
@@ -3821,7 +4093,10 @@
     const F = fData(y), ds = histDataset(fDsKey(y));
     if (!F || !ds) { wrap.append(el("p", "xempty", failed.has(fFile(y)) ? `No fantasy data for ${y} yet — run python3 build_fantasy.py ${y}.` : "Loading…")); return; }
     const P = fpreset(), teams = P.teams || 10;
-    let rows = fRows(y, f.grp);
+    const lead = f.view === "leaders" || f.view === "trending";
+    let rows, spec = null;
+    if (lead) { const res = fLeadRows(y, f.grp); if (res.wait) { wrap.append(el("p", "xempty", res.wait)); note.textContent = ""; return; } rows = res.rows; spec = res.spec; }
+    else rows = fRows(y, f.grp);
     // what-if numbers need the season's pool (underlying K / BB) and starters at each position
     if (f.view === "whatif") withDataset(ds, () => withWindow(NOWIN, () => {
       if (f.grp === "P") {
@@ -3838,14 +4113,17 @@
       }
     }));
     // ranks at the position / role (among everyone over the minimum), before search narrows the table
-    const inPos = rows.filter((r) => fInPos(r.p, f.pos) && fMinOK(r));
+    // Leaderboard: the minimum is the full season's, as on the site's own leaderboard (a range or split changes the numbers,
+    // not who is listed); Trending: playing time inside the window
+    const minOK = !lead ? fMinOK : f.view === "trending" ? (r) => (f.grp === "H" ? r.o.PA : r.o.IP) >= f.tmin[f.grp] : (r) => (f.grp === "H" ? r.S.PA : r.S.IP) >= (f.grp === "H" ? f.minH : f.minP);
+    const inPos = rows.filter((r) => fInPos(r.p, f.pos) && minOK(r));
     if (f.view === "whatif") {
       const act = inPos.map((r) => r.pts), what = inPos.map((r) => (f.grp === "P" ? r.npts : r.xfull));
       for (const r of inPos) { r.rank = rankOf(act, r.pts); r.xrank = (f.grp === "P" ? r.npts : r.xfull) == null ? null : rankOf(what, f.grp === "P" ? r.npts : r.xfull); }
     }
     const qq = f.q.trim().toLowerCase();
     let shown = inPos.filter((r) => !qq || r.p.name.toLowerCase().includes(qq) || (r.p.team || "").toLowerCase().includes(qq));
-    const cols = fColumns(f.view, f.grp);
+    const cols = lead ? fLeadCols(f.grp, f.basis[f.grp], f.view === "trending") : fColumns(f.view, f.grp);
     const sortKey = f.sort && cols.some((c) => c.label === f.sort) ? f.sort : cols[0].label;
     const sc = cols.find((c) => c.label === sortKey);
     const dir = f.dir === "asc" ? 1 : -1;
@@ -3853,7 +4131,7 @@
     // colour the rate columns by percentile within what is shown
     const pcts = {};
     for (const c of cols) if (c.paint) { const vals = shown.map((r) => c.get(r)); const oriented = vals.map((v) => (v == null ? null : c.low ? -v : v)); pcts[c.label] = percentiles(oriented); }
-    const fsig = ["f", f.view, f.grp, f.pos, f.year, f.q, sortKey, f.dir, f.minH, f.minP, fpreset().id, shown.length].join("|");
+    const fsig = ["f", f.view, f.grp, f.pos, f.year, f.q, sortKey, f.dir, f.minH, f.minP, fpreset().id, shown.length, JSON.stringify(spec)].join("|");
     if (fsig !== state.pageSig) { state.pageSig = fsig; state.page = 1; }
     const pg = pageWindow(shown.length);
     const pagerTop = el("div", "pager"), pagerBot = el("div", "pager");
@@ -3889,6 +4167,7 @@
     fFloatHead(wrap, scroll, table);
     if (!shown.length) wrap.append(el("p", "xempty", "No players match."));
     const wtxt = Object.entries(P.w[f.grp]).filter(([, v]) => Number(v)).map(([k, v]) => `${k} ${v > 0 ? "+" : ""}${v}`).join(", ");
+    if (lead) { note.textContent = fLeadNote(P, wtxt, y, F, spec, shown.length); return; }
     note.textContent = `${P.name}: ${wtxt || "no categories scored"}. ${y} official season stats through ${F.through}; ${shown.length} ${f.grp === "H" ? "hitters" : "pitchers"} with ${f.grp === "H" ? state.f.minH + "+ PA" : state.f.minP + "+ IP"}` +
       (f.view === "whatif" ? (f.grp === "P" ? ". uPts: strikeouts and walks at his underlying rates (uK% fitted on Whiff% and Strike%, uBB% = the walk rate at his Strike% percentile), earned runs at his luck-neutral ERA, hits allowed at his Savant xBA; wins, saves, holds and quality starts as they happened. Per-start numbers scale each start by the same ratios."
         : `. xPts: hits and total bases at his xBA / xSLG (the directional model; extra-base mix scaled to hit both) over his actual plate appearances; runs, RBI, walks, strikeouts and steals as they happened. Starter workload = the top ${teams} × lineup slots at the position by PA (OF 3), their average PA and PA per game.`) : ".");
@@ -5684,14 +5963,14 @@
   /* ---------- wiring ---------- */
   // the header's two dropdowns: the draft + fantasy pages, and the two leaderboards
   const NAV_GROUPS = [
-    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Draft & Fantasy", short: "Draft", modes: ["draftmode", "rankings", "draft", "eligibility", "fantasy"] },
+    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["draftmode", "rankings", "draft", "eligibility", "fantasy"] },
     { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending"] },
   ];
   function readMode() {
     const h = location.hash.replace("#", "");
     const pm = h.match(/^player\/(\d+)$/);
     if (pm) { state.mode = "player"; const id = Number(pm[1]); if (state.x.id !== id) { state.x = { id, type: null, ds: null }; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; } return; }
-    if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["points", "advanced", "whatif", "settings"].includes(v) ? v : "points"; return; }
+    if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["leaders", "trending", "whatif", "settings"].includes(v) ? v : "leaders"; return; }
     state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "draftmode", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none

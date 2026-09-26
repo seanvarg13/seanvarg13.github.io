@@ -8,8 +8,9 @@ outfield assists, double plays).
     python3 build_fantasy.py                 # the current season -> fantasy.js
     python3 build_fantasy.py 2025 2024       # past seasons -> hist/fantasy-YYYY.js (players from hist/mlb-YYYY.js)
 
-Output: window.DRAFT_FANTASY["YYYY"] = {season, through, hk, pk, gk, hitters: {id: [...hk]}, pitchers: {id: {s: [...pk],
-g: [[...gk], ...]}}, xh: {id: [xba, xslg, xwoba]}, xp: {id: [xba, xslg, xwoba, xera]}}.  Points themselves are computed
+Output: window.DRAFT_FANTASY["YYYY"] = {season, through, hk, pk, gk, hgk, hitters: {id: [...hk]}, pitchers: {id: {s: [...pk],
+g: [[...gk], ...]}}, hg: {id: [[...hgk], ...]}, xh: {id: [xba, xslg, xwoba]}, xp: {id: [xba, xslg, xwoba, xera]}}. Game-log rows
+drop their trailing zeros (read a missing field as 0); hg / pk rows carry home (1) or away (0) for the split filters.  Points themselves are computed
 in the browser from whichever scoring preset is chosen, so any ESPN setting works without a rebuild.
 """
 import io, json, sys, time
@@ -30,9 +31,18 @@ P_API = ["gamesPlayed", "gamesStarted", "outs", "wins", "losses", "saves", "hold
          "runs", "homeRuns", "baseOnBalls", "intentionalWalks", "hitBatsmen", "completeGames", "shutouts", "wildPitches", "balks",
          "pickoffs", "battersFaced", "atBats", "gamesFinished", "saveOpportunities", "totalBases", "groundIntoDoublePlay",
          "numberOfPitches"]
-GK = ["date", "GS", "OUTS", "W", "L", "SV", "HD", "BS", "K", "H", "ER", "R", "HR", "BB", "HBP", "CG", "SHO"]
+GK = ["date", "GS", "OUTS", "W", "L", "SV", "HD", "BS", "K", "H", "ER", "R", "HR", "BB", "HBP", "CG", "SHO",
+      "HOME", "BF", "AB", "IBB", "WP", "BK", "PK", "GF", "SVO", "TB", "GIDP", "NP"]   # appended fields: older files lack them
 G_API = ["gamesStarted", "outs", "wins", "losses", "saves", "holds", "blownSaves", "strikeOuts", "hits", "earnedRuns", "runs",
-         "homeRuns", "baseOnBalls", "hitBatsmen", "completeGames", "shutouts"]
+         "homeRuns", "baseOnBalls", "hitBatsmen", "completeGames", "shutouts",
+         "isHome", "battersFaced", "atBats", "intentionalWalks", "wildPitches", "balks", "pickoffs", "gamesFinished",
+         "saveOpportunities", "totalBases", "groundIntoDoublePlay", "numberOfPitches"]
+# hitter game logs, the categories that are usually zero last so each row can drop its trailing zeros
+HGK = ["date", "HOME", "PA", "AB", "H", "TB", "R", "RBI", "BB", "K", "PO", "A", "E", "SB", "2B", "3B", "HR", "CS", "IBB", "HBP",
+       "GIDP", "SF", "SH", "OFA", "DPT", "GWRBI"]
+HG_API = {"PA": "plateAppearances", "AB": "atBats", "H": "hits", "TB": "totalBases", "R": "runs", "RBI": "rbi", "BB": "baseOnBalls",
+          "K": "strikeOuts", "SB": "stolenBases", "2B": "doubles", "3B": "triples", "HR": "homeRuns", "CS": "caughtStealing",
+          "IBB": "intentionalWalks", "HBP": "hitByPitch", "GIDP": "groundIntoDoublePlay", "SF": "sacFlies", "SH": "sacBunts"}
 
 
 def log(msg):
@@ -69,6 +79,16 @@ def ival(st, k):
     return int(v) if isinstance(v, (int, float)) else 0
 
 
+def gval(sp, k):
+    return int(bool(sp.get("isHome"))) if k == "isHome" else ival(sp["stat"], k)
+
+
+def trim(row):
+    while row and row[-1] == 0:
+        row.pop()
+    return row
+
+
 def split_total(splits, k):
     """One number from a situational split: the combined line when there is one, else the teams' lines added up."""
     tot = [s for s in splits if "team" not in s]
@@ -90,23 +110,44 @@ def grand_slams(ids, season):
     return out
 
 
-def cycles(ids, season):
-    out = {}
-    for i in range(0, len(ids), 60):
-        chunk = ids[i:i + 60]
+def hitter_logs(ids, season, gw):
+    """Every hitter's game log, one row per game (HGK), with that game's fielding and game-winning RBI folded in, plus
+    his cycles (a single, double, triple and homer in one game)."""
+    logs, cyc = {}, {}
+    for i in range(0, len(ids), 40):
+        chunk = ids[i:i + 40]
         url = ("https://statsapi.mlb.com/api/v1/people?personIds=" + ",".join(map(str, chunk)) +
-               f"&hydrate=stats(group=[hitting],type=[gameLog],season={season})")
+               f"&hydrate=stats(group=[hitting,fielding],type=[gameLog],season={season})")
         for p in get(url).get("people", []):
+            games, gwd = {}, dict(gw.get(p["id"], {}))
             for s in p.get("stats", []):
+                grp = s["group"]["displayName"]
                 for sp in s["splits"]:
                     if sp.get("gameType", "R") != "R":
                         continue
+                    gk = (sp["date"], (sp.get("game") or {}).get("gamePk"))
+                    row = games.setdefault(gk, [int(sp["date"].replace("-", "")), int(bool(sp.get("isHome")))] + [0] * (len(HGK) - 2))
                     st = sp["stat"]
-                    d, t, hr = ival(st, "doubles"), ival(st, "triples"), ival(st, "homeRuns")
-                    if d and t and hr and ival(st, "hits") - d - t - hr > 0:
-                        out[p["id"]] = out.get(p["id"], 0) + 1
-    log(f"  cycles: {sum(out.values())}")
-    return out
+                    if grp == "hitting":
+                        for k, api in HG_API.items():
+                            row[HGK.index(k)] = ival(st, api)
+                        d, t, hr = ival(st, "doubles"), ival(st, "triples"), ival(st, "homeRuns")
+                        if d and t and hr and ival(st, "hits") - d - t - hr > 0:
+                            cyc[p["id"]] = cyc.get(p["id"], 0) + 1
+                    elif grp == "fielding":            # one line per position he played that game
+                        row[HGK.index("PO")] += ival(st, "putOuts"); row[HGK.index("A")] += ival(st, "assists")
+                        row[HGK.index("E")] += ival(st, "errors"); row[HGK.index("DPT")] += ival(st, "doublePlays")
+                        if (st.get("position") or sp.get("position") or {}).get("type") == "Outfielder":
+                            row[HGK.index("OFA")] += ival(st, "assists")
+            rows = sorted(games.values())
+            for row in rows:                           # a doubleheader's game-winner goes on the first game of the date
+                n = gwd.pop(row[0], 0)
+                if n:
+                    row[HGK.index("GWRBI")] = n
+            logs[str(p["id"])] = [trim(r) for r in rows]
+        log(f"  hitter game logs {min(i + 40, len(ids))}/{len(ids)}")
+    log(f"  cycles: {sum(cyc.values())}")
+    return logs, cyc
 
 
 def game_winning_rbi(season, through):
@@ -137,9 +178,10 @@ def game_winning_rbi(season, through):
                 if go and go.get("result", {}).get("rbi", 0) > 0:
                     b = go.get("matchup", {}).get("batter", {}).get("id")
                     if b:
-                        out[b] = out.get(b, 0) + 1
+                        dd = out.setdefault(b, {}); k = int(d["date"].replace("-", ""))
+                        dd[k] = dd.get(k, 0) + 1
         day = end + pd.Timedelta(days=1)
-    log(f"  game-winning RBI: {sum(out.values())}")
+    log(f"  game-winning RBI: {sum(sum(v.values()) for v in out.values())}")
     return out
 
 
@@ -213,13 +255,23 @@ def build(season, current):
                     if sp.get("gameType", "R") != "R":
                         continue
                     st = sp["stat"]
-                    rows.append([int(sp["date"].replace("-", ""))] + [ival(st, k) for k in G_API])
-                rec["g"] = sorted(rows)
+                    rows.append([int(sp["date"].replace("-", ""))] + [gval(sp, k) for k in G_API])
+                rec["g"] = [trim(r) for r in sorted(rows)]
         log(f"  game logs {min(i + 60, len(pit_ids))}/{len(pit_ids)}")
 
     # the bonus categories, each best-effort: an API hiccup costs that column, not the build
-    for col, fn in (("GSHR", lambda: grand_slams(hit_ids, season)), ("CYC", lambda: cycles(hit_ids, season)),
-                    ("GWRBI", lambda: game_winning_rbi(season, through))):
+    gw, hg = {}, {}
+    try:
+        gw = game_winning_rbi(season, through)
+    except (Exception, SystemExit) as e:              # noqa: BLE001
+        log(f"  !! GWRBI skipped: {e}")
+    try:
+        hg, cyc = hitter_logs(hit_ids, season, gw)
+    except (Exception, SystemExit) as e:              # noqa: BLE001
+        log(f"  !! hitter game logs skipped: {e}")
+        cyc = {}
+    for col, fn in (("GSHR", lambda: grand_slams(hit_ids, season)), ("CYC", lambda: cyc),
+                    ("GWRBI", lambda: {b: sum(v.values()) for b, v in gw.items()})):
         try:
             got = fn()
         except (Exception, SystemExit) as e:          # noqa: BLE001
@@ -232,8 +284,8 @@ def build(season, current):
 
     xh = savant_expected("batter", season)
     xp = savant_expected("pitcher", season)
-    out = {"season": season, "through": through, "hk": HK, "pk": PK, "gk": GK,
-           "hitters": hitters, "pitchers": pitchers,
+    out = {"season": season, "through": through, "hk": HK, "pk": PK, "gk": GK, "hgk": HGK,
+           "hitters": hitters, "pitchers": pitchers, "hg": {k: v for k, v in hg.items() if k in hitters},
            "xh": {k: v for k, v in xh.items() if k in hitters}, "xp": {k: v for k, v in xp.items() if k in pitchers}}
     path = HERE / ("fantasy.js" if current else f"hist/fantasy-{season}.js")
     path.write_text(f'window.DRAFT_FANTASY = window.DRAFT_FANTASY || {{}};\nwindow.DRAFT_FANTASY["{season}"] = '
