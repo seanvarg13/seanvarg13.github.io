@@ -324,7 +324,7 @@ keyed to that nesting — and `body.navopen header.top { z-index: 300 }` lifts t
 is open, which is what keeps them from painting behind it on a phone.
 
 **The player page** is the popup card itself: `renderExplore()` opens it in the site's `#modal` through
-`showPageCard()`, with no × (`.pagecard`) and a pinstripe pattern in the theme's colours behind it (`.pagebg`) where a card
+`showPageCard()`, with no × (`.pagecard`) and a light-blue square-spiral pattern in the theme's colours behind it (`.pagebg`) where a card
 off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
 
 - **The pinned plate** (`playerHead()`, `.phead`). The headshot sits in a square framed tile (the card's navy outline, a
