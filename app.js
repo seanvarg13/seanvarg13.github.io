@@ -41,6 +41,77 @@
       saveErr = "";
     } catch { saveErr = k; }     /* private mode, or the browser is full */
   }
+  // Sync across devices: what Sean saves — fantasy scoring presets, stars, the draft board and rankings — kept in a
+  // secret gist on his GitHub, so the phone and the laptop see the same. A key with gist access only is pasted once per
+  // device (Appearance ▸ Sync); it can't touch the site. Appearance stays per device on purpose. Three-way per key
+  // against what was last synced: a key changed on one side takes that side; changed on both, the fantasy presets and
+  // the keyed lists (stars, ranks …) are merged, anything else keeps this device's. A pull that changes anything here
+  // reloads the page once, so every screen reads the new copy.
+  const SYNC_KEYS = [LS.drafted, LS.extra, LS.roles, LS.ranks, LS.tiers, LS.tierNames, LS.sets, LS.extraPos, LS.stars, "draft2027.fantasy"];
+  const SYNC_LS = "draft2027.sync", GIST_FILE = "sean-site-sync.json", GIST_DESC = "Sean's Site: saved settings (synced by the site)";
+  const sync = Object.assign({ token: "", gist: "", base: null, at: "", err: "" }, load(SYNC_LS, {}));
+  const syncSave = () => { try { localStorage.setItem(SYNC_LS, JSON.stringify(sync)); } catch {} };
+  const syncSnap = () => { const o = {}; for (const k of SYNC_KEYS) { let v = null; try { v = localStorage.getItem(k); } catch {} o[k] = v; } return o; };
+  const gh = async (method, path, body) => {
+    const r = await fetch("https://api.github.com" + path, { method, cache: "no-store", headers: { Authorization: `Bearer ${sync.token}`, Accept: "application/vnd.github+json",
+      ...(body ? { "Content-Type": "application/json" } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    if (!r.ok) throw new Error(r.status === 401 ? "GitHub didn't accept the key" : r.status === 404 ? "not found" : `GitHub said ${r.status}`);
+    return r.status === 204 ? null : r.json();
+  };
+  const syncBlob = (data) => ({ files: { [GIST_FILE]: { content: JSON.stringify({ v: 1, at: new Date().toISOString(), data }) } } });
+  async function syncGist() {                               // the gist's id: remembered, else found by its description, else made
+    if (sync.gist) return sync.gist;
+    for (let page = 1; page <= 5; page++) {
+      const list = await gh("GET", `/gists?per_page=100&page=${page}`);
+      const g = list.find((x) => x.description === GIST_DESC && x.files && x.files[GIST_FILE]); if (g) return (sync.gist = g.id);
+      if (list.length < 100) break;
+    }
+    const g = await gh("POST", "/gists", Object.assign({ description: GIST_DESC, public: false }, syncBlob(syncSnap())));
+    sync.base = syncSnap(); return (sync.gist = g.id);
+  }
+  // both sides changed one key: presets and keyed lists are merged (this device wins a clash), anything else stays local
+  function syncMerge(k, L, R) {
+    if (L == null) return R; if (R == null) return L;
+    let l, r; try { l = JSON.parse(L); r = JSON.parse(R); } catch { return L; }
+    if (k === "draft2027.fantasy" && l && r) {
+      const ids = new Set((l.presets || []).map((x) => x.id));
+      return JSON.stringify(Object.assign({}, r, l, { presets: [...(l.presets || []), ...(r.presets || []).filter((x) => !ids.has(x.id))] }));
+    }
+    if (l && r && typeof l === "object" && typeof r === "object" && !Array.isArray(l) && !Array.isArray(r)) return JSON.stringify(Object.assign({}, r, l));
+    return L;
+  }
+  let syncBusy = false, syncLastPull = 0;
+  async function syncNow() {
+    if (!sync.token || syncBusy) return;
+    syncBusy = true;
+    try {
+      const id = await syncGist();
+      const g = await gh("GET", `/gists/${id}`), f = g.files && g.files[GIST_FILE];
+      let text = f ? f.content : "{}";
+      if (f && f.truncated) text = await (await fetch(f.raw_url, { cache: "no-store" })).text();
+      const remote = (JSON.parse(text || "{}").data) || {}, local = syncSnap(), base = sync.base, out = {};
+      for (const k of SYNC_KEYS) {
+        const L = local[k], R = remote[k] === undefined ? null : remote[k], B = base ? base[k] : undefined;
+        out[k] = L === R ? L : base && L === B ? R : base && R === B ? L : syncMerge(k, L, R);
+      }
+      const here = SYNC_KEYS.filter((k) => out[k] !== local[k]), there = SYNC_KEYS.some((k) => out[k] !== (remote[k] === undefined ? null : remote[k]));
+      for (const k of here) { try { if (out[k] == null) localStorage.removeItem(k); else localStorage.setItem(k, out[k]); } catch {} }
+      if (there) await gh("PATCH", `/gists/${id}`, syncBlob(out));
+      sync.base = out; sync.at = new Date().toISOString(); sync.err = ""; syncLastPull = Date.now(); syncSave();
+      if (here.length) {                                     // the new copy is only read at start-up: reload, but never in a loop
+        let last = 0; try { last = Number(sessionStorage.getItem("draft2027.syncReload")) || 0; sessionStorage.setItem("draft2027.syncReload", String(Date.now())); } catch {}
+        if (Date.now() - last > 15000) { location.reload(); return; }
+      }
+    } catch (e) { sync.err = e.message || String(e); syncSave(); }
+    finally { syncBusy = false; }
+    try { if (state.mode === "appearance") render(); } catch {}   // (state is declared further down)
+  }
+  // a pull when the site opens and whenever it comes back to the front; a push a few seconds after anything is saved
+  if (sync.token) {
+    setTimeout(syncNow, 800);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - syncLastPull > 20000) syncNow(); });
+    setInterval(() => { if (sync.base && SYNC_KEYS.some((k) => syncSnap()[k] !== sync.base[k])) syncNow(); }, 4000);
+  }
   // MLB teams by league and division (the codes the data uses; the A's were OAK through 2024)
   const DIVS = { "AL East": ["BAL", "BOS", "NYY", "TB", "TOR"], "AL Central": ["CWS", "CLE", "DET", "KC", "MIN"], "AL West": ["ATH", "HOU", "LAA", "SEA", "TEX"],
                  "NL East": ["ATL", "MIA", "NYM", "PHI", "WSH"], "NL Central": ["CHC", "CIN", "MIL", "PIT", "STL"], "NL West": ["AZ", "COL", "LAD", "SD", "SF"] };
@@ -3889,6 +3960,39 @@
   }
 
   /* ---------- Appearance: colour scheme, type, light / dark ---------- */
+  // Appearance ▸ Sync: connect this device to the gist with a key made once on GitHub (gist access only)
+  function renderSyncBox() {
+    const wrap = el("section", "syncbox");
+    wrap.append(el("h3", "asub", "Sync across devices"));
+    wrap.append(el("p", "note", "Your fantasy scoring presets, stars, draft board and rankings, kept the same on every device you connect. They're saved in a private note on your GitHub. Colours and layout stay each device's own."));
+    if (!sync.token) {
+      const ol = el("ol", "syncsteps");
+      const a = el("a", null, "Make a key on GitHub"); a.href = "https://github.com/settings/tokens/new?scopes=gist&description=Sean%27s%20Site%20sync"; a.target = "_blank"; a.rel = "noopener";
+      const li1 = el("li"); li1.append(a, " — only “gist” is ticked; set Expiration to “No expiration”, then Generate token and copy it."); ol.append(li1);
+      ol.append(el("li", null, "Paste it here and press Connect. Do the same on each device (the same key works everywhere)."));
+      wrap.append(ol);
+      const row = el("div", "syncrow"), inp = el("input"); inp.type = "password"; inp.placeholder = "ghp_…"; inp.autocomplete = "off"; inp.spellcheck = false;
+      const go = el("button", "btn", "Connect"); go.type = "button";
+      go.addEventListener("click", async () => {
+        const t = inp.value.trim(); if (!t) return;
+        sync.token = t; sync.gist = ""; sync.base = null; sync.err = ""; go.disabled = true; go.textContent = "Connecting…";
+        try { await gh("GET", "/gists?per_page=1"); syncSave(); await syncNow(); } catch (e) { sync.token = ""; sync.err = e.message; }
+        render();
+        if (sync.token) setInterval(() => { if (sync.base && SYNC_KEYS.some((k) => syncSnap()[k] !== sync.base[k])) syncNow(); }, 4000);
+      });
+      row.append(inp, go); wrap.append(row);
+    } else {
+      const when = sync.at ? new Date(sync.at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "not yet";
+      wrap.append(el("p", "syncstat", sync.err ? `Couldn't sync: ${sync.err}.` : `Connected · last synced ${when}.`));
+      const row = el("div", "syncrow");
+      const now = el("button", "btn", "Sync now"); now.type = "button"; now.addEventListener("click", () => { now.disabled = true; now.textContent = "Syncing…"; syncNow(); });
+      const off = el("button", "btn btn-quiet", "Disconnect this device"); off.type = "button";
+      off.addEventListener("click", () => { if (!confirm("Stop syncing on this device? What's saved here stays here.")) return; sync.token = ""; sync.gist = ""; sync.base = null; sync.err = ""; syncSave(); render(); });
+      row.append(now, off); wrap.append(row);
+    }
+    if (!sync.token && sync.err) wrap.append(el("p", "syncstat", `Couldn't connect: ${sync.err}.`));
+    return wrap;
+  }
   function renderAppearance() {
     const T = window.DRAFT_THEMES, box = $("pboard"); box.innerHTML = "";
     if (!T) { box.append(el("p", "xempty", "themes.js didn't load.")); return; }
@@ -3911,6 +4015,7 @@
       def.append(" ", b);
     }
     box.append(def);
+    box.append(renderSyncBox());
 
     // the player card's percentile bars: Savant's charts or the older meter rows, this device's choice
     box.append(el("h3", "asub", "Percentile bars"));

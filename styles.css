@@ -2636,3 +2636,10 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 .fantbox > .tbtn { margin-top: 8px; }
 :root[data-view="mobile"] .fanttile b { font-size: 17px; }
 :root[data-view="mobile"] .uerabox .ubt.fantlog td, :root[data-view="mobile"] .uerabox .ubt.fantlog th { padding-left: 2px; padding-right: 2px; font-size: 12px; }
+/* Appearance ▸ Sync across devices */
+.syncbox { margin: 18px 0 8px; }
+.syncsteps { margin: 6px 0 10px 18px; padding: 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+.syncsteps a { color: var(--accent-2-text); font-weight: 700; }
+.syncrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.syncrow input { flex: 1 1 220px; min-width: 0; height: 36px; padding: 0 10px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; }
+.syncstat { margin: 4px 0 8px; font-size: 13px; color: var(--ink-2); }
