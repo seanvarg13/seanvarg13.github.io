@@ -254,7 +254,17 @@
   // Mix wOBA: the league's value of his average ball in play (type × pulled / straightaway / the other way) — balls in play
   // only, no bunts, walks and strikeouts left out (Sean): what his batted-ball distribution alone is worth
   const mixW = (sum, n) => (K().mix && n ? Math.round(1000 * sum / n) / 1000 : null);
-  const SIDE_P = [{ key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }];
+  const SIDE_P = [{ key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" },
+                  { key: "stuff", label: "Stuff+", hib: true, dec: 0, unit: "" }, { key: "swhf", label: "Whiff+", hib: true, dec: 0, unit: "" },
+                  { key: "sbb", label: "Batted-ball+", hib: true, dec: 0, unit: "" }];
+  // Stuff+ and its two parts from summed per-pitch predictions (graded pitches n, and the sums of their whiff, ground-ball
+  // and popup chances) — the build's stuff_grade(), so a date window or split re-derives it from the day rows
+  function stuffFrom(n, w, g, p) {
+    const sc = K().stuff; if (!sc || !n) return { swhf: null, sbb: null, stuff: null };
+    const xw = 100 * w / n, xb = (g * sc.gb + p * sc.pu + (n - g - p) * sc.vair) / n, era = K().lgERA;
+    const wp = 100 + 100 * sc.kW * (xw - sc.lgW) / era, bp = 100 - 100 * sc.kB * (xb - sc.lgB) / era;
+    return { swhf: Math.round(10 * wp) / 10, sbb: Math.round(10 * bp) / 10, stuff: Math.round(10 * (wp + bp - 100)) / 10 };
+  }
   const ALL_H = union([...CARD, { metrics: Object.values(SUB).flat() }, { metrics: SIDE_H }], DATA.meta.hitterMetrics);
   const ALL_P = union([...CARD_P, { metrics: Object.values(SUB_P).flat() }, { metrics: SIDE_P }], DATA.meta.pitcherMetrics);
   const allFor = (g) => (g === "H" ? ALL_H : ALL_P);
@@ -628,7 +638,8 @@
                    siera: r2(siera(t.k, t.bb, t.gb, t.fbt, t.pu, t.bf)),
                    csw: rate(t.cs + t.whf, t.pit), zcon: rate(t.zcon, t.zsw), zone: rate(t.zpit, t.pit), osw: rate(t.osw, t.opit), swing: rate(t.sw, t.pit),
                    fbv: t.fbn ? Math.round(10 * t.fbv / t.fbn) / 10 : null, ext: t.extn ? Math.round(10 * t.exts / t.extn) / 10 : null,
-                   ev: (t.evn || t.bbe) ? Math.round(10 * t.evsum / (t.evn || t.bbe)) / 10 : null, hh: rate(t.hh, t.bip || t.bbe), brl: rate(t.brl, t.bip || t.bbe) },
+                   ev: (t.evn || t.bbe) ? Math.round(10 * t.evsum / (t.evn || t.bbe)) / 10 : null, hh: rate(t.hh, t.bip || t.bbe), brl: rate(t.brl, t.bip || t.bbe),
+                   ...stuffFrom(t.stn, t.stw, t.stg, t.stp) },
               sample: ip, ip, bf: t.bf, g: games, gs,
               ctx: { G: games, GS: gs, wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, Pitches: t.pit, bbl, PAw: t.wden, HBP: t.hbp } };
       } else {
@@ -3434,6 +3445,9 @@
     wsgp: "WSGP: the average of his Whiff%, Strike%, GB% and Popup% percentiles — the four rates he owns outright, before a fielder touches the ball or a run scores. 50 is an average pitcher in all four. The bar beside it ranks that average against the pool, so a pitcher who is good at all four can rank above his own average.",
     fbv: "Average velocity of his four-seamers and sinkers.",
     ext: "How far off the rubber he releases the ball. More extension makes the same velocity play up.",
+    stuff: "Stuff+: his pitches graded on what the ball does alone — velocity, spin, movement, release point, extension, arm angle and each pitch against his fastball; no location, no count. Two models, trained on every pitch of this season and last: how likely a swing is to miss it, and whether contact is a ground ball, a popup or an air ball. They're combined the way uERA weighs them, so whiffs carry the most: 100 is league average, and each point is 1% of runs saved (120 = a fifth fewer runs than average stuff). Whiff+ and Batted-ball+ are its two halves.",
+    swhf: "Whiff+: the whiff half of Stuff+ — how often swings at his pitches should miss, on their traits alone, turned into runs through uK% (100 = average).",
+    sbb: "Batted-ball+: the contact half of Stuff+ — how often his pitches, put in play, should become ground balls and popups rather than air balls, priced at the league's value for each (100 = average).",
   };
   function renderGlossary() {
     const box = el("div", "glossary");
@@ -4714,7 +4728,7 @@
   }
   const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["rolling", "Rolling"], ["fantasy", "Fantasy"]];
   const BTABS_H = [["mix", "Mix"]];                                      // a hitter's batted-ball mix
-  const BTABS_P = [["nera", "nERA"], ["uera", "uERA"]];                 // a pitcher's two ERAs, one tab each
+  const BTABS_P = [["stuff", "Stuff"], ["nera", "nERA"], ["uera", "uERA"]];   // his arsenal graded, then his two ERAs, one tab each
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -4761,6 +4775,8 @@
       body.append(renderMixTab(p, ref));
     } else if (pick === "fantasy") {
       body.append(renderFantasyTab(p));
+    } else if (pick === "stuff") {
+      body.append(renderStuffTab(p));
     } else if (pick === "nera") {
       body.append(renderLuckBox(p) || el("p", "note", "Luck-neutral ERA needs batted-ball data for this season."));
     } else if (pick === "uera") {
@@ -4974,6 +4990,47 @@
   }
   // a pitcher's foot of the middle box: batted-ball luck, set like the uERA box — luck-neutral ERA against the real
   // one in the heading, then what each batted-ball type has cost him against what it costs the league
+  // Stuff: his arsenal pitch by pitch — shape, the model's whiff / ground-ball / popup chances beside what happened, and
+  // the grades. Season numbers (the arsenal isn't split by day); the overall line follows any window or split.
+  const PITCH_NAME = { FF: "Four-seam", SI: "Sinker", FC: "Cutter", SL: "Slider", ST: "Sweeper", SV: "Slurve", CU: "Curveball", KC: "Knuckle curve",
+                       CS: "Slow curve", CH: "Changeup", FS: "Splitter", FO: "Forkball", SC: "Screwball", KN: "Knuckleball", EP: "Eephus", FA: "Fastball" };
+  const ARSENAL = DATA.meta.arsenalFields || ["pt", "n", "velo", "ivb", "hb", "spin", "xwhf", "xgb", "xpu", "whfp", "bbp", "stuffp", "whf", "gb", "pu", "sw", "bip"];
+  const plusStyle = (v) => pctStyle(Math.max(1, Math.min(99, Math.round(50 + 2.2 * (v - 100)))));   // 100 = the middle of the scale
+  function renderStuffTab(p) {
+    const box = el("div", "rollbox uerabox stuffbox");
+    const rows = (p.ctx && p.ctx.arsenal) || [];
+    const pv = V(p), m = pv.m;
+    const hd = el("div", "rollhd");
+    hd.append(el("span", "rollname", m.stuff == null ? "Stuff+ –" : `Stuff+ ${Math.round(m.stuff)}`),
+              el("span", "rollsub", m.stuff == null ? "no pitch-tracking grades for this season yet" : `Whiff+ ${Math.round(m.swhf)} · Batted-ball+ ${Math.round(m.sbb)}` + (viewLabel(p.type) && viewLabel(p.type) !== "full season" ? ` · ${viewLabel(p.type)}` : "")));
+    box.append(hd);
+    if (!rows.length) { box.append(el("p", "note", "The arsenal table comes with the next build of this season's data.")); return box; }
+    const R0 = rows.map((a) => Object.fromEntries(ARSENAL.map((k, i) => [k, a[i]])));
+    const tot = R0.reduce((s, r) => s + r.n, 0), R = R0.filter((r) => r.n >= 15);   // a pitch he's thrown a handful of times isn't graded on its own
+    const t = el("table", "ubt stufft"), th = el("thead"), hr = el("tr");
+    const heads = [["Pitch", "l"], ["Use", ""], ["Velo", ""], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin", ""],
+                   ["Stuff+", "sp"], ["Whiff+", ""], ["BB+", "", "Batted-ball+"], ["xWhiff", "", "The model's whiff rate per swing — his actual Whiff% under it"],
+                   ["xGB", "", "The model's ground-ball rate on contact — actual GB% under it"], ["xPU", "", "The model's popup rate on contact — actual under it"]];
+    for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
+    th.append(hr); t.append(th);
+    const tb = el("tbody");
+    const f1n = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%");
+    const cellPlus = (v, cls) => { const td = el("td", "plus" + (cls ? " " + cls : ""), v == null ? "–" : String(Math.round(v))); if (v != null) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; } } return td; };
+    const pair = (x, a) => { const td = el("td", "xa"); td.append(el("b", null, pct(x)), el("i", null, a == null ? "–" : pct(a))); return td; };
+    for (const r of R) {
+      const tr = el("tr");
+      tr.append(el("td", "l", PITCH_NAME[r.pt] || r.pt), el("td", null, pct(100 * r.n / tot)), el("td", null, f1n(r.velo)), el("td", null, f1n(r.ivb)), el("td", null, f1n(r.hb)),
+                el("td", null, r.spin == null ? "–" : String(r.spin)), cellPlus(r.stuffp, "sp"), cellPlus(r.whfp), cellPlus(r.bbp),
+                pair(r.xwhf, r.whf), pair(r.xgb, r.gb), pair(r.xpu, r.pu));
+      tb.append(tr);
+    }
+    const s0 = p.m || {}, trt = el("tr", "ftot");
+    trt.append(el("td", "l", "All pitches"), el("td", null, String(tot)), el("td"), el("td"), el("td"), el("td"), cellPlus(s0.stuff, "sp"), cellPlus(s0.swhf), cellPlus(s0.sbb), el("td"), el("td"), el("td"));
+    tb.append(trt); t.append(tb);
+    const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
+    box.append(el("p", "note", "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball — never where it was thrown. 100 is league average; each point is 1% of runs. Whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened. The table is his season; the headline follows the card's dates and splits."));
+    return box;
+  }
   function renderLuckBox(p) {
     const pv = V(p), c = K(), bbl = pv.ctx && pv.ctx.bbl;
     if (p.type !== "P" || !bbl || !c || !c.bbw) return null;
@@ -5081,11 +5138,11 @@
                        ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]]]];
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
   const PCT_COLS_P = [[["Whiffs and Strikes", ["whf", "strk"]], ["Swing & Miss", ["k", "whf"]], ["Zone & Chase", ["bb", "strk", "zone", "osw"]]],
-                      [["Results", ["kbb", "era"]], ["Batted Ball", ["gb", "pu", "mera"]], ["Stuff", ["fbv", "ext"]]]];
+                      [["Results", ["kbb", "era"]], ["Batted Ball", ["gb", "pu", "mera"]], ["Stuff", ["stuff", "swhf", "sbb", "fbv", "ext"]]]];
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%" };
-  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%" });   // a pitcher's O-Swing% is his chase rate
+  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+" });   // a pitcher's O-Swing% is his chase rate
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
     if (!nav) col.append(panelHead(...pctTitle(p, nav)));   // his page says the season in its header instead

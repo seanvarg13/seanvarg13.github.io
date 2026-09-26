@@ -78,7 +78,8 @@ COLS = ["game_date", "game_type", "game_pk", "batter", "pitcher", "stand", "p_th
         "type", "events", "launch_speed", "launch_angle", "launch_speed_angle", "bb_type", "hc_x", "hc_y",
         "inning", "inning_topbot", "at_bat_number", "outs_when_up", "woba_value", "woba_denom",
         "estimated_woba_using_speedangle", "estimated_ba_using_speedangle", "estimated_slg_using_speedangle",
-        "bat_speed", "pitch_type", "release_speed", "release_extension", "des"]
+        "bat_speed", "pitch_type", "release_speed", "release_extension", "des",
+        "release_spin_rate", "spin_axis", "pfx_x", "pfx_z", "release_pos_x", "release_pos_z", "arm_angle"]   # the last seven: Stuff
 MIX_COLS = {"mxgb": "gb", "mxpu": "pu", "mxldp": "ld_p", "mxldc": "ld_c", "mxldo": "ld_o", "mxfbp": "fb_p", "mxfbc": "fb_c",
             "mxfbo": "fb_o", "mxx": "x"}                                  # x = an air ball with no direction
 MIX = None          # the batted-ball mix's league values for the dataset being built (set by pitch_flags)
@@ -118,7 +119,7 @@ HITTER_SUB = {"woba": [("ba", "BA", True, 3, ""), ("slg", "SLG", True, 3, "")],
 PITCHER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "strk", "bip", "gb", "bf", "k", "bb", "outs", "wnum", "wden", "gs",
                "cs", "zpit", "opit", "zsw", "osw", "zcon", "hr", "hbp", "fbt", "pu", "bbe", "brl", "hh", "evsum",
                "fbn", "fbv", "extn", "exts",
-               "ld", "wbip", "wgb", "wld", "wfb", "wpu", "evn", "h"]   # h: hits allowed (fantasy splits by hand); luck-neutral ERA inputs: line drives, wOBA numerator on balls in play and by type; evn = EV-eligible balls (no bunts)
+               "ld", "wbip", "wgb", "wld", "wfb", "wpu", "evn", "h", "stn", "stw", "stg", "stp"]   # h: hits allowed (fantasy splits by hand); stn / stw / stg / stp: graded pitches and their summed whiff, ground-ball and popup chances (Stuff); luck-neutral ERA inputs: line drives, wOBA numerator on balls in play and by type; evn = EV-eligible balls (no bunts)
 # per-game earned runs (from MLB game logs) ride along as "P<id>:er" rows: [day, home, er]
 FASTBALLS = {"FF", "SI", "FT"}
 PITCHER_CARD = [
@@ -129,7 +130,7 @@ PITCHER_CARD = [
     ("Batted ball",          [("gb", "GB%", True, 1, "%"), ("pu", "Popup%", True, 1, "%"), ("mera", "Mix ERA", False, 2, "")]),
     # the four rates a pitcher owns outright, averaged (derived in the app from the four below it)
     ("Process score",        [("wsgp", "WSGP", True, 1, "")]),
-    ("Stuff",                [("fbv", "Fastball velo", True, 1, "mph"), ("ext", "Extension", True, 1, "ft")]),
+    ("Stuff",                [("stuff", "Stuff+", True, 0, ""), ("fbv", "Fastball velo", True, 1, "mph"), ("ext", "Extension", True, 1, "ft")]),
     # what the ERA should be and what he's giving up: the expected / underlying marks beside contact quality
     ("Expected & contact",   [("uk", "uK%", True, 1, "%"), ("ubb", "uBB%", False, 1, "%"),   # the fitted process rates
                               ("ukb", "u(K-BB%)", True, 1, "%"),   # u(K-BB%) is derived in the app (expected K% − expected BB%)
@@ -142,7 +143,8 @@ PITCHER_CARD_FOLD = ["Expected & contact"]   # groups that ride below the card a
 # fold-out rows under a pitcher card metric
 PITCHER_SUB = {"kbb": [("k", "K%", True, 1, "%"), ("bb", "BB%", False, 1, "%")],
                "whf": [("swstr", "SwStr%", True, 1, "%"), ("zcon", "Z-Contact%", False, 1, "%")],
-               "strk": [("zone", "Zone%", True, 1, "%"), ("osw", "O-Swing%", True, 1, "%")]}
+               "strk": [("zone", "Zone%", True, 1, "%"), ("osw", "O-Swing%", True, 1, "%")],
+               "stuff": [("swhf", "Whiff+", True, 0, ""), ("sbb", "Batted-ball+", True, 0, "")]}
 
 
 def siera_raw(k, bb, gb, fb, pu, pa):
@@ -252,7 +254,155 @@ def load_statcast(end: str) -> pd.DataFrame:
     return d
 
 
+# ============================================================================================
+# Stuff: a pitch graded on its physical traits alone (Sean, 26 Sep 2026) — velocity, spin rate and axis, induced vertical
+# and horizontal break, release height and side, extension, arm angle, the batter's side, and each pitch against his
+# primary fastball (velocity and break differences). No location, no count: what the ball does, not where it went.
+# Two models, trained at every build on this season and the one before (no model file to ship or pickle):
+#   * whiff — the chance a swing at this pitch misses (every non-bunt swing);
+#   * batted-ball type — ground ball, popup or air ball (line drives and flies together, as uERA treats them) on contact.
+# The two combine the way uERA does, so a whiff is worth what it is to uERA: a Whiff% point is 0.933 of a K% point
+# (UK in app.js), each strikeout takes a ball in play off the board; a ball in play is worth the league's wOBA for
+# its type, the air balls at the league's line-drive share. Both put on the ERA scale -> Stuff ERA, and
+# Stuff+ = 100 + the % of runs it saves against the league (higher is better; Whiff+ and Batted-ball+ are its two parts).
+# ============================================================================================
+STUFF = None        # {"lg": league means, "p": per-pitcher sums, "t": per pitcher-and-pitch-type sums} for the dataset being built
+STUFF_PT = {"FF": 0, "SI": 1, "FC": 2, "SL": 3, "ST": 4, "SV": 5, "CU": 6, "KC": 7, "CS": 6, "CH": 8, "FS": 9, "FO": 9, "SC": 8,
+            "KN": 10, "EP": 11, "FA": 0}
+STUFF_COLS = ["release_spin_rate", "spin_axis", "pfx_x", "pfx_z", "release_pos_x", "release_pos_z", "arm_angle"]
+STUFF_BB = {"ground_ball": 0, "popup": 1, "line_drive": 2, "fly_ball": 2}
+STUFF_BUNT = {"foul_bunt", "missed_bunt", "bunt_foul_tip"}
+# a pitcher's ctx.arsenal rows, one per pitch type (x = the model's chance; the plain ones are what happened)
+STUFF_ARSENAL = ["pt", "n", "velo", "ivb", "hb", "spin", "xwhf", "xgb", "xpu", "whfp", "bbp", "stuffp", "whf", "gb", "pu", "sw", "bip"]
+
+
+def stuff_features(d: pd.DataFrame) -> pd.DataFrame:
+    """One row of model inputs per pitch (NaN where Statcast has no tracking); lefties mirrored so both hands read alike."""
+    num = lambda c: pd.to_numeric(d[c], errors="coerce").astype(float) if c in d else pd.Series(np.nan, index=d.index)
+    L = d["p_throws"].eq("L").to_numpy()
+    velo, spin, axis = num("release_speed"), num("release_spin_rate"), num("spin_axis")
+    ivb, hb = 12 * num("pfx_z"), 12 * num("pfx_x") * np.where(L, 1, -1)            # inches; arm-side run positive
+    f = pd.DataFrame({"pt": d["pitch_type"].map(STUFF_PT).astype(float), "velo": velo, "spin": spin}, index=d.index)
+    ax = np.radians(np.where(L, 360 - axis, axis))
+    f["ax_s"], f["ax_c"], f["ivb"], f["hb"] = np.sin(ax), np.cos(ax), ivb, hb
+    f["relx"], f["relz"] = num("release_pos_x") * np.where(L, 1, -1), num("release_pos_z")
+    f["ext"], f["arm"] = num("release_extension"), num("arm_angle")
+    f["same"] = (d["stand"] == d["p_throws"]).astype(float)
+    # against his primary fastball: his most-thrown four-seamer, sinker or cutter in this data
+    fb = d["pitch_type"].isin(["FF", "SI", "FC"]) & f.velo.notna() & f.ivb.notna()
+    x = pd.DataFrame({"pitcher": d["pitcher"], "pt": d["pitch_type"], "velo": f.velo, "ivb": f.ivb, "hb": f.hb})[fb]
+    top = x.groupby(["pitcher", "pt"]).size().reset_index(name="n").sort_values("n").groupby("pitcher").tail(1)
+    ref = x.merge(top[["pitcher", "pt"]], on=["pitcher", "pt"]).groupby("pitcher")[["velo", "ivb", "hb"]].mean().reindex(d["pitcher"].to_numpy())
+    f["dvelo"], f["divb"], f["dhb"] = f.velo.to_numpy() - ref.velo.to_numpy(), f.ivb.to_numpy() - ref.ivb.to_numpy(), f.hb.to_numpy() - ref.hb.to_numpy()
+    f.loc[f.pt.isna() | f.velo.isna() | f.ivb.isna()] = np.nan                        # untracked or unclassed: no grade
+    return f
+
+
+def load_prior_season(year: int) -> pd.DataFrame:
+    """The season before, regular season only, for the Stuff models' training (pybaseball's cache makes it cheap after
+    the first time). Empty if it can't be had — the models then train on this season alone."""
+    try:
+        pb.cache.enable()
+        out = []
+        for a in pd.date_range(f"{year}-03-01", f"{year}-10-31", freq="MS"):
+            b = a + pd.offsets.MonthEnd(0)
+            try:
+                x = pb.statcast(start_dt=str(a.date()), end_dt=str(b.date()), verbose=False)
+            except Exception as e:                          # noqa: BLE001 — a bad month costs that month
+                log(f"    stuff: {year} {a:%b} skipped ({type(e).__name__})"); continue
+            if x is not None and len(x):
+                out.append(x[[c for c in COLS if c in x.columns]])
+        d = pd.concat(out, ignore_index=True) if out else pd.DataFrame(columns=COLS)
+        return d[d["game_type"].eq("R")] if len(d) else d
+    except Exception as e:                                  # noqa: BLE001
+        log(f"    stuff: no {year} data ({type(e).__name__})")
+        return pd.DataFrame(columns=COLS)
+
+
+def add_stuff(d: pd.DataFrame, prior: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Score every pitch: st_w (chance a swing misses), st_g / st_p (chance contact is a grounder / popup), st_n (1 if
+    graded). Sets STUFF for the pitcher rows and league constants. A failure here costs the Stuff grades, never the build."""
+    global STUFF
+    STUFF = None
+    for c in ["st_n", "st_w", "st_g", "st_p"]:
+        d[c] = 0.0
+    try:
+        return _add_stuff(d, prior)
+    except Exception as e:                                  # noqa: BLE001
+        STUFF = None
+        for c in ["st_n", "st_w", "st_g", "st_p"]:
+            d[c] = 0.0
+        log(f"  !! stuff skipped: {type(e).__name__}: {e}")
+        return d
+
+
+def _add_stuff(d: pd.DataFrame, prior: pd.DataFrame | None) -> pd.DataFrame:
+    from sklearn.ensemble import HistGradientBoostingClassifier
+    global STUFF
+    if not all(c in d.columns for c in ["pfx_x", "pfx_z", "release_spin_rate"]):
+        log("  stuff: no pitch-tracking columns in this data"); return d
+    t0 = time.time()
+    train = pd.concat([prior, d[[c for c in COLS if c in d.columns]]], ignore_index=True) if prior is not None and len(prior) else d
+    ftr = stuff_features(train)
+    ok = ftr.velo.notna().to_numpy()
+    desc = train["description"].to_numpy()
+    sw = ok & np.isin(desc, list(SWING)) & ~np.isin(desc, list(STUFF_BUNT))
+    bb = train["bb_type"].map(STUFF_BB)
+    bip = ok & train["type"].eq("X").to_numpy() & bb.notna().to_numpy() & ~train["events"].fillna("").str.contains("bunt").to_numpy()
+    if sw.sum() < 5000 or bip.sum() < 2000:
+        log(f"  stuff: too few tracked pitches ({sw.sum()} swings)"); return d
+    kw = dict(max_iter=400, learning_rate=0.06, max_leaf_nodes=63, min_samples_leaf=200, l2_regularization=1.0,
+              categorical_features=[0], early_stopping=True, validation_fraction=0.1, random_state=0)
+    wm = HistGradientBoostingClassifier(**kw).fit(ftr.to_numpy()[sw], np.isin(desc[sw], list(WHIFF)))
+    bm = HistGradientBoostingClassifier(**kw).fit(ftr.to_numpy()[bip], bb.to_numpy()[bip].astype(int))
+    f = stuff_features(d)
+    has = f.velo.notna().to_numpy()
+    X = f.to_numpy()[has]
+    pw = wm.predict_proba(X)[:, 1]; pbt = bm.predict_proba(X)
+    d.loc[has, "st_n"] = 1.0; d.loc[has, "st_w"] = pw; d.loc[has, "st_g"] = pbt[:, 0]; d.loc[has, "st_p"] = pbt[:, 1]
+    # the air balls' line-drive share and his pitch traits, for the per-pitch table
+    air = d["bb_type"].isin(["line_drive", "fly_ball"])
+    g = d[has].assign(velo=f.velo[has], ivb=f.ivb[has], hb=f.hb[has], spin=f.spin[has], wh=d["description"][has].isin(WHIFF),
+                      swg=d["description"][has].isin(SWING), gbx=d["bb_type"][has].eq("ground_ball"), pux=d["bb_type"][has].eq("popup"),
+                      bipx=d["bb_type"][has].isin(STUFF_BB.keys()))
+    agg = dict(n=("st_n", "sum"), w=("st_w", "sum"), g=("st_g", "sum"), p=("st_p", "sum"))
+    STUFF = {"lg": {"w": float(pw.mean()), "g": float(pbt[:, 0].mean()), "p": float(pbt[:, 1].mean()),
+                    "la": float(d["bb_type"].eq("line_drive").sum() / max(1, air.sum()))},
+             "p": g.groupby("pitcher").agg(**agg),
+             "t": g.groupby(["pitcher", "pitch_type"]).agg(**agg, velo=("velo", "mean"), ivb=("ivb", "mean"), hb=("hb", "mean"),
+                                                             spin=("spin", "mean"), sw=("swg", "sum"), wh=("wh", "sum"),
+                                                             bip=("bipx", "sum"), gb=("gbx", "sum"), pu=("pux", "sum"))}
+    log(f"  stuff: trained on {sw.sum():,} swings / {bip.sum():,} balls in play ({len(train):,} pitches), "
+        f"graded {has.sum():,} ({time.time() - t0:.0f}s)")
+    return d
+
+
+def stuff_consts(pit: pd.DataFrame, bbw: dict, pa9: float) -> dict | None:
+    """The league means and the two ERA weights (per Whiff% point, per 1.000 of ball-in-play value)."""
+    if not STUFF:
+        return None
+    lg = STUFF["lg"]
+    vair = lg["la"] * bbw["ld"] + (1 - lg["la"]) * bbw["fb"]
+    lgb = lg["g"] * bbw["gb"] + lg["p"] * bbw["pu"] + (1 - lg["g"] - lg["p"]) * vair
+    bip_share = float(pit.nBIP.sum() / max(1, pit.BF.sum()))
+    return {"lgW": round(100 * lg["w"], 3), "lgB": round(lgb, 4), "vair": round(vair, 4), "gb": bbw["gb"], "pu": bbw["pu"],
+            "kW": round(0.00933 * lgb / WOBA_SCALE * pa9, 4), "kB": round(bip_share / WOBA_SCALE * pa9, 3)}
+
+
+def stuff_grade(n, w, g, p, sc: dict, lg_era: float):
+    """Whiff+, Batted-ball+ and Stuff+ from summed per-pitch predictions."""
+    if not sc or not n:
+        return None, None, None
+    xw = 100 * w / n
+    xb = (g * sc["gb"] + p * sc["pu"] + (n - g - p) * sc["vair"]) / n
+    wp = 100 + 100 * sc["kW"] * (xw - sc["lgW"]) / lg_era
+    bp = 100 - 100 * sc["kB"] * (xb - sc["lgB"]) / lg_era
+    return round(wp, 1), round(bp, 1), round(wp + bp - 100, 1)
+
+
 def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
+    global STUFF
+    STUFF = None                                    # add_stuff() sets it again for a dataset that gets Stuff grades
     d = d.copy()
     z = pd.to_numeric(d["zone"], errors="coerce")
     d["in_zone"], d["out_zone"] = z.le(9), z.ge(11)
@@ -628,7 +778,8 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
               bip=("bip", "sum"), gb=("gb", "sum"), cs=("cs", "sum"), zpit=("in_zone", "sum"), opit=("out_zone", "sum"),
               zsw=("z_swing", "sum"), osw=("o_swing", "sum"), zcon=("z_contact", "sum"), fbt=("fbt", "sum"), pu=("pu", "sum"),
               bbe=("bbe", "sum"), brl=("barrel", "sum"), hh=("hardhit", "sum"), evsum=("ev", "sum"),
-              fbn=("fbn", "sum"), fbv=("fbv", "sum"), extn=("extn", "sum"), exts=("exts", "sum"), evn=("evb", "sum"))
+              fbn=("fbn", "sum"), fbv=("fbv", "sum"), extn=("extn", "sum"), exts=("exts", "sum"), evn=("evb", "sum"),
+              **{c: (s, "sum") for c, s in [("stn", "st_n"), ("stw", "st_w"), ("stg", "st_g"), ("stp", "st_p")] if s in d.columns})
     first = d.sort_values("at_bat_number").groupby(["game_pk", "inning_topbot"]).head(1)
     starters = set(zip(first["pitcher"], first["game_date"]))
     qp = p.groupby(PK).agg(bf=("pa", "size"), k=("is_k", "sum"), bb=("is_bb", "sum"),
@@ -636,6 +787,9 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                            hr=("is_hr", "sum"), hbp=("is_hbp", "sum"), h=("is_hit", "sum"),
                            ld=("t_ld", "sum"), wbip=("w_bip", "sum"), wgb=("w_gb", "sum"), wld=("w_ld", "sum"), wfb=("w_fb", "sum"), wpu=("w_pu", "sum"))
     q = q.join(qp, how="left").fillna(0)
+    for c in ["stn", "stw", "stg", "stp"]:
+        if c not in q.columns:
+            q[c] = 0.0
     q["gs"] = [1 if (key[0], key[1]) in starters else 0 for key in q.index]
 
     def pack(frame, fields):
@@ -648,7 +802,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                     row.append(v)
                 else:
                     # xbsum / xssum are sums of per-ball probabilities: a day's bucket is well under 1, so int() would erase it
-                    row.append(round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "xbsum", "xssum", "dbsum", "dssum") else int(v))
+                    row.append(round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp") else int(v))
             out.setdefault(int(pid), []).append(row)
         return out
     return pack(h, HITTER_DAY), pack(q, PITCHER_DAY)
@@ -896,7 +1050,11 @@ def league_constants(pit: pd.DataFrame, people: dict) -> dict:
                     "wbb": round(float(pit.wUBB.sum() / max(1, pit.nUBB.sum())), 3),      # wOBA value of a walk / a hit by pitch
                     "whbp": round(float(pit.wHBP.sum() / max(1, pit.HBP.sum())), 3)})
     if MIX:
-        out["mix"] = MIX                                          # Mix wOBA's league values (the page re-derives it in a window)
+        out["mix"] = MIX
+    if "bbw" in out:
+        sc = stuff_consts(pit, out["bbw"], out["pa9"])
+        if sc:
+            out["stuff"] = sc                                     # Stuff+'s league means and weights (the page re-derives it in a window)                                          # Mix wOBA's league values (the page re-derives it in a window)
     return out
 
 
@@ -937,6 +1095,23 @@ def build_pitchers(pit: pd.DataFrame, people: dict, days_p: dict, consts: dict) 
                          ("zcon", "ZContact_pct"), ("fbv", "FBvelo"), ("ext", "Ext"), ("ev", "avg_EV"),
                          ("hh", "HardHit_pct"), ("brl", "Barrel_pct"), ("pu", "PU_pct")]:
             m[key] = None if pd.isna(r[col]) else round(float(r[col]), 1)
+        sc = consts.get("stuff")
+        stuff_rows = None
+        if sc and STUFF is not None and pid in STUFF["p"].index:
+            s_ = STUFF["p"].loc[pid]
+            m["swhf"], m["sbb"], m["stuff"] = stuff_grade(s_.n, s_.w, s_.g, s_.p, sc, consts["lgERA"])
+            t_ = STUFF["t"].loc[pid] if pid in STUFF["t"].index.get_level_values(0) else None
+            if t_ is not None:                             # his arsenal: one row per pitch type, most-thrown first
+                stuff_rows = []
+                for pt, x in t_.sort_values("n", ascending=False).iterrows():
+                    wp, bp, sp = stuff_grade(x.n, x.w, x.g, x.p, sc, consts["lgERA"])
+                    r1 = lambda v, k=1: None if pd.isna(v) else round(float(v), k)
+                    stuff_rows.append([pt, int(x.n), r1(x.velo), r1(x.ivb), r1(x.hb), None if pd.isna(x.spin) else int(round(x.spin)),
+                                       r1(100 * x.w / x.n), r1(100 * x.g / x.n), r1(100 * x.p / x.n), wp, bp, sp,
+                                       r1(100 * x.wh / x.sw) if x.sw else None, r1(100 * x.gb / x.bip) if x.bip else None,
+                                       r1(100 * x.pu / x.bip) if x.bip else None, int(x.sw), int(x.bip)])
+        else:
+            m["swhf"] = m["sbb"] = m["stuff"] = None
         rows.append({
             "id": int(pid), "name": info["name"], "team": info["team"], "type": "P",
             "primary": r["role"], "pos": {r["role"]: int(r.G)}, "throws": r["throws"],
@@ -947,7 +1122,8 @@ def build_pitchers(pit: pd.DataFrame, people: dict, days_p: dict, consts: dict) 
                     "Pitches": int(r.Pitches),
                     "IPs": round(float(r.outsS) / 3, 1), "IPr": round(float(r.outsR) / 3, 1),   # innings as starter / reliever
                     "bbl": bbl,                                                                  # balls in play and wOBA allowed by type
-                    "PAw": int(r.wden) if "wden" in r else None, "HBP": int(r.HBP)},           # wOBA plate appearances + HBP (underlying ERA)
+                    "PAw": int(r.wden) if "wden" in r else None, "HBP": int(r.HBP),           # wOBA plate appearances + HBP (underlying ERA)
+                    "arsenal": stuff_rows},     # per pitch type: STUFF_ARSENAL fields
         })
     return rows
 
@@ -962,6 +1138,9 @@ def main():
     log("1/4 Statcast")
     d = pd.read_parquet(args.statcast_parquet) if args.statcast_parquet else load_statcast(args.end)
     d = pitch_flags(d)
+    if GAME_TYPES == {"R"}:
+        log("  stuff: loading last season to train on")
+        d = add_stuff(d, load_prior_season(SEASON - 1))
     hit = hitter_metrics(d)
     pit = pitcher_metrics(d)
     log(f"  {len(hit)} batters, {len(pit)} pitchers  ({time.time()-t0:.0f}s)")
@@ -1018,6 +1197,7 @@ def main():
         "pitcherCardFold": PITCHER_CARD_FOLD,
         "pitcherSub": {k: [{"key": kk, "label": l, "hib": h, "dec": dc, "unit": u} for kk, l, h, dc, u in v] for k, v in PITCHER_SUB.items()},
         "consts": consts,
+        "arsenalFields": STUFF_ARSENAL,
         "scoreNote": {
             "H": "xwOBA (Statcast expected wOBA from exit velocity and launch angle); the full season uses Savant's "
                  "published number, date windows and splits rebuild it from pitch-level data to within about .001",

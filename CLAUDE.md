@@ -226,6 +226,18 @@ PU, and LD / FB each pulled, straightaway or oppo — ground balls are one bucke
 handedness and speed, not the mix). Per ball in play — walks and strikeouts don't enter it (Sean,
 26 Sep 2026). Past seasons get it when rebuilt.
 
+**Stuff+** (`add_stuff` / `stuff_grade` in `build_data.py`, `stuffFrom` in `app.js`; Sean, 26 Sep 2026): each pitch
+graded on its traits alone — velocity, spin rate and axis, induced vertical / horizontal break (lefties mirrored), release
+height and side, extension, arm angle, batter side, and velocity / break gaps to his primary fastball; **no location, no
+count**. Two `HistGradientBoostingClassifier`s are **trained at every build** on this season plus the one before (no model
+file): P(whiff | swing) and P(ground ball / popup / air ball | contact). They combine on uERA's weights: a Whiff% point is
+0.933 K% points (`UK`), each K removes a ball in play worth the league BIP value (`kW` ≈ 0.10 ERA per point); a ball in
+play is worth the league wOBA of its type, air balls at the league's line-drive share (`kB` ≈ 0.20 ERA per .010).
+**Stuff+ = 100 + % of runs saved vs league** = Whiff+ + Batted-ball+ − 100. Whiffs carry more weight because their spread
+is bigger (SD 8.4 vs 4.9 in 2026). Checks on 2026 with a 2025 fit: whiff AUC .64; pitcher xWhiff vs actual Whiff% r .67,
+xGB vs GB% r .75; Stuff+ half-to-half r .91 (actual Whiff% .72). Day rows carry `stn/stw/stg/stp` so windows and splits
+re-derive it; `ctx.arsenal` holds the per-pitch table (`meta.arsenalFields`). A failure in the step costs only the grades.
+
 **Mix ERA** (`mixERA`): the ERA his batted-ball distribution *alone* is worth — same league-value-per-type
 machinery, but K% and BB% held at the pool's, so it is the mix and nothing else. ~4.15 is average, lower is
 better.
