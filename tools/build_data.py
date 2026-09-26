@@ -282,7 +282,7 @@ def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
     d["gbh"] = bbt & d["bb_type"].eq("ground_ball")
     d["puh"] = bbt & d["bb_type"].eq("popup")
     d["fbh"] = bbt & d["bb_type"].eq("fly_ball")
-    # Mix wOBA (Sean, 26 Sep 2026): each typed ball in play worth the dataset's average wOBA for its bucket — ground
+    # Mix wOBA (Sean, 26 Sep 2026): each typed ball in play (bunts out) worth the dataset's average wOBA for its bucket — ground
     # ball, popup, and line drives and fly balls each split pulled / straightaway / the other way — so a hitter's mix is
     # priced by what the league does on it, not by how hard he hit it. Direction matters most in the air, which is the
     # whole point: a pulled fly ball is worth far more than one the other way. No direction on a ball → its type's value.
@@ -291,7 +291,8 @@ def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
     kind = np.select([bt.eq("ground_ball"), bt.eq("popup"), bt.eq("line_drive"), bt.eq("fly_ball")], ["gb", "pu", "ld", "fb"], "")
     d["mixb"] = np.where(np.isin(kind, ["ld", "fb"]), np.char.add(np.char.add(kind.astype(str), "_"), dirn.astype(str)), kind)
     ev_ = d["events"].fillna("")
-    fin = d["bbt"] & ev_.ne("") & ~ev_.isin(EXCLUDE) & d["mixb"].ne("")      # the PA-ending ball in play, sacrifice bunts out
+    bunt_ = d["des"].astype(str).str.contains("bunt", case=False) | ev_.str.contains("bunt")
+    fin = d["bbt"] & ev_.ne("") & ~ev_.isin(EXCLUDE) & d["mixb"].ne("") & ~bunt_   # the PA-ending ball in play, no bunts
     wv = pd.to_numeric(d["woba_value"], errors="coerce").fillna(0.0).where(~ev_.isin(ZERO_NUM), 0.0)
     val = wv[fin].groupby(d["mixb"][fin]).mean()
     for t in ("ld", "fb"):                                        # a ball with no direction: its type's average
@@ -833,9 +834,9 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
         m["xwoba_sav"] = round(float(xw[pid]), 3) if pid in xw.index and pd.notna(xw[pid]) else None
         m["xwoba"] = m["xwoba_sav"] if m["xwoba_sav"] is not None else (round(xn / xd, 3) if xd else None)   # EV + launch angle
         m["woba"] = None if pd.isna(r.wOBA) else round(float(r.wOBA), 3)
-        # Mix wOBA: his batted-ball mix at the league's values, walks and strikeouts held at the league's rates
+        # Mix wOBA: the league's value of his average ball in play by bucket — balls in play only, no bunts (Sean)
         mn = float(r.get("MixN", 0) or 0)
-        m["mixw"] = round(MIX["w"] + MIX["f"] * (float(r.MixSum) / mn - MIX["lg"]), 3) if MIX and mn else None
+        m["mixw"] = round(float(r.MixSum) / mn, 3) if MIX and mn else None
         ab_ = float(r.AB) if pd.notna(r.AB) else 0.0
         m["ba"] = None if pd.isna(r.BA) else round(float(r.BA), 3)
         m["slg"] = None if pd.isna(r.SLG) else round(float(r.SLG), 3)

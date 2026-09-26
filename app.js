@@ -250,9 +250,9 @@
                   { key: "oppo", label: "Oppo%", hib: true, dec: 1, unit: "%" }, { key: "npull", label: "Non-pull%", hib: true, dec: 1, unit: "%" },
                   { key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "strk", label: "Strike%", hib: false, dec: 1, unit: "%" },
                   { key: "mixw", label: "Mix wOBA", hib: true, dec: 3, unit: "" }];
-  // Mix wOBA: his batted balls at the league's value for each (type × pulled / straightaway / the other way), walks and
-  // strikeouts at the league's rates — what his batted-ball distribution alone is worth (the hitters' Mix ERA)
-  const mixW = (sum, n) => { const x = K().mix; return x && n ? Math.round(1000 * (x.w + x.f * (sum / n - x.lg))) / 1000 : null; };
+  // Mix wOBA: the league's value of his average ball in play (type × pulled / straightaway / the other way) — balls in play
+  // only, no bunts, walks and strikeouts left out (Sean): what his batted-ball distribution alone is worth
+  const mixW = (sum, n) => (K().mix && n ? Math.round(1000 * sum / n) / 1000 : null);
   const SIDE_P = [{ key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }];
   const ALL_H = union([...CARD, { metrics: Object.values(SUB).flat() }, { metrics: SIDE_H }], DATA.meta.hitterMetrics);
   const ALL_P = union([...CARD_P, { metrics: Object.values(SUB_P).flat() }, { metrics: SIDE_P }], DATA.meta.pitcherMetrics);
@@ -3393,7 +3393,7 @@
     gb: "Ground balls per ball in play.",
     pull: "Pull Air%: balls hit in the air to his pull side, per ball in play. This is where home-run power shows up before the home runs do.",
     pullp: "Every ball in play hit to his pull side, on the ground or in the air.",
-    mixw: "Mix wOBA: what his batted-ball distribution alone is worth. Every ball in play takes the league's average wOBA for its type and direction — ground balls, popups, and line drives and fly balls each pulled, straightaway or the other way — with walks and strikeouts at the league's rates. So it rewards the mix (pulled air balls above all), not how hard he hit them. About .315 is average.",
+    mixw: "Mix wOBA: what his batted-ball distribution alone is worth, per ball in play. Every ball in play (no bunts) takes the league's average wOBA for its type and direction — ground balls, popups, and line drives and fly balls each pulled, straightaway or the other way — and Mix wOBA is the average over his. Walks and strikeouts don't enter it. So it rewards the mix (pulled air balls above all), not how hard he hit them. About .365 is average.",
     oppo: "Balls in play hit the other way.",
     cent: "Balls in play hit up the middle.",
     npull: "Everything not pulled — centre and opposite field together.",
@@ -4339,8 +4339,7 @@
     const avg = (o) => o.c.reduce((a, n, i) => a + n * (val(MIX_B[i][1]) || 0), 0) / o.n;   // his average ball's league value
     const box = el("div", "rollbox uerabox mixbox mixtab");
     const hd = el("div", "rollhd"), mw = pv.m.mixw, st = pl.stats.get(p.type + p.id);
-    hd.append(el("span", "rollname", mw == null ? "Batted-ball mix" : `Mix wOBA ${fmtX(mw)}`));
-    if (st && st.pct && st.pct.mixw != null) hd.append(el("span", "rollsub", `${ordinal(st.pct.mixw)} percentile`));
+    hd.append(el("span", "rollname", "Batted-ball mix"), el("span", "rollsub", `${mine.n} balls in play, no bunts`));
     box.append(hd);
     const grid = el("div", "mixgrid mixgrid5");
     grid.append(el("span"), el("span"), el("span", "mh", "Share"), el("span", "mh", "Lg wOBA"));
@@ -4354,14 +4353,13 @@
       paintBar(chip, hi > lo ? Math.round(100 * (r.v - lo) / (hi - lo)) : 50); chip.style.color = "#fff"; lgc.append(chip);
       grid.append(el("span", "ml", r.name), svTrack(arr.length ? insertPct(arr, dir * share) : null), el("span", "mv", share.toFixed(1) + "%"), lgc);
     }
-    // the bottom line: the league's wOBA weighted by his shares, ranked among the qualifiers and heat-mapped by that rank
+    // the bottom line, Mix wOBA: the league's wOBA weighted by his shares, ranked among the qualifiers and heat-mapped by that rank
     const me = avg(mine), arr = others.map(avg).sort((a, b) => a - b), pct = arr.length ? insertPct(arr, me) : null;
     const tot = el("span", "mv lg"), chip = el("span", "uchip", fmtX(me));
     paintBar(chip, pct); chip.style.color = "#fff"; tot.append(chip);
-    const lab = el("span", "ml mtot", "Weighted league wOBA"), n = el("span", "mv mn", String(mine.n)); n.title = `${mine.n} balls in play`;
-    grid.append(el("span", "mdiv"), lab, svTrack(pct), n, tot);
+    grid.append(el("span", "mdiv"), el("span", "ml mtot", "Mix wOBA"), svTrack(pct), el("span", "mv mn", pct == null ? "" : ordinal(pct)), tot);
     box.append(grid);
-    box.append(el("p", "note", `Each bar: where his share of that kind of ball ranks among ${pl.ref.length} qualifiers — more of the buckets worth more than the league's average ball (${fmtX(x.lg)}) is better, more of the rest is worse. Lg wOBA: what the league does on it, red the dearest. The bottom line is those values weighted by his shares — his average ball in play by where and how he hits it; Mix wOBA puts that on the wOBA scale with walks and strikeouts at the league's rates.`));
+    box.append(el("p", "note", `Each bar: where his share of that kind of ball ranks among ${pl.ref.length} qualifiers — more of the buckets worth more than the league's average ball (${fmtX(x.lg)}) is better, more of the rest is worse. Lg wOBA: what the league does on it, red the dearest. Mix wOBA, the bottom line, is those values weighted by his shares — what his average ball in play is worth by where and how he hits it (balls in play only: no walks, strikeouts or bunts).`));
     return box;
   }
   const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["rolling", "Rolling"], ["fantasy", "Fantasy"]];

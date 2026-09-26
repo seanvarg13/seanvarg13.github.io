@@ -220,9 +220,9 @@ The table comes from `tools/models/milb_translate.py` (same-season pairs at two 
 shifts, chained to MLB); re-run it by hand and paste the printed `MILB_X` when it goes stale.
 
 **Mix wOBA** (`mixw`, hitters; built in `pitch_flags()` / `build_hitters`, re-derived from `mixsum` / `mixn` day
-fields in a window): every typed ball in play at the dataset's average wOBA for its bucket (GB, PU, and LD / FB each
-pulled, straightaway or oppo), walks and strikeouts at the league's rates — the hitters' Mix ERA. Past seasons get it
-when rebuilt.
+fields in a window): the average over his balls in play (bunts out) of the dataset's wOBA for each ball's bucket (GB,
+PU, and LD / FB each pulled, straightaway or oppo). Per ball in play — walks and strikeouts don't enter it (Sean,
+26 Sep 2026). Past seasons get it when rebuilt.
 
 **Mix ERA** (`mixERA`): the ERA his batted-ball distribution *alone* is worth — same league-value-per-type
 machinery, but K% and BB% held at the pool's, so it is the mix and nothing else. ~4.15 is average, lower is
