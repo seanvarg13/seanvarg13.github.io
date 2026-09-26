@@ -2785,3 +2785,7 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
 .uerabox .ubt.stufft td.plus.sp { font-size: 14px; }
 .uerabox .ubt.stufft td.xa b { display: block; font-weight: 600; }
 .uerabox .ubt.stufft td.xa i { display: block; font-style: normal; font-size: 11px; color: var(--svtext); }
+/* the rows' box keeps a strip at its foot for the sideways scrollbar, so a Mac's floating scrollbar never sits over the
+   last player (Sean, 26 Sep 2026) */
+body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board > .board-scroll,
+:root:not([data-view="mobile"]) body[data-mode="fantasy"] .ftable-wrap > .fscroll { padding-bottom: 14px; }
