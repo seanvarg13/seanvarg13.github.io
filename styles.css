@@ -2735,7 +2735,7 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board > * { flex: none; }
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .colwrap, :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .colwrap { position: static; }
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board > .board-scroll, :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board > .board-scroll { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; overscroll-behavior: contain; }
-body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) main.wrap > .notes, :root:not([data-view="mobile"]) body[data-mode="fantasy"] main.wrap > .notes { max-height: 4.8em; overflow-y: auto; margin-top: 8px; }
+body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) main.wrap > .notes, :root:not([data-view="mobile"]) body[data-mode="fantasy"] main.wrap > .notes { margin-top: 10px; }
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"]) main.wrap > .notes:empty { display: none; }
 /* Fantasy: the same, its table's own header row frozen at the top of the table's box */
 :root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) main.wrap > .fboard { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding-bottom: 0; }
@@ -2748,3 +2748,18 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
 :root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) .ftable thead th.n, :root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) .ftable thead th.who { z-index: 5; }
 :root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) .fboard > .fnote { max-height: 4.8em; overflow-y: auto; margin: 8px 0 0; }
 :root:not([data-view="mobile"]) body:is([data-mode="fantasy"]) .ftable thead th.who { display: table-cell; vertical-align: middle; }   /* a flex th won't stick */
+
+/* the notes footer: colour key + layout switch on the left, Stat glossary / How this page works buttons on the right,
+   each opening an info window instead of a fold-out (Sean, 26 Sep 2026) */
+.notes { display: flex; align-items: center; justify-content: space-between; gap: 10px 24px; flex-wrap: wrap; }
+.notesleft { display: grid; gap: 2px; min-width: 0; flex: 1 1 420px; line-height: 1.4; }
+.notesbtns { display: flex; gap: 8px; flex: none; }
+.modal-panel:has(.infomodal) { width: min(920px, calc(100vw - 32px)); max-width: none; }
+.infomodal { max-height: calc(100dvh - 110px); grid-template-rows: auto minmax(0, 1fr) auto; }
+.infomodal .infobody { overflow-y: auto; overscroll-behavior: contain; min-height: 0; padding-right: 4px; }
+.infomodal .row { justify-content: flex-end; }
+:root[data-view="mobile"] .notesbtns { width: 100%; }
+:root[data-view="mobile"] .notesbtns .btn { flex: 1 1 0; }
+:root[data-view="mobile"] .infomodal { max-height: calc(100dvh - 60px); padding: 14px; }
+:root[data-view="mobile"] main.wrap > .notes { font-size: 11px; gap: 6px; margin-top: 6px; }
+:root[data-view="mobile"] .notesbtns .btn { padding: 6px 4px; font-size: 11px; white-space: nowrap; min-height: 0; }
