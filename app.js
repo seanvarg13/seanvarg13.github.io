@@ -4328,20 +4328,17 @@
   // over his balls: what his average ball in play is worth by where and how he hits it.
   const MIX_B = [["mxgb", "gb", "Ground balls"], ["mxpu", "pu", "Popups"], ["mxldp", "ld_p", "Line drives, pulled"], ["mxldc", "ld_c", "Line drives, center"],
                  ["mxldo", "ld_o", "Line drives, oppo"], ["mxfbp", "fb_p", "Fly balls, pulled"], ["mxfbc", "fb_c", "Fly balls, center"],
-                 ["mxfbo", "fb_o", "Fly balls, oppo"], ["mxx", "x", "No direction"], ["mxgbp", "gb_p", "Ground balls, pulled"],
-                 ["mxgbc", "gb_c", "Ground balls, center"], ["mxgbo", "gb_o", "Ground balls, oppo"]];   // build_data.MIX_COLS order; mxgb = all ground balls
+                 ["mxfbo", "fb_o", "Fly balls, oppo"], ["mxx", "x", "Air, no direction"]];   // build_data.MIX_COLS order
   function renderMixTab(p, g) {
     const x = K().mix, pv = V(p), pl = pool(g);
-    const cnt = (q) => {                                           // his balls by bucket; n counts each ball once (mxgb is the ground balls' total)
+    const cnt = (q) => {                                           // his balls by bucket and their total
       const c = V(q).ctx && V(q).ctx.mix; if (!c) return null;
       const n = c.slice(0, 9).reduce((a, b) => a + (b || 0), 0); return n ? { c: c.map((v) => v || 0), n } : null;
     };
     const mine = cnt(p);
     if (!x || !x.v || !mine) return el("p", "note", "The batted-ball mix is built from this season's data on — this season's file doesn't have it yet.");
-    // ground balls by direction when the file has them (26 Sep 2026 on), else the one ground-ball row
-    const gbDir = mine.c.length > 9 && x.v.gb_p != null, skip = gbDir ? "mxgb" : null;
-    const use = MIX_B.map(([k], i) => i < mine.c.length && k !== skip && !(k.startsWith("mxgb") && k !== "mxgb" && !gbDir));
-    const val = (b) => (b === "x" ? x.v.x ?? ((x.v.ld_x || 0) + (x.v.fb_x || 0)) / 2 : b === "gb" ? x.v.gb ?? x.v.gb_x : x.v[b]);
+    const use = MIX_B.map((_, i) => i < mine.c.length);
+    const val = (b) => (b === "x" ? x.v.x ?? ((x.v.ld_x || 0) + (x.v.fb_x || 0)) / 2 : x.v[b]);
     const others = pl.ref.map(cnt).filter(Boolean);
     const avg = (o) => o.c.reduce((a, n, i) => a + (use[i] ? n * (val(MIX_B[i][1]) || 0) : 0), 0) / o.n;   // his average ball's league value
     const box = el("div", "rollbox uerabox mixbox mixtab");
