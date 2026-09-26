@@ -231,21 +231,14 @@ graded on its traits alone — velocity, spin rate and axis, induced vertical / 
 height and side, extension, arm angle, batter side, and velocity / break gaps to his primary fastball; **no location, no
 count**. `HistGradientBoostingClassifier`s are **trained at every build** on this season plus the two before (`STUFF_YEARS`;
 tested 26 Sep 2026 on 2026: a third season helped slightly, a fourth to sixth or recency weights added nothing) (no model
-file): P(whiff | swing), P(strike of any kind | pitch) and P(ground ball / popup / air ball | contact). **Strike+** (added
-26 Sep 2026 — it's where fastballs earn their keep) values a Strike% point the uERA way: +0.409 K% (`UK`) plus the walks the
-league avoids per Strike% point (slope refitted each build on 300+ BF pitchers, ≈ −0.75), `kS` ≈ 0.12 ERA per point — so
-there's no separate BB+: walk avoidance is inside Strike+. They combine on uERA's weights: a Whiff% point is
+file): P(whiff | swing) and P(ground ball / popup / air ball | contact). They combine on uERA's weights: a Whiff% point is
 0.933 K% points (`UK`), each K removes a ball in play worth the league BIP value (`kW` ≈ 0.10 ERA per point); a ball in
 play is worth the league wOBA of its type, air balls at the league's line-drive share (`kB` ≈ 0.20 ERA per .010).
-**Stuff+ = 100 + % of runs saved vs league** = Whiff+ + Strike+ + Batted-ball+ − 200. The Stuff tab can grade each
+**Stuff+ = 100 + % of runs saved vs league** = Whiff+ + Batted-ball+ − 100. The Stuff tab can grade each
 pitch **against its own type** (`consts.stuff.types`: league means per pitch type; 100 = an average four-seamer for a
-four-seamer) or against all pitches; the headline Stuff+ is always against all pitches. **Pitching+** (`pitch_features`, `PITCH`, `consts.pitch`,
-day fields `pc*`) is the same three models with **location** (plate side mirrored for the batter, height in his own zone)
-and the **count** added; its whiff model is per pitch (swinging strikes), put back on the Whiff% scale by the league swing
-rate so a pitch in the dirt earns nothing. **Location+ = Pitching+ − Stuff+ + 100** (mean 100, SD ≈ 9; command pitchers
-with modest stuff lead it). On 2026: Pitching strike AUC .95 (Stuff .56), pitcher xStrike vs Strike% r .84 (.28); its
-whiff half is less predictive of the next half than Stuff's (.59 vs .65) — Stuff+ is the stable read, Pitching+ the fuller
-account. The Stuff tab hides a pitch's Pitching+ / Location+ under 40 pitches. Whiffs carry more weight because their spread
+four-seamer) or against all pitches; the headline Stuff+ is always against all pitches. **Strike+ and a location-aware
+Pitching+ / Location+ were built and dropped the same day** (Sean: "i just dont know what the new ones are adding") — the
+strike model mostly restated the Strike% already on the card; don't bring them back unasked. Whiffs carry more weight because their spread
 is bigger (SD 8.4 vs 4.9 in 2026). Checks on 2026 with a 2025 fit: whiff AUC .64; pitcher xWhiff vs actual Whiff% r .67,
 xGB vs GB% r .75; Stuff+ half-to-half r .91 (actual Whiff% .72). Day rows carry `stn/stw/stg/stp` so windows and splits
 re-derive it; `ctx.arsenal` holds the per-pitch table (`meta.arsenalFields`). A failure in the step costs only the grades.
