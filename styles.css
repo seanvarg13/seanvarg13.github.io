@@ -1017,7 +1017,7 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 :root[data-view="mobile"] .pcount { font-size: 11px; }
 :root[data-view="mobile"] .pbtn.pend { display: none; }
 :root[data-view="mobile"] .pbtn { min-width: 30px; height: 30px; padding: 0 6px; }
-:root[data-view="mobile"] .psize span { display: none; }
+:root[data-view="mobile"] .psize > span { display: none; }   /* the label only — the drop-down's own number is a span too */
 :root[data-view="mobile"] .psize select { height: 30px; font-size: 14px; }
 
 /* ---------- frozen panes: every list is a scroll box with the header row and the rank + name columns pinned ---------- */
@@ -2734,7 +2734,7 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) main.wrap > .board { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board > * { flex: none; }
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .colwrap, :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .colwrap { position: static; }
-body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board > .board-scroll, :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board > .board-scroll { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; overscroll-behavior: contain; }
+body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board > .board-scroll, :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board > .board-scroll { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; overscroll-behavior: none; }
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) main.wrap > .notes, :root:not([data-view="mobile"]) body[data-mode="fantasy"] main.wrap > .notes { margin-top: 10px; }
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"]) main.wrap > .notes:empty { display: none; }
 /* Fantasy: the same, its table's own header row frozen at the top of the table's box */
@@ -2788,3 +2788,5 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
 :root:not([data-view="mobile"]) body[data-mode="fantasy"] .ftable-wrap > .fscroll { padding-bottom: 14px; }
 .stuffbox .stuffvs { margin: 0 0 10px; }
 .btabbody > .uerabox.stuffbox { max-width: 1080px; }   /* the arsenal table has sixteen columns */
+/* the rows' box doesn't rubber-band: an iPhone pulled past the first row left a blank gap above it (Sean, 26 Sep 2026) */
+:root:not([data-view="mobile"]) body[data-mode="fantasy"] .ftable-wrap > .fscroll { overscroll-behavior: none; }
