@@ -2679,3 +2679,17 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 .tbtns .tbtn svg, .tbtns .tbtn .chev { color: inherit; stroke: currentColor; }
 :root[data-view="mobile"] .tbtns .tbtn.on { background: color-mix(in srgb, var(--rule) 72%, var(--accent-2)); color: #fff; }
 :root[data-view="mobile"] .tbtns .tbtn.open, :root[data-view="mobile"] .tbtns .tbtn.open:hover { background: #fff; color: var(--rule); border-color: var(--rule); }
+/* The card's own buttons (Filters, Star) and the tabs under the percentiles in the header buttons' format: navy, white
+   text, a white outline, the same hard shadow (Sean, 26 Sep 2026). The tabs stand apart now so each carries its own
+   shadow; the open tab, Filters while its box is open and a starred Star flip to white on navy */
+.phead .starbtn, .phead .phtoggle, .phead .mplate .btn, :root[data-view="mobile"] .phead .starbtn, :root[data-view="mobile"] .phead .phtoggle,
+:root[data-view="mobile"] .phead .mplate .btn { background: var(--rule); color: #fff; border: 2px solid #fff; border-radius: 0; }
+.phead .starbtn:hover, .phead .phtoggle:hover, .phead .mplate .btn:hover { background: color-mix(in srgb, var(--rule) 85%, #fff); color: #fff; }
+.phead .starbtn.on, .phead .phtoggle.on, :root[data-view="mobile"] .phead .starbtn.on, :root[data-view="mobile"] .phead .phtoggle.on { background: #fff; color: var(--rule); border-color: var(--rule); }
+.btabs, :root[data-view="mobile"] .btabs { gap: 6px; }
+:root[data-view="mobile"] .btabs { gap: 4px; }
+.btab, .btab:first-child, .btab:last-child, :root[data-view="mobile"] .btab {
+  background: var(--rule); color: #fff; border: 2px solid #fff; border-radius: 0;
+  box-shadow: 2px 2px 0 color-mix(in srgb, var(--rule) 40%, transparent), 0 3px 8px rgba(0, 0, 0, 0.18); }
+.btab:hover { background: color-mix(in srgb, var(--rule) 85%, #fff); }
+.btab.on, .btab.on:hover, :root[data-view="mobile"] .btab.on { background: #fff; color: var(--rule); border-color: var(--rule); }
