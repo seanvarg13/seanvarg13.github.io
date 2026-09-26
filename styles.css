@@ -2812,3 +2812,6 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
 .rows > .row { background: var(--surface); }
 .rows > .row:nth-child(even) { background: var(--stripe); }
 body[data-band="off"] .rows > .row:nth-child(even) { background: var(--surface); }
+/* the list as wide as its widest row, so each row's rule and stripe run under every column, not just the first
+   screenful (Sean, 26 Sep 2026: "the row outline is only active for half of the table") */
+body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board-scroll > .rows { width: max-content; min-width: 100%; }
