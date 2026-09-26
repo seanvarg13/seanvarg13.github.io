@@ -343,6 +343,9 @@ is deploy-limited.
   card in the site's one `#modal` via `showPageCard()`, with classes `pagecard` (no ×) and `pagebg` (navy with interlocking light-blue square double spirals, each chained into the next —
   pattern — Sean, 26 Sep 2026: "I don't really like the slant design" — masked in the theme's colours, instead of the dimmed list). Same element, classes and
   `playerView()` as a card off a list, so a change to one is a change to the other.
+* **The list pages share the pattern** (Sean, 26 Sep 2026): Leaderboard, Trending, Rankings, Draft board, Fantasy,
+  Eligibility and Compare put the same navy + spiral pattern behind the page (`body[data-mode=…]::before`, fixed) and
+  gather `main.wrap` — filters, table, notes — into one white card with the player card's outline and shadow.
 * `hist/` files built before a field was appended to `HITTER_DAY`/`PITCHER_DAY` lack it; `app.js` checks
   `indexOf(...) < 0` before using one. Keep doing that.
 * **Fantasy Leaderboard / Trending** (Sean, 26 Sep 2026): the header menu is now just "Fantasy". Points total, per game,
