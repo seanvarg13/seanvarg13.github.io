@@ -358,11 +358,11 @@ is deploy-limited.
 * **The percentile sections have no run values, fielding (OAA), sprint speed or spin.** Not in this data.
   Acknowledged gap, not a bug.
 * **The player page is a popup card** (Sean, 24 Sep 2026: "identical in every measure"): `renderExplore()` opens his
-  card in the site's one `#modal` via `showPageCard()`, with classes `pagecard` (no ×) and `pagebg` (navy with interlocking light-blue square double spirals, each chained into the next —
+  card in the site's one `#modal` via `showPageCard()`, with classes `pagecard` (no ×) and `pagebg` (white with interlocking square double spirals, each chained into the next, whole chains alternating navy and light blue — two masks, `--swirl-a` / `--swirl-b`, Sean 26 Sep 2026 —
   pattern — Sean, 26 Sep 2026: "I don't really like the slant design" — masked in the theme's colours, instead of the dimmed list). Same element, classes and
   `playerView()` as a card off a list, so a change to one is a change to the other.
 * **The list pages share the pattern** (Sean, 26 Sep 2026): Leaderboard, Trending, Rankings, Draft board, Fantasy,
-  Eligibility and Compare put the same navy + spiral pattern behind the page (`body[data-mode=…]::before`, fixed) and
+  Eligibility and Compare put the same white + spiral pattern behind the page (`body[data-mode=…]::before` / `::after`, fixed) and
   gather `main.wrap` — filters, table, notes — into one white card with the player card's outline and shadow.
   The card **stands still** (Sean: "I don't want the white box itself to scroll at all"): it fills the screen from under
   the header to an 18px gap (10px on the phone), the page never scrolls, and only the rows' box (`.board-scroll`, Fantasy
