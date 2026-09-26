@@ -58,8 +58,8 @@ def build_season(year: int, kind: str = "reg"):
     d = bd.pitch_flags(bd.load_statcast(end))
     if not len(d):
         bd.log(f"  no {kind} games for {year}"); return
-    if set(K["types"]) == {"R"}:                     # Stuff grades for a regular season, trained on it and the year before
-        d = bd.add_stuff(d, bd.load_prior_season(year - 1))
+    if set(K["types"]) == {"R"}:                     # Stuff / Pitching grades for a regular season, trained on it and the two before
+        d = bd.add_stuff(d, bd.load_prior_seasons(year))
     hit, pit = bd.hitter_metrics(d), bd.pitcher_metrics(d)
     bd.log(f"  {len(hit)} batters, {len(pit)} pitchers")
 

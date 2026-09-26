@@ -2790,4 +2790,4 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board > .board-scroll,
 :root:not([data-view="mobile"]) body[data-mode="fantasy"] .ftable-wrap > .fscroll { padding-bottom: 14px; }
 .stuffbox .stuffvs { margin: 0 0 10px; }
-.btabbody > .uerabox.stuffbox { max-width: 900px; }   /* the arsenal table has fourteen columns */
+.btabbody > .uerabox.stuffbox { max-width: 1080px; }   /* the arsenal table has sixteen columns */
