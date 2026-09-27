@@ -4900,7 +4900,7 @@
     } else if (pick === "fantasy") {
       body.append(renderFantasyTab(p));
     } else if (pick === "stuff") {
-      body.append(renderStuffTab(p));
+      body.append(renderStuffTab(p, o.st, g));
     } else if (pick === "nera") {
       body.append(renderLuckBox(p) || el("p", "note", "Luck-neutral ERA needs batted-ball data for this season."));
     } else if (pick === "uera") {
@@ -5170,7 +5170,22 @@
     });
   }   // the Stuff tab's per-pitch grades: against the league's pitches of the same type, or all pitches
   const plusStyle = (v) => pctStyle(Math.max(1, Math.min(99, Math.round(50 + 2.2 * (v - 100)))));   // 100 = the middle of the scale
-  function renderStuffTab(p) {
+  // Stuff uERA (Sean, 27 Sep 2026): uERA with the stuff model's rates in place of his real ones — xWhiff for Whiff% and
+  // xGB / xPU for his ground balls and popups (air balls split at the league's line-drive share, as uERA does) over his
+  // pitch mix. Walks, and Strike%'s part of uK%, come from his actual Strike% through the same estimator as uERA: the
+  // stuff model can't tell who throws strikes. Same pitches as the table above, so it follows the card's dates and splits.
+  function stuffUERA(p, R0, st, g) {
+    const pv = V(p), pl = g ? pool(g) : null, sorted = pl && pl.sorted, pctS = st && st.pct ? st.pct.strk : null;
+    if (!sorted || pctS == null || pv.m.strk == null) return null;
+    const n = R0.reduce((a, r) => a + r.n, 0); if (!n) return null;
+    const wx = (k) => R0.reduce((a, r) => a + (r[k] || 0) * r.n, 0) / n;
+    const xw = wx("xwhf"), xg = wx("xgb") / 100, xp = wx("xpu") / 100, air = Math.max(0, 1 - xg - xp);
+    const pvS = { m: { whf: xw, strk: pv.m.strk }, ctx: Object.assign({}, pv.ctx, { bbl: { gb: [1000 * xg], pu: [1000 * xp], ld: [500 * air], fb: [500 * air] } }) };
+    const ik = impliedKBB(pvS, pctS, sorted); if (!ik) return null;
+    const uera = underlyingERA(pvS, ik, sorted);
+    return uera == null ? null : { uera, k: ik.k, bb: ik.bb, xw, xg: 100 * xg, xp: 100 * xp, real: st.uera ?? null };
+  }
+  function renderStuffTab(p, st, g) {
     const box = el("div", "rollbox uerabox stuffbox");
     const rows = (p.ctx && p.ctx.arsenal) || [];
     const pv = V(p), m = pv.m;
@@ -5183,6 +5198,15 @@
     if (av === "loading") box.append(el("p", "note", "Loading his pitches game by game…"));
     else if (av && !av.length) { box.append(el("p", "note", "No graded pitches in this selection.")); return box; }
     const R0 = filtered ? av : rows.map((a) => Object.fromEntries(ARSENAL.map((k, i) => [k, a[i]])));
+    const su = stuffUERA(p, R0, st, g);
+    if (su) {
+      const line = el("div", "stuffuera"), f2 = (x) => (x == null ? "–" : x.toFixed(2));
+      line.append(el("b", null, `Stuff uERA ${f2(su.uera)}`),
+                  el("span", null, ` — uK% ${su.k.toFixed(1)} (xWhiff ${su.xw.toFixed(1)}%) · uBB% ${su.bb.toFixed(1)} · xGB ${su.xg.toFixed(1)}% · xPU ${su.xp.toFixed(1)}%` +
+                    ` · uERA ${f2(su.real)} · ERA ${f2(m.era)}`));
+      line.title = "uERA with his stuff's expected rates in place of his real ones: xWhiff for Whiff%, xGB and xPU for his ground balls and popups (air balls split at the league's line-drive share), walks from his actual Strike% as in uERA — the stuff model can't tell who throws strikes.";
+      box.append(line);
+    }
     const tot = R0.reduce((s, r) => s + r.n, 0), R = R0.filter((r) => r.n >= 15);   // a pitch he's thrown a handful of times isn't graded on its own
     // a pitch against its own kind: the league's average grades for that pitch type are subtracted, so 100 = an average
     // four-seamer for a four-seamer (Sean, 26 Sep 2026); "all pitches" keeps every pitch on the one scale

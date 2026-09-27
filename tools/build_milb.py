@@ -29,10 +29,11 @@ API = "https://statsapi.mlb.com/api/v1"
 FEEDS = CACHE / "feeds"
 
 
-def savant_day(day: str) -> pd.DataFrame:
-    """One day of Triple-A pitches from Savant (cached as CSV under .cache/milb)."""
+def savant_day(day: str, tag: str | None = None) -> pd.DataFrame:
+    """One day of Triple-A pitches from Savant (cached as CSV under .cache/milb). The search carries the Statcast-equipped
+    Florida State League parks too, so Single-A reads the same files (tag="aaa") for their pitch tracking."""
     CACHE.mkdir(parents=True, exist_ok=True)
-    f = CACHE / f"{LEVEL.lower()}-{day}.csv"
+    f = CACHE / f"{(tag or LEVEL).lower()}-{day}.csv"
     if f.exists():
         return pd.read_csv(f, low_memory=False) if f.stat().st_size > 5 else pd.DataFrame()
     url = ("https://baseballsavant.mlb.com/statcast-search-minors/csv?all=true&hfGT=R%7C&player_type=batter"
@@ -292,6 +293,54 @@ def milb_people(ids, year: int) -> dict:
     return people
 
 
+TRACK = ["release_spin_rate", "spin_axis", "pfx_x", "pfx_z", "release_pos_x", "release_pos_z", "arm_angle", "release_speed",
+         "release_extension", "pitch_type"]
+
+
+def fsl_tracking(d: pd.DataFrame, start: str, end: str) -> pd.DataFrame:
+    """Single-A is built from Gameday, which has no pitch tracking; the Florida State League's Statcast parks are in
+    Savant's minors search, so their pitches get it matched on (game, plate appearance, pitch number)."""
+    days = [str(x.date()) for x in pd.date_range(start, end)]
+    keep = ["game_pk", "at_bat_number", "pitch_number"] + TRACK
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        parts = [x[[c for c in keep if c in x.columns]] for x in ex.map(lambda day: savant_day(day, "aaa"), days) if len(x)]
+    if not parts:
+        return d
+    s = pd.concat(parts, ignore_index=True)
+    s = s[s["game_pk"].isin(set(d["game_pk"]))].drop_duplicates(["game_pk", "at_bat_number", "pitch_number"])
+    if not len(s):
+        bd.log("  fsl tracking: none"); return d
+    d = d.copy()
+    d["pitch_number"] = d.groupby(["game_pk", "at_bat_number"]).cumcount() + 1
+    m = d[["game_pk", "at_bat_number", "pitch_number"]].merge(s, on=["game_pk", "at_bat_number", "pitch_number"], how="left")
+    hit = m["pfx_x"].notna().to_numpy()
+    for c in TRACK:
+        if c in m.columns:
+            v = m[c].to_numpy()
+            d[c] = np.where(hit, v, d[c].to_numpy()) if c in d.columns else v
+    bd.log(f"  fsl tracking matched on {hit.sum():,} pitches ({d.loc[hit, 'game_pk'].nunique()} games)")
+    return d.drop(columns="pitch_number")
+
+
+def add_milb_stuff(d: pd.DataFrame, year: int, start: str, end: str, level: str) -> pd.DataFrame:
+    """Stuff+ for a tracked level (Triple-A, the FSL's Single-A parks): the MLB models — trained on that MLB season and
+    the two before — grade these pitches against MLB pitches of the same type (Sean, 27 Sep 2026). A failure costs the
+    grades only."""
+    try:
+        if level == "a":
+            d = fsl_tracking(d, start, end)
+        if not pd.to_numeric(d["pfx_x"], errors="coerce").notna().any():
+            return d
+        mlb = [bd.load_prior_season(y) for y in (year, year - 1, year - 2)]
+        mlb = [x for x in mlb if len(x)]
+        if not mlb:
+            bd.log("  stuff: no MLB seasons to train on"); return d
+        return bd.add_stuff(d, pd.concat(mlb, ignore_index=True), ref=mlb[0])
+    except Exception as e:                                 # noqa: BLE001
+        bd.log(f"  !! minors stuff skipped: {type(e).__name__}: {e}")
+        return d
+
+
 def build_season(year: int, level: str = "aaa"):
     global SPORT, LEVEL, LEVEL_NAME
     SPORT, LEVEL, LEVEL_NAME, source = LEVELS[level]
@@ -300,6 +349,8 @@ def build_season(year: int, level: str = "aaa"):
     bd.directional_xwoba = lambda p, tracked, num, den: num.astype(float).copy()   # no sprint speeds in the minors
     bd.log(f"=== {year} {LEVEL_NAME} ===")
     d = bd.pitch_flags(load_milb(start, end) if source == "savant" else load_feed(year, start, end))
+    if level in ("aaa", "a"):
+        d = add_milb_stuff(d, year, start, end, level)
     tracked = float(d.loc[d["bip"], "launch_speed"].notna().mean()) if d["bip"].any() else 0.0
     hit, pit = bd.hitter_metrics(d), bd.pitcher_metrics(d)
     bd.log(f"  {len(hit)} batters, {len(pit)} pitchers")
@@ -348,6 +399,10 @@ def build_season(year: int, level: str = "aaa"):
         er = [(days[g[0]], g[1], g[2]) for g in people[q["id"]]["games"] if g[0] in days]
         if er:
             daily[f"P{q['id']}:er"] = er
+    try:                                                   # the Stuff tab's arsenal by day (tracked levels only)
+        bd.write_arsenal_days(key, {k: v for k, v in bd.arsenal_daily(d, days).items() if k in pid}, OUT)
+    except Exception as e:                                 # noqa: BLE001
+        bd.log(f"  !! arsenal by day skipped: {type(e).__name__}: {e}")
     dpath = OUT / f"days-{key}.js"
     dpath.write_text(f'window.DRAFT_HIST_DAYS = window.DRAFT_HIST_DAYS || {{}};\nwindow.DRAFT_HIST_DAYS["{key}"] = '
                      + json.dumps(daily, separators=(",", ":")) + ";\n")

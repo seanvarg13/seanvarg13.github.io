@@ -148,8 +148,17 @@ def main():
         shutil.copy2(os.path.join(TOOLS, s), os.path.join(ROOT, s))
     say(f"=== {dt.datetime.now(ZoneInfo('America/New_York')):%F %T} start (through {end})")
     if a.rescore is not None:
-        years = a.rescore or [str(y) for y in range(2015, int(year))]
-        ok = run("build_history.py", *years) and run("build_career.py") and publish(f"rescored {' '.join(years)}", end, a.dry)
+        # plain years rebuild MLB seasons; "aaa-2025" / "a-2024" tokens rebuild a minor-league season (27 Sep 2026: Stuff+ there)
+        toks = a.rescore or [str(y) for y in range(2015, int(year))]
+        years = [t for t in toks if t.isdigit()]
+        milb = {}
+        for t in toks:
+            if "-" in t and t.split("-", 1)[1].isdigit():
+                milb.setdefault(t.split("-", 1)[0], []).append(t.split("-", 1)[1])
+        ok = (not years or run("build_history.py", *years))
+        for lvl, ys in milb.items():
+            ok = ok and run("build_milb.py", lvl, *ys)
+        ok = ok and run("build_career.py") and publish(f"rescored {' '.join(toks)}", end, a.dry)
         sys.exit(0 if ok else 1)
     steps = set(a.steps.split(","))
     ok = True

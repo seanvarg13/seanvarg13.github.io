@@ -247,6 +247,14 @@ strike model mostly restated the Strike% already on the card; don't bring them b
 is bigger (SD 8.4 vs 4.9 in 2026). Checks on 2026 with a 2025 fit: whiff AUC .64; pitcher xWhiff vs actual Whiff% r .67,
 xGB vs GB% r .75; Stuff+ half-to-half r .91 (actual Whiff% .72). Day rows carry `stn/stw/stg/stp` so windows and splits
 re-derive it; `ctx.arsenal` holds the per-pitch table (`meta.arsenalFields`); with a window or split the Stuff tab's table re-sums `hist/ars-<season>.js` instead (`arsenal_daily` / `arsenalView`: pitcher × day × hand × venue × pitch type, started flag included, ~8 MB, loaded only then — Sean, 26 Sep 2026). A failure in the step costs only the grades.
+**The minors get Stuff+ too** (Sean, 27 Sep 2026): Triple-A, and Single-A's Florida State League parks (Gameday has no
+tracking, so `fsl_tracking` in `build_milb.py` matches Savant's minors-search rows on game / PA / pitch number — the same
+cached day files Triple-A reads). `add_milb_stuff` trains the models on that MLB season and the two before and passes the
+MLB season as `ref` to `add_stuff`, so league means and each pitch type's baseline are MLB's: a minors Stuff+ is graded
+against MLB pitches of its type. Past seasons (MLB or minors) get Stuff+ when rebuilt — the workflow's `rescore` input
+takes years for MLB and `aaa-2025` / `a-2024` tokens for the minors. MLB 2015-2019 have no spin axis or arm angle, so
+their grades are rougher. **Stuff uERA** (Stuff tab, `stuffUERA` in `app.js`): uERA with xWhiff / xGB / xPU in place of
+his real Whiff% / GB% / PU%; walks and Strike%'s part of uK% from his actual Strike% (the stuff model can't see strikes).
 
 **BABIP luck** (hitters; `babip_stats` in `build_data.py`, `babipFrom` in `app.js`, day field `wbh`; Sean, 27 Sep 2026):
 BABIP = non-HR hits / non-HR balls in play (Statcast's, so sac bunts count — a heavy bunter reads ~.005 under the
