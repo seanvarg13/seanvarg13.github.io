@@ -3164,6 +3164,14 @@
     w.append(el("p", "note", `Tick the stats to show on ${{ rankings: "Rankings", draft: "the Draft board", trending: "Trending", leaderboard: "the Leaderboard" }[state.mode] || "this page"}${state.mode === "leaderboard" ? "; the value shows in each cell, coloured by its percentile" : ""}. Clicking a column heading on the board also sorts by it.`));
     const drawOrder = () => {};                       // the column order lives in the Table panel
     const groups = (pit ? CARD_P : CARD).map((grp) => ({ group: grp.group, metrics: grp.metrics.flatMap((m) => [...(m.key === HEAD_DUP ? [] : [m]), ...((pit ? SUB_P : SUB)[m.key] || [])]) }));
+    // the columns that aren't on the card (LB_EXTRA_*) get a place here too, beside their closest relatives
+    { const side = (k) => (pit ? SIDE_P : SIDE_H).find((m) => m.key === k);
+      const after = (key, k) => { const x = side(k); if (!x) return false; for (const grp of groups) { const i = grp.metrics.findIndex((m) => m.key === key); if (i >= 0) { grp.metrics.splice(i + 1, 0, x); return true; } } return false; };
+      if (pit) { if (!after("uera", "suera")) groups.push({ group: "Stuff", metrics: [side("suera")].filter(Boolean) }); }
+      else {
+        if (!after("woba", "xwdiff")) groups.push({ group: "Outcomes", metrics: [side("xwdiff")].filter(Boolean) });
+        groups.push({ group: "BABIP", metrics: ["babip", "xbabip", "bluck", "brel"].map(side).filter(Boolean) });
+      } }
     const seen = new Set();
     const grid = el("div", "colgrid");
     { // Year and Age always sit right after the name
