@@ -5245,7 +5245,7 @@
   // A hitter's percentile box is two columns of headed sections, the card's own groups plus the expected three —
   // wide enough (it takes the right-hand box's place too) that every bar keeps the length it has in one column.
   // EXPW / EXPB / EXPS are the directional model's xwOBA, xBA and xSLG, as everywhere.
-  const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]], ["BABIP", ["babip", "xbabip", "bluck", "brel"]],
+  const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]], ["BABIP", ["bluck", "brel"]],   // two rows: the box's height is locked and more made it scroll on its own
                        ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],
                        ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]]]];
