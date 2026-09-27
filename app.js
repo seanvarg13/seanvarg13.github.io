@@ -396,6 +396,7 @@
   // Statcast's xwOBA left the site 2026-09-24, and the directional one is the headline column already
   state.lb.H = state.lb.H.filter((k) => k !== "xws" && k !== "xwd");
   if (!state.lb.xwdAdded) { if (!state.lb.H.includes("xwdiff")) state.lb.H.splice(Math.max(0, state.lb.H.indexOf("woba") + 1), 0, "xwdiff"); state.lb.xwdAdded = true; }   // xwOBA − wOBA, 27 Sep 2026
+  { const tc = state.cols.trending; if (tc && tc.P && !tc.suAdded) { if (!tc.P.includes("suera")) tc.P.splice(tc.P.includes("uera") ? tc.P.indexOf("uera") + 1 : tc.P.length, 0, "suera"); tc.suAdded = true; } }   // Stuff uERA on Trending too
   { const tc = state.cols.trending; if (tc && tc.H && !tc.xwdAdded) { if (!tc.H.includes("xwdiff")) tc.H.splice(Math.max(0, tc.H.indexOf("woba") + 1), 0, "xwdiff"); tc.xwdAdded = true; } }
   let poolVersion = 0;               // bumps when eligibility changes, so cached pools rebuild
   // tiers used to be stored as break ranks ([5, 12]); convert to sizes ([5, 7]) once
@@ -722,7 +723,7 @@
   const groupFor = (pos) => (pos === "ALLP" ? "P" : PIT_TABS.includes(pos) ? pos : "H");
   const isPitcherGroup = (g) => g !== "H";
   const metricsFor = (g) => (isPitcherGroup(g) ? DATA.meta.pitcherMetrics : DATA.meta.hitterMetrics);
-  const TREND_P = ["whf", "strk", "k", "bb", "era", "nera", "uera", "siera", "gb", "wsgp"];
+  const TREND_P = ["whf", "strk", "k", "bb", "era", "nera", "uera", "suera", "siera", "gb", "wsgp"];
   // every card metric in card order, fold-outs right after their parent (the Leaderboard's column order)
   const lbOrder = (g) => { const pit = isPitcherGroup(g), seen = new Set(), out = []; for (const grp of (pit ? CARD_P : CARD)) for (const m of grp.metrics) for (const x of [m, ...((pit ? SUB_P : SUB)[m.key] || [])]) if (!seen.has(x.key)) { seen.add(x.key); out.push(x); }
     for (const k of pit ? LB_EXTRA_P : LB_EXTRA_H) { const x = (pit ? SIDE_P : SIDE_H).find((m) => m.key === k); if (x && !seen.has(k)) { seen.add(k); out.push(x); } }
