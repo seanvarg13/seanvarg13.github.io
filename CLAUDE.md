@@ -254,7 +254,9 @@ MLB season as `ref` to `add_stuff`, so league means and each pitch type's baseli
 against MLB pitches of its type. Past seasons (MLB or minors) get Stuff+ when rebuilt — the workflow's `rescore` input
 takes years for MLB and `aaa-2025` / `a-2024` tokens for the minors. MLB 2015-2019 have no spin axis or arm angle, so
 their grades are rougher. **Stuff uERA** (Stuff tab, `stuffUERA` in `app.js`): uERA with xWhiff / xGB / xPU in place of
-his real Whiff% / GB% / PU%; walks and Strike%'s part of uK% from his actual Strike% (the stuff model can't see strikes).
+his real Whiff% / GB% / PU%; walks and Strike%'s part of uK% from his actual Strike% (the stuff model can't see strikes). It's also a
+Leaderboard column (`suera`, `LB_EXTRA_P`; pool stats in `pool()` / `statsFor`, rates from `stuffRates`: day-row sums in a
+window, the arsenal otherwise).
 
 **BABIP luck** (hitters; `babip_stats` in `build_data.py`, `babipFrom` in `app.js`, day field `wbh`; Sean, 27 Sep 2026):
 BABIP = non-HR hits / non-HR balls in play (Statcast's, so sac bunts count — a heavy bunter reads ~.005 under the
