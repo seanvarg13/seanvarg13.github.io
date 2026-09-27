@@ -2855,3 +2855,18 @@ body[data-mode="pitches"] main.wrap > .notes { display: none; }   /* the lists' 
   background: var(--swirl-img) 0 0 / 684px 684px repeat; opacity: 1; -webkit-mask: none; mask: none; }
 :root.swirl-img .modal.pagebg .modal-back::after,
 :root.swirl-img body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"])::after { display: none; }
+/* BABIP tab: luck on the left, exposure (where his wOBA comes from) and his BABIP by season on the right */
+.babiptab .babipnotes p, .babiptab .uerabox > p { margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; }
+.babiptab .babipnotes p.note, .babiptab .uerabox > p.note { color: var(--muted); font-size: 11.5px; }
+.babipcomp { display: grid; gap: 6px; margin: 6px 0 4px; }
+.babipcomp .bcrow { display: grid; grid-template-columns: 92px minmax(0, 1fr) 38px; align-items: center; gap: 8px; font-size: 12px; }
+.babipcomp .bclab { color: var(--ink); }
+.babipcomp .bcval { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.babipcomp .bctrack { height: 12px; background: var(--hair); border-radius: 2px; overflow: hidden; }
+.babipcomp .bcbar { display: block; height: 100%; }
+.babipcomp .bcbar.bip { background: var(--accent-2); }
+.babipcomp .bcbar.hr { background: var(--accent, #0c2340); }
+.babipcomp .bcbar.bb { background: var(--muted); }
+.uerabox .ubt.babipyrs tr.fcur td { background: var(--accent-wash); font-weight: 700; }
+:root[data-view="mobile"] .btabs { gap: 3px; }
+:root[data-view="mobile"] .btab { padding: 0 4px; }   /* seven hitter tabs (BABIP made it seven) fit a 390px phone */

@@ -262,9 +262,12 @@ window, the arsenal otherwise).
 BABIP = non-HR hits / non-HR balls in play (Statcast's, so sac bunts count — a heavy bunter reads ~.005 under the
 official figure); xBABIP = the directional xBA's expected hits less his HR, over the same balls; **BABIP luck** = his hits in
 play above expected × the wOBA value of his own average hit in play, in wOBA points; **BIP reliance** = % of his wOBA
-numerator from hits in play (how much a BABIP swing moves him; league ~30-90%, middle 58%). A "BABIP" section on the hitter
-card with luck and reliance only — the percentile box's height is locked and the left column can't outgrow the right
-one (four rows made the box scroll inside the card); BABIP / xBABIP are leaderboard / Compare columns. Luck and
+numerator from hits in play (how much a BABIP swing moves him; league ~30-90%, middle 58%). They live in the hitter card's
+**BABIP bottom tab** (`renderBabipTab`; Sean, 27 Sep 2026: "a separate tab of its own") — not the percentile box, whose
+height is locked (a BABIP section there made it scroll). Left: luck, Exp / Act / Diff for BABIP, AVG, SLG, wOBA on the card's
+dates and splits, hits over expected, wOBA at expected BABIP. Right: reliance, where his wOBA comes from (official line,
+linear weights `LW`), what a ±.030 BABIP swing does, and BABIP by season (`fantasy.js` + `hist/fantasy-lines.js`).
+BABIP / xBABIP are leaderboard / Compare columns. Luck and
 reliance are coloured as risk (hib false). Also: `mixsum` used to be truncated to an int in the day rows,
 so every window / split Mix wOBA read far too low (full-season values were right) — fixed 27 Sep 2026; past seasons need a
 rebuild to pick it up.

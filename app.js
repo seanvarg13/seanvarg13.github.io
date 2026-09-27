@@ -4877,6 +4877,83 @@
   const MIX_B = [["mxgb", "gb", "Ground balls"], ["mxpu", "pu", "Popups"], ["mxldp", "ld_p", "Line drives, pulled"], ["mxldc", "ld_c", "Line drives, center"],
                  ["mxldo", "ld_o", "Line drives, oppo"], ["mxfbp", "fb_p", "Fly balls, pulled"], ["mxfbc", "fb_c", "Fly balls, center"],
                  ["mxfbo", "fb_o", "Fly balls, oppo"], ["mxx", "x", "Air, no direction"]];   // build_data.MIX_COLS order
+  // BABIP tab (hitters; Sean, 27 Sep 2026: "a separate tab … expand upon that stuff"): how much of his line is BABIP.
+  // Left: his results against what his contact deserved (the card's dates and splits), the luck in hits and wOBA points,
+  // and his wOBA at his expected BABIP. Right: his exposure — how much of his wOBA rides on hits in play and what a normal
+  // BABIP swing does to it — and his BABIP season by season from the official lines, so a high one can be read against
+  // his own norm (fast, spray-the-ball hitters sit above the league's ~.290 year after year).
+  const LW = { bb: 0.69, hbp: 0.72, s1: 0.88, s2: 1.25, s3: 1.58, hr: 2.03 };   // linear weights for the official-line splits
+  function renderBabipTab(p, st) {
+    const pv = V(p), m = pv.m, wrap = el("div", "eratab babiptab");
+    const f3 = (x) => (x == null ? "–" : fmtX(x)), sgn3 = (x) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(3).replace(/^0/, ""));
+    // left: luck
+    const box = el("div", "rollbox uerabox"), hd = el("div", "rollhd");
+    const lk = m.bluck;
+    hd.append(el("span", "rollname", lk == null ? "BABIP luck –" : `BABIP luck ${lk > 0 ? "+" : lk < 0 ? "−" : ""}${Math.abs(lk).toFixed(1)} pts`),
+              el("span", "rollsub", st && st.pct && st.pct.bluck != null ? `${ordinal(st.pct.bluck)} percentile` : ""));
+    box.append(hd);
+    const t = el("table", "ubt"); t.append(colgroup([null, 60, 60, 60]));
+    const hr = el("tr"); for (const h of ["", "Exp", "Act", "Diff"]) hr.append(el("th", h ? null : "l", h));
+    const th = el("thead"); th.append(hr); t.append(th);
+    const tb = el("tbody");
+    for (const [what, exp, act] of [["BABIP", m.xbabip, m.babip], ["AVG", m.dxba, m.ba], ["SLG", m.dxslg, m.slg], ["wOBA", m.xwd ?? m.xwoba, m.woba]]) {
+      const d = exp == null || act == null ? null : Math.round(1000 * (act - exp)) / 1000;
+      const r = el("tr"), dc = el("td", "dcell");
+      dc.append(el("span", "chip2 " + (d == null || Math.abs(d) < 0.010 ? "even" : d > 0 ? "unlucky" : "lucky"), sgn3(d)));   // above what he earned is the part at risk
+      r.append(el("td", "l", what), el("td", "exp", f3(exp)), el("td", null, f3(act)), dc); tb.append(r);
+    }
+    t.append(tb); box.append(t);
+    // the official season line (season-long, whatever the card's window) for hits, exposure and the career norm
+    const cur = String(DATA.meta.season), Fc = fData(cur); if (!Fc) fEnsure(cur);
+    const line = Fc && !DS.hist ? fHit(Fc, p.id) : null;
+    const notes = el("div", "babipnotes");
+    if (m.babip != null && m.xbabip != null && line) {
+      const den = line.AB - line.K - line.HR + line.SF, extra = Math.round((m.babip - m.xbabip) * den);
+      notes.append(el("p", null, `${extra >= 0 ? "+" : "−"}${Math.abs(extra)} hits in play against what his contact deserved (about ${den} balls in play, not counting home runs).`));
+    }
+    if (lk != null && m.woba != null) notes.append(el("p", null, `At his expected BABIP his wOBA would be ${f3(Math.round(1000 * (m.woba - lk / 1000)) / 1000)} instead of ${f3(m.woba)}.`));
+    if (DS.hist || needsDays()) notes.append(el("p", "note", "Hits and the season table on the right are the full season's official line; the rows above follow the card's dates and splits."));
+    box.append(notes); wrap.append(box);
+    // right: exposure + by season
+    const box2 = el("div", "rollbox uerabox"), hd2 = el("div", "rollhd");
+    hd2.append(el("span", "rollname", m.brel == null ? "BIP reliance –" : `BIP reliance ${m.brel.toFixed(1)}%`),
+               el("span", "rollsub", st && st.pct && st.pct.brel != null ? `${ordinal(st.pct.brel)} percentile` : ""));
+    box2.append(hd2);
+    if (line && line.PA) {
+      const s1 = line.H - line["2B"] - line["3B"] - line.HR, ubb = line.BB - line.IBB;
+      const vW = LW.bb * ubb + LW.hbp * line.HBP, vH = LW.hr * line.HR, vB = LW.s1 * s1 + LW.s2 * line["2B"] + LW.s3 * line["3B"], tot = vW + vH + vB;
+      const den = line.AB - line.K - line.HR + line.SF, nh = line.H - line.HR, wden = line.AB + ubb + line.SF + line.HBP;
+      const sens = nh && wden ? Math.round(1000 * 0.030 * den * (vB / nh) / wden) : null;
+      const comp = el("div", "babipcomp");
+      for (const [lab, v, cls] of [["Hits in play", vB, "bip"], ["Home runs", vH, "hr"], ["Walks + HBP", vW, "bb"]]) {
+        const row = el("div", "bcrow"), bar = el("span", "bcbar " + cls); bar.style.width = (tot ? 100 * v / tot : 0).toFixed(1) + "%";
+        const track = el("span", "bctrack"); track.append(bar);
+        row.append(el("span", "bclab", lab), track, el("span", "bcval", (tot ? 100 * v / tot : 0).toFixed(0) + "%")); comp.append(row);
+      }
+      box2.append(el("p", "note", "Where his wOBA comes from (the season's official line):"), comp);
+      if (sens != null) box2.append(el("p", null, `A normal BABIP swing (±.030) moves his wOBA about ±${sens} points — league hitters run about 12 to 26, the middle about 19.`));
+    }
+    // his BABIP by season, official lines
+    ensureScript("hist/fantasy-lines.js", () => !!window.DRAFT_FANTASY_LINES);
+    const L = window.DRAFT_FANTASY_LINES, rows = [];
+    if (line && line.PA) rows.push([cur, line]);
+    if (L) for (const yy of Object.keys(L.years).sort().reverse()) { const a = L.years[yy].hitters[p.id]; if (a) { const o = fLineObj(L, "H", a); if (o.PA) rows.push([yy, o]); } }
+    if (rows.length) {
+      const t2 = el("table", "ubt babipyrs"), th2 = el("thead"), h2 = el("tr");
+      for (const h of ["Season", "PA", "BABIP", "AVG"]) h2.append(el("th", h === "Season" ? "l" : null, h));
+      th2.append(h2); t2.append(th2);
+      const tb2 = el("tbody"); let H = 0, HR = 0, D = 0;
+      for (const [yy, o] of rows) {
+        const den = o.AB - o.K - o.HR + o.SF, b = den > 0 ? (o.H - o.HR) / den : null;
+        if (yy !== cur) { H += o.H; HR += o.HR; D += den; }
+        const r = el("tr", yy === cur ? "fcur" : null); r.append(el("td", "l", yy), el("td", null, String(o.PA)), el("td", null, f3(b)), el("td", null, f3(o.AB ? o.H / o.AB : null))); tb2.append(r);
+      }
+      if (D > 0) { const r = el("tr", "ftot"); r.append(el("td", "l", "Before " + cur), el("td"), el("td", null, f3((H - HR) / D)), el("td")); tb2.append(r); }
+      t2.append(tb2); box2.append(el("h4", "fanth", "BABIP by season"), t2);
+    } else box2.append(el("p", "note", L ? "No MLB seasons to show." : "Loading past seasons…"));
+    wrap.append(box2);
+    return wrap;
+  }
   function renderMixTab(p, g) {
     const x = K().mix, pv = V(p), pl = pool(g);
     const cnt = (q) => {                                           // his balls by bucket and their total
@@ -4917,7 +4994,7 @@
     return box;
   }
   const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["rolling", "Rolling"], ["fantasy", "Fantasy"]];
-  const BTABS_H = [["mix", "Mix"]];                                      // a hitter's batted-ball mix
+  const BTABS_H = [["mix", "Mix"], ["babip", "BABIP"]];                  // a hitter's batted-ball mix, and how much of his line is BABIP
   const BTABS_P = [["stuff", "Stuff"], ["nera", "nERA"], ["uera", "uERA"]];   // his arsenal graded, then his two ERAs, one tab each
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
@@ -4963,6 +5040,8 @@
       body.append(roll || el("p", "note", "No game-by-game data for this season, so there's no rolling line."));
     } else if (pick === "mix") {
       body.append(renderMixTab(p, ref));
+    } else if (pick === "babip") {
+      body.append(renderBabipTab(p, o.st));
     } else if (pick === "fantasy") {
       body.append(renderFantasyTab(p));
     } else if (pick === "stuff") {
@@ -5434,7 +5513,7 @@
   // A hitter's percentile box is two columns of headed sections, the card's own groups plus the expected three —
   // wide enough (it takes the right-hand box's place too) that every bar keeps the length it has in one column.
   // EXPW / EXPB / EXPS are the directional model's xwOBA, xBA and xSLG, as everywhere.
-  const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]], ["BABIP", ["bluck", "brel"]],   // two rows: the box's height is locked and more made it scroll on its own
+  const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
                        ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],
                        ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]]]];
