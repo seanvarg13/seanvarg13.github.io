@@ -299,8 +299,19 @@ def stuff_features(d: pd.DataFrame) -> pd.DataFrame:
     ref = (x.merge(top[["pitcher", "yr", "pt"]], on=["pitcher", "yr", "pt"]).groupby(["pitcher", "yr"])[["velo", "ivb", "hb"]].mean()
            .reindex(pd.MultiIndex.from_arrays([d["pitcher"].to_numpy(), yr])))
     f["dvelo"], f["divb"], f["dhb"] = f.velo.to_numpy() - ref.velo.to_numpy(), f.ivb.to_numpy() - ref.ivb.to_numpy(), f.hb.to_numpy() - ref.hb.to_numpy()
+    # arsenal depth (whiff model only, Sean 27 Sep 2026): how much he throws this pitch, and how many pitches he throws a
+    # real amount (5%+ that season; a 3% show-me pitch doesn't count). Tested on 2026: first-half xWhiff predicted the
+    # second half's Whiff% at .679 against .655 without them (10%+ .665, "effective number of pitches" .674); command
+    # habits (zone / edge rate, location spread) described the season better but predicted worse, so they're out
+    k = pd.Series(d["pitcher"].astype(str).to_numpy() + "_" + yr.astype(str), index=d.index)
+    sh = d.groupby([k, d["pitch_type"]]).size() / d.groupby(k).size()
+    f["use"] = sh.reindex(pd.MultiIndex.from_arrays([k, d["pitch_type"]])).to_numpy()
+    f["depth"] = sh[sh >= 0.05].groupby(level=0).size().reindex(k).to_numpy().astype(float)
     f.loc[f.pt.isna() | f.velo.isna() | f.ivb.isna()] = np.nan                        # untracked or unclassed: no grade
     return f
+
+
+STUFF_WHIFF_ONLY = ["use", "depth"]                # inputs the batted-ball model leaves out (they didn't help it)
 
 
 # what a prior season keeps for training (the rest of its columns are dropped as it loads, to keep memory down)
@@ -373,14 +384,15 @@ def _fit_stuff(train: pd.DataFrame, d: pd.DataFrame):
         log(f"  stuff: too few tracked pitches ({sw.sum()} swings)"); return None
     kw = dict(max_iter=400, learning_rate=0.06, max_leaf_nodes=63, min_samples_leaf=200, l2_regularization=1.0,
               categorical_features=[0], early_stopping=True, validation_fraction=0.1, random_state=0)
+    bcols = [c for c in ftr.columns if c not in STUFF_WHIFF_ONLY]
     Xtr = ftr.to_numpy()
     wm = HistGradientBoostingClassifier(**kw).fit(Xtr[sw], np.isin(desc[sw], list(WHIFF)))
-    bm = HistGradientBoostingClassifier(**kw).fit(Xtr[bip], bb.to_numpy()[bip].astype(int))
+    bm = HistGradientBoostingClassifier(**kw).fit(ftr[bcols].to_numpy()[bip], bb.to_numpy()[bip].astype(int))
     del Xtr, ftr
     f = stuff_features(d)
     has = f.velo.notna().to_numpy()
     X = f.to_numpy()[has]
-    pw = wm.predict_proba(X)[:, 1]; pbt = bm.predict_proba(X)
+    pw = wm.predict_proba(X)[:, 1]; pbt = bm.predict_proba(f[bcols].to_numpy()[has])
     d.loc[has, "st_n"] = 1.0; d.loc[has, "st_w"] = pw; d.loc[has, "st_g"] = pbt[:, 0]; d.loc[has, "st_p"] = pbt[:, 1]
     air = d["bb_type"].isin(["line_drive", "fly_ball"])
     g = d[has].assign(velo=f.velo[has], ivb=f.ivb[has], hb=f.hb[has], spin=f.spin[has], wh=d["description"][has].isin(WHIFF),

@@ -228,8 +228,11 @@ handedness and speed, not the mix). Per ball in play — walks and strikeouts do
 
 **Stuff+** (`add_stuff` / `stuff_grade` in `build_data.py`, `stuffFrom` in `app.js`; Sean, 26 Sep 2026): each pitch
 graded on its traits alone — velocity, spin rate and axis, induced vertical / horizontal break (lefties mirrored), release
-height and side, extension, arm angle, batter side, and velocity / break gaps to his primary fastball; **no location, no
-count**. `HistGradientBoostingClassifier`s are **trained at every build** on this season plus the two before (`STUFF_YEARS`;
+height and side, extension, arm angle, batter side, and velocity / break gaps to his primary fastball — plus, in the whiff
+model only, **arsenal depth**: this pitch's usage and how many pitch types he throws 5%+ of the time that season (`use`,
+`depth`, `STUFF_WHIFF_ONLY`; Sean, 27 Sep 2026 — first-half xWhiff → second-half Whiff% .655 → .679 on 2026; 10%+ .665,
+"effective number" .674; command habits — zone / edge rate, location spread — tested and left out, they predicted worse);
+**no location, no count**. `HistGradientBoostingClassifier`s are **trained at every build** on this season plus the two before (`STUFF_YEARS`;
 tested 26 Sep 2026 on 2026: a third season helped slightly, a fourth to sixth or recency weights added nothing) (no model
 file): P(whiff | swing) and P(ground ball / popup / air ball | contact). They combine on uERA's weights: a Whiff% point is
 0.933 K% points (`UK`), each K removes a ball in play worth the league BIP value (`kW` ≈ 0.10 ERA per point); a ball in
