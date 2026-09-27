@@ -8,7 +8,7 @@
   const HIT_TABS = ["ALL", "C", "1B", "2B", "3B", "SS", "OF", "DH"];
   const PIT_TABS = ["ALLP", "SP", "RP"];
   const TAB_LABEL = { ALL: "All hitters", ALLP: "All pitchers" };
-  const SHORT = { xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
+  const SHORT = { suera: "Stuff uERA", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
                tiers: "draft2027.tiers", tierNames: "draft2027.tierNames", sets: "draft2027.rankSets", extraPos: "draft2027.extraPos", stars: "draft2027.stars" };
   // Storage that cannot lose a saved list. A value that will not parse is left exactly where it is — its raw
@@ -259,6 +259,16 @@
                   { key: "xwdiff", label: "xwOBA − wOBA", hib: true, dec: 3, unit: "", sign: true }];
   // hitter stats that aren't on the card but can be Leaderboard / Trending columns
   const LB_EXTRA_H = ["xwdiff", "babip", "xbabip", "bluck", "brel"];
+  const LB_EXTRA_P = ["suera"];
+  // a pitcher's stuff rates for Stuff uERA: the day rows' sums in a window or split, the season's arsenal otherwise
+  function stuffRates(p) {
+    const m = V(p).m;
+    if (m._stn) return { xw: 100 * m._stw / m._stn, xg: m._stg / m._stn, xp: m._stp / m._stn };
+    const a = p.ctx && p.ctx.arsenal, F = DATA.meta.arsenalFields; if (!a || !F || needsDays()) return null;
+    const I = { n: F.indexOf("n"), w: F.indexOf("xwhf"), g: F.indexOf("xgb"), p: F.indexOf("xpu") };
+    let n = 0, w = 0, g = 0, pp = 0; for (const r of a) { n += r[I.n]; w += r[I.n] * r[I.w]; g += r[I.n] * r[I.g]; pp += r[I.n] * r[I.p]; }
+    return n ? { xw: w / n, xg: g / n / 100, xp: pp / n / 100 } : null;
+  }
   // babip_stats() in build_data.py, from summed day rows: xBABIP is the directional xBA's hits less his home runs over his
   // non-HR balls in play; luck is his hits in play above that, priced at his own average hit in play, in wOBA points
   function babipFrom(t) {
@@ -274,7 +284,7 @@
   // Mix wOBA: the league's value of his average ball in play (type × pulled / straightaway / the other way) — balls in play
   // only, no bunts, walks and strikeouts left out (Sean): what his batted-ball distribution alone is worth
   const mixW = (sum, n) => (K().mix && n ? Math.round(1000 * sum / n) / 1000 : null);
-  const SIDE_P = [{ key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" },
+  const SIDE_P = [{ key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "suera", label: "Stuff uERA", hib: false, dec: 2, unit: "" },
                   { key: "stuff", label: "Stuff+", hib: true, dec: 0, unit: "" }, { key: "swhf", label: "Whiff+", hib: true, dec: 0, unit: "" },
                   { key: "sbb", label: "Batted-ball+", hib: true, dec: 0, unit: "" }];
   // Stuff+ and its two parts from summed per-pitch predictions (graded pitches n, and the sums of their whiff, ground-ball
@@ -354,7 +364,7 @@
     teamF: prefs.teamF || null,                    // {kind: "lg" | "div" | "team", v} — only that league, division or team                        // filters tucked away behind a slim bar (it stays pinned, so they can come back from anywhere)   // Year / Age columns right after the name ("auto": Year when the list spans seasons)
     lbSplit: { hand: "all", venue: "all" },       // Leaderboard: vs L / R and home / away (session only, like the card's)
     lb: Object.assign({ H: ["woba", "ev", "brl", "hh", "pull", "air", "gb", "zsw", "osw", "whf", "k", "bb"],
-                        P: ["whf", "strk", "gb", "pu", "wsgp", "k", "bb", "kbb", "ukb", "era", "nera", "uera", "siera", "fip", "fbv"] }, prefs.lb || {}),   // Leaderboard columns
+                        P: ["whf", "strk", "gb", "pu", "wsgp", "k", "bb", "kbb", "ukb", "era", "nera", "uera", "suera", "siera", "fip", "fbv"] }, prefs.lb || {}),   // Leaderboard columns
     open: prefs.open || {},          // which fold-out rows are expanded, e.g. {air: true}
     cmp: Object.assign({ type: "H", players: [] }, prefs.cmp || {}),   // Compare page: [{id, ds}]
     cmpCols: prefs.cmpCols || {},              // Compare: chosen stats per type {H: [keys], P: [keys]}; missing = every card stat
@@ -380,6 +390,7 @@
 
   };
   if (state.lb.P.includes("nera") && !state.lb.P.includes("uera")) state.lb.P.splice(state.lb.P.indexOf("nera") + 1, 0, "uera");     // uERA back 2026-09-21
+  if (!state.lb.suAdded) { if (!state.lb.P.includes("suera")) state.lb.P.splice(state.lb.P.includes("uera") ? state.lb.P.indexOf("uera") + 1 : state.lb.P.length, 0, "suera"); state.lb.suAdded = true; }   // Stuff uERA, 27 Sep 2026
   if (state.lb.P.includes("kbb") && !state.lb.P.includes("ukb")) state.lb.P.splice(state.lb.P.indexOf("kbb") + 1, 0, "ukb");       // added 2026-09-21
   if (state.lb.P.includes("gb") && !state.lb.P.includes("wsgp")) state.lb.P.splice(state.lb.P.indexOf("gb") + 1, 0, "wsgp");       // WSGP added 2026-09-23
   // Statcast's xwOBA left the site 2026-09-24, and the directional one is the headline column already
@@ -669,7 +680,7 @@
                    csw: rate(t.cs + t.whf, t.pit), zcon: rate(t.zcon, t.zsw), zone: rate(t.zpit, t.pit), osw: rate(t.osw, t.opit), swing: rate(t.sw, t.pit),
                    fbv: t.fbn ? Math.round(10 * t.fbv / t.fbn) / 10 : null, ext: t.extn ? Math.round(10 * t.exts / t.extn) / 10 : null,
                    ev: (t.evn || t.bbe) ? Math.round(10 * t.evsum / (t.evn || t.bbe)) / 10 : null, hh: rate(t.hh, t.bip || t.bbe), brl: rate(t.brl, t.bip || t.bbe),
-                   ...stuffFrom(t.stn, t.stw, t.stg, t.stp, t.stbw, t.stbg, t.stbp) },
+                   ...stuffFrom(t.stn, t.stw, t.stg, t.stp, t.stbw, t.stbg, t.stbp), _stn: t.stn, _stw: t.stw, _stg: t.stg, _stp: t.stp },
               sample: ip, ip, bf: t.bf, g: games, gs,
               ctx: { G: games, GS: gs, wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, Pitches: t.pit, bbl, PAw: t.wden, HBP: t.hbp } };
       } else {
@@ -714,7 +725,7 @@
   const TREND_P = ["whf", "strk", "k", "bb", "era", "nera", "uera", "siera", "gb", "wsgp"];
   // every card metric in card order, fold-outs right after their parent (the Leaderboard's column order)
   const lbOrder = (g) => { const pit = isPitcherGroup(g), seen = new Set(), out = []; for (const grp of (pit ? CARD_P : CARD)) for (const m of grp.metrics) for (const x of [m, ...((pit ? SUB_P : SUB)[m.key] || [])]) if (!seen.has(x.key)) { seen.add(x.key); out.push(x); }
-    if (!pit) for (const k of LB_EXTRA_H) { const x = SIDE_H.find((m) => m.key === k); if (x && !seen.has(k)) { seen.add(k); out.push(x); } }
+    for (const k of pit ? LB_EXTRA_P : LB_EXTRA_H) { const x = (pit ? SIDE_P : SIDE_H).find((m) => m.key === k); if (x && !seen.has(k)) { seen.add(k); out.push(x); } }
     return out; };
   // Year and Age: plain columns that always sit right after the name (no percentile)
   const PRE_COLS = { year: { key: "year", label: "Year" }, age: { key: "age", label: "Age" } };
@@ -897,6 +908,11 @@
       const ues = list.map((p) => stats.get(p.type + p.id).uera), uep = percentiles(ues.map((x) => (x == null ? null : -x)));
       list.forEach((p, i) => { stats.get(p.type + p.id).pct.uera = uep[i]; });
       sorted.uera = ues.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
+      // Stuff uERA (the Stuff tab's, as a column): his stuff's xWhiff / xGB / xPU through the same machinery
+      const sus = list.map((p, i) => { const r = stuffRates(p), u = r && stuffUeraCore(V(p), r.xw, r.xg, r.xp, pct.strk[i], sorted); return u ? u.uera : null; });
+      const sup = percentiles(sus.map((x) => (x == null ? null : -x)));
+      list.forEach((p, i) => { const s = stats.get(p.type + p.id); s.suera = sus[i]; s.pct.suera = sup[i]; });
+      sorted.suera = sus.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
       const wss = list.map((_, i) => wsgpFrom(pct.whf[i], pct.strk[i], pct.gb && pct.gb[i], pct.pu && pct.pu[i]));
       const wsp = percentiles(wss);
       list.forEach((p, i) => { const s = stats.get(p.type + p.id); s.wsgp = wss[i]; s.pct.wsgp = wsp[i]; });
@@ -937,12 +953,14 @@
     pct.ubb = ukbb && pl.sorted.ubb ? insertPct(pl.sorted.ubb, -ukbb.bb) : null;
     const uera = pl.sorted.uera ? underlyingERA(V(p), ukbb, pl.sorted) : null;
     pct.uera = uera == null || !pl.sorted.uera ? null : insertPct(pl.sorted.uera, -uera);
+    const sr = stuffRates(p), su0 = sr && pl.sorted.suera ? stuffUeraCore(V(p), sr.xw, sr.xg, sr.xp, pct.strk, pl.sorted) : null, suera = su0 ? su0.uera : null;
+    pct.suera = suera == null ? null : insertPct(pl.sorted.suera, -suera);
     const mera = mixERA(V(p), pl.sorted);
     pct.mera = mera == null || !pl.sorted.mera ? null : insertPct(pl.sorted.mera, -mera);
     const wsgp = wsgpFrom(pct.whf, pct.strk, pct.gb, pct.pu);
     pct.wsgp = wsgp == null || !pl.sorted.wsgp ? null : insertPct(pl.sorted.wsgp, wsgp);
     return { pct, score, scorePct: Math.round(score), rank: above + 1, outside: true, ukbb, ukb,
-             uk: ukbb ? ukbb.k : null, ubb: ukbb ? ukbb.bb : null, uera, mera, wsgp };
+             uk: ukbb ? ukbb.k : null, ubb: ukbb ? ukbb.bb : null, uera, suera, mera, wsgp };
   }
 
   // percentile of x if it were inserted into the sorted ascending array (ties share the mean rank)
@@ -1210,6 +1228,7 @@
       if (key === "ubb") { const v = st(p).ubb; return v == null ? null : -v; }
       if (key === "wsgp") return st(p).wsgp;
       if (key === "uera") { const u = st(p).uera; return u == null ? null : -u; }
+      if (key === "suera") { const u = st(p).suera; return u == null ? null : -u; }
       const mm = sortMetric, v = V(p).m[key];
       if (mm && v != null) return mm.hib === false ? -v : v;       // oriented so "desc" is always best first
       return st(p).pct[key];
@@ -1898,7 +1917,7 @@
   }
 
   // a metric's value for display: season / window values live on V(p).m, pool-derived ones (underlying ERA) on the stats
-  const metricValue = (m, pv, st) => (m.key === "ukb" ? (st ? st.ukb : null) : m.key === "uera" ? (st ? st.uera : null)
+  const metricValue = (m, pv, st) => (m.key === "ukb" ? (st ? st.ukb : null) : m.key === "uera" ? (st ? st.uera : null) : m.key === "suera" ? (st ? st.suera : null)
                                       : m.key === "wsgp" ? (st ? st.wsgp : null) : m.key === "uk" ? (st ? st.uk : null)
                                       : m.key === "ubb" ? (st ? st.ubb : null) : m.key === "mera" ? (st ? st.mera : null) : pv.m[m.key]);
   // Compare a card with something else: another of his seasons, the other side of a split, or a stretch of games.
@@ -3562,6 +3581,7 @@
     fbv: "Average velocity of his four-seamers and sinkers.",
     ext: "How far off the rubber he releases the ball. More extension makes the same velocity play up.",
     stuff: "Stuff+: his pitches graded on what the ball does alone — velocity, spin, movement, release point, extension, arm angle and each pitch against his fastball; no location, no count. Two models, trained on every pitch of this season and the two before: how likely a swing is to miss it, and whether contact is a ground ball, a popup or an air ball. They're combined the way uERA weighs them, so whiffs carry the most. Every pitch is graded against the league's pitches of its own type — 100 is an average four-seamer for a four-seamer, an average curveball for a curveball — and his grade is those averaged by how often he throws each. Each point is 1% of runs saved (120 = a fifth fewer runs than average stuff for the pitches he throws). Whiff+ and Batted-ball+ are its two halves. The whiff model also knows how much he uses the pitch and how many pitches he throws 5%+ of the time.",
+    suera: "Stuff uERA: uERA built from his stuff instead of his results — the stuff model's xWhiff in place of his Whiff% (through uK%), its xGB and xPU in place of his ground balls and popups (the rest of his air balls split at the league's line-drive share), and walks from his actual Strike% as in uERA, since the stuff model can't tell who throws strikes. What his arsenal alone says his ERA should be.",
     xwdiff: "xwOBA − wOBA: what his contact, walks and strikeouts deserved (the site's xwOBA) minus what he actually got. Above zero he's been unlucky — his results should rise toward his xwOBA; below zero he's been lucky. +.030 is a lot. Every point is a thousandth of wOBA.",
     babip: "BABIP: batting average on balls in play — hits that aren't home runs, over balls in play that aren't home runs (sac flies count). It swings a lot by chance: a hitter's BABIP from one season to the next holds only loosely.",
     xbabip: "xBABIP: the BABIP his contact should have produced — the site's hitting model (exit velocity, launch angle, spray and pull direction, sprint speed) gives every ball in play its chance of being a hit; his expected hits, less his home runs, over his non-HR balls in play.",
@@ -5175,11 +5195,14 @@
   // pitch mix. Walks, and Strike%'s part of uK%, come from his actual Strike% through the same estimator as uERA: the
   // stuff model can't tell who throws strikes. Same pitches as the table above, so it follows the card's dates and splits.
   function stuffUERA(p, R0, st, g) {
-    const pv = V(p), pl = g ? pool(g) : null, sorted = pl && pl.sorted, pctS = st && st.pct ? st.pct.strk : null;
-    if (!sorted || pctS == null || pv.m.strk == null) return null;
+    const pl = g ? pool(g) : null, sorted = pl && pl.sorted, pctS = st && st.pct ? st.pct.strk : null;
     const n = R0.reduce((a, r) => a + r.n, 0); if (!n) return null;
     const wx = (k) => R0.reduce((a, r) => a + (r[k] || 0) * r.n, 0) / n;
-    const xw = wx("xwhf"), xg = wx("xgb") / 100, xp = wx("xpu") / 100, air = Math.max(0, 1 - xg - xp);
+    return stuffUeraCore(V(p), wx("xwhf"), wx("xgb") / 100, wx("xpu") / 100, pctS, sorted);
+  }
+  function stuffUeraCore(pv, xw, xg, xp, pctS, sorted) {
+    if (!sorted || pctS == null || pv.m.strk == null || xw == null) return null;
+    const air = Math.max(0, 1 - xg - xp);
     const pvS = { m: { whf: xw, strk: pv.m.strk }, ctx: Object.assign({}, pv.ctx, { bbl: { gb: [1000 * xg], pu: [1000 * xp], ld: [500 * air], fb: [500 * air] } }) };
     const ik = impliedKBB(pvS, pctS, sorted); if (!ik) return null;
     const uera = underlyingERA(pvS, ik, sorted);
