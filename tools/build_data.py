@@ -96,7 +96,7 @@ NON_AB = {"walk", "intent_walk", "hit_by_pitch", "sac_fly", "sac_fly_double_play
 HITTER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", "osw", "zcon", "ocon", "brl",
               "air", "pullair", "pa", "ab", "bb", "k", "wnum", "wden", "xnum", "xden", "hh", "ss", "strk", "bsn", "bssum",
               "bbe", "evsum", "dnum", "pulln", "ld", "gbh", "puh", "evs", "bbt", "bip", "evn", "oppn", "h", "tb", "xbsum", "xssum", "dbsum", "dssum", "mixsum", "mixn",
-              "mxgb", "mxpu", "mxldp", "mxldc", "mxldo", "mxfbp", "mxfbc", "mxfbo", "mxx", "hr"]   # hr: home runs (the fantasy page splits his official line by hand with these); mixsum / mixn = batted-ball mix value (Mix wOBA), mx* = its balls by bucket (mxx: air, no direction); dnum = directional-xwOBA numerator; evs = that row's exit velocities (no bunts); trailing fields (older files lack them): bbt = typed balls in play, bip = all balls in play, evn = EV-eligible (tracked, no bunt)
+              "mxgb", "mxpu", "mxldp", "mxldc", "mxldo", "mxfbp", "mxfbc", "mxfbo", "mxx", "hr", "wbh"]   # wbh: wOBA value of his hits on balls in play (not HR) — BABIP reliance; hr: home runs (the fantasy page splits his official line by hand with these); mixsum / mixn = batted-ball mix value (Mix wOBA), mx* = its balls by bucket (mxx: air, no direction); dnum = directional-xwOBA numerator; evs = that row's exit velocities (no bunts); trailing fields (older files lack them): bbt = typed balls in play, bip = all balls in play, evn = EV-eligible (tracked, no bunt)
 # The hitter card, grouped. key, label, higher-is-better, decimals, unit. Keys not in HITTER_METRICS are card-only.
 HITTER_CARD = [
     ("Outcomes",             [("woba", "wOBA", True, 3, ""), ("xws", "xwOBA", True, 3, ""), ("xwd", "dxwOBA", True, 3, "")]),
@@ -119,7 +119,7 @@ HITTER_SUB = {"woba": [("ba", "BA", True, 3, ""), ("slg", "SLG", True, 3, "")],
 PITCHER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "strk", "bip", "gb", "bf", "k", "bb", "outs", "wnum", "wden", "gs",
                "cs", "zpit", "opit", "zsw", "osw", "zcon", "hr", "hbp", "fbt", "pu", "bbe", "brl", "hh", "evsum",
                "fbn", "fbv", "extn", "exts",
-               "ld", "wbip", "wgb", "wld", "wfb", "wpu", "evn", "h", "stn", "stw", "stg", "stp"]   # h: hits allowed (fantasy splits by hand); stn / stw / stg / stp: graded pitches and their summed whiff, ground-ball and popup chances (Stuff); luck-neutral ERA inputs: line drives, wOBA numerator on balls in play and by type; evn = EV-eligible balls (no bunts)
+               "ld", "wbip", "wgb", "wld", "wfb", "wpu", "evn", "h", "stn", "stw", "stg", "stp", "stbw", "stbg", "stbp"]   # stb*: the league means of each graded pitch's own type (Stuff+ is graded against pitch type); h: hits allowed (fantasy splits by hand); stn / stw / stg / stp: graded pitches and their summed whiff, ground-ball and popup chances (Stuff); luck-neutral ERA inputs: line drives, wOBA numerator on balls in play and by type; evn = EV-eligible balls (no bunts)
 # per-game earned runs (from MLB game logs) ride along as "P<id>:er" rows: [day, home, er]
 FASTBALLS = {"FF", "SI", "FT"}
 PITCHER_CARD = [
@@ -348,7 +348,7 @@ def load_prior_seasons(season: int) -> pd.DataFrame:
     return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=STUFF_TRAIN)
 
 
-STUFF_OUT = ["st_n", "st_w", "st_g", "st_p"]
+STUFF_OUT = ["st_n", "st_w", "st_g", "st_p", "st_bw", "st_bg", "st_bp"]   # st_b*: the league means for the pitch's own type
 
 
 def add_stuff(d: pd.DataFrame, prior: pd.DataFrame | None = None) -> pd.DataFrame:
@@ -394,11 +394,18 @@ def _fit_stuff(train: pd.DataFrame, d: pd.DataFrame):
     X = f.to_numpy()[has]
     pw = wm.predict_proba(X)[:, 1]; pbt = bm.predict_proba(f[bcols].to_numpy()[has])
     d.loc[has, "st_n"] = 1.0; d.loc[has, "st_w"] = pw; d.loc[has, "st_g"] = pbt[:, 0]; d.loc[has, "st_p"] = pbt[:, 1]
+    # every pitch also carries the league's average chances for its own type, so a pitcher's grades are against pitch type
+    # (Sean, 27 Sep 2026: "vs all pitches" gone) — summed like the chances, so any window or split re-derives them
+    pts = d["pitch_type"][has]
+    tm = pd.DataFrame({"pt": pts.to_numpy(), "w": pw, "g": pbt[:, 0], "p": pbt[:, 1]}).groupby("pt").agg(n=("w", "size"), w=("w", "mean"), g=("g", "mean"), p=("p", "mean"))
+    tm = tm[tm.n >= 500]
+    for c, lgv in (("w", pw.mean()), ("g", pbt[:, 0].mean()), ("p", pbt[:, 1].mean())):
+        d.loc[has, "st_b" + c] = pts.map(tm[c]).fillna(lgv).to_numpy()
     air = d["bb_type"].isin(["line_drive", "fly_ball"])
     g = d[has].assign(velo=f.velo[has], ivb=f.ivb[has], hb=f.hb[has], spin=f.spin[has], wh=d["description"][has].isin(WHIFF),
                       swg=d["description"][has].isin(SWING), gbx=d["bb_type"][has].eq("ground_ball"), pux=d["bb_type"][has].eq("popup"),
                       bipx=d["bb_type"][has].isin(STUFF_BB.keys()))
-    agg = dict(n=("st_n", "sum"), w=("st_w", "sum"), g=("st_g", "sum"), p=("st_p", "sum"))
+    agg = dict(n=("st_n", "sum"), w=("st_w", "sum"), g=("st_g", "sum"), p=("st_p", "sum"), bw=("st_bw", "sum"), bg=("st_bg", "sum"), bp=("st_bp", "sum"))
     res = {"lg": {"w": float(pw.mean()), "g": float(pbt[:, 0].mean()), "p": float(pbt[:, 1].mean()),
                   "la": float(d["bb_type"].eq("line_drive").sum() / max(1, air.sum()))},
            "pt": g.groupby("pitch_type").agg(**agg),                 # the league by pitch type: each pitch is also graded against its own kind
@@ -436,6 +443,19 @@ def stuff_grade(n, w, g, p, sc: dict, lg_era: float):
     wp = 100 + 100 * sc["kW"] * (xw - sc["lgW"]) / lg_era
     bp = 100 - 100 * sc["kB"] * (xb - sc["lgB"]) / lg_era
     return round(wp, 1), round(bp, 1), round(wp + bp - 100, 1)
+
+
+def stuff_grade_type(n, w, g, p, bw, bg, bp, sc: dict, lg_era: float):
+    """Whiff+, Batted-ball+ and Stuff+ against pitch type: the same weights, but his baseline is the league's average for
+    the pitches he throws, in his mix (= the usage-weighted mean of his pitches' grades against their own types)."""
+    if not sc or not n:
+        return None, None, None
+    xw, bxw = 100 * w / n, 100 * bw / n
+    xb = (g * sc["gb"] + p * sc["pu"] + (n - g - p) * sc["vair"]) / n
+    bxb = (bg * sc["gb"] + bp * sc["pu"] + (n - bg - bp) * sc["vair"]) / n
+    wp = 100 + 100 * sc["kW"] * (xw - bxw) / lg_era
+    bp_ = 100 - 100 * sc["kB"] * (xb - bxb) / lg_era
+    return round(wp, 1), round(bp_, 1), round(wp + bp_ - 100, 1)
 
 
 def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
@@ -756,6 +776,7 @@ def pa_rows(d: pd.DataFrame) -> pd.DataFrame:
     p["t_ubb"] = ev.eq("walk")
     p["w_ubb"] = p["wnum"].where(p["t_ubb"], 0.0)
     p["w_hbp"] = p["wnum"].where(p["is_hbp"], 0.0)
+    p["w_bh"] = p["wnum"].where(p["is_hit"] & ~p["is_hr"], 0.0)       # hits in play: what BABIP swings move
     # xwOBA (matches Savant's leaderboard to ~.001): balls in play take their xwOBA, K/BB/HBP their actual
     # wOBA value, untracked balls in play are dropped from both sides, and an intentional walk counts as a
     # league-average PA in numerator and denominator
@@ -805,7 +826,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                            k=("is_k", "sum"), wnum=("wnum", "sum"), wden=("wden", "sum"),
                            xnum=("xnum", "sum"), xden=("xden", "sum"), dnum=("dnum", "sum"),
                            h=("is_hit", "sum"), tb=("tb", "sum"), xbsum=("xbsum", "sum"), xssum=("xssum", "sum"),
-                           dbsum=("dbsum", "sum"), dssum=("dssum", "sum"), hr=("is_hr", "sum"))
+                           dbsum=("dbsum", "sum"), dssum=("dssum", "sum"), hr=("is_hr", "sum"), wbh=("w_bh", "sum"))
     h = h.join(hp, how="left")
     h["evs"] = h["evs"].apply(lambda v: v if isinstance(v, list) else [])
     h = h.fillna(0)
@@ -817,7 +838,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
               zsw=("z_swing", "sum"), osw=("o_swing", "sum"), zcon=("z_contact", "sum"), fbt=("fbt", "sum"), pu=("pu", "sum"),
               bbe=("bbe", "sum"), brl=("barrel", "sum"), hh=("hardhit", "sum"), evsum=("ev", "sum"),
               fbn=("fbn", "sum"), fbv=("fbv", "sum"), extn=("extn", "sum"), exts=("exts", "sum"), evn=("evb", "sum"),
-              **{c: (s, "sum") for c, s in [("stn", "st_n"), ("stw", "st_w"), ("stg", "st_g"), ("stp", "st_p")] if s in d.columns})
+              **{c: (s, "sum") for c, s in [("stn", "st_n"), ("stw", "st_w"), ("stg", "st_g"), ("stp", "st_p"), ("stbw", "st_bw"), ("stbg", "st_bg"), ("stbp", "st_bp")] if s in d.columns})
     first = d.sort_values("at_bat_number").groupby(["game_pk", "inning_topbot"]).head(1)
     starters = set(zip(first["pitcher"], first["game_date"]))
     qp = p.groupby(PK).agg(bf=("pa", "size"), k=("is_k", "sum"), bb=("is_bb", "sum"),
@@ -825,7 +846,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                            hr=("is_hr", "sum"), hbp=("is_hbp", "sum"), h=("is_hit", "sum"),
                            ld=("t_ld", "sum"), wbip=("w_bip", "sum"), wgb=("w_gb", "sum"), wld=("w_ld", "sum"), wfb=("w_fb", "sum"), wpu=("w_pu", "sum"))
     q = q.join(qp, how="left").fillna(0)
-    for c in ["stn", "stw", "stg", "stp"]:
+    for c in ["stn", "stw", "stg", "stp", "stbw", "stbg", "stbp"]:
         if c not in q.columns:
             q[c] = 0.0
     q["gs"] = [1 if (key[0], key[1]) in starters else 0 for key in q.index]
@@ -840,7 +861,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                     row.append(v)
                 else:
                     # xbsum / xssum are sums of per-ball probabilities: a day's bucket is well under 1, so int() would erase it
-                    row.append(round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp") else int(v))
+                    row.append(round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp", "stbw", "stbg", "stbp", "mixsum", "wbh") else int(v))
             out.setdefault(int(pid), []).append(row)
         return out
     return pack(h, HITTER_DAY), pack(q, PITCHER_DAY)
@@ -1057,6 +1078,27 @@ def metric_values(r, metrics):
     return {key: (None if pd.isna(r[col]) else round(float(r[col]), dec)) for key, _, col, _, dec, _ in metrics}
 
 
+def babip_stats(rows: list) -> dict:
+    """BABIP, xBABIP (the directional xBA's hits, less his home runs, over his non-HR balls in play), BABIP luck (his hits
+    in play above expected, in wOBA points) and BIP reliance (% of his wOBA from hits in play — how far a BABIP swing
+    moves him). Sean, 27 Sep 2026. Same arithmetic as babipFrom() in app.js, which re-derives them in a window."""
+    ix = {f: HITTER_DAY.index(f) for f in ("h", "hr", "bip", "dbsum", "wnum", "wden", "wbh")}
+    t = {f: sum(r[i] for r in rows if len(r) > i) for f, i in ix.items()}
+    has_wbh = any(len(r) > ix["wbh"] for r in rows)
+    out = {"babip": None, "xbabip": None, "bluck": None, "brel": None}
+    den = t["bip"] - t["hr"]
+    if den > 0:
+        out["babip"] = round((t["h"] - t["hr"]) / den, 3)
+        if t["dbsum"]:
+            out["xbabip"] = round((t["dbsum"] - t["hr"]) / den, 3)
+    if has_wbh and t["wden"] and t["wnum"]:
+        nh = t["h"] - t["hr"]
+        out["brel"] = round(100 * t["wbh"] / t["wnum"], 1)
+        if t["dbsum"] and nh:
+            out["bluck"] = round(1000 * (nh - (t["dbsum"] - t["hr"])) * (t["wbh"] / nh) / t["wden"], 1)
+    return out
+
+
 def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: dict, xw: pd.Series, bsp: pd.Series) -> list:
     df = hit.join(sav.drop(columns=["Air_pct"], errors="ignore"), how="left")   # Air% is our no-popup version
     if "PullAir_pct" in df.columns:
@@ -1092,6 +1134,7 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
         dss = sum(x[HITTER_DAY.index("dssum")] for x in rows_d if len(x) > HITTER_DAY.index("dssum"))
         m["dxba"] = round(dbs / ab_, 3) if ab_ else None      # the directional models' answer to xBA / xSLG
         m["dxslg"] = round(dss / ab_, 3) if ab_ else None
+        m.update(babip_stats(rows_d))
         m["zmo"] = None if pd.isna(r["ZSwing_pct"]) or pd.isna(r["OSwing_pct"]) else round(float(r["ZSwing_pct"] - r["OSwing_pct"]), 1)
         m["k"], m["bb"] = (None if pd.isna(r.K_pct) else round(float(r.K_pct), 1)), (None if pd.isna(r.BB_pct) else round(float(r.BB_pct), 1))
         m["con"] = None if pd.isna(r["Whiff_pct"]) else round(100 - float(r["Whiff_pct"]), 1)
@@ -1182,7 +1225,7 @@ def build_pitchers(pit: pd.DataFrame, people: dict, days_p: dict, consts: dict) 
         stuff_rows = None
         if sc and STUFF is not None and pid in STUFF["p"].index:
             s_ = STUFF["p"].loc[pid]
-            m["swhf"], m["sbb"], m["stuff"] = stuff_grade(s_.n, s_.w, s_.g, s_.p, sc, consts["lgERA"])
+            m["swhf"], m["sbb"], m["stuff"] = stuff_grade_type(s_.n, s_.w, s_.g, s_.p, s_.bw, s_.bg, s_.bp, sc, consts["lgERA"])
             t_ = STUFF["t"].loc[pid] if pid in STUFF["t"].index.get_level_values(0) else None
             if t_ is not None:                             # his arsenal: one row per pitch type, most-thrown first
                 stuff_rows = []

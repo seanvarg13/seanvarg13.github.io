@@ -237,14 +237,25 @@ tested 26 Sep 2026 on 2026: a third season helped slightly, a fourth to sixth or
 file): P(whiff | swing) and P(ground ball / popup / air ball | contact). They combine on uERA's weights: a Whiff% point is
 0.933 K% points (`UK`), each K removes a ball in play worth the league BIP value (`kW` ≈ 0.10 ERA per point); a ball in
 play is worth the league wOBA of its type, air balls at the league's line-drive share (`kB` ≈ 0.20 ERA per .010).
-**Stuff+ = 100 + % of runs saved vs league** = Whiff+ + Batted-ball+ − 100. The Stuff tab can grade each
-pitch **against its own type** (`consts.stuff.types`: league means per pitch type; 100 = an average four-seamer for a
-four-seamer) or against all pitches; the headline Stuff+ is always against all pitches. **Strike+ and a location-aware
+**Stuff+ = 100 + % of runs saved** = Whiff+ + Batted-ball+ − 100, **graded against pitch type only** (Sean, 27 Sep 2026:
+"vs all pitches" removed everywhere): every pitch's baseline is the league's mean chances for its own type (`st_bw/bg/bp`,
+day fields `stbw/stbg/stbp`, `stuff_grade_type` / `stuffFrom`), so 100 = an average four-seamer for a four-seamer and his
+grade is his pitches' type-relative grades averaged by use — the Stuff tab's All pitches row and the headline are the same
+number. Files built before that lack the baselines and grade against all pitches until rebuilt. **Strike+ and a location-aware
 Pitching+ / Location+ were built and dropped the same day** (Sean: "i just dont know what the new ones are adding") — the
 strike model mostly restated the Strike% already on the card; don't bring them back unasked. Whiffs carry more weight because their spread
 is bigger (SD 8.4 vs 4.9 in 2026). Checks on 2026 with a 2025 fit: whiff AUC .64; pitcher xWhiff vs actual Whiff% r .67,
 xGB vs GB% r .75; Stuff+ half-to-half r .91 (actual Whiff% .72). Day rows carry `stn/stw/stg/stp` so windows and splits
 re-derive it; `ctx.arsenal` holds the per-pitch table (`meta.arsenalFields`); with a window or split the Stuff tab's table re-sums `hist/ars-<season>.js` instead (`arsenal_daily` / `arsenalView`: pitcher × day × hand × venue × pitch type, started flag included, ~8 MB, loaded only then — Sean, 26 Sep 2026). A failure in the step costs only the grades.
+
+**BABIP luck** (hitters; `babip_stats` in `build_data.py`, `babipFrom` in `app.js`, day field `wbh`; Sean, 27 Sep 2026):
+BABIP = non-HR hits / non-HR balls in play (Statcast's, so sac bunts count — a heavy bunter reads ~.005 under the
+official figure); xBABIP = the directional xBA's expected hits less his HR, over the same balls; **BABIP luck** = his hits in
+play above expected × the wOBA value of his own average hit in play, in wOBA points; **BIP reliance** = % of his wOBA
+numerator from hits in play (how much a BABIP swing moves him; league ~30-90%, middle 58%). A "BABIP" section on the hitter
+card; luck and reliance are coloured as risk (hib false). Also: `mixsum` used to be truncated to an int in the day rows,
+so every window / split Mix wOBA read far too low (full-season values were right) — fixed 27 Sep 2026; past seasons need a
+rebuild to pick it up.
 
 **Mix ERA** (`mixERA`): the ERA his batted-ball distribution *alone* is worth — same league-value-per-type
 machinery, but K% and BB% held at the pool's, so it is the mix and nothing else. ~4.15 is average, lower is

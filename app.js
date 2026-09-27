@@ -250,7 +250,23 @@
   const SIDE_H = [{ key: "pullp", label: "Pull%", hib: true, dec: 1, unit: "%" }, { key: "cent", label: "Cent%", hib: true, dec: 1, unit: "%" },
                   { key: "oppo", label: "Oppo%", hib: true, dec: 1, unit: "%" }, { key: "npull", label: "Non-pull%", hib: true, dec: 1, unit: "%" },
                   { key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "strk", label: "Strike%", hib: false, dec: 1, unit: "%" },
-                  { key: "mixw", label: "Mix wOBA", hib: true, dec: 3, unit: "" }];
+                  { key: "mixw", label: "Mix wOBA", hib: true, dec: 3, unit: "" },
+                  // BABIP, what his contact says it should be, the wOBA points the gap is worth, and how much of his wOBA rides
+                  // on hits in play (Sean, 27 Sep 2026). Luck and reliance are flagged the other way round: more is more risk
+                  { key: "babip", label: "BABIP", hib: true, dec: 3, unit: "" }, { key: "xbabip", label: "xBABIP", hib: true, dec: 3, unit: "" },
+                  { key: "bluck", label: "BABIP luck", hib: false, dec: 0, unit: " pts" }, { key: "brel", label: "BIP reliance", hib: false, dec: 0, unit: "%" }];
+  // babip_stats() in build_data.py, from summed day rows: xBABIP is the directional xBA's hits less his home runs over his
+  // non-HR balls in play; luck is his hits in play above that, priced at his own average hit in play, in wOBA points
+  function babipFrom(t) {
+    const den = (t.bip || 0) - (t.hr || 0), nh = (t.h || 0) - (t.hr || 0), r3 = (x) => Math.round(1000 * x) / 1000;
+    const out = { babip: den > 0 && t.h !== undefined ? r3(nh / den) : null, xbabip: null, bluck: null, brel: null };
+    if (den > 0 && t.dbsum) out.xbabip = r3((t.dbsum - (t.hr || 0)) / den);
+    if (t.wbh !== undefined && t.wden && t.wnum) {
+      out.brel = Math.round(1000 * t.wbh / t.wnum) / 10;
+      if (t.dbsum && nh) out.bluck = Math.round(10 * 1000 * (nh - (t.dbsum - (t.hr || 0))) * (t.wbh / nh) / t.wden) / 10;
+    }
+    return out;
+  }
   // Mix wOBA: the league's value of his average ball in play (type × pulled / straightaway / the other way) — balls in play
   // only, no bunts, walks and strikeouts left out (Sean): what his batted-ball distribution alone is worth
   const mixW = (sum, n) => (K().mix && n ? Math.round(1000 * sum / n) / 1000 : null);
@@ -258,11 +274,15 @@
                   { key: "stuff", label: "Stuff+", hib: true, dec: 0, unit: "" }, { key: "swhf", label: "Whiff+", hib: true, dec: 0, unit: "" },
                   { key: "sbb", label: "Batted-ball+", hib: true, dec: 0, unit: "" }];
   // Stuff+ and its two parts from summed per-pitch predictions (graded pitches n, and the sums of their whiff, ground-ball
-  // and popup chances) — the build's stuff_grade(), so a date window or split re-derives it from the day rows
-  function stuffFrom(n, w, g, p) {
+  // and popup chances) — the build's stuff_grade_type(), so a date window or split re-derives it from the day rows. Graded
+  // against pitch type (Sean, 27 Sep 2026: "vs all pitches" gone): bw / bg / bp are the league's means for the types he
+  // threw, summed the same way, so his baseline is his own mix. Files built before that lack them and grade against all.
+  function stuffFrom(n, w, g, p, bw, bg, bp) {
     const sc = K().stuff; if (!sc || !n) return { swhf: null, sbb: null, stuff: null };
-    const r1 = (x) => Math.round(10 * x) / 10, [wp, bp] = stuffParts(sc, 100 * w / n, g / n, p / n, K().lgERA);
-    return { swhf: r1(wp), sbb: r1(bp), stuff: r1(wp + bp - 100) };
+    const r1 = (x) => Math.round(10 * x) / 10, [wp, bp_] = stuffParts(sc, 100 * w / n, g / n, p / n, K().lgERA);
+    if (!bw) return { swhf: r1(wp), sbb: r1(bp_), stuff: r1(wp + bp_ - 100) };
+    const [wb, bb] = stuffParts(sc, 100 * bw / n, bg / n, bp / n, K().lgERA);
+    return { swhf: r1(wp - wb + 100), sbb: r1(bp_ - bb + 100), stuff: r1(wp - wb + bp_ - bb + 100) };
   }
   // the two halves from rates: xWhiff% per swing, and the ground-ball and popup shares of contact
   function stuffParts(sc, xw, xg, xp, era) {
@@ -643,7 +663,7 @@
                    csw: rate(t.cs + t.whf, t.pit), zcon: rate(t.zcon, t.zsw), zone: rate(t.zpit, t.pit), osw: rate(t.osw, t.opit), swing: rate(t.sw, t.pit),
                    fbv: t.fbn ? Math.round(10 * t.fbv / t.fbn) / 10 : null, ext: t.extn ? Math.round(10 * t.exts / t.extn) / 10 : null,
                    ev: (t.evn || t.bbe) ? Math.round(10 * t.evsum / (t.evn || t.bbe)) / 10 : null, hh: rate(t.hh, t.bip || t.bbe), brl: rate(t.brl, t.bip || t.bbe),
-                   ...stuffFrom(t.stn, t.stw, t.stg, t.stp) },
+                   ...stuffFrom(t.stn, t.stw, t.stg, t.stp, t.stbw, t.stbg, t.stbp) },
               sample: ip, ip, bf: t.bf, g: games, gs,
               ctx: { G: games, GS: gs, wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, Pitches: t.pit, bbl, PAw: t.wden, HBP: t.hbp } };
       } else {
@@ -666,7 +686,7 @@
                    zmo: t.zpit && t.opit ? Math.round(10 * (100 * t.zsw / t.zpit - 100 * t.osw / t.opit)) / 10 : null,
                    con: t.sw ? Math.round(10 * (100 - 100 * t.whf / t.sw)) / 10 : null,
                    pullp: rate(t.pulln, bden), ld: rate(t.ld, bden), gb: rate(t.gbh, bden), pu: rate(t.puh, bden),
-                   mixw: t.mixn === undefined ? null : mixW(t.mixsum, t.mixn),
+                   mixw: t.mixn === undefined ? null : mixW(t.mixsum, t.mixn), ...babipFrom(t),
                    fb: rate((DS.airNoPU ? t.air : t.air - (t.puh || 0)) - t.ld, bden),
                    ev90: q90, maxev: hasEvs && evs.length ? evs[evs.length - 1] : null,
                    hh: rate(t.hh, bipn), ss: rate(t.ss, bipn), strk: rate(t.strk, t.pit), swing: rate(t.sw, t.pit), k: rate(t.k, t.pa), bb: rate(t.bb, t.pa) },
@@ -3454,7 +3474,11 @@
     wsgp: "WSGP: the average of his Whiff%, Strike%, GB% and Popup% percentiles — the four rates he owns outright, before a fielder touches the ball or a run scores. 50 is an average pitcher in all four. The bar beside it ranks that average against the pool, so a pitcher who is good at all four can rank above his own average.",
     fbv: "Average velocity of his four-seamers and sinkers.",
     ext: "How far off the rubber he releases the ball. More extension makes the same velocity play up.",
-    stuff: "Stuff+: his pitches graded on what the ball does alone — velocity, spin, movement, release point, extension, arm angle and each pitch against his fastball; no location, no count. Two models, trained on every pitch of this season and the two before: how likely a swing is to miss it, and whether contact is a ground ball, a popup or an air ball. They're combined the way uERA weighs them, so whiffs carry the most: 100 is league average, and each point is 1% of runs saved (120 = a fifth fewer runs than average stuff). Whiff+ and Batted-ball+ are its two halves.",
+    stuff: "Stuff+: his pitches graded on what the ball does alone — velocity, spin, movement, release point, extension, arm angle and each pitch against his fastball; no location, no count. Two models, trained on every pitch of this season and the two before: how likely a swing is to miss it, and whether contact is a ground ball, a popup or an air ball. They're combined the way uERA weighs them, so whiffs carry the most. Every pitch is graded against the league's pitches of its own type — 100 is an average four-seamer for a four-seamer, an average curveball for a curveball — and his grade is those averaged by how often he throws each. Each point is 1% of runs saved (120 = a fifth fewer runs than average stuff for the pitches he throws). Whiff+ and Batted-ball+ are its two halves. The whiff model also knows how much he uses the pitch and how many pitches he throws 5%+ of the time.",
+    babip: "BABIP: batting average on balls in play — hits that aren't home runs, over balls in play that aren't home runs (sac flies count). It swings a lot by chance: a hitter's BABIP from one season to the next holds only loosely.",
+    xbabip: "xBABIP: the BABIP his contact should have produced — the site's hitting model (exit velocity, launch angle, spray and pull direction, sprint speed) gives every ball in play its chance of being a hit; his expected hits, less his home runs, over his non-HR balls in play.",
+    bluck: "BABIP luck: his hits in play above (or below) what his contact deserved, turned into wOBA points at the value of his own average hit in play. +20 means his wOBA sits about .020 above what his balls in play earned — the part most likely to fall away. Shown as a warning: more luck is coloured as more risk.",
+    brel: "BIP reliance: the share of his wOBA that comes from hits on balls in play (singles, doubles and triples) rather than walks, hit-by-pitches and home runs. The higher it is, the more a normal BABIP swing moves his production — a slap hitter lives on it, a three-true-outcomes slugger barely notices. The league runs from about 30% to 90%, middle 58%.",
     swhf: "Whiff+: the whiff half of Stuff+ — how often swings at his pitches should miss, on their traits alone, turned into runs through uK% (100 = average).",
     sbb: "Batted-ball+: the contact half of Stuff+ — how often his pitches, put in play, should become ground balls and popups rather than air balls, priced at the league's value for each (100 = average).",
   };
@@ -5006,7 +5030,7 @@
   const PITCH_NAME = { FF: "Four-seam", SI: "Sinker", FC: "Cutter", SL: "Slider", ST: "Sweeper", SV: "Slurve", CU: "Curveball", KC: "Knuckle curve",
                        CS: "Slow curve", CH: "Changeup", FS: "Splitter", FO: "Forkball", SC: "Screwball", KN: "Knuckleball", EP: "Eephus", FA: "Fastball" };
   const ARSENAL = DATA.meta.arsenalFields || ["pt", "n", "velo", "ivb", "hb", "spin", "xwhf", "xgb", "xpu", "whfp", "bbp", "stuffp", "whf", "gb", "pu", "sw", "bip"];
-  let STUFF_VS = "type";
+
   // The arsenal through the card's dates and splits (Sean, 26 Sep 2026: a reliever's pitches should show when the card is
   // set to As RP). hist/ars-<season>.js holds each pitcher's pitch types game by game — graded pitches and the summed
   // model chances, shape and outcomes (meta.arsDayFields) — loaded the first time the Stuff tab is open with a window
@@ -5067,14 +5091,11 @@
     // four-seamer for a four-seamer (Sean, 26 Sep 2026); "all pitches" keeps every pitch on the one scale
     const sc = K().stuff, T = (sc && sc.types) || {};
     const typeAvg = (pt) => { const x = T[pt]; if (!x || !sc) return null; const [w, b2] = stuffParts(sc, x[1], x[2], x[3], K().lgERA); return { w, b: b2, t: w + b2 - 100 }; };
-    const vsType = STUFF_VS === "type" && Object.keys(T).length > 0;
+    // every pitch against its own type, always (Sean, 27 Sep 2026: the "vs all pitches" view is gone) — the All pitches row
+    // is those averaged by use, which is how the headline is graded too. A past season built before types shipped grades
+    // against all pitches until it's rebuilt
+    const vsType = Object.keys(T).length > 0;
     const rel = (v, a) => (v == null ? null : vsType && a != null ? v - a + 100 : v);
-    const seg = el("div", "seg stuffvs"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Grade each pitch against");
-    for (const [v, l] of [["type", "vs its pitch type"], ["all", "vs all pitches"]]) {
-      const bt = el("button", "segbtn small", l); bt.type = "button"; bt.setAttribute("aria-pressed", String(STUFF_VS === v));
-      bt.addEventListener("click", (e) => { e.stopPropagation(); if (STUFF_VS !== v) { STUFF_VS = v; render(); } }); seg.append(bt);
-    }
-    if (Object.keys(T).length) box.append(seg);
     const t = el("table", "ubt stufft"), th = el("thead"), hr = el("tr");
     const heads = [["Pitch", "l"], ["Use", ""], ["Velo", ""], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin", ""],
                    ["Stuff+", "sp"], ["Whiff+", ""], ["BB+", "", "Batted-ball+"], ["xWhiff", "", "The model's whiff rate per swing — his actual Whiff% under it"],
@@ -5111,8 +5132,8 @@
                cellPlus(tv.w), cellPlus(tv.b), pair(wx("xwhf"), act("whf", "sw")), pair(wx("xgb"), act("gb", "bip")), pair(wx("xpu"), act("pu", "bip")));
     tb.append(trt); t.append(tb);
     const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
-    box.append(el("p", "note", (vsType ? "Each pitch is graded against the league's pitches of its type — 100 is an average four-seamer for a four-seamer, an average slider for a slider — and the All pitches row averages those by how often he throws each. The headline Stuff+ is against all pitches, so pitchers compare on one scale. " : "Every pitch on one scale: 100 is the league's average pitch of any kind, the scale the headline uses. ") +
-      "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball — never where it was thrown. Each point is 1% of runs; whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened. The table and the headline follow the card's dates and splits."));
+    box.append(el("p", "note", "Each pitch is graded against the league's pitches of its own type — 100 is an average four-seamer for a four-seamer, an average curveball for a curveball — and All pitches (and the Stuff+ above) averages those by how often he throws each. " +
+      "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball, plus how much he uses it and how many pitches he throws — never where it was thrown. Each point is 1% of runs; whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened. The table and the headline follow the card's dates and splits."));
     return box;
   }
   function renderLuckBox(p) {
@@ -5216,7 +5237,7 @@
   // A hitter's percentile box is two columns of headed sections, the card's own groups plus the expected three —
   // wide enough (it takes the right-hand box's place too) that every bar keeps the length it has in one column.
   // EXPW / EXPB / EXPS are the directional model's xwOBA, xBA and xSLG, as everywhere.
-  const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],
+  const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]], ["BABIP", ["babip", "xbabip", "bluck", "brel"]],
                        ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],
                        ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]]]];
@@ -5225,7 +5246,8 @@
                       [["Results", ["kbb", "era"]], ["Batted Ball", ["gb", "pu", "mera"]], ["Stuff", ["stuff", "swhf", "sbb", "fbv", "ext"]]]];
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
-                          whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%" };
+                          whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
+                          babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance" };
   const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+" });   // a pitcher's O-Swing% is his chase rate
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
