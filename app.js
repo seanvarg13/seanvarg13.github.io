@@ -8,7 +8,7 @@
   const HIT_TABS = ["ALL", "C", "1B", "2B", "3B", "SS", "OF", "DH"];
   const PIT_TABS = ["ALLP", "SP", "RP"];
   const TAB_LABEL = { ALL: "All hitters", ALLP: "All pitchers" };
-  const SHORT = { pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
+  const SHORT = { xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
                tiers: "draft2027.tiers", tierNames: "draft2027.tierNames", sets: "draft2027.rankSets", extraPos: "draft2027.extraPos", stars: "draft2027.stars" };
   // Storage that cannot lose a saved list. A value that will not parse is left exactly where it is — its raw
@@ -254,7 +254,11 @@
                   // BABIP, what his contact says it should be, the wOBA points the gap is worth, and how much of his wOBA rides
                   // on hits in play (Sean, 27 Sep 2026). Luck and reliance are flagged the other way round: more is more risk
                   { key: "babip", label: "BABIP", hib: true, dec: 3, unit: "" }, { key: "xbabip", label: "xBABIP", hib: true, dec: 3, unit: "" },
-                  { key: "bluck", label: "BABIP luck", hib: false, dec: 0, unit: " pts" }, { key: "brel", label: "BIP reliance", hib: false, dec: 0, unit: "%" }];
+                  { key: "bluck", label: "BABIP luck", hib: false, dec: 1, unit: " pts", sign: true }, { key: "brel", label: "BIP reliance", hib: false, dec: 1, unit: "%" },
+                  // xwOBA − wOBA (Sean, 27 Sep 2026): above zero his contact deserved more than he got — the unlucky ones
+                  { key: "xwdiff", label: "xwOBA − wOBA", hib: true, dec: 3, unit: "", sign: true }];
+  // hitter stats that aren't on the card but can be Leaderboard / Trending columns
+  const LB_EXTRA_H = ["xwdiff", "babip", "xbabip", "bluck", "brel"];
   // babip_stats() in build_data.py, from summed day rows: xBABIP is the directional xBA's hits less his home runs over his
   // non-HR balls in play; luck is his hits in play above that, priced at his own average hit in play, in wOBA points
   function babipFrom(t) {
@@ -380,6 +384,8 @@
   if (state.lb.P.includes("gb") && !state.lb.P.includes("wsgp")) state.lb.P.splice(state.lb.P.indexOf("gb") + 1, 0, "wsgp");       // WSGP added 2026-09-23
   // Statcast's xwOBA left the site 2026-09-24, and the directional one is the headline column already
   state.lb.H = state.lb.H.filter((k) => k !== "xws" && k !== "xwd");
+  if (!state.lb.xwdAdded) { if (!state.lb.H.includes("xwdiff")) state.lb.H.splice(Math.max(0, state.lb.H.indexOf("woba") + 1), 0, "xwdiff"); state.lb.xwdAdded = true; }   // xwOBA − wOBA, 27 Sep 2026
+  { const tc = state.cols.trending; if (tc && tc.H && !tc.xwdAdded) { if (!tc.H.includes("xwdiff")) tc.H.splice(Math.max(0, tc.H.indexOf("woba") + 1), 0, "xwdiff"); tc.xwdAdded = true; } }
   let poolVersion = 0;               // bumps when eligibility changes, so cached pools rebuild
   // tiers used to be stored as break ranks ([5, 12]); convert to sizes ([5, 7]) once
   const breaksToSizes = (t) => { const out = {}; for (const [tab, br] of Object.entries(t || {})) { const b = br.slice().sort((x, y) => x - y); out[tab] = b.map((v, i) => v - (i ? b[i - 1] : 0)); } return out; };
@@ -581,7 +587,7 @@
     const xd = seasonXwDir(p) ?? null;                             // the directional model, re-anchored to this season
     const sg = dirInfo().ok;       // Statcast's xBA / xSLG stand in for an MLB season not yet rescored, never in the minors
     const out = Object.assign({}, m, {
-      xwoba: xd, xwd: xd,
+      xwoba: xd, xwd: xd, xwdiff: xd != null && m.woba != null ? Math.round(1000 * (xd - m.woba)) / 1000 : null,
       dxba: m.dxba ?? (sg ? m.xba : null) ?? null, dxslg: m.dxslg ?? (sg ? m.xslg : null) ?? null,
       zmo: m.zmo !== undefined ? m.zmo : m.zsw == null || m.osw == null ? null : Math.round(10 * (m.zsw - m.osw)) / 10,
       con: m.con !== undefined ? m.con : m.whf == null ? null : Math.round(10 * (100 - m.whf)) / 10,
@@ -681,6 +687,7 @@
                    dxslg: !t.ab ? null : t.dssum !== undefined ? Math.round(1000 * t.dssum / t.ab) / 1000 : t.xssum !== undefined && dirInfo().ok ? Math.round(1000 * t.xssum / t.ab) / 1000 : null,
                    osw: rate(t.osw, t.opit), zsw: rate(t.zsw, t.zpit), zcon: rate(t.zcon, t.zsw), ocon: rate(t.ocon, t.osw), whf: rate(t.whf, t.sw),
                    xwoba: noEV ? null : xwDir, xwd: noEV ? null : xwDir,   // the directional model
+                   xwdiff: noEV || xwDir == null || !t.wden ? null : Math.round(1000 * (xwDir - t.wnum / t.wden)) / 1000,
                    woba: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null,
                    bs: t.bsn ? Math.round(10 * t.bssum / t.bsn) / 10 : null,
                    zmo: t.zpit && t.opit ? Math.round(10 * (100 * t.zsw / t.zpit - 100 * t.osw / t.opit)) / 10 : null,
@@ -706,7 +713,9 @@
   const metricsFor = (g) => (isPitcherGroup(g) ? DATA.meta.pitcherMetrics : DATA.meta.hitterMetrics);
   const TREND_P = ["whf", "strk", "k", "bb", "era", "nera", "uera", "siera", "gb", "wsgp"];
   // every card metric in card order, fold-outs right after their parent (the Leaderboard's column order)
-  const lbOrder = (g) => { const pit = isPitcherGroup(g), seen = new Set(), out = []; for (const grp of (pit ? CARD_P : CARD)) for (const m of grp.metrics) for (const x of [m, ...((pit ? SUB_P : SUB)[m.key] || [])]) if (!seen.has(x.key)) { seen.add(x.key); out.push(x); } return out; };
+  const lbOrder = (g) => { const pit = isPitcherGroup(g), seen = new Set(), out = []; for (const grp of (pit ? CARD_P : CARD)) for (const m of grp.metrics) for (const x of [m, ...((pit ? SUB_P : SUB)[m.key] || [])]) if (!seen.has(x.key)) { seen.add(x.key); out.push(x); }
+    if (!pit) for (const k of LB_EXTRA_H) { const x = SIDE_H.find((m) => m.key === k); if (x && !seen.has(k)) { seen.add(k); out.push(x); } }
+    return out; };
   // Year and Age: plain columns that always sit right after the name (no percentile)
   const PRE_COLS = { year: { key: "year", label: "Year" }, age: { key: "age", label: "Age" } };
   const preCols = () => { const pre = state.pre || {}; const out = []; if (pre.year === true || (pre.year !== false && DS.each)) out.push(PRE_COLS.year); if (pre.age) out.push(PRE_COLS.age); return out; };
@@ -717,7 +726,7 @@
   const HEAD_DUP = "xwd";      // the headline xwOBA as a card stat: every hitter list already leads with it, so no column or sort of its own
   const lbCols = (g) => { const all = lbOrder(g), pit = isPitcherGroup(g), skip = !pit && wobaHead() ? "woba" : null; return state.lb[pit ? "P" : "H"].filter((k) => k !== skip).map((k) => all.find((m) => m.key === k)).filter(Boolean).map((m) => Object.assign({}, m, { showValue: true })); };
   // the stats shown as columns on each list page: the Leaderboard's set (state.lb), or a page's own chosen set, else the page's defaults
-  const defaultColKeys = (mode, g) => (mode === "trending" && isPitcherGroup(g) ? TREND_P.slice() : metricsFor(g).map((m) => m.key));
+  const defaultColKeys = (mode, g) => (mode === "trending" && isPitcherGroup(g) ? TREND_P.slice() : [...metricsFor(g).map((m) => m.key), ...(mode === "trending" && !isPitcherGroup(g) ? ["xwdiff"] : [])]);
   const colKeys = (g) => { const k = isPitcherGroup(g) ? "P" : "H"; if (state.mode === "leaderboard") return state.lb[k]; const own = state.cols[state.mode]; return own && own[k] ? own[k] : defaultColKeys(state.mode, g); };
   const setColKeys = (g, keys) => { const k = isPitcherGroup(g) ? "P" : "H"; const known = new Set(lbOrder(g).map((m) => m.key)); const ordered = [...new Set(keys)].filter((x) => known.has(x)); if (state.mode === "leaderboard") state.lb[k] = ordered; else { state.cols[state.mode] = state.cols[state.mode] || {}; state.cols[state.mode][k] = ordered; } savePrefs(); };
   const brkKey = (g) => `${state.mode}:${isPitcherGroup(g) ? "P" : "H"}`;
@@ -1103,7 +1112,9 @@
   }
 
   /* ---------- formatting ---------- */
-  function fmt(v, m) { return m.dec === 3 ? fmtX(v) : m.dec === 2 ? v.toFixed(2) : m.unit === "%" ? v.toFixed(1) + "%" : v.toFixed(1) + (m.unit ? " " + m.unit : ""); }
+  function fmt(v, m) {
+    if (m.sign) { const a = Math.abs(v), t = m.dec === 3 ? a.toFixed(3).replace(/^0/, "") : a.toFixed(m.dec ?? 1); return (v > 0 ? "+" : v < 0 ? "−" : "") + t + (m.unit || ""); }   // signed gaps: +.024 / −.018
+    return m.dec === 3 ? fmtX(v) : m.dec === 2 ? v.toFixed(2) : m.unit === "%" ? v.toFixed(1) + "%" : v.toFixed(1) + (m.unit ? " " + m.unit : ""); }
   const fmtX = (x) => (x == null || x < 0 ? "–" : x.toFixed(3).replace(/^0/, ""));
   // fixed column widths, the way the board's grid rows are fixed: null = take whatever is left
   function colgroup(widths) {
@@ -2728,6 +2739,82 @@
     }
     return box;
   }
+  // Pitch Stuff+ (Leaderboards ▸ Pitch Stuff+; Sean, 27 Sep 2026): every pitcher's pitches as their own rows, graded
+  // against their own type as on the Stuff tab — the best sweeper, the best changeup, by Stuff+, Whiff+ or BB+. The season's
+  // arsenal table (ctx.arsenal), filtered by pitch type, hand, role and a pitch minimum; a name opens his card on the Stuff tab.
+  // index.html doesn't round-trip, so the page's section and its menu entry are made here
+  const pitchBoardEl = () => {
+    let b = $("pitchboard");
+    if (!b) { b = el("section", "xboard pitchboard"); b.id = "pitchboard"; b.hidden = true; $("eboard").after(b); }
+    const m = $("lbmenu");
+    if (m && !m.querySelector('a[href="#pitches"]')) { const li = el("li"); const a = el("a", null, "Pitch Stuff+"); a.href = "#pitches"; li.append(a); m.append(li); }
+    return b;
+  };
+  pitchBoardEl();
+  const pb = Object.assign({ pt: "all", hand: "all", role: "all", min: 100, sort: "stuffp", dir: -1 }, load("draft2027.pitchboard", {}));
+  function renderPitchBoard() {
+    const box = pitchBoardEl(); box.innerHTML = "";
+    const sc = K().stuff, T = (sc && sc.types) || {}, F = DATA.meta.arsenalFields || ARSENAL;
+    const typeAvg = (pt) => { const x = T[pt]; if (!x || !sc) return null; const [w, b] = stuffParts(sc, x[1], x[2], x[3], K().lgERA); return { w, b, t: w + b - 100 }; };
+    const rows = [];
+    for (const p of DATA.players) {
+      if (p.type !== "P" || !p.ctx || !p.ctx.arsenal) continue;
+      if (pb.hand !== "all" && p.throws !== pb.hand) continue;
+      if (pb.role !== "all" && p.primary !== pb.role) continue;
+      const R0 = p.ctx.arsenal.map((a) => Object.fromEntries(F.map((k, i) => [k, a[i]]))), tot = R0.reduce((s, r) => s + r.n, 0);
+      for (const r of R0) {
+        if (r.n < pb.min || (pb.pt !== "all" && r.pt !== pb.pt)) continue;
+        const A = typeAvg(r.pt), rel = (v, a) => (v == null ? null : A ? v - a + 100 : v);
+        rows.push({ p, pt: r.pt, n: r.n, use: 100 * r.n / tot, velo: r.velo, ivb: r.ivb, hb: r.hb, spin: r.spin,
+                    stuffp: rel(r.stuffp, A && A.t), whfp: rel(r.whfp, A && A.w), bbp: rel(r.bbp, A && A.b),
+                    xwhf: r.xwhf, whf: r.whf, xgb: r.xgb, gb: r.gb, xpu: r.xpu, pu: r.pu });
+      }
+    }
+    const key = pb.sort, dir = pb.dir;
+    rows.sort((a, b) => (a[key] == null) - (b[key] == null) || dir * ((a[key] ?? 0) - (b[key] ?? 0)) || b.n - a.n);
+    // filters
+    const save = () => { save_(); render(); }, save_ = () => { try { localStorage.setItem("draft2027.pitchboard", JSON.stringify(pb)); } catch {} };
+    const bar = el("div", "pbfilters");
+    const types = [...new Set(DATA.players.filter((p) => p.type === "P" && p.ctx && p.ctx.arsenal).flatMap((p) => p.ctx.arsenal.map((a) => a[0])))]
+      .filter((t) => T[t]).sort((a, b) => (T[b][0] || 0) - (T[a][0] || 0));
+    bar.append(pillSelect(pb.pt === "all" ? "All pitches" : PITCH_NAME[pb.pt] || pb.pt, [["all", "All pitches"], ...types.map((t) => [t, PITCH_NAME[t] || t])], pb.pt, (v) => { pb.pt = v; save(); }, "Pitch"));
+    bar.append(pillSelect(pb.hand === "all" ? "Both hands" : pb.hand === "R" ? "Righties" : "Lefties", [["all", "Both hands"], ["R", "Righties"], ["L", "Lefties"]], pb.hand, (v) => { pb.hand = v; save(); }, "Throws"));
+    bar.append(pillSelect(pb.role === "all" ? "SP + RP" : pb.role, [["all", "SP + RP"], ["SP", "SP"], ["RP", "RP"]], pb.role, (v) => { pb.role = v; save(); }, "Role"));
+    bar.append(pillSelect(`${pb.min}+ pitches`, [25, 50, 100, 200, 400, 800].map((n) => [String(n), `${n}+ pitches`]), String(pb.min), (v) => { pb.min = Number(v); save(); }, "Minimum"));
+    bar.append(el("span", "pbcount", `${rows.length} pitch${rows.length === 1 ? "" : "es"} · ${DATA.meta.season} · graded against its own type`));
+    box.append(bar);
+    // table
+    const cols = [["rk", "#", false], ["who", "Pitcher", false], ["pt", "Pitch", false], ["n", "Pitches", true], ["use", "Use", true], ["velo", "Velo", true],
+                  ["ivb", "IVB", true], ["hb", "HB", true], ["spin", "Spin", true], ["stuffp", "Stuff+", true], ["whfp", "Whiff+", true], ["bbp", "BB+", true],
+                  ["xwhf", "xWhiff", true], ["xgb", "xGB", true], ["xpu", "xPU", true]];
+    const tips = { ivb: "Induced vertical break, inches", hb: "Horizontal break, inches (arm side +)", stuffp: "Stuff+ against the league's pitches of the same type (100 = average for its type)",
+                   whfp: "Whiff+ against its type", bbp: "Batted-ball+ against its type", xwhf: "The model's whiff rate per swing — actual under it", xgb: "The model's ground-ball rate on contact — actual under it",
+                   xpu: "The model's popup rate on contact — actual under it", use: "Share of his pitches" };
+    const t = el("table", "ftable stufft pbtable"), th = el("thead"), hr = el("tr");
+    for (const [k, l, sortable] of cols) {
+      const c = el("th", k === "who" ? "who" : k === "rk" ? "n" : null);
+      if (sortable) { const b = el("button", "sortbtn" + (pb.sort === k ? " on" : ""), l + (pb.sort === k ? (pb.dir < 0 ? " ▾" : " ▴") : "")); b.type = "button";
+        b.addEventListener("click", () => { if (pb.sort === k) pb.dir = -pb.dir; else { pb.sort = k; pb.dir = -1; } save(); }); c.append(b); } else c.textContent = l;
+      if (tips[k]) c.title = tips[k];
+      hr.append(c);
+    }
+    th.append(hr); t.append(th);
+    const tb = el("tbody"), f1 = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%");
+    const plus = (v) => { const td = el("td", "plus", v == null ? "–" : String(Math.round(v))); if (v != null) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; } } return td; };
+    const pair = (x, a) => { const td = el("td", "xa"); td.append(el("b", null, pct(x)), el("i", null, a == null ? "–" : pct(a))); return td; };
+    rows.slice(0, 300).forEach((r, i) => {
+      const tr = el("tr"), who = el("td", "who"), btn = el("button", "linkbtn pbname", r.p.name); btn.type = "button";
+      btn.addEventListener("click", () => { state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.pbtab = "stuff"; savePrefs(); state.expanded = "P" + r.p.id; render(); });
+      who.append(btn, el("small", null, ` ${r.p.team} · ${r.p.primary} · ${r.p.throws || ""}HP`));
+      tr.append(el("td", "n", String(i + 1)), who, el("td", null, PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(r.use)),
+                el("td", null, f1(r.velo)), el("td", null, f1(r.ivb)), el("td", null, f1(r.hb)), el("td", null, r.spin == null ? "–" : String(r.spin)),
+                plus(r.stuffp), plus(r.whfp), plus(r.bbp), pair(r.xwhf, r.whf), pair(r.xgb, r.gb), pair(r.xpu, r.pu));
+      tb.append(tr);
+    });
+    t.append(tb);
+    const scroll = el("div", "fscroll pbscroll"); scroll.append(t); box.append(scroll);
+    box.append(el("p", "note", (rows.length > 300 ? "The top 300 shown. " : "") + "Each pitch is graded against the league's pitches of its own type on its traits alone (velocity, spin, movement, release, extension, arm angle, its gap to his fastball, how much he throws it and how deep his arsenal is) — 100 is average for that pitch type. Under each x-rate is what actually happened. Full season; click a name for his card."));
+  }
   function renderEligibility() {
     const box = $("eboard"); box.innerHTML = "";
     // add a position: find a player, then pick from what he hasn't earned
@@ -2872,7 +2959,7 @@
     const modal = $("modal"), body = $("modal-body");
     modal.classList.remove("pcard"); document.body.classList.remove("cardpop");
     const key = state.expanded;
-    const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy"].includes(state.mode);
+    const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy", "pitches"].includes(state.mode);
     const src = state.cardDs && histDataset(state.cardDs) ? histDataset(state.cardDs).players : DATA.players;
     const p0 = key && listMode ? (src.find((q) => q.type + q.id === key) || DATA.players.find((q) => q.type + q.id === key)) : null;
     modal.classList.toggle("pcard", !!p0); document.body.classList.toggle("cardpop", !!p0);   // before the lock: a phone keeps its place under a card
@@ -3475,6 +3562,7 @@
     fbv: "Average velocity of his four-seamers and sinkers.",
     ext: "How far off the rubber he releases the ball. More extension makes the same velocity play up.",
     stuff: "Stuff+: his pitches graded on what the ball does alone — velocity, spin, movement, release point, extension, arm angle and each pitch against his fastball; no location, no count. Two models, trained on every pitch of this season and the two before: how likely a swing is to miss it, and whether contact is a ground ball, a popup or an air ball. They're combined the way uERA weighs them, so whiffs carry the most. Every pitch is graded against the league's pitches of its own type — 100 is an average four-seamer for a four-seamer, an average curveball for a curveball — and his grade is those averaged by how often he throws each. Each point is 1% of runs saved (120 = a fifth fewer runs than average stuff for the pitches he throws). Whiff+ and Batted-ball+ are its two halves. The whiff model also knows how much he uses the pitch and how many pitches he throws 5%+ of the time.",
+    xwdiff: "xwOBA − wOBA: what his contact, walks and strikeouts deserved (the site's xwOBA) minus what he actually got. Above zero he's been unlucky — his results should rise toward his xwOBA; below zero he's been lucky. +.030 is a lot. Every point is a thousandth of wOBA.",
     babip: "BABIP: batting average on balls in play — hits that aren't home runs, over balls in play that aren't home runs (sac flies count). It swings a lot by chance: a hitter's BABIP from one season to the next holds only loosely.",
     xbabip: "xBABIP: the BABIP his contact should have produced — the site's hitting model (exit velocity, launch angle, spray and pull direction, sprint speed) gives every ball in play its chance of being a hit; his expected hits, less his home runs, over his non-HR balls in play.",
     bluck: "BABIP luck: his hits in play above (or below) what his contact deserved, turned into wOBA points at the value of his own average hit in play. +20 means his wOBA sits about .020 above what his balls in play earned — the part most likely to fall away. Shown as a warning: more luck is coloured as more risk.",
@@ -3613,12 +3701,12 @@
   }
   function renderNow() {
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
-    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = state.mode === "draftmode" || home, appear = state.mode === "appearance", fant = state.mode === "fantasy", other = player || compare || elig || hub || appear || fant;
+    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = state.mode === "draftmode" || home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches", other = pitches || player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
     const T = state.tbl; document.body.dataset.heat = T.heat ? "on" : "off"; document.body.dataset.band = T.band ? "on" : "off"; document.body.dataset.sorthl = T.sortHl ? "on" : "off"; document.body.dataset.density = T.density;
     $("ctoolbar").hidden = !compare; $("cboard").hidden = !compare;
-    $("eboard").hidden = !elig;
+    $("eboard").hidden = !elig; pitchBoardEl().hidden = !pitches;
     document.querySelector(".toolbar:not(.xtoolbar)").hidden = other; $("board").hidden = other; $("drafttools").hidden = true; $("ranktools").hidden = true; $("setbar").hidden = true; $("lbtools").hidden = true;
     renderChrome();
     if (state.textModal) { renderTextModal(); } else if (other) { $("modal").hidden = true; lockPage(false); parkControls(); $("modal-body").innerHTML = ""; }
@@ -3632,6 +3720,7 @@
     }
     if (compare) { renderCompare(); renderModal(); return; }
     if (elig) { renderEligibility(); return; }
+    if (pitches) { renderPitchBoard(); renderModal(); return; }
     const listRender = () => {
       ensureView();
       if (state.mode === "trending" && !TREND_TABS.includes(state.pos)) state.pos = "ALL";
@@ -5255,7 +5344,7 @@
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
-                          babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance" };
+                          babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA" };
   const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+" });   // a pitcher's O-Swing% is his chase rate
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
@@ -6204,14 +6293,14 @@
   // the header's two dropdowns: the draft + fantasy pages, and the two leaderboards
   const NAV_GROUPS = [
     { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["draftmode", "rankings", "draft", "eligibility", "fantasy"] },
-    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending"] },
+    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending", "pitches"] },
   ];
   function readMode() {
     const h = location.hash.replace("#", "");
     const pm = h.match(/^player\/(\d+)$/);
     if (pm) { state.mode = "player"; const id = Number(pm[1]); if (state.x.id !== id) { state.x = { id, type: null, ds: null }; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; } return; }
     if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["leaders", "trending", "whatif", "settings"].includes(v) ? v : "leaders"; return; }
-    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "draftmode", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
+    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "pitches", "draftmode", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {

@@ -384,6 +384,14 @@ is deploy-limited.
   the header to an 18px gap (10px on the phone), the page never scrolls, and only the rows' box (`.board-scroll`, Fantasy
   `.fscroll`) moves — filters, pager and column header frozen above it. On the phone, Fantasy keeps the page scroll (its
   filters would leave the table no room).
+* **Pitch Stuff+ leaderboard** (Leaderboards ▸ Pitch Stuff+, `#pitches`, `renderPitchBoard` in `app.js`; Sean, 27 Sep 2026):
+  every pitcher's pitches as their own rows from `ctx.arsenal`, graded against their own type (Stuff+ / Whiff+ / BB+),
+  filtered by pitch type, hand, SP / RP and a pitch minimum, every column sortable, a name opens his card on the Stuff tab.
+  Full season only. The section and the menu entry are made in `app.js` (`pitchBoardEl`) because `index.html` doesn't
+  round-trip. Its standing-card CSS is the `[data-mode="pitches"]` block at the end of `styles.css`.
+* **xwOBA − wOBA** (`xwdiff`, hitters; Sean, 27 Sep 2026): a Leaderboard / Trending column (added once to saved column sets
+  via `state.lb.xwdAdded`), signed (+ = unlucky). `LB_EXTRA_H` lists the hitter stats that are columns without being on
+  the card (xwdiff, babip, xbabip, bluck, brel); `fmt()` prints `sign: true` metrics as +.024 / −.018.
 * **Starts / relief split** (Sean, 26 Sep 2026): a pitcher who both started and relieved (`ctx.GS > 0` and `G > GS`)
   gets a third split on his card, `state.split.role` = all / sp / rp. `V()` keeps the day rows whose `gs` flag matches,
   earned runs follow the same days, and a past season reads its day-by-day file for it (`byDay` in `histDataset`).
