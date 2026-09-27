@@ -4835,6 +4835,14 @@
       const pos = scrolls ? sc.scrollTop : window.scrollY;
       const max = scrolls ? sc.scrollHeight - sc.clientHeight : document.documentElement.scrollHeight - window.innerHeight;
       const want = pos + delta;
+      // closing a tab: no blank room kept under the strip — the card settles back to how it looked before one was opened
+      // (Sean, 27 Sep 2026); only switching between tabs holds the strip where it was
+      if (state.pbtab === "none") {
+        sec.style.minHeight = ""; tabPad = null;
+        const top = Math.max(0, Math.min(want, scrolls ? sc.scrollHeight - sc.clientHeight : document.documentElement.scrollHeight - window.innerHeight));
+        if (scrolls) sc.scrollTop = top; else window.scrollTo(0, top);
+        holdScroll = null; return;
+      }
       if (want > max) {
         const h = Math.ceil(sec.offsetHeight + want - max);
         sec.style.minHeight = h + "px";
