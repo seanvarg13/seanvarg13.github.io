@@ -2847,3 +2847,5 @@ body[data-mode="pitches"] #pitchboard > .note { margin: 8px 0 0; font-size: 12px
 :root[data-view="mobile"] body[data-mode="pitches"] main.wrap > #pitchboard { padding: 10px 8px 0; }
 body[data-mode="pitches"] main.wrap > .notes { display: none; }   /* the lists' percentile key doesn't apply here */
 :root[data-view="mobile"] body[data-mode="pitches"] #pitchboard > .note { display: none; }   /* the phone keeps the room for rows */
+.stuffbox .stuffuera { margin: 0 0 10px; font-size: 13px; color: var(--ink-2); }
+.stuffbox .stuffuera b { font-size: 15px; color: var(--ink); margin-right: 2px; }

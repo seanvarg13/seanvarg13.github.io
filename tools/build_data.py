@@ -351,19 +351,24 @@ def load_prior_seasons(season: int) -> pd.DataFrame:
 STUFF_OUT = ["st_n", "st_w", "st_g", "st_p", "st_bw", "st_bg", "st_bp"]   # st_b*: the league means for the pitch's own type
 
 
-def add_stuff(d: pd.DataFrame, prior: pd.DataFrame | None = None) -> pd.DataFrame:
+def add_stuff(d: pd.DataFrame, prior: pd.DataFrame | None = None, ref: pd.DataFrame | None = None) -> pd.DataFrame:
     """Score every pitch on its traits alone: the chance a swing misses (st_w), the chance contact is a grounder / popup
     (st_g / st_p), st_n = 1 if graded. Sets STUFF for the pitcher rows and league constants. A failure costs the grades,
-    never the build."""
+    never the build.
+    With ref (the minors, Sean 27 Sep 2026): the models train on prior alone (MLB seasons) and the league means and each
+    pitch type's baseline come from ref (that MLB season), so a Triple-A pitch is graded against MLB pitches of its type."""
     global STUFF
     STUFF = None
     for c in STUFF_OUT:
         d[c] = 0.0
     if not all(c in d.columns for c in ["pfx_x", "pfx_z", "release_spin_rate"]):
         log("  stuff: no pitch-tracking columns in this data"); return d
-    train = pd.concat([prior, d[[c for c in STUFF_TRAIN if c in d.columns]]], ignore_index=True) if prior is not None and len(prior) else d
+    if ref is not None:
+        train = prior
+    else:
+        train = pd.concat([prior, d[[c for c in STUFF_TRAIN if c in d.columns]]], ignore_index=True) if prior is not None and len(prior) else d
     try:
-        STUFF = _fit_stuff(train, d)
+        STUFF = _fit_stuff(train, d, ref)
     except Exception as e:                                  # noqa: BLE001
         for c in STUFF_OUT:
             d[c] = 0.0
@@ -371,7 +376,7 @@ def add_stuff(d: pd.DataFrame, prior: pd.DataFrame | None = None) -> pd.DataFram
     return d
 
 
-def _fit_stuff(train: pd.DataFrame, d: pd.DataFrame):
+def _fit_stuff(train: pd.DataFrame, d: pd.DataFrame, ref: pd.DataFrame | None = None):
     from sklearn.ensemble import HistGradientBoostingClassifier
     t0 = time.time()
     ftr = stuff_features(train)
@@ -397,18 +402,31 @@ def _fit_stuff(train: pd.DataFrame, d: pd.DataFrame):
     # every pitch also carries the league's average chances for its own type, so a pitcher's grades are against pitch type
     # (Sean, 27 Sep 2026: "vs all pitches" gone) — summed like the chances, so any window or split re-derives them
     pts = d["pitch_type"][has]
-    tm = pd.DataFrame({"pt": pts.to_numpy(), "w": pw, "g": pbt[:, 0], "p": pbt[:, 1]}).groupby("pt").agg(n=("w", "size"), w=("w", "mean"), g=("g", "mean"), p=("p", "mean"))
+    # the yardstick: this dataset's own pitches, or (the minors) the reference MLB season's, graded by the same models
+    if ref is not None:
+        fr = stuff_features(ref); hr = fr.velo.notna().to_numpy()
+        rw = wm.predict_proba(fr.to_numpy()[hr])[:, 1]; rb = bm.predict_proba(fr[bcols].to_numpy()[hr])
+        rdf = pd.DataFrame({"pitch_type": ref["pitch_type"].to_numpy()[hr], "n": 1.0, "w": rw, "g": rb[:, 0], "p": rb[:, 1]})
+        rair = ref["bb_type"].isin(["line_drive", "fly_ball"])
+        base = {"w": float(rw.mean()), "g": float(rb[:, 0].mean()), "p": float(rb[:, 1].mean()),
+                "la": float(ref["bb_type"].eq("line_drive").sum() / max(1, rair.sum()))}
+        del fr
+    else:
+        rdf = pd.DataFrame({"pitch_type": pts.to_numpy(), "n": 1.0, "w": pw, "g": pbt[:, 0], "p": pbt[:, 1]})
+        air0 = d["bb_type"].isin(["line_drive", "fly_ball"])
+        base = {"w": float(pw.mean()), "g": float(pbt[:, 0].mean()), "p": float(pbt[:, 1].mean()),
+                "la": float(d["bb_type"].eq("line_drive").sum() / max(1, air0.sum()))}
+    tm = rdf.groupby("pitch_type").agg(n=("w", "size"), w=("w", "mean"), g=("g", "mean"), p=("p", "mean"))
     tm = tm[tm.n >= 500]
-    for c, lgv in (("w", pw.mean()), ("g", pbt[:, 0].mean()), ("p", pbt[:, 1].mean())):
-        d.loc[has, "st_b" + c] = pts.map(tm[c]).fillna(lgv).to_numpy()
+    for c in ("w", "g", "p"):
+        d.loc[has, "st_b" + c] = pts.map(tm[c]).fillna(base[c]).to_numpy()
     air = d["bb_type"].isin(["line_drive", "fly_ball"])
     g = d[has].assign(velo=f.velo[has], ivb=f.ivb[has], hb=f.hb[has], spin=f.spin[has], wh=d["description"][has].isin(WHIFF),
                       swg=d["description"][has].isin(SWING), gbx=d["bb_type"][has].eq("ground_ball"), pux=d["bb_type"][has].eq("popup"),
                       bipx=d["bb_type"][has].isin(STUFF_BB.keys()))
     agg = dict(n=("st_n", "sum"), w=("st_w", "sum"), g=("st_g", "sum"), p=("st_p", "sum"), bw=("st_bw", "sum"), bg=("st_bg", "sum"), bp=("st_bp", "sum"))
-    res = {"lg": {"w": float(pw.mean()), "g": float(pbt[:, 0].mean()), "p": float(pbt[:, 1].mean()),
-                  "la": float(d["bb_type"].eq("line_drive").sum() / max(1, air.sum()))},
-           "pt": g.groupby("pitch_type").agg(**agg),                 # the league by pitch type: each pitch is also graded against its own kind
+    res = {"lg": base,
+           "pt": rdf.groupby("pitch_type")[["n", "w", "g", "p"]].sum(),   # the league by pitch type: each pitch is also graded against its own kind
            "p": g.groupby("pitcher").agg(**agg),
            "t": g.groupby(["pitcher", "pitch_type"]).agg(**agg, velo=("velo", "mean"), ivb=("ivb", "mean"), hb=("hb", "mean"),
                                                            spin=("spin", "mean"), sw=("swg", "sum"), wh=("wh", "sum"),
@@ -878,7 +896,7 @@ ARS_DAY = ["day", "hand", "home", "gs", "pt", "n", "w", "g", "p", "velo", "ivb",
 def write_arsenal_days(key: str, rows: dict, out_dir: Path | None = None) -> None:
     if not rows:
         return
-    out = (out_dir or HERE / "hist") / f"ars-{key.split('-', 1)[1]}.js"
+    out = (out_dir or HERE / "hist") / f"ars-{key[4:] if key.startswith('mlb-') else key}.js"   # ars-2026.js, ars-aaa-2026.js
     out.parent.mkdir(exist_ok=True)
     out.write_text(f'window.DRAFT_ARS = window.DRAFT_ARS || {{}};\nwindow.DRAFT_ARS["{key}"] = '
                    + json.dumps({f"P{k}": v for k, v in rows.items()}, separators=(",", ":")) + ";\n")
