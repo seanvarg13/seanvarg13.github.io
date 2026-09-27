@@ -5183,7 +5183,10 @@
     const pvS = { m: { whf: xw, strk: pv.m.strk }, ctx: Object.assign({}, pv.ctx, { bbl: { gb: [1000 * xg], pu: [1000 * xp], ld: [500 * air], fb: [500 * air] } }) };
     const ik = impliedKBB(pvS, pctS, sorted); if (!ik) return null;
     const uera = underlyingERA(pvS, ik, sorted);
-    return uera == null ? null : { uera, k: ik.k, bb: ik.bb, xw, xg: 100 * xg, xp: 100 * xp, real: st.uera ?? null };
+    if (uera == null) return null;
+    const la = sorted.ldAir != null ? sorted.ldAir : 0.5;
+    return { uera, ik, ukb: Math.round(10 * (ik.k - ik.bb)) / 10, pct: sorted.uera ? insertPct(sorted.uera, -uera) : null,
+             shares: { gb: 100 * xg, ld: 100 * air * la, fb: 100 * air * (1 - la), pu: 100 * xp }, mera: mixERA(pvS, sorted) };
   }
   function renderStuffTab(p, st, g) {
     const box = el("div", "rollbox uerabox stuffbox");
@@ -5199,14 +5202,6 @@
     else if (av && !av.length) { box.append(el("p", "note", "No graded pitches in this selection.")); return box; }
     const R0 = filtered ? av : rows.map((a) => Object.fromEntries(ARSENAL.map((k, i) => [k, a[i]])));
     const su = stuffUERA(p, R0, st, g);
-    if (su) {
-      const line = el("div", "stuffuera"), f2 = (x) => (x == null ? "–" : x.toFixed(2));
-      line.append(el("b", null, `Stuff uERA ${f2(su.uera)}`),
-                  el("span", null, ` — uK% ${su.k.toFixed(1)} (xWhiff ${su.xw.toFixed(1)}%) · uBB% ${su.bb.toFixed(1)} · xGB ${su.xg.toFixed(1)}% · xPU ${su.xp.toFixed(1)}%` +
-                    ` · uERA ${f2(su.real)} · ERA ${f2(m.era)}`));
-      line.title = "uERA with his stuff's expected rates in place of his real ones: xWhiff for Whiff%, xGB and xPU for his ground balls and popups (air balls split at the league's line-drive share), walks from his actual Strike% as in uERA — the stuff model can't tell who throws strikes.";
-      box.append(line);
-    }
     const tot = R0.reduce((s, r) => s + r.n, 0), R = R0.filter((r) => r.n >= 15);   // a pitch he's thrown a handful of times isn't graded on its own
     // a pitch against its own kind: the league's average grades for that pitch type are subtracted, so 100 = an average
     // four-seamer for a four-seamer (Sean, 26 Sep 2026); "all pitches" keeps every pitch on the one scale
@@ -5253,6 +5248,15 @@
                cellPlus(tv.w), cellPlus(tv.b), pair(wx("xwhf"), act("whf", "sw")), pair(wx("xgb"), act("gb", "bip")), pair(wx("xpu"), act("pu", "bip")));
     tb.append(trt); t.append(tb);
     const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
+    // Stuff uERA under the table, laid out like the uERA tab: expected against actual, then the mix his stuff projects
+    if (su) {
+      const w = el("div", "eratab stuffera");
+      const ub = renderUeraBox(p, st, { title: "Stuff uERA", uera: su.uera, pct: su.pct, ukbb: su.ik, ukb: su.ukb });
+      const mx = renderMixBox(p, g, { title: "Expected batted-ball mix", shares: su.shares, mera: su.mera });
+      if (ub) { ub.title = "uERA with his stuff's expected rates in place of his real ones: xWhiff for Whiff% (K% through uK%), xGB and xPU for his ground balls and popups — the rest of his air balls split into line drives and fly balls at the league's share — and walks from his actual Strike% as in uERA, since the stuff model can't tell who throws strikes. Exp is what his stuff projects; Act is what happened."; w.append(ub); }
+      if (mx) { mx.title = "The batted-ball mix his stuff projects: xGB and xPU from the model, the rest of the air balls split at the league's line-drive share. Each bar is where that rate would rank among the season's pitchers (100 = best)."; w.append(mx); }
+      if (w.childNodes.length) box.append(w);
+    }
     box.append(el("p", "note", "Each pitch is graded against the league's pitches of its own type — 100 is an average four-seamer for a four-seamer, an average curveball for a curveball — and All pitches (and the Stuff+ above) averages those by how often he throws each. " +
       "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball, plus how much he uses it and how many pitches he throws — never where it was thrown. Each point is 1% of runs; whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened. The table and the headline follow the card's dates and splits."));
     return box;
@@ -5293,12 +5297,14 @@
     return box;
   }
   // the pitcher's version of the same foot panel: what his process says the ERA should be, against what it is
-  function renderUeraBox(p, st) {
-    if (p.type !== "P" || !st || st.uera == null || !st.ukbb) return null;
-    const pv = V(p), ik = st.ukbb;
+  // ov (the Stuff tab's Stuff uERA): { title, uera, pct, ukbb, ukb } in place of his uERA's
+  function renderUeraBox(p, st, ov) {
+    const U = ov || (st && { title: "uERA", uera: st.uera, pct: st.pct && st.pct.uera, ukbb: st.ukbb, ukb: st.ukb });
+    if (p.type !== "P" || !U || U.uera == null || !U.ukbb) return null;
+    const pv = V(p), ik = U.ukbb;
     const box = el("div", "rollbox uerabox");
     const hd = el("div", "rollhd");
-    hd.append(el("span", "rollname", `uERA ${st.uera.toFixed(2)}`), el("span", "rollsub", st.pct.uera == null ? "" : `${ordinal(st.pct.uera)} percentile`));
+    hd.append(el("span", "rollname", `${U.title} ${U.uera.toFixed(2)}`), el("span", "rollsub", U.pct == null ? "" : `${ordinal(U.pct)} percentile`));
     box.append(hd);
     const t = el("table", "ubt");
     t.append(colgroup([null, 60, 60, 56]));
@@ -5307,7 +5313,7 @@
     const th = el("thead"); th.append(hr); t.append(th);
     const tb = el("tbody");
     const rows = [["K%", ik.k, pv.m.k, true, false], ["BB%", ik.bb, pv.m.bb, false, false],
-                  ["K−BB%", st.ukb, pv.m.kbb, true, false], ["ERA", st.uera, pv.m.era, false, true]];
+                  ["K−BB%", U.ukb, pv.m.kbb, true, false], ["ERA", U.uera, pv.m.era, false, true]];
     for (const [what, exp, act, hib, isEra] of rows) {
       const d = act == null || exp == null ? null : (isEra ? Math.round(100 * (act - exp)) / 100 : Math.round(10 * (act - exp)) / 10);
       const good = d == null ? null : hib ? d > 0 : d < 0;
@@ -5324,7 +5330,8 @@
   // uERA's batted-ball side: his mix as percentile bars — each type, where his rate of it ranks among the season's
   // pitchers in the direction that helps him (more grounders and popups, fewer line drives and fly balls), the rate
   // itself, and what the league's hitters do on that type (wOBA)
-  function renderMixBox(p, g) {
+  // ov (the Stuff tab): { title, shares: {gb, ld, fb, pu} in %, mera } — his expected mix in place of the real one
+  function renderMixBox(p, g, ov) {
     const pv = V(p), c = K(), pl = pool(g);
     if (p.type !== "P" || !c || !c.bbw) return null;
     const T = ["gb", "ld", "fb", "pu"], names = { gb: "Ground balls", ld: "Line drives", fb: "Fly balls", pu: "Popups" };
@@ -5334,13 +5341,13 @@
       const n = T.reduce((a, t) => a + ((b[t] || [0])[0] || 0), 0); if (!n) return null;
       const o = {}; for (const t of T) o[t] = 100 * ((b[t] || [0])[0] || 0) / n; return o;
     };
-    const mine = shares(p); if (!mine) return null;
+    const mine = ov ? ov.shares : shares(p); if (!mine) return null;
     const others = pl.ref.map(shares).filter(Boolean);
     const la = pl.sorted && pl.sorted.ldAir != null ? pl.sorted.ldAir : null;
     const box = el("div", "rollbox uerabox mixbox");
     const hd = el("div", "rollhd");
-    hd.append(el("span", "rollname", "Batted-ball mix"));
-    const me = pl.stats.get(p.type + p.id), mera = me && me.mera != null ? me.mera : mixERA(pv, pl.sorted || {});
+    hd.append(el("span", "rollname", ov ? ov.title : "Batted-ball mix"));
+    const me = pl.stats.get(p.type + p.id), mera = ov ? ov.mera : me && me.mera != null ? me.mera : mixERA(pv, pl.sorted || {});
     if (mera != null) hd.append(el("span", "rollsub", `Mix ERA ${mera.toFixed(2)}`));
     box.append(hd);
     box.title = `Each bar is where his rate ranks among the season's pitchers, 100 = best: more ground balls and popups, fewer line drives and fly balls. uERA keeps his ground-ball and popup shares and splits the rest of his air balls into line drives and fly balls at the league's ratio${la == null ? "" : ` (${Math.round(100 * la)}% line drives)`}, then prices every type at the league's wOBA for it.`;
