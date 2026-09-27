@@ -2848,3 +2848,10 @@ body[data-mode="pitches"] #pitchboard > .note { margin: 8px 0 0; font-size: 12px
 body[data-mode="pitches"] main.wrap > .notes { display: none; }   /* the lists' percentile key doesn't apply here */
 :root[data-view="mobile"] body[data-mode="pitches"] #pitchboard > .note { display: none; }   /* the phone keeps the room for rows */
 .stuffbox .eratab.stuffera { margin-top: 22px; }   /* Stuff uERA under the arsenal table, set like the uERA tab */
+/* the pattern drawn by buildSwirl() in app.js, with the navy / light-blue hand-offs blended (Sean, 27 Sep 2026): when it's
+   there it replaces the two masked layers above (they stay as the fallback) */
+:root.swirl-img .modal.pagebg .modal-back::before,
+:root.swirl-img body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"])::before {
+  background: var(--swirl-img) 0 0 / 684px 684px repeat; opacity: 1; -webkit-mask: none; mask: none; }
+:root.swirl-img .modal.pagebg .modal-back::after,
+:root.swirl-img body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"])::after { display: none; }

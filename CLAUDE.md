@@ -384,7 +384,7 @@ is deploy-limited.
 * **The percentile sections have no run values, fielding (OAA), sprint speed or spin.** Not in this data.
   Acknowledged gap, not a bug.
 * **The player page is a popup card** (Sean, 24 Sep 2026: "identical in every measure"): `renderExplore()` opens his
-  card in the site's one `#modal` via `showPageCard()`, with classes `pagecard` (no ×) and `pagebg` (white with interlocking square double spirals, each chained into the next, whole chains alternating navy and light blue — two masks, `--swirl-a` / `--swirl-b`, Sean 26 Sep 2026 —
+  card in the site's one `#modal` via `showPageCard()`, with classes `pagecard` (no ×) and `pagebg` (white with interlocking square double spirals, each chained into the next, whole chains alternating navy and light blue — two masks, `--swirl-a` / `--swirl-b`, Sean 26 Sep 2026; since 27 Sep drawn by `buildSwirl()` in `app.js` as an SVG in `--swirl-img` with each navy / light-blue hand-off faded through the mid colour, colours from the theme, the masks the fallback —
   pattern — Sean, 26 Sep 2026: "I don't really like the slant design" — masked in the theme's colours, instead of the dimmed list). Same element, classes and
   `playerView()` as a card off a list, so a change to one is a change to the other.
 * **The list pages share the pattern** (Sean, 26 Sep 2026): Leaderboard, Trending, Rankings, Draft board, Fantasy,
