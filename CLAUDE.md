@@ -253,7 +253,9 @@ BABIP = non-HR hits / non-HR balls in play (Statcast's, so sac bunts count — a
 official figure); xBABIP = the directional xBA's expected hits less his HR, over the same balls; **BABIP luck** = his hits in
 play above expected × the wOBA value of his own average hit in play, in wOBA points; **BIP reliance** = % of his wOBA
 numerator from hits in play (how much a BABIP swing moves him; league ~30-90%, middle 58%). A "BABIP" section on the hitter
-card; luck and reliance are coloured as risk (hib false). Also: `mixsum` used to be truncated to an int in the day rows,
+card with luck and reliance only — the percentile box's height is locked and the left column can't outgrow the right
+one (four rows made the box scroll inside the card); BABIP / xBABIP are leaderboard / Compare columns. Luck and
+reliance are coloured as risk (hib false). Also: `mixsum` used to be truncated to an int in the day rows,
 so every window / split Mix wOBA read far too low (full-season values were right) — fixed 27 Sep 2026; past seasons need a
 rebuild to pick it up.
 
