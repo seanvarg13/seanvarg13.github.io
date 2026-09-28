@@ -210,8 +210,12 @@ Statcast/Directional toggle and the `xws` column are gone). The build still carr
   daily job, and the `.joblib` files are not in this repo (too large, and nothing here can run them).
 
 **uK% / uBB% / uERA** (pitchers, computed in `app.js`, not in the build):
-* **uK%** = `−26.975 + 0.933·Whiff% + 0.409·Strike%` (`UK`, fitted over every 100+ BF pitcher-season 2015-2026 bar
-  2020; Whiff% as is ran 2.5 points high). **uBB%** (`UBB` / `uBBFrom`, Sean 28 Sep 2026) = the league's BB% moved by his Strike%, Zone%, Chase%, Swing%,
+* **uK%** (`UKF` / `rateFit`, Sean 28 Sep 2026) = the league's K% moved by his Whiff% (+0.90 a point), Strike% (+0.89),
+  Swing% (−0.52), Z-Contact% (−0.16), Chase% (−0.10) and Zone% (+0.05), each against the dataset's league rate
+  (`lgRatesP`), fitted over every 100+ BF pitcher-season 2015-2026: 2.00 K% points from a 300+ BF pitcher's real K% vs
+  2.21 for the old `−26.975 + 0.933·Whiff% + 0.409·Strike%` (`UK`, kept as the last fallback), same error fitted and
+  unseen, weights steady across seasons. CSW% added nothing and muddled the weights; levels without Chase% / Z-Contact%
+  use a four-rate fit. **uBB%** (`UBB` / `uBBFrom`, Sean 28 Sep 2026) = the league's BB% moved by his Strike%, Zone%, Chase%, Swing%,
   Z-Contact% and Whiff% each against the dataset's league rate (`lgRatesP`), a straight-line fit over every 100+ BF
   pitcher-season 2015-2026 (−1.01 BB% per Strike% point, +0.21 Zone%, +0.09 Chase%, −0.05 Swing%, −0.10 Z-Contact%,
   +0.06 Whiff%): 1.46 BB% points from a pitcher's real BB% vs 1.73 for the old walk-rate-at-his-Strike%-percentile, and
@@ -262,7 +266,7 @@ MLB season as `ref` to `add_stuff`, so league means and each pitch type's baseli
 against MLB pitches of its type. Past seasons (MLB or minors) get Stuff+ when rebuilt — the workflow's `rescore` input
 takes years for MLB and `aaa-2025` / `a-2024` tokens for the minors. MLB 2015-2019 have no spin axis or arm angle, so
 their grades are rougher. **Stuff uERA** (Stuff tab, `stuffUERA` in `app.js`): uERA with xWhiff / xGB / xPU in place of
-his real Whiff% / GB% / PU%; walks and Strike%'s part of uK% from his actual Strike% (the stuff model can't see strikes). It's also a
+his real Whiff% / GB% / PU%; walks and every rate but Whiff% from his actual numbers (the stuff model can't see strikes). It's also a
 Leaderboard column (`suera`, `LB_EXTRA_P`; pool stats in `pool()` / `statsFor`, rates from `stuffRates`: day-row sums in a
 window, the arsenal otherwise).
 
