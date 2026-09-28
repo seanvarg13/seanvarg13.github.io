@@ -414,10 +414,16 @@ is deploy-limited.
   Filters stays solid, 6px between the card's band and its first section, the phone's card tabs are one sideways-sliding row
   (faded at the right edge, the picked tab scrolled into view in `renderBelow`), and dark mode darkens the swirl and the
   white ground under it.
+* **The minimal pass** (Sean, 28 Sep 2026: "I like the minimalistic look", then "do all of them"): the list toolbar wraps
+  onto a second line instead of scrolling off the edge; the list's foot is one line (the colour scale, then Colour key ·
+  Stat glossary · How this page works as links that open in the text window, then the layout switch — `renderChrome`'s
+  notes); the pager is plain numbers with only the current page filled navy; the pattern behind pages runs at 20%, both
+  layers; borders are 2px navy for the outer card and 1px inside it; the sorted column's values are bold, not boxed. The
+  block at the end of `styles.css`.
 * **Phone header is one line** (Sean, 28 Sep 2026): site name, search and a ☰ Menu button (`.navtog`, made in `app.js`
   because `index.html` doesn't round-trip); the page buttons (`.modes`) open under it in a two-column grid and close on a
   pick, a page change or a tap elsewhere. Desktop keeps its single row. The swirl pattern behind cards and list pages
-  runs at 45% (it competed with them).
+  runs at 20% since the minimal pass (45% before; it competed with them).
 * **days.js is warmed in the background** (Sean, 28 Sep 2026: faster filters on a phone): ~4 s after the site settles it is
   `fetch`ed into the browser cache (not run) so the first date range or split parses from cache instead of downloading
   ~5 MB; skipped under data saver. Splitting it by player doesn't work — a card in a window or split is ranked against the
