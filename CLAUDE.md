@@ -411,9 +411,10 @@ is deploy-limited.
 * **xwOBA − wOBA** (`xwdiff`, hitters; Sean, 27 Sep 2026): a Leaderboard / Trending column (added once to saved column sets
   via `state.lb.xwdAdded`), signed (+ = unlucky). `LB_EXTRA_H` lists the hitter stats that are columns without being on
   the card (xwdiff, babip, xbabip, bluck, brel); `fmt()` prints `sign: true` metrics as +.024 / −.018.
-* **Season Stats tab follows the card's filters** (Sean, 28 Sep 2026: "like fangraphs"): `renderViewStats` puts the card's
-  view (dates, hand, home / away, SP / RP) on top as FanGraphs-style Standard / Advanced / Batted Ball / Plate Discipline
-  tables (`VS_H` / `VS_P`), the full season's row under it when a filter is on, then the season-by-season table. Standard
+* **Spreadsheet Stats tab follows the card's filters** (Sean, 28 Sep 2026: "like fangraphs", then "a separate tab from season
+  stats"): `renderViewStats` shows the card's view (dates, hand, home / away, SP / RP) as FanGraphs-style Standard / Advanced /
+  Batted Ball / Plate Discipline tables (`VS_H` / `VS_P`), the full season's row under it when a filter is on; Season Stats
+  stays the season-by-season table. Standard
   is the official box score summed game by game (`fGamesOf` / `fWindow` / `fSum`, last three MLB seasons only; a hand split
   shares games out by the day's pitch data, so estimates); the rest is `V(p).m` plus the pool's uERA / Stuff uERA.
 * **Starts / relief split** (Sean, 26 Sep 2026): a pitcher who both started and relieved (`ctx.GS > 0` and `G > GS`)

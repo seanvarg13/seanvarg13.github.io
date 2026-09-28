@@ -2260,7 +2260,7 @@
       + `K% and BB% come from the official counts; ${H ? "wOBA, xwOBA and Whiff%" : "FIP, SIERA, Whiff% and Strike%"} from this site where that season and level is built (MLB from 2015, Triple-A from 2022, the lower levels from 2021). Combined lines average those by ${H ? "PA" : "batters faced"}.`));
     return box;
   }
-  // The Season Stats tab's top half (Sean, 28 Sep 2026: "stats based on the split or date filter … in a spreadsheet format
+  // The Spreadsheet Stats tab (Sean, 28 Sep 2026, its own tab since the same day: "stats based on the split or date filter … in a spreadsheet format
   // like fangraphs"): the card's own view — its dates, hand, home / away and starts / relief — as FanGraphs-style tables,
   // Standard, Advanced, Batted Ball, Plate Discipline, with the full season's line under it whenever a filter is on.
   // Standard is the official box score summed game by game (fantasy.js; a hand split shares each game out by that day's
@@ -5074,7 +5074,7 @@
     box.append(el("p", "note", `Each bar: where his share of that kind of ball ranks among ${pl.ref.length} qualifiers — more of the buckets worth more than the league's average ball (${fmtX(x.lg)}) is better, more of the rest is worse. Lg wOBA: what the league does on it, red the dearest. Mix wOBA, the bottom line, is those values weighted by his shares — what his average ball in play is worth by where and how he hits it (balls in play only: no walks, strikeouts or bunts).`));
     return box;
   }
-  const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["rolling", "Rolling"], ["fantasy", "Fantasy"]];
+  const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["sheet", "Spreadsheet Stats"], ["rolling", "Rolling"], ["fantasy", "Fantasy"]];   // Spreadsheet Stats: its own tab (Sean, 28 Sep 2026)
   const BTABS_H = [["mix", "Mix"], ["babip", "BABIP"]];                  // a hitter's batted-ball mix, and how much of his line is BABIP
   const BTABS_P = [["stuff", "Stuff"], ["nera", "nERA"], ["uera", "uERA"]];   // his arsenal graded, then his two ERAs, one tab each
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
@@ -5134,7 +5134,9 @@
       const ub = renderUeraBox(p, o.st), mx = renderMixBox(p, g);
       if (ub) w.append(ub); if (mx) w.append(mx);
       body.append(w.childNodes.length ? w : el("p", "note", "uERA needs Whiff%, Strike% and batted-ball data for this season."));
-    } else { body.append(renderViewStats(p, ref)); const st2 = renderSeasonTable(p); st2.prepend(el("h3", null, "By season")); body.append(st2); }
+    } else if (pick === "sheet") {
+      body.append(renderViewStats(p, ref));
+    } else body.append(renderSeasonTable(p));
     sec.append(body);
     return sec;
   }
