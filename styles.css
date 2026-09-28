@@ -2950,3 +2950,15 @@ body[data-mode="pitches"] main.wrap > .notes { display: none; }   /* the lists' 
 :root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap::after,
 :root:root .board::after, :root:root section.xboard::after, :root:root .btabbody::after, :root:root .hubcard::after, :root:root .eadder::after, :root:root .sitedef::after {
   content: ""; position: absolute; inset: 0; z-index: 50; pointer-events: none; box-shadow: var(--bevel-in); }
+/* the swirl pattern at half strength behind the cards (Sean, 28 Sep 2026 — it was competing with them) */
+:root.swirl-img .modal.pagebg .modal-back::before,
+:root.swirl-img body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"])::before { opacity: 0.45; }
+/* Phone header on one line: name, search, Menu; the page buttons open under it (app.js adds the button). Desktop keeps its row. */
+.navtog { display: none; }
+:root[data-view="mobile"] header.top { flex-wrap: wrap; align-items: center; }
+:root[data-view="mobile"] .navtog { display: inline-flex; align-items: center; order: 1; flex: none; height: 34px; margin: 6px 0 0; padding: 0 12px;
+  background: var(--rule); color: #fff; font: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  border: 0; border-radius: 0; box-shadow: var(--lift-btn); cursor: pointer; }
+:root[data-view="mobile"] body:not(.navopen) .modes { display: none; }
+:root[data-view="mobile"] body.navopen .modes { display: flex; flex-wrap: wrap; order: 3; width: 100%; overflow: visible; touch-action: auto; gap: 8px; padding: 8px 12px 10px; }
+:root[data-view="mobile"] body.navopen .modes > a, :root[data-view="mobile"] body.navopen .modes > .modesel { flex: 1 1 calc(50% - 8px); justify-content: center; }
