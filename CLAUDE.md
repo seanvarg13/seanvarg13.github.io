@@ -437,6 +437,11 @@ is deploy-limited.
   stays the season-by-season table. Standard
   is the official box score summed game by game (`fGamesOf` / `fWindow` / `fSum`, last three MLB seasons only; a hand split
   shares games out by the day's pitch data, so estimates); the rest is `V(p).m` plus the pool's uERA / Stuff uERA.
+* **The home page is a dashboard** (`renderHome`, Sean, 28 Sep 2026: "a legit home page"): a hero card (games through / updated,
+  a player search that opens his page, the most-used pages), then cards for starred players, next season's projected
+  leaders (from `proj.js`, scored with the preset in use), the top buy-low / sell-high names (`buySellRows`), the season's
+  xwOBA / Stuff+ / uERA leaders, and every page as tiles (`HOME_SECS` + `SHORT` blurbs). Only data.js and proj.js are
+  used so it opens fast; it sits on the swirl pattern like the list pages (CSS `.hub.home`).
 * **Next season's projections** (Fantasy ▸ 2027 Projections, `#proj`, `renderProj`; `tools/build_proj.py` → `proj.js`; Sean,
   28 Sep 2026): Marcel-style — the last three seasons' official lines per PA / BF weighted 5/4/3, regressed to the league
   (hitters 1800 PA, pitchers 1000 BF, role stats 60 BF), hitters age-adjusted, then pulled toward the process stats (¼ of

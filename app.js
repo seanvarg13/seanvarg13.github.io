@@ -3806,22 +3806,91 @@
       ["#appearance", "Appearance", "Colours, type and the mobile / desktop layout. Every device follows the site default until you pick something on it.", "Open Appearance"],
     ]],
   ];
+  // The home page (Sean, 28 Sep 2026: "a legit home page … an actual home page"): a dashboard rather than a list of links —
+  // when the data runs through, a search, the pages you use most, your starred players, next season's projected leaders,
+  // the buy-low / sell-high names and the season's leaders, then every page. Only files already loaded (data.js) or small
+  // (proj.js, 0.7 MB) are used, so it opens fast on a phone.
+  // a name on the home page opens his page (the same card), this season, full season, on the tab that explains the pick
+  const openCard = (p, tab) => { state.x = { id: p.id, type: p.type, ds: CUR.key }; state.expanded = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };
+    if (tab) state.pbtab = tab; savePrefs(); location.hash = "#player/" + p.id; };
+  const whenBuilt = (b) => { const d = b ? new Date(b.replace(" ", "T") + "Z") : null; return d && !isNaN(d) ? d.toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }) : b || ""; };
   function renderHome() {
-    const box = $("hub"); box.innerHTML = "";
-    const m = DATA.meta;
-    box.append(el("h2", null, "Sean's Site"),
-               el("p", "hublead", `Statcast hitting and pitching for ${m.season}, through ${m.through}. Pick a page below — or type a name in the search box up top to open any player's card from anywhere.`));
-    for (const [title, cards] of HOME_SECS) {
-      box.append(el("h3", "hubsec", title));
-      const grid = el("div", "hubgrid" + (cards.length === 1 ? " one" : ""));
-      for (const [href, name, blurb, cta] of cards) {
-        const c = el("a", "hubcard"); c.href = href;
-        c.append(el("h3", null, name), el("p", null, blurb), el("span", "btn", cta));
-        grid.append(c);
-      }
-      box.append(grid);
+    const box = $("hub"); box.innerHTML = ""; box.classList.add("home");
+    const m = DATA.meta, dayName = new Date(m.through + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    // hero: when the numbers run through, and a search that opens a card
+    const hero = el("section", "hcard hhero");
+    hero.append(el("h2", null, "Sean's Site"), el("p", "hsub", `${m.season} MLB · games through ${dayName} · updated ${whenBuilt(m.built)}`));
+    const sw = el("div", "hsearch"), inp = el("input"); inp.type = "search"; inp.placeholder = "Find a player…"; inp.autocomplete = "off";
+    const res = el("ul", "hres"); res.hidden = true;
+    const draw = () => {
+      const q = inp.value.trim().toLowerCase(); res.innerHTML = "";
+      const hits = q.length < 2 ? [] : DATA.players.filter((p) => p.name.toLowerCase().includes(q)).sort((a, b) => (b.pa || b.bf || 0) - (a.pa || a.bf || 0)).slice(0, 8);
+      res.hidden = !hits.length;
+      for (const p of hits) { const li = el("li"), bt = el("button"); bt.type = "button"; bt.append(el("b", null, p.name), ` ${p.team} · ${p.type === "P" ? p.primary : (p.primary || "")}`); bt.addEventListener("click", () => openCard(p)); li.append(bt); res.append(li); }
+    };
+    inp.addEventListener("input", draw); sw.append(inp, res); hero.append(sw);
+    const quick = el("div", "hquick");
+    for (const [href, lab] of [["#leaderboard", "Leaderboard"], ["#trending", "Trending"], ["#proj", `${m.season + 1} Projections`], ["#buysell", "Buy low / Sell high"], ["#draft", "Draft board"], ["#fantasy", "Fantasy"]]) {
+      const a = el("a", "btn", lab); a.href = href; quick.append(a);
     }
-    box.append(el("p", "note", `Data: ${m.season} Statcast through ${m.through}, built ${m.built}. xwOBA, xBA and xSLG are the directional model's.`));
+    hero.append(quick); box.append(hero);
+    const grid = el("div", "hgrid"); box.append(grid);
+    const card = (title, sub, link, linkLab) => {
+      const c = el("section", "hcard"), hd = el("div", "hhead"); hd.append(el("h3", null, title));
+      if (link) { const a = el("a", "hmore", linkLab || "See all →"); a.href = link; hd.append(a); }
+      c.append(hd); if (sub) c.append(el("p", "hnote", sub)); grid.append(c); return c;
+    };
+    const list = (c, rows) => { const ol = el("ol", "hlist"); for (const [p, main, side, tab] of rows) { const li = el("li"), bt = el("button", "hname", p.name); bt.type = "button"; bt.addEventListener("click", () => openCard(p, tab)); li.append(bt, el("span", "hteam", p.team || ""), el("b", "hval", main)); if (side) li.append(el("span", "hside", side)); ol.append(li); } c.append(ol); return ol; };
+    const f3 = (x) => (x == null ? "–" : fmtX(x)), f2 = (x) => (x == null ? "–" : x.toFixed(2)), f1 = (x) => (x == null ? "–" : x.toFixed(1));
+    // your starred players
+    const starKeys = Object.keys(state.stars), byKey = new Map(DATA.players.map((p) => [p.type + p.id, p]));
+    const stars = starKeys.map((k) => byKey.get(k)).filter(Boolean);
+    const sc = card("Your players", stars.length ? null : "Star players from their card (☆ Star) and they'll show up here, with where they stand.", stars.length ? "#rankings" : null, "Rankings →");
+    if (stars.length) withWindow(NOWIN, () => withSplit(NONE, () => list(sc, stars.slice(0, 8).map((p) => {
+      const mm = V(p).m; return p.type === "H" ? [p, f3(mm.xwd), `xwOBA · ${p.pa} PA`] : [p, f2(mm.era), `ERA · ${fmtIP(p.ip || 0)} IP`];
+    }))));
+    // next season's projected leaders under the fantasy preset in use
+    const pc = card(`${m.season + 1} projections`, `Projected points, ${fpreset().name} scoring.`, "#proj");
+    ensureScript("proj.js", () => !!window.DRAFT_PROJ);
+    if (window.DRAFT_PROJ) {
+      const P = window.DRAFT_PROJ, w = fpreset().w, top = (grp) => Object.entries(grp === "H" ? P.hitters : P.pitchers)
+        .map(([id, o]) => ({ p: byKey.get(grp + id) || { name: o.n, team: o.t, type: grp, id: Number(id) }, pts: fPts(w[grp], fDerive(Object.assign({}, o.l), grp)) }))
+        .sort((a, b) => b.pts - a.pts).slice(0, 5);
+      const two = el("div", "htwo");
+      for (const [grp, lab] of [["H", "Hitters"], ["P", "Pitchers"]]) { const col = el("div"); col.append(el("h4", null, lab)); list(col, top(grp).map((r) => [r.p, String(Math.round(r.pts)), "pts"])); two.append(col); }
+      pc.append(two);
+    } else pc.append(el("p", "hnote", failed.has("proj.js") ? "The projections come with the next daily update." : "Loading…"));
+    // buy low / sell high, the top three each way
+    const bsC = card("Buy low · Sell high", "Biggest gaps between results and process.", "#buysell");
+    const { H, P: PP } = buySellRows(), two = el("div", "htwo");
+    const g3 = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(3).replace(/^0/, ""), g2 = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(2);
+    const colB = el("div"); colB.append(el("h4", null, "Buy low"));
+    list(colB, [...[...H].sort((a, b) => b.gap - a.gap).slice(0, 3).map((r) => [r.p, g3(r.gap), "xwOBA−wOBA", "babip"]), ...[...PP].sort((a, b) => b.gap - a.gap).slice(0, 3).map((r) => [r.p, g2(r.gap), "ERA−uERA", "uera"])]);
+    const colS = el("div"); colS.append(el("h4", null, "Sell high"));
+    list(colS, [...[...H].sort((a, b) => a.gap - b.gap).slice(0, 3).map((r) => [r.p, g3(r.gap), "xwOBA−wOBA", "babip"]), ...[...PP].sort((a, b) => a.gap - b.gap).slice(0, 3).map((r) => [r.p, g2(r.gap), "ERA−uERA", "uera"])]);
+    two.append(colB, colS); bsC.append(two);
+    // the season's leaders: xwOBA (300+ PA), Stuff+ and uERA (100+ IP)
+    const lc = card(`${m.season} leaders`, null, "#leaderboard", "Leaderboard →"), three = el("div", "hthree");
+    withWindow(NOWIN, () => withSplit(NONE, () => {
+      const hit = DATA.players.filter((p) => p.type === "H" && (p.pa || 0) >= 300).map((p) => [p, V(p).m.xwd]).filter((r) => r[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const pit = DATA.players.filter((p) => p.type === "P" && (p.ip || 0) >= 100);
+      const stuff = pit.map((p) => [p, V(p).m.stuff]).filter((r) => r[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const uera = pit.map((p) => { const st = pool(p.primary).stats.get("P" + p.id) || rankIn(p.primary, p); return [p, st && st.uera]; }).filter((r) => r[1] != null).sort((a, b) => a[1] - b[1]).slice(0, 5);
+      for (const [lab, rows, f, tab] of [["xwOBA", hit, f3, null], ["Stuff+", stuff, (x) => String(Math.round(x)), "stuff"], ["uERA", uera, f2, "uera"]]) {
+        const col = el("div"); col.append(el("h4", null, lab)); list(col, rows.map(([p, v]) => [p, f(v), null, tab])); three.append(col);
+      }
+    }));
+    lc.append(three);
+    // every page, compact
+    const allC = el("section", "hcard hall"); allC.append(el("h3", null, "Every page"));
+    const tiles = el("div", "htiles");
+    const SHORT = { "#rankings": "Your own board: sort, drag, tier and save lists.", "#draft": "Draft day: mark picks, see who's left.", "#eligibility": "Who qualifies where, plus positions you add.",
+                    "#draftmode": "The draft pages and what each is for.", "#leaderboard": "Every player, any season or level, your stats.", "#trending": "Who's hot over his last N PA, innings or days.",
+                    "#compare": "Players side by side on the same stats.", "#fantasy": "Your scoring on everyone, any dates or split.", "#appearance": "Colours, type and layout." };
+    for (const [title, cards] of HOME_SECS) for (const [href, name] of cards) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, SHORT[href] || "")); tiles.append(a); }
+    for (const [href, name, blurb] of [["#proj", `${m.season + 1} Projections`, "Next season's projected lines and points."], ["#buysell", "Buy low / Sell high", "Results against process, both ways."], ["#pitches", "Pitch Stuff+", "Every pitch graded against its type."]]) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, blurb)); tiles.append(a); }
+    allC.append(tiles); box.append(allC);
+    box.append(el("p", "note", `Statcast ${m.season} through ${m.through}, built ${m.built} UTC. xwOBA, xBA and xSLG are the directional model's; uK%, uBB% and uERA are what a pitcher's process has historically been worth.`));
   }
   /* ---------- Stat glossary: one box per stat, the way Savant's glossary reads ---------- */
   const GLOSS = {
@@ -4038,7 +4107,7 @@
     document.querySelector(".toolbar:not(.xtoolbar)").hidden = other; $("board").hidden = other; $("drafttools").hidden = true; $("ranktools").hidden = true; $("setbar").hidden = true; $("lbtools").hidden = true;
     renderChrome();
     if (state.textModal) { renderTextModal(); } else if (other) { $("modal").hidden = true; lockPage(false); parkControls(); $("modal-body").innerHTML = ""; }
-    if (hub) { home ? renderHome() : renderHub(); return; }
+    if (hub) { $("hub").classList.toggle("home", home); home ? renderHome() : renderHub(); return; }
     if (appear) { renderAppearance(); return; }
     if (fant) { renderFantasy(); renderModal(); return; }
     if (player) {                                        // his page is a card of its own (showPageCard); a settings panel takes its place, over the pattern
