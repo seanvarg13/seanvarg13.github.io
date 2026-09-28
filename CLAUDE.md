@@ -411,6 +411,10 @@ is deploy-limited.
   of their contents (`pointer-events: none`) and they have no edge of their own, so the card's blue header runs to the side and
   gets blue light and shade — a bevel painted under the contents was covered by the band and left a white rim and a soft shadow all round (Sean, 28 Sep 2026 — briefly
   down-and-right only the same day; rounded corners before that).
+* **Phone header is one line** (Sean, 28 Sep 2026): site name, search and a ☰ Menu button (`.navtog`, made in `app.js`
+  because `index.html` doesn't round-trip); the page buttons (`.modes`) open under it in a two-column grid and close on a
+  pick, a page change or a tap elsewhere. Desktop keeps its single row. The swirl pattern behind cards and list pages
+  runs at 45% (it competed with them).
 * **Closing a card keeps the list's place** (`listAt` in `render()`): the rows' scroll, sideways scroll and page scroll are
   noted while no card is up and put back when one closes — on a phone the list is redrawn under the card and started over.
 * **The list pages share the pattern** (Sean, 26 Sep 2026): Leaderboard, Trending, Rankings, Draft board, Fantasy,

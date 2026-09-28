@@ -6763,6 +6763,16 @@
     const pair = (a, b) => a.addEventListener("scroll", () => { if (syncing || $("colwrap").parentNode === $("bscroll")) return; syncing = true; b.scrollLeft = a.scrollLeft; syncing = false; }, { passive: true });
     pair($("bscroll"), $("colwrap")); pair($("colwrap"), $("bscroll")); }
 
+  // Phone header on one line (Sean, 28 Sep 2026): the site name, the search and a Menu button; the page buttons open
+  // under it from Menu instead of running off the side of the screen. A pick, a page change or a tap elsewhere closes it.
+  { const hdr = document.querySelector("header.top"), nt = el("button", "navtog", "☰ Menu"); nt.type = "button"; nt.setAttribute("aria-expanded", "false");
+    const setNav = (on) => { document.body.classList.toggle("navopen", on); nt.setAttribute("aria-expanded", String(on)); nt.textContent = on ? "✕ Close" : "☰ Menu"; };
+    nt.addEventListener("click", (e) => { e.stopPropagation(); setNav(!document.body.classList.contains("navopen")); });
+    $("gsearch").after(nt);
+    window.addEventListener("hashchange", () => setNav(false));
+    document.addEventListener("click", (e) => { if (document.body.classList.contains("navopen") && !hdr.contains(e.target) && !e.target.closest(".modemenu")) setNav(false); });
+    hdr.querySelectorAll(".modes > a").forEach((a) => a.addEventListener("click", () => setNav(false))); }
+
   // keep the sticky column header just under the sticky toolbar
   const tb = document.querySelector(".toolbar:not(.xtoolbar)"), hd = document.querySelector("header.top");
   const setTb = () => { document.documentElement.style.setProperty("--toolbar-h", tb.hidden ? "0px" : tb.offsetHeight + "px"); document.documentElement.style.setProperty("--header-h", hd.offsetHeight + "px"); };
