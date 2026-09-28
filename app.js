@@ -2260,6 +2260,87 @@
       + `K% and BB% come from the official counts; ${H ? "wOBA, xwOBA and Whiff%" : "FIP, SIERA, Whiff% and Strike%"} from this site where that season and level is built (MLB from 2015, Triple-A from 2022, the lower levels from 2021). Combined lines average those by ${H ? "PA" : "batters faced"}.`));
     return box;
   }
+  // The Season Stats tab's top half (Sean, 28 Sep 2026: "stats based on the split or date filter … in a spreadsheet format
+  // like fangraphs"): the card's own view — its dates, hand, home / away and starts / relief — as FanGraphs-style tables,
+  // Standard, Advanced, Batted Ball, Plate Discipline, with the full season's line under it whenever a filter is on.
+  // Standard is the official box score summed game by game (fantasy.js; a hand split shares each game out by that day's
+  // pitch data, the way the Fantasy pages do, so those counts are estimates); everything else is the card's own numbers.
+  const VS_H = [
+    ["Advanced", [["BB%", "bb", 1, "%"], ["K%", "k", 1, "%"], ["ISO", "iso", 3], ["BABIP", "babip", 3], ["AVG", "ba", 3], ["SLG", "slg", 3], ["wOBA", "woba", 3],
+                  ["xBA", "dxba", 3], ["xSLG", "dxslg", 3], ["xwOBA", "xwd", 3], ["xwOBA−wOBA", "xwdiff", 3, "", true], ["xBABIP", "xbabip", 3], ["Mix wOBA", "mixw", 3]]],
+    ["Batted Ball", [["GB%", "gb", 1, "%"], ["LD%", "ld", 1, "%"], ["FB%", "fb", 1, "%"], ["PU%", "pu", 1, "%"], ["Pull%", "pullp", 1, "%"], ["Cent%", "cent", 1, "%"],
+                     ["Oppo%", "oppo", 1, "%"], ["Air%", "air", 1, "%"], ["Pull Air%", "pull", 1, "%"], ["EV", "ev", 1], ["EV90", "ev90", 1], ["maxEV", "maxev", 1],
+                     ["Barrel%", "brl", 1, "%"], ["HardHit%", "hh", 1, "%"], ["SweetSpot%", "ss", 1, "%"], ["Bat Speed", "bs", 1]]],
+    ["Plate Discipline", [["Swing%", "swing", 1, "%"], ["Z-Swing%", "zsw", 1, "%"], ["O-Swing%", "osw", 1, "%"], ["Contact%", "con", 1, "%"], ["Z-Contact%", "zcon", 1, "%"],
+                          ["O-Contact%", "ocon", 1, "%"], ["Whiff%", "whf", 1, "%"], ["Strike%", "strk", 1, "%"]]]];
+  const VS_P = [
+    ["Advanced", [["K%", "k", 1, "%"], ["BB%", "bb", 1, "%"], ["K-BB%", "kbb", 1, "%"], ["ERA", "era", 2], ["FIP", "fip", 2], ["SIERA", "siera", 2], ["nERA", "nera", 2],
+                  ["uERA", "uera", 2], ["Stuff uERA", "suera", 2], ["Stuff+", "stuff", 0], ["Whiff+", "swhf", 0], ["BB+", "sbb", 0]]],
+    ["Batted Ball", [["GB%", "gb", 1, "%"], ["PU%", "pu", 1, "%"], ["EV", "ev", 1], ["HardHit%", "hh", 1, "%"], ["Barrel%", "brl", 1, "%"], ["FBv", "fbv", 1], ["Ext", "ext", 1]]],
+    ["Plate Discipline", [["Swing%", "swing", 1, "%"], ["O-Swing%", "osw", 1, "%"], ["Z-Contact%", "zcon", 1, "%"], ["Zone%", "zone", 1, "%"], ["Whiff%", "whf", 1, "%"],
+                          ["SwStr%", "swstr", 1, "%"], ["CSW%", "csw", 1, "%"], ["Strike%", "strk", 1, "%"]]]];
+  function renderViewStats(p, g) {
+    const H = p.type === "H", on = !!winIdx() || splitActive(), wrap = el("div", "rawstats viewstats");
+    const label = viewLabel(p.type) || "full season";
+    // his numbers in a view: the card's metrics, plus a few worked out here
+    const nums = (full) => {
+      const run = () => {
+        const m = Object.assign({}, V(p).m), st = pool(g).stats.get(p.type + p.id) || rankIn(g, p);
+        if (H) { if (m.slg != null && m.ba != null) m.iso = m.slg - m.ba; if (m.xwd != null && m.woba != null) m.xwdiff = m.xwd - m.woba; }
+        else { m.uera = st && st.uera; m.suera = st && st.suera; }
+        return m;
+      };
+      return full ? withWindow(NOWIN, () => withSplit(NONE, run)) : run();
+    };
+    // the official line for the view (null when the season has no game logs here)
+    const y = String(DS.season), mlb = DS.level === "MLB" && /^\d{4}$/.test(y) && FYEARS.includes(y), F = mlb ? fData(y) : null;
+    if (mlb && !F) fEnsure(y);
+    const line = (full) => {
+      if (!F) return null;
+      const games = fGamesOf(F, H ? "H" : "P", p.id); if (!games || !games.length) return null;
+      if (full) return fSum(games, H ? "H" : "P");
+      const w = winIdx(), sp = SPLIT, role = roleOf(sp);
+      const spec = { lo: w && !w.last ? ymdOf(w.from) : 0, hi: w ? ymdOf(w.to) : 0, last: w && w.last ? Number(w.last) : 0, venue: sp.venue, hand: sp.hand };
+      let gs = role === "all" ? games : games.filter((x) => (role === "sp" ? x.GS : !x.GS));
+      gs = fWindow(gs, H ? "H" : "P", spec, spec.hand !== "all" ? fDayShares(DS, p, spec.hand) : null);
+      return gs.length ? fSum(gs, H ? "H" : "P") : null;
+    };
+    const short = label.replace(/^full season · /, "");
+    const rows = [[on ? (/^vs /.test(short) ? short : short.charAt(0).toUpperCase() + short.slice(1)) : "Full season", nums(false), line(false), "cur"]];
+    if (on) rows.push(["Full season", nums(true), line(true), ""]);
+    const i0 = (x) => (x == null ? "–" : String(Math.round(x)));
+    const r3 = (n, d) => (d ? fmtX(n / d) : "–");
+    const std = H
+      ? [["G", (o) => i0(o.G)], ["PA", (o) => i0(o.PA)], ["AB", (o) => i0(o.AB)], ["H", (o) => i0(o.H)], ["2B", (o) => i0(o["2B"])], ["3B", (o) => i0(o["3B"])],
+         ["HR", (o) => i0(o.HR)], ["R", (o) => i0(o.R)], ["RBI", (o) => i0(o.RBI)], ["BB", (o) => i0(o.BB)], ["SO", (o) => i0(o.K)], ["HBP", (o) => i0(o.HBP)],
+         ["SB", (o) => i0(o.SB)], ["CS", (o) => i0(o.CS)], ["AVG", (o) => r3(o.H, o.AB)], ["OBP", (o) => r3(o.H + o.BB + (o.HBP || 0), o.AB + o.BB + (o.HBP || 0) + (o.SF || 0))],
+         ["SLG", (o) => r3(o.TB, o.AB)], ["OPS", (o) => { const d1 = o.AB + o.BB + (o.HBP || 0) + (o.SF || 0); return o.AB && d1 ? fmtX((o.H + o.BB + (o.HBP || 0)) / d1 + o.TB / o.AB) : "–"; }]]
+      : [["W", (o) => i0(o.W)], ["L", (o) => i0(o.L)], ["G", (o) => i0(o.G)], ["GS", (o) => i0(o.GS)], ["SV", (o) => i0(o.SV)], ["HLD", (o) => i0(o.HD)],
+         ["IP", (o) => fmtIP(o.OUTS / 3)], ["TBF", (o) => i0(o.BF)], ["H", (o) => i0(o.H)], ["R", (o) => i0(o.R)], ["ER", (o) => i0(o.ER)], ["HR", (o) => i0(o.HR)],
+         ["BB", (o) => i0(o.BB)], ["HBP", (o) => i0(o.HBP)], ["SO", (o) => i0(o.K)], ["ERA", (o) => (o.OUTS ? (27 * o.ER / o.OUTS).toFixed(2) : "–")],
+         ["WHIP", (o) => (o.OUTS ? (3 * (o.H + o.BB) / o.OUTS).toFixed(2) : "–")], ["AVG", (o) => r3(o.H, o.AB)]];
+    const table = (title, cols, cell) => {
+      const sc = el("div", "rawscroll"), t = el("table"), th = el("thead"), hr = el("tr");
+      hr.append(el("th", "l", ""));
+      for (const c of cols) hr.append(el("th", null, c[0]));
+      th.append(hr); t.append(th);
+      const tb = el("tbody");
+      for (const r of rows) { const tr = el("tr", r[3] || null); tr.append(el("td", "l", r[0])); for (const c of cols) tr.append(el("td", null, cell(c, r))); tb.append(tr); }
+      t.append(tb); sc.append(t);
+      wrap.append(el("h3", null, title), sc);
+    };
+    wrap.append(el("p", "vshead", on ? `This view: ${label}` : "Full season · set dates or a split in Filters and these tables follow them"));
+    if (rows.some((r) => r[2])) table("Standard", std, (c, r) => (r[2] ? c[1](r[2]) : "–"));
+    else wrap.append(el("p", "note", F ? "No box-score line for this view." : mlb && !failed.has(fFile(y)) ? "Loading the box scores…" : "Box-score lines are kept for the last three MLB seasons."));
+    const fm = (v, dec, unit, sign) => {
+      if (v == null || Number.isNaN(v)) return "–";
+      if (sign) return (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(3).replace(/^0/, "");
+      return dec === 3 ? fmtX(v) : Number(v).toFixed(dec) + (unit || "");
+    };
+    for (const [title, cols] of H ? VS_H : VS_P) table(title, cols, (c, r) => fm(r[1][c[1]], c[2], c[3], c[4]));
+    if (on && SPLIT.hand !== "all") wrap.append(el("p", "note", `The Standard line vs ${SPLIT.hand}H${H ? "P" : "B"} shares each game's box score out by that day's pitch data, so its counts are close estimates.`));
+    return wrap;
+  }
   // The Season Stats tab: the plain season line, the way Savant's player page prints it — every MLB season and a
   // career total. A player with no MLB time gets his minor-league seasons, one line per level.
   function renderSeasonTable(p) {
@@ -5053,7 +5134,7 @@
       const ub = renderUeraBox(p, o.st), mx = renderMixBox(p, g);
       if (ub) w.append(ub); if (mx) w.append(mx);
       body.append(w.childNodes.length ? w : el("p", "note", "uERA needs Whiff%, Strike% and batted-ball data for this season."));
-    } else body.append(renderSeasonTable(p));
+    } else { body.append(renderViewStats(p, ref)); const st2 = renderSeasonTable(p); st2.prepend(el("h3", null, "By season")); body.append(st2); }
     sec.append(body);
     return sec;
   }
