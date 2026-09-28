@@ -505,8 +505,8 @@ is deploy-limited.
   Trending rows had no headline percentile (`placeIn` only covered the listed stats) — the pool now keeps a sorted list for
   the headline too.
 * **Leaderboard / Trending / Rankings / Draft board wear Fantasy's controls** (Sean, 28 Sep 2026): the toolbar buttons are
-  white with a navy outline like Star (solid navy while open or in effect; Fantasy's Filters button too — Sean preferred
-  that to light blue), the header row thin (~24px on desktop), and `#colhead` is Fantasy's pale header — small grey labels, the sorted one
+  Fantasy's tabs — white with a thin light-blue outline, filled light blue while open or in effect, 34px (Fantasy's Filters
+  button too; solid light blue and then a navy outline were tried the same evening), the header row thin (~24px on desktop), and `#colhead` is Fantasy's pale header — small grey labels, the sorted one
   in blue, a light-blue rule under it. The Stuff+ board keeps its navy header.
 * **Card tables in the same dress** (Sean, 28 Sep 2026): every table in a card's bottom tabs has the pale header; in
   Spreadsheet Stats a stat his card ranks is filled with its percentile colour (`pctOf` in `renderViewStats`, from the pool's
