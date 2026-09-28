@@ -20,7 +20,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DEPLOY = os.path.join(os.path.dirname(HERE), "draft-site-deploy")
 SITE_FILE = os.path.join(HERE, "netlify_site.json")
 API = "https://api.netlify.com/api/v1"
-TOP = ["index.html", "app.js", "styles.css", "themes.js", "defaults.js", "data.js", "days.js", "fantasy.js", "proj.js", "manifest.json",
+TOP = ["index.html", "app.js", "styles.css", "themes.js", "defaults.js", "data.js", "days.js", "fantasy.js", "manifest.json",
        "icons/icon-32.png", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png"]
 
 
