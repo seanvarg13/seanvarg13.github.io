@@ -401,7 +401,9 @@
     cmpCols: prefs.cmpCols || {},              // Compare: chosen stats per type {H: [keys], P: [keys]}; missing = every card stat
     rawMode: prefs.rawMode || "mlb",           // Season by season: "mlb" | "milb" | "all"
     tbl: Object.assign({ heat: false, band: true, sortHl: true, density: "comfortable", numbers: "auto", breaks: {} }, prefs.tbl || {}),
-    bars: prefs.bars === "classic" ? "classic" : "savant",   // the player card's percentile bars: Savant's charts, or the older meter rows   // Table features; breaks: {"mode:H": [keys with a rule after them]}
+    // the player card's percentile bars: Savant's charts, the older meter rows, or the Leaderboard's table look — set once for
+    // everyone when it arrived (Sean, 28 Sep 2026: "adjust the player page/card ... to be more like" the Leaderboard)
+    bars: !prefs.barsTableTried ? "table" : ["classic", "table"].includes(prefs.bars) ? prefs.bars : "savant", barsTableTried: true,   // the player card's percentile bars: Savant's charts, or the older meter rows   // Table features; breaks: {"mode:H": [keys with a rule after them]}
     cq: "",
     showDrafted: !!prefs.showDrafted,
     expanded: null,
@@ -445,7 +447,7 @@
     if (oldRoles) { for (const [id, r] of Object.entries(oldRoles)) { const l = state.extraPos[id] || (state.extraPos[id] = []); if (!l.includes(r)) l.push(r); } changed = true; }
     if (changed) { save(LS.extraPos, state.extraPos); try { localStorage.removeItem(LS.extra); localStorage.removeItem(LS.roles); } catch {} }
   })();
-  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, posAlso: state.posAlso, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, ptab: state.ptab, rollPA: state.rollPA, pbtab: state.pbtab, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, bars: state.bars }); }
+  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, posAlso: state.posAlso, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, ptab: state.ptab, rollPA: state.rollPA, pbtab: state.pbtab, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, bars: state.bars, barsTableTried: true }); }
   const draftedIds = () => new Set(state.drafted.map((d) => d.id));
   // Expected stats are one model, the directional one: xwOBA over exit velocity, launch angle, spray and pull angle and
   // the batter's sprint speed, summed from the same day-by-day rows so it follows any window or split, and xBA / xSLG
@@ -4814,7 +4816,7 @@
     row("Layout", "Auto gives a phone the compact layout; Desktop on a phone shows the full layout zoomed out.",
       segOf("Layout", [["auto", "Auto"], ["mobile", "Mobile"], ["desktop", "Desktop"]], T.viewPref(), (v) => { T.setView(v); renderAppearance(); }));
     row("Percentile bars", "How the bars on a player's card are drawn.",
-      segOf("Percentile bars", [["savant", "Savant charts"], ["classic", "Classic meters"]], state.bars, (v) => { state.bars = v; savePrefs(); render(); }));
+      segOf("Percentile bars", [["table", "Leaderboard table"], ["savant", "Savant charts"], ["classic", "Classic meters"]], state.bars, (v) => { state.bars = v; savePrefs(); render(); }));
     // type: one line per font, set in that font
     T.preloadFonts();
     const fg = el("div", "fonts");
@@ -5823,6 +5825,24 @@
             sec.append(box); c.append(sec);
           }
           cols.append(c);
+        }
+      } else if (state.bars === "table") {             // the Leaderboard's look: a table per column, the value filled with its percentile colour
+        cols.classList.add("pcttable");
+        for (const gs of sets) {
+          const t = el("table", "pctt");
+          for (const g of gs) {
+            const th = el("tbody", "pctsec"), hr = el("tr", "pcthd");
+            hr.append(el("th", "psec", g.title), el("th", null, "Value"), el("th", null, "Pctl"));
+            th.append(hr);
+            for (const r of g.rows) {
+              const tr = el("tr"); tr.title = r.tip;
+              const v = el("td", "v", r.value); if (r.pct != null) { paint(v, r.pct); v.classList.add("hot"); }
+              tr.append(el("td", "plab", r.label), v, el("td", "ppc", r.pct == null ? "–" : String(r.pct)));
+              th.append(tr);
+            }
+            t.append(th);
+          }
+          cols.append(t);
         }
       } else sets.forEach((gs, i) => cols.append(pctChart(gs, i)));
       body.append(cols);
