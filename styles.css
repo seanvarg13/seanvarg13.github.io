@@ -2873,26 +2873,28 @@ body[data-mode="pitches"] main.wrap > .notes { display: none; }   /* the lists' 
 /* One look for everything that stands off the page (Sean, 28 Sep 2026, pointing at cron-job.org's screenshot: "precisely
    like this big thing with the shadow"): softly rounded corners, a hairline edge you barely see, and a deep, soft shadow
    that falls all round it — no navy outline, no hard offset shadow. Cards and panels take the full shadow, dropdowns a
-   middle one, buttons and small tiles the same thing scaled down. */
+   middle one, buttons and small tiles the same thing scaled down. (Rounded and all-round until the next note.) */
 :root {
-  --lift-edge: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
-  --lift-card: 0 2px 6px rgba(0, 0, 0, 0.14), 0 10px 28px rgba(0, 0, 0, 0.26), 0 24px 64px rgba(0, 0, 0, 0.34);   /* as evident as the screenshot's (Sean) */
-  --lift-menu: 0 2px 5px rgba(0, 0, 0, 0.14), 0 10px 30px rgba(0, 0, 0, 0.32);
-  --lift-btn: 0 1px 3px rgba(0, 0, 0, 0.16), 0 5px 14px rgba(0, 0, 0, 0.26);
+  /* since 28 Sep 2026 (Sean, a spreadsheet pasted into a slide: "the exact format I want"): square corners, a thin grey
+     edge, and the shadow cast down and to the right — none above or to the left */
+  --lift-edge: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+  --lift-card: 7px 9px 12px rgba(0, 0, 0, 0.34);
+  --lift-menu: 5px 6px 9px rgba(0, 0, 0, 0.3);
+  --lift-btn: 2px 3px 5px rgba(0, 0, 0, 0.3);
 }
 :root:root .modal.pcard .modal-panel, :root:root:not([data-view="mobile"]) .modal.pcard .modal-panel, :root:root[data-view="mobile"] .modal.pcard .modal-panel,
 :root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap {
-  border: var(--lift-edge); border-radius: 10px; box-shadow: var(--lift-card); }
+  border: var(--lift-edge); border-radius: 0; box-shadow: var(--lift-card); }
 :root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap { overflow: clip; }
 :root:root .board, :root:root section.xboard, :root:root .btabbody, :root:root .hubcard, :root:root .eadder, :root:root .sitedef {
-  border: var(--lift-edge); border-radius: 8px; box-shadow: var(--lift-card); }
+  border: var(--lift-edge); border-radius: 0; box-shadow: var(--lift-card); }
 :root:root .phfilt.phpop, :root:root .pop, :root:root .hmenu, :root:root .menupop, :root:root .addlist, :root:root .ddmenu, :root:root .modemenu {
-  border: var(--lift-edge); border-radius: 8px; box-shadow: var(--lift-menu); }
+  border: var(--lift-edge); border-radius: 0; box-shadow: var(--lift-menu); }
 :root:root .modes a, :root:root .modes .modesel, :root:root .phead .starbtn, :root:root .phead .phtoggle, :root:root .phead .mplate .btn,
 :root:root .btab, :root:root .btab:first-child, :root:root .btab:last-child, :root:root .tbtns button, :root:root .tbtns .btn {
-  border: var(--lift-edge); border-radius: 6px; box-shadow: var(--lift-btn); }
+  border: var(--lift-edge); border-radius: 0; box-shadow: var(--lift-btn); }
 :root:root .btab.on, :root:root .modes a[aria-current="page"], :root:root .modes .modesel[aria-current="page"] { border: var(--lift-edge); }
-:root:root .phead .mplate .mug, :root:root .fanttile { border: var(--lift-edge); border-radius: 8px; box-shadow: var(--lift-btn); }
+:root:root .phead .mplate .mug, :root:root .fanttile { border: var(--lift-edge); border-radius: 0; box-shadow: var(--lift-btn); }
 /* Season Stats tab: the card's own view as FanGraphs-style tables (renderViewStats), the season-by-season table below */
 .viewstats .vshead { margin: 0 0 4px; font-size: 13px; font-weight: 700; color: var(--ink); }
 .viewstats h3, .btabbody .rawstats > h3 { margin: 16px 0 6px; font-size: 12.5px; }
