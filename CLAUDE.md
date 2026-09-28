@@ -211,7 +211,12 @@ Statcast/Directional toggle and the `xws` column are gone). The build still carr
 
 **uK% / uBB% / uERA** (pitchers, computed in `app.js`, not in the build):
 * **uK%** = `−26.975 + 0.933·Whiff% + 0.409·Strike%` (`UK`, fitted over every 100+ BF pitcher-season 2015-2026 bar
-  2020; Whiff% as is ran 2.5 points high). **uBB%** = the walk rate at his own Strike% percentile (`impliedKBB`).
+  2020; Whiff% as is ran 2.5 points high). **uBB%** (`UBB` / `uBBFrom`, Sean 28 Sep 2026) = the league's BB% moved by his Strike%, Zone%, Chase%, Swing%,
+  Z-Contact% and Whiff% each against the dataset's league rate (`lgRatesP`), a straight-line fit over every 100+ BF
+  pitcher-season 2015-2026 (−1.01 BB% per Strike% point, +0.21 Zone%, +0.09 Chase%, −0.05 Swing%, −0.10 Z-Contact%,
+  +0.06 Whiff%): 1.46 BB% points from a pitcher's real BB% vs 1.73 for the old walk-rate-at-his-Strike%-percentile, and
+  better on next season's BB% than his own BB%. Strike% bands and a tree model did no better. Levels without Chase% /
+  Z-Contact% use a four-rate fit, then Strike% alone.
 * **uERA** (`underlyingERA`) puts those two rates on the balls he actually allowed: his ground-ball and popup
   shares stand, the air balls left over are split into line drives and fly balls at the *population's* ratio, and
   every ball in play is then worth the league's average wOBA for its type (`consts.bbw`). The resulting wOBA is
