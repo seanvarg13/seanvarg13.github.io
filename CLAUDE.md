@@ -512,11 +512,11 @@ is deploy-limited.
   Spreadsheet Stats a stat his card ranks is filled with its percentile colour (`pctOf` in `renderViewStats`, from the pool's
   `st.pct`), like the Stuff table's grades. The card's bottom tabs are outlined white with the picked one light blue; the
   Filters button on the band stays navy (a light-blue one vanishes on the light-blue band).
-* **The card's percentiles as a Leaderboard table** (Sean, 28 Sep 2026: "adjust the player page/card ... to be more like this"):
-  `state.bars === "table"` in `renderPctPanel` draws each column of `PCT_COLS_H` / `PCT_COLS_P` as a `.pctt` table in a 1px
-  navy frame — a pale header row per section, stat · value · percentile, the value filled with its percentile colour. It
-  was switched on once for everyone (`barsTableTried` in the prefs); Appearance ▸ Percentile bars still offers Savant charts
-  and Classic meters. Fits the locked box. Its classes are `psec` / `plab` / `ppc` — `.l` and `.pc` carry styles elsewhere.
+* **The card's header band wears the Leaderboard's colours** (Sean, 28 Sep 2026): `.mplate` is the pager strip's pale blue
+  (light blue at 24% on white) with a 2px light-blue rule instead of the solid band and navy rule; Star and Filters are the
+  Leaderboard's outlined buttons (Filters filled light blue while open).
+* **Don't restyle the percentile bars unasked**: a Leaderboard-table version of them was tried and taken back the same
+  evening (Sean, 28 Sep 2026: "i didnt want you to touch any of the percentile bar metrics").
 * **Projections and Buy low / Sell high were built and removed the same day** (Sean, 28 Sep 2026: "I don't need those") —
   the pages, the home cards, `tools/build_proj.py` and `proj.js` are gone. Don't bring them back unasked.
 * **Starts / relief split** (Sean, 26 Sep 2026): a pitcher who both started and relieved (`ctx.GS > 0` and `G > GS`)
