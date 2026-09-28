@@ -3134,17 +3134,10 @@ body[data-mode="appearance"] main.wrap > .notes { display: none; }
 :root:root:root main.wrap .toolbar .tbtns .tbtn:hover, :root:root:root .fbar .fltbtn:hover { background: color-mix(in srgb, var(--accent-2) 18%, var(--surface)); }
 :root:root:root main.wrap .toolbar .tbtns .tbtn.on, :root:root:root main.wrap .toolbar .tbtns .tbtn[aria-expanded="true"], :root:root:root .fbar .fltbtn.on { background: var(--accent-2); color: var(--rule); border-color: var(--accent-2); }
 :root:root:root main.wrap .toolbar .tbtns .tbtn { height: 34px; min-height: 34px; font-size: 12px; letter-spacing: 0.06em; padding: 0 12px; }
-/* the card's percentiles as the Leaderboard's table (Sean, 28 Sep 2026): a table per column in a 1px navy frame, each section
-   a pale header row, the value filled edge to edge with its percentile colour, the percentile beside it */
-.pctcols.pcttable { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 22px; align-items: start; padding: 4px 2px 8px; }
-:root[data-view="mobile"] .pctcols.pcttable { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-.pctt { width: 100%; border-collapse: collapse; border: 1px solid var(--rule); font-size: 13px; background: var(--surface); }
-.pctt .pcthd th { background: var(--surface-2); color: var(--muted); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
-  padding: 6px 10px; text-align: right; border-bottom: 2px solid var(--accent-2); border-top: 1px solid var(--hair); }
-.pctt .pcthd th.psec { display: table-cell; width: auto; margin: 0; text-align: left; color: var(--accent-2-text); }
-.pctt tbody:first-child .pcthd th { border-top: 0; }
-.pctt td { padding: 0 10px; height: 30px; text-align: right; border-bottom: 1px solid var(--hair); color: var(--ink); font-variant-numeric: tabular-nums; }
-.pctt tr:nth-child(odd) td { background: var(--stripe, #f7f9fb); }
-.pctt td.plab { text-align: left; font-weight: 600; color: var(--ink-2); }
-.pctt td.v { width: 76px; text-align: center; font-weight: 700; }
-.pctt td.ppc { width: 44px; color: var(--muted); font-weight: 700; }
+/* the card's header band in the Leaderboard's colours (Sean, 28 Sep 2026, pointing at the band: "only ... the color formatting
+   and scheme of the header"): the pager strip's pale blue (light blue at 24% on white) with a light-blue rule under it, and
+   Star / Filters as the Leaderboard's buttons — white with a thin light-blue outline, Filters filled light blue while open */
+:root:root:root .phead .mplate { background: color-mix(in srgb, var(--accent-2) 24%, var(--surface)); border-bottom: 2px solid var(--accent-2); }
+:root:root:root .phead .starbtn, :root:root:root .phead .starbtn:not(.phtoggle) { background: var(--surface); color: var(--rule); border: 1px solid var(--accent-2); }
+:root:root:root .phead .starbtn:hover { background: color-mix(in srgb, var(--accent-2) 18%, var(--surface)); }
+:root:root:root .phead .starbtn.on, :root:root:root .phead .starbtn[aria-expanded="true"], :root:root:root .phead .starbtn.phtoggle.on { background: var(--accent-2); color: var(--rule); border-color: var(--accent-2); }
