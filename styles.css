@@ -3007,6 +3007,3 @@ body[data-mode="home"] main.wrap > .notes { display: none; }   /* the lists' per
    under a diagonal drag. The tab row, the stat strip and the tables are scrollers of their own, so they still slide */
 :root[data-view="mobile"] .modal.pcard :is(.modal-panel, #modal-body, .cardscroll) { touch-action: pan-y pinch-zoom; overscroll-behavior-x: none; }
 :root[data-view="mobile"] .modal.pcard :is(.btabs, .hstrip) { touch-action: pan-x pan-y pinch-zoom; }
-/* the white card is back behind the list pages (Sean, 28 Sep 2026: tried without it for an hour, went back), with a plain
-   border and no shadow like everything else; the table and boards inside it drop their own frame so it's one box, not two */
-:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap :is(.board, section.xboard) { border: 0; }

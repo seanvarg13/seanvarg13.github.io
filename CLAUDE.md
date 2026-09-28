@@ -431,8 +431,8 @@ is deploy-limited.
   noted while no card is up and put back when one closes — on a phone the list is redrawn under the card and started over.
 * **The list pages share the pattern** (Sean, 26 Sep 2026): Leaderboard, Trending, Rankings, Draft board, Fantasy,
   Eligibility and Compare put the same white + spiral pattern behind the page (`body[data-mode=…]::before` / `::after`, fixed) and
-  gather `main.wrap` — filters, table, notes — into one white card with a plain navy border (no shadow). The table / boards inside it drop their own frame, so
-  it's one box, not two. Taking the white card away (the pattern straight behind buttons, table and notes) was tried on
+  gather `main.wrap` — filters, table, notes — into one white card with a plain navy border (no shadow). The table / boards inside keep their own navy frame (a
+  single-frame version, inner borders dropped, was tried the same evening and Sean didn't like it). Taking the white card away (the pattern straight behind buttons, table and notes) was tried on
   28 Sep 2026 and undone within the hour — Sean agreed the card looks better; don't remove it unasked.
   The card **stands still** (Sean: "I don't want the white box itself to scroll at all"): it fills the screen from under
   the header to an 18px gap (10px on the phone), the page never scrolls, and only the rows' box (`.board-scroll`, Fantasy
