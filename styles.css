@@ -2903,7 +2903,7 @@ body:is([data-mode="pitches"]) main.wrap > .notes { display: none; }   /* the li
 :root[data-view="mobile"] .toolrow { padding: 6px 0 16px; margin: -6px 0 -16px; }   /* the phone card has no side room to borrow */
 /* the swirl pattern at half strength behind the cards (Sean, 28 Sep 2026 — it was competing with them) */
 :root.swirl-img .modal.pagebg .modal-back::before,
-:root.swirl-img body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"],[data-mode="home"])::before { opacity: 0.45; }
+:root.swirl-img body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"],[data-mode="home"])::before { opacity: 0.2; }
 /* Phone header on one line: name, search, Menu; the page buttons open under it (app.js adds the button). Desktop keeps its row. */
 .navtog { display: none; }
 :root[data-view="mobile"] header.top { flex-wrap: wrap; align-items: center; }
@@ -3007,3 +3007,29 @@ body[data-mode="home"] main.wrap > .notes { display: none; }   /* the lists' per
    under a diagonal drag. The tab row, the stat strip and the tables are scrollers of their own, so they still slide */
 :root[data-view="mobile"] .modal.pcard :is(.modal-panel, #modal-body, .cardscroll) { touch-action: pan-y pinch-zoom; overscroll-behavior-x: none; }
 :root[data-view="mobile"] .modal.pcard :is(.btabs, .hstrip) { touch-action: pan-x pan-y pinch-zoom; }
+/* The minimal pass (Sean, 28 Sep 2026: "I like the minimalistic look"):
+   - the toolbar wraps onto a second line instead of running off the edge (phone's Splits & Dates, desktop's draft row) */
+.toolrow, :root[data-view="mobile"] .toolrow { flex-wrap: wrap; overflow: visible; }
+.drafttools, :root[data-view="mobile"] .drafttools { flex: 0 1 auto; flex-wrap: wrap; white-space: normal; }
+/*  - the list's foot is one line of links: the colour scale, Colour key · Stat glossary · How this page works · Layout */
+.notes .noteline { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; line-height: 1.5; }
+.notes .noteline .scale { margin: 0 2px 0 0; }
+.notes .noteline .nsep { color: var(--hair); }
+.notes .noteline .viewsw { display: inline; }
+.notes .noteline .linkbtn { font-size: inherit; }
+/*  - a quiet pager: plain numbers, only the current page filled */
+:root:root .pager .pbtn, :root:root:not([data-view="mobile"]) .pager .pbtn, :root:root[data-view="mobile"] .pager .pbtn { border: 0; background: transparent; color: var(--accent); }
+:root:root .pager .pbtn[aria-current="page"] { background: var(--rule); color: #fff; }
+:root:root .pager .pbtn:hover:not(:disabled):not([aria-current="page"]) { color: var(--ink); text-decoration: underline; }
+/*  - two border weights: 2px navy for the outer frame, 1px navy for what sits inside it; the rows share one pale line */
+:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap :is(.board, section.xboard) { border-width: 1px; }
+/*  - the sorted column is a faint tint, not a box round every value */
+body[data-sorthl="on"] .pct.sorted, body[data-sorthl="on"] .score.sorted { box-shadow: none; }
+:root:root:root .toolrow > .tools { flex: 1 1 100%; min-width: 0; flex-wrap: wrap; }
+:root:root:root .toolrow .tbtns { flex-wrap: wrap; min-width: 0; }
+.notes .noteline .viewsw { margin: 0; }
+body[data-sorthl="on"] .pct.sorted, body[data-sorthl="on"] .score.sorted,
+body[data-sorthl="on"][data-heat="off"] .pct.sorted, body[data-sorthl="on"][data-heat="off"] .score.sorted { background: transparent !important; font-weight: 800; color: var(--ink); }
+/*  - the pattern behind the pages at a fifth of its strength, both of its layers */
+:root.swirl-img body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"],[data-mode="home"])::after,
+:root.swirl-img .modal.pagebg .modal-back::after { opacity: 0.2; }

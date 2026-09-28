@@ -3847,11 +3847,15 @@
     const notes = $("notes"); notes.innerHTML = "";
     const scale = el("span", "scale"); [5, 25, 50, 75, 95].forEach((p) => { const i = el("i"); paint(i, p); scale.append(i); });
     const l1 = el("div"); l1.append("Percentiles run 0–100 within the pool", scale, "blue is cold, red is hot. O-Swing% and Whiff% (for hitters) are flipped so 100 is always the best. Click a column heading to sort by it; click a player for the full card.");
-    // the colour key and the layout switch on the left; the glossary and the page's how-to are buttons on the right that
-    // open in a window (Sean, 26 Sep 2026), so the foot of the card never needs scrolling
-    const left = el("div", "notesleft"); left.append(l1, renderViewSwitch());
-    const btns = el("div", "notesbtns");
-    notes.append(left, btns);
+    // one quiet line under the table (Sean, 28 Sep 2026: the key, the layout switch and two big buttons took a quarter of
+    // a phone's screen): the colour scale itself, then the key, the glossary and the page's how-to as links that open in a
+    // window, then the layout switch
+    const line = el("div", "noteline"), keyTxt = l1;
+    line.append(scale.cloneNode(true));
+    const btns = line;
+    notes.append(line);
+    const link = (label, build) => { const b = el("button", "linkbtn", label); b.type = "button"; b.addEventListener("click", () => { state.textModal = { title: label, build }; render(); }); return b; };
+    line.append(link("Colour key", () => { const b = el("div", "prose"); b.append(keyTxt); return b; }));
     const prose = [];
     prose.push(Object.assign(el("div"), { innerHTML: `<b>Eligibility</b> — a hitter is listed at every position where he played ${ESPN.posGames}+ games this season, counting MLB and minor-league games together (ESPN's rule for call-ups), OF combined, DH counts; pitchers are SP with ${ESPN.spIP}+ IP as a starter and RP with ${ESPN.rpIP}+ IP in relief. Add anything ESPN gives him that the games don't from his card. <b>Pools</b> — every hitter percentile is measured against hitters with <b>${REF_PA}+ PA</b> on the season, any position; every pitcher percentile against pitchers with <b>${REF_PA}+ batters faced</b>, starters and relievers together. That population never changes — a date range or split only changes the numbers being compared — and the <b>Min PA / Min IP</b> boxes only set who is listed: a player under the bar is placed against that same population rather than reshaping it.` }));
     prose.push(Object.assign(el("div"), { innerHTML: `<b>xwOBA</b> — the directional model, and only that: every ball in play scored on its exit velocity, launch angle, spray and pull angle and the batter's sprint speed, so where he hit the ball counts too, with strikeouts, walks and hit-by-pitches counting as themselves. It is summed from the same day-by-day rows, so windows and splits follow it, re-anchored each season so the league's average is its real wOBA, and blank in the minors, which have no xwOBA model (wOBA heads the lists there). <b>xBA</b> and <b>xSLG</b> are the same recipe's — a past MLB season not yet rescored for them shows Statcast's until it is. <b>Batted-ball definitions</b> follow Savant's leaderboards: BBE is every ball in play, Avg EV / 90th% / max EV skip bunts, Barrel%, Hard-Hit% and Sweet-Spot% are per ball in play. Seasons before 2020 have a few percent of untracked balls that Savant's public feed fills with placeholder values, so an Avg EV there can sit a tenth or two off the leaderboard.` }));
@@ -3864,11 +3868,8 @@
     if (state.mode === "leaderboard") prose.push(Object.assign(el("div"), { innerHTML: `<b>Leaderboard</b> — every hitter or pitcher over the Min PA / IP box, for any season and level you pick (MLB from 2015, the minors from 2021), with the stats you choose (<b>Columns…</b>). The vs-L / R and home / away toggles redraw every number and percentile from those plate appearances only (the comparison group stays the season's qualifiers on their numbers in the same split); ERA needs full games, so it's blank in a handedness split. Each cell shows the number, coloured by where it ranks among the season's qualifiers; click a heading to sort, click it again to flip. Dates and Last-N work here too, and the position tabs narrow the list.` }));
     if (state.mode === "trending") prose.push(Object.assign(el("div"), { innerHTML: `<b>Trending</b> — who's hot right now. The position tabs use the same eligibility as everywhere else (${ESPN.posGames}+ games at a position this season, plus anything you've added). Hitters are ordered by ${HEAD.label} over each player's last N plate appearances (or the last N days); pitchers by the average of their Whiff% and Strike% percentiles over their last N innings (or days), with K%, BB%, ERA, SIERA and GB% for that span alongside. Full-season minimums don't apply here — <b>at least</b> sets how much playing time a player needs inside the span to be listed. The chips show the actual number, coloured by where it ranks among the season's qualifiers on their numbers in the same span. Click a player for his card over that span.` }));
     if (state.mode === "draft") prose.push(Object.assign(el("div"), { innerHTML: `<b>Draft mode</b> — <b>Draft from</b> picks the order: the big board, your working rankings, or any set you saved on the Rankings page (tiers included). Drafted players are saved in this browser, so you can close the tab and come back mid-draft. “Show drafted” keeps them on the board, dimmed.` }));
-    for (const [label, build] of [["Stat glossary", renderGlossary], ["How this page works", () => { const b = el("div", "prose"); b.append(...prose); return b; }]]) {
-      const b = el("button", "btn", label); b.type = "button";
-      b.addEventListener("click", () => { state.textModal = { title: label, build }; render(); });
-      btns.append(b);
-    }
+    btns.append(el("span", "nsep", "·"), link("Stat glossary", renderGlossary), el("span", "nsep", "·"), link("How this page works", () => { const b = el("div", "prose"); b.append(...prose); return b; }),
+      el("span", "nsep", "·"), renderViewSwitch());
   }
 
   // the comparison's column heads stick under the card's pinned plate, so they need its height
