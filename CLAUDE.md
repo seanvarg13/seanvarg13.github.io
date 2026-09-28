@@ -404,8 +404,9 @@ is deploy-limited.
   `playerView()` as a card off a list, so a change to one is a change to the other.
 * **One lifted look** (Sean, 28 Sep 2026, from cron-job.org's screenshot): every card, panel, dropdown, button and tile that
   stands off the page has square corners (Sean, 28 Sep 2026 evening: "hard and not soft" — every radius in `styles.css` is 0
-  but true circles, 50%), a faint hairline edge and a soft all-round shadow (`--lift-edge` /
-  `--lift-card` / `--lift-menu` / `--lift-btn`, the block near the end of `styles.css`). A down-right shadow
+  but true circles, 50%) and a plain navy border, **no shadow** (Sean: "instead of the shadows just do a border"): 2px on
+  cards, panels and dropdowns (`--lift-line`), 1px on buttons and tiles (`--lift-edge`); `--lift-card` / `--lift-menu` /
+  `--lift-btn` are `none` (the block near the end of `styles.css`). The soft all-round shadow of that morning is gone. A down-right shadow
   and a bevel were tried the same afternoon and dropped — Sean: the morning's version "looks better". Don't bring the
   bevel back unasked. Also from that pass: the card's × is a navy button like the rest, Star is outlined (secondary) while
   Filters stays solid, 6px between the card's band and its first section, the phone's card tabs are one sideways-sliding row
@@ -428,7 +429,7 @@ is deploy-limited.
   noted while no card is up and put back when one closes — on a phone the list is redrawn under the card and started over.
 * **The list pages share the pattern** (Sean, 26 Sep 2026): Leaderboard, Trending, Rankings, Draft board, Fantasy,
   Eligibility and Compare put the same white + spiral pattern behind the page (`body[data-mode=…]::before` / `::after`, fixed) and
-  gather `main.wrap` — filters, table, notes — into one white card with the player card's outline and shadow.
+  gather `main.wrap` — filters, table, notes — into one white card with the player card's outline.
   The card **stands still** (Sean: "I don't want the white box itself to scroll at all"): it fills the screen from under
   the header to an 18px gap (10px on the phone), the page never scrolls, and only the rows' box (`.board-scroll`, Fantasy
   `.fscroll`) moves — filters, pager and column header frozen above it. On the phone, Fantasy keeps the page scroll (its
@@ -449,22 +450,11 @@ is deploy-limited.
   shares games out by the day's pitch data, so estimates); the rest is `V(p).m` plus the pool's uERA / Stuff uERA.
 * **The home page is a dashboard** (`renderHome`, Sean, 28 Sep 2026: "a legit home page"): a hero card (games through / updated,
   a player search, the most-used pages; a name anywhere on it pops his card up over the home page — `openCard` sets
-  `state.expanded`, and `renderModal`'s `listMode` includes home — Sean, 28 Sep 2026), then cards for starred players, next season's projected
-  leaders (from `proj.js`, scored with the preset in use), the top buy-low / sell-high names (`buySellRows`), the season's
-  xwOBA / Stuff+ / uERA leaders, and every page as tiles (`HOME_SECS` + `SHORT` blurbs). Only data.js and proj.js are
+  `state.expanded`, and `renderModal`'s `listMode` includes home — Sean, 28 Sep 2026), then cards for starred players and the season's
+  xwOBA / Stuff+ / uERA leaders, and every page as tiles (`HOME_SECS` + `SHORT` blurbs). Only data.js is
   used so it opens fast; it sits on the swirl pattern like the list pages (CSS `.hub.home`).
-* **Next season's projections** (Fantasy ▸ 2027 Projections, `#proj`, `renderProj`; `tools/build_proj.py` → `proj.js`; Sean,
-  28 Sep 2026): Marcel-style — the last three seasons' official lines per PA / BF weighted 5/4/3, regressed to the league
-  (hitters 1800 PA, pitchers 1000 BF, role stats 60 BF), hitters age-adjusted, then pulled toward the process stats (¼ of
-  H / TB from dxBA / dxSLG, R / RBI / HR × √(xwOBA/wOBA); pitchers K 30% uK%, BB 50% uBB%, ER 75% nERA). Playing time is a
-  least-squares fit on workload, peak of three seasons, age, starter share and quality, capped at 700 PA / 820 BF. Backtested
-  (fit 2016-23, checked 2025-26): hitters' points per PA error .106 → .093 vs last season alone, pitchers' per BF .194 →
-  .180. `proj.js` holds counting lines only; the page scores them with the Fantasy preset in use. "Full season" scales every
-  line to 600 PA / 180 IP (SP) / 65 IP (RP). Runs in the daily job after `build_fantasy.py` (non-fatal).
-* **Buy low / Sell high** (Leaderboards ▸, `#buysell`, `renderBuySell`): the biggest xwOBA − wOBA gaps (hitters) and ERA −
-  uERA gaps (pitchers), full season, minimum PA / IP adjustable; a name opens his card on the BABIP / uERA tab. Both new
-  pages render into the pitch board's standing card (`pitchBoardEl`), so the `[data-mode="pitches"]` CSS covers
-  `proj` / `buysell` too.
+* **Projections and Buy low / Sell high were built and removed the same day** (Sean, 28 Sep 2026: "I don't need those") —
+  the pages, the home cards, `tools/build_proj.py` and `proj.js` are gone. Don't bring them back unasked.
 * **Starts / relief split** (Sean, 26 Sep 2026): a pitcher who both started and relieved (`ctx.GS > 0` and `G > GS`)
   gets a third split on his card, `state.split.role` = all / sp / rp. `V()` keeps the day rows whose `gs` flag matches,
   earned runs follow the same days, and a past season reads its day-by-day file for it (`byDay` in `histDataset`).
