@@ -3008,3 +3008,12 @@ body[data-mode="home"] main.wrap > .notes { display: none; }   /* the lists' per
 .hub.home .hquick .btn { text-align: center; }
 /* the phone's Menu panel shows when the data runs through (the header has no room for it) */
 :root[data-view="mobile"] body.navopen .stamp { display: block; order: 4; width: 100%; margin: -4px 0 8px; padding: 0 12px; font-size: 12px; color: var(--accent-2-ink); }
+/* the phone card never moves sideways or rubber-bands: the tab row's bleed stuck out 6px past the card, so iOS let a
+   diagonal drag pull the whole card down and right (a blank gap under the band, the chart cut off at the edge) */
+:root[data-view="mobile"] .modal .cardscroll { overflow-x: hidden; overscroll-behavior: none; }
+:root[data-view="mobile"] :is(.board-scroll, .fscroll, .toolrow, .hstrip) { overscroll-behavior-x: none; }
+:root[data-view="mobile"] .modal .btabs { padding-inline: 6px; margin-inline: -6px; }   /* the card's sections sit 6px in, so bleed 6, not 12 */
+/* a two-way card's Hitting / Pitching toggle and Filters share one line on a phone instead of stacking (a taller band) */
+:root[data-view="mobile"] .phead .mrank { column-gap: 6px; }
+:root[data-view="mobile"] .phead .mrank .seg button { padding-inline: 7px; }
+:root[data-view="mobile"] .phead .mrank .vlabel:has(+ .seg) { flex-basis: 100%; }
