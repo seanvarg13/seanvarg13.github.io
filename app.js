@@ -2928,6 +2928,9 @@
     if (!b) { b = el("section", "xboard pitchboard"); b.id = "pitchboard"; b.hidden = true; $("eboard").after(b); }
     const m = $("lbmenu");
     if (m && !m.querySelector('a[href="#pitches"]')) { const li = el("li"); const a = el("a", null, "Pitch Stuff+"); a.href = "#pitches"; li.append(a); m.append(li); }
+    if (m && !m.querySelector('a[href="#buysell"]')) { const li = el("li"); const a = el("a", null, "Buy low / Sell high"); a.href = "#buysell"; li.append(a); m.append(li); }
+    const fm = $("modemenu");                              // next season's projections sit with the draft pages
+    if (fm && !fm.querySelector('a[href="#proj"]')) { const li = el("li"); const a = el("a", null, `${DATA.meta.season + 1} Projections`); a.href = "#proj"; li.append(a); fm.insertBefore(li, fm.children[1] || null); }
     return b;
   };
   pitchBoardEl();
@@ -2994,6 +2997,131 @@
     t.append(tb);
     const scroll = el("div", "fscroll pbscroll"); scroll.append(t); box.append(scroll);
     box.append(el("p", "note", (rows.length > 300 ? "The top 300 shown. " : "") + "Each pitch is graded against the league's pitches of its own type on its traits alone (velocity, spin, movement, release, extension, arm angle, its gap to his fastball, how much he throws it and how deep his arsenal is) — 100 is average for that pitch type. Under each x-rate is what actually happened. Full season; click a name for his card."));
+  }
+  // ----- Next season's projections (Sean, 28 Sep 2026: "a projections page … for draft season") -----
+  // proj.js (tools/build_proj.py) carries each player's projected counting line; points come from the fantasy preset in
+  // use, so a scoring change needs nothing rebuilt. Last season's points sit beside it, from the official lines.
+  const pj = Object.assign({ grp: "H", pos: "ALL", sort: "pts", dir: -1, q: "", pt: "proj" }, load("draft2027.proj", {}));
+  // "Full season" playing time: every line scaled to a full workload at his projected rates — 600 PA, 180 IP for a starter,
+  // 65 for a reliever — for when you'd rather judge a player on how he hits or pitches than on the injury risk the
+  // projected playing time carries (a regular who missed time is projected, on the record, to play less again)
+  const fullLine = (l, H) => {
+    const want = H ? 600 : (l.GS >= 5 ? 180 : 65), have = H ? l.PA : l.OUTS / 3;
+    if (!have) return l;
+    const f = want / have, o = {};
+    for (const k in l) o[k] = typeof l[k] === "number" ? l[k] * f : l[k];
+    return o;
+  };
+  function renderProj() {
+    const box = pitchBoardEl(); box.innerHTML = "";
+    ensureScript("proj.js", () => !!window.DRAFT_PROJ);
+    const P = window.DRAFT_PROJ;
+    if (!P) { box.append(el("p", "note", failed.has("proj.js") ? "The projections haven't been built yet — they come with the next daily update." : "Loading projections…")); return; }
+    const cur = String(DATA.meta.season), F = fData(cur); if (!F) fEnsure(cur);
+    const H = pj.grp === "H", w = fpreset().w[H ? "H" : "P"], byId = new Map(DATA.players.filter((q) => q.type === (H ? "H" : "P")).map((q) => [String(q.id), q]));
+    const rows = [];
+    for (const [id, o] of Object.entries(H ? P.hitters : P.pitchers)) {
+      const l = fDerive(pj.pt === "full" ? fullLine(Object.assign({}, o.l), H) : Object.assign({}, o.l), H ? "H" : "P"), dp = byId.get(id);
+      const pos = dp ? (H ? eligiblePositions(dp) : pitcherRoles(dp)) : [H ? "DH" : (l.GS >= 5 ? "SP" : "RP")];
+      if (pj.pos !== "ALL" && !pos.includes(pj.pos)) continue;
+      if (pj.q && !o.n.toLowerCase().includes(pj.q.toLowerCase())) continue;
+      const last = F ? (H ? fHit(F, id) : fPit(F, id)) : null;
+      const r = { id, o, l, dp, pos, pts: fPts(w, l), last: last ? fPts(w, last) : null };
+      if (H) Object.assign(r, { pa: l.PA, r: l.R, hr: l.HR, rbi: l.RBI, sb: l.SB, avg: l.AB ? l.H / l.AB : null, obp: l.PA ? (l.H + l.BB + l.HBP) / l.PA : null, slg: l.AB ? l.TB / l.AB : null, k: l.K, bb: l.BB });
+      else Object.assign(r, { ip: l.IP, w: l.W, sv: l.SV, hd: l.HD, k: l.K, era: l.IP ? 9 * l.ER / l.IP : null, whip: l.IP ? (l.H + l.BB) / l.IP : null, kp: l.BF ? 100 * l.K / l.BF : null, bbp: l.BF ? 100 * l.BB / l.BF : null });
+      r.pg = H ? (r.pa ? 600 * r.pts / r.pa : null) : (r.ip ? r.pts / r.ip : null);
+      r.d = r.last == null ? null : r.pts - r.last;
+      rows.push(r);
+    }
+    const low = new Set(["era", "whip", "bbp", "k"].filter((k) => !(k === "k" && !H)));
+    rows.sort((a, b) => (a[pj.sort] == null) - (b[pj.sort] == null) || pj.dir * ((a[pj.sort] ?? 0) - (b[pj.sort] ?? 0)));
+    const save = () => { try { localStorage.setItem("draft2027.proj", JSON.stringify(pj)); } catch {} render(); };
+    const bar = el("div", "pbfilters");
+    bar.append(pillSelect(H ? "Hitters" : "Pitchers", [["H", "Hitters"], ["P", "Pitchers"]], pj.grp, (v) => { pj.grp = v; pj.pos = "ALL"; pj.sort = "pts"; pj.dir = -1; save(); }, "Players"));
+    const posOpts = H ? ["ALL", "C", "1B", "2B", "3B", "SS", "OF", "DH"] : ["ALL", "SP", "RP"];
+    bar.append(pillSelect(pj.pos === "ALL" ? "All positions" : pj.pos, posOpts.map((x) => [x, x === "ALL" ? "All positions" : x]), pj.pos, (v) => { pj.pos = v; save(); }, "Position"));
+    bar.append(pillSelect(pj.pt === "full" ? "Full season" : "Projected playing time", [["proj", "Projected playing time"], ["full", "Full season"]], pj.pt, (v) => { pj.pt = v; save(); }, "Playing time"));
+    const q = el("input", "pjq"); q.type = "search"; q.placeholder = "Find a player…"; q.value = pj.q;
+    q.addEventListener("change", () => { pj.q = q.value.trim(); save(); });
+    bar.append(q, el("span", "pbcount", `${rows.length} ${H ? "hitters" : "pitchers"} · ${P.meta.season} · ${fpreset().name} scoring`));
+    box.append(bar);
+    const cols = H ? [["rk", "#"], ["who", "Player"], ["pts", "Pts"], ["pg", "Pts/600"], ["last", cur], ["d", "+/−"], ["pa", "PA"], ["r", "R"], ["hr", "HR"], ["rbi", "RBI"], ["sb", "SB"],
+                      ["avg", "AVG"], ["obp", "OBP"], ["slg", "SLG"], ["bb", "BB"], ["k", "K"]]
+                   : [["rk", "#"], ["who", "Player"], ["pts", "Pts"], ["pg", "Pts/IP"], ["last", cur], ["d", "+/−"], ["ip", "IP"], ["w", "W"], ["sv", "SV"], ["hd", "HLD"], ["k", "K"],
+                      ["era", "ERA"], ["whip", "WHIP"], ["kp", "K%"], ["bbp", "BB%"]];
+    const t = el("table", "ftable pbtable projt"), th = el("thead"), hr = el("tr");
+    for (const [k, lab] of cols) {
+      const c = el("th", k === "who" ? "who" : k === "rk" ? "n" : null);
+      if (k === "rk" || k === "who") c.textContent = lab;
+      else { const b = el("button", "sortbtn" + (pj.sort === k ? " on" : ""), lab + (pj.sort === k ? (pj.dir < 0 ? " ▾" : " ▴") : "")); b.type = "button";
+        b.addEventListener("click", () => { if (pj.sort === k) pj.dir = -pj.dir; else { pj.sort = k; pj.dir = low.has(k) ? 1 : -1; } save(); }); c.append(b); }
+      hr.append(c);
+    }
+    th.append(hr); t.append(th);
+    const f0 = (x) => (x == null ? "–" : String(Math.round(x))), f1 = (x) => (x == null ? "–" : x.toFixed(1)), f2 = (x) => (x == null ? "–" : x.toFixed(2)), f3 = (x) => (x == null ? "–" : fmtX(x));
+    const FMT = { pts: f0, pg: H ? f0 : f2, last: f0, d: (x) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(Math.round(x))), pa: f0, r: f0, hr: f0, rbi: f0, sb: f0, avg: f3, obp: f3, slg: f3, bb: f0, k: f0,
+                  ip: f0, w: f0, sv: f0, hd: f0, era: f2, whip: f2, kp: f1, bbp: f1 };
+    const tb = el("tbody");
+    rows.slice(0, 400).forEach((r, i) => {
+      const tr = el("tr"), who = el("td", "who");
+      const nm = el(r.dp ? "button" : "span", r.dp ? "linkbtn pbname" : "pbname", r.o.n);
+      if (r.dp) { nm.type = "button"; nm.addEventListener("click", () => { state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.expanded = (H ? "H" : "P") + r.id; render(); }); }
+      who.append(nm, el("small", null, ` ${r.o.t || ""} · ${r.pos.slice(0, 3).join(", ")} · ${r.o.age}`));
+      tr.append(el("td", "n", String(i + 1)), who);
+      for (const [k] of cols.slice(2)) { const td = el("td", k === "pts" ? "pjpts" : k === "d" ? (r.d > 0 ? "pjup" : r.d < 0 ? "pjdn" : null) : null, FMT[k](r[k])); tr.append(td); }
+      tb.append(tr);
+    });
+    t.append(tb);
+    const scroll = el("div", "fscroll pbscroll"); scroll.append(t); box.append(scroll);
+    box.append(el("p", "note", `${P.meta.season} projections from ${P.meta.from.join(", ")}: the three seasons weighted 5 / 4 / 3, pulled toward the league by how much playing time is behind them, adjusted for age, and moved toward the process stats — xBA / xSLG / xwOBA for hitters, uK% / uBB% / luck-neutral ERA for pitchers. Playing time comes from the recent workload, age and how good he is, and allows for injuries (a regular who missed time is projected to play less again, as the record says) — "Full season" puts everyone on a full workload at his projected rates instead. Tested on past seasons: it predicts the next season's points per PA and per batter better than last season alone. Points use the scoring preset chosen on the Fantasy page.`));
+  }
+  // ----- Buy low / sell high (Sean, 28 Sep 2026): the biggest gaps between what happened and what the process says -----
+  // Hitters: xwOBA − wOBA (the directional model against his results). Pitchers: ERA − uERA. Full season, qualifiers only.
+  const bs = Object.assign({ minH: 250, minP: 60 }, load("draft2027.buysell", {}));
+  function buySellRows() {
+    return withWindow(NOWIN, () => withSplit(NONE, () => {
+      const H = [], Pp = [];
+      for (const p of DATA.players) {
+        if (p.type === "H" && (p.pa || 0) >= bs.minH) { const m = V(p).m; if (m.xwd != null && m.woba != null) H.push({ p, a: m.woba, x: m.xwd, gap: m.xwd - m.woba, luck: m.bluck }); }
+        if (p.type === "P" && (p.ip || 0) >= bs.minP) {
+          const g = p.primary, st = pool(g).stats.get("P" + p.id) || rankIn(g, p), era = V(p).m.era;
+          if (st && st.uera != null && era != null) Pp.push({ p, a: era, x: st.uera, gap: era - st.uera });
+        }
+      }
+      return { H, P: Pp };
+    }));
+  }
+  function renderBuySell() {
+    const box = pitchBoardEl(); box.innerHTML = "";
+    const { H, P } = buySellRows();
+    const save = () => { try { localStorage.setItem("draft2027.buysell", JSON.stringify(bs)); } catch {} render(); };
+    const bar = el("div", "pbfilters");
+    bar.append(pillSelect(`${bs.minH}+ PA`, [100, 150, 250, 350, 450].map((n) => [String(n), `${n}+ PA`]), String(bs.minH), (v) => { bs.minH = Number(v); save(); }, "Hitters"));
+    bar.append(pillSelect(`${bs.minP}+ IP`, [20, 40, 60, 100, 140].map((n) => [String(n), `${n}+ IP`]), String(bs.minP), (v) => { bs.minP = Number(v); save(); }, "Pitchers"));
+    bar.append(el("span", "pbcount", `${DATA.meta.season} · through ${fmtDate(DATA.meta.through)}`));
+    box.append(bar);
+    const grid = el("div", "bsgrid");
+    const list = (title, sub, rows, fmtA, fmtG, open) => {
+      const c = el("div", "bslist"); c.append(el("h3", null, title), el("p", "note", sub));
+      const t = el("table", "ftable pbtable bst"), th = el("thead"), hr = el("tr");
+      for (const h of ["", "Player", fmtA.lab, fmtA.xlab, "Gap"]) hr.append(el("th", h === "Player" ? "who" : null, h));
+      th.append(hr); t.append(th); const tb = el("tbody");
+      rows.slice(0, 15).forEach((r, i) => {
+        const tr = el("tr"), who = el("td", "who"), b = el("button", "linkbtn pbname", r.p.name); b.type = "button";
+        b.addEventListener("click", () => open(r.p)); who.append(b, el("small", null, ` ${r.p.team}`));
+        tr.append(el("td", "n", String(i + 1)), who, el("td", null, fmtA.f(r.a)), el("td", null, fmtA.f(r.x)), el("td", "bsgap", fmtG(r.gap))); tb.append(tr);
+      });
+      t.append(tb); c.append(t); return c;
+    };
+    const openH = (p) => { state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.pbtab = "babip"; savePrefs(); state.expanded = "H" + p.id; render(); };
+    const openP = (p) => { state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.pbtab = "uera"; savePrefs(); state.expanded = "P" + p.id; render(); };
+    const w3 = { lab: "wOBA", xlab: "xwOBA", f: (x) => fmtX(x) }, e2 = { lab: "ERA", xlab: "uERA", f: (x) => x.toFixed(2) };
+    const g3 = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(3).replace(/^0/, ""), g2 = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(2);
+    grid.append(list("Buy low · hitters", "Contact deserved more than he got: xwOBA well above wOBA.", [...H].sort((a, b) => b.gap - a.gap), w3, g3, openH));
+    grid.append(list("Sell high · hitters", "Results ahead of the contact: wOBA well above xwOBA.", [...H].sort((a, b) => a.gap - b.gap), w3, g3, openH));
+    grid.append(list("Buy low · pitchers", "ERA well above what his whiffs, strikes and batted balls say (uERA).", [...P].sort((a, b) => b.gap - a.gap), e2, g2, openP));
+    grid.append(list("Sell high · pitchers", "ERA well below his uERA — the results are running ahead.", [...P].sort((a, b) => a.gap - b.gap), e2, g2, openP));
+    const scroll = el("div", "fscroll pbscroll bsscroll"); scroll.append(grid); box.append(scroll);
   }
   function renderEligibility() {
     const box = $("eboard"); box.innerHTML = "";
@@ -3139,7 +3267,7 @@
     const modal = $("modal"), body = $("modal-body");
     modal.classList.remove("pcard"); document.body.classList.remove("cardpop");
     const key = state.expanded;
-    const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy", "pitches"].includes(state.mode);
+    const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy", "pitches", "proj", "buysell"].includes(state.mode);
     const src = state.cardDs && histDataset(state.cardDs) ? histDataset(state.cardDs).players : DATA.players;
     const p0 = key && listMode ? (src.find((q) => q.type + q.id === key) || DATA.players.find((q) => q.type + q.id === key)) : null;
     modal.classList.toggle("pcard", !!p0); document.body.classList.toggle("cardpop", !!p0);   // before the lock: a phone keeps its place under a card
@@ -3901,7 +4029,7 @@
   }
   function renderNow() {
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
-    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = state.mode === "draftmode" || home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches", other = pitches || player || compare || elig || hub || appear || fant;
+    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = state.mode === "draftmode" || home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = ["pitches", "proj", "buysell"].includes(state.mode), other = pitches || player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
     const T = state.tbl; document.body.dataset.heat = T.heat ? "on" : "off"; document.body.dataset.band = T.band ? "on" : "off"; document.body.dataset.sorthl = T.sortHl ? "on" : "off"; document.body.dataset.density = T.density;
@@ -3920,7 +4048,7 @@
     }
     if (compare) { renderCompare(); renderModal(); return; }
     if (elig) { renderEligibility(); return; }
-    if (pitches) { renderPitchBoard(); renderModal(); return; }
+    if (pitches) { (state.mode === "proj" ? renderProj : state.mode === "buysell" ? renderBuySell : renderPitchBoard)(); renderModal(); return; }
     const listRender = () => {
       ensureView();
       if (state.mode === "trending" && !TREND_TABS.includes(state.pos)) state.pos = "ALL";
@@ -6609,15 +6737,15 @@
   /* ---------- wiring ---------- */
   // the header's two dropdowns: the draft + fantasy pages, and the two leaderboards
   const NAV_GROUPS = [
-    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["draftmode", "rankings", "draft", "eligibility", "fantasy"] },
-    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending", "pitches"] },
+    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["draftmode", "proj", "rankings", "draft", "eligibility", "fantasy"] },
+    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending", "pitches", "buysell"] },
   ];
   function readMode() {
     const h = location.hash.replace("#", "");
     const pm = h.match(/^player\/(\d+)$/);
     if (pm) { state.mode = "player"; const id = Number(pm[1]); if (state.x.id !== id) { state.x = { id, type: null, ds: null }; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; } return; }
     if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["leaders", "trending", "whatif", "settings"].includes(v) ? v : "leaders"; return; }
-    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "pitches", "draftmode", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
+    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "pitches", "proj", "buysell", "draftmode", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {

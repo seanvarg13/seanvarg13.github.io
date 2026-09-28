@@ -437,6 +437,18 @@ is deploy-limited.
   stays the season-by-season table. Standard
   is the official box score summed game by game (`fGamesOf` / `fWindow` / `fSum`, last three MLB seasons only; a hand split
   shares games out by the day's pitch data, so estimates); the rest is `V(p).m` plus the pool's uERA / Stuff uERA.
+* **Next season's projections** (Fantasy ▸ 2027 Projections, `#proj`, `renderProj`; `tools/build_proj.py` → `proj.js`; Sean,
+  28 Sep 2026): Marcel-style — the last three seasons' official lines per PA / BF weighted 5/4/3, regressed to the league
+  (hitters 1800 PA, pitchers 1000 BF, role stats 60 BF), hitters age-adjusted, then pulled toward the process stats (¼ of
+  H / TB from dxBA / dxSLG, R / RBI / HR × √(xwOBA/wOBA); pitchers K 30% uK%, BB 50% uBB%, ER 75% nERA). Playing time is a
+  least-squares fit on workload, peak of three seasons, age, starter share and quality, capped at 700 PA / 820 BF. Backtested
+  (fit 2016-23, checked 2025-26): hitters' points per PA error .106 → .093 vs last season alone, pitchers' per BF .194 →
+  .180. `proj.js` holds counting lines only; the page scores them with the Fantasy preset in use. "Full season" scales every
+  line to 600 PA / 180 IP (SP) / 65 IP (RP). Runs in the daily job after `build_fantasy.py` (non-fatal).
+* **Buy low / Sell high** (Leaderboards ▸, `#buysell`, `renderBuySell`): the biggest xwOBA − wOBA gaps (hitters) and ERA −
+  uERA gaps (pitchers), full season, minimum PA / IP adjustable; a name opens his card on the BABIP / uERA tab. Both new
+  pages render into the pitch board's standing card (`pitchBoardEl`), so the `[data-mode="pitches"]` CSS covers
+  `proj` / `buysell` too.
 * **Starts / relief split** (Sean, 26 Sep 2026): a pitcher who both started and relieved (`ctx.GS > 0` and `G > GS`)
   gets a third split on his card, `state.split.role` = all / sp / rp. `V()` keeps the day rows whose `gs` flag matches,
   earned runs follow the same days, and a past season reads its day-by-day file for it (`byDay` in `histDataset`).

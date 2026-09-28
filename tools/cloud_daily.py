@@ -21,11 +21,11 @@ from zoneinfo import ZoneInfo
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOOLS = os.path.join(ROOT, "tools")
 os.chdir(ROOT)
-SCRIPTS = ["build_data.py", "build_history.py", "build_milb.py", "build_fantasy.py", "build_career.py"]
+SCRIPTS = ["build_data.py", "build_history.py", "build_milb.py", "build_fantasy.py", "build_career.py", "build_proj.py"]
 # what the site serves: the same list publish.py stamps, plus every hist/ file
-TOP = ["index.html", "app.js", "styles.css", "themes.js", "defaults.js", "data.js", "days.js", "fantasy.js", "manifest.json",
+TOP = ["index.html", "app.js", "styles.css", "themes.js", "defaults.js", "data.js", "days.js", "fantasy.js", "proj.js", "manifest.json",
        "icons/icon-32.png", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png"]
-OUTPUTS = ["data.js", "days.js", "fantasy.js"]            # plus hist/*.js — what a build writes
+OUTPUTS = ["data.js", "days.js", "fantasy.js", "proj.js"]            # plus hist/*.js — what a build writes
 
 
 def say(msg):
@@ -168,6 +168,7 @@ def main():
         ok = (run("build_milb.py", "aaa", year)
               and run("build_milb.py", "aa", "ap", "a", year)
               and run("build_fantasy.py")
+              and (run("build_proj.py") or True)          # next season's projections; a failure costs only them
               and run("build_history.py", "index")
               and run("build_career.py")
               and publish("minors, fantasy, index, career", end, a.dry))
