@@ -4,7 +4,7 @@ Fantasy baseball draft rankings built on 2026 Statcast skill percentiles.
 
 **Home** — `index.html#home` (the default route and the wordmark's link): every page on the site as a card,
 in three groups — Draft day, Look things up, Set up. The header carries **Home**, a **Fantasy**
-menu (Draft Mode, Rankings, Draft board, Eligibility, Fantasy leaderboard, Fantasy trending, Scoring settings), a **Leaderboards** menu
+menu (Rankings, Draft board, Eligibility, Fantasy leaderboard, Fantasy trending, Scoring settings), a **Leaderboards** menu
 (Leaderboard, Trending Players), **Compare** and **Appearance**; `NAV_GROUPS` in `app.js` holds the two
 menus and `HOME_SECS` the home page's cards.
 
@@ -293,8 +293,9 @@ on by itself in Each-season mode). Clicking a line opens that season's card, or 
 
 ## Team filter and the toolbar
 
-The four Draft Mode pages (Draft Mode / Rankings / Draft board / Eligibility) are a dropdown on the header's own
-**Draft Mode** item rather than a second nav row; it shows whichever of them you're on. Opening a player's card and
+The draft pages (Rankings / Draft board / Eligibility) sit in the header's **Fantasy** dropdown rather than a second nav
+row (the old Draft Mode overview page was removed 28 Sep 2026 — the home page covers it). Rankings and the Draft board
+list every player, with no minimum PA / IP. Opening a player's card and
 closing it leaves the page exactly where it was (`lockPage` reads the scroll position *before* `body.modal-open`
 makes the page `position: fixed`, which would otherwise collapse it to zero).
 
@@ -489,7 +490,7 @@ with the list (Save / open / export). On Rankings and the Draft board, starred p
 ## Fantasy points
 
 `#fantasy` — ESPN-style points scoring, the header's **Fantasy** menu (renamed from "Draft & Fantasy", 26 Sep 2026; it
-still holds Draft Mode, Rankings, Draft board and Eligibility). **Scoring settings** holds presets (ESPN standard built
+still holds Rankings, Draft board and Eligibility). **Scoring settings** holds presets (ESPN standard built
 in; make your own from any of ESPN's categories, plus league size). Every view covers 2026 and the two seasons before,
 by position / role, with the scoring picked at the top.
 

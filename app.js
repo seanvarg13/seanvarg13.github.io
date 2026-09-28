@@ -481,7 +481,10 @@
   // pool minimum in effect: the tab's Min PA / IP, always judged on the FULL season (a date range or split only
   // changes the numbers being compared, never who qualifies)
   // the Min PA / IP box is a full-season number; spring training and postseason sets (tiny refPA) scale it down
-  function effMin(g) { return DS.refPA < 100 ? Math.max(1, Math.round(state.min[g] * DS.refPA / REF_PA)) : state.min[g] * (DS.minScale || 1); }
+  // Rankings and the Draft board list everyone (Sean, 28 Sep 2026: "you want to see everyone who can get drafted"); the
+  // percentiles still rank against the 300+ PA / BF pool (refMin), so nobody's numbers move
+  const noMin = () => state.mode === "rankings" || state.mode === "draft";
+  function effMin(g) { if (noMin()) return 0; return DS.refPA < 100 ? Math.max(1, Math.round(state.min[g] * DS.refPA / REF_PA)) : state.min[g] * (DS.minScale || 1); }
   const seasonSample = (p) => (p.type === "P" ? p.ip : p.pa);
   // the reference population every percentile is measured against: hitters with 300+ PA (pro-rated for a
   // date window or split); pitchers use the tab's minimum
@@ -1648,6 +1651,7 @@
     $("minlabel").textContent = "Min " + sampleLabel(g);
     const inp = $("min");
     if (document.activeElement !== inp) inp.value = state.min[g];
+    const box = inp.closest("label, .field") || inp.parentElement; if (box) box.hidden = noMin();
     inp.step = isPitcherGroup(g) ? 5 : 10;
   }
   const FROZEN_MODES = ["leaderboard", "trending", "rankings", "draft"];
@@ -2938,6 +2942,8 @@
     return b;
   };
   pitchBoardEl();
+  // Draft Mode is gone (Sean, 28 Sep 2026: the home page does its job); the Mac's index.html template may still list it
+  { const dm = document.querySelector('#modemenu a[href="#draftmode"]'); if (dm) dm.closest("li").remove(); }
   const pb = Object.assign({ pt: "all", hand: "all", role: "all", min: 100, sort: "stuffp", dir: -1 }, load("draft2027.pitchboard", {}));
   function renderPitchBoard() {
     const box = pitchBoardEl(); box.innerHTML = "";
@@ -3649,31 +3655,12 @@
       b.addEventListener("click", () => { state.tierView = v; savePrefs(); render(); }); seg.append(b);
     }
   }
-  function renderHub() {
-    const box = $("hub"); box.innerHTML = "";
-    box.append(el("h2", null, "Draft Mode"), el("p", "hublead", "Three pages that work together on draft day. Rank players and tier them, then draft from that list as picks come off the board."));
-    const grid = el("div", "hubgrid");
-    const cards = [
-      ["#rankings", "Rankings", "Your board. Start from the model's order, sort by any column, then drag, type ranks or tick players into tiers. Save as many lists as you like and reopen them here.", "Open Rankings"],
-      ["#draft", "Draft board", "For the draft itself. Pick which list to draft from — the model, your working list or a saved one — and mark players as they go; the board keeps only who's left, tiers intact, and remembers it if you close the tab.", "Open Draft board"],
-      ["#eligibility", "Eligibility", "Who counts where. ESPN's rules run automatically (20+ games at a position this season, MLB and minors together; SP / RP by innings), and this page lists the positions you've added yourself on player cards, with a way to take them back.", "Open Eligibility"],
-    ];
-    for (const [href, title, blurb, cta] of cards) {
-      const c = el("a", "hubcard"); c.href = href;
-      c.append(el("h3", null, title), el("p", null, blurb), el("span", "btn", cta));
-      grid.append(c);
-    }
-    box.append(grid);
-    const m = DATA.meta;
-    box.append(el("p", "note", `Data: ${m.season} Statcast through ${m.through}. The Leaderboards and Compare live in the top bar; type a name at the top right to open any player's card.`));
-  }
   // the front door: every page on the site, grouped by what you came to do
   const HOME_SECS = [
     ["Draft day", [
       ["#rankings", "Rankings", "Your board. Start from the model's order, sort by any stat, then drag, type ranks or tick players into tiers — and save as many lists as you like.", "Open Rankings"],
       ["#draft", "Draft board", "For the draft itself. Pick the list to draft from, mark players as they go, and the board keeps only who's left — tiers intact, saved in this browser mid-draft.", "Open Draft board"],
       ["#eligibility", "Eligibility", "Who counts where. ESPN's rules run automatically (20+ games at a position, MLB and minors together; SP / RP by innings), plus anything you've added yourself.", "Open Eligibility"],
-      ["#draftmode", "Draft Mode", "The three pages above, with what each one is for.", "Open Draft Mode"],
     ]],
     ["Look things up", [
       ["#leaderboard", "Leaderboard", "Every hitter or pitcher over your minimum, for any season and level — MLB from 2015, the minors from 2021 — with the stats you pick, plus splits, date ranges and last-N.", "Open Leaderboard"],
@@ -3744,7 +3731,7 @@
     const allC = el("section", "hcard hall"); allC.append(el("h3", null, "Every page"));
     const tiles = el("div", "htiles");
     const SHORT = { "#rankings": "Your own board: sort, drag, tier and save lists.", "#draft": "Draft day: mark picks, see who's left.", "#eligibility": "Who qualifies where, plus positions you add.",
-                    "#draftmode": "The draft pages and what each is for.", "#leaderboard": "Every player, any season or level, your stats.", "#trending": "Who's hot over his last N PA, innings or days.",
+                    "#leaderboard": "Every player, any season or level, your stats.", "#trending": "Who's hot over his last N PA, innings or days.",
                     "#compare": "Players side by side on the same stats.", "#fantasy": "Your scoring on everyone, any dates or split.", "#appearance": "Colours, type and layout." };
     for (const [title, cards] of HOME_SECS) for (const [href, name] of cards) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, SHORT[href] || "")); tiles.append(a); }
     for (const [href, name, blurb] of [["#pitches", "Pitch Stuff+", "Every pitch graded against its type."]]) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, blurb)); tiles.append(a); }
@@ -3958,7 +3945,7 @@
   }
   function renderNow() {
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
-    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = state.mode === "draftmode" || home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches", other = pitches || player || compare || elig || hub || appear || fant;
+    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches", other = pitches || player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
     const T = state.tbl; document.body.dataset.heat = T.heat ? "on" : "off"; document.body.dataset.band = T.band ? "on" : "off"; document.body.dataset.sorthl = T.sortHl ? "on" : "off"; document.body.dataset.density = T.density;
@@ -3967,7 +3954,7 @@
     document.querySelector(".toolbar:not(.xtoolbar)").hidden = other; $("board").hidden = other; $("drafttools").hidden = true; $("ranktools").hidden = true; $("setbar").hidden = true; $("lbtools").hidden = true;
     renderChrome();
     if (state.textModal) { renderTextModal(); } else if (other) { $("modal").hidden = true; lockPage(false); parkControls(); $("modal-body").innerHTML = ""; }
-    if (hub) { $("hub").classList.toggle("home", home); if (home) { renderHome(); renderModal(); } else renderHub(); return; }
+    if (hub) { $("hub").classList.toggle("home", home); renderHome(); renderModal(); return; }
     if (appear) { renderAppearance(); return; }
     if (fant) { renderFantasy(); renderModal(); return; }
     if (player) {                                        // his page is a card of its own (showPageCard); a settings panel takes its place, over the pattern
@@ -6403,7 +6390,7 @@
     const bits = [];
     if (state.mode === "leaderboard") { if (state.lbSplit.hand !== "all") bits.push(`vs ${state.lbSplit.hand}H${pit ? "B" : "P"}`); if (state.lbSplit.venue !== "all") bits.push(state.lbSplit.venue); }
     if (state.mode === "trending") { const t = trendCfg(); bits.push(t.unit === "days" ? `last ${t.days} days` : `last ${t[t.unit]} ${unit}`); bits.push(`${trendMin()}+ ${unit} in span`); }
-    else { const w = winIdx(); if (w) bits.push(state.win.days ? `last ${state.win.days} days` : winLabel()); bits.push(`${state.min[g]}+ ${unit}`); }
+    else { const w = winIdx(); if (w) bits.push(state.win.days ? `last ${state.win.days} days` : winLabel()); bits.push(noMin() ? "everyone" : `${state.min[g]}+ ${unit}`); }
     if (state.mode === "leaderboard" && lbKey() !== CUR.key) { const ds = histDataset(lbKey()); if (ds && (ds.refPA < 100 || ds.minScale > 1)) bits.push(`(${withDataset(ds, () => effMin(g))}+ ${ds.multi && !ds.each ? "over the span" : "here"})`); }
     $("tsum").hidden = state.editRanks;              // editing ranks: the row belongs to the tier tools
     $("teambtn").textContent = teamLabel(state.teamF); $("teambtn").classList.toggle("on", !!state.teamF); $("teamclear").hidden = !state.teamF;
@@ -6604,7 +6591,7 @@
       sec.append(el("p", "note", cur === "days" ? `Everyone's games in the last N days through ${DATA.meta.through}.` : cur === "last" ? `Each player's most recent ${unit === "IP" ? "innings" : "plate appearances"} (through the To date, if set). Every stat and percentile is rebuilt from those games.` : cur === "range" ? "A blank side means the season's start or end. Every stat and percentile is rebuilt from those games." : "Full-season numbers."));
       const sec2 = el("div", "psec"); sec2.append(el("h4", null, "Minimum")); const row2 = el("div", "prow"); row2.append($("minfield"), $("reffield")); sec2.append(row2);
       sec2.append(el("p", "note", `Who is listed. Percentiles are always measured against ${pit ? "pitchers with 300+ batters faced" : "hitters with 300+ PA"} on the season.`));
-      w.append(sec, sec2);
+      w.append(sec); if (!noMin()) w.append(sec2);          // Rankings and the Draft board list everyone
     }
     const row = el("div", "row");
     const done = el("button", "btn", "Done"); done.type = "button"; done.addEventListener("click", () => closePanel(false));
@@ -6669,7 +6656,7 @@
   /* ---------- wiring ---------- */
   // the header's two dropdowns: the draft + fantasy pages, and the two leaderboards
   const NAV_GROUPS = [
-    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["draftmode", "rankings", "draft", "eligibility", "fantasy"] },
+    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "eligibility", "fantasy"] },
     { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending", "pitches"] },
   ];
   function readMode() {
@@ -6677,7 +6664,7 @@
     const pm = h.match(/^player\/(\d+)$/);
     if (pm) { state.mode = "player"; const id = Number(pm[1]); if (state.x.id !== id) { state.x = { id, type: null, ds: null }; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; } return; }
     if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["leaders", "trending", "whatif", "settings"].includes(v) ? v : "leaders"; return; }
-    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "pitches", "draftmode", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
+    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "pitches", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {
