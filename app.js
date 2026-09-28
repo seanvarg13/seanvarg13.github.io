@@ -1892,8 +1892,9 @@
         const b = el("div", "pct"); const showV = state.tbl.numbers === "values" ? true : state.tbl.numbers === "pct" ? false : (trending || m.showValue);
         if (pct == null && (showV ? v == null : true)) { b.classList.add("na"); b.textContent = "–"; } else { b.textContent = showV ? (v == null ? "–" : fmt(v, m).replace(" mph", "")) : pct;
           // like the Fantasy tables (Sean, 28 Sep 2026: "give the table this same formatting color wise"): the column you sort by
-          // and the signed xwOBA - wOBA are filled with their percentile colour, the rest plain unless heat is on for all
-          const hot = (state.sort === m.key && !customOrder()) || m.key === "xwdiff";
+          // is filled with its percentile colour, the rest plain unless heat is on for all (xwOBA − wOBA was coloured too, until
+          // Sean: "dont heat map xwoba - woba")
+          const hot = state.sort === m.key && !customOrder();
           if ((state.tbl.heat || hot) && pct != null) { paint(b, pct); if (hot) b.classList.add("hot"); } }
         if (state.sort === m.key && !customOrder()) b.classList.add("sorted");
         if (hasBreak(g, m.key)) b.classList.add("brk");
