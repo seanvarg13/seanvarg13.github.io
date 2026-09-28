@@ -233,7 +233,8 @@ dataset's league rate (hitters with 20+ PA, PA-weighted), fitted over every 100+
 from a 300+ PA hitter's real K%, the same on unseen seasons. Z- / O-Contact added nothing once Whiff% is in, and per-pitch
 swinging / called strike rates did worse. **Unlike uBB%, it does not beat his own K% at next season's** (2.76 vs 2.60
 points; the two averaged 2.55) — it says what his swings and misses imply, not a forecast. Added to `V()` for every view;
-a Leaderboard / Compare column (`LB_EXTRA_H`) and the Spreadsheet Stats Plate Discipline table.
+a Leaderboard / Compare column (`LB_EXTRA_H`), the Spreadsheet Stats Plate Discipline table, and the hitter card's
+Contact section right under K% (`PCT_COLS_H`; Sean, 28 Sep 2026).
 
 **Arsenal Opt.** (pitchers; `arsenalOpt` / `aoptBase` in `app.js`; Sean, 28 Sep 2026: "how much the pitcher optimizes their
 arsenal %s to throw pitches that ... get more swing and miss"): his pitches' xWhiff averaged by his real usage, minus the
@@ -504,7 +505,8 @@ is deploy-limited.
   Trending rows had no headline percentile (`placeIn` only covered the listed stats) — the pool now keeps a sorted list for
   the headline too.
 * **Leaderboard / Trending / Rankings / Draft board wear Fantasy's controls** (Sean, 28 Sep 2026): the toolbar buttons are
-  light blue with navy type (navy while active), and `#colhead` is Fantasy's pale header — small grey labels, the sorted one
+  white with a navy outline like Star (solid navy while open or in effect; Fantasy's Filters button too — Sean preferred
+  that to light blue), the header row thin (~24px on desktop), and `#colhead` is Fantasy's pale header — small grey labels, the sorted one
   in blue, a light-blue rule under it. The Stuff+ board keeps its navy header.
 * **Card tables in the same dress** (Sean, 28 Sep 2026): every table in a card's bottom tabs has the pale header; in
   Spreadsheet Stats a stat his card ranks is filled with its percentile colour (`pctOf` in `renderViewStats`, from the pool's

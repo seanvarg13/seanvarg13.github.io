@@ -3407,9 +3407,10 @@
     // the columns that aren't on the card (LB_EXTRA_*) get a place here too, beside their closest relatives
     { const side = (k) => (pit ? SIDE_P : SIDE_H).find((m) => m.key === k);
       const after = (key, k) => { const x = side(k); if (!x) return false; for (const grp of groups) { const i = grp.metrics.findIndex((m) => m.key === key); if (i >= 0) { grp.metrics.splice(i + 1, 0, x); return true; } } return false; };
-      if (pit) { if (!after("uera", "suera")) groups.push({ group: "Stuff", metrics: [side("suera")].filter(Boolean) }); }
+      if (pit) { if (!after("uera", "suera")) groups.push({ group: "Stuff", metrics: [side("suera")].filter(Boolean) }); if (!after("suera", "aopt")) groups.push({ group: "Stuff", metrics: [side("aopt")].filter(Boolean) }); }
       else {
         if (!after("woba", "xwdiff")) groups.push({ group: "Outcomes", metrics: [side("xwdiff")].filter(Boolean) });
+        if (!after("k", "xk")) groups.push({ group: "Outcomes", metrics: [side("xk")].filter(Boolean) });
         groups.push({ group: "BABIP", metrics: ["babip", "xbabip", "bluck", "brel"].map(side).filter(Boolean) });
       } }
     const seen = new Set();
@@ -5775,7 +5776,7 @@
   // EXPW / EXPB / EXPS are the directional model's xwOBA, xBA and xSLG, as everywhere.
   const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
                        ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],
-                      [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],
+                      [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k", "xk"]],
                        ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]]]];
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
   const PCT_COLS_P = [[["Whiffs and Strikes", ["whf", "strk"]], ["Swing & Miss", ["k", "whf"]], ["Zone & Chase", ["bb", "strk", "zone", "osw"]]],
