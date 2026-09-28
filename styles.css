@@ -2876,9 +2876,9 @@ body[data-mode="pitches"] main.wrap > .notes { display: none; }   /* the lists' 
    middle one, buttons and small tiles the same thing scaled down. */
 :root {
   --lift-edge: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
-  --lift-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 12px 34px rgba(0, 0, 0, 0.24);
-  --lift-menu: 0 1px 2px rgba(0, 0, 0, 0.08), 0 8px 22px rgba(0, 0, 0, 0.2);
-  --lift-btn: 0 1px 2px rgba(0, 0, 0, 0.1), 0 3px 9px rgba(0, 0, 0, 0.16);
+  --lift-card: 0 2px 6px rgba(0, 0, 0, 0.14), 0 10px 28px rgba(0, 0, 0, 0.26), 0 24px 64px rgba(0, 0, 0, 0.34);   /* as evident as the screenshot's (Sean) */
+  --lift-menu: 0 2px 5px rgba(0, 0, 0, 0.14), 0 10px 30px rgba(0, 0, 0, 0.32);
+  --lift-btn: 0 1px 3px rgba(0, 0, 0, 0.16), 0 5px 14px rgba(0, 0, 0, 0.26);
 }
 :root:root .modal.pcard .modal-panel, :root:root:not([data-view="mobile"]) .modal.pcard .modal-panel, :root:root[data-view="mobile"] .modal.pcard .modal-panel,
 :root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap {
