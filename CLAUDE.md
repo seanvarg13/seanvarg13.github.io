@@ -405,7 +405,9 @@ is deploy-limited.
 * **One lifted look** (Sean, 28 Sep 2026, from cron-job.org's screenshot): every card, panel, dropdown, button and tile that
   stands off the page shares one look (`--lift-edge` / `--lift-card` / `--lift-menu` / `--lift-btn`, the block near the end of
   `styles.css`). Since 28 Sep 2026 (Sean, from a spreadsheet pasted into a slide: "the exact format I want") that is square
-  corners, a thin grey edge and a shadow cast down and to the right only; it was rounded with an all-round shadow before.
+  corners, a raised **bevel** edge (`--bevel`: lit top and left, shaded bottom and right, half-see-through so it takes each
+  box's own colour; 3px on panels, 2px on buttons and menus) and a shadow cast down and to the right only; it was rounded
+  with an all-round shadow before.
 * **Closing a card keeps the list's place** (`listAt` in `render()`): the rows' scroll, sideways scroll and page scroll are
   noted while no card is up and put back when one closes — on a phone the list is redrawn under the card and started over.
 * **The list pages share the pattern** (Sean, 26 Sep 2026): Leaderboard, Trending, Rankings, Draft board, Fantasy,
