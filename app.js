@@ -926,6 +926,7 @@
     // sorted oriented values + scores, so a player outside this pool can be placed in it
     const sorted = {};
     for (const m of allFor(g)) sorted[m.key] = list.map((p) => { const x = V(p).m[m.key]; return x == null ? null : m.hib ? x : -x; }).filter((v) => v != null).sort((a, b) => a - b);
+    if (g === "H") { const hk = wobaHead() ? "woba" : HEAD.key; if (!sorted[hk]) sorted[hk] = list.map((p) => V(p).m[hk]).filter((v) => v != null).sort((a, b) => a - b); }
     if (isPitcherGroup(g) && pct.whf && pct.strk) {                  // underlying ERA for the population, then its percentiles
       let ldN = 0, fbN = 0, gbN = 0, puN = 0, paN = 0;
       for (const p of list) {
@@ -990,6 +991,8 @@
     if (g === "H") {
       const hk = wobaHead() ? "woba" : HEAD.key;
       const score = pm[hk] ?? -1;
+      // the headline itself when it isn't one of the listed stats (a Trending row), so it has a percentile to colour by
+      if (pct[hk] == null && pm[hk] != null && pl.sorted[hk]) pct[hk] = insertPct(pl.sorted[hk], pm[hk]);
       pct.zmo = pm.zsw == null || pm.osw == null ? null : insertPct(pl.sorted.zmo, pm.zsw - pm.osw);
       const w = DATA.meta.hitterWeights, tot = Object.values(w).reduce((a, b) => a + b, 0);
       const raw = Object.entries(w).reduce((s, [k, v]) => s + (pct[k] ?? 50) * v, 0) / tot;
@@ -1829,13 +1832,17 @@
       who.append(meta);
       main.append(who);
       for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const b = el("div", "pct pre", on ? preValue(c.key, p) : ""); if (!on) b.classList.add("off"); else { if (state.sort === c.key && !customOrder()) b.classList.add("sorted"); b.prepend(el("span", "lbl", c.label)); } main.append(b); }
-      const sc = el("div", "score", p.type === "H" ? fmtX(st.score) : Math.round(st.score)); if (state.tbl.heat) paint(sc, st.scorePct); if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
+      const sc = el("div", "score", p.type === "H" ? fmtX(st.score) : Math.round(st.score)); if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null; if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) sc.classList.add("hot"); } } if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
       sc.title = p.type === "H" ? `${HEAD.label} ${fmtX(st.score)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl` : "Score"; main.append(sc);
       const pcts = el("div", "pcts");
       for (const m of ms) {
         const v = metricValue(m, V(p), st), pct = st.pct[m.key];
         const b = el("div", "pct"); const showV = state.tbl.numbers === "values" ? true : state.tbl.numbers === "pct" ? false : (trending || m.showValue);
-        if (pct == null && (showV ? v == null : true)) { b.classList.add("na"); b.textContent = "–"; } else { b.textContent = showV ? (v == null ? "–" : fmt(v, m).replace(" mph", "")) : pct; if (state.tbl.heat && pct != null) paint(b, pct); }
+        if (pct == null && (showV ? v == null : true)) { b.classList.add("na"); b.textContent = "–"; } else { b.textContent = showV ? (v == null ? "–" : fmt(v, m).replace(" mph", "")) : pct;
+          // like the Fantasy tables (Sean, 28 Sep 2026: "give the table this same formatting color wise"): the column you sort by
+          // and the signed xwOBA - wOBA are filled with their percentile colour, the rest plain unless heat is on for all
+          const hot = (state.sort === m.key && !customOrder()) || m.key === "xwdiff";
+          if ((state.tbl.heat || hot) && pct != null) { paint(b, pct); if (hot) b.classList.add("hot"); } }
         if (state.sort === m.key && !customOrder()) b.classList.add("sorted");
         if (hasBreak(g, m.key)) b.classList.add("brk");
         b.title = `${m.label}: ${v == null ? "n/a" : fmt(v, m)} (${pct == null ? "n/a" : ordinal(pct)} pctl)`;
@@ -3912,11 +3919,12 @@
   // and put back the moment one closes — the rows' box, its sideways scroll, and the page.
   let listAt = null;
   const listScrollers = () => [...document.querySelectorAll("main.wrap .board-scroll, #fboard .fscroll, .pbscroll")];
+  const noteList = () => { listAt = { mode: state.mode, y: window.scrollY, s: listScrollers().map((e) => [e.scrollTop, e.scrollLeft]) }; };
   function render() {
     const cardKey = () => (state.mode === "player" ? "x" + state.x.id : state.expanded);   // his page is a card too
     const keep = keepScroll(), mb = cardSc(), open = !$("modal").hidden ? cardKey() : null, mtop = mb ? mb.scrollTop : 0;
     const wasCard = !$("modal").hidden;
-    if (!wasCard) listAt = { mode: state.mode, y: window.scrollY, s: listScrollers().map((e) => [e.scrollTop, e.scrollLeft]) };
+    if (!wasCard) noteList();
     renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage(); ddSync();
     if (ddOpen && !ddOpen.trig.isConnected) ddClose();   // a list whose opener was redrawn away
     keep();
@@ -4585,7 +4593,8 @@
         if (c.paint && v != null && (c.label === sortKey || c.label === "Trend" || c.label === "Δ")) { const pct = pcts[c.label][i]; if (pct != null) paint(td, pct); td.classList.add("pc"); }
         trr.append(td);
       });
-      const open = () => { state.cardDs = fDsKey(y) === CUR.key ? null : fDsKey(y); state.cardWin = Object.assign({}, NOWIN); state.expanded = r.p.type + r.p.id; renderModal(); };
+      // the table's place is noted first: its card opens without a full render, and closing one redraws the table from the top
+      const open = () => { noteList(); state.cardDs = fDsKey(y) === CUR.key ? null : fDsKey(y); state.cardWin = Object.assign({}, NOWIN); state.expanded = r.p.type + r.p.id; renderModal(); };
       trr.addEventListener("click", open); trr.addEventListener("keydown", (e) => { if (e.key === "Enter") open(); });
       tbody.append(trr);
     });

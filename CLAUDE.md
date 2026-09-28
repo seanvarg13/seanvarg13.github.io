@@ -433,7 +433,8 @@ is deploy-limited.
 * **A phone card only moves up and down** (Sean, 28 Sep 2026: "scroll it left and right for no reason"): `.cardscroll` clips
   sideways overflow, doesn't bounce, and takes `touch-action: pan-y pinch-zoom`; the tab row, stat strip and tables are
   scrollers of their own and still slide. Keep anything wide inside its own `overflow-x: auto` box.
-* **Closing a card keeps the list's place** (`listAt` in `render()`): the rows' scroll, sideways scroll and page scroll are
+* **Closing a card keeps the list's place** (`listAt` / `noteList()` in `render()`; the Fantasy table's rows call `noteList()`
+  themselves, since they open the card with `renderModal()` and skip the render that would note it — fixed 28 Sep 2026): the rows' scroll, sideways scroll and page scroll are
   noted while no card is up and put back when one closes — on a phone the list is redrawn under the card and started over.
 * **The list pages share the pattern** (Sean, 26 Sep 2026): Leaderboard, Trending, Rankings, Draft board, Fantasy,
   Eligibility and Compare put the same white + spiral pattern behind the page (`body[data-mode=…]::before` / `::after`, fixed) and
@@ -480,6 +481,11 @@ is deploy-limited.
   and the minimum fold behind a Filters button with a one-line summary (`fFilterSummary`); only the sorted column and Trend / Δ
   are heat-coloured; the note is two lines with "More about these numbers"; "Edit scoring" dropped (the Scoring settings tab
   does it); `#fboard` has no frame of its own, the table has the 1px one; the phone's page tabs are a 2×2 grid.
+* **Leaderboard colouring follows Fantasy's** (Sean, 28 Sep 2026: "give the table this same formatting color wise"): with the
+  colour scale off (the default), the column you sort by and the signed xwOBA − wOBA are filled edge to edge with their
+  percentile colour (`.hot`, stretched over the row's padding), the rest plain; the heat-off / sorted-tint rules skip `.hot`.
+  Trending rows had no headline percentile (`placeIn` only covered the listed stats) — the pool now keeps a sorted list for
+  the headline too.
 * **Projections and Buy low / Sell high were built and removed the same day** (Sean, 28 Sep 2026: "I don't need those") —
   the pages, the home cards, `tools/build_proj.py` and `proj.js` are gone. Don't bring them back unasked.
 * **Starts / relief split** (Sean, 26 Sep 2026): a pitcher who both started and relieved (`ctx.GS > 0` and `G > GS`)

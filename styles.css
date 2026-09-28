@@ -1394,13 +1394,13 @@ body[data-mode="leaderboard"] .score, body[data-mode="trending"] .score { font-f
 :root[data-view="mobile"] body[data-mode="leaderboard"] .score, :root[data-view="mobile"] body[data-mode="trending"] .score { font-size: 11px; height: 24px; }
 
 /* ---------- Table features: heat map off by default (plain numbers), banding, sorted-column shading, density ---------- */
-body[data-heat="off"] .pct, body[data-heat="off"] .score { background: transparent !important; color: var(--ink) !important; font-weight: 600; }
+body[data-heat="off"] .pct:not(.hot), body[data-heat="off"] .score:not(.hot) { background: transparent !important; color: var(--ink) !important; font-weight: 600; }
 body[data-heat="off"] .pct.na { color: var(--muted) !important; }
 body[data-heat="off"] .score { font-weight: 700; }
 body[data-band="off"] .row:nth-child(even) .row-main { background: var(--surface); }
 body[data-band="on"] .row:nth-child(even) .row-main { background: var(--stripe); }
 body[data-sorthl="on"] .pct.sorted, body[data-sorthl="on"] .score.sorted { box-shadow: inset 0 0 0 1px var(--btn-line); }
-body[data-sorthl="on"][data-heat="off"] .pct.sorted, body[data-sorthl="on"][data-heat="off"] .score.sorted { background: var(--accent-wash) !important; box-shadow: none; }
+body[data-sorthl="on"][data-heat="off"] .pct.sorted:not(.hot), body[data-sorthl="on"][data-heat="off"] .score.sorted:not(.hot) { background: var(--accent-wash) !important; box-shadow: none; }
 body[data-sorthl="on"] .colhead button.h[aria-sort] { background: var(--btn); color: var(--btn-ink); text-decoration: none; border-radius: 0; }
 body[data-sorthl="off"] .colhead button.h[aria-sort] { text-decoration: underline; }
 body[data-density="compact"] .row-main { padding-top: 3px; padding-bottom: 3px; }
@@ -3028,8 +3028,8 @@ body[data-sorthl="on"] .pct.sorted, body[data-sorthl="on"] .score.sorted { box-s
 :root:root:root .toolrow > .tools { flex: 1 1 100%; min-width: 0; flex-wrap: wrap; }
 :root:root:root .toolrow .tbtns { flex-wrap: wrap; min-width: 0; }
 .notes .noteline .viewsw { margin: 0; }
-body[data-sorthl="on"] .pct.sorted, body[data-sorthl="on"] .score.sorted,
-body[data-sorthl="on"][data-heat="off"] .pct.sorted, body[data-sorthl="on"][data-heat="off"] .score.sorted { background: transparent !important; font-weight: 800; color: var(--ink); }
+body[data-sorthl="on"] .pct.sorted:not(.hot), body[data-sorthl="on"] .score.sorted:not(.hot),
+body[data-sorthl="on"][data-heat="off"] .pct.sorted:not(.hot), body[data-sorthl="on"][data-heat="off"] .score.sorted:not(.hot) { background: transparent !important; font-weight: 800; color: var(--ink); }
 /*  - the pattern behind the pages at a fifth of its strength, both of its layers */
 :root.swirl-img body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"],[data-mode="home"],[data-mode="appearance"])::after,
 :root.swirl-img .modal.pagebg .modal-back::after { opacity: 0.2; }
@@ -3095,3 +3095,7 @@ body[data-mode="appearance"] main.wrap > .notes { display: none; }
 :root[data-view="mobile"] .fsubnav a { text-align: center; margin: 0; }
 :root[data-view="mobile"] .fbar .fsum { flex: 1 1 140px; }
 :root[data-view="mobile"] .postabs.ftabs { flex-wrap: wrap; overflow: visible; }
+/* the leaderboards' coloured column fills its cells edge to edge down the rows, as the Fantasy tables' do (Sean, 28 Sep 2026) */
+#rows .row-main > .hot, #rows .row-main .pcts > .hot { align-self: stretch; margin: -8px 0; height: auto; min-height: 0; font-weight: 700; box-shadow: none; }
+:root[data-view="mobile"] #rows .row-main > .hot, :root[data-view="mobile"] #rows .row-main .pcts > .hot { margin: -4px 0; }
+#rows .hot .lbl { color: inherit; opacity: .8; }
