@@ -2900,3 +2900,8 @@ body[data-mode="pitches"] main.wrap > .notes { display: none; }   /* the lists' 
 .viewstats tr.cur td { background: var(--accent-wash); color: var(--ink); font-weight: 600; }
 .viewstats .note { margin-top: 8px; }
 .viewstats th { text-transform: none; letter-spacing: 0.02em; font-size: 11px; }
+/* eight tabs under a card since Spreadsheet Stats (Sean, 28 Sep 2026): a phone lays them out four by four, a desktop keeps
+   one row with a little less padding */
+:root:not([data-view="mobile"]) .btab { padding: 0 16px; }
+:root[data-view="mobile"] .btabs { flex-wrap: wrap; row-gap: 6px; }
+:root[data-view="mobile"] .btab { flex: 1 1 calc(25% - 3px); min-width: 0; }
