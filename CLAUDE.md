@@ -407,7 +407,9 @@ is deploy-limited.
   `styles.css`). Since 28 Sep 2026 (Sean, from a spreadsheet pasted into a slide: "the exact format I want") that is square
   corners, a **bevel** that is shading in the box's own colour, never a new one (`--bevel-in` / `--bevel-in-sm`: soft
   inset light top-left, soft inset shade bottom-right; the border itself is transparent so it's the box's colour — Sean:
-  "the same color as whatever it is next to") and a soft shadow all round (Sean, 28 Sep 2026 — briefly
+  "the same color as whatever it is next to"). On the big boxes (card, list-page card, tab panels, boards) the bevel is a `::after` layer on top
+  of their contents (`pointer-events: none`) and they have no edge of their own, so the card's blue header runs to the side and
+  gets blue light and shade — a bevel painted under the contents was covered by the band and left a white rim and a soft shadow all round (Sean, 28 Sep 2026 — briefly
   down-and-right only the same day; rounded corners before that).
 * **Closing a card keeps the list's place** (`listAt` in `render()`): the rows' scroll, sideways scroll and page scroll are
   noted while no card is up and put back when one closes — on a phone the list is redrawn under the card and started over.
