@@ -521,6 +521,13 @@
     sc.onerror = () => { state.daysLoading = false; state.daysFailed = true; render(); };
     document.head.append(sc);
   }
+  // Warm the game-by-game file in the background (Sean, 28 Sep 2026: faster filters on the phone). A date range or split
+  // needs every player's games — each card is ranked against the whole pool in the same window — so the file can't be split
+  // by player, and packing it differently saved only ~8%. What's slow is the first ~5 MB download, so a few seconds after the
+  // site settles it's fetched quietly into the browser's cache (not run: parsing waits until a filter asks for it). The file
+  // is versioned, so this happens once per daily update; skipped when the phone has data saver on.
+  if (!(navigator.connection && navigator.connection.saveData))
+    setTimeout(() => { if (!daysReady() && !state.daysLoading) (window.requestIdleCallback || ((f) => f()))(() => { try { fetch(vsrc("days.js"), { priority: "low" }).catch(() => {}); } catch (e) {} }); }, 4000);
   const rowsOf = (p) => DS.rows(p);
   // Explore data: hist/index.js (who exists in which seasons) and hist/<key>.js per past season, loaded on demand
   const loading = new Set(), failed = new Set();

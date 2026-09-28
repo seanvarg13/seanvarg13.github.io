@@ -160,7 +160,6 @@ button { cursor: pointer; }
   font-family: var(--display); font-weight: 700; font-size: 26px; line-height: 1;
   letter-spacing: 0.01em; text-transform: uppercase; color: var(--ink); text-decoration: none;
 }
-.wordmark-year { color: var(--accent-2); }
 .modes { display: flex; gap: 2px; padding: 3px; background: var(--surface-2); border-radius: 8px; }
 .modes a, .modes .modesel {
   font-family: var(--display); font-weight: 600; font-size: 17px; letter-spacing: 0.04em; text-transform: uppercase;
@@ -194,7 +193,6 @@ button { cursor: pointer; }
   font-family: var(--display); font-weight: 600; font-size: 17px; letter-spacing: 0.04em;
   padding: 4px 11px; color: var(--ink-2);
 }
-.postab:hover { background: var(--surface-2); }
 .postab[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
 .postab small { font-family: var(--body); font-size: 11px; font-weight: 500; opacity: 0.75; margin-left: 5px; letter-spacing: 0; }
 
@@ -367,7 +365,6 @@ button { cursor: pointer; }
 .roleswitch h3 { margin-bottom: 6px; }
 .seg { display: inline-flex; padding: 3px; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; gap: 2px; }
 .segbtn { border: 0; background: transparent; border-radius: 6px; padding: 4px 16px; font-family: var(--display); font-weight: 600; font-size: 16px; letter-spacing: 0.05em; color: var(--ink-2); }
-.segbtn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 .roleswitch .note { margin: 8px 0 0; }
 .splitbar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 12px; }
 .splitbar.full { grid-column: 1 / -1; margin-bottom: 0; }
@@ -631,7 +628,6 @@ header.top {
 .tierhead .plus { color: var(--band-dim); border-color: var(--band-line); border-radius: 2px; }
 .tierhead .unadd { background: rgba(255, 255, 255, 0.18); color: var(--band-ink); }
 .tierhead .unadd:hover { background: var(--band-ink); color: var(--band); }
-.tierhead.untiered { background: var(--surface-2); color: var(--ink-2); }
 .tierhead.untiered small { color: var(--muted); }
 .tierhead.untiered .plus { color: var(--ink-2); border-color: var(--hair); }
 .tierlbl.editable:hover { border-bottom-color: var(--band-ink); }
@@ -1041,7 +1037,6 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 .ftable th.who, .ftable td.who { left: 40px; }
 /* phone: the same table, scaled down — rank · name pinned, chips in fixed columns, no per-row wrapping */
 :root[data-view="mobile"] .board-scroll { max-height: calc(100dvh - 16px); }
-:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) minmax(var(--namew, 142px), 1fr) var(--pre1, 0px) var(--pre2, 0px) 50px repeat(var(--n), 46px) var(--act, 0px); }
 :root[data-view="mobile"] .colhead { padding: 5px 6px; }
 :root[data-view="mobile"] .colhead .h { font-size: 9.5px; letter-spacing: 0.02em; padding: 0 2px; }
 :root[data-view="mobile"] .colhead button.h { padding: 3px 0; }
@@ -1153,7 +1148,6 @@ body.modal-open { position: fixed; inset: 0; width: 100%; overflow: hidden; }
 /* ---------- toolbar panels: Included stats · Splits & dates ---------- */
 .tools { align-items: center; }
 .tbtn { white-space: nowrap; }
-.tbtn.on { background: var(--accent-wash); }
 .tsum { font-size: 12px; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .panel .psec { margin: 14px 0 6px; }
 .panel .psec h4 { margin: 0 0 8px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-2-text); border-bottom: 1px solid var(--hair); padding-bottom: 3px; }
@@ -2548,8 +2542,6 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 /* Every box casts a shadow (Sean: "basically every box i want it to have a shadow"): the lists, the pages' own boxes,
    the tab panels under a player card and the home tiles take the card's softer cousin; the toolbar buttons match the
    header's. A box nested in one of these (the fantasy table's scroller) is left flat so shadows don't double up */
-:root { --box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18), 0 2px 5px rgba(0, 0, 0, 0.12); }
-.board, section.xboard, .btabbody, .hubcard, .eadder, .sitedef { box-shadow: var(--box-shadow); }
 .tbtns button, .tbtns .btn { box-shadow: 2px 2px 0 color-mix(in srgb, var(--rule) 30%, transparent), 0 3px 8px rgba(0, 0, 0, 0.14); }
 /* "Classic meters" (Appearance ▸ Percentile bars): the older look — a pale rounded track, the fill in the percentile's
    colour with a round end, a white midline, a big white-ringed bubble, the value bold with its unit, and roomy rows
@@ -2868,8 +2860,6 @@ body:is([data-mode="pitches"],[data-mode="proj"],[data-mode="buysell"]) main.wra
 .babipcomp .bcbar.hr { background: var(--accent, #0c2340); }
 .babipcomp .bcbar.bb { background: var(--muted); }
 .uerabox .ubt.babipyrs tr.fcur td { background: var(--accent-wash); font-weight: 700; }
-:root[data-view="mobile"] .btabs { gap: 3px; }
-:root[data-view="mobile"] .btab { padding: 0 4px; }   /* seven hitter tabs (BABIP made it seven) fit a 390px phone */
 /* One look for everything that stands off the page (Sean, 28 Sep 2026, pointing at cron-job.org's screenshot: "precisely
    like this big thing with the shadow"): softly rounded corners, a hairline edge you barely see, and a deep, soft shadow
    that falls all round it — no navy outline, no hard offset shadow. Cards and panels take the full shadow, dropdowns a
@@ -2904,8 +2894,6 @@ body:is([data-mode="pitches"],[data-mode="proj"],[data-mode="buysell"]) main.wra
 /* eight tabs under a card since Spreadsheet Stats (Sean, 28 Sep 2026): a phone lays them out four by four, a desktop keeps
    one row with a little less padding */
 :root:not([data-view="mobile"]) .btab { padding: 0 16px; }
-:root[data-view="mobile"] .btabs { flex-wrap: wrap; row-gap: 6px; }
-:root[data-view="mobile"] .btab { flex: 1 1 calc(25% - 3px); min-width: 0; }
 /* the table box keeps its shadow inside a list page's card (Sean, 28 Sep 2026), so the filter row above it paints no white
    of its own — the card behind is white already, and the row's white had cut the table's shadow off in a hard bar */
 :root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"],[data-mode="proj"],[data-mode="buysell"]) main.wrap > .toolbar { background: transparent; }
@@ -3018,3 +3006,5 @@ body[data-mode="home"] main.wrap > .notes { display: none; }   /* the lists' per
 :root[data-view="mobile"] .hub.home .htwo { grid-template-columns: minmax(0, 1fr); }
 :root[data-view="mobile"] .hub.home .hquick { display: grid; grid-template-columns: 1fr 1fr; }
 .hub.home .hquick .btn { text-align: center; }
+/* the phone's Menu panel shows when the data runs through (the header has no room for it) */
+:root[data-view="mobile"] body.navopen .stamp { display: block; order: 4; width: 100%; margin: -4px 0 8px; padding: 0 12px; font-size: 12px; color: var(--accent-2-ink); }
