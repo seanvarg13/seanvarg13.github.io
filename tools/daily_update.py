@@ -85,6 +85,7 @@ ok = (ok
       and run("build_milb.py", "aaa", year)
       and run("build_milb.py", "aa", "ap", "a", year)
       and run("build_fantasy.py")
+      and (run("build_proj.py") or True)          # next season's projections (proj.js); a failure costs only them
       and run("build_history.py", "index")
       # season-by-season / career tables on every card (hist/career.js + hist/minors.js); needs the search
       # index above, since that is the player list it builds from
