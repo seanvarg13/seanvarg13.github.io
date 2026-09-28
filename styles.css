@@ -3120,3 +3120,11 @@ body[data-mode="appearance"] main.wrap > .notes { display: none; }
 :root:root:root .btab, :root:root:root .btab:first-child, :root:root:root .btab:last-child { background: var(--surface); color: var(--rule); border: 1px solid var(--accent-2); }
 :root:root:root .btab.on, :root:root:root .btab[aria-selected="true"], :root:root:root .btab[aria-pressed="true"] { background: var(--accent-2); color: var(--rule); border-color: var(--accent-2); }
 
+/* the toolbar's buttons white with a navy outline, like Star; the one that's open or in effect stays solid navy (Sean,
+   28 Sep 2026), and a thinner header row over the lists */
+:root:root:root main.wrap .toolbar .tbtns .tbtn, :root:root:root .fbar .fltbtn { background: var(--surface); color: var(--rule); border: 1.5px solid var(--rule); }
+:root:root:root main.wrap .toolbar .tbtns .tbtn:hover, :root:root:root .fbar .fltbtn:hover { background: var(--surface-2); }
+:root:root:root main.wrap .toolbar .tbtns .tbtn.on, :root:root:root main.wrap .toolbar .tbtns .tbtn[aria-expanded="true"], :root:root:root .fbar .fltbtn.on { background: var(--rule); color: #fff; border-color: var(--rule); }
+:root:root:root #colhead { padding-top: 2px; padding-bottom: 2px; min-height: 0; }
+:root:root:root #colhead .h { min-height: 0; height: auto; padding-top: 3px; padding-bottom: 3px; line-height: 1.2; }
+:root:root .ftable thead th .h { padding-top: 4px; padding-bottom: 4px; }
