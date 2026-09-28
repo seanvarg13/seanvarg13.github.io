@@ -2877,6 +2877,11 @@ body[data-mode="pitches"] main.wrap > .notes { display: none; }   /* the lists' 
 :root {
   /* since 28 Sep 2026 (Sean, a spreadsheet pasted into a slide: "the exact format I want"): square corners, a thin grey
      edge, and the shadow cast down and to the right — none above or to the left */
+  /* the bevel (Sean, 28 Sep 2026: "like the bevel effect though with the shadow"): a raised edge, lit along the top and left,
+     shaded along the bottom and right. Half-see-through, over the box's own background, so a white panel and a navy
+     button each get a lighter and darker edge of their own colour */
+  --bevel: var(--bevel-lt) var(--bevel-dk) var(--bevel-dk) var(--bevel-lt);
+  --bevel-lt: rgba(255, 255, 255, 0.6); --bevel-dk: rgba(0, 0, 0, 0.3);
   --lift-edge: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
   --lift-card: 7px 9px 12px rgba(0, 0, 0, 0.34);
   --lift-menu: 5px 6px 9px rgba(0, 0, 0, 0.3);
@@ -2915,3 +2920,14 @@ body[data-mode="pitches"] main.wrap > .notes { display: none; }   /* the lists' 
    bottom and left (Sean, 28 Sep 2026: "i still kinda see it"). Room inside the row for the shadow, taken back outside */
 .toolrow { padding: 6px 14px 16px; margin: -6px -14px -16px; }
 :root[data-view="mobile"] .toolrow { padding: 6px 0 16px; margin: -6px 0 -16px; }   /* the phone card has no side room to borrow */
+/* the bevel on everything lifted: 3px on cards and panels, 2px on dropdowns, buttons and tiles; the edge sits in the box's
+   own background (border-box) so its colour comes through the half-see-through edges */
+:root:root .modal.pcard .modal-panel, :root:root:not([data-view="mobile"]) .modal.pcard .modal-panel, :root:root[data-view="mobile"] .modal.pcard .modal-panel,
+:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap,
+:root:root .board, :root:root section.xboard, :root:root .btabbody, :root:root .hubcard, :root:root .eadder, :root:root .sitedef {
+  border: 3px solid; border-color: var(--bevel); background-clip: border-box; }
+:root:root .phfilt.phpop, :root:root .pop, :root:root .hmenu, :root:root .menupop, :root:root .addlist, :root:root .ddmenu, :root:root .modemenu,
+:root:root .modes a, :root:root .modes .modesel, :root:root .phead .starbtn, :root:root .phead .phtoggle, :root:root .phead .mplate .btn,
+:root:root .btab, :root:root .btab:first-child, :root:root .btab:last-child, :root:root .btab.on, :root:root .tbtns button, :root:root .tbtns .btn,
+:root:root .modes a[aria-current="page"], :root:root .modes .modesel[aria-current="page"], :root:root .phead .mplate .mug, :root:root .fanttile {
+  border: 2px solid; border-color: var(--bevel); background-clip: border-box; }
