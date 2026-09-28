@@ -61,8 +61,11 @@ ERA, SIERA, FIP, Avg EV, Hard-Hit% and Barrel%. Groups named in `meta.pitcherCar
 built on. uK% is fitted on his Whiff% and Strike%: `-26.975 + 0.933·Whiff% + 0.409·Strike%` (`UK` in `app.js`; Sean,
 25 Sep 2026), least squares over every 100+ BF pitcher-season 2015-2026 bar 2020, weighted by BF. It sits within half
 a point of the league's real K% every season and misses a pitcher's by ~2.6; Whiff% taken as the K% directly — the
-old rule — ran 2.5 points high and missed by 3.4, and 2 × SwStr% + 1 did no better. uBB% is the walk rate of the
-pitcher at his Strike% percentile in the same pool. Both are ordinary card metrics (`uk`, `ubb`) alongside u(K-BB%)
+old rule — ran 2.5 points high and missed by 3.4, and 2 × SwStr% + 1 did no better. uBB% (since 28 Sep 2026) is the walk rate
+pitchers with his process have historically had: the league's BB% moved by how far his Strike%, Zone%, Chase%, Swing%,
+Z-Contact% and Whiff% each sit from the league's, weights fitted over every 100+ BF pitcher-season 2015-2026. It lands
+within ~1.5 points of a pitcher's real BB% (the old Strike%-percentile match: 1.7) and predicts next season's BB% better
+than his own BB% does. Double-A and most of Single-A lack Chase% / Z-Contact% and use a four-rate version. Both are ordinary card metrics (`uk`, `ubb`) alongside u(K-BB%)
 and uERA, so they can sit on any table.
 
 **WSGP** is the average of a pitcher's Whiff%, Strike%, GB% and Popup% **percentiles** — the four rates that belong

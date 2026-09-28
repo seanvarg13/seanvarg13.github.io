@@ -790,14 +790,46 @@
   // uK% and uBB%: the strikeout and walk rates his process implies. uK% is fitted on his Whiff% and Strike% (Sean,
   // 25 Sep 2026): every 100+ BF pitcher-season 2015-2026 bar 2020, weighted by BF — within half a point of the league's
   // real K% every season and ~2.6 points of a pitcher's, where Whiff% as is ran 2.5 points high and missed by 3.4
-  // (2 × SwStr% + 1 was no better). uBB% is the walk rate at his own Strike% percentile.
+  // (2 × SwStr% + 1 was no better).
   const UK = { c: -26.975, whf: 0.933, strk: 0.409 };
-  function impliedKBB(pv, pctS, sorted) {
+  // uBB% (Sean, 28 Sep 2026: "predicted by underlying metrics … what's the best way"): the walk rate pitchers with his
+  // process have historically had — the league's BB% moved by how far each of six rates sits from the league's, weights
+  // fitted over every 100+ BF pitcher-season 2015-2026 (BF-weighted, straight line; curves and Strike% bands did no better).
+  // Tested each season against a fit on the others: within 1.46 BB% points of a pitcher's walk rate that season (the old
+  // "walk rate at his Strike% percentile": 1.73) and 2.25 of his next season's (old 2.56; his own BB% as is, 2.44).
+  // Strike% does most of it (about −1 BB% a point); at the same Strike%, strikes from chases and balls put in play mean
+  // fewer walks than strikes taken in the zone. Levels without locations (Double-A, most of Single-A) have no Chase% or
+  // Z-Contact% and use the four-rate fit; Strike% alone if even that's missing.
+  const UBB = [{ c: -0.068, w: { strk: -1.008, zone: 0.214, osw: 0.093, swing: -0.045, zcon: -0.104, whf: 0.062 } },
+               { c: -0.069, w: { strk: -0.938, zone: 0.179, swing: 0.013, whf: 0.148 } },
+               { c: -0.069, w: { strk: -0.769 } }];
+  const lgPCache = new Map();
+  function lgRatesP() {                                // the dataset's league rates: every pitcher with 20+ BF, weighted by BF
+    const key = DS.key; if (lgPCache.has(key)) return lgPCache.get(key);
+    const s = {}, n = {};
+    for (const q of DS.players) {
+      if (q.type !== "P" || !(q.bf >= 20)) continue;
+      for (const k of ["bb", "strk", "zone", "osw", "swing", "zcon", "whf"]) { const v = q.m[k]; if (v == null) continue; s[k] = (s[k] || 0) + v * q.bf; n[k] = (n[k] || 0) + q.bf; }
+    }
+    const out = {}; for (const k in s) out[k] = s[k] / n[k];
+    lgPCache.set(key, out); return out;
+  }
+  function uBBFrom(m) {
+    const L = lgRatesP(); if (L.bb == null) return null;
+    for (const f of UBB) {
+      const ks = Object.keys(f.w); if (!ks.every((k) => m[k] != null && L[k] != null)) continue;
+      return L.bb + f.c + ks.reduce((a, k) => a + f.w[k] * (m[k] - L[k]), 0);
+    }
+    return null;
+  }
+  // bbM: the rates his walks come from, when they aren't pv's own (Stuff uERA swaps his Whiff% for the stuff model's)
+  function impliedKBB(pv, pctS, sorted, bbM) {
     const m = pv.m;
-    if (m.whf == null || m.strk == null || pctS == null || !sorted.bb) return null;
+    if (m.whf == null || m.strk == null) return null;
     const k = Math.max(0, UK.c + UK.whf * m.whf + UK.strk * m.strk);   // uK%: whiffs, nudged by how often he's in the zone and ahead
-    const bb = -quantile(sorted.bb, pctS);                            // uBB%: the walk rate at his Strike% percentile
-    if (Number.isNaN(k) || Number.isNaN(bb)) return null;
+    let bb = uBBFrom(bbM || m);                                          // uBB%: what his process has historically walked
+    if (bb == null && pctS != null && sorted && sorted.bb) bb = -quantile(sorted.bb, pctS);   // no league rates: the old percentile match
+    if (bb == null || Number.isNaN(k) || Number.isNaN(bb)) return null;
     return { k: Math.round(10 * k) / 10, bb: Math.round(10 * Math.max(0, bb)) / 10 };
   }
   // Mix ERA: the ERA his batted-ball distribution alone is worth. Every ball in play takes the league's value for its
@@ -2633,7 +2665,7 @@
     const row = el("div", "uerarow"); row.append(card); if (mix) row.append(mix);
     box.append(row);
     const from = (v, pct) => (v == null ? "" : ` (${v.toFixed(1)}%${pct == null ? "" : ", " + ordinal(pct)}）`.replace("）", ")"));
-    box.append(el("p", "note", `Expected K% is −27.0 + 0.933·Whiff% + 0.409·Strike% (his Whiff%${from(pv.m.whf, st.pct.whf)}, Strike%${from(pv.m.strk, st.pct.strk)}), a fit over every 100+ BF pitcher-season since 2015 that lands within about 2.6 points of a pitcher's real K%, against 3.4 for Whiff% as is; expected BB% is the walk rate at his Strike% percentile. uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. The percentile bars rank the rates uERA uses, so the line-drive and fly-ball bars are both really his air-ball rate — fewer counts as better. Blue diff: results beat the process; red: they trail it.`));
+    box.append(el("p", "note", `Expected K% is −27.0 + 0.933·Whiff% + 0.409·Strike% (his Whiff%${from(pv.m.whf, st.pct.whf)}, Strike%${from(pv.m.strk, st.pct.strk)}), a fit over every 100+ BF pitcher-season since 2015 that lands within about 2.6 points of a pitcher's real K%, against 3.4 for Whiff% as is; expected BB% is the walk rate pitchers with his Strike%, Zone%, Chase%, Swing%, Z-Contact% and Whiff% have historically had (a fit over every 100+ BF pitcher-season since 2015, within about 1.5 points of a pitcher's real BB%). uERA puts those two rates on the mix above: his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate (${(100 * (pl0 || 0.5)).toFixed(1)}% line drives), every ball in play then worth the league's average for its type — so a high line-drive rate never punishes him, but putting the ball in the air does. The percentile bars rank the rates uERA uses, so the line-drive and fly-ball bars are both really his air-ball rate — fewer counts as better. Blue diff: results beat the process; red: they trail it.`));
     return box;
   }
   // a percentile bar in a table cell: the same Savant bar as every other one
@@ -3698,10 +3730,10 @@
     fip: "Fielding-independent pitching: strikeouts, walks, hit batters and home runs only, scaled to look like an ERA.",
     siera: "Skill-interactive ERA: FIP's inputs plus how he uses the ground, shifted so the league averages its real ERA.",
     nera: "Luck-neutral ERA: his actual batted balls, each re-scored at what that type of ball is worth league-wide, so the bounces come out.",
-    uera: "Underlying ERA: what his whiff, strike and batted-ball rates say his ERA should be. Strikeouts come in at the rate his Whiff% and Strike% imply, walks at the walk rate his Strike% percentile implies, his ground-ball and popup shares stand, and the air balls that are left are split into line drives and fly balls at the league's rate — then every ball in play is worth the league's average for its type.",
+    uera: "Underlying ERA: what his whiff, strike and batted-ball rates say his ERA should be. Strikeouts come in at the rate his Whiff% and Strike% imply, walks at the rate his Strike%, Zone%, Chase%, Swing%, Z-Contact% and Whiff% have historically come with, his ground-ball and popup shares stand, and the air balls that are left are split into line drives and fly balls at the league's rate — then every ball in play is worth the league's average for its type.",
     ukb: "Underlying K-BB%: uK% minus uBB% — what his swing-and-miss and strike-throwing say the gap should be, with the results taken out of it.",
     uk: "uK%: the strikeout rate his process implies — fitted on his Whiff% and Strike% (−27.0 + 0.933·Whiff% + 0.409·Strike%).",
-    ubb: "uBB%: the walk rate his process implies — the walk rate of the pitcher sitting at his Strike% percentile in the same pool.",
+    ubb: "uBB%: the walk rate his process implies — what pitchers with his Strike%, Zone%, Chase%, Swing%, Z-Contact% and Whiff% (each against the league's) have historically walked. Strike% does most of it, about one walk per 100 batters for every point.",
     xwd: "Expected wOBA, the directional model — see xwOBA.",
     mera: "Mix ERA: the ERA his batted-ball distribution alone is worth. Every ball in play is priced at the league's average for its type — his ground-ball and popup shares as they are, the air balls that are left split into line drives and fly balls at the league's rate — and the strikeout and walk rates are held at the league's, so nothing but where the ball goes moves it. 4.15 is an average mix; lower is a better one. A ground ball is worth .228 and an air ball .524, so this is mostly a ground-ball and popup stat.",
     wsgp: "WSGP: the average of his Whiff%, Strike%, GB% and Popup% percentiles — the four rates he owns outright, before a fielder touches the ball or a run scores. 50 is an average pitcher in all four. The bar beside it ranks that average against the pool, so a pitcher who is good at all four can rank above his own average.",
@@ -3994,7 +4026,7 @@
   const fInPos = (p, pos) => pos === "ALL" || pos === "ALLP" || fPos(p).includes(pos);
   const fMinOK = (r) => (r.p.type === "H" ? r.o.PA >= state.f.minH : r.o.IP >= state.f.minP);
 
-  // luck-neutral lines. Pitchers: K and BB from his underlying rates (uK% fitted on Whiff% and Strike%, uBB% = BB% at his Strike% percentile),
+  // luck-neutral lines. Pitchers: K and BB from his underlying rates (uK% fitted on Whiff% and Strike%, uBB% = the walk rate his Strike%, zone and swing rates have historically come with),
   // ER from luck-neutral ERA, hits allowed from Savant xBA (there is no directional model for pitchers). Hitters: hits and
   // total bases from the directional xBA / xSLG (Savant's for a season not yet rescored), with the
   // extra-base mix scaled to hit both; everything else (R, RBI, SB, BB, K) as it happened.
@@ -4477,7 +4509,7 @@
     const wtxt = Object.entries(P.w[f.grp]).filter(([, v]) => Number(v)).map(([k, v]) => `${k} ${v > 0 ? "+" : ""}${v}`).join(", ");
     if (lead) { note.textContent = fLeadNote(P, wtxt, y, F, spec, shown.length); return; }
     note.textContent = `${P.name}: ${wtxt || "no categories scored"}. ${y} official season stats through ${F.through}; ${shown.length} ${f.grp === "H" ? "hitters" : "pitchers"} with ${f.grp === "H" ? state.f.minH + "+ PA" : state.f.minP + "+ IP"}` +
-      (f.view === "whatif" ? (f.grp === "P" ? ". uPts: strikeouts and walks at his underlying rates (uK% fitted on Whiff% and Strike%, uBB% = the walk rate at his Strike% percentile), earned runs at his luck-neutral ERA, hits allowed at his Savant xBA; wins, saves, holds and quality starts as they happened. Per-start numbers scale each start by the same ratios."
+      (f.view === "whatif" ? (f.grp === "P" ? ". uPts: strikeouts and walks at his underlying rates (uK% fitted on Whiff% and Strike%, uBB% = the walk rate his Strike%, zone and swing rates have historically come with), earned runs at his luck-neutral ERA, hits allowed at his Savant xBA; wins, saves, holds and quality starts as they happened. Per-start numbers scale each start by the same ratios."
         : `. xPts: hits and total bases at his xBA / xSLG (the directional model; extra-base mix scaled to hit both) over his actual plate appearances; runs, RBI, walks, strikeouts and steals as they happened. Starter workload = the top ${teams} × lineup slots at the position by PA (OF 3), their average PA and PA per game.`) : ".");
   }
 
@@ -5412,7 +5444,7 @@
     if (!sorted || pctS == null || pv.m.strk == null || xw == null) return null;
     const air = Math.max(0, 1 - xg - xp);
     const pvS = { m: { whf: xw, strk: pv.m.strk }, ctx: Object.assign({}, pv.ctx, { bbl: { gb: [1000 * xg], pu: [1000 * xp], ld: [500 * air], fb: [500 * air] } }) };
-    const ik = impliedKBB(pvS, pctS, sorted); if (!ik) return null;
+    const ik = impliedKBB(pvS, pctS, sorted, pv.m); if (!ik) return null;   // walks from his real rates, not the stuff model's
     const uera = underlyingERA(pvS, ik, sorted);
     if (uera == null) return null;
     const la = sorted.ldAir != null ? sorted.ldAir : 0.5;
