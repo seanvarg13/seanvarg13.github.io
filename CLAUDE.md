@@ -403,8 +403,11 @@ is deploy-limited.
   pattern — Sean, 26 Sep 2026: "I don't really like the slant design" — masked in the theme's colours, instead of the dimmed list). Same element, classes and
   `playerView()` as a card off a list, so a change to one is a change to the other.
 * **One lifted look** (Sean, 28 Sep 2026, from cron-job.org's screenshot): every card, panel, dropdown, button and tile that
-  stands off the page has rounded corners, a faint hairline edge and a soft all-round shadow (`--lift-card` / `--lift-menu` /
-  `--lift-btn`, the block at the end of `styles.css`) — the navy outlines and hard offset shadows are gone.
+  stands off the page shares one look (`--lift-edge` / `--lift-card` / `--lift-menu` / `--lift-btn`, the block near the end of
+  `styles.css`). Since 28 Sep 2026 (Sean, from a spreadsheet pasted into a slide: "the exact format I want") that is square
+  corners, a thin grey edge and a shadow cast down and to the right only; it was rounded with an all-round shadow before.
+* **Closing a card keeps the list's place** (`listAt` in `render()`): the rows' scroll, sideways scroll and page scroll are
+  noted while no card is up and put back when one closes — on a phone the list is redrawn under the card and started over.
 * **The list pages share the pattern** (Sean, 26 Sep 2026): Leaderboard, Trending, Rankings, Draft board, Fantasy,
   Eligibility and Compare put the same white + spiral pattern behind the page (`body[data-mode=…]::before` / `::after`, fixed) and
   gather `main.wrap` — filters, table, notes — into one white card with the player card's outline and shadow.

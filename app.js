@@ -3863,12 +3863,23 @@
     document.documentElement.style.setProperty("--modal-max", h + "px");
   }
   let holdScroll = null, lastPlayerId = null;        // scroll still owed to a player's page (see keepScroll)
+  // Where a list page was when a card opened over it (Sean, 28 Sep 2026: closing a card off the leaderboard "takes me right
+  // back to the top"). On a phone the list is redrawn under the card and starts over, so it's noted while no card is up
+  // and put back the moment one closes — the rows' box, its sideways scroll, and the page.
+  let listAt = null;
+  const listScrollers = () => [...document.querySelectorAll("main.wrap .board-scroll, #fboard .fscroll, .pbscroll")];
   function render() {
     const cardKey = () => (state.mode === "player" ? "x" + state.x.id : state.expanded);   // his page is a card too
     const keep = keepScroll(), mb = cardSc(), open = !$("modal").hidden ? cardKey() : null, mtop = mb ? mb.scrollTop : 0;
+    const wasCard = !$("modal").hidden;
+    if (!wasCard) listAt = { mode: state.mode, y: window.scrollY, s: listScrollers().map((e) => [e.scrollTop, e.scrollLeft]) };
     renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage(); ddSync();
     if (ddOpen && !ddOpen.trig.isConnected) ddClose();   // a list whose opener was redrawn away
     keep();
+    if (wasCard && $("modal").hidden && listAt && listAt.mode === state.mode) {
+      listScrollers().forEach((e, i) => { const v = listAt.s[i]; if (v) { e.scrollTop = v[0]; e.scrollLeft = v[1]; } });
+      if (listAt.y && Math.abs(window.scrollY - listAt.y) > 1) window.scrollTo(0, listAt.y);
+    }
     const sc = cardSc(); if (open && open === cardKey() && !$("modal").hidden && sc && sc.scrollTop !== mtop) sc.scrollTop = mtop;   // the same card, redrawn
   }
   // A player's page is rebuilt on every pick (a season, a level, a tab, a filter). Rebuilt, it is briefly short and the
