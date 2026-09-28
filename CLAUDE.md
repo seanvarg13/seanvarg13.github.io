@@ -444,7 +444,7 @@ is deploy-limited.
   the header to an 18px gap (10px on the phone), the page never scrolls, and only the rows' box (`.board-scroll`, Fantasy
   `.fscroll`) moves — filters, pager and column header frozen above it. On the phone, Fantasy keeps the page scroll (its
   filters would leave the table no room).
-* **Pitch Stuff+ leaderboard** (Leaderboards ▸ Pitch Stuff+, `#pitches`, `renderPitchBoard` in `app.js`; Sean, 27 Sep 2026):
+* **Stuff+ leaderboard** (Leaderboards ▸ Stuff+ — named "Pitch Stuff+" until 28 Sep 2026, `#pitches`, `renderPitchBoard` in `app.js`; Sean, 27 Sep 2026):
   every pitcher's pitches as their own rows from `ctx.arsenal`, graded against their own type (Stuff+ / Whiff+ / BB+),
   filtered by pitch type, hand, SP / RP and a pitch minimum, every column sortable, a name opens his card on the Stuff tab.
   Full season only. The section and the menu entry are made in `app.js` (`pitchBoardEl`) because `index.html` doesn't
@@ -468,6 +468,18 @@ is deploy-limited.
   menu's group key is still `draftmode` (index.html's `#modesel`), but it's never a page.
 * **Rankings and the Draft board list everyone** (Sean, 28 Sep 2026: "see everyone who can get drafted"): `noMin()` makes
   `effMin` 0 there and hides the Min box / Minimum section; percentiles still rank against the 300+ PA / BF pool.
+* **Stuff+ table header is pinned on both axes** (28 Sep 2026): Fantasy-table rules (`.ftable th.n/.who { top: auto }`, a flex
+  `th.who`, the phone's unstuck header) had let rows slide up past it; the `:root:root .pbtable` block at the end of
+  `styles.css` pins the whole header and gives # (44px) and Pitcher their own sticky spots. The `.pbtable` is also an `.ftable`,
+  so a Fantasy-table change can reach it — check both.
+* **Appearance is a settings list** (Sean, 28 Sep 2026: "make it look cleaner"): `renderAppearance` builds one `.aset` row per
+  setting (name + note left, control right; stacked on a phone), scheme swatches (banner with "Sean's Site" + four colour
+  dots, blurb as a tooltip), the page on the pattern like the lists. The font name is `.ffname` — `.fhead` is taken by the
+  Fantasy table's floating header.
+* **Fantasy, calmer** (Sean, 28 Sep 2026: "funky and somewhat overwhelming"): dates / window, hand, home / away, the points basis
+  and the minimum fold behind a Filters button with a one-line summary (`fFilterSummary`); only the sorted column and Trend / Δ
+  are heat-coloured; the note is two lines with "More about these numbers"; "Edit scoring" dropped (the Scoring settings tab
+  does it); `#fboard` has no frame of its own, the table has the 1px one; the phone's page tabs are a 2×2 grid.
 * **Projections and Buy low / Sell high were built and removed the same day** (Sean, 28 Sep 2026: "I don't need those") —
   the pages, the home cards, `tools/build_proj.py` and `proj.js` are gone. Don't bring them back unasked.
 * **Starts / relief split** (Sean, 26 Sep 2026): a pitcher who both started and relieved (`ctx.GS > 0` and `G > GS`)

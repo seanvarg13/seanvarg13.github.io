@@ -2938,7 +2938,7 @@
     let b = $("pitchboard");
     if (!b) { b = el("section", "xboard pitchboard"); b.id = "pitchboard"; b.hidden = true; $("eboard").after(b); }
     const m = $("lbmenu");
-    if (m && !m.querySelector('a[href="#pitches"]')) { const li = el("li"); const a = el("a", null, "Pitch Stuff+"); a.href = "#pitches"; li.append(a); m.append(li); }
+    if (m && !m.querySelector('a[href="#pitches"]')) { const li = el("li"); const a = el("a", null, "Stuff+"); a.href = "#pitches"; li.append(a); m.append(li); }
     return b;
   };
   pitchBoardEl();
@@ -3734,7 +3734,7 @@
                     "#leaderboard": "Every player, any season or level, your stats.", "#trending": "Who's hot over his last N PA, innings or days.",
                     "#compare": "Players side by side on the same stats.", "#fantasy": "Your scoring on everyone, any dates or split.", "#appearance": "Colours, type and layout." };
     for (const [title, cards] of HOME_SECS) for (const [href, name] of cards) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, SHORT[href] || "")); tiles.append(a); }
-    for (const [href, name, blurb] of [["#pitches", "Pitch Stuff+", "Every pitch graded against its type."]]) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, blurb)); tiles.append(a); }
+    for (const [href, name, blurb] of [["#pitches", "Stuff+", "Every pitch graded against its type."]]) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, blurb)); tiles.append(a); }
     allC.append(tiles); box.append(allC);
     box.append(el("p", "note", `Statcast ${m.season} through ${m.through}, built ${m.built} UTC. xwOBA, xBA and xSLG are the directional model's; uK%, uBB% and uERA are what a pitcher's process has historically been worth.`));
   }
@@ -4381,7 +4381,6 @@
     for (const p of fpresets()) { const o = el("option", null, p.name); o.value = p.id; if (p.id === fpreset().id) o.selected = true; sel.append(o); }
     sel.addEventListener("change", () => { fstore.current = sel.value; fsave(); renderFantasy(); });
     pre.append(sel); bar.append(pre); ddSelect(sel);
-    const edit = el("button", "btn btn-quiet", "Edit scoring"); edit.type = "button"; edit.addEventListener("click", () => { location.hash = "#fantasy/settings"; }); bar.append(edit);
     bar.append(pillSelect(y, FYEARS.map((yy) => [yy, yy]), y, (yy) => { f.year = yy; fUi(); renderFantasy(); }, "Season"));
     const seg = el("div", "seg"); seg.setAttribute("role", "group");
     for (const [g, l] of [["H", "Hitters"], ["P", "Pitchers"]]) {
@@ -4396,9 +4395,16 @@
     const mn = el("label", "field"); mn.append(el("span", null, f.grp === "H" ? "Min PA" : "Min IP"));
     const mi = el("input"); mi.type = "number"; mi.min = 0; mi.step = f.grp === "H" ? (tr ? 5 : 10) : tr ? 1 : 5; mi.value = tr ? f.tmin[f.grp] : f.grp === "H" ? f.minH : f.minP; mi.inputMode = "numeric";
     mi.addEventListener("change", () => { const v = Math.max(0, Number(mi.value) || 0); if (tr) f.tmin[f.grp] = v; else if (f.grp === "H") f.minH = v; else f.minP = v; fUi(); renderFTable(box); });
-    mn.append(mi); bar.append(mn);
+    mn.append(mi);
+    // the less-used controls (dates / window, hand, home / away, actual or expected, the minimum) fold behind one Filters
+    // button, with what's in effect summed up beside it (Sean, 28 Sep 2026: the page was "somewhat overwhelming")
+    if (f.view === "leaders" || tr) {
+      const fb = el("button", "btn fltbtn" + (f.fopen ? " on" : ""), f.fopen ? "Hide filters" : "Filters"); fb.type = "button";
+      fb.addEventListener("click", () => { f.fopen = !f.fopen; renderFantasy(); });
+      bar.append(fb, el("span", "fsum", fFilterSummary()));
+    } else bar.append(mn);
     box.append(bar);
-    if (f.view === "leaders" || tr) box.append(fFilterBar(box));
+    if ((f.view === "leaders" || tr) && f.fopen) { const fr = fFilterBar(box); fr.append(mn); box.append(fr); }
     // position tabs
     const tabs = el("div", "postabs ftabs"); tabs.setAttribute("role", "tablist");
     const tabList = f.grp === "H" ? HIT_TABS : PIT_TABS;
@@ -4409,10 +4415,25 @@
     }
     box.append(tabs);
     box.append(el("div", "ftable-wrap"));
-    box.append(el("p", "note fnote"));
+    const note = el("p", "note fnote" + (f.noteOpen ? " open" : "")); box.append(note);
+    const more = el("button", "linkbtn fnotemore", f.noteOpen ? "Less" : "More about these numbers"); more.type = "button";
+    more.addEventListener("click", () => { f.noteOpen = !f.noteOpen; note.classList.toggle("open", f.noteOpen); more.textContent = f.noteOpen ? "Less" : "More about these numbers"; });
+    box.append(more);
     renderFTable(box);
   }
   const fUi = () => { const f = state.f; fstore.ui = { view: f.view, grp: f.grp, pos: f.pos, year: f.year, minH: f.minH, minP: f.minP, win: f.win, hand: f.hand, venue: f.venue, basis: f.basis, tr: f.tr, tmin: f.tmin }; fsave(); };
+  // one line saying what the folded filters are set to
+  function fFilterSummary() {
+    const f = state.f, pit = f.grp === "P", bits = [];
+    if (f.view === "trending") { const t = f.tr[f.grp]; bits.push(t.unit === "days" ? `last ${t.n} days` : `last ${t.n} ${pit ? "IP" : "PA"}`); }
+    else bits.push(f.win.from || f.win.to ? `${f.win.from ? fmtDate(f.win.from) : "opening day"} – ${f.win.to ? fmtDate(f.win.to) : "latest"}` : "full season");
+    if (f.hand !== "all") bits.push(`vs ${f.hand}H${pit ? "B" : "P"}`);
+    if (f.venue !== "all") bits.push(f.venue);
+    const B = { x: "expected", both: "actual + expected", n: "luck-neutral", u: "underlying", all: "all three" }[f.basis[f.grp]];
+    if (B) bits.push(B + " points");
+    bits.push(f.view === "trending" ? `${f.tmin[f.grp]}+ ${pit ? "IP" : "PA"} in span` : `${pit ? f.minP : f.minH}+ ${pit ? "IP" : "PA"}`);
+    return bits.join(" · ");
+  }
   // the Leaderboard / Trending filter row: dates (or the trailing window), vs LHP / RHP, home / away, actual or expected
   function fFilterBar(box) {
     const f = state.f, pit = f.grp === "P", row = el("div", "fbar ffilters");
@@ -4560,7 +4581,8 @@
       const who = el("td", "who"); who.append(el("b", null, r.p.name), el("small", null, ` ${r.p.team} · ${fPos(r.p).join(", ") || r.p.primary || ""}`)); trr.append(who);
       cols.forEach((c, j) => {
         const v = c.get(r), td = el("td", c.num ? "num" : "txt", c.fmt ? c.fmt(v) : String(v ?? "–"));
-        if (c.paint && v != null) { const pct = pcts[c.label][i]; if (pct != null) paint(td, pct); td.classList.add("pc"); }
+        // colour only what you're sorting by, plus the signed Trend / Δ (every rate column in red and blue was a wall of colour)
+        if (c.paint && v != null && (c.label === sortKey || c.label === "Trend" || c.label === "Δ")) { const pct = pcts[c.label][i]; if (pct != null) paint(td, pct); td.classList.add("pc"); }
         trr.append(td);
       });
       const open = () => { state.cardDs = fDsKey(y) === CUR.key ? null : fDsKey(y); state.cardWin = Object.assign({}, NOWIN); state.expanded = r.p.type + r.p.id; renderModal(); };
@@ -4684,18 +4706,60 @@
     if (!sync.token && sync.err) wrap.append(el("p", "syncstat", `Couldn't connect: ${sync.err}.`));
     return wrap;
   }
+  // Appearance as a plain settings list (Sean, 28 Sep 2026: "make it look cleaner and better"): one row per setting, its
+  // name and a line of explanation on the left, the control on the right (stacked on a phone)
   function renderAppearance() {
     const T = window.DRAFT_THEMES, box = $("pboard"); box.innerHTML = "";
     if (!T) { box.append(el("p", "xempty", "themes.js didn't load.")); return; }
     const cur = T.current();
-    box.append(el("h2", "ahead", "Appearance"));
-    box.append(el("p", "hublead", "Colours and type for the whole site. A device follows the site default until you pick something on it; the phone app and Safari each count as their own device."));
+    const head = el("div", "ahd"); head.append(el("h2", "ahead", "Appearance"), el("p", "hublead", "Colours, type and layout. Each device follows the site default until you pick something on it; the phone app and Safari count as separate devices."));
+    box.append(head);
+    const row = (title, note, ...ctl) => {
+      const r = el("section", "aset"), l = el("div", "alab"), c = el("div", "actl");
+      l.append(el("h3", null, title)); if (note) l.append(el("p", null, note));
+      c.append(...ctl); r.append(l, c); box.append(r); return c;
+    };
+    const segOf = (label, opts, on, pick) => {
+      const seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", label);
+      for (const [v, l] of opts) { const b = el("button", "segbtn", l); b.type = "button"; b.setAttribute("aria-pressed", String(v === on)); b.addEventListener("click", () => pick(v)); seg.append(b); }
+      return seg;
+    };
+    // colour schemes: a swatch each (the banner with the site's name, then its colours), the blurb on hover
+    const sg = el("div", "schemes");
+    for (const [id, sc] of Object.entries(T.schemes)) {
+      const L = sc.light, b = el("button", "scheme"); b.type = "button"; b.title = sc.blurb || ""; b.setAttribute("aria-pressed", String(id === cur.scheme));
+      const bar = el("div", "spv-bar"); bar.style.background = L["accent-2"]; bar.style.borderBottom = `3px solid ${L.rule}`;
+      const word = el("span", "spv-word", "Sean's Site"); word.style.color = L["accent-2-ink"]; bar.append(word);
+      const dots = el("div", "spv-dots");
+      for (const c of [L.rule, L["accent-2"], L.btn || L["accent-2"], L.pop || L["accent-2-text"]]) { const i = el("i"); i.style.background = c; dots.append(i); }
+      b.append(bar, dots, el("span", "sname", sc.name));
+      b.addEventListener("click", () => { T.set({ scheme: id }); renderAppearance(); });
+      sg.append(b);
+    }
+    row("Colour scheme", "The site's colours. The percentile colours (blue cold, red hot) are the same in every scheme.", sg);
+    row("Light or dark", null, segOf("Light or dark", [["system", "Match device"], ["light", "Light"], ["dark", "Dark"]], cur.theme, (v) => { T.set({ theme: v }); renderAppearance(); }));
+    row("Layout", "Auto gives a phone the compact layout; Desktop on a phone shows the full layout zoomed out.",
+      segOf("Layout", [["auto", "Auto"], ["mobile", "Mobile"], ["desktop", "Desktop"]], T.viewPref(), (v) => { T.setView(v); renderAppearance(); }));
+    row("Percentile bars", "How the bars on a player's card are drawn.",
+      segOf("Percentile bars", [["savant", "Savant charts"], ["classic", "Classic meters"]], state.bars, (v) => { state.bars = v; savePrefs(); render(); }));
+    // type: one line per font, set in that font
+    T.preloadFonts();
+    const fg = el("div", "fonts");
+    for (const [id, f] of Object.entries(T.fonts)) {
+      const b = el("button", "fontcard"); b.type = "button"; b.title = f.blurb || ""; b.setAttribute("aria-pressed", String(id === cur.font));
+      const h = el("span", "ffname", f.name); h.style.fontFamily = f.display;
+      const body = el("span", "fbody", "Yordan Alvarez · .442 xwOBA · 94.2 mph"); body.style.fontFamily = f.body;
+      b.append(h, body);
+      b.addEventListener("click", () => { T.set({ font: id }); renderAppearance(); });
+      fg.append(b);
+    }
+    row("Font", null, fg);
     // site default: what every device shows until it picks its own (written from the Mac, shipped by Publish)
     const d = T.defaults, own = T.hasOwn();
     const def = el("div", "sitedef");
-    def.append(el("b", null, "Site default: "), `${T.schemes[d.scheme] ? T.schemes[d.scheme].name : d.scheme} · ${T.fonts[d.font] ? T.fonts[d.font].name : d.font} · ${d.theme === "system" ? "match device" : d.theme} · ${d.view || "auto"} layout`);
-    def.append(el("span", "note", own ? " — this device has its own choices." : " — this device is following it."));
-    if (own) { const b = el("button", "btn btn-quiet", "Follow the site default here"); b.type = "button"; b.addEventListener("click", () => { T.useDefaults(); render(); }); def.append(" ", b); }
+    def.append(el("span", null, `${T.schemes[d.scheme] ? T.schemes[d.scheme].name : d.scheme} · ${T.fonts[d.font] ? T.fonts[d.font].name : d.font} · ${d.theme === "system" ? "match device" : d.theme} · ${d.view === "auto" ? "auto layout" : d.view}`));
+    def.append(el("span", "note", own ? "This device has its own choices." : "This device is following it."));
+    if (own) { const b = el("button", "btn btn-quiet", "Follow the site default"); b.type = "button"; b.addEventListener("click", () => { T.useDefaults(); render(); }); def.append(b); }
     if (window.DRAFT_LOCAL) {
       const b = el("button", "btn", "Make my choices the site default"); b.type = "button"; b.title = "Writes defaults.js — press Publish afterwards so the phone gets it";
       b.addEventListener("click", async () => {
@@ -4703,81 +4767,12 @@
         const r = await fetch("/api/appearance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
         const j = await r.json(); if (j.ok) { Object.assign(T.defaults, j.defaults); T.useDefaults(); render(); alert("Saved as the site default. Press Publish in the header to send it to the phone."); }
       });
-      def.append(" ", b);
+      def.append(b);
     }
-    box.append(def);
-    box.append(renderSyncBox());
-
-    // the player card's percentile bars: Savant's charts or the older meter rows, this device's choice
-    box.append(el("h3", "asub", "Percentile bars"));
-    { const seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Percentile bars");
-      for (const [v, l] of [["savant", "Savant charts"], ["classic", "Classic meters"]]) {
-        const b = el("button", "segbtn", l); b.type = "button"; b.setAttribute("aria-pressed", String(state.bars === v));
-        b.addEventListener("click", () => { state.bars = v; savePrefs(); render(); }); seg.append(b);
-      }
-      box.append(seg, el("p", "note", "How the bars on a player's page and popup card are drawn. Open any player to see it.")); }
-    // colour schemes: each card is a miniature of the banner, a button, a tier head and the chips in that scheme
-    box.append(el("h3", "asub", "Color scheme"));
-    const sg = el("div", "schemes");
-    for (const [id, sc] of Object.entries(T.schemes)) {
-      const L = sc.light;
-      const b = el("button", "scheme"); b.type = "button"; b.setAttribute("aria-pressed", String(id === cur.scheme));
-      const pv = el("div", "spv");
-      const bar = el("div", "spv-bar"); bar.style.background = L["accent-2"]; bar.style.borderBottom = `3px solid ${L.rule}`; bar.style.boxShadow = `0 2px 0 ${L["stripe-line"]}`;
-      const year = el("span", "spv-year", "2027"); year.style.color = L.pop;
-      const word = el("span", "spv-word", "Draft Board"); word.style.color = L["accent-2-ink"];
-      const tab = el("span", "spv-tab", "Rankings"); tab.style.color = L["accent-2-dim"];
-      bar.append(year, word, tab);
-      const row = el("div", "spv-row");
-      const btn = el("span", "spv-btn", "Edit rankings"); btn.style.background = L.btn || L["accent-2"]; btn.style.color = L["btn-ink"] || L["accent-2-ink"];
-      const chip = el("span", "spv-chip", "All hitters · 597"); chip.style.color = L["accent-2-text"];
-      row.append(btn, chip);
-      const tier = el("div", "spv-tier", "Tier 1"); tier.style.background = L["accent-2"]; tier.style.color = L["accent-2-ink"];
-      const meters = el("div", "spv-meters");
-      for (const [w, pct] of [[0.9, 92], [0.35, 30], [0.62, 64]]) { const m = el("div", "spv-meter"); const f = el("i"); f.style.width = `${w * 100}%`; paint(f, pct); m.append(f); meters.append(m); }
-      pv.append(bar, row, tier, meters);
-      b.append(pv, el("span", "sname", sc.name), el("span", "sblurb", sc.blurb));
-      b.addEventListener("click", () => { T.set({ scheme: id }); renderAppearance(); });
-      sg.append(b);
-    }
-    box.append(sg);
-
-    // light / dark
-    box.append(el("h3", "asub", "Light or dark"));
-    const seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Light or dark");
-    for (const [v, l] of [["system", "Match the phone / Mac"], ["light", "Light"], ["dark", "Dark"]]) {
-      const sb = el("button", "segbtn", l); sb.type = "button"; sb.setAttribute("aria-pressed", String(v === cur.theme));
-      sb.addEventListener("click", () => { T.set({ theme: v }); renderAppearance(); });
-      seg.append(sb);
-    }
-    box.append(seg);
-
-    // layout
-    box.append(el("h3", "asub", "Layout"));
-    const lseg = el("div", "seg"); lseg.setAttribute("role", "group"); lseg.setAttribute("aria-label", "Layout");
-    for (const [v, l] of [["auto", "Auto"], ["mobile", "Mobile"], ["desktop", "Desktop"]]) {
-      const sb = el("button", "segbtn", l); sb.type = "button"; sb.setAttribute("aria-pressed", String(v === T.viewPref()));
-      sb.addEventListener("click", () => { T.setView(v); renderAppearance(); });
-      lseg.append(sb);
-    }
-    box.append(lseg);
-    box.append(el("p", "note", "Auto gives phones the compact layout: filters fold behind one button, each row's percentile chips scroll sideways, and the card opens as a full-width sheet. Desktop on a phone shows the full layout zoomed out."));
-
-    // type
-    box.append(el("h3", "asub", "Font"));
-    T.preloadFonts();
-    const fg = el("div", "fonts");
-    for (const [id, f] of Object.entries(T.fonts)) {
-      const b = el("button", "fontcard"); b.type = "button"; b.setAttribute("aria-pressed", String(id === cur.font));
-      const h = el("span", "fhead", "2027 Draft Board"); h.style.fontFamily = f.display;
-      const body = el("span", "fbody", "Yordan Alvarez · HOU · OF, DH · .442 xwOBA · 94.2 mph"); body.style.fontFamily = f.body;
-      const nums = el("span", "fnums", "0123456789 · K% BB% u(K-BB%) nERA"); nums.style.fontFamily = f.body;
-      b.append(h, body, nums, el("span", "sname", f.name), el("span", "sblurb", f.blurb));
-      b.addEventListener("click", () => { T.set({ font: id }); renderAppearance(); });
-      fg.append(b);
-    }
-    box.append(fg);
-    box.append(el("p", "note", "The percentile colours (blue cold, red hot) are the same in every scheme."));
+    row("Site default", "What a device shows before you pick anything on it.", def);
+    const sb = renderSyncBox(), sh = sb.querySelector("h3"), sn = sb.querySelector(":scope > p.note");
+    if (sh) sh.remove(); if (sn) sn.remove();
+    row("Sync across devices", "Fantasy scoring, stars, the draft board and rankings, kept the same on every device you connect (a private note on your GitHub). Colours and layout stay each device's own.", sb);
   }
 
   /* ---------- Explore: any player, any season ---------- */
