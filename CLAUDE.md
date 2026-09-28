@@ -414,6 +414,12 @@ is deploy-limited.
   because `index.html` doesn't round-trip); the page buttons (`.modes`) open under it in a two-column grid and close on a
   pick, a page change or a tap elsewhere. Desktop keeps its single row. The swirl pattern behind cards and list pages
   runs at 45% (it competed with them).
+* **days.js is warmed in the background** (Sean, 28 Sep 2026: faster filters on a phone): ~4 s after the site settles it is
+  `fetch`ed into the browser cache (not run) so the first date range or split parses from cache instead of downloading
+  ~5 MB; skipped under data saver. Splitting it by player doesn't work — a card in a window or split is ranked against the
+  whole pool in that window — and a columnar repack saved only ~8%. The phone's Menu panel shows the "through" date.
+* **Stylesheet cleanups are checked by computed style**, not by eye: the scratch harness records every element's computed
+  style in ~45 states (phone / desktop, light / dark, every page and card tab) and a cleanup must leave all of them identical.
 * **Closing a card keeps the list's place** (`listAt` in `render()`): the rows' scroll, sideways scroll and page scroll are
   noted while no card is up and put back when one closes — on a phone the list is redrawn under the card and started over.
 * **The list pages share the pattern** (Sean, 26 Sep 2026): Leaderboard, Trending, Rankings, Draft board, Fantasy,
