@@ -24,6 +24,9 @@ on:
       rescore:
         description: "rebuild past seasons instead (e.g. 2015 2016 … 2025); blank for the daily run"
         default: ""
+      auto:
+        description: "set by the outside timer (cron-job.org): only build if today's update isn't live yet, like a scheduled run"
+        default: ""
       dry:
         description: "build but don't publish"
         type: boolean
@@ -53,7 +56,9 @@ jobs:
         id: gate
         run: |
           go=true
-          if [ "${{ github.event_name }}" = "schedule" ]; then
+          # the outside timer (cron-job.org, 28 Sep 2026 — GitHub's own schedule kept starting hours late or not at all)
+          # starts a manual run with auto=1, which asks the same questions as a scheduled one
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event.inputs.auto }}" = "1" ]; then
             # GitHub starts scheduled runs late when it's busy — hours late, some mornings (25 Sep 2026: the 4:45 run
             # began at 10:10). So there are backup times above, and every scheduled run just asks: is it past 4:45 in
             # New York, and is today's update not live yet? The first one that finds it missing does it; the rest stand down.

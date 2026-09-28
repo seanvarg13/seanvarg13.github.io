@@ -23,7 +23,10 @@ This repo is **two things at once**:
 `tools/`, the same steps as the Mac's `daily_update.py`, published as a plain commit on top of `main` (never a
 force-push), with the download caches kept between runs. GitHub starts scheduled runs late on busy mornings (hours, sometimes), so the workflow has backup times
 through the morning and each scheduled run only goes if it is past 4:40 in New York and `data.js` isn't through
-yesterday yet. `tools/cloud.json` is the switch: `{"daily": true}` =
+yesterday yet. **That still wasn't enough** (27-28 Sep 2026: no scheduled run started before 10 am), so the real trigger is an
+**outside timer**: cron-job.org POSTs a `workflow_dispatch` with `auto=1` at 4:45 New York time (Sean's fine-grained token,
+Actions read/write on this repo only, lives there, not here); `auto=1` makes a manual run ask the same "already live?"
+question as a scheduled one. A Claude routine ("Site daily update kick", 4:50) checks and kicks it too; GitHub's schedule stays as the last backup. `tools/cloud.json` is the switch: `{"daily": true}` =
 the cloud publishes and the Mac's job and publisher stand down (they read the file from `main`); `false` = the Mac
 publishes and the schedule does nothing (a manual run still works: Actions → Daily update → Run workflow, with
 optional `steps`, `rescore` years and `dry`). The directional models are not in the repo: the Mac's publisher
@@ -390,6 +393,9 @@ is deploy-limited.
   card in the site's one `#modal` via `showPageCard()`, with classes `pagecard` (no ×) and `pagebg` (white with interlocking square double spirals, each chained into the next, whole chains alternating navy and light blue — two masks, `--swirl-a` / `--swirl-b`, Sean 26 Sep 2026; since 27 Sep drawn by `buildSwirl()` in `app.js` as an SVG in `--swirl-img` with each navy / light-blue hand-off faded through the mid colour, colours from the theme, the masks the fallback —
   pattern — Sean, 26 Sep 2026: "I don't really like the slant design" — masked in the theme's colours, instead of the dimmed list). Same element, classes and
   `playerView()` as a card off a list, so a change to one is a change to the other.
+* **One lifted look** (Sean, 28 Sep 2026, from cron-job.org's screenshot): every card, panel, dropdown, button and tile that
+  stands off the page has rounded corners, a faint hairline edge and a soft all-round shadow (`--lift-card` / `--lift-menu` /
+  `--lift-btn`, the block at the end of `styles.css`) — the navy outlines and hard offset shadows are gone.
 * **The list pages share the pattern** (Sean, 26 Sep 2026): Leaderboard, Trending, Rankings, Draft board, Fantasy,
   Eligibility and Compare put the same white + spiral pattern behind the page (`body[data-mode=…]::before` / `::after`, fixed) and
   gather `main.wrap` — filters, table, notes — into one white card with the player card's outline and shadow.

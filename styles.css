@@ -2870,3 +2870,26 @@ body[data-mode="pitches"] main.wrap > .notes { display: none; }   /* the lists' 
 .uerabox .ubt.babipyrs tr.fcur td { background: var(--accent-wash); font-weight: 700; }
 :root[data-view="mobile"] .btabs { gap: 3px; }
 :root[data-view="mobile"] .btab { padding: 0 4px; }   /* seven hitter tabs (BABIP made it seven) fit a 390px phone */
+/* One look for everything that stands off the page (Sean, 28 Sep 2026, pointing at cron-job.org's screenshot: "precisely
+   like this big thing with the shadow"): softly rounded corners, a hairline edge you barely see, and a deep, soft shadow
+   that falls all round it — no navy outline, no hard offset shadow. Cards and panels take the full shadow, dropdowns a
+   middle one, buttons and small tiles the same thing scaled down. */
+:root {
+  --lift-edge: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  --lift-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 12px 34px rgba(0, 0, 0, 0.24);
+  --lift-menu: 0 1px 2px rgba(0, 0, 0, 0.08), 0 8px 22px rgba(0, 0, 0, 0.2);
+  --lift-btn: 0 1px 2px rgba(0, 0, 0, 0.1), 0 3px 9px rgba(0, 0, 0, 0.16);
+}
+:root:root .modal.pcard .modal-panel, :root:root:not([data-view="mobile"]) .modal.pcard .modal-panel, :root:root[data-view="mobile"] .modal.pcard .modal-panel,
+:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap {
+  border: var(--lift-edge); border-radius: 10px; box-shadow: var(--lift-card); }
+:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap { overflow: clip; }
+:root:root .board, :root:root section.xboard, :root:root .btabbody, :root:root .hubcard, :root:root .eadder, :root:root .sitedef {
+  border: var(--lift-edge); border-radius: 8px; box-shadow: var(--lift-card); }
+:root:root .phfilt.phpop, :root:root .pop, :root:root .hmenu, :root:root .menupop, :root:root .addlist, :root:root .ddmenu, :root:root .modemenu {
+  border: var(--lift-edge); border-radius: 8px; box-shadow: var(--lift-menu); }
+:root:root .modes a, :root:root .modes .modesel, :root:root .phead .starbtn, :root:root .phead .phtoggle, :root:root .phead .mplate .btn,
+:root:root .btab, :root:root .btab:first-child, :root:root .btab:last-child, :root:root .tbtns button, :root:root .tbtns .btn {
+  border: var(--lift-edge); border-radius: 6px; box-shadow: var(--lift-btn); }
+:root:root .btab.on, :root:root .modes a[aria-current="page"], :root:root .modes .modesel[aria-current="page"] { border: var(--lift-edge); }
+:root:root .phead .mplate .mug, :root:root .fanttile { border: var(--lift-edge); border-radius: 8px; box-shadow: var(--lift-btn); }
