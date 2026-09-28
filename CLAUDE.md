@@ -406,7 +406,9 @@ is deploy-limited.
   stands off the page has square corners (Sean, 28 Sep 2026 evening: "hard and not soft" — every radius in `styles.css` is 0
   but true circles, 50%) and a plain navy border, **no shadow** (Sean: "instead of the shadows just do a border"): 2px on
   cards, panels and dropdowns (`--lift-line`), 1px on buttons and tiles (`--lift-edge`); `--lift-card` / `--lift-menu` /
-  `--lift-btn` are `none` (the block near the end of `styles.css`). The soft all-round shadow of that morning is gone. A down-right shadow
+  `--lift-btn` are `none` (the block near the end of `styles.css`). The soft all-round shadow of that morning is gone, and so is every other drop / offset shadow in the stylesheet
+  (`--shadow` is `none`; Sean: "eliminate the shadow stuff and just do regular borders") — only thin rings round bubbles /
+  headshots and inset marker lines are left. Don't add shadows back unasked. A down-right shadow
   and a bevel were tried the same afternoon and dropped — Sean: the morning's version "looks better". Don't bring the
   bevel back unasked. Also from that pass: the card's × is a navy button like the rest, Star is outlined (secondary) while
   Filters stays solid, 6px between the card's band and its first section, the phone's card tabs are one sideways-sliding row
