@@ -2936,3 +2936,17 @@ body[data-mode="pitches"] main.wrap > .notes { display: none; }   /* the lists' 
 :root:root .btab, :root:root .btab:first-child, :root:root .btab:last-child, :root:root .btab.on, :root:root .tbtns button, :root:root .tbtns .btn,
 :root:root .modes a[aria-current="page"], :root:root .modes .modesel[aria-current="page"], :root:root .phead .mplate .mug, :root:root .fanttile {
   border: 2px solid; border-color: var(--bevel); background-clip: border-box; }
+/* The bevel on the big boxes sits on top of what's inside them (Sean, 28 Sep 2026: the card's blue header had a white edge
+   and no bevel — "I want the bevel color to be the same blue in that area"). No edge of their own, so the blue runs to the
+   side; the light and shade are a see-through layer over everything, so they're lighter and darker blue over the blue and
+   lighter and darker white over the white. It passes every tap through. */
+:root:root .modal.pcard .modal-panel, :root:root:not([data-view="mobile"]) .modal.pcard .modal-panel, :root:root[data-view="mobile"] .modal.pcard .modal-panel,
+:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap,
+:root:root .board, :root:root section.xboard, :root:root .btabbody, :root:root .hubcard, :root:root .eadder, :root:root .sitedef {
+  border: 0; box-shadow: 0 0 4px rgba(0, 0, 0, 0.18), 0 0 22px rgba(0, 0, 0, 0.32); }
+:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap,
+:root:root .board, :root:root section.xboard, :root:root .btabbody, :root:root .hubcard, :root:root .eadder, :root:root .sitedef { position: relative; }
+:root:root .modal.pcard .modal-panel::after,
+:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap::after,
+:root:root .board::after, :root:root section.xboard::after, :root:root .btabbody::after, :root:root .hubcard::after, :root:root .eadder::after, :root:root .sitedef::after {
+  content: ""; position: absolute; inset: 0; z-index: 50; pointer-events: none; box-shadow: var(--bevel-in); }
