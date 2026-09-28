@@ -58,10 +58,10 @@ table column.
 ERA, SIERA, FIP, Avg EV, Hard-Hit% and Barrel%. Groups named in `meta.pitcherCardFold` ride below as a fold-out instead of in a column.
 
 **uK% and uBB%** are what his process rates say the strikeout and walk rates should be, and they are what uERA is
-built on. uK% is fitted on his Whiff% and Strike%: `-26.975 + 0.933·Whiff% + 0.409·Strike%` (`UK` in `app.js`; Sean,
-25 Sep 2026), least squares over every 100+ BF pitcher-season 2015-2026 bar 2020, weighted by BF. It sits within half
-a point of the league's real K% every season and misses a pitcher's by ~2.6; Whiff% taken as the K% directly — the
-old rule — ran 2.5 points high and missed by 3.4, and 2 × SwStr% + 1 did no better. uBB% (since 28 Sep 2026) is the walk rate
+built on. uK% (since 28 Sep 2026) is the strikeout rate pitchers with his process have historically had: the league's K% moved
+by his Whiff% (+0.90 a point), Strike% (+0.89), Swing% (−0.52), Z-Contact% (−0.16), Chase% (−0.10) and Zone% (+0.05)
+each against the league's, fitted over every 100+ BF pitcher-season 2015-2026 — within ~2.0 K% points of an established
+pitcher's real K% (the old Whiff% + Strike% formula: 2.2), steady weights season to season, no overfitting. uBB% (since 28 Sep 2026) is the walk rate
 pitchers with his process have historically had: the league's BB% moved by how far his Strike%, Zone%, Chase%, Swing%,
 Z-Contact% and Whiff% each sit from the league's, weights fitted over every 100+ BF pitcher-season 2015-2026. It lands
 within ~1.5 points of a pitcher's real BB% (the old Strike%-percentile match: 1.7) and predicts next season's BB% better
