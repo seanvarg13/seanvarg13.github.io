@@ -227,6 +227,23 @@ Statcast/Directional toggle and the `xws` column are gone). The build still carr
   put on the ERA scale as `lgERA + (xw − lgwOBA) / wobaScale · pa9`. So a high line-drive rate never punishes
   him, but putting the ball in the air does.
 
+**xK%** (hitters; `XKH` / `xKFrom` / `lgRatesH` in `app.js`; Sean, 28 Sep 2026) = the league's K% moved by his Whiff% (+0.99 a
+point), Z-Swing% (−0.21), O-Swing% (−0.27) and the strike rate of the pitches he sees (`strk`, +0.52), each against the
+dataset's league rate (hitters with 20+ PA, PA-weighted), fitted over every 100+ PA hitter-season 2015-2026: 1.72 K% points
+from a 300+ PA hitter's real K%, the same on unseen seasons. Z- / O-Contact added nothing once Whiff% is in, and per-pitch
+swinging / called strike rates did worse. **Unlike uBB%, it does not beat his own K% at next season's** (2.76 vs 2.60
+points; the two averaged 2.55) — it says what his swings and misses imply, not a forecast. Added to `V()` for every view;
+a Leaderboard / Compare column (`LB_EXTRA_H`) and the Spreadsheet Stats Plate Discipline table.
+
+**Arsenal Opt.** (pitchers; `arsenalOpt` / `aoptBase` in `app.js`; Sean, 28 Sep 2026: "how much the pitcher optimizes their
+arsenal %s to throw pitches that ... get more swing and miss"): his pitches' xWhiff averaged by his real usage, minus the
+same pitches averaged at a typical mix (the league's share of each pitch type among pitchers who throw it 3%+, scaled to his
+arsenal), in whiff-per-swing points; pitches under 3% use ignored. Checked 2024-26: real Whiff% ≈ typical-mix xWhiff + ~1.0 ×
+Arsenal Opt. (weight .94-1.06), and his real Whiff% tracks the mix-weighted xWhiff (r .77) far better than the typical-mix
+one (.64). Full season only (`V()` sets `aopt` when no window / split). On the Stuff tab (with its percentile), a Leaderboard
+column (`LB_EXTRA_P`) and a sortable Stuff+ board column (the pitcher's value on each of his rows). A whiff-only lens: a
+sinkerballer leaning on his sinker for grounders reads negative by design.
+
 **MLB-equivalent uERA** (the minors' rows in Season Stats, `milbU` / `MILB_X` in `app.js`): the level's Whiff%,
 Strike%, GB% and Popup% shifted up to the majors by a fixed table per level, then uERA against that season's MLB pool.
 The table comes from `tools/models/milb_translate.py` (same-season pairs at two levels, 2021 on, reliability-corrected
@@ -486,6 +503,13 @@ is deploy-limited.
   percentile colour (`.hot`, stretched over the row's padding), the rest plain; the heat-off / sorted-tint rules skip `.hot`.
   Trending rows had no headline percentile (`placeIn` only covered the listed stats) — the pool now keeps a sorted list for
   the headline too.
+* **Leaderboard / Trending / Rankings / Draft board wear Fantasy's controls** (Sean, 28 Sep 2026): the toolbar buttons are
+  light blue with navy type (navy while active), and `#colhead` is Fantasy's pale header — small grey labels, the sorted one
+  in blue, a light-blue rule under it. The Stuff+ board keeps its navy header.
+* **Card tables in the same dress** (Sean, 28 Sep 2026): every table in a card's bottom tabs has the pale header; in
+  Spreadsheet Stats a stat his card ranks is filled with its percentile colour (`pctOf` in `renderViewStats`, from the pool's
+  `st.pct`), like the Stuff table's grades. The card's bottom tabs are outlined white with the picked one light blue; the
+  Filters button on the band stays navy (a light-blue one vanishes on the light-blue band).
 * **Projections and Buy low / Sell high were built and removed the same day** (Sean, 28 Sep 2026: "I don't need those") —
   the pages, the home cards, `tools/build_proj.py` and `proj.js` are gone. Don't bring them back unasked.
 * **Starts / relief split** (Sean, 26 Sep 2026): a pitcher who both started and relieved (`ctx.GS > 0` and `G > GS`)
