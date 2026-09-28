@@ -403,9 +403,10 @@ is deploy-limited.
   pattern — Sean, 26 Sep 2026: "I don't really like the slant design" — masked in the theme's colours, instead of the dimmed list). Same element, classes and
   `playerView()` as a card off a list, so a change to one is a change to the other.
 * **One lifted look** (Sean, 28 Sep 2026, from cron-job.org's screenshot): every card, panel, dropdown, button and tile that
-  stands off the page has softly rounded corners, a faint hairline edge and a soft all-round shadow (`--lift-edge` /
-  `--lift-card` / `--lift-menu` / `--lift-btn`, the block near the end of `styles.css`). Square corners, a down-right shadow
-  and a bevel were all tried the same afternoon and dropped — Sean: the morning's version "looks better". Don't bring the
+  stands off the page has square corners (Sean, 28 Sep 2026 evening: "hard and not soft" — every radius in `styles.css` is 0
+  but true circles, 50%), a faint hairline edge and a soft all-round shadow (`--lift-edge` /
+  `--lift-card` / `--lift-menu` / `--lift-btn`, the block near the end of `styles.css`). A down-right shadow
+  and a bevel were tried the same afternoon and dropped — Sean: the morning's version "looks better". Don't bring the
   bevel back unasked. Also from that pass: the card's × is a navy button like the rest, Star is outlined (secondary) while
   Filters stays solid, 6px between the card's band and its first section, the phone's card tabs are one sideways-sliding row
   (faded at the right edge, the picked tab scrolled into view in `renderBelow`), and dark mode darkens the swirl and the
