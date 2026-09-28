@@ -389,12 +389,17 @@ def _fit_stuff(train: pd.DataFrame, d: pd.DataFrame, ref: pd.DataFrame | None = 
         log(f"  stuff: too few tracked pitches ({sw.sum()} swings)"); return None
     kw = dict(max_iter=400, learning_rate=0.06, max_leaf_nodes=63, min_samples_leaf=200, l2_regularization=1.0,
               categorical_features=[0], early_stopping=True, validation_fraction=0.1, random_state=0)
-    bcols = [c for c in ftr.columns if c not in STUFF_WHIFF_ONLY]
-    Xtr = ftr.to_numpy()
+    # a trait no pitch in the training seasons has (spin axis and arm angle before 2020) is left out: an all-empty
+    # column makes the fit fail outright (numpy's "window shape" error), which cost 2015-2019 every grade
+    seen = lambda c, m: bool(np.isfinite(ftr[c].to_numpy(dtype=float)[m]).any())
+    wcols = [c for i, c in enumerate(ftr.columns) if i == 0 or seen(c, sw)]     # column 0 is the categorical one
+    bcols = [c for c in wcols if c not in STUFF_WHIFF_ONLY and seen(c, bip)]
+    if len(wcols) < len(ftr.columns): log(f"  stuff: no data for {', '.join(c for c in ftr.columns if c not in wcols)} — graded without")
+    ftr = ftr[wcols]; Xtr = ftr.to_numpy()
     wm = HistGradientBoostingClassifier(**kw).fit(Xtr[sw], np.isin(desc[sw], list(WHIFF)))
     bm = HistGradientBoostingClassifier(**kw).fit(ftr[bcols].to_numpy()[bip], bb.to_numpy()[bip].astype(int))
     del Xtr, ftr
-    f = stuff_features(d)
+    f = stuff_features(d)[wcols]
     has = f.velo.notna().to_numpy()
     X = f.to_numpy()[has]
     pw = wm.predict_proba(X)[:, 1]; pbt = bm.predict_proba(f[bcols].to_numpy()[has])
@@ -404,7 +409,7 @@ def _fit_stuff(train: pd.DataFrame, d: pd.DataFrame, ref: pd.DataFrame | None = 
     pts = d["pitch_type"][has]
     # the yardstick: this dataset's own pitches, or (the minors) the reference MLB season's, graded by the same models
     if ref is not None:
-        fr = stuff_features(ref); hr = fr.velo.notna().to_numpy()
+        fr = stuff_features(ref)[wcols]; hr = fr.velo.notna().to_numpy()
         rw = wm.predict_proba(fr.to_numpy()[hr])[:, 1]; rb = bm.predict_proba(fr[bcols].to_numpy()[hr])
         rdf = pd.DataFrame({"pitch_type": ref["pitch_type"].to_numpy()[hr], "n": 1.0, "w": rw, "g": rb[:, 0], "p": rb[:, 1]})
         rair = ref["bb_type"].isin(["line_drive", "fly_ball"])
