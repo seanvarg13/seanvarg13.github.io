@@ -2905,3 +2905,7 @@ body[data-mode="pitches"] main.wrap > .notes { display: none; }   /* the lists' 
 :root:not([data-view="mobile"]) .btab { padding: 0 16px; }
 :root[data-view="mobile"] .btabs { flex-wrap: wrap; row-gap: 6px; }
 :root[data-view="mobile"] .btab { flex: 1 1 calc(25% - 3px); min-width: 0; }
+/* the table box inside a list page's card stays flat — its own shadow ran under the filter row's white and showed as a
+   hard white bar between the buttons and the table (Sean, 28 Sep 2026); the card around it carries the lift */
+:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap :is(.board, section.xboard) { box-shadow: none; }
+:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap > .toolbar { border-bottom: 0; }
