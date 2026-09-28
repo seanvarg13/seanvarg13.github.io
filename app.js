@@ -5150,6 +5150,8 @@
       bar.append(b);
     }
     sec.append(bar);
+    // a phone's tab row slides sideways: keep the picked tab in view after a redraw (the row starts over at the left)
+    if (mobileView() && pick) requestAnimationFrame(() => { const on = bar.querySelector(".btab.on"); if (on && on.offsetLeft + on.offsetWidth > bar.clientWidth - 24) bar.scrollLeft = on.offsetLeft - 24; });
     if (tabPad && tabPad.who === p.type + p.id + ":" + pick) sec.style.minHeight = tabPad.h + "px";
     if (!pick) return sec;
     const body = el("div", "btabbody");
