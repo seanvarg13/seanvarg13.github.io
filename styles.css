@@ -2883,9 +2883,10 @@ body[data-mode="pitches"] main.wrap > .notes { display: none; }   /* the lists' 
   --bevel: var(--bevel-lt) var(--bevel-dk) var(--bevel-dk) var(--bevel-lt);
   --bevel-lt: rgba(255, 255, 255, 0.6); --bevel-dk: rgba(0, 0, 0, 0.3);
   --lift-edge: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
-  --lift-card: 7px 9px 12px rgba(0, 0, 0, 0.34);
-  --lift-menu: 5px 6px 9px rgba(0, 0, 0, 0.3);
-  --lift-btn: 2px 3px 5px rgba(0, 0, 0, 0.3);
+  /* the shadow falls all round the box again, bevel kept (Sean, 28 Sep 2026: "bevel edges and make the shadow in every direction") */
+  --lift-card: 0 0 4px rgba(0, 0, 0, 0.18), 0 0 22px rgba(0, 0, 0, 0.32);
+  --lift-menu: 0 0 3px rgba(0, 0, 0, 0.18), 0 0 16px rgba(0, 0, 0, 0.3);
+  --lift-btn: 0 0 2px rgba(0, 0, 0, 0.2), 0 0 8px rgba(0, 0, 0, 0.3);
 }
 :root:root .modal.pcard .modal-panel, :root:root:not([data-view="mobile"]) .modal.pcard .modal-panel, :root:root[data-view="mobile"] .modal.pcard .modal-panel,
 :root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap {
