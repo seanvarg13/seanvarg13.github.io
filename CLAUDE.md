@@ -463,6 +463,11 @@ is deploy-limited.
   `state.expanded`, and `renderModal`'s `listMode` includes home — Sean, 28 Sep 2026), then cards for starred players and the season's
   xwOBA / Stuff+ / uERA leaders, and every page as tiles (`HOME_SECS` + `SHORT` blurbs). Only data.js is
   used so it opens fast; it sits on the swirl pattern like the list pages (CSS `.hub.home`).
+* **Draft Mode is gone** (Sean, 28 Sep 2026: "serves no purpose anymore with the homepage"): `renderHub`, its menu entry
+  (also stripped in `app.js` for the Mac's template) and its home tile; `#draftmode` lands on the home page. The Fantasy
+  menu's group key is still `draftmode` (index.html's `#modesel`), but it's never a page.
+* **Rankings and the Draft board list everyone** (Sean, 28 Sep 2026: "see everyone who can get drafted"): `noMin()` makes
+  `effMin` 0 there and hides the Min box / Minimum section; percentiles still rank against the 300+ PA / BF pool.
 * **Projections and Buy low / Sell high were built and removed the same day** (Sean, 28 Sep 2026: "I don't need those") —
   the pages, the home cards, `tools/build_proj.py` and `proj.js` are gone. Don't bring them back unasked.
 * **Starts / relief split** (Sean, 26 Sep 2026): a pitcher who both started and relieved (`ctx.GS > 0` and `G > GS`)
