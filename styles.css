@@ -3017,3 +3017,7 @@ body[data-mode="home"] main.wrap > .notes { display: none; }   /* the lists' per
 :root[data-view="mobile"] .phead .mrank { column-gap: 6px; }
 :root[data-view="mobile"] .phead .mrank .seg button { padding-inline: 7px; }
 :root[data-view="mobile"] .phead .mrank .vlabel:has(+ .seg) { flex-basis: 100%; }
+/* and a phone's touch on the card can only move it up and down (or zoom): iOS would still rubber-band a box sideways
+   under a diagonal drag. The tab row, the stat strip and the tables are scrollers of their own, so they still slide */
+:root[data-view="mobile"] .modal.pcard :is(.modal-panel, #modal-body, .cardscroll) { touch-action: pan-y pinch-zoom; overscroll-behavior-x: none; }
+:root[data-view="mobile"] .modal.pcard :is(.btabs, .hstrip) { touch-action: pan-x pan-y pinch-zoom; }

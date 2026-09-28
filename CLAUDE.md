@@ -421,6 +421,9 @@ is deploy-limited.
   whole pool in that window — and a columnar repack saved only ~8%. The phone's Menu panel shows the "through" date.
 * **Stylesheet cleanups are checked by computed style**, not by eye: the scratch harness records every element's computed
   style in ~45 states (phone / desktop, light / dark, every page and card tab) and a cleanup must leave all of them identical.
+* **A phone card only moves up and down** (Sean, 28 Sep 2026: "scroll it left and right for no reason"): `.cardscroll` clips
+  sideways overflow, doesn't bounce, and takes `touch-action: pan-y pinch-zoom`; the tab row, stat strip and tables are
+  scrollers of their own and still slide. Keep anything wide inside its own `overflow-x: auto` box.
 * **Closing a card keeps the list's place** (`listAt` in `render()`): the rows' scroll, sideways scroll and page scroll are
   noted while no card is up and put back when one closes — on a phone the list is redrawn under the card and started over.
 * **The list pages share the pattern** (Sean, 26 Sep 2026): Leaderboard, Trending, Rankings, Draft board, Fantasy,
@@ -445,7 +448,8 @@ is deploy-limited.
   is the official box score summed game by game (`fGamesOf` / `fWindow` / `fSum`, last three MLB seasons only; a hand split
   shares games out by the day's pitch data, so estimates); the rest is `V(p).m` plus the pool's uERA / Stuff uERA.
 * **The home page is a dashboard** (`renderHome`, Sean, 28 Sep 2026: "a legit home page"): a hero card (games through / updated,
-  a player search that opens his page, the most-used pages), then cards for starred players, next season's projected
+  a player search, the most-used pages; a name anywhere on it pops his card up over the home page — `openCard` sets
+  `state.expanded`, and `renderModal`'s `listMode` includes home — Sean, 28 Sep 2026), then cards for starred players, next season's projected
   leaders (from `proj.js`, scored with the preset in use), the top buy-low / sell-high names (`buySellRows`), the season's
   xwOBA / Stuff+ / uERA leaders, and every page as tiles (`HOME_SECS` + `SHORT` blurbs). Only data.js and proj.js are
   used so it opens fast; it sits on the swirl pattern like the list pages (CSS `.hub.home`).
