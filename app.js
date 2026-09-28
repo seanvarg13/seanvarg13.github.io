@@ -3274,7 +3274,7 @@
     const modal = $("modal"), body = $("modal-body");
     modal.classList.remove("pcard"); document.body.classList.remove("cardpop");
     const key = state.expanded;
-    const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy", "pitches", "proj", "buysell"].includes(state.mode);
+    const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy", "pitches", "proj", "buysell", "home"].includes(state.mode);
     const src = state.cardDs && histDataset(state.cardDs) ? histDataset(state.cardDs).players : DATA.players;
     const p0 = key && listMode ? (src.find((q) => q.type + q.id === key) || DATA.players.find((q) => q.type + q.id === key)) : null;
     modal.classList.toggle("pcard", !!p0); document.body.classList.toggle("cardpop", !!p0);   // before the lock: a phone keeps its place under a card
@@ -3818,8 +3818,9 @@
   // the buy-low / sell-high names and the season's leaders, then every page. Only files already loaded (data.js) or small
   // (proj.js, 0.7 MB) are used, so it opens fast on a phone.
   // a name on the home page opens his page (the same card), this season, full season, on the tab that explains the pick
-  const openCard = (p, tab) => { state.x = { id: p.id, type: p.type, ds: CUR.key }; state.expanded = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };
-    if (tab) state.pbtab = tab; savePrefs(); location.hash = "#player/" + p.id; };
+  // a name on the home page pops his card up over the home page (as the lists do), not off to his page
+  const openCard = (p, tab) => { state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };
+    if (tab) state.pbtab = tab; savePrefs(); state.expanded = p.type + p.id; render(); };
   const whenBuilt = (b) => { const d = b ? new Date(b.replace(" ", "T") + "Z") : null; return d && !isNaN(d) ? d.toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }) : b || ""; };
   function renderHome() {
     const box = $("hub"); box.innerHTML = ""; box.classList.add("home");
@@ -4114,7 +4115,7 @@
     document.querySelector(".toolbar:not(.xtoolbar)").hidden = other; $("board").hidden = other; $("drafttools").hidden = true; $("ranktools").hidden = true; $("setbar").hidden = true; $("lbtools").hidden = true;
     renderChrome();
     if (state.textModal) { renderTextModal(); } else if (other) { $("modal").hidden = true; lockPage(false); parkControls(); $("modal-body").innerHTML = ""; }
-    if (hub) { $("hub").classList.toggle("home", home); home ? renderHome() : renderHub(); return; }
+    if (hub) { $("hub").classList.toggle("home", home); if (home) { renderHome(); renderModal(); } else renderHub(); return; }
     if (appear) { renderAppearance(); return; }
     if (fant) { renderFantasy(); renderModal(); return; }
     if (player) {                                        // his page is a card of its own (showPageCard); a settings panel takes its place, over the pattern
