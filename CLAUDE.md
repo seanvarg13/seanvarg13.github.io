@@ -500,7 +500,7 @@ is deploy-limited.
   are heat-coloured; the note is two lines with "More about these numbers"; "Edit scoring" dropped (the Scoring settings tab
   does it); `#fboard` has no frame of its own, the table has the 1px one; the phone's page tabs are a 2×2 grid.
 * **Leaderboard colouring follows Fantasy's** (Sean, 28 Sep 2026: "give the table this same formatting color wise"): with the
-  colour scale off (the default), the column you sort by and the signed xwOBA − wOBA are filled edge to edge with their
+  colour scale off (the default), only the column you sort by is filled edge to edge (xwOBA − wOBA was too, until Sean said not to) with their
   percentile colour (`.hot`, stretched over the row's padding), the rest plain; the heat-off / sorted-tint rules skip `.hot`.
   Trending rows had no headline percentile (`placeIn` only covered the listed stats) — the pool now keeps a sorted list for
   the headline too.
