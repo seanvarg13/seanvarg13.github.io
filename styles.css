@@ -3007,14 +3007,6 @@ body[data-mode="home"] main.wrap > .notes { display: none; }   /* the lists' per
    under a diagonal drag. The tab row, the stat strip and the tables are scrollers of their own, so they still slide */
 :root[data-view="mobile"] .modal.pcard :is(.modal-panel, #modal-body, .cardscroll) { touch-action: pan-y pinch-zoom; overscroll-behavior-x: none; }
 :root[data-view="mobile"] .modal.pcard :is(.btabs, .hstrip) { touch-action: pan-x pan-y pinch-zoom; }
-/* no white card behind the list pages any more (Sean, 28 Sep 2026: "I don't know if there is a need for the white backdrop"):
-   the buttons, the table's own box and the notes sit straight on the pattern; the bits of loose text (the summary beside
-   the buttons, the notes under the table) get a white box of their own so they stay readable on it */
-:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap {
-  background: transparent; border: 0; box-shadow: none; }
-:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap > .notes {
-  background: var(--surface); border: var(--lift-edge); padding: 8px 12px; }
-:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .toolrow .tsum { background: var(--surface); border: var(--lift-edge); padding: 4px 8px; }
-:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) main.wrap > .toolbar :is(#setbar, #drafttools, #trendtools, #ranktools):not([hidden]) {
-  background: var(--surface); border: var(--lift-edge); }
-:root:root:root body:is([data-mode="eligibility"],[data-mode="compare"],[data-mode="fantasy"],[data-mode="pitches"]) .credit { background: var(--surface); border: var(--lift-edge); padding: 6px 10px; }
+/* the white card is back behind the list pages (Sean, 28 Sep 2026: tried without it for an hour, went back), with a plain
+   border and no shadow like everything else; the table and boards inside it drop their own frame so it's one box, not two */
+:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap :is(.board, section.xboard) { border: 0; }
