@@ -403,14 +403,13 @@ is deploy-limited.
   pattern — Sean, 26 Sep 2026: "I don't really like the slant design" — masked in the theme's colours, instead of the dimmed list). Same element, classes and
   `playerView()` as a card off a list, so a change to one is a change to the other.
 * **One lifted look** (Sean, 28 Sep 2026, from cron-job.org's screenshot): every card, panel, dropdown, button and tile that
-  stands off the page shares one look (`--lift-edge` / `--lift-card` / `--lift-menu` / `--lift-btn`, the block near the end of
-  `styles.css`). Since 28 Sep 2026 (Sean, from a spreadsheet pasted into a slide: "the exact format I want") that is square
-  corners, a **bevel** that is shading in the box's own colour, never a new one (`--bevel-in` / `--bevel-in-sm`: soft
-  inset light top-left, soft inset shade bottom-right; the border itself is transparent so it's the box's colour — Sean:
-  "the same color as whatever it is next to"). On the big boxes (card, list-page card, tab panels, boards) the bevel is a `::after` layer on top
-  of their contents (`pointer-events: none`) and they have no edge of their own, so the card's blue header runs to the side and
-  gets blue light and shade — a bevel painted under the contents was covered by the band and left a white rim and a soft shadow all round (Sean, 28 Sep 2026 — briefly
-  down-and-right only the same day; rounded corners before that).
+  stands off the page has softly rounded corners, a faint hairline edge and a soft all-round shadow (`--lift-edge` /
+  `--lift-card` / `--lift-menu` / `--lift-btn`, the block near the end of `styles.css`). Square corners, a down-right shadow
+  and a bevel were all tried the same afternoon and dropped — Sean: the morning's version "looks better". Don't bring the
+  bevel back unasked. Also from that pass: the card's × is a navy button like the rest, Star is outlined (secondary) while
+  Filters stays solid, 6px between the card's band and its first section, the phone's card tabs are one sideways-sliding row
+  (faded at the right edge, the picked tab scrolled into view in `renderBelow`), and dark mode darkens the swirl and the
+  white ground under it.
 * **Phone header is one line** (Sean, 28 Sep 2026): site name, search and a ☰ Menu button (`.navtog`, made in `app.js`
   because `index.html` doesn't round-trip); the page buttons (`.modes`) open under it in a two-column grid and close on a
   pick, a page change or a tap elsewhere. Desktop keeps its single row. The swirl pattern behind cards and list pages
