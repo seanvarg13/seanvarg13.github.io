@@ -431,10 +431,9 @@ is deploy-limited.
   noted while no card is up and put back when one closes — on a phone the list is redrawn under the card and started over.
 * **The list pages share the pattern** (Sean, 26 Sep 2026): Leaderboard, Trending, Rankings, Draft board, Fantasy,
   Eligibility and Compare put the same white + spiral pattern behind the page (`body[data-mode=…]::before` / `::after`, fixed) and
-  gather `main.wrap` — filters, table, notes — into one standing column. Since 28 Sep 2026 evening it has **no white card**
-  behind it (Sean: "I don't know if there is a need for the white backdrop"): buttons, the table's own box and the notes sit
-  on the pattern, and loose text (the summary chip, the draft / trend / rankings bars, the notes, the credit) gets a white
-  box of its own (the block at the end of `styles.css`).
+  gather `main.wrap` — filters, table, notes — into one white card with a plain navy border (no shadow). The table / boards inside it drop their own frame, so
+  it's one box, not two. Taking the white card away (the pattern straight behind buttons, table and notes) was tried on
+  28 Sep 2026 and undone within the hour — Sean agreed the card looks better; don't remove it unasked.
   The card **stands still** (Sean: "I don't want the white box itself to scroll at all"): it fills the screen from under
   the header to an 18px gap (10px on the phone), the page never scrolls, and only the rows' box (`.board-scroll`, Fantasy
   `.fscroll`) moves — filters, pager and column header frozen above it. On the phone, Fantasy keeps the page scroll (its
