@@ -52,7 +52,7 @@
   --lo: #325aa1;      /* percentile: cold — Savant's blue */
   --mid: #b3b3b3;     /* percentile: 50th — a solid grey, not a tint, so the ends carry */
   --hi: #d22d49;      /* percentile: hot  — Savant's red */
-  --shadow: 0 1px 2px rgba(19, 41, 75, 0.06), 0 8px 24px rgba(19, 41, 75, 0.07);
+  --shadow: none;
   --display: "Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif;   /* Savant's type, the site's only font */
   --body: "Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
@@ -91,7 +91,7 @@
     --lo: #4a86dd;
     --mid: #6a7382;
     --hi: #e2455c;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+    --shadow: none;
   }
 }
 :root[data-theme="dark"] {
@@ -128,7 +128,7 @@
   --lo: #4a86dd;
   --mid: #6a7382;
   --hi: #e2455c;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow: none;
 }
 
 /* ---------- base ---------- */
@@ -165,7 +165,7 @@ button { cursor: pointer; }
   font-family: var(--display); font-weight: 600; font-size: 17px; letter-spacing: 0.04em; text-transform: uppercase;
   color: var(--ink-2); text-decoration: none; padding: 5px 14px; border-radius: 0;
 }
-.modes a[aria-current="page"], .modes .modesel[aria-current="page"] { background: var(--accent); color: var(--accent-ink); box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+.modes a[aria-current="page"], .modes .modesel[aria-current="page"] { background: var(--accent); color: var(--accent-ink); box-shadow: none; }
 .stamp { margin-left: auto; color: var(--muted); font-size: 12.5px; }
 .stamp b { color: var(--ink-2); font-weight: 500; }
 
@@ -429,7 +429,7 @@ button { cursor: pointer; }
 .cgrid .chead { margin: -8px -11px 0; padding: 10px 11px 8px; background: var(--surface); }
 .cgrid .plate {
   display: grid; justify-items: center; gap: 6px; padding: 12px 10px 12px; text-align: center;
-  background: var(--surface-2); border: 2px solid var(--plate); border-radius: 0; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.10);
+  background: var(--surface-2); border: 2px solid var(--plate); border-radius: 0; box-shadow: none;
 }
 .cgrid .chead .mug { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; object-position: top; background: var(--surface); border: 2px solid var(--surface); box-shadow: 0 0 0 2px var(--plate); display: block; }
 .cgrid .chead .mug.initials { display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 26px; color: var(--ink-2); }
@@ -461,7 +461,7 @@ button { cursor: pointer; }
 /* ---------- player popup ---------- */
 .modal { position: fixed; inset: 0; z-index: 50; overflow-y: auto; padding: 28px 16px 40px; display: grid; justify-items: center; align-content: start; }
 .modal-back { position: fixed; inset: 0; background: rgba(10, 14, 12, 0.5); }
-.modal-panel { position: relative; width: min(1040px, 100%); background: var(--surface); border-radius: 0; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35); border: 1px solid var(--hair); overflow: clip; }
+.modal-panel { position: relative; width: min(1040px, 100%); background: var(--surface); border-radius: 0; box-shadow: none; border: 1px solid var(--hair); overflow: clip; }
 .modal-close { position: absolute; top: 12px; right: 12px; z-index: 2; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--hair); background: var(--surface); color: var(--ink-2); font-size: 20px; line-height: 1; padding: 0; }
 .modal-close:hover { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 body.modal-open { overflow: hidden; }
@@ -635,7 +635,7 @@ header.top {
 .tiername { border-radius: 0; }
 
 /* player card & popup: navy plate, ruled sections */
-.modal-panel { border-radius: 0; border: 0; box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4); }
+.modal-panel { border-radius: 0; border: 0; box-shadow: none; }
 .modal-close { border-radius: 0; background: rgba(255, 255, 255, 0.14); border-color: transparent; color: var(--band-ink); }
 .modal-close:hover { background: var(--band-ink); color: var(--band); border-color: transparent; }
 .mplate { background: var(--band); color: var(--band-ink); border-bottom: 3px solid var(--accent-2); position: relative; z-index: 1; }
@@ -660,7 +660,7 @@ header.top {
 .cgrid .plate { border-radius: 0; box-shadow: none; border: 1px solid var(--hair); }
 .cgrid .chead .pill { border-radius: 0; }
 .cgrid .chead h3 { text-transform: uppercase; font-size: 18px; letter-spacing: 0.02em; }
-.menupop, .addlist { border-radius: 0; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); }
+.menupop, .addlist { border-radius: 0; box-shadow: none; }
 .mrow, .addhit { border-radius: 0; }
 .tierpick .tierchoice { border-radius: 0; }
 .textmodal h2 { text-transform: uppercase; font-size: 18px; letter-spacing: 0.04em; color: var(--accent); }
@@ -1758,7 +1758,7 @@ body.modal-open header.top { z-index: 60; }
 /* the list itself is Savant's, like every dropdown on the player page: a white box in a heavy dark rule, the pages
    in large type. It sits on the page, outside the header (app.js moves it there), so nothing can clip or cover it. */
 .modemenu { position: fixed; z-index: 1000; display: none; min-width: 150px; margin: 0; padding: 2px 0; list-style: none;
-            background: var(--surface); border: 3px solid var(--ddline); border-radius: 0; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12); }
+            background: var(--surface); border: 3px solid var(--ddline); border-radius: 0; box-shadow: none; }
 .modemenu.show { display: block; }
 .modemenu li { margin: 0; padding: 0; }
 .modemenu li a {
@@ -1883,7 +1883,7 @@ body.modal-open header.top { z-index: 60; }
 
 /* the pinned heading row has to be opaque across the column gaps too, or rows show through it as they pass */
 .cmpgrid .ccorner, .cmpgrid .chead { padding-left: 8px; padding-right: 8px; margin-left: -8px; margin-right: -8px; }
-.cmpgrid .chead { box-shadow: 0 8px 10px -8px rgba(0, 0, 0, 0.25); }
+.cmpgrid .chead { box-shadow: none; }
 :root:not([data-view="mobile"]) .cmpgrid { justify-content: center; }
 
 /* ---- uERA and batted-ball luck: the leaderboard's own table, rigid columns and all ---- */
@@ -1937,7 +1937,7 @@ body.modal-open header.top { z-index: 60; }
 .tbtns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .tbtns .tbtn.open { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
 .pop { position: fixed; z-index: 120; overflow: auto; overscroll-behavior: contain;
-  background: var(--surface); border: 1px solid var(--accent-2); border-radius: 0; box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+  background: var(--surface); border: 1px solid var(--accent-2); border-radius: 0; box-shadow: none;
   min-width: 300px; max-width: min(720px, calc(100vw - 16px)); }
 .pop[hidden] { display: none; }
 .pop-close { position: absolute; top: 6px; right: 8px; z-index: 2; width: 26px; height: 26px; border-radius: 0;
@@ -1976,7 +1976,7 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
   background-repeat: no-repeat; background-color: var(--surface-2); }
 .splate .mug { display: block; width: 80px; height: 80px; margin: -46px auto 0; position: relative;
   border-radius: 50%; object-fit: cover; object-position: top; background: var(--surface);
-  border: 3px solid var(--surface); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25); }
+  border: 3px solid var(--surface); box-shadow: none; }
 .splate .mug.initials { display: grid; place-items: center; font-family: var(--display); font-weight: 700;
   font-size: 26px; color: var(--ink-2); background: var(--surface-2); }
 .splate h2 { margin: 6px 0 0; font-family: var(--display); font-weight: 500; font-size: 30px; line-height: 1.08;
@@ -2062,7 +2062,7 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .hsel .hsl:disabled { cursor: default; color: inherit; }
 .hmenu { position: absolute; top: calc(100% + 7px); left: 50%; transform: translateX(-50%); z-index: 40;
   min-width: calc(100% + 34px); max-height: 46vh; overflow-y: auto; padding: 5px 0; text-align: left;
-  background: var(--surface); border: 2px solid var(--accent-2); border-radius: 0; box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2); }
+  background: var(--surface); border: 2px solid var(--accent-2); border-radius: 0; box-shadow: none; }
 .hmi { display: block; width: 100%; text-align: left; border: 0; background: none; cursor: pointer;
   font-family: var(--display); font-weight: 700; font-size: 17px; line-height: 1.25; color: var(--ink);
   padding: 6px 20px; white-space: nowrap; }
@@ -2143,7 +2143,7 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .rollsvg .rguide { stroke: var(--svtext); stroke-width: 1; stroke-dasharray: 2 2; pointer-events: none; }
 .rollsvg .rhot { stroke: var(--surface); stroke-width: 2; pointer-events: none; }
 .rolltip { position: absolute; z-index: 3; pointer-events: none; display: grid; gap: 1px; padding: 5px 8px; white-space: nowrap;
-  background: var(--surface); border: 1px solid var(--svframe); border-radius: 0; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  background: var(--surface); border: 1px solid var(--svframe); border-radius: 0; box-shadow: none;
   font: 400 11.5px/1.25 "Roboto Condensed", var(--body); color: var(--svtext); }
 .rolltip b { font-size: 13px; color: var(--ink); }
 .rolltip[hidden] { display: none; }
@@ -2361,7 +2361,7 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 /* the list is placed on the page (fixed, over everything) under its opener by app.js — see ddOpenOn */
 .ddmenu { position: fixed; z-index: 1000; max-height: min(50vh, 420px); overflow-y: auto; margin: 0;
   padding: 2px 0; background: var(--surface); border: 3px solid var(--ddline); border-radius: 0; text-align: left;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12); overscroll-behavior: contain; }
+  box-shadow: none; overscroll-behavior: contain; }
 .ddh { padding: 6px 12px 2px; font-family: var(--body); font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--muted); }
 /* a select that opens Savant's list: the select stays, hidden, behind a box (or the pill it sits in) */
@@ -2406,7 +2406,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .modal.pcard .modal-back { display: block; }
 :root[data-view="mobile"] .modal.pcard .modal-panel { position: absolute; left: 8px; right: 8px; top: calc(var(--header-h, 0px) + 8px); bottom: 8px;
   width: auto; min-height: 0; margin: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--hair); border-radius: 0;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35); }
+  box-shadow: none; }
 :root[data-view="mobile"] .modal.pcard #modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 :root[data-view="mobile"] .modal.pcard #modal-body .cardtop { top: 0; }
 :root[data-view="mobile"] .modal.pcard .modal-panel .modal-close { position: absolute; top: 6px; right: 6px; }
@@ -2461,7 +2461,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 /* the card (a popup and his page alike): hard square corners, an outline in the rule's navy and a deeper shadow, so it
    stands off the list or the pattern behind it (the outline went and came back, 26 Sep 2026) */
 .modal.pcard .modal-panel, :root:not([data-view="mobile"]) .modal.pcard .modal-panel, :root[data-view="mobile"] .modal.pcard .modal-panel {
-  border-radius: 0; border: 2px solid var(--rule); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38), 0 3px 8px rgba(0, 0, 0, 0.22); }
+  border-radius: 0; border: 2px solid var(--rule); box-shadow: none; }
 /* The headshot in a framed tile (Sean picked it from four): square, the card's navy outline and hard offset shadow,
    a light wash behind the cut-out, and the Star button under it */
 .phmug, .phleft > .phmug { flex: none; display: flex; flex-direction: column; align-items: center; gap: 8px; align-self: flex-start; }   /* top, so an open Star panel doesn't drag it down */
@@ -2470,7 +2470,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
   width: 116px; height: 116px; margin: 0; align-self: auto; box-sizing: border-box; border-radius: 0; padding-top: 6px;
   object-fit: contain; object-position: center bottom; border: 2px solid var(--rule);
   background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, var(--accent-2)), color-mix(in srgb, var(--surface) 70%, var(--accent-2)));
-  box-shadow: 3px 3px 0 color-mix(in srgb, var(--rule) 35%, transparent); }
+  box-shadow: none; }
 :root .phead .mplate .mug.initials { display: grid; place-items: center; padding: 0; font-size: 34px; color: var(--ink-2); }
 :root[data-view="mobile"] .phead .mplate .mug { width: 92px; height: 92px; }
 :root[data-view="mobile"] .phead .mplate .mug.initials { font-size: 28px; }
@@ -2479,7 +2479,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
    navy outline and a small hard shadow */
 .modes a, .modes .modesel, :root:not([data-view="mobile"]) .modes a, :root:not([data-view="mobile"]) .modes .modesel,
 :root[data-view="mobile"] .modes a, :root[data-view="mobile"] .modes .modesel, .phead .starbtn, .phead .phtoggle, .phead .mplate .btn {
-  border: 2px solid var(--rule); border-radius: 0; box-shadow: 2px 2px 0 color-mix(in srgb, var(--rule) 40%, transparent), 0 3px 8px rgba(0, 0, 0, 0.18); }
+  border: 2px solid var(--rule); border-radius: 0; box-shadow: none; }
 .modes a[aria-current="page"], .modes .modesel[aria-current="page"], :root:not([data-view="mobile"]) .modes a[aria-current="page"],
 :root:not([data-view="mobile"]) .modes .modesel[aria-current="page"], :root[data-view="mobile"] .modes a[aria-current="page"],
 :root[data-view="mobile"] .modes .modesel[aria-current="page"] { border-color: var(--rule); }
@@ -2517,7 +2517,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 .phead .mrank .phtoggle { height: 26px; padding: 0 10px; font-size: 11.5px; }
 .phead .phtoggle.on { background: var(--tab-fill); color: var(--tab-ink); }
 .phfilt.phpop { position: absolute; top: calc(100% + 8px); left: 0; z-index: 30; margin: 0; padding: 12px; width: max-content;
-  background: var(--accent-2); border: 2px solid var(--rule); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38), 0 3px 8px rgba(0, 0, 0, 0.22);
+  background: var(--accent-2); border: 2px solid var(--rule); box-shadow: none;
   align-items: stretch; }
 .phfilt.phpop:empty { display: none; }
 .phfilt.phpop .phgrid { justify-content: start; }
@@ -2542,7 +2542,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 /* Every box casts a shadow (Sean: "basically every box i want it to have a shadow"): the lists, the pages' own boxes,
    the tab panels under a player card and the home tiles take the card's softer cousin; the toolbar buttons match the
    header's. A box nested in one of these (the fantasy table's scroller) is left flat so shadows don't double up */
-.tbtns button, .tbtns .btn { box-shadow: 2px 2px 0 color-mix(in srgb, var(--rule) 30%, transparent), 0 3px 8px rgba(0, 0, 0, 0.14); }
+.tbtns button, .tbtns .btn { box-shadow: none; }
 /* "Classic meters" (Appearance ▸ Percentile bars): the older look — a pale rounded track, the fill in the percentile's
    colour with a round end, a white midline, a big white-ringed bubble, the value bold with its unit, and roomy rows
    between dashed teal rules. Scoped hard (:root:root … .pctclassic) to win over the chart-style track rules */
@@ -2561,7 +2561,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root:root .pctclassic .meter .svtrack::after { content: ""; display: block; position: absolute; left: 50%; top: 0; bottom: 0; width: 1.5px; background: rgba(255, 255, 255, 0.85); z-index: 1; }
 :root:root .pctclassic .meter .svtrack .fill { border-radius: 0; }
 :root:root .pctclassic .meter .svtrack .bub { width: 34px; height: 34px; margin: -17px 0 0 -17px; padding: 0; font-size: 14px; font-weight: 700; line-height: 34px;
-  display: grid; place-items: center; box-shadow: 0 0 0 3px #ffffff, 0 1px 3px rgba(0, 0, 0, 0.25); z-index: 2; }
+  display: grid; place-items: center; box-shadow: 0 0 0 3px #ffffff; z-index: 2; }
 :root:root .pctclassic .meter .svtrack .bub.c3 { font-size: 12px; }
 :root:root .pctclassic .meter .val { font-weight: 700; font-size: 16px; color: var(--ink); text-align: right; white-space: nowrap; }
 .pctfoot { margin: 14px 0 4px; text-align: center; font-size: 12.5px; color: var(--muted); }
@@ -2619,7 +2619,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 .fantedit { font-size: 12px; color: var(--accent-2-text); }
 .fanttiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; margin: 6px 0 14px; }
 .fanttile { border: 1px solid var(--hair); background: var(--surface); padding: 8px 10px; display: flex; flex-direction: column; gap: 1px;
-            box-shadow: 2px 2px 0 color-mix(in srgb, var(--ink) 18%, transparent); }
+            box-shadow: none; }
 .fanttile b { font-size: 20px; font-variant-numeric: tabular-nums; color: var(--ink); line-height: 1.1; }
 .fanttile span { font-size: 11px; color: var(--svtext); }
 .fanttile i { font-style: normal; font-size: 11px; font-weight: 700; color: var(--accent-2-text); }
@@ -2686,7 +2686,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .btabs { gap: 4px; }
 .btab, .btab:first-child, .btab:last-child, :root[data-view="mobile"] .btab {
   background: var(--rule); color: #fff; border: 2px solid #fff; border-radius: 0;
-  box-shadow: 2px 2px 0 color-mix(in srgb, var(--rule) 40%, transparent), 0 3px 8px rgba(0, 0, 0, 0.18); }
+  box-shadow: none; }
 .btab:hover { background: color-mix(in srgb, var(--rule) 85%, #fff); }
 .btab.on, .btab.on:hover, :root[data-view="mobile"] .btab.on { background: #fff; color: var(--rule); border-color: var(--rule); }
 /* on the white page the toolbar buttons' outline is the scheme's light blue, not white (Sean) */
@@ -2711,7 +2711,7 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
   background: var(--rule); opacity: 0.75;
   -webkit-mask: var(--swirl-a); mask: var(--swirl-a); }
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap { background: var(--surface); border: 2px solid var(--rule); margin: 18px auto 28px; padding-bottom: 16px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38), 0 3px 8px rgba(0, 0, 0, 0.22); }
+  box-shadow: none; }
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap > .toolbar { background: var(--surface); }
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) .notes { padding-inline: 4px; }
 :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"]) main.wrap { margin: 10px 6px 18px; }
