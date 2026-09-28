@@ -3128,3 +3128,9 @@ body[data-mode="appearance"] main.wrap > .notes { display: none; }
 :root:root:root #colhead { padding-top: 2px; padding-bottom: 2px; min-height: 0; }
 :root:root:root #colhead .h { min-height: 0; height: auto; padding-top: 3px; padding-bottom: 3px; line-height: 1.2; }
 :root:root .ftable thead th .h { padding-top: 4px; padding-bottom: 4px; }
+/* …and then Fantasy's tab look for them (Sean, 28 Sep 2026): white with a thin light-blue outline, the open or active one
+   filled light blue */
+:root:root:root main.wrap .toolbar .tbtns .tbtn, :root:root:root .fbar .fltbtn { background: var(--surface); color: var(--rule); border: 1px solid var(--accent-2); }
+:root:root:root main.wrap .toolbar .tbtns .tbtn:hover, :root:root:root .fbar .fltbtn:hover { background: color-mix(in srgb, var(--accent-2) 18%, var(--surface)); }
+:root:root:root main.wrap .toolbar .tbtns .tbtn.on, :root:root:root main.wrap .toolbar .tbtns .tbtn[aria-expanded="true"], :root:root:root .fbar .fltbtn.on { background: var(--accent-2); color: var(--rule); border-color: var(--accent-2); }
+:root:root:root main.wrap .toolbar .tbtns .tbtn { height: 34px; min-height: 34px; font-size: 12px; letter-spacing: 0.06em; padding: 0 12px; }
