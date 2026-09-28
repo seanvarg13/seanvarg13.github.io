@@ -5969,9 +5969,12 @@
     const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
     const r6 = W - 40, VW = W < 420 ? 41 : 45, bar = r6 - 40 - 85 - VW;   // the rule's width, the value column (room for "118.5" beside a 100 bubble; a phone's bar can't spare as much), the bar's width
     const x = (p) => 10 + (bar - 10) * Math.max(0, Math.min(100, p)) / 100;
-    const root = mk("g", { transform: "translate(20,10)" });
-    let y = 0;
     const smp = groups[0] && groups[0].sample;
+    // a phone starts the first heading right under the card's band: the 10 up top plus the heading's own headroom read as a
+    // blank strip there (the sample line, when there is one, still needs the 10)
+    const top = !(smp && smp.length) && document.documentElement.dataset.view === "mobile" ? -12 : 10;
+    const root = mk("g", { transform: `translate(20,${top})` });
+    let y = 0;
     if (smp && smp.length) {                                     // the playing time behind every bar below, labelled as such
       const t = mk("text", { class: "svsample", x: 0, y: 14 });
       t.append(mk("tspan", { class: "svslbl" }, "SAMPLE"));
@@ -6018,7 +6021,7 @@
       root.append(G);
       y += g.rows.length * 23 + 34 + 10 + (first ? 20 : 0);
     });
-    const H = y + 20;
+    const H = y + 20 + top - 10;
     const svg = mk("svg", { class: "svpct", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Percentile rankings" });
     svg.append(root);
     return svg;
