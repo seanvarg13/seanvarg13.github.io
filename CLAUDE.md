@@ -487,10 +487,12 @@ is deploy-limited.
 * **Games tab** (pitcher card, `renderGamesTab` / `gameLog` / `gamePitches` in `app.js`; Sean, 29 Sep 2026: "his stuff+ by
   start/relief appearance"): every appearance of the card's season from the day rows (days.js, or `hist/days-<season>.js`),
   whatever the card's dates or splits — Stuff+ that day (`stuffFrom` on the day's `stn…stbp`) against his season, a dot chart
-  of it (starts filled, relief hollow), the box line (IP, ER, K, BB, K%, BB%, Whiff%, Strike%, Zone%, Chase%, GB%, PU%) and
+  of it (starts filled, relief hollow), a slim log (IP, ER, K, BB, Stuff+, Δ, luck — Sean: the first version was "very crammed")
+  with the rates (K%, BB%, Whiff%, Strike%, Zone%, Chase%, GB%, PU%) as the picked game's box-score tiles over his season, and
   **BIP luck**: the day's wOBA on each batted-ball type (`wgb/wld/wfb/wpu` over `gb/ld/fbt/pu`) against the league's value
   for the type (`consts.bbw`), in runs (÷ `wobaScale`), + = unlucky. Tapping a game shows each pitch that day graded against
-  its type beside his season grade (`hist/ars-<season>.js`; under 5 of a pitch isn't graded) and the luck by type. **No park
+  its type beside his season, every metric the arsenal file carries (Stuff+ / Whiff+ / BB+, use, velo, IVB, HB, spin, xWhiff /
+  Whiff%, xGB / GB%, xPU / PU%; counts in the tooltips; `hist/ars-<season>.js`; under 5 of a pitch isn't graded) and the luck by type. **No park
   adjustment**: checked 29 Sep 2026 (home − away by team, 2024-26) — Coors takes ~2.9" of four-seam IVB and ~3 Stuff+ points,
   Tampa / Houston / Miami / San Diego add ~0.9" and ~2 points, Rogers Centre ~0; the day rows only know home / away, not the park.
 * **xwOBA − wOBA** (`xwdiff`, hitters; Sean, 27 Sep 2026): a Leaderboard / Trending column (added once to saved column sets

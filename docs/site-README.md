@@ -553,10 +553,10 @@ Built by `build_trends.py` into `hist/trends.js` every morning after the MLB bui
 ## Games (a pitcher's appearances)
 
 A pitcher's card has a **Games** tab: every appearance this season, newest first — Stuff+ that day and how far it was from
-his season grade, a dot chart of it across the year (starts filled, relief outings hollow), the box line (IP, ER, K, BB, K%,
-BB%, Whiff%, Strike%, Zone%, Chase%, GB%, popup%) and **BIP luck**, the runs his balls in play cost (+) or saved (−) him
-against the league's average result for each batted-ball type. Tap a game to see each pitch that day graded against its type
-with his season grade under it, and the luck broken out by ground balls, line drives, fly balls and popups. Stuff+ isn't
+his season grade, a dot chart of it across the year (starts filled, relief outings hollow), IP, ER, K, BB and **BIP luck**, the runs his balls in play cost (+) or saved (−) him
+against the league's average result for each batted-ball type. Tap a game for its box score (each rate over his season's), every pitch
+that day with all its numbers — grades, usage, velocity, movement, spin, expected and actual whiff / ground-ball / popup rates —
+his season's under each one, and the luck broken out by ground balls, line drives, fly balls and popups. Stuff+ isn't
 park-adjusted: Coors Field costs a pitcher about 3 points, a few parks (Tampa, Houston, Miami, San Diego) add about 2.
 
 ## Hosting (a real link, on your phone)

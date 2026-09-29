@@ -3189,3 +3189,18 @@ body[data-mode="trends"] #pitchboard > .trchartbox { margin: 4px 0 10px; }
 .gamesbox .ubt.gpt td.xa i { display: block; font-style: normal; font-size: 11px; opacity: 0.8; }
 .gamesbox .gverdict { font-size: 12px; margin: 6px 0 0; }
 .gamesbox .ubt.gluck { width: 100%; }
+.gamesbox .gbox { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.gamesbox .gtile { border: 1px solid var(--hair); padding: 6px 4px; text-align: center; display: flex; flex-direction: column; gap: 1px; }
+.gamesbox .gtile .gl { font-size: 11px; color: var(--muted); font-weight: 600; }
+.gamesbox .gtile b { font-size: 17px; font-variant-numeric: tabular-nums; color: var(--ink); }
+.gamesbox .gtile b.up { color: #c8102e; }
+.gamesbox .gtile b.down { color: var(--accent-2-text); }
+.gamesbox .gtile i { font-style: normal; font-size: 11px; color: var(--muted); }
+:root[data-view="mobile"] .gamesbox .gbox { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.gamesbox .ubt.glog { width: 100%; }
+.gamesbox .ubt.glog td { padding-top: 7px; padding-bottom: 7px; }
+.gamesbox .ubt.gpt td.l, .gamesbox .ubt.gpt th:first-child { position: sticky; left: 0; background: var(--surface); z-index: 1; }
+.gamesbox .ubt.gpt td, .gamesbox .ubt.gpt th { padding-left: 6px; padding-right: 6px; }
+.btabbody > .uerabox.gamesbox { max-width: 1200px; }   /* the per-pitch table has nineteen columns */
+.gamesbox .glogscroll, .gamesbox .gchart { max-width: 820px; }
+.gamesbox .gbox { max-width: 820px; }

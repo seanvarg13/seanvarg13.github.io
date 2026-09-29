@@ -5851,7 +5851,9 @@
     for (const r of rows) { const t = sum.get(r[I.pt]) || Object.fromEntries(ARS_F.slice(5).map((f) => [f, 0])); for (const f of ARS_F.slice(5)) t[f] += r[I[f]]; sum.set(r[I.pt], t); }
     return [...sum.entries()].filter(([, t]) => t.n > 0).sort((a, b) => b[1].n - a[1].n).map(([pt, t]) => {
       const A = typeAvgOf(pt), [wp, bp] = sc ? stuffParts(sc, 100 * t.w / t.n, t.g / t.n, t.p / t.n, K().lgERA) : [null, null];
-      return { pt, n: t.n, velo: t.velo / t.n, ivb: t.ivb / t.n, hb: t.hb / t.n, xwhf: 100 * t.w / t.n, whf: t.sw ? 100 * t.wh / t.sw : null, sw: t.sw,
+      return { pt, n: t.n, velo: t.velo / t.n, ivb: t.ivb / t.n, hb: t.hb / t.n, spin: t.spn ? t.spin / t.spn : null,
+               xwhf: 100 * t.w / t.n, xgb: 100 * t.g / t.n, xpu: 100 * t.p / t.n, whf: t.sw ? 100 * t.wh / t.sw : null, gb: t.bip ? 100 * t.gb / t.bip : null,
+               pu: t.bip ? 100 * t.pu / t.bip : null, sw: t.sw, wh: t.wh, bip: t.bip, bipgb: t.gb, bippu: t.pu,
                st: wp == null || !A ? null : wp + bp - 100 - A.t + 100, w: wp == null || !A ? null : wp - A.w + 100, b: bp == null || !A ? null : bp - A.b + 100 };
     });
   }
@@ -5859,9 +5861,11 @@
     const out = {};
     for (const a of (p.ctx && p.ctx.arsenal) || []) {
       const r = Object.fromEntries(ARSENAL.map((k, i) => [k, a[i]])), A = typeAvgOf(r.pt);
-      out[r.pt] = { n: r.n, velo: r.velo, ivb: r.ivb, st: r.stuffp == null || !A ? null : r.stuffp - A.t + 100, w: r.whfp == null || !A ? null : r.whfp - A.w + 100,
-                    b: r.bbp == null || !A ? null : r.bbp - A.b + 100, xwhf: r.xwhf, whf: r.whf };
+      out[r.pt] = { n: r.n, velo: r.velo, ivb: r.ivb, hb: r.hb, spin: r.spin, st: r.stuffp == null || !A ? null : r.stuffp - A.t + 100, w: r.whfp == null || !A ? null : r.whfp - A.w + 100,
+                    b: r.bbp == null || !A ? null : r.bbp - A.b + 100, xwhf: r.xwhf, whf: r.whf, xgb: r.xgb, gb: r.gb, xpu: r.xpu, pu: r.pu };
     }
+    const tot = Object.values(out).reduce((a, r) => a + (r.n || 0), 0);
+    for (const r of Object.values(out)) r.use = tot ? 100 * r.n / tot : null;
     return out;
   }
   const luckWord = (r) => (r == null ? "" : r >= 1.5 ? "brutal" : r >= 0.5 ? "unlucky" : r <= -1.5 ? "very lucky" : r <= -0.5 ? "lucky" : "about right");
@@ -5891,11 +5895,11 @@
       box.append(ch);
     }
     const pick = log.find((g) => g.day === state.gameDay) || log[0];
-    // the log: a row per appearance, newest first; tap one for its pitches and luck below
+    // the log: a row per appearance, newest first, only what picks a game out (Sean, 29 Sep 2026: "very crammed") — the
+    // rates are in the picked game's box score below; tap one to open it
     const t = el("table", "ubt stufft glog"), th = el("thead"), hr = el("tr");
-    const heads = [["Date", "l"], ["", ""], ["Stuff+", "", "Stuff+ that day, every pitch against its own type"], ["Δ", "", "Stuff+ that day minus his season"],
-                   ["BIP luck", "", "Runs his balls in play cost him against the league's average for their types: + unlucky, − lucky"],
-                   ["IP"], ["ER"], ["K"], ["BB"], ["K%"], ["BB%"], ["Whiff%"], ["Strike%"], ["Zone%"], ["Chase%"], ["GB%"], ["PU%"]];
+    const heads = [["Date", "l"], ["", ""], ["IP"], ["ER"], ["K"], ["BB"], ["Stuff+", "", "Stuff+ that day, every pitch against its own type"], ["Δ", "", "Stuff+ that day minus his season"],
+                   ["Luck", "", "BIP luck: runs his balls in play cost him against the league's average for their types: + unlucky, − lucky"]];
     for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
     th.append(hr); t.append(th);
     const tb = el("tbody"), pc = (x) => (x == null ? "–" : x.toFixed(1));
@@ -5903,51 +5907,66 @@
       const tr = el("tr", g === pick ? "on" : null); tr.tabIndex = 0;
       const stc = el("td", "plus", g.st == null ? "–" : String(Math.round(g.st))); if (g.st != null) { const ps = plusStyle(g.st); if (ps) { stc.style.background = ps.bg; stc.style.color = ps.fg; } }
       const dl = g.st != null && sea != null ? g.st - sea : null;
-      tr.append(el("td", "l", g.date ? fmtDate(g.date) : "–"), el("td", "role", g.sp ? "SP" : "RP"), stc,
+      tr.append(el("td", "l", g.date ? fmtDate(g.date) : "–"), el("td", "role", g.sp ? "SP" : "RP"), el("td", null, fmtIP(g.ip)), el("td", null, g.g.er == null ? "–" : String(g.g.er)),
+                el("td", null, String(g.g.k)), el("td", null, String(g.g.bb)), stc,
                 el("td", "dlt " + (dl == null ? "" : dl >= 3 ? "up" : dl <= -3 ? "down" : ""), dl == null ? "–" : signed(dl, 0)),
-                el("td", "lk " + luckCls(g.luck), g.luck == null ? "–" : signed(g.luck)),
-                el("td", null, fmtIP(g.ip)), el("td", null, g.g.er == null ? "–" : String(g.g.er)),
-                el("td", null, String(g.g.k)), el("td", null, String(g.g.bb)), el("td", null, pc(g.k)), el("td", null, pc(g.bb)), el("td", null, pc(g.whf)), el("td", null, pc(g.strk)),
-                el("td", null, pc(g.zone)), el("td", null, pc(g.osw)), el("td", null, pc(g.gb)), el("td", null, pc(g.pu)));
+                el("td", "lk " + luckCls(g.luck), g.luck == null ? "–" : signed(g.luck)));
       const go = () => { state.gameDay = g.day; render(); };
       tr.addEventListener("click", go); tr.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
       tb.append(tr);
     }
     const s0 = p.m || {}, tot = el("tr", "ftot");
-    const sluck = log.reduce((a, g) => a + (g.luck || 0), 0);
-    tot.append(el("td", "l", "Season"), el("td"), el("td", "plus", sea == null ? "–" : String(Math.round(sea))), el("td"), el("td", "lk " + luckCls(sluck / 3), signed(sluck)),
-               el("td", null, fmtIP(p.ip || 0)), el("td"), el("td"), el("td"), el("td", null, pc(s0.k)), el("td", null, pc(s0.bb)), el("td", null, pc(s0.whf)),
-               el("td", null, pc(s0.strk)), el("td", null, pc(s0.zone)), el("td", null, pc(s0.osw)), el("td", null, pc(s0.gb)), el("td", null, pc(s0.pu)));
+    const sluck = log.reduce((a, g) => a + (g.luck || 0), 0), ser = log.reduce((a, g) => a + (g.g.er || 0), 0), sk = log.reduce((a, g) => a + g.g.k, 0), sbb = log.reduce((a, g) => a + g.g.bb, 0);
+    tot.append(el("td", "l", "Season"), el("td"), el("td", null, fmtIP(log.reduce((a, g) => a + g.ip, 0))), el("td", null, String(ser)), el("td", null, String(sk)), el("td", null, String(sbb)),
+               el("td", "plus", sea == null ? "–" : String(Math.round(sea))), el("td"), el("td", "lk " + luckCls(sluck / 3), signed(sluck)));
     tb.append(tot); t.append(tb);
     const sw = el("div", "stuffscroll glogscroll"); sw.append(t); box.append(sw);
     // the picked game
     const det = el("div", "gdetail");
     det.append(el("h4", "gdhd", `${pick.date ? fmtDate(pick.date) : ""} · ${pick.sp ? "start" : "relief"} · ${fmtIP(pick.ip)} IP, ${pick.g.er ?? "–"} ER, ${pick.g.k} K, ${pick.g.bb} BB, ${pick.g.bf} BF, ${pick.g.pit} pitches`));
+    // the day's rates, each over his season's
+    { const bx = el("div", "gpart"); bx.append(el("div", "gsub", "Box score — that day, his season under it"));
+      const grid = el("div", "gbox");
+      for (const [lab, k, hib] of [["K%", "k", 1], ["BB%", "bb", 0], ["Whiff%", "whf", 1], ["Strike%", "strk", 1], ["Zone%", "zone", 1], ["Chase%", "osw", 1], ["GB%", "gb", 1], ["Popup%", "pu", 1]]) {
+        const v = pick[k], sv = s0[k], d = v != null && sv != null ? v - sv : null, c = el("div", "gtile");
+        const big = el("b", "gv" + (d == null || Math.abs(d) < 3 ? "" : (d > 0) === !!hib ? " up" : " down"), pc(v));
+        c.append(el("span", "gl", lab), big, el("i", null, `season ${pc(sv)}`)); grid.append(c);
+      }
+      bx.append(grid); det.append(bx); }
     const gp = gamePitches(p, pick.day), SP = seasonPitches(p);
     const pt = el("div", "gpart");
-    pt.append(el("div", "gsub", "Stuff+ that day against his season"));
+    pt.append(el("div", "gsub", "Every pitch that day — his season under each number"));
     if (gp === "loading") pt.append(el("p", "note", "Loading his pitches game by game…"));
     else if (!gp || !gp.length) pt.append(el("p", "note", "No graded pitches that day."));
     else {
       const t2 = el("table", "ubt stufft gpt"), h2 = el("tr");
-      for (const [h, tt] of [["Pitch"], ["#"], ["Velo", "That day — his season under it"], ["IVB", "That day — his season under it"], ["Stuff+", "That day — his season under it"], ["Δ"],
-                             ["Whiff+"], ["BB+", "Batted-ball+"], ["Whiffs", "Whiffs / swings that day"]]) { const e = el("th", h === "Pitch" ? "l" : null, h); if (tt) e.title = tt; h2.append(e); }
+      const cols = [["Pitch", "l"], ["#", "", "Pitches thrown"], ["Stuff+"], ["Δ", "", "Stuff+ that day minus his season's for the pitch"], ["Whiff+"], ["BB+", "", "Batted-ball+"],
+                    ["Use", "", "Share of his pitches"], ["Velo"], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin"],
+                    ["xWhiff", "", "The model's whiff rate per swing"], ["Whiff%", "", "Whiffs per swing (hover for whiffs / swings that day)"],
+                    ["xGB", "", "The model's ground-ball rate on contact"], ["GB%", "", "Ground balls per ball in play (hover for the count)"], ["xPU", "", "The model's popup rate on contact"], ["PU%", "", "Popups per ball in play"]];
+      for (const [h, c, tt] of cols) { const e = el("th", c || null, h); if (tt) e.title = tt; h2.append(e); }
       const th2 = el("thead"); th2.append(h2); t2.append(th2);
-      const b2 = el("tbody"), plusTd = (v, s) => { const td = el("td", "plus xa"); const b = el("b", null, v == null ? "–" : String(Math.round(v))); if (v != null) { const ps = plusStyle(v); if (ps) { td.style.background = ps.bg; td.style.color = ps.fg; } } td.append(b, el("i", null, s == null ? "–" : String(Math.round(s)))); return td; };
-      const two = (a, b) => { const td = el("td", "xa"); td.append(el("b", null, a == null ? "–" : a.toFixed(1)), el("i", null, b == null ? "–" : b.toFixed(1))); return td; };
-      const tot2 = { n: 0, st: 0, w: 0, b: 0, sn: 0, sw: 0, wh: 0 };
+      const b2 = el("tbody"), plusTd = (v, sv) => { const td = el("td", "plus xa"); const b = el("b", null, v == null ? "–" : String(Math.round(v))); if (v != null) { const ps = plusStyle(v); if (ps) { td.style.background = ps.bg; td.style.color = ps.fg; } } td.append(b, el("i", null, sv == null ? "–" : String(Math.round(sv)))); return td; };
+      const two = (a, b, d = 1) => { const td = el("td", "xa"); td.append(el("b", null, a == null ? "–" : a.toFixed(d)), el("i", null, b == null ? "–" : b.toFixed(d))); return td; };
+      const tip = (td, t) => { td.title = t; return td; };
+      const dlt = (d, thr) => el("td", "dlt " + (d == null ? "" : d >= thr ? "up" : d <= -thr ? "down" : ""), d == null ? "–" : signed(d, 0));
+      const n0 = gp.reduce((a, r) => a + r.n, 0), tot2 = { n: 0, st: 0, w: 0, b: 0 };
       for (const r of gp) {
-        const S = SP[r.pt] || {}, dl = r.st != null && S.st != null ? r.st - S.st : null, tr = el("tr");
-        tr.append(el("td", "l", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), two(r.velo, S.velo), two(r.ivb, S.ivb),
-                  r.n >= 5 ? plusTd(r.st, S.st) : plusTd(null, S.st), el("td", "dlt " + (dl == null || r.n < 5 ? "" : dl >= 5 ? "up" : dl <= -5 ? "down" : ""), r.n >= 5 ? signed(dl, 0) : "–"),
-                  r.n >= 5 ? plusTd(r.w, S.w) : plusTd(null, S.w), r.n >= 5 ? plusTd(r.b, S.b) : plusTd(null, S.b), el("td", null, `${Math.round(r.whf != null ? r.whf * r.sw / 100 : 0)} / ${r.sw}`));
+        const S = SP[r.pt] || {}, ok = r.n >= 5, tr = el("tr");
+        tr.append(el("td", "l", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)),
+                  plusTd(ok ? r.st : null, S.st), dlt(ok && r.st != null && S.st != null ? r.st - S.st : null, 5), plusTd(ok ? r.w : null, S.w), plusTd(ok ? r.b : null, S.b),
+                  two(100 * r.n / n0, S.use), two(r.velo, S.velo), two(r.ivb, S.ivb), two(r.hb, S.hb), two(r.spin, S.spin, 0),
+                  two(r.xwhf, S.xwhf), tip(two(r.whf, S.whf), `${r.wh} whiffs on ${r.sw} swings`), two(r.xgb, S.xgb), tip(two(r.gb, S.gb), `${r.bipgb} of ${r.bip} balls in play`), two(r.xpu, S.xpu), tip(two(r.pu, S.pu), `${r.bippu} of ${r.bip} balls in play`));
         b2.append(tr);
         if (r.st != null) { tot2.n += r.n; tot2.st += r.st * r.n; tot2.w += r.w * r.n; tot2.b += r.b * r.n; }
       }
-      const tr = el("tr", "ftot"), gt = tot2.n ? tot2.st / tot2.n : pick.st, dl = gt != null && sea != null ? gt - sea : null;
-      tr.append(el("td", "l", "All pitches"), el("td", null, String(gp.reduce((a, r) => a + r.n, 0))), el("td"), el("td"), plusTd(gt, sea),
-                el("td", "dlt " + (dl == null ? "" : dl >= 3 ? "up" : dl <= -3 ? "down" : ""), signed(dl, 0)), plusTd(tot2.n ? tot2.w / tot2.n : pick.swhf, s0.swhf), plusTd(tot2.n ? tot2.b / tot2.n : pick.sbb, s0.sbb),
-                el("td", null, `${pick.g.whf} / ${pick.g.sw}`));
+      const wx = (k) => gp.reduce((a, r) => a + (r[k] || 0) * r.n, 0) / n0, sb = gp.reduce((a, r) => a + r.bip, 0), ssw = gp.reduce((a, r) => a + r.sw, 0), swh = gp.reduce((a, r) => a + r.wh, 0);
+      const Sv = Object.values(SP), sn = Sv.reduce((a, r) => a + (r.n || 0), 0), swx = (k) => (sn ? Sv.reduce((a, r) => a + (r[k] || 0) * (r.n || 0), 0) / sn : null);
+      const tr = el("tr", "ftot"), gt = tot2.n ? tot2.st / tot2.n : pick.st;
+      tr.append(el("td", "l", "All pitches"), el("td", null, String(n0)), plusTd(gt, sea), dlt(gt != null && sea != null ? gt - sea : null, 3),
+                plusTd(tot2.n ? tot2.w / tot2.n : pick.swhf, s0.swhf), plusTd(tot2.n ? tot2.b / tot2.n : pick.sbb, s0.sbb), el("td"), el("td"), el("td"), el("td"), el("td"),
+                two(wx("xwhf"), swx("xwhf")), tip(two(ssw ? 100 * swh / ssw : null, s0.whf), `${swh} whiffs on ${ssw} swings`),
+                two(wx("xgb"), swx("xgb")), tip(two(sb ? 100 * gp.reduce((a, r) => a + r.bipgb, 0) / sb : null, s0.gb), `${sb} balls in play`), two(wx("xpu"), swx("xpu")), two(sb ? 100 * gp.reduce((a, r) => a + r.bippu, 0) / sb : null, s0.pu));
       b2.append(tr); t2.append(b2);
       const w2 = el("div", "stuffscroll"); w2.append(t2); pt.append(w2);
     }
