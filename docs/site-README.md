@@ -539,6 +539,17 @@ it, and whether contact is a grounder, a popup or an air ball — combined the w
 model's whiff / ground-ball / popup rates with what actually happened under each; each pitch graded **vs its pitch type**
 (100 = an average four-seamer for a four-seamer) or **vs all pitches**. Past seasons get it when rebuilt.
 
+## League Trends
+
+Leaderboards ▸ League Trends shows league-wide averages for every MLB season since 2015, to see how the game has moved.
+**Hitting** has four tables — plate discipline (K%, BB%, swing / zone-swing / chase, contact, Whiff%, Zone%, Strike%), batted
+balls (GB / LD / FB / PU, pull, oppo, Pull Air%), quality of contact (Avg EV, EV90, Hard-Hit, Barrel, Sweet-Spot, bat speed) and
+results (AVG, SLG, wOBA, BABIP, HR%, league ERA). **Pitching** picks one stat — usage, velocity, induced vertical break,
+horizontal break, spin, Whiff%, xWhiff% or GB% — and shows it for every pitch type. Rates are league totals (every pitch, swing
+and ball in play pooled), not averages of players. Each column is coloured by where the season ranks among them (red the
+highest, blue the lowest); tap a column's name to draw it as a line. The current season is marked * (so far), 2020 † (60 games).
+Built by `build_trends.py` into `hist/trends.js` every morning after the MLB build.
+
 ## Hosting (a real link, on your phone)
 
 It is a static site, so any host works. The built-in way is **GitHub Pages** (free, no publishing quota — Netlify's

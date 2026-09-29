@@ -145,6 +145,7 @@ season only now: `indexReady()` in `app.js` drops them from the index, so nothin
 | `build_fantasy.py [years…]` | `fantasy.js`, `hist/fantasy-YYYY.js` | official counting stats + per-game logs for hitters (`hg`/`hgk`, with fielding and GWRBI per game) and pitchers (`gk`), home / away on both — the Fantasy Leaderboard / Trending sum these for any date range and split + Savant expected stats, plus ESPN's bonus categories: grand slams (the API's bases-loaded `r123` split), cycles (hitter game logs), game-winning RBI (the schedule's scoring plays: the RBI that put the winners ahead for good), fielding A / PO / OFA / DPT, pitcher TB / GIDP / pitches. Points are computed in the browser from the chosen scoring preset (`FCATS` in `app.js` lists every category), so an ESPN setting change needs no rebuild |
 | `build_fantasy.py lines [years…]` | `hist/fantasy-lines.js` | every past season's official lines (2015 on, no game logs) for the card's Fantasy ▸ By season table; static, rebuilt by hand when a season ends |
 | `build_career.py` | `hist/career.js`, `hist/minors.js` | season-by-season + career tables on every card. Reads the search index, so run it **after** `build_history.py index` |
+| `build_trends.py` | `hist/trends.js` | League Trends: every MLB season's league totals (hitting rates pooled over every pitch / swing / batted ball from `hist/mlb-YYYY.js` rows + this season's `days.js`) and per pitch type from each pitcher's `ctx.arsenal` (usage, velo, IVB, HB, spin, Whiff%, xWhiff, GB%). A few seconds; runs after `build_data.py` (and after a rescore), non-fatal |
 | `serve.py` | — | local server on :8787 with an "Update data" button; `--phone` binds to the LAN |
 
 ### Shapes
@@ -346,7 +347,7 @@ Statcast's.
 
 | file | on the Mac |
 |---|---|
-| `tools/build_data.py`, `build_history.py`, `build_milb.py`, `build_fantasy.py`, `build_career.py` | `draft-site/` |
+| `tools/build_data.py`, `build_history.py`, `build_milb.py`, `build_fantasy.py`, `build_career.py`, `build_trends.py` | `draft-site/` |
 | `tools/daily_update.py` | the 5:30 job |
 | `tools/publish.py` | mirrors the site into `draft-site-deploy` and stamps cache-busting versions; also the Netlify uploader |
 | `tools/publish_github.py` | the publisher in use — commits and force-pushes `main` |
@@ -475,6 +476,14 @@ is deploy-limited.
   filtered by pitch type, hand, SP / RP and a pitch minimum, every column sortable, a name opens his card on the Stuff tab.
   Full season only. The section and the menu entry are made in `app.js` (`pitchBoardEl`) because `index.html` doesn't
   round-trip. Its standing-card CSS is the `[data-mode="pitches"]` block at the end of `styles.css`.
+* **League Trends** (Leaderboards ▸ League Trends, `#trends`, `renderTrends` in `app.js`; Sean, 29 Sep 2026: "league wide
+  trends by year ... to see how the landscapes change"): reads `hist/trends.js` (`build_trends.py`) on demand. Hitting: pick a
+  group (plate discipline / batted balls / quality of contact / results), a row per season, each column coloured by the
+  season's rank among them (red highest, blue lowest — no good / bad); pitching: pick a stat, a column per pitch type. Tapping a
+  column header draws it as a line above the table (`trendChart`, plain SVG, the part season hollow). Drawn in the Stuff+ board's
+  section (`#pitchboard`) and standing-card CSS (every `[data-mode="pitches"]` rule also names `trends`). No Stuff+ by pitch: it's
+  graded against each season's own type average, so the league is 100 every year. Savant has since relabelled old sweepers, so
+  ST exists (small) before 2023.
 * **xwOBA − wOBA** (`xwdiff`, hitters; Sean, 27 Sep 2026): a Leaderboard / Trending column (added once to saved column sets
   via `state.lb.xwdAdded`), signed (+ = unlucky). `LB_EXTRA_H` lists the hitter stats that are columns without being on
   the card (xwdiff, babip, xbabip, bluck, brel); `fmt()` prints `sign: true` metrics as +.024 / −.018.

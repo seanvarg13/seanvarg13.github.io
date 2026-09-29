@@ -39,6 +39,7 @@ FILES = {
     "tools/build_milb.py": os.path.join(HERE, "build_milb.py"),
     "tools/build_fantasy.py": os.path.join(HERE, "build_fantasy.py"),
     "tools/build_career.py": os.path.join(HERE, "build_career.py"),
+    "tools/build_trends.py": os.path.join(HERE, "build_trends.py"),
     "tools/daily_update.py": os.path.join(HERE, "daily_update.py"),
     "tools/publish.py": os.path.join(HERE, "publish.py"),
     "tools/publish_github.py": os.path.join(HERE, "publish_github.py"),

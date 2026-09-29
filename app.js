@@ -3015,6 +3015,7 @@
     if (!b) { b = el("section", "xboard pitchboard"); b.id = "pitchboard"; b.hidden = true; $("eboard").after(b); }
     const m = $("lbmenu");
     if (m && !m.querySelector('a[href="#pitches"]')) { const li = el("li"); const a = el("a", null, "Stuff+"); a.href = "#pitches"; li.append(a); m.append(li); }
+    if (m && !m.querySelector('a[href="#trends"]')) { const li = el("li"); const a = el("a", null, "League Trends"); a.href = "#trends"; li.append(a); m.append(li); }
     return b;
   };
   pitchBoardEl();
@@ -3086,6 +3087,121 @@
     const scroll = el("div", "fscroll pbscroll"); scroll.append(t); box.append(scroll);
     box.append(el("p", "note", (rows.length > 300 ? "The top 300 shown. " : "") + "Each pitch is graded against the league's pitches of its own type on its traits alone (velocity, spin, movement, release, extension, arm angle, its gap to his fastball, how much he throws it and how deep his arsenal is) — 100 is average for that pitch type. Under each x-rate is what actually happened. Full season; click a name for his card."));
   }
+  // League Trends (Sean, 29 Sep 2026: "league wide trends by year ... to see how the landscapes change"): hist/trends.js,
+  // written by build_trends.py — every season's league totals (hitting: pitches / swings / batted balls pooled, not an average
+  // of players) and, by pitch type, usage and the arsenal's velo / movement / spin / whiff / grounders. Drawn in the Stuff+
+  // board's standing card (same section, same CSS). Each column is coloured by where that year ranks among the seasons —
+  // red the highest, blue the lowest, nothing good or bad about it — and the picked column is drawn as a line above.
+  const TR_GROUPS = [
+    ["disc", "Plate discipline", ["K%", "BB%", "Swing%", "Z-Swing%", "O-Swing%", "Z-Contact%", "O-Contact%", "Contact%", "Whiff%", "Zone%", "Strike%"]],
+    ["bb", "Batted balls", ["GB%", "LD%", "FB%", "PU%", "Pull%", "Oppo%", "Pull Air%"]],
+    ["qoc", "Quality of contact", ["Avg EV", "EV90", "Hard-Hit%", "Barrel%", "Sweet-Spot%", "Bat Speed"]],
+    ["res", "Results", ["AVG", "SLG", "wOBA", "BABIP", "HR%", "lgERA"]],
+  ];
+  const TR_PM = [["use", "Usage %"], ["velo", "Velocity"], ["ivb", "Induced vert. break"], ["hb", "Horizontal break"], ["spin", "Spin rate"], ["whf", "Whiff%"], ["xwhf", "xWhiff%"], ["gb", "GB%"]];
+  const TR_TIP = { "Pull Air%": "Pulled line drives and fly balls, share of batted balls", "EV90": "The 90th-percentile exit velocity of every tracked batted ball",
+                   "Bat Speed": "Competitive swings; tracked from 2023", "lgERA": "League ERA", "HR%": "Home runs per PA", "Strike%": "Called, swinging and foul strikes plus balls in play, per pitch",
+                   "Zone%": "Pitches in the zone", "Avg EV": "Bunts out", "Hard-Hit%": "95+ mph, per ball in play", "Barrel%": "Per ball in play", "Sweet-Spot%": "8-32° launch angle, per ball in play" };
+  const trs = Object.assign({ side: "H", grp: "disc", hk: "Whiff%", pm: "velo", pk: "FF" }, load("draft2027.trends", {}));
+  function trFmt(k, v) {
+    if (v == null) return "–";
+    if (["AVG", "SLG", "wOBA", "BABIP"].includes(k)) return v.toFixed(3).replace(/^0/, "");
+    if (k === "lgERA") return v.toFixed(2);
+    if (k === "spin") return String(Math.round(v));
+    return v.toFixed(1);
+  }
+  const trNice = (r) => { const b = Math.pow(10, Math.floor(Math.log10(r))); return b * [1, 2, 2.5, 5, 10].find((f) => f * b >= r); };
+  // one line across the seasons: 2px, 8px markers, the part season hollow, a tooltip on each point, the last value labelled
+  function trendChart(host, pts, name, fmtv, partial) {
+    const got = pts.filter((q) => q.v != null);
+    if (got.length < 2) { host.append(el("p", "trnone", `${name}: not enough seasons to draw.`)); return; }
+    const W = Math.max(280, host.clientWidth || 600), H = W < 460 ? 150 : 190, L = 40, R = 22, T = 20, B = 24;
+    let lo = Math.min(...got.map((q) => q.v)), hi = Math.max(...got.map((q) => q.v));
+    const pad = (hi - lo) * 0.15 || Math.abs(hi) * 0.02 || 1; lo -= pad; hi += pad;
+    const step = trNice((hi - lo) / 4), y0 = pts[0].y, y1 = pts[pts.length - 1].y;
+    const X = (y) => L + (y1 > y0 ? (y - y0) / (y1 - y0) : 0.5) * (W - L - R), Y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+    const tf = (v) => (step < 0.01 ? v.toFixed(3).replace(/^0/, "") : step < 0.1 ? v.toFixed(2) : step < 1 ? v.toFixed(1) : String(Math.round(v)));
+    const g = [];
+    for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step)
+      g.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" class="trgrid"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" class="trax">${tf(v)}</text>`);
+    const every = W < 460 ? 2 : 1;
+    pts.forEach((q, i) => { if (i % every === 0 || i === pts.length - 1) g.push(`<text x="${X(q.y)}" y="${H - 6}" text-anchor="middle" class="trax">${String(q.y).slice(W < 460 ? 2 : 0).replace(/^(\d\d)$/, "'$1")}</text>`); });
+    let d = "", pen = false;
+    for (const q of pts) { if (q.v == null) { pen = false; continue; } d += `${pen ? "L" : "M"}${X(q.y).toFixed(1)},${Y(q.v).toFixed(1)}`; pen = true; }
+    g.push(`<path d="${d}" class="trline"/>`);
+    for (const q of got) g.push(`<circle cx="${X(q.y)}" cy="${Y(q.v)}" r="4" class="trdot${q.y === partial ? " part" : ""}"/>`);
+    const last = got[got.length - 1];
+    g.push(`<text x="${Math.min(X(last.y), W - 4)}" y="${Y(last.v) - 10}" text-anchor="end" class="trlab">${fmtv(last.v)}</text>`);
+    for (const q of got) g.push(`<circle cx="${X(q.y)}" cy="${Y(q.v)}" r="13" class="trhit" data-y="${q.y}"/>`);
+    const wrap = el("div", "trchart");
+    wrap.innerHTML = `<div class="trtitle">${name}</div><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${name} by season">${g.join("")}</svg>`;
+    const tip = el("div", "trtip"); tip.hidden = true; wrap.append(tip);
+    const show = (c) => {
+      const q = got.find((z) => String(z.y) === c.dataset.y); if (!q) return;
+      tip.textContent = `${q.y}${q.y === partial ? " (so far)" : ""} · ${fmtv(q.v)}`; tip.hidden = false;
+      const x = Number(c.getAttribute("cx")), y = Number(c.getAttribute("cy"));
+      tip.style.left = Math.max(4, Math.min(x - tip.offsetWidth / 2, W - tip.offsetWidth - 4)) + "px"; tip.style.top = Math.max(0, y - 58 + 26) + "px";
+    };
+    wrap.querySelectorAll(".trhit").forEach((c) => { c.addEventListener("pointerenter", () => show(c)); c.addEventListener("pointerdown", () => show(c)); c.addEventListener("pointerleave", () => { tip.hidden = true; }); });
+    host.append(wrap);
+  }
+  function renderTrends() {
+    const box = pitchBoardEl(); box.innerHTML = "";
+    const D = window.DRAFT_TRENDS;
+    if (!D) { ensureScript("hist/trends.js", () => !!window.DRAFT_TRENDS); box.append(el("p", "note", failed.has("hist/trends.js") ? "hist/trends.js isn't built yet — it comes with the next daily update." : "Loading league trends…")); return; }
+    const save = () => { try { localStorage.setItem("draft2027.trends", JSON.stringify(trs)); } catch {} render(); };
+    const yrs = Object.keys(D.years).map(Number).sort((a, b) => a - b), cur = D.season;
+    const hit = trs.side === "H";
+    const grp = TR_GROUPS.find((G) => G[0] === trs.grp) || TR_GROUPS[0];
+    const cols = hit ? grp[2] : ["ALL", ...D.types].filter((t) => !(trs.pm === "use" && t === "ALL"));
+    const pmName = (TR_PM.find((m) => m[0] === trs.pm) || TR_PM[1])[1];
+    const val = (y, c) => { const Y = D.years[y]; if (hit) return c === "lgERA" ? Y.lgERA : Y.H[c]; const t = Y.T[c]; return t ? t[trs.pm] : null; };
+    let pick = hit ? trs.hk : trs.pk; if (!cols.includes(pick)) pick = cols.includes("Whiff%") ? "Whiff%" : cols.includes("FF") ? "FF" : cols[0];
+    const colName = (c) => (hit ? c : c === "ALL" ? "All pitches" : PITCH_NAME[c] || c);
+    const unit = (c) => (hit ? (/%$/.test(c) ? "%" : c === "Avg EV" || c === "EV90" || c === "Bat Speed" ? " mph" : "") : trs.pm === "velo" ? " mph" : trs.pm === "spin" ? " rpm" : trs.pm === "ivb" || trs.pm === "hb" ? '"' : "%");
+    // filters
+    const bar = el("div", "pbfilters");
+    bar.append(pillSelect(hit ? "Hitting" : "Pitching", [["H", "Hitting"], ["P", "Pitching"]], trs.side, (v) => { trs.side = v; save(); }, "Side"));
+    if (hit) bar.append(pillSelect(grp[1], TR_GROUPS.map((G) => [G[0], G[1]]), grp[0], (v) => { trs.grp = v; save(); }, "Stats"));
+    else bar.append(pillSelect(pmName, TR_PM, trs.pm, (v) => { trs.pm = v; save(); }, "Stat"));
+    bar.append(el("span", "pbcount", `MLB ${yrs[0]}–${yrs[yrs.length - 1]} · ${cur} through ${fmtDate(D.through)}`));
+    box.append(bar);
+    // the picked column, as a line
+    const ch = el("div", "trchartbox"); box.append(ch);
+    const pts = yrs.map((y) => ({ y, v: val(y, pick) }));
+    trendChart(ch, pts, hit ? colName(pick) : `${colName(pick)} · ${pmName}`, (v) => trFmt(hit ? pick : trs.pm, v) + unit(pick), cur);
+    // the table: a row per season, a column per stat (or pitch type); tap a column to draw it
+    const t = el("table", "ftable trtable"), th = el("thead"), hr = el("tr");
+    hr.append(el("th", "yr", "Season"));
+    for (const c of cols) {
+      const h = el("th"), b = el("button", "sortbtn" + (c === pick ? " on" : ""), hit ? c : c === "ALL" ? "All" : c); b.type = "button";
+      b.title = (hit ? TR_TIP[c] || c : colName(c)) + " — draw it";
+      b.addEventListener("click", () => { if (hit) trs.hk = c; else trs.pk = c; save(); });
+      h.append(b); hr.append(h);
+    }
+    th.append(hr); t.append(th);
+    const rank = {};
+    for (const c of cols) {
+      const v = yrs.map((y) => val(y, c)).filter((x) => x != null).sort((a, b) => a - b);
+      rank[c] = (x) => (x == null || v.length < 3 ? null : 100 * (v.indexOf(x) + (v.lastIndexOf(x) - v.indexOf(x)) / 2) / (v.length - 1));
+    }
+    const tb = el("tbody");
+    for (const y of [...yrs].reverse()) {
+      const tr_ = el("tr"), yc = el("td", "yr", String(y) + (y === cur ? "*" : y === 2020 ? "†" : ""));
+      if (y === cur) yc.title = `So far — through ${fmtDate(D.through)}`; else if (y === 2020) yc.title = "60-game season";
+      tr_.append(yc);
+      for (const c of cols) { const x = val(y, c), td = el("td", c === pick ? "on" : null, trFmt(hit ? c : trs.pm, x)); paint(td, rank[c](x)); tr_.append(td); }
+      tb.append(tr_);
+    }
+    t.append(tb);
+    const scroll = el("div", "fscroll pbscroll trscroll"); scroll.append(t); box.append(scroll);
+    box.append(el("p", "note", "League totals, every MLB regular season: rates pooled over every pitch, swing and batted ball, not averaged player by player. " +
+      "Each column is coloured by where the season ranks among them — red highest, blue lowest. * this season so far; † the 60-game 2020. " +
+      (hit ? "Batted-ball shares are of every ball in play; Hard-Hit, Barrel and Sweet-Spot per ball in play. Bat speed is tracked from 2023."
+           : "By pitch type from every pitcher's arsenal: velocity, movement and spin averaged by pitches, Whiff% per swing, GB% per ball in play. Horizontal break is arm side +. Stuff+ isn't here: it's graded against each season's own pitch-type average, so the league is 100 every year.")));
+  }
+  let trResize;
+  window.addEventListener("resize", () => { if (state.mode !== "trends") return; clearTimeout(trResize); trResize = setTimeout(render, 150); });
   function renderEligibility() {
     const box = $("eboard"); box.innerHTML = "";
     // add a position: find a player, then pick from what he hasn't earned
@@ -3814,7 +3930,7 @@
                     "#leaderboard": "Every player, any season or level, your stats.", "#trending": "Who's hot over his last N PA, innings or days.",
                     "#compare": "Players side by side on the same stats.", "#fantasy": "Your scoring on everyone, any dates or split.", "#appearance": "Colours, type and layout." };
     for (const [title, cards] of HOME_SECS) for (const [href, name] of cards) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, SHORT[href] || "")); tiles.append(a); }
-    for (const [href, name, blurb] of [["#pitches", "Stuff+", "Every pitch graded against its type."]]) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, blurb)); tiles.append(a); }
+    for (const [href, name, blurb] of [["#pitches", "Stuff+", "Every pitch graded against its type."], ["#trends", "League Trends", "League averages by season, hitting and by pitch."]]) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, blurb)); tiles.append(a); }
     allC.append(tiles); box.append(allC);
     box.append(el("p", "note", `Statcast ${m.season} through ${m.through}, built ${m.built} UTC. xwOBA, xBA and xSLG are the directional model's; uK%, uBB% and uERA are what a pitcher's process has historically been worth.`));
   }
@@ -4030,7 +4146,7 @@
   }
   function renderNow() {
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
-    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches", other = pitches || player || compare || elig || hub || appear || fant;
+    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends", other = pitches || player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
     const T = state.tbl; document.body.dataset.heat = T.heat ? "on" : "off"; document.body.dataset.band = T.band ? "on" : "off"; document.body.dataset.sorthl = T.sortHl ? "on" : "off"; document.body.dataset.density = T.density;
@@ -4049,6 +4165,7 @@
     }
     if (compare) { renderCompare(); renderModal(); return; }
     if (elig) { renderEligibility(); return; }
+    if (state.mode === "trends") { renderTrends(); return; }
     if (pitches) { renderPitchBoard(); renderModal(); return; }
     const listRender = () => {
       ensureView();
@@ -6750,14 +6867,14 @@
   // the header's two dropdowns: the draft + fantasy pages, and the two leaderboards
   const NAV_GROUPS = [
     { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "eligibility", "fantasy"] },
-    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending", "pitches"] },
+    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending", "pitches", "trends"] },
   ];
   function readMode() {
     const h = location.hash.replace("#", "");
     const pm = h.match(/^player\/(\d+)$/);
     if (pm) { state.mode = "player"; const id = Number(pm[1]); if (state.x.id !== id) { state.x = { id, type: null, ds: null }; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; } return; }
     if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["leaders", "trending", "whatif", "settings"].includes(v) ? v : "leaders"; return; }
-    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "pitches", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
+    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "pitches", "trends", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {

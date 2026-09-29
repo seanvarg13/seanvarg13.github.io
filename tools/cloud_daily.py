@@ -21,7 +21,7 @@ from zoneinfo import ZoneInfo
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOOLS = os.path.join(ROOT, "tools")
 os.chdir(ROOT)
-SCRIPTS = ["build_data.py", "build_history.py", "build_milb.py", "build_fantasy.py", "build_career.py"]
+SCRIPTS = ["build_data.py", "build_history.py", "build_milb.py", "build_fantasy.py", "build_career.py", "build_trends.py"]
 # what the site serves: the same list publish.py stamps, plus every hist/ file
 TOP = ["index.html", "app.js", "styles.css", "themes.js", "defaults.js", "data.js", "days.js", "fantasy.js", "manifest.json",
        "icons/icon-32.png", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png"]
@@ -158,12 +158,13 @@ def main():
         ok = (not years or run("build_history.py", *years))
         for lvl, ys in milb.items():
             ok = ok and run("build_milb.py", lvl, *ys)
-        ok = ok and run("build_career.py") and publish(f"rescored {' '.join(toks)}", end, a.dry)
+        ok = ok and run("build_career.py") and (run("build_trends.py") or True) and publish(f"rescored {' '.join(toks)}", end, a.dry)
         sys.exit(0 if ok else 1)
     steps = set(a.steps.split(","))
     ok = True
     if "mlb" in steps:
-        ok = run("build_data.py", "--end", end) and publish("MLB", end, a.dry)
+        # League Trends (hist/trends.js) re-sums the season just built; a failure there costs only that page
+        ok = run("build_data.py", "--end", end) and (run("build_trends.py") or True) and publish("MLB", end, a.dry)
     if ok and "minors" in steps:
         ok = (run("build_milb.py", "aaa", year)
               and run("build_milb.py", "aa", "ap", "a", year)
