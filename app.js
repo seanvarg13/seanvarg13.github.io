@@ -5895,38 +5895,46 @@
       box.append(ch);
     }
     const pick = log.find((g) => g.day === state.gameDay) || log[0];
-    // the log: a row per appearance, newest first, only what picks a game out (Sean, 29 Sep 2026: "very crammed") — the
-    // rates are in the picked game's box score below; tap one to open it
-    const t = el("table", "ubt stufft glog"), th = el("thead"), hr = el("tr");
-    const RATES = [["K%", "k", 1], ["BB%", "bb", 0], ["Whiff%", "whf", 1], ["Strike%", "strk", 1], ["Zone%", "zone", 1], ["Chase%", "osw", 1], ["GB%", "gb", 1], ["PU%", "pu", 1]];
-    const heads = [["Date", "l"], ["IP"], ["ER"], ["K"], ["BB"], ["Stuff+", "", "Stuff+ that day, every pitch against its own type"], ["Δ", "", "Stuff+ that day minus his season"],
-                   ["Luck", "", "BIP luck: runs his balls in play cost him against the league's average for their types: + unlucky, − lucky"],
-                   ...RATES.map(([h]) => [h, "rt", "That day; red / blue when 3+ points better / worse than his season"])];
+    // the log, oldest first (Sean, 29 Sep 2026), in three blocks split by a rule: his stuff (Stuff+, Δ vs season), the start's
+    // results (IP, ER, K, BB, K%, BB%, BIP luck), then the underlying rates (Whiff%, Strike%, Zone%, Chase%, GB%, PU%) — rates
+    // red / blue when 3+ points better / worse than his season. Tap a row for that day's box score, pitches and luck below.
+    const t = el("table", "ubt stufft glog"), th = el("thead"), gr = el("tr", "ggrp"), hr = el("tr");
+    const RES = [["K%", "k", 1], ["BB%", "bb", 0]], UND = [["Whiff%", "whf", 1], ["Strike%", "strk", 1], ["Zone%", "zone", 1], ["Chase%", "osw", 1], ["GB%", "gb", 1], ["PU%", "pu", 1]];
+    const rtTip = "That day; red / blue when 3+ points better / worse than his season";
+    const heads = [["Date", "l"], ["Stuff+", "", "Stuff+ that day, every pitch against its own type"], ["Δ", "gend", "Stuff+ that day minus his season"],
+                   ["IP"], ["ER"], ["K"], ["BB"], ...RES.map(([h]) => [h, "rt", rtTip]),
+                   ["Luck", "gend", "BIP luck: runs his balls in play cost him against the league's average for their types: + unlucky, − lucky"],
+                   ...UND.map(([h]) => [h, "rt", rtTip])];
+    for (const [lab, n, c] of [["", 1, "l"], ["Stuff", 2, "gend"], ["Start results", 7, "gend"], ["Underlying", 6, ""]]) { const e = el("th", c || null, lab); e.colSpan = n; gr.append(e); }
     for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
-    th.append(hr); t.append(th);
+    th.append(gr, hr); t.append(th);
     const tb = el("tbody"), pc = (x) => (x == null ? "–" : x.toFixed(1));
-    for (const g of log) {
-      const tr = el("tr", g === pick ? "on" : null); tr.tabIndex = 0;
+    const rate = (g, [, k, hib]) => { const v = g[k], sv = (p.m || {})[k], d = v != null && sv != null ? v - sv : null;
+      return el("td", "rt" + (d == null || Math.abs(d) < 3 ? "" : (d > 0) === !!hib ? " up" : " down"), pc(v)); };
+    let onRow = null;
+    for (const g of [...log].reverse()) {
+      const tr = el("tr", g === pick ? "on" : null); tr.tabIndex = 0; if (g === pick) onRow = tr;
       const stc = el("td", "plus", g.st == null ? "–" : String(Math.round(g.st))); if (g.st != null) { const ps = plusStyle(g.st); if (ps) { stc.style.background = ps.bg; stc.style.color = ps.fg; } }
       const dl = g.st != null && sea != null ? g.st - sea : null;
       const dc = el("td", "l"); dc.append(g.date ? fmtDate(g.date) : "–", el("span", "role", g.sp ? " SP" : " RP"));
-      tr.append(dc, el("td", null, fmtIP(g.ip)), el("td", null, g.g.er == null ? "–" : String(g.g.er)),
-                el("td", null, String(g.g.k)), el("td", null, String(g.g.bb)), stc,
-                el("td", "dlt " + (dl == null ? "" : dl >= 3 ? "up" : dl <= -3 ? "down" : ""), dl == null ? "–" : signed(dl, 0)),
-                el("td", "lk " + luckCls(g.luck), g.luck == null ? "–" : signed(g.luck)),
-                ...RATES.map(([, k, hib]) => { const v = g[k], sv = (p.m || {})[k], d = v != null && sv != null ? v - sv : null;
-                  return el("td", "rt" + (d == null || Math.abs(d) < 3 ? "" : (d > 0) === !!hib ? " up" : " down"), pc(v)); }));
+      tr.append(dc, stc, el("td", "gend dlt " + (dl == null ? "" : dl >= 3 ? "up" : dl <= -3 ? "down" : ""), dl == null ? "–" : signed(dl, 0)),
+                el("td", null, fmtIP(g.ip)), el("td", null, g.g.er == null ? "–" : String(g.g.er)), el("td", null, String(g.g.k)), el("td", null, String(g.g.bb)),
+                ...RES.map((r) => rate(g, r)), el("td", "gend lk " + luckCls(g.luck), g.luck == null ? "–" : signed(g.luck)),
+                ...UND.map((r) => rate(g, r)));
       const go = () => { state.gameDay = g.day; render(); };
       tr.addEventListener("click", go); tr.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
       tb.append(tr);
     }
     const s0 = p.m || {}, tot = el("tr", "ftot");
     const sluck = log.reduce((a, g) => a + (g.luck || 0), 0), ser = log.reduce((a, g) => a + (g.g.er || 0), 0), sk = log.reduce((a, g) => a + g.g.k, 0), sbb = log.reduce((a, g) => a + g.g.bb, 0);
-    tot.append(el("td", "l", "Season"), el("td", null, fmtIP(log.reduce((a, g) => a + g.ip, 0))), el("td", null, String(ser)), el("td", null, String(sk)), el("td", null, String(sbb)),
-               el("td", "plus", sea == null ? "–" : String(Math.round(sea))), el("td"), el("td", "lk " + luckCls(sluck / 3), signed(sluck)),
-               ...RATES.map(([, k]) => el("td", "rt", pc(s0[k]))));
+    tot.append(el("td", "l", "Season"), el("td", "plus", sea == null ? "–" : String(Math.round(sea))), el("td", "gend"),
+               el("td", null, fmtIP(log.reduce((a, g) => a + g.ip, 0))), el("td", null, String(ser)), el("td", null, String(sk)), el("td", null, String(sbb)),
+               ...RES.map(([, k]) => el("td", "rt", pc(s0[k]))), el("td", "gend lk " + luckCls(sluck / 3), signed(sluck)),
+               ...UND.map(([, k]) => el("td", "rt", pc(s0[k]))));
     tb.append(tot); t.append(tb);
     const sw = el("div", "stuffscroll glogscroll"); sw.append(t); box.append(sw);
+    // oldest first puts the latest game at the bottom: open with the picked row in view
+    if (onRow) requestAnimationFrame(() => { const top = onRow.offsetTop - sw.clientHeight + onRow.offsetHeight + 8; if (top > 0) sw.scrollTop = top; });
     // the picked game
     const det = el("div", "gdetail");
     det.append(el("h4", "gdhd", `${pick.date ? fmtDate(pick.date) : ""} · ${pick.sp ? "start" : "relief"} · ${fmtIP(pick.ip)} IP, ${pick.g.er ?? "–"} ER, ${pick.g.k} K, ${pick.g.bb} BB, ${pick.g.bf} BF, ${pick.g.pit} pitches`));
