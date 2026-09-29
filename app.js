@@ -4784,7 +4784,7 @@
       cols.forEach((c, j) => {
         const v = c.get(r), td = el("td", c.num ? "num" : "txt", c.fmt ? c.fmt(v) : String(v ?? "–"));
         // colour only what you're sorting by, plus the signed Trend / Δ (every rate column in red and blue was a wall of colour)
-        if (c.paint && v != null && (c.label === sortKey || c.label === "Trend" || c.label === "Δ" || /Pts\/PA$/.test(c.label))) { const pct = pcts[c.label][i]; if (pct != null) paint(td, pct); td.classList.add("pc"); }   // hitters' Pts/PA always coloured (Sean, 29 Sep 2026)
+        if (c.paint && v != null && (c.label === sortKey || c.label === "Trend" || c.label === "Δ")) { const pct = pcts[c.label][i]; if (pct != null) paint(td, pct); td.classList.add("pc"); }
         trr.append(td);
       });
       // the table's place is noted first: its card opens without a full render, and closing one redraws the table from the top
@@ -5133,7 +5133,7 @@
     else { o.IP = o.OUTS / 3; o.OUT = o.OUTS; o.SVHD = o.SV + o.HD; }
     return o;
   }
-  function renderFantasySeasons(p, grp, w, y) {
+  function renderFantasySeasons(p, grp, w, y, ppaPct) {
     const wrap = el("div", "fantseasons");
     wrap.append(el("h4", "fanth", "By season"));
     ensureScript("hist/fantasy-lines.js", () => !!window.DRAFT_FANTASY_LINES);
@@ -5156,7 +5156,7 @@
       if (grp === "H") r.append(el("td", null, String(o.PA)));
       else r.append(el("td", null, String(o.GS)), el("td", null, outsIP(o.OUTS)));
       r.append(el("td", "fp" + (pts < 0 ? " neg" : ""), f1(pts)), el("td", null, f2(pts / o.G)));
-      if (grp === "H") r.append(el("td", null, f3(o.PA ? pts / o.PA : null)));
+      if (grp === "H") { const v = o.PA ? pts / o.PA : null, td = el("td", "ppa", f3(v)), pc = ppaPct && v != null ? ppaPct(v) : null; if (pc != null) paint(td, pc); r.append(td); }   // coloured against this season's qualified hitters
       tb.append(r);
     }
     if (rows.length > 1) {
@@ -5196,7 +5196,11 @@
     tile(f1(tot), "season points", rows ? rank(rows.map((r) => r.pts), tot) : "");
     const qual = rows ? rows.filter(fMinOK) : [];
     tile(f2(ppg), "points per game", rows && qual.some((r) => r.p.id === p.id) ? rank(qual.map((r) => r.pts / r.o.G), ppg) : "");
-    if (grp === "H" && o.PA) tile((tot / o.PA).toFixed(3), "points per PA", rows && qual.some((r) => r.p.id === p.id) ? rank(qual.filter((r) => r.o.PA).map((r) => r.pts / r.o.PA), tot / o.PA) : "");   // beside per game (Sean, 29 Sep 2026)
+    // points per PA beside per game, heat-coloured by where it sits among the fantasy page's qualified hitters (Sean, 29 Sep 2026)
+    const ppaVals = grp === "H" ? qual.filter((r) => r.o.PA).map((r) => r.pts / r.o.PA) : [];
+    const ppaPct = (v) => (ppaVals.length && v != null ? Math.round(100 * ppaVals.filter((x) => x < v).length / ppaVals.length) : null);
+    if (grp === "H" && o.PA) { tile((tot / o.PA).toFixed(3), "points per PA", qual.some((r) => r.p.id === p.id) ? rank(ppaVals, tot / o.PA) : "");
+      const b = tiles.lastChild.querySelector("b"), pc = ppaPct(tot / o.PA); if (b && pc != null) { paint(b, pc); b.classList.add("ppachip"); } }
     tile(String(o.G), grp === "H" ? "games" : `games · ${o.GS} GS`, grp === "H" ? `${o.PA} PA` : `${outsIP(o.OUTS)} IP`);
     if (grp === "P") {                                   // per start and per relief outing, when he has had both
       const st = o.games.filter((g) => g.GS), rl = o.games.filter((g) => !g.GS);
@@ -5223,7 +5227,7 @@
     if (grp === "H") tr.append(el("td", null, o.PA ? (tot / o.PA).toFixed(3) : "–"));
     tb.append(tr);
     t.append(tb); box.append(t);
-    box.append(renderFantasySeasons(p, grp, w, y));
+    box.append(renderFantasySeasons(p, grp, w, y, ppaPct));
     // a pitcher's game log, newest first: the last ten, or every game on request
     if (grp === "P" && o.games.length) {
       const miss = Object.keys(w).filter((k) => Number(w[k]) && o.games[0][k] === undefined && !["IP", "OUT", "G", "SVHD", "RW", "RL", "QS", "NH", "PG"].includes(k));
