@@ -60,6 +60,11 @@ def build_season(year: int, kind: str = "reg"):
         bd.log(f"  no {kind} games for {year}"); return
     if set(K["types"]) == {"R"}:                     # Stuff / Pitching grades for a regular season, trained on it and the two before
         d = bd.add_stuff(d, bd.load_prior_seasons(year))
+    elif kind == "spring":                           # spring Stuff+ (Sean, 29 Sep 2026): the last three MLB seasons' models grade the
+        # spring pitches against the last MLB season's pitch types, the way the minors are graded; parks adjusted within spring
+        mlb = [x for x in (bd.load_prior_season(year - k) for k in (1, 2, 3)) if len(x)]
+        if mlb:
+            d = bd.add_stuff(d, pd.concat(mlb, ignore_index=True), ref=mlb[0])
     hit, pit = bd.hitter_metrics(d), bd.pitcher_metrics(d)
     bd.log(f"  {len(hit)} batters, {len(pit)} pitchers")
 

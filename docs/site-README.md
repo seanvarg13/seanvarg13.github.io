@@ -557,6 +557,12 @@ two-start pitcher, your starred pitchers' probable starts (or a reliever's expec
 how many opposing starters are left- or right-handed, each with projected points under your scoring. Switch to Everyone to see
 the whole league. Clubs name starters a few days ahead, so a week fills in as it nears.
 
+## Spring training Stuff+
+
+Leaderboards ▸ Stuff+ has a **Games** picker: switch it to Spring training to see every pitch thrown in spring graded the same
+way as the season's (against MLB pitches of its type, parks taken out). Through February and March the spring numbers are rebuilt
+every morning; tap a name for his spring card.
+
 ## Game Logs (hitters)
 
 A hitter's card opens its tabs with **Game Logs**: every game this season, oldest first — xwOBA that game (coloured by where it
