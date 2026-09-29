@@ -3237,3 +3237,12 @@ body[data-mode="trends"] #pitchboard > .trchartbox { margin: 4px 0 10px; }
 .gamesbox .uchip.on { text-shadow: 0 0 2px rgba(0, 0, 0, 0.35); }
 /* the log wears the Leaderboard table's frame: a thin navy outline (Sean, 29 Sep 2026) */
 .gamesbox .glogscroll { border: 1px solid var(--rule); }
+/* Game Logs, 29 Sep 2026 (Sean): the pitch and luck tables wear the log's thin navy frame, and the log's Season row is frozen
+   at the foot of its box — grey and bold — so the full-season line is always in view while the games scroll */
+.gamesbox .gframe { border: 1px solid var(--rule); }
+.gamesbox .gframe > .ubt.gluck { max-width: none; }
+.gamesbox .gpart:has(> .gframe > .ubt.gluck) { max-width: 460px; }
+:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog tr.ftot td { position: sticky; bottom: 0; z-index: 2; background: var(--surface-2); font-weight: 700; color: var(--ink); border-top: 2px solid var(--rule); }
+:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog tr.ftot td.l { z-index: 3; }
+.gamesbox .gframe .ubt td.l, .gamesbox .gframe .ubt th.l, .gamesbox .gframe .ubt th:first-child { padding-left: 8px; }
+.gamesbox .gframe .ubt td:last-child, .gamesbox .gframe .ubt th:last-child { padding-right: 8px; }
