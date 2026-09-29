@@ -3227,10 +3227,10 @@ body[data-mode="trends"] #pitchboard > .trchartbox { margin: 4px 0 10px; }
 .gamesbox .ubt.glog thead tr.ggrp th:first-child { position: static; }
 .gamesbox .ubt.glog thead tr.ggrp th { text-align: center !important; }
 /* the log's two header rows: group labels on light blue, column names on navy */
-:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead tr.ggrp th { background: var(--accent-2); color: var(--accent-2-ink); border-bottom: 0; }
+:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead tr.ggrp th { background: color-mix(in srgb, var(--accent-2) 24%, var(--surface)); color: var(--ink); border-bottom: 2px solid var(--accent-2); }   /* the Leaderboard pager strip's pale blue */
 :root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead tr:not(.ggrp) th { background: var(--surface-2); color: var(--muted); border-bottom: 2px solid var(--accent-2); }
 :root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead th.lc { text-transform: none; }
-:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead tr.ggrp .gend { border-right-color: var(--surface) !important; }
+:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead tr.ggrp .gend { border-right-color: var(--rule) !important; }
 /* the day's uERA: a chip coloured like Season Stats' uERA, the one heat-mapped result (Sean, 29 Sep 2026) */
 .gamesbox .ubt.glog td.uera { padding-top: 4px; padding-bottom: 4px; }
 .gamesbox .uchip { display: inline-block; min-width: 3.6em; padding: 3px 6px; text-align: center; font-weight: 700; box-sizing: border-box; }
