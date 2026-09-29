@@ -3235,3 +3235,5 @@ body[data-mode="trends"] #pitchboard > .trchartbox { margin: 4px 0 10px; }
 .gamesbox .ubt.glog td.uera { padding-top: 4px; padding-bottom: 4px; }
 .gamesbox .uchip { display: inline-block; min-width: 3.6em; padding: 3px 6px; text-align: center; font-weight: 700; box-sizing: border-box; }
 .gamesbox .uchip.on { text-shadow: 0 0 2px rgba(0, 0, 0, 0.35); }
+/* the log wears the Leaderboard table's frame: a thin navy outline (Sean, 29 Sep 2026) */
+.gamesbox .glogscroll { border: 1px solid var(--rule); }
