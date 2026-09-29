@@ -5995,7 +5995,7 @@
                 two(wx("xwhf"), swx("xwhf")), tip(two(ssw ? 100 * swh / ssw : null, s0.whf), `${swh} whiffs on ${ssw} swings`),
                 two(wx("xgb"), swx("xgb")), tip(two(sb ? 100 * gp.reduce((a, r) => a + r.bipgb, 0) / sb : null, s0.gb), `${sb} balls in play`), two(wx("xpu"), swx("xpu")), two(sb ? 100 * gp.reduce((a, r) => a + r.bippu, 0) / sb : null, s0.pu));
       b2.append(tr); t2.append(b2);
-      const w2 = el("div", "stuffscroll"); w2.append(t2); pt.append(w2);
+      const w2 = el("div", "stuffscroll gframe"); w2.append(t2); pt.append(w2);
     }
     det.append(pt);
     // batted-ball luck that day
@@ -6015,7 +6015,7 @@
       const tr = el("tr", "ftot"), nb = ["gb", "ld", "fb", "pu"].reduce((a, k) => a + (pick.T[k][0] || 0), 0), wb = ["gb", "ld", "fb", "pu"].reduce((a, k) => a + (pick.T[k][1] || 0), 0),
             lgb = ["gb", "ld", "fb", "pu"].reduce((a, k) => a + (pick.T[k][0] || 0) * c.bbw[k], 0);
       tr.append(el("td", "l", "All balls in play"), el("td", null, String(nb)), el("td", null, nb ? fmtX(wb / nb) : "–"), el("td", null, nb ? fmtX(lgb / nb) : "–"), el("td", "lk " + luckCls(pick.luck), signed(pick.luck)));
-      b3.append(tr); t3.append(b3); lk.append(t3);
+      b3.append(tr); t3.append(b3); { const fr = el("div", "gframe"); fr.append(t3); lk.append(fr); }
       if (pick.luck != null) {
         const v = el("p", "gverdict"); v.append(el("span", "chip2 " + (pick.luck >= 0.5 ? "unlucky" : pick.luck <= -0.5 ? "lucky" : "even"), luckWord(pick.luck)),
           ` ${pick.luck >= 0 ? "His balls in play cost him" : "His balls in play saved him"} ${Math.abs(pick.luck).toFixed(1)} run${Math.abs(pick.luck) >= 0.95 && Math.abs(pick.luck) < 1.05 ? "" : "s"} against league-average results on the same kinds of contact.`);
