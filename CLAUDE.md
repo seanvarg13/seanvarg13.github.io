@@ -484,6 +484,15 @@ is deploy-limited.
   section (`#pitchboard`) and standing-card CSS (every `[data-mode="pitches"]` rule also names `trends`). No Stuff+ by pitch: it's
   graded against each season's own type average, so the league is 100 every year. Savant has since relabelled old sweepers, so
   ST exists (small) before 2023.
+* **Games tab** (pitcher card, `renderGamesTab` / `gameLog` / `gamePitches` in `app.js`; Sean, 29 Sep 2026: "his stuff+ by
+  start/relief appearance"): every appearance of the card's season from the day rows (days.js, or `hist/days-<season>.js`),
+  whatever the card's dates or splits — Stuff+ that day (`stuffFrom` on the day's `stn…stbp`) against his season, a dot chart
+  of it (starts filled, relief hollow), the box line (IP, ER, K, BB, K%, BB%, Whiff%, Strike%, Zone%, Chase%, GB%, PU%) and
+  **BIP luck**: the day's wOBA on each batted-ball type (`wgb/wld/wfb/wpu` over `gb/ld/fbt/pu`) against the league's value
+  for the type (`consts.bbw`), in runs (÷ `wobaScale`), + = unlucky. Tapping a game shows each pitch that day graded against
+  its type beside his season grade (`hist/ars-<season>.js`; under 5 of a pitch isn't graded) and the luck by type. **No park
+  adjustment**: checked 29 Sep 2026 (home − away by team, 2024-26) — Coors takes ~2.9" of four-seam IVB and ~3 Stuff+ points,
+  Tampa / Houston / Miami / San Diego add ~0.9" and ~2 points, Rogers Centre ~0; the day rows only know home / away, not the park.
 * **xwOBA − wOBA** (`xwdiff`, hitters; Sean, 27 Sep 2026): a Leaderboard / Trending column (added once to saved column sets
   via `state.lb.xwdAdded`), signed (+ = unlucky). `LB_EXTRA_H` lists the hitter stats that are columns without being on
   the card (xwdiff, babip, xbabip, bluck, brel); `fmt()` prints `sign: true` metrics as +.024 / −.018.

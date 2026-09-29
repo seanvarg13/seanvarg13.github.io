@@ -550,6 +550,15 @@ and ball in play pooled), not averages of players. Each column is coloured by wh
 highest, blue the lowest); tap a column's name to draw it as a line. The current season is marked * (so far), 2020 † (60 games).
 Built by `build_trends.py` into `hist/trends.js` every morning after the MLB build.
 
+## Games (a pitcher's appearances)
+
+A pitcher's card has a **Games** tab: every appearance this season, newest first — Stuff+ that day and how far it was from
+his season grade, a dot chart of it across the year (starts filled, relief outings hollow), the box line (IP, ER, K, BB, K%,
+BB%, Whiff%, Strike%, Zone%, Chase%, GB%, popup%) and **BIP luck**, the runs his balls in play cost (+) or saved (−) him
+against the league's average result for each batted-ball type. Tap a game to see each pitch that day graded against its type
+with his season grade under it, and the luck broken out by ground balls, line drives, fly balls and popups. Stuff+ isn't
+park-adjusted: Coors Field costs a pitcher about 3 points, a few parks (Tampa, Houston, Miami, San Diego) add about 2.
+
 ## Hosting (a real link, on your phone)
 
 It is a static site, so any host works. The built-in way is **GitHub Pages** (free, no publishing quota — Netlify's
