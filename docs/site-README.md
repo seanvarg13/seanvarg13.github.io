@@ -553,7 +553,7 @@ Built by `build_trends.py` into `hist/trends.js` every morning after the MLB bui
 ## Games (a pitcher's appearances)
 
 A pitcher's card has a **Games** tab: every appearance this season, oldest first, grouped as Stuff · Start results · Underlying — Stuff+ that day and how far it was from
-his season grade, a dot chart of it across the year (starts filled, relief outings hollow), IP, ER, K, BB, **BIP luck** and every rate (K%, BB%, Whiff%, Strike%, Zone%, Chase%, GB%, popup% — red / blue when 3+ points better / worse than his season), the runs his balls in play cost (+) or saved (−) him
+his season grade, a dot chart of it across the year (starts filled, relief outings hollow), IP, ER, K%, BB%, K-BB%, **BIP luck**, then Whiff%, Strike%, GB% and popup% (rates red / blue when 3+ points better / worse than his season), the runs his balls in play cost (+) or saved (−) him
 against the league's average result for each batted-ball type. Tap a game for its box score (each rate over his season's), every pitch
 that day with all its numbers — grades, usage, velocity, movement, spin, expected and actual whiff / ground-ball / popup rates —
 his season's under each one, and the luck broken out by ground balls, line drives, fly balls and popups. Stuff+ isn't

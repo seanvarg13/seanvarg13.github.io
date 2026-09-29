@@ -3223,3 +3223,10 @@ body[data-mode="trends"] #pitchboard > .trchartbox { margin: 4px 0 10px; }
 .gamesbox .ubt.glog td.lk { border-right: 0; }
 .gamesbox .ubt.glog td.gend.lk { border-right: 1px solid var(--rule) !important; }
 .gamesbox .ubt.glog th.rt:first-of-type { border-right: 0; }
+/* group labels centred over their whole block; only the column-name row's Date cell is pinned */
+.gamesbox .ubt.glog thead tr.ggrp th:first-child { position: static; }
+.gamesbox .ubt.glog thead tr.ggrp th { text-align: center !important; }
+/* the log's two header rows: group labels on light blue, column names on navy */
+:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead tr.ggrp th { background: var(--accent-2); color: var(--accent-2-ink); border-bottom: 0; }
+:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead tr:not(.ggrp) th { background: var(--accent); color: var(--accent-ink); border-bottom: 0; }
+:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead .gend { border-right-color: var(--surface) !important; }
