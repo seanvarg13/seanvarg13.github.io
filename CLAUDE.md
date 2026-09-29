@@ -484,6 +484,14 @@ is deploy-limited.
   section (`#pitchboard`) and standing-card CSS (every `[data-mode="pitches"]` rule also names `trends`). No Stuff+ by pitch: it's
   graded against each season's own type average, so the league is 100 every year. Savant has since relabelled old sweepers, so
   ST exists (small) before 2023.
+* **Call-up Watch** (Leaderboards ▸ Call-up Watch, `#callups`, `renderCallups` / `cuRows` in `app.js`; Sean, 29 Sep 2026): this
+  season's minor leaguers at one level (`hist/<aaa|aa|ap|a>-<season>.js`, loaded on demand). Pitchers ranked by **MLB-equivalent
+  uERA** — the level's Whiff% / Strike% / GB% / PU% shifted by `MILB_X` and placed in this season's MLB SP or RP pool (`placeIn`),
+  the same number as Season Stats' minors rows — as a chip coloured by that MLB percentile, with minors Stuff+ (tracked levels
+  only), K%, BB%, Whiff%, Strike%, GB%, FB velo, ERA; hitters by wOBA (no directional xwOBA in the minors) with K%, BB%, Whiff%,
+  Chase%, EV, EV90, Brl%, HH%. Filters: side, level, SP / RP, age, minimum BF / PA, "no MLB time yet" (an id with an MLB line
+  this season is tagged MLB). A name opens his card on that level's season (`state.x.ds`). Same `#pitchboard` section and
+  standing-card CSS as the Stuff+ board (the `[data-mode="pitches"]` rules name `trends` and `callups` too).
 * **Game Logs tab** (pitcher card, `renderGamesTab` / `gameLog` / `gamePitches` in `app.js`; Sean, 29 Sep 2026: "his stuff+ by
   start/relief appearance"): every appearance of the card's season from the day rows (days.js, or `hist/days-<season>.js`),
   whatever the card's dates or splits — Stuff+ that day (`stuffFrom` on the day's `stn…stbp`) against his season, a dot chart
