@@ -270,7 +270,14 @@ height and side, extension, arm angle, batter side, and velocity / break gaps to
 model only, **arsenal depth**: this pitch's usage and how many pitch types he throws 5%+ of the time that season (`use`,
 `depth`, `STUFF_WHIFF_ONLY`; Sean, 27 Sep 2026 — first-half xWhiff → second-half Whiff% .655 → .679 on 2026; 10%+ .665,
 "effective number" .674; command habits — zone / edge rate, location spread — tested and left out, they predicted worse);
-**no location, no count**. `HistGradientBoostingClassifier`s are **trained at every build** on this season plus the two before (`STUFF_YEARS`;
+**no location, no count**. **Park-adjusted** (Sean, 29 Sep 2026; `park_offsets` / `STUFF_PARK`): before grading, each pitch's
+velocity, ride, run and spin are taken back to a neutral park — a two-way fixed-effects fit (pitch = his own pitch-type average that
+season + the park × pitch type offset, alternated four times so home staffs don't bias their park), shrunk by n / (n + 400) and
+centred per type. Found 29 Sep 2026: Coors takes ~2.4-2.9" of four-seam ride, Tampa / Miami / Houston / San Diego add ~0.5-1.1",
+Rogers Centre ~0; on Jul-Aug 2026 the adjustment roughly halved each park's home − away gap in the model's whiff / ground-ball
+chances. Only the model's inputs move — the arsenal table's velo / IVB / HB / spin stay as measured (`stuff_features(d, park=False)`).
+Needs `home_team` (kept in `STUFF_TRAIN`); a frame without it (some minors data) grades unadjusted. Past seasons pick it up when
+rescored. `HistGradientBoostingClassifier`s are **trained at every build** on this season plus the two before (`STUFF_YEARS`;
 tested 26 Sep 2026 on 2026: a third season helped slightly, a fourth to sixth or recency weights added nothing) (no model
 file): P(whiff | swing) and P(ground ball / popup / air ball | contact). They combine on uERA's weights: a Whiff% point is
 0.933 K% points (`UK`), each K removes a ball in play worth the league BIP value (`kW` ≈ 0.10 ERA per point); a ball in
@@ -513,9 +520,7 @@ is deploy-limited.
   **BIP luck**: the day's wOBA on each batted-ball type (`wgb/wld/wfb/wpu` over `gb/ld/fbt/pu`) against the league's value
   for the type (`consts.bbw`), in runs (÷ `wobaScale`), + = unlucky. Tapping a game shows each pitch that day graded against
   its type beside his season, every metric the arsenal file carries (Stuff+ / Whiff+ / BB+, use, velo, IVB, HB, spin, xWhiff /
-  Whiff%, xGB / GB%, xPU / PU%; counts in the tooltips; `hist/ars-<season>.js`; under 5 of a pitch isn't graded) and the luck by type. **No park
-  adjustment**: checked 29 Sep 2026 (home − away by team, 2024-26) — Coors takes ~2.9" of four-seam IVB and ~3 Stuff+ points,
-  Tampa / Houston / Miami / San Diego add ~0.9" and ~2 points, Rogers Centre ~0; the day rows only know home / away, not the park.
+  Whiff%, xGB / GB%, xPU / PU%; counts in the tooltips; `hist/ars-<season>.js`; under 5 of a pitch isn't graded) and the luck by type.
 * **Hitter Game Logs tab** (hitter card, first of `BTABS_H`, `renderHitGamesTab` / `hitGameLog` in `app.js`; Sean, 29 Sep 2026):
   every game of the card's season from the day rows (via `gameDays`), oldest first, in the pitchers' dress — **Game** (date,
   xwOBA as a chip coloured against the season's 300+ PA hitters' xwOBA) · **Results** (PA, H, HR, BB, K, wOBA, luck = (wOBA −
