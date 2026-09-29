@@ -484,13 +484,15 @@ is deploy-limited.
   section (`#pitchboard`) and standing-card CSS (every `[data-mode="pitches"]` rule also names `trends`). No Stuff+ by pitch: it's
   graded against each season's own type average, so the league is 100 every year. Savant has since relabelled old sweepers, so
   ST exists (small) before 2023.
-* **Games tab** (pitcher card, `renderGamesTab` / `gameLog` / `gamePitches` in `app.js`; Sean, 29 Sep 2026: "his stuff+ by
+* **Game Logs tab** (pitcher card, `renderGamesTab` / `gameLog` / `gamePitches` in `app.js`; Sean, 29 Sep 2026: "his stuff+ by
   start/relief appearance"): every appearance of the card's season from the day rows (days.js, or `hist/days-<season>.js`),
   whatever the card's dates or splits — Stuff+ that day (`stuffFrom` on the day's `stn…stbp`) against his season, a dot chart
   of it (starts filled, relief hollow), a log, oldest first, in three blocks under group labels with a rule
-  between (Sean, 29 Sep 2026): **Stuff** (date, Stuff+, Δ) · **Start results** (IP, ER, K%, BB%, K-BB%, luck — raw K / BB dropped) ·
-  **Underlying** (Whiff%, Strike%, GB%, PU% — Zone% / Chase% dropped; Sean, 29 Sep 2026), group labels centred on a light-blue
-  row over navy column names — rates red / blue when 3+ points better / worse than his season, the date pinned, opening
+  between (Sean, 29 Sep 2026): **Stuff** (date, Stuff+, Δ) · **Start results** (IP, ER, K%, BB%, **uERA** — that day's rates through
+  `impliedKBB` / `underlyingERA` on its balls in play, the one heat-mapped result, a chip coloured by its percentile among the
+  season's pitchers like Season Stats' uERA; raw K / BB, K-BB% and the luck column dropped) · **Underlying** (Whiff%, Strike%, GB%,
+  PU% — Zone% / Chase% dropped; Sean, 29 Sep 2026), no text colouring, group labels centred on a light-blue row over the pale
+  grey column-name row. The tab is called **Game Logs** (key `games`) — the date pinned, opening
   scrolled to the picked (latest) game; the rest scrolls sideways on a phone, the picked game's rates as box-score tiles over his season, and
   **BIP luck**: the day's wOBA on each batted-ball type (`wgb/wld/wfb/wpu` over `gb/ld/fbt/pu`) against the league's value
   for the type (`consts.bbw`), in runs (÷ `wobaScale`), + = unlucky. Tapping a game shows each pitch that day graded against

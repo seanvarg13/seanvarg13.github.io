@@ -5371,7 +5371,7 @@
   }
   const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["sheet", "Spreadsheet Stats"], ["rolling", "Rolling"], ["fantasy", "Fantasy"]];   // Spreadsheet Stats: its own tab (Sean, 28 Sep 2026)
   const BTABS_H = [["mix", "Mix"], ["babip", "BABIP"]];                  // a hitter's batted-ball mix, and how much of his line is BABIP
-  const BTABS_P = [["stuff", "Stuff"], ["games", "Games"], ["nera", "nERA"], ["uera", "uERA"]];   // his arsenal graded, then his two ERAs, one tab each
+  const BTABS_P = [["stuff", "Stuff"], ["games", "Game Logs"], ["nera", "nERA"], ["uera", "uERA"]];   // his arsenal graded, then his two ERAs, one tab each
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -5838,7 +5838,8 @@
       const luck = bbw && n ? (act - exp) / (c.wobaScale || 1.25) : null;
       return { day: d, date: src.days && src.days[d], g, sp: !!g.gs, ip: g.outs / 3, st: st.stuff, swhf: st.swhf, sbb: st.sbb, luck, T,
                k: sc(0, g.k, g.bf), bb: sc(0, g.bb, g.bf), whf: sc(0, g.whf, g.sw), strk: sc(0, g.strk, g.pit), zone: sc(0, g.zpit, g.pit),
-               osw: sc(0, g.osw, g.opit), gb: sc(0, g.gb, g.bip), pu: sc(0, g.pu, g.bip), kbb: g.bf ? 100 * (g.k - g.bb) / g.bf : null };
+               osw: sc(0, g.osw, g.opit), gb: sc(0, g.gb, g.bip), pu: sc(0, g.pu, g.bip), kbb: g.bf ? 100 * (g.k - g.bb) / g.bf : null,
+               swing: sc(0, g.sw, g.pit), zcon: sc(0, g.zcon, g.zsw) };
     });
   }
   const typeAvgOf = (pt) => { const sc = K().stuff, x = sc && sc.types && sc.types[pt]; if (!x) return null; const [w, b] = stuffParts(sc, x[1], x[2], x[3], K().lgERA); return { w, b, t: w + b - 100 }; };
@@ -5899,27 +5900,38 @@
     // results (IP, ER, K, BB, K%, BB%, BIP luck), then the underlying rates (Whiff%, Strike%, Zone%, Chase%, GB%, PU%) — rates
     // red / blue when 3+ points better / worse than his season. Tap a row for that day's box score, pitches and luck below.
     const t = el("table", "ubt stufft glog"), th = el("thead"), gr = el("tr", "ggrp"), hr = el("tr");
-    const RES = [["K%", "k", 1], ["BB%", "bb", 0], ["K-BB%", "kbb", 1]], UND = [["Whiff%", "whf", 1], ["Strike%", "strk", 1], ["GB%", "gb", 1], ["PU%", "pu", 1]];   // Zone% / Chase% dropped (Sean)
-    const rtTip = "That day; red / blue when 3+ points better / worse than his season";
+    const RES = [["K%", "k", 1], ["BB%", "bb", 0]], UND = [["Whiff%", "whf", 1], ["Strike%", "strk", 1], ["GB%", "gb", 1], ["PU%", "pu", 1]];   // Zone% / Chase% dropped (Sean)
+    const rtTip = "That day";
     const heads = [["Date", "l"], ["Stuff+", "", "Stuff+ that day, every pitch against its own type"], ["Δ", "gend", "Stuff+ that day minus his season"],
                    ["IP"], ["ER"], ...RES.map(([h]) => [h, "rt", rtTip]),
-                   ["Luck", "gend", "BIP luck: runs his balls in play cost him against the league's average for their types: + unlucky, − lucky"],
+                   ["uERA", "gend lc", "Underlying ERA that day: his uK% and uBB% from the day's Whiff%, Strike% and swing rates, on the balls in play he allowed at the league's value for each type — coloured by where it would rank among the season's pitchers"],
                    ...UND.map(([h]) => [h, "rt", rtTip])];
-    for (const [lab, n, c] of [["Stuff", 3, "gend"], ["Start results", 6, "gend"], ["Underlying", 4, ""]]) { const e = el("th", c || null, lab); e.colSpan = n; gr.append(e); }
+    for (const [lab, n, c] of [["Stuff", 3, "gend"], ["Start results", 5, "gend"], ["Underlying", 4, ""]]) { const e = el("th", c || null, lab); e.colSpan = n; gr.append(e); }
     for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
     th.append(gr, hr); t.append(th);
     const tb = el("tbody"), pc = (x) => (x == null ? "–" : x.toFixed(1));
-    const rate = (g, [, k, hib]) => { const v = g[k], sv = (p.m || {})[k], d = v != null && sv != null ? v - sv : null;
-      return el("td", "rt" + (d == null || Math.abs(d) < 3 ? "" : (d > 0) === !!hib ? " up" : " down"), pc(v)); };
+    const rate = (g, [, k]) => el("td", "rt", pc(g[k]));
+    // uERA that day (Sean, 29 Sep 2026: in place of K-BB%, the one coloured cell in the results): the day's rates through the
+    // season's uK% / uBB% fits and its balls in play at the league's value per type, as a chip coloured like Season Stats'
+    const sorted = (pool(p.primary === "RP" ? "RP" : "SP") || {}).sorted || {};
+    const ueraOf = (g) => {
+      const G = g.g, pv = { m: { whf: g.whf, strk: g.strk, zone: g.zone, osw: g.osw, swing: g.swing, zcon: g.zcon, k: g.k, bb: g.bb },
+                            ctx: { bbl: { gb: [G.gb, G.wgb], ld: [G.ld, G.wld], fb: [G.fbt, G.wfb], pu: [G.pu, G.wpu] }, PAw: G.bf, HBP: G.hbp } };
+      const v = underlyingERA(pv, impliedKBB(pv, null, sorted), sorted);
+      return v == null ? null : { v, pct: sorted.uera ? insertPct(sorted.uera, -v) : null };
+    };
+    const ueraTd = (u) => { const td = el("td", "gend uera"), chip = el("span", "uchip", u ? u.v.toFixed(2) : "–");
+      if (u && u.pct != null) { paintBar(chip, u.pct); chip.style.color = "#fff"; chip.classList.add("on"); td.title = `uERA ${u.v.toFixed(2)} · would be ${ordinal(u.pct)} pctl among the season's pitchers`; }
+      td.append(chip); return td; };
     let onRow = null;
     for (const g of [...log].reverse()) {
       const tr = el("tr", g === pick ? "on" : null); tr.tabIndex = 0; if (g === pick) onRow = tr;
       const stc = el("td", "plus", g.st == null ? "–" : String(Math.round(g.st))); if (g.st != null) { const ps = plusStyle(g.st); if (ps) { stc.style.background = ps.bg; stc.style.color = ps.fg; } }
       const dl = g.st != null && sea != null ? g.st - sea : null;
       const dc = el("td", "l"); dc.append(g.date ? fmtDate(g.date) : "–", el("span", "role", g.sp ? " SP" : " RP"));
-      tr.append(dc, stc, el("td", "gend dlt " + (dl == null ? "" : dl >= 3 ? "up" : dl <= -3 ? "down" : ""), dl == null ? "–" : signed(dl, 0)),
+      tr.append(dc, stc, el("td", "gend dlt", dl == null ? "–" : signed(dl, 0)),
                 el("td", null, fmtIP(g.ip)), el("td", null, g.g.er == null ? "–" : String(g.g.er)),
-                ...RES.map((r) => rate(g, r)), el("td", "gend lk " + luckCls(g.luck), g.luck == null ? "–" : signed(g.luck)),
+                ...RES.map((r) => rate(g, r)), ueraTd(ueraOf(g)),
                 ...UND.map((r) => rate(g, r)));
       const go = () => { state.gameDay = g.day; render(); };
       tr.addEventListener("click", go); tr.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
@@ -5929,7 +5941,8 @@
     const sluck = log.reduce((a, g) => a + (g.luck || 0), 0), ser = log.reduce((a, g) => a + (g.g.er || 0), 0);
     tot.append(el("td", "l", "Season"), el("td", "plus", sea == null ? "–" : String(Math.round(sea))), el("td", "gend"),
                el("td", null, fmtIP(log.reduce((a, g) => a + g.ip, 0))), el("td", null, String(ser)),
-               ...RES.map(([, k]) => el("td", "rt", pc(s0[k]))), el("td", "gend lk " + luckCls(sluck / 3), signed(sluck)),
+               ...RES.map(([, k]) => el("td", "rt", pc(s0[k]))),
+               ueraTd((() => { const v = underlyingERA(p, impliedKBB(p, null, sorted), sorted); return v == null ? null : { v, pct: sorted.uera ? insertPct(sorted.uera, -v) : null }; })()),
                ...UND.map(([, k]) => el("td", "rt", pc(s0[k]))));
     tb.append(tot); t.append(tb);
     const sw = el("div", "stuffscroll glogscroll"); sw.append(t); box.append(sw);
