@@ -151,11 +151,14 @@ def main():
         # plain years rebuild MLB seasons; "aaa-2025" / "a-2024" tokens rebuild a minor-league season (27 Sep 2026: Stuff+ there)
         toks = a.rescore or [str(y) for y in range(2015, int(year))]
         years = [t for t in toks if t.isdigit()]
-        milb = {}
+        milb, other = {}, {}
         for t in toks:
             if "-" in t and t.split("-", 1)[1].isdigit():
-                milb.setdefault(t.split("-", 1)[0], []).append(t.split("-", 1)[1])
+                k0, y0 = t.split("-", 1)
+                (other if k0 in ("spring", "post") else milb).setdefault(k0, []).append(y0)   # "spring-2026": that spring training
         ok = (not years or run("build_history.py", *years))
+        for kind, ys in other.items():
+            ok = ok and run("build_history.py", kind, *ys)
         for lvl, ys in milb.items():
             ok = ok and run("build_milb.py", lvl, *ys)
         ok = ok and run("build_career.py") and (run("build_trends.py") or True) and publish(f"rescored {' '.join(toks)}", end, a.dry)
@@ -165,6 +168,10 @@ def main():
     if "mlb" in steps:
         # League Trends (hist/trends.js) re-sums the season just built; a failure there costs only that page
         ok = run("build_data.py", "--end", end) and (run("build_trends.py") or True) and publish("MLB", end, a.dry)
+        # spring training (Sean, 29 Sep 2026: track a pitcher's stuff in spring): through March, rebuild this spring's dataset too —
+        # Stuff+ graded against MLB pitch types — and publish it; a failure costs only the spring file
+        if ok and end[5:7] in ("02", "03") and run("build_history.py", "spring", year):
+            publish("spring training", end, a.dry)
     if ok and "minors" in steps:
         ok = (run("build_milb.py", "aaa", year)
               and run("build_milb.py", "aa", "ap", "a", year)

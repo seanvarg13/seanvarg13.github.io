@@ -3024,12 +3024,28 @@
   // Draft Mode is gone (Sean, 28 Sep 2026: the home page does its job); the Mac's index.html template may still list it
   { const dm = document.querySelector('#modemenu a[href="#draftmode"]'); if (dm) dm.closest("li").remove(); }
   const pb = Object.assign({ pt: "all", hand: "all", role: "all", min: 100, sort: "stuffp", dir: -1 }, load("draft2027.pitchboard", {}));
+  // spring training (Sean, 29 Sep 2026: "track a pitchers stuff in spring training"): the board can read this spring's dataset
+  // (hist/mlb-<year>-spring.js, graded by the MLB models against MLB pitch types) — next year's spring once it exists, else this one's
+  const springKey = () => { const S = DATA.meta.season; for (const y of [S + 1, S]) { const k = `mlb-${y}-spring`; if (!failed.has(`hist/${k}.js`)) return k; } return null; };
   function renderPitchBoard() {
     const box = pitchBoardEl(); box.innerHTML = "";
+    if (pb.src === "spring") {
+      const k = springKey(), ds = k && histDataset(k);
+      if (!ds) {
+        if (k) ensureHist(k);
+        const bar0 = el("div", "pbfilters"); bar0.append(pillSelect("Spring training", [["season", `${DATA.meta.season} season`], ["spring", "Spring training"]], "spring", (v) => { pb.src = v; try { localStorage.setItem("draft2027.pitchboard", JSON.stringify(pb)); } catch {} render(); }, "Games"));
+        box.append(bar0, el("p", "note", k ? "Loading spring training…" : "No spring training file yet — it's built through February and March."));
+        return;
+      }
+      return withDataset(ds, () => withWindow(NOWIN, () => pitchBoardBody(box, k)));
+    }
+    return pitchBoardBody(box, null);
+  }
+  function pitchBoardBody(box, springK) {
     const sc = K().stuff, T = (sc && sc.types) || {}, F = DATA.meta.arsenalFields || ARSENAL;
     const typeAvg = (pt) => { const x = T[pt]; if (!x || !sc) return null; const [w, b] = stuffParts(sc, x[1], x[2], x[3], K().lgERA); return { w, b, t: w + b - 100 }; };
     const rows = [];
-    for (const p of DATA.players) {
+    for (const p of DS.players) {
       if (p.type !== "P" || !p.ctx || !p.ctx.arsenal) continue;
       if (pb.hand !== "all" && p.throws !== pb.hand) continue;
       if (pb.role !== "all" && p.primary !== pb.role) continue;
@@ -3048,13 +3064,14 @@
     // filters
     const save = () => { save_(); render(); }, save_ = () => { try { localStorage.setItem("draft2027.pitchboard", JSON.stringify(pb)); } catch {} };
     const bar = el("div", "pbfilters");
-    const types = [...new Set(DATA.players.filter((p) => p.type === "P" && p.ctx && p.ctx.arsenal).flatMap((p) => p.ctx.arsenal.map((a) => a[0])))]
+    const types = [...new Set(DS.players.filter((p) => p.type === "P" && p.ctx && p.ctx.arsenal).flatMap((p) => p.ctx.arsenal.map((a) => a[0])))]
       .filter((t) => T[t]).sort((a, b) => (T[b][0] || 0) - (T[a][0] || 0));
+    bar.append(pillSelect(springK ? "Spring training" : `${DATA.meta.season} season`, [["season", `${DATA.meta.season} season`], ["spring", "Spring training"]], springK ? "spring" : "season", (v) => { pb.src = v; save(); }, "Games"));
     bar.append(pillSelect(pb.pt === "all" ? "All pitches" : PITCH_NAME[pb.pt] || pb.pt, [["all", "All pitches"], ...types.map((t) => [t, PITCH_NAME[t] || t])], pb.pt, (v) => { pb.pt = v; save(); }, "Pitch"));
     bar.append(pillSelect(pb.hand === "all" ? "Both hands" : pb.hand === "R" ? "Righties" : "Lefties", [["all", "Both hands"], ["R", "Righties"], ["L", "Lefties"]], pb.hand, (v) => { pb.hand = v; save(); }, "Throws"));
     bar.append(pillSelect(pb.role === "all" ? "SP + RP" : pb.role, [["all", "SP + RP"], ["SP", "SP"], ["RP", "RP"]], pb.role, (v) => { pb.role = v; save(); }, "Role"));
     bar.append(pillSelect(`${pb.min}+ pitches`, [25, 50, 100, 200, 400, 800].map((n) => [String(n), `${n}+ pitches`]), String(pb.min), (v) => { pb.min = Number(v); save(); }, "Minimum"));
-    bar.append(el("span", "pbcount", `${rows.length} pitch${rows.length === 1 ? "" : "es"} · ${DATA.meta.season} · graded against its own type`));
+    bar.append(el("span", "pbcount", `${rows.length} pitch${rows.length === 1 ? "" : "es"} · ${springK ? DS.label || "spring training" : DATA.meta.season} · graded against its own type`));
     box.append(bar);
     // table
     const cols = [["rk", "#", false], ["who", "Pitcher", false], ["pt", "Pitch", false], ["n", "Pitches", true], ["use", "Use", true], ["velo", "Velo", true],
@@ -3077,7 +3094,10 @@
     const pair = (x, a) => { const td = el("td", "xa"); td.append(el("b", null, pct(x)), el("i", null, a == null ? "–" : pct(a))); return td; };
     rows.slice(0, 300).forEach((r, i) => {
       const tr = el("tr"), who = el("td", "who"), btn = el("button", "linkbtn pbname", r.p.name); btn.type = "button";
-      btn.addEventListener("click", () => { state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.pbtab = "stuff"; savePrefs(); state.expanded = "P" + r.p.id; render(); });
+      btn.addEventListener("click", () => {
+        state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.pbtab = "stuff"; savePrefs();
+        if (springK) { state.x = { id: r.p.id, type: "P", ds: springK }; location.hash = "#player/" + r.p.id; return; }   // his spring card
+        state.cardDs = null; state.expanded = "P" + r.p.id; render(); });
       who.append(btn, el("small", null, ` ${r.p.team} · ${r.p.primary} · ${r.p.throws || ""}HP`));
       tr.append(el("td", "n", String(i + 1)), who, el("td", null, PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(r.use)),
                 el("td", null, f1(r.velo)), el("td", null, f1(r.ivb)), el("td", null, f1(r.hb)), el("td", null, r.spin == null ? "–" : String(r.spin)),

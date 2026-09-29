@@ -591,7 +591,12 @@ is deploy-limited.
 * **Saved settings sync through a secret gist** (Sean, 26 Sep 2026): fantasy presets, stars, drafted, rankings, tiers
   and ranking sets (`SYNC_KEYS` in `app.js`) — Appearance ▸ Sync across devices, a gist-only GitHub key per device.
   Anything new that should follow him between devices goes in `SYNC_KEYS`; per-device UI state and Appearance don't.
-* Spring training has little tracking (many parks are not instrumented), so EV-based stats are thin there.
+* **Spring training Stuff+** (Sean, 29 Sep 2026): `build_history.py spring <year>` grades spring pitches with the last three MLB
+  seasons' models against the last MLB season's pitch types (like the minors; `ref=`), park-adjusted within spring. Spring
+  tracking is near-complete (2026: 1,039 of 1,045 pitchers have velocity). `cloud_daily.py` rebuilds and publishes this spring's
+  file every morning through February and March, and `rescore` takes `spring-2026` tokens. The site stays regular season only,
+  except the Stuff+ board's **Games: Spring training** option (`pb.src`, `springKey`: next year's spring once built, else this
+  one's), which reads `hist/mlb-<year>-spring.js`; a name opens his spring card (`state.x.ds`). EV-based stats are thinner there.
 
 ## 9. Things only Sean can do
 
