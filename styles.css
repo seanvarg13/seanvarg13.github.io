@@ -3214,3 +3214,12 @@ body[data-mode="trends"] #pitchboard > .trchartbox { margin: 4px 0 10px; }
 .gamesbox .ubt.glog th.rt:first-of-type, .gamesbox .ubt.glog td.lk { border-right: 1px solid var(--hair); }
 .gamesbox .ubt.glog td.rt.up { color: #c8102e; font-weight: 700; }
 .gamesbox .ubt.glog td.rt.down { color: var(--accent-2-text); font-weight: 700; }
+/* the log in three blocks (stuff · start results · underlying), the group names over them, a rule between */
+.gamesbox .ubt.glog th { position: static; }
+.gamesbox .ubt.glog thead { position: sticky; top: 0; z-index: 3; background: var(--surface); }
+.gamesbox .ubt.glog thead th:first-child { position: sticky; left: 0; z-index: 4; }
+.gamesbox .ubt.glog tr.ggrp th { font-size: 10.5px; letter-spacing: .06em; color: var(--ink); padding-top: 4px; padding-bottom: 0; border-bottom: 0; text-align: center; }
+.gamesbox .ubt.glog .gend { border-right: 1px solid var(--rule) !important; }
+.gamesbox .ubt.glog td.lk { border-right: 0; }
+.gamesbox .ubt.glog td.gend.lk { border-right: 1px solid var(--rule) !important; }
+.gamesbox .ubt.glog th.rt:first-of-type { border-right: 0; }
