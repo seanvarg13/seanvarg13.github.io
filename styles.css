@@ -3204,3 +3204,13 @@ body[data-mode="trends"] #pitchboard > .trchartbox { margin: 4px 0 10px; }
 .btabbody > .uerabox.gamesbox { max-width: 1200px; }   /* the per-pitch table has nineteen columns */
 .gamesbox .glogscroll, .gamesbox .gchart { max-width: 820px; }
 .gamesbox .gbox { max-width: 820px; }
+/* the log carries every rate again (Sean: "i still want to see the other metrics"): it scrolls sideways under a pinned date */
+.gamesbox .glogscroll { max-width: none; }
+.gamesbox .ubt.glog { width: auto; min-width: 100%; border-collapse: separate; border-spacing: 0; }
+.gamesbox .ubt.glog td, .gamesbox .ubt.glog th { padding-left: 8px; padding-right: 8px; }
+.gamesbox .ubt.glog td.l, .gamesbox .ubt.glog th:first-child { position: sticky; left: 0; background: var(--surface); z-index: 2; }
+.gamesbox .ubt.glog thead th:first-child { z-index: 3; }
+.gamesbox .ubt.glog td.l .role { color: var(--muted); font-size: 11px; font-weight: 400; }
+.gamesbox .ubt.glog th.rt:first-of-type, .gamesbox .ubt.glog td.lk { border-right: 1px solid var(--hair); }
+.gamesbox .ubt.glog td.rt.up { color: #c8102e; font-weight: 700; }
+.gamesbox .ubt.glog td.rt.down { color: var(--accent-2-text); font-weight: 700; }

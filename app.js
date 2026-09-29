@@ -5898,8 +5898,10 @@
     // the log: a row per appearance, newest first, only what picks a game out (Sean, 29 Sep 2026: "very crammed") — the
     // rates are in the picked game's box score below; tap one to open it
     const t = el("table", "ubt stufft glog"), th = el("thead"), hr = el("tr");
-    const heads = [["Date", "l"], ["", ""], ["IP"], ["ER"], ["K"], ["BB"], ["Stuff+", "", "Stuff+ that day, every pitch against its own type"], ["Δ", "", "Stuff+ that day minus his season"],
-                   ["Luck", "", "BIP luck: runs his balls in play cost him against the league's average for their types: + unlucky, − lucky"]];
+    const RATES = [["K%", "k", 1], ["BB%", "bb", 0], ["Whiff%", "whf", 1], ["Strike%", "strk", 1], ["Zone%", "zone", 1], ["Chase%", "osw", 1], ["GB%", "gb", 1], ["PU%", "pu", 1]];
+    const heads = [["Date", "l"], ["IP"], ["ER"], ["K"], ["BB"], ["Stuff+", "", "Stuff+ that day, every pitch against its own type"], ["Δ", "", "Stuff+ that day minus his season"],
+                   ["Luck", "", "BIP luck: runs his balls in play cost him against the league's average for their types: + unlucky, − lucky"],
+                   ...RATES.map(([h]) => [h, "rt", "That day; red / blue when 3+ points better / worse than his season"])];
     for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
     th.append(hr); t.append(th);
     const tb = el("tbody"), pc = (x) => (x == null ? "–" : x.toFixed(1));
@@ -5907,18 +5909,22 @@
       const tr = el("tr", g === pick ? "on" : null); tr.tabIndex = 0;
       const stc = el("td", "plus", g.st == null ? "–" : String(Math.round(g.st))); if (g.st != null) { const ps = plusStyle(g.st); if (ps) { stc.style.background = ps.bg; stc.style.color = ps.fg; } }
       const dl = g.st != null && sea != null ? g.st - sea : null;
-      tr.append(el("td", "l", g.date ? fmtDate(g.date) : "–"), el("td", "role", g.sp ? "SP" : "RP"), el("td", null, fmtIP(g.ip)), el("td", null, g.g.er == null ? "–" : String(g.g.er)),
+      const dc = el("td", "l"); dc.append(g.date ? fmtDate(g.date) : "–", el("span", "role", g.sp ? " SP" : " RP"));
+      tr.append(dc, el("td", null, fmtIP(g.ip)), el("td", null, g.g.er == null ? "–" : String(g.g.er)),
                 el("td", null, String(g.g.k)), el("td", null, String(g.g.bb)), stc,
                 el("td", "dlt " + (dl == null ? "" : dl >= 3 ? "up" : dl <= -3 ? "down" : ""), dl == null ? "–" : signed(dl, 0)),
-                el("td", "lk " + luckCls(g.luck), g.luck == null ? "–" : signed(g.luck)));
+                el("td", "lk " + luckCls(g.luck), g.luck == null ? "–" : signed(g.luck)),
+                ...RATES.map(([, k, hib]) => { const v = g[k], sv = (p.m || {})[k], d = v != null && sv != null ? v - sv : null;
+                  return el("td", "rt" + (d == null || Math.abs(d) < 3 ? "" : (d > 0) === !!hib ? " up" : " down"), pc(v)); }));
       const go = () => { state.gameDay = g.day; render(); };
       tr.addEventListener("click", go); tr.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
       tb.append(tr);
     }
     const s0 = p.m || {}, tot = el("tr", "ftot");
     const sluck = log.reduce((a, g) => a + (g.luck || 0), 0), ser = log.reduce((a, g) => a + (g.g.er || 0), 0), sk = log.reduce((a, g) => a + g.g.k, 0), sbb = log.reduce((a, g) => a + g.g.bb, 0);
-    tot.append(el("td", "l", "Season"), el("td"), el("td", null, fmtIP(log.reduce((a, g) => a + g.ip, 0))), el("td", null, String(ser)), el("td", null, String(sk)), el("td", null, String(sbb)),
-               el("td", "plus", sea == null ? "–" : String(Math.round(sea))), el("td"), el("td", "lk " + luckCls(sluck / 3), signed(sluck)));
+    tot.append(el("td", "l", "Season"), el("td", null, fmtIP(log.reduce((a, g) => a + g.ip, 0))), el("td", null, String(ser)), el("td", null, String(sk)), el("td", null, String(sbb)),
+               el("td", "plus", sea == null ? "–" : String(Math.round(sea))), el("td"), el("td", "lk " + luckCls(sluck / 3), signed(sluck)),
+               ...RATES.map(([, k]) => el("td", "rt", pc(s0[k]))));
     tb.append(tot); t.append(tb);
     const sw = el("div", "stuffscroll glogscroll"); sw.append(t); box.append(sw);
     // the picked game
