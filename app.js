@@ -3096,8 +3096,7 @@
       const tr = el("tr"), who = el("td", "who"), btn = el("button", "linkbtn pbname", r.p.name); btn.type = "button";
       btn.addEventListener("click", () => {
         state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.pbtab = "stuff"; savePrefs();
-        if (springK) { state.x = { id: r.p.id, type: "P", ds: springK }; location.hash = "#player/" + r.p.id; return; }   // his spring card
-        state.cardDs = null; state.expanded = "P" + r.p.id; render(); });
+        state.cardDs = springK || null; state.expanded = "P" + r.p.id; render(); });   // off the spring board: his spring card
       who.append(btn, el("small", null, ` ${r.p.team} · ${r.p.primary} · ${r.p.throws || ""}HP`));
       tr.append(el("td", "n", String(i + 1)), who, el("td", null, PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(r.use)),
                 el("td", null, f1(r.velo)), el("td", null, f1(r.ivb)), el("td", null, f1(r.hb)), el("td", null, r.spin == null ? "–" : String(r.spin)),
@@ -3548,7 +3547,7 @@
     parkControls(); body.innerHTML = "";
     if (!p0) return;
     // which season: the current one (list pool + Rank vs apply) or another year from the chips (regular seasons only)
-    if (state.cardDs && keyKind(state.cardDs)) state.cardDs = null;
+    if (state.cardDs && keyKind(state.cardDs) && !(state.mode === "pitches" && pb.src === "spring")) state.cardDs = null;   // spring cards only off the spring Stuff+ board
     const dsKey = state.cardDs || CUR.key;
     if (dsKey !== CUR.key) ensureHist(dsKey);
     const ds = histDataset(dsKey);
