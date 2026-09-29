@@ -5838,7 +5838,7 @@
       const luck = bbw && n ? (act - exp) / (c.wobaScale || 1.25) : null;
       return { day: d, date: src.days && src.days[d], g, sp: !!g.gs, ip: g.outs / 3, st: st.stuff, swhf: st.swhf, sbb: st.sbb, luck, T,
                k: sc(0, g.k, g.bf), bb: sc(0, g.bb, g.bf), whf: sc(0, g.whf, g.sw), strk: sc(0, g.strk, g.pit), zone: sc(0, g.zpit, g.pit),
-               osw: sc(0, g.osw, g.opit), gb: sc(0, g.gb, g.bip), pu: sc(0, g.pu, g.bip) };
+               osw: sc(0, g.osw, g.opit), gb: sc(0, g.gb, g.bip), pu: sc(0, g.pu, g.bip), kbb: g.bf ? 100 * (g.k - g.bb) / g.bf : null };
     });
   }
   const typeAvgOf = (pt) => { const sc = K().stuff, x = sc && sc.types && sc.types[pt]; if (!x) return null; const [w, b] = stuffParts(sc, x[1], x[2], x[3], K().lgERA); return { w, b, t: w + b - 100 }; };
@@ -5899,13 +5899,13 @@
     // results (IP, ER, K, BB, K%, BB%, BIP luck), then the underlying rates (Whiff%, Strike%, Zone%, Chase%, GB%, PU%) — rates
     // red / blue when 3+ points better / worse than his season. Tap a row for that day's box score, pitches and luck below.
     const t = el("table", "ubt stufft glog"), th = el("thead"), gr = el("tr", "ggrp"), hr = el("tr");
-    const RES = [["K%", "k", 1], ["BB%", "bb", 0]], UND = [["Whiff%", "whf", 1], ["Strike%", "strk", 1], ["Zone%", "zone", 1], ["Chase%", "osw", 1], ["GB%", "gb", 1], ["PU%", "pu", 1]];
+    const RES = [["K%", "k", 1], ["BB%", "bb", 0], ["K-BB%", "kbb", 1]], UND = [["Whiff%", "whf", 1], ["Strike%", "strk", 1], ["GB%", "gb", 1], ["PU%", "pu", 1]];   // Zone% / Chase% dropped (Sean)
     const rtTip = "That day; red / blue when 3+ points better / worse than his season";
     const heads = [["Date", "l"], ["Stuff+", "", "Stuff+ that day, every pitch against its own type"], ["Δ", "gend", "Stuff+ that day minus his season"],
-                   ["IP"], ["ER"], ["K"], ["BB"], ...RES.map(([h]) => [h, "rt", rtTip]),
+                   ["IP"], ["ER"], ...RES.map(([h]) => [h, "rt", rtTip]),
                    ["Luck", "gend", "BIP luck: runs his balls in play cost him against the league's average for their types: + unlucky, − lucky"],
                    ...UND.map(([h]) => [h, "rt", rtTip])];
-    for (const [lab, n, c] of [["", 1, "l"], ["Stuff", 2, "gend"], ["Start results", 7, "gend"], ["Underlying", 6, ""]]) { const e = el("th", c || null, lab); e.colSpan = n; gr.append(e); }
+    for (const [lab, n, c] of [["Stuff", 3, "gend"], ["Start results", 6, "gend"], ["Underlying", 4, ""]]) { const e = el("th", c || null, lab); e.colSpan = n; gr.append(e); }
     for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
     th.append(gr, hr); t.append(th);
     const tb = el("tbody"), pc = (x) => (x == null ? "–" : x.toFixed(1));
@@ -5918,7 +5918,7 @@
       const dl = g.st != null && sea != null ? g.st - sea : null;
       const dc = el("td", "l"); dc.append(g.date ? fmtDate(g.date) : "–", el("span", "role", g.sp ? " SP" : " RP"));
       tr.append(dc, stc, el("td", "gend dlt " + (dl == null ? "" : dl >= 3 ? "up" : dl <= -3 ? "down" : ""), dl == null ? "–" : signed(dl, 0)),
-                el("td", null, fmtIP(g.ip)), el("td", null, g.g.er == null ? "–" : String(g.g.er)), el("td", null, String(g.g.k)), el("td", null, String(g.g.bb)),
+                el("td", null, fmtIP(g.ip)), el("td", null, g.g.er == null ? "–" : String(g.g.er)),
                 ...RES.map((r) => rate(g, r)), el("td", "gend lk " + luckCls(g.luck), g.luck == null ? "–" : signed(g.luck)),
                 ...UND.map((r) => rate(g, r)));
       const go = () => { state.gameDay = g.day; render(); };
@@ -5926,9 +5926,9 @@
       tb.append(tr);
     }
     const s0 = p.m || {}, tot = el("tr", "ftot");
-    const sluck = log.reduce((a, g) => a + (g.luck || 0), 0), ser = log.reduce((a, g) => a + (g.g.er || 0), 0), sk = log.reduce((a, g) => a + g.g.k, 0), sbb = log.reduce((a, g) => a + g.g.bb, 0);
+    const sluck = log.reduce((a, g) => a + (g.luck || 0), 0), ser = log.reduce((a, g) => a + (g.g.er || 0), 0);
     tot.append(el("td", "l", "Season"), el("td", "plus", sea == null ? "–" : String(Math.round(sea))), el("td", "gend"),
-               el("td", null, fmtIP(log.reduce((a, g) => a + g.ip, 0))), el("td", null, String(ser)), el("td", null, String(sk)), el("td", null, String(sbb)),
+               el("td", null, fmtIP(log.reduce((a, g) => a + g.ip, 0))), el("td", null, String(ser)),
                ...RES.map(([, k]) => el("td", "rt", pc(s0[k]))), el("td", "gend lk " + luckCls(sluck / 3), signed(sluck)),
                ...UND.map(([, k]) => el("td", "rt", pc(s0[k]))));
     tb.append(tot); t.append(tb);
