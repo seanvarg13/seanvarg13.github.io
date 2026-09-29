@@ -5371,7 +5371,7 @@
   }
   const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["sheet", "Spreadsheet Stats"], ["rolling", "Rolling"], ["fantasy", "Fantasy"]];   // Spreadsheet Stats: its own tab (Sean, 28 Sep 2026)
   const BTABS_H = [["mix", "Mix"], ["babip", "BABIP"]];                  // a hitter's batted-ball mix, and how much of his line is BABIP
-  const BTABS_P = [["stuff", "Stuff"], ["nera", "nERA"], ["uera", "uERA"]];   // his arsenal graded, then his two ERAs, one tab each
+  const BTABS_P = [["stuff", "Stuff"], ["games", "Games"], ["nera", "nERA"], ["uera", "uERA"]];   // his arsenal graded, then his two ERAs, one tab each
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -5424,6 +5424,8 @@
       body.append(renderFantasyTab(p));
     } else if (pick === "stuff") {
       body.append(renderStuffTab(p, o.st, g));
+    } else if (pick === "games") {
+      body.append(renderGamesTab(p));
     } else if (pick === "nera") {
       body.append(renderLuckBox(p) || el("p", "note", "Luck-neutral ERA needs batted-ball data for this season."));
     } else if (pick === "uera") {
@@ -5799,6 +5801,184 @@
     }
     box.append(el("p", "note", "Each pitch is graded against the league's pitches of its own type — 100 is an average four-seamer for a four-seamer, an average curveball for a curveball — and All pitches (and the Stuff+ above) averages those by how often he throws each. " +
       "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball, plus how much he uses it and how many pitches he throws — never where it was thrown. Each point is 1% of runs; whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened. The table and the headline follow the card's dates and splits."));
+    return box;
+  }
+  // Games (Sean, 29 Sep 2026: "his stuff+ by start/relief appearance ... if on each appearance their stuff+ was down or up"):
+  // every appearance this season from the game-by-game rows — a box line (IP, ER, K, BB and his rates), Stuff+ that day
+  // against his season, and how the balls in play went against the league's value for their type. Tap a game for its
+  // pitches: each graded that day beside his season grade (hist/ars-<season>.js), and the batted-ball luck by type.
+  // Every appearance, whatever the card's dates or splits.
+  function gameDays(p) {
+    if (DS.multi) return null;
+    if (DS.key === CUR.key) {
+      if (!window.DRAFT_DAYS) { if (state.daysFailed) return null; ensureDays(); return "loading"; }
+      return { rows: window.DRAFT_DAYS[p.type + p.id] || [], er: window.DRAFT_DAYS[p.type + p.id + ":er"] || [], days: DATA.meta.days };
+    }
+    const h = window.DRAFT_HIST && window.DRAFT_HIST[DS.key]; if (!h || !h.days) return null;
+    const file = `hist/${h.daysFile || `days-${h.season}.js`}`, D = window.DRAFT_HIST_DAYS && window.DRAFT_HIST_DAYS[DS.key];
+    if (!D) { if (failed.has(file)) return null; ensureScript(file, () => !!(window.DRAFT_HIST_DAYS && window.DRAFT_HIST_DAYS[DS.key])); return "loading"; }
+    return { rows: D[p.type + p.id] || [], er: D[p.type + p.id + ":er"] || [], days: h.days };
+  }
+  function gameLog(p) {
+    const src = gameDays(p); if (!src || src === "loading") return src;
+    const f = DF.P, by = new Map();
+    for (const r of src.rows) {
+      const g = by.get(r[0]) || Object.fromEntries(f.slice(3).map((k) => [k, 0]));
+      f.forEach((k, i) => { if (i > 2 && typeof r[i] === "number") g[k] = k === "gs" ? Math.max(g[k], r[i]) : g[k] + r[i]; });
+      by.set(r[0], g);
+    }
+    for (const [d, , er] of src.er) { const g = by.get(d); if (g) g.er = (g.er || 0) + er; }
+    const c = K(), bbw = c && c.bbw, sc = (x, a, b) => (b ? 100 * a / b : null);
+    return [...by.entries()].sort((a, b) => b[0] - a[0]).map(([d, g]) => {
+      const st = g.stn ? stuffFrom(g.stn, g.stw, g.stg, g.stp, g.stbw, g.stbg, g.stbp) : { stuff: null };
+      // batted-ball luck: what his balls in play earned against the league's wOBA for their type, in runs (wOBA / scale)
+      const T = { gb: [g.gb, g.wgb], ld: [g.ld, g.wld], fb: [g.fbt, g.wfb], pu: [g.pu, g.wpu] };
+      let act = 0, exp = 0, n = 0;
+      if (bbw) for (const k in T) { act += T[k][1] || 0; exp += (T[k][0] || 0) * bbw[k]; n += T[k][0] || 0; }
+      const luck = bbw && n ? (act - exp) / (c.wobaScale || 1.25) : null;
+      return { day: d, date: src.days && src.days[d], g, sp: !!g.gs, ip: g.outs / 3, st: st.stuff, swhf: st.swhf, sbb: st.sbb, luck, T,
+               k: sc(0, g.k, g.bf), bb: sc(0, g.bb, g.bf), whf: sc(0, g.whf, g.sw), strk: sc(0, g.strk, g.pit), zone: sc(0, g.zpit, g.pit),
+               osw: sc(0, g.osw, g.opit), gb: sc(0, g.gb, g.bip), pu: sc(0, g.pu, g.bip) };
+    });
+  }
+  const typeAvgOf = (pt) => { const sc = K().stuff, x = sc && sc.types && sc.types[pt]; if (!x) return null; const [w, b] = stuffParts(sc, x[1], x[2], x[3], K().lgERA); return { w, b, t: w + b - 100 }; };
+  function gamePitches(p, day) {                                    // his pitches on one day, graded against their types
+    const k = arsKey(); if (!k) return null;
+    const file = `hist/ars-${k.replace(/^mlb-/, "")}.js`;
+    if (!arsReady(k)) { if (failed.has(file)) return null; ensureScript(file, () => arsReady(k)); return "loading"; }
+    const rows = (window.DRAFT_ARS[k]["P" + p.id] || []).filter((r) => r[0] === day);
+    const I = Object.fromEntries(ARS_F.map((f, i) => [f, i])), sum = new Map(), sc = K().stuff;
+    for (const r of rows) { const t = sum.get(r[I.pt]) || Object.fromEntries(ARS_F.slice(5).map((f) => [f, 0])); for (const f of ARS_F.slice(5)) t[f] += r[I[f]]; sum.set(r[I.pt], t); }
+    return [...sum.entries()].filter(([, t]) => t.n > 0).sort((a, b) => b[1].n - a[1].n).map(([pt, t]) => {
+      const A = typeAvgOf(pt), [wp, bp] = sc ? stuffParts(sc, 100 * t.w / t.n, t.g / t.n, t.p / t.n, K().lgERA) : [null, null];
+      return { pt, n: t.n, velo: t.velo / t.n, ivb: t.ivb / t.n, hb: t.hb / t.n, xwhf: 100 * t.w / t.n, whf: t.sw ? 100 * t.wh / t.sw : null, sw: t.sw,
+               st: wp == null || !A ? null : wp + bp - 100 - A.t + 100, w: wp == null || !A ? null : wp - A.w + 100, b: bp == null || !A ? null : bp - A.b + 100 };
+    });
+  }
+  function seasonPitches(p) {                                       // the season's arsenal on the same scale
+    const out = {};
+    for (const a of (p.ctx && p.ctx.arsenal) || []) {
+      const r = Object.fromEntries(ARSENAL.map((k, i) => [k, a[i]])), A = typeAvgOf(r.pt);
+      out[r.pt] = { n: r.n, velo: r.velo, ivb: r.ivb, st: r.stuffp == null || !A ? null : r.stuffp - A.t + 100, w: r.whfp == null || !A ? null : r.whfp - A.w + 100,
+                    b: r.bbp == null || !A ? null : r.bbp - A.b + 100, xwhf: r.xwhf, whf: r.whf };
+    }
+    return out;
+  }
+  const luckWord = (r) => (r == null ? "" : r >= 1.5 ? "brutal" : r >= 0.5 ? "unlucky" : r <= -1.5 ? "very lucky" : r <= -0.5 ? "lucky" : "about right");
+  const luckCls = (r) => (r == null ? "" : r >= 0.5 ? "unlucky" : r <= -0.5 ? "lucky" : "even");
+  const signed = (x, d = 1) => { if (x == null) return "–"; const r = Number(x.toFixed(d)); return (r > 0 ? "+" : r < 0 ? "−" : "±") + Math.abs(r).toFixed(d); };
+  function renderGamesTab(p) {
+    const box = el("div", "rollbox uerabox gamesbox");
+    const log = gameLog(p), sea = p.m && p.m.stuff;
+    const hd = el("div", "rollhd");
+    hd.append(el("span", "rollname", "Game by game"), el("span", "rollsub", sea == null ? "every appearance" : `Stuff+ each outing against his season ${Math.round(sea)}`));
+    box.append(hd);
+    if (log === "loading") { box.append(el("p", "note", "Loading his games…")); return box; }
+    if (!log || !log.length) { box.append(el("p", "note", "No game-by-game rows for this season.")); return box; }
+    // Stuff+ by outing: a dot a game against his season line (starts filled, relief hollow)
+    const pts = [...log].reverse().filter((g) => g.st != null);
+    if (pts.length >= 2) {
+      const W = mobileView() ? 360 : 640, H = 120, L = 34, R = 10, T = 10, B = 18, vals = pts.map((g) => g.st).concat(sea != null ? [sea] : []);
+      let lo = Math.min(...vals), hi = Math.max(...vals); const pad = Math.max(4, (hi - lo) * 0.1); lo -= pad; hi += pad;
+      const X = (i) => L + (pts.length > 1 ? i / (pts.length - 1) : 0.5) * (W - L - R), Y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+      const step = hi - lo > 60 ? 20 : hi - lo > 25 ? 10 : 5, g = [];
+      for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) g.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" class="trgrid"/><text x="${L - 5}" y="${Y(v) + 4}" text-anchor="end" class="trax">${v}</text>`);
+      if (sea != null) g.push(`<line x1="${L}" x2="${W - R}" y1="${Y(sea)}" y2="${Y(sea)}" class="gsea"/><text x="${L + 4}" y="${T + 8}" class="trax">dashed: season ${Math.round(sea)} · hollow: relief</text>`);
+      g.push(`<path class="trline gline" d="${pts.map((q, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(q.st).toFixed(1)}`).join("")}"/>`);
+      pts.forEach((q, i) => g.push(`<circle cx="${X(i)}" cy="${Y(q.st)}" r="4" class="trdot${q.sp ? "" : " part"}${state.gameDay === q.day ? " on" : ""}"><title>${fmtDate(q.date)} · Stuff+ ${Math.round(q.st)} · ${q.sp ? "start" : "relief"}</title></circle><circle cx="${X(i)}" cy="${Y(q.st)}" r="11" class="trhit" data-day="${q.day}"/>`));
+      const ch = el("div", "trchart gchart"); ch.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">${g.join("")}</svg>`;
+      ch.querySelectorAll(".trhit").forEach((c) => c.addEventListener("click", () => { state.gameDay = Number(c.dataset.day); render(); }));
+      box.append(ch);
+    }
+    const pick = log.find((g) => g.day === state.gameDay) || log[0];
+    // the log: a row per appearance, newest first; tap one for its pitches and luck below
+    const t = el("table", "ubt stufft glog"), th = el("thead"), hr = el("tr");
+    const heads = [["Date", "l"], ["", ""], ["Stuff+", "", "Stuff+ that day, every pitch against its own type"], ["Δ", "", "Stuff+ that day minus his season"],
+                   ["BIP luck", "", "Runs his balls in play cost him against the league's average for their types: + unlucky, − lucky"],
+                   ["IP"], ["ER"], ["K"], ["BB"], ["K%"], ["BB%"], ["Whiff%"], ["Strike%"], ["Zone%"], ["Chase%"], ["GB%"], ["PU%"]];
+    for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
+    th.append(hr); t.append(th);
+    const tb = el("tbody"), pc = (x) => (x == null ? "–" : x.toFixed(1));
+    for (const g of log) {
+      const tr = el("tr", g === pick ? "on" : null); tr.tabIndex = 0;
+      const stc = el("td", "plus", g.st == null ? "–" : String(Math.round(g.st))); if (g.st != null) { const ps = plusStyle(g.st); if (ps) { stc.style.background = ps.bg; stc.style.color = ps.fg; } }
+      const dl = g.st != null && sea != null ? g.st - sea : null;
+      tr.append(el("td", "l", g.date ? fmtDate(g.date) : "–"), el("td", "role", g.sp ? "SP" : "RP"), stc,
+                el("td", "dlt " + (dl == null ? "" : dl >= 3 ? "up" : dl <= -3 ? "down" : ""), dl == null ? "–" : signed(dl, 0)),
+                el("td", "lk " + luckCls(g.luck), g.luck == null ? "–" : signed(g.luck)),
+                el("td", null, fmtIP(g.ip)), el("td", null, g.g.er == null ? "–" : String(g.g.er)),
+                el("td", null, String(g.g.k)), el("td", null, String(g.g.bb)), el("td", null, pc(g.k)), el("td", null, pc(g.bb)), el("td", null, pc(g.whf)), el("td", null, pc(g.strk)),
+                el("td", null, pc(g.zone)), el("td", null, pc(g.osw)), el("td", null, pc(g.gb)), el("td", null, pc(g.pu)));
+      const go = () => { state.gameDay = g.day; render(); };
+      tr.addEventListener("click", go); tr.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
+      tb.append(tr);
+    }
+    const s0 = p.m || {}, tot = el("tr", "ftot");
+    const sluck = log.reduce((a, g) => a + (g.luck || 0), 0);
+    tot.append(el("td", "l", "Season"), el("td"), el("td", "plus", sea == null ? "–" : String(Math.round(sea))), el("td"), el("td", "lk " + luckCls(sluck / 3), signed(sluck)),
+               el("td", null, fmtIP(p.ip || 0)), el("td"), el("td"), el("td"), el("td", null, pc(s0.k)), el("td", null, pc(s0.bb)), el("td", null, pc(s0.whf)),
+               el("td", null, pc(s0.strk)), el("td", null, pc(s0.zone)), el("td", null, pc(s0.osw)), el("td", null, pc(s0.gb)), el("td", null, pc(s0.pu)));
+    tb.append(tot); t.append(tb);
+    const sw = el("div", "stuffscroll glogscroll"); sw.append(t); box.append(sw);
+    // the picked game
+    const det = el("div", "gdetail");
+    det.append(el("h4", "gdhd", `${pick.date ? fmtDate(pick.date) : ""} · ${pick.sp ? "start" : "relief"} · ${fmtIP(pick.ip)} IP, ${pick.g.er ?? "–"} ER, ${pick.g.k} K, ${pick.g.bb} BB, ${pick.g.bf} BF, ${pick.g.pit} pitches`));
+    const gp = gamePitches(p, pick.day), SP = seasonPitches(p);
+    const pt = el("div", "gpart");
+    pt.append(el("div", "gsub", "Stuff+ that day against his season"));
+    if (gp === "loading") pt.append(el("p", "note", "Loading his pitches game by game…"));
+    else if (!gp || !gp.length) pt.append(el("p", "note", "No graded pitches that day."));
+    else {
+      const t2 = el("table", "ubt stufft gpt"), h2 = el("tr");
+      for (const [h, tt] of [["Pitch"], ["#"], ["Velo", "That day — his season under it"], ["IVB", "That day — his season under it"], ["Stuff+", "That day — his season under it"], ["Δ"],
+                             ["Whiff+"], ["BB+", "Batted-ball+"], ["Whiffs", "Whiffs / swings that day"]]) { const e = el("th", h === "Pitch" ? "l" : null, h); if (tt) e.title = tt; h2.append(e); }
+      const th2 = el("thead"); th2.append(h2); t2.append(th2);
+      const b2 = el("tbody"), plusTd = (v, s) => { const td = el("td", "plus xa"); const b = el("b", null, v == null ? "–" : String(Math.round(v))); if (v != null) { const ps = plusStyle(v); if (ps) { td.style.background = ps.bg; td.style.color = ps.fg; } } td.append(b, el("i", null, s == null ? "–" : String(Math.round(s)))); return td; };
+      const two = (a, b) => { const td = el("td", "xa"); td.append(el("b", null, a == null ? "–" : a.toFixed(1)), el("i", null, b == null ? "–" : b.toFixed(1))); return td; };
+      const tot2 = { n: 0, st: 0, w: 0, b: 0, sn: 0, sw: 0, wh: 0 };
+      for (const r of gp) {
+        const S = SP[r.pt] || {}, dl = r.st != null && S.st != null ? r.st - S.st : null, tr = el("tr");
+        tr.append(el("td", "l", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), two(r.velo, S.velo), two(r.ivb, S.ivb),
+                  r.n >= 5 ? plusTd(r.st, S.st) : plusTd(null, S.st), el("td", "dlt " + (dl == null || r.n < 5 ? "" : dl >= 5 ? "up" : dl <= -5 ? "down" : ""), r.n >= 5 ? signed(dl, 0) : "–"),
+                  r.n >= 5 ? plusTd(r.w, S.w) : plusTd(null, S.w), r.n >= 5 ? plusTd(r.b, S.b) : plusTd(null, S.b), el("td", null, `${Math.round(r.whf != null ? r.whf * r.sw / 100 : 0)} / ${r.sw}`));
+        b2.append(tr);
+        if (r.st != null) { tot2.n += r.n; tot2.st += r.st * r.n; tot2.w += r.w * r.n; tot2.b += r.b * r.n; }
+      }
+      const tr = el("tr", "ftot"), gt = tot2.n ? tot2.st / tot2.n : pick.st, dl = gt != null && sea != null ? gt - sea : null;
+      tr.append(el("td", "l", "All pitches"), el("td", null, String(gp.reduce((a, r) => a + r.n, 0))), el("td"), el("td"), plusTd(gt, sea),
+                el("td", "dlt " + (dl == null ? "" : dl >= 3 ? "up" : dl <= -3 ? "down" : ""), signed(dl, 0)), plusTd(tot2.n ? tot2.w / tot2.n : pick.swhf, s0.swhf), plusTd(tot2.n ? tot2.b / tot2.n : pick.sbb, s0.sbb),
+                el("td", null, `${pick.g.whf} / ${pick.g.sw}`));
+      b2.append(tr); t2.append(b2);
+      const w2 = el("div", "stuffscroll"); w2.append(t2); pt.append(w2);
+    }
+    det.append(pt);
+    // batted-ball luck that day
+    const c = K(), lk = el("div", "gpart");
+    lk.append(el("div", "gsub", "Batted-ball luck"));
+    if (!c || !c.bbw) lk.append(el("p", "note", "No batted-ball values for this season."));
+    else {
+      const t3 = el("table", "ubt gluck"), h3 = el("tr");
+      for (const h of ["", "BIP", "wOBA", "Lg", "Runs"]) h3.append(el("th", h ? null : "l", h));
+      const th3 = el("thead"); th3.append(h3); t3.append(th3);
+      const b3 = el("tbody"), names = { gb: "Ground balls", ld: "Line drives", fb: "Fly balls", pu: "Popups" };
+      for (const k of ["gb", "ld", "fb", "pu"]) {
+        const [n, w] = pick.T[k], r = n ? (w - n * c.bbw[k]) / (c.wobaScale || 1.25) : null, tr = el("tr");
+        tr.append(el("td", "l", names[k]), el("td", null, String(n || 0)), el("td", null, n ? fmtX(w / n) : "–"), el("td", null, fmtX(c.bbw[k])), el("td", "lk " + luckCls(r == null ? null : r * 2), r == null ? "–" : signed(r)));
+        b3.append(tr);
+      }
+      const tr = el("tr", "ftot"), nb = ["gb", "ld", "fb", "pu"].reduce((a, k) => a + (pick.T[k][0] || 0), 0), wb = ["gb", "ld", "fb", "pu"].reduce((a, k) => a + (pick.T[k][1] || 0), 0),
+            lgb = ["gb", "ld", "fb", "pu"].reduce((a, k) => a + (pick.T[k][0] || 0) * c.bbw[k], 0);
+      tr.append(el("td", "l", "All balls in play"), el("td", null, String(nb)), el("td", null, nb ? fmtX(wb / nb) : "–"), el("td", null, nb ? fmtX(lgb / nb) : "–"), el("td", "lk " + luckCls(pick.luck), signed(pick.luck)));
+      b3.append(tr); t3.append(b3); lk.append(t3);
+      if (pick.luck != null) {
+        const v = el("p", "gverdict"); v.append(el("span", "chip2 " + (pick.luck >= 0.5 ? "unlucky" : pick.luck <= -0.5 ? "lucky" : "even"), luckWord(pick.luck)),
+          ` ${pick.luck >= 0 ? "His balls in play cost him" : "His balls in play saved him"} ${Math.abs(pick.luck).toFixed(1)} run${Math.abs(pick.luck) >= 0.95 && Math.abs(pick.luck) < 1.05 ? "" : "s"} against league-average results on the same kinds of contact.`);
+        lk.append(v);
+      }
+    }
+    det.append(lk);
+    box.append(det);
+    box.append(el("p", "note", "Every appearance this season, whatever the card's dates or splits. Stuff+ grades each pitch that day on its traits against the league's pitches of its type — 100 is average — and Δ is that day against his season (under each grade). A game's grade on a handful of pitches is noisy; a pitch he threw fewer than 5 times isn't graded on its own. BIP luck gives each ball in play the league's wOBA for its type (ground ball, line drive, fly ball, popup) and counts what he actually allowed above or below that, in runs: + means the balls fell in against him."));
     return box;
   }
   function renderLuckBox(p) {
