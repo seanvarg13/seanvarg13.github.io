@@ -5380,7 +5380,7 @@
     return box;
   }
   const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["sheet", "Spreadsheet Stats"], ["rolling", "Rolling"], ["fantasy", "Fantasy"]];   // Spreadsheet Stats: its own tab (Sean, 28 Sep 2026)
-  const BTABS_H = [["mix", "Mix"], ["babip", "BABIP"]];                  // a hitter's batted-ball mix, and how much of his line is BABIP
+  const BTABS_H = [["games", "Game Logs"], ["mix", "Mix"], ["babip", "BABIP"]];                  // a hitter's batted-ball mix, and how much of his line is BABIP
   const BTABS_P = [["stuff", "Stuff"], ["games", "Game Logs"], ["nera", "nERA"], ["uera", "uERA"]];   // his arsenal graded, then his two ERAs, one tab each
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
@@ -5435,7 +5435,7 @@
     } else if (pick === "stuff") {
       body.append(renderStuffTab(p, o.st, g));
     } else if (pick === "games") {
-      body.append(renderGamesTab(p));
+      body.append(p.type === "P" ? renderGamesTab(p) : renderHitGamesTab(p));
     } else if (pick === "nera") {
       body.append(renderLuckBox(p) || el("p", "note", "Luck-neutral ERA needs batted-ball data for this season."));
     } else if (pick === "uera") {
@@ -6035,6 +6035,91 @@
     det.append(lk);
     box.append(det);
     box.append(el("p", "note", "Every appearance this season, whatever the card's dates or splits. Stuff+ grades each pitch that day on its traits against the league's pitches of its type — 100 is average — and Δ is that day against his season (under each grade). A game's grade on a handful of pitches is noisy; a pitch he threw fewer than 5 times isn't graded on its own. BIP luck gives each ball in play the league's wOBA for its type (ground ball, line drive, fly ball, popup) and counts what he actually allowed above or below that, in runs: + means the balls fell in against him."));
+    return box;
+  }
+  // Hitter Game Logs (Sean, 29 Sep 2026): the pitchers' tab for a hitter — every game this season from the day rows, whatever the
+  // card's dates or splits. xwOBA that day (the directional model, re-anchored like the season's) is the one heat-coloured cell, a
+  // chip placed among the season's 300+ PA hitters; then the line, the contact and the swing decisions, each block under its label.
+  // Tap a game for its tiles over his season, every tracked ball's exit velocity, and what his luck was worth.
+  function hitGameLog(p) {
+    const src = gameDays(p); if (!src || src === "loading") return src;
+    const f = DF.H, ei = f.indexOf("evs"), by = new Map();
+    for (const r of src.rows) {
+      const g = by.get(r[0]) || { evs: [] };
+      f.forEach((k, i) => { if (i < 3) return; if (i === ei) { if (Array.isArray(r[i])) g.evs.push(...r[i]); return; } if (typeof r[i] === "number") g[k] = (g[k] || 0) + r[i]; });
+      by.set(r[0], g);
+    }
+    const I = dirInfo(), c = K(), pc = (a, b) => (b ? 100 * a / b : null);
+    return [...by.entries()].sort((a, b) => b[0] - a[0]).map(([d, g]) => ({ day: d, date: src.days && src.days[d], g,
+      xw: I.ok && g.wden && g.dnum !== undefined ? I.scale * g.dnum / g.wden : null, woba: g.wden ? g.wnum / g.wden : null,
+      ev: g.evn ? g.evsum / g.evn : null, max: g.evs.length ? Math.max(...g.evs) : null, hh: pc(g.hh, g.bbe), whf: pc(g.whf, g.sw), osw: pc(g.osw, g.opit),
+      luck: I.ok && g.wden && g.dnum !== undefined ? (g.wnum - I.scale * g.dnum) / ((c && c.wobaScale) || 1.25) : null }));
+  }
+  function renderHitGamesTab(p) {
+    const box = el("div", "rollbox uerabox gamesbox hgames");
+    const log = hitGameLog(p), sxw = seasonXwDir(p), s0 = p.m || {};
+    const hd = el("div", "rollhd");
+    hd.append(el("span", "rollname", "Game by game"), el("span", "rollsub", sxw == null ? "every game" : `xwOBA each game against his season ${fmtX(sxw)}`));
+    box.append(hd);
+    if (log === "loading") { box.append(el("p", "note", "Loading his games…")); return box; }
+    if (!log || !log.length) { box.append(el("p", "note", "No game-by-game rows for this season.")); return box; }
+    const pick = log.find((g) => g.day === state.hGameDay) || log[0];
+    // the season's hitters to colour a game's xwOBA against
+    const ref = DS.players.filter((q) => q.type === "H" && (q.pa || 0) >= (DS.refPA || 300)).map((q) => seasonXwDir(q)).filter((x) => x != null).sort((a, b) => a - b);
+    const chip = (v) => { const td = el("td", "gend uera"), ch = el("span", "uchip", v == null ? "–" : fmtX(v));
+      if (v != null && ref.length) { const pct = insertPct(ref, v); paintBar(ch, pct); ch.style.color = "#fff"; ch.classList.add("on"); td.title = `xwOBA ${fmtX(v)} that game · a ${ordinal(pct)} percentile season rate among ${DS.season} hitters`; }
+      td.append(ch); return td; };
+    const t = el("table", "ubt stufft glog"), th = el("thead"), gr = el("tr", "ggrp"), hr = el("tr");
+    for (const [lab, n, c] of [["Game", 2, "gend"], ["Results", 7, "gend"], ["Contact", 4, "gend"], ["Discipline", 2, ""]]) { const e = el("th", c || null, lab); e.colSpan = n; gr.append(e); }
+    const heads = [["Date", "l"], ["xwOBA", "gend", "Expected wOBA that game (the directional model)"], ["PA"], ["H"], ["HR"], ["BB"], ["K"], ["wOBA"],
+                   ["Luck", "gend", "Runs his results that game came in above (+) or below (−) his xwOBA"], ["EV", "", "Average exit velocity"], ["Max EV"], ["Brl", "", "Barrels"],
+                   ["HH%", "gend", "Hard-hit (95+ mph) share of batted balls"], ["Whiff%"], ["Chase%"]];
+    for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
+    th.append(gr, hr); t.append(th);
+    const tb = el("tbody"), f1 = (x) => (x == null ? "–" : x.toFixed(1)), n0 = (x) => String(x || 0);
+    let onRow = null;
+    for (const g of [...log].reverse()) {
+      const G = g.g, tr = el("tr", g === pick ? "on" : null); tr.tabIndex = 0; if (g === pick) onRow = tr;
+      tr.append(el("td", "l", g.date ? fmtDate(g.date) : "–"), chip(g.xw), el("td", null, n0(G.pa)), el("td", null, n0(G.h)), el("td", null, n0(G.hr)), el("td", null, n0(G.bb)),
+                el("td", null, n0(G.k)), el("td", null, g.woba == null ? "–" : fmtX(g.woba)), el("td", "gend", g.luck == null ? "–" : signed(g.luck)),
+                el("td", null, f1(g.ev)), el("td", null, f1(g.max)), el("td", null, n0(G.brl)), el("td", "gend", f1(g.hh)), el("td", null, f1(g.whf)), el("td", null, f1(g.osw)));
+      const go = () => { state.hGameDay = g.day; render(); };
+      tr.addEventListener("click", go); tr.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
+      tb.append(tr);
+    }
+    const sum = (k) => log.reduce((a, g) => a + (g.g[k] || 0), 0), slk = log.reduce((a, g) => a + (g.luck || 0), 0), smax = Math.max(...log.map((g) => g.max || 0));
+    const tot = el("tr", "ftot");
+    tot.append(el("td", "l", "Season"), chip(sxw), el("td", null, String(sum("pa"))), el("td", null, String(sum("h"))), el("td", null, String(sum("hr"))), el("td", null, String(sum("bb"))),
+               el("td", null, String(sum("k"))), el("td", null, s0.woba == null ? "–" : fmtX(s0.woba)), el("td", "gend", signed(slk)), el("td", null, f1(s0.ev)), el("td", null, smax ? smax.toFixed(1) : "–"),
+               el("td", null, String(sum("brl"))), el("td", "gend", f1(s0.hh)), el("td", null, f1(s0.whf)), el("td", null, f1(s0.osw)));
+    tb.append(tot); t.append(tb);
+    const sw = el("div", "stuffscroll glogscroll"); sw.append(t); box.append(sw);
+    if (onRow) requestAnimationFrame(() => { const top = onRow.offsetTop - sw.clientHeight + onRow.offsetHeight + 8; if (top > 0) sw.scrollTop = top; });
+    // the picked game
+    const det = el("div", "gdetail"), G = pick.g;
+    det.append(el("h4", "gdhd", `${pick.date ? fmtDate(pick.date) : ""} · ${G.pa || 0} PA, ${G.h || 0} H${G.hr ? `, ${G.hr} HR` : ""}, ${G.bb || 0} BB, ${G.k || 0} K`));
+    { const bx = el("div", "gpart"); bx.append(el("div", "gsub", "That game — his season under it"));
+      const grid = el("div", "gbox");
+      for (const [lab, v, sv, fm] of [["xwOBA", pick.xw, sxw, fmtX], ["wOBA", pick.woba, s0.woba, fmtX], ["Avg EV", pick.ev, s0.ev, f1], ["Max EV", pick.max, s0.maxev, f1],
+                                      ["Hard-hit%", pick.hh, s0.hh, f1], ["Whiff%", pick.whf, s0.whf, f1], ["Chase%", pick.osw, s0.osw, f1], ["Barrels", G.brl || 0, null, n0]]) {
+        const c = el("div", "gtile"); c.append(el("span", "gl", lab), el("b", null, v == null ? "–" : fm(v)), el("i", null, sv == null ? " " : `season ${fm(sv)}`)); grid.append(c);
+      }
+      bx.append(grid); det.append(bx); }
+    { const bx = el("div", "gpart"); bx.append(el("div", "gsub", "Every tracked ball in play — exit velocity"));
+      const evs = [...G.evs].sort((a, b) => b - a);
+      if (!evs.length) bx.append(el("p", "note", "No tracked balls in play that game."));
+      else { const row = el("div", "evrow"); for (const v of evs) { const e = el("span", "evchip" + (v >= 95 ? " hh" : ""), v.toFixed(1)); row.append(e); } bx.append(row); }
+      det.append(bx); }
+    if (pick.luck != null) {
+      const bx = el("div", "gpart"); bx.append(el("div", "gsub", "Luck"));
+      const bb = babipFrom(G), v = el("p", "gverdict");
+      v.append(el("span", "chip2 " + (pick.luck >= 0.3 ? "lucky" : pick.luck <= -0.3 ? "unlucky" : "even"), pick.luck >= 0.3 ? "lucky" : pick.luck <= -0.3 ? "unlucky" : "about right"),
+        ` His results were worth ${Math.abs(pick.luck).toFixed(1)} run${Math.abs(pick.luck) >= 0.95 && Math.abs(pick.luck) < 1.05 ? "" : "s"} ${pick.luck >= 0 ? "more" : "less"} than the contact and plate appearances behind them (wOBA ${fmtX(pick.woba)} against xwOBA ${fmtX(pick.xw)})` +
+        (bb.babip != null && bb.xbabip != null ? `; BABIP ${fmtX(bb.babip)} against an expected ${fmtX(bb.xbabip)}.` : "."));
+      bx.append(v); det.append(bx);
+    }
+    box.append(det);
+    box.append(el("p", "note", "Every game this season, whatever the card's dates or splits. xwOBA is coloured by where that rate would sit among the season's 300+ PA hitters — one game is a tiny sample, so read the colours as that day's quality of contact, not a talent level. Luck = (wOBA − xwOBA) over his wOBA plate appearances, in runs: + means the results beat the contact."));
     return box;
   }
   function renderLuckBox(p) {

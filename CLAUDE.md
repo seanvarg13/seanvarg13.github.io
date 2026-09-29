@@ -500,6 +500,12 @@ is deploy-limited.
   Whiff%, xGB / GB%, xPU / PU%; counts in the tooltips; `hist/ars-<season>.js`; under 5 of a pitch isn't graded) and the luck by type. **No park
   adjustment**: checked 29 Sep 2026 (home − away by team, 2024-26) — Coors takes ~2.9" of four-seam IVB and ~3 Stuff+ points,
   Tampa / Houston / Miami / San Diego add ~0.9" and ~2 points, Rogers Centre ~0; the day rows only know home / away, not the park.
+* **Hitter Game Logs tab** (hitter card, first of `BTABS_H`, `renderHitGamesTab` / `hitGameLog` in `app.js`; Sean, 29 Sep 2026):
+  every game of the card's season from the day rows (via `gameDays`), oldest first, in the pitchers' dress — **Game** (date,
+  xwOBA as a chip coloured against the season's 300+ PA hitters' xwOBA) · **Results** (PA, H, HR, BB, K, wOBA, luck = (wOBA −
+  xwOBA) runs, + = the results beat the contact) · **Contact** (EV, max EV, barrels, HH%) · **Discipline** (Whiff%, Chase%), Season row
+  frozen at the foot. Tap a game: tiles over his season, every tracked ball's exit velocity (the day rows' `evs` lists), and
+  its luck with BABIP vs xBABIP. `state.hGameDay` is the picked game.
 * **xwOBA − wOBA** (`xwdiff`, hitters; Sean, 27 Sep 2026): a Leaderboard / Trending column (added once to saved column sets
   via `state.lb.xwdAdded`), signed (+ = unlucky). `LB_EXTRA_H` lists the hitter stats that are columns without being on
   the card (xwdiff, babip, xbabip, bluck, brel); `fmt()` prints `sign: true` metrics as +.024 / −.018.
