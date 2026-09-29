@@ -77,6 +77,7 @@ if cloud_publishes():
     sys.exit(0)
 ok = run("build_data.py", "--end", end)
 if ok:
+    run("build_trends.py")                              # League Trends page (hist/trends.js); non-fatal
     # the minor-league scrape takes another hour or more; put the MLB numbers on the site now rather than
     # leaving it a day stale all morning. Whatever the minors add is published again at the end.
     say(f"--- MLB data through {end} built; publishing it before the minors run")
@@ -118,6 +119,7 @@ if ok:
     if todo:
         say(f"--- rescoring {len(todo)} past season(s) with the directional xBA / xSLG models: {' '.join(todo)}")
         if run("build_history.py", *todo) and run("build_career.py"):
+            run("build_trends.py")
             say("--- rescore built; publishing it")
             ok = publish()
 say(f"=== {dt.datetime.now():%F %T} {'done' if ok else 'FAILED'}")
