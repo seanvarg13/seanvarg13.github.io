@@ -4784,7 +4784,7 @@
       cols.forEach((c, j) => {
         const v = c.get(r), td = el("td", c.num ? "num" : "txt", c.fmt ? c.fmt(v) : String(v ?? "–"));
         // colour only what you're sorting by, plus the signed Trend / Δ (every rate column in red and blue was a wall of colour)
-        if (c.paint && v != null && (c.label === sortKey || c.label === "Trend" || c.label === "Δ")) { const pct = pcts[c.label][i]; if (pct != null) paint(td, pct); td.classList.add("pc"); }
+        if (c.paint && v != null && (c.label === sortKey || c.label === "Trend" || c.label === "Δ" || /Pts\/PA$/.test(c.label))) { const pct = pcts[c.label][i]; if (pct != null) paint(td, pct); td.classList.add("pc"); }   // hitters' Pts/PA always coloured (Sean, 29 Sep 2026)
         trr.append(td);
       });
       // the table's place is noted first: its card opens without a full render, and closing one redraws the table from the top
