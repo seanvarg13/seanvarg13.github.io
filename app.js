@@ -4541,11 +4541,11 @@
     const cols = [];
     if (grp === "H") {
       const line = [["G", o("G")], ["PA", o("PA")], ["AB", o("AB")]];
-      if (basis === "x") cols.push(tot("x"), perG("x"), perAB("x"), perWk("x"), tot(""), delta("x"), arrow("H → xH", "H", "x"), arrow("TB → xTB", "TB", "x"),
+      if (basis === "x") cols.push(tot("x"), perG("x"), perPA("x"), perAB("x"), perWk("x"), tot(""), delta("x"), arrow("H → xH", "H", "x"), arrow("TB → xTB", "TB", "x"),
         arrow("R → xR", "R", "x"), arrow("RBI → xRBI", "RBI", "x"), why("xBA", "x", "xba", (x) => fmtX(x)), why("xSLG", "x", "xslg", (x) => fmtX(x)),
         why("xwOBA", "x", "xw", (x) => fmtX(x)), why("wOBA", "x", "woba", (x) => fmtX(x)), ...line);
-      else if (basis === "both") cols.push(tot(""), tot("x"), delta("x"), perG(""), perG("x"), perAB(""), perAB("x"), perWk(""), perWk("x"), ...line, wk);
-      else cols.push(tot(""), perG(""), perAB(""), perPA(""), perWk(""), ...line, wk, ["R", o("R")], ["HR", o("HR")], ["RBI", o("RBI")], ["SB", o("SB")], ["BB", o("BB")], ["K", o("K")],
+      else if (basis === "both") cols.push(tot(""), tot("x"), delta("x"), perG(""), perG("x"), perPA(""), perPA("x"), perAB(""), perAB("x"), perWk(""), perWk("x"), ...line, wk);
+      else cols.push(tot(""), perG(""), perPA(""), perAB(""), perWk(""), ...line, wk, ["R", o("R")], ["HR", o("HR")], ["RBI", o("RBI")], ["SB", o("SB")], ["BB", o("BB")], ["K", o("K")],
         ["AVG", num((r) => div(r.o.H, r.o.AB), (x) => fmtX(x))], ["OBP", num((r) => div(r.o.H + r.o.BB + r.o.HBP, r.o.AB + r.o.BB + r.o.HBP + r.o.SF), (x) => fmtX(x))],
         ["SLG", num((r) => div(r.o.TB, r.o.AB), (x) => fmtX(x))]);
     } else {
@@ -5144,23 +5144,25 @@
     if (L) for (const yy of Object.keys(L.years).sort().reverse()) { const a = L.years[yy][grp === "H" ? "hitters" : "pitchers"][p.id]; if (a) { const o = fLineObj(L, grp, a); if (o.G) rows.push([yy, o]); } }
     if (!rows.length) { wrap.append(el("p", "note", L ? "No MLB seasons to show." : failed.has("hist/fantasy-lines.js") ? "Past seasons aren't built yet." : "Loading past seasons…")); return wrap; }
     const t = el("table", "ubt fantyrs"), th = el("thead"), hr = el("tr");
-    const heads = grp === "H" ? ["Season", "G", "PA", "Pts", "Pts/G"] : ["Season", "G", "GS", "IP", "Pts", "Pts/G"];
+    const heads = grp === "H" ? ["Season", "G", "PA", "Pts", "Pts/G", "Pts/PA"] : ["Season", "G", "GS", "IP", "Pts", "Pts/G"];
     for (const h of heads) hr.append(el("th", h === "Season" ? "l" : null, h));
     th.append(hr); t.append(th);
     const tb = el("tbody");
-    let tp = 0, tg = 0;
+    let tp = 0, tg = 0, tpa = 0;
+    const f3 = (x) => (x == null || !isFinite(x) ? "–" : x.toFixed(3));
     for (const [yy, o] of rows) {
-      const pts = fPts(w, o), r = el("tr", yy === y ? "fcur" : null); tp += pts; tg += o.G;
+      const pts = fPts(w, o), r = el("tr", yy === y ? "fcur" : null); tp += pts; tg += o.G; tpa += o.PA || 0;
       r.append(el("td", "l", yy), el("td", null, String(o.G)));
       if (grp === "H") r.append(el("td", null, String(o.PA)));
       else r.append(el("td", null, String(o.GS)), el("td", null, outsIP(o.OUTS)));
       r.append(el("td", "fp" + (pts < 0 ? " neg" : ""), f1(pts)), el("td", null, f2(pts / o.G)));
+      if (grp === "H") r.append(el("td", null, f3(o.PA ? pts / o.PA : null)));
       tb.append(r);
     }
     if (rows.length > 1) {
       const r = el("tr", "ftot"); r.append(el("td", "l", "Total"), el("td", null, String(tg)));
       if (grp === "H") r.append(el("td")); else r.append(el("td"), el("td"));
-      r.append(el("td", "fp", f1(tp)), el("td", null, f2(tp / tg))); tb.append(r);
+      r.append(el("td", "fp", f1(tp)), el("td", null, f2(tp / tg))); if (grp === "H") r.append(el("td", null, f3(tpa ? tp / tpa : null))); tb.append(r);
     }
     t.append(tb); wrap.append(t);
     if (L && rows.some(([yy]) => yy !== cur)) wrap.append(el("p", "note", "Past seasons are scored from the official season line: cycles and game-winning RBI aren't in it, so they count zero there; per-start points need game logs, so they're this season only."));
@@ -5194,6 +5196,7 @@
     tile(f1(tot), "season points", rows ? rank(rows.map((r) => r.pts), tot) : "");
     const qual = rows ? rows.filter(fMinOK) : [];
     tile(f2(ppg), "points per game", rows && qual.some((r) => r.p.id === p.id) ? rank(qual.map((r) => r.pts / r.o.G), ppg) : "");
+    if (grp === "H" && o.PA) tile((tot / o.PA).toFixed(3), "points per PA", rows && qual.some((r) => r.p.id === p.id) ? rank(qual.filter((r) => r.o.PA).map((r) => r.pts / r.o.PA), tot / o.PA) : "");   // beside per game (Sean, 29 Sep 2026)
     tile(String(o.G), grp === "H" ? "games" : `games · ${o.GS} GS`, grp === "H" ? `${o.PA} PA` : `${outsIP(o.OUTS)} IP`);
     if (grp === "P") {                                   // per start and per relief outing, when he has had both
       const st = o.games.filter((g) => g.GS), rl = o.games.filter((g) => !g.GS);
@@ -5206,16 +5209,19 @@
     const cats = Object.entries(w).filter(([k, v]) => Number(v) && o[k]).map(([k, v]) => [k, Number(v), o[k] || 0, Number(v) * (o[k] || 0)])
       .sort((a, b) => Math.abs(b[3]) - Math.abs(a[3]));
     const t = el("table", "ubt fantcats"), th = el("thead"), hr = el("tr");
-    for (const h of ["Category", "Stat", "×", "Pts", "Per game"]) hr.append(el("th", h === "Category" ? "l" : null, h));
+    for (const h of ["Category", "Stat", "×", "Pts", "Per game", ...(grp === "H" ? ["Per PA"] : [])]) hr.append(el("th", h === "Category" ? "l" : null, h));
     th.append(hr); t.append(th);
     const tb = el("tbody");
     for (const [k, v, n, pts] of cats) {
       const r = el("tr");
       r.append(el("td", "l", (lbl[k] || k).replace(/ \(.*\)$/, "")), el("td", null, k === "IP" ? outsIP(o.OUTS) : String(Math.round(n * 10) / 10)),
                el("td", "fw", (v > 0 ? "" : "−") + Math.abs(v)), el("td", "fp" + (pts < 0 ? " neg" : ""), f1(pts)), el("td", null, f2(pts / o.G)));
+      if (grp === "H") r.append(el("td", null, o.PA ? (pts / o.PA).toFixed(3) : "–"));
       tb.append(r);
     }
-    const tr = el("tr", "ftot"); tr.append(el("td", "l", "Total"), el("td"), el("td"), el("td", "fp", f1(tot)), el("td", null, f2(ppg))); tb.append(tr);
+    const tr = el("tr", "ftot"); tr.append(el("td", "l", "Total"), el("td"), el("td"), el("td", "fp", f1(tot)), el("td", null, f2(ppg)));
+    if (grp === "H") tr.append(el("td", null, o.PA ? (tot / o.PA).toFixed(3) : "–"));
+    tb.append(tr);
     t.append(tb); box.append(t);
     box.append(renderFantasySeasons(p, grp, w, y));
     // a pitcher's game log, newest first: the last ten, or every game on request
