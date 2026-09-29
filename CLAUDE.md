@@ -484,6 +484,14 @@ is deploy-limited.
   section (`#pitchboard`) and standing-card CSS (every `[data-mode="pitches"]` rule also names `trends`). No Stuff+ by pitch: it's
   graded against each season's own type average, so the league is 100 every year. Savant has since relabelled old sweepers, so
   ST exists (small) before 2023.
+* **Weekly Planner** (Fantasy ▸ Weekly Planner, `#planner`, `renderPlanner` / `pwSchedule` in `app.js`; Sean, 29 Sep 2026): the
+  Monday–Sunday week (‹ Prev / Next ›, `pw.off` weeks from this one, New York time) fetched **live from the MLB Stats API in the
+  browser** (`schedule?sportId=1&gameType=R&…&hydrate=probablePitcher,team` — it sends `Access-Control-Allow-Origin: *`; nothing is
+  built), cached per week in memory. Starred players (`state.stars`, keys type+id) or everyone. Three tables: two-start pitchers
+  (everyone), pitchers (probable starts, or a reliever's club games × his relief-appearance rate), hitters (club games and the
+  opposing probable starters' hands from `throws`). Projected points = starts × points per start / games × points per game (this
+  season's `fantasy.js` under the current preset). Team codes match the site's (the API's abbreviations: AZ, ATH, CWS, WSH…).
+  Probables appear a few days ahead, so a later week fills in as it nears. Same `#pitchboard` standing card as the Stuff+ board.
 * **Call-up Watch** (Leaderboards ▸ Call-up Watch, `#callups`, `renderCallups` / `cuRows` in `app.js`; Sean, 29 Sep 2026): this
   season's minor leaguers at one level (`hist/<aaa|aa|ap|a>-<season>.js`, loaded on demand). Pitchers ranked by **MLB-equivalent
   uERA** — the level's Whiff% / Strike% / GB% / PU% shifted by `MILB_X` and placed in this season's MLB SP or RP pool (`placeIn`),

@@ -550,6 +550,13 @@ and ball in play pooled), not averages of players. Each column is coloured by wh
 highest, blue the lowest); tap a column's name to draw it as a line. The current season is marked * (so far), 2020 † (60 games).
 Built by `build_trends.py` into `hist/trends.js` every morning after the MLB build.
 
+## Weekly Planner
+
+Fantasy ▸ Weekly Planner shows a Monday-to-Sunday week (step with ‹ Prev / Next ›) straight from MLB's schedule: every
+two-start pitcher, your starred pitchers' probable starts (or a reliever's expected outings), and your starred hitters' games with
+how many opposing starters are left- or right-handed, each with projected points under your scoring. Switch to Everyone to see
+the whole league. Clubs name starters a few days ahead, so a week fills in as it nears.
+
 ## Game Logs (hitters)
 
 A hitter's card opens its tabs with **Game Logs**: every game this season, oldest first — xwOBA that game (coloured by where it
