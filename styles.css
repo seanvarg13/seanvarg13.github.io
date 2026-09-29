@@ -3249,3 +3249,7 @@ body[data-mode="trends"] #pitchboard > .trchartbox { margin: 4px 0 10px; }
 /* the card's Fantasy tab: points per PA coloured by percentile (Sean, 29 Sep 2026) */
 .fantbox .fanttile b.ppachip { display: inline-block; align-self: flex-start; padding: 0 6px; }
 .fantbox .ubt.fantyrs td.ppa { font-weight: 700; text-align: center; }
+/* hitter Game Logs: the same dress as the pitchers', plus every tracked ball's exit velocity as a row of chips */
+.gamesbox .evrow { display: flex; flex-wrap: wrap; gap: 4px; }
+.gamesbox .evchip { border: 1px solid var(--hair); padding: 2px 6px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.gamesbox .evchip.hh { border-color: var(--rule); font-weight: 700; }

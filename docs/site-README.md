@@ -550,6 +550,13 @@ and ball in play pooled), not averages of players. Each column is coloured by wh
 highest, blue the lowest); tap a column's name to draw it as a line. The current season is marked * (so far), 2020 † (60 games).
 Built by `build_trends.py` into `hist/trends.js` every morning after the MLB build.
 
+## Game Logs (hitters)
+
+A hitter's card opens its tabs with **Game Logs**: every game this season, oldest first — xwOBA that game (coloured by where it
+would sit among the season's regular hitters), the line (PA, H, HR, BB, K, wOBA and luck: how many runs the results were worth
+above or below the contact), exit velocity (average, max, barrels, hard-hit %) and Whiff% / Chase%, with the season row pinned at
+the bottom. Tap a game for its numbers over his season, every tracked ball's exit velocity, and its BABIP against expected.
+
 ## Game Logs (a pitcher's appearances)
 
 A pitcher's card has a **Game Logs** tab: every appearance this season, oldest first, grouped as Stuff · Start results · Underlying — Stuff+ that day and how far it was from
