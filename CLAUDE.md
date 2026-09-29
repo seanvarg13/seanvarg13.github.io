@@ -487,8 +487,9 @@ is deploy-limited.
 * **Games tab** (pitcher card, `renderGamesTab` / `gameLog` / `gamePitches` in `app.js`; Sean, 29 Sep 2026: "his stuff+ by
   start/relief appearance"): every appearance of the card's season from the day rows (days.js, or `hist/days-<season>.js`),
   whatever the card's dates or splits — Stuff+ that day (`stuffFrom` on the day's `stn…stbp`) against his season, a dot chart
-  of it (starts filled, relief hollow), a slim log (IP, ER, K, BB, Stuff+, Δ, luck — Sean: the first version was "very crammed")
-  with the rates (K%, BB%, Whiff%, Strike%, Zone%, Chase%, GB%, PU%) as the picked game's box-score tiles over his season, and
+  of it (starts filled, relief hollow), a log (IP, ER, K, BB, Stuff+, Δ, luck, then K%, BB%, Whiff%, Strike%, Zone%, Chase%, GB%, PU% —
+  red / blue when 3+ points better / worse than his season; the date pinned, the rest scrolls sideways on a phone — Sean found
+  the first cut "very crammed", then wanted the rates back in it), the picked game's rates as box-score tiles over his season, and
   **BIP luck**: the day's wOBA on each batted-ball type (`wgb/wld/wfb/wpu` over `gb/ld/fbt/pu`) against the league's value
   for the type (`consts.bbw`), in runs (÷ `wobaScale`), + = unlucky. Tapping a game shows each pitch that day graded against
   its type beside his season, every metric the arsenal file carries (Stuff+ / Whiff+ / BB+, use, velo, IVB, HB, spin, xWhiff /
