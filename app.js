@@ -3020,6 +3020,7 @@
     return b;
   };
   pitchBoardEl();
+  { const mm = $("modemenu"); if (mm && !mm.querySelector('a[href="#planner"]')) { const li = el("li"); const a = el("a", null, "Weekly Planner"); a.href = "#planner"; li.append(a); mm.append(li); } }
   // Draft Mode is gone (Sean, 28 Sep 2026: the home page does its job); the Mac's index.html template may still list it
   { const dm = document.querySelector('#modemenu a[href="#draftmode"]'); if (dm) dm.closest("li").remove(); }
   const pb = Object.assign({ pt: "all", hand: "all", role: "all", min: 100, sort: "stuffp", dir: -1 }, load("draft2027.pitchboard", {}));
@@ -3283,6 +3284,95 @@
     box.append(el("p", "note", (rows.length > 300 ? "The top 300 shown. " : "") + (P
       ? "MLB-equivalent uERA carries his Whiff%, Strike%, ground-ball and popup rates up to the majors by the level's typical drop (fitted on pitchers who worked at two levels in a season), then prices them like any MLB pitcher's uERA; the chip is where that would rank among this season's MLB starters or relievers. Stuff+ is graded against MLB pitches of the same type, and only exists where the level tracks pitches. · MLB = he has pitched in the majors this season."
       : "The minors have no directional xwOBA, so hitters are ranked by wOBA with the contact (exit velocity, barrels, hard-hit) and swing numbers beside it; exit velocity exists only at tracked levels (Triple-A, some Single-A parks). · MLB = he has batted in the majors this season.")));
+  }
+  // Weekly Planner (Sean, 29 Sep 2026): the Monday-to-Sunday week's schedule and probable starters, fetched from the MLB Stats API
+  // in the browser when the page opens (it allows cross-site reads; nothing is built for it). Starred players by default, or
+  // everyone: pitchers' probable starts (two-start weeks flagged) and hitters' games with the opposing starters' hands, each with
+  // projected points under the chosen scoring — per start / per game / per relief outing from this season's fantasy lines.
+  const pw = Object.assign({ scope: "stars", off: 0 }, load("draft2027.planner", {}));
+  const pwCache = new Map();
+  const ymd = (d) => d.toISOString().slice(0, 10);
+  function pwWeek(off) {
+    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+    const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7) + 7 * off);
+    const e = new Date(d); e.setUTCDate(e.getUTCDate() + 6);
+    return { from: ymd(d), to: ymd(e) };
+  }
+  function pwSchedule(wk) {
+    const k = wk.from; if (pwCache.has(k)) return pwCache.get(k);
+    pwCache.set(k, "loading");
+    fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&gameType=R&startDate=${wk.from}&endDate=${wk.to}&hydrate=probablePitcher,team`)
+      .then((r) => r.json()).then((j) => { pwCache.set(k, (j.dates || []).flatMap((d) => d.games || [])); if (state.mode === "planner") render(); })
+      .catch(() => { pwCache.set(k, "failed"); if (state.mode === "planner") render(); });
+    return "loading";
+  }
+  function renderPlanner() {
+    const box = pitchBoardEl(); box.innerHTML = "";
+    const save = () => { try { localStorage.setItem("draft2027.planner", JSON.stringify(pw)); } catch {} render(); };
+    const wk = pwWeek(pw.off), bar = el("div", "pbfilters");
+    const nav = (lab, d) => { const b = el("button", "btn btn-quiet tbtn", lab); b.type = "button"; b.addEventListener("click", () => { pw.off += d; save(); }); return b; };
+    const wl = el("span", "pwweek", `${fmtDate(wk.from)} – ${fmtDate(wk.to)}`);
+    bar.append(nav("‹ Prev", -1), wl, nav("Next ›", 1));
+    if (pw.off) { const b = nav("This week", 0); b.onclick = null; b.addEventListener("click", () => { pw.off = 0; save(); }); bar.append(b); }
+    bar.append(pillSelect(pw.scope === "stars" ? "Starred players" : "Everyone", [["stars", "Starred players"], ["all", "Everyone"]], pw.scope, (v) => { pw.scope = v; save(); }, "Players"));
+    bar.append(el("span", "pbcount", `${fpreset().name} scoring`));
+    box.append(bar);
+    const y = String(DATA.meta.season), F = fData(y); if (!F) fEnsure(y);
+    const games = pwSchedule(wk);
+    if (games === "loading" || !F) { box.append(el("p", "note", "Loading the week's schedule…")); return; }
+    if (games === "failed") { box.append(el("p", "note", "Couldn't reach the MLB schedule — try again in a minute.")); return; }
+    if (!games.length) { box.append(el("p", "note", "No regular-season games this week. The off-season — step back with ‹ Prev to see how a week reads.")); return; }
+    // the week by team: games, and each game's probable starters
+    const byTeam = new Map(), starts = new Map(), P = new Map(DATA.players.filter((q) => q.type === "P").map((q) => [q.id, q]));
+    const add = (t, g) => { if (!byTeam.has(t)) byTeam.set(t, []); byTeam.get(t).push(g); };
+    for (const g of games) {
+      if (g.status && /Postponed|Cancelled/.test(g.status.detailedState || "")) continue;
+      const A = g.teams.away, H = g.teams.home, a = A.team.abbreviation, h = H.team.abbreviation, date = g.officialDate;
+      add(a, { date, opp: h, home: false, oppSP: H.probablePitcher && H.probablePitcher.id }); add(h, { date, opp: a, home: true, oppSP: A.probablePitcher && A.probablePitcher.id });
+      for (const [side, opp, home] of [[A, h, false], [H, a, true]]) if (side.probablePitcher) { const id = side.probablePitcher.id; if (!starts.has(id)) starts.set(id, []); starts.get(id).push({ date, opp, home, name: side.probablePitcher.fullName }); }
+    }
+    const w = fpreset().w, rowsH = fRows(y, "H") || [], rowsP = fRows(y, "P") || [];
+    const teamG = {}; for (const r of rowsH) teamG[r.p.team] = Math.max(teamG[r.p.team] || 0, r.o.G);   // games his club has played, near enough
+    const starred = (q) => !!state.stars[q.type + q.id];
+    const pick = (r) => pw.scope === "all" || starred(r.p);
+    // pitchers: probable starts, or relief outings at his season's rate
+    const pRows = [];
+    for (const r of rowsP) {
+      if (!pick(r) && !(starts.has(r.p.id))) continue;
+      const st = starts.get(r.p.id) || [], tg = (byTeam.get(r.p.team) || []).length;
+      const perS = r.starts.length ? r.ptsS / r.starts.length : null, perR = r.relief.length ? r.ptsR / r.relief.length : null;
+      const relRate = teamG[r.p.team] ? r.relief.length / teamG[r.p.team] : 0;
+      const proj = st.length ? st.length * (perS ?? 0) : r.p.primary === "RP" && perR != null ? tg * relRate * perR : null;
+      pRows.push({ r, st, tg, perS, perR, proj, two: st.length >= 2 });
+    }
+    const hRows = rowsH.filter(pick).map((r) => { const gs = byTeam.get(r.p.team) || [], opp = gs.map((g) => P.get(g.oppSP)).filter(Boolean);
+      return { r, gs, L: opp.filter((q) => q.throws === "L").length, R: opp.filter((q) => q.throws === "R").length, perG: r.o.G ? r.pts / r.o.G : null, proj: r.o.G ? gs.length * r.pts / r.o.G : null }; });
+    const f1 = (x) => (x == null ? "–" : x.toFixed(1)), f2x = (x) => (x == null ? "–" : x.toFixed(2));
+    const openCard = (q) => { state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.expanded = q.type + q.id; render(); };
+    const nameCell = (q, sub) => { const td = el("td", "pwho"), b = el("button", "linkbtn pwname", (starred(q) ? "★ " : "") + q.name); b.type = "button"; b.addEventListener("click", () => openCard(q)); td.append(b, el("small", null, " " + sub)); return td; };
+    const table = (title, heads, rows) => {
+      const sec = el("div", "pwsec"); sec.append(el("h4", "pwh", title));
+      if (!rows.length) { sec.append(el("p", "note", pw.scope === "stars" ? "Nobody here — star players on their cards, or switch to Everyone." : "Nobody this week.")); return sec; }
+      const t = el("table", "pwtable"), th = el("thead"), hr = el("tr");
+      for (const [h, c] of heads) hr.append(el("th", c || null, h)); th.append(hr); t.append(th);
+      const tb = el("tbody"); for (const tr of rows) tb.append(tr); t.append(tb);
+      const sc = el("div", "pwscroll"); sc.append(t); sec.append(sc); return sec;
+    };
+    const dayTag = (x) => `${new Date(x.date + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short" })} ${x.home ? "vs" : "@"} ${x.opp}`;
+    // two-start pitchers, everyone, best projection first
+    const two = pRows.filter((x) => x.two).sort((a, b) => (b.proj ?? -1e9) - (a.proj ?? -1e9));
+    box.append(table(`Two-start pitchers (${two.length})`, [["Pitcher", "pwho"], ["Proj pts"], ["Starts"], ["Pts / start"]],
+      two.map((x) => { const tr = el("tr"); tr.append(nameCell(x.r.p, `${x.r.p.team} · ${x.r.p.primary}`), el("td", "pwp", f1(x.proj)), el("td", "l", x.st.map(dayTag).join(" · ")), el("td", null, f1(x.perS))); return tr; })));
+    const mineP = pRows.filter((x) => pick(x.r) && (x.st.length || x.r.p.primary === "RP")).sort((a, b) => (b.proj ?? -1e9) - (a.proj ?? -1e9)).slice(0, pw.scope === "all" ? 60 : 200);
+    box.append(table(pw.scope === "stars" ? "Your pitchers" : "Pitchers (top 60)", [["Pitcher", "pwho"], ["Proj pts"], ["This week"], ["Pts / start · relief"]],
+      mineP.map((x) => { const tr = el("tr"); tr.append(nameCell(x.r.p, `${x.r.p.team} · ${x.r.p.primary}`), el("td", "pwp", f1(x.proj)), el("td", "l", x.st.length ? x.st.map(dayTag).join(" · ") : `${x.tg} team games, no probable start`),
+        el("td", null, `${f1(x.perS)} · ${f1(x.perR)}`)); return tr; })));
+    const mineH = hRows.sort((a, b) => (b.proj ?? -1e9) - (a.proj ?? -1e9)).slice(0, pw.scope === "all" ? 60 : 200);
+    box.append(table(pw.scope === "stars" ? "Your hitters" : "Hitters (top 60)", [["Hitter", "pwho"], ["Proj pts"], ["Games"], ["vs LHP / RHP"], ["Pts / G"]],
+      mineH.map((x) => { const tr = el("tr"); tr.append(nameCell(x.r.p, `${x.r.p.team} · ${x.r.p.primary || ""}`), el("td", "pwp", f1(x.proj)), el("td", null, String(x.gs.length)),
+        el("td", null, `${x.L} / ${x.R}`), el("td", null, f2x(x.perG))); return tr; })));
+    box.append(el("p", "note", "The week's schedule and probable starters come straight from MLB when the page opens; clubs name starters a few days ahead, so later days fill in as the week nears. Projected points = starts × his points per start (relievers: the club's games × how often he's pitched × his points per relief outing; hitters: games × points per game), this season, under the scoring picked on the Fantasy page. vs LHP / RHP counts the opposing probable starters named so far. ★ = starred."));
   }
   let trResize;
   window.addEventListener("resize", () => { if (state.mode !== "trends") return; clearTimeout(trResize); trResize = setTimeout(render, 150); });
@@ -4014,7 +4104,7 @@
                     "#leaderboard": "Every player, any season or level, your stats.", "#trending": "Who's hot over his last N PA, innings or days.",
                     "#compare": "Players side by side on the same stats.", "#fantasy": "Your scoring on everyone, any dates or split.", "#appearance": "Colours, type and layout." };
     for (const [title, cards] of HOME_SECS) for (const [href, name] of cards) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, SHORT[href] || "")); tiles.append(a); }
-    for (const [href, name, blurb] of [["#pitches", "Stuff+", "Every pitch graded against its type."], ["#trends", "League Trends", "League averages by season, hitting and by pitch."], ["#callups", "Call-up Watch", "This season's minor leaguers, ranked for the majors."]]) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, blurb)); tiles.append(a); }
+    for (const [href, name, blurb] of [["#pitches", "Stuff+", "Every pitch graded against its type."], ["#trends", "League Trends", "League averages by season, hitting and by pitch."], ["#callups", "Call-up Watch", "This season's minor leaguers, ranked for the majors."], ["#planner", "Weekly Planner", "The week ahead: probable starts, two-start pitchers, games."]]) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, blurb)); tiles.append(a); }
     allC.append(tiles); box.append(allC);
     box.append(el("p", "note", `Statcast ${m.season} through ${m.through}, built ${m.built} UTC. xwOBA, xBA and xSLG are the directional model's; uK%, uBB% and uERA are what a pitcher's process has historically been worth.`));
   }
@@ -4230,7 +4320,7 @@
   }
   function renderNow() {
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
-    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups", other = pitches || player || compare || elig || hub || appear || fant;
+    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner", other = pitches || player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
     const T = state.tbl; document.body.dataset.heat = T.heat ? "on" : "off"; document.body.dataset.band = T.band ? "on" : "off"; document.body.dataset.sorthl = T.sortHl ? "on" : "off"; document.body.dataset.density = T.density;
@@ -4251,6 +4341,7 @@
     if (elig) { renderEligibility(); return; }
     if (state.mode === "trends") { renderTrends(); return; }
     if (state.mode === "callups") { renderCallups(); renderModal(); return; }
+    if (state.mode === "planner") { renderPlanner(); renderModal(); return; }
     if (pitches) { renderPitchBoard(); renderModal(); return; }
     const listRender = () => {
       ensureView();
@@ -7272,7 +7363,7 @@
   /* ---------- wiring ---------- */
   // the header's two dropdowns: the draft + fantasy pages, and the two leaderboards
   const NAV_GROUPS = [
-    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "eligibility", "fantasy"] },
+    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "eligibility", "fantasy", "planner"] },
     { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending", "pitches", "trends", "callups"] },
   ];
   function readMode() {
@@ -7280,7 +7371,7 @@
     const pm = h.match(/^player\/(\d+)$/);
     if (pm) { state.mode = "player"; const id = Number(pm[1]); if (state.x.id !== id) { state.x = { id, type: null, ds: null }; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; } return; }
     if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["leaders", "trending", "whatif", "settings"].includes(v) ? v : "leaders"; return; }
-    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "pitches", "trends", "callups", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
+    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "pitches", "trends", "callups", "planner", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {
