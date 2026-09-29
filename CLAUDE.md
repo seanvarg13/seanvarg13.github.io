@@ -556,7 +556,7 @@ is deploy-limited.
   earned runs follow the same days, and a past season reads its day-by-day file for it (`byDay` in `histDataset`).
 * `hist/` files built before a field was appended to `HITTER_DAY`/`PITCHER_DAY` lack it; `app.js` checks
   `indexOf(...) < 0` before using one. Keep doing that.
-* **Fantasy Leaderboard / Trending** (Sean, 26 Sep 2026): the header menu is now just "Fantasy". Points total, per game (hitters' Pts/PA right beside Pts/G in every basis and always heat-coloured, like Trend / Δ, and a points-per-PA tile, Per PA column and By season Pts/PA on the card's Fantasy tab — Sean, 29 Sep 2026),
+* **Fantasy Leaderboard / Trending** (Sean, 26 Sep 2026): the header menu is now just "Fantasy". Points total, per game (hitters' Pts/PA right beside Pts/G in every basis; on the card's Fantasy tab a points-per-PA tile, Per PA column and By season Pts/PA, the tile and the By season column heat-coloured against this season's qualified hitters — Sean, 29 Sep 2026: the card, not the leaderboard),
   per AB / PA, per start / relief app / IP, per week (weeks he played in); dates, vs LHP / RHP, home / away; expected
   points — hitters xPts (H / TB from dxBA / dxSLG, R and RBI × xwOBA/wOBA), pitchers nPts (luck-neutral) and uPts
   (uK / uBB / uERA). Hand splits share each game's official line out by that day's Statcast rows (`fDayShares`), so

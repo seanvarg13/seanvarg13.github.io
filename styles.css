@@ -3246,3 +3246,6 @@ body[data-mode="trends"] #pitchboard > .trchartbox { margin: 4px 0 10px; }
 :root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog tr.ftot td.l { z-index: 3; }
 .gamesbox .gframe .ubt td.l, .gamesbox .gframe .ubt th.l, .gamesbox .gframe .ubt th:first-child { padding-left: 8px; }
 .gamesbox .gframe .ubt td:last-child, .gamesbox .gframe .ubt th:last-child { padding-right: 8px; }
+/* the card's Fantasy tab: points per PA coloured by percentile (Sean, 29 Sep 2026) */
+.fantbox .fanttile b.ppachip { display: inline-block; align-self: flex-start; padding: 0 6px; }
+.fantbox .ubt.fantyrs td.ppa { font-weight: 700; text-align: center; }
