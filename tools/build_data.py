@@ -278,12 +278,54 @@ STUFF_BUNT = {"foul_bunt", "missed_bunt", "bunt_foul_tip"}
 STUFF_ARSENAL = ["pt", "n", "velo", "ivb", "hb", "spin", "xwhf", "xgb", "xpu", "whfp", "bbp", "stuffp", "whf", "gb", "pu", "sw", "bip"]
 
 
-def stuff_features(d: pd.DataFrame) -> pd.DataFrame:
-    """One row of model inputs per pitch (NaN where Statcast has no tracking); lefties mirrored so both hands read alike."""
+STUFF_PARK = ["velo", "ivb", "hb", "spin"]     # the traits a ballpark moves (Coors' thin air takes ~3" off a four-seamer's ride)
+STUFF_PARK_K = 400                             # shrinkage: a park × pitch type with n pitches keeps n / (n + 400) of its offset
+
+
+def park_offsets(d: pd.DataFrame, f: pd.DataFrame) -> pd.DataFrame | None:
+    """How much each park moves each pitch type's velocity, ride, run and spin (Sean, 29 Sep 2026: "park adjusted stuff+").
+    A two-way fixed-effects fit — every pitch = his own pitch-type average (that season) + the park's offset — solved by
+    alternating the two a few times, so a park isn't blamed for its home staff and a pitcher isn't credited for his park.
+    Offsets are shrunk toward zero by sample and centred so the league's parks average out to nothing."""
+    if "home_team" not in d.columns:
+        return None
+    yr = pd.to_datetime(d["game_date"]).dt.year.to_numpy()
+    who = d["pitcher"].astype(str) + "_" + pd.Series(yr, index=d.index).astype(str) + "_" + d["pitch_type"].astype(str)
+    park = d["home_team"].astype(str) + "_" + d["pitch_type"].astype(str)
+    out = {}
+    for c in STUFF_PARK:
+        x = f[c]; ok = x.notna() & f.pt.notna()
+        if ok.sum() < 20000:
+            return None
+        xs, ws, ps = x[ok], who[ok], park[ok]
+        pe = pd.Series(0.0, index=xs.index)
+        for _ in range(4):
+            own = (xs - pe).groupby(ws).transform("mean")
+            r = xs - own
+            g = r.groupby(ps).agg(["sum", "size"])
+            eff = g["sum"] / (g["size"] + STUFF_PARK_K)
+            pe = ps.map(eff).fillna(0.0)
+        # centre within each pitch type, pitch-weighted, so the league's own mean is untouched
+        n = g["size"]; pt_of = eff.index.str.rsplit("_", n=1).str[-1]
+        centre = (eff * n).groupby(pt_of).sum() / n.groupby(pt_of).sum()
+        out[c] = eff - pt_of.map(centre).to_numpy()
+    return pd.DataFrame(out)
+
+
+def stuff_features(d: pd.DataFrame, park: bool = True) -> pd.DataFrame:
+    """One row of model inputs per pitch (NaN where Statcast has no tracking); lefties mirrored so both hands read alike.
+    park: velocity, ride, run and spin are taken back to a neutral park first (park_offsets), so a Coors start doesn't
+    read as worse stuff and a Tampa one as better; the displayed velo / IVB / HB / spin stay as measured."""
     num = lambda c: pd.to_numeric(d[c], errors="coerce").astype(float) if c in d else pd.Series(np.nan, index=d.index)
     L = d["p_throws"].eq("L").to_numpy()
     velo, spin, axis = num("release_speed"), num("release_spin_rate"), num("spin_axis")
     ivb, hb = 12 * num("pfx_z"), 12 * num("pfx_x") * np.where(L, 1, -1)            # inches; arm-side run positive
+    if park:
+        pf = park_offsets(d, pd.DataFrame({"pt": d["pitch_type"].map(STUFF_PT).astype(float), "velo": velo, "ivb": ivb, "hb": hb, "spin": spin}, index=d.index))
+        if pf is not None:
+            key = d["home_team"].astype(str) + "_" + d["pitch_type"].astype(str)
+            velo = velo - key.map(pf["velo"]).fillna(0.0); ivb = ivb - key.map(pf["ivb"]).fillna(0.0)
+            hb = hb - key.map(pf["hb"]).fillna(0.0); spin = spin - key.map(pf["spin"]).fillna(0.0)
     f = pd.DataFrame({"pt": d["pitch_type"].map(STUFF_PT).astype(float), "velo": velo, "spin": spin}, index=d.index)
     ax = np.radians(np.where(L, 360 - axis, axis))
     f["ax_s"], f["ax_c"], f["ivb"], f["hb"] = np.sin(ax), np.cos(ax), ivb, hb
@@ -316,7 +358,7 @@ STUFF_WHIFF_ONLY = ["use", "depth"]                # inputs the batted-ball mode
 
 # what a prior season keeps for training (the rest of its columns are dropped as it loads, to keep memory down)
 STUFF_TRAIN = ["game_date", "game_type", "pitcher", "stand", "p_throws", "description", "type", "events", "bb_type", "pitch_type",
-               "release_speed", "release_extension"] + STUFF_COLS
+               "release_speed", "release_extension", "home_team"] + STUFF_COLS          # home_team: the park adjustment
 STUFF_YEARS = 2          # prior seasons the models train on besides this one: three seasons in all — tested on 2026 (26 Sep
                          # 2026), a third season still helped a little, a fourth to sixth added nothing, recency weights neither
 
@@ -426,7 +468,8 @@ def _fit_stuff(train: pd.DataFrame, d: pd.DataFrame, ref: pd.DataFrame | None = 
     for c in ("w", "g", "p"):
         d.loc[has, "st_b" + c] = pts.map(tm[c]).fillna(base[c]).to_numpy()
     air = d["bb_type"].isin(["line_drive", "fly_ball"])
-    g = d[has].assign(velo=f.velo[has], ivb=f.ivb[has], hb=f.hb[has], spin=f.spin[has], wh=d["description"][has].isin(WHIFF),
+    fr0 = stuff_features(d, park=False)                                   # the arsenal table shows what was measured, park and all
+    g = d[has].assign(velo=fr0.velo[has], ivb=fr0.ivb[has], hb=fr0.hb[has], spin=fr0.spin[has], wh=d["description"][has].isin(WHIFF),
                       swg=d["description"][has].isin(SWING), gbx=d["bb_type"][has].eq("ground_ball"), pux=d["bb_type"][has].eq("popup"),
                       bipx=d["bb_type"][has].isin(STUFF_BB.keys()))
     agg = dict(n=("st_n", "sum"), w=("st_w", "sum"), g=("st_g", "sum"), p=("st_p", "sum"), bw=("st_bw", "sum"), bg=("st_bg", "sum"), bp=("st_bp", "sum"))
