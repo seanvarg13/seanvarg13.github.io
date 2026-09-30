@@ -679,10 +679,10 @@ is deploy-limited.
   numbers) + **Source Sans 3** (`--body`: everything else), loaded by `themes.js` (`F.studio`, the only font); Roboto
   Condensed is gone. **The swirl is gone**: `nopattern` is always on and the Appearance row is removed; pages sit on
   `--ground`, a pale tint of the scheme's `--accent-2` (pale Carolina blue on the default scheme). Don't bring the swirl back unasked.
-* **Bold, and where it isn't** (Sean, 30 Sep 2026, after the Font Studio page — he kept Barlow Condensed + Source Sans 3): unbolding
-  the whole site was tried and taken back within the hour. What stays regular weight: the card's stat names by the percentile bars
-  (`.svpct .svlbl`; the values were already plain) and the numbers in the lists (`#rows` cells, sorted column included, and
-  `.ftable` cells but the name). Names, headings and buttons keep their weight.
+* **No bold** (Sean, 30 Sep 2026, after the Font Studio page — he kept Barlow Condensed + Source Sans 3): one rule at the very end
+  of `styles.css` sets every element to weight 400 except the percentile bubbles' digits (`.svnum`, Savant's Roboto Condensed 700).
+  Bold was brought back for an hour (all but the card's stat names and the lists' numbers) and dropped again — Sean: "keep
+  everything unbolded ... more minimalistic". Don't reintroduce bold unasked.
 * **Heat maps share the bars' scale** (Sean, 30 Sep 2026: "the darkest red isn't dark anymore"): `pctStyle` takes its colour from
   `savantStyle` (Savant's #3661ad / #b4cfd1 / #d82129 in Lab), so a table cell and a bar at the same percentile match, and the
   sorted column (`.hot`, Fantasy's `.fsorted`) is its full colour again — the light tint from the fourth minimal pass is gone.

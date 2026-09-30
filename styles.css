@@ -3491,9 +3491,6 @@ body.cardpop.modal-open main.wrap, body.cardpop.modal-open > footer { visibility
 .modal.pcard #modal-body { position: relative; }
 :root:root[data-view="mobile"] .phead .hstrip { column-gap: 6px; }
 :root[data-view="mobile"] .phead .mplate .hstrip { margin-right: -44px; }   /* under the ×, which sits at the band's top: room for Filters and a two-way switch on one line */
-/* The card's stat names by the percentile bars at regular weight (Sean, 30 Sep 2026: unbolding everything was tried and taken
-   back the same evening — only "the actual stats on the player card like woba xwoba" stay unbolded). */
-:root:root .svpct .svlbl { font-weight: 400; }
-/* the lists' numbers at regular weight too (Sean, 30 Sep 2026: "keep the stats on the leaderboard not bolded"), the sorted
-   column included; names and headers keep theirs */
-:root:root #rows :is(.pct, .score, .pct.hot, .score.hot, .pct.sorted, .score.sorted), :root:root .ftable td:not(.who) { font-weight: 400 !important; }
+/* No bold anywhere (Sean, 30 Sep 2026: "keep everything unbolded ... it looks more minimalistic") — every face at its regular
+   400, headings, names and numbers included, except the percentile bubbles' digits, which stay Savant's (Roboto Condensed 700). */
+:root:root :not(.svnum) { font-weight: 400 !important; }

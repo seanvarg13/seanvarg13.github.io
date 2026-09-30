@@ -16,8 +16,8 @@ its own, the header has them.
 regular-season qualifiers, so a 99 means "as good as a top-1% regular season"; the sample line shows how few PA it is.
 This October's postseason rebuilds every morning.
 
-**Weights and heat colours** (30 Sep 2026): the fonts are unchanged (the Font Studio comparison kept them). The card's stat names
-beside the percentile bars and the numbers in the lists are regular weight; names, headings and buttons stay bold. Every heat-mapped
+**Weights and heat colours** (30 Sep 2026): the fonts are unchanged (the Font Studio comparison kept them). Nothing is bold except the digits in the
+percentile bubbles. Every heat-mapped
 cell uses the percentile bars' colour scale, and the sorted column is filled with its full colour.
 
 **Base Running** (30 Sep 2026): a hitter card's last section is Sprint Speed (Baseball Savant), SB, SB attempts and SB%
