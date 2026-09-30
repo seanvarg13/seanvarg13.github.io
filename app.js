@@ -3646,24 +3646,43 @@
     }
   }
   // the Leaderboard's column picker: every card metric, grouped as on the card
-  // The three table panels are one popup with three tabs — one button on the toolbar instead of three, which
-  // leaves the rank tools room to sit on the row rather than scrolling off it.
-  const PANEL_TABS = [["filters", "Filters"], ["stats", "Included stats"], ["splits", "Splits & dates"], ["table", "Table"]];
   // one button per panel on the toolbar, each opening its own dropdown under itself rather than a page-wide modal
   const POP_BTNS = [["positions", "Position"], ["filters", "Filters"], ["stats", "Stats"], ["splits", "Splits & dates"], ["table", "Table"]];
   const POPPED = new Set(POP_BTNS.map(([k]) => k));
+  // Since the minimal pass (Sean, 29 Sep 2026) the toolbar is two buttons, position and Filters: Filters opens one dropdown
+  // with the four panels as tabs across its top (the last one used opens first), so the row never wraps on a phone
+  const GRP_TABS = [["filters", "Filters"], ["stats", "Stats"], ["splits", "Splits & dates"], ["table", "Table"]];
+  const GRP = new Set(GRP_TABS.map(([k]) => k));
   function renderToolButtons() {
     const box = $("tbtns");
     if (!box) return;
     box.innerHTML = "";
-    for (const [k, label] of POP_BTNS) {
-      const on = state.panel === k;
-      const b = el("button", "btn btn-quiet tbtn" + (on ? " open" : "") + (popActive(k) ? " on" : ""), k === "positions" ? posBtnLabel() : label);
+    const grpOpen = GRP.has(state.panel);
+    const add = (k, label, on, act) => {
+      const b = el("button", "btn btn-quiet tbtn" + (on ? " open" : "") + (act ? " on" : ""), label);
       b.type = "button"; b.dataset.panel = k;
       b.setAttribute("aria-expanded", String(on)); b.setAttribute("aria-haspopup", "true");
-      b.addEventListener("click", (e) => { e.stopPropagation(); if (state.panel === k) closePanel(false); else openPanel(k); });
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (k === "grp") { if (grpOpen) closePanel(false); else openPanel(GRP.has(state.panelTab) ? state.panelTab : "filters"); }
+        else if (state.panel === k) closePanel(false); else openPanel(k);
+      });
       box.append(b);
+    };
+    add("positions", posBtnLabel(), state.panel === "positions", popActive("positions"));
+    const n = ["filters", "splits"].filter(popActive).length;
+    add("grp", "Filters" + (n ? ` · ${n}` : ""), grpOpen, n > 0);
+  }
+  // the tab row across the top of the Filters dropdown
+  function grpTabs() {
+    const row = el("div", "ptabs grptabs"); row.setAttribute("role", "tablist");
+    for (const [k, label] of GRP_TABS) {
+      const b = el("button", "ptab" + (k === state.panel ? " on" : ""), label); b.type = "button";
+      b.setAttribute("aria-selected", String(k === state.panel));
+      b.addEventListener("click", (e) => { e.stopPropagation(); if (k === state.panel) return; parkControls(); state.panel = k; state.panelTab = k; state.colPick = k === "stats"; savePrefs(); render(); });
+      row.append(b);
     }
+    return row;
   }
   const posBtnLabel = () => { const sel = posSel(); return sel.length > 1 ? `${TAB_LABEL[sel[0]] || sel[0]} +${sel.length - 1}` : TAB_LABEL[sel[0]] || sel[0]; };
   // a button reads as "set" when something in its panel is doing work
@@ -3678,13 +3697,15 @@
   function popBody() {
     const pop = $("pop"), body = $("pop-body");
     pop.hidden = false; body.innerHTML = "";
+    pop.classList.toggle("grppop", GRP.has(state.panel));
+    if (GRP.has(state.panel)) { state.panelTab = state.panel; body.append(grpTabs()); }
     return body;
   }
   // the panel hangs under its own button, clamped to the window, and never taller than the room below it
   function placePop() {
     const pop = $("pop");
     if (pop.hidden) return;
-    const btn = $("tbtns") && $("tbtns").querySelector(`[data-panel="${state.panel}"]`);
+    const btn = $("tbtns") && $("tbtns").querySelector(`[data-panel="${GRP.has(state.panel) ? "grp" : state.panel}"]`);
     if (!btn) return;
     const r = btn.getBoundingClientRect(), mob = document.documentElement.dataset.view === "mobile";
     pop.style.maxHeight = Math.max(220, innerHeight - r.bottom - 16) + "px";
@@ -3699,16 +3720,6 @@
     const modal = $("modal");
     if (!modal.hidden) { modal.hidden = true; lockPage(false); }
     return popBody();
-  }
-  function panelTabs(cur) {
-    const row = el("div", "ptabs"); row.setAttribute("role", "tablist");
-    for (const [k, label] of PANEL_TABS) {
-      const b = el("button", "ptab" + (k === cur ? " on" : ""), label); b.type = "button";
-      b.setAttribute("aria-selected", String(k === cur));
-      b.addEventListener("click", () => { if (k === cur) return; state.panel = k; state.panelTab = k; state.colPick = k === "stats"; savePrefs(); render(); });
-      row.append(b);
-    }
-    return row;
   }
   function renderColPick() {
     parkControls();                                   // the shared controls must be out of the modal before it is cleared
@@ -4072,23 +4083,9 @@
   function renderHome() {
     const box = $("hub"); box.innerHTML = ""; box.classList.add("home");
     const m = DATA.meta, dayName = new Date(m.through + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
-    // hero: when the numbers run through, and a search that opens a card
-    const hero = el("section", "hcard hhero");
-    hero.append(el("h2", null, "Sean's Site"), el("p", "hsub", `${m.season} MLB · games through ${dayName} · updated ${whenBuilt(m.built)}`));
-    const sw = el("div", "hsearch"), inp = el("input"); inp.type = "search"; inp.placeholder = "Find a player…"; inp.autocomplete = "off";
-    const res = el("ul", "hres"); res.hidden = true;
-    const draw = () => {
-      const q = inp.value.trim().toLowerCase(); res.innerHTML = "";
-      const hits = q.length < 2 ? [] : DATA.players.filter((p) => p.name.toLowerCase().includes(q)).sort((a, b) => (b.pa || b.bf || 0) - (a.pa || a.bf || 0)).slice(0, 8);
-      res.hidden = !hits.length;
-      for (const p of hits) { const li = el("li"), bt = el("button"); bt.type = "button"; bt.append(el("b", null, p.name), ` ${p.team} · ${p.type === "P" ? p.primary : (p.primary || "")}`); bt.addEventListener("click", () => openCard(p)); li.append(bt); res.append(li); }
-    };
-    inp.addEventListener("input", draw); sw.append(inp, res); hero.append(sw);
-    const quick = el("div", "hquick");
-    for (const [href, lab] of [["#leaderboard", "Leaderboard"], ["#trending", "Trending"], ["#draft", "Draft board"], ["#fantasy", "Fantasy"]]) {
-      const a = el("a", "btn", lab); a.href = href; quick.append(a);
-    }
-    hero.append(quick); box.append(hero);
+    // one quiet line for when the numbers run through (Sean, 29 Sep 2026, the minimal pass: the hero's title, its own
+    // search and the four page buttons all repeated the header, so they went)
+    const hero = el("p", "hline", `${m.season} MLB · games through ${dayName} · updated ${whenBuilt(m.built)}`); box.append(hero);
     const grid = el("div", "hgrid"); box.append(grid);
     const card = (title, sub, link, linkLab) => {
       const c = el("section", "hcard"), hd = el("div", "hhead"); hd.append(el("h3", null, title));
@@ -4230,12 +4227,13 @@
     // one quiet line under the table (Sean, 28 Sep 2026: the key, the layout switch and two big buttons took a quarter of
     // a phone's screen): the colour scale itself, then the key, the glossary and the page's how-to as links that open in a
     // window, then the layout switch
-    const line = el("div", "noteline"), keyTxt = l1;
-    line.append(scale.cloneNode(true));
-    const btns = line;
-    notes.append(line);
+    // ... and since the minimal pass (Sean, 29 Sep 2026) not under the table at all: they live in the header's More menu
+    const keyTxt = l1, mm = $("moremenu"); mm.innerHTML = "";
+    const li = (n) => { const x = el("li"); x.append(n); mm.append(x); };
+    const app = el("a", null, "Appearance"); app.href = "#appearance"; if (state.mode === "appearance") app.setAttribute("aria-current", "page"); li(app);
+    const btns = { append: (...ns) => ns.forEach((n) => { if (!n.classList.contains("nsep")) li(n); }) };
     const link = (label, build) => { const b = el("button", "linkbtn", label); b.type = "button"; b.addEventListener("click", () => { state.textModal = { title: label, build }; render(); }); return b; };
-    line.append(link("Colour key", () => { const b = el("div", "prose"); b.append(keyTxt); return b; }));
+    btns.append(link("Colour key", () => { const b = el("div", "prose"); b.append(keyTxt); return b; }));
     const prose = [];
     prose.push(Object.assign(el("div"), { innerHTML: `<b>Eligibility</b> — a hitter is listed at every position where he played ${ESPN.posGames}+ games this season, counting MLB and minor-league games together (ESPN's rule for call-ups), OF combined, DH counts; pitchers are SP with ${ESPN.spIP}+ IP as a starter and RP with ${ESPN.rpIP}+ IP in relief. Add anything ESPN gives him that the games don't from his card. <b>Pools</b> — every hitter percentile is measured against hitters with <b>${REF_PA}+ PA</b> on the season, any position; every pitcher percentile against pitchers with <b>${REF_PA}+ batters faced</b>, starters and relievers together. That population never changes — a date range or split only changes the numbers being compared — and the <b>Min PA / Min IP</b> boxes only set who is listed: a player under the bar is placed against that same population rather than reshaping it.` }));
     prose.push(Object.assign(el("div"), { innerHTML: `<b>xwOBA</b> — the directional model, and only that: every ball in play scored on its exit velocity, launch angle, spray and pull angle and the batter's sprint speed, so where he hit the ball counts too, with strikeouts, walks and hit-by-pitches counting as themselves. It is summed from the same day-by-day rows, so windows and splits follow it, re-anchored each season so the league's average is its real wOBA, and blank in the minors, which have no xwOBA model (wOBA heads the lists there). <b>xBA</b> and <b>xSLG</b> are the same recipe's — a past MLB season not yet rescored for them shows Statcast's until it is. <b>Batted-ball definitions</b> follow Savant's leaderboards: BBE is every ball in play, Avg EV / 90th% / max EV skip bunts, Barrel%, Hard-Hit% and Sweet-Spot% are per ball in play. Seasons before 2020 have a few percent of untracked balls that Savant's public feed fills with placeholder values, so an Avg EV there can sit a tenth or two off the leaderboard.` }));
@@ -5106,6 +5104,10 @@
   }
   // Appearance as a plain settings list (Sean, 28 Sep 2026: "make it look cleaner and better"): one row per setting, its
   // name and a line of explanation on the left, the control on the right (stacked on a phone)
+  // the background pattern, this device's own choice (Sean, 29 Sep 2026, the minimal pass)
+  const patternOn = () => { try { return localStorage.getItem("draft2027.pattern") !== "off"; } catch { return true; } };
+  const setPattern = (on) => { try { localStorage.setItem("draft2027.pattern", on ? "on" : "off"); } catch {} document.documentElement.classList.toggle("nopattern", !on); };
+  document.documentElement.classList.toggle("nopattern", !patternOn());
   function renderAppearance() {
     const T = window.DRAFT_THEMES, box = $("pboard"); box.innerHTML = "";
     if (!T) { box.append(el("p", "xempty", "themes.js didn't load.")); return; }
@@ -5136,6 +5138,8 @@
     }
     row("Colour scheme", "The site's colours. The percentile colours (blue cold, red hot) are the same in every scheme.", sg);
     row("Light or dark", null, segOf("Light or dark", [["system", "Match device"], ["light", "Light"], ["dark", "Dark"]], cur.theme, (v) => { T.set({ theme: v }); renderAppearance(); }));
+    row("Background pattern", "The swirl behind the pages and cards, kept faint since the minimal pass. Off leaves plain grey.",
+      segOf("Background pattern", [["on", "On"], ["off", "Off"]], patternOn() ? "on" : "off", (v) => { setPattern(v === "on"); renderAppearance(); }));
     row("Layout", "Auto gives a phone the compact layout; Desktop on a phone shows the full layout zoomed out.",
       segOf("Layout", [["auto", "Auto"], ["mobile", "Mobile"], ["desktop", "Desktop"]], T.viewPref(), (v) => { T.setView(v); renderAppearance(); }));
     row("Percentile bars", "How the bars on a player's card are drawn.",
@@ -5585,18 +5589,38 @@
     const tabs = p.type === "P" ? [...BTABS, ...BTABS_P] : [...BTABS, ...BTABS_H];
     const pick = state.pbtab === "none" ? null : tabs.some(([k]) => k === state.pbtab) ? state.pbtab : "compare";
     const g = o.g || (p.type === "H" ? "H" : p.primary), ref = o.ref || g;
+    // Since the minimal pass (Sean, 29 Sep 2026) the strip is plain words, and the tabs that are two views of one thing
+    // share a word: Stats holds Season and Spreadsheet, More the smaller tabs. A shared word opens the one last used
+    // in it, and its members sit as a small row under the strip.
+    const labOf = (k) => (tabs.find(([x]) => x === k) || [])[1];
+    const groups = [["compare"], ["stats", "sheet"], ...(p.type === "P" ? [["stuff"]] : []), ["games"], ["fantasy"],
+                    ["rolling", ...(p.type === "P" ? ["nera", "uera"] : ["mix", "babip"])]];
+    const GLAB = { stats: "Stats", rolling: "More" };
+    const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(lab); };   // nERA / uERA keep their small letter
+    const go = (k) => { const y0 = bar.getBoundingClientRect().top, inPop = !!bar.closest("#modal-body"); state.pbtab = k; savePrefs(); render(); anchorTabs(y0, inPop, p); };
+    const sub = state.pbsub || (state.pbsub = {});
     const bar = el("div", "btabs"); bar.setAttribute("role", "tablist");
-    for (const [k, lab] of tabs) {
-      const b = el("button", "btab" + (k === pick ? " on" : "")); b.type = "button";
-      if (/^[nu]ERA$/.test(lab)) b.append(el("span", "lc", lab[0]), lab.slice(1)); else b.append(lab);   // nERA / uERA keep their small letter
-      b.setAttribute("aria-selected", String(k === pick));
-      b.addEventListener("click", () => {
-        const y0 = bar.getBoundingClientRect().top, inPop = !!bar.closest("#modal-body");
-        state.pbtab = k === pick ? "none" : k; savePrefs(); render(); anchorTabs(y0, inPop, p);
-      });
+    let openG = null;
+    for (const G of groups) {
+      const on = G.includes(pick); if (on) openG = G;
+      const b = el("button", "btab" + (on ? " on" : "")); b.type = "button";
+      if (G.length > 1) b.append(GLAB[G[0]]); else tabLab(b, labOf(G[0]));
+      b.setAttribute("aria-selected", String(on));
+      b.addEventListener("click", () => go(on ? "none" : G.includes(sub[G[0]]) ? sub[G[0]] : G[0]));
       bar.append(b);
     }
     sec.append(bar);
+    if (openG && openG.length > 1) {
+      sub[openG[0]] = pick;
+      const row = el("div", "bsubtabs"); row.setAttribute("role", "tablist");
+      for (const k of openG) {
+        const b = el("button", "bsub" + (k === pick ? " on" : "")); b.type = "button"; tabLab(b, labOf(k).replace(/ Stats$/, ""));
+        b.setAttribute("aria-selected", String(k === pick));
+        b.addEventListener("click", () => { if (k !== pick) go(k); });
+        row.append(b);
+      }
+      sec.append(row);
+    }
     // a phone's tab row slides sideways: keep the picked tab in view after a redraw (the row starts over at the left)
     if (mobileView() && pick) requestAnimationFrame(() => { const on = bar.querySelector(".btab.on"); if (on && on.offsetLeft + on.offsetWidth > bar.clientWidth - 24) bar.scrollLeft = on.offsetLeft - 24; });
     if (tabPad && tabPad.who === p.type + p.id + ":" + pick) sec.style.minHeight = tabPad.h + "px";
@@ -6523,15 +6547,16 @@
       const W = Math.max(300, Math.round(bw) || 400);   // drawn at its real size, like every other bar (Savant shrinks under 400)
       if (host.dataset.w === String(W) && host.firstChild) return;
       host.dataset.w = String(W); pctLast[slot] = W;
-      host.replaceChildren(pctSvg(groups, W));
+      host.replaceChildren(pctSvg(groups, W, slot === 0));
     };
     const W0 = pctLast[slot] || 400;
     host.dataset.w = String(W0);
-    host.append(pctSvg(groups, W0));
+    host.append(pctSvg(groups, W0, slot === 0));
     if (window.ResizeObserver) { const ro = new ResizeObserver(draw); ro.observe(host); pctROs.push(ro); }
     return host;
   }
-  function pctSvg(groups, W) {
+  // the Poor / Average / Great scale heads the first chart only (Sean, 29 Sep 2026, the minimal pass: once a card is enough)
+  function pctSvg(groups, W, scale = true) {
     const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
     const r6 = W - 40, VW = W < 420 ? 41 : 45, bar = r6 - 40 - 85 - VW;   // the rule's width, the value column (room for "118.5" beside a 100 bubble; a phone's bar can't spare as much), the bar's width
     const x = (p) => 10 + (bar - 10) * Math.max(0, Math.min(100, p)) / 100;
@@ -6549,17 +6574,17 @@
       y = 24;
     }
     groups.forEach((g, gi) => {
-      const first = gi === 0, G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
+      const first = gi === 0 && scale, G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
       G.append(mk("rect", { class: "svsecrule", x: 0, y: 34, width: r6, height: 2 }));
-      G.append(mk("text", { class: "svsecname", x: 0, y: 28 }, g.title.toUpperCase()));
+      G.append(mk("text", { class: "svsecname", x: 0, y: 28 }, g.title));
       if (first) {                                               // POOR / AVERAGE / GREAT, each arrow over its tick
         const S = mk("g", { transform: "translate(125,54)" });
         const tri = (cx) => `M${cx},2L${cx - 3},8L${cx + 3},8Z`;
         const c0 = savantStyle(0).bg, c50 = savantStyle(50).bg, c100 = savantStyle(100).bg;
         S.append(mk("path", { d: tri(12), fill: c0 }), mk("path", { d: tri(x(50)), fill: c50 }), mk("path", { d: tri(bar - 12), fill: c100 }));
-        S.append(mk("text", { class: "svscale", fill: c0 }, "POOR"),
-                 mk("text", { class: "svscale", x: x(50), "text-anchor": "middle", fill: c50 }, "AVERAGE"),
-                 mk("text", { class: "svscale", x: x(100), "text-anchor": "end", fill: c100 }, "GREAT"));
+        S.append(mk("text", { class: "svscale", fill: c0 }, "Poor"),
+                 mk("text", { class: "svscale", x: x(50), "text-anchor": "middle", fill: c50 }, "Average"),
+                 mk("text", { class: "svscale", x: x(100), "text-anchor": "end", fill: c100 }, "Great"));
         G.append(S);
       }
       const R = mk("g", { transform: `translate(40,${44 + (first ? 20 : 0)})` });
@@ -7381,9 +7406,18 @@
 
   /* ---------- wiring ---------- */
   // the header's two dropdowns: the draft + fantasy pages, and the two leaderboards
+  // "More" (Sean, 29 Sep 2026, the minimal pass): Appearance, and the colour key / glossary / how-to / layout switch that
+  // used to sit under every list, gathered in one header menu. Made here because index.html doesn't round-trip.
+  { const w = el("div", "modesel"); w.id = "moresel"; w.dataset.mode = "more";
+    const t = el("span", "modesel-txt", "More"); t.id = "moreseltxt";
+    const b = el("button", "modesel-btn"); b.type = "button"; b.setAttribute("aria-haspopup", "true"); b.setAttribute("aria-expanded", "false"); b.setAttribute("aria-controls", "moremenu"); b.setAttribute("aria-label", "More");
+    const ul = el("ul", "modemenu"); ul.id = "moremenu";
+    w.append(t, document.querySelector("#lbsel .chev").cloneNode(true), b, ul);
+    document.querySelector(".modes").append(w); }
   const NAV_GROUPS = [
     { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "eligibility", "fantasy", "planner"] },
     { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending", "pitches", "trends", "callups"] },
+    { key: "more", sel: "moresel", txt: "moreseltxt", menu: "moremenu", label: "More", short: "More", modes: ["appearance"] },
   ];
   function readMode() {
     const h = location.hash.replace("#", "");

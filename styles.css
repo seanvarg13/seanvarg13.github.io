@@ -2949,17 +2949,6 @@ body:is([data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-m
    through, a search, the pages used most), then two columns of cards, then every page as compact tiles */
 .hub.home { max-width: 1180px; margin: 0 auto; padding: 18px 0 28px; }
 .hub.home .hcard { background: var(--surface); border: var(--lift-line); border-radius: 0; box-shadow: var(--lift-card); padding: 16px 18px; }
-.hub.home .hhero { padding: 22px 22px 18px; margin-bottom: 18px; }
-.hub.home .hhero h2 { margin: 0; font-size: 30px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--accent); }
-.hub.home .hsub { margin: 4px 0 14px; font-size: 14px; color: var(--ink-2); }
-.hub.home .hsearch { position: relative; max-width: 560px; }
-.hub.home .hsearch input { width: 100%; box-sizing: border-box; height: 44px; padding: 0 14px; font: inherit; font-size: 16px; border: 1px solid var(--hair); border-radius: 0; background: var(--surface); color: var(--ink); }
-.hub.home .hres { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20; margin: 0; padding: 4px; list-style: none; background: var(--surface); border: var(--lift-line); border-radius: 0; box-shadow: var(--lift-menu); }
-.hub.home .hres button { display: block; width: 100%; text-align: left; padding: 8px 10px; border: 0; background: none; font: inherit; font-size: 14px; color: var(--ink-2); border-radius: 0; cursor: pointer; }
-.hub.home .hres button:hover { background: var(--accent-wash); }
-.hub.home .hres b { color: var(--ink); }
-.hub.home .hquick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.hub.home .hquick .btn { text-decoration: none; }
 .hub.home .hgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .hub.home .hhead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .hub.home .hcard h3 { margin: 0; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-2-text); }
@@ -2985,13 +2974,9 @@ body:is([data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-m
 .hub.home > .note { margin-top: 14px; padding: 8px 12px; background: var(--surface); border-radius: 0; }
 :root[data-view="mobile"] .hub.home { padding: 10px 10px 20px; }
 :root[data-view="mobile"] .hub.home .hgrid, :root[data-view="mobile"] .hub.home .hthree { grid-template-columns: minmax(0, 1fr); }
-:root[data-view="mobile"] .hub.home .hhero h2 { font-size: 22px; }
 :root[data-view="mobile"] .hub.home .htiles { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 body[data-mode="home"] main.wrap > .notes { display: none; }   /* the lists' percentile key and glossary buttons don't apply to the home page */
-.hub.home .hquick .btn { display: inline-flex; align-items: center; justify-content: center; height: 34px; padding: 0 12px; font-size: 12px; line-height: 1; box-sizing: border-box; }
 :root[data-view="mobile"] .hub.home .htwo { grid-template-columns: minmax(0, 1fr); }
-:root[data-view="mobile"] .hub.home .hquick { display: grid; grid-template-columns: 1fr 1fr; }
-.hub.home .hquick .btn { text-align: center; }
 /* the phone's Menu panel shows when the data runs through (the header has no room for it) */
 :root[data-view="mobile"] body.navopen .stamp { display: block; order: 4; width: 100%; margin: -4px 0 8px; padding: 0 12px; font-size: 12px; color: var(--accent-2-ink); }
 /* the phone card never moves sideways or rubber-bands: the tab row's bleed stuck out 6px past the card, so iOS let a
@@ -3276,3 +3261,84 @@ body[data-mode="planner"] main.wrap > #pitchboard { overflow: auto; }
 .pwtable td.pwho small { color: var(--muted); }
 .pwtable .pwname { font-weight: 700; color: var(--ink); text-decoration: none; }
 :root[data-view="mobile"] body[data-mode="planner"] #pitchboard > .note { display: block; }   /* the loading / off-season notes are the page here */
+
+/* ---------- The minimal pass, second round (Sean, 29 Sep 2026: "do all of those changes") ----------
+   One block, last in the file, so each rule here wins over the layers above it. */
+/* 1. the swirl, faint (8%, from 20%); Appearance ▸ Background pattern turns it off on this device */
+:root.swirl-img body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-mode="home"],[data-mode="appearance"])::before,
+:root.swirl-img body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-mode="home"],[data-mode="appearance"])::after,
+:root.swirl-img .modal.pagebg .modal-back::before, :root.swirl-img .modal.pagebg .modal-back::after { opacity: 0.08; }
+:root.nopattern body::before, :root.nopattern body::after, :root.nopattern .modal.pagebg .modal-back::before, :root.nopattern .modal.pagebg .modal-back::after { display: none !important; }
+:root.nopattern body, :root.nopattern .modal.pagebg .modal-back { background: var(--surface-2); }
+
+/* 2. no shouting: nothing is set in capitals by the stylesheet any more (data that is capitals — team codes — stays), and
+   the wide tracking that went with the capitals goes too; buttons and headings drop from heavy to semibold */
+:root *, :root *::before, :root *::after { text-transform: none !important; letter-spacing: normal !important; }
+:root :is(h1, h2, h3, h4, .wordmark, .btn, .tbtn, .btab, .bsub, .segbtn, .ptab, .modes a, .modes .modesel, .modemenu li a) { font-weight: 600; }
+:root .pthd b, :root .pthd .tsel.yr .tsl { font-weight: 600; }
+
+/* 3. the header's pages as plain words: no boxes, the current one underlined; Appearance lives in More */
+:root:root .modes > a.modes-aux { display: none; }
+:root:root:not([data-view="mobile"]) .modes { gap: 2px; }
+:root:root .modes a, :root:root .modes .modesel, :root:root:not([data-view="mobile"]) .modes a, :root:root:not([data-view="mobile"]) .modes .modesel,
+:root:root .modes a[aria-current="page"], :root:root .modes .modesel[aria-current="page"],
+:root:root:not([data-view="mobile"]) .modes a[aria-current="page"], :root:root:not([data-view="mobile"]) .modes .modesel[aria-current="page"],
+:root:root .modes a:hover, :root:root .modes .modesel:hover, :root:root .modes .modesel.open {
+  background: transparent; color: var(--accent-2-ink); border: 0; border-bottom: 2px solid transparent; border-radius: 0; box-shadow: none; font-size: 14px; }
+:root:root .modes a[aria-current="page"], :root:root .modes .modesel[aria-current="page"] { border-bottom-color: var(--accent-2-ink); }
+:root:root .modes a:hover, :root:root .modes .modesel:hover, :root:root .modes .modesel.open { border-bottom-color: color-mix(in srgb, var(--accent-2-ink) 40%, transparent); }
+/* a phone's menu: the same words, two to a row, the current one underlined */
+:root:root[data-view="mobile"] body.navopen .modes > a, :root:root[data-view="mobile"] body.navopen .modes > .modesel { justify-content: flex-start; min-height: 38px; padding: 0 4px; font-size: 15px; }
+/* the More menu's actions look like its links */
+.modemenu li .linkbtn { display: block; width: 100%; margin: 0; padding: 1px 12px; border: 0; background: none; color: var(--ink); text-align: left;
+  font-family: var(--display); font-size: 19px; font-weight: 400; line-height: 1.45; text-decoration: none; cursor: pointer; white-space: nowrap; }
+.modemenu li .linkbtn:hover, .modemenu li .linkbtn:focus-visible { background: var(--hover); outline: none; }
+.modemenu li .viewsw { padding: 6px 12px 4px; margin-top: 2px; border-top: 1px solid var(--hair); font-size: 13px; color: var(--muted); white-space: nowrap; }
+.modemenu li .viewsw .linkbtn { display: inline; width: auto; padding: 0; font-family: inherit; font-size: 13px; color: var(--accent); }
+.modemenu li .viewsw .linkbtn[aria-pressed="true"] { color: var(--ink); font-weight: 600; }
+.modemenu li .viewsw .linkbtn:hover { background: none; text-decoration: underline; }
+
+/* 4. the Filters dropdown: its four panels as tabs across the top, so the panels' own titles go */
+#pop.grppop #pop-body > .textmodal > h2#modal-title { display: none; }
+#pop.grppop .grptabs { display: flex; gap: 18px; margin: 0 0 12px; padding: 0 2px; border-bottom: 1px solid var(--hair); overflow-x: auto; scrollbar-width: none; }
+#pop.grppop .grptabs .ptab { flex: none; margin: 0 0 -1px; padding: 8px 0 7px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--muted); font-size: 14px; cursor: pointer; }
+#pop.grppop .grptabs .ptab.on { color: var(--ink); border-bottom-color: var(--rule); }
+#pop.grppop .grptabs .ptab:hover:not(.on) { color: var(--ink); }
+
+/* 5. tighter rows: on a desktop about 38px (from 53); on a phone the second line is just the team */
+:root:not([data-view="mobile"]) #board .row-main { padding-top: 3px; padding-bottom: 3px; }
+:root:not([data-view="mobile"]) #board .row-main .name { line-height: 1.2; }
+:root:not([data-view="mobile"]) #board .row-main .meta { line-height: 1.2; }
+:root[data-view="mobile"] #board .row-main .meta > span:not(.team):not(.added) { display: none; }
+
+/* 6. nothing under the table: the key, glossary, how-to and layout switch are in the header's More menu */
+footer.notes:empty { display: none; }
+
+/* 7. the pager plain: no tinted strip, a hairline under it */
+:root:root .pager, :root:root:not([data-view="mobile"]) .pager { background: transparent; border-bottom: 1px solid var(--hair); }
+:root:root .pager:last-child { border-top: 1px solid var(--hair); }
+
+/* 8. the card's tabs as words, the open one underlined; Stats and More show their members as a small row under them */
+:root:root:root .btabs { gap: 20px; border-bottom: 1px solid var(--hair); }
+:root:root:not([data-view="mobile"]) .btabs { justify-content: flex-start; }
+:root:root:root .btab, :root:root:root .btab:first-child, :root:root:root .btab:last-child,
+:root:root:root .btab.on, :root:root:root .btab[aria-selected="true"], :root:root:root .btab:hover {
+  flex: none; min-height: 0; height: auto; margin: 0 0 -1px; padding: 9px 0 7px; background: none; color: var(--muted); border: 0;
+  border-bottom: 2px solid transparent; border-radius: 0; box-shadow: none; font-size: 14px; }
+:root:root:root .btab.on, :root:root:root .btab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--rule); }
+:root:root:root .btab:hover:not(.on) { color: var(--ink); }
+.bsubtabs { display: flex; gap: 6px; margin: 10px 0 2px; flex-wrap: wrap; }
+.bsubtabs .bsub { margin: 0; padding: 4px 12px; border: 1px solid var(--hair); border-radius: 0; background: var(--surface); color: var(--ink-2); font: inherit; font-size: 13px; cursor: pointer; }
+.bsubtabs .bsub.on { border-color: var(--rule); color: var(--ink); background: color-mix(in srgb, var(--accent-2) 24%, var(--surface)); }
+.bsubtabs .bsub .lc, .btab .lc { text-transform: none; }
+
+/* 9. the card's band, quieter: the no-photo fallback is plain initials, the season picker is a word with a small ▾ rather
+   than a dotted rule, and the × is a small plain mark */
+:root:root .phead .mplate .mug.initials { border: 0; background: none; color: var(--muted); font-size: 30px; font-weight: 500; }
+:root:root .tsl, :root:root .phead .tsel:not(.solo) .tsl { background: none; padding-bottom: 0; }
+:root:root .tsel:not(.solo) .tsl::after { content: "▾"; margin-left: 3px; font-size: 0.55em; vertical-align: 0.25em; opacity: 0.55; }
+:root:root:root .modal.pcard .modal-close, :root:root:root .modal-close { width: 30px; height: 30px; background: transparent; color: var(--ink-2); border: 0; font-size: 24px; font-weight: 400; box-shadow: none; }
+:root:root:root .modal.pcard .modal-close:hover, :root:root:root .modal-close:hover { background: transparent; color: var(--ink); }
+
+/* 11. the home page opens on one quiet line, then the cards */
+.hub.home .hline { margin: 0 0 14px; padding: 0 2px; font-size: 14px; color: var(--ink-2); }
