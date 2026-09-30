@@ -5737,7 +5737,7 @@
     } else if (pick === "stuff") {
       body.append(renderStuffTab(p, o.st, g));
     } else if (pick === "games") {
-      body.append(p.type === "P" ? renderGamesTab(p) : renderHitGamesTab(p));
+      body.append(renderGameLogs(p));
     } else if (pick === "nera") {
       body.append(renderLuckBox(p) || el("p", "note", "Luck-neutral ERA needs batted-ball data for this season."));
     } else if (pick === "uera") {
@@ -6184,6 +6184,40 @@
   const luckWord = (r) => (r == null ? "" : r >= 1.5 ? "brutal" : r >= 0.5 ? "unlucky" : r <= -1.5 ? "very lucky" : r <= -0.5 ? "lucky" : "about right");
   const luckCls = (r) => (r == null ? "" : r >= 0.5 ? "unlucky" : r <= -0.5 ? "lucky" : "even");
   const signed = (x, d = 1) => { if (x == null) return "–"; const r = Number(x.toFixed(d)); return (r > 0 ? "+" : r < 0 ? "−" : "±") + Math.abs(r).toFixed(d); };
+  // Game Logs for the card's year: regular season, postseason or spring training (Sean, 30 Sep 2026: "add postseason game logs
+  // and spring training game logs to the game logs tab"). A switch over the log, for the game types he played that year; the
+  // card itself stays on its season. Spring / October logs read their own day files (hist/days-<year>-post.js …), their
+  // chips are ranked against that year's regular season like their cards (kindPool), and a pitch breakdown shows where the
+  // day's arsenal file is built.
+  function gameKinds(p) {
+    if (DS.multi || !indexReady()) return [];
+    const base = keyBase(DS.key), e = window.DRAFT_INDEX.players.find((x) => x.id === p.id);     // e.k: the ones built for him
+    const his = new Set([base, DS.key, ...((e && e.k) || []).filter((sv) => sv[2] === p.type).map((sv) => sv[0])]);
+    return KINDS.map(([k, l]) => [k ? `${base}-${k}` : base, l]).filter(([key]) => his.has(key));
+  }
+  function renderGameLogs(p) {
+    ensureIndex();
+    if (state.glFor !== p.type + p.id) { state.glFor = p.type + p.id; state.glKind = null; }   // a new card opens on its own season's games
+    const kinds = gameKinds(p), want = state.glKind == null ? DS.key : state.glKind ? `${keyBase(DS.key)}-${state.glKind}` : keyBase(DS.key);
+    const key = kinds.some(([k]) => k === want) ? want : DS.key;
+    const wrap = el("div", "glwrap");
+    if (kinds.length > 1) {
+      const seg = el("div", "seg glkind"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Games");
+      for (const [k, l] of kinds) {
+        const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(k === key));
+        b.addEventListener("click", () => { if (k === key) return; state.glKind = keyKind(k); state.gameDay = null; state.hGameDay = null; render(); });
+        seg.append(b);
+      }
+      wrap.append(seg);
+    }
+    const draw = (q) => (q.type === "P" ? renderGamesTab(q) : renderHitGamesTab(q));
+    if (key === DS.key) { wrap.append(draw(p)); return wrap; }
+    const ds = key === CUR.key ? CUR : histDataset(key);
+    if (!ds || (ds.kind && !regularOf(ds))) { ensureHist(key); wrap.append(el("p", "note", "Loading his games…")); return wrap; }
+    const q = ds.players.find((x) => x.id === p.id && x.type === p.type);
+    wrap.append(q ? withDataset(ds, () => draw(q)) : el("p", "note", `No ${(KINDS.find(([k]) => k === keyKind(key)) || [, "games"])[1].toLowerCase()} games for him in ${keyYear(key)}.`));
+    return wrap;
+  }
   function renderGamesTab(p) {
     const box = el("div", "rollbox uerabox gamesbox");
     const log = gameLog(p), sea = p.m && p.m.stuff;
@@ -6382,7 +6416,7 @@
     let onRow = null;
     for (const g of [...log].reverse()) {
       const G = g.g, tr = el("tr", g === pick ? "on" : null); tr.tabIndex = 0; if (g === pick) onRow = tr;
-      tr.append(el("td", "l", g.date ? fmtDate(g.date) : "–"), chip(g.xw), el("td", null, n0(G.pa)), el("td", null, n0(G.h)), el("td", null, n0(G.hr)), el("td", null, n0(G.bb)),
+      tr.append(el("td", "l", g.date ? fmtDate(g.date) : "–"), chip(g.xw), el("td", null, n0(G.pa)), el("td", null, n0(G.h)), el("td", null, G.hr == null ? "–" : n0(G.hr)), el("td", null, n0(G.bb)),
                 el("td", null, n0(G.k)), el("td", null, g.woba == null ? "–" : fmtX(g.woba)), el("td", "gend", g.luck == null ? "–" : signed(g.luck)),
                 el("td", null, f1(g.ev)), el("td", null, f1(g.max)), el("td", null, n0(G.brl)), el("td", "gend", f1(g.hh)), el("td", null, f1(g.whf)), el("td", null, f1(g.osw)));
       const go = () => { state.hGameDay = g.day; render(); };
@@ -6391,7 +6425,7 @@
     }
     const sum = (k) => log.reduce((a, g) => a + (g.g[k] || 0), 0), slk = log.reduce((a, g) => a + (g.luck || 0), 0), smax = Math.max(...log.map((g) => g.max || 0));
     const tot = el("tr", "ftot");
-    tot.append(el("td", "l", "Season"), chip(sxw), el("td", null, String(sum("pa"))), el("td", null, String(sum("h"))), el("td", null, String(sum("hr"))), el("td", null, String(sum("bb"))),
+    tot.append(el("td", "l", "Season"), chip(sxw), el("td", null, String(sum("pa"))), el("td", null, String(sum("h"))), el("td", null, log.some((g) => g.g.hr != null) ? String(sum("hr")) : "–"), el("td", null, String(sum("bb"))),
                el("td", null, String(sum("k"))), el("td", null, s0.woba == null ? "–" : fmtX(s0.woba)), el("td", "gend", signed(slk)), el("td", null, f1(s0.ev)), el("td", null, smax ? smax.toFixed(1) : "–"),
                el("td", null, String(sum("brl"))), el("td", "gend", f1(s0.hh)), el("td", null, f1(s0.whf)), el("td", null, f1(s0.osw)));
     tb.append(tot); t.append(tb);

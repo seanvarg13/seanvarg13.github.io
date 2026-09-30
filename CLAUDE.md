@@ -557,6 +557,12 @@ is deploy-limited.
   xwOBA) runs, + = the results beat the contact) · **Contact** (EV, max EV, barrels, HH%) · **Discipline** (Whiff%, Chase%), Season row
   frozen at the foot. Tap a game: tiles over his season, every tracked ball's exit velocity (the day rows' `evs` lists), and
   its luck with BABIP vs xBABIP. `state.hGameDay` is the picked game.
+* **Postseason / spring game logs** (Sean, 30 Sep 2026): both Game Logs tabs sit in `renderGameLogs`, which puts a Regular season /
+  Spring training / Postseason switch over the log for the game types he has that year (`gameKinds`, from the index entry's
+  `e.k` — the index's `seasons` list drops spring / post, so don't check it). The card stays on its season; the log reads that
+  game type's dataset and day file (`hist/days-<year>-post.js` …), chips ranked against that year's regular season (`kindPool`).
+  `state.glKind` resets when a new player's card opens. Spring / October files built before `hr` / `dbsum` were appended to the
+  day rows show HR as "–" until rebuilt (`rescore` with `post-2025` / `spring-2025` tokens); spring has no directional xwOBA.
 * **xwOBA − wOBA** (`xwdiff`, hitters; Sean, 27 Sep 2026): a Leaderboard / Trending column (added once to saved column sets
   via `state.lb.xwdAdded`), signed (+ = unlucky). `LB_EXTRA_H` lists the hitter stats that are columns without being on
   the card (xwdiff, babip, xbabip, bluck, brel); `fmt()` prints `sign: true` metrics as +.024 / −.018.
