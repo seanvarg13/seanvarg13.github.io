@@ -3444,3 +3444,4 @@ body[data-mode="rankings"] #rankcount { display: none; }
 .prow .psize { margin-left: 0; }
 :root[data-view="mobile"] .prow .psize > span:first-child { display: inline; }
 .ftable td.fsorted { background-image: linear-gradient(color-mix(in srgb, var(--surface) 58%, transparent), color-mix(in srgb, var(--surface) 58%, transparent)) !important; color: var(--ink) !important; font-weight: 700; }
+.svpct .svnum.c3 { font-size: 12px; letter-spacing: 0; }   /* 100: same size as the rest, fitted by textLength in pctSvg */
