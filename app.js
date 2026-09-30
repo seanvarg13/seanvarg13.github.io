@@ -3115,6 +3115,7 @@
   const springKey = () => { const S = DATA.meta.season; for (const y of [S + 1, S]) { const k = `mlb-${y}-spring`; if (!failed.has(`hist/${k}.js`)) return k; } return null; };
   function renderPitchBoard() {
     const box = pitchBoardEl(); box.innerHTML = "";
+    if (pb.src === "spring") pb.src = "season";            // spring training isn't shown anywhere any more (Sean, 30 Sep 2026)
     if (pb.src === "spring") {
       const k = springKey(), ds = k && histDataset(k);
       if (!ds) {
@@ -3152,7 +3153,6 @@
     const bar = el("div", "pbfilters");
     const types = [...new Set(DS.players.filter((p) => p.type === "P" && p.ctx && p.ctx.arsenal).flatMap((p) => p.ctx.arsenal.map((a) => a[0])))]
       .filter((t) => T[t]).sort((a, b) => (T[b][0] || 0) - (T[a][0] || 0));
-    bar.append(pillSelect(springK ? "Spring training" : `${DATA.meta.season} season`, [["season", `${DATA.meta.season} season`], ["spring", "Spring training"]], springK ? "spring" : "season", (v) => { pb.src = v; save(); }, "Games"));
     bar.append(pillSelect(pb.pt === "all" ? "All pitches" : PITCH_NAME[pb.pt] || pb.pt, [["all", "All pitches"], ...types.map((t) => [t, PITCH_NAME[t] || t])], pb.pt, (v) => { pb.pt = v; save(); }, "Pitch"));
     bar.append(pillSelect(pb.hand === "all" ? "Both hands" : pb.hand === "R" ? "Righties" : "Lefties", [["all", "Both hands"], ["R", "Righties"], ["L", "Lefties"]], pb.hand, (v) => { pb.hand = v; save(); }, "Throws"));
     bar.append(pillSelect(pb.role === "all" ? "SP + RP" : pb.role, [["all", "SP + RP"], ["SP", "SP"], ["RP", "RP"]], pb.role, (v) => { pb.role = v; save(); }, "Role"));
@@ -3610,6 +3610,7 @@
     if (state.tierPick && state.mode === "rankings" && state.editRanks && state.selKeys.length) { renderTierPick(); return; }
     const listNow = ["rankings", "draft", "trending", "leaderboard"].includes(state.mode);
     if (!POPPED.has(state.panel)) $("pop").hidden = true;
+    else if (state.keepPop && !$("pop").hidden) return;                // typing in the panel's minimum: leave the panel be
     if (state.panel === "positions" && listNow) { renderPositionsPanel(); return; }
     if (state.panel === "filters" && listNow) { renderFilterPanel(); return; }
     if (state.panel === "splits" && listNow && state.mode === "leaderboard") { renderSplitsPanel(); return; }
@@ -3634,6 +3635,7 @@
     parkControls(); body.innerHTML = "";
     if (!p0) return;
     // which season: the current one (list pool + Rank vs apply) or another year from the chips (regular seasons only)
+    if (state.cardDs && keyKind(state.cardDs)) state.cardDs = keyBase(state.cardDs) === CUR.key ? null : keyBase(state.cardDs);   // cards are regular season only
     const dsKey = state.cardDs || CUR.key;
     if (dsKey !== CUR.key) ensureHist(dsKey);
     const ds0 = histDataset(dsKey), ds = ds0 && ds0.kind && !ds0.multi && !regularOf(ds0) ? null : ds0;   // spring / PS: its regular season too
@@ -6193,7 +6195,7 @@
     if (DS.multi || !indexReady()) return [];
     const base = keyBase(DS.key), e = window.DRAFT_INDEX.players.find((x) => x.id === p.id);     // e.k: the ones built for him
     const his = new Set([base, DS.key, ...((e && e.k) || []).filter((sv) => sv[2] === p.type).map((sv) => sv[0])]);
-    return KINDS.map(([k, l]) => [k ? `${base}-${k}` : base, l]).filter(([key]) => his.has(key));
+    return KINDS.filter(([k]) => k !== "spring").map(([k, l]) => [k ? `${base}-${k}` : base, l]).filter(([key]) => his.has(key));
   }
   function renderGameLogs(p) {
     ensureIndex();
@@ -6986,7 +6988,9 @@
     if (!o.entry || !o.pick) { t.append(el("b", null, String(DS.season)), ` ${DS.level}${KIND_TAG[DS.kind || ""] || ""} Percentiles`); hd.append(t); return hd; }
     // his seasons of this type: regular ones, plus the spring / postseason ones the MLB dropdown offers (MLB PS / MLB ST —
     // short, so the title keeps its width; Sean, 30 Sep 2026)
-    const mine = o.entry.s.concat(o.entry.k || []).filter((sv) => sv[2] === p.type);
+    // regular seasons only: postseason lives in Game Logs alone, spring training nowhere (Sean, 30 Sep 2026: "we won't show
+    // anything postseason related except game logs and then for spring let's just show nothing")
+    const mine = o.entry.s.filter((sv) => sv[2] === p.type);
     const cur = mine.find((sv) => sv[0] === o.key);
     if (!cur) { t.append(el("b", null, String(DS.season)), ` ${DS.level}${KIND_TAG[DS.kind || ""] || ""} Percentiles`); hd.append(t); return hd; }
     const years = [...new Set(o.entry.s.filter((sv) => sv[2] === p.type).map((sv) => sv[1]).concat([cur[1]]))].sort((x, y) => y - x);
@@ -7615,7 +7619,9 @@
     clearTimeout(minTimer);
     minTimer = setTimeout(() => {
       const v = Math.max(0, Number(e.target.value) || 0);
-      state.min[groupFor(state.pos)] = v; state.expanded = null; savePrefs(); render();
+      // the list redraws but the open panel doesn't: redrawing it lifts the box out of the page and back, which takes the
+      // cursor (and a phone's keyboard) away after every digit (Sean, 30 Sep 2026)
+      state.min[groupFor(state.pos)] = v; state.expanded = null; savePrefs(); state.keepPop = document.activeElement === e.target; render(); state.keepPop = false;
     }, 250);
   });
   for (const [id, k] of [["dfrom", "from"], ["dto", "to"]]) $(id).addEventListener("change", (e) => {
