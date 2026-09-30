@@ -11,7 +11,7 @@
   // a column's label, with the % a rate's cells no longer carry (Sean, 29 Sep 2026)
   const LB_SLIM = { H: ["woba", "ev", "brl", "hh", "osw", "whf", "k", "bb"], P: ["k", "bb", "whf", "strk", "gb", "era", "uera", "suera"] };
   const colLab = (m) => { const l = SHORT[m.key] || m.label; return m.unit === "%" && !l.includes("%") ? l + "%" : l; };
-  const SHORT = { suera: "Stuff uERA", aopt: "Arsenal Opt.", xk: "xK%", pxw: "pxwOBA", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
+  const SHORT = { suera: "Stuff uERA", aopt: "Arsenal Opt.", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
                tiers: "draft2027.tiers", tierNames: "draft2027.tierNames", sets: "draft2027.rankSets", extraPos: "draft2027.extraPos", stars: "draft2027.stars" };
   // Storage that cannot lose a saved list. A value that will not parse is left exactly where it is — its raw
@@ -273,10 +273,10 @@
                   { key: "xwdiff", label: "xwOBA − wOBA", hib: true, dec: 3, unit: "", sign: true },
                   // what his whiffs, swing decisions and the strikes he sees say his K% should be (Sean, 28 Sep 2026)
                   { key: "xk", label: "xK%", hib: false, dec: 1, unit: "%" },
-                  // his xwOBA on contact, and his xwOBA with his strikeouts at his xK% (Sean, 28 Sep 2026)
-                  { key: "xwcon", label: "xwOBAcon", hib: true, dec: 3, unit: "" }, { key: "pxw", label: "pxwOBA", hib: true, dec: 3, unit: "" }];
+                  // his xwOBA on contact (Sean, 28 Sep 2026; pxwOBA beside it was removed 30 Sep 2026: "that stat is not needed")
+                  { key: "xwcon", label: "xwOBAcon", hib: true, dec: 3, unit: "" }];
   // hitter stats that aren't on the card but can be Leaderboard / Trending columns
-  const LB_EXTRA_H = ["xwdiff", "pxw", "xwcon", "xk", "babip", "xbabip", "bluck", "brel"];
+  const LB_EXTRA_H = ["xwdiff", "xwcon", "xk", "babip", "xbabip", "bluck", "brel"];
   const LB_EXTRA_P = ["suera", "aopt"];
   // Arsenal optimization (Sean, 28 Sep 2026: "how much the pitcher optimizes their arsenal %s to throw pitches that on
   // average get more swing and miss"): his pitches' xWhiff averaged by how often he actually throws each, minus the same
@@ -443,7 +443,11 @@
   if (!state.lb.slim && state.lb.P.includes("kbb") && !state.lb.P.includes("ukb")) state.lb.P.splice(state.lb.P.indexOf("kbb") + 1, 0, "ukb");       // added 2026-09-21
   if (!state.lb.slim && state.lb.P.includes("gb") && !state.lb.P.includes("wsgp")) state.lb.P.splice(state.lb.P.indexOf("gb") + 1, 0, "wsgp");       // WSGP added 2026-09-23
   // Statcast's xwOBA left the site 2026-09-24, and the directional one is the headline column already
-  state.lb.H = state.lb.H.filter((k) => k !== "xws" && k !== "xwd");
+  state.lb.H = state.lb.H.filter((k) => k !== "xws" && k !== "xwd" && k !== "pxw");   // pxwOBA gone 30 Sep 2026
+  for (const c of Object.values(state.cols || {})) if (c && Array.isArray(c.H)) c.H = c.H.filter((k) => k !== "pxw");
+  if (state.cmpCols && Array.isArray(state.cmpCols.H)) state.cmpCols.H = state.cmpCols.H.filter((k) => k !== "pxw");
+  if (state.sort === "pxw") state.sort = "score";
+  if (state.cmp2 && state.cmp2.pick && Array.isArray(state.cmp2.pick.H)) state.cmp2.pick.H = state.cmp2.pick.H.filter((k) => k !== "pxw");
   if (!state.lb.xwdAdded) { if (!state.lb.H.includes("xwdiff")) state.lb.H.splice(Math.max(0, state.lb.H.indexOf("woba") + 1), 0, "xwdiff"); state.lb.xwdAdded = true; }   // xwOBA − wOBA, 27 Sep 2026
   { const tc = state.cols.trending; if (tc && tc.P && !tc.suAdded) { if (!tc.P.includes("suera")) tc.P.splice(tc.P.includes("uera") ? tc.P.indexOf("uera") + 1 : tc.P.length, 0, "suera"); tc.suAdded = true; } }   // Stuff uERA on Trending too
   { const tc = state.cols.trending; if (tc && tc.H && !tc.xwdAdded) { if (!tc.H.includes("xwdiff")) tc.H.splice(Math.max(0, tc.H.indexOf("woba") + 1), 0, "xwdiff"); tc.xwdAdded = true; } }
@@ -787,12 +791,9 @@
     if (p.type === "P" && v.m && v.m.aopt === undefined) { const R = needsDays() ? null : arsenalRows(p), o = R && arsenalOpt(R); v.m = Object.assign({}, v.m, { aopt: o ? Math.round(10 * o.opt) / 10 : null }); }   // a season trait: full season only
     if (p.type === "H" && v.m && v.m.xk === undefined) {
       const xk = xKFrom(v.m), m = v.m, pa = v.pa, bbe = v.ctx && v.ctx.BBE, wbb = (K() && K().wbb) || 0.7;
-      // pxwOBA (Sean, 28 Sep 2026: "xWOBAcon, xK%, and BB% ... a proxy for xWOBA"): his xwOBA with his strikeouts at his xK%.
-      // Each strikeout over xK% is a ball in play he'd otherwise have put in play, worth his own xwOBA on contact (xwOBAcon:
-      // xwOBA less the walks' share, over his batted balls); walks stay as they are
+      // xwOBAcon: his xwOBA less the walks' share, over his batted balls
       const con = m.xwd != null && m.bb != null && pa && bbe ? (m.xwd * pa - wbb * m.bb / 100 * pa) / bbe : null;
-      const pxw = xk != null && con != null && m.k != null ? m.xwd + (m.k - xk) / 100 * con : null;
-      v.m = Object.assign({}, m, { xk: xk == null ? null : Math.round(10 * xk) / 10, xwcon: con == null ? null : Math.round(1000 * con) / 1000, pxw: pxw == null ? null : Math.round(1000 * pxw) / 1000 });
+      v.m = Object.assign({}, m, { xk: xk == null ? null : Math.round(10 * xk) / 10, xwcon: con == null ? null : Math.round(1000 * con) / 1000 });
     }
     valCache.set(key, v);
     return v;
@@ -2465,7 +2466,7 @@
   // pitch data, the way the Fantasy pages do, so those counts are estimates); everything else is the card's own numbers.
   const VS_H = [
     ["Advanced", [["BB%", "bb", 1, "%"], ["K%", "k", 1, "%"], ["ISO", "iso", 3], ["BABIP", "babip", 3], ["AVG", "ba", 3], ["SLG", "slg", 3], ["wOBA", "woba", 3],
-                  ["xBA", "dxba", 3], ["xSLG", "dxslg", 3], ["xwOBA", "xwd", 3], ["pxwOBA", "pxw", 3], ["xwOBAcon", "xwcon", 3], ["xwOBA−wOBA", "xwdiff", 3, "", true], ["xBABIP", "xbabip", 3], ["Mix wOBA", "mixw", 3]]],
+                  ["xBA", "dxba", 3], ["xSLG", "dxslg", 3], ["xwOBA", "xwd", 3], ["xwOBAcon", "xwcon", 3], ["xwOBA−wOBA", "xwdiff", 3, "", true], ["xBABIP", "xbabip", 3], ["Mix wOBA", "mixw", 3]]],
     ["Batted Ball", [["GB%", "gb", 1, "%"], ["LD%", "ld", 1, "%"], ["FB%", "fb", 1, "%"], ["PU%", "pu", 1, "%"], ["Pull%", "pullp", 1, "%"], ["Cent%", "cent", 1, "%"],
                      ["Oppo%", "oppo", 1, "%"], ["Air%", "air", 1, "%"], ["Pull Air%", "pull", 1, "%"], ["EV", "ev", 1], ["EV90", "ev90", 1], ["maxEV", "maxev", 1],
                      ["Barrel%", "brl", 1, "%"], ["HardHit%", "hh", 1, "%"], ["SweetSpot%", "ss", 1, "%"], ["Bat Speed", "bs", 1]]],
@@ -3828,7 +3829,7 @@
       else {
         if (!after("woba", "xwdiff")) groups.push({ group: "Outcomes", metrics: [side("xwdiff")].filter(Boolean) });
         if (!after("k", "xk")) groups.push({ group: "Outcomes", metrics: [side("xk")].filter(Boolean) });
-        for (const [a, k] of [["xwdiff", "pxw"], ["pxw", "xwcon"]]) if (!after(a, k)) groups.push({ group: "Outcomes", metrics: [side(k)].filter(Boolean) });
+        for (const [a, k] of [["xwdiff", "xwcon"]]) if (!after(a, k)) groups.push({ group: "Outcomes", metrics: [side(k)].filter(Boolean) });
         groups.push({ group: "BABIP", metrics: ["babip", "xbabip", "bluck", "brel"].map(side).filter(Boolean) });
       } }
     const seen = new Set();
@@ -4242,7 +4243,6 @@
     stuff: "Stuff+: his pitches graded on what the ball does alone — velocity, spin, movement, release point, extension, arm angle and each pitch against his fastball; no location, no count. Two models, trained on every pitch of this season and the two before: how likely a swing is to miss it, and whether contact is a ground ball, a popup or an air ball. They're combined the way uERA weighs them, so whiffs carry the most. Every pitch is graded against the league's pitches of its own type — 100 is an average four-seamer for a four-seamer, an average curveball for a curveball — and his grade is those averaged by how often he throws each. Each point is 1% of runs saved (120 = a fifth fewer runs than average stuff for the pitches he throws). Whiff+ and Batted-ball+ are its two halves. The whiff model also knows how much he uses the pitch and how many pitches he throws 5%+ of the time.",
     suera: "Stuff uERA: uERA built from his stuff instead of his results — the stuff model's xWhiff in place of his Whiff% (through uK%), its xGB and xPU in place of his ground balls and popups (the rest of his air balls split at the league's line-drive share), and walks from his actual Strike% as in uERA, since the stuff model can't tell who throws strikes. What his arsenal alone says his ERA should be.",
     aopt: "Arsenal optimization: how far his pitch usage leans toward his own swing-and-miss pitches. Each pitch's expected whiff rate (the Stuff model's xWhiff) averaged by how often he actually throws it, minus the same pitches averaged at the league's typical usage of those pitch types. In whiff-per-swing points: +3 means his mix gets three more whiffs per 100 swings than the same pitches thrown in a typical mix would. Each point has come with about a point of real Whiff%. Whiffs only — a sinkerballer who leans on his sinker for ground balls reads negative on purpose.",
-    pxw: "Process xwOBA: his xwOBA with his strikeouts set to his xK% — each strikeout above what his whiffs and swing decisions imply becomes a ball in play at his own xwOBA on contact (and each one below, an out). Walks stay as they are. It reads what his contact and swing-and-miss say together; over 2015-2026 it predicted next season's wOBA about as well as xwOBA (r .49 vs .50) — the two averaged were a touch better — so treat a big gap as a flag, not a forecast.",
     xwcon: "xwOBA on contact: the directional model's value of his average batted ball — xwOBA with his walks taken out, spread over his balls in play. League average is about .375.",
     xk: "Expected K%: the strikeout rate his Whiff%, Z-Swing%, O-Swing% and the share of strikes he sees have historically come with (fitted over every 100+ PA hitter-season since 2015). It lands within about 1.7 points of a regular's real K%; a K% well above it says he's striking out more than his swings and misses explain (two-strike trouble, taking strike three), well below it that he's beating them. His own K% is still the steadier guide to next year's — the two averaged are best.",
     xwdiff: "xwOBA − wOBA: what his contact, walks and strikeouts deserved (the site's xwOBA) minus what he actually got. Above zero he's been unlucky — his results should rise toward his xwOBA; below zero he's been lucky. +.030 is a lot. Every point is a thousandth of wOBA.",
@@ -6514,7 +6514,7 @@
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
-                          babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", aopt: "Arsenal Opt.", pxw: "pxwOBA", xwcon: "xwOBAcon" };
+                          babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", aopt: "Arsenal Opt.", xwcon: "xwOBAcon" };
   const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+" });   // a pitcher's O-Swing% is his chase rate
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);

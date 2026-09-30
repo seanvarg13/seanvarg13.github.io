@@ -237,12 +237,10 @@ points; the two averaged 2.55) — it says what his swings and misses imply, not
 a Leaderboard / Compare column (`LB_EXTRA_H`), the Spreadsheet Stats Plate Discipline table, and the hitter card's
 Contact section right under K% (`PCT_COLS_H`; Sean, 28 Sep 2026).
 
-**pxwOBA / xwOBAcon** (hitters; set in `V()` beside `xk`; Sean, 28 Sep 2026: "xWOBAcon, xK%, and BB% ... a proxy for
-xWOBA"): xwOBAcon = (xwOBA × PA − wBB × BB) / BBE, his xwOBA on contact; **pxwOBA = xwOBA + (K% − xK%) × xwOBAcon** — his
-strikeouts moved to his xK%, each one a ball in play at his own contact value; walks as they are. Backtested 2015-2025
-(300+ PA → next 300+): next season's wOBA r .493 vs .498 for xwOBA, the two averaged .499 — no better as a forecast, like
-xK% itself; a read of contact plus swing-and-miss. Spread vs xwOBA: SD .009, 5th-95th ±.014. Leaderboard / Compare columns
-(`LB_EXTRA_H`, beside xwOBA − wOBA in the Stats picker) and Spreadsheet Stats ▸ Advanced; not on the percentile chart.
+**xwOBAcon** (hitters; set in `V()` beside `xk`; Sean, 28 Sep 2026) = (xwOBA × PA − wBB × BB) / BBE, his xwOBA on contact —
+a Leaderboard / Compare column (`LB_EXTRA_H`). **pxwOBA** (xwOBA with his strikeouts moved to his xK%) was built the same day and
+**removed everywhere on 30 Sep 2026** (Sean: "that stat is not needed"; it forecast no better than xwOBA) — saved column lists,
+sorts and comparison picks drop `pxw` on load. Don't bring it back unasked.
 
 **Arsenal Opt.** (pitchers; `arsenalOpt` / `aoptBase` in `app.js`; Sean, 28 Sep 2026: "how much the pitcher optimizes their
 arsenal %s to throw pitches that ... get more swing and miss"): his pitches' xWhiff averaged by his real usage, minus the
