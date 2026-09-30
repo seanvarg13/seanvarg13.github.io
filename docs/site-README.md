@@ -22,7 +22,8 @@ cell uses the percentile bars' colour scale, and the sorted column is filled wit
 
 **The minimal pass, seventh round** (30 Sep 2026): thinner 1px frames and grey section rules; the header search shows your 5 most
 recent players when tapped empty; press and hold a column name for its definition and league middle; filters in effect show as
-chips with × on the card; swipe a card down to close it on a phone; home is the leaders and your starred players. The tables keep
+chips with × on the card; swipe a card down to close it on a phone; home is the leaders and your starred players, with
+"Leaderboard →" and each leader list's name opening its full list. The tables keep
 their old format (two-line list rows, numbered pages, every game in Game Logs).
 
 **Base Running** (30 Sep 2026): a hitter card's last section is Sprint Speed (Baseball Savant), SB, SB attempts and SB%

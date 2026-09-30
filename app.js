@@ -4251,14 +4251,19 @@
       const mm = V(p).m; return p.type === "H" ? [p, f3(mm.xwd), `xwOBA · ${p.pa} PA`] : [p, f2(mm.era), `ERA · ${fmtIP(p.ip || 0)} IP`];
     }))));
     // the season's leaders: xwOBA (300+ PA), Stuff+ and uERA (100+ IP)
-    const lc = card(`${m.season} leaders`, null, null), three = el("div", "hthree");
+    const lc = card(`${m.season} leaders`, null, "#leaderboard", "Leaderboard →"), three = el("div", "hthree");   // the way into the lists (Sean, 30 Sep 2026)
     withWindow(NOWIN, () => withSplit(NONE, () => {
       const hit = DATA.players.filter((p) => p.type === "H" && (p.pa || 0) >= 300).map((p) => [p, V(p).m.xwd]).filter((r) => r[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 5);
       const pit = DATA.players.filter((p) => p.type === "P" && (p.ip || 0) >= 100);
       const stuff = pit.map((p) => [p, V(p).m.stuff]).filter((r) => r[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 5);
       const uera = pit.map((p) => { const st = pool(p.primary).stats.get("P" + p.id) || rankIn(p.primary, p); return [p, st && st.uera]; }).filter((r) => r[1] != null).sort((a, b) => a[1] - b[1]).slice(0, 5);
       for (const [lab, rows, f, tab] of [["xwOBA", hit, f3, null], ["Stuff+", stuff, (x) => String(Math.round(x)), "stuff"], ["uERA", uera, f2, "uera"]]) {
-        const col = el("div"); col.append(el("h4", null, lab)); list(col, rows.map(([p, v]) => [p, f(v), null, tab])); three.append(col);
+        // each list's name opens the full list it comes from: hitters by xwOBA, the Stuff+ board, pitchers by uERA
+        const go = { xwOBA: () => { state.pos = "ALL"; state.sort = "score"; state.dir = "desc"; return "#leaderboard"; }, "Stuff+": () => "#pitches",
+                     uERA: () => { state.pos = "ALLP"; state.sort = "uera"; state.dir = "asc"; return "#leaderboard"; } }[lab];
+        const hd = el("h4"), a = el("a", "hmore", `${lab} →`); a.href = lab === "Stuff+" ? "#pitches" : "#leaderboard";
+        a.addEventListener("click", (e) => { e.preventDefault(); const h = go(); savePrefs(); location.hash = h; }); hd.append(a);
+        const col = el("div"); col.append(hd); list(col, rows.map(([p, v]) => [p, f(v), null, tab])); three.append(col);
       }
     }));
     lc.append(three);
