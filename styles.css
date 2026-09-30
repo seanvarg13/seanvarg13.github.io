@@ -3314,22 +3314,12 @@ body[data-mode="planner"] main.wrap > #pitchboard { overflow: auto; }
 /* 6. nothing under the table: the key, glossary, how-to and layout switch are in the header's More menu */
 footer.notes:empty { display: none; }
 
-/* 7. the pager plain: no tinted strip, a hairline under it */
-:root:root .pager, :root:root:not([data-view="mobile"]) .pager { background: transparent; border-bottom: 1px solid var(--hair); }
-:root:root .pager:last-child { border-top: 1px solid var(--hair); }
-
-/* 8. the card's tabs as words, the open one underlined; Stats and More show their members as a small row under them */
-:root:root:root .btabs { gap: 20px; border-bottom: 1px solid var(--hair); }
-:root:root:not([data-view="mobile"]) .btabs { justify-content: flex-start; }
-:root:root:root .btab, :root:root:root .btab:first-child, :root:root:root .btab:last-child,
-:root:root:root .btab.on, :root:root:root .btab[aria-selected="true"], :root:root:root .btab:hover {
-  flex: none; min-height: 0; height: auto; margin: 0 0 -1px; padding: 9px 0 7px; background: none; color: var(--muted); border: 0;
-  border-bottom: 2px solid transparent; border-radius: 0; box-shadow: none; font-size: 14px; }
-:root:root:root .btab.on, :root:root:root .btab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--rule); }
-:root:root:root .btab:hover:not(.on) { color: var(--ink); }
-.bsubtabs { display: flex; gap: 6px; margin: 10px 0 2px; flex-wrap: wrap; }
-.bsubtabs .bsub { margin: 0; padding: 4px 12px; border: 1px solid var(--hair); border-radius: 0; background: var(--surface); color: var(--ink-2); font: inherit; font-size: 13px; cursor: pointer; }
-.bsubtabs .bsub.on { border-color: var(--rule); color: var(--ink); background: color-mix(in srgb, var(--accent-2) 24%, var(--surface)); }
+/* 7 and 8 (a plain pager, the card's tabs as underlined words) were taken back the same night (Sean, 30 Sep 2026: "why'd you
+   get rid of the light blue ... and not actual buttons"): the pager keeps its pale-blue strip and the card's tabs stay the
+   centred outlined buttons above. What's left of 8: the Stats / More members as a small row of the same buttons, centred. */
+.bsubtabs { display: flex; justify-content: center; gap: 6px; margin: 10px 0 2px; flex-wrap: wrap; }
+.bsubtabs .bsub { margin: 0; padding: 5px 14px; border: 1px solid var(--accent-2); border-radius: 0; background: var(--surface); color: var(--rule); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.bsubtabs .bsub.on { background: var(--accent-2); color: var(--rule); }
 .bsubtabs .bsub .lc, .btab .lc { text-transform: none; }
 
 /* 9. the card's band, quieter: the no-photo fallback is plain initials, the season picker is a word with a small ▾ rather
