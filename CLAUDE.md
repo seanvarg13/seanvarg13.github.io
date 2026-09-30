@@ -506,8 +506,8 @@ is deploy-limited.
   page behind a popup card is hidden while it's up (`body.cardpop.modal-open main.wrap`, visibility only, so the list keeps its
   place); **tapping a bar opens a note** under it (`statPop`: the glossary line, the league middle from the pool's sorted list, last
   season's value and percentile); **▲ / ▼ after a value** when his percentile moved 5+ points on last season (full-season MLB cards
-  only — a trial, Sean "not sold", drop `.svchg` if he says so); a phone pins the current section's name at the top of the card's
-  scroller (`.secstick`, an overlay set on scroll in `playerView`). Not done at his say: the headshot frame, a narrower label
+  only — a trial, Sean "not sold", drop `.svchg` if he says so). A pinned section name on a phone (`.secstick`) was tried and taken
+  back the same night (Sean didn't like the headers staying) — don't bring it back unasked. Not done at his say: the headshot frame, a narrower label
   column, darker middle bubbles, swiping between players.
 * **Phone header is one line** (Sean, 28 Sep 2026): site name, search and a ☰ Menu button (`.navtog`, made in `app.js`
   because `index.html` doesn't round-trip); the page buttons (`.modes`) open under it in a two-column grid and close on a

@@ -19,7 +19,7 @@ This October's postseason rebuilds every morning.
 **The minimal pass, sixth round** (30 Sep 2026): on a card, Filters looks like the Hitting / Pitching switch and sits beside it
 at the end of the PA · G line (the band is a row shorter), the info line has no season, Share (beside the star) sends his card's
 link, the page behind a popup card is hidden, tapping a bar explains the stat with the league middle and last season, a ▲ / ▼
-marks a 5+ point percentile move on last season (a trial), and on a phone the section you're in stays named at the top.
+marks a 5+ point percentile move on last season (a trial).
 
 **The minimal pass, third round** (29 Sep 2026): rows say positions · PA under the name; rate cells have no % (the column
 header does); the Leaderboard opens on eight stats (Filters ▸ Stats adds more); the card's line is PA · G (IP · G / GS); home has
