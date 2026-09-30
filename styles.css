@@ -3431,3 +3431,7 @@ body[data-mode="rankings"] #rankcount { display: none; }
 :root[data-theme="dark"] { --ground: color-mix(in srgb, var(--accent-2) 7%, #0b1424); }
 :root.nopattern body, :root.nopattern .modal.pagebg .modal-back { background: var(--ground); }
 .svpct .svnum { dominant-baseline: auto; font-variant-numeric: tabular-nums; }
+/* the percentile sections' names wear the card title's type (Sean, 30 Sep 2026: "look exactly like how 2026 MLB Percentiles
+   looks"): the condensed face at 600 in navy, 24px on a desktop and 19px on a phone, like .pthd */
+.svpct .svsecname { font-family: var(--display); font-size: 24px; font-weight: 600; letter-spacing: 0; fill: var(--ink); }
+:root[data-view="mobile"] .svpct .svsecname { font-size: 19px; }
