@@ -33,7 +33,9 @@ order — one stat a line, drag by the grip or ↑ ↓, "Gap after" for a dividi
 (its links are in More). On a card, the bottom tabs (still outlined buttons, picked one light blue — flat underlined words and a
 pager without its pale-blue strip were tried and taken back the same night) are Compare · Season Stats · Stuff
 (pitchers) · Game Logs · Fantasy · Mix (hitters) / **More** (pitchers: nERA, uERA, as a small row under the strip; `state.pbsub`)
-— Spreadsheet Stats, Rolling and the hitters' BABIP tab came off the strip on 30 Sep 2026; the Poor / Average / Great
+— Spreadsheet Stats, Rolling and the hitters' BABIP tab came off the strip on 30 Sep 2026; Game Logs has a Regular season /
+Spring training / Postseason switch over the log for the years he has those games (`renderGameLogs`; the card stays on its
+season, the chips rank against that year's regular season); the Poor / Average / Great
 scale heads the first chart only; the no-photo initials are plain, the season picker is a word with a small ▾, the × a plain
 mark.
 

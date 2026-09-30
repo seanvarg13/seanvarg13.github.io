@@ -3408,3 +3408,5 @@ body[data-mode="rankings"] #rankcount { display: none; }
 .orow.drag { position: relative; z-index: 1; background: var(--accent-wash); outline: 2px solid var(--accent-2); }
 .orow.drag .ogrip { cursor: grabbing; }
 :root[data-view="mobile"] .orow .obrk { padding: 0 6px; }
+/* Game Logs: Regular season / Postseason / Spring training over the log (Sean, 30 Sep 2026) */
+.glkind { display: flex; justify-content: center; flex-wrap: wrap; margin: 0 0 10px; }
