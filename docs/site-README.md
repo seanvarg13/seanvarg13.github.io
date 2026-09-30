@@ -15,8 +15,9 @@ its own, the header has them.
 capitals, they're data); buttons and headings are semibold; the background swirl runs at 8% (Appearance ▸ Background
 pattern turns it off per device, `draft2027.pattern`); the list toolbar is two buttons — position and **Filters**, which
 opens one dropdown with Filters / Stats / Splits & dates / Table as tabs across its top (`GRP_TABS`, `grpTabs()`); rows are
-~38px on a desktop and a phone's second line is just the team; the pager has no tinted strip; nothing sits under the table
-(its links are in More). On a card, the bottom tabs are words with the open one underlined, Compare · Season Stats · Stuff
+~38px on a desktop and a phone's second line is just the team; nothing sits under the table
+(its links are in More). On a card, the bottom tabs (still outlined buttons, picked one light blue — flat underlined words and a
+pager without its pale-blue strip were tried and taken back the same night) are Compare · Season Stats · Stuff
 (pitchers) · Game Logs · Fantasy · Mix (hitters) / **More** (pitchers: nERA, uERA, as a small row under the strip; `state.pbsub`)
 — Spreadsheet Stats, Rolling and the hitters' BABIP tab came off the strip on 30 Sep 2026; the Poor / Average / Great
 scale heads the first chart only; the no-photo initials are plain, the season picker is a word with a small ▾, the × a plain

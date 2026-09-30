@@ -460,10 +460,13 @@ is deploy-limited.
   and a **More** menu (made in `app.js`, a third `NAV_GROUPS` entry, filled in `renderChrome`) holds Appearance, Colour key,
   Stat glossary, How this page works and the layout switch — nothing sits under the lists any more; the list toolbar is
   position + **Filters** (one dropdown, `GRP_TABS` as tabs across its top, the last used opens first); desktop rows ~38px, a
-  phone's second line just the team; the pager plain. Card: bottom tabs are words, Compare · Season Stats · Stuff
+  phone's second line just the team. Card: bottom tabs Compare · Season Stats · Stuff
   (pitchers) · Game Logs · Fantasy · Mix (hitters) / More (nERA, uERA; members as a small row under the strip) — Spreadsheet
   Stats, Rolling and the hitters' BABIP tab were taken off the strip (Sean, 30 Sep 2026; their renderers are still in `app.js`); Poor / Average / Great only on the first chart (`pctSvg`'s `scale`); section names in the charts as written, not
   capitals; plain initials, a ▾ on the season picker, a plain ×. Home opens on one line (no title, search or buttons).
+  **Taken back the same night** (Sean, 30 Sep 2026: "why'd you get rid of the light blue ... and not actual buttons"): the
+  pager's pale-blue strip and the card's tabs as centred outlined buttons (picked one light blue) stay — don't flatten them
+  again unasked; the Stats / More members are a centred row of the same buttons.
 * **Phone header is one line** (Sean, 28 Sep 2026): site name, search and a ☰ Menu button (`.navtog`, made in `app.js`
   because `index.html` doesn't round-trip); the page buttons (`.modes`) open under it in a two-column grid and close on a
   pick, a page change or a tap elsewhere. Desktop keeps its single row. The swirl pattern behind cards and list pages
