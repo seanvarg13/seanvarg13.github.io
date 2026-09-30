@@ -24,7 +24,11 @@ section names are small grey labels.
 **The minimal pass, second round** (29 Sep 2026): nothing is set in capitals by the stylesheet (team codes are still
 capitals, they're data); buttons and headings are semibold; the background swirl runs at 8% (Appearance ▸ Background
 pattern turns it off per device, `draft2027.pattern`); the list toolbar is two buttons — position and **Filters**, which
-opens one dropdown with Filters / Stats / Splits & dates / Table as tabs across its top (`GRP_TABS`, `grpTabs()`); rows are
+opens one dropdown with Filters / Stats / Splits / Dates / Table format as tabs across its top (`GRP_TABS`, `grpTabs()`;
+Splits only on the Leaderboard). The dropdown is one fixed size whatever the tab (560px, less if the window is short): the
+tab row and the Done / Cancel row stay put and the middle scrolls. Filters holds the name / team, the season row (One season
+/ Multiple seasons first, so it never moves) and Sort by with the minimum PA / IP beside it; Table format opens on the column
+order — one stat a line, drag by the grip or ↑ ↓, "Gap after" for a dividing line, × to drop it (Sean, 30 Sep 2026); rows are
 ~38px on a desktop and a phone's second line is just the team; nothing sits under the table
 (its links are in More). On a card, the bottom tabs (still outlined buttons, picked one light blue — flat underlined words and a
 pager without its pale-blue strip were tried and taken back the same night) are Compare · Season Stats · Stuff
