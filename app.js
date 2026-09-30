@@ -3002,7 +3002,7 @@
     plate.append(headshot(p.id, p.name));
     const txt = el("div");
     const h2 = el("h2", null, p.name); h2.id = "modal-title"; txt.append(h2);
-    txt.append(el("div", "mline", `${p.team} · ${posShown(p)}${p.type === "P" ? " · " + p.throws + "HP" : p.bats ? " · " + p.bats : ""} · ${dsSeason()}${p.age != null ? " · age " + p.age : ""}`));
+    txt.append(el("div", "mline", `${p.team} · ${posShown(p)}${p.type === "P" ? " · " + p.throws + "HP" : p.bats ? " · " + p.bats : ""}${p.age != null ? " · age " + p.age : ""}`));   // no season: the picker above says it (minimal pass 6)
     const v = V(p);
     if (st.pct) txt.append(renderStrip(p, v));
     const r = el("div", "mrank");
@@ -6623,10 +6623,26 @@
       const lab = (labels && labels[key0]) || PCT_LABEL[got.k];
       const m = lab ? Object.assign({}, got.m, { label: lab }) : got.m;
       const pct = st.pct[got.k];
-      return { m, v: got.v, k: got.k, label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null,
+      const lg = lgOf(got.k, m), prev = prevOf ? prevOf(m, got.k) : null;
+      return { m, v: got.v, k: got.k, label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null, lg: lg == null ? null : fmt(lg, m), prev, prevYear: DS.season - 1,
+               gloss: GLOSS[{ xwd: "xwoba", EXPW: "xwoba" }[got.k]] || GLOSS[got.k] || "", hib: m.hib,
                tip: `${m.label}: ${fmt(got.v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}` };
     };
     pctROs.forEach((ro) => ro.disconnect()); pctROs = [];
+    // tap a row (minimal pass 6): the league's middle value for the pool and, on a full-season MLB card, his line a season
+    // earlier with a ▲ / ▼ beside the value when his percentile moved 5+ points
+    const pl = pool(ref), lgOf = (k, m) => { const a = pl.sorted && pl.sorted[k]; if (!a || !a.length) return null; const v = a[Math.floor(a.length / 2)]; return m.hib ? v : -v; };
+    let prevOf = null;
+    const prevKey = DS.level === "MLB" && !DS.kind && !DS.multi && viewLabel(p.type) === "full season" ? `mlb-${DS.season - 1}` : null;
+    if (prevKey && (!indexReady() || window.DRAFT_INDEX.seasons.includes(prevKey))) {
+      const pds = histDataset(prevKey);
+      if (!pds) ensureHist(prevKey);
+      else prevOf = withDataset(pds, () => withWindow(NOWIN, () => withSplit(NONE, () => {
+        const pp = pds.players.find((q) => q.id === p.id && q.type === p.type); if (!pp) return null;
+        const st2 = pool(ref).stats.get(pp.type + pp.id) || rankIn(ref, pp), pv2 = V(pp);
+        return (m, k) => { const v = metricValue(m, pv2, st2); return v == null ? null : { v, pct: st2 && st2.pct ? st2.pct[k] : null, value: fmt(v, m) }; };
+      })));
+    }
     {
       const cols = el("div", "pctcols"), sets = [];
       for (const sections of (p.type === "H" ? PCT_COLS_H : PCT_COLS_P)) {
@@ -6707,6 +6723,22 @@
     return host;
   }
   // the Poor / Average / Great scale heads the first chart only (Sean, 29 Sep 2026, the minimal pass: once a card is enough)
+  // tap a percentile row: what the stat is, the league's middle value, his season before (minimal pass 6, Sean, 30 Sep 2026)
+  function statPop(row, r) {
+    const host = row.closest(".svchart"); if (!host) return;
+    const old = host.querySelector(".statpop"), same = old && old.dataset.k === r.k; if (old) old.remove(); if (same) return;
+    const d = el("div", "statpop"); d.dataset.k = r.k;
+    const top = el("div", "sphd"); top.append(el("b", null, r.label), el("span", null, `${fmt(r.v, r.m)}${r.pct != null ? " · " + ordinal(r.pct) + " percentile" : ""}`)); d.append(top);
+    if (r.gloss) d.append(el("p", null, r.gloss));
+    const facts = [r.lg != null ? `League middle: ${r.lg}` : "", r.hib === false ? "Lower is better" : "",
+                   r.prev ? `${r.prevYear}: ${r.prev.value}${r.prev.pct != null ? " (" + ordinal(r.prev.pct) + ")" : ""}` : ""].filter(Boolean);
+    if (facts.length) d.append(el("p", "spfacts", facts.join(" · ")));
+    const hr = host.getBoundingClientRect(), rr = row.getBoundingClientRect();
+    d.style.top = Math.round(rr.bottom - hr.top + 4) + "px";
+    host.append(d);
+    const away = (e) => { if (!d.contains(e.target)) { d.remove(); document.removeEventListener("click", away, true); } };
+    setTimeout(() => document.addEventListener("click", away, true), 0);
+  }
   function pctSvg(groups, W, scale = true) {
     const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
     const r6 = W - 40, VW = W < 420 ? 41 : 45, bar = r6 - 40 - 85 - VW;   // the rule's width, the value column (room for "118.5" beside a 100 bubble; a phone's bar can't spare as much), the bar's width
@@ -6741,6 +6773,10 @@
         M.append(B);
         M.append(mk("text", { class: "svlbl", x: 80, y: 10, "text-anchor": "end" }, r.label));
         M.append(mk("text", { class: "svlbl svval", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));
+        // his percentile a season earlier, when it moved 5+ points: ▲ better, ▼ worse, just past the value (minimal pass 6)
+        if (r.prev && r.prev.pct != null && r.pct != null && Math.abs(r.pct - r.prev.pct) >= 5)
+          M.append(mk("text", { class: "svchg " + (r.pct > r.prev.pct ? "up" : "dn"), x: 85 + bar + VW + 4, y: 10 }, r.pct > r.prev.pct ? "▲" : "▼"));
+        M.addEventListener("click", (e) => { e.stopPropagation(); statPop(M, r); });
         if (on) {
           const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
           C.append(mk("circle", { class: "svbulb", r: 10, fill: s.bub }));
@@ -6900,6 +6936,23 @@
     // phone's rubber-band never moves the plate or opens a gap above it
     const sc = el("div", "cardscroll"); sc.append(page, renderBelow(p, { st, g, ref }));
     box.append(sc);
+    // a phone keeps the section you're in named at the top while its bars scroll under it (minimal pass 6, Sean, 30 Sep
+    // 2026) — an overlay redrawn on scroll, since position: sticky doesn't reach inside the charts' svg
+    if (mobileView()) {
+      const pin = el("div", "secstick"); pin.hidden = true; box.append(pin);
+      const upd = () => {
+        const top = sc.getBoundingClientRect().top;
+        const G = [...sc.querySelectorAll(".svgrp")].find((x) => { const n = x.querySelector(".svsecname").getBoundingClientRect(), r = x.getBoundingClientRect(); return n.top < top && r.bottom > top + 40; });
+        if (!G) { pin.hidden = true; return; }
+        const n = G.querySelector(".svsecname"), rule = G.querySelector(".svsecrule").getBoundingClientRect(), svg = G.ownerSVGElement;
+        const k = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width ? svg.getBoundingClientRect().width / svg.viewBox.baseVal.width : 1, bx = box.getBoundingClientRect();
+        const sr = sc.getBoundingClientRect(), t = el("span", null, n.textContent);   // the ground runs edge to edge, the rule only under the name's width
+        pin.replaceChildren(t); pin.hidden = false;
+        Object.assign(pin.style, { top: sc.offsetTop + "px", left: sr.left - bx.left - box.clientLeft + "px", width: sc.clientWidth + "px", paddingLeft: rule.left - sr.left + "px", fontSize: (parseFloat(getComputedStyle(n).fontSize) || 19) * k + "px" });
+        t.style.width = rule.width + "px";
+      };
+      sc.addEventListener("scroll", upd, { passive: true });
+    }
   }
   // Where the numbers and photos come from, and what the site is for: at the foot of every page and every card
   const CREDIT = "Data: MLB Stats API and Baseball Savant (MLB Advanced Media). Player photos: MLB. Not affiliated with or endorsed by MLB or Baseball Savant. A personal project for personal, non-commercial use only.";
@@ -7071,12 +7124,25 @@
     // the Filters button beside "full season", on a desktop too: a phone opens them into the plate, a desktop in a
     // panel hung under the button, so the plate itself stays one short row
     const open = !!state.cardTools;
-    const b = el("button", "starbtn phtoggle" + (open ? " on" : ""), "Filters");
-    b.type = "button"; b.setAttribute("aria-expanded", String(open));
+    // dressed as the Hitting / Pitching switch, same type and height, and sits beside it (Sean, 30 Sep 2026)
+    const b = el("button", "segbtn small phfilt", open ? "Filters ▴" : "Filters ▾");
+    b.type = "button"; b.setAttribute("aria-expanded", String(open)); b.setAttribute("aria-pressed", String(open));
     b.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = !state.cardTools; savePrefs(); render(); });
     // Filters sits at the end of the PA · G line (Sean, 30 Sep 2026: "up and to the right of the PA and games played stat to
     // make the header a bit smaller row wise"); the mrank line underneath only when something else is on it
-    const tog = el("span", "phtog"); tog.append(b); (plate.querySelector(".hstrip") || mr || plate).append(tog);
+    const tog = el("span", "phtog"), fs = el("div", "seg phfiltseg"); fs.append(b); tog.append(fs);
+    (plate.querySelector(".hstrip") || mr || plate).append(tog);
+    { const ts = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (ts) tog.after(ts); }   // a two-way player's switch: right after Filters, a row saved
+    // Share: his card's own link (#player/<id>), through the phone's share sheet where there is one (Sean, 30 Sep 2026)
+    { const sh = el("button", "phshare", "Share"); sh.type = "button"; sh.title = "Share a link to this player";
+      sh.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const url = location.origin + location.pathname + "#player/" + p.id;
+        try { if (navigator.share) { await navigator.share({ title: p.name, url }); return; } } catch (_) { return; }   // a cancelled share sheet
+        try { await navigator.clipboard.writeText(url); sh.textContent = "Link copied"; } catch (_) { sh.textContent = "Copy failed"; }
+        setTimeout(() => { sh.textContent = "Share"; }, 1800);
+      });
+      (h2 || tog).append(sh); }   // beside the star, off the PA · G line
     if (!mob) { F.classList.add("phpop"); tog.append(F); }
     let warn = null;
     if (open) {
@@ -7757,7 +7823,7 @@
   // a desktop's Filters panel shuts on a click anywhere outside it (or its button), or on Escape
   document.addEventListener("click", (e) => {
     if (!state.cardTools || mobileView() || !document.querySelector(".phpop")) return;
-    if (e.target.closest(".phpop, .phtoggle, .ddmenu") || !e.target.isConnected) return;
+    if (e.target.closest(".phpop, .phtoggle, .phfilt, .ddmenu") || !e.target.isConnected) return;
     state.cardTools = false; savePrefs(); render();
   });
   document.addEventListener("keydown", (e) => {
