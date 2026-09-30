@@ -637,7 +637,9 @@ is deploy-limited.
   is Savant's again — 20px bar, 10/50/90 ticks, dashed rules, Poor / Average / Great on the first chart — keeping only the
   section names in the title's type and the bubble digits centred by `dy`. Don't restyle them again unasked. **And back again, adjusted** (Sean, later that evening: "go back one update ... make it so the height of them is the same
   as these savant ones and make the circle text always white"): the studio bar once more, but 20px tall like Savant's and white
-  digits in every bubble (no navy middle).
+  digits in every bubble (no navy middle). **Final (Sean, the same night: "never mind just keep the savant ones ... make the bubbles for them the savant
+  style too"):** Savant's bars and Savant's bubbles (r 10, 2px ring, white digits), exactly as before the studio page; only the
+  section names in the title's type and the digits centred by `dy` differ. Leave them.
 * **Type and ground** (Sean, 30 Sep 2026, same page): the whole site is **Barlow Condensed** (`--display`: headings, names, big
   numbers) + **Source Sans 3** (`--body`: everything else), loaded by `themes.js` (`F.studio`, the only font); Roboto
   Condensed is gone. **The swirl is gone**: `nopattern` is always on and the Appearance row is removed; pages sit on
