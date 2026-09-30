@@ -524,6 +524,14 @@ is deploy-limited.
   columns), Show more instead of page numbers, one-line home rows and Game Logs' last-10 view — the lists have two-line rows and
   numbered pages again, Fantasy its pagers, Game Logs every game. Don't bring those back unasked. Idea 1 (the info line up on
   the season line) is only in the Card Header Comparison artifact, not built.
+* **Desktop lists without the white card** (Sean, 30 Sep 2026: on the Stuff+ board "get rid of the outer box, it feels
+  pointless", then on the Leaderboard "stick the filters button into the blue bar ... make the leaderboard itself bigger and get
+  rid of the outer white stuff"): on a desktop the **Leaderboard and Trending** have no white card round the list — Filters (`#tbtns`)
+  moves into the pager's blue bar (`seatFilters`, called from `renderPager` and put back in the toolbar before the bar is cleared,
+  on a phone and on every other page; `body.filtbar`), the toolbar row hides unless it carries a note, and the table takes the room.
+  The **Stuff+ board, League Trends, Call-up Watch and Weekly Planner** lose both the white card and the board's own frame
+  (`#pitchboard`): their filters sit on the ground over the table. Rankings, Draft board, Fantasy, Eligibility and every phone
+  layout keep the card.
 * **Base Running** (hitter card, the last section — end of the right column, after Batted-Ball Distribution; Sean, 30 Sep 2026): Sprint Speed (Savant's, ft/s, 5+
   competitive runs — `sprint_speeds()`, the model's own feature), SB, SB Att. (SB + CS) and SB% (none without an attempt), official
   from the MLB Stats API's season line (`mlb_people` → `baserunning()` in `build_data.py`, `m.spd / sb / sba / sbp`). Percentiles like

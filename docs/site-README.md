@@ -26,6 +26,10 @@ chips with × on the card; swipe a card down to close it on a phone; home is the
 "Leaderboard →" and each leader list's name opening its full list. The tables keep
 their old format (two-line list rows, numbered pages, every game in Game Logs).
 
+**Desktop lists** (30 Sep 2026): on a computer the Leaderboard and Trending have no white card; the Filters button sits in the
+blue bar with the page numbers and the table fills the space. The Stuff+ board, League Trends, Call-up Watch and the Weekly Planner
+drop their boxes the same way, with their filters over the table. Phones are unchanged.
+
 **Base Running** (30 Sep 2026): a hitter card's last section is Sprint Speed (Baseball Savant), SB, SB attempts and SB%
 (official), each with its percentile among 300+ PA hitters; full season only. They are Leaderboard / Compare columns too.
 

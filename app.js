@@ -2130,12 +2130,24 @@
     return { size, pages, page: state.page, start, end: state.page < pages ? starts[state.page] : total };
   }
   // a pager bar: "1–50 of 597", first / previous / page numbers / next / last, and rows-per-page
+  // On a desktop the Leaderboard's and Trending's Filters button rides in the pager's blue bar, and the white card around the
+  // list goes (Sean, 30 Sep 2026: "stick the filters button into the blue bar ... make the leaderboard itself bigger"). It is
+  // taken back to its toolbar before the bar is redrawn, and stays there on a phone and on every other page
+  const inBarModes = ["leaderboard", "trending"];
+  function seatFilters(box, total) {
+    const tb = $("tbtns"), home = $("toolrow") && $("toolrow").querySelector(".tools");
+    if (!tb || !home) return;
+    const want = box && box.id === "pagertop" && total && !mobileView() && inBarModes.includes(state.mode);
+    document.body.classList.toggle("filtbar", !!want);
+    if (want) box.prepend(tb); else if (tb.parentNode !== home) home.prepend(tb);
+  }
   function renderPager(box, total, pg, onChange) {
     if (!box) return;
+    { const tb = $("tbtns"); if (tb && box.contains(tb)) seatFilters(null); }   // out of the bar before it is cleared
     box.innerHTML = "";
     const go = (n) => { state.page = Math.min(pg.pages, Math.max(1, n)); (onChange || renderRows)(); const top = box.closest(".board, .fboard") || box; const sb = top.querySelector(".board-scroll, .fscroll"); if (sb) sb.scrollTop = 0; const y = top.getBoundingClientRect().top + window.scrollY - 8; if (window.scrollY > y) window.scrollTo({ top: y }); };
     const setSize = (n) => { state.pageSize = n; state.page = 1; savePrefs(); (onChange || renderRows)(); };
-    if (!total) { box.hidden = true; return; }
+    if (!total) { box.hidden = true; if (!onChange) seatFilters(null); return; }
     box.hidden = false;
     box.append(el("span", "pcount", pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : `${total} players`));
     if (pg.pages > 1) {
@@ -2153,6 +2165,7 @@
       box.append(nav);
     }
     if (onChange) box.append(perPageField(setSize));    // the list pages keep theirs in Filters (minimal pass 4); Fantasy here
+    if (!onChange) seatFilters(box, total);
   }
   function perPageField(setSize) {
     const sz = el("label", "field psize"); sz.append(el("span", null, "Per page"));
@@ -4470,6 +4483,7 @@
     const wasCard = !$("modal").hidden;
     if (!wasCard) noteList();
     renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage(); ddSync();
+    if (!inBarModes.includes(state.mode) || mobileView()) seatFilters(null);   // Filters back on its toolbar off the Leaderboard / Trending
     if (ddOpen && !ddOpen.trig.isConnected) ddClose();   // a list whose opener was redrawn away
     keep();
     if (wasCard && $("modal").hidden && listAt && listAt.mode === state.mode) {
