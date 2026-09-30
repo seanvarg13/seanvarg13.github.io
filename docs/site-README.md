@@ -20,6 +20,12 @@ This October's postseason rebuilds every morning.
 percentile bubbles. Every heat-mapped
 cell uses the percentile bars' colour scale, and the sorted column is filled with its full colour.
 
+**The minimal pass, seventh round** (30 Sep 2026): thinner 1px frames and grey section rules; list rows on one line (positions and
+PA are small columns after the name); lists grow with **Show more** (tap, or just scroll to it) instead of page numbers; the header
+search shows your 5 most recent players when tapped empty; press and hold a column name for its definition and league middle;
+filters in effect show as chips with × on the card; swipe a card down to close it on a phone; Game Logs start with the last 10
+games (Show all for the rest); home is the leaders and your starred players.
+
 **Base Running** (30 Sep 2026): a hitter card's last section is Sprint Speed (Baseball Savant), SB, SB attempts and SB%
 (official), each with its percentile among 300+ PA hitters; full season only. They are Leaderboard / Compare columns too.
 

@@ -1813,7 +1813,8 @@
     const mobile = document.documentElement.dataset.view === "mobile";
     h.style.setProperty("--rankw", editing ? (mobile ? (hasTiers ? "108px" : "72px") : hasTiers ? "190px" : "134px") : mobile ? "30px" : "44px");
     // no "Rank" over the numbers (minimal pass 5): they say what they are
-    h.append(el("div", "h", editing ? (hasTiers ? "Rank · tier" : "My rank") : ""), el("div", "h left", ref === g ? "Player" : `Player · ranked vs ${POOL_NAME[ref]}`));
+    h.append(el("div", "h", editing ? (hasTiers ? "Rank · tier" : "My rank") : ""), el("div", "h left", ref === g ? "Player" : `Player · ranked vs ${POOL_NAME[ref]}`),
+             el("div", "h mcol", "Pos"), el("div", "h mcol", isPitcherGroup(g) ? "IP" : "PA"));
     const head = (key, label, title) => { const h = editing ? Object.assign(el("div", "h", label), { title }) : sortButton(key, label, title); if (/^[a-z]/.test(label)) h.classList.add("lc"); return h; };
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
     for (const k of ["year", "age"]) h.style.setProperty("--pre" + (k === "year" ? 1 : 2), preOn(k) ? "var(--prew, 64px)" : "0px");
@@ -1824,9 +1825,38 @@
     for (const m of ms) {
       const hb = head(m.key, colLab(m), m.label + (m.hib ? " — higher is better" : " — lower is better"));
       hb.dataset.key = m.key; if (hasBreak(g, m.key)) hb.classList.add("brk");
+      holdNote(hb, () => colNote(m, g));
       h.append(hb);
     }
     if (state.mode === "draft") h.append(el("div", "h", ""));
+  }
+  // press and hold a column name for its note (minimal pass 7, Sean, 30 Sep 2026) — a tap still sorts. The note: what the
+  // stat is (the glossary) and the middle of the pool the list ranks against
+  function colNote(m, g) {
+    const a = pool(g).sorted && pool(g).sorted[m.key], mid = a && a.length ? a[Math.floor(a.length / 2)] : null;
+    const gl = GLOSS[{ xwd: "xwoba", EXPW: "xwoba" }[m.key]] || GLOSS[m.key] || "";
+    return { label: m.label, text: gl, facts: [mid != null ? `League middle: ${fmt(m.hib ? mid : -mid, m)}` : "", m.hib ? "" : "Lower is better"].filter(Boolean).join(" · ") };
+  }
+  let holdPop = null;
+  function closeHoldPop() { if (holdPop) { holdPop.remove(); holdPop = null; } }
+  document.addEventListener("scroll", closeHoldPop, true);
+  function holdNote(btn, make) {
+    let t = null, fired = false;
+    const start = () => { fired = false; clearTimeout(t); t = setTimeout(() => { fired = true; showHoldPop(btn, make()); }, 450); };
+    const stop = () => clearTimeout(t);
+    btn.addEventListener("pointerdown", start); btn.addEventListener("pointerup", stop); btn.addEventListener("pointerleave", stop); btn.addEventListener("pointercancel", stop);
+    btn.addEventListener("contextmenu", (e) => e.preventDefault());               // a phone's long-press menu
+    btn.addEventListener("click", (e) => { if (fired) { fired = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);   // the hold isn't also a sort
+  }
+  function showHoldPop(btn, n) {
+    closeHoldPop();
+    const d = el("div", "statpop holdpop"), hd = el("div", "sphd"); hd.append(el("b", null, n.label)); d.append(hd);
+    if (n.text) d.append(el("p", null, n.text));
+    if (n.facts) d.append(el("p", "spfacts", n.facts));
+    document.body.append(d); holdPop = d;
+    const r = btn.getBoundingClientRect(), w = Math.min(320, innerWidth - 24);
+    Object.assign(d.style, { position: "fixed", width: w + "px", left: Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - w / 2)) + "px", top: r.bottom + 6 + "px", right: "auto" });
+    setTimeout(() => { const off = (e) => { if (!d.contains(e.target)) { closeHoldPop(); document.removeEventListener("pointerdown", off, true); } }; document.addEventListener("pointerdown", off, true); }, 0);
   }
   function sortButton(key, label, title) {
     const ranked = customOrder(), on = state.sort === key && (!ranked || state.rankSort);
@@ -1968,12 +1998,13 @@
       who.append(nameEl);
       // just his positions and playing time under the name (Sean, 29 Sep 2026); team and hand are in the name's tooltip
       nameEl.title = nameEl.title || `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`;
+      // one line a row (minimal pass 7, Sean, 30 Sep 2026): positions and PA / IP are small columns of their own after the
+      // name, not a second line under it; the meta line keeps only a span's year and an added position
       const meta = el("div", "meta");
-      meta.append(el("span", "posl", posShown(p)));
       const v = V(p);
-      const flag = el("span", "flag", p.type === "P" ? `${fmtIP(v.ip)} IP` : `${v.pa} PA`);
+      const posc = el("div", "pct mcol posc", posShown(p));
+      const flag = el("div", "pct mcol flag", p.type === "P" ? fmtIP(v.ip) : String(v.pa));
       if (seasonSample(p) < effMin(g) && !hasExtra(p, state.pos)) { flag.classList.add("low"); flag.title = `Under the Min ${sampleLabel(g)} — listed after everyone who qualifies; his percentiles are where he'd land among them`; }
-      meta.append(flag);
       // the season on the name line (Sean, 30 Sep 2026): each player-season's own year in a span, the span or season otherwise
       if (lbMulti()) meta.append(el("span", "yr", preValue("year", p)));   // spans only (minimal pass 4); a combined player: the seasons he played in it
       if (hasExtra(p, state.pos)) {
@@ -1983,8 +2014,8 @@
         x.addEventListener("click", (e) => { e.stopPropagation(); removePos(p.id, state.pos); state.expanded = null; render(); });
         tag.append(x); meta.append(tag);
       }
-      who.append(meta);
-      main.append(who);
+      if (meta.childNodes.length) who.append(meta);
+      main.append(who, posc, flag);
       for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const b = el("div", "pct pre", on ? preValue(c.key, p) : ""); if (!on) b.classList.add("off"); else { if (state.sort === c.key && !customOrder()) b.classList.add("sorted"); b.prepend(el("span", "lbl", c.label)); } main.append(b); }
       const sc = el("div", "score", p.type === "H" ? fmtX(st.score) : Math.round(st.score)); if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null; if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) sc.classList.add("hot"); } } if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
       sc.title = p.type === "H" ? `${HEAD.label} ${fmtX(st.score)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl` : "Score"; main.append(sc);
@@ -2031,6 +2062,7 @@
         if (rankMode && !untiered && !tiers[t].length) { const dz = el("li", "tierdrop", "Drop players here"); dz.dataset.tier = t; frag.append(dz); }
       });
     } else { const rows = list.map((p, i) => [p, i]); rows.forEach(([p, i], j) => { if (onPage(i)) emitRow(p, i, rows, j); }); }
+    { const mb = moreButton(list.length, pg); if (mb) { const li = el("li", "moreli"); li.append(mb); frag.append(li); } }
     ol.append(frag);
     fitNameCol();
   }
@@ -2097,36 +2129,37 @@
     }
     const pages = starts.length;
     if (state.page > pages) state.page = pages; if (state.page < 1) state.page = 1;
-    const start = starts[state.page - 1];
-    return { size, pages, page: state.page, start, end: state.page < pages ? starts[state.page] : total };
+    // the lists grow instead of paging (minimal pass 7, Sean, 30 Sep 2026): "page" n shows everything through page n
+    return { size, pages, page: state.page, start: 0, end: state.page < pages ? starts[state.page] : total };
   }
   // a pager bar: "1–50 of 597", first / previous / page numbers / next / last, and rows-per-page
+  // the count over a list ("50 of 267"); the rows grow with Show more at their foot (minimal pass 7: no page numbers)
   function renderPager(box, total, pg, onChange) {
     if (!box) return;
     box.innerHTML = "";
-    const go = (n) => { state.page = Math.min(pg.pages, Math.max(1, n)); (onChange || renderRows)(); const top = box.closest(".board, .fboard") || box; const sb = top.querySelector(".board-scroll, .fscroll"); if (sb) sb.scrollTop = 0; const y = top.getBoundingClientRect().top + window.scrollY - 8; if (window.scrollY > y) window.scrollTo({ top: y }); };
     const setSize = (n) => { state.pageSize = n; state.page = 1; savePrefs(); (onChange || renderRows)(); };
     if (!total) { box.hidden = true; return; }
     box.hidden = false;
-    box.append(el("span", "pcount", pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : `${total} players`));
-    if (pg.pages > 1) {
-      const nav = el("div", "pnav");
-      const b = (label, n, title, dis) => { const x = el("button", "pbtn", label); x.type = "button"; x.title = title; x.disabled = dis; x.addEventListener("click", () => go(n)); return x; };
-      nav.append(b("‹", pg.page - 1, "Previous page", pg.page === 1));   // no « / » (minimal pass 5): the first and last pages are numbered anyway
-      const near = document.documentElement.dataset.view === "mobile" ? 1 : 2;
-      const nums = new Set([1, pg.pages, ...Array.from({ length: 2 * near + 1 }, (_, i) => pg.page - near + i)].filter((n) => n >= 1 && n <= pg.pages));
-      let last = 0;
-      for (const n of [...nums].sort((a, c) => a - c)) {
-        if (n - last > 1) nav.append(el("span", "pgap", "…"));
-        const x = b(String(n), n, `Page ${n}`, false); if (n === pg.page) x.setAttribute("aria-current", "page"); nav.append(x); last = n;
-      }
-      nav.append(b("›", pg.page + 1, "Next page", pg.page === pg.pages));
-      box.append(nav);
-    }
+    box.append(el("span", "pcount", pg.end < total ? `${pg.end} of ${total}` : `${total} ${total === 1 ? "player" : "players"}`));
     if (onChange) box.append(perPageField(setSize));    // the list pages keep theirs in Filters (minimal pass 4); Fantasy here
   }
+  // Show more at the foot of a list: a tap, or just scrolling it into view, adds the next batch (the per-page size)
+  let moreIO = null;
+  function moreButton(total, pg, onChange) {
+    if (moreIO) { moreIO.disconnect(); moreIO = null; }
+    if (pg.end >= total) return null;
+    const b = el("button", "morebtn", `Show more · ${total - pg.end} left`); b.type = "button";
+    let done = false;
+    const go = () => { if (done) return; done = true; if (moreIO) { moreIO.disconnect(); moreIO = null; } state.page = pg.page + 1; (onChange || renderRows)(); };
+    b.addEventListener("click", (e) => { e.stopPropagation(); go(); });
+    if ("IntersectionObserver" in window) {
+      moreIO = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) go(); }, { rootMargin: "0px 0px 300px 0px" });
+      requestAnimationFrame(() => { if (b.isConnected && moreIO) moreIO.observe(b); });
+    }
+    return b;
+  }
   function perPageField(setSize) {
-    const sz = el("label", "field psize"); sz.append(el("span", null, "Per page"));
+    const sz = el("label", "field psize"); sz.append(el("span", null, "Rows at a time"));
     const sel = el("select");
     for (const n of PAGE_SIZES) { const o = el("option", null, n ? String(n) : "All"); o.value = String(n); if (n === (state.pageSize || 0)) o.selected = true; sel.append(o); }
     sel.addEventListener("change", () => setSize(Number(sel.value)));
@@ -3012,7 +3045,16 @@
     if (st.pct) txt.append(renderStrip(p, v));
     const r = el("div", "mrank");
     // only when something is set: "full season" said nothing (Sean, 30 Sep 2026, minimal pass 4)
-    if (st.pct && viewLabel(p.type) !== "full season") r.append(el("span", "vlabel", viewLabel(p.type)));
+    // each filter in effect as a chip with its own × (minimal pass 7, Sean, 30 Sep 2026): see it and clear it in one tap
+    if (st.pct) {
+      const chip = (text, clear) => { const c = el("span", "fchip"); c.append(text); const x = el("button", "fchipx", "×"); x.type = "button"; x.title = "Clear " + text; x.setAttribute("aria-label", x.title);
+        x.addEventListener("click", (e) => { e.stopPropagation(); clear(); savePrefs(); render(); }); c.append(x); r.append(c); };
+      const wl = winLabel(p.type), sp = state.split || {};
+      if (wl && wl !== "full season") chip(wl, () => { state.cardWin = { from: "", to: "", last: "" }; });
+      if (SPLIT.hand !== "all") chip("vs " + SPLIT.hand + "H" + (p.type === "P" ? "B" : "P"), () => { state.split = Object.assign({}, sp, { hand: "all" }); });
+      if (SPLIT.venue !== "all") chip(SPLIT.venue === "home" ? "Home" : "Away", () => { state.split = Object.assign({}, sp, { venue: "all" }); });
+      if (roleOf(SPLIT) !== "all") chip(roleOf(SPLIT) === "sp" ? "As SP" : "As RP", () => { state.split = Object.assign({}, sp, { role: "all" }); });
+    }
     const ts = typeSeg(p); if (ts) r.append(ts);
     txt.append(r);
     txt.append(renderStarControl(p));
@@ -4207,12 +4249,13 @@
     // your starred players
     const starKeys = Object.keys(state.stars), byKey = new Map(DATA.players.map((p) => [p.type + p.id, p]));
     const stars = starKeys.map((k) => byKey.get(k)).filter(Boolean);
-    const sc = card("Your players", stars.length ? null : "Star players from their card (☆ Star) and they'll show up here, with where they stand.", stars.length ? "#rankings" : null, "Rankings →");
+    // no card at all until something is starred (minimal pass 7, Sean, 30 Sep 2026): home is your players and the leaders
+    const sc = stars.length ? card("Your players", null, null) : null;
     if (stars.length) withWindow(NOWIN, () => withSplit(NONE, () => list(sc, stars.slice(0, 8).map((p) => {
       const mm = V(p).m; return p.type === "H" ? [p, f3(mm.xwd), `xwOBA · ${p.pa} PA`] : [p, f2(mm.era), `ERA · ${fmtIP(p.ip || 0)} IP`];
     }))));
     // the season's leaders: xwOBA (300+ PA), Stuff+ and uERA (100+ IP)
-    const lc = card(`${m.season} leaders`, null, "#leaderboard", "Leaderboard →"), three = el("div", "hthree");
+    const lc = card(`${m.season} leaders`, null, null), three = el("div", "hthree");
     withWindow(NOWIN, () => withSplit(NONE, () => {
       const hit = DATA.players.filter((p) => p.type === "H" && (p.pa || 0) >= 300).map((p) => [p, V(p).m.xwd]).filter((r) => r[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 5);
       const pit = DATA.players.filter((p) => p.type === "P" && (p.ip || 0) >= 100);
@@ -5063,11 +5106,12 @@
     const fsig = ["f", f.view, f.grp, f.pos, f.year, f.q, sortKey, f.dir, f.minH, f.minP, fpreset().id, shown.length, JSON.stringify(spec)].join("|");
     if (fsig !== state.pageSig) { state.pageSig = fsig; state.page = 1; }
     const pg = pageWindow(shown.length);
-    const pagerTop = el("div", "pager"), pagerBot = el("div", "pager");
-    const redraw = () => renderFTable(box);
+    const pagerTop = el("div", "pager");
+    const redraw = () => {   // keep the reader's place: the table's own scroll, and the page's (a phone scrolls the page here)
+      const sc0 = box.querySelector(".fscroll"), top = sc0 ? sc0.scrollTop : 0, y = window.scrollY, h = box.offsetHeight;
+      box.style.minHeight = h + "px"; renderFTable(box); box.style.minHeight = "";
+      const sc1 = box.querySelector(".fscroll"); if (sc1) sc1.scrollTop = top; if (window.scrollY !== y) window.scrollTo(0, y); };
     renderPager(pagerTop, shown.length, pg, redraw);
-    // a pager under the rows only where the page itself scrolls (Fantasy on a phone); elsewhere the top one never leaves view
-    if (mobileView()) renderPager(pagerBot, shown.length, pg, redraw);
     wrap.append(pagerTop);
     const table = el("table", "ftable"), thead = el("thead"), tr = el("tr");
     tr.append(el("th", "n", ""), el("th", "who", "Player"));
@@ -5096,7 +5140,7 @@
       tbody.append(trr);
     });
     table.append(tbody);
-    const scroll = el("div", "fscroll"); scroll.append(table); wrap.append(scroll); if (mobileView()) wrap.append(pagerBot);
+    const scroll = el("div", "fscroll"); scroll.append(table); { const mb = moreButton(shown.length, pg, redraw); if (mb) scroll.append(mb); } wrap.append(scroll);
     fFloatHead(wrap, scroll, table);
     if (!shown.length) wrap.append(el("p", "xempty", "No players match."));
     const wtxt = Object.entries(P.w[f.grp]).filter(([, v]) => Number(v)).map(([k, v]) => `${k} ${v > 0 ? "+" : ""}${v}`).join(", ");
@@ -6240,7 +6284,7 @@
   }
   function renderGameLogs(p) {
     ensureIndex();
-    if (state.glFor !== p.type + p.id) { state.glFor = p.type + p.id; state.glKind = null; }   // a new card opens on its own season's games
+    if (state.glFor !== p.type + p.id) { state.glFor = p.type + p.id; state.glKind = null; state.glAll = false; }   // a new card opens on its own season's games
     const kinds = gameKinds(p), want = state.glKind == null ? DS.key : state.glKind ? `${keyBase(DS.key)}-${state.glKind}` : keyBase(DS.key);
     const key = kinds.some(([k]) => k === want) ? want : DS.key;
     const wrap = el("div", "glwrap");
@@ -6260,6 +6304,20 @@
     const q = ds.players.find((x) => x.id === p.id && x.type === p.type);
     wrap.append(q ? withDataset(ds, () => draw(q)) : el("p", "note", `No ${(KINDS.find(([k]) => k === keyKind(key)) || [, "games"])[1].toLowerCase()} games for him in ${keyYear(key)}.`));
     return wrap;
+  }
+  // Game Logs show his last 10 games, oldest of them first, with "Show all" over them (minimal pass 7, Sean, 30 Sep 2026); a
+  // picked game further back shows the whole log
+  const GL_SHOW = 10;
+  function glRows(log, pick) {                         // log is newest first; the table reads oldest first
+    const all = state.glAll || log.length <= GL_SHOW || log.indexOf(pick) >= GL_SHOW;
+    return (all ? log : log.slice(0, GL_SHOW)).slice().reverse();
+  }
+  function glMore(tb, log, pick, cols) {
+    if (log.length <= GL_SHOW || log.indexOf(pick) >= GL_SHOW) return;
+    const tr = el("tr", "glmore"), td = el("td", "l"); td.colSpan = cols;
+    const b = el("button", "linkbtn", state.glAll ? `Show the last ${GL_SHOW}` : `Show all ${log.length} games`); b.type = "button";
+    b.addEventListener("click", (e) => { e.stopPropagation(); state.glAll = !state.glAll; render(); });
+    td.append(b); tr.append(td); tb.append(tr);
   }
   function renderGamesTab(p) {
     const box = el("div", "rollbox uerabox gamesbox");
@@ -6313,7 +6371,8 @@
       if (u && u.pct != null) { paintBar(chip, u.pct); chip.style.color = "#fff"; chip.classList.add("on"); td.title = `uERA ${u.v.toFixed(2)} · would be ${ordinal(u.pct)} pctl among the season's pitchers`; }
       td.append(chip); return td; };
     let onRow = null;
-    for (const g of [...log].reverse()) {
+    glMore(tb, log, pick, heads.length);
+    for (const g of glRows(log, pick)) {
       const tr = el("tr", g === pick ? "on" : null); tr.tabIndex = 0; if (g === pick) onRow = tr;
       const stc = el("td", "plus", g.st == null ? "–" : String(Math.round(g.st))); if (g.st != null) { const ps = plusStyle(g.st); if (ps) { stc.style.background = ps.bg; stc.style.color = ps.fg; } }
       const dl = g.st != null && sea != null ? g.st - sea : null;
@@ -6457,7 +6516,8 @@
     th.append(gr, hr); t.append(th);
     const tb = el("tbody"), f1 = (x) => (x == null ? "–" : x.toFixed(1)), n0 = (x) => String(x || 0);
     let onRow = null;
-    for (const g of [...log].reverse()) {
+    glMore(tb, log, pick, heads.length);
+    for (const g of glRows(log, pick)) {
       const G = g.g, tr = el("tr", g === pick ? "on" : null); tr.tabIndex = 0; if (g === pick) onRow = tr;
       tr.append(el("td", "l", g.date ? fmtDate(g.date) : "–"), chip(g.xw), el("td", null, n0(G.pa)), el("td", null, n0(G.h)), el("td", null, G.hr == null ? "–" : n0(G.hr)), el("td", null, n0(G.bb)),
                 el("td", null, n0(G.k)), el("td", null, g.woba == null ? "–" : fmtX(g.woba)), el("td", "gend", g.luck == null ? "–" : signed(g.luck)),
@@ -6770,7 +6830,7 @@
     // and all, on a faint track — no 10 / 50 / 90 ticks, no dashed rules between rows, no Poor / Average / Great row
     groups.forEach((g, gi) => {
       const G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
-      G.append(mk("rect", { class: "svsecrule", x: 0, y: 34, width: r6, height: 2 }));
+      G.append(mk("rect", { class: "svsecrule", x: 0, y: 35, width: r6, height: 1 }));   // a thin grey rule (minimal pass 7)
       G.append(mk("text", { class: "svsecname", x: 0, y: 28 }, g.title));
       const R = mk("g", { transform: "translate(40,44)" });
       g.rows.forEach((r, i) => {
@@ -6934,6 +6994,7 @@
   // o: { p, st, g, ref, entry (his search-index row), key (the season shown), pick(key) }
   function playerView(box, o) {
     const { p, st, g, ref } = o;
+    noteRecent(p);
     box.append(playerHead(p, st, g, o));
     const page = el("div", "ppage");
     const B = el("div", "pcol pcolB wide");                   // one box, two columns of sections, for hitters and pitchers
@@ -7172,10 +7233,11 @@
     if (!indexReady() || q.length < 2) return [];
     return window.DRAFT_INDEX.players.filter((e) => norm(e.name).includes(norm(q))).slice(0, 10);
   }
-  function renderSearchList(ul, q, onPick) {
+  function renderSearchList(ul, q, onPick, recent) {
     ul.innerHTML = "";
-    const hits = searchHits(q);
+    const hits = recent || searchHits(q);
     ul.hidden = hits.length === 0;
+    if (recent && hits.length) ul.append(el("li", "recenthd", "Recent"));
     for (const e of hits) {
       const li = el("li"); const b = el("button", "addhit"); b.type = "button";
       const years = e.s.map((sv) => sv[1]), span = Math.min(...years) === Math.max(...years) ? String(years[0]) : `${Math.min(...years)}–${Math.max(...years)}`;
@@ -7183,6 +7245,18 @@
       b.addEventListener("click", () => onPick(e));
       li.append(b); ul.append(li);
     }
+  }
+  // the last players whose cards were opened, newest first (minimal pass 7, Sean, 30 Sep 2026): the header search shows them
+  // when it's tapped empty. Per device, like the other conveniences
+  const RECENT_KEY = "draft2027.recent";
+  function noteRecent(p) {
+    try { const a = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]").filter((id) => id !== p.id); a.unshift(p.id); localStorage.setItem(RECENT_KEY, JSON.stringify(a.slice(0, 5))); } catch (_) {}
+  }
+  function recentEntries() {
+    if (!indexReady()) return [];
+    let ids = []; try { ids = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch (_) {}
+    const by = new Map(window.DRAFT_INDEX.players.map((e) => [e.id, e]));
+    return ids.map((id) => by.get(id)).filter(Boolean);
   }
   // the header search: pick a player and go to his page
   function renderGlobalSearch() {
@@ -7192,7 +7266,7 @@
       state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };   // a searched player always opens on his full season
       renderSearchList($("glist"), "", () => {});                      // close the list of hits
       savePrefs(); location.hash = "#player/" + e.id; if (state.mode === "player") render();
-    });
+    }, !state.gq && document.activeElement === $("gq") ? recentEntries() : null);
   }
 
   // MLB headshot with an initials fallback (the hosted artifact can't load outside images)
@@ -7728,13 +7802,13 @@
   $("cq").addEventListener("input", (e) => { state.cq = e.target.value; renderCompare(); });
   $("cq").addEventListener("keydown", (e) => { if (e.key === "Enter") { const first = $("clist").querySelector("button"); if (first) first.click(); } if (e.key === "Escape") { state.cq = ""; e.target.value = ""; renderCompare(); } });
   $("cclear").addEventListener("click", () => { state.cmp.players = []; savePrefs(); render(); });
-  $("gq").addEventListener("focus", ensureIndex);
+  $("gq").addEventListener("focus", () => { ensureIndex(); if (!state.gq) renderGlobalSearch(); });   // empty: the recent players
   $("gq").addEventListener("input", (e) => { state.gq = e.target.value; ensureIndex(); renderGlobalSearch(); });
   $("gq").addEventListener("keydown", (e) => {
     if (e.key === "Enter") { const first = $("glist").querySelector("button"); if (first) first.click(); }
     if (e.key === "Escape") { state.gq = ""; e.target.value = ""; renderGlobalSearch(); }
   });
-  document.addEventListener("click", (e) => { if (!$("gsearch").contains(e.target) && state.gq) { state.gq = ""; $("gq").value = ""; renderGlobalSearch(); } if (!$("ctoolbar").contains(e.target) && state.cq) { state.cq = ""; $("cq").value = ""; renderSearchList($("clist"), "", () => {}); } });
+  document.addEventListener("click", (e) => { if (!$("gsearch").contains(e.target) && !state.gq && !$("glist").hidden) renderSearchList($("glist"), "", () => {}); if (!$("gsearch").contains(e.target) && state.gq) { state.gq = ""; $("gq").value = ""; renderGlobalSearch(); } if (!$("ctoolbar").contains(e.target) && state.cq) { state.cq = ""; $("cq").value = ""; renderSearchList($("clist"), "", () => {}); } });
   $("ref").addEventListener("change", (e) => { state.ref = e.target.value; state.expanded = null; savePrefs(); render(); });
   $("rankreset").addEventListener("click", () => ask(`Reset ${TAB_LABEL[state.pos] || state.pos}?`, "Back to big-board order, tiers and tier names cleared on this tab.", () => { delete state.ranks[state.pos]; delete state.tiers[state.pos]; delete state.tierNames[state.pos]; save(LS.ranks, state.ranks); save(LS.tiers, state.tiers); save(LS.tierNames, state.tierNames); render(); }));
   $("ranksave").addEventListener("click", saveCurrent);
@@ -7755,6 +7829,33 @@
   $("draftorder").addEventListener("change", (e) => { state.draftOrder = e.target.value; savePrefs(); render(); });
   for (const id of ["sort", "ref", "draftorder", "setpick"]) ddSelect($(id));   // the page's own selects open Savant's list too
   const closeModal = () => { if (state.textModal) { state.textModal = null; render(); return; } if (state.panel || state.colPick) { closePanel(true); return; } if (state.tierPick) { state.tierPick = null; render(); return; } if (state.expanded) { state.expanded = null; render(); } };
+  // a phone closes a popup card with a swipe down (minimal pass 7, Sean, 30 Sep 2026): from its header band, or from anywhere
+  // once its body is scrolled to the top. Only closes; there's no swiping between players
+  {
+    const modal = $("modal"); let y0 = null, x0 = 0, dy = 0, panel = null, sc = null;
+    modal.addEventListener("touchstart", (e) => {
+      y0 = null; if (!mobileView() || !state.expanded || !modal.classList.contains("pcard") || e.touches.length !== 1) return;
+      const t = e.target; if (t.closest("input, select, textarea, .btabs, .hstrip, .tscroll, table, .phpop, .ddmenu")) return;
+      sc = modal.querySelector(".cardscroll"); if (!t.closest(".cardtop") && sc && sc.scrollTop > 0) return;
+      panel = modal.querySelector(".modal-panel"); y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; dy = 0;
+    }, { passive: true });
+    modal.addEventListener("touchmove", (e) => {
+      if (y0 == null || !panel) return;
+      const d = e.touches[0].clientY - y0, dx = Math.abs(e.touches[0].clientX - x0);
+      if (dy === 0 && (d <= 0 || dx > Math.abs(d))) { if (Math.abs(d) > 8 || dx > 8) y0 = null; return; }   // up or sideways: leave it alone
+      if (sc && sc.scrollTop > 0 && !e.target.closest(".cardtop")) { y0 = null; return; }
+      dy = Math.max(0, d); panel.style.transition = "none"; panel.style.transform = `translateY(${dy * 0.85}px)`;
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+    const end = () => {
+      if (y0 == null || !panel) { y0 = null; return; }
+      const p = panel; y0 = null;
+      if (dy > 110) { p.style.transition = "transform .16s ease-in"; p.style.transform = "translateY(100vh)"; setTimeout(() => { p.style.transform = ""; p.style.transition = ""; closeModal(); }, 150); }
+      else { p.style.transition = "transform .18s ease-out"; p.style.transform = ""; setTimeout(() => { p.style.transition = ""; }, 200); }
+      dy = 0;
+    };
+    modal.addEventListener("touchend", end); modal.addEventListener("touchcancel", end);
+  }
   /* ---------- the header's two menus: open on hover with a mouse, on a tap without one ---------- */
   (function navMenus() {
     const canHover = () => matchMedia("(hover: hover) and (pointer: fine)").matches;
