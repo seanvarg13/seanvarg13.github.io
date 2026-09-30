@@ -504,8 +504,8 @@ is deploy-limited.
   picker says it); **Filters is dressed as the Hitting / Pitching switch** (a one-button `.seg`, `.phfilt`, pressed while open) and a
   two-way player's switch moves beside it at the end of the PA · G line (on a phone that line runs under the ×, `margin-right: -44px`),
   so the band is a row shorter; **Share** is a small link beside the star (`#player/<id>`, the share sheet or the clipboard); the
-  page behind a popup card is hidden while it's up (`body.cardpop.modal-open main.wrap`, visibility only, so the list keeps its
-  place); **tapping a bar opens a note** under it (`statPop`: the glossary line, the league middle from the pool's sorted list, last
+  page behind a popup card was hidden while it was up and **shown again the same night** (Sean: "i actually dont want the stuff
+  disappearing behind the player card") — don't hide it again unasked; **tapping a bar opens a note** under it (`statPop`: the glossary line, the league middle from the pool's sorted list, last
   season's value and percentile); ▲ / ▼ after a value for a 5+ point percentile move on last season were tried and **dropped the same
   night** (Sean: "get rid of the up and down arrows") — the tap note still gives last season. A pinned section name on a phone (`.secstick`) was tried and taken
   back the same night (Sean didn't like the headers staying) — don't bring it back unasked. Not done at his say: the headshot frame, a narrower label
