@@ -347,6 +347,7 @@ def build_season(year: int, level: str = "aaa"):
     start, end = f"{year}-{SEASONS[year][0]}", f"{year}-{SEASONS[year][1]}"
     bd.SEASON, bd.SEASON_START = year, start
     bd.directional_xwoba = lambda p, tracked, num, den: num.astype(float).copy()   # no sprint speeds in the minors
+    bd.sprint_speeds = lambda: {}                                                      # (nor on the card's Base Running rows)
     bd.log(f"=== {year} {LEVEL_NAME} ===")
     d = bd.pitch_flags(load_milb(start, end) if source == "savant" else load_feed(year, start, end))
     if level in ("aaa", "a"):

@@ -16,10 +16,12 @@ its own, the header has them.
 regular-season qualifiers, so a 99 means "as good as a top-1% regular season"; the sample line shows how few PA it is.
 This October's postseason rebuilds every morning.
 
+**Base Running** (30 Sep 2026): a hitter card's left column ends with Sprint Speed (Baseball Savant), SB, SB attempts and SB%
+(official), each with its percentile among 300+ PA hitters; full season only. They are Leaderboard / Compare columns too.
+
 **The minimal pass, sixth round** (30 Sep 2026): on a card, Filters looks like the Hitting / Pitching switch and sits beside it
 at the end of the PA · G line (the band is a row shorter), the info line has no season, Share (beside the star) sends his card's
-link, the page behind a popup card is hidden, tapping a bar explains the stat with the league middle and last season, a ▲ / ▼
-marks a 5+ point percentile move on last season (a trial).
+link, the page behind a popup card is hidden, tapping a bar explains the stat with the league middle and last season.
 
 **The minimal pass, third round** (29 Sep 2026): rows say positions · PA under the name; rate cells have no % (the column
 header does); the Leaderboard opens on eight stats (Filters ▸ Stats adds more); the card's line is PA · G (IP · G / GS); home has
