@@ -6729,9 +6729,8 @@
         if (on) {
           const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
           C.append(mk("circle", { class: "svbulb", r: 10, fill: s.bub }));
-          // centred by the digits' own height (dy), not dominant-baseline, which iOS Safari places differently (Sean, 30 Sep 2026)
-          // 100 at the same size as every other number, pressed a little narrower to fit the circle, not set smaller (Sean, 30 Sep 2026)
-          C.append(mk("text", Object.assign({ class: "svnum" + (r.pct >= 100 ? " c3" : ""), y: 0, dy: "0.35em" }, r.pct >= 100 ? { textLength: 15.5, lengthAdjust: "spacingAndGlyphs" } : {}), r.pct));
+          // the bubble exactly as it was on the morning of 30 Sep 2026 (Sean: "equal to whatever it was at 9am this morning")
+          C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : ""), y: 1 }, r.pct));
           M.append(C);
         }
         R.append(M);

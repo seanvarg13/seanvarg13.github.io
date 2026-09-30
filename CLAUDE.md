@@ -639,7 +639,9 @@ is deploy-limited.
   as these savant ones and make the circle text always white"): the studio bar once more, but 20px tall like Savant's and white
   digits in every bubble (no navy middle). **Final (Sean, the same night: "never mind just keep the savant ones ... make the bubbles for them the savant
   style too"):** Savant's bars and Savant's bubbles (r 10, 2px ring, white digits), exactly as before the studio page; only the
-  section names in the title's type and the digits centred by `dy` differ. Leave them. A 100 is set at the same size as the other digits and fitted to the circle with `textLength` (Sean: 100 looked much smaller).
+  section names in the title's type and the digits centred by `dy` differ. Leave them. **Reset (Sean, that night: "equal to whatever it was at 9am this morning"):** `pctSvg` is byte-for-byte the 9 am
+  version (main at 89710a8) — bars, bubble, and its digits at `y: 1` in Savant's Roboto Condensed (a 100 at 10px, `.c3`); only
+  the section names keep the title's type. `themes.js` loads Roboto Condensed 700 for those digits alone. Leave all of it.
 * **Type and ground** (Sean, 30 Sep 2026, same page): the whole site is **Barlow Condensed** (`--display`: headings, names, big
   numbers) + **Source Sans 3** (`--body`: everything else), loaded by `themes.js` (`F.studio`, the only font); Roboto
   Condensed is gone. **The swirl is gone**: `nopattern` is always on and the Appearance row is removed; pages sit on
