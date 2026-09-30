@@ -16,9 +16,9 @@ capitals, they're data); buttons and headings are semibold; the background swirl
 pattern turns it off per device, `draft2027.pattern`); the list toolbar is two buttons — position and **Filters**, which
 opens one dropdown with Filters / Stats / Splits & dates / Table as tabs across its top (`GRP_TABS`, `grpTabs()`); rows are
 ~38px on a desktop and a phone's second line is just the team; the pager has no tinted strip; nothing sits under the table
-(its links are in More). On a card, the bottom tabs are words with the open one underlined, grouped: Compare · **Stats**
-(Season, Spreadsheet) · Stuff (pitchers) · Game Logs · Fantasy · **More** (Rolling, Mix, BABIP / nERA, uERA) — a group opens
-the member last used in it, the members as a small row under the strip (`state.pbsub`, not saved); the Poor / Average / Great
+(its links are in More). On a card, the bottom tabs are words with the open one underlined, Compare · Season Stats · Stuff
+(pitchers) · Game Logs · Fantasy · Mix (hitters) / **More** (pitchers: nERA, uERA, as a small row under the strip; `state.pbsub`)
+— Spreadsheet Stats, Rolling and the hitters' BABIP tab came off the strip on 30 Sep 2026; the Poor / Average / Great
 scale heads the first chart only; the no-photo initials are plain, the season picker is a word with a small ▾, the × a plain
 mark.
 

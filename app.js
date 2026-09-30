@@ -5578,8 +5578,9 @@
     box.append(el("p", "note", `Each bar: where his share of that kind of ball ranks among ${pl.ref.length} qualifiers — more of the buckets worth more than the league's average ball (${fmtX(x.lg)}) is better, more of the rest is worse. Lg wOBA: what the league does on it, red the dearest. Mix wOBA, the bottom line, is those values weighted by his shares — what his average ball in play is worth by where and how he hits it (balls in play only: no walks, strikeouts or bunts).`));
     return box;
   }
-  const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["sheet", "Spreadsheet Stats"], ["rolling", "Rolling"], ["fantasy", "Fantasy"]];   // Spreadsheet Stats: its own tab (Sean, 28 Sep 2026)
-  const BTABS_H = [["games", "Game Logs"], ["mix", "Mix"], ["babip", "BABIP"]];                  // a hitter's batted-ball mix, and how much of his line is BABIP
+  // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
+  const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["fantasy", "Fantasy"]];
+  const BTABS_H = [["games", "Game Logs"], ["mix", "Mix"]];                  // a hitter's batted-ball mix
   const BTABS_P = [["stuff", "Stuff"], ["games", "Game Logs"], ["nera", "nERA"], ["uera", "uERA"]];   // his arsenal graded, then his two ERAs, one tab each
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
@@ -5593,9 +5594,10 @@
     // share a word: Stats holds Season and Spreadsheet, More the smaller tabs. A shared word opens the one last used
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => (tabs.find(([x]) => x === k) || [])[1];
+    const has = (k) => tabs.some(([x]) => x === k);
     const groups = [["compare"], ["stats", "sheet"], ...(p.type === "P" ? [["stuff"]] : []), ["games"], ["fantasy"],
-                    ["rolling", ...(p.type === "P" ? ["nera", "uera"] : ["mix", "babip"])]];
-    const GLAB = { stats: "Stats", rolling: "More" };
+                    ["rolling", ...(p.type === "P" ? ["nera", "uera"] : ["mix", "babip"])]].map((G) => G.filter(has)).filter((G) => G.length);
+    const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(lab); };   // nERA / uERA keep their small letter
     const go = (k) => { const y0 = bar.getBoundingClientRect().top, inPop = !!bar.closest("#modal-body"); state.pbtab = k; savePrefs(); render(); anchorTabs(y0, inPop, p); };
     const sub = state.pbsub || (state.pbsub = {});
