@@ -1969,7 +1969,7 @@
       if (seasonSample(p) < effMin(g) && !hasExtra(p, state.pos)) { flag.classList.add("low"); flag.title = `Under the Min ${sampleLabel(g)} — listed after everyone who qualifies; his percentiles are where he'd land among them`; }
       meta.append(flag);
       // the season on the name line (Sean, 30 Sep 2026): each player-season's own year in a span, the span or season otherwise
-      if (state.mode === "leaderboard") meta.append(el("span", "yr", preValue("year", p)));   // a combined player: the seasons he played in the span
+      if (lbMulti()) meta.append(el("span", "yr", preValue("year", p)));   // spans only (minimal pass 4); a combined player: the seasons he played in it
       if (hasExtra(p, state.pos)) {
         const tag = el("span", "added", `added ${state.pos}`);
         const x = el("button", "unadd", "×"); x.type = "button"; x.title = `Remove ${state.pos} from ${p.name}'s eligibility`;
@@ -2119,11 +2119,14 @@
       nav.append(b("›", pg.page + 1, "Next page", pg.page === pg.pages), lastb);
       box.append(nav);
     }
-    const sz = el("label", "psize"); sz.append(el("span", null, "Per page"));
+    if (onChange) box.append(perPageField(setSize));    // the list pages keep theirs in Filters (minimal pass 4); Fantasy here
+  }
+  function perPageField(setSize) {
+    const sz = el("label", "field psize"); sz.append(el("span", null, "Per page"));
     const sel = el("select");
     for (const n of PAGE_SIZES) { const o = el("option", null, n ? String(n) : "All"); o.value = String(n); if (n === (state.pageSize || 0)) o.selected = true; sel.append(o); }
     sel.addEventListener("change", () => setSize(Number(sel.value)));
-    sz.append(sel); box.append(sz); ddSelect(sel);
+    sz.append(sel); ddSelect(sel); return sz;
   }
 
   // a metric's value for display: season / window values live on V(p).m, pool-derived ones (underlying ERA) on the stats
@@ -3004,7 +3007,8 @@
     const v = V(p);
     if (st.pct) txt.append(renderStrip(p, v));
     const r = el("div", "mrank");
-    if (st.pct) r.append(el("span", "vlabel", viewLabel(p.type)));
+    // only when something is set: "full season" said nothing (Sean, 30 Sep 2026, minimal pass 4)
+    if (st.pct && viewLabel(p.type) !== "full season") r.append(el("span", "vlabel", viewLabel(p.type)));
     const ts = typeSeg(p); if (ts) r.append(ts);
     txt.append(r);
     txt.append(renderStarControl(p));
@@ -4335,6 +4339,9 @@
     if (state.mode === "draft") prose.push(Object.assign(el("div"), { innerHTML: `<b>Draft mode</b> — <b>Draft from</b> picks the order: the big board, your working rankings, or any set you saved on the Rankings page (tiers included). Drafted players are saved in this browser, so you can close the tab and come back mid-draft. “Show drafted” keeps them on the board, dimmed.` }));
     btns.append(el("span", "nsep", "·"), link("Stat glossary", renderGlossary), el("span", "nsep", "·"), link("How this page works", () => { const b = el("div", "prose"); b.append(...prose); return b; }),
       el("span", "nsep", "·"), renderViewSwitch());
+    // the data's date lives here now, not in the desktop header (Sean, 30 Sep 2026, minimal pass 4)
+    { const x = el("li", "morestamp"); const thr = new Date(m.through + "T12:00:00");
+      x.textContent = `Games through ${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`; x.title = `${m.season} Statcast through ${m.through} (built ${m.built})`; mm.append(x); }
   }
 
   // the comparison's column heads stick under the card's pinned plate, so they need its height
@@ -4348,7 +4355,10 @@
       else {
         const mb = cardSc(), bar = mb.querySelector(".pbelow2 .btabs");
         const top = mp.getBoundingClientRect().top - mb.getBoundingClientRect().top + mb.scrollTop;
-        mp.style.height = Math.max(360, Math.round(mb.clientHeight - top - (bar ? bar.getBoundingClientRect().height + 22 : 0) - 12)) + "px";
+        // never taller than its charts, so the tab strip sits right under them instead of past an empty stretch (Sean, 30 Sep
+        // 2026, minimal pass 4: "close the gap"); the card itself keeps its size
+        mp.style.minHeight = "0"; mp.style.height = "auto"; const natural = Math.ceil(mp.getBoundingClientRect().height);
+        mp.style.height = Math.min(natural, Math.max(360, Math.round(mb.clientHeight - top - (bar ? bar.getBoundingClientRect().height + 22 : 0) - 12))) + "px";
       }
     }
     const pg = document.querySelector("#xboard .ppage");
@@ -5060,7 +5070,7 @@
       cols.forEach((c, j) => {
         const v = c.get(r), td = el("td", c.num ? "num" : "txt", c.fmt ? c.fmt(v) : String(v ?? "–"));
         // colour only what you're sorting by, plus the signed Trend / Δ (every rate column in red and blue was a wall of colour)
-        if (c.paint && v != null && (c.label === sortKey || c.label === "Trend" || c.label === "Δ")) { const pct = pcts[c.label][i]; if (pct != null) paint(td, pct); td.classList.add("pc"); }
+        if (c.paint && v != null && (c.label === sortKey || c.label === "Trend" || c.label === "Δ")) { const pct = pcts[c.label][i]; if (pct != null) paint(td, pct); td.classList.add("pc"); if (c.label === sortKey) td.classList.add("fsorted"); }
         trr.append(td);
       });
       // the table's place is noted first: its card opens without a full render, and closing one redraws the table from the top
@@ -7101,7 +7111,8 @@
     const img = el("img", "mug"); img.alt = ""; img.loading = "lazy";
     // MLB's cut-out ("silo") portrait — head and shoulders on a transparent background, the way Savant shows them
     img.src = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:silo:current.png/w_240,q_auto:best/v1/people/${id}/headshot/silo/current`;
-    img.addEventListener("error", () => { const f = el("div", "mug initials", (name || "?").split(" ").map((w) => w[0]).slice(0, 2).join("")); img.replaceWith(f); });
+    // no photo: an empty tile of the same size (the grey initials went in the minimal pass 4, Sean, 30 Sep 2026)
+    img.addEventListener("error", () => { const f = el("div", "mug initials"); f.setAttribute("aria-hidden", "true"); img.replaceWith(f); });
     return img;
   }
 
@@ -7255,7 +7266,9 @@
     if (state.mode === "trending") { const t = trendCfg(); bits.push(t.unit === "days" ? `last ${t.days} days` : `last ${t[t.unit]} ${unit}`); bits.push(`${trendMin()}+ ${unit} in span`); }
     else { const w = winIdx(); if (w) bits.push(state.win.days ? `last ${state.win.days} days` : winLabel()); bits.push(noMin() ? "everyone" : `${state.min[g]}+ ${unit}`); }
     if (state.mode === "leaderboard" && lbKey() !== CUR.key) { const ds = histDataset(lbKey()); if (ds && (ds.refPA < 100 || ds.minScale > 1)) bits.push(`(${withDataset(ds, () => effMin(g))}+ ${ds.multi && !ds.each ? "over the span" : "here"})`); }
-    $("tsum").hidden = state.editRanks;              // editing ranks: the row belongs to the tier tools
+    // editing ranks: the row belongs to the tier tools; the Leaderboard and Trending show no summary at all since the minimal
+    // pass 4 (Sean, 30 Sep 2026) — the Filters count and the column header already say it
+    $("tsum").hidden = state.editRanks || state.mode === "leaderboard" || state.mode === "trending";
     $("teambtn").textContent = teamLabel(state.teamF); $("teambtn").classList.toggle("on", !!state.teamF); $("teamclear").hidden = !state.teamF;
     // the one visible line: the tab, the season if it isn't this one, the team filter, then everything in effect
     const tab = TAB_LABEL[state.pos] || state.pos;
@@ -7409,6 +7422,7 @@
     if (sorting || pit || minNode) {
       const b = el("div", "psec"); b.append(el("h4", null, "Order and minimum"));
       const r = el("div", "prow"); if (sorting) r.append(sf); if (minNode) r.append(minNode); if (pit) r.append($("reffield"));
+      r.append(perPageField((n) => { state.pageSize = n; state.page = 1; savePrefs(); renderRows(); }));
       b.append(r);
       if (minNode && !trending) b.append(el("p", "note", lbMulti() ? "The minimum is per season; a combined span multiplies it by the seasons in it." : `The minimum is who is listed; percentiles are always against ${pit ? "pitchers with 300+ batters faced" : "hitters with 300+ PA"} on the season.`));
       if (pit) b.append(el("p", "note", "Rank vs sets the pool a pitcher's percentiles are measured against — his own (starters or relievers) or all pitchers."));

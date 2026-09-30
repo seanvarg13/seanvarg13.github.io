@@ -3435,3 +3435,24 @@ body[data-mode="rankings"] #rankcount { display: none; }
    looks"): the condensed face at 600 in navy, 24px on a desktop and 19px on a phone, like .pthd */
 .svpct .svsecname { font-family: var(--display); font-size: 24px; font-weight: 600; letter-spacing: 0; fill: var(--ink); }
 :root[data-view="mobile"] .svpct .svsecname { font-size: 19px; }
+/* minimal pass 4 (Sean, 30 Sep 2026): every heading inside a card's tabs — Season Stats, Game Logs, Fantasy, uERA, Mix,
+   Compare — in the card title's type, like the percentile sections: condensed 600, navy, 24px (19px on a phone), a 2px
+   navy rule under it */
+:root:root .rollhd .rollname, :root:root .sechd .secname, :root:root .cgrid .cgroup {
+  font-family: var(--display); font-weight: 600; font-size: 24px; line-height: 1.1; letter-spacing: 0; text-transform: none; color: var(--ink); }
+:root:root[data-view="mobile"] .rollhd .rollname, :root:root[data-view="mobile"] .sechd .secname, :root:root[data-view="mobile"] .cgrid .cgroup { font-size: 19px; }
+:root:root .sechd, :root:root .rollhd { border-bottom-color: var(--ink); }
+:root:root .cgrid .cgroup { border-bottom: 2px solid var(--ink); }
+/* minimal pass 4 (Sean, 30 Sep 2026) */
+/* Fantasy: just the "More about these numbers" link under the table until it's opened */
+:root:root .fnote:not(.open) { display: none; }
+/* the data's date moved from the desktop header into the More menu */
+.stamp { display: none !important; }
+#moremenu .morestamp { padding: 8px 14px 6px; border-top: 1px solid var(--hair); color: var(--muted); font-size: 12.5px; cursor: default; }
+/* the sorted column: its percentile colour as a light tint (the surface laid over it) with navy digits, not a solid block */
+#rows .pct.hot, #rows .score.hot { background-image: linear-gradient(color-mix(in srgb, var(--surface) 58%, transparent), color-mix(in srgb, var(--surface) 58%, transparent)) !important; color: var(--ink) !important; }
+/* the per-page box sits in Filters beside the minimum */
+.prow .psize { display: inline-flex; align-items: center; gap: 6px; }
+.prow .psize { margin-left: 0; }
+:root[data-view="mobile"] .prow .psize > span:first-child { display: inline; }
+.ftable td.fsorted { background-image: linear-gradient(color-mix(in srgb, var(--surface) 58%, transparent), color-mix(in srgb, var(--surface) 58%, transparent)) !important; color: var(--ink) !important; font-weight: 700; }
