@@ -3530,3 +3530,14 @@ body.cardpop.modal-open main.wrap, body.cardpop.modal-open > footer { visibility
 :root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap > .toolbar:not(:has(.winnote:not(:empty))) { display: none; }
 :root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap { padding-bottom: 0; }
 :root:root[data-view="mobile"] body:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap { margin-top: calc(10px + env(safe-area-inset-bottom, 0px) / 2); margin-bottom: 0; }
+/* a phone's Leaderboard / Trending: Filters in the blue bar too, the toolbar row above it gone unless it has a note */
+:root[data-view="mobile"] body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap > .toolbar:not(:has(.winnote:not(:empty))) { display: none; }
+:root[data-view="mobile"] #pagertop > .tbtns { margin-right: 8px; }
+:root[data-view="mobile"] #pagertop > .tbtns .tbtn { height: 30px; min-height: 30px; padding: 0 10px; }
+/* Filters in the blue bar keeps the toolbar's look (Sean, 30 Sep 2026: "subtle differences"): white with a thin light-blue
+   outline, filled light blue while open or in effect — not the pager's navy page button */
+:root:root:root #pagertop .tbtns .tbtn { background: var(--surface); color: var(--rule); border: 1px solid var(--accent-2); height: 34px; min-height: 34px; font-size: 12px; padding: 0 12px; box-shadow: none; }
+:root:root:root #pagertop .tbtns .tbtn:hover { background: color-mix(in srgb, var(--accent-2) 18%, var(--surface)); }
+:root:root:root #pagertop .tbtns .tbtn.on, :root:root:root #pagertop .tbtns .tbtn[aria-expanded="true"] { background: var(--accent-2); color: var(--rule); border-color: var(--accent-2); }
+:root:root:root[data-view="mobile"] #pagertop .tbtns .tbtn { height: 30px; min-height: 30px; padding: 0 10px; }
+:root[data-view="mobile"] body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap { background: none; border: 0 !important; padding-inline: 4px; padding-bottom: 0; }   /* 10px all round */

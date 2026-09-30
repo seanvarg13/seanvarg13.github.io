@@ -29,7 +29,7 @@ their old format (two-line list rows, numbered pages, every game in Game Logs).
 **Desktop lists** (30 Sep 2026): on a computer the Leaderboard and Trending have no white card; the Filters button sits in the
 blue bar with the page numbers and the table fills the space. The Stuff+ board, League Trends, Call-up Watch and the Weekly Planner
 drop their boxes the same way, with their filters over the table. The Leaderboard and Trending sit centred, with the
-same space under the header as above the bottom of the screen, on a phone too.
+same space under the header as above the bottom of the screen, on a phone too; on a phone Filters is in the blue bar too and the white card is gone.
 
 **Card scrolling on a computer** (30 Sep 2026): the percentile charts show at full height and the tabs (Season Stats, Game
 Logs…) sit under them; scroll the card to reach them, as on a phone.

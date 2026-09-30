@@ -534,6 +534,9 @@ is deploy-limited.
   layout keep the card. **Centred** (Sean, 30 Sep 2026): the Leaderboard / Trending table sits with equal space under the header
   and above the bottom — on a desktop 18px each (the empty toolbar row and the card's bottom padding go), on a phone the two 10px
   gaps plus the home-bar strip split evenly (`margin-top: 10px + inset / 2`, no bottom margin).
+  **Phones too** (Sean, the same evening: "keep that and actually apply it to mobile"): Filters in the blue bar and no white card on
+  a phone's Leaderboard / Trending, 10px round the table. In the bar, Filters keeps the toolbar's look — white, thin light-blue
+  outline, light blue while open or in effect (`#pagertop .tbtns .tbtn`), not the pager's navy page button.
 * **Desktop card scrolls as one** (Sean, 30 Sep 2026: the tab strip "always visible at the bottom ... i dont like that"): the
   percentile box on a desktop card is its charts' full height (`sizePPage`'s `#modal-body` branch sets the natural height, no cap),
   so it never scrolls on its own and the tab strip sits under the last section, reached by scrolling the card like a phone's.

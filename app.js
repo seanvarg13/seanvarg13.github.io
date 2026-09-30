@@ -2130,14 +2130,14 @@
     return { size, pages, page: state.page, start, end: state.page < pages ? starts[state.page] : total };
   }
   // a pager bar: "1–50 of 597", first / previous / page numbers / next / last, and rows-per-page
-  // On a desktop the Leaderboard's and Trending's Filters button rides in the pager's blue bar, and the white card around the
+  // The Leaderboard's and Trending's Filters button rides in the pager's blue bar (a phone's too, since 30 Sep 2026 evening), and the white card around the
   // list goes (Sean, 30 Sep 2026: "stick the filters button into the blue bar ... make the leaderboard itself bigger"). It is
-  // taken back to its toolbar before the bar is redrawn, and stays there on a phone and on every other page
+  // taken back to its toolbar before the bar is redrawn, and stays there on every other page
   const inBarModes = ["leaderboard", "trending"];
   function seatFilters(box, total) {
     const tb = $("tbtns"), home = $("toolrow") && $("toolrow").querySelector(".tools");
     if (!tb || !home) return;
-    const want = box && box.id === "pagertop" && total && !mobileView() && inBarModes.includes(state.mode);
+    const want = box && box.id === "pagertop" && total && inBarModes.includes(state.mode);   // a phone too (Sean, 30 Sep 2026)
     document.body.classList.toggle("filtbar", !!want);
     if (want) box.prepend(tb); else if (tb.parentNode !== home) home.prepend(tb);
   }
@@ -4485,7 +4485,7 @@
     const wasCard = !$("modal").hidden;
     if (!wasCard) noteList();
     renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage(); ddSync();
-    if (!inBarModes.includes(state.mode) || mobileView()) seatFilters(null);   // Filters back on its toolbar off the Leaderboard / Trending
+    if (!inBarModes.includes(state.mode)) seatFilters(null);   // Filters back on its toolbar off the Leaderboard / Trending
     if (ddOpen && !ddOpen.trig.isConnected) ddClose();   // a list whose opener was redrawn away
     keep();
     if (wasCard && $("modal").hidden && listAt && listAt.mode === state.mode) {
