@@ -6709,7 +6709,8 @@
         if (on) {
           const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
           C.append(mk("circle", { class: "svbulb", r: 11.5, fill: s.bub }));
-          C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : "") + (r.pct >= 38 && r.pct <= 62 ? " mid" : ""), y: 1 }, r.pct));   // the grey middle takes navy digits
+          // centred by the digits' own height (dy), not dominant-baseline, which iOS Safari places differently (Sean, 30 Sep 2026)
+          C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : "") + (r.pct >= 38 && r.pct <= 62 ? " mid" : ""), y: 0, dy: "0.35em" }, r.pct));   // the grey middle takes navy digits
           M.append(C);
         }
         R.append(M);

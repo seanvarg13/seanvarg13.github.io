@@ -3430,3 +3430,4 @@ body[data-mode="rankings"] #rankcount { display: none; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ground: color-mix(in srgb, var(--accent-2) 7%, #0b1424); } }
 :root[data-theme="dark"] { --ground: color-mix(in srgb, var(--accent-2) 7%, #0b1424); }
 :root.nopattern body, :root.nopattern .modal.pagebg .modal-back { background: var(--ground); }
+.svpct .svnum { dominant-baseline: auto; font-variant-numeric: tabular-nums; }
