@@ -510,6 +510,22 @@ is deploy-limited.
   night** (Sean: "get rid of the up and down arrows") — the tap note still gives last season. A pinned section name on a phone (`.secstick`) was tried and taken
   back the same night (Sean didn't like the headers staying) — don't bring it back unasked. Not done at his say: the headshot frame, a narrower label
   column, darker middle bubbles, swiping between players.
+* **The minimal pass, seventh round** (Sean, 30 Sep 2026: "I like these all except don't do 1 yet"): **thin frames** — the list
+  card, popup card, its tabs' box, home cards, the header and band rules at 1px (`--lift-line` too); **section rules** under the
+  percentile charts' and the card tabs' headings a thin grey (`--secrule`; `svsecrule` is a 1px rect); **one-line list rows** —
+  positions and PA / IP are two small grey grid columns after the name (`.mcol`, `--posw` / `--paw` in every `.grid` template; the
+  colhead has Pos / PA headers), the meta line only for a span's year or an added position; **Show more instead of pages** —
+  `pageWindow` returns `start: 0`, so "page" n is everything through page n; `moreButton` at the list's foot (Leaderboard, Trending,
+  Rankings, Draft board, Fantasy) adds the next batch on a tap or when scrolled into view (IntersectionObserver), the strip says
+  "50 of 267", Filters' size is "Rows at a time"; Fantasy's redraw keeps the table's and the page's scroll; **recent players** — the
+  header search, tapped empty, lists the last 5 cards opened (`noteRecent` in `playerView`, `draft2027.recent`, per device);
+  **press and hold a column name** on the lists for its note (`holdNote` / `colNote`: glossary + the pool's middle; a tap still
+  sorts); **filter chips** on the card — each filter in effect (dates, hand, home / away, SP / RP) a chip with its own × in `.mrank`;
+  **swipe down to close** a popup card on a phone (from the band, or anywhere once scrolled to the top; closes only — swiping between
+  players was declined); **Game Logs** show the last 10 games with "Show all N games" over them (`glRows` / `glMore`,
+  `state.glAll`, reset per card); **home** is the leaders card (full width, one-line rows with the team small beside the name) plus
+  Your players only once something is starred. Idea 1 (the info line up on the season line) is shown in the Card Header Comparison
+  artifact, not built.
 * **Base Running** (hitter card, the last section — end of the right column, after Batted-Ball Distribution; Sean, 30 Sep 2026): Sprint Speed (Savant's, ft/s, 5+
   competitive runs — `sprint_speeds()`, the model's own feature), SB, SB Att. (SB + CS) and SB% (none without an attempt), official
   from the MLB Stats API's season line (`mlb_people` → `baserunning()` in `build_data.py`, `m.spd / sb / sba / sbp`). Percentiles like

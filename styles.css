@@ -246,7 +246,7 @@ button { cursor: pointer; }
 /* shared grid for header + rows */
 .grid {
   display: grid;
-  grid-template-columns: var(--rankw, 44px) minmax(var(--namew, 180px), 1fr) var(--pre1, 0px) var(--pre2, 0px) 56px repeat(var(--n), var(--colw, 42px)) var(--act, 0px);
+  grid-template-columns: var(--rankw, 44px) minmax(var(--namew, 180px), 1fr) var(--posw, 64px) var(--paw, 44px) var(--pre1, 0px) var(--pre2, 0px) 56px repeat(var(--n), var(--colw, 42px)) var(--act, 0px);
   column-gap: 6px; align-items: center;
 }
 .colhead {
@@ -1316,12 +1316,12 @@ body.modal-open { position: fixed; inset: 0; width: 100%; overflow: hidden; }
 /* the wheel over a table scrolls the page (the boxes only own sideways scrolling) */
 .board-scroll, .fscroll, .colwrap, .fhead-clip { overscroll-behavior-y: auto; }
 /* lists: a little more air, values in roomier chips, the name column capped so few stats don't stretch it */
-.grid { grid-template-columns: var(--rankw, 44px) minmax(var(--namew, 180px), 300px) var(--pre1, 0px) var(--pre2, 0px) 56px repeat(var(--n), var(--colw, 42px)) var(--act, 0px) minmax(0, 1fr); }
+.grid { grid-template-columns: var(--rankw, 44px) minmax(var(--namew, 180px), 300px) var(--posw, 64px) var(--paw, 44px) var(--pre1, 0px) var(--pre2, 0px) 56px repeat(var(--n), var(--colw, 42px)) var(--act, 0px) minmax(0, 1fr); }
 .row-main { padding: 8px 12px; }
 .pct { margin: 0 4px; height: 26px; }
 .score { margin: 0 4px; }
 .colhead { padding-top: 8px; padding-bottom: 8px; }
-:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) minmax(var(--namew, 142px), 1fr) var(--pre1, 0px) var(--pre2, 0px) 50px repeat(var(--n), 46px) var(--act, 0px) minmax(0, 1fr); }
+:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) minmax(var(--namew, 142px), 1fr) var(--posw, 64px) var(--paw, 44px) var(--pre1, 0px) var(--pre2, 0px) 50px repeat(var(--n), 46px) var(--act, 0px) minmax(0, 1fr); }
 :root[data-view="mobile"] .row-main { padding: 4px 6px; }
 :root[data-view="mobile"] .pct { margin: 0 2px; height: 24px; }
 
@@ -1407,8 +1407,8 @@ body[data-density="compact"] .pct { height: 22px; font-size: 11.5px; }
 body[data-density="compact"] .name { font-size: 13px; }
 body[data-density="compact"] .meta { font-size: 11px; }
 /* the name column fills whatever the stats leave (Savant): no cap, no filler */
-.grid { grid-template-columns: var(--rankw, 44px) minmax(var(--namew, 180px), 1fr) var(--pre1, 0px) var(--pre2, 0px) 56px repeat(var(--n), var(--colw, 42px)) var(--act, 0px); }
-:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) minmax(var(--namew, 142px), 1fr) var(--pre1, 0px) var(--pre2, 0px) 50px repeat(var(--n), 46px) var(--act, 0px); }
+.grid { grid-template-columns: var(--rankw, 44px) minmax(var(--namew, 180px), 1fr) var(--posw, 64px) var(--paw, 44px) var(--pre1, 0px) var(--pre2, 0px) 56px repeat(var(--n), var(--colw, 42px)) var(--act, 0px); }
+:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) minmax(var(--namew, 142px), 1fr) var(--posw, 64px) var(--paw, 44px) var(--pre1, 0px) var(--pre2, 0px) 50px repeat(var(--n), 46px) var(--act, 0px); }
 .trow { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; }
 .trow b { display: block; font-size: 13px; }
 .trow small { display: block; color: var(--muted); font-size: 12px; }
@@ -1417,7 +1417,7 @@ body[data-density="compact"] .meta { font-size: 11px; }
 /* stats never squeeze: fixed, roomy columns — more stats make the table wider (scroll sideways), not tighter */
 .pct { margin: 0 6px; }
 .score { margin: 0 6px; margin-left: 18px; }
-:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) minmax(var(--namew, 142px), 1fr) var(--pre1, 0px) var(--pre2, 0px) 54px repeat(var(--n), 54px) var(--act, 0px); }
+:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 30px) minmax(var(--namew, 142px), 1fr) var(--posw, 64px) var(--paw, 44px) var(--pre1, 0px) var(--pre2, 0px) 54px repeat(var(--n), 54px) var(--act, 0px); }
 :root[data-view="mobile"] .pct { margin: 0 3px; }
 .search { flex: 1 1 180px; }
 
@@ -3494,3 +3494,40 @@ body.cardpop.modal-open main.wrap, body.cardpop.modal-open > footer { visibility
 /* No bold anywhere (Sean, 30 Sep 2026: "keep everything unbolded ... it looks more minimalistic") — every face at its regular
    400, headings, names and numbers included, except the percentile bubbles' digits, which stay Savant's (Roboto Condensed 700). */
 :root:root :not(.svnum) { font-weight: 400 !important; }
+/* Minimal pass 7 (Sean, 30 Sep 2026). Thinner frames: the cards, the list pages' white card, the popup card, its tabs' box and
+   the header rules at 1px instead of 2-3px; section rules (the percentile charts' and the card tabs' headings) a thin grey
+   line instead of a heavy navy one. */
+:root { --lift-line: 1px solid var(--rule); --secrule: color-mix(in srgb, var(--ink) 20%, var(--surface)); }
+:root:root:root :is(#xboard, .btabbody, .modal-panel, main.wrap, section.hcard) { border-width: 1px !important; }
+:root:root:root .phead .mplate { border-bottom-width: 1px; }
+:root:root:root header.top { border-bottom-width: 1px; }
+:root:root:root .svpct .svsecrule { fill: var(--secrule); }
+:root:root:root .cgrid .cgroup { border-bottom: 1px solid var(--secrule); }
+:root:root:root :is(.sechd, .rollhd) { border-bottom: 1px solid var(--secrule); }
+/* one-line list rows (minimal pass 7): positions and PA / IP as two small grey columns after the name */
+:root:root #rows .row-main > .mcol, :root:root #colhead > .mcol { font-size: 12px; color: var(--muted); background: none !important; justify-content: center; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root:root #rows .row-main > .flag.low { color: var(--muted); opacity: .6; }
+:root[data-view="mobile"] .grid { --posw: 54px; --paw: 40px; }
+:root:root #rows .who { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+:root:root #rows .who .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+:root:root #rows .who .meta { margin: 0; flex: none; }
+/* Show more at the foot of a list (minimal pass 7: no page numbers) */
+#rows li.moreli { list-style: none; display: flex; justify-content: center; padding: 12px 8px 16px; border: 0; background: none; }
+.morebtn { display: block; margin: 12px auto 16px; min-height: 34px; padding: 0 18px; border: 1px solid var(--accent-2); background: var(--surface); color: var(--ink); font: 400 14px var(--body); cursor: pointer; }
+#rows li.moreli .morebtn { margin: 0; }
+.morebtn:hover, .morebtn:focus-visible { background: color-mix(in srgb, var(--accent-2) 24%, var(--surface)); outline: none; }
+.pager .pcount { color: var(--muted); }
+#glist li.recenthd { padding: 6px 12px 2px; font-size: 12px; color: var(--muted); list-style: none; }
+.holdpop { z-index: 60; } #colhead .h { -webkit-touch-callout: none; user-select: none; }
+/* the card's filter chips (minimal pass 7) */
+.phead .mrank .fchip { display: inline-flex; align-items: center; gap: 2px; height: 24px; padding: 0 2px 0 8px; border: 1px solid var(--accent-2); background: var(--surface); color: var(--ink); font-size: 12px; white-space: nowrap; }
+.phead .mrank .fchipx { border: 0; background: none; color: var(--ink-2); font-size: 15px; line-height: 1; padding: 0 5px; cursor: pointer; }
+.phead .mrank .fchipx:hover { color: var(--ink); }
+.phead .mrank:has(.fchip) { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 6px; }
+:root:root .glog tr.glmore td { text-align: left; padding: 6px 10px; background: var(--surface); position: static; } .glog tr.glmore .linkbtn { font-size: 13px; }
+/* home (minimal pass 7): leader and starred rows on one line — name, team small and grey beside it, value at the right */
+:root:root .hub.home .hlist li { grid-template-columns: 18px minmax(0, 1fr) auto auto; grid-template-areas: "n name team val"; column-gap: 8px; padding: 5px 0; }
+:root:root .hub.home .hlist li .hname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+:root:root .hub.home .hgrid > .hcard:only-child { grid-column: 1 / -1; }
+:root:root .hub.home .hlist li .hteam { font-size: 12px; color: var(--muted); }
+:root:root .hub.home .hlist li .hside { display: none; }
