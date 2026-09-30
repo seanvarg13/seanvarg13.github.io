@@ -11,6 +11,11 @@ menus and `HOME_SECS` the home page's cards. Since the minimal pass (29 Sep 2026
 current one underlined, and the home page opens on one line (games through / updated) — no title, search or page buttons of
 its own, the header has them.
 
+**Postseason and spring training on a card** (30 Sep 2026): the title's "MLB ▾" also offers **MLB PS** (postseason) and **MLB ST**
+(spring training) for the years he has them. Those percentiles compare his October / spring numbers with that year's
+regular-season qualifiers, so a 99 means "as good as a top-1% regular season"; the sample line shows how few PA it is.
+This October's postseason rebuilds every morning.
+
 **The minimal pass, third round** (29 Sep 2026): rows say positions · PA under the name; rate cells have no % (the column
 header does); the Leaderboard opens on eight stats (Filters ▸ Stats adds more); the card's line is PA · G (IP · G / GS); home has
 no "Every page" tiles; Rankings is one toolbar row; Fantasy's positions are a pill and its search is under Filters; panel

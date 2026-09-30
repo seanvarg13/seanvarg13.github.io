@@ -161,7 +161,8 @@ def main():
             ok = ok and run("build_history.py", kind, *ys)
         for lvl, ys in milb.items():
             ok = ok and run("build_milb.py", lvl, *ys)
-        ok = ok and run("build_career.py") and (run("build_trends.py") or True) and publish(f"rescored {' '.join(toks)}", end, a.dry)
+        # the search index too, so a newly built spring / postseason shows in the cards' MLB dropdown
+        ok = ok and run("build_history.py", "index") and run("build_career.py") and (run("build_trends.py") or True) and publish(f"rescored {' '.join(toks)}", end, a.dry)
         sys.exit(0 if ok else 1)
     steps = set(a.steps.split(","))
     ok = True
@@ -172,6 +173,10 @@ def main():
         # Stuff+ graded against MLB pitch types — and publish it; a failure costs only the spring file
         if ok and end[5:7] in ("02", "03") and run("build_history.py", "spring", year):
             publish("spring training", end, a.dry)
+        # the postseason (Sean, 30 Sep 2026: MLB PS on the cards): from late September into November, rebuild this October's
+        # dataset every morning (no games yet = no file, harmlessly); the index step below then offers it on the cards
+        if ok and end[5:7] in ("09", "10", "11"):
+            run("build_history.py", "post", year)
     if ok and "minors" in steps:
         ok = (run("build_milb.py", "aaa", year)
               and run("build_milb.py", "aa", "ap", "a", year)

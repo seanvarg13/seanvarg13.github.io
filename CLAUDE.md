@@ -630,6 +630,16 @@ is deploy-limited.
   except the Stuff+ board's **Games: Spring training** option (`pb.src`, `springKey`: next year's spring once built, else this
   one's), which reads `hist/mlb-<year>-spring.js`; a name opens his spring card as the list popup (`state.cardDs` = the spring key; `renderModal` keeps it only on that board). EV-based stats are thinner there.
 
+* **Postseason and spring on the cards** (Sean, 30 Sep 2026: "a dropdown on the MLB and say PS and spring training ST"): the
+  card title's level dropdown (`pageTitle`) offers **MLB PS** / **MLB ST** beside MLB for any year he has them — `indexReady()`
+  keeps each player's spring / postseason seasons aside in `e.k` instead of dropping them, `KIND_TAG` gives the short labels.
+  Those percentiles are **against that year's regular-season qualifiers** (full season, same hand / venue split): `pool()` hands a
+  spring / postseason dataset to `kindPool`, which takes the regular season's reference arrays (`regularOf`) and places every
+  spring / October line among them; the dataset's `consts` are the regular season's too. A card waits for the regular season's
+  file before ranking. Build: `build_history.py post <year>` grades postseason Stuff+ on that year's regular season and the two
+  before; `cloud_daily.py` rebuilds this year's postseason every morning Sep–Nov (the minors step's index then offers it), and a
+  `rescore` run now rebuilds the index too (`post-2026` / `spring-2027` tokens).
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
