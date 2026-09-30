@@ -3353,3 +3353,14 @@ body[data-mode="rankings"] #rankcount { display: none; }
 /* ... and Star / Filters take the plain text colour too (their --rule text was near-black on a dark band in dark mode) */
 :root:root:root .phead .starbtn, :root:root:root .phead .starbtn:not(.phtoggle), :root:root:root .phead .starbtn.on,
 :root:root:root .phead .starbtn[aria-expanded="true"], :root:root:root .phead .starbtn.phtoggle.on { color: var(--ink); }
+/* iPhones with a home bar (Sean's 17, 30 Sep 2026: the lists and cards ran "into the weird bottom area"): the standing list
+   card and the popup card stop above the home-bar strip — env(safe-area-inset-bottom), 0 where there isn't one — as well
+   as their usual gap */
+:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-mode="planner"]) main.wrap {
+  height: calc(100dvh - var(--header-h, 64px) - 20px - env(safe-area-inset-bottom, 0px)); }
+:root:root[data-view="mobile"] .modal.pcard .modal-panel { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+:root[data-view="mobile"] .board-scroll { max-height: calc(100dvh - 16px - env(safe-area-inset-bottom, 0px)); }
+:root[data-view="mobile"] body { padding-bottom: env(safe-area-inset-bottom, 0px); }
+:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-mode="planner"]) { padding-bottom: 0; }
+/* the page's credit line would now show in that strip under a standing list card, so on a phone it stays off those pages */
+:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-mode="planner"]) > .credit { display: none; }

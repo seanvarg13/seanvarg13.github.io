@@ -486,6 +486,10 @@ is deploy-limited.
 * **A phone's list rows slide sideways under the frozen rank and name**; those two run the row's full height (over its
   padding, the block at the end of `styles.css`) so the sorted column's fill, stretched over the padding too, slides under
   them — before, it poked out above and below the name as red bars (Sean's phone screenshot, 30 Sep 2026).
+* **iPhone home bar** (Sean's 17, 30 Sep 2026): on a phone the standing list card and the popup card stop
+  `env(safe-area-inset-bottom)` above the bottom (index.html's `viewport-fit=cover` makes it non-zero), other pages get it as
+  body padding, and the credit line is hidden on the standing-card pages (it would sit in that strip). Headless tests report
+  0 for it — check with the rule's env() swapped for 34px.
 * **A phone card only moves up and down** (Sean, 28 Sep 2026: "scroll it left and right for no reason"): `.cardscroll` clips
   sideways overflow, doesn't bounce, and takes `touch-action: pan-y pinch-zoom`; the tab row, stat strip and tables are
   scrollers of their own and still slide. Keep anything wide inside its own `overflow-x: auto` box.
