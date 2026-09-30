@@ -633,7 +633,9 @@ is deploy-limited.
   30 Sep 2026** from the Percentile Bar Studio page (seven concepts; he picked the Savant bar as drawn there, "precisely"):
   `pctSvg` draws a 17px bar on a faint track (`--pctrack`), no 10/50/90 ticks, no dashed rules between rows, no Poor / Average /
   Great row, a 23px bubble with a white ring (navy digits from 38 to 62); section names in the condensed face, grey, over a 2px
-  navy rule (since the same evening in the card title's type: 600 navy, 24px / 19px on a phone, like `.pthd`); labels bold navy, values plain (`.svval`). Same row pitch, so the box height is unchanged.
+  navy rule (since the same evening in the card title's type: 600 navy, 24px / 19px on a phone, like `.pthd`); labels bold navy, values plain (`.svval`). Same row pitch, so the box height is unchanged. **Taken back the same evening** (Sean: "back to the baseballsavant style percentile bars they just look better"): `pctSvg`
+  is Savant's again — 20px bar, 10/50/90 ticks, dashed rules, Poor / Average / Great on the first chart — keeping only the
+  section names in the title's type and the bubble digits centred by `dy`. Don't restyle them again unasked.
 * **Type and ground** (Sean, 30 Sep 2026, same page): the whole site is **Barlow Condensed** (`--display`: headings, names, big
   numbers) + **Source Sans 3** (`--body`: everything else), loaded by `themes.js` (`F.studio`, the only font); Roboto
   Condensed is gone. **The swirl is gone**: `nopattern` is always on and the Appearance row is removed; pages sit on
