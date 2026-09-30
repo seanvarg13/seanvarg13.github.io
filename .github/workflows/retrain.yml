@@ -6,6 +6,10 @@
 # (so the daily build can load the files), saves the models it replaces on a "models-prev-<date>" release, uploads the
 # new ones, and — unless told not to — rescores every past MLB season and postseason with them and rebuilds this season,
 # publishing as the daily run does.
+#
+# restore: a models-prev-<date> tag puts those models back instead of training (Sean, 30 Sep 2026: the "harder is never worse"
+# fit tracked actual wOBA worse — same season r .818 vs .854 — so the previous models went back). The ones it replaces are
+# kept on a new models-prev release as usual, then the same rescore runs.
 name: Retrain models
 
 on:
@@ -23,6 +27,9 @@ on:
         description: "after uploading, rescore every past MLB season (and past postseasons) with them"
         type: boolean
         default: true
+      restore:
+        description: "instead of training, put back the models on this release (e.g. models-prev-20260930-1634)"
+        default: ""
 
 permissions:
   contents: write
@@ -67,7 +74,16 @@ jobs:
           echo "pins: $pins"
           python -m pip install $pins pybaseball requests pyarrow
 
+      - name: Put back the models on ${{ inputs.restore }} (no training)
+        if: inputs.restore != ''
+        run: |
+          gh release download "${{ inputs.restore }}" -R "$GITHUB_REPOSITORY" -D "$MODEL_DIR" --clobber
+          for m in v3_dir v3_ba v3_slg; do test -s "$MODEL_DIR/$m.joblib" || { echo "::error::$m.joblib is missing from ${{ inputs.restore }}"; exit 1; }; done
+          cat "$MODEL_DIR/versions.json"
+          ls -la "$MODEL_DIR"
+
       - name: Past seasons' PA files (only the current season is fetched every time)
+        if: inputs.restore == ''
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/../model-workspace/pa_20*.parquet
@@ -75,16 +91,18 @@ jobs:
           restore-keys: pa-seasons-
 
       - name: Every regular-season plate appearance 2015-now
+        if: inputs.restore == ''
         run: python tools/models/fetch_pa.py
 
       - name: Keep the past seasons' PA files for next time (even after a failure, so a rerun picks up where this stopped)
-        if: always()
+        if: always() && inputs.restore == ''
         uses: actions/cache/save@v4
         with:
           path: ${{ github.workspace }}/../model-workspace/pa_20*.parquet
           key: pa-seasons-${{ github.run_id }}
 
       - name: Train
+        if: inputs.restore == ''
         run: |
           export ANCHOR=$(python -c "import pandas as pd; print(int(pd.read_parquet('$MODEL_DIR/pa_all.parquet', columns=['game_year']).game_year.max()))")
           export MONO=${{ inputs.monotonic && '1' || '0' }}
@@ -130,7 +148,8 @@ jobs:
           # right here rather than as a Daily update run: one queued there can be cancelled by the next scheduled backup
           git config user.name "Sean's Site (GitHub Actions)"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          years=$(python -c "import pandas as pd; y=int(pd.read_parquet('$MODEL_DIR/pa_all.parquet', columns=['game_year']).game_year.max()); print(' '.join([str(x) for x in range(2015, y)] + [f'post-{x}' for x in range(2023, y)]))")
+          # this season from data.js (a restore has no PA file to read it from)
+          years=$(python -c "import json; raw=open('data.js').read(); y=int(json.loads(raw[raw.index('= {') + 2:].rstrip().rstrip(';'))['meta']['season']); print(' '.join([str(x) for x in range(2015, y)] + [f'post-{x}' for x in range(2023, y)]))")
           echo "rescoring $years"
           python tools/cloud_daily.py --rescore $years
           python tools/cloud_daily.py --steps mlb

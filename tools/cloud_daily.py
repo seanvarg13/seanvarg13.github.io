@@ -81,8 +81,13 @@ def restamp():
     return build
 
 
+START = time.time()
+
+
 def outputs():
-    return [p for p in OUTPUTS if os.path.exists(p)] + sorted(glob.glob("hist/*.js"))
+    # only what this run wrote (30 Sep 2026): every other file is the checkout's copy from when the run began, and putting it
+    # back on top of main would undo another run that rebuilt it meanwhile (a retrain's rescore beside a minors rebuild)
+    return [p for p in OUTPUTS + sorted(glob.glob("hist/*.js")) if os.path.exists(p) and os.path.getmtime(p) >= START - 1]
 
 
 def publish(label, end, dry):

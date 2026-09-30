@@ -200,8 +200,14 @@ exactly 1, so a raw season of dxwOBA lands a few points off the real scale (+.00
 `dirInfo()` re-anchors each dataset with one factor — league wOBA over league dxwOBA, PA-weighted across every
 hitter in the file (2026: ×0.981) — applied to the season number and to every window and split alike. It is a
 single positive multiplier, so orderings and percentiles are identical either way; only the level moves.
-The same function also notices a file whose `xwoba_dir` is simply its `wOBA` for everybody — the minor-league
-builds never run the model — and reports no directional numbers at all rather than passing wOBA off as dxwOBA.
+The same function also notices a file whose `xwoba_dir` is simply its `wOBA` for everybody — an untracked minor-league
+level (Double-A, High-A), where the model has nothing to score — and reports no directional numbers at all rather than
+passing wOBA off as dxwOBA. Triple-A runs the model (since 30 Sep 2026), with sprint speed left blank.
+
+**Models in use: the pre-monotonic fit.** A cloud retrain on 30 Sep 2026 with "harder is never worse" (the prediction may
+only rise with exit velocity) tracked actual wOBA worse — 300+ PA hitters 2015-2025, same season r .818 / r² .670 against the
+previous models' .854 / .730, next season's wOBA a tie at r .446 (his own wOBA: .484) — so the previous models were put back
+the same evening (Actions → Retrain models with `restore: models-prev-20260930-1634`) and every season rescored.
 
 On the 2026 board, dxwOBA tracks wOBA far more closely than Statcast's does (r .862 against .798 among
 qualifiers, and .860 against .777 for the top third by Pull Air%), while Statcast's is a shade better at
@@ -298,7 +304,16 @@ python3 build_milb.py 2026          # one season (~40 min of downloads the first
 ```
 
 Triple-A seasons show up as extra `2026 AAA` chips on player cards, Explore and Compare; percentiles are against that
-level's own qualifiers. No bat speed (no bat tracking in the minors) and no directional xwOBA.
+level's own qualifiers. No bat speed (no bat tracking in the minors). Triple-A has the directional xwOBA / xBA / xSLG
+(sprint speed left blank); untracked levels keep their real results.
+
+Below Triple-A, Gameday gives no zone number, but it plots every pitch (`pitchData.coordinates` x / y). `plot_zone()` in
+`build_milb.py` turns the plot into feet at the plate (a straight-line fit on 7,261 Triple-A pitches that carry both) and
+into Statcast's zones 1-9 / 11-14 against the batter's own zone top and bottom — right on 96% of pitches for in / out, as
+good as the tracked pX / pZ against the same rule. So Double-A, High-A and Single-A get Zone%, Z-Swing%, O-Swing%
+(Chase%), Z- / O-Contact% and everything built on them (uK%, uBB%), as TJStats shows them (Sean, 30 Sep 2026; Josue De
+Paula's 2026 Double-A: Z-Swing 69.1 / O-Swing 25.7 / Z-Contact 91.0 vs TJStats' 68.1 / 24.3 / 89.6). Cached game files
+from before have no zones and are fetched again once.
 `python3 build_career.py` refreshes the season-by-season / career stats table shown on every card —
 `hist/career.js` (MLB lines + career totals) and `hist/minors.js` (the minor-league lines). It reads the
 search index, so run it after `build_history.py index`; it takes about 3 minutes and **is part of the daily

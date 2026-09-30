@@ -3,8 +3,9 @@ Statcast search, then refresh hist/index.js so Explore / Compare / player cards 
 
 Usage:  python3 build_milb.py [2024 2025 ...]        (default: every season in SEASONS not built yet)
 
-Same metrics and constants as the MLB seasons (build_data.py); no bat speed (no bat tracking in the minors) and
-no directional xwOBA (that model needs MLB sprint speeds) — xwOBA is Savant's EV + launch-angle number.
+Same metrics and constants as the MLB seasons (build_data.py); no bat speed (no bat tracking in the minors). xwOBA is the
+directional model, as in the majors, with sprint speed left blank (Sean, 30 Sep 2026) — it only scores tracked balls, so
+an untracked level (AA, A+) keeps its real results.
 """
 import sys, json, time, io, datetime as dt
 from pathlib import Path
@@ -128,6 +129,28 @@ def barrel(ev, la):
     return lo <= la <= hi
 
 
+# Gameday's pitch plot (pitchData.coordinates x / y, pixels) in feet at the plate, fitted on 7,261 Triple-A pitches that carry
+# both the plot and Statcast's pX / pZ (Sean, 30 Sep 2026: Double-A's zone / chase numbers, as TJStats shows them). Gameday
+# gives no zone number below Triple-A, but it plots every pitch, and this rebuilds Statcast's in / out of the zone on 96% of
+# pitches — the same as pX / pZ themselves against the same rule
+PLOT_X, PLOT_Z, ZONE_HALF, ZONE_PAD = (-0.026067, 3.0467), (-0.036283, 8.7029), 0.82, 0.02
+
+
+def plot_zone(pdt: dict):
+    """Statcast's zone (1-9 in, 11-14 out) from the Gameday plot, for levels with no zone number; 10 = no plot (neither in
+    nor out, as a missing zone is)."""
+    co = pdt.get("coordinates") or {}
+    x, y, top, bot = co.get("x"), co.get("y"), pdt.get("strikeZoneTop"), pdt.get("strikeZoneBottom")
+    if x is None or y is None or not top or not bot:
+        return 10
+    px, pz = PLOT_X[0] * x + PLOT_X[1], PLOT_Z[0] * y + PLOT_Z[1]
+    if abs(px) <= ZONE_HALF and bot - ZONE_PAD <= pz <= top + ZONE_PAD:
+        col = min(2, int((px + ZONE_HALF) / (2 * ZONE_HALF / 3)))
+        row = min(2, max(0, int((top + ZONE_PAD - pz) / ((top - bot + 2 * ZONE_PAD) / 3))))
+        return 1 + 3 * row + col
+    return (11 if px < 0 else 12) if pz >= (top + bot) / 2 else (13 if px < 0 else 14)
+
+
 def feed_game(pk: int, game_date: str) -> pd.DataFrame:
     """One minor-league game's pitches from the Gameday play-by-play, as Statcast-shaped rows (cached)."""
     FEEDS.mkdir(parents=True, exist_ok=True)
@@ -139,7 +162,9 @@ def feed_game(pk: int, game_date: str) -> pd.DataFrame:
             d = pd.read_csv(f, low_memory=False)
             if "des" not in d.columns:                    # files cached before the play text was kept: no bunt flag (only EV means care)
                 d["des"] = ""
-            return d
+            if pd.to_numeric(d["zone"], errors="coerce").notna().any():
+                return d
+            f.unlink(missing_ok=True)                     # cached before the zone came from the plot: fetch it again
         except Exception:                                 # a corrupt cached file: fetch it again
             f.unlink(missing_ok=True)
     js = {}
@@ -174,7 +199,7 @@ def feed_game(pk: int, game_date: str) -> pd.DataFrame:
                 "game_date": game_date, "game_type": "R", "game_pk": pk,
                 "batter": (mu.get("batter") or {}).get("id"), "pitcher": (mu.get("pitcher") or {}).get("id"),
                 "stand": (mu.get("batSide") or {}).get("code"), "p_throws": (mu.get("pitchHand") or {}).get("code"),
-                "description": desc, "zone": pdt.get("zone"), "type": typ, "events": ev,
+                "description": desc, "zone": pdt.get("zone") or plot_zone(pdt), "type": typ, "events": ev,
                 "launch_speed": ls, "launch_angle": la, "launch_speed_angle": 6 if (typ == "X" and barrel(ls, la)) else None,
                 "bb_type": hd.get("trajectory") if typ == "X" else None,
                 "hc_x": co.get("coordX"), "hc_y": co.get("coordY"),
@@ -346,8 +371,9 @@ def build_season(year: int, level: str = "aaa"):
     SPORT, LEVEL, LEVEL_NAME, source = LEVELS[level]
     start, end = f"{year}-{SEASONS[year][0]}", f"{year}-{SEASONS[year][1]}"
     bd.SEASON, bd.SEASON_START = year, start
-    bd.directional_xwoba = lambda p, tracked, num, den: num.astype(float).copy()   # no sprint speeds in the minors
-    bd.sprint_speeds = lambda: {}                                                      # (nor on the card's Base Running rows)
+    # no sprint speeds in the minors: the directional models read it as missing, as xBA / xSLG always have here
+    # (xwOBA too since 30 Sep 2026 — Sean: "AAA doesnt have xwOBA just xba and xslg"), and the card has no Base Running rows
+    bd.sprint_speeds = lambda: {}
     bd.log(f"=== {year} {LEVEL_NAME} ===")
     d = bd.pitch_flags(load_milb(start, end) if source == "savant" else load_feed(year, start, end))
     if level in ("aaa", "a"):
