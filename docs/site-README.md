@@ -22,8 +22,9 @@ no "Every page" tiles; Rankings is one toolbar row; Fantasy's positions are a pi
 section names are small grey labels.
 
 **The minimal pass, second round** (29 Sep 2026): nothing is set in capitals by the stylesheet (team codes are still
-capitals, they're data); buttons and headings are semibold; the background swirl runs at 8% (Appearance ▸ Background
-pattern turns it off per device, `draft2027.pattern`); the list toolbar is two buttons — position and **Filters**, which
+capitals, they're data); buttons and headings are semibold; the background swirl is gone since 30 Sep 2026 — pages sit on a plain pale
+tint of the scheme (`--ground`), set in Barlow Condensed headings and Source Sans 3 text, and the card's percentile bars
+are the slimmer bar-and-bubble from the Percentile Bar Studio page; the list toolbar is two buttons — position and **Filters**, which
 opens one dropdown with Filters / Stats / Splits / Dates / Table format as tabs across its top (`GRP_TABS`, `grpTabs()`;
 Splits only on the Leaderboard). The dropdown is one fixed size whatever the tab (560px, less if the window is short): the
 tab row and the Done / Cancel row stay put and the middle scrolls. Filters holds the name / team, the season row (One season

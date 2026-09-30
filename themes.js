@@ -49,19 +49,20 @@ window.DRAFT_THEMES = (function () {
     },
   };
 
-  // one font, the one Baseball Savant sets nearly all of its text in, on desktop and phone alike. This file loads
-  // it (in <head>, before the page paints) rather than index.html, whose template lives on the Mac and isn't synced.
-  const SAVANT_FONT = '"Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif';
+  // the site's type (Sean, 30 Sep 2026, from the Percentile Bar Studio page: "adjust the entire font of the site to be this
+  // font"): Barlow Condensed for headings, names and big numbers, Source Sans 3 for everything else. This file loads them
+  // (in <head>, before the page paints) rather than index.html, whose template lives on the Mac and isn't synced.
   const F = {
-    savant: { name: "Roboto Condensed", blurb: "Baseball Savant's type — the same on every page and every device.",
-              google: "family=Roboto+Condensed:ital,wght@0,100..900;1,100..900",
-              display: SAVANT_FONT, body: SAVANT_FONT },
+    studio: { name: "Barlow Condensed + Source Sans 3", blurb: "Condensed headings, an easy-reading text face — the same on every page and device.",
+              google: "family=Barlow+Condensed:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,400..700;1,400..700",
+              display: '"Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif',
+              body: '"Source Sans 3", "Source Sans Pro", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif' },
   };
 
   const LS = { scheme: "draft2027.scheme", font: "draft2027.font", theme: "draft2027.theme", view: "draft2027.view" };
-  const DEFAULTS = Object.assign({ scheme: "unc", font: "savant", theme: "system", view: "auto" }, window.DRAFT_DEFAULTS || {});
+  const DEFAULTS = Object.assign({ scheme: "unc", font: "studio", theme: "system", view: "auto" }, window.DRAFT_DEFAULTS || {});
   if (!S[DEFAULTS.scheme]) DEFAULTS.scheme = "unc";
-  if (!F[DEFAULTS.font]) DEFAULTS.font = "savant";
+  if (!F[DEFAULTS.font]) DEFAULTS.font = "studio";
   const get = (k) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } };
   const put = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } };
   const root = document.documentElement;
