@@ -7061,7 +7061,9 @@
     const b = el("button", "starbtn phtoggle" + (open ? " on" : ""), "Filters");
     b.type = "button"; b.setAttribute("aria-expanded", String(open));
     b.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = !state.cardTools; savePrefs(); render(); });
-    const tog = el("span", "phtog"); tog.append(b); (mr || plate).append(tog);
+    // Filters sits at the end of the PA · G line (Sean, 30 Sep 2026: "up and to the right of the PA and games played stat to
+    // make the header a bit smaller row wise"); the mrank line underneath only when something else is on it
+    const tog = el("span", "phtog"); tog.append(b); (plate.querySelector(".hstrip") || mr || plate).append(tog);
     if (!mob) { F.classList.add("phpop"); tog.append(F); }
     let warn = null;
     if (open) {

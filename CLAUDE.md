@@ -497,7 +497,8 @@ is deploy-limited.
   »; no "Rank" / "Rk" over the rank numbers; Fantasy's four page buttons are one pill (`.fpage`); Compare moved from the header
   into the Leaderboards menu (the header is Home · Fantasy · Leaderboards · More); the credit line under every page and the home
   page's data note are at the end of the Stat glossary (`.gcredit`; `creditLine` is gone); Game Logs have no group-label row
-  (`tr.ggrp` hidden, the rules between groups stay). A toolbar dropdown closes on a page change.
+  (`tr.ggrp` hidden, the rules between groups stay). A toolbar dropdown closes on a page change. Later that night: the card's Filters button sits at the end of the PA · G line (`.hstrip`, which must stay
+  `overflow: visible` — the desktop Filters panel hangs out of it), and the band's bottom rule is navy (`--rule`).
 * **Phone header is one line** (Sean, 28 Sep 2026): site name, search and a ☰ Menu button (`.navtog`, made in `app.js`
   because `index.html` doesn't round-trip); the page buttons (`.modes`) open under it in a two-column grid and close on a
   pick, a page change or a tap elsewhere. Desktop keeps its single row. The swirl pattern behind cards and list pages

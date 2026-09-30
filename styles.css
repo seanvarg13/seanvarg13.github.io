@@ -3471,3 +3471,8 @@ body[data-mode="rankings"] #rankcount { display: none; }
 #pop.grppop .grptabs { flex-wrap: nowrap; }
 :root[data-view="mobile"] #pop.grppop .grptabs { gap: 14px; }
 :root[data-view="mobile"] #pop.grppop .grptabs .ptab { font-size: 13.5px; }
+/* the card's band: Filters at the end of the PA · G line, and a navy rule under the band (Sean, 30 Sep 2026) */
+:root:root:root .phead .mplate { border-bottom-color: var(--rule); }
+:root:root .phead .hstrip { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; overflow: visible; }   /* the Filters panel hangs out of it */
+.phead .hstrip .phtog { margin-left: 4px; }
+.phead .mrank:empty { display: none; }
