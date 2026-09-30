@@ -3612,7 +3612,8 @@
     if (!POPPED.has(state.panel)) $("pop").hidden = true;
     if (state.panel === "positions" && listNow) { renderPositionsPanel(); return; }
     if (state.panel === "filters" && listNow) { renderFilterPanel(); return; }
-    if (state.panel === "splits" && listNow) { renderSplitsPanel(); return; }
+    if (state.panel === "splits" && listNow && state.mode === "leaderboard") { renderSplitsPanel(); return; }
+    if (state.panel === "dates" && listNow) { renderDatesPanel(); return; }
     if (state.panel === "stats" && listNow) { renderColPick(); return; }
     if (state.panel === "table" && listNow) { renderTablePanel(); return; }
     if (state.panel === "team" && listNow) { renderTeamPanel(); return; }
@@ -3696,35 +3697,33 @@
     const years = [...new Set(keys.map(year))].sort((x, y) => y - x);
     const inYear = (y) => keys.filter((k) => year(k) === y).sort((p, q) => LEVEL_ORDER.indexOf(levelOf(p)) - LEVEL_ORDER.indexOf(levelOf(q)));
     const pick = (k) => { state.lbDs = k === CUR.key ? null : k; if (state.lbTo && state.lbTo <= year(k)) state.lbTo = null; state.page = 1; state.win = { from: "", to: "", last: "" }; state.expanded = null; savePrefs(); render(); };
-    box.append(el("span", "splbl", "Season"));
-    box.append(pillSelect(String(year(cur)), years.map((y) => [String(y), String(y)]), String(year(cur)), (y) => { const opts = inYear(Number(y)); pick((opts.find((k) => levelOf(k) === levelOf(cur) && !keyKind(k)) || opts.find((k) => levelOf(k) === levelOf(cur)) || opts[0])); }, "Season"));
-    // Multiple seasons (Sean, 30 Sep 2026: "a button that I select to show multiple seasons and that triggers the year x to
-    // year y"): off, one season; on, Season [from] to [to] with Combined / Each season. Turning it on from the latest season
-    // starts the span two seasons back.
+    // One season / Multiple seasons (Sean, 30 Sep 2026: "a button that I select to show multiple seasons and that triggers the
+    // year x to year y", then "stays in the same area when it is selected or unselected"): a switch at the head of the row, so
+    // turning it on or off never moves it. On: Season [from] to [to] with Combined / Each season. Turning it on from the
+    // latest season starts the span two seasons back.
     const kk = keyKind(cur) ? "-" + keyKind(cur) : "", keyAt = (y) => `${levelOf(cur)}-${y}${kk}`;
     const later = years.filter((y) => y > year(cur) && keys.includes(keyAt(y))).sort((x, y) => x - y);
     const earlier = years.filter((y) => y < year(cur) && keys.includes(keyAt(y))).sort((x, y) => y - x);
     const spanOn = !!(state.lbTo && later.includes(state.lbTo));
-    if (later.length || earlier.length) {
-      const tog = el("button", "segbtn small spantog", "Multiple seasons"); tog.type = "button"; tog.setAttribute("aria-pressed", String(spanOn));
-      tog.addEventListener("click", () => {
-        if (spanOn) state.lbTo = null;
-        else if (later.length) state.lbTo = later[later.length - 1];
-        else { const from = earlier[Math.min(1, earlier.length - 1)]; state.lbTo = year(cur); state.lbDs = keyAt(from) === CUR.key ? null : keyAt(from); }
-        state.win = { from: "", to: "", last: "" }; state.expanded = null; state.page = 1; savePrefs(); render();
-      });
-      box.append(tog);
-    }
+    const setSpan = (on) => {
+      if (on === spanOn) return;
+      if (!on) state.lbTo = null;
+      else if (later.length) state.lbTo = later[later.length - 1];
+      else { const from = earlier[Math.min(1, earlier.length - 1)]; state.lbTo = year(cur); state.lbDs = keyAt(from) === CUR.key ? null : keyAt(from); }
+      state.win = { from: "", to: "", last: "" }; state.expanded = null; state.page = 1; savePrefs(); render();
+    };
+    { const seg = el("div", "seg spanseg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Seasons");
+      for (const [v, l] of [[false, "One season"], [true, "Multiple seasons"]]) {
+        const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(spanOn === v));
+        b.disabled = v && !later.length && !earlier.length; b.addEventListener("click", () => setSpan(v)); seg.append(b);
+      }
+      box.append(seg); }
+    box.append(el("span", "splbl", spanOn ? "From" : "Season"));
+    box.append(pillSelect(String(year(cur)), years.map((y) => [String(y), String(y)]), String(year(cur)), (y) => { const opts = inYear(Number(y)); pick((opts.find((k) => levelOf(k) === levelOf(cur) && !keyKind(k)) || opts.find((k) => levelOf(k) === levelOf(cur)) || opts[0])); }, "Season"));
     if (spanOn) {
       box.append(el("span", "splbl", "to"));
       const toPill = pillSelect(String(state.lbTo), later.map((y) => [String(y), String(y)]), String(state.lbTo), (y) => { state.lbTo = Number(y); state.win = { from: "", to: "", last: "" }; state.expanded = null; state.page = 1; savePrefs(); render(); }, "Through");
       toPill.classList.add("topill"); if (later.length === 1) toPill.classList.add("solo"); box.append(toPill);
-      const seg = el("div", "seg kindseg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Span");
-      for (const [v, l, t] of [[false, "Combined", "One line per player: every season in the span added together"], [true, "Each season", "Every player-season on its own line"]]) {
-        const b = el("button", "segbtn small", l); b.type = "button"; b.title = t; b.setAttribute("aria-pressed", String(state.lbEach === v));
-        b.addEventListener("click", () => { if (state.lbEach !== v) { state.lbEach = v; state.expanded = null; state.page = 1; savePrefs(); render(); } }); seg.append(b);
-      }
-      box.append(seg);
     }
     const lv = inYear(year(cur)).filter((k) => !keyKind(k) || k === cur);          // one entry per level; the game type is its own control
     const lvPill = pillSelect((LEVEL_NAMES[levelOf(cur)] || levelOf(cur)) + kindTag(cur), lv.map((k) => [k, (LEVEL_NAMES[levelOf(k)] || levelOf(k)) + kindTag(k)]), cur, pick, "Level");
@@ -3741,15 +3740,26 @@
       }
       box.append(seg);
     }
+    if (spanOn) {
+      const seg = el("div", "seg kindseg eachseg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Span");
+      for (const [v, l, t] of [[false, "Combined", "One line per player: every season in the span added together"], [true, "Each season", "Every player-season on its own line"]]) {
+        const b = el("button", "segbtn small", l); b.type = "button"; b.title = t; b.setAttribute("aria-pressed", String(state.lbEach === v));
+        b.addEventListener("click", () => { if (state.lbEach !== v) { state.lbEach = v; state.expanded = null; state.page = 1; savePrefs(); render(); } }); seg.append(b);
+      }
+      box.append(seg);
+    }
   }
   // the Leaderboard's column picker: every card metric, grouped as on the card
   // one button per panel on the toolbar, each opening its own dropdown under itself rather than a page-wide modal
-  const POP_BTNS = [["positions", "Position"], ["filters", "Filters"], ["stats", "Stats"], ["splits", "Splits & dates"], ["table", "Table"]];
+  const POP_BTNS = [["positions", "Position"], ["filters", "Filters"], ["stats", "Stats"], ["splits", "Splits"], ["dates", "Dates"], ["table", "Table format"]];
   const POPPED = new Set(POP_BTNS.map(([k]) => k));
   // Since the minimal pass (Sean, 29 Sep 2026) the toolbar is two buttons, position and Filters: Filters opens one dropdown
   // with the four panels as tabs across its top (the last one used opens first), so the row never wraps on a phone
-  const GRP_TABS = [["filters", "Filters"], ["stats", "Stats"], ["splits", "Splits & dates"], ["table", "Table"]];
+  // Dates got a tab of its own and Table became "Table format" (Sean, 30 Sep 2026); Splits (vs L / R, home / away) is the
+  // Leaderboard's alone, so the other lists don't show an empty tab
+  const GRP_TABS = [["filters", "Filters"], ["stats", "Stats"], ["splits", "Splits"], ["dates", "Dates"], ["table", "Table format"]];
   const GRP = new Set(GRP_TABS.map(([k]) => k));
+  const grpTabsNow = () => GRP_TABS.filter(([k]) => k !== "splits" || state.mode === "leaderboard");
   function renderToolButtons() {
     const box = $("tbtns");
     if (!box) return;
@@ -3761,19 +3771,19 @@
       b.setAttribute("aria-expanded", String(on)); b.setAttribute("aria-haspopup", "true");
       b.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (k === "grp") { if (grpOpen) closePanel(false); else openPanel(GRP.has(state.panelTab) ? state.panelTab : "filters"); }
+        if (k === "grp") { if (grpOpen) closePanel(false); else openPanel(grpTabsNow().some(([t]) => t === state.panelTab) ? state.panelTab : "filters"); }
         else if (state.panel === k) closePanel(false); else openPanel(k);
       });
       box.append(b);
     };
     add("positions", posBtnLabel(), state.panel === "positions", popActive("positions"));
-    const n = ["filters", "splits"].filter(popActive).length;
+    const n = ["filters", "splits", "dates"].filter(popActive).length;
     add("grp", "Filters" + (n ? ` · ${n}` : ""), grpOpen, n > 0);
   }
   // the tab row across the top of the Filters dropdown
   function grpTabs() {
     const row = el("div", "ptabs grptabs"); row.setAttribute("role", "tablist");
-    for (const [k, label] of GRP_TABS) {
+    for (const [k, label] of grpTabsNow()) {
       const b = el("button", "ptab" + (k === state.panel ? " on" : ""), label); b.type = "button";
       b.setAttribute("aria-selected", String(k === state.panel));
       b.addEventListener("click", (e) => { e.stopPropagation(); if (k === state.panel) return; parkControls(); state.panel = k; state.panelTab = k; state.colPick = k === "stats"; savePrefs(); render(); });
@@ -3787,7 +3797,8 @@
     const g = groupFor(state.pos);
     if (k === "positions") return posSel().length > 1 || state.pos !== (isPitcherGroup(g) ? "ALLP" : "ALL");
     if (k === "filters") return !!(state.q || state.teamF || (state.mode === "leaderboard" && lbKey() !== CUR.key));
-    if (k === "splits") return state.mode === "trending" || winRequested() || (state.mode === "leaderboard" && (state.lbSplit.hand !== "all" || state.lbSplit.venue !== "all"));
+    if (k === "splits") return state.mode === "leaderboard" && (state.lbSplit.hand !== "all" || state.lbSplit.venue !== "all");
+    if (k === "dates") return state.mode === "trending" || winRequested();
     if (k === "stats") return !customOrder() && state.sort !== "score";
     return false;
   }
@@ -3807,6 +3818,9 @@
     const r = btn.getBoundingClientRect(), mob = document.documentElement.dataset.view === "mobile";
     pop.style.maxHeight = Math.max(220, innerHeight - r.bottom - 16) + "px";
     pop.style.top = Math.round(r.bottom + 6) + "px";
+    // the Filters dropdown is one size whatever tab is up (Sean, 30 Sep 2026: "I don't want the size of the popup window to
+    // ever change"): as tall as the room allows up to 560px, and the tab scrolls inside it
+    pop.style.setProperty("--pop-top", Math.round(r.bottom + 6) + "px");   // #pop.grppop's height in styles.css (the home bar needs env())
     if (mob) { pop.style.left = "8px"; pop.style.right = "8px"; pop.style.width = "auto"; return; }
     pop.style.right = "auto"; pop.style.width = "";
     pop.style.left = "0px";
@@ -3869,7 +3883,7 @@
     const all = el("button", "btn btn-quiet", "Reset to defaults"); all.type = "button"; all.addEventListener("click", () => { if (state.mode === "leaderboard") state.lb[key] = key === "P" ? ["whf", "strk", "gb", "pu", "wsgp", "k", "bb", "kbb", "ukb", "era", "nera", "uera", "siera", "fip", "fbv"] : ["woba", "ev", "brl", "hh", "pull", "air", "gb", "zsw", "osw", "whf", "k", "bb"]; else if (state.cols[state.mode]) delete state.cols[state.mode][key]; savePrefs(); render(); });
     const done = el("button", "btn", "Done"); done.type = "button"; done.addEventListener("click", () => closePanel(false));
     const cancel = el("button", "btn btn-quiet", "Cancel"); cancel.type = "button"; cancel.title = "Close without keeping these changes"; cancel.addEventListener("click", () => closePanel(true));
-    row.append(done, cancel, all); w.append(row); body.append(w);
+    row.append(done, cancel, all); popFoot(body, w, row);
   }
   function renderTrendTools() {
     const on = state.mode === "trending";
@@ -7268,7 +7282,7 @@
   }
   function closePanel(cancel) {
     $("pop").hidden = true;
-    if (cancel && state.panelSnap && (state.panel === "stats" || state.panel === "splits" || state.panel === "team")) { const snap = JSON.parse(state.panelSnap); for (const k of PANEL_KEYS) state[k] = snap[k]; savePrefs(); poolsChanged(); }
+    if (cancel && state.panelSnap && (state.panel === "stats" || state.panel === "splits" || state.panel === "dates" || state.panel === "filters" || state.panel === "team")) { const snap = JSON.parse(state.panelSnap); for (const k of PANEL_KEYS) state[k] = snap[k]; savePrefs(); poolsChanged(); }
     state.panelSnap = null; state.panel = null; state.colPick = false; state.expanded = null; parkControls(); render();
   }
   // "Set up comparison": the stats on the grid, and what each side is based on — the same box that used to
@@ -7362,11 +7376,15 @@
     const sec = (title, ...nodes) => { const b = el("div", "psec"); b.append(el("h4", null, title)); const r = el("div", "prow"); r.append(...nodes); b.append(r); return b; };
     w.append(sec("Player", $("searchbox"), $("teamctl")));
     if (state.mode === "leaderboard") w.append(sec("Season and level", $("lbseason")));
-    const sf = $("sortfield"), sorting = !customOrder();
-    if (sorting || pit) {
-      const b = el("div", "psec"); b.append(el("h4", null, "Order"));
-      const r = el("div", "prow"); if (sorting) r.append(sf); if (pit) r.append($("reffield"));
+    // the minimum sits beside Sort by (Sean, 30 Sep 2026: "the PA qualification ... next to the sort by option"); Trending's is
+    // playing time inside its span, Rankings and the Draft board list everyone
+    const sf = $("sortfield"), sorting = !customOrder(), trending = state.mode === "trending";
+    const minNode = trending ? $("trendminfield") : noMin() ? null : $("minfield");
+    if (sorting || pit || minNode) {
+      const b = el("div", "psec"); b.append(el("h4", null, "Order and minimum"));
+      const r = el("div", "prow"); if (sorting) r.append(sf); if (minNode) r.append(minNode); if (pit) r.append($("reffield"));
       b.append(r);
+      if (minNode && !trending) b.append(el("p", "note", lbMulti() ? "The minimum is per season; a combined span multiplies it by the seasons in it." : `The minimum is who is listed; percentiles are always against ${pit ? "pitchers with 300+ batters faced" : "hitters with 300+ PA"} on the season.`));
       if (pit) b.append(el("p", "note", "Rank vs sets the pool a pitcher's percentiles are measured against — his own (starters or relievers) or all pitchers."));
       w.append(b);
     }
@@ -7374,24 +7392,43 @@
     const done = el("button", "btn", "Done"); done.type = "button"; done.addEventListener("click", () => closePanel(false));
     const clear = el("button", "btn btn-quiet", "Clear"); clear.type = "button"; clear.title = "Name and team";
     clear.addEventListener("click", () => { state.q = ""; $("search").value = ""; state.teamF = null; state.expanded = null; savePrefs(); render(); });
-    row.append(done, clear); w.append(row); body.append(w);
-    renderTabs(); renderSortSelect(); renderRef(); renderLbTools();
+    row.append(done, clear); popFoot(body, w, row);
+    renderTabs(); renderSortSelect(); renderRef(); renderMin(); renderLbTools(); renderTrendTools();
   }
+  // the buttons under a tab: pinned under the scrolling part in the Filters dropdown, so they never move either
+  function popFoot(body, w, row) { if ($("pop").classList.contains("grppop")) { row.classList.add("popfoot"); body.append(w, row); } else { w.append(row); body.append(w); } }
+  const panelButtons = (clearFn) => {
+    const row = el("div", "row");
+    const done = el("button", "btn", "Done"); done.type = "button"; done.addEventListener("click", () => closePanel(false));
+    const cancel = el("button", "btn btn-quiet", "Cancel"); cancel.type = "button"; cancel.title = "Close without keeping these changes"; cancel.addEventListener("click", () => closePanel(true));
+    const clear = el("button", "btn btn-quiet", "Clear"); clear.type = "button"; clear.addEventListener("click", clearFn);
+    row.append(done, cancel, clear); return row;
+  };
+  // Splits: the Leaderboard's vs L / R and home / away
   function renderSplitsPanel() {
+    parkControls();
+    const body = panelOpen();
+    const w = el("div", "textmodal panel");
+    const h2 = el("h2", null, "Splits"); h2.id = "modal-title"; w.append(h2);
+    const sec = el("div", "psec"); sec.append(el("h4", null, "Splits")); sec.append($("lbsplit"));
+    sec.append(el("p", "note", "Every stat and percentile is rebuilt from the plate appearances in the split; the pool is ranked in the same split."));
+    w.append(sec);
+    popFoot(body, w, panelButtons(() => { state.lbSplit = { hand: "all", venue: "all" }; state.expanded = null; render(); }));
+    renderLbTools();
+  }
+  // Dates: full season, a range, the last N days or each player's last N PA / IP (Trending: its span)
+  function renderDatesPanel() {
     parkControls();
     const body = panelOpen();
     const g = groupFor(state.pos), pit = isPitcherGroup(g), unit = pit ? "IP" : "PA", trending = state.mode === "trending";
     const w = el("div", "textmodal panel");
-    const h2 = el("h2", null, "Splits & dates"); h2.id = "modal-title"; w.append(h2);
-    if (state.mode === "leaderboard") { const sec = el("div", "psec"); sec.append(el("h4", null, "Splits")); sec.append($("lbsplit")); w.append(sec); }
+    const h2 = el("h2", null, "Dates"); h2.id = "modal-title"; w.append(h2);
     if (trending) {
       const sec = el("div", "psec"); sec.append(el("h4", null, "Span")); const row = el("div", "prow"); row.append($("trendnfield"), $("trendunit")); sec.append(row);
-      sec.append(el("p", "note", "Each player's most recent plate appearances / innings, or everyone's last N calendar days."));
-      const sec2 = el("div", "psec"); sec2.append(el("h4", null, "Minimum")); const row2 = el("div", "prow"); row2.append($("trendminfield")); sec2.append(row2);
-      w.append(sec, sec2);
+      sec.append(el("p", "note", "Each player's most recent plate appearances / innings, or everyone's last N calendar days. The minimum inside the span is on the Filters tab."));
+      w.append(sec);
     } else if (lbMulti()) {
-      const sec = el("div", "psec"); sec.append(el("h4", null, "Dates")); sec.append(el("p", "note", "A span of seasons is always the whole of each season — pick one season for a date range.")); w.append(sec);
-      const sec2 = el("div", "psec"); sec2.append(el("h4", null, "Minimum")); const row2 = el("div", "prow"); row2.append($("minfield")); sec2.append(row2); sec2.append(el("p", "note", `Per season; a combined span multiplies it by the seasons in it.`)); w.append(sec2);
+      const sec = el("div", "psec"); sec.append(el("h4", null, "Dates")); sec.append(el("p", "note", "A span of seasons is always the whole of each season — pick one season (Filters) for a date range.")); w.append(sec);
     } else {
       const sec = el("div", "psec"); sec.append(el("h4", null, "Dates"));
       const kinds = el("div", "seg"); kinds.setAttribute("role", "group");
@@ -7412,17 +7449,10 @@
       if (cur === "range") row.append($("daterange")); else if (cur === "days") row.append($("daysfield")); else if (cur === "last") row.append($("lastfield"), $("daterange"));
       if (cur !== "season") sec.append(row);
       sec.append(el("p", "note", cur === "days" ? `Everyone's games in the last N days through ${DATA.meta.through}.` : cur === "last" ? `Each player's most recent ${unit === "IP" ? "innings" : "plate appearances"} (through the To date, if set). Every stat and percentile is rebuilt from those games.` : cur === "range" ? "A blank side means the season's start or end. Every stat and percentile is rebuilt from those games." : "Full-season numbers."));
-      const sec2 = el("div", "psec"); sec2.append(el("h4", null, "Minimum")); const row2 = el("div", "prow"); row2.append($("minfield"), $("reffield")); sec2.append(row2);
-      sec2.append(el("p", "note", `Who is listed. Percentiles are always measured against ${pit ? "pitchers with 300+ batters faced" : "hitters with 300+ PA"} on the season.`));
-      w.append(sec); if (!noMin()) w.append(sec2);          // Rankings and the Draft board list everyone
+      w.append(sec);
     }
-    const row = el("div", "row");
-    const done = el("button", "btn", "Done"); done.type = "button"; done.addEventListener("click", () => closePanel(false));
-    const cancel = el("button", "btn btn-quiet", "Cancel"); cancel.type = "button"; cancel.title = "Close without keeping these changes"; cancel.addEventListener("click", () => closePanel(true));
-    const clear = el("button", "btn btn-quiet", "Clear"); clear.type = "button";
-    clear.addEventListener("click", () => { if (state.mode === "leaderboard") state.lbSplit = { hand: "all", venue: "all" }; if (!trending) state.win = { from: "", to: "", last: "" }; state.expanded = null; render(); });
-    row.append(done, cancel, clear); w.append(row); body.append(w);
-    renderDates(); renderMin(); renderRef(); renderLbTools(); renderTrendTools();
+    popFoot(body, w, panelButtons(() => { if (!trending) state.win = { from: "", to: "", last: "" }; state.expanded = null; render(); }));
+    renderDates(); renderTrendTools();
   }
   // "Table" panel: how the list is drawn
   function renderTablePanel() {
@@ -7430,7 +7460,7 @@
     const body = panelOpen();
     const g = groupFor(state.pos), T = state.tbl;
     const w = el("div", "textmodal panel");
-    const h2 = el("h2", null, "Table"); h2.id = "modal-title"; w.append(h2);
+    const h2 = el("h2", null, "Table format"); h2.id = "modal-title"; w.append(h2);
     const apply = () => { savePrefs(); render(); renderTablePanel(); };
     const toggle = (label, hint, key) => { const l = el("label", "toggle trow"); const c = el("input"); c.type = "checkbox"; c.checked = !!T[key]; c.addEventListener("change", () => { T[key] = c.checked; apply(); }); const t = el("span"); t.append(el("b", null, label)); if (hint) t.append(el("small", null, hint)); l.append(c, t); return l; };
     const sec = el("div", "psec"); sec.append(el("h4", null, "Look"));
@@ -7444,22 +7474,52 @@
     const nseg = el("div", "seg"); for (const [v, l] of [["auto", "Page default"], ["values", "Values"], ["pct", "Percentiles"]]) { const b = el("button", "segbtn", l); b.type = "button"; b.setAttribute("aria-pressed", String(T.numbers === v)); b.addEventListener("click", () => { T.numbers = v; apply(); }); nseg.append(b); }
     nums.append(nseg); sec.append(nums);
     w.append(sec);
-    const sec2 = el("div", "psec"); sec2.append(el("h4", null, "Columns"));
-    sec2.append(el("p", "note", "The order of the stats, left to right. ◀ ▶ move a stat; │ puts a line break after it."));
-    const orderBox = el("div", "colorder"); const drawOrder = () => {
-      orderBox.innerHTML = ""; orderBox.append(el("h4", null, "Column order"));
-      const strip = el("div", "orderstrip"), keys = colKeys(g), all = lbOrder(g);
-      keys.forEach((k, i) => { const m = all.find((x) => x.key === k); if (!m) return; const chipEl = el("span", "ochip");
-        const left = el("button", "omove", "◀"); left.type = "button"; left.disabled = i === 0; left.addEventListener("click", () => { moveColKey(g, k, -1); drawOrder(); renderColhead(); renderRows(); });
-        const right = el("button", "omove", "▶"); right.type = "button"; right.disabled = i === keys.length - 1; right.addEventListener("click", () => { moveColKey(g, k, 1); drawOrder(); renderColhead(); renderRows(); });
-        const bk = el("button", "obrk" + (hasBreak(g, k) ? " on" : ""), "│"); bk.type = "button"; bk.title = hasBreak(g, k) ? "Remove the line break after this stat" : "Line break after this stat"; bk.addEventListener("click", () => { toggleBreak(g, k); drawOrder(); renderColhead(); renderRows(); });
-        chipEl.append(left, el("span", "olbl", SHORT[m.key] || m.label), right, bk); strip.append(chipEl); });
-      orderBox.append(strip);
+    // Column order (Sean, 30 Sep 2026: "make the ordering easier for the user and look better"): one stat a line, left to
+    // right read top to bottom; drag the grip (mouse or finger) or use ↑ ↓, "Gap after" starts a new group after it, × drops it
+    const sec2 = el("div", "psec"); sec2.append(el("h4", null, "Column order"));
+    sec2.append(el("p", "note", "Top to bottom is left to right on the table. Drag a stat by its grip, or use the arrows. Tick more stats on the Stats tab."));
+    const list = el("ol", "olist");
+    const redraw = () => { renderColhead(); renderRows(); renderToolSummary(); };
+    const drawOrder = () => {
+      list.innerHTML = "";
+      const keys = colKeys(g), all = lbOrder(g);
+      keys.forEach((k, i) => {
+        const m = all.find((x) => x.key === k); if (!m) return;
+        const li = el("li", "orow" + (hasBreak(g, k) ? " brk" : "")); li.dataset.key = k;
+        const grip = el("span", "ogrip", "⠿"); grip.title = "Drag to move"; grip.setAttribute("aria-hidden", "true");
+        const btn = (cls, txt, title, dis, fn) => { const b = el("button", cls, txt); b.type = "button"; b.title = title; b.setAttribute("aria-label", title); b.disabled = dis; b.addEventListener("click", (e) => { e.stopPropagation(); fn(); drawOrder(); redraw(); }); return b; };
+        const up = btn("omove", "↑", `Move ${m.label} left`, i === 0, () => moveColKey(g, k, -1));
+        const dn = btn("omove", "↓", `Move ${m.label} right`, i === keys.length - 1, () => moveColKey(g, k, 1));
+        const gap = btn("obrk" + (hasBreak(g, k) ? " on" : ""), "Gap after", hasBreak(g, k) ? "Remove the dividing line after this stat" : "A dividing line after this stat", false, () => toggleBreak(g, k));
+        gap.setAttribute("aria-pressed", String(hasBreak(g, k)));
+        const rm = btn("orm", "×", `Take ${m.label} off the table`, keys.length < 2, () => { setColKeys(g, colKeys(g).filter((x) => x !== k)); ensureSortValid(); renderSortSelect(); });
+        li.append(grip, el("span", "onum", String(i + 1)), el("span", "olbl", m.label), up, dn, gap, rm);
+        grip.addEventListener("pointerdown", (e) => dragRow(e, li));
+        list.append(li);
+      });
     };
-    drawOrder(); sec2.append(orderBox); w.append(sec2);
+    // drag: the row follows the pointer, the others shuffle round it, the order is kept on release
+    const dragRow = (e, li) => {
+      e.preventDefault(); const scroller = list.closest(".textmodal") || list;
+      li.classList.add("drag"); list.classList.add("dragging");
+      const move = (ev) => {
+        const rows = [...list.children].filter((r) => r !== li);
+        const after = rows.find((r) => { const b = r.getBoundingClientRect(); return ev.clientY < b.top + b.height / 2; });
+        if (after) { if (li.nextSibling !== after) list.insertBefore(li, after); } else if (list.lastChild !== li) list.append(li);
+        const sb = scroller.getBoundingClientRect();                     // near an edge of the scrolling box: scroll it
+        if (ev.clientY < sb.top + 30) scroller.scrollTop -= 8; else if (ev.clientY > sb.bottom - 30) scroller.scrollTop += 8;
+      };
+      const up = () => {
+        removeEventListener("pointermove", move); removeEventListener("pointerup", up); removeEventListener("pointercancel", up);
+        const order = [...list.children].map((r) => r.dataset.key), rest = colKeys(g).filter((k) => !order.includes(k));
+        setColKeys(g, [...order, ...rest]); drawOrder(); redraw();
+      };
+      addEventListener("pointermove", move); addEventListener("pointerup", up); addEventListener("pointercancel", up);
+    };
+    drawOrder(); sec2.append(list); w.insertBefore(sec2, sec);       // the order first: it's what this tab is mostly for
     const row = el("div", "row"); const done = el("button", "btn", "Done"); done.type = "button"; done.addEventListener("click", () => closePanel(false));
     const reset = el("button", "btn btn-quiet", "Reset to defaults"); reset.type = "button"; reset.addEventListener("click", () => { state.tbl = { heat: false, band: true, sortHl: true, density: "comfortable", numbers: "auto" }; apply(); });
-    row.append(done, reset); w.append(row); body.append(w);
+    row.append(done, reset); popFoot(body, w, row);
   }
   $("ranksortclear").addEventListener("click", () => { state.rankSort = false; savePrefs(); render(); });
   $("pop-close").addEventListener("click", () => closePanel(false));

@@ -457,7 +457,10 @@ is deploy-limited.
   (per device, `draft2027.pattern`, class `nopattern` on `<html>`); the header's pages are plain words, current one underlined,
   and a **More** menu (made in `app.js`, a third `NAV_GROUPS` entry, filled in `renderChrome`) holds Appearance, Colour key,
   Stat glossary, How this page works and the layout switch — nothing sits under the lists any more; the list toolbar is
-  position + **Filters** (one dropdown, `GRP_TABS` as tabs across its top, the last used opens first); desktop rows ~38px, a
+  position + **Filters** (one dropdown, `GRP_TABS` as tabs across its top — Filters · Stats · Splits · Dates · Table
+  format, the last used opens first; since 30 Sep 2026 one fixed size, `#pop.grppop` + `--pop-top` from `placePop`, tabs and
+  the `popfoot` buttons pinned, the middle scrolling; minimum beside Sort by; One / Multiple seasons first in the season row so
+  it never moves; the column order a drag-and-arrows list, `.olist`); desktop rows ~38px, a
   phone's second line just the team. Card: bottom tabs Compare · Season Stats · Stuff
   (pitchers) · Game Logs · Fantasy · Mix (hitters) / More (nERA, uERA; members as a small row under the strip) — Spreadsheet
   Stats, Rolling and the hitters' BABIP tab were taken off the strip (Sean, 30 Sep 2026; their renderers are still in `app.js`); Poor / Average / Great only on the first chart (`pctSvg`'s `scale`); section names in the charts as written, not

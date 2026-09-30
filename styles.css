@@ -3372,9 +3372,39 @@ body[data-mode="rankings"] #rankcount { display: none; }
 #lbseason { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 8px; }
 #lbseason .pill { min-width: 0; }
 #lbseason .pill .pill-text { white-space: nowrap; }
-#lbseason .spantog { order: 4; flex: 0 0 auto; }
-#lbseason .spantog[aria-pressed="true"] { background: var(--accent-2); border-color: var(--accent-2); color: var(--rule); }
-#lbseason .kindseg { order: 5; flex: 1 1 220px; display: flex; }
+#lbseason .kindseg { flex: 1 1 220px; display: flex; }
 #lbseason .kindseg .segbtn { flex: 1 1 0; }
 #board .meta .flag + .yr::before { content: "· "; }
-#lbseason .spantog, #lbseason .spantog:hover { padding: 0 12px; min-height: 30px; border: 1px solid var(--accent-2); background: var(--surface); color: var(--rule); }
+/* the Filters dropdown, one size for every tab (Sean, 30 Sep 2026: "I don't want the size of the popup window to ever
+   change"): 560px wide, as tall as the room under the button allows up to 560px; the tab row stays at the top and the
+   Done / Cancel row at the bottom, only the middle scrolls */
+#pop.grppop { display: flex; flex-direction: column; overflow: hidden; width: 560px; max-height: none;
+  height: max(300px, min(560px, calc(100dvh - var(--pop-top, 120px) - 22px - env(safe-area-inset-bottom, 0px)))); }
+:root[data-view="mobile"] #pop.grppop { width: auto; }
+#pop.grppop #pop-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding-bottom: 0; }
+#pop.grppop .grptabs { flex: none; padding-right: 34px; }
+#pop.grppop #pop-body > .textmodal { display: block; flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding-right: 4px; }
+#pop.grppop .popfoot { flex: none; margin: 0 -12px; padding: 10px 12px; border-top: 1px solid var(--hair); background: var(--surface); }
+#pop.grppop .colgrid { margin-bottom: 4px; }
+/* One season / Multiple seasons: first on its own line, so it stays put whichever is picked */
+#pop #lbseason { flex: 1 1 100%; min-width: 0; }
+#lbseason .spanseg { flex: 0 0 100%; display: flex; }
+#lbseason .spanseg .segbtn { flex: 1 1 0; }
+/* the column order: one stat a line, grip · number · name · ↑ ↓ · Gap after · × */
+.olist { list-style: none; margin: 6px 0 0; padding: 0; border: 1px solid var(--hair); }
+.orow { display: flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 6px 0 0; background: var(--surface); border-bottom: 1px solid var(--hair); font-size: 13px; }
+.orow:last-child { border-bottom: 0; }
+.orow.brk { border-bottom: 2px solid var(--rule); }
+.orow.brk:last-child { border-bottom: 0; }
+.orow .ogrip { align-self: stretch; display: flex; align-items: center; padding: 0 8px; color: var(--muted); font-size: 16px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.orow .onum { width: 20px; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; text-align: right; }
+.orow .olbl { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; padding: 0; }
+.orow .omove, .orow .orm { flex: none; width: 30px; height: 28px; padding: 0; border: 1px solid var(--hair); background: var(--surface); color: var(--ink-2); font-size: 14px; cursor: pointer; }
+.orow .omove:disabled, .orow .orm:disabled { color: var(--hair); cursor: default; }
+.orow .omove:hover:not(:disabled), .orow .orm:hover:not(:disabled) { background: var(--accent-wash); }
+.orow .obrk { flex: none; height: 28px; padding: 0 8px; border: 1px solid var(--hair); border-left: 1px solid var(--hair); background: var(--surface); color: var(--muted); font-size: 12px; cursor: pointer; }
+.orow .obrk.on { border-color: var(--accent-2); background: var(--accent-2); color: var(--rule); font-weight: 600; }
+.olist.dragging { cursor: grabbing; }
+.orow.drag { position: relative; z-index: 1; background: var(--accent-wash); outline: 2px solid var(--accent-2); }
+.orow.drag .ogrip { cursor: grabbing; }
+:root[data-view="mobile"] .orow .obrk { padding: 0 6px; }
