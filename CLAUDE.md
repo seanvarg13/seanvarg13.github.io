@@ -641,7 +641,11 @@ is deploy-limited.
   style too"):** Savant's bars and Savant's bubbles (r 10, 2px ring, white digits), exactly as before the studio page; only the
   section names in the title's type and the digits centred by `dy` differ. Leave them. **Reset (Sean, that night: "equal to whatever it was at 9am this morning"):** `pctSvg` is byte-for-byte the 9 am
   version (main at 89710a8) — bars, bubble, and its digits at `y: 1` in Savant's Roboto Condensed (a 100 at 10px, `.c3`); only
-  the section names keep the title's type. `themes.js` loads Roboto Condensed 700 for those digits alone. Leave all of it.
+  the section names keep the title's type. `themes.js` loads Roboto Condensed 700 for those digits alone. Leave all of it. **Then, the same night, the studio look at Savant's size** (Sean: "the percentile bar style you gave me again but ...
+  the same height as the savant style and ... the bubble ... font style height and fit exactly the same"): `pctSvg` is the 9 am
+  code minus the 10 / 50 / 90 ticks, the dashed rules and the Poor / Average / Great row; labels bold navy, values plain
+  (`.svval`), a faint track, a navy rule under each section name. The 20px bar and the bubble (r 10, 2px ring, white Roboto
+  Condensed digits at `y: 1`, a 100 at 10px) are Savant's, untouched.
 * **Type and ground** (Sean, 30 Sep 2026, same page): the whole site is **Barlow Condensed** (`--display`: headings, names, big
   numbers) + **Source Sans 3** (`--body`: everything else), loaded by `themes.js` (`F.studio`, the only font); Roboto
   Condensed is gone. **The swirl is gone**: `nopattern` is always on and the Appearance row is removed; pages sit on

@@ -3446,3 +3446,11 @@ body[data-mode="rankings"] #rankcount { display: none; }
 /* the bubble's digits in the type they had on the morning of 30 Sep 2026, Savant's Roboto Condensed (Sean: "equal to whatever
    it was at 9am"); themes.js loads it for this alone */
 .svpct .svnum { font-family: "Roboto Condensed", var(--body); }
+/* Sean's bars (30 Sep 2026, the Percentile Bar Studio's look at Savant's size): labels bold navy, values plain, the bar on a
+   faint track; the bar's height and the bubble — size, ring, digits, their type and place — are Savant's, untouched */
+.svpct text { font-size: 13px; }
+.svpct .svnum { font-size: 12px; }
+.svpct .svline { fill: color-mix(in srgb, var(--ink) 7%, var(--surface)); }
+.svpct .svlbl { fill: var(--ink); font-weight: 600; }
+.svpct .svlbl.svval { fill: var(--ink-2); font-weight: 400; }
+.svpct .svsecrule { fill: var(--ink); }

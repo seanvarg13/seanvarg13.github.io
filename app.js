@@ -6699,21 +6699,13 @@
       root.append(t);
       y = 24;
     }
+    // Sean's look (30 Sep 2026, the Percentile Bar Studio's bar at Savant's size): Savant's 20px bar and Savant's bubble, digits
+    // and all, on a faint track — no 10 / 50 / 90 ticks, no dashed rules between rows, no Poor / Average / Great row
     groups.forEach((g, gi) => {
-      const first = gi === 0 && scale, G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
+      const G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
       G.append(mk("rect", { class: "svsecrule", x: 0, y: 34, width: r6, height: 2 }));
       G.append(mk("text", { class: "svsecname", x: 0, y: 28 }, g.title));
-      if (first) {                                               // POOR / AVERAGE / GREAT, each arrow over its tick
-        const S = mk("g", { transform: "translate(125,54)" });
-        const tri = (cx) => `M${cx},2L${cx - 3},8L${cx + 3},8Z`;
-        const c0 = savantStyle(0).bg, c50 = savantStyle(50).bg, c100 = savantStyle(100).bg;
-        S.append(mk("path", { d: tri(12), fill: c0 }), mk("path", { d: tri(x(50)), fill: c50 }), mk("path", { d: tri(bar - 12), fill: c100 }));
-        S.append(mk("text", { class: "svscale", fill: c0 }, "Poor"),
-                 mk("text", { class: "svscale", x: x(50), "text-anchor": "middle", fill: c50 }, "Average"),
-                 mk("text", { class: "svscale", x: x(100), "text-anchor": "end", fill: c100 }, "Great"));
-        G.append(S);
-      }
-      const R = mk("g", { transform: `translate(40,${44 + (first ? 20 : 0)})` });
+      const R = mk("g", { transform: "translate(40,44)" });
       g.rows.forEach((r, i) => {
         const M = mk("g", { class: "svrow", transform: `translate(0,${i * 23})` });
         M.append(mk("title", {}, r.tip));
@@ -6721,11 +6713,9 @@
         const B = mk("g", { transform: "translate(85,0)", opacity: on ? 1 : 0.35 });
         B.append(mk("rect", { class: "svline", width: bar, height: 5, y: 7.5 }));
         if (on) B.append(mk("rect", { width: x(r.pct), height: 20, y: 0, fill: s.bg }));
-        for (const tx of [x(50) - 1, 11, bar - 13]) B.append(mk("rect", { class: "svtick", width: 2, height: 20, x: tx }));
         M.append(B);
         M.append(mk("text", { class: "svlbl", x: 80, y: 10, "text-anchor": "end" }, r.label));
-        M.append(mk("text", { class: "svlbl", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));
-        if (i) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + VW},-1.5` }));
+        M.append(mk("text", { class: "svlbl svval", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));
         if (on) {
           const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
           C.append(mk("circle", { class: "svbulb", r: 10, fill: s.bub }));
@@ -6737,7 +6727,7 @@
       });
       G.append(R);
       root.append(G);
-      y += g.rows.length * 23 + 34 + 10 + (first ? 20 : 0);
+      y += g.rows.length * 23 + 34 + 10;
     });
     const H = y + 20 + top - 10;
     const svg = mk("svg", { class: "svpct", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Percentile rankings" });
