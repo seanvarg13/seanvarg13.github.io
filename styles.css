@@ -3372,5 +3372,9 @@ body[data-mode="rankings"] #rankcount { display: none; }
 #lbseason { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 8px; }
 #lbseason .pill { min-width: 0; }
 #lbseason .pill .pill-text { white-space: nowrap; }
-#lbseason .kindseg { order: 5; flex: 1 1 100%; display: flex; }
+#lbseason .spantog { order: 4; flex: 0 0 auto; }
+#lbseason .spantog[aria-pressed="true"] { background: var(--accent-2); border-color: var(--accent-2); color: var(--rule); }
+#lbseason .kindseg { order: 5; flex: 1 1 220px; display: flex; }
 #lbseason .kindseg .segbtn { flex: 1 1 0; }
+#board .meta .flag + .yr::before { content: "· "; }
+#lbseason .spantog, #lbseason .spantog:hover { padding: 0 12px; min-height: 30px; border: 1px solid var(--accent-2); background: var(--surface); color: var(--rule); }
