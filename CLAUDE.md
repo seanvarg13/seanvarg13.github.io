@@ -503,7 +503,7 @@ is deploy-limited.
 * **The minimal pass, sixth round** (Sean, 30 Sep 2026: "I like everything but 3-5"): the card's info line drops the season (the
   picker says it); **Filters is dressed as the Hitting / Pitching switch** (a one-button `.seg`, `.phfilt`, pressed while open) and a
   two-way player's switch moves beside it at the end of the PA · G line (on a phone that line runs under the ×, `margin-right: -44px`),
-  so the band is a row shorter; **Share** is a small link beside the star (`#player/<id>`, the share sheet or the clipboard); the
+  so the band is a row shorter; **Share** was a small link beside the star (removed in the eighth round); the
   page behind a popup card was hidden while it was up and **shown again the same night** (Sean: "i actually dont want the stuff
   disappearing behind the player card") — don't hide it again unasked; **tapping a bar opens a note** under it (`statPop`: the glossary line, the league middle from the pool's sorted list, last
   season's value and percentile); ▲ / ▼ after a value for a 5+ point percentile move on last season were tried and **dropped the same
@@ -537,6 +537,16 @@ is deploy-limited.
   **Phones too** (Sean, the same evening: "keep that and actually apply it to mobile"): Filters in the blue bar and no white card on
   a phone's Leaderboard / Trending, 10px round the table. In the bar, Filters keeps the toolbar's look — white, thin light-blue
   outline, light blue while open or in effect (`#pagertop .tbtns .tbtn`), not the pager's navy page button.
+* **The minimal pass, eighth round** (Sean, 30 Sep 2026: "i like all of these, instead of 5 lets actually get rid of the share"):
+  **Rankings and the Draft board** get the Leaderboard's treatment (`inBarModes`, the `body.filtbar` rules name them; the toolbar
+  row stays while Rankings' list bar is in it), **Eligibility** loses its white card; **Fantasy's Leaderboard / Trending** keep
+  only the page pill and Filters, seated in the pager's blue bar (`box._fbar`, put back by `renderFTable` after every redraw) —
+  scoring, season, Hitters / Pitchers and position are the Filters fold's first row (`.fsetup`), What if keeps them on its bar;
+  the **Stuff+ board family** wears the Leaderboard's pale header; the card's **level shows only when it says something**
+  (`lvWorth` in `pageTitle`: a year with other levels, a minors season or a postseason one — "2026 ▾" alone otherwise); **Share is
+  gone**; **idea 1**: team, positions, bats and age ride on the season line (`.mlinein`, "age" dropped), a row saved; the pager's
+  numbers only show with more than one page (they already did); the **Filters dropdown's foot** is one "Clear" link (`popFoot`;
+  changes apply as made, × closes); the **home page's data line** is small and grey.
 * **Desktop card scrolls as one** (Sean, 30 Sep 2026: the tab strip "always visible at the bottom ... i dont like that"): the
   percentile box on a desktop card is its charts' full height (`sizePPage`'s `#modal-body` branch sets the natural height, no cap),
   so it never scrolls on its own and the tab strip sits under the last section, reached by scrolling the card like a phone's.

@@ -26,6 +26,12 @@ chips with × on the card; swipe a card down to close it on a phone; home is the
 "Leaderboard →" and each leader list's name opening its full list. The tables keep
 their old format (two-line list rows, numbered pages, every game in Game Logs).
 
+**The minimal pass, eighth round** (30 Sep 2026): Rankings and the Draft board look like the Leaderboard (Filters in the blue
+bar, no white card); Fantasy's Leaderboard and Trending keep just the page picker and Filters in the blue bar, with scoring,
+season, hitters / pitchers and position inside Filters; the Stuff+ board has the pale table header; a card shows "2026 ▾" with
+team, positions, bats and age on the same line, and the level only when there's another one to pick; no Share; the Filters
+dropdown ends in a single Clear link; the home page's date line is small and grey.
+
 **Desktop lists** (30 Sep 2026): on a computer the Leaderboard and Trending have no white card; the Filters button sits in the
 blue bar with the page numbers and the table fills the space. The Stuff+ board, League Trends, Call-up Watch and the Weekly Planner
 drop their boxes the same way, with their filters over the table. The Leaderboard and Trending sit centred, with the
@@ -38,8 +44,7 @@ Logs…) sit under them; scroll the card to reach them, as on a phone.
 (official), each with its percentile among 300+ PA hitters; full season only. They are Leaderboard / Compare columns too.
 
 **The minimal pass, sixth round** (30 Sep 2026): on a card, Filters looks like the Hitting / Pitching switch and sits beside it
-at the end of the PA · G line (the band is a row shorter), the info line has no season, Share (beside the star) sends his card's
-link, tapping a bar explains the stat with the league middle and last season.
+at the end of the PA · G line (the band is a row shorter), the info line has no season, tapping a bar explains the stat with the league middle and last season.
 
 **The minimal pass, third round** (29 Sep 2026): rows say positions · PA under the name; rate cells have no % (the column
 header does); the Leaderboard opens on eight stats (Filters ▸ Stats adds more); the card's line is PA · G (IP · G / GS); home has

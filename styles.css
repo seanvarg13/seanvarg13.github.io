@@ -3516,21 +3516,21 @@ body[data-mode="rankings"] #rankcount { display: none; }
 :root:not([data-view="mobile"]) body:is([data-mode="pitches"], [data-mode="trends"], [data-mode="callups"], [data-mode="planner"]) #pitchboard { border: 0 !important; padding: 0 !important; background: none !important; box-shadow: none !important; }
 /* Leaderboard and Trending on a desktop (Sean, 30 Sep 2026): Filters sits in the pager's blue bar, the white card around the
    list is gone, and the table takes the room — the page ground straight behind it. The toolbar row only shows when it has a note */
-:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap { background: none; border: 0 !important; padding-inline: 0; }
-:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap > .toolbar { background: none; }
-:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) #toolrow:not(:has(.winnote:not(:empty))) { display: none; }
+:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"], [data-mode="rankings"], [data-mode="draft"]) main.wrap { background: none; border: 0 !important; padding-inline: 0; }
+:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"], [data-mode="rankings"], [data-mode="draft"]) main.wrap > .toolbar { background: none; }
+:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"], [data-mode="rankings"], [data-mode="draft"]) #toolrow:not(:has(.winnote:not(:empty))) { display: none; }
 #pagertop > .tbtns { display: inline-flex; margin: 0 14px 0 0; }
-:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap { padding-top: 0; }
+:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"], [data-mode="rankings"], [data-mode="draft"]) main.wrap { padding-top: 0; }
 /* the Stuff+ board family the same way on a desktop: no white card, no board frame — its filters on the ground over the table */
 :root:not([data-view="mobile"]) body:is([data-mode="pitches"], [data-mode="trends"], [data-mode="callups"], [data-mode="planner"]) main.wrap { background: none; border: 0 !important; padding-inline: 0; }
 /* the Leaderboard and Trending sit centred between the site's header and the bottom of the screen (Sean, 30 Sep 2026): on a
    desktop the empty toolbar row goes (Filters is in the blue bar) and the card's bottom padding with it, so the table has 18px
    above and below; on a phone the free space — the two 10px gaps plus the home-bar strip — is split evenly top and bottom */
-:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap > .toolbar:not(:has(.winnote:not(:empty))) { display: none; }
-:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap { padding-bottom: 0; }
-:root:root[data-view="mobile"] body:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap { margin-top: calc(10px + env(safe-area-inset-bottom, 0px) / 2); margin-bottom: 0; }
+:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"], [data-mode="rankings"], [data-mode="draft"]) main.wrap > .toolbar:not(:has(.winnote:not(:empty))):not(:has(#setrow:not([hidden]))):not(:has(#setbar:not([hidden]))) { display: none; }
+:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"], [data-mode="rankings"], [data-mode="draft"]) main.wrap { padding-bottom: 0; }
+:root:root[data-view="mobile"] body:is([data-mode="leaderboard"], [data-mode="trending"], [data-mode="rankings"], [data-mode="draft"]) main.wrap { margin-top: calc(10px + env(safe-area-inset-bottom, 0px) / 2); margin-bottom: 0; }
 /* a phone's Leaderboard / Trending: Filters in the blue bar too, the toolbar row above it gone unless it has a note */
-:root[data-view="mobile"] body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap > .toolbar:not(:has(.winnote:not(:empty))) { display: none; }
+:root[data-view="mobile"] body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"], [data-mode="rankings"], [data-mode="draft"]) main.wrap > .toolbar:not(:has(.winnote:not(:empty))):not(:has(#setrow:not([hidden]))):not(:has(#setbar:not([hidden]))) { display: none; }
 :root[data-view="mobile"] #pagertop > .tbtns { margin-right: 8px; }
 :root[data-view="mobile"] #pagertop > .tbtns .tbtn { height: 30px; min-height: 30px; padding: 0 10px; }
 /* Filters in the blue bar keeps the toolbar's look (Sean, 30 Sep 2026: "subtle differences"): white with a thin light-blue
@@ -3539,7 +3539,7 @@ body[data-mode="rankings"] #rankcount { display: none; }
 :root:root:root #pagertop .tbtns .tbtn:hover { background: color-mix(in srgb, var(--accent-2) 18%, var(--surface)); }
 :root:root:root #pagertop .tbtns .tbtn.on, :root:root:root #pagertop .tbtns .tbtn[aria-expanded="true"] { background: var(--accent-2); color: var(--rule); border-color: var(--accent-2); }
 :root:root:root[data-view="mobile"] #pagertop .tbtns .tbtn { height: 30px; min-height: 30px; padding: 0 10px; }
-:root[data-view="mobile"] body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap { background: none; border: 0 !important; padding-inline: 4px; padding-bottom: 0; }   /* 10px all round */
+:root[data-view="mobile"] body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"], [data-mode="rankings"], [data-mode="draft"]) main.wrap { background: none; border: 0 !important; padding-inline: 4px; padding-bottom: 0; }   /* 10px all round */
 /* The lists on a desktop drawn like a phone's (Sean, 30 Sep 2026: "on the phone i see the row separator on the red highlighted
    cell, and the player name cell looks slightly different"): the sorted column's fill stops at the row, so each row's rule runs
    through it, and the rank and name cells fill the row's height with the phone's thin rule down the name's right side */
@@ -3549,3 +3549,20 @@ body[data-mode="rankings"] #rankcount { display: none; }
 :root:root:not([data-view="mobile"]) #rows .row-main > .who, :root:root:not([data-view="mobile"]) #colhead > .h.left { box-shadow: none; border-right: 1px solid var(--hair); }
 /* the Fantasy table the same (desktop): the sorted column's fill stops at each row's rule instead of running through it */
 :root:root:not([data-view="mobile"]) .ftable:not(.pbtable) tbody td.fsorted { background-clip: padding-box; border-left: 0; border-right: 0; }
+/* Minimal pass 8 (Sean, 30 Sep 2026). The card: team, positions, bats and age on the season line in the text face */
+.phead .pthd .mlinein { font-family: var(--body); font-size: 12.5px; color: var(--ink-2); letter-spacing: 0; white-space: normal; vertical-align: 1px; }
+:root:root .hub.home .hline { font-size: 12px; color: var(--muted); margin-bottom: 10px; }   /* the data line, small and grey (minimal pass 8) */
+/* the Stuff+ board (and the other boards drawn with it) in the Leaderboard's pale header: small grey names on the pale ground,
+   the sorted one light blue, a light-blue rule under the row (minimal pass 8) */
+:root:root:root .pbtable thead th, :root:root:root .pbtable thead th.n, :root:root:root .pbtable thead th.who { background: var(--surface-2); color: var(--muted); font-size: 11px; border-bottom: 2px solid var(--accent-2); }
+:root:root:root .pbtable thead th .sortbtn.on { color: var(--accent-2-text); text-decoration: none; }
+#pop.grppop .popfoot { justify-content: flex-end; padding-block: 8px; } #pop.grppop .popfoot .popclear { font-size: 13px; }
+/* Eligibility: no white card either, on a desktop and a phone (minimal pass 8) */
+body[data-mode="eligibility"] main.wrap { background: none !important; border: 0 !important; }
+/* Fantasy's Leaderboard / Trending: the page pill and Filters sit in the pager's blue bar; scoring, season, side and position are
+   the Filters fold's first row (minimal pass 8) */
+.pager > .fbar.inbar { display: inline-flex; gap: 8px; align-items: center; margin: 0 14px 0 0; padding: 0; border: 0; background: none; flex-wrap: nowrap; }
+.fbar.fsetup { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 0 0 8px; padding: 0; border: 0; background: none; }
+.pager > .fbar.inbar .fltbtn { white-space: nowrap; }
+:root[data-view="mobile"] .pager:has(> .fbar.inbar) { flex-wrap: wrap; row-gap: 6px; }
+:root[data-view="mobile"] .pager > .fbar.inbar { flex-basis: 100%; margin-right: 0; }
