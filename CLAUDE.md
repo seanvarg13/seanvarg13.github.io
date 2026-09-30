@@ -541,6 +541,12 @@ is deploy-limited.
   percentile box on a desktop card is its charts' full height (`sizePPage`'s `#modal-body` branch sets the natural height, no cap),
   so it never scrolls on its own and the tab strip sits under the last section, reached by scrolling the card like a phone's.
   This supersedes the locked-height / fill-the-card rule for the popup card and the player page on a desktop.
+* **Desktop rows drawn like a phone's** (Sean, 30 Sep 2026: "on the phone i see the row separator on the red highlighted cell,
+  and the player name cell looks slightly different"): on a desktop the sorted column's fill (`.hot`) stops at its row (margin
+  −3px, the row's padding, instead of −8px), so each row's rule runs through the red; the rank and name cells fill the row's height
+  with the phone's thin `--hair` rule down the name's right side (the box-shadow divider went); Fantasy's `td.fsorted` clips its
+  fill to the padding box (no white side borders) so its rules show too. A scaled-up desktop type size was tried for a minute and
+  dropped — it was the rules and the name cell he meant, not the sizes.
 * **Base Running** (hitter card, the last section — end of the right column, after Batted-Ball Distribution; Sean, 30 Sep 2026): Sprint Speed (Savant's, ft/s, 5+
   competitive runs — `sprint_speeds()`, the model's own feature), SB, SB Att. (SB + CS) and SB% (none without an attempt), official
   from the MLB Stats API's season line (`mlb_people` → `baserunning()` in `build_data.py`, `m.spd / sb / sba / sbp`). Percentiles like
