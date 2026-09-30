@@ -174,7 +174,18 @@
     ds.rows = (p) => (byDay() ? (daily() ? daily()[p.type + p.id] : null) : h.rows[p.type + p.id]) || [];
     ds.ready = () => !byDay() || !!daily();
     ds.load = () => { if (h.days) ensureScript(`hist/${h.daysFile || `days-${h.season}.js`}`, () => !!daily()); };
+    // spring / postseason: measured on that year's regular season, so its league constants too (a few hundred PA of October
+    // make a poor league average) — once the regular season's file is in
+    if (ds.kind) Object.defineProperty(ds, "consts", { get: () => { const r = regularOf(ds); return r ? r.consts : h.consts; } });
     return ds;
+  }
+  // the regular season a spring / postseason dataset is measured against (null while its file loads)
+  function regularOf(ds) {
+    if (!ds || !ds.kind || ds.multi) return null;
+    const rk = keyBase(ds.key);
+    if (rk === CUR.key) return CUR;
+    if (!(window.DRAFT_HIST && window.DRAFT_HIST[rk])) { ensureHist(rk); return null; }
+    return histDataset(rk);
   }
   // A span of seasons on the Leaderboard. "mlb-2023_2025" folds every season a player had in the span into one
   // line (his rows are summed like a date window); "mlb-2023_2025+each" lists every player-season as its own line.
@@ -587,7 +598,8 @@
     if (!ix.regularOnly) {
       ix.regularOnly = true;
       if (Array.isArray(ix.seasons)) ix.seasons = ix.seasons.filter((k) => !keyKind(k));
-      for (const e of ix.players || []) e.s = e.s.filter((sv) => !keyKind(sv[0]));
+      // his spring / postseason seasons stay aside (e.k) for the card title's MLB dropdown (MLB PS / MLB ST; Sean, 30 Sep 2026)
+      for (const e of ix.players || []) { e.k = e.s.filter((sv) => keyKind(sv[0])); e.s = e.s.filter((sv) => !keyKind(sv[0])); }
       ix.players = (ix.players || []).filter((e) => e.s.length);
     }
     return true;
@@ -956,6 +968,8 @@
   function pool(g) {
     const key = g + ":" + effMin(g) + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + daysReady();
     if (poolCache.has(key)) return poolCache.get(key);
+    const R = regularOf(DS), waiting = !!(DS.kind && !DS.multi && !R);   // its regular season still loading: don't keep this one
+    if (R) return kindPool(g, R, key);
     const all = DS.players.filter((p) => inGroup(p, g));
     // qualification is by full-season PA / IP; inside a date range or split, only players who actually appeared count
     const active = (p) => !needsDays() || V(p).sample > 0;
@@ -1047,6 +1061,20 @@
     const res = { list: listed, tail, ref: list, stats, sorted, scores };
     for (const p of listed) if (!stats.has(p.type + p.id)) stats.set(p.type + p.id, placeIn(res, g, p));   // listed but under the reference minimum
     for (const p of tail) stats.set(p.type + p.id, placeIn(res, g, p));
+    if (!waiting) poolCache.set(key, res);
+    return res;
+  }
+  // Spring training and the postseason (Sean, 30 Sep 2026: "compare it to regular season qualifiers from that year"): the
+  // reference population is that year's regular-season qualifiers, full season, in the same hand / venue split; every
+  // spring or October line is placed among them, so a 99 is "as good as a top-1% regular season" over however few PA
+  function kindPool(g, R, key) {
+    const ref = withDataset(R, () => { if (!R.ready()) R.load(); return withWindow(NOWIN, () => pool(g)); });
+    const active = (p) => !needsDays() || V(p).sample > 0, smp = (p) => (needsDays() ? V(p).sample : seasonSample(p));
+    const all = DS.players.filter((p) => inGroup(p, g) && active(p));
+    const listed = all.filter((p) => smp(p) >= effMin(g) || hasExtra(p, g)), ls = new Set(listed);
+    const tail = all.filter((p) => !ls.has(p)).sort((x, y) => smp(y) - smp(x));
+    const res = { list: listed, tail, ref: ref.ref, stats: new Map(), sorted: ref.sorted, scores: ref.scores, kindOf: R };
+    for (const p of all) res.stats.set(p.type + p.id, placeIn(res, g, p));
     poolCache.set(key, res);
     return res;
   }
@@ -1115,6 +1143,7 @@
   // game type of a dataset key: "" regular season, "spring", "post"  (mlb-2026 · mlb-2026-spring · mlb-2025-post)
   const KINDS = [["", "Regular season"], ["spring", "Spring training"], ["post", "Postseason"]];
   const KIND_SHORT = { "": "", spring: "Spring", post: "Postseason" };
+  const KIND_TAG = { "": "", spring: " ST", post: " PS" };                          // the card title's MLB ST / MLB PS
   const KIND_TINY = { "": "Regular", spring: "Spring", post: "Post" };            // the phone's filter row
   const mobileView = () => document.documentElement.dataset.view === "mobile";
   const keyKind = (key) => { const parts = key.split("-"); return parts.length > 2 && (parts[2] === "spring" || parts[2] === "post") ? parts[2] : ""; };
@@ -3553,10 +3582,9 @@
     parkControls(); body.innerHTML = "";
     if (!p0) return;
     // which season: the current one (list pool + Rank vs apply) or another year from the chips (regular seasons only)
-    if (state.cardDs && keyKind(state.cardDs) && !(state.mode === "pitches" && pb.src === "spring")) state.cardDs = null;   // spring cards only off the spring Stuff+ board
     const dsKey = state.cardDs || CUR.key;
     if (dsKey !== CUR.key) ensureHist(dsKey);
-    const ds = histDataset(dsKey);
+    const ds0 = histDataset(dsKey), ds = ds0 && ds0.kind && !ds0.multi && !regularOf(ds0) ? null : ds0;   // spring / PS: its regular season too
     if (!ds) { body.append(cardTop(renderPlate(p0, { rank: "–" }, "H", "H"), renderSeasonChips(p0)), el("p", "note", `Loading ${dsKey.startsWith("mlb-") ? dsKey.slice(4) : dsKey.replace("aaa-", "") + " Triple-A"} season…`)); return; }
     withDataset(ds, () => withWindow(state.cardWin, () => withSplit(state.split, () => {
       const p = ds.players.find((q) => q.id === p0.id && q.type === p0.type) || p0;
@@ -6703,7 +6731,7 @@
       plate.append(txt); return plate;
     };
     ensureHist(key);
-    const ds = histDataset(key);
+    const ds0 = histDataset(key), ds = ds0 && ds0.kind && !ds0.multi && !regularOf(ds0) ? null : ds0;   // spring / PS: its regular season too
     renderXDates(ds);
     if (!ds) { box.append(cardTop(stub(), chips({ id: entry.id, type }))); box.append(el("p", "xempty", failed.has(`hist/${key}.js`) ? `hist/${key}.js is missing — run build_history.py` : `Loading ${key.startsWith("mlb-") ? key.slice(4) : key.replace("aaa-", "") + " Triple-A"} season…`)); return; }
     withDataset(ds, () => withWindow(state.cardWin, () => withSplit(state.split, () => {
@@ -6844,21 +6872,24 @@
   // where the season is picked
   function pageTitle(p, o) {
     const hd = el("div", "ptitle"), t = el("h2", "pthd");
-    const kind = DS.kind ? " " + KIND_SHORT[DS.kind] : "";
-    const mine = o.entry ? o.entry.s.filter((sv) => sv[2] === p.type) : [];
+    const kt = (k) => KIND_TAG[keyKind(k)] || "";
+    if (!o.entry || !o.pick) { t.append(el("b", null, String(DS.season)), ` ${DS.level}${KIND_TAG[DS.kind || ""] || ""} Percentiles`); hd.append(t); return hd; }
+    // his seasons of this type: regular ones, plus the spring / postseason ones the MLB dropdown offers (MLB PS / MLB ST —
+    // short, so the title keeps its width; Sean, 30 Sep 2026)
+    const mine = o.entry.s.concat(o.entry.k || []).filter((sv) => sv[2] === p.type);
     const cur = mine.find((sv) => sv[0] === o.key);
-    if (!cur || !o.pick) { t.append(el("b", null, String(DS.season)), ` ${DS.level}${kind} Percentiles`); hd.append(t); return hd; }
-    const same = mine.filter((sv) => keyKind(sv[0]) === keyKind(cur[0]));       // regular season with regular seasons, and so on
-    const years = [...new Set(same.map((sv) => sv[1]))].sort((x, y) => y - x);
-    const inYear = (y) => same.filter((sv) => sv[1] === y).sort((x, z) => LEVEL_ORDER.indexOf(levelOf(x[0])) - LEVEL_ORDER.indexOf(levelOf(z[0])));
+    if (!cur) { t.append(el("b", null, String(DS.season)), ` ${DS.level}${KIND_TAG[DS.kind || ""] || ""} Percentiles`); hd.append(t); return hd; }
+    const years = [...new Set(o.entry.s.filter((sv) => sv[2] === p.type).map((sv) => sv[1]).concat([cur[1]]))].sort((x, y) => y - x);
+    const KORD = { "": 0, post: 1, spring: 2 };
+    const inYear = (y) => mine.filter((sv) => sv[1] === y).sort((x, z) => LEVEL_ORDER.indexOf(levelOf(x[0])) - LEVEL_ORDER.indexOf(levelOf(z[0])) || KORD[keyKind(x[0])] - KORD[keyKind(z[0])]);
     const yr = titleSelect(String(cur[1]), years.map((y) => [String(y), String(y)]), (y) => {
       const opts = inYear(Number(y)); if (!opts.length) return;
-      const hit = opts.find((sv) => levelOf(sv[0]) === levelOf(cur[0])) || opts[0];
+      const hit = opts.find((sv) => levelOf(sv[0]) === levelOf(cur[0]) && keyKind(sv[0]) === keyKind(cur[0])) || opts.find((sv) => levelOf(sv[0]) === levelOf(cur[0]) && !keyKind(sv[0])) || opts[0];
       if (hit[0] !== cur[0]) o.pick(hit[0]);
     }, "Season");
-    const lv = titleSelect(cur[0], inYear(cur[1]).map((sv) => [sv[0], LEVELS[levelOf(sv[0])] || levelOf(sv[0])]), (k) => o.pick(k), "Level");
+    const lv = titleSelect(cur[0], inYear(cur[1]).map((sv) => [sv[0], (LEVELS[levelOf(sv[0])] || levelOf(sv[0])) + kt(sv[0])]), (k) => o.pick(k), "Level");
     yr.classList.add("yr");
-    t.append(yr, " ", lv, `${kind} Percentiles`);
+    t.append(yr, " ", lv, " Percentiles");
     hd.append(t);
     return hd;
   }
