@@ -3340,3 +3340,8 @@ body[data-mode="rankings"] #rankcount { display: none; }
 :root[data-view="mobile"] body[data-mode="rankings"] #ranktools { order: -1; }
 /* the rows' second line: his positions · PA */
 #board .meta .posl + .flag::before { content: "· "; }
+/* A phone's rows slide sideways under the frozen rank and name: those two now run the row's full height (over its 4px
+   padding), so the sorted column's fill — stretched over that padding too — slides under them instead of poking out above
+   and below the name as red bars (Sean, 30 Sep 2026, from his phone) */
+:root[data-view="mobile"] #rows .row-main > .who, :root[data-view="mobile"] #rows .row-main > .rank { align-self: stretch; margin-block: -4px; padding-block: 4px; }
+:root[data-view="mobile"] #rows .row-main > .who { display: flex; flex-direction: column; justify-content: center; }
