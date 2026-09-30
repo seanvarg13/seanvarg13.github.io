@@ -3476,3 +3476,27 @@ body[data-mode="rankings"] #rankcount { display: none; }
 :root:root .phead .hstrip { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; overflow: visible; }   /* the Filters panel hangs out of it */
 .phead .hstrip .phtog { margin-left: 4px; }
 .phead .mrank:empty { display: none; }
+/* Minimal pass 6 (Sean, 30 Sep 2026). Filters is dressed as the Hitting / Pitching switch (same face, size and height) and
+   the two sit together at the end of the PA · G line; Share is a small link beside the star; the page behind a popup card is
+   hidden while it's up (kept laid out, so the list keeps its place); a tap on a bar opens its note; ▲ / ▼ for a move of 5+
+   percentile points on last season; a phone pins the section name while its bars scroll. */
+.phead .hstrip .seg { vertical-align: middle; }
+:root[data-view="mobile"] .phead .hstrip .seg button { padding-inline: 6px; }
+.phead .phtog + .seg { margin-left: 0; }
+.phead h2 .phshare { border: 0; background: none; padding: 0 0 0 10px; font: 600 12.5px var(--body); color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; vertical-align: middle; cursor: pointer; }
+body.cardpop.modal-open main.wrap, body.cardpop.modal-open > footer { visibility: hidden; }
+.svchart { position: relative; }
+.svpct .svrow { cursor: pointer; }
+.svpct .svchg { font-size: 9px; font-family: var(--body); }
+.svpct .svchg.up { fill: #d82129; }
+.svpct .svchg.dn { fill: #3661ad; }
+.statpop { position: absolute; left: 16px; right: 16px; z-index: 5; background: var(--surface); border: 1px solid var(--rule); padding: 8px 10px; font-size: 12.5px; line-height: 1.4; color: var(--ink); }
+.statpop .sphd { display: flex; gap: 10px; align-items: baseline; }
+.statpop .sphd b { font-family: var(--display); font-size: 17px; font-weight: 600; }
+.statpop p { margin: 4px 0; color: var(--ink-2); }
+.statpop .spfacts { color: var(--muted); font-size: 12px; }
+.modal.pcard #modal-body { position: relative; }
+.secstick { position: absolute; z-index: 4; background: var(--surface); font-family: var(--display); font-weight: 600; color: var(--ink); line-height: 1.25; padding: 4px 0 6px; pointer-events: none; box-sizing: border-box; }
+.secstick span { display: block; border-bottom: 2px solid var(--rule); padding-bottom: 3px; }
+:root:root[data-view="mobile"] .phead .hstrip { column-gap: 6px; }
+:root[data-view="mobile"] .phead .mplate .hstrip { margin-right: -44px; }   /* under the ×, which sits at the band's top: room for Filters and a two-way switch on one line */
