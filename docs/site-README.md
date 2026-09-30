@@ -39,7 +39,7 @@ Logs…) sit under them; scroll the card to reach them, as on a phone.
 
 **The minimal pass, sixth round** (30 Sep 2026): on a card, Filters looks like the Hitting / Pitching switch and sits beside it
 at the end of the PA · G line (the band is a row shorter), the info line has no season, Share (beside the star) sends his card's
-link, the page behind a popup card is hidden, tapping a bar explains the stat with the league middle and last season.
+link, tapping a bar explains the stat with the league middle and last season.
 
 **The minimal pass, third round** (29 Sep 2026): rows say positions · PA under the name; rate cells have no % (the column
 header does); the Leaderboard opens on eight stats (Filters ▸ Stats adds more); the card's line is PA · G (IP · G / GS); home has
