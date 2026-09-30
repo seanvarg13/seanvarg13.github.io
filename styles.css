@@ -935,7 +935,6 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 .fbar .field select { height: 32px; }
 .fbar .fq { height: 32px; border: 1px solid var(--hair); background: var(--surface); border-radius: 0; padding: 0 10px; font-size: 13px; width: 200px; }
 .fbar .field input[type="number"] { width: 72px; height: 32px; }
-.ftabs { margin-bottom: 8px; }
 .fscroll { overflow-x: auto; border: 1px solid var(--hair); background: var(--surface); }
 .ftable { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .ftable th { position: sticky; top: 0; z-index: 2; background: var(--surface-2); border-bottom: 2px solid var(--accent-2); padding: 0; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
@@ -2965,16 +2964,9 @@ body:is([data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-m
 .hub.home .hteam { grid-area: team; font-size: 11.5px; color: var(--muted); }
 .hub.home .hval { grid-area: val; font-size: 14px; font-variant-numeric: tabular-nums; color: var(--ink); }
 .hub.home .hside { grid-area: side; justify-self: end; font-size: 11px; color: var(--muted); }
-.hub.home .hall { margin-top: 18px; }
-.hub.home .htiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin-top: 10px; }
-.hub.home .htile { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border: 1px solid var(--hair); border-radius: 0; text-decoration: none; background: var(--surface); }
-.hub.home .htile:hover { background: var(--accent-wash); }
-.hub.home .htile b { font-size: 13.5px; color: var(--ink); }
-.hub.home .htile span { font-size: 12px; color: var(--muted); line-height: 1.35; }
 .hub.home > .note { margin-top: 14px; padding: 8px 12px; background: var(--surface); border-radius: 0; }
 :root[data-view="mobile"] .hub.home { padding: 10px 10px 20px; }
 :root[data-view="mobile"] .hub.home .hgrid, :root[data-view="mobile"] .hub.home .hthree { grid-template-columns: minmax(0, 1fr); }
-:root[data-view="mobile"] .hub.home .htiles { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 body[data-mode="home"] main.wrap > .notes { display: none; }   /* the lists' percentile key and glossary buttons don't apply to the home page */
 :root[data-view="mobile"] .hub.home .htwo { grid-template-columns: minmax(0, 1fr); }
 /* the phone's Menu panel shows when the data runs through (the header has no room for it) */
@@ -3079,7 +3071,6 @@ body[data-mode="appearance"] main.wrap > .notes { display: none; }
 :root[data-view="mobile"] .fsubnav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; overflow: visible; }
 :root[data-view="mobile"] .fsubnav a { text-align: center; margin: 0; }
 :root[data-view="mobile"] .fbar .fsum { flex: 1 1 140px; }
-:root[data-view="mobile"] .postabs.ftabs { flex-wrap: wrap; overflow: visible; }
 /* the leaderboards' coloured column fills its cells edge to edge down the rows, as the Fantasy tables' do (Sean, 28 Sep 2026) */
 #rows .row-main > .hot, #rows .row-main .pcts > .hot { align-self: stretch; margin: -8px 0; height: auto; min-height: 0; font-weight: 700; box-shadow: none; }
 :root[data-view="mobile"] #rows .row-main > .hot, :root[data-view="mobile"] #rows .row-main .pcts > .hot { margin: -4px 0; }
@@ -3305,11 +3296,11 @@ body[data-mode="planner"] main.wrap > #pitchboard { overflow: auto; }
 #pop.grppop .grptabs .ptab.on { color: var(--ink); border-bottom-color: var(--rule); }
 #pop.grppop .grptabs .ptab:hover:not(.on) { color: var(--ink); }
 
-/* 5. tighter rows: on a desktop about 38px (from 53); on a phone the second line is just the team */
+/* 5. tighter rows: on a desktop about 38px (from 53); the second line is his positions and PA (app.js) */
 :root:not([data-view="mobile"]) #board .row-main { padding-top: 3px; padding-bottom: 3px; }
 :root:not([data-view="mobile"]) #board .row-main .name { line-height: 1.2; }
 :root:not([data-view="mobile"]) #board .row-main .meta { line-height: 1.2; }
-:root[data-view="mobile"] #board .row-main .meta > span:not(.team):not(.added) { display: none; }
+
 
 /* 6. nothing under the table: the key, glossary, how-to and layout switch are in the header's More menu */
 footer.notes:empty { display: none; }
@@ -3332,3 +3323,20 @@ footer.notes:empty { display: none; }
 
 /* 11. the home page opens on one quiet line, then the cards */
 .hub.home .hline { margin: 0 0 14px; padding: 0 2px; font-size: 14px; color: var(--ink-2); }
+
+/* ---------- The minimal pass, third round (Sean, 29 Sep 2026) ---------- */
+/* Rankings: its list bar and the toolbar share one row — position and Filters on the left, Edit rankings, the list's status,
+   Rankings lists and Save on the right; the "All hitters" chip went (the position button already says it) */
+body[data-mode="rankings"] .toolbar:not(.xtoolbar) { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+body[data-mode="rankings"] #toolrow { order: 0; flex: 1 1 auto; min-width: 0; }
+body[data-mode="rankings"] #setrow { order: 1; flex: 0 1 auto; min-width: 0; }
+body[data-mode="rankings"] #setbar { padding: 0; background: none; border: 0; }
+body[data-mode="rankings"] #rankcount { display: none; }
+/* the Filters dropdown and the other panels: section names as small grey labels, no rule under them */
+:root:root .panel .psec h4 { color: var(--muted); font-size: 12px; font-weight: 600; border-bottom: 0; padding-bottom: 0; margin-bottom: 6px; }
+/* on a phone the list bar is its own row under the toolbar: Edit rankings, Rankings lists and Save side by side */
+:root[data-view="mobile"] body[data-mode="rankings"] #setrow { flex: 1 1 100%; }
+:root[data-view="mobile"] body[data-mode="rankings"] #setbar { flex-wrap: nowrap; gap: 6px; }
+:root[data-view="mobile"] body[data-mode="rankings"] #ranktools { order: -1; }
+/* the rows' second line: his positions · PA */
+#board .meta .posl + .flag::before { content: "· "; }

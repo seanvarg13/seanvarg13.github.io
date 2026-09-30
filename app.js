@@ -8,6 +8,9 @@
   const HIT_TABS = ["ALL", "C", "1B", "2B", "3B", "SS", "OF", "DH"];
   const PIT_TABS = ["ALLP", "SP", "RP"];
   const TAB_LABEL = { ALL: "All hitters", ALLP: "All pitchers" };
+  // a column's label, with the % a rate's cells no longer carry (Sean, 29 Sep 2026)
+  const LB_SLIM = { H: ["woba", "ev", "brl", "hh", "osw", "whf", "k", "bb"], P: ["k", "bb", "whf", "strk", "gb", "era", "uera", "suera"] };
+  const colLab = (m) => { const l = SHORT[m.key] || m.label; return m.unit === "%" && !l.includes("%") ? l + "%" : l; };
   const SHORT = { suera: "Stuff uERA", aopt: "Arsenal Opt.", xk: "xK%", pxw: "pxwOBA", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
                tiers: "draft2027.tiers", tierNames: "draft2027.tierNames", sets: "draft2027.rankSets", extraPos: "draft2027.extraPos", stars: "draft2027.stars" };
@@ -396,8 +399,7 @@
     tbFold: !!prefs.tbFold,
     teamF: prefs.teamF || null,                    // {kind: "lg" | "div" | "team", v} — only that league, division or team                        // filters tucked away behind a slim bar (it stays pinned, so they can come back from anywhere)   // Year / Age columns right after the name ("auto": Year when the list spans seasons)
     lbSplit: { hand: "all", venue: "all" },       // Leaderboard: vs L / R and home / away (session only, like the card's)
-    lb: Object.assign({ H: ["woba", "ev", "brl", "hh", "pull", "air", "gb", "zsw", "osw", "whf", "k", "bb"],
-                        P: ["whf", "strk", "gb", "pu", "wsgp", "k", "bb", "kbb", "ukb", "era", "nera", "uera", "suera", "siera", "fip", "fbv"] }, prefs.lb || {}),   // Leaderboard columns
+    lb: Object.assign({ H: LB_SLIM.H.slice(), P: LB_SLIM.P.slice() }, prefs.lb || {}),   // Leaderboard columns
     open: prefs.open || {},          // which fold-out rows are expanded, e.g. {air: true}
     cmp: Object.assign({ type: "H", players: [] }, prefs.cmp || {}),   // Compare page: [{id, ds}]
     cmpCols: prefs.cmpCols || {},              // Compare: chosen stats per type {H: [keys], P: [keys]}; missing = every card stat
@@ -422,10 +424,13 @@
     draftOrder: prefs.draftOrder || "board",   // Draft page: "board", "mine" (working rankings) or "set:<name>"
 
   };
-  if (state.lb.P.includes("nera") && !state.lb.P.includes("uera")) state.lb.P.splice(state.lb.P.indexOf("nera") + 1, 0, "uera");     // uERA back 2026-09-21
+  // the minimal pass (Sean, 29 Sep 2026): the Leaderboard opens on a handful of core stats, set once over any saved list;
+  // Filters ▸ Stats adds the rest back (the migrations below then leave a slimmed list alone: their flags are set here too)
+  if (!state.lb.slim) { state.lb.H = LB_SLIM.H.slice(); state.lb.P = LB_SLIM.P.slice(); Object.assign(state.lb, { slim: true, suAdded: true, xwdAdded: true }); }
+  if (!state.lb.slim && state.lb.P.includes("nera") && !state.lb.P.includes("uera")) state.lb.P.splice(state.lb.P.indexOf("nera") + 1, 0, "uera");     // uERA back 2026-09-21
   if (!state.lb.suAdded) { if (!state.lb.P.includes("suera")) state.lb.P.splice(state.lb.P.includes("uera") ? state.lb.P.indexOf("uera") + 1 : state.lb.P.length, 0, "suera"); state.lb.suAdded = true; }   // Stuff uERA, 27 Sep 2026
-  if (state.lb.P.includes("kbb") && !state.lb.P.includes("ukb")) state.lb.P.splice(state.lb.P.indexOf("kbb") + 1, 0, "ukb");       // added 2026-09-21
-  if (state.lb.P.includes("gb") && !state.lb.P.includes("wsgp")) state.lb.P.splice(state.lb.P.indexOf("gb") + 1, 0, "wsgp");       // WSGP added 2026-09-23
+  if (!state.lb.slim && state.lb.P.includes("kbb") && !state.lb.P.includes("ukb")) state.lb.P.splice(state.lb.P.indexOf("kbb") + 1, 0, "ukb");       // added 2026-09-21
+  if (!state.lb.slim && state.lb.P.includes("gb") && !state.lb.P.includes("wsgp")) state.lb.P.splice(state.lb.P.indexOf("gb") + 1, 0, "wsgp");       // WSGP added 2026-09-23
   // Statcast's xwOBA left the site 2026-09-24, and the directional one is the headline column already
   state.lb.H = state.lb.H.filter((k) => k !== "xws" && k !== "xwd");
   if (!state.lb.xwdAdded) { if (!state.lb.H.includes("xwdiff")) state.lb.H.splice(Math.max(0, state.lb.H.indexOf("woba") + 1), 0, "xwdiff"); state.lb.xwdAdded = true; }   // xwOBA − wOBA, 27 Sep 2026
@@ -1743,7 +1748,7 @@
       const sh = head("score", isPitcherGroup(g) ? "Score" : woH ? "wOBA" : HEAD.label, woH ? "wOBA — no directional xwOBA at this level" : DATA.meta.scoreNote[isPitcherGroup(g) ? "P" : "H"]); if (hasBreak(g, "score")) sh.classList.add("brk"); h.append(sh); }
     // stat headers: click to sort (the column order is changed in the Table panel)
     for (const m of ms) {
-      const hb = head(m.key, SHORT[m.key] || m.label, m.label + (m.hib ? " — higher is better" : " — lower is better"));
+      const hb = head(m.key, colLab(m), m.label + (m.hib ? " — higher is better" : " — lower is better"));
       hb.dataset.key = m.key; if (hasBreak(g, m.key)) hb.classList.add("brk");
       h.append(hb);
     }
@@ -1877,9 +1882,10 @@
       const nameEl = el("div", "name", p.name);
       if (state.mode === "rankings" || state.mode === "draft") { const sk = listStars()[p.type + p.id]; if (sk) { const star = el("span", "rowstar", "★"); star.title = sk.note || "Starred"; nameEl.append(" ", star); if (sk.note) nameEl.title = sk.note; } }
       who.append(nameEl);
+      // just his positions and playing time under the name (Sean, 29 Sep 2026); team and hand are in the name's tooltip
+      nameEl.title = nameEl.title || `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`;
       const meta = el("div", "meta");
-      meta.append(el("span", "team", p.team));
-      meta.append(el("span", null, p.type === "P" ? `${posLabel(p)} · ${p.throws}HP` : posLabel(p) + (p.bats ? ` · ${p.bats}` : "")));
+      meta.append(el("span", "posl", posLabel(p)));
       const v = V(p);
       const flag = el("span", "flag", p.type === "P" ? `${fmtIP(v.ip)} IP` : `${v.pa} PA`);
       if (seasonSample(p) < effMin(g) && !hasExtra(p, state.pos)) { flag.classList.add("low"); flag.title = `Under the Min ${sampleLabel(g)} — listed after everyone who qualifies; his percentiles are where he'd land among them`; }
@@ -1900,7 +1906,7 @@
       for (const m of ms) {
         const v = metricValue(m, V(p), st), pct = st.pct[m.key];
         const b = el("div", "pct"); const showV = state.tbl.numbers === "values" ? true : state.tbl.numbers === "pct" ? false : (trending || m.showValue);
-        if (pct == null && (showV ? v == null : true)) { b.classList.add("na"); b.textContent = "–"; } else { b.textContent = showV ? (v == null ? "–" : fmt(v, m).replace(" mph", "")) : pct;
+        if (pct == null && (showV ? v == null : true)) { b.classList.add("na"); b.textContent = "–"; } else { b.textContent = showV ? (v == null ? "–" : fmt(v, m).replace(" mph", "").replace("%", "")) : pct;   // the % is in the header
           // like the Fantasy tables (Sean, 28 Sep 2026: "give the table this same formatting color wise"): the column you sort by
           // is filled with its percentile colour, the rest plain unless heat is on for all (xwOBA − wOBA was coloured too, until
           // Sean: "dont heat map xwoba - woba")
@@ -1909,7 +1915,7 @@
         if (state.sort === m.key && !customOrder()) b.classList.add("sorted");
         if (hasBreak(g, m.key)) b.classList.add("brk");
         b.title = `${m.label}: ${v == null ? "n/a" : fmt(v, m)} (${pct == null ? "n/a" : ordinal(pct)} pctl)`;
-        b.prepend(el("span", "lbl", SHORT[m.key] || m.label));
+        b.prepend(el("span", "lbl", colLab(m)));
         pcts.append(b);
       }
       main.append(pcts);
@@ -2871,13 +2877,13 @@
 
   /* ---------- player popup (Rankings / Draft / Trending) ---------- */
   // the season's counting stats: PA / AB / balls in play / games, or IP / BF / G-GS / pitches
-  // the playing time behind a line of numbers: [value, unit] pairs — PA, AB, BBE, G for a hitter; IP, BF, G / GS, pitches
+  // the playing time behind a line of numbers: [value, unit] pairs — PA and G for a hitter; IP and G / GS for a pitcher
   function sampleParts(p, pv) {
     const out = [];
-    if (p.type === "P") out.push([fmtIP(pv.ip), "IP"], [pv.bf, "BF"], [`${pv.g} / ${pv.gs}`, "G / GS"], [pv.ctx.Pitches, "pitches"]);
+    // two numbers, not four (Sean, 29 Sep 2026, the minimal pass): PA and G, or IP and G / GS
+    if (p.type === "P") out.push([fmtIP(pv.ip), "IP"], [`${pv.g} / ${pv.gs}`, "G / GS"]);
     else {
-      out.push([pv.pa, "PA"], [pv.ab, "AB"]);
-      if (pv.ctx.BBE || pv.ctx.BIP == null) out.push([pv.ctx.BBE, "BBE"]); else out.push([pv.ctx.BIP, "BIP"]);
+      out.push([pv.pa, "PA"]);
       const gH = pv.ctx.G != null ? pv.ctx.G : careerG(p);
       if (gH != null) out.push([gH, "G"]);
     }
@@ -4055,23 +4061,6 @@
       b.addEventListener("click", () => { state.tierView = v; savePrefs(); render(); }); seg.append(b);
     }
   }
-  // the front door: every page on the site, grouped by what you came to do
-  const HOME_SECS = [
-    ["Draft day", [
-      ["#rankings", "Rankings", "Your board. Start from the model's order, sort by any stat, then drag, type ranks or tick players into tiers — and save as many lists as you like.", "Open Rankings"],
-      ["#draft", "Draft board", "For the draft itself. Pick the list to draft from, mark players as they go, and the board keeps only who's left — tiers intact, saved in this browser mid-draft.", "Open Draft board"],
-      ["#eligibility", "Eligibility", "Who counts where. ESPN's rules run automatically (20+ games at a position, MLB and minors together; SP / RP by innings), plus anything you've added yourself.", "Open Eligibility"],
-    ]],
-    ["Look things up", [
-      ["#leaderboard", "Leaderboard", "Every hitter or pitcher over your minimum, for any season and level — MLB from 2015, the minors from 2021 — with the stats you pick, plus splits, date ranges and last-N.", "Open Leaderboard"],
-      ["#trending", "Trending Players", "Who's hot right now: hitters over their last N plate appearances or days, pitchers over their last N innings, ranked against the season's qualifiers on the same span.", "Open Trending"],
-      ["#compare", "Compare", "Players side by side on the same stats — each on his own season, split or window.", "Open Compare"],
-      ["#fantasy", "Fantasy points", "Your scoring on every player: totals, per game, per at bat, per start and per week; expected points from xwOBA (hitters) and luck-neutral / underlying ERA (pitchers); any dates, vs LHP / RHP, home / away, and who's trending.", "Open Fantasy"],
-    ]],
-    ["Set up", [
-      ["#appearance", "Appearance", "Colours, type and the mobile / desktop layout. Every device follows the site default until you pick something on it.", "Open Appearance"],
-    ]],
-  ];
   // The home page (Sean, 28 Sep 2026: "a legit home page … an actual home page"): a dashboard rather than a list of links —
   // when the data runs through, a search, the pages you use most, your starred players and the season's leaders, then
   // every page. Only data.js is used, so it opens fast on a phone.
@@ -4113,15 +4102,7 @@
       }
     }));
     lc.append(three);
-    // every page, compact
-    const allC = el("section", "hcard hall"); allC.append(el("h3", null, "Every page"));
-    const tiles = el("div", "htiles");
-    const SHORT = { "#rankings": "Your own board: sort, drag, tier and save lists.", "#draft": "Draft day: mark picks, see who's left.", "#eligibility": "Who qualifies where, plus positions you add.",
-                    "#leaderboard": "Every player, any season or level, your stats.", "#trending": "Who's hot over his last N PA, innings or days.",
-                    "#compare": "Players side by side on the same stats.", "#fantasy": "Your scoring on everyone, any dates or split.", "#appearance": "Colours, type and layout." };
-    for (const [title, cards] of HOME_SECS) for (const [href, name] of cards) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, SHORT[href] || "")); tiles.append(a); }
-    for (const [href, name, blurb] of [["#pitches", "Stuff+", "Every pitch graded against its type."], ["#trends", "League Trends", "League averages by season, hitting and by pitch."], ["#callups", "Call-up Watch", "This season's minor leaguers, ranked for the majors."], ["#planner", "Weekly Planner", "The week ahead: probable starts, two-start pitchers, games."]]) { const a = el("a", "htile"); a.href = href; a.append(el("b", null, name), el("span", null, blurb)); tiles.append(a); }
-    allC.append(tiles); box.append(allC);
+    // no "Every page" tiles (Sean, 29 Sep 2026, the minimal pass): the header's menus already list them
     box.append(el("p", "note", `Statcast ${m.season} through ${m.through}, built ${m.built} UTC. xwOBA, xBA and xSLG are the directional model's; uK%, uBB% and uERA are what a pitcher's process has historically been worth.`));
   }
   /* ---------- Stat glossary: one box per stat, the way Savant's glossary reads ---------- */
@@ -4783,10 +4764,14 @@
       b.addEventListener("click", () => { f.grp = g; f.pos = g === "H" ? "ALL" : "ALLP"; f.sort = null; fUi(); renderFantasy(); }); seg.append(b);
     }
     bar.append(seg);
+    // the position is one pill beside Hitters / Pitchers, not a row of tabs (Sean, 29 Sep 2026, the minimal pass)
+    const tabList = f.grp === "H" ? HIT_TABS : PIT_TABS;
+    const posPill = pillSelect(TAB_LABEL[f.pos] || f.pos, tabList.map((t) => [t, TAB_LABEL[t] || t]), f.pos, (t) => { f.pos = t; fUi(); renderFantasy(); }, "Position");
+    bar.append(posPill);
     const q = el("input"); q.type = "search"; q.placeholder = "Search name or team"; q.value = f.q; q.className = "fq";
     q.addEventListener("input", () => { f.q = q.value; renderFTable(box); });
-    bar.append(q);
     const tr = f.view === "trending";
+    if (!(f.view === "leaders" || tr)) bar.append(q);        // Leaderboard / Trending: the search folds behind Filters
     const mn = el("label", "field"); mn.append(el("span", null, f.grp === "H" ? "Min PA" : "Min IP"));
     const mi = el("input"); mi.type = "number"; mi.min = 0; mi.step = f.grp === "H" ? (tr ? 5 : 10) : tr ? 1 : 5; mi.value = tr ? f.tmin[f.grp] : f.grp === "H" ? f.minH : f.minP; mi.inputMode = "numeric";
     mi.addEventListener("change", () => { const v = Math.max(0, Number(mi.value) || 0); if (tr) f.tmin[f.grp] = v; else if (f.grp === "H") f.minH = v; else f.minP = v; fUi(); renderFTable(box); });
@@ -4799,16 +4784,7 @@
       bar.append(fb, el("span", "fsum", fFilterSummary()));
     } else bar.append(mn);
     box.append(bar);
-    if ((f.view === "leaders" || tr) && f.fopen) { const fr = fFilterBar(box); fr.append(mn); box.append(fr); }
-    // position tabs
-    const tabs = el("div", "postabs ftabs"); tabs.setAttribute("role", "tablist");
-    const tabList = f.grp === "H" ? HIT_TABS : PIT_TABS;
-    for (const t of tabList) {
-      const b = el("button", "postab", t === "ALL" ? "All hitters" : t === "ALLP" ? "All pitchers" : t); b.type = "button"; b.setAttribute("role", "tab");
-      b.setAttribute("aria-selected", String(t === f.pos));
-      b.addEventListener("click", () => { f.pos = t; fUi(); renderFTable(box); }); tabs.append(b);
-    }
-    box.append(tabs);
+    if ((f.view === "leaders" || tr) && f.fopen) { const fr = fFilterBar(box); fr.prepend(q); fr.append(mn); box.append(fr); }
     box.append(el("div", "ftable-wrap"));
     const note = el("p", "note fnote" + (f.noteOpen ? " open" : "")); box.append(note);
     const more = el("button", "linkbtn fnotemore", f.noteOpen ? "Less" : "More about these numbers"); more.type = "button";
@@ -4826,6 +4802,7 @@
     if (f.venue !== "all") bits.push(f.venue);
     const B = { x: "expected", both: "actual + expected", n: "luck-neutral", u: "underlying", all: "all three" }[f.basis[f.grp]];
     if (B) bits.push(B + " points");
+    if (f.q) bits.push(`"${f.q}"`);
     bits.push(f.view === "trending" ? `${f.tmin[f.grp]}+ ${pit ? "IP" : "PA"} in span` : `${pit ? f.minP : f.minH}+ ${pit ? "IP" : "PA"}`);
     return bits.join(" · ");
   }

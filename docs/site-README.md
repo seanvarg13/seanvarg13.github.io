@@ -11,6 +11,11 @@ menus and `HOME_SECS` the home page's cards. Since the minimal pass (29 Sep 2026
 current one underlined, and the home page opens on one line (games through / updated) — no title, search or page buttons of
 its own, the header has them.
 
+**The minimal pass, third round** (29 Sep 2026): rows say positions · PA under the name; rate cells have no % (the column
+header does); the Leaderboard opens on eight stats (Filters ▸ Stats adds more); the card's line is PA · G (IP · G / GS); home has
+no "Every page" tiles; Rankings is one toolbar row; Fantasy's positions are a pill and its search is under Filters; panel
+section names are small grey labels.
+
 **The minimal pass, second round** (29 Sep 2026): nothing is set in capitals by the stylesheet (team codes are still
 capitals, they're data); buttons and headings are semibold; the background swirl runs at 8% (Appearance ▸ Background
 pattern turns it off per device, `draft2027.pattern`); the list toolbar is two buttons — position and **Filters**, which
