@@ -3494,3 +3494,6 @@ body.cardpop.modal-open main.wrap, body.cardpop.modal-open > footer { visibility
 .modal.pcard #modal-body { position: relative; }
 :root:root[data-view="mobile"] .phead .hstrip { column-gap: 6px; }
 :root[data-view="mobile"] .phead .mplate .hstrip { margin-right: -44px; }   /* under the ×, which sits at the band's top: room for Filters and a two-way switch on one line */
+/* No bold anywhere (Sean, 30 Sep 2026: "try unbolding everything that is currently bolded") — every face at its regular
+   400, headings and names included, except the percentile bubbles' digits, which stay Savant's (Roboto Condensed 700). */
+:root:root :not(.svnum) { font-weight: 400 !important; }
