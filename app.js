@@ -2133,7 +2133,7 @@
   // The Leaderboard's and Trending's Filters button rides in the pager's blue bar (a phone's too, since 30 Sep 2026 evening), and the white card around the
   // list goes (Sean, 30 Sep 2026: "stick the filters button into the blue bar ... make the leaderboard itself bigger"). It is
   // taken back to its toolbar before the bar is redrawn, and stays there on every other page
-  const inBarModes = ["leaderboard", "trending"];
+  const inBarModes = ["leaderboard", "trending", "rankings", "draft"];
   function seatFilters(box, total) {
     const tb = $("tbtns"), home = $("toolrow") && $("toolrow").querySelector(".tools");
     if (!tb || !home) return;
@@ -4945,22 +4945,26 @@
     if (f.view === "settings") { const top = el("div", "fbar"); top.append(vp); box.append(top); renderFSettings(box); return; }
     // toolbar: page · preset · year · group · position · search · minimum
     const bar = el("div", "fbar"); bar.append(vp);
+    const lean = f.view === "leaders" || f.view === "trending";   // minimal pass 8: just the page and Filters, in the blue bar
+    const lean0 = bar;
     const pre = el("label", "field"); pre.append(el("span", null, "Scoring"));
     const sel = el("select");
     for (const p of fpresets()) { const o = el("option", null, p.name); o.value = p.id; if (p.id === fpreset().id) o.selected = true; sel.append(o); }
     sel.addEventListener("change", () => { fstore.current = sel.value; fsave(); renderFantasy(); });
-    pre.append(sel); bar.append(pre); ddSelect(sel);
-    bar.append(pillSelect(y, FYEARS.map((yy) => [yy, yy]), y, (yy) => { f.year = yy; fUi(); renderFantasy(); }, "Season"));
+    pre.append(sel); ddSelect(sel);
+    const yrPill = pillSelect(y, FYEARS.map((yy) => [yy, yy]), y, (yy) => { f.year = yy; fUi(); renderFantasy(); }, "Season");
     const seg = el("div", "seg"); seg.setAttribute("role", "group");
     for (const [g, l] of [["H", "Hitters"], ["P", "Pitchers"]]) {
       const b = el("button", "segbtn", l); b.type = "button"; b.setAttribute("aria-pressed", String(g === f.grp));
       b.addEventListener("click", () => { f.grp = g; f.pos = g === "H" ? "ALL" : "ALLP"; f.sort = null; fUi(); renderFantasy(); }); seg.append(b);
     }
-    bar.append(seg);
     // the position is one pill beside Hitters / Pitchers, not a row of tabs (Sean, 29 Sep 2026, the minimal pass)
     const tabList = f.grp === "H" ? HIT_TABS : PIT_TABS;
     const posPill = pillSelect(TAB_LABEL[f.pos] || f.pos, tabList.map((t) => [t, TAB_LABEL[t] || t]), f.pos, (t) => { f.pos = t; fUi(); renderFantasy(); }, "Position");
-    bar.append(posPill);
+    // on the Leaderboard / Trending the scoring, season, side and position go into the Filters fold (minimal pass 8, Sean, 30
+    // Sep 2026); the What-if page keeps them on its bar
+    const setup = [pre, yrPill, seg, posPill];
+    if (!lean) lean0.append(...setup);
     const q = el("input"); q.type = "search"; q.placeholder = "Search name or team"; q.value = f.q; q.className = "fq";
     q.addEventListener("input", () => { f.q = q.value; renderFTable(box); });
     const tr = f.view === "trending";
@@ -4972,12 +4976,12 @@
     // the less-used controls (dates / window, hand, home / away, actual or expected, the minimum) fold behind one Filters
     // button, with what's in effect summed up beside it (Sean, 28 Sep 2026: the page was "somewhat overwhelming")
     if (f.view === "leaders" || tr) {
-      const fb = el("button", "btn fltbtn" + (f.fopen ? " on" : ""), f.fopen ? "Hide filters" : "Filters"); fb.type = "button";
+      const fb = el("button", "btn fltbtn" + (f.fopen ? " on" : ""), f.fopen ? "Filters ▴" : "Filters ▾"); fb.type = "button";
       fb.addEventListener("click", () => { f.fopen = !f.fopen; renderFantasy(); });
-      bar.append(fb, el("span", "fsum", fFilterSummary()));
+      bar.append(fb);
     } else bar.append(mn);
-    box.append(bar);
-    if ((f.view === "leaders" || tr) && f.fopen) { const fr = fFilterBar(box); fr.prepend(q); fr.append(mn); box.append(fr); }
+    box.append(bar); box._fbar = lean ? bar : null;          // renderFTable seats it in the pager's blue bar
+    if ((f.view === "leaders" || tr) && f.fopen) { const fr = fFilterBar(box); const top = el("div", "fbar fsetup"); top.append(...setup, q); fr.prepend(top); fr.append(mn); box.append(fr); }
     box.append(el("div", "ftable-wrap"));
     const note = el("p", "note fnote" + (f.noteOpen ? " open" : "")); box.append(note);
     const more = el("button", "linkbtn fnotemore", f.noteOpen ? "Less" : "More about these numbers"); more.type = "button";
@@ -5129,6 +5133,7 @@
     // a pager under the rows only where the page itself scrolls (Fantasy on a phone); elsewhere the top one never leaves view
     if (mobileView()) renderPager(pagerBot, shown.length, pg, redraw);
     wrap.append(pagerTop);
+    if (box._fbar) { box._fbar.classList.add("inbar"); pagerTop.prepend(box._fbar); }   // a redraw clears the wrap; the bar goes back in
     const table = el("table", "ftable"), thead = el("thead"), tr = el("tr");
     tr.append(el("th", "n", ""), el("th", "who", "Player"));
     for (const c of cols) {
@@ -7129,7 +7134,10 @@
     }, "Season");
     const lv = titleSelect(cur[0], inYear(cur[1]).map((sv) => [sv[0], (LEVELS[levelOf(sv[0])] || levelOf(sv[0])) + kt(sv[0])]), (k) => o.pick(k), "Level");
     yr.classList.add("yr");
-    t.append(yr, " ", lv, " Percentiles");
+    // the level only when it says something (minimal pass 8, Sean, 30 Sep 2026): a year with just his MLB season shows "2026 ▾"
+    // alone; a year with minor-league seasons keeps the dropdown to pick the level, and a minors-only year names it
+    const lvWorth = inYear(cur[1]).length > 1 || levelOf(cur[0]) !== "mlb" || keyKind(cur[0]);
+    t.append(yr, ...(lvWorth ? [" ", lv] : []), " Percentiles");
     hd.append(t);
     return hd;
   }
@@ -7160,6 +7168,10 @@
     title.classList.add("pinline");
     for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
     if (h2) h2.after(title); else plate.append(title);
+    // his team, positions, bats and age ride on the season line, a row saved (minimal pass 8, Sean, 30 Sep 2026 — idea 1 of the
+    // Card Header Comparison)
+    { const ml = plate.querySelector(".mline"), hd2 = title.querySelector(".pthd");
+      if (ml && hd2) { const s2 = el("span", "mlinein", " · " + ml.textContent.replace(/\bage (\d+)/, "$1")); hd2.append(s2); ml.remove(); } }
     const finish = () => {                               // put the pieces where this layout wants them
       if (mob) { if (F.childNodes.length) plate.append(F); }
       else {
@@ -7184,16 +7196,6 @@
     const tog = el("span", "phtog"), fs = el("div", "seg phfiltseg"); fs.append(b); tog.append(fs);
     (plate.querySelector(".hstrip") || mr || plate).append(tog);
     { const ts = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (ts) tog.after(ts); }   // a two-way player's switch: right after Filters, a row saved
-    // Share: his card's own link (#player/<id>), through the phone's share sheet where there is one (Sean, 30 Sep 2026)
-    { const sh = el("button", "phshare", "Share"); sh.type = "button"; sh.title = "Share a link to this player";
-      sh.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        const url = location.origin + location.pathname + "#player/" + p.id;
-        try { if (navigator.share) { await navigator.share({ title: p.name, url }); return; } } catch (_) { return; }   // a cancelled share sheet
-        try { await navigator.clipboard.writeText(url); sh.textContent = "Link copied"; } catch (_) { sh.textContent = "Copy failed"; }
-        setTimeout(() => { sh.textContent = "Share"; }, 1800);
-      });
-      (h2 || tog).append(sh); }   // beside the star, off the PA · G line
     if (!mob) { F.classList.add("phpop"); tog.append(F); }
     let warn = null;
     if (open) {
@@ -7599,7 +7601,15 @@
     renderTabs(); renderSortSelect(); renderRef(); renderMin(); renderLbTools(); renderTrendTools();
   }
   // the buttons under a tab: pinned under the scrolling part in the Filters dropdown, so they never move either
-  function popFoot(body, w, row) { if ($("pop").classList.contains("grppop")) { row.classList.add("popfoot"); body.append(w, row); } else { w.append(row); body.append(w); } }
+  // In the Filters dropdown changes apply as they're made, so its foot is one small "Clear" link (minimal pass 8, Sean, 30 Sep
+  // 2026); the × at its top closes it
+  function popFoot(body, w, row) {
+    if ($("pop").classList.contains("grppop")) {
+      const clear = [...row.querySelectorAll("button")].find((x) => x.textContent === "Clear");
+      if (clear) { clear.className = "linkbtn popclear"; row.replaceChildren(clear); }
+      row.classList.add("popfoot"); body.append(w, row);
+    } else { w.append(row); body.append(w); }
+  }
   const panelButtons = (clearFn) => {
     const row = el("div", "row");
     const done = el("button", "btn", "Done"); done.type = "button"; done.addEventListener("click", () => closePanel(false));
