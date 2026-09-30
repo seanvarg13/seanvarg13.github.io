@@ -3454,3 +3454,20 @@ body[data-mode="rankings"] #rankcount { display: none; }
 .svpct .svlbl { fill: var(--ink); font-weight: 600; }
 .svpct .svlbl.svval { fill: var(--ink-2); font-weight: 400; }
 .svpct .svsecrule { fill: var(--ink); }
+/* minimal pass 5 (Sean, 30 Sep 2026) */
+/* the Star is a ☆ / ★ right after the player's name */
+:root:root .phead h2 .starbox.staricon { display: inline-flex; vertical-align: middle; margin: 0 0 0 8px; position: relative; }
+:root:root .phead h2 .staricon .starbtn { border: 0 !important; background: none !important; box-shadow: none !important; padding: 0 2px; min-height: 0; height: auto; font-size: 0.8em; line-height: 1;
+  color: var(--muted); font-family: var(--body); cursor: pointer; }
+:root:root .phead h2 .staricon .starbtn.on { color: var(--ink); }
+:root:root .phead h2 .staricon .starbtn:hover { color: var(--ink); }
+/* the season picker under the name, left-aligned, in the title's own type */
+:root:root .phead .ptitle.pinline { flex-basis: auto; margin: 2px 0 2px; padding: 0; text-align: left; }
+:root:root .phead .ptitle.pinline .pthd { font-size: 19px; }
+/* Game Logs: no group labels over the columns (Stuff / Start results / Underlying …) — the thin rules between the groups
+   stay (minimal pass 5) */
+:root:root .gamesbox .ubt.glog thead tr.ggrp { display: none; }
+/* six tabs across the Filters dropdown: one sliding row on a phone, never two lines */
+#pop.grppop .grptabs { flex-wrap: nowrap; }
+:root[data-view="mobile"] #pop.grppop .grptabs { gap: 14px; }
+:root[data-view="mobile"] #pop.grppop .grptabs .ptab { font-size: 13.5px; }
