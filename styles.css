@@ -3541,3 +3541,12 @@ body.cardpop.modal-open main.wrap, body.cardpop.modal-open > footer { visibility
 :root:root:root #pagertop .tbtns .tbtn.on, :root:root:root #pagertop .tbtns .tbtn[aria-expanded="true"] { background: var(--accent-2); color: var(--rule); border-color: var(--accent-2); }
 :root:root:root[data-view="mobile"] #pagertop .tbtns .tbtn { height: 30px; min-height: 30px; padding: 0 10px; }
 :root[data-view="mobile"] body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap { background: none; border: 0 !important; padding-inline: 4px; padding-bottom: 0; }   /* 10px all round */
+/* The lists on a desktop drawn like a phone's (Sean, 30 Sep 2026: "on the phone i see the row separator on the red highlighted
+   cell, and the player name cell looks slightly different"): the sorted column's fill stops at the row, so each row's rule runs
+   through it, and the rank and name cells fill the row's height with the phone's thin rule down the name's right side */
+:root:root:not([data-view="mobile"]) #rows .row-main > .hot, :root:root:not([data-view="mobile"]) #rows .row-main .pcts > .hot { margin: -3px 0; align-self: stretch; }
+:root:root:not([data-view="mobile"]) #rows .row-main > :is(.who, .rank) { align-self: stretch; margin-block: -3px; padding-block: 3px; display: flex; flex-direction: column; justify-content: center; }
+:root:root:not([data-view="mobile"]) #rows .row-main > .rank { align-items: flex-end; }
+:root:root:not([data-view="mobile"]) #rows .row-main > .who, :root:root:not([data-view="mobile"]) #colhead > .h.left { box-shadow: none; border-right: 1px solid var(--hair); }
+/* the Fantasy table the same (desktop): the sorted column's fill stops at each row's rule instead of running through it */
+:root:root:not([data-view="mobile"]) .ftable:not(.pbtable) tbody td.fsorted { background-clip: padding-box; border-left: 0; border-right: 0; }
