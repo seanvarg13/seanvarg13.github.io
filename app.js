@@ -1807,7 +1807,8 @@
     const editing = state.mode === "rankings" && state.editRanks, hasTiers = editing && (state.tiers[state.pos] || []).length;
     const mobile = document.documentElement.dataset.view === "mobile";
     h.style.setProperty("--rankw", editing ? (mobile ? (hasTiers ? "108px" : "72px") : hasTiers ? "190px" : "134px") : mobile ? "30px" : "44px");
-    h.append(el("div", "h", editing ? (hasTiers ? "Rank · tier" : "My rank") : mobile ? "Rk" : "Rank"), el("div", "h left", ref === g ? "Player" : `Player · ranked vs ${POOL_NAME[ref]}`));
+    // no "Rank" over the numbers (minimal pass 5): they say what they are
+    h.append(el("div", "h", editing ? (hasTiers ? "Rank · tier" : "My rank") : ""), el("div", "h left", ref === g ? "Player" : `Player · ranked vs ${POOL_NAME[ref]}`));
     const head = (key, label, title) => { const h = editing ? Object.assign(el("div", "h", label), { title }) : sortButton(key, label, title); if (/^[a-z]/.test(label)) h.classList.add("lc"); return h; };
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
     for (const k of ["year", "age"]) h.style.setProperty("--pre" + (k === "year" ? 1 : 2), preOn(k) ? "var(--prew, 64px)" : "0px");
@@ -2106,8 +2107,7 @@
     if (pg.pages > 1) {
       const nav = el("div", "pnav");
       const b = (label, n, title, dis) => { const x = el("button", "pbtn", label); x.type = "button"; x.title = title; x.disabled = dis; x.addEventListener("click", () => go(n)); return x; };
-      const first = b("«", 1, "First page", pg.page === 1); first.classList.add("pend");
-      nav.append(first, b("‹", pg.page - 1, "Previous page", pg.page === 1));
+      nav.append(b("‹", pg.page - 1, "Previous page", pg.page === 1));   // no « / » (minimal pass 5): the first and last pages are numbered anyway
       const near = document.documentElement.dataset.view === "mobile" ? 1 : 2;
       const nums = new Set([1, pg.pages, ...Array.from({ length: 2 * near + 1 }, (_, i) => pg.page - near + i)].filter((n) => n >= 1 && n <= pg.pages));
       let last = 0;
@@ -2115,8 +2115,7 @@
         if (n - last > 1) nav.append(el("span", "pgap", "…"));
         const x = b(String(n), n, `Page ${n}`, false); if (n === pg.page) x.setAttribute("aria-current", "page"); nav.append(x); last = n;
       }
-      const lastb = b("»", pg.pages, "Last page", pg.page === pg.pages); lastb.classList.add("pend");
-      nav.append(b("›", pg.page + 1, "Next page", pg.page === pg.pages), lastb);
+      nav.append(b("›", pg.page + 1, "Next page", pg.page === pg.pages));
       box.append(nav);
     }
     if (onChange) box.append(perPageField(setSize));    // the list pages keep theirs in Filters (minimal pass 4); Fantasy here
@@ -3107,6 +3106,11 @@
     if (m && !m.querySelector('a[href="#pitches"]')) { const li = el("li"); const a = el("a", null, "Stuff+"); a.href = "#pitches"; li.append(a); m.append(li); }
     if (m && !m.querySelector('a[href="#trends"]')) { const li = el("li"); const a = el("a", null, "League Trends"); a.href = "#trends"; li.append(a); m.append(li); }
     if (m && !m.querySelector('a[href="#callups"]')) { const li = el("li"); const a = el("a", null, "Call-up Watch"); a.href = "#callups"; li.append(a); m.append(li); }
+    // Compare lives in this menu, not the header (minimal pass 5, Sean, 30 Sep 2026): Home · Fantasy · Leaderboards · More
+    if (m && !m.querySelector('a[href="#compare"]')) {
+      const top = document.querySelector('.modes > a[data-mode="compare"]'); if (top) top.remove();
+      const li = el("li"); const a = el("a", null, "Compare"); a.href = "#compare"; li.append(a); m.append(li);
+    }
     return b;
   };
   pitchBoardEl();
@@ -3763,7 +3767,8 @@
   // with the four panels as tabs across its top (the last one used opens first), so the row never wraps on a phone
   // Dates got a tab of its own and Table became "Table format" (Sean, 30 Sep 2026); Splits (vs L / R, home / away) is the
   // Leaderboard's alone, so the other lists don't show an empty tab
-  const GRP_TABS = [["filters", "Filters"], ["stats", "Stats"], ["splits", "Splits"], ["dates", "Dates"], ["table", "Table format"]];
+  // and since the minimal pass 5 (Sean, 30 Sep 2026) the position picker is its first tab, so Filters is the toolbar's only button
+  const GRP_TABS = [["positions", "Position"], ["filters", "Filters"], ["stats", "Stats"], ["splits", "Splits"], ["dates", "Dates"], ["table", "Table format"]];
   const GRP = new Set(GRP_TABS.map(([k]) => k));
   const grpTabsNow = () => GRP_TABS.filter(([k]) => k !== "splits" || state.mode === "leaderboard");
   function renderToolButtons() {
@@ -3782,9 +3787,9 @@
       });
       box.append(b);
     };
-    add("positions", posBtnLabel(), state.panel === "positions", popActive("positions"));
-    const n = ["filters", "splits", "dates"].filter(popActive).length;
-    add("grp", "Filters" + (n ? ` · ${n}` : ""), grpOpen, n > 0);
+    // the position shows on the button when it isn't everyone ("SS · Filters"), so the one button still says what's listed
+    const n = ["filters", "splits", "dates"].filter(popActive).length, pos = popActive("positions") ? posBtnLabel() + " · " : "";
+    add("grp", pos + "Filters" + (n ? ` · ${n}` : ""), grpOpen, n > 0 || !!pos);
   }
   // the tab row across the top of the Filters dropdown
   function grpTabs() {
@@ -4214,7 +4219,7 @@
     }));
     lc.append(three);
     // no "Every page" tiles (Sean, 29 Sep 2026, the minimal pass): the header's menus already list them
-    box.append(el("p", "note", `Statcast ${m.season} through ${m.through}, built ${m.built} UTC. xwOBA, xBA and xSLG are the directional model's; uK%, uBB% and uERA are what a pitcher's process has historically been worth.`));
+    // the data line and the credit live in the Stat glossary now (minimal pass 5, Sean, 30 Sep 2026)
   }
   /* ---------- Stat glossary: one box per stat, the way Savant's glossary reads ---------- */
   const GLOSS = {
@@ -4294,6 +4299,11 @@
       d.append(el("b", null, x.label), el("p", null, GLOSS[x.key]));
       box.append(d);
     }
+    // the data and credit lines that used to sit under every page and the home page (minimal pass 5, Sean, 30 Sep 2026)
+    { const m = DATA.meta, f = el("div", "gcredit");
+      f.append(el("p", "note", `Statcast ${m.season} through ${m.through}, built ${m.built} UTC. xwOBA, xBA and xSLG are the directional model's; uK%, uBB% and uERA are what a pitcher's process has historically been worth.`),
+               el("p", "note", CREDIT));
+      box.append(f); }
     return box;
   }
   function renderChrome() {
@@ -4859,15 +4869,13 @@
     const box = $("fboard"); box.innerHTML = "";
     const f = state.f, y = f.year, T = window.DRAFT_THEMES;
     fEnsure(y);
-    // sub-nav
-    const nav = el("nav", "subnav fsubnav");
-    for (const [v, l] of [["leaders", "Leaderboard"], ["trending", "Trending"], ["whatif", "What if"], ["settings", "Scoring settings"]]) {
-      const a = el("a", null, l); a.href = `#fantasy/${v}`; if (v === f.view) a.setAttribute("aria-current", "page"); nav.append(a);
-    }
-    box.append(nav);
-    if (f.view === "settings") { renderFSettings(box); return; }
-    // toolbar: preset · year · group · position · search · minimum
-    const bar = el("div", "fbar");
+    // the page: one pill instead of four buttons (minimal pass 5, Sean, 30 Sep 2026 — a 2×2 grid of them on a phone)
+    const PAGES = [["leaders", "Leaderboard"], ["trending", "Trending"], ["whatif", "What if"], ["settings", "Scoring settings"]];
+    const vp = pillSelect((PAGES.find(([v]) => v === f.view) || PAGES[0])[1], PAGES, f.view, (v) => { location.hash = `#fantasy/${v}`; }, "Page");
+    vp.classList.add("fpage");
+    if (f.view === "settings") { const top = el("div", "fbar"); top.append(vp); box.append(top); renderFSettings(box); return; }
+    // toolbar: page · preset · year · group · position · search · minimum
+    const bar = el("div", "fbar"); bar.append(vp);
     const pre = el("label", "field"); pre.append(el("span", null, "Scoring"));
     const sel = el("select");
     for (const p of fpresets()) { const o = el("option", null, p.name); o.value = p.id; if (p.id === fpreset().id) o.selected = true; sel.append(o); }
@@ -5053,7 +5061,7 @@
     if (mobileView()) renderPager(pagerBot, shown.length, pg, redraw);
     wrap.append(pagerTop);
     const table = el("table", "ftable"), thead = el("thead"), tr = el("tr");
-    tr.append(el("th", "n", document.documentElement.dataset.view === "mobile" ? "Rk" : "Rank"), el("th", "who", "Player"));
+    tr.append(el("th", "n", ""), el("th", "who", "Player"));
     for (const c of cols) {
       const th = el("th", c.num ? "num" : "txt"); const b = el("button", "h", c.label); b.type = "button"; if (c.title) b.title = c.title;
       if (c.label === sortKey) th.setAttribute("aria-sort", f.dir === "asc" ? "ascending" : "descending");
@@ -5675,18 +5683,22 @@
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
+  let pbtabReset = false;
   function renderBelow(p, o = {}) {
     const sec = el("section", "pbelow2");
     const tabs = p.type === "P" ? [...BTABS, ...BTABS_P] : [...BTABS, ...BTABS_H];
-    const pick = state.pbtab === "none" ? null : tabs.some(([k]) => k === state.pbtab) ? state.pbtab : "compare";
+    // a card opens on Season Stats (minimal pass 5, Sean, 30 Sep 2026): Compare, the least used, went to the end of the row,
+    // and a Compare left open from before is put back to Stats once per visit
+    if (!pbtabReset) { pbtabReset = true; if (state.pbtab === "compare") state.pbtab = "stats"; }
+    const pick = state.pbtab === "none" ? null : tabs.some(([k]) => k === state.pbtab) ? state.pbtab : "stats";
     const g = o.g || (p.type === "H" ? "H" : p.primary), ref = o.ref || g;
     // Since the minimal pass (Sean, 29 Sep 2026) the strip is plain words, and the tabs that are two views of one thing
     // share a word: Stats holds Season and Spreadsheet, More the smaller tabs. A shared word opens the one last used
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => (tabs.find(([x]) => x === k) || [])[1];
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["compare"], ["stats", "sheet"], ...(p.type === "P" ? [["stuff"]] : []), ["games"], ["fantasy"],
-                    ["rolling", ...(p.type === "P" ? ["nera", "uera"] : ["mix", "babip"])]].map((G) => G.filter(has)).filter((G) => G.length);
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["stuff"]] : []), ["games"], ["fantasy"],
+                    ["rolling", ...(p.type === "P" ? ["nera", "uera"] : ["mix", "babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(lab); };   // nERA / uERA keep their small letter
     const go = (k) => { const y0 = bar.getBoundingClientRect().top, inPop = !!bar.closest("#modal-body"); state.pbtab = k; savePrefs(); render(); anchorTabs(y0, inPop, p); };
@@ -6873,12 +6885,11 @@
     page.append(B);
     // only what's under the plate scrolls (Sean: "the scrolling only involves the non header parts"), so a flick or a
     // phone's rubber-band never moves the plate or opens a gap above it
-    const sc = el("div", "cardscroll"); sc.append(page, renderBelow(p, { st, g, ref }), creditLine());
+    const sc = el("div", "cardscroll"); sc.append(page, renderBelow(p, { st, g, ref }));
     box.append(sc);
   }
   // Where the numbers and photos come from, and what the site is for: at the foot of every page and every card
   const CREDIT = "Data: MLB Stats API and Baseball Savant (MLB Advanced Media). Player photos: MLB. Not affiliated with or endorsed by MLB or Baseball Savant. A personal project for personal, non-commercial use only.";
-  const creditLine = () => el("p", "credit", CREDIT);
   // the card's scroller: its body under the plate, else (a settings panel) the modal body itself
   const cardSc = () => { const mb = $("modal-body"); return (mb && mb.querySelector(":scope > .cardscroll")) || mb; };
   // Savant's dropdown, the one list every picker on the site opens: a white box inside a heavy dark rule hung straight
@@ -7015,21 +7026,28 @@
     // the headshot in a framed tile with the Star button under it, on a desktop and a phone alike (an open Star panel
     // goes under his lines, where it has the room)
     const mug = plate.querySelector(":scope > .mug");
-    if (mug) {
-      const col = el("div", "phmug"); mug.replaceWith(col); col.append(mug);
-      if (star) {
-        const note = star.querySelector(".starnote"); if (note) note.remove();          // the note is in the button's title
-        const panel = star.querySelector(".starpanel"); if (panel) (h2 ? h2.parentElement : plate).append(panel);
-        col.append(star);
-      }
-    } else if (star && mr) mr.append(star);
+    if (mug) { const col = el("div", "phmug"); mug.replaceWith(col); col.append(mug); }
+    // the Star is a ☆ / ★ right after his name (minimal pass 5, Sean, 30 Sep 2026), not a button under the photo; an open Star
+    // panel still goes under his lines, where it has the room
+    if (star) {
+      const note = star.querySelector(".starnote"); if (note) note.remove();          // the note is in the button's title
+      const panel = star.querySelector(".starpanel"); if (panel) (h2 ? h2.parentElement : plate).append(panel);
+      const sb = star.querySelector(".starbtn");
+      if (sb) { const on = sb.classList.contains("on"); sb.textContent = on ? "★" : "☆"; sb.setAttribute("aria-label", on ? "Starred — edit" : "Star this player"); }
+      star.classList.add("staricon");
+      if (h2) h2.append(star); else if (mr) mr.append(star);
+    }
     const title = pageTitle(p, o);
+    // the season picker sits right under his name, "2026 ▾ MLB" (minimal pass 5, Sean, 30 Sep 2026) — not a row of its own
+    // across the band's foot on a phone or a column of its own on a desktop
+    title.classList.add("pinline");
+    for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
+    if (h2) h2.after(title); else plate.append(title);
     const finish = () => {                               // put the pieces where this layout wants them
-      if (mob) { if (F.childNodes.length) plate.append(F); plate.append(title); }
+      if (mob) { if (F.childNodes.length) plate.append(F); }
       else {
         const left = el("div", "phleft"); left.append(...plate.childNodes);
-        const mid = el("div", "phmid"); mid.append(title);
-        plate.append(left, mid);
+        plate.append(left);
         if (!F.classList.contains("phpop") && F.childNodes.length) { plate.append(F); plate.classList.add("phright"); }   // season chips: on the right
       }
       top.append(plate); return top;
@@ -7588,7 +7606,7 @@
     document.querySelector(".modes").append(w); }
   const NAV_GROUPS = [
     { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "eligibility", "fantasy", "planner"] },
-    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending", "pitches", "trends", "callups"] },
+    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending", "pitches", "trends", "callups", "compare"] },
     { key: "more", sel: "moresel", txt: "moreseltxt", menu: "moremenu", label: "More", short: "More", modes: ["appearance"] },
   ];
   function readMode() {
@@ -7613,7 +7631,7 @@
   const statSorted = () => !!(customOrder() && state.rankSort && !state.editRanks);
   // a tab with a saved order of its own: column sorting is off there, the order is the order
   const customOrder = () => { const s = orderSource(); return !!(s && (s.ranks[state.pos] || []).length); };
-  window.addEventListener("hashchange", () => { readMode(); state.expanded = null; render(); });
+  window.addEventListener("hashchange", () => { readMode(); state.expanded = null; if (POPPED.has(state.panel)) { state.panel = null; $("pop").hidden = true; parkControls(); } render(); });   // a toolbar dropdown doesn't follow you to another page
   $("search").addEventListener("input", (e) => { state.q = e.target.value; state.expanded = null; renderRows(); });
   $("sort").addEventListener("change", (e) => { state.sort = e.target.value; state.dir = state.sort === "name" ? "asc" : "desc"; savePrefs(); render(); });
   let minTimer;
@@ -7809,6 +7827,6 @@
   })();
 
 
-  document.querySelector("main.wrap").after(creditLine());   // the page's own foot, under every page
+  // no credit line under the pages any more: it's at the end of the Stat glossary (minimal pass 5)
   readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); migrateTierOrder(); render(); setTb(); watchBuild();
 })();

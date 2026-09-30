@@ -489,6 +489,15 @@ is deploy-limited.
   (`perPageField`; Fantasy keeps its pager's); Fantasy's note is just its "More about these numbers" link until opened; "Games
   through …" moved from the desktop header (`.stamp` hidden) to the foot of the More menu; the sorted column (`.hot`, Fantasy's
   `.fsorted`) is a light tint of its percentile colour with navy digits.
+* **The minimal pass, fifth round** (Sean, 30 Sep 2026: "do all of those"): the card's Star is a ☆ / ★ right after the name
+  (`.staricon`, the panel unchanged); the season picker sits under the name as "2026 ▾ MLB" (`.ptitle.pinline`, "Percentiles"
+  dropped; no title column / row of its own); cards open on Season Stats and Compare is the strip's last tab (`pbtabReset` puts a
+  saved Compare back to Stats once per visit); the list toolbar is one button — the position picker is the Filters dropdown's
+  first tab (`GRP_TABS` starts with `positions`; the button reads "SS · Filters" when a position is picked); the pager has no « /
+  »; no "Rank" / "Rk" over the rank numbers; Fantasy's four page buttons are one pill (`.fpage`); Compare moved from the header
+  into the Leaderboards menu (the header is Home · Fantasy · Leaderboards · More); the credit line under every page and the home
+  page's data note are at the end of the Stat glossary (`.gcredit`; `creditLine` is gone); Game Logs have no group-label row
+  (`tr.ggrp` hidden, the rules between groups stay). A toolbar dropdown closes on a page change.
 * **Phone header is one line** (Sean, 28 Sep 2026): site name, search and a ☰ Menu button (`.navtog`, made in `app.js`
   because `index.html` doesn't round-trip); the page buttons (`.modes`) open under it in a two-column grid and close on a
   pick, a page change or a tap elsewhere. Desktop keeps its single row. The swirl pattern behind cards and list pages
