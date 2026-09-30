@@ -480,6 +480,15 @@ is deploy-limited.
   PA · G / IP · G / GS (`sampleParts`); no "Every page" tiles on home; Rankings' list bar shares the toolbar's row (its own row
   on a phone); Fantasy's positions are one pill beside Hitters / Pitchers and its search sits in the Filters fold; panel section
   names are small grey labels.
+* **The minimal pass, fourth round** (Sean, 30 Sep 2026: "ok to all of those changes"): no initials tile when there's no
+  headshot (an empty tile of the same size); the card's "full season" note only shows when a filter is on; **on a desktop the
+  card's percentile box stops at its charts** (`sizePPage`: `min(natural, the old fill-the-card height)`), so the tab strip sits
+  right under them — Sean approved closing that gap, the card itself keeps its size; every heading inside the card's tabs
+  (`.rollname`, `.secname`, `.cgroup`) in the title's type; the Leaderboard / Trending have no summary line beside Filters
+  (`#tsum` hidden); a row's season only shows in a span of seasons; Per page lives in Filters ▸ Order and minimum
+  (`perPageField`; Fantasy keeps its pager's); Fantasy's note is just its "More about these numbers" link until opened; "Games
+  through …" moved from the desktop header (`.stamp` hidden) to the foot of the More menu; the sorted column (`.hot`, Fantasy's
+  `.fsorted`) is a light tint of its percentile colour with navy digits.
 * **Phone header is one line** (Sean, 28 Sep 2026): site name, search and a ☰ Menu button (`.navtog`, made in `app.js`
   because `index.html` doesn't round-trip); the page buttons (`.modes`) open under it in a two-column grid and close on a
   pick, a page change or a tap elsewhere. Desktop keeps its single row. The swirl pattern behind cards and list pages
