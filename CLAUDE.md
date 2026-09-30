@@ -485,7 +485,9 @@ is deploy-limited.
   style in ~45 states (phone / desktop, light / dark, every page and card tab) and a cleanup must leave all of them identical.
 * **A phone's list rows slide sideways under the frozen rank and name**; those two run the row's full height (over its
   padding, the block at the end of `styles.css`) so the sorted column's fill, stretched over the padding too, slides under
-  them — before, it poked out above and below the name as red bars (Sean's phone screenshot, 30 Sep 2026).
+  them — before, it poked out above and below the name as red bars (Sean's phone screenshot, 30 Sep 2026). The frozen Rk /
+  Player header cells keep a solid `--surface-2` ground (the pale-header rule had made them see-through, so column names ran
+  under "Player" and read on top of it).
 * **iPhone home bar** (Sean's 17, 30 Sep 2026): on a phone the standing list card and the popup card stop
   `env(safe-area-inset-bottom)` above the bottom (index.html's `viewport-fit=cover` makes it non-zero), other pages get it as
   body padding, and the credit line is hidden on the standing-card pages (it would sit in that strip). Headless tests report
