@@ -670,7 +670,10 @@ is deploy-limited.
 * **Fantasy Leaderboard / Trending** (Sean, 26 Sep 2026): the header menu is now just "Fantasy". Points total, per game (hitters' Pts/PA right beside Pts/G in every basis; on the card's Fantasy tab a points-per-PA tile, Per PA column and By season Pts/PA, the tile and the By season column heat-coloured against this season's qualified hitters — Sean, 29 Sep 2026: the card, not the leaderboard),
   per AB / PA, per start / relief app / IP, per week (weeks he played in); dates, vs LHP / RHP, home / away; expected
   points — hitters xPts (H / TB from dxBA / dxSLG, R and RBI × xwOBA/wOBA), pitchers nPts (luck-neutral) and uPts
-  (uK / uBB / uERA). Hand splits share each game's official line out by that day's Statcast rows (`fDayShares`), so
+  (uK / uBB / uERA). **The card's Fantasy tab works for any season** (Sean, 30 Sep 2026): a season without game logs — an
+  older card, or a player with no 2026 games — is scored from his official line in `hist/fantasy-lines.js` (`fromLine` in
+  `renderFantasyTab`: points, per game, per PA, categories and By season; no ranks, per-start tiles or game log; per PA coloured
+  against this season's qualified hitters). Hand splits share each game's official line out by that day's Statcast rows (`fDayShares`), so
   vs L + vs R = the whole. See `docs/site-README.md` § Fantasy points.
 * **Saved settings sync through a secret gist** (Sean, 26 Sep 2026): fantasy presets, stars, drafted, rankings, tiers
   and ranking sets (`SYNC_KEYS` in `app.js`) — Appearance ▸ Sync across devices, a gist-only GitHub key per device.

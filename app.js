@@ -5467,9 +5467,13 @@
   }
   function renderFantasyTab(p) {
     const box = el("div", "rollbox uerabox fantbox");
-    const y = DS.level === "MLB" && FYEARS.includes(String(DS.season)) ? String(DS.season) : String(DATA.meta.season);
+    // the card's own MLB season when it has game logs (the last three seasons), else this season (Sean, 30 Sep 2026: also for
+    // players who didn't play in 2026): a season without logs — an older card, or no 2026 games — is scored from its
+    // official line in hist/fantasy-lines.js, so the points, per game and per PA are always there
+    const cardY = String(DS.season), grp = p.type === "H" ? "H" : "P";
+    let y = DS.level === "MLB" && FYEARS.includes(cardY) ? cardY : String(DATA.meta.season);
     fEnsure(y);
-    const F = fData(y), grp = p.type === "H" ? "H" : "P";
+    const F = fData(y);
     // the scoring picker: every saved preset, the same choice as the fantasy page
     const top = el("div", "fanttop"), lab = el("label", "field"), sel = el("select");
     for (const q of fpresets()) { const o = el("option", null, q.name); o.value = q.id; if (q.id === fpreset().id) o.selected = true; sel.append(o); }
@@ -5477,15 +5481,22 @@
     lab.append(el("span", null, "Scoring"), sel); top.append(lab);
     const ed = el("a", "fantedit", "Edit scoring"); ed.href = "#fantasy/settings"; top.append(ed);
     box.append(top); ddSelect(sel);
-    if (!F) { box.append(el("p", "note", failed.has(fFile(y)) ? `No fantasy stats for ${y}.` : "Loading fantasy stats…")); return box; }
-    const o = grp === "H" ? fHit(F, p.id) : fPit(F, p.id);
-    if (!o || !o.G) { box.append(el("p", "note", `No ${y} MLB games for him.`)); return box; }
+    let o = F ? (grp === "H" ? fHit(F, p.id) : fPit(F, p.id)) : null, fromLine = false;
+    if (!o || !o.G || (DS.level === "MLB" && cardY !== y)) {
+      ensureScript("hist/fantasy-lines.js", () => !!window.DRAFT_FANTASY_LINES);
+      const L = window.DRAFT_FANTASY_LINES, has = (yy) => L && L.years[yy] && L.years[yy][grp === "H" ? "hitters" : "pitchers"][p.id];
+      // his card's season if it's there, else the latest season he played
+      const ly = L ? (has(cardY) ? cardY : Object.keys(L.years).sort().reverse().find(has)) : null;
+      if (ly) { o = fLineObj(L, grp, has(ly)); y = ly; fromLine = true; }
+      else if (!L && !failed.has("hist/fantasy-lines.js")) { box.append(el("p", "note", "Loading fantasy stats…")); return box; }
+    }
+    if (!o || !o.G) { box.append(el("p", "note", "No MLB games for him to score.")); return box; }
     const pre = fpreset(), w = pre.w[grp] || {}, tot = fPts(w, o);
     const hd = el("div", "rollhd");
-    hd.append(el("span", "rollname", `${f1(tot)} pts`), el("span", "rollsub", `${y} · ${pre.name}` + (y !== String(DS.season) ? " (fantasy covers the last three MLB seasons)" : "")));
+    hd.append(el("span", "rollname", `${f1(tot)} pts`), el("span", "rollsub", `${y} · ${pre.name}` + (fromLine ? " · from his official season line" : y !== String(DS.season) ? " (fantasy covers the last three MLB seasons)" : "")));
     box.append(hd);
     // where he ranks: the season total among every hitter / pitcher, per game among those past the fantasy page's minimum
-    const rows = fRows(y, grp);
+    const rows = fromLine ? null : fRows(y, grp);
     const rank = (vals, v) => (vals.length ? `${ordinal(rankOf(vals, v))} of ${vals.length}` : "");
     const tiles = el("div", "fanttiles");
     const tile = (big, small, sub) => { const t = el("div", "fanttile"); t.append(el("b", null, big), el("span", null, small)); if (sub) t.append(el("i", null, sub)); tiles.append(t); };
@@ -5494,12 +5505,14 @@
     const qual = rows ? rows.filter(fMinOK) : [];
     tile(f2(ppg), "points per game", rows && qual.some((r) => r.p.id === p.id) ? rank(qual.map((r) => r.pts / r.o.G), ppg) : "");
     // points per PA beside per game, heat-coloured by where it sits among the fantasy page's qualified hitters (Sean, 29 Sep 2026)
-    const ppaVals = grp === "H" ? qual.filter((r) => r.o.PA).map((r) => r.pts / r.o.PA) : [];
+    // coloured against this season's qualified hitters, whichever season the tab is showing
+    const cq = fromLine ? (fRows(String(DATA.meta.season), grp) || []).filter(fMinOK) : qual;
+    const ppaVals = grp === "H" ? cq.filter((r) => r.o.PA).map((r) => r.pts / r.o.PA) : [];
     const ppaPct = (v) => (ppaVals.length && v != null ? Math.round(100 * ppaVals.filter((x) => x < v).length / ppaVals.length) : null);
     if (grp === "H" && o.PA) { tile((tot / o.PA).toFixed(3), "points per PA", qual.some((r) => r.p.id === p.id) ? rank(ppaVals, tot / o.PA) : "");
       const b = tiles.lastChild.querySelector("b"), pc = ppaPct(tot / o.PA); if (b && pc != null) { paint(b, pc); b.classList.add("ppachip"); } }
     tile(String(o.G), grp === "H" ? "games" : `games · ${o.GS} GS`, grp === "H" ? `${o.PA} PA` : `${outsIP(o.OUTS)} IP`);
-    if (grp === "P") {                                   // per start and per relief outing, when he has had both
+    if (grp === "P" && o.games) {                        // per start and per relief outing, when he has had both
       const st = o.games.filter((g) => g.GS), rl = o.games.filter((g) => !g.GS);
       if (st.length && rl.length) tile(f2(st.reduce((a, g) => a + fPts(w, g), 0) / st.length), "points per start", `${st.length} starts`);
       if (st.length && rl.length) tile(f2(rl.reduce((a, g) => a + fPts(w, g), 0) / rl.length), "points per relief outing", `${rl.length} outings`);
@@ -5526,7 +5539,7 @@
     t.append(tb); box.append(t);
     box.append(renderFantasySeasons(p, grp, w, y, ppaPct));
     // a pitcher's game log, newest first: the last ten, or every game on request
-    if (grp === "P" && o.games.length) {
+    if (grp === "P" && o.games && o.games.length) {
       const miss = Object.keys(w).filter((k) => Number(w[k]) && o.games[0][k] === undefined && !["IP", "OUT", "G", "SVHD", "RW", "RL", "QS", "NH", "PG"].includes(k));
       const all = FANT_OPEN.has(p.id), games = o.games.slice().reverse(), show = all ? games : games.slice(0, 10);
       box.append(el("h4", "fanth", "Game log"));
