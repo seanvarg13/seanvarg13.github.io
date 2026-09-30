@@ -5,8 +5,22 @@ Fantasy baseball draft rankings built on 2026 Statcast skill percentiles.
 **Home** — `index.html#home` (the default route and the wordmark's link): every page on the site as a card,
 in three groups — Draft day, Look things up, Set up. The header carries **Home**, a **Fantasy**
 menu (Rankings, Draft board, Eligibility, Fantasy leaderboard, Fantasy trending, Scoring settings), a **Leaderboards** menu
-(Leaderboard, Trending Players), **Compare** and **Appearance**; `NAV_GROUPS` in `app.js` holds the two
-menus and `HOME_SECS` the home page's cards.
+(Leaderboard, Trending Players), **Compare** and a **More** menu (Appearance, Colour key, Stat glossary, How this page
+works, the layout switch — made in `app.js`, filled by `renderChrome`); `NAV_GROUPS` in `app.js` holds the three
+menus and `HOME_SECS` the home page's cards. Since the minimal pass (29 Sep 2026) the header's pages are plain words with the
+current one underlined, and the home page opens on one line (games through / updated) — no title, search or page buttons of
+its own, the header has them.
+
+**The minimal pass, second round** (29 Sep 2026): nothing is set in capitals by the stylesheet (team codes are still
+capitals, they're data); buttons and headings are semibold; the background swirl runs at 8% (Appearance ▸ Background
+pattern turns it off per device, `draft2027.pattern`); the list toolbar is two buttons — position and **Filters**, which
+opens one dropdown with Filters / Stats / Splits & dates / Table as tabs across its top (`GRP_TABS`, `grpTabs()`); rows are
+~38px on a desktop and a phone's second line is just the team; the pager has no tinted strip; nothing sits under the table
+(its links are in More). On a card, the bottom tabs are words with the open one underlined, grouped: Compare · **Stats**
+(Season, Spreadsheet) · Stuff (pitchers) · Game Logs · Fantasy · **More** (Rolling, Mix, BABIP / nERA, uERA) — a group opens
+the member last used in it, the members as a small row under the strip (`state.pbsub`, not saved); the Poor / Average / Great
+scale heads the first chart only; the no-photo initials are plain, the season picker is a word with a small ▾, the × a plain
+mark.
 
 The two menus work like Baseball Savant's: the opener is a `<button>` that only opens the menu — it is never
 a page and never changes its label — and the pages are plain `<a>` links in a `.modemenu` list, with the open
@@ -617,10 +631,11 @@ seconds after anything is saved. Per key, against what was last synced: changed 
 both (or on a device's first connect), the fantasy presets are merged by id and keyed lists by key, this device
 winning a clash. A pull that changes anything reloads the page once. Appearance stays per device.
 
-**Appearance** (header link): colour scheme — Carolina blue (default), Carolina navy, Titans, Titans · Carolina
+**Appearance** (More ▸ Appearance): colour scheme — Carolina blue (default), Carolina navy, Titans, Titans · Carolina
 (Titans navy and the red stripe, with Carolina blue on the banner instead of Titans blue), Purple,
 Crimson Tide, Clemson — plus font and light / dark. Schemes are defined in `themes.js` as the token roles
-described at the top of `styles.css`; add one by adding an entry there. Saved per browser.
+described at the top of `styles.css`; add one by adding an entry there. Saved per browser. Also the background pattern
+(on / off, per device).
 
 **Hands-off**: `bash install_schedule.sh` installs a launchd job that runs `daily_update.py` (MLB + minors
 through yesterday, then `publish_github.py`) every day at 5:30 am and logs to `logs/daily.log`. It publishes

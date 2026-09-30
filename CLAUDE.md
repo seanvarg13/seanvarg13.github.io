@@ -453,6 +453,17 @@ is deploy-limited.
   notes); the pager is plain numbers with only the current page filled navy; the pattern behind pages runs at 20%, both
   layers; borders are 2px navy for the outer card and 1px inside it; the sorted column's values are bold, not boxed. The
   block at the end of `styles.css`.
+* **The minimal pass, second round** (Sean, 29 Sep 2026: "do all of those changes"): the block at the very end of
+  `styles.css` plus a few `app.js` changes. No stylesheet capitals or wide tracking anywhere (`text-transform` /
+  `letter-spacing` forced off site-wide), semibold buttons and headings; the swirl at 8% with Appearance ▸ Background pattern
+  (per device, `draft2027.pattern`, class `nopattern` on `<html>`); the header's pages are plain words, current one underlined,
+  and a **More** menu (made in `app.js`, a third `NAV_GROUPS` entry, filled in `renderChrome`) holds Appearance, Colour key,
+  Stat glossary, How this page works and the layout switch — nothing sits under the lists any more; the list toolbar is
+  position + **Filters** (one dropdown, `GRP_TABS` as tabs across its top, the last used opens first); desktop rows ~38px, a
+  phone's second line just the team; the pager plain. Card: bottom tabs are words, grouped Compare · Stats (Season,
+  Spreadsheet) · Stuff · Game Logs · Fantasy · More (Rolling, Mix, BABIP / nERA, uERA), members as a small row under the
+  strip; Poor / Average / Great only on the first chart (`pctSvg`'s `scale`); section names in the charts as written, not
+  capitals; plain initials, a ▾ on the season picker, a plain ×. Home opens on one line (no title, search or buttons).
 * **Phone header is one line** (Sean, 28 Sep 2026): site name, search and a ☰ Menu button (`.navtog`, made in `app.js`
   because `index.html` doesn't round-trip); the page buttons (`.modes`) open under it in a two-column grid and close on a
   pick, a page change or a tap elsewhere. Desktop keeps its single row. The swirl pattern behind cards and list pages
