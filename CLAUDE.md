@@ -36,7 +36,7 @@ repo's **`models` release**, which the workflow downloads and pins against. **Re
 (`tools/models/fetch_pa.py`, past seasons cached), trains `model3.py` / `model_bs.py` under the release's pinned versions
 (`MODEL_DIR`, `ANCHOR`, and `MONO=1` for the "harder is never worse" constraint on exit velocity), keeps the replaced
 files on a `models-prev-<date>` release, uploads the new ones with `versions.json` saying `trained.by: github-actions`,
-and starts a Daily update rescoring every past season and postseason. The Mac's publisher (`upload_models`) no longer
+and then, in the same job, rescores every past season and postseason and rebuilds this one (`cloud_daily.py --rescore …`, then `--steps mlb`) — its own concurrency group, since a scheduled backup arriving in the daily group cancelled a queued retrain (30 Sep 2026). The Mac's publisher (`upload_models`) no longer
 pushes an older model back over a newer one on the release — it fetches the newer one instead (its own kept in
 `model-workspace/prev-<time>/`) and only sends `versions.json` with a model of its own.
 
