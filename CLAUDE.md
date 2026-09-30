@@ -531,7 +531,9 @@ is deploy-limited.
   on a phone and on every other page; `body.filtbar`), the toolbar row hides unless it carries a note, and the table takes the room.
   The **Stuff+ board, League Trends, Call-up Watch and Weekly Planner** lose both the white card and the board's own frame
   (`#pitchboard`): their filters sit on the ground over the table. Rankings, Draft board, Fantasy, Eligibility and every phone
-  layout keep the card.
+  layout keep the card. **Centred** (Sean, 30 Sep 2026): the Leaderboard / Trending table sits with equal space under the header
+  and above the bottom — on a desktop 18px each (the empty toolbar row and the card's bottom padding go), on a phone the two 10px
+  gaps plus the home-bar strip split evenly (`margin-top: 10px + inset / 2`, no bottom margin).
 * **Desktop card scrolls as one** (Sean, 30 Sep 2026: the tab strip "always visible at the bottom ... i dont like that"): the
   percentile box on a desktop card is its charts' full height (`sizePPage`'s `#modal-body` branch sets the natural height, no cap),
   so it never scrolls on its own and the tab strip sits under the last section, reached by scrolling the card like a phone's.

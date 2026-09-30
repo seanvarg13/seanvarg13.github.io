@@ -3524,3 +3524,9 @@ body.cardpop.modal-open main.wrap, body.cardpop.modal-open > footer { visibility
 :root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap { padding-top: 0; }
 /* the Stuff+ board family the same way on a desktop: no white card, no board frame — its filters on the ground over the table */
 :root:not([data-view="mobile"]) body:is([data-mode="pitches"], [data-mode="trends"], [data-mode="callups"], [data-mode="planner"]) main.wrap { background: none; border: 0 !important; padding-inline: 0; }
+/* the Leaderboard and Trending sit centred between the site's header and the bottom of the screen (Sean, 30 Sep 2026): on a
+   desktop the empty toolbar row goes (Filters is in the blue bar) and the card's bottom padding with it, so the table has 18px
+   above and below; on a phone the free space — the two 10px gaps plus the home-bar strip — is split evenly top and bottom */
+:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap > .toolbar:not(:has(.winnote:not(:empty))) { display: none; }
+:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap { padding-bottom: 0; }
+:root:root[data-view="mobile"] body:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap { margin-top: calc(10px + env(safe-area-inset-bottom, 0px) / 2); margin-bottom: 0; }
