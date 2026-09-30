@@ -282,9 +282,12 @@
                   // what his whiffs, swing decisions and the strikes he sees say his K% should be (Sean, 28 Sep 2026)
                   { key: "xk", label: "xK%", hib: false, dec: 1, unit: "%" },
                   // his xwOBA on contact (Sean, 28 Sep 2026; pxwOBA beside it was removed 30 Sep 2026: "that stat is not needed")
-                  { key: "xwcon", label: "xwOBAcon", hib: true, dec: 3, unit: "" }];
+                  { key: "xwcon", label: "xwOBAcon", hib: true, dec: 3, unit: "" },
+                  // Base Running (Sean, 30 Sep 2026): Savant's sprint speed and the official steals, full season only
+                  { key: "spd", label: "Sprint Speed", hib: true, dec: 1, unit: "ft/s" }, { key: "sb", label: "SB", hib: true, dec: 0, unit: "", int: true },
+                  { key: "sba", label: "SB Att.", hib: true, dec: 0, unit: "", int: true }, { key: "sbp", label: "SB%", hib: true, dec: 1, unit: "%" }];
   // hitter stats that aren't on the card but can be Leaderboard / Trending columns
-  const LB_EXTRA_H = ["xwdiff", "xwcon", "xk", "babip", "xbabip", "bluck", "brel"];
+  const LB_EXTRA_H = ["xwdiff", "xwcon", "xk", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp"];
   const LB_EXTRA_P = ["suera", "aopt"];
   // Arsenal optimization (Sean, 28 Sep 2026: "how much the pitcher optimizes their arsenal %s to throw pitches that on
   // average get more swing and miss"): his pitches' xWhiff averaged by how often he actually throws each, minus the same
@@ -1306,6 +1309,7 @@
   /* ---------- formatting ---------- */
   function fmt(v, m) {
     if (m.sign) { const a = Math.abs(v), t = m.dec === 3 ? a.toFixed(3).replace(/^0/, "") : a.toFixed(m.dec ?? 1); return (v > 0 ? "+" : v < 0 ? "−" : "") + t + (m.unit || ""); }   // signed gaps: +.024 / −.018
+    if (m.int) return String(Math.round(v));                   // counts (steals)
     return m.dec === 3 ? fmtX(v) : m.dec === 2 ? v.toFixed(2) : m.unit === "%" ? v.toFixed(1) + "%" : v.toFixed(1) + (m.unit ? " " + m.unit : ""); }
   const fmtX = (x) => (x == null || x < 0 ? "–" : x.toFixed(3).replace(/^0/, ""));
   // fixed column widths, the way the board's grid rows are fixed: null = take whatever is left
@@ -4279,6 +4283,10 @@
     suera: "Stuff uERA: uERA built from his stuff instead of his results — the stuff model's xWhiff in place of his Whiff% (through uK%), its xGB and xPU in place of his ground balls and popups (the rest of his air balls split at the league's line-drive share), and walks from his actual Strike% as in uERA, since the stuff model can't tell who throws strikes. What his arsenal alone says his ERA should be.",
     aopt: "Arsenal optimization: how far his pitch usage leans toward his own swing-and-miss pitches. Each pitch's expected whiff rate (the Stuff model's xWhiff) averaged by how often he actually throws it, minus the same pitches averaged at the league's typical usage of those pitch types. In whiff-per-swing points: +3 means his mix gets three more whiffs per 100 swings than the same pitches thrown in a typical mix would. Each point has come with about a point of real Whiff%. Whiffs only — a sinkerballer who leans on his sinker for ground balls reads negative on purpose.",
     xwcon: "xwOBA on contact: the directional model's value of his average batted ball — xwOBA with his walks taken out, spread over his balls in play. League average is about .375.",
+    spd: "Sprint Speed: Baseball Savant's feet per second in his fastest one-second window, averaged over the top two-thirds of his competitive runs (5+ of them). About 27 is average, 30 is elite. For the whole season only.",
+    sb: "Stolen bases, official. For the whole season only.",
+    sba: "Stolen-base attempts: stolen bases plus caught stealing, official. For the whole season only.",
+    sbp: "Stolen-base success rate: stolen bases over attempts. Blank without an attempt. For the whole season only.",
     xk: "Expected K%: the strikeout rate his Whiff%, Z-Swing%, O-Swing% and the share of strikes he sees have historically come with (fitted over every 100+ PA hitter-season since 2015). It lands within about 1.7 points of a regular's real K%; a K% well above it says he's striking out more than his swings and misses explain (two-strike trouble, taking strike three), well below it that he's beating them. His own K% is still the steadier guide to next year's — the two averaged are best.",
     xwdiff: "xwOBA − wOBA: what his contact, walks and strikeouts deserved (the site's xwOBA) minus what he actually got. Above zero he's been unlucky — his results should rise toward his xwOBA; below zero he's been lucky. +.030 is a lot. Every point is a thousandth of wOBA.",
     babip: "BABIP: batting average on balls in play — hits that aren't home runs, over balls in play that aren't home runs (sac flies count). It swings a lot by chance: a hitter's BABIP from one season to the next holds only loosely.",
@@ -6597,7 +6605,7 @@
   // wide enough (it takes the right-hand box's place too) that every bar keeps the length it has in one column.
   // EXPW / EXPB / EXPS are the directional model's xwOBA, xBA and xSLG, as everywhere.
   const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
-                       ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],
+                       ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]], ["Base Running", ["spd", "sb", "sba", "sbp"]]],
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k", "xk"]],
                        ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]]]];
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
@@ -6606,7 +6614,8 @@
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
-                          babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", aopt: "Arsenal Opt.", xwcon: "xwOBAcon" };
+                          babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", aopt: "Arsenal Opt.", xwcon: "xwOBAcon",
+                          spd: "Sprint Speed", sb: "SB", sba: "SB Att.", sbp: "SB%" };
   const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+" });   // a pitcher's O-Swing% is his chase rate
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
@@ -6630,7 +6639,7 @@
     };
     pctROs.forEach((ro) => ro.disconnect()); pctROs = [];
     // tap a row (minimal pass 6): the league's middle value for the pool and, on a full-season MLB card, his line a season
-    // earlier with a ▲ / ▼ beside the value when his percentile moved 5+ points
+    // earlier for the note (the ▲ / ▼ beside values were dropped the same night — Sean didn't want them)
     const pl = pool(ref), lgOf = (k, m) => { const a = pl.sorted && pl.sorted[k]; if (!a || !a.length) return null; const v = a[Math.floor(a.length / 2)]; return m.hib ? v : -v; };
     let prevOf = null;
     const prevKey = DS.level === "MLB" && !DS.kind && !DS.multi && viewLabel(p.type) === "full season" ? `mlb-${DS.season - 1}` : null;
@@ -6773,9 +6782,6 @@
         M.append(B);
         M.append(mk("text", { class: "svlbl", x: 80, y: 10, "text-anchor": "end" }, r.label));
         M.append(mk("text", { class: "svlbl svval", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));
-        // his percentile a season earlier, when it moved 5+ points: ▲ better, ▼ worse, just past the value (minimal pass 6)
-        if (r.prev && r.prev.pct != null && r.pct != null && Math.abs(r.pct - r.prev.pct) >= 5)
-          M.append(mk("text", { class: "svchg " + (r.pct > r.prev.pct ? "up" : "dn"), x: 85 + bar + VW + 4, y: 10 }, r.pct > r.prev.pct ? "▲" : "▼"));
         M.addEventListener("click", (e) => { e.stopPropagation(); statPop(M, r); });
         if (on) {
           const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });

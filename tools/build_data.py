@@ -764,6 +764,19 @@ def sprint_speeds() -> dict:
     return _SPRINT
 
 
+def baserunning(pid: int, info: dict) -> dict:
+    """The card's Base Running section (Sean, 30 Sep 2026): Savant's sprint speed (ft/s, its competitive runs) and the
+    official steals — SB, attempts (SB + CS) and success rate (none without an attempt). Full season only."""
+    try:
+        spd = sprint_speeds().get(pid)
+    except Exception as e:                                   # a Savant hiccup costs the sprint row, not the build
+        log("  sprint speed unavailable:", e); spd = None
+    sb, cs = info.get("sb"), info.get("cs")
+    att = (sb or 0) + (cs or 0) if sb is not None or cs is not None else None
+    return {"spd": round(float(spd), 1) if spd is not None and pd.notna(spd) else None,
+            "sb": sb, "sba": att, "sbp": round(100 * sb / att, 1) if att else None}
+
+
 def dir_features(p: pd.DataFrame) -> pd.DataFrame:
     """What all three directional models read: Savant's inputs plus where the ball went."""
     spray = np.degrees(np.arctan2(p["hc_x"] - 125.42, 198.27 - p["hc_y"]))
@@ -1049,7 +1062,7 @@ def mlb_people(ids, game_logs: bool = True) -> dict:
             except Exception as e:
                 log("   retry", e); time.sleep(2)
         for p in js.get("people", []):
-            pos_games, ab, ip, era, er, games, season_team = {}, None, None, None, None, [], None
+            pos_games, ab, ip, era, er, games, season_team, sb, cs = {}, None, None, None, None, [], None, None, None
             for s in p.get("stats", []):
                 grp, typ = s["group"]["displayName"], s["type"]["displayName"]
                 if typ == "season" and grp in ("hitting", "pitching"):
@@ -1068,6 +1081,7 @@ def mlb_people(ids, game_logs: bool = True) -> dict:
                         st = tot[0]["stat"]
                         if grp == "hitting":
                             ab = st.get("atBats")
+                            sb, cs = st.get("stolenBases"), st.get("caughtStealing")   # the card's Base Running section
                         else:
                             ip = innings_to_float(st.get("inningsPitched"))
                             era = float(st["era"]) if st.get("era") not in (None, "-.--") else None
@@ -1091,7 +1105,7 @@ def mlb_people(ids, game_logs: bool = True) -> dict:
                 "primary": prim,
                 "pos": pos_games,
                 "age": p.get("currentAge"),
-                "ab": ab, "ip": ip, "era": era, "er": er, "games": games,
+                "ab": ab, "ip": ip, "era": era, "er": er, "games": games, "sb": sb, "cs": cs,
                 "seasonTeam": season_team, "birth": p.get("birthDate"),
             }
         log(f"  mlb api: {min(i + 80, len(ids))}/{len(ids)}")
@@ -1210,6 +1224,7 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
             m[key] = None if pd.isna(r[col]) else round(float(r[col]), 1)
         own_bs = None if pd.isna(r["BatSpeed"]) else round(float(r["BatSpeed"]), 1)
         m["bs"] = round(float(bsp[pid]), 1) if pid in bsp.index and pd.notna(bsp[pid]) else own_bs
+        m.update(baserunning(int(pid), info))
         rows.append({
             "id": int(pid), "name": info["name"], "team": info["team"], "type": "H",
             "primary": info["primary"] or "DH", "pos": info["pos"], "milb": info.get("milb", {}), "bats": r["bats"],

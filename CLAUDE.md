@@ -367,6 +367,7 @@ Statcast's.
 | `tools/install_schedule.sh` | installs/removes the launchd agent |
 | `tools/models/model3.py`, `model_bs.py` | the directional models' training scripts, in `model-workspace/` |
 | `tools/models/milb_translate.py` | fits `MILB_X` (the minors-to-MLB rate shifts) from `hist/`; repo only, run by hand |
+| `tools/add_baserunning.py` | fills the Base Running numbers into already-built `data.js` / `hist/mlb-YYYY.js`; repo only, run by hand |
 
 Not mirrored, on purpose: `github_site.json` / `netlify_site.json` (account config), `~/.github_token`,
 `.cache/`, `logs/`, `*.joblib`, `pa_all.parquet`.
@@ -505,10 +506,18 @@ is deploy-limited.
   so the band is a row shorter; **Share** is a small link beside the star (`#player/<id>`, the share sheet or the clipboard); the
   page behind a popup card is hidden while it's up (`body.cardpop.modal-open main.wrap`, visibility only, so the list keeps its
   place); **tapping a bar opens a note** under it (`statPop`: the glossary line, the league middle from the pool's sorted list, last
-  season's value and percentile); **▲ / ▼ after a value** when his percentile moved 5+ points on last season (full-season MLB cards
-  only — a trial, Sean "not sold", drop `.svchg` if he says so). A pinned section name on a phone (`.secstick`) was tried and taken
+  season's value and percentile); ▲ / ▼ after a value for a 5+ point percentile move on last season were tried and **dropped the same
+  night** (Sean: "get rid of the up and down arrows") — the tap note still gives last season. A pinned section name on a phone (`.secstick`) was tried and taken
   back the same night (Sean didn't like the headers staying) — don't bring it back unasked. Not done at his say: the headshot frame, a narrower label
   column, darker middle bubbles, swiping between players.
+* **Base Running** (hitter card, left column under Batted-Ball Quality; Sean, 30 Sep 2026): Sprint Speed (Savant's, ft/s, 5+
+  competitive runs — `sprint_speeds()`, the model's own feature), SB, SB Att. (SB + CS) and SB% (none without an attempt), official
+  from the MLB Stats API's season line (`mlb_people` → `baserunning()` in `build_data.py`, `m.spd / sb / sba / sbp`). Percentiles like
+  any card stat (300+ PA pool); also Leaderboard / Compare columns (`LB_EXTRA_H`, `SIDE_H`; `int: true` prints the counts whole).
+  **Full season only** — a date window or split has no rows for them, so the section drops out. Files built before 30 Sep 2026 got
+  them from `tools/add_baserunning.py` (Savant's sprint leaderboard + the Stats API's season lines, patched into `data.js` and
+  `hist/mlb-YYYY.js` without a rebuild; rerun it if a file rebuilt by older code loses them). The minors have none
+  (`build_milb.py` blanks `sprint_speeds`, and its people carry no steals).
 * **Phone header is one line** (Sean, 28 Sep 2026): site name, search and a ☰ Menu button (`.navtog`, made in `app.js`
   because `index.html` doesn't round-trip); the page buttons (`.modes`) open under it in a two-column grid and close on a
   pick, a page change or a tap elsewhere. Desktop keeps its single row. The swirl pattern behind cards and list pages

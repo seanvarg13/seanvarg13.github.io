@@ -3478,8 +3478,7 @@ body[data-mode="rankings"] #rankcount { display: none; }
 .phead .mrank:empty { display: none; }
 /* Minimal pass 6 (Sean, 30 Sep 2026). Filters is dressed as the Hitting / Pitching switch (same face, size and height) and
    the two sit together at the end of the PA · G line; Share is a small link beside the star; the page behind a popup card is
-   hidden while it's up (kept laid out, so the list keeps its place); a tap on a bar opens its note; ▲ / ▼ for a move of 5+
-   percentile points on last season. */
+   hidden while it's up (kept laid out, so the list keeps its place); a tap on a bar opens its note. */
 .phead .hstrip .seg { vertical-align: middle; }
 :root[data-view="mobile"] .phead .hstrip .seg button { padding-inline: 6px; }
 .phead .phtog + .seg { margin-left: 0; }
@@ -3487,9 +3486,6 @@ body[data-mode="rankings"] #rankcount { display: none; }
 body.cardpop.modal-open main.wrap, body.cardpop.modal-open > footer { visibility: hidden; }
 .svchart { position: relative; }
 .svpct .svrow { cursor: pointer; }
-.svpct .svchg { font-size: 9px; font-family: var(--body); }
-.svpct .svchg.up { fill: #d82129; }
-.svpct .svchg.dn { fill: #3661ad; }
 .statpop { position: absolute; left: 16px; right: 16px; z-index: 5; background: var(--surface); border: 1px solid var(--rule); padding: 8px 10px; font-size: 12.5px; line-height: 1.4; color: var(--ink); }
 .statpop .sphd { display: flex; gap: 10px; align-items: baseline; }
 .statpop .sphd b { font-family: var(--display); font-size: 17px; font-weight: 600; }
