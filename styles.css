@@ -3418,7 +3418,6 @@ body[data-mode="rankings"] #rankcount { display: none; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ground: color-mix(in srgb, var(--accent-2) 7%, #0b1424); } }
 :root[data-theme="dark"] { --ground: color-mix(in srgb, var(--accent-2) 7%, #0b1424); }
 :root.nopattern body, :root.nopattern .modal.pagebg .modal-back { background: var(--ground); }
-.svpct .svnum { dominant-baseline: auto; font-variant-numeric: tabular-nums; }
 /* the percentile sections' names wear the card title's type (Sean, 30 Sep 2026: "look exactly like how 2026 MLB Percentiles
    looks"): the condensed face at 600 in navy, 24px on a desktop and 19px on a phone, like .pthd */
 .svpct .svsecname { font-family: var(--display); font-size: 24px; font-weight: 600; letter-spacing: 0; fill: var(--ink); }
@@ -3444,4 +3443,6 @@ body[data-mode="rankings"] #rankcount { display: none; }
 .prow .psize { margin-left: 0; }
 :root[data-view="mobile"] .prow .psize > span:first-child { display: inline; }
 .ftable td.fsorted { background-image: linear-gradient(color-mix(in srgb, var(--surface) 58%, transparent), color-mix(in srgb, var(--surface) 58%, transparent)) !important; color: var(--ink) !important; font-weight: 700; }
-.svpct .svnum.c3 { font-size: 12px; letter-spacing: 0; }   /* 100: same size as the rest, fitted by textLength in pctSvg */
+/* the bubble's digits in the type they had on the morning of 30 Sep 2026, Savant's Roboto Condensed (Sean: "equal to whatever
+   it was at 9am"); themes.js loads it for this alone */
+.svpct .svnum { font-family: "Roboto Condensed", var(--body); }
