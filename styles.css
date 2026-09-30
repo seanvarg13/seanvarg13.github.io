@@ -3345,3 +3345,11 @@ body[data-mode="rankings"] #rankcount { display: none; }
    and below the name as red bars (Sean, 30 Sep 2026, from his phone) */
 :root[data-view="mobile"] #rows .row-main > .who, :root[data-view="mobile"] #rows .row-main > .rank { align-self: stretch; margin-block: -4px; padding-block: 4px; }
 :root[data-view="mobile"] #rows .row-main > .who { display: flex; flex-direction: column; justify-content: center; }
+/* The card's band is pale (light blue at 24% on the page's white, 28 Sep 2026), but its text still took the "ink on the
+   light-blue fill" tokens — navy in Carolina, but white in Titans, Purple, Crimson Tide and Clemson, whose fill is dark,
+   and dark navy on a dark band in dark mode (Sean, 30 Sep 2026, on Titans: "white on the light blue which looks bad").
+   Inside the card's top those tokens become the scheme's plain text colours, so Carolina reads exactly as before. */
+.phead { --accent-2-ink: var(--ink); --accent-2-dim: var(--ink-2); --band-ink: var(--ink); --tab-ink: var(--ink); }
+/* ... and Star / Filters take the plain text colour too (their --rule text was near-black on a dark band in dark mode) */
+:root:root:root .phead .starbtn, :root:root:root .phead .starbtn:not(.phtoggle), :root:root:root .phead .starbtn.on,
+:root:root:root .phead .starbtn[aria-expanded="true"], :root:root:root .phead .starbtn.phtoggle.on { color: var(--ink); }
