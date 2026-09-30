@@ -3410,20 +3410,8 @@ body[data-mode="rankings"] #rankcount { display: none; }
 :root[data-view="mobile"] .orow .obrk { padding: 0 6px; }
 /* Game Logs: Regular season / Postseason / Spring training over the log (Sean, 30 Sep 2026) */
 .glkind { display: flex; justify-content: center; flex-wrap: wrap; margin: 0 0 10px; }
-/* Sean's percentile bars (30 Sep 2026, "make it look precisely like these", from the Percentile Bar Studio page): section
-   names in the condensed face, grey, over a 2px navy rule; labels bold navy, values plain; a faint track under a slimmer
-   bar (pctSvg), no ticks, no dashed rules between rows; the bubble a size up with a white ring, navy digits in the grey middle */
-.svpct { font-family: var(--body); }
-.svpct text { font-size: 13px; }
-.svpct .svsecname { font-family: var(--display); font-size: 19px; font-weight: 600; letter-spacing: 0; fill: var(--muted); }
-.svpct .svsecrule { fill: var(--ink); }
-.svpct .svline { fill: var(--pctrack); }
-.svpct .svlbl { fill: var(--ink); font-weight: 600; }
-.svpct .svlbl.svval { fill: var(--ink-2); font-weight: 400; }
-.svpct .svbulb { stroke: var(--surface); stroke-width: 2.5; }
-.svpct .svnum { font-size: 12.5px; }
-.svpct .svnum.mid { fill: #13294b; }
-:root { --pctrack: color-mix(in srgb, var(--ink) 7%, var(--surface)); }
+/* the percentile bars are Savant's again (Sean, 30 Sep 2026: "back to the baseballsavant style ... they just look better");
+   the slimmer studio bar that replaced them for an afternoon is gone. Only the section names keep the card title's type (below). */
 /* no swirl any more (Sean, 30 Sep 2026: "get rid of the background swirls"): every page sits on a plain pale ground in
    the scheme's own tint — pale Carolina blue on the default scheme — with the white cards and navy borders on top */
 :root { --ground: color-mix(in srgb, var(--accent-2) 9%, #f6f8fb); }
