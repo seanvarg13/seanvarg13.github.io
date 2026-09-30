@@ -597,6 +597,9 @@ is deploy-limited.
 * **The card's header band wears the Leaderboard's colours** (Sean, 28 Sep 2026): `.mplate` is the pager strip's pale blue
   (light blue at 24% on white) with a 2px light-blue rule instead of the solid band and navy rule; Star and Filters are the
   Leaderboard's outlined buttons (Filters filled light blue while open).
+* **The card's band text follows the scheme** (Sean, 30 Sep 2026, on Titans: white text on the pale band): `.phead` remaps
+  `--accent-2-ink` / `--accent-2-dim` / `--band-ink` / `--tab-ink` to `--ink` / `--ink-2`, since the band is pale now in every
+  scheme; Star / Filters text is `--ink`. Carolina (whose accent-2-ink is its ink) is unchanged.
 * **Don't restyle the percentile bars unasked**: a Leaderboard-table version of them was tried and taken back the same
   evening (Sean, 28 Sep 2026: "i didnt want you to touch any of the percentile bar metrics").
 * **Projections and Buy low / Sell high were built and removed the same day** (Sean, 28 Sep 2026: "I don't need those") —
