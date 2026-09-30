@@ -16,6 +16,9 @@ its own, the header has them.
 regular-season qualifiers, so a 99 means "as good as a top-1% regular season"; the sample line shows how few PA it is.
 This October's postseason rebuilds every morning.
 
+**No bold** (30 Sep 2026): the whole site is set at regular weight, headings and names included; only the digits in the
+percentile bubbles stay bold, as on Savant. The fonts are unchanged (the Font Studio comparison kept them).
+
 **Base Running** (30 Sep 2026): a hitter card's last section is Sprint Speed (Baseball Savant), SB, SB attempts and SB%
 (official), each with its percentile among 300+ PA hitters; full season only. They are Leaderboard / Compare columns too.
 

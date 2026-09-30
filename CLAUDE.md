@@ -679,6 +679,9 @@ is deploy-limited.
   numbers) + **Source Sans 3** (`--body`: everything else), loaded by `themes.js` (`F.studio`, the only font); Roboto
   Condensed is gone. **The swirl is gone**: `nopattern` is always on and the Appearance row is removed; pages sit on
   `--ground`, a pale tint of the scheme's `--accent-2` (pale Carolina blue on the default scheme). Don't bring the swirl back unasked.
+* **No bold** (Sean, 30 Sep 2026, after the Font Studio page — he kept Barlow Condensed + Source Sans 3: "let's just try unbolding
+  everything that is currently bolded"): one rule at the very end of `styles.css` sets every element to weight 400 except the
+  percentile bubbles' digits (`.svnum`, Savant's Roboto Condensed 700). A trial; to undo it, delete that rule.
 * **Projections and Buy low / Sell high were built and removed the same day** (Sean, 28 Sep 2026: "I don't need those") —
   the pages, the home cards, `tools/build_proj.py` and `proj.js` are gone. Don't bring them back unasked.
 * **Starts / relief split** (Sean, 26 Sep 2026): a pitcher who both started and relieved (`ctx.GS > 0` and `G > GS`)
