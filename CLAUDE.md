@@ -483,6 +483,9 @@ is deploy-limited.
   whole pool in that window — and a columnar repack saved only ~8%. The phone's Menu panel shows the "through" date.
 * **Stylesheet cleanups are checked by computed style**, not by eye: the scratch harness records every element's computed
   style in ~45 states (phone / desktop, light / dark, every page and card tab) and a cleanup must leave all of them identical.
+* **A phone's list rows slide sideways under the frozen rank and name**; those two run the row's full height (over its
+  padding, the block at the end of `styles.css`) so the sorted column's fill, stretched over the padding too, slides under
+  them — before, it poked out above and below the name as red bars (Sean's phone screenshot, 30 Sep 2026).
 * **A phone card only moves up and down** (Sean, 28 Sep 2026: "scroll it left and right for no reason"): `.cardscroll` clips
   sideways overflow, doesn't bounce, and takes `touch-action: pan-y pinch-zoom`; the tab row, stat strip and tables are
   scrollers of their own and still slide. Keep anything wide inside its own `overflow-x: auto` box.
