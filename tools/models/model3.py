@@ -12,14 +12,19 @@ Why v3: v2 weighted 2015-2025 equally, so more than half its training came from 
 "level" is mean prediction / actual league wOBA on contact: v2 ran 2.5% hot, which is why the site
 had to re-anchor it per season. Trains straight off the local pybaseball cache — no network.
 """
-import time, numpy as np, pandas as pd, joblib
+import os, time, numpy as np, pandas as pd, joblib
 from sklearn.ensemble import HistGradientBoostingRegressor
 import pybaseball as pb
 pb.cache.enable()
 
-SP = "/Users/seanvargas/Desktop/Fantasy Baseball/model-workspace/"   # pa_all.parquet lives here (was a session scratchpad)
-OUT = "/Users/seanvargas/Desktop/Fantasy Baseball/model-workspace/v3_dir.joblib"
-HALF_LIFE, ANCHOR = 3.0, 2026          # a season 3 years back counts half as much
+# MODEL_DIR: the cloud retrain (.github/workflows/retrain.yml) points it at its own workspace; the Mac's is the default
+SP = os.path.join(os.environ.get("MODEL_DIR", "/Users/seanvargas/Desktop/Fantasy Baseball/model-workspace"), "")   # pa_all.parquet lives here
+OUT = SP + "v3_dir.joblib"
+HALF_LIFE, ANCHOR = 3.0, int(os.environ.get("ANCHOR", 2026))   # a season 3 years back counts half as much
+# MONO=1: "harder is never worse" — the prediction may only rise with exit velocity (tested 30 Sep 2026 on 2021-25, each
+# season scored by a fit on the ones before: hitters' xwOBA -> next season's wOBA r .551 vs .543, better in 4 of 5 seasons,
+# though a single ball is predicted a little worse, R2 .54 vs .59)
+MONO = os.environ.get("MONO") == "1"
 ZERO_NUM = {"field_error", "fielders_choice", "fielders_choice_out"}
 EXCLUDE = {"sac_bunt", "truncated_pa", "catcher_interf", "intent_walk"}
 FEATS = ["launch_speed", "launch_angle", "sprint_speed", "pull_angle", "spray_angle", "stand_R"]
@@ -38,7 +43,7 @@ d["spray_angle"] = spray
 d["pull_angle"] = np.where(d.stand.eq("R"), -spray, spray)     # + = pull side, either hand
 d["stand_R"] = d.stand.eq("R").astype(float)
 sp = []
-for y in range(2015, 2027):
+for y in range(2015, ANCHOR + 1):
     t = pb.statcast_sprint_speed(y, min_opp=5)[["player_id", "sprint_speed"]].rename(columns={"player_id": "batter"})
     t["game_year"] = y; sp.append(t)
 sp = pd.concat(sp).drop_duplicates(["batter", "game_year"])
@@ -53,12 +58,12 @@ log(f"BBE {len(bbe):,}  coords {100*bbe.hc_x.notna().mean():.1f}%  sprint {100*b
 log("league wOBAcon by season:\n" + mu.round(4).to_string())
 
 m = HistGradientBoostingRegressor(max_iter=1200, learning_rate=0.04, max_leaf_nodes=63,
-                                  min_samples_leaf=150, l2_regularization=1.0, early_stopping=True,
+                                  min_samples_leaf=150, l2_regularization=1.0, early_stopping=True, monotonic_cst=[1, 0, 0, 0, 0, 0] if MONO else None,
                                   validation_fraction=0.1, random_state=0)
 m.fit(bbe[FEATS], bbe["y"], sample_weight=w.values)
 log(f"fit in {m.n_iter_} iterations")
 joblib.dump(m, OUT)
-p26 = m.predict(bbe[bbe.game_year == 2026][FEATS]) * mu[2026]
-a26 = bbe[bbe.game_year == 2026].wnum
+p26 = m.predict(bbe[bbe.game_year == ANCHOR][FEATS]) * mu[ANCHOR]
+a26 = bbe[bbe.game_year == ANCHOR].wnum
 log(f"2026 in-sample level {p26.mean()/a26.mean():.4f}  (predicted {p26.mean():.4f} vs actual {a26.mean():.4f})")
 log("saved " + OUT)

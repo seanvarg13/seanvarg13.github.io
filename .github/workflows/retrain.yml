@@ -1,0 +1,118 @@
+# Retrain the directional xwOBA / xBA / xSLG models (tools/models/model3.py, model_bs.py) on GitHub's machines, then
+# put them on the "models" release the daily build reads — the job that used to need Sean's Mac.
+#
+# Actions -> Retrain models -> Run workflow. It fetches every regular-season PA 2015-now from Statcast
+# (tools/models/fetch_pa.py, ~25 min), trains with the exact Python + package versions in the release's versions.json
+# (so the daily build can load the files), saves the models it replaces on a "models-prev-<date>" release, uploads the
+# new ones, and — unless told not to — starts a Daily update run that rescores every past MLB season and postseason with
+# them. The next morning's daily run (or a manual one with steps "mlb") rebuilds this season.
+name: Retrain models
+
+on:
+  workflow_dispatch:
+    inputs:
+      monotonic:
+        description: "harder is never worse: the prediction may only rise with exit velocity"
+        type: boolean
+        default: false
+      publish:
+        description: "upload the new models (off = train and report only)"
+        type: boolean
+        default: true
+      rescore:
+        description: "after uploading, rescore every past MLB season (and past postseasons) with them"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MODEL_DIR: ${{ github.workspace }}/../model-workspace
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: The current models and the versions they were saved with
+        id: models
+        run: |
+          mkdir -p "$MODEL_DIR/prev"
+          gh release download models -R "$GITHUB_REPOSITORY" -D "$MODEL_DIR/prev" --clobber
+          ls -la "$MODEL_DIR/prev"
+          echo "python=$(python3 -c "import json; print(json.load(open('$MODEL_DIR/prev/versions.json'))['python'])")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ steps.models.outputs.python }}
+
+      - name: Packages (the same pins, so the daily build can load what this saves)
+        run: |
+          python -m pip install --upgrade pip
+          pins=$(python -c "import json; v=json.load(open('$MODEL_DIR/prev/versions.json')); print(' '.join(f'{k}=={x}' for k, x in v['packages'].items()))")
+          echo "pins: $pins"
+          python -m pip install $pins pybaseball requests pyarrow
+
+      - name: Past seasons' PA files (only the current season is fetched every time)
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/../model-workspace/pa_20*.parquet
+          key: pa-seasons-${{ github.run_id }}
+          restore-keys: pa-seasons-
+
+      - name: Every regular-season plate appearance 2015-now
+        run: python tools/models/fetch_pa.py
+
+      - name: Keep the past seasons' PA files for next time
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/../model-workspace/pa_20*.parquet
+          key: pa-seasons-${{ github.run_id }}
+
+      - name: Train
+        run: |
+          export ANCHOR=$(python -c "import pandas as pd; print(int(pd.read_parquet('$MODEL_DIR/pa_all.parquet', columns=['game_year']).game_year.max()))")
+          export MONO=${{ inputs.monotonic && '1' || '0' }}
+          echo "anchor $ANCHOR · monotonic $MONO"
+          python tools/models/model3.py
+          python tools/models/model_bs.py
+          python - <<'PY'
+          import json, os, platform, datetime as dt, importlib.metadata as md
+          d = os.environ["MODEL_DIR"]
+          v = {"python": ".".join(platform.python_version_tuple()[:2]),
+               "packages": {p: md.version(p) for p in ("scikit-learn", "numpy", "pandas", "scipy", "joblib")},
+               # the Mac's publisher leaves models alone that are newer on the release than its own (publish_github.py)
+               "trained": {"by": "github-actions", "at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M"),
+                           "through": int(os.environ["ANCHOR"]), "monotonic": os.environ["MONO"] == "1"}}
+          json.dump(v, open(os.path.join(d, "versions.json"), "w"), indent=1, sort_keys=True)
+          print(json.dumps(v, indent=1))
+          PY
+          ls -la "$MODEL_DIR"
+
+      - name: Keep the old models, upload the new ones
+        if: inputs.publish
+        run: |
+          tag="models-prev-$(date -u +%Y%m%d-%H%M)"
+          gh release create "$tag" -R "$GITHUB_REPOSITORY" --title "Models replaced $(date -u +%F)" \
+            --notes "The directional models the retrain of $(date -u '+%F %H:%M') UTC replaced. To go back, upload these to the models release." \
+            "$MODEL_DIR"/prev/v3_dir.joblib "$MODEL_DIR"/prev/v3_ba.joblib "$MODEL_DIR"/prev/v3_slg.joblib "$MODEL_DIR"/prev/versions.json
+          gh release upload models -R "$GITHUB_REPOSITORY" --clobber \
+            "$MODEL_DIR"/v3_dir.joblib "$MODEL_DIR"/v3_ba.joblib "$MODEL_DIR"/v3_slg.joblib "$MODEL_DIR"/versions.json
+
+      - name: Rescore every past season with the new models
+        if: inputs.publish && inputs.rescore
+        run: |
+          # starts once this run ends (same concurrency group); postseasons from 2023, where their files are built
+          years=$(python -c "import pandas as pd; y=int(pd.read_parquet('$MODEL_DIR/pa_all.parquet', columns=['game_year']).game_year.max()); print(' '.join([str(x) for x in range(2015, y)] + [f'post-{x}' for x in range(2023, y)]))")
+          gh workflow run daily.yml -R "$GITHUB_REPOSITORY" --ref main -f rescore="$years"
+          echo "started a rescore of $years"

@@ -31,8 +31,14 @@ the cloud publishes and the Mac's job and publisher stand down (they read the fi
 publishes and the schedule does nothing (a manual run still works: Actions → Daily update → Run workflow, with
 optional `steps`, `rescore` years and `dry`). The directional models are not in the repo: the Mac's publisher
 uploads `model-workspace/*.joblib` and `versions.json` (the Python + package versions they were pickled with) to the
-repo's **`models` release**, which the workflow downloads and pins against. Retraining a model is still a Mac job;
-publishing it is automatic (the next Mac publish uploads changed files, even with the cloud on).
+repo's **`models` release**, which the workflow downloads and pins against. **Retraining can run in the cloud too**
+(30 Sep 2026): Actions → Retrain models (`.github/workflows/retrain.yml`) fetches every regular-season PA 2015-now
+(`tools/models/fetch_pa.py`, past seasons cached), trains `model3.py` / `model_bs.py` under the release's pinned versions
+(`MODEL_DIR`, `ANCHOR`, and `MONO=1` for the "harder is never worse" constraint on exit velocity), keeps the replaced
+files on a `models-prev-<date>` release, uploads the new ones with `versions.json` saying `trained.by: github-actions`,
+and starts a Daily update rescoring every past season and postseason. The Mac's publisher (`upload_models`) no longer
+pushes an older model back over a newer one on the release — it fetches the newer one instead (its own kept in
+`model-workspace/prev-<time>/`) and only sends `versions.json` with a model of its own.
 
 **The switch is on (25 Sep 2026)**: a dry run and a real run matched the Mac's build (same players, same league
 constants, 99.5% of values identical — the rest Statcast corrections the Mac's cache predates), so GitHub Actions
