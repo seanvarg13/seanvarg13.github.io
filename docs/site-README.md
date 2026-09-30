@@ -30,6 +30,9 @@ their old format (two-line list rows, numbered pages, every game in Game Logs).
 blue bar with the page numbers and the table fills the space. The Stuff+ board, League Trends, Call-up Watch and the Weekly Planner
 drop their boxes the same way, with their filters over the table. Phones are unchanged.
 
+**Card scrolling on a computer** (30 Sep 2026): the percentile charts show at full height and the tabs (Season Stats, Game
+Logs…) sit under them; scroll the card to reach them, as on a phone.
+
 **Base Running** (30 Sep 2026): a hitter card's last section is Sprint Speed (Baseball Savant), SB, SB attempts and SB%
 (official), each with its percentile among 300+ PA hitters; full season only. They are Leaderboard / Compare columns too.
 
