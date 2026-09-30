@@ -204,6 +204,9 @@
   function multiDataset(key) {
     if (multiCache.has(key)) return multiCache.get(key);
     const mp = parseMulti(key); if (!mp) return null;
+    // which seasons are built comes from the index: until it's in, only this season is known, and a span built then was just
+    // 2026 — and kept (Sean, 30 Sep 2026: "2015 to 2026 and yet it is just showing 2026"). Wait for the index instead.
+    if (!indexReady()) { ensureIndex(); return null; }
     const keys = mp.members.filter((k) => builtKeys().includes(k)); if (!keys.length) return null;
     for (const k of keys) ensureHist(k);
     const parts = keys.map((k) => histDataset(k)); if (parts.some((d) => !d)) return null;   // still loading a member

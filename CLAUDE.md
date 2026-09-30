@@ -645,7 +645,8 @@ is deploy-limited.
   (`#lbseason`). Since 30 Sep 2026 a **Multiple seasons** button turns the span on / off (on from the latest season it starts two
   seasons back); the "to" pill and Combined / Each season only show while it's on. The pager, search and column ticks redraw the rows
   through `inListView` (`renderRows` / `renderColhead` step into the Leaderboard's dataset and split themselves) — they used to fall
-  back to this season, so page 2 of a span showed 2026. The name line carries the season (`.yr`: a player-season's year, a combined
+  back to this season, so page 2 of a span showed 2026. `multiDataset` waits for the search index (which seasons are built): a span
+  built before it arrived knew only 2026 and was cached that way (fixed 30 Sep 2026). The name line carries the season (`.yr`: a player-season's year, a combined
   player's own seasons in the span), so the Year column is no longer automatic (only when ticked in Table).
 * **Positions shown are where he played that season** (`playedLabel`: positions with a tenth of his games, most first, up to three;
   SP / RP by that season's starts and relief), on the Leaderboard, Trending and cards; next year's fantasy eligibility (`posLabel`)
