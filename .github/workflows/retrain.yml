@@ -4,8 +4,8 @@
 # Actions -> Retrain models -> Run workflow. It fetches every regular-season PA 2015-now from Statcast
 # (tools/models/fetch_pa.py, ~25 min), trains with the exact Python + package versions in the release's versions.json
 # (so the daily build can load the files), saves the models it replaces on a "models-prev-<date>" release, uploads the
-# new ones, and — unless told not to — starts a Daily update run that rescores every past MLB season and postseason with
-# them. The next morning's daily run (or a manual one with steps "mlb") rebuilds this season.
+# new ones, and — unless told not to — rescores every past MLB season and postseason with them and rebuilds this season,
+# publishing as the daily run does.
 name: Retrain models
 
 on:
@@ -26,18 +26,22 @@ on:
 
 permissions:
   contents: write
-  actions: write
+  pages: write
 
+# its own queue (30 Sep 2026): in the daily one a scheduled backup run, arriving while this waited, cancelled it — GitHub
+# keeps one waiting run per group. Publishing is safe alongside a daily run: cloud_daily.py commits on top of main as it is
+# and retries when main has moved.
 concurrency:
-  group: daily-update
+  group: retrain
   cancel-in-progress: false
 
 jobs:
   retrain:
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 350
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       MODEL_DIR: ${{ github.workspace }}/../model-workspace
     steps:
       - uses: actions/checkout@v4
@@ -110,10 +114,23 @@ jobs:
           gh release upload models -R "$GITHUB_REPOSITORY" --clobber \
             "$MODEL_DIR"/v3_dir.joblib "$MODEL_DIR"/v3_ba.joblib "$MODEL_DIR"/v3_slg.joblib "$MODEL_DIR"/versions.json
 
-      - name: Rescore every past season with the new models
+      - name: The daily build's download caches (for the rescore)
+        if: inputs.publish && inputs.rescore
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.pybaseball/cache
+            .cache
+          key: data-cache-${{ github.run_id }}
+          restore-keys: data-cache-
+
+      - name: Rescore every past season, then this one, with the new models
         if: inputs.publish && inputs.rescore
         run: |
-          # starts once this run ends (same concurrency group); postseasons from 2023, where their files are built
+          # right here rather than as a Daily update run: one queued there can be cancelled by the next scheduled backup
+          git config user.name "Sean's Site (GitHub Actions)"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           years=$(python -c "import pandas as pd; y=int(pd.read_parquet('$MODEL_DIR/pa_all.parquet', columns=['game_year']).game_year.max()); print(' '.join([str(x) for x in range(2015, y)] + [f'post-{x}' for x in range(2023, y)]))")
-          gh workflow run daily.yml -R "$GITHUB_REPOSITORY" --ref main -f rescore="$years"
-          echo "started a rescore of $years"
+          echo "rescoring $years"
+          python tools/cloud_daily.py --rescore $years
+          python tools/cloud_daily.py --steps mlb
