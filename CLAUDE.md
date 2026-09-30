@@ -34,7 +34,9 @@ uploads `model-workspace/*.joblib` and `versions.json` (the Python + package ver
 repo's **`models` release**, which the workflow downloads and pins against. **Retraining can run in the cloud too**
 (30 Sep 2026): Actions → Retrain models (`.github/workflows/retrain.yml`) fetches every regular-season PA 2015-now
 (`tools/models/fetch_pa.py`, past seasons cached), trains `model3.py` / `model_bs.py` under the release's pinned versions
-(`MODEL_DIR`, `ANCHOR`, and `MONO=1` for the "harder is never worse" constraint on exit velocity), keeps the replaced
+(`MODEL_DIR`, `ANCHOR`, and `MONO=1` for the "harder is never worse" constraint on exit velocity — tried 30 Sep 2026 and put
+back the same evening: same-season r vs wOBA .818 against the old models' .854, next season a tie; the workflow's `restore`
+input takes a `models-prev-<date>` tag, puts those models back and rescores, no training), keeps the replaced
 files on a `models-prev-<date>` release, uploads the new ones with `versions.json` saying `trained.by: github-actions`,
 and then, in the same job, rescores every past season and postseason and rebuilds this one (`cloud_daily.py --rescore …`, then `--steps mlb`) — its own concurrency group, since a scheduled backup arriving in the daily group cancelled a queued retrain (30 Sep 2026). The Mac's publisher (`upload_models`) no longer
 pushes an older model back over a newer one on the release — it fetches the newer one instead (its own kept in
@@ -136,7 +138,7 @@ last publish, the Mac keeps its copy and the repo's lands in `logs/tools-conflic
 | **Savant expected stats** | `est_woba`, `est_ba`, `est_slg` → Statcast's xwOBA/xBA/xSLG; not shown any more, only the stand-in for xBA/xSLG on a past season not yet rescored | `leaderboard/expected_statistics?type=batter&year=…&csv=true` |
 | **Savant sprint speed** | `sprint_speed`, a feature of all three directional models | `pybaseball.statcast_sprint_speed(min_opp=5)` |
 | **MLB Stats API** | names, teams, positions, games by position, official AB/IP/ERA/earned runs, per-game logs, bio + draft (`people/<id>?hydrate=draft`), minor-league lines | `statsapi.mlb.com/api/v1/...` |
-| **Savant minors search** | Triple-A Statcast; AA/A+/A come from Gameday play-by-play (calls, batted-ball type and location, no tracking outside FSL parks) | `build_milb.py`, cached under `.cache/milb` |
+| **Savant minors search** | Triple-A Statcast; AA/A+/A come from Gameday play-by-play (calls, batted-ball type and location, the zone rebuilt from Gameday's pitch plot, no tracking outside FSL parks) | `build_milb.py`, cached under `.cache/milb` |
 
 Everything is fetched anonymously — no API keys anywhere in this pipeline.
 
@@ -147,7 +149,7 @@ Everything is fetched anonymously — no API keys anywhere in this pipeline.
 | `build_data.py [--end DATE]` | `data.js`, `days.js` | the current season. Every MLB player who played ships (`MIN_PA_HITTER` / `MIN_BF_PITCHER` = 1, since 24 Sep 2026 — a 12-BF start had left River Ryan off the site); league constants still come from 20+ BF (`CONST_MIN_BF`), and the minors keep a 20 floor. ~1-2 min on a warm cache. All the knobs (`SEASON`, `GAME_TYPES`, `DEFAULT_MIN`, `REF_MIN_PA`, `PULL_LINE`, metric lists, card layout, score weights) are constants at the top |
 | `build_history.py [years…]` | `hist/mlb-YYYY.js` (+ days) | re-runs `build_data.py` season by season for 2015-2025. `build_history.py index` rebuilds `hist/index.js` (the search index). `spring 2026 2025` / `post 2025 2024` build those game types as their own datasets — but the site is regular
 season only now: `indexReady()` in `app.js` drops them from the index, so nothing offers them. Rows are player × handedness × venue — no date dimension, so past seasons have splits but not date windows |
-| `build_milb.py [aaa|aa|ap|a] [year]` | `hist/<level>-YYYY.js` | Triple-A has real Statcast; lower levels have batted-ball type and location only. **No bat speed, no directional xwOBA** in the minors (the model needs MLB sprint speeds) |
+| `build_milb.py [aaa|aa|ap|a] [year]` | `hist/<level>-YYYY.js` | Triple-A has real Statcast; lower levels have batted-ball type and location, and the zone from Gameday's pitch plot (`plot_zone`). **No bat speed** in the minors; the directional models run with sprint speed blank (Triple-A only scores — nothing else is tracked) |
 | `build_fantasy.py [years…]` | `fantasy.js`, `hist/fantasy-YYYY.js` | official counting stats + per-game logs for hitters (`hg`/`hgk`, with fielding and GWRBI per game) and pitchers (`gk`), home / away on both — the Fantasy Leaderboard / Trending sum these for any date range and split + Savant expected stats, plus ESPN's bonus categories: grand slams (the API's bases-loaded `r123` split), cycles (hitter game logs), game-winning RBI (the schedule's scoring plays: the RBI that put the winners ahead for good), fielding A / PO / OFA / DPT, pitcher TB / GIDP / pitches. Points are computed in the browser from the chosen scoring preset (`FCATS` in `app.js` lists every category), so an ESPN setting change needs no rebuild |
 | `build_fantasy.py lines [years…]` | `hist/fantasy-lines.js` | every past season's official lines (2015 on, no game logs) for the card's Fantasy ▸ By season table; static, rebuilt by hand when a season ends |
 | `build_career.py` | `hist/career.js`, `hist/minors.js` | season-by-season + career tables on every card. Reads the search index, so run it **after** `build_history.py index` |
@@ -345,8 +347,8 @@ percentiles.
 a date window or split; the Min PA box only controls who is *listed*. Pitchers use the Min IP pool. Percentiles
 count ties at half (`insertPct`), and lower-is-better metrics are stored negated in the sorted arrays.
 
-**Fallbacks.** The minors have no directional xwOBA (`build_milb.py` stubs that model out — it needs MLB sprint
-speeds), so there the hitters' headline and rank are wOBA and the player page has no xwOBA row. The directional
+**Fallbacks.** Below Triple-A there is no directional xwOBA (nothing tracked to score), so there the hitters' headline and
+rank are wOBA and the player page has no xwOBA row. Triple-A has it since 30 Sep 2026 (sprint speed blank). The directional
 xBA/xSLG models do run in the minors (with sprint speed missing); where nothing is tracked (AA, `tracked < 5%`) they
 fall back to BA/SLG (`PCT_FALL` in `app.js`). Past MLB seasons whose `hist/` file predates the xBA/xSLG rescore show
 Statcast's xBA/xSLG under those names until it runs (their xwOBA is already directional); the minors never show
@@ -557,6 +559,13 @@ is deploy-limited.
   with the phone's thin `--hair` rule down the name's right side (the box-shadow divider went); Fantasy's `td.fsorted` clips its
   fill to the padding box (no white side borders) so its rules show too. A scaled-up desktop type size was tried for a minute and
   dropped — it was the rules and the name cell he meant, not the sizes.
+* **Minors: Triple-A xwOBA and Double-A zones** (Sean, 30 Sep 2026: "AAA doesnt have xWOBA just xba and xslg", and TJStats' Double-A
+  card): `build_milb.py` no longer stubs the directional xwOBA — Triple-A scores it with sprint speed blank (as xBA / xSLG always
+  did), and Call-up Watch ranks Triple-A hitters by it (`xw` column). Below Triple-A the zone comes from Gameday's pitch plot
+  (`plot_zone`, 96% in / out agreement with Statcast on Triple-A), so Zone%, Z-Swing%, O-Swing%, Z- / O-Contact% and the rates
+  built on them exist there; the card notes say so. TJBat+ is TJStats' own, not built. Past seasons pick both up when rebuilt
+  (`rescore` with `aaa-2025` / `aa-2024` … tokens). **`cloud_daily.py` publishes only the files its run wrote** (mtime since
+  start) — it used to put back every `hist/` file from its checkout, which would undo a second run rebuilding them alongside.
 * **Base Running** (hitter card, the last section — end of the right column, after Batted-Ball Distribution; Sean, 30 Sep 2026): Sprint Speed (Savant's, ft/s, 5+
   competitive runs — `sprint_speeds()`, the model's own feature), SB, SB Att. (SB + CS) and SB% (none without an attempt), official
   from the MLB Stats API's season line (`mlb_people` → `baserunning()` in `build_data.py`, `m.spd / sb / sba / sbp`). Percentiles like

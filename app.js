@@ -2333,8 +2333,8 @@
     const cw = () => null;
     const leftH = DATA.meta.hitterCardLeft || 2;
     if (DS.noStatcast) card.append(el("p", "note", DS.tracked > 0.05
-      ? `Only some ${DS.levelName} parks track pitches (${Math.round(100 * DS.tracked)}% of balls in play, the Florida State League): exit velocity, barrels, xwOBA and zone numbers cover those games only, and bat speed isn't tracked. Hitters rank by wOBA here.`
-      : `No pitch tracking at this level (${DS.levelName}): exit velocity, barrels, xwOBA, bat speed and zone / chase numbers aren't available — swings, contact, batted-ball type and direction come from the play-by-play. Hitters rank by wOBA here.`));
+      ? `Only some ${DS.levelName} parks track pitches (${Math.round(100 * DS.tracked)}% of balls in play, the Florida State League): exit velocity, barrels and xwOBA cover those games only, and bat speed isn't tracked; zone / chase numbers come from Gameday's pitch plot. Hitters rank by wOBA here.`
+      : `No pitch tracking at this level (${DS.levelName}): exit velocity, barrels, xwOBA and bat speed aren't available — swings, contact, batted-ball type and direction come from the play-by-play, and zone / chase numbers from Gameday's pitch plot. Hitters rank by wOBA here.`));
     CARD.forEach((grp, gi) => {
       const box = el("section", "hgroup");
       box.append(el("h4", null, grp.group));
@@ -2813,8 +2813,8 @@
     const cw = () => null;
     const left = DATA.meta.pitcherCardLeft || 2;
     if (DS.noStatcast) card.append(el("p", "note", DS.tracked > 0.05
-      ? `Only some ${DS.levelName} parks track pitches (the Florida State League): velocity, zone / chase and exit-velocity numbers cover those games only.`
-      : `No pitch tracking at this level (${DS.levelName}): velocity, extension, zone / chase and exit-velocity numbers aren't available — strikes, swings, whiffs and batted-ball types come from the play-by-play.`));
+      ? `Only some ${DS.levelName} parks track pitches (the Florida State League): velocity and exit-velocity numbers cover those games only; zone / chase numbers come from Gameday's pitch plot.`
+      : `No pitch tracking at this level (${DS.levelName}): velocity, extension and exit-velocity numbers aren't available — strikes, swings, whiffs and batted-ball types come from the play-by-play, and zone / chase numbers from Gameday's pitch plot.`));
     const FOLD_P = new Set(DATA.meta.pitcherCardFold || []), folded = [];
     CARD_P.forEach((grp, gi) => {
       const isFold = FOLD_P.has(grp.group);
@@ -3373,8 +3373,9 @@
   }
   // Call-up Watch (Sean, 29 Sep 2026): this season's minor leaguers at one level, ranked for the majors. Pitchers by MLB-equivalent
   // uERA — the level's Whiff%, Strike%, GB% and Popup% carried up by MILB_X and placed in this season's MLB pool, the Season Stats
-  // number — with minors Stuff+ where the level is tracked (Triple-A, the FSL parks); hitters by wOBA with the contact and swing
-  // numbers beside it (the minors have no directional xwOBA). A name opens his card on that level's season.
+  // number — with minors Stuff+ where the level is tracked (Triple-A, the FSL parks); hitters by the directional xwOBA where the
+  // level is tracked (Triple-A, since 30 Sep 2026), else wOBA, with the contact and swing numbers beside it. A name opens his card
+  // on that level's season.
   const cu = Object.assign({ lvl: "aaa", side: "P", role: "all", age: 0, min: 100, fresh: false, sort: "", dir: 0 }, load("draft2027.callups", {}));
   const CU_LV = [["aaa", "Triple-A", "AAA"], ["aa", "Double-A", "AA"], ["ap", "High-A", "A+"], ["a", "Single-A", "A"]];
   const cuCache = new Map();
@@ -3396,7 +3397,7 @@
           })));
           if (u) { row.meu = u.v; row.mePct = u.pct; }
         }
-      } else Object.assign(row, { n: q.pa || 0, woba: m.woba, k: m.k, bb: m.bb, whf: m.whf, osw: m.osw, ev: m.ev, ev90: m.ev90, brl: m.brl, hh: m.hh });
+      } else Object.assign(row, { n: q.pa || 0, xw: withDataset(ds, () => seasonXwDir(q)), woba: m.woba, k: m.k, bb: m.bb, whf: m.whf, osw: m.osw, ev: m.ev, ev90: m.ev90, brl: m.brl, hh: m.hh });
       out.push(row);
     }
     cuCache.set(ck, out); return out;
@@ -3419,8 +3420,8 @@
     let rows = cuRows(key, L[2], cu.side).filter((r) => r.n >= cu.min && (!cu.age || (r.age && r.age <= cu.age)) && (!cu.fresh || !r.mlb) && (cu.side !== "P" || cu.role === "all" || r.g === cu.role));
     const P = cu.side === "P";
     const cols = P ? [["age", "Age", 0], ["n", "BF", 0], ["meu", "MLB-eq uERA", 2, true], ["stuff", "Stuff+", 0], ["k", "K%", 1], ["bb", "BB%", 1, true], ["whf", "Whiff%", 1], ["strk", "Strike%", 1], ["gb", "GB%", 1], ["fbv", "FB velo", 1], ["era", "ERA", 2, true]]
-                   : [["age", "Age", 0], ["n", "PA", 0], ["woba", "wOBA", 3], ["k", "K%", 1, true], ["bb", "BB%", 1], ["whf", "Whiff%", 1, true], ["osw", "Chase%", 1, true], ["ev", "EV", 1], ["ev90", "EV90", 1], ["brl", "Brl%", 1], ["hh", "HH%", 1]];
-    const sk = cu.sort && cols.some((c) => c[0] === cu.sort) ? cu.sort : P ? "meu" : "woba", low = (k) => { const c = cols.find((c0) => c0[0] === k); return !!(c && c[3]) || k === "age"; };
+                   : [["age", "Age", 0], ["n", "PA", 0], ...(withDataset(ds, () => dirInfo().ok) ? [["xw", "xwOBA", 3]] : []), ["woba", "wOBA", 3], ["k", "K%", 1, true], ["bb", "BB%", 1], ["whf", "Whiff%", 1, true], ["osw", "Chase%", 1, true], ["ev", "EV", 1], ["ev90", "EV90", 1], ["brl", "Brl%", 1], ["hh", "HH%", 1]];
+    const sk = cu.sort && cols.some((c) => c[0] === cu.sort) ? cu.sort : P ? "meu" : cols.some((c) => c[0] === "xw") ? "xw" : "woba", low = (k) => { const c = cols.find((c0) => c0[0] === k); return !!(c && c[3]) || k === "age"; };
     const dir = cu.sort === sk && cu.dir ? cu.dir : low(sk) ? 1 : -1;
     rows.sort((a, b) => (a[sk] == null) - (b[sk] == null) || dir * ((a[sk] ?? 0) - (b[sk] ?? 0)));
     bar.append(el("span", "pbcount", `${rows.length} ${P ? "pitchers" : "hitters"} · ${L[1]} ${DATA.meta.season}`));
@@ -3444,7 +3445,7 @@
         const v = r[k];
         if (k === "meu") { const td = el("td", "uera"), ch = el("span", "uchip", v == null ? "–" : v.toFixed(2)); if (v != null && r.mePct != null) { paintBar(ch, r.mePct); ch.style.color = "#fff"; ch.classList.add("on"); td.title = `Would be ${ordinal(r.mePct)} percentile among ${DATA.meta.season} MLB ${r.g === "SP" ? "starters" : "relievers"}`; } td.append(ch); tr.append(td); continue; }
         if (k === "stuff") { const td = el("td", "plus", v == null ? "–" : String(Math.round(v))); if (v != null) { const ps = plusStyle(v); if (ps) { td.style.background = ps.bg; td.style.color = ps.fg; } } tr.append(td); continue; }
-        tr.append(el("td", null, v == null ? "–" : k === "woba" ? fmtX(v) : d ? v.toFixed(d) : String(Math.round(v))));
+        tr.append(el("td", null, v == null ? "–" : k === "woba" || k === "xw" ? fmtX(v) : d ? v.toFixed(d) : String(Math.round(v))));
       }
       tb.append(tr);
     });
@@ -3452,7 +3453,7 @@
     const scroll = el("div", "fscroll pbscroll"); scroll.append(t); box.append(scroll);
     box.append(el("p", "note", (rows.length > 300 ? "The top 300 shown. " : "") + (P
       ? "MLB-equivalent uERA carries his Whiff%, Strike%, ground-ball and popup rates up to the majors by the level's typical drop (fitted on pitchers who worked at two levels in a season), then prices them like any MLB pitcher's uERA; the chip is where that would rank among this season's MLB starters or relievers. Stuff+ is graded against MLB pitches of the same type, and only exists where the level tracks pitches. · MLB = he has pitched in the majors this season."
-      : "The minors have no directional xwOBA, so hitters are ranked by wOBA with the contact (exit velocity, barrels, hard-hit) and swing numbers beside it; exit velocity exists only at tracked levels (Triple-A, some Single-A parks). · MLB = he has batted in the majors this season.")));
+      : "Hitters are ranked by xwOBA (the directional model, without sprint speed) where the level is tracked — Triple-A — and by wOBA below it, with the contact (exit velocity, barrels, hard-hit) and swing numbers beside it; exit velocity exists only at tracked levels (Triple-A, some Single-A parks), and zone / chase numbers below Triple-A come from Gameday's pitch plot. · MLB = he has batted in the majors this season.")));
   }
   // Weekly Planner (Sean, 29 Sep 2026): the Monday-to-Sunday week's schedule and probable starters, fetched from the MLB Stats API
   // in the browser when the page opens (it allows cross-site reads; nothing is built for it). Starred players by default, or
