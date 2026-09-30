@@ -620,7 +620,15 @@ is deploy-limited.
   `--accent-2-ink` / `--accent-2-dim` / `--band-ink` / `--tab-ink` to `--ink` / `--ink-2`, since the band is pale now in every
   scheme; Star / Filters text is `--ink`. Carolina (whose accent-2-ink is its ink) is unchanged.
 * **Don't restyle the percentile bars unasked**: a Leaderboard-table version of them was tried and taken back the same
-  evening (Sean, 28 Sep 2026: "i didnt want you to touch any of the percentile bar metrics").
+  evening (Sean, 28 Sep 2026: "i didnt want you to touch any of the percentile bar metrics"). **Restyled at his request on
+  30 Sep 2026** from the Percentile Bar Studio page (seven concepts; he picked the Savant bar as drawn there, "precisely"):
+  `pctSvg` draws a 17px bar on a faint track (`--pctrack`), no 10/50/90 ticks, no dashed rules between rows, no Poor / Average /
+  Great row, a 23px bubble with a white ring (navy digits from 38 to 62); section names in the condensed face, grey, over a 2px
+  navy rule; labels bold navy, values plain (`.svval`). Same row pitch, so the box height is unchanged.
+* **Type and ground** (Sean, 30 Sep 2026, same page): the whole site is **Barlow Condensed** (`--display`: headings, names, big
+  numbers) + **Source Sans 3** (`--body`: everything else), loaded by `themes.js` (`F.studio`, the only font); Roboto
+  Condensed is gone. **The swirl is gone**: `nopattern` is always on and the Appearance row is removed; pages sit on
+  `--ground`, a pale tint of the scheme's `--accent-2` (pale Carolina blue on the default scheme). Don't bring the swirl back unasked.
 * **Projections and Buy low / Sell high were built and removed the same day** (Sean, 28 Sep 2026: "I don't need those") —
   the pages, the home cards, `tools/build_proj.py` and `proj.js` are gone. Don't bring them back unasked.
 * **Starts / relief split** (Sean, 26 Sep 2026): a pitcher who both started and relieved (`ctx.GS > 0` and `G > GS`)

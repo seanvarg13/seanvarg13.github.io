@@ -53,8 +53,8 @@
   --mid: #b3b3b3;     /* percentile: 50th — a solid grey, not a tint, so the ends carry */
   --hi: #d22d49;      /* percentile: hot  — Savant's red */
   --shadow: none;
-  --display: "Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif;   /* Savant's type, the site's only font */
-  --body: "Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;   /* headings, names, big numbers (themes.js sets both) */
+  --body: "Source Sans 3", "Source Sans Pro", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;   /* everything else */
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -2117,7 +2117,7 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 /* pinned to the foot of the Advanced box: the tabs above it scroll, this stays put */
 .pcol > .rollbox { flex: none; margin: 0; padding: 10px 16px 12px; }
 :root[data-view="mobile"] .pcol > .rollbox { padding: 6px 12px 12px; }
-.uerabox .ubt { width: 100%; border-collapse: collapse; font-family: "Roboto Condensed", var(--body); }
+.uerabox .ubt { width: 100%; border-collapse: collapse; font-family: var(--body); }
 .uerabox .ubt th { padding: 2px 3px 5px; font-size: 12px; font-weight: 400; color: var(--svtext); text-align: right;
   border-bottom: 1px dashed var(--svrule); }
 .uerabox .ubt td { padding: 5px 3px; font-size: 13px; color: var(--ink); text-align: right; border: 0; }
@@ -2127,12 +2127,12 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .uerabox .ubt td.exp { font-weight: 700; }
 .uerabox .ubt .chip2 { min-width: 38px; font-size: 12px; }
 .rollhd { display: flex; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 8px; padding: 0 0 4px 0;
-  border-bottom: 2px solid var(--svsec); margin-bottom: 6px; font-family: "Roboto Condensed", var(--body); }
+  border-bottom: 2px solid var(--svsec); margin-bottom: 6px; font-family: var(--body); }
 .rollhd .rollname { font-size: 16px; font-weight: 700; color: var(--svhead); }
 .rollhd .rollsub { font-size: 12px; color: var(--svtext); margin-left: auto; }
 .rollhd .rollwin { margin-left: auto; font-size: 12px; color: var(--svtext); display: inline-flex; align-items: center; gap: 4px; }
 .rollhd .rollsel { height: 24px; padding: 0 4px; border: 1px solid var(--hair); border-radius: 0; background: var(--surface); color: var(--ink);
-  font: 700 12px/1 "Roboto Condensed", var(--body); }
+  font: 700 12px/1 var(--body); }
 :root[data-view="mobile"] .rollhd .rollsel { font-size: 16px; height: 30px; }   /* 16px: iOS won't zoom */
 .rollchart { position: relative; }
 /* the rolling line: a 160px plot (a touch over the old 132) and the strip under it the hover note sits in */
@@ -2143,7 +2143,7 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .rollsvg .rhot { stroke: var(--surface); stroke-width: 2; pointer-events: none; }
 .rolltip { position: absolute; z-index: 3; pointer-events: none; display: grid; gap: 1px; padding: 5px 8px; white-space: nowrap;
   background: var(--surface); border: 1px solid var(--svframe); border-radius: 0; box-shadow: none;
-  font: 400 11.5px/1.25 "Roboto Condensed", var(--body); color: var(--svtext); }
+  font: 400 11.5px/1.25 var(--body); color: var(--svtext); }
 .rolltip b { font-size: 13px; color: var(--ink); }
 .rolltip[hidden] { display: none; }
 .rollhd .rollseg { flex: none; }
@@ -2151,11 +2151,11 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .rollbox .rollnone { margin: 6px 0 0; font-size: 12px; color: var(--svtext); }
 /* the right box: every section at once, each under the same heading the middle box uses */
 .xsec + .xsec { margin-top: 16px; }
-.sechd { padding: 0 0 4px; margin-bottom: 6px; border-bottom: 2px solid var(--svsec); font-family: "Roboto Condensed", var(--body); }
+.sechd { padding: 0 0 4px; margin-bottom: 6px; border-bottom: 2px solid var(--svsec); font-family: var(--body); }
 .sechd .secname { font-size: 16px; font-weight: 700; color: var(--svhead); }
 .xsec .meters + .meters { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--rule); }
 .rollchart { width: 100%; }
-.rollsvg { display: block; width: 100%; height: auto; overflow: visible; font-family: "Roboto Condensed", var(--body); }
+.rollsvg { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--body); }
 .rollsvg text { font-size: 12px; fill: var(--svtext); dominant-baseline: middle; font-variant-numeric: normal; }
 .rollsvg .rtick, .rollsvg .rnow { text-anchor: end; }
 .rollsvg .rnow { font-weight: 700; fill: var(--ink); }
@@ -2168,10 +2168,10 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .rollsvg .rdot { stroke: var(--surface); stroke-width: 2; }
 .ppage .meter .val { white-space: nowrap; }
 
-/* the card's season table, sized to match Savant's: Roboto Condensed 12.8px in #333, bold headings between two
+/* the card's season table, sized to match Savant's (in the site's text face since 30 Sep 2026): 12.8px in #333, bold headings between two
    1px black rules, 18px rows with no padding, the season on screen in pale yellow, the career line on grey */
 .heatcard { width: 100%; max-width: none; margin: 8px 0 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: none; }
-.heatcard table { width: 100%; table-layout: auto; border-collapse: collapse; font: 400 12.8px/18.3px "Roboto Condensed", var(--body); color: var(--svtitle); }   /* columns sized to their numbers, as Savant's are */
+.heatcard table { width: 100%; table-layout: auto; border-collapse: collapse; font: 400 12.8px/18.3px var(--body); color: var(--svtitle); }   /* columns sized to their numbers, as Savant's are */
 .heatcard thead th { padding: 4px 3px; font-size: 12.8px; font-weight: 700; line-height: 18.3px; letter-spacing: 0; text-transform: none;
   text-align: right; background: var(--surface); color: var(--svtitle); border: 0; border-top: 1px solid var(--svhead); border-bottom: 1px solid var(--svhead); white-space: nowrap; }
 .heatcard tbody td { padding: 0 3px; height: 18.3px; font-size: 12.8px; line-height: 18.3px; font-weight: 400; text-align: right;
@@ -2204,7 +2204,7 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .papps .datesbar, .papps .lastrow { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; margin: 0; padding: 0; }
 .papps .datesbar .to, .papps .lastrow .to { color: var(--svtext); font-size: 12px; }
 .papps .datesbar input[type="date"], .papps .lastin { height: 28px; min-width: 0; border: 1px solid var(--hair); border-radius: 0;
-  background: var(--surface); color: var(--ink); padding: 0 6px; font: 400 13px/1 "Roboto Condensed", var(--body); }
+  background: var(--surface); color: var(--ink); padding: 0 6px; font: 400 13px/1 var(--body); }
 .papps .datesbar input[type="date"] { width: 124px; }
 .papps .lastin { width: 64px; }
 .papps .datesbar input:disabled, .papps .lastin:disabled { opacity: 0.45; }
@@ -2262,7 +2262,7 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 :root:root .svtrack .bub { position: absolute; top: 50%; width: 22px; height: 22px; min-width: 0; margin: -11px 0 0 -11px; padding: 1px 0 0;
   box-sizing: border-box; border: 2px solid var(--surface); border-radius: 50%; transform: none; box-shadow: none; z-index: 2;
   display: grid; place-items: center; color: #ffffff; text-shadow: none; letter-spacing: 0; font-variant-numeric: normal;
-  font-family: "Roboto Condensed", var(--body); font-size: 12px; font-weight: 700; line-height: 1; }
+  font-family: var(--body); font-size: 12px; font-weight: 700; line-height: 1; }
 :root:root .svtrack .bub.c3 { font-size: 10px; }
 :root:root .svtrack .bub.ghost { background: var(--surface); color: var(--svtext); box-shadow: inset 0 0 0 1.5px var(--svtext); }
 /* a row of them, laid out as Savant lays out its chart: a row every 23px, the label's right edge 5px from the bar,
@@ -2270,7 +2270,7 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
    the label's last 80px and the value's last 30px only */
 :root:root .meters .meter { min-height: 23px; height: auto; margin: 0; padding: 3px 0 0; border: 0; gap: 0; column-gap: 0;
   grid-template-columns: 125px minmax(0, 1fr) 35px; align-items: center;
-  font-family: "Roboto Condensed", var(--body); font-size: 12px; line-height: 1; }
+  font-family: var(--body); font-size: 12px; line-height: 1; }
 :root:root .meters .meter.cmp { grid-template-columns: 110px minmax(0, 1fr) 35px 70px; }
 :root:root .meters .meter.ruled { border-top: 2px dotted var(--rail); }
 :root:root .meters .meter > .lbl, :root:root .meters .meter > .val { align-self: stretch; display: flex; align-items: center; min-width: 0;
@@ -2292,7 +2292,7 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .pchead { padding: 8.5px 12px 20px; text-align: center; }   /* Savant's 8px, plus the half pixel its compare icon drops the line */
 .pchead:has(+ .pctbox) { padding-bottom: 0; min-height: 37.4px; }
 .pchead + .pscroll { padding-top: 0; }
-.pcthd { font-family: "Roboto Condensed", var(--display); font-size: 18px; font-weight: 400; line-height: 1.428571;
+.pcthd { font-family: var(--display); font-size: 18px; font-weight: 400; line-height: 1.428571;
   color: var(--svtitle); letter-spacing: 0; }
 .pcthd b, .pcthd .hsel .hsl { font-weight: 700; }
 /* the year and, beside it, the level: both pickers wear Savant's bold word over a 3px dotted teal rule */
@@ -2317,13 +2317,13 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 :root:not([data-view="mobile"]) .pbelow2 { width: min(100%, var(--pbox-w)); margin-inline: auto; }
 .pctcols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; align-items: start; }
 :root[data-view="mobile"] .pctcols { grid-template-columns: minmax(0, 1fr); }
-.pctsample { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; padding: 2px 20px 6px; font-family: "Roboto Condensed", var(--body); }
+.pctsample { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; padding: 2px 20px 6px; font-family: var(--body); }
 .pctsample .pslbl { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--svtext); margin-right: -4px; }
 .pctsample b { font-size: 16px; font-weight: 700; color: var(--svhead); }
 .pctsample .psu { font-size: 12px; color: var(--svtext); }
 /* the percentile chart itself is one SVG drawn to Savant's numbers (see pctSvg in app.js); these are only its inks */
 .svchart { width: 100%; }
-.svpct { display: block; width: 100%; height: auto; overflow: visible; font-family: "Roboto Condensed", var(--body); }
+.svpct { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--body); }
 .svpct text { font-size: 12px; dominant-baseline: middle; }
 .svpct .svscale { dominant-baseline: auto; }
 .svpct .svsecname { font-size: 15px; font-weight: 700; letter-spacing: 0.08em; fill: var(--accent-2-text); dominant-baseline: auto; }
@@ -2377,7 +2377,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 .phf .dd { display: block; }
 .phf .dd .ddbox { width: 100%; }
 .rollwin .dd .ddbox.rollsel { height: 24px; min-width: 52px; padding: 0 6px 0 8px; gap: 6px; border: 1px solid var(--hair); border-radius: 0;
-  font: 700 12px/1 "Roboto Condensed", var(--body); }
+  font: 700 12px/1 var(--body); }
 .cmpctl .dd { display: block; }
 .cmpctl .ddbox.cmpbox { width: 100%; height: 28px; border-color: var(--hair); font: 600 12px/1 var(--body); }
 :root[data-view="mobile"] .rollwin .dd .ddbox.rollsel { height: 30px; font-size: 15px; }
@@ -2386,7 +2386,7 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .pthd { font-size: 19px; }
 /* the batted-ball mix: type, Savant's bar, his rate, the league's wOBA on the type */
 .mixgrid { display: grid; grid-template-columns: 84px minmax(0, 1fr) 46px 54px; align-items: center; column-gap: 10px; row-gap: 9px;
-  font-family: "Roboto Condensed", var(--body); padding-top: 2px; }
+  font-family: var(--body); padding-top: 2px; }
 .mixgrid .mh { font-size: 12px; color: var(--svtext); text-align: right; }
 .mixgrid .ml { font-size: 13px; color: var(--svtext); white-space: nowrap; }
 .mixgrid .mv { font-size: 13px; color: var(--ink); text-align: right; }
@@ -3410,3 +3410,23 @@ body[data-mode="rankings"] #rankcount { display: none; }
 :root[data-view="mobile"] .orow .obrk { padding: 0 6px; }
 /* Game Logs: Regular season / Postseason / Spring training over the log (Sean, 30 Sep 2026) */
 .glkind { display: flex; justify-content: center; flex-wrap: wrap; margin: 0 0 10px; }
+/* Sean's percentile bars (30 Sep 2026, "make it look precisely like these", from the Percentile Bar Studio page): section
+   names in the condensed face, grey, over a 2px navy rule; labels bold navy, values plain; a faint track under a slimmer
+   bar (pctSvg), no ticks, no dashed rules between rows; the bubble a size up with a white ring, navy digits in the grey middle */
+.svpct { font-family: var(--body); }
+.svpct text { font-size: 13px; }
+.svpct .svsecname { font-family: var(--display); font-size: 19px; font-weight: 600; letter-spacing: 0; fill: var(--muted); }
+.svpct .svsecrule { fill: var(--ink); }
+.svpct .svline { fill: var(--pctrack); }
+.svpct .svlbl { fill: var(--ink); font-weight: 600; }
+.svpct .svlbl.svval { fill: var(--ink-2); font-weight: 400; }
+.svpct .svbulb { stroke: var(--surface); stroke-width: 2.5; }
+.svpct .svnum { font-size: 12.5px; }
+.svpct .svnum.mid { fill: #13294b; }
+:root { --pctrack: color-mix(in srgb, var(--ink) 7%, var(--surface)); }
+/* no swirl any more (Sean, 30 Sep 2026: "get rid of the background swirls"): every page sits on a plain pale ground in
+   the scheme's own tint — pale Carolina blue on the default scheme — with the white cards and navy borders on top */
+:root { --ground: color-mix(in srgb, var(--accent-2) 9%, #f6f8fb); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ground: color-mix(in srgb, var(--accent-2) 7%, #0b1424); } }
+:root[data-theme="dark"] { --ground: color-mix(in srgb, var(--accent-2) 7%, #0b1424); }
+:root.nopattern body, :root.nopattern .modal.pagebg .modal-back { background: var(--ground); }
