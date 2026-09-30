@@ -457,7 +457,7 @@ is deploy-limited.
   (per device, `draft2027.pattern`, class `nopattern` on `<html>`); the header's pages are plain words, current one underlined,
   and a **More** menu (made in `app.js`, a third `NAV_GROUPS` entry, filled in `renderChrome`) holds Appearance, Colour key,
   Stat glossary, How this page works and the layout switch — nothing sits under the lists any more; the list toolbar is
-  position + **Filters** (one dropdown, `GRP_TABS` as tabs across its top — Filters · Stats · Splits · Dates · Table
+  position + **Filters** (typing in its minimum box redraws the list, not the panel — `state.keepPop`, so the cursor stays; one dropdown, `GRP_TABS` as tabs across its top — Filters · Stats · Splits · Dates · Table
   format, the last used opens first; since 30 Sep 2026 one fixed size, `#pop.grppop` + `--pop-top` from `placePop`, tabs and
   the `popfoot` buttons pinned, the middle scrolling; minimum beside Sort by; One / Multiple seasons first in the season row so
   it never moves; the column order a drag-and-arrows list, `.olist`); desktop rows ~38px, a
@@ -557,8 +557,8 @@ is deploy-limited.
   xwOBA) runs, + = the results beat the contact) · **Contact** (EV, max EV, barrels, HH%) · **Discipline** (Whiff%, Chase%), Season row
   frozen at the foot. Tap a game: tiles over his season, every tracked ball's exit velocity (the day rows' `evs` lists), and
   its luck with BABIP vs xBABIP. `state.hGameDay` is the picked game.
-* **Postseason / spring game logs** (Sean, 30 Sep 2026): both Game Logs tabs sit in `renderGameLogs`, which puts a Regular season /
-  Spring training / Postseason switch over the log for the game types he has that year (`gameKinds`, from the index entry's
+* **Postseason game logs** (Sean, 30 Sep 2026): both Game Logs tabs sit in `renderGameLogs`, which puts a Regular season /
+  Postseason switch (spring training taken off the same day) over the log for the game types he has that year (`gameKinds`, from the index entry's
   `e.k` — the index's `seasons` list drops spring / post, so don't check it). The card stays on its season; the log reads that
   game type's dataset and day file (`hist/days-<year>-post.js` …), chips ranked against that year's regular season (`kindPool`).
   `state.glKind` resets when a new player's card opens. Spring / October files built before `hr` / `dbsum` were appended to the
@@ -637,6 +637,11 @@ is deploy-limited.
   except the Stuff+ board's **Games: Spring training** option (`pb.src`, `springKey`: next year's spring once built, else this
   one's), which reads `hist/mlb-<year>-spring.js`; a name opens his spring card as the list popup (`state.cardDs` = the spring key; `renderModal` keeps it only on that board). EV-based stats are thinner there.
 
+* **Taken back the same day** (Sean, 30 Sep 2026: "we won't show anything postseason related except game logs and then for spring
+  let's just show nothing"): the card title offers regular seasons only (`pageTitle` reads `entry.s`, not `e.k`; a saved
+  `state.cardDs` on a spring / PS key falls back to its regular season in `renderModal`), the Stuff+ board has no Games pill
+  (`pb.src` is forced to the season), and Game Logs' switch is Regular season / Postseason only. The builds, `kindPool` and the
+  rest of the machinery below stay, so bringing either back is a UI change. Don't show spring training anywhere unasked.
 * **Postseason and spring on the cards** (Sean, 30 Sep 2026: "a dropdown on the MLB and say PS and spring training ST"): the
   card title's level dropdown (`pageTitle`) offers **MLB PS** / **MLB ST** beside MLB for any year he has them — `indexReady()`
   keeps each player's spring / postseason seasons aside in `e.k` instead of dropping them, `KIND_TAG` gives the short labels.
