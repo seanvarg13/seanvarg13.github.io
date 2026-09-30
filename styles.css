@@ -3367,3 +3367,10 @@ body[data-mode="rankings"] #rankcount { display: none; }
 /* the frozen Rk / Player header cells keep a solid ground: the pale-header rule (#colhead .h, 28 Sep 2026) made every header
    cell see-through, so on a phone slid sideways the column names ran under "Player" and read on top of it (Sean, 30 Sep 2026) */
 :root:root:root #colhead .h:first-child, :root:root:root #colhead .h:nth-child(2) { background: var(--surface-2); }
+/* the Leaderboard's season row (Filters ▸ Season and level): Season [from] to [to] and the level on one line, Combined /
+   Each season under them, nothing cut off on a phone (Sean, 30 Sep 2026: spans of seasons) */
+#lbseason { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 8px; }
+#lbseason .pill { min-width: 0; }
+#lbseason .pill .pill-text { white-space: nowrap; }
+#lbseason .kindseg { order: 5; flex: 1 1 100%; display: flex; }
+#lbseason .kindseg .segbtn { flex: 1 1 0; }

@@ -640,6 +640,12 @@ is deploy-limited.
   before; `cloud_daily.py` rebuilds this year's postseason every morning Sep–Nov (the minors step's index then offers it), and a
   `rescore` run now rebuilds the index too (`post-2026` / `spring-2027` tokens).
 
+* **Leaderboard spans of seasons** (Filters ▸ Season and level: Season [from] to [to], then **Combined** — one line per player,
+  every season in the span summed from rows — or **Each season** — every player-season its own line with a Year column;
+  `lbKey` / `multiKey` / `multiDataset`). Combined players carry no season numbers of their own, so `dirInfo()` for a span asks
+  its member seasons — before 30 Sep 2026 a combined span quietly led with wOBA instead of xwOBA. The season row wraps on a phone
+  (`#lbseason`), Combined / Each season full width under the pickers.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
