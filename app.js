@@ -240,7 +240,12 @@
         }
         return p;
       });
-      ds.rows = (p) => { if (p._rows) return p._rows; const rows = p.parts.flatMap(([d, q]) => d.rows(q)); if (ds.ready()) p._rows = rows; return rows; };
+      // each season's directional xwOBA runs on that season's scale (dirInfo per season), so a combined line's dnum is scaled
+      // part by part here and the span's own scale is 1 — one averaged scale had put, say, 2016 on 2015-26's level (30 Sep 2026)
+      const di = DF.H.indexOf("dnum");
+      const partRows = (d, q) => { const rs = d.rows(q); if (q.type !== "H" || di < 0) return rs; const sc = withDataset(d, dirInfo); const k = sc.ok ? sc.scale : 1;
+        return k === 1 ? rs : rs.map((r) => { if (r[di] === undefined) return r; const c = r.slice(); c[di] = r[di] * k; return c; }); };
+      ds.rows = (p) => { if (p._rows) return p._rows; const rows = p.parts.flatMap(([d, q]) => partRows(d, q)); if (ds.ready()) p._rows = rows; return rows; };
       ds.er = () => [];
     }
     multiCache.set(key, ds);
@@ -641,7 +646,7 @@
       const mp = parseMulti(k), parts = mp ? mp.members.filter((x) => builtKeys().includes(x)).map((x) => histDataset(x)) : [];
       if (!parts.length || parts.some((d) => !d)) return { ok: false, scale: 1 };           // a member still loading: ask again
       const infos = parts.map((d) => withDataset(d, dirInfo)), ok = infos.every((i) => i.ok);
-      const info = { ok, scale: ok ? infos.reduce((a, i) => a + i.scale, 0) / infos.length : 1 };
+      const info = { ok, scale: 1 };
       dirCache.set(k, info);
       return info;
     }
@@ -659,8 +664,10 @@
     return info;
   }
   // the directional model's season number, re-anchored (or summed from its own rows)
+  // the directional scale for p: his own season's in an each-season span (p.src), else the dataset's
+  const dirFor = (p) => (p && p.src && DS.multi ? withDataset(p.src, dirInfo) : dirInfo());
   function seasonXwDir(p) {
-    const m = p.m, I = dirInfo();
+    const m = p.m, I = dirFor(p);
     if (!I.ok) return null;
     if (m.xwoba_dir != null) return Math.round(1000 * m.xwoba_dir * I.scale) / 1000;
     const f = DF.H, di = f.indexOf("dnum"), wi = f.indexOf("wden");
@@ -764,7 +771,7 @@
       } else {
         const bden = t.bbt || t.bbe;                      // batted-ball type / direction: every typed ball in play (older files: tracked BBE)
         const noEV = DS.tracked != null && DS.tracked < 0.05;
-        const xwDir = hasDir && t.wden && dirInfo().ok ? Math.round(1000 * dirInfo().scale * t.dnum / t.wden) / 1000 : null;
+        const DI = dirFor(p), xwDir = hasDir && t.wden && DI.ok ? Math.round(1000 * DI.scale * t.dnum / t.wden) / 1000 : null;
         const evn = t.evn || t.bbe, bipn = t.bip || t.bbe;   // EV-eligible balls (no bunts) and all balls in play; older files carry tracked BBE only
         v = { m: { ev: evn ? Math.round(10 * t.evsum / evn) / 10 : null, brl: rate(t.brl, bipn), pull: rate(t.pullair, bden),
                    air: rate(t.air !== undefined ? (DS.airNoPU ? t.air : t.air - (t.puh || 0)) : bden - (t.gbh || 0) - (t.puh || 0), bden),   // line drives + fly balls: popups are never air

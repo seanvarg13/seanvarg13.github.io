@@ -646,7 +646,10 @@ is deploy-limited.
   seasons back); the "to" pill and Combined / Each season only show while it's on. The pager, search and column ticks redraw the rows
   through `inListView` (`renderRows` / `renderColhead` step into the Leaderboard's dataset and split themselves) — they used to fall
   back to this season, so page 2 of a span showed 2026. `multiDataset` waits for the search index (which seasons are built): a span
-  built before it arrived knew only 2026 and was cached that way (fixed 30 Sep 2026). The name line carries the season (`.yr`: a player-season's year, a combined
+  built before it arrived knew only 2026 and was cached that way (fixed 30 Sep 2026). Each season's directional xwOBA keeps **its
+  own season's scale** in a span (`dirFor(p)`: an each-season player uses `p.src`'s `dirInfo`; a combined line's rows have `dnum`
+  scaled part by part and the span's scale is 1) — one averaged scale had shown Gary Sánchez 2016 at .407 in a span vs .422 on his
+  card (Sean, 30 Sep 2026). The name line carries the season (`.yr`: a player-season's year, a combined
   player's own seasons in the span), so the Year column is no longer automatic (only when ticked in Table).
 * **Positions shown are where he played that season** (`playedLabel`: positions with a tenth of his games, most first, up to three;
   SP / RP by that season's starts and relief), on the Leaderboard, Trending and cards; next year's fantasy eligibility (`posLabel`)
