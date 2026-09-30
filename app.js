@@ -810,7 +810,8 @@
     return out; };
   // Year and Age: plain columns that always sit right after the name (no percentile)
   const PRE_COLS = { year: { key: "year", label: "Year" }, age: { key: "age", label: "Age" } };
-  const preCols = () => { const pre = state.pre || {}; const out = []; if (pre.year === true || (pre.year !== false && DS.each)) out.push(PRE_COLS.year); if (pre.age) out.push(PRE_COLS.age); return out; };
+  // the Year column is no longer automatic in a span: the year is on the name line (30 Sep 2026)
+  const preCols = () => { const pre = state.pre || {}; const out = []; if (pre.year === true) out.push(PRE_COLS.year); if (pre.age) out.push(PRE_COLS.age); return out; };
   const seasonOf = (p) => p.season ?? (p.seasons ? p.seasons[p.seasons.length - 1] : DS.season);
   const preValue = (k, p) => (k === "age" ? (p.age ?? "–") : p.season != null ? String(p.season) : p.seasons ? yearSpan(p.seasons) : String(DS.season));
   // no directional xwOBA at this level (the minors): wOBA carries the hitters' headline, and its own column would repeat it
@@ -1318,6 +1319,22 @@
     for (const x of addedPos(p)) if ((x === "SP" || x === "RP") && !r.includes(x)) r.push(x);
     return r;
   }
+  // Where he played that season (Sean, 30 Sep 2026): the positions he spent at least a tenth of his games at, most first, up to
+  // three; a pitcher's SP / RP by that season's starts and relief outings. Next year's fantasy eligibility (posLabel) is only
+  // what the fantasy pages show — Rankings, the Draft board, Eligibility and Fantasy.
+  function playedLabel(p) {
+    if (p.type === "P") {
+      const c = p.ctx || {}, gs = c.GS || 0, rp = (c.G || 0) - gs;
+      if (!c.G) return p.primary || "P";
+      const r = []; if (gs) r.push(["SP", c.IPs != null ? c.IPs : gs]); if (rp > 0) r.push(["RP", c.IPr != null ? c.IPr : rp]);
+      return r.sort((a, b) => b[1] - a[1]).map((x) => x[0]).join(", ");
+    }
+    const order = HIT_TABS.slice(1), games = Object.entries(p.pos || {}).filter(([k, g]) => g > 0 && order.includes(k));
+    const tot = games.reduce((a, [, g]) => a + g, 0);
+    const out = games.filter(([, g]) => g >= Math.max(1, 0.1 * tot)).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k);
+    return out.length ? out.join(", ") : (HIT_TABS.includes(p.primary) ? p.primary : "DH");
+  }
+  const posShown = (p) => (["rankings", "draft", "eligibility", "fantasy"].includes(state.mode) ? posLabel(p) : playedLabel(p));
   // "2B, 3B, OF" — with the tab you're on listed first
   function posLabel(p) {
     const list = eligiblePositions(p).slice();
@@ -1764,7 +1781,8 @@
     inp.step = isPitcherGroup(g) ? 5 : 10;
   }
   const FROZEN_MODES = ["leaderboard", "trending", "rankings", "draft"];
-  function renderColhead() {
+  function renderColhead() { return inListView(renderColheadIn); }
+  function renderColheadIn() {
     const g = groupFor(state.pos), ref = refFor(g);
     const ms = colsFor(g), trending = state.mode === "trending";
     const h = $("colhead"); h.innerHTML = ""; h.className = "colhead grid";
@@ -1808,7 +1826,17 @@
     });
     return b;
   }
-  function renderRows() {
+  // The Leaderboard draws in its own season(s) and split, which render() switches to. A redraw of just the rows or the header
+  // (the pager, the search box, a column tick) came in without that switch and fell back to this season — page 2 of a span of
+  // seasons showed 2026 (Sean, 30 Sep 2026). These two now step into the Leaderboard's view themselves when they're not in it.
+  function inListView(fn) {
+    if (state.mode !== "leaderboard") return fn();
+    const key = lbKey(), ds = key === CUR.key ? CUR : histDataset(key);
+    if (!ds || DS === ds) return fn();
+    return withDataset(ds, () => withSplit(state.lbSplit, fn));
+  }
+  function renderRows() { return inListView(renderRowsIn); }
+  function renderRowsIn() {
     const { list, stats, g, ref, manual } = visiblePlayers();
     const rankMode = state.mode === "rankings" && state.editRanks;
     const src = orderSource();
@@ -1924,11 +1952,13 @@
       // just his positions and playing time under the name (Sean, 29 Sep 2026); team and hand are in the name's tooltip
       nameEl.title = nameEl.title || `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`;
       const meta = el("div", "meta");
-      meta.append(el("span", "posl", posLabel(p)));
+      meta.append(el("span", "posl", posShown(p)));
       const v = V(p);
       const flag = el("span", "flag", p.type === "P" ? `${fmtIP(v.ip)} IP` : `${v.pa} PA`);
       if (seasonSample(p) < effMin(g) && !hasExtra(p, state.pos)) { flag.classList.add("low"); flag.title = `Under the Min ${sampleLabel(g)} — listed after everyone who qualifies; his percentiles are where he'd land among them`; }
       meta.append(flag);
+      // the season on the name line (Sean, 30 Sep 2026): each player-season's own year in a span, the span or season otherwise
+      if (state.mode === "leaderboard") meta.append(el("span", "yr", preValue("year", p)));   // a combined player: the seasons he played in the span
       if (hasExtra(p, state.pos)) {
         const tag = el("span", "added", `added ${state.pos}`);
         const x = el("button", "unadd", "×"); x.type = "button"; x.title = `Remove ${state.pos} from ${p.name}'s eligibility`;
@@ -2959,7 +2989,7 @@
     plate.append(headshot(p.id, p.name));
     const txt = el("div");
     const h2 = el("h2", null, p.name); h2.id = "modal-title"; txt.append(h2);
-    txt.append(el("div", "mline", `${p.team} · ${posLabel(p)}${p.type === "P" ? " · " + p.throws + "HP" : p.bats ? " · " + p.bats : ""} · ${dsSeason()}${p.age != null ? " · age " + p.age : ""}`));
+    txt.append(el("div", "mline", `${p.team} · ${posShown(p)}${p.type === "P" ? " · " + p.throws + "HP" : p.bats ? " · " + p.bats : ""} · ${dsSeason()}${p.age != null ? " · age " + p.age : ""}`));
     const v = V(p);
     if (st.pct) txt.append(renderStrip(p, v));
     const r = el("div", "mrank");
@@ -3654,24 +3684,36 @@
     const year = (k) => Number(k.split("-")[1]);
     const years = [...new Set(keys.map(year))].sort((x, y) => y - x);
     const inYear = (y) => keys.filter((k) => year(k) === y).sort((p, q) => LEVEL_ORDER.indexOf(levelOf(p)) - LEVEL_ORDER.indexOf(levelOf(q)));
-    const pick = (k) => { state.lbDs = k === CUR.key ? null : k; if (state.lbTo && state.lbTo <= year(k)) state.lbTo = null; state.win = { from: "", to: "", last: "" }; state.expanded = null; savePrefs(); render(); };
+    const pick = (k) => { state.lbDs = k === CUR.key ? null : k; if (state.lbTo && state.lbTo <= year(k)) state.lbTo = null; state.page = 1; state.win = { from: "", to: "", last: "" }; state.expanded = null; savePrefs(); render(); };
     box.append(el("span", "splbl", "Season"));
     box.append(pillSelect(String(year(cur)), years.map((y) => [String(y), String(y)]), String(year(cur)), (y) => { const opts = inYear(Number(y)); pick((opts.find((k) => levelOf(k) === levelOf(cur) && !keyKind(k)) || opts.find((k) => levelOf(k) === levelOf(cur)) || opts[0])); }, "Season"));
-    // "to": a later year at the same level and game type makes the list a span of seasons
-    const later = years.filter((y) => y > year(cur) && keys.includes(`${levelOf(cur)}-${y}${keyKind(cur) ? "-" + keyKind(cur) : ""}`)).sort((x, y) => x - y);
-    if (later.length) {
-      const to = state.lbTo && later.includes(state.lbTo) ? state.lbTo : null;
+    // Multiple seasons (Sean, 30 Sep 2026: "a button that I select to show multiple seasons and that triggers the year x to
+    // year y"): off, one season; on, Season [from] to [to] with Combined / Each season. Turning it on from the latest season
+    // starts the span two seasons back.
+    const kk = keyKind(cur) ? "-" + keyKind(cur) : "", keyAt = (y) => `${levelOf(cur)}-${y}${kk}`;
+    const later = years.filter((y) => y > year(cur) && keys.includes(keyAt(y))).sort((x, y) => x - y);
+    const earlier = years.filter((y) => y < year(cur) && keys.includes(keyAt(y))).sort((x, y) => y - x);
+    const spanOn = !!(state.lbTo && later.includes(state.lbTo));
+    if (later.length || earlier.length) {
+      const tog = el("button", "segbtn small spantog", "Multiple seasons"); tog.type = "button"; tog.setAttribute("aria-pressed", String(spanOn));
+      tog.addEventListener("click", () => {
+        if (spanOn) state.lbTo = null;
+        else if (later.length) state.lbTo = later[later.length - 1];
+        else { const from = earlier[Math.min(1, earlier.length - 1)]; state.lbTo = year(cur); state.lbDs = keyAt(from) === CUR.key ? null : keyAt(from); }
+        state.win = { from: "", to: "", last: "" }; state.expanded = null; state.page = 1; savePrefs(); render();
+      });
+      box.append(tog);
+    }
+    if (spanOn) {
       box.append(el("span", "splbl", "to"));
-      const toPill = pillSelect(to ? String(to) : "—", [["", "— (one season)"], ...later.map((y) => [String(y), String(y)])], to ? String(to) : "", (y) => { state.lbTo = y ? Number(y) : null; state.win = { from: "", to: "", last: "" }; state.expanded = null; savePrefs(); render(); }, "Through");
-      toPill.classList.add("topill"); if (!to) toPill.classList.add("solo"); box.append(toPill);
-      if (to) {
-        const seg = el("div", "seg kindseg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Span");
-        for (const [v, l, t] of [[false, "Combined", "One line per player: every season in the span added together"], [true, "Each season", "Every player-season on its own line"]]) {
-          const b = el("button", "segbtn small", l); b.type = "button"; b.title = t; b.setAttribute("aria-pressed", String(state.lbEach === v));
-          b.addEventListener("click", () => { if (state.lbEach !== v) { state.lbEach = v; state.expanded = null; savePrefs(); render(); } }); seg.append(b);
-        }
-        box.append(seg);
+      const toPill = pillSelect(String(state.lbTo), later.map((y) => [String(y), String(y)]), String(state.lbTo), (y) => { state.lbTo = Number(y); state.win = { from: "", to: "", last: "" }; state.expanded = null; state.page = 1; savePrefs(); render(); }, "Through");
+      toPill.classList.add("topill"); if (later.length === 1) toPill.classList.add("solo"); box.append(toPill);
+      const seg = el("div", "seg kindseg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Span");
+      for (const [v, l, t] of [[false, "Combined", "One line per player: every season in the span added together"], [true, "Each season", "Every player-season on its own line"]]) {
+        const b = el("button", "segbtn small", l); b.type = "button"; b.title = t; b.setAttribute("aria-pressed", String(state.lbEach === v));
+        b.addEventListener("click", () => { if (state.lbEach !== v) { state.lbEach = v; state.expanded = null; state.page = 1; savePrefs(); render(); } }); seg.append(b);
       }
+      box.append(seg);
     }
     const lv = inYear(year(cur)).filter((k) => !keyKind(k) || k === cur);          // one entry per level; the game type is its own control
     const lvPill = pillSelect((LEVEL_NAMES[levelOf(cur)] || levelOf(cur)) + kindTag(cur), lv.map((k) => [k, (LEVEL_NAMES[levelOf(k)] || levelOf(k)) + kindTag(k)]), cur, pick, "Level");
@@ -6697,7 +6739,7 @@
     plate.append(headshot(p.id, p.name));
     const h2 = el("h2", null, p.name); h2.id = "modal-title"; plate.append(h2);
     const tm = el("div", "steam");
-    tm.append(el("span", null, `${posLabel(p)} | ${TEAM_FULL[t] || TEAM_NAMES[t] || p.team}`));
+    tm.append(el("span", null, `${posShown(p)} | ${TEAM_FULL[t] || TEAM_NAMES[t] || p.team}`));
     if (tid) { const lg = el("img", "slogo"); lg.alt = ""; lg.loading = "lazy"; lg.src = `https://www.mlbstatic.com/team-logos/${tid}.svg`; lg.addEventListener("error", () => lg.remove()); tm.append(lg); }
     plate.append(tm);
     const bat = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;

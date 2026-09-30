@@ -644,7 +644,14 @@ is deploy-limited.
   every season in the span summed from rows — or **Each season** — every player-season its own line with a Year column;
   `lbKey` / `multiKey` / `multiDataset`). Combined players carry no season numbers of their own, so `dirInfo()` for a span asks
   its member seasons — before 30 Sep 2026 a combined span quietly led with wOBA instead of xwOBA. The season row wraps on a phone
-  (`#lbseason`), Combined / Each season full width under the pickers.
+  (`#lbseason`). Since 30 Sep 2026 a **Multiple seasons** button turns the span on / off (on from the latest season it starts two
+  seasons back); the "to" pill and Combined / Each season only show while it's on. The pager, search and column ticks redraw the rows
+  through `inListView` (`renderRows` / `renderColhead` step into the Leaderboard's dataset and split themselves) — they used to fall
+  back to this season, so page 2 of a span showed 2026. The name line carries the season (`.yr`: a player-season's year, a combined
+  player's own seasons in the span), so the Year column is no longer automatic (only when ticked in Table).
+* **Positions shown are where he played that season** (`playedLabel`: positions with a tenth of his games, most first, up to three;
+  SP / RP by that season's starts and relief), on the Leaderboard, Trending and cards; next year's fantasy eligibility (`posLabel`)
+  only on Rankings, the Draft board, Eligibility and Fantasy (`posShown`; Sean, 30 Sep 2026).
 
 ## 9. Things only Sean can do
 
