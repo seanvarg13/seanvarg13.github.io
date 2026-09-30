@@ -3511,3 +3511,16 @@ body.cardpop.modal-open main.wrap, body.cardpop.modal-open > footer { visibility
 .phead .mrank:has(.fchip) { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 6px; }
 #glist li.recenthd { padding: 6px 12px 2px; font-size: 12px; color: var(--muted); list-style: none; }
 .holdpop { z-index: 60; } #colhead .h { -webkit-touch-callout: none; user-select: none; }
+/* the Stuff+ board, League Trends, Call-up Watch and the Weekly Planner on a desktop (Sean, 30 Sep 2026: "get rid of the outer
+   box, it feels pointless"): the board's own frame inside the page's white card goes, so it's one card and the table, like the
+   Leaderboard */
+:root:not([data-view="mobile"]) body:is([data-mode="pitches"], [data-mode="trends"], [data-mode="callups"], [data-mode="planner"]) #pitchboard { border: 0 !important; padding: 0 !important; background: none !important; box-shadow: none !important; }
+/* Leaderboard and Trending on a desktop (Sean, 30 Sep 2026): Filters sits in the pager's blue bar, the white card around the
+   list is gone, and the table takes the room — the page ground straight behind it. The toolbar row only shows when it has a note */
+:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap { background: none; border: 0 !important; padding-inline: 0; }
+:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap > .toolbar { background: none; }
+:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) #toolrow:not(:has(.winnote:not(:empty))) { display: none; }
+#pagertop > .tbtns { display: inline-flex; margin: 0 14px 0 0; }
+:root:not([data-view="mobile"]) body.filtbar:is([data-mode="leaderboard"], [data-mode="trending"]) main.wrap { padding-top: 0; }
+/* the Stuff+ board family the same way on a desktop: no white card, no board frame — its filters on the ground over the table */
+:root:not([data-view="mobile"]) body:is([data-mode="pitches"], [data-mode="trends"], [data-mode="callups"], [data-mode="planner"]) main.wrap { background: none; border: 0 !important; padding-inline: 0; }
