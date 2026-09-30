@@ -489,7 +489,7 @@ is deploy-limited.
   (`#tsum` hidden); a row's season only shows in a span of seasons; Per page lives in Filters ▸ Order and minimum
   (`perPageField`; Fantasy keeps its pager's); Fantasy's note is just its "More about these numbers" link until opened; "Games
   through …" moved from the desktop header (`.stamp` hidden) to the foot of the More menu; the sorted column (`.hot`, Fantasy's
-  `.fsorted`) is a light tint of its percentile colour with navy digits.
+  `.fsorted`) was a light tint of its percentile colour with navy digits (undone 30 Sep 2026 evening: full colour again).
 * **The minimal pass, fifth round** (Sean, 30 Sep 2026: "do all of those"): the card's Star is a ☆ / ★ right after the name
   (`.staricon`, the panel unchanged); the season picker sits under the name as "2026 ▾ MLB" (`.ptitle.pinline`, "Percentiles"
   dropped; no title column / row of its own); cards open on Season Stats and Compare is the strip's last tab (`pbtabReset` puts a
@@ -679,9 +679,13 @@ is deploy-limited.
   numbers) + **Source Sans 3** (`--body`: everything else), loaded by `themes.js` (`F.studio`, the only font); Roboto
   Condensed is gone. **The swirl is gone**: `nopattern` is always on and the Appearance row is removed; pages sit on
   `--ground`, a pale tint of the scheme's `--accent-2` (pale Carolina blue on the default scheme). Don't bring the swirl back unasked.
-* **No bold** (Sean, 30 Sep 2026, after the Font Studio page — he kept Barlow Condensed + Source Sans 3: "let's just try unbolding
-  everything that is currently bolded"): one rule at the very end of `styles.css` sets every element to weight 400 except the
-  percentile bubbles' digits (`.svnum`, Savant's Roboto Condensed 700). A trial; to undo it, delete that rule.
+* **Bold, and where it isn't** (Sean, 30 Sep 2026, after the Font Studio page — he kept Barlow Condensed + Source Sans 3): unbolding
+  the whole site was tried and taken back within the hour. What stays regular weight: the card's stat names by the percentile bars
+  (`.svpct .svlbl`; the values were already plain) and the numbers in the lists (`#rows` cells, sorted column included, and
+  `.ftable` cells but the name). Names, headings and buttons keep their weight.
+* **Heat maps share the bars' scale** (Sean, 30 Sep 2026: "the darkest red isn't dark anymore"): `pctStyle` takes its colour from
+  `savantStyle` (Savant's #3661ad / #b4cfd1 / #d82129 in Lab), so a table cell and a bar at the same percentile match, and the
+  sorted column (`.hot`, Fantasy's `.fsorted`) is its full colour again — the light tint from the fourth minimal pass is gone.
 * **Projections and Buy low / Sell high were built and removed the same day** (Sean, 28 Sep 2026: "I don't need those") —
   the pages, the home cards, `tools/build_proj.py` and `proj.js` are gone. Don't bring them back unasked.
 * **Starts / relief split** (Sean, 26 Sep 2026): a pitcher who both started and relieved (`ctx.GS > 0` and `G > GS`)

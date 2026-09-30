@@ -1244,8 +1244,9 @@
   function pctStyle(p) {
     if (p == null) return null;
     if (colorCache.has(p)) return colorCache.get(p);
-    const t = (p - 50) / 50;
-    const fill = t >= 0 ? mix(tokens.mid, tokens.hi, t) : mix(tokens.mid, tokens.lo, -t);
+    // the percentile bars' own scale, so a heat-mapped cell and a bar at the same percentile are the same colour (Sean,
+    // 30 Sep 2026: "the heat maps have the same color levels ... as the percentile bars")
+    const fill = savantStyle(p).bg.match(/\d+/g).map(Number);
     const white = [255, 255, 255], dark = [21, 24, 26];
     const ink = contrast(fill, dark) >= contrast(fill, white) ? dark : white;
     const s = { bg: `rgb(${fill.join(",")})`, fg: `rgb(${ink.join(",")})` };

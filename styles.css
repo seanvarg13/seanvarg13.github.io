@@ -3436,13 +3436,10 @@ body[data-mode="rankings"] #rankcount { display: none; }
 /* the data's date moved from the desktop header into the More menu */
 .stamp { display: none !important; }
 #moremenu .morestamp { padding: 8px 14px 6px; border-top: 1px solid var(--hair); color: var(--muted); font-size: 12.5px; cursor: default; }
-/* the sorted column: its percentile colour as a light tint (the surface laid over it) with navy digits, not a solid block */
-#rows .pct.hot, #rows .score.hot { background-image: linear-gradient(color-mix(in srgb, var(--surface) 58%, transparent), color-mix(in srgb, var(--surface) 58%, transparent)) !important; color: var(--ink) !important; }
 /* the per-page box sits in Filters beside the minimum */
 .prow .psize { display: inline-flex; align-items: center; gap: 6px; }
 .prow .psize { margin-left: 0; }
 :root[data-view="mobile"] .prow .psize > span:first-child { display: inline; }
-.ftable td.fsorted { background-image: linear-gradient(color-mix(in srgb, var(--surface) 58%, transparent), color-mix(in srgb, var(--surface) 58%, transparent)) !important; color: var(--ink) !important; font-weight: 700; }
 /* the bubble's digits in the type they had on the morning of 30 Sep 2026, Savant's Roboto Condensed (Sean: "equal to whatever
    it was at 9am"); themes.js loads it for this alone */
 .svpct .svnum { font-family: "Roboto Condensed", var(--body); }
@@ -3494,6 +3491,9 @@ body.cardpop.modal-open main.wrap, body.cardpop.modal-open > footer { visibility
 .modal.pcard #modal-body { position: relative; }
 :root:root[data-view="mobile"] .phead .hstrip { column-gap: 6px; }
 :root[data-view="mobile"] .phead .mplate .hstrip { margin-right: -44px; }   /* under the ×, which sits at the band's top: room for Filters and a two-way switch on one line */
-/* No bold anywhere (Sean, 30 Sep 2026: "try unbolding everything that is currently bolded") — every face at its regular
-   400, headings and names included, except the percentile bubbles' digits, which stay Savant's (Roboto Condensed 700). */
-:root:root :not(.svnum) { font-weight: 400 !important; }
+/* The card's stat names by the percentile bars at regular weight (Sean, 30 Sep 2026: unbolding everything was tried and taken
+   back the same evening — only "the actual stats on the player card like woba xwoba" stay unbolded). */
+:root:root .svpct .svlbl { font-weight: 400; }
+/* the lists' numbers at regular weight too (Sean, 30 Sep 2026: "keep the stats on the leaderboard not bolded"), the sorted
+   column included; names and headers keep theirs */
+:root:root #rows :is(.pct, .score, .pct.hot, .score.hot, .pct.sorted, .score.sorted), :root:root .ftable td:not(.who) { font-weight: 400 !important; }
