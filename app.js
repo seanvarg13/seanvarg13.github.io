@@ -4433,8 +4433,10 @@
         const top = mp.getBoundingClientRect().top - mb.getBoundingClientRect().top + mb.scrollTop;
         // never taller than its charts, so the tab strip sits right under them instead of past an empty stretch (Sean, 30 Sep
         // 2026, minimal pass 4: "close the gap"); the card itself keeps its size
+        // and never shorter either (Sean, 30 Sep 2026: the tab strip "always visible at the bottom ... i dont like that"): the
+        // charts at their full height, so the tabs are part of the card's scroll, under the last section, on a desktop too
         mp.style.minHeight = "0"; mp.style.height = "auto"; const natural = Math.ceil(mp.getBoundingClientRect().height);
-        mp.style.height = Math.min(natural, Math.max(360, Math.round(mb.clientHeight - top - (bar ? bar.getBoundingClientRect().height + 22 : 0) - 12))) + "px";
+        mp.style.height = natural + "px"; void top; void bar;
       }
     }
     const pg = document.querySelector("#xboard .ppage");
