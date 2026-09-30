@@ -517,7 +517,9 @@ is deploy-limited.
   **press and hold a column name** on the lists for its note (`holdNote` / `colNote`: glossary + the pool's middle; a tap still
   sorts); **filter chips** on the card — each filter in effect (dates, hand, home / away, SP / RP) a chip with its own × in `.mrank`;
   **swipe down to close** a popup card on a phone (from the band, or anywhere once scrolled to the top; closes only — swiping between
-  players was declined); **home** is the leaders card plus Your players only once something is starred. **Taken back within the
+  players was declined); **home** is the leaders card plus Your players only once something is starred; the leaders card links to the
+  Leaderboard, and each list's name (xwOBA → / Stuff+ → / uERA →) opens its full list — hitters by xwOBA, the Stuff+ board, pitchers by
+  uERA (Sean: "from the home page I can access the leaderboard"). **Taken back within the
   hour** (Sean: "go back to the old leaderboards table format and old format for all tables"): one-line list rows (Pos / PA
   columns), Show more instead of page numbers, one-line home rows and Game Logs' last-10 view — the lists have two-line rows and
   numbered pages again, Fantasy its pagers, Game Logs every game. Don't bring those back unasked. Idea 1 (the info line up on
