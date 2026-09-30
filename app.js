@@ -6936,23 +6936,6 @@
     // phone's rubber-band never moves the plate or opens a gap above it
     const sc = el("div", "cardscroll"); sc.append(page, renderBelow(p, { st, g, ref }));
     box.append(sc);
-    // a phone keeps the section you're in named at the top while its bars scroll under it (minimal pass 6, Sean, 30 Sep
-    // 2026) — an overlay redrawn on scroll, since position: sticky doesn't reach inside the charts' svg
-    if (mobileView()) {
-      const pin = el("div", "secstick"); pin.hidden = true; box.append(pin);
-      const upd = () => {
-        const top = sc.getBoundingClientRect().top;
-        const G = [...sc.querySelectorAll(".svgrp")].find((x) => { const n = x.querySelector(".svsecname").getBoundingClientRect(), r = x.getBoundingClientRect(); return n.top < top && r.bottom > top + 40; });
-        if (!G) { pin.hidden = true; return; }
-        const n = G.querySelector(".svsecname"), rule = G.querySelector(".svsecrule").getBoundingClientRect(), svg = G.ownerSVGElement;
-        const k = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width ? svg.getBoundingClientRect().width / svg.viewBox.baseVal.width : 1, bx = box.getBoundingClientRect();
-        const sr = sc.getBoundingClientRect(), t = el("span", null, n.textContent);   // the ground runs edge to edge, the rule only under the name's width
-        pin.replaceChildren(t); pin.hidden = false;
-        Object.assign(pin.style, { top: sc.offsetTop + "px", left: sr.left - bx.left - box.clientLeft + "px", width: sc.clientWidth + "px", paddingLeft: rule.left - sr.left + "px", fontSize: (parseFloat(getComputedStyle(n).fontSize) || 19) * k + "px" });
-        t.style.width = rule.width + "px";
-      };
-      sc.addEventListener("scroll", upd, { passive: true });
-    }
   }
   // Where the numbers and photos come from, and what the site is for: at the foot of every page and every card
   const CREDIT = "Data: MLB Stats API and Baseball Savant (MLB Advanced Media). Player photos: MLB. Not affiliated with or endorsed by MLB or Baseball Savant. A personal project for personal, non-commercial use only.";

@@ -3479,7 +3479,7 @@ body[data-mode="rankings"] #rankcount { display: none; }
 /* Minimal pass 6 (Sean, 30 Sep 2026). Filters is dressed as the Hitting / Pitching switch (same face, size and height) and
    the two sit together at the end of the PA · G line; Share is a small link beside the star; the page behind a popup card is
    hidden while it's up (kept laid out, so the list keeps its place); a tap on a bar opens its note; ▲ / ▼ for a move of 5+
-   percentile points on last season; a phone pins the section name while its bars scroll. */
+   percentile points on last season. */
 .phead .hstrip .seg { vertical-align: middle; }
 :root[data-view="mobile"] .phead .hstrip .seg button { padding-inline: 6px; }
 .phead .phtog + .seg { margin-left: 0; }
@@ -3496,7 +3496,5 @@ body.cardpop.modal-open main.wrap, body.cardpop.modal-open > footer { visibility
 .statpop p { margin: 4px 0; color: var(--ink-2); }
 .statpop .spfacts { color: var(--muted); font-size: 12px; }
 .modal.pcard #modal-body { position: relative; }
-.secstick { position: absolute; z-index: 4; background: var(--surface); font-family: var(--display); font-weight: 600; color: var(--ink); line-height: 1.25; padding: 4px 0 6px; pointer-events: none; box-sizing: border-box; }
-.secstick span { display: block; border-bottom: 2px solid var(--rule); padding-bottom: 3px; }
 :root:root[data-view="mobile"] .phead .hstrip { column-gap: 6px; }
 :root[data-view="mobile"] .phead .mplate .hstrip { margin-right: -44px; }   /* under the ×, which sits at the band's top: room for Filters and a two-way switch on one line */
