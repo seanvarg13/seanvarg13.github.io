@@ -467,6 +467,12 @@ is deploy-limited.
   **Taken back the same night** (Sean, 30 Sep 2026: "why'd you get rid of the light blue ... and not actual buttons"): the
   pager's pale-blue strip and the card's tabs as centred outlined buttons (picked one light blue) stay — don't flatten them
   again unasked; the Stats / More members are a centred row of the same buttons.
+* **The minimal pass, third round** (Sean, 29 Sep 2026): list rows' second line is his positions · PA (team and hand in the
+  name's tooltip); rate cells drop the % (the header carries it, `colLab`); the Leaderboard opens on 8 stats (`LB_SLIM`, set once
+  over any saved list via `state.lb.slim`, which also stops the old column migrations re-adding theirs); the card's stat line is
+  PA · G / IP · G / GS (`sampleParts`); no "Every page" tiles on home; Rankings' list bar shares the toolbar's row (its own row
+  on a phone); Fantasy's positions are one pill beside Hitters / Pitchers and its search sits in the Filters fold; panel section
+  names are small grey labels.
 * **Phone header is one line** (Sean, 28 Sep 2026): site name, search and a ☰ Menu button (`.navtog`, made in `app.js`
   because `index.html` doesn't round-trip); the page buttons (`.modes`) open under it in a two-column grid and close on a
   pick, a page change or a tap elsewhere. Desktop keeps its single row. The swirl pattern behind cards and list pages
