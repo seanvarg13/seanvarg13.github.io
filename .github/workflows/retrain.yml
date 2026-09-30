@@ -73,7 +73,8 @@ jobs:
       - name: Every regular-season plate appearance 2015-now
         run: python tools/models/fetch_pa.py
 
-      - name: Keep the past seasons' PA files for next time
+      - name: Keep the past seasons' PA files for next time (even after a failure, so a rerun picks up where this stopped)
+        if: always()
         uses: actions/cache/save@v4
         with:
           path: ${{ github.workspace }}/../model-workspace/pa_20*.parquet
