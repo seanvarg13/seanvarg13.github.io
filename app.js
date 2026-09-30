@@ -5593,25 +5593,9 @@
       if (st.length && rl.length) tile(f2(rl.reduce((a, g) => a + fPts(w, g), 0) / rl.length), "points per relief outing", `${rl.length} outings`);
     }
     box.append(tiles);
-    // where the points come from: each category the preset scores, his count, the weight, the points
+    // the points-by-category table came off (Sean, 30 Sep 2026: "i just wanna see points per game and pa"); By season below
+    // carries points, per game and per PA
     const lbl = Object.fromEntries(FCATS[grp]);
-    const cats = Object.entries(w).filter(([k, v]) => Number(v) && o[k]).map(([k, v]) => [k, Number(v), o[k] || 0, Number(v) * (o[k] || 0)])
-      .sort((a, b) => Math.abs(b[3]) - Math.abs(a[3]));
-    const t = el("table", "ubt fantcats"), th = el("thead"), hr = el("tr");
-    for (const h of ["Category", "Stat", "×", "Pts", "Per game", ...(grp === "H" ? ["Per PA"] : [])]) hr.append(el("th", h === "Category" ? "l" : null, h));
-    th.append(hr); t.append(th);
-    const tb = el("tbody");
-    for (const [k, v, n, pts] of cats) {
-      const r = el("tr");
-      r.append(el("td", "l", (lbl[k] || k).replace(/ \(.*\)$/, "")), el("td", null, k === "IP" ? outsIP(o.OUTS) : String(Math.round(n * 10) / 10)),
-               el("td", "fw", (v > 0 ? "" : "−") + Math.abs(v)), el("td", "fp" + (pts < 0 ? " neg" : ""), f1(pts)), el("td", null, f2(pts / o.G)));
-      if (grp === "H") r.append(el("td", null, o.PA ? (pts / o.PA).toFixed(3) : "–"));
-      tb.append(r);
-    }
-    const tr = el("tr", "ftot"); tr.append(el("td", "l", "Total"), el("td"), el("td"), el("td", "fp", f1(tot)), el("td", null, f2(ppg)));
-    if (grp === "H") tr.append(el("td", null, o.PA ? (tot / o.PA).toFixed(3) : "–"));
-    tb.append(tr);
-    t.append(tb); box.append(t);
     box.append(renderFantasySeasons(p, grp, w, y, ppaPct));
     // a pitcher's game log, newest first: the last ten, or every game on request
     if (grp === "P" && o.games && o.games.length) {
@@ -5767,7 +5751,7 @@
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["fantasy", "Fantasy"]];
   const BTABS_H = [["games", "Game Logs"], ["mix", "Mix"]];                  // a hitter's batted-ball mix
-  const BTABS_P = [["stuff", "Stuff"], ["games", "Game Logs"], ["nera", "nERA"], ["uera", "uERA"]];   // his arsenal graded, then his two ERAs, one tab each
+  const BTABS_P = [["stuff", "Stuff"], ["games", "Game Logs"], ["uera", "uERA"]];   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -5788,7 +5772,7 @@
     const groups = [["stats", "sheet"], ...(p.type === "P" ? [["stuff"]] : []), ["games"], ["fantasy"],
                     ["rolling", ...(p.type === "P" ? ["nera", "uera"] : ["mix", "babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
-    const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(lab); };   // nERA / uERA keep their small letter
+    const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
     const go = (k) => { const y0 = bar.getBoundingClientRect().top, inPop = !!bar.closest("#modal-body"); state.pbtab = k; savePrefs(); render(); anchorTabs(y0, inPop, p); };
     const sub = state.pbsub || (state.pbsub = {});
     const bar = el("div", "btabs"); bar.setAttribute("role", "tablist");
@@ -5814,7 +5798,12 @@
       sec.append(row);
     }
     // a phone's tab row slides sideways: keep the picked tab in view after a redraw (the row starts over at the left)
-    if (mobileView() && pick) requestAnimationFrame(() => { const on = bar.querySelector(".btab.on"); if (on && on.offsetLeft + on.offsetWidth > bar.clientWidth - 24) bar.scrollLeft = on.offsetLeft - 24; });
+    // — unless the whole row fits, when it sits centred with no fade (Sean, 30 Sep 2026)
+    if (mobileView()) requestAnimationFrame(() => {
+      const bs = [...bar.querySelectorAll(".btab")], need = bs.reduce((a, b) => a + b.offsetWidth, 0) + 4 * (bs.length - 1) + 24;
+      bar.classList.toggle("fits", need <= bar.clientWidth);
+      const on = pick && bar.querySelector(".btab.on"); if (on && on.offsetLeft + on.offsetWidth > bar.clientWidth - 24) bar.scrollLeft = on.offsetLeft - 24;
+    });
     if (tabPad && tabPad.who === p.type + p.id + ":" + pick) sec.style.minHeight = tabPad.h + "px";
     if (!pick) return sec;
     const body = el("div", "btabbody");
@@ -6672,8 +6661,8 @@
   // wide enough (it takes the right-hand box's place too) that every bar keeps the length it has in one column.
   // EXPW / EXPB / EXPS are the directional model's xwOBA, xBA and xSLG, as everywhere.
   const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
-                       ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],
-                      [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k", "xk"]],
+                       ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]], ["Swing Decisions", ["zsw", "osw", "bb"]]],   // under BBQ (Sean, 30 Sep 2026: balance the columns)
+                      [["Contact", ["zcon", "ocon", "whf", "k", "xk"]],
                        ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]], ["Base Running", ["spd", "sb", "sba", "sbp"]]]];   // the last section (Sean)
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
   const PCT_COLS_P = [[["Whiffs and Strikes", ["whf", "strk"]], ["Swing & Miss", ["k", "whf"]], ["Zone & Chase", ["bb", "strk", "zone", "osw"]]],
@@ -6822,7 +6811,8 @@
     const smp = groups[0] && groups[0].sample;
     // a phone starts the first heading right under the card's band: the 10 up top plus the heading's own headroom read as a
     // blank strip there (the sample line, when there is one, still needs the 10)
-    const top = !(smp && smp.length) && document.documentElement.dataset.view === "mobile" ? -12 : 10;
+    // — and on a desktop too since 30 Sep 2026 (Sean: "push everything up a bit")
+    const top = !(smp && smp.length) ? -12 : 10;
     const root = mk("g", { transform: `translate(20,${top})` });
     let y = 0;
     if (smp && smp.length) {                                     // the playing time behind every bar below, labelled as such
@@ -6917,10 +6907,13 @@
                     pos: (q.primaryPosition || {}).abbreviation,
                     draft: d && d.isDrafted ? { year: d.year, rd: d.pickRound, no: d.pickNumber,
                                                 team: (d.team || {}).name, school: (d.school || {}).name } : null });
+      for (const n of document.querySelectorAll(`.mlinein[data-bio="${id}"]`)) { n.append(htWt(BIO.get(id))); delete n.dataset.bio; }
       if (state.mode === "player") render();
     }).catch(() => {});
     return null;
   }
+  // 6'3" 220 lb, for the card's season line
+  const htWt = (b) => { const h = b && b.ht ? String(b.ht).replace(/\s+/g, "") : ""; return h || (b && b.wt) ? ` · ${[h, b.wt ? b.wt + " lb" : ""].filter(Boolean).join(" ")}` : ""; };
   // the left panel, laid out after Savant's: his action shot as a banner, the cut-out over it, the rest centred
   function renderSavantPlate(p, st, g) {
     const t = teamCode(p.team), tid = TEAM_ID[t], b = bio(p.id);
@@ -7172,7 +7165,11 @@
     // his team, positions, bats and age ride on the season line, a row saved (minimal pass 8, Sean, 30 Sep 2026 — idea 1 of the
     // Card Header Comparison)
     { const ml = plate.querySelector(".mline"), hd2 = title.querySelector(".pthd");
-      if (ml && hd2) { const s2 = el("span", "mlinein", " · " + ml.textContent.replace(/\bage (\d+)/, "$1")); hd2.append(s2); ml.remove(); } }
+      if (ml && hd2) {
+        const s2 = el("span", "mlinein", " · " + ml.textContent.replace(/\bage (\d+)/, "$1")); hd2.append(s2); ml.remove();
+        // his height and weight at the end (Sean, 30 Sep 2026), from MLB's record: filled in when the request comes back
+        const b = bio(p.id); if (b) s2.append(htWt(b)); else s2.dataset.bio = p.id;
+      } }
     const finish = () => {                               // put the pieces where this layout wants them
       if (mob) { if (F.childNodes.length) plate.append(F); }
       else {

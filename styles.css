@@ -3566,3 +3566,10 @@ body[data-mode="eligibility"] main.wrap { background: none !important; border: 0
 .pager > .fbar.inbar .fltbtn { white-space: nowrap; }
 :root[data-view="mobile"] .pager:has(> .fbar.inbar) { flex-wrap: wrap; row-gap: 6px; }
 :root[data-view="mobile"] .pager > .fbar.inbar { flex-basis: 100%; margin-right: 0; }
+/* the card's tab row on a phone sits centred when it fits (Sean, 30 Sep 2026: "make sure the buttons are centered for the mobile
+   version too"): tighter tabs so it does (renderBelow sets .fits after measuring) — no fade and no end spacer then; a row that
+   still overflows slides as before */
+:root[data-view="mobile"] .btabs { gap: 4px; }
+:root[data-view="mobile"] .btab, :root[data-view="mobile"] .btab:first-child, :root[data-view="mobile"] .btab:last-child { padding: 0 8px; }
+:root[data-view="mobile"] .btabs.fits { justify-content: center; -webkit-mask: none; mask: none; }
+:root[data-view="mobile"] .btabs.fits::after { display: none; }

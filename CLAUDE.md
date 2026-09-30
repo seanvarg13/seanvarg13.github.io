@@ -559,6 +559,14 @@ is deploy-limited.
   with the phone's thin `--hair` rule down the name's right side (the box-shadow divider went); Fantasy's `td.fsorted` clips its
   fill to the padding box (no white side borders) so its rules show too. A scaled-up desktop type size was tried for a minute and
   dropped — it was the rules and the name cell he meant, not the sizes.
+* **Card layout, ninth pass** (Sean, 30 Sep 2026): a hitter's **Swing Decisions** sits under Batted-Ball Quality in the left
+  column (`PCT_COLS_H`), so the two columns are even on a desktop (a phone's stacked order is unchanged); the first section
+  heading starts right under the band on a desktop too (`pctSvg`'s `top` is −12 whenever there's no sample line); the card's
+  season line ends with his **height and weight** (`htWt`, from `bio()` — MLB's people record, filled in when it arrives,
+  `.mlinein[data-bio]`); the Fantasy tab lost its points-by-category table (tiles, then By season with points / per game /
+  per PA); a pitcher's strip has **uERA** where More was and no nERA (`BTABS_P`; `renderLuckBox` stays in `app.js`); on a phone
+  the tab row says Stats, the tabs are tighter, and when the row fits it sits centred with no fade (`.btabs.fits`, measured in
+  `renderBelow`), else it slides as before.
 * **Minors: Triple-A xwOBA and Double-A zones** (Sean, 30 Sep 2026: "AAA doesnt have xWOBA just xba and xslg", and TJStats' Double-A
   card): `build_milb.py` no longer stubs the directional xwOBA — Triple-A scores it with sprint speed blank (as xBA / xSLG always
   did), and Call-up Watch ranks Triple-A hitters by it (`xw` column). Below Triple-A the zone comes from Gameday's pitch plot

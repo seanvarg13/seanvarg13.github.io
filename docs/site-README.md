@@ -714,3 +714,12 @@ Access — the installer probes for that and prints the one-time fix. `bash inst
 
 Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address like
 `http://192.168.1.23:8787/` the phone can open while the Mac is running it.
+
+## Card layout, 30 Sep 2026 (evening)
+
+- Hitters: Swing Decisions moved under Batted-Ball Quality so the desktop columns balance; the percentiles start right under
+  the band on a desktop as on a phone.
+- The season line ends with height and weight from MLB's people record (`htWt` / `bio()`), filled in when the request returns.
+- Fantasy tab: the points-by-category table is gone — tiles, then By season (points, Pts/G, Pts/PA).
+- Pitchers' strip: uERA where More was; nERA is off the strip.
+- Phone: the tab row reads Stats, tabs are tighter, and a row that fits is centred without the edge fade (`.btabs.fits`).
