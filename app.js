@@ -628,6 +628,16 @@
   function dirInfo() {
     const k = DS.key;
     if (dirCache.has(k)) return dirCache.get(k);
+    // a span of seasons: its combined players carry no season numbers of their own (they're summed from rows), so the model
+    // is on when it's on in every season of the span — before this a combined span quietly led with wOBA (30 Sep 2026)
+    if (DS.multi) {
+      const mp = parseMulti(k), parts = mp ? mp.members.filter((x) => builtKeys().includes(x)).map((x) => histDataset(x)) : [];
+      if (!parts.length || parts.some((d) => !d)) return { ok: false, scale: 1 };           // a member still loading: ask again
+      const infos = parts.map((d) => withDataset(d, dirInfo)), ok = infos.every((i) => i.ok);
+      const info = { ok, scale: ok ? infos.reduce((a, i) => a + i.scale, 0) / infos.length : 1 };
+      dirCache.set(k, info);
+      return info;
+    }
     let w = 0, d = 0, n = 0, same = 0;
     for (const p of DS.players) {
       if (p.type !== "H") continue;
