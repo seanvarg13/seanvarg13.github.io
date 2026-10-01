@@ -743,7 +743,8 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
 - **Off-season** (Nov 1 – Mar 15): home leads with next year's draft prep; the Weekly Planner leaves the menu; the scheduled daily build
   pauses Nov 15 – Feb 14.
 - Call-up Watch shows Z-Contact% for hitters; the card's Fantasy tab lost "Edit scoring"; filter chips hide while the Filters panel is open.
-- `hist/aaa-2022.js` had impossible wOBA values from Savant's 2022 minors data; the build now derives them from the event.
+- `hist/aaa-2022.js` had impossible wOBA values: Savant's 2022 minors data leaves the wOBA denominator blank on about half the plate
+  appearances. The build now fills it in (and the value from the event when that's blank too).
 
 ## Second recommendations pass, 1 Oct 2026
 
