@@ -3607,3 +3607,14 @@ body[data-mode="eligibility"] main.wrap { background: none !important; border: 0
 /* the season's official line under the facts (Sean, 1 Oct 2026): a row of its own, the same label-over-value facts */
 .phead .hstrip .hstats { display: flex; flex-basis: 100%; flex-wrap: wrap; gap: 4px 14px; }
 :root[data-view="mobile"] .phead .hstrip .hstats { gap: 2px 12px; }
+/* a phone's band (Sean, 1 Oct 2026): name, season line, then bio + Filters beside the headshot; under them one row across the band —
+   playing time and the season's line, spread edge to edge over a thin rule */
+:root[data-view="mobile"] .phead .mplate { flex-wrap: wrap; }
+:root[data-view="mobile"] .phead .hstrip .hbio { flex-basis: auto; }
+:root[data-view="mobile"] .phead .mplate .hstrip { margin-right: -44px; margin-bottom: 0; align-items: flex-end; }
+:root[data-view="mobile"] .phead .hstrip .phtog { margin-left: auto; }
+:root[data-view="mobile"] .phead .mplate > .hrow { flex: 1 0 100%; display: flex; justify-content: space-between; gap: 4px 8px;
+  flex-wrap: wrap; border-top: 1px solid var(--secrule, var(--hair)); padding-top: 6px; margin-right: -46px; }
+:root[data-view="mobile"] .phead .hrow .hchip.fact { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.1; gap: 0; }
+:root[data-view="mobile"] .phead .hrow .hchip.fact i { font-style: normal; font-size: 10px; color: var(--ink-2); }
+:root[data-view="mobile"] .phead .hrow .hchip.fact b { font-family: var(--display); font-size: 16px; color: var(--ink); }

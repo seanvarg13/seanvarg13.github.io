@@ -7396,7 +7396,15 @@
     }
     (plate.querySelector(".hstrip") || mr || plate).append(tog);
     { const ts = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (ts) tog.after(ts); }   // a two-way player's switch: right after Filters, a row saved
-    { const hs = plate.querySelector(".hstrip"); if (hs && hs._stats) hs.append(hs._stats); }   // the season's line, last: its own row
+    { const hs = plate.querySelector(".hstrip"); if (hs && hs._stats) hs.append(hs._stats);   // the season's line, last: its own row
+      // a phone (Sean, 1 Oct 2026: four ragged rows "just looks so weird"): the bio and Filters stay beside the headshot, and the
+      // playing time and the season's line run as one row across the band under it
+      if (mob && hs) {
+        const row = el("div", "hrow");
+        row.append(...[...hs.children].filter((c) => c.classList.contains("fact")));
+        if (hs._stats) { row.append(...hs._stats.children); hs._stats.remove(); }
+        if (row.childNodes.length) plate.append(row);
+      } }
     if (!mob) { F.classList.add("phpop"); tog.append(F); }
     let warn = null;
     if (open) {
