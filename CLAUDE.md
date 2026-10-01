@@ -559,6 +559,12 @@ is deploy-limited.
   with the phone's thin `--hair` rule down the name's right side (the box-shadow divider went); Fantasy's `td.fsorted` clips its
   fill to the padding box (no white side borders) so its rules show too. A scaled-up desktop type size was tried for a minute and
   dropped — it was the rules and the name cell he meant, not the sizes.
+* **Savant's percentile bars, centred** (Sean, 1 Oct 2026: "make it baseballsavant style and go back to the length we previously
+  had. But now center them"): `pctSvg` is the 9 am 30 Sep drawing again — 20px bar, 10 / 50 / 90 ticks, dashed rules, Poor / Average
+  / Great over the first chart, Savant's bubble, labels and values in `--svtext`, a 2px light-blue rule under each section name (the
+  end-of-file `:root:root:root:root .svpct` rules) — at its old length on every screen (the phone's 1 Oct widening is undone), with
+  the rows' block (dashed label column through the value) moved 20 left so it sits 40 in from each side (`IND`, `pctLabelW` guards a
+  label wider than its column). Section names stay where they were. This supersedes the "studio look" notes below.
 * **The band's facts row** (Sean, 1 Oct 2026: option C of the Card Header Rows page): the season line is "2026 ▾ · team · positions";
   under it one row of small grey labels over values in the name's face — HT, WT, B/T, AGE (`.hbio`, from `bio()`, refilled by
   `fillBio` when MLB's record arrives; B/T falls back to the hand the data carries), then PA · G or IP · G / GS (`renderStrip` /

@@ -6817,19 +6817,30 @@
     const away = (e) => { if (!d.contains(e.target)) { d.remove(); document.removeEventListener("click", away, true); } };
     setTimeout(() => document.addEventListener("click", away, true), 0);
   }
+  // Savant's percentile bars (Sean, 1 Oct 2026: "make it baseballsavant style and go back to the length we previously had"):
+  // the 9 am 30 Sep drawing — 10 / 50 / 90 ticks, dashed rules, Poor / Average / Great over the first chart — centred in its column
+  let lblCtx = null;
+  function pctLabelW(groups) {                         // the widest row label at the chart's 12px type
+    if (!lblCtx) { try { lblCtx = document.createElement("canvas").getContext("2d"); } catch { lblCtx = null; } }
+    if (!lblCtx) return 80;
+    lblCtx.font = `12px ${getComputedStyle(document.body).fontFamily}`;
+    let w = 0; for (const g of groups) for (const r of g.rows) w = Math.max(w, lblCtx.measureText(r.label).width);
+    return Math.min(120, Math.ceil(w));
+  }
   function pctSvg(groups, W, scale = true) {
     const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
-    // a phone's bars run wider (Sean, 1 Oct 2026): 8 in from each side instead of 20, and the labels' 40 of indent mostly given
-    // to the bar — the longest label ("Fastball Velo") still fits its 86
-    const ph = document.documentElement.dataset.view === "mobile", SM = ph ? 8 : 20, IND = ph ? 6 : 40;
-    const r6 = W - 2 * SM, VW = W < 420 ? 41 : 45, bar = r6 - IND - 85 - VW;   // the rule's width, the value column (room for "118.5" beside a 100 bubble; a phone's bar can't spare as much), the bar's width
+    const r6 = W - 40, VW = W < 420 ? 41 : 45, bar = r6 - 40 - 85 - VW;
+    // centred (Sean, 1 Oct 2026: Savant's bars back, the length they had, "but now center them"): the rows' block — the dashed
+    // label column through the value — moves 20 left, so it sits 40 in from each side of the section rule (20 + 20 either way);
+    // a label wider than its 80 column keeps the room it needs. Section names and rules stay put
+    const IND = Math.max(20, pctLabelW(groups) - 80 + 4);   // the rule's width, the value column (room for "118.5" beside a 100 bubble; a phone's bar can't spare as much), the bar's width
     const x = (p) => 10 + (bar - 10) * Math.max(0, Math.min(100, p)) / 100;
     const smp = groups[0] && groups[0].sample;
     // a phone starts the first heading right under the card's band: the 10 up top plus the heading's own headroom read as a
     // blank strip there (the sample line, when there is one, still needs the 10)
     // — and on a desktop too since 30 Sep 2026 (Sean: "push everything up a bit")
     const top = !(smp && smp.length) ? -12 : 10;
-    const root = mk("g", { transform: `translate(${SM},${top})` });
+    const root = mk("g", { transform: `translate(20,${top})` });
     let y = 0;
     if (smp && smp.length) {                                     // the playing time behind every bar below, labelled as such
       const t = mk("text", { class: "svsample", x: 0, y: 14 });
@@ -6838,13 +6849,21 @@
       root.append(t);
       y = 24;
     }
-    // Sean's look (30 Sep 2026, the Percentile Bar Studio's bar at Savant's size): Savant's 20px bar and Savant's bubble, digits
-    // and all, on a faint track — no 10 / 50 / 90 ticks, no dashed rules between rows, no Poor / Average / Great row
     groups.forEach((g, gi) => {
-      const G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
-      G.append(mk("rect", { class: "svsecrule", x: 0, y: 35, width: r6, height: 1 }));   // a thin grey rule (minimal pass 7)
+      const first = gi === 0 && scale, G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
+      G.append(mk("rect", { class: "svsecrule", x: 0, y: 34, width: r6, height: 2 }));
       G.append(mk("text", { class: "svsecname", x: 0, y: 28 }, g.title));
-      const R = mk("g", { transform: `translate(${IND},44)` });
+      if (first) {                                               // POOR / AVERAGE / GREAT, each arrow over its tick
+        const S = mk("g", { transform: `translate(${IND + 85},54)` });
+        const tri = (cx) => `M${cx},2L${cx - 3},8L${cx + 3},8Z`;
+        const c0 = savantStyle(0).bg, c50 = savantStyle(50).bg, c100 = savantStyle(100).bg;
+        S.append(mk("path", { d: tri(12), fill: c0 }), mk("path", { d: tri(x(50)), fill: c50 }), mk("path", { d: tri(bar - 12), fill: c100 }));
+        S.append(mk("text", { class: "svscale", fill: c0 }, "Poor"),
+                 mk("text", { class: "svscale", x: x(50), "text-anchor": "middle", fill: c50 }, "Average"),
+                 mk("text", { class: "svscale", x: x(100), "text-anchor": "end", fill: c100 }, "Great"));
+        G.append(S);
+      }
+      const R = mk("g", { transform: `translate(${IND},${44 + (first ? 20 : 0)})` });
       g.rows.forEach((r, i) => {
         const M = mk("g", { class: "svrow", transform: `translate(0,${i * 23})` });
         M.append(mk("title", {}, r.tip));
@@ -6852,22 +6871,23 @@
         const B = mk("g", { transform: "translate(85,0)", opacity: on ? 1 : 0.35 });
         B.append(mk("rect", { class: "svline", width: bar, height: 5, y: 7.5 }));
         if (on) B.append(mk("rect", { width: x(r.pct), height: 20, y: 0, fill: s.bg }));
+        for (const tx of [x(50) - 1, 11, bar - 13]) B.append(mk("rect", { class: "svtick", width: 2, height: 20, x: tx }));
         M.append(B);
         M.append(mk("text", { class: "svlbl", x: 80, y: 10, "text-anchor": "end" }, r.label));
-        M.append(mk("text", { class: "svlbl svval", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));
+        M.append(mk("text", { class: "svlbl", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));
         M.addEventListener("click", (e) => { e.stopPropagation(); statPop(M, r); });
+        if (i) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + VW},-1.5` }));
         if (on) {
           const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
           C.append(mk("circle", { class: "svbulb", r: 10, fill: s.bub }));
-          // the bubble exactly as it was on the morning of 30 Sep 2026 (Sean: "equal to whatever it was at 9am this morning")
-          C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : ""), y: 1 }, r.pct));
+          C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : ""), y: 1 }, r.pct));   // Savant's bubble
           M.append(C);
         }
         R.append(M);
       });
       G.append(R);
       root.append(G);
-      y += g.rows.length * 23 + 34 + 10;
+      y += g.rows.length * 23 + 34 + 10 + (first ? 20 : 0);
     });
     const H = y + 20 + top - 10;
     const svg = mk("svg", { class: "svpct", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Percentile rankings" });

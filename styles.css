@@ -3582,3 +3582,6 @@ body[data-mode="eligibility"] main.wrap { background: none !important; border: 0
 :root[data-view="mobile"] .phead .hstrip .hbio { display: flex; flex-basis: 100%; gap: 12px; }
 :root[data-view="mobile"] .phead .hstrip .hchip.fact b { font-size: 15px; }
 :root[data-view="mobile"] .phead .hstrip .hbio:empty { display: none; }
+/* Savant's bars again (Sean, 1 Oct 2026): labels and values in Savant's grey-ink, the 2px light-blue rule under each section name */
+:root:root:root:root .svpct .svlbl, :root:root:root:root .svpct .svlbl.svval { fill: var(--svtext); }
+:root:root:root:root .svpct .svsecrule { fill: var(--accent-2); }
