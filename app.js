@@ -2805,18 +2805,9 @@
                    "A+": { whf: -8.47, strk: -2.6, gb: -4.38, pu: -0.73 }, A: { whf: -10.69, strk: -3.13, gb: -6.81, pu: -0.38 } };
   // every card stat's shift from a minors level up to the majors (tools/models/milb_translate.py's MILB_EQ, the same reliability-
   // corrected same-season pairs as MILB_X, chained A → A+ → AA → AAA → MLB; fitted 1 Oct 2026): the minors card's "vs MLB" switch
-  // places his line plus the shift among that season's MLB qualifiers (Sean, 1 Oct 2026). A stat a level doesn't carry has none.
+  // placed his line plus the shift among that season's MLB qualifiers — removed the same day (Sean: "get rid of the mlb mode"; his own
+  // numbers beside an MLB rank read wrong). Call-up Watch's MLB wOBA / K% still use it. A stat a level doesn't carry has none.
   const MILB_EQ = {"H":{"AAA":{"woba":-0.0696,"xwd":-0.0354,"dxba":-0.0128,"dxslg":-0.0309,"ba":-0.0417,"slg":-0.0854,"ev":-0.3725,"brl":0.8327,"hh":4.7527,"ev90":-0.2686,"maxev":-0.522,"zsw":0.4214,"osw":1.8191,"bb":-3.5552,"zcon":-2.263,"ocon":-3.4099,"whf":2.1531,"k":4.5326,"air":-2.2213,"pu":0.2783,"gb":2.0493,"pull":-0.7854,"mixw":-0.0347},"AA":{"woba":-0.0524,"ba":-0.0365,"slg":-0.0786,"zsw":1.7268,"osw":-2.3673,"bb":-3.7303,"zcon":1.2256,"ocon":-12.0309,"whf":2.2838,"k":5.4001,"air":-3.5193,"pu":-0.934,"gb":5.8046,"pull":-2.4789,"mixw":-0.0161},"A+":{"woba":-0.0701,"ba":-0.0447,"slg":-0.1015,"zsw":0.9905,"osw":0.4739,"bb":-5.0429,"zcon":-0.2826,"ocon":-11.3479,"whf":2.8214,"k":6.6804,"air":-3.2105,"pu":-1.1827,"gb":5.7359,"pull":-2.7748,"mixw":-0.019},"A":{"woba":-0.0892,"ba":-0.0555,"slg":-0.1207,"zsw":2.3615,"osw":3.21,"bb":-6.7828,"zcon":-1.2631,"ocon":-10.9189,"whf":4.2674,"k":9.0683,"air":-3.4176,"pu":-0.8498,"gb":5.5544,"pull":-2.8544,"mixw":-0.0174}},"P":{"AAA":{"whf":-3.5344,"strk":0.6645,"k":-3.5359,"bb":-0.9805,"kbb":-2.1449,"era":0.1687,"zone":8.0622,"osw":-1.5172,"swing":0.286,"zcon":1.6816,"gb":-2.1305,"pu":0.1951,"stuff":1.3191,"swhf":1.171,"sbb":0.2031,"fbv":0.2795,"ext":0.0881},"AA":{"whf":-6.5138,"strk":-1.7673,"k":-7.1602,"bb":1.6365,"kbb":-7.886,"era":1.6182,"zone":6.9607,"osw":-7.7656,"swing":-1.6708,"zcon":6.7246,"gb":-2.4365,"pu":-0.3767},"A+":{"whf":-8.4794,"strk":-2.5922,"k":-9.6551,"bb":2.3585,"kbb":-10.7189,"era":1.9822,"zone":5.8849,"osw":-6.674,"swing":-1.7521,"zcon":6.896,"gb":-4.4058,"pu":-0.7454},"A":{"whf":-10.6893,"strk":-3.132,"k":-12.1729,"bb":2.6369,"kbb":-12.9663,"era":2.3986,"zone":3.9288,"osw":-6.2256,"swing":-2.0019,"zcon":8.162,"gb":-6.8313,"pu":-0.3978}}};
-  let vsMLB = !!load("draft2027.vsmlb", false);
-  // the percentile his MLB-equivalent line would have, or undefined when the card isn't a minors one in "vs MLB"
-  function mlbEqFor(p, ref) {
-    if (!vsMLB || !DS.level || DS.level === "MLB" || DS.kind || DS.multi) return null;
-    const sh = (MILB_EQ[p.type === "H" ? "H" : "P"] || {})[DS.level]; if (!sh) return null;
-    const y = DS.season, mds = y === DATA.meta.season ? CUR : histDataset(`mlb-${y}`);
-    if (!mds) { ensureHist(`mlb-${y}`); return null; }
-    const pl = withDataset(mds, () => withWindow(NOWIN, () => withSplit(NONE, () => pool(ref))));
-    return (k, v, m) => { const d = sh[k] ?? (k === "xk" ? sh.k : undefined), arr = pl.sorted && pl.sorted[k]; if (d == null || !arr || v == null) return null; const x = v + d; return insertPct(arr, m.hib ? x : -x); };
-  }
   // the pool's hit-by-pitch rate, which an MLB-equivalent line takes as its own (the minors' lines don't carry HBP)
   const hbpCache = new WeakMap();
   const lgHBP = (pl) => { if (!hbpCache.has(pl)) { let h = 0, n = 0; for (const q of pl.ref) { h += q.ctx.HBP || 0; n += q.ctx.PAw || 0; } hbpCache.set(pl, n ? h / n : 0.01); } return hbpCache.get(pl); };
@@ -6766,7 +6757,7 @@
     if (!nav) col.append(panelHead(...pctTitle(p, nav)));   // his page says the season in its header instead
     const body = el("div", "pscroll pctbox");
     const noEV = DS.tracked != null && DS.tracked < 0.05;
-    const exp = expKeys(), eqP = mlbEqFor(p, ref);
+    const exp = expKeys();
     const val = (k) => { const m = all.find((x) => x.key === k); if (!m || (noEV && NEEDS_EV.has(k))) return null; const v = metricValue(m, pv, st); return v == null ? null : { m, v, k }; };
     const row = (key0, labels) => {
       const start = exp[key0] || key0;
@@ -6775,7 +6766,7 @@
       if (!got) return null;
       const lab = (labels && labels[key0]) || PCT_LABEL[got.k];
       const m = lab ? Object.assign({}, got.m, { label: lab }) : got.m;
-      const pct = eqP ? eqP(got.k, got.v, m) : st.pct[got.k];
+      const pct = st.pct[got.k];
       const lg = lgOf(got.k, m), prev = prevOf ? prevOf(m, got.k) : null;
       return { m, v: got.v, k: got.k, label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null, lg: lg == null ? null : fmt(lg, m), prev, prevYear: DS.season - 1,
                gloss: GLOSS[{ xwd: "xwoba", EXPW: "xwoba" }[got.k]] || GLOSS[got.k] || "", hib: m.hib,
@@ -7385,17 +7376,6 @@
     // Filters sits at the end of the PA · G line (Sean, 30 Sep 2026: "up and to the right of the PA and games played stat to
     // make the header a bit smaller row wise"); the mrank line underneath only when something else is on it
     const tog = el("span", "phtog"), fs = el("div", "seg phfiltseg"); fs.append(b); tog.append(fs);
-    // a minors season ranks against its own level or, translated, against that year's MLB qualifiers (1 Oct 2026)
-    if (DS.level && DS.level !== "MLB" && !DS.kind && MILB_EQ[p.type === "H" ? "H" : "P"][DS.level]) {
-      const vs = el("div", "seg vsmlb"); vs.setAttribute("role", "group"); vs.setAttribute("aria-label", "Rank against");
-      for (const [on, l] of [[false, "vs " + DS.level], [true, "vs MLB"]]) {
-        const x = el("button", "segbtn small", l); x.type = "button"; x.setAttribute("aria-pressed", String(vsMLB === on));
-        x.title = on ? "His line carried up to the majors (each stat's average shift for players who played both levels that season), ranked among that season's MLB qualifiers" : `Ranked among ${DS.levelName} qualifiers`;
-        x.addEventListener("click", (e) => { e.stopPropagation(); if (vsMLB !== on) { vsMLB = on; try { localStorage.setItem("draft2027.vsmlb", JSON.stringify(on)); } catch {} render(); } });
-        vs.append(x);
-      }
-      tog.append(vs);
-    }
     (plate.querySelector(".hstrip") || mr || plate).append(tog);
     { const ts = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (ts) tog.after(ts); }   // a two-way player's switch: right after Filters, a row saved
     { const hs = plate.querySelector(".hstrip"); if (hs && hs._stats) hs.append(hs._stats);   // the season's line, last: its own row

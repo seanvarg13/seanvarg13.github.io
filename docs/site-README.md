@@ -763,3 +763,4 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
 - **Phone card header**: bio facts and Filters beside the headshot; playing time and the season's line in one row across the band
   underneath, over a thin rule.
 - **Desktop card header**: the bio (HT / WT / B/T / AGE) and Filters on the first row, PA or IP and the season's line on the second.
+- **vs MLB on minors cards removed**: a minors card ranks against its own level only (Call-up Watch keeps its MLB wOBA / K%).

@@ -578,7 +578,7 @@ is deploy-limited.
 * **Recommendations pass, 1 Oct 2026** (Sean: "do 2, 3, 4, 5, 6, 7, 8"): **Trending folded into the Leaderboard** — a Season / Recent
   switch beside Filters in the blue bar (`recentSwitch`, seated by `seatFilters`; `#trending` still works), the same on Fantasy's
   Leaderboard (Season / Recent beside the page pill, which no longer lists Trending), and both Trending entries are gone from the menus
-  (Leaderboards: Leaderboard · Stuff+ · League Trends · Call-up Watch · Compare). **"vs MLB" on a minors card** — a `vs AA | vs MLB`
+  (Leaderboards: Leaderboard · Stuff+ · League Trends · Call-up Watch · Compare). **"vs MLB" on a minors card** (**removed the same day** — Sean: "get rid of the mlb mode", a .384 AAA wOBA beside a 39th MLB percentile read as wrong; don't bring it back unasked; `MILB_EQ` stays for Call-up Watch) — a `vs AA | vs MLB`
   switch after Filters (`.vsmlb`, `draft2027.vsmlb` per device): each card stat plus its level's shift (`MILB_EQ`, every card stat for
   hitters and pitchers, from `card_shifts()` in `tools/models/milb_translate.py` — the same reliability-corrected same-season pairs as
   `MILB_X`, chained to MLB; re-run and paste when stale) placed among that season's MLB qualifiers (`mlbEqFor` in `renderPctPanel`); a stat
