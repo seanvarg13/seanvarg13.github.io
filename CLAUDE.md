@@ -153,6 +153,7 @@ season only now: `indexReady()` in `app.js` drops them from the index, so nothin
 | `build_fantasy.py [years…]` | `fantasy.js`, `hist/fantasy-YYYY.js` | official counting stats + per-game logs for hitters (`hg`/`hgk`, with fielding and GWRBI per game) and pitchers (`gk`), home / away on both — the Fantasy Leaderboard / Trending sum these for any date range and split + Savant expected stats, plus ESPN's bonus categories: grand slams (the API's bases-loaded `r123` split), cycles (hitter game logs), game-winning RBI (the schedule's scoring plays: the RBI that put the winners ahead for good), fielding A / PO / OFA / DPT, pitcher TB / GIDP / pitches. Points are computed in the browser from the chosen scoring preset (`FCATS` in `app.js` lists every category), so an ESPN setting change needs no rebuild |
 | `build_fantasy.py lines [years…]` | `hist/fantasy-lines.js` | every past season's official lines (2015 on, no game logs) for the card's Fantasy ▸ By season table; static, rebuilt by hand when a season ends |
 | `build_career.py` | `hist/career.js`, `hist/minors.js` | season-by-season + career tables on every card. Reads the search index, so run it **after** `build_history.py index` |
+| `build_similar.py` | `hist/similar.js` | every qualified MLB player-season 2015-now ranked within its season (+ under-the-line players ranked against them), hand / role and pitch mix — the cards' cross-season Similar line. Seconds; after `build_data.py` and after a rescore, non-fatal |
 | `build_trends.py` | `hist/trends.js` | League Trends: every MLB season's league totals (hitting rates pooled over every pitch / swing / batted ball from `hist/mlb-YYYY.js` rows + this season's `days.js`) and per pitch type from each pitcher's `ctx.arsenal` (usage, velo, IVB, HB, spin, Whiff%, xWhiff, GB%). A few seconds; runs after `build_data.py` (and after a rescore), non-fatal |
 | `serve.py` | — | local server on :8787 with an "Update data" button; `--phone` binds to the LAN |
 
@@ -564,7 +565,13 @@ is deploy-limited.
   average of two mean percentile gaps — style (hitters: Air%, GB%, PU%, Pull Air%, Chase%, Z-Swing%, Whiff%, K%, BB%, plus his batting side;
   pitchers: GB%, PU%, Zone%, Chase%, Swing%, FB velo, extension, his pitch mix from `ctx.arsenal` counted as two stats, plus his hand) and
   skill (hitters: xwOBA, EV, Brl%, HH%, EV90, bat speed, Z-Contact%; pitchers: Stuff+, Whiff%, Strike%, K-BB%, uERA); same pool / view /
-  split; a name's tooltip gives both matches; it opens his card the way this one was opened. **Call-up Watch** hitters get MLB wOBA and MLB K% (his line + `MILB_EQ`'s shift), and untracked
+  split; a name's tooltip gives both matches; it opens his card the way this one was opened. **Across seasons** (Sean, the same day: "player
+  and year ... it doesn't have to be a player from that same year"): a full-season MLB card matches against every qualified player-season
+  2015-now from **`hist/similar.js`** (`tools/build_similar.py`, run after `build_data.py` / a rescore by `cloud_daily.py` and
+  `daily_update.py`, mirrored by `sync_tools.py`: each season's 300+ PA / 150+ BF qualifiers ranked within their own season, plus anyone
+  100+ PA / 50+ BF ranked against them so his own card can be matched from, a qualified flag, hand with a pitcher's -SP / -RP role, the
+  pitch mix) — `similarAcross` in `app.js`; each player once (his closest season), shown "Name 'YY", a tap opens that season; hand +8 and
+  role +15 go straight onto the style gap. A window, split, minors / spring / October card or an unlisted season keeps the same-season match. **Call-up Watch** hitters get MLB wOBA and MLB K% (his line + `MILB_EQ`'s shift), and untracked
   levels show "–" for EV / Brl% / HH% instead of 0.0. **Team search** — a team code or name ("NYY", "Dodgers") in the header search lists
   this season's roster first, hitters then pitchers by playing time (`searchHits`), then any name matches. **A phone's pager drops its
   "1–25 of 534"** (`.pcount`), leaving the bar to Filters, Season / Recent and the pages.

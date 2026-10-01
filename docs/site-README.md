@@ -754,3 +754,6 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
 - On a phone the pager shows no "1–25 of N" count.
 - **Similar players** now match on style (batted-ball shape and approach, or pitch mix, velo and zone habits, plus handedness) and on
   skill (contact quality and xwOBA, or Stuff+, whiffs, strikes, K-BB and uERA), averaged; hover a name for both match scores.
+- **Similar players across seasons**: on a full-season MLB card the matches come from every season since 2015 ("Kershaw '16"),
+  from `hist/similar.js` (`build_similar.py`, rebuilt with the daily update). Tap a name for that season's card. Starters match
+  starters and relievers relievers.
