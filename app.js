@@ -4016,6 +4016,7 @@
         for (const [a, k] of [["xwdiff", "xwcon"]]) if (!after(a, k)) groups.push({ group: "Outcomes", metrics: [side(k)].filter(Boolean) });
         groups.push({ group: "BABIP", metrics: ["babip", "xbabip", "bluck", "brel"].map(side).filter(Boolean) });
       } }
+    groups.push({ group: "Fantasy points", metrics: pit ? FANT_P : FANT_H });   // under the current scoring preset (Sean, 1 Oct 2026)
     const seen = new Set();
     const grid = el("div", "colgrid");
     { // Year and Age always sit right after the name
