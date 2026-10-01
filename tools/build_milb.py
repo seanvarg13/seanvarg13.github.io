@@ -74,6 +74,14 @@ def load_milb(start: str, end: str) -> pd.DataFrame:
     for c in ["launch_speed", "launch_angle", "launch_speed_angle", "zone", "hc_x", "hc_y", "woba_value", "woba_denom",
               "estimated_woba_using_speedangle", "bat_speed", "release_speed", "release_extension", "outs_when_up"]:
         d[c] = pd.to_numeric(d[c], errors="coerce")
+    # Savant's 2022 minors rows carry garbage wOBA values on some plate appearances (12.5, 35.7 … — the file had 409 hitters with a
+    # wOBA over 1, found 1 Oct 2026): a value no event can be worth is taken from the event itself, as Gameday's levels do
+    ev = d["events"].fillna("")
+    bad = ev.ne("") & ((d["woba_value"] > 2.2) | (d["woba_value"] < 0) | (d["woba_denom"] > 1))
+    if bad.any():
+        bd.log(f"  {int(bad.sum()):,} plate appearances with an impossible wOBA value: taken from the event")
+        d.loc[bad, "woba_value"] = ev[bad].map(WOBA_W).fillna(0.0)
+        d.loc[bad, "woba_denom"] = 1.0
     bd.log(f"  {len(d):,} pitches, {d.game_date.min().date()} .. {d.game_date.max().date()}, {d.game_pk.nunique()} games")
     return d
 

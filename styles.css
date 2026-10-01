@@ -3585,3 +3585,15 @@ body[data-mode="eligibility"] main.wrap { background: none !important; border: 0
 /* Savant's bars again (Sean, 1 Oct 2026): labels and values in Savant's grey-ink, the 2px light-blue rule under each section name */
 :root:root:root:root .svpct .svlbl, :root:root:root:root .svpct .svlbl.svval { fill: var(--svtext); }
 :root:root:root:root .svpct .svsecrule { fill: var(--accent-2); }
+/* the off-season's draft-prep card on home (1 Oct 2026): three plain links, the page name over a grey line */
+.hprep { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.hpreplink { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--accent-2); color: var(--ink); text-decoration: none; }
+.hpreplink b { font-family: var(--display); font-size: 18px; }
+.hpreplink span { font-size: 12px; color: var(--ink-2); }
+.hpreplink:hover { background: color-mix(in srgb, var(--accent-2) 18%, transparent); }
+/* the Leaderboard's and Fantasy's Season / Recent switch, beside Filters (1 Oct 2026) */
+.recentsw { margin-left: 6px; flex: none; }
+#pagertop .recentsw .segbtn { height: 30px; }
+/* a minors card's vs-level / vs-MLB switch sits after Filters */
+.phead .hstrip .vsmlb { margin-left: 6px; }
+.hcard.hprepcard { align-self: start; }

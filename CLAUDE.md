@@ -559,6 +559,19 @@ is deploy-limited.
   with the phone's thin `--hair` rule down the name's right side (the box-shadow divider went); Fantasy's `td.fsorted` clips its
   fill to the padding box (no white side borders) so its rules show too. A scaled-up desktop type size was tried for a minute and
   dropped — it was the rules and the name cell he meant, not the sizes.
+* **Recommendations pass, 1 Oct 2026** (Sean: "do 2, 3, 4, 5, 6, 7, 8"): **Trending folded into the Leaderboard** — a Season / Recent
+  switch beside Filters in the blue bar (`recentSwitch`, seated by `seatFilters`; `#trending` still works), the same on Fantasy's
+  Leaderboard (Season / Recent beside the page pill, which no longer lists Trending), and both Trending entries are gone from the menus
+  (Leaderboards: Leaderboard · Stuff+ · League Trends · Call-up Watch · Compare). **"vs MLB" on a minors card** — a `vs AA | vs MLB`
+  switch after Filters (`.vsmlb`, `draft2027.vsmlb` per device): each card stat plus its level's shift (`MILB_EQ`, every card stat for
+  hitters and pitchers, from `card_shifts()` in `tools/models/milb_translate.py` — the same reliability-corrected same-season pairs as
+  `MILB_X`, chained to MLB; re-run and paste when stale) placed among that season's MLB qualifiers (`mlbEqFor` in `renderPctPanel`); a stat
+  a level doesn't carry has no shift (no bubble); values shown are his own. **Off-season** (`offSeason()`, 1 Nov – 15 Mar New York
+  time): home leads with a "<next year> draft prep" card (Rankings · Draft board · Eligibility) and the Weekly Planner leaves the Fantasy
+  menu; the daily workflow's scheduled / `auto=1` runs stand down 15 Nov – 14 Feb (a plain manual run still builds). **Call-up Watch**
+  hitters have Z-Con%. The card's Fantasy tab has no "Edit scoring" link. The card's filter chips hide while the Filters panel is open.
+  **Found and fixed:** `hist/aaa-2022.js` had 409 hitters with a wOBA over 1 (Savant's 2022 minors rows carry impossible `woba_value`s);
+  `load_milb` now takes those from the event (`WOBA_W`) — rebuild with `rescore: aaa-2022`.
 * **Savant's percentile bars, centred** (Sean, 1 Oct 2026: "make it baseballsavant style and go back to the length we previously
   had. But now center them"): `pctSvg` is the 9 am 30 Sep drawing again — 20px bar, 10 / 50 / 90 ticks, dashed rules, Poor / Average
   / Great over the first chart, Savant's bubble, labels and values in `--svtext`, a 2px light-blue rule under each section name (the

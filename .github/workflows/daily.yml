@@ -73,6 +73,10 @@ jobs:
           built = m.get("built", "")                       # the build's UTC time, "YYYY-MM-DD HH:MM"
           now_utc = dt.datetime.now(dt.timezone.utc)
           early = (ny.hour, ny.minute) < (4, 40)
+          # the off-season (Sean, 1 Oct 2026): nothing to build from 15 Nov (the World Series is over) to 14 Feb (spring training's
+          # first games are later in the month); a manual run without auto still builds
+          if (ny.month, ny.day) >= (11, 15) or (ny.month, ny.day) < (2, 15):
+              early = True
           done = m.get("through", "") >= yday or (built[:10] == now_utc.date().isoformat() and built[11:13] >= "13")
           # (an off day never reaches yesterday; a build after 13:00 UTC today counts as done so the backups stop)
           print("false" if early or done else "true")

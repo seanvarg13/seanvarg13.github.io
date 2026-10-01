@@ -91,5 +91,65 @@ def main():
     print("MILB_X =", json.dumps(table))
 
 
+# Every card stat, for the card's "vs MLB" switch (Sean, 1 Oct 2026): the same reliability-corrected shift, fitted straight from
+# the level files (players on two levels' lists the same season, 40+ PA / BF at each), chained A -> A+ -> AA -> AAA -> MLB. A stat
+# a level doesn't carry (exit velocity below Triple-A) breaks the chain there, so that level has no shift for it.
+CARD = {"H": ["woba", "xwoba_dir", "dxba", "dxslg", "ba", "slg", "ev", "brl", "hh", "ev90", "maxev", "zsw", "osw", "bb", "zcon", "ocon", "whf",
+              "k", "air", "pu", "gb", "pull", "mixw"],
+        "P": ["whf", "strk", "k", "bb", "kbb", "era", "zone", "osw", "swing", "zcon", "gb", "pu", "stuff", "swhf", "sbb", "fbv", "ext"]}
+UNTRACKED = {"xwoba_dir", "dxba", "dxslg", "ev", "brl", "hh", "ev90", "maxev", "stuff", "swhf", "sbb", "fbv", "ext"}   # only real where tracked
+
+
+def card_shifts():
+    out = {}
+    for t, keys in CARD.items():
+        size = "pa" if t == "H" else "bf"
+        sets = defaultdict(dict)                       # (level, season) -> id -> (n, m)
+        lg = {}
+        files = [(lv, f) for lv, k in FILE.items() for f in sorted((HERE / "hist").glob(f"{k}-20*.js")) if f.stem.count("-") == 1]
+        files.append(("MLB", HERE / "data.js"))
+        for lv, f in files:
+            ds = load(f, "window.DRAFT_DATA = ") if f.name == "data.js" else dataset(f)
+            season = int(ds["meta"]["season"]) if f.name == "data.js" else int(f.stem.split("-")[1])
+            if ds.get("kind") or season < 2021:
+                continue
+            tracked = lv in ("MLB", "AAA")
+            ps = [p for p in ds["players"] if p["type"] == t and (p.get(size) or 0) >= MIN_BF]
+            for p in ps:
+                sets[(lv, season)][p["id"]] = (p[size], {k: v for k, v in p["m"].items() if k in keys and v is not None
+                                                         and (tracked or k not in UNTRACKED)
+                                                         and not (k in ("woba", "xwoba_dir", "mixw") and v > 1.5)})   # aaa-2022's broken wOBA
+            lg[(lv, season)] = {k: (sum(n * m[k] for n, m in sets[(lv, season)].values() if k in m) /
+                                    max(1, sum(n for n, m in sets[(lv, season)].values() if k in m))) for k in keys}
+        shifts = {}
+        for lo, hi in STEPS:
+            shifts[(lo, hi)] = {}
+            for k in keys:
+                pairs = []
+                for (lv, season), ids in sets.items():
+                    if lv != lo or (hi, season) not in sets:
+                        continue
+                    up = sets[(hi, season)]
+                    for pid, (n0, m0) in ids.items():
+                        if pid in up and k in m0 and k in up[pid][1]:
+                            n1, m1 = up[pid]
+                            pairs.append((2 / (1 / n0 + 1 / n1), m0[k], m1[k], lg[(lo, season)][k]))
+                if len(pairs) < 30:
+                    continue
+                sw = sum(w for w, *_ in pairs)
+                mx, my = sum(w * x for w, x, _, _ in pairs) / sw, sum(w * y for w, _, y, _ in pairs) / sw
+                vx = sum(w * (x - mx) ** 2 for w, x, _, _ in pairs)
+                r = sum(w * (x - mx) * (y - my) for w, x, y, _ in pairs) / vx if vx else 1.0
+                shifts[(lo, hi)][k] = sum(w * (y - (g + r * (x - g))) for w, x, y, g in pairs) / sw
+        acc, table = {}, {}
+        for lo, hi in reversed(STEPS):
+            acc = {k: (0.0 if hi == "MLB" else acc[k]) + shifts[(lo, hi)][k] for k in keys
+                   if k in shifts[(lo, hi)] and (hi == "MLB" or k in acc)}
+            table[lo] = {("xwd" if k == "xwoba_dir" else k): round(v, 4) for k, v in acc.items()}
+        out[t] = table
+    print("MILB_EQ =", json.dumps(out, separators=(",", ":")))
+
+
 if __name__ == "__main__":
     main()
+    card_shifts()

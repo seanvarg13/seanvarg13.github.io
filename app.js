@@ -2140,6 +2140,22 @@
     const want = box && box.id === "pagertop" && total && inBarModes.includes(state.mode);   // a phone too (Sean, 30 Sep 2026)
     document.body.classList.toggle("filtbar", !!want);
     if (want) box.prepend(tb); else if (tb.parentNode !== home) home.prepend(tb);
+    // Trending folded into the Leaderboard (Sean, 1 Oct 2026): one menu entry, and a Season / Recent switch beside Filters
+    const sw = recentSwitch();
+    if (want && ["leaderboard", "trending"].includes(state.mode)) tb.after(sw); else sw.remove();
+  }
+  let recentSw = null;
+  function recentSwitch() {
+    if (!recentSw) {
+      recentSw = el("div", "seg recentsw"); recentSw.setAttribute("role", "group"); recentSw.setAttribute("aria-label", "Season or recent");
+      for (const [m, l] of [["leaderboard", "Season"], ["trending", "Recent"]]) {
+        const b = el("button", "segbtn small", l); b.type = "button"; b.dataset.m = m;
+        b.addEventListener("click", () => { if (state.mode !== m) location.hash = "#" + m; });
+        recentSw.append(b);
+      }
+    }
+    for (const b of recentSw.children) b.setAttribute("aria-pressed", String(b.dataset.m === state.mode));
+    return recentSw;
   }
   function renderPager(box, total, pg, onChange) {
     if (!box) return;
@@ -2787,6 +2803,20 @@
   // tools/models/milb_translate.py on every pitcher who worked at two levels in a season, 2021-2026, chained
   const MILB_X = { AAA: { whf: -3.54, strk: 0.67, gb: -2.12, pu: 0.2 }, AA: { whf: -6.51, strk: -1.77, gb: -2.42, pu: -0.37 },
                    "A+": { whf: -8.47, strk: -2.6, gb: -4.38, pu: -0.73 }, A: { whf: -10.69, strk: -3.13, gb: -6.81, pu: -0.38 } };
+  // every card stat's shift from a minors level up to the majors (tools/models/milb_translate.py's MILB_EQ, the same reliability-
+  // corrected same-season pairs as MILB_X, chained A → A+ → AA → AAA → MLB; fitted 1 Oct 2026): the minors card's "vs MLB" switch
+  // places his line plus the shift among that season's MLB qualifiers (Sean, 1 Oct 2026). A stat a level doesn't carry has none.
+  const MILB_EQ = {"H":{"AAA":{"woba":-0.0696,"xwd":-0.0354,"dxba":-0.0128,"dxslg":-0.0309,"ba":-0.0417,"slg":-0.0854,"ev":-0.3725,"brl":0.8327,"hh":4.7527,"ev90":-0.2686,"maxev":-0.522,"zsw":0.4214,"osw":1.8191,"bb":-3.5552,"zcon":-2.263,"ocon":-3.4099,"whf":2.1531,"k":4.5326,"air":-2.2213,"pu":0.2783,"gb":2.0493,"pull":-0.7854,"mixw":-0.0347},"AA":{"woba":-0.0524,"ba":-0.0365,"slg":-0.0786,"zsw":1.7268,"osw":-2.3673,"bb":-3.7303,"zcon":1.2256,"ocon":-12.0309,"whf":2.2838,"k":5.4001,"air":-3.5193,"pu":-0.934,"gb":5.8046,"pull":-2.4789,"mixw":-0.0161},"A+":{"woba":-0.0701,"ba":-0.0447,"slg":-0.1015,"zsw":0.9905,"osw":0.4739,"bb":-5.0429,"zcon":-0.2826,"ocon":-11.3479,"whf":2.8214,"k":6.6804,"air":-3.2105,"pu":-1.1827,"gb":5.7359,"pull":-2.7748,"mixw":-0.019},"A":{"woba":-0.0892,"ba":-0.0555,"slg":-0.1207,"zsw":2.3615,"osw":3.21,"bb":-6.7828,"zcon":-1.2631,"ocon":-10.9189,"whf":4.2674,"k":9.0683,"air":-3.4176,"pu":-0.8498,"gb":5.5544,"pull":-2.8544,"mixw":-0.0174}},"P":{"AAA":{"whf":-3.5344,"strk":0.6645,"k":-3.5359,"bb":-0.9805,"kbb":-2.1449,"era":0.1687,"zone":8.0622,"osw":-1.5172,"swing":0.286,"zcon":1.6816,"gb":-2.1305,"pu":0.1951,"stuff":1.3191,"swhf":1.171,"sbb":0.2031,"fbv":0.2795,"ext":0.0881},"AA":{"whf":-6.5138,"strk":-1.7673,"k":-7.1602,"bb":1.6365,"kbb":-7.886,"era":1.6182,"zone":6.9607,"osw":-7.7656,"swing":-1.6708,"zcon":6.7246,"gb":-2.4365,"pu":-0.3767},"A+":{"whf":-8.4794,"strk":-2.5922,"k":-9.6551,"bb":2.3585,"kbb":-10.7189,"era":1.9822,"zone":5.8849,"osw":-6.674,"swing":-1.7521,"zcon":6.896,"gb":-4.4058,"pu":-0.7454},"A":{"whf":-10.6893,"strk":-3.132,"k":-12.1729,"bb":2.6369,"kbb":-12.9663,"era":2.3986,"zone":3.9288,"osw":-6.2256,"swing":-2.0019,"zcon":8.162,"gb":-6.8313,"pu":-0.3978}}};
+  let vsMLB = !!load("draft2027.vsmlb", false);
+  // the percentile his MLB-equivalent line would have, or undefined when the card isn't a minors one in "vs MLB"
+  function mlbEqFor(p, ref) {
+    if (!vsMLB || !DS.level || DS.level === "MLB" || DS.kind || DS.multi) return null;
+    const sh = (MILB_EQ[p.type === "H" ? "H" : "P"] || {})[DS.level]; if (!sh) return null;
+    const y = DS.season, mds = y === DATA.meta.season ? CUR : histDataset(`mlb-${y}`);
+    if (!mds) { ensureHist(`mlb-${y}`); return null; }
+    const pl = withDataset(mds, () => withWindow(NOWIN, () => withSplit(NONE, () => pool(ref))));
+    return (k, v, m) => { const d = sh[k] ?? (k === "xk" ? sh.k : undefined), arr = pl.sorted && pl.sorted[k]; if (d == null || !arr || v == null) return null; const x = v + d; return insertPct(arr, m.hib ? x : -x); };
+  }
   // the pool's hit-by-pitch rate, which an MLB-equivalent line takes as its own (the minors' lines don't carry HBP)
   const hbpCache = new WeakMap();
   const lgHBP = (pl) => { if (!hbpCache.has(pl)) { let h = 0, n = 0; for (const q of pl.ref) { h += q.ctx.HBP || 0; n += q.ctx.PAw || 0; } hbpCache.set(pl, n ? h / n : 0.01); } return hbpCache.get(pl); };
@@ -3067,8 +3097,9 @@
     if (st.pct) txt.append(renderStrip(p, v));
     const r = el("div", "mrank");
     // only when something is set: "full season" said nothing (Sean, 30 Sep 2026, minimal pass 4)
-    // each filter in effect as a chip with its own × (minimal pass 7, Sean, 30 Sep 2026): see it and clear it in one tap
-    if (st.pct) {
+    // each filter in effect as a chip with its own × (minimal pass 7, Sean, 30 Sep 2026): see it and clear it in one tap — not while
+    // the Filters panel is open, which shows the same settings (1 Oct 2026)
+    if (st.pct && !state.cardTools) {
       const chip = (text, clear) => { const c = el("span", "fchip"); c.append(text); const x = el("button", "fchipx", "×"); x.type = "button"; x.title = "Clear " + text; x.setAttribute("aria-label", x.title);
         x.addEventListener("click", (e) => { e.stopPropagation(); clear(); savePrefs(); render(); }); c.append(x); r.append(c); };
       const wl = winLabel(p.type), sp = state.split || {};
@@ -3183,9 +3214,11 @@
     return b;
   };
   pitchBoardEl();
-  { const mm = $("modemenu"); if (mm && !mm.querySelector('a[href="#planner"]')) { const li = el("li"); const a = el("a", null, "Weekly Planner"); a.href = "#planner"; li.append(a); mm.append(li); } }
+  { const mm = $("modemenu"); if (mm && !mm.querySelector('a[href="#planner"]') && !offSeason()) { const li = el("li"); const a = el("a", null, "Weekly Planner"); a.href = "#planner"; li.append(a); mm.append(li); } }   // not in the off-season: no games to plan
   // Draft Mode is gone (Sean, 28 Sep 2026: the home page does its job); the Mac's index.html template may still list it
   { const dm = document.querySelector('#modemenu a[href="#draftmode"]'); if (dm) dm.closest("li").remove(); }
+  // Trending lives inside the Leaderboard and the Fantasy leaderboard now (Season / Recent, 1 Oct 2026): off both menus
+  for (const h of ["#trending", "#fantasy/trending"]) { const a = document.querySelector(`.modemenu a[href="${h}"]`); if (a) a.closest("li").remove(); }
   const pb = Object.assign({ pt: "all", hand: "all", role: "all", min: 100, sort: "stuffp", dir: -1 }, load("draft2027.pitchboard", {}));
   // spring training (Sean, 29 Sep 2026: "track a pitchers stuff in spring training"): the board can read this spring's dataset
   // (hist/mlb-<year>-spring.js, graded by the MLB models against MLB pitch types) — next year's spring once it exists, else this one's
@@ -3410,7 +3443,7 @@
           })));
           if (u) { row.meu = u.v; row.mePct = u.pct; }
         }
-      } else Object.assign(row, { n: q.pa || 0, xw: withDataset(ds, () => seasonXwDir(q)), woba: m.woba, k: m.k, bb: m.bb, whf: m.whf, osw: m.osw, ev: m.ev, ev90: m.ev90, brl: m.brl, hh: m.hh });
+      } else Object.assign(row, { n: q.pa || 0, xw: withDataset(ds, () => seasonXwDir(q)), woba: m.woba, k: m.k, bb: m.bb, whf: m.whf, osw: m.osw, zcon: m.zcon, ev: m.ev, ev90: m.ev90, brl: m.brl, hh: m.hh });
       out.push(row);
     }
     cuCache.set(ck, out); return out;
@@ -3433,7 +3466,7 @@
     let rows = cuRows(key, L[2], cu.side).filter((r) => r.n >= cu.min && (!cu.age || (r.age && r.age <= cu.age)) && (!cu.fresh || !r.mlb) && (cu.side !== "P" || cu.role === "all" || r.g === cu.role));
     const P = cu.side === "P";
     const cols = P ? [["age", "Age", 0], ["n", "BF", 0], ["meu", "MLB-eq uERA", 2, true], ["stuff", "Stuff+", 0], ["k", "K%", 1], ["bb", "BB%", 1, true], ["whf", "Whiff%", 1], ["strk", "Strike%", 1], ["gb", "GB%", 1], ["fbv", "FB velo", 1], ["era", "ERA", 2, true]]
-                   : [["age", "Age", 0], ["n", "PA", 0], ...(withDataset(ds, () => dirInfo().ok) ? [["xw", "xwOBA", 3]] : []), ["woba", "wOBA", 3], ["k", "K%", 1, true], ["bb", "BB%", 1], ["whf", "Whiff%", 1, true], ["osw", "Chase%", 1, true], ["ev", "EV", 1], ["ev90", "EV90", 1], ["brl", "Brl%", 1], ["hh", "HH%", 1]];
+                   : [["age", "Age", 0], ["n", "PA", 0], ...(withDataset(ds, () => dirInfo().ok) ? [["xw", "xwOBA", 3]] : []), ["woba", "wOBA", 3], ["k", "K%", 1, true], ["bb", "BB%", 1], ["whf", "Whiff%", 1, true], ["osw", "Chase%", 1, true], ["zcon", "Z-Con%", 1], ["ev", "EV", 1], ["ev90", "EV90", 1], ["brl", "Brl%", 1], ["hh", "HH%", 1]];
     const sk = cu.sort && cols.some((c) => c[0] === cu.sort) ? cu.sort : P ? "meu" : cols.some((c) => c[0] === "xw") ? "xw" : "woba", low = (k) => { const c = cols.find((c0) => c0[0] === k); return !!(c && c[3]) || k === "age"; };
     const dir = cu.sort === sk && cu.dir ? cu.dir : low(sk) ? 1 : -1;
     rows.sort((a, b) => (a[sk] == null) - (b[sk] == null) || dir * ((a[sk] ?? 0) - (b[sk] ?? 0)));
@@ -4255,6 +4288,8 @@
   const openCard = (p, tab) => { state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };
     if (tab) state.pbtab = tab; savePrefs(); state.expanded = p.type + p.id; render(); };
   const whenBuilt = (b) => { const d = b ? new Date(b.replace(" ", "T") + "Z") : null; return d && !isNaN(d) ? d.toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }) : b || ""; };
+  // November 1 to March 15, New York time: no regular-season games, so home turns to next year and the Weekly Planner steps aside
+  function offSeason() { const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" })), mo = d.getMonth() + 1, dy = d.getDate(); return mo >= 11 || mo <= 2 || (mo === 3 && dy <= 15); }
   function renderHome() {
     const box = $("hub"); box.innerHTML = ""; box.classList.add("home");
     const m = DATA.meta, dayName = new Date(m.through + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
@@ -4267,6 +4302,16 @@
       if (link) { const a = el("a", "hmore", linkLab || "See all →"); a.href = link; hd.append(a); }
       c.append(hd); if (sub) c.append(el("p", "hnote", sub)); grid.append(c); return c;
     };
+    // the off-season (Sean, 1 Oct 2026): from November to mid-March home leads with next year's draft prep
+    if (offSeason()) {
+      const dc = card(`${m.season + 1} draft prep`, null, null);
+      dc.classList.add("hprepcard");
+      const row = el("div", "hprep");
+      for (const [h, l, sub] of [["#rankings", "Rankings", "your order for next year"], ["#draft", "Draft board", "everyone who can be drafted"], ["#eligibility", "Eligibility", "positions for next year"]]) {
+        const a = el("a", "hpreplink"); a.href = h; a.append(el("b", null, l), el("span", null, sub)); row.append(a);
+      }
+      dc.append(row);
+    }
     const list = (c, rows) => { const ol = el("ol", "hlist"); for (const [p, main, side, tab] of rows) { const li = el("li"), bt = el("button", "hname", p.name); bt.type = "button"; bt.addEventListener("click", () => openCard(p, tab)); li.append(bt, el("span", "hteam", p.team || ""), el("b", "hval", main)); if (side) li.append(el("span", "hside", side)); ol.append(li); } c.append(ol); return ol; };
     const f3 = (x) => (x == null ? "–" : fmtX(x)), f2 = (x) => (x == null ? "–" : x.toFixed(2)), f1 = (x) => (x == null ? "–" : x.toFixed(1));
     // your starred players
@@ -4953,13 +4998,22 @@
     const f = state.f, y = f.year, T = window.DRAFT_THEMES;
     fEnsure(y);
     // the page: one pill instead of four buttons (minimal pass 5, Sean, 30 Sep 2026 — a 2×2 grid of them on a phone)
-    const PAGES = [["leaders", "Leaderboard"], ["trending", "Trending"], ["whatif", "What if"], ["settings", "Scoring settings"]];
-    const vp = pillSelect((PAGES.find(([v]) => v === f.view) || PAGES[0])[1], PAGES, f.view, (v) => { location.hash = `#fantasy/${v}`; }, "Page");
+    // Trending is the Leaderboard over recent games (1 Oct 2026): one page in the pill, a Season / Recent switch beside it
+    const PAGES = [["leaders", "Leaderboard"], ["whatif", "What if"], ["settings", "Scoring settings"]], pv0 = f.view === "trending" ? "leaders" : f.view;
+    const vp = pillSelect((PAGES.find(([v]) => v === pv0) || PAGES[0])[1], PAGES, pv0, (v) => { location.hash = `#fantasy/${v}`; }, "Page");
     vp.classList.add("fpage");
     if (f.view === "settings") { const top = el("div", "fbar"); top.append(vp); box.append(top); renderFSettings(box); return; }
     // toolbar: page · preset · year · group · position · search · minimum
     const bar = el("div", "fbar"); bar.append(vp);
-    const lean = f.view === "leaders" || f.view === "trending";   // minimal pass 8: just the page and Filters, in the blue bar
+    const lean = f.view === "leaders" || f.view === "trending";
+    if (lean) {
+      const rs = el("div", "seg recentsw"); rs.setAttribute("role", "group"); rs.setAttribute("aria-label", "Season or recent");
+      for (const [v, l] of [["leaders", "Season"], ["trending", "Recent"]]) {
+        const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(f.view === v));
+        b.addEventListener("click", () => { if (f.view !== v) location.hash = `#fantasy/${v}`; }); rs.append(b);
+      }
+      bar.append(rs);
+    }   // minimal pass 8: just the page and Filters, in the blue bar
     const lean0 = bar;
     const pre = el("label", "field"); pre.append(el("span", null, "Scoring"));
     const sel = el("select");
@@ -5567,7 +5621,7 @@
     for (const q of fpresets()) { const o = el("option", null, q.name); o.value = q.id; if (q.id === fpreset().id) o.selected = true; sel.append(o); }
     sel.addEventListener("change", () => { fstore.current = sel.value; fsave(); render(); });
     lab.append(el("span", null, "Scoring"), sel); top.append(lab);
-    const ed = el("a", "fantedit", "Edit scoring"); ed.href = "#fantasy/settings"; top.append(ed);
+    // no "Edit scoring" link (1 Oct 2026): the picker beside it switches presets, and editing lives on the Fantasy page
     box.append(top); ddSelect(sel);
     let o = F ? (grp === "H" ? fHit(F, p.id) : fPit(F, p.id)) : null, fromLine = false;
     if (!o || !o.G || (DS.level === "MLB" && cardY !== y)) {
@@ -6691,7 +6745,7 @@
     if (!nav) col.append(panelHead(...pctTitle(p, nav)));   // his page says the season in its header instead
     const body = el("div", "pscroll pctbox");
     const noEV = DS.tracked != null && DS.tracked < 0.05;
-    const exp = expKeys();
+    const exp = expKeys(), eqP = mlbEqFor(p, ref);
     const val = (k) => { const m = all.find((x) => x.key === k); if (!m || (noEV && NEEDS_EV.has(k))) return null; const v = metricValue(m, pv, st); return v == null ? null : { m, v, k }; };
     const row = (key0, labels) => {
       const start = exp[key0] || key0;
@@ -6700,7 +6754,7 @@
       if (!got) return null;
       const lab = (labels && labels[key0]) || PCT_LABEL[got.k];
       const m = lab ? Object.assign({}, got.m, { label: lab }) : got.m;
-      const pct = st.pct[got.k];
+      const pct = eqP ? eqP(got.k, got.v, m) : st.pct[got.k];
       const lg = lgOf(got.k, m), prev = prevOf ? prevOf(m, got.k) : null;
       return { m, v: got.v, k: got.k, label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null, lg: lg == null ? null : fmt(lg, m), prev, prevYear: DS.season - 1,
                gloss: GLOSS[{ xwd: "xwoba", EXPW: "xwoba" }[got.k]] || GLOSS[got.k] || "", hib: m.hib,
@@ -7225,6 +7279,17 @@
     // Filters sits at the end of the PA · G line (Sean, 30 Sep 2026: "up and to the right of the PA and games played stat to
     // make the header a bit smaller row wise"); the mrank line underneath only when something else is on it
     const tog = el("span", "phtog"), fs = el("div", "seg phfiltseg"); fs.append(b); tog.append(fs);
+    // a minors season ranks against its own level or, translated, against that year's MLB qualifiers (1 Oct 2026)
+    if (DS.level && DS.level !== "MLB" && !DS.kind && MILB_EQ[p.type === "H" ? "H" : "P"][DS.level]) {
+      const vs = el("div", "seg vsmlb"); vs.setAttribute("role", "group"); vs.setAttribute("aria-label", "Rank against");
+      for (const [on, l] of [[false, "vs " + DS.level], [true, "vs MLB"]]) {
+        const x = el("button", "segbtn small", l); x.type = "button"; x.setAttribute("aria-pressed", String(vsMLB === on));
+        x.title = on ? "His line carried up to the majors (each stat's average shift for players who played both levels that season), ranked among that season's MLB qualifiers" : `Ranked among ${DS.levelName} qualifiers`;
+        x.addEventListener("click", (e) => { e.stopPropagation(); if (vsMLB !== on) { vsMLB = on; try { localStorage.setItem("draft2027.vsmlb", JSON.stringify(on)); } catch {} render(); } });
+        vs.append(x);
+      }
+      tog.append(vs);
+    }
     (plate.querySelector(".hstrip") || mr || plate).append(tog);
     { const ts = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (ts) tog.after(ts); }   // a two-way player's switch: right after Filters, a row saved
     if (!mob) { F.classList.add("phpop"); tog.append(F); }
