@@ -601,7 +601,8 @@ is deploy-limited.
   `fact`), Filters at the end. On a phone the bio facts are a line of their own above the playing time.
   **The season line** (Sean, 1 Oct 2026: "his stats that year like their avg obp and slugging %"): a row of its own under the facts,
   his official line for the card's season (`seasonLine`, `hist/career.js` — the TOT row for a traded player): AVG / OBP / SLG / OPS
-  (Sean: just the slash line and OPS), or W-L / ERA / WHIP / K% / BB% / SV (K and BB over batters faced); MLB regular seasons only, the full season whatever the card's filters (`.hstats`).
+  (Sean: just the slash line and OPS), or uERA (the card's) / ERA / K% / BB% / SV (K and BB over batters faced; W-L and WHIP dropped, Sean 1 Oct 2026),
+  and the playing time is PA or IP alone (no G / GS); MLB regular seasons only, the full season whatever the card's filters (`.hstats`).
   **On a phone** (Sean, 1 Oct 2026: the four ragged rows "just looks so weird"): name, season line, then HT / WT / B/T / AGE with
   Filters pushed right beside the headshot; under them one row across the band (`.hrow`, moved there in `renderPlate`) — the playing
   time and the season line spread edge to edge over a thin rule. Desktop unchanged.

@@ -3059,17 +3059,18 @@
     if (bt) box.append(fact("B/T", bt));
     if (p.age != null) box.append(fact("AGE", p.age));
   }
-  function renderStrip(p, pv) {
+  function renderStrip(p, pv, st) {
     const strip = el("div", "hstrip"), bioBox = el("span", "hbio");
     const b = bio(p.id); fillBio(bioBox, p, b); if (!b) { bioBox.dataset.bio = p.id; bioBox._p = p; }   // filled again when MLB's record comes back
     strip.append(bioBox);
-    for (const [v, k] of sampleParts(p, pv)) strip.append(fact(k, v));
-    strip._stats = seasonLine(p);
+    // playing time without games (Sean, 1 Oct 2026: "I don't need to see G or GS at all"): PA, or IP
+    for (const [v, k] of sampleParts(p, pv)) if (k === "PA" || k === "IP") strip.append(fact(k, v));
+    strip._stats = seasonLine(p, st);
     return strip;
   }
   // his official line for the card's season, a row of its own under the facts (Sean, 1 Oct 2026: "his stats that year like
   // their avg obp and slugging %"): hist/career.js, the same lines as Season Stats; MLB regular seasons only
-  function seasonLine(p) {
+  function seasonLine(p, st) {
     if (DS.level && DS.level !== "MLB" || DS.kind || DS.multi) return null;
     const box = el("span", "hstats");
     ensureScript("hist/career.js", careerReady);
@@ -3079,7 +3080,8 @@
     if (!r) return null;
     const ff = p.type === "H"
       ? [["AVG", fmtX(r[14])], ["OBP", fmtX(r[15])], ["SLG", fmtX(r[16])], ["OPS", fmtX(r[17])]]   // the slash line and OPS, no more (Sean, 1 Oct 2026)
-      : [["W-L", `${r[2]}-${r[3]}`], ["ERA", r[4] == null ? "–" : (+r[4]).toFixed(2)], ["WHIP", r[13] == null ? "–" : (+r[13]).toFixed(2)],
+      // uERA where W-L was, no WHIP (Sean, 1 Oct 2026); uERA is the card's own, from the pool
+      : [["uERA", st && st.uera != null ? st.uera.toFixed(2) : "–"], ["ERA", r[4] == null ? "–" : (+r[4]).toFixed(2)],
          ["K%", r[16] ? (100 * r[12] / r[16]).toFixed(1) : "–"], ["BB%", r[16] ? (100 * r[11] / r[16]).toFixed(1) : "–"], ["SV", r[7]]];   // rates over his batters faced, not counts
     for (const [k, v] of ff) box.append(fact(k, v == null ? "–" : v));
     return box;
@@ -3112,7 +3114,7 @@
     const h2 = el("h2", null, p.name); h2.id = "modal-title"; txt.append(h2);
     txt.append(el("div", "mline", `${p.team} · ${posShown(p)}`));   // hand and age moved to the facts row under it (1 Oct 2026)   // no season: the picker above says it (minimal pass 6)
     const v = V(p);
-    if (st.pct) txt.append(renderStrip(p, v));
+    if (st.pct) txt.append(renderStrip(p, v, st));
     const r = el("div", "mrank");
     // only when something is set: "full season" said nothing (Sean, 30 Sep 2026, minimal pass 4)
     // each filter in effect as a chip with its own × (minimal pass 7, Sean, 30 Sep 2026): see it and clear it in one tap — not while
