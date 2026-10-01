@@ -599,11 +599,16 @@ is deploy-limited.
   under it one row of small grey labels over values in the name's face — HT, WT, B/T, AGE (`.hbio`, from `bio()`, refilled by
   `fillBio` when MLB's record arrives; B/T falls back to the hand the data carries), then PA · G or IP · G / GS (`renderStrip` /
   `fact`), Filters at the end. On a phone the bio facts are a line of their own above the playing time.
+  **The season line** (Sean, 1 Oct 2026: "his stats that year like their avg obp and slugging %"): a row of its own under the facts,
+  his official line for the card's season (`seasonLine`, `hist/career.js` — the TOT row for a traded player): AVG / OBP / SLG / OPS /
+  HR / RBI / SB, or W-L / ERA / WHIP / K / BB / SV; MLB regular seasons only, the full season whatever the card's filters (`.hstats`).
+  Same day: Swing Decisions back at the top of the right column (`PCT_COLS_H`), and `pctSvg`'s `top` is −2, not −12 — at the title's
+  size the section names were sliced off at the top.
 * **1 Oct 2026** (Sean): **Base Running is off the card** (`PCT_COLS_H`; Sprint Speed / SB / SB Att. / SB% stay Leaderboard / Compare
   columns and in the data); **a phone's percentile bars run wider** — `pctSvg` sits 8 in from each side instead of 20 and gives the
   labels 6 of indent instead of 40 (`SM` / `IND`), ~37% more bar at 390px wide; the bars and bubbles themselves are unchanged (he
   decided against going back to the Savant ones). Height / weight placement is open: four options in the Card Header Rows artifact.
-* **Card layout, ninth pass** (Sean, 30 Sep 2026): a hitter's **Swing Decisions** sits under Batted-Ball Quality in the left
+* **Card layout, ninth pass** (Sean, 30 Sep 2026): a hitter's **Swing Decisions** sat under Batted-Ball Quality in the left (back on the right since 1 Oct 2026)
   column (`PCT_COLS_H`), so the two columns are even on a desktop (a phone's stacked order is unchanged); the first section
   heading starts right under the band on a desktop too (`pctSvg`'s `top` is −12 whenever there's no sample line); the card's
   season line ends with his **height and weight** (`htWt`, from `bio()` — MLB's people record, filled in when it arrives,
