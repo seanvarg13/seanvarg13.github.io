@@ -576,8 +576,9 @@ is deploy-limited.
   time): home leads with a "<next year> draft prep" card (Rankings · Draft board · Eligibility) and the Weekly Planner leaves the Fantasy
   menu; the daily workflow's scheduled / `auto=1` runs stand down 15 Nov – 14 Feb (a plain manual run still builds). **Call-up Watch**
   hitters have Z-Con%. The card's Fantasy tab has no "Edit scoring" link. The card's filter chips hide while the Filters panel is open.
-  **Found and fixed:** `hist/aaa-2022.js` had 409 hitters with a wOBA over 1 (Savant's 2022 minors rows carry impossible `woba_value`s);
-  `load_milb` now takes those from the event (`WOBA_W`) — rebuild with `rescore: aaa-2022`.
+  **Found and fixed:** `hist/aaa-2022.js` had 409 hitters with a wOBA over 1 — Savant's 2022 minors rows leave `woba_denom` blank on about
+  half the plate appearances (the value is there), so wOBA was divided by a fraction of his PAs; `load_milb` now gives every counting PA its
+  denominator (and its value from the event, `WOBA_W`, when blank) and logs "wOBA bookkeeping repaired …" — rebuilt with `rescore: aaa-2022`.
 * **Savant's percentile bars, centred** (Sean, 1 Oct 2026: "make it baseballsavant style and go back to the length we previously
   had. But now center them"): `pctSvg` is the 9 am 30 Sep drawing again — 20px bar, 10 / 50 / 90 ticks, dashed rules, Poor / Average
   / Great over the first chart, Savant's bubble, labels and values in `--svtext`, a 2px light-blue rule under each section name (the

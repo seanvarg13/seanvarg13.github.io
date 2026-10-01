@@ -76,12 +76,16 @@ def load_milb(start: str, end: str) -> pd.DataFrame:
         d[c] = pd.to_numeric(d[c], errors="coerce")
     # Savant's 2022 minors rows carry garbage wOBA values on some plate appearances (12.5, 35.7 … — the file had 409 hitters with a
     # wOBA over 1, found 1 Oct 2026): a value no event can be worth is taken from the event itself, as Gameday's levels do
+    # … and on about half its plate appearances no wOBA denominator at all, so a hitter's wOBA was divided by a fraction of his
+    # PAs (the real fault behind those 12.5s): a PA that counts gets its denominator, and its value from the event if it has none
     ev = d["events"].fillna("")
+    skip = ev.isin(["sac_bunt", "sac_bunt_double_play", "intent_walk", "catcher_interf", "truncated_pa"])
     bad = ev.ne("") & ((d["woba_value"] > 2.2) | (d["woba_value"] < 0) | (d["woba_denom"] > 1))
-    if bad.any():
-        bd.log(f"  {int(bad.sum()):,} plate appearances with an impossible wOBA value: taken from the event")
-        d.loc[bad, "woba_value"] = ev[bad].map(WOBA_W).fillna(0.0)
-        d.loc[bad, "woba_denom"] = 1.0
+    nod = ev.ne("") & ~skip & (d["woba_denom"].isna() | d["woba_denom"].eq(0) | d["woba_value"].isna())
+    if (bad | nod).any():
+        bd.log(f"  wOBA bookkeeping repaired from the event on {int((bad | nod).sum()):,} plate appearances")
+        d.loc[bad | (nod & d["woba_value"].isna()), "woba_value"] = ev[bad | (nod & d["woba_value"].isna())].map(WOBA_W).fillna(0.0)
+        d.loc[bad | nod, "woba_denom"] = 1.0
     bd.log(f"  {len(d):,} pitches, {d.game_date.min().date()} .. {d.game_date.max().date()}, {d.game_pk.nunique()} games")
     return d
 
