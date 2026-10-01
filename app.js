@@ -6796,29 +6796,40 @@
         }
       } else sets.forEach((gs, i) => cols.append(pctChart(gs, i)));
       body.append(cols);
-      const sim = similarRow(p, st, ref, sets.flat().flatMap((g0) => g0.rows.map((r) => r.k))); if (sim) body.append(sim);
+      const sim = similarRow(p, st, ref); if (sim) body.append(sim);
       if (state.bars === "classic") { const vl0 = viewLabel(p.type); body.append(el("p", "pctfoot", `${vl0 || "full season"} · ${poolPhrase(ref)} (${pool(ref).ref.length})`)); }
     }
     const vl = viewLabel(p.type);
     col.title = `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`;   // Savant prints no footer: the pool is in the hover
     col.append(body);
   }
-  // the five qualifiers whose percentiles sit closest to his across the card's stats (Sean, 1 Oct 2026: "similar players"), in the
-  // same pool, view and split as the card; a name opens his card the way the card itself was opened
-  function similarRow(p, st, ref, keys) {
+  // the five qualifiers most like him in style and in skill both (Sean, 1 Oct 2026: "similar players both stylistically and skill
+  // wise"): two percentile distances, averaged — style is how he gets there (a hitter's batted-ball shape and approach, and his side
+  // of the plate; a pitcher's pitch mix, velo / extension, zone and chase, ground balls and popups, and his hand), skill is how good
+  // it is (contact quality and xwOBA; Stuff+, whiffs, strikes, K-BB and uERA). Same pool, view and split as the card
+  const SIM = { H: { style: ["air", "gb", "pu", "pull", "osw", "zsw", "whf", "k", "bb"], skill: ["xwd", "ev", "brl", "hh", "ev90", "bs", "zcon"] },
+                P: { style: ["gb", "pu", "zone", "osw", "swing", "fbv", "ext"], skill: ["stuff", "whf", "strk", "kbb", "uera"] } };
+  const pitchMix = (q) => { const a = q.ctx && q.ctx.arsenal; if (!a || !a.length) return null; const t = a.reduce((x, r) => x + (r[1] || 0), 0); if (!t) return null; const m = {}; for (const r of a) m[r[0]] = 100 * (r[1] || 0) / t; return m; };
+  function similarRow(p, st, ref) {
     if (!st || !st.pct) return null;
-    const pl = pool(ref), me = p.type + p.id, by = new Map(pl.ref.map((q) => [q.type + q.id, q])), out = [];
+    const P = p.type === "P", K = SIM[P ? "P" : "H"], pl = pool(ref), me = p.type + p.id, by = new Map(pl.ref.map((q) => [q.type + q.id, q]));
+    const myMix = P ? pitchMix(p) : null, myHand = P ? p.throws : p.bats;
+    const gap = (a, b, keys) => { let d = 0, n = 0; for (const k of keys) { const x = a[k], y = b[k]; if (x == null || y == null) continue; d += Math.abs(x - y); n++; } return n >= 3 ? [d, n] : null; };
+    const out = [];
     for (const [k, s] of pl.stats) {
-      if (k === me || !by.has(k)) continue;
-      let d = 0, n = 0;
-      for (const key of keys) { const a = st.pct[key], b = s.pct[key]; if (a == null || b == null) continue; d += Math.abs(a - b); n++; }
-      if (n >= Math.min(8, keys.length - 2)) out.push([d / n, by.get(k)]);
+      const q = by.get(k); if (k === me || !q) continue;
+      const sk = gap(st.pct, s.pct, K.skill), sy = gap(st.pct, s.pct, K.style); if (!sk || !sy) continue;
+      let [sd, sn] = sy;
+      if (P) { const mx = pitchMix(q); if (myMix && mx) { let d = 0; for (const t of new Set([...Object.keys(myMix), ...Object.keys(mx)])) d += Math.abs((myMix[t] || 0) - (mx[t] || 0)); sd += d; sn += 2; } }   // the mix counts as two stats
+      const hand = P ? q.throws : q.bats; if (myHand && hand && hand !== myHand) { sd += 25; sn += 1; }                                   // the other side: a style gap
+      const style = sd / sn, skill = sk[0] / sk[1];
+      out.push([(style + skill) / 2, q, style, skill]);
     }
     if (!out.length) return null;
     out.sort((a, b) => a[0] - b[0]);
     const row = el("div", "simrow"); row.append(el("span", "simlbl", "Similar"));
-    for (const [, q] of out.slice(0, 5)) {
-      const b = el("button", "simname", q.name); b.type = "button"; b.title = `${q.name} · ${q.team}`;
+    for (const [, q, style, skill] of out.slice(0, 5)) {
+      const b = el("button", "simname", q.name); b.type = "button"; b.title = `${q.name} · ${q.team} — style match ${Math.round(100 - style)}, skill match ${Math.round(100 - skill)}`;
       b.addEventListener("click", (e) => {
         e.stopPropagation();
         if (state.mode === "player") { state.x = { id: q.id, type: q.type, ds: DS.key }; savePrefs(); location.hash = "#player/" + q.id; render(); }

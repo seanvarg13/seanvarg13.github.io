@@ -752,3 +752,5 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
 - **Call-up Watch**: MLB wOBA and MLB K% for hitters (translated by `MILB_EQ`); "–" for contact stats at untracked levels.
 - **Team search**: type a team code or name in the header search to see this season's roster.
 - On a phone the pager shows no "1–25 of N" count.
+- **Similar players** now match on style (batted-ball shape and approach, or pitch mix, velo and zone habits, plus handedness) and on
+  skill (contact quality and xwOBA, or Stuff+, whiffs, strikes, K-BB and uERA), averaged; hover a name for both match scores.

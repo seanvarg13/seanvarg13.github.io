@@ -559,9 +559,12 @@ is deploy-limited.
   with the phone's thin `--hair` rule down the name's right side (the box-shadow divider went); Fantasy's `td.fsorted` clips its
   fill to the padding box (no white side borders) so its rules show too. A scaled-up desktop type size was tried for a minute and
   dropped — it was the rules and the name cell he meant, not the sizes.
-* **Second recommendations pass, 1 Oct 2026** (Sean: "2, 3, 4, and 7"): **Similar** — under the percentile charts, the five qualifiers whose
-  percentiles sit closest to his over the card's stats (`similarRow`: mean absolute percentile gap, same pool / view / split; a name opens
-  his card the way this one was opened). **Call-up Watch** hitters get MLB wOBA and MLB K% (his line + `MILB_EQ`'s shift), and untracked
+* **Second recommendations pass, 1 Oct 2026** (Sean: "2, 3, 4, and 7"): **Similar** — under the percentile charts, the five qualifiers most like
+  him **in style and in skill both** (`similarRow` / `SIM`, Sean the same day: "similar players both stylistically and skill wise"): the
+  average of two mean percentile gaps — style (hitters: Air%, GB%, PU%, Pull Air%, Chase%, Z-Swing%, Whiff%, K%, BB%, plus his batting side;
+  pitchers: GB%, PU%, Zone%, Chase%, Swing%, FB velo, extension, his pitch mix from `ctx.arsenal` counted as two stats, plus his hand) and
+  skill (hitters: xwOBA, EV, Brl%, HH%, EV90, bat speed, Z-Contact%; pitchers: Stuff+, Whiff%, Strike%, K-BB%, uERA); same pool / view /
+  split; a name's tooltip gives both matches; it opens his card the way this one was opened. **Call-up Watch** hitters get MLB wOBA and MLB K% (his line + `MILB_EQ`'s shift), and untracked
   levels show "–" for EV / Brl% / HH% instead of 0.0. **Team search** — a team code or name ("NYY", "Dodgers") in the header search lists
   this season's roster first, hitters then pitchers by playing time (`searchHits`), then any name matches. **A phone's pager drops its
   "1–25 of 534"** (`.pcount`), leaving the bar to Filters, Season / Recent and the pages.
