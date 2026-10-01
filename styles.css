@@ -3597,3 +3597,10 @@ body[data-mode="eligibility"] main.wrap { background: none !important; border: 0
 /* a minors card's vs-level / vs-MLB switch sits after Filters */
 .phead .hstrip .vsmlb { margin-left: 6px; }
 .hcard.hprepcard { align-self: start; }
+/* the card's "Similar" line under the percentile charts (1 Oct 2026): a grey label, then five plain names */
+.simrow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 4px 20px 10px; font-size: 13px; }
+.simrow .simlbl { color: var(--ink-2); font-size: 12px; }
+:root:root .simrow .simname { background: none; border: 0; padding: 0; color: var(--ink); -webkit-text-fill-color: var(--ink); min-height: 0; height: auto; font: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: var(--accent-2); text-underline-offset: 3px; }
+:root[data-view="mobile"] .simrow { margin-inline: 12px; }
+/* a phone's pager drops its "1–25 of 534" (1 Oct 2026): room for Filters and Season / Recent in the blue bar */
+:root[data-view="mobile"] .pager .pcount { display: none; }

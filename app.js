@@ -3427,7 +3427,7 @@
   const cuCache = new Map();
   function cuRows(key, lv, side) {
     const ck = key + ":" + side + ":" + CUR.key + ":" + poolVersion; if (cuCache.has(ck)) return cuCache.get(ck);
-    const ds = histDataset(key), x = MILB_X[lv], mlb = new Map(DATA.players.map((q) => [q.type + q.id, q])), out = [];
+    const ds = histDataset(key), x = MILB_X[lv], eqH = (MILB_EQ.H || {})[lv], mlb = new Map(DATA.players.map((q) => [q.type + q.id, q])), out = [];
     for (const q of ds.players) {
       if (q.type !== side) continue;
       const m = q.m || {}, inMLB = mlb.get(q.type + q.id), row = { p: q, age: q.age, mlb: !!inMLB };
@@ -3443,7 +3443,8 @@
           })));
           if (u) { row.meu = u.v; row.mePct = u.pct; }
         }
-      } else Object.assign(row, { n: q.pa || 0, xw: withDataset(ds, () => seasonXwDir(q)), woba: m.woba, k: m.k, bb: m.bb, whf: m.whf, osw: m.osw, zcon: m.zcon, ev: m.ev, ev90: m.ev90, brl: m.brl, hh: m.hh });
+      } else Object.assign(row, { n: q.pa || 0, xw: withDataset(ds, () => seasonXwDir(q)), woba: m.woba,
+        mwoba: m.woba != null && eqH && eqH.woba != null ? m.woba + eqH.woba : null, mk: m.k != null && eqH && eqH.k != null ? m.k + eqH.k : null, k: m.k, bb: m.bb, whf: m.whf, osw: m.osw, zcon: m.zcon, ...(ds.tracked != null && ds.tracked < 0.05 ? {} : { ev: m.ev, ev90: m.ev90, brl: m.brl, hh: m.hh }) });   // untracked levels: "–", not 0.0
       out.push(row);
     }
     cuCache.set(ck, out); return out;
@@ -3466,7 +3467,7 @@
     let rows = cuRows(key, L[2], cu.side).filter((r) => r.n >= cu.min && (!cu.age || (r.age && r.age <= cu.age)) && (!cu.fresh || !r.mlb) && (cu.side !== "P" || cu.role === "all" || r.g === cu.role));
     const P = cu.side === "P";
     const cols = P ? [["age", "Age", 0], ["n", "BF", 0], ["meu", "MLB-eq uERA", 2, true], ["stuff", "Stuff+", 0], ["k", "K%", 1], ["bb", "BB%", 1, true], ["whf", "Whiff%", 1], ["strk", "Strike%", 1], ["gb", "GB%", 1], ["fbv", "FB velo", 1], ["era", "ERA", 2, true]]
-                   : [["age", "Age", 0], ["n", "PA", 0], ...(withDataset(ds, () => dirInfo().ok) ? [["xw", "xwOBA", 3]] : []), ["woba", "wOBA", 3], ["k", "K%", 1, true], ["bb", "BB%", 1], ["whf", "Whiff%", 1, true], ["osw", "Chase%", 1, true], ["zcon", "Z-Con%", 1], ["ev", "EV", 1], ["ev90", "EV90", 1], ["brl", "Brl%", 1], ["hh", "HH%", 1]];
+                   : [["age", "Age", 0], ["n", "PA", 0], ...(withDataset(ds, () => dirInfo().ok) ? [["xw", "xwOBA", 3]] : []), ["woba", "wOBA", 3], ["mwoba", "MLB wOBA", 3], ["k", "K%", 1, true], ["mk", "MLB K%", 1, true], ["bb", "BB%", 1], ["whf", "Whiff%", 1, true], ["osw", "Chase%", 1, true], ["zcon", "Z-Con%", 1], ["ev", "EV", 1], ["ev90", "EV90", 1], ["brl", "Brl%", 1], ["hh", "HH%", 1]];
     const sk = cu.sort && cols.some((c) => c[0] === cu.sort) ? cu.sort : P ? "meu" : cols.some((c) => c[0] === "xw") ? "xw" : "woba", low = (k) => { const c = cols.find((c0) => c0[0] === k); return !!(c && c[3]) || k === "age"; };
     const dir = cu.sort === sk && cu.dir ? cu.dir : low(sk) ? 1 : -1;
     rows.sort((a, b) => (a[sk] == null) - (b[sk] == null) || dir * ((a[sk] ?? 0) - (b[sk] ?? 0)));
@@ -3491,7 +3492,7 @@
         const v = r[k];
         if (k === "meu") { const td = el("td", "uera"), ch = el("span", "uchip", v == null ? "–" : v.toFixed(2)); if (v != null && r.mePct != null) { paintBar(ch, r.mePct); ch.style.color = "#fff"; ch.classList.add("on"); td.title = `Would be ${ordinal(r.mePct)} percentile among ${DATA.meta.season} MLB ${r.g === "SP" ? "starters" : "relievers"}`; } td.append(ch); tr.append(td); continue; }
         if (k === "stuff") { const td = el("td", "plus", v == null ? "–" : String(Math.round(v))); if (v != null) { const ps = plusStyle(v); if (ps) { td.style.background = ps.bg; td.style.color = ps.fg; } } tr.append(td); continue; }
-        tr.append(el("td", null, v == null ? "–" : k === "woba" || k === "xw" ? fmtX(v) : d ? v.toFixed(d) : String(Math.round(v))));
+        tr.append(el("td", null, v == null ? "–" : k === "woba" || k === "xw" || k === "mwoba" ? fmtX(v) : d ? v.toFixed(d) : String(Math.round(v))));
       }
       tb.append(tr);
     });
@@ -6795,11 +6796,37 @@
         }
       } else sets.forEach((gs, i) => cols.append(pctChart(gs, i)));
       body.append(cols);
+      const sim = similarRow(p, st, ref, sets.flat().flatMap((g0) => g0.rows.map((r) => r.k))); if (sim) body.append(sim);
       if (state.bars === "classic") { const vl0 = viewLabel(p.type); body.append(el("p", "pctfoot", `${vl0 || "full season"} · ${poolPhrase(ref)} (${pool(ref).ref.length})`)); }
     }
     const vl = viewLabel(p.type);
     col.title = `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`;   // Savant prints no footer: the pool is in the hover
     col.append(body);
+  }
+  // the five qualifiers whose percentiles sit closest to his across the card's stats (Sean, 1 Oct 2026: "similar players"), in the
+  // same pool, view and split as the card; a name opens his card the way the card itself was opened
+  function similarRow(p, st, ref, keys) {
+    if (!st || !st.pct) return null;
+    const pl = pool(ref), me = p.type + p.id, by = new Map(pl.ref.map((q) => [q.type + q.id, q])), out = [];
+    for (const [k, s] of pl.stats) {
+      if (k === me || !by.has(k)) continue;
+      let d = 0, n = 0;
+      for (const key of keys) { const a = st.pct[key], b = s.pct[key]; if (a == null || b == null) continue; d += Math.abs(a - b); n++; }
+      if (n >= Math.min(8, keys.length - 2)) out.push([d / n, by.get(k)]);
+    }
+    if (!out.length) return null;
+    out.sort((a, b) => a[0] - b[0]);
+    const row = el("div", "simrow"); row.append(el("span", "simlbl", "Similar"));
+    for (const [, q] of out.slice(0, 5)) {
+      const b = el("button", "simname", q.name); b.type = "button"; b.title = `${q.name} · ${q.team}`;
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (state.mode === "player") { state.x = { id: q.id, type: q.type, ds: DS.key }; savePrefs(); location.hash = "#player/" + q.id; render(); }
+        else { state.expanded = q.type + q.id; render(); }
+      });
+      row.append(b);
+    }
+    return row;
   }
   function sampleLine(p, pv) {
     const d = el("div", "pctsample");
@@ -7329,7 +7356,13 @@
   function searchHits(q) {
     q = q.trim();
     if (!indexReady() || q.length < 2) return [];
-    return window.DRAFT_INDEX.players.filter((e) => norm(e.name).includes(norm(q))).slice(0, 10);
+    // a team code or name lists this season's roster first (Sean, 1 Oct 2026: "NYY" or "Yankees"), most playing time first
+    const key = `mlb-${DATA.meta.season}`, Q = q.toUpperCase(), nq = norm(q);
+    const team = Object.keys(TEAM_NAMES).find((t) => t === Q || (nq.length >= 4 && [TEAM_NAMES[t], TEAM_FULL[t]].some((n) => n && norm(n).includes(nq))));
+    const roster = team ? window.DRAFT_INDEX.players.map((e) => [e, e.s.find((sv) => sv[0] === key && sv[5] === team)]).filter((r) => r[1])
+      .sort((a, b) => (a[1][2] === b[1][2] ? b[1][4] - a[1][4] : a[1][2] === "H" ? -1 : 1)).map((r) => r[0]) : [];
+    const named = window.DRAFT_INDEX.players.filter((e) => norm(e.name).includes(nq) && !roster.includes(e)).slice(0, 10);
+    return roster.length ? [...roster, ...named].slice(0, 60) : named;
   }
   function renderSearchList(ul, q, onPick, recent) {
     ul.innerHTML = "";
