@@ -764,3 +764,4 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
   underneath, over a thin rule.
 - **Desktop card header**: the bio (HT / WT / B/T / AGE) and Filters on the first row, PA or IP and the season's line on the second.
 - **vs MLB on minors cards removed**: a minors card ranks against its own level only (Call-up Watch keeps its MLB wOBA / K%).
+- **Points columns on every list**: Filters ▸ Stats offers Pts, Pts/G and Pts/PA (hitters) and Pts, Pts/G, Pts/IP and Pts/GS (pitchers) under your current scoring preset — Rankings, the Draft board and the Leaderboard alike. Full season only.

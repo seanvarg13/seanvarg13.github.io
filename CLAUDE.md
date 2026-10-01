@@ -857,6 +857,12 @@ is deploy-limited.
   scaled part by part and the span's scale is 1) — one averaged scale had shown Gary Sánchez 2016 at .407 in a span vs .422 on his
   card (Sean, 30 Sep 2026). The name line carries the season (`.yr`: a player-season's year, a combined
   player's own seasons in the span), so the Year column is no longer automatic (only when ticked in Table).
+* **Fantasy points as list columns** (Sean, 1 Oct 2026: "on the fantasy rankings and draft board ... points per game and points per
+  PA"): Pts / Pts/G / Pts/PA (hitters) and Pts / Pts/G / Pts/IP / Pts/GS (pitchers) in every list page's Filters ▸ Stats (`FANT_H` /
+  `FANT_P`, in `LB_EXTRA_H` / `_P`), shown as values, sortable. `fantFill` puts them on `V(p).m` from the official season line
+  (`fantasy.js` / `hist/fantasy-<y>.js`, loaded by `colsFor` when a points column is ticked) under the current preset; `fsave` bumps
+  `fantGen` and clears the pools so a scoring change re-scores. Full season of the last three MLB seasons only (a window, split,
+  span or minors season reads "–").
 * **Positions shown are where he played that season** (`playedLabel`: positions with a tenth of his games, most first, up to three;
   SP / RP by that season's starts and relief), on the Leaderboard, Trending and cards; next year's fantasy eligibility (`posLabel`)
   only on Rankings, the Draft board, Eligibility and Fantasy (`posShown`; Sean, 30 Sep 2026).
