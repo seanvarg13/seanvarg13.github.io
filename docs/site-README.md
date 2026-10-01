@@ -733,3 +733,14 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
   PA and G (IP and G / GS for a pitcher) — with Filters at its end. On a phone the four bio facts sit on their own line.
 - Percentile bars: Savant's style again (ticks at 10 / 50 / 90, dashed rules, Poor / Average / Great over the first chart) at their
   earlier length, each chart's rows centred in their column (40px clear on both sides).
+
+## Recommendations pass, 1 Oct 2026
+
+- **Trending is part of the Leaderboard**: Season / Recent beside Filters (and beside Fantasy's page pill). The menus no longer list
+  Trending.
+- **Minor-league cards: vs AA / vs MLB.** "vs MLB" adds each stat's level-to-MLB shift (fitted from players who played both levels the
+  same season, `MILB_EQ`) and ranks the result among that season's MLB qualifiers. The values shown stay his own.
+- **Off-season** (Nov 1 – Mar 15): home leads with next year's draft prep; the Weekly Planner leaves the menu; the scheduled daily build
+  pauses Nov 15 – Feb 14.
+- Call-up Watch shows Z-Contact% for hitters; the card's Fantasy tab lost "Edit scoring"; filter chips hide while the Filters panel is open.
+- `hist/aaa-2022.js` had impossible wOBA values from Savant's 2022 minors data; the build now derives them from the event.
