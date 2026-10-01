@@ -723,3 +723,9 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
 - Fantasy tab: the points-by-category table is gone — tiles, then By season (points, Pts/G, Pts/PA).
 - Pitchers' strip: uERA where More was; nERA is off the strip.
 - Phone: the tab row reads Stats, tabs are tighter, and a row that fits is centred without the edge fade (`.btabs.fits`).
+
+## 1 Oct 2026
+
+- Base Running is off the hitter card; its four stats are still Leaderboard / Compare columns.
+- On a phone the percentile chart sits 8px from each side and the labels give up most of their indent, so every bar is about a
+  third longer. Bars and bubbles are otherwise unchanged.

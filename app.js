@@ -6663,7 +6663,7 @@
   const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
                        ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]], ["Swing Decisions", ["zsw", "osw", "bb"]]],   // under BBQ (Sean, 30 Sep 2026: balance the columns)
                       [["Contact", ["zcon", "ocon", "whf", "k", "xk"]],
-                       ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]], ["Base Running", ["spd", "sb", "sba", "sbp"]]]];   // the last section (Sean)
+                       ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]]]];   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
   const PCT_COLS_P = [[["Whiffs and Strikes", ["whf", "strk"]], ["Swing & Miss", ["k", "whf"]], ["Zone & Chase", ["bb", "strk", "zone", "osw"]]],
                       [["Results", ["kbb", "era"]], ["Batted Ball", ["gb", "pu", "mera"]], ["Stuff", ["stuff", "swhf", "sbb", "fbv", "ext"]]]];
@@ -6806,14 +6806,17 @@
   }
   function pctSvg(groups, W, scale = true) {
     const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
-    const r6 = W - 40, VW = W < 420 ? 41 : 45, bar = r6 - 40 - 85 - VW;   // the rule's width, the value column (room for "118.5" beside a 100 bubble; a phone's bar can't spare as much), the bar's width
+    // a phone's bars run wider (Sean, 1 Oct 2026): 8 in from each side instead of 20, and the labels' 40 of indent mostly given
+    // to the bar — the longest label ("Fastball Velo") still fits its 86
+    const ph = document.documentElement.dataset.view === "mobile", SM = ph ? 8 : 20, IND = ph ? 6 : 40;
+    const r6 = W - 2 * SM, VW = W < 420 ? 41 : 45, bar = r6 - IND - 85 - VW;   // the rule's width, the value column (room for "118.5" beside a 100 bubble; a phone's bar can't spare as much), the bar's width
     const x = (p) => 10 + (bar - 10) * Math.max(0, Math.min(100, p)) / 100;
     const smp = groups[0] && groups[0].sample;
     // a phone starts the first heading right under the card's band: the 10 up top plus the heading's own headroom read as a
     // blank strip there (the sample line, when there is one, still needs the 10)
     // — and on a desktop too since 30 Sep 2026 (Sean: "push everything up a bit")
     const top = !(smp && smp.length) ? -12 : 10;
-    const root = mk("g", { transform: `translate(20,${top})` });
+    const root = mk("g", { transform: `translate(${SM},${top})` });
     let y = 0;
     if (smp && smp.length) {                                     // the playing time behind every bar below, labelled as such
       const t = mk("text", { class: "svsample", x: 0, y: 14 });
@@ -6828,7 +6831,7 @@
       const G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
       G.append(mk("rect", { class: "svsecrule", x: 0, y: 35, width: r6, height: 1 }));   // a thin grey rule (minimal pass 7)
       G.append(mk("text", { class: "svsecname", x: 0, y: 28 }, g.title));
-      const R = mk("g", { transform: "translate(40,44)" });
+      const R = mk("g", { transform: `translate(${IND},44)` });
       g.rows.forEach((r, i) => {
         const M = mk("g", { class: "svrow", transform: `translate(0,${i * 23})` });
         M.append(mk("title", {}, r.tip));
