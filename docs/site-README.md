@@ -757,6 +757,6 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
 - **Similar players across seasons**: on a full-season MLB card the matches come from every season since 2015 ("Kershaw '16"),
   from `hist/similar.js` (`build_similar.py`, rebuilt with the daily update). Tap a name for that season's card. Starters match
   starters and relievers relievers.
-- **Season line on the card**: under the bio and playing-time facts, his official line for the card's season — AVG / OBP / SLG / OPS /
-  HR / RBI / SB for hitters, W-L / ERA / WHIP / K / BB / SV for pitchers (`seasonLine`, from `hist/career.js`; MLB regular seasons).
+- **Season line on the card**: under the bio and playing-time facts, his official line for the card's season — AVG / OBP / SLG / OPS
+  for hitters, W-L / ERA / WHIP / K% / BB% / SV for pitchers (`seasonLine`, from `hist/career.js`; MLB regular seasons).
   Swing Decisions is back at the top of the right column, and the section names at the top of the charts are no longer clipped.

@@ -600,8 +600,8 @@ is deploy-limited.
   `fillBio` when MLB's record arrives; B/T falls back to the hand the data carries), then PA · G or IP · G / GS (`renderStrip` /
   `fact`), Filters at the end. On a phone the bio facts are a line of their own above the playing time.
   **The season line** (Sean, 1 Oct 2026: "his stats that year like their avg obp and slugging %"): a row of its own under the facts,
-  his official line for the card's season (`seasonLine`, `hist/career.js` — the TOT row for a traded player): AVG / OBP / SLG / OPS /
-  HR / RBI / SB, or W-L / ERA / WHIP / K / BB / SV; MLB regular seasons only, the full season whatever the card's filters (`.hstats`).
+  his official line for the card's season (`seasonLine`, `hist/career.js` — the TOT row for a traded player): AVG / OBP / SLG / OPS
+  (Sean: just the slash line and OPS), or W-L / ERA / WHIP / K% / BB% / SV (K and BB over batters faced); MLB regular seasons only, the full season whatever the card's filters (`.hstats`).
   Same day: Swing Decisions back at the top of the right column (`PCT_COLS_H`), and `pctSvg`'s `top` is −2, not −12 — at the title's
   size the section names were sliced off at the top.
 * **1 Oct 2026** (Sean): **Base Running is off the card** (`PCT_COLS_H`; Sprint Speed / SB / SB Att. / SB% stay Leaderboard / Compare
