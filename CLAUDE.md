@@ -559,6 +559,10 @@ is deploy-limited.
   with the phone's thin `--hair` rule down the name's right side (the box-shadow divider went); Fantasy's `td.fsorted` clips its
   fill to the padding box (no white side borders) so its rules show too. A scaled-up desktop type size was tried for a minute and
   dropped — it was the rules and the name cell he meant, not the sizes.
+* **1 Oct 2026** (Sean): **Base Running is off the card** (`PCT_COLS_H`; Sprint Speed / SB / SB Att. / SB% stay Leaderboard / Compare
+  columns and in the data); **a phone's percentile bars run wider** — `pctSvg` sits 8 in from each side instead of 20 and gives the
+  labels 6 of indent instead of 40 (`SM` / `IND`), ~37% more bar at 390px wide; the bars and bubbles themselves are unchanged (he
+  decided against going back to the Savant ones). Height / weight placement is open: four options in the Card Header Rows artifact.
 * **Card layout, ninth pass** (Sean, 30 Sep 2026): a hitter's **Swing Decisions** sits under Batted-Ball Quality in the left
   column (`PCT_COLS_H`), so the two columns are even on a desktop (a phone's stacked order is unchanged); the first section
   heading starts right under the band on a desktop too (`pctSvg`'s `top` is −12 whenever there's no sample line); the card's
@@ -574,7 +578,7 @@ is deploy-limited.
   built on them exist there; the card notes say so. TJBat+ is TJStats' own, not built. Past seasons pick both up when rebuilt
   (`rescore` with `aaa-2025` / `aa-2024` … tokens). **`cloud_daily.py` publishes only the files its run wrote** (mtime since
   start) — it used to put back every `hist/` file from its checkout, which would undo a second run rebuilding them alongside.
-* **Base Running** (hitter card, the last section — end of the right column, after Batted-Ball Distribution; Sean, 30 Sep 2026): Sprint Speed (Savant's, ft/s, 5+
+* **Base Running** (hitter card until 1 Oct 2026, when it came off the card; Sean, 30 Sep 2026): Sprint Speed (Savant's, ft/s, 5+
   competitive runs — `sprint_speeds()`, the model's own feature), SB, SB Att. (SB + CS) and SB% (none without an attempt), official
   from the MLB Stats API's season line (`mlb_people` → `baserunning()` in `build_data.py`, `m.spd / sb / sba / sbp`). Percentiles like
   any card stat (300+ PA pool); also Leaderboard / Compare columns (`LB_EXTRA_H`, `SIDE_H`; `int: true` prints the counts whole).
