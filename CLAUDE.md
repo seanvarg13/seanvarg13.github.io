@@ -605,7 +605,8 @@ is deploy-limited.
   and the playing time is PA or IP alone (no G / GS); MLB regular seasons only, the full season whatever the card's filters (`.hstats`).
   **On a phone** (Sean, 1 Oct 2026: the four ragged rows "just looks so weird"): name, season line, then HT / WT / B/T / AGE with
   Filters pushed right beside the headshot; under them one row across the band (`.hrow`, moved there in `renderPlate`) — the playing
-  time and the season line spread edge to edge over a thin rule. Desktop unchanged.
+  time and the season line spread edge to edge over a thin rule. **A desktop** (Sean, 1 Oct 2026): first row HT / WT / B/T / AGE
+  and Filters, second row PA or IP then the season line (the playing-time fact moved into `.hstats`).
   Same day: Swing Decisions back at the top of the right column (`PCT_COLS_H`), and `pctSvg`'s `top` is −2, not −12 — at the title's
   size the section names were sliced off at the top.
 * **1 Oct 2026** (Sean): **Base Running is off the card** (`PCT_COLS_H`; Sprint Speed / SB / SB Att. / SB% stay Leaderboard / Compare
