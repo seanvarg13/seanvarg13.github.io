@@ -858,7 +858,7 @@ is deploy-limited.
   card (Sean, 30 Sep 2026). The name line carries the season (`.yr`: a player-season's year, a combined
   player's own seasons in the span), so the Year column is no longer automatic (only when ticked in Table).
 * **Fantasy points as list columns** (Sean, 1 Oct 2026: "on the fantasy rankings and draft board ... points per game and points per
-  PA"): Pts / Pts/G / Pts/PA (hitters) and Pts / Pts/G / Pts/IP / Pts/GS (pitchers) in every list page's Filters ▸ Stats (`FANT_H` /
+  PA"): Pts / Pts/G / Pts/PA (hitters) and Pts / Pts/G / Pts/IP / Pts/GS (pitchers) in every list page's Filters ▸ Stats, their own "Fantasy points" group in `renderColPick` (`FANT_H` /
   `FANT_P`, in `LB_EXTRA_H` / `_P`), shown as values, sortable. `fantFill` puts them on `V(p).m` from the official season line
   (`fantasy.js` / `hist/fantasy-<y>.js`, loaded by `colsFor` when a points column is ticked) under the current preset; `fsave` bumps
   `fantGen` and clears the pools so a scoring change re-scores. Full season of the last three MLB seasons only (a window, split,
