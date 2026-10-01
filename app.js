@@ -3078,8 +3078,9 @@
     const r = rows.find((x) => x[1] === "TOT") || (rows.length === 1 ? rows[0] : null);
     if (!r) return null;
     const ff = p.type === "H"
-      ? [["AVG", fmtX(r[14])], ["OBP", fmtX(r[15])], ["SLG", fmtX(r[16])], ["OPS", fmtX(r[17])], ["HR", r[9]], ["RBI", r[10]], ["SB", r[11]]]
-      : [["W-L", `${r[2]}-${r[3]}`], ["ERA", r[4] == null ? "–" : (+r[4]).toFixed(2)], ["WHIP", r[13] == null ? "–" : (+r[13]).toFixed(2)], ["K", r[12]], ["BB", r[11]], ["SV", r[7]]];
+      ? [["AVG", fmtX(r[14])], ["OBP", fmtX(r[15])], ["SLG", fmtX(r[16])], ["OPS", fmtX(r[17])]]   // the slash line and OPS, no more (Sean, 1 Oct 2026)
+      : [["W-L", `${r[2]}-${r[3]}`], ["ERA", r[4] == null ? "–" : (+r[4]).toFixed(2)], ["WHIP", r[13] == null ? "–" : (+r[13]).toFixed(2)],
+         ["K%", r[16] ? (100 * r[12] / r[16]).toFixed(1) : "–"], ["BB%", r[16] ? (100 * r[11] / r[16]).toFixed(1) : "–"], ["SV", r[7]]];   // rates over his batters faced, not counts
     for (const [k, v] of ff) box.append(fact(k, v == null ? "–" : v));
     return box;
   }
