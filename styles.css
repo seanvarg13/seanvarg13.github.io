@@ -3604,3 +3604,6 @@ body[data-mode="eligibility"] main.wrap { background: none !important; border: 0
 :root[data-view="mobile"] .simrow { margin-inline: 12px; }
 /* a phone's pager drops its "1–25 of 534" (1 Oct 2026): room for Filters and Season / Recent in the blue bar */
 :root[data-view="mobile"] .pager .pcount { display: none; }
+/* the season's official line under the facts (Sean, 1 Oct 2026): a row of its own, the same label-over-value facts */
+.phead .hstrip .hstats { display: flex; flex-basis: 100%; flex-wrap: wrap; gap: 4px 14px; }
+:root[data-view="mobile"] .phead .hstrip .hstats { gap: 2px 12px; }

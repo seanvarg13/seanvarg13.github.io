@@ -442,7 +442,7 @@ off a list has the list dimmed. Both are built by `playerView()`; top to bottom:
   bubble, the value bold with its unit, dashed rules between rows and the pool under the sections (`.pctclassic`).
 - **The percentile sections** (`renderPctPanel`): two columns of headed sections, drawn by the site's own SVG
   code (`pctSvg`) in the style of Savant's charts. Hitters (`PCT_COLS_H`): Results (wOBA, xwOBA, xBA, xSLG — the expected three the directional model's),
-  Batted-Ball Quality, then Swing Decisions (Z-Swing%, O-Swing%, BB%), Contact and Batted-Ball Distribution.
+  Batted-Ball Quality on the left; Swing Decisions (Z-Swing%, O-Swing%, BB%), Contact and Batted-Ball Distribution on the right.
   Pitchers (`PCT_COLS_P`): Whiffs and Strikes, Swing & Miss, Zone & Chase (BB%, Strike%, Zone%, Chase%), then Results
   (K-BB%, ERA), Batted Ball (GB%, Popup%, Mix ERA) and Stuff. His uERA table and batted-ball mix live in the uERA tab
   on a desktop and a phone alike (for a day they sat in a right-hand third beside a desktop's bars; Sean wanted them
@@ -757,3 +757,6 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
 - **Similar players across seasons**: on a full-season MLB card the matches come from every season since 2015 ("Kershaw '16"),
   from `hist/similar.js` (`build_similar.py`, rebuilt with the daily update). Tap a name for that season's card. Starters match
   starters and relievers relievers.
+- **Season line on the card**: under the bio and playing-time facts, his official line for the card's season — AVG / OBP / SLG / OPS /
+  HR / RBI / SB for hitters, W-L / ERA / WHIP / K / BB / SV for pitchers (`seasonLine`, from `hist/career.js`; MLB regular seasons).
+  Swing Decisions is back at the top of the right column, and the section names at the top of the charts are no longer clipped.

@@ -3064,7 +3064,24 @@
     const b = bio(p.id); fillBio(bioBox, p, b); if (!b) { bioBox.dataset.bio = p.id; bioBox._p = p; }   // filled again when MLB's record comes back
     strip.append(bioBox);
     for (const [v, k] of sampleParts(p, pv)) strip.append(fact(k, v));
+    strip._stats = seasonLine(p);
     return strip;
+  }
+  // his official line for the card's season, a row of its own under the facts (Sean, 1 Oct 2026: "his stats that year like
+  // their avg obp and slugging %"): hist/career.js, the same lines as Season Stats; MLB regular seasons only
+  function seasonLine(p) {
+    if (DS.level && DS.level !== "MLB" || DS.kind || DS.multi) return null;
+    const box = el("span", "hstats");
+    ensureScript("hist/career.js", careerReady);
+    const rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null;
+    const rows = rec && rec[p.type] ? rec[p.type].filter((r) => r[0] === +DS.season) : [];
+    const r = rows.find((x) => x[1] === "TOT") || (rows.length === 1 ? rows[0] : null);
+    if (!r) return null;
+    const ff = p.type === "H"
+      ? [["AVG", fmtX(r[14])], ["OBP", fmtX(r[15])], ["SLG", fmtX(r[16])], ["OPS", fmtX(r[17])], ["HR", r[9]], ["RBI", r[10]], ["SB", r[11]]]
+      : [["W-L", `${r[2]}-${r[3]}`], ["ERA", r[4] == null ? "–" : (+r[4]).toFixed(2)], ["WHIP", r[13] == null ? "–" : (+r[13]).toFixed(2)], ["K", r[12]], ["BB", r[11]], ["SV", r[7]]];
+    for (const [k, v] of ff) box.append(fact(k, v == null ? "–" : v));
+    return box;
   }
   // a two-way player reads either way: the same switch on the popup card and on his own page
   function typeSeg(p) {
@@ -6729,8 +6746,8 @@
   // wide enough (it takes the right-hand box's place too) that every bar keeps the length it has in one column.
   // EXPW / EXPB / EXPS are the directional model's xwOBA, xBA and xSLG, as everywhere.
   const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
-                       ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]], ["Swing Decisions", ["zsw", "osw", "bb"]]],   // under BBQ (Sean, 30 Sep 2026: balance the columns)
-                      [["Contact", ["zcon", "ocon", "whf", "k", "xk"]],
+                       ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],
+                      [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k", "xk"]],   // back on the right, at the top (Sean, 1 Oct 2026)
                        ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]]]];   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
   const PCT_COLS_P = [[["Whiffs and Strikes", ["whf", "strk"]], ["Swing & Miss", ["k", "whf"]], ["Zone & Chase", ["bb", "strk", "zone", "osw"]]],
@@ -6977,8 +6994,9 @@
     const smp = groups[0] && groups[0].sample;
     // a phone starts the first heading right under the card's band: the 10 up top plus the heading's own headroom read as a
     // blank strip there (the sample line, when there is one, still needs the 10)
-    // — and on a desktop too since 30 Sep 2026 (Sean: "push everything up a bit")
-    const top = !(smp && smp.length) ? -12 : 10;
+    // — and on a desktop too since 30 Sep 2026 (Sean: "push everything up a bit"). −2, not −12: the section names grew to the
+    // title's size and −12 sliced the tops off "Results" / "Contact" (Sean, 1 Oct 2026)
+    const top = !(smp && smp.length) ? -2 : 10;
     const root = mk("g", { transform: `translate(20,${top})` });
     let y = 0;
     if (smp && smp.length) {                                     // the playing time behind every bar below, labelled as such
@@ -7377,6 +7395,7 @@
     }
     (plate.querySelector(".hstrip") || mr || plate).append(tog);
     { const ts = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (ts) tog.after(ts); }   // a two-way player's switch: right after Filters, a row saved
+    { const hs = plate.querySelector(".hstrip"); if (hs && hs._stats) hs.append(hs._stats); }   // the season's line, last: its own row
     if (!mob) { F.classList.add("phpop"); tog.append(F); }
     let warn = null;
     if (open) {
