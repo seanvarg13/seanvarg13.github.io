@@ -287,8 +287,15 @@
                   { key: "spd", label: "Sprint Speed", hib: true, dec: 1, unit: "ft/s" }, { key: "sb", label: "SB", hib: true, dec: 0, unit: "", int: true },
                   { key: "sba", label: "SB Att.", hib: true, dec: 0, unit: "", int: true }, { key: "sbp", label: "SB%", hib: true, dec: 1, unit: "%" }];
   // hitter stats that aren't on the card but can be Leaderboard / Trending columns
-  const LB_EXTRA_H = ["xwdiff", "xwcon", "xk", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp"];
-  const LB_EXTRA_P = ["suera", "aopt"];
+  const LB_EXTRA_H = ["xwdiff", "xwcon", "xk", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp", "fpts", "fpg", "fppa"];
+  const LB_EXTRA_P = ["suera", "aopt", "fpts", "fpg", "fpip", "fpgs"];
+  // fantasy points as list columns (Sean, 1 Oct 2026: "on the fantasy rankings and draft board ... points per game and points per PA"):
+  // the official season line under the current scoring preset (fantasy.js), full season only — fantFill puts them on V(p)
+  const FANT_H = [{ key: "fpts", label: "Pts", hib: true, dec: 0, unit: "", int: true, showValue: true }, { key: "fpg", label: "Pts/G", hib: true, dec: 2, unit: "", showValue: true },
+                  { key: "fppa", label: "Pts/PA", hib: true, dec: 3, unit: "", showValue: true }];
+  const FANT_P = [{ key: "fpts", label: "Pts", hib: true, dec: 0, unit: "", int: true, showValue: true }, { key: "fpg", label: "Pts/G", hib: true, dec: 2, unit: "", showValue: true },
+                  { key: "fpip", label: "Pts/IP", hib: true, dec: 2, unit: "", showValue: true }, { key: "fpgs", label: "Pts/GS", hib: true, dec: 1, unit: "", showValue: true }];
+  const FANT_KEYS = new Set(["fpts", "fpg", "fppa", "fpip", "fpgs"]);
   // Arsenal optimization (Sean, 28 Sep 2026: "how much the pitcher optimizes their arsenal %s to throw pitches that on
   // average get more swing and miss"): his pitches' xWhiff averaged by how often he actually throws each, minus the same
   // pitches averaged at a typical mix — the league's usage of each of those pitch types (among pitchers who throw it),
@@ -361,8 +368,8 @@
     const xb = xg * sc.gb + xp * sc.pu + (1 - xg - xp) * sc.vair;
     return [100 + 100 * sc.kW * (xw - sc.lgW) / era, 100 - 100 * sc.kB * (xb - sc.lgB) / era];
   }
-  const ALL_H = union([...CARD, { metrics: Object.values(SUB).flat() }, { metrics: SIDE_H }], DATA.meta.hitterMetrics);
-  const ALL_P = union([...CARD_P, { metrics: Object.values(SUB_P).flat() }, { metrics: SIDE_P }], DATA.meta.pitcherMetrics);
+  const ALL_H = union([...CARD, { metrics: Object.values(SUB).flat() }, { metrics: SIDE_H }, { metrics: FANT_H }], DATA.meta.hitterMetrics);
+  const ALL_P = union([...CARD_P, { metrics: Object.values(SUB_P).flat() }, { metrics: SIDE_P }, { metrics: FANT_P }], DATA.meta.pitcherMetrics);
   const allFor = (g) => (g === "H" ? ALL_H : ALL_P);
   // Swartz's SIERA (2011) plus this season's shift
   function siera(k, bb, gb, fb, pu, pa) {
@@ -708,7 +715,7 @@
   // a player's numbers for the active window: metric values, sample (AB or IP), context stats
   function V(p) {
     const key = viewKey() + ":" + p.type + p.id;
-    if (valCache.has(key)) return valCache.get(key);
+    if (valCache.has(key)) return fantFill(valCache.get(key), p);
     let v;
     const w = winIdx() || { lo: 0, hi: seasonDays().length - 1 };
     if (!needsRows() || !daysReady()) {
@@ -809,6 +816,32 @@
       v.m = Object.assign({}, m, { xk: xk == null ? null : Math.round(10 * xk) / 10, xwcon: con == null ? null : Math.round(1000 * con) / 1000 });
     }
     valCache.set(key, v);
+    return fantFill(v, p);
+  }
+  // his fantasy points for the season under the current preset, filled in once fantasy.js (or that season's file) is here;
+  // fantGen moves whenever the scoring is saved, so a preset change re-scores. A window, split, span or minors season has none
+  let fantGen = 0;
+  function fantFill(v, p) {
+    if (v._fg === fantGen) return v;
+    const y = String(DS.season), none = { fpts: null, fpg: null, fppa: null, fpip: null, fpgs: null };
+    if ((DS.level && DS.level !== "MLB") || DS.kind || DS.multi || needsDays() || SPLIT.hand !== "all" || SPLIT.venue !== "all" || roleOf(SPLIT) !== "all" || !FYEARS.includes(y)) {
+      v.m = Object.assign({}, v.m, none); v._fg = fantGen; return v;
+    }
+    const F = fData(y); if (!F) return v;                       // not here yet: asked for by colsFor when a points column is showing
+    const w = fpreset().w, out = Object.assign({}, none);
+    if (p.type === "H") {
+      const o = fHit(F, p.id);
+      if (o) { out.fpts = Math.round(fPts(w.H, o)); out.fpg = o.G ? Math.round(100 * fPts(w.H, o) / o.G) / 100 : null; out.fppa = o.PA ? Math.round(1000 * fPts(w.H, o) / o.PA) / 1000 : null; }
+    } else {
+      const o = fPit(F, p.id);
+      if (o) {
+        const t = fPts(w.P, o), st = o.games.filter((g) => g.GS);
+        out.fpts = Math.round(t); out.fpg = o.games.length ? Math.round(100 * t / o.games.length) / 100 : null;
+        out.fpip = o.IP ? Math.round(100 * t / o.IP) / 100 : null;
+        out.fpgs = st.length ? Math.round(10 * st.reduce((s, g) => s + fPts(w.P, g), 0) / st.length) / 10 : null;
+      }
+    }
+    v.m = Object.assign({}, v.m, out); v._fg = fantGen;
     return v;
   }
 
@@ -820,7 +853,7 @@
   const TREND_P = ["whf", "strk", "k", "bb", "era", "nera", "uera", "suera", "siera", "gb", "wsgp"];
   // every card metric in card order, fold-outs right after their parent (the Leaderboard's column order)
   const lbOrder = (g) => { const pit = isPitcherGroup(g), seen = new Set(), out = []; for (const grp of (pit ? CARD_P : CARD)) for (const m of grp.metrics) for (const x of [m, ...((pit ? SUB_P : SUB)[m.key] || [])]) if (!seen.has(x.key)) { seen.add(x.key); out.push(x); }
-    for (const k of pit ? LB_EXTRA_P : LB_EXTRA_H) { const x = (pit ? SIDE_P : SIDE_H).find((m) => m.key === k); if (x && !seen.has(k)) { seen.add(k); out.push(x); } }
+    for (const k of pit ? LB_EXTRA_P : LB_EXTRA_H) { const x = [...(pit ? SIDE_P : SIDE_H), ...(pit ? FANT_P : FANT_H)].find((m) => m.key === k); if (x && !seen.has(k)) { seen.add(k); out.push(x); } }
     return out; };
   // Year and Age: plain columns that always sit right after the name (no percentile)
   const PRE_COLS = { year: { key: "year", label: "Year" }, age: { key: "age", label: "Age" } };
@@ -841,6 +874,7 @@
   const toggleBreak = (g, key) => { const b = state.tbl.breaks = state.tbl.breaks || {}; const cur = b[brkKey(g)] || []; b[brkKey(g)] = cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key]; savePrefs(); };
   const moveColKey = (g, key, dir) => { const keys = colKeys(g).slice(), i = keys.indexOf(key), j = i + dir; if (i < 0 || j < 0 || j >= keys.length) return; [keys[i], keys[j]] = [keys[j], keys[i]]; setColKeys(g, keys); };
   const colsFor = (g) => {
+    if (colKeys(g).some((k) => FANT_KEYS.has(k)) && FYEARS.includes(String(DS.season))) fEnsure(String(DS.season));   // points columns need the fantasy file
     if (state.mode === "leaderboard") return lbCols(g);
     const keys = colKeys(g), all = allFor(g), dflt = metricsFor(g);
     return keys.map((k) => dflt.find((m) => m.key === k) || all.find((m) => m.key === k)).filter(Boolean);
@@ -4411,6 +4445,11 @@
     stuff: "Stuff+: his pitches graded on what the ball does alone — velocity, spin, movement, release point, extension, arm angle and each pitch against his fastball; no location, no count. Two models, trained on every pitch of this season and the two before: how likely a swing is to miss it, and whether contact is a ground ball, a popup or an air ball. They're combined the way uERA weighs them, so whiffs carry the most. Every pitch is graded against the league's pitches of its own type — 100 is an average four-seamer for a four-seamer, an average curveball for a curveball — and his grade is those averaged by how often he throws each. Each point is 1% of runs saved (120 = a fifth fewer runs than average stuff for the pitches he throws). Whiff+ and Batted-ball+ are its two halves. The whiff model also knows how much he uses the pitch and how many pitches he throws 5%+ of the time.",
     suera: "Stuff uERA: uERA built from his stuff instead of his results — the stuff model's xWhiff in place of his Whiff% (through uK%), its xGB and xPU in place of his ground balls and popups (the rest of his air balls split at the league's line-drive share), and walks from his actual Strike% as in uERA, since the stuff model can't tell who throws strikes. What his arsenal alone says his ERA should be.",
     aopt: "Arsenal optimization: how far his pitch usage leans toward his own swing-and-miss pitches. Each pitch's expected whiff rate (the Stuff model's xWhiff) averaged by how often he actually throws it, minus the same pitches averaged at the league's typical usage of those pitch types. In whiff-per-swing points: +3 means his mix gets three more whiffs per 100 swings than the same pitches thrown in a typical mix would. Each point has come with about a point of real Whiff%. Whiffs only — a sinkerballer who leans on his sinker for ground balls reads negative on purpose.",
+    fpts: "Fantasy points for the season under your current scoring settings (Fantasy ▸ Scoring settings), from the official box scores. Full season only.",
+    fpg: "Fantasy points per game played, under your current scoring settings. Full season only.",
+    fppa: "Fantasy points per plate appearance, under your current scoring settings — rate value that doesn't depend on playing time. Full season only.",
+    fpip: "Fantasy points per inning pitched, under your current scoring settings. Full season only.",
+    fpgs: "Fantasy points per start (his starts only), under your current scoring settings. Full season only.",
     xwcon: "xwOBA on contact: the directional model's value of his average batted ball — xwOBA with his walks taken out, spread over his balls in play. League average is about .375.",
     spd: "Sprint Speed: Baseball Savant's feet per second in his fastest one-second window, averaged over the top two-thirds of his competitive runs (5+ of them). About 27 is average, 30 is elite. For the whole season only.",
     sb: "Stolen bases, official. For the whole season only.",
@@ -4665,7 +4704,7 @@
   const FSLOTS = { C: 1, "1B": 1, "2B": 1, "3B": 1, SS: 1, OF: 3, DH: 1 };              // ESPN default lineup (UTIL counted at DH)
   const FLS = "draft2027.fantasy";
   const fstore = Object.assign({ presets: [], current: "espn", ui: {} }, load(FLS, {}));
-  const fsave = () => save(FLS, fstore);
+  const fsave = () => { fantGen++; poolCache.clear(); rankCache.clear(); save(FLS, fstore); };   // re-scores the points columns
   const fpresets = () => [ESPN_PRESET, ...fstore.presets];
   const fpreset = () => fpresets().find((p) => p.id === fstore.current) || ESPN_PRESET;
   const NOWIN = { from: "", to: "", last: "" };
@@ -6749,7 +6788,7 @@
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
-                          babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", aopt: "Arsenal Opt.", xwcon: "xwOBAcon",
+                          babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", aopt: "Arsenal Opt.", xwcon: "xwOBAcon", fpts: "Pts", fpg: "Pts/G", fppa: "Pts/PA", fpip: "Pts/IP", fpgs: "Pts/GS",
                           spd: "Sprint Speed", sb: "SB", sba: "SB Att.", sbp: "SB%" };
   const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+" });   // a pitcher's O-Swing% is his chase rate
   function renderPctPanel(p, st, g, ref, col, nav) {
