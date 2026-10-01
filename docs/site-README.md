@@ -760,3 +760,5 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
 - **Season line on the card**: under the bio and playing-time facts, his official line for the card's season — AVG / OBP / SLG / OPS
   for hitters, W-L / ERA / WHIP / K% / BB% / SV for pitchers (`seasonLine`, from `hist/career.js`; MLB regular seasons).
   Swing Decisions is back at the top of the right column, and the section names at the top of the charts are no longer clipped.
+- **Phone card header**: bio facts and Filters beside the headshot; playing time and the season's line in one row across the band
+  underneath, over a thin rule.
