@@ -729,3 +729,5 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
 - Base Running is off the hitter card; its four stats are still Leaderboard / Compare columns.
 - On a phone the percentile chart sits 8px from each side and the labels give up most of their indent, so every bar is about a
   third longer. Bars and bubbles are otherwise unchanged.
+- The card's header: the season line is year, team and positions; under it a row of labelled facts — HT, WT, B/T, AGE, then
+  PA and G (IP and G / GS for a pitcher) — with Filters at its end. On a phone the four bio facts sit on their own line.

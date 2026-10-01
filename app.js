@@ -3018,9 +3018,22 @@
     }
     return out.filter(([v]) => v != null && v !== "");
   }
+  // the band's facts row (Sean, 1 Oct 2026, option C of the Card Header Rows page): a small label over each value, like the back
+  // of a baseball card — height, weight, bats / throws and age (.hbio, its own line on a phone), then his playing time
+  const fact = (k, v) => { const c = el("span", "hchip fact"); c.append(el("i", null, k), el("b", null, String(v))); return c; };
+  function fillBio(box, p, b) {
+    box.replaceChildren();
+    if (b && b.ht) box.append(fact("HT", String(b.ht).replace(/\s+/g, "")));
+    if (b && b.wt) box.append(fact("WT", b.wt));
+    const bt = b && (b.bats || b.throws) ? `${b.bats || "?"}/${b.throws || "?"}` : p.type === "P" ? (p.throws ? p.throws + "HP" : null) : p.bats;
+    if (bt) box.append(fact("B/T", bt));
+    if (p.age != null) box.append(fact("AGE", p.age));
+  }
   function renderStrip(p, pv) {
-    const strip = el("div", "hstrip");
-    for (const [v, k] of sampleParts(p, pv)) { const c = el("span", "hchip"); c.append(el("b", null, String(v)), " ", k); strip.append(c); }
+    const strip = el("div", "hstrip"), bioBox = el("span", "hbio");
+    const b = bio(p.id); fillBio(bioBox, p, b); if (!b) { bioBox.dataset.bio = p.id; bioBox._p = p; }   // filled again when MLB's record comes back
+    strip.append(bioBox);
+    for (const [v, k] of sampleParts(p, pv)) strip.append(fact(k, v));
     return strip;
   }
   // a two-way player reads either way: the same switch on the popup card and on his own page
@@ -3049,7 +3062,7 @@
     plate.append(headshot(p.id, p.name));
     const txt = el("div");
     const h2 = el("h2", null, p.name); h2.id = "modal-title"; txt.append(h2);
-    txt.append(el("div", "mline", `${p.team} · ${posShown(p)}${p.type === "P" ? " · " + p.throws + "HP" : p.bats ? " · " + p.bats : ""}${p.age != null ? " · age " + p.age : ""}`));   // no season: the picker above says it (minimal pass 6)
+    txt.append(el("div", "mline", `${p.team} · ${posShown(p)}`));   // hand and age moved to the facts row under it (1 Oct 2026)   // no season: the picker above says it (minimal pass 6)
     const v = V(p);
     if (st.pct) txt.append(renderStrip(p, v));
     const r = el("div", "mrank");
@@ -6910,13 +6923,12 @@
                     pos: (q.primaryPosition || {}).abbreviation,
                     draft: d && d.isDrafted ? { year: d.year, rd: d.pickRound, no: d.pickNumber,
                                                 team: (d.team || {}).name, school: (d.school || {}).name } : null });
-      for (const n of document.querySelectorAll(`.mlinein[data-bio="${id}"]`)) { n.append(htWt(BIO.get(id))); delete n.dataset.bio; }
+      for (const n of document.querySelectorAll(`.hbio[data-bio="${id}"]`)) {
+        fillBio(n, n._p, BIO.get(id)); delete n.dataset.bio; }
       if (state.mode === "player") render();
     }).catch(() => {});
     return null;
   }
-  // 6'3" 220 lb, for the card's season line
-  const htWt = (b) => { const h = b && b.ht ? String(b.ht).replace(/\s+/g, "") : ""; return h || (b && b.wt) ? ` · ${[h, b.wt ? b.wt + " lb" : ""].filter(Boolean).join(" ")}` : ""; };
   // the left panel, laid out after Savant's: his action shot as a banner, the cut-out over it, the rest centred
   function renderSavantPlate(p, st, g) {
     const t = teamCode(p.team), tid = TEAM_ID[t], b = bio(p.id);
@@ -7169,9 +7181,7 @@
     // Card Header Comparison)
     { const ml = plate.querySelector(".mline"), hd2 = title.querySelector(".pthd");
       if (ml && hd2) {
-        const s2 = el("span", "mlinein", " · " + ml.textContent.replace(/\bage (\d+)/, "$1")); hd2.append(s2); ml.remove();
-        // his height and weight at the end (Sean, 30 Sep 2026), from MLB's record: filled in when the request comes back
-        const b = bio(p.id); if (b) s2.append(htWt(b)); else s2.dataset.bio = p.id;
+        const s2 = el("span", "mlinein", " · " + ml.textContent); hd2.append(s2); ml.remove();
       } }
     const finish = () => {                               // put the pieces where this layout wants them
       if (mob) { if (F.childNodes.length) plate.append(F); }

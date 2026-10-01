@@ -3573,3 +3573,12 @@ body[data-mode="eligibility"] main.wrap { background: none !important; border: 0
 :root[data-view="mobile"] .btab, :root[data-view="mobile"] .btab:first-child, :root[data-view="mobile"] .btab:last-child { padding: 0 8px; }
 :root[data-view="mobile"] .btabs.fits { justify-content: center; -webkit-mask: none; mask: none; }
 :root[data-view="mobile"] .btabs.fits::after { display: none; }
+/* the band's facts row (Sean, 1 Oct 2026, option C): a small grey label over each value in the name's condensed face; on a phone
+   the bio facts (.hbio) take a line of their own above the playing time and Filters */
+.phead .hstrip .hbio { display: contents; }
+.phead .hstrip .hchip.fact { display: inline-flex; flex-direction: column; line-height: 1.1; gap: 0; }
+.phead .hstrip .hchip.fact i { font-style: normal; font-size: 10px; color: var(--ink-2); }
+.phead .hstrip .hchip.fact b { font-family: var(--display); font-size: 17px; color: var(--ink); }
+:root[data-view="mobile"] .phead .hstrip .hbio { display: flex; flex-basis: 100%; gap: 12px; }
+:root[data-view="mobile"] .phead .hstrip .hchip.fact b { font-size: 15px; }
+:root[data-view="mobile"] .phead .hstrip .hbio:empty { display: none; }
