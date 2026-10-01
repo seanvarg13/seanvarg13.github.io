@@ -21,7 +21,7 @@ from zoneinfo import ZoneInfo
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOOLS = os.path.join(ROOT, "tools")
 os.chdir(ROOT)
-SCRIPTS = ["build_data.py", "build_history.py", "build_milb.py", "build_fantasy.py", "build_career.py", "build_trends.py"]
+SCRIPTS = ["build_data.py", "build_history.py", "build_milb.py", "build_fantasy.py", "build_career.py", "build_trends.py", "build_similar.py"]
 # what the site serves: the same list publish.py stamps, plus every hist/ file
 TOP = ["index.html", "app.js", "styles.css", "themes.js", "defaults.js", "data.js", "days.js", "fantasy.js", "manifest.json",
        "icons/icon-32.png", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png"]
@@ -167,13 +167,13 @@ def main():
         for lvl, ys in milb.items():
             ok = ok and run("build_milb.py", lvl, *ys)
         # the search index too, so a newly built spring / postseason shows in the cards' MLB dropdown
-        ok = ok and run("build_history.py", "index") and run("build_career.py") and (run("build_trends.py") or True) and publish(f"rescored {' '.join(toks)}", end, a.dry)
+        ok = ok and run("build_history.py", "index") and run("build_career.py") and (run("build_trends.py") or True) and (run("build_similar.py") or True) and publish(f"rescored {' '.join(toks)}", end, a.dry)
         sys.exit(0 if ok else 1)
     steps = set(a.steps.split(","))
     ok = True
     if "mlb" in steps:
         # League Trends (hist/trends.js) re-sums the season just built; a failure there costs only that page
-        ok = run("build_data.py", "--end", end) and (run("build_trends.py") or True) and publish("MLB", end, a.dry)
+        ok = run("build_data.py", "--end", end) and (run("build_trends.py") or True) and (run("build_similar.py") or True) and publish("MLB", end, a.dry)
         # spring training (Sean, 29 Sep 2026: track a pitcher's stuff in spring): through March, rebuild this spring's dataset too —
         # Stuff+ graded against MLB pitch types — and publish it; a failure costs only the spring file
         if ok and end[5:7] in ("02", "03") and run("build_history.py", "spring", year):

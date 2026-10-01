@@ -78,6 +78,7 @@ if cloud_publishes():
 ok = run("build_data.py", "--end", end)
 if ok:
     run("build_trends.py")                              # League Trends page (hist/trends.js); non-fatal
+    run("build_similar.py")                             # the cards' Similar line across seasons (hist/similar.js); non-fatal
     # the minor-league scrape takes another hour or more; put the MLB numbers on the site now rather than
     # leaving it a day stale all morning. Whatever the minors add is published again at the end.
     say(f"--- MLB data through {end} built; publishing it before the minors run")

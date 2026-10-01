@@ -6810,8 +6810,55 @@
   const SIM = { H: { style: ["air", "gb", "pu", "pull", "osw", "zsw", "whf", "k", "bb"], skill: ["xwd", "ev", "brl", "hh", "ev90", "bs", "zcon"] },
                 P: { style: ["gb", "pu", "zone", "osw", "swing", "fbv", "ext"], skill: ["stuff", "whf", "strk", "kbb", "uera"] } };
   const pitchMix = (q) => { const a = q.ctx && q.ctx.arsenal; if (!a || !a.length) return null; const t = a.reduce((x, r) => x + (r[1] || 0), 0); if (!t) return null; const m = {}; for (const r of a) m[r[0]] = 100 * (r[1] || 0) / t; return m; };
+  // across seasons (Sean, 1 Oct 2026: "player and year ... it doesn't have to be a player from that same year"): hist/similar.js
+  // (tools/build_similar.py) holds every qualified MLB player-season 2015-now, each ranked within its own season, so a full-season
+  // MLB card is matched against all of them — the same two halves, the same mix and hand terms — and a name opens that season.
+  // A date window, a split, a minors or a spring / October card, or a season below the qualifying line keeps the same-season match
+  const simReady = () => !!window.DRAFT_SIMILAR;
+  function similarAcross(p) {
+    if (DS.level !== "MLB" || DS.kind || DS.multi || needsDays() || (SPLIT && (SPLIT.hand !== "all" || SPLIT.venue !== "all" || roleOf(SPLIT) !== "all"))) return null;
+    ensureScript("hist/similar.js", simReady);
+    if (!simReady()) return failed.has("hist/similar.js") ? null : "wait";
+    // a row: id, year, name, team, hand (a pitcher's with -SP / -RP), qualified flag, [pitch mix,] percentiles
+    const S = window.DRAFT_SIMILAR, t = p.type === "P" ? "P" : "H", rows = S[t], ns = S.nstyle[t], P = t === "P", vi = P ? 7 : 6;
+    const mine = rows.find((r) => r[0] === p.id && r[1] === DS.season); if (!mine) return null;
+    const mv = mine[vi], mix0 = P ? mine[6] : null;
+    const gap = (a, b, i0, i1) => { let d = 0, n = 0; for (let i = i0; i < i1; i++) { if (a[i] < 0 || b[i] < 0) continue; d += Math.abs(a[i] - b[i]); n++; } return n >= 3 ? [d, n] : null; };
+    const out = [];
+    for (const r of rows) {
+      if (r[0] === p.id || !r[5]) continue;                                  // matches are qualified seasons only
+      const v = r[vi], sy = gap(mv, v, 0, ns), sk = gap(mv, v, ns, mv.length); if (!sy || !sk) continue;
+      let [sd, sn] = sy;
+      if (P && mix0) { const mx = r[6]; let d = 0; for (const k of new Set([...Object.keys(mix0), ...Object.keys(mx)])) d += Math.abs((mix0[k] || 0) - (mx[k] || 0)); sd += d; sn += 2; }
+      // the hand (+8) and a pitcher's role (+15) go straight onto the style gap — averaged in as one more stat they barely counted
+      const [h0, r0] = (mine[4] || "").split("-"), [h1, r1] = (r[4] || "").split("-");
+      const style = sd / sn + (h0 && h1 && h0 !== h1 ? 8 : 0) + (r0 && r1 && r0 !== r1 ? 15 : 0), skill = sk[0] / sk[1];
+      out.push([(style + skill) / 2, r, style, skill]);
+    }
+    out.sort((a, b) => a[0] - b[0]);
+    const seen = new Set(), top = [];
+    for (const o of out) { if (seen.has(o[1][0])) continue; seen.add(o[1][0]); top.push(o); if (top.length === 5) break; }   // each player once, his closest season
+    return top;
+  }
   function similarRow(p, st, ref) {
     if (!st || !st.pct) return null;
+    const across = similarAcross(p);
+    if (across === "wait") return null;
+    if (across && across.length) {
+      const row = el("div", "simrow"); row.append(el("span", "simlbl", "Similar"));
+      for (const [, r, style, skill] of across) {
+        const [id, yr, name, team] = r, b = el("button", "simname", `${name} '${String(yr).slice(2)}`); b.type = "button";
+        b.title = `${name} · ${yr} ${team} — style match ${Math.round(100 - style)}, skill match ${Math.round(100 - skill)}`;
+        b.addEventListener("click", (e) => {
+          e.stopPropagation();
+          state.x = { id, type: p.type, ds: yr === DATA.meta.season ? CUR.key : `mlb-${yr}` }; state.expanded = null;
+          state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };
+          savePrefs(); location.hash = "#player/" + id; if (state.mode === "player") render();
+        });
+        row.append(b);
+      }
+      return row;
+    }
     const P = p.type === "P", K = SIM[P ? "P" : "H"], pl = pool(ref), me = p.type + p.id, by = new Map(pl.ref.map((q) => [q.type + q.id, q]));
     const myMix = P ? pitchMix(p) : null, myHand = P ? p.throws : p.bats;
     const gap = (a, b, keys) => { let d = 0, n = 0; for (const k of keys) { const x = a[k], y = b[k]; if (x == null || y == null) continue; d += Math.abs(x - y); n++; } return n >= 3 ? [d, n] : null; };
@@ -6821,8 +6868,8 @@
       const sk = gap(st.pct, s.pct, K.skill), sy = gap(st.pct, s.pct, K.style); if (!sk || !sy) continue;
       let [sd, sn] = sy;
       if (P) { const mx = pitchMix(q); if (myMix && mx) { let d = 0; for (const t of new Set([...Object.keys(myMix), ...Object.keys(mx)])) d += Math.abs((myMix[t] || 0) - (mx[t] || 0)); sd += d; sn += 2; } }   // the mix counts as two stats
-      const hand = P ? q.throws : q.bats; if (myHand && hand && hand !== myHand) { sd += 25; sn += 1; }                                   // the other side: a style gap
-      const style = sd / sn, skill = sk[0] / sk[1];
+      const hand = P ? q.throws : q.bats, role = (x) => ((x.ctx && x.ctx.GS) || 0) * 2 >= ((x.ctx && x.ctx.G) || 1);
+      const style = sd / sn + (myHand && hand && hand !== myHand ? 8 : 0) + (P && role(p) !== role(q) ? 15 : 0), skill = sk[0] / sk[1];   // hand and role: straight onto the style gap
       out.push([(style + skill) / 2, q, style, skill]);
     }
     if (!out.length) return null;
