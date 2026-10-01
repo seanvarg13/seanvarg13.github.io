@@ -7406,7 +7406,8 @@
         row.append(...[...hs.children].filter((c) => c.classList.contains("fact")));
         if (hs._stats) { row.append(...hs._stats.children); hs._stats.remove(); }
         if (row.childNodes.length) plate.append(row);
-      } }
+      } else if (hs && hs._stats) hs._stats.prepend(...[...hs.children].filter((c) => c.classList.contains("fact")));   // a desktop: the bio and Filters on the first row, PA / IP and the season's line on the second (Sean, 1 Oct 2026)
+    }
     if (!mob) { F.classList.add("phpop"); tog.append(F); }
     let warn = null;
     if (open) {
