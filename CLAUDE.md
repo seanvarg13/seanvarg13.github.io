@@ -559,6 +559,10 @@ is deploy-limited.
   with the phone's thin `--hair` rule down the name's right side (the box-shadow divider went); Fantasy's `td.fsorted` clips its
   fill to the padding box (no white side borders) so its rules show too. A scaled-up desktop type size was tried for a minute and
   dropped — it was the rules and the name cell he meant, not the sizes.
+* **The band's facts row** (Sean, 1 Oct 2026: option C of the Card Header Rows page): the season line is "2026 ▾ · team · positions";
+  under it one row of small grey labels over values in the name's face — HT, WT, B/T, AGE (`.hbio`, from `bio()`, refilled by
+  `fillBio` when MLB's record arrives; B/T falls back to the hand the data carries), then PA · G or IP · G / GS (`renderStrip` /
+  `fact`), Filters at the end. On a phone the bio facts are a line of their own above the playing time.
 * **1 Oct 2026** (Sean): **Base Running is off the card** (`PCT_COLS_H`; Sprint Speed / SB / SB Att. / SB% stay Leaderboard / Compare
   columns and in the data); **a phone's percentile bars run wider** — `pctSvg` sits 8 in from each side instead of 20 and gives the
   labels 6 of indent instead of 40 (`SM` / `IND`), ~37% more bar at 390px wide; the bars and bubbles themselves are unchanged (he
