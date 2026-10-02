@@ -770,3 +770,4 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
   drafts from a 2027 consensus: the site's points projection blended (median) with the early 2027 rankings from ESPN, Yahoo, CBS and
   RotoWire. Auction values are priced for your room. A draft in progress is saved on the device and comes back paused.
 - **Mock Draft settings**: pick your draft slot from a row of buttons, choose the scoring from your saved Fantasy presets, and change the clocks (pick, nomination, bid), computer-team speed or scoring mid-draft with the Timer button.
+- **Mock Draft room**: a one-minute countdown before the first pick (Start now skips it); sound alerts — a chime at the start, an alert when you're on the clock or nominating, a tick in the last three seconds of every bid and of your own clock, a gavel on each sale (🔊 / 🔇 to switch off); auction values re-priced so stars cost what they do on ESPN (top players ~$50–65 of $260).

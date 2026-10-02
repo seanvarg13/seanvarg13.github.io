@@ -882,6 +882,15 @@ is deploy-limited.
   Proj column (and the final standings) use the **Scoring** picked at setup from the saved Fantasy presets (`mkScoring`, `mkSet.scoring`).
   Same day: the draft slot is a row of buttons (Random, 1…N); a **Timer** button in the room's top bar changes the pick / nomination /
   bid clocks, the AI speed and the scoring mid-draft (a running clock longer than the new length is cut to it).
+  **Later that day** (Sean: a 60-second countdown, sound alerts, "auction values ... very low for the top players"): the room opens on
+  a one-minute countdown (`status: "pre"`, `mk.pre`; Start now skips it; no Draft / Nominate buttons until it ends — `mkGo`). Sounds
+  are Web Audio tones (`mkSnd`, no files; the context opens on a tap — Start draft or any press in the room — as iOS needs): a chime at
+  the start, a two-tone alert whenever you go on the clock or have to nominate, a tick in each of the last three seconds of every bid,
+  of your own pick / nomination clock and of the countdown (`mkTicks`), a gavel when a player sells (a brighter one when you win him),
+  a soft click for other picks; 🔊 / 🔇 in the top bar (`mkSet.sound`). Auction $ re-priced: replacement is the best player left
+  after the **starters** are filled (benches out — `mkVOR(..., false)`), only starters-quality players share the surplus, by value over
+  replacement **to the power `MK_CURVE` = 1.4** (10 teams, $260: Skubal ~$66, Ohtani / Witt ~$52, ~165 players over $1; the
+  straight-line, bench-replacement version topped out at ~$35, 1.75 overshot to $86).
 * **Positions shown are where he played that season** (`playedLabel`: positions with a tenth of his games, most first, up to three;
   SP / RP by that season's starts and relief), on the Leaderboard, Trending and cards; next year's fantasy eligibility (`posLabel`)
   only on Rankings, the Draft board, Eligibility and Fantasy (`posShown`; Sean, 30 Sep 2026).

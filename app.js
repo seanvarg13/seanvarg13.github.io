@@ -8124,25 +8124,32 @@
   };
   // value over replacement for a league: fill every team's starting slots by projected points, then the benches; replacement at a
   // slot is the best player left over who could fill it
-  function mkVOR(pool, teams, roster, key) {
+  function mkVOR(pool, teams, roster, key, benchRepl = true) {
     const order = pool.slice().sort((a, b) => b[key] - a[key]);
     const need = {}; for (const [s] of MK_SLOTS) if (s !== "BN") need[s] = (roster[s] || 0) * teams;
     const pri = ["C", "SS", "2B", "3B", "1B", "OF", "MI", "CI", "UTIL", "SP", "RP", "P"];
     const used = new Set();
     for (const x of order) { const s = pri.find((s) => need[s] > 0 && mkFits(x, s)); if (s) { need[s]--; used.add(x.k); } }
-    let bench = (roster.BN || 0) * teams; for (const x of order) { if (bench <= 0) break; if (!used.has(x.k)) { used.add(x.k); bench--; } }
+    let bench = benchRepl ? (roster.BN || 0) * teams : 0; for (const x of order) { if (bench <= 0) break; if (!used.has(x.k)) { used.add(x.k); bench--; } }
     const repl = {}; for (const s of pri) { const r = order.find((x) => !used.has(x.k) && mkFits(x, s)); repl[s] = r ? r[key] : 0; }
     const out = new Map();
     for (const x of pool) { const sl = pri.filter((s) => (roster[s] || 0) > 0 && mkFits(x, s)); const base = sl.length ? Math.min(...sl.map((s) => repl[s])) : Math.max(...Object.values(repl)); out.set(x.k, x[key] - base); }
     return out;
   }
-  // auction dollars for this room: $1 a roster spot, the rest of the money shared by value over replacement among the draftable
+  // auction dollars for this room: $1 a roster spot, the rest of the money shared among the players good enough to start, by value
+  // over a starters-only replacement level, raised to a power — rooms pay a premium for stars (Sean, 2 Oct 2026: "very low for
+  // the top players": the first version priced off a post-bench replacement level, straight-line, and topped out at ~$35 of $260).
+  // MK_CURVE 1.4 puts the best player near a quarter of a team's cap and the top hitters near a fifth in a 10-team $260 room (Skubal
+  // ~$66, Ohtani / Witt ~$52, ~165 players over $1), the shape of ESPN's points auctions; 1.75 overshot ($86).
+  const MK_CURVE = 1.4;
   function mkDollars(set) {
-    const pool = mkPool(), vor = mkVOR(pool, set.teams, set.roster, "espn");
-    const spots = set.teams * mkSlotList(set.roster).length, top = pool.slice().sort((a, b) => vor.get(b.k) - vor.get(a.k)).slice(0, spots);
-    const pos = top.reduce((s, x) => s + Math.max(0, vor.get(x.k)), 0), cash = set.teams * set.budget - spots;
+    const pool = mkPool(), vor = mkVOR(pool, set.teams, set.roster, "espn", false);
+    const spots = set.teams * mkSlotList(set.roster).length, starters = set.teams * mkSlotList(set.roster, false).length;
+    const order = pool.slice().sort((a, b) => vor.get(b.k) - vor.get(a.k)), paid = order.slice(0, starters).filter((x) => vor.get(x.k) > 0);
+    const w = (x) => Math.pow(Math.max(0, vor.get(x.k)), MK_CURVE), tot = paid.reduce((s, x) => s + w(x), 0), cash = set.teams * set.budget - spots;
     const out = new Map(); for (const x of pool) out.set(x.k, 0);
-    for (const x of top) out.set(x.k, Math.max(1, Math.round(1 + cash * Math.max(0, vor.get(x.k)) / (pos || 1))));
+    for (const x of order.slice(0, spots)) out.set(x.k, 1);
+    for (const x of paid) out.set(x.k, Math.max(1, Math.round(1 + cash * w(x) / (tot || 1))));
     return out;
   }
   let mkDollarCache = null;
@@ -8155,7 +8162,8 @@
   function mkStart() {
     const set = JSON.parse(JSON.stringify(mkSet)), T = set.teams;
     const me = set.slot === "random" ? Math.floor(Math.random() * T) : Math.min(T, Math.max(1, +set.slot)) - 1;
-    mk = { set, me, status: "live", paused: false, log: [], queue: [], pick: 0, clock: (set.type === "snake" ? set.pickSecs : set.nomSecs) * 1000, wait: 0,
+    mkAudio();                                            // the tap that starts the draft unlocks the sound
+    mk = { set, me, status: "pre", pre: 60000, paused: false, log: [], queue: [], pick: 0, clock: (set.type === "snake" ? set.pickSecs : set.nomSecs) * 1000, wait: 0,
            teams: Array.from({ length: T }, (_, i) => ({ name: i === me ? "Your team" : `Team ${i + 1}`, me: i === me, picks: [], budget: set.budget })),
            auc: set.type === "auction" ? { phase: "nom", nom: 0, k: null, bid: 0, high: -1, vals: null, hist: [] } : null, started: Date.now() };
     mk.wait = mkAiDelay();
@@ -8187,8 +8195,9 @@
   }
   function mkDraftPick(k) {
     const ti = mkOnClock(); mkRecord(ti, k, 0); mk.pick++;
-    mk.clock = mk.set.pickSecs * 1000; mk.wait = mkAiDelay();
+    mk.clock = mk.set.pickSecs * 1000; mk.wait = mkAiDelay(); mkTickAt = 0;
     if (mk.pick >= mkTotal()) mkFinish();
+    else { mkSnd(mk.teams[ti].me ? "won" : "pick"); if (mk.teams[mkOnClock()].me) setTimeout(() => mkSnd("turn"), 300); }
     mkSave(); mkDraw();
   }
   // auction
@@ -8201,20 +8210,27 @@
   function mkBid(ti, amt) {
     const A = mk.auc; if (A.phase !== "bid" || ti === A.high || amt <= A.bid) return false;
     const t = mk.teams[ti]; if (amt > mkMaxBid(t) || !mkCanAdd(t, mkP(A.k), mk.set.roster)) return false;
-    A.bid = amt; A.high = ti; A.hist.push([ti, amt]); mk.clock = mk.set.bidSecs * 1000; mkSave(); mkDrawLive(); return true;
+    A.bid = amt; A.high = ti; A.hist.push([ti, amt]); mk.clock = mk.set.bidSecs * 1000; mkTickAt = 0; mkSave(); mkDrawLive(); return true;
   }
   function mkSold() {
-    const A = mk.auc; mkRecord(A.high, A.k, A.bid); mk.pick++;
+    const A = mk.auc; mkRecord(A.high, A.k, A.bid); mk.pick++; mkSnd(mk.teams[A.high].me ? "won" : "sold"); mkTickAt = 0;
     A.last = { k: A.k, t: A.high, bid: A.bid };
     if (mk.teams.every((t) => mkOpen(t) <= 0)) { mkFinish(); mkSave(); mkDraw(); return; }
     let n = A.nom; for (let i = 0; i < mk.teams.length; i++) { n = (n + 1) % mk.teams.length; if (mkOpen(mk.teams[n]) > 0) break; }
     Object.assign(A, { phase: "nom", nom: n, k: null, bid: 0, high: -1, vals: null, hist: [] });
     mk.clock = mk.set.nomSecs * 1000; mk.wait = mkAiDelay(); mkSave(); mkDraw();
+    if (mk.teams[n].me) setTimeout(() => mkSnd("turn"), 450);
   }
   function mkAiNominate(ti) {
     const taken = mkTaken(), t = mk.teams[ti], pool = mkPool().filter((x) => !taken.has(x.k) && mkCanAdd(t, x, mk.set.roster)).sort((a, b) => mkVal(b.k) - mkVal(a.k)).slice(0, 12);
     const pick = pool[Math.floor(Math.random() * Math.min(pool.length, 8))];
     if (pick) mkNominate(ti, pick.k, 1);
+  }
+  function mkGo() {
+    mk.status = "live"; mk.pre = 0; mk.clock = (mk.set.type === "snake" ? mk.set.pickSecs : mk.set.nomSecs) * 1000; mk.wait = mkAiDelay(); mkTickAt = 0;
+    mkSnd("start");
+    if (mk.set.type === "snake" ? mk.teams[mkOnClock()].me : mk.teams[mk.auc.nom].me) setTimeout(() => mkSnd("turn"), 700);
+    mkSave(); mkDraw();
   }
   function mkFinish() { mk.status = "done"; mk.paused = false; }
   // one clock for everything: counts down, lets the computer teams act, and auto-picks / auto-nominates for you at zero
@@ -8222,9 +8238,13 @@
   function mkTick(start) {
     if (start) { if (!mkTimer) { mkLast = Date.now(); mkTimer = setInterval(() => mkTick(false), 250); } return; }
     const now = Date.now(), dt = now - mkLast; mkLast = now;
-    if (state.mode !== "mock" || !mk || mk.status !== "live") { if (mk && mk.status === "live" && state.mode !== "mock" && !mk.paused) { mk.paused = true; mkSave(); } clearInterval(mkTimer); mkTimer = null; return; }
+    const on = mk && (mk.status === "live" || mk.status === "pre");
+    if (state.mode !== "mock" || !on) { if (on && state.mode !== "mock" && !mk.paused) { mk.paused = true; mkSave(); } clearInterval(mkTimer); mkTimer = null; return; }
     if (mk.paused || !mkReady()) return;
+    // a minute in the room before the first pick (Sean, 2 Oct 2026): look the list over, queue players; Start now skips it
+    if (mk.status === "pre") { mk.pre -= dt; mkTicks(mk.pre, true); if (mk.pre <= 0) mkGo(); else mkClock(); return; }
     mk.clock -= dt;
+    { const mine = mk.set.type === "snake" ? mk.teams[mkOnClock()].me : (mk.auc.phase === "bid" || mk.teams[mk.auc.nom].me); mkTicks(mk.clock, mine); }
     if (mk.set.type === "snake") {
       const ti = mkOnClock(), t = mk.teams[ti];
       if (!t.me) { mk.wait -= dt; if (mk.wait <= 0 || mk.clock <= 0) { const x = mkAiChoice(ti); if (x) mkDraftPick(x.k); return; } }
@@ -8248,8 +8268,30 @@
     }
     mkClock();
   }
+  // sounds (Sean, 2 Oct 2026: "sound alerts for when the draft starts, when the user is on the clock, a countdown ticker for the last
+  // 3 seconds of each bid"): made with Web Audio, no files. The context is opened on a tap (Start draft, any button in the room),
+  // which is what a phone needs before it will play anything
+  let mkCtx = null;
+  const mkAudio = () => { try { if (!mkCtx) mkCtx = new (window.AudioContext || window.webkitAudioContext)(); if (mkCtx.state === "suspended") mkCtx.resume(); } catch {} return mkCtx; };
+  function mkTone(f, at, dur, vol = 0.18, type = "sine") {
+    const c = mkCtx; if (!c) return; const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + at;
+    o.type = type; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function mkSnd(kind) {
+    if (mkSet.sound === false || !mkAudio()) return;
+    if (kind === "start") { mkTone(523, 0, 0.25); mkTone(659, 0.16, 0.25); mkTone(784, 0.32, 0.45); }
+    else if (kind === "turn") { mkTone(880, 0, 0.18, 0.22); mkTone(1175, 0.2, 0.3, 0.22); }
+    else if (kind === "tick") mkTone(1000, 0, 0.07, 0.14, "square");
+    else if (kind === "sold") { mkTone(330, 0, 0.12, 0.22, "triangle"); mkTone(220, 0.1, 0.25, 0.22, "triangle"); }
+    else if (kind === "won") { mkTone(784, 0, 0.15, 0.2); mkTone(1047, 0.14, 0.35, 0.2); }
+    else if (kind === "pick") mkTone(600, 0, 0.06, 0.06, "triangle");
+  }
+  // the last three seconds of a clock tick, once a second: every bid, your pick or nomination, and the countdown to the start
+  function mkTicks(ms, on) { const sec = Math.ceil(ms / 1000); if (on && sec >= 1 && sec <= 3 && sec !== mkTickAt) { mkTickAt = sec; mkSnd("tick"); } else if (sec > 3) mkTickAt = 0; }
+  let mkTickAt = 0;
   const mkFmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
-  function mkClock() { const c = document.getElementById("mkclock"); if (c && mk) { c.textContent = mk.paused ? "Paused" : mkFmt(mk.clock); c.classList.toggle("low", !mk.paused && mk.clock < 10000); } }
+  function mkClock() { const c = document.getElementById("mkclock"); if (c && mk) { const ms = mk.status === "pre" ? mk.pre : mk.clock; c.textContent = mk.paused ? "Paused" : mkFmt(ms); c.classList.toggle("low", !mk.paused && ms < 10000); } }
   const POSCLR = { C: "#7b5ea7", "1B": "#c0392b", "2B": "#d35400", "3B": "#b7950b", SS: "#1e8449", OF: "#2471a3", DH: "#5d6d7e", SP: "#117a65", RP: "#6c3483" };
   const mkPosTag = (x) => x.type === "P" ? x.elig.join("/") : x.elig.join(", ");
   // ---- drawing ----
@@ -8303,7 +8345,8 @@
     if (mk.status === "done") { mkDrawDone(box); return; }
     const mob = mobileView();
     box.append(mkTop());
-    if (mk.auc) box.append(mkAuctionPanel());
+    if (mk.auc && mk.status === "live") box.append(mkAuctionPanel());
+    if (!box._mkwake) { box._mkwake = true; box.addEventListener("pointerdown", () => { if (state.mode === "mock" && mkSet.sound !== false) mkAudio(); }); }
     if (mob) {
       const tabs = el("div", "seg mktabs");
       for (const [k, l] of [["players", "Players"], ["team", "My team"], ["board", "Board"], ["log", "Picks"]]) { const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(mkUI.tab === k)); b.addEventListener("click", () => { mkUI.tab = k; mkDraw(); }); tabs.append(b); }
@@ -8327,9 +8370,10 @@
   function mkTop() {
     const top = el("div", "mktop"), T = mk.set.teams;
     let what;
-    if (mk.set.type === "snake") { const ti = mkOnClock(), r = Math.floor(mk.pick / T) + 1, n = (mk.pick % T) + 1; what = `Round ${r} · Pick ${n} (${mk.pick + 1} of ${mkTotal()}) · ${mk.teams[ti].me ? "You're on the clock" : mk.teams[ti].name + " is picking"}`; }
+    if (mk.status === "pre") what = `The draft starts in a minute · you ${mk.set.type === "snake" ? "pick " + (mk.me + 1) + (mk.me === 0 ? "st" : mk.me === 1 ? "nd" : mk.me === 2 ? "rd" : "th") : "nominate " + (mk.me + 1) + (mk.me === 0 ? "st" : mk.me === 1 ? "nd" : mk.me === 2 ? "rd" : "th")} of ${T} · queue players with ☆ while you wait`;
+    else if (mk.set.type === "snake") { const ti = mkOnClock(), r = Math.floor(mk.pick / T) + 1, n = (mk.pick % T) + 1; what = `Round ${r} · Pick ${n} (${mk.pick + 1} of ${mkTotal()}) · ${mk.teams[ti].me ? "You're on the clock" : mk.teams[ti].name + " is picking"}`; }
     else { const A = mk.auc; what = A.phase === "nom" ? (mk.teams[A.nom].me ? "Your nomination" : `${mk.teams[A.nom].name} is nominating`) : `Bidding on ${mkP(A.k).name}`; what += ` · ${mk.log.length} of ${mkTotal()} sold`; }
-    const mine = mk.set.type === "snake" ? mk.teams[mkOnClock()].me : (mk.auc.phase === "nom" && mk.teams[mk.auc.nom].me);
+    const mine = mk.status === "live" && (mk.set.type === "snake" ? mk.teams[mkOnClock()].me : (mk.auc.phase === "nom" && mk.teams[mk.auc.nom].me));
     top.classList.toggle("mine", !!mine);
     const clock = el("div", "mkclock"); clock.id = "mkclock";
     const info = el("div", "mkwhat", what);
@@ -8340,7 +8384,10 @@
     // the next reset, and a running clock longer than it is cut down to it
     const tm = el("button", "btn btn-quiet", "Timer"); tm.type = "button"; tm.setAttribute("aria-expanded", String(!!mkUI.timer));
     tm.addEventListener("click", () => { mkUI.timer = !mkUI.timer; mkDraw(); });
-    btns.append(tm, pz, quit);
+    const snd = el("button", "btn btn-quiet mksnd", mkSet.sound === false ? "🔇" : "🔊"); snd.type = "button"; snd.title = mkSet.sound === false ? "Sound off — tap to turn on" : "Sound on — tap to turn off";
+    snd.addEventListener("click", () => { mkSet.sound = mkSet.sound === false; mkSaveSet(); if (mkSet.sound) { mkAudio(); mkSnd("tick"); } mkDraw(); });
+    btns.append(snd, tm, pz, quit);
+    if (mk.status === "pre") { const go = el("button", "btn", "Start now"); go.type = "button"; go.addEventListener("click", () => { mkAudio(); mkGo(); }); btns.prepend(go); }
     if (mkUI.timer) {
       const tp = el("div", "mktimer");
       const f = (label, key, min, max) => { const l = el("label", "mkrcell"); const i = el("input", "mknum"); i.type = "number"; i.min = min; i.max = max; i.value = mk.set[key];
@@ -8396,7 +8443,7 @@
   function mkDrawList() { const l = document.querySelector(".mklist"); if (l) l.replaceChildren(mkTable()); }
   function mkTable() {
     const taken = mkTaken(), me = mk.teams[mk.me], auc = mk.set.type === "auction", A = mk.auc;
-    const myTurn = !mk.paused && (auc ? A.phase === "nom" && mk.teams[A.nom].me : mk.teams[mkOnClock()].me);
+    const myTurn = !mk.paused && mk.status === "live" && (auc ? A.phase === "nom" && mk.teams[A.nom].me : mk.teams[mkOnClock()].me);
     const nq = norm(mkUI.q || "");
     let rows = mkPool().filter((x) => (!mkUI.hide || !taken.has(x.k)) && (mkUI.pos === "ALL" || (mkUI.pos === "DH" ? x.type === "H" : x.elig.includes(mkUI.pos))) && (!nq || norm(x.name).includes(nq)));
     if (mkUI.sort === "proj") rows.sort((a, b) => b.mine - a.mine); else if (mkUI.sort === "val") rows.sort((a, b) => mkVal(b.k) - mkVal(a.k) || a.adp - b.adp);
