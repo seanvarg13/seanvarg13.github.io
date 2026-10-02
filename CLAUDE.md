@@ -888,9 +888,17 @@ is deploy-limited.
   the start, a two-tone alert whenever you go on the clock or have to nominate, a tick in each of the last three seconds of every bid,
   of your own pick / nomination clock and of the countdown (`mkTicks`), a gavel when a player sells (a brighter one when you win him),
   a soft click for other picks; 🔊 / 🔇 in the top bar (`mkSet.sound`). Auction $ re-priced: replacement is the best player left
-  after the **starters** are filled (benches out — `mkVOR(..., false)`), only starters-quality players share the surplus, by value over
-  replacement **to the power `MK_CURVE` = 1.4** (10 teams, $260: Skubal ~$66, Ohtani / Witt ~$52, ~165 players over $1; the
-  straight-line, bench-replacement version topped out at ~$35, 1.75 overshot to $86).
+  after the **starters** are filled (benches out — `mkVOR(..., false)`), and that order is priced on **ESPN's own 2026 values**
+  (`MK_ESPN`, 10 teams / $260 / 26 spots, 190 players over $0) by `mkCurve`: rank → share of the room's money at the same fraction
+  of the draftable pool, then scaled to **the room's teams × cap** with a $1 floor (Sean, 2 Oct 2026: "adjusted based on the auction
+  value i set" — 10 × $260: Skubal $115, Ohtani $69; 14 × $200: $86 / $52; a $100 cap halves, $500 doubles). (Before: value over
+  replacement to a power, which topped out at ~$66.)
+  **Computer bidding** (Sean, 2 Oct 2026: his league's 2026 auction, "make the actual auction behave similarly"): `MK_MKT` is every
+  price paid in that room (14 × $200 × 25, Ohtani $108, 191 of 350 at $1-2), the AI's market curve (`mkMarket`, by ADP, through the
+  same `mkCurve` so it follows the cap too). A team's price = (0.7 market + 0.3 the $ column) × 0.8 × inflation (`mkInflation`: money
+  left vs what the best open players are worth) × its style (`MK_STYLES` / `mkStyleMul`: stars-and-scrubs, balanced, bargain, early
+  spender, pitching- / hitting-heavy) × noise (σ 0.2) × its money per open spot; half for a player who'd only fill the bench. Stars are
+  nominated first, later a mix of the top and $1 fliers; bids jump $3-10 while far under a price, then go up $1.
 * **Positions shown are where he played that season** (`playedLabel`: positions with a tenth of his games, most first, up to three;
   SP / RP by that season's starts and relief), on the Leaderboard, Trending and cards; next year's fantasy eligibility (`posLabel`)
   only on Rankings, the Draft board, Eligibility and Fantasy (`posShown`; Sean, 30 Sep 2026).
