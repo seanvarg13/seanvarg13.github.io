@@ -3098,6 +3098,19 @@
   function seasonLine(p, st) {
     if (DS.level && DS.level !== "MLB" || DS.kind || DS.multi) return null;
     const box = el("span", "hstats");
+    // with a date range or split on, the same line for just those games (the fantasy file's game logs)
+    if (winIdx() || splitActive()) {
+      const o = fViewLine(p);
+      if (!o || o === "wait" || o.empty) { if (o === "wait" || (o && o.empty)) for (const k of (p.type === "H" ? ["AVG", "OBP", "SLG", "OPS"] : ["uERA", "ERA", "K%", "BB%", "SV"])) box.append(fact(k, "–")); return o ? box : null; }
+      const r3 = (n, d) => (d ? fmtX(n / d) : "–"), obp = (o.H + o.BB + (o.HBP || 0)) / ((o.AB + o.BB + (o.HBP || 0) + (o.SF || 0)) || NaN);
+      const ff = p.type === "H"
+        ? [["AVG", r3(o.H, o.AB)], ["OBP", isFinite(obp) ? fmtX(obp) : "–"], ["SLG", r3(o.TB, o.AB)], ["OPS", o.AB && isFinite(obp) ? fmtX(obp + o.TB / o.AB) : "–"]]
+        : [["uERA", st && st.uera != null ? st.uera.toFixed(2) : "–"], ["ERA", o.OUTS ? (27 * o.ER / o.OUTS).toFixed(2) : "–"],
+           ["K%", o.BF ? (100 * o.K / o.BF).toFixed(1) : "–"], ["BB%", o.BF ? (100 * o.BB / o.BF).toFixed(1) : "–"], ["SV", String(o.SV || 0)]];
+      for (const [k, v] of ff) box.append(fact(k, v));
+      box.title = viewLabel(p.type) || "";
+      return box;
+    }
     ensureScript("hist/career.js", careerReady);
     const rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null;
     const rows = rec && rec[p.type] ? rec[p.type].filter((r) => r[0] === +DS.season) : [];
@@ -4887,6 +4900,22 @@
     }
     return g;
   }
+  // his official line for the card's view — the date range, hand, home / away and SP / RP in effect — summed from the season's game
+  // logs (the last three MLB seasons); null with no filter on or no logs, "wait" while the fantasy file loads. The header's
+  // season line and the Fantasy tab both read it (Sean, 2 Oct 2026: filter by a date range and both follow)
+  function fViewLine(p) {
+    if (!winIdx() && !splitActive()) return null;
+    const y = String(DS.season), grp = p.type === "H" ? "H" : "P";
+    if (DS.level !== "MLB" || DS.kind || DS.multi || !FYEARS.includes(y)) return null;
+    const F = fData(y); if (!F) { fEnsure(y); return "wait"; }
+    let games = fGamesOf(F, grp, p.id); if (!games || !games.length) return null;
+    const w = winIdx(), sp = SPLIT, role = roleOf(sp);
+    const spec = { lo: w && !w.last ? ymdOf(w.from) : 0, hi: w ? ymdOf(w.to) : 0, last: w && w.last ? Number(w.last) : 0, venue: sp.venue, hand: sp.hand };
+    if (role !== "all") games = games.filter((x) => (role === "sp" ? x.GS : !x.GS));
+    games = fWindow(games, grp, spec, spec.hand !== "all" ? fDayShares(DS, p, spec.hand) : null);
+    if (!games.length) return { G: 0, empty: true };
+    const o = fSum(games, grp); o.games = grp === "P" ? games : undefined; return o;
+  }
   // hits and total bases at his expected rates over the same at bats, the extra-base mix scaled to hit both
   function fXHits(o, xba, xslg) {
     const xH = xba * o.AB, xTB = xslg * o.AB;
@@ -5690,22 +5719,27 @@
       else if (!L && !failed.has("hist/fantasy-lines.js")) { box.append(el("p", "note", "Loading fantasy stats…")); return box; }
     }
     if (!o || !o.G) { box.append(el("p", "note", "No MLB games for him to score.")); return box; }
+    // the card's date range / split narrows the points to those games (Sean, 2 Oct 2026); ranks are season-long, so they drop
+    const vw = !fromLine && y === String(DS.season) ? fViewLine(p) : null, vlab = vw ? viewLabel(p.type) : "";
+    if (vw === "wait") { box.append(el("p", "note", "Loading fantasy stats…")); return box; }
+    if (vw && vw.empty) { box.append(el("p", "note", `No games in ${vlab || "this view"}.`)); return box; }
+    if (vw) o = Object.assign(vw, { games: vw.games });
     const pre = fpreset(), w = pre.w[grp] || {}, tot = fPts(w, o);
     const hd = el("div", "rollhd");
-    hd.append(el("span", "rollname", `${f1(tot)} pts`), el("span", "rollsub", `${y} · ${pre.name}` + (fromLine ? " · from his official season line" : y !== String(DS.season) ? " (fantasy covers the last three MLB seasons)" : "")));
+    hd.append(el("span", "rollname", `${f1(tot)} pts`), el("span", "rollsub", `${y} · ${pre.name}` + (vw ? ` · ${vlab}` : "") + (fromLine ? " · from his official season line" : y !== String(DS.season) ? " (fantasy covers the last three MLB seasons)" : "")));
     box.append(hd);
     // where he ranks: the season total among every hitter / pitcher, per game among those past the fantasy page's minimum
-    const rows = fromLine ? null : fRows(y, grp);
+    const rows = fromLine || vw ? null : fRows(y, grp);
     const rank = (vals, v) => (vals.length ? `${ordinal(rankOf(vals, v))} of ${vals.length}` : "");
     const tiles = el("div", "fanttiles");
     const tile = (big, small, sub) => { const t = el("div", "fanttile"); t.append(el("b", null, big), el("span", null, small)); if (sub) t.append(el("i", null, sub)); tiles.append(t); };
     const ppg = tot / o.G;
-    tile(f1(tot), "season points", rows ? rank(rows.map((r) => r.pts), tot) : "");
+    tile(f1(tot), vw ? "points" : "season points", rows ? rank(rows.map((r) => r.pts), tot) : "");
     const qual = rows ? rows.filter(fMinOK) : [];
     tile(f2(ppg), "points per game", rows && qual.some((r) => r.p.id === p.id) ? rank(qual.map((r) => r.pts / r.o.G), ppg) : "");
     // points per PA beside per game, heat-coloured by where it sits among the fantasy page's qualified hitters (Sean, 29 Sep 2026)
     // coloured against this season's qualified hitters, whichever season the tab is showing
-    const cq = fromLine ? (fRows(String(DATA.meta.season), grp) || []).filter(fMinOK) : qual;
+    const cq = fromLine || vw ? (fRows(String(DATA.meta.season), grp) || []).filter(fMinOK) : qual;
     const ppaVals = grp === "H" ? cq.filter((r) => r.o.PA).map((r) => r.pts / r.o.PA) : [];
     const ppaPct = (v) => (ppaVals.length && v != null ? Math.round(100 * ppaVals.filter((x) => x < v).length / ppaVals.length) : null);
     if (grp === "H" && o.PA) { tile((tot / o.PA).toFixed(3), "points per PA", qual.some((r) => r.p.id === p.id) ? rank(ppaVals, tot / o.PA) : "");
