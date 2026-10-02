@@ -8010,8 +8010,12 @@
   const MK_SLOTS = [["C", "C"], ["1B", "1B"], ["2B", "2B"], ["3B", "3B"], ["SS", "SS"], ["MI", "2B/SS"], ["CI", "1B/3B"], ["OF", "OF"], ["UTIL", "UTIL"],
                     ["SP", "SP"], ["RP", "RP"], ["P", "P"], ["BN", "Bench"]];
   const MK_DEF = { type: "snake", teams: 10, slot: "random", pickSecs: 60, nomSecs: 30, bidSecs: 10, budget: 260, ai: "normal",
-                   roster: { C: 1, "1B": 1, "2B": 1, "3B": 1, SS: 1, MI: 0, CI: 0, OF: 3, UTIL: 1, SP: 5, RP: 3, P: 0, BN: 7 } };
+                   // Sean's league (2 Oct 2026): 2B/SS and 1B/3B, four OF, eight P and no SP / RP slots, four bench
+                   roster: { C: 1, "1B": 1, "2B": 1, "3B": 1, SS: 1, MI: 1, CI: 1, OF: 4, UTIL: 1, SP: 0, RP: 0, P: 8, BN: 4 } };
   const mkSet = Object.assign({}, MK_DEF, load("draft2027.mock", {}));
+  // a roster saved while the old ESPN default was the default moves to the new one; one he set himself stays
+  const MK_OLDDEF = { C: 1, "1B": 1, "2B": 1, "3B": 1, SS: 1, MI: 0, CI: 0, OF: 3, UTIL: 1, SP: 5, RP: 3, P: 0, BN: 7 };
+  if (mkSet.roster && MK_SLOTS.every(([s]) => (mkSet.roster[s] || 0) === MK_OLDDEF[s])) delete mkSet.roster;
   mkSet.roster = Object.assign({}, MK_DEF.roster, mkSet.roster || {});
   let mk = load("draft2027.mockdraft", null);             // the draft in progress, or null
   if (mk) mk.paused = true;                               // a reload comes back paused
@@ -8151,7 +8155,7 @@
   // smoothed into that shape (MK_TOP), laid on the 2027 ADP — the n-th player by ADP is worth the n-th price. The $ column and the
   // computer teams' market are the same number, so what you see is what the room thinks.
   const MK_MKT = { teams: 14, budget: 200, spots: 25, prices: [108,92,74,70,60,58,46,45,43,43,43,42,41,39,38,36,34,34,34,31,31,31,31,30,30,29,29,29,28,25,24,24,23,23,22,21,21,20,19,19,19,18,18,18,17,17,17,17,17,17,17,17,16,16,16,16,16,15,15,14,14,14,14,13,13,13,13,13,13,12,11,11,11,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,9,9,9,9,9,9,9,9,8,8,8,8,8,8,8,7,7,7,7,7,7,7,7,7,7,7,7,7,6,6,6,6,6,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] };
-  const MK_TOP = [108, 76, 70, 67, 65, 63, 61, 59, 57, 55, 54, 52, 50, 48, 46, 45, 44, 43, 42, 41, 39, 37, 35, 34, 33, 32];
+  const MK_TOP = [104, 76, 70, 67, 65, 63, 61, 59, 57, 55, 54, 52, 50, 48, 46, 45, 44, 43, 42, 41, 39, 37, 35, 34, 33, 32];
   const MK_PRICE = MK_TOP.concat(MK_MKT.prices.slice(MK_TOP.length));
   // the curve for a room of T teams, $B each, N spots: the stars are the same few players in any room, so the top ranks map rank for
   // rank; deeper down a rank sits at the same fraction of the pool as in Sean's room. Then the money over $1 a spot is shared to
@@ -8248,7 +8252,13 @@
     const A = mk.auc; A.phase = "bid"; A.k = k; A.bid = Math.max(1, open || 1); A.high = ti; A.hist = [[ti, A.bid]]; A.nomBy = ti;
     // each computer team's price for him: the market for his ADP (the $ column), moved by the room's inflation, its
     // own style and money per open spot against the room's, then a wide personal spread (real rooms disagree — Tatis $38, PCA $15)
-    const x = mkP(k), base = mkMarket(x), infl = mkInflation();
+    // the room's mood on this player (Sean, 2 Oct 2026: "make it so the auction is random so it doesnt go exactly based on auction
+    // values adp every time"): one draw for the whole room, so some players go for well over their $ and others slip, on top of each
+    // team's own spread. Smaller at the very top (a superstar's price is the one the room agrees on most) and held to -30% / +35% at
+    // full size: uncapped it once sold De La Cruz for $122, and at full size on Ohtani it sold him for $166
+    const x = mkP(k), tier = 0.4 + 0.6 * Math.min(1, (x.adp - 1) / (2 * mk.set.teams));
+    const mood = Math.max(1 - 0.3 * tier, Math.min(1 + 0.35 * tier, Math.exp(0.22 * tier * gauss())));
+    const base = mkMarket(x) * mood, infl = mkInflation();
     const per = mk.teams.reduce((s, t) => s + t.budget, 0) / Math.max(1, mk.teams.reduce((s, t) => s + mkOpen(t), 0));
     A.vals = mk.teams.map((t, i) => {
       if (t.me) return 0;
@@ -8282,7 +8292,7 @@
     const early = mk.log.length < mk.set.teams * 1.5, poor = t.budget <= mkOpen(t) + 2;
     let pick;
     if (poor) pick = avail.filter((x) => mkFillsStarter(t, x, mk.set.roster))[Math.floor(Math.random() * 6)] || avail[0];
-    else if (early || Math.random() < 0.6) pick = avail[Math.floor(Math.random() * Math.min(avail.length, early ? 4 : 12))];
+    else if (early || Math.random() < 0.6) pick = avail[Math.floor(Math.random() * Math.min(avail.length, early ? 8 : 15))];
     else { const lo = avail.slice(Math.min(avail.length - 1, 20), 120); pick = lo[Math.floor(Math.random() * lo.length)] || avail[0]; }
     const open = !poor && Math.random() < 0.15 ? Math.max(1, Math.min(mkMaxBid(t), Math.round(0.4 * mkMarket(pick)))) : 1;
     mkNominate(ti, pick.k, open);
@@ -8387,7 +8397,7 @@
     const grid = el("div", "mkrgrid");
     for (const [s, l] of MK_SLOTS) { const c = el("label", "mkrcell"); c.append(el("span", null, l), num(mkSet.roster[s] || 0, 0, s === "BN" ? 15 : s === "SP" || s === "RP" || s === "P" || s === "OF" ? 10 : 3, (v) => { mkSet.roster[s] = v; mkDrawSetup(box); })); grid.append(c); }
     rs.append(grid);
-    const rst = el("button", "linkbtn", "ESPN default"); rst.type = "button"; rst.addEventListener("click", () => { mkSet.roster = Object.assign({}, MK_DEF.roster); mkSaveSet(); mkDrawSetup(box); }); rs.append(rst);
+    const rst = el("button", "linkbtn", "Default"); rst.type = "button"; rst.addEventListener("click", () => { mkSet.roster = Object.assign({}, MK_DEF.roster); mkSaveSet(); mkDrawSetup(box); }); rs.append(rst);
     w.append(rs);
     { const s = el("select", "mksel"); for (const p of fpresets()) { const o = el("option", null, p.name); o.value = p.id; o.selected = p.id === mkScoring().id; s.append(o); }
       s.addEventListener("change", () => { mkSet.scoring = s.value; mkSaveSet(); });
