@@ -3785,9 +3785,12 @@
     const modal = $("modal"), body = $("modal-body");
     modal.classList.remove("pcard"); document.body.classList.remove("cardpop");
     const key = state.expanded;
-    const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy", "pitches", "home"].includes(state.mode);
+    // the Mock Draft's names pop the card up over the room too (Sean, 2 Oct 2026), and so does a Similar player's name from inside one
+    const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy", "pitches", "home", "mock"].includes(state.mode);
+    if (key && listMode && state.cardDs && !histDataset(state.cardDs)) ensureHist(state.cardDs);   // a past season's card: its file first
     const src = state.cardDs && histDataset(state.cardDs) ? histDataset(state.cardDs).players : DATA.players;
-    const p0 = key && listMode ? (src.find((q) => q.type + q.id === key) || DATA.players.find((q) => q.type + q.id === key)) : null;
+    const p0 = key && listMode ? (src.find((q) => q.type + q.id === key) || DATA.players.find((q) => q.type + q.id === key)
+      || (state.cardDs && !histDataset(state.cardDs) ? { id: +key.slice(1), type: key[0], name: "", team: "", pos: [], m: {}, ctx: {} } : null)) : null;
     modal.classList.toggle("pcard", !!p0); document.body.classList.toggle("cardpop", !!p0);   // before the lock: a phone keeps its place under a card
     modal.hidden = !p0; lockPage(!!p0);
     parkControls(); body.innerHTML = "";
@@ -6904,8 +6907,10 @@
         b.title = `${name} · ${yr} ${team} — style match ${Math.round(100 - style)}, skill match ${Math.round(100 - skill)}`;
         b.addEventListener("click", (e) => {
           e.stopPropagation();
-          state.x = { id, type: p.type, ds: yr === DATA.meta.season ? CUR.key : `mlb-${yr}` }; state.expanded = null;
           state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };
+          // inside a popup card it stays a popup — his card for that season over the same page, closed back to it
+          if (state.mode !== "player" && state.expanded) { state.cardDs = yr === DATA.meta.season ? null : `mlb-${yr}`; state.expanded = p.type + id; render(); return; }
+          state.x = { id, type: p.type, ds: yr === DATA.meta.season ? CUR.key : `mlb-${yr}` }; state.expanded = null;
           savePrefs(); location.hash = "#player/" + id; if (state.mode === "player") render();
         });
         row.append(b);

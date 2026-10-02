@@ -571,7 +571,7 @@ is deploy-limited.
   2015-now from **`hist/similar.js`** (`tools/build_similar.py`, run after `build_data.py` / a rescore by `cloud_daily.py` and
   `daily_update.py`, mirrored by `sync_tools.py`: each season's 300+ PA / 150+ BF qualifiers ranked within their own season, plus anyone
   100+ PA / 50+ BF ranked against them so his own card can be matched from, a qualified flag, hand with a pitcher's -SP / -RP role, the
-  pitch mix) — `similarAcross` in `app.js`; each player once (his closest season), shown "Name 'YY", a tap opens that season; hand +8 and
+  pitch mix) — `similarAcross` in `app.js`; each player once (his closest season), shown "Name 'YY", a tap opens that season (as a popup when tapped inside one); hand +8 and
   role +15 go straight onto the style gap. A window, split, minors / spring / October card or an unlisted season keeps the same-season match. **Call-up Watch** hitters get MLB wOBA and MLB K% (his line + `MILB_EQ`'s shift), and untracked
   levels show "–" for EV / Brl% / HH% instead of 0.0. **Team search** — a team code or name ("NYY", "Dodgers") in the header search lists
   this season's roster first, hitters then pitchers by playing time (`searchHits`), then any name matches. **A phone's pager drops its
@@ -936,6 +936,10 @@ is deploy-limited.
   its focus) across full redraws, cleared once it's placed; Enter in the box bids. **Teams tab** (same day: "see the current budget and
   max bid for every team"): a side / phone tab listing every team's money left, max bid ($1 kept for each other open spot), spots left
   and projected points, the high bidder marked; a name opens that team's roster.
+  **Cards pop up in the room** (Sean, 2 Oct 2026: "when i click on a player let it give a pop up window that i can exit ... similar
+  players ... just another pop up window"): `renderModal`'s `listMode` includes `mock`, so a name opens the popup card over the draft
+  (the clock keeps running); and on every popup page a cross-season Similar name opens that season's card as the popup (`state.cardDs`,
+  the hist file loaded first — a placeholder `p0` shows "Loading 2019 season…") instead of going to `#player`. × goes back to the page.
   **Default roster has two UTIL** (Sean, 2 Oct 2026; `MK_OLDDEF` lists both earlier defaults so a saved copy of either moves up).
   **Louder** (Sean, 2 Oct 2026: "make the auction or pick sounds much louder"): `mkAudio` builds a compressor + 2.5× master gain once,
   every cue is a square tone with a triangle an octave under at 3-4× the old level (`mkSnd`'s `two`), your-turn plays twice, and on an
