@@ -616,6 +616,8 @@ is deploy-limited.
   `seasonLine` shows that line's AVG / OBP / SLG / OPS (pitchers: ERA, K%, BB%, SV over those games; uERA is the view's already),
   and `renderFantasyTab` scores it — points, per game, per PA, games, per start / relief — with the view's name in the sub-head and no
   season ranks. Last three MLB seasons only (where the fantasy files have game logs); an older season's line hides under a filter.
+  The By season table's row for the card's season is that filtered line too (marked with the view, e.g. "2026 · May 1 – Sep 27"), and
+  the table has **PA/G** behind PA, the Total row carrying PA and PA/G (Sean, 2 Oct 2026).
 * **1 Oct 2026** (Sean): **Base Running is off the card** (`PCT_COLS_H`; Sprint Speed / SB / SB Att. / SB% stay Leaderboard / Compare
   columns and in the data); **a phone's percentile bars run wider** — `pctSvg` sits 8 in from each side instead of 20 and gives the
   labels 6 of indent instead of 40 (`SM` / `IND`), ~37% more bar at 390px wide; the bars and bubbles themselves are unchanged (he

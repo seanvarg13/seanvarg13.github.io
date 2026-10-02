@@ -765,7 +765,7 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
 - **Desktop card header**: the bio (HT / WT / B/T / AGE) and Filters on the first row, PA or IP and the season's line on the second.
 - **vs MLB on minors cards removed**: a minors card ranks against its own level only (Call-up Watch keeps its MLB wOBA / K%).
 - **Points columns on every list**: Filters ▸ Stats offers Pts, Pts/G and Pts/PA (hitters) and Pts, Pts/G, Pts/IP and Pts/GS (pitchers) under your current scoring preset — Rankings, the Draft board and the Leaderboard alike. Full season only.
-- **Card filters reach the header and Fantasy tab**: with a date range, hand, home / away or SP / RP filter on, the slash line in the card's header and the Fantasy tab's points, points per game and points per PA are for just those games (last three seasons).
+- **Card filters reach the header and Fantasy tab**: with a date range, hand, home / away or SP / RP filter on, the slash line in the card's header and the Fantasy tab's points, points per game and points per PA are for just those games, and so is that season's row in By season (last three seasons). By season also shows PA per game.
 - **Mock Draft** (Fantasy ▸ Mock Draft): practice snake or auction drafts against computer teams, ESPN-style — your settings for teams,
   draft slot, roster spots, pick clock, salary cap and bid clock; pause any time; a queue; the board, your team and the pick log. Everyone
   drafts from the site's 2027 projection, ranked for the room's scoring, teams and roster. Auction values are priced for your room. A draft in progress is saved on the device and comes back paused.
