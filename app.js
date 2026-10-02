@@ -3259,7 +3259,8 @@
     return b;
   };
   pitchBoardEl();
-  { const mm = $("modemenu"); if (mm && !mm.querySelector('a[href="#planner"]') && !offSeason()) { const li = el("li"); const a = el("a", null, "Weekly Planner"); a.href = "#planner"; li.append(a); mm.append(li); } }   // not in the off-season: no games to plan
+  { const mm = $("modemenu"); if (mm && !mm.querySelector('a[href="#planner"]') && !offSeason()) { const li = el("li"); const a = el("a", null, "Weekly Planner"); a.href = "#planner"; li.append(a); mm.append(li); } }
+  { const mm = $("modemenu"); if (mm && !mm.querySelector('a[href="#mock"]')) { const li = el("li"); const a = el("a", null, "Mock Draft"); a.href = "#mock"; li.append(a); mm.append(li); } }   // Sean, 2 Oct 2026   // not in the off-season: no games to plan
   // Draft Mode is gone (Sean, 28 Sep 2026: the home page does its job); the Mac's index.html template may still list it
   { const dm = document.querySelector('#modemenu a[href="#draftmode"]'); if (dm) dm.closest("li").remove(); }
   // Trending lives inside the Leaderboard and the Fantasy leaderboard now (Season / Recent, 1 Oct 2026): off both menus
@@ -4624,7 +4625,7 @@
   }
   function renderNow() {
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
-    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner", other = pitches || player || compare || elig || hub || appear || fant;
+    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock", other = pitches || player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
     const T = state.tbl; document.body.dataset.heat = T.heat ? "on" : "off"; document.body.dataset.band = T.band ? "on" : "off"; document.body.dataset.sorthl = T.sortHl ? "on" : "off"; document.body.dataset.density = T.density;
@@ -4646,6 +4647,7 @@
     if (state.mode === "trends") { renderTrends(); return; }
     if (state.mode === "callups") { renderCallups(); renderModal(); return; }
     if (state.mode === "planner") { renderPlanner(); renderModal(); return; }
+    if (state.mode === "mock") { renderMock(); renderModal(); return; }
     if (pitches) { renderPitchBoard(); renderModal(); return; }
     const listRender = () => {
       ensureView();
@@ -7997,8 +7999,465 @@
     const ul = el("ul", "modemenu"); ul.id = "moremenu";
     w.append(t, document.querySelector("#lbsel .chev").cloneNode(true), b, ul);
     document.querySelector(".modes").append(w); }
+  /* ---------- Mock Draft (Sean, 2 Oct 2026: "practice mock drafts ... snake and auction ... function very very similar to espns") ----------
+     A draft room against computer teams. The order everyone drafts from is a 2027 consensus: the site's own points projection
+     (2024-26 official lines under ESPN's standard scoring, weighted to this year, regressed, aged) ranked by value over
+     replacement, averaged with the early 2027 lists published so far (hist/adp-2027.js: ESPN's and Yahoo's top 50 / 25, CBS's
+     position ranks, RotoWire's first 2027 draft by position — the position lists are placed where that position's n-th player
+     falls in the projection). Auction dollars are the same value over replacement priced for the room's teams, roster and cap.
+     The "Proj" column is the projection under your own scoring (Fantasy ▸ Scoring settings). Settings and a draft in progress
+     are kept on this device (draft2027.mock / draft2027.mockdraft); leaving the page pauses the clock. */
+  const MK_SLOTS = [["C", "C"], ["1B", "1B"], ["2B", "2B"], ["3B", "3B"], ["SS", "SS"], ["MI", "2B/SS"], ["CI", "1B/3B"], ["OF", "OF"], ["UTIL", "UTIL"],
+                    ["SP", "SP"], ["RP", "RP"], ["P", "P"], ["BN", "Bench"]];
+  const MK_DEF = { type: "snake", teams: 10, slot: "random", pickSecs: 60, nomSecs: 30, bidSecs: 10, budget: 260, ai: "normal",
+                   roster: { C: 1, "1B": 1, "2B": 1, "3B": 1, SS: 1, MI: 0, CI: 0, OF: 3, UTIL: 1, SP: 5, RP: 3, P: 0, BN: 7 } };
+  const mkSet = Object.assign({}, MK_DEF, load("draft2027.mock", {}));
+  mkSet.roster = Object.assign({}, MK_DEF.roster, mkSet.roster || {});
+  let mk = load("draft2027.mockdraft", null);             // the draft in progress, or null
+  if (mk) mk.paused = true;                               // a reload comes back paused
+  const mkUI = { tab: "players", side: "team", pos: "ALL", q: "", sort: "adp", hide: true, boardTeam: null };
+  const mkSaveSet = () => { try { localStorage.setItem("draft2027.mock", JSON.stringify(mkSet)); } catch {} };
+  const mkSave = () => { try { if (mk) localStorage.setItem("draft2027.mockdraft", JSON.stringify(mk)); else localStorage.removeItem("draft2027.mockdraft"); } catch {} };
+  const MK_YEARS = [2026, 2025, 2024], MK_W = { 2026: 0.5, 2025: 0.3, 2024: 0.2 }, MK_TW = { 2026: 0.6, 2025: 0.25, 2024: 0.15 };
+  const mkReady = () => !!(fData(String(DATA.meta.season)) && window.DRAFT_FANTASY_LINES && window.DRAFT_ADP27);
+  function mkEnsure() {
+    fEnsure(String(DATA.meta.season));
+    ensureScript("hist/fantasy-lines.js", () => !!window.DRAFT_FANTASY_LINES);
+    ensureScript("hist/adp-2027.js", () => !!window.DRAFT_ADP27);
+  }
+  // his official line for a season as the scoring's keys: this season from fantasy.js, earlier ones from fantasy-lines.js
+  function mkLine(p, y) {
+    if (y === DATA.meta.season) { const F = fData(String(y)); return F ? (p.type === "H" ? fHit(F, p.id) : fPit(F, p.id)) : null; }
+    const L = window.DRAFT_FANTASY_LINES, r = L && L.years[y] && L.years[y][p.type === "H" ? "hitters" : "pitchers"][p.id]; if (!r) return null;
+    const o = {}; (p.type === "H" ? L.hk : L.pk).forEach((k, i) => { o[k] = r[i] || 0; });
+    return fDerive(o, p.type === "H" ? "H" : "P");
+  }
+  const mkAge = (a) => (a == null ? 1 : a <= 25 ? 1.04 : a <= 27 ? 1.02 : a <= 30 ? 1 : a <= 32 ? 0.98 : a <= 34 ? 0.96 : 0.93);
+  // the pool, built once per scoring: every 2026 MLB player with a projection, his eligibility, role and projected points
+  let mkPoolCache = null;
+  function mkPool() {
+    const wEspn = ESPN_PRESET.w, wMe = fpreset().w, sig = JSON.stringify(wMe);
+    if (mkPoolCache && mkPoolCache.sig === sig) return mkPoolCache.pool;
+    const rows = [];
+    for (const p of CUR.players) {
+      const lines = MK_YEARS.map((y) => [y, mkLine(p, y)]).filter(([, o]) => o && (p.type === "H" ? o.PA > 0 : o.OUTS > 0));
+      if (!lines.length || !lines.some(([y]) => y === DATA.meta.season)) continue;
+      const opp = (o) => (p.type === "H" ? o.PA : o.OUTS / 3);
+      const o26 = lines.find(([y]) => y === DATA.meta.season)[1];
+      const role = p.type === "P" ? ((o26.GS || 0) * 2 >= (o26.G || 1) ? "SP" : "RP") : null;
+      let tw = 0, tn = 0;
+      for (const [y, o] of lines) { tn += MK_TW[y] * opp(o); tw += MK_TW[y]; }
+      let time = tw ? tn / tw : 0;
+      const age = (p.age ?? 28) + 1;
+      if (p.type === "H") { if (opp(o26) >= 150 && age <= 27) time = Math.max(time, 520); time = Math.min(680, time * (age >= 35 ? 0.9 : 1)); }
+      else if (role === "SP") { if (opp(o26) >= 50 && age <= 28) time = Math.max(time, 140); time = Math.min(195, time); }
+      else time = Math.min(72, Math.max(time, opp(o26) >= 30 ? 55 : time));
+      rows.push({ p, k: p.type + p.id, lines, role, time, age, opp });
+    }
+    // league rates to regress toward: the 2026 regulars' points per PA / per inning, a touch under average
+    const rateOf = (w, grp, filt) => { let a = 0, b = 0; for (const r of rows) if (filt(r)) { const o = r.lines.find(([y]) => y === DATA.meta.season)[1]; a += fPts(w[grp], o); b += r.opp(o); } return b ? 0.92 * a / b : 0; };
+    const lg = (w) => ({ H: rateOf(w, "H", (r) => r.p.type === "H" && r.opp(r.lines[0][1]) >= 300), SP: rateOf(w, "P", (r) => r.role === "SP" && r.opp(r.lines[0][1]) >= 80),
+                         RP: rateOf(w, "P", (r) => r.role === "RP" && r.opp(r.lines[0][1]) >= 30) });
+    const lgE = lg(wEspn), lgM = lg(wMe);
+    const proj = (r, w, L) => {
+      const grp = r.p.type === "H" ? "H" : "P", R = r.p.type === "H" ? 100 : 25, base = r.p.type === "H" ? L.H : L[r.role];
+      let num = 0, den = 0; for (const [y, o] of r.lines) { num += MK_W[y] * fPts(w[grp], o); den += MK_W[y] * r.opp(o); }
+      return Math.max(0, r.time * mkAge(r.age) * (num + R * base) / (den + R));
+    };
+    const pool = rows.map((r) => ({ k: r.k, p: r.p, id: r.p.id, type: r.p.type, name: r.p.name, team: r.p.team, age: r.age,
+      elig: r.p.type === "H" ? eligiblePositions(r.p) : (r.role === "SP" ? ["SP", ...pitcherRoles(r.p).filter((x) => x === "RP")] : ["RP", ...pitcherRoles(r.p).filter((x) => x === "SP")]),
+      role: r.role, time: Math.round(r.time), espn: proj(r, wEspn, lgE), mine: proj(r, wMe, lgM) })).filter((x) => x.espn > 20);
+    // the consensus: projection rank (value over replacement, 10 teams, the default roster) averaged with the published lists
+    const vor = mkVOR(pool, 10, MK_DEF.roster, "espn");
+    const byV = pool.slice().sort((a, b) => vor.get(b.k) - vor.get(a.k)), prank = new Map(byV.map((x, i) => [x.k, i + 1]));
+    const A = (window.DRAFT_ADP27 || {}).ranks || {};
+    const posOrder = {};                                   // the projection's own order at each position, for the position lists
+    for (const x of byV) for (const s of [...x.elig, x.type === "H" ? "DH" : null]) if (s) (posOrder[s] = posOrder[s] || []).push(x.k);
+    for (const x of pool) {
+      const a = A[x.k], votes = [prank.get(x.k)];   // keyed by type + id: Ohtani the hitter and the pitcher share an id
+      if (a) {
+        if (a.espn) votes.push(a.espn); if (a.yahoo) votes.push(a.yahoo);
+        for (const src of ["cbs", "rw"]) if (a[src]) {
+          const best = Math.min(...a[src].map(([pos, n]) => { const list = posOrder[pos === "DH" ? "DH" : pos] || []; const at = list[Math.min(n, list.length) - 1]; return at ? prank.get(at) : 999; }));
+          if (best < 999) votes.push(best);
+        }
+      }
+      // the median, not the mean: one projection miss (Judge's half season) shouldn't drag a player the experts all agree on
+      votes.sort((p, q) => p - q); const m = votes.length >> 1;
+      x.votes = votes.length; x.cons = votes.length % 2 ? votes[m] : (votes[m - 1] + votes[m]) / 2;
+    }
+    pool.sort((a, b) => a.cons - b.cons || b.espn - a.espn);
+    pool.forEach((x, i) => { x.adp = i + 1; });
+    mkPoolCache = { sig, pool, map: new Map(pool.map((x) => [x.k, x])) };
+    return pool;
+  }
+  const mkP = (k) => { mkPool(); return mkPoolCache.map.get(k); };
+  // which slots a player can fill
+  function mkFits(x, slot) {
+    if (slot === "BN") return true;
+    if (x.type === "P") return slot === "P" || x.elig.includes(slot);
+    if (slot === "UTIL") return true;
+    if (slot === "MI") return x.elig.includes("2B") || x.elig.includes("SS");
+    if (slot === "CI") return x.elig.includes("1B") || x.elig.includes("3B");
+    return x.elig.includes(slot);
+  }
+  const mkSlotList = (roster, bench = true) => MK_SLOTS.flatMap(([s]) => (s === "BN" && !bench ? [] : Array(roster[s] || 0).fill(s)));
+  // the best assignment of players to slots (a bipartite matching, small enough to do by augmenting paths), starters first
+  function mkAssign(players, roster) {
+    const slots = mkSlotList(roster), own = new Array(slots.length).fill(-1);
+    const order = players.map((_, i) => i).sort((a, b) => (players[b].espn || 0) - (players[a].espn || 0));
+    const tryP = (i, seen) => { for (let s = 0; s < slots.length; s++) { if (seen[s] || !mkFits(players[i], slots[s])) continue; seen[s] = true; if (own[s] < 0 || tryP(own[s], seen)) { own[s] = i; return true; } } return false; };
+    // starters before the bench: a player only lands on the bench if no starting slot can be freed for him
+    const nb = slots.filter((s) => s !== "BN").length;
+    const tryStart = (i, seen) => { for (let s = 0; s < nb; s++) { if (seen[s] || !mkFits(players[i], slots[s])) continue; seen[s] = true; if (own[s] < 0 || tryStart(own[s], seen)) { own[s] = i; return true; } } return false; };
+    const placed = new Set();
+    for (const i of order) if (tryStart(i, new Array(slots.length).fill(false))) placed.add(i);
+    for (const i of order) if (!placed.has(i)) { for (let s = nb; s < slots.length; s++) if (own[s] < 0) { own[s] = i; placed.add(i); break; } }
+    return { slots, own, ok: placed.size === players.length };
+  }
+  const mkCanAdd = (team, x, roster) => mkAssign([...team.picks.map((q) => mkP(q.k)), x], roster).ok;
+  const mkFillsStarter = (team, x, roster) => {
+    const a = mkAssign([...team.picks.map((q) => mkP(q.k)), x], roster), i = team.picks.length;
+    return a.own.some((o, s) => o === i && a.slots[s] !== "BN");
+  };
+  // value over replacement for a league: fill every team's starting slots by projected points, then the benches; replacement at a
+  // slot is the best player left over who could fill it
+  function mkVOR(pool, teams, roster, key) {
+    const order = pool.slice().sort((a, b) => b[key] - a[key]);
+    const need = {}; for (const [s] of MK_SLOTS) if (s !== "BN") need[s] = (roster[s] || 0) * teams;
+    const pri = ["C", "SS", "2B", "3B", "1B", "OF", "MI", "CI", "UTIL", "SP", "RP", "P"];
+    const used = new Set();
+    for (const x of order) { const s = pri.find((s) => need[s] > 0 && mkFits(x, s)); if (s) { need[s]--; used.add(x.k); } }
+    let bench = (roster.BN || 0) * teams; for (const x of order) { if (bench <= 0) break; if (!used.has(x.k)) { used.add(x.k); bench--; } }
+    const repl = {}; for (const s of pri) { const r = order.find((x) => !used.has(x.k) && mkFits(x, s)); repl[s] = r ? r[key] : 0; }
+    const out = new Map();
+    for (const x of pool) { const sl = pri.filter((s) => (roster[s] || 0) > 0 && mkFits(x, s)); const base = sl.length ? Math.min(...sl.map((s) => repl[s])) : Math.max(...Object.values(repl)); out.set(x.k, x[key] - base); }
+    return out;
+  }
+  // auction dollars for this room: $1 a roster spot, the rest of the money shared by value over replacement among the draftable
+  function mkDollars(set) {
+    const pool = mkPool(), vor = mkVOR(pool, set.teams, set.roster, "espn");
+    const spots = set.teams * mkSlotList(set.roster).length, top = pool.slice().sort((a, b) => vor.get(b.k) - vor.get(a.k)).slice(0, spots);
+    const pos = top.reduce((s, x) => s + Math.max(0, vor.get(x.k)), 0), cash = set.teams * set.budget - spots;
+    const out = new Map(); for (const x of pool) out.set(x.k, 0);
+    for (const x of top) out.set(x.k, Math.max(1, Math.round(1 + cash * Math.max(0, vor.get(x.k)) / (pos || 1))));
+    return out;
+  }
+  let mkDollarCache = null;
+  const mkVal = (k) => { if (!mk) return 0; const sig = JSON.stringify([mk.set.teams, mk.set.roster, mk.set.budget, mkPoolCache && mkPoolCache.sig]); if (!mkDollarCache || mkDollarCache.sig !== sig) mkDollarCache = { sig, m: mkDollars(mk.set) }; return mkDollarCache.m.get(k) || 0; };
+  const mkTaken = () => new Set(mk ? mk.log.map((l) => l.k) : []);
+  const mkSpots = () => mkSlotList(mk.set.roster).length;
+  const mkOpen = (t) => mkSpots() - t.picks.length;
+  const mkMaxBid = (t) => t.budget - Math.max(0, mkOpen(t) - 1);
+  const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+  function mkStart() {
+    const set = JSON.parse(JSON.stringify(mkSet)), T = set.teams;
+    const me = set.slot === "random" ? Math.floor(Math.random() * T) : Math.min(T, Math.max(1, +set.slot)) - 1;
+    mk = { set, me, status: "live", paused: false, log: [], queue: [], pick: 0, clock: (set.type === "snake" ? set.pickSecs : set.nomSecs) * 1000, wait: 0,
+           teams: Array.from({ length: T }, (_, i) => ({ name: i === me ? "Your team" : `Team ${i + 1}`, me: i === me, picks: [], budget: set.budget })),
+           auc: set.type === "auction" ? { phase: "nom", nom: 0, k: null, bid: 0, high: -1, vals: null, hist: [] } : null, started: Date.now() };
+    mk.wait = mkAiDelay();
+    mkSave(); mkUI.tab = "players"; mkTick(true); render();
+  }
+  const mkAiDelay = () => (mk.set.ai === "fast" ? 400 : mk.set.ai === "slow" ? 3500 : 1600) * (0.6 + 0.8 * Math.random());
+  const mkTotal = () => mk.set.teams * mkSpots();
+  const mkOnClock = () => { const T = mk.set.teams, r = Math.floor(mk.pick / T), i = mk.pick % T; return r % 2 === 0 ? i : T - 1 - i; };
+  function mkRecord(ti, k, cost) {
+    const t = mk.teams[ti]; t.picks.push({ k, cost: cost || 0 }); if (cost) t.budget -= cost;
+    mk.log.push({ n: mk.log.length + 1, t: ti, k, cost: cost || 0 }); mk.queue = mk.queue.filter((q) => q !== k);
+  }
+  // a computer team's snake pick: the best few available by the consensus, with some noise, leaning to what its lineup still needs
+  function mkAiChoice(ti, noise = true) {
+    const t = mk.teams[ti], taken = mkTaken(), R = mk.set.roster, pool = mkPool();
+    const asg = mkAssign(t.picks.map((q) => mkP(q.k)), R), startersLeft = asg.slots.filter((s, i) => s !== "BN" && asg.own[i] < 0).length;
+    const mustFill = mkOpen(t) <= startersLeft;            // no bench picks left to spend: every pick from here fills a lineup hole
+    let best = null, bs = Infinity, seen = 0;
+    for (const x of pool) {
+      if (taken.has(x.k)) continue;
+      if (!mkCanAdd(t, x, R)) continue;
+      const starter = mkFillsStarter(t, x, R);
+      if (mustFill && !starter) continue;
+      const s = x.adp + (noise ? gauss() * (1.5 + 0.06 * x.adp) : 0) + (starter ? 0 : 6 + 0.12 * x.adp);
+      if (s < bs) { bs = s; best = x; }
+      if (++seen > 14) break;
+    }
+    return best;
+  }
+  function mkDraftPick(k) {
+    const ti = mkOnClock(); mkRecord(ti, k, 0); mk.pick++;
+    mk.clock = mk.set.pickSecs * 1000; mk.wait = mkAiDelay();
+    if (mk.pick >= mkTotal()) mkFinish();
+    mkSave(); mkDraw();
+  }
+  // auction
+  function mkNominate(ti, k, open) {
+    const A = mk.auc; A.phase = "bid"; A.k = k; A.bid = Math.max(1, open || 1); A.high = ti; A.hist = [[ti, A.bid]]; A.nomBy = ti;
+    const base = mkVal(k), x = mkP(k);
+    A.vals = mk.teams.map((t, i) => { if (t.me) return 0; let v = base * (0.85 + 0.3 * Math.random()); if (!mkFillsStarter(t, x, mk.set.roster)) v *= 0.55; return Math.max(1, Math.round(v)); });
+    mk.clock = mk.set.bidSecs * 1000; mkSave(); mkDraw();
+  }
+  function mkBid(ti, amt) {
+    const A = mk.auc; if (A.phase !== "bid" || ti === A.high || amt <= A.bid) return false;
+    const t = mk.teams[ti]; if (amt > mkMaxBid(t) || !mkCanAdd(t, mkP(A.k), mk.set.roster)) return false;
+    A.bid = amt; A.high = ti; A.hist.push([ti, amt]); mk.clock = mk.set.bidSecs * 1000; mkSave(); mkDrawLive(); return true;
+  }
+  function mkSold() {
+    const A = mk.auc; mkRecord(A.high, A.k, A.bid); mk.pick++;
+    A.last = { k: A.k, t: A.high, bid: A.bid };
+    if (mk.teams.every((t) => mkOpen(t) <= 0)) { mkFinish(); mkSave(); mkDraw(); return; }
+    let n = A.nom; for (let i = 0; i < mk.teams.length; i++) { n = (n + 1) % mk.teams.length; if (mkOpen(mk.teams[n]) > 0) break; }
+    Object.assign(A, { phase: "nom", nom: n, k: null, bid: 0, high: -1, vals: null, hist: [] });
+    mk.clock = mk.set.nomSecs * 1000; mk.wait = mkAiDelay(); mkSave(); mkDraw();
+  }
+  function mkAiNominate(ti) {
+    const taken = mkTaken(), t = mk.teams[ti], pool = mkPool().filter((x) => !taken.has(x.k) && mkCanAdd(t, x, mk.set.roster)).sort((a, b) => mkVal(b.k) - mkVal(a.k)).slice(0, 12);
+    const pick = pool[Math.floor(Math.random() * Math.min(pool.length, 8))];
+    if (pick) mkNominate(ti, pick.k, 1);
+  }
+  function mkFinish() { mk.status = "done"; mk.paused = false; }
+  // one clock for everything: counts down, lets the computer teams act, and auto-picks / auto-nominates for you at zero
+  let mkTimer = null, mkLast = 0;
+  function mkTick(start) {
+    if (start) { if (!mkTimer) { mkLast = Date.now(); mkTimer = setInterval(() => mkTick(false), 250); } return; }
+    const now = Date.now(), dt = now - mkLast; mkLast = now;
+    if (state.mode !== "mock" || !mk || mk.status !== "live") { if (mk && mk.status === "live" && state.mode !== "mock" && !mk.paused) { mk.paused = true; mkSave(); } clearInterval(mkTimer); mkTimer = null; return; }
+    if (mk.paused || !mkReady()) return;
+    mk.clock -= dt;
+    if (mk.set.type === "snake") {
+      const ti = mkOnClock(), t = mk.teams[ti];
+      if (!t.me) { mk.wait -= dt; if (mk.wait <= 0 || mk.clock <= 0) { const x = mkAiChoice(ti); if (x) mkDraftPick(x.k); return; } }
+      else if (mk.clock <= 0) { const q = mk.queue.map(mkP).find((x) => x && !mkTaken().has(x.k) && mkCanAdd(t, x, mk.set.roster)); const x = q || mkAiChoice(ti, false); if (x) mkDraftPick(x.k); return; }
+    } else {
+      const A = mk.auc;
+      if (A.phase === "nom") {
+        const t = mk.teams[A.nom];
+        if (!t.me) { mk.wait -= dt; if (mk.wait <= 0) { mkAiNominate(A.nom); return; } }
+        else if (mk.clock <= 0) { const q = mk.queue.map(mkP).find((x) => x && !mkTaken().has(x.k)); if (q) mkNominate(A.nom, q.k, 1); else mkAiNominate(A.nom); return; }
+      } else {
+        if (mk.clock <= 0) { mkSold(); return; }
+        // the computer teams: each tick maybe one raises, more often as the clock runs down, never past its own price for him
+        const late = mk.clock < 3000, cand = mk.teams.map((t, i) => i).filter((i) => !mk.teams[i].me && i !== A.high && A.vals[i] > A.bid && mkMaxBid(mk.teams[i]) > A.bid && mkCanAdd(mk.teams[i], mkP(A.k), mk.set.roster));
+        if (cand.length && Math.random() < (late ? 0.32 : 0.07) * Math.min(3, cand.length)) {
+          const i = cand[Math.floor(Math.random() * cand.length)], room = A.vals[i] - A.bid;
+          const step = room > 15 && Math.random() < 0.35 ? 1 + Math.floor(Math.random() * Math.min(5, room / 4)) : 1;
+          mkBid(i, Math.min(A.vals[i], mkMaxBid(mk.teams[i]), A.bid + step));
+        }
+      }
+    }
+    mkClock();
+  }
+  const mkFmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+  function mkClock() { const c = document.getElementById("mkclock"); if (c && mk) { c.textContent = mk.paused ? "Paused" : mkFmt(mk.clock); c.classList.toggle("low", !mk.paused && mk.clock < 10000); } }
+  const POSCLR = { C: "#7b5ea7", "1B": "#c0392b", "2B": "#d35400", "3B": "#b7950b", SS: "#1e8449", OF: "#2471a3", DH: "#5d6d7e", SP: "#117a65", RP: "#6c3483" };
+  const mkPosTag = (x) => x.type === "P" ? x.elig.join("/") : x.elig.join(", ");
+  // ---- drawing ----
+  function renderMock() {
+    const box = pitchBoardEl(); mkEnsure();
+    if (!mkReady()) { box.replaceChildren(el("p", "note", "Loading players, projections and the 2027 rankings…")); return; }
+    if (!mk) { mkDrawSetup(box); return; }
+    mkDraw(); mkTick(true);
+  }
+  function mkDrawSetup(box) {
+    box.replaceChildren();
+    const w = el("div", "mkset");
+    w.append(el("h2", "mkh", "Mock Draft"), el("p", "note", "Practice against computer teams drafting from a 2027 consensus. Settings are saved on this device."));
+    const row = (label, ctrl, note) => { const r = el("div", "aset"); const l = el("div", "asetl"); l.append(el("div", "asetn", label)); if (note) l.append(el("div", "asetd", note)); r.append(l, ctrl); w.append(r); };
+    const seg = (opts, val, on) => { const s = el("div", "seg"); for (const [v, l] of opts) { const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(String(val) === String(v))); b.addEventListener("click", () => { on(v); mkSaveSet(); mkDrawSetup(box); }); s.append(b); } return s; };
+    const num = (val, min, max, on, step = 1) => { const i = el("input", "mknum"); i.type = "number"; i.min = min; i.max = max; i.step = step; i.value = val; i.addEventListener("change", () => { const v = Math.max(min, Math.min(max, Math.round(+i.value || min))); i.value = v; on(v); mkSaveSet(); }); return i; };
+    row("Draft type", seg([["snake", "Snake"], ["auction", "Auction"]], mkSet.type, (v) => { mkSet.type = v; }));
+    row("Teams", num(mkSet.teams, 4, 16, (v) => { mkSet.teams = v; if (mkSet.slot !== "random" && +mkSet.slot > v) mkSet.slot = "random"; mkDrawSetup(box); }));
+    { const s = el("select", "mksel"); for (const v of ["random", ...Array.from({ length: mkSet.teams }, (_, i) => String(i + 1))]) { const o = el("option", null, v === "random" ? "Random" : v); o.value = v; o.selected = String(mkSet.slot) === v; s.append(o); }
+      s.addEventListener("change", () => { mkSet.slot = s.value; mkSaveSet(); }); row(mkSet.type === "snake" ? "Your draft slot" : "Your nomination slot", s); }
+    if (mkSet.type === "snake") row("Seconds per pick", num(mkSet.pickSecs, 10, 600, (v) => { mkSet.pickSecs = v; }), "When it runs out you get the first player in your queue, else the best available.");
+    else {
+      row("Salary cap", num(mkSet.budget, 50, 1000, (v) => { mkSet.budget = v; }), "Per team. Every roster spot costs at least $1.");
+      row("Seconds to nominate", num(mkSet.nomSecs, 10, 300, (v) => { mkSet.nomSecs = v; }));
+      row("Seconds per bid", num(mkSet.bidSecs, 3, 60, (v) => { mkSet.bidSecs = v; }), "The clock goes back to this after every bid.");
+    }
+    row("Computer teams", seg([["fast", "Fast"], ["normal", "Normal"], ["slow", "Slow"]], mkSet.ai, (v) => { mkSet.ai = v; }), "How long they take to pick or nominate.");
+    const rs = el("div", "mkroster"); rs.append(el("h4", "pwh", `Roster spots · ${mkSlotList(mkSet.roster).length} per team`));
+    const grid = el("div", "mkrgrid");
+    for (const [s, l] of MK_SLOTS) { const c = el("label", "mkrcell"); c.append(el("span", null, l), num(mkSet.roster[s] || 0, 0, s === "BN" ? 15 : s === "SP" || s === "RP" || s === "P" || s === "OF" ? 10 : 3, (v) => { mkSet.roster[s] = v; mkDrawSetup(box); })); grid.append(c); }
+    rs.append(grid);
+    const rst = el("button", "linkbtn", "ESPN default"); rst.type = "button"; rst.addEventListener("click", () => { mkSet.roster = Object.assign({}, MK_DEF.roster); mkSaveSet(); mkDrawSetup(box); }); rs.append(rst);
+    w.append(rs);
+    w.append(el("p", "note", `Scoring for the Proj column: ${fpreset().name} (Fantasy ▸ Scoring settings). The draft order everyone follows is the 2027 consensus.`));
+    const go = el("button", "btn mkgo", "Start draft"); go.type = "button"; go.disabled = !mkSlotList(mkSet.roster).length; go.addEventListener("click", mkStart); w.append(go);
+    const A = window.DRAFT_ADP27; if (A) { const s = el("details", "mksrc"); s.append(el("summary", null, "Where the 2027 consensus comes from"));
+      s.append(el("p", "note", "The site's projection (2024-26 official lines, ESPN standard points, weighted to 2026, regressed and aged) ranked by value over replacement, averaged with every early 2027 list published so far. Those lists are category-based, so a reliever or a base stealer can sit differently from a points league's view; the projection pulls the other way."));
+      const ul = el("ul"); for (const x of A.sources) { const li = el("li"); const a = el("a", null, x.name); a.href = x.url; a.target = "_blank"; a.rel = "noopener"; li.append(a, ` · ${fmtDate(x.date)}`); ul.append(li); } s.append(ul); w.append(s); }
+    box.append(w);
+  }
+  // the whole room; the list and side panes keep their scroll, the search box its text and focus
+  function mkDraw() {
+    if (state.mode !== "mock" || !mk) return;
+    const box = pitchBoardEl();
+    const keep = { list: box.querySelector(".mklist")?.scrollTop || 0, side: box.querySelector(".mkside")?.scrollTop || 0, focus: document.activeElement && document.activeElement.id === "mkq" };
+    box.replaceChildren();
+    if (mk.status === "done") { mkDrawDone(box); return; }
+    const mob = mobileView();
+    box.append(mkTop());
+    if (mk.auc) box.append(mkAuctionPanel());
+    if (mob) {
+      const tabs = el("div", "seg mktabs");
+      for (const [k, l] of [["players", "Players"], ["team", "My team"], ["board", "Board"], ["log", "Picks"]]) { const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(mkUI.tab === k)); b.addEventListener("click", () => { mkUI.tab = k; mkDraw(); }); tabs.append(b); }
+      box.append(tabs);
+      const main = el("div", "mkmain one");
+      if (mkUI.tab === "players") main.append(mkListPane()); else { const s = el("div", "mkside"); s.append(mkSidePane(mkUI.tab)); main.append(s); }
+      box.append(main);
+    } else {
+      const main = el("div", "mkmain"), side = el("div", "mkside");
+      const st = el("div", "seg mktabs"); for (const [k, l] of [["team", "My team"], ["board", "Board"], ["log", "Picks"], ["queue", "Queue"]]) { const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(mkUI.side === k)); b.addEventListener("click", () => { mkUI.side = k; mkDraw(); }); st.append(b); }
+      side.append(st, mkSidePane(mkUI.side));
+      main.append(mkListPane(), side); box.append(main);
+    }
+    const l = box.querySelector(".mklist"); if (l) l.scrollTop = keep.list;
+    const s = box.querySelector(".mkside"); if (s) s.scrollTop = keep.side;
+    if (keep.focus) { const q = $("mkq"); if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
+    mkClock();
+  }
+  // just the parts a bid changes
+  function mkDrawLive() { if (state.mode !== "mock" || !mk || !mk.auc) return; const o = document.querySelector(".mkauc"); if (o) o.replaceWith(mkAuctionPanel()); const t = document.querySelector(".mktop"); if (t) t.replaceWith(mkTop()); mkClock(); }
+  function mkTop() {
+    const top = el("div", "mktop"), T = mk.set.teams;
+    let what;
+    if (mk.set.type === "snake") { const ti = mkOnClock(), r = Math.floor(mk.pick / T) + 1, n = (mk.pick % T) + 1; what = `Round ${r} · Pick ${n} (${mk.pick + 1} of ${mkTotal()}) · ${mk.teams[ti].me ? "You're on the clock" : mk.teams[ti].name + " is picking"}`; }
+    else { const A = mk.auc; what = A.phase === "nom" ? (mk.teams[A.nom].me ? "Your nomination" : `${mk.teams[A.nom].name} is nominating`) : `Bidding on ${mkP(A.k).name}`; what += ` · ${mk.log.length} of ${mkTotal()} sold`; }
+    const mine = mk.set.type === "snake" ? mk.teams[mkOnClock()].me : (mk.auc.phase === "nom" && mk.teams[mk.auc.nom].me);
+    top.classList.toggle("mine", !!mine);
+    const clock = el("div", "mkclock"); clock.id = "mkclock";
+    const info = el("div", "mkwhat", what);
+    const btns = el("div", "mkbtns");
+    const pz = el("button", "btn mkpause", mk.paused ? "Resume" : "Pause"); pz.type = "button"; pz.addEventListener("click", () => { mk.paused = !mk.paused; mkLast = Date.now(); mkSave(); mkTick(true); mkDraw(); });
+    const quit = el("button", "btn btn-quiet", "End"); quit.type = "button"; quit.addEventListener("click", () => { if (confirm("End this mock draft? It can't be resumed.")) { mk = null; mkSave(); render(); } });
+    btns.append(pz, quit);
+    if (mk.set.type === "auction") { const me = mk.teams[mk.me]; btns.prepend(el("span", "mkbudget", `$${me.budget} left · max bid $${mkMaxBid(me)}`)); }
+    top.append(clock, info, btns);
+    return top;
+  }
+  function mkAuctionPanel() {
+    const A = mk.auc, w = el("div", "mkauc"), me = mk.teams[mk.me];
+    if (A.phase === "nom") {
+      w.append(el("div", "mkaucn", mk.teams[A.nom].me ? "Your nomination: tap Nominate on a player. Opening bid:" : `Waiting for ${mk.teams[A.nom].name} to nominate…`));
+      if (mk.teams[A.nom].me) { const i = el("input", "mknum"); i.type = "number"; i.min = 1; i.max = mkMaxBid(me); i.value = A.open || 1; i.id = "mkopen"; i.addEventListener("change", () => { A.open = Math.max(1, Math.min(mkMaxBid(me), +i.value || 1)); i.value = A.open; }); w.append(i); }
+      if (A.last) { const x = mkP(A.last.k); w.append(el("div", "mklast", `Last: ${x.name} to ${mk.teams[A.last.t].name} for $${A.last.bid}`)); }
+      return w;
+    }
+    const x = mkP(A.k), hi = mk.teams[A.high];
+    const head = el("div", "mkaucp"); const nb = el("button", "linkbtn mkpname", x.name); nb.type = "button"; nb.addEventListener("click", () => mkOpenCard(x)); head.append(nb, el("span", "mksub", ` ${x.team} · ${mkPosTag(x)} · value $${mkVal(x.k)} · proj ${Math.round(x.mine)}`));
+    const bid = el("div", "mkbid"); bid.append(el("span", "mkbamt", `$${A.bid}`), el("span", "mkbwho", hi.me ? "You're high" : hi.name));
+    const ctl = el("div", "mkbctl");
+    const can = (amt) => A.high !== mk.me && amt <= mkMaxBid(me) && mkCanAdd(me, x, mk.set.roster);
+    for (const d of [1, 5]) { const b = el("button", "btn", `+$${d} ($${A.bid + d})`); b.type = "button"; b.disabled = !can(A.bid + d) || mk.paused; b.addEventListener("click", () => mkBid(mk.me, A.bid + d)); ctl.append(b); }
+    const i = el("input", "mknum"); i.type = "number"; i.min = A.bid + 1; i.max = mkMaxBid(me); i.placeholder = "$"; i.id = "mkcust";
+    const cb = el("button", "btn btn-quiet", "Bid"); cb.type = "button"; cb.disabled = mk.paused || A.high === mk.me; cb.addEventListener("click", () => { const v = Math.round(+i.value); if (can(v) && v > A.bid) mkBid(mk.me, v); });
+    ctl.append(i, cb);
+    const hist = el("div", "mkhist", A.hist.slice(-4).reverse().map(([t, a]) => `${mk.teams[t].me ? "You" : mk.teams[t].name} $${a}`).join(" · "));
+    w.append(head, bid, ctl, hist);
+    return w;
+  }
+  function mkOpenCard(x) { state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.expanded = x.type + x.id; render(); }
+  function mkListPane() {
+    const pane = el("div", "mklistw"), bar = el("div", "mkbar");
+    const q = el("input", "mksearch"); q.id = "mkq"; q.type = "search"; q.placeholder = "Find a player"; q.value = mkUI.q; q.addEventListener("input", () => { mkUI.q = q.value; mkDrawList(); });
+    const pos = el("div", "mkpos"); for (const p of ["ALL", "C", "1B", "2B", "3B", "SS", "OF", "DH", "SP", "RP"]) { const b = el("button", "mkpill", p === "ALL" ? "All" : p); b.type = "button"; b.setAttribute("aria-pressed", String(mkUI.pos === p)); b.addEventListener("click", () => { mkUI.pos = p; mkDraw(); }); pos.append(b); }
+    const sort = el("select", "mksel"); for (const [v, l] of [["adp", "Sort: 2027 ADP"], ["proj", "Sort: Proj (your scoring)"], ...(mk.set.type === "auction" ? [["val", "Sort: $ value"]] : [])]) { const o = el("option", null, l); o.value = v; o.selected = mkUI.sort === v; sort.append(o); }
+    sort.addEventListener("change", () => { mkUI.sort = sort.value; mkDraw(); });
+    const hide = el("label", "mkhide"); const hc = el("input"); hc.type = "checkbox"; hc.checked = mkUI.hide; hc.addEventListener("change", () => { mkUI.hide = hc.checked; mkDraw(); }); hide.append(hc, " Hide drafted");
+    bar.append(q, sort, hide, pos);
+    const list = el("div", "mklist"); list.append(mkTable());
+    pane.append(bar, list); return pane;
+  }
+  function mkDrawList() { const l = document.querySelector(".mklist"); if (l) l.replaceChildren(mkTable()); }
+  function mkTable() {
+    const taken = mkTaken(), me = mk.teams[mk.me], auc = mk.set.type === "auction", A = mk.auc;
+    const myTurn = !mk.paused && (auc ? A.phase === "nom" && mk.teams[A.nom].me : mk.teams[mkOnClock()].me);
+    const nq = norm(mkUI.q || "");
+    let rows = mkPool().filter((x) => (!mkUI.hide || !taken.has(x.k)) && (mkUI.pos === "ALL" || (mkUI.pos === "DH" ? x.type === "H" : x.elig.includes(mkUI.pos))) && (!nq || norm(x.name).includes(nq)));
+    if (mkUI.sort === "proj") rows.sort((a, b) => b.mine - a.mine); else if (mkUI.sort === "val") rows.sort((a, b) => mkVal(b.k) - mkVal(a.k) || a.adp - b.adp);
+    rows = rows.slice(0, 250);
+    const t = el("table", "pwtable mktable"), th = el("thead"), hr = el("tr");
+    for (const [h, c] of [["ADP", null], ["Player", "pwho"], ["Proj", null], ...(auc ? [["$", null]] : []), ["", null]]) hr.append(el("th", c, h));
+    th.append(hr); t.append(th); const tb = el("tbody");
+    for (const x of rows) {
+      const tr = el("tr"); const gone = taken.has(x.k); if (gone) tr.className = "mkgone";
+      const who = el("td", "pwho"); const nb = el("button", "linkbtn pwname", x.name); nb.type = "button"; nb.addEventListener("click", () => mkOpenCard(x));
+      const tag = el("span", "mkptag", x.elig[0] === "DH" ? "DH" : x.elig[0]); tag.style.background = POSCLR[x.elig[0]] || "#5d6d7e";
+      who.append(tag, nb, el("small", null, ` ${x.team} · ${mkPosTag(x)}`));
+      tr.append(el("td", null, String(x.adp)), who, el("td", null, String(Math.round(x.mine))));
+      if (auc) tr.append(el("td", null, mkVal(x.k) ? `$${mkVal(x.k)}` : "–"));
+      const act = el("td", "mkact");
+      if (gone) { const l = mk.log.find((l) => l.k === x.k); act.append(el("small", null, `${mk.teams[l.t].me ? "You" : mk.teams[l.t].name}${l.cost ? " $" + l.cost : ""}`)); }
+      else {
+        if (myTurn && mkCanAdd(me, x, mk.set.roster)) { const b = el("button", "btn mkdraft", auc ? "Nominate" : "Draft"); b.type = "button"; b.addEventListener("click", () => { if (auc) mkNominate(mk.me, x.k, Math.min(mkMaxBid(me), A.open || 1)); else mkDraftPick(x.k); }); act.append(b); }
+        const qd = mk.queue.includes(x.k), s = el("button", "linkbtn mkstar", qd ? "★" : "☆"); s.type = "button"; s.title = qd ? "Take out of your queue" : "Add to your queue";
+        s.addEventListener("click", () => { mk.queue = qd ? mk.queue.filter((k) => k !== x.k) : [...mk.queue, x.k]; mkSave(); mkDraw(); }); act.append(s);
+      }
+      tr.append(act); tb.append(tr);
+    }
+    t.append(tb);
+    if (!rows.length) { const w = el("div"); w.append(t, el("p", "note", "Nobody matches.")); return w; }
+    return t;
+  }
+  function mkSidePane(which) {
+    const w = el("div", "mkpane");
+    if (which === "team" || which === "players") {
+      const teamI = mkUI.boardTeam ?? mk.me, t = mk.teams[teamI];
+      const sel = el("select", "mksel"); mk.teams.forEach((x, i) => { const o = el("option", null, x.name); o.value = i; o.selected = i === teamI; sel.append(o); }); sel.addEventListener("change", () => { mkUI.boardTeam = +sel.value; mkDraw(); });
+      w.append(sel);
+      const ps = t.picks.map((q) => mkP(q.k)), a = mkAssign(ps, mk.set.roster);
+      const tb = el("table", "pwtable mkteam"); const body = el("tbody");
+      a.slots.forEach((s, i) => { const o = a.own[i], x = o >= 0 ? ps[o] : null, tr = el("tr"); tr.append(el("td", "mkslot", MK_SLOTS.find(([k]) => k === s)[1]));
+        const c = el("td", "pwho"); if (x) { const b = el("button", "linkbtn pwname", x.name); b.type = "button"; b.addEventListener("click", () => mkOpenCard(x)); c.append(b, el("small", null, ` ${x.team} · ${mkPosTag(x)}`)); } else c.append(el("small", null, "—"));
+        tr.append(c, el("td", null, x ? String(Math.round(x.mine)) : ""), el("td", null, x && mk.set.type === "auction" ? `$${t.picks[o].cost}` : ""));
+        body.append(tr); });
+      tb.append(body); w.append(tb);
+      const startPts = a.own.reduce((s, o, i) => s + (o >= 0 && a.slots[i] !== "BN" ? ps[o].mine : 0), 0);
+      w.append(el("p", "note", `Starters' projected points: ${Math.round(startPts)}${mk.set.type === "auction" ? ` · $${t.budget} left` : ""}`));
+    } else if (which === "board") {
+      const T = mk.set.teams, rounds = mkSpots(), g = el("div", "mkboard"); g.style.setProperty("--n", T);
+      mk.teams.forEach((t) => g.append(el("div", "mkbh" + (t.me ? " me" : ""), t.name)));
+      if (mk.set.type === "snake") {
+        for (let r = 0; r < rounds; r++) for (let c = 0; c < T; c++) {
+          const n = r * T + (r % 2 === 0 ? c : T - 1 - c), l = mk.log[n], cell = el("div", "mkbc");
+          if (l) { const x = mkP(l.k); cell.style.borderLeftColor = POSCLR[x.elig[0]] || "#5d6d7e"; cell.append(el("b", null, x.name), el("small", null, `${r + 1}.${(n % T) + 1} · ${x.elig[0]}`)); }
+          else if (n === mk.pick) cell.classList.add("now");
+          g.append(cell);
+        }
+      } else {
+        for (let r = 0; r < rounds; r++) mk.teams.forEach((t) => { const q = t.picks[r], cell = el("div", "mkbc"); if (q) { const x = mkP(q.k); cell.style.borderLeftColor = POSCLR[x.elig[0]] || "#5d6d7e"; cell.append(el("b", null, x.name), el("small", null, `$${q.cost} · ${x.elig[0]}`)); } g.append(cell); });
+      }
+      const sc = el("div", "mkboardw"); sc.append(g); w.append(sc);
+    } else if (which === "log") {
+      if (!mk.log.length) w.append(el("p", "note", "No picks yet."));
+      const ul = el("ol", "mklog"); for (const l of mk.log.slice().reverse()) { const x = mkP(l.k), li = el("li"); li.value = l.n; li.append(el("b", null, x.name), ` ${x.elig[0]} · ${mk.teams[l.t].me ? "You" : mk.teams[l.t].name}${l.cost ? " · $" + l.cost : ""}`); if (mk.teams[l.t].me) li.className = "me"; ul.append(li); }
+      w.append(ul);
+    } else if (which === "queue") {
+      const taken = mkTaken(), q = mk.queue.filter((k) => !taken.has(k));
+      if (!q.length) w.append(el("p", "note", "Tap ☆ beside a player to queue him. When your clock runs out you get the first one who fits."));
+      const ul = el("ol", "mklog"); q.forEach((k, i) => { const x = mkP(k), li = el("li"); li.append(el("b", null, x.name), ` ${x.elig[0]} · ADP ${x.adp} `);
+        const up = el("button", "linkbtn", "↑"); up.type = "button"; up.disabled = !i; up.addEventListener("click", () => { const j = mk.queue.indexOf(k), p = mk.queue.indexOf(q[i - 1]); [mk.queue[j], mk.queue[p]] = [mk.queue[p], mk.queue[j]]; mkSave(); mkDraw(); });
+        const rm = el("button", "linkbtn", "×"); rm.type = "button"; rm.addEventListener("click", () => { mk.queue = mk.queue.filter((z) => z !== k); mkSave(); mkDraw(); });
+        li.append(up, rm); ul.append(li); });
+      w.append(ul);
+    }
+    return w;
+  }
+  function mkDrawDone(box) {
+    const w = el("div", "mkset");
+    w.append(el("h2", "mkh", "Draft complete"));
+    const rows = mk.teams.map((t, i) => { const ps = t.picks.map((q) => mkP(q.k)), a = mkAssign(ps, mk.set.roster); return { t, i, pts: a.own.reduce((s, o, j) => s + (o >= 0 && a.slots[j] !== "BN" ? ps[o].mine : 0), 0) }; }).sort((a, b) => b.pts - a.pts);
+    const tb = el("table", "pwtable"), hd = el("tr"); for (const h of ["#", "Team", "Starters' projected points"]) hd.append(el("th", h === "Team" ? "pwho" : null, h));
+    const th = el("thead"); th.append(hd); tb.append(th); const body = el("tbody");
+    rows.forEach((r, n) => { const tr = el("tr"); if (r.t.me) tr.className = "mkmine"; tr.append(el("td", null, String(n + 1)), el("td", "pwho", r.t.name), el("td", null, String(Math.round(r.pts)))); body.append(tr); });
+    tb.append(body); w.append(tb);
+    mkUI.boardTeam = mk.me; w.append(el("h4", "pwh", "Your team")); w.append(mkSidePane("team"));
+    const again = el("button", "btn mkgo", "New mock draft"); again.type = "button"; again.addEventListener("click", () => { mk = null; mkSave(); render(); });
+    const brd = el("details", "mksrc"); brd.append(el("summary", null, "The board")); brd.append(mkSidePane("board"));
+    w.append(brd, again); box.append(w);
+  }
   const NAV_GROUPS = [
-    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "eligibility", "fantasy", "planner"] },
+    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "eligibility", "fantasy", "planner", "mock"] },
     { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending", "pitches", "trends", "callups", "compare"] },
     { key: "more", sel: "moresel", txt: "moreseltxt", menu: "moremenu", label: "More", short: "More", modes: ["appearance"] },
   ];
@@ -8007,7 +8466,7 @@
     const pm = h.match(/^player\/(\d+)$/);
     if (pm) { state.mode = "player"; const id = Number(pm[1]); if (state.x.id !== id) { state.x = { id, type: null, ds: null }; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; } return; }
     if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["leaders", "trending", "whatif", "settings"].includes(v) ? v : "leaders"; return; }
-    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "pitches", "trends", "callups", "planner", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
+    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "pitches", "trends", "callups", "planner", "mock", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {

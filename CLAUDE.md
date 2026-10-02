@@ -863,6 +863,23 @@ is deploy-limited.
   (`fantasy.js` / `hist/fantasy-<y>.js`, loaded by `colsFor` when a points column is ticked) under the current preset; `fsave` bumps
   `fantGen` and clears the pools so a scoring change re-scores. Full season of the last three MLB seasons only (a window, split,
   span or minors season reads "–").
+* **Mock Draft** (Fantasy ▸ Mock Draft, `#mock`, `renderMock` and the `mk*` block before `NAV_GROUPS` in `app.js`; Sean, 2 Oct 2026:
+  "practice mock drafts ... snake and auction ... function very very similar to espns ... allow pausing"): a draft room against computer
+  teams on the Stuff+ board's standing card (every `[data-mode="planner"]` CSS rule also names `mock`; the room's own block is at the end
+  of `styles.css`). Setup: snake / auction, 4-16 teams, your slot (or random), seconds per pick, or cap / nomination / bid seconds, AI
+  speed, roster spots per slot (C, 1B, 2B, 3B, SS, 2B/SS, 1B/3B, OF, UTIL, SP, RP, P, Bench). Room: clock + Pause / End, player list
+  (search, position pills, sort by ADP / your Proj / $, Draft or Nominate, ☆ queue), My team (slots filled by a bipartite matching,
+  `mkAssign`), Board, Picks, Queue; auction panel with +$1 / +$5 / custom bids. At zero you get your queue's first player who fits, else
+  the best available. Computer teams pick by ADP with noise and roster need (`mkAiChoice`), nominate from the top values and bid up to a
+  private price around the player's $ (`mkTick`). Settings `draft2027.mock`, the draft in progress `draft2027.mockdraft` (comes back
+  paused; leaving the page pauses it). **The 2027 ADP** (`mkPool`): the site's projection — 2024-26 official lines (`fantasy.js` +
+  `hist/fantasy-lines.js`) under ESPN standard scoring, weighted .5 / .3 / .2, regressed toward the league rate, playing time weighted
+  .6 / .25 / .15, aged — ranked by value over replacement (10 teams, default roster), then the **median** with the early 2027 lists in
+  **`hist/adp-2027.js`** (hand-built 2 Oct 2026 from ESPN's top 50, Yahoo's top 25, CBS's position ranks and RotoWire's first 2027
+  draft by position; keyed type+id — Ohtani the hitter and pitcher share an MLB id; position lists are placed where that position's
+  n-th player falls in the projection). Those lists are category-based. Refresh the file when ESPN publishes 2027 ADP (its API had no
+  2027 season on 2 Oct). Auction $ = $1 a spot plus the cap's surplus shared by value over replacement for the room (`mkDollars`). The
+  Proj column is the projection under the current Fantasy preset.
 * **Positions shown are where he played that season** (`playedLabel`: positions with a tenth of his games, most first, up to three;
   SP / RP by that season's starts and relief), on the Leaderboard, Trending and cards; next year's fantasy eligibility (`posLabel`)
   only on Rankings, the Draft board, Eligibility and Fantasy (`posShown`; Sean, 30 Sep 2026).
