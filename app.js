@@ -8067,11 +8067,10 @@
   const mkSave = () => { try { if (mk) localStorage.setItem("draft2027.mockdraft", JSON.stringify(mk)); else localStorage.removeItem("draft2027.mockdraft"); } catch {} };
   // the scoring the room's Proj column and team totals use: one of the saved Fantasy presets, picked at setup (Sean, 2 Oct 2026)
   const mkScoring = () => { const id = mk ? mk.set.scoring : mkSet.scoring; return fpresets().find((p) => p.id === id) || fpreset(); };
-  const mkReady = () => !!(fData(String(DATA.meta.season)) && window.DRAFT_PROJ27 && (window.DRAFT_ESPN27 || failed.has("hist/espn-adp27.js")));
+  const mkReady = () => !!(fData(String(DATA.meta.season)) && window.DRAFT_PROJ27);
   function mkEnsure() {
     fEnsure(String(DATA.meta.season));
     ensureScript("hist/proj-2027.js", () => !!window.DRAFT_PROJ27);
-    ensureScript("hist/espn-adp27.js", () => !!window.DRAFT_ESPN27);
   }
   // the pool, built once per scoring: every 2026 MLB player with a projection, his eligibility, role and projected points
   let mkPoolCache = null;
@@ -8103,18 +8102,6 @@
     // a real league is drafting for (the early 2027 expert lists were category-based, which is why they read odd in a points room)
     const vor = mkVOR(pool, S.teams, S.roster, "mine");
     pool.sort((a, b) => vor.get(b.k) - vor.get(a.k) || b.mine - a.mine);
-    // ESPN's order is the base (Sean, 2 Oct 2026: ESPN's draft room, "make adjustments for 2027 based on projections ... keep the same
-    // idea"), moved by the projection: a player the projection likes far better (Judge at ESPN's $6 on an injured 2026, De La Cruz, Raleigh)
-    // is pulled most of the way up — "make adjustments to the players whose adp is way too ridiculously low" — one it likes less only a
-    // little; a player ESPN doesn't list goes by the projection, a little behind
-    const E = window.DRAFT_ESPN27, er = new Map(E ? E.order.map(([k], i) => [k, i + 1]) : []);
-    pool.forEach((x, i) => {
-      const p = i + 1, e = er.get(x.k);
-      x.prank = p; x.erank = e || null;
-      const wp = p < e ? 0.65 + 0.25 * Math.min(1, (e - p) / 60) : 0.25;   // the wider ESPN undershoots, the more the projection decides
-      x.cons = e == null ? (E ? p * 1.15 + 15 : p) : (1 - wp) * e + wp * p;
-    });
-    pool.sort((a, b) => a.cons - b.cons || a.prank - b.prank);
     pool.forEach((x, i) => { x.adp = i + 1; });
     mkPoolCache = { sig, pool, map: new Map(pool.map((x) => [x.k, x])) };
     return pool;
@@ -8173,12 +8160,8 @@
   // the curve for a room of T teams, $B each, N spots: the stars are the same few players in any room, so the top ranks map rank for
   // rank; deeper down a rank sits at the same fraction of the pool as in Sean's room. Then the money over $1 a spot is shared to
   // the room's T x B in those proportions (a $400 cap doubles every price over the floor, a $100 one halves it)
-  // since 2 Oct 2026 the curve is ESPN's own auction values (hist/espn-adp27.js — Sean's screenshots of ESPN's draft room: Ohtani $130,
-  // Soto $92, Skenes $78 … ~150 players over $0, a 12-team $260 room by its totals; Sean: "thats what i wanted the pricing scaling"),
-  // scaled to the room; his league's prices (MK_PRICE) stay as the fallback
   function mkCurve(N, T, B) {
-    const E = window.DRAFT_ESPN27, src = E ? { P: E.order.map(([, v]) => v).sort((a, b) => b - a), teams: E.teams, budget: E.budget, spots: E.spots } : { P: MK_PRICE, teams: MK_MKT.teams, budget: MK_MKT.budget, spots: MK_MKT.spots };
-    const P = src.P, M = src.teams * src.spots, tot = src.teams * src.budget, sc = M / N, at = (i) => (i < P.length ? P[i] : 0);
+    const P = MK_PRICE, M = MK_MKT.teams * MK_MKT.spots, tot = MK_MKT.teams * MK_MKT.budget, sc = M / N, at = (i) => (i < P.length ? P[i] : 0);
     const raw = Array.from({ length: N }, (_, r) => { const t = Math.min(1, r / 60), q = r * (1 + (sc - 1) * t), i = Math.floor(q), f = q - i; return (at(i) * (1 - f) + at(i + 1) * f) / tot; });
     const over = raw.map((v) => Math.max(0, v * T * B - 1)), sum = over.reduce((a, b) => a + b, 0), cash = T * B - N;
     return over.map((v) => 1 + (sum ? v * cash / sum : 0));
