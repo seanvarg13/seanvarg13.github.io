@@ -8304,6 +8304,22 @@
     mkSave(); mkDraw();
   }
   function mkFinish() { mk.status = "done"; mk.paused = false; }
+  // the computer teams still willing to raise on the player up for bid, and one of them's next bid
+  const mkBidders = () => { const A = mk.auc; return mk.teams.map((t, i) => i).filter((i) => !mk.teams[i].me && i !== A.high && A.vals[i] > A.bid && mkMaxBid(mk.teams[i]) > A.bid && mkCanAdd(mk.teams[i], mkP(A.k), mk.set.roster)); };
+  function mkAiRaise(cand) {
+    const A = mk.auc, i = cand[Math.floor(Math.random() * cand.length)], room = A.vals[i] - A.bid;
+    // jumps while the price is far under what he's worth to them, then a dollar at a time — the way a room bids
+    const step = room > 25 && A.bid < 0.5 * A.vals[i] ? 3 + Math.floor(Math.random() * 8) : room > 8 && Math.random() < 0.4 ? 1 + Math.floor(Math.random() * 3) : 1;
+    return [i, Math.min(A.vals[i], mkMaxBid(mk.teams[i]), A.bid + step)];
+  }
+  // fast forward (Sean, 2 Oct 2026: "if I know I don't want a player I can fast forward through his bidding process"): the computer
+  // teams bid it out on the spot, the same way they would on the clock, and he's sold — you're out of it (a bid of yours that's
+  // still high stands until someone tops it)
+  function mkSkip() {
+    const A = mk.auc; if (!A || A.phase !== "bid") return;
+    for (let n = 0; n < 5000; n++) { const cand = mkBidders(); if (!cand.length) break; const [i, amt] = mkAiRaise(cand); if (amt <= A.bid) break; A.bid = amt; A.high = i; A.hist.push([i, amt]); }
+    mkSold();
+  }
   // one clock for everything: counts down, lets the computer teams act, and auto-picks / auto-nominates for you at zero
   let mkTimer = null, mkLast = 0;
   function mkTick(start) {
@@ -8329,13 +8345,8 @@
       } else {
         if (mk.clock <= 0) { mkSold(); return; }
         // the computer teams: each tick maybe one raises, more often as the clock runs down, never past its own price for him
-        const late = mk.clock < 3000, cand = mk.teams.map((t, i) => i).filter((i) => !mk.teams[i].me && i !== A.high && A.vals[i] > A.bid && mkMaxBid(mk.teams[i]) > A.bid && mkCanAdd(mk.teams[i], mkP(A.k), mk.set.roster));
-        if (cand.length && Math.random() < (late ? 0.32 : 0.07) * Math.min(3, cand.length)) {
-          const i = cand[Math.floor(Math.random() * cand.length)], room = A.vals[i] - A.bid;
-          // jumps while the price is far under what he's worth to them, then a dollar at a time — the way a room bids
-          const step = room > 25 && A.bid < 0.5 * A.vals[i] ? 3 + Math.floor(Math.random() * 8) : room > 8 && Math.random() < 0.4 ? 1 + Math.floor(Math.random() * 3) : 1;
-          mkBid(i, Math.min(A.vals[i], mkMaxBid(mk.teams[i]), A.bid + step));
-        }
+        const late = mk.clock < 3000, cand = mkBidders();
+        if (cand.length && Math.random() < (late ? 0.32 : 0.07) * Math.min(3, cand.length)) { const [i, amt] = mkAiRaise(cand); mkBid(i, amt); }
       }
     }
     mkClock();
@@ -8495,7 +8506,8 @@
     for (const d of [1, 5]) { const b = el("button", "btn", `+$${d} ($${A.bid + d})`); b.type = "button"; b.disabled = !can(A.bid + d) || mk.paused; b.addEventListener("click", () => mkBid(mk.me, A.bid + d)); ctl.append(b); }
     const i = el("input", "mknum"); i.type = "number"; i.min = A.bid + 1; i.max = mkMaxBid(me); i.placeholder = "$"; i.id = "mkcust";
     const cb = el("button", "btn btn-quiet", "Bid"); cb.type = "button"; cb.disabled = mk.paused || A.high === mk.me; cb.addEventListener("click", () => { const v = Math.round(+i.value); if (can(v) && v > A.bid) mkBid(mk.me, v); });
-    ctl.append(i, cb);
+    const ff = el("button", "btn btn-quiet mkskip", "⏩ Skip"); ff.type = "button"; ff.title = "Not interested: the other teams bid him out now"; ff.disabled = mk.paused; ff.addEventListener("click", () => { mkAudio(); mkSkip(); });
+    ctl.append(i, cb, ff);
     const hist = el("div", "mkhist", A.hist.slice(-4).reverse().map(([t, a]) => `${mk.teams[t].me ? "You" : mk.teams[t].name} $${a}`).join(" · "));
     w.append(head, bid, ctl, hist);
     return w;
