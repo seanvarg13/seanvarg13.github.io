@@ -5658,7 +5658,8 @@
     else { o.IP = o.OUTS / 3; o.OUT = o.OUTS; o.SVHD = o.SV + o.HD; }
     return o;
   }
-  function renderFantasySeasons(p, grp, w, y, ppaPct) {
+  // vw / vlab: the card's filtered line for season y (Sean, 2 Oct 2026: a date range filters that season's row too, not just the tiles)
+  function renderFantasySeasons(p, grp, w, y, ppaPct, vw, vlab) {
     const wrap = el("div", "fantseasons");
     wrap.append(el("h4", "fanth", "By season"));
     ensureScript("hist/fantasy-lines.js", () => !!window.DRAFT_FANTASY_LINES);
@@ -5667,9 +5668,10 @@
     const now = Fc && (grp === "H" ? fHit(Fc, p.id) : fPit(Fc, p.id));
     if (now && now.G) rows.push([cur, now]);
     if (L) for (const yy of Object.keys(L.years).sort().reverse()) { const a = L.years[yy][grp === "H" ? "hitters" : "pitchers"][p.id]; if (a) { const o = fLineObj(L, grp, a); if (o.G) rows.push([yy, o]); } }
+    if (vw && vw.G) for (const r of rows) if (r[0] === y) r[1] = vw;
     if (!rows.length) { wrap.append(el("p", "note", L ? "No MLB seasons to show." : failed.has("hist/fantasy-lines.js") ? "Past seasons aren't built yet." : "Loading past seasons…")); return wrap; }
     const t = el("table", "ubt fantyrs"), th = el("thead"), hr = el("tr");
-    const heads = grp === "H" ? ["Season", "G", "PA", "Pts", "Pts/G", "Pts/PA"] : ["Season", "G", "GS", "IP", "Pts", "Pts/G"];
+    const heads = grp === "H" ? ["Season", "G", "PA", "PA/G", "Pts", "Pts/G", "Pts/PA"] : ["Season", "G", "GS", "IP", "Pts", "Pts/G"];   // PA/G behind PA (Sean, 2 Oct 2026)
     for (const h of heads) hr.append(el("th", h === "Season" ? "l" : null, h));
     th.append(hr); t.append(th);
     const tb = el("tbody");
@@ -5677,8 +5679,9 @@
     const f3 = (x) => (x == null || !isFinite(x) ? "–" : x.toFixed(3));
     for (const [yy, o] of rows) {
       const pts = fPts(w, o), r = el("tr", yy === y ? "fcur" : null); tp += pts; tg += o.G; tpa += o.PA || 0;
-      r.append(el("td", "l", yy), el("td", null, String(o.G)));
-      if (grp === "H") r.append(el("td", null, String(o.PA)));
+      const yc = el("td", "l", yy); if (vw && vw.G && yy === y && vlab) yc.append(el("small", null, ` · ${vlab}`));
+      r.append(yc, el("td", null, String(o.G)));
+      if (grp === "H") r.append(el("td", null, String(o.PA)), el("td", null, f2(o.G ? o.PA / o.G : null)));
       else r.append(el("td", null, String(o.GS)), el("td", null, outsIP(o.OUTS)));
       r.append(el("td", "fp" + (pts < 0 ? " neg" : ""), f1(pts)), el("td", null, f2(pts / o.G)));
       if (grp === "H") { const v = o.PA ? pts / o.PA : null, td = el("td", "ppa", f3(v)), pc = ppaPct && v != null ? ppaPct(v) : null; if (pc != null) paint(td, pc); r.append(td); }   // coloured against this season's qualified hitters
@@ -5686,7 +5689,7 @@
     }
     if (rows.length > 1) {
       const r = el("tr", "ftot"); r.append(el("td", "l", "Total"), el("td", null, String(tg)));
-      if (grp === "H") r.append(el("td")); else r.append(el("td"), el("td"));
+      if (grp === "H") r.append(el("td", null, String(tpa)), el("td", null, f2(tg ? tpa / tg : null))); else r.append(el("td"), el("td"));
       r.append(el("td", "fp", f1(tp)), el("td", null, f2(tp / tg))); if (grp === "H") r.append(el("td", null, f3(tpa ? tp / tpa : null))); tb.append(r);
     }
     t.append(tb); wrap.append(t);
@@ -5754,7 +5757,7 @@
     // the points-by-category table came off (Sean, 30 Sep 2026: "i just wanna see points per game and pa"); By season below
     // carries points, per game and per PA
     const lbl = Object.fromEntries(FCATS[grp]);
-    box.append(renderFantasySeasons(p, grp, w, y, ppaPct));
+    box.append(renderFantasySeasons(p, grp, w, y, ppaPct, vw, vlab));
     // a pitcher's game log, newest first: the last ten, or every game on request
     if (grp === "P" && o.games && o.games.length) {
       const miss = Object.keys(w).filter((k) => Number(w[k]) && o.games[0][k] === undefined && !["IP", "OUT", "G", "SVHD", "RW", "RL", "QS", "NH", "PG"].includes(k));
