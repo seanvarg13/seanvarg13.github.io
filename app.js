@@ -8049,6 +8049,13 @@
         elig: p.type === "H" ? eligiblePositions(p) : (role === "SP" ? ["SP", ...pitcherRoles(p).filter((x) => x === "RP")] : ["RP", ...pitcherRoles(p).filter((x) => x === "SP")]),
         role, time: Math.round(p.type === "H" ? o.PA : o.IP), espn, mine });
     }
+    // a two-way player is one player (Sean, 2 Oct 2026: "ohtani should be valued as a pitcher and hitter"): his pitching points ride
+    // on his hitting entry, he fills a hitter's slot, and the separate pitcher entry goes — so he's the one way-out-front price
+    for (const h of pool.filter((x) => x.type === "H")) {
+      const pi = pool.findIndex((x) => x.type === "P" && x.id === h.id); if (pi < 0) continue;
+      const pt = pool[pi]; if (pt.espn < 50 && pt.mine < 50) continue;
+      h.espn += pt.espn; h.mine += pt.mine; h.two = { espn: pt.espn, mine: pt.mine, ip: pt.time }; pool.splice(pi, 1);
+    }
     // the ranking is the room's own: value over replacement under the scoring, teams and roster picked at setup — what every team in
     // a real league is drafting for (the early 2027 expert lists were category-based, which is why they read odd in a points room)
     const vor = mkVOR(pool, S.teams, S.roster, "mine");
@@ -8344,7 +8351,7 @@
   const mkFmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
   function mkClock() { const c = document.getElementById("mkclock"); if (c && mk) { const ms = mk.status === "pre" ? mk.pre : mk.clock; c.textContent = mk.paused ? "Paused" : mkFmt(ms); c.classList.toggle("low", !mk.paused && ms < 10000); } }
   const POSCLR = { C: "#7b5ea7", "1B": "#c0392b", "2B": "#d35400", "3B": "#b7950b", SS: "#1e8449", OF: "#2471a3", DH: "#5d6d7e", SP: "#117a65", RP: "#6c3483" };
-  const mkPosTag = (x) => x.type === "P" ? x.elig.join("/") : x.elig.join(", ");
+  const mkPosTag = (x) => x.type === "P" ? x.elig.join("/") : x.elig.join(", ") + (x.two ? " + P" : "");
   // ---- drawing ----
   function renderMock() {
     const box = pitchBoardEl(); mkEnsure();

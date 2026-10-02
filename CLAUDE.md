@@ -927,6 +927,9 @@ is deploy-limited.
   which is what read odd); the $ curve is unchanged and follows the new order. ESPN standard, 14 × $200, Sean's roster: Soto $98,
   Misiorowski $72, Ohtani (hitter) $66, Skubal $63 … — eight P slots a team make aces valuable. Swap in Steamer / ZiPS when they're out
   (November) by writing the same file shape.
+  **Ohtani is one player** (Sean, 2 Oct 2026: "ohtani should be valued as a pitcher and hitter thats why he should be $98 value guy and
+  the rest are not too close"): `mkPool` folds a two-way player's pitcher entry into his hitter entry (points summed, `x.two` keeps the
+  pitching part, the room tags him "DH + P"); he fills one hitter slot. 14 × $200: Ohtani $98, Soto $72, Misiorowski $66, Skubal $63.
   **Default roster has two UTIL** (Sean, 2 Oct 2026; `MK_OLDDEF` lists both earlier defaults so a saved copy of either moves up).
   **Louder** (Sean, 2 Oct 2026: "make the auction or pick sounds much louder"): `mkAudio` builds a compressor + 2.5× master gain once,
   every cue is a square tone with a triangle an octave under at 3-4× the old level (`mkSnd`'s `two`), your-turn plays twice, and on an
