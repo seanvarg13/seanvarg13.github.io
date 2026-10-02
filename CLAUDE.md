@@ -880,6 +880,8 @@ is deploy-limited.
   n-th player falls in the projection). Those lists are category-based. Refresh the file when ESPN publishes 2027 ADP (its API had no
   2027 season on 2 Oct). The
   Proj column (and the final standings) use the **Scoring** picked at setup from the saved Fantasy presets (`mkScoring`, `mkSet.scoring`).
+  **Default roster** (Sean, 2 Oct 2026, his league): C, 1B, 2B, 3B, SS, 2B/SS, 1B/3B, 4 OF, UTIL, 8 P, no SP / RP, 4 bench (24); a saved roster
+  that still equals the old ESPN default (`MK_OLDDEF`) moves to it on load, one he changed stays. The setup's reset link says Default.
   Same day: the draft slot is a row of buttons (Random, 1…N); a **Timer** button in the room's top bar changes the pick / nomination /
   bid clocks, the AI speed and the scoring mid-draft (a running clock longer than the new length is cut to it).
   **Later that day** (Sean: a 60-second countdown, sound alerts, "auction values ... very low for the top players"): the room opens on
@@ -895,14 +897,15 @@ is deploy-limited.
   no list names, never ahead of the listed ones at their rank (+60). CBS / RotoWire DH lists are matched against **DH-only** hitters
   (matched against every hitter, RotoWire's DH #3 Yandy Díaz came out ADP 3). **$ = the price for his ADP rank** (`mkDollars`) on
   `MK_PRICE`: Sean's league's 2026 auction (`MK_MKT`, every price paid, 14 × $200 × 25, 191 of 350 at $1-2) with its top 26 smoothed
-  (`MK_TOP`: 108, 76, 70, 67, 65 … 32). `mkCurve` maps the top ranks rank for rank (the stars are the same few in any room), deeper
-  ranks at the same fraction of the pool, then shares the money over $1 a spot to the room's teams × cap: 14 × $200 gives Ohtani $107,
+  (`MK_TOP`: 104, 76, 70, 67, 65 … 32; Ohtani $102 in a 14 × $200 room at Sean's ask). `mkCurve` maps the top ranks rank for rank (the stars are the same few in any room), deeper
+  ranks at the same fraction of the pool, then shares the money over $1 a spot to the room's teams × cap: 14 × $200 gives Ohtani $102,
   Witt $75, then $69-50 for the next ten; 10 × $260 Ohtani $130. The $ column is the computer teams' market too (`mkMarket`), so
   what you see is what the room thinks. Proj stays the site's projection under your scoring.
   **Computer bidding** (Sean, 2 Oct 2026: "make the actual auction behave similarly" to his league): a team's price = the $ for his
-  ADP × 0.8 × inflation (`mkInflation`: money left vs what the best open players are worth) × its style (`MK_STYLES` / `mkStyleMul`:
+  ADP × the room's mood on that lot (one draw for every team, `exp(0.22 · tier · gauss)` held to 1 − .3 tier … 1 + .35 tier, tier .4 for ADP 1 rising to 1 by ADP 2 × teams — a superstar swings least — Sean: "make it so the auction is random so it doesnt
+  go exactly based on auction values adp every time") × 0.8 × inflation (`mkInflation`: money left vs what the best open players are worth) × its style (`MK_STYLES` / `mkStyleMul`:
   stars-and-scrubs, balanced, bargain, early spender, pitching- / hitting-heavy) × noise (σ 0.2) × its money per open spot; half for a
-  player who'd only fill the bench. Stars are nominated first, later a mix of the top and $1 fliers; bids jump $3-10 while far under a
+  player who'd only fill the bench. Stars are nominated first (any of the top 8 open), later a mix of the top 15 and $1 fliers; bids jump $3-10 while far under a
   price, then go up $1.
 * **Positions shown are where he played that season** (`playedLabel`: positions with a tenth of his games, most first, up to three;
   SP / RP by that season's starts and relief), on the Leaderboard, Trending and cards; next year's fantasy eligibility (`posLabel`)
