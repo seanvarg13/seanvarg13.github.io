@@ -8074,9 +8074,14 @@
     const byV = pool.slice().sort((a, b) => vor.get(b.k) - vor.get(a.k)), prank = new Map(byV.map((x, i) => [x.k, i + 1]));
     const A = (window.DRAFT_ADP27 || {}).ranks || {};
     const posOrder = {};                                   // the projection's own order at each position, for the position lists
-    for (const x of byV) for (const s of [...x.elig, x.type === "H" ? "DH" : null]) if (s) (posOrder[s] = posOrder[s] || []).push(x.k);
+    // a DH list ranks the DH-only bats (Díaz, Rooker), so it's matched against them, not every hitter — matched against everyone, the
+    // third DH became the third-best hitter in baseball
+    const dhOnly = (x) => x.type === "H" && !x.elig.some((e) => e !== "DH" && e !== "UTIL");
+    for (const x of byV) for (const s of [...x.elig.filter((e) => e !== "DH"), dhOnly(x) ? "DH" : null]) if (s) (posOrder[s] = posOrder[s] || []).push(x.k);
+    // the 2027 lists decide (Sean, 2 Oct 2026: "make the rankings based on the 2027 rankings"): a listed player is the median of his
+    // lists; the projection only places the players no list names, and never ahead of where the lists run out at his rank
     for (const x of pool) {
-      const a = A[x.k], votes = [prank.get(x.k)];   // keyed by type + id: Ohtani the hitter and the pitcher share an id
+      const a = A[x.k], votes = [];   // keyed by type + id: Ohtani the hitter and the pitcher share an id
       if (a) {
         if (a.espn) votes.push(a.espn); if (a.yahoo) votes.push(a.yahoo);
         for (const src of ["cbs", "rw"]) if (a[src]) {
@@ -8084,10 +8089,14 @@
           if (best < 999) votes.push(best);
         }
       }
-      // the median, not the mean: one projection miss (Judge's half season) shouldn't drag a player the experts all agree on
+      // the median, not the mean: one list's odd placement shouldn't drag a player the rest agree on
       votes.sort((p, q) => p - q); const m = votes.length >> 1;
-      x.votes = votes.length; x.cons = votes.length % 2 ? votes[m] : (votes[m - 1] + votes[m]) / 2;
+      x.votes = votes.length; x.cons = votes.length ? (votes.length % 2 ? votes[m] : (votes[m - 1] + votes[m]) / 2) : null;
     }
+    // unlisted: his projection rank, pushed behind the listed players the lists rank there (+0.5 breaks the tie their way); one the
+    // projection loves but no list names (a half-season call-up) still can't jump the consensus top
+    const listed = pool.filter((x) => x.cons != null).map((x) => x.cons).sort((p, q) => p - q), deep = listed.length ? listed[listed.length - 1] : 0;
+    for (const x of pool) if (x.cons == null) { const r = prank.get(x.k); x.cons = Math.max(r, Math.min(deep, 60 + r)) + 0.5; }
     pool.sort((a, b) => a.cons - b.cons || b.espn - a.espn);
     pool.forEach((x, i) => { x.adp = i + 1; });
     mkPoolCache = { sig, pool, map: new Map(pool.map((x) => [x.k, x])) };
@@ -8136,35 +8145,34 @@
     for (const x of pool) { const sl = pri.filter((s) => (roster[s] || 0) > 0 && mkFits(x, s)); const base = sl.length ? Math.min(...sl.map((s) => repl[s])) : Math.max(...Object.values(repl)); out.set(x.k, x[key] - base); }
     return out;
   }
-  // auction dollars for this room (Sean, 2 Oct 2026: "look at espns 2026 ... $200 auction leagues and see how they rated dollars wise
-  // the top players and make it similar"): ESPN's own 2026 auction values (10 teams, $260 — Ohtani $110, Soto $78, Skenes $66 …, ~190
-  // players over $0) as a curve, rank -> share of the room's money at the same fraction of the draftable pool; our order (value over
-  // replacement against starters only) decides who sits at each rank. In a 14-team $200 room the top comes out near $118 — what Ohtani
-  // went for in Sean's league ($108). (Before: value over replacement to a power, which topped out at ~$35, then ~$66.)
-  const MK_ESPN = { teams: 10, budget: 260, spots: 26, values: [110,78,66,64,61,59,55,55,51,46,44,42,41,39,39,35,35,34,33,32,32,31,31,30,30,29,29,28,28,28,28,27,27,26,26,25,25,24,23,23,23,22,22,22,21,21,21,21,20,20,19,19,18,18,18,17,17,16,16,16,15,15,15,15,14,14,14,14,13,13,13,13,12,12,12,12,11,11,11,11,11,10,10,10,10,9,9,9,9,9,8,8,8,8,8,8,8,7,7,7,7,7,6,6,6,6,6,6,5,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] };
-  function mkCurve(src, N, T, B) {
-    const P = src, M = src.teams * src.spots, tot = src.teams * src.budget, at = (i) => (i < P.length ? P[i] : 0);
-    const raw = Array.from({ length: N }, (_, r) => { const q = ((r + 0.5) / N) * M - 0.5, i = Math.max(0, Math.floor(q)), f = Math.max(0, q - i); return (at(i) * (1 - f) + at(i + 1) * f) / tot; });
+  // auction dollars (Sean, 2 Oct 2026: "do the $ auction values for those players based on what my drafts experience was like ...
+  // ohtani should be the only crazy player, then maybe 1 or 2 above 60/70 and the rest of the tippity top tier guys ... 50-70"): his
+  // league's 2026 auction (MK_MKT: every price paid, 14 teams / $200 / 25 spots, Ohtani $108, 191 of 350 at $1-2) with the top
+  // smoothed into that shape (MK_TOP), laid on the 2027 ADP — the n-th player by ADP is worth the n-th price. The $ column and the
+  // computer teams' market are the same number, so what you see is what the room thinks.
+  const MK_MKT = { teams: 14, budget: 200, spots: 25, prices: [108,92,74,70,60,58,46,45,43,43,43,42,41,39,38,36,34,34,34,31,31,31,31,30,30,29,29,29,28,25,24,24,23,23,22,21,21,20,19,19,19,18,18,18,17,17,17,17,17,17,17,17,16,16,16,16,16,15,15,14,14,14,14,13,13,13,13,13,13,12,11,11,11,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,9,9,9,9,9,9,9,9,8,8,8,8,8,8,8,7,7,7,7,7,7,7,7,7,7,7,7,7,6,6,6,6,6,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] };
+  const MK_TOP = [108, 76, 70, 67, 65, 63, 61, 59, 57, 55, 54, 52, 50, 48, 46, 45, 44, 43, 42, 41, 39, 37, 35, 34, 33, 32];
+  const MK_PRICE = MK_TOP.concat(MK_MKT.prices.slice(MK_TOP.length));
+  // the curve for a room of T teams, $B each, N spots: the stars are the same few players in any room, so the top ranks map rank for
+  // rank; deeper down a rank sits at the same fraction of the pool as in Sean's room. Then the money over $1 a spot is shared to
+  // the room's T x B in those proportions (a $400 cap doubles every price over the floor, a $100 one halves it)
+  function mkCurve(N, T, B) {
+    const P = MK_PRICE, M = MK_MKT.teams * MK_MKT.spots, tot = MK_MKT.teams * MK_MKT.budget, sc = M / N, at = (i) => (i < P.length ? P[i] : 0);
+    const raw = Array.from({ length: N }, (_, r) => { const t = Math.min(1, r / 60), q = r * (1 + (sc - 1) * t), i = Math.floor(q), f = q - i; return (at(i) * (1 - f) + at(i + 1) * f) / tot; });
     const over = raw.map((v) => Math.max(0, v * T * B - 1)), sum = over.reduce((a, b) => a + b, 0), cash = T * B - N;
     return over.map((v) => 1 + (sum ? v * cash / sum : 0));
   }
-  function mkDollars(set) {
-    const pool = mkPool(), vor = mkVOR(pool, set.teams, set.roster, "espn", false), N = set.teams * mkSlotList(set.roster).length;
-    const curve = mkCurve(Object.assign(MK_ESPN.values.slice(), { teams: MK_ESPN.teams, spots: MK_ESPN.spots, budget: MK_ESPN.budget }), N, set.teams, set.budget);
-    const out = new Map(); pool.slice().sort((a, b) => vor.get(b.k) - vor.get(a.k)).forEach((x, r) => out.set(x.k, r < N ? Math.round(curve[r]) : 0));
-    return out;
-  }
-  // the market (Sean, 2 Oct 2026: his league's 2026 auction — "I want the mock drafts to actually feel like real legit drafts like
-  // this"): every price paid in a 14-team, $200, 25-spot room, best first. What a computer team will pay follows this curve, not the
-  // value column: the n-th player by the 2027 ADP is worth what the same share of that room's players fetched, scaled to this
-  // room's money and size. That gives the real shape — a star at half a budget, a long $1 tail (191 of 350 went for $1-2)
-  const MK_MKT = { teams: 14, budget: 200, spots: 25, prices: [108,92,74,70,60,58,46,45,43,43,43,42,41,39,38,36,34,34,34,31,31,31,31,30,30,29,29,29,28,25,24,24,23,23,22,21,21,20,19,19,19,18,18,18,17,17,17,17,17,17,17,17,16,16,16,16,16,15,15,14,14,14,14,13,13,13,13,13,13,12,11,11,11,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,9,9,9,9,9,9,9,9,8,8,8,8,8,8,8,7,7,7,7,7,7,7,7,7,7,7,7,7,6,6,6,6,6,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] };
   let mkMktCache = null;
   function mkMarket(x) {
-    if (!mk) return 1;
+    if (!mk || !x) return 1;
     const T = mk.set.teams, B = mk.set.budget, N = T * mkSpots(), sig = `${T}/${B}/${N}`;
-    if (!mkMktCache || mkMktCache.sig !== sig) mkMktCache = { sig, curve: mkCurve(Object.assign(MK_MKT.prices.slice(), { teams: MK_MKT.teams, spots: MK_MKT.spots, budget: MK_MKT.budget }), N, T, B) };
+    if (!mkMktCache || mkMktCache.sig !== sig) mkMktCache = { sig, curve: mkCurve(N, T, B) };
     return x.adp <= N ? mkMktCache.curve[x.adp - 1] : 1;
+  }
+  function mkDollars(set) {
+    const N = set.teams * mkSlotList(set.roster).length, curve = mkCurve(N, set.teams, set.budget), out = new Map();
+    mkPool().forEach((x) => out.set(x.k, x.adp <= N ? Math.round(curve[x.adp - 1]) : 0));
+    return out;
   }
   // computer teams draft with a style each (stars and scrubs, balanced, bargain hunters, early spenders, pitching- or hitting-heavy),
   // like the teams in a real room
@@ -8238,9 +8246,9 @@
   // auction
   function mkNominate(ti, k, open) {
     const A = mk.auc; A.phase = "bid"; A.k = k; A.bid = Math.max(1, open || 1); A.high = ti; A.hist = [[ti, A.bid]]; A.nomBy = ti;
-    // each computer team's price for him: mostly the market for his ADP, partly the value column, moved by the room's inflation, its
+    // each computer team's price for him: the market for his ADP (the $ column), moved by the room's inflation, its
     // own style and money per open spot against the room's, then a wide personal spread (real rooms disagree — Tatis $38, PCA $15)
-    const x = mkP(k), base = 0.7 * mkMarket(x) + 0.3 * mkVal(k), infl = mkInflation();
+    const x = mkP(k), base = mkMarket(x), infl = mkInflation();
     const per = mk.teams.reduce((s, t) => s + t.budget, 0) / Math.max(1, mk.teams.reduce((s, t) => s + mkOpen(t), 0));
     A.vals = mk.teams.map((t, i) => {
       if (t.me) return 0;
