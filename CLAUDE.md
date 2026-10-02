@@ -879,7 +879,9 @@ is deploy-limited.
   draft by position; keyed type+id — Ohtani the hitter and pitcher share an MLB id; position lists are placed where that position's
   n-th player falls in the projection). Those lists are category-based. Refresh the file when ESPN publishes 2027 ADP (its API had no
   2027 season on 2 Oct). Auction $ = $1 a spot plus the cap's surplus shared by value over replacement for the room (`mkDollars`). The
-  Proj column is the projection under the current Fantasy preset.
+  Proj column (and the final standings) use the **Scoring** picked at setup from the saved Fantasy presets (`mkScoring`, `mkSet.scoring`).
+  Same day: the draft slot is a row of buttons (Random, 1…N); a **Timer** button in the room's top bar changes the pick / nomination /
+  bid clocks, the AI speed and the scoring mid-draft (a running clock longer than the new length is cut to it).
 * **Positions shown are where he played that season** (`playedLabel`: positions with a tenth of his games, most first, up to three;
   SP / RP by that season's starts and relief), on the Leaderboard, Trending and cards; next year's fantasy eligibility (`posLabel`)
   only on Rankings, the Draft board, Eligibility and Fantasy (`posShown`; Sean, 30 Sep 2026).

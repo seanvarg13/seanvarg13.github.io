@@ -769,3 +769,4 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
   draft slot, roster spots, pick clock, salary cap and bid clock; pause any time; a queue; the board, your team and the pick log. Everyone
   drafts from a 2027 consensus: the site's points projection blended (median) with the early 2027 rankings from ESPN, Yahoo, CBS and
   RotoWire. Auction values are priced for your room. A draft in progress is saved on the device and comes back paused.
+- **Mock Draft settings**: pick your draft slot from a row of buttons, choose the scoring from your saved Fantasy presets, and change the clocks (pick, nomination, bid), computer-team speed or scoring mid-draft with the Timer button.

@@ -3685,3 +3685,9 @@ tr.mkmine td { background: var(--accent-wash, var(--surface-2)); }
 :root[data-view="mobile"] .mkbid { flex-direction: row; align-items: baseline; gap: 6px; min-width: 0; } :root[data-view="mobile"] .mkbamt { font-size: 22px; }
 :root[data-view="mobile"] .mkbctl .btn { padding: 0 8px; } :root[data-view="mobile"] .mkbctl .mknum { width: 56px; }
 :root[data-view="mobile"] .mktop .mkclock { font-size: 22px; min-width: 2.6em; }
+.mktop { flex-wrap: wrap; }
+.mktimer { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 10px 16px; padding-top: 8px; border-top: 1px solid var(--hair); }
+.mktimer .mkrcell { flex-direction: row; align-items: center; gap: 6px; color: var(--ink-2); }
+.mkslots { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; max-width: 60%; }
+:root[data-view="mobile"] .mkslots { max-width: none; justify-content: flex-start; }
+.mkslots .mkpill { min-width: 34px; }
