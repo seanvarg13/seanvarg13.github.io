@@ -910,6 +910,9 @@ is deploy-limited.
   **⏩ Skip** (Sean, 2 Oct 2026: "if I know I don't want a player I can fast forward through his bidding process"): beside Bid in the
   auction panel, `mkSkip` lets the computer teams bid the lot out at once with the clock's own logic (`mkBidders` / `mkAiRaise`, shared
   with `mkTick`) and sells him; a bid of yours that's still high stands until someone tops it.
+  **On a phone** (Sean, 2 Oct 2026: the list "is only taking up 35% of the screen"): one frame instead of two, the clock bar and the
+  list's search / sort / positions a line each (positions slide sideways), tighter rows, no bid-history line — the rows get ~61% of the
+  screen between lots and ~46% while one is up for bid (they had ~33%). The block after the minimal passes' at the end of `styles.css`.
 * **Positions shown are where he played that season** (`playedLabel`: positions with a tenth of his games, most first, up to three;
   SP / RP by that season's starts and relief), on the Leaderboard, Trending and cards; next year's fantasy eligibility (`posLabel`)
   only on Rankings, the Draft board, Eligibility and Fantasy (`posShown`; Sean, 30 Sep 2026).

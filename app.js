@@ -8453,7 +8453,7 @@
   function mkTop() {
     const top = el("div", "mktop"), T = mk.set.teams;
     let what;
-    if (mk.status === "pre") what = `The draft starts in a minute · you ${mk.set.type === "snake" ? "pick " + (mk.me + 1) + (mk.me === 0 ? "st" : mk.me === 1 ? "nd" : mk.me === 2 ? "rd" : "th") : "nominate " + (mk.me + 1) + (mk.me === 0 ? "st" : mk.me === 1 ? "nd" : mk.me === 2 ? "rd" : "th")} of ${T} · queue players with ☆ while you wait`;
+    if (mk.status === "pre") what = `Draft starts in a minute · you ${mk.set.type === "snake" ? "pick " + (mk.me + 1) + (mk.me === 0 ? "st" : mk.me === 1 ? "nd" : mk.me === 2 ? "rd" : "th") : "nominate " + (mk.me + 1) + (mk.me === 0 ? "st" : mk.me === 1 ? "nd" : mk.me === 2 ? "rd" : "th")} of ${T} · ☆ to queue`;
     else if (mk.set.type === "snake") { const ti = mkOnClock(), r = Math.floor(mk.pick / T) + 1, n = (mk.pick % T) + 1; what = `Round ${r} · Pick ${n} (${mk.pick + 1} of ${mkTotal()}) · ${mk.teams[ti].me ? "You're on the clock" : mk.teams[ti].name + " is picking"}`; }
     else { const A = mk.auc; what = A.phase === "nom" ? (mk.teams[A.nom].me ? "Your nomination" : `${mk.teams[A.nom].name} is nominating`) : `Bidding on ${mkP(A.k).name}`; what += ` · ${mk.log.length} of ${mkTotal()} sold`; }
     const mine = mk.status === "live" && (mk.set.type === "snake" ? mk.teams[mkOnClock()].me : (mk.auc.phase === "nom" && mk.teams[mk.auc.nom].me));
@@ -8486,7 +8486,7 @@
       ss.addEventListener("change", () => { mk.set.scoring = ss.value; mkSet.scoring = ss.value; mkSaveSet(); mkSave(); mkDraw(); }); sc.append(el("span", null, "Scoring"), ss); tp.append(sc);
       top.append(tp);
     }
-    if (mk.set.type === "auction") { const me = mk.teams[mk.me]; btns.prepend(el("span", "mkbudget", `$${me.budget} left · max bid $${mkMaxBid(me)}`)); }
+    if (mk.set.type === "auction") { const me = mk.teams[mk.me]; btns.prepend(el("span", "mkbudget", `$${me.budget} left · max $${mkMaxBid(me)}`)); }
     top.append(clock, info, btns);
     return top;
   }
