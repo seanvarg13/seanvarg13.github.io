@@ -8010,98 +8010,49 @@
   const MK_SLOTS = [["C", "C"], ["1B", "1B"], ["2B", "2B"], ["3B", "3B"], ["SS", "SS"], ["MI", "2B/SS"], ["CI", "1B/3B"], ["OF", "OF"], ["UTIL", "UTIL"],
                     ["SP", "SP"], ["RP", "RP"], ["P", "P"], ["BN", "Bench"]];
   const MK_DEF = { type: "snake", teams: 10, slot: "random", pickSecs: 60, nomSecs: 30, bidSecs: 10, budget: 260, ai: "normal",
-                   // Sean's league (2 Oct 2026): 2B/SS and 1B/3B, four OF, eight P and no SP / RP slots, four bench
-                   roster: { C: 1, "1B": 1, "2B": 1, "3B": 1, SS: 1, MI: 1, CI: 1, OF: 4, UTIL: 1, SP: 0, RP: 0, P: 8, BN: 4 } };
+                   // Sean's league (2 Oct 2026): 2B/SS and 1B/3B, four OF, two UTIL, eight P and no SP / RP slots, four bench
+                   roster: { C: 1, "1B": 1, "2B": 1, "3B": 1, SS: 1, MI: 1, CI: 1, OF: 4, UTIL: 2, SP: 0, RP: 0, P: 8, BN: 4 } };
   const mkSet = Object.assign({}, MK_DEF, load("draft2027.mock", {}));
   // a roster saved while the old ESPN default was the default moves to the new one; one he set himself stays
-  const MK_OLDDEF = { C: 1, "1B": 1, "2B": 1, "3B": 1, SS: 1, MI: 0, CI: 0, OF: 3, UTIL: 1, SP: 5, RP: 3, P: 0, BN: 7 };
-  if (mkSet.roster && MK_SLOTS.every(([s]) => (mkSet.roster[s] || 0) === MK_OLDDEF[s])) delete mkSet.roster;
+  const MK_OLDDEF = [{ C: 1, "1B": 1, "2B": 1, "3B": 1, SS: 1, MI: 0, CI: 0, OF: 3, UTIL: 1, SP: 5, RP: 3, P: 0, BN: 7 },
+                     { C: 1, "1B": 1, "2B": 1, "3B": 1, SS: 1, MI: 1, CI: 1, OF: 4, UTIL: 1, SP: 0, RP: 0, P: 8, BN: 4 }];
+  if (mkSet.roster && MK_OLDDEF.some((d) => MK_SLOTS.every(([s]) => (mkSet.roster[s] || 0) === d[s]))) delete mkSet.roster;
   mkSet.roster = Object.assign({}, MK_DEF.roster, mkSet.roster || {});
   let mk = load("draft2027.mockdraft", null);             // the draft in progress, or null
   if (mk) mk.paused = true;                               // a reload comes back paused
   const mkUI = { tab: "players", side: "team", pos: "ALL", q: "", sort: "adp", hide: true, boardTeam: null };
   const mkSaveSet = () => { try { localStorage.setItem("draft2027.mock", JSON.stringify(mkSet)); } catch {} };
   const mkSave = () => { try { if (mk) localStorage.setItem("draft2027.mockdraft", JSON.stringify(mk)); else localStorage.removeItem("draft2027.mockdraft"); } catch {} };
-  const MK_YEARS = [2026, 2025, 2024], MK_W = { 2026: 0.5, 2025: 0.3, 2024: 0.2 }, MK_TW = { 2026: 0.6, 2025: 0.25, 2024: 0.15 };
   // the scoring the room's Proj column and team totals use: one of the saved Fantasy presets, picked at setup (Sean, 2 Oct 2026)
   const mkScoring = () => { const id = mk ? mk.set.scoring : mkSet.scoring; return fpresets().find((p) => p.id === id) || fpreset(); };
-  const mkReady = () => !!(fData(String(DATA.meta.season)) && window.DRAFT_FANTASY_LINES && window.DRAFT_ADP27);
+  const mkReady = () => !!(fData(String(DATA.meta.season)) && window.DRAFT_PROJ27);
   function mkEnsure() {
     fEnsure(String(DATA.meta.season));
-    ensureScript("hist/fantasy-lines.js", () => !!window.DRAFT_FANTASY_LINES);
-    ensureScript("hist/adp-2027.js", () => !!window.DRAFT_ADP27);
+    ensureScript("hist/proj-2027.js", () => !!window.DRAFT_PROJ27);
   }
-  // his official line for a season as the scoring's keys: this season from fantasy.js, earlier ones from fantasy-lines.js
-  function mkLine(p, y) {
-    if (y === DATA.meta.season) { const F = fData(String(y)); return F ? (p.type === "H" ? fHit(F, p.id) : fPit(F, p.id)) : null; }
-    const L = window.DRAFT_FANTASY_LINES, r = L && L.years[y] && L.years[y][p.type === "H" ? "hitters" : "pitchers"][p.id]; if (!r) return null;
-    const o = {}; (p.type === "H" ? L.hk : L.pk).forEach((k, i) => { o[k] = r[i] || 0; });
-    return fDerive(o, p.type === "H" ? "H" : "P");
-  }
-  const mkAge = (a) => (a == null ? 1 : a <= 25 ? 1.04 : a <= 27 ? 1.02 : a <= 30 ? 1 : a <= 32 ? 0.98 : a <= 34 ? 0.96 : 0.93);
   // the pool, built once per scoring: every 2026 MLB player with a projection, his eligibility, role and projected points
   let mkPoolCache = null;
   function mkPool() {
-    const wEspn = ESPN_PRESET.w, wMe = mkScoring().w, sig = JSON.stringify(wMe);
+    // 2027 projections (hist/proj-2027.js, tools/build_proj27.py — Sean, 2 Oct 2026: "use like some sort of 2027 projection system"):
+    // Marcel's weighted, regressed, aged rates on every official category, H / TB / ER pulled halfway to Statcast's expected, and
+    // playing time that doesn't punish a regular for one lost season. Scored with any preset, so Proj is in your scoring
+    const wEspn = ESPN_PRESET.w, wMe = mkScoring().w, S = mk ? mk.set : mkSet, sig = JSON.stringify([wMe, S.teams, S.roster]);
     if (mkPoolCache && mkPoolCache.sig === sig) return mkPoolCache.pool;
-    const rows = [];
+    const J = window.DRAFT_PROJ27, pool = [];
     for (const p of CUR.players) {
-      const lines = MK_YEARS.map((y) => [y, mkLine(p, y)]).filter(([, o]) => o && (p.type === "H" ? o.PA > 0 : o.OUTS > 0));
-      if (!lines.length || !lines.some(([y]) => y === DATA.meta.season)) continue;
-      const opp = (o) => (p.type === "H" ? o.PA : o.OUTS / 3);
-      const o26 = lines.find(([y]) => y === DATA.meta.season)[1];
-      const role = p.type === "P" ? ((o26.GS || 0) * 2 >= (o26.G || 1) ? "SP" : "RP") : null;
-      let tw = 0, tn = 0;
-      for (const [y, o] of lines) { tn += MK_TW[y] * opp(o); tw += MK_TW[y]; }
-      let time = tw ? tn / tw : 0;
-      const age = (p.age ?? 28) + 1;
-      if (p.type === "H") { if (opp(o26) >= 150 && age <= 27) time = Math.max(time, 520); time = Math.min(680, time * (age >= 35 ? 0.9 : 1)); }
-      else if (role === "SP") { if (opp(o26) >= 50 && age <= 28) time = Math.max(time, 140); time = Math.min(195, time); }
-      else time = Math.min(72, Math.max(time, opp(o26) >= 30 ? 55 : time));
-      rows.push({ p, k: p.type + p.id, lines, role, time, age, opp });
+      const a = J && J[p.type === "H" ? "hitters" : "pitchers"][p.id]; if (!a) continue;
+      const o = {}; (p.type === "H" ? J.hk : J.pk).forEach((k, i) => { o[k] = a[i] || 0; }); fDerive(o, p.type === "H" ? "H" : "P");
+      const grp = p.type === "H" ? "H" : "P", role = p.type === "P" ? (o.GS * 2 >= (o.G || 1) ? "SP" : "RP") : null;
+      const espn = fPts(wEspn[grp], o), mine = fPts(wMe[grp], o);
+      if (espn <= 20 && mine <= 20) continue;
+      pool.push({ k: p.type + p.id, p, id: p.id, type: p.type, name: p.name, team: p.team, age: (p.age ?? 28) + 1, line: o,
+        elig: p.type === "H" ? eligiblePositions(p) : (role === "SP" ? ["SP", ...pitcherRoles(p).filter((x) => x === "RP")] : ["RP", ...pitcherRoles(p).filter((x) => x === "SP")]),
+        role, time: Math.round(p.type === "H" ? o.PA : o.IP), espn, mine });
     }
-    // league rates to regress toward: the 2026 regulars' points per PA / per inning, a touch under average
-    const rateOf = (w, grp, filt) => { let a = 0, b = 0; for (const r of rows) if (filt(r)) { const o = r.lines.find(([y]) => y === DATA.meta.season)[1]; a += fPts(w[grp], o); b += r.opp(o); } return b ? 0.92 * a / b : 0; };
-    const lg = (w) => ({ H: rateOf(w, "H", (r) => r.p.type === "H" && r.opp(r.lines[0][1]) >= 300), SP: rateOf(w, "P", (r) => r.role === "SP" && r.opp(r.lines[0][1]) >= 80),
-                         RP: rateOf(w, "P", (r) => r.role === "RP" && r.opp(r.lines[0][1]) >= 30) });
-    const lgE = lg(wEspn), lgM = lg(wMe);
-    const proj = (r, w, L) => {
-      const grp = r.p.type === "H" ? "H" : "P", R = r.p.type === "H" ? 100 : 25, base = r.p.type === "H" ? L.H : L[r.role];
-      let num = 0, den = 0; for (const [y, o] of r.lines) { num += MK_W[y] * fPts(w[grp], o); den += MK_W[y] * r.opp(o); }
-      return Math.max(0, r.time * mkAge(r.age) * (num + R * base) / (den + R));
-    };
-    const pool = rows.map((r) => ({ k: r.k, p: r.p, id: r.p.id, type: r.p.type, name: r.p.name, team: r.p.team, age: r.age,
-      elig: r.p.type === "H" ? eligiblePositions(r.p) : (r.role === "SP" ? ["SP", ...pitcherRoles(r.p).filter((x) => x === "RP")] : ["RP", ...pitcherRoles(r.p).filter((x) => x === "SP")]),
-      role: r.role, time: Math.round(r.time), espn: proj(r, wEspn, lgE), mine: proj(r, wMe, lgM) })).filter((x) => x.espn > 20);
-    // the consensus: projection rank (value over replacement, 10 teams, the default roster) averaged with the published lists
-    const vor = mkVOR(pool, 10, MK_DEF.roster, "espn");
-    const byV = pool.slice().sort((a, b) => vor.get(b.k) - vor.get(a.k)), prank = new Map(byV.map((x, i) => [x.k, i + 1]));
-    const A = (window.DRAFT_ADP27 || {}).ranks || {};
-    const posOrder = {};                                   // the projection's own order at each position, for the position lists
-    // a DH list ranks the DH-only bats (Díaz, Rooker), so it's matched against them, not every hitter — matched against everyone, the
-    // third DH became the third-best hitter in baseball
-    const dhOnly = (x) => x.type === "H" && !x.elig.some((e) => e !== "DH" && e !== "UTIL");
-    for (const x of byV) for (const s of [...x.elig.filter((e) => e !== "DH"), dhOnly(x) ? "DH" : null]) if (s) (posOrder[s] = posOrder[s] || []).push(x.k);
-    // the 2027 lists decide (Sean, 2 Oct 2026: "make the rankings based on the 2027 rankings"): a listed player is the median of his
-    // lists; the projection only places the players no list names, and never ahead of where the lists run out at his rank
-    for (const x of pool) {
-      const a = A[x.k], votes = [];   // keyed by type + id: Ohtani the hitter and the pitcher share an id
-      if (a) {
-        if (a.espn) votes.push(a.espn); if (a.yahoo) votes.push(a.yahoo);
-        for (const src of ["cbs", "rw"]) if (a[src]) {
-          const best = Math.min(...a[src].map(([pos, n]) => { const list = posOrder[pos === "DH" ? "DH" : pos] || []; const at = list[Math.min(n, list.length) - 1]; return at ? prank.get(at) : 999; }));
-          if (best < 999) votes.push(best);
-        }
-      }
-      // the median, not the mean: one list's odd placement shouldn't drag a player the rest agree on
-      votes.sort((p, q) => p - q); const m = votes.length >> 1;
-      x.votes = votes.length; x.cons = votes.length ? (votes.length % 2 ? votes[m] : (votes[m - 1] + votes[m]) / 2) : null;
-    }
-    // unlisted: his projection rank, pushed behind the listed players the lists rank there (+0.5 breaks the tie their way); one the
-    // projection loves but no list names (a half-season call-up) still can't jump the consensus top
-    const listed = pool.filter((x) => x.cons != null).map((x) => x.cons).sort((p, q) => p - q), deep = listed.length ? listed[listed.length - 1] : 0;
-    for (const x of pool) if (x.cons == null) { const r = prank.get(x.k); x.cons = Math.max(r, Math.min(deep, 60 + r)) + 0.5; }
-    pool.sort((a, b) => a.cons - b.cons || b.espn - a.espn);
+    // the ranking is the room's own: value over replacement under the scoring, teams and roster picked at setup — what every team in
+    // a real league is drafting for (the early 2027 expert lists were category-based, which is why they read odd in a points room)
+    const vor = mkVOR(pool, S.teams, S.roster, "mine");
+    pool.sort((a, b) => vor.get(b.k) - vor.get(a.k) || b.mine - a.mine);
     pool.forEach((x, i) => { x.adp = i + 1; });
     mkPoolCache = { sig, pool, map: new Map(pool.map((x) => [x.k, x])) };
     return pool;
@@ -8355,20 +8306,37 @@
   // 3 seconds of each bid"): made with Web Audio, no files. The context is opened on a tap (Start draft, any button in the room),
   // which is what a phone needs before it will play anything
   let mkCtx = null;
-  const mkAudio = () => { try { if (!mkCtx) mkCtx = new (window.AudioContext || window.webkitAudioContext)(); if (mkCtx.state === "suspended") mkCtx.resume(); } catch {} return mkCtx; };
-  function mkTone(f, at, dur, vol = 0.18, type = "sine") {
+  // much louder since Sean's ask (2 Oct 2026: "make the auction or pick sounds much louder"): every tone goes through a compressor
+  // and a 2.5x master gain, at three to four times the old levels, and on an iPhone the page asks for the media channel
+  // (audioSession "playback") — Web Audio otherwise rides the ringer volume and goes silent on the mute switch
+  let mkOut = null;
+  const mkAudio = () => {
+    try {
+      if (navigator.audioSession && navigator.audioSession.type !== "playback") navigator.audioSession.type = "playback";
+      if (!mkCtx) {
+        mkCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const comp = mkCtx.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 6; comp.ratio.value = 8; comp.attack.value = 0.002; comp.release.value = 0.12;
+        const gain = mkCtx.createGain(); gain.gain.value = 2.5; comp.connect(gain); gain.connect(mkCtx.destination); mkOut = comp;
+      }
+      if (mkCtx.state === "suspended") mkCtx.resume();
+    } catch {}
+    return mkCtx;
+  };
+  function mkTone(f, at, dur, vol = 0.6, type = "sine") {
     const c = mkCtx; if (!c) return; const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + at;
-    o.type = type; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.02);
+    o.type = type; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.min(1, vol), t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(mkOut || c.destination); o.start(t); o.stop(t + dur + 0.02);
   }
   function mkSnd(kind) {
     if (mkSet.sound === false || !mkAudio()) return;
-    if (kind === "start") { mkTone(523, 0, 0.25); mkTone(659, 0.16, 0.25); mkTone(784, 0.32, 0.45); }
-    else if (kind === "turn") { mkTone(880, 0, 0.18, 0.22); mkTone(1175, 0.2, 0.3, 0.22); }
-    else if (kind === "tick") mkTone(1000, 0, 0.07, 0.14, "square");
-    else if (kind === "sold") { mkTone(330, 0, 0.12, 0.22, "triangle"); mkTone(220, 0.1, 0.25, 0.22, "triangle"); }
-    else if (kind === "won") { mkTone(784, 0, 0.15, 0.2); mkTone(1047, 0.14, 0.35, 0.2); }
-    else if (kind === "pick") mkTone(600, 0, 0.06, 0.06, "triangle");
+    // a triangle an octave under each main tone gives it body on a phone speaker, which drops most of a bare sine
+    const two = (f, at, dur, vol) => { mkTone(f, at, dur, vol, "square"); mkTone(f / 2, at, dur, vol * 0.8, "triangle"); };
+    if (kind === "start") { two(523, 0, 0.28, 0.7); two(659, 0.18, 0.28, 0.7); two(784, 0.36, 0.55, 0.8); }
+    else if (kind === "turn") { two(880, 0, 0.22, 0.8); two(1175, 0.24, 0.35, 0.85); two(880, 0.62, 0.22, 0.8); two(1175, 0.86, 0.35, 0.85); }
+    else if (kind === "tick") two(1000, 0, 0.09, 0.6);
+    else if (kind === "sold") { two(330, 0, 0.14, 0.8); two(220, 0.12, 0.3, 0.85); }
+    else if (kind === "won") { two(784, 0, 0.18, 0.75); two(1047, 0.16, 0.25, 0.75); two(1319, 0.34, 0.45, 0.8); }
+    else if (kind === "pick") two(600, 0, 0.1, 0.35);
   }
   // the last three seconds of a clock tick, once a second: every bid, your pick or nomination, and the countdown to the start
   function mkTicks(ms, on) { const sec = Math.ceil(ms / 1000); if (on && sec >= 1 && sec <= 3 && sec !== mkTickAt) { mkTickAt = sec; mkSnd("tick"); } else if (sec > 3) mkTickAt = 0; }
@@ -8412,11 +8380,11 @@
     w.append(rs);
     { const s = el("select", "mksel"); for (const p of fpresets()) { const o = el("option", null, p.name); o.value = p.id; o.selected = p.id === mkScoring().id; s.append(o); }
       s.addEventListener("change", () => { mkSet.scoring = s.value; mkSaveSet(); });
-      row("Scoring", s, "Your saved scoring settings (Fantasy ▸ Scoring settings): the Proj column and the final standings use it. The draft order everyone follows is the 2027 consensus."); }
+      row("Scoring", s, "Your saved scoring settings (Fantasy ▸ Scoring settings): the Proj column, the draft order every team follows and the final standings all use it."); }
     const go = el("button", "btn mkgo", "Start draft"); go.type = "button"; go.disabled = !mkSlotList(mkSet.roster).length; go.addEventListener("click", mkStart); w.append(go);
-    const A = window.DRAFT_ADP27; if (A) { const s = el("details", "mksrc"); s.append(el("summary", null, "Where the 2027 consensus comes from"));
-      s.append(el("p", "note", "The site's projection (2024-26 official lines, ESPN standard points, weighted to 2026, regressed and aged) ranked by value over replacement, averaged with every early 2027 list published so far. Those lists are category-based, so a reliever or a base stealer can sit differently from a points league's view; the projection pulls the other way."));
-      const ul = el("ul"); for (const x of A.sources) { const li = el("li"); const a = el("a", null, x.name); a.href = x.url; a.target = "_blank"; a.rel = "noopener"; li.append(a, ` · ${fmtDate(x.date)}`); ul.append(li); } s.append(ul); w.append(s); }
+    { const J = window.DRAFT_PROJ27, s = el("details", "mksrc"); s.append(el("summary", null, "Where the 2027 rankings come from"));
+      s.append(el("p", "note", "A 2027 projection for every player (Marcel, the system Steamer and ZiPS are measured against: the last three seasons weighted 5 / 4 / 3, pulled toward the league and aged, with hits, total bases and earned runs moved halfway to what Statcast expected, and playing time that doesn't punish a regular for one injured season), scored with the scoring above and ranked by value over replacement for this room's teams and roster. Steamer and ZiPS 2027 aren't out until November." + (J ? ` Built ${fmtDate(J.built)}.` : "")));
+      w.append(s); }
     box.append(w);
   }
   // the whole room; the list and side panes keep their scroll, the search box its text and focus
