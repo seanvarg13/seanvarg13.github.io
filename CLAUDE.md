@@ -948,6 +948,15 @@ is deploy-limited.
   players ... just another pop up window"): `renderModal`'s `listMode` includes `mock`, so a name opens the popup card over the draft
   (the clock keeps running); and on every popup page a cross-season Similar name opens that season's card as the popup (`state.cardDs`,
   the hist file loaded first — a placeholder `p0` shows "Loading 2019 season…") instead of going to `#player`. × goes back to the page.
+  **ESPN's draft room is the base** (Sean, 2 Oct 2026, fifteen screenshots of ESPN's auction list, points scoring: "i mostly just want
+  the budgets to be properly set up ... thats what i wanted the pricing scaling"): **`hist/espn-adp27.js`** (`DRAFT_ESPN27`: 271 players in
+  ESPN's order with ESPN's $, keyed type+id — Ohtani as one; 12 teams × $260 by its totals) is now the **price curve** (`mkCurve`; his
+  league's `MK_PRICE` is the fallback), scaled to the room: 12 × $260 gives Ohtani $133, Soto $94 (ESPN $130 / $92); 14 × $200 Ohtani
+  ~$103. The **ADP** is ESPN's order moved by the 2027 projection's rank (`mkPool`): where the projection likes a player better, it
+  weighs .65 rising to .9 the wider ESPN undershoots ("make adjustments to the players whose adp is way too ridiculously low": Judge
+  ESPN #110 → ~#17, Lindor #206 → ~#49, De La Cruz #112 → ~#46); where it likes him less, .25. Unlisted players go by the projection,
+  behind (`p × 1.15 + 15`). Raleigh / Riley Greene / Langford stay mid-round — the points projection agrees with ESPN there. Refresh the
+  file from ESPN's room when 2027 values change (same shape: `order: [[key, $], …]`).
   **Default roster has two UTIL** (Sean, 2 Oct 2026; `MK_OLDDEF` lists both earlier defaults so a saved copy of either moves up).
   **Louder** (Sean, 2 Oct 2026: "make the auction or pick sounds much louder"): `mkAudio` builds a compressor + 2.5× master gain once,
   every cue is a square tone with a triangle an octave under at 3-4× the old level (`mkSnd`'s `two`), your-turn plays twice, and on an
