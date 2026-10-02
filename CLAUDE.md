@@ -370,6 +370,7 @@ Statcast's.
 | `tools/install_schedule.sh` | installs/removes the launchd agent |
 | `tools/models/model3.py`, `model_bs.py` | the directional models' training scripts, in `model-workspace/` |
 | `tools/models/milb_translate.py` | fits `MILB_X` (the minors-to-MLB rate shifts) from `hist/`; repo only, run by hand |
+| `tools/build_proj27.py` | the Mock Draft's 2027 projections → `hist/proj-2027.js`; repo only, run by hand |
 | `tools/add_baserunning.py` | fills the Base Running numbers into already-built `data.js` / `hist/mlb-YYYY.js`; repo only, run by hand |
 
 Not mirrored, on purpose: `github_site.json` / `netlify_site.json` (account config), `~/.github_token`,
@@ -880,7 +881,7 @@ is deploy-limited.
   n-th player falls in the projection). Those lists are category-based. Refresh the file when ESPN publishes 2027 ADP (its API had no
   2027 season on 2 Oct). The
   Proj column (and the final standings) use the **Scoring** picked at setup from the saved Fantasy presets (`mkScoring`, `mkSet.scoring`).
-  **Default roster** (Sean, 2 Oct 2026, his league): C, 1B, 2B, 3B, SS, 2B/SS, 1B/3B, 4 OF, UTIL, 8 P, no SP / RP, 4 bench (24); a saved roster
+  **Default roster** (Sean, 2 Oct 2026, his league): C, 1B, 2B, 3B, SS, 2B/SS, 1B/3B, 4 OF, 2 UTIL, 8 P, no SP / RP, 4 bench (25); a saved roster
   that still equals the old ESPN default (`MK_OLDDEF`) moves to it on load, one he changed stays. The setup's reset link says Default.
   Same day: the draft slot is a row of buttons (Random, 1…N); a **Timer** button in the room's top bar changes the pick / nomination /
   bid clocks, the AI speed and the scoring mid-draft (a running clock longer than the new length is cut to it).
@@ -913,6 +914,23 @@ is deploy-limited.
   **On a phone** (Sean, 2 Oct 2026: the list "is only taking up 35% of the screen"): one frame instead of two, the clock bar and the
   list's search / sort / positions a line each (positions slide sideways), tighter rows, no bid-history line — the rows get ~61% of the
   screen between lots and ~46% while one is up for bid (they had ~33%). The block after the minimal passes' at the end of `styles.css`.
+  **2027 projections drive the rankings** (Sean, 2 Oct 2026: "these rankings feel very odd and wrong, maybe use like some sort of 2027
+  projection system ... fangraphs or zips or oopsy"): Steamer / ZiPS / OOPSY 2027 aren't published in October and FanGraphs is behind
+  Cloudflare from the cloud, so **`tools/build_proj27.py` → `hist/proj-2027.js`** (repo only, run by hand; rerun after the season's
+  last fantasy build) projects every official category: Marcel (2024-26 weighted 5 / 4 / 3, pitchers 3 / 2 / 1, regressed with 1200
+  weighted PA / 600 weighted outs of the league rate, aged +0.6% a year under 29 / −0.3% over), a hitter's H and TB halfway to
+  Savant's xBA / xSLG × AB (extra-base hits scaled to match), a pitcher's ER halfway to xERA, QS / RW / RL counted from 2026's game logs,
+  and playing time that keeps a regular's lost season from sinking him (≥ 85% of his two fullest seasons; a young everyday player ≥ 560
+  PA, a young starter ≥ 140 IP; caps 700 PA / 200 IP / 72 IP relief). `mkPool` scores those lines with the room's preset (`mine`, the
+  Proj column) and **the ADP is value over replacement under the room's own scoring, teams and roster** (`mk.set`, else `mkSet`) —
+  every team in a league drafts for the same scoring. The early expert lists (`hist/adp-2027.js`) are no longer read (category-based,
+  which is what read odd); the $ curve is unchanged and follows the new order. ESPN standard, 14 × $200, Sean's roster: Soto $98,
+  Misiorowski $72, Ohtani (hitter) $66, Skubal $63 … — eight P slots a team make aces valuable. Swap in Steamer / ZiPS when they're out
+  (November) by writing the same file shape.
+  **Default roster has two UTIL** (Sean, 2 Oct 2026; `MK_OLDDEF` lists both earlier defaults so a saved copy of either moves up).
+  **Louder** (Sean, 2 Oct 2026: "make the auction or pick sounds much louder"): `mkAudio` builds a compressor + 2.5× master gain once,
+  every cue is a square tone with a triangle an octave under at 3-4× the old level (`mkSnd`'s `two`), your-turn plays twice, and on an
+  iPhone `navigator.audioSession.type = "playback"` puts the sounds on the media channel (louder, and not silenced by the mute switch).
 * **Positions shown are where he played that season** (`playedLabel`: positions with a tenth of his games, most first, up to three;
   SP / RP by that season's starts and relief), on the Leaderboard, Trending and cards; next year's fantasy eligibility (`posLabel`)
   only on Rankings, the Draft board, Eligibility and Fantasy (`posShown`; Sean, 30 Sep 2026).
