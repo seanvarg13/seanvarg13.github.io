@@ -8019,6 +8019,8 @@
   const mkSaveSet = () => { try { localStorage.setItem("draft2027.mock", JSON.stringify(mkSet)); } catch {} };
   const mkSave = () => { try { if (mk) localStorage.setItem("draft2027.mockdraft", JSON.stringify(mk)); else localStorage.removeItem("draft2027.mockdraft"); } catch {} };
   const MK_YEARS = [2026, 2025, 2024], MK_W = { 2026: 0.5, 2025: 0.3, 2024: 0.2 }, MK_TW = { 2026: 0.6, 2025: 0.25, 2024: 0.15 };
+  // the scoring the room's Proj column and team totals use: one of the saved Fantasy presets, picked at setup (Sean, 2 Oct 2026)
+  const mkScoring = () => { const id = mk ? mk.set.scoring : mkSet.scoring; return fpresets().find((p) => p.id === id) || fpreset(); };
   const mkReady = () => !!(fData(String(DATA.meta.season)) && window.DRAFT_FANTASY_LINES && window.DRAFT_ADP27);
   function mkEnsure() {
     fEnsure(String(DATA.meta.season));
@@ -8036,7 +8038,7 @@
   // the pool, built once per scoring: every 2026 MLB player with a projection, his eligibility, role and projected points
   let mkPoolCache = null;
   function mkPool() {
-    const wEspn = ESPN_PRESET.w, wMe = fpreset().w, sig = JSON.stringify(wMe);
+    const wEspn = ESPN_PRESET.w, wMe = mkScoring().w, sig = JSON.stringify(wMe);
     if (mkPoolCache && mkPoolCache.sig === sig) return mkPoolCache.pool;
     const rows = [];
     for (const p of CUR.players) {
@@ -8266,8 +8268,10 @@
     const num = (val, min, max, on, step = 1) => { const i = el("input", "mknum"); i.type = "number"; i.min = min; i.max = max; i.step = step; i.value = val; i.addEventListener("change", () => { const v = Math.max(min, Math.min(max, Math.round(+i.value || min))); i.value = v; on(v); mkSaveSet(); }); return i; };
     row("Draft type", seg([["snake", "Snake"], ["auction", "Auction"]], mkSet.type, (v) => { mkSet.type = v; }));
     row("Teams", num(mkSet.teams, 4, 16, (v) => { mkSet.teams = v; if (mkSet.slot !== "random" && +mkSet.slot > v) mkSet.slot = "random"; mkDrawSetup(box); }));
-    { const s = el("select", "mksel"); for (const v of ["random", ...Array.from({ length: mkSet.teams }, (_, i) => String(i + 1))]) { const o = el("option", null, v === "random" ? "Random" : v); o.value = v; o.selected = String(mkSet.slot) === v; s.append(o); }
-      s.addEventListener("change", () => { mkSet.slot = s.value; mkSaveSet(); }); row(mkSet.type === "snake" ? "Your draft slot" : "Your nomination slot", s); }
+    // the slot as a row of buttons, every one in sight (Sean, 2 Oct 2026: "let me select my draft slot")
+    { const s = el("div", "mkslots"); for (const v of ["random", ...Array.from({ length: mkSet.teams }, (_, i) => String(i + 1))]) { const o = el("button", "mkpill", v === "random" ? "Random" : v); o.type = "button"; o.setAttribute("aria-pressed", String(String(mkSet.slot) === v));
+        o.addEventListener("click", () => { mkSet.slot = v; mkSaveSet(); mkDrawSetup(box); }); s.append(o); }
+      row(mkSet.type === "snake" ? "Your draft slot" : "Your nomination slot", s, mkSet.type === "snake" ? "Where you pick in round 1 (the order snakes back each round)." : "Where you come in the nomination order."); }
     if (mkSet.type === "snake") row("Seconds per pick", num(mkSet.pickSecs, 10, 600, (v) => { mkSet.pickSecs = v; }), "When it runs out you get the first player in your queue, else the best available.");
     else {
       row("Salary cap", num(mkSet.budget, 50, 1000, (v) => { mkSet.budget = v; }), "Per team. Every roster spot costs at least $1.");
@@ -8281,7 +8285,9 @@
     rs.append(grid);
     const rst = el("button", "linkbtn", "ESPN default"); rst.type = "button"; rst.addEventListener("click", () => { mkSet.roster = Object.assign({}, MK_DEF.roster); mkSaveSet(); mkDrawSetup(box); }); rs.append(rst);
     w.append(rs);
-    w.append(el("p", "note", `Scoring for the Proj column: ${fpreset().name} (Fantasy ▸ Scoring settings). The draft order everyone follows is the 2027 consensus.`));
+    { const s = el("select", "mksel"); for (const p of fpresets()) { const o = el("option", null, p.name); o.value = p.id; o.selected = p.id === mkScoring().id; s.append(o); }
+      s.addEventListener("change", () => { mkSet.scoring = s.value; mkSaveSet(); });
+      row("Scoring", s, "Your saved scoring settings (Fantasy ▸ Scoring settings): the Proj column and the final standings use it. The draft order everyone follows is the 2027 consensus."); }
     const go = el("button", "btn mkgo", "Start draft"); go.type = "button"; go.disabled = !mkSlotList(mkSet.roster).length; go.addEventListener("click", mkStart); w.append(go);
     const A = window.DRAFT_ADP27; if (A) { const s = el("details", "mksrc"); s.append(el("summary", null, "Where the 2027 consensus comes from"));
       s.append(el("p", "note", "The site's projection (2024-26 official lines, ESPN standard points, weighted to 2026, regressed and aged) ranked by value over replacement, averaged with every early 2027 list published so far. Those lists are category-based, so a reliever or a base stealer can sit differently from a points league's view; the projection pulls the other way."));
@@ -8330,7 +8336,26 @@
     const btns = el("div", "mkbtns");
     const pz = el("button", "btn mkpause", mk.paused ? "Resume" : "Pause"); pz.type = "button"; pz.addEventListener("click", () => { mk.paused = !mk.paused; mkLast = Date.now(); mkSave(); mkTick(true); mkDraw(); });
     const quit = el("button", "btn btn-quiet", "End"); quit.type = "button"; quit.addEventListener("click", () => { if (confirm("End this mock draft? It can't be resumed.")) { mk = null; mkSave(); render(); } });
-    btns.append(pz, quit);
+    // the clocks can change mid-draft too (Sean, 2 Oct 2026: "change the auction timer/count down"): the new length applies from
+    // the next reset, and a running clock longer than it is cut down to it
+    const tm = el("button", "btn btn-quiet", "Timer"); tm.type = "button"; tm.setAttribute("aria-expanded", String(!!mkUI.timer));
+    tm.addEventListener("click", () => { mkUI.timer = !mkUI.timer; mkDraw(); });
+    btns.append(tm, pz, quit);
+    if (mkUI.timer) {
+      const tp = el("div", "mktimer");
+      const f = (label, key, min, max) => { const l = el("label", "mkrcell"); const i = el("input", "mknum"); i.type = "number"; i.min = min; i.max = max; i.value = mk.set[key];
+        i.addEventListener("change", () => { const v = Math.max(min, Math.min(max, Math.round(+i.value || min))); i.value = v; mk.set[key] = v; mkSet[key] = v; mkSaveSet();
+          const live = mk.set.type === "snake" ? key === "pickSecs" : (mk.auc.phase === "nom" ? key === "nomSecs" : key === "bidSecs");
+          if (live && mk.clock > v * 1000) mk.clock = v * 1000; mkSave(); mkClock(); });
+        l.append(el("span", null, label), i); tp.append(l); };
+      if (mk.set.type === "snake") f("Seconds per pick", "pickSecs", 10, 600);
+      else { f("Seconds to nominate", "nomSecs", 10, 300); f("Seconds per bid", "bidSecs", 3, 60); }
+      const ai = el("label", "mkrcell"); const sel = el("select", "mksel"); for (const [v, l] of [["fast", "Fast"], ["normal", "Normal"], ["slow", "Slow"]]) { const o = el("option", null, l); o.value = v; o.selected = mk.set.ai === v; sel.append(o); }
+      sel.addEventListener("change", () => { mk.set.ai = sel.value; mkSet.ai = sel.value; mkSaveSet(); mkSave(); }); ai.append(el("span", null, "Computer teams"), sel); tp.append(ai);
+      const sc = el("label", "mkrcell"); const ss = el("select", "mksel"); for (const p of fpresets()) { const o = el("option", null, p.name); o.value = p.id; o.selected = p.id === mkScoring().id; ss.append(o); }
+      ss.addEventListener("change", () => { mk.set.scoring = ss.value; mkSet.scoring = ss.value; mkSaveSet(); mkSave(); mkDraw(); }); sc.append(el("span", null, "Scoring"), ss); tp.append(sc);
+      top.append(tp);
+    }
     if (mk.set.type === "auction") { const me = mk.teams[mk.me]; btns.prepend(el("span", "mkbudget", `$${me.budget} left · max bid $${mkMaxBid(me)}`)); }
     top.append(clock, info, btns);
     return top;
