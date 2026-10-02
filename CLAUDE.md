@@ -907,6 +907,9 @@ is deploy-limited.
   stars-and-scrubs, balanced, bargain, early spender, pitching- / hitting-heavy) × noise (σ 0.2) × its money per open spot; half for a
   player who'd only fill the bench. Stars are nominated first (any of the top 8 open), later a mix of the top 15 and $1 fliers; bids jump $3-10 while far under a
   price, then go up $1.
+  **⏩ Skip** (Sean, 2 Oct 2026: "if I know I don't want a player I can fast forward through his bidding process"): beside Bid in the
+  auction panel, `mkSkip` lets the computer teams bid the lot out at once with the clock's own logic (`mkBidders` / `mkAiRaise`, shared
+  with `mkTick`) and sells him; a bid of yours that's still high stands until someone tops it.
 * **Positions shown are where he played that season** (`playedLabel`: positions with a tenth of his games, most first, up to three;
   SP / RP by that season's starts and relief), on the Leaderboard, Trending and cards; next year's fantasy eligibility (`posLabel`)
   only on Rankings, the Draft board, Eligibility and Fantasy (`posShown`; Sean, 30 Sep 2026).
