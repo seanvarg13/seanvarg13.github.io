@@ -3691,3 +3691,33 @@ tr.mkmine td { background: var(--accent-wash, var(--surface-2)); }
 .mkslots { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; max-width: 60%; }
 :root[data-view="mobile"] .mkslots { max-width: none; justify-content: flex-start; }
 .mkslots .mkpill { min-width: 34px; }
+/* Mock Draft on a phone (Sean, 2 Oct 2026: the player list "is only taking up 35% of the screen"): one frame instead of two, the
+   clock bar and the list's search / sort / positions each squeezed to a line, tighter rows — the list gets ~60% of the screen */
+:root[data-view="mobile"] body[data-mode="mock"] main.wrap { padding: 0 4px 4px; }
+:root[data-view="mobile"] body[data-mode="mock"] #pitchboard { border: 0; padding: 4px 0 0; gap: 4px; }
+:root[data-view="mobile"] body[data-mode="mock"] .mktop { gap: 2px 8px; padding: 4px 8px; }
+:root[data-view="mobile"] body[data-mode="mock"] .mktop .mkclock { font-size: 20px; min-width: 2.4em; line-height: 1.1; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkwhat { font-size: 12px; line-height: 1.25; flex-basis: calc(100% - 4em); }
+:root[data-view="mobile"] body[data-mode="mock"] .mkbtns { gap: 4px; flex-wrap: nowrap; overflow-x: auto; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkbtns .btn { height: 28px; min-height: 0; padding: 0 7px; font-size: 13px; flex: none; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkbudget { font-size: 12px; white-space: nowrap; flex: none; margin-right: auto; }
+:root[data-view="mobile"] body[data-mode="mock"] .mktabs { flex: none; }
+:root[data-view="mobile"] body[data-mode="mock"] .mktabs > * { padding-top: 3px; padding-bottom: 3px; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkbar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 4px 6px; padding: 5px 6px; }
+:root[data-view="mobile"] body[data-mode="mock"] .mksearch { padding: 4px 6px; min-width: 0; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkbar .mksel { padding: 4px 2px; font-size: 13px; max-width: 120px; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkhide { font-size: 12px; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkpos { grid-column: 1 / -1; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkpos::-webkit-scrollbar { display: none; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkpill { flex: none; padding: 2px 9px; }
+:root[data-view="mobile"] body[data-mode="mock"] .mktable th { padding-top: 4px; padding-bottom: 4px; }
+:root[data-view="mobile"] body[data-mode="mock"] .mktable td { padding-top: 4px; padding-bottom: 4px; line-height: 1.2; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkauc { padding: 4px 8px; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkauc .btn { height: 30px; min-height: 0; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkhist { display: none; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkaucp { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkaucp .mksub { font-size: 12px; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkbamt { font-size: 20px; line-height: 1.1; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkbctl { gap: 4px; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkbctl .btn { padding: 0 7px; font-size: 13px; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkbctl .mknum { width: 48px; padding: 3px 4px; }
