@@ -3721,3 +3721,19 @@ tr.mkmine td { background: var(--accent-wash, var(--surface-2)); }
 :root[data-view="mobile"] body[data-mode="mock"] .mkbctl { gap: 4px; }
 :root[data-view="mobile"] body[data-mode="mock"] .mkbctl .btn { padding: 0 7px; font-size: 13px; }
 :root[data-view="mobile"] body[data-mode="mock"] .mkbctl .mknum { width: 48px; padding: 3px 4px; }
+/* the bid buttons hold their place while bids come in (Sean, 2 Oct 2026): the price and the +$ labels change width with their
+   digits, so each gets a fixed width with tabular figures and nothing after them shifts */
+.mkbid { min-width: 132px; }
+.mkbamt, .mkstep { font-variant-numeric: tabular-nums; }
+.mkbwho { display: inline-block; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mkstep { min-width: 98px; justify-content: center; text-align: center; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkbid { min-width: 0; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkstep { min-width: 84px; padding: 0 4px; }
+.mkauc .mkhist { flex-basis: 100%; }
+.mkbid { width: 132px; min-width: 132px; }
+.mkbwho { width: 120px; }
+.mkstep { width: 98px; }
+.mkteams td.n, .mkteams th.n { text-align: right; font-variant-numeric: tabular-nums; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkbid { width: auto; min-width: 0; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkbwho { width: auto; }
+:root[data-view="mobile"] body[data-mode="mock"] .mkstep { width: 84px; }

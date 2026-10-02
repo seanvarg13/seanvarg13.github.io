@@ -930,6 +930,12 @@ is deploy-limited.
   **Ohtani is one player** (Sean, 2 Oct 2026: "ohtani should be valued as a pitcher and hitter thats why he should be $98 value guy and
   the rest are not too close"): `mkPool` folds a two-way player's pitcher entry into his hitter entry (points summed, `x.two` keeps the
   pitching part, the room tags him "DH + P"); he fills one hitter slot. 14 × $200: Ohtani $98, Soto $72, Misiorowski $66, Skubal $63.
+  **Steady bid panel** (Sean, 2 Oct 2026: the bid and Skip buttons "dont move when new bids are made" and a new bid shouldn't reset
+  the typed bid): `mkDrawLive` refreshes the panel in place (`w._refresh`, same lot) instead of rebuilding it; the price, high bidder and
+  +$ buttons have fixed widths with tabular digits and the bid history its own line; the typed bid is kept in `mkUI.cust` per lot (and
+  its focus) across full redraws, cleared once it's placed; Enter in the box bids. **Teams tab** (same day: "see the current budget and
+  max bid for every team"): a side / phone tab listing every team's money left, max bid ($1 kept for each other open spot), spots left
+  and projected points, the high bidder marked; a name opens that team's roster.
   **Default roster has two UTIL** (Sean, 2 Oct 2026; `MK_OLDDEF` lists both earlier defaults so a saved copy of either moves up).
   **Louder** (Sean, 2 Oct 2026: "make the auction or pick sounds much louder"): `mkAudio` builds a compressor + 2.5× master gain once,
   every cue is a square tone with a triangle an octave under at 3-4× the old level (`mkSnd`'s `two`), your-turn plays twice, and on an

@@ -8398,7 +8398,7 @@
   function mkDraw() {
     if (state.mode !== "mock" || !mk) return;
     const box = pitchBoardEl();
-    const keep = { list: box.querySelector(".mklist")?.scrollTop || 0, side: box.querySelector(".mkside")?.scrollTop || 0, focus: document.activeElement && document.activeElement.id === "mkq" };
+    const keep = { list: box.querySelector(".mklist")?.scrollTop || 0, side: box.querySelector(".mkside")?.scrollTop || 0, focus: document.activeElement && document.activeElement.id === "mkq", cust: document.activeElement && document.activeElement.id === "mkcust" };
     box.replaceChildren();
     if (mk.status === "done") { mkDrawDone(box); return; }
     const mob = mobileView();
@@ -8407,24 +8407,25 @@
     if (!box._mkwake) { box._mkwake = true; box.addEventListener("pointerdown", () => { if (state.mode === "mock" && mkSet.sound !== false) mkAudio(); }); }
     if (mob) {
       const tabs = el("div", "seg mktabs");
-      for (const [k, l] of [["players", "Players"], ["team", "My team"], ["board", "Board"], ["log", "Picks"]]) { const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(mkUI.tab === k)); b.addEventListener("click", () => { mkUI.tab = k; mkDraw(); }); tabs.append(b); }
+      for (const [k, l] of [["players", "Players"], ["team", "My team"], ["teams", "Teams"], ["board", "Board"], ["log", "Picks"]]) { const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(mkUI.tab === k)); b.addEventListener("click", () => { mkUI.tab = k; mkDraw(); }); tabs.append(b); }
       box.append(tabs);
       const main = el("div", "mkmain one");
       if (mkUI.tab === "players") main.append(mkListPane()); else { const s = el("div", "mkside"); s.append(mkSidePane(mkUI.tab)); main.append(s); }
       box.append(main);
     } else {
       const main = el("div", "mkmain"), side = el("div", "mkside");
-      const st = el("div", "seg mktabs"); for (const [k, l] of [["team", "My team"], ["board", "Board"], ["log", "Picks"], ["queue", "Queue"]]) { const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(mkUI.side === k)); b.addEventListener("click", () => { mkUI.side = k; mkDraw(); }); st.append(b); }
+      const st = el("div", "seg mktabs"); for (const [k, l] of [["team", "My team"], ["teams", "Teams"], ["board", "Board"], ["log", "Picks"], ["queue", "Queue"]]) { const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(mkUI.side === k)); b.addEventListener("click", () => { mkUI.side = k; mkDraw(); }); st.append(b); }
       side.append(st, mkSidePane(mkUI.side));
       main.append(mkListPane(), side); box.append(main);
     }
     const l = box.querySelector(".mklist"); if (l) l.scrollTop = keep.list;
     const s = box.querySelector(".mkside"); if (s) s.scrollTop = keep.side;
     if (keep.focus) { const q = $("mkq"); if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
+    if (keep.cust) { const c = $("mkcust"); if (c) c.focus({ preventScroll: true }); }
     mkClock();
   }
   // just the parts a bid changes
-  function mkDrawLive() { if (state.mode !== "mock" || !mk || !mk.auc) return; const o = document.querySelector(".mkauc"); if (o) o.replaceWith(mkAuctionPanel()); const t = document.querySelector(".mktop"); if (t) t.replaceWith(mkTop()); mkClock(); }
+  function mkDrawLive() { if (state.mode !== "mock" || !mk || !mk.auc) return; const o = document.querySelector(".mkauc"); if (o) { if (o._refresh && o.dataset.k === String(mk.auc.k) && mk.auc.phase === "bid") o._refresh(); else o.replaceWith(mkAuctionPanel()); } const t = document.querySelector(".mktop"); if (t) t.replaceWith(mkTop()); mkClock(); }
   function mkTop() {
     const top = el("div", "mktop"), T = mk.set.teams;
     let what;
@@ -8473,17 +8474,31 @@
       if (A.last) { const x = mkP(A.last.k); w.append(el("div", "mklast", `Last: ${x.name} to ${mk.teams[A.last.t].name} for $${A.last.bid}`)); }
       return w;
     }
-    const x = mkP(A.k), hi = mk.teams[A.high];
+    // a new bid updates this panel in place (Sean, 2 Oct 2026: the buttons shouldn't move and a bid coming in shouldn't wipe what he's
+    // typing): the amounts, labels and disabled states change, the elements and the typed bid stay; the typed bid also survives a
+    // full redraw (mkUI.cust, per lot), and the buttons hold their width whatever the digits
+    const x = mkP(A.k), hi = mk.teams[A.high]; w.dataset.k = String(A.k);
     const head = el("div", "mkaucp"); const nb = el("button", "linkbtn mkpname", x.name); nb.type = "button"; nb.addEventListener("click", () => mkOpenCard(x)); head.append(nb, el("span", "mksub", ` ${x.team} · ${mkPosTag(x)} · value $${mkVal(x.k)} · proj ${Math.round(x.mine)}`));
-    const bid = el("div", "mkbid"); bid.append(el("span", "mkbamt", `$${A.bid}`), el("span", "mkbwho", hi.me ? "You're high" : hi.name));
+    const amt = el("span", "mkbamt"), who = el("span", "mkbwho"), bid = el("div", "mkbid"); bid.append(amt, who);
     const ctl = el("div", "mkbctl");
-    const can = (amt) => A.high !== mk.me && amt <= mkMaxBid(me) && mkCanAdd(me, x, mk.set.roster);
-    for (const d of [1, 5]) { const b = el("button", "btn", `+$${d} ($${A.bid + d})`); b.type = "button"; b.disabled = !can(A.bid + d) || mk.paused; b.addEventListener("click", () => mkBid(mk.me, A.bid + d)); ctl.append(b); }
-    const i = el("input", "mknum"); i.type = "number"; i.min = A.bid + 1; i.max = mkMaxBid(me); i.placeholder = "$"; i.id = "mkcust";
-    const cb = el("button", "btn btn-quiet", "Bid"); cb.type = "button"; cb.disabled = mk.paused || A.high === mk.me; cb.addEventListener("click", () => { const v = Math.round(+i.value); if (can(v) && v > A.bid) mkBid(mk.me, v); });
-    const ff = el("button", "btn btn-quiet mkskip", "⏩ Skip"); ff.type = "button"; ff.title = "Not interested: the other teams bid him out now"; ff.disabled = mk.paused; ff.addEventListener("click", () => { mkAudio(); mkSkip(); });
+    const can = (v) => A.high !== mk.me && v <= mkMaxBid(me) && mkCanAdd(me, x, mk.set.roster);
+    const steps = [1, 5].map((d) => { const b = el("button", "btn mkstep"); b.type = "button"; b.addEventListener("click", () => mkBid(mk.me, A.bid + d)); ctl.append(b); return [d, b]; });
+    const i = el("input", "mknum"); i.type = "number"; i.placeholder = "$"; i.id = "mkcust";
+    if (mkUI.custK === A.k) i.value = mkUI.cust || "";
+    i.addEventListener("input", () => { mkUI.cust = i.value; mkUI.custK = A.k; });
+    const cb = el("button", "btn btn-quiet", "Bid"); cb.type = "button";
+    cb.addEventListener("click", () => { const v = Math.round(+i.value); if (can(v) && v > A.bid) { i.value = ""; mkUI.cust = ""; mkBid(mk.me, v); } });
+    i.addEventListener("keydown", (e) => { if (e.key === "Enter") cb.click(); });
+    const ff = el("button", "btn btn-quiet mkskip", "⏩ Skip"); ff.type = "button"; ff.title = "Not interested: the other teams bid him out now"; ff.addEventListener("click", () => { mkAudio(); mkSkip(); });
     ctl.append(i, cb, ff);
-    const hist = el("div", "mkhist", A.hist.slice(-4).reverse().map(([t, a]) => `${mk.teams[t].me ? "You" : mk.teams[t].name} $${a}`).join(" · "));
+    const hist = el("div", "mkhist");
+    w._refresh = () => {
+      amt.textContent = `$${A.bid}`; who.textContent = mk.teams[A.high].me ? "You're high" : mk.teams[A.high].name;
+      for (const [d, b] of steps) { b.textContent = `+$${d} ($${A.bid + d})`; b.disabled = !can(A.bid + d) || mk.paused; }
+      i.min = A.bid + 1; i.max = mkMaxBid(me); cb.disabled = mk.paused || A.high === mk.me; ff.disabled = mk.paused;
+      hist.textContent = A.hist.slice(-4).reverse().map(([t, a]) => `${mk.teams[t].me ? "You" : mk.teams[t].name} $${a}`).join(" · ");
+    };
+    w._refresh();
     w.append(head, bid, ctl, hist);
     return w;
   }
@@ -8532,6 +8547,24 @@
   }
   function mkSidePane(which) {
     const w = el("div", "mkpane");
+    // every team at a glance (Sean, 2 Oct 2026: "see the current budget and max bid for every team"): money left, the most it can bid
+    // (keeping $1 for each other open spot), spots left and its projected points; a name opens that team's roster
+    if (which === "teams") {
+      const auc = mk.set.type === "auction", A = mk.auc, tb = el("table", "pwtable mkteams"), hd = el("tr");
+      for (const h of ["Team", ...(auc ? ["Left", "Max bid"] : []), "Spots", "Proj"]) hd.append(el("th", h === "Team" ? null : "n", h));
+      const body = el("tbody");
+      mk.teams.forEach((t, i) => {
+        const tr = el("tr"); if (t.me) tr.classList.add("mkmine");
+        const nb = el("button", "linkbtn", t.me ? "Your team" : t.name); nb.type = "button"; nb.addEventListener("click", () => { mkUI.boardTeam = i; if (mobileView()) mkUI.tab = "team"; else mkUI.side = "team"; mkDraw(); });
+        const c = el("td", "pwho"); c.append(nb); if (auc && A && A.phase === "bid" && A.high === i) c.append(el("small", null, " · high bid"));
+        tr.append(c);
+        if (auc) tr.append(el("td", "n", `$${t.budget}`), el("td", "n", mkOpen(t) > 0 ? `$${mkMaxBid(t)}` : "–"));
+        tr.append(el("td", "n", String(mkOpen(t))), el("td", "n", String(Math.round(t.picks.reduce((a, q) => a + (mkP(q.k)?.mine || 0), 0)))));
+        body.append(tr);
+      });
+      const th = el("thead"); th.append(hd); tb.append(th, body); w.append(tb);
+      return w;
+    }
     if (which === "team" || which === "players") {
       const teamI = mkUI.boardTeam ?? mk.me, t = mk.teams[teamI];
       const sel = el("select", "mksel"); mk.teams.forEach((x, i) => { const o = el("option", null, x.name); o.value = i; o.selected = i === teamI; sel.append(o); }); sel.addEventListener("change", () => { mkUI.boardTeam = +sel.value; mkDraw(); });
