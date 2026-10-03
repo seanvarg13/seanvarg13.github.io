@@ -359,25 +359,26 @@
   // threw, summed the same way, so his baseline is his own mix. Files built before that lack them and grade against all.
   // f / d / bf / bd (2 Oct 2026): summed foul chances on contact and damage (wOBA on contact), his and his types' — files
   // built before them leave them undefined and grade on whiff and batted-ball type alone
-  // wl / bwl (3 Oct 2026): summed whiff chances with location, his and his types' — Location+ (locFrom)
-  function stuffFrom(n, w, g, p, bw, bg, bp, f, d, bf, bd, wl, bwl) {
+  // nl / wl / ws / bwl / bws (3 Oct 2026): over the pitches swung at — swings graded, summed whiff chances with location,
+  // stuff-only chances on the same swings, and his types' means of each — Location+ (locFrom)
+  function stuffFrom(n, w, g, p, bw, bg, bp, f, d, bf, bd, nl, wl, ws, bwl, bws) {
     const sc = K().stuff; if (!sc || !n) return { swhf: null, sbb: null, stuff: null, sloc: null };
     const per = (x, k) => (x == null ? null : k * x / n);
     const r1 = (x) => Math.round(10 * x) / 10, [wp, bp_] = stuffParts(sc, 100 * w / n, g / n, p / n, K().lgERA, per(f, 100), per(d, 1));
     if (!bw) return { swhf: r1(wp), sbb: r1(bp_), stuff: r1(wp + bp_ - 100), sloc: null };
     const [wb, bb] = stuffParts(sc, 100 * bw / n, bg / n, bp / n, K().lgERA, per(bf, 100), per(bd, 1));
-    return { swhf: r1(wp - wb + 100), sbb: r1(bp_ - bb + 100), stuff: r1(wp - wb + bp_ - bb + 100), sloc: locFrom(sc, per(w, 100), per(wl, 100), per(bw, 100), per(bwl, 100)) };
+    return { swhf: r1(wp - wb + 100), sbb: r1(bp_ - bb + 100), stuff: r1(wp - wb + bp_ - bb + 100), sloc: nl ? locFrom(sc, 100 * ws / nl, 100 * wl / nl, 100 * bws / nl, 100 * bwl / nl) : null };
   }
-  // Location+ (3 Oct 2026): how much where he throws his pitches adds to the whiffs his stuff earns — his location-aware
-  // whiff edge over his pitch types minus his stuff-only edge, in Stuff+ points (kW ERA per whiff point); 100 = his spots
-  // add what an average pitcher's do. The build's location_plus(). Rates in %: his xWhiff, his xWhiff with location, and
-  // his types' means of each
+  // Location+ (3 Oct 2026): how much where he throws his pitches adds to the whiffs his stuff earns — over the pitches
+  // swung at, his location-aware whiff edge over his pitch types minus his stuff-only edge on the same swings, in Stuff+
+  // points (kW ERA per whiff point); 100 = his spots add what an average pitcher's do. The build's location_plus(). Rates
+  // in %: his stuff xWhiff on his swings, his xWhiff with location, and his types' means of each
   function locFrom(sc, xw, xwl, bxw, bxwl) {
     if (!sc || !sc.kW || xw == null || xwl == null || bxw == null || bxwl == null) return null;
     return Math.round(10 * (100 + 100 * sc.kW * ((xwl - bxwl) - (xw - bxw)) / K().lgERA)) / 10;
   }
-  // a pitch type's league xWhiff with location (consts.stuff.types[pt][6]), null on files built before it
-  const typeLoc = (sc, pt) => { const x = sc && sc.types && sc.types[pt]; return x && x[6] != null ? x[6] : null; };
+  // a pitch type's league xWhiff with location and stuff-only, both over its swings (consts.stuff.types[pt][6] / [7]); null on files built before them
+  const typeLoc = (sc, pt) => { const x = sc && sc.types && sc.types[pt]; return x && x[6] != null && x[7] != null ? [x[6], x[7]] : null; };
   // the two halves from rates: xWhiff% per swing, the ground-ball and popup shares of contact, and (2 Oct 2026) foul% of
   // contact and damage (wOBA on contact) — the build's stuff_parts(): a ball in play is the GB / PU / air mix blended with
   // the damage model, and a foul chance above the league's saves what a foul saves over a ball in play
@@ -797,7 +798,7 @@
                    csw: rate(t.cs + t.whf, t.pit), zcon: rate(t.zcon, t.zsw), zone: rate(t.zpit, t.pit), osw: rate(t.osw, t.opit), swing: rate(t.sw, t.pit),
                    fbv: t.fbn ? Math.round(10 * t.fbv / t.fbn) / 10 : null, ext: t.extn ? Math.round(10 * t.exts / t.extn) / 10 : null,
                    ev: (t.evn || t.bbe) ? Math.round(10 * t.evsum / (t.evn || t.bbe)) / 10 : null, hh: rate(t.hh, t.bip || t.bbe), brl: rate(t.brl, t.bip || t.bbe),
-                   ...stuffFrom(t.stn, t.stw, t.stg, t.stp, t.stbw, t.stbg, t.stbp, t.stf, t.std, t.stbf, t.stbd, t.stwl, t.stbwl), _stn: t.stn, _stw: t.stw, _stg: t.stg, _stp: t.stp },
+                   ...stuffFrom(t.stn, t.stw, t.stg, t.stp, t.stbw, t.stbg, t.stbp, t.stf, t.std, t.stbf, t.stbd, t.stnl, t.stwl, t.stws, t.stbwl, t.stbws), _stn: t.stn, _stw: t.stw, _stg: t.stg, _stp: t.stp },
               sample: ip, ip, bf: t.bf, g: games, gs,
               ctx: { G: games, GS: gs, wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, Pitches: t.pit, bbl, PAw: t.wden, HBP: t.hbp } };
       } else {
@@ -6286,11 +6287,11 @@
     const sc = K().stuff, r1 = (x) => Math.round(10 * x) / 10;
     return [...sum.entries()].filter(([, t]) => t.n > 0).sort((a, b) => b[1].n - a[1].n).map(([pt, t]) => {
       const [wp, bp] = sc ? stuffParts(sc, 100 * t.w / t.n, t.g / t.n, t.p / t.n, K().lgERA, t.f == null ? null : 100 * t.f / t.n, t.d == null ? null : t.d / t.n) : [null, null];
-      const xwl = t.wl == null ? null : 100 * t.wl / t.n, tl = typeLoc(sc, pt), tw = sc && sc.types && sc.types[pt] ? sc.types[pt][1] : null;
+      const xwl = t.nl ? 100 * t.wl / t.nl : null, tl = typeLoc(sc, pt);
       return { pt, n: t.n, velo: t.velo / t.n, ivb: t.ivb / t.n, hb: t.hb / t.n, spin: t.spn ? Math.round(t.spin / t.spn) : null,
                xwhf: 100 * t.w / t.n, xgb: 100 * t.g / t.n, xpu: 100 * t.p / t.n, whfp: wp == null ? null : r1(wp), bbp: bp == null ? null : r1(bp),
                stuffp: wp == null ? null : r1(wp + bp - 100), whf: t.sw ? 100 * t.wh / t.sw : null, gb: t.bip ? 100 * t.gb / t.bip : null,
-               pu: t.bip ? 100 * t.pu / t.bip : null, sw: t.sw, bip: t.bip, xwhfl: xwl, locp: locFrom(sc, 100 * t.w / t.n, xwl, tw, tl) };
+               pu: t.bip ? 100 * t.pu / t.bip : null, sw: t.sw, bip: t.bip, xwhfl: t.nl >= 5 ? xwl : null, locp: t.nl >= 5 && tl ? locFrom(sc, 100 * t.ws / t.nl, xwl, tl[1], tl[0]) : null };
     });
   }   // the Stuff tab's per-pitch grades: against the league's pitches of the same type, or all pitches
   const plusStyle = (v) => pctStyle(Math.max(1, Math.min(99, Math.round(50 + 2.2 * (v - 100)))));   // 100 = the middle of the scale

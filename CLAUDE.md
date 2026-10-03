@@ -299,9 +299,13 @@ the old season-plus-two training). Build scripts pass `prior` as a function so t
 the minors / spring / postseason callers load only the reference season when the file exists. Tested: 2020-25 grades 2026 as well as
 2024-25 (same-season r Whiff / GB / PU .760 / .802 / .657 vs .771 / .798 / .647, next season identical) and Stuff+ moves less year
 to year (r .861 vs .847). **Location**: `location_features` (lz = height as a share of the batter's zone, lx = side, + away from
-the batter) feed only the sixth model; per pitch `st_wl` / `st_bwl` (his type's mean), day fields `stwl / stbwl`, arsenal-day `wl`,
-`ctx.arsenal` `xwhfl / locp`, `consts.stuff.lgWL` and a seventh number on each `types` entry. **Location+** (`location_plus` /
-`locFrom`) = 100 + 100·kW·((xWhiff·loc − type's) − (xWhiff − type's)) / lgERA: `m.sloc` on the card (Stuff section, `SIDE_P`),
+the batter) feed only the sixth model. Its chance is P(whiff | swing) *at that spot* — a ball in the dirt reads 80% whether or
+not anyone swung — so it's carried **over the pitches swung at only** (the first build averaged it over every pitch and read 36%
+against xWhiff's 26%): per pitch `st_nl` (a graded swing) / `st_wl` (chance with location) / `st_ws` (the stuff-only chance on the
+same swing) / `st_bwl`, `st_bws` (his type's means over its swings), day fields `stnl / stwl / stws / stbwl / stbws`, arsenal-day
+`nl / wl / ws`, `ctx.arsenal` `xwhfl / locp` (null under 5 swings), `consts.stuff.lgWL / lgWS` and a seventh and eighth number on
+each `types` entry. **Location+** (`location_plus` / `locFrom`) = 100 + 100·kW·((xWhiff·loc − type's) − (xWhiff on the same
+swings − type's)) / lgERA: `m.sloc` on the card (Stuff section, `SIDE_P`),
 a Leaderboard column (`LB_EXTRA_P`), Stuff tab columns xWhiff·loc / Loc+ and the Stuff+ board's. Stuff+ / Whiff+ / Batted-ball+
 never see location. Tested the same day and left out: location in the batted-ball models and the count (same season a touch
 better, next season worse), a run-value regressor in place of the component build (FanGraphs' recipe: next-period r runs .50 →
