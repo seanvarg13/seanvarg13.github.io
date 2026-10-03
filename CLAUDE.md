@@ -291,8 +291,8 @@ numbers on each `types` entry; files built before them grade on whiff + type alo
 season being built had been graded without its park adjustment (only the training seasons had it).
 **Fixed models + Pitching+ / Location+ (Sean, 3 Oct 2026: "add in the location aspect ... base it off all prior years ... the fixed
 model", then "whiff+, bb+ and location+ ... feeds into pitching plus ... a separate model from the stuff plus, but still have both
-predict whiff% and gb% and pu%")**: `tools/models/train_stuff.py` trains all six models (whiff, batted-ball type, foul, damage, and
-whiff / batted-ball type again **with location**) on 2020 (the first season with spin axis) through the last finished season and
+predict whiff% and gb% and pu%")**: `tools/models/train_stuff.py` trains all the models (whiff, batted-ball type, foul, damage, whiff / batted-ball type again **with location**, and since the
+same day the two command models below — eight in all) on 2020 (the first season with spin axis) through the last finished season and
 saves `model-workspace/stuff_models.joblib`; `.github/workflows/train_stuff.yml` runs it under the release's pinned versions (16 Nov,
 and by hand), keeps the replaced file on a `stuff-prev-<date>` release, uploads to the `models` release and rescores everything; the
 daily workflow downloads it with the directional models and `add_stuff` → `load_stuff_models` grades with it (`_grade_stuff`;
@@ -353,6 +353,40 @@ their grades are rougher. **Stuff uERA** (Stuff tab, `stuffUERA` in `app.js`): u
 his real Whiff% / GB% / PU%; walks and every rate but Whiff% from his actual numbers (the stuff model can't see strikes). It's also a
 Leaderboard column (`suera`, `LB_EXTRA_P`; pool stats in `pool()` / `statsFor`, rates from `stuffRates`: day-row sums in a
 window, the arsenal otherwise).
+
+**Command models, xBB%, Pitching uBB% and Command+ (Sean, 3 Oct 2026: "would there be any way to incorporate a pitchers command and
+ability to generate chases, stay in the zone and throw strikes and avoid balls in the model", "improve like the whiff gb pu models and
+also be accurate towards like walk rates? i want to be able to make the pitching uera bb% more accurate", "ok yeah try that")**: two
+more models in `train_stuff_models` (so the fixed file holds eight) — **swing**: P(swing) from the pitch's traits (the whiff model's
+inputs) plus its spot (`lx` / `lz`), how far outside the zone it crossed (`edge`, feet; the plate's half-width plus a ball's radius,
+the batter's own top and bottom) and the count (`balls` / `strikes`); **call**: P(called strike | taken) from type, spot, edge, count,
+batter side and hand (`command_features`, `STUFF_CMD`, model keys `swing` / `call`, columns `scols` / `ccols`; pitchouts, intentional
+balls and bunts out of the training). Per pitch (`_grade_stuff`): strike chance = P(swing) + (1 − P(swing)) · P(called), chase chance =
+P(swing) out of the zone, swing-and-miss chance = P(swing) × the location whiff chance — summed as `st_cn / st_cs / st_ck / st_co /
+st_cso / st_ci / st_csi / st_cwi / st_cw` (graded pitches, swing chances, strike chances, out-of-zone pitches and their swing chances,
+in-zone pitches, their swing and swing-and-miss chances, swing-and-miss chances on every pitch), day fields `stcn … stcw`, arsenal-day
+`cn cs ck co cso stk osz` (the last two: strikes and out-of-zone swings that happened on the graded pitches), `ctx.arsenal` `xstk stk
+xchs chs` (per pitch type: xStrike% vs Strike%, xChase% vs Chase%), and on each pitcher `m.xstrk / xswing / xosw / xzcon / xwhfa` —
+the Strike%, Swing%, Chase%, Z-Contact% and Whiff% his pitches deserved where he threw them (`build_pitchers`; a window or split
+re-derives them in `V()`). `COLS` / `STUFF_TRAIN` carry `balls` / `strikes` (and `zone` for training); `build_milb.py` gives every
+Gameday pitch the count it came in (the feed's count is the state after it), so Triple-A and the FSL parks get them too. In `app.js`:
+**xBB%** (`xBBFrom`, `XBB_MAP`) = the uBB% fit run on those expected rates instead of his actual ones, each against the league's
+expected rate (`lgRatesP` carries both; Zone% is his own); **Pitching uBB%** (`pubb`, `CMD_BLEND` 0.4) = 0.6 uBB% + 0.4 xBB%, the walk
+rate inside Pitching uERA (`stuffUeraCore` / `impliedKBB` take a `bbX`; the pool's `puera`, `statsFor` and the tab's `pitchUERA` pass
+`V(p).m.pubb`); **Command+** (`cmd`) = 100 + 100 · kBB · (lgBB − xBB) / lgERA with kBB = (wBB − lgB) / 100 / wobaScale · pa9 — a walk
+priced against a ball in play on uERA's scale, 1 point = 1% of runs like Stuff+ (`cmdFill`, set on every `V()` for pitchers). All five
+are `SIDE_P` / `LB_EXTRA_P` columns (Stats panel group "Command"; Command+ in the Stuff column set), Command+ in the Pitching+ tab's
+sub-head, xStrike / xChase pairs on the Pitching+ tab (per pitch from the arsenal, the total row from the card's own rates) and the
+Stuff+ board. **Backtest** (scratch `cmd.py`, models fitted on the two seasons before, 300+ BF, r / mean abs error in BB% points):
+same season, xBB% alone .713 / 1.19 (2024), .625 / 1.28 (2025), .712 / 1.15 (2026) vs uBB% .833 / .93, .744 / 1.00, .802 / .98;
+next season (2024 → 25, 2025 → 26) xBB% .561 / 1.29, .564 / 1.25 vs uBB% .603 / 1.27, .502 / 1.42 and his own BB% .558 / 1.40,
+.563 / 1.43; the 0.6 / 0.4 blend .609 / 1.23, .558 / 1.29 next season at .816 / .735 / .799 same season (a half-and-half blend .606 /
+1.23, .566 / 1.27 at .804 / .724 / .791 — the 0.4 weight keeps more of the same-season fit). Refitting uBB%'s weights on the expected
+rates, or on both sets, did no better. The expected rates track the actual same-season (Strike% r .85-.88, Swing% .80-.82, Chase%
+.73-.75, Z-Contact% .74-.82, Whiff% .76-.84); expected Strike% predicted next season's Strike% better than actual in 2025 → 26 (.685 vs
+.603) and worse in 2024 → 25 (.651 vs .695). **For K% the expected rates added nothing** (uK% from them: same-season r .67 vs .90) and
+a refit on both sets matched the site's uK%, so uK% is unchanged. Files built before the fields show "–" for the five columns and no
+xStrike / xChase pairs, and Pitching uERA walks at uBB% there (`pubb` null → `impliedKBB`'s own).
 
 **Model candidates tested and left out, 3 Oct 2026** (Sean: "do all that but park factors for directional xwoba"; scratch `bt8.py` /
 `dxw.py` / `framing.py`, every candidate scored on 2025 and 2026 same-season halves and 2025 → 2026 / 2024 → 2025 next-season):
@@ -1058,6 +1092,11 @@ is deploy-limited.
   leaves it there, and the Filters panel's Order and minimum row has no Min box or Per page on the Leaderboard; the label is Min IP for
   pitchers (`renderMin` / `sampleLabel`). The Stats panel lists the **Pitching+ family as its own group** — Pitching+, Whiff+ (loc),
   Batted-ball+ (loc), Location+, Pitching uERA — whatever the card's data carries (Sean: "i dont see any of the pitching+ stats").
+* **Command (Sean, 3 Oct 2026)**: see §4 — two more models (swing, called strike) give every pitch a strike chance and a chase chance
+  from where it was thrown and the count; **xBB%** is the walk rate those spots deserve, **Pitching uBB%** (0.6 uBB% + 0.4 xBB%) is what
+  Pitching uERA walks, **Command+** is xBB% as a share of runs against the league (100 = average), and xStrike% / xChase% sit beside
+  the actual rates on the Pitching+ tab and the Stuff+ board. Needs the models retrained (Actions → Train Stuff+ models) and every
+  season rescored; a file built before the fields reads "–" and keeps the old Pitching uERA walks.
 
 * **Home, 3 Oct 2026** (Sean: "not make it the starred players ... leaderboard for both xwoba and pitching uERA and then also add a
   trending for hitters of last 100 PAs and then last 50 IP for pitchers by pitching uERA", then "get rid of Sean's Site on it too",
