@@ -289,28 +289,33 @@ the next — command), seam-shifted-wake proxies, release point vs his fastball,
 `stf / std / stbf / stbd`, arsenal-day `f / d`, `ctx.arsenal` `xfoul / xdmg`, `consts.stuff` `lgF / kF / lgD / dmg` and two more
 numbers on each `types` entry; files built before them grade on whiff + type alone. Same day: `COLS` gained `home_team` — the
 season being built had been graded without its park adjustment (only the training seasons had it).
-**Fixed models + Location+ (Sean, 3 Oct 2026: "add in the location aspect ... base it off all prior years ... the fixed model")**:
-`tools/models/train_stuff.py` trains all six models (whiff, whiff + location, batted-ball type, foul, damage) on 2020 (the first
-season with spin axis) through the last finished season and saves `model-workspace/stuff_models.joblib`; `.github/workflows/
-train_stuff.yml` runs it under the release's pinned versions (16 Nov, and by hand), keeps the replaced file on a `stuff-prev-<date>`
-release, uploads to the `models` release and rescores everything; the daily workflow downloads it with the directional models and
-`add_stuff` → `load_stuff_models` grades with it (`_grade_stuff`; `train_stuff_models` is the fallback when the file is missing —
-the old season-plus-two training). Build scripts pass `prior` as a function so the training seasons aren't loaded unless needed;
-the minors / spring / postseason callers load only the reference season when the file exists. Tested: 2020-25 grades 2026 as well as
-2024-25 (same-season r Whiff / GB / PU .760 / .802 / .657 vs .771 / .798 / .647, next season identical) and Stuff+ moves less year
-to year (r .861 vs .847). **Location**: `location_features` (lz = height as a share of the batter's zone, lx = side, + away from
-the batter) feed only the sixth model. Its chance is P(whiff | swing) *at that spot* — a ball in the dirt reads 80% whether or
-not anyone swung — so it's carried **over the pitches swung at only** (the first build averaged it over every pitch and read 36%
-against xWhiff's 26%): per pitch `st_nl` (a graded swing) / `st_wl` (chance with location) / `st_ws` (the stuff-only chance on the
-same swing) / `st_bwl`, `st_bws` (his type's means over its swings), day fields `stnl / stwl / stws / stbwl / stbws`, arsenal-day
-`nl / wl / ws`, `ctx.arsenal` `xwhfl / locp` (null under 5 swings), `consts.stuff.lgWL / lgWS` and a seventh and eighth number on
-each `types` entry. **Location+** (`location_plus` / `locFrom`) = 100 + 100·kW·((xWhiff·loc − type's) − (xWhiff on the same
-swings − type's)) / lgERA: `m.sloc` on the card (Stuff section, `SIDE_P`),
-a Leaderboard column (`LB_EXTRA_P`), Stuff tab columns xWhiff·loc / Loc+ and the Stuff+ board's. Stuff+ / Whiff+ / Batted-ball+
-never see location. Tested the same day and left out: location in the batted-ball models and the count (same season a touch
-better, next season worse), a run-value regressor in place of the component build (FanGraphs' recipe: next-period r runs .50 →
-.39, K-BB .58 → .49), a full Pitching+ (fits the season better, predicts the next worse), the primary fastball's own xWhiff as an
-input for the secondaries (see the 3 Oct test). `COLS` / `STUFF_TRAIN` / build_milb's `TRACK` carry `sz_top` / `sz_bot` for it. **Park-adjusted** (Sean, 29 Sep 2026; `park_offsets` / `STUFF_PARK`): before grading, each pitch's
+**Fixed models + Pitching+ / Location+ (Sean, 3 Oct 2026: "add in the location aspect ... base it off all prior years ... the fixed
+model", then "whiff+, bb+ and location+ ... feeds into pitching plus ... a separate model from the stuff plus, but still have both
+predict whiff% and gb% and pu%")**: `tools/models/train_stuff.py` trains all six models (whiff, batted-ball type, foul, damage, and
+whiff / batted-ball type again **with location**) on 2020 (the first season with spin axis) through the last finished season and
+saves `model-workspace/stuff_models.joblib`; `.github/workflows/train_stuff.yml` runs it under the release's pinned versions (16 Nov,
+and by hand), keeps the replaced file on a `stuff-prev-<date>` release, uploads to the `models` release and rescores everything; the
+daily workflow downloads it with the directional models and `add_stuff` → `load_stuff_models` grades with it (`_grade_stuff`;
+`train_stuff_models` is the fallback when the file is missing — the old season-plus-two training). Build scripts pass `prior` as a
+function so the training seasons aren't loaded unless needed; the minors / spring / postseason callers load only the reference season
+when the file exists. Tested: 2020-25 grades 2026 as well as 2024-25 (same-season r Whiff / GB / PU .760 / .802 / .657 vs .771 /
+.798 / .647, next season identical) and Stuff+ moves less year to year (r .861 vs .847). **Two families, both predicting Whiff% /
+GB% / PU%**: Stuff+ = Whiff+ + Batted-ball+ − 100 from the stuff-only models (unchanged); **Pitching+** = the same from the
+location-aware pair (`location_features`: lz = height as a share of the batter's zone, lx = side, + away from the batter — never
+seen by the stuff models); **Location+** = Pitching+ − Stuff+ + 100. A location-aware chance is P(whiff | swing) / P(type | contact)
+*at that spot* (over every pitch a ball in the dirt reads 80% whiff), so each is carried **with the stuff-only chance on the same
+pitches**: swings `st_nl / st_wl / st_ws` (+ the type's `st_bwl / st_bws`), balls in play `st_nb / st_gl / st_pl / st_gs / st_ps` (+
+`st_bgl / st_bpl / st_bgs / st_bps`); day fields `stnl stwl stws stbwl stbws stnb stgl stpl stgs stps stbgl stbpl stbgs stbps`,
+arsenal-day `nl wl ws nb gl pl gs ps`, `ctx.arsenal` `xwhfl locp xgbl xpul pitp whfpl bbpl` (null under 5 swings / balls in play),
+`consts.stuff` `lgWL lgWS lgGL lgPL lgGS lgPS` and `types[pt][6..11]`. `location_delta` (= `locDelta`) prices what location adds:
+whiffs at kW over his swings, the GB / PU / air mix at kB over his balls in play; `pitching_grade` / `pitchingFrom` add it to the
+Stuff+ halves → `m.pitch / pwhf / pbb / sloc` (card Stuff section: Stuff+, Whiff+, Batted-ball+, **Pitching+, Location+**, velo,
+extension — `PITCHER_CARD` + `PCT_COLS_P`; Leaderboard columns in `LB_EXTRA_P`; Stuff tab and Stuff+ board columns Pitching+ /
+Whiff+·loc / BB+·loc / Loc+ / xWhiff·loc / xGB·loc / xPU·loc, re-based against type like the stuff ones; `stuffPlusLoc` is the one
+call for a summed row — V() and the game log). 2026: xWhiff·loc vs Whiff% r .847 (xWhiff .740); Location+ 100 ± 4. Tested the same
+day and left out: the count (nothing on top of location), a run-value regressor in place of the component build (FanGraphs' recipe:
+next-period r runs .50 → .39, K-BB .58 → .49), the primary fastball's own xWhiff as an input for the secondaries (+.005-.01).
+`COLS` / `STUFF_TRAIN` / build_milb's `TRACK` carry `sz_top` / `sz_bot` for the location. **Park-adjusted** (Sean, 29 Sep 2026; `park_offsets` / `STUFF_PARK`): before grading, each pitch's
 velocity, ride, run and spin are taken back to a neutral park — a two-way fixed-effects fit (pitch = his own pitch-type average that
 season + the park × pitch type offset, alternated four times so home staffs don't bias their park), shrunk by n / (n + 400) and
 centred per type. Found 29 Sep 2026: Coors takes ~2.4-2.9" of four-seam ride, Tampa / Miami / Houston / San Diego add ~0.5-1.1",
