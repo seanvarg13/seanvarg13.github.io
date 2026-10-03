@@ -841,3 +841,12 @@ Trending (xwOBA over each hitter's last 100 PA, Pitching uERA over each pitcher'
 says "loading" for a moment on a cold open). No starred-players card. Each list's name opens the Leaderboard set up the same way.
 The "Sean's Site" wordmark is gone from the header (Home is the first tab). The Leaderboard's column names are in the Stuff+ table's
 header format and the table has a navy outline.
+
+**The format pass, 3 Oct 2026** (Sean, from a list of recommendations — "I do like a minimalistic look"): every table on the site in one
+skin (small grey column names on the pale ground over a grey hairline, 13px numbers, the same 46px rows) and every table, card and
+popup in the same 1px outline, visible in dark mode too; fewer blues — outlines are grey and only the active button, tab or pill is
+light blue; a ▾ on the sorted column; the Stuff+ board's rates without a % in every cell (the header carries it) and only the sorted
+column coloured (a Colour pill brings every + column back); the pitchers' headline column is called Rating; Table format moved from the
+Leaderboard's row into the ⋯ menu; on a phone the Leaderboard's filter row slides sideways on one line; Similar players are plain names;
+and home has a third card, Last game day — the best xwOBA games and the best starts by Stuff+ on the latest day. A stat strip under
+the card's header was mocked up and declined.

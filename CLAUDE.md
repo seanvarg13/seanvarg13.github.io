@@ -1055,6 +1055,21 @@ is deploy-limited.
   The Stuff+ table has the same navy outline and the Leaderboard's rows are as tall as its (46px, `min-height: 45px` on `.row-main`;
   Sean, the same hour). A list row's second line leads with the **team** (`.teaml`, Sean: "add the team in like the stuff+ table has").
 
+* **The format pass, 3 Oct 2026** (Sean picked items 1-8 and 10-15 of a recommendations list; **9, a stat strip under the card's
+  band, was mocked up and declined** — "oh no dont do that"; don't bring it back unasked). The block at the end of `styles.css`
+  ("the format pass"): **one frame** — every table, card and popup in a 1px outline of `--frame` (navy; `#4d6ea3` in dark mode, where
+  the navy vanished); **one table skin** — the Fantasy page, the Stuff+ board, the Leaderboard and every card table (Season Stats,
+  Game Logs, Stuff, Fantasy, uERA) have 11px grey column names on the pale ground over a grey hairline (the 2px light-blue rule is
+  gone), 13px tabular cells, 46px rows (the card's own rules carry `#modal`, so the skin's do too); the Leaderboard's cells at 13px;
+  a ▾ / ▴ on the sorted column name (`#colhead .h[aria-sort]::after`); **fewer blues** — button, pill, segment and card-tab outlines
+  are grey (`--line-soft`), light blue only while active or open, the home lists' links in `--ink-2`; the phone's Leaderboard filter
+  row is one sideways-sliding line; Similar is plain names with dots between; the home lists' team line 11px and value 13.5px. In
+  `app.js`: the Stuff+ board's rate cells drop the % (the headers say Use% / xWhiff% / xGB% / xPU% / …·loc%) and **colour only the
+  sorted + column** (`pb.heat`, a "Colour: sorted / all" pill); the pitchers' headline column is **Rating** (was "Score"; the tooltip
+  carries `scoreNote.P`); **Table format left the Leaderboard's row for the ⋯ menu** (`renderChrome`, `placePop` hangs it under the
+  first button); home has a third card, **Last game day** (the latest day in `meta.days`: the best xwOBA games with 3+ PA from
+  `hitGameLog`, the best starts by Stuff+ with 3+ IP from `gameLog`), the three cards side by side from 1180px (`.hgrid`, names 13px there).
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:

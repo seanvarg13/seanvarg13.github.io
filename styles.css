@@ -3797,3 +3797,59 @@ header.top .wordmark { display: none; }
 :root:root:root:root body[data-mode="pitches"] #pitchboard > .pbscroll { border: 1px solid var(--rule); }
 :root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main { min-height: 45px; box-sizing: border-box; align-items: center; }
 #board .meta .teaml + .posl::before { content: "· "; }   /* team · positions · PA (Sean, 3 Oct 2026) */
+
+/* ---------- the format pass, 3 Oct 2026 (Sean: items 1-8 and 10-15 of the recommendations; a minimal look) ---------- */
+/* one frame: every table, card and popup in a 1px outline of one colour, visible in dark mode too (items 1, 15) */
+:root { --frame: var(--rule); --line-soft: color-mix(in srgb, var(--muted) 45%, transparent); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --frame: #4d6ea3; } }
+:root[data-theme="dark"] { --frame: #4d6ea3; }
+:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) .board > .board-scroll, :root:root:root:root body[data-mode="pitches"] #pitchboard > .pbscroll,
+:root:root:root:root body:is([data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-mode="mock"]) #pitchboard > .pbscroll,
+:root:root:root:root .hcard, :root:root:root:root .fscroll, :root:root:root:root .btabbody, :root:root:root:root .modal.pcard .modal-panel,
+:root:root:root:root body:is([data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"]) main.wrap { border: 1px solid var(--frame); }
+/* one table skin (items 1, 11): 11px grey column names on the pale ground over a grey hairline, 13px tabular cells, 46px rows */
+:root:root:root:root .ftable th, :root:root:root:root .ftable th button.h, :root:root:root:root .btabbody .ubt th, :root:root:root:root .uerabox .ubt th { font-size: 11px; color: var(--muted); font-weight: 400; }
+:root:root:root:root .ftable th { background: var(--surface-2); border-bottom: 1px solid var(--hair); }
+:root:root:root:root .ftable th button.h, :root:root:root:root .ftable th.n, :root:root:root:root .ftable th.who { padding-top: 8px; padding-bottom: 8px; }
+:root:root:root:root .ftable { font-size: 13px; }
+:root:root:root:root .ftable td { font-size: 13px; height: 46px; box-sizing: border-box; font-variant-numeric: tabular-nums; }
+:root:root:root:root .pbtable thead th { border-bottom: 1px solid var(--hair); }
+:root:root:root:root .btabbody .ubt th, :root:root:root:root .uerabox .ubt th { background: var(--surface-2); border-bottom: 1px solid var(--hair); padding-top: 8px; padding-bottom: 8px; }
+:root:root:root:root .btabbody .ubt td, :root:root:root:root .uerabox .ubt td { font-size: 13px; height: 46px; box-sizing: border-box; font-variant-numeric: tabular-nums; }
+:root:root:root:root #colhead { border-bottom: 1px solid var(--hair); }
+/* the lists' cells at 13px like the Stuff+ table's (item 2) */
+:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .pct, :root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .score { font-size: 13px; }
+/* a ▾ / ▴ on the sorted column name (item 8) */
+#colhead .h[aria-sort="descending"]::after { content: " ▾"; } #colhead .h[aria-sort="ascending"]::after { content: " ▴"; }
+/* fewer blues (items 6, 14): outlines grey, light blue only for what is active; the home lists' links in the ink */
+:root:root:root:root #pagertop .tbtns .tbtn { border-color: var(--line-soft); color: var(--ink); }
+:root:root:root:root #pagertop .tbtns .tbtn.on, :root:root:root:root #pagertop .tbtns .tbtn[aria-expanded="true"] { border-color: var(--accent-2); background: var(--accent-2); color: var(--rule); }
+:root:root:root:root #pagertop > #minfield.topmin input { border-color: var(--line-soft); }
+:root:root:root:root .pill { border-color: var(--line-soft); }
+:root:root:root:root .seg { border-color: var(--line-soft); } :root:root:root:root .seg .segbtn + .segbtn { border-left-color: var(--line-soft); }
+:root:root:root:root .btab, :root:root:root:root .btab:first-child, :root:root:root:root .btab:last-child { border-color: var(--line-soft); }
+:root:root:root:root .btab.on, :root:root:root:root .btab[aria-selected="true"], :root:root:root:root .btab[aria-pressed="true"] { border-color: var(--accent-2); }
+:root:root:root:root .hub.home .hmore { color: var(--ink-2); }
+/* a phone's filter row slides sideways on one line (item 7) */
+:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; gap: 6px; padding: 0 0 8px; }
+:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop::-webkit-scrollbar { display: none; }
+:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop > * { flex: none; }
+:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop > .tbtns { flex-wrap: nowrap; }
+:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop .pcount { white-space: nowrap; margin-left: 4px; }
+/* Similar as plain names with dots between (item 10) */
+:root:root:root:root .simrow { gap: 4px 8px; }
+:root:root:root:root .simrow .simname { text-decoration: none; }
+:root:root:root:root .simrow .simname:hover { text-decoration: underline; }
+:root:root:root:root .simrow .simname + .simname::before { content: "· "; color: var(--muted); }
+/* home lists: the team line quieter, the value a touch bigger (item 13) */
+:root:root:root:root .hub.home .hteam { font-size: 11px; }
+:root:root:root:root .hub.home .hval { font-size: 13.5px; }
+/* the card's tables whatever their class (Season Stats has none), and the game log's, in the same skin */
+:root:root:root:root:root .btabbody table th, :root:root:root:root:root .gamesbox table th { font-size: 11px; color: var(--muted); font-weight: 400; background: var(--surface-2); border-bottom: 1px solid var(--hair); padding-top: 8px; padding-bottom: 8px; }
+:root:root:root:root:root .btabbody table td, :root:root:root:root:root .gamesbox table td { font-size: 13px; height: 46px; box-sizing: border-box; font-variant-numeric: tabular-nums; }
+/* home: the three cards side by side on a wide screen, so the lists fill the height without scrolling */
+@media (min-width: 1180px) { :root:not([data-view="mobile"]) .hub.home .hgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* the card's own table rules carry #modal / #xboard, so the skin needs them too */
+:root:root:root #modal .btabbody table thead th, :root:root:root #xboard .btabbody table thead th, :root:root:root #modal .btabbody table th, :root:root:root #xboard .btabbody table th { font-size: 11px; color: var(--muted); font-weight: 400; background: var(--surface-2); border-bottom: 1px solid var(--hair); padding-top: 8px; padding-bottom: 8px; }
+:root:root:root #modal .btabbody table td, :root:root:root #xboard .btabbody table td { font-size: 13px; height: 46px; box-sizing: border-box; font-variant-numeric: tabular-nums; }
+@media (min-width: 1180px) { :root:not([data-view="mobile"]) .hub.home .hname { font-size: 13px; } :root:not([data-view="mobile"]) .hub.home .hval { font-size: 13px; } }   /* three cards across: names a touch smaller so fewer clip */
