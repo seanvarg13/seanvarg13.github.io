@@ -3765,3 +3765,15 @@ tr.mkmine td { background: var(--accent-wash, var(--surface-2)); }
 :root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) main.wrap > .notes .lbnote { font-size: 12px; color: var(--muted); margin: 0; }
 :root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop { padding: 0 0 8px; flex-wrap: wrap; justify-content: flex-start; }
 :root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) main.wrap > .notes { display: none; }   /* the phone keeps the room for rows */
+
+/* The Leaderboard's column tabs ride in the filter row (Sean, 3 Oct 2026: "get all of this stuff to be in the upper area where
+   filters is"), a line under the buttons; the rows' box is then the whole framed table. The filter buttons are one per tab of the
+   dropdown (Position · Filters · Stats · Splits · Dates · Table), each filled light blue while open or in effect */
+:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop #lbtabs { display: inline-flex; align-items: center; gap: 8px; flex: none; border: 0; background: none; padding: 0; margin: 0; }
+:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop #lbtabs .lbside { margin: 0; }
+:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) .board > .board-scroll { border-top: 1px solid var(--hair); }
+:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop > .tbtns { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop > .tbtns { gap: 4px; }
+:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop .tbtns .tbtn { padding: 0 8px; font-size: 11.5px; }
+.quickwin { flex-wrap: wrap; gap: 6px; }
+.quickwin .btn.on { background: var(--accent-2); color: var(--rule); border-color: var(--accent-2); }

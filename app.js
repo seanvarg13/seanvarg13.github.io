@@ -625,6 +625,17 @@
   const noMin = () => state.mode === "rankings" || state.mode === "draft";
   function effMin(g) { if (noMin()) return 0; return DS.refPA < 100 ? Math.max(1, Math.round(state.min[g] * DS.refPA / REF_PA)) : state.min[g] * (DS.minScale || 1); }
   const seasonSample = (p) => (p.type === "P" ? p.ip : p.pa);
+  // the listing minimum inside a date window (Sean, 3 Oct 2026: one-tap Last 30 days / Last 100 PA on the Leaderboard — a
+  // full-season 300 PA listed nobody): Last N PA / IP lists anyone with three quarters of N; a date range or Last N days
+  // scales the box's number by the window's share of the season's game days. Recent keeps its own "at least" box
+  function listMin(g) {
+    const m = effMin(g);
+    if (!m || !needsDays() || state.mode === "trending") return m;
+    const w = winDates(); if (!w) return m;
+    if (w.last) return Math.min(m, Math.max(1, Math.round(0.75 * w.last)));
+    const days = seasonDays(), n = days.filter((d) => d >= w.from && d <= w.to).length;
+    return Math.max(1, Math.round(m * n / Math.max(1, days.length)));
+  }
   // the reference population every percentile is measured against: hitters with 300+ PA (pro-rated for a
   // date window or split); pitchers use the tab's minimum
   const REF_PA = DATA.meta.refMinPA || 300;
@@ -1093,7 +1104,7 @@
   const poolCache = new Map();
   // returns { list: players in pool, stats: Map key -> {pct: {metric: pctl}, score, rank} }
   function pool(g) {
-    const key = g + ":" + effMin(g) + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + daysReady();
+    const key = g + ":" + effMin(g) + ":" + (needsDays() ? listMin(g) : "") + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + daysReady();
     if (poolCache.has(key)) return poolCache.get(key);
     const R = regularOf(DS), waiting = !!(DS.kind && !DS.multi && !R);   // its regular season still loading: don't keep this one
     if (R) return kindPool(g, R, key);
@@ -1102,7 +1113,7 @@
     const active = (p) => !needsDays() || V(p).sample > 0;
     // the listing minimum is playing time inside the window when one is set (a date range's innings, not the season's)
     const smp = (p) => (needsDays() ? V(p).sample : seasonSample(p));
-    const listed = all.filter((p) => (smp(p) >= effMin(g) || hasExtra(p, g)) && active(p));
+    const listed = all.filter((p) => (smp(p) >= listMin(g) || hasExtra(p, g)) && active(p));
     // reference population: every hitter with 300+ PA, or every pitcher with 300+ batters faced, whatever the tab
     const everyone = isPitcherGroup(g) ? DS.players.filter((p) => p.type === "P") : all;
     const list = everyone.filter((p) => refSample(p) >= refMin(g) && active(p));
@@ -1203,7 +1214,7 @@
     const ref = withDataset(R, () => { if (!R.ready()) R.load(); return withWindow(NOWIN, () => pool(g)); });
     const active = (p) => !needsDays() || V(p).sample > 0, smp = (p) => (needsDays() ? V(p).sample : seasonSample(p));
     const all = DS.players.filter((p) => inGroup(p, g) && active(p));
-    const listed = all.filter((p) => smp(p) >= effMin(g) || hasExtra(p, g)), ls = new Set(listed);
+    const listed = all.filter((p) => smp(p) >= listMin(g) || hasExtra(p, g)), ls = new Set(listed);
     const tail = all.filter((p) => !ls.has(p)).sort((x, y) => smp(y) - smp(x));
     const res = { list: listed, tail, ref: ref.ref, stats: new Map(), sorted: ref.sorted, scores: ref.scores, kindOf: R };
     for (const p of all) res.stats.set(p.type + p.id, placeIn(res, g, p));
@@ -1915,9 +1926,10 @@
   const lbSetKeys = (g, keys) => { const known = new Set(lbOrder(g).map((m) => m.key)); return keys.filter((k) => known.has(k)); };
   function renderLbTabs() {
     let row = $("lbtabs");
-    if (!row) { row = el("div", "lbtabs"); row.id = "lbtabs"; $("bscroll").before(row); }
-    const on = ["leaderboard", "trending"].includes(state.mode);
-    row.hidden = !on; if (!on) return;
+    if (!row) { row = el("div", "lbtabs"); row.id = "lbtabs"; }
+    const on = ["leaderboard", "trending"].includes(state.mode), top = $("pagertop");
+    row.hidden = !on; if (!on) { row.remove(); return; }
+    { const pc = top.querySelector(".pcount"); if (row.parentNode !== top || (pc && row.nextSibling !== pc)) top.insertBefore(row, pc); }   // before the count, which keeps the right edge   // in the filter row, under the buttons (Sean, 3 Oct 2026: "all of this stuff ... in the upper area where filters is")
     row.innerHTML = "";
     const g = groupFor(state.pos), pit = isPitcherGroup(g), cur = colKeys(g);
     const seg = el("div", "seg lbside"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Hitters or pitchers");
@@ -1927,28 +1939,25 @@
       seg.append(b);
     }
     row.append(seg);
-    const tabs = el("div", "lbtabrow"); tabs.setAttribute("role", "tablist");
+    // the column sets as one pill (Sean, 3 Oct 2026: "for like standard advanced etc make that one button of itself"), like the
+    // Stuff+ board's filters: it says the set in effect, Custom when the list matches none, and lists them all when tapped
     const same = (a, b) => a.length === b.length && a.every((k, i) => k === b[i]);
-    let matched = false;
-    for (const [name, keys] of LB_SETS[pit ? "P" : "H"]) {
-      const set = lbSetKeys(g, keys), active = same(set, cur); matched = matched || active;
-      const b = el("button", "lbtab", name); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(active));
-      b.addEventListener("click", () => {
-        if (same(set, colKeys(g))) return;
-        setColKeys(g, set);
-        if (!["score", "blend", "name", "sample", "age", "year"].includes(state.sort) && !set.includes(state.sort)) { state.sort = "score"; state.dir = "desc"; }
-        ensureSortValid(); savePrefs(); render();
-      });
-      tabs.append(b);
-    }
-    if (!matched) { const b = el("button", "lbtab", "Custom"); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", "true"); b.title = "The stats picked in Filters ▸ Stats"; b.addEventListener("click", () => { parkControls(); state.panelTab = "stats"; openPanel("stats"); }); tabs.append(b); }
-    row.append(tabs);
-    const sel = tabs.querySelector('[aria-selected="true"]'); if (sel && tabs.scrollWidth > tabs.clientWidth) sel.scrollIntoView({ block: "nearest", inline: "center" });   // a phone's row slides: the picked tab in view
+    const sets = LB_SETS[pit ? "P" : "H"].map(([name, keys]) => [name, lbSetKeys(g, keys)]);
+    const curName = (sets.find(([, set]) => same(set, cur)) || ["Custom"])[0];
+    const opts = [...sets.map(([name]) => [name, name]), ...(curName === "Custom" ? [["Custom", "Custom"]] : [])];
+    const pick = (v) => {
+      if (v === "Custom") { parkControls(); state.panelTab = "stats"; openPanel("stats"); return; }
+      const set = (sets.find(([name]) => name === v) || [])[1]; if (!set || same(set, colKeys(g))) return;
+      setColKeys(g, set);
+      if (!["score", "blend", "name", "sample", "age", "year"].includes(state.sort) && !set.includes(state.sort)) { state.sort = "score"; state.dir = "desc"; }
+      ensureSortValid(); savePrefs(); render();
+    };
+    const pill = pillSelect(curName, opts, curName, pick, "Stats shown"); pill.classList.add("lbsetpill"); pill.title = "Which stats the table shows";
+    row.append(pill);
   }
   function renderColheadIn() {
     const g = groupFor(state.pos), ref = refFor(g);
     const ms = colsFor(g), trending = state.mode === "trending";
-    renderLbTabs();
     const h = $("colhead"); h.innerHTML = ""; h.className = "colhead grid";
     { const wrapEl = $("colwrap"), bs = $("bscroll"), board = $("board");
       // the list pages' card stands still and its rows' box scrolls both ways, so the header rides inside that box, stuck
@@ -2077,7 +2086,7 @@
       return;
     }
     if (!pool(g).list.length) {
-      empty.append(`No ${isPitcherGroup(g) ? "pitchers" : "hitters"} reach ${effMin(g)} ${sampleLabel(g)} ${DS.kind ? "in these games" : "this season"}${needsDays() ? " with games in this range" : ""}. Lower the minimum.`);
+      empty.append(`No ${isPitcherGroup(g) ? "pitchers" : "hitters"} reach ${listMin(g)} ${sampleLabel(g)} ${DS.kind ? "in these games" : "this season"}${needsDays() ? " with games in this range" : ""}. Lower the minimum.`);
     } else if (!list.length) empty.textContent = "No players match.";
     const frag = document.createDocumentFragment();
     const listDs = DS === CUR ? null : DS.key;   // the season this list is drawn from (captured now: click handlers run later)
@@ -2315,7 +2324,7 @@
     if (!total) { box.hidden = true; if (!onChange) seatFilters(null); return; }
     box.hidden = false;
     { const g = groupFor(state.pos), pit = isPitcherGroup(g);   // the Stuff+ board's count line at the right (Sean, 3 Oct 2026)
-      box.append(el("span", "pcount", pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total} ${pit ? "pitchers" : "hitters"} · ${DS.season}${state.mode === "leaderboard" ? ` · ${effMin(g) || 0}+ ${pit ? "IP" : "PA"}` : ""}` : `${total} players`)); }
+      box.append(el("span", "pcount", pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total} ${pit ? "pitchers" : "hitters"} · ${DS.season}${state.mode === "leaderboard" ? ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}` : ""}` : `${total} players`)); }
     if (pg.pages > 1) {
       const nav = el("div", "pnav");
       const b = (label, n, title, dis) => { const x = el("button", "pbtn", label); x.type = "button"; x.title = title; x.disabled = dis; x.addEventListener("click", () => go(n)); return x; };
@@ -2331,7 +2340,7 @@
       box.append(nav);
     }
     if (onChange) box.append(perPageField(setSize));    // the list pages keep theirs in Filters (minimal pass 4); Fantasy here
-    if (!onChange) seatFilters(box, total);
+    if (!onChange) { seatFilters(box, total); if (onePage()) renderLbTabs(); }   // the column tabs ride in this row on the Leaderboard / Recent
   }
   function perPageField(setSize) {
     const sz = el("label", "field psize"); sz.append(el("span", null, "Per page"));
@@ -4082,8 +4091,22 @@
       box.append(b);
     };
     // the position shows on the button when it isn't everyone ("SS · Filters"), so the one button still says what's listed
+    if (onePage()) {   // the Leaderboard / Recent: one button per tab of the dropdown (Sean, 3 Oct 2026: "separate the filters to be their own individual buttons"), each saying what it holds
+      for (const [k, label] of grpTabsNow()) add(k, k === "positions" ? (popActive(k) ? posBtnLabel() : "Position") : k === "dates" ? datesLabel() : label, state.panel === k, popActive(k));
+      return;
+    }
     const n = ["filters", "splits", "dates"].filter(popActive).length, pos = popActive("positions") ? posBtnLabel() + " · " : "";
     add("grp", pos + "Filters" + (n ? ` · ${n}` : ""), grpOpen, n > 0 || !!pos);
+  }
+  // what the Dates button says: the window in effect, else "Dates"
+  function datesLabel() {
+    if (state.mode === "trending") { const t = trendCfg(), n = Number(t[t.unit]) || 0; return n ? `Last ${n} ${t.unit}` : "Dates"; }
+    const w = state.win || {}, pit = isPitcherGroup(groupFor(state.pos));
+    if (w.days) return `Last ${w.days} days`;
+    if (lastN(w)) return `Last ${lastN(w)} ${pit ? "IP" : "PA"}`;
+    const d = (x) => { const t = new Date(x + "T12:00:00"); return t.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
+    if (w.from || w.to) return `${w.from ? d(w.from) : "Start"} – ${w.to ? d(w.to) : "End"}`;
+    return "Dates";
   }
   // the tab row across the top of the Filters dropdown
   function grpTabs() {
@@ -4118,7 +4141,7 @@
   function placePop() {
     const pop = $("pop");
     if (pop.hidden) return;
-    const btn = $("tbtns") && $("tbtns").querySelector(`[data-panel="${GRP.has(state.panel) ? "grp" : state.panel}"]`);
+    const btn = $("tbtns") && ($("tbtns").querySelector(`[data-panel="${state.panel}"]`) || $("tbtns").querySelector(`[data-panel="${GRP.has(state.panel) ? "grp" : state.panel}"]`));
     if (!btn) return;
     const r = btn.getBoundingClientRect(), mob = document.documentElement.dataset.view === "mobile";
     pop.style.maxHeight = Math.max(220, innerHeight - r.bottom - 16) + "px";
@@ -8108,10 +8131,15 @@
         kinds.append(b);
       }
       sec.append(kinds);
+      { const q = el("div", "prow quickwin");   // one tap for the usual windows (Sean, 3 Oct 2026)
+        const quick = (label, win, act) => { const b = el("button", "btn btn-quiet small" + (act ? " on" : ""), label); b.type = "button"; b.addEventListener("click", () => { state.win = win; state.expanded = null; render(); }); q.append(b); };
+        for (const n of [7, 14, 30]) quick(`Last ${n} days`, { from: daysBack(n), to: "", last: "", days: n }, Number(state.win.days) === n);
+        for (const n of pit ? [15, 30, 60] : [50, 100, 200]) quick(`Last ${n} ${unit}`, { from: "", to: "", last: String(n) }, !state.win.days && lastN(state.win) === n);
+        sec.append(q); }
       const row = el("div", "prow");
       if (cur === "range") row.append($("daterange")); else if (cur === "days") row.append($("daysfield")); else if (cur === "last") row.append($("lastfield"), $("daterange"));
       if (cur !== "season") sec.append(row);
-      sec.append(el("p", "note", cur === "days" ? `Everyone's games in the last N days through ${DATA.meta.through}.` : cur === "last" ? `Each player's most recent ${unit === "IP" ? "innings" : "plate appearances"} (through the To date, if set). Every stat and percentile is rebuilt from those games.` : cur === "range" ? "A blank side means the season's start or end. Every stat and percentile is rebuilt from those games." : "Full-season numbers."));
+      sec.append(el("p", "note", cur === "days" ? `Everyone's games in the last N days through ${DATA.meta.through}; the Min ${unit} box scales to the window's share of the season.` : cur === "last" ? `Each player's most recent ${unit === "IP" ? "innings" : "plate appearances"} (through the To date, if set). Every stat and percentile is rebuilt from those games; anyone with three quarters of N is listed.` : cur === "range" ? "A blank side means the season's start or end. Every stat and percentile is rebuilt from those games." : "Full-season numbers."));
       w.append(sec);
     }
     popFoot(body, w, panelButtons(() => { if (!trending) state.win = { from: "", to: "", last: "" }; state.expanded = null; render(); }));
