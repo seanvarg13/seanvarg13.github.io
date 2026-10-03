@@ -634,7 +634,8 @@ Batted-ball+ (loc)) from a second pair that also sees **where the pitch crossed 
 was thrown. **Location+** is the difference, Pitching+ − Stuff+ + 100: what his spots add (100 = an average pitcher's). Pitching+'s
 expected Whiff% tracks the real thing far more closely (r .85 vs .74) and carries over to next season a little less. Stuff+ and
 Pitching+ sit together in the card's Stuff section with Location+; the Stuff tab and the Stuff+ board show both families' grades and
-x-rates per pitch; all are Leaderboard columns. A run-value-trained Stuff+ (FanGraphs' recipe) was tested against the component build
+x-rates per pitch; all are Leaderboard columns. **Pitching uERA** is Stuff uERA's twin from the Pitching+ rates (its own box on the Stuff tab, a
+Leaderboard column). A run-value-trained Stuff+ (FanGraphs' recipe) was tested against the component build
 and predicted the next period worse, so the component build stays.
 
 ## League Trends
