@@ -500,7 +500,7 @@
     cmp: Object.assign({ type: "H", players: [] }, prefs.cmp || {}),   // Compare page: [{id, ds}]
     cmpCols: prefs.cmpCols || {},              // Compare: chosen stats per type {H: [keys], P: [keys]}; missing = every card stat
     rawMode: prefs.rawMode || "mlb",           // Season by season: "mlb" | "milb" | "all"
-    tbl: Object.assign({ heat: false, band: true, sortHl: true, density: "comfortable", numbers: "auto", breaks: {} }, prefs.tbl || {}),
+    tbl: Object.assign({ heat: false, band: true, sortHl: true, density: "comfortable", numbers: "auto", breaks: {}, shrink: false }, prefs.tbl || {}),
     bars: prefs.bars === "classic" ? "classic" : "savant",   // the player card's percentile bars: Savant's charts, or the older meter rows (a table look was tried and taken back, 28 Sep 2026)   // the player card's percentile bars: Savant's charts, or the older meter rows   // Table features; breaks: {"mode:H": [keys with a rule after them]}
     cq: "",
     showDrafted: !!prefs.showDrafted,
@@ -709,7 +709,7 @@
   const ensureHist = (key) => (key === CUR.key ? ensureDays() : isMulti(key) ? multiDataset(key) : ensureScript(`hist/${key}.js`, () => !!(window.DRAFT_HIST && window.DRAFT_HIST[key])));
   const needsRows = () => needsDays() || !!DS.aggregate;   // a combined span always sums rows, window or not
   const ensureView = () => { if (needsRows() && !DS.ready()) DS.load(); };   // fetch whatever the current view needs
-  const viewKey = () => DS.key + ":" + winKey() + ":" + SPLIT.hand + ":" + SPLIT.venue + ":" + roleOf(SPLIT);
+  const viewKey = () => DS.key + ":" + winKey() + ":" + SPLIT.hand + ":" + SPLIT.venue + ":" + roleOf(SPLIT) + (state.tbl && state.tbl.shrink ? ":rg" : "");   // :rg — small samples regressed (Table format)
   const splitLabel = () => {
     const parts = [];
     if (SPLIT.hand !== "all") parts.push("vs " + SPLIT.hand + "H" + (isPitcherGroup(groupFor(state.pos)) ? "B" : "P"));
@@ -792,6 +792,21 @@
   const rate = (a, b, dec = 1) => (b > 0 ? Math.round((100 * a / b) * 10 ** dec) / 10 ** dec : null);
   const valCache = new Map();
   // a player's numbers for the active window: metric values, sample (AB or IP), context stats
+  const priorCache = new Map();
+  function priorMeans(g) {                                 // the reference pool's full-season average of every listed stat
+    const key = DS.key + ":" + g; if (priorCache.has(key)) return priorCache.get(key);
+    const pool = DS.players.filter((q) => inGroup(q, g) && refSample(q) >= refMin(g)), out = {};
+    for (const m of allFor(g)) { let s = 0, n = 0; for (const q of pool) { const x = q.m && q.m[m.key]; if (typeof x === "number" && isFinite(x)) { s += x; n++; } } if (n >= 20) out[m.key] = s / n; }
+    if (g === "H") { let s = 0, n = 0; for (const q of pool) { const x = seasonXwDir(q); if (typeof x === "number" && isFinite(x)) { s += x; n++; } } if (n >= 20) out.xwd = out.xwoba = s / n; }   // the headline isn't in the list
+    priorCache.set(key, out); return out;
+  }
+  const SHRINK_K = 120;
+  function shrinkM(p, v) {
+    const g = p.type === "P" ? (p.primary || "P") : "H", mu = priorMeans(g);
+    const n = p.type === "P" ? (v.bf != null ? v.bf : (v.sample || 0) * 4.3) : v.sample || 0, w = n / (n + SHRINK_K), m = Object.assign({}, v.m);
+    for (const k in mu) if (typeof m[k] === "number" && isFinite(m[k])) m[k] = w * m[k] + (1 - w) * mu[k];
+    return m;
+  }
   function V(p) {
     const key = viewKey() + ":" + p.type + p.id;
     if (valCache.has(key)) return fantFill(valCache.get(key), p);
@@ -894,6 +909,10 @@
       const con = m.xwd != null && m.bb != null && pa && bbe ? (m.xwd * pa - wbb * m.bb / 100 * pa) / bbe : null;
       v.m = Object.assign({}, m, { xk: xk == null ? null : Math.round(10 * xk) / 10, xwcon: con == null ? null : Math.round(1000 * con) / 1000 });
     }
+    // Regress small samples (Table format; Sean, 3 Oct 2026, from the model recommendations): in a date window or split, every
+    // rate is pulled toward the pool's full-season average by how little he has played — w = n / (n + 120), n = his PA or batters
+    // faced in the window — so a 30-PA week reads as mostly league average and the Recent / Last-N lists stop jumping
+    if (state.tbl && state.tbl.shrink && needsDays() && v && v.m) v = Object.assign({}, v, { m: shrinkM(p, v) });
     valCache.set(key, v);
     return fantFill(v, p);
   }
@@ -8184,7 +8203,8 @@
     const sec = el("div", "psec"); sec.append(el("h4", null, "Look"));
     sec.append(toggle("Heat map", "colour every number by its percentile (off = plain numbers, like Savant)", "heat"),
                toggle("Banded rows", "alternate row shading", "band"),
-               toggle("Highlight the sorted stat", "shade the column the table is sorted by", "sortHl"));
+               toggle("Highlight the sorted stat", "shade the column the table is sorted by", "sortHl"),
+               toggle("Regress small samples", "in a date window or split, pull every rate toward the league average by how little he has played (120 PA or batters faced is the halfway point), so a hot week reads as a lean, not a new player", "shrink"));
     const dens = el("div", "prow"); dens.append(el("span", "plbl", "Density"));
     const dseg = el("div", "seg"); for (const [v, l] of [["comfortable", "Comfortable"], ["compact", "Compact"]]) { const b = el("button", "segbtn", l); b.type = "button"; b.setAttribute("aria-pressed", String(T.density === v)); b.addEventListener("click", () => { T.density = v; apply(); }); dseg.append(b); }
     dens.append(dseg); sec.append(dens);

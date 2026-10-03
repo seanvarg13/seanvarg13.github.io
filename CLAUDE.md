@@ -354,6 +354,23 @@ his real Whiff% / GB% / PU%; walks and every rate but Whiff% from his actual num
 Leaderboard column (`suera`, `LB_EXTRA_P`; pool stats in `pool()` / `statsFor`, rates from `stuffRates`: day-row sums in a
 window, the arsenal otherwise).
 
+**Model candidates tested and left out, 3 Oct 2026** (Sean: "do all that but park factors for directional xwoba"; scratch `bt8.py` /
+`dxw.py` / `framing.py`, every candidate scored on 2025 and 2026 same-season halves and 2025 → 2026 / 2024 → 2025 next-season):
+*Stuff+* — seam-shifted wake done properly (the axis the movement implies against the measured axis, and movement per rpm),
+the closest sibling pitch (movement + velo distance, its velo gap), monotonic velo / extension, batter quality (the batters' shrunk
+whiff rates, scored faced or neutral): all within ±.01 of the current model. *Pitching+* — count-relative location with the distance
+to the zone's edge (better same-season, worse next, the command pattern again), location consistency (nothing), batter quality
+(+.02 same-season whiff and +.014 forward on 2026 halves, +.006 / +.009 next-season 2026, but −.009 forward on 2025 halves and
+−.002 on 2024 → 2025, GB / PU a point lower throughout — not robust). *Directional xwOBA* — bat speed, swing length, attack angle,
+direction and tilt (2024-25 fit, scored on 2026: RMSE .3589 vs .3600 for the same two seasons without them, hitter-level r .899 vs
+.895, with one fewer training season), a weak / hard contact split for sprint speed (R² +.001); the calibration table by EV × LA ×
+direction found hard fly balls to centre over-priced in 2025 (100-105 mph, 25-40°: predicted .661, actual .526, n 1,542 — the ball
+and the season, not a feature; the per-season anchor absorbs most of it). *uBB%* — catchers' framing out of Strike% (a called-strike
+model's residual per catcher-season, shrunk, credited by the pitches he caught): adjusted Strike% predicts next season's BB% at
+r −.474 vs −.486 raw. None of it ships; don't re-run them unasked. What did ship is a display setting: **Table format ▸ Regress small
+samples** (`state.tbl.shrink`, `shrinkM` / `priorMeans` in `V()`, `viewKey` carries `:rg`): in a window or split every listed rate is
+pulled toward the reference pool's full-season average with w = n / (n + 120), n = PA or batters faced in the window. Off by default.
+
 **BABIP luck** (hitters; `babip_stats` in `build_data.py`, `babipFrom` in `app.js`, day field `wbh`; Sean, 27 Sep 2026):
 BABIP = non-HR hits / non-HR balls in play (Statcast's, so sac bunts count — a heavy bunter reads ~.005 under the
 official figure); xBABIP = the directional xBA's expected hits less his HR, over the same balls; **BABIP luck** = his hits in
