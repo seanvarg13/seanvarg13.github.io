@@ -665,6 +665,10 @@ Each fit also uses everything in the data that helped when held out season by se
 ground-ball and popup rates, fastball velocity, extension, Stuff+, Whiff+, Location+, the arsenal's expected whiff rate, fastball share,
 number of pitch types and age, fitted over 2020-2026. Held out, the starters' strikeout error drops from 1.55 to 1.37 points and the walk
 error from 0.95 to 0.91; relievers from 2.33 to 2.13 and 1.42 to 1.37. The six-rate fit remains the fallback for a level without Stuff+ grades.
+Later the same night the fits gained five **count-state rates** — first-pitch strike rate, strike rate at three balls, and with two strikes
+the whiff rate per swing, the swing rate and the zone rate (pitch-level process, like Strike%, never the plate appearance's result). Held
+out, the starters' strikeout error drops to 1.12 points and the walk error to 0.54 (relievers 1.75 and 0.93). Seasons built before the
+fields use the previous fit until they're rebuilt.
 
 ## League Trends
 
