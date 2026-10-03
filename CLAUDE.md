@@ -239,7 +239,17 @@ Statcast/Directional toggle and the `xws` column are gone). The build still carr
   and relievers ~0.5 low. Leave-one-season-out 2024-26: starters' uBB% bias +0.21 / +0.30 / +0.32 → −0.07 / +0.04 / +0.06, error 0.92 /
   1.04 / 0.98 → 0.90 / 1.02 / 0.94; relievers' bias −0.5 → −0.1; uK% bias halved for both. The remaining compression (the lowest-walk
   starters still ~0.8 high, the wildest ~1.2 low) is the fit regressing the extremes, as an expectation should; curvature terms, CSW% /
-  SwStr% and a tree model did no better.
+  SwStr% and a tree model did no better. **Then the full fits, the same evening** (Sean: "get it as accurate as humanly and AIly possible
+  ... use all years 2020-2026"): the role fits at the front of `UKF` / `UBB` now use the six rates plus CSW%, SwStr%, GB%, Popup%, FB velo,
+  extension, Stuff+, Whiff+, Location+ and, uncentred (`raw`), the arsenal's location-aware xWhiff over his swings (`xwl`), fastball share
+  (`fb`), pitch types thrown 5%+ (`ntypes`) and age — `arsenalExtras(p, t)` builds those from the season's arsenal (`xwl` from the day rows'
+  `stnl` / `stwl` in a window), `V()` carries them as `ex`, `rateFit` leaves `raw` keys uncentred, `impliedKBB` merges `pv.ex` into the rates,
+  `lgRatesP` carries the extra league rates. Ridge (λ 3), BF-weighted, every 100+ BF pitcher-season 2020-2026 with a Stuff+ grade, centred on
+  each season's 20+ BF league; Pitching+ left out (= Stuff+ + Location+ − 100, it split the fit into ±2 offsetting weights). The six-rate
+  role fits are next in line, the pooled 2015-2026 fits last, for a level or file without grades. Held out season by season 2021-2026:
+  starters' K% error 1.55 → 1.37 and BB% 0.95 → 0.91, relievers' K% 2.33 → 2.13 and BB% 1.42 → 1.37; EV / HH / Brl% and a tree model added
+  nothing. Inside Stuff uERA / Pitching uERA the model's whiff rate replaces his and SwStr% / CSW% move with it (`stuffUeraCore`), so the full
+  fit sees one consistent set of expected rates. Wheeler 2026 reads K% 28.6 / BB% 7.1 against 29.9 / 7.3 (the six-rate fit: 26.3 / 8.5).
 * **uERA** (`underlyingERA`) puts those two rates on the balls he actually allowed: his ground-ball and popup
   shares stand, the air balls left over are split into line drives and fly balls at the *population's* ratio, and
   every ball in play is then worth the league's average wOBA for its type (`consts.bbw`). The resulting wOBA is
