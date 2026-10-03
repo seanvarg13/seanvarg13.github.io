@@ -394,6 +394,20 @@ rates, or on both sets, did no better. The expected rates track the actual same-
 a refit on both sets matched the site's uK%, so uK% is unchanged. Files built before the fields show "–" for the five columns and no
 xStrike / xChase pairs, and Pitching uERA walks at uBB% there (`pubb` null → `impliedKBB`'s own).
 
+**The expected whiff rate inside Stuff uERA / Pitching uERA is calibrated (Sean, 3 Oct 2026: Pitching uERA "gets close on the whiff rate ... but
+it undershoots the k% very often")**: the models' expected Whiff% is compressed (its spread across 300+ BF pitchers is ~80% of the real
+one — a tree model leans to the middle) and on a season the fixed models never saw it can sit off level (2026 read 2.6 points hot, so every
+K% ran 2.6 high and the bottom-20 K% 5.8 high). uK% was fitted on real Whiff%, so `pool()` (`calOf`) centres the expected rate on the pool's
+real league Whiff% and stretches it by the ratio of spreads (`sorted.calS` for the stuff rates, `sorted.calP` for the location ones; the
+pool's 300+ BF pitchers, 20 needed) before `stuffUeraCore` hands it to `impliedKBB` — `statsFor`, the Stuff / Pitching+ tabs' boxes use the
+same. Tested 2024-26 on 300+ BF pitchers: Pitching uERA's K% error 1.93 / 1.95 / 3.14 → 1.82 / 1.85 / 2.00 points, bias +0.25 / +0.23 /
++2.63 → −0.1, the top-20 K% undershoot 3.0-3.5 → 2.4-2.7 (what's left is the model's own compression beyond a linear stretch), next
+season's K% r .72 / .66 vs .71 / .62 for uERA's own uK%; Stuff uERA the same shape. The displayed xWhiff pairs stay the models' raw numbers;
+only the K estimate changes. Tested the same evening and declined by Sean: blending actual and expected Whiff% (0.3 / 0.7 beat either for
+next season's Whiff%, r .77 vs .74 / .76; his gap over the model repeats at r .29) — "no dont do actual and expected blend"; an expected
+swinging-strike rate (expected swing × expected whiff per swing) in place of the per-swing model — worse everywhere (same-season K% r .70 vs
+.77, next-season Whiff% .68 vs .76), the swing model adds noise. His own K% stays the best forecast of next season's K% (r .75 / .67).
+
 **Model candidates tested and left out, 3 Oct 2026** (Sean: "do all that but park factors for directional xwoba"; scratch `bt8.py` /
 `dxw.py` / `framing.py`, every candidate scored on 2025 and 2026 same-season halves and 2025 → 2026 / 2024 → 2025 next-season):
 *Stuff+* — seam-shifted wake done properly (the axis the movement implies against the measured axis, and movement per rpm),

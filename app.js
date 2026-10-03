@@ -1210,12 +1210,22 @@
       list.forEach((p, i) => { stats.get(p.type + p.id).pct.uera = uep[i]; });
       sorted.uera = ues.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
       // Stuff uERA (the Stuff tab's, as a column): his stuff's xWhiff / xGB / xPU through the same machinery
-      const sus = list.map((p, i) => { const r = stuffRates(p), u = r && stuffUeraCore(V(p), r.xw, r.xg, r.xp, pct.strk[i], sorted); return u ? u.uera : null; });
+      // The expected whiff rate on the real Whiff% scale (3 Oct 2026; Sean: Pitching uERA "undershoots the k% very often"): the models'
+      // rate is compressed — its spread across pitchers is ~80% of the real one, a tree model leaning to the middle — and on a season the
+      // fixed models never saw it can sit off level (2026 read 2.6 points hot, every K% with it). uK% was fitted on real Whiff%, so the
+      // expected rate is centred on the pool's real league rate and stretched by the ratio of spreads before it goes in. Tested 2024-26:
+      // K% error 1.93 / 1.95 / 3.14 → 1.82 / 1.85 / 2.00, the top-20 undershoot 3.0-3.5 → 2.4-2.7, next season's K% a little better too.
+      // The displayed xWhiff pairs stay the models' own numbers; only the K estimate inside the uERAs is put on this scale
+      const calOf = (rates) => { const a = [], x = []; list.forEach((p, i) => { const r = rates[i], w = V(p).m.whf; if (r && w != null && refSample(p) >= refMin(g)) { a.push(w); x.push(r.xw); } });
+        if (a.length < 20) return null; const mean = (v) => v.reduce((t, y) => t + y, 0) / v.length, sd = (v, m) => Math.sqrt(v.reduce((t, y) => t + (y - m) * (y - m), 0) / v.length);
+        const la = mean(a), lx = mean(x), sx = sd(x, lx); return { la, lx, s: sx ? sd(a, la) / sx : 1 }; };
+      const srs = list.map((p) => stuffRates(p)), prs = list.map((p) => pitchRates(p)); sorted.calS = calOf(srs); sorted.calP = calOf(prs);
+      const sus = list.map((p, i) => { const r = srs[i], u = r && stuffUeraCore(V(p), r.xw, r.xg, r.xp, pct.strk[i], sorted, sorted.calS); return u ? u.uera : null; });
       const sup = percentiles(sus.map((x) => (x == null ? null : -x)));
       list.forEach((p, i) => { const s = stats.get(p.type + p.id); s.suera = sus[i]; s.pct.suera = sup[i]; });
       sorted.suera = sus.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
       // Pitching uERA (3 Oct 2026): the same with the location-aware rates
-      const pus = list.map((p, i) => { const r = pitchRates(p), u = r && stuffUeraCore(V(p), r.xw, r.xg, r.xp, pct.strk[i], sorted); return u ? u.uera : null; });
+      const pus = list.map((p, i) => { const r = prs[i], u = r && stuffUeraCore(V(p), r.xw, r.xg, r.xp, pct.strk[i], sorted, sorted.calP); return u ? u.uera : null; });
       const pup = percentiles(pus.map((x) => (x == null ? null : -x)));
       list.forEach((p, i) => { const s = stats.get(p.type + p.id); s.puera = pus[i]; s.pct.puera = pup[i]; });
       sorted.puera = pus.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
@@ -1275,9 +1285,9 @@
     pct.ubb = ukbb && pl.sorted.ubb ? insertPct(pl.sorted.ubb, -ukbb.bb) : null;
     const uera = pl.sorted.uera ? underlyingERA(V(p), ukbb, pl.sorted) : null;
     pct.uera = uera == null || !pl.sorted.uera ? null : insertPct(pl.sorted.uera, -uera);
-    const sr = stuffRates(p), su0 = sr && pl.sorted.suera ? stuffUeraCore(V(p), sr.xw, sr.xg, sr.xp, pct.strk, pl.sorted) : null, suera = su0 ? su0.uera : null;
+    const sr = stuffRates(p), su0 = sr && pl.sorted.suera ? stuffUeraCore(V(p), sr.xw, sr.xg, sr.xp, pct.strk, pl.sorted, pl.sorted.calS) : null, suera = su0 ? su0.uera : null;
     pct.suera = suera == null ? null : insertPct(pl.sorted.suera, -suera);
-    const pr = pitchRates(p), pu0 = pr && pl.sorted.puera ? stuffUeraCore(V(p), pr.xw, pr.xg, pr.xp, pct.strk, pl.sorted) : null, puera = pu0 ? pu0.uera : null;
+    const pr = pitchRates(p), pu0 = pr && pl.sorted.puera ? stuffUeraCore(V(p), pr.xw, pr.xg, pr.xp, pct.strk, pl.sorted, pl.sorted.calP) : null, puera = pu0 ? pu0.uera : null;
     pct.puera = puera == null ? null : insertPct(pl.sorted.puera, -puera);
     const mera = mixERA(V(p), pl.sorted);
     pct.mera = mera == null || !pl.sorted.mera ? null : insertPct(pl.sorted.mera, -mera);
@@ -6500,18 +6510,18 @@
     const pl = g ? pool(g) : null, sorted = pl && pl.sorted, pctS = st && st.pct ? st.pct.strk : null;
     const n = R0.reduce((a, r) => a + r.n, 0); if (!n) return null;
     const wx = (k) => R0.reduce((a, r) => a + (r[k] || 0) * r.n, 0) / n;
-    return stuffUeraCore(V(p), wx("xwhf"), wx("xgb") / 100, wx("xpu") / 100, pctS, sorted);
+    return stuffUeraCore(V(p), wx("xwhf"), wx("xgb") / 100, wx("xpu") / 100, pctS, sorted, sorted && sorted.calS);
   }
   function pitchUERA(p, R0, st, g) {                               // Pitching uERA from the arsenal rows: xWhiff·loc over swings, xGB·loc / xPU·loc over balls in play
     const pl = g ? pool(g) : null, sorted = pl && pl.sorted, pctS = st && st.pct ? st.pct.strk : null;
     const wx = (k, d) => { const R1 = R0.filter((r) => r[k] != null), n = R1.reduce((a, r) => a + (r[d] || 0), 0); return n ? R1.reduce((a, r) => a + r[k] * (r[d] || 0), 0) / n : null; };
     const xw = wx("xwhfl", "sw"), xg = wx("xgbl", "bip"), xp = wx("xpul", "bip"); if (xw == null || xg == null) return null;
-    return stuffUeraCore(V(p), xw, xg / 100, xp / 100, pctS, sorted);
+    return stuffUeraCore(V(p), xw, xg / 100, xp / 100, pctS, sorted, sorted && sorted.calP);
   }
-  function stuffUeraCore(pv, xw, xg, xp, pctS, sorted) {
+  function stuffUeraCore(pv, xw, xg, xp, pctS, sorted, cal) {   // cal: the pool's scale for the expected whiff rate (calOf in pool), else as is
     if (!sorted || pctS == null || pv.m.strk == null || xw == null) return null;
-    const air = Math.max(0, 1 - xg - xp);
-    const pvS = { m: Object.assign({}, pv.m, { whf: xw }), ctx: Object.assign({}, pv.ctx, { bbl: { gb: [1000 * xg], pu: [1000 * xp], ld: [500 * air], fb: [500 * air] } }) };
+    const air = Math.max(0, 1 - xg - xp), xwK = cal ? cal.la + cal.s * (xw - cal.lx) : xw;
+    const pvS = { m: Object.assign({}, pv.m, { whf: xwK }), ctx: Object.assign({}, pv.ctx, { bbl: { gb: [1000 * xg], pu: [1000 * xp], ld: [500 * air], fb: [500 * air] } }) };
     const ik = impliedKBB(pvS, pctS, sorted, pv.m); if (!ik) return null;   // walks from his real rates, not the stuff model's
     const uera = underlyingERA(pvS, ik, sorted);
     if (uera == null) return null;
