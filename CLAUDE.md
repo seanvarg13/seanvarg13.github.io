@@ -1006,6 +1006,16 @@ is deploy-limited.
   `defaults.js`. It is frozen: the daily build and `sync_tools` don't touch `xyz/` (a Mac publish that mirrors the whole deploy
   folder could drop it — the branch is the real backup). The redesign that replaced it is below.
 
+* **Header and Leaderboard column tabs** (Sean, 3 Oct 2026, after a full redesign prototype he liked but didn't take: "keep the
+  current site design and format as is ... introduce some of the functionality"): the header is **Home · Leaders · Stuff+ · Fantasy**
+  (`pitchBoardEl` puts the Stuff+ link in the header and moves Fantasy after it; `NAV_GROUPS`'s leaderboard group is labelled Leaders
+  and no longer claims `pitches`; More is a quiet ⋯ at the end with the same menu); the Leaderboard / Recent have **column-set tabs**
+  — Hitters / Pitchers, then Standard · Advanced · Batted ball · Plate discipline (· Stuff for pitchers) — `LB_SETS` / `renderLbTabs`
+  (called from `renderColheadIn`), the row `#lbtabs` between the pager bar and `#bscroll`; a tab writes the same column list as
+  Filters ▸ Stats (`setColKeys`), a list matching no tab shows a Custom tab that opens Filters ▸ Stats, and `state.lb.tabs` moves a
+  never-customised `LB_SLIM` list to Standard once. `LB_SETS` sits by `LB_SLIM` at the top because that migration runs at load.
+  Cards stay popups; the rows keep scrolling inside the standing card. The prototype itself is a Claude artifact, not in the repo.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:

@@ -790,3 +790,27 @@ Same Wi-Fi only, no account needed: `python3 serve.py --phone` prints an address
   drafts from the site's 2027 projection, ranked for the room's scoring, teams and roster. Auction values are priced for your room. A draft in progress is saved on the device and comes back paused.
 - **Mock Draft settings**: pick your draft slot from a row of buttons, choose the scoring from your saved Fantasy presets, and change the clocks (pick, nomination, bid), computer-team speed or scoring mid-draft with the Timer button.
 - **Mock Draft room**: a one-minute countdown before the first pick (Start now skips it); sound alerts — a chime at the start, an alert when you're on the clock or nominating, a tick in the last three seconds of every bid and of your own clock, a gavel on each sale (🔊 / 🔇 to switch off); auction values follow the ADP on a price curve shaped like a real 14-team $200 league's 2026 auction — Ohtani alone near $102, one or two more in the $70s, the rest of the top tier $50–70 — scaled to whatever cap and team count you set. Computer teams bid off the same prices, each with a style (stars and scrubs, bargain hunting, pitching-heavy …), stars nominated early, jump bids, and a long $1 tail. Every lot also gets a random swing for the whole room, so the same player can go well over or under his $ from one draft to the next. Default roster: C, 1B, 2B, 3B, SS, 2B/SS, 1B/3B, 4 OF, 2 UTIL, 8 P, 4 bench. Rankings come from the site's own 2027 projection (Marcel-style: three seasons weighted, regressed and aged, with Statcast's expected hits / total bases / earned runs and sensible playing time), scored with your scoring and ranked by value over replacement for the room's teams and roster. Ohtani counts as one player — his hitting and pitching points together, in one hitter slot — so he's the clear #1 (about $98 in a 14-team $200 room). Sounds are much louder, and on an iPhone they play even with the mute switch on. Tap a name for his card as a popup over the draft (a Similar player on it opens his card the same way; × goes back to the draft). A Teams tab shows every team's money left, max bid and open spots. The bid buttons stay put as bids come in, and what you type in the bid box isn't wiped by a new bid. Not interested in the player up for bid? ⏩ Skip lets the other teams bid him out instantly.
+
+## 3 Oct 2026 — the header and the Leaderboard's column tabs
+
+Sean looked at a full redesign prototype (three doors + search, a player page as a real page, FanGraphs-style column groups) and
+kept the site as it is — "keep the current site design and format as is" — but took two pieces of it:
+
+- **The header is Home · Leaders · Stuff+ · Fantasy.** Leaders is the old Leaderboards menu (Leaderboard, League Trends, Call-up
+  Watch, Compare); **Stuff+** is the pitch board as a page of its own in the header rather than a menu entry; Fantasy follows. The
+  old More menu (Appearance, Colour key, Stat glossary, How this page works, the layout switch, the data's date) is a quiet **⋯**
+  at the end — it was never a page. Made in `app.js` (`pitchBoardEl` moves the links; `NAV_GROUPS`), since `index.html` doesn't
+  round-trip.
+- **Column-set tabs on the Leaderboard and Recent** (`LB_SETS` / `renderLbTabs`, the row `#lbtabs` between the blue bar and the
+  rows' box, so it stays put while the rows scroll): a **Hitters / Pitchers** switch, then **Standard · Advanced · Batted ball ·
+  Plate discipline** (pitchers add **Stuff**). A tab sets the same column list Filters ▸ Stats edits, so a hand-picked set reads
+  as **Custom** (tap it to open Filters ▸ Stats) until a tab is picked again; a never-customised list opens on Standard. Sorting
+  by a column the new tab doesn't carry falls back to the headline. Hitters — Standard: wOBA, BA, SLG, xBA, xSLG, K%, BB%;
+  Advanced: wOBA, xwOBA − wOBA, xwOBAcon, xK%, BABIP, xBABIP, BABIP luck, BIP reliance; Batted ball: EV, EV90, max EV, Brl%, HH%,
+  bat speed, Air%, Pull Air%, GB%, Popup%; Plate discipline: K%, xK%, BB%, Whiff%, O-Swing%, Z-Swing%, Z-Contact%, O-Contact%.
+  Pitchers — Standard: ERA, K%, BB%, Whiff%, Strike%, GB%, uERA, Stuff uERA; Advanced: ERA, FIP, SIERA, nERA, uERA, Stuff uERA,
+  Pitching uERA, u(K-BB%), WSGP; Batted ball: GB%, Popup%, EV, HH%, Brl%; Plate discipline: Whiff%, Strike%, Zone%, Chase%,
+  Swing%, Z-Contact%, CSW%, SwStr%; Stuff: Stuff+, Whiff+, Batted-ball+, Pitching+, Whiff+·loc, BB+·loc, Loc+, Arsenal Opt.,
+  FB velo, extension.
+
+Player cards stay popups and the list's rows still scroll inside the standing card — both as before.
