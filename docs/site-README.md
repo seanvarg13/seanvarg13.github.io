@@ -657,6 +657,11 @@ The models' rates are compressed toward the middle, and on a season they haven't
 had Pitching uERA undershooting the best strikeout pitchers by about 3 points of K% and overshooting the worst. The calibration roughly halves
 the bias and takes the across-the-board 2026 error away; the xWhiff numbers shown on the tabs are still the models' own.
 
+**Starter and reliever fits** (3 Oct 2026). uK% and uBB% now use separate weights for starters and relievers (the pooled fit stays as the
+fallback). At the same whiff, strike, zone and chase rates a reliever walks about 0.7 points more than a starter, so the one fit had read every
+regular starter about a third of a point high on walks (the best control starters a full point high) and relievers half a point low. Out of
+sample the starters' walk bias goes to about zero with the error down a little, and the strikeout estimates gain the same way.
+
 ## League Trends
 
 Leaderboards ▸ League Trends shows league-wide averages for every MLB season since 2015, to see how the game has moved.
