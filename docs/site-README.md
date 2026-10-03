@@ -619,6 +619,13 @@ it, and whether contact is a grounder, a popup or an air ball — combined the w
 model's whiff / ground-ball / popup rates with what actually happened under each; each pitch graded **vs its pitch type**
 (100 = an average four-seamer for a four-seamer) or **vs all pitches**. Past seasons get it when rebuilt.
 
+Since 2 Oct 2026 the model also knows the pitcher's **throwing hand** (the same pitch plays up from a lefty: about 2 more
+whiffs per 100 swings and 3 more grounders per 100 balls in play) and each pitch's **approach angles** with its height and side
+at the plate taken out, and two more models grade contact: how often it goes **foul** instead of into play, and the **damage** a
+ball in play does (its wOBA). Batted-ball+ values contact at half that damage and half the grounder / popup / air mix, plus the
+runs saved by fouls. Tested against each pitcher's next season, this lifted Stuff+'s correlation with runs saved from .40 to .49
+(K-BB% .45 to .56). Ball / called-strike chances, seam-shifted-wake measures and release-point tunnelling were tested and left out.
+
 ## League Trends
 
 Leaderboards ▸ League Trends shows league-wide averages for every MLB season since 2015, to see how the game has moved.

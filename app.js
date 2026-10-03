@@ -356,18 +356,28 @@
   // and popup chances) — the build's stuff_grade_type(), so a date window or split re-derives it from the day rows. Graded
   // against pitch type (Sean, 27 Sep 2026: "vs all pitches" gone): bw / bg / bp are the league's means for the types he
   // threw, summed the same way, so his baseline is his own mix. Files built before that lack them and grade against all.
-  function stuffFrom(n, w, g, p, bw, bg, bp) {
+  // f / d / bf / bd (2 Oct 2026): summed foul chances on contact and damage (wOBA on contact), his and his types' — files
+  // built before them leave them undefined and grade on whiff and batted-ball type alone
+  function stuffFrom(n, w, g, p, bw, bg, bp, f, d, bf, bd) {
     const sc = K().stuff; if (!sc || !n) return { swhf: null, sbb: null, stuff: null };
-    const r1 = (x) => Math.round(10 * x) / 10, [wp, bp_] = stuffParts(sc, 100 * w / n, g / n, p / n, K().lgERA);
+    const per = (x, k) => (x == null ? null : k * x / n);
+    const r1 = (x) => Math.round(10 * x) / 10, [wp, bp_] = stuffParts(sc, 100 * w / n, g / n, p / n, K().lgERA, per(f, 100), per(d, 1));
     if (!bw) return { swhf: r1(wp), sbb: r1(bp_), stuff: r1(wp + bp_ - 100) };
-    const [wb, bb] = stuffParts(sc, 100 * bw / n, bg / n, bp / n, K().lgERA);
+    const [wb, bb] = stuffParts(sc, 100 * bw / n, bg / n, bp / n, K().lgERA, per(bf, 100), per(bd, 1));
     return { swhf: r1(wp - wb + 100), sbb: r1(bp_ - bb + 100), stuff: r1(wp - wb + bp_ - bb + 100) };
   }
-  // the two halves from rates: xWhiff% per swing, and the ground-ball and popup shares of contact
-  function stuffParts(sc, xw, xg, xp, era) {
-    const xb = xg * sc.gb + xp * sc.pu + (1 - xg - xp) * sc.vair;
-    return [100 + 100 * sc.kW * (xw - sc.lgW) / era, 100 - 100 * sc.kB * (xb - sc.lgB) / era];
+  // the two halves from rates: xWhiff% per swing, the ground-ball and popup shares of contact, and (2 Oct 2026) foul% of
+  // contact and damage (wOBA on contact) — the build's stuff_parts(): a ball in play is the GB / PU / air mix blended with
+  // the damage model, and a foul chance above the league's saves what a foul saves over a ball in play
+  function stuffParts(sc, xw, xg, xp, era, xf, xd) {
+    let xb = xg * sc.gb + xp * sc.pu + (1 - xg - xp) * sc.vair, lb = sc.lgB;
+    if (xd != null && sc.lgD != null) { const a = sc.dmg == null ? 0.5 : sc.dmg; xb = (1 - a) * xb + a * xd; lb = (1 - a) * lb + a * sc.lgD; }
+    let bp = 100 - 100 * sc.kB * (xb - lb) / era;
+    if (xf != null && sc.kF) bp += 100 * sc.kF * (xf - sc.lgF) / era;
+    return [100 + 100 * sc.kW * (xw - sc.lgW) / era, bp];
   }
+  // a pitch type's league grades from consts.stuff.types ([pitches, xWhiff, xGB, xPU, xFoul, xDamage]; older files stop at xPU)
+  const typeParts = (sc, x) => stuffParts(sc, x[1], x[2], x[3], K().lgERA, x[4], x[5]);
   const ALL_H = union([...CARD, { metrics: Object.values(SUB).flat() }, { metrics: SIDE_H }, { metrics: FANT_H }], DATA.meta.hitterMetrics);
   const ALL_P = union([...CARD_P, { metrics: Object.values(SUB_P).flat() }, { metrics: SIDE_P }, { metrics: FANT_P }], DATA.meta.pitcherMetrics);
   const allFor = (g) => (g === "H" ? ALL_H : ALL_P);
@@ -775,7 +785,7 @@
                    csw: rate(t.cs + t.whf, t.pit), zcon: rate(t.zcon, t.zsw), zone: rate(t.zpit, t.pit), osw: rate(t.osw, t.opit), swing: rate(t.sw, t.pit),
                    fbv: t.fbn ? Math.round(10 * t.fbv / t.fbn) / 10 : null, ext: t.extn ? Math.round(10 * t.exts / t.extn) / 10 : null,
                    ev: (t.evn || t.bbe) ? Math.round(10 * t.evsum / (t.evn || t.bbe)) / 10 : null, hh: rate(t.hh, t.bip || t.bbe), brl: rate(t.brl, t.bip || t.bbe),
-                   ...stuffFrom(t.stn, t.stw, t.stg, t.stp, t.stbw, t.stbg, t.stbp), _stn: t.stn, _stw: t.stw, _stg: t.stg, _stp: t.stp },
+                   ...stuffFrom(t.stn, t.stw, t.stg, t.stp, t.stbw, t.stbg, t.stbp, t.stf, t.std, t.stbf, t.stbd), _stn: t.stn, _stw: t.stw, _stg: t.stg, _stp: t.stp },
               sample: ip, ip, bf: t.bf, g: games, gs,
               ctx: { G: games, GS: gs, wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, Pitches: t.pit, bbl, PAw: t.wden, HBP: t.hbp } };
       } else {
@@ -3299,7 +3309,7 @@
   }
   function pitchBoardBody(box, springK) {
     const sc = K().stuff, T = (sc && sc.types) || {}, F = DATA.meta.arsenalFields || ARSENAL;
-    const typeAvg = (pt) => { const x = T[pt]; if (!x || !sc) return null; const [w, b] = stuffParts(sc, x[1], x[2], x[3], K().lgERA); return { w, b, t: w + b - 100 }; };
+    const typeAvg = (pt) => { const x = T[pt]; if (!x || !sc) return null; const [w, b] = typeParts(sc, x); return { w, b, t: w + b - 100 }; };
     const rows = [];
     for (const p of DS.players) {
       if (p.type !== "P" || !p.ctx || !p.ctx.arsenal) continue;
@@ -6224,7 +6234,7 @@
   // the grades. The season's table (ctx.arsenal) until the card has a window or split, then arsenalView's sums.
   const PITCH_NAME = { FF: "Four-seam", SI: "Sinker", FC: "Cutter", SL: "Slider", ST: "Sweeper", SV: "Slurve", CU: "Curveball", KC: "Knuckle curve",
                        CS: "Slow curve", CH: "Changeup", FS: "Splitter", FO: "Forkball", SC: "Screwball", KN: "Knuckleball", EP: "Eephus", FA: "Fastball" };
-  const ARSENAL = DATA.meta.arsenalFields || ["pt", "n", "velo", "ivb", "hb", "spin", "xwhf", "xgb", "xpu", "whfp", "bbp", "stuffp", "whf", "gb", "pu", "sw", "bip"];
+  const ARSENAL = DATA.meta.arsenalFields || ["pt", "n", "velo", "ivb", "hb", "spin", "xwhf", "xgb", "xpu", "whfp", "bbp", "stuffp", "whf", "gb", "pu", "sw", "bip", "xfoul", "xdmg"];
 
   // The arsenal through the card's dates and splits (Sean, 26 Sep 2026: a reliever's pitches should show when the card is
   // set to As RP). hist/ars-<season>.js holds each pitcher's pitch types game by game — graded pitches and the summed
@@ -6260,7 +6270,7 @@
     }
     const sc = K().stuff, r1 = (x) => Math.round(10 * x) / 10;
     return [...sum.entries()].filter(([, t]) => t.n > 0).sort((a, b) => b[1].n - a[1].n).map(([pt, t]) => {
-      const [wp, bp] = sc ? stuffParts(sc, 100 * t.w / t.n, t.g / t.n, t.p / t.n, K().lgERA) : [null, null];
+      const [wp, bp] = sc ? stuffParts(sc, 100 * t.w / t.n, t.g / t.n, t.p / t.n, K().lgERA, t.f == null ? null : 100 * t.f / t.n, t.d == null ? null : t.d / t.n) : [null, null];
       return { pt, n: t.n, velo: t.velo / t.n, ivb: t.ivb / t.n, hb: t.hb / t.n, spin: t.spn ? Math.round(t.spin / t.spn) : null,
                xwhf: 100 * t.w / t.n, xgb: 100 * t.g / t.n, xpu: 100 * t.p / t.n, whfp: wp == null ? null : r1(wp), bbp: bp == null ? null : r1(bp),
                stuffp: wp == null ? null : r1(wp + bp - 100), whf: t.sw ? 100 * t.wh / t.sw : null, gb: t.bip ? 100 * t.gb / t.bip : null,
@@ -6307,7 +6317,7 @@
     // a pitch against its own kind: the league's average grades for that pitch type are subtracted, so 100 = an average
     // four-seamer for a four-seamer (Sean, 26 Sep 2026); "all pitches" keeps every pitch on the one scale
     const sc = K().stuff, T = (sc && sc.types) || {};
-    const typeAvg = (pt) => { const x = T[pt]; if (!x || !sc) return null; const [w, b2] = stuffParts(sc, x[1], x[2], x[3], K().lgERA); return { w, b: b2, t: w + b2 - 100 }; };
+    const typeAvg = (pt) => { const x = T[pt]; if (!x || !sc) return null; const [w, b2] = typeParts(sc, x); return { w, b: b2, t: w + b2 - 100 }; };
     // every pitch against its own type, always (Sean, 27 Sep 2026: the "vs all pitches" view is gone) — the All pitches row
     // is those averaged by use, which is how the headline is graded too. A past season built before types shipped grades
     // against all pitches until it's rebuilt
@@ -6401,7 +6411,7 @@
     for (const [d, , er] of src.er) { const g = by.get(d); if (g) g.er = (g.er || 0) + er; }
     const c = K(), bbw = c && c.bbw, sc = (x, a, b) => (b ? 100 * a / b : null);
     return [...by.entries()].sort((a, b) => b[0] - a[0]).map(([d, g]) => {
-      const st = g.stn ? stuffFrom(g.stn, g.stw, g.stg, g.stp, g.stbw, g.stbg, g.stbp) : { stuff: null };
+      const st = g.stn ? stuffFrom(g.stn, g.stw, g.stg, g.stp, g.stbw, g.stbg, g.stbp, g.stf, g.std, g.stbf, g.stbd) : { stuff: null };
       // batted-ball luck: what his balls in play earned against the league's wOBA for their type, in runs (wOBA / scale)
       const T = { gb: [g.gb, g.wgb], ld: [g.ld, g.wld], fb: [g.fbt, g.wfb], pu: [g.pu, g.wpu] };
       let act = 0, exp = 0, n = 0;
@@ -6413,7 +6423,7 @@
                swing: sc(0, g.sw, g.pit), zcon: sc(0, g.zcon, g.zsw) };
     });
   }
-  const typeAvgOf = (pt) => { const sc = K().stuff, x = sc && sc.types && sc.types[pt]; if (!x) return null; const [w, b] = stuffParts(sc, x[1], x[2], x[3], K().lgERA); return { w, b, t: w + b - 100 }; };
+  const typeAvgOf = (pt) => { const sc = K().stuff, x = sc && sc.types && sc.types[pt]; if (!x) return null; const [w, b] = typeParts(sc, x); return { w, b, t: w + b - 100 }; };
   function gamePitches(p, day) {                                    // his pitches on one day, graded against their types
     const k = arsKey(); if (!k) return null;
     const file = `hist/ars-${k.replace(/^mlb-/, "")}.js`;
@@ -6422,7 +6432,7 @@
     const I = Object.fromEntries(ARS_F.map((f, i) => [f, i])), sum = new Map(), sc = K().stuff;
     for (const r of rows) { const t = sum.get(r[I.pt]) || Object.fromEntries(ARS_F.slice(5).map((f) => [f, 0])); for (const f of ARS_F.slice(5)) t[f] += r[I[f]]; sum.set(r[I.pt], t); }
     return [...sum.entries()].filter(([, t]) => t.n > 0).sort((a, b) => b[1].n - a[1].n).map(([pt, t]) => {
-      const A = typeAvgOf(pt), [wp, bp] = sc ? stuffParts(sc, 100 * t.w / t.n, t.g / t.n, t.p / t.n, K().lgERA) : [null, null];
+      const A = typeAvgOf(pt), [wp, bp] = sc ? stuffParts(sc, 100 * t.w / t.n, t.g / t.n, t.p / t.n, K().lgERA, t.f == null ? null : 100 * t.f / t.n, t.d == null ? null : t.d / t.n) : [null, null];
       return { pt, n: t.n, velo: t.velo / t.n, ivb: t.ivb / t.n, hb: t.hb / t.n, spin: t.spn ? t.spin / t.spn : null,
                xwhf: 100 * t.w / t.n, xgb: 100 * t.g / t.n, xpu: 100 * t.p / t.n, whf: t.sw ? 100 * t.wh / t.sw : null, gb: t.bip ? 100 * t.gb / t.bip : null,
                pu: t.bip ? 100 * t.pu / t.bip : null, sw: t.sw, wh: t.wh, bip: t.bip, bipgb: t.gb, bippu: t.pu,
