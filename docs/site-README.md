@@ -651,6 +651,12 @@ Chase% read a couple of points under the actual rates, and he preferred the walk
 at the original uBB% and no command column remains. The expected rates did nothing for K%, so uK%
 still runs on his actual rates. Seasons built before the models read "–".
 
+**Expected whiff on the real scale** (3 Oct 2026). Inside Stuff uERA and Pitching uERA the models' expected Whiff% is first put on the real
+Whiff% scale — centred on the league's real rate and stretched to the real spread across pitchers — before it feeds the strikeout estimate.
+The models' rates are compressed toward the middle, and on a season they haven't seen they can sit off level (2026 ran 2.6 points hot), which
+had Pitching uERA undershooting the best strikeout pitchers by about 3 points of K% and overshooting the worst. The calibration roughly halves
+the bias and takes the across-the-board 2026 error away; the xWhiff numbers shown on the tabs are still the models' own.
+
 ## League Trends
 
 Leaderboards ▸ League Trends shows league-wide averages for every MLB season since 2015, to see how the game has moved.
