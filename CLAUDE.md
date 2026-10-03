@@ -1052,6 +1052,8 @@ is deploy-limited.
   The Leaderboard's column names wear the Stuff+ table's header format (11px, 8px above and below; the end of `styles.css`), and the
   rows' box has a 1px navy outline. **The home lists fill the screen** (Sean, the same hour: a desktop had the bottom third blank): a
   phone shows five rows a list, a desktop as many as its height holds (`N` in `renderHome`, 5-15, 50px a row under a 310px allowance).
+  The Stuff+ table has the same navy outline and the Leaderboard's rows are as tall as its (46px, `min-height: 45px` on `.row-main`;
+  Sean, the same hour).
 
 ## 9. Things only Sean can do
 
