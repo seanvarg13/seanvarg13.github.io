@@ -354,7 +354,8 @@ his real Whiff% / GB% / PU%; walks and every rate but Whiff% from his actual num
 Leaderboard column (`suera`, `LB_EXTRA_P`; pool stats in `pool()` / `statsFor`, rates from `stuffRates`: day-row sums in a
 window, the arsenal otherwise).
 
-**Command models, xBB%, Pitching uBB% and Command+ (Sean, 3 Oct 2026: "would there be any way to incorporate a pitchers command and
+**Command models, xBB%, Pitching uBB% and Command+ — built and REMOVED the same evening (Sean, 3 Oct 2026: "get rid of the command models
+entirely i dont want them, go back to what the bb% estimates were before"; earlier that evening: "would there be any way to incorporate a pitchers command and
 ability to generate chases, stay in the zone and throw strikes and avoid balls in the model", "improve like the whiff gb pu models and
 also be accurate towards like walk rates? i want to be able to make the pitching uera bb% more accurate", "ok yeah try that")**: two
 more models in `train_stuff_models` (so the fixed file holds eight) — **swing**: P(swing) from the pitch's traits (the whiff model's
@@ -379,7 +380,10 @@ are `SIDE_P` / `LB_EXTRA_P` columns (Stats panel group "Command"; Command+ in th
 sub-head. **xStrike% / xChase% were columns too, for an hour** (Leaderboard, the Pitching+ tab's pairs, the Stuff+ board) and came off
 at Sean's say the same evening ("they look way too inaccurate" — the fixed models read a couple of points under this season's actual rates,
 which the fit's league centring absorbs but a side-by-side pair doesn't); the rates stay on `m` / the arsenal / the day rows for xBB%.
-Don't show them unasked. Saved column lists drop `xstrk` / `xosw` on load. **Backtest** (scratch `cmd.py`, models fitted on the two seasons before, 300+ BF, r / mean abs error in BB% points):
+**The app no longer reads any of it**: uERA and Pitching uERA both walk at the actual-rate uBB% as before, `impliedKBB` / `stuffUeraCore`
+have no walk override, there is no xBB% / Pitching uBB% / Command+ column or Stats group, and saved column lists / sorts drop `xstrk xosw cmd
+xbb pubb` on load. The build side (the two models in the fixed file, the `st_c*` sums, day fields, arsenal-day fields, `ctx.arsenal` `xstk stk
+xchs chs`, `m.xstrk …`) is still there and inert — strip it at a future retrain if the file size matters. Don't bring any of it back unasked. **Backtest** (scratch `cmd.py`, models fitted on the two seasons before, 300+ BF, r / mean abs error in BB% points):
 same season, xBB% alone .713 / 1.19 (2024), .625 / 1.28 (2025), .712 / 1.15 (2026) vs uBB% .833 / .93, .744 / 1.00, .802 / .98;
 next season (2024 → 25, 2025 → 26) xBB% .561 / 1.29, .564 / 1.25 vs uBB% .603 / 1.27, .502 / 1.42 and his own BB% .558 / 1.40,
 .563 / 1.43; the 0.6 / 0.4 blend .609 / 1.23, .558 / 1.29 next season at .816 / .735 / .799 same season (a half-and-half blend .606 /
@@ -1096,8 +1100,9 @@ is deploy-limited.
   Batted-ball+ (loc), Location+, Pitching uERA — whatever the card's data carries (Sean: "i dont see any of the pitching+ stats").
 * **Command (Sean, 3 Oct 2026)**: see §4 — two more models (swing, called strike) give every pitch a strike chance and a chase chance
   from where it was thrown and the count; **xBB%** is the walk rate those spots deserve, **Pitching uBB%** (0.6 uBB% + 0.4 xBB%) is what
-  Pitching uERA walks, **Command+** is xBB% as a share of runs against the league (100 = average). xStrike% / xChase% were shown beside
-  the actual rates for an hour and taken off (Sean: "way too inaccurate"); don't bring them back unasked. Needs the models retrained (Actions → Train Stuff+ models) and every
+  Pitching uERA walked, **Command+** was xBB% as a share of runs against the league. **All of it came off the site the same evening**
+  (Sean: xStrike / xChase "way too inaccurate", then "get rid of the command models entirely"): both uERAs walk at the old uBB% again and
+  no column remains; the build's sums are inert. Don't bring any of it back unasked. Needs the models retrained (Actions → Train Stuff+ models) and every
   season rescored; a file built before the fields reads "–" and keeps the old Pitching uERA walks.
 
 * **Home, 3 Oct 2026** (Sean: "not make it the starred players ... leaderboard for both xwoba and pitching uERA and then also add a

@@ -638,7 +638,7 @@ and x-rates per pitch (the Stuff+ board shows both); all are Leaderboard columns
 Pitching+ rates (on the Pitching+ tab, a Leaderboard column). A run-value-trained Stuff+ (FanGraphs' recipe) was tested against the component build
 and predicted the next period worse, so the component build stays.
 
-**Command** (3 Oct 2026). Two more models — the chance a pitch is **swung at**, and the chance a taken pitch is **called a strike**, each
+**Command** (3 Oct 2026, built and removed the same evening). Two more models — the chance a pitch is **swung at**, and the chance a taken pitch is **called a strike**, each
 from the pitch's traits, where it crossed the plate, how far outside the zone that was and the count — give every pitch a strike chance
 and every pitch out of the zone a chase chance, and with the location whiff model a swing-and-miss chance. So a pitcher has the Strike%,
 Chase%, Swing%, Z-Contact% and Whiff% his pitches *deserved* where he threw them. **xBB%** is uBB%'s fit run on those instead of his
@@ -646,10 +646,9 @@ actual rates: what his command, not his results, says he should walk. **Pitching
 Pitching uERA — backtested 2024-26 it lands within 1.23 / 1.29 BB% points of next season's walk rate against 1.27 / 1.42 for uBB%
 alone (and 1.40 / 1.43 for his own BB%), keeping most of uBB%'s same-season fit; xBB% alone tracks the season less closely (r .71 vs
 .80). **Command+** is xBB% as a share of runs against the league's walk rate (a walk priced against a ball in play, as uERA does; 100 =
-average, each point 1% of runs like Stuff+). The Pitching+ tab shows Command+ in its sub-head; Command+, xBB% and Pitching uBB% are
-Leaderboard columns (Stats ▸ Command; Command+ is in the Stuff column set). The expected Strike% and Chase% themselves were shown for an
-hour and taken off the same evening — they run a couple of points under the actual rates (the fit centres them on the league, a side-by-side
-pair doesn't), so they stay inside xBB% only. The expected rates did nothing for K%, so uK%
+average, each point 1% of runs like Stuff+). All of it was taken off the site the same evening at Sean's say — the expected Strike% and
+Chase% read a couple of points under the actual rates, and he preferred the walk estimate as it was — so uERA and Pitching uERA both walk
+at the original uBB% and no command column remains. The expected rates did nothing for K%, so uK%
 still runs on his actual rates. Seasons built before the models read "–".
 
 ## League Trends
@@ -849,7 +848,7 @@ a date range or last N days scales the Min PA / IP box by the window's share of 
 window, Position covers hitters vs pitchers. The row is the six buttons, the Standard ▾ pill and the count.
 The **Min PA** box (Min IP for pitchers) sits in that row too, so the minimum is one tap away instead of inside the Filters dropdown,
 and the Stats panel groups Pitching+, Whiff+ (loc), Batted-ball+ (loc), Location+ and Pitching uERA under their own "Pitching+" heading
-(and Command+, xBB%, Pitching uBB% under "Command").
+.
 
 **Home, 3 Oct 2026**: two cards — the season's leaders (xwOBA for hitters with 300+ PA, Pitching uERA for pitchers with 100+ IP) and
 Trending (xwOBA over each hitter's last 100 PA, Pitching uERA over each pitcher's last 50 IP; it reads the game-by-game file, so it
