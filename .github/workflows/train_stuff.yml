@@ -108,7 +108,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # the release was downloaded into prev/ above; the rescore reads the directional models from MODEL_DIR itself
           # (3 Oct 2026: every season failed on a missing v3_dir.joblib — Stuff+ graded, then the xwOBA step found no model)
-          cp "$MODEL_DIR"/prev/*.joblib "$MODEL_DIR"/prev/versions.json "$MODEL_DIR"/ 2>/dev/null || true
+          cp "$MODEL_DIR"/prev/v3_*.joblib "$MODEL_DIR"/prev/versions.json "$MODEL_DIR"/ 2>/dev/null || true   # not prev/stuff_models.joblib: that would put the old file over the one just trained
           ls -la "$MODEL_DIR"
           years=$(python -c "import json; raw=open('data.js').read(); y=int(json.loads(raw[raw.index('= {') + 2:].rstrip().rstrip(';'))['meta']['season']); print(' '.join([str(x) for x in range(2015, y)] + [f'post-{x}' for x in range(2023, y + 1)]))")
           echo "rescoring $years"
