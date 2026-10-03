@@ -1790,7 +1790,7 @@
   function renderSortSelect() {
     const g = groupFor(state.pos);
     const sel = $("sort"); sel.innerHTML = "";
-    const opts = [["score", isPitcherGroup(g) ? "Score" : HEAD.label], ...(isPitcherGroup(g) ? [] : [["blend", "Skills blend pctl"]]),
+    const opts = [["score", isPitcherGroup(g) ? "Rating" : HEAD.label], ...(isPitcherGroup(g) ? [] : [["blend", "Skills blend pctl"]]),
                   ...(isPitcherGroup(g) ? ALL_P : ALL_H.filter((m) => m.key !== HEAD.key && m.key !== HEAD_DUP)).map((m) => [m.key, m.label + " pctl"]),
                   ["sample", isPitcherGroup(g) ? "Innings pitched" : "Plate appearances"], ...(preCols().some((c) => c.key === "year") ? [["year", "Year"]] : []), ["age", "Age"], ["name", "Name"]];
     for (const [v, l] of opts) { const o = el("option", null, l); o.value = v; sel.append(o); }
@@ -1970,7 +1970,7 @@
     for (const k of ["year", "age"]) h.style.setProperty("--pre" + (k === "year" ? 1 : 2), preOn(k) ? "var(--prew, 64px)" : "0px");
     for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const hb = on ? head(c.key, c.label, c.key === "year" ? "Season" : "Age that season") : el("div", "h"); hb.classList.add("pre"); if (!on) hb.classList.add("off"); h.append(hb); }
     { const woH = !isPitcherGroup(g) && wobaHead();
-      const sh = head("score", isPitcherGroup(g) ? "Score" : woH ? "wOBA" : HEAD.label, woH ? "wOBA — no directional xwOBA at this level" : DATA.meta.scoreNote[isPitcherGroup(g) ? "P" : "H"]); if (hasBreak(g, "score")) sh.classList.add("brk"); h.append(sh); }
+      const sh = head("score", isPitcherGroup(g) ? "Rating" : woH ? "wOBA" : HEAD.label, woH ? "wOBA — no directional xwOBA at this level" : isPitcherGroup(g) ? `Rating: ${DATA.meta.scoreNote.P}` : DATA.meta.scoreNote.H); /* "Rating" (Sean, 3 Oct 2026: "Score" said nothing) */ if (hasBreak(g, "score")) sh.classList.add("brk"); h.append(sh); }
     // stat headers: click to sort (the column order is changed in the Table panel)
     for (const m of ms) {
       const hb = head(m.key, colLab(m), m.label + (m.hib ? " — higher is better" : " — lower is better"));
@@ -2168,7 +2168,7 @@
       main.append(who);
       for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const b = el("div", "pct pre", on ? preValue(c.key, p) : ""); if (!on) b.classList.add("off"); else { if (state.sort === c.key && !customOrder()) b.classList.add("sorted"); b.prepend(el("span", "lbl", c.label)); } main.append(b); }
       const sc = el("div", "score", p.type === "H" ? fmtX(st.score) : Math.round(st.score)); if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null; if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) sc.classList.add("hot"); } } if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
-      sc.title = p.type === "H" ? `${HEAD.label} ${fmtX(st.score)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl` : "Score"; main.append(sc);
+      sc.title = p.type === "H" ? `${HEAD.label} ${fmtX(st.score)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl` : `Rating ${Math.round(st.score)}: ${DATA.meta.scoreNote.P}`; main.append(sc);
       const pcts = el("div", "pcts");
       for (const m of ms) {
         const v = metricValue(m, V(p), st), pct = st.pct[m.key];
@@ -3161,7 +3161,7 @@
     box.append(el("h3", null, "Ranked as a starter, a reliever, and among all pitchers"));
     const table = el("table");
     const thead = el("thead"), hr = el("tr");
-    hr.append(el("th", "l", "Pool"), el("th", null, "Score"));
+    hr.append(el("th", "l", "Pool"), el("th", null, "Rating"));
     for (const m of ms) hr.append(el("th", null, SHORT[m.key] || m.label));
     hr.append(el("th", "l", "Rank"));
     thead.append(hr); table.append(thead);
@@ -3456,13 +3456,14 @@
     bar.append(pillSelect(pb.hand === "all" ? "Both hands" : pb.hand === "R" ? "Righties" : "Lefties", [["all", "Both hands"], ["R", "Righties"], ["L", "Lefties"]], pb.hand, (v) => { pb.hand = v; save(); }, "Throws"));
     bar.append(pillSelect(pb.role === "all" ? "SP + RP" : pb.role, [["all", "SP + RP"], ["SP", "SP"], ["RP", "RP"]], pb.role, (v) => { pb.role = v; save(); }, "Role"));
     bar.append(pillSelect(`${pb.min}+ pitches`, [25, 50, 100, 200, 400, 800].map((n) => [String(n), `${n}+ pitches`]), String(pb.min), (v) => { pb.min = Number(v); save(); }, "Minimum"));
+    bar.append(pillSelect(pb.heat === "all" ? "Colour: all" : "Colour: sorted", [["sorted", "Colour the sorted column"], ["all", "Colour every + column"]], pb.heat === "all" ? "all" : "sorted", (v) => { pb.heat = v; save(); }, "Colour"));
     bar.append(el("span", "pbcount", `${rows.length} pitch${rows.length === 1 ? "" : "es"} · ${springK ? DS.label || "spring training" : DATA.meta.season} · graded against its own type`));
     box.append(bar);
     // table
-    const cols = [["rk", "#", false], ["who", "Pitcher", false], ["pt", "Pitch", false], ["n", "Pitches", true], ["use", "Use", true], ["velo", "Velo", true],
+    const cols = [["rk", "#", false], ["who", "Pitcher", false], ["pt", "Pitch", false], ["n", "Pitches", true], ["use", "Use%", true], ["velo", "Velo", true],
                   ["ivb", "IVB", true], ["hb", "HB", true], ["spin", "Spin", true], ["stuffp", "Stuff+", true], ["whfp", "Whiff+", true], ["bbp", "BB+", true],
-                  ["xwhf", "xWhiff", true], ["xgb", "xGB", true], ["xpu", "xPU", true], ["pitp", "Pitching+", true], ["whfpl", "Whiff+·loc", true], ["bbpl", "BB+·loc", true], ["locp", "Loc+", true],
-                  ["xwhfl", "xWhiff·loc", true], ["xgbl", "xGB·loc", true], ["xpul", "xPU·loc", true], ["aopt", "Arsenal Opt.", true]];
+                  ["xwhf", "xWhiff%", true], ["xgb", "xGB%", true], ["xpu", "xPU%", true], ["pitp", "Pitching+", true], ["whfpl", "Whiff+·loc", true], ["bbpl", "BB+·loc", true], ["locp", "Loc+", true],
+                  ["xwhfl", "xWhiff·loc%", true], ["xgbl", "xGB·loc%", true], ["xpul", "xPU·loc%", true], ["aopt", "Arsenal Opt.", true]];
     const tips = { ivb: "Induced vertical break, inches", hb: "Horizontal break, inches (arm side +)", stuffp: "Stuff+ against the league's pitches of the same type (100 = average for its type)",
                    whfp: "Whiff+ against its type", bbp: "Batted-ball+ against its type", xwhf: "The model's whiff rate per swing — actual under it", xgb: "The model's ground-ball rate on contact — actual under it",
                    aopt: "Arsenal optimization, the pitcher's: how much his usage leans toward his own swing-and-miss pitches, in xWhiff points against a typical mix of the same pitches", xpu: "The model's popup rate on contact — actual under it", use: "Share of his pitches",
@@ -3477,8 +3478,9 @@
       hr.append(c);
     }
     th.append(hr); t.append(th);
-    const tb = el("tbody"), f1 = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%");
-    const plus = (v) => { const td = el("td", "plus", v == null ? "–" : String(Math.round(v))); if (v != null) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; } } return td; };
+    const tb = el("tbody"), f1 = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1));   // the % is in the header (Sean, 3 Oct 2026)
+    const heatAll = pb.heat === "all";   // the sorted column alone by default (Sean, 3 Oct 2026: seven coloured columns was the loudest thing on the site)
+    const plus = (v, k) => { const td = el("td", "plus", v == null ? "–" : String(Math.round(v))); if (v != null && (heatAll || pb.sort === k)) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; } } return td; };
     const pair = (x, a) => { const td = el("td", "xa"); td.append(el("b", null, pct(x)), el("i", null, a == null ? "–" : pct(a))); return td; };
     rows.slice(0, 300).forEach((r, i) => {
       const tr = el("tr"), who = el("td", "who"), btn = el("button", "linkbtn pbname", r.p.name); btn.type = "button";
@@ -3488,8 +3490,8 @@
       who.append(btn, el("small", null, ` ${r.p.team} · ${r.p.primary} · ${r.p.throws || ""}HP`));
       tr.append(el("td", "n", String(i + 1)), who, el("td", null, PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(r.use)),
                 el("td", null, f1(r.velo)), el("td", null, f1(r.ivb)), el("td", null, f1(r.hb)), el("td", null, r.spin == null ? "–" : String(r.spin)),
-                plus(r.stuffp), plus(r.whfp), plus(r.bbp), pair(r.xwhf, r.whf), pair(r.xgb, r.gb), pair(r.xpu, r.pu),
-                plus(r.pitp), plus(r.whfpl), plus(r.bbpl), plus(r.locp), pair(r.xwhfl, r.whf), pair(r.xgbl, r.gb), pair(r.xpul, r.pu),
+                plus(r.stuffp, "stuffp"), plus(r.whfp, "whfp"), plus(r.bbp, "bbp"), pair(r.xwhf, r.whf), pair(r.xgb, r.gb), pair(r.xpu, r.pu),
+                plus(r.pitp, "pitp"), plus(r.whfpl, "whfpl"), plus(r.bbpl, "bbpl"), plus(r.locp, "locp"), pair(r.xwhfl, r.whf), pair(r.xgbl, r.gb), pair(r.xpul, r.pu),
                 el("td", null, r.aopt == null ? "–" : (r.aopt >= 0 ? "+" : "−") + Math.abs(r.aopt).toFixed(1)));
       tb.append(tr);
     });
@@ -4089,7 +4091,7 @@
     };
     // the position shows on the button when it isn't everyone ("SS · Filters"), so the one button still says what's listed
     if (onePage()) {   // the Leaderboard / Recent: one button per tab of the dropdown (Sean, 3 Oct 2026: "separate the filters to be their own individual buttons"), each saying what it holds
-      for (const [k, label] of grpTabsNow()) add(k, k === "positions" ? (popActive(k) ? posBtnLabel() : "Position") : k === "dates" ? datesLabel() : label, state.panel === k, popActive(k));
+      for (const [k, label] of grpTabsNow()) { if (k === "table") continue; add(k, k === "positions" ? (popActive(k) ? posBtnLabel() : "Position") : k === "dates" ? datesLabel() : label, state.panel === k, popActive(k)); }   // Table format lives in the ⋯ menu (Sean, 3 Oct 2026)
       return;
     }
     const n = ["filters", "splits", "dates"].filter(popActive).length, pos = popActive("positions") ? posBtnLabel() + " · " : "";
@@ -4138,7 +4140,7 @@
   function placePop() {
     const pop = $("pop");
     if (pop.hidden) return;
-    const btn = $("tbtns") && ($("tbtns").querySelector(`[data-panel="${state.panel}"]`) || $("tbtns").querySelector(`[data-panel="${GRP.has(state.panel) ? "grp" : state.panel}"]`));
+    const btn = $("tbtns") && ($("tbtns").querySelector(`[data-panel="${state.panel}"]`) || $("tbtns").querySelector(`[data-panel="${GRP.has(state.panel) ? "grp" : state.panel}"]`) || (GRP.has(state.panel) ? $("tbtns").querySelector(".tbtn") : null));   // Table format, opened from the ⋯ menu, hangs under the first button
     if (!btn) return;
     const r = btn.getBoundingClientRect(), mob = document.documentElement.dataset.view === "mobile";
     pop.style.maxHeight = Math.max(220, innerHeight - r.bottom - 16) + "px";
@@ -4565,6 +4567,24 @@
         });
       });
     }
+    // the last game day (Sean, 3 Oct 2026, from the recommendations: "the one thing a daily-use site should open on in season"): the best
+    // xwOBA games (3+ PA) and the best starts by Stuff+ (3+ IP) on the latest day in the day rows
+    { const days = m.days || [], lastDay = days.length - 1, when = days[lastDay] ? fmtDate(days[lastDay]) : "";
+      const nc = card(`Last game day${when ? " · " + when : ""}`, "the best xwOBA games (3+ PA) · the best starts by Stuff+ (3+ IP)", null);
+      if (!daysReady()) nc.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…"));
+      else {
+        const nt = two(nc), hit = [], pit = [];
+        withWindow(NOWIN, () => withSplit(NONE, () => {
+          for (const p of DATA.players) {
+            if (p.type === "H") { const log = hitGameLog(p); if (!Array.isArray(log)) continue; const g = log.find((x) => x.day === lastDay); if (g && (g.g.pa || 0) >= 3 && g.xw != null) hit.push([p, g.xw, `${g.g.pa} PA`]); }
+            else { const log = gameLog(p); if (!Array.isArray(log)) continue; const g = log.find((x) => x.day === lastDay); if (g && g.sp && g.ip >= 3 && g.st != null) pit.push([p, g.st, `${fmtIP(g.ip)} IP`]); }
+          }
+        }));
+        hit.sort((a, b) => b[1] - a[1]); pit.sort((a, b) => b[1] - a[1]);
+        const plain = (box, lab, rows, f, tab) => { const hd = el("h4", null, lab), c = el("div"); c.append(hd); list(c, rows.map(([p, v, side]) => [p, f(v), side, tab])); box.append(c); };
+        plain(nt, "xwOBA that day", hit.slice(0, N), f3, "games"); plain(nt, "Stuff+ that start", pit.slice(0, N), (x) => String(Math.round(x)), "games");
+      }
+    }
     // no "Every page" tiles (Sean, 29 Sep 2026, the minimal pass): the header's menus already list them
     // the data line and the credit live in the Stat glossary now (minimal pass 5, Sean, 30 Sep 2026)
   }
@@ -4696,6 +4716,7 @@
     const keyTxt = l1, mm = $("moremenu"); mm.innerHTML = "";
     const li = (n) => { const x = el("li"); x.append(n); mm.append(x); };
     const app = el("a", null, "Appearance"); app.href = "#appearance"; if (state.mode === "appearance") app.setAttribute("aria-current", "page"); li(app);
+    if (onePage()) { const tf = el("button", "linkbtn", "Table format"); tf.type = "button"; tf.addEventListener("click", () => { parkControls(); state.panelTab = "table"; openPanel("table"); }); li(tf); }   // off the Leaderboard's row (Sean, 3 Oct 2026)
     const btns = { append: (...ns) => ns.forEach((n) => { if (!n.classList.contains("nsep")) li(n); }) };
     const link = (label, build) => { const b = el("button", "linkbtn", label); b.type = "button"; b.addEventListener("click", () => { state.textModal = { title: label, build }; render(); }); return b; };
     btns.append(link("Colour key", () => { const b = el("div", "prose"); b.append(keyTxt); return b; }));
