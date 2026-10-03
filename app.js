@@ -1932,13 +1932,7 @@
     { const pc = top.querySelector(".pcount"); if (row.parentNode !== top || (pc && row.nextSibling !== pc)) top.insertBefore(row, pc); }   // before the count, which keeps the right edge   // in the filter row, under the buttons (Sean, 3 Oct 2026: "all of this stuff ... in the upper area where filters is")
     row.innerHTML = "";
     const g = groupFor(state.pos), pit = isPitcherGroup(g), cur = colKeys(g);
-    const seg = el("div", "seg lbside"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Hitters or pitchers");
-    for (const [pos, l] of [["ALL", "Hitters"], ["ALLP", "Pitchers"]]) {
-      const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(pit === (pos === "ALLP")));
-      b.addEventListener("click", () => { if (pit === (pos === "ALLP")) return; state.pos = pos; state.posAlso = []; state.expanded = null; ensureSortValid(); savePrefs(); render(); });
-      seg.append(b);
-    }
-    row.append(seg);
+    // no Hitters / Pitchers switch here (Sean, 3 Oct 2026: "get rid of the hitters/pitchers box") — the Position button has them
     // the column sets as one pill (Sean, 3 Oct 2026: "for like standard advanced etc make that one button of itself"), like the
     // Stuff+ board's filters: it says the set in effect, Custom when the list matches none, and lists them all when tapped
     const same = (a, b) => a.length === b.length && a.every((k, i) => k === b[i]);
@@ -2300,7 +2294,7 @@
     if (want) box.prepend(tb); else if (tb.parentNode !== home) home.prepend(tb);
     // Trending folded into the Leaderboard (Sean, 1 Oct 2026): one menu entry, and a Season / Recent switch beside Filters
     const sw = recentSwitch();
-    if (want && ["leaderboard", "trending"].includes(state.mode)) tb.after(sw); else sw.remove();
+    sw.remove();   // gone (Sean, 3 Oct 2026: "get rid of the season/recent box") — the Dates button's presets cover a recent window; #trending still works by hash
   }
   let recentSw = null;
   function recentSwitch() {
@@ -4134,7 +4128,7 @@
     const pop = $("pop"), body = $("pop-body");
     pop.hidden = false; body.innerHTML = "";
     pop.classList.toggle("grppop", GRP.has(state.panel));
-    if (GRP.has(state.panel)) { state.panelTab = state.panel; body.append(grpTabs()); }
+    if (GRP.has(state.panel)) { state.panelTab = state.panel; if (!onePage()) body.append(grpTabs()); pop.classList.toggle("notabs", onePage()); }   // the Leaderboard's buttons are the tabs (Sean, 3 Oct 2026: "get rid of ... the other ones in that box")
     return body;
   }
   // the panel hangs under its own button, clamped to the window, and never taller than the room below it

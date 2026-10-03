@@ -1031,6 +1031,10 @@ is deploy-limited.
   window is **`listMin`** — Last N lists anyone with ¾ of N, a date range / last N days scales the Min box by the window's share of the
   season's game days (a full-season 300 had listed nobody over 30 days); Recent keeps its own "at least" box. The count line says the
   window's minimum ("292 hitters · 2026 · 49+ PA in the window").
+  **Then** (Sean, the same hour, from a screenshot of the Position dropdown): the dropdown shows **no tab row** on the Leaderboard /
+  Recent (`popBody` skips `grpTabs()` under `onePage()`, class `notabs`) since the buttons are the tabs; the **Season / Recent switch is
+  gone** from the bar (`seatFilters` removes it everywhere — the Dates presets cover a recent window; `#trending` still works by hash);
+  the **Hitters / Pitchers switch is gone** (the Position button has them). The row is the six buttons, the Standard ▾ pill, the count.
 
 ## 9. Things only Sean can do
 
