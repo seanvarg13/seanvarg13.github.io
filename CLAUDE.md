@@ -376,8 +376,10 @@ rate inside Pitching uERA (`stuffUeraCore` / `impliedKBB` take a `bbX`; the pool
 `V(p).m.pubb`); **Command+** (`cmd`) = 100 + 100 · kBB · (lgBB − xBB) / lgERA with kBB = (wBB − lgB) / 100 / wobaScale · pa9 — a walk
 priced against a ball in play on uERA's scale, 1 point = 1% of runs like Stuff+ (`cmdFill`, set on every `V()` for pitchers). All five
 are `SIDE_P` / `LB_EXTRA_P` columns (Stats panel group "Command"; Command+ in the Stuff column set), Command+ in the Pitching+ tab's
-sub-head, xStrike / xChase pairs on the Pitching+ tab (per pitch from the arsenal, the total row from the card's own rates) and the
-Stuff+ board. **Backtest** (scratch `cmd.py`, models fitted on the two seasons before, 300+ BF, r / mean abs error in BB% points):
+sub-head. **xStrike% / xChase% were columns too, for an hour** (Leaderboard, the Pitching+ tab's pairs, the Stuff+ board) and came off
+at Sean's say the same evening ("they look way too inaccurate" — the fixed models read a couple of points under this season's actual rates,
+which the fit's league centring absorbs but a side-by-side pair doesn't); the rates stay on `m` / the arsenal / the day rows for xBB%.
+Don't show them unasked. Saved column lists drop `xstrk` / `xosw` on load. **Backtest** (scratch `cmd.py`, models fitted on the two seasons before, 300+ BF, r / mean abs error in BB% points):
 same season, xBB% alone .713 / 1.19 (2024), .625 / 1.28 (2025), .712 / 1.15 (2026) vs uBB% .833 / .93, .744 / 1.00, .802 / .98;
 next season (2024 → 25, 2025 → 26) xBB% .561 / 1.29, .564 / 1.25 vs uBB% .603 / 1.27, .502 / 1.42 and his own BB% .558 / 1.40,
 .563 / 1.43; the 0.6 / 0.4 blend .609 / 1.23, .558 / 1.29 next season at .816 / .735 / .799 same season (a half-and-half blend .606 /
@@ -1094,8 +1096,8 @@ is deploy-limited.
   Batted-ball+ (loc), Location+, Pitching uERA — whatever the card's data carries (Sean: "i dont see any of the pitching+ stats").
 * **Command (Sean, 3 Oct 2026)**: see §4 — two more models (swing, called strike) give every pitch a strike chance and a chase chance
   from where it was thrown and the count; **xBB%** is the walk rate those spots deserve, **Pitching uBB%** (0.6 uBB% + 0.4 xBB%) is what
-  Pitching uERA walks, **Command+** is xBB% as a share of runs against the league (100 = average), and xStrike% / xChase% sit beside
-  the actual rates on the Pitching+ tab and the Stuff+ board. Needs the models retrained (Actions → Train Stuff+ models) and every
+  Pitching uERA walks, **Command+** is xBB% as a share of runs against the league (100 = average). xStrike% / xChase% were shown beside
+  the actual rates for an hour and taken off (Sean: "way too inaccurate"); don't bring them back unasked. Needs the models retrained (Actions → Train Stuff+ models) and every
   season rescored; a file built before the fields reads "–" and keeps the old Pitching uERA walks.
 
 * **Home, 3 Oct 2026** (Sean: "not make it the starred players ... leaderboard for both xwoba and pitching uERA and then also add a
