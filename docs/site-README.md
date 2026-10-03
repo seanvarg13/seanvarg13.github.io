@@ -670,6 +670,13 @@ the whiff rate per swing, the swing rate and the zone rate (pitch-level process,
 out, the starters' strikeout error drops to 1.12 points and the walk error to 0.54 (relievers 1.75 and 0.93). Seasons built before the
 fields use the previous fit until they're rebuilt.
 
+**Pitching uERA now looks at next season** (3 Oct 2026). Its K% and BB% come from fits trained on the *following* season's rates — from
+everything his pitches do (whiffs, strikes, swings, the count-state rates, Stuff+, Location+, the location model's expected whiff rate, his
+mix and age), never his actual K% or BB% — and its batted balls are the ground-ball / popup mix the location-aware models expect, so this
+year's luck is out of all of it. Held out by season it predicts next year's K% and BB% better than a pitcher's own rates do (starters: 2.5
+vs 2.8 points of K%, 1.3 vs 1.4 of BB%). A pitcher whose Pitching uERA sits under his ERA is one to expect more from; over it, less. uERA and
+Stuff uERA remain this-season reads.
+
 ## League Trends
 
 Leaderboards ▸ League Trends shows league-wide averages for every MLB season since 2015, to see how the game has moved.

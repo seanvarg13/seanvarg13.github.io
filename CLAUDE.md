@@ -261,6 +261,14 @@ Statcast/Directional toggle and the `xws` column are gone). The build still carr
   ahead / behind and the share of PAs reaching two strikes (they'd take starters to 0.83 / 0.38 — Sean can have them if he wants them).
   Files built before the fields fall through to the full fit without them, then the six-rate role fits, then the pooled ones; every
   season needs a rescore to carry them (dispatched 3 Oct 2026).
+  **Pitching uERA is next season's (Sean, 3 Oct 2026: "my whole goal is to use this to identify pitchers for next year ... i want pitching+
+  uERA to provide me with the best idea of what pitchers to target for next year")**: `NKF` / `NBB` are the same inputs fitted to the
+  *following* season's K% and BB% (pairs 2020 → 21 … 2025 → 26 with 100+ BF both years, by role, ridge λ 5, weighted by the smaller sample,
+  each rate against its own season's league; process only — his actual K% / BB% as inputs gained .05 and were left out), `nextKBB(pv)` runs
+  them, and `stuffUeraCore(…, next = true)` (the pool's `puera`, `statsFor`, the tab's `pitchUERA`) uses that pair in place of `impliedKBB`
+  on the location models' expected GB / PU mix. Held out by target season: starters' next K% error 2.53 vs 2.81 from his own K% and 2.83 from
+  the same-season fit, BB% 1.27 vs 1.41 / 1.44; relievers' 3.41 vs 4.00 / 3.82 and 1.86 vs 2.20 / 2.15. uERA and Stuff uERA stay
+  same-season reads. A file without the count fields or an arsenal falls back to the same-season path. The uERA box and the glossary say so.
 * **uERA** (`underlyingERA`) puts those two rates on the balls he actually allowed: his ground-ball and popup
   shares stand, the air balls left over are split into line drives and fly balls at the *population's* ratio, and
   every ball in play is then worth the league's average wOBA for its type (`consts.bbw`). The resulting wOBA is

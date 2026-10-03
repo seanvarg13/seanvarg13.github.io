@@ -1114,6 +1114,22 @@
     return null;
   }
   const uBBFrom = (m, role) => rateFit(m, "bb", UBB, undefined, role);
+  // Next season (Sean, 3 Oct 2026: "my whole goal is to use this to identify pitchers for next year ... i want pitching+ uERA to provide
+  // me with the best idea of what pitchers to target for next year"): the same inputs fitted to NEXT season's K% and BB% instead of this
+  // one's — every pitcher-season 2020 → 21 … 2025 → 26 with 100+ BF both years, by his role, ridge λ 5, weighted by the smaller of the two
+  // samples, each rate against its own season's league. Process only: his actual K% / BB% as inputs gained .05 of error and were left out.
+  // Held out by target season: starters' next K% error 2.53 (his own K% 2.81, the same-season fit 2.83), BB% 1.27 (1.41 / 1.44); relievers'
+  // 3.41 (4.00 / 3.82) and 1.86 (2.20 / 2.15). Pitching uERA is built on these (nextKBB), so its gap to his actual line is the list of
+  // pitchers to expect more or less from. A file without the count-state fields or an arsenal can't run them (null → the same-season path)
+  const NKF = [{ role: "SP", raw: ["xwl", "fb", "ntypes", "age"], c: -15.7306, w: { strk: -2.3791, zone: 0.2133, osw: 0.14, swing: 1.9278, zcon: -0.2659, whf: -0.739, csw: 2.6373, swstr: -1.2386, gb: -0.0634, pu: -0.0767, fbv: 0.1586, ext: 1.1023, stuff: 0.2184, swhf: -0.1901, sloc: -0.0625, xwl: 0.5459, fb: 0.04, ntypes: 0.1755, age: -0.0437, fstrk: -0.0729, b3strk: 0.0091, s2whf: 0.1098, s2sw: -0.0831, s2zone: -0.0077 } },
+               { role: "RP", raw: ["xwl", "fb", "ntypes", "age"], c: -15.8243, w: { strk: -0.8964, zone: 0.0404, osw: -0.0123, swing: 0.5157, zcon: -0.07, whf: -0.6558, csw: 1.2507, swstr: 0.4705, gb: -0.0549, pu: 0.0775, fbv: 0.1562, ext: 0.4912, stuff: 0.0769, swhf: -0.0069, sloc: -0.1087, xwl: 0.4585, fb: 0.032, ntypes: 0.3339, age: 0.0266, fstrk: -0.0643, b3strk: 0.0046, s2whf: 0.0566, s2sw: -0.0802, s2zone: 0.07 } }];
+  const NBB = [{ role: "SP", raw: ["xwl", "fb", "ntypes", "age"], c: -0.47, w: { strk: 2.322, zone: -0.1032, osw: -0.0809, swing: -2.3007, zcon: 0.0104, whf: 0.5867, csw: -2.562, swstr: 1.3854, gb: -0.0098, pu: 0.0317, fbv: 0.0296, ext: -0.2616, stuff: 0.0001, swhf: 0.011, sloc: 0.0276, xwl: 0.0398, fb: -0.0039, ntypes: -0.1519, age: -0.0022, fstrk: -0.0612, b3strk: -0.0516, s2whf: -0.0032, s2sw: 0.065, s2zone: 0.0292 } },
+               { role: "RP", raw: ["xwl", "fb", "ntypes", "age"], c: -3.1791, w: { strk: -1.5926, zone: -0.0798, osw: -0.1044, swing: 1.7029, zcon: 0.0144, whf: 0.548, csw: 1.3986, swstr: -2.5851, gb: -0.0062, pu: 0.0617, fbv: 0.0905, ext: -0.3879, stuff: -0.0089, swhf: 0.037, sloc: 0.0162, xwl: 0.1097, fb: -0.003, ntypes: -0.1692, age: 0.0473, fstrk: -0.0392, b3strk: -0.0311, s2whf: 0.0263, s2sw: -0.0173, s2zone: 0.0303 } }];
+  function nextKBB(pv) {
+    const role = pv.role || pv.primary, ex = pv.ex || (pv.ctx && pv.ctx.arsenal ? arsenalExtras(pv) : {}), m = Object.assign({}, pv.m, ex);
+    const k = rateFit(m, "k", NKF, undefined, role), bb = rateFit(m, "bb", NBB, undefined, role);
+    return k == null || bb == null ? null : { k: Math.round(10 * Math.max(0, k)) / 10, bb: Math.round(10 * Math.max(0, bb)) / 10, next: true };
+  }
   // the full fits' arsenal inputs: his location-aware xWhiff over his swings (xwl; in a window the day rows' sums), fastball share of his
   // pitches (fb), pitch types thrown 5%+ (ntypes) and age — the season's arsenal whatever the card's dates (a mix is a season trait)
   function arsenalExtras(p, t) {
@@ -1271,7 +1287,7 @@
       list.forEach((p, i) => { const s = stats.get(p.type + p.id); s.suera = sus[i]; s.pct.suera = sup[i]; });
       sorted.suera = sus.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
       // Pitching uERA (3 Oct 2026): the same with the location-aware rates
-      const pus = list.map((p, i) => { const r = prs[i], u = r && stuffUeraCore(V(p), r.xw, r.xg, r.xp, pct.strk[i], sorted, sorted.calP); return u ? u.uera : null; });
+      const pus = list.map((p, i) => { const r = prs[i], u = r && stuffUeraCore(V(p), r.xw, r.xg, r.xp, pct.strk[i], sorted, sorted.calP, true); return u ? u.uera : null; });   // next season's K% / BB% (3 Oct 2026)
       const pup = percentiles(pus.map((x) => (x == null ? null : -x)));
       list.forEach((p, i) => { const s = stats.get(p.type + p.id); s.puera = pus[i]; s.pct.puera = pup[i]; });
       sorted.puera = pus.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
@@ -1333,7 +1349,7 @@
     pct.uera = uera == null || !pl.sorted.uera ? null : insertPct(pl.sorted.uera, -uera);
     const sr = stuffRates(p), su0 = sr && pl.sorted.suera ? stuffUeraCore(V(p), sr.xw, sr.xg, sr.xp, pct.strk, pl.sorted, pl.sorted.calS) : null, suera = su0 ? su0.uera : null;
     pct.suera = suera == null ? null : insertPct(pl.sorted.suera, -suera);
-    const pr = pitchRates(p), pu0 = pr && pl.sorted.puera ? stuffUeraCore(V(p), pr.xw, pr.xg, pr.xp, pct.strk, pl.sorted, pl.sorted.calP) : null, puera = pu0 ? pu0.uera : null;
+    const pr = pitchRates(p), pu0 = pr && pl.sorted.puera ? stuffUeraCore(V(p), pr.xw, pr.xg, pr.xp, pct.strk, pl.sorted, pl.sorted.calP, true) : null, puera = pu0 ? pu0.uera : null;
     pct.puera = puera == null ? null : insertPct(pl.sorted.puera, -puera);
     const mera = mixERA(V(p), pl.sorted);
     pct.mera = mera == null || !pl.sorted.mera ? null : insertPct(pl.sorted.mera, -mera);
@@ -4730,7 +4746,7 @@
     suera: "Stuff uERA: uERA built from his stuff instead of his results — the stuff model's xWhiff in place of his Whiff% (through uK%), its xGB and xPU in place of his ground balls and popups (the rest of his air balls split at the league's line-drive share), and walks from his actual Strike% as in uERA, since the stuff model can't tell who throws strikes. What his arsenal alone says his ERA should be.",
     aopt: "Arsenal optimization: how far his pitch usage leans toward his own swing-and-miss pitches. Each pitch's expected whiff rate (the Stuff model's xWhiff) averaged by how often he actually throws it, minus the same pitches averaged at the league's typical usage of those pitch types. In whiff-per-swing points: +3 means his mix gets three more whiffs per 100 swings than the same pitches thrown in a typical mix would. Each point has come with about a point of real Whiff%. Whiffs only — a sinkerballer who leans on his sinker for ground balls reads negative on purpose.",
     pitch: "Pitching+: Stuff+'s twin that also knows where each pitch crossed the plate. A second pair of models — whiff per swing and batted-ball type on contact, each seeing everything Stuff+ sees plus the pitch's height in the batter's zone and its side — grade the pitch as thrown, in the spot it was thrown. Whiff+ (loc) and Batted-ball+ (loc) are its halves, on the same scale as Stuff+'s (100 = an average pitch of its type, each point 1% of runs), and Pitching+ − Stuff+ is Location+. It tracks this season's results far more closely than Stuff+ (its expected Whiff% matches actual at r .85 vs .74) and carries over to next season a little less.",
-    puera: "Pitching uERA: Stuff uERA's twin from the Pitching+ models — the location-aware xWhiff (over his swings) in place of his Whiff%, its xGB and xPU (over his balls in play) in place of his ground balls and popups, walks from his actual Strike% as in uERA. What his pitches, in the spots he throws them, say his ERA should be.",
+    puera: "Pitching uERA: next season's ERA from his pitches. Its K% and BB% are fits trained on the following season's rates — from his whiffs, strikes, swings, count-state rates (first-pitch and three-ball strikes, two-strike whiffs), Stuff+, Location+, the location model's expected whiff rate, his mix and age, never his actual K% or BB% — and its batted balls are the ground-ball / popup mix the location-aware models expect, so this year's luck is out of all of it. Held out by season it beats his own K% and BB% at predicting next year's (starters: 2.5 vs 2.8 K% points, 1.3 vs 1.4 BB%). A pitcher whose Pitching uERA sits under his ERA is one to expect more from next year; over it, less.",
     pwhf: "Whiff+ (loc): Pitching+'s whiff half — his location-aware whiff chance on the pitches swung at, against the league's for his pitch types.",
     pbb: "Batted-ball+ (loc): Pitching+'s contact half — the ground-ball / popup / air mix the location-aware model expects on his balls in play, priced like Batted-ball+.",
     sloc: "Location+: what where he throws his pitches adds to his stuff — Pitching+ minus Stuff+, plus 100. Each location-aware chance is compared with the stuff-only chance on the same pitches (swings for whiffs, balls in play for the mix), so 100 means his spots add what an average pitcher's do and 110 that they're worth about 10% of a run's runs saved on top of his stuff. Stuff+ never sees location; this is the part that does.",
@@ -6562,16 +6578,16 @@
     const pl = g ? pool(g) : null, sorted = pl && pl.sorted, pctS = st && st.pct ? st.pct.strk : null;
     const wx = (k, d) => { const R1 = R0.filter((r) => r[k] != null), n = R1.reduce((a, r) => a + (r[d] || 0), 0); return n ? R1.reduce((a, r) => a + r[k] * (r[d] || 0), 0) / n : null; };
     const xw = wx("xwhfl", "sw"), xg = wx("xgbl", "bip"), xp = wx("xpul", "bip"); if (xw == null || xg == null) return null;
-    return stuffUeraCore(V(p), xw, xg / 100, xp / 100, pctS, sorted, sorted && sorted.calP);
+    return stuffUeraCore(V(p), xw, xg / 100, xp / 100, pctS, sorted, sorted && sorted.calP, true);
   }
-  function stuffUeraCore(pv, xw, xg, xp, pctS, sorted, cal) {   // cal: the pool's scale for the expected whiff rate (calOf in pool), else as is
-    if (!sorted || pctS == null || pv.m.strk == null || xw == null) return null;
+  function stuffUeraCore(pv, xw, xg, xp, pctS, sorted, cal, next) {   // cal: the pool's scale for the expected whiff rate (calOf in pool), else as is;
+    if (!sorted || pctS == null || pv.m.strk == null || xw == null) return null;   // next: K% / BB% from the next-season fits (Pitching uERA)
     const air = Math.max(0, 1 - xg - xp), xwK = cal ? cal.la + cal.s * (xw - cal.lx) : xw, m0 = pv.m;
     // the model's whiff rate replaces his, and the per-pitch rates built on whiffs move with it (SwStr% = whiffs per pitch, CSW% = that
     // plus his called strikes), so the full fits see one consistent set of expected rates
     const sw = m0.swing != null && m0.swstr != null ? { swstr: xwK * m0.swing / 100, csw: m0.csw != null ? m0.csw - m0.swstr + xwK * m0.swing / 100 : m0.csw } : {};
     const pvS = { role: pv.role || pv.primary, ex: pv.ex, m: Object.assign({}, m0, { whf: xwK }, sw), ctx: Object.assign({}, pv.ctx, { bbl: { gb: [1000 * xg], pu: [1000 * xp], ld: [500 * air], fb: [500 * air] } }) };
-    const ik = impliedKBB(pvS, pctS, sorted, pv.m); if (!ik) return null;   // walks from his real rates, not the stuff model's
+    const ik = (next && nextKBB(pv)) || impliedKBB(pvS, pctS, sorted, pv.m); if (!ik) return null;   // walks from his real rates, not the stuff model's
     const uera = underlyingERA(pvS, ik, sorted);
     if (uera == null) return null;
     const la = sorted.ldAir != null ? sorted.ldAir : 0.5;
@@ -6675,11 +6691,11 @@
       const w = el("div", "eratab stuffera");
       const ub = renderUeraBox(p, st, { title: "Pitching uERA", uera: pu.uera, pct: pu.pct, ukbb: pu.ik, ukb: pu.ukb });
       const mx = renderMixBox(p, g, { title: "Expected batted-ball mix (with location)", shares: pu.shares, mera: pu.mera });
-      if (ub) { ub.title = "uERA with the Pitching+ models' expected rates in place of his real ones: the location-aware xWhiff (over his swings) for Whiff%, xGB and xPU (over his balls in play) for his ground balls and popups, walks from his actual Strike% as in uERA. Exp is what his pitches, where he throws them, project; Act is what happened."; w.append(ub); }
+      if (ub) { ub.title = "Next season's uERA: the K% and BB% his pitches project for next year (fits trained on the following season's rates, from everything his pitches do — whiffs, strikes, counts, stuff, location — never his actual K% or BB%), on the ground-ball / popup mix the location-aware models expect. Exp is what to expect next year; Act is this season. The gap is where he should come back toward."; w.append(ub); }
       if (mx) { mx.title = "The batted-ball mix the location-aware model projects on his balls in play, the rest of the air balls split at the league's line-drive share."; w.append(mx); }
       if (w.childNodes.length) box.append(w);
     }
-    box.append(el("p", "note", P ? "Pitching+ is Stuff+'s twin from a second pair of models that also see where each pitch crossed the plate — the same pitch graded in the spot it was thrown, against the league's pitches of its own type (100 = average for its type). Whiff+ and BB+ are its halves; Location+ is Pitching+ − Stuff+ + 100, what his spots add. xWhiff is over the pitches swung at and xGB / xPU over the balls in play, with what actually happened under each. Each point is 1% of runs; the table and the headline follow the card's dates and splits."
+    box.append(el("p", "note", P ? "Pitching+ is Stuff+'s twin from a second pair of models that also see where each pitch crossed the plate — the same pitch graded in the spot it was thrown, against the league's pitches of its own type (100 = average for its type). Whiff+ and BB+ are its halves; Location+ is Pitching+ − Stuff+ + 100, what his spots add. xWhiff is over the pitches swung at and xGB / xPU over the balls in play, with what actually happened under each. Each point is 1% of runs; the table and the headline follow the card's dates and splits. Pitching uERA under the table is next season's: its K% and BB% come from fits trained on the following year's rates (his pitches' whiffs, strikes, counts, stuff and location, never his actual K% or BB%), its batted balls from the location models — the gap to his actual line is what to expect him to give back or get back."
       : "Each pitch is graded against the league's pitches of its own type — 100 is an average four-seamer for a four-seamer, an average curveball for a curveball — and All pitches (and the Stuff+ above) averages those by how often he throws each. " +
       "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball, plus how much he uses it and how many pitches he throws — never where it was thrown (the Pitching+ tab grades the same pitch with its location). Each point is 1% of runs; whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened. The table and the headline follow the card's dates and splits."));
     return box;
