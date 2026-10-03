@@ -2250,8 +2250,9 @@
   // `runs` (optional) are the [start, end) spans the rows are shown in — the tiers. Given them, a page holds
   // as many whole tiers as fit rather than a fixed count, so a tier is never split across two pages; a tier
   // longer than the page size gets a page of its own.
+  const onePage = () => ["leaderboard", "trending"].includes(state.mode);   // the Leaderboard / Recent list everyone, like the Stuff+ board (Sean, 3 Oct 2026)
   function pageWindow(total, runs) {
-    const size = state.pageSize || 0;
+    const size = onePage() ? 0 : state.pageSize || 0;
     let starts = [0];
     if (size && runs && runs.length) {
       starts = []; let filled = 0;
@@ -2313,7 +2314,8 @@
     const setSize = (n) => { state.pageSize = n; state.page = 1; savePrefs(); (onChange || renderRows)(); };
     if (!total) { box.hidden = true; if (!onChange) seatFilters(null); return; }
     box.hidden = false;
-    box.append(el("span", "pcount", pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : `${total} players`));
+    { const g = groupFor(state.pos), pit = isPitcherGroup(g);   // the Stuff+ board's count line at the right (Sean, 3 Oct 2026)
+      box.append(el("span", "pcount", pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total} ${pit ? "pitchers" : "hitters"} · ${DS.season}${state.mode === "leaderboard" ? ` · ${effMin(g) || 0}+ ${pit ? "IP" : "PA"}` : ""}` : `${total} players`)); }
     if (pg.pages > 1) {
       const nav = el("div", "pnav");
       const b = (label, n, title, dis) => { const x = el("button", "pbtn", label); x.type = "button"; x.title = title; x.disabled = dis; x.addEventListener("click", () => go(n)); return x; };
@@ -4654,6 +4656,9 @@
     // a phone's screen): the colour scale itself, then the key, the glossary and the page's how-to as links that open in a
     // window, then the layout switch
     // ... and since the minimal pass (Sean, 29 Sep 2026) not under the table at all: they live in the header's More menu
+    if (["leaderboard", "trending"].includes(state.mode)) notes.append(el("p", "note lbnote", state.mode === "leaderboard"
+      ? `Everyone over the minimum, on one page. Each number is coloured by its percentile among the season's qualifiers (hitters with ${REF_PA}+ PA, pitchers ${REF_PA}+ batters faced); click a column name to sort, click a name for his card.`
+      : `Who's hot over the span set in Filters ▸ Dates, on one page; each number coloured by its percentile among the season's qualifiers on their numbers in the same span. Click a name for his card over that span.`));
     const keyTxt = l1, mm = $("moremenu"); mm.innerHTML = "";
     const li = (n) => { const x = el("li"); x.append(n); mm.append(x); };
     const app = el("a", null, "Appearance"); app.href = "#appearance"; if (state.mode === "appearance") app.setAttribute("aria-current", "page"); li(app);

@@ -3750,3 +3750,18 @@ tr.mkmine td { background: var(--accent-wash, var(--surface-2)); }
 .lbtabs .lbtab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
 :root[data-view="mobile"] .lbtabs { padding: 6px 8px 0; gap: 4px 8px; }
 :root[data-view="mobile"] .lbtabs .lbtab { font-size: 12.5px; padding: 6px 7px 8px; }
+/* The Leaderboard / Recent in the Stuff+ board's dress (Sean, 3 Oct 2026: "i like this look for this page ... make the
+   leaderboards page like this too, so now everybody is on the one page and it scrolls"): the filter row — Filters, Season / Recent,
+   the count at the right — sits on the ground above the table with no blue bar and no frame of its own; the column tabs and the
+   rows' box are the one framed table (the tabs carry its top and sides, the box its sides and bottom); a note under it. Everyone
+   is listed (onePage in app.js), so there are no page numbers */
+:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) main.wrap > .board { border: 0; background: none; box-shadow: none; overflow: visible; }
+:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop { background: none; border: 0; padding: 0 0 10px; gap: 8px 10px; }
+:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop .pcount { margin-left: auto; display: inline; font-size: 12px; color: var(--muted); }
+:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop > .tbtns { margin-right: 0; }
+:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #lbtabs { border: 1px solid var(--hair); border-bottom: 1px solid var(--hair); background: var(--surface); }
+:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) .board > .board-scroll { border: 1px solid var(--hair); border-top: 0; background: var(--surface); }
+:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) main.wrap > .notes { margin-top: 8px; }
+:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) main.wrap > .notes .lbnote { font-size: 12px; color: var(--muted); margin: 0; }
+:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop { padding: 0 0 8px; flex-wrap: wrap; justify-content: flex-start; }
+:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) main.wrap > .notes { display: none; }   /* the phone keeps the room for rows */

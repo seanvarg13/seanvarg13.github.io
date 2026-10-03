@@ -1015,6 +1015,11 @@ is deploy-limited.
   Filters ▸ Stats (`setColKeys`), a list matching no tab shows a Custom tab that opens Filters ▸ Stats, and `state.lb.tabs` moves a
   never-customised `LB_SLIM` list to Standard once. `LB_SETS` sits by `LB_SLIM` at the top because that migration runs at load.
   Cards stay popups; the rows keep scrolling inside the standing card. The prototype itself is a Claude artifact, not in the repo.
+  **Then, the same day** (Sean, on the Stuff+ board: "i like this look for this page ... make the leaderboards page like this too, so now
+  everybody is on the one page and it scrolls"): the Leaderboard / Recent list **everyone** (`onePage()` makes `pageWindow` one page, so
+  no page numbers), the filter row (Filters, Season / Recent, the count "267 hitters · 2026 · 300+ PA" at the right) sits on the ground
+  with no blue bar, the column tabs + rows' box are the one framed table, and a note (`.lbnote`, in `#notes` from `renderChrome`) sits
+  under it — the block at the end of `styles.css`. Rankings / Draft board keep their pager.
 
 ## 9. Things only Sean can do
 
