@@ -818,7 +818,7 @@
     const w = winIdx() || { lo: 0, hi: seasonDays().length - 1 };
     if (!needsRows() || !daysReady()) {
       v = p.type === "P"
-        ? { m: p.m, sample: p.ip, ip: p.ip, bf: p.bf, g: p.ctx.G, gs: p.ctx.GS, ctx: p.ctx, role: p.primary }
+        ? { m: p.m, sample: p.ip, ip: p.ip, bf: p.bf, g: p.ctx.G, gs: p.ctx.GS, ctx: p.ctx, role: p.primary, ex: arsenalExtras(p) }
         : { m: withFB(seasonHitterM(p)), sample: p.pa, ab: p.ab, pa: p.pa, ctx: p.ctx };
     } else {
       const f = DF[p.type], t = {}; f.forEach((k) => (t[k] = 0));
@@ -874,7 +874,7 @@
                    fbv: t.fbn ? Math.round(10 * t.fbv / t.fbn) / 10 : null, ext: t.extn ? Math.round(10 * t.exts / t.extn) / 10 : null,
                    ev: (t.evn || t.bbe) ? Math.round(10 * t.evsum / (t.evn || t.bbe)) / 10 : null, hh: rate(t.hh, t.bip || t.bbe), brl: rate(t.brl, t.bip || t.bbe),
                    ...stuffPlusLoc(t), _stn: t.stn, _stw: t.stw, _stg: t.stg, _stp: t.stp, _stnl: t.stnl, _stwl: t.stwl, _stnb: t.stnb, _stgl: t.stgl, _stpl: t.stpl },
-              sample: ip, ip, bf: t.bf, g: games, gs, role: p.primary,
+              sample: ip, ip, bf: t.bf, g: games, gs, role: p.primary, ex: arsenalExtras(p, t),
               ctx: { G: games, GS: gs, wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, Pitches: t.pit, bbl, PAw: t.wden, HBP: t.hbp } };
       } else {
         const bden = t.bbt || t.bbe;                      // batted-ball type / direction: every typed ball in play (older files: tracked BBE)
@@ -1034,7 +1034,16 @@
   // strikes out a little less per whiff than a starter — the pooled fit had read every regular starter ~0.3 BB% high (the best control
   // starters a point high) and every reliever ~0.5 low. Leave-one-season-out 2024-26: starters' uBB% bias +0.2 / +0.3 / +0.3 → −0.1 / 0 /
   // +0.1 with the error down ~0.03, relievers' −0.5 → −0.1, uK% bias halved both ways. The pooled fits stay as the fallback (no role)
-  const UKF = [{ role: "SP", c: 0.221, w: { whf: 0.924, strk: 0.908, zone: 0.023, osw: -0.097, swing: -0.533, zcon: -0.198 } },
+  // The full fits (Sean, 3 Oct 2026: "get it as accurate as humanly and AIly possible ... use all years 2020-2026"): everything the data
+  // carries that helped, held out season by season — the six rates plus CSW%, SwStr%, GB%, Popup%, fastball velo, extension, Stuff+,
+  // Whiff+, Location+, the arsenal's location-aware xWhiff (xwl), fastball share (fb), pitch types thrown 5%+ (ntypes) and age (raw: not
+  // centred on the league); ridge-fitted (λ 3) by role over every 100+ BF pitcher-season 2020-2026 with a Stuff+ grade (Pitching+ left
+  // out: it's Stuff+ + Location+ − 100 and split the fit into ±2 offsetting weights). Held-out error: starters' K% 1.55 → 1.37, BB% 0.95 →
+  // 0.91; relievers' K% 2.33 → 2.13, BB% 1.42 → 1.37 (the 6-rate role fits below are next in line, then the pooled ones). EV / HH / Brl
+  // added nothing. Needs a Stuff+ grade and an arsenal: a level or file without them falls through to the rate-only fits
+  const UKF = [{ role: "SP", raw: ["xwl", "fb", "ntypes", "age"], c: -4.1711, w: { strk: 0.4597, zone: -0.048, osw: -0.0592, swing: -0.4362, zcon: -0.0721, whf: 0.2236, csw: 0.5619, swstr: 0.734, gb: -0.0629, pu: 0.0624, fbv: 0.1584, ext: 0.5629, stuff: 0.1907, swhf: -0.2006, sloc: 0.0202, xwl: 0.0352, fb: 0.0486, ntypes: -0.0113, age: 0.0323 } },
+               { role: "RP", raw: ["xwl", "fb", "ntypes", "age"], c: -7.3905, w: { strk: 0.4178, zone: -0.016, osw: -0.0815, swing: -0.4306, zcon: -0.0788, whf: 0.11, csw: 0.576, swstr: 0.697, gb: -0.0754, pu: 0.0299, fbv: 0.1451, ext: -0.0074, stuff: 0.134, swhf: -0.1028, sloc: 0.0315, xwl: 0.1273, fb: 0.038, ntypes: 0.0652, age: 0.0491 } },
+               { role: "SP", c: 0.221, w: { whf: 0.924, strk: 0.908, zone: 0.023, osw: -0.097, swing: -0.533, zcon: -0.198 } },
                { role: "RP", c: -0.049, w: { whf: 0.846, strk: 0.713, zone: 0.122, osw: -0.026, swing: -0.513, zcon: -0.168 } },
                { c: 0.061, w: { whf: 0.898, strk: 0.887, zone: 0.051, osw: -0.097, swing: -0.523, zcon: -0.160 } },
                { c: 0.058, w: { whf: 1.005, strk: 0.717, zone: 0.189, swing: -0.506 } }];
@@ -1046,7 +1055,9 @@
   // Strike% does most of it (about −1 BB% a point); at the same Strike%, strikes from chases and balls put in play mean
   // fewer walks than strikes taken in the zone. Levels without locations (Double-A, most of Single-A) have no Chase% or
   // Z-Contact% and use the four-rate fit; Strike% alone if even that's missing.
-  const UBB = [{ role: "SP", c: -0.375, w: { strk: -1.004, zone: 0.213, osw: 0.072, swing: -0.004, zcon: -0.070, whf: 0.051 } },
+  const UBB = [{ role: "SP", raw: ["xwl", "fb", "ntypes", "age"], c: 0.6562, w: { strk: -1.0323, zone: 0.1404, osw: 0.0957, swing: 0.2562, zcon: -0.0678, whf: 0.4054, csw: 0.126, swstr: -0.9721, gb: -0.028, pu: 0.0062, fbv: 0.0615, ext: -0.1466, stuff: 0.0142, swhf: -0.0191, sloc: -0.0351, xwl: 0.0245, fb: 0.0032, ntypes: -0.2026, age: -0.0326 } },
+               { role: "RP", raw: ["xwl", "fb", "ntypes", "age"], c: -2.14, w: { strk: -0.0695, zone: 0.1939, osw: 0.1538, swing: -0.8493, zcon: -0.0879, whf: 0.2692, csw: -0.8872, swstr: 0.2581, gb: -0.0311, pu: 0.0016, fbv: 0.0562, ext: -0.2216, stuff: 0.0568, swhf: -0.0623, sloc: -0.0237, xwl: 0.0929, fb: 0.0033, ntypes: -0.1431, age: 0.0098 } },
+               { role: "SP", c: -0.375, w: { strk: -1.004, zone: 0.213, osw: 0.072, swing: -0.004, zcon: -0.070, whf: 0.051 } },
                { role: "RP", c: 0.311, w: { strk: -1.025, zone: 0.245, osw: 0.138, swing: -0.083, zcon: -0.087, whf: 0.081 } },
                { c: -0.068, w: { strk: -1.008, zone: 0.214, osw: 0.093, swing: -0.045, zcon: -0.104, whf: 0.062 } },
                { c: -0.069, w: { strk: -0.938, zone: 0.179, swing: 0.013, whf: 0.148 } },
@@ -1076,7 +1087,7 @@
     const s = {}, n = {};
     for (const q of DS.players) {
       if (q.type !== "P" || !(q.bf >= 20)) continue;
-      for (const k of ["k", "bb", "strk", "zone", "osw", "swing", "zcon", "whf"]) { const v = q.m[k]; if (v == null) continue; s[k] = (s[k] || 0) + v * q.bf; n[k] = (n[k] || 0) + q.bf; }
+      for (const k of ["k", "bb", "strk", "zone", "osw", "swing", "zcon", "whf", "csw", "swstr", "gb", "pu", "fbv", "ext", "stuff", "swhf", "sloc"]) { const v = q.m[k]; if (v == null) continue; s[k] = (s[k] || 0) + v * q.bf; n[k] = (n[k] || 0) + q.bf; }
     }
     const out = {}; for (const k in s) out[k] = s[k] / n[k];
     lgPCache.set(key, out); return out;
@@ -1086,12 +1097,25 @@
     if (L[lg] == null) return null;
     for (const f of fits) {
       if (f.role && f.role !== role) continue;
-      const ks = Object.keys(f.w); if (!ks.every((k) => m[k] != null && L[k] != null)) continue;
-      return L[lg] + f.c + ks.reduce((a, k) => a + f.w[k] * (m[k] - L[k]), 0);
+      const raw = (k) => f.raw && f.raw.includes(k);             // an input used as it is, not against the league (a share, a count, an age)
+      const ks = Object.keys(f.w); if (!ks.every((k) => m[k] != null && (raw(k) || L[k] != null))) continue;
+      return L[lg] + f.c + ks.reduce((a, k) => a + f.w[k] * (m[k] - (raw(k) ? 0 : L[k])), 0);
     }
     return null;
   }
   const uBBFrom = (m, role) => rateFit(m, "bb", UBB, undefined, role);
+  // the full fits' arsenal inputs: his location-aware xWhiff over his swings (xwl; in a window the day rows' sums), fastball share of his
+  // pitches (fb), pitch types thrown 5%+ (ntypes) and age — the season's arsenal whatever the card's dates (a mix is a season trait)
+  function arsenalExtras(p, t) {
+    const a = p.ctx && p.ctx.arsenal, F = DATA.meta.arsenalFields, out = { age: p.age ?? null };
+    if (!a || !F) return out;
+    const I = { n: F.indexOf("n"), sw: F.indexOf("sw"), w: F.indexOf("xwhfl") }; let n = 0, fb = 0, sw = 0, w = 0, nt = 0;
+    for (const r of a) { n += r[I.n]; if (["FF", "SI", "FC"].includes(r[0])) fb += r[I.n]; if (I.w >= 0 && r[I.w] != null) { sw += r[I.sw]; w += r[I.sw] * r[I.w]; } }
+    for (const r of a) if (n && r[I.n] / n >= 0.05) nt++;
+    out.fb = n ? 100 * fb / n : null; out.ntypes = n ? nt : null;
+    out.xwl = t && t.stnl ? 100 * t.stwl / t.stnl : sw ? w / sw : null;
+    return out;
+  }
   // The command models (3 Oct 2026: a swing and a called-strike model giving every pitch a strike and a chase chance, xBB% = this fit
   // on those expected rates, Pitching uERA walking at 0.6 uBB% + 0.4 xBB%, Command+) were built, backtested (the blend forecast next
   // season's walks a little better: error 1.23 / 1.29 BB% points vs 1.27 / 1.42) and removed the same evening at Sean's say — the
@@ -1101,9 +1125,10 @@
   function impliedKBB(pv, pctS, sorted, bbM) {
     const m = pv.m;
     if (m.whf == null || m.strk == null) return null;
-    const role = pv.role || pv.primary;                                  // SP / RP: its own fit (V() carries it; a player object has primary)
-    const k = Math.max(0, rateFit(m, "k", UKF, undefined, role) ?? (UK.c + UK.whf * m.whf + UK.strk * m.strk));   // uK%: what his process has historically struck out
-    let bb = uBBFrom(bbM || m, role);                                    // uBB%: what his process has historically walked
+    const role = pv.role || pv.primary, ex = pv.ex || (pv.ctx && pv.ctx.arsenal ? arsenalExtras(pv) : {});   // SP / RP: its own fit; ex: the arsenal inputs (V() carries both)
+    const mk = Object.assign({}, m, ex), mb = Object.assign({}, bbM || m, ex);
+    const k = Math.max(0, rateFit(mk, "k", UKF, undefined, role) ?? (UK.c + UK.whf * m.whf + UK.strk * m.strk));   // uK%: what his process has historically struck out
+    let bb = uBBFrom(mb, role);                                          // uBB%: what his process has historically walked
     if (bb == null && pctS != null && sorted && sorted.bb) bb = -quantile(sorted.bb, pctS);   // no league rates: the old percentile match
     if (bb == null || Number.isNaN(k) || Number.isNaN(bb)) return null;
     return { k: Math.round(10 * k) / 10, bb: Math.round(10 * Math.max(0, bb)) / 10 };
@@ -6531,8 +6556,11 @@
   }
   function stuffUeraCore(pv, xw, xg, xp, pctS, sorted, cal) {   // cal: the pool's scale for the expected whiff rate (calOf in pool), else as is
     if (!sorted || pctS == null || pv.m.strk == null || xw == null) return null;
-    const air = Math.max(0, 1 - xg - xp), xwK = cal ? cal.la + cal.s * (xw - cal.lx) : xw;
-    const pvS = { role: pv.role || pv.primary, m: Object.assign({}, pv.m, { whf: xwK }), ctx: Object.assign({}, pv.ctx, { bbl: { gb: [1000 * xg], pu: [1000 * xp], ld: [500 * air], fb: [500 * air] } }) };
+    const air = Math.max(0, 1 - xg - xp), xwK = cal ? cal.la + cal.s * (xw - cal.lx) : xw, m0 = pv.m;
+    // the model's whiff rate replaces his, and the per-pitch rates built on whiffs move with it (SwStr% = whiffs per pitch, CSW% = that
+    // plus his called strikes), so the full fits see one consistent set of expected rates
+    const sw = m0.swing != null && m0.swstr != null ? { swstr: xwK * m0.swing / 100, csw: m0.csw != null ? m0.csw - m0.swstr + xwK * m0.swing / 100 : m0.csw } : {};
+    const pvS = { role: pv.role || pv.primary, ex: pv.ex, m: Object.assign({}, m0, { whf: xwK }, sw), ctx: Object.assign({}, pv.ctx, { bbl: { gb: [1000 * xg], pu: [1000 * xp], ld: [500 * air], fb: [500 * air] } }) };
     const ik = impliedKBB(pvS, pctS, sorted, pv.m); if (!ik) return null;   // walks from his real rates, not the stuff model's
     const uera = underlyingERA(pvS, ik, sorted);
     if (uera == null) return null;
@@ -6792,7 +6820,7 @@
     // season's uK% / uBB% fits and its balls in play at the league's value per type, as a chip coloured like Season Stats'
     const sorted = (pool(p.primary === "RP" ? "RP" : "SP") || {}).sorted || {};
     const ueraOf = (g) => {
-      const G = g.g, pv = { role: p.primary, m: { whf: g.whf, strk: g.strk, zone: g.zone, osw: g.osw, swing: g.swing, zcon: g.zcon, k: g.k, bb: g.bb },
+      const G = g.g, pv = { role: p.primary, ex: arsenalExtras(p), m: { whf: g.whf, strk: g.strk, zone: g.zone, osw: g.osw, swing: g.swing, zcon: g.zcon, k: g.k, bb: g.bb },
                             ctx: { bbl: { gb: [G.gb, G.wgb], ld: [G.ld, G.wld], fb: [G.fbt, G.wfb], pu: [G.pu, G.wpu] }, PAw: G.bf, HBP: G.hbp } };
       const v = underlyingERA(pv, impliedKBB(pv, null, sorted), sorted);
       return v == null ? null : { v, pct: sorted.uera ? insertPct(sorted.uera, -v) : null };
