@@ -1001,10 +1001,10 @@ is deploy-limited.
   only on Rankings, the Draft board, Eligibility and Fantasy (`posShown`; Sean, 30 Sep 2026).
 
 * **The "xyz layout" (Sean, 3 Oct 2026: "save the current site so i can go back to it if i want, call it xyz layout")**: the site as
-  it stood that afternoon is the git tag **`xyz-layout`** and a live copy at **`/xyz/`** — `xyz/index.html` (with `<base href="/">`
+  it stood that afternoon is the branch **`xyz-layout`** (a tag could not be pushed through the proxy) and a live copy at **`/xyz/`** — `xyz/index.html` (with `<base href="/">`
   so it reads the live `data.js`, `days.js`, `hist/` and `build.json`) plus its own `app.js`, `styles.css`, `themes.js`,
   `defaults.js`. It is frozen: the daily build and `sync_tools` don't touch `xyz/` (a Mac publish that mirrors the whole deploy
-  folder could drop it — the tag is the real backup). The redesign that replaced it is below.
+  folder could drop it — the branch is the real backup). The redesign that replaced it is below.
 
 ## 9. Things only Sean can do
 
