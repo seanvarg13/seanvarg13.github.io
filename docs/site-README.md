@@ -661,6 +661,10 @@ the bias and takes the across-the-board 2026 error away; the xWhiff numbers show
 fallback). At the same whiff, strike, zone and chase rates a reliever walks about 0.7 points more than a starter, so the one fit had read every
 regular starter about a third of a point high on walks (the best control starters a full point high) and relievers half a point low. Out of
 sample the starters' walk bias goes to about zero with the error down a little, and the strikeout estimates gain the same way.
+Each fit also uses everything in the data that helped when held out season by season: the six rates plus CSW%, swinging-strike rate,
+ground-ball and popup rates, fastball velocity, extension, Stuff+, Whiff+, Location+, the arsenal's expected whiff rate, fastball share,
+number of pitch types and age, fitted over 2020-2026. Held out, the starters' strikeout error drops from 1.55 to 1.37 points and the walk
+error from 0.95 to 0.91; relievers from 2.33 to 2.13 and 1.42 to 1.37. The six-rate fit remains the fallback for a level without Stuff+ grades.
 
 ## League Trends
 
