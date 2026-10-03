@@ -250,6 +250,17 @@ Statcast/Directional toggle and the `xws` column are gone). The build still carr
   starters' K% error 1.55 → 1.37 and BB% 0.95 → 0.91, relievers' K% 2.33 → 2.13 and BB% 1.42 → 1.37; EV / HH / Brl% and a tree model added
   nothing. Inside Stuff uERA / Pitching uERA the model's whiff rate replaces his and SwStr% / CSW% move with it (`stuffUeraCore`), so the full
   fit sees one consistent set of expected rates. Wheeler 2026 reads K% 28.6 / BB% 7.1 against 29.9 / 7.3 (the six-rate fit: 26.3 / 8.5).
+  **Plus the count-state rates, later that night** (Sean, on Wheeler 2025 reading 5 K% low and 2 BB% high: "is there anyway to improve the
+  fit of both? ... without blending actual stats"): `pitch_flags` builds, from `balls` / `strikes`, the first pitch of a PA and whether it
+  was a strike (`fp` / `fps`), three-ball pitches and the strikes among them (`b3` / `b3s`), two-strike pitches and their swings, whiffs and
+  in-zone pitches (`s2` / `s2sw` / `s2wh` / `s2z`); `pitcher_metrics` turns them into `FStrk_pct`, `B3Strk_pct`, `S2Whf_pct`, `S2Sw_pct`,
+  `S2Zone_pct` → `m.fstrk / b3strk / s2whf / s2sw / s2zone`, and `PITCHER_DAY` carries the eight sums so `V()` re-derives them in a window.
+  Pitch-level process like Strike%, never the plate appearance's result. The front fits in `UKF` / `UBB` add the five (same recipe:
+  ridge, by role, 2020-2026); held out season by season starters' K% error 1.37 → 1.12 and BB% 0.91 → 0.54, relievers' 2.13 → 1.75 and
+  1.37 → 0.93; Wheeler 2025 reads 32.8 / 5.9 against 33.3 / 5.6. Tested and left out as too close to the result: the share of pitches thrown
+  ahead / behind and the share of PAs reaching two strikes (they'd take starters to 0.83 / 0.38 — Sean can have them if he wants them).
+  Files built before the fields fall through to the full fit without them, then the six-rate role fits, then the pooled ones; every
+  season needs a rescore to carry them (dispatched 3 Oct 2026).
 * **uERA** (`underlyingERA`) puts those two rates on the balls he actually allowed: his ground-ball and popup
   shares stand, the air balls left over are split into line drives and fly balls at the *population's* ratio, and
   every ball in play is then worth the league's average wOBA for its type (`consts.bbw`). The resulting wOBA is

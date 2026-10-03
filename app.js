@@ -873,6 +873,7 @@
                    csw: rate(t.cs + t.whf, t.pit), zcon: rate(t.zcon, t.zsw), zone: rate(t.zpit, t.pit), osw: rate(t.osw, t.opit), swing: rate(t.sw, t.pit),
                    fbv: t.fbn ? Math.round(10 * t.fbv / t.fbn) / 10 : null, ext: t.extn ? Math.round(10 * t.exts / t.extn) / 10 : null,
                    ev: (t.evn || t.bbe) ? Math.round(10 * t.evsum / (t.evn || t.bbe)) / 10 : null, hh: rate(t.hh, t.bip || t.bbe), brl: rate(t.brl, t.bip || t.bbe),
+                   fstrk: rate(t.fps, t.fp), b3strk: rate(t.b3s, t.b3), s2whf: rate(t.s2wh, t.s2sw), s2sw: rate(t.s2sw, t.s2), s2zone: rate(t.s2z, t.s2),   // count states (null on files built before them)
                    ...stuffPlusLoc(t), _stn: t.stn, _stw: t.stw, _stg: t.stg, _stp: t.stp, _stnl: t.stnl, _stwl: t.stwl, _stnb: t.stnb, _stgl: t.stgl, _stpl: t.stpl },
               sample: ip, ip, bf: t.bf, g: games, gs, role: p.primary, ex: arsenalExtras(p, t),
               ctx: { G: games, GS: gs, wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, Pitches: t.pit, bbl, PAw: t.wden, HBP: t.hbp } };
@@ -1041,7 +1042,14 @@
   // out: it's Stuff+ + Location+ − 100 and split the fit into ±2 offsetting weights). Held-out error: starters' K% 1.55 → 1.37, BB% 0.95 →
   // 0.91; relievers' K% 2.33 → 2.13, BB% 1.42 → 1.37 (the 6-rate role fits below are next in line, then the pooled ones). EV / HH / Brl
   // added nothing. Needs a Stuff+ grade and an arsenal: a level or file without them falls through to the rate-only fits
-  const UKF = [{ role: "SP", raw: ["xwl", "fb", "ntypes", "age"], c: -4.1711, w: { strk: 0.4597, zone: -0.048, osw: -0.0592, swing: -0.4362, zcon: -0.0721, whf: 0.2236, csw: 0.5619, swstr: 0.734, gb: -0.0629, pu: 0.0624, fbv: 0.1584, ext: 0.5629, stuff: 0.1907, swhf: -0.2006, sloc: 0.0202, xwl: 0.0352, fb: 0.0486, ntypes: -0.0113, age: 0.0323 } },
+  // With the count-state rates (3 Oct 2026, same ask): first-pitch strike% (fstrk), strike% at three balls (b3strk), and with two
+  // strikes the whiff% per swing (s2whf), swing% (s2sw) and zone% (s2zone) — pitch-level process, built in pitch_flags and carried on
+  // m and the day rows (fp fps b3 b3s s2 s2sw s2wh s2z). Held out 2021-26: starters' K% error 1.37 → 1.12 and BB% 0.91 → 0.54,
+  // relievers' 2.13 → 1.75 and 1.37 → 0.93. Share-of-pitches-ahead / behind and the share of PAs reaching two strikes would go
+  // further (K% 0.83, BB% 0.38) but summarise how counts went, so they're out. A file without the fields falls through to the fits below
+  const UKF = [{ role: "SP", raw: ["xwl", "fb", "ntypes", "age"], c: -3.3401, w: { strk: 0.4909, zone: -0.2008, osw: 0.0522, swing: -0.2735, zcon: -0.2127, whf: -0.2067, csw: 0.4762, swstr: 0.4719, gb: -0.0817, pu: 0.0346, fbv: 0.1319, ext: 0.3817, stuff: 0.1308, swhf: -0.1423, sloc: 0.0247, xwl: 0.103, fb: 0.0264, ntypes: -0.158, age: 0.0002, fstrk: -0.0769, b3strk: 0.0982, s2whf: 0.454, s2sw: -0.2577, s2zone: 0.2363 } },
+               { role: "RP", raw: ["xwl", "fb", "ntypes", "age"], c: -8.6965, w: { strk: -0.0677, zone: -0.147, osw: 0.0796, swing: 0.1069, zcon: -0.2298, whf: -0.4905, csw: 1.009, swstr: 0.3274, gb: -0.0802, pu: 0.0069, fbv: 0.1161, ext: -0.0842, stuff: 0.0976, swhf: -0.0943, sloc: 0.0103, xwl: 0.2471, fb: 0.027, ntypes: -0.0564, age: 0.0319, fstrk: -0.065, b3strk: 0.0851, s2whf: 0.4356, s2sw: -0.2441, s2zone: 0.2273 } },
+               { role: "SP", raw: ["xwl", "fb", "ntypes", "age"], c: -4.1711, w: { strk: 0.4597, zone: -0.048, osw: -0.0592, swing: -0.4362, zcon: -0.0721, whf: 0.2236, csw: 0.5619, swstr: 0.734, gb: -0.0629, pu: 0.0624, fbv: 0.1584, ext: 0.5629, stuff: 0.1907, swhf: -0.2006, sloc: 0.0202, xwl: 0.0352, fb: 0.0486, ntypes: -0.0113, age: 0.0323 } },
                { role: "RP", raw: ["xwl", "fb", "ntypes", "age"], c: -7.3905, w: { strk: 0.4178, zone: -0.016, osw: -0.0815, swing: -0.4306, zcon: -0.0788, whf: 0.11, csw: 0.576, swstr: 0.697, gb: -0.0754, pu: 0.0299, fbv: 0.1451, ext: -0.0074, stuff: 0.134, swhf: -0.1028, sloc: 0.0315, xwl: 0.1273, fb: 0.038, ntypes: 0.0652, age: 0.0491 } },
                { role: "SP", c: 0.221, w: { whf: 0.924, strk: 0.908, zone: 0.023, osw: -0.097, swing: -0.533, zcon: -0.198 } },
                { role: "RP", c: -0.049, w: { whf: 0.846, strk: 0.713, zone: 0.122, osw: -0.026, swing: -0.513, zcon: -0.168 } },
@@ -1055,7 +1063,9 @@
   // Strike% does most of it (about −1 BB% a point); at the same Strike%, strikes from chases and balls put in play mean
   // fewer walks than strikes taken in the zone. Levels without locations (Double-A, most of Single-A) have no Chase% or
   // Z-Contact% and use the four-rate fit; Strike% alone if even that's missing.
-  const UBB = [{ role: "SP", raw: ["xwl", "fb", "ntypes", "age"], c: 0.6562, w: { strk: -1.0323, zone: 0.1404, osw: 0.0957, swing: 0.2562, zcon: -0.0678, whf: 0.4054, csw: 0.126, swstr: -0.9721, gb: -0.028, pu: 0.0062, fbv: 0.0615, ext: -0.1466, stuff: 0.0142, swhf: -0.0191, sloc: -0.0351, xwl: 0.0245, fb: 0.0032, ntypes: -0.2026, age: -0.0326 } },
+  const UBB = [{ role: "SP", raw: ["xwl", "fb", "ntypes", "age"], c: -1.0989, w: { strk: -0.4154, zone: 0.0015, osw: 0.046, swing: -0.1783, zcon: -0.0695, whf: 0.3265, csw: -0.2341, swstr: -0.3399, gb: -0.0241, pu: 0.0075, fbv: 0.0204, ext: 0.053, stuff: 0.0362, swhf: -0.0456, sloc: -0.0107, xwl: 0.038, fb: 0.0053, ntypes: -0.0576, age: 0.0014, fstrk: 0.03, b3strk: -0.2166, s2whf: -0.0715, s2sw: 0.0577, s2zone: 0.0299 } },
+               { role: "RP", raw: ["xwl", "fb", "ntypes", "age"], c: -2.0914, w: { strk: -0.0431, zone: 0.0471, osw: 0.0265, swing: -0.6175, zcon: -0.0527, whf: 0.3398, csw: -0.6544, swstr: 0.0884, gb: -0.0273, pu: 0.0012, fbv: 0.0434, ext: -0.1683, stuff: 0.0404, swhf: -0.0344, sloc: 0.0057, xwl: 0.0633, fb: 0.0036, ntypes: -0.0219, age: 0.0099, fstrk: 0.0377, b3strk: -0.1927, s2whf: -0.0931, s2sw: 0.0632, s2zone: 0.005 } },
+               { role: "SP", raw: ["xwl", "fb", "ntypes", "age"], c: 0.6562, w: { strk: -1.0323, zone: 0.1404, osw: 0.0957, swing: 0.2562, zcon: -0.0678, whf: 0.4054, csw: 0.126, swstr: -0.9721, gb: -0.028, pu: 0.0062, fbv: 0.0615, ext: -0.1466, stuff: 0.0142, swhf: -0.0191, sloc: -0.0351, xwl: 0.0245, fb: 0.0032, ntypes: -0.2026, age: -0.0326 } },
                { role: "RP", raw: ["xwl", "fb", "ntypes", "age"], c: -2.14, w: { strk: -0.0695, zone: 0.1939, osw: 0.1538, swing: -0.8493, zcon: -0.0879, whf: 0.2692, csw: -0.8872, swstr: 0.2581, gb: -0.0311, pu: 0.0016, fbv: 0.0562, ext: -0.2216, stuff: 0.0568, swhf: -0.0623, sloc: -0.0237, xwl: 0.0929, fb: 0.0033, ntypes: -0.1431, age: 0.0098 } },
                { role: "SP", c: -0.375, w: { strk: -1.004, zone: 0.213, osw: 0.072, swing: -0.004, zcon: -0.070, whf: 0.051 } },
                { role: "RP", c: 0.311, w: { strk: -1.025, zone: 0.245, osw: 0.138, swing: -0.083, zcon: -0.087, whf: 0.081 } },
@@ -1087,7 +1097,7 @@
     const s = {}, n = {};
     for (const q of DS.players) {
       if (q.type !== "P" || !(q.bf >= 20)) continue;
-      for (const k of ["k", "bb", "strk", "zone", "osw", "swing", "zcon", "whf", "csw", "swstr", "gb", "pu", "fbv", "ext", "stuff", "swhf", "sloc"]) { const v = q.m[k]; if (v == null) continue; s[k] = (s[k] || 0) + v * q.bf; n[k] = (n[k] || 0) + q.bf; }
+      for (const k of ["k", "bb", "strk", "zone", "osw", "swing", "zcon", "whf", "csw", "swstr", "gb", "pu", "fbv", "ext", "stuff", "swhf", "sloc", "fstrk", "b3strk", "s2whf", "s2sw", "s2zone"]) { const v = q.m[k]; if (v == null) continue; s[k] = (s[k] || 0) + v * q.bf; n[k] = (n[k] || 0) + q.bf; }
     }
     const out = {}; for (const k in s) out[k] = s[k] / n[k];
     lgPCache.set(key, out); return out;
