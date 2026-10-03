@@ -856,3 +856,5 @@ location consistency (Stuff+ / Pitching+), bat-tracking inputs and a weak-contac
 (uBB%) were all backtested and none beat the current models, so nothing changed. One display setting was added: **Table format ▸
 Regress small samples** — in a date window or split, every rate is pulled toward the league average by how little a player has played
 (120 PA or batters faced is the halfway point), so a hot week reads as a lean rather than a new player. Off by default.
+
+**Same evening**: every table's header row is navy with white column names (the sorted one light blue).
