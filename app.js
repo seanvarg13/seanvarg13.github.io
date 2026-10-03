@@ -5985,7 +5985,7 @@
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["fantasy", "Fantasy"]];
   const BTABS_H = [["games", "Game Logs"], ["mix", "Mix"]];                  // a hitter's batted-ball mix
-  const BTABS_P = [["stuff", "Stuff"], ["games", "Game Logs"], ["uera", "uERA"]];   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
+  const BTABS_P = [["stuff", "Stuff"], ["pitching", "Pitching+"], ["games", "Game Logs"], ["uera", "uERA"]];   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -6003,7 +6003,7 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => (tabs.find(([x]) => x === k) || [])[1];
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["stuff"]] : []), ["games"], ["fantasy"],
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["stuff"], ["pitching"]] : []), ["games"], ["fantasy"],
                     ["rolling", ...(p.type === "P" ? ["nera", "uera"] : ["mix", "babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
@@ -6068,6 +6068,8 @@
       body.append(renderFantasyTab(p));
     } else if (pick === "stuff") {
       body.append(renderStuffTab(p, o.st, g));
+    } else if (pick === "pitching") {
+      body.append(renderStuffTab(p, o.st, g, "pitching"));
     } else if (pick === "games") {
       body.append(renderGameLogs(p));
     } else if (pick === "nera") {
@@ -6371,13 +6373,17 @@
     return { uera, ik, ukb: Math.round(10 * (ik.k - ik.bb)) / 10, pct: sorted.uera ? insertPct(sorted.uera, -uera) : null,
              shares: { gb: 100 * xg, ld: 100 * air * la, fb: 100 * air * (1 - la), pu: 100 * xp }, mera: mixERA(pvS, sorted) };
   }
-  function renderStuffTab(p, st, g) {
-    const box = el("div", "rollbox uerabox stuffbox");
+  // mode "pitching" (Sean, 3 Oct 2026: "pitching+ on a separate tab"): the same table for the location-aware family —
+  // Pitching+, its halves, Location+ and its x-rates — with Pitching uERA under it; "stuff" keeps Stuff+'s, Stuff uERA and Arsenal Opt.
+  function renderStuffTab(p, st, g, mode = "stuff") {
+    const box = el("div", "rollbox uerabox stuffbox"), P = mode === "pitching";
     const rows = (p.ctx && p.ctx.arsenal) || [];
     const pv = V(p), m = pv.m;
-    const hd = el("div", "rollhd");
-    hd.append(el("span", "rollname", m.stuff == null ? "Stuff+ –" : `Stuff+ ${Math.round(m.stuff)}`),
-              el("span", "rollsub", m.stuff == null ? "no pitch-tracking grades for this season yet" : `Whiff+ ${Math.round(m.swhf)} · Batted-ball+ ${Math.round(m.sbb)}` + (m.pitch == null ? "" : ` · Pitching+ ${Math.round(m.pitch)} · Location+ ${Math.round(m.sloc)}`) + (viewLabel(p.type) && viewLabel(p.type) !== "full season" ? ` · ${viewLabel(p.type)}` : "")));
+    const hd = el("div", "rollhd"), vl = viewLabel(p.type) && viewLabel(p.type) !== "full season" ? ` · ${viewLabel(p.type)}` : "";
+    if (P) hd.append(el("span", "rollname", m.pitch == null ? "Pitching+ –" : `Pitching+ ${Math.round(m.pitch)}`),
+                     el("span", "rollsub", m.pitch == null ? "no location-aware grades for this season yet" : `Whiff+ ${Math.round(m.pwhf)} · Batted-ball+ ${Math.round(m.pbb)} · Location+ ${Math.round(m.sloc)}` + vl));
+    else hd.append(el("span", "rollname", m.stuff == null ? "Stuff+ –" : `Stuff+ ${Math.round(m.stuff)}`),
+                   el("span", "rollsub", m.stuff == null ? "no pitch-tracking grades for this season yet" : `Whiff+ ${Math.round(m.swhf)} · Batted-ball+ ${Math.round(m.sbb)}` + vl));
     box.append(hd);
     if (!rows.length) { box.append(el("p", "note", "The arsenal table comes with the next build of this season's data.")); return box; }
     const av = arsenalView(p), filtered = Array.isArray(av);
@@ -6397,11 +6403,11 @@
     const rel = (v, a) => (v == null ? null : vsType && a != null ? v - a + 100 : v);
     const t = el("table", "ubt stufft"), th = el("thead"), hr = el("tr");
     const heads = [["Pitch", "l"], ["Use", ""], ["Velo", ""], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin", ""],
-                   ["Stuff+", "sp"], ["Whiff+", ""], ["BB+", "", "Batted-ball+"], ["xWhiff", "", "The model's whiff rate per swing — his actual Whiff% under it"],
-                   ["xGB", "", "The model's ground-ball rate on contact — actual GB% under it"], ["xPU", "", "The model's popup rate on contact — actual under it"],
-                   ["Pitching+", "sp", "Stuff+ with location: the same pitch graded in the spot it was thrown"], ["Whiff+·loc", "", "Pitching+'s whiff half"], ["BB+·loc", "", "Pitching+'s batted-ball half"],
-                   ["Loc+", "", "Location+: Pitching+ − Stuff+ + 100 — what his locations add (100 = an average pitcher's spots)"],
-                   ["xWhiff·loc", "", "The whiff rate per swing the location-aware model expects — his actual Whiff% under it"], ["xGB·loc", "", "The location-aware model's ground-ball rate on contact — actual under it"], ["xPU·loc", "", "The location-aware model's popup rate on contact — actual under it"]];
+                   ...(P ? [["Pitching+", "sp", "Stuff+ with location: the same pitch graded in the spot it was thrown"], ["Whiff+", "", "Pitching+'s whiff half"], ["BB+", "", "Pitching+'s batted-ball half"],
+                           ["Loc+", "", "Location+: Pitching+ − Stuff+ + 100 — what his locations add (100 = an average pitcher's spots)"],
+                           ["xWhiff", "", "The whiff rate per swing the location-aware model expects — his actual Whiff% under it"], ["xGB", "", "The location-aware model's ground-ball rate on contact — actual under it"], ["xPU", "", "The location-aware model's popup rate on contact — actual under it"]]
+                        : [["Stuff+", "sp"], ["Whiff+", ""], ["BB+", "", "Batted-ball+"], ["xWhiff", "", "The model's whiff rate per swing — his actual Whiff% under it"],
+                           ["xGB", "", "The model's ground-ball rate on contact — actual GB% under it"], ["xPU", "", "The model's popup rate on contact — actual under it"]])];
     for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
     th.append(hr); t.append(th);
     const tb = el("tbody");
@@ -6416,11 +6422,11 @@
     for (const r of R) {
       const A = vsType ? typeAvg(r.pt) : null, tr = el("tr");
       tr.append(el("td", "l", PITCH_NAME[r.pt] || r.pt), el("td", null, pct(100 * r.n / tot)), el("td", null, f1n(r.velo)), el("td", null, f1n(r.ivb)), el("td", null, f1n(r.hb)),
-                el("td", null, r.spin == null ? "–" : String(r.spin)), cellPlus(rel(r.stuffp, A && A.t), "sp"),
-                cellPlus(rel(r.whfp, A && A.w)), cellPlus(rel(r.bbp, A && A.b)),
-                pair(r.xwhf, r.whf), pair(r.xgb, r.gb), pair(r.xpu, r.pu),
-                cellPlus(rel(r.pitp, A && A.t), "sp"), cellPlus(rel(r.whfpl, A && A.w)), cellPlus(rel(r.bbpl, A && A.b)), cellPlus(r.locp),
-                pair(r.xwhfl, r.whf), pair(r.xgbl, r.gb), pair(r.xpul, r.pu));
+                el("td", null, r.spin == null ? "–" : String(r.spin)),
+                ...(P ? [cellPlus(rel(r.pitp, A && A.t), "sp"), cellPlus(rel(r.whfpl, A && A.w)), cellPlus(rel(r.bbpl, A && A.b)), cellPlus(r.locp),
+                         pair(r.xwhfl, r.whf), pair(r.xgbl, r.gb), pair(r.xpul, r.pu)]
+                      : [cellPlus(rel(r.stuffp, A && A.t), "sp"), cellPlus(rel(r.whfp, A && A.w)), cellPlus(rel(r.bbp, A && A.b)),
+                         pair(r.xwhf, r.whf), pair(r.xgb, r.gb), pair(r.xpu, r.pu)]));
       tb.append(tr);
     }
     const s0 = p.m || {}, trt = el("tr", "ftot");
@@ -6433,14 +6439,14 @@
     const mv = filtered ? m : s0;                                   // a window / split: the card's own (filtered) grades
     const tv = vsType && relSum.n ? { t: relSum.t / relSum.n, w: relSum.w / relSum.n, b: relSum.b / relSum.n }
                                   : { t: mv.swhf == null ? mv.stuff : mv.swhf + mv.sbb - 100, w: mv.swhf, b: mv.sbb };
-    trt.append(el("td", "l", "All pitches"), el("td", null, String(tot)), el("td"), el("td"), el("td"), el("td"), cellPlus(tv.t, "sp"),
-               cellPlus(tv.w), cellPlus(tv.b), pair(wx("xwhf"), act("whf", "sw")), pair(wx("xgb"), act("gb", "bip")), pair(wx("xpu"), act("pu", "bip")),
-               cellPlus(mv.pitch, "sp"), cellPlus(mv.pwhf), cellPlus(mv.pbb), cellPlus(mv.sloc),
-               pair(R0.some((r) => r.xwhfl != null) ? wxs("xwhfl", "sw") : null, act("whf", "sw")), pair(R0.some((r) => r.xgbl != null) ? wxs("xgbl", "bip") : null, act("gb", "bip")), pair(R0.some((r) => r.xpul != null) ? wxs("xpul", "bip") : null, act("pu", "bip")));
+    trt.append(el("td", "l", "All pitches"), el("td", null, String(tot)), el("td"), el("td"), el("td"), el("td"),
+               ...(P ? [cellPlus(mv.pitch, "sp"), cellPlus(mv.pwhf), cellPlus(mv.pbb), cellPlus(mv.sloc),
+                        pair(R0.some((r) => r.xwhfl != null) ? wxs("xwhfl", "sw") : null, act("whf", "sw")), pair(R0.some((r) => r.xgbl != null) ? wxs("xgbl", "bip") : null, act("gb", "bip")), pair(R0.some((r) => r.xpul != null) ? wxs("xpul", "bip") : null, act("pu", "bip"))]
+                     : [cellPlus(tv.t, "sp"), cellPlus(tv.w), cellPlus(tv.b), pair(wx("xwhf"), act("whf", "sw")), pair(wx("xgb"), act("gb", "bip")), pair(wx("xpu"), act("pu", "bip"))]));
     tb.append(trt); t.append(tb);
     const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
     // how well his usage leans on his whiff pitches (arsenalOpt), with where that ranks among the season's pitchers
-    { const o = arsenalOpt(R0);
+    if (!P) { const o = arsenalOpt(R0);
       if (o) {
         const all = DS.players.filter((q) => q.type === "P" && q.ip >= 20).map((q) => { const r = arsenalRows(q); const x = r && arsenalOpt(r); return x ? x.opt : null; }).filter((x) => x != null).sort((a, b) => a - b);
         const pc = all.length ? Math.round(100 * all.filter((x) => x < o.opt).length / all.length) : null;
@@ -6452,7 +6458,7 @@
         box.append(d);
       } }
     // Stuff uERA under the table, laid out like the uERA tab: expected against actual, then the mix his stuff projects
-    if (su) {
+    if (!P && su) {
       const w = el("div", "eratab stuffera");
       const ub = renderUeraBox(p, st, { title: "Stuff uERA", uera: su.uera, pct: su.pct, ukbb: su.ik, ukb: su.ukb });
       const mx = renderMixBox(p, g, { title: "Expected batted-ball mix", shares: su.shares, mera: su.mera });
@@ -6460,7 +6466,7 @@
       if (mx) { mx.title = "The batted-ball mix his stuff projects: xGB and xPU from the model, the rest of the air balls split at the league's line-drive share. Each bar is where that rate would rank among the season's pitchers (100 = best)."; w.append(mx); }
       if (w.childNodes.length) box.append(w);
     }
-    if (pu) {                                                        // Pitching uERA (3 Oct 2026): the same from the location-aware rates
+    if (P && pu) {                                                   // Pitching uERA (3 Oct 2026): the same from the location-aware rates
       const w = el("div", "eratab stuffera");
       const ub = renderUeraBox(p, st, { title: "Pitching uERA", uera: pu.uera, pct: pu.pct, ukbb: pu.ik, ukb: pu.ukb });
       const mx = renderMixBox(p, g, { title: "Expected batted-ball mix (with location)", shares: pu.shares, mera: pu.mera });
@@ -6468,8 +6474,9 @@
       if (mx) { mx.title = "The batted-ball mix the location-aware model projects on his balls in play, the rest of the air balls split at the league's line-drive share."; w.append(mx); }
       if (w.childNodes.length) box.append(w);
     }
-    box.append(el("p", "note", "Each pitch is graded against the league's pitches of its own type — 100 is an average four-seamer for a four-seamer, an average curveball for a curveball — and All pitches (and the Stuff+ above) averages those by how often he throws each. " +
-      "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball, plus how much he uses it and how many pitches he throws — never where it was thrown; the Pitching+ columns grade the same pitch with its location, and Location+ is the difference. Each point is 1% of runs; whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened. The table and the headline follow the card's dates and splits."));
+    box.append(el("p", "note", P ? "Pitching+ is Stuff+'s twin from a second pair of models that also see where each pitch crossed the plate — the same pitch graded in the spot it was thrown, against the league's pitches of its own type (100 = average for its type). Whiff+ and BB+ are its halves; Location+ is Pitching+ − Stuff+ + 100, what his spots add. xWhiff is over the pitches swung at and xGB / xPU over the balls in play, with what actually happened under each. Each point is 1% of runs; the table and the headline follow the card's dates and splits."
+      : "Each pitch is graded against the league's pitches of its own type — 100 is an average four-seamer for a four-seamer, an average curveball for a curveball — and All pitches (and the Stuff+ above) averages those by how often he throws each. " +
+      "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball, plus how much he uses it and how many pitches he throws — never where it was thrown (the Pitching+ tab grades the same pitch with its location). Each point is 1% of runs; whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened. The table and the headline follow the card's dates and splits."));
     return box;
   }
   // Games (Sean, 29 Sep 2026: "his stuff+ by start/relief appearance ... if on each appearance their stuff+ was down or up"):

@@ -315,7 +315,10 @@ Whiff+·loc / BB+·loc / Loc+ / xWhiff·loc / xGB·loc / xPU·loc, re-based agai
 call for a summed row — V() and the game log). **Pitching uERA** (`puera`, Sean the same day: "give pitching plus a uERA") = Stuff uERA
 with the Pitching+ rates — `pitchRates` (day sums `_stnl / _stwl` over swings, `_stnb / _stgl / _stpl` over balls in play in a window;
 the arsenal's `xwhfl` by swings and `xgbl / xpul` by balls in play otherwise) through `stuffUeraCore`; pool stats, a Leaderboard /
-Compare column (`LB_EXTRA_P`), `VS_P`, and a second uERA box on the Stuff tab (`pitchUERA`). 2026: xWhiff·loc vs Whiff% r .847 (xWhiff .740); Location+ 100 ± 4. Tested the same
+Compare column (`LB_EXTRA_P`), `VS_P`, and a uERA box (`pitchUERA`). **Pitching+ is its own card tab** (Sean, 3 Oct 2026: "on a separate tab ... as
+stuff+"): `BTABS_P` has `pitching` after `stuff`, and `renderStuffTab(p, st, g, "pitching")` draws the same table for the location
+family (Pitching+, its halves, Location+, xWhiff / xGB / xPU) with Pitching uERA under it; the Stuff tab keeps the stuff-only
+columns, Stuff uERA and Arsenal Opt. 2026: xWhiff·loc vs Whiff% r .847 (xWhiff .740); Location+ 100 ± 4. Tested the same
 day and left out: the count (nothing on top of location), a run-value regressor in place of the component build (FanGraphs' recipe:
 next-period r runs .50 → .39, K-BB .58 → .49), the primary fastball's own xWhiff as an input for the secondaries (+.005-.01).
 `COLS` / `STUFF_TRAIN` / build_milb's `TRACK` carry `sz_top` / `sz_bot` for the location. **Park-adjusted** (Sean, 29 Sep 2026; `park_offsets` / `STUFF_PARK`): before grading, each pitch's
