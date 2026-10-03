@@ -1053,7 +1053,7 @@ is deploy-limited.
   rows' box has a 1px navy outline. **The home lists fill the screen** (Sean, the same hour: a desktop had the bottom third blank): a
   phone shows five rows a list, a desktop as many as its height holds (`N` in `renderHome`, 5-15, 50px a row under a 310px allowance).
   The Stuff+ table has the same navy outline and the Leaderboard's rows are as tall as its (46px, `min-height: 45px` on `.row-main`;
-  Sean, the same hour).
+  Sean, the same hour). A list row's second line leads with the **team** (`.teaml`, Sean: "add the team in like the stuff+ table has").
 
 ## 9. Things only Sean can do
 

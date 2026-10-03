@@ -2149,6 +2149,7 @@
       // just his positions and playing time under the name (Sean, 29 Sep 2026); team and hand are in the name's tooltip
       nameEl.title = nameEl.title || `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`;
       const meta = el("div", "meta");
+      if (p.team) meta.append(el("span", "teaml", p.team));   // the team first, as the Stuff+ table has it (Sean, 3 Oct 2026)
       meta.append(el("span", "posl", posShown(p)));
       const v = V(p);
       const flag = el("span", "flag", p.type === "P" ? `${fmtIP(v.ip)} IP` : `${v.pa} PA`);
