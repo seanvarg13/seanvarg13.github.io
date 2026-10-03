@@ -331,7 +331,7 @@ def milb_people(ids, year: int) -> dict:
 
 
 TRACK = ["release_spin_rate", "spin_axis", "pfx_x", "pfx_z", "release_pos_x", "release_pos_z", "arm_angle", "release_speed",
-         "release_extension", "pitch_type", "plate_x", "plate_z", "vx0", "vy0", "vz0", "ax", "ay", "az"]   # the last eight: approach angles
+         "release_extension", "pitch_type", "plate_x", "plate_z", "vx0", "vy0", "vz0", "ax", "ay", "az", "sz_top", "sz_bot"]   # approach angles, location
 
 
 def fsl_tracking(d: pd.DataFrame, start: str, end: str) -> pd.DataFrame:
@@ -368,7 +368,7 @@ def add_milb_stuff(d: pd.DataFrame, year: int, start: str, end: str, level: str)
             d = fsl_tracking(d, start, end)
         if not pd.to_numeric(d["pfx_x"], errors="coerce").notna().any():
             return d
-        mlb = [bd.load_prior_season(y) for y in (year, year - 1, year - 2)]
+        mlb = [bd.load_prior_season(y) for y in ((year,) if bd.STUFF_MODELS.exists() else (year, year - 1, year - 2))]   # fixed models: the reference season only
         mlb = [x for x in mlb if len(x)]
         if not mlb:
             bd.log("  stuff: no MLB seasons to train on"); return d
