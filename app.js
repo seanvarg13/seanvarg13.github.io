@@ -4532,31 +4532,35 @@
     }
     const list = (c, rows) => { const ol = el("ol", "hlist"); for (const [p, main, side, tab] of rows) { const li = el("li"), bt = el("button", "hname", p.name); bt.type = "button"; bt.addEventListener("click", () => openCard(p, tab)); li.append(bt, el("span", "hteam", p.team || ""), el("b", "hval", main)); if (side) li.append(el("span", "hside", side)); ol.append(li); } c.append(ol); return ol; };
     const f3 = (x) => (x == null ? "–" : fmtX(x)), f2 = (x) => (x == null ? "–" : x.toFixed(2)), f1 = (x) => (x == null ? "–" : x.toFixed(1));
-    // your starred players
-    const starKeys = Object.keys(state.stars), byKey = new Map(DATA.players.map((p) => [p.type + p.id, p]));
-    const stars = starKeys.map((k) => byKey.get(k)).filter(Boolean);
-    // no card at all until something is starred (minimal pass 7, Sean, 30 Sep 2026): home is your players and the leaders
-    const sc = stars.length ? card("Your players", null, null) : null;
-    if (stars.length) withWindow(NOWIN, () => withSplit(NONE, () => list(sc, stars.slice(0, 8).map((p) => {
-      const mm = V(p).m; return p.type === "H" ? [p, f3(mm.xwd), `xwOBA · ${p.pa} PA`] : [p, f2(mm.era), `ERA · ${fmtIP(p.ip || 0)} IP`];
-    }))));
-    // the season's leaders: xwOBA (300+ PA), Stuff+ and uERA (100+ IP)
-    const lc = card(`${m.season} leaders`, null, "#leaderboard", "Leaderboard →"), three = el("div", "hthree");   // the way into the lists (Sean, 30 Sep 2026)
+    // no starred-players card (Sean, 3 Oct 2026): home is the leaders and who's trending
+    // the season's leaders: xwOBA (300+ PA) and Pitching uERA (100+ IP) (Sean, 3 Oct 2026: "leaderboard for both xwoba and pitching uERA")
+    const two = (c) => { const t = el("div", "hthree htwo"); c.append(t); return t; };
+    const goLB = (pos, sort, dir) => (e) => { e.preventDefault(); state.pos = pos; state.posAlso = []; state.sort = sort; state.dir = dir; savePrefs(); location.hash = "#leaderboard"; };
+    const col = (box, lab, rows, f, tab, go) => { const hd = el("h4"), a = el("a", "hmore", `${lab} →`); a.href = "#leaderboard"; a.addEventListener("click", go); hd.append(a); const c = el("div"); c.append(hd); list(c, rows.map(([p, v]) => [p, f(v), null, tab])); box.append(c); };
+    const puOf = (p) => { const st = pool(p.primary).stats.get("P" + p.id) || rankIn(p.primary, p); return st && st.puera; };
+    const lc = card(`${m.season} leaders`, null, "#leaderboard", "Leaderboard →"), lt = two(lc);
     withWindow(NOWIN, () => withSplit(NONE, () => {
       const hit = DATA.players.filter((p) => p.type === "H" && (p.pa || 0) >= 300).map((p) => [p, V(p).m.xwd]).filter((r) => r[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 5);
-      const pit = DATA.players.filter((p) => p.type === "P" && (p.ip || 0) >= 100);
-      const stuff = pit.map((p) => [p, V(p).m.stuff]).filter((r) => r[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 5);
-      const uera = pit.map((p) => { const st = pool(p.primary).stats.get("P" + p.id) || rankIn(p.primary, p); return [p, st && st.uera]; }).filter((r) => r[1] != null).sort((a, b) => a[1] - b[1]).slice(0, 5);
-      for (const [lab, rows, f, tab] of [["xwOBA", hit, f3, null], ["Stuff+", stuff, (x) => String(Math.round(x)), "stuff"], ["uERA", uera, f2, "uera"]]) {
-        // each list's name opens the full list it comes from: hitters by xwOBA, the Stuff+ board, pitchers by uERA
-        const go = { xwOBA: () => { state.pos = "ALL"; state.sort = "score"; state.dir = "desc"; return "#leaderboard"; }, "Stuff+": () => "#pitches",
-                     uERA: () => { state.pos = "ALLP"; state.sort = "uera"; state.dir = "asc"; return "#leaderboard"; } }[lab];
-        const hd = el("h4"), a = el("a", "hmore", `${lab} →`); a.href = lab === "Stuff+" ? "#pitches" : "#leaderboard";
-        a.addEventListener("click", (e) => { e.preventDefault(); const h = go(); savePrefs(); location.hash = h; }); hd.append(a);
-        const col = el("div"); col.append(hd); list(col, rows.map(([p, v]) => [p, f(v), null, tab])); three.append(col);
-      }
+      const pit = DATA.players.filter((p) => p.type === "P" && (p.ip || 0) >= 100).map((p) => [p, puOf(p)]).filter((r) => r[1] != null).sort((a, b) => a[1] - b[1]).slice(0, 5);
+      col(lt, "xwOBA", hit, f3, null, goLB("ALL", "score", "desc")); col(lt, "Pitching uERA", pit, f2, "pitching", goLB("ALLP", "puera", "asc"));
     }));
-    lc.append(three);
+    // trending (Sean, 3 Oct 2026): hitters over their last 100 PA by xwOBA, pitchers over their last 50 IP by Pitching uERA — from
+    // the day rows, so the card says "loading" until days.js is in, then redraws itself
+    const tc = card("Trending", "hitters over their last 100 PA · pitchers over their last 50 IP", null);
+    if (!daysReady()) { tc.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); if (!state.daysLoading && !state.daysFailed) ensureDays(); }
+    else {
+      const tt = two(tc);
+      withSplit(NONE, () => {
+        withWindow({ from: "", to: "", last: "100" }, () => {
+          const hit = DATA.players.filter((p) => p.type === "H").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 75 && v.m.xwd != null).map(([p, v]) => [p, v.m.xwd]).sort((a, b) => b[1] - a[1]).slice(0, 5);
+          col(tt, "xwOBA, last 100 PA", hit, f3, null, (e) => { e.preventDefault(); state.pos = "ALL"; state.posAlso = []; state.sort = "score"; state.dir = "desc"; state.win = { from: "", to: "", last: "100" }; savePrefs(); location.hash = "#leaderboard"; });
+        });
+        withWindow({ from: "", to: "", last: "50" }, () => {
+          const pit = DATA.players.filter((p) => p.type === "P").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 37.5).map(([p]) => [p, puOf(p)]).filter((r) => r[1] != null).sort((a, b) => a[1] - b[1]).slice(0, 5);
+          col(tt, "Pitching uERA, last 50 IP", pit, f2, "pitching", (e) => { e.preventDefault(); state.pos = "ALLP"; state.posAlso = []; state.sort = "puera"; state.dir = "asc"; state.win = { from: "", to: "", last: "50" }; savePrefs(); location.hash = "#leaderboard"; });
+        });
+      });
+    }
     // no "Every page" tiles (Sean, 29 Sep 2026, the minimal pass): the header's menus already list them
     // the data line and the credit live in the Stat glossary now (minimal pass 5, Sean, 30 Sep 2026)
   }

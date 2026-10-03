@@ -835,3 +835,9 @@ a date range or last N days scales the Min PA / IP box by the window's share of 
 window, Position covers hitters vs pitchers. The row is the six buttons, the Standard ▾ pill and the count.
 The **Min PA** box (Min IP for pitchers) sits in that row too, so the minimum is one tap away instead of inside the Filters dropdown,
 and the Stats panel groups Pitching+, Whiff+ (loc), Batted-ball+ (loc), Location+ and Pitching uERA under their own "Pitching+" heading.
+
+**Home, 3 Oct 2026**: two cards — the season's leaders (xwOBA for hitters with 300+ PA, Pitching uERA for pitchers with 100+ IP) and
+Trending (xwOBA over each hitter's last 100 PA, Pitching uERA over each pitcher's last 50 IP; it reads the game-by-game file, so it
+says "loading" for a moment on a cold open). No starred-players card. Each list's name opens the Leaderboard set up the same way.
+The "Sean's Site" wordmark is gone from the header (Home is the first tab). The Leaderboard's column names are in the Stuff+ table's
+header format and the table has a navy outline.

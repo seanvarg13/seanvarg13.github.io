@@ -1042,6 +1042,16 @@ is deploy-limited.
   pitchers (`renderMin` / `sampleLabel`). The Stats panel lists the **Pitching+ family as its own group** — Pitching+, Whiff+ (loc),
   Batted-ball+ (loc), Location+, Pitching uERA — whatever the card's data carries (Sean: "i dont see any of the pitching+ stats").
 
+* **Home, 3 Oct 2026** (Sean: "not make it the starred players ... leaderboard for both xwoba and pitching uERA and then also add a
+  trending for hitters of last 100 PAs and then last 50 IP for pitchers by pitching uERA", then "get rid of Sean's Site on it too",
+  "make the leaderboard have the same column headers format as the stuff+ table"): `renderHome` draws two cards — **leaders**
+  (xwOBA, 300+ PA; Pitching uERA, 100+ IP, `puOf` from the pool's stats) and **Trending** (xwOBA over each hitter's last 100 PA, 75+ in
+  the window; Pitching uERA over each pitcher's last 50 IP, 37.5+) from the day rows through `withWindow`, "Loading game-by-game
+  data…" until `ensureDays()` has days.js, then it redraws itself; each list's name opens the Leaderboard with that position, sort and
+  window. No starred-players card. The header's **wordmark is hidden** (`header.top .wordmark { display: none }`) — Home is in the nav.
+  The Leaderboard's column names wear the Stuff+ table's header format (11px, 8px above and below; the end of `styles.css`), and the
+  rows' box has a 1px navy outline.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
