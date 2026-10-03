@@ -3779,3 +3779,7 @@ tr.mkmine td { background: var(--accent-wash, var(--surface-2)); }
 .quickwin .btn.on { background: var(--accent-2); color: var(--rule); border-color: var(--accent-2); }
 /* the dropdown without its tab row (the Leaderboard's buttons are the tabs): the panel's content starts at the top */
 #pop.grppop.notabs #pop-body > .textmodal { padding-top: 6px; }
+/* the Min PA / IP box in the Leaderboard's top row (Sean, 3 Oct 2026), dressed like the buttons beside it */
+#pagertop > #minfield.topmin { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: var(--muted); }
+#pagertop > #minfield.topmin input { width: 62px; height: 34px; border: 1px solid var(--accent-2); background: var(--surface); font: inherit; font-size: 13px; padding: 0 8px; text-align: center; }
+:root[data-view="mobile"] #pagertop > #minfield.topmin input { height: 30px; width: 56px; }

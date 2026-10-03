@@ -2312,7 +2312,9 @@
   function renderPager(box, total, pg, onChange) {
     if (!box) return;
     { const tb = $("tbtns"); if (tb && box.contains(tb)) seatFilters(null); }   // out of the bar before it is cleared
-    box.innerHTML = "";
+    // the Min PA / IP box stays put while the bar is redrawn (a move would blur it mid-typing; cleared with innerHTML it would be lost)
+    const mfKeep = box.id === "pagertop" && onePage() && !noMin() && state.mode === "leaderboard" ? $("minfield") : null;
+    for (const n of [...box.children]) { if (n === mfKeep) continue; if (n.id === "minfield") $("park").append(n); else n.remove(); }
     const go = (n) => { state.page = Math.min(pg.pages, Math.max(1, n)); (onChange || renderRows)(); const top = box.closest(".board, .fboard") || box; const sb = top.querySelector(".board-scroll, .fscroll"); if (sb) sb.scrollTop = 0; const y = top.getBoundingClientRect().top + window.scrollY - 8; if (window.scrollY > y) window.scrollTo({ top: y }); };
     const setSize = (n) => { state.pageSize = n; state.page = 1; savePrefs(); (onChange || renderRows)(); };
     if (!total) { box.hidden = true; if (!onChange) seatFilters(null); return; }
@@ -2334,7 +2336,7 @@
       box.append(nav);
     }
     if (onChange) box.append(perPageField(setSize));    // the list pages keep theirs in Filters (minimal pass 4); Fantasy here
-    if (!onChange) { seatFilters(box, total); if (onePage()) renderLbTabs(); }   // the column tabs ride in this row on the Leaderboard / Recent
+    if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs(); if (mfKeep) { mfKeep.classList.add("topmin"); if (mfKeep.previousSibling !== $("tbtns")) $("tbtns").after(mfKeep); } } }   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
   }
   function perPageField(setSize) {
     const sz = el("label", "field psize"); sz.append(el("span", null, "Per page"));
@@ -4171,7 +4173,14 @@
     // the columns that aren't on the card (LB_EXTRA_*) get a place here too, beside their closest relatives
     { const side = (k) => (pit ? SIDE_P : SIDE_H).find((m) => m.key === k);
       const after = (key, k) => { const x = side(k); if (!x) return false; for (const grp of groups) { const i = grp.metrics.findIndex((m) => m.key === key); if (i >= 0) { grp.metrics.splice(i + 1, 0, x); return true; } } return false; };
-      if (pit) { if (!after("uera", "suera")) groups.push({ group: "Stuff", metrics: [side("suera")].filter(Boolean) }); if (!after("suera", "puera")) groups.push({ group: "Stuff", metrics: [side("puera")].filter(Boolean) }); if (!after("suera", "aopt")) groups.push({ group: "Stuff", metrics: [side("aopt")].filter(Boolean) }); for (const k of ["pwhf", "pbb"]) if (!after("pitch", k)) groups.push({ group: "Stuff", metrics: [side(k)].filter(Boolean) }); }
+      if (pit) {
+        if (!after("uera", "suera")) groups.push({ group: "Stuff", metrics: [side("suera")].filter(Boolean) });
+        if (!after("suera", "aopt")) groups.push({ group: "Stuff", metrics: [side("aopt")].filter(Boolean) });
+        // the Pitching+ family as a group of its own, whatever the card's data carries (Sean, 3 Oct 2026: "i dont see any of the pitching+ stats")
+        const fam = ["pitch", "pwhf", "pbb", "sloc", "puera"].map((k) => lbOrder(g).find((m) => m.key === k) || side(k)).filter(Boolean);
+        for (const grp of groups) grp.metrics = grp.metrics.filter((m) => !fam.some((x) => x.key === m.key));
+        groups.push({ group: "Pitching+", metrics: fam });
+      }
       else {
         if (!after("woba", "xwdiff")) groups.push({ group: "Outcomes", metrics: [side("xwdiff")].filter(Boolean) });
         if (!after("k", "xk")) groups.push({ group: "Outcomes", metrics: [side("xk")].filter(Boolean) });
@@ -7945,7 +7954,7 @@
   // the two toolbar panels: "Included stats" (sort + columns) and "Splits & dates" (splits, window, minimum)
   const PARKED = ["postabs", "searchbox", "teamctl", "lbseason", "sortfield", "daterange", "daysfield", "lastfield",
                   "minfield", "reffield", "lbsplit", "trendnfield", "trendunit", "trendminfield"];
-  function parkControls() { const park = $("park"); for (const id of PARKED) { const n = $(id); if (n && n.parentNode !== park) park.append(n); } }
+  function parkControls() { const park = $("park"); for (const id of PARKED) { const n = $(id); if (id === "minfield" && n && n.parentNode && n.parentNode.id === "pagertop") continue; if (n && n.parentNode !== park) park.append(n); } }   // the Min box seated in the Leaderboard's top row stays there (renderPager parks it when the page changes)
   const PANEL_KEYS = ["sort", "dir", "lb", "cols", "win", "min", "lbSplit", "trend", "pre", "teamF"];
   function openPanel(name) {
     state.panelSnap = JSON.stringify(Object.fromEntries(PANEL_KEYS.map((k) => [k, state[k]])));   // Cancel still reverts; clicking away applies
@@ -8050,11 +8059,11 @@
     // the minimum sits beside Sort by (Sean, 30 Sep 2026: "the PA qualification ... next to the sort by option"); Trending's is
     // playing time inside its span, Rankings and the Draft board list everyone
     const sf = $("sortfield"), sorting = !customOrder(), trending = state.mode === "trending";
-    const minNode = trending ? $("trendminfield") : noMin() ? null : $("minfield");
+    const minNode = trending ? $("trendminfield") : noMin() || onePage() ? null : $("minfield");   // the Leaderboard's sits in the top row (Sean, 3 Oct 2026)
     if (sorting || pit || minNode) {
       const b = el("div", "psec"); b.append(el("h4", null, "Order and minimum"));
       const r = el("div", "prow"); if (sorting) r.append(sf); if (minNode) r.append(minNode); if (pit) r.append($("reffield"));
-      r.append(perPageField((n) => { state.pageSize = n; state.page = 1; savePrefs(); renderRows(); }));
+      if (!onePage()) r.append(perPageField((n) => { state.pageSize = n; state.page = 1; savePrefs(); renderRows(); }));   // everyone is on one page there
       b.append(r);
       if (minNode && !trending) b.append(el("p", "note", lbMulti() ? "The minimum is per season; a combined span multiplies it by the seasons in it." : `The minimum is who is listed; percentiles are always against ${pit ? "pitchers with 300+ batters faced" : "hitters with 300+ PA"} on the season.`));
       if (pit) b.append(el("p", "note", "Rank vs sets the pool a pitcher's percentiles are measured against — his own (starters or relievers) or all pitchers."));
@@ -8125,15 +8134,10 @@
         kinds.append(b);
       }
       sec.append(kinds);
-      { const q = el("div", "prow quickwin");   // one tap for the usual windows (Sean, 3 Oct 2026)
-        const quick = (label, win, act) => { const b = el("button", "btn btn-quiet small" + (act ? " on" : ""), label); b.type = "button"; b.addEventListener("click", () => { state.win = win; state.expanded = null; render(); }); q.append(b); };
-        for (const n of [7, 14, 30]) quick(`Last ${n} days`, { from: daysBack(n), to: "", last: "", days: n }, Number(state.win.days) === n);
-        for (const n of pit ? [15, 30, 60] : [50, 100, 200]) quick(`Last ${n} ${unit}`, { from: "", to: "", last: String(n) }, !state.win.days && lastN(state.win) === n);
-        sec.append(q); }
       const row = el("div", "prow");
-      if (cur === "range") row.append($("daterange")); else if (cur === "days") row.append($("daysfield")); else if (cur === "last") row.append($("lastfield"), $("daterange"));
+      if (cur === "range") row.append($("daterange")); else if (cur === "days") row.append($("daysfield")); else if (cur === "last") row.append($("lastfield"));   // Last N: the number and nothing else (Sean, 3 Oct 2026 — the presets and the To date went)
       if (cur !== "season") sec.append(row);
-      sec.append(el("p", "note", cur === "days" ? `Everyone's games in the last N days through ${DATA.meta.through}; the Min ${unit} box scales to the window's share of the season.` : cur === "last" ? `Each player's most recent ${unit === "IP" ? "innings" : "plate appearances"} (through the To date, if set). Every stat and percentile is rebuilt from those games; anyone with three quarters of N is listed.` : cur === "range" ? "A blank side means the season's start or end. Every stat and percentile is rebuilt from those games." : "Full-season numbers."));
+      sec.append(el("p", "note", cur === "days" ? `Everyone's games in the last N days through ${DATA.meta.through}; the Min ${unit} box scales to the window's share of the season.` : cur === "last" ? `Each player's most recent ${unit === "IP" ? "innings" : "plate appearances"} . Every stat and percentile is rebuilt from those games; anyone with three quarters of N is listed.` : cur === "range" ? "A blank side means the season's start or end. Every stat and percentile is rebuilt from those games." : "Full-season numbers."));
       w.append(sec);
     }
     popFoot(body, w, panelButtons(() => { if (!trending) state.win = { from: "", to: "", last: "" }; state.expanded = null; render(); }));
