@@ -850,3 +850,9 @@ column coloured (a Colour pill brings every + column back); the pitchers' headli
 Leaderboard's row into the ⋯ menu; on a phone the Leaderboard's filter row slides sideways on one line; Similar players are plain names;
 and home has a third card, Last game day — the best xwOBA games and the best starts by Stuff+ on the latest day. A stat strip under
 the card's header was mocked up and declined.
+
+**Model tests, 3 Oct 2026**: seam-shifted wake, sibling pitches, monotonic velocity, batter quality, count-relative location and
+location consistency (Stuff+ / Pitching+), bat-tracking inputs and a weak-contact split (directional xwOBA) and catcher framing
+(uBB%) were all backtested and none beat the current models, so nothing changed. One display setting was added: **Table format ▸
+Regress small samples** — in a date window or split, every rate is pulled toward the league average by how little a player has played
+(120 PA or batters faced is the halfway point), so a hot week reads as a lean rather than a new player. Off by default.
