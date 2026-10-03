@@ -3785,3 +3785,11 @@ tr.mkmine td { background: var(--accent-wash, var(--surface-2)); }
 :root[data-view="mobile"] #pagertop > #minfield.topmin input { height: 30px; width: 56px; }
 /* the Leaderboard's table in a plain navy outline (Sean, 3 Oct 2026: "to the leaderboard tables can you add an outline") */
 :root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) .board > .board-scroll { border: 1px solid var(--rule); }
+/* home: two columns per card (leaders, trending) and no wordmark (Sean, 3 Oct 2026: "get rid of Sean's Site on it too") */
+.hub.home .hthree.htwo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+:root[data-view="mobile"] .hub.home .hthree.htwo { grid-template-columns: minmax(0, 1fr); }
+header.top .wordmark { display: none; }
+/* the Leaderboard's column names in the Stuff+ table's header format (Sean, 3 Oct 2026): the same 11px grey labels on the pale
+   ground, but the Stuff+ board's taller row (8px above and below) */
+:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #colhead .h { font-size: 11px; padding-top: 8px; padding-bottom: 8px; line-height: 1.2; }
+:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #colhead { padding-top: 0; padding-bottom: 0; }
