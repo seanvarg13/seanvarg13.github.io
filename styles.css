@@ -3868,3 +3868,9 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root .btabbody table th, :root:root:root:root:root .gamesbox table th, :root:root:root:root:root .uerabox .ubt th { background: var(--rule); color: #fff; border-bottom: 1px solid var(--rule); }
 :root:root:root:root:root .gamesbox .ubt.glog thead { background: var(--rule); }
 :root:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead tr:not(.ggrp) th, :root:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead th:first-child { background: var(--rule); color: #fff; border-bottom: 1px solid var(--rule); }   /* the game log's own header rule carries :is(#modal) */
+/* no ▾ on the sorted column name, but the Leaderboard's header row keeps the two-line height it had with it (Sean, 3 Oct 2026) */
+#colhead .h[aria-sort="descending"]::after, #colhead .h[aria-sort="ascending"]::after { content: none; }
+:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #colhead .h { padding-top: 13px; padding-bottom: 13px; }
+/* the card's tables back to compact rows (Sean, 3 Oct 2026: "way too big for what is needed for the player card") — the navy header stays */
+:root:root:root:root :is(#modal, #xboard) .btabbody table td, :root:root:root:root :is(#modal, #xboard) .btabbody .gamesbox table td, :root:root:root:root:root .btabbody table td, :root:root:root:root:root .gamesbox table td, :root:root:root:root:root .uerabox .ubt td { height: auto; font-size: 12.5px; padding-top: 5px; padding-bottom: 5px; }
+:root:root:root:root :is(#modal, #xboard) .btabbody table th, :root:root:root:root :is(#modal, #xboard) .btabbody table thead th, :root:root:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead tr:not(.ggrp) th, :root:root:root:root:root .btabbody table th, :root:root:root:root:root .gamesbox table th, :root:root:root:root:root .uerabox .ubt th { padding-top: 6px; padding-bottom: 6px; }
