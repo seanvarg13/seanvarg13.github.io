@@ -261,14 +261,30 @@ Statcast/Directional toggle and the `xws` column are gone). The build still carr
   ahead / behind and the share of PAs reaching two strikes (they'd take starters to 0.83 / 0.38 — Sean can have them if he wants them).
   Files built before the fields fall through to the full fit without them, then the six-rate role fits, then the pooled ones; every
   season needs a rescore to carry them (dispatched 3 Oct 2026).
-  **Pitching uERA is next season's (Sean, 3 Oct 2026: "my whole goal is to use this to identify pitchers for next year ... i want pitching+
-  uERA to provide me with the best idea of what pitchers to target for next year")**: `NKF` / `NBB` are the same inputs fitted to the
-  *following* season's K% and BB% (pairs 2020 → 21 … 2025 → 26 with 100+ BF both years, by role, ridge λ 5, weighted by the smaller sample,
-  each rate against its own season's league; process only — his actual K% / BB% as inputs gained .05 and were left out), `nextKBB(pv)` runs
-  them, and `stuffUeraCore(…, next = true)` (the pool's `puera`, `statsFor`, the tab's `pitchUERA`) uses that pair in place of `impliedKBB`
-  on the location models' expected GB / PU mix. Held out by target season: starters' next K% error 2.53 vs 2.81 from his own K% and 2.83 from
-  the same-season fit, BB% 1.27 vs 1.41 / 1.44; relievers' 3.41 vs 4.00 / 3.82 and 1.86 vs 2.20 / 2.15. uERA and Stuff uERA stay
-  same-season reads. A file without the count fields or an arsenal falls back to the same-season path. The uERA box and the glossary say so.
+  **pERA and the projected rates (Sean, 3 Oct 2026: "take stuff+ and pitching+ and come up with one thing that projects a pitchers whiff
+  rate gb% pu% by pitch and overall ... and also a pERA stat that shows players who maybe got fewer ks and more walks ... than they should have
+  ... avoid biasing it too much where it isnt going to be applicable to next year")**: a pitcher's **next season** from this season's pitches.
+  `NKF` / `NBB` are the full fits' inputs fitted to the *following* season's K% and BB% (pairs 2020 → 21 … 2025 → 26 with 100+ BF both years,
+  by role, ridge λ 5, weighted by the smaller sample, each rate against its own season's league; process only — his actual K% / BB% as inputs
+  were left out), trimmed to what held when each input was dropped in turn: the two-strike rates (whiffs, swings, zone) are **noise for next
+  year's K%** (a sixth of his pitches) and are out; first-pitch and three-ball strike rates stay for BB% only. `nextKBB(pv)` runs them. Held
+  out by target season: starters' next K% error 2.55 (his own K% 2.81, the same-season fit 2.83), BB% 1.27 (1.41 / 1.44); relievers' 3.42
+  (4.00 / 3.82) and 1.86 (2.20 / 2.15). **Per pitch** (`PPITCH` / `projPitch` / `projRates`): each pitch's stuff-only and location-aware
+  chances blended by what carried over to the same pitch type's rate the next season (pitcher × type with 100+ both years, 2020-26):
+  whiff = .009 + .389 xWhiff + .584 xWhiff·loc, GB = 3.16 + .616 xGB + .306 xGB·loc, PU = .25 + .680 xPU + .274 xPU·loc — the spots carry
+  the whiffs, stuff the batted balls, and the pitch's own last-year rate added nothing on top. Next-season error per pitch: whiff 5.6 points
+  (its actual rate 6.3), GB 7.6 (8.9), PU 3.5 (4.0). Overall = whiffs by swings, GB / PU by balls in play (`stuffRates` / `pitchRates`
+  through the same blend — day-row sums in a window). **pERA** = `stuffUeraCore(…, cal = null, next = true)`: `nextKBB`'s K% / BB% on the
+  projected GB / PU mix through `underlyingERA`. Backtest 2021 → 22 … 2025 → 26, 100+ IP both years: next season's ERA r .439 / mean abs
+  error .72 against ERA .267 / .96, FIP .355, SIERA .394, nERA .388. History: the lucky side regressed as advertised (Manoah '22, Gonsolin
+  '22, Hendricks, Lauer '22, Matz '21, Abbott '25 …); the unlucky side is mixed (Cease '23 → '24 came back, Pfaadt / Bradley didn't) — the
+  stat says what the pitches deserve, not that the pitches hold. In `app.js`: pool stats and sorted lists `pera nk nbb nwhf ngb npu` (lower
+  negated like uERA; `NEXT_KEYS`), `statsFor` for an unlisted player, `metricValue`, sort keys, `SIDE_P` / `LB_EXTRA_P` columns pERA · pK% ·
+  pBB% · pWhiff% · pGB% · pPU% (Stats panel group **Next season**; the Advanced column set carries pERA), `VS_P`, the glossary, and a **pERA
+  card tab** (`BTABS_P` after Pitching+, `renderNextTab`: Pitch / Use / pWhiff / pGB / pPU each over this season's actual, All pitches, then
+  the uERA box titled pERA — Exp = next season, Act = this one — and the projected mix). The keys are `n*` because `pwhf` / `pbb` are
+  Pitching+'s halves. **Pitching uERA is this season's again** (it read next season's for an evening, PR #276); uERA / Stuff uERA /
+  Pitching uERA are same-season reads, pERA is the forward one. A file without an arsenal has no pERA ("–").
 * **uERA** (`underlyingERA`) puts those two rates on the balls he actually allowed: his ground-ball and popup
   shares stand, the air balls left over are split into line drives and fly balls at the *population's* ratio, and
   every ball in play is then worth the league's average wOBA for its type (`consts.bbw`). The resulting wOBA is

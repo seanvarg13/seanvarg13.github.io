@@ -670,12 +670,17 @@ the whiff rate per swing, the swing rate and the zone rate (pitch-level process,
 out, the starters' strikeout error drops to 1.12 points and the walk error to 0.54 (relievers 1.75 and 0.93). Seasons built before the
 fields use the previous fit until they're rebuilt.
 
-**Pitching uERA now looks at next season** (3 Oct 2026). Its K% and BB% come from fits trained on the *following* season's rates — from
-everything his pitches do (whiffs, strikes, swings, the count-state rates, Stuff+, Location+, the location model's expected whiff rate, his
-mix and age), never his actual K% or BB% — and its batted balls are the ground-ball / popup mix the location-aware models expect, so this
-year's luck is out of all of it. Held out by season it predicts next year's K% and BB% better than a pitcher's own rates do (starters: 2.5
-vs 2.8 points of K%, 1.3 vs 1.4 of BB%). A pitcher whose Pitching uERA sits under his ERA is one to expect more from; over it, less. uERA and
-Stuff uERA remain this-season reads.
+**pERA — next season from this season's pitches** (3 Oct 2026). A pitcher card's **pERA** tab, and six Leaderboard / Compare columns
+(pERA, pK%, pBB%, pWhiff%, pGB%, pPU% — the Stats panel's *Next season* group), project what his pitches should do next year. Each pitch's
+whiff, ground-ball and popup rate is the stuff-only and location-aware models' chances blended by how much each carried over to the same pitch
+type's rate the following season (the spots carry more of the whiffs, stuff more of the batted balls; a pitch's own rate added nothing on top),
+shown over this season's actual rate pitch by pitch and for the whole arsenal. pK% and pBB% are fits trained on the *following* season's K% and
+BB% from everything his pitches did — whiffs, strikes, swings, Stuff+, Location+, the expected whiff rate, his mix and age — never his actual
+K% or BB%; two-strike rates were tested and left out as noise for next year. pERA puts those on the projected mix the way uERA does. Held out
+by season, pK% / pBB% beat his own rates at next year's (starters 2.5 vs 2.8 K% points, 1.3 vs 1.4 BB%), and pERA predicts next year's ERA
+better than ERA, FIP, SIERA or nERA (r .44 vs .27-.39). A pitcher under his pERA, or whose pK% sits over his K%, is one to expect more from;
+the reverse, less — though the unlucky side is less reliable than the lucky one (lucky pitchers regress, unlucky ones only sometimes come
+back). uERA, Stuff uERA and Pitching uERA are this-season reads.
 
 ## League Trends
 
