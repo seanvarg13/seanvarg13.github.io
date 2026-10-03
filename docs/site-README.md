@@ -626,6 +626,15 @@ ball in play does (its wOBA). Batted-ball+ values contact at half that damage an
 runs saved by fouls. Tested against each pitcher's next season, this lifted Stuff+'s correlation with runs saved from .40 to .49
 (K-BB% .45 to .56). Ball / called-strike chances, seam-shifted-wake measures and release-point tunnelling were tested and left out.
 
+Since 3 Oct 2026 the models are **fixed**: trained once on every season from 2020 through the last finished one (six seasons grade
+as well as the last two, and move pitchers less year to year), kept on the repo's `models` release with the directional ones, and
+retrained each off-season by the **Train Stuff+ models** workflow. And a second whiff model sees everything Stuff+ sees **plus where
+the pitch crossed the plate**: its expected whiff rate (**xWhiff·loc**) tracks a pitcher's actual Whiff% far more closely than
+xWhiff alone (season r .86-.89 vs .73-.78), and **Location+** is what his spots add to his stuff's whiffs on the Stuff+ scale (100
+= an average pitcher's locations). Both are on the Stuff tab (per pitch and the All pitches row), the Stuff+ board and the
+Leaderboard; Stuff+, Whiff+ and Batted-ball+ never see location. A run-value-trained Stuff+ (FanGraphs' recipe) was tested
+against the component build and predicted the next period worse, so the component build stays.
+
 ## League Trends
 
 Leaderboards ▸ League Trends shows league-wide averages for every MLB season since 2015, to see how the game has moved.

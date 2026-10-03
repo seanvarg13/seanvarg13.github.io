@@ -1,0 +1,112 @@
+# Train the fixed Stuff+ models (tools/models/train_stuff.py) on GitHub's machines and put stuff_models.joblib on the
+# "models" release the daily build reads (Sean, 3 Oct 2026: "base it off all prior years ... retrained at the end of
+# the season"). Every regular season from 2020 through the last finished one (through = this year once it's November,
+# else last year), fetched through pybaseball's cache like the daily build, trained with the exact Python + package
+# versions in the release's versions.json so the daily build can load the file, the replaced file kept on a
+# "stuff-prev-<date>" release — and, unless told not to, every past season, postseason and this season rescored with it.
+#
+# Runs itself on 16 November (the season's over, the daily run stands down from the 15th) and by hand any time:
+# Actions -> Train Stuff+ models -> Run workflow.
+name: Train Stuff+ models
+
+on:
+  schedule:
+    - cron: "17 10 16 11 *"         # 16 Nov, 10:17 UTC
+  workflow_dispatch:
+    inputs:
+      through:
+        description: "last season to train on (blank: the last finished one)"
+        default: ""
+      publish:
+        description: "upload the new models (off = train and report only)"
+        type: boolean
+        default: true
+      rescore:
+        description: "after uploading, rescore every past MLB season, past postseasons and this season"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: retrain
+  cancel-in-progress: false
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MODEL_DIR: ${{ github.workspace }}/../model-workspace
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: The current models and the versions they were saved with
+        id: models
+        run: |
+          mkdir -p "$MODEL_DIR/prev"
+          gh release download models -R "$GITHUB_REPOSITORY" -D "$MODEL_DIR/prev" --clobber
+          ls -la "$MODEL_DIR/prev"
+          echo "python=$(python3 -c "import json; print(json.load(open('$MODEL_DIR/prev/versions.json'))['python'])")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ steps.models.outputs.python }}
+
+      - name: Packages (the same pins, so the daily build can load what this saves)
+        run: |
+          python -m pip install --upgrade pip
+          pins=$(python -c "import json; v=json.load(open('$MODEL_DIR/prev/versions.json')); print(' '.join(f'{k}=={x}' for k, x in v['packages'].items()))")
+          echo "pins: $pins"
+          python -m pip install $pins pybaseball requests pyarrow
+
+      - name: The daily build's download caches (the seasons to train on, and the rescore after)
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.pybaseball/cache
+            .cache
+          key: data-cache-${{ github.run_id }}
+          restore-keys: data-cache-
+
+      - name: Train
+        run: |
+          export THROUGH="${{ inputs.through }}" TRAINED_BY=github-actions
+          python tools/models/train_stuff.py
+          ls -la "$MODEL_DIR"
+
+      - name: Save the download caches (the seasons just fetched)
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.pybaseball/cache
+            .cache
+          key: data-cache-${{ github.run_id }}
+
+      - name: Keep the old file, upload the new one
+        if: inputs.publish != false
+        run: |
+          if [ -s "$MODEL_DIR/prev/stuff_models.joblib" ]; then
+            tag="stuff-prev-$(date -u +%Y%m%d-%H%M)"
+            gh release create "$tag" -R "$GITHUB_REPOSITORY" --title "Stuff+ models replaced $(date -u +%F)" \
+              --notes "The fixed Stuff+ models the training of $(date -u '+%F %H:%M') UTC replaced. To go back, upload this to the models release." \
+              "$MODEL_DIR/prev/stuff_models.joblib"
+          fi
+          gh release upload models -R "$GITHUB_REPOSITORY" --clobber "$MODEL_DIR/stuff_models.joblib"
+
+      - name: Rescore every past season, the postseasons, then this season, with the new models
+        if: inputs.publish != false && inputs.rescore != false
+        run: |
+          git config user.name "Sean's Site (GitHub Actions)"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          years=$(python -c "import json; raw=open('data.js').read(); y=int(json.loads(raw[raw.index('= {') + 2:].rstrip().rstrip(';'))['meta']['season']); print(' '.join([str(x) for x in range(2015, y)] + [f'post-{x}' for x in range(2023, y + 1)]))")
+          echo "rescoring $years"
+          python tools/cloud_daily.py --rescore $years
+          python tools/cloud_daily.py --steps mlb

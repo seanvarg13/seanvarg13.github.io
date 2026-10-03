@@ -59,11 +59,12 @@ def build_season(year: int, kind: str = "reg"):
     if not len(d):
         bd.log(f"  no {kind} games for {year}"); return
     if set(K["types"]) == {"R"}:                     # Stuff / Pitching grades for a regular season, trained on it and the two before
-        d = bd.add_stuff(d, bd.load_prior_seasons(year))
+        d = bd.add_stuff(d, lambda: bd.load_prior_seasons(year))
     elif kind in ("spring", "post"):                 # spring Stuff+ (Sean, 29 Sep 2026): the last three MLB seasons' models grade the
         # spring pitches against the last MLB season's pitch types, the way the minors are graded; parks adjusted within spring.
         # The postseason (30 Sep 2026) the same, on that year's regular season and the two before
         back = (1, 2, 3) if kind == "spring" else (0, 1, 2)
+        if bd.STUFF_MODELS.exists(): back = back[:1]                    # the fixed models need only the reference season
         mlb = [x for x in (bd.load_prior_season(year - k) for k in back) if len(x)]
         if mlb:
             d = bd.add_stuff(d, pd.concat(mlb, ignore_index=True), ref=mlb[0])

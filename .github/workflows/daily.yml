@@ -95,6 +95,8 @@ jobs:
           gh release download models -R "$GITHUB_REPOSITORY" -D ../model-workspace --clobber
           ls -la ../model-workspace
           for m in v3_dir v3_ba v3_slg; do test -s ../model-workspace/$m.joblib || { echo "::error::$m.joblib is missing from the models release"; exit 1; }; done
+          # the fixed Stuff+ models (3 Oct 2026): without the file the build trains them itself, as it used to
+          test -s ../model-workspace/stuff_models.joblib && echo "stuff_models.joblib: $(stat -c %s ../model-workspace/stuff_models.joblib) bytes" || echo "::warning::no stuff_models.joblib on the models release — Stuff+ will be trained in the build"
           py=$(python3 -c "import json; print(json.load(open('../model-workspace/versions.json'))['python'])")
           echo "python=$py" >> "$GITHUB_OUTPUT"
 
