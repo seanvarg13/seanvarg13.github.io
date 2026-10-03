@@ -1026,11 +1026,21 @@ is deploy-limited.
   Dates · Table format (`renderToolButtons` under `onePage()`, each opening the same dropdown on its tab; `placePop` anchors to the open
   tab's button; Dates says the window in effect, `datesLabel`); the Hitters / Pitchers switch and the column sets ride in that same row
   (`renderLbTabs` is called from `renderPager` and puts `#lbtabs` before the count), the sets as **one pill** (`pillSelect`, "Standard ▾",
-  Custom when the list matches none — tapping Custom opens Filters ▸ Stats); the rows' box is the whole framed table. The **Dates tab**
-  has one-tap presets (`.quickwin`: last 7 / 14 / 30 days, last 50 / 100 / 200 PA or 15 / 30 / 60 IP), and the listing minimum inside a
+  Custom when the list matches none — tapping Custom opens Filters ▸ Stats); the rows' box is the whole framed table. The **Dates tab**'s
+  Last N days / Last N PA show the number box and nothing else (one-tap presets were tried and taken out the same hour at Sean's say), and the listing minimum inside a
   window is **`listMin`** — Last N lists anyone with ¾ of N, a date range / last N days scales the Min box by the window's share of the
   season's game days (a full-season 300 had listed nobody over 30 days); Recent keeps its own "at least" box. The count line says the
   window's minimum ("292 hitters · 2026 · 49+ PA in the window").
+  **Then** (Sean, the same hour, from a screenshot of the Position dropdown): the dropdown shows **no tab row** on the Leaderboard /
+  Recent (`popBody` skips `grpTabs()` under `onePage()`, class `notabs`) since the buttons are the tabs; the **Season / Recent switch is
+  gone** from the bar (`seatFilters` removes it everywhere — the Dates presets cover a recent window; `#trending` still works by hash);
+  the **Hitters / Pitchers switch is gone** (the Position button has them). The row is the six buttons, the Standard ▾ pill, the count.
+  **Same hour**: the **Min PA / IP box rides in that row** too (Sean: "add in the min PA box to that top area instead of one of the
+  filter pop up boxes ... for pitchers ofc make it innings"): `renderPager` keeps `#minfield` in `#pagertop` across redraws (it parks
+  it rather than removing it, and never moves it when it's already after the buttons, so typing keeps the cursor), `parkControls`
+  leaves it there, and the Filters panel's Order and minimum row has no Min box or Per page on the Leaderboard; the label is Min IP for
+  pitchers (`renderMin` / `sampleLabel`). The Stats panel lists the **Pitching+ family as its own group** — Pitching+, Whiff+ (loc),
+  Batted-ball+ (loc), Location+, Pitching uERA — whatever the card's data carries (Sean: "i dont see any of the pitching+ stats").
 
 ## 9. Things only Sean can do
 

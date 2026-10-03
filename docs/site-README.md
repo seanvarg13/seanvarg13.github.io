@@ -825,7 +825,13 @@ phone). Rankings and the Draft board keep their pages.
 dates by most recent PA or days): the Leaderboard's filter row is **Position · Filters · Stats · Splits · Dates · Table format** as separate
 buttons (each opens the dropdown on that tab; Dates reads the window in effect, e.g. "Last 30 days"), then Season / Recent, Hitters /
 Pitchers, and the column sets as one **Standard ▾** pill (Standard · Advanced · Batted ball · Plate discipline · Stuff; "Custom" when you
-hand-picked stats — tap it for Filters ▸ Stats), the count at the right. The **Dates** tab has one-tap presets — last 7 / 14 / 30 days,
-last 50 / 100 / 200 PA (15 / 30 / 60 IP) — and inside a window the listing minimum scales: Last N lists anyone with three quarters of N,
+hand-picked stats — tap it for Filters ▸ Stats), the count at the right. The **Dates** tab's Last N days / Last N PA are just the number box
+(preset buttons were tried and dropped the same hour), and inside a window the listing minimum scales: Last N lists anyone with three quarters of N,
 a date range or last N days scales the Min PA / IP box by the window's share of the season's game days (the count line says it:
 "292 hitters · 2026 · 49+ PA in the window"). Recent keeps its own "at least" box.
+
+**Then** (Sean, from a screenshot of the Position dropdown): the dropdown no longer repeats the tab row inside it on the Leaderboard
+(the buttons are the tabs), and the Season / Recent and Hitters / Pitchers switches are gone from the bar — Dates covers a recent
+window, Position covers hitters vs pitchers. The row is the six buttons, the Standard ▾ pill and the count.
+The **Min PA** box (Min IP for pitchers) sits in that row too, so the minimum is one tap away instead of inside the Filters dropdown,
+and the Stats panel groups Pitching+, Whiff+ (loc), Batted-ball+ (loc), Location+ and Pitching uERA under their own "Pitching+" heading.
