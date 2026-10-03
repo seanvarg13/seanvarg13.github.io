@@ -628,12 +628,14 @@ runs saved by fouls. Tested against each pitcher's next season, this lifted Stuf
 
 Since 3 Oct 2026 the models are **fixed**: trained once on every season from 2020 through the last finished one (six seasons grade
 as well as the last two, and move pitchers less year to year), kept on the repo's `models` release with the directional ones, and
-retrained each off-season by the **Train Stuff+ models** workflow. And a second whiff model sees everything Stuff+ sees **plus where
-the pitch crossed the plate**: its expected whiff rate (**xWhiff·loc**) tracks a pitcher's actual Whiff% far more closely than
-xWhiff alone (season r .86-.89 vs .73-.78), and **Location+** is what his spots add to his stuff's whiffs on the Stuff+ scale (100
-= an average pitcher's locations). Both are on the Stuff tab (per pitch and the All pitches row), the Stuff+ board and the
-Leaderboard; Stuff+, Whiff+ and Batted-ball+ never see location. A run-value-trained Stuff+ (FanGraphs' recipe) was tested
-against the component build and predicted the next period worse, so the component build stays.
+retrained each off-season by the **Train Stuff+ models** workflow. And there are **two families**, both predicting Whiff%, GB% and
+Popup%: **Stuff+** (Whiff+ and Batted-ball+) from models that never see location, and **Pitching+** (Whiff+ (loc) and
+Batted-ball+ (loc)) from a second pair that also sees **where the pitch crossed the plate** — the same pitch graded in the spot it
+was thrown. **Location+** is the difference, Pitching+ − Stuff+ + 100: what his spots add (100 = an average pitcher's). Pitching+'s
+expected Whiff% tracks the real thing far more closely (r .85 vs .74) and carries over to next season a little less. Stuff+ and
+Pitching+ sit together in the card's Stuff section with Location+; the Stuff tab and the Stuff+ board show both families' grades and
+x-rates per pitch; all are Leaderboard columns. A run-value-trained Stuff+ (FanGraphs' recipe) was tested against the component build
+and predicted the next period worse, so the component build stays.
 
 ## League Trends
 
