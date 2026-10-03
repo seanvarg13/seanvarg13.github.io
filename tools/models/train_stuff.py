@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """The fixed Stuff+ models (Sean, 3 Oct 2026: "base it off all prior years ... retrained at the end of the season").
 
-Trains build_data.py's six models — whiff per swing, whiff per swing with location, batted-ball type on contact, foul on
-contact, damage (wOBA) on a ball in play — on every regular season from 2020 (the first with spin axis) through THROUGH
+Trains build_data.py's eight models — whiff per swing, whiff per swing with location, batted-ball type on contact (with and
+without location), foul on contact, damage (wOBA) on a ball in play, and the command pair (swing, called strike | taken) — on every regular season from 2020 (the first with spin axis) through THROUGH
 (default: the last finished season — this year's if it's November or later, else last year's), and saves them as
 MODEL_DIR/stuff_models.joblib, which the Train Stuff+ models workflow puts on the "models" release and every daily build
 downloads. Without that file the build trains on the season plus the two before, as it did until 3 Oct 2026.

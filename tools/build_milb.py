@@ -198,6 +198,7 @@ def feed_game(pk: int, game_date: str) -> pd.DataFrame:
         pitches = [e for e in play.get("playEvents", []) if e.get("isPitch")]
         if not pitches and ev_type == "intent_walk":            # no-pitch intentional walk: one stand-in row
             pitches = [{"details": {"description": "Intent Ball", "isBall": True}}]
+        b_, s_ = 0, 0                                           # the count the pitch came in (the feed's count is after it)
         for i, e in enumerate(pitches):
             det = e.get("details", {}); hd = e.get("hitData") or {}; pdt = e.get("pitchData") or {}
             desc = DESC.get(det.get("description", ""))
@@ -221,7 +222,9 @@ def feed_game(pk: int, game_date: str) -> pd.DataFrame:
                 "estimated_woba_using_speedangle": None, "bat_speed": None,
                 "pitch_type": (det.get("type") or {}).get("code"), "release_speed": pdt.get("startSpeed"),
                 "release_extension": pdt.get("extension"), "des": res.get("description", "") if ev else "",
+                "balls": b_, "strikes": s_,
             })
+            c_ = e.get("count") or {}; b_, s_ = c_.get("balls", b_), c_.get("strikes", s_)
         outs = (play.get("count") or {}).get("outs", outs)
     d = pd.DataFrame(rows, columns=bd.COLS)
     if len(d):

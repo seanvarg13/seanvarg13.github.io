@@ -638,6 +638,19 @@ and x-rates per pitch (the Stuff+ board shows both); all are Leaderboard columns
 Pitching+ rates (on the Pitching+ tab, a Leaderboard column). A run-value-trained Stuff+ (FanGraphs' recipe) was tested against the component build
 and predicted the next period worse, so the component build stays.
 
+**Command** (3 Oct 2026). Two more models — the chance a pitch is **swung at**, and the chance a taken pitch is **called a strike**, each
+from the pitch's traits, where it crossed the plate, how far outside the zone that was and the count — give every pitch a strike chance
+and every pitch out of the zone a chase chance, and with the location whiff model a swing-and-miss chance. So a pitcher has the Strike%,
+Chase%, Swing%, Z-Contact% and Whiff% his pitches *deserved* where he threw them. **xBB%** is uBB%'s fit run on those instead of his
+actual rates: what his command, not his results, says he should walk. **Pitching uBB%** (0.6 uBB% + 0.4 xBB%) is the walk rate inside
+Pitching uERA — backtested 2024-26 it lands within 1.23 / 1.29 BB% points of next season's walk rate against 1.27 / 1.42 for uBB%
+alone (and 1.40 / 1.43 for his own BB%), keeping most of uBB%'s same-season fit; xBB% alone tracks the season less closely (r .71 vs
+.80). **Command+** is xBB% as a share of runs against the league's walk rate (a walk priced against a ball in play, as uERA does; 100 =
+average, each point 1% of runs like Stuff+). The Pitching+ tab shows **xStrike** and **xChase** beside the actual rates per pitch and for
+the whole arsenal, and Command+ in its sub-head; Command+, xStrike%, xChase%, xBB% and Pitching uBB% are Leaderboard columns (Stats ▸
+Command; Command+ is in the Stuff column set) and the Stuff+ board carries the two pairs. The expected rates did nothing for K%, so uK%
+still runs on his actual rates. Seasons built before the models read "–".
+
 ## League Trends
 
 Leaderboards ▸ League Trends shows league-wide averages for every MLB season since 2015, to see how the game has moved.
@@ -810,7 +823,7 @@ kept the site as it is — "keep the current site design and format as is" — b
   bat speed, Air%, Pull Air%, GB%, Popup%; Plate discipline: K%, xK%, BB%, Whiff%, O-Swing%, Z-Swing%, Z-Contact%, O-Contact%.
   Pitchers — Standard: ERA, K%, BB%, Whiff%, Strike%, GB%, uERA, Stuff uERA; Advanced: ERA, FIP, SIERA, nERA, uERA, Stuff uERA,
   Pitching uERA, u(K-BB%), WSGP; Batted ball: GB%, Popup%, EV, HH%, Brl%; Plate discipline: Whiff%, Strike%, Zone%, Chase%,
-  Swing%, Z-Contact%, CSW%, SwStr%; Stuff: Stuff+, Whiff+, Batted-ball+, Pitching+, Whiff+·loc, BB+·loc, Loc+, Arsenal Opt.,
+  Swing%, Z-Contact%, CSW%, SwStr%; Stuff: Stuff+, Whiff+, Batted-ball+, Pitching+, Whiff+·loc, BB+·loc, Loc+, Command+, Arsenal Opt.,
   FB velo, extension.
 
 Player cards stay popups and the list's rows still scroll inside the standing card — both as before.
@@ -834,7 +847,8 @@ a date range or last N days scales the Min PA / IP box by the window's share of 
 (the buttons are the tabs), and the Season / Recent and Hitters / Pitchers switches are gone from the bar — Dates covers a recent
 window, Position covers hitters vs pitchers. The row is the six buttons, the Standard ▾ pill and the count.
 The **Min PA** box (Min IP for pitchers) sits in that row too, so the minimum is one tap away instead of inside the Filters dropdown,
-and the Stats panel groups Pitching+, Whiff+ (loc), Batted-ball+ (loc), Location+ and Pitching uERA under their own "Pitching+" heading.
+and the Stats panel groups Pitching+, Whiff+ (loc), Batted-ball+ (loc), Location+ and Pitching uERA under their own "Pitching+" heading
+(and Command+, xStrike%, xChase%, xBB%, Pitching uBB% under "Command").
 
 **Home, 3 Oct 2026**: two cards — the season's leaders (xwOBA for hitters with 300+ PA, Pitching uERA for pitchers with 100+ IP) and
 Trending (xwOBA over each hitter's last 100 PA, Pitching uERA over each pitcher's last 50 IP; it reads the game-by-game file, so it
@@ -853,7 +867,8 @@ the card's header was mocked up and declined.
 
 **Model tests, 3 Oct 2026**: seam-shifted wake, sibling pitches, monotonic velocity, batter quality, count-relative location and
 location consistency (Stuff+ / Pitching+), bat-tracking inputs and a weak-contact split (directional xwOBA) and catcher framing
-(uBB%) were all backtested and none beat the current models, so nothing changed. One display setting was added: **Table format ▸
+(uBB%) were all backtested and none beat the current models, so nothing changed there; the one that did ship is the command pair above.
+One display setting was added: **Table format ▸
 Regress small samples** — in a date window or split, every rate is pulled toward the league average by how little a player has played
 (120 PA or batters faced is the halfway point), so a hot week reads as a lean rather than a new player. Off by default.
 
