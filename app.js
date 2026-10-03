@@ -10,6 +10,18 @@
   const TAB_LABEL = { ALL: "All hitters", ALLP: "All pitchers" };
   // a column's label, with the % a rate's cells no longer carry (Sean, 29 Sep 2026)
   const LB_SLIM = { H: ["woba", "ev", "brl", "hh", "osw", "whf", "k", "bb"], P: ["k", "bb", "whf", "strk", "gb", "era", "uera", "suera"] };
+  // the Leaderboard's column-set tabs (Sean, 3 Oct 2026, from the redesign prototype); renderLbTabs draws them
+  const LB_SETS = {
+    H: [["Standard", ["woba", "ba", "slg", "dxba", "dxslg", "k", "bb"]],
+        ["Advanced", ["woba", "xwdiff", "xwcon", "xk", "mixw", "babip", "xbabip", "bluck", "brel"]],
+        ["Batted ball", ["ev", "ev90", "maxev", "brl", "hh", "bs", "air", "pull", "gb", "pu"]],
+        ["Plate discipline", ["k", "xk", "bb", "whf", "osw", "zsw", "zcon", "ocon"]]],
+    P: [["Standard", ["era", "k", "bb", "kbb", "whf", "strk", "gb", "uera"]],
+        ["Advanced", ["era", "fip", "siera", "nera", "uera", "suera", "puera", "ukb", "wsgp"]],
+        ["Batted ball", ["gb", "pu", "ev", "hh", "brl"]],
+        ["Plate discipline", ["whf", "strk", "zone", "osw", "swing", "zcon", "csw", "swstr"]],
+        ["Stuff", ["stuff", "swhf", "sbb", "pitch", "pwhf", "pbb", "sloc", "aopt", "fbv", "ext"]]],
+  };
   const colLab = (m) => { const l = SHORT[m.key] || m.label; return m.unit === "%" && !l.includes("%") ? l + "%" : l; };
   const SHORT = { suera: "Stuff uERA", puera: "Pitching uERA", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+·loc", pbb: "BB+·loc", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
@@ -511,6 +523,7 @@
   // the minimal pass (Sean, 29 Sep 2026): the Leaderboard opens on a handful of core stats, set once over any saved list;
   // Filters ▸ Stats adds the rest back (the migrations below then leave a slimmed list alone: their flags are set here too)
   if (!state.lb.slim) { state.lb.H = LB_SLIM.H.slice(); state.lb.P = LB_SLIM.P.slice(); Object.assign(state.lb, { slim: true, suAdded: true, xwdAdded: true }); }
+  if (!state.lb.tabs) { const same = (a, b) => a.length === b.length && a.every((k, i) => k === b[i]); for (const k of ["H", "P"]) if (same(state.lb[k], LB_SLIM[k])) state.lb[k] = LB_SETS[k][0][1].slice(); state.lb.tabs = true; }   // the column-set tabs (3 Oct 2026): a never-customised list opens on Standard
   if (!state.lb.slim && state.lb.P.includes("nera") && !state.lb.P.includes("uera")) state.lb.P.splice(state.lb.P.indexOf("nera") + 1, 0, "uera");     // uERA back 2026-09-21
   if (!state.lb.suAdded) { if (!state.lb.P.includes("suera")) state.lb.P.splice(state.lb.P.includes("uera") ? state.lb.P.indexOf("uera") + 1 : state.lb.P.length, 0, "suera"); state.lb.suAdded = true; }   // Stuff uERA, 27 Sep 2026
   if (!state.lb.slim && state.lb.P.includes("kbb") && !state.lb.P.includes("ukb")) state.lb.P.splice(state.lb.P.indexOf("kbb") + 1, 0, "ukb");       // added 2026-09-21
@@ -1895,9 +1908,47 @@
   }
   const FROZEN_MODES = ["leaderboard", "trending", "rankings", "draft"];
   function renderColhead() { return inListView(renderColheadIn); }
+  // Column sets as tabs over the Leaderboard (Sean, 3 Oct 2026, from the redesign prototype: "I really like the standard advanced
+  // batted ball and plate discipline stuff"): Hitters / Pitchers, then Standard · Advanced · Batted ball · Plate discipline (· Stuff
+  // for pitchers), each a list of columns; a tab sets the same column list Filters ▸ Stats edits, so a hand-picked set reads as
+  // "Custom" until a tab is picked again. The Leaderboard and Recent (trending) both, each keeping its own columns.
+  const lbSetKeys = (g, keys) => { const known = new Set(lbOrder(g).map((m) => m.key)); return keys.filter((k) => known.has(k)); };
+  function renderLbTabs() {
+    let row = $("lbtabs");
+    if (!row) { row = el("div", "lbtabs"); row.id = "lbtabs"; $("bscroll").before(row); }
+    const on = ["leaderboard", "trending"].includes(state.mode);
+    row.hidden = !on; if (!on) return;
+    row.innerHTML = "";
+    const g = groupFor(state.pos), pit = isPitcherGroup(g), cur = colKeys(g);
+    const seg = el("div", "seg lbside"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Hitters or pitchers");
+    for (const [pos, l] of [["ALL", "Hitters"], ["ALLP", "Pitchers"]]) {
+      const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(pit === (pos === "ALLP")));
+      b.addEventListener("click", () => { if (pit === (pos === "ALLP")) return; state.pos = pos; state.posAlso = []; state.expanded = null; ensureSortValid(); savePrefs(); render(); });
+      seg.append(b);
+    }
+    row.append(seg);
+    const tabs = el("div", "lbtabrow"); tabs.setAttribute("role", "tablist");
+    const same = (a, b) => a.length === b.length && a.every((k, i) => k === b[i]);
+    let matched = false;
+    for (const [name, keys] of LB_SETS[pit ? "P" : "H"]) {
+      const set = lbSetKeys(g, keys), active = same(set, cur); matched = matched || active;
+      const b = el("button", "lbtab", name); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(active));
+      b.addEventListener("click", () => {
+        if (same(set, colKeys(g))) return;
+        setColKeys(g, set);
+        if (!["score", "blend", "name", "sample", "age", "year"].includes(state.sort) && !set.includes(state.sort)) { state.sort = "score"; state.dir = "desc"; }
+        ensureSortValid(); savePrefs(); render();
+      });
+      tabs.append(b);
+    }
+    if (!matched) { const b = el("button", "lbtab", "Custom"); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", "true"); b.title = "The stats picked in Filters ▸ Stats"; b.addEventListener("click", () => { parkControls(); state.panelTab = "stats"; openPanel("stats"); }); tabs.append(b); }
+    row.append(tabs);
+    const sel = tabs.querySelector('[aria-selected="true"]'); if (sel && tabs.scrollWidth > tabs.clientWidth) sel.scrollIntoView({ block: "nearest", inline: "center" });   // a phone's row slides: the picked tab in view
+  }
   function renderColheadIn() {
     const g = groupFor(state.pos), ref = refFor(g);
     const ms = colsFor(g), trending = state.mode === "trending";
+    renderLbTabs();
     const h = $("colhead"); h.innerHTML = ""; h.className = "colhead grid";
     { const wrapEl = $("colwrap"), bs = $("bscroll"), board = $("board");
       // the list pages' card stands still and its rows' box scrolls both ways, so the header rides inside that box, stuck
@@ -3324,7 +3375,14 @@
     let b = $("pitchboard");
     if (!b) { b = el("section", "xboard pitchboard"); b.id = "pitchboard"; b.hidden = true; $("eboard").after(b); }
     const m = $("lbmenu");
-    if (m && !m.querySelector('a[href="#pitches"]')) { const li = el("li"); const a = el("a", null, "Stuff+"); a.href = "#pitches"; li.append(a); m.append(li); }
+    // the header is Home · Leaders · Stuff+ · Fantasy (Sean, 3 Oct 2026: "have a home, leaders, pitches (call it stuff+), and fantasy
+    // tab"): the Stuff+ board is a page of its own in the header, not a Leaders entry, and Fantasy moves after it. More (Appearance,
+    // the colour key, the glossary, the layout switch) stays as a quiet ⋯ at the end, since it never was a page
+    { const nav = document.querySelector(".modes"), lb = $("lbsel"), fan = $("modesel");
+      if (nav && lb && !nav.querySelector('a[data-mode="pitches"]')) {
+        const a = el("a", null, "Stuff+"); a.href = "#pitches"; a.dataset.mode = "pitches"; a.title = "Every pitcher's pitches graded";
+        lb.after(a); if (fan) a.after(fan);
+      } }
     if (m && !m.querySelector('a[href="#trends"]')) { const li = el("li"); const a = el("a", null, "League Trends"); a.href = "#trends"; li.append(a); m.append(li); }
     if (m && !m.querySelector('a[href="#callups"]')) { const li = el("li"); const a = el("a", null, "Call-up Watch"); a.href = "#callups"; li.append(a); m.append(li); }
     // Compare lives in this menu, not the header (minimal pass 5, Sean, 30 Sep 2026): Home · Fantasy · Leaderboards · More
@@ -4586,7 +4644,7 @@
         else a.removeAttribute("aria-current");
       }
     }
-    document.title = { draft: "Sean's Site · Draft board", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", appearance: "Sean's Site · Appearance", fantasy: "Sean's Site · Fantasy" }[state.mode] || "Sean's Site";
+    document.title = { pitches: "Sean's Site · Stuff+", draft: "Sean's Site · Draft board", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", appearance: "Sean's Site · Appearance", fantasy: "Sean's Site · Fantasy" }[state.mode] || "Sean's Site";
     const m = DATA.meta;
     const thr = new Date(m.through + "T12:00:00"); $("stamp").innerHTML = `through <b>${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</b>`; $("stamp").title = `${m.season} Statcast through ${m.through} (built ${m.built})`;
     const notes = $("notes"); notes.innerHTML = "";
@@ -8769,8 +8827,8 @@
   }
   const NAV_GROUPS = [
     { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "eligibility", "fantasy", "planner", "mock"] },
-    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaderboards", short: "Leaders", modes: ["leaderboard", "trending", "pitches", "trends", "callups", "compare"] },
-    { key: "more", sel: "moresel", txt: "moreseltxt", menu: "moremenu", label: "More", short: "More", modes: ["appearance"] },
+    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaders", short: "Leaders", modes: ["leaderboard", "trending", "trends", "callups", "compare"] },   // Stuff+ (#pitches) is its own header tab (3 Oct 2026)
+    { key: "more", sel: "moresel", txt: "moreseltxt", menu: "moremenu", label: "⋯", short: "More", modes: ["appearance"] },
   ];
   function readMode() {
     const h = location.hash.replace("#", "");

@@ -1001,10 +1001,20 @@ is deploy-limited.
   only on Rankings, the Draft board, Eligibility and Fantasy (`posShown`; Sean, 30 Sep 2026).
 
 * **The "xyz layout" (Sean, 3 Oct 2026: "save the current site so i can go back to it if i want, call it xyz layout")**: the site as
-  it stood that afternoon is the git tag **`xyz-layout`** and a live copy at **`/xyz/`** — `xyz/index.html` (with `<base href="/">`
+  it stood that afternoon is the branch **`xyz-layout`** (a tag could not be pushed through the proxy) and a live copy at **`/xyz/`** — `xyz/index.html` (with `<base href="/">`
   so it reads the live `data.js`, `days.js`, `hist/` and `build.json`) plus its own `app.js`, `styles.css`, `themes.js`,
   `defaults.js`. It is frozen: the daily build and `sync_tools` don't touch `xyz/` (a Mac publish that mirrors the whole deploy
-  folder could drop it — the tag is the real backup). The redesign that replaced it is below.
+  folder could drop it — the branch is the real backup). The redesign that replaced it is below.
+
+* **Header and Leaderboard column tabs** (Sean, 3 Oct 2026, after a full redesign prototype he liked but didn't take: "keep the
+  current site design and format as is ... introduce some of the functionality"): the header is **Home · Leaders · Stuff+ · Fantasy**
+  (`pitchBoardEl` puts the Stuff+ link in the header and moves Fantasy after it; `NAV_GROUPS`'s leaderboard group is labelled Leaders
+  and no longer claims `pitches`; More is a quiet ⋯ at the end with the same menu); the Leaderboard / Recent have **column-set tabs**
+  — Hitters / Pitchers, then Standard · Advanced · Batted ball · Plate discipline (· Stuff for pitchers) — `LB_SETS` / `renderLbTabs`
+  (called from `renderColheadIn`), the row `#lbtabs` between the pager bar and `#bscroll`; a tab writes the same column list as
+  Filters ▸ Stats (`setColKeys`), a list matching no tab shows a Custom tab that opens Filters ▸ Stats, and `state.lb.tabs` moves a
+  never-customised `LB_SLIM` list to Standard once. `LB_SETS` sits by `LB_SLIM` at the top because that migration runs at load.
+  Cards stay popups; the rows keep scrolling inside the standing card. The prototype itself is a Claude artifact, not in the repo.
 
 ## 9. Things only Sean can do
 
