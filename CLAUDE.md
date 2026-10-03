@@ -277,7 +277,18 @@ height and side, extension, arm angle, batter side, and velocity / break gaps to
 model only, **arsenal depth**: this pitch's usage and how many pitch types he throws 5%+ of the time that season (`use`,
 `depth`, `STUFF_WHIFF_ONLY`; Sean, 27 Sep 2026 — first-half xWhiff → second-half Whiff% .655 → .679 on 2026; 10%+ .665,
 "effective number" .674; command habits — zone / edge rate, location spread — tested and left out, they predicted worse);
-**no location, no count**. **Park-adjusted** (Sean, 29 Sep 2026; `park_offsets` / `STUFF_PARK`): before grading, each pitch's
+**no location, no count**. **Since 2 Oct 2026** (Sean, after Kyle Bland's pitch-model thread: "add all of it in"; backtested
+on 2025 / 2026 halves and 2024→25 / 2025→26 seasons, models trained only on earlier years): the **pitcher's hand** (`lefty` — the same
+mirrored pitch gets ~2 more whiffs / 100 swings and ~3 more grounders / 100 BIP from a lefty) and **location-neutral VAA / HAA**
+(`approach_angles`: the angle left after the plate height / side it crossed at, per pitch type) are inputs to every model, and two
+models join: **foul** (P(foul | contact)) and **damage** (wOBA on a ball in play, regression). Batted-ball+ prices contact at
+`STUFF_DMG` = half damage, half the GB / PU / air mix, and adds `kF` ERA per foul% point (contact per pitch × `STUFF_FOUL_RV` 0.085
+runs × pitches per nine); `stuff_parts` in the build = `stuffParts` in `app.js`. Next-season r: runs saved per 100 pitches .40 →
+.49, xwOBA allowed .44 → .53, K-BB% .45 → .56. Tested and left out: ball / called-strike chances (better within a season, worse
+the next — command), seam-shifted-wake proxies, release point vs his fastball, grading vs all pitches. New sums: day fields
+`stf / std / stbf / stbd`, arsenal-day `f / d`, `ctx.arsenal` `xfoul / xdmg`, `consts.stuff` `lgF / kF / lgD / dmg` and two more
+numbers on each `types` entry; files built before them grade on whiff + type alone. Same day: `COLS` gained `home_team` — the
+season being built had been graded without its park adjustment (only the training seasons had it). **Park-adjusted** (Sean, 29 Sep 2026; `park_offsets` / `STUFF_PARK`): before grading, each pitch's
 velocity, ride, run and spin are taken back to a neutral park — a two-way fixed-effects fit (pitch = his own pitch-type average that
 season + the park × pitch type offset, alternated four times so home staffs don't bias their park), shrunk by n / (n + 400) and
 centred per type. Found 29 Sep 2026: Coors takes ~2.4-2.9" of four-seam ride, Tampa / Miami / Houston / San Diego add ~0.5-1.1",

@@ -331,7 +331,7 @@ def milb_people(ids, year: int) -> dict:
 
 
 TRACK = ["release_spin_rate", "spin_axis", "pfx_x", "pfx_z", "release_pos_x", "release_pos_z", "arm_angle", "release_speed",
-         "release_extension", "pitch_type"]
+         "release_extension", "pitch_type", "plate_x", "plate_z", "vx0", "vy0", "vz0", "ax", "ay", "az"]   # the last eight: approach angles
 
 
 def fsl_tracking(d: pd.DataFrame, start: str, end: str) -> pd.DataFrame:
