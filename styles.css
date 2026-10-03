@@ -3796,3 +3796,4 @@ header.top .wordmark { display: none; }
 /* the Stuff+ table in the same navy outline, and the Leaderboard's rows as tall as the Stuff+ table's (Sean, 3 Oct 2026) */
 :root:root:root:root body[data-mode="pitches"] #pitchboard > .pbscroll { border: 1px solid var(--rule); }
 :root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main { min-height: 45px; box-sizing: border-box; align-items: center; }
+#board .meta .teaml + .posl::before { content: "· "; }   /* team · positions · PA (Sean, 3 Oct 2026) */
