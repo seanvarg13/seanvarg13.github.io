@@ -3793,3 +3793,6 @@ header.top .wordmark { display: none; }
    ground, but the Stuff+ board's taller row (8px above and below) */
 :root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #colhead .h { font-size: 11px; padding-top: 8px; padding-bottom: 8px; line-height: 1.2; }
 :root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #colhead { padding-top: 0; padding-bottom: 0; }
+/* the Stuff+ table in the same navy outline, and the Leaderboard's rows as tall as the Stuff+ table's (Sean, 3 Oct 2026) */
+:root:root:root:root body[data-mode="pitches"] #pitchboard > .pbscroll { border: 1px solid var(--rule); }
+:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main { min-height: 45px; box-sizing: border-box; align-items: center; }
