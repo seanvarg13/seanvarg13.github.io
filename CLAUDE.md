@@ -1020,6 +1020,17 @@ is deploy-limited.
   no page numbers), the filter row (Filters, Season / Recent, the count "267 hitters · 2026 · 300+ PA" at the right) sits on the ground
   with no blue bar, the column tabs + rows' box are the one framed table, and a note (`.lbnote`, in `#notes` from `renderChrome`) sits
   under it — the block at the end of `styles.css`. Rankings / Draft board keep their pager.
+  **And again** (Sean, the same hour: "get all of this stuff to be in the upper area where filters is ... separate the filters to be
+  their own individual buttons ... for like standard advanced etc make that one button of itself ... dates has the capability to filter
+  by like most recent PAs or days"): on the Leaderboard / Recent the one Filters button is **six** — Position · Filters · Stats · Splits ·
+  Dates · Table format (`renderToolButtons` under `onePage()`, each opening the same dropdown on its tab; `placePop` anchors to the open
+  tab's button; Dates says the window in effect, `datesLabel`); the Hitters / Pitchers switch and the column sets ride in that same row
+  (`renderLbTabs` is called from `renderPager` and puts `#lbtabs` before the count), the sets as **one pill** (`pillSelect`, "Standard ▾",
+  Custom when the list matches none — tapping Custom opens Filters ▸ Stats); the rows' box is the whole framed table. The **Dates tab**
+  has one-tap presets (`.quickwin`: last 7 / 14 / 30 days, last 50 / 100 / 200 PA or 15 / 30 / 60 IP), and the listing minimum inside a
+  window is **`listMin`** — Last N lists anyone with ¾ of N, a date range / last N days scales the Min box by the window's share of the
+  season's game days (a full-season 300 had listed nobody over 30 days); Recent keeps its own "at least" box. The count line says the
+  window's minimum ("292 hitters · 2026 · 49+ PA in the window").
 
 ## 9. Things only Sean can do
 

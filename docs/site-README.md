@@ -820,3 +820,12 @@ leaderboards page like this too, so now everybody is on the one page and it scro
 numbers), the filter row — Filters, Season / Recent, and a count like "267 hitters · 2026 · 300+ PA" at the right — on the ground
 above the table with no blue bar, the column tabs and the rows' box one framed table that scrolls, and a note under it (hidden on a
 phone). Rankings and the Draft board keep their pages.
+
+**And again, the same hour** (Sean: the filters as their own buttons, everything in the upper area, the column sets as one button, and
+dates by most recent PA or days): the Leaderboard's filter row is **Position · Filters · Stats · Splits · Dates · Table format** as separate
+buttons (each opens the dropdown on that tab; Dates reads the window in effect, e.g. "Last 30 days"), then Season / Recent, Hitters /
+Pitchers, and the column sets as one **Standard ▾** pill (Standard · Advanced · Batted ball · Plate discipline · Stuff; "Custom" when you
+hand-picked stats — tap it for Filters ▸ Stats), the count at the right. The **Dates** tab has one-tap presets — last 7 / 14 / 30 days,
+last 50 / 100 / 200 PA (15 / 30 / 60 IP) — and inside a window the listing minimum scales: Last N lists anyone with three quarters of N,
+a date range or last N days scales the Min PA / IP box by the window's share of the season's game days (the count line says it:
+"292 hitters · 2026 · 49+ PA in the window"). Recent keeps its own "at least" box.
