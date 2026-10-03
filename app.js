@@ -4535,13 +4535,16 @@
     // no starred-players card (Sean, 3 Oct 2026): home is the leaders and who's trending
     // the season's leaders: xwOBA (300+ PA) and Pitching uERA (100+ IP) (Sean, 3 Oct 2026: "leaderboard for both xwoba and pitching uERA")
     const two = (c) => { const t = el("div", "hthree htwo"); c.append(t); return t; };
+    // as many rows as the screen has room for (Sean, 3 Oct 2026: "make more of the screen filled" — a desktop had the bottom
+    // third blank): a phone keeps five; a desktop fits its height, 5 to 15
+    const N = mobileView() ? 5 : Math.max(5, Math.min(15, Math.floor((innerHeight - 310) / 50)));
     const goLB = (pos, sort, dir) => (e) => { e.preventDefault(); state.pos = pos; state.posAlso = []; state.sort = sort; state.dir = dir; savePrefs(); location.hash = "#leaderboard"; };
     const col = (box, lab, rows, f, tab, go) => { const hd = el("h4"), a = el("a", "hmore", `${lab} →`); a.href = "#leaderboard"; a.addEventListener("click", go); hd.append(a); const c = el("div"); c.append(hd); list(c, rows.map(([p, v]) => [p, f(v), null, tab])); box.append(c); };
     const puOf = (p) => { const st = pool(p.primary).stats.get("P" + p.id) || rankIn(p.primary, p); return st && st.puera; };
     const lc = card(`${m.season} leaders`, null, "#leaderboard", "Leaderboard →"), lt = two(lc);
     withWindow(NOWIN, () => withSplit(NONE, () => {
-      const hit = DATA.players.filter((p) => p.type === "H" && (p.pa || 0) >= 300).map((p) => [p, V(p).m.xwd]).filter((r) => r[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 5);
-      const pit = DATA.players.filter((p) => p.type === "P" && (p.ip || 0) >= 100).map((p) => [p, puOf(p)]).filter((r) => r[1] != null).sort((a, b) => a[1] - b[1]).slice(0, 5);
+      const hit = DATA.players.filter((p) => p.type === "H" && (p.pa || 0) >= 300).map((p) => [p, V(p).m.xwd]).filter((r) => r[1] != null).sort((a, b) => b[1] - a[1]).slice(0, N);
+      const pit = DATA.players.filter((p) => p.type === "P" && (p.ip || 0) >= 100).map((p) => [p, puOf(p)]).filter((r) => r[1] != null).sort((a, b) => a[1] - b[1]).slice(0, N);
       col(lt, "xwOBA", hit, f3, null, goLB("ALL", "score", "desc")); col(lt, "Pitching uERA", pit, f2, "pitching", goLB("ALLP", "puera", "asc"));
     }));
     // trending (Sean, 3 Oct 2026): hitters over their last 100 PA by xwOBA, pitchers over their last 50 IP by Pitching uERA — from
@@ -4552,11 +4555,11 @@
       const tt = two(tc);
       withSplit(NONE, () => {
         withWindow({ from: "", to: "", last: "100" }, () => {
-          const hit = DATA.players.filter((p) => p.type === "H").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 75 && v.m.xwd != null).map(([p, v]) => [p, v.m.xwd]).sort((a, b) => b[1] - a[1]).slice(0, 5);
+          const hit = DATA.players.filter((p) => p.type === "H").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 75 && v.m.xwd != null).map(([p, v]) => [p, v.m.xwd]).sort((a, b) => b[1] - a[1]).slice(0, N);
           col(tt, "xwOBA, last 100 PA", hit, f3, null, (e) => { e.preventDefault(); state.pos = "ALL"; state.posAlso = []; state.sort = "score"; state.dir = "desc"; state.win = { from: "", to: "", last: "100" }; savePrefs(); location.hash = "#leaderboard"; });
         });
         withWindow({ from: "", to: "", last: "50" }, () => {
-          const pit = DATA.players.filter((p) => p.type === "P").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 37.5).map(([p]) => [p, puOf(p)]).filter((r) => r[1] != null).sort((a, b) => a[1] - b[1]).slice(0, 5);
+          const pit = DATA.players.filter((p) => p.type === "P").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 37.5).map(([p]) => [p, puOf(p)]).filter((r) => r[1] != null).sort((a, b) => a[1] - b[1]).slice(0, N);
           col(tt, "Pitching uERA, last 50 IP", pit, f2, "pitching", (e) => { e.preventDefault(); state.pos = "ALLP"; state.posAlso = []; state.sort = "puera"; state.dir = "asc"; state.win = { from: "", to: "", last: "50" }; savePrefs(); location.hash = "#leaderboard"; });
         });
       });
