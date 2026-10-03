@@ -230,7 +230,16 @@ Statcast/Directional toggle and the `xws` column are gone). The build still carr
   pitcher-season 2015-2026 (−1.01 BB% per Strike% point, +0.21 Zone%, +0.09 Chase%, −0.05 Swing%, −0.10 Z-Contact%,
   +0.06 Whiff%): 1.46 BB% points from a pitcher's real BB% vs 1.73 for the old walk-rate-at-his-Strike%-percentile, and
   better on next season's BB% than his own BB%. Strike% bands and a tree model did no better. Levels without Chase% /
-  Z-Contact% use a four-rate fit, then Strike% alone.
+  Z-Contact% use a four-rate fit, then Strike% alone. **Starters and relievers have their own weights for both** (Sean, 3 Oct 2026: the
+  walk estimates "all overshooting", then "two separate models, one for sps and one for rps"): `UKF` / `UBB` lead with a `role: "SP"` and a
+  `role: "RP"` fit (every 100+ BF pitcher-season 2021-2026 by his role that season, BF-weighted, centred on each season's 20+ BF league
+  rates), the pooled fit last as the fallback; `rateFit` takes the role, `V()` carries `role: p.primary`, `impliedKBB` reads `pv.role ||
+  pv.primary` (the game log's per-game rows and `stuffUeraCore`'s copy carry it too). At the same rates a reliever walks ~0.7 BB% more and
+  strikes out a little less per whiff; the pooled fit had every regular starter ~0.3 BB% high (the 20 best control starters a point high)
+  and relievers ~0.5 low. Leave-one-season-out 2024-26: starters' uBB% bias +0.21 / +0.30 / +0.32 → −0.07 / +0.04 / +0.06, error 0.92 /
+  1.04 / 0.98 → 0.90 / 1.02 / 0.94; relievers' bias −0.5 → −0.1; uK% bias halved for both. The remaining compression (the lowest-walk
+  starters still ~0.8 high, the wildest ~1.2 low) is the fit regressing the extremes, as an expectation should; curvature terms, CSW% /
+  SwStr% and a tree model did no better.
 * **uERA** (`underlyingERA`) puts those two rates on the balls he actually allowed: his ground-ball and popup
   shares stand, the air balls left over are split into line drives and fly balls at the *population's* ratio, and
   every ball in play is then worth the league's average wOBA for its type (`consts.bbw`). The resulting wOBA is
