@@ -1086,6 +1086,9 @@ is deploy-limited.
   carries `scoreNote.P`); **Table format left the Leaderboard's row for the ⋯ menu** (`renderChrome`, `placePop` hangs it under the
   first button); home has a third card, **Last game day** (the latest day in `meta.days`: the best xwOBA games with 3+ PA from
   `hitGameLog`, the best starts by Stuff+ with 3+ IP from `gameLog`), the three cards side by side from 1180px (`.hgrid`, names 13px there).
+  **Table headers are navy with white text** (Sean, the same evening: "make the tables headers be navy and white text"): the block
+  after the format pass in `styles.css` — `#colhead`, `.ftable th`, the Stuff+ board, every card table and the game log (whose own rule
+  carries `:is(#modal, #xboard)`, so the override does too); the sorted column name is light blue on the navy.
 
 ## 9. Things only Sean can do
 

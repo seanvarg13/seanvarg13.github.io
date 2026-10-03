@@ -3853,3 +3853,18 @@ header.top .wordmark { display: none; }
 :root:root:root #modal .btabbody table thead th, :root:root:root #xboard .btabbody table thead th, :root:root:root #modal .btabbody table th, :root:root:root #xboard .btabbody table th { font-size: 11px; color: var(--muted); font-weight: 400; background: var(--surface-2); border-bottom: 1px solid var(--hair); padding-top: 8px; padding-bottom: 8px; }
 :root:root:root #modal .btabbody table td, :root:root:root #xboard .btabbody table td { font-size: 13px; height: 46px; box-sizing: border-box; font-variant-numeric: tabular-nums; }
 @media (min-width: 1180px) { :root:not([data-view="mobile"]) .hub.home .hname { font-size: 13px; } :root:not([data-view="mobile"]) .hub.home .hval { font-size: 13px; } }   /* three cards across: names a touch smaller so fewer clip */
+/* table headers navy with white text (Sean, 3 Oct 2026: "make the tables headers be navy and white text"); the sorted column name
+   light blue on the navy */
+:root:root:root:root:root #colhead, :root:root:root:root:root #colhead .h, :root:root:root:root:root #colhead .h:first-child, :root:root:root:root:root #colhead .h:nth-child(2) { background: var(--rule); color: #fff; }
+:root:root:root:root:root #colhead { border-bottom: 1px solid var(--rule); }
+:root:root:root:root:root #colhead .h:hover { color: #fff; background: color-mix(in srgb, var(--rule) 85%, #fff); }
+:root:root:root:root:root #colhead .h[aria-sort] { color: var(--accent-2); }
+:root:root:root:root:root .ftable th, :root:root:root:root:root .ftable th button.h, :root:root:root:root:root .ftable th.n, :root:root:root:root:root .ftable th.who,
+:root:root:root:root:root .pbtable thead th, :root:root:root:root:root .pbtable thead th .sortbtn { background: var(--rule); color: #fff; }
+:root:root:root:root:root .ftable th { border-bottom: 1px solid var(--rule); }
+:root:root:root:root:root .ftable th button.h:hover, :root:root:root:root:root .pbtable thead th .sortbtn:hover { color: #fff; background: color-mix(in srgb, var(--rule) 85%, #fff); }
+:root:root:root:root:root .ftable th[aria-sort] button.h, :root:root:root:root:root .pbtable thead th .sortbtn.on { color: var(--accent-2); }
+:root:root:root #modal .btabbody table th, :root:root:root #xboard .btabbody table th, :root:root:root #modal .btabbody table thead th, :root:root:root #xboard .btabbody table thead th,
+:root:root:root:root:root .btabbody table th, :root:root:root:root:root .gamesbox table th, :root:root:root:root:root .uerabox .ubt th { background: var(--rule); color: #fff; border-bottom: 1px solid var(--rule); }
+:root:root:root:root:root .gamesbox .ubt.glog thead { background: var(--rule); }
+:root:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead tr:not(.ggrp) th, :root:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead th:first-child { background: var(--rule); color: #fff; border-bottom: 1px solid var(--rule); }   /* the game log's own header rule carries :is(#modal) */
