@@ -858,3 +858,4 @@ Regress small samples** — in a date window or split, every rate is pulled towa
 (120 PA or batters faced is the halfway point), so a hot week reads as a lean rather than a new player. Off by default.
 
 **Same evening**: every table's header row is navy with white column names (the sorted one light blue).
+No arrow on the sorted column name (the header keeps its height), and the card's tables are compact again.

@@ -1089,6 +1089,9 @@ is deploy-limited.
   **Table headers are navy with white text** (Sean, the same evening: "make the tables headers be navy and white text"): the block
   after the format pass in `styles.css` — `#colhead`, `.ftable th`, the Stuff+ board, every card table and the game log (whose own rule
   carries `:is(#modal, #xboard)`, so the override does too); the sorted column name is light blue on the navy.
+  **Then** (Sean, the same evening): **no ▾ on the sorted column name** — the Leaderboard's header row keeps the two-line height it had
+  with it (13px above and below, ~40px); and the **card's tables are compact again** (12.5px cells, 5px padding, ~30px rows, the navy
+  header 6px above and below) — Sean: "way too big for what is needed for the player card". The 46px rows stay on the lists.
 
 ## 9. Things only Sean can do
 
