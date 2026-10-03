@@ -814,3 +814,9 @@ kept the site as it is — "keep the current site design and format as is" — b
   FB velo, extension.
 
 Player cards stay popups and the list's rows still scroll inside the standing card — both as before.
+
+**Later that day** — the Leaderboard and Recent wear the Stuff+ board's look (Sean: "i like this look for this page ... make the
+leaderboards page like this too, so now everybody is on the one page and it scrolls"): everyone over the minimum on one page (no page
+numbers), the filter row — Filters, Season / Recent, and a count like "267 hitters · 2026 · 300+ PA" at the right — on the ground
+above the table with no blue bar, the column tabs and the rows' box one framed table that scrolls, and a note under it (hidden on a
+phone). Rankings and the Draft board keep their pages.
