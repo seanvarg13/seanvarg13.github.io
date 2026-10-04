@@ -7537,8 +7537,10 @@
   const RATING_M = { key: "rating", label: "Rating", hib: true, dec: 0, int: true, unit: "" };
   // then (Sean, minutes later: "get rid of results and in skills show just x(k-bb)%, mix woba and rating"): one section, Skills, with the three
   // and then (Sean: "for skills could you instead do xk%, xbb%, and x(k-bb)%") — the Rating row stays wired (RATING_M) but is off the card
-  const PCT_COLS_P = [[["Skills", ["xkf", "xbbf", "xkbb"]], ["Swing & Miss", ["k", "xkf"]], ["Walk Avoidance", ["bb", "xbbf"]]],
-                      [["Batted Ball", ["gb", "pu", "mixw"]], ["Stuff", ["xks", "xbbf", "nmix", "xrat"]]]];   // Stuff ends in the xRating, no velo / Pitching+ (Sean, 4 Oct 2026)
+  // and (Sean, the same night: "get rid of x(K-BB)% in skills, get rid of xrating in stuff, and add a rating section at the end with rating and
+  // xrating"): a Rating section closes the right column; both ratings are percentile blends already, so their bubbles are the numbers
+  const PCT_COLS_P = [[["Skills", ["xkf", "xbbf"]], ["Swing & Miss", ["k", "xkf"]], ["Walk Avoidance", ["bb", "xbbf"]]],
+                      [["Batted Ball", ["gb", "pu", "mixw"]], ["Stuff", ["xks", "xbbf", "nmix"]], ["Rating", ["rating", "xrat"]]]];
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
@@ -7561,7 +7563,7 @@
       for (const alt of (!got && PCT_FALL[start]) || []) { got = val(alt); if (got) break; }
       if (!got) return null;
       const lab = (labels && labels[key0]) || PCT_LABEL[got.k];
-      const m = lab ? Object.assign({}, got.m, { label: lab }) : got.m;
+      const m = Object.assign({}, got.m, lab ? { label: lab } : {}, got.k === "xrat" ? { int: true } : {});   // the xRating row prints whole, like the Rating's
       const pct = got.k === "rating" || got.k === "xrat" ? Math.round(got.v) : st.pct[got.k];   // both ratings are percentile blends already: the bubble is the number
       const lg = got.k === "rating" || got.k === "xrat" ? 50 : lgOf(got.k, m), prev = prevOf ? prevOf(m, got.k) : null;
       return { m, v: got.v, k: got.k, label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null, lg: lg == null ? null : fmt(lg, m), prev, prevYear: DS.season - 1,
