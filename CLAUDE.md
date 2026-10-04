@@ -1244,6 +1244,14 @@ is deploy-limited.
   load. Home's leader and trending lists are **uERA** (`puOf` reads `st.uera`). Everything is still computed (`renderNextTab`,
   `renderGameLogs`, `pitchUERA`, the pool's `pera / nk / nbb / puera`) — a UI change brings any of it back; don't, unasked.
 
+* **Expected = the Pitching+ model's own numbers (Sean, 4 Oct 2026, Ian Seymour's card: "his expected whiffs are 26.9 not 25.1")**: the
+  whiff check and the xWhiff% / xGB% / xPU% columns (`nwhf / ngb / npu`, group "Expected (Pitching+)") read `projRates(p)` = `pitchRates(p)`,
+  the location-aware model's rates on his swings / balls in play — the same numbers as the Pitching+ tab's All pitches row. The two-model
+  next-season blend (`PPITCH` / `projPitch`, still in the per-pitch `renderNextTab`) had read a point or two off the table and confused the
+  page. The whiff check's history is on this gap (scratch `wgap2.py`): 2-4 over → 77% lost whiffs, −2.2 (K% −2.3); 4+ → 100%, −3.9 (K%
+  −4.6); 2+ under → 73% gained, +1.5 (K% +0.9); within 2 → −0.7, the league's drift. The models themselves are unchanged (the fixed file
+  trained through 2025); Seymour's four-seam reads 23.0 expected / 26.0 actual, his changeup 35.4 / 38.4.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:

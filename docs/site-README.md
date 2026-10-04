@@ -140,10 +140,10 @@ columns are pWhiff%, pGB%, pPU% and Whiff vs proj. Home's pitcher lists are by u
 **One Pitching+** (4 Oct 2026). Stuff+ and Pitching+ are no longer shown apart: the card, the board (Leaders header "Pitching+"), the
 Game Logs and the Leaderboard carry one grade — the pitch graded on what it does and where it was thrown, against its own type — with
 Whiff+ and Batted-ball+ as its halves and Location+ as what the spots add. The Pitching+ tab's sub-head still says what the stuff alone
-grades. Under its table sits the **whiff check**: his Whiff% against the rate his pitches project for next season, with a verdict — 2+
-points over, "Likely to regress" (2020-26: 76% of such pitchers lost whiffs the next year, 2.0 points on average; 4+ over, 96% and 3.7);
-2+ under, "Likely to improve" (82% gained, +1.8); else "In line". It's also a Leaderboard / Compare column, *Whiff vs proj.* (a minus is
-upside). The pitcher card's first section is **Skills** — Whiff%, Strike% and **Mix wOBA**, the Rating's three inputs (the league's wOBA per ball in
+grades. Under its table sits the **whiff check**: his Whiff% against the model's expected whiff rate on his swings (the All pitches row), with a
+verdict — 2+ points over, "Likely to regress" (2020-26: 77% of such pitchers lost whiffs the next year, 2.2 points on average; 4+ over,
+every one, 3.9); 2+ under, "Likely to improve" (73% gained, +1.5); else "In line". It's also a Leaderboard / Compare column, *Whiff vs
+exp.* (a minus is upside), beside xWhiff%, xGB% and xPU%, the model's expected rates. The pitcher card's first section is **Skills** — Whiff%, Strike% and **Mix wOBA**, the Rating's three inputs (the league's wOBA per ball in
 play for the mix he allows; Mix ERA is a column only now).
 
 **Rating** (the pitchers' headline score, 4 Oct 2026) is Whiff% 55, Strike% 30 and Mix wOBA 15 over percentiles — whiffs, strikes and
