@@ -1363,6 +1363,16 @@ is deploy-limited.
   inputs (both whiff rates by `xwl`'s effect, Strike%, `fstrk` +1.0 / `b3strk` +3.0 from role3.py as plain shifts in `AS_SP`, velo,
   Pitching+) for the starter xRating and shows them on the line. 2026: Sasaki K% 23.6 / xK% 26.3, Wheeler 29.9 / 27.9, Webb 25.7 / 30.0,
   Devin Williams 28.3 / 33.3.
+  **And then same-season accuracy over forecasting (Sean, minutes later: "i dont care as much about its ability to predict future seasons, i
+  want the highest correlation for current season. My goal is to find guys that are true underperformers and weed out guys that are true
+  overperformers or frauds")**: `XKM` is the actual-rate fit — Whiff%, CSW%, SwStr%, two-strike Whiff%, Strike%, Swing%, Z-Contact%, Zone%,
+  Chase%, first-pitch / three-ball strike rates, two-strike swing and zone rates, GB%, PU%, FB velo, extension, Pitching+, Location+, Stuff+
+  and both expected whiff rates (small weights), pooled, centred on the season's league, ridge λ 3: held out season by season rmse 1.42 /
+  mean error 1.12 on 300+ BF pitchers, in-sample r .954 (the expected-whiff version 1.95, Whiff% alone 2.36; by-role fits no better). Tiers
+  without the stuff grades (1.54) and the six basic rates (1.99). So K% − xK% is pure conversion now — and it repeats (Wheeler over, Webb
+  under, every year), so the glossary says it's what he does, not what he'll stop doing; the whiff check stays the luck read. The As-a-starter
+  line moves his actual whiff rates by the `xwl` effect too (`wr`) so the starter xK% is consistent. 2026: Sasaki 25.0, Wheeler 28.7, Webb
+  27.9, Devin Williams 29.3.
 
 ## 9. Things only Sean can do
 

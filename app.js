@@ -1221,9 +1221,16 @@
   // velo, extension, Pitching+ and Location+, it reads 1.95 same-season and 3.40 next season: the only version that beats his own K% at next
   // year's (3.55; the 4-stat xWhiff form 3.75, Whiff% alone 3.62). SP / RP fits were no better than the pooled one. Tiers for files without
   // the stuff grades or the count-state fields; "basic" is for the minors
-  const XKM = [{ c: 0.0011, w: { xw: 0.7841, xws: -0.3202, strk: 0.9509, swing: -0.6305, zcon: -0.5615, zone: -0.0253, osw: 0.1396, fstrk: -0.1057, b3strk: 0.0897, s2sw: -0.2519, s2zone: 0.0962, fbv: 0.1226, ext: 0.4156, pitch: 0.0827, sloc: -0.1385 } },
-               { c: 0.0009, w: { xw: 0.6041, strk: 0.9865, swing: -0.7138, zcon: -0.591, zone: -0.0185, osw: 0.2131, fstrk: -0.1163, b3strk: 0.0821, s2sw: -0.2688, s2zone: 0.1255, fbv: 0.2349, ext: 0.5662 } },
-               { c: 0, w: { xw: 0.6834, strk: 0.7934, swing: -0.747, zcon: -0.607, zone: 0.0964, osw: 0.1282 } }];
+  // And then same-season accuracy over forecasting (Sean, the same evening: "i dont care as much about its ability to predict future seasons, i
+  // want the highest correlation for current season ... find guys that are true underperformers and weed out ... frauds"): his actual rates are
+  // allowed back in. Whiff%, CSW%, SwStr%, two-strike Whiff%, Strike%, Swing%, Z-Contact%, Zone%, Chase%, first-pitch / three-ball strike rates,
+  // two-strike swing and zone rates, GB%, PU%, FB velo, extension, Pitching+, Location+, Stuff+ and the two expected whiff rates — held out
+  // season by season: rmse 1.42 / mean error 1.12 points on 300+ BF pitchers (the expected-whiff-only version 1.95, Whiff% alone 2.36;
+  // in-sample r .954). The K% − xK% gap is then pure conversion — what his whiffs and strikes should have turned into — and it repeats
+  // (Wheeler over every year, Webb under), so a gap says what he does, not what he'll stop doing; the whiff check is the luck read
+  const XKM = [{ c: -0.0001, w: { whf: -0.4163, csw: 0.851, swstr: 0.2875, s2whf: 0.4674, strk: 0.1094, swing: 0.0686, zcon: -0.2387, zone: -0.1759, osw: 0.0434, fstrk: -0.0756, b3strk: 0.0935, s2sw: -0.2651, s2zone: 0.2525, gb: -0.0794, pu: 0.0268, fbv: 0.1158, ext: 0.2225, pitch: -0.2046, sloc: 0.2566, stuff: 0.2685, xw: 0.1545, xws: -0.0265 } },
+               { c: -0.0008, w: { whf: -0.3181, csw: 0.8479, swstr: 0.4156, s2whf: 0.4491, strk: 0.0773, swing: 0.1082, zcon: -0.3054, zone: -0.2249, osw: 0.0379, fstrk: -0.0697, b3strk: 0.0907, s2sw: -0.2618, s2zone: 0.2574, fbv: 0.2044, ext: 0.315 } },
+               { c: 0, w: { whf: 0.8913, strk: 0.8331, swing: -0.5133, zcon: -0.1645, zone: 0.0667, osw: -0.0687 } }];
   // the league's expected whiff rates (location-aware over swings, stuff-only over pitches) for the centring — every 20+ BF pitcher, by BF, per view
   const lgXwCache = new Map();
   function lgXw() {
@@ -1232,7 +1239,7 @@
     for (const q of DS.players) { if (q.type !== "P" || !(q.bf >= 20)) continue; const r = pitchRates(q), s = stuffRates(q); if (r) { a += r.xw * q.bf; na += q.bf; } if (s) { b += s.xw * q.bf; nb += q.bf; } }
     const out = { xw: na ? a / na : null, xws: nb ? b / nb : null }; lgXwCache.set(key, out); return out;
   }
-  const xKModel = (m, xw, xws) => { if (xw == null) return null; const v = rateFit(Object.assign({}, m, { xw, xws }), "k", XKM, Object.assign({}, lgRatesP(), lgXw())); return v == null ? null : Math.round(10 * v) / 10; };
+  const xKModel = (m, xw, xws) => { const v = rateFit(Object.assign({}, m, { xw, xws }), "k", XKM, Object.assign({}, lgRatesP(), lgXw())); return v == null ? null : Math.round(10 * v) / 10; };
   const xBBFormula = (m) => (m.strk == null || m.fstrk == null || m.b3strk == null ? null : Math.round(10 * (XBBF.c + XBBF.strk * m.strk + XBBF.fstrk * m.fstrk + XBBF.b3strk * m.b3strk)) / 10);
   // the Mix wOBA a ground-ball / popup share implies (the expected mix from the Pitching+ model): air balls split at the pool's line-drive share
   function mixOfShares(xg, xp, sorted) {
@@ -4844,7 +4851,7 @@
     maxev: "The hardest ball he hit all season.",
     bs: "Average bat speed over competitive swings (bunts and check swings dropped).",
     osw: "O-Swing%: how often he swings at pitches outside the zone. Lower is better for a hitter, higher for a pitcher.",
-    xkf: "xK%: the strikeout rate his pitches say he should have — a fit over every 100+ BF pitcher-season 2020-26 on the Pitching+ model's expected whiff rates (location-aware and stuff-only), Strike%, Swing%, Z-Contact%, Zone%, Chase%, first-pitch / three-ball strike rates, two-strike swing and zone rates, velocity, extension, Pitching+ and Location+, each against the league's. No actual whiffs in it, and the one version that forecast next season's K% better than his own K% did (held out season by season). Above it, he turned his stuff into strikeouts better than most — a repeatable trait, not luck (Wheeler every year); below it, worse (Webb).",
+    xkf: "xK%: the strikeout rate his rates say he should have — a fit over every 100+ BF pitcher-season 2020-26 on his Whiff%, CSW%, SwStr%, two-strike Whiff%, Strike%, Swing%, Z-Contact%, Zone%, Chase%, first-pitch / three-ball strike rates, two-strike swing and zone rates, GB%, PU%, velocity, extension, Pitching+, Location+, Stuff+ and the expected whiff rates, each against the league's; within about 1.1 K% points of the real one (r .95). Above it he turned his whiffs and strikes into strikeouts better than most; below it, worse. That gap is a repeatable trait (Wheeler over every year, Webb under), so read it as what he does rather than what he'll stop doing — the Pitching+ tab's whiff check is the luck read.",
     xbbf: "xBB%: the walk rate his Strike%, 1st-pitch Strike% and 3-ball Strike% say he should have — a fit over every 100+ BF pitcher-season 2020-26 that explains 82% of the spread in BB%, typically within 1.1 points. Above it, he walked more than his strikes deserved (usually a high-whiff pitcher's long plate appearances or a small three-ball sample); below it, fewer.",
     fstrk: "1st-pitch Strike%: the share of first pitches of a plate appearance that were strikes (called, swinging, foul or in play).",
     b3strk: "3-ball Strike%: the share of pitches thrown with three balls that were strikes — the one that decides ball four. With Strike% and 1st-pitch Strike% it explains 82% of the spread in BB% (Strike% alone 58%); Zone% and Chase% add nothing on top. Noisier year to year than Strike% (r .39 vs .59).",
@@ -6845,7 +6852,9 @@
     // velo, Pitching+), the mix as translated above
     const W = XRW, tot = Object.values(W).reduce((a, b) => a + b, 0) || 1;
     const sk = asStarter("strk", m.strk), sr = stuffRates(p);
-    const mS = Object.assign({}, m, { strk: sk, fstrk: m.fstrk == null ? null : m.fstrk + AS_SP.fstrk[0], b3strk: m.b3strk == null ? null : m.b3strk + AS_SP.b3strk[0], fbv: fv, pitch: pt });
+    const wr = m.whf ? asStarter("xwl", m.whf) / m.whf : 1;   // his actual whiff rates move by the same effect as the expected one
+    const mS = Object.assign({}, m, { strk: sk, fstrk: m.fstrk == null ? null : m.fstrk + AS_SP.fstrk[0], b3strk: m.b3strk == null ? null : m.b3strk + AS_SP.b3strk[0], fbv: fv, pitch: pt,
+                                      whf: m.whf == null ? null : m.whf * wr, s2whf: m.s2whf == null ? null : m.s2whf * wr, swstr: m.swstr == null ? null : m.swstr * wr, csw: m.csw == null || m.swstr == null ? m.csw : m.csw - m.swstr * (1 - wr) });
     const xkS = xKModel(mS, xw, sr ? asStarter("xwl", sr.xw) : null), xbS = xBBFormula(mS);
     const px = { xkf: S.xkf && xkS != null ? insertPct(S.xkf, xkS) : null, xbbf: S.xbbf && xbS != null ? insertPct(S.xbbf, -xbS) : null, nmix: S.nmix && nm != null ? insertPct(S.nmix, -nm) : null };
     const xr = Object.keys(W).every((k) => px[k] != null) ? Math.round(Object.keys(W).reduce((a, k) => a + W[k] * px[k], 0) / tot) : null;
