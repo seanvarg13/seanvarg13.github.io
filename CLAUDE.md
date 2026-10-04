@@ -1515,6 +1515,19 @@ is deploy-limited.
   ranks them) and Stuff (velo, extension, Pitching+, Location+). **xBB%** (`XBB_COLS_P`): Walks (BB% · xBB% · uBB%), The formula (Strike%,
   1st-pitch, 3-ball), Zone & Chase, Whiffs. The sort-key path reads any `NEXT_KEYS` member off the pool's stats now.
 
+* **Expected Called Strike% (Sean, 4 Oct 2026: "is the expected called strikes not a stable thing in the stuff/pitching model", then "ok we can add
+  it to everything, and thus itll be added to the xk% calculation from pitching+")**: `ncstr` = the command models' called-strike chance per pitch
+  (P(take) × P(called | taken) from the pitch's traits, spot and count — the build's `xstrk − xswing` for a season, the day rows' `stck − stcs`
+  over `stcn` in a window via `m.xcraw`), **centred on the league's actual called-strike rate** (`xCalled(m)`; `lgRatesP` carries `cstr` and the
+  raw `xcstr`), set on `V(p).m` beside `xbbf`. Why it's worth having (300+ BF pitchers 2023-26): same-season r with actual .68-.73, year to year
+  .72-.74 against actual's .58-.65, forecasts next year's actual at .43-.55; the residual (framing, umpires, sequencing) repeats at .37-.53. The
+  fixed models read 2025-26 ~0.5-0.8 points hot, which is what made xStrike% look wrong beside Strike% on 3 Oct — the centring takes that out.
+  **It is inside Pitching+ xK%**: `xkParts` uses it for CSW% (expected called + expected swinging strikes) in place of his actual called-strike
+  rate, so `xks` → `xkbbs` → the xRating move with it (Skenes 2026 Pitching+ xK% 26.7 with the location foul model's rescore in). A `SIDE_P` def
+  (percentiles from the pool like any `m` stat, a Leaderboard column), a bar on the xK% tab after xWhiff%, a Called Strike% row in the Pitching+
+  tab's breakdown, labels / `SHORT` / glossary. Files without the command sums (built before 3 Oct 2026) fall back to his actual rate. The
+  expected swing rate stays unused for SwStr% (tested 3 Oct 2026: expected swing × expected whiff was worse everywhere).
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
