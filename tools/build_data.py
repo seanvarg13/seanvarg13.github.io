@@ -71,7 +71,7 @@ HITTER_SCORE_WEIGHTS = {"brl": 40.5, "ev": 11.6, "zcon": 16.9, "ocon": 17.2,
 # the pitchers' Rating (Sean, 4 Oct 2026: "the four skills in order of importance, ability to get Ks, avoid walks, get gbs, and get
 # popups" — process, not outcomes). Weights from a 2020-26 backtest against NEXT season's ESPN points per inning (starters 100+ IP both
 # years, r .56 vs .51 for the old 50 / 50 Whiff% / Strike%); Chase% and SwStr% tested and left out (nothing on top of these four)
-PITCHER_SCORE_WEIGHTS = {"whf": 50.0, "strk": 20.0, "gb": 20.0, "pu": 10.0}
+PITCHER_SCORE_WEIGHTS = {"whf": 55.0, "strk": 30.0, "mixw": 15.0}   # Sean's own call, 4 Oct 2026: Whiff%, Strike%, then the mix as one number (Mix wOBA, worked out in the app)
 
 WHIFF = {"swinging_strike", "swinging_strike_blocked", "foul_tip", "missed_bunt", "bunt_foul_tip"}
 SWING = WHIFF | {"foul", "hit_into_play", "foul_bunt"}
@@ -136,7 +136,7 @@ PITCHER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "strk", "bip", "gb", "
 FASTBALLS = {"FF", "SI", "FT"}
 PITCHER_CARD = [
     # Skills first (Sean, 4 Oct 2026): the four rates the Rating weighs, plus Mix wOBA (worked out in the app from ctx.bbl like Mix ERA)
-    ("Skills",               [("whf", "Whiff%", True, 1, "%"), ("strk", "Strike%", True, 1, "%"), ("gb", "GB%", True, 1, "%"), ("pu", "Popup%", True, 1, "%"), ("mixw", "Mix wOBA", False, 3, "")]),
+    ("Skills",               [("whf", "Whiff%", True, 1, "%"), ("strk", "Strike%", True, 1, "%"), ("mixw", "Mix wOBA", False, 3, "")]),
     ("Swing & miss",         [("k", "K%", True, 1, "%"), ("whf", "Whiff%", True, 1, "%"), ("csw", "CSW%", True, 1, "%")]),
     ("Zone & chase",         [("bb", "BB%", False, 1, "%"), ("strk", "Strike%", True, 1, "%")]),
     ("Results",              [("kbb", "K-BB%", True, 1, "%"), ("era", "ERA", False, 2, "")]),
@@ -1768,7 +1768,7 @@ def main():
                  "published number, date windows and splits rebuild it from pitch-level data to within about .001",
             "blend": "wOBA percentile blend (Formula 1): 40.5% Barrel, 17.2% O-Contact, 16.9% Z-Contact, "
                      "11.6% Avg EV, 9.0% Z-minus-O Swing, 4.5% O-Swing (flipped), 0.2% Pull Air — re-ranked as a percentile",
-            "P": "Whiff% 50, Strike% 20, GB% 20, Popup% 10 — the four skills a pitcher owns, weighted by what carried into next season's fantasy points (Sean, 4 Oct 2026)",
+            "P": "Whiff% 55, Strike% 30, Mix wOBA 15 — whiffs, strikes and the batted-ball mix as one number, over percentiles (Sean, 4 Oct 2026)",
         },
     }
     out = {"meta": meta, "players": hitters + pitchers}

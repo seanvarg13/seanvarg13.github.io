@@ -139,11 +139,12 @@ Whiff+ and Batted-ball+ as its halves and Location+ as what the spots add. The P
 grades. Under its table sits the **whiff check**: his Whiff% against the rate his pitches project for next season, with a verdict — 2+
 points over, "Likely to regress" (2020-26: 76% of such pitchers lost whiffs the next year, 2.0 points on average; 4+ over, 96% and 3.7);
 2+ under, "Likely to improve" (82% gained, +1.8); else "In line". It's also a Leaderboard / Compare column, *Whiff vs proj.* (a minus is
-upside). The pitcher card's first section is **Skills** — Whiff%, Strike%, GB%, Popup% and **Mix wOBA** (the league's wOBA per ball in
+upside). The pitcher card's first section is **Skills** — Whiff%, Strike% and **Mix wOBA**, the Rating's three inputs (the league's wOBA per ball in
 play for the mix he allows; Mix ERA is a column only now).
 
-**Rating** (the pitchers' headline score, 4 Oct 2026) is Whiff% 50, Strike% 20, GB% 20 and Popup% 10 over percentiles — the four
-skills a pitcher owns, in that order, weighted by what carried into the next season's fantasy points (it was a plain average of Whiff%
+**Rating** (the pitchers' headline score, 4 Oct 2026) is Whiff% 55, Strike% 30 and Mix wOBA 15 over percentiles — whiffs, strikes and
+the batted-ball mix as one number, Sean's weights (a backtest had put the four rates at 50 / 20 / 20 / 10 against the next season's
+fantasy points (it was a plain average of Whiff%
 and Strike%; Chase% and SwStr% were tested and added nothing).
 
 **WSGP** is the average of a pitcher's Whiff%, Strike%, GB% and Popup% **percentiles** — the four rates that belong

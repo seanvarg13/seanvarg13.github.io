@@ -510,8 +510,8 @@ range or a past season re-ranks him within that pool.
 earned runs over Statcast innings). SIERA is Swartz's 2011 form shifted by `sieraShift` for the same reason.
 
 **Hitter rank** is the wOBA percentile blend: `brl 40.5, zcon 16.9, ocon 17.2, ev 11.6, zmo 9.0, osw 4.5,
-pull 0.2` over percentiles (already flipped so 100 = best). **Pitcher rank (Rating)** is `PITCHER_SCORE_WEIGHTS` in `build_data.py`, shipped as `meta.pitcherWeights`: **Whiff% 50, Strike% 20,
-GB% 20, Popup% 10** over percentiles (Sean, 4 Oct 2026: "the four skills in order of importance, ability to get Ks, avoid walks, get gbs,
+pull 0.2` over percentiles (already flipped so 100 = best). **Pitcher rank (Rating)** is `PITCHER_SCORE_WEIGHTS` in `build_data.py`, shipped as `meta.pitcherWeights`: **Whiff% 55, Strike% 30, Mix wOBA 15** over percentiles (Sean's own call a few minutes after the 50 / 20 / 20 / 10 below; the pool
+ranks Mix wOBA before the score and `placeIn` does too, and the card's Skills section is those three) (Sean, 4 Oct 2026: "the four skills in order of importance, ability to get Ks, avoid walks, get gbs,
 and get popups" — process, not outcomes; 50 / 50 Whiff% / Strike% before). Backtest 2020-26 against next season's ESPN points per inning,
 starters 100+ IP both years (relievers 40+): the old score r .51 / .47, this one .56 / .49; K% / BB% in place of Whiff% / Strike% would
 be .61 but they're outcomes; SwStr% ≈ Whiff% (kept Whiff%); Chase% adds nothing to Strike% for next year's walks (r −.03 on what Strike%
