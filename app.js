@@ -7402,8 +7402,9 @@
   // xSkills (Sean, 4 Oct 2026: "below skills ... xSkills which is their xwhiff, strike%, and expected mix woba"): the xRating's inputs
   // Zone & Chase is the walk formula's three (Sean, 4 Oct 2026): Strike% + first-pitch + three-ball strike rates, R² .82 on BB%, with xBB% under BB% —
   // Zone% / Chase% off the card. Same day: Zone & Chase on the right, Results under xSkills, and Stuff is just velo and extension (the Pitching+
-  // grades live on their own tab) — ten rows a column
-  const PCT_COLS_P = [[["Skills", ["whf", "strk", "mixw"]], ["xSkills", ["nwhf", "strk", "nmix"]], ["Results", ["kbb", "era"]], ["Swing & Miss", ["k", "whf"]]],
+  // grades live on their own tab) — ten rows a column. xSkills is xWhiff% · xBB% · xMix wOBA (Sean: "replace strike% with xBB%"); the xRating
+  // itself still weighs Strike%, as the Rating does
+  const PCT_COLS_P = [[["Skills", ["whf", "strk", "mixw"]], ["xSkills", ["nwhf", "xbbf", "nmix"]], ["Results", ["kbb", "era"]], ["Swing & Miss", ["k", "whf"]]],
                       [["Zone & Chase", ["bb", "xbbf", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["gb", "pu", "mixw"]], ["Stuff", ["fbv", "ext"]]]];
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",

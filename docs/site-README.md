@@ -152,6 +152,7 @@ plate appearances run to three balls, where the 3-ball strike rate decides ball 
 three rates say he should have, from the same fit, usually within about a point of the real one.
 The pitcher card's columns (4 Oct 2026): Skills · xSkills · Results · Swing & Miss on the left, Zone & Chase · Batted Ball · Stuff
 (fastball velo and extension only; the Pitching+ grades are on their own tab) on the right.
+xSkills reads xWhiff%, xBB% and xMix wOBA.
 
 **xRating** (4 Oct 2026): the Rating's weights with the Pitching+ model's expected whiff rate and the Mix wOBA its expected mix implies in
 place of his actual ones — what his pitches and spots say the Rating should be. On the Pitching+ tab beside the Rating and a Leaderboard /

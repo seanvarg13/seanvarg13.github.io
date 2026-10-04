@@ -1329,7 +1329,8 @@ is deploy-limited.
   **Then the columns rebalanced (Sean, the same hour: "put that section on the right side ... get rid of the stuff models ... just make it
   fastball velo and extension ... put results below xSkills")**: `PCT_COLS_P` left = Skills · xSkills · Results · Swing & Miss, right = Zone &
   Chase · Batted Ball · Stuff (Fastball velo, Extension only — Pitching+ / Whiff+ / Batted-ball+ / Location+ live on the Pitching+ tab and
-  stay columns). Ten rows a column.
+  stay columns). Ten rows a column. **xSkills is xWhiff% · xBB% · xMix wOBA** (Sean, the same hour: "replace strike% with xBB%") — the
+  xRating's own inputs are unchanged (Strike%, as the Rating).
 
 ## 9. Things only Sean can do
 
