@@ -7533,8 +7533,9 @@
   // Results first (Sean, 4 Oct 2026: "add results section that goes up top that has the x(K-bb)% mix woba, and then his rating"): the Rating's
   // two inputs and the Rating itself. 9 rows left, 10 right
   const RATING_M = { key: "rating", label: "Rating", hib: true, dec: 0, int: true, unit: "" };
-  const PCT_COLS_P = [[["Results", ["xkbb", "mixw", "rating"]], ["Skills", ["xkf", "xbbf", "xkbb", "mixw"]], ["Swing & Miss", ["k", "xkf"]]],
-                      [["Walk Avoidance", ["bb", "xbbf"]], ["Batted Ball", ["gb", "pu", "mixw"]], ["Stuff", ["xks", "xbbf", "nmix", "fbv", "pitch"]]]];
+  // then (Sean, minutes later: "get rid of results and in skills show just x(k-bb)%, mix woba and rating"): one section, Skills, with the three
+  const PCT_COLS_P = [[["Skills", ["xkbb", "mixw", "rating"]], ["Swing & Miss", ["k", "xkf"]], ["Walk Avoidance", ["bb", "xbbf"]]],
+                      [["Batted Ball", ["gb", "pu", "mixw"]], ["Stuff", ["xks", "xbbf", "nmix", "fbv", "pitch"]]]];
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
