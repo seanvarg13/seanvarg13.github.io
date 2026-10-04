@@ -8278,7 +8278,11 @@
     // make the header a bit smaller row wise"); the mrank line underneath only when something else is on it
     const tog = el("span", "phtog"), fs = el("div", "seg phfiltseg"); fs.append(b); tog.append(fs);
     (plate.querySelector(".hstrip") || mr || plate).append(tog);
-    if (p.type === "P") { const ss = sideSwitch(); if (mob) ss.classList.add("vert"); tog.after(ss); }   // vertical beside Filters on a phone (Sean, 4 Oct 2026)
+    if (p.type === "P") {                                 // a phone: vertical, to the left of Filters, the same box as Filters (Sean, 4 Oct 2026)
+      const ss = sideSwitch();
+      if (mob) { ss.classList.add("vert"); tog.before(ss); requestAnimationFrame(() => { if (fs.isConnected) { ss.style.height = fs.offsetHeight + "px"; ss.style.width = fs.offsetWidth + "px"; } }); }
+      else tog.after(ss);
+    }
     { const ts = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (ts) tog.after(ts); }   // a two-way player's switch: right after Filters, a row saved
     { const hs = plate.querySelector(".hstrip"); if (hs && hs._stats) hs.append(hs._stats);   // the season's line, last: its own row
       // a phone (Sean, 1 Oct 2026: four ragged rows "just looks so weird"): the bio and Filters stay beside the headshot, and the
