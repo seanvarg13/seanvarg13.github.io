@@ -135,14 +135,17 @@ PITCHER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "strk", "bip", "gb", "
 # per-game earned runs (from MLB game logs) ride along as "P<id>:er" rows: [day, home, er]
 FASTBALLS = {"FF", "SI", "FT"}
 PITCHER_CARD = [
-    ("Whiffs and strikes",   [("whf", "Whiff%", True, 1, "%"), ("strk", "Strike%", True, 1, "%")]),
+    # Skills first (Sean, 4 Oct 2026): the four rates the Rating weighs, plus Mix wOBA (worked out in the app from ctx.bbl like Mix ERA)
+    ("Skills",               [("whf", "Whiff%", True, 1, "%"), ("strk", "Strike%", True, 1, "%"), ("gb", "GB%", True, 1, "%"), ("pu", "Popup%", True, 1, "%"), ("mixw", "Mix wOBA", False, 3, "")]),
     ("Swing & miss",         [("k", "K%", True, 1, "%"), ("whf", "Whiff%", True, 1, "%"), ("csw", "CSW%", True, 1, "%")]),
     ("Zone & chase",         [("bb", "BB%", False, 1, "%"), ("strk", "Strike%", True, 1, "%")]),
     ("Results",              [("kbb", "K-BB%", True, 1, "%"), ("era", "ERA", False, 2, "")]),
-    ("Batted ball",          [("gb", "GB%", True, 1, "%"), ("pu", "Popup%", True, 1, "%"), ("mera", "Mix ERA", False, 2, "")]),
+    ("Batted ball",          [("gb", "GB%", True, 1, "%"), ("pu", "Popup%", True, 1, "%"), ("mixw", "Mix wOBA", False, 3, ""), ("mera", "Mix ERA", False, 2, "")]),   # Mix wOBA on the card, Mix ERA a column (4 Oct 2026)
     # the four rates a pitcher owns outright, averaged (derived in the app from the four below it)
     ("Process score",        [("wsgp", "WSGP", True, 1, "")]),
-    ("Stuff",                [("stuff", "Stuff+", True, 0, ""), ("pitch", "Pitching+", True, 0, ""), ("fbv", "Fastball velo", True, 1, "mph"), ("ext", "Extension", True, 1, "ft")]),
+    # one grade (Sean, 4 Oct 2026: "get rid of stuff+ and pitching+ being separate"): Pitching+ with its halves and Location+; Stuff+ still
+    # built (the models, the sums, m.stuff) but no longer a card metric or a column
+    ("Stuff",                [("pitch", "Pitching+", True, 0, ""), ("sloc", "Location+", True, 0, ""), ("fbv", "Fastball velo", True, 1, "mph"), ("ext", "Extension", True, 1, "ft")]),
     # what the ERA should be and what he's giving up: the expected / underlying marks beside contact quality
     ("Expected & contact",   [("uk", "uK%", True, 1, "%"), ("ubb", "uBB%", False, 1, "%"),   # the fitted process rates
                               ("ukb", "u(K-BB%)", True, 1, "%"),   # u(K-BB%) is derived in the app (expected K% − expected BB%)
@@ -156,7 +159,7 @@ PITCHER_CARD_FOLD = ["Expected & contact"]   # groups that ride below the card a
 PITCHER_SUB = {"kbb": [("k", "K%", True, 1, "%"), ("bb", "BB%", False, 1, "%")],
                "whf": [("swstr", "SwStr%", True, 1, "%"), ("zcon", "Z-Contact%", False, 1, "%")],
                "strk": [("zone", "Zone%", True, 1, "%"), ("osw", "O-Swing%", True, 1, "%")],
-               "stuff": [("swhf", "Whiff+", True, 0, ""), ("sbb", "Batted-ball+", True, 0, "")]}
+               "pitch": [("pwhf", "Whiff+", True, 0, ""), ("pbb", "Batted-ball+", True, 0, "")]}
 
 
 def siera_raw(k, bb, gb, fb, pu, pa):
