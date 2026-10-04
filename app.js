@@ -7534,7 +7534,8 @@
   // two inputs and the Rating itself. 9 rows left, 10 right
   const RATING_M = { key: "rating", label: "Rating", hib: true, dec: 0, int: true, unit: "" };
   // then (Sean, minutes later: "get rid of results and in skills show just x(k-bb)%, mix woba and rating"): one section, Skills, with the three
-  const PCT_COLS_P = [[["Skills", ["xkbb", "mixw", "rating"]], ["Swing & Miss", ["k", "xkf"]], ["Walk Avoidance", ["bb", "xbbf"]]],
+  // and then (Sean: "for skills could you instead do xk%, xbb%, and x(k-bb)%") — the Rating row stays wired (RATING_M) but is off the card
+  const PCT_COLS_P = [[["Skills", ["xkf", "xbbf", "xkbb"]], ["Swing & Miss", ["k", "xkf"]], ["Walk Avoidance", ["bb", "xbbf"]]],
                       [["Batted Ball", ["gb", "pu", "mixw"]], ["Stuff", ["xks", "xbbf", "nmix", "fbv", "pitch"]]]];
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
