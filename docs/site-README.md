@@ -133,6 +133,10 @@ within ~1.5 points of a pitcher's real BB% (the old Strike%-percentile match: 1.
 than his own BB% does. Double-A and most of Single-A lack Chase% / Z-Contact% and use a four-rate version. Both are ordinary card metrics (`uk`, `ubb`) alongside u(K-BB%)
 and uERA, so they can sit on any table.
 
+**Simpler cards** (4 Oct 2026, later): the pERA tab, the Pitching uERA box and both Game Logs tabs came off the cards; the Pitching+
+tab is the per-pitch table (expected whiffs, ground balls and popups against actual) and the whiff check, and the Leaderboard's Projected
+columns are pWhiff%, pGB%, pPU% and Whiff vs proj. Home's pitcher lists are by uERA.
+
 **One Pitching+** (4 Oct 2026). Stuff+ and Pitching+ are no longer shown apart: the card, the board (Leaders header "Pitching+"), the
 Game Logs and the Leaderboard carry one grade — the pitch graded on what it does and where it was thrown, against its own type — with
 Whiff+ and Batted-ball+ as its halves and Location+ as what the spots add. The Pitching+ tab's sub-head still says what the stuff alone
