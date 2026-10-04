@@ -1321,6 +1321,11 @@ is deploy-limited.
   correlation with three-ball strike rate is −.70, with Zone% / Chase% / Swing% under .06. The "walks beyond Strike%" residual repeats year to
   year at r .49 (half skill, half noise); three-ball strike rate itself at .39. Zone% / Chase% stay fold-outs under Strike% (`PITCHER_SUB`) and
   columns. Files built before the count-state fields show "–" for the two bars.
+  **xBB% (Sean, the same hour: "below bb% add xBB%")**: the formula itself as a card metric right under BB% — `xBBFormula(m)` / `XBBF`
+  (61.762 − 0.545·Strike% − 0.026·1st-pitch Strike% − 0.229·3-ball Strike%, the pooled BF-weighted fit; the SP / RP fits were within 0.1 of
+  it), set on `V(p).m` for every pitcher view like the hitters' xK%, key **`xbbf`** (`xbb` was the command models' walk rate and the
+  saved-list migration still drops that key), a `SIDE_P` def (lower = better) so the pool ranks it, glossary / `OUTCOME_LABEL_P` / `SHORT` /
+  Stats-panel Discipline entries. Misiorowski 2025: 11.0 actual vs 7.9 expected; 2026: 6.6 vs 5.4. Null without the count-state fields.
 
 ## 9. Things only Sean can do
 
