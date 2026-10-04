@@ -1503,6 +1503,18 @@ is deploy-limited.
  `nmix`'s label is **Mix xwOBA** everywhere (lower is better, as before). 2026 Skenes: Called 13.5 (6th pct),
   SwStr 14.4 (87th), Foul 21.0 (91st).
 
+* **xK% and xBB% tabs (Sean, 4 Oct 2026: "a tab that shows the same expected strikeout percentile bars that we had before when we showed
+  everything with like the formulas. and then also have that tab show the like pitching+ expected k stuff too and make that percentile bars as
+  well", "a tab for expected bb% as well that has all those same percentile bars")**: `BTABS_P` is Pitching+ · **xK%** · **xBB%** · nERA. Both
+  draw the card's percentile bars (`pctColumns` — the section drawing factored out of `renderPctPanel`, which keeps the ResizeObserver reset and
+  the Similar row; `renderPctTab` wraps it with a note, `.pcttab`). **xK%** (`XK_COLS_P`): Strikeouts (K% · xK% · Pitching+ xK%), Strikes — actual
+  (Whiff%, Called Strike%, SwStr%, CSW%, 2-strike Whiff%, Foul%), Strikes — Pitching+ expected (xWhiff%, **xSwStr% · xCSW% · x2-strike Whiff% ·
+  xFoul%** — new pool stats `nswstr / ncsw / ns2whf / nfoul` from `xkParts`, the one place the Pitching+ xK% substitutions live now; `xKStuff`
+  and `renderXkBreakdown` read it too; in `NEXT_KEYS`, the PK block, `statsFor`, `SIDE_P`, `SHORT`, the glossary), then Plate (Strike%, Swing%,
+  Zone%, Chase%, Z-Contact%), Counts (1st-pitch / 3-ball Strike%, 2-strike Swing% / Zone% — `s2whf / s2sw / s2zone` got `SIDE_P` defs so the pool
+  ranks them) and Stuff (velo, extension, Pitching+, Location+). **xBB%** (`XBB_COLS_P`): Walks (BB% · xBB% · uBB%), The formula (Strike%,
+  1st-pitch, 3-ball), Zone & Chase, Whiffs. The sort-key path reads any `NEXT_KEYS` member off the pool's stats now.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
