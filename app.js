@@ -23,7 +23,7 @@
         ["Pitching+", ["xrat", "pitch", "pwhf", "pbb", "sloc", "wgap", "nwhf", "fbv", "ext"]]],   // one grade (Sean, 4 Oct 2026: Stuff+ and Pitching+ no longer separate)
   };
   const colLab = (m) => { const l = SHORT[m.key] || m.label; return m.unit === "%" && !l.includes("%") ? l + "%" : l; };
-  const SHORT = { foul: "Foul%", xkf: "xK%", xbbf: "xBB%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", mixw: "Mix wOBA", nmix: "Mix xwOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
+  const SHORT = { foul: "Foul%", xkf: "xK%", xks: "Stuff xK%", xbbf: "xBB%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", mixw: "Mix wOBA", nmix: "Mix xwOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
                tiers: "draft2027.tiers", tierNames: "draft2027.tierNames", sets: "draft2027.rankSets", extraPos: "draft2027.extraPos", stars: "draft2027.stars" };
   // Storage that cannot lose a saved list. A value that will not parse is left exactly where it is — its raw
@@ -300,9 +300,9 @@
                   { key: "sba", label: "SB Att.", hib: true, dec: 0, unit: "", int: true }, { key: "sbp", label: "SB%", hib: true, dec: 1, unit: "%" }];
   // hitter stats that aren't on the card but can be Leaderboard / Trending columns
   const LB_EXTRA_H = ["xwdiff", "xwcon", "xk", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp", "fpts", "fpg", "fppa"];
-  const LB_EXTRA_P = ["xrat", "nwhf", "xkf", "ngb", "npu", "nmix", "wgap", "pitch", "pwhf", "pbb", "sloc", "fpts", "fpg", "fpip", "fpgs"];   // pERA / pK% / pBB% / Pitching uERA off the lists (Sean, 4 Oct 2026: "I simply just want expected whiffs GBs and pus")   // Stuff uERA / Arsenal Opt. off the lists with Stuff+ (4 Oct 2026)
-  const NEXT_KEYS = new Set(["xrat", "nwhf", "ngb", "npu", "nmix", "wgap", "xkf"]);   // xK% (4 Oct 2026)
-  const XRW = { xkf: 55, xbbf: 35, nmix: 10 };   // the xRating's weights (Sean, 4 Oct 2026: "make the weight for xskills 55%/35%/10%")   // xRating and the expected Mix wOBA too (4 Oct 2026)
+  const LB_EXTRA_P = ["xrat", "nwhf", "xkf", "xks", "ngb", "npu", "nmix", "wgap", "pitch", "pwhf", "pbb", "sloc", "fpts", "fpg", "fpip", "fpgs"];   // pERA / pK% / pBB% / Pitching uERA off the lists (Sean, 4 Oct 2026: "I simply just want expected whiffs GBs and pus")   // Stuff uERA / Arsenal Opt. off the lists with Stuff+ (4 Oct 2026)
+  const NEXT_KEYS = new Set(["xrat", "nwhf", "ngb", "npu", "nmix", "wgap", "xkf", "xks"]);   // xK% / Stuff xK% (4 Oct 2026)
+  const XRW = { xks: 55, xbbf: 35, nmix: 10 };   // the xRating (Sean, 4 Oct 2026: "xrating xK% ... using their stuff expected whiff rates and stuff expected foul rates ... xBB% as standard ... mix xwoba based on their stuff"), 55 / 35 / 10   // xRating and the expected Mix wOBA too (4 Oct 2026)
   // still computed and on the pool's stats, but off every list, panel and sort (Sean, 4 Oct 2026: one Pitching+; "get rid of pERA and pitching+ uERA")
   const RETIRED_P = new Set(["stuff", "swhf", "sbb", "suera", "aopt", "puera", "pera", "nk", "nbb", "uera"]);   // uERA too (Sean, 4 Oct 2026: "Replace uERA with nERA")   // pera / nk / nbb still on the pool's stats, just not listed   // next season's (pERA and the projected rates), read off the pool's stats
   // fantasy points as list columns (Sean, 1 Oct 2026: "on the fantasy rankings and draft board ... points per game and points per PA"):
@@ -388,7 +388,7 @@
   // Mix wOBA: the league's value of his average ball in play (type × pulled / straightaway / the other way) — balls in play
   // only, no bunts, walks and strikeouts left out (Sean): what his batted-ball distribution alone is worth
   const mixW = (sum, n) => (K().mix && n ? Math.round(1000 * sum / n) / 1000 : null);
-  const SIDE_P = [{ key: "xkf", label: "xK%", hib: true, dec: 1, unit: "%" }, { key: "xbbf", label: "xBB%", hib: false, dec: 1, unit: "%" }, { key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "suera", label: "Stuff uERA", hib: false, dec: 2, unit: "" }, { key: "puera", label: "Pitching uERA", hib: false, dec: 2, unit: "" }, { key: "pera", label: "pERA", hib: false, dec: 2, unit: "" }, { key: "wgap", label: "Whiff vs exp.", hib: false, dec: 1, unit: " pts", sign: true }, { key: "nmix", label: "Mix xwOBA", hib: false, dec: 3, unit: "" }, { key: "xrat", label: "xRating", hib: true, dec: 0, unit: "" }, { key: "nk", label: "pK%", hib: true, dec: 1, unit: "%" }, { key: "nbb", label: "pBB%", hib: false, dec: 1, unit: "%" }, { key: "nwhf", label: "xWhiff%", hib: true, dec: 1, unit: "%" }, { key: "ngb", label: "xGB%", hib: true, dec: 1, unit: "%" }, { key: "npu", label: "xPU%", hib: true, dec: 1, unit: "%" },
+  const SIDE_P = [{ key: "xkf", label: "xK%", hib: true, dec: 1, unit: "%" }, { key: "xks", label: "Stuff xK%", hib: true, dec: 1, unit: "%" }, { key: "xbbf", label: "xBB%", hib: false, dec: 1, unit: "%" }, { key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "suera", label: "Stuff uERA", hib: false, dec: 2, unit: "" }, { key: "puera", label: "Pitching uERA", hib: false, dec: 2, unit: "" }, { key: "pera", label: "pERA", hib: false, dec: 2, unit: "" }, { key: "wgap", label: "Whiff vs exp.", hib: false, dec: 1, unit: " pts", sign: true }, { key: "nmix", label: "Mix xwOBA", hib: false, dec: 3, unit: "" }, { key: "xrat", label: "xRating", hib: true, dec: 0, unit: "" }, { key: "nk", label: "pK%", hib: true, dec: 1, unit: "%" }, { key: "nbb", label: "pBB%", hib: false, dec: 1, unit: "%" }, { key: "nwhf", label: "xWhiff%", hib: true, dec: 1, unit: "%" }, { key: "ngb", label: "xGB%", hib: true, dec: 1, unit: "%" }, { key: "npu", label: "xPU%", hib: true, dec: 1, unit: "%" },
                   { key: "stuff", label: "Stuff+", hib: true, dec: 0, unit: "" }, { key: "swhf", label: "Whiff+", hib: true, dec: 0, unit: "" },
                   { key: "sbb", label: "Batted-ball+", hib: true, dec: 0, unit: "" },
                   { key: "aopt", label: "Arsenal Opt.", hib: true, dec: 1, unit: " pts", sign: true },
@@ -903,7 +903,7 @@
                    fbv: t.fbn ? Math.round(10 * t.fbv / t.fbn) / 10 : null, ext: t.extn ? Math.round(10 * t.exts / t.extn) / 10 : null,
                    ev: (t.evn || t.bbe) ? Math.round(10 * t.evsum / (t.evn || t.bbe)) / 10 : null, hh: rate(t.hh, t.bip || t.bbe), brl: rate(t.brl, t.bip || t.bbe),
                    fstrk: rate(t.fps, t.fp), b3strk: rate(t.b3s, t.b3), s2whf: rate(t.s2wh, t.s2sw), s2sw: rate(t.s2sw, t.s2), s2zone: rate(t.s2z, t.s2),   // count states (null on files built before them)
-                   ...stuffPlusLoc(t), _stn: t.stn, _stw: t.stw, _stg: t.stg, _stp: t.stp, _stnl: t.stnl, _stwl: norm ? tN.stwl : t.stwl, _stnb: t.stnb, _stgl: norm ? tN.stgl : t.stgl, _stpl: norm ? tN.stpl : t.stpl },
+                   ...stuffPlusLoc(t), _stn: t.stn, _stw: t.stw, _stg: t.stg, _stp: t.stp, _stnl: t.stnl, _stwl: norm ? tN.stwl : t.stwl, _stf: t.stf, _stnb: t.stnb, _stgl: norm ? tN.stgl : t.stgl, _stpl: norm ? tN.stpl : t.stpl },
               sample: ip, ip, bf: t.bf, g: games, gs, role: p.primary, ex: arsenalExtras(p, t),
               ctx: { G: games, GS: gs, wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, Pitches: t.pit, bbl, PAw: t.wden, HBP: t.hbp } };
       } else {
@@ -1247,10 +1247,32 @@
   const lgXwCache = new Map();
   function lgXw() {
     const key = viewKey(); if (lgXwCache.has(key)) return lgXwCache.get(key);
-    let a = 0, b = 0, na = 0, nb = 0;
-    for (const q of DS.players) { if (q.type !== "P" || !(q.bf >= 20)) continue; const r = pitchRates(q), s = stuffRates(q); if (r) { a += r.xw * q.bf; na += q.bf; } if (s) { b += s.xw * q.bf; nb += q.bf; } }
-    const out = { xw: na ? a / na : null, xws: nb ? b / nb : null }; lgXwCache.set(key, out); return out;
+    let a = 0, b = 0, c = 0, na = 0, nb = 0, nc = 0;
+    for (const q of DS.players) { if (q.type !== "P" || !(q.bf >= 20)) continue; const r = pitchRates(q), s = stuffRates(q), m = V(q).m; if (r) { a += r.xw * q.bf; na += q.bf; } if (s) { b += s.xw * q.bf; nb += q.bf; }
+      const xf = r && m.swing != null ? foulChance(q) : null; if (xf != null) { c += m.swing * (1 - r.xw / 100) * xf / 100 * q.bf; nc += q.bf; } }   // the league's expected fouls per pitch
+    const out = { xw: na ? a / na : null, xws: nb ? b / nb : null, xfp: nc ? c / nc : null }; lgXwCache.set(key, out); return out;
   }
+  // the stuff model's foul chance on contact (%) over his pitches: the day rows' sums in a window, the arsenal otherwise
+  function foulChance(p) {
+    const m = V(p).m; if (m._stn && m._stf != null) return 100 * m._stf / m._stn;
+    const a = p.ctx && p.ctx.arsenal, F = DATA.meta.arsenalFields; if (!a || !F || needsDays()) return null;
+    const iN = F.indexOf("n"), iF = F.indexOf("xfoul"); if (iF < 0) return null;
+    let n = 0, t = 0; for (const r of a) if (r[iF] != null) { n += r[iN]; t += r[iN] * r[iF]; }
+    return n ? t / n : null;
+  }
+  // Stuff xK% (Sean, 4 Oct 2026: "xrating xK% but if possible using their stuff expected whiff rates and stuff expected foul rates"): the
+  // same K% fit with the whiff side expected — the Pitching+ model's xWhiff for Whiff%, swings × xWhiff for SwStr%, called strikes + that
+  // for CSW%, his two-strike whiff rate scaled by the same ratio, and for Foul% the contact that's left (swings × (1 − xWhiff)) times the
+  // stuff model's foul chance on contact. The expected rates are centred on the league's actual ones first (the models read a couple of
+  // points hot on a season they never saw), so the level is right and only his spread counts. Checked 2020-26 (scratch xks.js): same-season
+  // r .87 with K% (Whiff% alone .87), next season's K% rmse 3.39 against his own K%'s 3.55, and K% − Stuff xK% predicts next year's K%
+  // change at r −.36 (the actual-rate gap: −.07) — the forward read, where xK% is the same-season one
+  const xKStuff = (m, xw, xws, xf) => {
+    if (xw == null || m.swing == null || m.cstr == null) return null;
+    const L = lgRatesP(), LX = lgXw(), xwc = L.whf != null && LX.xw != null ? xw + L.whf - LX.xw : xw, sws = m.swing * xwc / 100;
+    const fx = xf == null ? null : m.swing * (1 - xwc / 100) * xf / 100, foul = fx == null ? m.foul : L.foul != null && LX.xfp != null ? fx + L.foul - LX.xfp : fx;
+    return xKModel(Object.assign({}, m, { whf: xwc, swstr: sws, csw: m.cstr + sws, s2whf: m.s2whf == null ? null : m.whf ? m.s2whf * xwc / m.whf : m.s2whf, foul }), xwc, xws);
+  };
   const xKModel = (m, xw, xws) => { const v = rateFit(Object.assign({}, m, { xw, xws }), "k", XKM, Object.assign({}, lgRatesP(), lgXw())); return v == null ? null : Math.round(10 * v) / 10; };
   const xBBFormula = (m) => (m.strk == null || m.fstrk == null || m.b3strk == null ? null : Math.round(10 * (XBBF.c + XBBF.strk * m.strk + XBBF.fstrk * m.fstrk + XBBF.b3strk * m.b3strk)) / 10);
   // the Mix wOBA a ground-ball / popup share implies (the expected mix from the Pitching+ model): air balls split at the pool's line-drive share
@@ -1306,7 +1328,7 @@
     const ms = metricsFor(g);
     const pct = {};
     for (const m of allFor(g)) pct[m.key] = percentiles(list.map((p) => { const x = V(p).m[m.key]; return x == null ? null : m.hib ? x : -x; }));
-    let score, scorePct, blend, zmoVals = [], rawBlend = [], mixwVals = null;
+    let score, scorePct, blend, zmoVals = [], rawBlend = [], mixwVals = null, pjs0 = null, srs0 = null;
     if (g === "H") {
       const hk = wobaHead() ? "woba" : HEAD.key;               // no directional model at this level: wOBA carries the headline
       const xw = list.map((p) => V(p).m[hk]);
@@ -1323,6 +1345,10 @@
       // Mix wOBA's percentiles before the score (it weighs 15 since 4 Oct 2026): the pool's line-drive share first, the rest below reuses them
       { let ldN = 0, fbN = 0; for (const p of list) { const b = (V(p).ctx || {}).bbl; if (b) { ldN += (b.ld || [0])[0]; fbN += (b.fb || [0])[0]; } }
         mixwVals = list.map((p) => mixWOBA(V(p), { ldAir: ldN + fbN ? ldN / (ldN + fbN) : null })); pct.mixw = percentiles(mixwVals.map((x) => (x == null ? null : -x))); }
+      // the Rating is xK% 55 / xBB% 35 / Mix wOBA 10 since 4 Oct 2026 (Sean: "make rating xK%, xBB%, and mix woba"), so xK% is ranked here,
+      // before the score; the PK block below re-uses these rates and sets the same percentiles again
+      pjs0 = list.map((p) => projRates(p)); srs0 = list.map((p) => stuffRates(p));
+      pct.xkf = percentiles(list.map((p, i) => (pjs0[i] ? xKModel(V(p).m, pjs0[i].xw, srs0[i] ? srs0[i].xw : null) : null)));
       const w = DATA.meta.pitcherWeights, tot = Object.values(w).reduce((a, b) => a + b, 0);
       score = list.map((_, i) => Object.entries(w).reduce((s, [k, v]) => s + (pct[k][i] ?? 50) * v, 0) / tot);
       scorePct = score.map((x) => Math.round(x));
@@ -1384,7 +1410,7 @@
       const calOf = (rates) => { const a = [], x = []; list.forEach((p, i) => { const r = rates[i], w = V(p).m.whf; if (r && w != null && refSample(p) >= refMin(g)) { a.push(w); x.push(r.xw); } });
         if (a.length < 20) return null; const mean = (v) => v.reduce((t, y) => t + y, 0) / v.length, sd = (v, m) => Math.sqrt(v.reduce((t, y) => t + (y - m) * (y - m), 0) / v.length);
         const la = mean(a), lx = mean(x), sx = sd(x, lx); return { la, lx, s: sx ? sd(a, la) / sx : 1 }; };
-      const srs = list.map((p) => stuffRates(p)), prs = list.map((p) => pitchRates(p)); sorted.calS = calOf(srs); sorted.calP = calOf(prs);
+      const srs = srs0 || list.map((p) => stuffRates(p)), prs = list.map((p) => pitchRates(p)); sorted.calS = calOf(srs); sorted.calP = calOf(prs);
       const sus = list.map((p, i) => { const r = srs[i], u = r && stuffUeraCore(V(p), r.xw, r.xg, r.xp, pct.strk[i], sorted, sorted.calS); return u ? u.uera : null; });
       const sup = percentiles(sus.map((x) => (x == null ? null : -x)));
       list.forEach((p, i) => { const s = stats.get(p.type + p.id); s.suera = sus[i]; s.pct.suera = sup[i]; });
@@ -1396,11 +1422,12 @@
       sorted.puera = pus.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
       // pERA (Sean, 3 Oct 2026): next season's — the forward fits' K% and BB% (nextKBB) on the projected ground-ball / popup mix
       // (projRates); the projected rates themselves are columns too (pK%, pBB%, pWhiff%, pGB%, pPU%)
-      const pjs = list.map((p) => projRates(p));
+      const pjs = pjs0 || list.map((p) => projRates(p));
       const pes = list.map((p, i) => { const r = pjs[i]; return r ? stuffUeraCore(V(p), r.xw, r.xg, r.xp, pct.strk[i], sorted, null, true) : null; });
       const PK = { pera: (i) => (pes[i] ? -pes[i].uera : null), nk: (i) => (pes[i] ? pes[i].ik.k : null), nbb: (i) => (pes[i] ? -pes[i].ik.bb : null),
                    nwhf: (i) => (pjs[i] ? pjs[i].xw : null), ngb: (i) => (pjs[i] ? 100 * pjs[i].xg : null), npu: (i) => (pjs[i] ? 100 * pjs[i].xp : null),
-                   xkf: (i) => (pjs[i] ? xKModel(V(list[i]).m, pjs[i].xw, srs[i] ? srs[i].xw : null) : null),   // xK% on the expected whiff rates
+                   xkf: (i) => (pjs[i] ? xKModel(V(list[i]).m, pjs[i].xw, srs[i] ? srs[i].xw : null) : null),   // xK%: the same-season fit on his rates
+                   xks: (i) => (pjs[i] ? xKStuff(V(list[i]).m, pjs[i].xw, srs[i] ? srs[i].xw : null, foulChance(list[i])) : null),   // Stuff xK%: the whiff side expected
                    // the whiff gap (Sean, 4 Oct 2026: "alerts pitchers that are getting more whiffs than their stuff and command would indicate"):
                    // his Whiff% minus the rate his pitches project for next season — + = more than they deserve, and it comes back (wgapVerdict)
                    wgap: (i) => (pjs[i] && V(list[i]).m.whf != null ? -(Math.round(10 * (V(list[i]).m.whf - pjs[i].xw)) / 10) : null),
@@ -1469,6 +1496,8 @@
     }
     const mixw = mixWOBA(V(p), pl.sorted);   // before the score: it's a Rating input (4 Oct 2026)
     pct.mixw = mixw == null || !pl.sorted.mixw ? null : insertPct(pl.sorted.mixw, -mixw);
+    const pj = projRates(p), sr = stuffRates(p), xk0 = pj ? xKModel(V(p).m, pj.xw, sr ? sr.xw : null) : null;   // xK% too: a Rating input since 4 Oct 2026
+    pct.xkf = xk0 == null || !pl.sorted.xkf ? null : insertPct(pl.sorted.xkf, xk0);
     const w = DATA.meta.pitcherWeights, tot = Object.values(w).reduce((a, b) => a + b, 0);
     const score = Object.entries(w).reduce((s, [k, v]) => s + (pct[k] ?? 50) * v, 0) / tot;
     let above = 0; for (const s of pl.scores) if (s > score) above++;
@@ -1479,13 +1508,13 @@
     pct.ubb = ukbb && pl.sorted.ubb ? insertPct(pl.sorted.ubb, -ukbb.bb) : null;
     const uera = pl.sorted.uera ? underlyingERA(V(p), ukbb, pl.sorted) : null;
     pct.uera = uera == null || !pl.sorted.uera ? null : insertPct(pl.sorted.uera, -uera);
-    const sr = stuffRates(p), su0 = sr && pl.sorted.suera ? stuffUeraCore(V(p), sr.xw, sr.xg, sr.xp, pct.strk, pl.sorted, pl.sorted.calS) : null, suera = su0 ? su0.uera : null;
+    const su0 = sr && pl.sorted.suera ? stuffUeraCore(V(p), sr.xw, sr.xg, sr.xp, pct.strk, pl.sorted, pl.sorted.calS) : null, suera = su0 ? su0.uera : null;
     pct.suera = suera == null ? null : insertPct(pl.sorted.suera, -suera);
     const pr = pitchRates(p), pu0 = pr && pl.sorted.puera ? stuffUeraCore(V(p), pr.xw, pr.xg, pr.xp, pct.strk, pl.sorted, pl.sorted.calP) : null, puera = pu0 ? pu0.uera : null;
     pct.puera = puera == null ? null : insertPct(pl.sorted.puera, -puera);
-    const pj = projRates(p), pe0 = pj && pl.sorted.pera ? stuffUeraCore(V(p), pj.xw, pj.xg, pj.xp, pct.strk, pl.sorted, null, true) : null;   // pERA: next season's
+    const pe0 = pj && pl.sorted.pera ? stuffUeraCore(V(p), pj.xw, pj.xg, pj.xp, pct.strk, pl.sorted, null, true) : null;   // pERA: next season's
     const nx = { pera: pe0 ? pe0.uera : null, nk: pe0 ? pe0.ik.k : null, nbb: pe0 ? pe0.ik.bb : null, nwhf: pj ? pj.xw : null, ngb: pj ? 100 * pj.xg : null, npu: pj ? 100 * pj.xp : null,
-                 xkf: pj ? xKModel(V(p).m, pj.xw, sr ? sr.xw : null) : null,
+                 xkf: xk0, xks: pj ? xKStuff(V(p).m, pj.xw, sr ? sr.xw : null, foulChance(p)) : null,
                  wgap: pj && V(p).m.whf != null ? Math.round(10 * (V(p).m.whf - pj.xw)) / 10 : null, nmix: pj ? mixOfShares(pj.xg, pj.xp, pl.sorted) : null };
     for (const k of Object.keys(nx)) pct[k] = nx[k] == null || !pl.sorted[k] ? null : insertPct(pl.sorted[k], k === "pera" || k === "nbb" || k === "wgap" || k === "nmix" ? -nx[k] : nx[k]);
     { const W = XRW, tot = Object.values(W).reduce((a, b) => a + b, 0) || 1, ks = Object.keys(W);   // xRating: xK% 55 / xBB% 35 / Mix xwOBA 10
@@ -1788,7 +1817,7 @@
       if (key === "pera" || key === "nbb" || key === "wgap" || key === "nmix") { const u = st(p)[key]; return u == null ? null : -u; }
       if (key === "xrat") return st(p).xrat;
       if (key === "mixw" && V(p).m.mixw == null) { const u = st(p).mixw; return u == null ? null : -u; }
-      if (key === "nk" || key === "nwhf" || key === "ngb" || key === "npu" || key === "xkf") return st(p)[key];
+      if (key === "nk" || key === "nwhf" || key === "ngb" || key === "npu" || key === "xkf" || key === "xks") return st(p)[key];
       const mm = sortMetric, v = V(p).m[key];
       if (mm && v != null) return mm.hib === false ? -v : v;       // oriented so "desc" is always best first
       return st(p).pct[key];
@@ -4863,6 +4892,7 @@
     maxev: "The hardest ball he hit all season.",
     bs: "Average bat speed over competitive swings (bunts and check swings dropped).",
     osw: "O-Swing%: how often he swings at pitches outside the zone. Lower is better for a hitter, higher for a pitcher.",
+    xks: "Stuff xK%: xK% with the whiff side expected instead of actual — the Pitching+ model's expected whiff rate, the swinging strikes and two-strike whiffs it implies, and the stuff model's foul chance on the contact that's left — centred on the league. Forecasts next season's K% a little better than his own K% does, and K% above it tends to come down (below it, up). The xRating's K input.",
     cstr: "Called Strike%: called strikes per pitch — the strikes he gets without a swing. With SwStr% and Foul% it is one of the three strikes that keep a plate appearance alive, which is how xK% reads them.",
     foul: "Foul%: the share of his pitches fouled off — the strikes that were neither called, swung through nor put in play. It is what turns whiffs and strikes into strikeouts: contact that goes foul keeps the plate appearance alive, a ball in play ends it. With it, K% is explained to within half a point; without it, pitchers like Skenes read as over-performers and Webb / Phillips as under-performers. Repeats year to year like Strike%.",
     xkf: "xK%: the strikeout rate his rates say he should have — a fit over every 100+ BF pitcher-season 2020-26 on his Foul%, Whiff%, CSW%, SwStr%, two-strike Whiff%, Strike%, Swing%, Z-Contact%, Zone%, Chase%, first-pitch / three-ball strike rates, two-strike swing and zone rates, GB%, PU%, velocity, extension, Pitching+, Location+, Stuff+ and the expected whiff rates, each against the league's; within about half a K% point of the real one once Foul% is in. What's left over is noise, or Mason Miller.",
@@ -4916,7 +4946,7 @@
     pera: "pERA: next season's ERA from his pitches. Its K% and BB% (pK%, pBB%) are fits trained on the following season's rates — from his whiffs, strikes, swings, Stuff+, Location+, the location model's expected whiff rate, his mix and age, never his actual K% or BB% — on the ground-ball / popup mix his pitches project for next year (pGB%, pPU%). Held out by season it beats his own rates at next year's K% and BB% (starters 2.5 vs 2.8 K% points, 1.3 vs 1.4 BB%) and his ERA, FIP, SIERA and nERA at next year's ERA (r .44 vs .27-.39). A pitcher whose pERA sits under his ERA is one to expect more from next year; over it, less.",
     nk: "pK%: the strikeout rate his pitches project for next season — a fit trained on the following year's K% from his whiffs, strikes, swings, stuff, location, mix and age, never his actual K%. Where it sits over his K%, the strikeouts should come.",
     nbb: "pBB%: the walk rate his pitches project for next season — a fit trained on the following year's BB% from his strikes, swings, first-pitch and three-ball strikes, stuff, location, mix and age, never his actual BB%.",
-    xrat: "xRating: the xSkills' percentiles weighted xK% 55, xBB% 35, Mix xwOBA 10 — what his pitches, where he throws them and his strike rates say the Rating should be, with no actual whiffs in it.",
+    xrat: "xRating: Stuff xK% 55, xBB% 35, Mix xwOBA 10 over percentiles — the Rating with the whiff side and the batted-ball mix taken from what his stuff and spots should produce rather than what they did. A Rating well above it has run on whiffs or balls in play its stuff didn't earn.",
     nmix: "Mix xwOBA: the league's wOBA per ball in play for the ground-ball / popup mix the Pitching+ model expects from his pitches, the air balls split at the league's line-drive share (lower is better).",
     nwhf: "xWhiff%: the whiff rate per swing the Pitching+ model expects from his pitches and where he throws them — the Pitching+ tab's All pitches row.",
     ngb: "xGB%: the ground-ball rate on contact the Pitching+ model expects from his pitches and their spots.",
@@ -6869,11 +6899,11 @@
     const wr = m.whf ? asStarter("xwl", m.whf) / m.whf : 1;   // his actual whiff rates move by the same effect as the expected one
     const mS = Object.assign({}, m, { strk: sk, fstrk: m.fstrk == null ? null : m.fstrk + AS_SP.fstrk[0], b3strk: m.b3strk == null ? null : m.b3strk + AS_SP.b3strk[0], fbv: fv, pitch: pt,
                                       whf: m.whf == null ? null : m.whf * wr, s2whf: m.s2whf == null ? null : m.s2whf * wr, swstr: m.swstr == null ? null : m.swstr * wr, csw: m.csw == null || m.swstr == null ? m.csw : m.csw - m.swstr * (1 - wr) });
-    const xkS = xKModel(mS, xw, sr ? asStarter("xwl", sr.xw) : null), xbS = xBBFormula(mS);
-    const px = { xkf: S.xkf && xkS != null ? insertPct(S.xkf, xkS) : null, xbbf: S.xbbf && xbS != null ? insertPct(S.xbbf, -xbS) : null, nmix: S.nmix && nm != null ? insertPct(S.nmix, -nm) : null };
+    const xkS = xKStuff(mS, xw, sr ? asStarter("xwl", sr.xw) : null, foulChance(p)), xbS = xBBFormula(mS);
+    const px = { xks: S.xks && xkS != null ? insertPct(S.xks, xkS) : null, xbbf: S.xbbf && xbS != null ? insertPct(S.xbbf, -xbS) : null, nmix: S.nmix && nm != null ? insertPct(S.nmix, -nm) : null };
     const xr = Object.keys(W).every((k) => px[k] != null) ? Math.round(Object.keys(W).reduce((a, k) => a + W[k] * px[k], 0) / tot) : null;
     const d = el("div", "aopt asstarter");
-    d.append(el("b", null, "As a starter"), el("span", null, `: xWhiff ${r1(pj.xw)} → ${r1(xw)}, Pitching+ ${m.pitch == null ? "–" : Math.round(m.pitch)} → ${pt == null ? "–" : Math.round(pt)}, FB velo ${r1(m.fbv)} → ${r1(fv)}, Strike% ${r1(m.strk)} → ${r1(sk)}, xK% ${r1(m.xkf == null && st ? st.xkf : m.xkf)} → ${r1(xkS)}, xBB% ${r1(m.xbbf)} → ${r1(xbS)}, xGB% ${r1(100 * pj.xg)} → ${r1(xg)}, xPU% ${r1(100 * pj.xp)} → ${r1(xpu)}${nm == null ? "" : `, Mix xwOBA ${nm0.toFixed(3)} → ${nm.toFixed(3)}`}${xr == null ? "" : `, xRating among starters ${xr}`}. Relievers who moved to the rotation (2015-26, 102 of them) gave back about this much of what the role had given them, net of the normal year-to-year drift — more the better the reliever numbers were.`));
+    d.append(el("b", null, "As a starter"), el("span", null, `: xWhiff ${r1(pj.xw)} → ${r1(xw)}, Pitching+ ${m.pitch == null ? "–" : Math.round(m.pitch)} → ${pt == null ? "–" : Math.round(pt)}, FB velo ${r1(m.fbv)} → ${r1(fv)}, Strike% ${r1(m.strk)} → ${r1(sk)}, Stuff xK% ${r1(st ? st.xks : null)} → ${r1(xkS)}, xBB% ${r1(m.xbbf)} → ${r1(xbS)}, xGB% ${r1(100 * pj.xg)} → ${r1(xg)}, xPU% ${r1(100 * pj.xp)} → ${r1(xpu)}${nm == null ? "" : `, Mix xwOBA ${nm0.toFixed(3)} → ${nm.toFixed(3)}`}${xr == null ? "" : `, xRating among starters ${xr}`}. Relievers who moved to the rotation (2015-26, 102 of them) gave back about this much of what the role had given them, net of the normal year-to-year drift — more the better the reliever numbers were.`));
     d.title = "The reliever-to-starter effect from history: the next-season fit for relievers who became starters minus the fit for relievers who stayed relievers, at his value. Strike% rises about half a point (more zone, more first-pitch and three-ball strikes — a starter paces himself), Location+ doesn't move, and the batted-ball mix barely does (a point of ground balls).";
     return d;
   }
@@ -6957,8 +6987,8 @@
     const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
     if (P) { const xr = st && st.xrat != null ? st.xrat : null, rt = st && st.scorePct != null ? st.scorePct : null;
       if (xr != null && rt != null) { const d = el("div", "aopt xrating"), gap = rt - xr;
-        d.append(el("b", null, `Rating ${rt} · xRating ${xr}`), el("span", null, ` — the xSkills (xK% 55, xBB% 35, Mix xwOBA 10) against the Rating's Whiff% 55, Strike% 30, Mix wOBA 15.${Math.abs(gap) >= 8 ? ` His Rating runs ${Math.abs(gap)} ${gap > 0 ? "over" : "under"} what his pitches say; about half of a gap like that has closed the next season.` : " The two agree."}`));
-        d.title = "xRating: the xSkills' percentiles weighted xK% 55, xBB% 35, Mix xwOBA 10 — the strikeout, walk and batted-ball rates his pitches say he should have, with no actual whiffs in it.";
+        d.append(el("b", null, `Rating ${rt} · xRating ${xr}`), el("span", null, ` — Stuff xK% 55, xBB% 35, Mix xwOBA 10 against the Rating's xK% 55, xBB% 35, Mix wOBA 10: the same three skills with the whiffs and the mix taken from his stuff instead of his results.${Math.abs(gap) >= 8 ? ` His Rating runs ${Math.abs(gap)} ${gap > 0 ? "over" : "under"} what his pitches say; about half of a gap like that has closed the next season.` : " The two agree."}`));
+        d.title = "xRating: Stuff xK% 55, xBB% 35, Mix xwOBA 10 over percentiles — the strikeout, walk and batted-ball rates his stuff and spots say he should have.";
         box.append(d); }
       const asSP = p.primary === "RP" && !needsDays() ? renderAsStarter(p, st) : null; if (asSP) box.append(asSP);
       if (roleNorm(SPLIT)) { const d = el("div", "aopt spnorm");
@@ -7475,7 +7505,7 @@
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
                           babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", aopt: "Arsenal Opt.", sloc: "Location+", pitch: "Pitching+", pwhf: "Whiff+ (loc)", pbb: "Batted-ball+ (loc)", xwcon: "xwOBAcon", fpts: "Pts", fpg: "Pts/G", fppa: "Pts/PA", fpip: "Pts/IP", fpgs: "Pts/GS",
                           spd: "Sprint Speed", sb: "SB", sba: "SB Att.", sbp: "SB%" };
-  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", fstrk: "1st-pitch Strike%", b3strk: "3-ball Strike%", xbbf: "xBB%", xkf: "xK%", foul: "Foul%", cstr: "Called Strike%", swstr: "SwStr%", nmix: "Mix xwOBA", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+", sloc: "Location+" });   // a pitcher's O-Swing% is his chase rate
+  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", fstrk: "1st-pitch Strike%", b3strk: "3-ball Strike%", xbbf: "xBB%", xkf: "xK%", xks: "Stuff xK%", foul: "Foul%", cstr: "Called Strike%", swstr: "SwStr%", nmix: "Mix xwOBA", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+", sloc: "Location+" });   // a pitcher's O-Swing% is his chase rate
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
     if (!nav) col.append(panelHead(...pctTitle(p, nav)));   // his page says the season in its header instead

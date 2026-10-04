@@ -1407,7 +1407,22 @@ is deploy-limited.
   SwStr% · Foul% (the three defs live in the build's Swing & miss group; `data.js` re-patched), 12 rows a column. **Then Skills is xK% ·
   xBB% · Mix xwOBA alone** (Sean, the same hour, from a screenshot: "get rid of the top 3") — Whiff%, Strike% and Mix wOBA still show in Swing &
   Miss, Zone & Chase and Batted Ball; 9 rows left, 12 right. **Then Mix wOBA, not Mix xwOBA** (Sean, a minute later: "keep it to xK%, xBB%, and mix woba"):
-  Skills = xK% · xBB% · Mix wOBA; Mix xwOBA stays a column and the xRating's third input. `nmix`'s label is **Mix xwOBA** everywhere (lower is better, as before). 2026 Skenes: Called 13.5 (6th pct),
+  Skills = xK% · xBB% · Mix wOBA; Mix xwOBA stays a column and the xRating's third input.
+* **Rating on the expected rates, xRating on the stuff (Sean, 4 Oct 2026: "make rating xK%, xBB%, and mix woba", "xrating xK% but if possible
+  using their stuff expected whiff rates and stuff expected foul rates ... use xBB% as standard and the use mix xwoba based on their stuff")**:
+  `PITCHER_SCORE_WEIGHTS` / `meta.pitcherWeights` = **xK% 55, xBB% 35, Mix wOBA 10** (`data.js` + `scoreNote.P` patched; the Whiff% 55 /
+  Strike% 30 / Mix wOBA 15 Rating lasted the day). xK% isn't on `m`, so `pool()` ranks it before the score (`pjs0` / `srs0`, re-used by the PK
+  block) and `placeIn` places it first (`xk0`). **Stuff xK%** (`xks`, `xKStuff(m, xw, xws, xf)`): the same K% fit with the whiff side
+  expected — the Pitching+ model's xWhiff for Whiff%, swings × xWhiff for SwStr%, called strikes + that for CSW%, two-strike whiffs scaled, and
+  Foul% = the contact left (swings × (1 − xWhiff)) × the stuff model's foul chance on contact (`foulChance(p)`: `_stf / _stn` day sums in a
+  window — `V()` now carries `_stf` — else the arsenal's `xfoul` by pitches); the expected whiff and foul levels are centred on the league's
+  actual ones first (`lgXw()` now also carries `xfp`, the league's expected fouls per pitch) since the fixed models read 2026 ~2 points hot.
+  Scratch `xks.js`, 300+ BF 2020-26: same-season r .87 with K% (xK% .99, Whiff% .87), next season's K% rmse 3.39 vs his own 3.55 and xK%'s
+  3.55, and K% − Stuff xK% predicts next year's K% change at r −.36 (K% − xK%: −.07) — the forward read. **xRating = Stuff xK% 55, xBB% 35,
+  Mix xwOBA 10** (`XRW`); the `.xrating` line, glossary (`xks`, `xrat`), `renderAsStarter` (Stuff xK% on the translated inputs), `NEXT_KEYS`,
+  `SIDE_P` / `LB_EXTRA_P` column "Stuff xK%", the sort-key path. Note `patchfoul.js` re-serialised `data.js`, so its numbers are plain JSON
+  (55, not 55.0) — match loosely when patching.
+ `nmix`'s label is **Mix xwOBA** everywhere (lower is better, as before). 2026 Skenes: Called 13.5 (6th pct),
   SwStr 14.4 (87th), Foul 21.0 (91st).
 
 ## 9. Things only Sean can do
