@@ -7466,8 +7466,9 @@
   // No xSkills section (Sean, 4 Oct 2026): xK% / xBB% / Mix xwOBA ride under Skills (11 rows left, 12 right)
   // Then no Strikes section either (Sean, the same hour): the three strikes and xK% ride in Swing & Miss — K%, xK%, Whiff%, Called Strike%,
   // SwStr%, Foul% (12 rows a column)
-  // Skills is the expected three alone (Sean, 4 Oct 2026: "get rid of the top 3") — Whiff% and Strike% are in Swing & Miss / Zone & Chase, Mix wOBA in Batted Ball
-  const PCT_COLS_P = [[["Skills", ["xkf", "xbbf", "nmix"]], ["Swing & Miss", ["k", "xkf", "whf", "cstr", "swstr", "foul"]]],
+  // Skills (Sean, 4 Oct 2026: "get rid of the top 3", then "keep it to xK%, xBB%, and mix woba"): xK% · xBB% · Mix wOBA — the actual mix, not
+  // the expected one; Whiff% and Strike% are in Swing & Miss / Zone & Chase, Mix xwOBA a column
+  const PCT_COLS_P = [[["Skills", ["xkf", "xbbf", "mixw"]], ["Swing & Miss", ["k", "xkf", "whf", "cstr", "swstr", "foul"]]],
                       [["Zone & Chase", ["bb", "xbbf", "strk", "fstrk", "b3strk"]], ["Results", ["kbb", "era"]], ["Batted Ball", ["gb", "pu", "mixw"]], ["Stuff", ["fbv", "ext"]]]];
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
