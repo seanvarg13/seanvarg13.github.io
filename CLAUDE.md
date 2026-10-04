@@ -1278,8 +1278,9 @@ is deploy-limited.
   carries an **As a starter** line (`renderAsStarter` / `AS_SP` / `asStarter`): his xWhiff, Pitching+ and FB velo moved by the
   reliever-to-starter effect from history — every RP → SP pair 2015-26 (102) against RP → RP (1,724), scratch `role.py`: the next-season fit
   for the movers minus the fit for the stayers, at his value (xWhiff 3.47 − .19x, Pitching+ 27.17 − .32x, Stuff+ 27.29 − .32x, velo
-  15.30 − .17x — a −0.9 whiff point, −4 to −7 Pitching+ and −0.6 mph for a typical reliever, more the better his reliever numbers; Strike%,
-  Location+ and the mix barely move) — and his **xRating among starters** (the translated xWhiff, his Strike% and expected mix placed in
+  15.30 − .17x — a −0.9 whiff point, −4 to −7 Pitching+ and −0.6 mph for a typical reliever, more the better his reliever numbers; Strike% and
+  Location+ don't move; the mix barely does and is carried for completeness — `role2.py`: xGB% 4.42 − .120x ≈ −0.8, xPU% +0.1, xMix wOBA
+  .0629 − .167x ≈ +.001, shown on the line and in the starter xRating) — and his **xRating among starters** (the translated xWhiff, his Strike% and expected mix placed in
   the SP pool). Bubic 2024: xWhiff 27.7 → 25.9 (2025 actual 25.1), Pitching+ 106 → 100 (actual 96.5), xRating 86 → 77 among starters.
   The reverse (SP → RP: +1.3 whiff, +6.5 Pitching+, +1.1 mph) isn't shown. **xRating is the first column** of every pitcher column set
   (`LB_SETS`, right after the Rating headline) and `state.lb.xratFront` moves it to the front of saved lists once.
