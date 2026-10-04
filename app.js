@@ -7464,7 +7464,9 @@
   // Strikes (Sean, 4 Oct 2026: "called strikes, whiffs, and then foul strikes ... the way that that k% model does"): the three kinds of strike
   // that don't end the plate appearance, per pitch, as xK% reads them; Results moved right to keep the columns even (11 / 12)
   // No xSkills section (Sean, 4 Oct 2026): xK% / xBB% / Mix xwOBA ride under Skills (11 rows left, 12 right)
-  const PCT_COLS_P = [[["Skills", ["whf", "strk", "mixw", "xkf", "xbbf", "nmix"]], ["Swing & Miss", ["k", "whf"]], ["Strikes", ["cstr", "swstr", "foul"]]],
+  // Then no Strikes section either (Sean, the same hour): the three strikes and xK% ride in Swing & Miss — K%, xK%, Whiff%, Called Strike%,
+  // SwStr%, Foul% (12 rows a column)
+  const PCT_COLS_P = [[["Skills", ["whf", "strk", "mixw", "xkf", "xbbf", "nmix"]], ["Swing & Miss", ["k", "xkf", "whf", "cstr", "swstr", "foul"]]],
                       [["Zone & Chase", ["bb", "xbbf", "strk", "fstrk", "b3strk"]], ["Results", ["kbb", "era"]], ["Batted Ball", ["gb", "pu", "mixw"]], ["Stuff", ["fbv", "ext"]]]];
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",

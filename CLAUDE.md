@@ -1401,8 +1401,10 @@ is deploy-limited.
   woba call it mix xwoba")**: `PITCHER_CARD` gains a **Strikes** group — `cstr` **Called Strike%** (called strikes per pitch; the build's
   `CStr_pct` = CS / Pitches, `V()` from `t.cs / t.pit`, and `csw − swstr` on a file built before it), `swstr` SwStr%, `foul` Foul% — the
   three strikes that keep a plate appearance alive, as xK% reads them (`data.js` patched; Foul% left `SIDE_P` for the card). `PCT_COLS_P`:
-  left = **Skills** (Whiff%, Strike%, Mix wOBA, xK%, xBB%, Mix xwOBA) · Swing & Miss · Strikes (11 rows), right = Zone & Chase · Results ·
-  Batted Ball · Stuff (12). `nmix`'s label is **Mix xwOBA** everywhere (lower is better, as before). 2026 Skenes: Called 13.5 (6th pct),
+  left = **Skills** (Whiff%, Strike%, Mix wOBA, xK%, xBB%, Mix xwOBA) · Swing & Miss (11 rows), right = Zone & Chase · Results ·
+  Batted Ball · Stuff (12). **Then no Strikes section** (Sean, the same hour: "dont add a new section just add the called strikes, whiffs,
+  and foul strike thing to the swing and miss section and also add xk% to that too"): **Swing & Miss** is K% · xK% · Whiff% · Called Strike% ·
+  SwStr% · Foul% (the three defs live in the build's Swing & miss group; `data.js` re-patched), 12 rows a column. `nmix`'s label is **Mix xwOBA** everywhere (lower is better, as before). 2026 Skenes: Called 13.5 (6th pct),
   SwStr 14.4 (87th), Foul 21.0 (91st).
 
 ## 9. Things only Sean can do
