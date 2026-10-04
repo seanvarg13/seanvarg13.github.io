@@ -6771,18 +6771,21 @@
   //   xWhiff   (8.99 + .61x) − (5.52 + .80x) = 3.47 − .19x     Pitching+ (45.74 + .50x) − (18.57 + .82x) = 27.17 − .32x
   //   Stuff+   (40.53 + .55x) − (13.24 + .87x) = 27.29 − .32x  FB velo   (17.47 + .81x) − (2.17 + .98x) = 15.30 − .17x
   // Bubic 2024 → 25: xWhiff 27.7 → 25.9 (actual 25.1), Pitching+ 106 → 100 (actual 96.5). Strike%, Location+ and the mix barely move
-  const AS_SP = { xwl: [3.47, -0.19], pitch: [27.17, -0.32], stuff: [27.29, -0.32], fbv: [15.30, -0.17] };
+  // the mix barely moves with the role (scratch role2.py): xGB% 4.42 − .120x (−0.8 for a typical reliever), xPU% +0.1, xMix wOBA
+  // .0629 − .167x (+.001) — carried for completeness, it moves the starter xRating by a point at most
+  const AS_SP = { xwl: [3.47, -0.19], pitch: [27.17, -0.32], stuff: [27.29, -0.32], fbv: [15.30, -0.17], xgb: [4.42, -0.120], xpu: [0.44, -0.046], nmix: [0.0629, -0.167] };
   const asStarter = (k, x) => (x == null ? null : x + AS_SP[k][0] + AS_SP[k][1] * x);
   function renderAsStarter(p, st) {
     const pj = projRates(p), m = V(p).m, spPool = pool("SP"), S = spPool && spPool.sorted; if (!pj || !S || !S.nwhf) return null;
     const xw = asStarter("xwl", pj.xw), pt = asStarter("pitch", m.pitch), fv = asStarter("fbv", m.fbv), r1 = (x) => (x == null ? "–" : x.toFixed(1));
+    const xg = asStarter("xgb", 100 * pj.xg), xpu = asStarter("xpu", 100 * pj.xp), nm0 = st && st.nmix != null ? st.nmix : null, nm = nm0 == null ? null : Math.round(1000 * asStarter("nmix", nm0)) / 1000;
     // his xRating in the starters' pool, with the translated whiff rate (Strike% and the mix as they are)
     const W = DATA.meta.pitcherWeights || {}, tot = Object.values(W).reduce((a, b) => a + b, 0) || 1;
-    const px = { whf: insertPct(S.nwhf, xw), strk: S.strk ? insertPct(S.strk, m.strk) : null, mixw: S.nmix && st && st.nmix != null ? insertPct(S.nmix, -st.nmix) : null };
+    const px = { whf: insertPct(S.nwhf, xw), strk: S.strk ? insertPct(S.strk, m.strk) : null, mixw: S.nmix && nm != null ? insertPct(S.nmix, -nm) : null };
     const xr = Object.keys(W).every((k) => px[k] != null) ? Math.round(Object.keys(W).reduce((a, k) => a + W[k] * px[k], 0) / tot) : null;
     const d = el("div", "aopt asstarter");
-    d.append(el("b", null, "As a starter"), el("span", null, `: xWhiff ${r1(pj.xw)} → ${r1(xw)}, Pitching+ ${m.pitch == null ? "–" : Math.round(m.pitch)} → ${pt == null ? "–" : Math.round(pt)}, FB velo ${r1(m.fbv)} → ${r1(fv)}${xr == null ? "" : `, xRating among starters ${xr}`}. Relievers who moved to the rotation (2015-26, 102 of them) gave back about this much of what the role had given them, net of the normal year-to-year drift — more the better the reliever numbers were.`));
-    d.title = "The reliever-to-starter effect from history: the next-season fit for relievers who became starters minus the fit for relievers who stayed relievers, at his value. Strike%, Location+ and the batted-ball mix barely move with the role.";
+    d.append(el("b", null, "As a starter"), el("span", null, `: xWhiff ${r1(pj.xw)} → ${r1(xw)}, Pitching+ ${m.pitch == null ? "–" : Math.round(m.pitch)} → ${pt == null ? "–" : Math.round(pt)}, FB velo ${r1(m.fbv)} → ${r1(fv)}, xGB% ${r1(100 * pj.xg)} → ${r1(xg)}, xPU% ${r1(100 * pj.xp)} → ${r1(xpu)}${nm == null ? "" : `, xMix wOBA ${nm0.toFixed(3)} → ${nm.toFixed(3)}`}${xr == null ? "" : `, xRating among starters ${xr}`}. Relievers who moved to the rotation (2015-26, 102 of them) gave back about this much of what the role had given them, net of the normal year-to-year drift — more the better the reliever numbers were.`));
+    d.title = "The reliever-to-starter effect from history: the next-season fit for relievers who became starters minus the fit for relievers who stayed relievers, at his value. Strike% and Location+ don't move with the role and the batted-ball mix barely does (a point of ground balls).";
     return d;
   }
   function renderWhiffCheck(p, m) {
