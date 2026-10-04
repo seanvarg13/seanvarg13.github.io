@@ -1540,8 +1540,11 @@ is deploy-limited.
   by `playerHead`, removed at the top of every `render`): title, × (`.phwinx`), the same `.phgrid`, the split warning / days note, a Clear
   button (full season, every split); a tap on the backdrop or Escape closes it (the document handlers now test `.phmodal` / `.phwin`, on a phone
   too); nothing is put in the plate, so the card never shifts — `.phfilt.phpop` and its CSS are unused. xSkills is gone as a section (Stuff mode's
-  Rating is it). **The xK% tab pairs the rates** (Sean, same hour: "every stat that is being compared next to each other"): one section, each
-  actual strike rate right over its Pitching+ expected one (Whiff% / xWhiff%, Called Strike% / xCalled Strike%, …).
+  Rating is it). **The xK% tab pairs the rates side by side** (Sean, same hour: "every stat that is being compared next to each other ... horizontally"):
+  left column **Actual** (K%, xK%, Whiff%, Called Strike%, SwStr%, CSW%, 2-strike Whiff%, Foul%), right column **Pitching+ expected** (K%, Pitching+
+  xK%, xWhiff%, xCalled Strike%, …) row for row — K% heads both so they align, and `pctColumns(…, { scaleAll: true })` puts the Poor / Average /
+  Great scale on both charts (`pctChart`'s third argument) since the scale row is what had offset them; Plate under the left, Counts and Stuff
+  under the right. A phone stacks the two.
 
 ## 9. Things only Sean can do
 
