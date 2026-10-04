@@ -1470,7 +1470,9 @@ is deploy-limited.
 * **Results section (Sean, 4 Oct 2026: "add results section that goes up top that has the x(K-bb)% mix woba, and then his rating", then minutes
   later "get rid of results and in skills show just x(k-bb)%, mix woba and rating")**: then "for skills could you instead do xk%, xbb%, and x(k-bb)%"): the
   pitcher card opens on **Skills** — xK% · xBB% · x(K-BB)% (`PCT_COLS_P`; left = Skills · Swing & Miss · Walk Avoidance, right = Batted Ball ·
-  Stuff, 7 / 8 rows). The Rating row (`RATING_M`, key `rating`) stayed wired but is off the card. The Rating row is special-cased in `renderPctPanel` (`RATING_M`, key `rating`, not a column): its value
+  Stuff, 7 / 7 rows). The Rating row (`RATING_M`, key `rating`) stayed wired but is off the card. **Stuff is Pitching+ xK% · xBB% · Pitching+
+  Mix xwOBA · xRating** (Sean, the same night: "under stuff get rid of fastball velo and pitching+ and add in xRating"); the xRating row's bubble is
+  the number itself, like the Rating's. The Rating row is special-cased in `renderPctPanel` (`RATING_M`, key `rating`, not a column): its value
   is `st.score` and, since the Rating is already a percentile blend, the bubble is the number itself (the tap note's league middle is 50);
   `OUTCOME_LABEL_P` / glossary carry `rating`.
 * **Expected fouls with the batter's swing (Sean, 4 Oct 2026: "i just really want his and other players foul ball data to be accurate because it
