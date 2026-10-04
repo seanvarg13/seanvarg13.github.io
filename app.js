@@ -8278,7 +8278,7 @@
     // make the header a bit smaller row wise"); the mrank line underneath only when something else is on it
     const tog = el("span", "phtog"), fs = el("div", "seg phfiltseg"); fs.append(b); tog.append(fs);
     (plate.querySelector(".hstrip") || mr || plate).append(tog);
-    if (p.type === "P" && !mob) tog.after(sideSwitch());
+    if (p.type === "P") { const ss = sideSwitch(); if (mob) ss.classList.add("vert"); tog.after(ss); }   // vertical beside Filters on a phone (Sean, 4 Oct 2026)
     { const ts = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (ts) tog.after(ts); }   // a two-way player's switch: right after Filters, a row saved
     { const hs = plate.querySelector(".hstrip"); if (hs && hs._stats) hs.append(hs._stats);   // the season's line, last: its own row
       // a phone (Sean, 1 Oct 2026: four ragged rows "just looks so weird"): the bio and Filters stay beside the headshot, and the
@@ -8315,16 +8315,25 @@
     // Filters is a window over the card (Sean, 4 Oct 2026: "a pop up window that just has a clear button ... hit x in the right or click
     // outside of it to exit ... doesn't ... shift down the player card"): fixed over everything, the grid inside, × and Clear, closed by
     // a tap on the backdrop or Escape (the document handlers). Nothing is put in the plate, so the card never moves
+    // dressed like the Leaderboard's Filters dropdown (Sean, 4 Oct 2026: "the same format as the filters button is on like the leaderboards"):
+    // hung under the Filters button, the small × top right, the body, a Clear link in a ruled foot; a tap anywhere else closes it
     if (open) {
-      const win = el("div", "phwin"), hd = el("div", "phwinhd"); hd.append(el("span", "phwintitle", "Filters"));
-      const x = el("button", "phwinx", "×"); x.type = "button"; x.setAttribute("aria-label", "Close filters");
-      x.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = false; savePrefs(); render(); }); hd.append(x); win.append(hd);
-      if (p.type === "P" && mob) { const r = el("div", "phsiderow"); r.append(el("span", "phcap", "Numbers"), sideSwitch()); win.append(r); }
-      win.append(grid); if (sum.childNodes.length) win.append(sum);
-      const ft = el("div", "phwinft"), clear = el("button", "btn btn-quiet", "Clear"); clear.type = "button";
+      const win = el("div", "phwin pop"), x = el("button", "pop-close", "×"); x.type = "button"; x.setAttribute("aria-label", "Close filters");
+      x.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = false; savePrefs(); render(); });
+      const body = el("div", "pop-body phwinbody"); body.append(grid); if (sum.childNodes.length) body.append(sum);
+      const ft = el("div", "popfoot phwinft"), clear = el("button", "linkbtn popclear", "Clear"); clear.type = "button";
       clear.addEventListener("click", (e) => { e.stopPropagation(); state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; savePrefs(); render(); });
-      ft.append(clear); win.append(ft);
+      ft.append(clear); win.append(x, body, ft);
       const ov = el("div", "phmodal"); ov.append(win); document.body.append(ov);
+      const place = () => {                              // under the button, like placePop; a phone's spans the screen
+        const bt = document.querySelector(".phead .phfilt"); if (!bt || !ov.isConnected) return;
+        const r = bt.getBoundingClientRect();
+        win.style.top = Math.round(r.bottom + 6) + "px"; win.style.maxHeight = Math.max(220, innerHeight - r.bottom - 16) + "px";
+        if (mobileView()) { win.style.left = "8px"; win.style.right = "8px"; win.style.width = "auto"; return; }
+        win.style.right = "auto"; win.style.width = ""; win.style.left = "0px"; const w = win.offsetWidth;
+        win.style.left = Math.round(Math.max(8, Math.min(r.left, innerWidth - w - 8))) + "px";
+      };
+      requestAnimationFrame(place); ov._place = place;
     } else if (sum.childNodes.length) F.append(sum);
     return finish();
   }
@@ -9653,6 +9662,7 @@
   sizeModal();
   window.addEventListener("resize", sizeModal);
   window.addEventListener("resize", sizePPage);
+  window.addEventListener("resize", () => { const ov = document.querySelector(".phmodal"); if (ov && ov._place) ov._place(); });
   if (window.visualViewport) { window.visualViewport.addEventListener("resize", sizeModal); window.visualViewport.addEventListener("scroll", sizeModal); }
   // a desktop's Filters panel shuts on a click anywhere outside it (or its button), or on Escape
   document.addEventListener("click", (e) => {

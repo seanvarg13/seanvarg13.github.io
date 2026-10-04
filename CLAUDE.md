@@ -1535,11 +1535,15 @@ is deploy-limited.
   to exit ... doesn't ... shift down the player card")**: `PCT_COLS_P` (Raw) = Skills (xK% · xBB%) · Swing & Miss (K% · xK%) · Walk Avoidance
   (BB% · xBB%) | Batted Ball (GB% · Popup% · Mix wOBA) · Rating (Rating · x(K-BB)% · Mix wOBA); `PCT_COLS_PS` (Stuff) = the same sections off
   the Pitching+ models — Pitching+ xK%, xBB%, xGB% / xPU% / Mix xwOBA, xRating / Pitching+ x(K-BB)% / Mix xwOBA — labelled plain xK% / x(K-BB)%
-  (`STUFF_LABELS`). `state.cardSide` (per device, `cardSide` in prefs), `sideSwitch()`: beside Filters on a desktop, the first row of the
-  Filters window on a phone (the phone's bio line is full). **Filters is a window** (`.phmodal` backdrop + `.phwin`, appended to `document.body`
-  by `playerHead`, removed at the top of every `render`): title, × (`.phwinx`), the same `.phgrid`, the split warning / days note, a Clear
-  button (full season, every split); a tap on the backdrop or Escape closes it (the document handlers now test `.phmodal` / `.phwin`, on a phone
-  too); nothing is put in the plate, so the card never shifts — `.phfilt.phpop` and its CSS are unused. xSkills is gone as a section (Stuff mode's
+  (`STUFF_LABELS`). `state.cardSide` (per device, `cardSide` in prefs), `sideSwitch()`: beside Filters on both — a desktop's horizontal, a
+  phone's **vertical** (`.phside.vert`, Raw over Stuff; Sean, the same hour: "vertical so raw is on top and stuff is below and that way it can
+  just exist next to it"). **Filters is a window** (`.phmodal` transparent backdrop + `.phwin.pop`, appended to `document.body` by `playerHead`,
+  removed at the top of every `render`) **in the Leaderboard dropdown's dress** (Sean: "the same format as the filters button is on like the
+  leaderboards"): hung under the Filters button (`place`, like `placePop` — a phone's spans the screen 8px in, re-placed on resize via
+  `ov._place`), the small `.pop-close` × top right, the same `.phgrid` in a `.pop-body` (date inputs get a hair border so an empty iOS one shows),
+  the split warning / days note, and a `.popfoot` with one "Clear" link (full season, every split); a tap anywhere else or Escape closes it (the
+  document handlers test `.phmodal` / `.phwin`, on a phone too); nothing is put in the plate, so the card never shifts — `.phfilt.phpop` and
+  its CSS are unused. xSkills is gone as a section (Stuff mode's
   Rating is it). **The xK% tab pairs the rates side by side** (Sean, same hour: "every stat that is being compared next to each other ... horizontally"):
   left column **Actual** (K%, xK%, Whiff%, Called Strike%, SwStr%, CSW%, 2-strike Whiff%, Foul%), right column **Pitching+ expected** (K%, Pitching+
   xK%, xWhiff%, xCalled Strike%, …) row for row — K% heads both so they align, and `pctColumns(…, { scaleAll: true })` puts the Poor / Average /
