@@ -1263,15 +1263,16 @@
   // Stuff xK% (Sean, 4 Oct 2026: "xrating xK% but if possible using their stuff expected whiff rates and stuff expected foul rates"): the
   // same K% fit with the whiff side expected — the Pitching+ model's xWhiff for Whiff%, swings × xWhiff for SwStr%, called strikes + that
   // for CSW%, his two-strike whiff rate scaled by the same ratio, and for Foul% the contact that's left (swings × (1 − xWhiff)) times the
-  // stuff model's foul chance on contact. The expected rates are centred on the league's actual ones first (the models read a couple of
-  // points hot on a season they never saw), so the level is right and only his spread counts. Checked 2020-26 (scratch xks.js): same-season
+  // stuff model's foul chance on contact. Checked 2020-26 (scratch xks.js): same-season
   // r .87 with K% (Whiff% alone .87), next season's K% rmse 3.39 against his own K%'s 3.55, and K% − Stuff xK% predicts next year's K%
   // change at r −.36 (the actual-rate gap: −.07) — the forward read, where xK% is the same-season one
+  // No league centring (Sean, 4 Oct 2026, Skenes's card: "the model says his expected whiff% is 29.1% not 26.1%"): the expected whiff
+  // rate goes in as the site shows it. On a season the fixed models read hot (2026: league 27.9 expected vs 25.0 actual) every Stuff xK%
+  // sits a couple of points above K% — the xRating is percentiles, so the ranks are the same either way
   const xKStuff = (m, xw, xws, xf) => {
     if (xw == null || m.swing == null || m.cstr == null) return null;
-    const L = lgRatesP(), LX = lgXw(), xwc = L.whf != null && LX.xw != null ? xw + L.whf - LX.xw : xw, sws = m.swing * xwc / 100;
-    const fx = xf == null ? null : m.swing * (1 - xwc / 100) * xf / 100, foul = fx == null ? m.foul : L.foul != null && LX.xfp != null ? fx + L.foul - LX.xfp : fx;
-    return xKModel(Object.assign({}, m, { whf: xwc, swstr: sws, csw: m.cstr + sws, s2whf: m.s2whf == null ? null : m.whf ? m.s2whf * xwc / m.whf : m.s2whf, foul }), xwc, xws);
+    const sws = m.swing * xw / 100, foul = xf == null ? m.foul : m.swing * (1 - xw / 100) * xf / 100;
+    return xKModel(Object.assign({}, m, { whf: xw, swstr: sws, csw: m.cstr + sws, s2whf: m.s2whf == null ? null : m.whf ? m.s2whf * xw / m.whf : m.s2whf, foul }), xw, xws);
   };
   const xKModel = (m, xw, xws) => { const v = rateFit(Object.assign({}, m, { xw, xws }), "k", XKM, Object.assign({}, lgRatesP(), lgXw())); return v == null ? null : Math.round(10 * v) / 10; };
   const xBBFormula = (m) => (m.strk == null || m.fstrk == null || m.b3strk == null ? null : Math.round(10 * (XBBF.c + XBBF.strk * m.strk + XBBF.fstrk * m.fstrk + XBBF.b3strk * m.b3strk)) / 10);
