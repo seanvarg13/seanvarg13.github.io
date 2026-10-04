@@ -1033,8 +1033,14 @@ def hitter_metrics(d: pd.DataFrame) -> pd.DataFrame:
 
 
 def pitcher_metrics(d: pd.DataFrame) -> pd.DataFrame:
+    # Foul% (Sean, 4 Oct 2026, hunting what K% − xK% was: "there has to be something that can explain this"): the strikes that are neither
+    # called, swung through nor put in play — fouls, per pitch. It is what the K% fit on every other rate was missing: held out season by
+    # season the error on 300+ BF pitchers goes 1.42 → 0.63 points, and Skenes / Webb / Phillips / Wandy Peralta's "unexplained" K% is
+    # gone (foul 21% vs 14-15%). Contact that goes foul keeps the strikeout alive; a ball in play ends the plate appearance. Year to year
+    # r .56, like Strike%. app.js re-derives it in a window from the day rows (strk − cs − whf − bip over pit)
+    d = d.assign(foul=d["strike"] & ~d["whiff"] & ~d["bip"] & ~d["cs"])
     g = d.groupby("pitcher")
-    f = g.agg(Pitches=("swing", "size"), Swings=("swing", "sum"), Whiffs=("whiff", "sum"),
+    f = g.agg(Pitches=("swing", "size"), Swings=("swing", "sum"), Whiffs=("whiff", "sum"), Foul=("foul", "sum"),
               Strikes=("strike", "sum"), BIP=("bip", "sum"), GB=("gb", "sum"),
               G=("game_pk", "nunique"), CS=("cs", "sum"), ZonePit=("in_zone", "sum"), OutPit=("out_zone", "sum"),
               ZSw=("z_swing", "sum"), OSw=("o_swing", "sum"), ZCon=("z_contact", "sum"), FBt=("fbt", "sum"),
@@ -1052,6 +1058,7 @@ def pitcher_metrics(d: pd.DataFrame) -> pd.DataFrame:
     r["GB_pct"] = 100 * f.GB / f.BIP.replace(0, np.nan)
     r["PU_pct"] = 100 * f.PU / f.BIP.replace(0, np.nan)             # popups per ball in play
     r["CSW_pct"] = 100 * (f.CS + f.Whiffs) / f.Pitches.replace(0, np.nan)
+    r["Foul_pct"] = 100 * f.Foul / f.Pitches.replace(0, np.nan)
     r["Zone_pct"] = 100 * f.ZonePit / f.Pitches.replace(0, np.nan)
     r["OSwing_pct"] = 100 * f.OSw / f.OutPit.replace(0, np.nan)
     r["Swing_pct"] = 100 * f.Swings / f.Pitches.replace(0, np.nan)
@@ -1647,7 +1654,7 @@ def build_pitchers(pit: pd.DataFrame, people: dict, days_p: dict, consts: dict) 
         m["nera"] = neutral_era(r, consts) if "wBIP" in pit.columns else None
         bbl = {t: [int(r[f"n{t.upper()}"]), round(float(r[f"w{t.upper()}"] / r[f"n{t.upper()}"]), 3) if r[f"n{t.upper()}"] else None]
                for t in BB_TYPES} if "wBIP" in pit.columns else None
-        for key, col in [("swstr", "SwStr_pct"), ("csw", "CSW_pct"), ("zone", "Zone_pct"), ("osw", "OSwing_pct"), ("swing", "Swing_pct"),
+        for key, col in [("swstr", "SwStr_pct"), ("csw", "CSW_pct"), ("foul", "Foul_pct"), ("zone", "Zone_pct"), ("osw", "OSwing_pct"), ("swing", "Swing_pct"),
                          ("zcon", "ZContact_pct"), ("fbv", "FBvelo"), ("ext", "Ext"), ("ev", "avg_EV"),
                          ("hh", "HardHit_pct"), ("brl", "Barrel_pct"), ("pu", "PU_pct"),
                          ("fstrk", "FStrk_pct"), ("b3strk", "B3Strk_pct"), ("s2whf", "S2Whf_pct"), ("s2sw", "S2Sw_pct"), ("s2zone", "S2Zone_pct")]:
