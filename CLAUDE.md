@@ -1467,6 +1467,11 @@ is deploy-limited.
   **`xkbbs` = Pitching+ x(K-BB)%** (Pitching+ xK% − xBB%; PK block, `statsFor`, `NEXT_KEYS`, `SIDE_P` column, glossary; `renderAsStarter`
   places it in the SP pool from the translated xK% and xBB%), so the Rating · xRating line compares like with like. Skenes 2026: Rating 86 ·
   xRating 69 (was 83 · 67); Wheeler 92 · 92; Misiorowski 96 · 91.
+* **Results section (Sean, 4 Oct 2026: "add results section that goes up top that has the x(K-bb)% mix woba, and then his rating")**: the pitcher
+  card opens on **Results** — x(K-BB)% · Mix wOBA · **Rating** (`PCT_COLS_P`; left = Results · Skills · Swing & Miss, right = Walk Avoidance ·
+  Batted Ball · Stuff, 9 / 10 rows). The Rating row is special-cased in `renderPctPanel` (`RATING_M`, key `rating`, not a column): its value
+  is `st.score` and, since the Rating is already a percentile blend, the bubble is the number itself (the tap note's league middle is 50);
+  `OUTCOME_LABEL_P` / glossary carry `rating`.
  `nmix`'s label is **Mix xwOBA** everywhere (lower is better, as before). 2026 Skenes: Called 13.5 (6th pct),
   SwStr 14.4 (87th), Foul 21.0 (91st).
 
