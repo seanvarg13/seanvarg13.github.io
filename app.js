@@ -7538,7 +7538,7 @@
   // then (Sean, minutes later: "get rid of results and in skills show just x(k-bb)%, mix woba and rating"): one section, Skills, with the three
   // and then (Sean: "for skills could you instead do xk%, xbb%, and x(k-bb)%") — the Rating row stays wired (RATING_M) but is off the card
   const PCT_COLS_P = [[["Skills", ["xkf", "xbbf", "xkbb"]], ["Swing & Miss", ["k", "xkf"]], ["Walk Avoidance", ["bb", "xbbf"]]],
-                      [["Batted Ball", ["gb", "pu", "mixw"]], ["Stuff", ["xks", "xbbf", "nmix", "fbv", "pitch"]]]];
+                      [["Batted Ball", ["gb", "pu", "mixw"]], ["Stuff", ["xks", "xbbf", "nmix", "xrat"]]]];   // Stuff ends in the xRating, no velo / Pitching+ (Sean, 4 Oct 2026)
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
@@ -7562,8 +7562,8 @@
       if (!got) return null;
       const lab = (labels && labels[key0]) || PCT_LABEL[got.k];
       const m = lab ? Object.assign({}, got.m, { label: lab }) : got.m;
-      const pct = got.k === "rating" ? got.v : st.pct[got.k];
-      const lg = got.k === "rating" ? 50 : lgOf(got.k, m), prev = prevOf ? prevOf(m, got.k) : null;
+      const pct = got.k === "rating" || got.k === "xrat" ? Math.round(got.v) : st.pct[got.k];   // both ratings are percentile blends already: the bubble is the number
+      const lg = got.k === "rating" || got.k === "xrat" ? 50 : lgOf(got.k, m), prev = prevOf ? prevOf(m, got.k) : null;
       return { m, v: got.v, k: got.k, label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null, lg: lg == null ? null : fmt(lg, m), prev, prevYear: DS.season - 1,
                gloss: GLOSS[{ xwd: "xwoba", EXPW: "xwoba" }[got.k]] || GLOSS[got.k] || "", hib: m.hib,
                tip: `${m.label}: ${fmt(got.v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}` };
