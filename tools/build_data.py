@@ -141,6 +141,8 @@ PITCHER_CARD = [
     # the walk formula (Sean, 4 Oct 2026): BB% on Strike% + first-pitch strike% + three-ball strike% has R² .82 against .58 for Strike%
     # alone — Zone% / Chase% add nothing once Strike% is known; they stay fold-outs under Strike% and columns
     ("Zone & chase",         [("bb", "BB%", False, 1, "%"), ("strk", "Strike%", True, 1, "%"), ("fstrk", "1st-pitch Strike%", True, 1, "%"), ("b3strk", "3-ball Strike%", True, 1, "%")]),
+    # the strikes a pitcher gets without a ball in play, per pitch — the three the K% fit (xK%) is built on (Sean, 4 Oct 2026)
+    ("Strikes",              [("cstr", "Called Strike%", True, 1, "%"), ("swstr", "SwStr%", True, 1, "%"), ("foul", "Foul%", True, 1, "%")]),
     ("Results",              [("kbb", "K-BB%", True, 1, "%"), ("era", "ERA", False, 2, "")]),
     ("Batted ball",          [("gb", "GB%", True, 1, "%"), ("pu", "Popup%", True, 1, "%"), ("mixw", "Mix wOBA", False, 3, ""), ("mera", "Mix ERA", False, 2, "")]),   # Mix wOBA on the card, Mix ERA a column (4 Oct 2026)
     # the four rates a pitcher owns outright, averaged (derived in the app from the four below it)
@@ -1059,6 +1061,7 @@ def pitcher_metrics(d: pd.DataFrame) -> pd.DataFrame:
     r["PU_pct"] = 100 * f.PU / f.BIP.replace(0, np.nan)             # popups per ball in play
     r["CSW_pct"] = 100 * (f.CS + f.Whiffs) / f.Pitches.replace(0, np.nan)
     r["Foul_pct"] = 100 * f.Foul / f.Pitches.replace(0, np.nan)
+    r["CStr_pct"] = 100 * f.CS / f.Pitches.replace(0, np.nan)        # called strikes per pitch
     r["Zone_pct"] = 100 * f.ZonePit / f.Pitches.replace(0, np.nan)
     r["OSwing_pct"] = 100 * f.OSw / f.OutPit.replace(0, np.nan)
     r["Swing_pct"] = 100 * f.Swings / f.Pitches.replace(0, np.nan)
@@ -1654,7 +1657,7 @@ def build_pitchers(pit: pd.DataFrame, people: dict, days_p: dict, consts: dict) 
         m["nera"] = neutral_era(r, consts) if "wBIP" in pit.columns else None
         bbl = {t: [int(r[f"n{t.upper()}"]), round(float(r[f"w{t.upper()}"] / r[f"n{t.upper()}"]), 3) if r[f"n{t.upper()}"] else None]
                for t in BB_TYPES} if "wBIP" in pit.columns else None
-        for key, col in [("swstr", "SwStr_pct"), ("csw", "CSW_pct"), ("foul", "Foul_pct"), ("zone", "Zone_pct"), ("osw", "OSwing_pct"), ("swing", "Swing_pct"),
+        for key, col in [("swstr", "SwStr_pct"), ("csw", "CSW_pct"), ("foul", "Foul_pct"), ("cstr", "CStr_pct"), ("zone", "Zone_pct"), ("osw", "OSwing_pct"), ("swing", "Swing_pct"),
                          ("zcon", "ZContact_pct"), ("fbv", "FBvelo"), ("ext", "Ext"), ("ev", "avg_EV"),
                          ("hh", "HardHit_pct"), ("brl", "Barrel_pct"), ("pu", "PU_pct"),
                          ("fstrk", "FStrk_pct"), ("b3strk", "B3Strk_pct"), ("s2whf", "S2Whf_pct"), ("s2sw", "S2Sw_pct"), ("s2zone", "S2Zone_pct")]:

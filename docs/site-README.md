@@ -142,7 +142,7 @@ hour, more the better his numbers), plus his xRating placed among starters. xRat
 
 **All as SP** (4 Oct 2026): a pitcher who both started and relieved has a fourth Role option in his card's Filters. It keeps every inning but
 reads the days he relieved as a starter — their expected whiff, ground-ball and popup rates moved by the same reliever-to-starter effect — so
-xWhiff / xGB / xPU (the Pitching+ table and xSkills), xMix wOBA, xRating and the whiff check are what the whole season says about him in the
+xWhiff / xGB / xPU (the Pitching+ table and xSkills), Mix xwOBA, xRating and the whiff check are what the whole season says about him in the
 rotation. His actual rates, Pitching+ and the start days are untouched.
 
 **Zone & Chase = the walk formula** (4 Oct 2026): the pitcher card's Zone & Chase section is BB%, Strike%, 1st-pitch Strike% and 3-ball
@@ -152,7 +152,9 @@ plate appearances run to three balls, where the 3-ball strike rate decides ball 
 three rates say he should have, from the same fit, usually within about a point of the real one.
 The pitcher card's columns (4 Oct 2026): Skills · xSkills · Results · Swing & Miss on the left, Zone & Chase · Batted Ball · Stuff
 (fastball velo and extension only; the Pitching+ grades are on their own tab) on the right.
-xSkills reads xK%, xBB% and xMix wOBA, and the **xRating** is those three percentiles weighted 55 / 35 / 10. **xK%** (4 Oct 2026) is the
+Skills reads Whiff%, Strike%, Mix wOBA, then xK%, xBB% and Mix xwOBA (there is no separate xSkills section), and the **xRating** is those
+last three percentiles weighted 55 / 35 / 10. A **Strikes** section shows Called Strike%, SwStr% and Foul% per pitch — the three strikes that
+keep a plate appearance alive, which is how xK% reads them. **xK%** (4 Oct 2026) is the
 strikeout rate his rates say he should have: a fit over every 100+ BF pitcher-season since 2020 on his whiff, called-strike and swinging-strike
 rates, two-strike whiff rate, Strike%, swing and contact rates, the count-state strike rates, batted-ball mix, velocity, extension, the
 Pitching+ grades and the expected whiff rates, each against the league's — within about a point of the real K% (r .95). A pitcher above it
@@ -163,7 +165,7 @@ for. Foul% is a Leaderboard column under Plate discipline. The Pitching+ tab's w
 
 **xRating** (4 Oct 2026): the Rating's weights with the Pitching+ model's expected whiff rate and the Mix wOBA its expected mix implies in
 place of his actual ones — what his pitches and spots say the Rating should be. On the Pitching+ tab beside the Rating and a Leaderboard /
-Compare column with xMix wOBA. Steadier year to year than the Rating; about half of a gap between the two closes the next season.
+Compare column with Mix xwOBA. Steadier year to year than the Rating; about half of a gap between the two closes the next season.
 
 **nERA in uERA's place** (4 Oct 2026): the card's band, its tab strip (Pitching+ · nERA), Season Stats' last column, the home page's
 pitcher lists and the Leaderboard's Standard set all read the luck-neutral ERA instead of uERA.
