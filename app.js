@@ -6553,7 +6553,7 @@
     } else if (pick === "pitching") {
       body.append(renderStuffTab(p, o.st, g, "pitching"));
     } else if (pick === "xk") {
-      body.append(renderPctTab(p, o.st, g, ref, XK_COLS_P, "xK% is the K% his strike rates imply (left, actual); Pitching+ xK% runs the same fit with the whiff and foul side as the models expect it from his pitches and where he throws them (Strikes — Pitching+ expected). The other rates are the fit's remaining inputs."));
+      body.append(renderPctTab(p, o.st, g, ref, XK_COLS_P, "Left: his actual strike rates and the xK% they imply. Right, row for row: the same rates as the Pitching+ models expect them from his pitches, where he throws them and the batter's swing, and the Pitching+ xK% they imply. Plate, Counts and Stuff are the fit's other inputs.", { scaleAll: true }));
     } else if (pick === "xbb") {
       body.append(renderPctTab(p, o.st, g, ref, XBB_COLS_P, "xBB% = 61.8 − 0.545 × Strike% − 0.026 × 1st-pitch Strike% − 0.229 × 3-ball Strike% (every 100+ BF pitcher-season 2020-26, R² .82). Zone, chase and whiffs are why the same Strike% walks more or fewer."));
     } else if (pick === "next") {
@@ -7629,15 +7629,16 @@
   // had before ... and then also have that tab show the like pitching+ expected k stuff too and make that percentile bars as well", "a tab for
   // expected bb% as well that has all those same percentile bars"): the K% fit's inputs — his strike rates, then the same rates as the stuff
   // and spots say them (xkParts) — and the walk formula's, drawn by pctColumns like the card's own sections
-  // each actual strike rate right over the Pitching+ expected one (Sean, 4 Oct 2026: "every stat that is being compared next to each other")
-  const XK_COLS_P = [[["Strikeouts", ["k", "xkf", "xks"]], ["Strikes — actual over Pitching+ expected", ["whf", "nwhf", "cstr", "ncstr", "swstr", "nswstr", "csw", "ncsw", "s2whf", "ns2whf", "foul", "nfoul"]]],
-                     [["Plate", ["strk", "swing", "zone", "osw", "zcon"]], ["Counts", ["fstrk", "b3strk", "s2sw", "s2zone"]], ["Stuff", ["fbv", "ext", "pitch", "sloc"]]]];
+  // actual on the left, Pitching+ expected on the right, row for row (Sean, 4 Oct 2026: "next to each other ... horizontally"): K% heads both
+  // so the rows line up on a desktop; a phone stacks the two sections
+  const XK_COLS_P = [[["Actual", ["k", "xkf", "whf", "cstr", "swstr", "csw", "s2whf", "foul"]], ["Plate", ["strk", "swing", "zone", "osw", "zcon"]]],
+                     [["Pitching+ expected", ["k", "xks", "nwhf", "ncstr", "nswstr", "ncsw", "ns2whf", "nfoul"]], ["Counts", ["fstrk", "b3strk", "s2sw", "s2zone"]], ["Stuff", ["fbv", "ext", "pitch", "sloc"]]]];
   const XBB_COLS_P = [[["Walks", ["bb", "xbbf", "ubb"]], ["The formula", ["strk", "fstrk", "b3strk"]]],
                       [["Zone & Chase", ["zone", "osw", "swing", "zcon"]], ["Whiffs", ["whf", "swstr", "k"]]]];
-  function renderPctTab(p, st, g, ref, spec, note) {
+  function renderPctTab(p, st, g, ref, spec, note, opts) {
     const box = el("div", "pcttab");
     if (!st || !st.pct) { box.append(el("p", "note", "No percentiles for this season.")); return box; }
-    box.append(pctColumns(p, st, g, ref, spec));
+    box.append(pctColumns(p, st, g, ref, spec, opts));
     if (note) box.append(el("p", "note pcttabnote", note));
     return box;
   }
@@ -7653,7 +7654,7 @@
     col.append(body);
   }
   // the sections of percentile bars: spec = [[["title", keys]...] per column]; every key is one of the pool's metrics (or the Rating)
-  function pctColumns(p, st, g, ref, spec) {
+  function pctColumns(p, st, g, ref, spec, opts = {}) {
     const pv = V(p), all = allFor(g);
     const noEV = DS.tracked != null && DS.tracked < 0.05;
     const exp = expKeys();
@@ -7707,7 +7708,7 @@
           }
           cols.append(c);
         }
-      } else sets.forEach((gs, i) => cols.append(pctChart(gs, i)));
+      } else sets.forEach((gs, i) => cols.append(pctChart(gs, i, opts.scaleAll || i === 0)));   // scaleAll: every column heads with the scale, so paired columns line up row for row
       return cols;
     }
   }
@@ -7834,18 +7835,18 @@
   // guess and resized a moment later, everything under it would shift — and near the foot of the page the browser
   // would pull the window up to fit, which is what threw a phone's page upward on every tap of a tab.
   const pctLast = [];
-  function pctChart(groups, slot = 0) {
+  function pctChart(groups, slot = 0, scale = slot === 0) {
     const host = el("div", "svchart");
     const draw = () => {
       const bw = host.getBoundingClientRect().width;
       const W = Math.max(300, Math.round(bw) || 400);   // drawn at its real size, like every other bar (Savant shrinks under 400)
       if (host.dataset.w === String(W) && host.firstChild) return;
       host.dataset.w = String(W); pctLast[slot] = W;
-      host.replaceChildren(pctSvg(groups, W, slot === 0));
+      host.replaceChildren(pctSvg(groups, W, scale));
     };
     const W0 = pctLast[slot] || 400;
     host.dataset.w = String(W0);
-    host.append(pctSvg(groups, W0, slot === 0));
+    host.append(pctSvg(groups, W0, scale));
     if (window.ResizeObserver) { const ro = new ResizeObserver(draw); ro.observe(host); pctROs.push(ro); }
     return host;
   }
