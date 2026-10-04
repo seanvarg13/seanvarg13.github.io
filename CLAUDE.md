@@ -1273,6 +1273,17 @@ is deploy-limited.
   Rating − xRating predicts next year's Rating change at slope −.44 (half the gap closes). Bubic 2025: Rating 84, xRating 67 → 2026
   Rating 56. The Rating itself is unchanged.
 
+* **As a starter, and xRating beside the Rating (Sean, 4 Oct 2026: "pitchers are relievers in year 1 and then become starters in year 2
+  ... is there a way to basically translate that ... And in the tables put xRating right next to rating")**: a reliever's Pitching+ tab
+  carries an **As a starter** line (`renderAsStarter` / `AS_SP` / `asStarter`): his xWhiff, Pitching+ and FB velo moved by the
+  reliever-to-starter effect from history — every RP → SP pair 2015-26 (102) against RP → RP (1,724), scratch `role.py`: the next-season fit
+  for the movers minus the fit for the stayers, at his value (xWhiff 3.47 − .19x, Pitching+ 27.17 − .32x, Stuff+ 27.29 − .32x, velo
+  15.30 − .17x — a −0.9 whiff point, −4 to −7 Pitching+ and −0.6 mph for a typical reliever, more the better his reliever numbers; Strike%,
+  Location+ and the mix barely move) — and his **xRating among starters** (the translated xWhiff, his Strike% and expected mix placed in
+  the SP pool). Bubic 2024: xWhiff 27.7 → 25.9 (2025 actual 25.1), Pitching+ 106 → 100 (actual 96.5), xRating 86 → 77 among starters.
+  The reverse (SP → RP: +1.3 whiff, +6.5 Pitching+, +1.1 mph) isn't shown. **xRating is the first column** of every pitcher column set
+  (`LB_SETS`, right after the Rating headline) and `state.lb.xratFront` moves it to the front of saved lists once.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:

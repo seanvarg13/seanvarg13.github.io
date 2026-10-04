@@ -16,11 +16,11 @@
         ["Advanced", ["woba", "xwdiff", "xwcon", "xk", "mixw", "babip", "xbabip", "bluck", "brel"]],
         ["Batted ball", ["ev", "ev90", "maxev", "brl", "hh", "bs", "air", "pull", "gb", "pu"]],
         ["Plate discipline", ["k", "xk", "bb", "whf", "osw", "zsw", "zcon", "ocon"]]],
-    P: [["Standard", ["era", "k", "bb", "kbb", "whf", "strk", "gb", "nera"]],   // nERA where uERA was (Sean, 4 Oct 2026)
-        ["Advanced", ["era", "fip", "siera", "nera", "ukb", "wsgp"]],
-        ["Batted ball", ["gb", "pu", "ev", "hh", "brl"]],
-        ["Plate discipline", ["whf", "strk", "zone", "osw", "swing", "zcon", "csw", "swstr"]],
-        ["Pitching+", ["pitch", "pwhf", "pbb", "sloc", "wgap", "nwhf", "fbv", "ext"]]],   // one grade (Sean, 4 Oct 2026: Stuff+ and Pitching+ no longer separate)
+    P: [["Standard", ["xrat", "era", "k", "bb", "kbb", "whf", "strk", "gb", "nera"]],   // xRating right after the Rating (Sean, 4 Oct 2026); nERA where uERA was
+        ["Advanced", ["xrat", "era", "fip", "siera", "nera", "ukb", "wsgp"]],
+        ["Batted ball", ["xrat", "gb", "pu", "ev", "hh", "brl"]],
+        ["Plate discipline", ["xrat", "whf", "strk", "zone", "osw", "swing", "zcon", "csw", "swstr"]],
+        ["Pitching+", ["xrat", "pitch", "pwhf", "pbb", "sloc", "wgap", "nwhf", "fbv", "ext"]]],   // one grade (Sean, 4 Oct 2026: Stuff+ and Pitching+ no longer separate)
   };
   const colLab = (m) => { const l = SHORT[m.key] || m.label; return m.unit === "%" && !l.includes("%") ? l + "%" : l; };
   const SHORT = { suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", mixw: "Mix wOBA", nmix: "xMix wOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
@@ -554,6 +554,8 @@
     state.lb.P = (state.lb.P || []).filter(gone); for (const c of Object.values(state.cols || {})) if (c && Array.isArray(c.P)) c.P = c.P.filter(gone);
     if (state.cmpCols && Array.isArray(state.cmpCols.P)) state.cmpCols.P = state.cmpCols.P.filter(gone); if (!gone(state.sort)) state.sort = "score"; }
   if (state.cmp2 && state.cmp2.pick && Array.isArray(state.cmp2.pick.H)) state.cmp2.pick.H = state.cmp2.pick.H.filter((k) => k !== "pxw");
+  if (!state.lb.xratFront) { const front = (L) => { if (!Array.isArray(L)) return; const i = L.indexOf("xrat"); if (i >= 0) L.splice(i, 1); L.unshift("xrat"); };   // xRating beside the Rating (Sean, 4 Oct 2026)
+    front(state.lb.P); for (const c of Object.values(state.cols || {})) if (c) front(c.P); state.lb.xratFront = true; }
   if (!state.lb.xwdAdded) { if (!state.lb.H.includes("xwdiff")) state.lb.H.splice(Math.max(0, state.lb.H.indexOf("woba") + 1), 0, "xwdiff"); state.lb.xwdAdded = true; }   // xwOBA − wOBA, 27 Sep 2026
   { const tc = state.cols.trending; if (tc && tc.P && !tc.suAdded) { if (!tc.P.includes("suera")) tc.P.splice(tc.P.includes("uera") ? tc.P.indexOf("uera") + 1 : tc.P.length, 0, "suera"); tc.suAdded = true; } }   // Stuff uERA on Trending too
   { const tc = state.cols.trending; if (tc && tc.H && !tc.xwdAdded) { if (!tc.H.includes("xwdiff")) tc.H.splice(Math.max(0, tc.H.indexOf("woba") + 1), 0, "xwdiff"); tc.xwdAdded = true; } }
@@ -6762,6 +6764,27 @@
     if (gap <= WGAP.improve) return { cls: "lucky", word: "Likely to improve", hist: "pitchers 2+ points under their expected rate gained whiffs the next season 73% of the time, 1.5 points on average (K% +0.9)" };
     return { cls: "even", word: "In line", hist: "within 2 points of the expected rate the next season moved −0.7 on average — the league-wide drift, nothing of his own" };
   }
+  // As a starter (Sean, 4 Oct 2026: "pitchers are relievers in year 1 and then become starters in year 2 ... stuff is better for a reliever
+  // ... is there a way to translate that"): every pitcher who relieved one season and started the next, 2015-26 (102), against the
+  // relievers who stayed relievers (1,724) — the move costs what the role gave him, net of the normal year-to-year drift, and more the better
+  // his reliever numbers were (scratch role.py). The role effect = the RP→SP next-season fit minus the RP→RP one, at his value:
+  //   xWhiff   (8.99 + .61x) − (5.52 + .80x) = 3.47 − .19x     Pitching+ (45.74 + .50x) − (18.57 + .82x) = 27.17 − .32x
+  //   Stuff+   (40.53 + .55x) − (13.24 + .87x) = 27.29 − .32x  FB velo   (17.47 + .81x) − (2.17 + .98x) = 15.30 − .17x
+  // Bubic 2024 → 25: xWhiff 27.7 → 25.9 (actual 25.1), Pitching+ 106 → 100 (actual 96.5). Strike%, Location+ and the mix barely move
+  const AS_SP = { xwl: [3.47, -0.19], pitch: [27.17, -0.32], stuff: [27.29, -0.32], fbv: [15.30, -0.17] };
+  const asStarter = (k, x) => (x == null ? null : x + AS_SP[k][0] + AS_SP[k][1] * x);
+  function renderAsStarter(p, st) {
+    const pj = projRates(p), m = V(p).m, spPool = pool("SP"), S = spPool && spPool.sorted; if (!pj || !S || !S.nwhf) return null;
+    const xw = asStarter("xwl", pj.xw), pt = asStarter("pitch", m.pitch), fv = asStarter("fbv", m.fbv), r1 = (x) => (x == null ? "–" : x.toFixed(1));
+    // his xRating in the starters' pool, with the translated whiff rate (Strike% and the mix as they are)
+    const W = DATA.meta.pitcherWeights || {}, tot = Object.values(W).reduce((a, b) => a + b, 0) || 1;
+    const px = { whf: insertPct(S.nwhf, xw), strk: S.strk ? insertPct(S.strk, m.strk) : null, mixw: S.nmix && st && st.nmix != null ? insertPct(S.nmix, -st.nmix) : null };
+    const xr = Object.keys(W).every((k) => px[k] != null) ? Math.round(Object.keys(W).reduce((a, k) => a + W[k] * px[k], 0) / tot) : null;
+    const d = el("div", "aopt asstarter");
+    d.append(el("b", null, "As a starter"), el("span", null, `: xWhiff ${r1(pj.xw)} → ${r1(xw)}, Pitching+ ${m.pitch == null ? "–" : Math.round(m.pitch)} → ${pt == null ? "–" : Math.round(pt)}, FB velo ${r1(m.fbv)} → ${r1(fv)}${xr == null ? "" : `, xRating among starters ${xr}`}. Relievers who moved to the rotation (2015-26, 102 of them) gave back about this much of what the role had given them, net of the normal year-to-year drift — more the better the reliever numbers were.`));
+    d.title = "The reliever-to-starter effect from history: the next-season fit for relievers who became starters minus the fit for relievers who stayed relievers, at his value. Strike%, Location+ and the batted-ball mix barely move with the role.";
+    return d;
+  }
   function renderWhiffCheck(p, m) {
     const pj = projRates(p); if (!pj || m.whf == null) return null;
     const gap = Math.round(10 * (m.whf - pj.xw)) / 10, v = wgapVerdict(gap), d = el("div", "aopt whiffcheck");
@@ -6845,6 +6868,7 @@
         d.append(el("b", null, `Rating ${rt} · xRating ${xr}`), el("span", null, ` — the Rating's weights (Whiff% 55, Strike% 30, Mix wOBA 15) with the expected whiff rate and expected mix in place of his actual ones.${Math.abs(gap) >= 8 ? ` His Rating runs ${Math.abs(gap)} ${gap > 0 ? "over" : "under"} what his pitches say; about half of a gap like that has closed the next season.` : " The two agree."}`));
         d.title = "xRating: the Rating's own weights over the Pitching+ model's expected Whiff%, his Strike% and the Mix wOBA his expected GB% / PU% imply. Backtest 2015-26: steadier year to year than the Rating (r .79 vs .73), and about half of Rating − xRating closes the next season.";
         box.append(d); }
+      const asSP = p.primary === "RP" && !needsDays() ? renderAsStarter(p, st) : null; if (asSP) box.append(asSP);
       const wc = renderWhiffCheck(p, m); if (wc) box.append(wc); }
     // how well his usage leans on his whiff pitches (arsenalOpt), with where that ranks among the season's pitchers
     if (!P) { const o = arsenalOpt(R0);
