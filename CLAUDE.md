@@ -1263,6 +1263,16 @@ is deploy-limited.
   which put the 50 / 50 weights and the old card layout back on the live site for a few minutes; `data.js` was re-patched by hand. A rescore
   run's final MLB build uses the `tools/` it started with — merge `tools/` changes before dispatching one, or re-patch `data.js` after.
 
+* **xRating (Sean, 4 Oct 2026: "an xRating, that has the same weights but uses xwhiff, strike%, and then the expected mix woba from
+  pitching+")**: `meta.pitcherWeights` over the percentiles of the Pitching+ model's expected Whiff% (`nwhf`), his Strike% and **xMix wOBA**
+  (`nmix` = `mixOfShares(xg, xp, sorted)`: the Mix wOBA his expected GB% / PU% imply, air balls at the pool's line-drive share, lower =
+  better) — pool stat `xrat` + percentiles + sorted (the pool's `PK` block and `statsFor`; the key map `X = { whf: "nwhf", mixw: "nmix" }`
+  so a weights change in the build carries over), columns xRating / xMix wOBA (`SIDE_P` / `LB_EXTRA_P` / `NEXT_KEYS`), a "Rating N ·
+  xRating N" line on the Pitching+ tab above the whiff check (`.xrating`; names a gap of 8+). Backtest 2015-26 starters, 15+ GS
+  (scratch `xrat.py`): next season's points per start r .52 vs the Rating's .54 (same season .66 vs .73), year to year .79 vs .73, and
+  Rating − xRating predicts next year's Rating change at slope −.44 (half the gap closes). Bubic 2025: Rating 84, xRating 67 → 2026
+  Rating 56. The Rating itself is unchanged.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
