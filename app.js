@@ -23,7 +23,7 @@
         ["Pitching+", ["xrat", "pitch", "pwhf", "pbb", "sloc", "wgap", "nwhf", "fbv", "ext"]]],   // one grade (Sean, 4 Oct 2026: Stuff+ and Pitching+ no longer separate)
   };
   const colLab = (m) => { const l = SHORT[m.key] || m.label; return m.unit === "%" && !l.includes("%") ? l + "%" : l; };
-  const SHORT = { xkf: "xK%", xbbf: "xBB%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", mixw: "Mix wOBA", nmix: "xMix wOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
+  const SHORT = { foul: "Foul%", xkf: "xK%", xbbf: "xBB%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", mixw: "Mix wOBA", nmix: "xMix wOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
                tiers: "draft2027.tiers", tierNames: "draft2027.tierNames", sets: "draft2027.rankSets", extraPos: "draft2027.extraPos", stars: "draft2027.stars" };
   // Storage that cannot lose a saved list. A value that will not parse is left exactly where it is — its raw
@@ -388,7 +388,7 @@
   // Mix wOBA: the league's value of his average ball in play (type × pulled / straightaway / the other way) — balls in play
   // only, no bunts, walks and strikeouts left out (Sean): what his batted-ball distribution alone is worth
   const mixW = (sum, n) => (K().mix && n ? Math.round(1000 * sum / n) / 1000 : null);
-  const SIDE_P = [{ key: "xkf", label: "xK%", hib: true, dec: 1, unit: "%" }, { key: "xbbf", label: "xBB%", hib: false, dec: 1, unit: "%" }, { key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "suera", label: "Stuff uERA", hib: false, dec: 2, unit: "" }, { key: "puera", label: "Pitching uERA", hib: false, dec: 2, unit: "" }, { key: "pera", label: "pERA", hib: false, dec: 2, unit: "" }, { key: "wgap", label: "Whiff vs exp.", hib: false, dec: 1, unit: " pts", sign: true }, { key: "nmix", label: "xMix wOBA", hib: false, dec: 3, unit: "" }, { key: "xrat", label: "xRating", hib: true, dec: 0, unit: "" }, { key: "nk", label: "pK%", hib: true, dec: 1, unit: "%" }, { key: "nbb", label: "pBB%", hib: false, dec: 1, unit: "%" }, { key: "nwhf", label: "xWhiff%", hib: true, dec: 1, unit: "%" }, { key: "ngb", label: "xGB%", hib: true, dec: 1, unit: "%" }, { key: "npu", label: "xPU%", hib: true, dec: 1, unit: "%" },
+  const SIDE_P = [{ key: "xkf", label: "xK%", hib: true, dec: 1, unit: "%" }, { key: "foul", label: "Foul%", hib: true, dec: 1, unit: "%" }, { key: "xbbf", label: "xBB%", hib: false, dec: 1, unit: "%" }, { key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "suera", label: "Stuff uERA", hib: false, dec: 2, unit: "" }, { key: "puera", label: "Pitching uERA", hib: false, dec: 2, unit: "" }, { key: "pera", label: "pERA", hib: false, dec: 2, unit: "" }, { key: "wgap", label: "Whiff vs exp.", hib: false, dec: 1, unit: " pts", sign: true }, { key: "nmix", label: "xMix wOBA", hib: false, dec: 3, unit: "" }, { key: "xrat", label: "xRating", hib: true, dec: 0, unit: "" }, { key: "nk", label: "pK%", hib: true, dec: 1, unit: "%" }, { key: "nbb", label: "pBB%", hib: false, dec: 1, unit: "%" }, { key: "nwhf", label: "xWhiff%", hib: true, dec: 1, unit: "%" }, { key: "ngb", label: "xGB%", hib: true, dec: 1, unit: "%" }, { key: "npu", label: "xPU%", hib: true, dec: 1, unit: "%" },
                   { key: "stuff", label: "Stuff+", hib: true, dec: 0, unit: "" }, { key: "swhf", label: "Whiff+", hib: true, dec: 0, unit: "" },
                   { key: "sbb", label: "Batted-ball+", hib: true, dec: 0, unit: "" },
                   { key: "aopt", label: "Arsenal Opt.", hib: true, dec: 1, unit: " pts", sign: true },
@@ -898,7 +898,8 @@
                    era: er == null || !ip ? null : r2(9 * er / ip),
                    fip: ip ? r2((13 * t.hr + 3 * (t.bb + t.hbp) - 2 * t.k) / ip + K().fipC) : null,
                    siera: r2(siera(t.k, t.bb, t.gb, t.fbt, t.pu, t.bf)),
-                   csw: rate(t.cs + t.whf, t.pit), zcon: rate(t.zcon, t.zsw), zone: rate(t.zpit, t.pit), osw: rate(t.osw, t.opit), swing: rate(t.sw, t.pit),
+                   csw: rate(t.cs + t.whf, t.pit), foul: t.cs === undefined || t.bip === undefined ? null : rate(t.strk - t.cs - t.whf - t.bip, t.pit),   // strikes that were neither called, missed nor put in play
+                   zcon: rate(t.zcon, t.zsw), zone: rate(t.zpit, t.pit), osw: rate(t.osw, t.opit), swing: rate(t.sw, t.pit),
                    fbv: t.fbn ? Math.round(10 * t.fbv / t.fbn) / 10 : null, ext: t.extn ? Math.round(10 * t.exts / t.extn) / 10 : null,
                    ev: (t.evn || t.bbe) ? Math.round(10 * t.evsum / (t.evn || t.bbe)) / 10 : null, hh: rate(t.hh, t.bip || t.bbe), brl: rate(t.brl, t.bip || t.bbe),
                    fstrk: rate(t.fps, t.fp), b3strk: rate(t.b3s, t.b3), s2whf: rate(t.s2wh, t.s2sw), s2sw: rate(t.s2sw, t.s2), s2zone: rate(t.s2z, t.s2),   // count states (null on files built before them)
@@ -1129,7 +1130,7 @@
     const s = {}, n = {};
     for (const q of DS.players) {
       if (q.type !== "P" || !(q.bf >= 20)) continue;
-      for (const k of ["k", "bb", "strk", "zone", "osw", "swing", "zcon", "whf", "csw", "swstr", "gb", "pu", "fbv", "ext", "stuff", "swhf", "sloc", "pitch", "fstrk", "b3strk", "s2whf", "s2sw", "s2zone"]) { const v = q.m[k]; if (v == null) continue; s[k] = (s[k] || 0) + v * q.bf; n[k] = (n[k] || 0) + q.bf; }
+      for (const k of ["k", "bb", "strk", "zone", "osw", "swing", "zcon", "whf", "csw", "swstr", "gb", "pu", "fbv", "ext", "stuff", "swhf", "sloc", "pitch", "foul", "fstrk", "b3strk", "s2whf", "s2sw", "s2zone"]) { const v = q.m[k]; if (v == null) continue; s[k] = (s[k] || 0) + v * q.bf; n[k] = (n[k] || 0) + q.bf; }
     }
     const out = {}; for (const k in s) out[k] = s[k] / n[k];
     lgPCache.set(key, out); return out;
@@ -1228,7 +1229,18 @@
   // season by season: rmse 1.42 / mean error 1.12 points on 300+ BF pitchers (the expected-whiff-only version 1.95, Whiff% alone 2.36;
   // in-sample r .954). The K% − xK% gap is then pure conversion — what his whiffs and strikes should have turned into — and it repeats
   // (Wheeler over every year, Webb under), so a gap says what he does, not what he'll stop doing; the whiff check is the luck read
-  const XKM = [{ c: -0.0001, w: { whf: -0.4163, csw: 0.851, swstr: 0.2875, s2whf: 0.4674, strk: 0.1094, swing: 0.0686, zcon: -0.2387, zone: -0.1759, osw: 0.0434, fstrk: -0.0756, b3strk: 0.0935, s2sw: -0.2651, s2zone: 0.2525, gb: -0.0794, pu: 0.0268, fbv: 0.1158, ext: 0.2225, pitch: -0.2046, sloc: 0.2566, stuff: 0.2685, xw: 0.1545, xws: -0.0265 } },
+  // And the piece that was missing (Sean, 4 Oct 2026: "do not use career differences. There has to be something that can explain this kind
+  // of like how with bb% there were more specific things that explained bb% compared to just strike %"): FOUL% — the strikes that are
+  // neither called, missed nor put in play, per pitch (scratch mech.js / mech2.js). Of everything the build carries, only the foul rate
+  // (+.43) and its mirror the in-play rate (−.42) line up with what the fit above left unexplained; the arsenal's shape, called strikes and
+  // the pitch mix don't. Contact that goes foul keeps the strikeout alive, a ball in play ends the plate appearance. With Foul% in, held
+  // out season by season: rmse 1.42 → 0.63 (mean error 0.50), and the "unexplained" K% of Skenes (+3.1 → +0.9), Webb (−3.7 → +0.3),
+  // Phillips (−4.2 → +0.2) and Wandy Peralta (−3.5 → −0.6) is gone; Mason Miller (+3) is the one that isn't. Foul% repeats year to year at
+  // r .56, like Strike% (.59), and runs with Swing% (.75), Zone% (.48) and fastball share (.27). The first two tiers need it; the next three
+  // are the fit without it, for a file built before it
+  const XKM = [{ c: -0.0003, w: { whf: -0.3716, csw: 1.4372, swstr: 0.8246, s2whf: 0.4217, strk: -0.4154, swing: -0.3891, zcon: -0.022, zone: -0.1541, osw: -0.0022, fstrk: -0.0467, b3strk: 0.088, s2sw: -0.1953, s2zone: 0.1456, gb: -0.0097, pu: -0.0134, fbv: 0.0058, ext: 0.1381, pitch: 0.09, sloc: -0.0774, stuff: -0.0768, xw: 0.0233, xws: -0.0147, foul: 1.5573 } },
+               { c: -0.0004, w: { whf: -0.3706, csw: 1.4401, swstr: 0.8716, s2whf: 0.4219, strk: -0.42, swing: -0.4136, zcon: -0.0228, zone: -0.1641, osw: 0.0068, fstrk: -0.0448, b3strk: 0.0877, s2sw: -0.1949, s2zone: 0.1469, fbv: 0.026, ext: 0.1532, foul: 1.586 } },
+               { c: -0.0001, w: { whf: -0.4163, csw: 0.851, swstr: 0.2875, s2whf: 0.4674, strk: 0.1094, swing: 0.0686, zcon: -0.2387, zone: -0.1759, osw: 0.0434, fstrk: -0.0756, b3strk: 0.0935, s2sw: -0.2651, s2zone: 0.2525, gb: -0.0794, pu: 0.0268, fbv: 0.1158, ext: 0.2225, pitch: -0.2046, sloc: 0.2566, stuff: 0.2685, xw: 0.1545, xws: -0.0265 } },
                { c: -0.0008, w: { whf: -0.3181, csw: 0.8479, swstr: 0.4156, s2whf: 0.4491, strk: 0.0773, swing: 0.1082, zcon: -0.3054, zone: -0.2249, osw: 0.0379, fstrk: -0.0697, b3strk: 0.0907, s2sw: -0.2618, s2zone: 0.2574, fbv: 0.2044, ext: 0.315 } },
                { c: 0, w: { whf: 0.8913, strk: 0.8331, swing: -0.5133, zcon: -0.1645, zone: 0.0667, osw: -0.0687 } }];
   // the league's expected whiff rates (location-aware over swings, stuff-only over pitches) for the centring — every 20+ BF pitcher, by BF, per view
@@ -4851,7 +4863,8 @@
     maxev: "The hardest ball he hit all season.",
     bs: "Average bat speed over competitive swings (bunts and check swings dropped).",
     osw: "O-Swing%: how often he swings at pitches outside the zone. Lower is better for a hitter, higher for a pitcher.",
-    xkf: "xK%: the strikeout rate his rates say he should have — a fit over every 100+ BF pitcher-season 2020-26 on his Whiff%, CSW%, SwStr%, two-strike Whiff%, Strike%, Swing%, Z-Contact%, Zone%, Chase%, first-pitch / three-ball strike rates, two-strike swing and zone rates, GB%, PU%, velocity, extension, Pitching+, Location+, Stuff+ and the expected whiff rates, each against the league's; within about 1.1 K% points of the real one (r .95). Above it he turned his whiffs and strikes into strikeouts better than most; below it, worse. That gap is a repeatable trait (Wheeler over every year, Webb under), so read it as what he does rather than what he'll stop doing — the Pitching+ tab's whiff check is the luck read.",
+    foul: "Foul%: the share of his pitches fouled off — the strikes that were neither called, swung through nor put in play. It is what turns whiffs and strikes into strikeouts: contact that goes foul keeps the plate appearance alive, a ball in play ends it. With it, K% is explained to within half a point; without it, pitchers like Skenes read as over-performers and Webb / Phillips as under-performers. Repeats year to year like Strike%.",
+    xkf: "xK%: the strikeout rate his rates say he should have — a fit over every 100+ BF pitcher-season 2020-26 on his Foul%, Whiff%, CSW%, SwStr%, two-strike Whiff%, Strike%, Swing%, Z-Contact%, Zone%, Chase%, first-pitch / three-ball strike rates, two-strike swing and zone rates, GB%, PU%, velocity, extension, Pitching+, Location+, Stuff+ and the expected whiff rates, each against the league's; within about half a K% point of the real one once Foul% is in. What's left over is noise, or Mason Miller.",
     xbbf: "xBB%: the walk rate his Strike%, 1st-pitch Strike% and 3-ball Strike% say he should have — a fit over every 100+ BF pitcher-season 2020-26 that explains 82% of the spread in BB%, typically within 1.1 points. Above it, he walked more than his strikes deserved (usually a high-whiff pitcher's long plate appearances or a small three-ball sample); below it, fewer.",
     fstrk: "1st-pitch Strike%: the share of first pitches of a plate appearance that were strikes (called, swinging, foul or in play).",
     b3strk: "3-ball Strike%: the share of pitches thrown with three balls that were strikes — the one that decides ball four. With Strike% and 1st-pitch Strike% it explains 82% of the spread in BB% (Strike% alone 58%); Zone% and Chase% add nothing on top. Noisier year to year than Strike% (r .39 vs .59).",
@@ -5983,7 +5996,7 @@
                    ["Quality", [["ev", "brl", "hh", "bs", "ev90", "maxev"]]]];
   const EXTRA_P = [["Run prev.", [["era", "kbb"], ["nera", "mera", "siera", "fip"]]],
                    ["K and BB", [["uk", "ubb", "ukb"], ["wsgp", "csw", "swstr"]]],
-                   ["Discipline", [["strk", "xbbf", "fstrk", "b3strk", "zone", "osw", "swing", "zcon"]]],
+                   ["Discipline", [["strk", "xbbf", "fstrk", "b3strk", "foul", "zone", "osw", "swing", "zcon"]]],
                    ["Batted ball", [["gb", "pu"], ["ev", "hh", "brl"]]]];
   // the pitchers' right box, for now: the pitcher percentile stats Savant shows (the ones this data has), under headings
   const EXTRA_P_SAV = [["Stuff", [["fbv", "ext"]]],
@@ -7454,7 +7467,7 @@
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
                           babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", aopt: "Arsenal Opt.", sloc: "Location+", pitch: "Pitching+", pwhf: "Whiff+ (loc)", pbb: "Batted-ball+ (loc)", xwcon: "xwOBAcon", fpts: "Pts", fpg: "Pts/G", fppa: "Pts/PA", fpip: "Pts/IP", fpgs: "Pts/GS",
                           spd: "Sprint Speed", sb: "SB", sba: "SB Att.", sbp: "SB%" };
-  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", fstrk: "1st-pitch Strike%", b3strk: "3-ball Strike%", xbbf: "xBB%", xkf: "xK%", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+", sloc: "Location+" });   // a pitcher's O-Swing% is his chase rate
+  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", fstrk: "1st-pitch Strike%", b3strk: "3-ball Strike%", xbbf: "xBB%", xkf: "xK%", foul: "Foul%", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+", sloc: "Location+" });   // a pitcher's O-Swing% is his chase rate
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
     if (!nav) col.append(panelHead(...pctTitle(p, nav)));   // his page says the season in its header instead

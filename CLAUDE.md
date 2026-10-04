@@ -1381,6 +1381,21 @@ is deploy-limited.
   Whiff% alone is fully explained by the fit's called strikes / two-strike rates), Cole +0.3, Sasaki −1.1 (z −1.0, two seasons; his 2026 halves
   split 32 / 26 on whiffs — noise), Misiorowski +0.1, Warren −0.7. Shrunk talent (gap × 0.76 / (0.76 + SE²)): Brown +1.8, Skenes +1.6, Peralta
   −1.6, Phillips −1.2, Webb −1.1, Sasaki −0.4.
+  **Foul% — the mechanism (Sean, 4 Oct 2026: "do not use career differences. There has to be something that can explain this kind of like
+  how with bb% there were more specific things that explained bb% compared to just strike %")**: scratch `mech.js` / `mech2.js` correlated
+  the fit's leftover K% with everything the build carries that wasn't in it (per-pitch foul, in-play and called-strike rates from the day
+  rows, two-strike pitch share, pitches / PA, HBP, fastball / breaking / offspeed share, best-pitch whiff and its gap over his average,
+  fastball whiff, pitch-mix entropy, pitch count): only **foul rate** (+.43) and its mirror the in-play rate (−.42) move it; called strikes
+  −.01, the arsenal shape under .14. Contact that goes foul keeps the strikeout alive, a ball in play ends the PA. With Foul% in the fit,
+  held out season by season: rmse 1.42 → **0.63** (mean error 0.50; foul share of contact 0.61, two-strike share alone 1.02), and the named
+  gaps vanish — Skenes 2026 +3.1 → +0.9 (foul 21.0% vs league 18.3), Webb 2025 −3.7 → +0.3 (17.6), Phillips 2025 −4.2 → +0.2 (13.7), Wandy
+  Peralta 2025 −3.5 → −0.6, Valdez / Sánchez to ~0; Mason Miller stays +3 (hitters can't foul off 103). Foul% repeats year to year at r .56
+  (Strike% .59, in-play rate .75) and runs with Swing% (.75), Zone% (.48), fastball share (.27), breaking share (−.22). **Shipped**: the build's
+  `pitcher_metrics` flags `foul = strike & ~whiff & ~bip & ~cs` → `Foul_pct` → `m.foul`; `data.js` and `hist/mlb-2020…2025.js` patched
+  from their day rows (scratch `patchfoul.js`: strk − cs − whf − bip over pit); `V()` re-derives it in a window / split; `lgRatesP` carries
+  it; `XKM` leads with the two Foul% tiers (full, no-stuff) and keeps the three without it for older files; **Foul%** is a `SIDE_P` metric
+  (Leaderboard column, Stats ▸ Discipline, glossary), not on the card. 2026 cards: Skenes K% 28.1 / xK% 27.2, Webb 25.7 / 26.3, Phillips
+  18.8 / 19.3, Sasaki 23.6 / 24.6, Wheeler 29.9 / 29.7. The career-gap significance numbers above are of the pre-Foul% fit and are history.
 
 ## 9. Things only Sean can do
 
