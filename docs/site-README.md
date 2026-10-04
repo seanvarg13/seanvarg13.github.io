@@ -153,11 +153,11 @@ three rates say he should have, from the same fit, usually within about a point 
 The pitcher card's columns (4 Oct 2026): Skills · xSkills · Results · Swing & Miss on the left, Zone & Chase · Batted Ball · Stuff
 (fastball velo and extension only; the Pitching+ grades are on their own tab) on the right.
 xSkills reads xK%, xBB% and xMix wOBA, and the **xRating** is those three percentiles weighted 55 / 35 / 10. **xK%** (4 Oct 2026) is the
-strikeout rate his pitches say he should have: a fit over every 100+ BF pitcher-season since 2020 on the Pitching+ model's expected whiff
-rates, Strike%, swing and contact rates, the count-state strike rates, velocity, extension, Pitching+ and Location+, each against the
-league's — no actual whiffs in it. Of every version tried it was the one that forecast next season's K% better than his own K% did. A pitcher
-above it turns his stuff into strikeouts better than most, and that is a repeatable trait rather than luck (Wheeler every year); one below it
-(Webb) tends to stay below.
+strikeout rate his rates say he should have: a fit over every 100+ BF pitcher-season since 2020 on his whiff, called-strike and swinging-strike
+rates, two-strike whiff rate, Strike%, swing and contact rates, the count-state strike rates, batted-ball mix, velocity, extension, the
+Pitching+ grades and the expected whiff rates, each against the league's — within about a point of the real K% (r .95). A pitcher above it
+turns his whiffs and strikes into strikeouts better than most; one below it, worse. That gap is a repeatable trait rather than luck (Wheeler
+over every year, Webb under), so it says what he does, not what he'll stop doing; the Pitching+ tab's whiff check is the luck read.
 
 **xRating** (4 Oct 2026): the Rating's weights with the Pitching+ model's expected whiff rate and the Mix wOBA its expected mix implies in
 place of his actual ones — what his pitches and spots say the Rating should be. On the Pitching+ tab beside the Rating and a Leaderboard /
