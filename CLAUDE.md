@@ -1285,6 +1285,15 @@ is deploy-limited.
   The reverse (SP → RP: +1.3 whiff, +6.5 Pitching+, +1.1 mph) isn't shown. **xRating is the first column** of every pitcher column set
   (`LB_SETS`, right after the Rating headline) and `state.lb.xratFront` moves it to the front of saved lists once.
 
+* **The SP / RP split on the Pitching+ tab (Sean, 4 Oct 2026: "make it so the pitching+ stuff and xwhiff xgb and xpu work for the RP and sp
+  splits for guys who did both")**: it always was wired (`arsenalView` filters the arsenal day rows by the started flag) but had been
+  broken since the location family shipped — `meta.arsDayFields` carries **`gs` twice** (the started flag at index 3 and the stuff-only
+  ground-ball chance sum `gs` in `nl wl ws nb gl pl gs ps`), `Object.fromEntries` keeps the later index, so the role filter compared a
+  probability sum with 0 / 1 ("As SP" read "No graded pitches", "As RP" summed a few dozen pitches). `arsenalView` now reads the flag at
+  `ARS_F.indexOf("gs")` (`gsI`); the sums still use the later `gs` for the chance. Don't rename either field — every `hist/ars-*.js`
+  carries the list. Under a role split the tab's head, table, xWhiff / xGB / xPU pairs, the whiff check and the Rating · xRating line all
+  follow (the day rows' sums in `V()`, the pool in that split).
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
