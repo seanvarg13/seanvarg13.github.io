@@ -6647,9 +6647,12 @@
       let acc = 0; lo = w.hi + 1;
       for (const d of [...byDay.keys()].sort((x, y) => y - x)) { acc += byDay.get(d); lo = d; if (acc >= 3 * w.last) break; }
     }
-    const I = Object.fromEntries(ARS_F.map((f, i) => [f, i])), sum = new Map();
+    // "gs" is in ARS_F twice — the started flag at 3 and, since the location family (3 Oct 2026), the stuff-only ground-ball chance sum
+    // near the end — and the index map keeps the later one, so the role filter had been testing a probability sum against 0 / 1 (an
+    // "As SP" view read "No graded pitches"; Sean, 4 Oct 2026). The flag is the first one
+    const I = Object.fromEntries(ARS_F.map((f, i) => [f, i])), gsI = ARS_F.indexOf("gs"), sum = new Map();
     for (const r of rows) {
-      if (r[0] < lo || r[0] > w.hi || !ok(r[0], r[I.hand], r[I.home], r[I.gs])) continue;
+      if (r[0] < lo || r[0] > w.hi || !ok(r[0], r[I.hand], r[I.home], r[gsI])) continue;
       const t = sum.get(r[I.pt]) || Object.fromEntries(ARS_F.slice(5).map((f) => [f, 0]));
       for (const f of ARS_F.slice(5)) t[f] += r[I[f]];
       sum.set(r[I.pt], t);
