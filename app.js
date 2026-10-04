@@ -16,8 +16,8 @@
         ["Advanced", ["woba", "xwdiff", "xwcon", "xk", "mixw", "babip", "xbabip", "bluck", "brel"]],
         ["Batted ball", ["ev", "ev90", "maxev", "brl", "hh", "bs", "air", "pull", "gb", "pu"]],
         ["Plate discipline", ["k", "xk", "bb", "whf", "osw", "zsw", "zcon", "ocon"]]],
-    P: [["Standard", ["era", "k", "bb", "kbb", "whf", "strk", "gb", "uera"]],
-        ["Advanced", ["era", "fip", "siera", "nera", "uera", "ukb", "wsgp"]],
+    P: [["Standard", ["era", "k", "bb", "kbb", "whf", "strk", "gb", "nera"]],   // nERA where uERA was (Sean, 4 Oct 2026)
+        ["Advanced", ["era", "fip", "siera", "nera", "ukb", "wsgp"]],
         ["Batted ball", ["gb", "pu", "ev", "hh", "brl"]],
         ["Plate discipline", ["whf", "strk", "zone", "osw", "swing", "zcon", "csw", "swstr"]],
         ["Pitching+", ["pitch", "pwhf", "pbb", "sloc", "wgap", "nwhf", "fbv", "ext"]]],   // one grade (Sean, 4 Oct 2026: Stuff+ and Pitching+ no longer separate)
@@ -303,7 +303,7 @@
   const LB_EXTRA_P = ["nwhf", "ngb", "npu", "wgap", "pitch", "pwhf", "pbb", "sloc", "fpts", "fpg", "fpip", "fpgs"];   // pERA / pK% / pBB% / Pitching uERA off the lists (Sean, 4 Oct 2026: "I simply just want expected whiffs GBs and pus")   // Stuff uERA / Arsenal Opt. off the lists with Stuff+ (4 Oct 2026)
   const NEXT_KEYS = new Set(["nwhf", "ngb", "npu", "wgap"]);
   // still computed and on the pool's stats, but off every list, panel and sort (Sean, 4 Oct 2026: one Pitching+; "get rid of pERA and pitching+ uERA")
-  const RETIRED_P = new Set(["stuff", "swhf", "sbb", "suera", "aopt", "puera", "pera", "nk", "nbb"]);   // pera / nk / nbb still on the pool's stats, just not listed   // next season's (pERA and the projected rates), read off the pool's stats
+  const RETIRED_P = new Set(["stuff", "swhf", "sbb", "suera", "aopt", "puera", "pera", "nk", "nbb", "uera"]);   // uERA too (Sean, 4 Oct 2026: "Replace uERA with nERA")   // pera / nk / nbb still on the pool's stats, just not listed   // next season's (pERA and the projected rates), read off the pool's stats
   // fantasy points as list columns (Sean, 1 Oct 2026: "on the fantasy rankings and draft board ... points per game and points per PA"):
   // the official season line under the current scoring preset (fantasy.js), full season only — fantFill puts them on V(p)
   const FANT_H = [{ key: "fpts", label: "Pts", hib: true, dec: 0, unit: "", int: true, showValue: true }, { key: "fpg", label: "Pts/G", hib: true, dec: 2, unit: "", showValue: true },
@@ -541,7 +541,7 @@
   // Filters ▸ Stats adds the rest back (the migrations below then leave a slimmed list alone: their flags are set here too)
   if (!state.lb.slim) { state.lb.H = LB_SLIM.H.slice(); state.lb.P = LB_SLIM.P.slice(); Object.assign(state.lb, { slim: true, suAdded: true, xwdAdded: true }); }
   if (!state.lb.tabs) { const same = (a, b) => a.length === b.length && a.every((k, i) => k === b[i]); for (const k of ["H", "P"]) if (same(state.lb[k], LB_SLIM[k])) state.lb[k] = LB_SETS[k][0][1].slice(); state.lb.tabs = true; }   // the column-set tabs (3 Oct 2026): a never-customised list opens on Standard
-  if (!state.lb.slim && state.lb.P.includes("nera") && !state.lb.P.includes("uera")) state.lb.P.splice(state.lb.P.indexOf("nera") + 1, 0, "uera");     // uERA back 2026-09-21
+     // uERA back 2026-09-21
   if (!state.lb.suAdded) { if (!state.lb.P.includes("suera")) state.lb.P.splice(state.lb.P.includes("uera") ? state.lb.P.indexOf("uera") + 1 : state.lb.P.length, 0, "suera"); state.lb.suAdded = true; }   // Stuff uERA, 27 Sep 2026
   if (!state.lb.slim && state.lb.P.includes("kbb") && !state.lb.P.includes("ukb")) state.lb.P.splice(state.lb.P.indexOf("kbb") + 1, 0, "ukb");       // added 2026-09-21
   if (!state.lb.slim && state.lb.P.includes("gb") && !state.lb.P.includes("wsgp")) state.lb.P.splice(state.lb.P.indexOf("gb") + 1, 0, "wsgp");       // WSGP added 2026-09-23
@@ -550,7 +550,7 @@
   for (const c of Object.values(state.cols || {})) if (c && Array.isArray(c.H)) c.H = c.H.filter((k) => k !== "pxw");
   if (state.cmpCols && Array.isArray(state.cmpCols.H)) state.cmpCols.H = state.cmpCols.H.filter((k) => k !== "pxw");
   if (state.sort === "pxw") state.sort = "score";
-  { const gone = (k) => !["xstrk", "xosw", "cmd", "xbb", "pubb", "stuff", "swhf", "sbb", "suera", "aopt", "puera", "pera", "nk", "nbb"].includes(k);   // the command models' columns (3 Oct 2026), then the Stuff+ family (4 Oct 2026: one Pitching+)
+  { const gone = (k) => !["xstrk", "xosw", "cmd", "xbb", "pubb", "stuff", "swhf", "sbb", "suera", "aopt", "puera", "pera", "nk", "nbb", "uera"].includes(k);   // the command models' columns (3 Oct 2026), then the Stuff+ family (4 Oct 2026: one Pitching+)
     state.lb.P = (state.lb.P || []).filter(gone); for (const c of Object.values(state.cols || {})) if (c && Array.isArray(c.P)) c.P = c.P.filter(gone);
     if (state.cmpCols && Array.isArray(state.cmpCols.P)) state.cmpCols.P = state.cmpCols.P.filter(gone); if (!gone(state.sort)) state.sort = "score"; }
   if (state.cmp2 && state.cmp2.pick && Array.isArray(state.cmp2.pick.H)) state.cmp2.pick.H = state.cmp2.pick.H.filter((k) => k !== "pxw");
@@ -2864,7 +2864,7 @@
                           ["O-Contact%", "ocon", 1, "%"], ["Whiff%", "whf", 1, "%"], ["Strike%", "strk", 1, "%"], ["K%", "k", 1, "%"], ["xK%", "xk", 1, "%"]]]];
   const VS_P = [
     ["Advanced", [["K%", "k", 1, "%"], ["BB%", "bb", 1, "%"], ["K-BB%", "kbb", 1, "%"], ["ERA", "era", 2], ["FIP", "fip", 2], ["SIERA", "siera", 2], ["nERA", "nera", 2],
-                  ["uERA", "uera", 2], ["Pitching+", "pitch", 0], ["Whiff+", "pwhf", 0], ["BB+", "pbb", 0], ["Location+", "sloc", 0]]],
+                  ["Pitching+", "pitch", 0], ["Whiff+", "pwhf", 0], ["BB+", "pbb", 0], ["Location+", "sloc", 0]]],
     ["Batted Ball", [["GB%", "gb", 1, "%"], ["PU%", "pu", 1, "%"], ["EV", "ev", 1], ["HardHit%", "hh", 1, "%"], ["Barrel%", "brl", 1, "%"], ["FBv", "fbv", 1], ["Ext", "ext", 1]]],
     ["Plate Discipline", [["Swing%", "swing", 1, "%"], ["O-Swing%", "osw", 1, "%"], ["Z-Contact%", "zcon", 1, "%"], ["Zone%", "zone", 1, "%"], ["Whiff%", "whf", 1, "%"],
                           ["SwStr%", "swstr", 1, "%"], ["CSW%", "csw", 1, "%"], ["Strike%", "strk", 1, "%"]]]];
@@ -2944,7 +2944,7 @@
     if (!careerReady()) { box.append(el("p", "note", failed.has("hist/career.js") ? "hist/career.js hasn't been built — run build_career.py" : "Loading career stats…")); return box; }
     // kept simple (Sean): PA, HR and the slash line for a hitter; IP, ERA and the four rates a pitcher owns for a pitcher
     const H = p.type === "H", cols = H ? ["PA", "HR", "AVG", "OBP", "SLG", "OPS"] : ["IP", "ERA", "K%", "BB%", "GB%", "Popup%"];
-    const colsMLB = H ? cols : [...cols, "uERA"];   // uERA the last column; in the minors it's the MLB-equivalent (Sean)
+    const colsMLB = H ? cols : [...cols, "nERA"];   // nERA the last column (Sean, 4 Oct 2026: nERA where uERA was); the minors show the level's own
     const idx = cols.map((k) => (H ? RAW_H : RAW_P).indexOf(k));
     const pct = (n, d) => (n == null || !d ? null : 100 * n / d);
     // GB% / Popup%: career.js carries them from its next build; until then, from the season's own file if it's loaded
@@ -2960,7 +2960,7 @@
     // a minor-league line's level file, when it's here (career.js carries these from its next build)
     const DSK = { AAA: "aaa", AA: "aa", "A+": "ap", A: "a" };
     const milbM = (r) => { const k = DSK[lvName(r.level)], ds = k && histDataset(k + "-" + r.season); const q = ds && ds.players.find((x) => x.id === p.id && x.type === p.type); return q ? q.m : null; };
-    const fmtv = (k, v) => v == null ? "–" : ["AVG", "OBP", "SLG", "OPS"].includes(k) ? fmtX(v) : ["ERA", "WHIP", "uERA"].includes(k) ? Number(v).toFixed(2) : /%$/.test(k) ? Number(v).toFixed(1) : String(v);
+    const fmtv = (k, v) => v == null ? "–" : ["AVG", "OBP", "SLG", "OPS"].includes(k) ? fmtX(v) : ["ERA", "WHIP", "uERA", "nERA"].includes(k) ? Number(v).toFixed(2) : /%$/.test(k) ? Number(v).toFixed(1) : String(v);
     // uERA is worked out on the page against the season's pitchers, so each MLB year's file is fetched when the table opens
     const want = new Set();
     const uera = (season) => {
@@ -2969,8 +2969,20 @@
       if (!ds) { want.add(k); return undefined; }                 // undefined: still loading
       const q = ds.players.find((x) => x.id === p.id && x.type === "P"); if (!q) return null;
       return withDataset(ds, () => withWindow(NOWIN, () => withSplit({ hand: "all", venue: "all" }, () => {
-        const g = q.primary, st = pool(g).stats.get("P" + q.id) || rankIn(g, q);
-        return st && st.uera != null ? { v: st.uera, pct: st.pct.uera } : null;
+        const g = q.primary, st = pool(g).stats.get("P" + q.id) || rankIn(g, q), v = V(q).m.nera;
+        return st && v != null ? { v, pct: st.pct.nera } : null;
+      })));
+    };
+    // a minors line's nERA: the level file's own (every level has batted-ball types), ranked among that level's pitchers
+    const milbN = (r) => {
+      const lv = { AAA: "aaa", AA: "aa", "A+": "ap", A: "a" }[r.level] || null; if (!lv) return null;
+      const k = `${lv}-${r.season}`, ds = histDataset(k);
+      if (!ds && failed.has(`hist/${k}.js`)) return null;
+      if (!ds) { want.add(k); return undefined; }
+      const q = ds.players.find((x) => x.id === p.id && x.type === "P"); if (!q) return null;
+      return withDataset(ds, () => withWindow(NOWIN, () => withSplit({ hand: "all", venue: "all" }, () => {
+        const g = q.primary, st = pool(g).stats.get("P" + q.id) || rankIn(g, q), v = V(q).m.nera;
+        return st && v != null ? { v, pct: st.pct.nera } : null;
       })));
     };
     // the minors' uERA is an MLB equivalent: his Whiff%, Strike%, GB% and Popup% at a level, carried up to the majors
@@ -3023,20 +3035,19 @@
       if (both) { const hr = el("tr", "hdrow"), th = el("th", "l"); th.colSpan = 2 + tc.length; th.append(el("span", "rawhd", minors ? "Minor leagues" : "MLB")); hr.append(th); tbody.append(hr); }
       // the minors show the level where the majors show the club (Sean: the minor-league club isn't what he's after)
       const tr = el("tr", "colhd");
-      for (const h of ["Season", minors ? "Level" : "Team", ...tc]) tr.append(el("th", ["Season", "Level", "Team"].includes(h) ? "l" : h === "uERA" ? "lc" : null, h === "Popup%" ? "PU%" : h));   // PU%: a narrower head, more room between columns (Sean)
+      for (const h of ["Season", minors ? "Level" : "Team", ...tc]) tr.append(el("th", ["Season", "Level", "Team"].includes(h) ? "l" : h === "nERA" ? "lc" : null, h === "Popup%" ? "PU%" : h));   // PU%: a narrower head, more room between columns (Sean)
       tbody.append(tr);
       const draw = (r, seasonTxt, level, team, cls) => {
         const row = el("tr", cls || null);
         row.append(el("td", "l", seasonTxt));
         const tm = el("td", "l tm", team || ""); if (team && team.length > 14) tm.title = team; row.append(tm);   // a club's full name on hover
         for (const k of tc) {
-          if (k === "uERA") {                                    // the year's uERA, coloured by its percentile among that season's pitchers
+          if (k === "nERA") {                                    // the year's nERA, coloured by its percentile among that season's pitchers
             // the colour sits on a chip inside the cell, as a leaderboard's sorted column does, not the whole cell (Sean)
-            const u = r.club ? null : minors ? milbU(r) : uera(r.season), td = el("td", "uera"), chip = el("span", "uchip", u === undefined ? "…" : fmtv(k, u && u.v));
+            const u = r.club ? null : minors ? milbN(r) : uera(r.season), td = el("td", "uera"), chip = el("span", "uchip", u === undefined ? "…" : fmtv(k, u && u.v));
             if (u && u.pct != null) {
               paintBar(chip, u.pct); chip.style.color = "#fff"; chip.classList.add("on");   // white on every colour (Sean)
-              td.title = minors ? `MLB-equivalent uERA ${u.v.toFixed(2)}: his rates carried up to the majors · would be ${ordinal(u.pct)} pctl among ${r.season} MLB ${u.g === "SP" ? "starters" : "relievers"}`
-                                : `uERA ${u.v.toFixed(2)} · ${ordinal(u.pct)} pctl among ${r.season} pitchers`;
+              td.title = `nERA ${u.v.toFixed(2)} · ${ordinal(u.pct)} pctl among ${r.season} ${minors ? r.level : ""} pitchers`;
             }
             td.append(chip);
             row.append(td); continue;
@@ -3064,7 +3075,7 @@
           const wavg = (k) => { let n = 0, d = 0; for (const r of rows) { if (!r.c.BF) continue; const v = val(r, k); if (v == null) return null; n += v * r.c.BF; d += r.c.BF; } return d ? n / d : null; };   // only with every season in it
           const ix = tc.map((k) => (H ? RAW_H : RAW_P).indexOf(k));
           const ueraC = () => { let n = 0, d = 0; for (const r of rows) { const u = uera(r.season), ip = ipNum(r.c.IP); if (!u) return null; n += u.v * ip; d += ip; } return d ? n / d : null; };   // innings-weighted
-          const cv = (k, j) => (k === "uERA" ? ueraC() : H || ix[j] >= 0 ? career[ix[j]] : k === "K%" ? pct(sum((r) => r.c.K), bf) : k === "BB%" ? pct(sum((r) => r.c.BB), bf) : wavg(k));
+          const cv = (k, j) => (k === "nERA" ? ueraC() : H || ix[j] >= 0 ? career[ix[j]] : k === "K%" ? pct(sum((r) => r.c.K), bf) : k === "BB%" ? pct(sum((r) => r.c.BB), bf) : wavg(k));
           const row = el("tr", "career"); row.append(el("td", "l", "Career"), el("td", "l", `${rows.length} yr`)); tc.forEach((k, j) => row.append(el("td", null, fmtv(k, cv(k, j))))); tbody.append(row);
         }
       }
@@ -3382,11 +3393,11 @@
     // with a date range or split on, the same line for just those games (the fantasy file's game logs)
     if (winIdx() || splitActive()) {
       const o = fViewLine(p);
-      if (!o || o === "wait" || o.empty) { if (o === "wait" || (o && o.empty)) for (const k of (p.type === "H" ? ["AVG", "OBP", "SLG", "OPS"] : ["uERA", "ERA", "K%", "BB%", "SV"])) box.append(fact(k, "–")); return o ? box : null; }
+      if (!o || o === "wait" || o.empty) { if (o === "wait" || (o && o.empty)) for (const k of (p.type === "H" ? ["AVG", "OBP", "SLG", "OPS"] : ["nERA", "ERA", "K%", "BB%", "SV"])) box.append(fact(k, "–")); return o ? box : null; }
       const r3 = (n, d) => (d ? fmtX(n / d) : "–"), obp = (o.H + o.BB + (o.HBP || 0)) / ((o.AB + o.BB + (o.HBP || 0) + (o.SF || 0)) || NaN);
       const ff = p.type === "H"
         ? [["AVG", r3(o.H, o.AB)], ["OBP", isFinite(obp) ? fmtX(obp) : "–"], ["SLG", r3(o.TB, o.AB)], ["OPS", o.AB && isFinite(obp) ? fmtX(obp + o.TB / o.AB) : "–"]]
-        : [["uERA", st && st.uera != null ? st.uera.toFixed(2) : "–"], ["ERA", o.OUTS ? (27 * o.ER / o.OUTS).toFixed(2) : "–"],
+        : [["nERA", V(p).m.nera != null ? V(p).m.nera.toFixed(2) : "–"], ["ERA", o.OUTS ? (27 * o.ER / o.OUTS).toFixed(2) : "–"],   // nERA where uERA was (Sean, 4 Oct 2026)
            ["K%", o.BF ? (100 * o.K / o.BF).toFixed(1) : "–"], ["BB%", o.BF ? (100 * o.BB / o.BF).toFixed(1) : "–"], ["SV", String(o.SV || 0)]];
       for (const [k, v] of ff) box.append(fact(k, v));
       box.title = viewLabel(p.type) || "";
@@ -3400,7 +3411,7 @@
     const ff = p.type === "H"
       ? [["AVG", fmtX(r[14])], ["OBP", fmtX(r[15])], ["SLG", fmtX(r[16])], ["OPS", fmtX(r[17])]]   // the slash line and OPS, no more (Sean, 1 Oct 2026)
       // uERA where W-L was, no WHIP (Sean, 1 Oct 2026); uERA is the card's own, from the pool
-      : [["uERA", st && st.uera != null ? st.uera.toFixed(2) : "–"], ["ERA", r[4] == null ? "–" : (+r[4]).toFixed(2)],
+      : [["nERA", p.m && p.m.nera != null ? p.m.nera.toFixed(2) : "–"], ["ERA", r[4] == null ? "–" : (+r[4]).toFixed(2)],
          ["K%", r[16] ? (100 * r[12] / r[16]).toFixed(1) : "–"], ["BB%", r[16] ? (100 * r[11] / r[16]).toFixed(1) : "–"], ["SV", r[7]]];   // rates over his batters faced, not counts
     for (const [k, v] of ff) box.append(fact(k, v == null ? "–" : v));
     return box;
@@ -4702,12 +4713,12 @@
     const N = mobileView() ? 5 : Math.max(5, Math.min(15, Math.floor((innerHeight - 310) / 50)));
     const goLB = (pos, sort, dir) => (e) => { e.preventDefault(); state.pos = pos; state.posAlso = []; state.sort = sort; state.dir = dir; savePrefs(); location.hash = "#leaderboard"; };
     const col = (box, lab, rows, f, tab, go) => { const hd = el("h4"), a = el("a", "hmore", `${lab} →`); a.href = "#leaderboard"; a.addEventListener("click", go); hd.append(a); const c = el("div"); c.append(hd); list(c, rows.map(([p, v]) => [p, f(v), null, tab])); box.append(c); };
-    const puOf = (p) => { const st = pool(p.primary).stats.get("P" + p.id) || rankIn(p.primary, p); return st && st.uera; };   // uERA since Pitching uERA came off (4 Oct 2026)
+    const puOf = (p) => V(p).m.nera;   // nERA (Sean, 4 Oct 2026: "Replace uERA with nERA"); in a window V() re-derives it from the day rows
     const lc = card(`${m.season} leaders`, null, "#leaderboard", "Leaderboard →"), lt = two(lc);
     withWindow(NOWIN, () => withSplit(NONE, () => {
       const hit = DATA.players.filter((p) => p.type === "H" && (p.pa || 0) >= 300).map((p) => [p, V(p).m.xwd]).filter((r) => r[1] != null).sort((a, b) => b[1] - a[1]).slice(0, N);
       const pit = DATA.players.filter((p) => p.type === "P" && (p.ip || 0) >= 100).map((p) => [p, puOf(p)]).filter((r) => r[1] != null).sort((a, b) => a[1] - b[1]).slice(0, N);
-      col(lt, "xwOBA", hit, f3, null, goLB("ALL", "score", "desc")); col(lt, "uERA", pit, f2, "uera", goLB("ALLP", "uera", "asc"));
+      col(lt, "xwOBA", hit, f3, null, goLB("ALL", "score", "desc")); col(lt, "nERA", pit, f2, "nera", goLB("ALLP", "nera", "asc"));
     }));
     // trending (Sean, 3 Oct 2026): hitters over their last 100 PA by xwOBA, pitchers over their last 50 IP by Pitching uERA — from
     // the day rows, so the card says "loading" until days.js is in, then redraws itself
@@ -4722,7 +4733,7 @@
         });
         withWindow({ from: "", to: "", last: "50" }, () => {
           const pit = DATA.players.filter((p) => p.type === "P").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 37.5).map(([p]) => [p, puOf(p)]).filter((r) => r[1] != null).sort((a, b) => a[1] - b[1]).slice(0, N);
-          col(tt, "uERA, last 50 IP", pit, f2, "uera", (e) => { e.preventDefault(); state.pos = "ALLP"; state.posAlso = []; state.sort = "uera"; state.dir = "asc"; state.win = { from: "", to: "", last: "50" }; savePrefs(); location.hash = "#leaderboard"; });
+          col(tt, "nERA, last 50 IP", pit, f2, "nera", (e) => { e.preventDefault(); state.pos = "ALLP"; state.posAlso = []; state.sort = "nera"; state.dir = "asc"; state.win = { from: "", to: "", last: "50" }; savePrefs(); location.hash = "#leaderboard"; });
         });
       });
     }
@@ -6269,7 +6280,7 @@
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["fantasy", "Fantasy"]];
   const BTABS_H = [["mix", "Mix"]];   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
-  const BTABS_P = [["pitching", "Pitching+"], ["uera", "uERA"]];   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
+  const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"]];   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -6287,8 +6298,8 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => (tabs.find(([x]) => x === k) || [])[1];
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"]] : []), ["fantasy"],
-                    ["rolling", ...(p.type === "P" ? ["nera", "uera"] : ["mix", "babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["nera"]] : []), ["fantasy"],
+                    ["rolling", ...(p.type === "P" ? ["uera"] : ["mix", "babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
     const go = (k) => { const y0 = bar.getBoundingClientRect().top, inPop = !!bar.closest("#modal-body"); state.pbtab = k; savePrefs(); render(); anchorTabs(y0, inPop, p); };
@@ -7374,7 +7385,7 @@
   // of the plate; a pitcher's pitch mix, velo / extension, zone and chase, ground balls and popups, and his hand), skill is how good
   // it is (contact quality and xwOBA; Stuff+, whiffs, strikes, K-BB and uERA). Same pool, view and split as the card
   const SIM = { H: { style: ["air", "gb", "pu", "pull", "osw", "zsw", "whf", "k", "bb"], skill: ["xwd", "ev", "brl", "hh", "ev90", "bs", "zcon"] },
-                P: { style: ["gb", "pu", "zone", "osw", "swing", "fbv", "ext"], skill: ["pitch", "whf", "strk", "kbb", "uera"] } };
+                P: { style: ["gb", "pu", "zone", "osw", "swing", "fbv", "ext"], skill: ["pitch", "whf", "strk", "kbb", "nera"] } };
   const pitchMix = (q) => { const a = q.ctx && q.ctx.arsenal; if (!a || !a.length) return null; const t = a.reduce((x, r) => x + (r[1] || 0), 0); if (!t) return null; const m = {}; for (const r of a) m[r[0]] = 100 * (r[1] || 0) / t; return m; };
   // across seasons (Sean, 1 Oct 2026: "player and year ... it doesn't have to be a player from that same year"): hist/similar.js
   // (tools/build_similar.py) holds every qualified MLB player-season 2015-now, each ranked within its own season, so a full-season

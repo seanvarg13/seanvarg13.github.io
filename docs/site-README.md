@@ -133,6 +133,9 @@ within ~1.5 points of a pitcher's real BB% (the old Strike%-percentile match: 1.
 than his own BB% does. Double-A and most of Single-A lack Chase% / Z-Contact% and use a four-rate version. Both are ordinary card metrics (`uk`, `ubb`) alongside u(K-BB%)
 and uERA, so they can sit on any table.
 
+**nERA in uERA's place** (4 Oct 2026): the card's band, its tab strip (Pitching+ · nERA), Season Stats' last column, the home page's
+pitcher lists and the Leaderboard's Standard set all read the luck-neutral ERA instead of uERA.
+
 **Simpler cards** (4 Oct 2026, later): the pERA tab, the Pitching uERA box and both Game Logs tabs came off the cards; the Pitching+
 tab is the per-pitch table (expected whiffs, ground balls and popups against actual) and the whiff check, and the Leaderboard's Projected
 columns are pWhiff%, pGB%, pPU% and Whiff vs proj. Home's pitcher lists are by uERA.

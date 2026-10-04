@@ -149,7 +149,7 @@ PITCHER_CARD = [
     # what the ERA should be and what he's giving up: the expected / underlying marks beside contact quality
     ("Expected & contact",   [("uk", "uK%", True, 1, "%"), ("ubb", "uBB%", False, 1, "%"),   # the fitted process rates
                               ("ukb", "u(K-BB%)", True, 1, "%"),   # u(K-BB%) is derived in the app (expected K% − expected BB%)
-                              ("uera", "uERA", False, 2, ""), ("nera", "Luck-neutral ERA", False, 2, ""),
+                              ("nera", "Luck-neutral ERA", False, 2, ""),
                               ("siera", "SIERA", False, 2, ""), ("fip", "FIP", False, 2, ""),
                               ("ev", "Avg EV", False, 1, "mph"), ("hh", "Hard-Hit%", False, 1, "%"), ("brl", "Barrel%", False, 1, "%")]),
 ]
