@@ -1236,6 +1236,14 @@ is deploy-limited.
   untouched); Batted Ball is GB% · Popup% · Mix wOBA and Mix ERA is a column only (still in `PITCHER_CARD`'s Batted ball group for the pool).
   The glossary's `mixw` entry covers both sides.
 
+* **pERA, Pitching uERA and the Game Logs tabs off the cards (Sean, 4 Oct 2026: "Get rid of pERA and pitching+ uERA I simply just want
+  expected whiffs GBs and pus. And no need for game logs on pitcher or hitter player cards")**: `BTABS_P` is Pitching+ · uERA, `BTABS_H` is
+  Mix; the Pitching+ tab shows the table (xWhiff / xGB / xPU against actual, per pitch and in all) and the whiff check, no uERA box under it;
+  the Leaderboard's Projected group is pWhiff% · pGB% · pPU% · Whiff vs proj. (`NEXT_KEYS`); `RETIRED_P` (`stuff swhf sbb suera aopt puera
+  pera nk nbb`) keeps those keys out of the Sort by list, `LB_EXTRA_P` / `LB_SETS` / `VS_P` no longer name them, and saved lists drop them on
+  load. Home's leader and trending lists are **uERA** (`puOf` reads `st.uera`). Everything is still computed (`renderNextTab`,
+  `renderGameLogs`, `pitchUERA`, the pool's `pera / nk / nbb / puera`) — a UI change brings any of it back; don't, unasked.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
