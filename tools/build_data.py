@@ -71,7 +71,7 @@ HITTER_SCORE_WEIGHTS = {"brl": 40.5, "ev": 11.6, "zcon": 16.9, "ocon": 17.2,
 # the pitchers' Rating (Sean, 4 Oct 2026: "the four skills in order of importance, ability to get Ks, avoid walks, get gbs, and get
 # popups" — process, not outcomes). Weights from a 2020-26 backtest against NEXT season's ESPN points per inning (starters 100+ IP both
 # years, r .56 vs .51 for the old 50 / 50 Whiff% / Strike%); Chase% and SwStr% tested and left out (nothing on top of these four)
-PITCHER_SCORE_WEIGHTS = {"xkf": 55.0, "xbbf": 35.0, "mixw": 10.0}   # Sean, 4 Oct 2026 (evening): xK%, xBB% and Mix wOBA — all three worked out in the app (xK% is the same-season fit, xBB% the walk formula); Whiff% 55 / Strike% 30 / Mix wOBA 15 earlier that day
+PITCHER_SCORE_WEIGHTS = {"xkbb": 80.0, "mixw": 20.0}   # Sean, 4 Oct 2026 (night): x(K-BB)% and Mix wOBA, the split that scored best against ESPN points per start / inning (kbbrate.py); before that   # Sean, 4 Oct 2026 (evening): xK%, xBB% and Mix wOBA — all three worked out in the app (xK% is the same-season fit, xBB% the walk formula); Whiff% 55 / Strike% 30 / Mix wOBA 15 earlier that day
 
 WHIFF = {"swinging_strike", "swinging_strike_blocked", "foul_tip", "missed_bunt", "bunt_foul_tip"}
 SWING = WHIFF | {"foul", "hit_into_play", "foul_bunt"}
@@ -1806,7 +1806,7 @@ def main():
                  "published number, date windows and splits rebuild it from pitch-level data to within about .001",
             "blend": "wOBA percentile blend (Formula 1): 40.5% Barrel, 17.2% O-Contact, 16.9% Z-Contact, "
                      "11.6% Avg EV, 9.0% Z-minus-O Swing, 4.5% O-Swing (flipped), 0.2% Pull Air — re-ranked as a percentile",
-            "P": "xK% 55, xBB% 35, Mix wOBA 10 — the strikeouts and walks his rates say he should have, and the batted-ball mix as one number, over percentiles (Sean, 4 Oct 2026)",
+            "P": "x(K-BB)% 80, Mix wOBA 20 — the strikeout-minus-walk rate his rates say he should have, and the batted-ball mix as one number, over percentiles (Sean, 4 Oct 2026)",
         },
     }
     out = {"meta": meta, "players": hitters + pitchers}
