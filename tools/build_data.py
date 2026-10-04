@@ -86,7 +86,9 @@ COLS = ["game_date", "game_type", "game_pk", "batter", "pitcher", "stand", "p_th
         "release_spin_rate", "spin_axis", "pfx_x", "pfx_z", "release_pos_x", "release_pos_z", "arm_angle",   # these seven: Stuff
         "home_team", "plate_x", "plate_z", "vx0", "vy0", "vz0", "ax", "ay", "az",  # Stuff's park adjustment and approach angles
         "sz_top", "sz_bot",                                                         # the batter's zone: the location-aware whiff model
-        "balls", "strikes"]                                                         # the count: the command models (swing, called strike) — 3 Oct 2026
+        "balls", "strikes",                                                         # the count: the command models (swing, called strike) — 3 Oct 2026
+        "swing_length", "attack_angle", "attack_direction", "swing_path_tilt",      # the batter's swing (with bat_speed above): the foul model with swing — 4 Oct 2026
+        "intercept_ball_minus_batter_pos_x_inches", "intercept_ball_minus_batter_pos_y_inches"]
         # (home_team was missing until 2 Oct 2026, so the season being built was graded without its park adjustment)
 MIX_COLS = {"mxgb": "gb", "mxpu": "pu", "mxldp": "ld_p", "mxldc": "ld_c", "mxldo": "ld_o", "mxfbp": "fb_p", "mxfbc": "fb_c",
             "mxfbo": "fb_o", "mxx": "x"}                                  # x = an air ball with no direction
@@ -132,7 +134,7 @@ PITCHER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "strk", "bip", "gb", "
                "stnb", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps",   # the same over the balls in play for the GB / PU chances (Pitching+)
                "stcn", "stcs", "stck", "stco", "stcso", "stci", "stcsi", "stcwi", "stcw",   # command (3 Oct 2026)
                "fp", "fps", "b3", "b3s", "s2", "s2sw", "s2wh", "s2z",   # count states (3 Oct 2026): first pitches and the strikes among them, three-ball pitches and strikes, two-strike pitches and their swings, whiffs and in-zone pitches
-               "stnf", "stfl", "stfs"]   # fouls with location (4 Oct 2026): pitches contacted, the foul chance where each crossed and the stuff-only one on the same contact: pitches graded for it; their summed swing and strike chances; out-of-zone pitches and their swing chances; in-zone pitches, their swing chances and swing-and-miss chances; swing-and-miss chances on every pitch   # stb*: the league means of each graded pitch's own type (Stuff+ is graded against pitch type); h: hits allowed (fantasy splits by hand); stn / stw / stg / stp: graded pitches and their summed whiff, ground-ball and popup chances (Stuff); luck-neutral ERA inputs: line drives, wOBA numerator on balls in play and by type; evn = EV-eligible balls (no bunts)
+               "stnf", "stfl", "stfs", "stfw"]   # fouls with location (stfw: and the batter's swing) (4 Oct 2026): pitches contacted, the foul chance where each crossed and the stuff-only one on the same contact: pitches graded for it; their summed swing and strike chances; out-of-zone pitches and their swing chances; in-zone pitches, their swing chances and swing-and-miss chances; swing-and-miss chances on every pitch   # stb*: the league means of each graded pitch's own type (Stuff+ is graded against pitch type); h: hits allowed (fantasy splits by hand); stn / stw / stg / stp: graded pitches and their summed whiff, ground-ball and popup chances (Stuff); luck-neutral ERA inputs: line drives, wOBA numerator on balls in play and by type; evn = EV-eligible balls (no bunts)
 # per-game earned runs (from MLB game logs) ride along as "P<id>:er" rows: [day, home, er]
 FASTBALLS = {"FF", "SI", "FT"}
 PITCHER_CARD = [
@@ -324,7 +326,8 @@ STUFF_ARSENAL = ["pt", "n", "velo", "ivb", "hb", "spin", "xwhf", "xgb", "xpu", "
                  "xwhfl", "locp",      # xwhfl: whiff chance with location (%); locp: Location+ for the pitch (3 Oct 2026)
                  "xgbl", "xpul", "pitp", "whfpl", "bbpl",   # the location-aware GB / PU chances, Pitching+ and its Whiff+ / Batted-ball+
                  "xstk", "stk", "xchs", "chs",              # command (3 Oct 2026): the strike chance the swing and called-strike models give the pitch where it was thrown, and the chase chance out of the zone — each beside what happened (%)
-                 "xfoull"]              # the foul chance on contact with location (%; 4 Oct 2026), null under 5 contacted pitches
+                 "xfoull",              # the foul chance on contact with location (%; 4 Oct 2026), null under 5 contacted pitches
+                 "xfoulw"]              # ... and with the batter's swing too (the location chance where no swing was tracked)
 STUFF_FOUL_RV = 0.085   # runs a foul saves over a ball in play (Statcast run expectancy, 2023-2026: .082-.090)
 STUFF_DMG = 0.5         # Batted-ball+'s share of the damage model in a ball in play's value (the rest: the GB / PU / air mix)
 
@@ -400,6 +403,15 @@ def location_features(d: pd.DataFrame) -> pd.DataFrame:
 
 
 STUFF_CMD = ["lx", "lz", "edge", "balls", "strikes"]   # the command models' inputs beyond the pitch's traits (3 Oct 2026)
+# the batter's swing on the pitch (bat tracking, 2024 on): the foul model with swing (Sean, 4 Oct 2026: "i just really want his and other
+# players foul ball data to be accurate") — a late, defensive swing is what a foul is, and whether a pitcher's pitches draw them is his
+STUFF_SWING = ["bat_speed", "swing_length", "attack_angle", "attack_direction", "swing_path_tilt",
+               "intercept_ball_minus_batter_pos_x_inches", "intercept_ball_minus_batter_pos_y_inches"]
+
+
+def swing_features(d: pd.DataFrame) -> pd.DataFrame:
+    num = lambda c: pd.to_numeric(d[c], errors="coerce").astype(float) if c in d else pd.Series(np.nan, index=d.index)
+    return pd.DataFrame({c: num(c) for c in STUFF_SWING}, index=d.index)
 
 
 def command_features(d: pd.DataFrame) -> pd.DataFrame:
@@ -464,7 +476,9 @@ STUFF_WHIFF_ONLY = ["use", "depth"]                # inputs the batted-ball mode
 STUFF_TRAIN = ["game_date", "game_type", "pitcher", "stand", "p_throws", "description", "type", "events", "bb_type", "pitch_type",
                "release_speed", "release_extension", "home_team", "woba_value", "woba_denom",      # home_team: the park adjustment;
                "plate_x", "plate_z", "vx0", "vy0", "vz0", "ax", "ay", "az", "sz_top", "sz_bot",
-               "balls", "strikes", "zone"] + STUFF_COLS   # woba: damage; the rest: approach angles, location; the count and zone: the command models
+               "balls", "strikes", "zone",                # woba: damage; the rest: approach angles, location; the count and zone: the command models
+               "bat_speed", "swing_length", "attack_angle", "attack_direction", "swing_path_tilt",   # the batter's swing: the foul model with swing (4 Oct 2026)
+               "intercept_ball_minus_batter_pos_x_inches", "intercept_ball_minus_batter_pos_y_inches"] + STUFF_COLS
 STUFF_YEARS = 2          # prior seasons the models train on besides this one: three seasons in all — tested on 2026 (26 Sep
                          # 2026), a third season still helped a little, a fourth to sixth added nothing, recency weights neither
 
@@ -502,7 +516,7 @@ STUFF_OUT = ["st_n", "st_w", "st_g", "st_p", "st_bw", "st_bg", "st_bp",   # st_b
                                                                       # stuff-only chance on the same swings, and the type's means of each (3 Oct 2026)
              "st_nb", "st_gl", "st_pl", "st_gs", "st_ps", "st_bgl", "st_bpl", "st_bgs", "st_bps",   # the same on balls in play for GB / PU
              "st_cn", "st_cs", "st_ck", "st_co", "st_cso", "st_ci", "st_csi", "st_cwi", "st_cw",    # command (3 Oct 2026): graded for it, its swing and strike chances, out of the zone (and its swing chance), in the zone (swing and swing-and-miss chances), swing-and-miss chance on every pitch
-             "st_nf", "st_fl", "st_fs"]   # fouls with location (4 Oct 2026): on the pitches contacted, the foul chance where the pitch crossed, and the stuff-only one on the same contact
+             "st_nf", "st_fl", "st_fs", "st_fw"]   # fouls with location (and st_fw: with the batter's swing too, 4 Oct 2026) (4 Oct 2026): on the pitches contacted, the foul chance where the pitch crossed, and the stuff-only one on the same contact
 
 
 def add_stuff(d: pd.DataFrame, prior=None, ref: pd.DataFrame | None = None) -> pd.DataFrame:
@@ -592,6 +606,18 @@ def train_stuff_models(train: pd.DataFrame) -> dict | None:
     # and next season's from .67 to .69; the count and the pitch before (type, velo change, spot moved, what it did, pitch
     # number) added nothing on top and were left out (scratch foulseq.py). The stuff-only foul model stays for Stuff+
     flm = HistGradientBoostingClassifier(**kw).fit(fl[lcols].to_numpy()[con], desc[con] == "foul") if seen_loc(loc, con) else None
+    # foul with location and the batter's swing (Sean, 4 Oct 2026): bat speed, swing length, attack angle / direction, path tilt and the
+    # intercept point on the contacted pitch — trained on the contact that has bat tracking (2024 on). Backtest (scratch foulsw.py, each
+    # season scored by models trained on the other two): pitcher-level r with foul-on-contact .741 / .773 / .734 (location) → .766 /
+    # .787 / .762, and the spread of expected rates widens toward the real one (sd 2.6-2.8 → 2.9-3.1 against 3.5). Skenes 2026: 54.1 →
+    # 55.1 (actual 56.9); Sasaki 2025 52.0 → 47.2 (44.8); Mason Miller 2025 57.2 → 60.5 (61.2). A pitch without a tracked swing is
+    # graded by the location model instead (_grade_stuff), so seasons before 2024 read the location number
+    swf = swing_features(train); fwcols = lcols + STUFF_SWING; fwm = None
+    cb = con & swf["bat_speed"].notna().to_numpy() if flm is not None else np.zeros(len(train), bool)
+    if cb.sum() >= 20000:
+        fwm = HistGradientBoostingClassifier(**kw).fit(pd.concat([fl, swf], axis=1)[fwcols].to_numpy()[cb], desc[cb] == "foul")
+    else:
+        log(f"  stuff: too little contact with bat tracking for the foul-with-swing model ({cb.sum():,})")
     # command (3 Oct 2026; Sean: "a pitchers command and ability to generate chases, stay in the zone and throw strikes and avoid
     # balls"): P(swing) from the pitch's traits, its spot, how far off the plate it was and the count, and P(called strike | taken)
     # from its type, spot and count. Together they give every pitch a strike chance, a chase chance out of the zone and — with
@@ -615,8 +641,8 @@ def train_stuff_models(train: pd.DataFrame) -> dict | None:
         else:
             log(f"  stuff: too few pitches with a count and location for the command models ({cok.sum():,})")
     log(f"  stuff: trained on {sw.sum():,} swings / {bip.sum():,} balls in play / {ncmd:,} pitches for command ({len(train):,} pitches, {time.time() - t0:.0f}s)")
-    return {"whiff": wm, "whiff_loc": lm, "bb": bm, "bb_loc": lbm, "foul": fm, "foul_loc": flm, "dmg": dm, "swing": sm, "call": cm,
-            "wcols": wcols, "bcols": bcols, "lcols": lcols, "lbcols": lbcols, "scols": scols, "ccols": ccols,
+    return {"whiff": wm, "whiff_loc": lm, "bb": bm, "bb_loc": lbm, "foul": fm, "foul_loc": flm, "foul_sw": fwm, "dmg": dm, "swing": sm, "call": cm,
+            "wcols": wcols, "bcols": bcols, "lcols": lcols, "lbcols": lbcols, "scols": scols, "ccols": ccols, "fwcols": fwcols,
             "trained": {"at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M"), "pitches": int(len(train)), "swings": int(sw.sum())}}
 
 
@@ -628,7 +654,7 @@ def _grade_stuff(M: dict, d: pd.DataFrame, ref: pd.DataFrame | None = None):
     """Grade a dataset with the models: per-pitch chances into d's st_* columns, the yardstick (this dataset's pitches, or
     ref's) into STUFF's league / per-type means, and the per-pitcher and per-pitch-type sums for the cards."""
     t0 = time.time()
-    wm, lm, bm, lbm, fm, dm, flm = M["whiff"], M.get("whiff_loc"), M["bb"], M.get("bb_loc"), M["foul"], M.get("dmg"), M.get("foul_loc")
+    wm, lm, bm, lbm, fm, dm, flm, fwm = M["whiff"], M.get("whiff_loc"), M["bb"], M.get("bb_loc"), M["foul"], M.get("dmg"), M.get("foul_loc"), M.get("foul_sw")
     wcols, bcols, lcols, lbcols = M["wcols"], M["bcols"], M.get("lcols", M["wcols"] + STUFF_LOC), M.get("lbcols", M["bcols"] + STUFF_LOC)
     def score(x):
         f = stuff_features(x); has = f.velo.notna().to_numpy()
@@ -641,6 +667,13 @@ def _grade_stuff(M: dict, d: pd.DataFrame, ref: pd.DataFrame | None = None):
         out["wl"] = lm.predict_proba(fl[lcols].to_numpy()[has])[:, 1] if lm is not None else out["w"].copy()
         out["bl"] = lbm.predict_proba(fl[lbcols].to_numpy()[has]) if lbm is not None else out["b"].copy()
         out["fl"] = flm.predict_proba(fl[lcols].to_numpy()[has])[:, 1] if flm is not None else None   # None: a file trained before it, and the sums stay 0
+        out["fw"] = None
+        if fwm is not None and out["fl"] is not None:                 # with the batter's swing where it was tracked, the location chance where not
+            swf = swing_features(x); fw = pd.concat([fl, swf], axis=1)
+            for c in M["fwcols"]:
+                if c not in fw.columns: fw[c] = np.nan
+            hb = swf["bat_speed"].notna().to_numpy()[has]
+            out["fw"] = np.where(hb, fwm.predict_proba(fw[M["fwcols"]].to_numpy()[has])[:, 1] if hb.any() else 0.0, out["fl"])
         # command (3 Oct 2026): the swing and called-strike chances on every graded pitch that has a spot and a count
         sm, cm = M.get("swing"), M.get("call")
         out["cn"] = None
@@ -676,9 +709,9 @@ def _grade_stuff(M: dict, d: pd.DataFrame, ref: pd.DataFrame | None = None):
     # the foul chance with location is P(foul | contact) at that spot, so, like the whiff one, it's kept over the pitches
     # actually contacted (with the stuff-only chance on the same pitches); Stuff xK% reads it in the app
     conm = swm * (~d["description"][has].isin(WHIFF)).to_numpy().astype(float)
-    pfl = o["fl"] if o["fl"] is not None else None
+    pfl = o["fl"] if o["fl"] is not None else None; pfw = o["fw"] if o["fw"] is not None else pfl
     if pfl is not None:
-        d.loc[has, "st_nf"] = conm; d.loc[has, "st_fl"] = pfl * conm; d.loc[has, "st_fs"] = pf * conm
+        d.loc[has, "st_nf"] = conm; d.loc[has, "st_fl"] = pfl * conm; d.loc[has, "st_fs"] = pf * conm; d.loc[has, "st_fw"] = pfw * conm
     bim = d["bb_type"][has].isin(STUFF_BB.keys()).to_numpy().astype(float)      # and the mix on the balls in play
     d.loc[has, "st_nb"] = bim; d.loc[has, "st_gl"] = pbl[:, 0] * bim; d.loc[has, "st_pl"] = pbl[:, 1] * bim
     d.loc[has, "st_gs"] = pbt[:, 0] * bim; d.loc[has, "st_ps"] = pbt[:, 1] * bim
@@ -693,11 +726,12 @@ def _grade_stuff(M: dict, d: pd.DataFrame, ref: pd.DataFrame | None = None):
         rcon = rsw * (~ref["description"][hr].isin(WHIFF)).to_numpy().astype(float)
         rdf = pd.DataFrame({"pitch_type": ref["pitch_type"].to_numpy()[hr], "n": 1.0, "w": r["w"], "g": r["b"][:, 0], "p": r["b"][:, 1], "f": r["f"], "d": r["d"],
                             "nl": rsw, "wl": r["wl"] * rsw, "ws": r["w"] * rsw, "nf": rcon, "fl": (r["fl"] if r["fl"] is not None else r["f"]) * rcon, "fs": r["f"] * rcon,
+                            "fw": (r["fw"] if r["fw"] is not None else r["fl"] if r["fl"] is not None else r["f"]) * rcon,
                             "nb": rbi, "gl": r["bl"][:, 0] * rbi, "pl": r["bl"][:, 1] * rbi, "gs": r["b"][:, 0] * rbi, "ps": r["b"][:, 1] * rbi})
         src = ref
     else:
         rdf = pd.DataFrame({"pitch_type": pts.to_numpy(), "n": 1.0, "w": pw, "g": pbt[:, 0], "p": pbt[:, 1], "f": pf, "d": pdm, "nl": swm, "wl": pwl * swm, "ws": pw * swm,
-                            "nf": conm, "fl": (pfl if pfl is not None else pf) * conm, "fs": pf * conm,
+                            "nf": conm, "fl": (pfl if pfl is not None else pf) * conm, "fs": pf * conm, "fw": (pfw if pfw is not None else pf) * conm,
                             "nb": bim, "gl": pbl[:, 0] * bim, "pl": pbl[:, 1] * bim, "gs": pbt[:, 0] * bim, "ps": pbt[:, 1] * bim})
         src = d
     air0 = src["bb_type"].isin(["line_drive", "fly_ball"])
@@ -706,6 +740,7 @@ def _grade_stuff(M: dict, d: pd.DataFrame, ref: pd.DataFrame | None = None):
             "d": float(np.nanmean(rdf.d)) if dm is not None else None, "wl": float(rdf.wl.sum() / nsw), "ws": float(rdf.ws.sum() / nsw),
             "gl": float(rdf.gl.sum() / nbi), "pl": float(rdf.pl.sum() / nbi), "gs": float(rdf.gs.sum() / nbi), "ps": float(rdf.ps.sum() / nbi),
             "fl": float(rdf.fl.sum() / max(1.0, float(rdf.nf.sum()))) if pfl is not None else None, "fs": float(rdf.fs.sum() / max(1.0, float(rdf.nf.sum()))) if pfl is not None else None,
+            "fw": float(rdf.fw.sum() / max(1.0, float(rdf.nf.sum()))) if o["fw"] is not None else None,
             "la": float(src["bb_type"].eq("line_drive").sum() / max(1, air0.sum())), **swing_rates(src)}
     tm = rdf.groupby("pitch_type").agg(n=("w", "size"), w=("w", "mean"), g=("g", "mean"), p=("p", "mean"), f=("f", "mean"), d=("d", "mean"),
                                        nl=("nl", "sum"), wl=("wl", "sum"), ws=("ws", "sum"), nb=("nb", "sum"), gl=("gl", "sum"), pl=("pl", "sum"), gs=("gs", "sum"), ps=("ps", "sum"))
@@ -731,7 +766,7 @@ def _grade_stuff(M: dict, d: pd.DataFrame, ref: pd.DataFrame | None = None):
                bgl=("st_bgl", "sum"), bpl=("st_bpl", "sum"), bgs=("st_bgs", "sum"), bps=("st_bps", "sum"),
                cn=("st_cn", "sum"), cs=("st_cs", "sum"), ck=("st_ck", "sum"), co=("st_co", "sum"), cso=("st_cso", "sum"),
                ci=("st_ci", "sum"), csi=("st_csi", "sum"), cwi=("st_cwi", "sum"), cw=("st_cw", "sum"), stk=("stkx", "sum"), osz=("oszx", "sum"),
-               nf=("st_nf", "sum"), fl=("st_fl", "sum"), fs=("st_fs", "sum"))
+               nf=("st_nf", "sum"), fl=("st_fl", "sum"), fs=("st_fs", "sum"), fw=("st_fw", "sum"))
     res = {"lg": base,
            "pt": rdf.groupby("pitch_type")[["n", "w", "g", "p", "f", "d", "nl", "wl", "ws", "nb", "gl", "pl", "gs", "ps"]].sum(),   # the league by pitch type: each pitch is also graded against its own kind
            "p": g.groupby("pitcher").agg(**agg),
@@ -766,6 +801,8 @@ def stuff_consts(pit: pd.DataFrame, bbw: dict, pa9: float) -> dict | None:
         out.update({"lgD": round(lg["d"], 4), "dmg": STUFF_DMG})     # damage: blended into a ball in play's value at STUFF_DMG
     if lg.get("fl") is not None:                                      # over contact: the league's foul chance with location, and stuff-only on the same contact
         out.update({"lgFL": round(100 * lg["fl"], 3), "lgFS": round(100 * lg["fs"], 3)})
+    if lg.get("fw") is not None:                                      # over contact: the foul chance with location and the batter's swing
+        out.update({"lgFW": round(100 * lg["fw"], 3)})
     if lg.get("wl") is not None:                                      # over swings: the league's whiff chance with location, and stuff-only on the same swings
         out.update({"lgWL": round(100 * lg["wl"], 3), "lgWS": round(100 * lg["ws"], 3)})
     if lg.get("gl") is not None:                                      # over balls in play: the GB / PU chances with location, and stuff-only on the same balls
@@ -1289,7 +1326,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                                                  ("stbgl", "st_bgl"), ("stbpl", "st_bpl"), ("stbgs", "st_bgs"), ("stbps", "st_bps"),
                                                  ("stcn", "st_cn"), ("stcs", "st_cs"), ("stck", "st_ck"), ("stco", "st_co"), ("stcso", "st_cso"),
                                                  ("stci", "st_ci"), ("stcsi", "st_csi"), ("stcwi", "st_cwi"), ("stcw", "st_cw"),
-                                                 ("stnf", "st_nf"), ("stfl", "st_fl"), ("stfs", "st_fs")] if s in d.columns})
+                                                 ("stnf", "st_nf"), ("stfl", "st_fl"), ("stfs", "st_fs"), ("stfw", "st_fw")] if s in d.columns})
     first = d.sort_values("at_bat_number").groupby(["game_pk", "inning_topbot"]).head(1)
     starters = set(zip(first["pitcher"], first["game_date"]))
     qp = p.groupby(PK).agg(bf=("pa", "size"), k=("is_k", "sum"), bb=("is_bb", "sum"),
@@ -1298,7 +1335,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                            ld=("t_ld", "sum"), wbip=("w_bip", "sum"), wgb=("w_gb", "sum"), wld=("w_ld", "sum"), wfb=("w_fb", "sum"), wpu=("w_pu", "sum"))
     q = q.join(qp, how="left").fillna(0)
     for c in ["stn", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stnl", "stwl", "stws", "stbwl", "stbws", "stnb", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps",
-              "stcn", "stcs", "stck", "stco", "stcso", "stci", "stcsi", "stcwi", "stcw", "stnf", "stfl", "stfs"]:
+              "stcn", "stcs", "stck", "stco", "stcso", "stci", "stcsi", "stcwi", "stcw", "stnf", "stfl", "stfs", "stfw"]:
         if c not in q.columns:
             q[c] = 0.0
     q["gs"] = [1 if (key[0], key[1]) in starters else 0 for key in q.index]
@@ -1313,7 +1350,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                     row.append(v)
                 else:
                     # xbsum / xssum are sums of per-ball probabilities: a day's bucket is well under 1, so int() would erase it
-                    row.append(round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stwl", "stws", "stbwl", "stbws", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps", "stcs", "stck", "stcso", "stcsi", "stcwi", "stcw", "stfl", "stfs", "mixsum", "wbh") else int(v))
+                    row.append(round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stwl", "stws", "stbwl", "stbws", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps", "stcs", "stck", "stcso", "stcsi", "stcwi", "stcw", "stfl", "stfs", "stfw", "mixsum", "wbh") else int(v))
             out.setdefault(int(pid), []).append(row)
         return out
     return pack(h, HITTER_DAY), pack(q, PITCHER_DAY)
@@ -1328,7 +1365,7 @@ ARS_DAY = ["day", "hand", "home", "gs", "pt", "n", "w", "g", "p", "velo", "ivb",
            "f", "d", "nl", "wl", "ws",    # f / d: summed foul chances on contact and damage (wOBA on contact) — 2 Oct 2026; nl / wl / ws: swings graded, whiff chances with location and stuff-only on them
            "nb", "gl", "pl", "gs", "ps",  # balls in play graded, GB / PU chances with location and stuff-only on them
            "cn", "cs", "ck", "co", "cso", "stk", "osz",   # command (3 Oct 2026): pitches graded for it, their swing and strike chances, the ones out of the zone and their swing chances; strikes and out-of-zone swings that happened on them
-           "nf", "fl", "fs"]              # fouls with location (4 Oct 2026): pitches contacted, the foul chance where each crossed, the stuff-only one on the same contact
+           "nf", "fl", "fs", "fw"]        # fouls with location (fw: and the batter's swing) (4 Oct 2026): pitches contacted, the foul chance where each crossed, the stuff-only one on the same contact
 
 
 def write_arsenal_days(key: str, rows: dict, out_dir: Path | None = None) -> None:
@@ -1358,7 +1395,7 @@ def arsenal_daily(d: pd.DataFrame, days: dict) -> dict:
                       "nb": x["st_nb"], "gl": x["st_gl"], "pl": x["st_pl"], "gs": x["st_gs"], "ps": x["st_ps"],
                       "cn": x["st_cn"], "cs": x["st_cs"], "ck": x["st_ck"], "co": x["st_co"], "cso": x["st_cso"],
                       "stk": (x["type"].isin(["S", "X"]) & (x["st_cn"] > 0)).astype(int), "osz": (x["description"].isin(SWING) & (x["st_co"] > 0)).astype(int),
-                      "nf": x["st_nf"], "fl": x["st_fl"], "fs": x["st_fs"]})
+                      "nf": x["st_nf"], "fl": x["st_fl"], "fs": x["st_fs"], "fw": x["st_fw"]})
     q = y.groupby(["pitcher", "game_date", "bhand", "phome", "pt"]).sum(numeric_only=True)
     out = {}
     for (pid, date, hand, home, pt), r in q.iterrows():
@@ -1371,7 +1408,7 @@ def arsenal_daily(d: pd.DataFrame, days: dict) -> dict:
                                              int(r.sw), int(r.wh), int(r.bip), int(r.gb), int(r.pu), round(float(r.f), 2), round(float(r.d), 2), int(r.nl), round(float(r.wl), 2), round(float(r.ws), 2),
                                              int(r.nb), round(float(r.gl), 2), round(float(r.pl), 2), round(float(r.gs), 2), round(float(r.ps), 2),
                                              int(r.cn), round(float(r.cs), 2), round(float(r.ck), 2), int(r.co), round(float(r.cso), 2), int(r.stk), int(r.osz),
-                                             int(r.nf), round(float(r.fl), 2), round(float(r.fs), 2)])
+                                             int(r.nf), round(float(r.fl), 2), round(float(r.fs), 2), round(float(r.fw), 2)])
     return out
 
 
@@ -1713,7 +1750,8 @@ def build_pitchers(pit: pd.DataFrame, people: dict, days_p: dict, consts: dict) 
                                        r1(100 * x.pu / x.bip) if x.bip else None, int(x.sw), int(x.bip),
                                        r1(100 * x.f / x.n), r1(x.dd / x.n, 3) if sc.get("lgD") is not None else None,
                                        *pitch_loc_row(x, wp, bp, sc, consts["lgERA"]), *command_row(x),
-                                       r1(100 * x.fl / x.nf) if "nf" in x and x.nf >= 5 and sc.get("lgFL") is not None else None])
+                                       r1(100 * x.fl / x.nf) if "nf" in x and x.nf >= 5 and sc.get("lgFL") is not None else None,
+                                       r1(100 * x.fw / x.nf) if "nf" in x and x.nf >= 5 and sc.get("lgFW") is not None else None])
         else:
             m["swhf"] = m["sbb"] = m["stuff"] = m["sloc"] = m["pwhf"] = m["pbb"] = m["pitch"] = None
         rows.append({

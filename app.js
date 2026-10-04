@@ -906,7 +906,7 @@
                    fbv: t.fbn ? Math.round(10 * t.fbv / t.fbn) / 10 : null, ext: t.extn ? Math.round(10 * t.exts / t.extn) / 10 : null,
                    ev: (t.evn || t.bbe) ? Math.round(10 * t.evsum / (t.evn || t.bbe)) / 10 : null, hh: rate(t.hh, t.bip || t.bbe), brl: rate(t.brl, t.bip || t.bbe),
                    fstrk: rate(t.fps, t.fp), b3strk: rate(t.b3s, t.b3), s2whf: rate(t.s2wh, t.s2sw), s2sw: rate(t.s2sw, t.s2), s2zone: rate(t.s2z, t.s2),   // count states (null on files built before them)
-                   ...stuffPlusLoc(t), _stn: t.stn, _stw: t.stw, _stg: t.stg, _stp: t.stp, _stnl: t.stnl, _stwl: norm ? tN.stwl : t.stwl, _stf: t.stf, _stnf: t.stnf, _stfl: t.stfl, _stnb: t.stnb, _stgl: norm ? tN.stgl : t.stgl, _stpl: norm ? tN.stpl : t.stpl },
+                   ...stuffPlusLoc(t), _stn: t.stn, _stw: t.stw, _stg: t.stg, _stp: t.stp, _stnl: t.stnl, _stwl: norm ? tN.stwl : t.stwl, _stf: t.stf, _stnf: t.stnf, _stfl: t.stfl, _stfw: t.stfw, _stnb: t.stnb, _stgl: norm ? tN.stgl : t.stgl, _stpl: norm ? tN.stpl : t.stpl },
               sample: ip, ip, bf: t.bf, g: games, gs, role: p.primary, ex: arsenalExtras(p, t),
               ctx: { G: games, GS: gs, wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, Pitches: t.pit, bbl, PAw: t.wden, HBP: t.hbp } };
       } else {
@@ -1261,11 +1261,13 @@
     // the pitcher-level fit from r ~.72 to ~.76 and closes ~40% of Skenes's gap; the count and the pitch before added nothing),
     // over his contacted pitches (day sums in a window; the arsenal's xfoull weighted by each pitch's contact otherwise), else
     // the stuff-only chance over every graded pitch as before
-    const m = V(p).m; if (m._stnf && m._stfl != null) return 100 * m._stfl / m._stnf;
+    // ... and with the batter's swing on top (4 Oct 2026, xfoulw / stfw: bat tracking, 2024 on) first of all
+    const m = V(p).m; if (m._stnf && m._stfw != null) return 100 * m._stfw / m._stnf;
+    if (m._stnf && m._stfl != null) return 100 * m._stfl / m._stnf;
     if (m._stn && m._stf != null) return 100 * m._stf / m._stn;
     const a = p.ctx && p.ctx.arsenal, F = DATA.meta.arsenalFields; if (!a || !F || needsDays()) return null;
-    const iN = F.indexOf("n"), iF = F.indexOf("xfoul"), iL = F.indexOf("xfoull"), iS = F.indexOf("sw"), iW = F.indexOf("whf");
-    if (iL >= 0 && a.some((r) => r[iL] != null)) { let n = 0, t = 0; for (const r of a) if (r[iL] != null) { const c = r[iS] * (1 - (r[iW] || 0) / 100); n += c; t += c * r[iL]; } if (n) return t / n; }
+    const iN = F.indexOf("n"), iF = F.indexOf("xfoul"), iS = F.indexOf("sw"), iW = F.indexOf("whf");
+    for (const iL of [F.indexOf("xfoulw"), F.indexOf("xfoull")]) if (iL >= 0 && a.some((r) => r[iL] != null)) { let n = 0, t = 0; for (const r of a) if (r[iL] != null) { const c = r[iS] * (1 - (r[iW] || 0) / 100); n += c; t += c * r[iL]; } if (n) return t / n; }
     if (iF < 0) return null;
     let n = 0, t = 0; for (const r of a) if (r[iF] != null) { n += r[iN]; t += r[iN] * r[iF]; }
     return n ? t / n : null;

@@ -976,3 +976,10 @@ before added nothing and were left out. Files built before the retrain fall back
 The pitcher Rating is the percentile blend of x(K-BB)% (80) and Mix wOBA (20). Against ESPN points per start and per inning 2020-26 it beat the
 xK% 55 / xBB% 35 / Mix wOBA 10 version in every cut, same season and next, and 80 / 20 was the best split of the two. The xRating has the same shape on
 the stuff side: Pitching+ x(K-BB)% (80) and Mix xwOBA (20). Pitching+ x(K-BB)% is also a Leaderboard column.
+
+### Expected fouls with the batter's swing (4 Oct 2026)
+
+The foul model that feeds Pitching+ xK% also sees the batter's swing on each contacted pitch (bat speed, swing length, attack angle and
+direction, swing-path tilt, intercept point; bat tracking, 2024 on). Scored season by season on models trained on the other seasons, the fit
+with a pitcher's foul-on-contact rate goes from r ~.75 (location) to ~.77, and the pitchers the old models missed most (Skenes high, Sasaki
+and Phillips low) come most of the way in. Pitches without a tracked swing, and every season before 2024, use the location model.
