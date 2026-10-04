@@ -1454,6 +1454,19 @@ is deploy-limited.
   the Stats panel's Expected group carry it), a `SIDE_P` def (higher is better), labels / `SHORT` / glossary; Skills = xK% · xBB% · **x(K-BB)%** ·
   Mix wOBA; the Standard and Advanced pitcher column sets carry it after K-BB% / nERA, and `state.lb.xkbbAdd` slots it after K-BB% in a saved
   pitcher list once (so a saved Standard list stays Standard).
+* **Rating = x(K-BB)% 80 / Mix wOBA 20 (Sean, 4 Oct 2026: "how does a weighting of x(k-bb)% and mix woba trend with ... points per start or ip",
+  then "switch it to this instead and make it the most optimal weighting of the two")**: scratch `kbbrate.py` — every 100+ BF pitcher-season
+  2020-26, ESPN standard points, percentiles within season × role, starters 15+ GS by points per start and per inning, relievers 40+ IP by
+  points per inning, same season and next (368 / 460 pairs). The 55 / 35 / 10 Rating: SP pts/start r .791 / .563, RP pts/IP .664 / .468;
+  x(K-BB)% 80 / Mix 20: .796 / .578 and .689 / .483 (SP pts/IP .817 / .568 → .830 / .589) — ahead in every cut, and 80 / 20 is the best split
+  of the two on the mean of all six (85 / 15 a hair behind, 70 / 30 and 90 / 10 both worse). Why: x(K-BB)% weights xK% and xBB% by their own
+  spreads (~75 / 25), and the free xK% / xBB% / Mix grid wanted 70-80 / 10-15 / 10-15 — xBB% alone is only r .46 / .25 with points. The gains
+  are second-decimal; relievers' last-year points still beat any process rating at next year's (.64, saves and holds are role).
+  `PITCHER_SCORE_WEIGHTS` / `meta.pitcherWeights` = `{xkbb: 80, mixw: 20}` (`data.js` + `scoreNote.P` patched); `pool()` ranks x(K-BB)% before
+  the score (`xk0s` → `pct.xkbb`) and `placeIn` does too (`xkbb0`). **The xRating keeps the Rating's shape**: `XRW = {xkbbs: 80, nmix: 20}` with
+  **`xkbbs` = Pitching+ x(K-BB)%** (Pitching+ xK% − xBB%; PK block, `statsFor`, `NEXT_KEYS`, `SIDE_P` column, glossary; `renderAsStarter`
+  places it in the SP pool from the translated xK% and xBB%), so the Rating · xRating line compares like with like. Skenes 2026: Rating 86 ·
+  xRating 69 (was 83 · 67); Wheeler 92 · 92; Misiorowski 96 · 91.
  `nmix`'s label is **Mix xwOBA** everywhere (lower is better, as before). 2026 Skenes: Called 13.5 (6th pct),
   SwStr 14.4 (87th), Foul 21.0 (91st).
 

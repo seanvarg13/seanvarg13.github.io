@@ -970,3 +970,9 @@ Mix wOBA) and Stuff (Pitching+ xK%, xBB%, Pitching+ Mix xwOBA, Fastball Velo, Pi
 Pitching+ xK% (formerly Stuff xK%) reads the stuff model's expected foul rate **with location** once the models are retrained: where a pitch
 crosses lifts the pitcher-level fit with foul-on-contact from r ~.72 to ~.76 and the next-season one from .67 to .69; the count and the pitch
 before added nothing and were left out. Files built before the retrain fall back to the stuff-only foul chance.
+
+### Rating = x(K-BB)% 80 / Mix wOBA 20 (4 Oct 2026)
+
+The pitcher Rating is the percentile blend of x(K-BB)% (80) and Mix wOBA (20). Against ESPN points per start and per inning 2020-26 it beat the
+xK% 55 / xBB% 35 / Mix wOBA 10 version in every cut, same season and next, and 80 / 20 was the best split of the two. The xRating has the same shape on
+the stuff side: Pitching+ x(K-BB)% (80) and Mix xwOBA (20). Pitching+ x(K-BB)% is also a Leaderboard column.
