@@ -1473,6 +1473,22 @@ is deploy-limited.
   Stuff, 7 / 8 rows). The Rating row (`RATING_M`, key `rating`) stayed wired but is off the card. The Rating row is special-cased in `renderPctPanel` (`RATING_M`, key `rating`, not a column): its value
   is `st.score` and, since the Rating is already a percentile blend, the bubble is the number itself (the tap note's league middle is 50);
   `OUTCOME_LABEL_P` / glossary carry `rating`.
+* **Expected fouls with the batter's swing (Sean, 4 Oct 2026: "i just really want his and other players foul ball data to be accurate because it
+  clearly is missing something since he clearly gets a lot of foul balls", then "ok implement this new foul ball model")**: Skenes's Pitching+ xK%
+  sat 2-4 points under his xK% every year and the whole gap was fouls (actual foul per contact 59.7 / 55.1 / 57.3 against the stuff model's
+  ~52-53; the whiff substitution nets to zero). A tenth model in the fixed file, **`foul_sw`** = P(foul | contact) from the pitch's traits, its
+  spot and the **batter's swing** on it — `STUFF_SWING`: bat speed, swing length, attack angle / direction, swing-path tilt and the intercept
+  point (bat tracking, 2024 on; `COLS` / `STUFF_TRAIN` carry them, `swing_features`), trained on the contact that has bat tracking (`fwcols` =
+  the location model's inputs + the seven). Backtest (scratch `fetch2.py` re-reads 2024-26 from pybaseball's cache with the columns,
+  `foulsw.py` scores each season with models trained on the other two; 300+ BF, foul per contact): location .741 / .773 / .734 (2026 / 2025
+  / 2024) → **.766 / .787 / .762**, swing alone .737 / .753 / .726, and the spread of expected rates widens toward the real one (sd 2.6-2.8 →
+  2.9-3.1 against 3.5). Skenes: 2024 59.3 actual, 52.8 → 56.0; 2025 54.3, 53.8 → 54.3; 2026 56.9, 54.1 → 55.1. Sasaki 2025 44.8: 52.0 → 47.2;
+  Mason Miller 2025 61.2: 57.2 → 60.5; Phillips 2025 39.9: 45.8 → 44.8. It credits a pitcher for the defensive swings his pitches draw, which
+  is a step closer to results than the whiff model — by Sean's choice. Per pitch, `_grade_stuff` grades a contacted pitch with a tracked
+  swing by this model and the rest by the location model, so seasons before 2024 read the location number: `st_fw` (over `st_nf`), day field
+  **`stfw`** (appended), arsenal-day `fw`, `ctx.arsenal` **`xfoulw`**, `consts.stuff` `lgFW`. `foulChance(p)` in `app.js` prefers `_stfw` /
+  `xfoulw`, then the location pair, then stuff-only. Needs Train Stuff+ models + a rescore (queued behind the location one, 4 Oct 2026).
+  Estimate before it lands (scratch, the backtest models on the 2026 SP pool): Skenes Pitching+ xK% 24.8 → ~26.5, xRating 69 → ~74.
  `nmix`'s label is **Mix xwOBA** everywhere (lower is better, as before). 2026 Skenes: Called 13.5 (6th pct),
   SwStr 14.4 (87th), Foul 21.0 (91st).
 
