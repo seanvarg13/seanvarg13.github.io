@@ -1404,7 +1404,9 @@ is deploy-limited.
   left = **Skills** (Whiff%, Strike%, Mix wOBA, xK%, xBB%, Mix xwOBA) · Swing & Miss (11 rows), right = Zone & Chase · Results ·
   Batted Ball · Stuff (12). **Then no Strikes section** (Sean, the same hour: "dont add a new section just add the called strikes, whiffs,
   and foul strike thing to the swing and miss section and also add xk% to that too"): **Swing & Miss** is K% · xK% · Whiff% · Called Strike% ·
-  SwStr% · Foul% (the three defs live in the build's Swing & miss group; `data.js` re-patched), 12 rows a column. `nmix`'s label is **Mix xwOBA** everywhere (lower is better, as before). 2026 Skenes: Called 13.5 (6th pct),
+  SwStr% · Foul% (the three defs live in the build's Swing & miss group; `data.js` re-patched), 12 rows a column. **Then Skills is xK% ·
+  xBB% · Mix xwOBA alone** (Sean, the same hour, from a screenshot: "get rid of the top 3") — Whiff%, Strike% and Mix wOBA still show in Swing &
+  Miss, Zone & Chase and Batted Ball; 9 rows left, 12 right. `nmix`'s label is **Mix xwOBA** everywhere (lower is better, as before). 2026 Skenes: Called 13.5 (6th pct),
   SwStr 14.4 (87th), Foul 21.0 (91st).
 
 ## 9. Things only Sean can do

@@ -152,8 +152,8 @@ plate appearances run to three balls, where the 3-ball strike rate decides ball 
 three rates say he should have, from the same fit, usually within about a point of the real one.
 The pitcher card's columns (4 Oct 2026): Skills · xSkills · Results · Swing & Miss on the left, Zone & Chase · Batted Ball · Stuff
 (fastball velo and extension only; the Pitching+ grades are on their own tab) on the right.
-Skills reads Whiff%, Strike%, Mix wOBA, then xK%, xBB% and Mix xwOBA (there is no separate xSkills section), and the **xRating** is those
-last three percentiles weighted 55 / 35 / 10. Swing & Miss shows K%, xK%, Whiff%, then Called Strike%, SwStr% and Foul% per pitch — the three
+Skills reads xK%, xBB% and Mix xwOBA (Whiff%, Strike% and Mix wOBA show in the sections below), and the **xRating** is those three
+percentiles weighted 55 / 35 / 10. Swing & Miss shows K%, xK%, Whiff%, then Called Strike%, SwStr% and Foul% per pitch — the three
 strikes that keep a plate appearance alive, which is how xK% reads them. **xK%** (4 Oct 2026) is the
 strikeout rate his rates say he should have: a fit over every 100+ BF pitcher-season since 2020 on his whiff, called-strike and swinging-strike
 rates, two-strike whiff rate, Strike%, swing and contact rates, the count-state strike rates, batted-ball mix, velocity, extension, the
