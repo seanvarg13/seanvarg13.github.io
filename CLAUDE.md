@@ -1396,6 +1396,14 @@ is deploy-limited.
   it; `XKM` leads with the two Foul% tiers (full, no-stuff) and keeps the three without it for older files; **Foul%** is a `SIDE_P` metric
   (Leaderboard column, Stats ▸ Discipline, glossary), not on the card. 2026 cards: Skenes K% 28.1 / xK% 27.2, Webb 25.7 / 26.3, Phillips
   18.8 / 19.3, Sasaki 23.6 / 24.6, Wheeler 29.9 / 29.7. The career-gap significance numbers above are of the pre-Foul% fit and are history.
+  **Strikes section, no xSkills, Mix xwOBA (Sean, 4 Oct 2026: "a player card section that shows called strikes, whiffs, and then foul strikes
+  ... the way that that k% model does", "get rid of the xskills section and just put the three things under xskills under skills", "for xmix
+  woba call it mix xwoba")**: `PITCHER_CARD` gains a **Strikes** group — `cstr` **Called Strike%** (called strikes per pitch; the build's
+  `CStr_pct` = CS / Pitches, `V()` from `t.cs / t.pit`, and `csw − swstr` on a file built before it), `swstr` SwStr%, `foul` Foul% — the
+  three strikes that keep a plate appearance alive, as xK% reads them (`data.js` patched; Foul% left `SIDE_P` for the card). `PCT_COLS_P`:
+  left = **Skills** (Whiff%, Strike%, Mix wOBA, xK%, xBB%, Mix xwOBA) · Swing & Miss · Strikes (11 rows), right = Zone & Chase · Results ·
+  Batted Ball · Stuff (12). `nmix`'s label is **Mix xwOBA** everywhere (lower is better, as before). 2026 Skenes: Called 13.5 (6th pct),
+  SwStr 14.4 (87th), Foul 21.0 (91st).
 
 ## 9. Things only Sean can do
 
