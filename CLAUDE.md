@@ -1449,6 +1449,11 @@ is deploy-limited.
   the count-state strike rates and Extension are off the card (still columns). The band's season line is nERA · ERA · K% · BB% · **K-BB%** (SV
   gone), in a window too (`seasonLine`). `OUTCOME_LABEL_P` labels `xks` "Pitching+ xK%" and `nmix` "Pitching+ Mix xwOBA" on the card (the
   column says Mix xwOBA).
+* **x(K-BB)% (Sean, 4 Oct 2026: "under skills can you add in x(K-BB)% above mix woba, and also add x(K-BB)% to the leaderboards")**: `xkbb` =
+  xK% − xBB% (both fits on his process), computed where xK% is (the pool's `PK` block, `statsFor`), in `NEXT_KEYS` (so the sort-key path and
+  the Stats panel's Expected group carry it), a `SIDE_P` def (higher is better), labels / `SHORT` / glossary; Skills = xK% · xBB% · **x(K-BB)%** ·
+  Mix wOBA; the Standard and Advanced pitcher column sets carry it after K-BB% / nERA, and `state.lb.xkbbAdd` slots it after K-BB% in a saved
+  pitcher list once (so a saved Standard list stays Standard).
  `nmix`'s label is **Mix xwOBA** everywhere (lower is better, as before). 2026 Skenes: Called 13.5 (6th pct),
   SwStr 14.4 (87th), Foul 21.0 (91st).
 

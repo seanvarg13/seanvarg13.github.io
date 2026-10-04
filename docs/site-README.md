@@ -965,8 +965,8 @@ No arrow on the sorted column name (the header keeps its height), and the card's
 
 ### Pitcher card layout and expected fouls (4 Oct 2026)
 
-The pitcher card's sections are Skills (xK%, xBB%, Mix wOBA), Swing & Miss (K%, xK%), Walk Avoidance (BB%, xBB%), Batted Ball (GB%, Popup%,
-Mix wOBA) and Stuff (Pitching+ xK%, xBB%, Pitching+ Mix xwOBA, Fastball Velo, Pitching+). The band's season line ends in K-BB% instead of saves.
+The pitcher card's sections are Skills (xK%, xBB%, x(K-BB)% = xK% − xBB%, Mix wOBA), Swing & Miss (K%, xK%), Walk Avoidance (BB%, xBB%), Batted Ball (GB%, Popup%,
+Mix wOBA) and Stuff (Pitching+ xK%, xBB%, Pitching+ Mix xwOBA, Fastball Velo, Pitching+). The band's season line ends in K-BB% instead of saves. x(K-BB)% is also a Leaderboard column (Standard and Advanced sets).
 Pitching+ xK% (formerly Stuff xK%) reads the stuff model's expected foul rate **with location** once the models are retrained: where a pitch
 crosses lifts the pitcher-level fit with foul-on-contact from r ~.72 to ~.76 and the next-season one from .67 to .69; the count and the pitch
 before added nothing and were left out. Files built before the retrain fall back to the stuff-only foul chance.
