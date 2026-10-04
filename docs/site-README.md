@@ -140,6 +140,11 @@ expected mix implies, the xRating's three inputs, right under Skills.
 rotation, from every reliever who became a starter 2015-26 (the role gives a reliever about a whiff point, 4-7 Pitching+ and half a mile an
 hour, more the better his numbers), plus his xRating placed among starters. xRating is the first column after the Rating on every pitcher list.
 
+**All as SP** (4 Oct 2026): a pitcher who both started and relieved has a fourth Role option in his card's Filters. It keeps every inning but
+reads the days he relieved as a starter — their expected whiff, ground-ball and popup rates moved by the same reliever-to-starter effect — so
+xWhiff / xGB / xPU (the Pitching+ table and xSkills), xMix wOBA, xRating and the whiff check are what the whole season says about him in the
+rotation. His actual rates, Pitching+ and the start days are untouched.
+
 **xRating** (4 Oct 2026): the Rating's weights with the Pitching+ model's expected whiff rate and the Mix wOBA its expected mix implies in
 place of his actual ones — what his pitches and spots say the Rating should be. On the Pitching+ tab beside the Rating and a Leaderboard /
 Compare column with xMix wOBA. Steadier year to year than the Rating; about half of a gap between the two closes the next season.

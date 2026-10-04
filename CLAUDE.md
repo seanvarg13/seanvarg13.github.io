@@ -1299,6 +1299,18 @@ is deploy-limited.
   card's second section (`PCT_COLS_P`), xWhiff% · Strike% · xMix wOBA — the xRating's inputs, ranked off the pool's `nwhf` / `nmix` stats
   (their percentiles come from the pool's PK block, so a window or split re-ranks them like everything else).
 
+* **All as SP (Sean, 4 Oct 2026: "for pitchers who did a bit of both SP and RP can you normalize their RP xWhiff and xgb and xpu for them as a
+  starter if the filter is on starter. So again still show all their innings but just show it as they were a starter")**: a fourth Role option
+  for `bothRoles(p)` pitchers, `state.split.role = "spn"`. `roleOf` returns it; `roleFilt` (−1 / 1 / 0 for the day filter — spn keeps every
+  day), `roleNorm` and `roleWord` ("all innings as SP") sit beside it, and the two game-log filters (`fViewLine`, the Fantasy tab) treat it as
+  all. `V()` sums, beside the raw day rows, `tN.stwl / stgl / stpl` with the relief days' sums (`gs` flag 0) moved by `spNorm(k, sum, n)` =
+  `(1 + b)·sum + a·n / 100` from `AS_SP`'s xwl / xgb / xpu — and hands those to `_stwl / _stgl / _stpl`, so `pitchRates` → `projRates` →
+  nwhf / ngb / npu / nmix / xrat / wgap (the pool's PK block, `statsFor`, xSkills, the whiff check, the Rating · xRating line) all read the
+  normalized rates; `stuffPlusLoc` keeps the raw sums, so Pitching+ / Location+ don't move. `arsenalView` does the same per pitch type
+  (`wlN / glN / plN` beside `wl / gl / pl`; `locDelta` prices the raw spots), so the Pitching+ table's xWhiff / xGB / xPU per pitch and the
+  All pitches row match. A `.spnorm` note under the tab says what moved. Under the mode the whole pool is normalized the same way (every
+  pitcher's relief days), which is the reference the percentiles want. Montero 2026 (25 GS of 32 G): xWhiff 22.4 → 22.3, xGB 41.0 → 40.9.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
