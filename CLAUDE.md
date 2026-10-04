@@ -1294,6 +1294,10 @@ is deploy-limited.
   carries the list. Under a role split the tab's head, table, xWhiff / xGB / xPU pairs, the whiff check and the Rating · xRating line all
   follow (the day rows' sums in `V()`, the pool in that split).
 
+* **xSkills (Sean, 4 Oct 2026: "below skills can you put xSkills which is their xwhiff, strike%, and expected mix woba")**: the pitcher
+  card's second section (`PCT_COLS_P`), xWhiff% · Strike% · xMix wOBA — the xRating's inputs, ranked off the pool's `nwhf` / `nmix` stats
+  (their percentiles come from the pool's PK block, so a window or split re-ranks them like everything else).
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
