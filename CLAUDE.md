@@ -1424,6 +1424,31 @@ is deploy-limited.
   (55, not 55.0) — match loosely when patching. **The centring came out an hour later** (Sean, on Skenes's card: "the model says his expected
   whiff% is 29.1% not 26.1%"): `xKStuff` takes the expected whiff and foul rates as the site shows them, so on a season the fixed models read
   hot every Stuff xK% sits ~2 points above K% (2026); the xRating is percentiles and is unchanged by it. `lgXw().xfp` is unused now.
+
+* **Expected fouls with location (Sean, 4 Oct 2026: "factor in the sequencing location and count for expected foul balls to see if that improves
+  it accuracy wise", then "ok do it")**: a ninth model in the fixed file, **`foul_loc`** = P(foul | contact) from the pitch's traits plus where it
+  crossed (`lcols`, the location whiff model's inputs), trained in `train_stuff_models` beside the stuff-only foul model (which Stuff+ /
+  Batted-ball+ keep). Backtest (scratch `foulseq.py`, models on 2020-24, 300+ BF pitchers, foul per contact): stuff only r .754 / .692 (2025 /
+  2026), + location .787 / .740, + count .779 / .727, + count + the pitch before (type, velo change, spot moved, what it did, pitch number)
+  .782 / .729, sequencing alone .755 / .709; next season (2025 → 26) .667 → .689 (his own rate .704); the residual repeats at r .33 instead of
+  .39. **Count and sequencing add nothing on top of location and aren't shipped.** Skenes 2026: actual 56.9 (95th), stuff 52.4 (75th), with
+  location 54.1 (86th) — about 40% of his gap; Wheeler matches percentile for percentile either way; Mason Miller 2026 (57.2 actual vs 54
+  expected under every version) is what no pitch-level model gets. The chance is P(foul | contact) *at that spot*, so like the location whiff
+  chance it's carried over the pitches actually contacted with the stuff-only chance on the same pitches: `st_nf / st_fl / st_fs`, day fields
+  **`stnf stfl stfs`** (appended), arsenal-day `nf fl fs` (appended), `ctx.arsenal` **`xfoull`** (null under 5 contacted), `consts.stuff`
+  `lgFL / lgFS`. `foulChance(p)` in `app.js` reads `_stfl / _stnf` (V() carries them) else the arsenal's `xfoull` weighted by each pitch's
+  contact (`sw × (1 − whf)`), and falls back to the stuff-only `_stf / _stn` / `xfoul` on a file built before it — so **Pitching+ xK%** (the
+  column and card label for `xks` since the same day; the key is unchanged) and the xRating move only once the models are retrained (Actions →
+  Train Stuff+ models, dispatched 4 Oct 2026 with the rescore) and every season rescored. Until then the live numbers are the stuff-only ones.
+* **The card, 4 Oct 2026 (Sean: "keep the skills section, for swing and miss just show k% and xk%, for zone and chase just show bb% and xbb% and
+  call it walk avoidance, keep batted ball, no need to show results, (and also i dont care about saves showing on the header show k-bb% there),
+  under stuff show instead the pitching+ xk%, show their regular xbb%, and show their pitching+ mix xwoba, and you can keep fastball velocity and
+  also show their pitching+ as well")**: `PCT_COLS_P` left = Skills (xK% · xBB% · Mix wOBA) · Swing & Miss (K% · xK%) · **Walk Avoidance** (BB% ·
+  xBB%); right = Batted Ball (GB% · Popup% · Mix wOBA) · **Stuff** (Pitching+ xK% · xBB% · **Pitching+ Mix xwOBA** · Fastball Velo · Pitching+) —
+  the xRating's three inputs with his velo and grade, the stuff-side read of Skills. Results, Whiff%, Called Strike% / SwStr% / Foul%, Strike%,
+  the count-state strike rates and Extension are off the card (still columns). The band's season line is nERA · ERA · K% · BB% · **K-BB%** (SV
+  gone), in a window too (`seasonLine`). `OUTCOME_LABEL_P` labels `xks` "Pitching+ xK%" and `nmix` "Pitching+ Mix xwOBA" on the card (the
+  column says Mix xwOBA).
  `nmix`'s label is **Mix xwOBA** everywhere (lower is better, as before). 2026 Skenes: Called 13.5 (6th pct),
   SwStr 14.4 (87th), Foul 21.0 (91st).
 
