@@ -4969,6 +4969,7 @@
     pera: "pERA: next season's ERA from his pitches. Its K% and BB% (pK%, pBB%) are fits trained on the following season's rates — from his whiffs, strikes, swings, Stuff+, Location+, the location model's expected whiff rate, his mix and age, never his actual K% or BB% — on the ground-ball / popup mix his pitches project for next year (pGB%, pPU%). Held out by season it beats his own rates at next year's K% and BB% (starters 2.5 vs 2.8 K% points, 1.3 vs 1.4 BB%) and his ERA, FIP, SIERA and nERA at next year's ERA (r .44 vs .27-.39). A pitcher whose pERA sits under his ERA is one to expect more from next year; over it, less.",
     nk: "pK%: the strikeout rate his pitches project for next season — a fit trained on the following year's K% from his whiffs, strikes, swings, stuff, location, mix and age, never his actual K%. Where it sits over his K%, the strikeouts should come.",
     nbb: "pBB%: the walk rate his pitches project for next season — a fit trained on the following year's BB% from his strikes, swings, first-pitch and three-ball strikes, stuff, location, mix and age, never his actual BB%.",
+    rating: "Rating: x(K-BB)% 80, Mix wOBA 20 over percentiles — the strikeout-minus-walk rate his rates say he should have, and his batted-ball mix, as one 0-100 number (the bubble is the number itself).",
     xkbbs: "Pitching+ x(K-BB)%: Pitching+ xK% minus xBB% — the strikeout-minus-walk rate his stuff and spots say he should have; the xRating's main input (higher is better).",
     xrat: "xRating: Pitching+ x(K-BB)% 80, Mix xwOBA 20 over percentiles — the Rating with the whiff side and the batted-ball mix taken from what his stuff and spots should produce rather than what they did. A Rating well above it has run on whiffs or balls in play its stuff didn't earn.",
     nmix: "Mix xwOBA: the league's wOBA per ball in play for the ground-ball / popup mix the Pitching+ model expects from his pitches, the air balls split at the league's line-drive share (lower is better).",
@@ -7529,21 +7530,27 @@
   // the xRating's three inputs (Pitching+ xK%, xBB%, Pitching+ Mix xwOBA) with his velo and Pitching+ — the stuff-side read of the Skills
   // section above it. Whiff%, Strike%, the called / swinging / foul strikes, the count-state strike rates, K-BB%, ERA and extension stay
   // columns. Walk Avoidance sits under Swing & Miss so a phone reads them in his order and a desktop's columns stay even (7 / 8 rows)
-  const PCT_COLS_P = [[["Skills", ["xkf", "xbbf", "xkbb", "mixw"]], ["Swing & Miss", ["k", "xkf"]], ["Walk Avoidance", ["bb", "xbbf"]]],
-                      [["Batted Ball", ["gb", "pu", "mixw"]], ["Stuff", ["xks", "xbbf", "nmix", "fbv", "pitch"]]]];
+  // Results first (Sean, 4 Oct 2026: "add results section that goes up top that has the x(K-bb)% mix woba, and then his rating"): the Rating's
+  // two inputs and the Rating itself. 9 rows left, 10 right
+  const RATING_M = { key: "rating", label: "Rating", hib: true, dec: 0, int: true, unit: "" };
+  const PCT_COLS_P = [[["Results", ["xkbb", "mixw", "rating"]], ["Skills", ["xkf", "xbbf", "xkbb", "mixw"]], ["Swing & Miss", ["k", "xkf"]]],
+                      [["Walk Avoidance", ["bb", "xbbf"]], ["Batted Ball", ["gb", "pu", "mixw"]], ["Stuff", ["xks", "xbbf", "nmix", "fbv", "pitch"]]]];
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
                           babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", aopt: "Arsenal Opt.", sloc: "Location+", pitch: "Pitching+", pwhf: "Whiff+ (loc)", pbb: "Batted-ball+ (loc)", xwcon: "xwOBAcon", fpts: "Pts", fpg: "Pts/G", fppa: "Pts/PA", fpip: "Pts/IP", fpgs: "Pts/GS",
                           spd: "Sprint Speed", sb: "SB", sba: "SB Att.", sbp: "SB%" };
-  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", fstrk: "1st-pitch Strike%", b3strk: "3-ball Strike%", xbbf: "xBB%", xkf: "xK%", xks: "Pitching+ xK%", xkbb: "x(K-BB)%", xkbbs: "Pitching+ x(K-BB)%", foul: "Foul%", cstr: "Called Strike%", swstr: "SwStr%", nmix: "Pitching+ Mix xwOBA", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+", sloc: "Location+" });   // a pitcher's O-Swing% is his chase rate
+  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", fstrk: "1st-pitch Strike%", b3strk: "3-ball Strike%", xbbf: "xBB%", xkf: "xK%", xks: "Pitching+ xK%", xkbb: "x(K-BB)%", xkbbs: "Pitching+ x(K-BB)%", rating: "Rating", foul: "Foul%", cstr: "Called Strike%", swstr: "SwStr%", nmix: "Pitching+ Mix xwOBA", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+", sloc: "Location+" });   // a pitcher's O-Swing% is his chase rate
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
     if (!nav) col.append(panelHead(...pctTitle(p, nav)));   // his page says the season in its header instead
     const body = el("div", "pscroll pctbox");
     const noEV = DS.tracked != null && DS.tracked < 0.05;
     const exp = expKeys();
-    const val = (k) => { const m = all.find((x) => x.key === k); if (!m || (noEV && NEEDS_EV.has(k))) return null; const v = metricValue(m, pv, st); return v == null ? null : { m, v, k }; };
+    // the Rating as a bar (Sean, 4 Oct 2026: a Results section "that has the x(K-bb)% mix woba, and then his rating"): it's already a percentile
+    // blend, so the bubble is the number itself; not a column (the headline is), so it isn't in `all`
+    const val = (k) => { if (k === "rating") return p.type === "P" && st && st.score != null ? { m: RATING_M, v: Math.round(st.score), k } : null;
+      const m = all.find((x) => x.key === k); if (!m || (noEV && NEEDS_EV.has(k))) return null; const v = metricValue(m, pv, st); return v == null ? null : { m, v, k }; };
     const row = (key0, labels) => {
       const start = exp[key0] || key0;
       let got = val(start);
@@ -7551,8 +7558,8 @@
       if (!got) return null;
       const lab = (labels && labels[key0]) || PCT_LABEL[got.k];
       const m = lab ? Object.assign({}, got.m, { label: lab }) : got.m;
-      const pct = st.pct[got.k];
-      const lg = lgOf(got.k, m), prev = prevOf ? prevOf(m, got.k) : null;
+      const pct = got.k === "rating" ? got.v : st.pct[got.k];
+      const lg = got.k === "rating" ? 50 : lgOf(got.k, m), prev = prevOf ? prevOf(m, got.k) : null;
       return { m, v: got.v, k: got.k, label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null, lg: lg == null ? null : fmt(lg, m), prev, prevYear: DS.season - 1,
                gloss: GLOSS[{ xwd: "xwoba", EXPW: "xwoba" }[got.k]] || GLOSS[got.k] || "", hib: m.hib,
                tip: `${m.label}: ${fmt(got.v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}` };
