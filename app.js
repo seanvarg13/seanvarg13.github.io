@@ -637,7 +637,13 @@
   function withSplit(sp, fn) { const prev = SPLIT; SPLIT = sp; try { return fn(); } finally { SPLIT = prev; } }
   // game-by-game split rows live in days.js and load the first time a window or split is chosen
   // role: a pitcher's starts or relief outings only (Sean, 26 Sep 2026) — each day row says whether he started that day
-  const roleOf = (sp) => (sp.role === "sp" || sp.role === "rp" ? sp.role : "all");
+  const roleOf = (sp) => (sp.role === "sp" || sp.role === "rp" || sp.role === "spn" ? sp.role : "all");
+  // "spn" — all his innings, the relief days' expected whiff / ground-ball / popup rates moved to a starter's (Sean, 4 Oct 2026: "still show all
+  // their innings but just show it as they were a starter since there is an adjustment"): the day filter keeps every day (roleFilt −1), and
+  // V() / arsenalView translate the location-aware sums of the days he relieved with the reliever-to-starter effect (AS_SP) before summing
+  const roleFilt = (sp) => (roleOf(sp) === "sp" ? 1 : roleOf(sp) === "rp" ? 0 : -1);
+  const roleNorm = (sp) => roleOf(sp) === "spn";
+  const roleWord = (sp) => (roleOf(sp) === "sp" ? "as SP" : roleOf(sp) === "rp" ? "as RP" : "all innings as SP");
   const splitActive = () => SPLIT.hand !== "all" || SPLIT.venue !== "all" || roleOf(SPLIT) !== "all";
   // pool minimum in effect: the tab's Min PA / IP, always judged on the FULL season (a date range or split only
   // changes the numbers being compared, never who qualifies)
@@ -736,7 +742,7 @@
     const parts = [];
     if (SPLIT.hand !== "all") parts.push("vs " + SPLIT.hand + "H" + (isPitcherGroup(groupFor(state.pos)) ? "B" : "P"));
     if (SPLIT.venue !== "all") parts.push(SPLIT.venue === "home" ? "home" : "away");
-    if (roleOf(SPLIT) !== "all") parts.push(roleOf(SPLIT) === "sp" ? "as SP" : "as RP");
+    if (roleOf(SPLIT) !== "all") parts.push(roleWord(SPLIT));
     return parts.join(" · ");
   };
   const viewLabel = (type) => [winLabel(type), splitLabel()].filter(Boolean).join(" · ");
@@ -842,8 +848,9 @@
       const f = DF[p.type], t = {}; f.forEach((k) => (t[k] = 0));
       const hand = SPLIT.hand === "all" ? -1 : SPLIT.hand === "R" ? 1 : 0;
       const home = SPLIT.venue === "all" ? -1 : SPLIT.venue === "home" ? 1 : 0;
-      const role = p.type !== "P" || roleOf(SPLIT) === "all" ? -1 : roleOf(SPLIT) === "sp" ? 1 : 0, gsi = DF.P.indexOf("gs");
+      const role = p.type !== "P" ? -1 : roleFilt(SPLIT), gsi = DF.P.indexOf("gs"), norm = p.type === "P" && roleNorm(SPLIT);
       const roleOK = (row) => role < 0 || (row[gsi] ? 1 : 0) === role;
+      const tN = { stwl: 0, stgl: 0, stpl: 0 };   // the location-aware sums with the relief days moved to a starter's (All as SP)
       const dayset = new Set(), gsset = new Set(), evs = [];
       const ei = f.indexOf("evs"), dni = f.indexOf("dnum");
       let hasEvs = false, hasDir = false, lo = w.lo;
@@ -858,6 +865,8 @@
         dayset.add(row[0]);
         f.forEach((k, i) => { if (i >= 3 && k !== "gs" && k !== "evs" && row[i] !== undefined) t[k] += row[i]; });   // older files lack trailing fields
         if (p.type === "P" && row[f.indexOf("gs")]) gsset.add(row[0]);
+        if (norm) { const g = (k) => row[f.indexOf(k)] || 0, rp = !row[gsi];
+          tN.stwl += rp ? spNorm("xwl", g("stwl"), g("stnl")) : g("stwl"); tN.stgl += rp ? spNorm("xgb", g("stgl"), g("stnb")) : g("stgl"); tN.stpl += rp ? spNorm("xpu", g("stpl"), g("stnb")) : g("stpl"); }
         if (ei >= 0 && Array.isArray(row[ei])) { hasEvs = true; for (const e of row[ei]) evs.push(e); }
         if (dni >= 0 && row[dni] !== undefined) hasDir = true;
       }
@@ -892,7 +901,7 @@
                    fbv: t.fbn ? Math.round(10 * t.fbv / t.fbn) / 10 : null, ext: t.extn ? Math.round(10 * t.exts / t.extn) / 10 : null,
                    ev: (t.evn || t.bbe) ? Math.round(10 * t.evsum / (t.evn || t.bbe)) / 10 : null, hh: rate(t.hh, t.bip || t.bbe), brl: rate(t.brl, t.bip || t.bbe),
                    fstrk: rate(t.fps, t.fp), b3strk: rate(t.b3s, t.b3), s2whf: rate(t.s2wh, t.s2sw), s2sw: rate(t.s2sw, t.s2), s2zone: rate(t.s2z, t.s2),   // count states (null on files built before them)
-                   ...stuffPlusLoc(t), _stn: t.stn, _stw: t.stw, _stg: t.stg, _stp: t.stp, _stnl: t.stnl, _stwl: t.stwl, _stnb: t.stnb, _stgl: t.stgl, _stpl: t.stpl },
+                   ...stuffPlusLoc(t), _stn: t.stn, _stw: t.stw, _stg: t.stg, _stp: t.stp, _stnl: t.stnl, _stwl: norm ? tN.stwl : t.stwl, _stnb: t.stnb, _stgl: norm ? tN.stgl : t.stgl, _stpl: norm ? tN.stpl : t.stpl },
               sample: ip, ip, bf: t.bf, g: games, gs, role: p.primary, ex: arsenalExtras(p, t),
               ctx: { G: games, GS: gs, wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, Pitches: t.pit, bbl, PAw: t.wden, HBP: t.hbp } };
       } else {
@@ -2009,7 +2018,7 @@
       const bits = [];
       if (state.split.hand !== "all") bits.push(`vs ${state.split.hand}H${pit ? "B" : "P"}`);
       if (state.split.venue !== "all") bits.push(state.split.venue);
-      if (pit && roleOf(state.split) !== "all") bits.push(roleOf(state.split) === "sp" ? "as SP" : "as RP");
+      if (pit && roleOf(state.split) !== "all") bits.push(roleWord(state.split));
       if (state.cardWin.from || state.cardWin.to || lastN(state.cardWin)) bits.push(withWindow(state.cardWin, () => winLabel(p.type)));
       b.classList.toggle("on", bits.length > 0);
       head.append(b);
@@ -2041,7 +2050,10 @@
     };
     bar.append(seg("Handedness", [["all", pit ? "All batters" : "All pitchers"], ["L", pit ? "vs LHB" : "vs LHP"], ["R", pit ? "vs RHB" : "vs RHP"]], state.split.hand, (v) => (state.split.hand = v)));
     bar.append(seg("Venue", [["all", "Home + away"], ["home", "Home"], ["away", "Away"]], state.split.venue, (v) => (state.split.venue = v)));
-    if (pit && bothRoles(p)) bar.append(seg("Role", [["all", "SP + RP"], ["sp", "As SP"], ["rp", "As RP"]], roleOf(state.split), (v) => (state.split.role = v)));
+    if (pit && bothRoles(p)) { const rs = seg("Role", [["all", "SP + RP"], ["sp", "As SP"], ["rp", "As RP"], ["spn", "All as SP"]], roleOf(state.split), (v) => (state.split.role = v));
+      const nb = [...rs.querySelectorAll("button")].find((b) => b.textContent === "All as SP");
+      if (nb) nb.title = "Every inning, with the days he relieved read as a starter: their expected whiff, ground-ball and popup rates (the Pitching+ model's) moved by the reliever-to-starter effect from history, so xWhiff / xGB / xPU, xMix wOBA, xRating and the whiff check are what the whole season says about him in the rotation. Actual rates and Pitching+ are as they were.";
+      bar.append(rs); }
     if (state.mode !== "compare") bar.append(renderCardDates(p));
     if (state.daysLoading && state.mode === "compare") bar.append(el("span", "winnote", "Loading game-by-game data…"));
     // no "Showing vs LHP — not the full season · Show all" line any more (Sean: "just get rid of that"): the lit toggle
@@ -2913,7 +2925,7 @@
       if (full) return fSum(games, H ? "H" : "P");
       const w = winIdx(), sp = SPLIT, role = roleOf(sp);
       const spec = { lo: w && !w.last ? ymdOf(w.from) : 0, hi: w ? ymdOf(w.to) : 0, last: w && w.last ? Number(w.last) : 0, venue: sp.venue, hand: sp.hand };
-      let gs = role === "all" ? games : games.filter((x) => (role === "sp" ? x.GS : !x.GS));
+      let gs = role === "all" || role === "spn" ? games : games.filter((x) => (role === "sp" ? x.GS : !x.GS));
       gs = fWindow(gs, H ? "H" : "P", spec, spec.hand !== "all" ? fDayShares(DS, p, spec.hand) : null);
       return gs.length ? fSum(gs, H ? "H" : "P") : null;
     };
@@ -3478,7 +3490,7 @@
       if (wl && wl !== "full season") chip(wl, () => { state.cardWin = { from: "", to: "", last: "" }; });
       if (SPLIT.hand !== "all") chip("vs " + SPLIT.hand + "H" + (p.type === "P" ? "B" : "P"), () => { state.split = Object.assign({}, sp, { hand: "all" }); });
       if (SPLIT.venue !== "all") chip(SPLIT.venue === "home" ? "Home" : "Away", () => { state.split = Object.assign({}, sp, { venue: "all" }); });
-      if (roleOf(SPLIT) !== "all") chip(roleOf(SPLIT) === "sp" ? "As SP" : "As RP", () => { state.split = Object.assign({}, sp, { role: "all" }); });
+      if (roleOf(SPLIT) !== "all") chip(roleOf(SPLIT) === "sp" ? "As SP" : roleOf(SPLIT) === "rp" ? "As RP" : "All as SP", () => { state.split = Object.assign({}, sp, { role: "all" }); });
     }
     const ts = typeSeg(p); if (ts) r.append(ts);
     txt.append(r);
@@ -5303,7 +5315,7 @@
     let games = fGamesOf(F, grp, p.id); if (!games || !games.length) return null;
     const w = winIdx(), sp = SPLIT, role = roleOf(sp);
     const spec = { lo: w && !w.last ? ymdOf(w.from) : 0, hi: w ? ymdOf(w.to) : 0, last: w && w.last ? Number(w.last) : 0, venue: sp.venue, hand: sp.hand };
-    if (role !== "all") games = games.filter((x) => (role === "sp" ? x.GS : !x.GS));
+    if (role === "sp" || role === "rp") games = games.filter((x) => (role === "sp" ? x.GS : !x.GS));
     games = fWindow(games, grp, spec, spec.hand !== "all" ? fDayShares(DS, p, spec.hand) : null);
     if (!games.length) return { G: 0, empty: true };
     const o = fSum(games, grp); o.games = grp === "P" ? games : undefined; return o;
@@ -6638,7 +6650,7 @@
     const w = winIdx() || (winRequested() ? null : { lo: 0, hi: 1e9 });
     if (!w) return "loading";                                         // a past season's day rows are still on their way
     const hand = SPLIT.hand === "all" ? -1 : SPLIT.hand === "R" ? 1 : 0, home = SPLIT.venue === "all" ? -1 : SPLIT.venue === "home" ? 1 : 0;
-    const role = roleOf(SPLIT) === "all" ? -1 : roleOf(SPLIT) === "sp" ? 1 : 0;
+    const role = roleFilt(SPLIT), norm = roleNorm(SPLIT);
     const ok = (day, h, v, gs) => (hand < 0 || h === hand) && (home < 0 || v === home) && (role < 0 || gs === role);
     let lo = w.lo;
     if (w.last) {   // "last N IP": the same most-recent days the card's numbers use (his day rows' outs)
@@ -6653,8 +6665,10 @@
     const I = Object.fromEntries(ARS_F.map((f, i) => [f, i])), gsI = ARS_F.indexOf("gs"), sum = new Map();
     for (const r of rows) {
       if (r[0] < lo || r[0] > w.hi || !ok(r[0], r[I.hand], r[I.home], r[gsI])) continue;
-      const t = sum.get(r[I.pt]) || Object.fromEntries(ARS_F.slice(5).map((f) => [f, 0]));
+      const t = sum.get(r[I.pt]) || Object.assign(Object.fromEntries(ARS_F.slice(5).map((f) => [f, 0])), { wlN: 0, glN: 0, plN: 0 });
       for (const f of ARS_F.slice(5)) t[f] += r[I[f]];
+      // All as SP: the relief days' expected rates moved to a starter's, kept beside the raw sums (locDelta still prices his real spots)
+      if (norm) { const rp = !r[gsI]; t.wlN += rp ? spNorm("xwl", r[I.wl], r[I.nl]) : r[I.wl]; t.glN += rp ? spNorm("xgb", r[I.gl], r[I.nb]) : r[I.gl]; t.plN += rp ? spNorm("xpu", r[I.pl], r[I.nb]) : r[I.pl]; }
       sum.set(r[I.pt], t);
     }
     const sc = K().stuff, r1 = (x) => Math.round(10 * x) / 10;
@@ -6665,7 +6679,7 @@
                xwhf: 100 * t.w / t.n, xgb: 100 * t.g / t.n, xpu: 100 * t.p / t.n, whfp: wp == null ? null : r1(wp), bbp: bp == null ? null : r1(bp),
                stuffp: wp == null ? null : r1(wp + bp - 100), whf: t.sw ? 100 * t.wh / t.sw : null, gb: t.bip ? 100 * t.gb / t.bip : null,
                pu: t.bip ? 100 * t.pu / t.bip : null, sw: t.sw, bip: t.bip,
-               xwhfl: t.nl >= 5 ? 100 * t.wl / t.nl : null, xgbl: t.nb >= 5 ? 100 * t.gl / t.nb : null, xpul: t.nb >= 5 ? 100 * t.pl / t.nb : null,
+               xwhfl: t.nl >= 5 ? 100 * (norm ? t.wlN : t.wl) / t.nl : null, xgbl: t.nb >= 5 ? 100 * (norm ? t.glN : t.gl) / t.nb : null, xpul: t.nb >= 5 ? 100 * (norm ? t.plN : t.pl) / t.nb : null,
                locp: d ? r1(100 + d[0] + d[1]) : null, pitp: d && wp != null ? r1(wp + d[0] + bp + d[1] - 100) : null, whfpl: d && wp != null ? r1(wp + d[0]) : null, bbpl: d && wp != null ? r1(bp + d[1]) : null };
     });
   }   // the Stuff tab's per-pitch grades: against the league's pitches of the same type, or all pitches
@@ -6780,6 +6794,9 @@
   // flat — so Strike% reads +0.4 to +0.5 as a starter and BB% about a point lower
   const AS_SP = { xwl: [3.47, -0.19], pitch: [27.17, -0.32], stuff: [27.29, -0.32], fbv: [15.30, -0.17], xgb: [4.42, -0.120], xpu: [0.44, -0.046], nmix: [0.0629, -0.167], strk: [1.38, -0.015] };
   const asStarter = (k, x) => (x == null ? null : x + AS_SP[k][0] + AS_SP[k][1] * x);
+  // the same effect on a summed chance (whiff chances over nl swings, ground-ball / popup chances over nb balls in play): the rate moved by
+  // a + b·x, so the sum moves by a·n / 100 + b·sum — used by V() and arsenalView for the relief days under All as SP
+  const spNorm = (k, sum, n) => (sum || 0) * (1 + AS_SP[k][1]) + (n || 0) * AS_SP[k][0] / 100;
   function renderAsStarter(p, st) {
     const pj = projRates(p), m = V(p).m, spPool = pool("SP"), S = spPool && spPool.sorted; if (!pj || !S || !S.nwhf) return null;
     const xw = asStarter("xwl", pj.xw), pt = asStarter("pitch", m.pitch), fv = asStarter("fbv", m.fbv), r1 = (x) => (x == null ? "–" : x.toFixed(1));
@@ -6878,6 +6895,9 @@
         d.title = "xRating: the Rating's own weights over the Pitching+ model's expected Whiff%, his Strike% and the Mix wOBA his expected GB% / PU% imply. Backtest 2015-26: steadier year to year than the Rating (r .79 vs .73), and about half of Rating − xRating closes the next season.";
         box.append(d); }
       const asSP = p.primary === "RP" && !needsDays() ? renderAsStarter(p, st) : null; if (asSP) box.append(asSP);
+      if (roleNorm(SPLIT)) { const d = el("div", "aopt spnorm");
+        d.append(el("b", null, "All innings as a starter"), el("span", null, ": every pitch he threw, with the days he relieved read as a starter — their expected whiff, ground-ball and popup rates moved by the reliever-to-starter effect from history (about −0.9 whiff points, −0.8 ground-ball points and +0.1 popup points for a typical reliever, more the better his relief numbers). So xWhiff / xGB / xPU here and in the Pitching+ table, xMix wOBA, xRating and the whiff check are what the whole season says about him in the rotation; his actual rates, Pitching+ and the start days are as they were."));
+        box.append(d); }
       const wc = renderWhiffCheck(p, m); if (wc) box.append(wc); }
     // how well his usage leans on his whiff pitches (arsenalOpt), with where that ranks among the season's pitchers
     if (!P) { const o = arsenalOpt(R0);
