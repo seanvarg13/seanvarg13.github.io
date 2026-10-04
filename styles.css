@@ -3877,3 +3877,17 @@ header.top .wordmark { display: none; }
 /* the xK% / xBB% tabs (Sean, 4 Oct 2026): the card's percentile bars drawn again under the strip, the note under them small and grey */
 .pcttab { padding: 4px 8px 0; }
 .pcttab .pcttabnote { margin: 8px 4px 4px; font-size: 11.5px; color: var(--muted); }
+/* the card's Filters window (Sean, 4 Oct 2026): over everything, centred, nothing in the card moves; × top right, Clear at the foot */
+.phmodal { position: fixed; inset: 0; z-index: 90; background: rgba(12, 30, 60, 0.38); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.phwin { background: var(--surface); color: var(--ink); border: 2px solid var(--rule); width: min(560px, 100%); max-height: calc(100dvh - 32px); overflow: auto; padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 10px; }
+.phwinhd { display: flex; align-items: center; justify-content: space-between; }
+.phwintitle { font-family: var(--display); font-size: 20px; color: var(--ink); }
+.phwinx { width: 30px; height: 30px; padding: 0; border: 1px solid var(--rule); background: var(--rule); color: #fff; font-size: 18px; line-height: 1; cursor: pointer; }
+.phwinft { display: flex; justify-content: flex-end; }
+.phwin .phgrid { justify-content: start; }
+.phsiderow { display: flex; align-items: center; gap: 10px; }
+.phsiderow .phcap { margin: 0; }
+.phside .segbtn.on { background: var(--rule); color: #fff; }
+.phead .phside { margin-left: 8px; }
+.phwin .phgrid { background: none; padding: 0; }
+.phwin .phcap, .phwin .phsum, .phwin .winnote { color: var(--ink-2); }

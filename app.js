@@ -484,6 +484,7 @@
     cols: prefs.cols || {},                    // {rankings: {H: [...keys], P: [...]}, trending: …, draft: …}; the Leaderboard keeps state.lb
     panel: null,                               // "stats" | "splits": the open toolbar panel
     cardTools: !!prefs.cardTools,              // the card's splits / dates block shown
+    cardSide: prefs.cardSide === "stuff" ? "stuff" : "raw",   // the pitcher card's Raw / Stuff side (4 Oct 2026)
     stars: load("draft2027.stars", {}),        // the working list's starred players: key -> {note, at}; saved into a list with it
     starOnly: !!prefs.starOnly,                // Rankings / Draft: show only starred players
     starOpen: null,                            // the card whose star panel is open
@@ -579,7 +580,7 @@
     if (oldRoles) { for (const [id, r] of Object.entries(oldRoles)) { const l = state.extraPos[id] || (state.extraPos[id] = []); if (!l.includes(r)) l.push(r); } changed = true; }
     if (changed) { save(LS.extraPos, state.extraPos); try { localStorage.removeItem(LS.extra); localStorage.removeItem(LS.roles); } catch {} }
   })();
-  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, posAlso: state.posAlso, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, ptab: state.ptab, rollPA: state.rollPA, pbtab: state.pbtab, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, bars: state.bars }); }
+  function savePrefs() { save(LS.prefs, { v: 2, pos: state.pos, posAlso: state.posAlso, sort: state.sort, dir: state.dir, min: state.min, ref: state.ref, x: state.x, open: state.open, cmp: state.cmp, draftOrder: state.draftOrder, showDrafted: state.showDrafted, tierView: state.tierView, panelTab: state.panelTab, rankSort: state.rankSort, cmp2: state.cmp2, currentSet: state.currentSet, trend: state.trend, lb: state.lb, lbDs: state.lbDs, lbTo: state.lbTo, lbEach: state.lbEach, pre: state.pre, tbFold: state.tbFold, teamF: state.teamF, ptab: state.ptab, rollPA: state.rollPA, pbtab: state.pbtab, pageSize: state.pageSize, cols: state.cols, cardTools: state.cardTools, cardSide: state.cardSide, starOnly: state.starOnly, cmpCols: state.cmpCols, rawMode: state.rawMode, tbl: state.tbl, bars: state.bars }); }
   const draftedIds = () => new Set(state.drafted.map((d) => d.id));
   // Expected stats are one model, the directional one: xwOBA over exit velocity, launch angle, spray and pull angle and
   // the batter's sprint speed, summed from the same day-by-day rows so it follows any window or split, and xBA / xSLG
@@ -5161,6 +5162,7 @@
   const listScrollers = () => [...document.querySelectorAll("main.wrap .board-scroll, #fboard .fscroll, .pbscroll")];
   const noteList = () => { listAt = { mode: state.mode, y: window.scrollY, s: listScrollers().map((e) => [e.scrollTop, e.scrollLeft]) }; };
   function render() {
+    document.querySelectorAll(".phmodal").forEach((x) => x.remove());   // the card's Filters window is rebuilt by playerHead; a closed card leaves none
     const cardKey = () => (state.mode === "player" ? "x" + state.x.id : state.expanded);   // his page is a card too
     const keep = keepScroll(), mb = cardSc(), open = !$("modal").hidden ? cardKey() : null, mtop = mb ? mb.scrollTop : 0;
     const wasCard = !$("modal").hidden;
@@ -7598,8 +7600,25 @@
   // show x(K-BB)% and mix woba, and in xSkills only show the x(K-BB)% and mix xwoba"): Skills = the Rating's two inputs, xSkills = the
   // xRating's two (Pitching+ x(K-BB)% and Mix xwOBA, labelled plainly — the section says which side they're from); the xK% breakdown
   // Sean asked for with it lives on the Pitching+ tab (renderXkBreakdown)
-  const PCT_COLS_P = [[["Skills", ["xkbb", "mixw"]], ["xSkills", ["xkbbs", "nmix"]], ["Swing & Miss", ["k", "xkf"]]],
-                      [["Walk Avoidance", ["bb", "xbbf"]], ["Batted Ball", ["gb", "pu", "mixw"]], ["Rating", ["rating", "xrat"]]]];
+  // the pitcher card regrouped (Sean, 4 Oct 2026, from Skubal's card: "a top one with skills that shows xk% and xbb% ... swing and miss ...
+  // walk avoidance ... batted ball ... a rating one with the rating, x(k-bb)%, and mix woba ... a switch for either raw or stuff and then the
+  // stuff one shows all the same stuff but based on the stuff models"): Raw reads his process, Stuff the same sections off the Pitching+
+  // models (state.cardSide), the labels plain x… either way (Sean: "keep the stuff models expected stuff to just x...")
+  const PCT_COLS_P = [[["Skills", ["xkf", "xbbf"]], ["Swing & Miss", ["k", "xkf"]], ["Walk Avoidance", ["bb", "xbbf"]]],
+                      [["Batted Ball", ["gb", "pu", "mixw"]], ["Rating", ["rating", "xkbb", "mixw"]]]];
+  const PCT_COLS_PS = [[["Skills", ["xks", "xbbf"]], ["Swing & Miss", ["k", "xks"]], ["Walk Avoidance", ["bb", "xbbf"]]],
+                       [["Batted Ball", ["ngb", "npu", "nmix"]], ["Rating", ["xrat", "xkbbs", "nmix"]]]];
+  const STUFF_LABELS = { xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating" };
+  const stuffSide = () => state.cardSide === "stuff";
+  // the Raw | Stuff switch: beside Filters on a desktop, the first row of the Filters window on a phone (Sean, 4 Oct 2026)
+  function sideSwitch() {
+    const ss = el("div", "seg phside"); ss.setAttribute("aria-label", "Raw or stuff");
+    for (const [k, lab] of [["raw", "Raw"], ["stuff", "Stuff"]]) {
+      const on = (state.cardSide || "raw") === k, sb = el("button", "segbtn small" + (on ? " on" : ""), lab); sb.type = "button"; sb.setAttribute("aria-pressed", String(on));
+      sb.addEventListener("click", (e) => { e.stopPropagation(); state.cardSide = k; savePrefs(); render(); }); ss.append(sb);
+    }
+    return ss;
+  }
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
@@ -7610,7 +7629,8 @@
   // had before ... and then also have that tab show the like pitching+ expected k stuff too and make that percentile bars as well", "a tab for
   // expected bb% as well that has all those same percentile bars"): the K% fit's inputs — his strike rates, then the same rates as the stuff
   // and spots say them (xkParts) — and the walk formula's, drawn by pctColumns like the card's own sections
-  const XK_COLS_P = [[["Strikeouts", ["k", "xkf", "xks"]], ["Strikes — actual", ["whf", "cstr", "swstr", "csw", "s2whf", "foul"]], ["Strikes — Pitching+ expected", ["nwhf", "ncstr", "nswstr", "ncsw", "ns2whf", "nfoul"]]],
+  // each actual strike rate right over the Pitching+ expected one (Sean, 4 Oct 2026: "every stat that is being compared next to each other")
+  const XK_COLS_P = [[["Strikeouts", ["k", "xkf", "xks"]], ["Strikes — actual over Pitching+ expected", ["whf", "nwhf", "cstr", "ncstr", "swstr", "nswstr", "csw", "ncsw", "s2whf", "ns2whf", "foul", "nfoul"]]],
                      [["Plate", ["strk", "swing", "zone", "osw", "zcon"]], ["Counts", ["fstrk", "b3strk", "s2sw", "s2zone"]], ["Stuff", ["fbv", "ext", "pitch", "sloc"]]]];
   const XBB_COLS_P = [[["Walks", ["bb", "xbbf", "ubb"]], ["The formula", ["strk", "fstrk", "b3strk"]]],
                       [["Zone & Chase", ["zone", "osw", "swing", "zcon"]], ["Whiffs", ["whf", "swstr", "k"]]]];
@@ -7625,7 +7645,7 @@
     if (!nav) col.append(panelHead(...pctTitle(p, nav)));   // his page says the season in its header instead
     const body = el("div", "pscroll pctbox");
     pctROs.forEach((ro) => ro.disconnect()); pctROs = [];
-    body.append(pctColumns(p, st, g, ref, p.type === "H" ? PCT_COLS_H : PCT_COLS_P));
+    body.append(pctColumns(p, st, g, ref, p.type === "H" ? PCT_COLS_H : stuffSide() ? PCT_COLS_PS : PCT_COLS_P));
     const sim = similarRow(p, st, ref); if (sim) body.append(sim);
     if (state.bars === "classic") { const vl0 = viewLabel(p.type); body.append(el("p", "pctfoot", `${vl0 || "full season"} · ${poolPhrase(ref)} (${pool(ref).ref.length})`)); }
     const vl = viewLabel(p.type);
@@ -7671,7 +7691,8 @@
     {
       const cols = el("div", "pctcols"), sets = [];
       for (const sections of spec) {
-        const groups = sections.map(([title, keys]) => ({ title, rows: keys.map((k) => row(k, p.type === "P" ? OUTCOME_LABEL_P : OUTCOME_LABEL)).filter(Boolean) })).filter((x) => x.rows.length);
+        const LAB = p.type === "P" ? (spec === PCT_COLS_PS ? Object.assign({}, OUTCOME_LABEL_P, STUFF_LABELS) : OUTCOME_LABEL_P) : OUTCOME_LABEL;
+        const groups = sections.map(([title, keys]) => ({ title, rows: keys.map((k) => row(k, LAB)).filter(Boolean) })).filter((x) => x.rows.length);
         if (groups.length) sets.push(groups);
       }
       if (state.bars === "classic") {                // the older look: a heading per section over plain meter rows (Appearance)
@@ -8203,6 +8224,7 @@
   // season's title dead centre, and the filters — the dates and the split toggles — on the right. On a phone the filters fold behind one Filters button beside "full season", the Star goes up
   // by the name, and the title sits across the plate's foot.
   function playerHead(p, st, g, o) {
+    document.querySelectorAll(".phmodal").forEach((x) => x.remove());
     const top = el("div", "cardtop phead"), plate = renderPlate(p, st, g, g), mob = mobileView();
     const F = el("div", "phfilt");
     const star = plate.querySelector(":scope > div > .starbox"), mr = plate.querySelector(".mrank"), h2 = plate.querySelector("h2");
@@ -8255,6 +8277,7 @@
     // make the header a bit smaller row wise"); the mrank line underneath only when something else is on it
     const tog = el("span", "phtog"), fs = el("div", "seg phfiltseg"); fs.append(b); tog.append(fs);
     (plate.querySelector(".hstrip") || mr || plate).append(tog);
+    if (p.type === "P" && !mob) tog.after(sideSwitch());
     { const ts = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (ts) tog.after(ts); }   // a two-way player's switch: right after Filters, a row saved
     { const hs = plate.querySelector(".hstrip"); if (hs && hs._stats) hs.append(hs._stats);   // the season's line, last: its own row
       // a phone (Sean, 1 Oct 2026: four ragged rows "just looks so weird"): the bio and Filters stay beside the headshot, and the
@@ -8266,7 +8289,6 @@
         if (row.childNodes.length) plate.append(row);
       } else if (hs && hs._stats) hs._stats.prepend(...[...hs.children].filter((c) => c.classList.contains("fact")));   // a desktop: the bio and Filters on the first row, PA / IP and the season's line on the second (Sean, 1 Oct 2026)
     }
-    if (!mob) { F.classList.add("phpop"); tog.append(F); }
     let warn = null;
     if (open) {
       const sp = renderSplitPanel(p), seg = (n) => sp.querySelector(`.seg[aria-label="${n}"]`);
@@ -8286,11 +8308,23 @@
       if (role) { if (!mob) role.firstChild.textContent = "Both"; cell("Starts / relief", "w3 mfull", role); }
       warn = sp.querySelector(".splitwarn");
     }
-    if (open) F.append(grid);
     const sum = el("div", "phsum");                     // only when something needs saying: a split in force, days loading
     if (warn) sum.append(warn);
     if (state.daysLoading) sum.append(el("span", "winnote", "Loading game-by-game data…"));
-    if (sum.childNodes.length) F.append(sum);
+    // Filters is a window over the card (Sean, 4 Oct 2026: "a pop up window that just has a clear button ... hit x in the right or click
+    // outside of it to exit ... doesn't ... shift down the player card"): fixed over everything, the grid inside, × and Clear, closed by
+    // a tap on the backdrop or Escape (the document handlers). Nothing is put in the plate, so the card never moves
+    if (open) {
+      const win = el("div", "phwin"), hd = el("div", "phwinhd"); hd.append(el("span", "phwintitle", "Filters"));
+      const x = el("button", "phwinx", "×"); x.type = "button"; x.setAttribute("aria-label", "Close filters");
+      x.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = false; savePrefs(); render(); }); hd.append(x); win.append(hd);
+      if (p.type === "P" && mob) { const r = el("div", "phsiderow"); r.append(el("span", "phcap", "Numbers"), sideSwitch()); win.append(r); }
+      win.append(grid); if (sum.childNodes.length) win.append(sum);
+      const ft = el("div", "phwinft"), clear = el("button", "btn btn-quiet", "Clear"); clear.type = "button";
+      clear.addEventListener("click", (e) => { e.stopPropagation(); state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; savePrefs(); render(); });
+      ft.append(clear); win.append(ft);
+      const ov = el("div", "phmodal"); ov.append(win); document.body.append(ov);
+    } else if (sum.childNodes.length) F.append(sum);
     return finish();
   }
   // a player is primarily a pitcher if he has pitching seasons and never a real hitting season (100+ PA)
@@ -9543,7 +9577,7 @@
     const modal = $("modal"); let y0 = null, x0 = 0, dy = 0, panel = null, sc = null;
     modal.addEventListener("touchstart", (e) => {
       y0 = null; if (!mobileView() || !state.expanded || !modal.classList.contains("pcard") || e.touches.length !== 1) return;
-      const t = e.target; if (t.closest("input, select, textarea, .btabs, .hstrip, .tscroll, table, .phpop, .ddmenu")) return;
+      const t = e.target; if (t.closest("input, select, textarea, .btabs, .hstrip, .tscroll, table, .phpop, .phmodal, .ddmenu")) return;
       sc = modal.querySelector(".cardscroll"); if (!t.closest(".cardtop") && sc && sc.scrollTop > 0) return;
       panel = modal.querySelector(".modal-panel"); y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; dy = 0;
     }, { passive: true });
@@ -9621,12 +9655,12 @@
   if (window.visualViewport) { window.visualViewport.addEventListener("resize", sizeModal); window.visualViewport.addEventListener("scroll", sizeModal); }
   // a desktop's Filters panel shuts on a click anywhere outside it (or its button), or on Escape
   document.addEventListener("click", (e) => {
-    if (!state.cardTools || mobileView() || !document.querySelector(".phpop")) return;
-    if (e.target.closest(".phpop, .phtoggle, .phfilt, .ddmenu") || !e.target.isConnected) return;
+    if (!state.cardTools || !document.querySelector(".phmodal")) return;
+    if (e.target.closest(".phwin, .phtoggle, .phfilt, .ddmenu") || !e.target.isConnected) return;
     state.cardTools = false; savePrefs(); render();
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && state.cardTools && !mobileView() && document.querySelector(".phpop")) { e.stopImmediatePropagation(); state.cardTools = false; savePrefs(); render(); }
+    if (e.key === "Escape" && state.cardTools && document.querySelector(".phmodal")) { e.stopImmediatePropagation(); state.cardTools = false; savePrefs(); render(); }
   }, true);
   $("modal-close").addEventListener("click", closeModal);
   $("modal-back").addEventListener("click", closeModal);
