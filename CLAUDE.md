@@ -1347,6 +1347,22 @@ is deploy-limited.
   best-pitch gap, zone, count strikes, velo) reaches r .45 same-season / .36 next and misses Wheeler and Webb entirely — their trait is in
   sequencing / called third strikes the build doesn't keep. Candidate fields for a later build: two-strike called-strike rate, two-strike foul
   rate, put-away pitch share. Sasaki 2026: K% 23.6, xK% 29.1 (xWhiff 34.4 vs 29.7 actual; two-strike whiffs 25.5 under his overall).
+  **Then the most accurate version (Sean, the same evening: "make it so xK% is whatever formula gives you the most accurate version", "make
+  xskills just use xk, xbb, and mix xwoba", "make the weight for xskills 55%/35%/10%")**: `XKM` / `xKModel(m, xw, xws)` — scratch `xkfit.js`,
+  every 100+ BF pitcher-season 2020-26, each input centred on its season's 100+ BF league, ridge λ 3, held out season by season (300+ BF
+  scored). With his actual whiff rates the best same-season fit (all rates + stuff, rmse 1.43) is uK% in all but name and forecasts next
+  year's K% no better than his own K% (3.61 vs 3.55); with the whiff side **expected** — `projRates(p).xw` (location-aware, over swings) and
+  `stuffRates(p).xw` (stuff-only), no actual Whiff% / CSW% / SwStr% / two-strike whiff — plus Strike%, Swing%, Z-Contact%, Zone%, Chase%,
+  first-pitch / three-ball strike rates, two-strike swing and zone rates, FB velo, extension, Pitching+ and Location+ it reads 1.95 same-season
+  and **3.40 next season, the only version that beats his own K% at next year's** (the 4-stat xWhiff form 3.75, Whiff% alone 3.62); SP / RP
+  fits were no better than pooled. Three tiers (full → without the stuff grades → `xw strk swing zcon zone osw` for the minors) through
+  `rateFit(…, "k", XKM, L)` with `L = lgRatesP()` (now carrying `pitch`) plus `lgXw()` — the dataset's BF-weighted expected whiff rates over
+  every 20+ BF pitcher, cached per `viewKey`. Centring on the league is what takes the 2026 model's hot calibration out (Sasaki 29.1 → 26.3).
+  **xSkills is xK% · xBB% · xMix wOBA** and the **xRating is their percentiles at 55 / 35 / 10** (`XRW`; the pool's xrat block, `statsFor`,
+  the `.xrating` line and glossary say so; the Rating keeps `meta.pitcherWeights`). `renderAsStarter` re-runs xK% / xBB% on the translated
+  inputs (both whiff rates by `xwl`'s effect, Strike%, `fstrk` +1.0 / `b3strk` +3.0 from role3.py as plain shifts in `AS_SP`, velo,
+  Pitching+) for the starter xRating and shows them on the line. 2026: Sasaki K% 23.6 / xK% 26.3, Wheeler 29.9 / 27.9, Webb 25.7 / 30.0,
+  Devin Williams 28.3 / 33.3.
 
 ## 9. Things only Sean can do
 
