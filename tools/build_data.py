@@ -138,7 +138,9 @@ PITCHER_CARD = [
     # Skills first (Sean, 4 Oct 2026): the four rates the Rating weighs, plus Mix wOBA (worked out in the app from ctx.bbl like Mix ERA)
     ("Skills",               [("whf", "Whiff%", True, 1, "%"), ("strk", "Strike%", True, 1, "%"), ("mixw", "Mix wOBA", False, 3, "")]),
     ("Swing & miss",         [("k", "K%", True, 1, "%"), ("whf", "Whiff%", True, 1, "%"), ("csw", "CSW%", True, 1, "%")]),
-    ("Zone & chase",         [("bb", "BB%", False, 1, "%"), ("strk", "Strike%", True, 1, "%")]),
+    # the walk formula (Sean, 4 Oct 2026): BB% on Strike% + first-pitch strike% + three-ball strike% has R² .82 against .58 for Strike%
+    # alone — Zone% / Chase% add nothing once Strike% is known; they stay fold-outs under Strike% and columns
+    ("Zone & chase",         [("bb", "BB%", False, 1, "%"), ("strk", "Strike%", True, 1, "%"), ("fstrk", "1st-pitch Strike%", True, 1, "%"), ("b3strk", "3-ball Strike%", True, 1, "%")]),
     ("Results",              [("kbb", "K-BB%", True, 1, "%"), ("era", "ERA", False, 2, "")]),
     ("Batted ball",          [("gb", "GB%", True, 1, "%"), ("pu", "Popup%", True, 1, "%"), ("mixw", "Mix wOBA", False, 3, ""), ("mera", "Mix ERA", False, 2, "")]),   # Mix wOBA on the card, Mix ERA a column (4 Oct 2026)
     # the four rates a pitcher owns outright, averaged (derived in the app from the four below it)

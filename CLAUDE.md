@@ -1311,6 +1311,17 @@ is deploy-limited.
   All pitches row match. A `.spnorm` note under the tab says what moved. Under the mode the whole pool is normalized the same way (every
   pitcher's relief days), which is the reference the percentiles want. Montero 2026 (25 GS of 32 G): xWhiff 22.4 → 22.3, xGB 41.0 → 40.9.
 
+* **Zone & Chase is the walk formula (Sean, 4 Oct 2026: "replace strike % zone % and chase % with the stats in that formula with a 0.82 r^2")**:
+  the pitcher card's Zone & Chase section is BB% · Strike% · **1st-pitch Strike%** · **3-ball Strike%** (`PCT_COLS_P`; `fstrk` / `b3strk`, built
+  since 3 Oct 2026, now card metrics through `PITCHER_CARD`'s Zone & chase group — `data.js` patched by hand — so the pool ranks them; labels in
+  `OUTCOME_LABEL_P`, glossary entries, `SHORT`, the Stats panel's Discipline group). Why (scratch `bbstrk.js`, every 100+ BF pitcher-season
+  2020-26, BF-weighted): BB% on Strike% alone R² .58 (error 1.67 points); on Strike% + first-pitch + three-ball strike rates R² .82 (1.09). At
+  the same Strike% a higher-whiff pitcher walks more (+0.12 BB% per Whiff% point: Strike% counts whiffs and fouls, which bunch in two-strike
+  counts, and PAs that don't end on contact run to three balls — K% and BB% are uncorrelated raw, r .28 at fixed Strike%); the residual's
+  correlation with three-ball strike rate is −.70, with Zone% / Chase% / Swing% under .06. The "walks beyond Strike%" residual repeats year to
+  year at r .49 (half skill, half noise); three-ball strike rate itself at .39. Zone% / Chase% stay fold-outs under Strike% (`PITCHER_SUB`) and
+  columns. Files built before the count-state fields show "–" for the two bars.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
