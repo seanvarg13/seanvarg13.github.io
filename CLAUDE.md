@@ -1212,6 +1212,30 @@ is deploy-limited.
   with it (13px above and below, ~40px); and the **card's tables are compact again** (12.5px cells, 5px padding, ~30px rows, the navy
   header 6px above and below) — Sean: "way too big for what is needed for the player card". The 46px rows stay on the lists.
 
+* **One Pitching+, the whiff check, Skills first (Sean, 4 Oct 2026: "get rid of stuff+ and pitching+ being separate and just have one
+  pitching+ stat that basically alerts pitchers that are getting more whiffs than their stuff and command would indicate and are likely to
+  regress next year ... and then also an indicator for the other case ... on the pitcher player cards make the first section called Skills
+  and then add in gb% and popup% and mix woba and yeah change mix era to mix woba")**: **Pitching+ is the one grade shown** — the card's
+  Stuff section is Pitching+ · Whiff+ · Batted-ball+ · Location+ · velo · extension (`PITCHER_CARD` / `PITCHER_SUB["pitch"]` in the build,
+  `PCT_COLS_P`; `data.js` patched by hand), the Stuff tab is gone (`BTABS_P`: Pitching+ · pERA · Game Logs · uERA), the header link and the
+  board (`#pitches`) say Pitching+ and the board's columns are the location family only (`pb.sort` falls back to `pitp`), Game Logs grade
+  each outing and each pitch of a day by Pitching+ (`gameLog` reads `stuffPlusLoc(g).pitch`; `gamePitches` adds `locDelta` on the day's
+  `nl / wl / … / ps` sums via `withTypeBase`; `seasonPitches` reads `pitp / whfpl / bbpl / xwhfl …`), home's last-game-day list is "Pitching+
+  that start", Similar's skill list uses `pitch`, the Leaderboard column set is **Pitching+** (`LB_SETS`), and saved lists / sorts drop
+  `stuff swhf sbb suera aopt` on load. Stuff+ is still **built** (the models, day sums, `m.stuff / swhf / sbb`, Stuff uERA and Arsenal Opt.
+  in `app.js`) — it's inside Pitching+ and the Pitching+ tab's sub-head says "stuff alone N" — just not a card metric, column or tab. Don't
+  bring the separate Stuff+ views back unasked. **The whiff check** (`renderWhiffCheck` / `wgapVerdict` under the Pitching+ tab's table, and
+  the column **Whiff vs proj.** `wgap` in `SIDE_P` / `LB_EXTRA_P` / `NEXT_KEYS`, pool stat + percentiles, lower = better, signed): his
+  Whiff% minus `projRates(p).xw` (pWhiff%, the next-season projection that never sees his actual rate). History 2020-26, 300+ BF both
+  years (scratch `wgap.py`): 2-4 over → 76% lost whiffs next year, −2.0 (K% −2.2); 4+ over → 96%, −3.7 (K% −3.5); 2-4 under → 82% gained,
+  +1.8 (K% +1.3); within 2 → coin flip; slope −.67 (two thirds of the gap comes back); r with next year's whiff change −.45. Verdicts:
+  ≥ +2 "Likely to regress", ≤ −2 "Likely to improve", else "In line", each with its history line. Kyle Bradish 2025 (34.8% on 126 BF vs a
+  25.8% projection) → 23.6% in 2026, and his 2026 card reads "Likely to improve · −3.7". **Skills** is the card's first section: Whiff%,
+  Strike%, GB%, Popup%, **Mix wOBA** (`mixw` for pitchers: `mixWOBA` in `app.js`, the league's wOBA per ball in play for his mix with the
+  air balls split at the pool's line-drive share, lower = better; pool stat + `statsFor` + `metricValue` + sort, the hitters' `m.mixw`
+  untouched); Batted Ball is GB% · Popup% · Mix wOBA and Mix ERA is a column only (still in `PITCHER_CARD`'s Batted ball group for the pool).
+  The glossary's `mixw` entry covers both sides.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:

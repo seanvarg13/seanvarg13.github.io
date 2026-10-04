@@ -133,6 +133,15 @@ within ~1.5 points of a pitcher's real BB% (the old Strike%-percentile match: 1.
 than his own BB% does. Double-A and most of Single-A lack Chase% / Z-Contact% and use a four-rate version. Both are ordinary card metrics (`uk`, `ubb`) alongside u(K-BB%)
 and uERA, so they can sit on any table.
 
+**One Pitching+** (4 Oct 2026). Stuff+ and Pitching+ are no longer shown apart: the card, the board (Leaders header "Pitching+"), the
+Game Logs and the Leaderboard carry one grade — the pitch graded on what it does and where it was thrown, against its own type — with
+Whiff+ and Batted-ball+ as its halves and Location+ as what the spots add. The Pitching+ tab's sub-head still says what the stuff alone
+grades. Under its table sits the **whiff check**: his Whiff% against the rate his pitches project for next season, with a verdict — 2+
+points over, "Likely to regress" (2020-26: 76% of such pitchers lost whiffs the next year, 2.0 points on average; 4+ over, 96% and 3.7);
+2+ under, "Likely to improve" (82% gained, +1.8); else "In line". It's also a Leaderboard / Compare column, *Whiff vs proj.* (a minus is
+upside). The pitcher card's first section is **Skills** — Whiff%, Strike%, GB%, Popup% and **Mix wOBA** (the league's wOBA per ball in
+play for the mix he allows; Mix ERA is a column only now).
+
 **Rating** (the pitchers' headline score, 4 Oct 2026) is Whiff% 50, Strike% 20, GB% 20 and Popup% 10 over percentiles — the four
 skills a pitcher owns, in that order, weighted by what carried into the next season's fantasy points (it was a plain average of Whiff%
 and Strike%; Chase% and SwStr% were tested and added nothing).
