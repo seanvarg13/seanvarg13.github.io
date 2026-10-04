@@ -1252,6 +1252,17 @@ is deploy-limited.
   −4.6); 2+ under → 73% gained, +1.5 (K% +0.9); within 2 → −0.7, the league's drift. The models themselves are unchanged (the fixed file
   trained through 2025); Seymour's four-seam reads 23.0 expected / 26.0 actual, his changeup 35.4 / 38.4.
 
+* **nERA where uERA was (Sean, 4 Oct 2026: "get rid of uERA and just go with a luck neutral ERA called nERA and place that on the player
+  card where uERA was")**: the band's season line reads nERA (the view's `V(p).m.nera` under a filter, `p.m.nera` otherwise), the card's tab
+  strip is Pitching+ · nERA (`renderLuckBox`; `BTABS_P`), Season Stats' last column is **nERA** (the season's own, chipped by its percentile
+  among that season's pitchers — `uera(season)` now returns `V(q).m.nera` / `pct.nera`; a minors line shows its level's own through `milbN`,
+  the MLB-equivalent uERA column is gone from there, `milbU` stays for Call-up Watch), home's pitcher lists are nERA (`puOf`), the Standard
+  column set ends in nERA, `uera` is in `RETIRED_P` and dropped from saved lists, Similar's skill list uses `nera`, and `uera` left
+  `PITCHER_CARD`'s Expected & contact (uK% / uBB% / u(K-BB%) stay as columns). uERA is still computed everywhere underneath. **The overnight
+  cloud build regenerated `data.js` from a checkout older than the day's PRs** (its `--steps mlb` ran last in a rescore job started at 20:45),
+  which put the 50 / 50 weights and the old card layout back on the live site for a few minutes; `data.js` was re-patched by hand. A rescore
+  run's final MLB build uses the `tools/` it started with — merge `tools/` changes before dispatching one, or re-patch `data.js` after.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
