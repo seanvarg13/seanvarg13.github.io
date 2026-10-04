@@ -152,7 +152,10 @@ plate appearances run to three balls, where the 3-ball strike rate decides ball 
 three rates say he should have, from the same fit, usually within about a point of the real one.
 The pitcher card's columns (4 Oct 2026): Skills · xSkills · Results · Swing & Miss on the left, Zone & Chase · Batted Ball · Stuff
 (fastball velo and extension only; the Pitching+ grades are on their own tab) on the right.
-xSkills reads xWhiff%, xBB% and xMix wOBA.
+xSkills reads xWhiff%, xK%, xBB% and xMix wOBA. **xK%** (4 Oct 2026) is the strikeout rate the K% formula — Whiff%, Strike%, two-strike
+Whiff% and two-strike Swing%, which together explain 80% of the spread in K% — gives with the Pitching+ model's expected whiff rate in place
+of his own. A pitcher above it turns whiffs into strikeouts better than most, and that is a repeatable trait rather than luck (Wheeler every
+year); one below it (Webb) tends to stay below.
 
 **xRating** (4 Oct 2026): the Rating's weights with the Pitching+ model's expected whiff rate and the Mix wOBA its expected mix implies in
 place of his actual ones — what his pitches and spots say the Rating should be. On the Pitching+ tab beside the Rating and a Leaderboard /

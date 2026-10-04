@@ -1331,6 +1331,22 @@ is deploy-limited.
   Chase · Batted Ball · Stuff (Fastball velo, Extension only — Pitching+ / Whiff+ / Batted-ball+ / Location+ live on the Pitching+ tab and
   stay columns). Ten rows a column. **xSkills is xWhiff% · xBB% · xMix wOBA** (Sean, the same hour: "replace strike% with xBB%") — the
   xRating's own inputs are unchanged (Strike%, as the Rating).
+  **xK% (Sean, the same evening: "an xK% in the xSkills and base the whiff% in the model on their xWhiff%")**: the K% formula (scratch
+  `bbstrk.js` / `kconv*.js`: K% = −26.03 + 0.583·Whiff% + 0.552·Strike% + 0.367·2-strike Whiff% − 0.174·2-strike Swing%, every 100+ BF
+  pitcher-season 2020-26, BF-weighted, R² .80 / error 2.4 against Whiff% alone .71 / 2.8) run with **the Pitching+ model's expected whiff
+  rate** (`projRates(p).xw`) in place of his and his two-strike whiff rate scaled by the same ratio; Strike% and the two-strike swing rate
+  his own — `xKFormula(m, xw)` / `XKF`, key **`xkf`** (the hitters' xK% is `xk`), computed where `nwhf` is (the pool's PK block, `statsFor`'s
+  `nx`) since it needs `projRates`, so it's in `NEXT_KEYS` (Stats group "Expected (Pitching+)", the sort-key path), a `SIDE_P` def, labels /
+  glossary / `SHORT`, and **xSkills is xWhiff% · xK% · xBB% · xMix wOBA** (eleven rows on the left, ten on the right). What the K% residual
+  is: it correlates with called strikes / Strike% / Zone% (+.34), two-strike zone rate (+.26) and two-strike whiff rate (+.19), walks −.24 — a
+  whiff is a strikeout only with two strikes; it repeats year to year at r .49 (odd / even game days within 2026: .19, so a single season is
+  half noise), a career BF-weighted version at .52, and it regresses at exactly K%'s own rate (next K% = 4.4 + .77·K% − .04·gap), so it is a
+  **trait, not a regression flag** — Wheeler +2 to +3 every year (Strike% 64-67, two-strike whiffs ≥ his overall, two-strike zone 42-47%),
+  Hunter Brown / Skenes / Cole / Misiorowski +2 to +3 career; Wandy Peralta −3.7, Grant Holmes −3.0, Sánchez −2.4, Valdez −1.9, Webb −1.6
+  (sinker / contact pitchers who pitch to contact once ahead). A process-only model of the gap (two-strike zone, FB share, chase, Z-Contact,
+  best-pitch gap, zone, count strikes, velo) reaches r .45 same-season / .36 next and misses Wheeler and Webb entirely — their trait is in
+  sequencing / called third strikes the build doesn't keep. Candidate fields for a later build: two-strike called-strike rate, two-strike foul
+  rate, put-away pitch share. Sasaki 2026: K% 23.6, xK% 29.1 (xWhiff 34.4 vs 29.7 actual; two-strike whiffs 25.5 under his overall).
 
 ## 9. Things only Sean can do
 
