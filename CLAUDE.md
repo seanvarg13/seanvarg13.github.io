@@ -1373,6 +1373,14 @@ is deploy-limited.
   under, every year), so the glossary says it's what he does, not what he'll stop doing; the whiff check stays the luck read. The As-a-starter
   line moves his actual whiff rates by the `xwl` effect too (`wr`) so the starter xK% is consistent. 2026: Sasaki 25.0, Wheeler 28.7, Webb
   27.9, Devin Williams 29.3.
+  **Significance (Sean: "figure out the statistical significance of guys like tyler phillips, roki sasaki, skeens, wheeler, jacob webb";
+  scratch `sig.js`)**: a season's K% − xK% gap has variance ≈ 0.76 + 763 / BF (sd 1.8 at 300 BF, 1.4 at 600), the 0.76 being the spread of true
+  conversion talent (sd 0.87; 0.82 from the year-to-year covariance), so one season is about ¼ talent. Career gaps weighted by 1 / noise, with
+  z: Hunter Brown +2.5 (4.6), Skenes +2.5 (4.0, p < .001), Mason Miller +2.6 (2.8), Cade Smith +2.2 (2.3); Wandy Peralta −2.7 (−3.9), Phillips
+  −2.5 (−2.9, p .004), Webb −2.1 (−2.6, p .008), Valdez −1.2 (−2.9), Sánchez −1.2 (−2.4); Wheeler +0.4 (z 1.0 — his over-performance against
+  Whiff% alone is fully explained by the fit's called strikes / two-strike rates), Cole +0.3, Sasaki −1.1 (z −1.0, two seasons; his 2026 halves
+  split 32 / 26 on whiffs — noise), Misiorowski +0.1, Warren −0.7. Shrunk talent (gap × 0.76 / (0.76 + SE²)): Brown +1.8, Skenes +1.6, Peralta
+  −1.6, Phillips −1.2, Webb −1.1, Sasaki −0.4.
 
 ## 9. Things only Sean can do
 

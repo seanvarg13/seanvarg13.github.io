@@ -156,8 +156,9 @@ xSkills reads xK%, xBB% and xMix wOBA, and the **xRating** is those three percen
 strikeout rate his rates say he should have: a fit over every 100+ BF pitcher-season since 2020 on his whiff, called-strike and swinging-strike
 rates, two-strike whiff rate, Strike%, swing and contact rates, the count-state strike rates, batted-ball mix, velocity, extension, the
 Pitching+ grades and the expected whiff rates, each against the league's — within about a point of the real K% (r .95). A pitcher above it
-turns his whiffs and strikes into strikeouts better than most; one below it, worse. That gap is a repeatable trait rather than luck (Wheeler
-over every year, Webb under), so it says what he does, not what he'll stop doing; the Pitching+ tab's whiff check is the luck read.
+turns his whiffs and strikes into strikeouts better than most; one below it, worse. One season of that gap is about a quarter talent and
+three quarters noise; over several seasons it is a real trait (Skenes and Hunter Brown over, Webb, Phillips and Wandy Peralta under), so it
+says what he does, not what he'll stop doing. The Pitching+ tab's whiff check is the luck read.
 
 **xRating** (4 Oct 2026): the Rating's weights with the Pitching+ model's expected whiff rate and the Mix wOBA its expected mix implies in
 place of his actual ones — what his pitches and spots say the Rating should be. On the Pitching+ tab beside the Rating and a Leaderboard /
