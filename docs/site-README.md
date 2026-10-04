@@ -133,6 +133,9 @@ within ~1.5 points of a pitcher's real BB% (the old Strike%-percentile match: 1.
 than his own BB% does. Double-A and most of Single-A lack Chase% / Z-Contact% and use a four-rate version. Both are ordinary card metrics (`uk`, `ubb`) alongside u(K-BB%)
 and uERA, so they can sit on any table.
 
+**xSkills** (4 Oct 2026): the pitcher card's second section — the Pitching+ model's expected whiff rate, his Strike% and the Mix wOBA his
+expected mix implies, the xRating's three inputs, right under Skills.
+
 **As a starter** (4 Oct 2026): a reliever's Pitching+ tab says what his expected whiff rate, Pitching+ and velocity would read in the
 rotation, from every reliever who became a starter 2015-26 (the role gives a reliever about a whiff point, 4-7 Pitching+ and half a mile an
 hour, more the better his numbers), plus his xRating placed among starters. xRating is the first column after the Rating on every pitcher list.
