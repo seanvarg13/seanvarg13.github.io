@@ -153,9 +153,9 @@ three rates say he should have, from the same fit, usually within about a point 
 The pitcher card's columns (4 Oct 2026): Skills · xSkills · Results · Swing & Miss on the left, Zone & Chase · Batted Ball · Stuff
 (fastball velo and extension only; the Pitching+ grades are on their own tab) on the right.
 Skills reads xK%, xBB% and Mix wOBA (Whiff% and Strike% show in the sections below), and the **Rating** is those three percentiles weighted 55 / 35 / 10. The **xRating** is the same with the whiff side and the mix taken from
-his stuff instead of his results: **Stuff xK%** (xK% run on the Pitching+ model's expected whiff rate and the stuff model's expected foul
+his stuff instead of his results: **Pitching+ xK%** (xK% run on the Pitching+ model's expected whiff rate and the stuff model's expected foul
 rate, as the Pitching+ tab shows them), xBB% and Mix xwOBA, 55 / 35 / 10. A Rating well above the xRating has run on whiffs or balls in play the stuff
-didn't earn; the gap between K% and Stuff xK% is the one that predicts next year's strikeouts moving. Swing & Miss shows K%, xK%, Whiff%, then Called Strike%, SwStr% and Foul% per pitch — the three
+didn't earn; the gap between K% and Pitching+ xK% is the one that predicts next year's strikeouts moving. Swing & Miss shows K%, xK%, Whiff%, then Called Strike%, SwStr% and Foul% per pitch — the three
 strikes that keep a plate appearance alive, which is how xK% reads them. **xK%** (4 Oct 2026) is the
 strikeout rate his rates say he should have: a fit over every 100+ BF pitcher-season since 2020 on his whiff, called-strike and swinging-strike
 rates, two-strike whiff rate, Strike%, swing and contact rates, the count-state strike rates, batted-ball mix, velocity, extension, the
@@ -962,3 +962,11 @@ Regress small samples** — in a date window or split, every rate is pulled towa
 
 **Same evening**: every table's header row is navy with white column names (the sorted one light blue).
 No arrow on the sorted column name (the header keeps its height), and the card's tables are compact again.
+
+### Pitcher card layout and expected fouls (4 Oct 2026)
+
+The pitcher card's sections are Skills (xK%, xBB%, Mix wOBA), Swing & Miss (K%, xK%), Walk Avoidance (BB%, xBB%), Batted Ball (GB%, Popup%,
+Mix wOBA) and Stuff (Pitching+ xK%, xBB%, Pitching+ Mix xwOBA, Fastball Velo, Pitching+). The band's season line ends in K-BB% instead of saves.
+Pitching+ xK% (formerly Stuff xK%) reads the stuff model's expected foul rate **with location** once the models are retrained: where a pitch
+crosses lifts the pitcher-level fit with foul-on-contact from r ~.72 to ~.76 and the next-season one from .67 to .69; the count and the pitch
+before added nothing and were left out. Files built before the retrain fall back to the stuff-only foul chance.
