@@ -1528,6 +1528,21 @@ is deploy-limited.
   tab's breakdown, labels / `SHORT` / glossary. Files without the command sums (built before 3 Oct 2026) fall back to his actual rate. The
   expected swing rate stays unused for SwStr% (tested 3 Oct 2026: expected swing × expected whiff was worse everywhere).
 
+* **The card regrouped, Raw / Stuff, Filters as a window (Sean, 4 Oct 2026, from Skubal's card: "a top one with skills that shows xk% and xbb%
+  ... swing and miss ... walk avoidance ... batted ball ... a rating one with the rating, x(k-bb)%, and mix woba ... a switch for either raw or
+  stuff and then the stuff one shows all the same stuff but based on the stuff models"; approved from a mockup, then "keep the stuff models
+  expected stuff to just x...", and the Filters box "a pop up window that just has a clear button ... hit x in the right or click outside of it
+  to exit ... doesn't ... shift down the player card")**: `PCT_COLS_P` (Raw) = Skills (xK% · xBB%) · Swing & Miss (K% · xK%) · Walk Avoidance
+  (BB% · xBB%) | Batted Ball (GB% · Popup% · Mix wOBA) · Rating (Rating · x(K-BB)% · Mix wOBA); `PCT_COLS_PS` (Stuff) = the same sections off
+  the Pitching+ models — Pitching+ xK%, xBB%, xGB% / xPU% / Mix xwOBA, xRating / Pitching+ x(K-BB)% / Mix xwOBA — labelled plain xK% / x(K-BB)%
+  (`STUFF_LABELS`). `state.cardSide` (per device, `cardSide` in prefs), `sideSwitch()`: beside Filters on a desktop, the first row of the
+  Filters window on a phone (the phone's bio line is full). **Filters is a window** (`.phmodal` backdrop + `.phwin`, appended to `document.body`
+  by `playerHead`, removed at the top of every `render`): title, × (`.phwinx`), the same `.phgrid`, the split warning / days note, a Clear
+  button (full season, every split); a tap on the backdrop or Escape closes it (the document handlers now test `.phmodal` / `.phwin`, on a phone
+  too); nothing is put in the plate, so the card never shifts — `.phfilt.phpop` and its CSS are unused. xSkills is gone as a section (Stuff mode's
+  Rating is it). **The xK% tab pairs the rates** (Sean, same hour: "every stat that is being compared next to each other"): one section, each
+  actual strike rate right over its Pitching+ expected one (Whiff% / xWhiff%, Called Strike% / xCalled Strike%, …).
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
