@@ -23,7 +23,7 @@
         ["Pitching+", ["pitch", "pwhf", "pbb", "sloc", "wgap", "nwhf", "fbv", "ext"]]],   // one grade (Sean, 4 Oct 2026: Stuff+ and Pitching+ no longer separate)
   };
   const colLab = (m) => { const l = SHORT[m.key] || m.label; return m.unit === "%" && !l.includes("%") ? l + "%" : l; };
-  const SHORT = { suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs proj.", mixw: "Mix wOBA", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "pWhiff%", ngb: "pGB%", npu: "pPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
+  const SHORT = { suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", mixw: "Mix wOBA", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
                tiers: "draft2027.tiers", tierNames: "draft2027.tierNames", sets: "draft2027.rankSets", extraPos: "draft2027.extraPos", stars: "draft2027.stars" };
   // Storage that cannot lose a saved list. A value that will not parse is left exactly where it is — its raw
@@ -368,11 +368,10 @@
   const projPitch = (xs, xl, k) => (xs == null || xl == null ? null : PPITCH[k].c + PPITCH[k].s * xs + PPITCH[k].l * xl);   // all in %
   // his whole arsenal: the stuff-only rates (stuffRates) and the location-aware ones (pitchRates) through the same blend — in a window or
   // split the day rows' sums, the season's arsenal otherwise. xg / xp as shares, xw in %
-  function projRates(p) {
-    const a = stuffRates(p), b = pitchRates(p); if (!a || !b) return null;
-    const xw = projPitch(a.xw, b.xw, "whf"), xg = projPitch(100 * a.xg, 100 * b.xg, "gb"), xp = projPitch(100 * a.xp, 100 * b.xp, "pu");
-    return xw == null || xg == null || xp == null ? null : { xw, xg: Math.max(0, xg) / 100, xp: Math.max(0, xp) / 100 };
-  }
+  // Since 4 Oct 2026 (Sean, on Ian Seymour's card reading 25.1 under a table saying 26.9: "his expected whiffs are 26.9 not 25.1") the
+  // "expected" rates everywhere are the Pitching+ model's own — the same numbers as the tab's All pitches row — not the two-model blend
+  // (PPITCH / projPitch stay for the per-pitch view; the blend was within a point of this for most pitchers and confused the page)
+  function projRates(p) { return pitchRates(p); }
   // babip_stats() in build_data.py, from summed day rows: xBABIP is the directional xBA's hits less his home runs over his
   // non-HR balls in play; luck is his hits in play above that, priced at his own average hit in play, in wOBA points
   function babipFrom(t) {
@@ -388,7 +387,7 @@
   // Mix wOBA: the league's value of his average ball in play (type × pulled / straightaway / the other way) — balls in play
   // only, no bunts, walks and strikeouts left out (Sean): what his batted-ball distribution alone is worth
   const mixW = (sum, n) => (K().mix && n ? Math.round(1000 * sum / n) / 1000 : null);
-  const SIDE_P = [{ key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "suera", label: "Stuff uERA", hib: false, dec: 2, unit: "" }, { key: "puera", label: "Pitching uERA", hib: false, dec: 2, unit: "" }, { key: "pera", label: "pERA", hib: false, dec: 2, unit: "" }, { key: "wgap", label: "Whiff vs proj.", hib: false, dec: 1, unit: " pts", sign: true }, { key: "nk", label: "pK%", hib: true, dec: 1, unit: "%" }, { key: "nbb", label: "pBB%", hib: false, dec: 1, unit: "%" }, { key: "nwhf", label: "pWhiff%", hib: true, dec: 1, unit: "%" }, { key: "ngb", label: "pGB%", hib: true, dec: 1, unit: "%" }, { key: "npu", label: "pPU%", hib: true, dec: 1, unit: "%" },
+  const SIDE_P = [{ key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "suera", label: "Stuff uERA", hib: false, dec: 2, unit: "" }, { key: "puera", label: "Pitching uERA", hib: false, dec: 2, unit: "" }, { key: "pera", label: "pERA", hib: false, dec: 2, unit: "" }, { key: "wgap", label: "Whiff vs exp.", hib: false, dec: 1, unit: " pts", sign: true }, { key: "nk", label: "pK%", hib: true, dec: 1, unit: "%" }, { key: "nbb", label: "pBB%", hib: false, dec: 1, unit: "%" }, { key: "nwhf", label: "xWhiff%", hib: true, dec: 1, unit: "%" }, { key: "ngb", label: "xGB%", hib: true, dec: 1, unit: "%" }, { key: "npu", label: "xPU%", hib: true, dec: 1, unit: "%" },
                   { key: "stuff", label: "Stuff+", hib: true, dec: 0, unit: "" }, { key: "swhf", label: "Whiff+", hib: true, dec: 0, unit: "" },
                   { key: "sbb", label: "Batted-ball+", hib: true, dec: 0, unit: "" },
                   { key: "aopt", label: "Arsenal Opt.", hib: true, dec: 1, unit: " pts", sign: true },
@@ -4342,7 +4341,7 @@
         groups.push({ group: "Pitching+", metrics: fam });
         const nx = [...NEXT_KEYS].map((k) => side(k)).filter(Boolean);   // next season's, their own group (pERA; Sean, 3 Oct 2026)
         for (const grp of groups) grp.metrics = grp.metrics.filter((m) => !NEXT_KEYS.has(m.key));
-        groups.push({ group: "Projected", metrics: nx });
+        groups.push({ group: "Expected (Pitching+)", metrics: nx });
       }
       else {
         if (!after("woba", "xwdiff")) groups.push({ group: "Outcomes", metrics: [side("xwdiff")].filter(Boolean) });
@@ -4806,14 +4805,14 @@
     suera: "Stuff uERA: uERA built from his stuff instead of his results — the stuff model's xWhiff in place of his Whiff% (through uK%), its xGB and xPU in place of his ground balls and popups (the rest of his air balls split at the league's line-drive share), and walks from his actual Strike% as in uERA, since the stuff model can't tell who throws strikes. What his arsenal alone says his ERA should be.",
     aopt: "Arsenal optimization: how far his pitch usage leans toward his own swing-and-miss pitches. Each pitch's expected whiff rate (the Stuff model's xWhiff) averaged by how often he actually throws it, minus the same pitches averaged at the league's typical usage of those pitch types. In whiff-per-swing points: +3 means his mix gets three more whiffs per 100 swings than the same pitches thrown in a typical mix would. Each point has come with about a point of real Whiff%. Whiffs only — a sinkerballer who leans on his sinker for ground balls reads negative on purpose.",
     pitch: "Pitching+: his pitches graded on what the ball does and where he throws it — velocity, spin, movement, release, extension, arm angle, each pitch against his fastball, and the spot it crossed the plate — as a whiff chance per swing and a ground-ball / popup chance on contact, against the league's pitches of the same type (100 = average for its type, each point 1% of runs). Whiff+ and Batted-ball+ are its halves; Location+ is what the spots add over the stuff alone. The one grade on the site since 4 Oct 2026.",
-    wgap: "Whiff vs projection: his Whiff% minus the rate his pitches project for next season (pWhiff%: the stuff-only and location-aware chances blended by what carried over to the next year). Over it (+), he got whiffs the pitches didn't earn: 2-4 points over, 76% of pitchers lost whiffs the next season (2.0 on average, K% −2.2); 4+, 96% (−3.7). Under it (−), the whiffs tend to come: 2+ under, 82% gained (+1.8). Lower is better here — a minus is upside.",
+    wgap: "Whiff vs expected: his Whiff% minus the Pitching+ model's expected whiff rate on his swings (the pitches and where he throws them; the model never sees his actual rate). Over it (+), he got whiffs the pitches didn't earn: 2-4 points over, 77% of pitchers lost whiffs the next season (2.2 on average, K% −2.3); 4+, every one (−3.9). Under it (−), the whiffs tend to come: 2+ under, 73% gained (+1.5). Lower is better here — a minus is upside.",
     puera: "Pitching uERA: Stuff uERA's twin from the Pitching+ models — the location-aware xWhiff (over his swings) in place of his Whiff%, its xGB and xPU (over his balls in play) in place of his ground balls and popups, walks from his actual Strike% as in uERA. What his pitches, in the spots he throws them, say his ERA should be this season.",
     pera: "pERA: next season's ERA from his pitches. Its K% and BB% (pK%, pBB%) are fits trained on the following season's rates — from his whiffs, strikes, swings, Stuff+, Location+, the location model's expected whiff rate, his mix and age, never his actual K% or BB% — on the ground-ball / popup mix his pitches project for next year (pGB%, pPU%). Held out by season it beats his own rates at next year's K% and BB% (starters 2.5 vs 2.8 K% points, 1.3 vs 1.4 BB%) and his ERA, FIP, SIERA and nERA at next year's ERA (r .44 vs .27-.39). A pitcher whose pERA sits under his ERA is one to expect more from next year; over it, less.",
     nk: "pK%: the strikeout rate his pitches project for next season — a fit trained on the following year's K% from his whiffs, strikes, swings, stuff, location, mix and age, never his actual K%. Where it sits over his K%, the strikeouts should come.",
     nbb: "pBB%: the walk rate his pitches project for next season — a fit trained on the following year's BB% from his strikes, swings, first-pitch and three-ball strikes, stuff, location, mix and age, never his actual BB%.",
-    nwhf: "pWhiff%: the whiff rate per swing his pitches project for next season — each pitch's stuff-only and location-aware whiff chances blended by what carried over to the same pitch type's rate the next year (the spots carry more of it). Next-season error 5.6 points a pitch against 6.3 from the pitch's own rate.",
-    ngb: "pGB%: the ground-ball rate on contact his pitches project for next season — the stuff and location models' chances blended by what carried over (stuff carries most of it).",
-    npu: "pPU%: the popup rate on contact his pitches project for next season, blended the same way as pGB%.",
+    nwhf: "xWhiff%: the whiff rate per swing the Pitching+ model expects from his pitches and where he throws them — the Pitching+ tab's All pitches row.",
+    ngb: "xGB%: the ground-ball rate on contact the Pitching+ model expects from his pitches and their spots.",
+    npu: "xPU%: the popup rate on contact the Pitching+ model expects from his pitches and their spots.",
     pwhf: "Whiff+ (loc): Pitching+'s whiff half — his location-aware whiff chance on the pitches swung at, against the league's for his pitch types.",
     pbb: "Batted-ball+ (loc): Pitching+'s contact half — the ground-ball / popup / air mix the location-aware model expects on his balls in play, priced like Batted-ball+.",
     sloc: "Location+: what where he throws his pitches adds to his stuff — Pitching+ minus Stuff+, plus 100. Each location-aware chance is compared with the stuff-only chance on the same pitches (swings for whiffs, balls in play for the mix), so 100 means his spots add what an average pitcher's do and 110 that they're worth about 10% of a run's runs saved on top of his stuff. Stuff+ never sees location; this is the part that does.",
@@ -6719,20 +6718,23 @@
   // 2-4 points over, 76% lost whiffs the next year (−2.0 on average, K% −2.2); 4+ over, 96% (−3.7, K% −3.5); 2-4 under, 82% gained (+1.8,
   // K% +1.3); within 2, a coin flip (−0.2). About two thirds of the gap comes back (slope −.67). Kyle Bradish 2025 (34.8% on 126 BF against a
   // 25.8% projection) read 23.6% in 2026
+  // History on this gap (Whiff% − the Pitching+ model's xWhiff), 300+ BF both years 2020-26 (scratch wgap2.py): 2-4 over → 77% lost whiffs
+  // next year, −2.2 (K% −2.3); 4+ over → 100%, −3.9 (K% −4.6); 2+ under → 73% gained, +1.5 (K% +0.9); within 2 → −0.7 (whiffs drift
+  // down league-wide year to year). r with next year's whiff change −.42, slope −.62
   const WGAP = { regress: 2, improve: -2 };
   function wgapVerdict(gap) {
     if (gap == null) return null;
-    if (gap >= 4) return { cls: "unlucky", word: "Likely to regress", hist: "pitchers 4+ points over their projection lost whiffs the next season 96% of the time, 3.7 points on average (K% −3.5)" };
-    if (gap >= WGAP.regress) return { cls: "unlucky", word: "Likely to regress", hist: "pitchers 2-4 points over their projection lost whiffs the next season 76% of the time, 2.0 points on average (K% −2.2)" };
-    if (gap <= WGAP.improve) return { cls: "lucky", word: "Likely to improve", hist: "pitchers 2+ points under their projection gained whiffs the next season 82% of the time, 1.8 points on average (K% +1.3)" };
-    return { cls: "even", word: "In line", hist: "within 2 points of the projection the next season is a coin flip (−0.2 on average)" };
+    if (gap >= 4) return { cls: "unlucky", word: "Likely to regress", hist: "pitchers 4+ points over their expected rate lost whiffs the next season every time, 3.9 points on average (K% −4.6)" };
+    if (gap >= WGAP.regress) return { cls: "unlucky", word: "Likely to regress", hist: "pitchers 2-4 points over their expected rate lost whiffs the next season 77% of the time, 2.2 points on average (K% −2.3)" };
+    if (gap <= WGAP.improve) return { cls: "lucky", word: "Likely to improve", hist: "pitchers 2+ points under their expected rate gained whiffs the next season 73% of the time, 1.5 points on average (K% +0.9)" };
+    return { cls: "even", word: "In line", hist: "within 2 points of the expected rate the next season moved −0.7 on average — the league-wide drift, nothing of his own" };
   }
   function renderWhiffCheck(p, m) {
     const pj = projRates(p); if (!pj || m.whf == null) return null;
     const gap = Math.round(10 * (m.whf - pj.xw)) / 10, v = wgapVerdict(gap), d = el("div", "aopt whiffcheck");
     const sgn = gap > 0 ? "+" : gap < 0 ? "−" : "", big = el("b", "chip2 " + v.cls, `${v.word} · ${sgn}${Math.abs(gap).toFixed(1)}`);
-    d.append(big, el("span", null, ` Whiff% ${m.whf.toFixed(1)} against the ${pj.xw.toFixed(1)}% his stuff and location project for next season. In 2020-26 (300+ BF both years), ${v.hist}.`));
-    d.title = "His actual whiff rate per swing minus the rate his pitches project (pWhiff%, the stuff-only and location-aware chances blended by what carried over to the next season). The projection never sees his actual rate, so a gap is whiffs the pitches didn't earn, or didn't get.";
+    d.append(big, el("span", null, ` Whiff% ${m.whf.toFixed(1)} against the ${pj.xw.toFixed(1)}% the Pitching+ model expects from his pitches and where he throws them (the All pitches row above). In 2020-26 (300+ BF both years), ${v.hist}.`));
+    d.title = "His actual whiff rate per swing minus the Pitching+ model's expected rate on the same swings. The model never sees his actual rate, so a gap is whiffs the pitches didn't earn, or didn't get.";
     return d;
   }
   function renderStuffTab(p, st, g, mode = "stuff") {
@@ -6835,7 +6837,7 @@
       if (mx) { mx.title = "The batted-ball mix the location-aware model projects on his balls in play, the rest of the air balls split at the league's line-drive share."; w.append(mx); }
       if (w.childNodes.length) box.append(w);
     }
-    box.append(el("p", "note", P ? "Pitching+ is Stuff+'s twin from a second pair of models that also see where each pitch crossed the plate — the same pitch graded in the spot it was thrown, against the league's pitches of its own type (100 = average for its type). Whiff+ and BB+ are its halves; Location+ is Pitching+ − Stuff+ + 100, what his spots add. xWhiff is over the pitches swung at and xGB / xPU over the balls in play, with what actually happened under each. Each point is 1% of runs; the table and the headline follow the card's dates and splits. The whiff check under the table is his Whiff% against what those pitches project for next season — over it, the extra whiffs tend to come back; under it, they tend to come."
+    box.append(el("p", "note", P ? "Pitching+ is Stuff+'s twin from a second pair of models that also see where each pitch crossed the plate — the same pitch graded in the spot it was thrown, against the league's pitches of its own type (100 = average for its type). Whiff+ and BB+ are its halves; Location+ is Pitching+ − Stuff+ + 100, what his spots add. xWhiff is over the pitches swung at and xGB / xPU over the balls in play, with what actually happened under each. Each point is 1% of runs; the table and the headline follow the card's dates and splits. The whiff check under the table is his Whiff% against the model's expected rate — over it, the extra whiffs tend to come back the next season; under it, they tend to come."
       : "Each pitch is graded against the league's pitches of its own type — 100 is an average four-seamer for a four-seamer, an average curveball for a curveball — and All pitches (and the Stuff+ above) averages those by how often he throws each. " +
       "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball, plus how much he uses it and how many pitches he throws — never where it was thrown (the Pitching+ tab grades the same pitch with its location). Each point is 1% of runs; whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened. The table and the headline follow the card's dates and splits."));
     return box;
