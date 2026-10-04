@@ -1237,7 +1237,7 @@
     const ms = metricsFor(g);
     const pct = {};
     for (const m of allFor(g)) pct[m.key] = percentiles(list.map((p) => { const x = V(p).m[m.key]; return x == null ? null : m.hib ? x : -x; }));
-    let score, scorePct, blend, zmoVals = [], rawBlend = [];
+    let score, scorePct, blend, zmoVals = [], rawBlend = [], mixwVals = null;
     if (g === "H") {
       const hk = wobaHead() ? "woba" : HEAD.key;               // no directional model at this level: wOBA carries the headline
       const xw = list.map((p) => V(p).m[hk]);
@@ -1251,6 +1251,9 @@
       const ranked = percentiles(rawBlend);                    // Formula 1: the blend is re-ranked as a percentile
       blend = rawBlend.map((b, i) => ranked[i] + b / 1000);    // exact blend breaks ties among equal percentiles
     } else {
+      // Mix wOBA's percentiles before the score (it weighs 15 since 4 Oct 2026): the pool's line-drive share first, the rest below reuses them
+      { let ldN = 0, fbN = 0; for (const p of list) { const b = (V(p).ctx || {}).bbl; if (b) { ldN += (b.ld || [0])[0]; fbN += (b.fb || [0])[0]; } }
+        mixwVals = list.map((p) => mixWOBA(V(p), { ldAir: ldN + fbN ? ldN / (ldN + fbN) : null })); pct.mixw = percentiles(mixwVals.map((x) => (x == null ? null : -x))); }
       const w = DATA.meta.pitcherWeights, tot = Object.values(w).reduce((a, b) => a + b, 0);
       score = list.map((_, i) => Object.entries(w).reduce((s, [k, v]) => s + (pct[k][i] ?? 50) * v, 0) / tot);
       scorePct = score.map((x) => Math.round(x));
@@ -1296,7 +1299,7 @@
       list.forEach((p, i) => { stats.get(p.type + p.id).pct.mera = mep[i]; });
       sorted.mera = mers.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
       // Mix wOBA (Sean, 4 Oct 2026: "change mix era to mix woba"): the same mix priced per ball in play, like the hitters' stat
-      const mws = list.map((p) => mixWOBA(V(p), sorted)), mwp = percentiles(mws.map((x) => (x == null ? null : -x)));
+      const mws = mixwVals || list.map((p) => mixWOBA(V(p), sorted)), mwp = mixwVals ? pct.mixw : percentiles(mws.map((x) => (x == null ? null : -x)));
       list.forEach((p, i) => { const s = stats.get(p.type + p.id); s.mixw = mws[i]; s.pct.mixw = mwp[i]; });
       sorted.mixw = mws.filter((x) => x != null).map((x) => -x).sort((a, b) => a - b);
       const ues = list.map((p) => stats.get(p.type + p.id).uera), uep = percentiles(ues.map((x) => (x == null ? null : -x)));
@@ -1382,6 +1385,8 @@
       let above = 0; for (const s of pl.scores) if (s > score) above++;
       return { pct, score, scorePct: pct[hk], blend: DS.noStatcast ? null : insertPct(pl.sorted.blend, raw) + raw / 1000, rank: above + 1, outside: true };
     }
+    const mixw = mixWOBA(V(p), pl.sorted);   // before the score: it's a Rating input (4 Oct 2026)
+    pct.mixw = mixw == null || !pl.sorted.mixw ? null : insertPct(pl.sorted.mixw, -mixw);
     const w = DATA.meta.pitcherWeights, tot = Object.values(w).reduce((a, b) => a + b, 0);
     const score = Object.entries(w).reduce((s, [k, v]) => s + (pct[k] ?? 50) * v, 0) / tot;
     let above = 0; for (const s of pl.scores) if (s > score) above++;
@@ -1402,8 +1407,6 @@
     for (const k of Object.keys(nx)) pct[k] = nx[k] == null || !pl.sorted[k] ? null : insertPct(pl.sorted[k], k === "pera" || k === "nbb" || k === "wgap" ? -nx[k] : nx[k]);
     const mera = mixERA(V(p), pl.sorted);
     pct.mera = mera == null || !pl.sorted.mera ? null : insertPct(pl.sorted.mera, -mera);
-    const mixw = mixWOBA(V(p), pl.sorted);
-    pct.mixw = mixw == null || !pl.sorted.mixw ? null : insertPct(pl.sorted.mixw, -mixw);
     const wsgp = wsgpFrom(pct.whf, pct.strk, pct.gb, pct.pu);
     pct.wsgp = wsgp == null || !pl.sorted.wsgp ? null : insertPct(pl.sorted.wsgp, wsgp);
     return { pct, score, scorePct: Math.round(score), rank: above + 1, outside: true, ukbb, ukb,
@@ -7292,7 +7295,7 @@
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
   // Skills first (Sean, 4 Oct 2026: "make the first section called Skills and then add in gb% and popup% and mix woba"): the four rates the
   // Rating weighs plus Mix wOBA; Stuff is the one Pitching+ grade and its parts (Stuff+ no longer shown apart from it)
-  const PCT_COLS_P = [[["Skills", ["whf", "strk", "gb", "pu", "mixw"]], ["Swing & Miss", ["k", "whf"]], ["Zone & Chase", ["bb", "strk", "zone", "osw"]]],
+  const PCT_COLS_P = [[["Skills", ["whf", "strk", "mixw"]], ["Swing & Miss", ["k", "whf"]], ["Zone & Chase", ["bb", "strk", "zone", "osw"]]],
                       [["Results", ["kbb", "era"]], ["Batted Ball", ["gb", "pu", "mixw"]], ["Stuff", ["pitch", "pwhf", "pbb", "sloc", "fbv", "ext"]]]];
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
