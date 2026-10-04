@@ -1474,7 +1474,14 @@ is deploy-limited.
   Mix xwOBA** (Sean, the same night: "under stuff get rid of fastball velo and pitching+ and add in xRating", then "get rid of x(K-BB)% in skills,
   get rid of xrating in stuff, and add a rating section at the end with rating and xrating"): **Skills = xK% · xBB%**, and a **Rating** section
   closes the right column — Rating · xRating, both bubbles the number itself (`rating` via `RATING_M`; `xrat` gets `int: true` on the card).
-  Left 6 rows, right 8. The Rating row is special-cased in `renderPctPanel` (`RATING_M`, key `rating`, not a column): its value
+  **Then (Sean, minutes later: "under skills add in mix woba", "move stuff to below skills and call it Expected Skills", "ok in skills only show
+  x(K-BB)% and mix woba, and in xSkills only show the x(K-BB)% and mix xwoba for that too. And maybe in the pitching+ tab show the breakdown of
+  the xK% and then obviously include the xBB% there too")**: left = **Skills** (x(K-BB)% · Mix wOBA — the Rating's inputs) · **xSkills**
+  (Pitching+ x(K-BB)% · Mix xwOBA — the xRating's, labelled "x(K-BB)%" / "Mix xwOBA" on the card via `OUTCOME_LABEL_P`) · Swing & Miss (K% ·
+  xK%); right = Walk Avoidance (BB% · xBB%) · Batted Ball · Rating (Rating · xRating). 6 / 7 rows. The **xK% breakdown** (`renderXkBreakdown`,
+  `.xkbd`, on the Pitching+ tab under the Rating · xRating line): K% · xK% · Pitching+ xK% and xBB% in a line, then a table of the strike rates
+  the K% fit reads — Whiff%, SwStr%, CSW%, 2-strike Whiff%, Foul% — actual beside what the stuff and spots say (the same substitutions as
+  `xKStuff`), with the gap; xBB% is one number because the walk formula has no stuff side. The Rating row is special-cased in `renderPctPanel` (`RATING_M`, key `rating`, not a column): its value
   is `st.score` and, since the Rating is already a percentile blend, the bubble is the number itself (the tap note's league middle is 50);
   `OUTCOME_LABEL_P` / glossary carry `rating`.
 * **Expected fouls with the batter's swing (Sean, 4 Oct 2026: "i just really want his and other players foul ball data to be accurate because it

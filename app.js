@@ -6935,6 +6935,26 @@
     d.title = "The reliever-to-starter effect from history: the next-season fit for relievers who became starters minus the fit for relievers who stayed relievers, at his value. Strike% rises about half a point (more zone, more first-pitch and three-ball strikes — a starter paces himself), Location+ doesn't move, and the batted-ball mix barely does (a point of ground balls).";
     return d;
   }
+  // the xK% breakdown (Sean, 4 Oct 2026: "in the pitching+ tab show the breakdown of the xK% and then obviously include the xBB% there too"):
+  // the strike rates the K% fit reads, his actual ones beside the ones his stuff and spots say — the whiff rate from the Pitching+ model, the
+  // swinging strikes and CSW% that follow from it, two-strike whiffs scaled, and fouls from the foul model on the contact that's left — and the
+  // two K% they give. xBB% is the same walk formula either way (Strike%, first-pitch and three-ball strikes), so one number
+  function renderXkBreakdown(p, st) {
+    const m = V(p).m, pj = projRates(p); if (!pj || m.whf == null || m.swing == null || st == null || st.xkf == null) return null;
+    const xw = pj.xw, xf = foulChance(p), sws = m.swing * xw / 100, cstr = m.cstr ?? (m.csw != null && m.swstr != null ? m.csw - m.swstr : null);
+    const exp = { whf: xw, swstr: sws, csw: cstr == null ? null : cstr + sws, s2whf: m.s2whf == null ? null : m.whf ? m.s2whf * xw / m.whf : m.s2whf, foul: xf == null ? m.foul : m.swing * (1 - xw / 100) * xf / 100 };
+    const r1 = (x) => (x == null ? "–" : x.toFixed(1)), box = el("div", "aopt xkbd");
+    box.append(el("b", null, "xK% breakdown"), el("span", null, ` — K% ${r1(m.k)} · xK% ${r1(st.xkf)} on his actual strike rates · Pitching+ xK% ${r1(st.xks)} on the rates his stuff and spots say. xBB% ${r1(m.xbbf)} is the same walk formula on either side (Strike%, first-pitch and three-ball strikes), so the two x(K-BB)% differ only by the K%.`));
+    const t = el("table", "ubt stufft"), th = el("thead"), hr = el("tr");
+    for (const h of ["", "Actual", "Expected", "Gap"]) hr.append(el("th", null, h)); th.append(hr); t.append(th);
+    const tb = el("tbody");
+    for (const [k, lab, note] of [["whf", "Whiff%", "per swing — the Pitching+ model's expected rate on his swings"], ["swstr", "SwStr%", "per pitch: his swing rate × the whiff rate"], ["csw", "CSW%", "called strikes + swinging strikes per pitch"], ["s2whf", "2-strike Whiff%", "his two-strike whiff rate, scaled by the whiff gap"], ["foul", "Foul%", "fouls per pitch: the contact left × the foul model's chance on it (with where it crossed and the batter's swing where tracked)"]]) {
+      const a = m[k], e = exp[k]; if (a == null && e == null) continue;
+      const tr = el("tr"); tr.title = note; tr.append(el("td", null, lab), el("td", null, r1(a)), el("td", null, r1(e)), el("td", null, a == null || e == null ? "–" : (e - a > 0 ? "+" : "") + (e - a).toFixed(1))); tb.append(tr); }
+    t.append(tb); const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
+    box.title = "What Pitching+ xK% changes: the whiff side and the fouls are taken from the models instead of his results; Strike%, Swing%, Zone%, Chase%, the count-state strike rates and the rest stay his own.";
+    return box;
+  }
   function renderWhiffCheck(p, m) {
     const pj = projRates(p); if (!pj || m.whf == null) return null;
     const gap = Math.round(10 * (m.whf - pj.xw)) / 10, v = wgapVerdict(gap), d = el("div", "aopt whiffcheck");
@@ -7018,6 +7038,7 @@
         d.append(el("b", null, `Rating ${rt} · xRating ${xr}`), el("span", null, ` — Pitching+ x(K-BB)% 80, Mix xwOBA 20 against the Rating's x(K-BB)% 80, Mix wOBA 20: the same two skills with the strikeouts and the mix taken from his stuff instead of his results.${Math.abs(gap) >= 8 ? ` His Rating runs ${Math.abs(gap)} ${gap > 0 ? "over" : "under"} what his pitches say; about half of a gap like that has closed the next season.` : " The two agree."}`));
         d.title = "xRating: Pitching+ x(K-BB)% 80, Mix xwOBA 20 over percentiles — the strikeout, walk and batted-ball rates his stuff and spots say he should have.";
         box.append(d); }
+      const bd = renderXkBreakdown(p, st); if (bd) box.append(bd);
       const asSP = p.primary === "RP" && !needsDays() ? renderAsStarter(p, st) : null; if (asSP) box.append(asSP);
       if (roleNorm(SPLIT)) { const d = el("div", "aopt spnorm");
         d.append(el("b", null, "All innings as a starter"), el("span", null, ": every pitch he threw, with the days he relieved read as a starter — their expected whiff, ground-ball and popup rates moved by the reliever-to-starter effect from history (about −0.9 whiff points, −0.8 ground-ball points and +0.1 popup points for a typical reliever, more the better his relief numbers). So xWhiff / xGB / xPU here and in the Pitching+ table, Mix xwOBA, xRating and the whiff check are what the whole season says about him in the rotation; his actual rates, Pitching+ and the start days are as they were."));
@@ -7539,14 +7560,18 @@
   // and then (Sean: "for skills could you instead do xk%, xbb%, and x(k-bb)%") — the Rating row stays wired (RATING_M) but is off the card
   // and (Sean, the same night: "get rid of x(K-BB)% in skills, get rid of xrating in stuff, and add a rating section at the end with rating and
   // xrating"): a Rating section closes the right column; both ratings are percentile blends already, so their bubbles are the numbers
-  const PCT_COLS_P = [[["Skills", ["xkf", "xbbf"]], ["Swing & Miss", ["k", "xkf"]], ["Walk Avoidance", ["bb", "xbbf"]]],
-                      [["Batted Ball", ["gb", "pu", "mixw"]], ["Stuff", ["xks", "xbbf", "nmix"]], ["Rating", ["rating", "xrat"]]]];
+  // and then (Sean, the same night: "under skills add in mix woba", "move stuff to below skills and call it Expected Skills", "ok in skills only
+  // show x(K-BB)% and mix woba, and in xSkills only show the x(K-BB)% and mix xwoba"): Skills = the Rating's two inputs, xSkills = the
+  // xRating's two (Pitching+ x(K-BB)% and Mix xwOBA, labelled plainly — the section says which side they're from); the xK% breakdown
+  // Sean asked for with it lives on the Pitching+ tab (renderXkBreakdown)
+  const PCT_COLS_P = [[["Skills", ["xkbb", "mixw"]], ["xSkills", ["xkbbs", "nmix"]], ["Swing & Miss", ["k", "xkf"]]],
+                      [["Walk Avoidance", ["bb", "xbbf"]], ["Batted Ball", ["gb", "pu", "mixw"]], ["Rating", ["rating", "xrat"]]]];
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
                           babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", aopt: "Arsenal Opt.", sloc: "Location+", pitch: "Pitching+", pwhf: "Whiff+ (loc)", pbb: "Batted-ball+ (loc)", xwcon: "xwOBAcon", fpts: "Pts", fpg: "Pts/G", fppa: "Pts/PA", fpip: "Pts/IP", fpgs: "Pts/GS",
                           spd: "Sprint Speed", sb: "SB", sba: "SB Att.", sbp: "SB%" };
-  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", fstrk: "1st-pitch Strike%", b3strk: "3-ball Strike%", xbbf: "xBB%", xkf: "xK%", xks: "Pitching+ xK%", xkbb: "x(K-BB)%", xkbbs: "Pitching+ x(K-BB)%", rating: "Rating", foul: "Foul%", cstr: "Called Strike%", swstr: "SwStr%", nmix: "Pitching+ Mix xwOBA", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+", sloc: "Location+" });   // a pitcher's O-Swing% is his chase rate
+  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", fstrk: "1st-pitch Strike%", b3strk: "3-ball Strike%", xbbf: "xBB%", xkf: "xK%", xks: "Pitching+ xK%", xkbb: "x(K-BB)%", xkbbs: "x(K-BB)%", rating: "Rating", foul: "Foul%", cstr: "Called Strike%", swstr: "SwStr%", nmix: "Mix xwOBA", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+", sloc: "Location+" });   // a pitcher's O-Swing% is his chase rate
   function renderPctPanel(p, st, g, ref, col, nav) {
     const pv = V(p), all = allFor(g);
     if (!nav) col.append(panelHead(...pctTitle(p, nav)));   // his page says the season in its header instead
