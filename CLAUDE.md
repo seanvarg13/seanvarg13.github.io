@@ -510,8 +510,13 @@ range or a past season re-ranks him within that pool.
 earned runs over Statcast innings). SIERA is Swartz's 2011 form shifted by `sieraShift` for the same reason.
 
 **Hitter rank** is the wOBA percentile blend: `brl 40.5, zcon 16.9, ocon 17.2, ev 11.6, zmo 9.0, osw 4.5,
-pull 0.2` over percentiles (already flipped so 100 = best). Pitcher rank is the mean of the Whiff% and Strike%
-percentiles.
+pull 0.2` over percentiles (already flipped so 100 = best). **Pitcher rank (Rating)** is `PITCHER_SCORE_WEIGHTS` in `build_data.py`, shipped as `meta.pitcherWeights`: **Whiff% 50, Strike% 20,
+GB% 20, Popup% 10** over percentiles (Sean, 4 Oct 2026: "the four skills in order of importance, ability to get Ks, avoid walks, get gbs,
+and get popups" — process, not outcomes; 50 / 50 Whiff% / Strike% before). Backtest 2020-26 against next season's ESPN points per inning,
+starters 100+ IP both years (relievers 40+): the old score r .51 / .47, this one .56 / .49; K% / BB% in place of Whiff% / Strike% would
+be .61 but they're outcomes; SwStr% ≈ Whiff% (kept Whiff%); Chase% adds nothing to Strike% for next year's walks (r −.03 on what Strike%
+leaves) and gets weight 0 in every best grid; Stuff+ and pK%−pBB% together would reach .66 but Sean wanted the plain four skills. `data.js`
+was patched by hand the same day so the Rating changed before the next build.
 
 **Percentile pools.** Hitters are always ranked against hitters with **300+ PA** (`REF_MIN_PA`), pro-rated inside
 a date window or split; the Min PA box only controls who is *listed*. Pitchers use the Min IP pool. Percentiles
