@@ -1421,7 +1421,9 @@ is deploy-limited.
   3.55, and K% − Stuff xK% predicts next year's K% change at r −.36 (K% − xK%: −.07) — the forward read. **xRating = Stuff xK% 55, xBB% 35,
   Mix xwOBA 10** (`XRW`); the `.xrating` line, glossary (`xks`, `xrat`), `renderAsStarter` (Stuff xK% on the translated inputs), `NEXT_KEYS`,
   `SIDE_P` / `LB_EXTRA_P` column "Stuff xK%", the sort-key path. Note `patchfoul.js` re-serialised `data.js`, so its numbers are plain JSON
-  (55, not 55.0) — match loosely when patching.
+  (55, not 55.0) — match loosely when patching. **The centring came out an hour later** (Sean, on Skenes's card: "the model says his expected
+  whiff% is 29.1% not 26.1%"): `xKStuff` takes the expected whiff and foul rates as the site shows them, so on a season the fixed models read
+  hot every Stuff xK% sits ~2 points above K% (2026); the xRating is percentiles and is unchanged by it. `lgXw().xfp` is unused now.
  `nmix`'s label is **Mix xwOBA** everywhere (lower is better, as before). 2026 Skenes: Called 13.5 (6th pct),
   SwStr 14.4 (87th), Foul 21.0 (91st).
 

@@ -154,7 +154,7 @@ The pitcher card's columns (4 Oct 2026): Skills · xSkills · Results · Swing &
 (fastball velo and extension only; the Pitching+ grades are on their own tab) on the right.
 Skills reads xK%, xBB% and Mix wOBA (Whiff% and Strike% show in the sections below), and the **Rating** is those three percentiles weighted 55 / 35 / 10. The **xRating** is the same with the whiff side and the mix taken from
 his stuff instead of his results: **Stuff xK%** (xK% run on the Pitching+ model's expected whiff rate and the stuff model's expected foul
-rate, centred on the league), xBB% and Mix xwOBA, 55 / 35 / 10. A Rating well above the xRating has run on whiffs or balls in play the stuff
+rate, as the Pitching+ tab shows them), xBB% and Mix xwOBA, 55 / 35 / 10. A Rating well above the xRating has run on whiffs or balls in play the stuff
 didn't earn; the gap between K% and Stuff xK% is the one that predicts next year's strikeouts moving. Swing & Miss shows K%, xK%, Whiff%, then Called Strike%, SwStr% and Foul% per pitch — the three
 strikes that keep a plate appearance alive, which is how xK% reads them. **xK%** (4 Oct 2026) is the
 strikeout rate his rates say he should have: a fit over every 100+ BF pitcher-season since 2020 on his whiff, called-strike and swinging-strike
