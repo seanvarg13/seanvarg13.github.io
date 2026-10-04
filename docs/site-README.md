@@ -133,6 +133,10 @@ within ~1.5 points of a pitcher's real BB% (the old Strike%-percentile match: 1.
 than his own BB% does. Double-A and most of Single-A lack Chase% / Z-Contact% and use a four-rate version. Both are ordinary card metrics (`uk`, `ubb`) alongside u(K-BB%)
 and uERA, so they can sit on any table.
 
+**Rating** (the pitchers' headline score, 4 Oct 2026) is Whiff% 50, Strike% 20, GB% 20 and Popup% 10 over percentiles — the four
+skills a pitcher owns, in that order, weighted by what carried into the next season's fantasy points (it was a plain average of Whiff%
+and Strike%; Chase% and SwStr% were tested and added nothing).
+
 **WSGP** is the average of a pitcher's Whiff%, Strike%, GB% and Popup% **percentiles** — the four rates that belong
 to him before a fielder touches the ball or a run scores. Like u(K-BB%) and uERA it is pool-derived, not a rate on
 `V(p).m`: `pool()` averages the four percentile arrays into `stats.wsgp`, percentiles *that* for the bar, and keeps

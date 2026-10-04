@@ -68,7 +68,10 @@ PITCHER_METRICS = [       # the row columns on the list pages (SwStr% lives on t
 HITTER_SCORE_WEIGHTS = {"brl": 40.5, "ev": 11.6, "zcon": 16.9, "ocon": 17.2,
                         "pull": 0.2, "osw": 4.5, "zmo": 9.0}
 # Default pitcher rank: average of Whiff% and Strike% percentiles.
-PITCHER_SCORE_WEIGHTS = {"whf": 50.0, "strk": 50.0}
+# the pitchers' Rating (Sean, 4 Oct 2026: "the four skills in order of importance, ability to get Ks, avoid walks, get gbs, and get
+# popups" — process, not outcomes). Weights from a 2020-26 backtest against NEXT season's ESPN points per inning (starters 100+ IP both
+# years, r .56 vs .51 for the old 50 / 50 Whiff% / Strike%); Chase% and SwStr% tested and left out (nothing on top of these four)
+PITCHER_SCORE_WEIGHTS = {"whf": 50.0, "strk": 20.0, "gb": 20.0, "pu": 10.0}
 
 WHIFF = {"swinging_strike", "swinging_strike_blocked", "foul_tip", "missed_bunt", "bunt_foul_tip"}
 SWING = WHIFF | {"foul", "hit_into_play", "foul_bunt"}
@@ -1762,7 +1765,7 @@ def main():
                  "published number, date windows and splits rebuild it from pitch-level data to within about .001",
             "blend": "wOBA percentile blend (Formula 1): 40.5% Barrel, 17.2% O-Contact, 16.9% Z-Contact, "
                      "11.6% Avg EV, 9.0% Z-minus-O Swing, 4.5% O-Swing (flipped), 0.2% Pull Air — re-ranked as a percentile",
-            "P": "plain average of the Whiff% and Strike% percentiles",
+            "P": "Whiff% 50, Strike% 20, GB% 20, Popup% 10 — the four skills a pitcher owns, weighted by what carried into next season's fantasy points (Sean, 4 Oct 2026)",
         },
     }
     out = {"meta": meta, "players": hitters + pitchers}
