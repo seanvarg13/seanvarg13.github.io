@@ -1594,6 +1594,12 @@ is deploy-limited.
   (`.cache/milb/feeds/<pk>.csv.gz`) was written before the count was kept (3 Oct 2026) and was reused as long as it had a zone — it now refetches
   a game whose file has no `balls` column. A rescore of `aa-2026 ap-2026 a-2026` was dispatched after the merge (every game of those levels is
   fetched again, so it takes a while); older feed-level seasons pick it up when rescored.
+* **2-strike Whiff% back in xK%, and the gap is Whiff% − xK% (Sean, 5 Oct 2026: "do the formula that uses two strike whiff for xk%. And make
+  the formula actually whiff% - xK% instead of the other way around")**: `XKM` is the morning's fit again (the five tiers with `s2whf`, held-out
+  same-season rmse 0.63), the xK% tab's pairs and the Pitching+ breakdown show 2-strike Whiff% / x2-strike Whiff% again, and `xkw` = **Whiff%
+  − xK%** (`xkws` = xWhiff% − Pitching+ xK%), labels, glossary and `SHORT` flipped with it — high on a high Whiff% is the breakout shape
+  (Cavalli 2025: +9.7; his 2026 card reads −0.1 on the Raw side, +3.7 on the Stuff side). The refit without it (`xkrefit.js`) is history; the
+  glossary says xK% is the same-season read and Whiff% − xK% the forward one.
 
 ## 9. Things only Sean can do
 
