@@ -1560,6 +1560,17 @@ is deploy-limited.
   −1.6 (2026 K% 28.3, xK% 27.7), Wheeler 2025 0.0 → +1.9, Jacob Webb 2026 −0.7 → −1.9, Skenes 2026 xK% 27.0 / Pitching+ xK% 27.3. Pitching+
   xK% moves with it (`xkParts` still computes the scaled two-strike rate, unused by the fit); the xK% tab's pairs and the Pitching+ tab's
   breakdown no longer show 2-strike Whiff% (`s2whf` / `ns2whf` stay pool stats and columns). The Rating and xRating follow.
+* **xK% off the card, Whiff% in its place (Sean, 5 Oct 2026: "completely eliminate the xK% and just translate it to whiff% and so the stuff
+  xK% just becomes stuff xWhiff% or I guess the pitching+ one", "in swing and miss k%, whiff%, called strike%, and foul%", "in the walk
+  avoidance show bb% xbb% and then show the inputs to xbb% below xbb%", then "not show called strikes. So just whiff% and fouls")**:
+  `PCT_COLS_P` (Raw) = Skills (Whiff% · xBB%) · Swing & Miss (K% · Whiff% · Foul%) · Batted Ball | Walk Avoidance (BB% · xBB% · Strike% ·
+  1st-pitch Strike% · 3-ball Strike%) · Rating (Rating · x(K-BB)% · Mix wOBA); `PCT_COLS_PS` (Stuff) the same with the Pitching+ model's
+  xWhiff% (`nwhf`) and xFoul% (`nfoul`), labelled plain "xWhiff%" / "xFoul%" (`STUFF_LABELS`). Walk Avoidance moved to the right column so
+  the columns stay level (8 / 8). The card tab `xk` is titled **Whiff%** and its pairs drop the K% fits (Actual: K%, Whiff%, Called Strike%,
+  SwStr%, CSW%, Foul% against the Pitching+ expected ones); the Pitching+ tab's breakdown is headed "Strikes" (K% · Whiff% vs xWhiff% · xBB%).
+  xK% / Pitching+ xK% are still computed — the Rating runs on x(K-BB)% 80 / Mix wOBA 20 and the xRating on Pitching+ x(K-BB)% as before,
+  both Rating sections still show x(K-BB)% — and stay Leaderboard columns. If Sean wants the Rating itself rebuilt on Whiff%, that is a
+  separate change.
 
 ## 9. Things only Sean can do
 
