@@ -703,10 +703,7 @@
     if (daysReady() || state.daysLoading) return;
     state.daysLoading = true;
     const sc = document.createElement("script"); sc.src = vsrc("days.js");
-    // the day rows landing only empties what was computed from them or while waiting for them (a window, a split, a combined span —
-    // `provisional`); a full-season value or pool reads the season's own numbers and is the same with or without days.js, and on a phone
-    // this file (24 MB) arriving a few seconds after Home or a list was redrawing every pool it had (Sean, 5 Oct 2026: "it still drags")
-    sc.onload = () => { state.daysLoading = false; dropProvisional(); render(); };
+    sc.onload = () => { state.daysLoading = false; valCache.clear(); poolCache.clear(); rankCache.clear(); render(); };
     sc.onerror = () => { state.daysLoading = false; state.daysFailed = true; render(); };
     document.head.append(sc);
   }
@@ -724,10 +721,7 @@
     if (isReady() || loading.has(src) || failed.has(src)) return;
     loading.add(src);
     const sc = document.createElement("script"); sc.src = vsrc(src);
-    // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
-    // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
-    // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
-    sc.onload = () => { loading.delete(src); if (!/\/(?:index|career|similar|minors|trends|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };
+    sc.onload = () => { loading.delete(src); valCache.clear(); poolCache.clear(); rankCache.clear(); render(); if (state.gq) renderGlobalSearch(); };
     sc.onerror = () => { loading.delete(src); failed.add(src); render(); };
     document.head.append(sc);
   }
@@ -846,12 +840,9 @@
     for (const k in mu) if (typeof m[k] === "number" && isFinite(m[k])) m[k] = w * m[k] + (1 - w) * mu[k];
     return m;
   }
-  const provisional = { val: new Set(), pool: new Set(), rank: new Set() };   // cache keys that depend on the day rows (see ensureDays)
-  function dropProvisional() { for (const k of provisional.val) valCache.delete(k); for (const k of provisional.pool) poolCache.delete(k); for (const k of provisional.rank) rankCache.delete(k); provisional.val.clear(); provisional.pool.clear(); provisional.rank.clear(); }
   function V(p) {
     const key = viewKey() + ":" + p.type + p.id;
     if (valCache.has(key)) return fantFill(valCache.get(key), p);
-    if (needsRows()) provisional.val.add(key);
     let v;
     const w = winIdx() || { lo: 0, hi: seasonDays().length - 1 };
     if (!needsRows() || !daysReady()) {
@@ -1318,10 +1309,7 @@
     const x = xkParts(m, xw, xf); if (!x || x.cstr == null) return null;
     return xKModel(Object.assign({}, m, x), xw, xws);
   };
-  // the league rates + expected whiff levels merged once per view, not once per pitcher (the pool runs this ~1,400 times a build)
-  let xkL = null, xkLKey = null;
-  const xKLeague = () => { const k = DS.key + ":" + viewKey(); if (xkLKey !== k) { xkL = Object.assign({}, lgRatesP(), lgXw()); xkLKey = k; } return xkL; };
-  const xKModel = (m, xw, xws) => { const v = rateFit(Object.assign({}, m, { xw, xws }), "k", XKM, xKLeague()); return v == null ? null : Math.round(10 * v) / 10; };
+  const xKModel = (m, xw, xws) => { const v = rateFit(Object.assign({}, m, { xw, xws }), "k", XKM, Object.assign({}, lgRatesP(), lgXw())); return v == null ? null : Math.round(10 * v) / 10; };
   const xBBFormula = (m) => (m.strk == null || m.fstrk == null || m.b3strk == null ? null : Math.round(10 * (XBBF.c + XBBF.strk * m.strk + XBBF.fstrk * m.fstrk + XBBF.b3strk * m.b3strk)) / 10);
   // the Mix wOBA a ground-ball / popup share implies (the expected mix from the Pitching+ model): air balls split at the pool's line-drive share
   function mixOfShares(xg, xp, sorted) {
@@ -1360,9 +1348,8 @@
   const poolCache = new Map();
   // returns { list: players in pool, stats: Map key -> {pct: {metric: pctl}, score, rank} }
   function pool(g) {
-    const key = g + ":" + effMin(g) + ":" + (needsDays() ? listMin(g) : "") + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + (needsRows() ? daysReady() : "");
+    const key = g + ":" + effMin(g) + ":" + (needsDays() ? listMin(g) : "") + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + daysReady();
     if (poolCache.has(key)) return poolCache.get(key);
-    if (needsRows()) provisional.pool.add(key);
     const R = regularOf(DS), waiting = !!(DS.kind && !DS.multi && !R);   // its regular season still loading: don't keep this one
     if (R) return kindPool(g, R, key);
     const all = DS.players.filter((p) => inGroup(p, g));
@@ -1614,9 +1601,8 @@
   const rankCache = new Map();
   // percentiles, score and rank for pitcher p measured against pool g (SP, RP or P)
   function rankIn(g, p) {
-    const key = g + ":" + effMin(g) + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + (needsRows() ? daysReady() : "") + ":" + p.type + p.id;
+    const key = g + ":" + effMin(g) + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + daysReady() + ":" + p.type + p.id;
     if (rankCache.has(key)) return rankCache.get(key);
-    if (needsRows()) provisional.rank.add(key);
     const pl = pool(g);
     const res = pl.stats.get(p.type + p.id) || placeIn(pl, g, p);
     rankCache.set(key, res);
@@ -2569,10 +2555,10 @@
   // The name column is as wide as the widest name on the page, so every row's stats start in the same place.
   // Each row is its own grid, so a single long name would otherwise push that row's columns out of line; the
   // measured width becomes the column's minimum (it still stretches to fill whatever the stats leave over).
-  let measureCtx = null, measureFont = null;
+  let measureCtx = null;
   function textWidth(text, font) {
     measureCtx = measureCtx || document.createElement("canvas").getContext("2d");
-    if (font !== measureFont) { measureCtx.font = font; measureFont = font; }   // setting the font re-parses it: once per font, not per row
+    measureCtx.font = font;
     return measureCtx.measureText(text).width;
   }
   function fitNameCol() {
@@ -2581,18 +2567,16 @@
     const cs = getComputedStyle(first), pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
     const fontOf = (n) => { const c = getComputedStyle(n); return `${c.fontStyle} ${c.fontWeight} ${c.fontSize} ${c.fontFamily}`; };
     const nameFont = fontOf(first.querySelector(".name"));
-    let w = 0, metaFont = null, metaGap = 0;
+    let w = 0;
     for (const who of $("rows").querySelectorAll(".who")) {
       const nm = who.querySelector(".name");
       let own = nm ? textWidth(nm.textContent, nameFont) : 0;
       const meta = who.querySelector(".meta");                     // team · position · PA, laid out as a flex row
       if (meta) {
-        // measured off the canvas, not the layout: a computed style and an offsetWidth per row forced a layout for every one of
-        // ~700 rows (a quarter of a second on a desktop, a second on a phone — Sean, 5 Oct 2026); the "· " between parts is CSS content
-        if (metaFont == null) { const c = getComputedStyle(meta); metaFont = `${c.fontStyle} ${c.fontWeight} ${c.fontSize} ${c.fontFamily}`; metaGap = (parseFloat(c.columnGap) || 0) + textWidth("\u00b7 ", metaFont); }
+        const gap = parseFloat(getComputedStyle(meta).columnGap) || 0;
         let line = 0, n = 0;
-        for (const part of meta.children) { line += textWidth(part.textContent, metaFont); n++; }
-        own = Math.max(own, line + Math.max(0, n - 1) * metaGap);
+        for (const part of meta.children) { line += part.offsetWidth; n++; }
+        own = Math.max(own, line + Math.max(0, n - 1) * gap);
       }
       w = Math.max(w, own);
     }
@@ -3742,8 +3726,42 @@
       root.classList.add("swirl-img");
     } catch (e) { document.documentElement.classList.remove("swirl-img"); }
   }
-  buildSwirl();
-  new MutationObserver(buildSwirl).observe(document.documentElement, { attributes: true, attributeFilter: ["data-scheme", "data-theme"] });
+  // The helmet ground (Sean, 5 Oct 2026: "make the like default grey background kind of like instead an Ohio state helmet with the like
+  // star stickers", "I am just talking about making the background that used to be the swirl like that, can you at least try it"): the
+  // page ground is the helmet's silver and buckeye-leaf stickers — our own five-leaflet leaf, green with a white edge, a few numbered —
+  // are scattered over it at a low opacity, sparse like the real thing (the silver has to dominate). A seeded scatter so every page
+  // draws the same tile; a jittered grid so no two leaves overlap. Appearance ▸ Background turns it off on this device
+  // (draft2027.helmet), and then the plain ground of the scheme comes back
+  const helmetOn = () => { try { return localStorage.getItem("draft2027.helmet") !== "off"; } catch { return true; } };
+  function buildHelmet() {
+    const root = document.documentElement;
+    if (!helmetOn()) { root.classList.remove("helmet"); root.classList.add("nopattern"); buildSwirl(); return; }
+    try {
+      let s = 7; const rnd = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+      const dark = matchMedia("(prefers-color-scheme: dark)").matches ? root.dataset.theme !== "light" : root.dataset.theme === "dark";
+      const green = dark ? "#4a9a3c" : "#2f7a2a", edge = dark ? "#e9ecef" : "#ffffff", ink = dark ? "#e9ecef" : "#ffffff";
+      // one buckeye leaf: five leaflets fanned from a point over a short stem, the white sticker edge round each leaflet
+      const leaf = (num) => { let d = "";
+        for (let i = -2; i <= 2; i++) { const t = -90 + i * 34, r = 11 + (i === 0 ? 2 : Math.abs(i) === 1 ? 0.5 : -1.5);
+          d += `<ellipse cx="0" cy="${-r / 2}" rx="2.6" ry="${r / 2}" transform="rotate(${t + 90})" fill="${green}" stroke="${edge}" stroke-width="1.1"/>`; }
+        d += `<path d="M0,0 L0,6" stroke="${edge}" stroke-width="1.6" stroke-linecap="round"/><path d="M0,0 L0,6" stroke="${green}" stroke-width="0.8" stroke-linecap="round"/>`;
+        if (num) d += `<text x="0" y="-5" text-anchor="middle" font-family="Arial, sans-serif" font-size="4.6" font-weight="700" fill="${ink}">${num}</text>`;
+        return d; };
+      const T = 560, N = 4, cell = T / N, parts = [];
+      for (let gy = 0; gy < N; gy++) for (let gx = 0; gx < N; gx++) {
+        if (rnd() < 0.22) continue;                                          // gaps: the stickers bunch and leave bare silver
+        const x = gx * cell + cell * (0.25 + 0.5 * rnd()), y = gy * cell + cell * (0.25 + 0.5 * rnd()), sc = 1.15 + 0.7 * rnd(), rot = Math.round(rnd() * 360);
+        const num = rnd() < 0.3 ? String(1 + Math.floor(rnd() * 9)) : "";
+        parts.push(`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot}) scale(${sc.toFixed(2)})">${leaf(num)}</g>`);
+      }
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${T}" height="${T}" viewBox="0 0 ${T} ${T}">${parts.join("")}</svg>`;
+      root.style.setProperty("--helmet-img", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
+      root.classList.remove("swirl-img", "nopattern"); root.classList.add("helmet");
+    } catch (e) { root.classList.remove("helmet"); root.classList.add("nopattern"); }
+  }
+  buildHelmet();
+  new MutationObserver(buildHelmet).observe(document.documentElement, { attributes: true, attributeFilter: ["data-scheme", "data-theme"] });
+  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", buildHelmet); } catch {}
   const pitchBoardEl = () => {
     let b = $("pitchboard");
     if (!b) { b = el("section", "xboard pitchboard"); b.id = "pitchboard"; b.hidden = true; $("eboard").after(b); }
@@ -4918,9 +4936,7 @@
     // trending (Sean, 3 Oct 2026): hitters over their last 100 PA by xwOBA, pitchers over their last 50 IP by Pitching uERA — from
     // the day rows, so the card says "loading" until days.js is in, then redraws itself
     const tc = card("Trending", "hitters over their last 100 PA · pitchers over their last 50 IP", null);
-    // the 24 MB day file is asked for once Home has painted and the phone is idle, not inside the first render (parsing it blocks the
-    // main thread for seconds on a phone; a tap on a list in that time felt dead — Sean, 5 Oct 2026)
-    if (!daysReady()) { tc.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); if (!state.daysLoading && !state.daysFailed) setTimeout(() => (window.requestIdleCallback || ((f) => f()))(() => { if (state.mode === "home" && !daysReady()) ensureDays(); }), 1200); }
+    if (!daysReady()) { tc.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); if (!state.daysLoading && !state.daysFailed) ensureDays(); }
     else {
       const tt = two(tc);
       withSplit(NONE, () => {
@@ -6024,7 +6040,7 @@
   // name and a line of explanation on the left, the control on the right (stacked on a phone)
   // no background pattern any more (Sean, 30 Sep 2026: "get rid of the background swirls"): the pages sit on a plain pale
   // ground of the scheme's colour (styles.css, :root.nopattern)
-  document.documentElement.classList.add("nopattern");
+  if (!document.documentElement.classList.contains("helmet")) document.documentElement.classList.add("nopattern");   // the helmet ground sets its own (5 Oct 2026)
   function renderAppearance() {
     const T = window.DRAFT_THEMES, box = $("pboard"); box.innerHTML = "";
     if (!T) { box.append(el("p", "xempty", "themes.js didn't load.")); return; }
@@ -6057,6 +6073,8 @@
     row("Light or dark", null, segOf("Light or dark", [["system", "Match device"], ["light", "Light"], ["dark", "Dark"]], cur.theme, (v) => { T.set({ theme: v }); renderAppearance(); }));
     row("Layout", "Auto gives a phone the compact layout; Desktop on a phone shows the full layout zoomed out.",
       segOf("Layout", [["auto", "Auto"], ["mobile", "Mobile"], ["desktop", "Desktop"]], T.viewPref(), (v) => { T.setView(v); renderAppearance(); }));
+    row("Background", "The helmet: silver with buckeye-leaf stickers behind the pages, faint. Plain is the scheme's own pale ground. Per device.",
+      segOf("Background", [["on", "Helmet"], ["off", "Plain"]], helmetOn() ? "on" : "off", (v) => { try { localStorage.setItem("draft2027.helmet", v); } catch {} buildHelmet(); renderAppearance(); }));
     row("Percentile bars", "How the bars on a player's card are drawn.",
       segOf("Percentile bars", [["savant", "Savant charts"], ["classic", "Classic meters"]], state.bars, (v) => { state.bars = v; savePrefs(); render(); }));
     // type: one line per font, set in that font

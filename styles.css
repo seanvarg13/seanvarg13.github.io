@@ -3904,3 +3904,15 @@ header.top .wordmark { display: none; }
 /* fold-out rows under a card bar (Sean, 5 Oct 2026): the parent's name is the toggle, the sub rows read a step lighter */
 .svpct .svlbl.svfold { cursor: pointer; }
 :root:root:root:root .svpct .svlbl.svsub { fill: var(--ink-2); font-size: 11px; }
+
+/* ---------- The helmet ground (Sean, 5 Oct 2026: "an Ohio state helmet with the like star stickers ... the background that used to be the
+   swirl") ---------- buildHelmet() in app.js draws the stickers into --helmet-img; the ground is the helmet's silver (charcoal at night) */
+:root.helmet { --ground: #d4d7dc; }
+@media (prefers-color-scheme: dark) { :root.helmet:not([data-theme="light"]) { --ground: #1b1e23; } }
+:root.helmet[data-theme="dark"] { --ground: #1b1e23; }
+:root.helmet body, :root.helmet .modal.pagebg .modal-back { background: var(--ground); }
+:root.helmet body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-mode="mock"],[data-mode="home"],[data-mode="appearance"])::before, :root.helmet .modal.pagebg .modal-back::before {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; display: block !important;
+  background: var(--helmet-img) 0 0 / 560px 560px repeat; opacity: 0.32; -webkit-mask: none; mask: none; }
+:root.helmet body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-mode="mock"],[data-mode="home"],[data-mode="appearance"])::after, :root.helmet .modal.pagebg .modal-back::after { display: none !important; }
+:root.helmet body > * { position: relative; z-index: 1; }

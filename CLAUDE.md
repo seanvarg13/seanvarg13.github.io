@@ -1644,6 +1644,12 @@ is deploy-limited.
   pool being the same with or without the day rows — and Home asks for the file 1.2 s after it paints, on idle, and only while still on Home.
   Trimming `days.js` itself (the inert command sums `stcn…stcw` are a third of each pitcher row) is the next lever.
 
+* **Factory reset to 7:10am, 5 Oct 2026 (Sean: "Could you simply just factory reset everything to how it was at 7:10am this morning")**:
+  `app.js`, `styles.css`, `themes.js` and `defaults.js` are byte-for-byte main at b435851 (PR #337, merged 06:19 EDT): the PR #336
+  layout plus the green-leaf helmet ground and Appearance ▸ Background. That also drops the day's JavaScript speed fixes (the
+  `ensureScript` cache guard, the off-canvas `fitNameCol`, `xKLeague`, the provisional caches and Home's deferred `days.js`) — the
+  two entries above describe them and they can be re-applied as a separate change if the phone drags again.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
