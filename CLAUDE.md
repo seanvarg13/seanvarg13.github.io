@@ -1571,6 +1571,19 @@ is deploy-limited.
   xK% / Pitching+ xK% are still computed — the Rating runs on x(K-BB)% 80 / Mix wOBA 20 and the xRating on Pitching+ x(K-BB)% as before,
   both Rating sections still show x(K-BB)% — and stay Leaderboard columns. If Sean wants the Rating itself rebuilt on Whiff%, that is a
   separate change.
+* **xK% back, and xK% − Whiff% (Sean, 5 Oct 2026, an hour later: "go back to showing the xK% on the skills area and also add it to swing and
+  miss too ... K%, xK%, and then add in whiff too, and add in xK%- whiff% as a stat too. I'll use that to identify guys that maybe could k more
+  next year. And then go back to the xk% tab that has all of the k% inputs")**: `PCT_COLS_P` = Skills (xK% · xBB%) · **Swing & Miss (K% · xK% ·
+  Whiff% · xK% − Whiff%)** · Batted Ball | Walk Avoidance · Rating; `PCT_COLS_PS` the same with Pitching+ xK%, xWhiff% and Pitching+ xK% −
+  xWhiff%. **`xkw`** = xK% − Whiff% and **`xkws`** = Pitching+ xK% − xWhiff% (the pool's PK block, `statsFor`, `NEXT_KEYS`, `SIDE_P` defs with
+  `sign: true`, `SHORT` / `OUTCOME_LABEL_P` / `STUFF_LABELS` / glossary; higher = converts beyond his whiffs). The xK% tab is back as it was
+  (K% fits in both columns) and the Pitching+ breakdown is headed "xK% breakdown" again. Why the gap (scratch `conv.js`, K% beyond the K% his
+  Whiff% alone implies, 2020-26): year to year r .47 / .53 / .57 at 200 / 300 / 500+ BF, about half of it carries (next K% = 0.75 × Whiff% +
+  0.6 × gap); talent sd 1.65 K% points against noise sd 2.3 at 300 BF, so one 300-BF season is a third talent; Foul% is the piece that explains
+  it best (r .47) and persists best, called strikes and Strike% next, two-strike whiffs no better forward than anything. Career gaps: Pivetta
+  +4.1, Sale +4.0, Joe Ryan +3.8, Cole +3.8, Wheeler +3.6 every year; Tyler Anderson −4.2, Montgomery −3.4, Corbin / Gibson −2.5. For finding
+  breakouts, a whiff-based gap beats xK% − K% (r with next year's K% change .30 vs .20; 39-46% of the 4+ point jumpers flagged vs 23%).
+  Cavalli 2025: Whiff% 27.9, xK% 19.9, gap −8.
 
 ## 9. Things only Sean can do
 
