@@ -3889,6 +3889,8 @@ header.top .wordmark { display: none; }
 .phside .segbtn.on { background: var(--rule); color: #fff; }
 .phead .phside { margin-left: 8px; }
 .phead .phside.vert { flex-direction: column; margin: 0 6px 0 0; box-sizing: border-box; }
-.phead .phside.vert .segbtn { flex: 1 1 0; padding: 0 4px; font-size: 10.5px; line-height: 1; min-height: 0; }
+.phead .phside.vert .segbtn { flex: none; padding: 0 4px; font-size: 11px; line-height: 1; min-height: 0; }
 :root[data-view="mobile"] .phead .hstrip .phside.vert { margin-left: auto; margin-right: 0; }
 :root[data-view="mobile"] .phead .hstrip .phside.vert + .phtog { margin-left: 6px; }
+:root[data-view="mobile"] .phead .hstrip .phside.vert + .phtog { align-self: center; }
+:root[data-view="mobile"] .phead .hstrip:has(.phside.vert) { align-items: center; }

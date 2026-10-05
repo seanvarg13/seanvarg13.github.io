@@ -1537,8 +1537,10 @@ is deploy-limited.
   the Pitching+ models — Pitching+ xK%, xBB%, xGB% / xPU% / Mix xwOBA, xRating / Pitching+ x(K-BB)% / Mix xwOBA — labelled plain xK% / x(K-BB)%
   (`STUFF_LABELS`). `state.cardSide` (per device, `cardSide` in prefs), `sideSwitch()`: beside Filters on both — a desktop's horizontal, a
   phone's **vertical** (`.phside.vert`, Raw over Stuff; Sean, the same hour: "vertical so raw is on top and stuff is below and that way it can
-  just exist next to it"), **to the left of Filters and the same box as Filters** (Sean, minutes later; `playerHead` copies the Filters segment's
-  offset width / height onto it in a rAF, so real fonts match too; the mobile `.phside.vert` rules at the end of `styles.css`). **Filters is a window** (`.phmodal` transparent backdrop + `.phwin.pop`, appended to `document.body` by `playerHead`,
+  just exist next to it"), **to the left of Filters, each button the size of the Filters button** (Sean, minutes later, then 5 Oct 2026: "each of raw and stuff to be as
+  big, so technically it should be twice as tall"; `playerHead` copies the Filters segment's width and the Filters button's height onto each
+  button in a rAF, so real fonts match too; the row centres its items beside the taller switch — the mobile `.phside.vert` rules at the end of
+  `styles.css`). **Filters is a window** (`.phmodal` transparent backdrop + `.phwin.pop`, appended to `document.body` by `playerHead`,
   removed at the top of every `render`) **in the Leaderboard dropdown's dress** (Sean: "the same format as the filters button is on like the
   leaderboards"): hung under the Filters button (`place`, like `placePop` — a phone's spans the screen 8px in, re-placed on resize via
   `ov._place`), the small `.pop-close` × top right, the same `.phgrid` in a `.pop-body` (date inputs get a hair border so an empty iOS one shows),
