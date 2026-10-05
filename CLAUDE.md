@@ -1699,6 +1699,18 @@ is deploy-limited.
   Headless phone view at 4× CPU: pitchers' Leaderboard first draw ~2.0 s (the xK% fits in the PK block are heavier than yesterday-11am's
   pool), 25 rows a page, no script errors; Skenes's card draws every section with bubbles and the Raw ▾ switch.
 
+* **Raya type, lines and spacing (Sean, 5 Oct 2026: "make it so the site has the raya font size and font and their line widths and their
+  spacing as well")**: the Raya Dress Mock's typography on the site as it stands, not the dress — the block at the end of `styles.css`
+  ("Raya type, lines and spacing"): every element at weight 300 (`themes.js` loads Barlow Condensed 300 and Source Sans 3 300 now) with the
+  numbers (`.pct .score .hchip b .hval td .svval …`) at 400 so they read; names and headings 300 with 0.01em tracking; the small labels — nav
+  words, column names, section names, buttons, tabs, pills, the band's bio labels, the Min / Standard pills — Source Sans 3 11px, tracked
+  0.14em, uppercase (the one place the no-capitals rule is reversed); the bars' section names 11px tracked 0.16em; a list row's name 16px in
+  the condensed face over an 11px tracked team line; the band's fact values 18px over 10px tracked labels. **Lines**: one hairline
+  (`--raya-hair`, ink at 12%) between rows, under the column names, under the card tabs' headings and the phone band's row. **Spacing**: nav
+  gap 22px and 6px / 2px padding, column names 10px above and below, card tabs 14px apart, buttons 8px side padding and 30px tall, the
+  Leaderboard's filter row 10px / 12px. Kept as they were: the frames, the navy table headers (their words now tracked), the sorted column's
+  fill, the light-blue accent, the pale ground. The dress's own colours / frame removal / `hotInk` stay out — don't bring them back unasked.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
