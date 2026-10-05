@@ -694,11 +694,15 @@
     check();
     document.addEventListener("visibilitychange", () => { if (!document.hidden) check(); });
   }
+  // values, pools and ranks computed under a window / split before days.js was in are provisional — the file arriving replaces only those;
+  // a full-season value or pool is the same with or without the day rows, and throwing every one away froze the page for seconds (5 Oct 2026)
+  const provisional = { val: new Set(), pool: new Set(), rank: new Set() };
+  function dropProvisional() { for (const k of provisional.val) valCache.delete(k); for (const k of provisional.pool) poolCache.delete(k); for (const k of provisional.rank) rankCache.delete(k); provisional.val.clear(); provisional.pool.clear(); provisional.rank.clear(); }
   function ensureDays() {
     if (daysReady() || state.daysLoading) return;
     state.daysLoading = true;
     const sc = document.createElement("script"); sc.src = vsrc("days.js");
-    sc.onload = () => { state.daysLoading = false; valCache.clear(); poolCache.clear(); rankCache.clear(); render(); };
+    sc.onload = () => { state.daysLoading = false; dropProvisional(); render(); };
     sc.onerror = () => { state.daysLoading = false; state.daysFailed = true; render(); };
     document.head.append(sc);
   }
@@ -716,7 +720,9 @@
     if (isReady() || loading.has(src) || failed.has(src)) return;
     loading.add(src);
     const sc = document.createElement("script"); sc.src = vsrc(src);
-    sc.onload = () => { loading.delete(src); valCache.clear(); poolCache.clear(); rankCache.clear(); render(); if (state.gq) renderGlobalSearch(); };
+    // a file that carries no player values (the search index, careers, similar, trends…) changes nothing a pool or a value was computed from —
+    // emptying the caches for it made the Leaderboard redraw itself a few seconds after it came up (3-4 s frozen on a phone; 5 Oct 2026)
+    sc.onload = () => { loading.delete(src); if (!/\/(?:index|career|similar|minors|trends|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };
     sc.onerror = () => { loading.delete(src); failed.add(src); render(); };
     document.head.append(sc);
   }
@@ -838,6 +844,7 @@
   function V(p) {
     const key = viewKey() + ":" + p.type + p.id;
     if (valCache.has(key)) return fantFill(valCache.get(key), p);
+    if (needsRows() && !daysReady()) provisional.val.add(key);
     let v;
     const w = winIdx() || { lo: 0, hi: seasonDays().length - 1 };
     if (!needsRows() || !daysReady()) {
@@ -1130,17 +1137,18 @@
     lgPCache.set(key, out); return out;
   }
   // the league's rate (lg: "bb" / "k") moved by the first fit in the list whose rates he and the league both have
-  function rateFit(m, lg, fits, L = lgRatesP(), role) {   // role: SP / RP picks that role's fit; a fit with no role suits anyone
+  function rateFit(m, lg, fits, L = lgRatesP(), role, ex) {   // role: SP / RP picks that role's fit; a fit with no role suits anyone; ex: the arsenal inputs, read beside m (no copy of m per call — it was most of pool()'s time, 5 Oct 2026)
     if (L[lg] == null) return null;
+    const v = ex ? (k) => (ex[k] != null ? ex[k] : m[k]) : (k) => m[k];
     for (const f of fits) {
       if (f.role && f.role !== role) continue;
       const raw = (k) => f.raw && f.raw.includes(k);             // an input used as it is, not against the league (a share, a count, an age)
-      const ks = Object.keys(f.w); if (!ks.every((k) => m[k] != null && (raw(k) || L[k] != null))) continue;
-      return L[lg] + f.c + ks.reduce((a, k) => a + f.w[k] * (m[k] - (raw(k) ? 0 : L[k])), 0);
+      const ks = Object.keys(f.w); if (!ks.every((k) => v(k) != null && (raw(k) || L[k] != null))) continue;
+      return L[lg] + f.c + ks.reduce((a, k) => a + f.w[k] * (v(k) - (raw(k) ? 0 : L[k])), 0);
     }
     return null;
   }
-  const uBBFrom = (m, role) => rateFit(m, "bb", UBB, undefined, role);
+  const uBBFrom = (m, role, ex) => rateFit(m, "bb", UBB, undefined, role, ex);
   // Next season (Sean, 3 Oct 2026: "take stuff+ and pitching+ and come up with one thing that projects a pitchers whiff rate gb% pu% by
   // pitch and overall ... and also a pERA stat that shows players who maybe got fewer ks and more walks ... than they should have ... avoid
   // biasing it too much where it isnt going to be applicable to next year"): the same inputs fitted to NEXT season's K% and BB% — every
@@ -1155,8 +1163,8 @@
   const NBB = [{ role: "SP", raw: ["xwl", "fb", "ntypes", "age"], c: -0.2715, w: { strk: 2.4778, zone: -0.0684, osw: -0.084, swing: -2.346, zcon: 0.0008, whf: 0.5978, csw: -2.6559, swstr: 1.4283, fbv: 0.0215, ext: -0.2879, stuff: 0.0015, swhf: 0.0086, sloc: 0.0268, xwl: 0.0418, fb: -0.0051, ntypes: -0.1715, age: -0.0062, gb: -0.0109, pu: 0.0282, fstrk: -0.1034, b3strk: -0.0538 } },
                { role: "RP", raw: ["xwl", "fb", "ntypes", "age"], c: -2.9947, w: { strk: -1.5496, zone: -0.0509, osw: -0.1131, swing: 1.6458, zcon: 0.0236, whf: 0.5779, csw: 1.3541, swstr: -2.5256, fbv: 0.0936, ext: -0.38, stuff: -0.0052, swhf: 0.0346, sloc: 0.0171, xwl: 0.099, fb: -0.002, ntypes: -0.1699, age: 0.0485, gb: -0.0067, pu: 0.0637, fstrk: -0.0408, b3strk: -0.0313 } }];
   function nextKBB(pv) {
-    const role = pv.role || pv.primary, ex = pv.ex || (pv.ctx && pv.ctx.arsenal ? arsenalExtras(pv) : {}), m = Object.assign({}, pv.m, ex);
-    const k = rateFit(m, "k", NKF, undefined, role), bb = rateFit(m, "bb", NBB, undefined, role);
+    const role = pv.role || pv.primary, ex = pv.ex || (pv.ctx && pv.ctx.arsenal ? arsenalExtras(pv) : {}), m = pv.m;
+    const k = rateFit(m, "k", NKF, undefined, role, ex), bb = rateFit(m, "bb", NBB, undefined, role, ex);
     return k == null || bb == null ? null : { k: Math.round(10 * Math.max(0, k)) / 10, bb: Math.round(10 * Math.max(0, bb)) / 10, next: true };
   }
   // the full fits' arsenal inputs: his location-aware xWhiff over his swings (xwl; in a window the day rows' sums), fastball share of his
@@ -1181,9 +1189,8 @@
     const m = pv.m;
     if (m.whf == null || m.strk == null) return null;
     const role = pv.role || pv.primary, ex = pv.ex || (pv.ctx && pv.ctx.arsenal ? arsenalExtras(pv) : {});   // SP / RP: its own fit; ex: the arsenal inputs (V() carries both)
-    const mk = Object.assign({}, m, ex), mb = Object.assign({}, bbM || m, ex);
-    const k = Math.max(0, rateFit(mk, "k", UKF, undefined, role) ?? (UK.c + UK.whf * m.whf + UK.strk * m.strk));   // uK%: what his process has historically struck out
-    let bb = uBBFrom(mb, role);                                          // uBB%: what his process has historically walked
+    const k = Math.max(0, rateFit(m, "k", UKF, undefined, role, ex) ?? (UK.c + UK.whf * m.whf + UK.strk * m.strk));   // uK%: what his process has historically struck out
+    let bb = uBBFrom(bbM || m, role, ex);                                          // uBB%: what his process has historically walked
     if (bb == null && pctS != null && sorted && sorted.bb) bb = -quantile(sorted.bb, pctS);   // no league rates: the old percentile match
     if (bb == null || Number.isNaN(k) || Number.isNaN(bb)) return null;
     return { k: Math.round(10 * k) / 10, bb: Math.round(10 * Math.max(0, bb)) / 10 };
@@ -1239,8 +1246,9 @@
   const poolCache = new Map();
   // returns { list: players in pool, stats: Map key -> {pct: {metric: pctl}, score, rank} }
   function pool(g) {
-    const key = g + ":" + effMin(g) + ":" + (needsDays() ? listMin(g) : "") + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + daysReady();
+    const key = g + ":" + effMin(g) + ":" + (needsDays() ? listMin(g) : "") + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + (needsRows() ? daysReady() : "");
     if (poolCache.has(key)) return poolCache.get(key);
+    if (needsRows() && !daysReady()) provisional.pool.add(key);
     const R = regularOf(DS), waiting = !!(DS.kind && !DS.multi && !R);   // its regular season still loading: don't keep this one
     if (R) return kindPool(g, R, key);
     const all = DS.players.filter((p) => inGroup(p, g));
@@ -1456,8 +1464,9 @@
   const rankCache = new Map();
   // percentiles, score and rank for pitcher p measured against pool g (SP, RP or P)
   function rankIn(g, p) {
-    const key = g + ":" + effMin(g) + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + daysReady() + ":" + p.type + p.id;
+    const key = g + ":" + effMin(g) + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + (needsRows() ? daysReady() : "") + ":" + p.type + p.id;
     if (rankCache.has(key)) return rankCache.get(key);
+    if (needsRows() && !daysReady()) provisional.rank.add(key);
     const pl = pool(g);
     const res = pl.stats.get(p.type + p.id) || placeIn(pl, g, p);
     rankCache.set(key, res);
@@ -2410,10 +2419,10 @@
   // The name column is as wide as the widest name on the page, so every row's stats start in the same place.
   // Each row is its own grid, so a single long name would otherwise push that row's columns out of line; the
   // measured width becomes the column's minimum (it still stretches to fill whatever the stats leave over).
-  let measureCtx = null;
+  let measureCtx = null, measureFont = null;
   function textWidth(text, font) {
     measureCtx = measureCtx || document.createElement("canvas").getContext("2d");
-    measureCtx.font = font;
+    if (font !== measureFont) { measureCtx.font = font; measureFont = font; }
     return measureCtx.measureText(text).width;
   }
   function fitNameCol() {
@@ -2422,16 +2431,17 @@
     const cs = getComputedStyle(first), pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
     const fontOf = (n) => { const c = getComputedStyle(n); return `${c.fontStyle} ${c.fontWeight} ${c.fontSize} ${c.fontFamily}`; };
     const nameFont = fontOf(first.querySelector(".name"));
-    let w = 0;
+    let w = 0, metaFont = null, metaGap = 0;
     for (const who of $("rows").querySelectorAll(".who")) {
       const nm = who.querySelector(".name");
       let own = nm ? textWidth(nm.textContent, nameFont) : 0;
       const meta = who.querySelector(".meta");                     // team · position · PA, laid out as a flex row
       if (meta) {
-        const gap = parseFloat(getComputedStyle(meta).columnGap) || 0;
+        // measured on the canvas, not with offsetWidth: a computed style + offsetWidth per row forced a layout for every row (5 Oct 2026)
+        if (metaFont == null) { const c = getComputedStyle(meta); metaFont = `${c.fontStyle} ${c.fontWeight} ${c.fontSize} ${c.fontFamily}`; metaGap = parseFloat(c.columnGap) || 0; }
         let line = 0, n = 0;
-        for (const part of meta.children) { line += part.offsetWidth; n++; }
-        own = Math.max(own, line + Math.max(0, n - 1) * gap);
+        for (const part of meta.children) { line += textWidth(part.textContent, metaFont); n++; }
+        own = Math.max(own, line + Math.max(0, n - 1) * metaGap);
       }
       w = Math.max(w, own);
     }
@@ -4757,7 +4767,7 @@
     // trending (Sean, 3 Oct 2026): hitters over their last 100 PA by xwOBA, pitchers over their last 50 IP by Pitching uERA — from
     // the day rows, so the card says "loading" until days.js is in, then redraws itself
     const tc = card("Trending", "hitters over their last 100 PA · pitchers over their last 50 IP", null);
-    if (!daysReady()) { tc.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); if (!state.daysLoading && !state.daysFailed) ensureDays(); }
+    if (!daysReady()) { tc.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); if (!state.daysLoading && !state.daysFailed) setTimeout(() => (window.requestIdleCallback || ((f) => f()))(() => { if (state.mode === "home" && !daysReady() && !state.daysLoading && !state.daysFailed) ensureDays(); }), 1200); }   // after the page has painted, not in its way (5 Oct 2026)
     else {
       const tt = two(tc);
       withSplit(NONE, () => {
@@ -4779,9 +4789,11 @@
       else {
         const nt = two(nc), hit = [], pit = [];
         withWindow(NOWIN, () => withSplit(NONE, () => {
+          const D = window.DRAFT_DAYS || {};
           for (const p of DATA.players) {
-            if (p.type === "H") { const log = hitGameLog(p); if (!Array.isArray(log)) continue; const g = log.find((x) => x.day === lastDay); if (g && (g.g.pa || 0) >= 3 && g.xw != null) hit.push([p, g.xw, `${g.g.pa} PA`]); }
-            else { const log = gameLog(p); if (!Array.isArray(log)) continue; const g = log.find((x) => x.day === lastDay); if (g && g.sp && g.ip >= 3 && g.st != null) pit.push([p, g.st, `${fmtIP(g.ip)} IP`]); }
+            if (!(D[p.type + p.id] || []).some((r) => r[0] === lastDay)) continue;   // only who played that day (5 Oct 2026)
+            if (p.type === "H") { const log = hitGameLog(p, lastDay); if (!Array.isArray(log)) continue; const g = log.find((x) => x.day === lastDay); if (g && (g.g.pa || 0) >= 3 && g.xw != null) hit.push([p, g.xw, `${g.g.pa} PA`]); }
+            else { const log = gameLog(p, lastDay); if (!Array.isArray(log)) continue; const g = log.find((x) => x.day === lastDay); if (g && g.sp && g.ip >= 3 && g.st != null) pit.push([p, g.st, `${fmtIP(g.ip)} IP`]); }
           }
         }));
         hit.sort((a, b) => b[1] - a[1]); pit.sort((a, b) => b[1] - a[1]);
@@ -6949,15 +6961,16 @@
     if (!D) { if (failed.has(file)) return null; ensureScript(file, () => !!(window.DRAFT_HIST_DAYS && window.DRAFT_HIST_DAYS[DS.key])); return "loading"; }
     return { rows: D[p.type + p.id] || [], er: D[p.type + p.id + ":er"] || [], days: h.days };
   }
-  function gameLog(p) {
+  function gameLog(p, onlyDay) {   // onlyDay: just that day index (home's last-game-day card asks every pitcher; a full log each was most of its time, 5 Oct 2026)
     const src = gameDays(p); if (!src || src === "loading") return src;
     const f = DF.P, by = new Map();
     for (const r of src.rows) {
+      if (onlyDay != null && r[0] !== onlyDay) continue;
       const g = by.get(r[0]) || Object.fromEntries(f.slice(3).map((k) => [k, 0]));
       f.forEach((k, i) => { if (i > 2 && typeof r[i] === "number") g[k] = k === "gs" ? Math.max(g[k], r[i]) : g[k] + r[i]; });
       by.set(r[0], g);
     }
-    for (const [d, , er] of src.er) { const g = by.get(d); if (g) g.er = (g.er || 0) + er; }
+    for (const [d, , er] of src.er) { const g = by.get(d); if (g) g.er = (g.er || 0) + er; }   // a day without rows has no entry, so onlyDay holds here too
     const c = K(), bbw = c && c.bbw, sc = (x, a, b) => (b ? 100 * a / b : null);
     return [...by.entries()].sort((a, b) => b[0] - a[0]).map(([d, g]) => {
       const st = g.stn ? stuffPlusLoc(g) : { stuff: null, pitch: null };
@@ -7198,10 +7211,11 @@
   // card's dates or splits. xwOBA that day (the directional model, re-anchored like the season's) is the one heat-coloured cell, a
   // chip placed among the season's 300+ PA hitters; then the line, the contact and the swing decisions, each block under its label.
   // Tap a game for its tiles over his season, every tracked ball's exit velocity, and what his luck was worth.
-  function hitGameLog(p) {
+  function hitGameLog(p, onlyDay) {
     const src = gameDays(p); if (!src || src === "loading") return src;
     const f = DF.H, ei = f.indexOf("evs"), by = new Map();
     for (const r of src.rows) {
+      if (onlyDay != null && r[0] !== onlyDay) continue;
       const g = by.get(r[0]) || { evs: [] };
       f.forEach((k, i) => { if (i < 3) return; if (i === ei) { if (Array.isArray(r[i])) g.evs.push(...r[i]); return; } if (typeof r[i] === "number") g[k] = (g[k] || 0) + r[i]; });
       by.set(r[0], g);
