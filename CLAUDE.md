@@ -1738,3 +1738,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (PR #352) and the "built and taken back" note's don't-bring-back line for the dress — Sean asked for it. The old look is one revert away:
   `styles.css` / `app.js` from PR #352's merge (or PR #351's for the look without the Raya type). The slowness that made him drop it on
   the 5th was the JavaScript, not the dress (the lag entries above).
+
+* **Back to the prior format (Sean, 5 Oct 2026, minutes after the dress went live: "go back to the prior format with the prior font and
+  spacing and line width")**: `app.js`, `styles.css`, `themes.js` and `defaults.js` are PR #351's merge (7649174) byte for byte — the fast
+  front end with the morning's pitcher card and the phone pager, weight-400 Barlow Condensed / Source Sans 3, the frames, the navy table
+  headers, the pale ground, no Raya type block and no dress. The two entries above (Raya type, PR #352; the dress test, PR #353) are
+  history. Don't bring the dress or the Raya type back unasked.

@@ -1766,9 +1766,6 @@
     if (pct != null) { const b = el("div", "bub" + (pct >= 100 ? " c3" : ""), pct); b.style.left = svAt(pct); b.style.background = s.bub; t.append(b); }
     return t;
   }
-  // the Raya dress (Sean, 5 Oct 2026): with the colour scale off the sorted column has no fill — its values take their percentile
-  // colour as ink, the way a bubble carries it; the heat map (every column filled) keeps the fills
-  function hotInk(node, pct) { if (state.tbl.heat) return; const s = pctStyle(pct); if (s) { node.style.background = ""; node.style.color = s.bg; } }
   function paint(node, pct) { const s = pctStyle(pct); if (s) { node.style.background = s.bg; node.style.color = s.fg; } }
   // a percentile coloured as the player card's bars colour it: Savant's scale for the charts, the heat scale under
   // Classic meters (Sean: the Season Stats uERA chip matches the sliders), with dark or white text, whichever reads
@@ -2526,7 +2523,7 @@
       who.append(meta);
       main.append(who);
       for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const b = el("div", "pct pre", on ? preValue(c.key, p) : ""); if (!on) b.classList.add("off"); else { if (state.sort === c.key && !customOrder()) b.classList.add("sorted"); b.prepend(el("span", "lbl", c.label)); } main.append(b); }
-      const sc = el("div", "score", p.type === "H" ? fmtX(st.score) : Math.round(st.score)); if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null; if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) { sc.classList.add("hot"); hotInk(sc, sp); } } } if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
+      const sc = el("div", "score", p.type === "H" ? fmtX(st.score) : Math.round(st.score)); if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null; if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) sc.classList.add("hot"); } } if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
       sc.title = p.type === "H" ? `${HEAD.label} ${fmtX(st.score)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl` : `Rating ${Math.round(st.score)}: ${DATA.meta.scoreNote.P}`; main.append(sc);
       const pcts = el("div", "pcts");
       for (const m of ms) {
@@ -2537,7 +2534,7 @@
           // is filled with its percentile colour, the rest plain unless heat is on for all (xwOBA − wOBA was coloured too, until
           // Sean: "dont heat map xwoba - woba")
           const hot = state.sort === m.key && !customOrder();
-          if ((state.tbl.heat || hot) && pct != null) { paint(b, pct); if (hot) { b.classList.add("hot"); hotInk(b, pct); } } }
+          if ((state.tbl.heat || hot) && pct != null) { paint(b, pct); if (hot) b.classList.add("hot"); } }
         if (state.sort === m.key && !customOrder()) b.classList.add("sorted");
         if (hasBreak(g, m.key)) b.classList.add("brk");
         b.title = `${m.label}: ${v == null ? "n/a" : fmt(v, m)} (${pct == null ? "n/a" : ordinal(pct)} pctl)`;
@@ -3754,19 +3751,8 @@
       root.classList.add("swirl-img");
     } catch (e) { document.documentElement.classList.remove("swirl-img"); }
   }
-  // The helmet ground (Sean, 5 Oct 2026: "make the like default grey background kind of like instead an Ohio state helmet with the like
-  // star stickers", "I am just talking about making the background that used to be the swirl like that, can you at least try it"): the
-  // page ground is the helmet's silver and buckeye-leaf stickers — our own five-leaflet leaf, green with a white edge, a few numbered —
-  // are scattered over it at a low opacity, sparse like the real thing (the silver has to dominate). A seeded scatter so every page
-  // draws the same tile; a jittered grid so no two leaves overlap. Appearance ▸ Background turns it off on this device
-  // (draft2027.helmet), and then the plain ground of the scheme comes back
-  // the helmet ground (Sean, 5 Oct 2026): the buckeye-leaf stickers were tried twice — green leaves, then the real white round stickers —
-  // and taken off the same day ("get rid of the stickers that is bad and busy"). What stays is the helmet's plain silver (charcoal at
-  // night, the :root.helmet tokens in styles.css); no pattern of any kind is drawn. Don't bring the stickers or the swirl back unasked.
-  function buildHelmet() { const root = document.documentElement; root.classList.remove("swirl-img"); root.classList.add("helmet", "nopattern"); }
-  buildHelmet();
-  new MutationObserver(buildHelmet).observe(document.documentElement, { attributes: true, attributeFilter: ["data-scheme", "data-theme"] });
-  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", buildHelmet); } catch {}
+  buildSwirl();
+  new MutationObserver(buildSwirl).observe(document.documentElement, { attributes: true, attributeFilter: ["data-scheme", "data-theme"] });
   const pitchBoardEl = () => {
     let b = $("pitchboard");
     if (!b) { b = el("section", "xboard pitchboard"); b.id = "pitchboard"; b.hidden = true; $("eboard").after(b); }
@@ -6049,7 +6035,7 @@
   // name and a line of explanation on the left, the control on the right (stacked on a phone)
   // no background pattern any more (Sean, 30 Sep 2026: "get rid of the background swirls"): the pages sit on a plain pale
   // ground of the scheme's colour (styles.css, :root.nopattern)
-  if (!document.documentElement.classList.contains("helmet")) document.documentElement.classList.add("nopattern");   // the helmet ground sets its own (5 Oct 2026)
+  document.documentElement.classList.add("nopattern");
   function renderAppearance() {
     const T = window.DRAFT_THEMES, box = $("pboard"); box.innerHTML = "";
     if (!T) { box.append(el("p", "xempty", "themes.js didn't load.")); return; }
