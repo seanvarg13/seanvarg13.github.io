@@ -1794,3 +1794,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `xrat`, `kskl`, `ksklx`) updated. Next-season test behind the choice (scratch `nextk.js`, pairs 2020→26, 100+ BF both years, held out by year):
   Whiff% + Foul% + Called Strike% forecasts next K% as well as K% itself (r .681 vs .683); 2-strike Whiff% adds nothing forward (.643 → .644) but
   Sean chose it for the skill read; Strike% + 3-ball Strike% .516 vs BB% alone .545. Skenes 2026: Strikeout 84 · Control 74 · Rating 82 · xRating 70.
+* **Results, not Rating; no K% / BB% in the skill sections (Sean, 5 Oct 2026: "have the rating section become results and just have k%, bb%, and
+  k-bb%. And then in swing and miss get rid of k% and in walk avoidance add in first pitch strike %. Also eliminate bb% from walk avoidance")**:
+  `PCT_COLS_P` / `PCT_COLS_PS` left = Skills (Strikeout / xStrikeout · Control) · Swing & Miss (Whiff% / xWhiff% ▸ 2-strike Whiff%, Foul%) · Walk
+  Avoidance (Strike% · 1st-pitch Strike% · 3-ball Strike%); right = Batted Ball · **Results** (K% · BB% · K-BB%, his actual outcomes on both sides).
+  The Rating and xRating left the card's bars (the Pitching+ tab's Rating · xRating line and the Leaderboard columns still carry them).
