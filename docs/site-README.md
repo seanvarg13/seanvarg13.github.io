@@ -158,8 +158,8 @@ rate, as the Pitching+ tab shows them), xBB% and Mix xwOBA, 55 / 35 / 10. A Rati
 didn't earn; the gap between K% and Pitching+ xK% is the one that predicts next year's strikeouts moving. Swing & Miss shows K%, xK%, Whiff%, then Called Strike%, SwStr% and Foul% per pitch — the three
 strikes that keep a plate appearance alive, which is how xK% reads them. **xK%** (4 Oct 2026) is the
 strikeout rate his rates say he should have: a fit over every 100+ BF pitcher-season since 2020 on his whiff, called-strike and swinging-strike
-rates, two-strike whiff rate, Strike%, swing and contact rates, the count-state strike rates, batted-ball mix, velocity, extension, the
-Pitching+ grades and the expected whiff rates, each against the league's — within about a point of the real K% (r .95). A pitcher above it
+rates, Strike%, swing and contact rates, the count-state strike rates, batted-ball mix, velocity, extension, the
+Pitching+ grades and the expected whiff rates, each against the league's — within about a point of the real K%. Two-strike Whiff% was an input until 5 Oct 2026 and is not any more: a whiff with two strikes is the strikeout itself, so a season's run of them read as skill (Cade Cavalli's 2025 whiffs said more about his 2026 than his two-strike rate did); dropping it costs same-season fit and gains a little on next season's K%. A pitcher above it
 turns his whiffs and strikes into strikeouts better than most; one below it, worse. **Foul%** (4 Oct 2026) is the input that closed the gap:
 the share of his pitches fouled off. Contact that goes foul keeps the strikeout alive, a ball in play ends the plate appearance, and with it in
 the fit K% is explained to within half a point — Skenes' extra strikeouts (21% fouls) and Phillips' missing ones (14-15%) are both accounted
