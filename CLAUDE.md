@@ -1678,6 +1678,15 @@ is deploy-limited.
   (~1 s on a phone, once per publish) — the next levers are drawing the rows in chunks and trimming the inert command sums (`stcn…stcw`,
   1.5 MB) and the rest of the day fields the site doesn't read.
 
+* **A phone's Leaderboard pages again, and the pool places on demand (Sean, 5 Oct 2026: "So on mobile maybe we add back in the pages
+  aspect?")**: `phonePages()` = `onePage()` on a phone — `pageWindow` pages at `state.pageSize || 25` there (a desktop still lists everyone),
+  the page numbers sit on a line of their own under the filter row (`.pnavrow`, inserted after `#pagertop` by `renderPager`, removed on each
+  redraw; CSS at the end of `styles.css`), the count reads "1–25 of 193", and Filters ▸ Order carries Per page on a phone. The six buttons,
+  the Standard pill and the Min box are unchanged. **Lazy placement**: `pool()` used to run `placeIn` for every listed-under-reference player
+  and the whole tail up front (~650 pitchers, a third of the pool's time); `res.stats.get` now places one the first time anyone asks and keeps
+  it — nothing iterates the map (checked), `rankIn` already fell back to `placeIn`. Headless at 4× CPU, phone view, pitchers' Leaderboard
+  first draw 3.4 → 1.3 s; desktop render 0.84 → ~0.6 s; all 539 rows byte-identical again.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:

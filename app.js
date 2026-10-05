@@ -1386,8 +1386,13 @@
     // most playing time first, so they can be ranked and tiered without their small samples moving anyone else
     const listedSet = new Set(listed), tail = all.filter((p) => !listedSet.has(p) && active(p)).sort((x, y) => smp(y) - smp(x));
     const res = { list: listed, tail, ref: list, stats, sorted, scores };
-    for (const p of listed) if (!stats.has(p.type + p.id)) stats.set(p.type + p.id, placeIn(res, g, p));   // listed but under the reference minimum
-    for (const p of tail) stats.set(p.type + p.id, placeIn(res, g, p));
+    // listed but under the reference minimum, and the tail: placed the first time anyone asks for them (stats.get), not all at once —
+    // placing every one of ~650 pitchers up front was a third of the pool's time and a page shows 25 of them (5 Oct 2026). Nothing iterates the map
+    const unplaced = new Map();
+    for (const p of listed) if (!stats.has(p.type + p.id)) unplaced.set(p.type + p.id, p);
+    for (const p of tail) unplaced.set(p.type + p.id, p);
+    const get0 = stats.get.bind(stats);
+    stats.get = (k) => { let s = get0(k); if (s === undefined && unplaced.has(k)) { s = placeIn(res, g, unplaced.get(k)); stats.set(k, s); unplaced.delete(k); } return s; };
     if (!waiting) poolCache.set(key, res);
     return res;
   }
@@ -2457,8 +2462,11 @@
   // as many whole tiers as fit rather than a fixed count, so a tier is never split across two pages; a tier
   // longer than the page size gets a page of its own.
   const onePage = () => ["leaderboard", "trending"].includes(state.mode);   // the Leaderboard / Recent list everyone, like the Stuff+ board (Sean, 3 Oct 2026)
+  // ... on a desktop. A phone pages them again (Sean, 5 Oct 2026: "on mobile maybe we add back in the pages aspect?") — 700 rows built and laid out at
+  // once was most of a phone's first draw; the row keeps the one-page dress (the six buttons, the Standard pill, the Min box), the page numbers sit on a line of their own under it
+  const phonePages = () => onePage() && mobileView();
   function pageWindow(total, runs) {
-    const size = onePage() ? 0 : state.pageSize || 0;
+    const size = phonePages() ? state.pageSize || 25 : onePage() ? 0 : state.pageSize || 0;
     let starts = [0];
     if (size && runs && runs.length) {
       starts = []; let filled = 0;
@@ -2518,6 +2526,7 @@
     // the Min PA / IP box stays put while the bar is redrawn (a move would blur it mid-typing; cleared with innerHTML it would be lost)
     const mfKeep = box.id === "pagertop" && onePage() && !noMin() && state.mode === "leaderboard" ? $("minfield") : null;
     for (const n of [...box.children]) { if (n === mfKeep) continue; if (n.id === "minfield") $("park").append(n); else n.remove(); }
+    { const old = box.nextElementSibling; if (old && old.classList.contains("pnavrow")) old.remove(); }   // a phone's page numbers, redrawn below
     const go = (n) => { state.page = Math.min(pg.pages, Math.max(1, n)); (onChange || renderRows)(); const top = box.closest(".board, .fboard") || box; const sb = top.querySelector(".board-scroll, .fscroll"); if (sb) sb.scrollTop = 0; const y = top.getBoundingClientRect().top + window.scrollY - 8; if (window.scrollY > y) window.scrollTo({ top: y }); };
     const setSize = (n) => { state.pageSize = n; state.page = 1; savePrefs(); (onChange || renderRows)(); };
     if (!total) { box.hidden = true; if (!onChange) seatFilters(null); return; }
@@ -2536,7 +2545,7 @@
         const x = b(String(n), n, `Page ${n}`, false); if (n === pg.page) x.setAttribute("aria-current", "page"); nav.append(x); last = n;
       }
       nav.append(b("›", pg.page + 1, "Next page", pg.page === pg.pages));
-      box.append(nav);
+      if (phonePages() && box.id === "pagertop") { const row = el("div", "pnavrow"); row.append(nav); box.after(row); } else box.append(nav);
     }
     if (onChange) box.append(perPageField(setSize));    // the list pages keep theirs in Filters (minimal pass 4); Fantasy here
     if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs(); if (mfKeep) { mfKeep.classList.add("topmin"); if (mfKeep.previousSibling !== $("tbtns")) $("tbtns").after(mfKeep); } } }   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
@@ -8448,7 +8457,7 @@
     if (sorting || pit || minNode) {
       const b = el("div", "psec"); b.append(el("h4", null, "Order and minimum"));
       const r = el("div", "prow"); if (sorting) r.append(sf); if (minNode) r.append(minNode); if (pit) r.append($("reffield"));
-      if (!onePage()) r.append(perPageField((n) => { state.pageSize = n; state.page = 1; savePrefs(); renderRows(); }));   // everyone is on one page there
+      if (!onePage() || phonePages()) r.append(perPageField((n) => { state.pageSize = n; state.page = 1; savePrefs(); renderRows(); }));   // everyone is on one page there
       b.append(r);
       if (minNode && !trending) b.append(el("p", "note", lbMulti() ? "The minimum is per season; a combined span multiplies it by the seasons in it." : `The minimum is who is listed; percentiles are always against ${pit ? "pitchers with 300+ batters faced" : "hitters with 300+ PA"} on the season.`));
       if (pit) b.append(el("p", "note", "Rank vs sets the pool a pitcher's percentiles are measured against — his own (starters or relievers) or all pitchers."));
