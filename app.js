@@ -7025,62 +7025,70 @@
   // swinging strikes and CSW% that follow from it, two-strike whiffs scaled, and fouls from the foul model on the contact that's left — and the
   // two K% they give. xBB% is the same walk formula either way (Strike%, first-pitch and three-ball strikes), so one number
   // What drives K% and BB% (Sean, 5 Oct 2026: "a tab for each pitcher that has this table that shows share of what is the variance and what is
-  // explained and then gives the players metric for that stat with a heatmap based on how it impacts the k%/bb%"). Every 100+ BF pitcher-season
-  // 2020-26 (3,397), each stat centred on its season's BF-weighted league, BF-weighted OLS (scratch kbb_lmg.js): `share` is the stat's slice of
-  // the fit's R² averaged over every order the stats could enter (LMG / Shapley), so collinear inputs split their common ground fairly; `w` is
-  // the weight, K% / BB% points per point of the stat. K%: R² .962, rmse 1.03; BB%: R² .849, rmse 0.99. Same-season fits — the two-strike and
-  // three-ball rates sit close to the outcome, which is why they rank so high; Whiff% and Strike% are the ones that carry to next season.
+  // explained and then gives the players metric for that stat with a heatmap based on how it impacts the k%/bb%", then "can it include all of the
+  // same inputs"): the rows are xK%'s own inputs (XKM, 23 of them) and uBB%'s (UBB, by his role, 24), at the site's own weights, so the total row
+  // IS xK% (Stuff side: Pitching+ xK% — xkParts' expected strikes in place of his) and uBB%. The shares are each input's slice of the fit's R²
+  // over every 100+ BF pitcher-season 2020-26 (3,389 with an arsenal), centred per season, BF-weighted, by sampled Shapley / LMG (3,000 orders
+  // of entry, scratch kbb_full.js): K% R² .976, BB% .875. Same-season shares — the two-strike and three-ball rates sit close to the outcome.
   const DRIVERS = {
-    k: { r2: 0.962, rows: [["whf", 40.1, 0.737], ["s2whf", 36.2, 0.424], ["foul", 7.3, 1.569], ["osw", 4.8, -0.081], ["cstr", 4.3, 1.178], ["s2zone", 1.3, 0.169], ["zone", 1.1, -0.290], ["s2sw", 1.0, -0.210]] },
-    bb: { r2: 0.849, rows: [["b3strk", 29.6, -0.213], ["strk", 20.5, -0.646], ["swing", 8.6, -0.013], ["fstrk", 8.2, -0.009], ["zone", 7.1, 0.050], ["osw", 5.8, 0.020], ["whf", 2.8, 0.012], ["zcon", 2.3, -0.104]] },
+    k: { r2: 0.976, share: { s2whf: 13.2, csw: 13.1, whf: 10.4, swstr: 9.6, zcon: 7.4, foul: 7.2, xw: 6.6, pitch: 6.0, stuff: 5.9, xws: 5.7, fbv: 2.6, swing: 1.9, osw: 1.7, strk: 1.5, b3strk: 0.9, s2sw: 0.8, zone: 0.7, s2zone: 0.6, pu: 0.6, gb: 0.5, ext: 0.4, fstrk: 0.4, sloc: 0.2 } },
+    bb: { r2: 0.875, share: { b3strk: 25.7, strk: 16.1, swing: 8.9, fstrk: 6.3, zone: 5.7, osw: 5.1, whf: 2.8, csw: 2.4, swstr: 2.3, s2sw: 2.1, xwl: 1.6, s2zone: 1.1, ntypes: 1.0, zcon: 1.0, stuff: 1.0, s2whf: 0.9, swhf: 0.9, fbv: 0.9, gb: 0.5, age: 0.3, sloc: 0.2, pu: 0.2, fb: 0.2, ext: 0.1 } },
   };
+  const DRV_LABEL = { strk: "Strike%", whf: "Whiff%", csw: "CSW%", swstr: "SwStr%", zcon: "Z-Contact%", gb: "GB%", pu: "Popup%", fbv: "FB velo", ext: "Extension", pitch: "Pitching+", sloc: "Location+", stuff: "Stuff+", swhf: "Whiff+ (stuff)", xw: "xWhiff% (Pitching+)", xws: "xWhiff% (stuff only)", xwl: "xWhiff% (Pitching+)", fb: "Fastball share", ntypes: "Pitch types (5%+)", age: "Age" };
+  const DRV_XLAB = { whf: "xWhiff%", csw: "xCSW%", swstr: "xSwStr%", s2whf: "x2-strike Whiff%", foul: "xFoul%", cstr: "xCalled Strike%" };
   function renderDriversTab(p, st, g) {
-    const pv = V(p), m = pv.m, L0 = lgRatesP(), pl = pool(g), S = stuffSide();
-    // Stuff side (Sean, 5 Oct 2026: "make the stuff be based on his pitching+ expectations"): the whiff-side inputs are the Pitching+ models' expected
-    // rates — xWhiff%, x2-strike Whiff%, xFoul% (the pool's stats, from xkParts) and xCalled Strike% (on m) — the count / zone / strike rates his own
-    const XK = { whf: "nwhf", s2whf: "ns2whf", foul: "nfoul", cstr: "ncstr" };
-    const valOf = (q, k, sq) => { if (!S || !XK[k]) return V(q).m[k]; const xk = XK[k]; return xk === "ncstr" ? V(q).m.ncstr : (sq || pl.stats.get(q.type + q.id) || {})[xk]; };
-    // the expected rates read a couple of points off the actual league on a season the fixed models never saw, so each is set against the pool's own
-    // expected league (BF-weighted over the reference list), not the actual one
-    const L = Object.assign({}, L0);
-    if (S) for (const k of Object.keys(XK)) { let sw = 0, sv = 0; for (const q of pl.ref || []) { const v = valOf(q, k); if (v == null || !isFinite(v)) continue; sw += q.bf; sv += v * q.bf; } L[k] = sw ? sv / sw : null; }
+    const pv = V(p), m0 = pv.m, pl = pool(g), S = stuffSide();
     const box = el("div", "rollbox uerabox stuffbox drivers" + (S ? " stuffside" : ""));
     const vl = viewLabel(p.type) && viewLabel(p.type) !== "full season" ? ` · ${viewLabel(p.type)}` : "";
-    const hd = el("div", "rollhd"); hd.append(el("span", "rollname", S ? "What drives his K% and BB% — on the Pitching+ expected rates" : "What drives his K% and BB%"), el("span", "rollsub", "every 100+ BF pitcher-season 2020-26" + vl)); box.append(hd);
-    // his place on each stat among the reference pool, oriented so a high percentile pushes the target the good way (K% up, BB% down)
-    const sortedOf = {}; const ranked = (k) => { if (!sortedOf[k]) sortedOf[k] = (pl.ref || []).map((q) => valOf(q, k)).filter((x) => x != null && isFinite(x)).sort((a, b) => a - b); return sortedOf[k]; };
-    const r1 = (x) => (x == null ? "–" : x.toFixed(1)), DL = { strk: "Strike%", whf: "Whiff%" };
-    for (const [tgt, lab, good, dec] of [["k", "K%", +1, 1], ["bb", "BB%", -1, 2]]) {   // BB% effects are small, so two decimals there
-      const sg = (x) => (Math.abs(x) < 0.5 * 10 ** -dec ? "" : x > 0 ? "+" : "−") + Math.abs(x).toFixed(dec);
-      const D = DRIVERS[tgt], wrap = el("div", "aopt drvblock");
-      let fit = L[tgt] != null ? L[tgt] : null, any = false;
+    const hd = el("div", "rollhd"); hd.append(el("span", "rollname", S ? "What drives his K% and BB% — strikes as the Pitching+ models expect them" : "What drives his K% and BB%"), el("span", "rollsub", "xK% and uBB%, input by input · every 100+ BF pitcher-season 2020-26" + vl)); box.append(hd);
+    // the inputs of a pitcher as the fits read them: his rates + the expected whiff rates (xK%) + the arsenal extras (uBB%); on the Stuff side
+    // the strike rates xkParts substitutes (whiffs, swinging / called strikes, two-strike whiffs, fouls) are the models' expected ones
+    const inputsOf = (q, sub) => {   // sub: the Stuff side's substitution (the K% table only — uBB% has no expected side)
+      const v = V(q), m = v.m, pj = projRates(q), sr = stuffRates(q), ex = arsenalExtras(q, m);
+      const base = Object.assign({}, m, ex, { xw: pj ? pj.xw : null, xws: sr ? sr.xw : null });
+      if (sub && pj) { const x = xkParts(m, pj.xw, foulChance(q)); if (x && x.cstr != null) Object.assign(base, x); }
+      return { m: base, role: v.role || q.primary };
+    };
+    const r1 = (x) => (x == null ? "–" : x.toFixed(1));
+    const LK = xKLeague(), LB = lgRatesP();
+    // which tier of each fit he gets, as rateFit picks it: the first whose inputs he and the league both carry
+    const pickFit = (fits, lg, L, inp, role) => fits.find((f) => (!f.role || f.role === role) && Object.keys(f.w).every((k) => inp[k] != null && ((f.raw && f.raw.includes(k)) || L[k] != null)) && L[lg] != null) || null;
+    // the pool's BF-weighted mean of an input (the raw ones — a share, a count, an age — have no league rate; they're shown against the pool's mean)
+    const poolVals = {}; const vals = (k, sub) => { const ck = (sub ? "x:" : "") + k; if (!poolVals[ck]) { const a = []; for (const q of pl.ref || []) { const x = inputsOf(q, sub).m[k]; if (x != null && isFinite(x)) a.push([x, q.bf]); } poolVals[ck] = { sorted: a.map((t) => t[0]).sort((x, y) => x - y), mean: a.length ? a.reduce((t, u) => t + u[0] * u[1], 0) / a.reduce((t, u) => t + u[1], 0) : null }; } return poolVals[ck]; };
+    const sg = (x, dec) => (Math.abs(x) < 0.5 * 10 ** -dec ? "" : x > 0 ? "+" : "−") + Math.abs(x).toFixed(dec);
+    for (const [tgt, lab, good, dec, fits, L, statKey] of [["k", "K%", +1, 1, XKM, LK, S ? "xks" : "xkf"], ["bb", "BB%", -1, 2, UBB, LB, "ubb"]]) {
+      const sub = S && tgt === "k", me = inputsOf(p, sub), D = DRIVERS[tgt], wrap = el("div", "aopt drvblock"), f = pickFit(fits, tgt, L, me.m, me.role);
+      const fitLab = tgt === "k" ? (S ? "Pitching+ xK%" : "xK%") : "uBB%";
+      if (!f) { wrap.append(el("b", null, lab), el("p", "note", `This season's file doesn't carry every input of ${fitLab}.`)); box.append(wrap); continue; }
       const t = el("table", "ubt stufft drvt"), th = el("thead"), hr = el("tr");
-      for (const [h, tip] of [["Stat", ""], ["Share of " + lab + " variance", "This stat's slice of the fit's R²: how much of the spread in " + lab + " across pitchers it accounts for on its own, after sharing fairly with the stats it overlaps"], ["Of what's explained", "The same slice as a share of everything the fit explains"], ["His", "His rate in this view"], ["League", "The dataset's league rate (20+ BF pitchers, by batters faced)"], ["Effect", lab + " points this stat moves him off the league, at the fit's weight — coloured by where that puts him among the season's qualifiers (red = pushes " + lab + (good > 0 ? " up" : " down") + ")"]]) { const c = el("th", null, h); if (tip) c.title = tip; hr.append(c); }
+      for (const [h, tip] of [["Input", f.role ? `the ${f.role} fit's inputs` : ""], ["Share of " + lab + " variance", "This input's slice of the fit's R²: how much of the spread in " + lab + " across pitchers it accounts for, after sharing fairly with the inputs it overlaps (averaged over every order they could enter)"], ["Of what's explained", "The same slice as a share of everything the fit explains"], ["His", S && tgt === "k" ? "His rate in this view; the strike rates marked x are the Pitching+ models' expected ones" : "His rate in this view"], ["League", "The dataset's league rate (20+ BF pitchers, by batters faced); a share / count / age is shown against the pool's mean"], ["Effect", lab + " points this input moves him off the league at the fit's weight — coloured by where he ranks on it among the season's qualifiers (red = pushes " + lab + (good > 0 ? " up" : " down") + ")"]]) { const c = el("th", null, h); if (tip) c.title = tip; hr.append(c); }
       th.append(hr); t.append(th);
-      const tb = el("tbody");
-      for (const [k, share, w] of D.rows) {
-        const v = valOf(p, k, st), lg = L[k], tr = el("tr");
-        const name = S && XK[k] ? (STUFF_LABELS[XK[k]] || OUTCOME_LABEL_P[XK[k]]) : DL[k] || OUTCOME_LABEL_P[k] || k;
-        tr.append(el("td", "l", name), el("td", null, share.toFixed(1) + "%"), el("td", null, (share / D.r2).toFixed(1) + "%"));
-        const his = el("td", null, r1(v)), lgc = el("td", null, r1(lg)), eff = el("td", null, "–");
-        if (v != null && lg != null) {
-          const e = w * (v - lg); eff.textContent = sg(e); if (fit != null) fit += e; any = true;
-          const arr = ranked(k), pc = arr.length >= 20 ? insertPct(arr, v) : null;
-          if (pc != null) { const q = (w * good) >= 0 ? pc : 100 - pc; paint(his, q); paint(eff, q); }   // red = this stat pushes the target the good way
-        }
-        tr.append(his, lgc, eff); tr.title = `${name}: weight ${w > 0 ? "+" : ""}${w.toFixed(3)} ${lab} points per point of ${name}`;
+      const tb = el("tbody"); let tot = L[tgt] + f.c, rawC = 0;
+      const keys = Object.keys(f.w).sort((a, b) => (D.share[b] || 0) - (D.share[a] || 0));
+      for (const k of keys) {
+        const w = f.w[k], raw = f.raw && f.raw.includes(k), v = me.m[k], pvs = vals(k, sub);
+        const lg = raw ? pvs.mean : L[k]; if (v == null || lg == null) continue;
+        const e = w * (v - lg); tot += raw ? w * v : e; if (raw) rawC += w * lg;
+        const tr = el("tr"), name = (sub && DRV_XLAB[k]) || DRV_LABEL[k] || OUTCOME_LABEL_P[k] || k, sh = D.share[k];
+        tr.append(el("td", "l", name), el("td", null, sh == null ? "–" : sh.toFixed(1) + "%"), el("td", null, sh == null ? "–" : (sh / D.r2).toFixed(1) + "%"));
+        const his = el("td", null, r1(v)), lgc = el("td", null, r1(lg)), eff = el("td", null, sg(e, dec));
+        const pc = pvs.sorted.length >= 20 ? insertPct(pvs.sorted, v) : null;
+        if (pc != null) { const q = (w * good) >= 0 ? pc : 100 - pc; paint(his, q); paint(eff, q); }   // red = this input pushes the target the good way
+        tr.append(his, lgc, eff); tr.title = `${name}: weight ${w > 0 ? "+" : ""}${w.toFixed(3)} ${lab} points per point${raw ? " (not against the league — shown against the pool's mean)" : ""}`;
         tb.append(tr);
       }
-      t.append(tb);
-      const tot = el("tr", "drvtot"); tot.append(el("td", "l", "The fit"), el("td", null, (100 * D.r2).toFixed(1) + "%"), el("td", null, "100%"), el("td", null, r1(m[tgt])), el("td", null, r1(L[tgt])), el("td", null, any && fit != null ? r1(fit) + " fit" : "–"));
-      tot.title = `The fit explains ${(100 * D.r2).toFixed(1)}% of the spread in ${lab}. His = his actual ${lab}; Effect = the league's ${lab} plus every row's effect, what the fit says his process is worth.`;
-      tb.append(tot);
+      const cst = f.c + rawC;
+      if (Math.abs(cst) >= 0.05) { const tr = el("tr", "drvconst"); tr.append(el("td", "l", "Constant" + (f.role ? ` (${f.role} fit)` : "")), el("td"), el("td"), el("td"), el("td"), el("td", null, sg(cst, dec))); tr.title = "The fit's constant (plus what the pool's mean fastball share / pitch types / age are worth), so the rows and the league add up to the total"; tb.append(tr); }
+      const shown = st && st[statKey] != null ? st[statKey] : tot;
+      const trt = el("tr", "drvtot"); trt.append(el("td", "l", "The fit = " + fitLab), el("td", null, (100 * D.r2).toFixed(1) + "%"), el("td", null, "100%"), el("td", null, r1(m0[tgt])), el("td", null, r1(L[tgt])), el("td", null, r1(shown)));
+      trt.title = `The fit explains ${(100 * D.r2).toFixed(1)}% of the spread in ${lab}. His = his actual ${lab}; the last cell is the league's ${lab} plus the constant and every row's effect — ${fitLab} as the card shows it.`;
+      tb.append(trt); t.append(tb);
       const sc = el("div", "stuffscroll"); sc.append(t);
-      wrap.append(el("b", null, lab + (any && fit != null && m[tgt] != null ? ` ${r1(m[tgt])} · the fit says ${r1(fit)} (${sg(m[tgt] - fit)})` : "")), sc);
+      wrap.append(el("b", null, `${lab} ${r1(m0[tgt])} · ${fitLab} ${r1(shown)}` + (m0[tgt] != null && shown != null ? ` (${sg(m0[tgt] - shown, 1)})` : "")), sc);
       box.append(wrap);
     }
-    if (S) box.append(el("p", "note", "Stuff side: Whiff%, 2-strike Whiff%, Foul% and Called Strike% are the Pitching+ models' expected rates from his pitches, where he throws them and the batter's swing (the pool's own expected league is the baseline, since the fixed models read a season they never saw a point or two off); Strike%, the count-state rates, Zone%, Chase%, Swing% and Z-Contact% are his own. The fit is what those expected rates are worth."));
-    box.append(el("p", "note", "Share of variance is each stat's slice of the fit's R² over every 100+ BF pitcher-season 2020-26, split fairly among stats that overlap (averaged over every order they could enter). Effect = the fit's weight × (his rate − the league's), in K% or BB% points; its colour is where that effect ranks him among this season's qualifiers, red pushing K% up or BB% down. These are same-season fits, so 2-strike Whiff% and 3-ball Strike% sit close to the outcome itself; Whiff% and Strike% are the parts that carry to next season."));
+    if (S) box.append(el("p", "note", "Stuff side: the K% table's whiff, CSW%, SwStr%, 2-strike whiff and foul rates are the Pitching+ models' expected ones from his pitches, where he throws them and the batter's swing (what Pitching+ xK% reads); everything else is his own. uBB% has no expected side — the walk table is the same on both."));
+    box.append(el("p", "note", "The rows are the fits' own inputs at their own weights, so the last cell of each table is the card's xK% (or Pitching+ xK%) and uBB%. Share of variance is each input's slice of the fit's R² over every 100+ BF pitcher-season 2020-26, split fairly among inputs that overlap (averaged over 3,000 orders of entry) — a near-duplicate like CSW% beside Whiff% and SwStr% shares the credit. Effect = weight × (his − the league's), in K% or BB% points; its colour is where he ranks on that input among this season's qualifiers, red pushing K% up or BB% down. Same-season fits: the two-strike and three-ball rates sit close to the outcome; Whiff% and Strike% carry forward."));
     return box;
   }
   function renderXkBreakdown(p, st) {

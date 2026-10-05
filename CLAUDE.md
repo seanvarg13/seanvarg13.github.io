@@ -1767,3 +1767,16 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   against the pool's **own expected league** (BF-weighted over `pl.ref`), not the actual one, since the fixed models read a season they never saw
   a point or two off; the percentile colour ranks him on the expected rate among the pool. The head says "— on the Pitching+ expected rates"
   and a note explains. Skenes 2026: Raw fit 26.6, Stuff fit 23.5 against K% 28.1.
+* **The K% / BB% tab on the fits' full inputs (Sean, 5 Oct 2026: "is this not the same as the xk% we had yesterday", "can it include all of the
+  same inputs")**: the rows are now **xK%'s own 23 inputs** (`XKM`: Whiff%, CSW%, SwStr%, 2-strike Whiff%, Foul%, Strike%, Swing%, Z-Contact%,
+  Zone%, Chase%, 1st-pitch / 3-ball Strike%, 2-strike Swing% / Zone%, GB%, PU%, FB velo, extension, Pitching+, Location+, Stuff+, both expected
+  whiff rates) and **uBB%'s 24** (`UBB`, by his role — the raw inputs xwl / fastball share / pitch types / age shown against the pool's mean, a
+  Constant row carrying the fit's constant plus what those means are worth) at the site's own weights, so the last cell of each table **is** the
+  card's xK% (Stuff side: Pitching+ xK%, via `xkParts`' expected whiffs / CSW% / SwStr% / 2-strike whiffs / fouls, labelled x…) and uBB%
+  (`st.xkf / xks / ubb`); `pickFit` chooses the tier `rateFit` would, so an older file gets the tier it carries. The shares are by sampled
+  Shapley (3,000 orders, scratch `kbb_full.js`, every 100+ BF pitcher-season 2020-26 with an arsenal, centred per season, BF-weighted): K% R² .976
+  — 2-strike Whiff% 13.2 · CSW% 13.1 · Whiff% 10.4 · SwStr% 9.6 · Z-Contact% 7.4 · Foul% 7.2 · xWhiff% 6.6 · Pitching+ 6.0 · Stuff+ 5.9 ·
+  stuff xWhiff% 5.7 · velo 2.6 · the rest under 2; BB% R² .875 — 3-ball Strike% 25.7 · Strike% 16.1 · Swing% 8.9 · 1st-pitch 6.3 · Zone% 5.7 ·
+  Chase% 5.1 · the rest under 3. Near-duplicates (CSW% / SwStr% / Whiff%) share the credit, which is what the LMG split is for. `DRIVERS` /
+  `DRV_LABEL` / `DRV_XLAB`; the BB% table is the same on both sides (uBB% has no expected side). The eight-input fits of the first version are
+  history. Skenes 2026: K% 28.1 · xK% 27.2 / Pitching+ xK% 27.5; BB% 6.9 · uBB% 7.0.
