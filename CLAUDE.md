@@ -1645,6 +1645,15 @@ is deploy-limited.
   body's children wholesale. **Then** (Sean: "still a lack of responsiveness", and the selected row's stats showing through the frozen name): the
   dress's transparent hover / selected-row background is gone (the older opaque rules stand — a sticky cell inherits the row's background, so it
   must be opaque), and the weight-300 universal rule is the old no-bold rule changed in place rather than a second universal rule on top of it.
+  **The real slowness was JavaScript** (Sean's iPhone recording, 5 Oct 2026: the pitchers' Leaderboard drew, froze ~2.5 s and drew again):
+  `ensureScript`'s onload emptied the value and pool caches for *every* lazy file — the search index arriving a few seconds after the
+  Leaderboard threw the pool away and recomputed it (~1.2 s on a desktop, 3-4 s on a phone). It now keeps the caches for files that carry
+  no values (`hist/index.js`, `career`, `similar`, `minors`, `trends`, `adp-` / `proj-`, `fantasy-lines`); day rows, seasons, levels,
+  arsenal and fantasy files still clear them. Also `fitNameCol` measured every row's team line with a computed style + `offsetWidth` (a
+  forced layout per row) — it measures off the canvas now, and `textWidth` sets the canvas font only when it changes; `xKModel` merges the
+  league rates once per view (`xKLeague`) instead of per pitcher. Profile (scratch `prof.js`, CDP sampling): the Leaderboard render
+  1.74 s → 1.20 s on a desktop, once instead of twice; what's left is `pool()` itself (~0.7 s: `placeIn` for every listed pitcher under the
+  reference minimum, the PK block's fits), the next thing to cut if a phone still drags.
 
 ## 9. Things only Sean can do
 

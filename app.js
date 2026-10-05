@@ -721,7 +721,10 @@
     if (isReady() || loading.has(src) || failed.has(src)) return;
     loading.add(src);
     const sc = document.createElement("script"); sc.src = vsrc(src);
-    sc.onload = () => { loading.delete(src); valCache.clear(); poolCache.clear(); rankCache.clear(); render(); if (state.gq) renderGlobalSearch(); };
+    // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
+    // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
+    // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
+    sc.onload = () => { loading.delete(src); if (!/\/(?:index|career|similar|minors|trends|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };
     sc.onerror = () => { loading.delete(src); failed.add(src); render(); };
     document.head.append(sc);
   }
@@ -1309,7 +1312,10 @@
     const x = xkParts(m, xw, xf); if (!x || x.cstr == null) return null;
     return xKModel(Object.assign({}, m, x), xw, xws);
   };
-  const xKModel = (m, xw, xws) => { const v = rateFit(Object.assign({}, m, { xw, xws }), "k", XKM, Object.assign({}, lgRatesP(), lgXw())); return v == null ? null : Math.round(10 * v) / 10; };
+  // the league rates + expected whiff levels merged once per view, not once per pitcher (the pool runs this ~1,400 times a build)
+  let xkL = null, xkLKey = null;
+  const xKLeague = () => { const k = DS.key + ":" + viewKey(); if (xkLKey !== k) { xkL = Object.assign({}, lgRatesP(), lgXw()); xkLKey = k; } return xkL; };
+  const xKModel = (m, xw, xws) => { const v = rateFit(Object.assign({}, m, { xw, xws }), "k", XKM, xKLeague()); return v == null ? null : Math.round(10 * v) / 10; };
   const xBBFormula = (m) => (m.strk == null || m.fstrk == null || m.b3strk == null ? null : Math.round(10 * (XBBF.c + XBBF.strk * m.strk + XBBF.fstrk * m.fstrk + XBBF.b3strk * m.b3strk)) / 10);
   // the Mix wOBA a ground-ball / popup share implies (the expected mix from the Pitching+ model): air balls split at the pool's line-drive share
   function mixOfShares(xg, xp, sorted) {
@@ -2558,10 +2564,10 @@
   // The name column is as wide as the widest name on the page, so every row's stats start in the same place.
   // Each row is its own grid, so a single long name would otherwise push that row's columns out of line; the
   // measured width becomes the column's minimum (it still stretches to fill whatever the stats leave over).
-  let measureCtx = null;
+  let measureCtx = null, measureFont = null;
   function textWidth(text, font) {
     measureCtx = measureCtx || document.createElement("canvas").getContext("2d");
-    measureCtx.font = font;
+    if (font !== measureFont) { measureCtx.font = font; measureFont = font; }   // setting the font re-parses it: once per font, not per row
     return measureCtx.measureText(text).width;
   }
   function fitNameCol() {
@@ -2570,16 +2576,18 @@
     const cs = getComputedStyle(first), pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
     const fontOf = (n) => { const c = getComputedStyle(n); return `${c.fontStyle} ${c.fontWeight} ${c.fontSize} ${c.fontFamily}`; };
     const nameFont = fontOf(first.querySelector(".name"));
-    let w = 0;
+    let w = 0, metaFont = null, metaGap = 0;
     for (const who of $("rows").querySelectorAll(".who")) {
       const nm = who.querySelector(".name");
       let own = nm ? textWidth(nm.textContent, nameFont) : 0;
       const meta = who.querySelector(".meta");                     // team · position · PA, laid out as a flex row
       if (meta) {
-        const gap = parseFloat(getComputedStyle(meta).columnGap) || 0;
+        // measured off the canvas, not the layout: a computed style and an offsetWidth per row forced a layout for every one of
+        // ~700 rows (a quarter of a second on a desktop, a second on a phone — Sean, 5 Oct 2026); the "· " between parts is CSS content
+        if (metaFont == null) { const c = getComputedStyle(meta); metaFont = `${c.fontStyle} ${c.fontWeight} ${c.fontSize} ${c.fontFamily}`; metaGap = (parseFloat(c.columnGap) || 0) + textWidth("\u00b7 ", metaFont); }
         let line = 0, n = 0;
-        for (const part of meta.children) { line += part.offsetWidth; n++; }
-        own = Math.max(own, line + Math.max(0, n - 1) * gap);
+        for (const part of meta.children) { line += textWidth(part.textContent, metaFont); n++; }
+        own = Math.max(own, line + Math.max(0, n - 1) * metaGap);
       }
       w = Math.max(w, own);
     }
