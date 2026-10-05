@@ -1616,6 +1616,14 @@ is deploy-limited.
   (PR #334). **Then** (Sean, minutes later: "no need to show called strikes actually. And we can get rid of the xk% and xbb% tabs"): the fold-out is
   2-strike Whiff% · Foul% (xFoul% on the Stuff side) and `BTABS_P` is Pitching+ · nERA — `renderPctTab`, `XK_COLS_P` / `XBB_COLS_P` and the
   `pick === "xk" / "xbb"` branches stay in `app.js`, unreachable; a saved `pbtab` of xk / xbb falls back to Stats.
+* **The OSU helmet ground (Sean, 5 Oct 2026: "make the background that used to be the swirl like that [an Ohio State helmet with the
+  buckeye-leaf stickers], can you at least try it")**: `buildHelmet()` in `app.js` draws a 560px SVG tile of buckeye-leaf stickers (five
+  leaflets, green, a white edge, a stem; a third of them numbered) scattered on a jittered grid with gaps, puts it in `--helmet-img`, and
+  the end-of-file block in `styles.css` paints it fixed behind every list page and the popup card at 32% on a silver ground (`:root.helmet
+  --ground`, light `#d4d7dc` / dark `#1b1e23`; `body > *` lifted over it). Appearance ▸ **Background** (Helmet / Plain, per device,
+  `draft2027.helmet`; `helmetOn()`); Plain puts `nopattern` back. This supersedes "the swirl is gone / don't bring it back" above for the
+  ground only — the swirl drawing itself stays unused. No centre stripe.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
