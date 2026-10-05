@@ -1744,3 +1744,17 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   front end with the morning's pitcher card and the phone pager, weight-400 Barlow Condensed / Source Sans 3, the frames, the navy table
   headers, the pale ground, no Raya type block and no dress. The two entries above (Raya type, PR #352; the dress test, PR #353) are
   history. Don't bring the dress or the Raya type back unasked.
+
+* **K% / BB% drivers tab (Sean, 5 Oct 2026: "a tab for each pitcher that has this table that shows share of what is the variance and what is
+  explained and then gives the players metric for that stat with a heatmap based on how it impacts the k%/bb%")**: `BTABS_P` is Pitching+ ·
+  **K% / BB%** · nERA (`renderDriversTab`, `DRIVERS` in `app.js`; CSS `.drivers` at the end of `styles.css`). Two tables from scratch
+  `kbb_lmg.js` — every 100+ BF pitcher-season 2020-26 (3,397), each stat centred on its season's BF-weighted league, BF-weighted OLS, each
+  stat's share of R² by the LMG / Shapley decomposition (the R² gain averaged over every order of entry, so Whiff% and 2-strike Whiff% split
+  their common ground fairly): **K%** (R² .962, rmse 1.03) Whiff% 40.1 · 2-strike Whiff% 36.2 · Foul% 7.3 · Chase% 4.8 · Called Strike% 4.3 ·
+  2-strike Zone% 1.3 · Zone% 1.1 · 2-strike Swing% 1.0; **BB%** (R² .849, rmse 0.99) 3-ball Strike% 29.6 · Strike% 20.5 · Swing% 8.6 · 1st-pitch
+  Strike% 8.2 · Zone% 7.1 · Chase% 5.8 · Whiff% 2.8 · Z-Contact% 2.3. Columns: share of variance, share of what's explained (share / R²),
+  His (the view's `V(p).m`), League (`lgRatesP()`), Effect = weight × (his − league) in K% / BB% points (two decimals for BB%), the His and
+  Effect cells painted by his percentile on that stat among the pool's reference list (`pl.ref`, oriented by the weight's sign × the target's
+  good direction, so red = pushes K% up / BB% down); a "The fit" row (R², his actual, the league, the league + every effect = what the fit says)
+  and a head line "K% 28.1 · the fit says 26.6 (+1.5)". Same-season fits, so the two-strike / three-ball rates sit close to the outcome; the
+  note says Whiff% and Strike% are what carry forward. A file without a stat shows "–" and no effect for that row.

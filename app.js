@@ -6512,7 +6512,7 @@
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["fantasy", "Fantasy"]];
   const BTABS_H = [["mix", "Mix"]];   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
-  const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"]];   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
+  const BTABS_P = [["pitching", "Pitching+"], ["drivers", "K% / BB%"], ["nera", "nERA"]];   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -6530,7 +6530,7 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => (tabs.find(([x]) => x === k) || [])[1];
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["nera"]] : []), ["fantasy"],
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["drivers"], ["nera"]] : []), ["fantasy"],
                     ["rolling", ...(p.type === "P" ? ["uera"] : ["mix", "babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
@@ -6605,6 +6605,8 @@
       body.append(renderNextTab(p, o.st, g));
     } else if (pick === "games") {
       body.append(renderGameLogs(p));
+    } else if (pick === "drivers") {
+      body.append(renderDriversTab(p, o.st, g));
     } else if (pick === "nera") {
       body.append(renderLuckBox(p) || el("p", "note", "Luck-neutral ERA needs batted-ball data for this season."));
     } else if (pick === "uera") {
@@ -7022,6 +7024,56 @@
   // the strike rates the K% fit reads, his actual ones beside the ones his stuff and spots say — the whiff rate from the Pitching+ model, the
   // swinging strikes and CSW% that follow from it, two-strike whiffs scaled, and fouls from the foul model on the contact that's left — and the
   // two K% they give. xBB% is the same walk formula either way (Strike%, first-pitch and three-ball strikes), so one number
+  // What drives K% and BB% (Sean, 5 Oct 2026: "a tab for each pitcher that has this table that shows share of what is the variance and what is
+  // explained and then gives the players metric for that stat with a heatmap based on how it impacts the k%/bb%"). Every 100+ BF pitcher-season
+  // 2020-26 (3,397), each stat centred on its season's BF-weighted league, BF-weighted OLS (scratch kbb_lmg.js): `share` is the stat's slice of
+  // the fit's R² averaged over every order the stats could enter (LMG / Shapley), so collinear inputs split their common ground fairly; `w` is
+  // the weight, K% / BB% points per point of the stat. K%: R² .962, rmse 1.03; BB%: R² .849, rmse 0.99. Same-season fits — the two-strike and
+  // three-ball rates sit close to the outcome, which is why they rank so high; Whiff% and Strike% are the ones that carry to next season.
+  const DRIVERS = {
+    k: { r2: 0.962, rows: [["whf", 40.1, 0.737], ["s2whf", 36.2, 0.424], ["foul", 7.3, 1.569], ["osw", 4.8, -0.081], ["cstr", 4.3, 1.178], ["s2zone", 1.3, 0.169], ["zone", 1.1, -0.290], ["s2sw", 1.0, -0.210]] },
+    bb: { r2: 0.849, rows: [["b3strk", 29.6, -0.213], ["strk", 20.5, -0.646], ["swing", 8.6, -0.013], ["fstrk", 8.2, -0.009], ["zone", 7.1, 0.050], ["osw", 5.8, 0.020], ["whf", 2.8, 0.012], ["zcon", 2.3, -0.104]] },
+  };
+  function renderDriversTab(p, st, g) {
+    const pv = V(p), m = pv.m, L = lgRatesP(), pl = pool(g);
+    const box = el("div", "rollbox uerabox stuffbox drivers");
+    const vl = viewLabel(p.type) && viewLabel(p.type) !== "full season" ? ` · ${viewLabel(p.type)}` : "";
+    const hd = el("div", "rollhd"); hd.append(el("span", "rollname", "What drives his K% and BB%"), el("span", "rollsub", "every 100+ BF pitcher-season 2020-26" + vl)); box.append(hd);
+    // his place on each stat among the reference pool, oriented so a high percentile pushes the target the good way (K% up, BB% down)
+    const sortedOf = {}; const ranked = (k) => { if (!sortedOf[k]) sortedOf[k] = (pl.ref || []).map((q) => V(q).m[k]).filter((x) => x != null && isFinite(x)).sort((a, b) => a - b); return sortedOf[k]; };
+    const r1 = (x) => (x == null ? "–" : x.toFixed(1)), DL = { strk: "Strike%", whf: "Whiff%" };
+    for (const [tgt, lab, good, dec] of [["k", "K%", +1, 1], ["bb", "BB%", -1, 2]]) {   // BB% effects are small, so two decimals there
+      const sg = (x) => (Math.abs(x) < 0.5 * 10 ** -dec ? "" : x > 0 ? "+" : "−") + Math.abs(x).toFixed(dec);
+      const D = DRIVERS[tgt], wrap = el("div", "aopt drvblock");
+      let fit = L[tgt] != null ? L[tgt] : null, any = false;
+      const t = el("table", "ubt stufft drvt"), th = el("thead"), hr = el("tr");
+      for (const [h, tip] of [["Stat", ""], ["Share of " + lab + " variance", "This stat's slice of the fit's R²: how much of the spread in " + lab + " across pitchers it accounts for on its own, after sharing fairly with the stats it overlaps"], ["Of what's explained", "The same slice as a share of everything the fit explains"], ["His", "His rate in this view"], ["League", "The dataset's league rate (20+ BF pitchers, by batters faced)"], ["Effect", lab + " points this stat moves him off the league, at the fit's weight — coloured by where that puts him among the season's qualifiers (red = pushes " + lab + (good > 0 ? " up" : " down") + ")"]]) { const c = el("th", null, h); if (tip) c.title = tip; hr.append(c); }
+      th.append(hr); t.append(th);
+      const tb = el("tbody");
+      for (const [k, share, w] of D.rows) {
+        const v = m[k], lg = L[k], tr = el("tr");
+        const name = DL[k] || OUTCOME_LABEL_P[k] || k;
+        tr.append(el("td", "l", name), el("td", null, share.toFixed(1) + "%"), el("td", null, (share / D.r2).toFixed(1) + "%"));
+        const his = el("td", null, r1(v)), lgc = el("td", null, r1(lg)), eff = el("td", null, "–");
+        if (v != null && lg != null) {
+          const e = w * (v - lg); eff.textContent = sg(e); if (fit != null) fit += e; any = true;
+          const arr = ranked(k), pc = arr.length >= 20 ? insertPct(arr, v) : null;
+          if (pc != null) { const q = (w * good) >= 0 ? pc : 100 - pc; paint(his, q); paint(eff, q); }   // red = this stat pushes the target the good way
+        }
+        tr.append(his, lgc, eff); tr.title = `${name}: weight ${w > 0 ? "+" : ""}${w.toFixed(3)} ${lab} points per point of ${name}`;
+        tb.append(tr);
+      }
+      t.append(tb);
+      const tot = el("tr", "drvtot"); tot.append(el("td", "l", "The fit"), el("td", null, (100 * D.r2).toFixed(1) + "%"), el("td", null, "100%"), el("td", null, r1(m[tgt])), el("td", null, r1(L[tgt])), el("td", null, any && fit != null ? r1(fit) + " fit" : "–"));
+      tot.title = `The fit explains ${(100 * D.r2).toFixed(1)}% of the spread in ${lab}. His = his actual ${lab}; Effect = the league's ${lab} plus every row's effect, what the fit says his process is worth.`;
+      tb.append(tot);
+      const sc = el("div", "stuffscroll"); sc.append(t);
+      wrap.append(el("b", null, lab + (any && fit != null && m[tgt] != null ? ` ${r1(m[tgt])} · the fit says ${r1(fit)} (${sg(m[tgt] - fit)})` : "")), sc);
+      box.append(wrap);
+    }
+    box.append(el("p", "note", "Share of variance is each stat's slice of the fit's R² over every 100+ BF pitcher-season 2020-26, split fairly among stats that overlap (averaged over every order they could enter). Effect = the fit's weight × (his rate − the league's), in K% or BB% points; its colour is where that effect ranks him among this season's qualifiers, red pushing K% up or BB% down. These are same-season fits, so 2-strike Whiff% and 3-ball Strike% sit close to the outcome itself; Whiff% and Strike% are the parts that carry to next season."));
+    return box;
+  }
   function renderXkBreakdown(p, st) {
     const m = V(p).m, pj = projRates(p); if (!pj || m.whf == null || m.swing == null || st == null || st.xkf == null) return null;
     const exp = xkParts(m, pj.xw, foulChance(p)); if (!exp) return null;
