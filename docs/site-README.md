@@ -983,7 +983,3 @@ The foul model that feeds Pitching+ xK% also sees the batter's swing on each con
 direction, swing-path tilt, intercept point; bat tracking, 2024 on). Scored season by season on models trained on the other seasons, the fit
 with a pitcher's foul-on-contact rate goes from r ~.75 (location) to ~.77, and the pitchers the old models missed most (Skenes high, Sasaki
 and Phillips low) come most of the way in. Pitches without a tracked swing, and every season before 2024, use the location model.
-## The dress
-
-Since 5 Oct 2026 the site wears a quieter dress: no outlines or filled headers, light type with small tracked labels, one blue for whatever
-is active, and colour only in the percentile bars and the sorted column's values. The ground is a plain helmet silver.
