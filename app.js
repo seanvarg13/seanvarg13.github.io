@@ -703,7 +703,10 @@
     if (daysReady() || state.daysLoading) return;
     state.daysLoading = true;
     const sc = document.createElement("script"); sc.src = vsrc("days.js");
-    sc.onload = () => { state.daysLoading = false; valCache.clear(); poolCache.clear(); rankCache.clear(); render(); };
+    // the day rows landing only empties what was computed from them or while waiting for them (a window, a split, a combined span —
+    // `provisional`); a full-season value or pool reads the season's own numbers and is the same with or without days.js, and on a phone
+    // this file (24 MB) arriving a few seconds after Home or a list was redrawing every pool it had (Sean, 5 Oct 2026: "it still drags")
+    sc.onload = () => { state.daysLoading = false; dropProvisional(); render(); };
     sc.onerror = () => { state.daysLoading = false; state.daysFailed = true; render(); };
     document.head.append(sc);
   }
@@ -843,9 +846,12 @@
     for (const k in mu) if (typeof m[k] === "number" && isFinite(m[k])) m[k] = w * m[k] + (1 - w) * mu[k];
     return m;
   }
+  const provisional = { val: new Set(), pool: new Set(), rank: new Set() };   // cache keys that depend on the day rows (see ensureDays)
+  function dropProvisional() { for (const k of provisional.val) valCache.delete(k); for (const k of provisional.pool) poolCache.delete(k); for (const k of provisional.rank) rankCache.delete(k); provisional.val.clear(); provisional.pool.clear(); provisional.rank.clear(); }
   function V(p) {
     const key = viewKey() + ":" + p.type + p.id;
     if (valCache.has(key)) return fantFill(valCache.get(key), p);
+    if (needsRows()) provisional.val.add(key);
     let v;
     const w = winIdx() || { lo: 0, hi: seasonDays().length - 1 };
     if (!needsRows() || !daysReady()) {
@@ -1354,8 +1360,9 @@
   const poolCache = new Map();
   // returns { list: players in pool, stats: Map key -> {pct: {metric: pctl}, score, rank} }
   function pool(g) {
-    const key = g + ":" + effMin(g) + ":" + (needsDays() ? listMin(g) : "") + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + daysReady();
+    const key = g + ":" + effMin(g) + ":" + (needsDays() ? listMin(g) : "") + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + (needsRows() ? daysReady() : "");
     if (poolCache.has(key)) return poolCache.get(key);
+    if (needsRows()) provisional.pool.add(key);
     const R = regularOf(DS), waiting = !!(DS.kind && !DS.multi && !R);   // its regular season still loading: don't keep this one
     if (R) return kindPool(g, R, key);
     const all = DS.players.filter((p) => inGroup(p, g));
@@ -1607,8 +1614,9 @@
   const rankCache = new Map();
   // percentiles, score and rank for pitcher p measured against pool g (SP, RP or P)
   function rankIn(g, p) {
-    const key = g + ":" + effMin(g) + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + daysReady() + ":" + p.type + p.id;
+    const key = g + ":" + effMin(g) + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + (needsRows() ? daysReady() : "") + ":" + p.type + p.id;
     if (rankCache.has(key)) return rankCache.get(key);
+    if (needsRows()) provisional.rank.add(key);
     const pl = pool(g);
     const res = pl.stats.get(p.type + p.id) || placeIn(pl, g, p);
     rankCache.set(key, res);
@@ -4910,7 +4918,9 @@
     // trending (Sean, 3 Oct 2026): hitters over their last 100 PA by xwOBA, pitchers over their last 50 IP by Pitching uERA — from
     // the day rows, so the card says "loading" until days.js is in, then redraws itself
     const tc = card("Trending", "hitters over their last 100 PA · pitchers over their last 50 IP", null);
-    if (!daysReady()) { tc.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); if (!state.daysLoading && !state.daysFailed) ensureDays(); }
+    // the 24 MB day file is asked for once Home has painted and the phone is idle, not inside the first render (parsing it blocks the
+    // main thread for seconds on a phone; a tap on a list in that time felt dead — Sean, 5 Oct 2026)
+    if (!daysReady()) { tc.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); if (!state.daysLoading && !state.daysFailed) setTimeout(() => (window.requestIdleCallback || ((f) => f()))(() => { if (state.mode === "home" && !daysReady()) ensureDays(); }), 1200); }
     else {
       const tt = two(tc);
       withSplit(NONE, () => {
