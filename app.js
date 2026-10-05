@@ -8037,21 +8037,20 @@
     let w = 0; for (const g of groups) for (const r of g.rows) w = Math.max(w, lblCtx.measureText(r.label).width);
     return Math.min(120, Math.ceil(w));
   }
+  // The Raya Dress Mock's bars, precisely (Sean, 5 Oct 2026, from a phone screenshot of the mock: "make the percentile bars and sections on the
+  // player page and card look precisely like this, even give the percentile bubble this exact look"): the mock's .sec / .bar / .trk / .bub —
+  // a section is 14px over an 11px tracked-uppercase grey name, 10px, then 30px rows and 8px under; a row is a 112px label column (100 on a
+  // phone), a 44px (40) right-aligned value, 10px gaps, and a 20px flat track to 14px short of the right edge; the fill runs to his percentile
+  // and a 22px bubble sits centred on it (2px paper ring, white Roboto Condensed 700 digits at 10.5px); no ticks, no dashed rules, no 10 / 50 /
+  // 90; Poor / Average / Great over the first chart as a 10px tracked grey line on the track's span. Savant's drawing before this is in git
+  // (PR #360's app.js); the don't-restyle rule is lifted by this request only.
   function pctSvg(groups, W, scale = true) {
     const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
-    const r6 = W - 40, VW = W < 420 ? 41 : 45, bar = r6 - 40 - 85 - VW;
-    // centred (Sean, 1 Oct 2026: Savant's bars back, the length they had, "but now center them"): the rows' block — the dashed
-    // label column through the value — moves 20 left, so it sits 40 in from each side of the section rule (20 + 20 either way);
-    // a label wider than its 80 column keeps the room it needs. Section names and rules stay put
-    const IND = Math.max(20, pctLabelW(groups) - 80 + 4);   // the rule's width, the value column (room for "118.5" beside a 100 bubble; a phone's bar can't spare as much), the bar's width
-    const x = (p) => 10 + (bar - 10) * Math.max(0, Math.min(100, p)) / 100;
+    const ph = W < 700, LW = ph ? 100 : 112, VW = ph ? 40 : 44, GAP = 10, RM = 14, ROW = 30, TH = 20;
+    const bx = LW + GAP + VW + GAP, bar = Math.max(60, W - bx - RM);
+    const x = (p) => bar * Math.max(0, Math.min(100, p)) / 100;
     const smp = groups[0] && groups[0].sample;
-    // a phone starts the first heading right under the card's band: the 10 up top plus the heading's own headroom read as a
-    // blank strip there (the sample line, when there is one, still needs the 10)
-    // — and on a desktop too since 30 Sep 2026 (Sean: "push everything up a bit"). −2, not −12: the section names grew to the
-    // title's size and −12 sliced the tops off "Results" / "Contact" (Sean, 1 Oct 2026)
-    const top = !(smp && smp.length) ? -2 : 10;
-    const root = mk("g", { transform: `translate(20,${top})` });
+    const root = mk("g");
     let y = 0;
     if (smp && smp.length) {                                     // the playing time behind every bar below, labelled as such
       const t = mk("text", { class: "svsample", x: 0, y: 14 });
@@ -8060,50 +8059,41 @@
       root.append(t);
       y = 24;
     }
-    groups.forEach((g, gi) => {
-      const first = gi === 0 && scale, G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
-      G.append(mk("rect", { class: "svsecrule", x: 0, y: 34, width: r6, height: 2 }));
-      G.append(mk("text", { class: "svsecname", x: 0, y: 28 }, g.title));
-      if (first) {                                               // POOR / AVERAGE / GREAT, each arrow over its tick
-        const S = mk("g", { transform: `translate(${IND + 85},54)` });
-        const tri = (cx) => `M${cx},2L${cx - 3},8L${cx + 3},8Z`;
-        const c0 = savantStyle(0).bg, c50 = savantStyle(50).bg, c100 = savantStyle(100).bg;
-        S.append(mk("path", { d: tri(12), fill: c0 }), mk("path", { d: tri(x(50)), fill: c50 }), mk("path", { d: tri(bar - 12), fill: c100 }));
-        S.append(mk("text", { class: "svscale", fill: c0 }, "Poor"),
-                 mk("text", { class: "svscale", x: x(50), "text-anchor": "middle", fill: c50 }, "Average"),
-                 mk("text", { class: "svscale", x: x(100), "text-anchor": "end", fill: c100 }, "Great"));
-        G.append(S);
-      }
-      const R = mk("g", { transform: `translate(${IND},${44 + (first ? 20 : 0)})` });
+    if (scale) {                                                 // POOR / AVERAGE / GREAT on the track's span, above the first section (.scale)
+      const S = mk("g", { class: "svscalerow", transform: `translate(${bx},${y + 10})` });
+      S.append(mk("text", { class: "svscale" }, "Poor"), mk("text", { class: "svscale", x: bar / 2, "text-anchor": "middle" }, "Average"), mk("text", { class: "svscale", x: bar, "text-anchor": "end" }, "Great"));
+      root.append(S); y += 16;
+    }
+    groups.forEach((g) => {
+      const G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
+      G.append(mk("text", { class: "svsecname", x: 0, y: 14 + 11 }, g.title));   // .sec padding 14 + the 11px name
+      const R = mk("g", { transform: `translate(0,${14 + 11 + 10})` });
       g.rows.forEach((r, i) => {
-        const M = mk("g", { class: "svrow", transform: `translate(0,${i * 23})` });
+        const M = mk("g", { class: "svrow", transform: `translate(0,${i * ROW})` });
         M.append(mk("title", {}, r.tip));
-        const on = r.pct != null, s = on ? savantStyle(r.pct) : null;
-        const B = mk("g", { transform: "translate(85,0)", opacity: on ? 1 : 0.35 });
-        B.append(mk("rect", { class: "svline", width: bar, height: 5, y: 7.5 }));
-        if (on) B.append(mk("rect", { width: x(r.pct), height: 20, y: 0, fill: s.bg }));
-        for (const tx of [x(50) - 1, 11, bar - 13]) B.append(mk("rect", { class: "svtick", width: 2, height: 20, x: tx }));
-        M.append(B);
-        const L = mk("text", { class: "svlbl" + (r.sub ? " svsub" : "") + (r.fold ? " svfold" : ""), x: 80, y: 10, "text-anchor": "end" }, (r.fold ? (r.fold.open ? "▾ " : "▸ ") : "") + r.label);
+        const on = r.pct != null, s = on ? savantStyle(r.pct) : null, cy = ROW / 2;
+        const L = mk("text", { class: "svlbl" + (r.sub ? " svsub" : "") + (r.fold ? " svfold" : ""), x: 0, y: cy + 5 }, (r.fold ? (r.fold.open ? "▾ " : "▸ ") : "") + r.label);
         M.append(L);
-        M.append(mk("text", { class: "svlbl", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));
-        // a fold-out parent: tapping the name opens / closes its rows; the bar still opens the note
+        M.append(mk("text", { class: "svlbl svval", x: LW + GAP + VW, y: cy + 5, "text-anchor": "end" }, r.value));
+        const B = mk("g", { transform: `translate(${bx},${cy - TH / 2})`, opacity: on ? 1 : 0.35 });
+        B.append(mk("rect", { class: "svtrack", width: bar, height: TH }));
+        if (on) B.append(mk("rect", { width: x(r.pct), height: TH, fill: s.bg }));
+        M.append(B);
         M.addEventListener("click", (e) => { e.stopPropagation(); if (r.fold && e.target === L) { state.open[r.fold.key] = !r.fold.open; savePrefs(); render(); return; } statPop(M, r); });
-        if (i) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + VW},-1.5` }));
         if (on) {
-          const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
-          C.append(mk("circle", { class: "svbulb", r: 10, fill: s.bub }));
-          C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : ""), y: 1 }, r.pct));   // Savant's bubble
+          const C = mk("g", { transform: `translate(${bx + x(r.pct)},${cy})` });
+          C.append(mk("circle", { class: "svbulb", r: 10, fill: s.bg }));
+          C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : ""), y: 3.5 }, r.pct));
           M.append(C);
         }
         R.append(M);
       });
       G.append(R);
       root.append(G);
-      y += g.rows.length * 23 + 34 + 10 + (first ? 20 : 0);
+      y += 14 + 11 + 10 + g.rows.length * ROW + 8;
     });
-    const H = y + 20 + top - 10;
-    const svg = mk("svg", { class: "svpct", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Percentile rankings" });
+    const H = y + 4;
+    const svg = mk("svg", { class: "svpct raya", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Percentile rankings" });
     svg.append(root);
     return svg;
   }
