@@ -1644,11 +1644,16 @@ is deploy-limited.
   pool being the same with or without the day rows — and Home asks for the file 1.2 s after it paints, on idle, and only while still on Home.
   Trimming `days.js` itself (the inert command sums `stcn…stcw` are a third of each pitcher row) is the next lever.
 
-* **Factory reset to 7:10am, 5 Oct 2026 (Sean: "Could you simply just factory reset everything to how it was at 7:10am this morning")**:
-  `app.js`, `styles.css`, `themes.js` and `defaults.js` are byte-for-byte main at b435851 (PR #337, merged 06:19 EDT): the PR #336
-  layout plus the green-leaf helmet ground and Appearance ▸ Background. That also drops the day's JavaScript speed fixes (the
-  `ensureScript` cache guard, the off-canvas `fitNameCol`, `xKLeague`, the provisional caches and Home's deferred `days.js`) — the
-  two entries above describe them and they can be re-applied as a separate change if the phone drags again.
+* **Reset to yesterday 11am (Sean, 5 Oct 2026: first "factory reset everything to how it was at 7:10am this morning" — done for ten
+  minutes as main at b435851 — then "scratch that, can you bring it back to yesterday at 11am")**: `app.js`, `styles.css`, `themes.js`
+  and `defaults.js` are byte-for-byte main at 20be21a (the 4 Oct 10:34 data build; the last front-end merge before 11am EDT was PR #291 at
+  7:16): the card of that morning — Swing & Miss / Zone & Chase / Batted Ball / Stuff, tabs Season Stats · Pitching+ · nERA · Fantasy ·
+  Compare, the band's SV — and the **Rating is Whiff% 55 / Strike% 30 / Mix wOBA 15 again**: `data.js`'s `pitcherWeights` / `scoreNote.P`
+  patched back (the old app.js can't rank `xkbb`, so the x(K-BB)% 80 / Mix wOBA 20 weights would have broken the score) and
+  `PITCHER_SCORE_WEIGHTS` in `tools/build_data.py` set to match so the morning build keeps it. Everything else of 4-5 Oct in this file after
+  PR #291 (xK% on the card, x(K-BB)%, Stuff xK%, the Raw / Stuff switch, the Filters window, fold-outs, Control, the xK% / xBB% tabs, the
+  helmet, the dress, the speed fixes) is **history on the site** — still in git, and the build-side additions (foul models, day fields,
+  the extra card-group defs in `PITCHER_CARD`) stay since the old app.js ignores fields it doesn't name. Re-apply any of it only when asked.
 
 ## 9. Things only Sean can do
 
