@@ -6483,7 +6483,7 @@
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["fantasy", "Fantasy"]];
   const BTABS_H = [["mix", "Mix"]];   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
-  const BTABS_P = [["pitching", "Pitching+"], ["xk", "xK%"], ["xbb", "xBB%"], ["nera", "nERA"]];   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
+  const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"]];   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -6501,7 +6501,7 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => (tabs.find(([x]) => x === k) || [])[1];
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["xk"], ["xbb"], ["nera"]] : []), ["fantasy"],
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["nera"]] : []), ["fantasy"],
                     ["rolling", ...(p.type === "P" ? ["uera"] : ["mix", "babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
@@ -7632,9 +7632,9 @@
   // have a drop down with ... 2 strike whiff rate, foul%, and called strike percentage ... in skills show whiff rate and ... an average of
   // their strike percentile and their 3 ball strike percentile ... walk avoidance ... bb%, strike%, and 3 ball strike %"): Skills = Whiff% ·
   // Control, Swing & Miss = K% · Whiff% (fold-out: 2-strike Whiff%, Foul%, Called Strike%); the Stuff side the Pitching+ expected ones
-  const PCT_COLS_P = [[["Skills", ["whf", "ctrl"]], ["Swing & Miss", ["k", { k: "whf", sub: ["s2whf", "foul", "cstr"] }]], ["Batted Ball", ["gb", "pu", "mixw"]]],
+  const PCT_COLS_P = [[["Skills", ["whf", "ctrl"]], ["Swing & Miss", ["k", { k: "whf", sub: ["s2whf", "foul"] }]], ["Batted Ball", ["gb", "pu", "mixw"]]],
                       [["Walk Avoidance", ["bb", "strk", "b3strk"]], ["Rating", ["rating", "xkbb", "mixw"]]]];
-  const PCT_COLS_PS = [[["Skills", ["nwhf", "ctrl"]], ["Swing & Miss", ["k", { k: "nwhf", sub: ["ns2whf", "nfoul", "ncstr"] }]], ["Batted Ball", ["ngb", "npu", "nmix"]]],
+  const PCT_COLS_PS = [[["Skills", ["nwhf", "ctrl"]], ["Swing & Miss", ["k", { k: "nwhf", sub: ["ns2whf", "nfoul"] }]], ["Batted Ball", ["ngb", "npu", "nmix"]]],
                        [["Walk Avoidance", ["bb", "strk", "b3strk"]], ["Rating", ["xrat", "xkbbs", "nmix"]]]];
   const STUFF_LABELS = { xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => state.cardSide === "stuff";
