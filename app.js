@@ -3735,34 +3735,10 @@
   // are scattered over it at a low opacity, sparse like the real thing (the silver has to dominate). A seeded scatter so every page
   // draws the same tile; a jittered grid so no two leaves overlap. Appearance ▸ Background turns it off on this device
   // (draft2027.helmet), and then the plain ground of the scheme comes back
-  const helmetOn = () => { try { return localStorage.getItem("draft2027.helmet") !== "off"; } catch { return true; } };
-  function buildHelmet() {
-    const root = document.documentElement;
-    if (!helmetOn()) { root.classList.remove("helmet"); root.classList.add("nopattern"); buildSwirl(); return; }
-    try {
-      let s = 7; const rnd = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
-      const dark = matchMedia("(prefers-color-scheme: dark)").matches ? root.dataset.theme !== "light" : root.dataset.theme === "dark";
-      // the real helmet (Sean's photo, 5 Oct 2026): white round stickers packed over the silver, each with one dark buckeye leaf —
-      // five pointed leaflets fanned from the stem — not the green leaves of the first try
-      const paper = dark ? "#d6d9de" : "#ffffff", leafInk = dark ? "#14171b" : "#1c1f24";
-      const leaf = () => { let d = "";
-        for (let i = -2; i <= 2; i++) { const a = -90 + i * 36, L = i === 0 ? 13.5 : Math.abs(i) === 1 ? 12.5 : 10.5;
-          // a leaflet: a pointed, slightly toothed blade from the centre out, drawn as a closed path and rotated into place
-          d += `<path d="M0,0 C1.6,-${(L * 0.3).toFixed(1)} 2.6,-${(L * 0.55).toFixed(1)} 1.3,-${(L * 0.8).toFixed(1)} L0,-${L} L-1.3,-${(L * 0.8).toFixed(1)} C-2.6,-${(L * 0.55).toFixed(1)} -1.6,-${(L * 0.3).toFixed(1)} 0,0 Z" fill="${leafInk}" transform="rotate(${a + 90})"/>`; }
-        d += `<path d="M0,0.5 L0,6.5" stroke="${leafInk}" stroke-width="1.5" stroke-linecap="round"/>`;
-        return d; };
-      const T = 560, R = 19, cell = 44, rowH = cell * 0.87, parts = [];
-      const rows = Math.round(T / rowH), cols = Math.round(T / cell);
-      for (let gy = 0; gy < rows; gy++) for (let gx = 0; gx < cols; gx++) {
-        if (rnd() < 0.07) continue;                                          // the odd bare spot, as on a helmet
-        const x = gx * cell + (gy % 2 ? cell / 2 : 0) + (rnd() - 0.5) * 5, y = gy * rowH + rowH / 2 + (rnd() - 0.5) * 5, rot = Math.round(rnd() * 360);
-        parts.push(`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><circle r="${R}" fill="${paper}"/><g transform="rotate(${rot}) translate(0 2.5) scale(1.05)">${leaf()}</g></g>`);
-      }
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${T}" height="${T}" viewBox="0 0 ${T} ${T}">${parts.join("")}</svg>`;
-      root.style.setProperty("--helmet-img", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
-      root.classList.remove("swirl-img", "nopattern"); root.classList.add("helmet");
-    } catch (e) { root.classList.remove("helmet"); root.classList.add("nopattern"); }
-  }
+  // the helmet ground (Sean, 5 Oct 2026): the buckeye-leaf stickers were tried twice — green leaves, then the real white round stickers —
+  // and taken off the same day ("get rid of the stickers that is bad and busy"). What stays is the helmet's plain silver (charcoal at
+  // night, the :root.helmet tokens in styles.css); no pattern of any kind is drawn. Don't bring the stickers or the swirl back unasked.
+  function buildHelmet() { const root = document.documentElement; root.classList.remove("swirl-img"); root.classList.add("helmet", "nopattern"); }
   buildHelmet();
   new MutationObserver(buildHelmet).observe(document.documentElement, { attributes: true, attributeFilter: ["data-scheme", "data-theme"] });
   try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", buildHelmet); } catch {}
@@ -6077,8 +6053,6 @@
     row("Light or dark", null, segOf("Light or dark", [["system", "Match device"], ["light", "Light"], ["dark", "Dark"]], cur.theme, (v) => { T.set({ theme: v }); renderAppearance(); }));
     row("Layout", "Auto gives a phone the compact layout; Desktop on a phone shows the full layout zoomed out.",
       segOf("Layout", [["auto", "Auto"], ["mobile", "Mobile"], ["desktop", "Desktop"]], T.viewPref(), (v) => { T.setView(v); renderAppearance(); }));
-    row("Background", "The helmet: silver with buckeye-leaf stickers behind the pages, faint. Plain is the scheme's own pale ground. Per device.",
-      segOf("Background", [["on", "Helmet"], ["off", "Plain"]], helmetOn() ? "on" : "off", (v) => { try { localStorage.setItem("draft2027.helmet", v); } catch {} buildHelmet(); renderAppearance(); }));
     row("Percentile bars", "How the bars on a player's card are drawn.",
       segOf("Percentile bars", [["savant", "Savant charts"], ["classic", "Classic meters"]], state.bars, (v) => { state.bars = v; savePrefs(); render(); }));
     // type: one line per font, set in that font
