@@ -1603,6 +1603,17 @@ is deploy-limited.
   (Cavalli 2025: +9.7; his 2026 card reads −0.1 on the Raw side, +3.7 on the Stuff side). The refit without it (`xkrefit.js`) is history; the
   glossary says xK% is the same-season read and Whiff% − xK% the forward one.
 
+* **No xK% on the card; Whiff% with a fold-out, and Control (Sean, 5 Oct 2026: "no xK% at all. Let's just use whiff rate ... show K%, then whiff
+  rate. Then below Whiff rate have a drop down with overall whiff rate, 2 strike whiff rate, foul%, and called strike percentage ... in skills
+  show whiff rate and ... an average of their strike percentile and their 3 ball strike percentile ... walk avoidance ... bb%, strike%, and 3 ball
+  strike %")**: `PCT_COLS_P` = Skills (Whiff% · **Control**) · Swing & Miss (K% · Whiff% ▸ 2-strike Whiff%, Foul%, Called Strike%) · Batted Ball |
+  Walk Avoidance (BB% · Strike% · 3-ball Strike%) · Rating; `PCT_COLS_PS` the same on the Pitching+ expected rates (xWhiff% ▸ x2-strike Whiff%,
+  xFoul%, xCalled Strike%). **Control** (`ctrl`, `CTRL_M`) = the mean of his Strike% and 3-ball Strike% percentiles, a 0-100 number whose
+  bubble is itself like the Rating's — on the pool's stats (`ctrlOf` in `pool()`) and `placeIn`'s return; a card row only, not a column.
+  **Fold-outs in the Savant bars**: a `PCT_COLS_*` entry may be `{ k, sub: [...] }` — `rowsOf` in `pctColumns` draws the parent with ▸ / ▾
+  before its name (`r.fold`, `state.open["card:<k>"]`) and, open, its sub rows after it (`r.sub`, `.svsub` lighter); in `pctSvg` tapping the
+  name toggles, the bar still opens the note; `specKeys` flattens a spec for Compare and the column picker. xK% / Whiff% − xK% stay columns and
+  the xK% / xBB% tabs stay as they were. (PR #334.)
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
