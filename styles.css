@@ -3908,3 +3908,10 @@ header.top .wordmark { display: none; }
 /* a phone's Leaderboard pages again (Sean, 5 Oct 2026): the page numbers on a line of their own under the filter row */
 :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow { display: flex; justify-content: center; padding: 2px 0 6px; }
 :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow .pnav { display: flex; gap: 4px; align-items: center; }
+
+/* K% / BB% drivers tab (Sean, 5 Oct 2026): two small tables, the stat names left, the fit's total row on a rule */
+.drivers .drvblock > b { display: block; margin: 0 0 6px; }
+.drivers .drvt td.l, .drivers .drvt th:first-child { text-align: left; }
+.drivers .drvt td { white-space: nowrap; }
+.drivers .drvtot td { border-top: 1px solid var(--line-soft, #c9ced6); color: var(--ink-2, #4a5563); }
+.drivers .note { margin-top: 10px; }
