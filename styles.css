@@ -3915,7 +3915,8 @@ header.top .wordmark { display: none; }
   content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; display: block !important;
   background: var(--helmet-img) 0 0 / 560px 560px repeat; opacity: 0.26; -webkit-mask: none; mask: none; }
 :root.helmet body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-mode="mock"],[data-mode="home"],[data-mode="appearance"])::after, :root.helmet .modal.pagebg .modal-back::after { display: none !important; }
-:root.helmet body > * { position: relative; z-index: 1; }
+/* (a `body > * { position: relative }` lift for the stickers lived here until 5 Oct 2026 — it turned the sticky header and every fixed
+   dropdown / modal appended to body into in-flow boxes, so Filters opened nowhere and the header scrolled away. Never position body's children wholesale.) */
 
 /* ---------- The Raya dress (Sean, 5 Oct 2026: "That looks absolutely awesome let's do it", from the Raya Dress Mock page) ----------
    restraint, not a redesign: every outline and fill goes, the type is light with three sizes, small labels are tracked uppercase (the one

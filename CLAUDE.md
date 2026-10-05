@@ -1639,7 +1639,10 @@ is deploy-limited.
   stickers packed in offset rows over the silver, each with one dark five-leaflet buckeye leaf, at 26% — `buildHelmet()`; the green leaves
   of the first try are gone. **Then no stickers at all** (Sean, minutes later: "get rid of the stickers that is bad and busy"): `buildHelmet()`
   only sets the `helmet` + `nopattern` classes, the silver ground stays with nothing drawn on it, and the Appearance ▸ Background row is
-  gone. Don't bring the stickers or the swirl back unasked.
+  gone. Don't bring the stickers or the swirl back unasked. **The helmet's `body > * { position: relative; z-index: 1 }` lift broke the
+  site** (Sean: the header not frozen, "all of the like filter buttons are not working"): it turned the sticky header and every fixed
+  dropdown / window appended to body (`#pop`, `.ddmenu`, `.phmodal`, `#modal`) into in-flow boxes. Removed the same evening — never position
+  body's children wholesale.
 
 ## 9. Things only Sean can do
 
