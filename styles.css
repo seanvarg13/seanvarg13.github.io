@@ -3874,3 +3874,7 @@ header.top .wordmark { display: none; }
 /* the card's tables back to compact rows (Sean, 3 Oct 2026: "way too big for what is needed for the player card") — the navy header stays */
 :root:root:root:root :is(#modal, #xboard) .btabbody table td, :root:root:root:root :is(#modal, #xboard) .btabbody .gamesbox table td, :root:root:root:root:root .btabbody table td, :root:root:root:root:root .gamesbox table td, :root:root:root:root:root .uerabox .ubt td { height: auto; font-size: 12.5px; padding-top: 5px; padding-bottom: 5px; }
 :root:root:root:root :is(#modal, #xboard) .btabbody table th, :root:root:root:root :is(#modal, #xboard) .btabbody table thead th, :root:root:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead tr:not(.ggrp) th, :root:root:root:root:root .btabbody table th, :root:root:root:root:root .gamesbox table th, :root:root:root:root:root .uerabox .ubt th { padding-top: 6px; padding-bottom: 6px; }
+
+/* a phone's Leaderboard pages again (Sean, 5 Oct 2026): the page numbers on a line of their own under the filter row */
+:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow { display: flex; justify-content: center; padding: 2px 0 6px; }
+:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow .pnav { display: flex; gap: 4px; align-items: center; }
