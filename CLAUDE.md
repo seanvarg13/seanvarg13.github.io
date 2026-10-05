@@ -1613,7 +1613,9 @@ is deploy-limited.
   **Fold-outs in the Savant bars**: a `PCT_COLS_*` entry may be `{ k, sub: [...] }` — `rowsOf` in `pctColumns` draws the parent with ▸ / ▾
   before its name (`r.fold`, `state.open["card:<k>"]`) and, open, its sub rows after it (`r.sub`, `.svsub` lighter); in `pctSvg` tapping the
   name toggles, the bar still opens the note; `specKeys` flattens a spec for Compare and the column picker. xK% / Whiff% − xK% stay columns and
-  the xK% / xBB% tabs stay as they were. (PR #334.)
+  (PR #334). **Then** (Sean, minutes later: "no need to show called strikes actually. And we can get rid of the xk% and xbb% tabs"): the fold-out is
+  2-strike Whiff% · Foul% (xFoul% on the Stuff side) and `BTABS_P` is Pitching+ · nERA — `renderPctTab`, `XK_COLS_P` / `XBB_COLS_P` and the
+  `pick === "xk" / "xbb"` branches stay in `app.js`, unreachable; a saved `pbtab` of xk / xbb falls back to Stats.
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
