@@ -3915,3 +3915,4 @@ header.top .wordmark { display: none; }
 .drivers .drvt td { white-space: nowrap; }
 .drivers .drvtot td { border-top: 1px solid var(--line-soft, #c9ced6); color: var(--ink-2, #4a5563); }
 .drivers .note { margin-top: 10px; }
+.drivers .drvconst td { color: var(--ink-2, #4a5563); }
