@@ -7715,10 +7715,11 @@
   // have a drop down with ... 2 strike whiff rate, foul%, and called strike percentage ... in skills show whiff rate and ... an average of
   // their strike percentile and their 3 ball strike percentile ... walk avoidance ... bb%, strike%, and 3 ball strike %"): Skills = Whiff% ·
   // Control, Swing & Miss = K% · Whiff% (fold-out: 2-strike Whiff%, Foul%, Called Strike%); the Stuff side the Pitching+ expected ones
-  const PCT_COLS_P = [[["Skills", ["whf", "ctrl"]], ["Swing & Miss", ["k", { k: "whf", sub: ["s2whf", "foul"] }]], ["Batted Ball", ["gb", "pu", "mixw"]]],
-                      [["Walk Avoidance", ["bb", "strk", "b3strk"]], ["Rating", ["rating", "xkbb", "mixw"]]]];
-  const PCT_COLS_PS = [[["Skills", ["nwhf", "ctrl"]], ["Swing & Miss", ["k", { k: "nwhf", sub: ["ns2whf", "nfoul"] }]], ["Batted Ball", ["ngb", "npu", "nmix"]]],
-                       [["Walk Avoidance", ["bb", "strk", "b3strk"]], ["Rating", ["xrat", "xkbbs", "nmix"]]]];
+  // Walk Avoidance under Swing & Miss, ahead of Batted Ball (Sean, 5 Oct 2026); left 7 rows, right 6
+  const PCT_COLS_P = [[["Skills", ["whf", "ctrl"]], ["Swing & Miss", ["k", { k: "whf", sub: ["s2whf", "foul"] }]], ["Walk Avoidance", ["bb", "strk", "b3strk"]]],
+                      [["Batted Ball", ["gb", "pu", "mixw"]], ["Rating", ["rating", "xkbb", "mixw"]]]];
+  const PCT_COLS_PS = [[["Skills", ["nwhf", "ctrl"]], ["Swing & Miss", ["k", { k: "nwhf", sub: ["ns2whf", "nfoul"] }]], ["Walk Avoidance", ["bb", "strk", "b3strk"]]],
+                       [["Batted Ball", ["ngb", "npu", "nmix"]], ["Rating", ["xrat", "xkbbs", "nmix"]]]];
   const STUFF_LABELS = { xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => state.cardSide === "stuff";
   // the Raw | Stuff switch: beside Filters on a desktop, the first row of the Filters window on a phone (Sean, 4 Oct 2026)

@@ -1758,3 +1758,5 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   good direction, so red = pushes K% up / BB% down); a "The fit" row (R², his actual, the league, the league + every effect = what the fit says)
   and a head line "K% 28.1 · the fit says 26.6 (+1.5)". Same-season fits, so the two-strike / three-ball rates sit close to the outcome; the
   note says Whiff% and Strike% are what carry forward. A file without a stat shows "–" and no effect for that row.
+* **Walk Avoidance under Swing & Miss (Sean, 5 Oct 2026: "put walk avoidance below swing and miss and in front of batted ball")**: `PCT_COLS_P` /
+  `PCT_COLS_PS` left = Skills · Swing & Miss · Walk Avoidance, right = Batted Ball · Rating (a phone stacks them in that order).
