@@ -8280,7 +8280,8 @@
     (plate.querySelector(".hstrip") || mr || plate).append(tog);
     if (p.type === "P") {                                 // a phone: vertical, to the left of Filters, the same box as Filters (Sean, 4 Oct 2026)
       const ss = sideSwitch();
-      if (mob) { ss.classList.add("vert"); tog.before(ss); requestAnimationFrame(() => { if (fs.isConnected) { ss.style.height = fs.offsetHeight + "px"; ss.style.width = fs.offsetWidth + "px"; } }); }
+      // each of Raw and Stuff the size of the Filters button (Sean, 5 Oct 2026: "each of raw and stuff to be as big, so technically it should be twice as tall")
+      if (mob) { ss.classList.add("vert"); tog.before(ss); requestAnimationFrame(() => { if (fs.isConnected) { ss.style.width = fs.offsetWidth + "px"; for (const x of ss.children) x.style.height = b.offsetHeight + "px"; } }); }
       else tog.after(ss);
     }
     { const ts = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (ts) tog.after(ts); }   // a two-way player's switch: right after Filters, a row saved
