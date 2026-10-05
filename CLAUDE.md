@@ -1624,6 +1624,21 @@ is deploy-limited.
   `draft2027.helmet`; `helmetOn()`); Plain puts `nopattern` back. This supersedes "the swirl is gone / don't bring it back" above for the
   ground only — the swirl drawing itself stays unused. No centre stripe.
 
+* **The Raya dress (Sean, 5 Oct 2026, from the Raya Dress Mock page: "That looks absolutely awesome let's do it")**: the block at the very end
+  of `styles.css` (six-root prefix, `--raya` the one accent, `--raya-hair` the hairline) — **no frames or fills**: the format pass's 1px
+  outlines, the rows' box, the card, its tabs' box, home cards and the pager bar lose their borders; table headers (the Leaderboard, Fantasy,
+  the Pitching+ board, every card table and the game log) are grey tracked names on the paper over a hairline with the sorted one in the
+  accent, not navy with white text; the card's band is on the paper with no rule; the toolbar buttons, Filters / Raw-Stuff, the card tabs,
+  pills and segments are words with no outline or fill, the active one in the accent; the sorted column has no fill — `hotInk` in `app.js`
+  gives its values their percentile colour as ink (the heat map keeps its fills). **Type**: everything at weight 300 (numbers, values and
+  table cells at 400; `themes.js` loads the 300s), names and headings in the condensed face at 300, and **small labels tracked uppercase**
+  (nav, column names, section names in the bars — `.svsecname` at 11px in the body face, no rule under it — buttons, tabs, the band's bio
+  labels, the list rows' team line): the one place the no-capitals rule (second minimal pass) is reversed. The header and the Leaderboard's
+  filter row and note sit on the paper so the stickers don't run under the words. Savant's bars and bubbles, the sections, the lists'
+  density, square corners and no shadows are untouched. **The helmet stickers are the real ones** (Sean's photo, the same day): white round
+  stickers packed in offset rows over the silver, each with one dark five-leaflet buckeye leaf, at 26% — `buildHelmet()`; the green leaves
+  of the first try are gone.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:

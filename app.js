@@ -1747,6 +1747,9 @@
     if (pct != null) { const b = el("div", "bub" + (pct >= 100 ? " c3" : ""), pct); b.style.left = svAt(pct); b.style.background = s.bub; t.append(b); }
     return t;
   }
+  // the Raya dress (Sean, 5 Oct 2026): with the colour scale off the sorted column has no fill — its values take their percentile
+  // colour as ink, the way a bubble carries it; the heat map (every column filled) keeps the fills
+  function hotInk(node, pct) { if (state.tbl.heat) return; const s = pctStyle(pct); if (s) { node.style.background = ""; node.style.color = s.bg; } }
   function paint(node, pct) { const s = pctStyle(pct); if (s) { node.style.background = s.bg; node.style.color = s.fg; } }
   // a percentile coloured as the player card's bars colour it: Savant's scale for the charts, the heat scale under
   // Classic meters (Sean: the Season Stats uERA chip matches the sliders), with dark or white text, whichever reads
@@ -2504,7 +2507,7 @@
       who.append(meta);
       main.append(who);
       for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const b = el("div", "pct pre", on ? preValue(c.key, p) : ""); if (!on) b.classList.add("off"); else { if (state.sort === c.key && !customOrder()) b.classList.add("sorted"); b.prepend(el("span", "lbl", c.label)); } main.append(b); }
-      const sc = el("div", "score", p.type === "H" ? fmtX(st.score) : Math.round(st.score)); if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null; if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) sc.classList.add("hot"); } } if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
+      const sc = el("div", "score", p.type === "H" ? fmtX(st.score) : Math.round(st.score)); if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null; if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) { sc.classList.add("hot"); hotInk(sc, sp); } } } if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
       sc.title = p.type === "H" ? `${HEAD.label} ${fmtX(st.score)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl` : `Rating ${Math.round(st.score)}: ${DATA.meta.scoreNote.P}`; main.append(sc);
       const pcts = el("div", "pcts");
       for (const m of ms) {
@@ -2515,7 +2518,7 @@
           // is filled with its percentile colour, the rest plain unless heat is on for all (xwOBA − wOBA was coloured too, until
           // Sean: "dont heat map xwoba - woba")
           const hot = state.sort === m.key && !customOrder();
-          if ((state.tbl.heat || hot) && pct != null) { paint(b, pct); if (hot) b.classList.add("hot"); } }
+          if ((state.tbl.heat || hot) && pct != null) { paint(b, pct); if (hot) { b.classList.add("hot"); hotInk(b, pct); } } }
         if (state.sort === m.key && !customOrder()) b.classList.add("sorted");
         if (hasBreak(g, m.key)) b.classList.add("brk");
         b.title = `${m.label}: ${v == null ? "n/a" : fmt(v, m)} (${pct == null ? "n/a" : ordinal(pct)} pctl)`;
@@ -3739,20 +3742,21 @@
     try {
       let s = 7; const rnd = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
       const dark = matchMedia("(prefers-color-scheme: dark)").matches ? root.dataset.theme !== "light" : root.dataset.theme === "dark";
-      const green = dark ? "#4a9a3c" : "#2f7a2a", edge = dark ? "#e9ecef" : "#ffffff", ink = dark ? "#e9ecef" : "#ffffff";
-      // one buckeye leaf: five leaflets fanned from a point over a short stem, the white sticker edge round each leaflet
-      const leaf = (num) => { let d = "";
-        for (let i = -2; i <= 2; i++) { const t = -90 + i * 34, r = 11 + (i === 0 ? 2 : Math.abs(i) === 1 ? 0.5 : -1.5);
-          d += `<ellipse cx="0" cy="${-r / 2}" rx="2.6" ry="${r / 2}" transform="rotate(${t + 90})" fill="${green}" stroke="${edge}" stroke-width="1.1"/>`; }
-        d += `<path d="M0,0 L0,6" stroke="${edge}" stroke-width="1.6" stroke-linecap="round"/><path d="M0,0 L0,6" stroke="${green}" stroke-width="0.8" stroke-linecap="round"/>`;
-        if (num) d += `<text x="0" y="-5" text-anchor="middle" font-family="Arial, sans-serif" font-size="4.6" font-weight="700" fill="${ink}">${num}</text>`;
+      // the real helmet (Sean's photo, 5 Oct 2026): white round stickers packed over the silver, each with one dark buckeye leaf —
+      // five pointed leaflets fanned from the stem — not the green leaves of the first try
+      const paper = dark ? "#d6d9de" : "#ffffff", leafInk = dark ? "#14171b" : "#1c1f24";
+      const leaf = () => { let d = "";
+        for (let i = -2; i <= 2; i++) { const a = -90 + i * 36, L = i === 0 ? 13.5 : Math.abs(i) === 1 ? 12.5 : 10.5;
+          // a leaflet: a pointed, slightly toothed blade from the centre out, drawn as a closed path and rotated into place
+          d += `<path d="M0,0 C1.6,-${(L * 0.3).toFixed(1)} 2.6,-${(L * 0.55).toFixed(1)} 1.3,-${(L * 0.8).toFixed(1)} L0,-${L} L-1.3,-${(L * 0.8).toFixed(1)} C-2.6,-${(L * 0.55).toFixed(1)} -1.6,-${(L * 0.3).toFixed(1)} 0,0 Z" fill="${leafInk}" transform="rotate(${a + 90})"/>`; }
+        d += `<path d="M0,0.5 L0,6.5" stroke="${leafInk}" stroke-width="1.5" stroke-linecap="round"/>`;
         return d; };
-      const T = 560, N = 4, cell = T / N, parts = [];
-      for (let gy = 0; gy < N; gy++) for (let gx = 0; gx < N; gx++) {
-        if (rnd() < 0.22) continue;                                          // gaps: the stickers bunch and leave bare silver
-        const x = gx * cell + cell * (0.25 + 0.5 * rnd()), y = gy * cell + cell * (0.25 + 0.5 * rnd()), sc = 1.15 + 0.7 * rnd(), rot = Math.round(rnd() * 360);
-        const num = rnd() < 0.3 ? String(1 + Math.floor(rnd() * 9)) : "";
-        parts.push(`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot}) scale(${sc.toFixed(2)})">${leaf(num)}</g>`);
+      const T = 560, R = 19, cell = 44, rowH = cell * 0.87, parts = [];
+      const rows = Math.round(T / rowH), cols = Math.round(T / cell);
+      for (let gy = 0; gy < rows; gy++) for (let gx = 0; gx < cols; gx++) {
+        if (rnd() < 0.07) continue;                                          // the odd bare spot, as on a helmet
+        const x = gx * cell + (gy % 2 ? cell / 2 : 0) + (rnd() - 0.5) * 5, y = gy * rowH + rowH / 2 + (rnd() - 0.5) * 5, rot = Math.round(rnd() * 360);
+        parts.push(`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><circle r="${R}" fill="${paper}"/><g transform="rotate(${rot}) translate(0 2.5) scale(1.05)">${leaf()}</g></g>`);
       }
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${T}" height="${T}" viewBox="0 0 ${T} ${T}">${parts.join("")}</svg>`;
       root.style.setProperty("--helmet-img", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);

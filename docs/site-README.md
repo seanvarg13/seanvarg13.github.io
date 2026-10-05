@@ -988,3 +988,9 @@ and Phillips low) come most of the way in. Pitches without a tracked swing, and 
 
 Appearance ▸ Background picks the ground behind the list pages and the popup card: **Helmet** (the default) scatters faint buckeye-leaf
 stickers over a silver ground, like an Ohio State helmet; **Plain** is the pale tint it had before. Per device.
+
+## The dress
+
+Since 5 Oct 2026 the site wears a quieter dress: no outlines or filled headers, light type with small tracked labels, one blue for whatever
+is active, and colour only in the percentile bars and the sorted column's values. The ground is an Ohio State helmet: white buckeye-leaf
+stickers over silver (Appearance ▸ Background turns it off).

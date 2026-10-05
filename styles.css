@@ -3913,6 +3913,91 @@ header.top .wordmark { display: none; }
 :root.helmet body, :root.helmet .modal.pagebg .modal-back { background: var(--ground); }
 :root.helmet body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-mode="mock"],[data-mode="home"],[data-mode="appearance"])::before, :root.helmet .modal.pagebg .modal-back::before {
   content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; display: block !important;
-  background: var(--helmet-img) 0 0 / 560px 560px repeat; opacity: 0.32; -webkit-mask: none; mask: none; }
+  background: var(--helmet-img) 0 0 / 560px 560px repeat; opacity: 0.26; -webkit-mask: none; mask: none; }
 :root.helmet body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"],[data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-mode="mock"],[data-mode="home"],[data-mode="appearance"])::after, :root.helmet .modal.pagebg .modal-back::after { display: none !important; }
 :root.helmet body > * { position: relative; z-index: 1; }
+
+/* ---------- The Raya dress (Sean, 5 Oct 2026: "That looks absolutely awesome let's do it", from the Raya Dress Mock page) ----------
+   restraint, not a redesign: every outline and fill goes, the type is light with three sizes, small labels are tracked uppercase (the one
+   place the no-capitals rule is reversed), one accent marks what is active, and red / blue live only in the bars and the sorted column.
+   Savant's bars and bubbles, the card's sections, the lists' density, square corners and the helmet ground are untouched. The six-root
+   prefix outranks every earlier block; the --raya tokens are the dress's only colours. */
+:root { --raya: #2b6cb0; --raya-hair: color-mix(in srgb, var(--ink) 12%, transparent); --raya-track: 0.14em; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --raya: #7fb2ea; } }
+:root[data-theme="dark"] { --raya: #7fb2ea; }
+/* type: light everywhere, numbers at 400 so they stay readable; names and headings in the condensed face at 300 */
+:root:root:root:root:root:root :not(.svnum) { font-weight: 300 !important; }
+:root:root:root:root:root:root :is(.pct, .score, .hchip b, .hval, td, .svval, .pbtable td, .ftable td, .num, .mkcost, .bubble, .chipval, .tile b, .big, .fp) { font-weight: 400 !important; }
+:root:root:root:root:root:root :is(.pthd, .phead h2, .phname, .hub.home h2, .hcard h3, .hub h2) { font-weight: 300 !important; letter-spacing: 0.01em !important; }
+/* small tracked labels: nav, column names, section names, buttons, tabs, the band's bio labels */
+:root:root:root:root:root:root :is(.modes a, .modes .modesel, #colhead .h, .ftable th, .ftable th button.h, .pbtable thead th, .pbtable thead th .sortbtn, .btabbody table th, .gamesbox table th,
+  .uerabox .ubt th, .tbtn, .segbtn, .btab, .pill, .lbtabs .segbtn, .cgroup, .secname, .rollname, .phead .hstrip .hchip.fact i, .lbtab, .fpage button, .ftabs button, .ftab, .plabel, .ptab, .navtog)
+  { font-family: var(--body) !important; font-size: 11px !important; letter-spacing: var(--raya-track) !important; text-transform: uppercase !important; font-weight: 400 !important; }
+:root:root:root:root:root:root .svpct .svsecname { font-family: var(--body); font-size: 11px; font-weight: 400 !important; letter-spacing: 0.16em !important; text-transform: uppercase !important; fill: var(--muted); }
+:root:root:root:root:root:root .svpct .svsecrule { fill: transparent; }
+:root:root:root:root:root:root .svpct .svlbl { fill: var(--ink); }
+:root:root:root:root:root:root .svpct .svlbl.svval { fill: var(--ink); }
+:root:root:root:root:root:root .svpct .svlbl.svsub { fill: var(--muted); }
+:root:root:root:root:root:root .svpct .svscale { fill: var(--muted); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; }
+/* no frames, no fills: the format pass's outlines, the rows' box, the card, its tabs' box, home cards, the dropdowns' panels */
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) .board > .board-scroll, :root:root:root:root:root:root body[data-mode="pitches"] #pitchboard > .pbscroll,
+:root:root:root:root:root:root body:is([data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-mode="mock"]) #pitchboard > .pbscroll,
+:root:root:root:root:root:root .hcard, :root:root:root:root:root:root .fscroll, :root:root:root:root:root:root .btabbody, :root:root:root:root:root:root .modal.pcard .modal-panel, :root:root:root:root:root:root .modal-panel,
+:root:root:root:root:root:root body:is([data-mode="rankings"],[data-mode="draft"],[data-mode="fantasy"],[data-mode="eligibility"],[data-mode="compare"]) main.wrap,
+:root:root:root:root:root:root #bscroll, :root:root:root:root:root:root #rows, :root:root:root:root:root:root .board, :root:root:root:root:root:root .lbtabs, :root:root:root:root:root:root .gframe, :root:root:root:root:root:root .ftable-wrap,
+:root:root:root:root:root:root .btabbody .ubt, :root:root:root:root:root:root .uerabox, :root:root:root:root:root:root .mug, :root:root:root:root:root:root .pager { border-color: transparent !important; box-shadow: none !important; outline: 0 !important; }
+:root:root:root:root:root:root .pop, :root:root:root:root:root:root .ddmenu, :root:root:root:root:root:root .phwin.pop { border: 1px solid var(--raya-hair) !important; box-shadow: none !important; }
+/* the header: on the ground, pages as tracked words with the current one underlined in the accent, the search a bare line */
+:root:root:root:root:root:root header.top { background: transparent; border-bottom: 1px solid var(--raya-hair); box-shadow: none; }
+:root:root:root:root:root:root :is(.modes a, .modes .modesel) { color: var(--muted); background: none; border: 0; border-bottom: 1px solid transparent; margin-bottom: 0; padding: 6px 0; }
+:root:root:root:root:root:root :is(.modes a, .modes .modesel):hover { color: var(--ink); background: none; }
+:root:root:root:root:root:root :is(.modes a, .modes .modesel)[aria-current="page"] { color: var(--ink); background: none; border-bottom-color: var(--raya); }
+:root:root:root:root:root:root .search input { border: 0; border-bottom: 1px solid var(--raya-hair); background: transparent; border-radius: 0; box-shadow: none; }
+/* table headers: grey tracked names on the paper over a hairline, the sorted one in the accent */
+:root:root:root:root:root:root :is(#colhead, #colhead .h, #colhead .h:first-child, #colhead .h:nth-child(2), .ftable th, .ftable th button.h, .ftable th.n, .ftable th.who, .pbtable thead th, .pbtable thead th .sortbtn,
+  .btabbody table th, .btabbody table thead th, .gamesbox table th, .uerabox .ubt th, .gamesbox .ubt.glog thead, :is(#modal, #xboard) .btabbody table th, :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead tr:not(.ggrp) th)
+  { background: var(--surface) !important; color: var(--muted) !important; border-bottom-color: var(--raya-hair) !important; }
+:root:root:root:root:root:root :is(#colhead .h:hover, .ftable th button.h:hover, .pbtable thead th .sortbtn:hover) { color: var(--ink) !important; background: var(--surface) !important; }
+:root:root:root:root:root:root :is(#colhead .h[aria-sort], .ftable th[aria-sort] button.h, .pbtable thead th .sortbtn.on) { color: var(--raya) !important; }
+:root:root:root:root:root:root #colhead { border-bottom: 1px solid var(--raya-hair) !important; }
+/* the band: on the paper, no rule, the facts' values light */
+:root:root:root:root:root:root :is(.mplate, .phead .mplate) { background: var(--surface) !important; border-bottom: 0 !important; box-shadow: none !important; }
+:root:root:root:root:root:root .phead .hstrip .hchip.fact b { font-size: 18px; }
+:root:root:root:root:root:root .phead .hstrip .hchip.fact i { color: var(--muted); }
+:root:root:root:root:root:root[data-view="mobile"] .phead .hrow { border-top: 1px solid var(--raya-hair); }
+/* buttons are words: no outline, no fill; the one that is active or open in the accent */
+:root:root:root:root:root:root :is(.tbtn, #pagertop .tbtns .tbtn, .segbtn, .seg, .btab, .pill, .phead .phfilt .segbtn, .phside .segbtn, .lbtabs .seg, .fpage, .fpage button, .ftabs button, .ptab, .navtog)
+  { border: 0 !important; background: transparent !important; box-shadow: none !important; color: var(--muted); border-radius: 0; }
+:root:root:root:root:root:root .seg .segbtn + .segbtn { border-left: 0 !important; }
+:root:root:root:root:root:root :is(.tbtn.on, .tbtn[aria-expanded="true"], #pagertop .tbtns .tbtn.on, #pagertop .tbtns .tbtn[aria-expanded="true"], .segbtn.on, .segbtn[aria-pressed="true"], .segbtn[aria-selected="true"],
+  .btab.on, .btab[aria-selected="true"], .btab[aria-pressed="true"], .phside .segbtn.on, .phead .phfilt .segbtn[aria-expanded="true"], .fpage button.on, .ftabs button.on, .ptab.on, .lbtab.on)
+  { color: var(--raya) !important; background: transparent !important; border: 0 !important; }
+:root:root:root:root:root:root :is(.tbtn, .segbtn, .btab, .pill) { padding-left: 8px; padding-right: 8px; min-height: 30px; }
+:root:root:root:root:root:root .btabs { gap: 14px; }
+:root:root:root:root:root:root #pagertop > #minfield.topmin input { border: 0; border-bottom: 1px solid var(--raya-hair); background: transparent; border-radius: 0; }
+:root:root:root:root:root:root .pager { background: transparent; border: 0; }
+:root:root:root:root:root:root .pager button, :root:root:root:root:root:root .pager .pg { border: 0; background: transparent; color: var(--muted); }
+:root:root:root:root:root:root .pager button.on, :root:root:root:root:root:root .pager .pg.on { color: var(--raya); background: transparent; }
+/* the sorted column: no fill (its values carry their percentile colour, hotInk in app.js); rows separated by hairlines */
+:root:root:root:root:root:root #rows .row-main > .hot, :root:root:root:root:root:root #rows .row-main .pcts > .hot, :root:root:root:root:root:root td.fsorted { background: transparent !important; }
+:root:root:root:root:root:root .row-main { border-bottom: 1px solid var(--raya-hair); }
+:root:root:root:root:root:root .row-main:hover, :root:root:root:root:root:root .row[aria-expanded="true"] .row-main { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+:root:root:root:root:root:root #board .row-main .name { font-family: var(--display); font-size: 16px; }
+:root:root:root:root:root:root #board .meta { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+/* section rules under the card tabs' headings and the card's own rules, all the one hairline; Similar as plain names */
+:root:root:root:root:root:root :is(.sechd, .pchead, .btabbody, .lbtabs, .hrow, .simrow) { border-color: var(--raya-hair) !important; }
+:root:root:root:root:root:root .btabbody { margin-top: 10px; border-top: 1px solid var(--raya-hair) !important; }
+:root:root:root:root:root:root .simrow .simname { color: var(--ink); }
+:root:root:root:root:root:root .lbnote, :root:root:root:root:root:root .pcount { color: var(--muted); }
+/* the header and the list pages' filter row on the paper (the stickers run under the words otherwise); the menu openers and the Min / Standard pills tracked too */
+:root:root:root:root:root:root header.top { background: var(--surface); }
+:root:root:root:root:root:root :is(.modesel-txt, #minfield > span, .pill-text, .modesel-btn) { font-family: var(--body) !important; font-size: 11px !important; letter-spacing: var(--raya-track) !important; text-transform: uppercase !important; }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop { background: var(--surface); padding: 10px 12px 6px; margin-bottom: 0; }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) main.wrap > .notes .lbnote { background: var(--surface); margin: 0; padding: 10px 12px 12px; }
+:root:root:root:root:root:root #colhead .h { padding-top: 10px !important; padding-bottom: 10px !important; }
+/* nav spacing, the phone band's facts row labels, the sorted column name */
+:root:root:root:root:root:root .modes { gap: 22px; }
+:root:root:root:root:root:root :is(.modes a, .modes .modesel) { padding: 6px 2px; }
+:root:root:root:root:root:root .phead .hrow .hchip.fact i { font-family: var(--body) !important; font-size: 10px !important; letter-spacing: var(--raya-track) !important; text-transform: uppercase !important; color: var(--muted); }
+:root:root:root:root:root:root #colhead .h.sorted, :root:root:root:root:root:root #colhead .h.on { color: var(--raya) !important; }
+:root:root:root:root:root:root .hub.home .hline { background: var(--surface); display: inline-block; padding: 4px 10px; }
