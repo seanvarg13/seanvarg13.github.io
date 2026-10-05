@@ -3892,5 +3892,5 @@ header.top .wordmark { display: none; }
 .phead .phside.vert .segbtn { flex: none; padding: 0 4px; font-size: 11px; line-height: 1; min-height: 0; }
 :root[data-view="mobile"] .phead .hstrip .phside.vert { margin-left: auto; margin-right: 0; }
 :root[data-view="mobile"] .phead .hstrip .phside.vert + .phtog { margin-left: 6px; }
-:root[data-view="mobile"] .phead .hstrip .phside.vert + .phtog { align-self: center; }
-:root[data-view="mobile"] .phead .hstrip:has(.phside.vert) { align-items: center; }
+:root[data-view="mobile"] .phead .hstrip .phside.vert + .phtog { align-self: flex-end; }   /* Filters level with Stuff, Raw above it (Sean, 5 Oct 2026) */
+:root[data-view="mobile"] .phead .hstrip:has(.phside.vert) { align-items: flex-end; }
