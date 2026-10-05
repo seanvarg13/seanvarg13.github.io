@@ -1780,3 +1780,17 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Chase% 5.1 · the rest under 3. Near-duplicates (CSW% / SwStr% / Whiff%) share the credit, which is what the LMG split is for. `DRIVERS` /
   `DRV_LABEL` / `DRV_XLAB`; the BB% table is the same on both sides (uBB% has no expected side). The eight-input fits of the first version are
   history. Skenes 2026: K% 28.1 · xK% 27.2 / Pitching+ xK% 27.5; BB% 6.9 · uBB% 7.0.
+* **Strikeout composite, Rating and xRating on it (Sean, 5 Oct 2026: "under skills have instead whiff do an average percentile of whiff two strike
+  whiff and foul balls and then make rating be about that and then xrating be the same thing just with the stuff models driving whiffs and fouls")**:
+  **Strikeout** (`kskl`, `KSKL_M`) = his Whiff%, 2-strike Whiff% and Foul% percentiles averaged, a 0-100 number whose bubble is itself like Control —
+  built in `pool()` as `pct.kskl` (with `pct.ctrl`) before the score, on each stats entry (`s.kskl`, `s.pct.kskl / ctrl`) and in `placeIn`;
+  **xStrikeout** (`ksklx`, `KSKLX_M`) = the same on the Pitching+ expected rates (`nwhf / ns2whf / nfoul` percentiles), set after the PK block.
+  **Rating = Strikeout 60 / Control 20 / Mix wOBA 20** (`PITCHER_SCORE_WEIGHTS` / `meta.pitcherWeights` / `scoreNote.P`, `data.js` patched by hand) —
+  the 60 / 20 / 20 keeps the old 80 / 20 skills-vs-mix split with the K side and the walk side at roughly x(K-BB)%'s own 75 / 25 (not backtested
+  against points; `kbbrate.py` can be re-run on it). **xRating = xStrikeout 60 / Control 20 / Mix xwOBA 20** (`XRW`; `renderAsStarter`'s starter
+  xRating places the translated xWhiff%, the scaled x2-strike Whiff%, his xFoul%, the translated Strike% / 3-ball Strike% and the mix in the SP pool).
+  Card: Skills = Strikeout · Control (Stuff side xStrikeout · Control); the Rating section is Rating · Mix wOBA (xRating · Mix xwOBA) — x(K-BB)% /
+  Pitching+ x(K-BB)% are no longer Rating inputs and left the section (still columns, still computed). The Rating · xRating line, glossary (`rating`,
+  `xrat`, `kskl`, `ksklx`) updated. Next-season test behind the choice (scratch `nextk.js`, pairs 2020→26, 100+ BF both years, held out by year):
+  Whiff% + Foul% + Called Strike% forecasts next K% as well as K% itself (r .681 vs .683); 2-strike Whiff% adds nothing forward (.643 → .644) but
+  Sean chose it for the skill read; Strike% + 3-ball Strike% .516 vs BB% alone .545. Skenes 2026: Strikeout 84 · Control 74 · Rating 82 · xRating 70.

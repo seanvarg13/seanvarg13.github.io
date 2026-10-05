@@ -302,7 +302,7 @@
   const LB_EXTRA_H = ["xwdiff", "xwcon", "xk", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp", "fpts", "fpg", "fppa"];
   const LB_EXTRA_P = ["xrat", "nwhf", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "ngb", "npu", "nmix", "wgap", "pitch", "pwhf", "pbb", "sloc", "fpts", "fpg", "fpip", "fpgs"];   // pERA / pK% / pBB% / Pitching uERA off the lists (Sean, 4 Oct 2026: "I simply just want expected whiffs GBs and pus")   // Stuff uERA / Arsenal Opt. off the lists with Stuff+ (4 Oct 2026)
   const NEXT_KEYS = new Set(["xrat", "nwhf", "ngb", "npu", "nmix", "wgap", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "nswstr", "ncsw", "ns2whf", "nfoul"]);   // xK% / Pitching+ xK% (4 Oct 2026)
-  const XRW = { xkbbs: 80, nmix: 20 };   // the Rating's shape (x(K-BB)% 80 / Mix wOBA 20, 4 Oct 2026) with the stuff-side pair: Pitching+ x(K-BB)% and Mix xwOBA. Was xks 55 / xbbf 35 / nmix 10;   // the xRating (Sean, 4 Oct 2026: "xrating xK% ... using their stuff expected whiff rates and stuff expected foul rates ... xBB% as standard ... mix xwoba based on their stuff"), 55 / 35 / 10   // xRating and the expected Mix wOBA too (4 Oct 2026)
+  const XRW = { ksklx: 60, ctrl: 20, nmix: 20 };   // xRating = the Rating's shape with the stuff models driving whiffs and fouls (Sean, 5 Oct 2026): xStrikeout (xWhiff% / x2-strike Whiff% / xFoul% percentiles averaged) 60, Control 20, Mix xwOBA 20. Was Pitching+ x(K-BB)% 80 / Mix xwOBA 20;   // the Rating's shape (x(K-BB)% 80 / Mix wOBA 20, 4 Oct 2026) with the stuff-side pair: Pitching+ x(K-BB)% and Mix xwOBA. Was xks 55 / xbbf 35 / nmix 10;   // the xRating (Sean, 4 Oct 2026: "xrating xK% ... using their stuff expected whiff rates and stuff expected foul rates ... xBB% as standard ... mix xwoba based on their stuff"), 55 / 35 / 10   // xRating and the expected Mix wOBA too (4 Oct 2026)
   // still computed and on the pool's stats, but off every list, panel and sort (Sean, 4 Oct 2026: one Pitching+; "get rid of pERA and pitching+ uERA")
   const RETIRED_P = new Set(["stuff", "swhf", "sbb", "suera", "aopt", "puera", "pera", "nk", "nbb", "uera"]);   // uERA too (Sean, 4 Oct 2026: "Replace uERA with nERA")   // pera / nk / nbb still on the pool's stats, just not listed   // next season's (pERA and the projected rates), read off the pool's stats
   // fantasy points as list columns (Sean, 1 Oct 2026: "on the fantasy rankings and draft board ... points per game and points per PA"):
@@ -1403,16 +1403,21 @@
       // two"; kbbrate.py: against ESPN points per start / inning, same season and next, 80 / 20 beat the 55 / 35 / 10 Rating in every cut and every
       // other split of the two — x(K-BB)% weights xK% and xBB% by their own spreads, ~75 / 25, where 55 / 35 over-weighted the walks)
       pct.xkbb = percentiles(xk0s.map((k, i) => (k == null || V(list[i]).m.xbbf == null ? null : Math.round(10 * (k - V(list[i]).m.xbbf)) / 10)));
+      // Strikeout and Control (Sean, 5 Oct 2026: "under skills have instead whiff do an average percentile of whiff two strike whiff and foul
+      // balls and then make rating be about that"): the three strikeout-skill percentiles averaged, and the two walk-formula ones — the Rating's
+      // inputs with Mix wOBA (Strikeout 60 / Control 20 / Mix wOBA 20, meta.pitcherWeights)
+      const avgPct = (...ks) => list.map((_, i) => (ks.every((k) => pct[k] && pct[k][i] != null) ? Math.round(ks.reduce((a, k) => a + pct[k][i], 0) / ks.length) : null));
+      pct.kskl = avgPct("whf", "s2whf", "foul"); pct.ctrl = avgPct("strk", "b3strk");
       const w = DATA.meta.pitcherWeights, tot = Object.values(w).reduce((a, b) => a + b, 0);
-      score = list.map((_, i) => Object.entries(w).reduce((s, [k, v]) => s + (pct[k][i] ?? 50) * v, 0) / tot);
+      score = list.map((_, i) => Object.entries(w).reduce((s, [k, v]) => s + ((pct[k] && pct[k][i]) ?? 50) * v, 0) / tot);
       scorePct = score.map((x) => Math.round(x));
     }
     const stats = new Map();
     // Control (Sean, 5 Oct 2026: "an average of their strike percentile and their 3 ball strike percentile"): the two walk-formula
     // percentiles averaged, a 0-100 number like the Rating; the card's Skills section and nothing else
-    const ctrlOf = (i) => (pct.strk && pct.b3strk && pct.strk[i] != null && pct.b3strk[i] != null ? Math.round((pct.strk[i] + pct.b3strk[i]) / 2) : null);
-    list.forEach((p, i) => stats.set(p.type + p.id, { pct: Object.fromEntries(allFor(g).map((m) => [m.key, pct[m.key][i]])),
-                                                       score: score[i], scorePct: scorePct[i], blend: blend ? blend[i] : null, ctrl: p.type === "P" ? ctrlOf(i) : null }));
+    const ctrlOf = (i) => (pct.ctrl ? pct.ctrl[i] : null), ksklOf = (i) => (pct.kskl ? pct.kskl[i] : null);
+    list.forEach((p, i) => stats.set(p.type + p.id, { pct: Object.assign(Object.fromEntries(allFor(g).map((m) => [m.key, pct[m.key][i]])), p.type === "P" ? { ctrl: ctrlOf(i), kskl: ksklOf(i) } : {}),
+                                                       score: score[i], scorePct: scorePct[i], blend: blend ? blend[i] : null, ctrl: p.type === "P" ? ctrlOf(i) : null, kskl: p.type === "P" ? ksklOf(i) : null }));
     [...stats.entries()].sort((a, b) => b[1].score - a[1].score).forEach(([k, s], i) => { s.rank = i + 1; });
     // sorted oriented values + scores, so a player outside this pool can be placed in it
     const sorted = {};
@@ -1510,6 +1515,8 @@
       // Rating − xRating closes the next year (slope −.44). Bubic 2025: Rating 84, xRating 67
       // Since the same evening (Sean: "make the weight for xskills 55%/35%/10%"): the xRating is the xSkills' own weights — xK% 55, xBB% 35, Mix xwOBA
       // 10 (XRW) over their percentiles; the Rating keeps meta.pitcherWeights
+      // xStrikeout: the stuff-side composite — xWhiff% / x2-strike Whiff% / xFoul% percentiles averaged (Sean, 5 Oct 2026)
+      list.forEach((p) => { const s = stats.get(p.type + p.id), a = [s.pct.nwhf, s.pct.ns2whf, s.pct.nfoul]; s.ksklx = a.every((x) => x != null) ? Math.round((a[0] + a[1] + a[2]) / 3) : null; s.pct.ksklx = s.ksklx; });
       { const W = XRW, tot = Object.values(W).reduce((a, b) => a + b, 0) || 1;
         const xs = list.map((p) => { const s = stats.get(p.type + p.id), ks = Object.keys(W); if (ks.some((k) => s.pct[k] == null)) return null;
           return Math.round(ks.reduce((a, k) => a + W[k] * s.pct[k], 0) / tot); }), xp = percentiles(xs);
@@ -1572,6 +1579,8 @@
     pct.xkf = xk0 == null || !pl.sorted.xkf ? null : insertPct(pl.sorted.xkf, xk0);
     const xkbb0 = xk0 == null || V(p).m.xbbf == null ? null : Math.round(10 * (xk0 - V(p).m.xbbf)) / 10;   // x(K-BB)%: a Rating input (4 Oct 2026)
     pct.xkbb = xkbb0 == null || !pl.sorted.xkbb ? null : insertPct(pl.sorted.xkbb, xkbb0);
+    pct.ctrl = pct.strk != null && pct.b3strk != null ? Math.round((pct.strk + pct.b3strk) / 2) : null;   // Control and Strikeout: the Rating's skills (5 Oct 2026)
+    pct.kskl = pct.whf != null && pct.s2whf != null && pct.foul != null ? Math.round((pct.whf + pct.s2whf + pct.foul) / 3) : null;
     const w = DATA.meta.pitcherWeights, tot = Object.values(w).reduce((a, b) => a + b, 0);
     const score = Object.entries(w).reduce((s, [k, v]) => s + (pct[k] ?? 50) * v, 0) / tot;
     let above = 0; for (const s of pl.scores) if (s > score) above++;
@@ -1596,14 +1605,15 @@
     nx.xkws = nx.xks == null || nx.nwhf == null ? null : Math.round(10 * (nx.nwhf - nx.xks)) / 10;
     { const x = pj ? xkParts(V(p).m, pj.xw, foulChance(p)) : null; Object.assign(nx, { nswstr: x ? x.swstr : null, ncsw: x ? x.csw : null, ns2whf: x ? x.s2whf : null, nfoul: x ? x.foul : null }); }
     for (const k of Object.keys(nx)) pct[k] = nx[k] == null || !pl.sorted[k] ? null : insertPct(pl.sorted[k], k === "pera" || k === "nbb" || k === "wgap" || k === "nmix" ? -nx[k] : nx[k]);
-    { const W = XRW, tot = Object.values(W).reduce((a, b) => a + b, 0) || 1, ks = Object.keys(W);   // xRating: xK% 55 / xBB% 35 / Mix xwOBA 10
+    nx.ksklx = pct.nwhf != null && pct.ns2whf != null && pct.nfoul != null ? Math.round((pct.nwhf + pct.ns2whf + pct.nfoul) / 3) : null; pct.ksklx = nx.ksklx;
+    { const W = XRW, tot = Object.values(W).reduce((a, b) => a + b, 0) || 1, ks = Object.keys(W);   // xRating: xStrikeout 60 / Control 20 / Mix xwOBA 20
       nx.xrat = ks.some((k) => pct[k] == null) ? null : Math.round(ks.reduce((a, k) => a + W[k] * pct[k], 0) / tot);
       pct.xrat = nx.xrat == null || !pl.sorted.xrat ? null : insertPct(pl.sorted.xrat, nx.xrat); }
     const mera = mixERA(V(p), pl.sorted);
     pct.mera = mera == null || !pl.sorted.mera ? null : insertPct(pl.sorted.mera, -mera);
     const wsgp = wsgpFrom(pct.whf, pct.strk, pct.gb, pct.pu);
     pct.wsgp = wsgp == null || !pl.sorted.wsgp ? null : insertPct(pl.sorted.wsgp, wsgp);
-    return { pct, score, scorePct: Math.round(score), rank: above + 1, outside: true, ukbb, ukb, ctrl: pct.strk != null && pct.b3strk != null ? Math.round((pct.strk + pct.b3strk) / 2) : null,
+    return { pct, score, scorePct: Math.round(score), rank: above + 1, outside: true, ukbb, ukb, ctrl: pct.ctrl, kskl: pct.kskl,
              uk: ukbb ? ukbb.k : null, ubb: ukbb ? ukbb.bb : null, uera, suera, puera, mera, mixw, wsgp, ...nx };
   }
 
@@ -5040,9 +5050,11 @@
     nk: "pK%: the strikeout rate his pitches project for next season — a fit trained on the following year's K% from his whiffs, strikes, swings, stuff, location, mix and age, never his actual K%. Where it sits over his K%, the strikeouts should come.",
     nbb: "pBB%: the walk rate his pitches project for next season — a fit trained on the following year's BB% from his strikes, swings, first-pitch and three-ball strikes, stuff, location, mix and age, never his actual BB%.",
     ctrl: "Control: his Strike% percentile and his 3-ball Strike% percentile averaged — the two rates the walk formula reads most, as one 0-100 number (the bubble is the number itself).",
-    rating: "Rating: x(K-BB)% 80, Mix wOBA 20 over percentiles — the strikeout-minus-walk rate his rates say he should have, and his batted-ball mix, as one 0-100 number (the bubble is the number itself).",
+    rating: "Rating: Strikeout 60, Control 20, Mix wOBA 20 over percentiles — his strikeout skill (Whiff%, 2-strike Whiff% and Foul% percentiles averaged), his strike-throwing (Strike% and 3-ball Strike%) and his batted-ball mix, as one 0-100 number (the bubble is the number itself).",
+    kskl: "Strikeout: his Whiff%, 2-strike Whiff% and Foul% percentiles averaged — the three rates that turn pitches into strikeouts, as one 0-100 number (the bubble is the number itself).",
+    ksklx: "xStrikeout: the same three rates as the Pitching+ models expect them from his pitches, where he throws them and the batter's swing — xWhiff%, x2-strike Whiff% and xFoul% percentiles averaged.",
     xkbbs: "Pitching+ x(K-BB)%: Pitching+ xK% minus xBB% — the strikeout-minus-walk rate his stuff and spots say he should have; the xRating's main input (higher is better).",
-    xrat: "xRating: Pitching+ x(K-BB)% 80, Mix xwOBA 20 over percentiles — the Rating with the whiff side and the batted-ball mix taken from what his stuff and spots should produce rather than what they did. A Rating well above it has run on whiffs or balls in play its stuff didn't earn.",
+    xrat: "xRating: xStrikeout 60, Control 20, Mix xwOBA 20 over percentiles — the Rating with the whiffs, fouls and the batted-ball mix taken from what his stuff and spots should produce rather than what they did. A Rating well above it has run on whiffs or balls in play its stuff didn't earn.",
     nmix: "Mix xwOBA: the league's wOBA per ball in play for the ground-ball / popup mix the Pitching+ model expects from his pitches, the air balls split at the league's line-drive share (lower is better).",
     ncstr: "xCalled Strike%: called strikes per pitch the command models expect — each pitch's chance of being taken for a strike from its traits, its spot and the count, summed and centred on the league's actual rate. Steadier year to year than his actual rate (r .73 vs .60); what it misses — framing, the umpire, sequencing — is about a third of a pitcher's gap and repeats.",
     nswstr: "xSwStr%: swinging strikes per pitch the Pitching+ model expects — his swing rate × its expected whiff rate.",
@@ -7012,8 +7024,13 @@
     const mS = Object.assign({}, m, { strk: sk, fstrk: m.fstrk == null ? null : m.fstrk + AS_SP.fstrk[0], b3strk: m.b3strk == null ? null : m.b3strk + AS_SP.b3strk[0], fbv: fv, pitch: pt,
                                       whf: m.whf == null ? null : m.whf * wr, s2whf: m.s2whf == null ? null : m.s2whf * wr, swstr: m.swstr == null ? null : m.swstr * wr, csw: m.csw == null || m.swstr == null ? m.csw : m.csw - m.swstr * (1 - wr) });
     const xkS = xKStuff(mS, xw, sr ? asStarter("xwl", sr.xw) : null, foulChance(p)), xbS = xBBFormula(mS);
-    const px = { xks: S.xks && xkS != null ? insertPct(S.xks, xkS) : null, xbbf: S.xbbf && xbS != null ? insertPct(S.xbbf, -xbS) : null, nmix: S.nmix && nm != null ? insertPct(S.nmix, -nm) : null,
-                 xkbbs: S.xkbbs && xkS != null && xbS != null ? insertPct(S.xkbbs, xkS - xbS) : null };
+    // the starter xRating's inputs: xStrikeout from the translated xWhiff%, x2-strike Whiff% (scaled with it) and his xFoul% among starters; Control from
+    // the translated Strike% / 3-ball Strike%; the translated mix
+    const s2x = st && st.ns2whf != null && pj.xw ? st.ns2whf * xw / pj.xw : null, nf = st ? st.nfoul : null;
+    const pcx = [S.nwhf ? insertPct(S.nwhf, xw) : null, S.ns2whf && s2x != null ? insertPct(S.ns2whf, s2x) : null, S.nfoul && nf != null ? insertPct(S.nfoul, nf) : null];
+    const pcc = [S.strk && sk != null ? insertPct(S.strk, sk) : null, S.b3strk && mS.b3strk != null ? insertPct(S.b3strk, mS.b3strk) : null];
+    const px = { ksklx: pcx.every((x) => x != null) ? Math.round((pcx[0] + pcx[1] + pcx[2]) / 3) : null, ctrl: pcc.every((x) => x != null) ? Math.round((pcc[0] + pcc[1]) / 2) : null,
+                 nmix: S.nmix && nm != null ? insertPct(S.nmix, -nm) : null, xks: S.xks && xkS != null ? insertPct(S.xks, xkS) : null, xbbf: S.xbbf && xbS != null ? insertPct(S.xbbf, -xbS) : null };
     const xr = Object.keys(W).every((k) => px[k] != null) ? Math.round(Object.keys(W).reduce((a, k) => a + W[k] * px[k], 0) / tot) : null;
     const d = el("div", "aopt asstarter");
     d.append(el("b", null, "As a starter"), el("span", null, `: xWhiff ${r1(pj.xw)} → ${r1(xw)}, Pitching+ ${m.pitch == null ? "–" : Math.round(m.pitch)} → ${pt == null ? "–" : Math.round(pt)}, FB velo ${r1(m.fbv)} → ${r1(fv)}, Strike% ${r1(m.strk)} → ${r1(sk)}, Pitching+ xK% ${r1(st ? st.xks : null)} → ${r1(xkS)}, xBB% ${r1(m.xbbf)} → ${r1(xbS)}, xGB% ${r1(100 * pj.xg)} → ${r1(xg)}, xPU% ${r1(100 * pj.xp)} → ${r1(xpu)}${nm == null ? "" : `, Mix xwOBA ${nm0.toFixed(3)} → ${nm.toFixed(3)}`}${xr == null ? "" : `, xRating among starters ${xr}`}. Relievers who moved to the rotation (2015-26, 102 of them) gave back about this much of what the role had given them, net of the normal year-to-year drift — more the better the reliever numbers were.`));
@@ -7186,8 +7203,8 @@
     const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
     if (P) { const xr = st && st.xrat != null ? st.xrat : null, rt = st && st.scorePct != null ? st.scorePct : null;
       if (xr != null && rt != null) { const d = el("div", "aopt xrating"), gap = rt - xr;
-        d.append(el("b", null, `Rating ${rt} · xRating ${xr}`), el("span", null, ` — Pitching+ x(K-BB)% 80, Mix xwOBA 20 against the Rating's x(K-BB)% 80, Mix wOBA 20: the same two skills with the strikeouts and the mix taken from his stuff instead of his results.${Math.abs(gap) >= 8 ? ` His Rating runs ${Math.abs(gap)} ${gap > 0 ? "over" : "under"} what his pitches say; about half of a gap like that has closed the next season.` : " The two agree."}`));
-        d.title = "xRating: Pitching+ x(K-BB)% 80, Mix xwOBA 20 over percentiles — the strikeout, walk and batted-ball rates his stuff and spots say he should have.";
+        d.append(el("b", null, `Rating ${rt} · xRating ${xr}`), el("span", null, ` — xStrikeout 60, Control 20, Mix xwOBA 20 against the Rating's Strikeout 60, Control 20, Mix wOBA 20: the same skills with the whiffs, fouls and mix taken from what his stuff and spots say instead of his results.${Math.abs(gap) >= 8 ? ` His Rating runs ${Math.abs(gap)} ${gap > 0 ? "over" : "under"} what his pitches say; about half of a gap like that has closed the next season.` : " The two agree."}`));
+        d.title = "xRating: xStrikeout 60, Control 20, Mix xwOBA 20 over percentiles — the whiffs, fouls and batted-ball mix his stuff and spots say he should have, with his own strike-throwing.";
         box.append(d); }
       const bd = renderXkBreakdown(p, st); if (bd) box.append(bd);
       const asSP = p.primary === "RP" && !needsDays() ? renderAsStarter(p, st) : null; if (asSP) box.append(asSP);
@@ -7709,7 +7726,8 @@
   // Results first (Sean, 4 Oct 2026: "add results section that goes up top that has the x(K-bb)% mix woba, and then his rating"): the Rating's
   // two inputs and the Rating itself. 9 rows left, 10 right
   const RATING_M = { key: "rating", label: "Rating", hib: true, dec: 0, int: true, unit: "" };
-  const CTRL_M = { key: "ctrl", label: "Control", hib: true, dec: 0, int: true, unit: "" };   // Strike% and 3-ball Strike% percentiles averaged (Sean, 5 Oct 2026)
+  const CTRL_M = { key: "ctrl", label: "Control", hib: true, dec: 0, int: true, unit: "" };
+  const KSKL_M = { key: "kskl", label: "Strikeout", hib: true, dec: 0, int: true, unit: "" }, KSKLX_M = { key: "ksklx", label: "xStrikeout", hib: true, dec: 0, int: true, unit: "" };   // Whiff% / 2-strike Whiff% / Foul% percentiles averaged; the Pitching+ expected ones on the Stuff side (Sean, 5 Oct 2026)   // Strike% and 3-ball Strike% percentiles averaged (Sean, 5 Oct 2026)
   // then (Sean, minutes later: "get rid of results and in skills show just x(k-bb)%, mix woba and rating"): one section, Skills, with the three
   // and then (Sean: "for skills could you instead do xk%, xbb%, and x(k-bb)%") — the Rating row stays wired (RATING_M) but is off the card
   // and (Sean, the same night: "get rid of x(K-BB)% in skills, get rid of xrating in stuff, and add a rating section at the end with rating and
@@ -7733,10 +7751,10 @@
   // their strike percentile and their 3 ball strike percentile ... walk avoidance ... bb%, strike%, and 3 ball strike %"): Skills = Whiff% ·
   // Control, Swing & Miss = K% · Whiff% (fold-out: 2-strike Whiff%, Foul%, Called Strike%); the Stuff side the Pitching+ expected ones
   // Walk Avoidance under Swing & Miss, ahead of Batted Ball (Sean, 5 Oct 2026); left 7 rows, right 6
-  const PCT_COLS_P = [[["Skills", ["whf", "ctrl"]], ["Swing & Miss", ["k", { k: "whf", sub: ["s2whf", "foul"] }]], ["Walk Avoidance", ["bb", "strk", "b3strk"]]],
-                      [["Batted Ball", ["gb", "pu", "mixw"]], ["Rating", ["rating", "xkbb", "mixw"]]]];
-  const PCT_COLS_PS = [[["Skills", ["nwhf", "ctrl"]], ["Swing & Miss", ["k", { k: "nwhf", sub: ["ns2whf", "nfoul"] }]], ["Walk Avoidance", ["bb", "strk", "b3strk"]]],
-                       [["Batted Ball", ["ngb", "npu", "nmix"]], ["Rating", ["xrat", "xkbbs", "nmix"]]]];
+  const PCT_COLS_P = [[["Skills", ["kskl", "ctrl"]], ["Swing & Miss", ["k", { k: "whf", sub: ["s2whf", "foul"] }]], ["Walk Avoidance", ["bb", "strk", "b3strk"]]],
+                      [["Batted Ball", ["gb", "pu", "mixw"]], ["Rating", ["rating", "mixw"]]]];   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
+  const PCT_COLS_PS = [[["Skills", ["ksklx", "ctrl"]], ["Swing & Miss", ["k", { k: "nwhf", sub: ["ns2whf", "nfoul"] }]], ["Walk Avoidance", ["bb", "strk", "b3strk"]]],
+                       [["Batted Ball", ["ngb", "npu", "nmix"]], ["Rating", ["xrat", "nmix"]]]];
   const STUFF_LABELS = { xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => state.cardSide === "stuff";
   // the Raw | Stuff switch: beside Filters on a desktop, the first row of the Filters window on a phone (Sean, 4 Oct 2026)
@@ -7791,6 +7809,8 @@
     // blend, so the bubble is the number itself; not a column (the headline is), so it isn't in `all`
     const val = (k) => { if (k === "rating") return p.type === "P" && st && st.score != null ? { m: RATING_M, v: Math.round(st.score), k } : null;
       if (k === "ctrl") return p.type === "P" && st && st.ctrl != null ? { m: CTRL_M, v: st.ctrl, k } : null;
+      if (k === "kskl") return p.type === "P" && st && st.kskl != null ? { m: KSKL_M, v: st.kskl, k } : null;
+      if (k === "ksklx") return p.type === "P" && st && st.ksklx != null ? { m: KSKLX_M, v: st.ksklx, k } : null;
       const m = all.find((x) => x.key === k); if (!m || (noEV && NEEDS_EV.has(k))) return null; const v = metricValue(m, pv, st); return v == null ? null : { m, v, k }; };
     const row = (key0, labels) => {
       const start = exp[key0] || key0;
@@ -7799,7 +7819,7 @@
       if (!got) return null;
       const lab = (labels && labels[key0]) || PCT_LABEL[got.k];
       const m = Object.assign({}, got.m, lab ? { label: lab } : {}, got.k === "xrat" ? { int: true } : {});   // the xRating row prints whole, like the Rating's
-      const own = got.k === "rating" || got.k === "xrat" || got.k === "ctrl";   // percentile blends already: the bubble is the number
+      const own = got.k === "rating" || got.k === "xrat" || got.k === "ctrl" || got.k === "kskl" || got.k === "ksklx";   // percentile blends already: the bubble is the number
       const pct = own ? Math.round(got.v) : st.pct[got.k];
       const lg = own ? 50 : lgOf(got.k, m), prev = prevOf ? prevOf(m, got.k) : null;
       return { m, v: got.v, k: got.k, label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null, lg: lg == null ? null : fmt(lg, m), prev, prevYear: DS.season - 1,
