@@ -3900,3 +3900,7 @@ header.top .wordmark { display: none; }
 .phead .phsideseg .dd { display: inline-flex; }
 .phwin .phtwo { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
 .phwin .phtwo .seg { align-self: flex-start; }
+
+/* fold-out rows under a card bar (Sean, 5 Oct 2026): the parent's name is the toggle, the sub rows read a step lighter */
+.svpct .svlbl.svfold { cursor: pointer; }
+:root:root:root:root .svpct .svlbl.svsub { fill: var(--ink-2); font-size: 11px; }

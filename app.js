@@ -1395,8 +1395,11 @@
       scorePct = score.map((x) => Math.round(x));
     }
     const stats = new Map();
+    // Control (Sean, 5 Oct 2026: "an average of their strike percentile and their 3 ball strike percentile"): the two walk-formula
+    // percentiles averaged, a 0-100 number like the Rating; the card's Skills section and nothing else
+    const ctrlOf = (i) => (pct.strk && pct.b3strk && pct.strk[i] != null && pct.b3strk[i] != null ? Math.round((pct.strk[i] + pct.b3strk[i]) / 2) : null);
     list.forEach((p, i) => stats.set(p.type + p.id, { pct: Object.fromEntries(allFor(g).map((m) => [m.key, pct[m.key][i]])),
-                                                       score: score[i], scorePct: scorePct[i], blend: blend ? blend[i] : null }));
+                                                       score: score[i], scorePct: scorePct[i], blend: blend ? blend[i] : null, ctrl: p.type === "P" ? ctrlOf(i) : null }));
     [...stats.entries()].sort((a, b) => b[1].score - a[1].score).forEach(([k, s], i) => { s.rank = i + 1; });
     // sorted oriented values + scores, so a player outside this pool can be placed in it
     const sorted = {};
@@ -1582,7 +1585,7 @@
     pct.mera = mera == null || !pl.sorted.mera ? null : insertPct(pl.sorted.mera, -mera);
     const wsgp = wsgpFrom(pct.whf, pct.strk, pct.gb, pct.pu);
     pct.wsgp = wsgp == null || !pl.sorted.wsgp ? null : insertPct(pl.sorted.wsgp, wsgp);
-    return { pct, score, scorePct: Math.round(score), rank: above + 1, outside: true, ukbb, ukb,
+    return { pct, score, scorePct: Math.round(score), rank: above + 1, outside: true, ukbb, ukb, ctrl: pct.strk != null && pct.b3strk != null ? Math.round((pct.strk + pct.b3strk) / 2) : null,
              uk: ukbb ? ukbb.k : null, ubb: ukbb ? ukbb.bb : null, uera, suera, puera, mera, mixw, wsgp, ...nx };
   }
 
@@ -5007,6 +5010,7 @@
     pera: "pERA: next season's ERA from his pitches. Its K% and BB% (pK%, pBB%) are fits trained on the following season's rates — from his whiffs, strikes, swings, Stuff+, Location+, the location model's expected whiff rate, his mix and age, never his actual K% or BB% — on the ground-ball / popup mix his pitches project for next year (pGB%, pPU%). Held out by season it beats his own rates at next year's K% and BB% (starters 2.5 vs 2.8 K% points, 1.3 vs 1.4 BB%) and his ERA, FIP, SIERA and nERA at next year's ERA (r .44 vs .27-.39). A pitcher whose pERA sits under his ERA is one to expect more from next year; over it, less.",
     nk: "pK%: the strikeout rate his pitches project for next season — a fit trained on the following year's K% from his whiffs, strikes, swings, stuff, location, mix and age, never his actual K%. Where it sits over his K%, the strikeouts should come.",
     nbb: "pBB%: the walk rate his pitches project for next season — a fit trained on the following year's BB% from his strikes, swings, first-pitch and three-ball strikes, stuff, location, mix and age, never his actual BB%.",
+    ctrl: "Control: his Strike% percentile and his 3-ball Strike% percentile averaged — the two rates the walk formula reads most, as one 0-100 number (the bubble is the number itself).",
     rating: "Rating: x(K-BB)% 80, Mix wOBA 20 over percentiles — the strikeout-minus-walk rate his rates say he should have, and his batted-ball mix, as one 0-100 number (the bubble is the number itself).",
     xkbbs: "Pitching+ x(K-BB)%: Pitching+ xK% minus xBB% — the strikeout-minus-walk rate his stuff and spots say he should have; the xRating's main input (higher is better).",
     xrat: "xRating: Pitching+ x(K-BB)% 80, Mix xwOBA 20 over percentiles — the Rating with the whiff side and the batted-ball mix taken from what his stuff and spots should produce rather than what they did. A Rating well above it has run on whiffs or balls in play its stuff didn't earn.",
@@ -6617,7 +6621,8 @@
   }
   // the comparison under the Compare tab: the page's own sections for both sides, then anything added in "Set up
   // comparison" — every stat a plain row, nothing folds out
-  const cmpDefault = (type) => [...new Set((type === "H" ? PCT_COLS_H : PCT_COLS_P).flat().flatMap(([, keys]) => keys))];
+  const specKeys = (keys) => keys.flatMap((s) => (typeof s === "string" ? [s] : [s.k, ...s.sub]));   // a fold-out spec entry is { k, sub }
+  const cmpDefault = (type) => [...new Set((type === "H" ? PCT_COLS_H : PCT_COLS_P).flat().flatMap(([, keys]) => specKeys(keys)))];
   const cmpPick = (type) => new Set((state.cmp2.pick && state.cmp2.pick[type]) || cmpDefault(type));
   function cmpCard(p, g) {
     cardNow = { p, ds: DS };
@@ -6641,7 +6646,7 @@
     const groups = [], shown = new Set();
     for (const col of (type === "H" ? PCT_COLS_H : PCT_COLS_P)) for (const [title, keys] of col) {
       const metrics = [];
-      for (const k of keys) { if (!want.has(k)) continue; const m = resolve(k); if (m) { metrics.push(m); shown.add(m.key); } }
+      for (const k of specKeys(keys)) { if (!want.has(k)) continue; const m = resolve(k); if (m) { metrics.push(m); shown.add(m.key); } }
       if (metrics.length) groups.push({ group: title, metrics });
     }
     const extra = cmpAll(type).filter((k) => want.has(k) && !shown.has(k)).map((k) => all.find((x) => x.key === k)).filter((m) => m && has(m));
@@ -7604,6 +7609,7 @@
   // Results first (Sean, 4 Oct 2026: "add results section that goes up top that has the x(K-bb)% mix woba, and then his rating"): the Rating's
   // two inputs and the Rating itself. 9 rows left, 10 right
   const RATING_M = { key: "rating", label: "Rating", hib: true, dec: 0, int: true, unit: "" };
+  const CTRL_M = { key: "ctrl", label: "Control", hib: true, dec: 0, int: true, unit: "" };   // Strike% and 3-ball Strike% percentiles averaged (Sean, 5 Oct 2026)
   // then (Sean, minutes later: "get rid of results and in skills show just x(k-bb)%, mix woba and rating"): one section, Skills, with the three
   // and then (Sean: "for skills could you instead do xk%, xbb%, and x(k-bb)%") — the Rating row stays wired (RATING_M) but is off the card
   // and (Sean, the same night: "get rid of x(K-BB)% in skills, get rid of xrating in stuff, and add a rating section at the end with rating and
@@ -7622,11 +7628,15 @@
   // the right column so the two columns stay level (8 / 8). The Rating still runs on x(K-BB)% underneath
   // ... and back the same evening (Sean, 5 Oct 2026: "go back to showing the xK% on the skills area and also add it to swing and miss too
   // ... K%, xK%, and then add in whiff too, and add in xK%- whiff% as a stat"): Skills xK% · xBB%, Swing & Miss K% · xK% · Whiff% · xK% − Whiff%
-  const PCT_COLS_P = [[["Skills", ["xkf", "xbbf"]], ["Swing & Miss", ["k", "xkf", "whf", "xkw"]], ["Batted Ball", ["gb", "pu", "mixw"]]],
-                      [["Walk Avoidance", ["bb", "xbbf", "strk", "fstrk", "b3strk"]], ["Rating", ["rating", "xkbb", "mixw"]]]];
-  const PCT_COLS_PS = [[["Skills", ["xks", "xbbf"]], ["Swing & Miss", ["k", "xks", "nwhf", "xkws"]], ["Batted Ball", ["ngb", "npu", "nmix"]]],
-                       [["Walk Avoidance", ["bb", "xbbf", "strk", "fstrk", "b3strk"]], ["Rating", ["xrat", "xkbbs", "nmix"]]]];
-  const STUFF_LABELS = { xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%" };
+  // ... and then no xK% on the card at all (Sean, 5 Oct 2026: "Let's just use whiff rate ... show K%, then whiff rate. Then below Whiff rate
+  // have a drop down with ... 2 strike whiff rate, foul%, and called strike percentage ... in skills show whiff rate and ... an average of
+  // their strike percentile and their 3 ball strike percentile ... walk avoidance ... bb%, strike%, and 3 ball strike %"): Skills = Whiff% ·
+  // Control, Swing & Miss = K% · Whiff% (fold-out: 2-strike Whiff%, Foul%, Called Strike%); the Stuff side the Pitching+ expected ones
+  const PCT_COLS_P = [[["Skills", ["whf", "ctrl"]], ["Swing & Miss", ["k", { k: "whf", sub: ["s2whf", "foul", "cstr"] }]], ["Batted Ball", ["gb", "pu", "mixw"]]],
+                      [["Walk Avoidance", ["bb", "strk", "b3strk"]], ["Rating", ["rating", "xkbb", "mixw"]]]];
+  const PCT_COLS_PS = [[["Skills", ["nwhf", "ctrl"]], ["Swing & Miss", ["k", { k: "nwhf", sub: ["ns2whf", "nfoul", "ncstr"] }]], ["Batted Ball", ["ngb", "npu", "nmix"]]],
+                       [["Walk Avoidance", ["bb", "strk", "b3strk"]], ["Rating", ["xrat", "xkbbs", "nmix"]]]];
+  const STUFF_LABELS = { xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => state.cardSide === "stuff";
   // the Raw | Stuff switch: beside Filters on a desktop, the first row of the Filters window on a phone (Sean, 4 Oct 2026)
   function sideSwitch() {
@@ -7642,7 +7652,7 @@
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
                           babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", aopt: "Arsenal Opt.", sloc: "Location+", pitch: "Pitching+", pwhf: "Whiff+ (loc)", pbb: "Batted-ball+ (loc)", xwcon: "xwOBAcon", fpts: "Pts", fpg: "Pts/G", fppa: "Pts/PA", fpip: "Pts/IP", fpgs: "Pts/GS",
                           spd: "Sprint Speed", sb: "SB", sba: "SB Att.", sbp: "SB%" };
-  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", fstrk: "1st-pitch Strike%", b3strk: "3-ball Strike%", xbbf: "xBB%", xkf: "xK%", xks: "Pitching+ xK%", xkbb: "x(K-BB)%", xkbbs: "x(K-BB)%", xkw: "Whiff% − xK%", xkws: "xWhiff% − xK%", rating: "Rating", foul: "Foul%", csw: "CSW%", s2whf: "2-strike Whiff%", s2sw: "2-strike Swing%", s2zone: "2-strike Zone%", nwhf: "xWhiff%", ncstr: "xCalled Strike%", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strike Whiff%", nfoul: "xFoul%", ubb: "uBB%", zcon: "Z-Contact%", swing: "Swing%", cstr: "Called Strike%", swstr: "SwStr%", nmix: "Mix xwOBA", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+", sloc: "Location+" });   // a pitcher's O-Swing% is his chase rate
+  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", fstrk: "1st-pitch Strike%", b3strk: "3-ball Strike%", xbbf: "xBB%", xkf: "xK%", xks: "Pitching+ xK%", xkbb: "x(K-BB)%", xkbbs: "x(K-BB)%", xkw: "Whiff% − xK%", xkws: "xWhiff% − xK%", rating: "Rating", ctrl: "Control", foul: "Foul%", csw: "CSW%", s2whf: "2-strike Whiff%", s2sw: "2-strike Swing%", s2zone: "2-strike Zone%", nwhf: "xWhiff%", ncstr: "xCalled Strike%", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strike Whiff%", nfoul: "xFoul%", ubb: "uBB%", zcon: "Z-Contact%", swing: "Swing%", cstr: "Called Strike%", swstr: "SwStr%", nmix: "Mix xwOBA", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+", sloc: "Location+" });   // a pitcher's O-Swing% is his chase rate
   // the percentile bars behind the xK% and xBB% tabs (Sean, 4 Oct 2026: "a tab that shows the same expected strikeout percentile bars that we
   // had before ... and then also have that tab show the like pitching+ expected k stuff too and make that percentile bars as well", "a tab for
   // expected bb% as well that has all those same percentile bars"): the K% fit's inputs — his strike rates, then the same rates as the stuff
@@ -7679,6 +7689,7 @@
     // the Rating as a bar (Sean, 4 Oct 2026: a Results section "that has the x(K-bb)% mix woba, and then his rating"): it's already a percentile
     // blend, so the bubble is the number itself; not a column (the headline is), so it isn't in `all`
     const val = (k) => { if (k === "rating") return p.type === "P" && st && st.score != null ? { m: RATING_M, v: Math.round(st.score), k } : null;
+      if (k === "ctrl") return p.type === "P" && st && st.ctrl != null ? { m: CTRL_M, v: st.ctrl, k } : null;
       const m = all.find((x) => x.key === k); if (!m || (noEV && NEEDS_EV.has(k))) return null; const v = metricValue(m, pv, st); return v == null ? null : { m, v, k }; };
     const row = (key0, labels) => {
       const start = exp[key0] || key0;
@@ -7687,8 +7698,9 @@
       if (!got) return null;
       const lab = (labels && labels[key0]) || PCT_LABEL[got.k];
       const m = Object.assign({}, got.m, lab ? { label: lab } : {}, got.k === "xrat" ? { int: true } : {});   // the xRating row prints whole, like the Rating's
-      const pct = got.k === "rating" || got.k === "xrat" ? Math.round(got.v) : st.pct[got.k];   // both ratings are percentile blends already: the bubble is the number
-      const lg = got.k === "rating" || got.k === "xrat" ? 50 : lgOf(got.k, m), prev = prevOf ? prevOf(m, got.k) : null;
+      const own = got.k === "rating" || got.k === "xrat" || got.k === "ctrl";   // percentile blends already: the bubble is the number
+      const pct = own ? Math.round(got.v) : st.pct[got.k];
+      const lg = own ? 50 : lgOf(got.k, m), prev = prevOf ? prevOf(m, got.k) : null;
       return { m, v: got.v, k: got.k, label: m.label, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null, lg: lg == null ? null : fmt(lg, m), prev, prevYear: DS.season - 1,
                gloss: GLOSS[{ xwd: "xwoba", EXPW: "xwoba" }[got.k]] || GLOSS[got.k] || "", hib: m.hib,
                tip: `${m.label}: ${fmt(got.v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}` };
@@ -7711,7 +7723,16 @@
       const cols = el("div", "pctcols"), sets = [];
       for (const sections of spec) {
         const LAB = p.type === "P" ? (spec === PCT_COLS_PS ? Object.assign({}, OUTCOME_LABEL_P, STUFF_LABELS) : OUTCOME_LABEL_P) : OUTCOME_LABEL;
-        const groups = sections.map(([title, keys]) => ({ title, rows: keys.map((k) => row(k, LAB)).filter(Boolean) })).filter((x) => x.rows.length);
+        // a fold-out under a bar (Sean, 5 Oct 2026: "below Whiff rate have a drop down with ... 2 strike whiff rate, foul%, and called strike
+        // percentage"): a spec entry { k, sub: [...] } draws the parent with a ▸ / ▾ before its name; tapping the name opens the subs under it
+        const rowsOf = (keys) => keys.flatMap((spec) => {
+          if (typeof spec === "string") { const r = row(spec, LAB); return r ? [r] : []; }
+          const r = row(spec.k, LAB); if (!r) return [];
+          const ok = "card:" + spec.k, open = !!state.open[ok]; r.fold = { key: ok, open };
+          const subs = open ? spec.sub.map((k) => row(k, LAB)).filter(Boolean).map((s) => Object.assign(s, { sub: true })) : [];
+          return [r, ...subs];
+        });
+        const groups = sections.map(([title, keys]) => ({ title, rows: rowsOf(keys) })).filter((x) => x.rows.length);
         if (groups.length) sets.push(groups);
       }
       if (state.bars === "classic") {                // the older look: a heading per section over plain meter rows (Appearance)
@@ -7942,9 +7963,11 @@
         if (on) B.append(mk("rect", { width: x(r.pct), height: 20, y: 0, fill: s.bg }));
         for (const tx of [x(50) - 1, 11, bar - 13]) B.append(mk("rect", { class: "svtick", width: 2, height: 20, x: tx }));
         M.append(B);
-        M.append(mk("text", { class: "svlbl", x: 80, y: 10, "text-anchor": "end" }, r.label));
+        const L = mk("text", { class: "svlbl" + (r.sub ? " svsub" : "") + (r.fold ? " svfold" : ""), x: 80, y: 10, "text-anchor": "end" }, (r.fold ? (r.fold.open ? "▾ " : "▸ ") : "") + r.label);
+        M.append(L);
         M.append(mk("text", { class: "svlbl", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));
-        M.addEventListener("click", (e) => { e.stopPropagation(); statPop(M, r); });
+        // a fold-out parent: tapping the name opens / closes its rows; the bar still opens the note
+        M.addEventListener("click", (e) => { e.stopPropagation(); if (r.fold && e.target === L) { state.open[r.fold.key] = !r.fold.open; savePrefs(); render(); return; } statPop(M, r); });
         if (i) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + VW},-1.5` }));
         if (on) {
           const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
@@ -8678,7 +8701,7 @@
       grid.append(sec);
     };
     for (const col of (pit ? PCT_COLS_P : PCT_COLS_H)) for (const [title, keys] of col) {
-      const ks = keys.filter((k) => !seen.has(k)); ks.forEach((k) => seen.add(k));
+      const ks = specKeys(keys).filter((k) => !seen.has(k)); ks.forEach((k) => seen.add(k));
       if (ks.length) group(title, ks);
     }
     const covered = new Set([...seen].map((k) => exp[k] || k));
