@@ -3874,6 +3874,36 @@ header.top .wordmark { display: none; }
 /* the card's tables back to compact rows (Sean, 3 Oct 2026: "way too big for what is needed for the player card") — the navy header stays */
 :root:root:root:root :is(#modal, #xboard) .btabbody table td, :root:root:root:root :is(#modal, #xboard) .btabbody .gamesbox table td, :root:root:root:root:root .btabbody table td, :root:root:root:root:root .gamesbox table td, :root:root:root:root:root .uerabox .ubt td { height: auto; font-size: 12.5px; padding-top: 5px; padding-bottom: 5px; }
 :root:root:root:root :is(#modal, #xboard) .btabbody table th, :root:root:root:root :is(#modal, #xboard) .btabbody table thead th, :root:root:root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog thead tr:not(.ggrp) th, :root:root:root:root:root .btabbody table th, :root:root:root:root:root .gamesbox table th, :root:root:root:root:root .uerabox .ubt th { padding-top: 6px; padding-bottom: 6px; }
+/* the xK% / xBB% tabs (Sean, 4 Oct 2026): the card's percentile bars drawn again under the strip, the note under them small and grey */
+.pcttab { padding: 4px 8px 0; }
+.pcttab .pcttabnote { margin: 8px 4px 4px; font-size: 11.5px; color: var(--muted); }
+/* the card's Filters window (Sean, 4 Oct 2026): the Leaderboard dropdown's dress, hung under the Filters button; nothing in the card moves */
+.phmodal { position: fixed; inset: 0; z-index: 90; background: transparent; }
+.phwin.pop { position: fixed; width: 560px; max-width: calc(100vw - 16px); display: flex; flex-direction: column; overflow: hidden; }
+.phwin .phwinbody { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-top: 34px; }
+.phwin .phgrid { background: none; padding: 0; justify-content: start; }
+.phwin .phcap, .phwin .phsum, .phwin .winnote { color: var(--ink-2); }
+.phwin .phf input[type="date"], .phwin .phf .lastin { border-color: var(--hair); }
+.phwin .popfoot { display: flex; justify-content: flex-end; padding: 8px 12px; border-top: 1px solid var(--hair); background: var(--surface); }
+.phwin .popfoot .popclear { font-size: 13px; }
+.phside .segbtn.on { background: var(--rule); color: #fff; }
+.phead .phside { margin-left: 8px; }
+.phead .phside.vert { flex-direction: column; margin: 0 6px 0 0; box-sizing: border-box; }
+.phead .phside.vert .segbtn { flex: none; padding: 0 4px; font-size: 11px; line-height: 1; min-height: 0; }
+:root[data-view="mobile"] .phead .hstrip .phside.vert { margin-left: auto; margin-right: 0; }
+:root[data-view="mobile"] .phead .hstrip .phside.vert + .phtog { margin-left: 6px; }
+:root[data-view="mobile"] .phead .hstrip .phside.vert + .phtog { align-self: flex-end; }   /* Filters level with Stuff, Raw above it (Sean, 5 Oct 2026) */
+:root[data-view="mobile"] .phead .hstrip:has(.phside.vert) { align-items: flex-end; }
+
+/* Raw / Stuff as one dropdown in the season picker's dress, left of Filters; the two-way switch in the Filters window (Sean, 5 Oct 2026) */
+.phead .phtog { display: inline-flex; gap: 6px; align-items: center; }   /* Filters and the Raw / Stuff button side by side, the same dress (Sean, 5 Oct 2026) */
+.phead .phsideseg .dd { display: inline-flex; }
+.phwin .phtwo { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.phwin .phtwo .seg { align-self: flex-start; }
+
+/* fold-out rows under a card bar (Sean, 5 Oct 2026): the parent's name is the toggle, the sub rows read a step lighter */
+.svpct .svlbl.svfold { cursor: pointer; }
+:root:root:root:root .svpct .svlbl.svsub { fill: var(--ink-2); font-size: 11px; }
 
 /* a phone's Leaderboard pages again (Sean, 5 Oct 2026): the page numbers on a line of their own under the filter row */
 :root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow { display: flex; justify-content: center; padding: 2px 0 6px; }

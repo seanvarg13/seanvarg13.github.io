@@ -71,7 +71,7 @@ HITTER_SCORE_WEIGHTS = {"brl": 40.5, "ev": 11.6, "zcon": 16.9, "ocon": 17.2,
 # the pitchers' Rating (Sean, 4 Oct 2026: "the four skills in order of importance, ability to get Ks, avoid walks, get gbs, and get
 # popups" — process, not outcomes). Weights from a 2020-26 backtest against NEXT season's ESPN points per inning (starters 100+ IP both
 # years, r .56 vs .51 for the old 50 / 50 Whiff% / Strike%); Chase% and SwStr% tested and left out (nothing on top of these four)
-PITCHER_SCORE_WEIGHTS = {"whf": 55.0, "strk": 30.0, "mixw": 15.0}   # Sean, 5 Oct 2026: the site put back to 4 Oct 11am (the x(K-BB)% 80 / Mix wOBA 20 Rating of the 4th evening is history); Whiff%, Strike%, then the mix as one number (Mix wOBA, worked out in the app)
+PITCHER_SCORE_WEIGHTS = {"xkbb": 80.0, "mixw": 20.0}   # Sean, 4 Oct 2026 (night): x(K-BB)% and Mix wOBA, the split that scored best against ESPN points per start / inning (kbbrate.py); put back 5 Oct 2026 with the card of that morning
 
 WHIFF = {"swinging_strike", "swinging_strike_blocked", "foul_tip", "missed_bunt", "bunt_foul_tip"}
 SWING = WHIFF | {"foul", "hit_into_play", "foul_bunt"}

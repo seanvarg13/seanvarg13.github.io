@@ -1687,6 +1687,18 @@ is deploy-limited.
   it — nothing iterates the map (checked), `rankIn` already fell back to `placeIn`. Headless at 4× CPU, phone view, pitchers' Leaderboard
   first draw 3.4 → 1.3 s; desktop render 0.84 → ~0.6 s; all 539 rows byte-identical again.
 
+* **The morning's pitcher card is back on the fast front end (Sean, 5 Oct 2026: "With the page currently can you make the player card back to
+  how it was for pitchers most recently with the available stats and whatnot now")**: `app.js` is PR #345's (the PR #336 card — Skills:
+  Whiff% · Control, Swing & Miss: K% · Whiff% ▸ 2-strike Whiff% / Foul%, Batted Ball, Walk Avoidance: BB% · Strike% · 3-ball Strike%, Rating:
+  Rating · x(K-BB)% · Mix wOBA, the Raw ▾ / Stuff dropdown, the Filters window, tabs Pitching+ · nERA, K-BB% on the band — plus that PR's
+  cache guard, provisional caches, Home deferral, canvas `fitNameCol` and `xKLeague`) with the rest of today's work re-applied on top:
+  copy-free `rateFit(…, ex)`, `gameLog` / `hitGameLog(p, onlyDay)`, `phonePages()` and the `.pnavrow`, lazy `stats.get` placement.
+  `styles.css` is PR #336's (the card's fold-out / window / switch rules) plus the phone pager block. The **Rating is x(K-BB)% 80 / Mix wOBA
+  20 again** (this app.js ranks `xkbb` before the score): `data.js`'s `pitcherWeights` / `scoreNote.P` and `PITCHER_SCORE_WEIGHTS` in
+  `tools/build_data.py` put back. The two "reset" entries above are history as of this one; the lag entries still describe the live code.
+  Headless phone view at 4× CPU: pitchers' Leaderboard first draw ~2.0 s (the xK% fits in the PK block are heavier than yesterday-11am's
+  pool), 25 rows a page, no script errors; Skenes's card draws every section with bubbles and the Raw ▾ switch.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
