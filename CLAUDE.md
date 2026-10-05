@@ -1634,6 +1634,15 @@ is deploy-limited.
   rates once per view (`xKLeague`) instead of per pitcher. Profile (scratch `prof.js`, CDP sampling): the Leaderboard render 1.74 s → 1.20 s
   on a desktop, once instead of twice; what's left is `pool()` itself (~0.7 s: `placeIn` for every listed pitcher under the reference
   minimum, the PK block's fits — the xK% / expected-rate work of 4 Oct), the next thing to cut if a phone still drags.
+  **And the day file** (Sean, the same hour: "it is still dragging, why is that happening now if it didn't happen this morning"): `days.js`
+  is 24 MB since the 4 Oct rescore (the location / swing foul sums and command sums on every day row; 14 MB before), Home's Trending card
+  runs it on every fresh load, parsing it blocks a phone's main thread for seconds, and its arrival emptied every value and pool cache — so a
+  list opened in that window drew, froze while the file parsed and the pool recomputed, and drew again. Every publish today also reloaded his
+  phone through `build.json`, so he hit that cold path over and over where the morning's page had been warm. Now: `ensureDays`' onload drops
+  only the **provisional** caches — values, pools and ranks computed under a window / split / combined span (`provisional.val / pool / rank`,
+  marked in `V()`, `pool()` and the rank cache; the pool and rank keys carry `daysReady()` only when `needsRows()`), a full-season value or
+  pool being the same with or without the day rows — and Home asks for the file 1.2 s after it paints, on idle, and only while still on Home.
+  Trimming `days.js` itself (the inert command sums `stcn…stcw` are a third of each pitcher row) is the next lever.
 
 ## 9. Things only Sean can do
 
