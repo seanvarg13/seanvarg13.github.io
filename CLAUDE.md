@@ -1760,3 +1760,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   note says Whiff% and Strike% are what carry forward. A file without a stat shows "–" and no effect for that row.
 * **Walk Avoidance under Swing & Miss (Sean, 5 Oct 2026: "put walk avoidance below swing and miss and in front of batted ball")**: `PCT_COLS_P` /
   `PCT_COLS_PS` left = Skills · Swing & Miss · Walk Avoidance, right = Batted Ball · Rating (a phone stacks them in that order).
+* **The K% / BB% tab's Stuff side (Sean, 5 Oct 2026: "when it switches between raw and stuff could you make the stuff be based on his pitching+
+  expectations")**: under Raw ▾ / Stuff (`stuffSide()`), `renderDriversTab` swaps the whiff-side inputs for the Pitching+ models' expected rates
+  (`XK`: whf → `nwhf`, s2whf → `ns2whf`, foul → `nfoul` from the pool's stats, cstr → `ncstr` on `m`), labelled xWhiff% / x2-strike Whiff% /
+  xFoul% / xCalled Strike%; Strike%, the count-state rates, Zone%, Chase%, Swing% and Z-Contact% stay his own. Each expected rate is set
+  against the pool's **own expected league** (BF-weighted over `pl.ref`), not the actual one, since the fixed models read a season they never saw
+  a point or two off; the percentile colour ranks him on the expected rate among the pool. The head says "— on the Pitching+ expected rates"
+  and a note explains. Skenes 2026: Raw fit 26.6, Stuff fit 23.5 against K% 28.1.
