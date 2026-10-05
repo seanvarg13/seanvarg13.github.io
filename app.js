@@ -7035,12 +7035,20 @@
     bb: { r2: 0.849, rows: [["b3strk", 29.6, -0.213], ["strk", 20.5, -0.646], ["swing", 8.6, -0.013], ["fstrk", 8.2, -0.009], ["zone", 7.1, 0.050], ["osw", 5.8, 0.020], ["whf", 2.8, 0.012], ["zcon", 2.3, -0.104]] },
   };
   function renderDriversTab(p, st, g) {
-    const pv = V(p), m = pv.m, L = lgRatesP(), pl = pool(g);
-    const box = el("div", "rollbox uerabox stuffbox drivers");
+    const pv = V(p), m = pv.m, L0 = lgRatesP(), pl = pool(g), S = stuffSide();
+    // Stuff side (Sean, 5 Oct 2026: "make the stuff be based on his pitching+ expectations"): the whiff-side inputs are the Pitching+ models' expected
+    // rates — xWhiff%, x2-strike Whiff%, xFoul% (the pool's stats, from xkParts) and xCalled Strike% (on m) — the count / zone / strike rates his own
+    const XK = { whf: "nwhf", s2whf: "ns2whf", foul: "nfoul", cstr: "ncstr" };
+    const valOf = (q, k, sq) => { if (!S || !XK[k]) return V(q).m[k]; const xk = XK[k]; return xk === "ncstr" ? V(q).m.ncstr : (sq || pl.stats.get(q.type + q.id) || {})[xk]; };
+    // the expected rates read a couple of points off the actual league on a season the fixed models never saw, so each is set against the pool's own
+    // expected league (BF-weighted over the reference list), not the actual one
+    const L = Object.assign({}, L0);
+    if (S) for (const k of Object.keys(XK)) { let sw = 0, sv = 0; for (const q of pl.ref || []) { const v = valOf(q, k); if (v == null || !isFinite(v)) continue; sw += q.bf; sv += v * q.bf; } L[k] = sw ? sv / sw : null; }
+    const box = el("div", "rollbox uerabox stuffbox drivers" + (S ? " stuffside" : ""));
     const vl = viewLabel(p.type) && viewLabel(p.type) !== "full season" ? ` · ${viewLabel(p.type)}` : "";
-    const hd = el("div", "rollhd"); hd.append(el("span", "rollname", "What drives his K% and BB%"), el("span", "rollsub", "every 100+ BF pitcher-season 2020-26" + vl)); box.append(hd);
+    const hd = el("div", "rollhd"); hd.append(el("span", "rollname", S ? "What drives his K% and BB% — on the Pitching+ expected rates" : "What drives his K% and BB%"), el("span", "rollsub", "every 100+ BF pitcher-season 2020-26" + vl)); box.append(hd);
     // his place on each stat among the reference pool, oriented so a high percentile pushes the target the good way (K% up, BB% down)
-    const sortedOf = {}; const ranked = (k) => { if (!sortedOf[k]) sortedOf[k] = (pl.ref || []).map((q) => V(q).m[k]).filter((x) => x != null && isFinite(x)).sort((a, b) => a - b); return sortedOf[k]; };
+    const sortedOf = {}; const ranked = (k) => { if (!sortedOf[k]) sortedOf[k] = (pl.ref || []).map((q) => valOf(q, k)).filter((x) => x != null && isFinite(x)).sort((a, b) => a - b); return sortedOf[k]; };
     const r1 = (x) => (x == null ? "–" : x.toFixed(1)), DL = { strk: "Strike%", whf: "Whiff%" };
     for (const [tgt, lab, good, dec] of [["k", "K%", +1, 1], ["bb", "BB%", -1, 2]]) {   // BB% effects are small, so two decimals there
       const sg = (x) => (Math.abs(x) < 0.5 * 10 ** -dec ? "" : x > 0 ? "+" : "−") + Math.abs(x).toFixed(dec);
@@ -7051,8 +7059,8 @@
       th.append(hr); t.append(th);
       const tb = el("tbody");
       for (const [k, share, w] of D.rows) {
-        const v = m[k], lg = L[k], tr = el("tr");
-        const name = DL[k] || OUTCOME_LABEL_P[k] || k;
+        const v = valOf(p, k, st), lg = L[k], tr = el("tr");
+        const name = S && XK[k] ? (STUFF_LABELS[XK[k]] || OUTCOME_LABEL_P[XK[k]]) : DL[k] || OUTCOME_LABEL_P[k] || k;
         tr.append(el("td", "l", name), el("td", null, share.toFixed(1) + "%"), el("td", null, (share / D.r2).toFixed(1) + "%"));
         const his = el("td", null, r1(v)), lgc = el("td", null, r1(lg)), eff = el("td", null, "–");
         if (v != null && lg != null) {
@@ -7071,6 +7079,7 @@
       wrap.append(el("b", null, lab + (any && fit != null && m[tgt] != null ? ` ${r1(m[tgt])} · the fit says ${r1(fit)} (${sg(m[tgt] - fit)})` : "")), sc);
       box.append(wrap);
     }
+    if (S) box.append(el("p", "note", "Stuff side: Whiff%, 2-strike Whiff%, Foul% and Called Strike% are the Pitching+ models' expected rates from his pitches, where he throws them and the batter's swing (the pool's own expected league is the baseline, since the fixed models read a season they never saw a point or two off); Strike%, the count-state rates, Zone%, Chase%, Swing% and Z-Contact% are his own. The fit is what those expected rates are worth."));
     box.append(el("p", "note", "Share of variance is each stat's slice of the fit's R² over every 100+ BF pitcher-season 2020-26, split fairly among stats that overlap (averaged over every order they could enter). Effect = the fit's weight × (his rate − the league's), in K% or BB% points; its colour is where that effect ranks him among this season's qualifiers, red pushing K% up or BB% down. These are same-season fits, so 2-strike Whiff% and 3-ball Strike% sit close to the outcome itself; Whiff% and Strike% are the parts that carry to next season."));
     return box;
   }
