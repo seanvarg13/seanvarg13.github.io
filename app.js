@@ -3726,8 +3726,42 @@
       root.classList.add("swirl-img");
     } catch (e) { document.documentElement.classList.remove("swirl-img"); }
   }
-  buildSwirl();
-  new MutationObserver(buildSwirl).observe(document.documentElement, { attributes: true, attributeFilter: ["data-scheme", "data-theme"] });
+  // The helmet ground (Sean, 5 Oct 2026: "make the like default grey background kind of like instead an Ohio state helmet with the like
+  // star stickers", "I am just talking about making the background that used to be the swirl like that, can you at least try it"): the
+  // page ground is the helmet's silver and buckeye-leaf stickers — our own five-leaflet leaf, green with a white edge, a few numbered —
+  // are scattered over it at a low opacity, sparse like the real thing (the silver has to dominate). A seeded scatter so every page
+  // draws the same tile; a jittered grid so no two leaves overlap. Appearance ▸ Background turns it off on this device
+  // (draft2027.helmet), and then the plain ground of the scheme comes back
+  const helmetOn = () => { try { return localStorage.getItem("draft2027.helmet") !== "off"; } catch { return true; } };
+  function buildHelmet() {
+    const root = document.documentElement;
+    if (!helmetOn()) { root.classList.remove("helmet"); root.classList.add("nopattern"); buildSwirl(); return; }
+    try {
+      let s = 7; const rnd = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+      const dark = matchMedia("(prefers-color-scheme: dark)").matches ? root.dataset.theme !== "light" : root.dataset.theme === "dark";
+      const green = dark ? "#4a9a3c" : "#2f7a2a", edge = dark ? "#e9ecef" : "#ffffff", ink = dark ? "#e9ecef" : "#ffffff";
+      // one buckeye leaf: five leaflets fanned from a point over a short stem, the white sticker edge round each leaflet
+      const leaf = (num) => { let d = "";
+        for (let i = -2; i <= 2; i++) { const t = -90 + i * 34, r = 11 + (i === 0 ? 2 : Math.abs(i) === 1 ? 0.5 : -1.5);
+          d += `<ellipse cx="0" cy="${-r / 2}" rx="2.6" ry="${r / 2}" transform="rotate(${t + 90})" fill="${green}" stroke="${edge}" stroke-width="1.1"/>`; }
+        d += `<path d="M0,0 L0,6" stroke="${edge}" stroke-width="1.6" stroke-linecap="round"/><path d="M0,0 L0,6" stroke="${green}" stroke-width="0.8" stroke-linecap="round"/>`;
+        if (num) d += `<text x="0" y="-5" text-anchor="middle" font-family="Arial, sans-serif" font-size="4.6" font-weight="700" fill="${ink}">${num}</text>`;
+        return d; };
+      const T = 560, N = 4, cell = T / N, parts = [];
+      for (let gy = 0; gy < N; gy++) for (let gx = 0; gx < N; gx++) {
+        if (rnd() < 0.22) continue;                                          // gaps: the stickers bunch and leave bare silver
+        const x = gx * cell + cell * (0.25 + 0.5 * rnd()), y = gy * cell + cell * (0.25 + 0.5 * rnd()), sc = 1.15 + 0.7 * rnd(), rot = Math.round(rnd() * 360);
+        const num = rnd() < 0.3 ? String(1 + Math.floor(rnd() * 9)) : "";
+        parts.push(`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot}) scale(${sc.toFixed(2)})">${leaf(num)}</g>`);
+      }
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${T}" height="${T}" viewBox="0 0 ${T} ${T}">${parts.join("")}</svg>`;
+      root.style.setProperty("--helmet-img", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
+      root.classList.remove("swirl-img", "nopattern"); root.classList.add("helmet");
+    } catch (e) { root.classList.remove("helmet"); root.classList.add("nopattern"); }
+  }
+  buildHelmet();
+  new MutationObserver(buildHelmet).observe(document.documentElement, { attributes: true, attributeFilter: ["data-scheme", "data-theme"] });
+  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", buildHelmet); } catch {}
   const pitchBoardEl = () => {
     let b = $("pitchboard");
     if (!b) { b = el("section", "xboard pitchboard"); b.id = "pitchboard"; b.hidden = true; $("eboard").after(b); }
@@ -6006,7 +6040,7 @@
   // name and a line of explanation on the left, the control on the right (stacked on a phone)
   // no background pattern any more (Sean, 30 Sep 2026: "get rid of the background swirls"): the pages sit on a plain pale
   // ground of the scheme's colour (styles.css, :root.nopattern)
-  document.documentElement.classList.add("nopattern");
+  if (!document.documentElement.classList.contains("helmet")) document.documentElement.classList.add("nopattern");   // the helmet ground sets its own (5 Oct 2026)
   function renderAppearance() {
     const T = window.DRAFT_THEMES, box = $("pboard"); box.innerHTML = "";
     if (!T) { box.append(el("p", "xempty", "themes.js didn't load.")); return; }
@@ -6039,6 +6073,8 @@
     row("Light or dark", null, segOf("Light or dark", [["system", "Match device"], ["light", "Light"], ["dark", "Dark"]], cur.theme, (v) => { T.set({ theme: v }); renderAppearance(); }));
     row("Layout", "Auto gives a phone the compact layout; Desktop on a phone shows the full layout zoomed out.",
       segOf("Layout", [["auto", "Auto"], ["mobile", "Mobile"], ["desktop", "Desktop"]], T.viewPref(), (v) => { T.setView(v); renderAppearance(); }));
+    row("Background", "The helmet: silver with buckeye-leaf stickers behind the pages, faint. Plain is the scheme's own pale ground. Per device.",
+      segOf("Background", [["on", "Helmet"], ["off", "Plain"]], helmetOn() ? "on" : "off", (v) => { try { localStorage.setItem("draft2027.helmet", v); } catch {} buildHelmet(); renderAppearance(); }));
     row("Percentile bars", "How the bars on a player's card are drawn.",
       segOf("Percentile bars", [["savant", "Savant charts"], ["classic", "Classic meters"]], state.bars, (v) => { state.bars = v; savePrefs(); render(); }));
     // type: one line per font, set in that font
