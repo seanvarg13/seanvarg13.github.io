@@ -1727,3 +1727,14 @@ tail -f logs/daily.log                    # watch the 5:30 job
 If a script edited here does not seem to have taken effect, have him check the top of `logs/daily.log` for the
 `sync_tools:` lines — "updated …" means it was adopted, "keeping the local one" means the Mac's copy had also
 changed and the repo's copy is sitting in `logs/tools-conflicts/`.
+
+* **The Raya dress is back, as a test (Sean, 5 Oct 2026: "can you go back to the raya theme as a test for now and ill see how i like
+  that since itll not be slow now")**: `styles.css` is PR #341's (241c65d — the PR #336 card rules, the `:root.helmet` silver ground
+  `#d4d7dc` / `#1b1e23` dark with the stickers disabled, and the full "The Raya dress" block: weight 300 with the numbers at 400, tracked
+  uppercase labels, hairlines for frames, buttons as words, one accent `--raya`, the header on paper) plus the phone pager's `.pnavrow`
+  rules (page numbers as plain words, the current one in `--raya`); `app.js` carries the dress patch again (`hotInk` paints the sorted
+  column's digits in the percentile colour instead of filling the cell, `buildHelmet()` sets `helmet` + `nopattern` on `<html>` in place
+  of `buildSwirl`) on top of the fast front end with the morning's pitcher card. This supersedes the "Raya type, lines and spacing" entry
+  (PR #352) and the "built and taken back" note's don't-bring-back line for the dress — Sean asked for it. The old look is one revert away:
+  `styles.css` / `app.js` from PR #352's merge (or PR #351's for the look without the Raya type). The slowness that made him drop it on
+  the 5th was the JavaScript, not the dress (the lag entries above).
