@@ -1599,7 +1599,7 @@ is deploy-limited.
 * **2-strike Whiff% back in xK%, and the gap is Whiff% − xK% (Sean, 5 Oct 2026: "do the formula that uses two strike whiff for xk%. And make
   the formula actually whiff% - xK% instead of the other way around")**: `XKM` is the morning's fit again (the five tiers with `s2whf`, held-out
   same-season rmse 0.63), the xK% tab's pairs and the Pitching+ breakdown show 2-strike Whiff% / x2-strike Whiff% again, and `xkw` = **Whiff%
-  − xK%** (`xkws` = xWhiff% − Pitching+ xK%), labels, glossary and `SHORT` flipped with it — high on a high Whiff% is the breakout shape
+  − xK%** (`xkws` = xWhiff% − Pitching+ xK%), labels, glossary and `SHORT` flipped with it; both are in `LB_EXTRA_P` (the Stats panel offered them but `lbOrder` draws only the extras it names, so the ticked column never showed — Sean, 5 Oct 2026) — high on a high Whiff% is the breakout shape
   (Cavalli 2025: +9.7; his 2026 card reads −0.1 on the Raw side, +3.7 on the Stuff side). The refit without it (`xkrefit.js`) is history; the
   glossary says xK% is the same-season read and Whiff% − xK% the forward one.
 
