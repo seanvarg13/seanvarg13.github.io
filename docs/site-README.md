@@ -992,5 +992,4 @@ stickers over a silver ground, like an Ohio State helmet; **Plain** is the pale 
 ## The dress
 
 Since 5 Oct 2026 the site wears a quieter dress: no outlines or filled headers, light type with small tracked labels, one blue for whatever
-is active, and colour only in the percentile bars and the sorted column's values. The ground is an Ohio State helmet: white buckeye-leaf
-stickers over silver (Appearance ▸ Background turns it off).
+is active, and colour only in the percentile bars and the sorted column's values. The ground is a plain helmet silver.

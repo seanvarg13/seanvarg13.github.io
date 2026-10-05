@@ -1637,7 +1637,9 @@ is deploy-limited.
   filter row and note sit on the paper so the stickers don't run under the words. Savant's bars and bubbles, the sections, the lists'
   density, square corners and no shadows are untouched. **The helmet stickers are the real ones** (Sean's photo, the same day): white round
   stickers packed in offset rows over the silver, each with one dark five-leaflet buckeye leaf, at 26% — `buildHelmet()`; the green leaves
-  of the first try are gone.
+  of the first try are gone. **Then no stickers at all** (Sean, minutes later: "get rid of the stickers that is bad and busy"): `buildHelmet()`
+  only sets the `helmet` + `nopattern` classes, the silver ground stays with nothing drawn on it, and the Appearance ▸ Background row is
+  gone. Don't bring the stickers or the swirl back unasked.
 
 ## 9. Things only Sean can do
 

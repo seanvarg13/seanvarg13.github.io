@@ -4001,3 +4001,5 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .phead .hrow .hchip.fact i { font-family: var(--body) !important; font-size: 10px !important; letter-spacing: var(--raya-track) !important; text-transform: uppercase !important; color: var(--muted); }
 :root:root:root:root:root:root #colhead .h.sorted, :root:root:root:root:root:root #colhead .h.on { color: var(--raya) !important; }
 :root:root:root:root:root:root .hub.home .hline { background: var(--surface); display: inline-block; padding: 4px 10px; }
+/* no stickers (Sean, 5 Oct 2026: "get rid of the stickers that is bad and busy"): the helmet's silver stays, nothing is drawn on it */
+:root:root:root:root:root:root.helmet body::before, :root:root:root:root:root:root.helmet body::after, :root:root:root:root:root:root.helmet .modal.pagebg .modal-back::before { display: none !important; }
