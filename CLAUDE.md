@@ -1642,7 +1642,9 @@ is deploy-limited.
   gone. Don't bring the stickers or the swirl back unasked. **The helmet's `body > * { position: relative; z-index: 1 }` lift broke the
   site** (Sean: the header not frozen, "all of the like filter buttons are not working"): it turned the sticky header and every fixed
   dropdown / window appended to body (`#pop`, `.ddmenu`, `.phmodal`, `#modal`) into in-flow boxes. Removed the same evening — never position
-  body's children wholesale.
+  body's children wholesale. **Then** (Sean: "still a lack of responsiveness", and the selected row's stats showing through the frozen name): the
+  dress's transparent hover / selected-row background is gone (the older opaque rules stand — a sticky cell inherits the row's background, so it
+  must be opaque), and the weight-300 universal rule is the old no-bold rule changed in place rather than a second universal rule on top of it.
 
 ## 9. Things only Sean can do
 

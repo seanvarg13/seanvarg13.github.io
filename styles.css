@@ -3492,7 +3492,7 @@ body[data-mode="rankings"] #rankcount { display: none; }
 :root[data-view="mobile"] .phead .mplate .hstrip { margin-right: -44px; }   /* under the ×, which sits at the band's top: room for Filters and a two-way switch on one line */
 /* No bold anywhere (Sean, 30 Sep 2026: "keep everything unbolded ... it looks more minimalistic") — every face at its regular
    400, headings, names and numbers included, except the percentile bubbles' digits, which stay Savant's (Roboto Condensed 700). */
-:root:root :not(.svnum) { font-weight: 400 !important; }
+:root:root :not(.svnum) { font-weight: 300 !important; }   /* 400 until the Raya dress (5 Oct 2026); the end-of-file block puts numbers back at 400 */
 /* Minimal pass 7 (Sean, 30 Sep 2026). Thinner frames: the cards, the list pages' white card, the popup card, its tabs' box and
    the header rules at 1px instead of 2-3px; section rules (the percentile charts' and the card tabs' headings) a thin grey
    line instead of a heavy navy one. */
@@ -3927,7 +3927,6 @@ header.top .wordmark { display: none; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --raya: #7fb2ea; } }
 :root[data-theme="dark"] { --raya: #7fb2ea; }
 /* type: light everywhere, numbers at 400 so they stay readable; names and headings in the condensed face at 300 */
-:root:root:root:root:root:root :not(.svnum) { font-weight: 300 !important; }
 :root:root:root:root:root:root :is(.pct, .score, .hchip b, .hval, td, .svval, .pbtable td, .ftable td, .num, .mkcost, .bubble, .chipval, .tile b, .big, .fp) { font-weight: 400 !important; }
 :root:root:root:root:root:root :is(.pthd, .phead h2, .phname, .hub.home h2, .hcard h3, .hub h2) { font-weight: 300 !important; letter-spacing: 0.01em !important; }
 /* small tracked labels: nav, column names, section names, buttons, tabs, the band's bio labels */
@@ -3982,7 +3981,7 @@ header.top .wordmark { display: none; }
 /* the sorted column: no fill (its values carry their percentile colour, hotInk in app.js); rows separated by hairlines */
 :root:root:root:root:root:root #rows .row-main > .hot, :root:root:root:root:root:root #rows .row-main .pcts > .hot, :root:root:root:root:root:root td.fsorted { background: transparent !important; }
 :root:root:root:root:root:root .row-main { border-bottom: 1px solid var(--raya-hair); }
-:root:root:root:root:root:root .row-main:hover, :root:root:root:root:root:root .row[aria-expanded="true"] .row-main { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+/* (the selected / hovered row keeps the older opaque rules — a transparent mix here let the stats show through the frozen name, Sean 5 Oct 2026) */
 :root:root:root:root:root:root #board .row-main .name { font-family: var(--display); font-size: 16px; }
 :root:root:root:root:root:root #board .meta { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 /* section rules under the card tabs' headings and the card's own rules, all the one hairline; Similar as plain names */
