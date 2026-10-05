@@ -8298,13 +8298,17 @@
     // make the header a bit smaller row wise"); the mrank line underneath only when something else is on it
     const tog = el("span", "phtog"), fs = el("div", "seg phfiltseg"); fs.append(b); tog.append(fs);
     (plate.querySelector(".hstrip") || mr || plate).append(tog);
-    if (p.type === "P") {                                 // a phone: vertical, to the left of Filters, the same box as Filters (Sean, 4 Oct 2026)
-      const ss = sideSwitch();
-      // each of Raw and Stuff the size of the Filters button (Sean, 5 Oct 2026: "each of raw and stuff to be as big, so technically it should be twice as tall")
-      if (mob) { ss.classList.add("vert"); tog.before(ss); requestAnimationFrame(() => { if (fs.isConnected) { ss.style.width = fs.offsetWidth + "px"; for (const x of ss.children) x.style.height = b.offsetHeight + "px"; } }); }
-      else tog.after(ss);
+    // Raw / Stuff is one dropdown in the season picker's dress, to the left of Filters (Sean, 5 Oct 2026: "one singular button ... the same
+    // style as like the mlb/aaa/AA button thing is and also how the year is") — the two-button switch had made the row twice as tall on a
+    // phone and left a blank over the bio
+    if (p.type === "P") {
+      const side = (state.cardSide || "raw") === "stuff" ? "stuff" : "raw";
+      const ss = titleSelect(side, [["raw", "Raw"], ["stuff", "Stuff"]], (k) => { state.cardSide = k; savePrefs(); render(); }, "Raw or stuff");
+      ss.classList.add("side"); tog.before(ss);
     }
-    { const ts = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (ts) tog.after(ts); }   // a two-way player's switch: right after Filters, a row saved
+    // a two-way player's Hitting / Pitching switch lives in the Filters window now (Sean, 5 Oct 2026: "put the hitting and pitching button in
+    // the filters box so that you can eliminate that weird empty space gap"); it's taken off the plate here and put in the window below
+    const twoWay = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (twoWay) twoWay.remove();
     { const hs = plate.querySelector(".hstrip"); if (hs && hs._stats) hs.append(hs._stats);   // the season's line, last: its own row
       // a phone (Sean, 1 Oct 2026: four ragged rows "just looks so weird"): the bio and Filters stay beside the headshot, and the
       // playing time and the season's line run as one row across the band under it
@@ -8345,7 +8349,9 @@
     if (open) {
       const win = el("div", "phwin pop"), x = el("button", "pop-close", "×"); x.type = "button"; x.setAttribute("aria-label", "Close filters");
       x.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = false; savePrefs(); render(); });
-      const body = el("div", "pop-body phwinbody"); body.append(grid); if (sum.childNodes.length) body.append(sum);
+      const body = el("div", "pop-body phwinbody");
+      if (twoWay) { const tw = el("div", "phtwo"); tw.append(el("div", "phcap", "Hitting / Pitching"), twoWay); body.append(tw); }
+      body.append(grid); if (sum.childNodes.length) body.append(sum);
       const ft = el("div", "popfoot phwinft"), clear = el("button", "linkbtn popclear", "Clear"); clear.type = "button";
       clear.addEventListener("click", (e) => { e.stopPropagation(); state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; savePrefs(); render(); });
       ft.append(clear); win.append(x, body, ft);

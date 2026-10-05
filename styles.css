@@ -3894,3 +3894,9 @@ header.top .wordmark { display: none; }
 :root[data-view="mobile"] .phead .hstrip .phside.vert + .phtog { margin-left: 6px; }
 :root[data-view="mobile"] .phead .hstrip .phside.vert + .phtog { align-self: flex-end; }   /* Filters level with Stuff, Raw above it (Sean, 5 Oct 2026) */
 :root[data-view="mobile"] .phead .hstrip:has(.phside.vert) { align-items: flex-end; }
+
+/* Raw / Stuff as one dropdown in the season picker's dress, left of Filters; the two-way switch in the Filters window (Sean, 5 Oct 2026) */
+.phead .hstrip .tsel.side { margin-right: 10px; align-self: center; }
+.phead .hstrip .tsel.side .tsl { font-family: var(--display); font-size: 15px; line-height: 1; padding: 0; }
+.phwin .phtwo { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.phwin .phtwo .seg { align-self: flex-start; }

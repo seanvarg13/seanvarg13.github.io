@@ -174,9 +174,11 @@ def feed_game(pk: int, game_date: str) -> pd.DataFrame:
             d = pd.read_csv(f, low_memory=False)
             if "des" not in d.columns:                    # files cached before the play text was kept: no bunt flag (only EV means care)
                 d["des"] = ""
-            if pd.to_numeric(d["zone"], errors="coerce").notna().any():
+            if pd.to_numeric(d["zone"], errors="coerce").notna().any() and "balls" in d.columns:
                 return d
-            f.unlink(missing_ok=True)                     # cached before the zone came from the plot: fetch it again
+            f.unlink(missing_ok=True)                     # cached before the zone came from the plot, or before the count was kept
+                                                          # (3 Oct 2026 — Double-A and below had no first-pitch / three-ball strike rates
+                                                          # because every game was already cached; Sean, 5 Oct 2026): fetch it again
         except Exception:                                 # a corrupt cached file: fetch it again
             f.unlink(missing_ok=True)
     js = {}
