@@ -1586,8 +1586,10 @@ is deploy-limited.
   Cavalli 2025: Whiff% 27.9, xK% 19.9, gap −8.
 * **Raw / Stuff as one dropdown, the two-way switch in Filters, minors Walk Avoidance (Sean, 5 Oct 2026: "put the hitting and pitching button
   in the filters box so that you can eliminate that weird empty space gap ... make it one singular button ... the same style as like the mlb/aaa/AA
-  button thing is and also how the year is ... add the walk avoidance percentile bars for the minor leagues too")**: Raw / Stuff is a
-  `titleSelect` ("Raw ▾", `.tsel.side`, the season picker's dress) to the left of Filters on both layouts — `sideSwitch()` is unused; the
+  button thing is and also how the year is ... add the walk avoidance percentile bars for the minor leagues too")**: Raw / Stuff was a
+  `titleSelect` ("Raw ▾", the season picker's dress) for an hour, then **a button in the Filters button's own dress, right beside it**
+  (Sean: "make it look exactly like the filters button"): `.segbtn.small.phfilt.phsidebtn` in a `.seg.phfiltseg.phsideseg`, appended to
+  `.phtog` after Filters, the pick list hung under it by `ddList` — to the right of Filters on both layouts — `sideSwitch()` is unused; the
   vertical two-button switch had made the phone's bio row twice as tall and left a blank over the bio. A two-way player's Hitting / Pitching
   `.seg` is taken off the plate in `playerHead` and put at the top of the Filters window (`.phtwo`, captioned). **Minors**: Triple-A already
   showed Walk Avoidance in full; Double-A and below read no 1st-pitch / 3-ball strike rates (so no xBB%) because `load_feed`'s per-game cache

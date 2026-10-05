@@ -8299,10 +8299,13 @@
     // Raw / Stuff is one dropdown in the season picker's dress, to the left of Filters (Sean, 5 Oct 2026: "one singular button ... the same
     // style as like the mlb/aaa/AA button thing is and also how the year is") — the two-button switch had made the row twice as tall on a
     // phone and left a blank over the bio
+    // ... and then in the Filters button's own dress, right beside it (Sean, 5 Oct 2026: "put it next to the filters button and make it
+    // look exactly like the filters button"): the same .seg / .segbtn as Filters, the pick list hung under it by ddList
     if (p.type === "P") {
       const side = (state.cardSide || "raw") === "stuff" ? "stuff" : "raw";
-      const ss = titleSelect(side, [["raw", "Raw"], ["stuff", "Stuff"]], (k) => { state.cardSide = k; savePrefs(); render(); }, "Raw or stuff");
-      ss.classList.add("side"); tog.before(ss);
+      const sb = el("button", "segbtn small phfilt phsidebtn", side === "stuff" ? "Stuff ▾" : "Raw ▾"); sb.type = "button"; sb.setAttribute("aria-label", "Raw or stuff");
+      const dd = ddList(sb, [["raw", "Raw"], ["stuff", "Stuff"]], side, (k) => { state.cardSide = k; savePrefs(); render(); }, "side");
+      const ss = el("div", "seg phfiltseg phsideseg"); ss.append(dd); tog.append(ss);
     }
     // a two-way player's Hitting / Pitching switch lives in the Filters window now (Sean, 5 Oct 2026: "put the hitting and pitching button in
     // the filters box so that you can eliminate that weird empty space gap"); it's taken off the plate here and put in the window below
