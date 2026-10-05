@@ -1552,6 +1552,14 @@ is deploy-limited.
   xK%, xWhiff%, xCalled Strike%, …) row for row — K% heads both so they align, and `pctColumns(…, { scaleAll: true })` puts the Poor / Average /
   Great scale on both charts (`pctChart`'s third argument) since the scale row is what had offset them; Plate under the left, Counts and Stuff
   under the right. A phone stacks the two.
+* **No 2-strike Whiff% in xK% (Sean, 5 Oct 2026: "Cade Cavalli is a case where last year his whiffs were high but his xk% was low simply
+  because his 2 strike whiff was low but then this year that flipped because his skill of getting whiffs translated")**: `XKM`'s five tiers are
+  refit without `s2whf` (scratch `xkrefit.js`, same recipe — every 100+ BF pitcher-season 2020-26 centred on its season's league, ridge λ 3,
+  pooled); 2-strike Swing% and Zone% stay. A whiff with two strikes is the strikeout itself, so it was a result in the fit and a season's run
+  of them read as skill. Held out season by season: same-season rmse 0.63 → 1.04, next season's K% 3.57 → 3.49. Cavalli 2025 K% − xK% +0.1 →
+  −1.6 (2026 K% 28.3, xK% 27.7), Wheeler 2025 0.0 → +1.9, Jacob Webb 2026 −0.7 → −1.9, Skenes 2026 xK% 27.0 / Pitching+ xK% 27.3. Pitching+
+  xK% moves with it (`xkParts` still computes the scaled two-strike rate, unused by the fit); the xK% tab's pairs and the Pitching+ tab's
+  breakdown no longer show 2-strike Whiff% (`s2whf` / `ns2whf` stay pool stats and columns). The Rating and xRating follow.
 
 ## 9. Things only Sean can do
 
