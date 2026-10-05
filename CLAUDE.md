@@ -1655,6 +1655,29 @@ is deploy-limited.
   helmet, the dress, the speed fixes) is **history on the site** — still in git, and the build-side additions (foul models, day fields,
   the extra card-group defs in `PITCHER_CARD`) stay since the old app.js ignores fields it doesn't name. Re-apply any of it only when asked.
 
+* **The lag, found and fixed on the 11am-yesterday front end (Sean, 5 Oct 2026: "It's still super laggy can you fix that, what caused that?")**:
+  with the front end put back to Saturday 11am and still dragging, the cause had to be in the data and the page's own habits, and a
+  4×-throttled headless profile (scratch `tl.js` / `prof12.js` / `profhome.js`) showed exactly where: (1) `ensureScript` emptied every value /
+  pool / rank cache when **any** lazy file landed, so the search index arriving ~3 s after the pitchers' Leaderboard made the page recompute
+  the whole pool and redraw — a 3.3 s freeze on a phone right after the 4 s first draw; (2) **Home parses `days.js`** (24 MB since the
+  2-4 Oct rescores: 18 → 24 MB from the location / swing-foul / command sums — every float is already 2 dp, so the size is the field
+  count, not precision) on every cold load for its Trending card, and the **Last game day** card then ran a full game log for every one of
+  ~1,300 players to find one day — 5.4 s blocked; (3) in `pool()`, `impliedKBB` / `nextKBB` copied the whole metric object (`Object.assign`)
+  for every rate fit, four times per pitcher, which was most of the pool's time; (4) `fitNameCol` forced a layout per row. And every publish
+  reloads his phone through `build.json`, so each of the day's ~15 publishes put him on that cold path — the "it didn't lag this morning"
+  was a warm page. Fixed in `app.js` (same patches as PRs #342 / #345, re-applied to this version, plus the home card): `ensureScript`
+  keeps the caches for value-free files (`index`, `career`, `similar`, `minors`, `trends`, `adp-` / `proj-`, `fantasy-lines`);
+  `days.js` arriving drops only the **provisional** caches (values / pools / ranks computed under a window or split before it was in —
+  `provisional.val / pool / rank`, the pool and rank keys carry `daysReady()` only under `needsRows()`); Home asks for the file 1.2 s after
+  it paints, on idle, only while still on Home; `gameLog(p, onlyDay)` / `hitGameLog(p, onlyDay)` and the last-game-day card first checks
+  who has a row that day; `rateFit(m, lg, fits, L, role, ex)` reads the arsenal inputs beside `m` instead of copying it (`impliedKBB`,
+  `nextKBB`, `uBBFrom` pass `ex`); `fitNameCol` measures the team line on the canvas and `textWidth` sets the font once. Headless at 4×
+  CPU: Leaderboard first draw 4.1 → 3.6 s, the second freeze 3.3 → 0.3 s, Home's day-file freeze 5.4 → 1.7 s; desktop Leaderboard render
+  1.44 → 0.84 s (pool 0.94 → 0.34 s). Every one of the 539 listed pitchers' rows (Rating, xRating, nERA, uK%, uBB%, xWhiff%, Mix …) is
+  byte-identical before and after. What's left is the first draw itself (700 rows built and laid out, ~0.8 s desktop) and the 24 MB parse
+  (~1 s on a phone, once per publish) — the next levers are drawing the rows in chunks and trimming the inert command sums (`stcn…stcw`,
+  1.5 MB) and the rest of the day fields the site doesn't read.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
