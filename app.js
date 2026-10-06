@@ -3812,7 +3812,8 @@
   };
   pitchBoardEl();
   { const mm = $("modemenu"); if (mm && !mm.querySelector('a[href="#planner"]') && !offSeason()) { const li = el("li"); const a = el("a", null, "Weekly Planner"); a.href = "#planner"; li.append(a); mm.append(li); } }
-  { const mm = $("modemenu"); if (mm && !mm.querySelector('a[href="#mock"]')) { const li = el("li"); const a = el("a", null, "Mock Draft"); a.href = "#mock"; li.append(a); mm.append(li); } }   // Sean, 2 Oct 2026   // not in the off-season: no games to plan
+  { const mm = $("modemenu"); if (mm && !mm.querySelector('a[href="#mock"]')) { const li = el("li"); const a = el("a", null, "Mock Draft"); a.href = "#mock"; li.append(a); mm.append(li); } }   // Sean, 2 Oct 2026
+  { const mm = $("modemenu"); if (mm && !mm.querySelector('a[href="#claude"]')) { const li = el("li"); const a = el("a", null, "Claude rankings"); a.href = "#claude"; li.append(a); mm.append(li); } }   // Sean, 6 Oct 2026   // not in the off-season: no games to plan
   // Draft Mode is gone (Sean, 28 Sep 2026: the home page does its job); the Mac's index.html template may still list it
   { const dm = document.querySelector('#modemenu a[href="#draftmode"]'); if (dm) dm.closest("li").remove(); }
   // Trending lives inside the Leaderboard and the Fantasy leaderboard now (Season / Recent, 1 Oct 2026): off both menus
@@ -4108,6 +4109,70 @@
       ? "MLB-equivalent uERA carries his Whiff%, Strike%, ground-ball and popup rates up to the majors by the level's typical drop (fitted on pitchers who worked at two levels in a season), then prices them like any MLB pitcher's uERA; the chip is where that would rank among this season's MLB starters or relievers. Stuff+ is graded against MLB pitches of the same type, and only exists where the level tracks pitches. · MLB = he has pitched in the majors this season."
       : "Hitters are ranked by xwOBA (the directional model, without sprint speed) where the level is tracked — Triple-A — and by wOBA below it, with the contact (exit velocity, barrels, hard-hit) and swing numbers beside it; exit velocity exists only at tracked levels (Triple-A, some Single-A parks), and zone / chase numbers below Triple-A come from Gameday's pitch plot. · MLB = he has batted in the majors this season.")));
   }
+  // Claude rankings (Sean, 6 Oct 2026: "a ranking of starting pitchers for 2027 using both last years knowledge as well as player history
+  // including both majors and minors ... a separate page under fantasy and call it claude rankings, and for each player add a comments
+  // section"): hist/claude-2027.js, built by hand from the site's own numbers (scratch claude27.js) — a row per starter with the projected
+  // ESPN points, per start, the 2026 line and a comment; tap a row for the comment, a name for his card
+  const cl = Object.assign({ q: "", open: {}, all: false, sort: "pts" }, (() => { try { return JSON.parse(localStorage.getItem("draft2027.claude") || "{}"); } catch { return {}; } })());
+  function renderClaude() {
+    const box = pitchBoardEl(); box.innerHTML = "";
+    const save = () => { try { localStorage.setItem("draft2027.claude", JSON.stringify({ all: cl.all, sort: cl.sort })); } catch {} render(); };
+    const D27 = window.DRAFT_CLAUDE27;
+    if (!D27) { ensureScript("hist/claude-2027.js", () => !!window.DRAFT_CLAUDE27); box.append(el("p", "note", "Loading the rankings…")); return; }
+    const bar = el("div", "pbfilters");
+    const q = el("input", "pbsearch"); q.type = "search"; q.placeholder = "Find a pitcher"; q.value = cl.q; q.setAttribute("aria-label", "Find a pitcher");
+    q.addEventListener("input", () => { cl.q = q.value; const keep = q; render(); const nq = document.querySelector("#pitchboard .pbsearch"); if (nq) { nq.focus(); nq.setSelectionRange(nq.value.length, nq.value.length); } void keep; });
+    bar.append(q);
+    bar.append(pillSelect(cl.sort === "pps" ? "Per start" : "Total points", [["pts", "Total points"], ["pps", "Per start"]], cl.sort, (v) => { cl.sort = v; save(); }, "Order"));
+    const tog = el("button", "btn btn-quiet tbtn" + (cl.all ? " on" : ""), cl.all ? "Hide comments" : "Show all comments"); tog.type = "button"; tog.addEventListener("click", () => { cl.all = !cl.all; save(); }); bar.append(tog);
+    bar.append(el("span", "pbcount", `${D27.rows.length} starters · ${D27.scoring.split(" (")[0]} · built ${D27.built}`));
+    box.append(bar);
+    const rows = D27.rows.filter((r) => !cl.q || r.name.toLowerCase().includes(cl.q.toLowerCase()) || (r.team || "").toLowerCase() === cl.q.toLowerCase());
+    if (cl.sort === "pps") rows.sort((a, b) => b.pps - a.pps);
+    const P = new Map(DATA.players.filter((p) => p.type === "P").map((p) => [p.id, p]));
+    const ppsAll = D27.rows.map((r) => r.pps), ptsAll = D27.rows.map((r) => r.pts);
+    const pctIn = (arr, v) => Math.round(100 * arr.filter((x) => x < v).length / arr.length);
+    const paint = (td, pc) => { const st = pctStyle(pc); if (st) { td.style.background = st.bg; td.style.color = st.fg; } };
+    const f1 = (v) => v == null ? "–" : (+v).toFixed(1), f2 = (v) => v == null ? "–" : (+v).toFixed(2), f0 = (v) => v == null ? "–" : String(Math.round(v));
+    const cols = [["tier", "Tier"], ["pts", "Proj pts"], ["pps", "Pts/GS"], ["gs", "GS"], ["gs26", "2026 GS"], ["pps26", "2026 Pts/GS"], ["nera", "nERA"], ["xnera", "xnERA"], ["k", "K%"], ["bb", "BB%"], ["whf", "Whiff%"], ["pitch", "Pitching+"], ["fbv", "Velo"], ["late", "Aug 1 on"]];
+    const t = el("table", "ftable stufft pbtable cltable"), th = el("thead"), hr = el("tr");
+    hr.append(el("th", "n", "#"), el("th", "who", "Pitcher"));
+    for (const [k, lab] of cols) { const c = el("th", null, lab); if (k === "late") c.title = "nERA and K% from August 1 on (25+ IP)"; if (k === "pts") c.title = "Projected 2027 ESPN points: per start × projected starts"; hr.append(c); }
+    th.append(hr); t.append(th);
+    const tb = el("tbody");
+    rows.forEach((r) => {
+      const tr = el("tr", "clrow" + ((cl.all || cl.open[r.id]) ? " open" : "")), who = el("td", "who"), p = P.get(r.id);
+      const nm = p ? el("button", "linkbtn pbname", r.name) : el("span", "pbname", r.name);
+      if (p) { nm.type = "button"; nm.addEventListener("click", (e) => { e.stopPropagation(); openCard(p); }); }
+      who.append(nm, el("small", null, ` ${r.team || ""} · ${r.age}`));
+      tr.append(el("td", "n", String(r.rk)), who);
+      for (const [k] of cols) {
+        let td;
+        if (k === "tier") td = el("td", "cltier", "T" + r.tier);
+        else if (k === "pts") { td = el("td", null, f0(r.pts)); paint(td, pctIn(ptsAll, r.pts)); }
+        else if (k === "pps") { td = el("td", null, f1(r.pps)); paint(td, pctIn(ppsAll, r.pps)); }
+        else if (k === "late") td = el("td", "cllate", r.late ? `${f2(r.late.nera)} · ${f1(r.late.k)}%` : "–");
+        else if (k === "nera" || k === "xnera") td = el("td", null, f2(r[k]));
+        else if (k === "pitch" || k === "gs" || k === "gs26") td = el("td", null, f0(r[k]));
+        else td = el("td", null, f1(r[k]));
+        tr.append(td);
+      }
+      tr.addEventListener("click", () => { cl.open[r.id] = !cl.open[r.id]; render(); });
+      tb.append(tr);
+      if (cl.all || cl.open[r.id]) {
+        const cr = el("tr", "clcomment"), td = el("td"); td.colSpan = cols.length + 2;
+        const hist = r.hist.map((h) => `${h.y}: ${h.gs ?? "–"} GS, nERA ${f2(h.nera)}, K% ${f1(h.k)}, BB% ${f1(h.bb)}, Pitching+ ${f0(h.pitch)}${h.pps != null ? `, ${f1(h.pps)} pts/start` : ""}`);
+        const mins = (r.minors || []).map((m) => `${m.lvl.toUpperCase()} 2026: ${m.bf} BF, K% ${f1(m.k)}, BB% ${f1(m.bb)}${m.stuff != null ? `, Stuff+ ${f0(m.stuff)}` : ""}`);
+        const wrap = el("div", "clwrap");   // sticky to the left edge, so on a phone the comment stays in view while the table scrolls sideways
+        wrap.append(el("p", "clc", r.comment));
+        if (hist.length || mins.length) wrap.append(el("p", "clh", [...hist, ...mins].join(" · ")));
+        td.append(wrap); cr.append(td); tb.append(cr);
+      }
+    });
+    t.append(tb);
+    const scroll = el("div", "fscroll pbscroll"); scroll.append(t); box.append(scroll);
+    box.append(el("p", "note", `Scoring: ${D27.scoring}. ${D27.method}`));
+  }
   // Weekly Planner (Sean, 29 Sep 2026): the Monday-to-Sunday week's schedule and probable starters, fetched from the MLB Stats API
   // in the browser when the page opens (it allows cross-site reads; nothing is built for it). Starred players by default, or
   // everyone: pitchers' probable starts (two-start weeks flagged) and hitters' games with the opposing starters' hands, each with
@@ -4346,7 +4411,7 @@
     modal.classList.remove("pcard"); document.body.classList.remove("cardpop");
     const key = state.expanded;
     // the Mock Draft's names pop the card up over the room too (Sean, 2 Oct 2026), and so does a Similar player's name from inside one
-    const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy", "pitches", "home", "mock"].includes(state.mode);
+    const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy", "pitches", "home", "mock", "claude"].includes(state.mode);
     if (key && listMode && state.cardDs && !histDataset(state.cardDs)) ensureHist(state.cardDs);   // a past season's card: its file first
     const src = state.cardDs && histDataset(state.cardDs) ? histDataset(state.cardDs).players : DATA.players;
     const p0 = key && listMode ? (src.find((q) => q.type + q.id === key) || DATA.players.find((q) => q.type + q.id === key)
@@ -5284,7 +5349,7 @@
   }
   function renderNow() {
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
-    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock", other = pitches || player || compare || elig || hub || appear || fant;
+    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude", other = pitches || player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
     const T = state.tbl; document.body.dataset.heat = T.heat ? "on" : "off"; document.body.dataset.band = T.band ? "on" : "off"; document.body.dataset.sorthl = T.sortHl ? "on" : "off"; document.body.dataset.density = T.density;
@@ -5307,6 +5372,7 @@
     if (state.mode === "callups") { renderCallups(); renderModal(); return; }
     if (state.mode === "planner") { renderPlanner(); renderModal(); return; }
     if (state.mode === "mock") { renderMock(); renderModal(); return; }
+    if (state.mode === "claude") { renderClaude(); renderModal(); return; }
     if (pitches) { renderPitchBoard(); renderModal(); return; }
     const listRender = () => {
       ensureView();
@@ -9997,7 +10063,7 @@
     w.append(brd, again); box.append(w);
   }
   const NAV_GROUPS = [
-    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "eligibility", "fantasy", "planner", "mock"] },
+    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "eligibility", "fantasy", "planner", "mock", "claude"] },
     { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaders", short: "Leaders", modes: ["leaderboard", "trending", "trends", "callups", "compare"] },   // Stuff+ (#pitches) is its own header tab (3 Oct 2026)
     { key: "more", sel: "moresel", txt: "moreseltxt", menu: "moremenu", label: "⋯", short: "More", modes: ["appearance"] },
   ];
@@ -10006,7 +10072,7 @@
     const pm = h.match(/^player\/(\d+)$/);
     if (pm) { state.mode = "player"; const id = Number(pm[1]); if (state.x.id !== id) { state.x = { id, type: null, ds: null }; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; } return; }
     if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["leaders", "trending", "whatif", "settings"].includes(v) ? v : "leaders"; return; }
-    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "pitches", "trends", "callups", "planner", "mock", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
+    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "pitches", "trends", "callups", "planner", "mock", "claude", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {

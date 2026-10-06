@@ -1988,6 +1988,25 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **Every minors season 2021-26 carries the count-state / called-strike / foul fields (6 Oct 2026)**: two rescore runs (37466634801: aaa-2022..2025
   + aa / ap / a-2025; 37481424671: aa / ap / a 2021-2024, every Gameday feed refetched for the count) put `cstr / foul / s2whf / fstrk / b3strk` on every
   pitcher in every `hist/<aaa|aa|ap|a>-YYYY.js`, so the minors' Swing & Miss / Command bars, the strikeout profile and the four dials read on past seasons too.
+* **Claude rankings (Sean, 6 Oct 2026: "a ranking of starting pitchers for 2027 using both last years knowledge as well as player history
+  including both majors and minors ... make sure ian seymour and didier fuentes are included as starters ... a separate page under fantasy and
+  call it claude rankings, and for each player add a comments section", then "also factor in like the pitching+ model and maybe even anyone that
+  performed well down the stretch")**: Fantasy ▸ **Claude rankings** (`#claude`, `renderClaude` in `app.js`, the Stuff+ board's standing card —
+  every `[data-mode="mock"]` CSS rule also names `claude`; `.cltable` rules at the end of `styles.css`) reads **`hist/claude-2027.js`**
+  (`window.DRAFT_CLAUDE27`, 110 starters, hand-built — not part of any build): a row per pitcher (tier, projected ESPN points, per start, starts,
+  the 2026 line, the Aug 1-on nERA / K%), tap a row for his comment (56 hand-written for the top of the list plus Seymour, Fuentes, Meyer, Sheehan,
+  Ohtani, Glasnow, Sasaki, Pepiot; the rest built from the same numbers — archetype, dials, stretch run, flaws, 2024-25 and minors lines), a name
+  opens his card; search, Total points / Per start order, Show all comments. **How it was built** (scratch `scrape.js` → `assemble.js` → `rank.js`
+  → `comments.js` + `claude27.js`): the site's own Leaderboard scraped headless for every pitcher's 2024 / 2025 / 2026 and Aug 1-on 2026 pool
+  numbers (nERA, xnERA, xK%, Pitching+ family, called strikes, fouls per contact …), starts-only ESPN points per start from the fantasy files,
+  the Marcel projection (`hist/proj-2027.js`), and the minors files. Points per start = 40% history (2026 / 25 / 24 at .5 / .3 / .2 by starts,
+  regressed with 12 starts of league) + 40% 2026 process (xnERA .45, nERA .25, Pitching+ x(K-BB)% .30, the Aug 1-on nERA .30 where 25+ IP — the
+  pts/start-per-nERA scale is a fit over 2026 starters, 26.23 − 4.10·nERA; shrunk by BF toward his history) + 20% Marcel; age 34+ −0.25 a year,
+  ≤ 25 +0.25; no 2026 season (Pepiot, Berríos, Priester) −0.5 and 80% of the starts; starts = 95% of max(Marcel GS, .75 / .25 of 2026 / 2025 GS),
+  cap 32; total = per start × starts; tiers at 375 / 330 / 298 / 272 / 250. Seymour and Fuentes are ranked as starters (27 GS) with the
+  reliever-to-starter translation (`AS_SP`: a whiff point, half a run) — Fuentes' per-start value is a judgment call (11.4) since the formula's
+  shrink toward league on 300 relief BF was too hard on stuff that reads top-15. Rebuild by hand after the season's last build (re-run the four
+  scripts) or when Sean asks; the comments are prose and date quickly.
 * **xCalled on the Pitching+ tab (Sean, 6 Oct 2026: "add expected called strikes to the pitching+ tab as well")**: an **xCalled** pair after xFoul in
   `renderStuffTab`'s Pitching+ table — the command models' called-strike chance per pitch (the arsenal's `xcstr`, `arsenalView`'s in a window /
   split) plus `xCalled`'s league centring (`lgRatesP().cstr − .xcstr`, the models read the newest season a little hot) over his actual called
