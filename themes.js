@@ -54,7 +54,7 @@ window.DRAFT_THEMES = (function () {
   // (in <head>, before the page paints) rather than index.html, whose template lives on the Mac and isn't synced.
   const F = {
     studio: { name: "Barlow Condensed + Source Sans 3", blurb: "Condensed headings, an easy-reading text face — the same on every page and device.",
-              google: "family=Barlow+Condensed:wght@300;400;500;600;700&family=Source+Sans+3:ital,wght@0,300..700;1,300..700&family=Roboto+Condensed:wght@700",   // Roboto: the percentile bubbles' digits only
+              google: "family=Barlow+Condensed:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,400..700;1,400..700&family=Roboto+Condensed:wght@700",   // Roboto: the percentile bubbles' digits only
               display: '"Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif',
               body: '"Source Sans 3", "Source Sans Pro", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif' },
   };

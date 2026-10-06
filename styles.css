@@ -3917,22 +3917,16 @@ header.top .wordmark { display: none; }
 .drivers .note { margin-top: 10px; }
 .drivers .drvconst td { color: var(--ink-2, #4a5563); }
 
-/* ---------- The Raya mock's bars (Sean, 5 Oct 2026: "precisely like this") — pctSvg draws the mock's .bar / .trk / .bub; these are its type and colours ---------- */
-:root { --raya-pctrack: #eceef2; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --raya-pctrack: #2e333b; } }
-:root[data-theme="dark"] { --raya-pctrack: #2e333b; }
-:root:root:root:root:root:root .svpct.raya .svsecname { font-family: var(--body); font-size: 11px; font-weight: 300 !important; letter-spacing: 0.16em !important; text-transform: uppercase !important; fill: var(--ink-2); }
-:root:root:root:root:root:root .svpct.raya .svscale { font-family: var(--body); font-size: 10px; font-weight: 300 !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; fill: var(--ink-2); }
-:root:root:root:root:root:root .svpct.raya .svlbl { font-family: var(--body); font-size: 14px; font-weight: 300 !important; fill: var(--ink); }
-:root:root:root:root:root:root .svpct.raya .svlbl.svval { font-weight: 400 !important; fill: var(--ink); font-variant-numeric: tabular-nums; }
-:root:root:root:root:root:root .svpct.raya .svlbl.svfold, :root:root:root:root:root:root .svpct.raya .svlbl.svsub { fill: var(--ink-2); font-size: 14px; }
+/* ---------- the card's bars (6 Oct 2026: the flat track, bubble and centred rows kept; every Raya trait gone — the site's own type) ---------- */
+:root { --raya-pctrack: #eceef2; --raya-pctink: #000; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --raya-pctrack: #2e333b; --raya-pctink: #f2f3f5; } }
+:root[data-theme="dark"] { --raya-pctrack: #2e333b; --raya-pctink: #f2f3f5; }
+:root:root:root:root:root:root .svpct.raya .svsecname { font-family: var(--display); font-size: 19px; font-weight: 400 !important; letter-spacing: 0 !important; text-transform: none !important; fill: var(--raya-pctink); }
+:root:root:root:root:root:root .svpct.raya .svscale { font-family: var(--body); font-size: 11px; font-weight: 400 !important; letter-spacing: 0 !important; text-transform: none !important; fill: var(--raya-pctink); }
+:root:root:root:root:root:root .svpct.raya .svlbl { font-family: var(--body); font-size: 14px; font-weight: 400 !important; fill: var(--raya-pctink); }
+:root:root:root:root:root:root .svpct.raya .svlbl.svval { font-weight: 400 !important; fill: var(--raya-pctink); font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root .svpct.raya .svlbl.svfold, :root:root:root:root:root:root .svpct.raya .svlbl.svsub { fill: var(--raya-pctink); font-size: 14px; }
 :root:root:root:root:root:root .svpct.raya .svtrack { fill: var(--raya-pctrack); }
 :root:root:root:root:root:root .svpct.raya .svbulb { stroke: var(--surface, #fff); stroke-width: 2; }
 :root:root:root:root:root:root .svpct.raya .svnum { font-family: "Roboto Condensed", var(--display); font-size: 10.5px; font-weight: 700 !important; fill: #fff; text-anchor: middle; }
 :root:root:root:root:root:root .svpct.raya .svnum.c3 { font-size: 9.5px; }
-/* black type on the card's bars (Sean, 6 Oct 2026: "all the font color of the player card metrics and group names black and not a light or faint black") */
-:root { --raya-pctink: #000; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --raya-pctink: #f2f3f5; } }
-:root[data-theme="dark"] { --raya-pctink: #f2f3f5; }
-:root:root:root:root:root:root .svpct.raya .svsecname, :root:root:root:root:root:root .svpct.raya .svlbl, :root:root:root:root:root:root .svpct.raya .svlbl.svval,
-:root:root:root:root:root:root .svpct.raya .svlbl.svfold, :root:root:root:root:root:root .svpct.raya .svlbl.svsub, :root:root:root:root:root:root .svpct.raya .svscale { fill: var(--raya-pctink); }
