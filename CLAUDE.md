@@ -2177,3 +2177,19 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Whiff% · xBB% (xWhiff% · xBB%) — the Rating stays a Leaderboard column and the pool's score; the headline cell keeps `.hero` (the value in its
   percentile colour, big) but appends no `.ppill`. Found alongside: the `sorted` / `brk` classes on that cell had sat behind a mid-line `//`
   comment since PR #390 — the third time; it's a `/* */` now.
+* **Card and Leaderboard tidy, 6 Oct 2026 (Sean, from two phone screenshots: "get rid of rating on the player card and when nera is sorted on
+  make it show the stat as big and red like the other columns dont have like the percentile thing below it"; the tiles "just keep the lower text
+  to be the percentile of the metric and that's it"; "make the avg and obp be color mapped in the same way"; "put the bio stuff below the year
+  on its own line"; "get rid of the order by here that'll simply be determined by what the user selects to sort ... put the page number stuff on
+  the same level as the sp filters button is and then add the 1-50 of 233 onto that same level"; "in the area where the order by was put the min
+  IP filter in there")**: `PCT_COLS_P` / `_PS` Skills = Whiff% · xBB% (xWhiff% · xBB%), the Rating a column and the pool's score only; the sorted
+  headline cell keeps `.hero` (the value big in its percentile colour) and appends no `.ppill` — and the `sorted` / `brk` classes on it had sat
+  behind a mid-line `//` since PR #390 (the third time; `/* */` now). **Tiles**: the line under the number is the ordinal percentile alone (no ERA /
+  wOBA / OPS / PA / IP), so they're ~30px shorter; **AVG and OBP are coloured** — `slashPct(g, idx, v)` places the official value among the pool's
+  300+ PA hitters' `hist/career.js` TOT lines that season (AVG idx 14, OBP 15; cached per season / pool; 20+ needed), since neither is a card
+  metric. **Bio**: team · positions · B/T · age · height weight are a `.hbioline` under the year inside the title (`.mlinein` + `.hbio.inline`
+  moved there), not on the season line. **Filters panel**: the Leaderboard's Filters tab has no Sort by (the column tapped sorts; the headline
+  is the default) and the section is "Minimum" with the Min PA / IP box and Per page — `renderPager` keeps no Min box in the top row
+  (`mfKeep` null) and the Filters panel's `minNode` no longer skips `onePage()`. **A phone's bar** is Filters · "1–25 of 193" · ‹ 1 2 … 8 › on
+  one line (`.pnav.inbar`, 24px pills pushed right; the `.pnavrow` is gone), so the first row sits another ~20px higher. Desktop: the count line
+  under the controls now carries only the count.
