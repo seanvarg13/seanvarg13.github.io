@@ -1952,4 +1952,14 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   season r): FB velo .87, Stuff+ .64, GB% .60, Whiff% .40, Strike% .39 — a median spring is 27 BF / ~110 pitches. The 2026 spring file
   predates the location models (17-field arsenal rows), so Pitching+ reads "–" there until a `spring-2026` rescore (dispatched after the
   6 Oct retrain finished); next spring's file is built with them from the first morning.
+* **The 2026 retrain landed (run 37429519220, 6 Oct 2026, 10:27 UTC; every season and the postseasons rescored)** — and it only half fixed
+  the level: over the league's swings (20+ BF pitchers, from the arsenal rows) the location whiff model reads 2026 at 27.2 against an
+  actual 25.1 (+2.0; it was +3.1 trained through 2025), the stuff-only one 25.8 (+0.7), xGB·loc 44.0 vs 42.4; and on the training seasons
+  it runs **cold early and hot late** — 2020 −1.2, 2021 −1.1, 2022-25 within ±0.3, 2026 +2.0. The models have no season input, so a
+  2026 pitch that looks like a 2022 pitch is priced at 2022's whiff rate while hitters whiffed less on it this year (whatever the cause —
+  the ball, the ABS challenge zone, hitters adapting). The compression (expected sd ~0.8 of the real) is as before, so a Stuff-side
+  percentile still sits under the Raw one at the same number (Messick K-BB% 84th vs Pitching+ x(K-BB)% 73rd; Skenes 90 / 81). Options
+  not taken yet: a season feature in `train_stuff.py` (a new season scores at the last one's level), or centring the displayed expected
+  rates on the season's actual league (`xneraShift` / `xCalled` already do this for xnERA and called strikes; Sean declined it for xWhiff on
+  4 Oct).
 
