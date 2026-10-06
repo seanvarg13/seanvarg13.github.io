@@ -2208,3 +2208,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **A subtotal row (Sean, 6 Oct 2026: "add a row above everything else and basically just make it the subtotal of the four process oriented
   inputs to the k whiff gap")**: **The four together** (`.krow.ksub`) — the fouls, called strikes, two-strike finishing and walks pills summed,
   with the running K% at that point — sits between BB% and Everything else; Misiorowski +4.8 of a +4.2 gap, so Everything else reads −0.7.
+* **± K% pills coloured by sign (Sean, 6 Oct 2026, Schlittler's two-strike finishing: "why is the +0.4 in the light blue color if his finishing
+  is above league avg")**: they had been coloured on the percentile scale at 50 + 12 × the effect, and Savant's middle is a pale teal, so a small
+  plus read as a minus. `signStyle(v)` in `renderKArchetype`: neutral grey at 0, red deepening with a plus and blue with a minus, full at ±2.5
+  K% points (white digits past ~±1.1). Everything else keeps its flat grey pill (the `.krest` rule); the His pills stay on the percentile scale.
