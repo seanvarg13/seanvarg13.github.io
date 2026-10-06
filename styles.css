@@ -4114,3 +4114,14 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .krow.ktot .klab, :root:root:root:root:root:root .krow.krest .klab { font-weight: 700 !important; }
 :root:root:root:root:root:root .krow.krest .kpill { background: var(--surface-2) !important; color: var(--ink) !important; }
 :root:root:root:root:root:root .rollbox .rollhd { padding-left: 1px; }   /* the tracked 11px small caps' first letter has a negative side bearing and the box clips — "▸ITCHING+" (6 Oct 2026) */
+/* the K% build-up (Sean, 6 Oct 2026): Step · K% pts · running K% · Repeats? */
+:root:root:root:root:root:root .krow { grid-template-columns: 1fr 56px 52px 110px; }
+:root:root:root:root:root:root[data-view="mobile"] .krow { grid-template-columns: 1fr 50px 44px 84px; gap: 6px; }
+:root:root:root:root:root:root .krun { font-family: var(--display); font-size: 17px; font-weight: 700 !important; color: var(--ink); text-align: center; font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root .krow.kstart .krun, :root:root:root:root:root:root .krow.ktot .krun { font-size: 19px; }
+:root:root:root:root:root:root .krow.kstart .kpill { background: none !important; }
+:root:root:root:root:root:root .krow.ktot .krun { color: var(--ink); }
+:root:root:root:root:root:root .krow.krest { border-top: 2px solid var(--hair); }
+:root:root:root:root:root:root .krow.ktot { border-top: 1px solid var(--hair); border-bottom: 2px solid var(--ink); }
+:root:root:root:root:root:root .krow.ktot .kname .ksub { font-weight: 400 !important; }
+:root:root:root:root:root:root[data-view="mobile"] .ksub { white-space: normal; overflow: visible; }   /* a phone wraps the league / percentile line instead of cutting it */
