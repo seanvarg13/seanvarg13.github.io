@@ -1910,3 +1910,5 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the first column of the Standard and Advanced pitcher sets, right after the nERA headline (`state.lb.xneraFront` moves it to the front of saved lists
   once). **Header**: `seasonLine` shows xnERA (the pool's `st.xnera`) in nERA's place while the Stuff side is on, in a window too. Jax 2026: nERA 3.65,
   xnERA 3.68; Skubal 2.82 / 2.25; Sánchez 2.85 / 2.85; Glasnow 2.79 / 3.27.
+* **No K% / BB% tab (Sean, 6 Oct 2026: "get rid of the k% /bb% tab on the pitcher card as well")**: `BTABS_P` = Pitching+ · nERA; `renderDriversTab`
+  and `DRIVERS` stay in `app.js`, unreachable; a saved `pbtab` of drivers falls back to Stats.
