@@ -1912,3 +1912,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   xnERA 3.68; Skubal 2.82 / 2.25; Sánchez 2.85 / 2.85; Glasnow 2.79 / 3.27.
 * **No K% / BB% tab (Sean, 6 Oct 2026: "get rid of the k% /bb% tab on the pitcher card as well")**: `BTABS_P` = Pitching+ · nERA; `renderDriversTab`
   and `DRIVERS` stay in `app.js`, unreachable; a saved `pbtab` of drivers falls back to Stats.
+* **The Stuff+ / Pitching+ models retrained with 2026 in (Sean, 6 Oct 2026: "train it on 2026 then to get that to be better ... This way we aren't
+  inflating things")**: Actions → Train Stuff+ models dispatched with `through=2026` (run 37429519220; the workflow's default through is the last
+  finished season, i.e. 2025 until November). Why: the fixed models trained through 2025 read 2026 hot — the league's Pitching+ xK% 25.2 against
+  K% 21.8, xWhiff% 27.5 against 24.6, x(K-BB)% 16.8 against 13.4 (193 listed pitchers) — so an expected value sat ~3 points above the same actual
+  value and a pitcher's Stuff-side percentile ran 10 points under his Raw one at the same number (Messick: K-BB% 19.3 = 84th, Pitching+ x(K-BB)%
+  19.6 = 75th). Training on 2020-26 puts the 2026 level on the actual; the compression (expected spread ~77-81% of the real one) stays — a tree
+  model regresses to the middle. The `xneraShift` centring stays in place (it goes to ~0 on a season the models have seen). Every season and the
+  postseasons are rescored by the same run.
