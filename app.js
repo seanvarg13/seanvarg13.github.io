@@ -5048,7 +5048,7 @@
     nk: "pK%: the strikeout rate his pitches project for next season — a fit trained on the following year's K% from his whiffs, strikes, swings, stuff, location, mix and age, never his actual K%. Where it sits over his K%, the strikeouts should come.",
     nbb: "pBB%: the walk rate his pitches project for next season — a fit trained on the following year's BB% from his strikes, swings, first-pitch and three-ball strikes, stuff, location, mix and age, never his actual BB%.",
     ctrl: "Control: his Strike% percentile and his 3-ball Strike% percentile averaged — the two rates the walk formula reads most, as one 0-100 number (the bubble is the number itself).",
-    rating: "Rating: Strikeout 60, Control 20, Mix wOBA 20 over percentiles — his strikeout skill (Whiff%, 2-strike Whiff% and Foul% percentiles averaged), his strike-throwing (Strike% and 3-ball Strike%) and his batted-ball mix, as one 0-100 number (the bubble is the number itself).",
+    rating: "Rating: his nERA percentile — luck-neutral ERA, every ball in play at the league's value for its type, ranked among the season's qualifiers (Sean, 6 Oct 2026).",
     kskl: "Strikeout: his Whiff%, 2-strike Whiff% and Foul% percentiles averaged — the three rates that turn pitches into strikeouts, as one 0-100 number (the bubble is the number itself).",
     ksklx: "xStrikeout: the same three rates as the Pitching+ models expect them from his pitches, where he throws them and the batter's swing — xWhiff%, x2-strike Whiff% and xFoul% percentiles averaged.",
     xkbbs: "Pitching+ x(K-BB)%: Pitching+ xK% minus xBB% — the strikeout-minus-walk rate his stuff and spots say he should have; the xRating's main input (higher is better).",
@@ -6662,7 +6662,7 @@
   }
   // the comparison under the Compare tab: the page's own sections for both sides, then anything added in "Set up
   // comparison" — every stat a plain row, nothing folds out
-  const specKeys = (keys) => keys.flatMap((s) => (typeof s === "string" ? [s] : [s.k, ...s.sub]));   // a fold-out spec entry is { k, sub }
+  const specKeys = (keys) => keys.flatMap((s) => (typeof s === "string" ? (s === "|" ? [] : [s]) : [s.k, ...s.sub]));   // a fold-out spec entry is { k, sub }; "|" is a line break
   const cmpDefault = (type) => [...new Set((type === "H" ? PCT_COLS_H : PCT_COLS_P).flat().flatMap(([, keys]) => specKeys(keys)))];
   const cmpPick = (type) => new Set((state.cmp2.pick && state.cmp2.pick[type]) || cmpDefault(type));
   function cmpCard(p, g) {
@@ -7750,10 +7750,11 @@
   // their strike percentile and their 3 ball strike percentile ... walk avoidance ... bb%, strike%, and 3 ball strike %"): Skills = Whiff% ·
   // Control, Swing & Miss = K% · Whiff% (fold-out: 2-strike Whiff%, Foul%, Called Strike%); the Stuff side the Pitching+ expected ones
   // Walk Avoidance under Swing & Miss, ahead of Batted Ball (Sean, 5 Oct 2026); left 7 rows, right 6
-  const PCT_COLS_P = [[["Skills", ["kskl", "ctrl"]], ["Swing & Miss", ["whf", "s2whf", "foul"]], ["Walk Avoidance", ["strk", "fstrk", "b3strk"]]],   // no K% / BB% in the skill sections, 1st-pitch Strike% in; Results holds the outcomes (Sean, 5 Oct 2026)
-                      [["Batted Ball", ["gb", "pu", "mixw"]], ["Results", ["k", "bb", "kbb"]]]];   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
-  const PCT_COLS_PS = [[["Skills", ["ksklx", "ctrl"]], ["Swing & Miss", ["nwhf", "ns2whf", "nfoul"]], ["Walk Avoidance", ["strk", "fstrk", "b3strk"]]],
-                       [["Batted Ball", ["ngb", "npu", "nmix"]], ["Results", ["k", "bb", "kbb"]]]];
+  // Skills = K-BB% · Mix wOBA, K% back atop Swing & Miss and BB% atop Command (Walk Avoidance renamed) with a line break ("|") after each, no Results (Sean, 6 Oct 2026)
+  const PCT_COLS_P = [[["Skills", ["kbb", "mixw"]], ["Swing & Miss", ["k", "|", "whf", "s2whf", "foul"]]],
+                      [["Command", ["bb", "|", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["gb", "pu", "mixw"]]]];   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
+  const PCT_COLS_PS = [[["Skills", ["kbb", "nmix"]], ["Swing & Miss", ["k", "|", "nwhf", "ns2whf", "nfoul"]]],
+                       [["Command", ["bb", "|", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["ngb", "npu", "nmix"]]]];
   const STUFF_LABELS = { xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => false;   // the Stuff side came off the card (6 Oct 2026); PCT_COLS_PS stays for the record
   // the Raw | Stuff switch: beside Filters on a desktop, the first row of the Filters window on a phone (Sean, 4 Oct 2026)
@@ -7846,13 +7847,14 @@
         // a fold-out under a bar (Sean, 5 Oct 2026: "below Whiff rate have a drop down with ... 2 strike whiff rate, foul%, and called strike
         // percentage"): a spec entry { k, sub: [...] } draws the parent with a ▸ / ▾ before its name; tapping the name opens the subs under it
         const rowsOf = (keys) => keys.flatMap((spec) => {
+          if (spec === "|") return [{ gap: true }];   // a line break between rows (Sean, 6 Oct 2026: "after k% and bb% ... have a line break")
           if (typeof spec === "string") { const r = row(spec, LAB); return r ? [r] : []; }
           const r = row(spec.k, LAB); if (!r) return [];
           const ok = "card:" + spec.k, open = !!state.open[ok]; r.fold = { key: ok, open };
           const subs = open ? spec.sub.map((k) => row(k, LAB)).filter(Boolean).map((s) => Object.assign(s, { sub: true })) : [];
           return [r, ...subs];
         });
-        const groups = sections.map(([title, keys]) => ({ title, rows: rowsOf(keys) })).filter((x) => x.rows.length);
+        const groups = sections.map(([title, keys]) => ({ title, rows: rowsOf(keys) })).map((g) => { while (g.rows.length && g.rows[g.rows.length - 1].gap) g.rows.pop(); while (g.rows.length && g.rows[0].gap) g.rows.shift(); return g; }).filter((x) => x.rows.some((r) => !r.gap));
         if (groups.length) sets.push(groups);
       }
       if (state.bars === "classic") {                // the older look: a heading per section over plain meter rows (Appearance)
@@ -7862,7 +7864,7 @@
           for (const g of gs) {
             const sec = el("section", "xsec"), hd = el("div", "sechd"); hd.append(el("span", "secname", g.title)); sec.append(hd);
             const box = el("div", "meters");
-            for (const r of g.rows) { const row = meterRow(Object.assign({}, r.m, { label: r.label }), r.v, r.pct); if (r.v != null) row.querySelector(".val").textContent = fmt(r.v, r.m); box.append(row); }   // the value with its unit, as it was
+            for (const r of g.rows) { if (r.gap) continue; const row = meterRow(Object.assign({}, r.m, { label: r.label }), r.v, r.pct); if (r.v != null) row.querySelector(".val").textContent = fmt(r.v, r.m); box.append(row); }   // the value with its unit, as it was
             sec.append(box); c.append(sec);
           }
           cols.append(c);
@@ -8045,7 +8047,7 @@
   // (PR #360's app.js); the don't-restyle rule is lifted by this request only.
   function pctSvg(groups, W, scale = true) {
     const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
-    const ph = W < 700, LW = ph ? 100 : 112, VW = ph ? 40 : 44, GAP = 10, RM = 14, ROW = 30, TH = 20;
+    const ph = W < 700, LW = ph ? 100 : 112, VW = ph ? 40 : 44, GAP = 10, RM = 30, ROW = 30, TH = 20, BRK = 12;   // RM 30 (was the mock's 14): the bar ends earlier, so a 100 bubble sits inside the card (Sean, 6 Oct 2026); BRK = a line break's height
     const bx = LW + GAP + VW + GAP, bar = Math.max(60, W - bx - RM);
     const x = (p) => bar * Math.max(0, Math.min(100, p)) / 100;
     const smp = groups[0] && groups[0].sample;
@@ -8067,13 +8069,15 @@
       const G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
       G.append(mk("text", { class: "svsecname", x: 0, y: 14 + 11 }, g.title));   // .sec padding 14 + the 11px name
       const R = mk("g", { transform: `translate(0,${14 + 11 + 10})` });
-      g.rows.forEach((r, i) => {
-        const M = mk("g", { class: "svrow", transform: `translate(0,${i * ROW})` });
+      let ry = 0;
+      g.rows.forEach((r) => {
+        if (r.gap) { ry += BRK; return; }
+        const M = mk("g", { class: "svrow", transform: `translate(0,${ry})` }); ry += ROW;
         M.append(mk("title", {}, r.tip));
         const on = r.pct != null, s = on ? savantStyle(r.pct) : null, cy = ROW / 2;
-        const L = mk("text", { class: "svlbl" + (r.sub ? " svsub" : "") + (r.fold ? " svfold" : ""), x: 0, y: cy + 5 }, (r.fold ? (r.fold.open ? "▾ " : "▸ ") : "") + r.label);
+        const L = mk("text", { class: "svlbl" + (r.sub ? " svsub" : "") + (r.fold ? " svfold" : ""), x: 0, y: cy }, (r.fold ? (r.fold.open ? "▾ " : "▸ ") : "") + r.label);
         M.append(L);
-        M.append(mk("text", { class: "svlbl svval", x: LW + GAP + VW, y: cy + 5, "text-anchor": "end" }, r.value));
+        M.append(mk("text", { class: "svlbl svval", x: LW + GAP + VW, y: cy, "text-anchor": "end" }, r.value));
         const B = mk("g", { transform: `translate(${bx},${cy - TH / 2})`, opacity: on ? 1 : 0.35 });
         B.append(mk("rect", { class: "svtrack", width: bar, height: TH }));
         if (on) B.append(mk("rect", { width: x(r.pct), height: TH, fill: s.bg }));
@@ -8082,14 +8086,14 @@
         if (on) {
           const C = mk("g", { transform: `translate(${bx + x(r.pct)},${cy})` });
           C.append(mk("circle", { class: "svbulb", r: 10, fill: s.bg }));
-          C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : ""), y: 3.5 }, r.pct));
+          C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : ""), y: 0.5 }, r.pct));
           M.append(C);
         }
         R.append(M);
       });
       G.append(R);
       root.append(G);
-      y += 14 + 11 + 10 + g.rows.length * ROW + 8;
+      y += 14 + 11 + 10 + g.rows.reduce((a, r) => a + (r.gap ? BRK : ROW), 0) + 8;
     });
     const H = y + 4;
     const svg = mk("svg", { class: "svpct raya", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Percentile rankings" });
