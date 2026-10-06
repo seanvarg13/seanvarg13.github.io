@@ -2135,3 +2135,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   On a phone the name track is a fixed `var(--namew)` (150px, `fitNameCol` lo = hi = 150), `.who` clips, and `renderRowsIn` steps a name that
   doesn't fit down to 14px then 12.5px (`.name` is `display: block` so it measures and ellipsises) — Pete Crow-Armstrong fits at 12.5px. Desktop
   keeps the six-button row and the stretching name column.
+* **Rating = Whiff% 50 / xBB% 50; the Leaderboard is part of the page (Sean, 6 Oct 2026: "add back a ranking stat for pitchers that is the
+  average percentile of their skills thing so whiff and xbb", "we don't need to make it so the leaderboard is like a separate window on the
+  page")**: `PITCHER_SCORE_WEIGHTS` / `meta.pitcherWeights` = `{whf: 50, xbbf: 50}` (`data.js` + `scoreNote.P` patched, `tools/build_data.py`) —
+  the two Skills percentiles averaged (xBB% is on `m`, so the pool has its percentile before the score). **Rating is a column**: a `SIDE_P` def
+  `rating` read off the pool's stats (`metricValue` → `st.score`, the row's percentile `st.scorePct`, the sort key in `val`), first in `LB_EXTRA_P`
+  and the Standard / Advanced pitcher sets (`state.lb.ratingFront` moves it to the front of a saved list once), a Result band; and the first row of
+  the card's **Skills** (`PCT_COLS_P` / `_PS`: Rating · Whiff% · xBB%, the bubble the number itself via `RATING_M`). The pitchers' **headline nERA
+  cell is coloured by nERA's own percentile** (`st.pct.nera`), not the Rating's. **No standing card on the Leaderboard / Recent** (both views): the
+  block at the end of `styles.css` lets the html / body and `main.wrap` scroll, the rows' box has no height, frame, radius or ground of its own
+  (rows sit on the page ground, alternate rows on the surface), and the column names stick under the site header (`.colwrap` sticky at
+  `--header-h`). Rankings, the Draft board and Fantasy keep their standing card. This supersedes the "stands still" rule of 26 Sep for those two
+  pages. Beware once more: a `//` comment appended to a line that continues with code swallows the code — use `/* */` mid-line.
