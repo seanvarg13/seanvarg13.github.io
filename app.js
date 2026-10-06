@@ -3798,7 +3798,8 @@
     // the header is Home · Leaders · Stuff+ · Fantasy (Sean, 3 Oct 2026: "have a home, leaders, pitches (call it stuff+), and fantasy
     // tab"): the Stuff+ board is a page of its own in the header, not a Leaders entry, and Fantasy moves after it. More (Appearance,
     // the colour key, the glossary, the layout switch) stays as a quiet ⋯ at the end, since it never was a page
-    { const nav = document.querySelector(".modes"), lb = $("lbsel"), fan = $("modesel");
+    { const lb0 = $("lbsel"); if (lb0 && !lb0.dataset.plain) { lb0.dataset.plain = "1"; lb0.hidden = true; const a = el("a", null, "Leaders"); a.href = "#leaderboard"; a.dataset.mode = "leaderboard"; a.title = "Every player, every stat"; lb0.before(a); } }   // one entry left in its menu (6 Oct 2026), so a plain link; the hidden element keeps the menu code happy
+    { const nav = document.querySelector(".modes"), lb = document.querySelector('.modes a[data-mode="leaderboard"]') || $("lbsel"), fan = $("modesel");
       if (nav && lb && !nav.querySelector('a[data-mode="pitches"]')) {
         const a = el("a", null, "Pitching+"); a.href = "#pitches"; a.dataset.mode = "pitches"; a.title = "Every pitcher's pitches graded";
         lb.after(a); if (fan) a.after(fan);
@@ -5034,6 +5035,18 @@
       const pit = DATA.players.filter((p) => p.type === "P" && (p.ip || 0) >= 100).map((p) => [p, puOf(p)]).filter((r) => r[1] != null).sort((a, b) => a[1] - b[1]).slice(0, N);
       col(lt, "xwOBA", hit, f3, null, goLB("ALL", "score", "desc")); col(lt, "nERA", pit, f2, "nera", goLB("ALLP", "nera", "asc"));
     }));
+    // 2027 starters (6 Oct 2026): the Claude rankings' top of the list under the scoring in use, so the off-season question is on the front page
+    { const D27 = window.DRAFT_CLAUDE27;
+      if (!D27) ensureScript("hist/claude-2027.js", () => !!window.DRAFT_CLAUDE27);
+      const cc = card(`${m.season + 1} starters`, "the Claude rankings: projected points under the scoring in use", "#claude", "Claude rankings →");
+      if (!D27) cc.append(el("p", "hnote", "Loading the rankings…"));
+      else { const wP = fpreset().w.P, P = new Map(DATA.players.filter((q) => q.type === "P").map((q) => [q.id, q]));
+        const rows = D27.rows.map((r) => { const pps = r.line && r.espn ? fPts(wP, r.line) * (r.pps / r.espn) : r.pps; return [r, pps * r.gs]; }).sort((a, b) => b[1] - a[1]).slice(0, N);
+        const ol = el("ol", "hlist");
+        rows.forEach(([r, pts]) => { const li = el("li"), q = P.get(r.id), bt = el("button", "hname", r.name); bt.type = "button"; if (q) bt.addEventListener("click", () => openCard(q, "pitching")); else bt.disabled = true;
+          li.append(bt, el("span", "teaml", r.team || ""), el("b", "hval", String(Math.round(pts)))); ol.append(li); });
+        cc.append(ol); }
+    }
     // trending (Sean, 3 Oct 2026): hitters over their last 100 PA by xwOBA, pitchers over their last 50 IP by Pitching uERA — from
     // the day rows, so the card says "loading" until days.js is in, then redraws itself
     const tc = card("Trending", "hitters over their last 100 PA · pitchers over their last 50 IP", null);
@@ -7301,24 +7314,31 @@
     const box = el("div", "kconv karch ksum"), hd = el("div", "rollhd");
     hd.append(el("span", "rollname", name + (qual.length ? " · " + qual.join(", ") : "")));
     box.append(hd);
+    // the equation (Sean, 6 Oct 2026: "the table that shows how each input contributes to their k% being higher than their whiff alone would
+    // suggest or lower ... easier to understand"): K% = what the whiffs alone imply + four conversion dials, each a signed K%-point row, then
+    // the four together and what is left over, so the rows add up to his K%
+    const K = stuff ? "xK%" : "K%", base = kImplied(his.whf);
     const sumLine = el("p", "ksumline");
-    const K = stuff ? "xK%" : "K%";
-    sumLine.append(el("b", null, `${K} ${f1(his.k)}`), ` — the ${stuff ? "expected " : ""}whiffs alone say ${f1(kImplied(his.whf))}, the rest is ${sg(gap)}${stuff ? ` (his actual K% is ${f1(act.k)})` : ""}.`);
+    sumLine.append(el("b", null, `${K} ${f1(his.k)}`), ` = ${f1(base)} from ${stuff ? "expected " : ""}whiffs alone (${f1(his.whf)}%) ${gap >= 0 ? "+" : "−"} ${Math.abs(gap).toFixed(1)} from how they turn into strikeouts${stuff ? ` · his actual K% is ${f1(act.k)}` : ""}.`);
     box.append(sumLine);
     const rows = el("div", "krows");
-    const LAB = { whf: stuff ? "xWhiff%" : "Whiff%", s2d: "2-strike finishing", cstr: stuff ? "xCalled Strike%" : "Called Strike%", fpc: stuff ? "xFoul% of contact" : "Foul% of contact", bb: stuff ? "xBB%" : "BB%" };
-    const TIP = { whf: "whiffs per swing — 0.926 K% a point", s2d: "his two-strike whiff rate minus his overall — finishing once he is ahead", cstr: "called strikes per pitch", fpc: "the share of his contact that goes foul — a foul keeps the strikeout alive, a ball in play ends it", bb: "walks end plate appearances without a strikeout" };
+    const LAB = { s2d: "Finishing with two strikes", cstr: stuff ? "Called strikes (expected)" : "Called strikes", fpc: stuff ? "Foul balls on contact (expected)" : "Foul balls on contact", bb: stuff ? "Walks (xBB%)" : "Walks" };
+    const SUB = { s2d: (h, l) => `two-strike whiffs ${h >= 0 ? "+" : "−"}${Math.abs(h).toFixed(1)} over his overall · league ${l >= 0 ? "+" : "−"}${Math.abs(l).toFixed(1)}`, cstr: (h, l) => `${f1(h)}% of pitches · league ${f1(l)}`, fpc: (h, l) => `${f1(h)}% of contact · league ${f1(l)}`, bb: (h, l) => `${f1(h)}% · league ${f1(l)}` };
+    const TIP = { s2d: "a whiff with two strikes is the strikeout itself — his two-strike whiff rate against his overall", cstr: "a called strike keeps the count moving without contact", fpc: "a foul keeps the strikeout alive, a ball in play ends the plate appearance", bb: "a walk ends the plate appearance without a strikeout" };
     const word = (w) => (w >= 0.72 ? "mostly skill" : w >= 0.5 ? "half skill" : w >= 0.3 ? "mostly noise" : "noise at this sample");
-    let skillK = lg.k;
-    for (const k of ["whf", "s2d", "cstr", "fpc", "bb"]) {
+    const hdr = el("div", "krow khead"); hdr.append(el("span", null, "Dial"), el("span", "kc", "K% pts"), el("span", "kr", "Repeats?")); rows.append(hdr);
+    const pillOf = (v) => { const pill = el("span", "kpill", v == null ? "–" : sg(v)); if (v != null) { const s2 = pctStyle(Math.max(1, Math.min(99, Math.round(50 + 12 * v)))); if (s2) { pill.style.background = s2.bg; pill.style.color = s2.fg; } } return pill; };
+    let sum = 0, skillK = lg.k + W.whf * wOf("whf") * (his.whf - lg.whf);
+    for (const k of ["fpc", "cstr", "s2d", "bb"]) {
       const r = el("div", "krow"); r.title = TIP[k];
-      const nm = el("div", "kname"); nm.append(el("span", "klab", LAB[k]), el("span", "ksub", his[k] == null ? "–" : `${f1(his[k])} vs league ${f1(lg[k])}${pct[k] != null ? " · " + ordinal(pct[k]) + " pct" : ""}`));
-      const pill = el("span", "kpill", eff[k] == null ? "–" : sg(eff[k]));
-      if (eff[k] != null) { const s2 = pctStyle(Math.max(1, Math.min(99, Math.round(50 + 12 * eff[k])))); if (s2) { pill.style.background = s2.bg; pill.style.color = s2.fg; } }
-      const w = wOf(k); if (his[k] != null) skillK += W[k] * w * (his[k] - lg[k]);
-      r.append(nm, pill, el("span", "kword", his[k] == null ? "" : word(w)));
+      const nm = el("div", "kname"); nm.append(el("span", "klab", LAB[k]), el("span", "ksub", his[k] == null ? "–" : SUB[k](his[k], lg[k]) + (pct[k] != null ? " · " + ordinal(pct[k]) + " pct" : "")));
+      const w = wOf(k); if (his[k] != null) { skillK += W[k] * w * (his[k] - lg[k]); sum += eff[k]; }
+      r.append(nm, pillOf(eff[k]), el("span", "kword", his[k] == null ? "" : word(w)));
       rows.append(r);
     }
+    const tot = el("div", "krow ktot"); tot.append(el("div", "kname"), pillOf(sum), el("span", "kword", "the four together")); tot.querySelector(".kname").append(el("span", "klab", "The four dials"));
+    const rest = el("div", "krow krest"); rest.append(el("div", "kname"), pillOf(gap - sum), el("span", "kword", "sequencing, luck")); rest.querySelector(".kname").append(el("span", "klab", "Everything else"), el("span", "ksub", "the gap the four don't explain"));
+    rows.append(tot, rest);
     box.append(rows);
     const wk = wOf("k"), skK = lg.k + wk * (his.k - lg.k), nzK = (1 - wk) * (his.k - lg.k);
     const lvNote = DS.level && DS.level !== "MLB" ? " (MLB's reliability; a minors season is at least as noisy.)" : "";
@@ -8127,12 +8147,12 @@
   // Control, Swing & Miss = K% · Whiff% (fold-out: 2-strike Whiff%, Foul%, Called Strike%); the Stuff side the Pitching+ expected ones
   // Walk Avoidance under Swing & Miss, ahead of Batted Ball (Sean, 5 Oct 2026); left 7 rows, right 6
   // Skills = K-BB% · Mix wOBA, K% back atop Swing & Miss and BB% atop Command (Walk Avoidance renamed) with a line break ("|") after each, no Results (Sean, 6 Oct 2026)
-  const PCT_COLS_P = [[["Skills", ["kbb", "mixw"]], ["Swing & Miss", ["k", "|", "whf", "s2whf", "cstr", "fpc"]]],
+  const PCT_COLS_P = [[["Skills", ["whf", "xbbf"]], ["Swing & Miss", ["k", "|", "whf", "s2whf", "cstr", "fpc"]]],
                       [["Command", ["bb", "|", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["gb", "pu", "mixw"]]]];   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
   // the Stuff side (Sean, 6 Oct 2026: "for the swing and miss stuff you use all the expected whiff expected two strike whiff expected called
   // strikes and expected fouls from the pitching+ model, and also use expected batted ball stuff from it too ... an xK% too"): every bar off
   // the Pitching+ models — xK% (Pitching+ xK%), xWhiff%, x2-strike Whiff%, xCalled Strike%, xFoul% of contact, xBB%, xGB% / xPU% / Mix xwOBA
-  const PCT_COLS_PS = [[["Skills", ["xkbbs", "nmix"]], ["Swing & Miss", ["xks", "|", "nwhf", "ns2whf", "ncstr", "nfpc"]]],
+  const PCT_COLS_PS = [[["Skills", ["nwhf", "xbbf"]], ["Swing & Miss", ["xks", "|", "nwhf", "ns2whf", "ncstr", "nfpc"]]],
                        [["Command", ["xbbf", "|", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["ngb", "npu", "nmix"]]]];
   const STUFF_LABELS = { nfpc: "xFoul% of contact", xnera: "xnERA", xbbf: "xBB%", xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => state.cardSide === "stuff";   // the Raw / Stuff switch is back (Sean, 6 Oct 2026: "add back the raw vs stuff button")
@@ -8247,7 +8267,7 @@
           }
           cols.append(c);
         }
-      } else sets.forEach((gs, i) => cols.append(pctRows(gs, opts.scaleAll || i === 0)));   // the standard rows (6 Oct 2026); the first column carries the Percentile / Value head
+      } else sets.forEach((gs, i) => cols.append(pctChart(gs, i, opts.scaleAll || i === 0)));   // Savant's charts again (Sean, 6 Oct 2026, from a screenshot: "go back to these percentile bars"); pctRows below is the plain-rows alternative
       return cols;
     }
   }
