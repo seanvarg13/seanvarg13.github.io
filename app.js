@@ -16,8 +16,8 @@
         ["Advanced", ["woba", "xwdiff", "xwcon", "xk", "mixw", "babip", "xbabip", "bluck", "brel"]],
         ["Batted ball", ["ev", "ev90", "maxev", "brl", "hh", "bs", "air", "pull", "gb", "pu"]],
         ["Plate discipline", ["k", "xk", "bb", "whf", "osw", "zsw", "zcon", "ocon"]]],
-    P: [["Standard", ["era", "k", "bb", "kbb", "xkbb", "whf", "strk", "gb", "nera"]],   // no xRating, Stuff+ back in place of Pitching+ (Sean, 6 Oct 2026)
-        ["Advanced", ["era", "fip", "siera", "nera", "xkbb", "ukb", "wsgp"]],
+    P: [["Standard", ["era", "k", "bb", "kbb", "xkbb", "whf", "strk", "gb"]],   // nERA is the headline column (6 Oct 2026)   // no xRating, Stuff+ back in place of Pitching+ (Sean, 6 Oct 2026)
+        ["Advanced", ["era", "fip", "siera", "xkbb", "ukb", "wsgp"]],
         ["Batted ball", ["gb", "pu", "ev", "hh", "brl"]],
         ["Plate discipline", ["whf", "strk", "zone", "osw", "swing", "zcon", "csw", "swstr"]],
         ["Stuff+", ["stuff", "swhf", "sbb", "fbv", "ext"]]],
@@ -556,6 +556,8 @@
     state.lb.P = (state.lb.P || []).filter(gone); for (const c of Object.values(state.cols || {})) if (c && Array.isArray(c.P)) c.P = c.P.filter(gone);
     if (state.cmpCols && Array.isArray(state.cmpCols.P)) state.cmpCols.P = state.cmpCols.P.filter(gone); if (!gone(state.sort)) state.sort = "score"; }
   if (state.cmp2 && state.cmp2.pick && Array.isArray(state.cmp2.pick.H)) state.cmp2.pick.H = state.cmp2.pick.H.filter((k) => k !== "pxw");
+  if (!state.lb.neraHead) { const drop = (L) => { if (Array.isArray(L)) { const i = L.indexOf("nera"); if (i >= 0) L.splice(i, 1); } };   // nERA is the pitchers' headline (6 Oct 2026): out of a saved list once
+    drop(state.lb.P); for (const c of Object.values(state.cols || {})) if (c) drop(c.P); state.lb.neraHead = true; }
   if (!state.lb.xkbbAdd) {   // x(K-BB)% beside K-BB% (Sean, 4 Oct 2026): a saved pitcher list that carries K-BB% and not it gets it once, so a Standard list stays Standard
     const add = (L) => { if (!Array.isArray(L) || L.includes("xkbb")) return; const i = L.indexOf("kbb"); if (i >= 0) L.splice(i + 1, 0, "xkbb"); };
     add(state.lb.P); for (const c of Object.values(state.cols || {})) if (c) add(c.P); state.lb.xkbbAdd = true; }
@@ -1888,7 +1890,7 @@
     const stats = new Map(out.concat(tail).map((p) => [p.type + p.id, ref === g ? pool(g).stats.get(p.type + p.id) : rankIn(ref, p)]));   // pool() places every listed player
     const st = (p) => stats.get(p.type + p.id);
     const val = (p) => {
-      if (key === "score") return st(p).score;
+      if (key === "score") { if (p.type === "P") { const n = V(p).m.nera; return n == null ? null : -n; } return st(p).score; }   // a pitcher's headline sorts by his nERA itself, lowest first on "desc" (6 Oct 2026) — the percentile tied the under-minimum players
       if (key === "blend") return st(p).blend;
       if (key === "name") return p.name;
       if (key === "sample") return sample(p);
@@ -2151,7 +2153,7 @@
   function renderSortSelect() {
     const g = groupFor(state.pos);
     const sel = $("sort"); sel.innerHTML = "";
-    const opts = [["score", isPitcherGroup(g) ? "Rating" : HEAD.label], ...(isPitcherGroup(g) ? [] : [["blend", "Skills blend pctl"]]),
+    const opts = [["score", isPitcherGroup(g) ? "nERA" : HEAD.label], ...(isPitcherGroup(g) ? [] : [["blend", "Skills blend pctl"]]),
                   ...(isPitcherGroup(g) ? ALL_P.filter((m) => !RETIRED_P.has(m.key)) : ALL_H.filter((m) => m.key !== HEAD.key && m.key !== HEAD_DUP)).map((m) => [m.key, m.label + " pctl"]),
                   ["sample", isPitcherGroup(g) ? "Innings pitched" : "Plate appearances"], ...(preCols().some((c) => c.key === "year") ? [["year", "Year"]] : []), ["age", "Age"], ["name", "Name"]];
     for (const [v, l] of opts) { const o = el("option", null, l); o.value = v; sel.append(o); }
@@ -2334,7 +2336,7 @@
     for (const k of ["year", "age"]) h.style.setProperty("--pre" + (k === "year" ? 1 : 2), preOn(k) ? "var(--prew, 64px)" : "0px");
     for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const hb = on ? head(c.key, c.label, c.key === "year" ? "Season" : "Age that season") : el("div", "h"); hb.classList.add("pre"); if (!on) hb.classList.add("off"); h.append(hb); }
     { const woH = !isPitcherGroup(g) && wobaHead();
-      const sh = head("score", isPitcherGroup(g) ? "Rating" : woH ? "wOBA" : HEAD.label, woH ? "wOBA — no directional xwOBA at this level" : isPitcherGroup(g) ? `Rating: ${DATA.meta.scoreNote.P}` : DATA.meta.scoreNote.H); /* "Rating" (Sean, 3 Oct 2026: "Score" said nothing) */ if (hasBreak(g, "score")) sh.classList.add("brk"); h.append(sh); }
+      const sh = head("score", isPitcherGroup(g) ? "nERA" : woH ? "wOBA" : HEAD.label, woH ? "wOBA — no directional xwOBA at this level" : isPitcherGroup(g) ? `nERA, lowest first: ${DATA.meta.scoreNote.P}` : DATA.meta.scoreNote.H); /* "Rating" (Sean, 3 Oct 2026: "Score" said nothing) */ if (hasBreak(g, "score")) sh.classList.add("brk"); h.append(sh); }
     // stat headers: click to sort (the column order is changed in the Table panel)
     for (const m of ms) {
       const hb = head(m.key, colLab(m), m.label + (m.hib ? " — higher is better" : " — lower is better"));
@@ -2531,8 +2533,8 @@
       who.append(meta);
       main.append(who);
       for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const b = el("div", "pct pre", on ? preValue(c.key, p) : ""); if (!on) b.classList.add("off"); else { if (state.sort === c.key && !customOrder()) b.classList.add("sorted"); b.prepend(el("span", "lbl", c.label)); } main.append(b); }
-      const sc = el("div", "score", p.type === "H" ? fmtX(st.score) : Math.round(st.score)); if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null; if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) sc.classList.add("hot"); } } if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
-      sc.title = p.type === "H" ? `${HEAD.label} ${fmtX(st.score)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl` : `Rating ${Math.round(st.score)}: ${DATA.meta.scoreNote.P}`; main.append(sc);
+      const nv = p.type === "P" ? V(p).m.nera : null, sc = el("div", "score", p.type === "H" ? fmtX(st.score) : nv == null ? "–" : nv.toFixed(2));   // a pitcher's headline is his nERA itself (Sean, 6 Oct 2026: "show their actual nERA not their percentile"); the sort is still the percentile, so lowest nERA first if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null; if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) sc.classList.add("hot"); } } if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
+      sc.title = p.type === "H" ? `${HEAD.label} ${fmtX(st.score)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl` : `nERA ${nv == null ? "–" : nv.toFixed(2)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl — luck-neutral ERA: every ball in play at the league's value for its type`; main.append(sc);
       const pcts = el("div", "pcts");
       for (const m of ms) {
         const v = metricValue(m, V(p), st), pct = st.pct[m.key];
@@ -8038,20 +8040,21 @@
     let w = 0; for (const g of groups) for (const r of g.rows) w = Math.max(w, lblCtx.measureText(r.label).width);
     return Math.min(120, Math.ceil(w));
   }
-  // The Raya Dress Mock's bars, precisely (Sean, 5 Oct 2026, from a phone screenshot of the mock: "make the percentile bars and sections on the
-  // player page and card look precisely like this, even give the percentile bubble this exact look"): the mock's .sec / .bar / .trk / .bub —
-  // a section is 14px over an 11px tracked-uppercase grey name, 10px, then 30px rows and 8px under; a row is a 112px label column (100 on a
-  // phone), a 44px (40) right-aligned value, 10px gaps, and a 20px flat track to 14px short of the right edge; the fill runs to his percentile
-  // and a 22px bubble sits centred on it (2px paper ring, white Roboto Condensed 700 digits at 10.5px); no ticks, no dashed rules, no 10 / 50 /
-  // 90; Poor / Average / Great over the first chart as a 10px tracked grey line on the track's span. Savant's drawing before this is in git
-  // (PR #360's app.js); the don't-restyle rule is lifted by this request only.
   function pctSvg(groups, W, scale = true) {
     const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
-    const ph = W < 700, LW = ph ? 100 : 112, VW = ph ? 40 : 44, GAP = 10, RM = 30, ROW = 30, TH = 20, BRK = 12;   // RM 30 (was the mock's 14): the bar ends earlier, so a 100 bubble sits inside the card (Sean, 6 Oct 2026); BRK = a line break's height
-    const bx = LW + GAP + VW + GAP, bar = Math.max(60, W - bx - RM);
-    const x = (p) => bar * Math.max(0, Math.min(100, p)) / 100;
+    const r6 = W - 40, VW = W < 420 ? 41 : 45, bar = r6 - 40 - 85 - VW;
+    // centred (Sean, 1 Oct 2026: Savant's bars back, the length they had, "but now center them"): the rows' block — the dashed
+    // label column through the value — moves 20 left, so it sits 40 in from each side of the section rule (20 + 20 either way);
+    // a label wider than its 80 column keeps the room it needs. Section names and rules stay put
+    const IND = Math.max(20, pctLabelW(groups) - 80 + 4);   // the rule's width, the value column (room for "118.5" beside a 100 bubble; a phone's bar can't spare as much), the bar's width
+    const x = (p) => 10 + (bar - 10) * Math.max(0, Math.min(100, p)) / 100;
     const smp = groups[0] && groups[0].sample;
-    const root = mk("g");
+    // a phone starts the first heading right under the card's band: the 10 up top plus the heading's own headroom read as a
+    // blank strip there (the sample line, when there is one, still needs the 10)
+    // — and on a desktop too since 30 Sep 2026 (Sean: "push everything up a bit"). −2, not −12: the section names grew to the
+    // title's size and −12 sliced the tops off "Results" / "Contact" (Sean, 1 Oct 2026)
+    const top = !(smp && smp.length) ? -2 : 10;
+    const root = mk("g", { transform: `translate(20,${top})` });
     let y = 0;
     if (smp && smp.length) {                                     // the playing time behind every bar below, labelled as such
       const t = mk("text", { class: "svsample", x: 0, y: 14 });
@@ -8060,43 +8063,52 @@
       root.append(t);
       y = 24;
     }
-    if (scale) {                                                 // POOR / AVERAGE / GREAT on the track's span, above the first section (.scale)
-      const S = mk("g", { class: "svscalerow", transform: `translate(${bx},${y + 10})` });
-      S.append(mk("text", { class: "svscale" }, "Poor"), mk("text", { class: "svscale", x: bar / 2, "text-anchor": "middle" }, "Average"), mk("text", { class: "svscale", x: bar, "text-anchor": "end" }, "Great"));
-      root.append(S); y += 16;
-    }
-    groups.forEach((g) => {
-      const G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
-      G.append(mk("text", { class: "svsecname", x: 0, y: 14 + 14 }, g.title));   // 14 over the section name (the site's title type now, 19px), 10 under
-      const R = mk("g", { transform: `translate(0,${14 + 14 + 10})` });
-      let ry = 0;
+    groups.forEach((g, gi) => {
+      const first = gi === 0 && scale, G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
+      G.append(mk("rect", { class: "svsecrule", x: 0, y: 34, width: r6, height: 2 }));
+      G.append(mk("text", { class: "svsecname", x: 0, y: 28 }, g.title));
+      if (first) {                                               // POOR / AVERAGE / GREAT, each arrow over its tick
+        const S = mk("g", { transform: `translate(${IND + 85},54)` });
+        const tri = (cx) => `M${cx},2L${cx - 3},8L${cx + 3},8Z`;
+        const c0 = savantStyle(0).bg, c50 = savantStyle(50).bg, c100 = savantStyle(100).bg;
+        S.append(mk("path", { d: tri(12), fill: c0 }), mk("path", { d: tri(x(50)), fill: c50 }), mk("path", { d: tri(bar - 12), fill: c100 }));
+        S.append(mk("text", { class: "svscale", fill: c0 }, "Poor"),
+                 mk("text", { class: "svscale", x: x(50), "text-anchor": "middle", fill: c50 }, "Average"),
+                 mk("text", { class: "svscale", x: x(100), "text-anchor": "end", fill: c100 }, "Great"));
+        G.append(S);
+      }
+      const R = mk("g", { transform: `translate(${IND},${44 + (first ? 20 : 0)})` });
+      let ry = 0, i = 0;
       g.rows.forEach((r) => {
-        if (r.gap) { ry += BRK; return; }
-        const M = mk("g", { class: "svrow", transform: `translate(0,${ry})` }); ry += ROW;
+        if (r.gap) { ry += 12; return; }   // a line break between rows (6 Oct 2026)
+        const M = mk("g", { class: "svrow", transform: `translate(0,${ry})` }); ry += 23; const first_ = i === 0; i++;
         M.append(mk("title", {}, r.tip));
-        const on = r.pct != null, s = on ? savantStyle(r.pct) : null, cy = ROW / 2;
-        const L = mk("text", { class: "svlbl" + (r.sub ? " svsub" : "") + (r.fold ? " svfold" : ""), x: 0, y: cy }, (r.fold ? (r.fold.open ? "▾ " : "▸ ") : "") + r.label);
-        M.append(L);
-        M.append(mk("text", { class: "svlbl svval", x: LW + GAP + VW, y: cy, "text-anchor": "end" }, r.value));
-        const B = mk("g", { transform: `translate(${bx},${cy - TH / 2})`, opacity: on ? 1 : 0.35 });
-        B.append(mk("rect", { class: "svtrack", width: bar, height: TH }));
-        if (on) B.append(mk("rect", { width: x(r.pct), height: TH, fill: s.bg }));
+        const on = r.pct != null, s = on ? savantStyle(r.pct) : null;
+        const B = mk("g", { transform: "translate(85,0)", opacity: on ? 1 : 0.35 });
+        B.append(mk("rect", { class: "svline", width: bar, height: 5, y: 7.5 }));
+        if (on) B.append(mk("rect", { width: x(r.pct), height: 20, y: 0, fill: s.bg }));
+        for (const tx of [x(50) - 1, 11, bar - 13]) B.append(mk("rect", { class: "svtick", width: 2, height: 20, x: tx }));
         M.append(B);
+        const L = mk("text", { class: "svlbl" + (r.sub ? " svsub" : "") + (r.fold ? " svfold" : ""), x: 80, y: 10, "text-anchor": "end" }, (r.fold ? (r.fold.open ? "▾ " : "▸ ") : "") + r.label);
+        M.append(L);
+        M.append(mk("text", { class: "svlbl", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));
+        // a fold-out parent: tapping the name opens / closes its rows; the bar still opens the note
         M.addEventListener("click", (e) => { e.stopPropagation(); if (r.fold && e.target === L) { state.open[r.fold.key] = !r.fold.open; savePrefs(); render(); return; } statPop(M, r); });
+        if (!first_) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + VW},-1.5` }));
         if (on) {
-          const C = mk("g", { transform: `translate(${bx + x(r.pct)},${cy})` });
-          C.append(mk("circle", { class: "svbulb", r: 10, fill: s.bg }));
-          C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : ""), y: 0.5 }, r.pct));
+          const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
+          C.append(mk("circle", { class: "svbulb", r: 10, fill: s.bub }));
+          C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : ""), y: 1 }, r.pct));   // Savant's bubble
           M.append(C);
         }
         R.append(M);
       });
       G.append(R);
       root.append(G);
-      y += 14 + 14 + 10 + g.rows.reduce((a, r) => a + (r.gap ? BRK : ROW), 0) + 8;
+      y += g.rows.reduce((a, r) => a + (r.gap ? 12 : 23), 0) + 34 + 10 + (first ? 20 : 0);
     });
-    const H = y + 4;
-    const svg = mk("svg", { class: "svpct raya", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Percentile rankings" });
+    const H = y + 20 + top - 10;
+    const svg = mk("svg", { class: "svpct", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Percentile rankings" });
     svg.append(root);
     return svg;
   }
