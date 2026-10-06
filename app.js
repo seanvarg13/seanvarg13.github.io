@@ -3671,8 +3671,9 @@
       const bits = [pc != null ? ord(pc) : null].filter(Boolean);   /* the percentile alone under the number (Sean, 6 Oct 2026: "just keep the lower text to be the percentile of the metric and that's it") */ if (bits.length) { const pp = el("span", "p"); bits.forEach((x, i) => { if (i) pp.append(el("span", "dot", " · ")); pp.append(el("span", "pb", x)); }); t.append(pp); } row.append(t); return t; };
     const stuff = pit && stuffSide();
     if (pit) {
-      const hero = stuff ? ["xnERA", st && st.xnera != null ? st.xnera.toFixed(2) : null, pct.xnera] : ["nERA", m.nera != null ? m.nera.toFixed(2) : null, st && st.scorePct != null ? st.scorePct : pct.nera];
-      tile(hero[0], hero[1], hero[2], facts.ERA != null ? "ERA " + facts.ERA : null);
+      // IP in nERA's place, no colour (Sean, 6 Oct 2026: "instead of nERA show IP and don't make IP heat mapped at all"); nERA is the card's tab
+      const ipv = facts.IP != null ? facts.IP : pv.ip != null ? fmtIP(pv.ip) : p.ip != null ? fmtIP(p.ip) : null;
+      tile("IP", ipv, null, null);
       tile("K%", facts["K%"] != null ? facts["K%"] : m.k != null ? m.k.toFixed(1) : null, pct.k, null);
       tile("BB%", facts["BB%"] != null ? facts["BB%"] : m.bb != null ? m.bb.toFixed(1) : null, pct.bb, null);
       tile("K-BB%", facts["K-BB%"] != null ? facts["K-BB%"] : m.kbb != null ? m.kbb.toFixed(1) : null, pct.kbb, facts.IP != null ? facts.IP + " IP" : null);
@@ -3687,7 +3688,9 @@
   function fillBio(box, p, b) {
     box.replaceChildren();
     if (box.classList.contains("inline")) {   // on the season line: " · B/T L/L · 29 · 6'3\" 240" (6 Oct 2026)
-      const bt = b && (b.bats || b.throws) ? `${b.bats || "?"}/${b.throws || "?"}` : p.type === "P" ? (p.throws ? p.throws + "HP" : null) : p.bats ? "Bats " + p.bats : null;
+      // a pitcher reads LHP / RHP, not B/T (Sean, 6 Oct 2026); a hitter keeps B/T
+      const thr = p.type === "P" ? (b && b.throws) || p.throws : null;
+      const bt = p.type === "P" ? (thr ? thr + "HP" : null) : b && (b.bats || b.throws) ? `${b.bats || "?"}/${b.throws || "?"}` : p.bats ? "Bats " + p.bats : null;
       const bits = [bt ? (bt.includes("/") ? "B/T " + bt : bt) : null, p.age != null ? String(p.age) : null, b && b.ht ? String(b.ht).replace(/\s+/g, "") + (b.wt ? " " + b.wt : "") : b && b.wt ? String(b.wt) : null].filter(Boolean);
       box.textContent = bits.length ? " · " + bits.join(" · ") : "";
       return;
