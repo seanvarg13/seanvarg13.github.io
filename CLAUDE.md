@@ -1825,3 +1825,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Whiff+ / BB+ against type, xWhiff / xGB / xPU over actual, All pitches) and nothing under it (`EXTRAS = false` turns off Arsenal Opt. and
   Stuff uERA; the whiff check, Rating · xRating line and xK% breakdown were Pitching+'s). Still computed underneath: Pitching+, xRating, the
   expected rates (the K% / BB% tab's K% rows still list Pitching+ / Location+ / the expected whiff rates, since they are xK%'s inputs).
+* **The card's bars tidied, the sections reshaped, Rating = nERA (Sean, 6 Oct 2026, from Gavin Williams's card: "the percentile bar goes a
+  little bit too far to the right ... make the percentile in the bubble centered ... the actual metric centered on the bar and ... the metric name
+  centered ... all the font color ... black ... skills section instead just k-bb% and then mix wOBA and make the rating just be their nERA ...
+  get rid of the results section and put k% back at the top of swing and miss and bb% at the top of walk avoidance ... call walk avoidance
+  command ... after k% and bb% ... a line break")**: `pctSvg` ends the track 30px short of the right edge (`RM`, was the mock's 14, so a 100
+  bubble sits inside the card), puts the label / value at the row's centre (`y: cy` — `.svpct text` is `dominant-baseline: middle`, the mock's
+  baseline offset had sat them 5px low) and the bubble's digits at `y: 0.5`; a spec entry **`"|"`** is a line break — `rowsOf` makes a
+  `{ gap: true }` row, `pctSvg` leaves 12px (`BRK`), `specKeys` and the classic meters skip it, a group drops leading / trailing breaks. Type on the
+  bars is black (`--raya-pctink` #000, #f2f3f5 dark; the block at the end of `styles.css`). `PCT_COLS_P` = Skills (K-BB% · Mix wOBA) · Swing & Miss
+  (K% | Whiff% · 2-strike Whiff% · Foul%) | **Command** (BB% | Strike% · 1st-pitch · 3-ball) · Batted Ball; no Results. **Rating = the nERA
+  percentile** (`PITCHER_SCORE_WEIGHTS` / `meta.pitcherWeights` `{nera: 100}`, `data.js` patched, `scoreNote.P`, glossary); Strikeout / Control /
+  xStrikeout stay computed (`kskl / ctrl / ksklx` on the pool's stats) but are off the card.
