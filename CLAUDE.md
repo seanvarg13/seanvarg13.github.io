@@ -1936,3 +1936,20 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   and only the overall row is filled (the retrain run of 07:25 UTC started before this merge, so its rescore carries `foul` but not `cstr` / `xcstr`;
   the next daily build carries all three for 2026, past seasons at the next rescore). Skenes 2026: fouls +3.5, called −2.1, two-strike −0.2, walks
   +0.7 → +2.0 against an actual +2.8; Imanaga 2026: +0.6 / −2.0 / −1.5 / +1.3 → −1.7 against −2.4.
+* **Spring tab (Sean, 6 Oct 2026: "a tab about pitching+ but for spring training. As a way to get earlier indicators on arsenal and stuff and
+  pitching+ changes", then "go ahead")**: a pitcher card's strip is Pitching+ · **Spring** · nERA while a spring the card can speak to is built —
+  next year's `hist/mlb-<y>-spring.js` once it exists, else this year's, on a regular-season MLB card of that year or the one before
+  (`springFor`; `indexReady()` now keeps the built spring / postseason keys in `ix.kinds`, which `springKey` reads too). `renderSpringTab`:
+  a head line (BF · pitches · G, then what moved from last season to camp — FB velo ±0.5+, Stuff+ / Pitching+ ±3+, a **new** pitch (5+
+  spring pitches, under 2% the year before), a **dropped** one (5%+ the year before, gone from 40+ spring pitches), a usage swing of 8+
+  points) and a table in the Pitching+ tab's dress: per pitch, rows Spring 'YY · 'YY−1 season · Δ · 'YY season (once that regular season
+  is built — so a March read can be checked in October), columns Use, Velo, IVB, HB, Spin, Stuff+, Pitching+ (each against its own type in
+  its own file's league — `relOf` on the spring file's own `consts`), xWhiff / xGB / xPU (location-aware where the file has them), the
+  actual Whiff / GB / PU dimmed with the swing / ball-in-play counts in the tooltip, Pitches; the Δ row coloured where a direction is a
+  verdict (velo, the grades, the expected rates). All pitches = the card's own grades and his season rates. Full spring vs full season,
+  whatever the card's filters. CSS `.springbox` at the end of `styles.css`. The **Pitching+ board's Games: Spring training pill is back**
+  (`pb.src`, the forcing line is gone). Why only the physical columns matter (2026, 67 pitchers 60+ spring BF vs 200+ regular BF, spring →
+  season r): FB velo .87, Stuff+ .64, GB% .60, Whiff% .40, Strike% .39 — a median spring is 27 BF / ~110 pitches. The 2026 spring file
+  predates the location models (17-field arsenal rows), so Pitching+ reads "–" there until a `spring-2026` rescore (dispatched after the
+  6 Oct retrain finished); next spring's file is built with them from the first morning.
+
