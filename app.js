@@ -2318,10 +2318,15 @@
   function renderLbTabs() {
     let row = $("lbtabs");
     if (!row) { row = el("div", "lbtabs"); row.id = "lbtabs"; }
-    const on = ["leaderboard", "trending"].includes(state.mode), top = $("pagertop");
+    const on = ["leaderboard", "trending"].includes(state.mode) && !phonePages(), top = $("pagertop");   // a phone's pills live in the dropdown (lbPills)
     row.hidden = !on; if (!on) { row.remove(); return; }
     { const pc = top.querySelector(".pcount"); if (row.parentNode !== top || (pc && row.nextSibling !== pc)) top.insertBefore(row, pc); }   // before the count, which keeps the right edge   // in the filter row, under the buttons (Sean, 3 Oct 2026: "all of this stuff ... in the upper area where filters is")
     row.innerHTML = "";
+    row.append(lbSetPill());
+    const sp = lbSeasonPill(); if (sp) row.append(sp);   // Season ▾ in the row (6 Oct 2026, the proposed layout); the Filters tab still has the level / span controls
+  }
+  // the column-set pill: "Standard ▾", Custom when the list matches no set (tapping Custom opens Filters ▸ Stats)
+  function lbSetPill() {
     const g = groupFor(state.pos), pit = isPitcherGroup(g), cur = colKeys(g);
     // no Hitters / Pitchers switch here (Sean, 3 Oct 2026: "get rid of the hitters/pitchers box") — the Position button has them
     // the column sets as one pill (Sean, 3 Oct 2026: "for like standard advanced etc make that one button of itself"), like the
@@ -2338,8 +2343,7 @@
       ensureSortValid(); savePrefs(); render();
     };
     const pill = pillSelect(curName, opts, curName, pick, "Stats shown"); pill.classList.add("lbsetpill"); pill.title = "Which stats the table shows";
-    row.append(pill);
-    const sp = lbSeasonPill(); if (sp) row.append(sp);   // Season ▾ in the row (6 Oct 2026, the proposed layout); the Filters tab still has the level / span controls
+    return pill;
   }
   // the season as one pill in the Leaderboard's row: the same pick as the Filters tab's Season row; a span of seasons reads "2024–26 ▾" and opens that tab
   function lbSeasonPill() {
@@ -2638,6 +2642,7 @@
     } else { const rows = list.map((p, i) => [p, i]); rows.forEach(([p, i], j) => { if (onPage(i)) emitRow(p, i, rows, j); }); }
     ol.append(frag);
     fitNameCol();
+    if (mobileView()) requestAnimationFrame(() => { for (const nm of ol.querySelectorAll(".name")) { nm.style.fontSize = ""; nm.style.letterSpacing = ""; if (nm.scrollWidth > nm.clientWidth + 1) { nm.style.fontSize = "14px"; nm.style.letterSpacing = "-0.02em"; if (nm.scrollWidth > nm.clientWidth + 1) nm.style.fontSize = "12.5px"; } } });   // a long name steps down to 14 then 12.5px before it ellipsises (Sean, 6 Oct 2026: "fit the names in there")
   }
   // The name column is as wide as the widest name on the page, so every row's stats start in the same place.
   // Each row is its own grid, so a single long name would otherwise push that row's columns out of line; the
@@ -2672,7 +2677,7 @@
     const head = $("colhead").children[1];                          // "Player", or "Player · ranked vs …"
     if (head && head.textContent) w = Math.max(w, textWidth(head.textContent, fontOf(head)));
     const mobile = document.documentElement.dataset.view === "mobile";
-    const lo = mobile ? 124 : 180, hi = mobile ? 150 : 460;   // a phone keeps the name column narrow so more stat columns show (Sean, 6 Oct 2026); a long name ellipsises
+    const lo = mobile ? 150 : 180, hi = mobile ? 150 : 460;   // a phone keeps the name column narrow so more stat columns show (Sean, 6 Oct 2026); a long name ellipsises
     board.style.setProperty("--namew", Math.min(hi, Math.max(lo, Math.ceil(w + pad + 2))) + "px");
   }
   // ---- pages ----
@@ -4635,6 +4640,12 @@
       box.append(b);
     };
     // the position shows on the button when it isn't everyone ("SS · Filters"), so the one button still says what's listed
+    if (onePage() && phonePages()) {   // a phone (Sean, 6 Oct 2026: "move the hitters rp sp custom and year into the filters button"): one Filters button
+      // that says who's listed; the Hitters / SP / RP choice is the dropdown's Position tab, the column set and season sit at the top of its Stats / Filters tabs
+      const n = ["filters", "splits", "dates"].filter(popActive).length, pos = posBtnLabel();
+      add("grp", `${pos === "All pitchers" ? "Pitchers" : pos === "All hitters" ? "Hitters" : pos} · Filters${n ? ` · ${n}` : ""}`, grpOpen, n > 0);
+      return;
+    }
     if (onePage()) {   // the Leaderboard / Recent, since the proposed layout (Sean, 6 Oct 2026: "Implement both of those"): a Hitters · SP · RP
       // segment, then one Filters button whose dropdown holds the tabs (Position · Filters · Stats · Splits · Dates) — the six buttons of 3 Oct are history
       const pit = isPitcherGroup(groupFor(state.pos)), sel = posSel(), seg = el("div", "seg posseg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Who");
@@ -4689,7 +4700,8 @@
     const pop = $("pop"), body = $("pop-body");
     pop.hidden = false; body.innerHTML = "";
     pop.classList.toggle("grppop", GRP.has(state.panel));
-    if (GRP.has(state.panel)) { state.panelTab = state.panel; body.append(grpTabs()); pop.classList.remove("notabs"); }   // one Filters button again (6 Oct 2026), so the tabs ride in the dropdown
+    if (GRP.has(state.panel)) { state.panelTab = state.panel; body.append(grpTabs()); pop.classList.remove("notabs");
+      if (onePage() && phonePages() && state.panel === "stats") { const pr = el("div", "lbpills"); pr.append(lbSetPill()); body.append(pr); } }   // a phone's Standard ▾ pill rides at the top of the Stats tab (6 Oct 2026); the Filters tab already has the Season row   // one Filters button again (6 Oct 2026), so the tabs ride in the dropdown
     return body;
   }
   // the panel hangs under its own button, clamped to the window, and never taller than the room below it

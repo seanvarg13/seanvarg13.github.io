@@ -2125,3 +2125,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `fitNameCol` holds the name column to 124-150px (a longer name ellipsises), the name is 16px, the rank column 24px (the two `--rankw` setters),
   the stat columns 42px and the column names 10px with light tracking — four stat columns show beside the name at 390px instead of two and a half.
   Desktop unchanged.
+* **A phone's controls fold into Filters; the header aligned; names fit (Sean, 6 Oct 2026: "move the hitters rp sp custom and year into the
+  filters button instead also the column headers are misaligned also could we make the default width what it is in the second screenshot and
+  figure a way to fit the names in there")**: under `phonePages()` the control row is **one Filters button** ("Hitters · Filters", "SP · Filters" —
+  `posBtnLabel`) and the Min box; the Hitters / SP / RP choice is the dropdown's Position tab, the **Standard ▾ pill sits at the top of its Stats
+  tab** (`lbSetPill`, factored out of `renderLbTabs`; `.lbpills` in `popBody`) and the season is the Filters tab's own Season row (a season pill
+  there was tried and dropped as a duplicate). **The misalignment**: the rows' grid gave the name track `minmax(--namew, 1fr)`, so a row with a long
+  name grew its track past the header's 150px and every column name sat left of its column (Pete Crow-Armstrong's page: header 150 / row 176).
+  On a phone the name track is a fixed `var(--namew)` (150px, `fitNameCol` lo = hi = 150), `.who` clips, and `renderRowsIn` steps a name that
+  doesn't fit down to 14px then 12.5px (`.name` is `display: block` so it measures and ellipsises) — Pete Crow-Armstrong fits at 12.5px. Desktop
+  keeps the six-button row and the stretching name column.
