@@ -2037,6 +2037,22 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   comment is on its own lines now. Headless phone + desktop, light + dark: Leaderboard, home, a card, the Pitching+ board, Fantasy, Claude
   rankings, the Filters window — no script errors. Mocks of the direction (a literal Clutch Time take, then "now vs warmer" for the Leaderboard
   and the card) are the "Clutch Time Mock" canvas, not in the repo.
+* **Standard rows on the card; three pages gone; the scroll fixed (Sean, 6 Oct 2026: "the leaderboard isnt allowing me to scroll at all ·
+  you can eliminate the league trends, call up watch and compare · get rid of the savant bars and classic bars and just make the website
+  standard whatever you feel is easiest on the eyes and easiest to understand when immediately looking at the player card")**: (1) the warm
+  pass had put `overflow: hidden` on the rows' scrollers (`#bscroll` / `.board-scroll` / `.pbscroll` / `.fscroll`) for the rounded corners,
+  which froze every list — they keep the radius and lose the overflow rule; never set overflow on a scroller for its corners. (2) **League
+  Trends, Call-up Watch and Compare are off the menus and routes** (`pitchBoardEl` no longer adds their entries and removes a Compare one,
+  `NAV_GROUPS`'s Leaders group is `leaderboard · trending`, `readMode` sends `#trends` / `#callups` / `#compare` home, `BTABS` has no Compare
+  tab); `renderTrends`, `renderCallups`, the Compare page and the card's compare branch stay in `app.js`, unreachable. (3) **The card's
+  percentile sections are plain HTML rows** — `pctRows(groups, head)` in place of both `pctSvg` (Savant's charts) and the classic meters:
+  a `Percentile · Value` head on the first column, each section a small grey tracked name over a hairline, each row = the stat name (600),
+  a 10px rounded track filled to his percentile in Savant's colour, the percentile as a 24px coloured pill at the end of the track
+  (`pctStyle`), and his value bold in the condensed face at the right; fold-outs (▸ / ▾ on the name), "|" line breaks and the tap note
+  (`statPop` — the host carries `.svchart`) as before; no ticks, bubbles or Poor / Average / Great. CSS `.pctstd / .prowhead / .psec /
+  .prow / .ptrk / .pfill / .ppct / .pval` at the end of `styles.css`. The Appearance switch "Percentile bars" is gone and `state.bars` is
+  unused (`paintBar` is one scale); `pctSvg` / `pctChart` / `meterRow` stay for the record. Every earlier bar note in this file (Savant's
+  bars, the studio bar, the mock's bars, "don't restyle the bars unasked") is history as of this entry.
 * **xCalled on the Pitching+ tab (Sean, 6 Oct 2026: "add expected called strikes to the pitching+ tab as well")**: an **xCalled** pair after xFoul in
   `renderStuffTab`'s Pitching+ table — the command models' called-strike chance per pitch (the arsenal's `xcstr`, `arsenalView`'s in a window /
   split) plus `xCalled`'s league centring (`lgRatesP().cstr − .xcstr`, the models read the newest season a little hot) over his actual called
