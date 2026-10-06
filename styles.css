@@ -4270,3 +4270,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .krows.kfive .krow.ktot .knum:nth-child(2) { font-weight: 700; }
 :root:root:root:root:root:root .krows.kfive .knum.khis { justify-self: center; min-width: 44px; padding: 3px 6px; border-radius: 999px; font-weight: 700 !important; font-size: 13px; }
 :root:root:root:root:root:root[data-view="mobile"] .krows.kfive .knum.khis { min-width: 40px; padding: 3px 4px; font-size: 12.5px; }
+:root:root:root:root:root:root .krows.kfive .krow.ksub { border-top: 2px solid var(--hair); }
+:root:root:root:root:root:root .krows.kfive .krow.ksub .klab { font-weight: 700 !important; }
+:root:root:root:root:root:root .krows.kfive .krow.krest { border-top: 1px solid var(--hair); }

@@ -2205,3 +2205,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **The His column coloured (Sean, 6 Oct 2026: "On the his column can you heat map those stats in the same way the +/- K is")**: each His cell of
   the K% table is a pill in his percentile colour on that stat among the pool (`pct.whf / fpc / cstr / bb / k`, the two-strike gap's place among
   the reference list; `num(v, sgn, pc)`, `.knum.khis`); the Lg column stays plain. The `.kstart .kpill` blank-pill rule now skips `.khis`.
+* **A subtotal row (Sean, 6 Oct 2026: "add a row above everything else and basically just make it the subtotal of the four process oriented
+  inputs to the k whiff gap")**: **The four together** (`.krow.ksub`) — the fouls, called strikes, two-strike finishing and walks pills summed,
+  with the running K% at that point — sits between BB% and Everything else; Misiorowski +4.8 of a +4.2 gap, so Everything else reads −0.7.
