@@ -7423,20 +7423,20 @@
     // the impact to k% and then the updated k%"): the dial, his rate, the league's, the K%-point pill, the running K%. No sub-lines, no
     // percentiles, no Repeats? column; the tooltips keep the one-line explanations.
     const rows = el("div", "krows kfive");
-    const LAB = { whf: stuff ? "xWhiff%" : "Whiff%", fpc: stuff ? "xFouls / contact" : "Fouls / contact", cstr: stuff ? "xCalled Strike%" : "Called Strike%", s2d: stuff ? "x2-strike Whiff%" : "2-strike Whiff%", bb: stuff ? "xBB%" : "BB%" };
+    const LAB = { whf: stuff ? "xWhiff%" : "Whiff%", fpc: stuff ? "xFouls / contact" : "Fouls / contact", cstr: stuff ? "xCalled Strike%" : "Called Strike%", s2d: stuff ? "x2-strike finishing" : "2-strike finishing", bb: stuff ? "xBB%" : "BB%" };
     const TIP = { whf: `${K} = −0.8 + 0.926 × Whiff% across every 100+ BF pitcher-season 2020-26`, s2d: "a whiff with two strikes is the strikeout itself — his two-strike whiff rate against his overall", cstr: "called strikes per pitch — a called strike keeps the count moving without contact", fpc: "the share of his contact that goes foul — a foul keeps the strikeout alive, a ball in play ends the plate appearance", bb: "a walk ends the plate appearance without a strikeout" };
     const hdr = el("div", "krow khead"); hdr.append(el("span", null, "Step"), el("span", "kc", "His"), el("span", "kc", "Lg"), el("span", "kc", "± " + K), el("span", "kc", K)); rows.append(hdr);
     const pillOf = (v) => { const pill = el("span", "kpill", v == null ? "–" : sg(v)); if (v != null) { const s2 = pctStyle(Math.max(1, Math.min(99, Math.round(50 + 12 * v)))); if (s2) { pill.style.background = s2.bg; pill.style.color = s2.fg; } } return pill; };
-    const num = (v) => el("span", "knum", v == null ? "–" : f1(v)), run = (v) => el("span", "krun", f1(v));
-    const row = (cls, lab, h, l, pill, running, tip) => { const r = el("div", "krow" + (cls ? " " + cls : "")); if (tip) r.title = tip; r.append(el("span", "klab", lab), num(h), num(l), pill, running); return r; };
-    // the two-strike rate is shown as the rate itself (his overall is the row above); the effect is on the gap over his overall
-    const shown = (k) => (k === "s2d" ? [his.s2d == null ? null : his.whf + his.s2d, lg.s2d + lg.whf] : [his[k], lg[k]]);
+    const num = (v, sgn) => el("span", "knum", v == null ? "–" : sgn ? sg(v) : f1(v)), run = (v) => el("span", "krun", f1(v));
+    const row = (cls, lab, h, l, pill, running, tip, sgn) => { const r = el("div", "krow" + (cls ? " " + cls : "")); if (tip) r.title = tip; r.append(el("span", "klab", lab), num(h, sgn), num(l, sgn), pill, running); return r; };
+    // two-strike finishing is the gap: his two-strike whiff rate minus his overall, signed, the league's the same (Sean, 6 Oct 2026)
+    const shown = (k) => [his[k], lg[k]], signed = (k) => k === "s2d";
     let runK = base, sum = 0;
     { const r = row("kstart", LAB.whf, his.whf, lg.whf, el("span", "kpill kplain", "→"), run(runK), TIP.whf); rows.append(r); }
     for (const k of ["fpc", "cstr", "s2d", "bb"]) {
       if (his[k] != null) { sum += eff[k]; runK += eff[k]; }
       const [h, l] = shown(k);
-      rows.append(row("", LAB[k], h, l, pillOf(eff[k]), run(his[k] == null ? null : runK), TIP[k]));
+      rows.append(row("", LAB[k], h, l, pillOf(eff[k]), run(his[k] == null ? null : runK), TIP[k], signed(k)));
     }
     const rest = gap - sum; runK += rest;
     { const r = row("krest", "Everything else", null, null, pillOf(rest), run(runK), "sequencing, luck — what the four don't explain"); rows.append(r); }
