@@ -1849,3 +1849,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   #364** on top (the mock's geometry, the track ending 30px short, centred text, black type, "|" breaks supported but unused) and `themes.js`
   keeping the 300 weights loaded. Everything of PRs #360-#365 beyond the bars (Results, Command, K-BB% Skills, Rating = nERA, Stuff+ in place of
   Pitching+, the flat Swing & Miss, the Raya type) is history. The entries above for those PRs describe code that is no longer live.
+* **PR #366 undone (Sean, 6 Oct 2026, minutes later: "No sorry the formatting of that not the site")**: he meant PR #359's *format* (the pre-Raya
+  type) with the current site, which is what PR #365 already was — `app.js`, `styles.css`, `themes.js`, `data.js` and `tools/build_data.py` are PR
+  #365's merge (7011960) again: Skills = K-BB% · Mix wOBA, Swing & Miss K% | Whiff% · 2-strike Whiff% · Foul%, Command BB% | Strike% · 1st-pitch ·
+  3-ball, Batted Ball, Rating = nERA, Stuff+ in place of Pitching+, no xRating or Raw / Stuff switch, the mock's bars, the pre-Raya format. The
+  entry above (PR #366) is history.
