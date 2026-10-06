@@ -1841,3 +1841,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   spacing and font and everything format wise before I had you go back to the raya one just now")**: the "Raya type, lines and spacing" block is
   out of `styles.css` once more (PR #351's weight-400 type, buttons, nav, column names and hairlines); the two bar blocks at the end ("The Raya
   mock's bars", the black type) stay, and `themes.js` keeps loading the 300 weights so the bars' light labels and section names draw the same.
+* **Back to PR #359 with the new bars (Sean, 6 Oct 2026: "I meant this version [PR #359] but with the current bars look and that's the only
+  thing to keep from current")**: `app.js`, `styles.css`, `data.js` and `tools/build_data.py` are PR #359's merge (778258a — Skills = Strikeout ·
+  Control, Swing & Miss K% · Whiff% ▸ 2-strike / Foul%, Walk Avoidance BB% · Strike% · 3-ball, Batted Ball, Rating = Rating · Mix wOBA; the
+  Rating Strikeout 60 / Control 20 / Mix wOBA 20 and the xRating on the stuff models; the Raw / Stuff dropdown; tabs Pitching+ · K% / BB% · nERA;
+  the Pitching+ header link, board and column sets; the pre-Raya type and format) with **`pctSvg` and the two bar CSS blocks from PRs #361 /
+  #364** on top (the mock's geometry, the track ending 30px short, centred text, black type, "|" breaks supported but unused) and `themes.js`
+  keeping the 300 weights loaded. Everything of PRs #360-#365 beyond the bars (Results, Command, K-BB% Skills, Rating = nERA, Stuff+ in place of
+  Pitching+, the flat Swing & Miss, the Raya type) is history. The entries above for those PRs describe code that is no longer live.
