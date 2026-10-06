@@ -2369,7 +2369,7 @@
     h.style.setProperty("--n", ms.length); h.style.setProperty("--act", state.mode === "draft" ? "78px" : "0px"); h.style.setProperty("--colw", trending || ms.some((m) => m.showValue) ? "72px" : "56px");
     const editing = state.mode === "rankings" && state.editRanks, hasTiers = editing && (state.tiers[state.pos] || []).length;
     const mobile = document.documentElement.dataset.view === "mobile";
-    h.style.setProperty("--rankw", editing ? (mobile ? (hasTiers ? "108px" : "72px") : hasTiers ? "190px" : "134px") : mobile ? "30px" : "44px");
+    h.style.setProperty("--rankw", editing ? (mobile ? (hasTiers ? "108px" : "72px") : hasTiers ? "190px" : "134px") : mobile ? "24px" : "44px");
     // no "Rank" over the numbers (minimal pass 5): they say what they are
     h.append(el("div", "h", editing ? (hasTiers ? "Rank · tier" : "My rank") : ""), el("div", "h left", ref === g ? "Player" : `Player · ranked vs ${POOL_NAME[ref]}`));
     const head = (key, label, title) => { const h = editing ? Object.assign(el("div", "h", label), { title }) : sortButton(key, label, title); if (/^[a-z]/.test(label)) h.classList.add("lc"); return h; };
@@ -2528,7 +2528,7 @@
       const main = el("div", "row-main grid");
       main.style.setProperty("--n", ms.length); main.style.setProperty("--act", state.mode === "draft" ? "78px" : "0px"); main.style.setProperty("--colw", trending || ms.some((m) => m.showValue) ? "72px" : "56px");
       const mobile = document.documentElement.dataset.view === "mobile";
-      main.style.setProperty("--rankw", rankMode ? (mobile ? (allTiers.length ? "108px" : "72px") : allTiers.length ? "190px" : "134px") : mobile ? "30px" : "44px");
+      main.style.setProperty("--rankw", rankMode ? (mobile ? (allTiers.length ? "108px" : "72px") : allTiers.length ? "190px" : "134px") : mobile ? "24px" : "44px");
       main.style.setProperty("--pre1", preOn("year") ? "var(--prew, 64px)" : "0px"); main.style.setProperty("--pre2", preOn("age") ? "var(--prew, 64px)" : "0px");
       if (rankMode) {
         const key = p.type + p.id;
@@ -2672,7 +2672,7 @@
     const head = $("colhead").children[1];                          // "Player", or "Player · ranked vs …"
     if (head && head.textContent) w = Math.max(w, textWidth(head.textContent, fontOf(head)));
     const mobile = document.documentElement.dataset.view === "mobile";
-    const lo = mobile ? 142 : 180, hi = mobile ? 230 : 460;
+    const lo = mobile ? 124 : 180, hi = mobile ? 150 : 460;   // a phone keeps the name column narrow so more stat columns show (Sean, 6 Oct 2026); a long name ellipsises
     board.style.setProperty("--namew", Math.min(hi, Math.max(lo, Math.ceil(w + pad + 2))) + "px");
   }
   // ---- pages ----

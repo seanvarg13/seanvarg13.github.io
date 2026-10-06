@@ -4192,3 +4192,12 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] #colhead { padding-top: 5px; padding-bottom: 5px; }
 :root:root:root:root:root:root[data-view="mobile"] #colhead .h { padding-top: 4px !important; padding-bottom: 4px !important; }
 :root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) main.wrap { margin-top: 6px; }
+/* a phone's Leaderboard shows more columns (Sean, 6 Oct 2026: "lower the size of the player name column"): a 16px name in a 124-150px column
+   (ellipsised past that), a 24px rank column, 42px stat columns */
+:root:root:root:root:root:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 24px) minmax(var(--namew, 124px), 1fr) var(--pre1, 0px) var(--pre2, 0px) 50px repeat(var(--n), 42px) var(--act, 0px); }
+:root:root:root:root:root:root[data-view="mobile"] #board .name { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root:root:root:root:root:root[data-view="mobile"] #board .meta { font-size: 10px; }
+:root:root:root:root:root:root[data-view="mobile"] #board .who { padding-left: 4px; padding-right: 6px; }
+:root:root:root:root:root:root[data-view="mobile"] #board .pct { font-size: 12.5px; }
+:root:root:root:root:root:root[data-view="mobile"] .score.hero { font-size: 17px !important; }
+:root:root:root:root:root:root[data-view="mobile"] #colhead .h { font-size: 10px !important; letter-spacing: 0.04em !important; padding-left: 2px; padding-right: 2px; }
