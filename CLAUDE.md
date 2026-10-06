@@ -1876,3 +1876,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   split. Until a build carries them, the per-pitch actual reads "–" and the All pitches actual falls back to his season's Foul% ÷ (Swing% × contact
   share) from the card's own rates (Jax 2026: 51.3% expected / 47.3% actual; four-seam 67.0% expected, sinker 49, changeup 45, sweeper 46). The
   Stuff+ board has the same **xFoul%** column (`xfoul`, sortable).
+* **Foul% of contact on the card (Sean, 6 Oct 2026: "show on the swing and miss section the fouls at that percentile and not on the like 15% or
+  21% scale")**: `fpc` = Foul% ÷ (Swing% × (1 − Whiff%)), the share of his contact that goes foul (`foulPerContact`, set on `V(p).m` beside `xbbf`
+  for every pitcher view, so a window / split re-derives it), a `SIDE_P` def (the pool ranks it; `LB_EXTRA_P` so it draws as a column; Stats ▸
+  Discipline), glossary / `SHORT` / `OUTCOME_LABEL_P` "Foul% of contact". Swing & Miss is K% | Whiff% · 2-strike Whiff% · **Foul% of contact**
+  (`PCT_COLS_P`); the per-pitch `foul` stays a column and the Stuff side's `nfoul` is unchanged. League ~51%; Jax 2026 47.3 (14th), Henderson 59.1
+  (99th). Why it's the scale that matters (scratch `kconv3.js`, every 100+ BF pitcher-season 2020-26): K% beyond what Whiff% alone implies
+  (K% = −0.8 + 0.926·Whiff%) correlates with fouls per contact at r .57 and Called Strike% at .33; the two together fit it at r .81 (gap = −40.7 +
+  0.51·foul/contact + 0.90·Called Strike%), that prediction repeats year to year at .57 (the gap itself .47) and forecasts next year's gap at .45;
+  the predicted-low third runs 2.0 under this year and 1.3 under the next (72% still under), the high third 2.6 over → 1.4 over (70%).
