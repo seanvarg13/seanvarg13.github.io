@@ -4247,3 +4247,12 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow .pnav { display: flex; gap: 3px; margin: 0; flex-wrap: nowrap; }
 :root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow .pnav .pbtn { height: 22px; min-height: 22px !important; min-width: 22px; padding: 0 6px !important; font-size: 12px !important; line-height: 1; }
 :root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow .pgap { font-size: 12px; color: var(--muted); padding: 0 1px; }
+/* the card's bio on its own line under the year; the phone's count and page numbers on the Filters line (Sean, 6 Oct 2026) */
+:root:root:root:root:root:root .phead .hbioline { display: block; font-size: 13px; color: var(--ink-2); margin-top: 2px; font-weight: 500; }
+:root:root:root:root:root:root .phead .hbioline .mlinein, :root:root:root:root:root:root .phead .hbioline .hbio.inline { font-size: 13px; color: var(--ink-2); }
+:root:root:root:root:root:root[data-view="mobile"] .phead .hbioline { font-size: 12px; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop .pcount { font-size: 12px; color: var(--muted); white-space: nowrap; margin-left: 4px; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop .pnav.inbar { display: flex; gap: 3px; margin: 0 0 0 auto; flex-wrap: nowrap; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop .pnav.inbar .pbtn { height: 24px; min-height: 24px !important; min-width: 24px; padding: 0 6px !important; font-size: 12px !important; line-height: 1; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop .pgap { font-size: 12px; color: var(--muted); padding: 0 1px; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop { padding: 0 8px 4px; }

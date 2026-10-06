@@ -2752,7 +2752,7 @@
     if (!box) return;
     { const tb = $("tbtns"); if (tb && box.contains(tb)) seatFilters(null); }   // out of the bar before it is cleared
     // the Min PA / IP box stays put while the bar is redrawn (a move would blur it mid-typing; cleared with innerHTML it would be lost)
-    const mfKeep = box.id === "pagertop" && onePage() && !noMin() && state.mode === "leaderboard" ? $("minfield") : null;
+    const mfKeep = null;   // the Min box lives in the Filters panel again (6 Oct 2026)
     for (const n of [...box.children]) { if (n === mfKeep) continue; if (n.id === "minfield") $("park").append(n); else n.remove(); }
     { const old = box.nextElementSibling; if (old && old.classList.contains("pnavrow")) old.remove(); }   // a phone's page numbers, redrawn below
     const go = (n) => { state.page = Math.min(pg.pages, Math.max(1, n)); (onChange || renderRows)(); const top = box.closest(".board, .fboard") || box; const sb = top.querySelector(".board-scroll, .fscroll"); if (sb) sb.scrollTop = 0; const y = top.getBoundingClientRect().top + window.scrollY - 8; if (window.scrollY > y) window.scrollTo({ top: y }); };
@@ -2773,11 +2773,11 @@
         const x = b(String(n), n, `Page ${n}`, false); if (n === pg.page) x.setAttribute("aria-current", "page"); nav.append(x); last = n;
       }
       nav.append(b("›", pg.page + 1, "Next page", pg.page === pg.pages));
-      if (phonePages() && box.id === "pagertop") { const row = el("div", "pnavrow"); const pc = box.querySelector(".pcount"); if (pc) row.append(pc); row.append(nav); box.after(row); } else box.append(nav);   // a phone: the count left, small page numbers right on one line (Sean, 6 Oct 2026: pages back, "put it in the upper gap on the right")   // a phone: the count and the page numbers share one line (Sean, 6 Oct 2026: the table started too far down)
+      if (phonePages() && box.id === "pagertop") { const pc = box.querySelector(".pcount"); if (pc) box.append(pc); nav.classList.add("inbar"); box.append(nav); } else box.append(nav);   /* a phone: the count and the small page numbers ride on the Filters button's line (Sean, 6 Oct 2026) */   // a phone: the count left, small page numbers right on one line (Sean, 6 Oct 2026: pages back, "put it in the upper gap on the right")   // a phone: the count and the page numbers share one line (Sean, 6 Oct 2026: the table started too far down)
     }
     if (onChange) box.append(perPageField(setSize));    // the list pages keep theirs in Filters (minimal pass 4); Fantasy here
     if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs();
-      if (phonePages()) { if (mfKeep) { mfKeep.classList.add("topmin"); if (box.lastElementChild !== mfKeep) box.append(mfKeep); } }   // a phone: Min IP rides after the pills; the count is on the page-number line
+      if (phonePages()) { const pc = box.querySelector(".pcount"), nv = box.querySelector(".pnav"); if (pc) box.append(pc); if (nv) box.append(nv); }   /* after the Filters button */   // a phone: Min IP rides after the pills; the count is on the page-number line
       else { box.append(el("span", "lbbreak")); const pc = box.querySelector(".pcount"); if (pc) box.append(pc); if (mfKeep) { mfKeep.classList.add("topmin"); if (box.lastElementChild !== mfKeep) box.append(mfKeep); } } } }   // the count and the Min box on a quiet line under the controls (6 Oct 2026); the Min box moves only when it isn't already last   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
   }
   function perPageField(setSize) {
@@ -3654,11 +3654,21 @@
   // the four numbers he reads first, as tiles with their percentiles (6 Oct 2026, the proposed band): a pitcher's nERA (ERA beside it),
   // K%, BB%, K-BB% (IP beside it); a hitter's xwOBA (wOBA beside it), AVG, OBP, SLG (OPS and PA beside it). `facts` is the old band's
   // label → text (the season's official line and the playing time); a level without that line gets the card's own rates.
-  function bandTiles(p, st, facts) {
+  // the percentile of an official slash stat among the pool's 300+ PA hitters that season, from hist/career.js (AVG / OBP aren't card
+  // metrics, so the pool has no percentile for them — Sean, 6 Oct 2026: "make the avg and obp be color mapped in the same way")
+  const slashCache = new Map();
+  function slashPct(g, idx, v) {
+    if (v == null || !careerReady() || DS.level && DS.level !== "MLB" || DS.kind || DS.multi) return null;
+    const pl = pool(g), key = `${DS.season}:${g}:${idx}:${pl.ref.length}`;
+    let arr = slashCache.get(key);
+    if (!arr) { arr = []; for (const q of pl.ref) { const rec = window.DRAFT_CAREER[String(q.id)], rows = rec && rec.H ? rec.H.filter((r) => r[0] === +DS.season) : []; const r = rows.find((x) => x[1] === "TOT") || (rows.length === 1 ? rows[0] : null); if (r && r[idx] != null) arr.push(+r[idx]); } arr.sort((a, b) => a - b); slashCache.set(key, arr); }
+    return arr.length >= 20 ? insertPct(arr, +v) : null;
+  }
+  function bandTiles(p, st, facts, g) {
     const row = el("div", "htiles"), pv = V(p), m = pv.m, pct = (st && st.pct) || {}, pit = p.type === "P";
     const ord = (x) => (x == null ? null : ordinal(Math.round(x)));
     const tile = (lab, val, pc, sub) => { const t = el("div", "tile"); t.append(el("span", "l", lab)); const v = el("span", "v", val == null ? "–" : String(val)); if (pc != null) { const s2 = pctStyle(pc); if (s2) v.style.color = s2.bg; } t.append(v);
-      const bits = [pc != null ? ord(pc) : null, ...(sub ? String(sub).split(" · ") : [])].filter(Boolean); if (bits.length) { const pp = el("span", "p"); bits.forEach((x, i) => { if (i) pp.append(el("span", "dot", " · ")); pp.append(el("span", "pb", x)); }); t.append(pp); } row.append(t); return t; };
+      const bits = [pc != null ? ord(pc) : null].filter(Boolean);   /* the percentile alone under the number (Sean, 6 Oct 2026: "just keep the lower text to be the percentile of the metric and that's it") */ if (bits.length) { const pp = el("span", "p"); bits.forEach((x, i) => { if (i) pp.append(el("span", "dot", " · ")); pp.append(el("span", "pb", x)); }); t.append(pp); } row.append(t); return t; };
     const stuff = pit && stuffSide();
     if (pit) {
       const hero = stuff ? ["xnERA", st && st.xnera != null ? st.xnera.toFixed(2) : null, pct.xnera] : ["nERA", m.nera != null ? m.nera.toFixed(2) : null, st && st.scorePct != null ? st.scorePct : pct.nera];
@@ -3669,7 +3679,7 @@
     } else {
       const hx = m.xwd != null ? fmtX(m.xwd) : st && st.score != null ? fmtX(st.score) : null, hl = m.xwd != null ? "xwOBA" : "wOBA";
       tile(hl, hx, st && st.scorePct != null ? st.scorePct : null, hl === "xwOBA" && m.woba != null ? "wOBA " + fmtX(m.woba) : facts.PA != null ? facts.PA + " PA" : null);
-      if (facts.AVG != null) { tile("AVG", facts.AVG, pct.avg, null); tile("OBP", facts.OBP, pct.obp, null); tile("SLG", facts.SLG, pct.slg, [facts.OPS != null ? "OPS " + facts.OPS : null, facts.PA != null ? facts.PA + " PA" : null].filter(Boolean).join(" · ") || null); }
+      if (facts.AVG != null) { tile("AVG", facts.AVG, pct.avg != null ? pct.avg : slashPct(g || "H", 14, facts.AVG), null); tile("OBP", facts.OBP, pct.obp != null ? pct.obp : slashPct(g || "H", 15, facts.OBP), null); tile("SLG", facts.SLG, pct.slg, [facts.OPS != null ? "OPS " + facts.OPS : null, facts.PA != null ? facts.PA + " PA" : null].filter(Boolean).join(" · ") || null); }
       else { tile("K%", m.k != null ? m.k.toFixed(1) : null, pct.k, null); tile("BB%", m.bb != null ? m.bb.toFixed(1) : null, pct.bb, null); tile("Brl%", m.brl != null ? m.brl.toFixed(1) : null, pct.brl, facts.PA != null ? facts.PA + " PA" : null); }
     }
     return row;
@@ -8927,7 +8937,8 @@
     // Card Header Comparison)
     { const ml = plate.querySelector(".mline"), hd2 = title.querySelector(".pthd");
       if (ml && hd2) {
-        const s2 = el("span", "mlinein", " · " + ml.textContent); hd2.append(s2); ml.remove();
+        // a line of its own under the year (Sean, 6 Oct 2026: "put the bio stuff below the year on its own line"); the bio joins it below
+        const s2 = el("div", "hbioline"); s2.append(el("span", "mlinein", ml.textContent)); title.append(s2); ml.remove();
       } }
     const finish = () => {                               // put the pieces where this layout wants them
       if (mob) { if (F.childNodes.length) plate.append(F); }
@@ -8972,9 +8983,9 @@
     { const hs = plate.querySelector(".hstrip");
       if (hs) {
         const bioBox = hs.querySelector(".hbio"), hd2 = title.querySelector(".pthd");
-        if (bioBox && hd2) { bioBox.classList.add("inline"); fillBio(bioBox, p, bio(p.id)); hd2.append(bioBox); }
+        if (bioBox && hd2) { bioBox.classList.add("inline"); fillBio(bioBox, p, bio(p.id)); const bl = title.querySelector(".hbioline"); if (bl) bl.append(bioBox); else { const s2 = el("div", "hbioline"); s2.append(bioBox); title.append(s2); } }
         const facts = {}; for (const f of [...hs.querySelectorAll(".fact"), ...(hs._stats ? [...hs._stats.querySelectorAll(".fact")] : [])]) { const i = f.querySelector("i"), b = f.querySelector("b"); if (i && b) facts[i.textContent] = b.textContent; }
-        plate.append(bandTiles(p, st, facts));
+        plate.append(bandTiles(p, st, facts, g));
         const ctl = el("div", "phctl"); ctl.append(tog);
         const vl = viewLabel(p.type); ctl.append(el("span", "phview", vl && vl !== "full season" ? vl : "Full season"));
         plate.append(ctl);
@@ -9395,10 +9406,10 @@
     // the minimum sits beside Sort by (Sean, 30 Sep 2026: "the PA qualification ... next to the sort by option"); Trending's is
     // playing time inside its span, Rankings and the Draft board list everyone
     const sf = $("sortfield"), sorting = !customOrder(), trending = state.mode === "trending";
-    const minNode = trending ? $("trendminfield") : noMin() || onePage() ? null : $("minfield");   // the Leaderboard's sits in the top row (Sean, 3 Oct 2026)
+    const minNode = trending ? $("trendminfield") : noMin() ? null : $("minfield");   // the Min box is back in the panel (Sean, 6 Oct 2026: "in the area where the order by was put the min IP filter in there")
     if (sorting || pit || minNode) {
-      const b = el("div", "psec"); b.append(el("h4", null, "Order and minimum"));
-      const r = el("div", "prow"); if (sorting) r.append(sf); if (minNode) r.append(minNode); if (pit) r.append($("reffield"));
+      const b = el("div", "psec"); b.append(el("h4", null, onePage() ? "Minimum" : "Order and minimum"));
+      const r = el("div", "prow"); if (sorting && !onePage()) r.append(sf); if (minNode) r.append(minNode);   // no Sort by on the Leaderboard — the column tapped sorts (Sean, 6 Oct 2026) if (pit) r.append($("reffield"));
       if (!onePage() || phonePages()) r.append(perPageField((n) => { state.pageSize = n; state.page = 1; savePrefs(); renderRows(); }));   // everyone is on one page there
       b.append(r);
       if (minNode && !trending) b.append(el("p", "note", lbMulti() ? "The minimum is per season; a combined span multiplies it by the seasons in it." : `The minimum is who is listed; percentiles are always against ${pit ? "pitchers with 300+ batters faced" : "hitters with 300+ PA"} on the season.`));
