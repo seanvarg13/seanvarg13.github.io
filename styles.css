@@ -4119,7 +4119,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] .krow { grid-template-columns: 1fr 50px 44px 84px; gap: 6px; }
 :root:root:root:root:root:root .krun { font-family: var(--display); font-size: 17px; font-weight: 700 !important; color: var(--ink); text-align: center; font-variant-numeric: tabular-nums; }
 :root:root:root:root:root:root .krow.kstart .krun, :root:root:root:root:root:root .krow.ktot .krun { font-size: 19px; }
-:root:root:root:root:root:root .krow.kstart .kpill { background: none !important; }
+:root:root:root:root:root:root .krow.kstart .kpill:not(.khis) { background: none !important; }
 :root:root:root:root:root:root .krow.ktot .krun { color: var(--ink); }
 :root:root:root:root:root:root .krow.krest { border-top: 2px solid var(--hair); }
 :root:root:root:root:root:root .krow.ktot { border-top: 1px solid var(--hair); border-bottom: 2px solid var(--ink); }
@@ -4268,3 +4268,5 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .krows.kfive .krun { font-size: 16px; }
 :root:root:root:root:root:root .krows.kfive .krow.ktot .krun, :root:root:root:root:root:root .krows.kfive .krow.kstart .krun { font-size: 17px; }
 :root:root:root:root:root:root .krows.kfive .krow.ktot .knum:nth-child(2) { font-weight: 700; }
+:root:root:root:root:root:root .krows.kfive .knum.khis { justify-self: center; min-width: 44px; padding: 3px 6px; border-radius: 999px; font-weight: 700 !important; font-size: 13px; }
+:root:root:root:root:root:root[data-view="mobile"] .krows.kfive .knum.khis { min-width: 40px; padding: 3px 4px; font-size: 12.5px; }
