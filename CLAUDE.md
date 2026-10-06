@@ -2172,3 +2172,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   don't make it super space taking up")**: the Show more pill of PR #396 is gone (`pageWindow` pages a phone at 25 again, `renderRowsIn` appends
   nothing, `.showmore` CSS removed); `renderPager`'s `.pnavrow` holds the count at the left ("1–25 of 193") and the page numbers at the right
   (‹ 1 2 … 8 ›) as 22px pills on a 22px line (the block at the end of `styles.css`), so the rows start where they did.
+* **Rating off the card; the sorted nERA is the value alone (Sean, 6 Oct 2026: "get rid of rating on the player card and when nera is sorted on
+  make it show the stat as big and red like the other columns dont have like the percentile thing below it")**: `PCT_COLS_P` / `_PS` Skills =
+  Whiff% · xBB% (xWhiff% · xBB%) — the Rating stays a Leaderboard column and the pool's score; the headline cell keeps `.hero` (the value in its
+  percentile colour, big) but appends no `.ppill`. Found alongside: the `sorted` / `brk` classes on that cell had sat behind a mid-line `//`
+  comment since PR #390 — the third time; it's a `/* */` now.
