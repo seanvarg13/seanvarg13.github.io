@@ -2147,3 +2147,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (rows sit on the page ground, alternate rows on the surface), and the column names stick under the site header (`.colwrap` sticky at
   `--header-h`). Rankings, the Draft board and Fantasy keep their standing card. This supersedes the "stands still" rule of 26 Sep for those two
   pages. Beware once more: a `//` comment appended to a line that continues with code swallows the code — use `/* */` mid-line.
+* **One page with Show more, the filters frozen, no window (Sean, 6 Oct 2026: "could you just make it one big page with a show more option / And I
+  don't like how ... the filters stuff scrolls away plus make them freeze paned too", then "I like how you've handled the highlighted or sorted
+  column as is now")**: PR #395's page-scrolling Leaderboard is undone — the control row, the count and the column names are fixed again and only
+  the rows' box (`#bscroll`) scrolls, as every other list — but **frameless**: `#bscroll` / `.board-scroll` have no border, radius or own ground,
+  the column names sit on the page ground (`#colhead` / `.colwrap`), the rows alternate ground / surface (the block "the Leaderboard without the
+  window dress" at the end of `styles.css`). On a phone the page numbers are gone: `pageWindow` under `phonePages()` returns a cumulative window
+  (`end` = the first `state.page` pages, `more` while there are more), `renderRowsIn` appends a **Show more · 25 of 539** pill (`.showmore`) under
+  the rows (`state.page++` then `renderRows()`, the scroll kept), and the `.pnavrow` line holds only the count ("25 of 539"). The pill is
+  `position: sticky; left: 0` with `width: min(100%, 100vw − 24px)`, so it stays centred in the visible part of the sideways-scrolling rows box.
+  The sorted column's fill and the headline's value-over-pill are unchanged. Desktop still lists everyone.
