@@ -2157,3 +2157,14 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the rows (`state.page++` then `renderRows()`, the scroll kept), and the `.pnavrow` line holds only the count ("25 of 539"). The pill is
   `position: sticky; left: 0` with `width: min(100%, 100vw − 24px)`, so it stays centred in the visible part of the sideways-scrolling rows box.
   The sorted column's fill and the headline's value-over-pill are unchanged. Desktop still lists everyone.
+* **No window on a phone, banded thinner rows, a shorter name column (Sean, 6 Oct 2026, from a screenshot: "It still looks like it's a window
+  ... the 50 of 223 can be moved up and we can eliminate that unnecessary gap ... make it so the rows are banded ... make them thinner a bit and
+  make the player column much less long")**: the block at the end of `styles.css` — on a phone the Leaderboard / Recent `main.wrap` has no
+  hairline, radius, surface or side padding (the warm pass's `!important` card rule needed a six-root mobile override), the count line sits
+  right over the column names (no `.pnavrow` margin, `#colhead` padding 0, the `.h` cells 6px) and the header cells have no surface ground;
+  **bands** on both layouts — every even `#rows > .row`'s `.row-main` (the rows are `li.row` wrappers, so `nth-child` goes on the `li`) is
+  ink at 4% on the ground (`color-mix`), the surface tint of the hour before was invisible, and the hairline between rows is gone (the bands
+  are the rules); rows **44px on a phone, 50 on a desktop** (`box-sizing: border-box` — without it the 4px padding made 52 — and the
+  value-over-pill headline cell loses its padding / border on a phone, which had set the row at 52); the phone's **name column is 116px**
+  (`fitNameCol` lo = hi = 116, the grid's `--namew` default, a 22px rank column), the name 15px stepping down to 13 then 11.5px in
+  `renderRowsIn` before it ellipsises, the team line 9.5px.
