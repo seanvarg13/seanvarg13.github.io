@@ -2094,3 +2094,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   with the whole gap as its pill; the Repeats? word from `KREL` at his BF. The sum line, the skill-K% note, the whiff check (`renderWhiffCheck`
   stays in `app.js`) and the "Pitching+ is Stuff+'s twin" note are off the tab. On the Stuff side the first row is the expected Whiff% and the
   last xK%, with his actual K% in the sub-line. CSS `.krun / .kstart / .krest / .ktot` at the end of `styles.css`; a phone wraps the sub-lines.
+* **No line breaks on the card (Sean, 6 Oct 2026: "get rid of the line break for k% and the rest of its area and bb% and its area")**: the `"|"`
+  entries left `PCT_COLS_P` / `PCT_COLS_PS` — Swing & Miss is K% · Whiff% · 2-strike Whiff% · Called Strike% · Foul% of contact and Command BB% ·
+  Strike% · 1st-pitch · 3-ball in one run each; the break machinery stays in `rowsOf` / `pctSvg`, unused.
