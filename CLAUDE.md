@@ -2121,3 +2121,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **Tighter still on a phone (Sean, 6 Oct 2026: the table "takes up like 55% of the page")**: the phone's control row is one sideways-sliding line
   again (segment · Filters · Standard ▾ · Season ▾ · Min, 32px tall), the count / page-number line is 28px, the column-name row shorter and the
   page's top margin 6px — the first row sits ~120px under the site header and a 390 × 844 phone shows twelve rows. Desktop unchanged.
+* **A narrower name column on a phone (Sean, 6 Oct 2026: "lower the size of the player name column so I can see a bit more")**: on a phone
+  `fitNameCol` holds the name column to 124-150px (a longer name ellipsises), the name is 16px, the rank column 24px (the two `--rankw` setters),
+  the stat columns 42px and the column names 10px with light tracking — four stat columns show beside the name at 390px instead of two and a half.
+  Desktop unchanged.
