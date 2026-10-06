@@ -2007,6 +2007,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   reliever-to-starter translation (`AS_SP`: a whiff point, half a run) — Fuentes' per-start value is a judgment call (11.4) since the formula's
   shrink toward league on 300 relief BF was too hard on stuff that reads top-15. Rebuild by hand after the season's last build (re-run the four
   scripts) or when Sean asks; the comments are prose and date quickly.
+  **Scored under his own preset (Sean, minutes later: "I have a scoring saved in fantasy ... make it based on that scoring")**: each row carries
+  his projected per-start stat line (`line`: starts-only 2024-26 game logs weighted .5 / .3 / .2 — every `gk` field plus QS / NH; a synthetic
+  line from his rates for a pitcher without ten starts) and that line's ESPN points (`espn`); `renderClaude` scores the line with `fPts` under
+  `fpreset()` and scales it by `pps / espn`, so the ranking's process adjustments carry into any scoring, re-ranks, and a **Scoring** pill on the
+  bar switches the Fantasy preset (the same `fstore.current` the Fantasy page uses). The stored `pps` / `pts` / `rk` are the ESPN-standard ones.
 * **xCalled on the Pitching+ tab (Sean, 6 Oct 2026: "add expected called strikes to the pitching+ tab as well")**: an **xCalled** pair after xFoul in
   `renderStuffTab`'s Pitching+ table — the command models' called-strike chance per pitch (the arsenal's `xcstr`, `arsenalView`'s in a window /
   split) plus `xCalled`'s league centring (`lgRatesP().cstr − .xcstr`, the models read the newest season a little hot) over his actual called
