@@ -4180,3 +4180,15 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] #pagertop > #minfield.topmin { margin-left: 0; }
 :root:root:root:root:root:root[data-view="mobile"] .colband { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] #colhead { padding-top: 8px; padding-bottom: 8px; }
+/* a phone's Leaderboard top, tighter still (Sean, 6 Oct 2026: the table "takes up like 55% of the page"): one sideways-sliding control
+   row (segment · Filters · Standard ▾ · Season ▾ · Min), a 30px count / pages line, a shorter column-name row */
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; gap: 6px; padding: 0 0 4px; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop::-webkit-scrollbar { display: none; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop > * { flex: none; }
+:root:root:root:root:root:root[data-view="mobile"] #pagertop .posseg .segbtn, :root:root:root:root:root:root[data-view="mobile"] #pagertop .tbtns .tbtn, :root:root:root:root:root:root[data-view="mobile"] #pagertop .lbtabs .pill, :root:root:root:root:root:root[data-view="mobile"] #pagertop > #minfield.topmin input { height: 32px !important; min-height: 32px !important; }
+:root:root:root:root:root:root[data-view="mobile"] #pagertop > #minfield.topmin { white-space: nowrap; }
+:root:root:root:root:root:root[data-view="mobile"] .pnavrow { margin: 0 0 4px; }
+:root:root:root:root:root:root[data-view="mobile"] .pnavrow .pnav .pbtn { height: 28px; min-width: 28px; min-height: 28px !important; font-size: 13px; }
+:root:root:root:root:root:root[data-view="mobile"] #colhead { padding-top: 5px; padding-bottom: 5px; }
+:root:root:root:root:root:root[data-view="mobile"] #colhead .h { padding-top: 4px !important; padding-bottom: 4px !important; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) main.wrap { margin-top: 6px; }

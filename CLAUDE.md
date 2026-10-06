@@ -2118,3 +2118,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the Min PA / IP box rides on the control row after the Standard ▾ and Season ▾ pills (no `.lbbreak` on a phone), the count "1–25 of 539" shares
   the `.pnavrow` line with the page numbers (count left, pages right), the Result / Process band row (`#colband`) is hidden on a phone and the
   column-name row is a little shorter — the first row sits ~190px higher. A desktop is unchanged.
+* **Tighter still on a phone (Sean, 6 Oct 2026: the table "takes up like 55% of the page")**: the phone's control row is one sideways-sliding line
+  again (segment · Filters · Standard ▾ · Season ▾ · Min, 32px tall), the count / page-number line is 28px, the column-name row shorter and the
+  page's top margin 6px — the first row sits ~120px under the site header and a 390 × 844 phone shows twelve rows. Desktop unchanged.
