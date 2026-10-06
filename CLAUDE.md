@@ -1868,3 +1868,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   percentile, the column / Sort by option "nERA"; `val()` sorts the `score` key by the value, lowest first on the default "desc" — the percentile
   had tied every under-minimum pitcher at 100), and `nera` left the Standard / Advanced column sets (`state.lb.neraHead` drops it from a saved
   list once). The Rating (score) is still the nERA percentile underneath.
+* **Expected fouls on the Stuff+ tab and board (Sean, 6 Oct 2026: "add expected fouls to stuff+")**: an **xFoul** pair after xPU — the foul
+  model's share of contact that goes foul for each pitch (`xFoulOf`: the swing-aware `xfoulw`, else the location `xfoull`, else the stuff-only
+  `xfoul`) over his actual fouls per contact; All pitches weights the chances by each pitch's contacted swings (`sw × (1 − whf)`). The build now
+  counts the fouls that happened on the contacted pitches — `fo` in the per-pitcher × type sums, **`foul`** appended to `STUFF_ARSENAL` (fouls per
+  contact, null under 5 contacted) and **`fo`** appended to `ARS_DAY`, so `arsenalView` carries `xfoul / xfoull / xfoulw / foul` in a window or
+  split. Until a build carries them, the per-pitch actual reads "–" and the All pitches actual falls back to his season's Foul% ÷ (Swing% × contact
+  share) from the card's own rates (Jax 2026: 51.3% expected / 47.3% actual; four-seam 67.0% expected, sinker 49, changeup 45, sweeper 46). The
+  Stuff+ board has the same **xFoul%** column (`xfoul`, sortable).

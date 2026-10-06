@@ -327,7 +327,8 @@ STUFF_ARSENAL = ["pt", "n", "velo", "ivb", "hb", "spin", "xwhf", "xgb", "xpu", "
                  "xgbl", "xpul", "pitp", "whfpl", "bbpl",   # the location-aware GB / PU chances, Pitching+ and its Whiff+ / Batted-ball+
                  "xstk", "stk", "xchs", "chs",              # command (3 Oct 2026): the strike chance the swing and called-strike models give the pitch where it was thrown, and the chase chance out of the zone — each beside what happened (%)
                  "xfoull",              # the foul chance on contact with location (%; 4 Oct 2026), null under 5 contacted pitches
-                 "xfoulw"]              # ... and with the batter's swing too (the location chance where no swing was tracked)
+                 "xfoulw",              # ... and with the batter's swing too (the location chance where no swing was tracked)
+                 "foul"]                # what happened: fouls per contact (%; 6 Oct 2026, the Stuff+ tab's xFoul pair) — null under 5 contacted
 STUFF_FOUL_RV = 0.085   # runs a foul saves over a ball in play (Statcast run expectancy, 2023-2026: .082-.090)
 STUFF_DMG = 0.5         # Batted-ball+'s share of the damage model in a ball in play's value (the rest: the GB / PU / air mix)
 
@@ -758,7 +759,8 @@ def _grade_stuff(M: dict, d: pd.DataFrame, ref: pd.DataFrame | None = None):
                       swg=d["description"][has].isin(SWING), gbx=d["bb_type"][has].eq("ground_ball"), pux=d["bb_type"][has].eq("popup"),
                       bipx=d["bb_type"][has].isin(STUFF_BB.keys()),
                       stkx=d["type"][has].isin(["S", "X"]) & (d["st_cn"][has] > 0),        # what happened on the command-graded pitches:
-                      oszx=d["description"][has].isin(SWING) & (d["st_co"][has] > 0))      # strikes, and swings at the ones out of the zone
+                      oszx=d["description"][has].isin(SWING) & (d["st_co"][has] > 0),       # strikes, and swings at the ones out of the zone
+                      fox=d["description"][has].eq("foul") & (d["st_nf"][has] > 0))          # fouls on the contacted pitches the foul models graded
     agg = dict(n=("st_n", "sum"), w=("st_w", "sum"), g=("st_g", "sum"), p=("st_p", "sum"), bw=("st_bw", "sum"), bg=("st_bg", "sum"), bp=("st_bp", "sum"),
                f=("st_f", "sum"), dd=("st_d", "sum"), bf=("st_bf", "sum"), bd=("st_bd", "sum"),
                nl=("st_nl", "sum"), wl=("st_wl", "sum"), ws=("st_ws", "sum"), bwl=("st_bwl", "sum"), bws=("st_bws", "sum"),
@@ -766,7 +768,7 @@ def _grade_stuff(M: dict, d: pd.DataFrame, ref: pd.DataFrame | None = None):
                bgl=("st_bgl", "sum"), bpl=("st_bpl", "sum"), bgs=("st_bgs", "sum"), bps=("st_bps", "sum"),
                cn=("st_cn", "sum"), cs=("st_cs", "sum"), ck=("st_ck", "sum"), co=("st_co", "sum"), cso=("st_cso", "sum"),
                ci=("st_ci", "sum"), csi=("st_csi", "sum"), cwi=("st_cwi", "sum"), cw=("st_cw", "sum"), stk=("stkx", "sum"), osz=("oszx", "sum"),
-               nf=("st_nf", "sum"), fl=("st_fl", "sum"), fs=("st_fs", "sum"), fw=("st_fw", "sum"))
+               nf=("st_nf", "sum"), fl=("st_fl", "sum"), fs=("st_fs", "sum"), fw=("st_fw", "sum"), fo=("fox", "sum"))
     res = {"lg": base,
            "pt": rdf.groupby("pitch_type")[["n", "w", "g", "p", "f", "d", "nl", "wl", "ws", "nb", "gl", "pl", "gs", "ps"]].sum(),   # the league by pitch type: each pitch is also graded against its own kind
            "p": g.groupby("pitcher").agg(**agg),
@@ -1365,7 +1367,8 @@ ARS_DAY = ["day", "hand", "home", "gs", "pt", "n", "w", "g", "p", "velo", "ivb",
            "f", "d", "nl", "wl", "ws",    # f / d: summed foul chances on contact and damage (wOBA on contact) — 2 Oct 2026; nl / wl / ws: swings graded, whiff chances with location and stuff-only on them
            "nb", "gl", "pl", "gs", "ps",  # balls in play graded, GB / PU chances with location and stuff-only on them
            "cn", "cs", "ck", "co", "cso", "stk", "osz",   # command (3 Oct 2026): pitches graded for it, their swing and strike chances, the ones out of the zone and their swing chances; strikes and out-of-zone swings that happened on them
-           "nf", "fl", "fs", "fw"]        # fouls with location (fw: and the batter's swing) (4 Oct 2026): pitches contacted, the foul chance where each crossed, the stuff-only one on the same contact
+           "nf", "fl", "fs", "fw",        # fouls with location (fw: and the batter's swing) (4 Oct 2026): pitches contacted, the foul chance where each crossed, the stuff-only one on the same contact
+           "fo"]                          # fouls that happened on the contacted pitches (6 Oct 2026)
 
 
 def write_arsenal_days(key: str, rows: dict, out_dir: Path | None = None) -> None:
@@ -1395,7 +1398,8 @@ def arsenal_daily(d: pd.DataFrame, days: dict) -> dict:
                       "nb": x["st_nb"], "gl": x["st_gl"], "pl": x["st_pl"], "gs": x["st_gs"], "ps": x["st_ps"],
                       "cn": x["st_cn"], "cs": x["st_cs"], "ck": x["st_ck"], "co": x["st_co"], "cso": x["st_cso"],
                       "stk": (x["type"].isin(["S", "X"]) & (x["st_cn"] > 0)).astype(int), "osz": (x["description"].isin(SWING) & (x["st_co"] > 0)).astype(int),
-                      "nf": x["st_nf"], "fl": x["st_fl"], "fs": x["st_fs"], "fw": x["st_fw"]})
+                      "nf": x["st_nf"], "fl": x["st_fl"], "fs": x["st_fs"], "fw": x["st_fw"],
+                      "fo": (x["description"].eq("foul") & (x["st_nf"] > 0)).astype(int)})
     q = y.groupby(["pitcher", "game_date", "bhand", "phome", "pt"]).sum(numeric_only=True)
     out = {}
     for (pid, date, hand, home, pt), r in q.iterrows():
@@ -1408,7 +1412,7 @@ def arsenal_daily(d: pd.DataFrame, days: dict) -> dict:
                                              int(r.sw), int(r.wh), int(r.bip), int(r.gb), int(r.pu), round(float(r.f), 2), round(float(r.d), 2), int(r.nl), round(float(r.wl), 2), round(float(r.ws), 2),
                                              int(r.nb), round(float(r.gl), 2), round(float(r.pl), 2), round(float(r.gs), 2), round(float(r.ps), 2),
                                              int(r.cn), round(float(r.cs), 2), round(float(r.ck), 2), int(r.co), round(float(r.cso), 2), int(r.stk), int(r.osz),
-                                             int(r.nf), round(float(r.fl), 2), round(float(r.fs), 2), round(float(r.fw), 2)])
+                                             int(r.nf), round(float(r.fl), 2), round(float(r.fs), 2), round(float(r.fw), 2), int(r.fo)])
     return out
 
 
@@ -1751,7 +1755,8 @@ def build_pitchers(pit: pd.DataFrame, people: dict, days_p: dict, consts: dict) 
                                        r1(100 * x.f / x.n), r1(x.dd / x.n, 3) if sc.get("lgD") is not None else None,
                                        *pitch_loc_row(x, wp, bp, sc, consts["lgERA"]), *command_row(x),
                                        r1(100 * x.fl / x.nf) if "nf" in x and x.nf >= 5 and sc.get("lgFL") is not None else None,
-                                       r1(100 * x.fw / x.nf) if "nf" in x and x.nf >= 5 and sc.get("lgFW") is not None else None])
+                                       r1(100 * x.fw / x.nf) if "nf" in x and x.nf >= 5 and sc.get("lgFW") is not None else None,
+                                       r1(100 * x.fo / x.nf) if "nf" in x and x.nf >= 5 else None])
         else:
             m["swhf"] = m["sbb"] = m["stuff"] = m["sloc"] = m["pwhf"] = m["pbb"] = m["pitch"] = None
         rows.append({
