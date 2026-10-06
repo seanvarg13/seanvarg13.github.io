@@ -3917,38 +3917,6 @@ header.top .wordmark { display: none; }
 .drivers .note { margin-top: 10px; }
 .drivers .drvconst td { color: var(--ink-2, #4a5563); }
 
-/* ---------- Raya type, lines and spacing (Sean, 5 Oct 2026: "the raya font size and font and their line widths and their spacing") ----------
-   the Raya Dress Mock's typography on the site as it stands — not the dress: frames, fills, the sorted column's fill, the navy headers and the
-   accent stay. Light type (300; numbers at 400 so they read), three sizes, small labels tracked uppercase (the one place the no-capitals rule
-   is reversed), the rules between rows / under column names / under section headings one hairline, Raya's gaps and paddings. */
-:root { --raya-hair: color-mix(in srgb, var(--ink) 12%, transparent); --raya-track: 0.14em; }
-:root:root:root:root:root:root :not(.svnum) { font-weight: 300 !important; }
-:root:root:root:root:root:root :is(.pct, .score, .hchip b, .hval, td, .svval, .pbtable td, .ftable td, .num, .mkcost, .bubble, .chipval, .tile b, .big, .fp) { font-weight: 400 !important; }
-:root:root:root:root:root:root :is(.pthd, .phead h2, .phname, .hub.home h2, .hcard h3, .hub h2) { font-weight: 300 !important; letter-spacing: 0.01em !important; }
-:root:root:root:root:root:root :is(.modes a, .modes .modesel, #colhead .h, .ftable th, .ftable th button.h, .pbtable thead th, .pbtable thead th .sortbtn, .btabbody table th, .gamesbox table th,
-  .uerabox .ubt th, .tbtn, .segbtn, .btab, .pill, .lbtabs .segbtn, .cgroup, .secname, .rollname, .phead .hstrip .hchip.fact i, .lbtab, .fpage button, .ftabs button, .ftab, .plabel, .ptab, .navtog,
-  .modesel-txt, #minfield > span, .pill-text, .modesel-btn)
-  { font-family: var(--body) !important; font-size: 11px !important; letter-spacing: var(--raya-track) !important; text-transform: uppercase !important; font-weight: 400 !important; }
-:root:root:root:root:root:root .svpct .svsecname { font-family: var(--body); font-size: 11px; font-weight: 400 !important; letter-spacing: 0.16em !important; text-transform: uppercase !important; }
-:root:root:root:root:root:root .svpct .svscale { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; }
-:root:root:root:root:root:root .phead .hstrip .hchip.fact b { font-size: 18px; }
-:root:root:root:root:root:root .phead .hrow .hchip.fact i { font-family: var(--body) !important; font-size: 10px !important; letter-spacing: var(--raya-track) !important; text-transform: uppercase !important; }
-:root:root:root:root:root:root #board .row-main .name { font-family: var(--display); font-size: 16px; }
-:root:root:root:root:root:root #board .meta { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
-/* lines: one hairline between rows, under the column names, under the card tabs' headings and the band's phone row */
-:root:root:root:root:root:root .row-main { border-bottom: 1px solid var(--raya-hair); }
-:root:root:root:root:root:root #colhead { border-bottom: 1px solid var(--raya-hair) !important; }
-:root:root:root:root:root:root :is(.sechd, .pchead, .btabbody, .lbtabs, .hrow, .simrow) { border-color: var(--raya-hair) !important; }
-:root:root:root:root:root:root .btabbody { margin-top: 10px; border-top: 1px solid var(--raya-hair) !important; }
-:root:root:root:root:root:root[data-view="mobile"] .phead .hrow { border-top: 1px solid var(--raya-hair); }
-/* spacing: the nav's gaps, the column names' height, the card tabs' gap, button padding */
-:root:root:root:root:root:root .modes { gap: 22px; }
-:root:root:root:root:root:root :is(.modes a, .modes .modesel) { padding: 6px 2px; }
-:root:root:root:root:root:root #colhead .h { padding-top: 10px !important; padding-bottom: 10px !important; }
-:root:root:root:root:root:root .btabs { gap: 14px; }
-:root:root:root:root:root:root :is(.tbtn, .segbtn, .btab, .pill) { padding-left: 8px; padding-right: 8px; min-height: 30px; }
-:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop { padding: 10px 12px 6px; }
-
 /* ---------- The Raya mock's bars (Sean, 5 Oct 2026: "precisely like this") — pctSvg draws the mock's .bar / .trk / .bub; these are its type and colours ---------- */
 :root { --raya-pctrack: #eceef2; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --raya-pctrack: #2e333b; } }
