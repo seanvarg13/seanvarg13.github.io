@@ -3826,7 +3826,7 @@
         const A = typeAvg(r.pt), rel = (v, a) => (v == null ? null : A ? v - a + 100 : v);
         rows.push({ p, pt: r.pt, n: r.n, use: 100 * r.n / tot, velo: r.velo, ivb: r.ivb, hb: r.hb, spin: r.spin,
                     stuffp: rel(r.stuffp, A && A.t), whfp: rel(r.whfp, A && A.w), bbp: rel(r.bbp, A && A.b),
-                    xwhf: r.xwhf, whf: r.whf, xgb: r.xgb, gb: r.gb, xpu: r.xpu, pu: r.pu, xwhfl: r.xwhfl, xgbl: r.xgbl, xpul: r.xpul, locp: r.locp,
+                    xwhf: r.xwhf, whf: r.whf, xgb: r.xgb, gb: r.gb, xpu: r.xpu, pu: r.pu, xfoul: xFoulOf(r), foul: r.foul, xwhfl: r.xwhfl, xgbl: r.xgbl, xpul: r.xpul, locp: r.locp,
                     pitp: rel(r.pitp, A && A.t), whfpl: rel(r.whfpl, A && A.w), bbpl: rel(r.bbpl, A && A.b), aopt });
       }
     }
@@ -3848,10 +3848,11 @@
     const cols = [["rk", "#", false], ["who", "Pitcher", false], ["pt", "Pitch", false], ["n", "Pitches", true], ["use", "Use%", true], ["velo", "Velo", true],
                   ["ivb", "IVB", true], ["hb", "HB", true], ["spin", "Spin", true],   // one grade since 4 Oct 2026: the pitch with its location
                   ["stuffp", "Stuff+", true], ["whfp", "Whiff+", true], ["bbp", "BB+", true],
-                  ["xwhf", "xWhiff%", true], ["xgb", "xGB%", true], ["xpu", "xPU%", true]];
+                  ["xwhf", "xWhiff%", true], ["xgb", "xGB%", true], ["xpu", "xPU%", true], ["xfoul", "xFoul%", true]];
     const tips = { ivb: "Induced vertical break, inches", hb: "Horizontal break, inches (arm side +)", stuffp: "Stuff+ against the league's pitches of the same type (100 = average for its type)",
                    whfp: "Whiff+ against its type", bbp: "Batted-ball+ against its type", xwhf: "The model's whiff rate per swing — actual under it", xgb: "The model's ground-ball rate on contact — actual under it",
                    aopt: "Arsenal optimization, the pitcher's: how much his usage leans toward his own swing-and-miss pitches, in xWhiff points against a typical mix of the same pitches", xpu: "The model's popup rate on contact — actual under it", use: "Share of his pitches",
+                   xfoul: "The foul model's share of contact that goes foul (the pitch, its spot and the batter's swing) — actual under it",
                    xwhfl: "The whiff rate per swing the location-aware model expects — actual under it", xgbl: "The location-aware model's ground-ball rate on contact — actual under it", xpul: "The location-aware model's popup rate on contact — actual under it",
                    pitp: "Pitching+: the pitch graded with its location, against its type (100 = average for its type)", whfpl: "Pitching+'s whiff half", bbpl: "Pitching+'s batted-ball half", locp: "Location+: Pitching+ − Stuff+ + 100 — what his spots add (100 = an average pitcher's)" };
     const t = el("table", "ftable stufft pbtable"), th = el("thead"), hr = el("tr");
@@ -3875,7 +3876,7 @@
       who.append(btn, el("small", null, ` ${r.p.team} · ${r.p.primary} · ${r.p.throws || ""}HP`));
       tr.append(el("td", "n", String(i + 1)), who, el("td", null, PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(r.use)),
                 el("td", null, f1(r.velo)), el("td", null, f1(r.ivb)), el("td", null, f1(r.hb)), el("td", null, r.spin == null ? "–" : String(r.spin)),
-                plus(r.stuffp, "stuffp"), plus(r.whfp, "whfp"), plus(r.bbp, "bbp"), pair(r.xwhf, r.whf), pair(r.xgb, r.gb), pair(r.xpu, r.pu));
+                plus(r.stuffp, "stuffp"), plus(r.whfp, "whfp"), plus(r.bbp, "bbp"), pair(r.xwhf, r.whf), pair(r.xgb, r.gb), pair(r.xpu, r.pu), pair(r.xfoul, r.foul));
       tb.append(tr);
     });
     t.append(tb);
@@ -6895,7 +6896,11 @@
                stuffp: wp == null ? null : r1(wp + bp - 100), whf: t.sw ? 100 * t.wh / t.sw : null, gb: t.bip ? 100 * t.gb / t.bip : null,
                pu: t.bip ? 100 * t.pu / t.bip : null, sw: t.sw, bip: t.bip,
                xwhfl: t.nl >= 5 ? 100 * (norm ? t.wlN : t.wl) / t.nl : null, xgbl: t.nb >= 5 ? 100 * (norm ? t.glN : t.gl) / t.nb : null, xpul: t.nb >= 5 ? 100 * (norm ? t.plN : t.pl) / t.nb : null,
-               locp: d ? r1(100 + d[0] + d[1]) : null, pitp: d && wp != null ? r1(wp + d[0] + bp + d[1] - 100) : null, whfpl: d && wp != null ? r1(wp + d[0]) : null, bbpl: d && wp != null ? r1(bp + d[1]) : null };
+               locp: d ? r1(100 + d[0] + d[1]) : null, pitp: d && wp != null ? r1(wp + d[0] + bp + d[1] - 100) : null, whfpl: d && wp != null ? r1(wp + d[0]) : null, bbpl: d && wp != null ? r1(bp + d[1]) : null,
+               // fouls on the contacted pitches: the swing-aware / location chances over nf, the stuff-only one over every graded pitch,
+               // and what happened (fo, in files built since 6 Oct 2026)
+               xfoul: t.n ? 100 * t.f / t.n : null, xfoull: I.fl != null && t.nf >= 5 ? 100 * t.fl / t.nf : null, xfoulw: I.fw != null && t.nf >= 5 ? 100 * t.fw / t.nf : null,
+               foul: I.fo != null && t.nf >= 5 ? 100 * t.fo / t.nf : null };
     });
   }   // the Stuff tab's per-pitch grades: against the league's pitches of the same type, or all pitches
   const plusStyle = (v) => pctStyle(Math.max(1, Math.min(99, Math.round(50 + 2.2 * (v - 100)))));   // 100 = the middle of the scale
@@ -7131,6 +7136,9 @@
     d.title = "His actual whiff rate per swing minus the Pitching+ model's expected rate on the same swings. The model never sees his actual rate, so a gap is whiffs the pitches didn't earn, or didn't get.";
     return d;
   }
+  // a pitch's expected foul rate per contact: the swing-aware model where a batter's swing was tracked, else the location one,
+  // else the stuff-only chance (Sean, 6 Oct 2026: "add expected fouls to stuff+")
+  const xFoulOf = (r) => (r.xfoulw != null ? r.xfoulw : r.xfoull != null ? r.xfoull : r.xfoul == null ? null : r.xfoul);
   function renderStuffTab(p, st, g, mode = "stuff") {
     const box = el("div", "rollbox uerabox stuffbox"), P = mode === "pitching";
     const rows = (p.ctx && p.ctx.arsenal) || [];
@@ -7163,13 +7171,15 @@
                            ["Loc+", "", "Location+: Pitching+ − Stuff+ + 100 — what his locations add (100 = an average pitcher's spots)"],
                            ["xWhiff", "", "The whiff rate per swing the location-aware model expects — his actual Whiff% under it"], ["xGB", "", "The location-aware model's ground-ball rate on contact — actual under it"], ["xPU", "", "The location-aware model's popup rate on contact — actual under it"]]
                         : [["Stuff+", "sp"], ["Whiff+", ""], ["BB+", "", "Batted-ball+"], ["xWhiff", "", "The model's whiff rate per swing — his actual Whiff% under it"],
-                           ["xGB", "", "The model's ground-ball rate on contact — actual GB% under it"], ["xPU", "", "The model's popup rate on contact — actual under it"]])];
+                           ["xGB", "", "The model's ground-ball rate on contact — actual GB% under it"], ["xPU", "", "The model's popup rate on contact — actual under it"],
+                           ["xFoul", "", "The foul model's share of contact that goes foul — the pitch's traits, where it crossed and the batter's swing on it — his actual foul rate per contact under it (a foul keeps the strikeout alive; a ball in play ends the PA)"]])];
     for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
     th.append(hr); t.append(th);
     const tb = el("tbody");
     const f1n = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%");
     const cellPlus = (v, cls) => { const td = el("td", "plus" + (cls ? " " + cls : ""), v == null ? "–" : String(Math.round(v))); if (v != null) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; } } return td; };
     const pair = (x, a) => { const td = el("td", "xa"); td.append(el("b", null, pct(x)), el("i", null, a == null ? "–" : pct(a))); return td; };
+    const con = (r) => (r.sw || 0) * (1 - (r.whf || 0) / 100);   // the pitch's contacted swings — what the foul chance is over
     const relSum = { t: 0, w: 0, b: 0, n: 0 };
     for (const r of R0) {                                           // his arsenal against its types, usage-weighted, for the total row
       const A = typeAvg(r.pt); if (!A || r.stuffp == null) continue;
@@ -7182,7 +7192,7 @@
                 ...(P ? [cellPlus(rel(r.pitp, A && A.t), "sp"), cellPlus(rel(r.whfpl, A && A.w)), cellPlus(rel(r.bbpl, A && A.b)), cellPlus(r.locp),
                          pair(r.xwhfl, r.whf), pair(r.xgbl, r.gb), pair(r.xpul, r.pu)]
                       : [cellPlus(rel(r.stuffp, A && A.t), "sp"), cellPlus(rel(r.whfp, A && A.w)), cellPlus(rel(r.bbp, A && A.b)),
-                         pair(r.xwhf, r.whf), pair(r.xgb, r.gb), pair(r.xpu, r.pu)]));
+                         pair(r.xwhf, r.whf), pair(r.xgb, r.gb), pair(r.xpu, r.pu), pair(xFoulOf(r), r.foul)]));
       tb.append(tr);
     }
     const s0 = p.m || {}, trt = el("tr", "ftot");
@@ -7198,7 +7208,12 @@
     trt.append(el("td", "l", "All pitches"), el("td", null, String(tot)), el("td"), el("td"), el("td"), el("td"),
                ...(P ? [cellPlus(mv.pitch, "sp"), cellPlus(mv.pwhf), cellPlus(mv.pbb), cellPlus(mv.sloc),
                         pair(R0.some((r) => r.xwhfl != null) ? wxs("xwhfl", "sw") : null, act("whf", "sw")), pair(R0.some((r) => r.xgbl != null) ? wxs("xgbl", "bip") : null, act("gb", "bip")), pair(R0.some((r) => r.xpul != null) ? wxs("xpul", "bip") : null, act("pu", "bip"))]
-                     : [cellPlus(tv.t, "sp"), cellPlus(tv.w), cellPlus(tv.b), pair(wx("xwhf"), act("whf", "sw")), pair(wx("xgb"), act("gb", "bip")), pair(wx("xpu"), act("pu", "bip"))]));
+                     : [cellPlus(tv.t, "sp"), cellPlus(tv.w), cellPlus(tv.b), pair(wx("xwhf"), act("whf", "sw")), pair(wx("xgb"), act("gb", "bip")), pair(wx("xpu"), act("pu", "bip")),
+                        (() => { let n = 0, tx = 0, na = 0, ta = 0;   // expected fouls over his contact, actual over the contact that has a count
+                          for (const r of R0) { const c = con(r), x = xFoulOf(r); if (x != null && c) { n += c; tx += x * c; } if (r.foul != null && c) { na += c; ta += r.foul * c; } }
+                          // no per-pitch counts yet (a file built before 6 Oct 2026): his season's fouls per contact from the card's own rates
+                          const fa = na ? ta / na : m.foul != null && m.swing && m.whf != null && m.swing * (1 - m.whf / 100) > 0 ? m.foul / (m.swing * (1 - m.whf / 100)) * 100 : null;
+                          return pair(n ? tx / n : null, fa); })()]));
     tb.append(trt); t.append(tb);
     const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
     if (P) { const xr = st && st.xrat != null ? st.xrat : null, rt = st && st.scorePct != null ? st.scorePct : null;
@@ -7244,7 +7259,7 @@
     }
     box.append(el("p", "note", P ? "Pitching+ is Stuff+'s twin from a second pair of models that also see where each pitch crossed the plate — the same pitch graded in the spot it was thrown, against the league's pitches of its own type (100 = average for its type). Whiff+ and BB+ are its halves; Location+ is Pitching+ − Stuff+ + 100, what his spots add. xWhiff is over the pitches swung at and xGB / xPU over the balls in play, with what actually happened under each. Each point is 1% of runs; the table and the headline follow the card's dates and splits. The whiff check under the table is his Whiff% against the model's expected rate — over it, the extra whiffs tend to come back the next season; under it, they tend to come."
       : "Each pitch is graded against the league's pitches of its own type — 100 is an average four-seamer for a four-seamer, an average curveball for a curveball — and All pitches (and the Stuff+ above) averages those by how often he throws each. " +
-      "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball, plus how much he uses it and how many pitches he throws — never where it was thrown (the Pitching+ tab grades the same pitch with its location). Each point is 1% of runs; whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened. The table and the headline follow the card's dates and splits."));
+      "Graded on the pitch's traits alone — velocity, spin, movement, release, extension, arm angle and its gap to his fastball, plus how much he uses it and how many pitches he throws — never where it was thrown (the Pitching+ tab grades the same pitch with its location). Each point is 1% of runs; whiffs weigh the most, as they do in uERA. Under each x-rate is what actually happened. xFoul is the share of contact the foul model expects to go foul — from the pitch's traits, where it crossed and the batter's swing on it; a four-seamer with ride runs high, a sinker or changeup low — against his actual rate per contact (actuals per pitch arrive with the next build). The table and the headline follow the card's dates and splits."));
     return box;
   }
   // Games (Sean, 29 Sep 2026: "his stuff+ by start/relief appearance ... if on each appearance their stuff+ was down or up"):
