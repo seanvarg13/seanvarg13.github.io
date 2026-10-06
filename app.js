@@ -16,8 +16,8 @@
         ["Advanced", ["woba", "xwdiff", "xwcon", "xk", "mixw", "babip", "xbabip", "bluck", "brel"]],
         ["Batted ball", ["ev", "ev90", "maxev", "brl", "hh", "bs", "air", "pull", "gb", "pu"]],
         ["Plate discipline", ["k", "xk", "bb", "whf", "osw", "zsw", "zcon", "ocon"]]],
-    P: [["Standard", ["xnera", "era", "k", "bb", "kbb", "xkbb", "whf", "strk", "gb"]],   // xnERA right after the nERA headline (Sean, 6 Oct 2026: "put that next to nERA on the leaderboard")   // nERA is the headline column (6 Oct 2026)
-        ["Advanced", ["xnera", "era", "fip", "siera", "xkbb", "ukb", "wsgp"]],
+    P: [["Standard", ["rating", "xnera", "era", "k", "bb", "kbb", "xkbb", "whf", "strk", "gb"]],   // xnERA right after the nERA headline (Sean, 6 Oct 2026: "put that next to nERA on the leaderboard")   // nERA is the headline column (6 Oct 2026)
+        ["Advanced", ["rating", "xnera", "era", "fip", "siera", "xkbb", "ukb", "wsgp"]],
         ["Batted ball", ["gb", "pu", "ev", "hh", "brl"]],
         ["Plate discipline", ["whf", "strk", "zone", "osw", "swing", "zcon", "csw", "swstr"]],
         ["Pitching+", ["pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "fbv", "ext"]]],   // Pitching+ back in place of Stuff+ (Sean, 6 Oct 2026: "make stuff+ back into pitching+ with the addition of the location and command thing")
@@ -300,7 +300,7 @@
                   { key: "sba", label: "SB Att.", hib: true, dec: 0, unit: "", int: true }, { key: "sbp", label: "SB%", hib: true, dec: 1, unit: "%" }];
   // hitter stats that aren't on the card but can be Leaderboard / Trending columns
   const LB_EXTRA_H = ["xwdiff", "xwcon", "xk", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp", "fpts", "fpg", "fppa"];
-  const LB_EXTRA_P = ["xnera", "pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "nmix", "nfpc", "fpc", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "fpts", "fpg", "fpip", "fpgs"];   // Pitching+ family, xRating and the expected (Pitching+) columns off the lists (Sean, 6 Oct 2026: "get rid of pitching+ entirely and just go back to stuff+")   // pERA / pK% / pBB% / Pitching uERA off the lists (Sean, 4 Oct 2026: "I simply just want expected whiffs GBs and pus")   // Stuff uERA / Arsenal Opt. off the lists with Stuff+ (4 Oct 2026)
+  const LB_EXTRA_P = ["rating", "xnera", "pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "nmix", "nfpc", "fpc", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "fpts", "fpg", "fpip", "fpgs"];   // Pitching+ family, xRating and the expected (Pitching+) columns off the lists (Sean, 6 Oct 2026: "get rid of pitching+ entirely and just go back to stuff+")   // pERA / pK% / pBB% / Pitching uERA off the lists (Sean, 4 Oct 2026: "I simply just want expected whiffs GBs and pus")   // Stuff uERA / Arsenal Opt. off the lists with Stuff+ (4 Oct 2026)
   const NEXT_KEYS = new Set(["xrat", "nwhf", "ngb", "npu", "nmix", "wgap", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "nswstr", "ncsw", "ns2whf", "nfoul", "nfpc", "xnera"]);   // xFoul% of contact and xnERA (6 Oct 2026)   // xK% / Pitching+ xK% (4 Oct 2026)
   const XRW = { ksklx: 60, ctrl: 20, nmix: 20 };   // xRating = the Rating's shape with the stuff models driving whiffs and fouls (Sean, 5 Oct 2026): xStrikeout (xWhiff% / x2-strike Whiff% / xFoul% percentiles averaged) 60, Control 20, Mix xwOBA 20. Was Pitching+ x(K-BB)% 80 / Mix xwOBA 20;   // the Rating's shape (x(K-BB)% 80 / Mix wOBA 20, 4 Oct 2026) with the stuff-side pair: Pitching+ x(K-BB)% and Mix xwOBA. Was xks 55 / xbbf 35 / nmix 10;   // the xRating (Sean, 4 Oct 2026: "xrating xK% ... using their stuff expected whiff rates and stuff expected foul rates ... xBB% as standard ... mix xwoba based on their stuff"), 55 / 35 / 10   // xRating and the expected Mix wOBA too (4 Oct 2026)
   // still computed and on the pool's stats, but off every list, panel and sort (Sean, 4 Oct 2026: one Pitching+; "get rid of pERA and pitching+ uERA")
@@ -392,7 +392,8 @@
   // pitch; over the contact he allows (swings × (1 − Whiff%)) it's the share of contact that goes foul — the scale the xFoul pairs and
   // the K%-conversion read use (league ~51%; a four-seam ride pitcher runs 55-60, a sinker / changeup pitcher 45-48)
   const foulPerContact = (m) => (m.foul == null || m.swing == null || m.whf == null || m.swing * (1 - m.whf / 100) <= 0 ? null : Math.round(1000 * m.foul / (m.swing * (1 - m.whf / 100))) / 10);
-  const SIDE_P = [{ key: "fpc", label: "Foul% of contact", hib: true, dec: 1, unit: "%" }, { key: "nfpc", label: "xFoul% of contact", hib: true, dec: 1, unit: "%" }, { key: "xnera", label: "xnERA", hib: false, dec: 2, unit: "" }, { key: "xkf", label: "xK%", hib: true, dec: 1, unit: "%" }, { key: "xks", label: "Pitching+ xK%", hib: true, dec: 1, unit: "%" }, { key: "xkw", label: "Whiff% − xK%", hib: true, dec: 1, unit: "%", sign: true }, { key: "xkws", label: "xWhiff% − Pitching+ xK%", hib: true, dec: 1, unit: "%", sign: true }, { key: "xkbb", label: "x(K-BB)%", hib: true, dec: 1, unit: "%" }, { key: "xkbbs", label: "Pitching+ x(K-BB)%", hib: true, dec: 1, unit: "%" }, { key: "xbbf", label: "xBB%", hib: false, dec: 1, unit: "%" }, { key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "suera", label: "Stuff uERA", hib: false, dec: 2, unit: "" }, { key: "puera", label: "Pitching uERA", hib: false, dec: 2, unit: "" }, { key: "pera", label: "pERA", hib: false, dec: 2, unit: "" }, { key: "wgap", label: "Whiff vs exp.", hib: false, dec: 1, unit: " pts", sign: true }, { key: "nmix", label: "Mix xwOBA", hib: false, dec: 3, unit: "" }, { key: "xrat", label: "xRating", hib: true, dec: 0, unit: "" }, { key: "nk", label: "pK%", hib: true, dec: 1, unit: "%" }, { key: "nbb", label: "pBB%", hib: false, dec: 1, unit: "%" }, { key: "nwhf", label: "xWhiff%", hib: true, dec: 1, unit: "%" }, { key: "ncstr", label: "xCalled Strike%", hib: true, dec: 1, unit: "%" }, { key: "nswstr", label: "xSwStr%", hib: true, dec: 1, unit: "%" }, { key: "ncsw", label: "xCSW%", hib: true, dec: 1, unit: "%" }, { key: "ns2whf", label: "x2-strike Whiff%", hib: true, dec: 1, unit: "%" }, { key: "nfoul", label: "xFoul%", hib: true, dec: 1, unit: "%" }, { key: "s2whf", label: "2-strike Whiff%", hib: true, dec: 1, unit: "%" }, { key: "s2sw", label: "2-strike Swing%", hib: true, dec: 1, unit: "%" }, { key: "s2zone", label: "2-strike Zone%", hib: true, dec: 1, unit: "%" }, { key: "ngb", label: "xGB%", hib: true, dec: 1, unit: "%" }, { key: "npu", label: "xPU%", hib: true, dec: 1, unit: "%" },
+  const SIDE_P = [{ key: "rating", label: "Rating", hib: true, dec: 0, unit: "", int: true, showValue: true },   // the pool's score (Whiff% 50 / xBB% 50 percentiles, meta.pitcherWeights) as a column (Sean, 6 Oct 2026); read off the stats, not m
+                  { key: "fpc", label: "Foul% of contact", hib: true, dec: 1, unit: "%" }, { key: "nfpc", label: "xFoul% of contact", hib: true, dec: 1, unit: "%" }, { key: "xnera", label: "xnERA", hib: false, dec: 2, unit: "" }, { key: "xkf", label: "xK%", hib: true, dec: 1, unit: "%" }, { key: "xks", label: "Pitching+ xK%", hib: true, dec: 1, unit: "%" }, { key: "xkw", label: "Whiff% − xK%", hib: true, dec: 1, unit: "%", sign: true }, { key: "xkws", label: "xWhiff% − Pitching+ xK%", hib: true, dec: 1, unit: "%", sign: true }, { key: "xkbb", label: "x(K-BB)%", hib: true, dec: 1, unit: "%" }, { key: "xkbbs", label: "Pitching+ x(K-BB)%", hib: true, dec: 1, unit: "%" }, { key: "xbbf", label: "xBB%", hib: false, dec: 1, unit: "%" }, { key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "suera", label: "Stuff uERA", hib: false, dec: 2, unit: "" }, { key: "puera", label: "Pitching uERA", hib: false, dec: 2, unit: "" }, { key: "pera", label: "pERA", hib: false, dec: 2, unit: "" }, { key: "wgap", label: "Whiff vs exp.", hib: false, dec: 1, unit: " pts", sign: true }, { key: "nmix", label: "Mix xwOBA", hib: false, dec: 3, unit: "" }, { key: "xrat", label: "xRating", hib: true, dec: 0, unit: "" }, { key: "nk", label: "pK%", hib: true, dec: 1, unit: "%" }, { key: "nbb", label: "pBB%", hib: false, dec: 1, unit: "%" }, { key: "nwhf", label: "xWhiff%", hib: true, dec: 1, unit: "%" }, { key: "ncstr", label: "xCalled Strike%", hib: true, dec: 1, unit: "%" }, { key: "nswstr", label: "xSwStr%", hib: true, dec: 1, unit: "%" }, { key: "ncsw", label: "xCSW%", hib: true, dec: 1, unit: "%" }, { key: "ns2whf", label: "x2-strike Whiff%", hib: true, dec: 1, unit: "%" }, { key: "nfoul", label: "xFoul%", hib: true, dec: 1, unit: "%" }, { key: "s2whf", label: "2-strike Whiff%", hib: true, dec: 1, unit: "%" }, { key: "s2sw", label: "2-strike Swing%", hib: true, dec: 1, unit: "%" }, { key: "s2zone", label: "2-strike Zone%", hib: true, dec: 1, unit: "%" }, { key: "ngb", label: "xGB%", hib: true, dec: 1, unit: "%" }, { key: "npu", label: "xPU%", hib: true, dec: 1, unit: "%" },
                   { key: "stuff", label: "Stuff+", hib: true, dec: 0, unit: "" }, { key: "swhf", label: "Whiff+", hib: true, dec: 0, unit: "" },
                   { key: "sbb", label: "Batted-ball+", hib: true, dec: 0, unit: "" },
                   { key: "aopt", label: "Arsenal Opt.", hib: true, dec: 1, unit: " pts", sign: true },
@@ -559,6 +560,8 @@
   { const gone = (k) => !["xstrk", "xosw", "cmd", "xbb", "pubb", "suera", "aopt", "puera", "pera", "nk", "nbb", "uera", "xrat", "stuff", "swhf", "sbb"].includes(k);   // (6 Oct 2026: the Pitching+ family, xRating and the expected columns go; Stuff+ comes back)   // the command models' columns (3 Oct 2026), then the Stuff+ family (4 Oct 2026: one Pitching+)
     state.lb.P = (state.lb.P || []).filter(gone); for (const c of Object.values(state.cols || {})) if (c && Array.isArray(c.P)) c.P = c.P.filter(gone);
     if (state.cmpCols && Array.isArray(state.cmpCols.P)) state.cmpCols.P = state.cmpCols.P.filter(gone); if (!gone(state.sort)) state.sort = "score"; }
+  if (!state.lb.ratingFront) { const front = (L) => { if (!Array.isArray(L)) return; const i = L.indexOf("rating"); if (i >= 0) L.splice(i, 1); L.unshift("rating"); };   // the Rating column first (Sean, 6 Oct 2026)
+    front(state.lb.P); for (const c of Object.values(state.cols || {})) if (c) front(c.P); state.lb.ratingFront = true; }
   if (!state.lb.xneraFront) { const front = (L) => { if (!Array.isArray(L)) return; const i = L.indexOf("xnera"); if (i >= 0) L.splice(i, 1); L.unshift("xnera"); };   // xnERA beside the nERA headline (Sean, 6 Oct 2026)
     front(state.lb.P); for (const c of Object.values(state.cols || {})) if (c) front(c.P); state.lb.xneraFront = true; }
   if (state.cmp2 && state.cmp2.pick && Array.isArray(state.cmp2.pick.H)) state.cmp2.pick.H = state.cmp2.pick.H.filter((k) => k !== "pxw");
@@ -1916,6 +1919,7 @@
     const st = (p) => stats.get(p.type + p.id);
     const val = (p) => {
       if (key === "score") { if (p.type === "P") { const n = V(p).m.nera; return n == null ? null : -n; } return st(p).score; }   // a pitcher's headline sorts by his nERA itself, lowest first on "desc" (6 Oct 2026) — the percentile tied the under-minimum players
+      if (key === "rating") return st(p).score;
       if (key === "blend") return st(p).blend;
       if (key === "name") return p.name;
       if (key === "sample") return sample(p);
@@ -2403,7 +2407,7 @@
       } else band.remove(); }
   }
   // what a column measures: an outcome (Result) or the process behind it; anything unlisted reads as Process
-  const RESULT_KEYS = new Set(["score", "nera", "xnera", "era", "fip", "siera", "mera", "uera", "k", "bb", "kbb", "xk", "xkf", "xbbf", "xkbb", "xkbbs", "xks", "uk", "ubb", "ukb", "nk", "nbb", "pera",
+  const RESULT_KEYS = new Set(["score", "rating", "nera", "xnera", "era", "fip", "siera", "mera", "uera", "k", "bb", "kbb", "xk", "xkf", "xbbf", "xkbb", "xkbbs", "xks", "uk", "ubb", "ukb", "nk", "nbb", "pera",
                                "woba", "xwd", "xws", "xwdiff", "xwcon", "avg", "ba", "obp", "slg", "ops", "hr", "babip", "xbabip", "bluck", "brel", "dxba", "dxslg", "xba", "xslg", "sb", "sba", "sbp", "fpts", "fpg", "fppa", "fpip", "fpgs", "xpts", "npts", "upts"]);
   // press and hold a column name for its note (minimal pass 7, Sean, 30 Sep 2026) — a tap still sorts. The note: what the
   // stat is (the glossary) and the middle of the pool the list ranks against
@@ -2595,11 +2599,11 @@
       const nv = p.type === "P" ? V(p).m.nera : null, sc = el("div", "score", p.type === "H" ? fmtX(st.score) : nv == null ? "–" : nv.toFixed(2));
       // a pitcher's headline is his nERA itself (Sean, 6 Oct 2026: "show their actual nERA not their percentile"); the sort is still the
       // percentile, so lowest nERA first. (This comment had swallowed the paint below for a day — the column went unpainted and unmarked.)
-      if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null; if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) { sc.classList.add("hot", "hero"); sc.append(el("i", "ppill", String(Math.round(sp)))); } } }   // hero: coloured digits over a percentile pill, not a filled cell (6 Oct 2026) if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
+      if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = p.type === "P" && st.pct && st.pct.nera != null ? st.pct.nera : st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null;   /* a pitcher's headline is coloured by nERA's own percentile, not the Rating's (6 Oct 2026) */ if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) { sc.classList.add("hot", "hero"); sc.append(el("i", "ppill", String(Math.round(sp)))); } } }   // hero: coloured digits over a percentile pill, not a filled cell (6 Oct 2026) if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
       sc.title = p.type === "H" ? `${HEAD.label} ${fmtX(st.score)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl` : `nERA ${nv == null ? "–" : nv.toFixed(2)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl — luck-neutral ERA: every ball in play at the league's value for its type`; main.append(sc);
       const pcts = el("div", "pcts");
       for (const m of ms) {
-        const v = metricValue(m, V(p), st), pct = st.pct[m.key];
+        const v = metricValue(m, V(p), st), pct = m.key === "rating" ? (st.scorePct != null ? Math.round(st.scorePct) : null) : st.pct[m.key];
         const b = el("div", "pct"); const showV = state.tbl.numbers === "values" ? true : state.tbl.numbers === "pct" ? false : (trending || m.showValue);
         if (pct == null && (showV ? v == null : true)) { b.classList.add("na"); b.textContent = "–"; } else { b.textContent = showV ? (v == null ? "–" : fmt(v, m).replace(" mph", "").replace("%", "")) : pct;   // the % is in the header
           // like the Fantasy tables (Sean, 28 Sep 2026: "give the table this same formatting color wise"): the column you sort by
@@ -2785,7 +2789,7 @@
   }
 
   // a metric's value for display: season / window values live on V(p).m, pool-derived ones (underlying ERA) on the stats
-  const metricValue = (m, pv, st) => (m.key === "ukb" ? (st ? st.ukb : null) : m.key === "uera" ? (st ? st.uera : null) : m.key === "suera" ? (st ? st.suera : null) : m.key === "puera" ? (st ? st.puera : null)
+  const metricValue = (m, pv, st) => (m.key === "rating" ? (st && st.score != null ? Math.round(st.score) : null) : m.key === "ukb" ? (st ? st.ukb : null) : m.key === "uera" ? (st ? st.uera : null) : m.key === "suera" ? (st ? st.suera : null) : m.key === "puera" ? (st ? st.puera : null)
                                       : NEXT_KEYS.has(m.key) ? (st ? st[m.key] : null) : m.key === "mixw" && pv.m.mixw == null ? (st ? st.mixw : null)
                                       : m.key === "wsgp" ? (st ? st.wsgp : null) : m.key === "uk" ? (st ? st.uk : null)
                                       : m.key === "ubb" ? (st ? st.ubb : null) : m.key === "mera" ? (st ? st.mera : null) : pv.m[m.key]);
@@ -8230,12 +8234,12 @@
   // Control, Swing & Miss = K% · Whiff% (fold-out: 2-strike Whiff%, Foul%, Called Strike%); the Stuff side the Pitching+ expected ones
   // Walk Avoidance under Swing & Miss, ahead of Batted Ball (Sean, 5 Oct 2026); left 7 rows, right 6
   // Skills = K-BB% · Mix wOBA, K% back atop Swing & Miss and BB% atop Command (Walk Avoidance renamed) with a line break ("|") after each, no Results (Sean, 6 Oct 2026)
-  const PCT_COLS_P = [[["Skills", ["whf", "xbbf"]], ["Swing & Miss", ["k", "whf", "s2whf", "cstr", "fpc"]]],
+  const PCT_COLS_P = [[["Skills", ["rating", "whf", "xbbf"]], ["Swing & Miss", ["k", "whf", "s2whf", "cstr", "fpc"]]],
                       [["Command", ["bb", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["gb", "pu", "mixw"]]]];   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
   // the Stuff side (Sean, 6 Oct 2026: "for the swing and miss stuff you use all the expected whiff expected two strike whiff expected called
   // strikes and expected fouls from the pitching+ model, and also use expected batted ball stuff from it too ... an xK% too"): every bar off
   // the Pitching+ models — xK% (Pitching+ xK%), xWhiff%, x2-strike Whiff%, xCalled Strike%, xFoul% of contact, xBB%, xGB% / xPU% / Mix xwOBA
-  const PCT_COLS_PS = [[["Skills", ["nwhf", "xbbf"]], ["Swing & Miss", ["xks", "nwhf", "ns2whf", "ncstr", "nfpc"]]],
+  const PCT_COLS_PS = [[["Skills", ["rating", "nwhf", "xbbf"]], ["Swing & Miss", ["xks", "nwhf", "ns2whf", "ncstr", "nfpc"]]],
                        [["Command", ["xbbf", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["ngb", "npu", "nmix"]]]];
   const STUFF_LABELS = { nfpc: "xFoul% of contact", xnera: "xnERA", xbbf: "xBB%", xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => state.cardSide === "stuff";   // the Raw / Stuff switch is back (Sean, 6 Oct 2026: "add back the raw vs stuff button")

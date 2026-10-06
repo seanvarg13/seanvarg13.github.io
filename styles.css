@@ -4207,3 +4207,15 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] #board .who { min-width: 0; overflow: hidden; }
 :root:root:root:root:root:root[data-view="mobile"] .lbpills { display: flex; gap: 8px; padding: 10px 14px 0; flex-wrap: wrap; }
 :root:root:root:root:root:root[data-view="mobile"] #board .who .name { display: block; max-width: 100%; }   /* an inline name can't ellipsise or be measured */
+/* the Leaderboard is part of the page, not a window on it (Sean, 6 Oct 2026: "we don't need to make it so the leaderboard is like a separate
+   window on the page"): the page scrolls, the rows' box has no height of its own, no frame and no ground; the column names stick under the
+   site header. Rankings / Draft board / Fantasy keep their standing card. */
+:root:root:root:root:root:root:has(body:is([data-mode="leaderboard"],[data-mode="trending"])), :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) { height: auto; overflow: visible; }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) main.wrap { height: auto; min-height: 0; overflow: visible; display: block; margin-block: 10px 24px; padding-bottom: 0; }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) main.wrap > .board { display: block; }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) .board > .board-scroll, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #bscroll { max-height: none; overflow: visible; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) .board-scroll > .colwrap { position: sticky; top: var(--header-h, 0px); z-index: 3; background: var(--ground, var(--surface)); }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #colhead { background: var(--ground, var(--surface)); }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main .who, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main .rank { background: var(--ground, var(--surface)); }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main:nth-child(even), :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main:nth-child(even) .who, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main:nth-child(even) .rank { background: var(--surface); }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) main.wrap { margin-block: 6px 24px; }
