@@ -2097,3 +2097,20 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **No line breaks on the card (Sean, 6 Oct 2026: "get rid of the line break for k% and the rest of its area and bb% and its area")**: the `"|"`
   entries left `PCT_COLS_P` / `PCT_COLS_PS` — Swing & Miss is K% · Whiff% · 2-strike Whiff% · Called Strike% · Foul% of contact and Command BB% ·
   Strike% · 1st-pitch · 3-ball in one run each; the break machinery stays in `rowsOf` / `pctSvg`, unused.
+* **The proposed layout, built (Sean, 6 Oct 2026, from the "Proposed" boards on the Clutch Time Mock canvas: "Implement both of those they
+  look good")**: **Leaderboard** — the six filter buttons are one control row: a **Hitters · SP · RP** segment (`.posseg` in `renderToolButtons`
+  under `onePage()`; Hitters tapped again opens the Position tab for a sub-position and reads it, e.g. "SS"; SP / RP through `togglePos`), one
+  **Filters** button (its dropdown shows the tab row again — Position · Filters · Stats · Splits · Dates · Table format — `popBody` no longer skips
+  `grpTabs()`), the **Standard ▾** pill and a **Season ▾** pill (`lbSeasonPill`: the same pick as the Filters tab's Season row; a span reads
+  "2024–26 ▾" and opens that tab); the count and the Min PA / IP box sit on a quiet second line (`.lbbreak` flex break in `renderPager`; a phone
+  wraps the row instead of scrolling it). **Result / Process bands** over the column names (`#colband`, a second grid with the header's template,
+  drawn in `renderColheadIn`; `RESULT_KEYS` says which columns are outcomes, every contiguous run gets one word; the Result band's rule is ink).
+  The **headline cell** (`.score.hero`) is the value in its percentile colour over a small percentile pill (`.ppill`), not a filled cell; the
+  other sorted columns keep their fill. **Card** — the bio is plain words on the season line ("2026 ▾ · LAD · SP · LHP · 29 · 6'3" 240";
+  `.hbio.inline`, `fillBio` writes text for it, refilled when MLB's record arrives), the band's numbers are **four tiles** with their percentiles
+  (`bandTiles`: a pitcher's nERA with ERA beside it (xnERA on the Stuff side), K%, BB%, K-BB% with IP; a hitter's xwOBA with wOBA, AVG, OBP, SLG
+  with OPS and PA; a level without the official line gets K% / BB% / Brl% from the card's own rates), and **Filters / Raw ▾ sit on a row under
+  the tiles** (`.phctl`) with the view's name at the right ("Full season" or the window / split). The `.hstrip` facts row, the `.hrow` and the
+  `.hstats` line are gone from the band (`seasonLine` still builds the line; the tiles read it). `finish()` keeps the tiles and the control row
+  out of `.phleft` so they span the band (desktop grid areas `left right / tiles / ctl`). The Arsenal YoY tab on the mock is **not built** —
+  Sean asked to wait on the year-over-year arsenal comparison. CSS: the block "the proposed layout, built" at the end of `styles.css`.
