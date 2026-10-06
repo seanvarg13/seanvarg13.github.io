@@ -2339,6 +2339,22 @@
     };
     const pill = pillSelect(curName, opts, curName, pick, "Stats shown"); pill.classList.add("lbsetpill"); pill.title = "Which stats the table shows";
     row.append(pill);
+    const sp = lbSeasonPill(); if (sp) row.append(sp);   // Season ▾ in the row (6 Oct 2026, the proposed layout); the Filters tab still has the level / span controls
+  }
+  // the season as one pill in the Leaderboard's row: the same pick as the Filters tab's Season row; a span of seasons reads "2024–26 ▾" and opens that tab
+  function lbSeasonPill() {
+    if (state.mode !== "leaderboard") return null;
+    ensureIndex();
+    const keys = indexReady() ? window.DRAFT_INDEX.seasons : [CUR.key];
+    const cur = state.lbDs && keys.includes(state.lbDs) ? state.lbDs : CUR.key, year = (k) => Number(k.split("-")[1]);
+    const years = [...new Set(keys.map(year))].sort((x, y) => y - x);
+    const inYear = (y) => keys.filter((k) => year(k) === y).sort((p, q) => LEVEL_ORDER.indexOf(levelOf(p)) - LEVEL_ORDER.indexOf(levelOf(q)));
+    const span = state.lbTo && state.lbTo > year(cur);
+    if (span) { const b = el("button", "pill lbseasonpill", `${year(cur)}–${String(state.lbTo).slice(2)} ▾`); b.type = "button"; b.title = "A span of seasons — set in Filters"; b.addEventListener("click", (e) => { e.stopPropagation(); parkControls(); state.panelTab = "filters"; openPanel("filters"); }); return b; }
+    const pick = (y) => { const opts = inYear(Number(y)), k = opts.find((x) => levelOf(x) === levelOf(cur) && !keyKind(x)) || opts.find((x) => levelOf(x) === levelOf(cur)) || opts[0];
+      state.lbDs = k === CUR.key ? null : k; if (state.lbTo && state.lbTo <= year(k)) state.lbTo = null; state.page = 1; state.win = { from: "", to: "", last: "" }; state.expanded = null; savePrefs(); render(); };
+    const lvl = String(levelOf(cur)).toLowerCase() !== "mlb" ? " " + (LEVEL_NAMES[levelOf(cur)] || levelOf(cur)) : "";
+    const pl = pillSelect(String(year(cur)) + lvl, years.map((y) => [String(y), String(y)]), String(year(cur)), pick, "Season"); pl.classList.add("lbseasonpill"); pl.title = "Season"; return pl;
   }
   function renderColheadIn() {
     const g = groupFor(state.pos), ref = refFor(g);
@@ -2370,7 +2386,21 @@
       h.append(hb);
     }
     if (state.mode === "draft") h.append(el("div", "h", ""));
+    // Result / Process bands over the columns (6 Oct 2026, the proposed layout): outcomes on one side, skills on the other, each
+    // contiguous run of columns under one word; the band row is a second grid with the header's own template
+    { let band = $("colband"); if (!band) { band = el("div", "colhead grid colband"); band.id = "colband"; }
+      if (onePage() && ms.length) {
+        if (band.parentNode !== h.parentNode || band.nextSibling !== h) h.before(band);
+        band.style.cssText = h.style.cssText; band.innerHTML = "";
+        band.append(el("div"), el("div"), el("div", "pre"), el("div", "pre"));
+        const cat = (k) => (RESULT_KEYS.has(k) ? "Result" : "Process"), runs = [];
+        for (const k of ["score", ...ms.map((m) => m.key)]) { const c = cat(k); if (runs.length && runs[runs.length - 1][0] === c) runs[runs.length - 1][1]++; else runs.push([c, 1]); }
+        for (const [c, n] of runs) { const d = el("div", "band " + c.toLowerCase(), c); d.style.gridColumn = `span ${n}`; band.append(d); }
+      } else band.remove(); }
   }
+  // what a column measures: an outcome (Result) or the process behind it; anything unlisted reads as Process
+  const RESULT_KEYS = new Set(["score", "nera", "xnera", "era", "fip", "siera", "mera", "uera", "k", "bb", "kbb", "xk", "xkf", "xbbf", "xkbb", "xkbbs", "xks", "uk", "ubb", "ukb", "nk", "nbb", "pera",
+                               "woba", "xwd", "xws", "xwdiff", "xwcon", "avg", "ba", "obp", "slg", "ops", "hr", "babip", "xbabip", "bluck", "brel", "dxba", "dxslg", "xba", "xslg", "sb", "sba", "sbp", "fpts", "fpg", "fppa", "fpip", "fpgs", "xpts", "npts", "upts"]);
   // press and hold a column name for its note (minimal pass 7, Sean, 30 Sep 2026) — a tap still sorts. The note: what the
   // stat is (the glossary) and the middle of the pool the list ranks against
   function colNote(m, g) {
@@ -2561,7 +2591,7 @@
       const nv = p.type === "P" ? V(p).m.nera : null, sc = el("div", "score", p.type === "H" ? fmtX(st.score) : nv == null ? "–" : nv.toFixed(2));
       // a pitcher's headline is his nERA itself (Sean, 6 Oct 2026: "show their actual nERA not their percentile"); the sort is still the
       // percentile, so lowest nERA first. (This comment had swallowed the paint below for a day — the column went unpainted and unmarked.)
-      if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null; if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) sc.classList.add("hot"); } } if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
+      if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null; if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) { sc.classList.add("hot", "hero"); sc.append(el("i", "ppill", String(Math.round(sp)))); } } }   // hero: coloured digits over a percentile pill, not a filled cell (6 Oct 2026) if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
       sc.title = p.type === "H" ? `${HEAD.label} ${fmtX(st.score)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl` : `nERA ${nv == null ? "–" : nv.toFixed(2)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl — luck-neutral ERA: every ball in play at the league's value for its type`; main.append(sc);
       const pcts = el("div", "pcts");
       for (const m of ms) {
@@ -2737,7 +2767,7 @@
       if (phonePages() && box.id === "pagertop") { const row = el("div", "pnavrow"); row.append(nav); box.after(row); } else box.append(nav);
     }
     if (onChange) box.append(perPageField(setSize));    // the list pages keep theirs in Filters (minimal pass 4); Fantasy here
-    if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs(); if (mfKeep) { mfKeep.classList.add("topmin"); if (mfKeep.previousSibling !== $("tbtns")) $("tbtns").after(mfKeep); } } }   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
+    if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs(); box.append(el("span", "lbbreak")); const pc = box.querySelector(".pcount"); if (pc) box.append(pc); if (mfKeep) { mfKeep.classList.add("topmin"); if (box.lastElementChild !== mfKeep) box.append(mfKeep); } } }   // the count and the Min box on a quiet line under the controls (6 Oct 2026); the Min box moves only when it isn't already last   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
   }
   function perPageField(setSize) {
     const sz = el("label", "field psize"); sz.append(el("span", null, "Per page"));
@@ -3610,8 +3640,37 @@
   // the band's facts row (Sean, 1 Oct 2026, option C of the Card Header Rows page): a small label over each value, like the back
   // of a baseball card — height, weight, bats / throws and age (.hbio, its own line on a phone), then his playing time
   const fact = (k, v) => { const c = el("span", "hchip fact"); c.append(el("i", null, k), el("b", null, String(v))); return c; };
+  // the four numbers he reads first, as tiles with their percentiles (6 Oct 2026, the proposed band): a pitcher's nERA (ERA beside it),
+  // K%, BB%, K-BB% (IP beside it); a hitter's xwOBA (wOBA beside it), AVG, OBP, SLG (OPS and PA beside it). `facts` is the old band's
+  // label → text (the season's official line and the playing time); a level without that line gets the card's own rates.
+  function bandTiles(p, st, facts) {
+    const row = el("div", "htiles"), pv = V(p), m = pv.m, pct = (st && st.pct) || {}, pit = p.type === "P";
+    const ord = (x) => (x == null ? null : ordinal(Math.round(x)));
+    const tile = (lab, val, pc, sub) => { const t = el("div", "tile"); t.append(el("span", "l", lab)); const v = el("span", "v", val == null ? "–" : String(val)); if (pc != null) { const s2 = pctStyle(pc); if (s2) v.style.color = s2.bg; } t.append(v);
+      const bits = [pc != null ? ord(pc) : null, ...(sub ? String(sub).split(" · ") : [])].filter(Boolean); if (bits.length) { const pp = el("span", "p"); bits.forEach((x, i) => { if (i) pp.append(el("span", "dot", " · ")); pp.append(el("span", "pb", x)); }); t.append(pp); } row.append(t); return t; };
+    const stuff = pit && stuffSide();
+    if (pit) {
+      const hero = stuff ? ["xnERA", st && st.xnera != null ? st.xnera.toFixed(2) : null, pct.xnera] : ["nERA", m.nera != null ? m.nera.toFixed(2) : null, st && st.scorePct != null ? st.scorePct : pct.nera];
+      tile(hero[0], hero[1], hero[2], facts.ERA != null ? "ERA " + facts.ERA : null);
+      tile("K%", facts["K%"] != null ? facts["K%"] : m.k != null ? m.k.toFixed(1) : null, pct.k, null);
+      tile("BB%", facts["BB%"] != null ? facts["BB%"] : m.bb != null ? m.bb.toFixed(1) : null, pct.bb, null);
+      tile("K-BB%", facts["K-BB%"] != null ? facts["K-BB%"] : m.kbb != null ? m.kbb.toFixed(1) : null, pct.kbb, facts.IP != null ? facts.IP + " IP" : null);
+    } else {
+      const hx = m.xwd != null ? fmtX(m.xwd) : st && st.score != null ? fmtX(st.score) : null, hl = m.xwd != null ? "xwOBA" : "wOBA";
+      tile(hl, hx, st && st.scorePct != null ? st.scorePct : null, hl === "xwOBA" && m.woba != null ? "wOBA " + fmtX(m.woba) : facts.PA != null ? facts.PA + " PA" : null);
+      if (facts.AVG != null) { tile("AVG", facts.AVG, pct.avg, null); tile("OBP", facts.OBP, pct.obp, null); tile("SLG", facts.SLG, pct.slg, [facts.OPS != null ? "OPS " + facts.OPS : null, facts.PA != null ? facts.PA + " PA" : null].filter(Boolean).join(" · ") || null); }
+      else { tile("K%", m.k != null ? m.k.toFixed(1) : null, pct.k, null); tile("BB%", m.bb != null ? m.bb.toFixed(1) : null, pct.bb, null); tile("Brl%", m.brl != null ? m.brl.toFixed(1) : null, pct.brl, facts.PA != null ? facts.PA + " PA" : null); }
+    }
+    return row;
+  }
   function fillBio(box, p, b) {
     box.replaceChildren();
+    if (box.classList.contains("inline")) {   // on the season line: " · B/T L/L · 29 · 6'3\" 240" (6 Oct 2026)
+      const bt = b && (b.bats || b.throws) ? `${b.bats || "?"}/${b.throws || "?"}` : p.type === "P" ? (p.throws ? p.throws + "HP" : null) : p.bats ? "Bats " + p.bats : null;
+      const bits = [bt ? (bt.includes("/") ? "B/T " + bt : bt) : null, p.age != null ? String(p.age) : null, b && b.ht ? String(b.ht).replace(/\s+/g, "") + (b.wt ? " " + b.wt : "") : b && b.wt ? String(b.wt) : null].filter(Boolean);
+      box.textContent = bits.length ? " · " + bits.join(" · ") : "";
+      return;
+    }
     if (b && b.ht) box.append(fact("HT", String(b.ht).replace(/\s+/g, "")));
     if (b && b.wt) box.append(fact("WT", b.wt));
     const bt = b && (b.bats || b.throws) ? `${b.bats || "?"}/${b.throws || "?"}` : p.type === "P" ? (p.throws ? p.throws + "HP" : null) : p.bats;
@@ -4574,8 +4633,19 @@
       box.append(b);
     };
     // the position shows on the button when it isn't everyone ("SS · Filters"), so the one button still says what's listed
-    if (onePage()) {   // the Leaderboard / Recent: one button per tab of the dropdown (Sean, 3 Oct 2026: "separate the filters to be their own individual buttons"), each saying what it holds
-      for (const [k, label] of grpTabsNow()) { if (k === "table") continue; add(k, k === "positions" ? (popActive(k) ? posBtnLabel() : "Position") : k === "dates" ? datesLabel() : label, state.panel === k, popActive(k)); }   // Table format lives in the ⋯ menu (Sean, 3 Oct 2026)
+    if (onePage()) {   // the Leaderboard / Recent, since the proposed layout (Sean, 6 Oct 2026: "Implement both of those"): a Hitters · SP · RP
+      // segment, then one Filters button whose dropdown holds the tabs (Position · Filters · Stats · Splits · Dates) — the six buttons of 3 Oct are history
+      const pit = isPitcherGroup(groupFor(state.pos)), sel = posSel(), seg = el("div", "seg posseg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Who");
+      const hitLab = !pit && popActive("positions") ? posBtnLabel() : "Hitters";
+      for (const [pos, label, on] of [["ALL", hitLab, !pit], ["SP", "SP", pit && sel.length === 1 && sel[0] === "SP"], ["RP", "RP", pit && sel.length === 1 && sel[0] === "RP"]]) {
+        const b = el("button", "segbtn small", label); b.type = "button"; b.setAttribute("aria-pressed", String(on)); b.dataset.pos = pos;
+        b.title = pos === "ALL" ? "Hitters — tap again for a position" : pos === "SP" ? "Starters" : "Relievers";
+        b.addEventListener("click", (e) => { e.stopPropagation(); if (pos === "ALL" && !pit) { if (state.panel === "positions") closePanel(false); else openPanel("positions"); return; } togglePos(pos); });
+        seg.append(b);
+      }
+      box.append(seg);
+      const n = ["filters", "splits", "dates"].filter(popActive).length;
+      add("grp", "Filters" + (n ? ` · ${n}` : ""), grpOpen, n > 0);
       return;
     }
     const n = ["filters", "splits", "dates"].filter(popActive).length, pos = popActive("positions") ? posBtnLabel() + " · " : "";
@@ -4617,7 +4687,7 @@
     const pop = $("pop"), body = $("pop-body");
     pop.hidden = false; body.innerHTML = "";
     pop.classList.toggle("grppop", GRP.has(state.panel));
-    if (GRP.has(state.panel)) { state.panelTab = state.panel; if (!onePage()) body.append(grpTabs()); pop.classList.toggle("notabs", onePage()); }   // the Leaderboard's buttons are the tabs (Sean, 3 Oct 2026: "get rid of ... the other ones in that box")
+    if (GRP.has(state.panel)) { state.panelTab = state.panel; body.append(grpTabs()); pop.classList.remove("notabs"); }   // one Filters button again (6 Oct 2026), so the tabs ride in the dropdown
     return body;
   }
   // the panel hangs under its own button, clamped to the window, and never taller than the room below it
@@ -8844,8 +8914,9 @@
     const finish = () => {                               // put the pieces where this layout wants them
       if (mob) { if (F.childNodes.length) plate.append(F); }
       else {
-        const left = el("div", "phleft"); left.append(...plate.childNodes);
-        plate.append(left);
+        const wide = [...plate.children].filter((c) => c.classList.contains("htiles") || c.classList.contains("phctl"));   // the tiles and the control row span the band (6 Oct 2026)
+        const left = el("div", "phleft"); left.append(...[...plate.childNodes].filter((c) => !wide.includes(c)));
+        plate.append(left, ...wide);
         if (!F.classList.contains("phpop") && F.childNodes.length) { plate.append(F); plate.classList.add("phright"); }   // season chips: on the right
       }
       top.append(plate); return top;
@@ -8878,16 +8949,19 @@
     // a two-way player's Hitting / Pitching switch lives in the Filters window now (Sean, 5 Oct 2026: "put the hitting and pitching button in
     // the filters box so that you can eliminate that weird empty space gap"); it's taken off the plate here and put in the window below
     const twoWay = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (twoWay) twoWay.remove();
-    { const hs = plate.querySelector(".hstrip"); if (hs && hs._stats) hs.append(hs._stats);   // the season's line, last: its own row
-      // a phone (Sean, 1 Oct 2026: four ragged rows "just looks so weird"): the bio and Filters stay beside the headshot, and the
-      // playing time and the season's line run as one row across the band under it
-      if (mob && hs) {
-        const row = el("div", "hrow");
-        row.append(...[...hs.children].filter((c) => c.classList.contains("fact")));
-        if (hs._stats) { row.append(...hs._stats.children); hs._stats.remove(); }
-        if (row.childNodes.length) plate.append(row);
-      } else if (hs && hs._stats) hs._stats.prepend(...[...hs.children].filter((c) => c.classList.contains("fact")));   // a desktop: the bio and Filters on the first row, PA / IP and the season's line on the second (Sean, 1 Oct 2026)
-    }
+    // the proposed band (Sean, 6 Oct 2026: "Implement both of those"): the bio rides on the season line as plain words, the band's
+    // numbers are four tiles with their percentiles, and Filters / Raw sit on a row under the tiles with the view's name at the right
+    { const hs = plate.querySelector(".hstrip");
+      if (hs) {
+        const bioBox = hs.querySelector(".hbio"), hd2 = title.querySelector(".pthd");
+        if (bioBox && hd2) { bioBox.classList.add("inline"); fillBio(bioBox, p, bio(p.id)); hd2.append(bioBox); }
+        const facts = {}; for (const f of [...hs.querySelectorAll(".fact"), ...(hs._stats ? [...hs._stats.querySelectorAll(".fact")] : [])]) { const i = f.querySelector("i"), b = f.querySelector("b"); if (i && b) facts[i.textContent] = b.textContent; }
+        plate.append(bandTiles(p, st, facts));
+        const ctl = el("div", "phctl"); ctl.append(tog);
+        const vl = viewLabel(p.type); ctl.append(el("span", "phview", vl && vl !== "full season" ? vl : "Full season"));
+        plate.append(ctl);
+        hs.remove();
+      } }
     let warn = null;
     if (open) {
       const sp = renderSplitPanel(p), seg = (n) => sp.querySelector(`.seg[aria-label="${n}"]`);

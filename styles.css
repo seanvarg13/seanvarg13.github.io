@@ -4125,3 +4125,49 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .krow.ktot { border-top: 1px solid var(--hair); border-bottom: 2px solid var(--ink); }
 :root:root:root:root:root:root .krow.ktot .kname .ksub { font-weight: 400 !important; }
 :root:root:root:root:root:root[data-view="mobile"] .ksub { white-space: normal; overflow: visible; }   /* a phone wraps the league / percentile line instead of cutting it */
+/* ---- the proposed layout, built (Sean, 6 Oct 2026: "Implement both of those") ----
+   Leaderboard: one control row (Hitters · SP · RP, Filters, Standard ▾, Season ▾), the count and Min box on a quiet line under it,
+   Result / Process bands over the column names, the headline as coloured digits over a percentile pill.
+   Card: the bio on the season line, four tiles with percentiles, Filters / Raw under them with the view's name at the right. */
+:root:root:root:root:root:root #pagertop { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop { flex-wrap: wrap; overflow: visible; gap: 6px; padding: 0 0 6px; }
+:root:root:root:root:root:root #pagertop .lbbreak { flex-basis: 100%; height: 0; margin: 0; padding: 0; }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop .pcount { margin-left: 2px; display: inline; font-size: 12.5px; color: var(--muted); }
+:root:root:root:root:root:root #pagertop > #minfield.topmin { margin-left: auto; }
+:root:root:root:root:root:root #pagertop .posseg { display: inline-flex; border: 1px solid var(--line-soft); border-radius: 18px; overflow: hidden; background: var(--surface); }
+:root:root:root:root:root:root #pagertop .posseg .segbtn { height: 34px; min-height: 34px; padding: 0 13px; border: 0; border-radius: 0; background: transparent; color: var(--ink-2); font-size: 13.5px; }
+:root:root:root:root:root:root #pagertop .posseg .segbtn[aria-pressed="true"] { background: var(--ink); color: var(--ground, var(--surface)); }
+:root:root:root:root:root:root #pagertop .lbtabs { display: inline-flex; gap: 8px; padding: 0; margin: 0; }
+:root:root:root:root:root:root #pagertop .tbtns { display: inline-flex; }
+/* the bands */
+:root:root:root:root:root:root .colband { position: static; padding: 8px 12px 0; border-bottom: 0; background: var(--surface); }
+:root:root:root:root:root:root .colband .band { font-size: 10px !important; letter-spacing: 0.14em !important; text-transform: uppercase !important; color: var(--muted); text-align: center; border-bottom: 2px solid var(--hair); padding-bottom: 3px; margin: 0 3px; }
+:root:root:root:root:root:root .colband .band.result { border-bottom-color: var(--ink); color: var(--ink); }
+:root:root:root:root:root:root #colhead { border-bottom: 1px solid var(--hair); }
+/* the headline cell */
+:root:root:root:root:root:root .score.hero, :root:root:root:root:root:root[data-view="mobile"] .score.hero { background: transparent !important; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--heat) !important; font-size: 19px; line-height: 1; }
+:root:root:root:root:root:root .score.hero .ppill { font-style: normal; font-family: var(--body); font-size: 10px; font-weight: 700 !important; color: #fff; background: var(--heat); border-radius: 8px; padding: 1px 6px; line-height: 13px; letter-spacing: 0; }
+/* the card band */
+:root:root:root:root:root:root .phead .pthd .hbio.inline { display: inline; font-family: var(--body); font-size: 12.5px; color: var(--ink-2); letter-spacing: 0; white-space: normal; vertical-align: 1px; }
+:root:root:root:root:root:root .phead .htiles { display: flex; gap: 8px; width: 100%; flex-basis: 100%; grid-column: 1 / -1; grid-area: auto; }
+:root:root:root:root:root:root .phead .tile { flex: 1 1 0; min-width: 0; background: var(--surface); border: 1px solid var(--line-soft); border-radius: 14px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+:root:root:root:root:root:root .phead .tile .l { font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; color: var(--muted); }
+:root:root:root:root:root:root .phead .tile .v { font-family: var(--display); font-size: 24px; font-weight: 800 !important; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root .phead .tile .p { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root:root:root:root:root:root .phead .phctl { display: flex; align-items: center; gap: 8px; width: 100%; flex-basis: 100%; grid-column: 1 / -1; grid-area: auto; }
+:root:root:root:root:root:root .phead .phctl .phview { margin-left: auto; font-size: 12.5px; color: var(--muted); }
+:root:root:root:root:root:root .phead .phctl .phtog { margin: 0; }
+:root:root:root:root:root:root:not([data-view="mobile"]) .phead .mplate { grid-template-columns: 1fr auto; grid-template-areas: "left right" "tiles tiles" "ctl ctl"; row-gap: 10px; }
+:root:root:root:root:root:root:not([data-view="mobile"]) .phead .htiles { grid-area: tiles; }
+:root:root:root:root:root:root:not([data-view="mobile"]) .phead .phctl { grid-area: ctl; }
+:root:root:root:root:root:root[data-view="mobile"] .phead .tile { padding: 7px 8px; border-radius: 12px; }
+:root:root:root:root:root:root[data-view="mobile"] .phead .tile .v { font-size: 21px; }
+:root:root:root:root:root:root[data-view="mobile"] .phead .mplate { gap: 8px 12px; }
+:root:root:root:root:root:root #pagertop .posseg .segbtn { border: 0 !important; border-radius: 0 !important; height: 34px !important; min-height: 34px !important; box-shadow: none !important; }
+:root:root:root:root:root:root #pagertop .posseg .segbtn + .segbtn { border-left: 1px solid var(--line-soft) !important; }
+:root:root:root:root:root:root[data-view="mobile"] .phead .tile .p { white-space: normal; line-height: 1.2; }
+:root:root:root:root:root:root .phead .phleft { align-self: center; }
+:root:root:root:root:root:root .score.hero { font-size: 19px !important; font-weight: 800 !important; font-family: var(--display); }
+:root:root:root:root:root:root[data-view="mobile"] .phead .tile .p .dot { display: none; }
+:root:root:root:root:root:root[data-view="mobile"] .phead .tile .p .pb { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10.5px; }
+:root:root:root:root:root:root[data-view="mobile"] .phead .tile { padding: 7px 6px; }
