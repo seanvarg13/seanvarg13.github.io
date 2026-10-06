@@ -1854,3 +1854,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   #365's merge (7011960) again: Skills = K-BB% · Mix wOBA, Swing & Miss K% | Whiff% · 2-strike Whiff% · Foul%, Command BB% | Strike% · 1st-pitch ·
   3-ball, Batted Ball, Rating = nERA, Stuff+ in place of Pitching+, no xRating or Raw / Stuff switch, the mock's bars, the pre-Raya format. The
   entry above (PR #366) is history.
+* **No Raya anywhere (Sean, 6 Oct 2026: "I don't want any of the raya stuff back here anymore")**: the card's bars keep only the geometry he liked
+  (the flat 20px track ending 30px short, the fill to his percentile, the 22px bubble with its ring and Roboto Condensed digits, label / value / bubble
+  centred on the row, the line breaks); their type is the site's own again — section names in the title face (`--display`, 19px, `y: 28`, 14 over /
+  10 under), labels and values in `--body` at 400, no tracking, no capitals, black — the "the card's bars" block at the end of `styles.css`;
+  `themes.js` loads the 400+ weights only. Nothing Raya is left in the stylesheet or the font list. Don't bring any of it back unasked.

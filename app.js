@@ -8067,8 +8067,8 @@
     }
     groups.forEach((g) => {
       const G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
-      G.append(mk("text", { class: "svsecname", x: 0, y: 14 + 11 }, g.title));   // .sec padding 14 + the 11px name
-      const R = mk("g", { transform: `translate(0,${14 + 11 + 10})` });
+      G.append(mk("text", { class: "svsecname", x: 0, y: 14 + 14 }, g.title));   // 14 over the section name (the site's title type now, 19px), 10 under
+      const R = mk("g", { transform: `translate(0,${14 + 14 + 10})` });
       let ry = 0;
       g.rows.forEach((r) => {
         if (r.gap) { ry += BRK; return; }
@@ -8093,7 +8093,7 @@
       });
       G.append(R);
       root.append(G);
-      y += 14 + 11 + 10 + g.rows.reduce((a, r) => a + (r.gap ? BRK : ROW), 0) + 8;
+      y += 14 + 14 + 10 + g.rows.reduce((a, r) => a + (r.gap ? BRK : ROW), 0) + 8;
     });
     const H = y + 4;
     const svg = mk("svg", { class: "svpct raya", viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": "Percentile rankings" });
