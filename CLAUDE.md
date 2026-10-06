@@ -1799,3 +1799,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `PCT_COLS_P` / `PCT_COLS_PS` left = Skills (Strikeout / xStrikeout · Control) · Swing & Miss (Whiff% / xWhiff% ▸ 2-strike Whiff%, Foul%) · Walk
   Avoidance (Strike% · 1st-pitch Strike% · 3-ball Strike%); right = Batted Ball · **Results** (K% · BB% · K-BB%, his actual outcomes on both sides).
   The Rating and xRating left the card's bars (the Pitching+ tab's Rating · xRating line and the Leaderboard columns still carry them).
+* **The Raya type and the mock's bars (Sean, 5 Oct 2026, from a phone screenshot of the Raya Dress Mock: "give the site this exact font, this font
+  size, the raya spacing as well ... make the percentile bars and sections on the player page and card look precisely like this, even give the
+  percentile bubble this exact look")**: PR #352's "Raya type, lines and spacing" block is back at the end of `styles.css` (weight 300 with the
+  numbers at 400, the small labels 11px tracked uppercase, hairlines, Raya's gaps; `themes.js` loads the 300 weights again) — the dress itself
+  (frames off, silver ground, `hotInk`) stays out. **`pctSvg` is the mock's `.sec` / `.bar` / `.trk` / `.bub`** (artifact "Raya Dress Mock"): a section
+  is 14px over an 11px tracked-uppercase grey name, 10px, 30px rows, 8px under; a row is a 112px left-aligned label (100 on a phone, `W < 700`),
+  a 44px (40) right-aligned value at weight 400, 10px gaps, a 20px flat track (`--raya-pctrack` #eceef2 / #2e333b dark) to 14px short of the
+  right edge, the fill to his percentile, a 22px bubble centred on it (circle r 10 + 2px `--surface` ring, white Roboto Condensed 700 10.5px
+  digits); no 10 / 50 / 90 ticks, no dashed rules; Poor / Average / Great a 10px tracked grey line on the track's span above the first section
+  (`scale`). The SVG carries class `raya`; the "The Raya mock's bars" CSS block at the end of `styles.css` holds its type and colours (the
+  site-wide no-capitals rule needs `!important` on the tracking / uppercase). The sample line, fold-outs (▸ / ▾ on the name) and the tap note are
+  unchanged. Savant's drawing before this is PR #360's `pctSvg`. The "don't restyle the bars unasked" rule stands; this was asked.
