@@ -1813,3 +1813,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   unchanged. Savant's drawing before this is PR #360's `pctSvg`. The "don't restyle the bars unasked" rule stands; this was asked.
 * **Swing & Miss flat (Sean, 6 Oct 2026: "make it so swing and miss shows all three without a drop down")**: Whiff% · 2-strike Whiff% · Foul% as
   three plain rows (xWhiff% · x2-strike Whiff% · xFoul% on the Stuff side); the fold-out machinery stays in `pctColumns` / `pctSvg`, unused.
+* **Stuff+ back, Pitching+ and the xRating off the site (Sean, 6 Oct 2026: "get rid of pitching+ entirely and just go back to stuff+ and let's not
+  even do an xrating or a stuff filter on the player card at all, lets just have a stuff+ tab that shows expected whiff rates and gb% and pop up%
+  for the pitchers stuff")**: the header link, the board (`#pitches`: Stuff+ / Whiff+ / BB+ / xWhiff% / xGB% / xPU%, `pb.sort` falls back to
+  `stuffp`), the Leaderboard's column set (**Stuff+**: Stuff+ · Whiff+ · Batted-ball+ · velo · extension; `LB_SETS`), the Stats panel group, home's
+  "Stuff+ that start" (`gameLog`'s `st` is the stuff-only grade again) and Similar's skill list (`stuff`) are the stuff-only family. **No xRating
+  column** (out of every column set and `LB_EXTRA_P`; `xrat`, the Pitching+ family `pitch / pwhf / pbb / sloc`, `xks / xkbbs / xkws` and the
+  expected (Pitching+) columns `nwhf ngb npu nmix wgap nswstr ncsw ns2whf nfoul ncstr` are in `RETIRED_P` and dropped from saved lists on load;
+  the `xratFront` migration is gone). **The card**: `BTABS_P` = Stuff+ · K% / BB% · nERA, the Raw / Stuff dropdown is gone (`stuffSide()` is
+  false; `PCT_COLS_PS` stays for the record), and the **Stuff+ tab** is `renderStuffTab(p, st, g)` in stuff mode — the arsenal table (Stuff+ /
+  Whiff+ / BB+ against type, xWhiff / xGB / xPU over actual, All pitches) and nothing under it (`EXTRAS = false` turns off Arsenal Opt. and
+  Stuff uERA; the whiff check, Rating · xRating line and xK% breakdown were Pitching+'s). Still computed underneath: Pitching+, xRating, the
+  expected rates (the K% / BB% tab's K% rows still list Pitching+ / Location+ / the expected whiff rates, since they are xK%'s inputs).
