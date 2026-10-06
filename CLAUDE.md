@@ -2199,3 +2199,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   rate itself, its effect still on the gap over his overall), BB%, Everything else, K% (his against the league's, the pill the whole gap) — no
   sub-lines, percentiles or Repeats? column; the one-line explanations are the rows' tooltips. The Stuff side prefixes x. CSS at the end of
   `styles.css`; the archetype heading is unchanged.
+* **Two-strike finishing as the gap (Sean, 6 Oct 2026: "do like the gap one ... their 2 strike whiff minus their actual whiff")**: the K% table's
+  row is **2-strike finishing** — His = 2-strike Whiff% − Whiff%, signed (Misiorowski −0.6), Lg the league's gap (−0.7) — in place of the raw
+  two-strike rate; `num(v, sgn)` prints that row signed.
