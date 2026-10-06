@@ -4218,3 +4218,25 @@ header.top .wordmark { display: none; }
 /* a phone's Show more (Sean, 6 Oct 2026: "one big page with a show more option"): a pill row at the foot of the rows, inside the scroller */
 :root:root:root:root:root:root .showmore { display: flex; justify-content: center; padding: 12px 0 18px; position: sticky; left: 0; width: min(100%, 100vw - 24px); box-sizing: border-box; }
 :root:root:root:root:root:root .showmore .btn { height: 36px; padding: 0 18px; border-radius: 18px; }
+/* no window at all on a phone, tighter rows (Sean, 6 Oct 2026, from a screenshot: "It still looks like it's a window ... the 50 of 223 can be
+   moved up and we can eliminate that unnecessary gap ... make it so the rows are banded ... make them thinner a bit and make the player column
+   much less long"): the phone's outer card loses its hairline, radius and surface; the count sits right over the column names; every other row
+   is a visible band (ink at 4% on the ground — the surface tint was too close to see); rows 44px on a phone, 50 on a desktop; the name column
+   116px with a 15px name (fitNameCol / renderRowsIn step a long one down to 13 then 11.5px) */
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) main.wrap { border: 0 !important; border-radius: 0; background: transparent !important; padding-inline: 0; margin-top: 4px; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop { padding: 0 8px 2px; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow { margin: 0; padding: 0 8px; min-height: 0; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow .pcount { line-height: 20px; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #colhead { padding-top: 0; padding-bottom: 0; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #colhead .h { padding-top: 6px !important; padding-bottom: 6px !important; }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows > .row:nth-child(even) .row-main, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows > .row:nth-child(even) .row-main .who, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows > .row:nth-child(even) .row-main .rank { background: color-mix(in srgb, var(--ink) 4%, var(--ground, var(--surface))); }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main { min-height: 50px; border-bottom: 0; box-sizing: border-box; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main { min-height: 44px; }
+:root:root:root:root:root:root[data-view="mobile"] #board .row-main { padding-top: 4px; padding-bottom: 4px; }
+:root:root:root:root:root:root[data-view="mobile"] .grid { grid-template-columns: var(--rankw, 22px) var(--namew, 116px) var(--pre1, 0px) var(--pre2, 0px) 50px repeat(var(--n), 42px) var(--act, 0px); }
+:root:root:root:root:root:root[data-view="mobile"] #board .name { font-size: 15px; }
+:root:root:root:root:root:root[data-view="mobile"] #board .meta { font-size: 9.5px; }
+:root:root:root:root:root:root[data-view="mobile"] #board .rank { font-size: 11px; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main .score.hero { padding-top: 0; padding-bottom: 0; border: 0; }   /* the value-over-pill cell set the row's height at 52 */
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows > .row { border-bottom: 0; }   /* the bands are the rules */
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #colhead .h:not(:hover) { background: transparent !important; }   /* the frozen Rk / Player cells kept a surface ground that read as a white band */
