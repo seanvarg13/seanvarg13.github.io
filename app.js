@@ -7419,28 +7419,28 @@
     // component adds or subtracts to their k rate until it lands at the ultimate k rate"): a running K% column — whiffs alone, then each dial
     // moves it, "everything else" closes the gap, and the last row is his K%. No prose under it; the Repeats? column is the skill / noise read.
     const K = stuff ? "xK%" : "K%", base = kImplied(his.whf);
-    const rows = el("div", "krows");
-    const LAB = { s2d: "Finishing with two strikes", cstr: stuff ? "Called strikes (expected)" : "Called strikes", fpc: stuff ? "Foul balls on contact (expected)" : "Foul balls on contact", bb: stuff ? "Walks (xBB%)" : "Walks" };
-    const SUB = { s2d: (h, l) => `two-strike whiffs ${h >= 0 ? "+" : "−"}${Math.abs(h).toFixed(1)} over his overall · league ${l >= 0 ? "+" : "−"}${Math.abs(l).toFixed(1)}`, cstr: (h, l) => `${f1(h)}% of pitches · league ${f1(l)}`, fpc: (h, l) => `${f1(h)}% of contact · league ${f1(l)}`, bb: (h, l) => `${f1(h)}% · league ${f1(l)}` };
-    const TIP = { s2d: "a whiff with two strikes is the strikeout itself — his two-strike whiff rate against his overall", cstr: "a called strike keeps the count moving without contact", fpc: "a foul keeps the strikeout alive, a ball in play ends the plate appearance", bb: "a walk ends the plate appearance without a strikeout" };
-    const word = (w) => (w >= 0.72 ? "mostly skill" : w >= 0.5 ? "half skill" : w >= 0.3 ? "mostly noise" : "noise at this sample");
-    const hdr = el("div", "krow khead"); hdr.append(el("span", null, "Step"), el("span", "kc", "K% pts"), el("span", "kc", K), el("span", "kr", "Repeats?")); rows.append(hdr);
-    const pillOf = (v, plain) => { const pill = el("span", "kpill" + (plain ? " kplain" : ""), v == null ? "–" : plain ? f1(v) : sg(v)); if (v != null && !plain) { const s2 = pctStyle(Math.max(1, Math.min(99, Math.round(50 + 12 * v)))); if (s2) { pill.style.background = s2.bg; pill.style.color = s2.fg; } } return pill; };
-    const run = (v) => el("span", "krun", f1(v));
-    const row = (cls, lab, sub, pill, running, wordTxt, tip) => { const r = el("div", "krow" + (cls ? " " + cls : "")); if (tip) r.title = tip; const nm = el("div", "kname"); nm.append(el("span", "klab", lab)); if (sub) nm.append(el("span", "ksub", sub)); r.append(nm, pill, running, el("span", "kword", wordTxt || "")); return r; };
-    // step 1: his whiff rate, and the K% whiffs alone imply
-    let runK = base;
-    rows.append(row("kstart", stuff ? "Expected Whiff%" : "Whiff%", `${f1(his.whf)}% · league ${f1(lg.whf)}${pct.whf != null ? " · " + ordinal(pct.whf) + " pct" : ""} → a ${f1(base)} ${K} on whiffs alone`, pillOf(null, true), run(runK), word(wOf("whf")), "K% = −0.8 + 0.926 × Whiff% across every 100+ BF pitcher-season 2020-26"));
-    rows.lastChild.querySelector(".kpill").textContent = "";
-    let sum = 0;
+    // five plain columns (Sean, 6 Oct 2026: "the significant amount of words makes it tougher ... just show the stat and the league avg then
+    // the impact to k% and then the updated k%"): the dial, his rate, the league's, the K%-point pill, the running K%. No sub-lines, no
+    // percentiles, no Repeats? column; the tooltips keep the one-line explanations.
+    const rows = el("div", "krows kfive");
+    const LAB = { whf: stuff ? "xWhiff%" : "Whiff%", fpc: stuff ? "xFouls / contact" : "Fouls / contact", cstr: stuff ? "xCalled Strike%" : "Called Strike%", s2d: stuff ? "x2-strike Whiff%" : "2-strike Whiff%", bb: stuff ? "xBB%" : "BB%" };
+    const TIP = { whf: `${K} = −0.8 + 0.926 × Whiff% across every 100+ BF pitcher-season 2020-26`, s2d: "a whiff with two strikes is the strikeout itself — his two-strike whiff rate against his overall", cstr: "called strikes per pitch — a called strike keeps the count moving without contact", fpc: "the share of his contact that goes foul — a foul keeps the strikeout alive, a ball in play ends the plate appearance", bb: "a walk ends the plate appearance without a strikeout" };
+    const hdr = el("div", "krow khead"); hdr.append(el("span", null, "Step"), el("span", "kc", "His"), el("span", "kc", "Lg"), el("span", "kc", "± " + K), el("span", "kc", K)); rows.append(hdr);
+    const pillOf = (v) => { const pill = el("span", "kpill", v == null ? "–" : sg(v)); if (v != null) { const s2 = pctStyle(Math.max(1, Math.min(99, Math.round(50 + 12 * v)))); if (s2) { pill.style.background = s2.bg; pill.style.color = s2.fg; } } return pill; };
+    const num = (v) => el("span", "knum", v == null ? "–" : f1(v)), run = (v) => el("span", "krun", f1(v));
+    const row = (cls, lab, h, l, pill, running, tip) => { const r = el("div", "krow" + (cls ? " " + cls : "")); if (tip) r.title = tip; r.append(el("span", "klab", lab), num(h), num(l), pill, running); return r; };
+    // the two-strike rate is shown as the rate itself (his overall is the row above); the effect is on the gap over his overall
+    const shown = (k) => (k === "s2d" ? [his.s2d == null ? null : his.whf + his.s2d, lg.s2d + lg.whf] : [his[k], lg[k]]);
+    let runK = base, sum = 0;
+    { const r = row("kstart", LAB.whf, his.whf, lg.whf, el("span", "kpill kplain", "→"), run(runK), TIP.whf); rows.append(r); }
     for (const k of ["fpc", "cstr", "s2d", "bb"]) {
       if (his[k] != null) { sum += eff[k]; runK += eff[k]; }
-      rows.append(row("", LAB[k], his[k] == null ? "–" : SUB[k](his[k], lg[k]) + (pct[k] != null ? " · " + ordinal(pct[k]) + " pct" : ""), pillOf(eff[k]), run(his[k] == null ? null : runK), his[k] == null ? "" : word(wOf(k)), TIP[k]));
+      const [h, l] = shown(k);
+      rows.append(row("", LAB[k], h, l, pillOf(eff[k]), run(his[k] == null ? null : runK), TIP[k]));
     }
     const rest = gap - sum; runK += rest;
-    rows.append(row("krest", "Everything else", "sequencing, luck — what the four don't explain", pillOf(rest), run(runK), "mostly noise"));
-    rows.append(row("ktot", `${K} ${f1(his.k)}`, stuff ? `his actual K% is ${f1(act.k)}` : `${bf} batters faced`, pillOf(gap), run(his.k), stuff ? "" : word(wOf("k")), "the whole gap: K% − the K% his whiffs alone imply"));
-    rows.lastChild.querySelector(".kpill").title = "the whole gap: his K% against the K% whiffs alone imply";
+    { const r = row("krest", "Everything else", null, null, pillOf(rest), run(runK), "sequencing, luck — what the four don't explain"); rows.append(r); }
+    { const r = row("ktot", K, his.k, lg.k, pillOf(gap), run(his.k), stuff ? `the models' K%; his actual K% is ${f1(act.k)} · ${bf} batters faced` : `${bf} batters faced · the pill is the whole gap: K% − the K% his whiffs alone imply`); rows.append(r); }
     box.append(rows);
     return box;
   }

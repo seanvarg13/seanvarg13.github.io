@@ -4256,3 +4256,15 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop .pnav.inbar .pbtn { height: 24px; min-height: 24px !important; min-width: 24px; padding: 0 6px !important; font-size: 12px !important; line-height: 1; }
 :root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop .pgap { font-size: 12px; color: var(--muted); padding: 0 1px; }
 :root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop { padding: 0 8px 4px; }
+/* the K% build-up in five plain columns (Sean, 6 Oct 2026: "just show the stat and the league avg then the impact to k% and then the updated k%") */
+:root:root:root:root:root:root .krows.kfive .krow { grid-template-columns: 1fr 52px 52px 60px 56px; gap: 8px; min-height: 40px; }
+:root:root:root:root:root:root[data-view="mobile"] .krows.kfive .krow { grid-template-columns: 1fr 44px 44px 54px 48px; gap: 5px; min-height: 38px; }
+:root:root:root:root:root:root .krows.kfive .klab { font-size: 14px; font-weight: 600 !important; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root:root:root:root:root:root[data-view="mobile"] .krows.kfive .klab { font-size: 13px; }
+:root:root:root:root:root:root .krows.kfive .knum { font-variant-numeric: tabular-nums; text-align: center; font-size: 14px; color: var(--ink); }
+:root:root:root:root:root:root .krows.kfive .knum:nth-child(3) { color: var(--muted); }
+:root:root:root:root:root:root .krows.kfive .kpill { justify-self: center; min-width: 48px; text-align: center; }
+:root:root:root:root:root:root .krows.kfive .kpill.kplain { background: none !important; color: var(--muted) !important; }
+:root:root:root:root:root:root .krows.kfive .krun { font-size: 16px; }
+:root:root:root:root:root:root .krows.kfive .krow.ktot .krun, :root:root:root:root:root:root .krows.kfive .krow.kstart .krun { font-size: 17px; }
+:root:root:root:root:root:root .krows.kfive .krow.ktot .knum:nth-child(2) { font-weight: 700; }
