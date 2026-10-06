@@ -2212,3 +2212,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   is above league avg")**: they had been coloured on the percentile scale at 50 + 12 × the effect, and Savant's middle is a pale teal, so a small
   plus read as a minus. `signStyle(v)` in `renderKArchetype`: neutral grey at 0, red deepening with a plus and blue with a minus, full at ±2.5
   K% points (white digits past ~±1.1). Everything else keeps its flat grey pill (the `.krest` rule); the His pills stay on the percentile scale.
+* **The subtotal row, tinted and without a running K% (Sean, 6 Oct 2026: "not show the k% there since it is directly above ... make the row color
+  different so it clearly stands out as a subtotal")**: `.krow.ksub` carries only the four-dial pill (its K% cell is blank — the BB% row above
+  already shows it) on a grey band (ink at 6% on the surface, 8px corners, bled 10px into the table's padding).
