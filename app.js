@@ -2645,8 +2645,6 @@
       });
     } else { const rows = list.map((p, i) => [p, i]); rows.forEach(([p, i], j) => { if (onPage(i)) emitRow(p, i, rows, j); }); }
     ol.append(frag);
-    if (pg.more) { const sm = el("div", "showmore"), b = el("button", "btn", `Show more · ${pg.end} of ${list.length}`); b.type = "button";
-      b.addEventListener("click", () => { state.page++; renderRows(); }); sm.append(b); ol.append(sm); }   // no scroll reset: the next 25 appear under the last row
     fitNameCol();
     if (mobileView()) requestAnimationFrame(() => { for (const nm of ol.querySelectorAll(".name")) { nm.style.fontSize = ""; nm.style.letterSpacing = ""; if (nm.scrollWidth > nm.clientWidth + 1) { nm.style.fontSize = "13px"; nm.style.letterSpacing = "-0.02em"; if (nm.scrollWidth > nm.clientWidth + 1) nm.style.fontSize = "11.5px"; } } });   // a long name steps down to 14 then 12.5px before it ellipsises (Sean, 6 Oct 2026: "fit the names in there")
   }
@@ -2720,7 +2718,6 @@
     const pages = starts.length;
     if (state.page > pages) state.page = pages; if (state.page < 1) state.page = 1;
     const start = starts[state.page - 1];
-    if (phonePages()) return { size, pages, page: state.page, start: 0, end: state.page < pages ? starts[state.page] : total, more: state.page < pages };   // a phone shows everything up to its page: Show more appends the next 25 (Sean, 6 Oct 2026)
     return { size, pages, page: state.page, start, end: state.page < pages ? starts[state.page] : total };
   }
   // a pager bar: "1–50 of 597", first / previous / page numbers / next / last, and rows-per-page
@@ -2763,7 +2760,7 @@
     if (!total) { box.hidden = true; if (!onChange) seatFilters(null); return; }
     box.hidden = false;
     { const g = groupFor(state.pos), pit = isPitcherGroup(g);   // the Stuff+ board's count line at the right (Sean, 3 Oct 2026)
-      box.append(el("span", "pcount", pg.size && phonePages() ? `${pg.end} of ${total}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total} ${pit ? "pitchers" : "hitters"} · ${DS.season}${state.mode === "leaderboard" ? ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}` : ""}` : `${total} players`)); }
+      box.append(el("span", "pcount", pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total} ${pit ? "pitchers" : "hitters"} · ${DS.season}${state.mode === "leaderboard" ? ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}` : ""}` : `${total} players`)); }
     if (pg.pages > 1) {
       const nav = el("div", "pnav");
       const b = (label, n, title, dis) => { const x = el("button", "pbtn", label); x.type = "button"; x.title = title; x.disabled = dis; x.addEventListener("click", () => go(n)); return x; };
@@ -2776,7 +2773,7 @@
         const x = b(String(n), n, `Page ${n}`, false); if (n === pg.page) x.setAttribute("aria-current", "page"); nav.append(x); last = n;
       }
       nav.append(b("›", pg.page + 1, "Next page", pg.page === pg.pages));
-      if (phonePages() && box.id === "pagertop") { const row = el("div", "pnavrow"); const pc = box.querySelector(".pcount"); if (pc) row.append(pc); box.after(row); } else box.append(nav);   // a phone: the count alone — Show more sits under the rows (6 Oct 2026)   // a phone: the count and the page numbers share one line (Sean, 6 Oct 2026: the table started too far down)
+      if (phonePages() && box.id === "pagertop") { const row = el("div", "pnavrow"); const pc = box.querySelector(".pcount"); if (pc) row.append(pc); row.append(nav); box.after(row); } else box.append(nav);   // a phone: the count left, small page numbers right on one line (Sean, 6 Oct 2026: pages back, "put it in the upper gap on the right")   // a phone: the count and the page numbers share one line (Sean, 6 Oct 2026: the table started too far down)
     }
     if (onChange) box.append(perPageField(setSize));    // the list pages keep theirs in Filters (minimal pass 4); Fantasy here
     if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs();

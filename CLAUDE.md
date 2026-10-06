@@ -2168,3 +2168,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   value-over-pill headline cell loses its padding / border on a phone, which had set the row at 52); the phone's **name column is 116px**
   (`fitNameCol` lo = hi = 116, the grid's `--namew` default, a 22px rank column), the name 15px stepping down to 13 then 11.5px in
   `renderRowsIn` before it ellipsises, the team line 9.5px.
+* **Page numbers back on a phone, on the count line (Sean, 6 Oct 2026: "actually do the pages and put it in the upper gap on the right, but
+  don't make it super space taking up")**: the Show more pill of PR #396 is gone (`pageWindow` pages a phone at 25 again, `renderRowsIn` appends
+  nothing, `.showmore` CSS removed); `renderPager`'s `.pnavrow` holds the count at the left ("1–25 of 193") and the page numbers at the right
+  (‹ 1 2 … 8 ›) as 22px pills on a 22px line (the block at the end of `styles.css`), so the rows start where they did.

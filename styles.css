@@ -4216,8 +4216,8 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main .who, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main .rank { background: var(--ground, var(--surface)); }
 :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main:nth-child(even), :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main:nth-child(even) .who, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main:nth-child(even) .rank { background: var(--surface); }
 /* a phone's Show more (Sean, 6 Oct 2026: "one big page with a show more option"): a pill row at the foot of the rows, inside the scroller */
-:root:root:root:root:root:root .showmore { display: flex; justify-content: center; padding: 12px 0 18px; position: sticky; left: 0; width: min(100%, 100vw - 24px); box-sizing: border-box; }
-:root:root:root:root:root:root .showmore .btn { height: 36px; padding: 0 18px; border-radius: 18px; }
+
+
 /* no window at all on a phone, tighter rows (Sean, 6 Oct 2026, from a screenshot: "It still looks like it's a window ... the 50 of 223 can be
    moved up and we can eliminate that unnecessary gap ... make it so the rows are banded ... make them thinner a bit and make the player column
    much less long"): the phone's outer card loses its hairline, radius and surface; the count sits right over the column names; every other row
@@ -4240,3 +4240,10 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main .score.hero { padding-top: 0; padding-bottom: 0; border: 0; }   /* the value-over-pill cell set the row's height at 52 */
 :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows > .row { border-bottom: 0; }   /* the bands are the rules */
 :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #colhead .h:not(:hover) { background: transparent !important; }   /* the frozen Rk / Player cells kept a surface ground that read as a white band */
+/* page numbers back on a phone, small, at the right of the count line (Sean, 6 Oct 2026: "do the pages and put it in the upper gap on the right,
+   but don't make it super space taking up"): 22px buttons on the 22px count line, so the table starts where it did */
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 22px; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow .pcount { line-height: 22px; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow .pnav { display: flex; gap: 3px; margin: 0; flex-wrap: nowrap; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow .pnav .pbtn { height: 22px; min-height: 22px !important; min-width: 22px; padding: 0 6px !important; font-size: 12px !important; line-height: 1; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) .pnavrow .pgap { font-size: 12px; color: var(--muted); padding: 0 1px; }
