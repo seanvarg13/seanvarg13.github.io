@@ -1890,3 +1890,23 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `PCT_COLS_PS` carries `ncstr` in the same spot. The four whiff-to-strikeout dials in one place: fouls per contact (+0.5 K% a point), called
   strikes (+0.8), two-strike finishing (+0.36 per point of 2-strike Whiff% over overall) and BB% (−0.35) — together 85% of a season's K% beyond
   what Whiff% implies (scratch `kconv4.js`; deGrom 2021 +7.3 actual / +6.8 fit, Pérez 2026 +0.1 / −0.7).
+* **Pitching+ back, the Raw / Stuff switch back, the Stuff side on the Pitching+ models, xnERA (Sean, 6 Oct 2026: "make stuff+ back into pitching+
+  with the addition of the location and command thing. And then can we add back the raw vs stuff button ... for the swing and miss stuff you use all
+  the expected whiff expected two strike whiff expected called strikes and expected fouls from the pitching+ model, and also use expected batted ball
+  stuff from it too ... an XK% too and then use that to come up with a k-bb% and a mix xwoba that lets you create a stuff nERA and just call that
+  xnERA. And put that next to nERA on the leaderboard and then also with the stuff vs raw button when stuff is selected in the header replace nERA
+  with xnERA")**: PR #363 reversed except the xRating — the header link, the board (`#pitches`: Pitching+ / Whiff+ / BB+ / Loc+ / xWhiff·loc /
+  xGB·loc / xPU·loc / xFoul, `pb.sort` falls back to `pitp`), the Leaderboard column set **Pitching+** (`pitch pwhf pbb sloc nwhf ngb npu fbv ext`),
+  the Stats panel group, home's "Pitching+ that start", Similar's skill list (`pitch`), `BTABS_P` = Pitching+ · K% / BB% · nERA (the Pitching+ tab's
+  table now carries the xFoul pair too; the Rating · xRating line and As a starter stay off — `xr = null`, `asSP = null`); `RETIRED_P` / the saved-list
+  migration are `suera aopt puera pera nk nbb uera xrat stuff swhf sbb`. **Raw ▾ / Stuff** (`stuffSide()`, the `.phsidebtn` dropdown in `playerHead`) is
+  back; **`PCT_COLS_PS`** = Skills (x(K-BB)% = `xkbbs` · Mix xwOBA) · Swing & Miss (**xK%** = `xks` | xWhiff% · x2-strike Whiff% · xCalled Strike% ·
+  **xFoul% of contact**) | Command (**xBB%** | Strike% · 1st-pitch · 3-ball, his own) · Batted Ball (xGB% · xPU% · Mix xwOBA). New pool stats (the PK
+  block, `statsFor`, `NEXT_KEYS`, `SIDE_P`, `LB_EXTRA_P`, labels / `SHORT` / `STUFF_LABELS` / glossary): **`nfpc`** = `foulChance(p)`, the foul models'
+  share of contact going foul (the Stuff side of `fpc`); **`xnera`** = `expectedNERA(pv, xks, xbbf, nmix)` — nERA's bookkeeping (`underlyingERA`'s:
+  BB × wBB + HBP × wHBP + BIP × the per-ball wOBA, on the ERA scale) with Pitching+ xK%, xBB% and Mix xwOBA in place of his K%, BB% and mix — **centred**
+  so the pool's BF-weighted xnERA averages its nERA (`sorted.xneraShift`; raw it sat 0.52 under for everyone on 2026, the fixed models reading the season
+  ~2 K% points hot), lower = better (negated in the sorted list like `nmix`). 2026 starters: r .78 with nERA, sd .51 vs .67. **Leaderboard**: `xnera` is
+  the first column of the Standard and Advanced pitcher sets, right after the nERA headline (`state.lb.xneraFront` moves it to the front of saved lists
+  once). **Header**: `seasonLine` shows xnERA (the pool's `st.xnera`) in nERA's place while the Stuff side is on, in a window too. Jax 2026: nERA 3.65,
+  xnERA 3.68; Skubal 2.82 / 2.25; Sánchez 2.85 / 2.85; Glasnow 2.79 / 3.27.
