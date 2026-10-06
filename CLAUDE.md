@@ -2084,3 +2084,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   half skill / mostly noise" from `KREL` at his BF), a **The four dials** total and an **Everything else** remainder (sequencing, luck), and the
   skill-K% note (`.ksum / .krow / .khead / .ktot / .krest`). The `.rollhd` gets 1px of left padding — the tracked small caps' first letter was
   clipped by the box.
+* **The K% build-up, no scale row, no prose (Sean, 6 Oct 2026: "get rid of the poor average great label for the percentile bars", "show
+  their whiff %, then show what k% that whiff translates to, then show the process of how each component adds or subtracts to their k rate until
+  it lands at the ultimate k rate ... i like the column that says repeats or noise or skill", "i dont think we need any of that wording below")**:
+  `pctColumns` draws every chart with `scale = false` (the Poor / Average / Great row is gone; `pctSvg` still takes the flag). The Pitching+ tab's
+  strikeout profile (`renderKArchetype`) is a **running K% table**: columns Step · K% pts · K% · Repeats? — Whiff% first (his rate, league,
+  percentile, "→ a 28.6 K% on whiffs alone", the running K% = `kImplied`), then each dial (fouls on contact, called strikes, two-strike finishing,
+  walks) as a signed coloured pill moving the running K%, then Everything else (the gap the four don't explain) and the final row K% = his K%
+  with the whole gap as its pill; the Repeats? word from `KREL` at his BF. The sum line, the skill-K% note, the whiff check (`renderWhiffCheck`
+  stays in `app.js`) and the "Pitching+ is Stuff+'s twin" note are off the tab. On the Stuff side the first row is the expected Whiff% and the
+  last xK%, with his actual K% in the sub-line. CSS `.krun / .kstart / .krest / .ktot` at the end of `styles.css`; a phone wraps the sub-lines.
