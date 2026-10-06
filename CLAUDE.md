@@ -1979,4 +1979,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   "Swing-and-miss, and finishes · chase-driven, velocity", K% 28.1, skill K% 27.2, fouls +3.5 (78% skill at 712 BF), called strikes −2.1;
   Henderson: "Foul-ball finisher", fouls +4.6 of which +2.8 is noise at 371 BF; Phillips: "Balls in play, not fouls"; Imanaga: "Swing-and-miss
   that leaks strikeouts" (called strikes −2.0, two-strike finishing −1.3, 3rd percentile but 46% skill).
+* **The strikeout profile and the dials in the minors (Sean, 6 Oct 2026: "add these functionalities to the minor league pitchers too")**: every
+  level carries the inputs (Gameday gives calls, swings, fouls, the count), so a Triple-A / FSL card's Pitching+ tab already drew both under its
+  arsenal table; Double-A and below returned at "no arsenal". `renderStuffTab` now shows, with no arsenal rows, a level note plus `renderKArchetype`
+  and `renderKConv(p, st, [], …)`, and `renderKConv` draws the four-dial summary alone when it gets no rows (a note says the league is the level's
+  20+ BF pitchers and the weights are MLB's). The profile's note on a minors card says the skill / noise split uses MLB's reliability, so Skill is an
+  upper bound there. DeBerry (AA 2026): "Average whiffs, average conversion", two-strike finishing +1.9 of which +3.1 is noise at 582 BF.
 

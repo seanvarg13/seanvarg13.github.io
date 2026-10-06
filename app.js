@@ -7258,7 +7258,8 @@
     else trk.append(el("td", null, f1(his.k)), el("td", null, f1(lg.k)), pctTd(pct.k), heat(el("td", null, sg(his.k - lg.k)), his.k - lg.k), el("td", null, f1(skK)), heat(el("td", null, sg(nzK)), -nzK), el("td", null, Math.round(100 * wk) + "%"));
     tb.append(trk); t.append(tb);
     const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
-    if (!stuff) box.append(el("p", "note", `At ${bf} batters faced his skill K% reads ${f1(skK)} — the dials' skill parts add to ${f1(skillK)} — and ${sg(nzK)} of this season's K% is what a sample this size can't claim. Whiff% is the dial that carries (${Math.round(100 * wOf("whf"))}% at his size), two-strike finishing the one that mostly doesn't (${Math.round(100 * wOf("s2d"))}%): a season's run of two-strike whiffs is largely luck, a foul-ball or called-strike habit is largely his.`));
+    const lvNote = DS.level && DS.level !== "MLB" ? " The skill / noise split uses MLB's year-to-year reliability; a minor-league season is at least as noisy, so read the Skill column as an upper bound." : "";
+    if (!stuff) box.append(el("p", "note", `At ${bf} batters faced his skill K% reads ${f1(skK)} — the dials' skill parts add to ${f1(skillK)} — and ${sg(nzK)} of this season's K% is what a sample this size can't claim. Whiff% is the dial that carries (${Math.round(100 * wOf("whf"))}% at his size), two-strike finishing the one that mostly doesn't (${Math.round(100 * wOf("s2d"))}%): a season's run of two-strike whiffs is largely luck, a foul-ball or called-strike habit is largely his.` + lvNote));
     else box.append(el("p", "note", "Act − exp is what his results did beyond what the models expect from his pitches and where he threw them: a dial that's positive here year after year is a skill the models don't see (sequencing, deception, the catcher); one season of it is mostly noise. The Raw side splits each dial into skill and noise by sample size."));
     return box;
   }
@@ -7273,6 +7274,21 @@
     box.append(hd);
     const f1 = (x) => (x == null ? "–" : x.toFixed(1)), sg = (x) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(1));
     const heat = (td, v) => { if (v == null) return td; const st2 = pctStyle(Math.max(1, Math.min(99, Math.round(50 + 12 * v)))); if (st2) { td.style.background = st2.bg; td.style.color = st2.fg; } return td; };
+    if (!R0.length) {   // no arsenal (an untracked minors level): the four dials alone
+      const oC0 = cs == null ? null : KCONV.cstr * (cs - lgC), oF0 = fpc == null ? null : KCONV.fpc * (fpc - lgFpc);
+      const d20 = s2 == null || whf == null ? null : s2 - whf, oD0 = d20 == null ? null : KCONV.d2 * d20, oB0 = bb == null ? null : KCONV.bb * (bb - L.bb);
+      const parts0 = [oF0, oC0, oD0, oB0], sum0 = parts0.every((x) => x != null) ? parts0.reduce((a, b) => a + b, 0) : null, impl0 = kImplied(whf), gap0 = k - impl0;
+      const s2t = el("table", "ubt stufft kconvt kconv2"), tb0 = el("tbody");
+      const row0 = (lab, val, eff, tip) => { const tr = el("tr"); const a = el("td", "l", lab); if (tip) a.title = tip; tr.append(a, el("td", null, val), heat(el("td", null, sg(eff)), eff)); tb0.append(tr); };
+      row0("Fouls per contact", `${f1(fpc)} vs ${f1(lgFpc)}`, oF0, "contact that goes foul keeps the strikeout alive; a ball in play ends it");
+      row0("Called strikes", `${f1(cs)} vs ${f1(lgC)}`, oC0, "strikes without a swing");
+      row0("Two-strike finishing", `${f1(s2)} vs ${f1(whf)} overall`, oD0, "his two-strike whiff rate against his overall — the least stable of the four");
+      row0("Walks", `${f1(bb)} vs ${f1(L.bb)}`, oB0, "a walk is a plate appearance that can't be a strikeout");
+      const trs0 = el("tr", "ftot"); trs0.append(el("td", "l", "The four together"), el("td", null, ""), heat(el("td", null, sg(sum0)), sum0)); tb0.append(trs0);
+      const tra0 = el("tr", "ftot"); tra0.append(el("td", "l", stuff ? "xK% beyond what xWhiff% implies" : "K% beyond what Whiff% implies"), el("td", null, `${f1(k)} vs ${f1(impl0)}`), heat(el("td", null, sg(gap0)), gap0)); tb0.append(tra0);
+      s2t.append(tb0); const w0 = el("div", "stuffscroll"); w0.append(s2t); box.append(w0);
+      box.append(el("p", "note", "The league is this level's (pitchers with 20+ batters faced). The weights are MLB's — a point of fouls per contact, called strikes, two-strike finishing and walks is worth the same strikeouts here as it is up there, give or take."));
+      return box; }
     const t = el("table", "ubt stufft kconvt"), th = el("thead"), hr = el("tr");
     for (const [h, c, tt] of [["Pitch", "l"], ["Use", ""], [stuff ? "xWhiff" : "Whiff%", "", "per swing"], [stuff ? "xCalled" : "Called Strk", "", "called strikes per pitch"], [stuff ? "xFoul/con" : "Foul/con", "", "fouls per contact"],
                               ["Δ called", "", "this pitch's called strikes against the league's rate, in K% points beyond his whiffs"], ["Δ fouls", "", "this pitch's fouls per contact against the league's rate, in K% points beyond his whiffs"]]) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
@@ -7416,7 +7432,11 @@
     else hd.append(el("span", "rollname", m.stuff == null ? "Stuff+ –" : `Stuff+ ${Math.round(m.stuff)}`),
                    el("span", "rollsub", m.stuff == null ? "no pitch-tracking grades for this season yet" : `Whiff+ ${Math.round(m.swhf)} · Batted-ball+ ${Math.round(m.sbb)}` + vl));
     box.append(hd);
-    if (!rows.length) { box.append(el("p", "note", "The arsenal table comes with the next build of this season's data.")); return box; }
+    if (!rows.length) {   // no pitch tracking (Double-A and below): no arsenal table, but the strikeout profile and the whiffs-to-strikeouts
+      // summary read the calls, swings and fouls Gameday does carry (Sean, 6 Oct 2026: "add these functionalities to the minor league pitchers too")
+      box.append(el("p", "note", DS.level && DS.level !== "MLB" ? "No pitch tracking at this level, so there's no arsenal to grade — the strikeout profile below reads the calls, swings and fouls the feed does carry." : "The arsenal table comes with the next build of this season's data."));
+      if (P) { const ka = renderKArchetype(p, st, g); if (ka) box.append(ka); const kc = renderKConv(p, st, [], stuffSide()); if (kc) box.append(kc); }
+      return box; }
     const av = arsenalView(p), filtered = Array.isArray(av);
     if (av === "loading") box.append(el("p", "note", "Loading his pitches game by game…"));
     else if (av && !av.length) { box.append(el("p", "note", "No graded pitches in this selection.")); return box; }
