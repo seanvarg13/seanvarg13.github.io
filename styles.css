@@ -4171,3 +4171,12 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] .phead .tile .p .dot { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] .phead .tile .p .pb { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10.5px; }
 :root:root:root:root:root:root[data-view="mobile"] .phead .tile { padding: 7px 6px; }
+/* a phone's Leaderboard top, tightened (Sean, 6 Oct 2026: "how far down the leaderboard starts") */
+:root:root:root:root:root:root[data-view="mobile"] .pnavrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 0 6px; padding: 0 2px; }
+:root:root:root:root:root:root[data-view="mobile"] .pnavrow .pcount { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+:root:root:root:root:root:root[data-view="mobile"] .pnavrow .pnav { margin: 0; justify-content: flex-end; }
+:root:root:root:root:root:root[data-view="mobile"] .pnavrow .pnav .pbtn { height: 30px; min-width: 30px; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop { padding: 0 0 2px; gap: 6px; }
+:root:root:root:root:root:root[data-view="mobile"] #pagertop > #minfield.topmin { margin-left: 0; }
+:root:root:root:root:root:root[data-view="mobile"] .colband { display: none; }
+:root:root:root:root:root:root[data-view="mobile"] #colhead { padding-top: 8px; padding-bottom: 8px; }

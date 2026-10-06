@@ -2764,10 +2764,12 @@
         const x = b(String(n), n, `Page ${n}`, false); if (n === pg.page) x.setAttribute("aria-current", "page"); nav.append(x); last = n;
       }
       nav.append(b("›", pg.page + 1, "Next page", pg.page === pg.pages));
-      if (phonePages() && box.id === "pagertop") { const row = el("div", "pnavrow"); row.append(nav); box.after(row); } else box.append(nav);
+      if (phonePages() && box.id === "pagertop") { const row = el("div", "pnavrow"); const pc = box.querySelector(".pcount"); if (pc) row.append(pc); row.append(nav); box.after(row); } else box.append(nav);   // a phone: the count and the page numbers share one line (Sean, 6 Oct 2026: the table started too far down)
     }
     if (onChange) box.append(perPageField(setSize));    // the list pages keep theirs in Filters (minimal pass 4); Fantasy here
-    if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs(); box.append(el("span", "lbbreak")); const pc = box.querySelector(".pcount"); if (pc) box.append(pc); if (mfKeep) { mfKeep.classList.add("topmin"); if (box.lastElementChild !== mfKeep) box.append(mfKeep); } } }   // the count and the Min box on a quiet line under the controls (6 Oct 2026); the Min box moves only when it isn't already last   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
+    if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs();
+      if (phonePages()) { if (mfKeep) { mfKeep.classList.add("topmin"); if (box.lastElementChild !== mfKeep) box.append(mfKeep); } }   // a phone: Min IP rides after the pills; the count is on the page-number line
+      else { box.append(el("span", "lbbreak")); const pc = box.querySelector(".pcount"); if (pc) box.append(pc); if (mfKeep) { mfKeep.classList.add("topmin"); if (box.lastElementChild !== mfKeep) box.append(mfKeep); } } } }   // the count and the Min box on a quiet line under the controls (6 Oct 2026); the Min box moves only when it isn't already last   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
   }
   function perPageField(setSize) {
     const sz = el("label", "field psize"); sz.append(el("span", null, "Per page"));

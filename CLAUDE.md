@@ -2114,3 +2114,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `.hstats` line are gone from the band (`seasonLine` still builds the line; the tiles read it). `finish()` keeps the tiles and the control row
   out of `.phleft` so they span the band (desktop grid areas `left right / tiles / ctl`). The Arsenal YoY tab on the mock is **not built** —
   Sean asked to wait on the year-over-year arsenal comparison. CSS: the block "the proposed layout, built" at the end of `styles.css`.
+* **A phone's Leaderboard starts higher (Sean, 6 Oct 2026, from a phone screenshot: "how far down the leaderboard starts")**: under `phonePages()`
+  the Min PA / IP box rides on the control row after the Standard ▾ and Season ▾ pills (no `.lbbreak` on a phone), the count "1–25 of 539" shares
+  the `.pnavrow` line with the page numbers (count left, pages right), the Result / Process band row (`#colband`) is hidden on a phone and the
+  column-name row is a little shorter — the first row sits ~190px higher. A desktop is unchanged.
