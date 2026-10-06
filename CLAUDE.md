@@ -2202,3 +2202,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **Two-strike finishing as the gap (Sean, 6 Oct 2026: "do like the gap one ... their 2 strike whiff minus their actual whiff")**: the K% table's
   row is **2-strike finishing** — His = 2-strike Whiff% − Whiff%, signed (Misiorowski −0.6), Lg the league's gap (−0.7) — in place of the raw
   two-strike rate; `num(v, sgn)` prints that row signed.
+* **The His column coloured (Sean, 6 Oct 2026: "On the his column can you heat map those stats in the same way the +/- K is")**: each His cell of
+  the K% table is a pill in his percentile colour on that stat among the pool (`pct.whf / fpc / cstr / bb / k`, the two-strike gap's place among
+  the reference list; `num(v, sgn, pc)`, `.knum.khis`); the Lg column stays plain. The `.kstart .kpill` blank-pill rule now skips `.khis`.
