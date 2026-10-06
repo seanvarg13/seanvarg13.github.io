@@ -1885,3 +1885,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (K% = −0.8 + 0.926·Whiff%) correlates with fouls per contact at r .57 and Called Strike% at .33; the two together fit it at r .81 (gap = −40.7 +
   0.51·foul/contact + 0.90·Called Strike%), that prediction repeats year to year at .57 (the gap itself .47) and forecasts next year's gap at .45;
   the predicted-low third runs 2.0 under this year and 1.3 under the next (72% still under), the high third 2.6 over → 1.4 over (70%).
+* **Called Strike% in Swing & Miss (Sean, 6 Oct 2026: "add called strikes to the whiff or swing and miss section")**: `PCT_COLS_P` Swing & Miss =
+  K% | Whiff% · 2-strike Whiff% · **Called Strike%** · Foul% of contact (`cstr`, already a card metric in the build's Swing & miss group);
+  `PCT_COLS_PS` carries `ncstr` in the same spot. The four whiff-to-strikeout dials in one place: fouls per contact (+0.5 K% a point), called
+  strikes (+0.8), two-strike finishing (+0.36 per point of 2-strike Whiff% over overall) and BB% (−0.35) — together 85% of a season's K% beyond
+  what Whiff% implies (scratch `kconv4.js`; deGrom 2021 +7.3 actual / +6.8 fit, Pérez 2026 +0.1 / −0.7).
