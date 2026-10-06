@@ -1807,7 +1807,6 @@
   // Classic meters (Sean: the Season Stats uERA chip matches the sliders), with dark or white text, whichever reads
   function paintBar(node, pct) {
     if (pct == null) return;
-    if (state.bars === "classic") return paint(node, pct);
     const bg = savantStyle(pct).bg, c = bg.match(/\d+/g).map(Number), dark = [21, 24, 26];
     node.style.background = bg; node.style.color = contrast(c, dark) >= contrast(c, [255, 255, 255]) ? "rgb(21,24,26)" : "#fff";
   }
@@ -3804,13 +3803,10 @@
         const a = el("a", null, "Pitching+"); a.href = "#pitches"; a.dataset.mode = "pitches"; a.title = "Every pitcher's pitches graded";
         lb.after(a); if (fan) a.after(fan);
       } }
-    if (m && !m.querySelector('a[href="#trends"]')) { const li = el("li"); const a = el("a", null, "League Trends"); a.href = "#trends"; li.append(a); m.append(li); }
-    if (m && !m.querySelector('a[href="#callups"]')) { const li = el("li"); const a = el("a", null, "Call-up Watch"); a.href = "#callups"; li.append(a); m.append(li); }
+    // League Trends, Call-up Watch and Compare left the menus (Sean, 6 Oct 2026: "eliminate the league trends, call up watch and compare");
+    // their renderers stay below, and #trends / #callups / #compare land on home
     // Compare lives in this menu, not the header (minimal pass 5, Sean, 30 Sep 2026): Home · Fantasy · Leaderboards · More
-    if (m && !m.querySelector('a[href="#compare"]')) {
-      const top = document.querySelector('.modes > a[data-mode="compare"]'); if (top) top.remove();
-      const li = el("li"); const a = el("a", null, "Compare"); a.href = "#compare"; li.append(a); m.append(li);
-    }
+    { const top = document.querySelector('.modes > a[data-mode="compare"]'); if (top) top.remove(); const old = m && m.querySelector('a[href="#compare"]'); if (old) old.closest("li").remove(); }
     return b;
   };
   pitchBoardEl();
@@ -6189,7 +6185,7 @@
     row("Layout", "Auto gives a phone the compact layout; Desktop on a phone shows the full layout zoomed out.",
       segOf("Layout", [["auto", "Auto"], ["mobile", "Mobile"], ["desktop", "Desktop"]], T.viewPref(), (v) => { T.setView(v); renderAppearance(); }));
     row("Percentile bars", "How the bars on a player's card are drawn.",
-      segOf("Percentile bars", [["savant", "Savant charts"], ["classic", "Classic meters"]], state.bars, (v) => { state.bars = v; savePrefs(); render(); }));
+      );   // the Percentile bars switch (Savant charts / Classic meters) came off with the standard rows (6 Oct 2026)
     // type: one line per font, set in that font
     T.preloadFonts();
     const fg = el("div", "fonts");
@@ -6630,7 +6626,7 @@
     return box;
   }
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
-  const BTABS = [["compare", "Compare"], ["stats", "Season Stats"], ["fantasy", "Fantasy"]];
+  const BTABS = [["stats", "Season Stats"], ["fantasy", "Fantasy"]];   // Compare came off the strip with the Compare page (Sean, 6 Oct 2026)
   const BTABS_H = [["mix", "Mix"]];   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
   const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"]];   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
@@ -8188,7 +8184,6 @@
     pctROs.forEach((ro) => ro.disconnect()); pctROs = [];
     body.append(pctColumns(p, st, g, ref, p.type === "H" ? PCT_COLS_H : stuffSide() ? PCT_COLS_PS : PCT_COLS_P));
     const sim = similarRow(p, st, ref); if (sim) body.append(sim);
-    if (state.bars === "classic") { const vl0 = viewLabel(p.type); body.append(el("p", "pctfoot", `${vl0 || "full season"} · ${poolPhrase(ref)} (${pool(ref).ref.length})`)); }
     const vl = viewLabel(p.type);
     col.title = `${vl ? vl + " · " : ""}${poolPhrase(ref)} (${pool(ref).ref.length})`;   // Savant prints no footer: the pool is in the hover
     col.append(body);
@@ -8250,7 +8245,7 @@
         const groups = sections.map(([title, keys]) => ({ title, rows: rowsOf(keys) })).map((g) => { while (g.rows.length && g.rows[g.rows.length - 1].gap) g.rows.pop(); while (g.rows.length && g.rows[0].gap) g.rows.shift(); return g; }).filter((x) => x.rows.some((r) => !r.gap));
         if (groups.length) sets.push(groups);
       }
-      if (state.bars === "classic") {                // the older look: a heading per section over plain meter rows (Appearance)
+      if (false) {                // the older look: a heading per section over plain meter rows (Appearance) — off the site since the standard rows (6 Oct 2026)
         cols.classList.add("pctclassic");
         for (const gs of sets) {
           const c = el("div", "pctccol");
@@ -8262,9 +8257,33 @@
           }
           cols.append(c);
         }
-      } else sets.forEach((gs, i) => cols.append(pctChart(gs, i, opts.scaleAll || i === 0)));   // scaleAll: every column heads with the scale, so paired columns line up row for row
+      } else sets.forEach((gs, i) => cols.append(pctRows(gs, opts.scaleAll || i === 0)));   // the standard rows (6 Oct 2026); the first column carries the Percentile / Value head
       return cols;
     }
+  }
+  // The card's standard rows (Sean, 6 Oct 2026: "get rid of the savant bars and classic bars and just make the website standard whatever you
+  // feel is easiest on the eyes and easiest to understand when immediately looking at the player card"): plain HTML, one row a stat —
+  // the name, a slim rounded track filled to his percentile in Savant's colour, the percentile as a coloured pill at the end of the track,
+  // and his value bold at the right. No ticks, no bubbles on the bar, no Poor / Average / Great: the colour says it. The same tap note as
+  // the charts (statPop wants a .svchart host), the same fold-outs and line breaks. pctSvg / pctChart stay below for the record.
+  function pctRows(groups, head) {
+    const host = el("div", "svchart pctstd");
+    if (head) { const h = el("div", "prowhead"); h.append(el("span"), el("span", null, "Percentile"), el("span"), el("span", null, "Value")); host.append(h); }
+    for (const g of groups) {
+      const sec = el("section", "psec"); sec.append(el("div", "psecname", g.title));
+      for (const r of g.rows) {
+        if (r.gap) { sec.append(el("div", "prowgap")); continue; }
+        const row = el("div", "prow" + (r.sub ? " sub" : "")); row.title = r.tip;
+        const lab = el("button", "plbl", (r.fold ? (r.fold.open ? "▾ " : "▸ ") : "") + r.label); lab.type = "button";
+        const trk = el("div", "ptrk"), pill = el("span", "ppct", r.pct == null ? "–" : String(r.pct)), val = el("span", "pval", r.value);
+        if (r.pct != null) { const s = savantStyle(r.pct), ps = pctStyle(r.pct); const f = el("div", "pfill"); f.style.width = Math.max(2, Math.min(100, r.pct)) + "%"; f.style.background = s.bg; trk.append(f); pill.style.background = ps.bg; pill.style.color = ps.fg; } else { row.classList.add("none"); }
+        row.append(lab, trk, pill, val);
+        row.addEventListener("click", (e) => { e.stopPropagation(); if (r.fold && e.target === lab) { state.open[r.fold.key] = !r.fold.open; savePrefs(); render(); return; } statPop(row, r); });
+        sec.append(row);
+      }
+      host.append(sec);
+    }
+    return host;
   }
   // the five qualifiers most like him in style and in skill both (Sean, 1 Oct 2026: "similar players both stylistically and skill
   // wise"): two percentile distances, averaged — style is how he gets there (a hitter's batted-ball shape and approach, and his side
@@ -10075,7 +10094,7 @@
   }
   const NAV_GROUPS = [
     { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "eligibility", "fantasy", "planner", "mock", "claude"] },
-    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaders", short: "Leaders", modes: ["leaderboard", "trending", "trends", "callups", "compare"] },   // Stuff+ (#pitches) is its own header tab (3 Oct 2026)
+    { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaders", short: "Leaders", modes: ["leaderboard", "trending"] },   // Stuff+ (#pitches) is its own header tab (3 Oct 2026)
     { key: "more", sel: "moresel", txt: "moreseltxt", menu: "moremenu", label: "⋯", short: "More", modes: ["appearance"] },
   ];
   function readMode() {
@@ -10083,7 +10102,7 @@
     const pm = h.match(/^player\/(\d+)$/);
     if (pm) { state.mode = "player"; const id = Number(pm[1]); if (state.x.id !== id) { state.x = { id, type: null, ds: null }; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; } return; }
     if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["leaders", "trending", "whatif", "settings"].includes(v) ? v : "leaders"; return; }
-    state.mode = ["home", "draft", "rankings", "compare", "eligibility", "trending", "leaderboard", "pitches", "trends", "callups", "planner", "mock", "claude", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
+    state.mode = ["home", "draft", "rankings", "eligibility", "trending", "leaderboard", "pitches", "planner", "mock", "claude", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {

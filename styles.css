@@ -4010,7 +4010,8 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root main.wrap, :root:root:root:root:root:root body main.wrap { border: 1px solid var(--hair) !important; border-radius: 20px; background: var(--surface) !important; box-shadow: none !important; }
 :root:root:root:root:root:root:not([data-view="mobile"]) body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-mode="mock"],[data-mode="claude"]) main.wrap { border: 0 !important; background: transparent !important; }
 :root:root:root:root:root:root :is(#bscroll, .board-scroll, #pitchboard, .pbscroll, .fscroll, .gframe, .cltable, .pbtable, .ftable, .springbox, .kconv, .karch, .cgrid, .hcard, .hubcard, .home .card, .hgrid > *) { border-color: var(--hair) !important; outline-color: var(--hair) !important; box-shadow: none !important; }
-:root:root:root:root:root:root :is(#bscroll, .board-scroll, .pbscroll, .fscroll, .hubcard, .hcard, .home .card, .hgrid > *, .gframe, .springbox) { border-radius: 16px; overflow: hidden; }
+:root:root:root:root:root:root :is(.hubcard, .hcard, .home .card, .hgrid > *, .gframe, .springbox) { border-radius: 16px; overflow: hidden; }
+:root:root:root:root:root:root :is(#bscroll, .board-scroll, .pbscroll, .fscroll) { border-radius: 16px; }   /* these scroll: never overflow: hidden on them (it froze the Leaderboard, 6 Oct 2026) */
 :root:root:root:root:root:root #modal .card, :root:root:root:root:root:root #modal > div, :root:root:root:root:root:root .modal-card, :root:root:root:root:root:root #modal-body { border-color: var(--hair) !important; box-shadow: none !important; }
 :root:root:root:root:root:root:not([data-view="mobile"]) #modal .card, :root:root:root:root:root:root:not([data-view="mobile"]) .modal-card { border-radius: 24px; overflow: hidden; }
 :root:root:root:root:root:root[data-view="mobile"] #modal .card, :root:root:root:root:root:root[data-view="mobile"] .modal-card { border-radius: 24px 24px 0 0; overflow: hidden; }
@@ -4068,3 +4069,23 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .note, :root:root:root:root:root:root .lbnote, :root:root:root:root:root:root .hub .note { color: var(--muted); font-size: 13px; }
 :root:root:root:root:root:root .chip, :root:root:root:root:root:root .uchip, :root:root:root:root:root:root .mrank .chip { border-radius: 999px !important; }
 :root:root:root:root:root:root .heat, :root:root:root:root:root:root td.plus, :root:root:root:root:root:root .uchip.on { border-radius: 6px; }
+
+/* the card's standard rows (6 Oct 2026): label · track · percentile pill · value */
+:root:root:root:root:root:root .pctstd { position: relative; padding: 4px 0 8px; }
+:root:root:root:root:root:root .prowhead { display: grid; grid-template-columns: 118px 1fr 40px 54px; gap: 10px; align-items: end; padding: 6px 0 2px; font-size: 10.5px !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; color: var(--muted) !important; }
+:root:root:root:root:root:root .prowhead span:nth-child(2) { text-align: left; } :root:root:root:root:root:root .prowhead span:nth-child(4) { text-align: right; }
+:root:root:root:root:root:root .psec { padding: 10px 0 2px; }
+:root:root:root:root:root:root .psecname { font-size: 11px !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; color: var(--muted) !important; padding: 0 0 6px; border-bottom: 1px solid var(--hair); margin-bottom: 4px; }
+:root:root:root:root:root:root .prow { display: grid; grid-template-columns: 118px 1fr 40px 54px; gap: 10px; align-items: center; min-height: 32px; cursor: pointer; border-radius: 8px; }
+:root:root:root:root:root:root .prow:hover { background: var(--accent-wash); }
+:root:root:root:root:root:root .prow.sub .plbl { padding-left: 14px; color: var(--ink-2); font-size: 12.5px; }
+:root:root:root:root:root:root .prowgap { height: 10px; }
+:root:root:root:root:root:root .plbl { border: 0; background: transparent; padding: 0; text-align: left; font: inherit; font-size: 13.5px; color: var(--ink); font-weight: 600 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+:root:root:root:root:root:root .ptrk { position: relative; height: 10px; border-radius: 5px; background: var(--pctrack); overflow: hidden; }
+:root:root:root:root:root:root .pfill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; }
+:root:root:root:root:root:root .ppct { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; height: 24px; border-radius: 12px; font-size: 12.5px; font-weight: 700 !important; font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root .prow.none .ppct { background: var(--surface-2); color: var(--muted); }
+:root:root:root:root:root:root .pval { font-family: var(--display); font-size: 17px; font-weight: 700 !important; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+:root:root:root:root:root:root[data-view="mobile"] .prow, :root:root:root:root:root:root[data-view="mobile"] .prowhead { grid-template-columns: 130px 1fr 36px 48px; gap: 8px; }
+:root:root:root:root:root:root[data-view="mobile"] .plbl { font-size: 13px; }
+:root:root:root:root:root:root .pctstd .statpop { left: 0; right: 0; }
