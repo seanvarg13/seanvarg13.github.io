@@ -7751,9 +7751,9 @@
   // their strike percentile and their 3 ball strike percentile ... walk avoidance ... bb%, strike%, and 3 ball strike %"): Skills = Whiff% ·
   // Control, Swing & Miss = K% · Whiff% (fold-out: 2-strike Whiff%, Foul%, Called Strike%); the Stuff side the Pitching+ expected ones
   // Walk Avoidance under Swing & Miss, ahead of Batted Ball (Sean, 5 Oct 2026); left 7 rows, right 6
-  const PCT_COLS_P = [[["Skills", ["kskl", "ctrl"]], ["Swing & Miss", [{ k: "whf", sub: ["s2whf", "foul"] }]], ["Walk Avoidance", ["strk", "fstrk", "b3strk"]]],   // no K% / BB% in the skill sections, 1st-pitch Strike% in; Results holds the outcomes (Sean, 5 Oct 2026)
+  const PCT_COLS_P = [[["Skills", ["kskl", "ctrl"]], ["Swing & Miss", ["whf", "s2whf", "foul"]], ["Walk Avoidance", ["strk", "fstrk", "b3strk"]]],   // no K% / BB% in the skill sections, 1st-pitch Strike% in; Results holds the outcomes (Sean, 5 Oct 2026)
                       [["Batted Ball", ["gb", "pu", "mixw"]], ["Results", ["k", "bb", "kbb"]]]];   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
-  const PCT_COLS_PS = [[["Skills", ["ksklx", "ctrl"]], ["Swing & Miss", [{ k: "nwhf", sub: ["ns2whf", "nfoul"] }]], ["Walk Avoidance", ["strk", "fstrk", "b3strk"]]],
+  const PCT_COLS_PS = [[["Skills", ["ksklx", "ctrl"]], ["Swing & Miss", ["nwhf", "ns2whf", "nfoul"]], ["Walk Avoidance", ["strk", "fstrk", "b3strk"]]],
                        [["Batted Ball", ["ngb", "npu", "nmix"]], ["Results", ["k", "bb", "kbb"]]]];
   const STUFF_LABELS = { xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => state.cardSide === "stuff";
