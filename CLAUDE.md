@@ -2193,3 +2193,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (`mfKeep` null) and the Filters panel's `minNode` no longer skips `onePage()`. **A phone's bar** is Filters · "1–25 of 193" · ‹ 1 2 … 8 › on
   one line (`.pnav.inbar`, 24px pills pushed right; the `.pnavrow` is gone), so the first row sits another ~20px higher. Desktop: the count line
   under the controls now carries only the count.
+* **The K% build-up in five plain columns (Sean, 6 Oct 2026, from Yamamoto's card: "the significant amount of words makes it tougher for me to
+  understand, maybe instead just show the stat and the league avg then the impact to k% and then the updated k%")**: `renderKArchetype`'s table
+  (`.krows.kfive`) is Step · His · Lg · ± K% · K% — Whiff% (→ the K% whiffs alone imply), Fouls / contact, Called Strike%, 2-strike Whiff% (the
+  rate itself, its effect still on the gap over his overall), BB%, Everything else, K% (his against the league's, the pill the whole gap) — no
+  sub-lines, percentiles or Repeats? column; the one-line explanations are the rows' tooltips. The Stuff side prefixes x. CSS at the end of
+  `styles.css`; the archetype heading is unchanged.
