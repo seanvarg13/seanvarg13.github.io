@@ -2599,7 +2599,7 @@
       const nv = p.type === "P" ? V(p).m.nera : null, sc = el("div", "score", p.type === "H" ? fmtX(st.score) : nv == null ? "–" : nv.toFixed(2));
       // a pitcher's headline is his nERA itself (Sean, 6 Oct 2026: "show their actual nERA not their percentile"); the sort is still the
       // percentile, so lowest nERA first. (This comment had swallowed the paint below for a day — the column went unpainted and unmarked.)
-      if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = p.type === "P" && st.pct && st.pct.nera != null ? st.pct.nera : st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null;   /* a pitcher's headline is coloured by nERA's own percentile, not the Rating's (6 Oct 2026) */ if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) { sc.classList.add("hot", "hero"); sc.append(el("i", "ppill", String(Math.round(sp)))); } } }   // hero: coloured digits over a percentile pill, not a filled cell (6 Oct 2026) if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
+      if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = p.type === "P" && st.pct && st.pct.nera != null ? st.pct.nera : st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null;   /* a pitcher's headline is coloured by nERA's own percentile, not the Rating's (6 Oct 2026) */ if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) sc.classList.add("hot", "hero"); } }   /* hero: the value in its percentile colour, no pill under it (Sean, 6 Oct 2026: "dont have like the percentile thing below it") */ if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
       sc.title = p.type === "H" ? `${HEAD.label} ${fmtX(st.score)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl` : `nERA ${nv == null ? "–" : nv.toFixed(2)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl — luck-neutral ERA: every ball in play at the league's value for its type`; main.append(sc);
       const pcts = el("div", "pcts");
       for (const m of ms) {
@@ -8234,12 +8234,12 @@
   // Control, Swing & Miss = K% · Whiff% (fold-out: 2-strike Whiff%, Foul%, Called Strike%); the Stuff side the Pitching+ expected ones
   // Walk Avoidance under Swing & Miss, ahead of Batted Ball (Sean, 5 Oct 2026); left 7 rows, right 6
   // Skills = K-BB% · Mix wOBA, K% back atop Swing & Miss and BB% atop Command (Walk Avoidance renamed) with a line break ("|") after each, no Results (Sean, 6 Oct 2026)
-  const PCT_COLS_P = [[["Skills", ["rating", "whf", "xbbf"]], ["Swing & Miss", ["k", "whf", "s2whf", "cstr", "fpc"]]],
+  const PCT_COLS_P = [[["Skills", ["whf", "xbbf"]], ["Swing & Miss", ["k", "whf", "s2whf", "cstr", "fpc"]]],
                       [["Command", ["bb", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["gb", "pu", "mixw"]]]];   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
   // the Stuff side (Sean, 6 Oct 2026: "for the swing and miss stuff you use all the expected whiff expected two strike whiff expected called
   // strikes and expected fouls from the pitching+ model, and also use expected batted ball stuff from it too ... an xK% too"): every bar off
   // the Pitching+ models — xK% (Pitching+ xK%), xWhiff%, x2-strike Whiff%, xCalled Strike%, xFoul% of contact, xBB%, xGB% / xPU% / Mix xwOBA
-  const PCT_COLS_PS = [[["Skills", ["rating", "nwhf", "xbbf"]], ["Swing & Miss", ["xks", "nwhf", "ns2whf", "ncstr", "nfpc"]]],
+  const PCT_COLS_PS = [[["Skills", ["nwhf", "xbbf"]], ["Swing & Miss", ["xks", "nwhf", "ns2whf", "ncstr", "nfpc"]]],
                        [["Command", ["xbbf", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["ngb", "npu", "nmix"]]]];
   const STUFF_LABELS = { nfpc: "xFoul% of contact", xnera: "xnERA", xbbf: "xBB%", xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => state.cardSide === "stuff";   // the Raw / Stuff switch is back (Sean, 6 Oct 2026: "add back the raw vs stuff button")
