@@ -3934,3 +3934,7 @@ header.top .wordmark { display: none; }
 .springbox .springt .sflag { display: inline-block; margin-left: 6px; padding: 0 5px; font-size: 10px; border: 1px solid var(--line-soft, #c9ced6); color: var(--ink-2, #4a5563); }
 .springbox .springt .sflag.new { border-color: var(--accent-2, #7fb3e0); color: var(--ink); }
 .springbox .note { margin-top: 10px; }
+
+/* Strikeout profile (6 Oct 2026): the archetype line, the why, and the dials' skill / noise table on the Pitching+ tab */
+.stuffbox .karch .karchwhy { margin: 2px 0 8px; }
+.stuffbox .karcht td.l { white-space: nowrap; }

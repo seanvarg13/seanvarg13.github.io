@@ -1962,4 +1962,21 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   not taken yet: a season feature in `train_stuff.py` (a new season scores at the last one's level), or centring the displayed expected
   rates on the season's actual league (`xneraShift` / `xCalled` already do this for xnERA and called strikes; Sean declined it for xWhiff on
   4 Oct).
+* **Strikeout profile (Sean, 6 Oct 2026: "identifies the pitchers k archetype and why they are like this and what the true skill is and what's
+  noise")**: `renderKArchetype(p, st, g)` at the top of the Pitching+ tab's lower half (before Whiffs to strikeouts; CSS `.karch`). The archetype
+  name from his whiff percentile and the gap between his K% and what Whiff% alone implies (`kImplied`): 75th+ whiffs → "Pure swing-and-miss" /
+  "Swing-and-miss, and finishes" (gap ≥ +1.5) / "Swing-and-miss that leaks strikeouts" (≤ −1.5); 40-75th → the biggest dial names it ("Foul-ball
+  finisher", "Called-strike collector", "Two-strike closer", "Strike-thrower"; negative: "Balls in play, not fouls", "No called strikes", "Can't
+  finish with two strikes", "Walks eat his strikeouts"; else "Average whiffs, average conversion"); under 40th → "Pitch-to-contact" with the same
+  qualifiers; "· chase-driven" (Chase% 70th+) or "in the zone" (Zone% 70th+), "velocity" (85th+). A why line (K% and whiff percentiles, the gap,
+  every dial beyond ±0.5 with his rate vs the league's), then the table: Whiff% (0.926 K% a point), 2-strike finishing (2-strike Whiff% − Whiff%,
+  ranked among the pool's reference list), Called Strike%, Foul% of contact, BB% (`KCONV` weights) and K% — His, League, Pct, Effect, **Skill**
+  (league + w × (his − league)), **Noise** ((1 − w) × (his − league)), **Repeats** (w = BF / (BF + k)). `KREL` k from every consecutive pair of
+  100+ BF pitcher-seasons 2020-26 (scratch `karch.js`: talent variance = the between-season covariance, noise = c / BF): K% 128, Whiff% 97,
+  2-strike finishing 818, Called Strike% 171, Foul% of contact 198, BB% 261 — so at 300 BF Whiff% is 76% skill, fouls 60%, called strikes 64%,
+  walks 54%, two-strike finishing 27%. The note gives his skill K% (K% shrunk on its own k) and the dials' sum. On the Stuff side the same table
+  reads the Pitching+ expected rates with an Actual column and Act − exp (what the models don't see) in place of Skill / Noise. Skenes 2026:
+  "Swing-and-miss, and finishes · chase-driven, velocity", K% 28.1, skill K% 27.2, fouls +3.5 (78% skill at 712 BF), called strikes −2.1;
+  Henderson: "Foul-ball finisher", fouls +4.6 of which +2.8 is noise at 371 BF; Phillips: "Balls in play, not fouls"; Imanaga: "Swing-and-miss
+  that leaks strikeouts" (called strikes −2.0, two-strike finishing −1.3, 3rd percentile but 46% skill).
 
