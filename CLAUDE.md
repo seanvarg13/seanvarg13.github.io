@@ -1920,3 +1920,19 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   19.6 = 75th). Training on 2020-26 puts the 2026 level on the actual; the compression (expected spread ~77-81% of the real one) stays — a tree
   model regresses to the middle. The `xneraShift` centring stays in place (it goes to ~0 on a season the models have seen). Every season and the
   postseasons are rescored by the same run.
+* **Whiffs to strikeouts on the Pitching+ tab (Sean, 6 Oct 2026: "that table you've given me with whiff %, called strike %, and foul % can you add
+  that ... to the pitching+ tab. And then make it so when you switch between raw and stuff the stuff shows what's expected ... an overall row and for
+  each aspect I'd also like to see the +/- impact on the k-to-whiff gap")**: `renderKConv(p, st, R0, stuff)` under the Pitching+ tab's arsenal table
+  (before the whiff check; CSS `.kconv` at the end of `styles.css`): a row per pitch (15+ thrown) — Use, Whiff%, Called Strike% (per pitch), Fouls
+  per contact, **Δ called** = .779 × his share of pitches × (the pitch's rate − league), **Δ fouls** = .569 × its share of his contact × (rate −
+  league), so the pitch rows add to the All pitches row (his season rates: `m.whf / cstr / fpc`); then the four-dial summary — fouls, called strikes,
+  **two-strike finishing** (.357 × (2-strike Whiff% − Whiff%)), **walks** (−.348 × (BB% − league)), the four together, and the actual gap K% − (−0.8 +
+  0.926·Whiff%) (`KCONV` / `kImplied`, scratch `kconv4.js`: the four explain 85% of the gap 2020-26). Δ cells heat-coloured (`pctStyle` at 50 + 12·Δ).
+  **The Stuff side** reads the Pitching+ models: per pitch `xwhfl`, `xcstr` + the league's actual − expected called-strike offset (`xCalled`'s
+  centring), `xFoulOf`; overall `st.nwhf / m.ncstr / st.nfpc / st.ns2whf / m.xbbf` and `st.xks` against the K% its xWhiff% implies. League rates from
+  `lgRatesP()` (20+ BF, so BB% reads 8.9 there). **Build**: the arsenal row gains **`cstr`** (called strikes per pitch, %) and **`xcstr`** (the command
+  models' called-strike chance per pitch, `(ck − cs) / cn`, null under 5), appended to `STUFF_ARSENAL`; `ARS_DAY` gains **`cst`** (called strikes that
+  happened) so `arsenalView` carries both in a window / split. Until a build carries them the per-pitch Called / Foul columns and their Δs read "–"
+  and only the overall row is filled (the retrain run of 07:25 UTC started before this merge, so its rescore carries `foul` but not `cstr` / `xcstr`;
+  the next daily build carries all three for 2026, past seasons at the next rescore). Skenes 2026: fouls +3.5, called −2.1, two-strike −0.2, walks
+  +0.7 → +2.0 against an actual +2.8; Imanaga 2026: +0.6 / −2.0 / −1.5 / +1.3 → −1.7 against −2.4.

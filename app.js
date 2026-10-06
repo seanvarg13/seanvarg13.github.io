@@ -6929,7 +6929,8 @@
                // fouls on the contacted pitches: the swing-aware / location chances over nf, the stuff-only one over every graded pitch,
                // and what happened (fo, in files built since 6 Oct 2026)
                xfoul: t.n ? 100 * t.f / t.n : null, xfoull: I.fl != null && t.nf >= 5 ? 100 * t.fl / t.nf : null, xfoulw: I.fw != null && t.nf >= 5 ? 100 * t.fw / t.nf : null,
-               foul: I.fo != null && t.nf >= 5 ? 100 * t.fo / t.nf : null };
+               foul: I.fo != null && t.nf >= 5 ? 100 * t.fo / t.nf : null,
+               cstr: I.cst != null && t.n ? 100 * t.cst / t.n : null, xcstr: I.cn != null && t.cn >= 5 ? 100 * (t.ck - t.cs) / t.cn : null };   // called strikes per pitch (6 Oct 2026)
     });
   }   // the Stuff tab's per-pitch grades: against the league's pitches of the same type, or all pitches
   const plusStyle = (v) => pctStyle(Math.max(1, Math.min(99, Math.round(50 + 2.2 * (v - 100)))));   // 100 = the middle of the scale
@@ -7168,6 +7169,60 @@
   // a pitch's expected foul rate per contact: the swing-aware model where a batter's swing was tracked, else the location one,
   // else the stuff-only chance (Sean, 6 Oct 2026: "add expected fouls to stuff+")
   const xFoulOf = (r) => (r.xfoulw != null ? r.xfoulw : r.xfoull != null ? r.xfoull : r.xfoul == null ? null : r.xfoul);
+  // Whiffs to strikeouts (Sean, 6 Oct 2026: "that table ... with whiff %, called strike %, and foul % ... add it to the pitching+ tab ...
+  // the stuff shows what's expected ... an overall row and for each aspect ... the +/- impact on the k-to-whiff gap"): K% beyond what
+  // Whiff% alone implies (K% = −0.8 + 0.926·Whiff%, every 100+ BF pitcher-season 2020-26) is four dials — fouls per contact (+.569 a
+  // point over the league), Called Strike% (+.779), the two-strike edge (2-strike Whiff% − Whiff%, +.357) and BB% (−.348) — together
+  // 85% of a season's gap (scratch kconv4.js; deGrom 2021 +7.3 actual / +6.8 fit, Pérez 2026 +0.1 / −0.7). Per pitch, a pitch's share of
+  // the called-strike effect is its share of his pitches × its rate over the league's, and of the foul effect its share of his contact ×
+  // its rate over the league's, so the pitch rows add up to the overall row. The Stuff side reads the Pitching+ models' expected rates
+  // (xWhiff·loc, the command models' called-strike chance centred like xCalled Strike%, the foul models' chance on contact) and the
+  // Pitching+ xK% against the K% its xWhiff% implies.
+  const KCONV = { fpc: 0.569, cstr: 0.779, d2: 0.357, bb: -0.348 }, kImplied = (w) => -0.8 + 0.926 * w;
+  function renderKConv(p, st, R0, stuff) {
+    const m = V(p).m, L = lgRatesP(); if (!L.cstr || !L.foul || !L.swing || L.whf == null) return null;
+    const lgFpc = 100 * L.foul / (L.swing * (1 - L.whf / 100)), lgC = L.cstr, cshift = L.xcstr != null ? L.cstr - L.xcstr : 0;   // the command models read the newest season a little hot
+    const whf = stuff ? (st && st.nwhf) : m.whf, k = stuff ? (st && st.xks) : m.k, cs = stuff ? m.ncstr : m.cstr, fpc = stuff ? (st && st.nfpc) : m.fpc,
+          s2 = stuff ? (st && st.ns2whf) : m.s2whf, bb = stuff ? m.xbbf : m.bb;
+    if (whf == null || k == null) return null;
+    const box = el("div", "kconv"), hd = el("div", "rollhd");
+    hd.append(el("span", "rollname", "Whiffs to strikeouts"), el("span", "rollsub", stuff ? "on the Pitching+ models' expected rates" : "what turns his whiffs into strikeouts, and what doesn't"));
+    box.append(hd);
+    const f1 = (x) => (x == null ? "–" : x.toFixed(1)), sg = (x) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(1));
+    const heat = (td, v) => { if (v == null) return td; const st2 = pctStyle(Math.max(1, Math.min(99, Math.round(50 + 12 * v)))); if (st2) { td.style.background = st2.bg; td.style.color = st2.fg; } return td; };
+    const t = el("table", "ubt stufft kconvt"), th = el("thead"), hr = el("tr");
+    for (const [h, c, tt] of [["Pitch", "l"], ["Use", ""], [stuff ? "xWhiff" : "Whiff%", "", "per swing"], [stuff ? "xCalled" : "Called Strk", "", "called strikes per pitch"], [stuff ? "xFoul/con" : "Foul/con", "", "fouls per contact"],
+                              ["Δ called", "", "this pitch's called strikes against the league's rate, in K% points beyond his whiffs"], ["Δ fouls", "", "this pitch's fouls per contact against the league's rate, in K% points beyond his whiffs"]]) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
+    th.append(hr); t.append(th);
+    const tb = el("tbody"), tot = R0.reduce((a, r) => a + r.n, 0), con = (r) => (r.sw || 0) * (1 - (r.whf || 0) / 100), totCon = R0.reduce((a, r) => a + con(r), 0);
+    let dC = 0, dF = 0, anyC = false, anyF = false;
+    for (const r of R0.filter((r) => r.n >= 15)) {
+      const w = stuff ? r.xwhfl : r.whf, c = stuff ? (r.xcstr == null ? null : r.xcstr + cshift) : r.cstr, fo = stuff ? xFoulOf(r) : r.foul;
+      const dc = c == null || !tot ? null : KCONV.cstr * (r.n / tot) * (c - lgC), df = fo == null || !totCon ? null : KCONV.fpc * (con(r) / totCon) * (fo - lgFpc);
+      if (dc != null) { dC += dc; anyC = true; } if (df != null) { dF += df; anyF = true; }
+      const tr = el("tr"); tr.append(el("td", "l", PITCH_NAME[r.pt] || r.pt), el("td", null, f1(100 * r.n / tot) + "%"), el("td", null, f1(w)), el("td", null, f1(c)), el("td", null, f1(fo)), heat(el("td", null, sg(dc)), dc), heat(el("td", null, sg(df)), df));
+      tb.append(tr);
+    }
+    // the overall row: his season rates (the per-pitch effects add up to the overall ones when every pitch carries a rate)
+    const oC = cs == null ? null : KCONV.cstr * (cs - lgC), oF = fpc == null ? null : KCONV.fpc * (fpc - lgFpc);
+    const trt = el("tr", "ftot"); trt.append(el("td", "l", "All pitches"), el("td", null, String(tot)), el("td", null, f1(whf)), el("td", null, f1(cs)), el("td", null, f1(fpc)), heat(el("td", null, sg(oC)), oC), heat(el("td", null, sg(oF)), oF));
+    tb.append(trt); t.append(tb);
+    const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
+    // the two dials that aren't a pitch's: finishing with two strikes, and walks (a walk is a plate appearance that can't be a strikeout)
+    const d2 = s2 == null || whf == null ? null : s2 - whf, oD = d2 == null ? null : KCONV.d2 * d2, oB = bb == null ? null : KCONV.bb * (bb - L.bb);
+    const parts = [oF, oC, oD, oB], sum = parts.every((x) => x != null) ? parts.reduce((a, b) => a + b, 0) : null, impl = kImplied(whf), gap = k - impl;
+    const sum2 = el("table", "ubt stufft kconvt kconv2"), tb2 = el("tbody");
+    const row = (lab, val, eff, tip) => { const tr = el("tr"); const a = el("td", "l", lab); if (tip) a.title = tip; tr.append(a, el("td", null, val), heat(el("td", null, sg(eff)), eff)); tb2.append(tr); };
+    row("Fouls per contact", `${f1(fpc)} vs ${f1(lgFpc)}`, oF, "contact that goes foul keeps the strikeout alive; a ball in play ends it");
+    row("Called strikes", `${f1(cs)} vs ${f1(lgC)}`, oC, "strikes without a swing");
+    row("Two-strike finishing", `${f1(s2)} vs ${f1(whf)} overall`, oD, "his two-strike whiff rate against his overall — the least stable of the four");
+    row("Walks", `${f1(bb)} vs ${f1(L.bb)}`, oB, "a walk is a plate appearance that can't be a strikeout");
+    const trs = el("tr", "ftot"); trs.append(el("td", "l", "The four together"), el("td", null, ""), heat(el("td", null, sg(sum)), sum)); tb2.append(trs);
+    const tra = el("tr", "ftot"); tra.append(el("td", "l", stuff ? "xK% beyond what xWhiff% implies" : "K% beyond what Whiff% implies"), el("td", null, `${f1(k)} vs ${f1(impl)}`), heat(el("td", null, sg(gap)), gap)); tb2.append(tra);
+    sum2.append(tb2); const wrap2 = el("div", "stuffscroll"); wrap2.append(sum2); box.append(wrap2);
+    box.append(el("p", "note", `${stuff ? "The Pitching+ models' expected rates on his pitches: xWhiff per swing, the command models' called-strike chance (centred on the league's actual rate) and the foul models' share of contact going foul; xK% against the K% its xWhiff% implies." : "His actual rates by pitch."} A whiff rate implies a K% (about 0.93 points per whiff point); what moves a pitcher off it is fouls (+0.57 K% per point of fouls per contact over the league's ${lgFpc.toFixed(0)}), called strikes (+0.78 per point over ${lgC.toFixed(1)}), finishing with two strikes (+0.36 per point of 2-strike Whiff% over his overall) and walks (−0.35 per point over ${L.bb.toFixed(1)}) — together 85% of the gap across 2020-26. A pitch's Δ is its share of his pitches (contact, for fouls) times its rate against the league's, so the pitch rows add up to the overall. Fouls and called strikes carry year to year (r ~.55-.6); the two-strike edge mostly doesn't (.32).${anyC && anyF ? "" : " Called strikes and fouls by pitch arrive with the next build of this season's data."}`));
+    return box;
+  }
   function renderStuffTab(p, st, g, mode = "stuff") {
     const box = el("div", "rollbox uerabox stuffbox"), P = mode === "pitching";
     const rows = (p.ctx && p.ctx.arsenal) || [];
@@ -7259,6 +7314,7 @@
       if (roleNorm(SPLIT)) { const d = el("div", "aopt spnorm");
         d.append(el("b", null, "All innings as a starter"), el("span", null, ": every pitch he threw, with the days he relieved read as a starter — their expected whiff, ground-ball and popup rates moved by the reliever-to-starter effect from history (about −0.9 whiff points, −0.8 ground-ball points and +0.1 popup points for a typical reliever, more the better his relief numbers). So xWhiff / xGB / xPU here and in the Pitching+ table, Mix xwOBA, xRating and the whiff check are what the whole season says about him in the rotation; his actual rates, Pitching+ and the start days are as they were."));
         box.append(d); }
+      const kc = renderKConv(p, st, R0, stuffSide()); if (kc) box.append(kc);   // whiffs to strikeouts (6 Oct 2026)
       const wc = renderWhiffCheck(p, m); if (wc) box.append(wc); }
     // how well his usage leans on his whiff pitches (arsenalOpt), with where that ranks among the season's pitchers
     const EXTRAS = false;   // Arsenal Opt. and Stuff uERA under the table are off (Sean, 6 Oct 2026: "just have a stuff+ tab that shows expected whiff rates and gb% and pop up%")
