@@ -3950,3 +3950,121 @@ header.top .wordmark { display: none; }
 .cltable .clh { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.4; }
 .pbfilters .pbsearch { height: 34px; padding: 0 10px; border: 1px solid var(--line-soft); background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; min-width: 180px; }
 :root[data-view="mobile"] .cltable tr.clcomment td { padding: 8px 10px 12px; }
+
+/* ============================================================================================================
+   The warm pass (Sean, 6 Oct 2026: "convert the site to the formatting and theme that you believe ... would be most
+   optimal, easiest to understand and view and use, and most functional. All the power to you here").
+   Same layouts, same numbers. What changes: a warm off-white ground instead of the pale blue; a real type hierarchy
+   (names and the sorted number carry weight, everything else sits back); hairlines and air where the navy frames and
+   header bars were; pills where you tap; rounded surfaces; the percentile bars without ticks and dashed rules. The
+   sorted column keeps its fill on a desktop and shows bold coloured digits on a phone. The prefix is six :root so the
+   block wins over every earlier pass; delete the block to go back.
+   ============================================================================================================ */
+:root:root:root:root:root:root {
+  --ground: #f3f2ee; --surface: #fbfaf7; --surface-2: #edece7; --accent-wash: #efede8;
+  --ink: #141414; --ink-2: #44423d; --muted: #7d7b74; --hair: #e4e2db; --line-soft: #e4e2db;
+  --rule: #e4e2db; --frame: #e4e2db; --secrule: #e4e2db; --plate: #e4e2db; --stripe-line: transparent;
+  --lift-line: 1px solid var(--hair); --lift-edge: 1px solid var(--hair);
+  --accent: #141414; --accent-ink: #ffffff; --btn: #141414; --btn-ink: #ffffff; --btn-line: #e4e2db;
+  --accent-2: #141414; --accent-2-ink: #141414; --accent-2-dim: #7d7b74; --accent-2-text: #141414; --band: #fbfaf7; --band-ink: #141414; --tab-ink: #141414;
+  --svtext: #141414; --svrule: #e4e2db; --pctrack: #e6e4dd;
+}
+@media (prefers-color-scheme: dark) { :root:root:root:root:root:root:not([data-theme="light"]) {
+  --ground: #15161a; --surface: #1d1e23; --surface-2: #26272d; --accent-wash: #26272d;
+  --ink: #f2f1ec; --ink-2: #c9c7c0; --muted: #8e8c85; --hair: #2f3036; --line-soft: #2f3036; --rule: #2f3036; --frame: #2f3036; --secrule: #2f3036; --plate: #2f3036;
+  --accent: #f2f1ec; --accent-ink: #141414; --btn: #f2f1ec; --btn-ink: #141414; --btn-line: #2f3036;
+  --accent-2: #f2f1ec; --accent-2-ink: #f2f1ec; --accent-2-dim: #8e8c85; --accent-2-text: #f2f1ec; --band: #1d1e23; --band-ink: #f2f1ec; --tab-ink: #f2f1ec;
+  --svtext: #f2f1ec; --svrule: #2f3036; --pctrack: #2c2d33;
+} }
+:root:root:root:root:root:root[data-theme="dark"] {
+  --ground: #15161a; --surface: #1d1e23; --surface-2: #26272d; --accent-wash: #26272d;
+  --ink: #f2f1ec; --ink-2: #c9c7c0; --muted: #8e8c85; --hair: #2f3036; --line-soft: #2f3036; --rule: #2f3036; --frame: #2f3036; --secrule: #2f3036; --plate: #2f3036;
+  --accent: #f2f1ec; --accent-ink: #141414; --btn: #f2f1ec; --btn-ink: #141414; --btn-line: #2f3036;
+  --accent-2: #f2f1ec; --accent-2-ink: #f2f1ec; --accent-2-dim: #8e8c85; --accent-2-text: #f2f1ec; --band: #1d1e23; --band-ink: #f2f1ec; --tab-ink: #f2f1ec;
+  --svtext: #f2f1ec; --svrule: #2f3036; --pctrack: #2c2d33;
+}
+:root:root:root:root:root:root body { background: var(--ground); color: var(--ink); font-family: var(--body); }
+:root:root:root:root:root:root body::before, :root:root:root:root:root:root body::after { display: none !important; }
+
+/* type: weight is the hierarchy now — names and big numbers 700 in the condensed face, body 500, labels 600, small grey labels tracked */
+:root:root:root:root:root:root :not(.svnum) { font-weight: 500 !important; }
+:root:root:root:root:root:root :is(.name, .pthd, .pthd b, h1, h2, h3, .hubh, .cgroup, .secname, .rollname, .mkh, .svsecname, .score, .hchip b, .hval, .pct.hot, .score.hot, .fact b, .hbio b, .hstats b, .fsorted, .mkname) { font-weight: 700 !important; }
+:root:root:root:root:root:root :is(.lbl, .svlbl, th, .h, .pbcount, .pcount, .hubsec, .tsum, .colLab, .pill, .btn, .tbtn, .segbtn, .btab, .modes a, .modes .modesel, label, .cltier, .ftable th, .pbtable th, #colhead .h, .svscale, .popfoot a, .ftabs button, .fpage button) { font-weight: 600 !important; }
+:root:root:root:root:root:root .name { font-family: var(--display); font-size: 19px; color: var(--ink); letter-spacing: -0.005em; line-height: 1.1; }
+:root:root:root:root:root:root[data-view="mobile"] .name { font-size: 18px; }
+:root:root:root:root:root:root .who small, :root:root:root:root:root:root .teaml, :root:root:root:root:root:root .row-main .sub, :root:root:root:root:root:root .who .yr { font-size: 12.5px; color: var(--muted); }
+:root:root:root:root:root:root .pct, :root:root:root:root:root:root .score { font-size: 15px; font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root .pthd { font-size: 34px; letter-spacing: -0.015em; line-height: 1; }
+:root:root:root:root:root:root[data-view="mobile"] .pthd { font-size: 27px; }
+
+/* small labels: grey, tracked, uppercase — the one place the no-capitals rule is reversed, and only for 11px labels */
+:root:root:root:root:root:root :is(#colhead .h, .ftable th, .pbtable th, .hubsec, .svscale, .hbio .lab, .fact .lab, .cltier, .cgroup, .secname, .rollname) { font-size: 11px !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; color: var(--muted) !important; }
+:root:root:root:root:root:root :is(#colhead, #colhead .h, .ftable th, .ftable th button.h, .ftable th.n, .ftable th.who, .pbtable thead th, .pbtable thead th .sortbtn, .btabbody table th, .gamesbox table th, .gamesbox .ubt.glog thead, .gamesbox .ubt.glog thead th, .uerabox .ubt th, .gtable th, #modal table th) { background: var(--surface) !important; color: var(--muted) !important; border-bottom-color: var(--hair) !important; border-top: 0 !important; }
+:root:root:root:root:root:root :is(#colhead .h:hover, .ftable th button.h:hover, .pbtable thead th .sortbtn:hover) { background: var(--surface-2) !important; color: var(--ink) !important; }
+:root:root:root:root:root:root :is(#colhead .h[aria-sort], .ftable th[aria-sort] button.h, .pbtable thead th .sortbtn.on) { color: var(--ink) !important; }
+:root:root:root:root:root:root #colhead .h[aria-sort], :root:root:root:root:root:root #colhead .h.sorted, :root:root:root:root:root:root .pbtable th .sortbtn.on { color: var(--ink) !important; }
+:root:root:root:root:root:root .pbtable th .sortbtn { color: inherit; }
+:root:root:root:root:root:root .svpct .svsecname { font-family: var(--body); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; fill: var(--muted); }
+
+/* frames → hairlines; corners → rounded where it is a surface you hold */
+:root:root:root:root:root:root main.wrap, :root:root:root:root:root:root body main.wrap { border: 1px solid var(--hair) !important; border-radius: 20px; background: var(--surface) !important; box-shadow: none !important; }
+:root:root:root:root:root:root:not([data-view="mobile"]) body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-mode="mock"],[data-mode="claude"]) main.wrap { border: 0 !important; background: transparent !important; }
+:root:root:root:root:root:root :is(#bscroll, .board-scroll, #pitchboard, .pbscroll, .fscroll, .gframe, .cltable, .pbtable, .ftable, .springbox, .kconv, .karch, .cgrid, .hcard, .hubcard, .home .card, .hgrid > *) { border-color: var(--hair) !important; outline-color: var(--hair) !important; box-shadow: none !important; }
+:root:root:root:root:root:root :is(#bscroll, .board-scroll, .pbscroll, .fscroll, .hubcard, .hcard, .home .card, .hgrid > *, .gframe, .springbox) { border-radius: 16px; overflow: hidden; }
+:root:root:root:root:root:root #modal .card, :root:root:root:root:root:root #modal > div, :root:root:root:root:root:root .modal-card, :root:root:root:root:root:root #modal-body { border-color: var(--hair) !important; box-shadow: none !important; }
+:root:root:root:root:root:root:not([data-view="mobile"]) #modal .card, :root:root:root:root:root:root:not([data-view="mobile"]) .modal-card { border-radius: 24px; overflow: hidden; }
+:root:root:root:root:root:root[data-view="mobile"] #modal .card, :root:root:root:root:root:root[data-view="mobile"] .modal-card { border-radius: 24px 24px 0 0; overflow: hidden; }
+:root:root:root:root:root:root .pop, :root:root:root:root:root:root #pop, :root:root:root:root:root:root .phwin, :root:root:root:root:root:root .ddlist, :root:root:root:root:root:root .menu, :root:root:root:root:root:root .dropdown { border: 1px solid var(--hair) !important; border-radius: 16px !important; box-shadow: 0 12px 32px rgba(20,20,20,.10) !important; background: var(--surface) !important; }
+:root:root:root:root:root:root .pop .pop-close, :root:root:root:root:root:root .pop-close { border-radius: 50%; }
+
+/* header: on the ground, a hairline under it, the pages as plain words with the current one underlined */
+:root:root:root:root:root:root header.top { background: var(--ground) !important; border-bottom: 1px solid var(--hair) !important; box-shadow: none !important; }
+:root:root:root:root:root:root .modes a, :root:root:root:root:root:root .modes .modesel { color: var(--ink-2); font-size: 16px; border: 0 !important; background: transparent !important; border-radius: 0; padding: 6px 2px; }
+:root:root:root:root:root:root .modes a[aria-current="page"], :root:root:root:root:root:root .modes .modesel[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+:root:root:root:root:root:root .gsearch input, :root:root:root:root:root:root .gsearch, :root:root:root:root:root:root #gq { border-radius: 999px !important; border: 1px solid var(--hair) !important; background: var(--surface) !important; color: var(--ink) !important; }
+:root:root:root:root:root:root .navtog, :root:root:root:root:root:root header.top .btn { border-radius: 999px !important; background: var(--surface) !important; color: var(--ink) !important; border: 1px solid var(--hair) !important; }
+
+/* buttons, pills, tabs: pills, a hairline round them, the pressed one filled ink */
+:root:root:root:root:root:root :is(.btn, .tbtn, .segbtn, .btab, .pill, .fpage button, .ftabs button, .pbfilters button, .pbfilters .pill, .xseason, .pnav button, .pnavrow button, .popfoot .btn, .tierbtn, .linkpill) { border-radius: 999px !important; border: 1px solid var(--hair) !important; background: var(--surface) !important; color: var(--ink) !important; font-size: 14px !important; letter-spacing: 0 !important; text-transform: none !important; min-height: 36px; padding-left: 14px !important; padding-right: 14px !important; box-shadow: none !important; }
+:root:root:root:root:root:root .seg, :root:root:root:root:root:root .phfiltseg { border: 0 !important; background: transparent !important; border-radius: 999px !important; gap: 6px; padding: 0 !important; }
+:root:root:root:root:root:root .seg .segbtn { border: 1px solid var(--hair) !important; }
+:root:root:root:root:root:root :is(.btn.on, .tbtn.on, .tbtn.open, .segbtn[aria-pressed="true"], .btab.on, .btab[aria-selected="true"], .btab[aria-pressed="true"], .xseason[aria-pressed="true"], .pnav button.on, .pnav button[aria-current="page"], .pnavrow button.on, .pnavrow button[aria-current="page"], .fpage button.on, .fpage button[aria-pressed="true"], .ftabs button.on, .ftabs button[aria-selected="true"], .btn.primary, .btn.solid, .tierbtn[aria-pressed="true"], .pbfilters button.on) { background: var(--ink) !important; color: var(--ground) !important; border-color: var(--ink) !important; }
+:root:root:root:root:root:root .xseason[aria-pressed="true"] b, :root:root:root:root:root:root .btab.on b { color: var(--ground) !important; }
+:root:root:root:root:root:root .staricon, :root:root:root:root:root:root .pop-close, :root:root:root:root:root:root #modal .close, :root:root:root:root:root:root .mclose { background: var(--surface) !important; color: var(--ink) !important; border: 1px solid var(--hair) !important; border-radius: 50% !important; }
+:root:root:root:root:root:root input[type="number"], :root:root:root:root:root:root input[type="text"], :root:root:root:root:root:root input[type="search"], :root:root:root:root:root:root input[type="date"], :root:root:root:root:root:root select, :root:root:root:root:root:root .pbsearch { border-radius: 10px !important; border: 1px solid var(--hair) !important; background: var(--surface) !important; color: var(--ink) !important; }
+
+/* lists: taller rows, a hairline between them, the sorted column bold — filled on a desktop, coloured digits on a phone */
+:root:root:root:root:root:root #rows .row-main, :root:root:root:root:root:root .row-main { min-height: 56px; border-bottom: 1px solid var(--hair); }
+:root:root:root:root:root:root #rows .row-main:hover { background: var(--accent-wash); }
+:root:root:root:root:root:root .rank { color: var(--muted); font-size: 12.5px; }
+:root:root:root:root:root:root[data-view="mobile"] #rows .row-main > .hot, :root:root:root:root:root:root[data-view="mobile"] #rows .row-main .pcts > .hot, :root:root:root:root:root:root[data-view="mobile"] #rows .score.hot { background: transparent !important; color: var(--heat, var(--ink)) !important; font-family: var(--display); font-size: 19px !important; margin: 0 !important; }
+:root:root:root:root:root:root:not([data-view="mobile"]) #rows .row-main > .hot, :root:root:root:root:root:root:not([data-view="mobile"]) #rows .row-main .pcts > .hot { border-radius: 8px; margin: 4px 0 !important; }
+:root:root:root:root:root:root .ftable td, :root:root:root:root:root:root .pbtable td { font-size: 14px; }
+:root:root:root:root:root:root .pbtable td.who .pbname, :root:root:root:root:root:root .ftable td.who .linkbtn, :root:root:root:root:root:root .linkbtn.pbname { font-family: var(--display); font-size: 17px; font-weight: 700 !important; color: var(--ink); }
+:root:root:root:root:root:root .pager, :root:root:root:root:root:root #pagertop { border: 0 !important; background: transparent !important; }
+:root:root:root:root:root:root .pnav button, :root:root:root:root:root:root .pnavrow button { min-width: 36px; }
+:root:root:root:root:root:root .hot .lbl { color: inherit; }
+
+/* the card: the band on the surface, the name big, the facts as small grey labels over bold values */
+:root:root:root:root:root:root .mplate, :root:root:root:root:root:root .phead { background: var(--surface) !important; border-bottom: 1px solid var(--hair) !important; color: var(--ink) !important; }
+:root:root:root:root:root:root .mplate .hstrip .hchip b, :root:root:root:root:root:root .hchip b, :root:root:root:root:root:root .hval, :root:root:root:root:root:root .fact b { font-size: 20px; color: var(--ink) !important; }
+:root:root:root:root:root:root[data-view="mobile"] .mplate .hstrip .hchip b, :root:root:root:root:root:root[data-view="mobile"] .hval { font-size: 17px; }
+:root:root:root:root:root:root .hrow, :root:root:root:root:root:root .hstats { border-color: var(--hair) !important; }
+:root:root:root:root:root:root .btabs { gap: 8px; padding: 8px 0; }
+:root:root:root:root:root:root .btabs .btab { min-height: 38px; }
+
+/* the percentile bars: a rounded track, the fill, the bubble — no ticks, no dashed rules; labels in the ink, values bold */
+:root:root:root:root:root:root .svpct .svtick, :root:root:root:root:root:root .svpct .svdash { display: none; }
+:root:root:root:root:root:root .svpct .svline { fill: var(--pctrack); rx: 2.5px; }
+:root:root:root:root:root:root .svpct rect[fill]:not(.svline):not(.svsecrule):not(.svtick) { rx: 3px; }
+:root:root:root:root:root:root .svpct .svlbl { fill: var(--ink); font-size: 12.5px; font-weight: 600 !important; }
+:root:root:root:root:root:root .svpct .svlbl.svval { fill: var(--ink); font-weight: 700 !important; font-family: var(--display); font-size: 14px; }
+:root:root:root:root:root:root .svpct .svsecrule { fill: var(--hair); }
+:root:root:root:root:root:root .svpct .svbulb { stroke: var(--surface); stroke-width: 2.5; }
+:root:root:root:root:root:root .svpct .svsample, :root:root:root:root:root:root .svpct .svslbl { fill: var(--muted); }
+
+/* home, Fantasy, the notes */
+:root:root:root:root:root:root .hub h2, :root:root:root:root:root:root .hubcard h3 { color: var(--ink); text-transform: none !important; letter-spacing: -0.01em !important; }
+:root:root:root:root:root:root .note, :root:root:root:root:root:root .lbnote, :root:root:root:root:root:root .hub .note { color: var(--muted); font-size: 13px; }
+:root:root:root:root:root:root .chip, :root:root:root:root:root:root .uchip, :root:root:root:root:root:root .mrank .chip { border-radius: 999px !important; }
+:root:root:root:root:root:root .heat, :root:root:root:root:root:root td.plus, :root:root:root:root:root:root .uchip.on { border-radius: 6px; }
