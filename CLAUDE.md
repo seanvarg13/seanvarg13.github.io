@@ -1859,3 +1859,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   centred on the row, the line breaks); their type is the site's own again — section names in the title face (`--display`, 19px, `y: 28`, 14 over /
   10 under), labels and values in `--body` at 400, no tracking, no capitals, black — the "the card's bars" block at the end of `styles.css`;
   `themes.js` loads the 400+ weights only. Nothing Raya is left in the stylesheet or the font list. Don't bring any of it back unasked.
+* **Savant's bars back, the content kept, nERA as the pitchers' headline (Sean, 6 Oct 2026: "make it formatting wise what it was at 6pm today.
+  And then keep the content what it is now, and also make the nERA show their actual nERA not their percentile and also make it default to sort by
+  the lowest nERA")**: 6pm New York was the site between PR #354 (18:38) and #355 — the pre-Raya format with Savant's bars — so `pctSvg` is PR
+  #359's Savant drawing again (ticks, dashed rules, Poor / Average / Great, the section names in the title type), with the "|" line breaks kept
+  as 12px of air (`r.gap`), and the bar CSS blocks are gone from `styles.css`; the sections stay as PR #364 left them (Skills K-BB% · Mix wOBA,
+  Swing & Miss K% | …, Command BB% | …, Batted Ball). **The pitchers' headline column is his nERA itself** (`nv.toFixed(2)`, coloured by its
+  percentile, the column / Sort by option "nERA"; `val()` sorts the `score` key by the value, lowest first on the default "desc" — the percentile
+  had tied every under-minimum pitcher at 100), and `nera` left the Standard / Advanced column sets (`state.lb.neraHead` drops it from a saved
+  list once). The Rating (score) is still the nERA percentile underneath.
