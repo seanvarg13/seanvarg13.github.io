@@ -2215,3 +2215,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **The subtotal row, tinted and without a running K% (Sean, 6 Oct 2026: "not show the k% there since it is directly above ... make the row color
   different so it clearly stands out as a subtotal")**: `.krow.ksub` carries only the four-dial pill (its K% cell is blank — the BB% row above
   already shows it) on a grey band (ink at 6% on the surface, 8px corners, bled 10px into the table's padding).
+* **LHP / RHP in the bio, IP for nERA on the band (Sean, 6 Oct 2026: "change the bio for pitchers to just show LHP or RHP instead of B/T L/R",
+  "instead of nERA show IP and don't make IP heat mapped at all")**: `fillBio`'s inline branch prints a pitcher's hand as LHP / RHP (MLB's
+  `throws`, else the data's) and no B/T; hitters keep B/T. `bandTiles`' first pitcher tile is **IP** (the official line's, else `fmtIP` of the
+  view's innings — so a window / split reads its own), no colour and no percentile under it; K% · BB% · K-BB% follow as before. nERA (xnERA on the
+  Stuff side) left the band — it's still the headline of the Leaderboard and the card's nERA tab; `seasonLine` still builds it.
