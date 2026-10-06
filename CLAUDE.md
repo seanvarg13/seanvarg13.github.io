@@ -1811,3 +1811,5 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (`scale`). The SVG carries class `raya`; the "The Raya mock's bars" CSS block at the end of `styles.css` holds its type and colours (the
   site-wide no-capitals rule needs `!important` on the tracking / uppercase). The sample line, fold-outs (▸ / ▾ on the name) and the tap note are
   unchanged. Savant's drawing before this is PR #360's `pctSvg`. The "don't restyle the bars unasked" rule stands; this was asked.
+* **Swing & Miss flat (Sean, 6 Oct 2026: "make it so swing and miss shows all three without a drop down")**: Whiff% · 2-strike Whiff% · Foul% as
+  three plain rows (xWhiff% · x2-strike Whiff% · xFoul% on the Stuff side); the fold-out machinery stays in `pctColumns` / `pctSvg`, unused.
