@@ -2012,6 +2012,31 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   line from his rates for a pitcher without ten starts) and that line's ESPN points (`espn`); `renderClaude` scores the line with `fPts` under
   `fpreset()` and scales it by `pps / espn`, so the ranking's process adjustments carry into any scoring, re-ranks, and a **Scoring** pill on the
   bar switches the Fantasy preset (the same `fstore.current` the Fantasy page uses). The stored `pps` / `pts` / `rk` are the ESPN-standard ones.
+* **The warm pass (Sean, 6 Oct 2026, after a Clutch Time screenshot — "my site has a rigid thin feel to it" — then "convert the site to the
+  formatting and theme that you believe for the use case would be most optimal, easiest to understand and view and use, and most functional.
+  All the power to you here")**: the look, not the layout — every page keeps its structure, columns, bars and numbers. **This supersedes the
+  earlier "don't bring back unasked" rules on bold, rounded corners, air-instead-of-borders and the pale-blue ground; Sean asked.** The block
+  at the very end of `styles.css` ("The warm pass", every selector prefixed with six `:root` so it wins over every earlier pass — delete the
+  block and the `warm` scheme to go back) plus a **`warm` colour scheme in `themes.js`** (the scheme sets its tokens inline on `<html>`, which
+  beat a stylesheet override — so the pass's colours live there: an off-white ground `#f3f2ee`, surfaces `#fbfaf7`, ink `#141414`, hairlines
+  `#e4e2db`, every accent / rule / band / button token the ink or the hairline; dark `#15161a` / `#1d1e23` / `#f2f1ec` / `#2f3036`). It is the
+  **default scheme** (`DEFAULTS.scheme`, `defaults.js`) and `themes.js` moves every device to it once (`draft2027.warm1`, the saved scheme
+  cleared); a scheme picked after that stays, and the UNC / Titans / … schemes are still in Appearance. **What it does**: type is the hierarchy
+  — names, headings, the sorted number and the band's values 700 in the condensed face (list names 19px, the card title 34px / 27px phone), body
+  500, labels 600 (the site-wide "no bold" rule is overridden); small labels (column names, the bars' section names, the card's facts, home's
+  section lines) are 11px grey tracked uppercase — the one reversal of the no-capitals rule; **no navy header bars or frames** — table headers
+  are the surface with a hairline under them, the outer page card and the boards have hairline borders and 16-20px corners, the dropdowns and
+  the Filters window 16px with a soft shadow, the popup card 24px; **pills** — every button, tab, pill and pager number is a 36px+ hairline
+  pill, the pressed one filled ink with ground-coloured text; the header sits on the ground with a hairline, the pages as plain words with the
+  current one underlined, the search a pill; list rows 56px with a hairline between; **the sorted column** keeps its fill on a desktop (8px
+  corners, 4px in from the row) and on a phone shows **bold coloured digits on a clear ground** — `paint()` now sets `--heat` to the cell's
+  colour and the phone rule reads it; **the percentile bars** keep Savant's geometry but lose the 10 / 50 / 90 ticks and dashed rules (`.svtick`
+  / `.svdash` hidden), the track and fill get 2.5-3px `rx`, labels in the ink at 600, values 700 condensed, section names the small grey label.
+  `themes.js` loads Barlow Condensed 800 too. **Found and fixed the same hour**: since the nERA-headline change (6 Oct, PR #367) the pitchers'
+  headline cell's paint / `hot` / `sorted` code sat inside a mid-line `//` comment, so the nERA column was never coloured or marked sorted; the
+  comment is on its own lines now. Headless phone + desktop, light + dark: Leaderboard, home, a card, the Pitching+ board, Fantasy, Claude
+  rankings, the Filters window — no script errors. Mocks of the direction (a literal Clutch Time take, then "now vs warmer" for the Leaderboard
+  and the card) are the "Clutch Time Mock" canvas, not in the repo.
 * **xCalled on the Pitching+ tab (Sean, 6 Oct 2026: "add expected called strikes to the pitching+ tab as well")**: an **xCalled** pair after xFoul in
   `renderStuffTab`'s Pitching+ table — the command models' called-strike chance per pitch (the arsenal's `xcstr`, `arsenalView`'s in a window /
   split) plus `xCalled`'s league centring (`lgRatesP().cstr − .xcstr`, the models read the newest season a little hot) over his actual called

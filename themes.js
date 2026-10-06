@@ -10,6 +10,17 @@ window.DRAFT_THEMES = (function () {
   const greyNight = { page: "#121316", surface: "#1a1b1f", "surface-2": "#22242a", hair: "#2f3239", rail: "#3d414a", stripe: "#17181c", hover: "#24262d", band: "#1a1b1f", plate: "#5f6570", muted: "#8b919c", ink: "#eceef2", "ink-2": "#bfc5cf", mid: "#3d4048" };
 
   const S = {
+    warm: {
+      name: "Warm", blurb: "The warm pass (6 Oct 2026): an off-white ground, ink-black type and buttons, hairlines instead of frames — the percentile colours do the colouring.",
+      light: { accent: "#141414", "accent-2": "#141414", "accent-2-ink": "#141414", "accent-2-dim": "#7d7b74", "on-fill-wash": "rgba(20, 20, 20, 0.06)", "on-fill-wash-2": "rgba(20, 20, 20, 0.1)", "on-fill-line": "rgba(20, 20, 20, 0.18)", "tab-ink": "#141414",
+               "accent-2-text": "#141414", pop: "#fbfaf7", rule: "#e4e2db", "stripe-line": "transparent", "accent-wash": "#efede8", ink: "#141414", "ink-2": "#44423d", hover: "#efede8",
+               page: "#f3f2ee", surface: "#fbfaf7", "surface-2": "#edece7", hair: "#e4e2db", rail: "#d9d7d0", stripe: "#f3f2ee", band: "#fbfaf7", plate: "#e4e2db", muted: "#7d7b74",
+               btn: "#141414", "btn-ink": "#ffffff", "btn-line": "#e4e2db", "tab-fill": "#141414" },
+      dark: { accent: "#f2f1ec", "accent-2": "#f2f1ec", "accent-2-ink": "#f2f1ec", "accent-2-dim": "#8e8c85", "on-fill-wash": "rgba(242, 241, 236, 0.08)", "on-fill-wash-2": "rgba(242, 241, 236, 0.14)", "on-fill-line": "rgba(242, 241, 236, 0.22)", "tab-ink": "#f2f1ec",
+              "accent-2-text": "#f2f1ec", pop: "#1d1e23", rule: "#2f3036", "accent-wash": "#26272d", ink: "#f2f1ec", "ink-2": "#c9c7c0", hover: "#26272d",
+              page: "#15161a", surface: "#1d1e23", "surface-2": "#26272d", hair: "#2f3036", rail: "#3a3b42", stripe: "#15161a", band: "#1d1e23", plate: "#2f3036", muted: "#8e8c85",
+              btn: "#f2f1ec", "btn-ink": "#141414", "btn-line": "#2f3036", "tab-fill": "#f2f1ec" },
+    },
     unc: {
       name: "Carolina blue", blurb: "UNC — Carolina blue carries the site, navy type on it.",
       light: { accent: "#13294b", "accent-2": "#7bafd4", ...onLight("#13294b", "rgba(19, 41, 75, 0.85)"), "accent-2-text": "#4b9cd3", pop: "#ffffff", rule: "#13294b", "stripe-line": "transparent", "accent-wash": "rgba(123, 175, 212, 0.24)", ink: "#13294b", "ink-2": "#3a4a66", hover: "#eaf2f9", band: "#13294b" },
@@ -54,18 +65,20 @@ window.DRAFT_THEMES = (function () {
   // (in <head>, before the page paints) rather than index.html, whose template lives on the Mac and isn't synced.
   const F = {
     studio: { name: "Barlow Condensed + Source Sans 3", blurb: "Condensed headings, an easy-reading text face — the same on every page and device.",
-              google: "family=Barlow+Condensed:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,400..700;1,400..700&family=Roboto+Condensed:wght@700",   // Roboto: the percentile bubbles' digits only
+              google: "family=Barlow+Condensed:wght@400;500;600;700;800&family=Source+Sans+3:ital,wght@0,400..700;1,400..700&family=Roboto+Condensed:wght@700",   // Roboto: the percentile bubbles' digits only
               display: '"Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif',
               body: '"Source Sans 3", "Source Sans Pro", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif' },
   };
 
   const LS = { scheme: "draft2027.scheme", font: "draft2027.font", theme: "draft2027.theme", view: "draft2027.view" };
-  const DEFAULTS = Object.assign({ scheme: "unc", font: "studio", theme: "system", view: "auto" }, window.DRAFT_DEFAULTS || {});
-  if (!S[DEFAULTS.scheme]) DEFAULTS.scheme = "unc";
+  const DEFAULTS = Object.assign({ scheme: "warm", font: "studio", theme: "system", view: "auto" }, window.DRAFT_DEFAULTS || {});
+  if (!S[DEFAULTS.scheme]) DEFAULTS.scheme = "warm";
   if (!F[DEFAULTS.font]) DEFAULTS.font = "studio";
   const get = (k) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } };
   const put = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } };
   const root = document.documentElement;
+  // the warm pass (6 Oct 2026): every device moves to the warm scheme once, whatever it had saved; a scheme picked after that stays
+  try { if (!localStorage.getItem("draft2027.warm1")) { localStorage.setItem("draft2027.warm1", "1"); localStorage.removeItem(LS.scheme); } } catch { /* private mode */ }
   const current = () => ({
     scheme: S[get(LS.scheme)] ? get(LS.scheme) : DEFAULTS.scheme,
     font: F[get(LS.font)] ? get(LS.font) : DEFAULTS.font,

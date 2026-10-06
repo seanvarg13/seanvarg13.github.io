@@ -1802,7 +1802,7 @@
     if (pct != null) { const b = el("div", "bub" + (pct >= 100 ? " c3" : ""), pct); b.style.left = svAt(pct); b.style.background = s.bub; t.append(b); }
     return t;
   }
-  function paint(node, pct) { const s = pctStyle(pct); if (s) { node.style.background = s.bg; node.style.color = s.fg; } }
+  function paint(node, pct) { const s = pctStyle(pct); if (s) { node.style.background = s.bg; node.style.color = s.fg; node.style.setProperty("--heat", s.bg); } }   // --heat: a phone shows the sorted column as coloured digits on a clear ground (the warm pass, 6 Oct 2026)
   // a percentile coloured as the player card's bars colour it: Savant's scale for the charts, the heat scale under
   // Classic meters (Sean: the Season Stats uERA chip matches the sliders), with dark or white text, whichever reads
   function paintBar(node, pct) {
@@ -2559,7 +2559,10 @@
       who.append(meta);
       main.append(who);
       for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const b = el("div", "pct pre", on ? preValue(c.key, p) : ""); if (!on) b.classList.add("off"); else { if (state.sort === c.key && !customOrder()) b.classList.add("sorted"); b.prepend(el("span", "lbl", c.label)); } main.append(b); }
-      const nv = p.type === "P" ? V(p).m.nera : null, sc = el("div", "score", p.type === "H" ? fmtX(st.score) : nv == null ? "–" : nv.toFixed(2));   // a pitcher's headline is his nERA itself (Sean, 6 Oct 2026: "show their actual nERA not their percentile"); the sort is still the percentile, so lowest nERA first if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null; if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) sc.classList.add("hot"); } } if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
+      const nv = p.type === "P" ? V(p).m.nera : null, sc = el("div", "score", p.type === "H" ? fmtX(st.score) : nv == null ? "–" : nv.toFixed(2));
+      // a pitcher's headline is his nERA itself (Sean, 6 Oct 2026: "show their actual nERA not their percentile"); the sort is still the
+      // percentile, so lowest nERA first. (This comment had swallowed the paint below for a day — the column went unpainted and unmarked.)
+      if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null; if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) sc.classList.add("hot"); } } if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
       sc.title = p.type === "H" ? `${HEAD.label} ${fmtX(st.score)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl` : `nERA ${nv == null ? "–" : nv.toFixed(2)} · ${st.scorePct == null ? "n/a" : ordinal(st.scorePct)} pctl — luck-neutral ERA: every ball in play at the league's value for its type`; main.append(sc);
       const pcts = el("div", "pcts");
       for (const m of ms) {
