@@ -2053,6 +2053,17 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   .prow / .ptrk / .pfill / .ppct / .pval` at the end of `styles.css`. The Appearance switch "Percentile bars" is gone and `state.bars` is
   unused (`paintBar` is one scale); `pctSvg` / `pctChart` / `meterRow` stay for the record. Every earlier bar note in this file (Savant's
   bars, the studio bar, the mock's bars, "don't restyle the bars unasked") is history as of this entry.
+* **The Pitching+ tab, simplified; softer edges (Sean, 6 Oct 2026: "the rest of the tables look a bit busy/hard to understand", "if you think the
+  player cards should have softer edges thats great too ... make the entire site layout in the most optimal and easy to understand fashion")**:
+  under the arsenal table the tab now shows only the **strikeout profile** in a plain form — the archetype as the heading, one line that adds up
+  ("K% 30.0 — the whiffs alone say 28.6, the rest is +1.4"), and five rows in the card's dress (Whiff%, 2-strike finishing, Called Strike%, Foul%
+  of contact, BB%: his rate vs the league and percentile under the name, the K%-point effect as a coloured pill, "mostly skill / half skill /
+  mostly noise" from `KREL` at his BF), then the whiff check. The **xK% breakdown** table and the **Whiffs to strikeouts** tables (per-pitch Δ
+  called / Δ fouls, the four-dial summary) are off the tab (`renderXkBreakdown`, `renderKConv` stay in `app.js`, as does the profile's old
+  seven-column table — replaced inside `renderKArchetype`; CSS `.ksum / .krows / .krow / .kpill`). Softer edges: the card's tab boxes, tables and
+  the Stuff+ grades get 8-14px corners, headshots are round. **NPB**: asked whether the site could carry Japanese-league data (Imai, Murakami) —
+  no: the MLB Stats API lists Nippon Professional Baseball as sport 31 but serves no teams, schedule or player lines for it (checked 6 Oct 2026),
+  Statcast has nothing, and NPB's Hawk-Eye data isn't public; their MLB seasons are on the site like anyone's.
 * **xCalled on the Pitching+ tab (Sean, 6 Oct 2026: "add expected called strikes to the pitching+ tab as well")**: an **xCalled** pair after xFoul in
   `renderStuffTab`'s Pitching+ table — the command models' called-strike chance per pitch (the arsenal's `xcstr`, `arsenalView`'s in a window /
   split) plus `xCalled`'s league centring (`lgRatesP().cstr − .xcstr`, the models read the newest season a little hot) over his actual called

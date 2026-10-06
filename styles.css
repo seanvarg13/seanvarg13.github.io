@@ -4089,3 +4089,21 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] .prow, :root:root:root:root:root:root[data-view="mobile"] .prowhead { grid-template-columns: 130px 1fr 36px 48px; gap: 8px; }
 :root:root:root:root:root:root[data-view="mobile"] .plbl { font-size: 13px; }
 :root:root:root:root:root:root .pctstd .statpop { left: 0; right: 0; }
+
+/* the Pitching+ tab's strikeout profile, simplified (6 Oct 2026): one line that adds up, five dial rows in the card's dress */
+:root:root:root:root:root:root .ksum .ksumline { margin: 2px 0 10px; font-size: 14px; color: var(--ink-2); }
+:root:root:root:root:root:root .ksum .ksumline b { color: var(--ink); font-weight: 700 !important; }
+:root:root:root:root:root:root .krows { display: flex; flex-direction: column; }
+:root:root:root:root:root:root .krow { display: grid; grid-template-columns: 1fr 56px 110px; gap: 12px; align-items: center; min-height: 44px; border-top: 1px solid var(--hair); }
+:root:root:root:root:root:root .kname { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+:root:root:root:root:root:root .klab { font-size: 14px; font-weight: 600 !important; color: var(--ink); }
+:root:root:root:root:root:root .ksub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root:root:root:root:root:root .kpill { display: inline-flex; align-items: center; justify-content: center; height: 26px; border-radius: 13px; font-size: 13px; font-weight: 700 !important; font-variant-numeric: tabular-nums; background: var(--surface-2); color: var(--muted); }
+:root:root:root:root:root:root .kword { font-size: 12px; color: var(--muted); text-align: right; }
+:root:root:root:root:root:root[data-view="mobile"] .krow { grid-template-columns: 1fr 52px 92px; gap: 8px; }
+
+/* softer edges inside the card (Sean, 6 Oct 2026: "if you think the player cards should have softer edges thats great too") */
+:root:root:root:root:root:root #modal .btabbody, :root:root:root:root:root:root .btabbody, :root:root:root:root:root:root .stuffbox, :root:root:root:root:root:root .gamesbox, :root:root:root:root:root:root .uerabox, :root:root:root:root:root:root .rawstats, :root:root:root:root:root:root .btabbody table, :root:root:root:root:root:root .stuffscroll { border-radius: 14px; overflow: hidden; }
+:root:root:root:root:root:root .btabbody .stuffscroll, :root:root:root:root:root:root .btabbody .fscroll { overflow: auto; }
+:root:root:root:root:root:root .mplate .headshot, :root:root:root:root:root:root .mplate img, :root:root:root:root:root:root .hs, :root:root:root:root:root:root .avatar { border-radius: 50% !important; }
+:root:root:root:root:root:root .stuffbox .stufft td.plus, :root:root:root:root:root:root td.plus, :root:root:root:root:root:root .heat { border-radius: 8px; }
