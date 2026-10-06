@@ -2070,4 +2070,17 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   strikes per pitch (`cstr`); All pitches = `m.ncstr` over `m.cstr`. Sale 2026: slider 15.7 expected / 17.6 actual, sinker 25.4 / 26.3, all
   16.9 / 17.4; Imanaga: splitter 7.6 / 6.7, all 14.0 / 13.6 — the model expects a splitter-heavy mix to collect few called strikes, so his gap
   to Sale is the arsenal's design, not sequencing luck. Files built before 6 Oct 2026 read "–" per pitch.
-
+* **Savant's bars back, Skills = Whiff% · xBB%, a plain Leaders link, home's 2027 starters, the K% equation (Sean, 6 Oct 2026: "can you go
+  back to these percentile bars. and then for the skills can you make that be whiff% and then make it some sort of xBB% based on their strike
+  rate first strike rate third strike rate", "redesign the layout of the website the home page ... the site header", "i still want to see the
+  table that shows how each input contributes to their k% ... easier to understand than before")**: `pctColumns` draws `pctChart` (the Savant
+  charts in the warm pass's dress — the plain `pctRows` of PR #385 stay in `app.js`, unused); `PCT_COLS_P` Skills = **Whiff% · xBB%** (`xbbf`, the
+  Strike% / 1st-pitch / 3-ball fit) and `PCT_COLS_PS` xWhiff% · xBB%. **Header**: the Leaderboards menu had one entry left, so `pitchBoardEl` hides
+  `#lbsel` and puts a plain **Leaders** link to `#leaderboard` in its place (Home · Leaders · Pitching+ · Fantasy ▾ · ⋯). **Home**: a **2027
+  starters** card between the leaders and Trending — the Claude rankings' top rows scored under the current fantasy preset (`fPts(wP, r.line) ·
+  pps / espn · GS`), a name opens his card, "Claude rankings →" opens the page. **Pitching+ tab**: `renderKArchetype` is an equation, not a
+  table — "K% 30.0 = 28.6 from whiffs alone (31.7%) + 1.4 from how they turn into strikeouts", then one row per dial (fouls on contact, called
+  strikes, finishing with two strikes, walks: his rate · league · percentile, a ± pill in K% points coloured by its sign, and "mostly skill /
+  half skill / mostly noise" from `KREL` at his BF), a **The four dials** total and an **Everything else** remainder (sequencing, luck), and the
+  skill-K% note (`.ksum / .krow / .khead / .ktot / .krest`). The `.rollhd` gets 1px of left padding — the tracked small caps' first letter was
+  clipped by the box.
