@@ -743,7 +743,7 @@
     const ix = window.DRAFT_INDEX; if (!ix) return false;
     if (!ix.regularOnly) {
       ix.regularOnly = true;
-      if (Array.isArray(ix.seasons)) ix.seasons = ix.seasons.filter((k) => !keyKind(k));
+      if (Array.isArray(ix.seasons)) { ix.kinds = ix.seasons.filter((k) => keyKind(k)); ix.seasons = ix.seasons.filter((k) => !keyKind(k)); }   // the built spring / postseason files, for the Spring tab and the board (6 Oct 2026)
       // his spring / postseason seasons stay aside (e.k) for the card title's MLB dropdown (MLB PS / MLB ST; Sean, 30 Sep 2026)
       for (const e of ix.players || []) { e.k = e.s.filter((sv) => keyKind(sv[0])); e.s = e.s.filter((sv) => !keyKind(sv[0])); }
       ix.players = (ix.players || []).filter((e) => e.s.length);
@@ -3821,10 +3821,9 @@
   if (["stuffp", "whfp", "bbp", "xwhf", "xgb", "xpu", "aopt"].includes(pb.sort)) pb.sort = "pitp";   // Pitching+ again (6 Oct 2026); the stuff-only columns left the board   // the location columns left the board (6 Oct 2026: Stuff+ again)   // the stuff-only columns left the board (4 Oct 2026)
   // spring training (Sean, 29 Sep 2026: "track a pitchers stuff in spring training"): the board can read this spring's dataset
   // (hist/mlb-<year>-spring.js, graded by the MLB models against MLB pitch types) — next year's spring once it exists, else this one's
-  const springKey = () => { const S = DATA.meta.season; for (const y of [S + 1, S]) { const k = `mlb-${y}-spring`; if (!failed.has(`hist/${k}.js`)) return k; } return null; };
+  const springKey = () => { const S = DATA.meta.season, built = indexReady() ? window.DRAFT_INDEX.kinds : null; for (const y of [S + 1, S]) { const k = `mlb-${y}-spring`; if (built ? built.includes(k) : !failed.has(`hist/${k}.js`)) return k; } return null; };
   function renderPitchBoard() {
     const box = pitchBoardEl(); box.innerHTML = "";
-    if (pb.src === "spring") pb.src = "season";            // spring training isn't shown anywhere any more (Sean, 30 Sep 2026)
     if (pb.src === "spring") {
       const k = springKey(), ds = k && histDataset(k);
       if (!ds) {
@@ -3868,6 +3867,8 @@
     bar.append(pillSelect(pb.role === "all" ? "SP + RP" : pb.role, [["all", "SP + RP"], ["SP", "SP"], ["RP", "RP"]], pb.role, (v) => { pb.role = v; save(); }, "Role"));
     bar.append(pillSelect(`${pb.min}+ pitches`, [25, 50, 100, 200, 400, 800].map((n) => [String(n), `${n}+ pitches`]), String(pb.min), (v) => { pb.min = Number(v); save(); }, "Minimum"));
     bar.append(pillSelect(pb.heat === "all" ? "Colour: all" : "Colour: sorted", [["sorted", "Colour the sorted column"], ["all", "Colour every + column"]], pb.heat === "all" ? "all" : "sorted", (v) => { pb.heat = v; save(); }, "Colour"));
+    // Games: Spring training (back at Sean's ask, 6 Oct 2026, with the card's Spring tab) — next year's spring once it's built, else this one's
+    if (springKey()) bar.append(pillSelect(springK ? "Spring training" : `${DATA.meta.season} season`, [["season", `${DATA.meta.season} season`], ["spring", "Spring training"]], springK ? "spring" : "season", (v) => { pb.src = v; save(); }, "Games"));
     bar.append(el("span", "pbcount", `${rows.length} pitch${rows.length === 1 ? "" : "es"} · ${springK ? DS.label || "spring training" : DATA.meta.season} · graded against its own type`));
     box.append(bar);
     // table
@@ -6562,6 +6563,7 @@
   function renderBelow(p, o = {}) {
     const sec = el("section", "pbelow2");
     const tabs = p.type === "P" ? [...BTABS, ...BTABS_P] : [...BTABS, ...BTABS_H];
+    if (p.type === "P" && springFor()) tabs.splice(tabs.findIndex(([k]) => k === "nera"), 0, ["spring", "Spring"]);   // only while a spring this card can speak to is built (6 Oct 2026)
     // a card opens on Season Stats (minimal pass 5, Sean, 30 Sep 2026): Compare, the least used, went to the end of the row,
     // and a Compare left open from before is put back to Stats once per visit
     if (!pbtabReset) { pbtabReset = true; if (state.pbtab === "compare") state.pbtab = "stats"; }
@@ -6572,7 +6574,7 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => (tabs.find(([x]) => x === k) || [])[1];
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["nera"]] : []), ["fantasy"],
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"]] : []), ["fantasy"],
                     ["rolling", ...(p.type === "P" ? ["uera"] : ["mix", "babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
@@ -6639,6 +6641,8 @@
       body.append(renderStuffTab(p, o.st, g));
     } else if (pick === "pitching") {
       body.append(renderStuffTab(p, o.st, g, "pitching"));
+    } else if (pick === "spring") {
+      body.append(renderSpringTab(p));
     } else if (pick === "xk") {
       body.append(renderPctTab(p, o.st, g, ref, XK_COLS_P, "Left: his actual strike rates and the xK% they imply. Right, row for row: the same rates as the Pitching+ models expect them from his pitches, where he throws them and the batter's swing, and the Pitching+ xK% they imply. Plate, Counts and Stuff are the fit's other inputs.", { scaleAll: true }));
     } else if (pick === "xbb") {
@@ -7221,6 +7225,106 @@
     const tra = el("tr", "ftot"); tra.append(el("td", "l", stuff ? "xK% beyond what xWhiff% implies" : "K% beyond what Whiff% implies"), el("td", null, `${f1(k)} vs ${f1(impl)}`), heat(el("td", null, sg(gap)), gap)); tb2.append(tra);
     sum2.append(tb2); const wrap2 = el("div", "stuffscroll"); wrap2.append(sum2); box.append(wrap2);
     box.append(el("p", "note", `${stuff ? "The Pitching+ models' expected rates on his pitches: xWhiff per swing, the command models' called-strike chance (centred on the league's actual rate) and the foul models' share of contact going foul; xK% against the K% its xWhiff% implies." : "His actual rates by pitch."} A whiff rate implies a K% (about 0.93 points per whiff point); what moves a pitcher off it is fouls (+0.57 K% per point of fouls per contact over the league's ${lgFpc.toFixed(0)}), called strikes (+0.78 per point over ${lgC.toFixed(1)}), finishing with two strikes (+0.36 per point of 2-strike Whiff% over his overall) and walks (−0.35 per point over ${L.bb.toFixed(1)}) — together 85% of the gap across 2020-26. A pitch's Δ is its share of his pitches (contact, for fouls) times its rate against the league's, so the pitch rows add up to the overall. Fouls and called strikes carry year to year (r ~.55-.6); the two-strike edge mostly doesn't (.32).${anyC && anyF ? "" : " Called strikes and fouls by pitch arrive with the next build of this season's data."}`));
+    return box;
+  }
+  // Spring tab (Sean, 6 Oct 2026: "a tab about pitching+ but for spring training. As a way to get earlier indicators on arsenal
+  // and stuff and pitching+ changes"): his spring arsenal pitch by pitch beside the regular season before it — usage, velo, shape,
+  // Stuff+ / Pitching+ (each against its own type in its own file) and the models' expected rates — with the change, a "new" /
+  // "gone" flag on a pitch that wasn't in last year's mix or has vanished, and the season after the spring once it exists (so a
+  // March read can be checked in October). Spring whiff / GB / PU rates are a few dozen swings and read dim; the physical columns
+  // are what spring can tell you (2026, 60+ spring BF vs 200+ regular BF: FB velo r .87, Stuff+ .64, GB% .60, Whiff% .40). Full
+  // spring against the full season, whatever the card's filters. The spring the card can speak to: next year's once built, else
+  // this year's, and only on a regular-season MLB card of that year or the one before (springFor)
+  function springFor() {
+    if (DS.kind || DS.multi || (DS.level || "MLB") !== "MLB") return null;
+    const built = indexReady() ? window.DRAFT_INDEX.kinds : null, S = DATA.meta.season;
+    for (const y of [S + 1, S]) { const k = `mlb-${y}-spring`; if ((built ? built.includes(k) : !failed.has(`hist/${k}.js`)) && (y === DS.season || y === DS.season + 1)) return { k, y }; }
+    return null;
+  }
+  function renderSpringTab(p) {
+    const box = el("div", "rollbox uerabox stuffbox springbox"), sf = springFor();
+    if (!sf) return box;
+    const y = sf.y, sh = window.DRAFT_HIST && window.DRAFT_HIST[sf.k], yy = (n) => "'" + String(n).slice(2);
+    const keyOf = (yr) => (yr === DATA.meta.season ? CUR.key : `mlb-${yr}`), dsOf = (k) => (k === CUR.key ? CUR : histDataset(k));
+    const prevK = keyOf(y - 1), curK = keyOf(y), built = indexReady() ? window.DRAFT_INDEX.seasons : null;
+    const exists = (k) => k === CUR.key || (built ? built.includes(k) : !failed.has(`hist/${k}.js`));
+    const hd = el("div", "rollhd"); box.append(hd);
+    hd.append(el("span", "rollname", `Spring ${y}`));
+    if (!sh) { ensureHist(sf.k); hd.append(el("span", "rollsub", "loading…")); box.append(el("p", "note", `Loading ${y} spring training…`)); return box; }
+    const prev = exists(prevK) ? dsOf(prevK) : null, cur = y !== DS.season && exists(curK) ? dsOf(curK) : y === DS.season ? dsOf(curK) : null;
+    if (exists(prevK) && !prev) { ensureHist(prevK); hd.append(el("span", "rollsub", "loading…")); box.append(el("p", "note", `Loading the ${y - 1} season…`)); return box; }
+    if (exists(curK) && !cur) { ensureHist(curK); hd.append(el("span", "rollsub", "loading…")); box.append(el("p", "note", `Loading the ${y} season…`)); return box; }
+    const find = (ds) => (ds ? ds.players.find((q) => q.type === "P" && q.id === p.id) : null);
+    const ps = find(sh), pp = find(prev), pc = find(cur);
+    if (!ps) { hd.append(el("span", "rollsub", "no tracked pitches")); box.append(el("p", "note", `No ${y} spring training pitches tracked for him${pp ? ` — his ${y - 1} arsenal is on the Pitching+ tab of that season's card` : ""}.`)); return box; }
+    const objs = (q) => ((q && q.ctx && q.ctx.arsenal) || []).map((a) => Object.fromEntries(ARSENAL.map((k, i) => [k, a[i]])));
+    const RS = objs(ps), RP = objs(pp), RC = objs(pc), tot = (R) => R.reduce((s, r) => s + r.n, 0), tS = tot(RS), tP = tot(RP), tC = tot(RC);
+    // a pitch against its own type, in its own file's league (the spring file grades against MLB types already)
+    const relOf = (ds, c) => { const sc = c && c.stuff, T = (sc && sc.types) || {}; return (pt, v, part) => { const x = T[pt]; if (v == null || !x) return v; const [w, b] = stuffParts(sc, x[1], x[2], x[3], c.lgERA, x[4], x[5]); return v - (part === "w" ? w : part === "b" ? b : w + b - 100) + 100; }; };
+    const relS = relOf(sh, sh.consts), relP = relOf(prev, prev && (prev.hist ? window.DRAFT_HIST[prevK].consts : prev.consts)), relC = relOf(cur, cur && (cur.hist ? window.DRAFT_HIST[curK].consts : cur.consts));
+    const line = (R, t, rel, m) => (r) => (r ? { use: 100 * r.n / t, n: r.n, velo: r.velo, ivb: r.ivb, hb: r.hb, spin: r.spin, stuff: rel(r.pt, r.stuffp), pitch: rel(r.pt, r.pitp), xwhf: r.xwhfl ?? r.xwhf, xgb: r.xgbl ?? r.xgb, xpu: r.xpul ?? r.xpu, whf: r.whf, gb: r.gb, pu: r.pu, sw: r.sw, bip: r.bip } : null);
+    const LS = line(RS, tS, relS), LP = line(RP, tP, relP), LC = line(RC, tC, relC);
+    const byPt = (R) => Object.fromEntries(R.map((r) => [r.pt, r]));
+    const bS = byPt(RS), bP = byPt(RP), bC = byPt(RC);
+    const use = (b, t, pt) => (b[pt] && t ? 100 * b[pt].n / t : 0);
+    const types = [...new Set([...RS.map((r) => r.pt), ...RP.map((r) => r.pt), ...RC.map((r) => r.pt)])]
+      .filter((pt) => (bS[pt] && bS[pt].n >= 5) || use(bP, tP, pt) >= 3 || use(bC, tC, pt) >= 3)
+      .sort((a, b) => (bS[b] ? bS[b].n : 0) - (bS[a] ? bS[a].n : 0) || use(bP, tP, b) - use(bP, tP, a));
+    const flag = (pt) => (pp && bS[pt] && bS[pt].n >= 5 && use(bP, tP, pt) < 2 ? "new" : pp && use(bP, tP, pt) >= 5 && tS >= 40 && (!bS[pt] || bS[pt].n < 3) ? "gone" : null);
+    // the whole arsenal: the card's own grades, the expected rates weighted by pitches (xWhiff), the actual rates his season's
+    const all = (q, R, t, rel) => { if (!q) return null; const m = q.m || {}, wx = (k, k2) => { const R1 = R.filter((r) => (r[k] ?? r[k2]) != null), n = tot(R1); return n ? R1.reduce((s, r) => s + (r[k] ?? r[k2]) * r.n, 0) / n : null; };
+      return { use: t, n: t, velo: m.fbv, ivb: null, hb: null, spin: null, stuff: m.stuff, pitch: m.pitch, xwhf: wx("xwhfl", "xwhf"), xgb: wx("xgbl", "xgb"), xpu: wx("xpul", "xpu"), whf: m.whf, gb: m.gb, pu: m.pu, sw: null, bip: null, all: true }; };
+    const AS = all(ps, RS, tS), AP = all(pp, RP, tP), AC = all(pc, RC, tC);
+    // the head's one-line read: what moved from last season to camp
+    const parts = [], f1 = (x) => x.toFixed(1), sg = (x, d = 1) => (x > 0 ? "+" : "−") + Math.abs(x).toFixed(d);
+    if (AP && AS.velo != null && AP.velo != null && Math.abs(AS.velo - AP.velo) >= 0.5) parts.push(`FB velo ${sg(AS.velo - AP.velo)}`);
+    if (AP && AS.stuff != null && AP.stuff != null && Math.abs(AS.stuff - AP.stuff) >= 3) parts.push(`Stuff+ ${Math.round(AP.stuff)} → ${Math.round(AS.stuff)}`);
+    if (AP && AS.pitch != null && AP.pitch != null && Math.abs(AS.pitch - AP.pitch) >= 3) parts.push(`Pitching+ ${Math.round(AP.pitch)} → ${Math.round(AS.pitch)}`);
+    for (const pt of types) { const f = flag(pt); if (f === "new") parts.push(`new ${(PITCH_NAME[pt] || pt).toLowerCase()} (${Math.round(use(bS, tS, pt))}%)`); else if (f === "gone") parts.push(`${(PITCH_NAME[pt] || pt).toLowerCase()} dropped (was ${Math.round(use(bP, tP, pt))}%)`); }
+    for (const pt of types) { if (flag(pt) || !bS[pt] || !bP[pt] || bS[pt].n < 10) continue; const d = use(bS, tS, pt) - use(bP, tP, pt); if (Math.abs(d) >= 8) parts.push(`${(PITCH_NAME[pt] || pt).toLowerCase()} ${Math.round(use(bP, tP, pt))}% → ${Math.round(use(bS, tS, pt))}%`); }
+    const sample = `${ps.bf} BF · ${tS} pitches · ${ps.ctx && ps.ctx.G != null ? ps.ctx.G + " G" : ""}`.replace(/ · $/, "");
+    hd.append(el("span", "rollsub", sample + (pp ? ` · vs ${y - 1}: ` + (parts.length ? parts.join(" · ") : "the same arsenal as last season") : ` · his first MLB spring here — nothing from ${y - 1} to compare`)));
+    // the table: a pitch, then its spring line, last season's, the change, and the season after once built
+    const t = el("table", "ubt stufft springt"), th = el("thead"), hr = el("tr");
+    const heads = [["Pitch", "l"], ["", "l src"], ["Use", "", "Share of his pitches"], ["Velo", ""], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin", ""],
+                   ["Stuff+", "sp", "The pitch against its own type, in its own season's league"], ["Pitching+", "sp", "Stuff+ with location — the spring file needs the location models (a rescore) to carry it"],
+                   ["xWhiff", "", "The model's whiff rate per swing (location-aware where the file has it)"], ["xGB", "", "The model's ground-ball rate on contact"], ["xPU", "", "The model's popup rate on contact"],
+                   ["Whiff", "dim", "His actual whiff rate per swing — a few dozen swings in spring"], ["GB", "dim", "Actual ground-ball rate on contact"], ["PU", "dim", "Actual popup rate on contact"], ["Pitches", "dim"]];
+    for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
+    th.append(hr); t.append(th);
+    const tb = el("tbody");
+    const f1n = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%"), i0 = (x) => (x == null ? "–" : String(Math.round(x)));
+    const cellPlus = (v, cls) => { const td = el("td", "plus" + (cls ? " " + cls : ""), i0(v)); if (v != null) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; } } return td; };
+    const dimTd = (txt, tt) => { const td = el("td", "dim", txt); if (tt) td.title = tt; return td; };
+    const valueRow = (lab, L, cls) => { const tr = el("tr", cls || null); tr.append(el("td", "l src", lab));
+      if (!L) { for (let i = 0; i < 14; i++) tr.append(el("td", i === 0 ? "dim" : null, "–")); return tr; }
+      tr.append(el("td", null, L.all ? "" : pct(L.use)), el("td", null, f1n(L.velo)), el("td", null, f1n(L.ivb)), el("td", null, f1n(L.hb)), el("td", null, L.spin == null ? "–" : String(L.spin)),
+                cellPlus(L.stuff, "sp"), cellPlus(L.pitch, "sp"), el("td", null, pct(L.xwhf)), el("td", null, pct(L.xgb)), el("td", null, pct(L.xpu)),
+                dimTd(pct(L.whf), L.sw != null ? `${L.sw} swings` : null), dimTd(pct(L.gb), L.bip != null ? `${L.bip} balls in play` : null), dimTd(pct(L.pu), L.bip != null ? `${L.bip} balls in play` : null), dimTd(String(L.n)));
+      return tr; };
+    // the change, coloured where a direction is a verdict: velo, the grades and the expected rates (shape and use are just facts)
+    const dCell = (a, b, d, scale, pctFmt) => { const td = el("td", "dlt"); if (a == null || b == null) { td.textContent = "–"; return td; } const v = a - b; td.textContent = sg(v, d) + (pctFmt ? "" : ""); if (scale) paint(td, Math.max(2, Math.min(98, Math.round(50 + scale * v)))); return td; };
+    const deltaRow = (A, B) => { const tr = el("tr", "sdelta"); tr.append(el("td", "l src", "Δ"));
+      if (!A || !B) { for (let i = 0; i < 14; i++) tr.append(el("td", null, "–")); return tr; }
+      tr.append(A.all ? el("td") : dCell(A.use, B.use, 0), dCell(A.velo, B.velo, 1, 12), dCell(A.ivb, B.ivb, 1), dCell(A.hb, B.hb, 1), dCell(A.spin, B.spin, 0),
+                dCell(A.stuff, B.stuff, 0, 2.2), dCell(A.pitch, B.pitch, 0, 2.2), dCell(A.xwhf, B.xwhf, 1, 3), dCell(A.xgb, B.xgb, 1, 1.5), dCell(A.xpu, B.xpu, 1, 3),
+                dimTd(A.whf != null && B.whf != null ? sg(A.whf - B.whf) : "–"), dimTd(A.gb != null && B.gb != null ? sg(A.gb - B.gb) : "–"), dimTd(A.pu != null && B.pu != null ? sg(A.pu - B.pu) : "–"), el("td"));
+      return tr; };
+    const block = (name, S_, P_, C_, f) => {
+      const n = 2 + (pp ? 1 : 0) + (pc ? 1 : 0), first = el("tr", "sph"), nm = el("td", "l pname"); nm.rowSpan = n; nm.append(name);
+      if (f) nm.append(el("span", "sflag " + f, f));
+      first.append(nm);
+      const r1 = valueRow(`Spring ${yy(y)}`, S_); for (const c of [...r1.childNodes]) first.append(c);
+      tb.append(first);
+      if (pp) tb.append(valueRow(`${yy(y - 1)} season`, P_));
+      tb.append(deltaRow(S_, P_));
+      if (pc) tb.append(valueRow(`${yy(y)} season`, C_, "scur"));
+    };
+    for (const pt of types) block(PITCH_NAME[pt] || pt, LS(bS[pt]), LP(bP[pt]), LC(bC[pt]), flag(pt));
+    block("All pitches", AS, AP, AC, null);
+    t.append(tb);
+    const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
+    box.append(el("p", "note", `Spring pitches are graded against MLB pitch types with their own park adjustment (desert air takes ride off a fastball). What carries from camp to the season is the physical side — velocity, movement, mix, and the Stuff+ / Pitching+ built on them; whiff, ground-ball and popup rates are a few dozen swings against a mix of regulars and minor leaguers and read dim here. Velocity ramps through March (the first week reads a mile low) and a reliever's one-inning outings read hot.${pc ? ` The ${y} season rows are what actually followed.` : ""}${AS.pitch == null ? " Pitching+ for this spring arrives when the file is rescored with the location models." : ""}`));
     return box;
   }
   function renderStuffTab(p, st, g, mode = "stuff") {
