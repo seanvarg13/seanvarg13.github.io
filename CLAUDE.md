@@ -1985,6 +1985,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   and `renderKConv(p, st, [], …)`, and `renderKConv` draws the four-dial summary alone when it gets no rows (a note says the league is the level's
   20+ BF pitchers and the weights are MLB's). The profile's note on a minors card says the skill / noise split uses MLB's reliability, so Skill is an
   upper bound there. DeBerry (AA 2026): "Average whiffs, average conversion", two-strike finishing +1.9 of which +3.1 is noise at 582 BF.
+* **Every minors season 2021-26 carries the count-state / called-strike / foul fields (6 Oct 2026)**: two rescore runs (37466634801: aaa-2022..2025
+  + aa / ap / a-2025; 37481424671: aa / ap / a 2021-2024, every Gameday feed refetched for the count) put `cstr / foul / s2whf / fstrk / b3strk` on every
+  pitcher in every `hist/<aaa|aa|ap|a>-YYYY.js`, so the minors' Swing & Miss / Command bars, the strikeout profile and the four dials read on past seasons too.
 * **xCalled on the Pitching+ tab (Sean, 6 Oct 2026: "add expected called strikes to the pitching+ tab as well")**: an **xCalled** pair after xFoul in
   `renderStuffTab`'s Pitching+ table — the command models' called-strike chance per pitch (the arsenal's `xcstr`, `arsenalView`'s in a window /
   split) plus `xCalled`'s league centring (`lgRatesP().cstr − .xcstr`, the models read the newest season a little hot) over his actual called
