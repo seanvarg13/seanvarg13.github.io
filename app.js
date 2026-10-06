@@ -4127,10 +4127,18 @@
     const tog = el("button", "btn btn-quiet tbtn" + (cl.all ? " on" : ""), cl.all ? "Hide comments" : "Show all comments"); tog.type = "button"; tog.addEventListener("click", () => { cl.all = !cl.all; save(); }); bar.append(tog);
     bar.append(el("span", "pbcount", `${D27.rows.length} starters · ${D27.scoring.split(" (")[0]} · built ${D27.built}`));
     box.append(bar);
-    const rows = D27.rows.filter((r) => !cl.q || r.name.toLowerCase().includes(cl.q.toLowerCase()) || (r.team || "").toLowerCase() === cl.q.toLowerCase());
-    if (cl.sort === "pps") rows.sort((a, b) => b.pps - a.pps);
+    // the points follow the Fantasy scoring in use (Sean, 6 Oct 2026: "I have a scoring saved in fantasy ... make it based on that scoring"):
+    // each row carries his projected per-start stat line; it's scored under the preset and scaled by the ranking's own per-start value over
+    // the line's ESPN points, so the process adjustments (xnERA, the stretch run, the models) carry into any scoring
+    const pre = fpreset(), wP = pre.w.P;
+    const val = (r) => { if (!r.line || !r.espn) return { pps: r.pps, pts: r.pts }; const pps = fPts(wP, r.line) * (r.pps / r.espn); return { pps, pts: pps * r.gs }; };
+    const rows = D27.rows.filter((r) => !cl.q || r.name.toLowerCase().includes(cl.q.toLowerCase()) || (r.team || "").toLowerCase() === cl.q.toLowerCase()).map((r) => Object.assign({}, r, val(r)));
+    rows.sort((a, b) => cl.sort === "pps" ? b.pps - a.pps : b.pts - a.pts);
+    const rankOf = new Map(D27.rows.map((r) => Object.assign({}, r, val(r))).sort((a, b) => b.pts - a.pts).map((r, i) => [r.id, i + 1]));
+    bar.insertBefore(pillSelect(pre.name, fpresets().map((x) => [x.id, x.name]), pre.id, (v) => { fstore.current = v; fsave(); render(); }, "Scoring"), bar.querySelector(".pbcount"));
+    bar.querySelector(".pbcount").textContent = `${D27.rows.length} starters · ${pre.name} scoring · built ${D27.built}`;
     const P = new Map(DATA.players.filter((p) => p.type === "P").map((p) => [p.id, p]));
-    const ppsAll = D27.rows.map((r) => r.pps), ptsAll = D27.rows.map((r) => r.pts);
+    const scored = D27.rows.map((r) => val(r)), ppsAll = scored.map((r) => r.pps), ptsAll = scored.map((r) => r.pts);
     const pctIn = (arr, v) => Math.round(100 * arr.filter((x) => x < v).length / arr.length);
     const paint = (td, pc) => { const st = pctStyle(pc); if (st) { td.style.background = st.bg; td.style.color = st.fg; } };
     const f1 = (v) => v == null ? "–" : (+v).toFixed(1), f2 = (v) => v == null ? "–" : (+v).toFixed(2), f0 = (v) => v == null ? "–" : String(Math.round(v));
@@ -4145,7 +4153,7 @@
       const nm = p ? el("button", "linkbtn pbname", r.name) : el("span", "pbname", r.name);
       if (p) { nm.type = "button"; nm.addEventListener("click", (e) => { e.stopPropagation(); openCard(p); }); }
       who.append(nm, el("small", null, ` ${r.team || ""} · ${r.age}`));
-      tr.append(el("td", "n", String(r.rk)), who);
+      tr.append(el("td", "n", String(rankOf.get(r.id) || r.rk)), who);
       for (const [k] of cols) {
         let td;
         if (k === "tier") td = el("td", "cltier", "T" + r.tier);
@@ -4171,7 +4179,7 @@
     });
     t.append(tb);
     const scroll = el("div", "fscroll pbscroll"); scroll.append(t); box.append(scroll);
-    box.append(el("p", "note", `Scoring: ${D27.scoring}. ${D27.method}`));
+    box.append(el("p", "note", `Points are under the ${pre.name} scoring picked above (the Fantasy page's presets); the ranking was built under ESPN standard and each pitcher's projected per-start line is re-scored here, keeping his process adjustment. ${D27.method}`));
   }
   // Weekly Planner (Sean, 29 Sep 2026): the Monday-to-Sunday week's schedule and probable starters, fetched from the MLB Stats API
   // in the browser when the page opens (it allows cross-site reads; nothing is built for it). Starred players by default, or
