@@ -7295,45 +7295,36 @@
     else name = gap >= 1.5 ? "Pitch-to-contact that converts" : gap <= -1.5 ? "Pitch-to-contact, and leaks strikeouts" : "Pitch-to-contact";
     const qual = [];
     if (st && st.pct) { if (st.pct.osw >= 70) qual.push("chase-driven"); else if (st.pct.zone >= 70) qual.push("in the zone"); if (st.pct.fbv >= 85) qual.push("velocity"); }
-    const box = el("div", "kconv karch"), hd = el("div", "rollhd");
-    hd.append(el("span", "rollname", name + (qual.length ? " · " + qual.join(", ") : "")), el("span", "rollsub", stuff ? "on the Pitching+ models' expected rates — what his pitches and spots say he should be" : "strikeout profile — what makes his K%, and how much of it a season of his size can claim"));
+    // the simple read (Sean, 6 Oct 2026: the tables under the arsenal "look a bit busy / hard to understand"): the archetype, one line that
+    // adds up — K%, what the whiffs alone say, the rest — and five rows in the card's own dress: the dial, his rate against the league, what
+    // it is worth in K% points as a coloured pill, and whether a season of his size can call it skill. No per-pitch deltas, no seven columns.
+    const box = el("div", "kconv karch ksum"), hd = el("div", "rollhd");
+    hd.append(el("span", "rollname", name + (qual.length ? " · " + qual.join(", ") : "")));
     box.append(hd);
-    const ord = (x) => (x == null ? "" : ordinal(x) + " pct");
-    const why = [];
-    why.push(`${stuff ? "xK%" : "K%"} ${f1(his.k)}${pct.k != null ? ` (${ord(pct.k)})` : ""} on a${wp != null ? " " + ordinal(wp) + "-percentile" : "n"} ${stuff ? "expected " : ""}whiff rate (${f1(his.whf)}${stuff ? ` vs ${f1(act.whf)} actual` : ""})`);
-    const dl = dials.filter(([k]) => Math.abs(eff[k]) >= 0.5).map(([k, w]) => `${w} ${sg(eff[k])} (${f1(his[k])} vs ${f1(lg[k])}${k === "s2d" ? " — his two-strike whiff rate over his overall" : ""})`);
-    why.push(`${sg(gap)} beyond what the whiffs alone imply${dl.length ? ": " + dl.join(", ") : " — nothing beyond ±0.5 on any dial"}`);
-    box.append(el("p", "note karchwhy", why.join(". ") + "."));
-    // the table: each dial, his rate against the league, where it ranks, what it's worth in K% points, and the skill / noise split
-    const t = el("table", "ubt stufft kconvt karcht"), th = el("thead"), hr = el("tr");
-    const heads = stuff ? [["Dial", "l"], ["Expected", ""], ["Actual", ""], ["League", ""], ["Pct", "", "his expected rate among the pool"], ["Effect", "", "what the expected rate is worth in K% points against the league"], ["Act − exp", "", "his actual rate over what the models expect — the part the models can't see: skill the model misses, or noise"]]
-                       : [["Dial", "l"], ["His", ""], ["League", ""], ["Pct", ""], ["Effect", "", "what this rate is worth in K% points against the league"], ["Skill", "", "his rate pulled toward the league by how much a season of his size repeats: league + w × (his − league)"], ["Noise", "", "what a season of his size can't claim — the part that regresses"], ["Repeats", "", "the share of a season of his size that carries: BF / (BF + k), from every consecutive pair of seasons 2020-26"]];
-    for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
-    th.append(hr); t.append(th);
-    const tb = el("tbody");
-    const heat = (td, v, k = 12) => { if (v == null) return td; const s2 = pctStyle(Math.max(1, Math.min(99, Math.round(50 + k * v)))); if (s2) { td.style.background = s2.bg; td.style.color = s2.fg; } return td; };
-    const pctTd = (v, hib = true) => { const td = el("td", null, v == null ? "–" : String(v)); if (v != null) paint(td, hib ? v : 100 - v); return td; };
-    const LAB = { whf: [stuff ? "xWhiff%" : "Whiff%", "whiffs per swing"], s2d: ["2-strike finishing", "two-strike whiff rate minus his overall"], cstr: [stuff ? "xCalled Strike%" : "Called Strike%", "called strikes per pitch"], fpc: [stuff ? "xFoul% of contact" : "Foul% of contact", "contact that goes foul keeps the strikeout alive"], bb: [stuff ? "xBB%" : "BB%", "a walk is a plate appearance that can't be a strikeout"] };
-    let skillK = lg.k, noiseK = 0;
+    const sumLine = el("p", "ksumline");
+    const K = stuff ? "xK%" : "K%";
+    sumLine.append(el("b", null, `${K} ${f1(his.k)}`), ` — the ${stuff ? "expected " : ""}whiffs alone say ${f1(kImplied(his.whf))}, the rest is ${sg(gap)}${stuff ? ` (his actual K% is ${f1(act.k)})` : ""}.`);
+    box.append(sumLine);
+    const rows = el("div", "krows");
+    const LAB = { whf: stuff ? "xWhiff%" : "Whiff%", s2d: "2-strike finishing", cstr: stuff ? "xCalled Strike%" : "Called Strike%", fpc: stuff ? "xFoul% of contact" : "Foul% of contact", bb: stuff ? "xBB%" : "BB%" };
+    const TIP = { whf: "whiffs per swing — 0.926 K% a point", s2d: "his two-strike whiff rate minus his overall — finishing once he is ahead", cstr: "called strikes per pitch", fpc: "the share of his contact that goes foul — a foul keeps the strikeout alive, a ball in play ends it", bb: "walks end plate appearances without a strikeout" };
+    const word = (w) => (w >= 0.72 ? "mostly skill" : w >= 0.5 ? "half skill" : w >= 0.3 ? "mostly noise" : "noise at this sample");
+    let skillK = lg.k;
     for (const k of ["whf", "s2d", "cstr", "fpc", "bb"]) {
-      const tr = el("tr"), a = el("td", "l", LAB[k][0]); a.title = LAB[k][1]; tr.append(a);
-      if (his[k] == null) { for (let i = 1; i < heads.length; i++) tr.append(el("td", null, "–")); tb.append(tr); continue; }
-      const w = wOf(k), sk = lg[k] + w * (his[k] - lg[k]), nz = (1 - w) * (his[k] - lg[k]);
-      skillK += W[k] * w * (his[k] - lg[k]); noiseK += W[k] * nz;
-      if (stuff) tr.append(el("td", null, f1(his[k])), el("td", null, f1(act[k])), el("td", null, f1(lg[k])), pctTd(pct[k], k !== "bb"), heat(el("td", null, sg(eff[k])), eff[k]), heat(el("td", null, act[k] == null ? "–" : sg(act[k] - his[k])), act[k] == null ? null : W[k] * (act[k] - his[k])));
-      else tr.append(el("td", null, f1(his[k])), el("td", null, f1(lg[k])), pctTd(pct[k], k !== "bb"), heat(el("td", null, sg(eff[k])), eff[k]), el("td", null, f1(sk)), heat(el("td", null, sg(nz)), -W[k] * nz), el("td", null, Math.round(100 * w) + "%"));
-      tb.append(tr);
+      const r = el("div", "krow"); r.title = TIP[k];
+      const nm = el("div", "kname"); nm.append(el("span", "klab", LAB[k]), el("span", "ksub", his[k] == null ? "–" : `${f1(his[k])} vs league ${f1(lg[k])}${pct[k] != null ? " · " + ordinal(pct[k]) + " pct" : ""}`));
+      const pill = el("span", "kpill", eff[k] == null ? "–" : sg(eff[k]));
+      if (eff[k] != null) { const s2 = pctStyle(Math.max(1, Math.min(99, Math.round(50 + 12 * eff[k])))); if (s2) { pill.style.background = s2.bg; pill.style.color = s2.fg; } }
+      const w = wOf(k); if (his[k] != null) skillK += W[k] * w * (his[k] - lg[k]);
+      r.append(nm, pill, el("span", "kword", his[k] == null ? "" : word(w)));
+      rows.append(r);
     }
-    // K% itself: shrunk on its own reliability (the dials' skill adds up to about the same)
-    const wk = wOf("k"), skK = lg.k + wk * (his.k - lg.k), nzK = (1 - wk) * (his.k - lg.k), trk = el("tr", "ftot");
-    trk.append(el("td", "l", stuff ? "xK%" : "K%"));
-    if (stuff) trk.append(el("td", null, f1(his.k)), el("td", null, f1(act.k)), el("td", null, f1(lg.k)), pctTd(pct.k), heat(el("td", null, sg(his.k - lg.k)), his.k - lg.k), heat(el("td", null, sg(act.k - his.k)), act.k - his.k));
-    else trk.append(el("td", null, f1(his.k)), el("td", null, f1(lg.k)), pctTd(pct.k), heat(el("td", null, sg(his.k - lg.k)), his.k - lg.k), el("td", null, f1(skK)), heat(el("td", null, sg(nzK)), -nzK), el("td", null, Math.round(100 * wk) + "%"));
-    tb.append(trk); t.append(tb);
-    const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
-    const lvNote = DS.level && DS.level !== "MLB" ? " The skill / noise split uses MLB's year-to-year reliability; a minor-league season is at least as noisy, so read the Skill column as an upper bound." : "";
-    if (!stuff) box.append(el("p", "note", `At ${bf} batters faced his skill K% reads ${f1(skK)} — the dials' skill parts add to ${f1(skillK)} — and ${sg(nzK)} of this season's K% is what a sample this size can't claim. Whiff% is the dial that carries (${Math.round(100 * wOf("whf"))}% at his size), two-strike finishing the one that mostly doesn't (${Math.round(100 * wOf("s2d"))}%): a season's run of two-strike whiffs is largely luck, a foul-ball or called-strike habit is largely his.` + lvNote));
-    else box.append(el("p", "note", "Act − exp is what his results did beyond what the models expect from his pitches and where he threw them: a dial that's positive here year after year is a skill the models don't see (sequencing, deception, the catcher); one season of it is mostly noise. The Raw side splits each dial into skill and noise by sample size."));
+    box.append(rows);
+    const wk = wOf("k"), skK = lg.k + wk * (his.k - lg.k), nzK = (1 - wk) * (his.k - lg.k);
+    const lvNote = DS.level && DS.level !== "MLB" ? " (MLB's reliability; a minors season is at least as noisy.)" : "";
+    box.append(el("p", "note", stuff
+      ? `The pill is what each expected rate is worth in K% points against the league. Where his actual K% (${f1(act.k)}) beats this year after year, the models are missing something — sequencing, or a swing his pitches draw.${lvNote}`
+      : `The pill is what each dial is worth in K% points against the league. At ${bf} batters faced his skill K% reads ${f1(skK)}: ${sg(nzK)} of this season's ${f1(his.k)} is what a sample this size can't claim.${lvNote}`));
     return box;
   }
   function renderKConv(p, st, R0, stuff) {
@@ -7508,7 +7499,7 @@
     if (!rows.length) {   // no pitch tracking (Double-A and below): no arsenal table, but the strikeout profile and the whiffs-to-strikeouts
       // summary read the calls, swings and fouls Gameday does carry (Sean, 6 Oct 2026: "add these functionalities to the minor league pitchers too")
       box.append(el("p", "note", DS.level && DS.level !== "MLB" ? "No pitch tracking at this level, so there's no arsenal to grade — the strikeout profile below reads the calls, swings and fouls the feed does carry." : "The arsenal table comes with the next build of this season's data."));
-      if (P) { const ka = renderKArchetype(p, st, g); if (ka) box.append(ka); const kc = renderKConv(p, st, [], stuffSide()); if (kc) box.append(kc); }
+      if (P) { const ka = renderKArchetype(p, st, g); if (ka) box.append(ka); }   // the Whiffs to strikeouts tables came off (6 Oct 2026); renderKConv stays
       return box; }
     const av = arsenalView(p), filtered = Array.isArray(av);
     if (av === "loading") box.append(el("p", "note", "Loading his pitches game by game…"));
@@ -7588,13 +7579,12 @@
         d.append(el("b", null, `Rating ${rt} · xRating ${xr}`), el("span", null, ` — xStrikeout 60, Control 20, Mix xwOBA 20 against the Rating's Strikeout 60, Control 20, Mix wOBA 20: the same skills with the whiffs, fouls and mix taken from what his stuff and spots say instead of his results.${Math.abs(gap) >= 8 ? ` His Rating runs ${Math.abs(gap)} ${gap > 0 ? "over" : "under"} what his pitches say; about half of a gap like that has closed the next season.` : " The two agree."}`));
         d.title = "xRating: xStrikeout 60, Control 20, Mix xwOBA 20 over percentiles — the whiffs, fouls and batted-ball mix his stuff and spots say he should have, with his own strike-throwing.";
         box.append(d); }
-      const bd = renderXkBreakdown(p, st); if (bd) box.append(bd);
+      // the xK% breakdown table came off (Sean, 6 Oct 2026: the tables under the arsenal "look a bit busy"); it repeated the All pitches pairs. renderXkBreakdown stays
       const asSP = null;   // As a starter (xRating among starters) stays off with the xRating
       if (roleNorm(SPLIT)) { const d = el("div", "aopt spnorm");
         d.append(el("b", null, "All innings as a starter"), el("span", null, ": every pitch he threw, with the days he relieved read as a starter — their expected whiff, ground-ball and popup rates moved by the reliever-to-starter effect from history (about −0.9 whiff points, −0.8 ground-ball points and +0.1 popup points for a typical reliever, more the better his relief numbers). So xWhiff / xGB / xPU here and in the Pitching+ table, Mix xwOBA, xRating and the whiff check are what the whole season says about him in the rotation; his actual rates, Pitching+ and the start days are as they were."));
         box.append(d); }
       const ka = renderKArchetype(p, st, g); if (ka) box.append(ka);   // strikeout profile: archetype, skill / noise (6 Oct 2026)
-      const kc = renderKConv(p, st, R0, stuffSide()); if (kc) box.append(kc);   // whiffs to strikeouts (6 Oct 2026)
       const wc = renderWhiffCheck(p, m); if (wc) box.append(wc); }
     // how well his usage leans on his whiff pitches (arsenalOpt), with where that ranks among the season's pitchers
     const EXTRAS = false;   // Arsenal Opt. and Stuff uERA under the table are off (Sean, 6 Oct 2026: "just have a stuff+ tab that shows expected whiff rates and gb% and pop up%")
