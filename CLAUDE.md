@@ -1985,4 +1985,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   and `renderKConv(p, st, [], …)`, and `renderKConv` draws the four-dial summary alone when it gets no rows (a note says the league is the level's
   20+ BF pitchers and the weights are MLB's). The profile's note on a minors card says the skill / noise split uses MLB's reliability, so Skill is an
   upper bound there. DeBerry (AA 2026): "Average whiffs, average conversion", two-strike finishing +1.9 of which +3.1 is noise at 582 BF.
+* **xCalled on the Pitching+ tab (Sean, 6 Oct 2026: "add expected called strikes to the pitching+ tab as well")**: an **xCalled** pair after xFoul in
+  `renderStuffTab`'s Pitching+ table — the command models' called-strike chance per pitch (the arsenal's `xcstr`, `arsenalView`'s in a window /
+  split) plus `xCalled`'s league centring (`lgRatesP().cstr − .xcstr`, the models read the newest season a little hot) over his actual called
+  strikes per pitch (`cstr`); All pitches = `m.ncstr` over `m.cstr`. Sale 2026: slider 15.7 expected / 17.6 actual, sinker 25.4 / 26.3, all
+  16.9 / 17.4; Imanaga: splitter 7.6 / 6.7, all 14.0 / 13.6 — the model expects a splitter-heavy mix to collect few called strikes, so his gap
+  to Sale is the arsenal's design, not sequencing luck. Files built before 6 Oct 2026 read "–" per pitch.
 

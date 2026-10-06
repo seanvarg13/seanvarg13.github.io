@@ -7457,7 +7457,8 @@
                    ...(P ? [["Pitching+", "sp", "Stuff+ with location: the same pitch graded in the spot it was thrown"], ["Whiff+", "", "Pitching+'s whiff half"], ["BB+", "", "Pitching+'s batted-ball half"],
                            ["Loc+", "", "Location+: Pitching+ − Stuff+ + 100 — what his locations add (100 = an average pitcher's spots)"],
                            ["xWhiff", "", "The whiff rate per swing the location-aware model expects — his actual Whiff% under it"], ["xGB", "", "The location-aware model's ground-ball rate on contact — actual under it"], ["xPU", "", "The location-aware model's popup rate on contact — actual under it"],
-                           ["xFoul", "", "The foul model's share of contact that goes foul — the pitch's traits, where it crossed and the batter's swing on it — his actual foul rate per contact under it"]]
+                           ["xFoul", "", "The foul model's share of contact that goes foul — the pitch's traits, where it crossed and the batter's swing on it — his actual foul rate per contact under it"],
+                           ["xCalled", "", "The command models' called-strike chance per pitch — P(taken) × P(called | taken) from the pitch's traits, its spot and the count, centred on the league's actual called-strike rate — his actual called strikes per pitch under it (Sean, 6 Oct 2026)"]]
                         : [["Stuff+", "sp"], ["Whiff+", ""], ["BB+", "", "Batted-ball+"], ["xWhiff", "", "The model's whiff rate per swing — his actual Whiff% under it"],
                            ["xGB", "", "The model's ground-ball rate on contact — actual GB% under it"], ["xPU", "", "The model's popup rate on contact — actual under it"],
                            ["xFoul", "", "The foul model's share of contact that goes foul — the pitch's traits, where it crossed and the batter's swing on it — his actual foul rate per contact under it (a foul keeps the strikeout alive; a ball in play ends the PA)"]])];
@@ -7468,6 +7469,7 @@
     const cellPlus = (v, cls) => { const td = el("td", "plus" + (cls ? " " + cls : ""), v == null ? "–" : String(Math.round(v))); if (v != null) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; } } return td; };
     const pair = (x, a) => { const td = el("td", "xa"); td.append(el("b", null, pct(x)), el("i", null, a == null ? "–" : pct(a))); return td; };
     const con = (r) => (r.sw || 0) * (1 - (r.whf || 0) / 100);   // the pitch's contacted swings — what the foul chance is over
+    const LR = lgRatesP(), cshift = LR.xcstr != null && LR.cstr != null ? LR.cstr - LR.xcstr : 0;   // xCalled's centring: the fixed models read the newest season a little hot
     const relSum = { t: 0, w: 0, b: 0, n: 0 };
     for (const r of R0) {                                           // his arsenal against its types, usage-weighted, for the total row
       const A = typeAvg(r.pt); if (!A || r.stuffp == null) continue;
@@ -7478,7 +7480,7 @@
       tr.append(el("td", "l", PITCH_NAME[r.pt] || r.pt), el("td", null, pct(100 * r.n / tot)), el("td", null, f1n(r.velo)), el("td", null, f1n(r.ivb)), el("td", null, f1n(r.hb)),
                 el("td", null, r.spin == null ? "–" : String(r.spin)),
                 ...(P ? [cellPlus(rel(r.pitp, A && A.t), "sp"), cellPlus(rel(r.whfpl, A && A.w)), cellPlus(rel(r.bbpl, A && A.b)), cellPlus(r.locp),
-                         pair(r.xwhfl, r.whf), pair(r.xgbl, r.gb), pair(r.xpul, r.pu), pair(xFoulOf(r), r.foul)]
+                         pair(r.xwhfl, r.whf), pair(r.xgbl, r.gb), pair(r.xpul, r.pu), pair(xFoulOf(r), r.foul), pair(r.xcstr == null ? null : r.xcstr + cshift, r.cstr)]
                       : [cellPlus(rel(r.stuffp, A && A.t), "sp"), cellPlus(rel(r.whfp, A && A.w)), cellPlus(rel(r.bbp, A && A.b)),
                          pair(r.xwhf, r.whf), pair(r.xgb, r.gb), pair(r.xpu, r.pu), pair(xFoulOf(r), r.foul)]));
       tb.append(tr);
@@ -7498,7 +7500,8 @@
                         pair(R0.some((r) => r.xwhfl != null) ? wxs("xwhfl", "sw") : null, act("whf", "sw")), pair(R0.some((r) => r.xgbl != null) ? wxs("xgbl", "bip") : null, act("gb", "bip")), pair(R0.some((r) => r.xpul != null) ? wxs("xpul", "bip") : null, act("pu", "bip")),
                         (() => { let n = 0, tx = 0, na = 0, ta = 0; for (const r of R0) { const c = con(r), x = xFoulOf(r); if (x != null && c) { n += c; tx += x * c; } if (r.foul != null && c) { na += c; ta += r.foul * c; } }
                           const fa = na ? ta / na : m.foul != null && m.swing && m.whf != null && m.swing * (1 - m.whf / 100) > 0 ? m.foul / (m.swing * (1 - m.whf / 100)) * 100 : null;
-                          return pair(n ? tx / n : null, fa); })()]
+                          return pair(n ? tx / n : null, fa); })(),
+                        pair(mv.ncstr != null ? mv.ncstr : m.ncstr, mv.cstr != null ? mv.cstr : m.cstr)]
                      : [cellPlus(tv.t, "sp"), cellPlus(tv.w), cellPlus(tv.b), pair(wx("xwhf"), act("whf", "sw")), pair(wx("xgb"), act("gb", "bip")), pair(wx("xpu"), act("pu", "bip")),
                         (() => { let n = 0, tx = 0, na = 0, ta = 0;   // expected fouls over his contact, actual over the contact that has a count
                           for (const r of R0) { const c = con(r), x = xFoulOf(r); if (x != null && c) { n += c; tx += x * c; } if (r.foul != null && c) { na += c; ta += r.foul * c; } }
