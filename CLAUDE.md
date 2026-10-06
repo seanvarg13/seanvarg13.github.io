@@ -1837,3 +1837,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (K% | Whiff% · 2-strike Whiff% · Foul%) | **Command** (BB% | Strike% · 1st-pitch · 3-ball) · Batted Ball; no Results. **Rating = the nERA
   percentile** (`PITCHER_SCORE_WEIGHTS` / `meta.pitcherWeights` `{nera: 100}`, `data.js` patched, `scoreNote.P`, glossary); Strikeout / Control /
   xStrikeout stay computed (`kskl / ctrl / ksklx` on the pool's stats) but are off the card.
+* **The Raya type off again, the mock's bars kept (Sean, 6 Oct 2026: "keep the percentile bars how they are currently but go back to the old
+  spacing and font and everything format wise before I had you go back to the raya one just now")**: the "Raya type, lines and spacing" block is
+  out of `styles.css` once more (PR #351's weight-400 type, buttons, nav, column names and hairlines); the two bar blocks at the end ("The Raya
+  mock's bars", the black type) stay, and `themes.js` keeps loading the 300 weights so the bars' light labels and section names draw the same.
