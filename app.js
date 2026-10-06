@@ -7773,9 +7773,9 @@
   // Control, Swing & Miss = K% · Whiff% (fold-out: 2-strike Whiff%, Foul%, Called Strike%); the Stuff side the Pitching+ expected ones
   // Walk Avoidance under Swing & Miss, ahead of Batted Ball (Sean, 5 Oct 2026); left 7 rows, right 6
   // Skills = K-BB% · Mix wOBA, K% back atop Swing & Miss and BB% atop Command (Walk Avoidance renamed) with a line break ("|") after each, no Results (Sean, 6 Oct 2026)
-  const PCT_COLS_P = [[["Skills", ["kbb", "mixw"]], ["Swing & Miss", ["k", "|", "whf", "s2whf", "fpc"]]],
+  const PCT_COLS_P = [[["Skills", ["kbb", "mixw"]], ["Swing & Miss", ["k", "|", "whf", "s2whf", "cstr", "fpc"]]],
                       [["Command", ["bb", "|", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["gb", "pu", "mixw"]]]];   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
-  const PCT_COLS_PS = [[["Skills", ["kbb", "nmix"]], ["Swing & Miss", ["k", "|", "nwhf", "ns2whf", "nfoul"]]],
+  const PCT_COLS_PS = [[["Skills", ["kbb", "nmix"]], ["Swing & Miss", ["k", "|", "nwhf", "ns2whf", "ncstr", "nfoul"]]],
                        [["Command", ["bb", "|", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["ngb", "npu", "nmix"]]]];
   const STUFF_LABELS = { xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => false;   // the Stuff side came off the card (6 Oct 2026); PCT_COLS_PS stays for the record
