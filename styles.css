@@ -2401,6 +2401,9 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 .modal.pcard .ppage { margin-inline: 16px; }
 :root[data-view="mobile"] body.modal-open.cardpop { position: fixed; inset: 0; width: 100%; overflow: hidden; }
 :root[data-view="mobile"] body.modal-open.cardpop main { display: block; }
+/* …but a list page's standing card is a flex column whose rows' box takes the leftover height — as a block the box grew to every row and lost
+   its scroll, so the list behind a card sat at the top and jumped back on close (Sean, 7 Oct 2026); those pages keep flex under a card */
+:root[data-view="mobile"] body.modal-open.cardpop:is([data-mode="leaderboard"], [data-mode="trending"], [data-mode="rankings"], [data-mode="draft"], [data-mode="pitches"], [data-mode="claude"], [data-mode="mock"], [data-mode="planner"]) main.wrap { display: flex; }
 :root[data-view="mobile"] .modal.pcard { position: fixed; inset: 0; z-index: 50; display: block; padding: 0; overflow: hidden; touch-action: auto; }
 :root[data-view="mobile"] .modal.pcard .modal-back { display: block; }
 :root[data-view="mobile"] .modal.pcard .modal-panel { position: absolute; left: 8px; right: 8px; top: calc(var(--header-h, 0px) + 8px); bottom: 8px;
