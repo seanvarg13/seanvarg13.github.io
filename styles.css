@@ -4457,3 +4457,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .hrow .hchip.fact:last-child { border-right: 0; }
 /* the bio's two lines in one size and weight (Sean, 7 Oct 2026: "have the second row be the same size font as the first") */
 :root:root:root:root:root:root:root:root:root .phead .hbioline .hbio.inline .hbio2 { font-size: inherit; font-weight: inherit; color: inherit; }
+/* Filters as a plain white word with its arrow, no button (Sean, 7 Oct 2026: "making the filters thing not a button anymore but just it says
+   filters with the arrow in white and then brings the drop down box"); the chips under it keep their outline */
+:root:root:root:root:root:root:root:root:root:root .phead .phctl .phtog .seg.phfiltseg, :root:root:root:root:root:root:root:root:root:root .phead .phctl .phtog .seg.phfiltseg .segbtn.phfilt { background: transparent !important; border: 0 !important; color: var(--onband, #ffffff) !important; box-shadow: none !important; padding: 0 2px; width: auto; min-width: 0; font-size: 14px; font-weight: 600; }
+:root:root:root:root:root:root:root:root:root:root .phead .phctl .phtog .seg.phfiltseg .segbtn.phfilt[aria-pressed="true"], :root:root:root:root:root:root:root:root:root:root .phead .phctl .phtog .seg.phfiltseg .segbtn.phfilt.on { text-decoration: underline; text-underline-offset: 3px; }
