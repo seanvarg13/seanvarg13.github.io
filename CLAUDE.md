@@ -2362,3 +2362,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **The card's tabs blue (Sean, 7 Oct 2026: "make the tab buttons at the bottom blue with bold white text with a red outline")**: `.btabs .btab` is
   the scheme's light blue (`--accent-2`) with bold white text and the 1.5px red square outline; the picked tab is filled navy (`--ink`) so it still
   reads as picked. The block at the end of `styles.css` (the red-text version of the entry above lasted minutes).
+* **Filters 21px, Raw ▾ under it on both layouts, the bio solid white (Sean, 7 Oct 2026: "make it so filters is bigger text and again but the raw
+  stuff button below it and then make the bio stuff not translucent white")**: the corner's Filters ▾ is 21px (`!important` — the warm pass's
+  14px button rule had held it) over a 16px Raw ▾ (`.phtog` is a right-aligned column on a desktop too), and every bio line is `#ffffff`, not
+  `--onband-dim`. The block at the end of `styles.css`.
