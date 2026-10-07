@@ -2449,3 +2449,21 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   still scores. **Needs Actions → Train Stuff+ models with `through=2026`** then the rescore it runs — dispatched after the 2020-25 rescore of
   the same day (which carries the per-pitch `cstr` / `xcstr` to past seasons for the xCalled pairs). Until it lands the app-side four are live
   and the models are the 6 Oct ones.
+* **EV by batted-ball type; FB% and LD% in Air%'s place (Sean, 7 Oct 2026: "in batted ball quality could we add a percentile bar that shows avg
+  ev on fly balls, avg ev on line drives, and avg ev on gbs", "in batted ball distribution replace air % with two bars one for fly ball % and one
+  for line drive %"; asked with Aranda in mind — "did arandas ev by batted ball type change at all? or did he just get lucky and hit a ton of LDs
+  last year")**: **build** — `pitch_flags` splits the EV-eligible balls (tracked, no bunt) by the stringer's type into `evfbs / evfbn / evlds /
+  evldn / evgbs / evgbn` (sums and counts), `hitter_metrics` → `EV_FB / EV_LD / EV_GB`, `HITTER_METRICS` **`evfb / evld / evgb`** ("EV on FB / LD /
+  GB", so they're Leaderboard columns too), `HITTER_CARD`'s Batted-ball quality group carries them after Avg EV, and the six sums are appended to
+  `HITTER_DAY` (the day aggregation guards a frame without the flags; `pack` keeps the sums' decimals) so a window / split re-derives them. **App** —
+  `V()` re-derives `evfb / evld / evgb` from the day sums (null on a file built before them); `PCT_COLS_H` Batted-Ball Quality = Avg EV · **EV on
+  FB · EV on LD · EV on GB** · Barrel% · Bat Speed · Hard-Hit% · 90th% EV · Max EV, and Batted-Ball Distribution = **FB% · LD%** · Popup% · GB% ·
+  Pull Air% · Mix wOBA — `BB_DIST` (the group the app draws "everywhere", which is also what puts the keys in the pool's metric list: the Air%
+  fold-out that had held FB% / LD% is deleted at load, so without this the two rows silently drew nothing) is FB% / LD% / Popup% / GB% / Pull Air%;
+  Air% stays a Leaderboard column; labels (`OUTCOME_LABEL`, `SHORT`), glossary (`evfb / evld / evgb / fb / ld`), `NEEDS_EV`. Until a build
+  carries the sums the three EV rows don't draw (a key with no value is skipped) — a `steps=mlb` run was dispatched after the merge for 2026,
+  past seasons at the next rescore. **Why LD% is the noise** (scratch `aranda.js`, 300+ PA hitters, consecutive seasons 2021-26, n 994): year to year
+  LD% r .33 against FB% .72, GB% .74, Avg EV .78, EV90 .89, Brl% .79, HH% .80, BABIP .39, wOBA .46; the top-20 LD% hitters each season drop ~3.5-4.5
+  LD points the next year (29.5 → 26 against a 24 league) and ~.02 of wOBA. Aranda: 2025 LD% 30.5 (99th), BABIP .409 / xBABIP .382, wOBA .386, EV
+  93.0 (94th), HH% 54.1 (96th), EV90 106.9; 2026 LD% 27.5 (still 92nd), BABIP .340 / xBABIP .323, wOBA .349, EV 91.1 (84th), HH% 45.9 (80th),
+  EV90 104.0 (47th) — the line-drive rate came down as it does, and the contact itself got softer with it. EV by type for 2025 needs the rescore.

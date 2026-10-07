@@ -47,6 +47,9 @@ DIR_FEATS = ["launch_speed", "launch_angle", "sprint_speed", "pull_angle", "spra
 # key, label, column, higher-is-better, decimals, unit
 HITTER_METRICS = [
     ("ev",   "Avg EV",      "avg_EV",       True,  1, "mph"),
+    ("evfb", "EV on FB",    "EV_FB",        True,  1, "mph"),   # exit velocity by batted-ball type (Sean, 7 Oct 2026): fly balls, line drives, grounders
+    ("evld", "EV on LD",    "EV_LD",        True,  1, "mph"),
+    ("evgb", "EV on GB",    "EV_GB",        True,  1, "mph"),
     ("brl",  "Barrel%",     "Barrel_pct",   True,  1, "%"),
     ("pull", "Pull Air%",   "PullAir_pct",  True,  1, "%"),
     ("air",  "Air%",        "Air_pct",      True,  1, "%"),
@@ -106,14 +109,16 @@ NON_AB = {"walk", "intent_walk", "hit_by_pitch", "sac_fly", "sac_fly_double_play
 HITTER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", "osw", "zcon", "ocon", "brl",
               "air", "pullair", "pa", "ab", "bb", "k", "wnum", "wden", "xnum", "xden", "hh", "ss", "strk", "bsn", "bssum",
               "bbe", "evsum", "dnum", "pulln", "ld", "gbh", "puh", "evs", "bbt", "bip", "evn", "oppn", "h", "tb", "xbsum", "xssum", "dbsum", "dssum", "mixsum", "mixn",
-              "mxgb", "mxpu", "mxldp", "mxldc", "mxldo", "mxfbp", "mxfbc", "mxfbo", "mxx", "hr", "wbh"]   # wbh: wOBA value of his hits on balls in play (not HR) — BABIP reliance; hr: home runs (the fantasy page splits his official line by hand with these); mixsum / mixn = batted-ball mix value (Mix wOBA), mx* = its balls by bucket (mxx: air, no direction); dnum = directional-xwOBA numerator; evs = that row's exit velocities (no bunts); trailing fields (older files lack them): bbt = typed balls in play, bip = all balls in play, evn = EV-eligible (tracked, no bunt)
+              "mxgb", "mxpu", "mxldp", "mxldc", "mxldo", "mxfbp", "mxfbc", "mxfbo", "mxx", "hr", "wbh",
+              "evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn"]   # EV sums and counts by batted-ball type (fly ball / line drive / grounder; 7 Oct 2026) so a window re-derives EV on FB / LD / GB   # wbh: wOBA value of his hits on balls in play (not HR) — BABIP reliance; hr: home runs (the fantasy page splits his official line by hand with these); mixsum / mixn = batted-ball mix value (Mix wOBA), mx* = its balls by bucket (mxx: air, no direction); dnum = directional-xwOBA numerator; evs = that row's exit velocities (no bunts); trailing fields (older files lack them): bbt = typed balls in play, bip = all balls in play, evn = EV-eligible (tracked, no bunt)
 # The hitter card, grouped. key, label, higher-is-better, decimals, unit. Keys not in HITTER_METRICS are card-only.
 HITTER_CARD = [
     ("Outcomes",             [("woba", "wOBA", True, 3, ""), ("xws", "xwOBA", True, 3, ""), ("xwd", "dxwOBA", True, 3, "")]),
-    ("Batted-ball quality",  [("ev", "Avg EV", True, 1, "mph"), ("brl", "Barrel%", True, 1, "%")]),   # the rest fold out under Barrel%
+    ("Batted-ball quality",  [("ev", "Avg EV", True, 1, "mph"), ("evfb", "EV on FB", True, 1, "mph"), ("evld", "EV on LD", True, 1, "mph"), ("evgb", "EV on GB", True, 1, "mph"),
+                              ("brl", "Barrel%", True, 1, "%")]),   # the rest fold out under Barrel%; EV by type since 7 Oct 2026
     ("Swing decisions",      [("osw", "O-Swing%", False, 1, "%"), ("bb", "BB%", True, 1, "%")]),
     ("Contact",              [("whf", "Whiff%", False, 1, "%"), ("k", "K%", False, 1, "%")]),
-    ("Batted-ball distribution", [("air", "Air%", True, 1, "%"), ("pull", "Pull Air%", True, 1, "%")]),   # GB% is Air%'s mirror — it folds out under it
+    ("Batted-ball distribution", [("fb", "FB%", True, 1, "%"), ("ld", "LD%", True, 1, "%"), ("pull", "Pull Air%", True, 1, "%")]),   # FB% and LD% in Air%'s place (Sean, 7 Oct 2026); app.js's BB_DIST draws the group (Popup%, GB% too)
 ]
 HITTER_CARD_LEFT = 2   # groups in the card's left column
 HITTER_CARD_RULES = []   # rows that start a ruled-off block on the hitter card (none: the bars carry their own separators)
@@ -1018,6 +1023,9 @@ def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
     d["bunt"] = bunt
     d["evb"] = bbe & ~bunt                                  # EV-eligible: tracked and not a bunt (Savant's Avg EV skips bunts)
     d["ev"] = d["launch_speed"].where(d["evb"], 0.0)
+    for t, bbt in (("fb", "fly_ball"), ("ld", "line_drive"), ("gb", "ground_ball")):   # EV by batted-ball type (Sean, 7 Oct 2026): the same EV-eligible balls, split by the stringer's type
+        k = d["evb"] & d["bb_type"].eq(bbt)
+        d["ev" + t + "n"] = k.astype(int); d["ev" + t + "s"] = d["launch_speed"].where(k, 0.0)
     d["hand"] = d["p_throws"].eq("R").astype(int)          # hitter split: pitcher hand
     d["bhand"] = d["stand"].eq("R").astype(int)            # pitcher split: batter side
     d["bhome"] = d["inning_topbot"].eq("Bot").astype(int)  # batter is the home team
@@ -1093,6 +1101,8 @@ def hitter_metrics(d: pd.DataFrame) -> pd.DataFrame:
     r["avg_EV"] = f.avg_EV
     r["EV90"] = f.EV90
     r["maxEV"] = f.maxEV
+    for t in ("fb", "ld", "gb"):   # EV on fly balls / line drives / grounders (7 Oct 2026); NaN on a frame without the flags
+        r["EV_" + t.upper()] = (g["ev" + t + "s"].sum() / g["ev" + t + "n"].sum().replace(0, np.nan)) if ("ev" + t + "s") in d.columns else np.nan
     r["HardHit_pct"] = 100 * f.HH / f.BIP.replace(0, np.nan)       # per ball in play, like Savant's leaderboard
     r["SweetSpot_pct"] = 100 * f.SS / f.BIP.replace(0, np.nan)
     r["Strike_pct"] = 100 * f.Strikes / f.Pitches.replace(0, np.nan)
@@ -1333,7 +1343,10 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
               strk=("strike", "sum"), bsn=("comp", "sum"), bssum=("bs", "sum"), bbe=("bbe", "sum"), evsum=("ev", "sum"),
               pulln=("pull", "sum"), ld=("ld", "sum"), gbh=("gbh", "sum"), puh=("puh", "sum"), bbt=("bbt", "sum"),
               bip=("bip", "sum"), evn=("evb", "sum"), oppn=("oppo", "sum"),
-              mixsum=("mixv", "sum"), mixn=("mixn", "sum"), **{c: (c, "sum") for c in MIX_COLS})
+              mixsum=("mixv", "sum"), mixn=("mixn", "sum"), **{c: (c, "sum") for c in MIX_COLS},
+              **{c: (c, "sum") for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn") if c in d.columns})
+    for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn"):
+        if c not in h.columns: h[c] = 0.0
     h["mixsum"] = h["mixsum"].round(4)
     h["evs"] = d[d["evb"]].groupby(HK)["launch_speed"].agg(lambda x: [round(float(v), 1) for v in x])
     hp = p.groupby(HK).agg(pa=("pa", "sum"), ab=("ab", "sum"), bb=("is_bb", "sum"),
@@ -1384,7 +1397,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                     row.append(v)
                 else:
                     # xbsum / xssum are sums of per-ball probabilities: a day's bucket is well under 1, so int() would erase it
-                    row.append(round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stwl", "stws", "stbwl", "stbws", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps", "stcs", "stck", "stcso", "stcsi", "stcwi", "stcw", "stfl", "stfs", "stfw", "mixsum", "wbh") else int(v))
+                    row.append(round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stwl", "stws", "stbwl", "stbws", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps", "stcs", "stck", "stcso", "stcsi", "stcwi", "stcw", "stfl", "stfs", "stfw", "mixsum", "wbh", "evfbs", "evlds", "evgbs") else int(v))
             out.setdefault(int(pid), []).append(row)
         return out
     return pack(h, HITTER_DAY), pack(q, PITCHER_DAY)
