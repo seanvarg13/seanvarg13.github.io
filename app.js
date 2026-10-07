@@ -2381,7 +2381,8 @@
     const mobile = document.documentElement.dataset.view === "mobile";
     h.style.setProperty("--rankw", editing ? (mobile ? (hasTiers ? "108px" : "72px") : hasTiers ? "190px" : "134px") : mobile ? "22px" : "44px");
     // no "Rank" over the numbers (minimal pass 5): they say what they are
-    h.append(el("div", "h", editing ? (hasTiers ? "Rank · tier" : "My rank") : ""), el("div", "h left", ref === g ? "Player" : `Player · ranked vs ${POOL_NAME[ref]}`));
+    if (onePage()) h.style.setProperty("--rankw", mobile ? "50px" : "60px");   // the first column is his IP / PA there, not a rank
+    h.append(el("div", "h" + (onePage() ? " ptcol" : ""), editing ? (hasTiers ? "Rank · tier" : "My rank") : onePage() ? sampleLabel(g) : ""), el("div", "h left", ref === g ? "Player" : `Player · ranked vs ${POOL_NAME[ref]}`));   /* the rank is gone from the Leaderboard; his IP / PA sits there (Sean, 6 Oct 2026: "get rid of the ranking ... put innings pitched there") */
     const head = (key, label, title) => { const h = editing ? Object.assign(el("div", "h", label), { title }) : sortButton(key, label, title); if (/^[a-z]/.test(label)) h.classList.add("lc"); return h; };
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
     for (const k of ["year", "age"]) h.style.setProperty("--pre" + (k === "year" ? 1 : 2), preOn(k) ? "var(--prew, 64px)" : "0px");
@@ -2538,7 +2539,7 @@
       const main = el("div", "row-main grid");
       main.style.setProperty("--n", ms.length); main.style.setProperty("--act", state.mode === "draft" ? "78px" : "0px"); main.style.setProperty("--colw", trending || ms.some((m) => m.showValue) ? "72px" : "56px");
       const mobile = document.documentElement.dataset.view === "mobile";
-      main.style.setProperty("--rankw", rankMode ? (mobile ? (allTiers.length ? "108px" : "72px") : allTiers.length ? "190px" : "134px") : mobile ? "22px" : "44px");
+      main.style.setProperty("--rankw", rankMode ? (mobile ? (allTiers.length ? "108px" : "72px") : allTiers.length ? "190px" : "134px") : onePage() ? (mobile ? "50px" : "60px") : mobile ? "22px" : "44px");   // IP / PA in the first column on the Leaderboard
       main.style.setProperty("--pre1", preOn("year") ? "var(--prew, 64px)" : "0px"); main.style.setProperty("--pre2", preOn("age") ? "var(--prew, 64px)" : "0px");
       if (rankMode) {
         const key = p.type + p.id;
@@ -2571,14 +2572,19 @@
         li.addEventListener("dragstart", (e) => { dragKey = key; li.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", key); } catch {} });
         li.addEventListener("dragend", () => { dragKey = null; li.classList.remove("dragging"); clearDropMark(); });
       } else {
-        main.append(el("div", "rank", rankOf(p, i)));
+        if (onePage()) { const v0 = V(p), pt = el("div", "rank ptcol", p.type === "P" ? fmtIP(v0.ip) : String(v0.pa)); if (seasonSample(p) < effMin(g) && !hasExtra(p, state.pos)) { pt.classList.add("low"); pt.title = `Under the Min ${sampleLabel(g)} — listed after everyone who qualifies; his percentiles are where he'd land among them`; } main.append(pt); }
+        else main.append(el("div", "rank", rankOf(p, i)));
       }
       const who = el("div", "who");
-      const nameEl = el("div", "name", p.name);
+      // the Leaderboard's name is two lines, first name over last (Sean, 6 Oct 2026: "first name on the first row and last name on the second
+      // row"); team, positions and playing time move to the tooltip. A one-word name keeps the one line.
+      const split = onePage() ? p.name.match(/^(\S+)\s+(.+)$/) : null;
+      const nameEl = el("div", "name", split ? split[1] : p.name);
       if (state.mode === "rankings" || state.mode === "draft") { const sk = listStars()[p.type + p.id]; if (sk) { const star = el("span", "rowstar", "★"); star.title = sk.note || "Starred"; nameEl.append(" ", star); if (sk.note) nameEl.title = sk.note; } }
       who.append(nameEl);
       // just his positions and playing time under the name (Sean, 29 Sep 2026); team and hand are in the name's tooltip
       nameEl.title = nameEl.title || `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`;
+      if (split) { const v1 = V(p), last = el("div", "name lname", split[2]); who.append(last); who.title = `${p.name} · ${p.team} · ${posShown(p)} · ${p.type === "P" ? `${fmtIP(v1.ip)} IP` : `${v1.pa} PA`}`; main.append(who); }
       const meta = el("div", "meta");
       if (p.team) meta.append(el("span", "teaml", p.team));   // the team first, as the Stuff+ table has it (Sean, 3 Oct 2026)
       meta.append(el("span", "posl", posShown(p)));
@@ -2595,8 +2601,7 @@
         x.addEventListener("click", (e) => { e.stopPropagation(); removePos(p.id, state.pos); state.expanded = null; render(); });
         tag.append(x); meta.append(tag);
       }
-      who.append(meta);
-      main.append(who);
+      if (!split) { who.append(meta); main.append(who); }
       for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const b = el("div", "pct pre", on ? preValue(c.key, p) : ""); if (!on) b.classList.add("off"); else { if (state.sort === c.key && !customOrder()) b.classList.add("sorted"); b.prepend(el("span", "lbl", c.label)); } main.append(b); }
       const nv = p.type === "P" ? V(p).m.nera : null, sc = el("div", "score", p.type === "H" ? fmtX(st.score) : nv == null ? "–" : nv.toFixed(2));
       // a pitcher's headline is his nERA itself (Sean, 6 Oct 2026: "show their actual nERA not their percentile"); the sort is still the
@@ -2669,6 +2674,7 @@
     for (const who of $("rows").querySelectorAll(".who")) {
       const nm = who.querySelector(".name");
       let own = nm ? textWidth(nm.textContent, nameFont) : 0;
+      const ln = who.querySelector(".lname"); if (ln) own = Math.max(own, textWidth(ln.textContent, nameFont));
       const meta = who.querySelector(".meta");                     // team · position · PA, laid out as a flex row
       if (meta) {
         // measured off the canvas, not the layout: a computed style and an offsetWidth per row forced a layout for every one of

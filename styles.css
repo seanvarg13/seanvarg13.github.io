@@ -4387,3 +4387,16 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main { min-height: 48px; }
 :root:root:root:root:root:root #rows .row-main .rank { color: var(--muted); font-size: 11px; }
 :root:root:root:root:root:root[data-view="mobile"] #colhead .h { padding-top: 8px !important; padding-bottom: 8px !important; }
+
+/* column names over their values (Sean, 6 Oct 2026: "make it so the column headers are in line with the values"): the value cells
+   centre their digits, the names were right-aligned with the cell's padding — both centred now, no side padding on either, the
+   Player name's own column left as it was */
+:root:root:root:root:root:root:root #colhead .h:not(.who):not(.rank):not(.n):not(.left) { text-align: center !important; padding-left: 0 !important; padding-right: 0 !important; justify-content: center; }
+:root:root:root:root:root:root:root #rows .row-main .pct, :root:root:root:root:root:root:root #rows .row-main .score { text-align: center !important; padding-left: 0 !important; padding-right: 0 !important; justify-content: center; align-items: center; }
+
+/* IP / PA where the rank was, the name in two lines (Sean, 6 Oct 2026: "get rid of the ranking ... put innings pitched there and then have
+   the player column just be their name with their first name on the first row and last name on the second row") */
+:root:root:root:root:root:root:root #rows .row-main .rank.ptcol { color: var(--ink); font-size: 13px; font-variant-numeric: tabular-nums; text-align: center; justify-content: center; }
+:root:root:root:root:root:root:root #rows .row-main .rank.ptcol.low { color: var(--muted); }
+:root:root:root:root:root:root:root #colhead .h.ptcol { text-align: center !important; padding-left: 0 !important; padding-right: 0 !important; justify-content: center; }
+:root:root:root:root:root:root:root #rows .row-main .who .name.lname { margin-top: 1px; }

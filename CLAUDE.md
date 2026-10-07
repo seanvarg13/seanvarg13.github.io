@@ -2281,3 +2281,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   and no right margin, so the commas sit tight; it ellipsises instead of wrapping), the numbers 13px / 400 with 10px of right padding,
   the sorted headline 18px / 700, column names 11.5px / 500, the rank muted at 11px, rows 52px on a desktop / 48 on a phone. The
   light-blue bands, the red stripe, the 4px controls and the comma separators of the less-slop pass stay.
+* **Names over values, Carolina blue, IP / PA for the rank, two-line names (Sean, 6 Oct 2026: "make it so the column headers are in line
+  with the values", "change the blue to a bit of a lighter shade like maybe the unc blue", "get rid of the ranking ... put innings pitched
+  there and then have the player column just be their name with their first name on the first row and last name on the second row")**:
+  (1) the Leaderboard's column names and value cells are both **centred** with no side padding (the names had been right-aligned against the
+  cell's padding while the digits sat centred); the Player name stays left (`.h.left`). (2) The `titans` scheme's blue is **Carolina blue
+  `#7bafd4`** in place of Titans' `#4b92db` — accent, accent-2 (the bands), buttons, tab fill, the wash — light and dark; white type on it as
+  before, type stays navy. (3) **On the Leaderboard / Recent** (`onePage()`) the first column is his **IP / PA** (`.rank.ptcol`, header
+  `sampleLabel(g)`, `--rankw` 50 / 60px, muted when under the Min), the name is **first name over last** (`.name` + `.name.lname`, split on
+  the first space — "Pete" / "Crow-Armstrong", "Bobby" / "Witt Jr."), and team · positions · playing time live in the `.who` tooltip (no
+  `.meta` line); Rankings / Draft board keep their rank numbers and meta line; `fitNameCol` measures the last-name line too. A sorted-column
+  fill Savant's way (every sorted column a full-height coloured cell at the ordinary digit size) was built the same hour and **not shipped** —
+  Sean: "scratch that I like how it currently is" (the big coloured headline value).
