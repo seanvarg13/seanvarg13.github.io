@@ -80,7 +80,7 @@ EXCLUDE = {"sac_bunt", "truncated_pa", "catcher_interf", "intent_walk"}
 HITS = {"single": 1, "double": 2, "triple": 3, "home_run": 4}
 COLS = ["game_date", "game_type", "game_pk", "batter", "pitcher", "stand", "p_throws", "description", "zone",
         "type", "events", "launch_speed", "launch_angle", "launch_speed_angle", "bb_type", "hc_x", "hc_y",
-        "inning", "inning_topbot", "at_bat_number", "outs_when_up", "woba_value", "woba_denom",
+        "inning", "inning_topbot", "at_bat_number", "pitch_number", "outs_when_up", "woba_value", "woba_denom",   # pitch_number: the pitch before (7 Oct 2026)
         "estimated_woba_using_speedangle", "estimated_ba_using_speedangle", "estimated_slg_using_speedangle",
         "bat_speed", "pitch_type", "release_speed", "release_extension", "des",
         "release_spin_rate", "spin_axis", "pfx_x", "pfx_z", "release_pos_x", "release_pos_z", "arm_angle",   # these seven: Stuff
@@ -404,6 +404,28 @@ def location_features(d: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame({"lx": lx, "lz": lz}, index=d.index)
 
 
+# The pitch before, in the same plate appearance (7 Oct 2026, with the season and release-consistency inputs in stuff_features): was it the
+# same pitch type, how much faster or slower is this one, how far did the spot move (feet at the plate). The part of what the models miss
+# that repeats year to year (actual − expected whiff r .29-.44, scratch pmodel.js) is where tunnelling and sequencing would live; the
+# location family alone takes them — Stuff+ stays the pitch on its own. NaN on the first pitch of a PA and on a frame without the numbering
+STUFF_SEQ = ["pv_same", "pv_dvelo", "pv_dloc"]
+
+
+def seq_features(d: pd.DataFrame) -> pd.DataFrame:
+    out = pd.DataFrame({c: np.full(len(d), np.nan) for c in STUFF_SEQ}, index=d.index)
+    if not {"game_pk", "at_bat_number", "pitch_number", "plate_x", "plate_z", "release_speed"} <= set(d.columns): return out
+    num = lambda c: pd.to_numeric(d[c], errors="coerce").astype(float)
+    g = pd.DataFrame({"k": d["game_pk"].astype(str) + "_" + d["at_bat_number"].astype(str), "pn": num("pitch_number"), "pt": d["pitch_type"].astype(str),
+                      "v": num("release_speed"), "x": num("plate_x"), "z": num("plate_z")}, index=d.index)
+    g = g[g.pn.notna()].sort_values(["k", "pn"], kind="stable")
+    prev = g.groupby("k", sort=False)[["pt", "v", "x", "z"]].shift(1)
+    has = prev["v"].notna()
+    out.loc[g.index[has], "pv_same"] = (g.pt == prev.pt).astype(float)[has].to_numpy()
+    out.loc[g.index[has], "pv_dvelo"] = (g.v - prev.v)[has].to_numpy()
+    out.loc[g.index[has], "pv_dloc"] = np.sqrt((g.x - prev.x) ** 2 + (g.z - prev.z) ** 2)[has].to_numpy()
+    return out
+
+
 STUFF_CMD = ["lx", "lz", "edge", "balls", "strikes"]   # the command models' inputs beyond the pitch's traits (3 Oct 2026)
 # the batter's swing on the pitch (bat tracking, 2024 on): the foul model with swing (Sean, 4 Oct 2026: "i just really want his and other
 # players foul ball data to be accurate") — a late, defensive swing is what a foul is, and whether a pitcher's pitches draw them is his
@@ -467,6 +489,13 @@ def stuff_features(d: pd.DataFrame, park: bool = True) -> pd.DataFrame:
     sh = d.groupby([k, d["pitch_type"]]).size() / d.groupby(k).size()
     f["use"] = sh.reindex(pd.MultiIndex.from_arrays([k, d["pitch_type"]])).to_numpy()
     f["depth"] = sh[sh >= 0.05].groupby(level=0).size().reindex(k).to_numpy().astype(float)
+    # the season (7 Oct 2026): with no season input the fixed models priced a 2026 pitch at what the same pitch earned in 2021-25 and read the
+    # whole year 2 whiff points hot (2020-21 cold); a season number lets the level follow the year, and a season the models never saw scores at
+    # the last one's level (a tree puts an out-of-range value in its last bin). Release consistency: how tightly he repeats his release point
+    # on this pitch type that season (feet, the x / z spread combined) — a deception / tunnelling trait no per-pitch input carries
+    f["season"] = (yr - 2020).astype(float)
+    rel = pd.DataFrame({"x": f.relx, "z": f.relz}).groupby([d["pitcher"].to_numpy(), yr, d["pitch_type"].astype(str).to_numpy()]).std()
+    f["relsd"] = np.sqrt(rel.x ** 2 + rel.z ** 2).reindex(pd.MultiIndex.from_arrays([d["pitcher"].to_numpy(), yr, d["pitch_type"].astype(str).to_numpy()])).to_numpy()
     f.loc[f.pt.isna() | f.velo.isna() | f.ivb.isna()] = np.nan                        # untracked or unclassed: no grade
     return f
 
@@ -476,6 +505,7 @@ STUFF_WHIFF_ONLY = ["use", "depth"]                # inputs the batted-ball mode
 
 # what a prior season keeps for training (the rest of its columns are dropped as it loads, to keep memory down)
 STUFF_TRAIN = ["game_date", "game_type", "pitcher", "stand", "p_throws", "description", "type", "events", "bb_type", "pitch_type",
+               "game_pk", "at_bat_number", "pitch_number",      # the pitch before in the plate appearance: seq_features (7 Oct 2026)
                "release_speed", "release_extension", "home_team", "woba_value", "woba_denom",      # home_team: the park adjustment;
                "plate_x", "plate_z", "vx0", "vy0", "vz0", "ax", "ay", "az", "sz_top", "sz_bot",
                "balls", "strikes", "zone",                # woba: damage; the rest: approach angles, location; the count and zone: the command models
@@ -599,8 +629,8 @@ def train_stuff_models(train: pd.DataFrame) -> dict | None:
     dmk = bip & (wd > 0) & np.isfinite(wv)
     dm = HistGradientBoostingRegressor(**kw).fit(ftr[bcols].to_numpy()[dmk], wv[dmk]) if dmk.sum() >= 2000 else None
     # whiff with location (3 Oct 2026): the same inputs plus where the pitch crossed the plate
-    loc = location_features(train); lcols = wcols + STUFF_LOC
-    fl = pd.concat([ftr, loc], axis=1); lbcols = bcols + STUFF_LOC
+    loc = pd.concat([location_features(train), seq_features(train)], axis=1); lcols = wcols + STUFF_LOC + STUFF_SEQ   # + the pitch before (7 Oct 2026)
+    fl = pd.concat([ftr, loc], axis=1); lbcols = bcols + STUFF_LOC + STUFF_SEQ
     lm = HistGradientBoostingClassifier(**kw).fit(fl[lcols].to_numpy()[sw], np.isin(desc[sw], list(WHIFF))) if seen_loc(loc, sw) else None
     lbm = HistGradientBoostingClassifier(**kw).fit(fl[lbcols].to_numpy()[bip], bb.to_numpy()[bip].astype(int)) if seen_loc(loc, bip) else None
     # foul with location (Sean, 4 Oct 2026: "factor in the sequencing location and count for expected foul balls"): where the
@@ -665,7 +695,7 @@ def _grade_stuff(M: dict, d: pd.DataFrame, ref: pd.DataFrame | None = None):
         X = f[wcols].to_numpy()[has]; Xb = f[bcols].to_numpy()[has]
         out = {"w": wm.predict_proba(X)[:, 1], "b": bm.predict_proba(Xb), "f": fm.predict_proba(X)[:, 1],
                "d": dm.predict(Xb) if dm is not None else np.full(has.sum(), np.nan)}
-        fl = pd.concat([f, location_features(x)], axis=1) if lm is not None or lbm is not None or flm is not None else None
+        fl = pd.concat([f, location_features(x), seq_features(x)], axis=1) if lm is not None or lbm is not None or flm is not None else None
         out["wl"] = lm.predict_proba(fl[lcols].to_numpy()[has])[:, 1] if lm is not None else out["w"].copy()
         out["bl"] = lbm.predict_proba(fl[lbcols].to_numpy()[has]) if lbm is not None else out["b"].copy()
         out["fl"] = flm.predict_proba(fl[lcols].to_numpy()[has])[:, 1] if flm is not None else None   # None: a file trained before it, and the sums stay 0

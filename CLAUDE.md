@@ -2424,3 +2424,28 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   condensed in its percentile colour on a clear ground (`plus()` in `renderPitchBoard` gives the sorted cell class `hot` and `--heat` instead
   of a fill; "Colour: all" still fills the other + cells), and `td.plus` loses the softer-edges 8px radius there (it had turned the banded cells
   into pills).
+* **The Pitching+ model's five fixes (Sean, 7 Oct 2026, after "are there any improvements that can be made to the pitching+ model": "Ok do all
+  of that"; scratch `pmodel.js` on the season files 2020-26)**: (1) **the season's level** — the fixed models have no season input and read a whole
+  year hot or cold (2026 +2.1 whiff points / +1.6 GB even trained through it, 2020-21 −1.1): `xLevel()` in `app.js` is the league's actual −
+  expected gap per dataset on the same pitches (20+ BF pitchers' arsenal rows, swing- / ball-in-play- / contact-weighted, 2,000+ needed; both
+  families, GB / PU and the foul chance too), and `pitchRates` / `stuffRates` / `foulChance` are wrappers that put it on the raw sums
+  (`pitchRatesRaw` …), `xAdj(r)` puts it on an arsenal row — the board, the Pitching+ tab's rows and `seasonPitches` go through it — so every
+  expected rate shown, and everything downstream (nwhf / ngb / npu / nmix / xks / xnERA / xStrikeout / the Stuff side of the card), sits on the
+  season's actual league; the grades (Pitching+ / Stuff+ / Location+) cancel the level by construction and don't move. Wheeler 2026 xWhiff 30.7 →
+  28.7 against 30.9. The build side: `stuff_features` now carries **`season`** (year − 2020) and **`relsd`** (release-point spread per pitcher ×
+  season × pitch type, feet) in every model, so after the next retrain the level follows the year itself (an unseen season scores at the last
+  one's). (2) **Location+ shrunk by pitches** — per pitch, `LOC_K` 70: the location delta × n / (n + 70) in `xAdj` (and the board / tab / season
+  rows), since a pitch's Pitching+ repeated year to year at r .66 on 5-50 pitches against Stuff+'s .89 (the spots were the noise; .92 at 400+);
+  the pitcher's grade is untouched. Alvarado's cutter (365) Loc+ 114 → 112. (3) **The fair whiff gap** — `wgap` (Whiff vs exp., a column again
+  via `LB_EXTRA_P`) is his Whiff% minus the expected rate stretched to the real spread (`sorted.calP`'s centre and ratio — expected sd was 0.80
+  of actual every season, so the top whiff pitchers always read "over"); `xe(i)` in the pool's PK block, `xe0` in `statsFor`. (4) **A blended
+  forecast** — **`pjwhf`** Proj. Whiff% = the average of his actual and that stretched expected rate (next season r .76-.81 vs .74-.76 for
+  either alone, 2021-26 pairs): `NEXT_KEYS`, `SIDE_P`, `LB_EXTRA_P`, `SHORT`, glossary. (5) **New inputs for the next retrain** — besides
+  `season` / `relsd`, `seq_features` → `STUFF_SEQ` (`pv_same`, `pv_dvelo`, `pv_dloc`: the pitch before in the plate appearance — same type, the
+  velo gap, how far the spot moved) in the **location family only** (`lcols` / `lbcols`: whiff_loc, bb_loc, foul_loc; Stuff+ stays the pitch
+  alone); `pitch_number` joins `COLS`, `game_pk` / `at_bat_number` / `pitch_number` join `STUFF_TRAIN`; NaN on a PA's first pitch or a frame
+  without the numbering (the minors). Catcher framing was left out — the catcher's id isn't in the frames. The whole training path was run on a
+  synthetic 16,000-pitch frame here (scratch `synth_train.py`): every model trains with the new columns and a frame without `pitch_number`
+  still scores. **Needs Actions → Train Stuff+ models with `through=2026`** then the rescore it runs — dispatched after the 2020-25 rescore of
+  the same day (which carries the per-pitch `cstr` / `xcstr` to past seasons for the xCalled pairs). Until it lands the app-side four are live
+  and the models are the 6 Oct ones.
