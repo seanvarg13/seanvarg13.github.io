@@ -2310,3 +2310,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   nERA does")**: `#colhead .h[aria-sort]` / `.sorted` is white at 22% on the blue band, bold, with a 3px `--stripe-line` red rule (the ink rule of
   the less-slop pass is overridden); `.pct.hot` / `.score.hot` (and `.sorted`) digits are 700 on both layouts — the quieter-rows 400 had taken the
   bold off every sorted column but the headline. The block at the end of `styles.css`.
+* **Filters and Raw: white, black type, a red square outline (Sean, 7 Oct 2026: after a preview with light-blue text, "black text on the white
+  button with a red border for raw and filters"; "hard edges not soft")**: the card's two corner buttons on both layouts — `#ffffff` ground,
+  `#111111` type at 600, a 1.5px `--stripe-line` red border, no radius (the inner `.segbtn` of the Raw `.seg` has no border of its own). The block
+  at the end of `styles.css`.
