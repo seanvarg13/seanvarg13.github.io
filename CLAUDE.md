@@ -2237,3 +2237,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   on a desktop the grid's `right` area (`left right / tiles tiles`, 34px down); the view's name shows under them only when a filter is on
   ("Full season" is gone). The tiles follow, so the band ends right under them: 224 → 191px on a phone, 252 → 206 on a desktop. The
   above-the-tiles row of the hour before (PR #412) is history. The block at the end of `styles.css`.
+* **The K% table's last rows pared (Sean, 6 Oct 2026: "in the everything else row only show the 1.6 don't show the k% and then in the k% row
+  only show the last two columns of the final +/- and the final k%")**: Everything else carries only its pill (its K% cell blank like the
+  subtotal's), and the K% row's His / Lg cells are emptied after the row is built (`.knum.kblank`) so it reads just the whole gap and his K%.
