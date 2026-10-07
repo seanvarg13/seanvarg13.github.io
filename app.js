@@ -3699,9 +3699,11 @@
       // "put their age and height and weight on the line right below")
       // commas, not interpuncts, and a height as 6-4 (the less-slop pass, Sean, 6 Oct 2026)
       const ht = b && b.ht ? String(b.ht).replace(/(\d+)\D+(\d+).*/, "$1-$2") : null;
-      const body = [p.age != null ? "Age " + p.age : null, ht, b && b.wt ? String(b.wt) : null].filter(Boolean);
+      // height · weight · age with thin dots, the age a bare number (Sean, 7 Oct 2026: "get rid of their age saying age ... have the age come
+      // after height and weight and have a • in between")
+      const body = [ht, b && b.wt ? String(b.wt) : null, p.age != null ? String(p.age) : null].filter(Boolean);
       box.textContent = bt ? ", " + (bt.includes("/") ? "B/T " + bt : bt) : "";
-      if (body.length) box.append(el("span", "hbio2", body.join(", ")));
+      if (body.length) box.append(el("span", "hbio2", body.join(" \u00b7 ")));
       return;
     }
     if (b && b.ht) box.append(fact("HT", String(b.ht).replace(/\s+/g, "")));

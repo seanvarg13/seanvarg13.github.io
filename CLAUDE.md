@@ -2338,3 +2338,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   not where it is now")**: `playerHead` moves the `.mrank` chip row (`.fchip` ×) into the `.phctl` corner under Filters (`.mrank.inctl`,
   right-aligned, the chips white with a red outline like the button) instead of leaving it as a row over the facts; the small `.phview` name
   only shows for a view with no chips. Both layouts.
+* **The facts' dividers back; the bio's second line is height · weight · age (Sean, 7 Oct 2026: "make it so the lines in between the stats at the
+  bottom come back and get rid of their age saying age just have it be their age and have the age come after height and weight and have a • in
+  between")**: the phone's facts have their hairline dividers again (the top rule stayed), and `fillBio`'s second line reads "6-4 · 195 · 36" —
+  a thin middle dot between, no "Age" word, the age last. A star removal / age-beside-the-name version was started and withdrawn the same hour.
