@@ -2246,3 +2246,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   band under a hairline on a phone, left-aligned with 28px gaps on a desktop (grid `left right / row row`; `finish()` keeps it out of `.phleft`
   like the tiles were) — and `bandTiles` is no longer called (it stays in `app.js`). The corner Filters / Raw column and the two-line bio stay.
   Band 191 → 166px on a phone, 206 → 174 on a desktop. CSS at the end of `styles.css` (the phone's old `.hrow` rule's −46px margin is undone).
+* **The Titans palette (Sean, 6 Oct 2026: "make the websites main color palette or theme the Tennessee titans color scheme")**: the `titans`
+  scheme in `themes.js` is rebuilt in the warm pass's full token shape — light: a cool silver ground `#eef1f5`, surfaces `#fbfcfe`, Titans navy
+  `#0c2340` for type, buttons and the pressed pill, Titans blue `#4b92db` as `accent-2` (active fills, the band's blue), hairlines `#d6dde8`,
+  the red `#c8102e` stripe-line under the band; dark: `#0b1628` / `#112138` / `#edf3fa`, buttons Titans blue with navy ink. It also sets the warm
+  pass's own tokens (`ground line-soft frame secrule accent-ink band-ink svtext svrule pctrack`), which `styles.css`'s warm block hard-codes to its
+  off-white values and a scheme must override inline. It is the **default scheme** (`DEFAULTS.scheme`, `defaults.js`) and `themes.js` moves every
+  device to it once (`draft2027.titans1`, the saved scheme cleared), as the warm pass did; Warm, UNC and the rest stay in Appearance. The
+  percentile colours are Savant's and unchanged.
