@@ -4157,7 +4157,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .phead .phctl { display: flex; align-items: center; gap: 8px; width: 100%; flex-basis: 100%; grid-column: 1 / -1; grid-area: auto; }
 :root:root:root:root:root:root .phead .phctl .phview { margin-left: auto; font-size: 12.5px; color: var(--muted); }
 :root:root:root:root:root:root .phead .phctl .phtog { margin: 0; }
-:root:root:root:root:root:root:not([data-view="mobile"]) .phead .mplate { grid-template-columns: 1fr auto; grid-template-areas: "left right" "tiles tiles" "ctl ctl"; row-gap: 10px; }
+:root:root:root:root:root:root:not([data-view="mobile"]) .phead .mplate { grid-template-columns: 1fr auto; grid-template-areas: "left right" "ctl ctl" "tiles tiles"; row-gap: 8px; }
 :root:root:root:root:root:root:not([data-view="mobile"]) .phead .htiles { grid-area: tiles; }
 :root:root:root:root:root:root:not([data-view="mobile"]) .phead .phctl { grid-area: ctl; }
 :root:root:root:root:root:root[data-view="mobile"] .phead .tile { padding: 7px 8px; border-radius: 12px; }
@@ -4280,3 +4280,11 @@ header.top .wordmark { display: none; }
 /* age · height · weight on their own line under team · positions · hand (Sean, 6 Oct 2026) */
 :root:root:root:root:root:root .phead .hbioline .hbio.inline .hbio2 { display: block; font-size: 13px; color: var(--ink-2); margin-top: 1px; }
 :root:root:root:root:root:root[data-view="mobile"] .phead .hbioline .hbio.inline .hbio2 { font-size: 12px; }
+
+/* the control row above the tiles, the band ending right under them (Sean, 6 Oct 2026) */
+:root:root:root:root:root:root .phead .mplate { padding-bottom: 10px; }
+:root:root:root:root:root:root[data-view="mobile"] .phead .mplate { padding-bottom: 8px; gap: 6px 12px; }
+:root:root:root:root:root:root .phead .phctl .phtog .segbtn, :root:root:root:root:root:root .phead .phctl .phtog .seg { min-height: 30px; height: 30px; padding-top: 0; padding-bottom: 0; font-size: 13px; }
+:root:root:root:root:root:root .phead .phctl .phview { font-size: 12px; }
+:root:root:root:root:root:root[data-view="mobile"] .phead .tile { padding: 6px 8px; }
+:root:root:root:root:root:root[data-view="mobile"] .phead .tile .v { font-size: 20px; }
