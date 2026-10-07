@@ -2325,3 +2325,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (Leaderboard / Recent / Rankings / Draft board / Pitching+ board / Claude rankings / Mock / Planner) keep `main.wrap` as flex under a card
   (the rule right after it in `styles.css`), and `render()` puts the noted list scroll back when a card opens as well as when it closes, so
   nothing moves either way. Headless: the rows' box reads 498 before, under and after a card.
+* **A shorter phone band (Sean, 7 Oct 2026: "get rid of the lines that separate the stats at the bottom of the players header ... move that part up
+  a bit and clear more header space ... move the raw and filters buttons back up vertically a bit if necessary")**: no rule over the facts row and
+  no dividers between the facts, the row 2px under the bio, the corner buttons at 36px from the plate's top, the year / bio block 68px at least,
+  8px of bottom padding. Band 182 → 152px on a 390px phone. The block at the end of `styles.css`.

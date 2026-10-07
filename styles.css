@@ -4436,3 +4436,11 @@ header.top .wordmark { display: none; }
    under it; the bio lines below keep the 96px), and "MLB ▾" is a little smaller than the year so "2026 ▾ MLB ▾" clears them on a 390px phone */
 :root:root:root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline .pthd { padding-right: 0; white-space: nowrap; }
 :root:root:root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline .pthd .tsel:not(.yr) .tsl { font-size: 20px; }
+/* a shorter phone band (Sean, 7 Oct 2026: "get rid of the lines that separate the stats at the bottom of the players header ... if that means you
+   can move that part up a bit and clear more header space ... move the raw and filters buttons back up vertically a bit if necessary"): no rule
+   over the facts and no dividers between them, the row 2px under the bio, the corner buttons at 36px, the year / bio block 68px tall at least */
+:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate > .hrow { border-top: 0; margin-top: 2px; padding-top: 0; }
+:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .hrow .hchip.fact { border-right: 0; padding: 2px 0 0; }
+:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .phctl { top: 36px; }
+:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline { min-height: 68px; }
+:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate { padding-bottom: 8px; }
