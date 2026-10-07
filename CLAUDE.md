@@ -2260,3 +2260,17 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   and active fill, white text on it) and the red `#c8102e` only as the stripe under the band; type stays navy. The warm block's pressed-control
   rules (`.btn.on`, the page pills, `.btab.on`, the Hitters / SP / RP segment …) filled with `var(--ink)` and so stayed navy; they read
   `var(--btn, var(--ink))` / `var(--btn-ink, var(--ground))` now, the same colours on Warm. Dark mode is the navy one above.
+* **The less-slop pass (Sean, 6 Oct 2026, from the Less Slop Mock canvas: "Do you have any recommendations for making this look less like AI
+  slop", then "go with those recommendations ... keep the current percentile bars and ... make it so the navy blue is the titans light blue")**:
+  the block at the end of `styles.css` plus three separator changes in `app.js`. (1) **Labels**: no tracked uppercase anywhere — column names,
+  facts, the bars' section names, panel labels are sentence case at normal tracking (column names 12px / 600, fact labels 11px, section names
+  15px bold ink in the body face — `.svsecname` included). (2) **Controls**: 4px corners on every button, pill, tab and page number, 6px on
+  cards, menus and the popup card (the 999px / 16-24px of the warm pass are gone); the Leaderboard's Hitters / SP / RP is one segmented control
+  outlined in light blue, the picked one filled. (3) **Light-blue bands with the red stripe** (`--band2` = `--accent-2`): the site header (nav
+  words white, the current page underlined white, the search white-edged), the Leaderboard's column-name row (white names, the sorted one
+  underlined in ink; the Result / Process band row is hidden) and the card's band (white name / year / bio / facts, the Filters and Raw buttons
+  white-outlined on it). (4) **Rows**: names 15px / 600 in the body face, the team line 12px ink-2, no banding (a hairline between rows),
+  numbers right-aligned in tabular figures; the sorted nERA keeps its big condensed colour. (5) **Commas, not interpuncts**: "MIL, SP, RHP" /
+  "Age 24, 6-4, 197" on the card (`fillBio`, the `.mline`), "MIL, SP, 174.2 IP" on the rows (the `::before` separators), "SP filters (1)" on a
+  phone's button. (6) **Facts** as a six-column grid with hairline dividers on the band. The percentile bars are untouched. Dark mode keeps
+  the Titans dark tokens; the bands read `--accent-2` there too.
