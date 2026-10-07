@@ -4532,3 +4532,29 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .phctl { top: 8px; right: 52px; }   /* the ×'s own line (it sits at 8px / 8px, 34px wide) */
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate .mug { width: 60px; height: 60px; }
 :root:root:root:root:root:root:root:root:root:root .staricon, :root:root:root:root:root:root:root:root:root:root .rowstar { display: none !important; }
+/* the Pitching+ board in the Leaderboard's dress (Sean, 7 Oct 2026: "make the pitching+ table look exactly like the leaderboards one"): the
+   blue band of column names with the sorted one lit and red-ruled, banded 52px rows with no cell rules, plain names over a muted line, the
+   sorted column's value big in its colour on a clear ground, no frame round the rows */
+:root:root:root:root:root:root:root:root:root:root body[data-mode="pitches"] #pitchboard > .pbscroll { border: 0 !important; border-radius: 0 !important; background: transparent !important; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th, :root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th.n, :root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th.who, :root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th .sortbtn { background: var(--band2, var(--accent-2)) !important; color: var(--onband, #fff) !important; border-bottom: 0 !important; font-size: 11.5px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th { height: 40px; padding: 0 6px; vertical-align: middle; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th.who { padding-left: 10px; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th .sortbtn { padding: 0; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th .sortbtn:hover { background: transparent !important; color: var(--onband, #fff) !important; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th:has(.sortbtn.on) { background: color-mix(in srgb, #ffffff 22%, var(--band2, var(--accent-2))) !important; box-shadow: inset 0 -3px 0 var(--stripe-line, #c8102e); }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th .sortbtn.on { background: transparent !important; color: var(--onband, #fff) !important; font-weight: 700 !important; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable td { border: 0 !important; box-shadow: none !important; background: var(--ground, var(--surface)); font-size: 13px; font-weight: 400; padding: 0 6px; height: 52px; box-sizing: border-box; font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--ink) 4%, var(--ground, var(--surface))); }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable td.n { color: var(--muted); font-size: 11px; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable td.who { padding-left: 10px; min-width: 180px; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable td.who .pbname, :root:root:root:root:root:root:root:root:root:root #pitchboard .linkbtn.pbname { font-family: var(--body) !important; font-size: 15px !important; font-weight: 500 !important; color: var(--ink); display: block; line-height: 1.2; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable td.who small { display: block; font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable td.plus { font-weight: 400; min-width: 48px; border-radius: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable td.plus.hot { color: var(--heat, var(--ink)) !important; background: var(--ground, var(--surface)); font-family: var(--display); font-size: 19px; font-weight: 700; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable tbody tr:nth-child(even) td.plus.hot { background: color-mix(in srgb, var(--ink) 4%, var(--ground, var(--surface))); }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable td.xa b { font-weight: 400; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable td.xa i { font-size: 11px; color: var(--muted); }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pbtable td { height: 48px; }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pbtable td.who { min-width: 130px; }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pbtable td.who .pbname { font-size: 14.5px !important; }
+:root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th.who, :root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th.n { box-shadow: none !important; }

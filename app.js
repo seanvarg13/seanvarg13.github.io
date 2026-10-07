@@ -3988,7 +3988,9 @@
     th.append(hr); t.append(th);
     const tb = el("tbody"), f1 = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1));   // the % is in the header (Sean, 3 Oct 2026)
     const heatAll = pb.heat === "all";   // the sorted column alone by default (Sean, 3 Oct 2026: seven coloured columns was the loudest thing on the site)
-    const plus = (v, k) => { const td = el("td", "plus", v == null ? "–" : String(Math.round(v))); if (v != null && (heatAll || pb.sort === k)) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; } } return td; };
+    const plus = (v, k) => { const td = el("td", "plus", v == null ? "–" : String(Math.round(v)));
+      if (v != null && (heatAll || pb.sort === k)) { const st = plusStyle(v); if (st) { if (pb.sort === k) { td.classList.add("hot"); td.style.setProperty("--heat", st.bg); } else { td.style.background = st.bg; td.style.color = st.fg; } } }   // the sorted column reads like the Leaderboard's: the value in its colour (Sean, 7 Oct 2026)
+      return td; };
     const pair = (x, a) => { const td = el("td", "xa"); td.append(el("b", null, pct(x)), el("i", null, a == null ? "–" : pct(a))); return td; };
     rows.slice(0, 300).forEach((r, i) => {
       const tr = el("tr"), who = el("td", "who"), btn = el("button", "linkbtn pbname", r.p.name); btn.type = "button";
