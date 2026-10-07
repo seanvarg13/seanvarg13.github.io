@@ -1756,7 +1756,9 @@
     // 30 Sep 2026: "the heat maps have the same color levels ... as the percentile bars")
     const fill = savantStyle(p).bg.match(/\d+/g).map(Number);
     const white = [255, 255, 255], dark = [21, 24, 26];
-    const ink = contrast(fill, dark) >= contrast(fill, white) ? dark : white;
+    // white ink on anything darker than a mid tone (the mid reds from ~70th and the blues from ~30th), dark on the pale ends and the teal
+    // middle — by contrast ratio alone dark ink won on the mid reds and Sean couldn't read it (6 Oct 2026: "black on dark red")
+    const ink = lum(fill) < 0.35 ? white : dark;
     const s = { bg: `rgb(${fill.join(",")})`, fg: `rgb(${ink.join(",")})` };
     colorCache.set(p, s);
     return s;

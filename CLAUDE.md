@@ -2226,3 +2226,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **The ± K% pills go white sooner on the red side (Sean, 6 Oct 2026: the ink "on the dark ish red" was hard to read; then "don't make all red heat
   maps white text")**: `signStyle` switches to white digits at t > 0.25 for a plus (about +0.6 K% and up) and keeps 0.45 for a minus; the faintest
   reds and the His pills keep `pctStyle`'s own contrast rule. An all-red-is-white version lasted a few minutes (PR #409).
+  **Then the scale itself (Sean, from Wheeler's card: "I'm still seeing the black on dark red that I can't really read")**: `pctStyle` picks its
+  ink by luminance — white on any fill under 0.35 (the mid reds from about the 70th percentile up, the blues from about the 30th down), dark on
+  the pale ends and the teal middle. By contrast ratio alone dark ink had won on the mid reds (a 5.8 : 3.1 margin at the 75th), which is what he
+  couldn't read. Every heat-mapped cell, tile and pill shares the scale, so the Leaderboard's sorted column changes with it.
