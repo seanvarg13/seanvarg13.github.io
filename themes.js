@@ -34,9 +34,18 @@ window.DRAFT_THEMES = (function () {
               btn: "#7bafd4", "btn-ink": "#0f213d", "btn-line": "#7bafd4", "tab-fill": "#7bafd4", "tab-ink": "#0f213d" },
     },
     titans: {
-      name: "Titans", blurb: "Tennessee — Titans blue forward, navy type, the red stripe under the banner.",
-      light: { accent: "#0c2340", "accent-2": "#4b92db", ...onDark("#0c2340"), "accent-2-dim": W + "0.9)", "accent-2-text": "#4b92db", pop: "#0c2340", rule: "#0c2340", "stripe-line": "#c8102e", "accent-wash": "rgba(75, 146, 219, 0.16)", ink: "#0c2340", "ink-2": "#35465f", hover: "#e9f1f9", band: "#0c2340" },
-      dark: { accent: "#8dc0ee", "accent-2-ink": "#071427", "accent-2-dim": "rgba(7, 20, 39, 0.85)", "on-fill-line": "rgba(7, 20, 39, 0.35)", "tab-ink": "#071427", "accent-2-text": "#8dc0ee", pop: "#071427", rule: "#071427", ink: "#edf3fa", "ink-2": "#b7c5d8", hover: "#1b2b45", "accent-wash": "rgba(75, 146, 219, 0.2)" },
+      name: "Titans", blurb: "Tennessee Titans (the site's palette since 6 Oct 2026): a cool silver ground, Titans navy type and buttons, Titans blue where something is active, the red stripe under the banner.",
+      light: { accent: "#0c2340", "accent-2": "#4b92db", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.9)", "on-fill-wash": W + "0.12)", "on-fill-wash-2": W + "0.22)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
+               "accent-2-text": "#2f6fb3", pop: "#fbfcfe", rule: "#d6dde8", "stripe-line": "#c8102e", "accent-wash": "rgba(75, 146, 219, 0.14)", ink: "#0c2340", "ink-2": "#3d4e68", hover: "#e8eef6",
+               page: "#eef1f5", surface: "#fbfcfe", "surface-2": "#e3e8ef", hair: "#d6dde8", rail: "#c4cdd9", stripe: "#eef1f5", band: "#fbfcfe", plate: "#d6dde8", muted: "#6f7c90",
+               btn: "#0c2340", "btn-ink": "#ffffff", "btn-line": "#d6dde8", "tab-fill": "#0c2340",
+               // the warm pass's own tokens (styles.css sets them to its off-white values; a scheme has to say otherwise)
+               ground: "#eef1f5", "line-soft": "#d6dde8", frame: "#d6dde8", secrule: "#d6dde8", "accent-ink": "#ffffff", "band-ink": "#0c2340", svtext: "#0c2340", svrule: "#d6dde8", pctrack: "#dfe5ee" },
+      dark: { accent: "#8dc0ee", "accent-2": "#4b92db", "accent-2-ink": "#071427", "accent-2-dim": "rgba(7, 20, 39, 0.85)", "on-fill-wash": "rgba(7, 20, 39, 0.1)", "on-fill-wash-2": "rgba(7, 20, 39, 0.18)", "on-fill-line": "rgba(7, 20, 39, 0.35)", "tab-ink": "#071427",
+              "accent-2-text": "#8dc0ee", pop: "#112138", rule: "#233b5c", "stripe-line": "#c8102e", "accent-wash": "rgba(75, 146, 219, 0.22)", ink: "#edf3fa", "ink-2": "#b7c5d8", hover: "#172a46",
+              page: "#0b1628", surface: "#112138", "surface-2": "#172a46", hair: "#233b5c", rail: "#2d4a70", stripe: "#0b1628", band: "#112138", plate: "#233b5c", muted: "#8ea0b8",
+              btn: "#4b92db", "btn-ink": "#071427", "btn-line": "#233b5c", "tab-fill": "#4b92db",
+              ground: "#0b1628", "line-soft": "#233b5c", frame: "#233b5c", secrule: "#233b5c", "accent-ink": "#071427", "band-ink": "#edf3fa", svtext: "#edf3fa", svrule: "#233b5c", pctrack: "#1b2f4c" },
     },
     "titans-unc": {
       name: "Titans · Carolina", blurb: "Tennessee in Carolina blue — Titans navy type, the red stripe, UNC blue across the banner.",
@@ -71,14 +80,16 @@ window.DRAFT_THEMES = (function () {
   };
 
   const LS = { scheme: "draft2027.scheme", font: "draft2027.font", theme: "draft2027.theme", view: "draft2027.view" };
-  const DEFAULTS = Object.assign({ scheme: "warm", font: "studio", theme: "system", view: "auto" }, window.DRAFT_DEFAULTS || {});
-  if (!S[DEFAULTS.scheme]) DEFAULTS.scheme = "warm";
+  const DEFAULTS = Object.assign({ scheme: "titans", font: "studio", theme: "system", view: "auto" }, window.DRAFT_DEFAULTS || {});
+  if (!S[DEFAULTS.scheme]) DEFAULTS.scheme = "titans";
   if (!F[DEFAULTS.font]) DEFAULTS.font = "studio";
   const get = (k) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } };
   const put = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } };
   const root = document.documentElement;
   // the warm pass (6 Oct 2026): every device moves to the warm scheme once, whatever it had saved; a scheme picked after that stays
   try { if (!localStorage.getItem("draft2027.warm1")) { localStorage.setItem("draft2027.warm1", "1"); localStorage.removeItem(LS.scheme); } } catch { /* private mode */ }
+  // the Titans palette (Sean, 6 Oct 2026: "make the websites main color palette or theme the Tennessee titans color scheme"): every device moves to it once
+  try { if (!localStorage.getItem("draft2027.titans1")) { localStorage.setItem("draft2027.titans1", "1"); localStorage.removeItem(LS.scheme); } } catch { /* private mode */ }
   const current = () => ({
     scheme: S[get(LS.scheme)] ? get(LS.scheme) : DEFAULTS.scheme,
     font: F[get(LS.font)] ? get(LS.font) : DEFAULTS.font,
