@@ -4444,3 +4444,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .phctl { top: 36px; }
 :root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline { min-height: 68px; }
 :root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate { padding-bottom: 8px; }
+/* the rule over the facts is back, the dividers stay gone; Raw / Stuff lives in the Filters window (Sean, 7 Oct 2026: "put back the border on
+   top of the stats we don't need the one in between them, and let's move raw vs stuff to the filters buttons") */
+:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate > .hrow { border-top: 1px solid var(--onband-line); padding-top: 2px; }
+.phwin .phtwo.phside2 .seg .segbtn[aria-pressed="true"] { background: var(--btn, var(--ink)); color: var(--btn-ink, var(--ground)); }
