@@ -4523,3 +4523,6 @@ header.top .wordmark { display: none; }
 .hub.home .hpill { min-width: 28px; text-align: center; padding: 2px 6px; border-radius: 10px; font: 700 12px var(--body); background: color-mix(in srgb, var(--ink) 12%, var(--surface)); color: var(--ink); }
 .hub.home .harrow { font-size: 12px; color: var(--muted); }
 .hub.home .hmovers .hteam { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* every home list wears the lead card's rows (Sean, 7 Oct 2026); the Movers pills sit in the value slot */
+:root:root:root:root:root:root:root .hub.home .hbig .hval.hmove { font-size: 13px; display: inline-flex; }
+:root:root:root:root:root:root:root .hub.home .hbig .hval.hmove .hpill { font-size: 12px; }
