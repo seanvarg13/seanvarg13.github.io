@@ -2403,3 +2403,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   each a "was → now" pair of pills (`.hpill`, the now pill in its percentile colour) with "team · his window number over N PA / IP" under the name
   (`.hmovers`); "Leaderboard →" opens the Leaderboard on that window. The 2027 starters card is gone from home (the Claude rankings page is still
   under Fantasy). The card waits for days.js like Trending does.
+* **Every home list in the lead card's dress, four a list (Sean, 7 Oct 2026: "make all of the tables in this format where it shows the player
+  headshot", "show the top 4 for each, instead of the current 5 for hitters one and 3 for pitchers")**: `list()` and the Movers' `mlist` build
+  `.hbig` rows like the lead card's — headshot, the name in the condensed face, team (and the window line) under it, the value or the "was → now"
+  pills at the right — so no `.hlist` is drawn on home any more (its CSS stays); `NH = NP = 4` for the leaders, Trending and Movers (the lead card
+  keeps five / four). CSS at the end of `styles.css`.

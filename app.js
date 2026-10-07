@@ -5144,12 +5144,13 @@
       refH = sortedOf(H.map((p) => V(p).m.xwd)); refP = sortedOf(P.map((p) => { const v = puOf(p); return v == null ? null : -v; })); refSt = sortedOf(P.map((p) => (p.m.pitch != null ? p.m.pitch : p.m.stuff)));
     });
     const heat = (node, ref, v, neg) => { if (v == null || !ref.length) return; const s = pctStyle(insertPct(ref, neg ? -v : v)); if (s) { node.style.setProperty("--heat", s.bg); node.classList.add("heat"); } };
-    const list = (c, rows, ref, neg) => { const ol = el("ol", "hlist"); for (const [p, main, side, tab, raw] of rows) { const li = el("li"), bt = el("button", "hname", p.name); bt.type = "button"; bt.addEventListener("click", () => openCard(p, tab)); const v = el("b", "hval", main); heat(v, ref, raw, neg); li.append(bt, el("span", "hteam", p.team || ""), v); if (side) li.append(el("span", "hside", side)); ol.append(li); } c.append(ol); return ol; };
+    // every home list in the lead card's dress (Sean, 7 Oct 2026: "make all of the tables in this format where it shows the player headshot")
+    const list = (c, rows, ref, neg) => { const ol = el("ol", "hbig"); for (const [p, main, side, tab, raw] of rows) { const li = el("li"), bt = el("button", "hname", p.name); bt.type = "button"; bt.addEventListener("click", () => openCard(p, tab)); const v = el("b", "hval", main); heat(v, ref, raw, neg); const who = el("div", "hwho"); who.append(bt, el("span", "hsub", [p.team || "", side].filter(Boolean).join(" · "))); li.append(headshot(p.id, p.name), who, v); ol.append(li); } c.append(ol); return ol; };
     const big = (c, rows, ref, tab, f) => { const ol = el("ol", "hbig"); for (const [p, v, sub] of rows) { const li = el("li"), bt = el("button", "hname", p.name); bt.type = "button"; bt.addEventListener("click", () => openCard(p, tab)); const val = el("b", "hval", f(v)); heat(val, ref, v); const who = el("div", "hwho"); who.append(bt, el("span", "hsub", sub)); li.append(headshot(p.id, p.name), who, val); ol.append(li); } c.append(ol); };
     const two = (c) => { const t = el("div", "hthree htwo"); c.append(t); return t; };
     const goLB = (pos, sort, dir, win) => (e) => { e.preventDefault(); state.pos = pos; state.posAlso = []; state.sort = sort; state.dir = dir; if (win) state.win = win; savePrefs(); location.hash = "#leaderboard"; };
     const col = (box, lab, rows, f, tab, go, ref, neg) => { const hd = el("h4"), a = el("a", "hmore", `${lab} →`); a.href = "#leaderboard"; a.addEventListener("click", go); hd.append(a); const c = el("div"); c.append(hd); list(c, rows.map(([p, v]) => [p, f(v), null, tab, v]), ref, neg); box.append(c); };
-    const NB = mobileView() ? 4 : 5, NH = 5, NP = 4;
+    const NB = mobileView() ? 4 : 5, NH = 4, NP = 4;   // four a list (Sean, 7 Oct 2026: "the top 4 for each")
     // the lead: the last game day — the best xwOBA games (3+ PA) and the best starts by Pitching+ (3+ IP) on the latest day in the day rows,
     // with his line that day under the name (hits are in the day rows since 1 Oct 2026; an older file shows PA, BB and K)
     { const days = m.days || [], lastDay = days.length - 1, when = days[lastDay] ? fmtDate(days[lastDay]) : "";
@@ -5208,9 +5209,10 @@
       if (!daysReady()) mc.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…"));
       else {
         const pill = (pc, strong) => { const s = el("span", "hpill", String(Math.round(pc))); if (strong) { const c = pctStyle(pc); if (c) { s.style.background = c.bg; s.style.color = c.fg; } } return s; };
-        const mlist = (c, rows, tab, f) => { const ol = el("ol", "hlist hmovers"); for (const [p, was, now, v, n, unit] of rows) { const li = el("li"), bt = el("button", "hname", p.name); bt.type = "button"; bt.addEventListener("click", () => openCard(p, tab));
+const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (const [p, was, now, v, n, unit] of rows) { const li = el("li"), bt = el("button", "hname", p.name); bt.type = "button"; bt.addEventListener("click", () => openCard(p, tab));
             const mv = el("span", "hval hmove"); mv.append(pill(was, false), el("span", "harrow", "→"), pill(now, true));
-            li.append(bt, el("span", "hteam", `${p.team || ""} · ${f(v)} over ${unit === "IP" ? fmtIP(n) : Math.round(n)} ${unit}`), mv); ol.append(li); } c.append(ol); };
+            const who = el("div", "hwho"); who.append(bt, el("span", "hsub", `${p.team || ""} · ${f(v)} over ${unit === "IP" ? fmtIP(n) : Math.round(n)} ${unit}`));
+            li.append(headshot(p.id, p.name), who, mv); ol.append(li); } c.append(ol); };
         const seasonH = new Map(), seasonP = new Map();
         inWin(NOWIN, () => { for (const p of DATA.players) { if (p.type === "H" && (p.pa || 0) >= 300) { const v = V(p).m.xwd; if (v != null) seasonH.set(p, insertPct(refH, v)); } else if (p.type === "P" && (p.ip || 0) >= 100) { const v = puOf(p); if (v != null) seasonP.set(p, insertPct(refP, -v)); } } });
         const hit = [], pit = [];
