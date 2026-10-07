@@ -3701,7 +3701,7 @@
       const ht = b && b.ht ? String(b.ht).replace(/(\d+)\D+(\d+).*/, "$1-$2") : null;
       // height · weight · age with thin dots, the age a bare number (Sean, 7 Oct 2026: "get rid of their age saying age ... have the age come
       // after height and weight and have a • in between")
-      const body = [ht, b && b.wt ? String(b.wt) : null, p.age != null ? String(p.age) : null].filter(Boolean);
+      const body = [p.age != null ? "Age " + p.age : null, ht, b && b.wt ? String(b.wt) : null].filter(Boolean);   // "Age 36 · 6-4 · 195" (Sean, 7 Oct 2026: the age first, with the word)
       box.textContent = bt ? " \u00b7 " + (bt.includes("/") ? "B/T " + bt : bt) : "";
       if (body.length) box.append(el("span", "hbio2", body.join(" \u00b7 ")));
       return;
