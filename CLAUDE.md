@@ -2294,3 +2294,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   his IP / PA with the name split first over last, then on one line — both undone; Rankings / Draft board keep the team first. A sorted-column
   fill Savant's way (every sorted column a full-height coloured cell at the ordinary digit size) was built the same hour and **not shipped** —
   Sean: "scratch that I like how it currently is" (the big coloured headline value).
+* **The phone band tightened (Sean, 6 Oct 2026, from Sale's card: "make it so the bottom stats on the header are more spaced out and center
+  aligned ... put the raw stuff button next to the filters button and ... move the bottom stats up and make the header's height a bit
+  less")**: on a phone Filters ▾ and Raw ▾ sit side by side (84px each) on the year's line, right of the year (`.phctl` absolute at top 28px,
+  `.pthd` padded 180px on the right; the bio lines run full width under them), the year block has no minimum height, and the facts row runs
+  into the plate's 58px right padding (`margin-right: −46px`) so it spans the band, each fact centred in an equal share — `grid-auto-flow:
+  column` with `1fr` auto columns on both layouts, so five hitter facts or six pitcher facts split evenly (a desktop's five had left a blank
+  sixth). Band 174 → 165px on a 390px phone. The block at the end of `styles.css`.
