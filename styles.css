@@ -4299,3 +4299,14 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] .phead .mplate { position: relative; }
 :root:root:root:root:root:root[data-view="mobile"] .phead .phctl { position: absolute; right: 12px; top: 50px; width: 92px; }
 :root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline { padding-right: 100px; min-height: 80px; }
+
+/* the facts row back at the band's foot, no tiles (Sean, 6 Oct 2026) */
+:root:root:root:root:root:root .phead .mplate > .hrow { flex: 1 0 100%; width: 100%; display: flex; justify-content: space-between; align-items: flex-end; gap: 4px 8px; padding-top: 8px; border-top: 1px solid var(--hair); grid-column: 1 / -1; grid-area: auto; }
+:root:root:root:root:root:root .phead .hrow .hchip.fact { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.1; gap: 0; }
+:root:root:root:root:root:root .phead .hrow .hchip.fact i { font-style: normal; font-size: 10px !important; font-weight: 600 !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; color: var(--muted); }
+:root:root:root:root:root:root .phead .hrow .hchip.fact b { font-family: var(--display); font-size: 22px; color: var(--ink); }
+:root:root:root:root:root:root[data-view="mobile"] .phead .hrow .hchip.fact b { font-size: 19px; }
+:root:root:root:root:root:root:not([data-view="mobile"]) .phead .mplate { grid-template-areas: "left right" "row row"; }
+:root:root:root:root:root:root:not([data-view="mobile"]) .phead .mplate > .hrow { grid-area: row; justify-content: flex-start; gap: 4px 28px; }
+:root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline { min-height: 80px; }
+:root:root:root:root:root:root[data-view="mobile"] .phead .mplate > .hrow { margin-right: 0; flex-wrap: wrap; }

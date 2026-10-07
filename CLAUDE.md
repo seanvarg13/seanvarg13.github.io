@@ -2240,3 +2240,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **The K% table's last rows pared (Sean, 6 Oct 2026: "in the everything else row only show the 1.6 don't show the k% and then in the k% row
   only show the last two columns of the final +/- and the final k%")**: Everything else carries only its pill (its K% cell blank like the
   subtotal's), and the K% row's His / Lg cells are emptied after the row is built (`.knum.kblank`) so it reads just the whole gap and his K%.
+* **No tiles; the old facts row back at the band's foot (Sean, 6 Oct 2026: "let's get rid of the boxes and put the stats that we had before back at
+  the bottom of the header and do it in the same format they were there in")**: `playerHead` builds a `.hrow` from the strip's PA / IP fact and the
+  season line's facts (nERA · ERA · K% · BB% · K-BB%, or AVG · OBP · SLG · OPS) — small tracked labels over condensed numbers, spread across the
+  band under a hairline on a phone, left-aligned with 28px gaps on a desktop (grid `left right / row row`; `finish()` keeps it out of `.phleft`
+  like the tiles were) — and `bandTiles` is no longer called (it stays in `app.js`). The corner Filters / Raw column and the two-line bio stay.
+  Band 191 → 166px on a phone, 206 → 174 on a desktop. CSS at the end of `styles.css` (the phone's old `.hrow` rule's −46px margin is undone).
