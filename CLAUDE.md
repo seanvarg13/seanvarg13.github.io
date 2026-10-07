@@ -2346,3 +2346,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   comma. And have the second row be the same size font as the first")**: the card's bio reads "PHI · SP · RHP" over "6-4 · 195 · 36" — `mline`
   and `fillBio` join with a thin middle dot, not a comma (the Leaderboard rows keep their commas), and `.hbio2` inherits the first line's size and
   weight (13px / 500; 12px on a phone). The block at the end of `styles.css`.
+* **Filters as a word, not a button (Sean, 7 Oct 2026: "making the filters thing not a button anymore but just it says filters with the arrow in
+  white and then brings the drop down box for them")**: the card's corner Filters control is plain white "Filters ▾" text on the band (14px / 600,
+  no ground, border or shadow; underlined while the window is open) — the block at the end of `styles.css` on the `.phfiltseg` / `.phfilt`
+  rules; the window it opens and the chips under it (white, red outline) are unchanged. Both layouts.
