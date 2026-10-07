@@ -2396,3 +2396,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   **Trending** (last 100 PA / last 50 IP, the same shape) and **2027 starters** (9 rows); the compact lists' values are 17px condensed and coloured the
   same way. The `two()` side-by-side columns are only in the lead card now. CSS at the end of `styles.css`; the lead rows need `grid-area: auto` on
   the name / value because the `.hlist` rules pin `.hval` to a grid area the lead rows don't have.
+* **Movers in place of the 2027 starters on home (Sean, 7 Oct 2026: "instead of the Claude rankings could you add the movers thing that you have in
+  C")**: the third compact card is **Movers** — the biggest percentile jumps over the last 30 days (`win30`: from = the last game day − 29) against
+  the full season; hitters by xwOBA (75+ PA in the window, placed among the window's 75+ PA hitters; the season percentile among the 300+ PA pool),
+  pitchers by nERA (20+ IP in the window among the window's 20+ IP pitchers; the season one among 100+ IP), five and four rows sorted by the gain,
+  each a "was → now" pair of pills (`.hpill`, the now pill in its percentile colour) with "team · his window number over N PA / IP" under the name
+  (`.hmovers`); "Leaderboard →" opens the Leaderboard on that window. The 2027 starters card is gone from home (the Claude rankings page is still
+  under Fantasy). The card waits for days.js like Trending does.
