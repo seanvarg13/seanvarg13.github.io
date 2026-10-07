@@ -2352,3 +2352,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   rules; the window it opens and the chips under it (white, red outline) are unchanged. Both layouts.
 * **No note under the Mix tab's table (Sean, 7 Oct 2026, from Lowe's card: "I don't need all this text here at the bottom")**: `renderMixTab`'s
   "Each bar: where his share …" paragraph is gone; the table and the Mix wOBA row are unchanged.
+* **Bigger Filters, Raw ▾ as a word beside it, one bio colour, red card tabs (Sean, 7 Oct 2026: "make the filters word be bigger and also take
+  the stuff and raw out of filters and do the same thing with it, also make the rhp and b/t r/l the same color as the other bio stuff";
+  "make the bottom page tabs/buttons be red text bold like in the leaderboard red bold text and give it a red outline for the button too")**:
+  the corner's Filters ▾ is 17px; **Raw ▾ / Stuff ▾** is a white word under it again (`playerHead`: `.phsidebtn` in a `.seg.phfiltseg.phsideseg`,
+  the pick list hung by `ddList` — the Filters window no longer holds a Raw / Stuff segment; the `.phside2` CSS is unused); every part of the
+  bio (`.mlinein`, `.hbio.inline`, `.hbio2`) is `--onband-dim` at 400; the card's tab strip (`.btabs .btab`) is white with red (`--stripe-line`)
+  bold text and a 1.5px red square outline, the picked tab filled red with white text. The block at the end of `styles.css`.
