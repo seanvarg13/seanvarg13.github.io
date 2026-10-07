@@ -5199,17 +5199,32 @@
         col(tc, "nERA, last 50 IP", pit, f2, "nera", goLB("ALLP", "nera", "asc", { from: "", to: "", last: "50" }), refP, true);
       });
     }
-    // 2027 starters (6 Oct 2026): the Claude rankings' top of the list under the scoring in use, so the off-season question is on the front page
-    { const D27 = window.DRAFT_CLAUDE27;
-      if (!D27) ensureScript("hist/claude-2027.js", () => !!window.DRAFT_CLAUDE27);
-      const cc = card(`${m.season + 1} starters`, null, "#claude", "Claude rankings →");
-      if (!D27) cc.append(el("p", "hnote", "Loading the rankings…"));
-      else { const wP = fpreset().w.P, P = new Map(DATA.players.filter((q) => q.type === "P").map((q) => [q.id, q]));
-        const rows = D27.rows.map((r) => { const pps = r.line && r.espn ? fPts(wP, r.line) * (r.pps / r.espn) : r.pps; return [r, pps * r.gs]; }).sort((a, b) => b[1] - a[1]).slice(0, NH + NP);
-        const ol = el("ol", "hlist");
-        rows.forEach(([r, pts]) => { const li = el("li"), q = P.get(r.id), bt = el("button", "hname", r.name); bt.type = "button"; if (q) bt.addEventListener("click", () => openCard(q, "pitching")); else bt.disabled = true;
-          li.append(bt, el("span", "hteam", r.team || ""), el("b", "hval", String(Math.round(pts)))); ol.append(li); });
-        cc.append(ol); cc.append(el("p", "hnote", "projected points under the scoring in use · tap a name for his card")); }
+    // Movers (Sean, 7 Oct 2026: "instead of the Claude rankings could you add the movers thing that you have in C"): the biggest percentile jumps
+    // over the last 30 days against the full season — hitters by xwOBA (75+ PA in the window, ranked among the window's 75+ PA hitters), pitchers by
+    // nERA (20+ IP, among the window's 20+ IP pitchers) — each row "was → now" with his window number and sample under the name
+    { const days = m.days || [], from = days.length ? addDays(days[days.length - 1], -29) : "", win30 = { from: from && from > days[0] ? from : "", to: "", last: "" };
+      const mc = card("Movers", "last 30 days vs the season · percentile was → now", "#leaderboard", "Leaderboard →");
+      mc.querySelector(".hmore").addEventListener("click", goLB("ALL", "score", "desc", win30));
+      if (!daysReady()) mc.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…"));
+      else {
+        const pill = (pc, strong) => { const s = el("span", "hpill", String(Math.round(pc))); if (strong) { const c = pctStyle(pc); if (c) { s.style.background = c.bg; s.style.color = c.fg; } } return s; };
+        const mlist = (c, rows, tab, f) => { const ol = el("ol", "hlist hmovers"); for (const [p, was, now, v, n, unit] of rows) { const li = el("li"), bt = el("button", "hname", p.name); bt.type = "button"; bt.addEventListener("click", () => openCard(p, tab));
+            const mv = el("span", "hval hmove"); mv.append(pill(was, false), el("span", "harrow", "→"), pill(now, true));
+            li.append(bt, el("span", "hteam", `${p.team || ""} · ${f(v)} over ${unit === "IP" ? fmtIP(n) : Math.round(n)} ${unit}`), mv); ol.append(li); } c.append(ol); };
+        const seasonH = new Map(), seasonP = new Map();
+        inWin(NOWIN, () => { for (const p of DATA.players) { if (p.type === "H" && (p.pa || 0) >= 300) { const v = V(p).m.xwd; if (v != null) seasonH.set(p, insertPct(refH, v)); } else if (p.type === "P" && (p.ip || 0) >= 100) { const v = puOf(p); if (v != null) seasonP.set(p, insertPct(refP, -v)); } } });
+        const hit = [], pit = [];
+        inWin(win30, () => {
+          const H = DATA.players.filter((p) => p.type === "H").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 75 && v.m.xwd != null), P = DATA.players.filter((p) => p.type === "P").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 20 && v.m.nera != null);
+          const sH = sortedOf(H.map(([, v]) => v.m.xwd)), sP = sortedOf(P.map(([, v]) => -v.m.nera));
+          for (const [p, v] of H) { const was = seasonH.get(p); if (was == null) continue; const now = insertPct(sH, v.m.xwd); hit.push([p, was, now, v.m.xwd, v.sample, "PA"]); }
+          for (const [p, v] of P) { const was = seasonP.get(p); if (was == null) continue; const now = insertPct(sP, -v.m.nera); pit.push([p, was, now, v.m.nera, v.sample, "IP"]); }
+        });
+        const up = (r) => r[2] - r[1]; hit.sort((a, b) => up(b) - up(a)); pit.sort((a, b) => up(b) - up(a));
+        const sec = (lab) => { mc.append(el("h4", null, lab)); };
+        sec("Hitters · xwOBA"); mlist(mc, hit.slice(0, NH), null, f3); sec("Pitchers · nERA"); mlist(mc, pit.slice(0, NP), "nera", f2);
+        if (!hit.length && !pit.length) mc.append(el("p", "hnote", "Nobody qualifies in the window yet."));
+      }
     }
     // no "Every page" tiles (Sean, 29 Sep 2026, the minimal pass): the header's menus already list them
     // the data line and the credit live in the Stat glossary now (minimal pass 5, Sean, 30 Sep 2026)

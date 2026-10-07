@@ -4518,3 +4518,8 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hbig .hname { font-size: 18px; }
 :root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hbig .hval { font-size: 22px; }
 :root:root:root:root:root:root:root .hub.home .hbig .hval, :root:root:root:root:root:root:root .hub.home .hbig .hname { grid-area: auto; }   /* the .hlist grid areas don't exist on the lead rows */
+/* home Movers (Sean, 7 Oct 2026): "was → now" percentile pills in the value's place */
+.hub.home .hmove { display: inline-flex; align-items: center; gap: 5px; }
+.hub.home .hpill { min-width: 28px; text-align: center; padding: 2px 6px; border-radius: 10px; font: 700 12px var(--body); background: color-mix(in srgb, var(--ink) 12%, var(--surface)); color: var(--ink); }
+.hub.home .harrow { font-size: 12px; color: var(--muted); }
+.hub.home .hmovers .hteam { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
