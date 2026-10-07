@@ -4310,3 +4310,67 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:not([data-view="mobile"]) .phead .mplate > .hrow { grid-area: row; justify-content: flex-start; gap: 4px 28px; }
 :root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline { min-height: 80px; }
 :root:root:root:root:root:root[data-view="mobile"] .phead .mplate > .hrow { margin-right: 0; flex-wrap: wrap; }
+
+/* ============================================================================================================
+   The less-slop pass (Sean, 6 Oct 2026, from the Less Slop Mock: "go with those recommendations ... keep the current percentile
+   bars and ... make it so the navy blue is the titans light blue color"). Sentence-case labels at normal tracking; squared controls
+   and a real segmented switch; a light-blue header band, Leaderboard header and card band with the red stripe; plain row type with
+   no banding and right-aligned numbers; commas instead of interpuncts; a six-column facts grid. The bars are untouched.
+   ============================================================================================================ */
+:root:root:root:root:root:root { --band2: var(--accent-2); --onband: #ffffff; --onband-dim: rgba(255, 255, 255, 0.82); --onband-line: rgba(255, 255, 255, 0.55); }
+/* 1. labels */
+:root:root:root:root:root:root :is(#colhead .h, .ftable th, .pbtable th, .hubsec, .svscale, .hbio .lab, .fact .lab, .cltier, .cgroup, .secname, .rollname, .psecname, .prowhead, .krow.khead, .colband .band, .phead .tile .l) { letter-spacing: 0 !important; text-transform: none !important; font-size: 12px !important; font-weight: 600 !important; }
+:root:root:root:root:root:root :is(.cgroup, .secname, .rollname, .psecname) { font-size: 15px !important; font-weight: 700 !important; color: var(--ink) !important; }
+:root:root:root:root:root:root .svpct .svsecname { font-family: var(--body); font-size: 15px; font-weight: 700; letter-spacing: 0; text-transform: none; fill: var(--ink); }
+:root:root:root:root:root:root .phead .hrow .hchip.fact i { font-size: 11px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--onband-dim); }
+:root:root:root:root:root:root[data-view="mobile"] #colhead .h { font-size: 11px !important; letter-spacing: 0 !important; }
+/* 2. controls: squared, one segment */
+:root:root:root:root:root:root :is(.btn, .tbtn, .segbtn, .btab, .pill, .fpage button, .ftabs button, .pbfilters button, .pbfilters .pill, .xseason, .pnav button, .pnavrow button, .popfoot .btn, .tierbtn, .linkpill) { border-radius: 4px !important; border-color: var(--rail) !important; font-weight: 500 !important; }
+:root:root:root:root:root:root .seg, :root:root:root:root:root:root .phfiltseg { border-radius: 4px !important; }
+:root:root:root:root:root:root #pagertop .posseg { border: 1px solid var(--accent-2); border-radius: 4px; }
+:root:root:root:root:root:root #pagertop .posseg .segbtn { border-radius: 0 !important; border: 0 !important; border-right: 1px solid var(--accent-2) !important; }
+:root:root:root:root:root:root #pagertop .posseg .segbtn:last-child { border-right: 0 !important; }
+:root:root:root:root:root:root .gsearch input, :root:root:root:root:root:root .gsearch, :root:root:root:root:root:root #gq, :root:root:root:root:root:root .navtog, :root:root:root:root:root:root header.top .btn { border-radius: 4px !important; }
+:root:root:root:root:root:root .pop, :root:root:root:root:root:root #pop, :root:root:root:root:root:root .phwin, :root:root:root:root:root:root .ddlist, :root:root:root:root:root:root .menu, :root:root:root:root:root:root .dropdown { border-radius: 6px !important; }
+:root:root:root:root:root:root main.wrap, :root:root:root:root:root:root body main.wrap { border-radius: 6px; }
+:root:root:root:root:root:root :is(.hubcard, .hcard, .home .card, .hgrid > *, .gframe, .springbox, #bscroll, .board-scroll, .pbscroll, .fscroll) { border-radius: 6px; }
+:root:root:root:root:root:root:not([data-view="mobile"]) #modal .card, :root:root:root:root:root:root:not([data-view="mobile"]) .modal-card { border-radius: 6px; }
+:root:root:root:root:root:root[data-view="mobile"] #modal .card, :root:root:root:root:root:root[data-view="mobile"] .modal-card { border-radius: 6px 6px 0 0; }
+:root:root:root:root:root:root .pnav button, :root:root:root:root:root:root .pnavrow button { min-height: 24px; }
+/* 3. the light-blue bands with the red stripe: site header, Leaderboard column names, the card's band */
+:root:root:root:root:root:root header.top { background: var(--band2) !important; border-bottom: 3px solid var(--stripe-line, var(--band2)) !important; }
+:root:root:root:root:root:root .modes a, :root:root:root:root:root:root .modes .modesel, :root:root:root:root:root:root header.top .wordmark { color: var(--onband-dim); }
+:root:root:root:root:root:root .modes a[aria-current="page"], :root:root:root:root:root:root .modes .modesel[aria-current="page"] { color: var(--onband); box-shadow: inset 0 -2px 0 var(--onband); }
+:root:root:root:root:root:root .navtog, :root:root:root:root:root:root header.top .btn { background: transparent !important; color: var(--onband) !important; border-color: var(--onband-line) !important; }
+:root:root:root:root:root:root .gsearch input, :root:root:root:root:root:root .gsearch, :root:root:root:root:root:root #gq { border-color: var(--onband) !important; }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #colhead, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) .colwrap, :root:root:root:root:root:root #colhead { background: var(--band2) !important; border-bottom: 0; }
+:root:root:root:root:root:root #colhead .h, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #colhead .h:not(:hover) { color: var(--onband) !important; background: transparent !important; }
+:root:root:root:root:root:root #colhead .h:hover { background: rgba(255, 255, 255, 0.14) !important; color: var(--onband) !important; }
+:root:root:root:root:root:root #colhead .h[aria-sort], :root:root:root:root:root:root #colhead .h.sorted { color: var(--onband) !important; box-shadow: inset 0 -3px 0 var(--ink); }
+:root:root:root:root:root:root .colband { display: none; }
+:root:root:root:root:root:root .phead .mplate { background: var(--band2) !important; color: var(--onband); border-bottom: 3px solid var(--stripe-line, var(--band2)) !important; }
+:root:root:root:root:root:root .phead .mplate :is(h2, .pthd, .pthd b, .ptitle, .mlinein, .hbioline, .hbio.inline, .hbio2, .staricon, .fact b) { color: var(--onband) !important; }
+:root:root:root:root:root:root .phead .hbioline .mlinein, :root:root:root:root:root:root .phead .hbioline .hbio.inline, :root:root:root:root:root:root .phead .hbioline, :root:root:root:root:root:root .phead .hbio2 { color: var(--onband-dim) !important; font-weight: 400; }
+:root:root:root:root:root:root .phead .mplate .staricon, :root:root:root:root:root:root #modal .close { background: transparent !important; color: var(--onband) !important; border-color: var(--onband-line) !important; }
+:root:root:root:root:root:root .phead .phctl .phtog .segbtn, :root:root:root:root:root:root .phead .phctl .phtog .seg { background: transparent !important; color: var(--onband) !important; border-color: var(--onband-line) !important; }
+:root:root:root:root:root:root .phead .phctl .phview { color: var(--onband-dim); }
+/* 4. rows: plain type, no banding, numbers right-aligned */
+:root:root:root:root:root:root .name { font-family: var(--body); font-size: 15px; font-weight: 600 !important; letter-spacing: 0; }
+:root:root:root:root:root:root[data-view="mobile"] .name, :root:root:root:root:root:root[data-view="mobile"] #board .name { font-size: 15px; }
+:root:root:root:root:root:root .who small, :root:root:root:root:root:root .teaml, :root:root:root:root:root:root .row-main .sub, :root:root:root:root:root:root .who .yr, :root:root:root:root:root:root #board .meta { font-size: 12px; color: var(--ink-2); letter-spacing: 0; text-transform: none; }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows > .row:nth-child(even) .row-main, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows > .row:nth-child(even) .row-main .who, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows > .row:nth-child(even) .row-main .rank { background: var(--ground, var(--surface)); }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main { border-bottom: 1px solid var(--hair); }
+:root:root:root:root:root:root #rows .row-main .pct, :root:root:root:root:root:root #rows .row-main .score, :root:root:root:root:root:root #colhead .h:not(.who):not(.rank):not(.n) { text-align: right; font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root #rows .row-main .score.hero { align-items: flex-end; }
+/* 5. commas, not interpuncts */
+:root:root:root:root:root:root #board .meta .teaml + .posl::before, :root:root:root:root:root:root #board .meta .posl + .flag::before, :root:root:root:root:root:root #board .meta .flag + .yr::before { content: ", "; }
+/* 6. the facts as a six-column grid on the band */
+:root:root:root:root:root:root .phead .mplate > .hrow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--onband-line); padding-top: 0; }
+:root:root:root:root:root:root .phead .hrow .hchip.fact { padding: 7px 0 6px; border-right: 1px solid var(--onband-line); align-items: center; }
+:root:root:root:root:root:root .phead .hrow .hchip.fact:last-child { border-right: 0; }
+:root:root:root:root:root:root .phead .hrow .hchip.fact b { font-size: 20px; }
+:root:root:root:root:root:root:not([data-view="mobile"]) .phead .mplate > .hrow { justify-content: stretch; }
+:root:root:root:root:root:root[data-view="mobile"] #board .meta { font-size: 11px; }
+:root:root:root:root:root:root #board .meta { gap: 0; }
+:root:root:root:root:root:root #board .meta .posl, :root:root:root:root:root:root #board .meta .flag { letter-spacing: 0 !important; text-transform: none !important; font-size: inherit; color: inherit; }
+:root:root:root:root:root:root #board .meta .teaml + .posl::before, :root:root:root:root:root:root #board .meta .posl + .flag::before, :root:root:root:root:root:root #board .meta .flag + .yr::before { content: ",\00a0"; }

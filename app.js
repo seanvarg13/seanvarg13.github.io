@@ -3695,9 +3695,11 @@
       const bt = p.type === "P" ? (thr ? thr + "HP" : null) : b && (b.bats || b.throws) ? `${b.bats || "?"}/${b.throws || "?"}` : p.bats ? "Bats " + p.bats : null;
       // the hand stays on the team · positions line; age · height · weight are a line of their own under it (Sean, 6 Oct 2026:
       // "put their age and height and weight on the line right below")
-      const body = [p.age != null ? String(p.age) : null, b && b.ht ? String(b.ht).replace(/\s+/g, "") + (b.wt ? " " + b.wt : "") : b && b.wt ? String(b.wt) : null].filter(Boolean);
-      box.textContent = bt ? " · " + (bt.includes("/") ? "B/T " + bt : bt) : "";
-      if (body.length) box.append(el("span", "hbio2", body.join(" · ")));
+      // commas, not interpuncts, and a height as 6-4 (the less-slop pass, Sean, 6 Oct 2026)
+      const ht = b && b.ht ? String(b.ht).replace(/(\d+)\D+(\d+).*/, "$1-$2") : null;
+      const body = [p.age != null ? "Age " + p.age : null, ht, b && b.wt ? String(b.wt) : null].filter(Boolean);
+      box.textContent = bt ? ", " + (bt.includes("/") ? "B/T " + bt : bt) : "";
+      if (body.length) box.append(el("span", "hbio2", body.join(", ")));
       return;
     }
     if (b && b.ht) box.append(fact("HT", String(b.ht).replace(/\s+/g, "")));
@@ -3772,7 +3774,7 @@
     plate.append(headshot(p.id, p.name));
     const txt = el("div");
     const h2 = el("h2", null, p.name); h2.id = "modal-title"; txt.append(h2);
-    txt.append(el("div", "mline", `${p.team} · ${posShown(p)}`));   // hand and age moved to the facts row under it (1 Oct 2026)   // no season: the picker above says it (minimal pass 6)
+    txt.append(el("div", "mline", `${p.team}, ${posShown(p)}`));   // hand and age moved to the facts row under it (1 Oct 2026)   // no season: the picker above says it (minimal pass 6)
     const v = V(p);
     if (st.pct) txt.append(renderStrip(p, v, st));
     const r = el("div", "mrank");
@@ -4665,7 +4667,7 @@
     if (onePage() && phonePages()) {   // a phone (Sean, 6 Oct 2026: "move the hitters rp sp custom and year into the filters button"): one Filters button
       // that says who's listed; the Hitters / SP / RP choice is the dropdown's Position tab, the column set and season sit at the top of its Stats / Filters tabs
       const n = ["filters", "splits", "dates"].filter(popActive).length, pos = posBtnLabel();
-      add("grp", `${pos === "All pitchers" ? "Pitchers" : pos === "All hitters" ? "Hitters" : pos} · Filters${n ? ` · ${n}` : ""}`, grpOpen, n > 0);
+      add("grp", `${pos === "All pitchers" ? "Pitchers" : pos === "All hitters" ? "Hitters" : pos} filters${n ? ` (${n})` : ""}`, grpOpen, n > 0);   /* "SP filters", no interpunct (the less-slop pass) */
       return;
     }
     if (onePage()) {   // the Leaderboard / Recent, since the proposed layout (Sean, 6 Oct 2026: "Implement both of those"): a Hitters · SP · RP
@@ -4683,7 +4685,7 @@
       add("grp", "Filters" + (n ? ` · ${n}` : ""), grpOpen, n > 0);
       return;
     }
-    const n = ["filters", "splits", "dates"].filter(popActive).length, pos = popActive("positions") ? posBtnLabel() + " · " : "";
+    const n = ["filters", "splits", "dates"].filter(popActive).length, pos = popActive("positions") ? posBtnLabel() + " " : "";
     add("grp", pos + "Filters" + (n ? ` · ${n}` : ""), grpOpen, n > 0 || !!pos);
   }
   // what the Dates button says: the window in effect, else "Dates"
