@@ -4452,3 +4452,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root .phead .phctl .mrank.inctl { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; margin: 4px 0 0; max-width: 180px; }
 :root:root:root:root:root:root:root:root:root .phead .phctl .mrank.inctl .fchip { background: #ffffff; color: #111111; border: 1px solid var(--stripe-line, #c8102e); border-radius: 0; font-size: 12px; padding: 2px 6px; }
 :root:root:root:root:root:root:root:root:root .phead .phctl .mrank.inctl .fchipx { color: #111111; }
+/* the dividers between the facts are back (Sean, 7 Oct 2026: "make it so the lines in between the stats at the bottom come back") */
+:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .hrow .hchip.fact { border-right: 1px solid var(--onband-line); }
+:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .hrow .hchip.fact:last-child { border-right: 0; }
