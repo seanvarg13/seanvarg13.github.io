@@ -2370,3 +2370,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   look like this but obviously extend the red outline all the way around")**: `.btabs .btab` is the blue band with bold white text and a 3px red
   (`--stripe-line`) outline on every side; the picked tab carries the same 22% white wash the lit column name does (`color-mix`). The navy-picked
   version of the entry above is history. The block at the end of `styles.css`.
+* **Raw ▾ at Filters' size; "Age 36 · 6-4 · 195" (Sean, 7 Oct 2026: "for pitchers make the raw button the same size as filters", "put the players
+  age before their height and weight and add in the word Age again")**: the corner's Raw ▾ is 21px like Filters ▾, and `fillBio`'s second line
+  leads with "Age N" before height · weight.
