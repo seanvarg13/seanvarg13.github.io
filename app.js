@@ -9010,7 +9010,11 @@
         // Filters / Raw stacked in the band's empty top-right corner beside his lines (Sean, 6 Oct 2026: "put the filters and raw stuff
         // buttons in that blank space in the top right"), the view's name under them only when a filter is on; the tiles follow
         const ctl = el("div", "phctl"); ctl.append(tog);
-        const vl = viewLabel(p.type); if (vl && vl !== "full season") ctl.append(el("span", "phview", vl));
+        // the filter chips ride under the Filters button instead of their own row over the facts (Sean, 7 Oct 2026: "that filter description box
+        // below the filter button not where it is now") — the chips say the view, so the small name is only for a chipless view
+        const vl = viewLabel(p.type);
+        if (mr && mr.querySelector(".fchip")) { mr.classList.add("inctl"); ctl.append(mr); }
+        else if (vl && vl !== "full season") ctl.append(el("span", "phview", vl));
         // no tiles: the old facts row — PA or IP, then the season's line (nERA · ERA · K% · BB% · K-BB%, or the slash line) as small labels
         // over values — spread across the band's foot on both layouts (Sean, 6 Oct 2026: "get rid of the boxes and put the stats that we had
         // before back at the bottom of the header ... in the same format"); bandTiles stays in app.js, unused

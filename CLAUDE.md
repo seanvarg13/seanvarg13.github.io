@@ -2334,3 +2334,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   corner holds **Filters alone** — `playerHead` no longer builds the Raw ▾ dropdown, it builds a Raw / Stuff `.seg` (`sideSeg`) and puts it at the
   top of the Filters window under a "Raw / Stuff" caption (`.phtwo.phside2`, after a two-way player's Hitting / Pitching switch), the pressed side
   filled with `--btn`. Picking a side still sets `state.cardSide` and re-renders. Both layouts.
+* **The filter chips under the Filters button (Sean, 7 Oct 2026, Devers's last-100-PA card: "that filter description box below the filter button
+  not where it is now")**: `playerHead` moves the `.mrank` chip row (`.fchip` ×) into the `.phctl` corner under Filters (`.mrank.inctl`,
+  right-aligned, the chips white with a red outline like the button) instead of leaving it as a row over the facts; the small `.phview` name
+  only shows for a view with no chips. Both layouts.
