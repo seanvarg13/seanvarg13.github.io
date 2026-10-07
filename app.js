@@ -2576,15 +2576,15 @@
         else main.append(el("div", "rank", rankOf(p, i)));
       }
       const who = el("div", "who");
-      // the Leaderboard's name is two lines, first name over last (Sean, 6 Oct 2026: "first name on the first row and last name on the second
-      // row"); team, positions and playing time move to the tooltip. A one-word name keeps the one line.
-      const split = onePage() ? p.name.match(/^(\S+)\s+(.+)$/) : null;
-      const nameEl = el("div", "name", split ? split[1] : p.name);
+      // the Leaderboard's Player column is just his name on one line (Sean, 6 Oct 2026: "keep their name on one row ... just have their
+      // name in the player column" — a first-over-last split lasted an hour); team, positions and playing time are the tooltip
+      const split = onePage();
+      const nameEl = el("div", "name", p.name);
       if (state.mode === "rankings" || state.mode === "draft") { const sk = listStars()[p.type + p.id]; if (sk) { const star = el("span", "rowstar", "★"); star.title = sk.note || "Starred"; nameEl.append(" ", star); if (sk.note) nameEl.title = sk.note; } }
       who.append(nameEl);
       // just his positions and playing time under the name (Sean, 29 Sep 2026); team and hand are in the name's tooltip
       nameEl.title = nameEl.title || `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`;
-      if (split) { const v1 = V(p), last = el("div", "name lname", split[2]); who.append(last); who.title = `${p.name} · ${p.team} · ${posShown(p)} · ${p.type === "P" ? `${fmtIP(v1.ip)} IP` : `${v1.pa} PA`}`; main.append(who); }
+      if (split) { const v1 = V(p); who.title = `${p.name} · ${p.team} · ${posShown(p)} · ${p.type === "P" ? `${fmtIP(v1.ip)} IP` : `${v1.pa} PA`}`; main.append(who); }
       const meta = el("div", "meta");
       if (p.team) meta.append(el("span", "teaml", p.team));   // the team first, as the Stuff+ table has it (Sean, 3 Oct 2026)
       meta.append(el("span", "posl", posShown(p)));
