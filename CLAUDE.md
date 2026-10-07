@@ -2305,3 +2305,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   button below the filters button and move them both down slightly so they aren't directly hugging the exit button")**: on a phone `.phctl` is a
   column again at the band's right edge (Filters ▾ over Raw ▾, 84px each), 48px down from the plate's top so there is air under the ×; the year /
   bio block keeps 96px of right padding and an 84px minimum height so the facts row clears Raw. The side-by-side row of the entry above is history.
+* **The sorted column's name lit, red-ruled, every sorted column bold (Sean, 7 Oct 2026: "make the navy underline on the highlighted column be red
+  and maybe make it highlight the whole box of the stat that is being highlighted and bold the text of that stat ... make them all bold just like
+  nERA does")**: `#colhead .h[aria-sort]` / `.sorted` is white at 22% on the blue band, bold, with a 3px `--stripe-line` red rule (the ink rule of
+  the less-slop pass is overridden); `.pct.hot` / `.score.hot` (and `.sorted`) digits are 700 on both layouts — the quieter-rows 400 had taken the
+  bold off every sorted column but the headline. The block at the end of `styles.css`.

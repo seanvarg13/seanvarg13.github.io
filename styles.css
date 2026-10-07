@@ -4418,3 +4418,9 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root[data-view="mobile"] .phead .phctl .phview { position: static; }
 :root:root:root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline .pthd { padding-right: 96px; }
 :root:root:root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline { padding-right: 96px; min-height: 84px; }
+/* the sorted column on the Leaderboard (Sean, 7 Oct 2026: "make the navy underline on the highlighted column be red and maybe make it highlight
+   the whole box of the stat that is being highlighted and bold the text of that stat ... make them all bold just like nERA does"): the column
+   name's whole cell is lit (white at 22% on the blue band), its words bold, a 3px red rule under it; every sorted column's digits are bold,
+   not only the headline's */
+:root:root:root:root:root:root:root:root #colhead .h[aria-sort], :root:root:root:root:root:root:root:root #colhead .h.sorted { background: rgba(255, 255, 255, 0.22) !important; font-weight: 700 !important; box-shadow: inset 0 -3px 0 var(--stripe-line, #c8102e) !important; }
+:root:root:root:root:root:root:root:root #rows .row-main .pct.hot, :root:root:root:root:root:root:root:root #rows .row-main .score.hot, :root:root:root:root:root:root:root:root #rows .row-main .pct.sorted, :root:root:root:root:root:root:root:root #rows .row-main .score.sorted { font-weight: 700 !important; }
