@@ -2230,8 +2230,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   ink by luminance — white on any fill under 0.35 (the mid reds from about the 70th percentile up, the blues from about the 30th down), dark on
   the pale ends and the teal middle. By contrast ratio alone dark ink had won on the mid reds (a 5.8 : 3.1 margin at the 75th), which is what he
   couldn't read. Every heat-mapped cell, tile and pill shares the scale, so the Leaderboard's sorted column changes with it.
-* **Filters / Raw above the tiles (Sean, 6 Oct 2026: "move filters and raw vs stuff up above the boxes (as well as full season) so that we can
-  move the header border up and leave more room for the rest of the card")**: `playerHead` appends the `.phctl` row before `bandTiles`, the
-  desktop grid is `left right / ctl ctl / tiles tiles` (row gap 8px), the row's buttons are 30px tall with a 12px view label, a phone's tiles
-  are 6px / 8px padded with 20px numbers and the band's foot is 8-10px — the band is 224 → 213px on a phone, 252 → 244 on a desktop (the
-  block at the end of `styles.css`).
+* **Filters / Raw in the band's top-right corner (Sean, 6 Oct 2026: "move filters and raw vs stuff up above the boxes ... so that we can move the
+  header border up", then "put the filters and raw stuff buttons in that blank space in the top right")**: the `.phctl` row is a **column of two
+  26px buttons** (Filters ▾ over Raw ▾, the same width) in the empty corner beside his year and bio lines — on a phone absolutely placed
+  (`right: 12px; top: 50px`, under the ×; the year / bio block takes 100px of right padding and an 80px minimum height so the tiles clear it),
+  on a desktop the grid's `right` area (`left right / tiles tiles`, 34px down); the view's name shows under them only when a filter is on
+  ("Full season" is gone). The tiles follow, so the band ends right under them: 224 → 191px on a phone, 252 → 206 on a desktop. The
+  above-the-tiles row of the hour before (PR #412) is history. The block at the end of `styles.css`.
