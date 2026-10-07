@@ -4411,3 +4411,10 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate > .hrow { margin-right: -46px; margin-top: 6px; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }   /* however many facts, split evenly */
 :root:root:root:root:root:root:root[data-view="mobile"] .phead .hrow .hchip.fact { padding: 6px 0 5px; }
 :root:root:root:root:root:root:root .phead .mplate > .hrow { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }   /* a desktop's five hitter facts had left a blank sixth */
+/* Filters over Raw in the corner again, a little lower (Sean, 7 Oct 2026: "put the filters button where the raw stuff button is and then put
+   the raw stuff button below the filters button and move them both down slightly so they aren't directly hugging the exit button") */
+:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .phctl { top: 48px; flex-direction: column; align-items: flex-end; gap: 4px; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .phctl .phtog { flex-direction: column; gap: 4px; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .phctl .phview { position: static; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline .pthd { padding-right: 96px; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline { padding-right: 96px; min-height: 84px; }

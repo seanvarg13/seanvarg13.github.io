@@ -2301,3 +2301,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   into the plate's 58px right padding (`margin-right: −46px`) so it spans the band, each fact centred in an equal share — `grid-auto-flow:
   column` with `1fr` auto columns on both layouts, so five hitter facts or six pitcher facts split evenly (a desktop's five had left a blank
   sixth). Band 174 → 165px on a 390px phone. The block at the end of `styles.css`.
+* **Filters over Raw in the corner, lower (Sean, 7 Oct 2026: "put the filters button where the raw stuff button is and then put the raw stuff
+  button below the filters button and move them both down slightly so they aren't directly hugging the exit button")**: on a phone `.phctl` is a
+  column again at the band's right edge (Filters ▾ over Raw ▾, 84px each), 48px down from the plate's top so there is air under the ×; the year /
+  bio block keeps 96px of right padding and an 84px minimum height so the facts row clears Raw. The side-by-side row of the entry above is history.
