@@ -2287,9 +2287,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (1) the Leaderboard's column names and value cells are both **centred** with no side padding (the names had been right-aligned against the
   cell's padding while the digits sat centred); the Player name stays left (`.h.left`). (2) The `titans` scheme's blue is **Carolina blue
   `#7bafd4`** in place of Titans' `#4b92db` — accent, accent-2 (the bands), buttons, tab fill, the wash — light and dark; white type on it as
-  before, type stays navy. (3) **On the Leaderboard / Recent** (`onePage()`) the first column is his **IP / PA** (`.rank.ptcol`, header
-  `sampleLabel(g)`, `--rankw` 50 / 60px, muted when under the Min), the Player column is **just his name on one line** (Sean, minutes after a first-over-last split: "keep their
-  name on one row ... just have their name in the player column"), and team · positions · playing time live in the `.who` tooltip (no
-  `.meta` line); Rankings / Draft board keep their rank numbers and meta line; `fitNameCol` still measures a `.lname` line if one is ever drawn. A sorted-column
+  before, type stays navy. (3) **On the Leaderboard / Recent** (`onePage()`) the line under the name is **"SP · 174.2 IP"** — positions, a thin light middle
+  dot (`\00a0\00b7\00a0`, weight 300 at 70%, the Leaderboard-only `::before` at the end of `styles.css`), playing time; the team is the
+  name's tooltip (Sean, from his screenshot: "go back to this with the rank and then only have under the player name the position and the
+  IP/PA ... like 'SP • 134.1 IP' but make the dot obviously thinner"). Two versions lasted an hour each before it: the rank column replaced by
+  his IP / PA with the name split first over last, then on one line — both undone; Rankings / Draft board keep the team first. A sorted-column
   fill Savant's way (every sorted column a full-height coloured cell at the ordinary digit size) was built the same hour and **not shipped** —
   Sean: "scratch that I like how it currently is" (the big coloured headline value).
