@@ -2254,3 +2254,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   off-white values and a scheme must override inline. It is the **default scheme** (`DEFAULTS.scheme`, `defaults.js`) and `themes.js` moves every
   device to it once (`draft2027.titans1`, the saved scheme cleared), as the warm pass did; Warm, UNC and the rest stay in Appearance. The
   percentile colours are Savant's and unchanged.
+  **The white jersey (Sean, minutes later: "do it kind of like the titans white jerseys where white is the main color, the light blue is
+  secondary, and the red is tertiary")**: the `titans` light tokens are white first — ground, surfaces, band and pop `#ffffff`, `surface-2`
+  `#f3f6fa`, hairlines `#dde4ed` — with Titans light blue `#4b92db` as `accent`, `accent-2`, `btn` and `tab-fill` (every pressed pill, button
+  and active fill, white text on it) and the red `#c8102e` only as the stripe under the band; type stays navy. The warm block's pressed-control
+  rules (`.btn.on`, the page pills, `.btab.on`, the Hitters / SP / RP segment …) filled with `var(--ink)` and so stayed navy; they read
+  `var(--btn, var(--ink))` / `var(--btn-ink, var(--ground))` now, the same colours on Warm. Dark mode is the navy one above.
