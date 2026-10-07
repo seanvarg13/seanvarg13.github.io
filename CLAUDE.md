@@ -2220,3 +2220,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `throws`, else the data's) and no B/T; hitters keep B/T. `bandTiles`' first pitcher tile is **IP** (the official line's, else `fmtIP` of the
   view's innings — so a window / split reads its own), no colour and no percentile under it; K% · BB% · K-BB% follow as before. nERA (xnERA on the
   Stuff side) left the band — it's still the headline of the Leaderboard and the card's nERA tab; `seasonLine` still builds it.
+  **Then two lines** (Sean, minutes later: "put their age and height and weight on the line right below that first line where team position and
+  throwing arm is"): the `.hbioline` reads team · positions · LHP / RHP (a hitter's B/T) and, under it, age · height weight as a block `.hbio2`
+  inside the inline bio (`fillBio`; CSS at the end of `styles.css`) — "MIL · SP · RHP" over "24 · 6'4\" 197".

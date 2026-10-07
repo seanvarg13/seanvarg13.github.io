@@ -4276,3 +4276,7 @@ header.top .wordmark { display: none; }
 /* the subtotal row stands out (Sean, 6 Oct 2026: "make the row color different so it clearly stands out as a subtotal"), no running K% on it */
 :root:root:root:root:root:root .krows.kfive .krow.ksub { background: color-mix(in srgb, var(--ink) 6%, var(--surface)); margin: 0 -10px; padding: 0 10px; border-radius: 8px; border-top: 0; }
 :root:root:root:root:root:root .krows.kfive .krow.ksub + .krow.krest { border-top: 0; }
+
+/* age · height · weight on their own line under team · positions · hand (Sean, 6 Oct 2026) */
+:root:root:root:root:root:root .phead .hbioline .hbio.inline .hbio2 { display: block; font-size: 13px; color: var(--ink-2); margin-top: 1px; }
+:root:root:root:root:root:root[data-view="mobile"] .phead .hbioline .hbio.inline .hbio2 { font-size: 12px; }
