@@ -4491,3 +4491,10 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root .phead .phctl .phtog .seg.phfiltseg .segbtn.phfilt.phsidebtn { font-size: 21px !important; }
 /* Filters ▾ and Raw ▾ both 16px — the size Raw had before it was raised to match (Sean, 7 Oct 2026) */
 :root:root:root:root:root:root:root:root:root:root .phead .phctl .phtog .seg.phfiltseg .segbtn.phfilt, :root:root:root:root:root:root:root:root:root:root .phead .phctl .phtog .seg.phfiltseg .segbtn.phfilt.phsidebtn { font-size: 16px !important; }
+/* The card's tabs plain again: white, a navy outline, navy text, no bold (Sean, 7 Oct 2026: "back to just the navy outline white color with navy
+   text and no bold"); the picked tab keeps the scheme's light-blue fill with white text */
+:root:root:root:root:root:root:root:root:root:root .btabs .btab, :root:root:root:root:root:root:root:root:root:root .btabs .btab:first-child, :root:root:root:root:root:root:root:root:root:root .btabs .btab:last-child { background: var(--surface, #ffffff) !important; color: var(--ink) !important; border: 1px solid var(--ink) !important; border-radius: 4px !important; font-weight: 400 !important; }
+:root:root:root:root:root:root:root:root:root:root .btabs .btab.on, :root:root:root:root:root:root:root:root:root:root .btabs .btab[aria-selected="true"], :root:root:root:root:root:root:root:root:root:root .btabs .btab[aria-pressed="true"] { background: var(--btn, var(--accent-2)) !important; color: var(--btn-ink, #ffffff) !important; border-color: var(--ink) !important; }
+:root:root:root:root:root:root:root:root:root:root .btabs .btab b { color: inherit !important; font-weight: 400 !important; }
+/* the 600-weight control rule above carries an id inside its :is(), so it outranks any class chain — anchor the tabs' weight on the modal's id too */
+:root:root:root:root:root:root:root:root:root:root :is(#modal, #xboard) .btabs .btab { font-weight: 400 !important; }

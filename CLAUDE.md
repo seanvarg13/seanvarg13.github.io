@@ -2375,3 +2375,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   leads with "Age N" before height · weight.
 * **Filters ▾ and Raw ▾ both 16px (Sean, 7 Oct 2026: "make the filters and raw buttons the size that the raw button was prior to me asking you to
   change its size")**: the corner's two words share the 16px Raw ▾ had before PR #440. The block at the end of `styles.css`.
+* **The card's tabs plain again (Sean, 7 Oct 2026: "make the bottom buttons at the player page card back to just the navy outline white color with
+  navy text and no bold")**: `.btabs .btab` is white with a 1px navy (`--ink`) outline, 4px corners and navy text at weight 400; the picked tab is
+  the scheme's light-blue button fill with white text. The weight needed an id-anchored rule (`:is(#modal, #xboard) .btabs .btab`) because the
+  warm pass's 600-weight control rule carries `#colhead .h` inside its `:is()`, which gives the whole rule id specificity. The blue / red-outlined
+  tabs of the entries above are history. The block at the end of `styles.css`.
