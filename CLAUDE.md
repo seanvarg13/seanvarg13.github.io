@@ -2288,8 +2288,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   cell's padding while the digits sat centred); the Player name stays left (`.h.left`). (2) The `titans` scheme's blue is **Carolina blue
   `#7bafd4`** in place of Titans' `#4b92db` — accent, accent-2 (the bands), buttons, tab fill, the wash — light and dark; white type on it as
   before, type stays navy. (3) **On the Leaderboard / Recent** (`onePage()`) the first column is his **IP / PA** (`.rank.ptcol`, header
-  `sampleLabel(g)`, `--rankw` 50 / 60px, muted when under the Min), the name is **first name over last** (`.name` + `.name.lname`, split on
-  the first space — "Pete" / "Crow-Armstrong", "Bobby" / "Witt Jr."), and team · positions · playing time live in the `.who` tooltip (no
-  `.meta` line); Rankings / Draft board keep their rank numbers and meta line; `fitNameCol` measures the last-name line too. A sorted-column
+  `sampleLabel(g)`, `--rankw` 50 / 60px, muted when under the Min), the Player column is **just his name on one line** (Sean, minutes after a first-over-last split: "keep their
+  name on one row ... just have their name in the player column"), and team · positions · playing time live in the `.who` tooltip (no
+  `.meta` line); Rankings / Draft board keep their rank numbers and meta line; `fitNameCol` still measures a `.lname` line if one is ever drawn. A sorted-column
   fill Savant's way (every sorted column a full-height coloured cell at the ordinary digit size) was built the same hour and **not shipped** —
   Sean: "scratch that I like how it currently is" (the big coloured headline value).
