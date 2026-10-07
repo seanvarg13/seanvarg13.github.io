@@ -2314,3 +2314,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   button with a red border for raw and filters"; "hard edges not soft")**: the card's two corner buttons on both layouts — `#ffffff` ground,
   `#111111` type at 600, a 1.5px `--stripe-line` red border, no radius (the inner `.segbtn` of the Raw `.seg` has no border of its own). The block
   at the end of `styles.css`.
+* **The level picker beside the year on a phone (Sean, 7 Oct 2026, Brandyn Garcia's card: "players who played at multiple levels and show the
+  level on the card have it go below the year, make it right next to the year")**: the phone's `.pthd` no longer wraps and carries no right padding
+  of its own (the corner buttons start below it; the bio lines keep the 96px), and the level select's `.tsl` is 20px against the year's 27 so
+  "2026 ▾ MLB ▾" fits before the buttons at 390px. The block at the end of `styles.css`.

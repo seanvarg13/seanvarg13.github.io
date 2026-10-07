@@ -4428,3 +4428,8 @@ header.top .wordmark { display: none; }
    border for raw and filters", after a preview with light-blue text; "hard edges not soft") — both layouts, open or not */
 :root:root:root:root:root:root:root:root .phead .phctl .phtog .segbtn, :root:root:root:root:root:root:root:root .phead .phctl .phtog .seg { background: #ffffff !important; color: #111111 !important; border: 1.5px solid var(--stripe-line, #c8102e) !important; border-radius: 0 !important; font-weight: 600; }
 :root:root:root:root:root:root:root:root .phead .phctl .phtog .seg .segbtn { border: 0 !important; }
+/* the level picker stays on the year's line (Sean, 7 Oct 2026: "players who played at multiple levels and show the level on the card have it go
+   below the year, make it right next to the year"): the year line doesn't wrap and keeps no right padding of its own (the corner buttons start
+   under it; the bio lines below keep the 96px), and "MLB ▾" is a little smaller than the year so "2026 ▾ MLB ▾" clears them on a 390px phone */
+:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline .pthd { padding-right: 0; white-space: nowrap; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline .pthd .tsel:not(.yr) .tsl { font-size: 20px; }
