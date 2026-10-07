@@ -2373,3 +2373,5 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **Raw ▾ at Filters' size; "Age 36 · 6-4 · 195" (Sean, 7 Oct 2026: "for pitchers make the raw button the same size as filters", "put the players
   age before their height and weight and add in the word Age again")**: the corner's Raw ▾ is 21px like Filters ▾, and `fillBio`'s second line
   leads with "Age N" before height · weight.
+* **Filters ▾ and Raw ▾ both 16px (Sean, 7 Oct 2026: "make the filters and raw buttons the size that the raw button was prior to me asking you to
+  change its size")**: the corner's two words share the 16px Raw ▾ had before PR #440. The block at the end of `styles.css`.
