@@ -4489,3 +4489,5 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root .btabs .btab.on, :root:root:root:root:root:root:root:root:root:root .btabs .btab[aria-selected="true"], :root:root:root:root:root:root:root:root:root:root .btabs .btab[aria-pressed="true"] { background: color-mix(in srgb, #ffffff 22%, var(--accent-2, #7bafd4)) !important; color: #ffffff !important; }
 /* Raw ▾ the size of Filters ▾ (Sean, 7 Oct 2026: "for pitchers make the raw button the same size as filters") */
 :root:root:root:root:root:root:root:root:root:root .phead .phctl .phtog .seg.phfiltseg .segbtn.phfilt.phsidebtn { font-size: 21px !important; }
+/* Filters ▾ and Raw ▾ both 16px — the size Raw had before it was raised to match (Sean, 7 Oct 2026) */
+:root:root:root:root:root:root:root:root:root:root .phead .phctl .phtog .seg.phfiltseg .segbtn.phfilt, :root:root:root:root:root:root:root:root:root:root .phead .phctl .phtog .seg.phfiltseg .segbtn.phfilt.phsidebtn { font-size: 16px !important; }
