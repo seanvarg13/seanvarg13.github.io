@@ -2223,6 +2223,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   **Then two lines** (Sean, minutes later: "put their age and height and weight on the line right below that first line where team position and
   throwing arm is"): the `.hbioline` reads team · positions · LHP / RHP (a hitter's B/T) and, under it, age · height weight as a block `.hbio2`
   inside the inline bio (`fillBio`; CSS at the end of `styles.css`) — "MIL · SP · RHP" over "24 · 6'4\" 197".
-* **White digits on every red pill in the K% table (Sean, 6 Oct 2026: "regardless of how faint or dark the red heat map is make the text white")**:
-  `signStyle` gives any plus (red side) white digits whatever its depth, and `num`'s His pills read white whenever their percentile fill is
-  reddish (r more than 30 over g and b — the teal / grey middle keeps the ink); blue pills are unchanged.
+* **The ± K% pills go white sooner on the red side (Sean, 6 Oct 2026: the ink "on the dark ish red" was hard to read; then "don't make all red heat
+  maps white text")**: `signStyle` switches to white digits at t > 0.25 for a plus (about +0.6 K% and up) and keeps 0.45 for a minus; the faintest
+  reds and the His pills keep `pctStyle`'s own contrast rule. An all-red-is-white version lasted a few minutes (PR #409).
