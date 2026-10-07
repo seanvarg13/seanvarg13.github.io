@@ -2385,3 +2385,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Recent draws like the nERA headline — a clear ground, the value 19px bold in the condensed face in its percentile colour (`--heat`, which
   `paint()` sets on every cell) — instead of the filled cell with its 8px corners; the phone had this since the warm pass. The block at the end
   of `styles.css`.
+* **The frozen Rk / Player header cells opaque again (Sean, 7 Oct 2026, scrolled sideways on a desktop: "Year" slid under "Player")**: the
+  light-blue band pass had made every column-name cell transparent, so the sliding names drew through the two sticky ones. They carry the band
+  colour (`--band2`) and `z-index: 3` now — the block at the end of `styles.css`.
