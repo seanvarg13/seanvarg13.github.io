@@ -6749,7 +6749,6 @@
     paintBar(chip, pct); chip.style.color = "#fff"; tot.append(chip);
     grid.append(el("span", "mdiv"), el("span", "ml mtot", "Mix wOBA"), svTrack(pct), el("span", "mv mn", pct == null ? "" : ordinal(pct)), tot);
     box.append(grid);
-    box.append(el("p", "note", `Each bar: where his share of that kind of ball ranks among ${pl.ref.length} qualifiers — more of the buckets worth more than the league's average ball (${fmtX(x.lg)}) is better, more of the rest is worse. Lg wOBA: what the league does on it, red the dearest. Mix wOBA, the bottom line, is those values weighted by his shares — what his average ball in play is worth by where and how he hits it (balls in play only: no walks, strikeouts or bunts).`));
     return box;
   }
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
