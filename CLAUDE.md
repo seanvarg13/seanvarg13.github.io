@@ -2274,3 +2274,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   "Age 24, 6-4, 197" on the card (`fillBio`, the `.mline`), "MIL, SP, 174.2 IP" on the rows (the `::before` separators), "SP filters (1)" on a
   phone's button. (6) **Facts** as a six-column grid with hairline dividers on the band. The percentile bars are untouched. Dark mode keeps
   the Titans dark tokens; the bands read `--accent-2` there too.
+* **Quieter rows, the bands kept (Sean, 6 Oct 2026: "the font and spacing or lack thereof just feels very busy to me, and also
+  please keep the banded rows")**: the less-slop pass's two no-banding rules are gone (the even rows are ink at 4% on the ground again,
+  no hairline between rows), and the block at the end of `styles.css` ("quieter rows") calms the Leaderboard's type: names 15px / 500
+  (14.5 on a phone) in the body face, the team line one 11.5px muted line ("HOU, DH, OF, 691 PA" — `display: block` with inline children
+  and no right margin, so the commas sit tight; it ellipsises instead of wrapping), the numbers 13px / 400 with 10px of right padding,
+  the sorted headline 18px / 700, column names 11.5px / 500, the rank muted at 11px, rows 52px on a desktop / 48 on a phone. The
+  light-blue bands, the red stripe, the 4px controls and the comma separators of the less-slop pass stay.
