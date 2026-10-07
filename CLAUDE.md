@@ -2350,3 +2350,5 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   white and then brings the drop down box for them")**: the card's corner Filters control is plain white "Filters ▾" text on the band (14px / 600,
   no ground, border or shadow; underlined while the window is open) — the block at the end of `styles.css` on the `.phfiltseg` / `.phfilt`
   rules; the window it opens and the chips under it (white, red outline) are unchanged. Both layouts.
+* **No note under the Mix tab's table (Sean, 7 Oct 2026, from Lowe's card: "I don't need all this text here at the bottom")**: `renderMixTab`'s
+  "Each bar: where his share …" paragraph is gone; the table and the Mix wOBA row are unchanged.
