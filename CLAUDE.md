@@ -2380,3 +2380,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the scheme's light-blue button fill with white text. The weight needed an id-anchored rule (`:is(#modal, #xboard) .btabs .btab`) because the
   warm pass's 600-weight control rule carries `#colhead .h` inside its `:is()`, which gives the whole rule id specificity. The blue / red-outlined
   tabs of the entries above are history. The block at the end of `styles.css`.
+* **The sorted column on a desktop is the value in its colour (Sean, 7 Oct 2026: "on desktop version ... the highlighted column shows the stat
+  in red and not this heat map thingy", "basically what desktop currently does for nERA")**: every sorted column on a desktop's Leaderboard /
+  Recent draws like the nERA headline — a clear ground, the value 19px bold in the condensed face in its percentile colour (`--heat`, which
+  `paint()` sets on every cell) — instead of the filled cell with its 8px corners; the phone had this since the warm pass. The block at the end
+  of `styles.css`.
