@@ -2329,3 +2329,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   a bit and clear more header space ... move the raw and filters buttons back up vertically a bit if necessary")**: no rule over the facts row and
   no dividers between the facts, the row 2px under the bio, the corner buttons at 36px from the plate's top, the year / bio block 68px at least,
   8px of bottom padding. Band 182 → 152px on a 390px phone. The block at the end of `styles.css`.
+* **The facts' top rule back; Raw / Stuff inside Filters (Sean, 7 Oct 2026: "put back the border on top of the stats we don't need the one in
+  between them, and let's move raw vs stuff to the filters buttons")**: the phone's facts row has its hairline over it again (no dividers); the
+  corner holds **Filters alone** — `playerHead` no longer builds the Raw ▾ dropdown, it builds a Raw / Stuff `.seg` (`sideSeg`) and puts it at the
+  top of the Filters window under a "Raw / Stuff" caption (`.phtwo.phside2`, after a two-way player's Hitting / Pitching switch), the pressed side
+  filled with `--btn`. Picking a side still sets `state.cardSide` and re-renders. Both layouts.

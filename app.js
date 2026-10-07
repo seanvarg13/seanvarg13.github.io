@@ -8989,11 +8989,13 @@
     // phone and left a blank over the bio
     // ... and then in the Filters button's own dress, right beside it (Sean, 5 Oct 2026: "put it next to the filters button and make it
     // look exactly like the filters button"): the same .seg / .segbtn as Filters, the pick list hung under it by ddList
-    if (p.type === "P") {   // back (Sean, 6 Oct 2026: "add back the raw vs stuff button")
+    // ... and since 7 Oct 2026 inside the Filters window (Sean: "move raw vs stuff to the filters buttons"): a Raw / Stuff segment at the top of
+    // the window like the two-way player's Hitting / Pitching switch, no corner button of its own
+    let sideSeg = null;
+    if (p.type === "P") {
       const side = (state.cardSide || "raw") === "stuff" ? "stuff" : "raw";
-      const sb = el("button", "segbtn small phfilt phsidebtn", side === "stuff" ? "Stuff ▾" : "Raw ▾"); sb.type = "button"; sb.setAttribute("aria-label", "Raw or stuff");
-      const dd = ddList(sb, [["raw", "Raw"], ["stuff", "Stuff"]], side, (k) => { state.cardSide = k; savePrefs(); render(); }, "side");
-      const ss = el("div", "seg phfiltseg phsideseg"); ss.append(dd); tog.append(ss);
+      sideSeg = el("div", "seg"); sideSeg.setAttribute("aria-label", "Raw or stuff");
+      for (const [v, l] of [["raw", "Raw"], ["stuff", "Stuff"]]) { const sb = el("button", "segbtn small", l); sb.type = "button"; sb.setAttribute("aria-pressed", String(side === v)); sb.addEventListener("click", (e) => { e.stopPropagation(); if (side !== v) { state.cardSide = v; savePrefs(); render(); } }); sideSeg.append(sb); }
     }
     // a two-way player's Hitting / Pitching switch lives in the Filters window now (Sean, 5 Oct 2026: "put the hitting and pitching button in
     // the filters box so that you can eliminate that weird empty space gap"); it's taken off the plate here and put in the window below
@@ -9050,6 +9052,7 @@
       x.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = false; savePrefs(); render(); });
       const body = el("div", "pop-body phwinbody");
       if (twoWay) { const tw = el("div", "phtwo"); tw.append(el("div", "phcap", "Hitting / Pitching"), twoWay); body.append(tw); }
+      if (sideSeg) { const sw = el("div", "phtwo phside2"); sw.append(el("div", "phcap", "Raw / Stuff"), sideSeg); body.append(sw); }
       body.append(grid); if (sum.childNodes.length) body.append(sum);
       const ft = el("div", "popfoot phwinft"), clear = el("button", "linkbtn popclear", "Clear"); clear.type = "button";
       clear.addEventListener("click", (e) => { e.stopPropagation(); state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; savePrefs(); render(); });
