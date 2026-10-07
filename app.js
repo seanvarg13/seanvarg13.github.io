@@ -8997,10 +8997,11 @@
         const bioBox = hs.querySelector(".hbio"), hd2 = title.querySelector(".pthd");
         if (bioBox && hd2) { bioBox.classList.add("inline"); fillBio(bioBox, p, bio(p.id)); const bl = title.querySelector(".hbioline"); if (bl) bl.append(bioBox); else { const s2 = el("div", "hbioline"); s2.append(bioBox); title.append(s2); } }
         const facts = {}; for (const f of [...hs.querySelectorAll(".fact"), ...(hs._stats ? [...hs._stats.querySelectorAll(".fact")] : [])]) { const i = f.querySelector("i"), b = f.querySelector("b"); if (i && b) facts[i.textContent] = b.textContent; }
-        plate.append(bandTiles(p, st, facts, g));
+        // Filters / Raw and the view's name sit above the tiles, so the band ends right under the numbers (Sean, 6 Oct 2026: "move
+        // filters and raw vs stuff up above the boxes ... so that we can move the header border up")
         const ctl = el("div", "phctl"); ctl.append(tog);
         const vl = viewLabel(p.type); ctl.append(el("span", "phview", vl && vl !== "full season" ? vl : "Full season"));
-        plate.append(ctl);
+        plate.append(ctl, bandTiles(p, st, facts, g));
         hs.remove();
       } }
     let warn = null;
