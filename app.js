@@ -7451,8 +7451,10 @@
     }
     { const r = row("ksub", "The four together", null, null, pillOf(sum), el("span", "krun kblank", ""), "fouls, called strikes, two-strike finishing and walks — what the process explains of the gap over whiffs alone (Sean, 6 Oct 2026)"); rows.append(r); }
     const rest = gap - sum; runK += rest;
-    { const r = row("krest", "Everything else", null, null, pillOf(rest), run(runK), "sequencing, luck — what the four don't explain"); rows.append(r); }
-    { const r = row("ktot", K, his.k, lg.k, pillOf(gap), run(his.k), stuff ? `the models' K%; his actual K% is ${f1(act.k)} · ${bf} batters faced` : `${bf} batters faced · the pill is the whole gap: K% − the K% his whiffs alone imply`, false, pct.k); rows.append(r); }
+    // Everything else carries only its pill, and the K% row only the final pill and K% (Sean, 6 Oct 2026: "in the everything else row only
+    // show the 1.6 don't show the k% and then in the k% row only show the last two columns")
+    { const r = row("krest", "Everything else", null, null, pillOf(rest), el("span", "krun kblank", ""), "sequencing, luck — what the four don't explain"); rows.append(r); }
+    { const r = row("ktot", K, his.k, lg.k, pillOf(gap), run(his.k), stuff ? `the models' K%; his actual K% is ${f1(act.k)} · ${bf} batters faced` : `${bf} batters faced · the pill is the whole gap: K% − the K% his whiffs alone imply`, false, pct.k); r.querySelectorAll(".knum").forEach((n) => { n.textContent = ""; n.className = "knum kblank"; n.removeAttribute("style"); }); rows.append(r); }
     box.append(rows);
     return box;
   }
