@@ -3691,8 +3691,11 @@
       // a pitcher reads LHP / RHP, not B/T (Sean, 6 Oct 2026); a hitter keeps B/T
       const thr = p.type === "P" ? (b && b.throws) || p.throws : null;
       const bt = p.type === "P" ? (thr ? thr + "HP" : null) : b && (b.bats || b.throws) ? `${b.bats || "?"}/${b.throws || "?"}` : p.bats ? "Bats " + p.bats : null;
-      const bits = [bt ? (bt.includes("/") ? "B/T " + bt : bt) : null, p.age != null ? String(p.age) : null, b && b.ht ? String(b.ht).replace(/\s+/g, "") + (b.wt ? " " + b.wt : "") : b && b.wt ? String(b.wt) : null].filter(Boolean);
-      box.textContent = bits.length ? " · " + bits.join(" · ") : "";
+      // the hand stays on the team · positions line; age · height · weight are a line of their own under it (Sean, 6 Oct 2026:
+      // "put their age and height and weight on the line right below")
+      const body = [p.age != null ? String(p.age) : null, b && b.ht ? String(b.ht).replace(/\s+/g, "") + (b.wt ? " " + b.wt : "") : b && b.wt ? String(b.wt) : null].filter(Boolean);
+      box.textContent = bt ? " · " + (bt.includes("/") ? "B/T " + bt : bt) : "";
+      if (body.length) box.append(el("span", "hbio2", body.join(" · ")));
       return;
     }
     if (b && b.ht) box.append(fact("HT", String(b.ht).replace(/\s+/g, "")));
