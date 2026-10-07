@@ -4397,3 +4397,17 @@ header.top .wordmark { display: none; }
 /* under the name "SP · 174.2 IP" (Sean, 6 Oct 2026: "only have under the player name the position and the IP/PA ... like 'SP • 134.1 IP'
    but make the dot obviously thinner"): a middle dot, light, with a hair of air either side; the team is the name's tooltip */
 :root:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #board .meta .posl + .flag::before { content: "\00a0\00b7\00a0"; color: var(--muted); opacity: .7; font-weight: 300; }
+
+/* the phone band tightened (Sean, 6 Oct 2026: "make it so the bottom stats on the header are more spaced out and center aligned ... put
+   the raw stuff button next to the filters button and ... move the bottom stats up and make the header's height a bit less"): Filters and
+   Raw side by side on the year's line, right of the year (the bio lines run under them), the facts row spread across the whole band
+   (into the plate's right padding, which the × needed only up top), each fact centred in its sixth */
+:root:root:root:root:root:root:root[data-view="mobile"] .phead .phctl { position: absolute; right: 12px; top: 28px; width: auto; flex-direction: row; align-items: center; gap: 4px; }
+:root:root:root:root:root:root:root[data-view="mobile"] .phead .phctl .phtog { flex-direction: row; gap: 4px; }
+:root:root:root:root:root:root:root[data-view="mobile"] .phead .phctl .phtog .segbtn, :root:root:root:root:root:root:root[data-view="mobile"] .phead .phctl .phtog .seg { width: 84px; min-height: 26px; height: 26px; font-size: 12.5px; white-space: nowrap; }
+:root:root:root:root:root:root:root[data-view="mobile"] .phead .phctl .phview { position: absolute; right: 0; top: 30px; white-space: nowrap; max-width: none; }
+:root:root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline { padding-right: 0; min-height: 0; }
+:root:root:root:root:root:root:root[data-view="mobile"] .phead .ptitle.pinline .pthd { padding-right: 180px; }
+:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate > .hrow { margin-right: -46px; margin-top: 6px; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }   /* however many facts, split evenly */
+:root:root:root:root:root:root:root[data-view="mobile"] .phead .hrow .hchip.fact { padding: 6px 0 5px; }
+:root:root:root:root:root:root:root .phead .mplate > .hrow { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }   /* a desktop's five hitter facts had left a blank sixth */
