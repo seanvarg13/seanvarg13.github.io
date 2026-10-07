@@ -2342,3 +2342,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   bottom come back and get rid of their age saying age just have it be their age and have the age come after height and weight and have a • in
   between")**: the phone's facts have their hairline dividers again (the top rule stayed), and `fillBio`'s second line reads "6-4 · 195 · 36" —
   a thin middle dot between, no "Age" word, the age last. A star removal / age-beside-the-name version was started and withdrawn the same hour.
+* **Dots through the whole bio, both lines one size (Sean, 7 Oct 2026: "between any part of the bio that is different have a • between instead of a
+  comma. And have the second row be the same size font as the first")**: the card's bio reads "PHI · SP · RHP" over "6-4 · 195 · 36" — `mline`
+  and `fillBio` join with a thin middle dot, not a comma (the Leaderboard rows keep their commas), and `.hbio2` inherits the first line's size and
+  weight (13px / 500; 12px on a phone). The block at the end of `styles.css`.

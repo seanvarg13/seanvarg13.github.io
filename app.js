@@ -3702,7 +3702,7 @@
       // height · weight · age with thin dots, the age a bare number (Sean, 7 Oct 2026: "get rid of their age saying age ... have the age come
       // after height and weight and have a • in between")
       const body = [ht, b && b.wt ? String(b.wt) : null, p.age != null ? String(p.age) : null].filter(Boolean);
-      box.textContent = bt ? ", " + (bt.includes("/") ? "B/T " + bt : bt) : "";
+      box.textContent = bt ? " \u00b7 " + (bt.includes("/") ? "B/T " + bt : bt) : "";
       if (body.length) box.append(el("span", "hbio2", body.join(" \u00b7 ")));
       return;
     }
@@ -3778,7 +3778,7 @@
     plate.append(headshot(p.id, p.name));
     const txt = el("div");
     const h2 = el("h2", null, p.name); h2.id = "modal-title"; txt.append(h2);
-    txt.append(el("div", "mline", `${p.team}, ${posShown(p)}`));   // hand and age moved to the facts row under it (1 Oct 2026)   // no season: the picker above says it (minimal pass 6)
+    txt.append(el("div", "mline", `${p.team} \u00b7 ${posShown(p)}`));   /* thin dots between the bio's parts (Sean, 7 Oct 2026) */   // hand and age moved to the facts row under it (1 Oct 2026)   // no season: the picker above says it (minimal pass 6)
     const v = V(p);
     if (st.pct) txt.append(renderStrip(p, v, st));
     const r = el("div", "mrank");
