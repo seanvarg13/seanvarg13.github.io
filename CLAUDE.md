@@ -2359,3 +2359,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the pick list hung by `ddList` — the Filters window no longer holds a Raw / Stuff segment; the `.phside2` CSS is unused); every part of the
   bio (`.mlinein`, `.hbio.inline`, `.hbio2`) is `--onband-dim` at 400; the card's tab strip (`.btabs .btab`) is white with red (`--stripe-line`)
   bold text and a 1.5px red square outline, the picked tab filled red with white text. The block at the end of `styles.css`.
+* **The card's tabs blue (Sean, 7 Oct 2026: "make the tab buttons at the bottom blue with bold white text with a red outline")**: `.btabs .btab` is
+  the scheme's light blue (`--accent-2`) with bold white text and the 1.5px red square outline; the picked tab is filled navy (`--ink`) so it still
+  reads as picked. The block at the end of `styles.css` (the red-text version of the entry above lasted minutes).
