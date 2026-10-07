@@ -4476,3 +4476,9 @@ header.top .wordmark { display: none; }
    with a red outline"); the picked tab is the navy ink so it still reads as picked */
 :root:root:root:root:root:root:root:root:root:root .btabs .btab, :root:root:root:root:root:root:root:root:root:root .btabs .btab:first-child, :root:root:root:root:root:root:root:root:root:root .btabs .btab:last-child { background: var(--accent-2, #7bafd4) !important; color: #ffffff !important; border: 1.5px solid var(--stripe-line, #c8102e) !important; border-radius: 0 !important; font-weight: 700 !important; }
 :root:root:root:root:root:root:root:root:root:root .btabs .btab.on, :root:root:root:root:root:root:root:root:root:root .btabs .btab[aria-selected="true"], :root:root:root:root:root:root:root:root:root:root .btabs .btab[aria-pressed="true"] { background: var(--ink, #0c2340) !important; color: #ffffff !important; }
+/* Filters bigger still, Raw ▾ under it on both layouts, the bio solid white (Sean, 7 Oct 2026: "make it so filters is bigger text and again but the
+   raw stuff button below it and then make the bio stuff not translucent white") */
+:root:root:root:root:root:root:root:root:root:root .phead .phctl .phtog .seg.phfiltseg .segbtn.phfilt { font-size: 21px !important; min-height: 0 !important; height: auto; line-height: 1.2; }
+:root:root:root:root:root:root:root:root:root:root .phead .phctl .phtog .seg.phfiltseg .segbtn.phfilt.phsidebtn { font-size: 16px !important; }
+:root:root:root:root:root:root:root:root:root:root .phead .phctl .phtog { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+:root:root:root:root:root:root:root:root:root:root .phead .hbioline, :root:root:root:root:root:root:root:root:root:root .phead .hbioline .mlinein, :root:root:root:root:root:root:root:root:root:root .phead .hbioline .hbio.inline, :root:root:root:root:root:root:root:root:root:root .phead .hbioline .hbio.inline .hbio2 { color: #ffffff !important; }
