@@ -4502,3 +4502,19 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) #rows .row-main > .hot, :root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) #rows .row-main .pcts > .hot, :root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) #rows .score.hot { background: transparent !important; color: var(--heat, var(--ink)) !important; font-family: var(--display); font-size: 19px !important; font-weight: 700 !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
 /* the frozen Rk / Player header cells are opaque again (Sean, 7 Oct 2026: scrolled sideways, "Year" slid under "Player") — the band pass's transparent header cells let the sliding column names show through them */
 :root:root:root:root:root:root:root:root:root:root #colhead .h:first-child, :root:root:root:root:root:root:root:root:root:root #colhead .h:nth-child(2), :root:root:root:root:root:root:root:root:root:root #colhead .h.left { background: var(--band2, var(--accent-2)) !important; z-index: 3; }
+/* home, design A (Sean, 7 Oct 2026, from the Home Page Designs canvas: "I like design A"): the last game day as a full-width lead card with headshots,
+   big names, a line of what he did and the value in its percentile colour; leaders, Trending and the 2027 starters as three compact cards under it */
+.hub.home .hcard.hlead { margin-bottom: 18px; }
+.hub.home .hbig { margin: 0; padding: 0; list-style: none; }
+.hub.home .hbig li { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; column-gap: 10px; align-items: center; min-height: 58px; border-top: 1px solid var(--hair); }
+.hub.home .hbig .mug { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; object-position: top; background: var(--surface-2, #f3f6fa); }
+.hub.home .hbig .mug.initials { width: 34px; height: 34px; border-radius: 50%; background: var(--surface-2, #f3f6fa); }
+.hub.home .hbig .hwho { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+:root:root:root:root:root:root:root .hub.home .hbig .hname { font-family: var(--display); font-size: 20px; font-weight: 700; }
+.hub.home .hbig .hsub { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root:root:root:root:root:root:root .hub.home .hbig .hval { font-family: var(--display); font-size: 26px; font-weight: 700; }
+:root:root:root:root:root:root:root .hub.home .hval.heat { color: var(--heat) !important; }
+:root:root:root:root:root:root:root .hub.home .hlist .hval { font-family: var(--display); font-size: 17px; }
+:root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hbig .hname { font-size: 18px; }
+:root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hbig .hval { font-size: 22px; }
+:root:root:root:root:root:root:root .hub.home .hbig .hval, :root:root:root:root:root:root:root .hub.home .hbig .hname { grid-area: auto; }   /* the .hlist grid areas don't exist on the lead rows */

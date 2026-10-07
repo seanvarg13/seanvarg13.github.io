@@ -2388,3 +2388,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **The frozen Rk / Player header cells opaque again (Sean, 7 Oct 2026, scrolled sideways on a desktop: "Year" slid under "Player")**: the
   light-blue band pass had made every column-name cell transparent, so the sliding names drew through the two sticky ones. They carry the band
   colour (`--band2`) and `z-index: 3` now — the block at the end of `styles.css`.
+* **Home, design A (Sean, 7 Oct 2026, from the Home Page Designs canvas — five mocks, three desktop and two phone: "I like design A")**: `renderHome`
+  leads with **Last game day** as one full-width card (`.hcard.hlead`, `.hbig` rows: a round headshot, the name 20px in the condensed face, a line of
+  what he did that day — team · H-AB · HR · BB · K · barrels · max EV for a hitter, team · IP · ER · K · BB · whiff% for a start — and the value 26px in
+  its percentile colour: xwOBA against the season's 300+ PA hitters, Pitching+ against the 100+ IP pitchers' season grades, `heat` → `--heat` + class
+  `heat`), five rows a side (four on a phone), then three compact cards in the `.hgrid`: **2026 leaders** (5 by xwOBA over 4 by nERA, stacked),
+  **Trending** (last 100 PA / last 50 IP, the same shape) and **2027 starters** (9 rows); the compact lists' values are 17px condensed and coloured the
+  same way. The `two()` side-by-side columns are only in the lead card now. CSS at the end of `styles.css`; the lead rows need `grid-area: auto` on
+  the name / value because the `.hlist` rules pin `.hval` to a grid area the lead rows don't have.
