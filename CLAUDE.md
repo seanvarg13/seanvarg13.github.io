@@ -2318,3 +2318,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   level on the card have it go below the year, make it right next to the year")**: the phone's `.pthd` no longer wraps and carries no right padding
   of its own (the corner buttons start below it; the bio lines keep the 96px), and the level select's `.tsl` is 20px against the year's 27 so
   "2026 ▾ MLB ▾" fits before the buttons at 390px. The block at the end of `styles.css`.
+* **The list stays put under a card on a phone (Sean, 7 Oct 2026: "when I'm on the leaderboard and select a player card the leaderboard jumps
+  back to the top while I'm on the player card and then when I exit it jumps back to where I was")**: the phone rule that shows the page under a
+  popup card (`body.modal-open.cardpop main { display: block }`, undoing the plain modal's `display: none`) had turned the list pages' flex
+  standing card into a block, so the rows' box grew to every row (no scroll position to keep) and sprang back on close. Those pages
+  (Leaderboard / Recent / Rankings / Draft board / Pitching+ board / Claude rankings / Mock / Planner) keep `main.wrap` as flex under a card
+  (the rule right after it in `styles.css`), and `render()` puts the noted list scroll back when a card opens as well as when it closes, so
+  nothing moves either way. Headless: the rows' box reads 498 before, under and after a card.

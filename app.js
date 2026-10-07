@@ -5454,7 +5454,9 @@
     if (!inBarModes.includes(state.mode)) seatFilters(null);   // Filters back on its toolbar off the Leaderboard / Trending
     if (ddOpen && !ddOpen.trig.isConnected) ddClose();   // a list whose opener was redrawn away
     keep();
-    if (wasCard && $("modal").hidden && listAt && listAt.mode === state.mode) {
+    // put the list back under a card the moment it opens too, not only when it closes (Sean, 7 Oct 2026: the list behind the card "jumps back
+    // to the top ... and then when I exit it jumps back to where I was") — the modal is fixed, so the rows' box is free to sit where it was
+    if ((wasCard || !$("modal").hidden) && listAt && listAt.mode === state.mode) {
       listScrollers().forEach((e, i) => { const v = listAt.s[i]; if (v) { e.scrollTop = v[0]; e.scrollLeft = v[1]; } });
       if (listAt.y && Math.abs(window.scrollY - listAt.y) > 1) window.scrollTo(0, listAt.y);
     }
