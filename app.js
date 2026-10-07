@@ -2575,7 +2575,7 @@
       }
       const who = el("div", "who");
       const nameEl = el("div", "name", p.name);
-      if (state.mode === "rankings" || state.mode === "draft") { const sk = listStars()[p.type + p.id]; if (sk) { const star = el("span", "rowstar", "★"); star.title = sk.note || "Starred"; nameEl.append(" ", star); if (sk.note) nameEl.title = sk.note; } }
+      // the ★ after a starred name on Rankings / the Draft board is gone with the star feature (Sean, 7 Oct 2026)
       who.append(nameEl);
       // just his positions and playing time under the name (Sean, 29 Sep 2026); team and hand are in the name's tooltip
       nameEl.title = nameEl.title || `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`;
@@ -4279,7 +4279,7 @@
   // in the browser when the page opens (it allows cross-site reads; nothing is built for it). Starred players by default, or
   // everyone: pitchers' probable starts (two-start weeks flagged) and hitters' games with the opposing starters' hands, each with
   // projected points under the chosen scoring — per start / per game / per relief outing from this season's fantasy lines.
-  const pw = Object.assign({ scope: "stars", off: 0 }, load("draft2027.planner", {}));
+  const pw = Object.assign({ scope: "all", off: 0 }, load("draft2027.planner", {}), { scope: "all" });   // everyone: the star feature is off the site (Sean, 7 Oct 2026)
   const pwCache = new Map();
   const ymd = (d) => d.toISOString().slice(0, 10);
   function pwWeek(off) {
@@ -4305,7 +4305,6 @@
     const wl = el("span", "pwweek", `${fmtDate(wk.from)} – ${fmtDate(wk.to)}`);
     bar.append(nav("‹ Prev", -1), wl, nav("Next ›", 1));
     if (pw.off) { const b = nav("This week", 0); b.onclick = null; b.addEventListener("click", () => { pw.off = 0; save(); }); bar.append(b); }
-    bar.append(pillSelect(pw.scope === "stars" ? "Starred players" : "Everyone", [["stars", "Starred players"], ["all", "Everyone"]], pw.scope, (v) => { pw.scope = v; save(); }, "Players"));
     bar.append(el("span", "pbcount", `${fpreset().name} scoring`));
     box.append(bar);
     const y = String(DATA.meta.season), F = fData(y); if (!F) fEnsure(y);
@@ -4340,7 +4339,7 @@
       return { r, gs, L: opp.filter((q) => q.throws === "L").length, R: opp.filter((q) => q.throws === "R").length, perG: r.o.G ? r.pts / r.o.G : null, proj: r.o.G ? gs.length * r.pts / r.o.G : null }; });
     const f1 = (x) => (x == null ? "–" : x.toFixed(1)), f2x = (x) => (x == null ? "–" : x.toFixed(2));
     const openCard = (q) => { state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.expanded = q.type + q.id; render(); };
-    const nameCell = (q, sub) => { const td = el("td", "pwho"), b = el("button", "linkbtn pwname", (starred(q) ? "★ " : "") + q.name); b.type = "button"; b.addEventListener("click", () => openCard(q)); td.append(b, el("small", null, " " + sub)); return td; };
+    const nameCell = (q, sub) => { const td = el("td", "pwho"), b = el("button", "linkbtn pwname", q.name); b.type = "button"; b.addEventListener("click", () => openCard(q)); td.append(b, el("small", null, " " + sub)); return td; };
     const table = (title, heads, rows) => {
       const sec = el("div", "pwsec"); sec.append(el("h4", "pwh", title));
       if (!rows.length) { sec.append(el("p", "note", pw.scope === "stars" ? "Nobody here — star players on their cards, or switch to Everyone." : "Nobody this week.")); return sec; }
@@ -4843,7 +4842,7 @@
     $("rankcount").textContent = tabLabel;                    // the tab, nothing else — the row is short on room
     $("rankcount").title = n || tn ? `${tabLabel}${tn ? ` · ${tn} tier${tn === 1 ? "" : "s"}` : ""} · your own order` : `${tabLabel} · the model's order`;
     $("rankedit").textContent = state.editRanks ? "Done editing" : "Edit rankings";
-    const ns0 = Object.keys(listStars()).length; $("rankstars").textContent = state.starOnly ? `★ Starred only (${ns0})` : `☆ Starred (${ns0})`; $("rankstars").classList.toggle("on", state.starOnly); $("rankstars").hidden = !ns0 && !state.starOnly;
+    $("rankstars").hidden = true; state.starOnly = false;   // the star feature is off the site (Sean, 7 Oct 2026)
     $("rankedit").classList.toggle("btn-quiet", state.editRanks);
     $("rankaddtier").hidden = !state.editRanks; $("rankreset").hidden = !state.editRanks;
     const bottom = state.editRanks && selBottom(), bp = bottom && DATA.players.find((q) => q.type + q.id === bottom);
@@ -5073,7 +5072,7 @@
   // yes/no or single-line-input dialogs drawn in the page
   function ask(title, message, onYes, input) { state.textModal = { title, hint: message, ask: true, input, onSubmit: onYes }; render(); }
   function renderDraftTools() {
-    { const on = state.mode === "draft", ns0 = on ? Object.keys(listStars()).length : 0; const b = $("draftstars"); b.hidden = !on || (!ns0 && !state.starOnly); b.textContent = state.starOnly ? `★ Starred only (${ns0})` : `☆ Starred (${ns0})`; b.classList.toggle("on", state.starOnly); }
+    { const on = false, ns0 = 0; const b = $("draftstars"); b.hidden = true; b.textContent = state.starOnly ? `★ Starred only (${ns0})` : `☆ Starred (${ns0})`; b.classList.toggle("on", state.starOnly); }
     const on = state.mode === "draft";
     $("drafttools").hidden = !on;
     if (!on) return;
@@ -8970,14 +8969,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     if (mug) { const col = el("div", "phmug"); mug.replaceWith(col); col.append(mug); }
     // the Star is a ☆ / ★ right after his name (minimal pass 5, Sean, 30 Sep 2026), not a button under the photo; an open Star
     // panel still goes under his lines, where it has the room
-    if (star) {
-      const note = star.querySelector(".starnote"); if (note) note.remove();          // the note is in the button's title
-      const panel = star.querySelector(".starpanel"); if (panel) (h2 ? h2.parentElement : plate).append(panel);
-      const sb = star.querySelector(".starbtn");
-      if (sb) { const on = sb.classList.contains("on"); sb.textContent = on ? "★" : "☆"; sb.setAttribute("aria-label", on ? "Starred — edit" : "Star this player"); }
-      star.classList.add("staricon");
-      if (h2) h2.append(star); else if (mr) mr.append(star);
-    }
+    // no Star on the card (Sean, 7 Oct 2026: "get rid of the star feature across the site") — the saved stars and their sync stay, nothing draws them
+    if (star) star.remove();
     const title = pageTitle(p, o);
     // the season picker sits right under his name, "2026 ▾ MLB" (minimal pass 5, Sean, 30 Sep 2026) — not a row of its own
     // across the band's foot on a phone or a column of its own on a desktop

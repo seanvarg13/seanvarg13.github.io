@@ -4526,3 +4526,9 @@ header.top .wordmark { display: none; }
 /* every home list wears the lead card's rows (Sean, 7 Oct 2026); the Movers pills sit in the value slot */
 :root:root:root:root:root:root:root .hub.home .hbig .hval.hmove { font-size: 13px; display: inline-flex; }
 :root:root:root:root:root:root:root .hub.home .hbig .hval.hmove .hpill { font-size: 12px; }
+/* the band tidied (Sean, 7 Oct 2026, from Reynolds's card): the filter chip quiet, Filters level with the ×, a smaller phone headshot, no star */
+:root:root:root:root:root:root:root:root:root:root .phead .phctl .mrank.inctl .fchip { border: 1px solid var(--onband-line, rgba(255,255,255,.6)); color: var(--ink); background: var(--surface, #ffffff); }
+:root:root:root:root:root:root:root:root:root:root .phead .phctl .mrank.inctl .fchipx { color: var(--muted); }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .phctl { top: 8px; right: 52px; }   /* the ×'s own line (it sits at 8px / 8px, 34px wide) */
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate .mug { width: 60px; height: 60px; }
+:root:root:root:root:root:root:root:root:root:root .staricon, :root:root:root:root:root:root:root:root:root:root .rowstar { display: none !important; }

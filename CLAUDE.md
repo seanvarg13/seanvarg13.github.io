@@ -2408,3 +2408,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `.hbig` rows like the lead card's — headshot, the name in the condensed face, team (and the window line) under it, the value or the "was → now"
   pills at the right — so no `.hlist` is drawn on home any more (its CSS stays); `NH = NP = 4` for the leaders, Trending and Movers (the lead card
   keeps five / four). CSS at the end of `styles.css`.
+* **The band tidied, the star feature off the site (Sean, 7 Oct 2026, from Reynolds's card: "5 is good with me and 3 and 4 as well and also get rid
+  of the star feature across the site that's not needed anymore")**: the filter chip under Filters is quiet — white, a thin `--onband-line` edge, ink
+  text, a muted × (`.phctl .mrank.inctl .fchip`); on a phone Filters ▾ / Raw ▾ sit level with the × (`.phctl` at `top: 8px; right: 52px`, the × at
+  8px / 8px) and the headshot is 60px (was 74); **no stars** — `playerHead` removes the card's ☆ / ★, the lists draw no row star, `#rankstars` /
+  `#draftstars` are hidden with `state.starOnly` false, the Weekly Planner is always Everyone (its Starred / Everyone pill is gone, `pw.scope` forced
+  to `all`), and `.staricon` / `.rowstar` are `display: none`. `state.stars` and `SYNC_KEYS`' `stars` stay (saved data, harmless). The block at the end
+  of `styles.css`.
