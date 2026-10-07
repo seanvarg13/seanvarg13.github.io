@@ -2366,3 +2366,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   stuff button below it and then make the bio stuff not translucent white")**: the corner's Filters ▾ is 21px (`!important` — the warm pass's
   14px button rule had held it) over a 16px Raw ▾ (`.phtog` is a right-aligned column on a desktop too), and every bio line is `#ffffff`, not
   `--onband-dim`. The block at the end of `styles.css`.
+* **The card's tabs in the lit column name's dress (Sean, 7 Oct 2026, from a crop of the Leaderboard's sorted column name: "make the tab buttons
+  look like this but obviously extend the red outline all the way around")**: `.btabs .btab` is the blue band with bold white text and a 3px red
+  (`--stripe-line`) outline on every side; the picked tab carries the same 22% white wash the lit column name does (`color-mix`). The navy-picked
+  version of the entry above is history. The block at the end of `styles.css`.
