@@ -4358,9 +4358,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .name { font-family: var(--body); font-size: 15px; font-weight: 600 !important; letter-spacing: 0; }
 :root:root:root:root:root:root[data-view="mobile"] .name, :root:root:root:root:root:root[data-view="mobile"] #board .name { font-size: 15px; }
 :root:root:root:root:root:root .who small, :root:root:root:root:root:root .teaml, :root:root:root:root:root:root .row-main .sub, :root:root:root:root:root:root .who .yr, :root:root:root:root:root:root #board .meta { font-size: 12px; color: var(--ink-2); letter-spacing: 0; text-transform: none; }
-:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows > .row:nth-child(even) .row-main, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows > .row:nth-child(even) .row-main .who, :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows > .row:nth-child(even) .row-main .rank { background: var(--ground, var(--surface)); }
-:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main { border-bottom: 1px solid var(--hair); }
-:root:root:root:root:root:root #rows .row-main .pct, :root:root:root:root:root:root #rows .row-main .score, :root:root:root:root:root:root #colhead .h:not(.who):not(.rank):not(.n) { text-align: right; font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root :root:root:root:root:root:root #rows .row-main .pct, :root:root:root:root:root:root #rows .row-main .score, :root:root:root:root:root:root #colhead .h:not(.who):not(.rank):not(.n) { text-align: right; font-variant-numeric: tabular-nums; }
 :root:root:root:root:root:root #rows .row-main .score.hero { align-items: flex-end; }
 /* 5. commas, not interpuncts */
 :root:root:root:root:root:root #board .meta .teaml + .posl::before, :root:root:root:root:root:root #board .meta .posl + .flag::before, :root:root:root:root:root:root #board .meta .flag + .yr::before { content: ", "; }
@@ -4374,3 +4372,18 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root #board .meta { gap: 0; }
 :root:root:root:root:root:root #board .meta .posl, :root:root:root:root:root:root #board .meta .flag { letter-spacing: 0 !important; text-transform: none !important; font-size: inherit; color: inherit; }
 :root:root:root:root:root:root #board .meta .teaml + .posl::before, :root:root:root:root:root:root #board .meta .posl + .flag::before, :root:root:root:root:root:root #board .meta .flag + .yr::before { content: ",\00a0"; }
+
+/* quieter rows (Sean, 6 Oct 2026: "the font and spacing or lack thereof just feels very busy ... keep the banded rows") */
+:root:root:root:root:root:root .name, :root:root:root:root:root:root #board .name { font-weight: 500 !important; font-size: 15px; letter-spacing: 0; line-height: 1.15; }
+:root:root:root:root:root:root[data-view="mobile"] .name, :root:root:root:root:root:root[data-view="mobile"] #board .name { font-size: 14.5px; }
+:root:root:root:root:root:root #board .meta { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11.5px; color: var(--muted); margin-top: 2px; line-height: 1.2; }
+:root:root:root:root:root:root #board .meta > * { margin-right: 0; display: inline; }
+:root:root:root:root:root:root[data-view="mobile"] #board .meta { font-size: 11px; }
+:root:root:root:root:root:root #board .meta .posl, :root:root:root:root:root:root #board .meta .flag, :root:root:root:root:root:root #board .meta .teaml { color: var(--muted); font-weight: 400 !important; }
+:root:root:root:root:root:root #rows .row-main .pct, :root:root:root:root:root:root #rows .row-main .score { font-size: 13px; font-weight: 400 !important; padding-right: 10px; }
+:root:root:root:root:root:root #rows .row-main .score.hero { font-size: 18px; font-weight: 700 !important; }
+:root:root:root:root:root:root #colhead .h { font-size: 11.5px !important; font-weight: 500 !important; padding-right: 10px; }
+:root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main { min-height: 52px; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #rows .row-main { min-height: 48px; }
+:root:root:root:root:root:root #rows .row-main .rank { color: var(--muted); font-size: 11px; }
+:root:root:root:root:root:root[data-view="mobile"] #colhead .h { padding-top: 8px !important; padding-bottom: 8px !important; }
