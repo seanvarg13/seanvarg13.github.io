@@ -2415,3 +2415,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `#draftstars` are hidden with `state.starOnly` false, the Weekly Planner is always Everyone (its Starred / Everyone pill is gone, `pw.scope` forced
   to `all`), and `.staricon` / `.rowstar` are `display: none`. `state.stars` and `SYNC_KEYS`' `stars` stay (saved data, harmless). The block at the end
   of `styles.css`.
+* **The Pitching+ board in the Leaderboard's dress (Sean, 7 Oct 2026: "make the pitching+ table look exactly like the leaderboards one")**: the
+  block at the end of `styles.css`, every selector anchored on `#pitchboard` (the warm pass's `:is()` rules carry `#colhead` / `#bscroll`, so a
+  class-only rule loses to them whatever its root count): the column names on the blue band (`--band2`, white, 11.5px / 500, 40px tall) with the
+  sorted one lit (white at 22%, bold, the 3px red rule) like `#colhead`; rows 52px (48 on a phone) banded ink-at-4% on the ground with no cell
+  rules, no frame or radius round the rows' box, no divider after the sticky Pitcher column; names 15px / 500 in the body face over the muted
+  "PHI · RP · LHP" line; numbers 13px / 400 tabular; the **sorted + column** draws like a Leaderboard's sorted column — the value 19px bold
+  condensed in its percentile colour on a clear ground (`plus()` in `renderPitchBoard` gives the sorted cell class `hot` and `--heat` instead
+  of a fill; "Colour: all" still fills the other + cells), and `td.plus` loses the softer-edges 8px radius there (it had turned the banded cells
+  into pills).
