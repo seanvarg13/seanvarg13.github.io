@@ -8957,7 +8957,7 @@
     const finish = () => {                               // put the pieces where this layout wants them
       if (mob) { if (F.childNodes.length) plate.append(F); }
       else {
-        const wide = [...plate.children].filter((c) => c.classList.contains("htiles") || c.classList.contains("phctl"));   // the tiles and the control row span the band (6 Oct 2026)
+        const wide = [...plate.children].filter((c) => c.classList.contains("htiles") || c.classList.contains("phctl") || c.classList.contains("hrow"));   // the tiles and the control row span the band (6 Oct 2026)
         const left = el("div", "phleft"); left.append(...[...plate.childNodes].filter((c) => !wide.includes(c)));
         plate.append(left, ...wide);
         if (!F.classList.contains("phpop") && F.childNodes.length) { plate.append(F); plate.classList.add("phright"); }   // season chips: on the right
@@ -9003,7 +9003,13 @@
         // buttons in that blank space in the top right"), the view's name under them only when a filter is on; the tiles follow
         const ctl = el("div", "phctl"); ctl.append(tog);
         const vl = viewLabel(p.type); if (vl && vl !== "full season") ctl.append(el("span", "phview", vl));
-        plate.append(ctl, bandTiles(p, st, facts, g));
+        // no tiles: the old facts row — PA or IP, then the season's line (nERA · ERA · K% · BB% · K-BB%, or the slash line) as small labels
+        // over values — spread across the band's foot on both layouts (Sean, 6 Oct 2026: "get rid of the boxes and put the stats that we had
+        // before back at the bottom of the header ... in the same format"); bandTiles stays in app.js, unused
+        const row = el("div", "hrow");
+        row.append(...[...hs.children].filter((c) => c.classList.contains("fact")));
+        if (hs._stats) row.append(...hs._stats.children);
+        plate.append(ctl); if (row.childNodes.length) plate.append(row);
         hs.remove();
       } }
     let warn = null;
