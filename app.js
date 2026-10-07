@@ -8997,10 +8997,10 @@
         const bioBox = hs.querySelector(".hbio"), hd2 = title.querySelector(".pthd");
         if (bioBox && hd2) { bioBox.classList.add("inline"); fillBio(bioBox, p, bio(p.id)); const bl = title.querySelector(".hbioline"); if (bl) bl.append(bioBox); else { const s2 = el("div", "hbioline"); s2.append(bioBox); title.append(s2); } }
         const facts = {}; for (const f of [...hs.querySelectorAll(".fact"), ...(hs._stats ? [...hs._stats.querySelectorAll(".fact")] : [])]) { const i = f.querySelector("i"), b = f.querySelector("b"); if (i && b) facts[i.textContent] = b.textContent; }
-        // Filters / Raw and the view's name sit above the tiles, so the band ends right under the numbers (Sean, 6 Oct 2026: "move
-        // filters and raw vs stuff up above the boxes ... so that we can move the header border up")
+        // Filters / Raw stacked in the band's empty top-right corner beside his lines (Sean, 6 Oct 2026: "put the filters and raw stuff
+        // buttons in that blank space in the top right"), the view's name under them only when a filter is on; the tiles follow
         const ctl = el("div", "phctl"); ctl.append(tog);
-        const vl = viewLabel(p.type); ctl.append(el("span", "phview", vl && vl !== "full season" ? vl : "Full season"));
+        const vl = viewLabel(p.type); if (vl && vl !== "full season") ctl.append(el("span", "phview", vl));
         plate.append(ctl, bandTiles(p, st, facts, g));
         hs.remove();
       } }
