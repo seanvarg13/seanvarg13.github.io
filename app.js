@@ -966,6 +966,7 @@
                    zcon: rate(t.zcon, t.zsw), zone: rate(t.zpit, t.pit), osw: rate(t.osw, t.opit), swing: rate(t.sw, t.pit),
                    fbv: t.fbn ? Math.round(10 * t.fbv / t.fbn) / 10 : null, ext: t.extn ? Math.round(10 * t.exts / t.extn) / 10 : null,
                    ev: (t.evn || t.bbe) ? Math.round(10 * t.evsum / (t.evn || t.bbe)) / 10 : null, hh: rate(t.hh, t.bip || t.bbe), brl: rate(t.brl, t.bip || t.bbe),
+                   evfb: t.evfbn ? Math.round(10 * t.evfbs / t.evfbn) / 10 : null, evld: t.evldn ? Math.round(10 * t.evlds / t.evldn) / 10 : null, evgb: t.evgbn ? Math.round(10 * t.evgbs / t.evgbn) / 10 : null,   // EV allowed by batted-ball type (7 Oct 2026; null on a file built before the sums)
                    fstrk: rate(t.fps, t.fp), b3strk: rate(t.b3s, t.b3), s2whf: rate(t.s2wh, t.s2sw), s2sw: rate(t.s2sw, t.s2), s2zone: rate(t.s2z, t.s2),   // count states (null on files built before them)
                    xcraw: t.stcn ? 100 * (t.stck - t.stcs) / t.stcn : null,   // the command models' called-strike chance per pitch (strike chance − swing chance), uncentred
                    ...stuffPlusLoc(t), _stn: t.stn, _stw: t.stw, _stg: t.stg, _stp: t.stp, _stnl: t.stnl, _stwl: norm ? tN.stwl : t.stwl, _stf: t.stf, _stnf: t.stnf, _stfl: t.stfl, _stfw: t.stfw, _stnb: t.stnb, _stgl: norm ? tN.stgl : t.stgl, _stpl: norm ? tN.stpl : t.stpl },
@@ -5293,9 +5294,9 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     dxba: "Expected batting average — the same directional model, scored as hits per at-bat.",
     dxslg: "Expected slugging — the same directional model, scored as total bases per at-bat.",
     ev: "Average exit velocity off the bat, bunts excluded.",
-    evfb: "EV on FB: average exit velocity of his fly balls (the stringer's type, bunts and popups excluded). Hard fly balls are where the home runs are; a soft fly-ball average with a high Air% is a warning.",
-    evld: "EV on LD: average exit velocity of his line drives. A high line-drive rate is mostly noise year to year; the exit velocity on them is the part that repeats.",
-    evgb: "EV on GB: average exit velocity of his ground balls. Hard grounders find holes; this is what a ground-ball hitter's BABIP rests on.",
+    evfb: "EV on FB: average exit velocity on fly balls — the ones he hit, or for a pitcher the ones he allowed (the stringer's type, bunts and popups excluded). Hard fly balls are where the home runs are, for the hitter who hits them and against the pitcher who allows them; a soft fly-ball average with a high FB% is a hitter's warning sign.",
+    evld: "EV on LD: average exit velocity on line drives, hit or allowed. A high line-drive rate is mostly noise year to year; the exit velocity on them is the part that repeats.",
+    evgb: "EV on GB: average exit velocity on ground balls, hit or allowed. Hard grounders find holes — what a ground-ball hitter's BABIP rests on, and what a ground-ball pitcher gives up when his sinker gets squared up.",
     brl: "Barrels per ball in play. A barrel is the exit-velocity-and-angle combination that has historically produced at least a .500 average and 1.500 slugging.",
     hh: "Hard-Hit%: balls in play hit at 95 mph or more.",
     ss: "Sweet-Spot%: balls in play launched between 8° and 32°, the window line drives live in.",
@@ -8353,12 +8354,12 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   // Walk Avoidance under Swing & Miss, ahead of Batted Ball (Sean, 5 Oct 2026); left 7 rows, right 6
   // Skills = K-BB% · Mix wOBA, K% back atop Swing & Miss and BB% atop Command (Walk Avoidance renamed) with a line break ("|") after each, no Results (Sean, 6 Oct 2026)
   const PCT_COLS_P = [[["Skills", ["whf", "xbbf"]], ["Swing & Miss", ["k", "whf", "s2whf", "cstr", "fpc"]]],
-                      [["Command", ["bb", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["gb", "pu", "mixw"]]]];   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
+                      [["Command", ["bb", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["gb", "pu", "mixw", "evgb", "evfb", "evld"]]]];   // EV allowed on GB / FB / LD (Sean, 7 Oct 2026)   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
   // the Stuff side (Sean, 6 Oct 2026: "for the swing and miss stuff you use all the expected whiff expected two strike whiff expected called
   // strikes and expected fouls from the pitching+ model, and also use expected batted ball stuff from it too ... an xK% too"): every bar off
   // the Pitching+ models — xK% (Pitching+ xK%), xWhiff%, x2-strike Whiff%, xCalled Strike%, xFoul% of contact, xBB%, xGB% / xPU% / Mix xwOBA
   const PCT_COLS_PS = [[["Skills", ["nwhf", "xbbf"]], ["Swing & Miss", ["xks", "nwhf", "ns2whf", "ncstr", "nfpc"]]],
-                       [["Command", ["xbbf", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["ngb", "npu", "nmix"]]]];
+                       [["Command", ["xbbf", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["ngb", "npu", "nmix", "evgb", "evfb", "evld"]]]];   // the EV rows are his actual ones on both sides — no model prices exit velocity
   const STUFF_LABELS = { nfpc: "xFoul% of contact", xnera: "xnERA", xbbf: "xBB%", xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => state.cardSide === "stuff";   // the Raw / Stuff switch is back (Sean, 6 Oct 2026: "add back the raw vs stuff button")
   // the Raw | Stuff switch: beside Filters on a desktop, the first row of the Filters window on a phone (Sean, 4 Oct 2026)

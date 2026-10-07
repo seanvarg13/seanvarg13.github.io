@@ -2467,3 +2467,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   LD points the next year (29.5 → 26 against a 24 league) and ~.02 of wOBA. Aranda: 2025 LD% 30.5 (99th), BABIP .409 / xBABIP .382, wOBA .386, EV
   93.0 (94th), HH% 54.1 (96th), EV90 106.9; 2026 LD% 27.5 (still 92nd), BABIP .340 / xBABIP .323, wOBA .349, EV 91.1 (84th), HH% 45.9 (80th),
   EV90 104.0 (47th) — the line-drive rate came down as it does, and the contact itself got softer with it. EV by type for 2025 needs the rescore.
+* **EV allowed by batted-ball type on the pitcher card (Sean, 7 Oct 2026: "Can you add the gb fb and LD exit velo to the batted ball section")**:
+  the hitters' EV on FB / LD / GB from the pitcher's side. **Build**: `pitch_flags`' six sums serve both sides; `pitcher_metrics` → `EV_FB /
+  EV_LD / EV_GB` (nan on a frame without the flags); `build_pitchers` → `m.evfb / evld / evgb` (a column the frame lacks reads None);
+  `PITCHER_CARD`'s Batted ball group carries the three (lower is better for a pitcher — the defs ride in `meta.pitcherCard`, so the card needs
+  the new `data.js` before the rows draw); `PITCHER_DAY` gains `evfbs evfbn evlds evldn evgbs evgbn` (appended, the day agg guarded) so a window /
+  split re-derives them. **App**: the pitcher `V()` branch re-derives the three from the day sums (null on a file built before them);
+  `PCT_COLS_P` Batted Ball = GB% · Popup% · Mix wOBA · **EV on GB · EV on FB · EV on LD**, and `PCT_COLS_PS` the same three actual rows after
+  xGB% / xPU% / Mix xwOBA (no model prices exit velocity, so the Stuff side shows his own, like Command's strike rates); the glossary entries read on
+  both sides. Checked on a synthetic Statcast frame through `pitch_flags` → `pitcher_metrics` → `daily` → `build_pitchers` (scratch `synth_pev.py`:
+  the day rows re-derive the season numbers, a frame without the flags still builds) and headless on Wheeler's card with a hand-patched `data.js`
+  (both sides draw the rows; a window drops them without error until `days.js` carries the sums). `steps=mlb` dispatched after the merge; past
+  seasons at the next rescore. The card's right column runs 10 rows to the left's 7 now.

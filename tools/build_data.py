@@ -139,7 +139,8 @@ PITCHER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "strk", "bip", "gb", "
                "stnb", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps",   # the same over the balls in play for the GB / PU chances (Pitching+)
                "stcn", "stcs", "stck", "stco", "stcso", "stci", "stcsi", "stcwi", "stcw",   # command (3 Oct 2026)
                "fp", "fps", "b3", "b3s", "s2", "s2sw", "s2wh", "s2z",   # count states (3 Oct 2026): first pitches and the strikes among them, three-ball pitches and strikes, two-strike pitches and their swings, whiffs and in-zone pitches
-               "stnf", "stfl", "stfs", "stfw"]   # fouls with location (stfw: and the batter's swing) (4 Oct 2026): pitches contacted, the foul chance where each crossed and the stuff-only one on the same contact: pitches graded for it; their summed swing and strike chances; out-of-zone pitches and their swing chances; in-zone pitches, their swing chances and swing-and-miss chances; swing-and-miss chances on every pitch   # stb*: the league means of each graded pitch's own type (Stuff+ is graded against pitch type); h: hits allowed (fantasy splits by hand); stn / stw / stg / stp: graded pitches and their summed whiff, ground-ball and popup chances (Stuff); luck-neutral ERA inputs: line drives, wOBA numerator on balls in play and by type; evn = EV-eligible balls (no bunts)
+               "stnf", "stfl", "stfs", "stfw",   # fouls with location (stfw: and the batter's swing) (4 Oct 2026): pitches contacted, the foul chance where each crossed and the stuff-only one on the same contact: pitches graded for it; their summed swing and strike chances; out-of-zone pitches and their swing chances; in-zone pitches, their swing chances and swing-and-miss chances; swing-and-miss chances on every pitch   # stb*: the league means of each graded pitch's own type (Stuff+ is graded against pitch type); h: hits allowed (fantasy splits by hand); stn / stw / stg / stp: graded pitches and their summed whiff, ground-ball and popup chances (Stuff); luck-neutral ERA inputs: line drives, wOBA numerator on balls in play and by type; evn = EV-eligible balls (no bunts)
+               "evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn"]   # EV allowed by batted-ball type (7 Oct 2026): sums and counts of the EV-eligible fly balls / line drives / grounders, so a window re-derives EV on FB / LD / GB
 # per-game earned runs (from MLB game logs) ride along as "P<id>:er" rows: [day, home, er]
 FASTBALLS = {"FF", "SI", "FT"}
 PITCHER_CARD = [
@@ -152,7 +153,9 @@ PITCHER_CARD = [
     # alone — Zone% / Chase% add nothing once Strike% is known; they stay fold-outs under Strike% and columns
     ("Zone & chase",         [("bb", "BB%", False, 1, "%"), ("strk", "Strike%", True, 1, "%"), ("fstrk", "1st-pitch Strike%", True, 1, "%"), ("b3strk", "3-ball Strike%", True, 1, "%")]),
     ("Results",              [("kbb", "K-BB%", True, 1, "%"), ("era", "ERA", False, 2, "")]),
-    ("Batted ball",          [("gb", "GB%", True, 1, "%"), ("pu", "Popup%", True, 1, "%"), ("mixw", "Mix wOBA", False, 3, ""), ("mera", "Mix ERA", False, 2, "")]),   # Mix wOBA on the card, Mix ERA a column (4 Oct 2026)
+    ("Batted ball",          [("gb", "GB%", True, 1, "%"), ("pu", "Popup%", True, 1, "%"), ("mixw", "Mix wOBA", False, 3, ""), ("mera", "Mix ERA", False, 2, ""),   # Mix wOBA on the card, Mix ERA a column (4 Oct 2026)
+                              # EV allowed by batted-ball type (Sean, 7 Oct 2026: "add the gb fb and LD exit velo to the batted ball section"): the hitters' evfb / evld / evgb from his side
+                              ("evgb", "EV on GB", False, 1, "mph"), ("evfb", "EV on FB", False, 1, "mph"), ("evld", "EV on LD", False, 1, "mph")]),
     # the four rates a pitcher owns outright, averaged (derived in the app from the four below it)
     ("Process score",        [("wsgp", "WSGP", True, 1, "")]),
     # one grade (Sean, 4 Oct 2026: "get rid of stuff+ and pitching+ being separate"): Pitching+ with its halves and Location+; Stuff+ still
@@ -1150,7 +1153,8 @@ def pitcher_metrics(d: pd.DataFrame) -> pd.DataFrame:
               ZSw=("z_swing", "sum"), OSw=("o_swing", "sum"), ZCon=("z_contact", "sum"), FBt=("fbt", "sum"),
               PU=("pu", "sum"), BBE=("bbe", "sum"), EVn=("evb", "sum"), Barrels=("barrel", "sum"), HH=("hardhit", "sum"),
               EVsum=("ev", "sum"), FBn=("fbn", "sum"), FBv=("fbv", "sum"), Extn=("extn", "sum"), Exts=("exts", "sum"),
-              FP=("fp", "sum"), FPS=("fps", "sum"), B3=("b3", "sum"), B3S=("b3s", "sum"), S2=("s2", "sum"), S2Sw=("s2sw", "sum"), S2Wh=("s2wh", "sum"), S2Z=("s2z", "sum"))
+              FP=("fp", "sum"), FPS=("fps", "sum"), B3=("b3", "sum"), B3S=("b3s", "sum"), S2=("s2", "sum"), S2Sw=("s2sw", "sum"), S2Wh=("s2wh", "sum"), S2Z=("s2z", "sum"),
+              **{k: (c, "sum") for k, c in [("EVFBs", "evfbs"), ("EVFBn", "evfbn"), ("EVLDs", "evlds"), ("EVLDn", "evldn"), ("EVGBs", "evgbs"), ("EVGBn", "evgbn")] if c in d.columns})
     # starter = pitcher on the first plate appearance of a half-inning 1 for his team
     first = d.sort_values("at_bat_number").groupby(["game_pk", "inning_topbot"]).head(1)
     f["GS"] = first.groupby("pitcher")["game_pk"].nunique()
@@ -1171,6 +1175,9 @@ def pitcher_metrics(d: pd.DataFrame) -> pd.DataFrame:
     r["FBvelo"] = f.FBv / f.FBn.replace(0, np.nan)
     r["Ext"] = f.Exts / f.Extn.replace(0, np.nan)
     r["avg_EV"] = f.EVsum / f.EVn.replace(0, np.nan)                 # bunts excluded, like Savant
+    for t in ("fb", "ld", "gb"):                                      # EV allowed by batted-ball type (7 Oct 2026); nan on a frame without the flags
+        k = "EV" + t.upper()
+        r["EV_" + t.upper()] = (f[k + "s"] / f[k + "n"].replace(0, np.nan)) if (k + "s") in f.columns else np.nan
     r["HardHit_pct"] = 100 * f.HH / f.BIP.replace(0, np.nan)         # per ball in play
     r["Barrel_pct"] = 100 * f.Barrels / f.BIP.replace(0, np.nan)
     r["FStrk_pct"] = 100 * f.FPS / f.FP.replace(0, np.nan)          # the count-state rates (pitch_flags): first-pitch strike%,
@@ -1366,6 +1373,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
               bbe=("bbe", "sum"), brl=("barrel", "sum"), hh=("hardhit", "sum"), evsum=("ev", "sum"),
               fbn=("fbn", "sum"), fbv=("fbv", "sum"), extn=("extn", "sum"), exts=("exts", "sum"), evn=("evb", "sum"),
               fp=("fp", "sum"), fps=("fps", "sum"), b3=("b3", "sum"), b3s=("b3s", "sum"), s2=("s2", "sum"), s2sw=("s2sw", "sum"), s2wh=("s2wh", "sum"), s2z=("s2z", "sum"),
+              **{c: (c, "sum") for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn") if c in d.columns},   # EV allowed by type (7 Oct 2026)
               **{c: (s, "sum") for c, s in [("stn", "st_n"), ("stw", "st_w"), ("stg", "st_g"), ("stp", "st_p"), ("stbw", "st_bw"), ("stbg", "st_bg"), ("stbp", "st_bp"),
                                                  ("stf", "st_f"), ("std", "st_d"), ("stbf", "st_bf"), ("stbd", "st_bd"),
                                                  ("stnl", "st_nl"), ("stwl", "st_wl"), ("stws", "st_ws"), ("stbwl", "st_bwl"), ("stbws", "st_bws"),
@@ -1382,7 +1390,8 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                            ld=("t_ld", "sum"), wbip=("w_bip", "sum"), wgb=("w_gb", "sum"), wld=("w_ld", "sum"), wfb=("w_fb", "sum"), wpu=("w_pu", "sum"))
     q = q.join(qp, how="left").fillna(0)
     for c in ["stn", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stnl", "stwl", "stws", "stbwl", "stbws", "stnb", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps",
-              "stcn", "stcs", "stck", "stco", "stcso", "stci", "stcsi", "stcwi", "stcw", "stnf", "stfl", "stfs", "stfw"]:
+              "stcn", "stcs", "stck", "stco", "stcso", "stci", "stcsi", "stcwi", "stcw", "stnf", "stfl", "stfs", "stfw",
+              "evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn"]:
         if c not in q.columns:
             q[c] = 0.0
     q["gs"] = [1 if (key[0], key[1]) in starters else 0 for key in q.index]
@@ -1773,8 +1782,9 @@ def build_pitchers(pit: pd.DataFrame, people: dict, days_p: dict, consts: dict) 
         for key, col in [("swstr", "SwStr_pct"), ("csw", "CSW_pct"), ("foul", "Foul_pct"), ("cstr", "CStr_pct"), ("zone", "Zone_pct"), ("osw", "OSwing_pct"), ("swing", "Swing_pct"),
                          ("zcon", "ZContact_pct"), ("fbv", "FBvelo"), ("ext", "Ext"), ("ev", "avg_EV"),
                          ("hh", "HardHit_pct"), ("brl", "Barrel_pct"), ("pu", "PU_pct"),
-                         ("fstrk", "FStrk_pct"), ("b3strk", "B3Strk_pct"), ("s2whf", "S2Whf_pct"), ("s2sw", "S2Sw_pct"), ("s2zone", "S2Zone_pct")]:
-            m[key] = None if pd.isna(r[col]) else round(float(r[col]), 1)
+                         ("fstrk", "FStrk_pct"), ("b3strk", "B3Strk_pct"), ("s2whf", "S2Whf_pct"), ("s2sw", "S2Sw_pct"), ("s2zone", "S2Zone_pct"),
+                         ("evfb", "EV_FB"), ("evld", "EV_LD"), ("evgb", "EV_GB")]:   # EV allowed by type (7 Oct 2026)
+            m[key] = None if col not in r or pd.isna(r[col]) else round(float(r[col]), 1)
         sc = consts.get("stuff")
         stuff_rows = None
         m["xstrk"] = m["xswing"] = m["xosw"] = m["xzcon"] = m["xwhfa"] = None
