@@ -4455,3 +4455,5 @@ header.top .wordmark { display: none; }
 /* the dividers between the facts are back (Sean, 7 Oct 2026: "make it so the lines in between the stats at the bottom come back") */
 :root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .hrow .hchip.fact { border-right: 1px solid var(--onband-line); }
 :root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .hrow .hchip.fact:last-child { border-right: 0; }
+/* the bio's two lines in one size and weight (Sean, 7 Oct 2026: "have the second row be the same size font as the first") */
+:root:root:root:root:root:root:root:root:root .phead .hbioline .hbio.inline .hbio2 { font-size: inherit; font-weight: inherit; color: inherit; }
