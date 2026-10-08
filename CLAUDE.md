@@ -2721,3 +2721,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   are sticky; Age (`.f2`) is an ordinary cell between them, so as the table scrolls sideways it slides under the two and Team ends up against Season.
   `seasonBlock` sets `--sbage` on the table from the scroller's `scrollLeft` (1 → 0 over Age's own width, `--sbw2`) and Age's opacity follows it.
   The totals / gap label cells span all three and stay frozen as before. Both layouts.
+* **A phone's Regular Season / Playoffs at B-Ref's size (Sean, 8 Oct 2026: "make regular season and playoffs the same size as baseball reference
+  has")**: 30px tall (was 44), 13.5px regular weight (was 16px / 600), 12px of side padding, 5px of strip round them — "Regular Season" 121 × 30.
+  The desktop tabs were already 30px.
