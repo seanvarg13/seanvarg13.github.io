@@ -2586,3 +2586,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   average, club rows, In Split row, bolding or minors; "Loading his postseason games…" / "No postseason games." / "Couldn't load…" notes. **The
   fold** (`sbMore`, `tr.sbmore`): under 162 Game Avg a "▸ By team and league" row; the per-club and per-league rows (and their grey gaps) draw only
   once it's opened. Headless with the Stats API mocked; the live call works like `bio()`'s (same host, CORS open).
+* **The season table boxy like B-Ref, the column names centred, the totals rows on the band (Sean, 8 Oct 2026: "can you make it boxy like
+  baseball reference and also center each column header and make the bottom totals rows blue as well")**: the block at the end of `styles.css` —
+  the `.sbscroll` frame and the Regular Season / Playoffs tabs have square corners and a firmer edge (ink at 22%), the gridlines are ink at 16%,
+  every column name is centred (Season / Age / Team included — `th.l` too), the frozen Team column ends in a 2px ink rule, and every totals row
+  (`tr.tot`: N Yrs, 162 Game Avg, and the club / league rows under the fold) sits on the light-blue band (`--band2`) in bold white type with
+  white separators, a 2px ink rule over the first; the grey gap rows are 6px of surface. Both layouts.
