@@ -2798,6 +2798,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   summed, FB EV weighted by fly balls, Barrel% by BBE, xHR/FB weighted by fly balls over the seasons that have one, Diff over those same seasons.
   CSS `.hrfbbox / .hrfbt` at the end of `styles.css`. Wood: 2025 34.8% vs 24.0% (+10.9), 2026 32.3% vs 27.8%; Cruz 2024-25 21.0 / 21.3% vs 22.1 /
   23.9%, 2026 33.3% vs 23.0%.
+  **The Barrel% column is FB Brl%** (Sean, the same night: "make the barrel % be barrel % on fly balls only"): barrels per fly ball, `brfb`
+  appended to `SBX_KEYS` in `build_career.py` (so `hist/career-bb.js` carries it), heat-mapped against `hrfbLeague`'s `arr.brfb`, the Career cell
+  weighted by fly balls; a season built before 8 Oct 2026 reads "–" until rescored (2015-2025 dispatched the same evening). xHR/FB still runs on
+  overall Barrel% — the fit predates the fly-ball rate.
 * **Fly-ball power on the Leaderboard (Sean, 8 Oct 2026: "on the overall leaderboards page could you add FB EV, FB barrel rate, and then a
   composite average score of the percentile of both and also add expected hr to fb ratio there too")**: four hitter columns, in the **Batted
   ball** set right after Avg EV (`LB_SETS`; `state.lb.fbAdd` moves a saved list that still equals the old Batted ball set) and in

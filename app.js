@@ -6936,7 +6936,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   const HRFB_LG = new Map();
   function hrfbLeague(y) {   // that season's league: HR/FB, FB-weighted FB EV / Barrel% / EV90, and the qualifiers' sorted values for the heat map
     if (HRFB_LG.has(y)) return HRFB_LG.get(y);
-    const C = window.DRAFT_CAREER || {}, out = { hr: 0, fb: 0, s: {}, w: {}, arr: { hrfb: [], evfb: [], brl: [], x: [] } };
+    const C = window.DRAFT_CAREER || {}, out = { hr: 0, fb: 0, s: {}, w: {}, arr: { hrfb: [], evfb: [], brl: [], brfb: [], x: [] } };
     const rows = [];
     for (const id in C) {
       const r = (C[id].H || []).find((q) => q[0] === y); if (!r || (+r[3] || 0) < (y === 2020 ? 110 : 300)) continue;
@@ -6946,7 +6946,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       if (bx) for (const k of ["evfb", "brl", "ev90"]) if (bx[k] != null) { out.s[k] = (out.s[k] || 0) + bx[k] * fb; out.w[k] = (out.w[k] || 0) + fb; }
     }
     const lg = { hrfb: out.fb ? 100 * out.hr / out.fb : null }; for (const k in out.s) lg[k] = out.s[k] / out.w[k];
-    for (const [, , bx] of rows) if (bx) { if (bx.evfb != null) out.arr.evfb.push(bx.evfb); if (bx.brl != null) out.arr.brl.push(bx.brl); const xv = xHrfb(bx, lg); if (xv != null) out.arr.x.push(xv); }
+    for (const [, , bx] of rows) if (bx) { if (bx.evfb != null) out.arr.evfb.push(bx.evfb); if (bx.brl != null) out.arr.brl.push(bx.brl); if (bx.brfb != null) out.arr.brfb.push(bx.brfb); const xv = xHrfb(bx, lg); if (xv != null) out.arr.x.push(xv); }
     for (const k in out.arr) out.arr[k].sort((a, b) => a - b);
     const res = { lg, arr: out.arr }; HRFB_LG.set(y, res); return res;
   }
@@ -6967,7 +6967,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     if (!rows.length) { box.append(el("p", "note", "No MLB fly balls on record.")); return box; }
     const t = el("table", "ubt hrfbt"), th = el("tr");
     for (const [h, tip] of [["Season"], ["Team"], ["HR"], ["FB", "Fly balls + popups (Statcast's calls), his line-drive homers counted in"], ["HR/FB"], ["FB EV", "Exit velocity on fly balls (2023 on)"],
-      ["Barrel%"], ["xHR/FB", "What his contact says: that season's league HR/FB moved by his FB EV and Barrel% against the league's (2023 on), Barrel% and EV90 before"], ["Diff", "HR/FB − xHR/FB: + = more homers than his contact says"]]) {
+      ["FB Brl%", "Barrels per fly ball (built from 8 Oct 2026; a season not yet rebuilt reads –)"], ["xHR/FB", "What his contact says: that season's league HR/FB moved by his FB EV and Barrel% against the league's (2023 on), Barrel% and EV90 before"], ["Diff", "HR/FB − xHR/FB: + = more homers than his contact says"]]) {
       const c = el("th", h === "Season" || h === "Team" ? "l" : null, h); if (tip) c.title = tip; th.append(c);
     }
     const thead = el("thead"); thead.append(th); t.append(thead);
@@ -6982,16 +6982,16 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       cell(String(y), "l"); cell(l.team || "", "l"); cell(String(hr)); cell(String(fb));
       heatIf(cell(hf.toFixed(1) + "%"), L.arr.hrfb, hf);
       heatIf(cell(bx && bx.evfb != null ? bx.evfb.toFixed(1) : "–"), L.arr.evfb, bx && bx.evfb);
-      heatIf(cell(bx && bx.brl != null ? bx.brl.toFixed(1) + "%" : "–"), L.arr.brl, bx && bx.brl);
+      heatIf(cell(bx && bx.brfb != null ? bx.brfb.toFixed(1) + "%" : "–"), L.arr.brfb, bx && bx.brfb);   // fly balls only (Sean, 8 Oct 2026)
       heatIf(cell(xv == null ? "–" : xv.toFixed(1) + "%"), L.arr.x, xv);
       const d = cell(xv == null ? "–" : sgn(hf - xv)); if (xv != null) d.classList.add(hf - xv >= 0 ? "pos" : "neg");
       tb.append(tr);
       H += hr; F += fb;
       if (bx && bx.evfb != null) { eS += bx.evfb * fb; eW += fb; }
-      if (bx && bx.brl != null && bx.bbe) { bS += bx.brl * bx.bbe; bW += bx.bbe; }
+      if (bx && bx.brfb != null) { bS += bx.brfb * fb; bW += fb; }
       if (xv != null) { xS += xv * fb; xW += fb; hrX += hr; fbX += fb; }
     }
-    // career: HR / FB over every season; FB EV weighted by fly balls, Barrel% by batted balls; xHR/FB weighted by fly balls over the seasons that
+    // career: HR / FB over every season; FB EV and FB Brl% weighted by fly balls; xHR/FB weighted by fly balls over the seasons that
     // have one, and Diff over those same seasons
     const tr = el("tr", "tot"), cell = (v, cls) => { const td = el("td", cls || null, v); tr.append(td); return td; };
     const xc = xW ? xS / xW : null;
