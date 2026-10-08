@@ -9239,7 +9239,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   const SB_HEAT = new Set(["wOBA", "xwOBA", "Sprint"]);   // pills in their percentile colour among that season's qualified hitters
   const SB_TIP = { "BB%": "Walks per plate appearance", "K%": "Strikeouts per plate appearance", ISO: "Isolated power: SLG minus AVG",
     BABIP: "Batting average on balls in play: (H − HR) / (AB − K − HR + SF)", wOBA: "The site's wOBA where the season is built (2015 on), FanGraphs' before",
-    "HR/FB": "Home runs per fly ball, FanGraphs' (their fly-ball count, infield flies included)",
+    "HR/FB": "Home runs per fly ball, Savant's way: Statcast's fly balls and popups, with his line-drive homers counted as fly balls",
     "wRC+": "FanGraphs: runs created per PA, park and league adjusted, 100 = average", fWAR: "FanGraphs' wins above replacement — batting, fielding and, for a two-way player, pitching",
     bWAR: "Baseball-Reference's wins above replacement — batting, fielding and, for a two-way player, pitching", Sprint: "Statcast sprint speed, feet per second (2015 on)" };
   const SB_P = ["W", "L", "ERA", "FIP", "G", "GS", "IP", "H", "HR", "BB", "K", "WHIP", "K%", "BB%", "K-BB%", "Whiff%", "Strike%", "GB%"];

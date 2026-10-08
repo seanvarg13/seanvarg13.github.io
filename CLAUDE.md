@@ -2773,3 +2773,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   total (`fb_for`); MLB's count is the fallback when FanGraphs has none. `hist/career.js` patched in place the same day (scratch
   `patch_fgfb.py`: 16,991 season rows, 2,012 club rows). Wood: 2024 20.5%, 2025 30.7%, 2026 26.8%. Rerun of the FB EV analysis on the new counts:
   FB EV vs HR/FB r .814, Barrel% .847, FB EV + Barrel% R² .737 — unchanged; Cruz 2024-25 now reads 3-5 points under what his contact predicts.
+* **HR/FB is Savant's, with line-drive homers as fly balls (Sean, 8 Oct 2026, an hour after the FanGraphs switch: "Let's do savants version")**:
+  the FanGraphs counts above are gone (`fg_fly` removed). The fly-ball count is MLB's again (`flyOuts + flyHits + popOuts + popHits`, Statcast's
+  calls) **plus his home runs Statcast calls line drives or ground balls** (`ld_hr`: one Savant `statcast_search/csv` request a season —
+  `hfAB=home\.\.run|`, `hfBBT=line\.\.drive|ground\.\.ball|`, `type=details`, a row per homer, counted by `batter` — cached in
+  `.cache/sabr/ldhr-<y>.json`, this season refetched after 18 hours; seasons before 2015 add nothing). Without them a liner over the fence counted
+  on top of the ratio and not under it. `fb_season` adds them to a season's count; `fb_for` gives a traded season's clubs their share by fly balls.
+  `hist/career.js` rebuilt from the pre-FanGraphs file plus the homers (scratch `patch_ldhr.py`: 3,533 season rows, 673 club rows). Wood: 2024
+  23.7%, 2025 34.8% (31 / 89), 2026 32.3% (30 / 93); Judge 2025 30.6%, Ohtani 2025 32.4%, Cruz 2025 21.3%. League 12.9-13.3% 2024-26 (FanGraphs'
+  run ~1.5-2 points lower: they call more balls fly balls). Statcast's first two seasons call far more homers liners (2015: 2,174; 2016:
+  1,869; 2021 on: 424-602), which is why they're counted — it keeps those seasons' ratios consistent with their own fly-ball calls.
