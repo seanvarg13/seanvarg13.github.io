@@ -9107,7 +9107,32 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   window.addEventListener("scroll", condAsk, { passive: true });
   window.addEventListener("resize", condAsk);
   /* ---------- the season table, Baseball-Reference's in the site's dress (Sean, 8 Oct 2026) ---------- */
-  let sbMinors = false, sbAll = false;                         // Show minors; a phone's All N seasons (this visit)
+  let sbMinors = false, sbAll = false, sbKind = "reg", sbMore = false;   // Show minors; a phone's All N seasons; Regular Season / Playoffs; the club rows' fold (this visit)
+  // his postseason lines, MLB's official ones fetched in the browser like the bio (Sean, 8 Oct 2026: "add in the postseason and regular season
+  // ability thing"): type+id → null while it loads, false if it failed, else [{season, team, c}] oldest first, a traded October as TOT
+  const TEAM_BY_ID = Object.fromEntries(Object.entries(TEAM_ID).map(([k, v]) => [v, k]));
+  const PSTATS = new Map();
+  function postLines(p) {
+    const key = p.type + p.id;
+    if (PSTATS.has(key)) return PSTATS.get(key);
+    PSTATS.set(key, null);
+    const H = p.type === "H";
+    fetch(`https://statsapi.mlb.com/api/v1/people/${p.id}/stats?stats=yearByYear&gameType=P&group=${H ? "hitting" : "pitching"}`).then((r) => r.json()).then((j) => {
+      const splits = (((j.stats || [])[0] || {}).splits) || [], by = new Map();
+      for (const sp of splits) {
+        const st = sp.stat || {}, y = +sp.season; if (!y) continue;
+        const team = sp.team ? (TEAM_BY_ID[sp.team.id] || sp.team.abbreviation || "") : "";
+        const c = H ? { G: st.gamesPlayed, PA: st.plateAppearances, AB: st.atBats, R: st.runs, H: st.hits, "2B": st.doubles, "3B": st.triples, HR: st.homeRuns, RBI: st.rbi, SB: st.stolenBases,
+                        BB: st.baseOnBalls, K: st.strikeOuts, HBP: st.hitByPitch || 0, SF: st.sacFlies || 0, AVG: +st.avg, OBP: +st.obp, SLG: +st.slg, OPS: +st.ops, adv: {} }
+                    : { W: st.wins, L: st.losses, ERA: +st.era, G: st.gamesPlayed, GS: st.gamesStarted, SV: st.saves, IP: String(st.inningsPitched), H: st.hits, HR: st.homeRuns, BB: st.baseOnBalls,
+                        K: st.strikeOuts, ER: st.earnedRuns, BF: st.battersFaced, WHIP: +st.whip, adv: {} };
+        (by.get(y) || by.set(y, []).get(y)).push({ season: y, team, c, mlb: true });
+      }
+      const out = [...by].map(([y, ls]) => (ls.length === 1 ? ls[0] : { season: y, team: "TOT", c: sbCombine(H, ls).c, mlb: true })).sort((a, b) => a.season - b.season);
+      PSTATS.set(key, out); if (state.mode === "player") render();
+    }).catch(() => { PSTATS.set(key, false); if (state.mode === "player") render(); });
+    return null;
+  }
   const SB_H = ["G", "PA", "AB", "R", "H", "2B", "3B", "HR", "RBI", "SB", "BB", "K", "AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA"];
   const SB_P = ["W", "L", "ERA", "FIP", "G", "GS", "IP", "H", "HR", "BB", "K", "WHIP", "K%", "BB%", "K-BB%", "Whiff%", "Strike%", "GB%"];
   const SB_BEST_HI = { H: new Set(["G", "PA", "AB", "R", "H", "2B", "3B", "HR", "RBI", "SB", "BB", "AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA"]), P: new Set(["W", "G", "GS", "IP", "K", "K%", "K-BB%", "Whiff%", "Strike%", "GB%"]) };
@@ -9136,20 +9161,28 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const mi = el("button", "linkbtn sblink", sbMinors ? "Hide minors" : "Show minors"); mi.type = "button";
     mi.addEventListener("click", (e) => { e.stopPropagation(); sbMinors = !sbMinors; if (sbMinors) ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS); render(); });
     const gl = el("button", "linkbtn sblink", "Glossary"); gl.type = "button"; gl.addEventListener("click", (e) => { e.stopPropagation(); state.textModal = { title: "Stat glossary", build: renderGlossary }; render(); });
-    hd.append(mi, gl); box.append(hd);
+    const post = sbKind === "post";
+    if (!post) hd.append(mi); hd.append(gl); box.append(hd);
+    const tabs = el("div", "sbtabs");   // Regular Season / Playoffs, B-Ref's tabs on the table's top edge (Sean, 8 Oct 2026)
+    for (const [k, lab] of [["reg", "Regular Season"], ["post", "Playoffs"]]) {
+      const bt = el("button", "sbtab" + (sbKind === k ? " on" : ""), lab); bt.type = "button"; bt.setAttribute("aria-pressed", String(sbKind === k));
+      bt.addEventListener("click", (e) => { e.stopPropagation(); if (sbKind !== k) { sbKind = k; render(); } }); tabs.append(bt);
+    }
+    box.append(tabs);
     ensureScript("hist/career.js", careerReady);
-    if (!careerReady()) { box.append(el("p", "note", failed.has("hist/career.js") ? "hist/career.js hasn't been built — run build_career.py" : "Loading career stats…")); return box; }
-    if (sbMinors) ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS);
-    const lines = rawLines(p) || [], mlb = lines.filter((l) => l.mlb).sort((a, b) => a.season - b.season);
+    if (!post && !careerReady()) { box.append(el("p", "note", failed.has("hist/career.js") ? "hist/career.js hasn't been built — run build_career.py" : "Loading career stats…")); return box; }
+    if (!post && sbMinors) ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS);
+    const postState = post ? postLines(p) : undefined;   // null while MLB's record loads, false if it failed, else his postseason lines
+    const lines = post ? [] : (rawLines(p) || []), mlb = post ? (Array.isArray(postState) ? postState : []) : lines.filter((l) => l.mlb).sort((a, b) => a.season - b.season);
     const LV = ["AAA", "AA", "A+", "A", "A-", "Rk"], lvName = (l) => ({ "A(Adv)": "A+", "A(Full)": "A", "A(Short)": "A-", ROK: "Rk" }[l] || l);
-    const milb = sbMinors && window.DRAFT_MINORS ? lines.filter((l) => !l.mlb && !l.combo && !l.team === false && l.team).sort((a, b) => a.season - b.season || LV.indexOf(lvName(a.level)) - LV.indexOf(lvName(b.level))) : [];
-    const cols = H ? SB_H : SB_P, b = bio(p.id);
+    const milb = !post && sbMinors && window.DRAFT_MINORS ? lines.filter((l) => !l.mlb && !l.combo && !l.team === false && l.team).sort((a, b) => a.season - b.season || LV.indexOf(lvName(a.level)) - LV.indexOf(lvName(b.level))) : [];
+    const cols = post ? (H ? SB_H.filter((k) => k !== "wOBA" && k !== "xwOBA") : SB_P.filter((k) => !["FIP", "Whiff%", "Strike%", "GB%"].includes(k))) : (H ? SB_H : SB_P), b = bio(p.id);
     const ageIn = (y) => {
       if (b && b.born) { const d = new Date(b.born + "T12:00:00Z"); if (!isNaN(d)) { let a = y - d.getUTCFullYear(); if (d.getUTCMonth() > 5 || (d.getUTCMonth() === 5 && d.getUTCDate() > 30)) a--; return a; } }
       return p.age != null ? p.age - (DS.season - y) : null;
     };
     // the career bests, to bold (100+ PA / BF seasons)
-    const best = {}; const qual = mlb.filter((l) => (H ? +l.c.PA : +l.c.BF) >= 100);
+    const best = {}; const qual = post ? [] : mlb.filter((l) => (H ? +l.c.PA : +l.c.BF) >= 100);
     for (const k of cols) {
       const vs = qual.map((l) => sbVal(H, l, k)).filter((v) => v != null && v !== "").map(Number).filter((v) => !isNaN(v));
       if (vs.length > 1) best[k] = SB_BEST_HI[p.type].has(k) ? Math.max(...vs) : SB_BEST_LO[p.type].has(k) ? Math.min(...vs) : null;
@@ -9197,9 +9230,9 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       const ml = mlb.filter((l) => l.season === y);
       for (const l of ml) {
         const yr = el("span", "sbyr", String(y));
-        const trr = row([yr, ageIn(y), l.team, "MLB"], l, (y === +DS.season && DS.level === "MLB" ? "cur" : null), { bold: true });
+        const trr = row([yr, ageIn(y), l.team, "MLB"], l, (y === +DS.season && DS.level === "MLB" ? "cur" : null), { bold: !post });
         if (l.team === "TOT") trr.title = "Two or more clubs that season";
-        if (y === +DS.season && DS.level === "MLB") splitRow();
+        if (!post && y === +DS.season && DS.level === "MLB") splitRow();
       }
       for (const l of milb.filter((x) => x.season === y)) {
         const trr = row([String(y), ageIn(y), l.team || "", lvName(l.level)], l, "milb" + (y === +DS.season && DS.level === lvName(l.level) ? " cur" : ""));
@@ -9217,7 +9250,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       const n = new Set(mlb.map((l) => l.season)).size, tot = sbCombine(H, mlb);
       row([`${n} Yr${n > 1 ? "s" : ""}`], tot, "tot first");
       const G = +tot.c.G || 0, games = H ? G : mlb.reduce((a, l) => a + (l.season === 2020 ? 60 : 162), 0);   // a pitcher's per 162 team games
-      if (games) {
+      if (!post && games) {
         const avg = { c: Object.assign({}, tot.c) }, f = 162 / games;
         for (const k of (H ? ["G", "PA", "AB", "R", "H", "2B", "3B", "HR", "RBI", "SB", "BB", "K"] : ["W", "L", "G", "GS", "H", "HR", "BB", "K"])) avg.c[k] = Math.round((+tot.c[k] || 0) * f);
         if (!H) avg.c.IP = ipStr(ipNum(tot.c.IP) * f);
@@ -9236,25 +9269,41 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
         for (const x of parts) (byClub.get(x.team) || byClub.set(x.team, []).get(x.team)).push(x);
       }
       const clubs = [...byClub].filter(([t]) => t && t !== "TOT");
-      if (clubs.length) {
+      if (!post && clubs.length) {
+        // the club and league rows fold under the 162-game average (Sean, 8 Oct 2026: "make only the career and 162 game avg ones show and then
+        // make the others show with a drop down arrow")
+        const more = el("tr", "sbmore"), mtd = el("td"); mtd.colSpan = 3 + (lev ? 1 : 0) + cols.length;
+        const mbt = el("button", "linkbtn", (sbMore ? "▾ " : "▸ ") + "By team and league"); mbt.type = "button"; mbt.setAttribute("aria-expanded", String(sbMore));
+        mbt.addEventListener("click", (e) => { e.stopPropagation(); sbMore = !sbMore; render(); });
+        const minner = el("span", "sbin"); minner.append(mbt); mtd.append(minner); more.append(mtd); tbody.append(more);
         const gap = () => { const g = el("tr", "gap"), td = el("td"); td.colSpan = 3 + (lev ? 1 : 0) + cols.length; g.append(td); tbody.append(g); };
+        if (sbMore) {
         gap();
         for (const [t, ls] of clubs) { const yrs = new Set(ls.map((x) => x.season)).size; row([`${t} (${yrs} Yr${yrs > 1 ? "s" : ""})`], sbCombine(H, ls), "tot sub"); }
         const byLg = new Map();
         for (const [t, ls] of clubs) { const lg = leagueOf(t); (byLg.get(lg) || byLg.set(lg, []).get(lg)).push(...ls); }
         gap();
         for (const [lg, ls] of byLg) { const yrs = new Set(ls.map((x) => x.season)).size; row([`${lg} (${yrs} Yr${yrs > 1 ? "s" : ""})`], sbCombine(H, ls), "tot sub"); }
+        }
       }
     }
     table.append(tbody);
-    const sc = el("div", "sbscroll"); sc.append(table); box.append(sc);
+    const sc = el("div", "sbscroll"); sc.append(table); if (!(post && !mlb.length)) box.append(sc);
+    if (post && postState === null) box.append(el("p", "note", "Loading his postseason games…"));
+    if (post && postState === false) box.append(el("p", "note", "Couldn't load his postseason stats from MLB."));
+    if (post && Array.isArray(postState) && !postState.length) box.append(el("p", "note", "No postseason games."));
     const note = el("p", "sbnote");
-    note.append(el("b", null, "Bold"), ` season totals: his career best in that column (100+ ${H ? "PA" : "batters faced"} seasons).`);
-    if (!H) note.append(" FIP, Whiff%, Strike% and GB% start in 2017, the first season the site carries.");
-    if (winIdx() || splitActive()) note.append(" ", el("b", null, "In Split"), ": the card's filters — " + viewLabel(p.type) + " — from the official game logs; the bars below rank him in that window.");
+    if (post) note.append("Postseason: MLB's official lines, every October he played; a traded year's clubs as TOT.");
+    else note.append(el("b", null, "Bold"), ` season totals: his career best in that column (100+ ${H ? "PA" : "batters faced"} seasons).`);
+    if (!H && !post) note.append(" FIP, Whiff%, Strike% and GB% start in 2017, the first season the site carries.");
+    if (!post && (winIdx() || splitActive())) note.append(" ", el("b", null, "In Split"), ": the card's filters — " + viewLabel(p.type) + " — from the official game logs; the bars below rank him in that window.");
     box.append(note);
-    if (sbMinors && !window.DRAFT_MINORS) box.append(el("p", "note", failed.has("hist/minors.js") ? "hist/minors.js hasn't been built." : "Loading minor-league seasons…"));
-    if (!mlb.length && !milb.length) box.append(el("p", "note", "No MLB seasons on record." + (sbMinors ? "" : " Show minors lists his minor-league lines.")));
+    if (!post && sbMinors && !window.DRAFT_MINORS) box.append(el("p", "note", failed.has("hist/minors.js") ? "hist/minors.js hasn't been built." : "Loading minor-league seasons…"));
+    // the frozen Season / Age / Team columns' offsets from their drawn widths (the stylesheet's 60 / 40px guesses sat the Team column over the G
+    // column once the cells tightened to B-Ref's padding)
+    const fit = () => { const h1 = table.querySelector("th.f1"), h2 = table.querySelector("th.f2"); if (!h1 || !h2 || !table.isConnected) return; table.style.setProperty("--sbw1", h1.offsetWidth + "px"); table.style.setProperty("--sbw2", h2.offsetWidth + "px"); };
+    requestAnimationFrame(fit);
+    if (!post && !mlb.length && !milb.length) box.append(el("p", "note", "No MLB seasons on record." + (sbMinors ? "" : " Show minors lists his minor-league lines.")));
     return box;
   }
   function renderExplore() {
