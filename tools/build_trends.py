@@ -39,7 +39,7 @@ def hitting(rows, F, air_no_pu):
             if i >= len(r) or k in ("day", "hand", "home"):
                 continue
             v = r[i]
-            if k == "evs":
+            if k in ("evs", "evbk"):   # the day rows' two list fields: exit velocities and their Mix buckets
                 if isinstance(v, list):
                     evs.extend(v)
                 continue

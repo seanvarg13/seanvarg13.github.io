@@ -2479,3 +2479,24 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the day rows re-derive the season numbers, a frame without the flags still builds) and headless on Wheeler's card with a hand-patched `data.js`
   (both sides draw the rows; a window drops them without error until `days.js` carries the sums). `steps=mlb` dispatched after the merge; past
   seasons at the next rescore. The card's right column runs 10 rows to the left's 7 now.
+* **EV by batted-ball type moves to the Mix tab; Air% back; the Mix tab is a table (Sean, 8 Oct 2026: "go back to not having avg ev by batted
+  ball type and also just have air % / But in the batted ball mix section let's add those in there / make the batted ball mix tab be a table where it
+  shows the batted ball types in the way it does now and sorts them or orders them by wOBA and then have the players percentage of batted balls that
+  are that type in one column and then their avg EV in another and for each of them have them be heat mapped but don't do like a circle one just make
+  the text bolded and heat mapped color wise")**: the two card entries above are history on the cards — `PCT_COLS_H` Batted-Ball Quality is Avg EV ·
+  Barrel% · Bat Speed · Hard-Hit% · 90th% EV · Max EV and Distribution is Air% · Popup% · GB% · Pull Air% · Mix wOBA again (`BB_DIST` and the build's
+  `HITTER_CARD` groups as before 7 Oct), and the pitcher card's Batted Ball is GB% · Popup% · Mix wOBA (`PCT_COLS_P` / `_PS`); `evfb / evld / evgb`
+  stay built and stay Leaderboard columns on both sides (`HITTER_METRICS`, `PITCHER_CARD`'s Batted ball group). **The Mix tab** (`renderMixTab`) is a
+  table in the card-table dress (`table.ubt.mixt`; CSS at the end of `styles.css`): a row per bucket, dearest first — Lg wOBA (the dataset's value
+  for that kind of ball), **Share** (his balls in play in it) and **Avg EV** (his exit velocity on them) — the share and the EV in bold type coloured
+  by his percentile among the pool's qualifiers (`pctStyle(pct).bg` as the text colour, no chips, bars or bubbles; the share's direction by the
+  bucket's value against the league's per-ball wOBA, as the bars had it; EV higher = better; an EV on under 5 balls stays uncoloured, the pool's
+  reference needs 20), then the Mix wOBA foot row (value coloured by its percentile, the ordinal beside it). **Build**: `pitch_flags` gives every
+  ball its Mix bucket as a code (`mixc`, the `MIX_COLS` index, −1 outside the mix), `hitter_metrics` → `MXS<i> / MXN<i>` (EV sum and tracked
+  balls per bucket), `build_hitters` → **`ctx.mixev`** = `[[n, avg EV] | null]` in `MIX_COLS` order, and `HITTER_DAY` gains **`evbk`** — a list
+  beside `evs` with each exit velocity's bucket (~0.5 MB on days.js, against 16 sum fields at ~5 MB) — so `V()` re-derives `ctx.mixev` in a window or
+  split (`hasBk`; the sums skip the list field, as does `build_trends.py`). A file built before it reads "–" in the EV column (a window on this
+  season until the next build, past seasons until a rescore). Checked on a synthetic frame (scratch `synth_mix.py`: the day rows re-derive
+  `ctx.mixev`, a frame without `mixc` still builds) and headless on Aranda's card with a hand-patched `data.js` (scratch `patch_mixev.py` / `mix.js`:
+  the table, the colours, the window's "–", Wheeler's three Batted Ball rows). `steps=mlb` dispatched after the merge. The 7 Oct Savant pull for
+  Aranda stands (2025 EV on LD 96.5 / FB 94.3 / GB 91.0; 2026 95.8 / 92.6 / 86.7).

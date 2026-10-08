@@ -267,10 +267,9 @@
   // every metric that needs a percentile: the card groups plus the row bubbles
   const union = (card, row) => { const seen = new Map(); for (const g of card) for (const m of g.metrics) if (!seen.has(m.key)) seen.set(m.key, m); for (const m of row) if (!seen.has(m.key)) seen.set(m.key, m); return [...seen.values()]; };
   const SUB = DATA.meta.hitterSub || {};      // fold-out breakdown rows under a card metric (Air% -> FB%, LD%)
-  // Batted-ball distribution, everywhere it is drawn: FB% and LD% in Air%'s place (Sean, 7 Oct 2026: "replace air % with two bars one for fly
-  // ball % and one for line drive %"), Popup%, GB%, then Pull Air%, as five plain rows. The Air% fold-out goes (its rows are rows of their
-  // own); Air% itself stays a Leaderboard column through hitterMetrics
-  const BB_DIST = [{ key: "fb", label: "FB%", hib: true, dec: 1, unit: "%" }, { key: "ld", label: "LD%", hib: true, dec: 1, unit: "%" }, { key: "pu", label: "Popup%", hib: false, dec: 1, unit: "%" },
+  // Batted-ball distribution, everywhere it is drawn: Air% (line drives and fly balls, never popups), Popup%, GB%,
+  // then Pull Air%, as four plain rows (Air% back, Sean 8 Oct 2026: FB% / LD% and EV by type were a day's try). The Air% fold-out goes: its popup and ground-ball rows are rows of their own.
+  const BB_DIST = [{ key: "air", label: "Air%", hib: true, dec: 1, unit: "%" }, { key: "pu", label: "Popup%", hib: false, dec: 1, unit: "%" },
                    { key: "gb", label: "GB%", hib: false, dec: 1, unit: "%" }, { key: "pull", label: "Pull Air%", hib: true, dec: 1, unit: "%" }];
   for (const g of CARD) if (/batted-ball distribution/i.test(g.group)) g.metrics = BB_DIST.map((m) => ({ ...m }));
   delete SUB.air; delete SUB.pull;
@@ -917,8 +916,8 @@
       const roleOK = (row) => role < 0 || (row[gsi] ? 1 : 0) === role;
       const tN = { stwl: 0, stgl: 0, stpl: 0 };   // the location-aware sums with the relief days moved to a starter's (All as SP)
       const dayset = new Set(), gsset = new Set(), evs = [];
-      const ei = f.indexOf("evs"), dni = f.indexOf("dnum");
-      let hasEvs = false, hasDir = false, lo = w.lo;
+      const ei = f.indexOf("evs"), bki = f.indexOf("evbk"), dni = f.indexOf("dnum"), mxe = [], mxn = [];   // evbk: each evs entry's Mix bucket (8 Oct 2026)
+      let hasEvs = false, hasBk = false, hasDir = false, lo = w.lo;
       if (w.last) {   // trailing window: the fewest most-recent game days that reach N PA (hitters) / N IP (pitchers)
         const si = f.indexOf(p.type === "P" ? "outs" : "pa"), need = p.type === "P" ? 3 * w.last : w.last, byDay = new Map();
         for (const row of rowsOf(p)) { if (row[0] > w.hi || (hand >= 0 && row[1] !== hand) || (home >= 0 && row[2] !== home) || !roleOK(row)) continue; byDay.set(row[0], (byDay.get(row[0]) || 0) + row[si]); }
@@ -928,11 +927,12 @@
       for (const row of rowsOf(p)) {
         if (row[0] < lo || row[0] > w.hi || (hand >= 0 && row[1] !== hand) || (home >= 0 && row[2] !== home) || !roleOK(row)) continue;
         dayset.add(row[0]);
-        f.forEach((k, i) => { if (i >= 3 && k !== "gs" && k !== "evs" && row[i] !== undefined) t[k] += row[i]; });   // older files lack trailing fields
+        f.forEach((k, i) => { if (i >= 3 && k !== "gs" && k !== "evs" && k !== "evbk" && row[i] !== undefined) t[k] += row[i]; });   // older files lack trailing fields
         if (p.type === "P" && row[f.indexOf("gs")]) gsset.add(row[0]);
         if (norm) { const g = (k) => row[f.indexOf(k)] || 0, rp = !row[gsi];
           tN.stwl += rp ? spNorm("xwl", g("stwl"), g("stnl")) : g("stwl"); tN.stgl += rp ? spNorm("xgb", g("stgl"), g("stnb")) : g("stgl"); tN.stpl += rp ? spNorm("xpu", g("stpl"), g("stnb")) : g("stpl"); }
-        if (ei >= 0 && Array.isArray(row[ei])) { hasEvs = true; for (const e of row[ei]) evs.push(e); }
+        if (ei >= 0 && Array.isArray(row[ei])) { hasEvs = true; for (const e of row[ei]) evs.push(e);
+          if (bki >= 0 && Array.isArray(row[bki])) { hasBk = true; row[bki].forEach((b, j) => { if (b >= 0 && row[ei][j] != null) { mxe[b] = (mxe[b] || 0) + row[ei][j]; mxn[b] = (mxn[b] || 0) + 1; } }); } }   // EV by Mix bucket
         if (dni >= 0 && row[dni] !== undefined) hasDir = true;
       }
       evs.sort((x, y) => x - y);
@@ -1000,7 +1000,8 @@
                    hh: rate(t.hh, bipn), ss: rate(t.ss, bipn), strk: rate(t.strk, t.pit), swing: rate(t.sw, t.pit), k: rate(t.k, t.pa), bb: rate(t.bb, t.pa) },
               sample: t.pa, ab: t.ab, pa: t.pa,
               ctx: { wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, "K%": rate(t.k, t.pa), "BB%": rate(t.bb, t.pa), BBE: bipn, BIP: t.bbt || null, G: games,
-                     mix: t.mxgb === undefined ? null : MIX_B.map(([k]) => t[k] || 0), mixsum: t.mixsum, mixn: t.mixn } };
+                     mix: t.mxgb === undefined ? null : MIX_B.map(([k]) => t[k] || 0), mixsum: t.mixsum, mixn: t.mixn,
+                     mixev: hasBk ? MIX_B.map((_, i) => mxn[i] ? [mxn[i], Math.round(10 * mxe[i] / mxn[i]) / 10] : null) : null } };   // [tracked balls, avg EV] by bucket, null on a file without evbk
       }
     }
     // xBB% (Sean, 4 Oct 2026: "below bb% add xBB%"): the walk formula — BB% on Strike%, first-pitch strike% and three-ball strike%, fitted over
@@ -6801,11 +6802,18 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     wrap.append(box2);
     return wrap;
   }
+  // The Mix tab as a table (Sean, 8 Oct 2026: "the batted ball types in the way it does now and sorts them ... by wOBA and then have the
+  // players percentage of batted balls that are that type in one column and then their avg EV in another and for each of them have them be
+  // heat mapped but don't do like a circle one just make the text bolded and heat mapped color wise"): a row per bucket, dearest first —
+  // the league's wOBA on that kind of ball, his share of his balls in play, his average exit velocity on them (ctx.mixev from the build;
+  // in a window or split the day rows' evbk buckets under the evs list, so a file built before 8 Oct 2026 reads "–" there) — the share and
+  // the EV in bold type coloured by his percentile among the pool's qualifiers (the share's direction by the bucket's value: more of a dear
+  // bucket is good, more of a cheap one bad; harder is always better; an EV on under MIN_EV balls stays uncoloured), then the Mix wOBA line.
   function renderMixTab(p, g) {
     const x = K().mix, pv = V(p), pl = pool(g);
-    const cnt = (q) => {                                           // his balls by bucket and their total
+    const cnt = (q) => {                                           // his balls by bucket, their total, and [n, EV] by bucket
       const c = V(q).ctx && V(q).ctx.mix; if (!c) return null;
-      const n = c.slice(0, 9).reduce((a, b) => a + (b || 0), 0); return n ? { c: c.map((v) => v || 0), n } : null;
+      const n = c.slice(0, 9).reduce((a, b) => a + (b || 0), 0); return n ? { c: c.map((v) => v || 0), n, e: V(q).ctx.mixev || null } : null;
     };
     const mine = cnt(p);
     if (!x || !x.v || !mine) return el("p", "note", "The batted-ball mix is built from this season's data on — this season's file doesn't have it yet.");
@@ -6814,29 +6822,37 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const others = pl.ref.map(cnt).filter(Boolean);
     const avg = (o) => o.c.reduce((a, n, i) => a + (use[i] ? n * (val(MIX_B[i][1]) || 0) : 0), 0) / o.n;   // his average ball's league value
     const box = el("div", "rollbox uerabox mixbox mixtab");
-    const hd = el("div", "rollhd"), mw = pv.m.mixw, st = pl.stats.get(p.type + p.id);
+    const hd = el("div", "rollhd"), st = pl.stats.get(p.type + p.id);
     hd.append(el("span", "rollname", "Batted-ball mix"), el("span", "rollsub", `${mine.n} balls in play, no bunts`));
     box.append(hd);
-    const grid = el("div", "mixgrid mixgrid5");
-    grid.append(el("span"), el("span"), el("span", "mh", "Share"), el("span", "mh", "Lg wOBA"));
-    const vals = MIX_B.map(([, b]) => val(b)).filter((v) => v != null), lo = Math.min(...vals), hi = Math.max(...vals);
+    const tb = el("table", "ubt mixt"), th = el("thead"), hr = el("tr");
+    for (const [lab, cls, tip] of [["Batted ball", "l", ""], ["Lg wOBA", "", "the league's wOBA on that kind of ball this season"], ["Share", "", "his share of his balls in play"], ["Avg EV", "", "his average exit velocity on them"]]) {
+      const c = el("th", cls, lab); if (tip) c.title = tip; hr.append(c);
+    }
+    th.append(hr); tb.append(th);
+    const body = el("tbody"), MIN_EV = 5;                        // balls a bucket needs before its EV is ranked
+    const hot = (td, pct) => { if (pct == null) return; td.classList.add("mxh"); td.style.color = pctStyle(pct).bg; td.title = (td.title ? td.title + " · " : "") + ordinal(pct) + " percentile"; };
     const rows = MIX_B.map(([k, b, name], i) => ({ i, b, name, v: val(b) })).filter((r) => use[r.i] && r.v != null && (r.b !== "x" || mine.c[r.i]))
       .sort((a, b) => b.v - a.v);                                  // dearest bucket first
     for (const r of rows) {
-      const share = 100 * mine.c[r.i] / mine.n, dir = r.v >= x.lg ? 1 : -1;
+      const share = 100 * mine.c[r.i] / mine.n, dir = r.v >= x.lg ? 1 : -1;   // more of a dear bucket is good, more of a cheap one bad
       const arr = others.map((o) => dir * 100 * o.c[r.i] / o.n).sort((a, b) => a - b);
-      const lgc = el("span", "mv lg"), chip = el("span", "uchip", fmtX(r.v));
-      paintBar(chip, hi > lo ? Math.round(100 * (r.v - lo) / (hi - lo)) : 50); chip.style.color = "#fff"; lgc.append(chip);
-      grid.append(el("span", "ml", r.name), svTrack(arr.length ? insertPct(arr, dir * share) : null), el("span", "mv", share.toFixed(1) + "%"), lgc);
+      const me = mine.e && mine.e[r.i], ev = me ? me[1] : null;
+      const earr = others.map((o) => o.e && o.e[r.i] && o.e[r.i][0] >= MIN_EV ? o.e[r.i][1] : null).filter((v) => v != null).sort((a, b) => a - b);
+      const tr = el("tr");
+      const ts = el("td", "", share.toFixed(1) + "%"); ts.title = `${mine.c[r.i]} of ${mine.n}`; hot(ts, arr.length >= 20 ? insertPct(arr, dir * share) : null);
+      const te = el("td", "", ev == null ? "–" : ev.toFixed(1)); if (me) te.title = `${me[0]} tracked ball${me[0] === 1 ? "" : "s"}`;
+      if (ev != null && me[0] >= MIN_EV && earr.length >= 20) hot(te, insertPct(earr, ev));
+      tr.append(el("td", "l", r.name), el("td", "lg", fmtX(r.v)), ts, te);
+      body.append(tr);
     }
-    // the bottom line, Mix wOBA: the league's wOBA weighted by his shares, ranked among the qualifiers and heat-mapped by that rank
-    // the bar's own number and percentile, so the tab and the Batted-Ball Distribution bar always agree
+    // the foot, Mix wOBA: the league's wOBA weighted by his shares, ranked among the qualifiers — the bar's own number and percentile,
+    // so the tab and the Batted-Ball Distribution bar always agree
     const arr = others.map(avg).sort((a, b) => a - b), me = pv.m.mixw ?? avg(mine);
     const pct = st && st.pct && st.pct.mixw != null ? st.pct.mixw : arr.length ? insertPct(arr, me) : null;
-    const tot = el("span", "mv lg"), chip = el("span", "uchip", fmtX(me));
-    paintBar(chip, pct); chip.style.color = "#fff"; tot.append(chip);
-    grid.append(el("span", "mdiv"), el("span", "ml mtot", "Mix wOBA"), svTrack(pct), el("span", "mv mn", pct == null ? "" : ordinal(pct)), tot);
-    box.append(grid);
+    const tr = el("tr", "mtot"), tv = el("td", "", fmtX(me)); hot(tv, pct);
+    tr.append(el("td", "l", "Mix wOBA"), tv, el("td", "mn", pct == null ? "" : ordinal(pct)), el("td"));
+    body.append(tr); tb.append(body); box.append(tb);
     return box;
   }
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
@@ -8300,9 +8316,9 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   // wide enough (it takes the right-hand box's place too) that every bar keeps the length it has in one column.
   // EXPW / EXPB / EXPS are the directional model's xwOBA, xBA and xSLG, as everywhere.
   const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
-                       ["Batted-Ball Quality", ["ev", "evfb", "evld", "evgb", "brl", "bs", "hh", "ev90", "maxev"]]],   // EV on FB / LD / GB (Sean, 7 Oct 2026)
+                       ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],   // EV by batted-ball type lives on the Mix tab (Sean, 8 Oct 2026)
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k", "xk"]],   // back on the right, at the top (Sean, 1 Oct 2026)
-                       ["Batted-Ball Distribution", ["fb", "ld", "pu", "gb", "pull", "mixw"]]]];   // FB% and LD% in Air%'s place (Sean, 7 Oct 2026)   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
+                       ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]]]];   // Air% back (Sean, 8 Oct 2026)   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
   // Skills first (Sean, 4 Oct 2026: "make the first section called Skills and then add in gb% and popup% and mix woba"): the four rates the
   // Rating weighs plus Mix wOBA; Stuff is the one Pitching+ grade and its parts (Stuff+ no longer shown apart from it)
@@ -8354,12 +8370,12 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   // Walk Avoidance under Swing & Miss, ahead of Batted Ball (Sean, 5 Oct 2026); left 7 rows, right 6
   // Skills = K-BB% · Mix wOBA, K% back atop Swing & Miss and BB% atop Command (Walk Avoidance renamed) with a line break ("|") after each, no Results (Sean, 6 Oct 2026)
   const PCT_COLS_P = [[["Skills", ["whf", "xbbf"]], ["Swing & Miss", ["k", "whf", "s2whf", "cstr", "fpc"]]],
-                      [["Command", ["bb", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["gb", "pu", "mixw", "evgb", "evfb", "evld"]]]];   // EV allowed on GB / FB / LD (Sean, 7 Oct 2026)   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
+                      [["Command", ["bb", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["gb", "pu", "mixw"]]]];   // the EV-allowed-by-type rows lasted an evening (Sean, 8 Oct 2026); they stay columns   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
   // the Stuff side (Sean, 6 Oct 2026: "for the swing and miss stuff you use all the expected whiff expected two strike whiff expected called
   // strikes and expected fouls from the pitching+ model, and also use expected batted ball stuff from it too ... an xK% too"): every bar off
   // the Pitching+ models — xK% (Pitching+ xK%), xWhiff%, x2-strike Whiff%, xCalled Strike%, xFoul% of contact, xBB%, xGB% / xPU% / Mix xwOBA
   const PCT_COLS_PS = [[["Skills", ["nwhf", "xbbf"]], ["Swing & Miss", ["xks", "nwhf", "ns2whf", "ncstr", "nfpc"]]],
-                       [["Command", ["xbbf", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["ngb", "npu", "nmix", "evgb", "evfb", "evld"]]]];   // the EV rows are his actual ones on both sides — no model prices exit velocity
+                       [["Command", ["xbbf", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["ngb", "npu", "nmix"]]]];
   const STUFF_LABELS = { nfpc: "xFoul% of contact", xnera: "xnERA", xbbf: "xBB%", xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => state.cardSide === "stuff";   // the Raw / Stuff switch is back (Sean, 6 Oct 2026: "add back the raw vs stuff button")
   // the Raw | Stuff switch: beside Filters on a desktop, the first row of the Filters window on a phone (Sean, 4 Oct 2026)
