@@ -2574,3 +2574,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   value and his career's (`.pcc`), the wOBA / xwOBA (nERA / xnERA) pills cloned over as `.pcchip` (a career nERA isn't built, so that cell is "–");
   every value row a fixed height (22px desktop / 18px phone) so pills and plain numbers line up; `.pctiles.two` adds the label column. The position
   line reads the codes (`playedLabel`: "DH, 1B • Bats: Left"), not the words. Both layouts; the desktop bar ~60 → ~82px, the phone's 141 → ~160.
+* **The season table at B-Ref's dimensions, a Playoffs tab, the club rows folded (Sean, 8 Oct 2026, beside Trout's B-Ref page: "make it so the
+  table fits on the entire page easily like this baseball reference one does ... the same dimensions as theirs does cause i like how theirs fits
+  cleanly", "add in the postseason and regular season ability thing", "for the bottom of our table could you make only the career and 162 game avg
+  ones show and then make the others show with a drop down arrow")**: `.sbt` is its own width (`width: auto`, the `.sbscroll` frame `max-content`
+  hugging it, a phone's still the screen's width and scrolling), 13px cells 5px of padding wide and 28px tall, 12.5px column names 30px tall — the
+  block at the end of `styles.css`. **Regular Season / Playoffs** (`sbKind`, `.sbtabs` / `.sbtab` on the table's top edge): the Playoffs view reads
+  **`postLines(p)`** — MLB's official postseason lines fetched in the browser like the bio (`people/<id>/stats?stats=yearByYear&gameType=P&group=
+  hitting|pitching`, `PSTATS` by type+id: null while loading, false on a failure, a traded October's clubs combined as TOT through `sbCombine`;
+  `TEAM_BY_ID` inverts `TEAM_ID` for the codes) — the official columns only (no wOBA / xwOBA, FIP or the site's rates), an N Yrs row, no 162-game
+  average, club rows, In Split row, bolding or minors; "Loading his postseason games…" / "No postseason games." / "Couldn't load…" notes. **The
+  fold** (`sbMore`, `tr.sbmore`): under 162 Game Avg a "▸ By team and league" row; the per-club and per-league rows (and their grey gaps) draw only
+  once it's opened. Headless with the Stats API mocked; the live call works like `bio()`'s (same host, CORS open).
