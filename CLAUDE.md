@@ -2592,3 +2592,19 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   every column name is centred (Season / Age / Team included — `th.l` too), the frozen Team column ends in a 2px ink rule, and every totals row
   (`tr.tot`: N Yrs, 162 Game Avg, and the club / league rows under the fold) sits on the light-blue band (`--band2`) in bold white type with
   white separators, a 2px ink rule over the first; the grey gap rows are 6px of surface. Both layouts.
+* **A phone's tabs in B-Ref's dress, every season on a phone, a Pos column (Sean, 8 Oct 2026, beside Trout's B-Ref page: "make the regular
+  season and playoff button look like this", "get rid of the show all 8 seasons thing just make it show all seasons by default", "add a column
+  to the end that shows all the positions they played that year")**: the phone's Regular Season / Playoffs tabs are a full-width strip in the
+  table's frame (surface-2, the picked tab a 44px block in the button blue with white 16px type, the other plain words — the block at the end
+  of `styles.css`); a phone lists every season (`sbAll`, the "All N seasons ▾" row and the `tr.sball` rules are gone); and the table ends in
+  **Pos** — a hitter's every position that season, most games first, the games in the tooltip (OF for LF / CF / RF, DH included), a pitcher's
+  SP / RP by his starts and relief outings (`posOf`; the totals and In Split rows blank, "–" where nothing is known). **Build**:
+  `build_career.py` hydrates the API's `fielding` group too — `mlb_positions` turns its yearByYear rows into "OF:97,3B:45,DH:4,2B:3" per
+  season (a traded year has a row per club per position and a combined row only for a position he played with both clubs: the combined row
+  wins, the clubs' rows are summed otherwise) and appends it to every hitting row **after our numbers**; `minors()` fetches fielding with the
+  minors lines, `minors_positions` keys them by season / level / club, `with_adv` appends them to the minors' hitting rows, and a per-player
+  cache without the field is fetched once more. `rawLines` reads a row by **fixed index** now (season, team, the keys, two extra counts, our
+  numbers, positions), so a field appended at the end moves nothing; `postLines` asks for `hitting,fielding` and folds the October positions
+  the same way. Both files were patched in place the same day (scratch `patch_pos.py`: 17,039 of 17,073 MLB hitting rows and 51,112 of
+  67,528 minors rows — the rest are pitchers' batting lines or seasons with no games in the field; career.js 3.3 → 3.5 MB, minors.js
+  13.9 → 14.6 MB).

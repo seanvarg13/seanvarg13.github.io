@@ -3073,24 +3073,27 @@
       if (H) return { woba: a[0], xwoba: a[1], whf: mlb ? null : a[2] };
       return mlb ? { fip: a[0], siera: a[1], whf: a[5], strk: a[6], gb: a[7], pu: a[8] } : { fip: a[0], siera: a[1], whf: a[2], strk: a[3], gb: a[4], pu: a[5] };
     };
+    // a row is [season, team, …the keys, two extra counts, our numbers, (hitters) where he played] — read by fixed index, so a field
+    // appended at the end (the positions, 8 Oct 2026) moves nothing; the minors' rows have the level after the season
     for (const r of (rec && rec[p.type]) || []) {
       const c = {}; keysMLB.forEach((k, i) => { c[k] = r[2 + i]; });
-      const extra = r.length > 2 + keysMLB.length + 1 ? r.slice(2 + keysMLB.length, -1) : [];
+      const base = 2 + keysMLB.length, extra = r.slice(base, base + 2);
       if (H) { c.HBP = extra[0] || 0; c.SF = extra[1] || 0; } else { c.ER = extra[0]; c.BF = extra[1]; }
-      c.adv = advOf(r[r.length - 1], true);
-      lines.push({ season: r[0], level: "MLB", team: r[1], c, mlb: true });
+      c.adv = advOf(r[base + 2], true);
+      lines.push({ season: r[0], level: "MLB", team: r[1], c, mlb: true, pos: posPairs(r[base + 3]) });
     }
     const mrec = window.DRAFT_MINORS ? window.DRAFT_MINORS[String(p.id)] : null;
     for (const r of (mrec && mrec[p.type]) || []) {
       const c = {}; keysMLB.forEach((k, i) => { c[k] = r[3 + i]; });
-      const hasAdv = Array.isArray(r[r.length - 1]) || r[r.length - 1] === null;
-      const extra = hasAdv ? r.slice(3 + keysMLB.length, -1) : r.slice(3 + keysMLB.length);
+      const base = 3 + keysMLB.length, extra = r.slice(base, base + 2);
       if (H) { c.HBP = extra[0] || 0; c.SF = extra[1] || 0; } else { c.ER = extra[0]; c.BF = extra[1]; }
-      c.adv = hasAdv ? advOf(r[r.length - 1], false) : {};
-      lines.push({ season: r[0], level: r[1], team: r[2], c, mlb: false, combo: r[1] === "Minors" });
+      c.adv = advOf(r[base + 2], false);
+      lines.push({ season: r[0], level: r[1], team: r[2], c, mlb: false, combo: r[1] === "Minors", pos: posPairs(r[base + 3]) });
     }
     return lines;
   }
+  // "OF:97,3B:45,DH:4" — the career file's Pos field, every position he played that season with its games, most first — as [["OF", 97], …]
+  const posPairs = (s) => (typeof s === "string" && s ? s.split(",").map((x) => { const i = x.lastIndexOf(":"); return [x.slice(0, i), +x.slice(i + 1)]; }).filter((x) => x[0] && x[1] > 0) : null);
   function combineLines(H, parts) {
     const c = {};
     const sum = (k) => parts.reduce((a, x) => a + (Number(x.c[k]) || 0), 0);
@@ -9107,18 +9110,29 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   window.addEventListener("scroll", condAsk, { passive: true });
   window.addEventListener("resize", condAsk);
   /* ---------- the season table, Baseball-Reference's in the site's dress (Sean, 8 Oct 2026) ---------- */
-  let sbMinors = false, sbAll = false, sbKind = "reg", sbMore = false;   // Show minors; a phone's All N seasons; Regular Season / Playoffs; the club rows' fold (this visit)
+  let sbMinors = false, sbKind = "reg", sbMore = false;   // Show minors; Regular Season / Playoffs; the club rows' fold (this visit)
   // his postseason lines, MLB's official ones fetched in the browser like the bio (Sean, 8 Oct 2026: "add in the postseason and regular season
   // ability thing"): type+id → null while it loads, false if it failed, else [{season, team, c}] oldest first, a traded October as TOT
   const TEAM_BY_ID = Object.fromEntries(Object.entries(TEAM_ID).map(([k, v]) => [v, k]));
+  const OF_POS = { LF: "OF", CF: "OF", RF: "OF" };   // the site says OF everywhere
   const PSTATS = new Map();
   function postLines(p) {
     const key = p.type + p.id;
     if (PSTATS.has(key)) return PSTATS.get(key);
     PSTATS.set(key, null);
     const H = p.type === "H";
-    fetch(`https://statsapi.mlb.com/api/v1/people/${p.id}/stats?stats=yearByYear&gameType=P&group=${H ? "hitting" : "pitching"}`).then((r) => r.json()).then((j) => {
-      const splits = (((j.stats || [])[0] || {}).splits) || [], by = new Map();
+    fetch(`https://statsapi.mlb.com/api/v1/people/${p.id}/stats?stats=yearByYear&gameType=P&group=${H ? "hitting,fielding" : "pitching"}`).then((r) => r.json()).then((j) => {
+      const groups = j.stats || [], grp = (n) => groups.find((s) => (s.group || {}).displayName === n) || {};
+      const splits = grp(H ? "hitting" : "pitching").splits || [], by = new Map();
+      // where he played each October (hitters): the fielding group's rows per position — a combined row (no team) only for a position he
+      // played for two clubs, else the clubs' rows summed; LF / CF / RF fold into OF; a traded year's TOT line takes the same list (as the build does)
+      const posBy = new Map();
+      if (H) {
+        const comb = new Map(), club = new Map();
+        for (const sp of grp("fielding").splits || []) { const ps = (sp.position || {}).abbreviation, g = +((sp.stat || {}).games) || 0, y = +sp.season; if (!ps || !g || !y) continue; const m = sp.team ? club : comb, k = y + "|" + ps; m.set(k, (m.get(k) || 0) + g); }
+        for (const [k, g] of [...club].filter(([k]) => !comb.has(k)).concat([...comb])) { const [y, ps] = k.split("|"), f = OF_POS[ps] || ps, d = posBy.get(+y) || posBy.set(+y, new Map()).get(+y); d.set(f, (d.get(f) || 0) + g); }
+      }
+      const posAt = (y) => { const d = posBy.get(y); return d && d.size ? [...d].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])) : null; };
       for (const sp of splits) {
         const st = sp.stat || {}, y = +sp.season; if (!y) continue;
         const team = sp.team ? (TEAM_BY_ID[sp.team.id] || sp.team.abbreviation || "") : "";
@@ -9126,9 +9140,9 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
                         BB: st.baseOnBalls, K: st.strikeOuts, HBP: st.hitByPitch || 0, SF: st.sacFlies || 0, AVG: +st.avg, OBP: +st.obp, SLG: +st.slg, OPS: +st.ops, adv: {} }
                     : { W: st.wins, L: st.losses, ERA: +st.era, G: st.gamesPlayed, GS: st.gamesStarted, SV: st.saves, IP: String(st.inningsPitched), H: st.hits, HR: st.homeRuns, BB: st.baseOnBalls,
                         K: st.strikeOuts, ER: st.earnedRuns, BF: st.battersFaced, WHIP: +st.whip, adv: {} };
-        (by.get(y) || by.set(y, []).get(y)).push({ season: y, team, c, mlb: true });
+        (by.get(y) || by.set(y, []).get(y)).push({ season: y, team, c, mlb: true, pos: posAt(y) });
       }
-      const out = [...by].map(([y, ls]) => (ls.length === 1 ? ls[0] : { season: y, team: "TOT", c: sbCombine(H, ls).c, mlb: true })).sort((a, b) => a.season - b.season);
+      const out = [...by].map(([y, ls]) => (ls.length === 1 ? ls[0] : { season: y, team: "TOT", c: sbCombine(H, ls).c, mlb: true, pos: posAt(y) })).sort((a, b) => a.season - b.season);
       PSTATS.set(key, out); if (state.mode === "player") render();
     }).catch(() => { PSTATS.set(key, false); if (state.mode === "player") render(); });
     return null;
@@ -9156,7 +9170,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     return { c };
   }
   function seasonBlock(p, o) {
-    const H = p.type === "H", box = el("section", "sblock"), mob = mobileView();
+    const H = p.type === "H", box = el("section", "sblock");
     const hd = el("div", "sbhead"); hd.append(el("h3", "sbtitle", H ? "Standard batting" : "Standard pitching"));
     const mi = el("button", "linkbtn sblink", sbMinors ? "Hide minors" : "Show minors"); mi.type = "button";
     mi.addEventListener("click", (e) => { e.stopPropagation(); sbMinors = !sbMinors; if (sbMinors) ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS); render(); });
@@ -9189,10 +9203,19 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     }
     const table = el("table", "sbt"), thead = el("thead"), tr = el("tr");
     const lev = milb.length > 0;
-    for (const h of ["Season", "Age", "Team", ...(lev ? ["Lev"] : []), ...cols]) { const th = el("th", ["Season", "Team", "Lev"].includes(h) ? "l" : null, h); if (h === "Season") th.classList.add("f1"); if (h === "Age") th.classList.add("f2"); if (h === "Team") th.classList.add("f3"); tr.append(th); }
+    for (const h of ["Season", "Age", "Team", ...(lev ? ["Lev"] : []), ...cols, "Pos"]) { const th = el("th", ["Season", "Team", "Lev", "Pos"].includes(h) ? "l" : null, h); if (h === "Season") th.classList.add("f1"); if (h === "Age") th.classList.add("f2"); if (h === "Team") th.classList.add("f3"); tr.append(th); }
     thead.append(tr); table.append(thead);
+    const ncol = 3 + (lev ? 1 : 0) + cols.length + 1;   // every column, for a row that spans the table
     const tbody = el("tbody");
     const cell = (txt, cls) => { const td = el("td", cls || null); if (txt instanceof Node) td.append(txt); else td.textContent = txt; return td; };
+    // Pos (Sean, 8 Oct 2026: "all the positions they played that year"): a hitter's from the record's fielding lines (DH included), most games
+    // first; a pitcher's SP / RP by his starts and relief outings
+    const posOf = (l) => {
+      if (!l) return null;
+      if (H) return l.pos && l.pos.length ? l.pos : null;
+      const g = +l.c.G || 0, gs = +l.c.GS || 0, r = []; if (gs > 0) r.push(["SP", gs]); if (g - gs > 0) r.push(["RP", g - gs]);
+      return r.length ? r.sort((a, b) => b[1] - a[1]) : null;
+    };
     const row = (lead, l, cls, opts = {}) => {
       const trr = el("tr", cls || null);
       if (lead.length === 1) { const td = cell(lead[0], "l sbl f1"); td.colSpan = 3; trr.append(td); if (lev) trr.append(cell("", "l")); }
@@ -9202,11 +9225,12 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
         if (opts.bold && best[k] != null && v != null && Number(v) === best[k]) td.classList.add("hi");
         trr.append(td);
       }
+      const pp = opts.season ? posOf(l) : null, pt = cell(pp ? pp.map((x) => x[0]).join(", ") : (opts.season ? "–" : ""), "l pos");
+      if (pp) pt.title = pp.map(([k, g]) => `${k}: ${g} G`).join(" · ");
+      trr.append(pt);
       tbody.append(trr); return trr;
     };
-    // the seasons: a phone shows the last three until All seasons is tapped (Sean, 8 Oct 2026: "i like the E option for the phone")
-    const years = [...new Set([...mlb, ...milb].map((l) => l.season))].sort((a, b) => a - b);
-    const shown = mob && !sbAll && years.length > 3 ? years.slice(-3) : years;
+    const years = [...new Set([...mlb, ...milb].map((l) => l.season))].sort((a, b) => a - b);   // every season, on a phone too (Sean, 8 Oct 2026)
     const splitRow = () => {   // the card's date filter or split as a row under the season (Sean, 8 Oct 2026: "In Split")
       if (!(winIdx() || splitActive())) return;
       const vl = viewLabel(p.type), lead = el("span", "sbsplit"); lead.append(el("i", null, "In Split"), el("small", null, vl));
@@ -9226,24 +9250,19 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       }
       row([lead, null, ""], l, "insplit");
     };
-    for (const y of shown) {
+    for (const y of years) {
       const ml = mlb.filter((l) => l.season === y);
       for (const l of ml) {
         const yr = el("span", "sbyr", String(y));
-        const trr = row([yr, ageIn(y), l.team, "MLB"], l, (y === +DS.season && DS.level === "MLB" ? "cur" : null), { bold: !post });
+        const trr = row([yr, ageIn(y), l.team, "MLB"], l, (y === +DS.season && DS.level === "MLB" ? "cur" : null), { bold: !post, season: true });
         if (l.team === "TOT") trr.title = "Two or more clubs that season";
         if (!post && y === +DS.season && DS.level === "MLB") splitRow();
       }
       for (const l of milb.filter((x) => x.season === y)) {
-        const trr = row([String(y), ageIn(y), l.team || "", lvName(l.level)], l, "milb" + (y === +DS.season && DS.level === lvName(l.level) ? " cur" : ""));
+        const trr = row([String(y), ageIn(y), l.team || "", lvName(l.level)], l, "milb" + (y === +DS.season && DS.level === lvName(l.level) ? " cur" : ""), { season: true });
         if (y === +DS.season && DS.level !== "MLB" && DS.level === lvName(l.level)) splitRow();
         void trr;
       }
-    }
-    if (mob && years.length > 3) {
-      const trr = el("tr", "sball"), td = el("td"); td.colSpan = 3 + (lev ? 1 : 0) + cols.length;
-      const bt = el("button", "linkbtn", sbAll ? "Last 3 seasons ▴" : `All ${years.length} seasons ▾`); bt.type = "button"; bt.addEventListener("click", (e) => { e.stopPropagation(); sbAll = !sbAll; render(); });
-      const inner = el("span", "sbin"); inner.append(bt); td.append(inner); trr.append(td); tbody.append(trr);   // sticky inside the wide cell, so it shows where the table is scrolled to
     }
     // the totals: his MLB years, a 162-game average, each club, each league
     if (mlb.length) {
@@ -9272,11 +9291,11 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       if (!post && clubs.length) {
         // the club and league rows fold under the 162-game average (Sean, 8 Oct 2026: "make only the career and 162 game avg ones show and then
         // make the others show with a drop down arrow")
-        const more = el("tr", "sbmore"), mtd = el("td"); mtd.colSpan = 3 + (lev ? 1 : 0) + cols.length;
+        const more = el("tr", "sbmore"), mtd = el("td"); mtd.colSpan = ncol;
         const mbt = el("button", "linkbtn", (sbMore ? "▾ " : "▸ ") + "By team and league"); mbt.type = "button"; mbt.setAttribute("aria-expanded", String(sbMore));
         mbt.addEventListener("click", (e) => { e.stopPropagation(); sbMore = !sbMore; render(); });
         const minner = el("span", "sbin"); minner.append(mbt); mtd.append(minner); more.append(mtd); tbody.append(more);
-        const gap = () => { const g = el("tr", "gap"), td = el("td"); td.colSpan = 3 + (lev ? 1 : 0) + cols.length; g.append(td); tbody.append(g); };
+        const gap = () => { const g = el("tr", "gap"), td = el("td"); td.colSpan = ncol; g.append(td); tbody.append(g); };
         if (sbMore) {
         gap();
         for (const [t, ls] of clubs) { const yrs = new Set(ls.map((x) => x.season)).size; row([`${t} (${yrs} Yr${yrs > 1 ? "s" : ""})`], sbCombine(H, ls), "tot sub"); }
@@ -9295,6 +9314,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const note = el("p", "sbnote");
     if (post) note.append("Postseason: MLB's official lines, every October he played; a traded year's clubs as TOT.");
     else note.append(el("b", null, "Bold"), ` season totals: his career best in that column (100+ ${H ? "PA" : "batters faced"} seasons).`);
+    note.append(" Pos: " + (H ? "every position he played that season, most games first." : "SP / RP by his starts and relief outings."));
     if (!H && !post) note.append(" FIP, Whiff%, Strike% and GB% start in 2017, the first season the site carries.");
     if (!post && (winIdx() || splitActive())) note.append(" ", el("b", null, "In Split"), ": the card's filters — " + viewLabel(p.type) + " — from the official game logs; the bars below rank him in that window.");
     box.append(note);

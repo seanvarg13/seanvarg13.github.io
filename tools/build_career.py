@@ -1,6 +1,7 @@
 """Build hist/career.js: season-by-season traditional stats + career totals for every player in the search
 index (MLB Stats API yearByYear + career), with our wOBA / xwOBA (hitters) and FIP / SIERA (pitchers) attached
-where a season was built.  Usage: python3 build_career.py"""
+where a season was built, and where a hitter played each season (every position, games each, from the API's
+fielding lines — the season table's Pos column, 8 Oct 2026).  Usage: python3 build_career.py"""
 import json, time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -15,6 +16,59 @@ PIT = ["wins", "losses", "era", "gamesPlayed", "gamesStarted", "saves", "innings
 HIT_X = ["hitByPitch", "sacFlies"]          # extra counts so combined (MLB + minors) rate stats can be recomputed
 PIT_X = ["earnedRuns", "battersFaced"]
 CACHE = HERE / ".cache" / "milb_career"
+OF_POS = {"LF": "OF", "CF": "OF", "RF": "OF"}          # the site says OF everywhere
+
+
+def pos_string(games):
+    """{pos: games} -> "OF:97,3B:45,DH:4,2B:3", most games first (the app splits it; a row reads by fixed index)."""
+    return ",".join(f"{k}:{g}" for k, g in sorted(games.items(), key=lambda kv: (-kv[1], kv[0])) if g > 0)
+
+
+def fielding_splits(stats):
+    """(split, raw position, games) for every fielding yearByYear row with games — DH is a position there too."""
+    for s in stats:
+        if s["group"]["displayName"] == "fielding" and s["type"]["displayName"] == "yearByYear":
+            for sp in s["splits"]:
+                pos = (sp.get("position") or {}).get("abbreviation"); g = (sp.get("stat") or {}).get("games") or 0
+                if pos and g:
+                    yield sp, pos, int(g)
+
+
+def mlb_positions(stats):
+    """{season: "OF:97,3B:45,DH:4,2B:3"}: every position he played that MLB season, games each, most first, LF / CF / RF
+    folded into OF. A traded season has a row per club for each position and a combined row (no team) only for a
+    position he played with both clubs, so the combined row wins and the clubs' rows are summed otherwise."""
+    comb, club = {}, {}
+    for sp, raw, g in fielding_splits(stats):
+        if ((sp.get("sport") or {}).get("abbreviation") or "MLB") != "MLB":
+            continue
+        try:
+            y = int(str(sp["season"]).split(".")[0])
+        except (ValueError, KeyError):
+            continue
+        d = comb if "team" not in sp else club
+        d[(y, raw)] = d.get((y, raw), 0) + g
+    games = {}
+    for (y, raw), g in {**club, **comb}.items():          # the combined row replaces the clubs' for the same position
+        fold = OF_POS.get(raw, raw); games.setdefault(y, {}); games[y][fold] = games[y].get(fold, 0) + g
+    return {y: pos_string(d) for y, d in games.items()}
+
+
+def minors_positions(stats):
+    """{(season, level, team name): "SS:57,OF:36"} per club line in the minors (the API's combined rows are left out —
+    the table lists each club's own line)."""
+    games = {}
+    for sp, raw, g in fielding_splits(stats):
+        lvl = (sp.get("sport") or {}).get("abbreviation") or "?"
+        if lvl == "MLB" or "team" not in sp:
+            continue
+        try:
+            season = int(str(sp["season"]).split(".")[0])
+        except (ValueError, KeyError):
+            continue
+        k = (season, lvl, sp["team"].get("name") or ""); d = games.setdefault(k, {}); fold = OF_POS.get(raw, raw)
+        d[fold] = d.get(fold, 0) + g
+    return {k: pos_string(d) for k, d in games.items()}
 
 
 def minors(pid, fresh):
@@ -23,11 +77,13 @@ def minors(pid, fresh):
     f = CACHE / f"{pid}.json"
     if f.exists() and not fresh:
         try:
-            return json.loads(f.read_text())
+            cached = json.loads(f.read_text())
+            if "pos" in cached:                                # a cache written before the positions (8 Oct 2026) is fetched once more
+                return cached
         except ValueError:
             pass
-    url = f"https://statsapi.mlb.com/api/v1/people/{pid}/stats?stats=yearByYear&group=hitting,pitching&leagueListId=milb_all"
-    out = {"H": [], "P": []}
+    url = f"https://statsapi.mlb.com/api/v1/people/{pid}/stats?stats=yearByYear&group=hitting,pitching,fielding&leagueListId=milb_all"
+    out = {"H": [], "P": [], "pos": {}}                   # pos: "season|level|team" -> where he played (hitters' rows take it after our numbers)
     for attempt in range(3):
         try:
             js = requests.get(url, headers=UA, timeout=60).json(); break
@@ -35,6 +91,8 @@ def minors(pid, fresh):
             time.sleep(2); js = {}
     for s in js.get("stats", []):
         grp = s["group"]["displayName"]; t = "H" if grp == "hitting" else "P"
+        if grp == "fielding":
+            continue
         keys = (HIT + HIT_X) if t == "H" else (PIT + PIT_X)
         for sp in s["splits"]:
             st = sp["stat"]; lvl = sp.get("sport", {}).get("abbreviation") or "?"
@@ -46,6 +104,7 @@ def minors(pid, fresh):
             except (ValueError, KeyError):
                 continue
             out[t].append([season, lvl, team] + [num(st.get(k)) for k in keys])
+    out["pos"] = {"|".join(map(str, k)): v for k, v in minors_positions(js.get("stats", [])).items()}
     CACHE.mkdir(parents=True, exist_ok=True)
     f.write_text(json.dumps(out, separators=(",", ":")))
     return out
@@ -95,7 +154,7 @@ def main():
     for i in range(0, len(ids), 80):
         chunk = ids[i:i + 80]
         url = ("https://statsapi.mlb.com/api/v1/people?personIds=" + ",".join(map(str, chunk)) +
-               "&hydrate=stats(group=[hitting,pitching],type=[yearByYear,career])")
+               "&hydrate=stats(group=[hitting,pitching,fielding],type=[yearByYear,career])")
         for attempt in range(3):
             try:
                 js = requests.get(url, headers=UA, timeout=90).json(); break
@@ -103,8 +162,11 @@ def main():
                 print("  retry", e); time.sleep(3)
         for p in js.get("people", []):
             rec = {}
+            pos_by = mlb_positions(p.get("stats", []))         # where he played each season, for the hitting rows
             for s in p.get("stats", []):
                 grp, typ = s["group"]["displayName"], s["type"]["displayName"]
+                if grp == "fielding":
+                    continue
                 keys = HIT if grp == "hitting" else PIT
                 t = "H" if grp == "hitting" else "P"
                 if typ == "career":
@@ -137,6 +199,8 @@ def main():
                         r.append(None if not m else ([m.get("woba"), m.get("xwoba_dir", m.get("xwoba"))] if t == "H"   # the site's xwOBA is the directional model (8 Oct 2026)
                                                      else [m.get("fip"), m.get("siera"), m.get("k"), m.get("bb"), m.get("kbb"), m.get("whf"), m.get("strk"),
                                                            m.get("gb"), m.get("pu")]))   # appended: the card's simple season table shows GB% / Popup%
+                        if t == "H":
+                            r.append(pos_by.get(r[0], ""))     # then where he played — the app reads a row by fixed index (8 Oct 2026)
                     rec[t] = rows
             if rec:
                 out[str(p["id"])] = rec
@@ -146,19 +210,19 @@ def main():
     todo = [(pid, pid in current) for pid in ids]
     done = 0
     milb = {}
-    def with_adv(pid, t, rows):
+    def with_adv(pid, t, rows, pos):
         out_rows = []
         for r in rows:
             m = ours_m.get((pid, r[0], t, r[1]))
             adv = None if not m else ([m.get("woba"), m.get("xwoba_dir", m.get("xwoba")), m.get("whf")] if t == "H" else [m.get("fip"), m.get("siera"), m.get("whf"), m.get("strk"),
                                                                                                       m.get("gb"), m.get("pu")])   # appended: GB% / Popup% for the minors' season table
-            out_rows.append(list(r) + [adv])
+            out_rows.append(list(r) + [adv] + ([pos.get("|".join(map(str, r[:3])), "")] if t == "H" else []))   # then where he played (a cache written before 8 Oct 2026 has none)
         return out_rows
     with ThreadPoolExecutor(max_workers=8) as ex:
         for pid, res in zip([t[0] for t in todo], ex.map(lambda t: minors(*t), todo)):
             rec = {}
-            if res.get("H"): rec["H"] = with_adv(pid, "H", res["H"])
-            if res.get("P"): rec["P"] = with_adv(pid, "P", res["P"])
+            if res.get("H"): rec["H"] = with_adv(pid, "H", res["H"], res.get("pos") or {})
+            if res.get("P"): rec["P"] = with_adv(pid, "P", res["P"], {})
             if rec: milb[str(pid)] = rec
             done += 1
             if done % 500 == 0:
