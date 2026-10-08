@@ -6802,18 +6802,13 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     wrap.append(box2);
     return wrap;
   }
-  // The Mix tab as a table (Sean, 8 Oct 2026: "the batted ball types in the way it does now and sorts them ... by wOBA and then have the
-  // players percentage of batted balls that are that type in one column and then their avg EV in another and for each of them have them be
-  // heat mapped but don't do like a circle one just make the text bolded and heat mapped color wise"): a row per bucket, dearest first —
-  // the league's wOBA on that kind of ball, his share of his balls in play, his average exit velocity on them (ctx.mixev from the build;
-  // in a window or split the day rows' evbk buckets under the evs list, so a file built before 8 Oct 2026 reads "–" there) — the share and
-  // the EV in bold type coloured by his percentile among the pool's qualifiers (the share's direction by the bucket's value: more of a dear
-  // bucket is good, more of a cheap one bad; harder is always better; an EV on under MIN_EV balls stays uncoloured), then the Mix wOBA line.
+  // The Mix tab: the bars grid as it was before 8 Oct 2026 (the table of that morning lasted an hour — Sean: "go back to the prior
+  // percentile bar batted ball mix table"), with Avg EV by batted-ball type under it
   function renderMixTab(p, g) {
     const x = K().mix, pv = V(p), pl = pool(g);
-    const cnt = (q) => {                                           // his balls by bucket, their total, and [n, EV] by bucket
+    const cnt = (q) => {                                           // his balls by bucket and their total
       const c = V(q).ctx && V(q).ctx.mix; if (!c) return null;
-      const n = c.slice(0, 9).reduce((a, b) => a + (b || 0), 0); return n ? { c: c.map((v) => v || 0), n, e: V(q).ctx.mixev || null } : null;
+      const n = c.slice(0, 9).reduce((a, b) => a + (b || 0), 0); return n ? { c: c.map((v) => v || 0), n } : null;
     };
     const mine = cnt(p);
     if (!x || !x.v || !mine) return el("p", "note", "The batted-ball mix is built from this season's data on — this season's file doesn't have it yet.");
@@ -6822,37 +6817,42 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const others = pl.ref.map(cnt).filter(Boolean);
     const avg = (o) => o.c.reduce((a, n, i) => a + (use[i] ? n * (val(MIX_B[i][1]) || 0) : 0), 0) / o.n;   // his average ball's league value
     const box = el("div", "rollbox uerabox mixbox mixtab");
-    const hd = el("div", "rollhd"), st = pl.stats.get(p.type + p.id);
+    const hd = el("div", "rollhd"), mw = pv.m.mixw, st = pl.stats.get(p.type + p.id);
     hd.append(el("span", "rollname", "Batted-ball mix"), el("span", "rollsub", `${mine.n} balls in play, no bunts`));
     box.append(hd);
-    const tb = el("table", "ubt mixt"), th = el("thead"), hr = el("tr");
-    for (const [lab, cls, tip] of [["Batted ball", "l", ""], ["Lg wOBA", "", "the league's wOBA on that kind of ball this season"], ["Share", "", "his share of his balls in play"], ["Avg EV", "", "his average exit velocity on them"]]) {
-      const c = el("th", cls, lab); if (tip) c.title = tip; hr.append(c);
-    }
-    th.append(hr); tb.append(th);
-    const body = el("tbody"), MIN_EV = 5;                        // balls a bucket needs before its EV is ranked
-    const hot = (td, pct) => { if (pct == null) return; td.classList.add("mxh"); td.style.color = pctStyle(pct).bg; td.title = (td.title ? td.title + " · " : "") + ordinal(pct) + " percentile"; };
+    const grid = el("div", "mixgrid mixgrid5");
+    grid.append(el("span"), el("span"), el("span", "mh", "Share"), el("span", "mh", "Lg wOBA"));
+    const vals = MIX_B.map(([, b]) => val(b)).filter((v) => v != null), lo = Math.min(...vals), hi = Math.max(...vals);
     const rows = MIX_B.map(([k, b, name], i) => ({ i, b, name, v: val(b) })).filter((r) => use[r.i] && r.v != null && (r.b !== "x" || mine.c[r.i]))
       .sort((a, b) => b.v - a.v);                                  // dearest bucket first
     for (const r of rows) {
-      const share = 100 * mine.c[r.i] / mine.n, dir = r.v >= x.lg ? 1 : -1;   // more of a dear bucket is good, more of a cheap one bad
+      const share = 100 * mine.c[r.i] / mine.n, dir = r.v >= x.lg ? 1 : -1;
       const arr = others.map((o) => dir * 100 * o.c[r.i] / o.n).sort((a, b) => a - b);
-      const me = mine.e && mine.e[r.i], ev = me ? me[1] : null;
-      const earr = others.map((o) => o.e && o.e[r.i] && o.e[r.i][0] >= MIN_EV ? o.e[r.i][1] : null).filter((v) => v != null).sort((a, b) => a - b);
-      const tr = el("tr");
-      const ts = el("td", "", share.toFixed(1) + "%"); ts.title = `${mine.c[r.i]} of ${mine.n}`; hot(ts, arr.length >= 20 ? insertPct(arr, dir * share) : null);
-      const te = el("td", "", ev == null ? "–" : ev.toFixed(1)); if (me) te.title = `${me[0]} tracked ball${me[0] === 1 ? "" : "s"}`;
-      if (ev != null && me[0] >= MIN_EV && earr.length >= 20) hot(te, insertPct(earr, ev));
-      tr.append(el("td", "l", r.name), el("td", "lg", fmtX(r.v)), ts, te);
-      body.append(tr);
+      const lgc = el("span", "mv lg"), chip = el("span", "uchip", fmtX(r.v));
+      paintBar(chip, hi > lo ? Math.round(100 * (r.v - lo) / (hi - lo)) : 50); chip.style.color = "#fff"; lgc.append(chip);
+      grid.append(el("span", "ml", r.name), svTrack(arr.length ? insertPct(arr, dir * share) : null), el("span", "mv", share.toFixed(1) + "%"), lgc);
     }
-    // the foot, Mix wOBA: the league's wOBA weighted by his shares, ranked among the qualifiers — the bar's own number and percentile,
-    // so the tab and the Batted-Ball Distribution bar always agree
+    // the bottom line, Mix wOBA: the league's wOBA weighted by his shares, ranked among the qualifiers and heat-mapped by that rank
+    // the bar's own number and percentile, so the tab and the Batted-Ball Distribution bar always agree
     const arr = others.map(avg).sort((a, b) => a - b), me = pv.m.mixw ?? avg(mine);
     const pct = st && st.pct && st.pct.mixw != null ? st.pct.mixw : arr.length ? insertPct(arr, me) : null;
-    const tr = el("tr", "mtot"), tv = el("td", "", fmtX(me)); hot(tv, pct);
-    tr.append(el("td", "l", "Mix wOBA"), tv, el("td", "mn", pct == null ? "" : ordinal(pct)), el("td"));
-    body.append(tr); tb.append(body); box.append(tb);
+    const tot = el("span", "mv lg"), chip = el("span", "uchip", fmtX(me));
+    paintBar(chip, pct); chip.style.color = "#fff"; tot.append(chip);
+    grid.append(el("span", "mdiv"), el("span", "ml mtot", "Mix wOBA"), svTrack(pct), el("span", "mv mn", pct == null ? "" : ordinal(pct)), tot);
+    // Avg EV by batted-ball type under the mix (Sean, 8 Oct 2026: "below it can you just show avg ev by FB LD and GB"): his percentile bar
+    // among the pool's qualifiers (the pool's own rank, else placed among them), his exit velocity on that type and the league's mean —
+    // m.evfb / evld / evgb (a window re-derives them from the day sums; "–" on a file built before 7 Oct 2026, and no block at all)
+    const EVT = [["evfb", "Fly balls"], ["evld", "Line drives"], ["evgb", "Ground balls"]];
+    if (EVT.some(([k]) => pv.m[k] != null)) {
+      grid.append(el("span", "mdiv"), el("span", "ml mtot", "Avg EV"), el("span"), el("span", "mh", "EV"), el("span", "mh", "Lg"));
+      for (const [k, name] of EVT) {
+        const v = pv.m[k], vals = pl.ref.map((q) => V(q).m[k]).filter((z) => z != null).sort((a, b) => a - b);
+        const pc = st && st.pct && st.pct[k] != null ? st.pct[k] : v != null && vals.length >= 20 ? insertPct(vals, v) : null;
+        const lg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+        grid.append(el("span", "ml", name), svTrack(pc), el("span", "mv", v == null ? "–" : v.toFixed(1)), el("span", "mv lg", lg == null ? "" : lg.toFixed(1)));
+      }
+    }
+    box.append(grid);
     return box;
   }
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
