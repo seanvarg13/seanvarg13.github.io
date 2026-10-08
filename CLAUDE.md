@@ -2500,3 +2500,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `ctx.mixev`, a frame without `mixc` still builds) and headless on Aranda's card with a hand-patched `data.js` (scratch `patch_mixev.py` / `mix.js`:
   the table, the colours, the window's "–", Wheeler's three Batted Ball rows). `steps=mlb` dispatched after the merge. The 7 Oct Savant pull for
   Aranda stands (2025 EV on LD 96.5 / FB 94.3 / GB 91.0; 2026 95.8 / 92.6 / 86.7).
+* **The bars Mix tab back, with Avg EV by type under it (Sean, 8 Oct 2026, an hour later: "go back to the prior percentile bar batted ball mix
+  table / And then below it can you just show avg ev by FB LD and GB")**: `renderMixTab` is the grid of the day before again (bucket · percentile
+  bar · share · Lg wOBA chip, dearest first, the Mix wOBA line) and under a divider an **Avg EV** block — Fly balls · Line drives · Ground balls,
+  each his percentile bar among the pool's qualifiers (`st.pct.evfb / evld / evgb`, else placed among `pl.ref`), his EV and the league's mean
+  (`.mv.lg`) — from `m.evfb / evld / evgb` (a window or split re-derives them from the day sums; no block on a file built before 7 Oct 2026).
+  The table of PR #453 and its CSS are gone; its build side (`mixc`, `ctx.mixev`, the day rows' `evbk` list, ~0.5 MB) stays built and unread —
+  strip it at a future trim of `days.js`. Aranda 2026: FB 92.6 (54th) · LD 95.8 (79th) · GB 86.7 (62nd) against 92.1 / 93.9 / 86.0.
