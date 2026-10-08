@@ -333,7 +333,8 @@ def load_js(path, prefix):
 # picked. The app reads it by SBX_KEYS' order, so append to the end only.
 SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evgb",
             "gb", "ld", "fb", "pu", "air", "pull", "pullp", "cent", "oppo", "mixw",
-            "swing", "zsw", "osw", "con", "zcon", "ocon", "whf"]
+            "swing", "zsw", "osw", "con", "zcon", "ocon", "whf",
+            "brfb"]   # barrels per fly ball, the Mix tab's HR / FB table (8 Oct 2026)
 
 
 def season_bb():
