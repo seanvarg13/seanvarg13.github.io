@@ -2568,3 +2568,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `meta.hitterMetrics` carries it; a file built before 7 Oct 2026 has no value, so the row is skipped there). Avg EV stays a Leaderboard column
   and in the build's card group; LD / GB EV stay on the Mix tab. The pick follows the finding above: FB EV tracks xwOBAcon at r .78 against Avg
   EV's .69 and repeats year to year nearly as well (.76 vs .79).
+* **The condensed bar: a Career row, the pills, position codes (Sean, 8 Oct 2026, from Kurtz's desktop bar: "add one more row and have it be their
+  career stats, and then heat map the woba and xwoba here", "make their position be the labels of like 1B, OF, DH, 2B, SS, etc")**: `condensedBar`'s
+  tiles are the Summary block's own cells — a row-label tile first (the year over "Career", `.pctile.lab`), then per stat the label, the season's
+  value and his career's (`.pcc`), the wOBA / xwOBA (nERA / xnERA) pills cloned over as `.pcchip` (a career nERA isn't built, so that cell is "–");
+  every value row a fixed height (22px desktop / 18px phone) so pills and plain numbers line up; `.pctiles.two` adds the label column. The position
+  line reads the codes (`playedLabel`: "DH, 1B • Bats: Left"), not the words. Both layouts; the desktop bar ~60 → ~82px, the phone's 141 → ~160.
