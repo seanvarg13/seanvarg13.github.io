@@ -9448,7 +9448,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     // the totals: his MLB years, a 162-game average, each club, each league
     if (mlb.length) {
       const n = new Set(mlb.map((l) => l.season)).size, tot = sbCombine(H, mlb);
-      row([`${n} Yr${n > 1 ? "s" : ""}`], tot, "tot first", { heat: post ? null : 0, record: !post });
+      row([`${n} Yr${n > 1 ? "s" : ""}`], tot, "tot first", { record: !post });   // no heat map on the totals rows (Sean, 8 Oct 2026)
       const G = +tot.c.G || 0, games = H ? G : mlb.reduce((a, l) => a + (l.season === 2020 ? 60 : 162), 0);   // a pitcher's per 162 team games
       if (!post && games) {
         const avg = { c: Object.assign({}, tot.c), rc: tot.c }, f = 162 / games;
@@ -9457,7 +9457,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
         if (H && tot.c.sab) avg.c.sab = tot.c.sab.map((v, i) => (v == null || i === 0 || i === 5 ? v : v * f));   // runs and WAR per 162 games; wRC+ / wOBA as they are
         if (H && tot.c.ext) avg.c.ext = [tot.c.ext[0] == null ? null : tot.c.ext[0] * f, tot.c.ext[1], tot.c.ext[2]];   // bWAR per 162; sprint as it is (HR/FB reads the unscaled line)
         if (H && tot.c.pw) avg.c.pw = tot.c.pw.map((v) => (v == null ? null : v * f));   // and his pitching WAR per 162
-        row(["162 Game Avg"], avg, "tot", { heat: 0 });
+        row(["162 Game Avg"], avg, "tot");
       }
       // each club: a traded year's clubs from the record's own club rows
       const rec = window.DRAFT_CAREER[String(p.id)], keysMLB = H ? RAW_H : RAW_P, byClub = new Map();
@@ -9475,7 +9475,12 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       if (!post && clubs.length) {
         // the club rows, then the league rows, each group after a thin gap — always shown, B-Ref's spacing (Sean, 8 Oct 2026: "dont make the by
         // league or team splits a drop down anymore, and format them exactly like this row spacing wise"; the fold was the same day's)
-        const gap = () => { const g = el("tr", "gap"), td = el("td"); td.colSpan = ncol; g.append(td); tbody.append(g); };
+        // a gap is cells like a row's, so the group rules run through it all the way down (Sean, 8 Oct 2026: "make it so the line break after
+        // like 9 yrs and whatnot carries all the way down")
+        const gap = () => {
+          const g = el("tr", "gap"), lead = el("td", "sbl f1"); lead.colSpan = 3 + (lev ? 1 : 0); g.append(lead);
+          for (const k of cols) g.append(el("td", gEnd.has(k) ? "ge" : null)); g.append(el("td")); tbody.append(g);
+        };
         gap();
         for (const [t, ls] of clubs) { const yrs = new Set(ls.map((x) => x.season)).size; row([`${t} (${yrs} Yr${yrs > 1 ? "s" : ""})`], sbCombine(H, ls), "tot sub"); }
         const byLg = new Map();
