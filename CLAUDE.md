@@ -2798,3 +2798,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   summed, FB EV weighted by fly balls, Barrel% by BBE, xHR/FB weighted by fly balls over the seasons that have one, Diff over those same seasons.
   CSS `.hrfbbox / .hrfbt` at the end of `styles.css`. Wood: 2025 34.8% vs 24.0% (+10.9), 2026 32.3% vs 27.8%; Cruz 2024-25 21.0 / 21.3% vs 22.1 /
   23.9%, 2026 33.3% vs 23.0%.
+* **Fly-ball power on the Leaderboard (Sean, 8 Oct 2026: "on the overall leaderboards page could you add FB EV, FB barrel rate, and then a
+  composite average score of the percentile of both and also add expected hr to fb ratio there too")**: four hitter columns, in the **Batted
+  ball** set right after Avg EV (`LB_SETS`; `state.lb.fbAdd` moves a saved list that still equals the old Batted ball set) and in
+  `LB_EXTRA_H` — **FB EV** (`evfb`) and **FB Brl%** (`brfb`, built since 8 Oct 2026, so 2026 only until a rescore), whose defs come from
+  `meta.hitterMetrics` (`lbOrder` now looks there too, since neither is a card metric); **FB Power** (`fbq`) = the two percentiles averaged
+  among the 300+ PA pool, a 0-100 number coloured as itself (`pct.fbq` in `pool()`'s hitter block and `placeIn`, `metricValue` reads
+  `st.pct.fbq`); **xHR/FB** (`xhrfb`) = the Mix tab's `xHrfb` on his view's FB EV / Barrel% / EV90 against that season's `hrfbLeague` —
+  `hrfbFill` in `V()` (beside `fantFill`), regular MLB seasons 2015 on, needing `hist/career.js` + `career-bb.js`, which `colsFor` asks for
+  only while the column is showing; `hxKey` puts their arrival in the pool / rank keys under the same condition, so a player page loading
+  career.js doesn't throw its pool away. SIDE_H defs, glossary entries; SHORT `evfb` / `brfb` read "FB EV" / "FB Brl".
