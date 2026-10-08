@@ -292,7 +292,36 @@ def load_js(path, prefix):
     return json.loads(raw[raw.index(prefix) + len(prefix):].rstrip().rstrip(";"))
 
 
+# the season table's other views on a hitter's page (Sean, 8 Oct 2026: "a bar that allows the ability to switch between the stats we currently
+# have, a batted ball quality table, a batted ball distribution table, and a plate discipline table"): every MLB hitter-season's numbers from
+# data.js and hist/mlb-*.js, [BBE, …SBX_KEYS] by id and season, in hist/career-bb.js — its own file, loaded only when one of those tables is
+# picked. The app reads it by SBX_KEYS' order, so append to the end only.
+SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evgb",
+            "gb", "ld", "fb", "pu", "air", "pull", "pullp", "cent", "oppo", "mixw",
+            "swing", "zsw", "osw", "con", "zcon", "ocon", "whf"]
+
+
+def season_bb():
+    out = {}
+    files = [HERE / "data.js"] + sorted((HERE / "hist").glob("mlb-*.js"))
+    for f in files:
+        raw = f.read_text(); ds = json.loads(raw[raw.index("= {") + 2:].rstrip().rstrip(";"))
+        if ds.get("kind"):
+            continue                                       # spring / postseason files are not season lines
+        y = int(ds["meta"]["season"] if "meta" in ds else ds["season"])
+        for p in ds["players"]:
+            if p.get("type") != "H":
+                continue
+            m, cx = p.get("m") or {}, p.get("ctx") or {}
+            r = lambda v, d=1: None if v is None or v != v else round(float(v), d)
+            out.setdefault(str(p["id"]), {})[str(y)] = [cx.get("BBE")] + [r(m.get(k), 3 if k == "mixw" else 1) for k in SBX_KEYS]
+    path = HERE / "hist" / "career-bb.js"
+    path.write_text("window.DRAFT_CAREER_BB = " + json.dumps({"keys": SBX_KEYS, "p": out}, separators=(",", ":")) + ";\n")
+    print(f"OK {len(out)} hitters' batted-ball / discipline seasons -> {path.name} ({path.stat().st_size / 1e6:.1f} MB)", flush=True)
+
+
 def main():
+    season_bb()
     idx = load_js(HERE / "hist" / "index.js", "window.DRAFT_INDEX = ")
     ids = [e["id"] for e in idx["players"]]
     teams = {t["id"]: t["abbreviation"] for y in range(2000, 2027)
@@ -464,4 +493,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    season_bb() if sys.argv[1:] == ["bb"] else main()

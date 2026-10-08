@@ -4814,3 +4814,14 @@ header.top .wordmark { display: none; }
    9px, a shade darker than the totals rows (B-Ref: #eee rows, #ddd gap), no column rules, the frozen Team edge running straight through */
 :root:root:root:root:root:root .sbt tr.gap td { height: 9px; padding: 0; background: color-mix(in srgb, var(--ink) 9%, var(--band2, var(--accent-2))) !important; border: 0 !important; }
 :root:root:root:root:root:root .sbt tr.gap td.f3 { border-right: 2px solid var(--ink) !important; }
+/* the season table's switch — Standard · Batted Ball Quality · Batted Ball Distribution · Plate Discipline — at the foot of the space over the
+   table (Sean, 8 Oct 2026: "put that bar ... somewhere towards the bottom of that white space"): boxy like the table, the picked one the button
+   blue; a phone's is a 2 × 2 grid across the screen. The space above it is the old gap less the bar, so the title sits where it did */
+:root:root:root:root:root:root #xboard .sblock:has(.sbviews) { margin-top: 140px; }
+:root[data-view="mobile"]:root:root:root:root:root #xboard .sblock:has(.sbviews) { margin-top: 64px; }
+:root:root:root:root:root:root .sbviews { display: inline-flex; align-self: flex-start; margin-bottom: 22px; border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--surface)); background: var(--surface-2); padding: 4px; gap: 4px; }
+:root:root:root:root:root:root .sbview { height: 34px; padding: 0 16px; border: 0; border-radius: 0; background: transparent; color: var(--ink); font: 500 13.5px var(--body); cursor: pointer; white-space: nowrap; }
+:root:root:root:root:root:root .sbview:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+:root:root:root:root:root:root .sbview.on { background: var(--btn, var(--accent-2)); color: var(--btn-ink, #fff); font-weight: 600 !important; }
+:root[data-view="mobile"]:root:root:root:root:root .sbviews { display: grid; grid-template-columns: 1fr 1fr; align-self: stretch; margin-bottom: 14px; }
+:root[data-view="mobile"]:root:root:root:root:root .sbview { height: 34px; padding: 0 6px; font-size: 13px; }

@@ -777,7 +777,7 @@
     // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
     // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
     // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
-    sc.onload = () => { loading.delete(src); if (!/\/(?:index|career|similar|minors|trends|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };
+    sc.onload = () => { loading.delete(src); if (!/\/(?:index|career|career-bb|similar|minors|trends|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };
     sc.onerror = () => { loading.delete(src); failed.add(src); render(); };
     document.head.append(sc);
   }
@@ -9143,6 +9143,54 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   window.addEventListener("resize", condAsk);
   /* ---------- the season table, Baseball-Reference's in the site's dress (Sean, 8 Oct 2026) ---------- */
   let sbMinors = false, sbKind = "reg";   // Show minors; Regular Season / Playoffs (this visit)
+  // a hitter's season table switches between the standard line and three Statcast tables (Sean, 8 Oct 2026: "a bar that allows the ability to
+  // switch between the stats we currently have, a batted ball quality table, a batted ball distribution table, and a plate discipline table",
+  // "towards the bottom of that white space"): the bar sits over the table's title; the numbers are hist/career-bb.js (build_career.py's
+  // season_bb), loaded the first time a Statcast table is picked; per device
+  let sbTable = (() => { try { const v = localStorage.getItem("draft2027.sbtable"); return ["std", "bbq", "bbd", "pd"].includes(v) ? v : "std"; } catch (e) { return "std"; } })();
+  const SB_VIEWS = [["std", "Standard", "Standard batting"], ["bbq", "Batted Ball Quality", "Batted ball quality"], ["bbd", "Batted Ball Distribution", "Batted ball distribution"], ["pd", "Plate Discipline", "Plate discipline"]];
+  // column → its key in the file (hi: higher is better, lo: lower, neither: no heat map); "pa" columns are weighted by PA in a sum, the rest by BBE
+  const SBX = { "Avg EV": { k: "ev", hi: 1 }, EV90: { k: "ev90", hi: 1 }, "Max EV": { k: "maxev", hi: 1, max: 1 }, "Hard-Hit%": { k: "hh", hi: 1 }, "Barrel%": { k: "brl", hi: 1 },
+    "Sweet-Spot%": { k: "ss", hi: 1 }, "Bat Speed": { k: "bs", hi: 1 }, "FB EV": { k: "evfb", hi: 1 }, "LD EV": { k: "evld", hi: 1 }, "GB EV": { k: "evgb", hi: 1 },
+    "GB%": { k: "gb", lo: 1 }, "LD%": { k: "ld", hi: 1 }, "FB%": { k: "fb", hi: 1 }, "PU%": { k: "pu", lo: 1 }, "Air%": { k: "air", hi: 1 }, "Pull Air%": { k: "pull", hi: 1 },
+    "Pull%": { k: "pullp", hi: 1 }, "Cent%": { k: "cent" }, "Oppo%": { k: "oppo" }, "Mix wOBA": { k: "mixw", hi: 1 },
+    "Swing%": { k: "swing", pa: 1 }, "Z-Swing%": { k: "zsw", hi: 1, pa: 1 }, "O-Swing%": { k: "osw", lo: 1, pa: 1 }, "Contact%": { k: "con", hi: 1, pa: 1 },
+    "Z-Contact%": { k: "zcon", hi: 1, pa: 1 }, "O-Contact%": { k: "ocon", hi: 1, pa: 1 }, "Whiff%": { k: "whf", lo: 1, pa: 1 } };
+  const SBX_COLS = {
+    bbq: ["BBE", "Avg EV", "EV90", "Max EV", "Hard-Hit%", "Barrel%", "Sweet-Spot%", "FB EV", "LD EV", "GB EV", "Bat Speed"],
+    bbd: ["BBE", "GB%", "LD%", "FB%", "PU%", "Air%", "Pull Air%", "Pull%", "Cent%", "Oppo%", "Mix wOBA"],
+    pd: ["PA", "K%", "BB%", "Swing%", "Z-Swing%", "O-Swing%", "Contact%", "Z-Contact%", "O-Contact%", "Whiff%"] };
+  const SBX_BRK = { bbq: ["Avg EV", "Hard-Hit%", "FB EV", "Bat Speed", "Pos"], bbd: ["GB%", "Air%", "Pull%", "Mix wOBA", "Pos"], pd: ["K%", "Swing%", "Contact%", "Pos"] };
+  const SBX_TIP = { BBE: "Batted balls tracked by Statcast", EV90: "90th-percentile exit velocity", "Sweet-Spot%": "Batted balls launched 8-32°", "FB EV": "Exit velocity on fly balls",
+    "LD EV": "Exit velocity on line drives", "GB EV": "Exit velocity on ground balls", "Bat Speed": "Average bat speed on his competitive swings (2023 on)", "Air%": "Line drives and fly balls (no popups)",
+    "Pull Air%": "Balls in the air pulled", "Mix wOBA": "The league's wOBA for each kind of ball he hit, averaged over his balls in play", "O-Swing%": "Swings at pitches out of the zone (chase)",
+    "Contact%": "Contact per swing", "Whiff%": "Misses per swing" };
+  const sbxReady = () => !!window.DRAFT_CAREER_BB;
+  // his season's numbers from the file as {bbe, ev, …}, or null
+  function sbxOf(id, y) {
+    const B = window.DRAFT_CAREER_BB, a = B && B.p[String(id)] && B.p[String(id)][String(y)];
+    if (!a) return null; const o = { bbe: a[0] }; B.keys.forEach((k, i) => { o[k] = a[i + 1]; }); return o;
+  }
+  // a sum of lines' numbers: rates weighted by BBE (or PA), Max EV the max; blank when a piece with plate appearances has none (a traded
+  // season's clubs have no Statcast lines of their own)
+  function sbxCombine(lines) {
+    const has = lines.filter((l) => (+l.c.PA || 0) > 0); if (!has.length || !has.every((l) => l.bx)) return null;
+    const o = { bbe: has.reduce((a, l) => a + (+l.bx.bbe || 0), 0) };
+    for (const d of Object.values(SBX)) {
+      let n = 0, w = 0, mx = null;
+      for (const l of has) { const v = l.bx[d.k]; if (v == null) continue; if (d.max) { mx = mx == null ? v : Math.max(mx, v); continue; } const ww = d.pa ? +l.c.PA || 0 : +l.bx.bbe || 0; n += v * ww; w += ww; }
+      o[d.k] = d.max ? mx : w ? n / w : null;
+    }
+    return o;
+  }
+  // the heat map's pool for a Statcast column: that season's qualified hitters (300+ PA, 110 in 2020), from the two files
+  const SBX_POOLS = new Map();
+  function sbxPool(y, key) {
+    const id0 = y + ":" + key; if (SBX_POOLS.has(id0)) return SBX_POOLS.get(id0);
+    const C = window.DRAFT_CAREER || {}, B = window.DRAFT_CAREER_BB, out = [];
+    if (B) { const i = B.keys.indexOf(key) + 1; for (const id in B.p) { const a = B.p[id][String(y)]; if (!a || a[i] == null) continue; const r = ((C[id] || {}).H || []).find((x) => x[0] === y); if (r && (+r[3] || 0) >= (y === 2020 ? 110 : 300)) out.push(+a[i]); } }
+    out.sort((a, b) => a - b); SBX_POOLS.set(id0, out); return out;
+  }
   // his postseason lines, MLB's official ones fetched in the browser like the bio (Sean, 8 Oct 2026: "add in the postseason and regular season
   // ability thing"): type+id → null while it loads, false if it failed, else [{season, team, c}] oldest first, a traded October as TOT
   const TEAM_BY_ID = Object.fromEntries(Object.entries(TEAM_ID).map(([k, v]) => [v, k]));
@@ -9203,6 +9251,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   function sbVal(H, l, k) {
     const c = l.c, a = c.adv || {};
     if (H) {
+      if (k === "BBE") return l.bx ? l.bx.bbe : null;
+      if (SBX[k]) return l.bx ? l.bx[SBX[k].k] : null;
       const r = l.rc || c;   // rates from the unscaled line (the 162-game average scales only the counts)
       if (k === "wOBA") return sbWoba(l); if (k === "xwOBA") return a.xwoba;
       if (k === "BB%") return +r.PA ? 100 * r.BB / r.PA : null;
@@ -9227,7 +9277,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   }
   const sbRuns = (v) => { const r = Math.round(10 * v) / 10; return (r < 0 ? "−" : "") + Math.abs(r).toFixed(1); };   // WAR in tenths
   // rates carry their % sign in this table (Sean, 8 Oct 2026: "for walk and k percentages can you add in the % in the tables")
-  const sbFmt = (k, v) => (v == null || v === "" || (typeof v === "number" && isNaN(v)) ? "–" : ["AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA", "ISO", "BABIP"].includes(k) ? fmtX(+v)
+  const sbFmt = (k, v) => (v == null || v === "" || (typeof v === "number" && isNaN(v)) ? "–" : k === "Mix wOBA" ? fmtX(+v) : k === "BBE" ? String(Math.round(+v))
+    : ["Avg EV", "EV90", "Max EV", "FB EV", "LD EV", "GB EV", "Bat Speed"].includes(k) ? (+v).toFixed(1) : ["AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA", "ISO", "BABIP"].includes(k) ? fmtX(+v)
     : ["ERA", "FIP", "WHIP"].includes(k) ? (+v).toFixed(2) : k === "wRC+" ? String(Math.round(+v)) : ["fWAR", "bWAR"].includes(k) ? sbRuns(+v) : k === "Sprint" ? (+v).toFixed(1)
     : /%$|\/FB$/.test(k) ? (+v).toFixed(1) + "%" : k === "IP" ? String(v) : String(v));
   // a sum of lines: counts added, the rates recomputed, our numbers weighted by PA / BF (GB% too, which combineLines leaves out)
@@ -9322,7 +9373,19 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   const SB_RECORD_LO = new Set(["ERA", "WHIP"]);
   function seasonBlock(p, o) {
     const H = p.type === "H", box = el("section", "sblock");
-    const hd = el("div", "sbhead"); hd.append(el("h3", "sbtitle", H ? "Standard batting" : "Standard pitching"));
+    const view = H ? sbTable : "std";
+    if (H) {   // the table switch, at the foot of the space over the table (Sean, 8 Oct 2026)
+      const bar = el("div", "sbviews");
+      for (const [k, lab] of SB_VIEWS) {
+        const bt = el("button", "sbview" + (view === k ? " on" : ""), lab); bt.type = "button"; bt.setAttribute("aria-pressed", String(view === k));
+        bt.addEventListener("click", (e) => { e.stopPropagation(); if (sbTable === k) return; sbTable = k; try { localStorage.setItem("draft2027.sbtable", k); } catch (er) { /* private window */ } if (k !== "std") sbKind = "reg"; render(); });
+        bar.append(bt);
+      }
+      box.append(bar);
+    }
+    const sx = view !== "std";   // a Statcast table: regular season only, read from hist/career-bb.js
+    if (sx) ensureScript("hist/career-bb.js", sbxReady);
+    const hd = el("div", "sbhead"); hd.append(el("h3", "sbtitle", H ? SB_VIEWS.find((v) => v[0] === view)[2] : "Standard pitching"));
     const mi = el("button", "linkbtn sblink", sbMinors ? "Hide minors" : "Show minors"); mi.type = "button";
     mi.addEventListener("click", (e) => { e.stopPropagation(); sbMinors = !sbMinors; if (sbMinors) ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS); render(); });
     const gl = el("button", "linkbtn sblink", "Glossary"); gl.type = "button"; gl.addEventListener("click", (e) => { e.stopPropagation(); state.textModal = { title: "Stat glossary", build: renderGlossary }; render(); });
@@ -9332,19 +9395,21 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const tabs = el("div", "sbtabs");   // Regular Season / Playoffs, B-Ref's tabs on the table's top edge (Sean, 8 Oct 2026)
     for (const [k, lab] of [["reg", "Regular Season"], ["post", "Playoffs"]]) {
       const bt = el("button", "sbtab" + (sbKind === k ? " on" : ""), lab); bt.type = "button"; bt.setAttribute("aria-pressed", String(sbKind === k));
-      bt.addEventListener("click", (e) => { e.stopPropagation(); if (sbKind !== k) { sbKind = k; render(); } }); tabs.append(bt);
+      bt.addEventListener("click", (e) => { e.stopPropagation(); if (sbKind !== k) { sbKind = k; if (k === "post" && sbTable !== "std") { sbTable = "std"; try { localStorage.setItem("draft2027.sbtable", "std"); } catch (er) { /* private window */ } } render(); } }); tabs.append(bt);
     }
     box.append(tabs);
     ensureScript("hist/career.js", careerReady);
     if (!post && !careerReady()) { box.append(el("p", "note", failed.has("hist/career.js") ? "hist/career.js hasn't been built — run build_career.py" : "Loading career stats…")); return box; }
+    if (sx && !sbxReady()) { box.append(el("p", "note", failed.has("hist/career-bb.js") ? "hist/career-bb.js hasn't been built — run build_career.py bb" : "Loading Statcast seasons…")); return box; }
     if (!post && sbMinors) ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS);
     const postState = post ? postLines(p) : undefined;   // null while MLB's record loads, false if it failed, else his postseason lines
     const lines = post ? [] : (rawLines(p) || []), mlb = post ? (Array.isArray(postState) ? postState : []) : lines.filter((l) => l.mlb).sort((a, b) => a.season - b.season);
     const LV = ["AAA", "AA", "A+", "A", "A-", "Rk"], lvName = (l) => ({ "A(Adv)": "A+", "A(Full)": "A", "A(Short)": "A-", ROK: "Rk" }[l] || l);
     const milb = !post && sbMinors && window.DRAFT_MINORS ? lines.filter((l) => !l.mlb && !l.combo && !l.team === false && l.team).sort((a, b) => a.season - b.season || LV.indexOf(lvName(a.level)) - LV.indexOf(lvName(b.level))) : [];
-    const cols = post ? (H ? SB_H.filter((k) => !["wOBA", "xwOBA", ...SB_FG].includes(k)) : SB_P.filter((k) => !["FIP", "Whiff%", "Strike%", "GB%"].includes(k))) : (H ? SB_H : SB_P), b = bio(p.id);
+    if (sx) for (const l of mlb) l.bx = sbxOf(p.id, l.season);
+    const cols = sx ? SBX_COLS[view] : post ? (H ? SB_H.filter((k) => !["wOBA", "xwOBA", ...SB_FG].includes(k)) : SB_P.filter((k) => !["FIP", "Whiff%", "Strike%", "GB%"].includes(k))) : (H ? SB_H : SB_P), b = bio(p.id);
     // the group rules: a column whose next column starts a group ends one (FanGraphs' heavier lines)
-    const allCols = [...cols, "Pos"], brk = new Set(SB_BRK[p.type] || []); if (post && H) brk.add("SB");   /* no Sprint in October: SB keeps its own group */
+    const allCols = [...cols, "Pos"], brk = new Set(sx ? SBX_BRK[view] : SB_BRK[p.type] || []); if (post && H) brk.add("SB");   /* no Sprint in October: SB keeps its own group */
     const gEnd = new Set(allCols.filter((k, i) => i + 1 < allCols.length && brk.has(allCols[i + 1])));
     const ageIn = (y) => {
       if (b && b.born) { const d = new Date(b.born + "T12:00:00Z"); if (!isNaN(d)) { let a = y - d.getUTCFullYear(); if (d.getUTCMonth() > 5 || (d.getUTCMonth() === 5 && d.getUTCDate() > 30)) a--; return a; } }
@@ -9357,7 +9422,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const lev = milb.length > 0;
     for (const h of ["Season", "Age", "Team", ...(lev ? ["Lev"] : []), ...cols, "Pos"]) {
       const th = el("th", ["Season", "Team", "Lev", "Pos"].includes(h) ? "l" : null, h); if (h === "Season") th.classList.add("f1"); if (h === "Age") th.classList.add("f2"); if (h === "Team") th.classList.add("f3");
-      if (gEnd.has(h)) th.classList.add("ge"); if (H && SB_TIP[h]) th.title = SB_TIP[h];
+      if (gEnd.has(h)) th.classList.add("ge"); if (H && (SB_TIP[h] || SBX_TIP[h])) th.title = SB_TIP[h] || SBX_TIP[h];
       tr.append(th);
     }
     thead.append(tr); table.append(thead);
@@ -9380,10 +9445,11 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       else { trr.append(cell(lead[0], "l f1"), cell(lead[1] == null ? "" : String(lead[1]), "f2"), cell(lead[2] || "", "l f3")); if (lev) trr.append(cell(lead[3] || "", "l")); }
       for (const k of cols) {
         const v = l ? sbVal(H, l, k) : null, td = cell(sbFmt(k, v));
-        if (H && opts.heat != null && SB_HEAT.has(k) && v != null && !isNaN(+v)) {
-          const pool = sbPool(opts.heat)[k];
+        const xd = SBX[k];
+        if (H && opts.heat != null && (SB_HEAT.has(k) || (xd && (xd.hi || xd.lo))) && v != null && !isNaN(+v)) {
+          const pool = xd ? (xd.lo ? sbxPool(opts.heat, xd.k).map((x) => -x).reverse() : sbxPool(opts.heat, xd.k)) : sbPool(opts.heat)[k];
           if (pool && pool.length >= 20) {   /* the whole cell filled in its percentile colour, not a pill (Sean, 8 Oct 2026) */
-            const pc = insertPct(pool, +v), sty = pctStyle(pc);
+            const pc = insertPct(pool, xd && xd.lo ? -v : +v), sty = pctStyle(pc);
             td.classList.add("sbheat"); td.style.setProperty("background", sty.bg, "important"); td.style.setProperty("color", sty.fg, "important");
             td.title = ordinal(Math.round(pc)) + " percentile among " + (opts.heat ? opts.heat + "'s" : "every 2015-on") + " qualified hitters";
           }
@@ -9422,6 +9488,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
           AVG: o2.AB ? o2.H / o2.AB : null, OBP: (o2.AB + o2.BB + (o2.HBP || 0) + (o2.SF || 0)) ? (o2.H + o2.BB + (o2.HBP || 0)) / (o2.AB + o2.BB + (o2.HBP || 0) + (o2.SF || 0)) : null, SLG: o2.AB ? o2.TB / o2.AB : null };
         l.c.OPS = l.c.OBP != null && l.c.SLG != null ? l.c.OBP + l.c.SLG : null;
         l.c.adv = { woba: m.woba, xwoba: m.xwd != null ? m.xwd : m.xwoba_dir };
+        if (sx) { l.bx = { bbe: (V(p).ctx || {}).BBE }; for (const d of Object.values(SBX)) l.bx[d.k] = m[d.k]; }
       } else {
         const o2 = oo, ip = o2.OUTS / 3;
         l.c = { W: o2.W, L: o2.L, ERA: o2.OUTS ? 27 * o2.ER / o2.OUTS : null, G: o2.G, GS: o2.GS, IP: fmtIP(ip), H: o2.H, HR: o2.HR, BB: o2.BB, K: o2.K, BF: o2.BF, WHIP: ip ? (o2.H + o2.BB) / ip : null,
@@ -9450,6 +9517,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     // the totals: his MLB years, a 162-game average, each club, each league
     if (mlb.length) {
       const n = new Set(mlb.map((l) => l.season)).size, tot = sbCombine(H, mlb);
+      if (sx) tot.bx = sbxCombine(mlb);
       row([`${n} Yr${n > 1 ? "s" : ""}`], tot, "tot first", { record: !post });   // no heat map on the totals rows (Sean, 8 Oct 2026)
       const G = +tot.c.G || 0, games = H ? G : mlb.reduce((a, l) => a + (l.season === 2020 ? 60 : 162), 0);   // a pitcher's per 162 team games
       if (!post && games) {
@@ -9459,6 +9527,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
         if (H && tot.c.sab) avg.c.sab = tot.c.sab.map((v, i) => (v == null || i === 0 || i === 5 ? v : v * f));   // runs and WAR per 162 games; wRC+ / wOBA as they are
         if (H && tot.c.ext) avg.c.ext = [tot.c.ext[0] == null ? null : tot.c.ext[0] * f, tot.c.ext[1], tot.c.ext[2]];   // bWAR per 162; sprint as it is (HR/FB reads the unscaled line)
         if (H && tot.c.pw) avg.c.pw = tot.c.pw.map((v) => (v == null ? null : v * f));   // and his pitching WAR per 162
+        if (tot.bx) avg.bx = Object.assign({}, tot.bx, { bbe: Math.round((+tot.bx.bbe || 0) * f) });   // batted balls per 162; the rates as they are
         row(["162 Game Avg"], avg, "tot");
       }
       // each club: a traded year's clubs from the record's own club rows
@@ -9486,11 +9555,11 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
           const rest = el("td"); rest.colSpan = ncol - 3; g.append(rest); tbody.append(g);
         };
         gap();
-        for (const [t, ls] of clubs) { const yrs = new Set(ls.map((x) => x.season)).size; row([`${t} (${yrs} Yr${yrs > 1 ? "s" : ""})`], sbCombine(H, ls), "tot sub"); }
+        for (const [t, ls] of clubs) { const yrs = new Set(ls.map((x) => x.season)).size; const cl = sbCombine(H, ls); if (sx) cl.bx = sbxCombine(ls); row([`${t} (${yrs} Yr${yrs > 1 ? "s" : ""})`], cl, "tot sub"); }
         const byLg = new Map();
         for (const [t, ls] of clubs) { const lg = leagueOf(t); (byLg.get(lg) || byLg.set(lg, []).get(lg)).push(...ls); }
         gap();
-        for (const [lg, ls] of byLg) { const yrs = new Set(ls.map((x) => x.season)).size; row([`${lg} (${yrs} Yr${yrs > 1 ? "s" : ""})`], sbCombine(H, ls), "tot sub"); }
+        for (const [lg, ls] of byLg) { const yrs = new Set(ls.map((x) => x.season)).size; const cl = sbCombine(H, ls); if (sx) cl.bx = sbxCombine(ls); row([`${lg} (${yrs} Yr${yrs > 1 ? "s" : ""})`], cl, "tot sub"); }
       }
     }
     table.append(tbody);
