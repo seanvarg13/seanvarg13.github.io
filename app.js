@@ -9293,7 +9293,11 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
         const v = l ? sbVal(H, l, k) : null, td = cell(sbFmt(k, v));
         if (H && opts.heat != null && SB_HEAT.has(k) && v != null && !isNaN(+v)) {
           const pool = sbPool(opts.heat)[k];
-          if (pool && pool.length >= 20) { const pc = insertPct(pool, +v), chip = el("span", "uchip sbchip", td.textContent); paintBar(chip, pc); chip.style.color = "#fff"; chip.title = ordinal(Math.round(pc)) + " percentile among " + (opts.heat ? opts.heat + "'s" : "every 2015-on") + " qualified hitters"; td.textContent = ""; td.append(chip); }
+          if (pool && pool.length >= 20) {   /* the whole cell filled in its percentile colour, not a pill (Sean, 8 Oct 2026) */
+            const pc = insertPct(pool, +v), sty = pctStyle(pc);
+            td.classList.add("sbheat"); td.style.setProperty("background", sty.bg, "important"); td.style.setProperty("color", sty.fg, "important");
+            td.title = ordinal(Math.round(pc)) + " percentile among " + (opts.heat ? opts.heat + "'s" : "every 2015-on") + " qualified hitters";
+          }
         }
         if (opts.bold && best[k] != null && v != null && Number(v) === best[k]) td.classList.add("hi");
         if (gEnd.has(k)) td.classList.add("ge");

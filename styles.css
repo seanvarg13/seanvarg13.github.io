@@ -4741,4 +4741,4 @@ header.top .wordmark { display: none; }
 /* the season table, 8 Oct 2026 evening (Sean: "make the line breaks extend to the headers too", "heat map them"): the group rules run
    through the blue header and the totals rows in the ink, as they do on the rows; wOBA / xwOBA / Sprint as small percentile pills */
 :root:root:root:root:root:root .sbt th.ge, :root:root:root:root:root:root .sbt tr.tot td.ge, :root:root:root:root:root:root .sbt th.f3 { border-right: 2px solid var(--ink); }
-:root:root:root:root:root:root .sbt .uchip.sbchip { display: inline-block; min-width: 3.1em; padding: 1px 6px; border-radius: 999px; font-weight: 700; line-height: 1.3; text-align: center; box-sizing: border-box; font-variant-numeric: tabular-nums; text-shadow: 0 0 2px rgba(0,0,0,.35); }
+:root:root:root:root:root:root .sbt td.sbheat { font-weight: 700; }   /* wOBA / xwOBA / Sprint: the cell itself is the heat map */
