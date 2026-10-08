@@ -2755,3 +2755,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   loaded only when a Statcast table is picked (value-free in `ensureScript`'s list). Append keys at the end of `SBX_KEYS` only. Bat speed starts 2023,
   EV by batted-ball type 2023. Pitchers' pages have no bar yet. The space over the table is 140px + the bar (64px + the 2 × 2 bar on a phone),
   so the title sits about where it did.
+* **No white line under the totals' gaps (Sean, 8 Oct 2026: "you added a white line underneath the spacing on the totals while baseball reference
+  doesn't have that")**: each totals row draws its white rule on its top edge (`border-collapse: separate`), so the row right after a gap showed one
+  under the strip; `.sbt tr.gap + tr td` has no top border now.
