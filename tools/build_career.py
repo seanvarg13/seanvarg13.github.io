@@ -65,6 +65,36 @@ def bref_war(fresh, kind="bat"):
     return out or None
 
 
+def fg_fly(y, fresh):
+    """{mlbam id: fly balls} for a season from FanGraphs' leaderboard — their FB count (infield flies included, every home run a fly ball
+    whatever its launch angle), so the season table's HR/FB is FanGraphs' own (Sean, 8 Oct 2026: James Wood's "hr to fb ratio was 30% last year
+    and 26% this year ... those are what fangraphs states"; MLB's counts are Statcast's stringer calls, which make more line drives and fewer fly
+    balls — Wood 2025: 86 against FanGraphs' 101). Cached in .cache/sabr/fg-fb-<y>.json; this season refetched after 18 hours. None when it
+    can't be had (the caller falls back to MLB's count)."""
+    f = SABR / f"fg-fb-{y}.json"
+    if f.exists() and (not fresh or time.time() - f.stat().st_mtime < 18 * 3600):
+        try:
+            return json.loads(f.read_text())
+        except ValueError:
+            pass
+    try:
+        r = requests.get("https://www.fangraphs.com/api/leaders/major-league/data", headers=UA, timeout=120,
+                         params={"pos": "all", "stats": "bat", "lg": "all", "qual": 0, "season": y, "season1": y, "type": 2,
+                                 "pageitems": 5000, "ind": 0, "month": 0})
+        r.raise_for_status(); rows = r.json().get("data") or []
+    except Exception as e:
+        print(f"  FanGraphs fly balls {y} unavailable:", e, flush=True)
+        try:
+            return json.loads(f.read_text()) if f.exists() else None
+        except ValueError:
+            return None
+    out = {str(int(x["xMLBAMID"])): int(x["FB"]) for x in rows if x.get("xMLBAMID") and x.get("FB") is not None}
+    if out:
+        SABR.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps(out, separators=(",", ":")))
+    return out or None
+
+
 def fly_balls(st):
     """Fly balls + popups, MLB's batted-ball calls (FanGraphs' HR/FB counts infield flies as fly balls too)."""
     try:
@@ -349,6 +379,22 @@ def main():
 
     out = {}
     now = int(cur["meta"]["season"])
+    fgfb = {}                                              # season -> {player id: FanGraphs' fly balls}, fetched on first use
+    def fg_for(y):
+        if y not in fgfb:
+            fgfb[y] = fg_fly(y, fresh=y >= now) or {}
+        return fgfb[y]
+    def fb_for(pid, y, club, fb_by):
+        """FanGraphs' fly balls for his season; a traded season's club gets MLB's club count scaled to FanGraphs' total. MLB's count if
+        FanGraphs has none."""
+        g, m, tot = fg_for(y).get(str(pid)), fb_by.get((y, club)), fb_by.get((y, "TOT"))
+        if g is None or m is None or not tot:
+            return m
+        return round(m * g / tot)
+    def fb_season(pid, y, team, fb_by):
+        """his whole season's fly balls: FanGraphs' (a traded season's combined line too), else MLB's"""
+        g = fg_for(y).get(str(pid))
+        return g if g is not None else fb_by.get((y, team))
     sabr = {}                                              # season -> {player id: [wRC+, BsR, Off, Def, WAR, wOBA]}, fetched on first use
     def sabr_for(y):
         if y not in sabr:
@@ -433,7 +479,7 @@ def main():
                         rec[t + "T"] = sorted(clubs, key=lambda r: (r[0], r[1]))
                         if t == "H":
                             for r in clubs:
-                                ht_ext[(str(p["id"]), r[0], r[1])] = [bw.get(f"{p['id']}|{r[0]}", {}).get(r[1]), None, fb_by.get((r[0], r[1]))]
+                                ht_ext[(str(p["id"]), r[0], r[1])] = [bw.get(f"{p['id']}|{r[0]}", {}).get(r[1]), None, fb_for(p["id"], r[0], r[1], fb_by)]
                     rows = [by[k] for k in sorted(by)]
                     for r in rows:
                         m = ours.get((p["id"], r[0], t))
@@ -443,7 +489,7 @@ def main():
                         if t == "H":
                             r.append(pos_by.get(r[0], ""))     # then where he played — the app reads a row by fixed index (8 Oct 2026)
                             r.append(sabr_for(r[0]).get(str(p["id"])))   # then FanGraphs' wRC+ / BsR / Off / Def / WAR / wOBA (or null)
-                            r.append([bw.get(f"{p['id']}|{r[0]}", {}).get(""), (m or {}).get("spd"), fb_by.get((r[0], r[1]))])   # then bWAR, sprint speed, fly balls
+                            r.append([bw.get(f"{p['id']}|{r[0]}", {}).get(""), (m or {}).get("spd"), fb_season(p["id"], r[0], r[1], fb_by)])   # then bWAR, sprint speed, fly balls
                             r.append(pw_for(p["id"], r[0]))   # then his pitching WAR [FanGraphs, B-Ref] that season, or null
                     rec[t] = rows
             if rec:
