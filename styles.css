@@ -4771,3 +4771,21 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .pthd { font-size: 24px; }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate.pbio .pbsum { align-self: stretch; width: 100%; box-sizing: border-box; }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .phtog > *, :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .phtog .segbtn { width: 100%; box-sizing: border-box; }
+/* the condensed bar's layout as the page's own header (Sean, 8 Oct 2026: "make this the default header ... add their headshot on the far left ... in a
+   row below ... their height weight and birthday age"; no headshot on a phone; Back on a row of its own above it when the page came off a list) */
+:root:root:root:root:root:root .phcond.inflow { position: relative; top: auto; left: auto; right: auto; z-index: auto; box-shadow: none; overflow: visible; }
+:root:root:root:root:root:root .phcond.inflow.desk { padding: 14px min(6vw, 96px); gap: 20px; }
+:root:root:root:root:root:root .phcond.inflow:not(.desk) { padding: 10px 12px 8px; gap: 3px; }
+:root:root:root:root:root:root .phcond.inflow .pcphoto { flex: none; width: 72px; height: 96px; overflow: hidden; border-radius: 4px; background: var(--surface-2); }
+:root:root:root:root:root:root .phcond.inflow .pcphoto .mug { width: 100%; height: 100%; object-fit: cover; border-radius: 0; margin: 0; }
+:root:root:root:root:root:root .phcond.inflow.desk .pcname { font-size: 28px; }
+:root:root:root:root:root:root .phcond.inflow .pcbio { font-size: 13px; opacity: .92; }
+:root:root:root:root:root:root .phcond.inflow:not(.desk) .pcname { font-size: 22px; }
+:root:root:root:root:root:root .phcond.inflow:not(.desk) .pcline { white-space: normal; font-size: 12.5px; }
+:root:root:root:root:root:root .phcond.inflow:not(.desk) .pctiles { margin-top: 4px; padding-top: 4px; }
+:root:root:root:root:root:root .phcond.inflow .pcctlcol { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin-left: auto; flex: none; }
+:root:root:root:root:root:root .phcond.inflow .pcctlcol .pcctl { margin-left: 0; }
+:root:root:root:root:root:root .phcond.inflow .mrank.inctl { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; margin: 0; }
+:root:root:root:root:root:root .phcond.inflow:not(.desk) .mrank.inctl { justify-content: flex-start; }
+:root:root:root:root:root:root .pagehead .pbbackrow { display: flex; align-items: center; padding: 6px min(6vw, 96px); background: var(--surface); border-bottom: 1px solid var(--line-soft); }
+:root[data-view="mobile"]:root:root:root:root:root .pagehead .pbbackrow { padding: 6px 12px; }
