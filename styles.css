@@ -4832,3 +4832,16 @@ header.top .wordmark { display: none; }
    different table selections"): 140 → 350px, a phone's 64 → 160 */
 :root:root:root:root:root:root #xboard .sblock:has(.sbviews) { margin-top: 350px; }
 :root[data-view="mobile"]:root:root:root:root:root #xboard .sblock:has(.sbviews) { margin-top: 160px; }
+/* HR / FB by season on the Mix tab (Sean, 8 Oct 2026): every MLB season in the card-table dress, the rates heat-mapped among that season's
+   qualified hitters (the whole cell), Diff signed in red (more homers than his contact) / blue (fewer), a bold Career row */
+:root:root:root:root:root:root .hrfbbox { margin-top: 18px; }
+:root:root:root:root:root:root .hrfbscroll { overflow-x: auto; max-width: 100%; }
+:root:root:root:root:root:root table.hrfbt { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root table.hrfbt td, :root:root:root:root:root:root table.hrfbt th { text-align: right; white-space: nowrap; padding: 5px 8px; }
+:root:root:root:root:root:root table.hrfbt td.l, :root:root:root:root:root:root table.hrfbt th.l { text-align: left; }
+:root:root:root:root:root:root table.hrfbt td.hheat { font-weight: 700 !important; }
+:root:root:root:root:root:root table.hrfbt td.pos { color: #b3261e; font-weight: 600 !important; }
+:root:root:root:root:root:root table.hrfbt td.neg { color: #2f5fa8; font-weight: 600 !important; }
+:root:root:root:root:root:root table.hrfbt tr.cur td { background: color-mix(in srgb, var(--accent-2) 14%, var(--surface)); }
+:root:root:root:root:root:root table.hrfbt tr.tot td { font-weight: 700 !important; border-top: 2px solid var(--ink); }
+:root:root:root:root:root:root .hrfbbox .rollhd { padding-left: 3px; }

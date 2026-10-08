@@ -2783,3 +2783,16 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   23.7%, 2025 34.8% (31 / 89), 2026 32.3% (30 / 93); Judge 2025 30.6%, Ohtani 2025 32.4%, Cruz 2025 21.3%. League 12.9-13.3% 2024-26 (FanGraphs'
   run ~1.5-2 points lower: they call more balls fly balls). Statcast's first two seasons call far more homers liners (2015: 2,174; 2016:
   1,869; 2021 on: 424-602), which is why they're counted — it keeps those seasons' ratios consistent with their own fly-ball calls.
+* **HR / FB by season on the Mix tab (Sean, 8 Oct 2026: "include a table that shows a players hr to fb ratio by year as well as their avg fb ev and
+  barrel rate and then their expected hr to fb ratio ... regardless of what year is currently filtered on show all years")**: under the mix and the
+  EV / Barrel% blocks, `hrfbTable(p)` — every MLB season of his (Season · Team · HR · FB · HR/FB · FB EV · Barrel% · xHR/FB · Diff, then Career),
+  whatever season or filter the card is on, from `hist/career.js` (HR, the Savant fly-ball count with his line-drive homers) and `hist/career-bb.js`
+  (FB EV, Barrel%, EV90, BBE), both loaded by the table. **xHR/FB** (`xHrfb` / `XHRFB`) = that season's league HR/FB moved by his contact against
+  the league's (`hrfbLeague(y)`: FB-weighted over the season's 300+ PA hitters, 110 in 2020): **+0.779 per mph of FB EV and +0.738 per Barrel% point**
+  from 2023 (where EV by type exists), **+1.037 per Barrel% point and +0.499 per mph of EV90** before. Fitted over every 300+ PA hitter-season,
+  each centred on its season so the ball's year doesn't read as his (scratch `xhrfb.js`): r .862 / rmse 3.0 points (2023 on), .860 / 3.4 (all);
+  next season's HR/FB r .68 from xHR/FB against .65 from his own HR/FB. HR/FB, FB EV, Barrel% and xHR/FB are heat-mapped (whole cell) among
+  that season's qualified hitters on seasons of 100+ PA; Diff = HR/FB − xHR/FB, red when he out-homered his contact, blue under. Career: HR / FB
+  summed, FB EV weighted by fly balls, Barrel% by BBE, xHR/FB weighted by fly balls over the seasons that have one, Diff over those same seasons.
+  CSS `.hrfbbox / .hrfbt` at the end of `styles.css`. Wood: 2025 34.8% vs 24.0% (+10.9), 2026 32.3% vs 27.8%; Cruz 2024-25 21.0 / 21.3% vs 22.1 /
+  23.9%, 2026 33.3% vs 23.0%.

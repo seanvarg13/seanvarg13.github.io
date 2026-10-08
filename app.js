@@ -6845,7 +6845,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       const n = c.slice(0, 9).reduce((a, b) => a + (b || 0), 0); return n ? { c: c.map((v) => v || 0), n } : null;
     };
     const mine = cnt(p);
-    if (!x || !x.v || !mine) return el("p", "note", "The batted-ball mix is built from this season's data on — this season's file doesn't have it yet.");
+    if (!x || !x.v || !mine) { const w = el("div"); w.append(el("p", "note", "The batted-ball mix is built from this season's data on — this season's file doesn't have it yet."), hrfbTable(p)); return w; }
     const use = MIX_B.map((_, i) => i < mine.c.length);
     const val = (b) => (b === "x" ? x.v.x ?? ((x.v.ld_x || 0) + (x.v.fb_x || 0)) / 2 : x.v[b]);
     const others = pl.ref.map(cnt).filter(Boolean);
@@ -6892,6 +6892,84 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     typeBlock("Avg EV", "EV", [["evfb", "Fly balls"], ["evld", "Line drives"], ["evgb", "Ground balls"]]);
     typeBlock("Barrel%", "%", [["brfb", "Fly balls"], ["brld", "Line drives"], ["brgb", "Ground balls"]]);
     box.append(grid);
+    const w = el("div"); w.append(box, hrfbTable(p));
+    return w;
+  }
+  // HR/FB by season under the mix (Sean, 8 Oct 2026: "include a table that shows a players hr to fb ratio by year as well as their avg fb ev and
+  // barrel rate and then their expected hr to fb ratio ... regardless of what year is currently filtered on show all years"): every MLB season of
+  // his from hist/career.js (HR, Savant's fly balls with his line-drive homers) and hist/career-bb.js (FB EV, Barrel%, EV90), whatever season the
+  // card is on. xHR/FB is that season's league HR/FB moved by his contact against the league's (FB-weighted over the season's 300+ PA hitters,
+  // 110 in 2020): +0.779 a mph of FB EV and +0.738 a Barrel% point from 2023 on (EV by type starts then), +1.037 a Barrel% point and +0.499 a mph
+  // of EV90 before — fits over every 300+ PA hitter-season (scratch xhrfb.js; r .86 both, rmse 3.0 / 3.4 points), centred per season so the ball's
+  // year (2019, 2022) doesn't read as his. xHR/FB forecast next season's HR/FB at r .68 against his own HR/FB's .65
+  const XHRFB = { a: { evfb: 0.779, brl: 0.738 }, b: { brl: 1.037, ev90: 0.499 } };
+  const HRFB_LG = new Map();
+  function hrfbLeague(y) {   // that season's league: HR/FB, FB-weighted FB EV / Barrel% / EV90, and the qualifiers' sorted values for the heat map
+    if (HRFB_LG.has(y)) return HRFB_LG.get(y);
+    const C = window.DRAFT_CAREER || {}, out = { hr: 0, fb: 0, s: {}, w: {}, arr: { hrfb: [], evfb: [], brl: [], x: [] } };
+    const rows = [];
+    for (const id in C) {
+      const r = (C[id].H || []).find((q) => q[0] === y); if (!r || (+r[3] || 0) < (y === 2020 ? 110 : 300)) continue;
+      const l = mlbLine(true, r), fb = l.c.ext ? +l.c.ext[2] : 0, bx = sbxOf(id, y); if (!fb) continue;
+      out.hr += +l.c.HR || 0; out.fb += fb; rows.push([l, fb, bx]);
+      out.arr.hrfb.push(100 * (+l.c.HR || 0) / fb);
+      if (bx) for (const k of ["evfb", "brl", "ev90"]) if (bx[k] != null) { out.s[k] = (out.s[k] || 0) + bx[k] * fb; out.w[k] = (out.w[k] || 0) + fb; }
+    }
+    const lg = { hrfb: out.fb ? 100 * out.hr / out.fb : null }; for (const k in out.s) lg[k] = out.s[k] / out.w[k];
+    for (const [, , bx] of rows) if (bx) { if (bx.evfb != null) out.arr.evfb.push(bx.evfb); if (bx.brl != null) out.arr.brl.push(bx.brl); const xv = xHrfb(bx, lg); if (xv != null) out.arr.x.push(xv); }
+    for (const k in out.arr) out.arr[k].sort((a, b) => a - b);
+    const res = { lg, arr: out.arr }; HRFB_LG.set(y, res); return res;
+  }
+  function xHrfb(bx, lg) {
+    if (!bx || !lg || lg.hrfb == null) return null;
+    const f = bx.evfb != null && lg.evfb != null && bx.brl != null ? XHRFB.a : bx.brl != null && bx.ev90 != null && lg.ev90 != null ? XHRFB.b : null;
+    if (!f) return null;
+    let v = lg.hrfb; for (const k in f) v += f[k] * (bx[k] - lg[k]);
+    return Math.max(0, v);
+  }
+  function hrfbTable(p) {
+    const box = el("div", "rollbox uerabox hrfbbox");
+    const hd = el("div", "rollhd"); hd.append(el("span", "rollname", "HR / FB by season"));
+    box.append(hd);
+    ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady);
+    if (!careerReady() || !sbxReady()) { box.append(el("p", "note", failed.has("hist/career-bb.js") ? "hist/career-bb.js hasn't been built." : "Loading his seasons…")); return box; }
+    const rec = window.DRAFT_CAREER[String(p.id)], rows = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).filter((l) => l.c.ext && +l.c.ext[2] > 0).sort((a, b) => a.season - b.season);
+    if (!rows.length) { box.append(el("p", "note", "No MLB fly balls on record.")); return box; }
+    const t = el("table", "ubt hrfbt"), th = el("tr");
+    for (const [h, tip] of [["Season"], ["Team"], ["HR"], ["FB", "Fly balls + popups (Statcast's calls), his line-drive homers counted in"], ["HR/FB"], ["FB EV", "Exit velocity on fly balls (2023 on)"],
+      ["Barrel%"], ["xHR/FB", "What his contact says: that season's league HR/FB moved by his FB EV and Barrel% against the league's (2023 on), Barrel% and EV90 before"], ["Diff", "HR/FB − xHR/FB: + = more homers than his contact says"]]) {
+      const c = el("th", h === "Season" || h === "Team" ? "l" : null, h); if (tip) c.title = tip; th.append(c);
+    }
+    const thead = el("thead"); thead.append(th); t.append(thead);
+    const tb = el("tbody");
+    const heat = (td, arr, v, lo) => { if (v == null || !arr || arr.length < 20) return; const pc = insertPct(lo ? arr.map((z) => -z).reverse() : arr, lo ? -v : v), sty = pctStyle(pc); td.style.background = sty.bg; td.style.color = sty.fg; td.classList.add("hheat"); td.title = ordinal(Math.round(pc)) + " percentile among that season's qualified hitters"; };
+    const sgn = (v) => (v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1));
+    let H = 0, F = 0, eS = 0, eW = 0, bS = 0, bW = 0, xS = 0, xW = 0, hrX = 0, fbX = 0;
+    for (const l of rows) {
+      const y = l.season, hr = +l.c.HR || 0, fb = +l.c.ext[2], hf = 100 * hr / fb, bx = sbxOf(p.id, y), L = hrfbLeague(y), xv = xHrfb(bx, L.lg);
+      const tr = el("tr", y === +DS.season && DS.level === "MLB" ? "cur" : null), cell = (v, cls) => { const td = el("td", cls || null, v); tr.append(td); return td; };
+      const heatIf = +l.c.PA >= 100 ? heat : () => {};   // a cup of coffee isn't coloured against the qualifiers (Cruz 2021: 1 FB, 1 HR)
+      cell(String(y), "l"); cell(l.team || "", "l"); cell(String(hr)); cell(String(fb));
+      heatIf(cell(hf.toFixed(1) + "%"), L.arr.hrfb, hf);
+      heatIf(cell(bx && bx.evfb != null ? bx.evfb.toFixed(1) : "–"), L.arr.evfb, bx && bx.evfb);
+      heatIf(cell(bx && bx.brl != null ? bx.brl.toFixed(1) + "%" : "–"), L.arr.brl, bx && bx.brl);
+      heatIf(cell(xv == null ? "–" : xv.toFixed(1) + "%"), L.arr.x, xv);
+      const d = cell(xv == null ? "–" : sgn(hf - xv)); if (xv != null) d.classList.add(hf - xv >= 0 ? "pos" : "neg");
+      tb.append(tr);
+      H += hr; F += fb;
+      if (bx && bx.evfb != null) { eS += bx.evfb * fb; eW += fb; }
+      if (bx && bx.brl != null && bx.bbe) { bS += bx.brl * bx.bbe; bW += bx.bbe; }
+      if (xv != null) { xS += xv * fb; xW += fb; hrX += hr; fbX += fb; }
+    }
+    // career: HR / FB over every season; FB EV weighted by fly balls, Barrel% by batted balls; xHR/FB weighted by fly balls over the seasons that
+    // have one, and Diff over those same seasons
+    const tr = el("tr", "tot"), cell = (v, cls) => { const td = el("td", cls || null, v); tr.append(td); return td; };
+    const xc = xW ? xS / xW : null;
+    cell("Career", "l"); cell(""); cell(String(H)); cell(String(F)); cell((100 * H / F).toFixed(1) + "%");
+    cell(eW ? (eS / eW).toFixed(1) : "–"); cell(bW ? (bS / bW).toFixed(1) + "%" : "–"); cell(xc == null ? "–" : xc.toFixed(1) + "%");
+    cell(xc == null ? "–" : sgn(100 * hrX / fbX - xc));
+    tb.append(tr); t.append(tb);
+    const sc = el("div", "hrfbscroll"); sc.append(t); box.append(sc);
     return box;
   }
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
