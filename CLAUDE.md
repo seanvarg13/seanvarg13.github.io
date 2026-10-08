@@ -2679,3 +2679,19 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   placeholder, which pulled the window up to it: those placeholders carry class `pgload` (in `renderExplore` and `playerView`), and while one is
   up `render()` holds `#xboard` at the height it had (`heldH`, cleared once the real page is drawn), so `keepScroll` puts the reader back where
   they were. A page opened from a list, the search, a Similar name or a board still starts at the top.
+* **League leaders in the season table, gold records, air above it (Sean, 8 Oct 2026, after a preview of the condensed bar as the page's header —
+  declined, "it is fine how it is" — "add in some blank space between where standard batting starts and the end of the header", "get rid of this
+  bottom text below the standard hitting stats and do the thing baseballreference does with the bold indicates the player led the league and
+  italics indicates they led the MLB", "make the bottom two blue rows have bolded font and make it gold like profootballreference does if it is an
+  all time mlb record", "have the three rows of text below the table that indicates the bold italics and gold labeling, but only have that")**:
+  the career-best bolding is gone; a season row's cell is **bold** when he led his league (AL / NL by `leagueOf`) and **bold italic** when he led
+  MLB (`td.lead` / `td.mlblead`, the title says which) — `sbLeaders(H, y)` takes every player's season line from `hist/career.js` (`mlbLine`, the
+  row parse factored out of `rawLines`; a traded player leads MLB on his TOT line and a league on his clubs in it, `clubLine` / `sbCombine` when he
+  changed clubs inside one), counts (`SB_COUNT`: G, PA, HR, R, RBI, SB, fWAR, bWAR; W, L, G, GS, IP, H, HR, BB, K) lead by the most, rates by the
+  better end (`SB_BEST_LO`) among lines with 3.1 PA / 1 IP per team game (162, 60 in 2020). Only seasons from 2015 (`SB_LEAD_FROM`): career.js
+  holds every MLB player since 2015 with his whole career, so an earlier season misses whoever had retired. The N Yrs and 162 Game Avg rows are
+  bold; a career-row cell is **gold** (`td.record`, #e8c547) at or past MLB's all-time career record (`SB_RECORD`, Baseball-Reference's: G, PA,
+  HR, R, RBI, SB, AVG / OBP / SLG / OPS with 3,000+ PA; W, L, G, GS, IP, H, HR, BB, K, ERA / WHIP with 1,000+ IP) — no active player is near one,
+  so it doesn't fire yet. Under the table only the three-line key (`.sbkey`); the Postseason note and the rest of the old note are gone. 34px of
+  air above "Standard batting" (26 on a phone). Checked: Ohtani 2024 NL HR / RBI / OPS, MLB runs; Judge 2022 MLB across the board; Skenes 2025
+  MLB ERA, 2024 unqualified.
