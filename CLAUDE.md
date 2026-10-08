@@ -2672,6 +2672,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   draw (a `steps=mlb` run was dispatched after the merge; past seasons at the next rescore). **Found alongside**: since the EV-by-type change
   (7 Oct 2026) a `//` comment on `V()`'s hitter line had swallowed `brl` and `pull`, so a hitter's Barrel% and Pull Air% were missing under any
   date window or split — the fourth time a mid-line `//` has eaten code; it's `/* */` now.
+  **The ground-ball row came off the same day** (Sean: "get rid of gb% barrel rate too"): the block is Fly balls · Line drives; `brgb` is
+  still built and stays a Leaderboard column.
 * **His page stays put on a year or a filter (Sean, 8 Oct 2026: "make the site basically stay in the spot i was at and not shoot me back up to
   the top of a player page when i adjust the filters or change the year")**: `render()` scrolled to the top whenever the page's key changed, and
   the key carried the season, so every year picked started over at the top; the key is type + id now (`pageKeyOf`) — another season of the same

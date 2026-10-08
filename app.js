@@ -6877,8 +6877,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     // among the pool's qualifiers (the pool's own rank, else placed among them), his exit velocity on that type and the league's mean —
     // m.evfb / evld / evgb (a window re-derives them from the day sums; "–" on a file built before 7 Oct 2026, and no block at all)
     // and Barrel% by type under it (Sean, 8 Oct 2026: "add barrel rate by each category too so fb, ld, and gb"): barrels over the same tracked
-    // balls of each type (m.brfb / brld / brgb; no block on a file built before them). A ground-ball barrel is rare by definition (a barrel
-    // needs 8°+ of launch), so that row sits near zero for everyone and its bar mostly ranks the few who top-spin one hard at the low edge
+    // balls of each type (m.brfb / brld; no block on a file built before them). The ground-ball row came off the same day (Sean: "get rid of
+    // gb% barrel rate too") — a barrel needs 8°+ of launch, so it sat near zero for everyone; m.brgb is still built and a column
     const typeBlock = (title, unit, rows) => {
       if (!rows.some(([k]) => pv.m[k] != null)) return;
       grid.append(el("span", "mdiv"), el("span", "ml mtot", title), el("span"), el("span", "mh", unit), el("span", "mh", "Lg"));
@@ -6890,7 +6890,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       }
     };
     typeBlock("Avg EV", "EV", [["evfb", "Fly balls"], ["evld", "Line drives"], ["evgb", "Ground balls"]]);
-    typeBlock("Barrel%", "%", [["brfb", "Fly balls"], ["brld", "Line drives"], ["brgb", "Ground balls"]]);
+    typeBlock("Barrel%", "%", [["brfb", "Fly balls"], ["brld", "Line drives"]]);
     box.append(grid);
     const w = el("div"); w.append(box, hrfbTable(p));
     return w;
