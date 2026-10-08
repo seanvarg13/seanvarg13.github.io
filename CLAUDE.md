@@ -2645,3 +2645,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   xwOBA | G PA HR R RBI | BB% K% ISO HR/FB BABIP | AVG OBP SLG OPS wRC+ | Sprint SB | fWAR bWAR | Pos (the Playoffs view: … | AVG OBP SLG OPS | SB |
   Pos). The guard is in §1: `adopt_main_tools` / `RAN` / `DEPS` in `tools/cloud_daily.py`, tested on a scratch repo (a step built with V1 of a
   script, V2 merged before the publish → the step re-ran with V2 and main got V2's output).
+* **The season table's heat map fills the cell (Sean, 8 Oct 2026: "switch it over so the heat map is just the fill color of the entire cell and not
+  this like circle thing")**: wOBA / xwOBA / Sprint cells are painted whole (`td.sbheat`, `pctStyle`'s fill and ink set `!important` inline so the
+  totals rows' band colour gives way), bold; the `.sbchip` pills and their CSS are gone. The percentile is the cell's tooltip.
