@@ -9475,12 +9475,9 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       if (!post && clubs.length) {
         // the club rows, then the league rows, each group after a thin gap — always shown, B-Ref's spacing (Sean, 8 Oct 2026: "dont make the by
         // league or team splits a drop down anymore, and format them exactly like this row spacing wise"; the fold was the same day's)
-        // a gap is cells like a row's, so the group rules run through it all the way down (Sean, 8 Oct 2026: "make it so the line break after
-        // like 9 yrs and whatnot carries all the way down")
-        const gap = () => {
-          const g = el("tr", "gap"), lead = el("td", "sbl f1"); lead.colSpan = 3 + (lev ? 1 : 0); g.append(lead);
-          for (const k of cols) g.append(el("td", gEnd.has(k) ? "ge" : null)); g.append(el("td")); tbody.append(g);
-        };
+        // a gap is one cell across the table, as B-Ref draws it (Sean, 8 Oct 2026: rules carried through the gaps were tried and taken back —
+        // "you had it right the first time now that I look at baseball reference")
+        const gap = () => { const g = el("tr", "gap"), td = el("td"); td.colSpan = ncol; g.append(td); tbody.append(g); };
         gap();
         for (const [t, ls] of clubs) { const yrs = new Set(ls.map((x) => x.season)).size; row([`${t} (${yrs} Yr${yrs > 1 ? "s" : ""})`], sbCombine(H, ls), "tot sub"); }
         const byLg = new Map();

@@ -2724,3 +2724,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **A phone's Regular Season / Playoffs at B-Ref's size (Sean, 8 Oct 2026: "make regular season and playoffs the same size as baseball reference
   has")**: 30px tall (was 44), 13.5px regular weight (was 16px / 600), 12px of side padding, 5px of strip round them — "Regular Season" 121 × 30.
   The desktop tabs were already 30px.
+* **The totals' gaps plain again, twice the air, the key's words styled (Sean, 8 Oct 2026: "as far as the bottom totals line breaks I guess actually
+  you had it right the first time now that I look at baseball reference", "the standard batting and header gap can you double that size", "bold
+  and italicize the words bold italics")**: the gap rows are one cell across the table again (`gap()` in `seasonBlock`), so no rules run through
+  them, and the totals' label cell has its white rule back; the gaps stay the band blue and the totals stay unheated (PR #473's other two
+  changes). "Standard batting" starts 204px under the band (156 on a phone). The key's "Bold italic" is `b i` at 700 italic (the site-wide
+  weight rule had reset the `<i>`).
