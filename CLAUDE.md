@@ -2655,3 +2655,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   block's top → the band's foot (desktop ~105px, phone ~91), so the bar's bottom lands where the band's was and never covers the table. A phone's
   bar is one line — ‹ Back (when there's a list), the name, the year, Filters — over the season / career tiles (the position line is dropped
   there; a desktop keeps it under the name). CSS: the block at the end of `styles.css`.
+* **A phone's player band tidied (Sean, 8 Oct 2026, from Jo Adell's page: "make the positions just be the abbreviations and then put the filters and
+  year on the right side and then get rid of that top space ... fix the head shot and the wOBA and xwoba glitches")**: on a phone the bio's position
+  line reads the codes (`playedLabel`: "Positions: OF, DH"; a desktop keeps the words); with no Back the controls row is gone — `pageHead` gives the
+  plate `nobkm` and puts `.pbctl` (the year over Filters, a pitcher's Raw ▾ under that) floated right at the top of `.pbtext`, which is block flow
+  there so the name and bio wrap round it; the headshot fills its 96 × 128 tile (a 10-root phone card rule had held every band `.mug` at 60px, so
+  the photo sat as a stamp at the tile's foot); the Summary's wOBA / xwOBA (nERA / xnERA) pills sit in 1.35fr columns at 13.5px with no minimum
+  width (they had been 48px pills in 38px columns, running into each other and into PA), and `.pbmain` / `.pbsum` stretch the band's width. With
+  a Back the row stays (Back left, year and Filters right). The block at the end of `styles.css`.
