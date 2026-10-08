@@ -9491,6 +9491,9 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     }
     table.append(tbody);
     const sc = el("div", "sbscroll"); sc.append(table); if (!(post && !mlb.length)) box.append(sc);
+    // B-Ref's frozen columns are the season and the team: Age slides out from between them as the table scrolls sideways, fading as it goes
+    // (Sean, 8 Oct 2026: "when you scroll it fades and you just see the year and team"); the stylesheet keeps Team stuck right after Season
+    sc.addEventListener("scroll", () => { const w = parseFloat(table.style.getPropertyValue("--sbw2")) || 40; table.style.setProperty("--sbage", Math.max(0, 1 - sc.scrollLeft / w).toFixed(3)); }, { passive: true });
     // under the table only B-Ref's key, three lines (Sean, 8 Oct 2026: "get rid of this bottom text", then "have the three rows of text below the
     // table that indicates the bold italics and gold labeling, but only have that")
     if (!post && mlb.length) {

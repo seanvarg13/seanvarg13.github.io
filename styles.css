@@ -4793,3 +4793,9 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .sbt tr.tot td.sbl { border-right: 2px solid var(--ink); }
 :root:root:root:root:root:root .sbt tr.gap td { height: 10px; padding: 0; background: var(--band2, var(--accent-2)) !important; border-top: 0; border-bottom: 0; border-left: 0; border-right: 0; }
 :root:root:root:root:root:root .sbt tr.gap td.sbl, :root:root:root:root:root:root .sbt tr.gap td.ge { border-right: 2px solid var(--ink); }
+/* Season and Team frozen, Age between them free (Sean, 8 Oct 2026, from B-Ref on his phone: "when you scroll it fades and you just see the year and
+   team"): Team sticks at Season's right edge, so Age slides under the two and fades out (app.js sets --sbage from the table's sideways scroll) */
+:root:root:root:root:root:root .sbt .f2 { position: relative; left: auto; z-index: 0; opacity: var(--sbage, 1); }
+:root:root:root:root:root:root .sbt .f3 { left: var(--sbw1, 60px); }
+:root:root:root:root:root:root .sbt td.f1, :root:root:root:root:root:root .sbt td.f3 { z-index: 2; }
+:root:root:root:root:root:root .sbt th.f1, :root:root:root:root:root:root .sbt th.f3 { z-index: 3; }
