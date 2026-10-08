@@ -9232,7 +9232,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   // Baseball-Reference's bWAR beside it, each its own group, wOBA / xwOBA next on their own and heat-mapped, HR/FB between ISO and BABIP, Sprint
   // speed (heat-mapped) and SB as a group where BsR was; Off / Def / BsR gone
   // and then (Sean, the same night): OPS between SLG and wRC+, fWAR / bWAR after SB as one group (a rule before fWAR and after bWAR, none between)
-  const SB_H = ["wOBA", "xwOBA", "G", "PA", "HR", "R", "RBI", "BB%", "K%", "ISO", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "OPS", "wRC+", "Sprint", "SB", "fWAR", "bWAR"];
+  // ISO behind OPS (Sean, 8 Oct 2026: "move iso to behind ops on the standard table")
+  const SB_H = ["wOBA", "xwOBA", "G", "PA", "HR", "R", "RBI", "BB%", "K%", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "OPS", "ISO", "wRC+", "Sprint", "SB", "fWAR", "bWAR"];
   const SB_BRK = { H: new Set(["G", "BB%", "AVG", "Sprint", "fWAR", "Pos"]), P: new Set() };   // a heavier rule before each of these
   const SB_FG = ["fWAR", "bWAR", "wRC+", "Sprint", "HR/FB"], SB_SAB = { "wRC+": 0, fWAR: 4 };   // SB_FG: not in MLB's postseason lines
   const SB_HEAT = new Set(["wOBA", "xwOBA", "Sprint"]);   // pills in their percentile colour among that season's qualified hitters
