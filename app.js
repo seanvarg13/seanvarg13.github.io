@@ -8982,8 +8982,9 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const out = [];
     const line = (html) => { const d = el("div", "pbl"); d.innerHTML = html; out.push(d); return d; };
     const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
-    const pw = posWords(p);
-    line(`<b>${pw.includes(" and ") ? "Positions" : "Position"}:</b> ${esc(pw)}`);
+    // a phone reads the codes — OF, DH — not the words (Sean, 8 Oct 2026: "on mobile can you make the positions just be the abbreviations")
+    const pw = mobileView() ? playedLabel(p) : posWords(p);
+    line(`<b>${/ and |,/.test(pw) ? "Positions" : "Position"}:</b> ${esc(pw)}`);
     const bats = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
     const hands = [bats ? `<b>Bats:</b> ${handWord(bats)}` : null, thr ? `<b>Throws:</b> ${handWord(thr)}` : null].filter(Boolean);
     if (hands.length) line(hands.join(" &nbsp;•&nbsp; "));
@@ -9028,9 +9029,12 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       ctl.append(filtersTog(p));
       const chips = viewChips(p); if (chips.childNodes.length) ctl.append(chips);
     }
-    plate.append(ctl);
+    // a phone with no Back: no row either — the year and Filters stack at the right of the name, the bio wrapping round them (Sean, 8 Oct 2026:
+    // "put the filters and year on the right side and then get rid of that top space being there that those two buttons originally were in")
+    const ctlIn = !backAt && mobileView();
+    if (ctlIn) plate.classList.add("nobkm"); else plate.append(ctl);
     const main = el("div", "pbmain"), photo = el("div", "pbphoto"); photo.append(headshot(p.id, p.name)); main.append(photo);
-    const txt = el("div", "pbtext"), h2 = el("h2", null, p.name); h2.id = "modal-title"; txt.append(h2);
+    const txt = el("div", "pbtext"), h2 = el("h2", null, p.name); h2.id = "modal-title"; if (ctlIn) txt.append(ctl); txt.append(h2);
     txt.append(...bioLines(p, b));
     const more = el("button", "pbmore", bioMore ? "Less bio, draft info ▴" : "More bio, draft info ▾"); more.type = "button"; more.setAttribute("aria-expanded", String(bioMore));
     more.addEventListener("click", (e) => { e.stopPropagation(); bioMore = !bioMore; render(); });

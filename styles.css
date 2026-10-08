@@ -4755,3 +4755,19 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .phcond:not(.desk) .pbctl .phtog { gap: 6px; }
 :root:root:root:root:root:root .phcond:not(.desk) .phtog .segbtn, :root:root:root:root:root:root .phcond:not(.desk) .phtog .phfilt { min-height: 0; height: 26px; padding: 0 8px; font-size: 14px; line-height: 24px; }
 :root:root:root:root:root:root .phcond:not(.desk) .pctile i { font-size: 9px; line-height: 11px; }
+/* a phone's player page (Sean, 8 Oct 2026): the headshot fills its tile (an older 60px card rule had shrunk it to a stamp), the year and Filters
+   stack at the right of the name with no row of their own, and the Summary's wOBA / xwOBA pills get wider columns so they don't run together */
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate.pbio .pbphoto .mug { width: 100%; height: 100%; margin: 0; object-fit: cover; object-position: center top; }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext { display: block; }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > * + * { margin-top: 3px; }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl { float: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin: 0 0 4px 10px; }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl + h2 { margin-top: 0; }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbctl .pbsp, :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbctl .pbnoback { display: none; }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbmore { display: block; clear: both; margin-top: 8px; }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbsrow { grid-template-columns: 50px minmax(0, 1.35fr) minmax(0, 1.35fr); grid-auto-columns: minmax(0, 1fr); }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbsv .uchip.pbchip { min-width: 0; max-width: calc(100% - 4px); padding: 1px 5px; font-size: 13.5px; }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate.pbio .pbmain { align-self: stretch; width: 100%; box-sizing: border-box; }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .phtog { flex-direction: column; align-items: stretch; gap: 6px; }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .pthd { font-size: 24px; }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate.pbio .pbsum { align-self: stretch; width: 100%; box-sizing: border-box; }
+:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .phtog > *, :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .phtog .segbtn { width: 100%; box-sizing: border-box; }
