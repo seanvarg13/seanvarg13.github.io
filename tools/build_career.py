@@ -1,7 +1,8 @@
 """Build hist/career.js: season-by-season traditional stats + career totals for every player in the search
 index (MLB Stats API yearByYear + career), with our wOBA / xwOBA (hitters) and FIP / SIERA (pitchers) attached
 where a season was built, and where a hitter played each season (every position, games each, from the API's
-fielding lines — the season table's Pos column, 8 Oct 2026).  Usage: python3 build_career.py"""
+fielding lines — the season table's Pos column, 8 Oct 2026), and a hitter's FanGraphs wRC+ / BsR / Off / Def / WAR / wOBA per
+season from MLB's sabermetrics stat (the season table's FanGraphs columns, 8 Oct 2026).  Usage: python3 build_career.py"""
 import json, time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -17,6 +18,74 @@ HIT_X = ["hitByPitch", "sacFlies"]          # extra counts so combined (MLB + mi
 PIT_X = ["earnedRuns", "battersFaced"]
 CACHE = HERE / ".cache" / "milb_career"
 OF_POS = {"LF": "OF", "CF": "OF", "RF": "OF"}          # the site says OF everywhere
+SABR = HERE / ".cache" / "sabr"                       # FanGraphs' numbers per season; past seasons don't move, so they're kept
+
+
+def sabr_row(st):
+    """[wRC+, BsR, Off, Def, WAR, wOBA] from MLB's sabermetrics stat, which carries FanGraphs' values: Off = batting runs + base
+    running, Def = fielding runs + the positional adjustment (Ohtani 2024: 179 / 9.8 / 79.2 / -17.2 / 8.9, FanGraphs to the tenth)."""
+    def f(k):
+        v = st.get(k)
+        try:
+            return None if v is None else float(v)
+        except (TypeError, ValueError):
+            return None
+    w, bat, br, fld, pos, war, wo = (f(k) for k in ("wRcPlus", "batting", "baseRunning", "fielding", "positional", "war", "woba"))
+    r = lambda v, d: None if v is None else round(v, d)
+    return [r(w, 1), r(br, 2), r(None if bat is None or br is None else bat + br, 2), r(None if fld is None or pos is None else fld + pos, 2),
+            r(war, 2), r(wo, 3)]
+
+
+def _get_json(url, tries=4):
+    for attempt in range(tries):
+        try:
+            return requests.get(url, headers=UA, timeout=90).json()
+        except Exception:
+            time.sleep(2 + 2 * attempt)
+    return None
+
+
+def sabr_season(y, fresh):
+    """{player id: sabr_row} for every MLB hitter that season — one request (a traded season comes as his combined line)."""
+    f = SABR / f"hit-{y}.json"
+    if f.exists() and not fresh:
+        try:
+            return json.loads(f.read_text())
+        except ValueError:
+            pass
+    js = _get_json(f"https://statsapi.mlb.com/api/v1/stats?stats=sabermetrics&group=hitting&season={y}&sportId=1&playerPool=ALL&limit=5000")
+    out = {}
+    for s in (js or {}).get("stats", []):
+        for sp in s.get("splits", []):
+            pid = (sp.get("player") or {}).get("id")
+            if pid:
+                out[str(pid)] = sabr_row(sp.get("stat") or {})
+    if out:                                                # a failed fetch isn't cached, so the next run tries again
+        SABR.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps(out, separators=(",", ":")))
+    return out
+
+
+def sabr_clubs(pid, y, teams, fresh):
+    """{team code: sabr_row} for each club of a traded season (the player's own sabermetrics split by team)."""
+    f = SABR / "clubs" / f"{pid}-{y}.json"
+    if f.exists() and not fresh:
+        try:
+            return json.loads(f.read_text())
+        except ValueError:
+            pass
+    js = _get_json(f"https://statsapi.mlb.com/api/v1/people/{pid}/stats?stats=sabermetrics&group=hitting&season={y}")
+    if js is None:
+        return {}
+    out = {}
+    for s in js.get("stats", []):
+        for sp in s.get("splits", []):
+            tid = (sp.get("team") or {}).get("id")
+            if tid:
+                out[teams.get(tid, "?")] = sabr_row(sp.get("stat") or {})
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(out, separators=(",", ":")))
+    return out
 
 
 def pos_string(games):
@@ -151,6 +220,12 @@ def main():
                     ours_m[(p["id"], ds["season"], p["type"], nm)] = p["m"]
 
     out = {}
+    now = int(cur["meta"]["season"])
+    sabr = {}                                              # season -> {player id: [wRC+, BsR, Off, Def, WAR, wOBA]}, fetched on first use
+    def sabr_for(y):
+        if y not in sabr:
+            sabr[y] = sabr_season(y, fresh=y >= now)
+        return sabr[y]
     for i in range(0, len(ids), 80):
         chunk = ids[i:i + 80]
         url = ("https://statsapi.mlb.com/api/v1/people?personIds=" + ",".join(map(str, chunk)) +
@@ -201,10 +276,19 @@ def main():
                                                            m.get("gb"), m.get("pu")]))   # appended: the card's simple season table shows GB% / Popup%
                         if t == "H":
                             r.append(pos_by.get(r[0], ""))     # then where he played — the app reads a row by fixed index (8 Oct 2026)
+                            r.append(sabr_for(r[0]).get(str(p["id"])))   # then FanGraphs' wRC+ / BsR / Off / Def / WAR / wOBA (or null)
                     rec[t] = rows
             if rec:
                 out[str(p["id"])] = rec
         print(f"  {min(i + 80, len(ids))}/{len(ids)}", flush=True)
+    # a traded season's clubs get their own FanGraphs numbers, appended to the HT rows (threaded; past seasons cached)
+    tr = sorted({(pid, r[0]) for pid, rec in out.items() for r in rec.get("HT", [])})
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        for (pid, y), clubs in zip(tr, ex.map(lambda a: sabr_clubs(a[0], a[1], teams, fresh=a[1] >= now), tr)):
+            for r in out[pid]["HT"]:
+                if r[0] == y:
+                    r.append(clubs.get(r[1]))
+    print(f"  FanGraphs numbers: {len(sabr)} seasons, {len(tr)} traded seasons split by club", flush=True)
     # minor-league lines: threaded, cached; players on this season's board are refreshed every run
     current = {p["id"] for p in cur["players"]}
     todo = [(pid, pid in current) for pid in ids]
