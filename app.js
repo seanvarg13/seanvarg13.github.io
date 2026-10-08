@@ -9031,17 +9031,38 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const db = longDate(b.debut); if (db) line(`<b>MLB debut:</b> ${esc(db)}`);
     return box;
   }
-  // the page's band is the condensed bar's layout, in the page (Sean, 8 Oct 2026: "could we actually just make this the default header ... add their
-  // headshot on the far left ... in a row below their dh bats left throws right add their height weight and birthday age stuff"; "for mobile ...
-  // dont include their headshot"; "when this is accessed from a leaderboard simply have a single row section that goes above this that just houses
-  // the button to get back"): Back alone on a row of its own, then condensedBar(…, true)
+  // the page's band: the controls on top (Back, the season, Filters), the photo and the bio lines, the summary line at the foot
   function pageHead(p, st, g, o) {
     document.querySelectorAll(".phmodal").forEach((x) => x.remove());
-    const top = el("div", "cardtop phead pagehead");
-    if (backAt) { const row = el("div", "pbbackrow"); row.append(backButton(false)); top.append(row); }
+    const top = el("div", "cardtop phead pagehead"), plate = el("div", "mplate pbio");
+    const b = bio(p.id);
+    const ctl = el("div", "pbctl");
+    // no list to go back to → no row for the controls: the year and Filters sit in the band's top-right corner over its empty side (Sean, 8 Oct 2026:
+    // "now that you got rid of the home button this blank space is not needed. Keep it for when the back to the leaderboard is needed but thats it")
+    if (!backAt && !mobileView()) plate.classList.add("nobk");
+    ctl.append(backButton(false), el("span", "pbsp"));
+    const title = pageTitle(p, o); title.classList.add("pinline", "pbyear");
+    for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
+    ctl.append(title);
     const twoWay = typeSeg(p);
-    top.append(condensedBar(p, st, g, o, true));
-    if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay); if (!state.cardTools && sum.childNodes.length) top.append(sum); }
+    if (o.entry && !isMulti(o.key)) {
+      ctl.append(filtersTog(p));
+      const chips = viewChips(p); if (chips.childNodes.length) ctl.append(chips);
+    }
+    // a phone with no Back: no row either — the year and Filters stack at the right of the name, the bio wrapping round them (Sean, 8 Oct 2026:
+    // "put the filters and year on the right side and then get rid of that top space being there that those two buttons originally were in")
+    const ctlIn = !backAt && mobileView();
+    if (ctlIn) plate.classList.add("nobkm"); else plate.append(ctl);
+    const main = el("div", "pbmain"), photo = el("div", "pbphoto"); photo.append(headshot(p.id, p.name)); main.append(photo);
+    const txt = el("div", "pbtext"), h2 = el("h2", null, p.name); h2.id = "modal-title"; if (ctlIn) txt.append(ctl); txt.append(h2);
+    txt.append(...bioLines(p, b));
+    const more = el("button", "pbmore", bioMore ? "Less bio, draft info ▴" : "More bio, draft info ▾"); more.type = "button"; more.setAttribute("aria-expanded", String(bioMore));
+    more.addEventListener("click", (e) => { e.stopPropagation(); bioMore = !bioMore; render(); });
+    txt.append(more); if (bioMore) txt.append(moreBio(p, b));
+    main.append(txt); plate.append(main);
+    if (st && st.pct) plate.append(summaryBlock(p, st));
+    if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay); if (!state.cardTools && sum.childNodes.length) plate.append(sum); }
+    top.append(plate);
     return top;
   }
   // the filter chips (each filter in effect with its own ×), as renderPlate draws them for a popup
@@ -9059,10 +9080,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   }
   // a phone's band condenses once you scroll (Sean, 8 Oct 2026: "just show like the player name, their position, the bats throws row as well, and then
   // their stats for the current season and also the year and filters boxes up top"): a fixed bar that shows while the band is off the top
-  // inflow: the page's own header (pageHead) — not hidden or fixed, Back on its own row above it, the headshot (a desktop's), the bio row and the
-  // filter chips; otherwise the fixed bar that takes over once the header has scrolled away
-  function condensedBar(p, st, g, o, inflow) {
-    const mob = mobileView(), bar = el("div", "phcond" + (mob ? "" : " desk") + (inflow ? " inflow" : "")); bar.hidden = !inflow;
+  function condensedBar(p, st, g, o) {
+    const mob = mobileView(), bar = el("div", "phcond" + (mob ? "" : " desk")); bar.hidden = true;
     const title = pageTitle(p, o); title.classList.add("pinline", "pbyear");
     for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
     const b = bio(p.id), bats = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
@@ -9077,13 +9096,12 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       if (cur && head) {
         tiles = el("div", "pctiles");
         const hs = [...head.querySelectorAll(".pbsh")], vs = [...cur.querySelectorAll(".pbsv")], cs = car ? [...car.querySelectorAll(".pbsv")] : null;
-        const keep = p.type === "H" ? ["wOBA", "xwOBA", "BA", "OBP", "SLG", "OPS", "SB"] : ["nERA", "xnERA", "ERA", "K%", "BB%", "K-BB%"];   // SB after OPS (Sean, 8 Oct 2026)
+        const keep = p.type === "H" ? ["wOBA", "xwOBA", "BA", "OBP", "SLG", "OPS"] : ["nERA", "xnERA", "ERA", "K%", "BB%", "K-BB%"];
         const cell = (src) => { const c = src && src.querySelector(".pbchip"); if (c) { const k = c.cloneNode(true); k.classList.add("pcchip"); return k; } return src ? src.textContent : "–"; };
         if (cs) { const lab = el("div", "pctile lab"), b = el("b", null, cur.querySelector(".pbsl").textContent), c = el("span", "pcc", "Career"); lab.append(el("i", null, "\u00a0"), b, c); tiles.append(lab); }   // a blank header line, so its rows sit level with the values
         let n = 0;
-        const hix = (k) => hs.findIndex((h) => h.textContent === k);
-        keep.map(hix).filter((i) => i >= 0).forEach((i) => {   /* in keep's order, so SB lands after OPS */
-          const h = hs[i]; n++;
+        hs.forEach((h, i) => {
+          if (!keep.includes(h.textContent)) return; n++;
           const t = el("div", "pctile"), b = el("b"); b.append(cell(vs[i])); t.append(el("i", null, h.textContent), b);
           if (cs) { const c = el("span", "pcc"); c.append(cell(cs[i])); t.append(c); }
           tiles.append(t);
@@ -9092,24 +9110,6 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       }
     }
     const tog = o.entry && !isMulti(o.key) ? filtersTog(p) : null;
-    if (inflow) {
-      // height and weight, then born and age, on a row under the position line ("Loading" never shows: the row waits for MLB's record)
-      const hw = htWtLine(b), age = b && b.age != null ? b.age : p.age, born = b && longDate(b.born);
-      const bl = el("div", "pcline pcbio"), esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
-      bl.innerHTML = [hw ? esc(hw) : null, born ? `<b>Born:</b> ${esc(born)}${age != null ? " (Age " + age + ")" : ""}` : age != null ? `<b>Age:</b> ${age}` : null].filter(Boolean).join(" &nbsp;•&nbsp; ");
-      const chips = tog ? viewChips(p) : null, nm = el("div", "pcname", p.name); nm.id = "modal-title";
-      if (mob) {   // a phone: the name, the year and Filters on one line, the position and bio lines under it, the tiles; no headshot
-        const ctl = el("div", "pbctl"); ctl.append(nm, title); if (tog) ctl.append(tog);
-        bar.append(ctl, line); if (bl.innerHTML) bar.append(bl); if (chips && chips.childNodes.length) bar.append(chips); if (tiles) bar.append(tiles);
-      } else {     // a desktop: the headshot on the far left, the name over the position and bio lines, the tiles, the year and Filters at the right
-        const photo = el("div", "pcphoto"); photo.append(headshot(p.id, p.name));
-        const who = el("div", "pcwho"); who.append(nm, line); if (bl.innerHTML) who.append(bl);
-        const ctl = el("div", "pcctl"); ctl.append(title); if (tog) ctl.append(tog);
-        if (chips && chips.childNodes.length) { const c = el("div", "pcctlcol"); c.append(ctl, chips); bar.append(photo, who); if (tiles) bar.append(tiles); bar.append(c); }
-        else { bar.append(photo, who); if (tiles) bar.append(tiles); bar.append(ctl); }
-      }
-      return bar;
-    }
     if (mob) {   // a phone: one line — Back, the name, the year, Filters — over the tiles, so the bar is the Summary block's height
       const ctl = el("div", "pbctl"); if (backAt) { const bk = backButton(true); bk.textContent = "‹ Back"; ctl.append(bk); } ctl.append(el("div", "pcname", p.name), title); if (tog) ctl.append(tog);
       bar.append(ctl); if (tiles) bar.append(tiles);
@@ -9125,16 +9125,14 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   let condTick = false;
   const condSync = () => {
     condTick = false;
-    const bar = document.querySelector("#xboard .phcond:not(.inflow)"), band = document.querySelector("#xboard .pagehead"); if (!bar || !band) return;
+    const bar = document.querySelector("#xboard .phcond"), band = document.querySelector("#xboard .pagehead"); if (!bar || !band) return;
     // it takes over when the Summary block reaches the top (Sean, 8 Oct 2026: "the condensed version of the header shows up once i get to this
     // point ... so that the header doesn't show up over the table ... the same height as that part too"): as tall as the Summary block down to
     // the band's foot, so the bar's bottom sits where the band's was and covers nothing the band wasn't
     const hd = document.querySelector("header.top"), hb = Math.max(0, Math.round(hd ? hd.getBoundingClientRect().bottom : 0));
-    // the header is the bar's own layout now (8 Oct 2026), so the bar takes over once no more of the header than the bar's height is left on
-    // screen: its bottom lands where the header's was and it never covers the table
-    if (!bar._h) { const was = bar.hidden; bar.style.visibility = "hidden"; bar.hidden = false; bar._h = bar.getBoundingClientRect().height; bar.hidden = was; bar.style.visibility = ""; }
-    const br = band.getBoundingClientRect(), off = br.bottom <= hb + bar._h + 0.5 && br.top < hb;
-    if (off) bar.style.top = hb + "px";
+    const sum = band.querySelector(".pbsum"), sr = (sum || band).getBoundingClientRect(), br = band.getBoundingClientRect();
+    const off = sum ? sr.top <= hb + 0.5 : br.bottom < hb;
+    if (off) { bar.style.top = hb + "px"; if (sum) bar.style.height = Math.round(br.bottom - sr.top) + "px"; }
     if (bar.hidden === !off) return;
     bar.hidden = !off; document.body.classList.toggle("pcond", off);
   };
