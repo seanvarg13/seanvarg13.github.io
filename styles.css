@@ -4742,3 +4742,16 @@ header.top .wordmark { display: none; }
    through the blue header and the totals rows in the ink, as they do on the rows; wOBA / xwOBA / Sprint as small percentile pills */
 :root:root:root:root:root:root .sbt th.ge, :root:root:root:root:root:root .sbt tr.tot td.ge, :root:root:root:root:root:root .sbt th.f3 { border-right: 2px solid var(--ink); }
 :root:root:root:root:root:root .sbt td.sbheat { font-weight: 700; }   /* wOBA / xwOBA / Sprint: the cell itself is the heat map */
+/* the condensed bar takes over from the Summary block at its height (Sean, 8 Oct 2026): app.js sets the height; the content centres in it,
+   and a phone's bar is one line — Back, the name, the year, Filters — over the tiles */
+:root:root:root:root:root:root .phcond { box-sizing: border-box; justify-content: center; overflow: hidden; }
+:root:root:root:root:root:root .phcond.desk { padding-top: 0; padding-bottom: 0; }
+:root:root:root:root:root:root .phcond:not(.desk) { padding: 4px 12px 4px; gap: 2px; }
+:root:root:root:root:root:root .phcond:not(.desk) .pbctl { gap: 10px; min-width: 0; }
+:root:root:root:root:root:root .phcond:not(.desk) .pcname { flex: 1 1 auto; min-width: 0; font-size: 19px; }
+:root:root:root:root:root:root .phcond:not(.desk) .pbback.small { flex: none; padding: 2px 6px; font-size: 12px; }
+:root:root:root:root:root:root .phcond:not(.desk) .pctiles { margin-top: 0; padding-top: 2px; }
+:root:root:root:root:root:root .phcond:not(.desk) .pbyear .pthd { font-size: 20px; }
+:root:root:root:root:root:root .phcond:not(.desk) .pbctl .phtog { gap: 6px; }
+:root:root:root:root:root:root .phcond:not(.desk) .phtog .segbtn, :root:root:root:root:root:root .phcond:not(.desk) .phtog .phfilt { min-height: 0; height: 26px; padding: 0 8px; font-size: 14px; line-height: 24px; }
+:root:root:root:root:root:root .phcond:not(.desk) .pctile i { font-size: 9px; line-height: 11px; }
