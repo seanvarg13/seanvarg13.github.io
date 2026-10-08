@@ -4828,3 +4828,7 @@ header.top .wordmark { display: none; }
 /* no white line under a gap (Sean, 8 Oct 2026: "you added a white line underneath the spacing on the totals while baseball reference doesn't
    have that"): each totals row draws its white rule on its top edge, so the row after a gap loses it */
 :root:root:root:root:root:root .sbt tr.gap + tr td { border-top: 0 !important; }
+/* 2.5× the space between the band and the table switch (Sean, 8 Oct 2026: "2.5x the white space gap between the header and that box with the
+   different table selections"): 140 → 350px, a phone's 64 → 160 */
+:root:root:root:root:root:root #xboard .sblock:has(.sbviews) { margin-top: 350px; }
+:root[data-view="mobile"]:root:root:root:root:root #xboard .sblock:has(.sbviews) { margin-top: 160px; }

@@ -2760,3 +2760,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   under the strip; `.sbt tr.gap + tr td` has no top border now.
 * **ISO behind OPS (Sean, 8 Oct 2026: "move iso to behind ops on the standard table")**: `SB_H` = wOBA xwOBA | G PA HR R RBI | BB% K% HR/FB BABIP |
   AVG OBP SLG OPS ISO wRC+ | Sprint SB | fWAR bWAR | Pos.
+* **2.5× the space above the table switch (Sean, 8 Oct 2026: "2.5x the white space gap between the header and that box with the different table
+  selections")**: a hitter's `.sblock:has(.sbviews)` starts 350px under the band (was 140), 160px on a phone (was 64). Pitchers' pages (no bar) keep
+  204 / 156.
