@@ -2,8 +2,10 @@
 index (MLB Stats API yearByYear + career), with our wOBA / xwOBA (hitters) and FIP / SIERA (pitchers) attached
 where a season was built, and where a hitter played each season (every position, games each, from the API's
 fielding lines — the season table's Pos column, 8 Oct 2026), and a hitter's FanGraphs wRC+ / BsR / Off / Def / WAR / wOBA per
-season from MLB's sabermetrics stat (the season table's FanGraphs columns, 8 Oct 2026).  Usage: python3 build_career.py"""
-import json, time
+season from MLB's sabermetrics stat (the season table's FanGraphs columns, 8 Oct 2026), and after those
+[bWAR, sprint speed, fly balls]: Baseball-Reference's batting WAR (war_daily_bat.txt), Savant's sprint speed from our season
+files, and fly balls + popups from MLB's yearByYearAdvanced for HR/FB (8 Oct 2026).  Usage: python3 build_career.py"""
+import csv, io, json, time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import requests
@@ -19,6 +21,54 @@ PIT_X = ["earnedRuns", "battersFaced"]
 CACHE = HERE / ".cache" / "milb_career"
 OF_POS = {"LF": "OF", "CF": "OF", "RF": "OF"}          # the site says OF everywhere
 SABR = HERE / ".cache" / "sabr"                       # FanGraphs' numbers per season; past seasons don't move, so they're kept
+
+
+BREF_TEAM = {"ANA": "LAA", "CAL": "LAA", "ARI": "AZ", "OAK": "ATH", "CHW": "CWS", "FLA": "MIA", "KCR": "KC", "MON": "WSH",
+             "SDP": "SD", "SFG": "SF", "TBD": "TB", "TBR": "TB", "WSN": "WSH"}   # Baseball-Reference's club codes -> the site's
+
+
+def bref_war(fresh):
+    """{"pid|year": {"": the season's batting WAR, club: that club's}} from Baseball-Reference's daily WAR file (a row per stint).
+    Cached; refetched once a day while the season runs. None when it can't be had (the caller keeps the last build's numbers)."""
+    f = SABR / "bref-war.json"
+    if f.exists() and (not fresh or time.time() - f.stat().st_mtime < 18 * 3600):
+        try:
+            return json.loads(f.read_text())
+        except ValueError:
+            pass
+    try:
+        r = requests.get("https://www.baseball-reference.com/data/war_daily_bat.txt", headers=UA, timeout=300)
+        r.raise_for_status(); text = r.text
+    except Exception as e:
+        print("  Baseball-Reference WAR unavailable:", e, flush=True)
+        try:
+            return json.loads(f.read_text()) if f.exists() else None
+        except ValueError:
+            return None
+    out = {}
+    for row in csv.DictReader(io.StringIO(text)):
+        pid, y, w = row.get("mlb_ID"), row.get("year_ID"), row.get("WAR")
+        try:
+            w = float(w)
+        except (TypeError, ValueError):
+            continue
+        if not pid or not y:
+            continue
+        d = out.setdefault(f"{pid}|{y}", {}); t = BREF_TEAM.get(row.get("team_ID"), row.get("team_ID"))
+        d[""] = d.get("", 0) + w; d[t] = d.get(t, 0) + w
+    out = {k: {t: round(v, 2) for t, v in d.items()} for k, d in out.items()}
+    if out:
+        SABR.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps(out, separators=(",", ":")))
+    return out or None
+
+
+def fly_balls(st):
+    """Fly balls + popups, MLB's batted-ball calls (FanGraphs' HR/FB counts infield flies as fly balls too)."""
+    try:
+        return sum(int(st.get(k) or 0) for k in ("flyOuts", "flyHits", "popOuts", "popHits"))
+    except (TypeError, ValueError):
+        return None
 
 
 def sabr_row(st):
@@ -226,10 +276,26 @@ def main():
         if y not in sabr:
             sabr[y] = sabr_season(y, fresh=y >= now)
         return sabr[y]
+    # Baseball-Reference's WAR; when the file can't be fetched, the last build's numbers carry over
+    bw = bref_war(fresh=True)
+    if bw is None:
+        bw = {}
+        try:
+            prev = load_js(HERE / "hist" / "career.js", "window.DRAFT_CAREER = ")
+            for pid, rec in prev.items():
+                for r in rec.get("H", []):
+                    if len(r) > 23 and isinstance(r[23], list) and r[23][0] is not None:
+                        bw.setdefault(f"{pid}|{r[0]}", {})[""] = r[23][0]
+                for r in rec.get("HT", []):
+                    if len(r) > 21 and isinstance(r[21], list) and r[21][0] is not None:
+                        bw.setdefault(f"{pid}|{r[0]}", {})[r[1]] = r[21][0]
+        except Exception as e:
+            print("  no earlier career.js to carry bWAR from:", e, flush=True)
+    ht_ext = {}                                            # (pid, season, club) -> [bWAR, None, fly balls], appended to HT rows after their FanGraphs numbers
     for i in range(0, len(ids), 80):
         chunk = ids[i:i + 80]
         url = ("https://statsapi.mlb.com/api/v1/people?personIds=" + ",".join(map(str, chunk)) +
-               "&hydrate=stats(group=[hitting,pitching,fielding],type=[yearByYear,career])")
+               "&hydrate=stats(group=[hitting,pitching,fielding],type=[yearByYear,career,yearByYearAdvanced])")
         for attempt in range(3):
             try:
                 js = requests.get(url, headers=UA, timeout=90).json(); break
@@ -238,9 +304,16 @@ def main():
         for p in js.get("people", []):
             rec = {}
             pos_by = mlb_positions(p.get("stats", []))         # where he played each season, for the hitting rows
+            fb_by = {}                                         # (season, club or TOT) -> fly balls + popups, for HR/FB
+            for s in p.get("stats", []):
+                if s["group"]["displayName"] == "hitting" and s["type"]["displayName"] == "yearByYearAdvanced":
+                    for sp in s["splits"]:
+                        if (sp.get("sport") or {}).get("id", 1) != 1:
+                            continue
+                        fb_by[(int(sp["season"]), teams.get(sp["team"]["id"], "?") if sp.get("team") else "TOT")] = fly_balls(sp.get("stat") or {})
             for s in p.get("stats", []):
                 grp, typ = s["group"]["displayName"], s["type"]["displayName"]
-                if grp == "fielding":
+                if grp == "fielding" or typ == "yearByYearAdvanced":
                     continue
                 keys = HIT if grp == "hitting" else PIT
                 t = "H" if grp == "hitting" else "P"
@@ -268,6 +341,9 @@ def main():
                     clubs = [list(r) for r in rows if r[0] in multi and r[1] != "TOT"]
                     if clubs:
                         rec[t + "T"] = sorted(clubs, key=lambda r: (r[0], r[1]))
+                        if t == "H":
+                            for r in clubs:
+                                ht_ext[(str(p["id"]), r[0], r[1])] = [bw.get(f"{p['id']}|{r[0]}", {}).get(r[1]), None, fb_by.get((r[0], r[1]))]
                     rows = [by[k] for k in sorted(by)]
                     for r in rows:
                         m = ours.get((p["id"], r[0], t))
@@ -277,6 +353,7 @@ def main():
                         if t == "H":
                             r.append(pos_by.get(r[0], ""))     # then where he played — the app reads a row by fixed index (8 Oct 2026)
                             r.append(sabr_for(r[0]).get(str(p["id"])))   # then FanGraphs' wRC+ / BsR / Off / Def / WAR / wOBA (or null)
+                            r.append([bw.get(f"{p['id']}|{r[0]}", {}).get(""), (m or {}).get("spd"), fb_by.get((r[0], r[1]))])   # then bWAR, sprint speed, fly balls
                     rec[t] = rows
             if rec:
                 out[str(p["id"])] = rec
@@ -288,6 +365,7 @@ def main():
             for r in out[pid]["HT"]:
                 if r[0] == y:
                     r.append(clubs.get(r[1]))
+                    r.append(ht_ext.get((pid, r[0], r[1]), [None, None, None]))   # then the club's bWAR and fly balls
     print(f"  FanGraphs numbers: {len(sabr)} seasons, {len(tr)} traded seasons split by club", flush=True)
     # minor-league lines: threaded, cached; players on this season's board are refreshed every run
     current = {p["id"] for p in cur["players"]}

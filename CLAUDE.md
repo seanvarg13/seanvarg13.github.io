@@ -2621,3 +2621,22 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   site's where the season is built, FanGraphs' before 2015 (`sbWoba`). Playoffs, minors and In Split rows show "–" for the FanGraphs five (the
   Playoffs view drops them). `hist/career.js` patched in place the same day (scratch `patch_sab.py`: every hitting row, all 2,677 club rows;
   3.5 → ~4 MB). Pitchers' table unchanged. Same hour: **Avg EV back on the hitter bars** in EV on FB's place (Sean: "swap fb EV with regular avg EV").
+* **fWAR / bWAR first, wOBA / xwOBA and Sprint heat-mapped, HR/FB, % signs; the overnight build's stale checkout (Sean, 8 Oct 2026: "get rid of
+  off and def and bsr ... war first ... label it as fWAR and then add in baseball references war ... bWAR", "put wOBA and xwOBA first and heat
+  map them", "before babip and after iso ... hr/fb", "sprint speed where bsr was and heat map it ... stolen bases ... after sprint speed", "make
+  the line breaks extend to the headers too", "for walk and k percentages ... add in the %")**: `SB_H` = fWAR | bWAR | wOBA xwOBA | G PA HR R RBI
+  | BB% K% ISO HR/FB BABIP | AVG OBP SLG wRC+ | Sprint SB | Pos (WAR first and wOBA / xwOBA right after it, each its own group, since both were
+  asked to lead); Off / Def / BsR are gone (still in `sab`). **wOBA, xwOBA and Sprint are pills** (`.sbchip`, `paintBar`) placed among that
+  season's qualified hitters (300+ PA, 110 in 2020) from the career record (`sbPool(y)`); the totals rows among every qualified season 2015 on
+  (`sbPool(0)`). Every rate in the season table (both sides) prints its % sign (`sbFmt`). The group rules run through the blue header and the
+  totals rows in the ink. **Build**: `build_career.py` appends `[bWAR, sprint speed, fly balls]` to every hitting row after `sab` (index 23) and
+  every `HT` club row (index 21) — bWAR from Baseball-Reference's `war_daily_bat.txt` summed per stint (`bref_war`, cached a day, `BREF_TEAM` maps
+  its club codes; if it can't be fetched the last career.js's numbers carry over), sprint speed from our season files' `m.spd`, fly balls +
+  popups from MLB's `yearByYearAdvanced` (hydrated with the people call; HR/FB = HR / that, so a sum reads right — a few points above FanGraphs'
+  BIS-counted HR/FB). `sbCombine` adds bWAR and fly balls and PA-weights sprint; the 162 Game Avg scales bWAR. The Playoffs view drops fWAR /
+  bWAR / wRC+ / Sprint / HR/FB. **The Summary's career wOBA / xwOBA had read `sab` (153.747 / 2.745)**: `summaryBlock` read the row's last
+  field, which stopped being our numbers once fields were appended; it reads the fixed index (`2 + RAW_H.length + 2`) now. **And the overnight
+  cloud build (a9a3e6e) ran the pre-#462 `build_career.py`** — its checkout predated the merge — and rewrote career.js / minors.js without the
+  positions or the FanGraphs numbers, which is why wRC+ and WAR went blank on the live site; both files were patched back (scratch
+  `patch_ext.py`: positions and `sab` from PR #463's files, 2026 refetched, then the new field: bWAR 17,057 of 17,073 rows, every 2015+
+  qualified season's sprint speed, fly balls on every row). The next daily run uses the new script.
