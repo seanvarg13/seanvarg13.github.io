@@ -50,6 +50,9 @@ HITTER_METRICS = [
     ("evfb", "EV on FB",    "EV_FB",        True,  1, "mph"),   # exit velocity by batted-ball type (Sean, 7 Oct 2026): fly balls, line drives, grounders
     ("evld", "EV on LD",    "EV_LD",        True,  1, "mph"),
     ("evgb", "EV on GB",    "EV_GB",        True,  1, "mph"),
+    ("brfb", "Brl% on FB",  "BRL_FB",       True,  1, "%"),     # barrel rate by batted-ball type (Sean, 8 Oct 2026), the Mix tab's
+    ("brld", "Brl% on LD",  "BRL_LD",       True,  1, "%"),
+    ("brgb", "Brl% on GB",  "BRL_GB",       True,  1, "%"),
     ("brl",  "Barrel%",     "Barrel_pct",   True,  1, "%"),
     ("pull", "Pull Air%",   "PullAir_pct",  True,  1, "%"),
     ("air",  "Air%",        "Air_pct",      True,  1, "%"),
@@ -111,7 +114,8 @@ HITTER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", 
               "bbe", "evsum", "dnum", "pulln", "ld", "gbh", "puh", "evs", "bbt", "bip", "evn", "oppn", "h", "tb", "xbsum", "xssum", "dbsum", "dssum", "mixsum", "mixn",
               "mxgb", "mxpu", "mxldp", "mxldc", "mxldo", "mxfbp", "mxfbc", "mxfbo", "mxx", "hr", "wbh",
               "evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn",   # EV sums and counts by batted-ball type (fly ball / line drive / grounder; 7 Oct 2026) so a window re-derives EV on FB / LD / GB   # wbh: wOBA value of his hits on balls in play (not HR) — BABIP reliance; hr: home runs (the fantasy page splits his official line by hand with these); mixsum / mixn = batted-ball mix value (Mix wOBA), mx* = its balls by bucket (mxx: air, no direction); dnum = directional-xwOBA numerator; evs = that row's exit velocities (no bunts); trailing fields (older files lack them): bbt = typed balls in play, bip = all balls in play, evn = EV-eligible (tracked, no bunt)
-              "evbk"]   # each evs entry's Mix bucket (MIX_COLS index, -1 outside the mix), so a window re-derives EV by bucket for the Mix tab (8 Oct 2026)
+              "evbk",   # each evs entry's Mix bucket (MIX_COLS index, -1 outside the mix), so a window re-derives EV by bucket for the Mix tab (8 Oct 2026)
+              "brfb", "brld", "brgb"]   # barrels on fly balls / line drives / grounders (over evfbn / evldn / evgbn), the Mix tab's Barrel% by type (8 Oct 2026)
 # The hitter card, grouped. key, label, higher-is-better, decimals, unit. Keys not in HITTER_METRICS are card-only.
 HITTER_CARD = [
     ("Outcomes",             [("woba", "wOBA", True, 3, ""), ("xws", "xwOBA", True, 3, ""), ("xwd", "dxwOBA", True, 3, "")]),
@@ -1034,6 +1038,7 @@ def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
     for t, bbt in (("fb", "fly_ball"), ("ld", "line_drive"), ("gb", "ground_ball")):   # EV by batted-ball type (Sean, 7 Oct 2026): the same EV-eligible balls, split by the stringer's type
         k = d["evb"] & d["bb_type"].eq(bbt)
         d["ev" + t + "n"] = k.astype(int); d["ev" + t + "s"] = d["launch_speed"].where(k, 0.0)
+        d["br" + t] = (k & d["barrel"]).astype(int)   # barrels by type over the same balls (Sean, 8 Oct 2026: barrel rate by FB / LD / GB on the Mix tab)
     d["hand"] = d["p_throws"].eq("R").astype(int)          # hitter split: pitcher hand
     d["bhand"] = d["stand"].eq("R").astype(int)            # pitcher split: batter side
     d["bhome"] = d["inning_topbot"].eq("Bot").astype(int)  # batter is the home team
@@ -1111,6 +1116,7 @@ def hitter_metrics(d: pd.DataFrame) -> pd.DataFrame:
     r["maxEV"] = f.maxEV
     for t in ("fb", "ld", "gb"):   # EV on fly balls / line drives / grounders (7 Oct 2026); NaN on a frame without the flags
         r["EV_" + t.upper()] = (g["ev" + t + "s"].sum() / g["ev" + t + "n"].sum().replace(0, np.nan)) if ("ev" + t + "s") in d.columns else np.nan
+        r["BRL_" + t.upper()] = (100 * g["br" + t].sum() / g["ev" + t + "n"].sum().replace(0, np.nan)) if ("br" + t) in d.columns else np.nan
     e = d[d["evb"] & d["mixc"].ge(0)] if "mixc" in d.columns else None   # EV by Mix bucket (8 Oct 2026): the tracked balls in each and their EV sum, for ctx.mixev
     for i in range(len(MIX_COLS)):
         k = e[e["mixc"].eq(i)].groupby("batter")["launch_speed"] if e is not None else None
@@ -1361,8 +1367,8 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
               pulln=("pull", "sum"), ld=("ld", "sum"), gbh=("gbh", "sum"), puh=("puh", "sum"), bbt=("bbt", "sum"),
               bip=("bip", "sum"), evn=("evb", "sum"), oppn=("oppo", "sum"),
               mixsum=("mixv", "sum"), mixn=("mixn", "sum"), **{c: (c, "sum") for c in MIX_COLS},
-              **{c: (c, "sum") for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn") if c in d.columns})
-    for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn"):
+              **{c: (c, "sum") for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn", "brfb", "brld", "brgb") if c in d.columns})
+    for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn", "brfb", "brld", "brgb"):
         if c not in h.columns: h[c] = 0.0
     h["mixsum"] = h["mixsum"].round(4)
     h["evs"] = d[d["evb"]].groupby(HK)["launch_speed"].agg(lambda x: [round(float(v), 1) for v in x])

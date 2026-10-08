@@ -2663,3 +2663,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the photo sat as a stamp at the tile's foot); the Summary's wOBA / xwOBA (nERA / xnERA) pills sit in 1.35fr columns at 13.5px with no minimum
   width (they had been 48px pills in 38px columns, running into each other and into PA), and `.pbmain` / `.pbsum` stretch the band's width. With
   a Back the row stays (Back left, year and Filters right). The block at the end of `styles.css`.
+* **Barrel% by batted-ball type on the Mix tab (Sean, 8 Oct 2026: "on the mix tab can you add barrel rate by each category too so fb, ld, and gb")**:
+  under the Avg EV block a **Barrel%** block — Fly balls · Line drives · Ground balls, his percentile bar, his rate and the league's (`typeBlock` in
+  `renderMixTab`, which now draws both blocks). **Build**: `pitch_flags` counts the barrels among each type's EV-eligible balls (`brfb / brld /
+  brgb`, over `evfbn / evldn / evgbn`), `hitter_metrics` → `BRL_FB / BRL_LD / BRL_GB`, `HITTER_METRICS` **`brfb / brld / brgb`** (so the pool ranks
+  them and they're Leaderboard columns), and the three counts are appended to `HITTER_DAY` after `evbk` so a window re-derives them in `V()`. A
+  ground-ball barrel needs a grounder at 8°+ of launch, so that row reads near zero for everyone. Until a build carries them the block doesn't
+  draw (a `steps=mlb` run was dispatched after the merge; past seasons at the next rescore). **Found alongside**: since the EV-by-type change
+  (7 Oct 2026) a `//` comment on `V()`'s hitter line had swallowed `brl` and `pull`, so a hitter's Barrel% and Pull Air% were missing under any
+  date window or split — the fourth time a mid-line `//` has eaten code; it's `/* */` now.
