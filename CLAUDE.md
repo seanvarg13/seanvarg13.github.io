@@ -2695,3 +2695,17 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   so it doesn't fire yet. Under the table only the three-line key (`.sbkey`); the Postseason note and the rest of the old note are gone. 34px of
   air above "Standard batting" (26 on a phone). Checked: Ohtani 2024 NL HR / RBI / OPS, MLB runs; Judge 2022 MLB across the board; Skenes 2025
   MLB ERA, 2024 unqualified.
+* **The club and league rows always shown, a blue gap; total WAR for a two-way player (Sean, 8 Oct 2026: "dont make the by league or team splits a
+  drop down anymore, and format them exactly like this row spacing wise", from B-Ref's foot; "have the row gap be blue instead of white"; "for bwar
+  and fwar include all war so like include both pitching and hitting for ohtani")**: `seasonBlock` draws N Yrs · 162 Game Avg, a gap, every club
+  (`TEAM (n Yrs)`), a gap, every league — no "By team and league" fold (`sbMore` is gone). Every totals row is bold at the season rows' 28px; the gap
+  rows are 10px of the band blue a shade deeper (`color-mix` of `--ink` 18% into `--band2`). **WAR**: `build_career.py` appends his pitching WAR
+  `[FanGraphs, Baseball-Reference]` (or null) to every hitting row after the `[bWAR, sprint, fly balls]` array (index 24) and to every `HT` club
+  row (index 22) — FanGraphs' from MLB's sabermetrics stat, `group=pitching` (`sabr_pitch_season`, one league-wide request a season, cached in
+  `.cache/sabr/pitch-<y>.json`; `sabr_pitch_clubs` for a traded season's clubs), B-Ref's from `war_daily_pitch.txt` (`bref_war(…, kind="pitch")`,
+  per stint). In `app.js` `mlbLine` / `clubLine` / the club parse read it as `c.pw`, `sbVal`'s fWAR / bWAR are batting + pitching (a line that
+  batted but lacks its batting WAR stays blank), `sbCombine` sums it, the 162-game average scales it — so the league leaders count it too.
+  `hist/career.js` was patched in place the same day (scratch `patch_pw.py`; 7,368 hitting rows have a pitching WAR — most of them pitchers' own
+  at-bats). The app counts it only on a line with **100+ PA** (`SB_TWO_PA`): Ohtani's seasons (2020: 175 PA) and position players' mop-up innings, not
+  a pitcher's batting line, which would otherwise lead the league in WAR. Ohtani: B-Ref 2021 4.9 + 4.1 = 9.0, 2022 3.4 + 6.3 = 9.6, 2023 6.1 + 3.8;
+  FanGraphs 2023 6.6 + 2.3 = 8.9.
