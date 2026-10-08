@@ -8853,8 +8853,10 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   let backAt = null, backRestore = null, pageOpened = false;   // where a page was opened from: the list page, its scroll and its rows' box
   const BACK_LABEL = { leaderboard: "leaderboard", trending: "leaderboard", rankings: "rankings", draft: "draft board", pitches: "Pitching+", fantasy: "fantasy", home: "home",
                        claude: "Claude rankings", planner: "planner", eligibility: "eligibility", callups: "Call-up Watch", compare: "compare", mock: "mock draft", trends: "League Trends", appearance: "appearance" };
+  const BACK_MODES = ["leaderboard", "trending", "rankings", "draft", "pitches", "fantasy", "claude", "planner", "eligibility"];   // the list pages Back returns to
   function markBack() {
     if (state.mode === "player") return;                      // from one page to another: the first list is still where Back goes
+    if (!BACK_MODES.includes(state.mode)) { backAt = null; return; }   // home and the search give no Back (Sean, 8 Oct 2026: "get rid of the home button")
     noteList(); backAt = Object.assign({ hash: location.hash || "#home", label: BACK_LABEL[state.mode] || state.mode }, listAt);
   }
   // a name on a list: his page for that season, with the list's window and split carried over; o: { ds, win, split, tab }
@@ -8876,7 +8878,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     if (location.hash === b.hash) render(); else location.hash = b.hash;
   }
   const backButton = (small) => {
-    const b = el("button", "pbback" + (small ? " small" : ""), backAt ? `‹ Back to ${backAt.label}` : "‹ Home"); b.type = "button";
+    if (!backAt) return el("span", "pbnoback");               // no list to go back to: nothing where the button would be
+    const b = el("button", "pbback" + (small ? " small" : ""), `‹ Back to ${backAt.label}`); b.type = "button";
     b.addEventListener("click", (e) => { e.stopPropagation(); goBack(); });
     return b;
   };
@@ -9612,7 +9615,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   function renderGlobalSearch() {
     renderSearchList($("glist"), state.gq, (e) => {
       const t = primaryType(e), first = e.s.find((sv) => sv[2] === t);
-      markBack();   // the page's Back button returns here (8 Oct 2026)
+      backAt = null;   // a searched player's page has no Back button (Sean, 8 Oct 2026)
       state.x = { id: e.id, type: t, ds: first[0] }; state.expanded = null; state.gq = ""; $("gq").value = ""; $("gq").blur();
       state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };   // a searched player always opens on his full season
       renderSearchList($("glist"), "", () => {});                      // close the list of hits
