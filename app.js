@@ -4874,6 +4874,10 @@
         if (!after("k", "xk")) groups.push({ group: "Outcomes", metrics: [side("xk")].filter(Boolean) });
         for (const [a, k] of [["xwdiff", "xwcon"]]) if (!after(a, k)) groups.push({ group: "Outcomes", metrics: [side(k)].filter(Boolean) });
         groups.push({ group: "BABIP", metrics: ["babip", "xbabip", "bluck", "brel"].map(side).filter(Boolean) });
+        // FB EV / FB Brl% / FB Power / xHR/FB right after Avg EV (8 Oct 2026 — the two from the build aren't card metrics, so they had no box here)
+        { const fbm = ["evfb", "brfb", "fbq", "xhrfb"].map((k) => side(k) || metricsFor(g).find((m) => m.key === k)).filter(Boolean);
+          const at = groups.find((grp) => grp.metrics.some((m) => m.key === "ev"));
+          if (at) at.metrics.splice(at.metrics.findIndex((m) => m.key === "ev") + 1, 0, ...fbm); else groups.push({ group: "Fly-ball power", metrics: fbm }); }
       } }
     groups.push({ group: "Fantasy points", metrics: pit ? FANT_P : FANT_H });   // under the current scoring preset (Sean, 1 Oct 2026)
     const seen = new Set();
