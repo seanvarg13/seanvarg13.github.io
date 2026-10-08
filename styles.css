@@ -4782,3 +4782,8 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .sblock .sbkey { margin-top: 8px; font-size: 12.5px; line-height: 1.6; color: var(--ink-2); }
 :root:root:root:root:root:root .sblock .sbkey b { font-weight: 700 !important; color: var(--ink); }
 :root:root:root:root:root:root .sblock .sbkey .sbgold { background: #e8c547; color: #2a2100; padding: 0 4px; border-radius: 2px; font-weight: 700 !important; }
+/* the club and league rows, always shown (Sean, 8 Oct 2026, from B-Ref's foot): every totals row bold at the season rows' height, a 10px
+   gap between the career pair, the clubs and the leagues — blue, a shade deeper than the rows (Sean: "have the row gap be blue instead of white") */
+:root:root:root:root:root:root .sbt tr.tot td { font-weight: 700 !important; }
+:root:root:root:root:root:root .sbt tr.tot.sub td { height: 28px; }
+:root:root:root:root:root:root .sbt tr.gap td { height: 10px; padding: 0; background: color-mix(in srgb, var(--ink) 18%, var(--band2, var(--accent-2))) !important; border-left: 0; border-right: 0; }

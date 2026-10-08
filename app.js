@@ -3070,7 +3070,7 @@
     const base = 2 + keysMLB.length, extra = r.slice(base, base + 2), a = r[base + 2];
     if (H) { c.HBP = extra[0] || 0; c.SF = extra[1] || 0; } else { c.ER = extra[0]; c.BF = extra[1]; }
     c.adv = !Array.isArray(a) ? {} : H ? { woba: a[0], xwoba: a[1], whf: null } : { fip: a[0], siera: a[1], whf: a[5], strk: a[6], gb: a[7], pu: a[8] };
-    if (H) { c.sab = Array.isArray(r[base + 4]) ? r[base + 4] : null; c.ext = Array.isArray(r[base + 5]) ? r[base + 5] : null; }   // FanGraphs' [wRC+, BsR, Off, Def, WAR, wOBA]; [bWAR, sprint speed, fly balls] (8 Oct 2026)
+    if (H) { c.sab = Array.isArray(r[base + 4]) ? r[base + 4] : null; c.ext = Array.isArray(r[base + 5]) ? r[base + 5] : null; c.pw = Array.isArray(r[base + 6]) ? r[base + 6] : null; }   // FanGraphs' [wRC+, BsR, Off, Def, WAR, wOBA]; [bWAR, sprint speed, fly balls]; his pitching WAR [FanGraphs, B-Ref] (8 Oct 2026)
     return { season: r[0], level: "MLB", team: r[1], c, mlb: true, pos: posPairs(r[base + 3]) };
   }
   function rawLines(p) {
@@ -9142,7 +9142,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   window.addEventListener("scroll", condAsk, { passive: true });
   window.addEventListener("resize", condAsk);
   /* ---------- the season table, Baseball-Reference's in the site's dress (Sean, 8 Oct 2026) ---------- */
-  let sbMinors = false, sbKind = "reg", sbMore = false;   // Show minors; Regular Season / Playoffs; the club rows' fold (this visit)
+  let sbMinors = false, sbKind = "reg";   // Show minors; Regular Season / Playoffs (this visit)
   // his postseason lines, MLB's official ones fetched in the browser like the bio (Sean, 8 Oct 2026: "add in the postseason and regular season
   // ability thing"): type+id → null while it loads, false if it failed, else [{season, team, c}] oldest first, a traded October as TOT
   const TEAM_BY_ID = Object.fromEntries(Object.entries(TEAM_ID).map(([k, v]) => [v, k]));
@@ -9191,13 +9191,14 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   const SB_TIP = { "BB%": "Walks per plate appearance", "K%": "Strikeouts per plate appearance", ISO: "Isolated power: SLG minus AVG",
     BABIP: "Batting average on balls in play: (H − HR) / (AB − K − HR + SF)", wOBA: "The site's wOBA where the season is built (2015 on), FanGraphs' before",
     "HR/FB": "Home runs per fly ball (popups included, as FanGraphs counts them), on MLB's batted-ball calls",
-    "wRC+": "FanGraphs: runs created per PA, park and league adjusted, 100 = average", fWAR: "FanGraphs' wins above replacement",
-    bWAR: "Baseball-Reference's wins above replacement (batting and fielding)", Sprint: "Statcast sprint speed, feet per second (2015 on)" };
+    "wRC+": "FanGraphs: runs created per PA, park and league adjusted, 100 = average", fWAR: "FanGraphs' wins above replacement — batting, fielding and, for a two-way player, pitching",
+    bWAR: "Baseball-Reference's wins above replacement — batting, fielding and, for a two-way player, pitching", Sprint: "Statcast sprint speed, feet per second (2015 on)" };
   const SB_P = ["W", "L", "ERA", "FIP", "G", "GS", "IP", "H", "HR", "BB", "K", "WHIP", "K%", "BB%", "K-BB%", "Whiff%", "Strike%", "GB%"];
   const SB_BEST_HI = { H: new Set(["G", "PA", "HR", "R", "RBI", "SB", "BB%", "ISO", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA", "wRC+", "Sprint", "fWAR", "bWAR"]), P: new Set(["W", "G", "GS", "IP", "K", "K%", "K-BB%", "Whiff%", "Strike%", "GB%"]) };
   const SB_BEST_LO = { H: new Set(["K%"]), P: new Set(["ERA", "FIP", "WHIP", "BB%"]) };
   // a line's value for a column: the record's counts, the rates recomputed for a sum, our numbers from its adv
   // a hitter's wOBA: ours where the season is built (2015 on), FanGraphs' before it
+  const SB_TWO_PA = 100;   // a hitting line counts his pitching WAR from 100 PA (sbVal)
   const sbWoba = (l) => { const a = l.c.adv || {}; return a.woba != null ? a.woba : (l.c.sab && l.c.sab[5] != null ? l.c.sab[5] : null); };
   function sbVal(H, l, k) {
     const c = l.c, a = c.adv || {};
@@ -9208,8 +9209,15 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       if (k === "K%") return +r.PA ? 100 * r.K / r.PA : null;
       if (k === "ISO") return +r.AB ? (+r["2B"] + 2 * r["3B"] + 3 * r.HR) / r.AB : null;
       if (k === "BABIP") { const d = r.AB - r.K - r.HR + (+r.SF || 0); return d > 0 ? (r.H - r.HR) / d : null; }
+      // WAR is his whole WAR — batting and, for a two-way player, pitching (Sean, 8 Oct 2026: "include both pitching and hitting for ohtani")
+      // a line that batted but lacks its batting WAR stays blank rather than showing his pitching alone
+      // his pitching counts only on a line with 100+ PA — a two-way season (Ohtani's 2020 had 175) or a position player's mop-up innings, not a
+      // pitcher's own at-bats (deGrom's 2018 batting line would otherwise "lead" the NL in WAR)
+      const pw = (+r.PA || 0) >= SB_TWO_PA ? c.pw : null;
+      const war = (b, q) => (b == null ? (+r.PA ? null : q) : +b + (+q || 0));
+      if (k === "fWAR") return war(c.sab ? c.sab[4] : null, pw ? pw[0] : null);
       if (k in SB_SAB) return c.sab ? c.sab[SB_SAB[k]] : null;
-      if (k === "bWAR") return c.ext ? c.ext[0] : null; if (k === "Sprint") return c.ext ? c.ext[1] : null;
+      if (k === "bWAR") return war(c.ext ? c.ext[0] : null, pw ? pw[1] : null); if (k === "Sprint") return c.ext ? c.ext[1] : null;
       if (k === "HR/FB") { const fb = r.ext ? r.ext[2] : null; return fb ? 100 * r.HR / fb : null; }
       return c[k];
     }
@@ -9241,6 +9249,9 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       let sn = 0, sd = 0; for (const l of has) { const v = ex(l, 1); if (v != null) { sn += v * pa(l); sd += pa(l); } }
       const fb = has.length && has.every((l) => ex(l, 2) != null) ? has.reduce((a, l) => a + ex(l, 2), 0) : null;
       c.ext = [bw, sd ? sn / sd : null, fb];
+      // his pitching WAR adds up over the pieces he pitched in
+      const pp = lines.filter((l) => Array.isArray(l.c.pw) && (+l.c.PA || 0) >= SB_TWO_PA);
+      c.pw = pp.length ? [0, 1].map((i) => (pp.some((l) => l.c.pw[i] != null) ? pp.reduce((a, l) => a + (+l.c.pw[i] || 0), 0) : null)) : null;
       let n = 0, d = 0; for (const l of has) { const v = sbWoba(l); if (v != null) { n += v * pa(l); d += pa(l); } }
       c.adv.woba = d ? n / d : null;
     }
@@ -9272,7 +9283,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   const SB_LEADS = new Map();
   const clubLine = (H, r) => {   // a traded season's club row ([season, team, …keys, two counts, then FanGraphs' and the extra arrays for hitters])
     const keysMLB = H ? RAW_H : RAW_P, c = {}; keysMLB.forEach((k, i) => { c[k] = r[2 + i]; });
-    const ex = r.slice(2 + keysMLB.length); if (H) { c.HBP = ex[0] || 0; c.SF = ex[1] || 0; c.sab = Array.isArray(ex[2]) ? ex[2] : null; c.ext = Array.isArray(ex[3]) ? ex[3] : null; } else { c.ER = ex[0]; c.BF = ex[1]; }
+    const ex = r.slice(2 + keysMLB.length); if (H) { c.HBP = ex[0] || 0; c.SF = ex[1] || 0; c.sab = Array.isArray(ex[2]) ? ex[2] : null; c.ext = Array.isArray(ex[3]) ? ex[3] : null; c.pw = Array.isArray(ex[4]) ? ex[4] : null; } else { c.ER = ex[0]; c.BF = ex[1]; }
     c.adv = {}; return { season: r[0], team: r[1], c };
   };
   function sbLeaders(H, y) {
@@ -9445,6 +9456,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
         if (!H) avg.c.IP = ipStr(ipNum(tot.c.IP) * f);
         if (H && tot.c.sab) avg.c.sab = tot.c.sab.map((v, i) => (v == null || i === 0 || i === 5 ? v : v * f));   // runs and WAR per 162 games; wRC+ / wOBA as they are
         if (H && tot.c.ext) avg.c.ext = [tot.c.ext[0] == null ? null : tot.c.ext[0] * f, tot.c.ext[1], tot.c.ext[2]];   // bWAR per 162; sprint as it is (HR/FB reads the unscaled line)
+        if (H && tot.c.pw) avg.c.pw = tot.c.pw.map((v) => (v == null ? null : v * f));   // and his pitching WAR per 162
         row(["162 Game Avg"], avg, "tot", { heat: 0 });
       }
       // each club: a traded year's clubs from the record's own club rows
@@ -9452,7 +9464,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       const clubLines = {};
       for (const r of (rec && rec[p.type + "T"]) || []) {
         const c = {}; keysMLB.forEach((k, i) => { c[k] = r[2 + i]; });
-        const ex = r.slice(2 + keysMLB.length); if (H) { c.HBP = ex[0] || 0; c.SF = ex[1] || 0; c.sab = Array.isArray(ex[2]) ? ex[2] : null; c.ext = Array.isArray(ex[3]) ? ex[3] : null; } else { c.ER = ex[0]; c.BF = ex[1]; }
+        const ex = r.slice(2 + keysMLB.length); if (H) { c.HBP = ex[0] || 0; c.SF = ex[1] || 0; c.sab = Array.isArray(ex[2]) ? ex[2] : null; c.ext = Array.isArray(ex[3]) ? ex[3] : null; c.pw = Array.isArray(ex[4]) ? ex[4] : null; } else { c.ER = ex[0]; c.BF = ex[1]; }
         (clubLines[r[0]] = clubLines[r[0]] || []).push({ season: r[0], team: r[1], c: Object.assign(c, { adv: {} }) });
       }
       for (const l of mlb) {
@@ -9461,21 +9473,15 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       }
       const clubs = [...byClub].filter(([t]) => t && t !== "TOT");
       if (!post && clubs.length) {
-        // the club and league rows fold under the 162-game average (Sean, 8 Oct 2026: "make only the career and 162 game avg ones show and then
-        // make the others show with a drop down arrow")
-        const more = el("tr", "sbmore"), mtd = el("td"); mtd.colSpan = ncol;
-        const mbt = el("button", "linkbtn", (sbMore ? "▾ " : "▸ ") + "By team and league"); mbt.type = "button"; mbt.setAttribute("aria-expanded", String(sbMore));
-        mbt.addEventListener("click", (e) => { e.stopPropagation(); sbMore = !sbMore; render(); });
-        const minner = el("span", "sbin"); minner.append(mbt); mtd.append(minner); more.append(mtd); tbody.append(more);
+        // the club rows, then the league rows, each group after a thin gap — always shown, B-Ref's spacing (Sean, 8 Oct 2026: "dont make the by
+        // league or team splits a drop down anymore, and format them exactly like this row spacing wise"; the fold was the same day's)
         const gap = () => { const g = el("tr", "gap"), td = el("td"); td.colSpan = ncol; g.append(td); tbody.append(g); };
-        if (sbMore) {
         gap();
         for (const [t, ls] of clubs) { const yrs = new Set(ls.map((x) => x.season)).size; row([`${t} (${yrs} Yr${yrs > 1 ? "s" : ""})`], sbCombine(H, ls), "tot sub"); }
         const byLg = new Map();
         for (const [t, ls] of clubs) { const lg = leagueOf(t); (byLg.get(lg) || byLg.set(lg, []).get(lg)).push(...ls); }
         gap();
         for (const [lg, ls] of byLg) { const yrs = new Set(ls.map((x) => x.season)).size; row([`${lg} (${yrs} Yr${yrs > 1 ? "s" : ""})`], sbCombine(H, ls), "tot sub"); }
-        }
       }
     }
     table.append(tbody);
