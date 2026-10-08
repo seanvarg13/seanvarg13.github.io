@@ -9152,8 +9152,9 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   // these are the stats that the table shows, and include the line breaks as well"); then, the same evening: WAR first as fWAR with
   // Baseball-Reference's bWAR beside it, each its own group, wOBA / xwOBA next on their own and heat-mapped, HR/FB between ISO and BABIP, Sprint
   // speed (heat-mapped) and SB as a group where BsR was; Off / Def / BsR gone
-  const SB_H = ["fWAR", "bWAR", "wOBA", "xwOBA", "G", "PA", "HR", "R", "RBI", "BB%", "K%", "ISO", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "wRC+", "Sprint", "SB"];
-  const SB_BRK = { H: new Set(["bWAR", "wOBA", "G", "BB%", "AVG", "Sprint", "Pos"]), P: new Set() };   // a heavier rule before each of these
+  // and then (Sean, the same night): OPS between SLG and wRC+, fWAR / bWAR after SB as one group (a rule before fWAR and after bWAR, none between)
+  const SB_H = ["wOBA", "xwOBA", "G", "PA", "HR", "R", "RBI", "BB%", "K%", "ISO", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "OPS", "wRC+", "Sprint", "SB", "fWAR", "bWAR"];
+  const SB_BRK = { H: new Set(["G", "BB%", "AVG", "Sprint", "fWAR", "Pos"]), P: new Set() };   // a heavier rule before each of these
   const SB_FG = ["fWAR", "bWAR", "wRC+", "Sprint", "HR/FB"], SB_SAB = { "wRC+": 0, fWAR: 4 };   // SB_FG: not in MLB's postseason lines
   const SB_HEAT = new Set(["wOBA", "xwOBA", "Sprint"]);   // pills in their percentile colour among that season's qualified hitters
   const SB_TIP = { "BB%": "Walks per plate appearance", "K%": "Strikeouts per plate appearance", ISO: "Isolated power: SLG minus AVG",
@@ -9162,7 +9163,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     "wRC+": "FanGraphs: runs created per PA, park and league adjusted, 100 = average", fWAR: "FanGraphs' wins above replacement",
     bWAR: "Baseball-Reference's wins above replacement (batting and fielding)", Sprint: "Statcast sprint speed, feet per second (2015 on)" };
   const SB_P = ["W", "L", "ERA", "FIP", "G", "GS", "IP", "H", "HR", "BB", "K", "WHIP", "K%", "BB%", "K-BB%", "Whiff%", "Strike%", "GB%"];
-  const SB_BEST_HI = { H: new Set(["G", "PA", "HR", "R", "RBI", "SB", "BB%", "ISO", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "wOBA", "xwOBA", "wRC+", "Sprint", "fWAR", "bWAR"]), P: new Set(["W", "G", "GS", "IP", "K", "K%", "K-BB%", "Whiff%", "Strike%", "GB%"]) };
+  const SB_BEST_HI = { H: new Set(["G", "PA", "HR", "R", "RBI", "SB", "BB%", "ISO", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA", "wRC+", "Sprint", "fWAR", "bWAR"]), P: new Set(["W", "G", "GS", "IP", "K", "K%", "K-BB%", "Whiff%", "Strike%", "GB%"]) };
   const SB_BEST_LO = { H: new Set(["K%"]), P: new Set(["ERA", "FIP", "WHIP", "BB%"]) };
   // a line's value for a column: the record's counts, the rates recomputed for a sum, our numbers from its adv
   // a hitter's wOBA: ours where the season is built (2015 on), FanGraphs' before it

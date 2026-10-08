@@ -32,7 +32,58 @@ def say(msg):
     print(msg, flush=True)
 
 
+# The stale-checkout guard (Sean, 8 Oct 2026: "add the guard to the cloud build"). A run's checkout is main as it was when the run
+# began, and a run can take hours (a rescore, the minors), so a script merged to main meanwhile used to be ignored: the run built with
+# the old copy and published files the new code had changed (4 Oct: data.js with the old card layout; 7-8 Oct: career.js without the
+# positions or FanGraphs' numbers). Now every step first adopts tools/ as main carries it, and a publish re-runs any step of this run
+# whose script (or a script it imports) changed on main after the step ran, before it pushes.
+DEPS = {"build_history.py": ["build_data.py"], "build_milb.py": ["build_data.py", "build_history.py"]}
+RAN = []                                                 # [(script, args, {script: sha1 of the copy it ran with})] since the last publish
+
+
+def text_sha(b):
+    return hashlib.sha1(b).hexdigest()
+
+
+def adopt_main_tools():
+    """Bring the build scripts up to main's copies. Returns the ones that changed. A script that doesn't compile is left alone."""
+    if subprocess.run(["git", "fetch", "-q", "origin", "main"], capture_output=True).returncode:
+        say("    (guard: couldn't fetch main — running with the scripts this run has)")
+        return []
+    changed = []
+    for s in SCRIPTS:
+        r = subprocess.run(["git", "show", f"origin/main:tools/{s}"], capture_output=True)
+        if r.returncode or not r.stdout:
+            continue
+        here = os.path.join(ROOT, s)
+        if os.path.exists(here) and open(here, "rb").read() == r.stdout:
+            continue
+        try:
+            compile(r.stdout, s, "exec")
+        except SyntaxError as e:
+            say(f"!! guard: main's {s} doesn't compile ({e}) — keeping this run's copy")
+            continue
+        for dst in (here, os.path.join(TOOLS, s)):
+            with open(dst, "wb") as f:
+                f.write(r.stdout)
+        changed.append(s)
+    if changed:
+        say("    guard: main moved on — now using its " + ", ".join(changed))
+    return changed
+
+
+def script_shas(script):
+    return {s: text_sha(open(os.path.join(ROOT, s), "rb").read()) for s in [script, *DEPS.get(script, [])] if os.path.exists(os.path.join(ROOT, s))}
+
+
 def run(*args):
+    if args and args[0] in SCRIPTS:
+        adopt_main_tools()
+        RAN.append((args[0], args, script_shas(args[0])))
+    return _run(*args)
+
+
+def _run(*args):
     say("$ " + " ".join(args))
     p = subprocess.Popen([sys.executable, *args], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
     for line in p.stdout:
@@ -95,6 +146,25 @@ def publish(label, end, dry):
     if dry:
         say(f"--- (dry run) would publish: {label}; build id {restamp()}")
         return True
+    # the guard: re-run, with main's scripts, every step of this run built with a copy main has since replaced (twice at most —
+    # a merge landing during the re-run gets one more pass; the third publishes what it has and says so)
+    for rnd in range(3):
+        adopt_main_tools()
+        stale = [r for r in RAN if script_shas(r[0]) != r[2]]
+        if not stale:
+            break
+        if rnd == 2:
+            say("!! guard: the scripts keep changing on main — publishing this build; the next run catches up")
+            break
+        say(f"--- guard: {len(stale)} step(s) built with scripts main has replaced — re-running them before publishing")
+        first = RAN.index(stale[0])                          # everything after the first stale step read its output, so redo from there
+        redo = RAN[first:]
+        del RAN[first:]
+        for script, args, _ in redo:
+            if not run(*args):
+                say("!! guard: a re-run failed — not publishing")
+                return False
+    RAN.clear()
     keep = tempfile.mkdtemp()
     for rel in outputs():
         os.makedirs(os.path.join(keep, os.path.dirname(rel)), exist_ok=True)
