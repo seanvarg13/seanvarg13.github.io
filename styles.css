@@ -4558,3 +4558,13 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pbtable td.who { min-width: 130px; }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pbtable td.who .pbname { font-size: 14.5px !important; }
 :root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th.who, :root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th.n { box-shadow: none !important; }
+
+/* The Mix tab as a table (Sean, 8 Oct 2026): the card-table dress (.ubt) — his share and his EV by bucket in bold type coloured by
+   percentile (the colour is inline), no bars, chips or bubbles; the Mix wOBA foot row ruled off. Six roots: the warm pass's weight rules */
+:root:root:root:root:root:root .mixtab .mixt { width: 100%; }
+:root:root:root:root:root:root .mixtab .mixt th, :root:root:root:root:root:root .mixtab .mixt td { white-space: nowrap; font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root .mixtab .mixt td.l { color: var(--ink); }
+:root:root:root:root:root:root .mixtab .mixt td.lg { color: var(--svtext); }
+:root:root:root:root:root:root .mixtab .mixt td.mxh, :root:root:root:root:root:root .mixtab .mixt tr.mtot td { font-weight: 700 !important; }
+:root:root:root:root:root:root .mixtab .mixt td.mn { color: var(--svtext); font-size: 12px; font-weight: 500 !important; }
+:root:root:root:root:root:root .mixtab .mixt tr.mtot td { border-top: 2px solid var(--ink); }
