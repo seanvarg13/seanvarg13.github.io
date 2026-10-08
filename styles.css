@@ -4799,3 +4799,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .sbt .f3 { left: var(--sbw1, 60px); }
 :root:root:root:root:root:root .sbt td.f1, :root:root:root:root:root:root .sbt td.f3 { z-index: 2; }
 :root:root:root:root:root:root .sbt th.f1, :root:root:root:root:root:root .sbt th.f3 { z-index: 3; }
+/* a phone's Regular Season / Playoffs at B-Ref's size (Sean, 8 Oct 2026: "make regular season and playoffs the same size as baseball reference has"):
+   30px tall, 13.5px regular-weight type, 12px each side, 5px of strip round them */
+:root:root:root:root:root:root[data-view="mobile"] .sbtabs { padding: 5px; }
+:root:root:root:root:root:root[data-view="mobile"] .sbtab { height: 30px; padding: 0 12px; font: 400 13.5px var(--body) !important; }
