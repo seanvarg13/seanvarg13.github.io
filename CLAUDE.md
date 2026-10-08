@@ -2709,3 +2709,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   at-bats). The app counts it only on a line with **100+ PA** (`SB_TWO_PA`): Ohtani's seasons (2020: 175 PA) and position players' mop-up innings, not
   a pitcher's batting line, which would otherwise lead the league in WAR. Ohtani: B-Ref 2021 4.9 + 4.1 = 9.0, 2022 3.4 + 6.3 = 9.6, 2023 6.1 + 3.8;
   FanGraphs 2023 6.6 + 2.3 = 8.9.
+* **The totals' rules and gaps, no heat on them, more air (Sean, 8 Oct 2026, from Ohtani's page on his phone: "make it so the line break after like
+  9 yrs and whatnot carries all the way down and don't heat map any of the bottom totals rows and make the gap blue be the same shade of blue as the
+  rest and also make it so the white space gap between the header and standard batting is like 3x as big")**: the gap rows are built cell for cell
+  like a row (`gap()` in `seasonBlock`: the label cell spanning Season / Age / Team, a cell per column with `ge` where a group ends, Pos), so the
+  2px ink rule after the label and every group rule run unbroken from the column names through the totals, the gaps and the club / league rows;
+  `tr.tot td.sbl` carries the ink rule (it was white); the gaps are `--band2`, the totals' own blue, with no inner lines; N Yrs and 162 Game Avg
+  have no heat map (wOBA / xwOBA / Sprint plain there); "Standard batting" starts 102px under the band (78 on a phone).

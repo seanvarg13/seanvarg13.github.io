@@ -4773,8 +4773,8 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .phtog > *, :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .phtog .segbtn { width: 100%; box-sizing: border-box; }
 /* the season table (Sean, 8 Oct 2026): air between the band and "Standard batting"; B-Ref's league-leader marks (bold = led his league, bold
    italic = led MLB) and its key on the title row; the two totals rows bold, a cell gold where he holds an all-time MLB career record */
-:root:root:root:root:root:root #xboard .sblock { margin-top: 34px; }
-:root[data-view="mobile"]:root:root:root:root:root #xboard .sblock { margin-top: 26px; }
+:root:root:root:root:root:root #xboard .sblock { margin-top: 102px; }
+:root[data-view="mobile"]:root:root:root:root:root #xboard .sblock { margin-top: 78px; }
 :root:root:root:root:root:root .sbt td.lead { font-weight: 700 !important; }
 :root:root:root:root:root:root .sbt td.mlblead { font-style: italic; }
 :root:root:root:root:root:root .sbt tr.tot:not(.sub) td { font-weight: 700 !important; }
@@ -4787,3 +4787,9 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .sbt tr.tot td { font-weight: 700 !important; }
 :root:root:root:root:root:root .sbt tr.tot.sub td { height: 28px; }
 :root:root:root:root:root:root .sbt tr.gap td { height: 10px; padding: 0; background: color-mix(in srgb, var(--ink) 18%, var(--band2, var(--accent-2))) !important; border-left: 0; border-right: 0; }
+/* the totals and their gaps (Sean, 8 Oct 2026: "make it so the line break after like 9 yrs and whatnot carries all the way down ... make the gap blue
+   be the same shade of blue as the rest"; the space above "Standard batting" tripled to 102px / 78px on a phone): the rule after the label and
+   every group rule run in the ink through the totals and gap rows; a gap is the band's own blue with no inner lines */
+:root:root:root:root:root:root .sbt tr.tot td.sbl { border-right: 2px solid var(--ink); }
+:root:root:root:root:root:root .sbt tr.gap td { height: 10px; padding: 0; background: var(--band2, var(--accent-2)) !important; border-top: 0; border-bottom: 0; border-left: 0; border-right: 0; }
+:root:root:root:root:root:root .sbt tr.gap td.sbl, :root:root:root:root:root:root .sbt tr.gap td.ge { border-right: 2px solid var(--ink); }
