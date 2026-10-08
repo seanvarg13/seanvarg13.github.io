@@ -4733,3 +4733,8 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] .sbtabs { gap: 0; margin: 0 0 -8px; padding: 4px; background: var(--surface-2); border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--surface)); border-bottom: 0; }
 :root:root:root:root:root:root[data-view="mobile"] .sbtab { height: 44px; padding: 0 18px; border: 0; border-radius: 0; background: transparent; color: var(--ink); font: 600 16px var(--body); }
 :root:root:root:root:root:root[data-view="mobile"] .sbtab.on { background: var(--btn, var(--accent-2)); color: var(--btn-ink, #fff); }
+/* FanGraphs' group rules in the season table (Sean, 8 Oct 2026, from Ohtani's FanGraphs dashboard: "include the line breaks as well"): a 2px rule
+   after SB, BABIP, wRC+, BsR and WAR (app.js marks a group's last column .ge), ink on the rows, white on the blue header and totals */
+:root:root:root:root:root:root .sbt th.ge { border-right: 2px solid rgba(255,255,255,.85); }
+:root:root:root:root:root:root .sbt td.ge { border-right: 2px solid var(--ink); }
+:root:root:root:root:root:root .sbt tr.tot td.ge { border-right: 2px solid rgba(255,255,255,.85); }

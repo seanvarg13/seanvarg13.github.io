@@ -2608,3 +2608,16 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the same way. Both files were patched in place the same day (scratch `patch_pos.py`: 17,039 of 17,073 MLB hitting rows and 51,112 of
   67,528 minors rows — the rest are pitchers' batting lines or seasons with no games in the field; career.js 3.3 → 3.5 MB, minors.js
   13.9 → 14.6 MB).
+* **The hitters' season table is FanGraphs' dashboard (Sean, 8 Oct 2026, from Ohtani's FanGraphs table: "make it so these are the stats that the
+  table shows, and include the line breaks as well")**: `SB_H` = G · PA · HR · R · RBI · SB | BB% · K% · ISO · BABIP | AVG · OBP · SLG · wOBA · xwOBA ·
+  wRC+ | BsR | Off · Def · WAR, then Pos — a 2px rule after each group (`SB_BRK`, the group's last column `.ge`; the block at the end of `styles.css`).
+  BB% / K% / ISO / BABIP come from the official counts (`sbVal`; the 162 Game Avg row takes its rates from the unscaled total, `l.rc`). **wRC+, BsR,
+  Off, Def, WAR are FanGraphs' own**, served by MLB's Stats API `sabermetrics` stat (Off = batting + baseRunning, Def = fielding + positional; Ohtani
+  2024 179 / 9.8 / 79.2 / −17.2 / 8.9, FanGraphs to the tenth — a few older seasons sit a tenth or a wRC+ point off FanGraphs' current page).
+  `build_career.py` fetches one league-wide request per season (`sabr_season`, `stats?stats=sabermetrics&group=hitting&season=Y&playerPool=ALL`)
+  and, for each traded season, the player's own split by club (`sabr_clubs`), cached in `.cache/sabr/` with the current season refetched every run;
+  it appends `[wRC+, BsR, Off, Def, WAR, wOBA]` to every hitting row after the positions and to every `HT` club row. `rawLines` / the club parse
+  read it as `c.sab`; `sbCombine` sums the runs and WAR and PA-weights wRC+ (a piece with PA but no numbers blanks the total). **wOBA** is the
+  site's where the season is built, FanGraphs' before 2015 (`sbWoba`). Playoffs, minors and In Split rows show "–" for the FanGraphs five (the
+  Playoffs view drops them). `hist/career.js` patched in place the same day (scratch `patch_sab.py`: every hitting row, all 2,677 club rows;
+  3.5 → ~4 MB). Pitchers' table unchanged. Same hour: **Avg EV back on the hitter bars** in EV on FB's place (Sean: "swap fb EV with regular avg EV").

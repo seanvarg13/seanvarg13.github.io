@@ -3080,6 +3080,7 @@
       const base = 2 + keysMLB.length, extra = r.slice(base, base + 2);
       if (H) { c.HBP = extra[0] || 0; c.SF = extra[1] || 0; } else { c.ER = extra[0]; c.BF = extra[1]; }
       c.adv = advOf(r[base + 2], true);
+      if (H) c.sab = Array.isArray(r[base + 4]) ? r[base + 4] : null;   // FanGraphs' [wRC+, BsR, Off, Def, WAR, wOBA] (8 Oct 2026)
       lines.push({ season: r[0], level: "MLB", team: r[1], c, mlb: true, pos: posPairs(r[base + 3]) });
     }
     const mrec = window.DRAFT_MINORS ? window.DRAFT_MINORS[String(p.id)] : null;
@@ -8332,7 +8333,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   // wide enough (it takes the right-hand box's place too) that every bar keeps the length it has in one column.
   // EXPW / EXPB / EXPS are the directional model's xwOBA, xBA and xSLG, as everywhere.
   const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
-                       ["Batted-Ball Quality", ["evfb", "brl", "bs", "hh", "ev90", "maxev"]]],   // EV on fly balls in Avg EV's place (Sean, 8 Oct 2026: "swap avg ev with fly ball ev" — it tracks xwOBAcon at r .78 against Avg EV's .69); LD / GB EV on the Mix tab, Avg EV a column
+                       ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],   // Avg EV again (Sean, 8 Oct 2026: "swap fb EV with regular avg EV"); EV on FB / LD / GB on the Mix tab and as columns
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k", "xk"]],   // back on the right, at the top (Sean, 1 Oct 2026)
                        ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]]]];   // Air% back (Sean, 8 Oct 2026)   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
@@ -9147,26 +9148,57 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     }).catch(() => { PSTATS.set(key, false); if (state.mode === "player") render(); });
     return null;
   }
-  const SB_H = ["G", "PA", "AB", "R", "H", "2B", "3B", "HR", "RBI", "SB", "BB", "K", "AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA"];
+  // a hitter's columns are FanGraphs' batting dashboard, with its group rules (Sean, 8 Oct 2026, from Ohtani's FanGraphs table: "make it so
+  // these are the stats that the table shows, and include the line breaks as well"); wRC+ / BsR / Off / Def / WAR are FanGraphs' own
+  const SB_H = ["G", "PA", "HR", "R", "RBI", "SB", "BB%", "K%", "ISO", "BABIP", "AVG", "OBP", "SLG", "wOBA", "xwOBA", "wRC+", "BsR", "Off", "Def", "WAR"];
+  const SB_BRK = { H: new Set(["BB%", "AVG", "BsR", "Off", "Pos"]), P: new Set() };   // a heavier rule before each of these
+  const SB_FG = ["wRC+", "BsR", "Off", "Def", "WAR"], SB_SAB = { "wRC+": 0, BsR: 1, Off: 2, Def: 3, WAR: 4 };
+  const SB_TIP = { "BB%": "Walks per plate appearance", "K%": "Strikeouts per plate appearance", ISO: "Isolated power: SLG minus AVG",
+    BABIP: "Batting average on balls in play: (H − HR) / (AB − K − HR + SF)", wOBA: "The site's wOBA where the season is built (2015 on), FanGraphs' before",
+    "wRC+": "FanGraphs: runs created per PA, park and league adjusted, 100 = average", BsR: "FanGraphs: base-running runs above average (steals, extra bases, double plays)",
+    Off: "FanGraphs: batting runs + base running, above average", Def: "FanGraphs: fielding runs + the positional adjustment", WAR: "FanGraphs: wins above replacement" };
   const SB_P = ["W", "L", "ERA", "FIP", "G", "GS", "IP", "H", "HR", "BB", "K", "WHIP", "K%", "BB%", "K-BB%", "Whiff%", "Strike%", "GB%"];
-  const SB_BEST_HI = { H: new Set(["G", "PA", "AB", "R", "H", "2B", "3B", "HR", "RBI", "SB", "BB", "AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA"]), P: new Set(["W", "G", "GS", "IP", "K", "K%", "K-BB%", "Whiff%", "Strike%", "GB%"]) };
-  const SB_BEST_LO = { H: new Set(), P: new Set(["ERA", "FIP", "WHIP", "BB%"]) };
+  const SB_BEST_HI = { H: new Set(["G", "PA", "HR", "R", "RBI", "SB", "BB%", "ISO", "BABIP", "AVG", "OBP", "SLG", "wOBA", "xwOBA", "wRC+", "BsR", "Off", "Def", "WAR"]), P: new Set(["W", "G", "GS", "IP", "K", "K%", "K-BB%", "Whiff%", "Strike%", "GB%"]) };
+  const SB_BEST_LO = { H: new Set(["K%"]), P: new Set(["ERA", "FIP", "WHIP", "BB%"]) };
   // a line's value for a column: the record's counts, the rates recomputed for a sum, our numbers from its adv
+  // a hitter's wOBA: ours where the season is built (2015 on), FanGraphs' before it
+  const sbWoba = (l) => { const a = l.c.adv || {}; return a.woba != null ? a.woba : (l.c.sab && l.c.sab[5] != null ? l.c.sab[5] : null); };
   function sbVal(H, l, k) {
     const c = l.c, a = c.adv || {};
     if (H) {
-      if (k === "wOBA") return a.woba; if (k === "xwOBA") return a.xwoba;
+      const r = l.rc || c;   // rates from the unscaled line (the 162-game average scales only the counts)
+      if (k === "wOBA") return sbWoba(l); if (k === "xwOBA") return a.xwoba;
+      if (k === "BB%") return +r.PA ? 100 * r.BB / r.PA : null;
+      if (k === "K%") return +r.PA ? 100 * r.K / r.PA : null;
+      if (k === "ISO") return +r.AB ? (+r["2B"] + 2 * r["3B"] + 3 * r.HR) / r.AB : null;
+      if (k === "BABIP") { const d = r.AB - r.K - r.HR + (+r.SF || 0); return d > 0 ? (r.H - r.HR) / d : null; }
+      if (k in SB_SAB) return c.sab ? c.sab[SB_SAB[k]] : null;
       return c[k];
     }
     if (k === "FIP") return a.fip; if (k === "Whiff%") return a.whf; if (k === "Strike%") return a.strk; if (k === "GB%") return a.gb;
     if (k === "K%") return c.BF ? 100 * c.K / c.BF : null; if (k === "BB%") return c.BF ? 100 * c.BB / c.BF : null; if (k === "K-BB%") return c.BF ? 100 * (c.K - c.BB) / c.BF : null;
     return c[k];
   }
-  const sbFmt = (k, v) => (v == null || v === "" ? "–" : ["AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA"].includes(k) ? fmtX(+v) : ["ERA", "FIP", "WHIP"].includes(k) ? (+v).toFixed(2) : /%$/.test(k) ? (+v).toFixed(1) : k === "IP" ? String(v) : String(v));
+  const sbRuns = (v) => { const r = Math.round(10 * v) / 10; return (r < 0 ? "−" : "") + Math.abs(r).toFixed(1); };   // BsR / Off / Def / WAR, FanGraphs' tenths
+  const sbFmt = (k, v) => (v == null || v === "" || (typeof v === "number" && isNaN(v)) ? "–" : ["AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA", "ISO", "BABIP"].includes(k) ? fmtX(+v)
+    : ["ERA", "FIP", "WHIP"].includes(k) ? (+v).toFixed(2) : k === "wRC+" ? String(Math.round(+v)) : ["BsR", "Off", "Def", "WAR"].includes(k) ? sbRuns(+v)
+    : /%$/.test(k) ? (+v).toFixed(1) : k === "IP" ? String(v) : String(v));
   // a sum of lines: counts added, the rates recomputed, our numbers weighted by PA / BF (GB% too, which combineLines leaves out)
   function sbCombine(H, lines) {
     const c = combineLines(H, lines);
     if (!H) { let n = 0, d = 0; for (const l of lines) { const v = (l.c.adv || {}).gb, w = Number(l.c.BF) || 0; if (v != null && w) { n += v * w; d += w; } } c.adv.gb = d ? n / d : null; }
+    else {
+      // FanGraphs' runs and WAR add up and wRC+ is weighted by PA; a piece with plate appearances but no numbers leaves the total blank rather
+      // than short. wOBA is weighted the same way over each piece's own (ours, else FanGraphs')
+      const pa = (l) => Number(l.c.PA) || 0, has = lines.filter((l) => pa(l) > 0);
+      if (has.length && has.every((l) => Array.isArray(l.c.sab))) {
+        const t = [0, 0, 0, 0, 0, 0]; let wp = 0, op = 0;
+        for (const l of has) { const a = l.c.sab, w = pa(l); if (a[0] != null) { t[0] += a[0] * w; wp += w; } for (let i = 1; i < 5; i++) t[i] += +a[i] || 0; if (a[5] != null) { t[5] += a[5] * w; op += w; } }
+        c.sab = [wp ? t[0] / wp : null, t[1], t[2], t[3], t[4], op ? t[5] / op : null];
+      } else c.sab = null;
+      let n = 0, d = 0; for (const l of has) { const v = sbWoba(l); if (v != null) { n += v * pa(l); d += pa(l); } }
+      c.adv.woba = d ? n / d : null;
+    }
     return { c };
   }
   function seasonBlock(p, o) {
@@ -9190,7 +9222,9 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const lines = post ? [] : (rawLines(p) || []), mlb = post ? (Array.isArray(postState) ? postState : []) : lines.filter((l) => l.mlb).sort((a, b) => a.season - b.season);
     const LV = ["AAA", "AA", "A+", "A", "A-", "Rk"], lvName = (l) => ({ "A(Adv)": "A+", "A(Full)": "A", "A(Short)": "A-", ROK: "Rk" }[l] || l);
     const milb = !post && sbMinors && window.DRAFT_MINORS ? lines.filter((l) => !l.mlb && !l.combo && !l.team === false && l.team).sort((a, b) => a.season - b.season || LV.indexOf(lvName(a.level)) - LV.indexOf(lvName(b.level))) : [];
-    const cols = post ? (H ? SB_H.filter((k) => k !== "wOBA" && k !== "xwOBA") : SB_P.filter((k) => !["FIP", "Whiff%", "Strike%", "GB%"].includes(k))) : (H ? SB_H : SB_P), b = bio(p.id);
+    const cols = post ? (H ? SB_H.filter((k) => !["wOBA", "xwOBA", ...SB_FG].includes(k)) : SB_P.filter((k) => !["FIP", "Whiff%", "Strike%", "GB%"].includes(k))) : (H ? SB_H : SB_P), b = bio(p.id);
+    // the group rules: a column whose next column starts a group ends one (FanGraphs' heavier lines)
+    const allCols = [...cols, "Pos"], brk = SB_BRK[p.type] || new Set(), gEnd = new Set(allCols.filter((k, i) => i + 1 < allCols.length && brk.has(allCols[i + 1])));
     const ageIn = (y) => {
       if (b && b.born) { const d = new Date(b.born + "T12:00:00Z"); if (!isNaN(d)) { let a = y - d.getUTCFullYear(); if (d.getUTCMonth() > 5 || (d.getUTCMonth() === 5 && d.getUTCDate() > 30)) a--; return a; } }
       return p.age != null ? p.age - (DS.season - y) : null;
@@ -9203,7 +9237,11 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     }
     const table = el("table", "sbt"), thead = el("thead"), tr = el("tr");
     const lev = milb.length > 0;
-    for (const h of ["Season", "Age", "Team", ...(lev ? ["Lev"] : []), ...cols, "Pos"]) { const th = el("th", ["Season", "Team", "Lev", "Pos"].includes(h) ? "l" : null, h); if (h === "Season") th.classList.add("f1"); if (h === "Age") th.classList.add("f2"); if (h === "Team") th.classList.add("f3"); tr.append(th); }
+    for (const h of ["Season", "Age", "Team", ...(lev ? ["Lev"] : []), ...cols, "Pos"]) {
+      const th = el("th", ["Season", "Team", "Lev", "Pos"].includes(h) ? "l" : null, h); if (h === "Season") th.classList.add("f1"); if (h === "Age") th.classList.add("f2"); if (h === "Team") th.classList.add("f3");
+      if (gEnd.has(h)) th.classList.add("ge"); if (H && SB_TIP[h]) th.title = SB_TIP[h];
+      tr.append(th);
+    }
     thead.append(tr); table.append(thead);
     const ncol = 3 + (lev ? 1 : 0) + cols.length + 1;   // every column, for a row that spans the table
     const tbody = el("tbody");
@@ -9223,6 +9261,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       for (const k of cols) {
         const v = l ? sbVal(H, l, k) : null, td = cell(sbFmt(k, v));
         if (opts.bold && best[k] != null && v != null && Number(v) === best[k]) td.classList.add("hi");
+        if (gEnd.has(k)) td.classList.add("ge");
         trr.append(td);
       }
       const pp = opts.season ? posOf(l) : null, pt = cell(pp ? pp.map((x) => x[0]).join(", ") : (opts.season ? "–" : ""), "l pos");
@@ -9239,7 +9278,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       if (!oo || oo.empty) { const trr = row([lead, null, ""], null, "insplit"); trr.title = "No games in this window"; return; }
       const l = { c: {} };
       if (H) {
-        const o2 = oo; l.c = { G: o2.G, PA: o2.PA, AB: o2.AB, R: o2.R, H: o2.H, "2B": o2["2B"], "3B": o2["3B"], HR: o2.HR, RBI: o2.RBI, SB: o2.SB, BB: o2.BB, K: o2.K,
+        const o2 = oo; l.c = { G: o2.G, PA: o2.PA, AB: o2.AB, R: o2.R, H: o2.H, "2B": o2["2B"], "3B": o2["3B"], HR: o2.HR, RBI: o2.RBI, SB: o2.SB, BB: o2.BB, K: o2.K, HBP: o2.HBP || 0, SF: o2.SF || 0,
           AVG: o2.AB ? o2.H / o2.AB : null, OBP: (o2.AB + o2.BB + (o2.HBP || 0) + (o2.SF || 0)) ? (o2.H + o2.BB + (o2.HBP || 0)) / (o2.AB + o2.BB + (o2.HBP || 0) + (o2.SF || 0)) : null, SLG: o2.AB ? o2.TB / o2.AB : null };
         l.c.OPS = l.c.OBP != null && l.c.SLG != null ? l.c.OBP + l.c.SLG : null;
         l.c.adv = { woba: m.woba, xwoba: m.xwd != null ? m.xwd : m.xwoba_dir };
@@ -9270,9 +9309,10 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       row([`${n} Yr${n > 1 ? "s" : ""}`], tot, "tot first");
       const G = +tot.c.G || 0, games = H ? G : mlb.reduce((a, l) => a + (l.season === 2020 ? 60 : 162), 0);   // a pitcher's per 162 team games
       if (!post && games) {
-        const avg = { c: Object.assign({}, tot.c) }, f = 162 / games;
+        const avg = { c: Object.assign({}, tot.c), rc: tot.c }, f = 162 / games;
         for (const k of (H ? ["G", "PA", "AB", "R", "H", "2B", "3B", "HR", "RBI", "SB", "BB", "K"] : ["W", "L", "G", "GS", "H", "HR", "BB", "K"])) avg.c[k] = Math.round((+tot.c[k] || 0) * f);
         if (!H) avg.c.IP = ipStr(ipNum(tot.c.IP) * f);
+        if (H && tot.c.sab) avg.c.sab = tot.c.sab.map((v, i) => (v == null || i === 0 || i === 5 ? v : v * f));   // runs and WAR per 162 games; wRC+ / wOBA as they are
         row(["162 Game Avg"], avg, "tot");
       }
       // each club: a traded year's clubs from the record's own club rows
@@ -9280,7 +9320,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       const clubLines = {};
       for (const r of (rec && rec[p.type + "T"]) || []) {
         const c = {}; keysMLB.forEach((k, i) => { c[k] = r[2 + i]; });
-        const ex = r.slice(2 + keysMLB.length); if (H) { c.HBP = ex[0] || 0; c.SF = ex[1] || 0; } else { c.ER = ex[0]; c.BF = ex[1]; }
+        const ex = r.slice(2 + keysMLB.length); if (H) { c.HBP = ex[0] || 0; c.SF = ex[1] || 0; c.sab = Array.isArray(ex[2]) ? ex[2] : null; } else { c.ER = ex[0]; c.BF = ex[1]; }
         (clubLines[r[0]] = clubLines[r[0]] || []).push({ season: r[0], team: r[1], c: Object.assign(c, { adv: {} }) });
       }
       for (const l of mlb) {
@@ -9314,6 +9354,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const note = el("p", "sbnote");
     if (post) note.append("Postseason: MLB's official lines, every October he played; a traded year's clubs as TOT.");
     else note.append(el("b", null, "Bold"), ` season totals: his career best in that column (100+ ${H ? "PA" : "batters faced"} seasons).`);
+    if (H && !post) note.append(" wRC+, BsR, Off, Def and WAR are FanGraphs' (through MLB's stats API); totals add the runs and WAR and weight wRC+ by PA; wOBA before 2015 is FanGraphs'.");
     note.append(" Pos: " + (H ? "every position he played that season, most games first." : "SP / RP by his starts and relief outings."));
     if (!H && !post) note.append(" FIP, Whiff%, Strike% and GB% start in 2017, the first season the site carries.");
     if (!post && (winIdx() || splitActive())) note.append(" ", el("b", null, "In Split"), ": the card's filters — " + viewLabel(p.type) + " — from the official game logs; the bars below rank him in that window.");
