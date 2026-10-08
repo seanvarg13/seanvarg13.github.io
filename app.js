@@ -9057,16 +9057,28 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const title = pageTitle(p, o); title.classList.add("pinline", "pbyear");
     for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
     const b = bio(p.id), bats = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
-    const line = el("div", "pcline"); line.innerHTML = [posWords(p).replace(/&/g, "&amp;"), bats ? `<b>Bats:</b> ${handWord(bats)}` : null, thr ? `<b>Throws:</b> ${handWord(thr)}` : null].filter(Boolean).join(" &nbsp;•&nbsp; ");
+    // the position as its code — 1B, OF, DH, SP … (Sean, 8 Oct 2026: "on the condensed one there make their position be the labels of like 1B, OF, DH")
+    const line = el("div", "pcline"); line.innerHTML = [playedLabel(p).replace(/&/g, "&amp;"), bats ? `<b>Bats:</b> ${handWord(bats)}` : null, thr ? `<b>Throws:</b> ${handWord(thr)}` : null].filter(Boolean).join(" &nbsp;•&nbsp; ");
     let tiles = null;
     if (st && st.pct) {
-      const sum = summaryBlock(p, st), cur = sum.querySelector(".pbsrow.cur"), head = sum.querySelector(".pbshead");
+      // the season's line and, under it, his career's (Sean, 8 Oct 2026: "add one more row and have it be their career stats, and then heat map
+      // the woba and xwoba here"): the Summary block's own cells, so the wOBA / xwOBA pills come over as they are
+      const sum = summaryBlock(p, st), rows = [...sum.querySelectorAll(".pbsrow:not(.pbshead)")], head = sum.querySelector(".pbshead");
+      const cur = rows.find((r) => r.classList.contains("cur")), car = rows.find((r) => !r.classList.contains("cur"));
       if (cur && head) {
         tiles = el("div", "pctiles");
-        const hs = [...head.querySelectorAll(".pbsh")], vs = [...cur.querySelectorAll(".pbsv")];
+        const hs = [...head.querySelectorAll(".pbsh")], vs = [...cur.querySelectorAll(".pbsv")], cs = car ? [...car.querySelectorAll(".pbsv")] : null;
         const keep = p.type === "H" ? ["wOBA", "xwOBA", "BA", "OBP", "SLG", "OPS"] : ["nERA", "xnERA", "ERA", "K%", "BB%", "K-BB%"];
-        hs.forEach((h, i) => { if (!keep.includes(h.textContent)) return; const t = el("div", "pctile"); t.append(el("i", null, h.textContent), el("b", null, vs[i] ? vs[i].textContent : "–")); tiles.append(t); });
-        tiles.style.setProperty("--n", tiles.childNodes.length);
+        const cell = (src) => { const c = src && src.querySelector(".pbchip"); if (c) { const k = c.cloneNode(true); k.classList.add("pcchip"); return k; } return src ? src.textContent : "–"; };
+        if (cs) { const lab = el("div", "pctile lab"), b = el("b", null, cur.querySelector(".pbsl").textContent), c = el("span", "pcc", "Career"); lab.append(el("i", null, "\u00a0"), b, c); tiles.append(lab); }   // a blank header line, so its rows sit level with the values
+        let n = 0;
+        hs.forEach((h, i) => {
+          if (!keep.includes(h.textContent)) return; n++;
+          const t = el("div", "pctile"), b = el("b"); b.append(cell(vs[i])); t.append(el("i", null, h.textContent), b);
+          if (cs) { const c = el("span", "pcc"); c.append(cell(cs[i])); t.append(c); }
+          tiles.append(t);
+        });
+        tiles.style.setProperty("--n", n); if (cs) tiles.classList.add("two");
       }
     }
     const tog = o.entry && !isMulti(o.key) ? filtersTog(p) : null;
