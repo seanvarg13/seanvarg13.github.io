@@ -2507,3 +2507,31 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (`.mv.lg`) — from `m.evfb / evld / evgb` (a window or split re-derives them from the day sums; no block on a file built before 7 Oct 2026).
   The table of PR #453 and its CSS are gone; its build side (`mixc`, `ctx.mixev`, the day rows' `evbk` list, ~0.5 MB) stays built and unread —
   strip it at a future trim of `days.js`. Aranda 2026: FB 92.6 (54th) · LD 95.8 (79th) · GB 86.7 (62nd) against 92.1 / 93.9 / 86.0.
+* **His page from the lists; the Baseball-Reference band and season table (Sean, 8 Oct 2026, from the Player Page Designs canvas — "that is perfect
+  implement that", "make it so the bottom tabs at each player card page are still there at the bottom")**: a name on the Leaderboard / Recent, Rankings,
+  the Draft board, the Pitching+ board, Fantasy, home and the Claude rankings goes to **his page** (`openPlayer(p, { ds, win, split, tab })` →
+  `#player/<id>`, the list's window and split carried over) instead of popping a card up; `markBack()` notes the list page, its scroll and its rows'
+  box, and the page's **‹ Back to leaderboard** button (`goBack`; `backRestore` is read at the end of `render()`) puts the list back exactly as it was
+  left. The page (`playerView` with `page: true`, drawn straight into `#xboard` — no modal, no frame; `showPageCard` is unused) is **`pageHead`**: the
+  site's band full width with B-Ref's bio — the photo in a tile, the name, Position(s) (`POS_WORD`), Bats • Throws (only the hands the data knows),
+  height and weight with the metric in brackets, Born with the age (MLB's record carries `born / city / debut / full / nick` now; `bio()` sets `false`
+  when the fetch fails, so the page stops saying Loading), Team (a link that filters the Leaderboard by his team), a **More bio, draft info ▾** fold
+  (full name, nickname, birthplace, drafted, debut; `bioMore`), the controls on the band's top line (Back, the season picker, Filters ▾ / Raw ▾ —
+  `filtersTog` / `filtersWindow`, pulled out of `playerHead` so both bands share them; the window hangs under whichever Filters button is on screen —
+  and the filter chips, `viewChips`), and the **Summary** line at the band's foot (`summaryBlock`: this season and his career — hitters wOBA · xwOBA |
+  PA · AB · H · HR | R · RBI · SB | BA · OBP · SLG · OPS, pitchers nERA · ERA | W · L · G · GS · IP | H · HR · BB · K | WHIP · K% · BB% · K-BB%; the band
+  says the full season whatever the card's filters; a phone drops the `.pbx` columns; a career nERA isn't built, so it reads "–"). Then
+  **`seasonBlock`**, B-Ref's Standard batting / pitching table in the site's dress (`.sbt`: gridlines, the column names on the light-blue band, Season /
+  Age / Team frozen at the left with a heavier rule, the current season tinted, **bold = his career best in that column** (100+ PA / BF seasons — the
+  site has no league leaders or All-Star flags, so not B-Ref's bold / ★), the totals N Yrs · 162 Game Avg (a pitcher's per 162 team games, 60 for 2020)
+  · each club (a traded year's clubs from career.js's HT / PT rows) · each league (`AL_TEAMS`) in grey-banded groups; an **In Split** row under the
+  current season when a date filter or split is on — the official line from the fantasy game logs (`fViewLine`) with the view's wOBA / xwOBA (pitchers:
+  FIP, Whiff%, Strike%, GB% from `V(p).m`); **Show minors** interleaves the minor-league lines with a Lev column (`sbMinors`); a phone shows the last
+  three seasons until **All N seasons ▾** (`sbAll`, sticky inside the wide cell); Glossary opens the glossary), the percentile bars (`.ppage.pageflow`,
+  natural height, the page's width) and the tabs (`BTABS` is Fantasy alone — Season Stats is the table now — and the strip opens closed). **A phone's
+  band condenses** once scrolled (`condensedBar` → `.phcond`, a fixed bar `condSync` shows while `.pagehead` is off the top; the site header is static
+  on a phone's player page): Back · the year · Filters ▾, the name, position • bats • throws, this season's wOBA · xwOBA · BA · OBP · SLG · OPS
+  (pitchers nERA · ERA · K% · BB% · K-BB%). `hist/career.js` carries the **directional xwOBA** per season now (`build_career.py` writes `xwoba_dir`;
+  the file was patched in place the same day — 7,367 rows). Still popups: the Mock Draft room and the Pitching+ board's spring cards (`renderModal`).
+  Not built (B-Ref has them): the Postseason switch over the table and the Standard / Advanced column-set pills — per-season site stats beyond what
+  career.js carries would need the season files. CSS: the block at the end of `styles.css` (six roots, over every earlier pass).

@@ -2685,7 +2685,7 @@
       main.addEventListener("click", (e) => {
         const k = p.type + p.id;
         if (rankMode) { toggleSel(k, e); return; }                     // edit mode: select (cmd/ctrl adds, shift ranges)
-        if (!exp) { const lw = listWin(); state.cardDs = cds; state.cardWin = { from: lw.from, to: lw.to, last: lw.last }; if (listSplit) state.split = listSplit; } state.expanded = exp ? null : ck; render();
+        void exp; void ck; openPlayer(p, { ds: cds, win: listWin(), split: listSplit });   // his page, with the list's window and split (8 Oct 2026)
       });
       li.append(main);
       frag.append(li);
@@ -4050,6 +4050,7 @@
       const tr = el("tr"), who = el("td", "who"), btn = el("button", "linkbtn pbname", r.p.name); btn.type = "button";
       btn.addEventListener("click", () => {
         state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.pbtab = "pitching"; savePrefs();
+        if (!springK) { openPlayer(r.p, { tab: "pitching" }); return; }   // his page (8 Oct 2026); the spring board still pops the spring card up
         state.cardDs = springK || null; state.expanded = "P" + r.p.id; render(); });   // off the spring board: his spring card
       who.append(btn, el("small", null, ` ${r.p.team} · ${r.p.primary} · ${r.p.throws || ""}HP`));
       tr.append(el("td", "n", String(i + 1)), who, el("td", null, PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(r.use)),
@@ -4394,7 +4395,7 @@
     const hRows = rowsH.filter(pick).map((r) => { const gs = byTeam.get(r.p.team) || [], opp = gs.map((g) => P.get(g.oppSP)).filter(Boolean);
       return { r, gs, L: opp.filter((q) => q.throws === "L").length, R: opp.filter((q) => q.throws === "R").length, perG: r.o.G ? r.pts / r.o.G : null, proj: r.o.G ? gs.length * r.pts / r.o.G : null }; });
     const f1 = (x) => (x == null ? "–" : x.toFixed(1)), f2x = (x) => (x == null ? "–" : x.toFixed(2));
-    const openCard = (q) => { state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.expanded = q.type + q.id; render(); };
+    const openCard = (q) => openPlayer(q);
     const nameCell = (q, sub) => { const td = el("td", "pwho"), b = el("button", "linkbtn pwname", q.name); b.type = "button"; b.addEventListener("click", () => openCard(q)); td.append(b, el("small", null, " " + sub)); return td; };
     const table = (title, heads, rows) => {
       const sec = el("div", "pwsec"); sec.append(el("h4", "pwh", title));
@@ -5158,8 +5159,7 @@
   // every page. Only data.js is used, so it opens fast on a phone.
   // a name on the home page opens his page (the same card), this season, full season, on the tab that explains the pick
   // a name on the home page pops his card up over the home page (as the lists do), not off to his page
-  const openCard = (p, tab) => { state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };
-    if (tab) state.pbtab = tab; savePrefs(); state.expanded = p.type + p.id; render(); };
+  const openCard = (p, tab) => openPlayer(p, { tab });   // his page (8 Oct 2026), not a popup
   const whenBuilt = (b) => { const d = b ? new Date(b.replace(" ", "T") + "Z") : null; return d && !isNaN(d) ? d.toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }) : b || ""; };
   // November 1 to March 15, New York time: no regular-season games, so home turns to next year and the Weekly Planner steps aside
   function offSeason() { const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" })), mo = d.getMonth() + 1, dy = d.getDate(); return mo >= 11 || mo <= 2 || (mo === 3 && dy <= 15); }
@@ -5552,6 +5552,12 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       if (listAt.y && Math.abs(window.scrollY - listAt.y) > 1) window.scrollTo(0, listAt.y);
     }
     const sc = cardSc(); if (open && open === cardKey() && !$("modal").hidden && sc && sc.scrollTop !== mtop) sc.scrollTop = mtop;   // the same card, redrawn
+    // back from his page (8 Oct 2026): the list exactly as it was left — the rows' box, its sideways scroll and the page's scroll
+    if (backRestore && backRestore.mode === state.mode) {
+      const b = backRestore; backRestore = null;
+      const put = () => { listScrollers().forEach((e, i) => { const v = b.s[i]; if (v) { e.scrollTop = v[0]; e.scrollLeft = v[1]; } }); if (b.y && Math.abs(window.scrollY - b.y) > 1) window.scrollTo(0, b.y); };
+      put(); requestAnimationFrame(put);
+    } else if (state.mode === "player" && pageOpened) { pageOpened = false; window.scrollTo(0, 0); }
   }
   // A player's page is rebuilt on every pick (a season, a level, a tab, a filter). Rebuilt, it is briefly short and the
   // window snaps to the top, and its panels' own scrollers start over. On the same player, put them all back; if the
@@ -6242,7 +6248,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
         trr.append(td);
       });
       // the table's place is noted first: its card opens without a full render, and closing one redraws the table from the top
-      const open = () => { noteList(); state.cardDs = fDsKey(y) === CUR.key ? null : fDsKey(y); state.cardWin = Object.assign({}, NOWIN); state.expanded = r.p.type + r.p.id; renderModal(); };
+      const open = () => openPlayer(r.p, { ds: fDsKey(y) === CUR.key ? null : fDsKey(y) });
       trr.addEventListener("click", open); trr.addEventListener("keydown", (e) => { if (e.key === "Enter") open(); });
       tbody.append(trr);
     });
@@ -6856,7 +6862,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     return box;
   }
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
-  const BTABS = [["stats", "Season Stats"], ["fantasy", "Fantasy"]];   // Compare came off the strip with the Compare page (Sean, 6 Oct 2026)
+  const BTABS = [["fantasy", "Fantasy"]];   // Season Stats is the page's own table now (8 Oct 2026)   // Compare came off the strip with the Compare page (Sean, 6 Oct 2026)
   const BTABS_H = [["mix", "Mix"]];   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
   const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"]];   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
@@ -6870,7 +6876,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     // a card opens on Season Stats (minimal pass 5, Sean, 30 Sep 2026): Compare, the least used, went to the end of the row,
     // and a Compare left open from before is put back to Stats once per visit
     if (!pbtabReset) { pbtabReset = true; if (state.pbtab === "compare") state.pbtab = "stats"; }
-    const pick = state.pbtab === "none" ? null : tabs.some(([k]) => k === state.pbtab) ? state.pbtab : "stats";
+    const pick = state.pbtab === "none" ? null : tabs.some(([k]) => k === state.pbtab) ? state.pbtab : null;   // nothing open until a tab is tapped (8 Oct 2026)
     const g = o.g || (p.type === "H" ? "H" : p.primary), ref = o.ref || g;
     // Since the minimal pass (Sean, 29 Sep 2026) the strip is plain words, and the tabs that are two views of one thing
     // share a word: Stats holds Season and Spreadsheet, More the smaller tabs. A shared word opens the one last used
@@ -8798,7 +8804,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     fetch(`https://statsapi.mlb.com/api/v1/people/${id}?hydrate=draft`).then((r) => r.json()).then((j) => {
       const q = (j.people || [])[0]; if (!q) return;
       const d = (q.drafts || [])[0];
-      BIO.set(id, { ht: q.height, wt: q.weight, age: q.currentAge,
+      BIO.set(id, { ht: q.height, wt: q.weight, age: q.currentAge, born: q.birthDate, city: [q.birthCity, q.birthStateProvince, q.birthCountry].filter(Boolean).join(", "),
+                    debut: q.mlbDebutDate, full: q.fullFMLName || q.fullName, nick: q.nickName,
                     bats: (q.batSide || {}).code, throws: (q.pitchHand || {}).code,
                     pos: (q.primaryPosition || {}).abbreviation,
                     draft: d && d.isDrafted ? { year: d.year, rd: d.pickRound, no: d.pickNumber,
@@ -8806,7 +8813,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       for (const n of document.querySelectorAll(`.hbio[data-bio="${id}"]`)) {
         fillBio(n, n._p, BIO.get(id)); delete n.dataset.bio; }
       if (state.mode === "player") render();
-    }).catch(() => {});
+    }).catch(() => { BIO.set(id, false); if (state.mode === "player") render(); });   // false: asked and refused, so the page stops saying "Loading"
     return null;
   }
   // the left panel, laid out after Savant's: his action shot as a banner, the cut-out over it, the rest centred
@@ -8840,6 +8847,370 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     }
     return plate;
   }
+
+  /* ---------- his page, from the lists (Sean, 8 Oct 2026: "when you're on a leaderboard and you select a player it brings you to their player
+     page and instead of an x it has back to leaderboard button at the top which takes you back to the spot you were at on the leaderboard") ---------- */
+  let backAt = null, backRestore = null, pageOpened = false;   // where a page was opened from: the list page, its scroll and its rows' box
+  const BACK_LABEL = { leaderboard: "leaderboard", trending: "leaderboard", rankings: "rankings", draft: "draft board", pitches: "Pitching+", fantasy: "fantasy", home: "home",
+                       claude: "Claude rankings", planner: "planner", eligibility: "eligibility", callups: "Call-up Watch", compare: "compare", mock: "mock draft", trends: "League Trends", appearance: "appearance" };
+  function markBack() {
+    if (state.mode === "player") return;                      // from one page to another: the first list is still where Back goes
+    noteList(); backAt = Object.assign({ hash: location.hash || "#home", label: BACK_LABEL[state.mode] || state.mode }, listAt);
+  }
+  // a name on a list: his page for that season, with the list's window and split carried over; o: { ds, win, split, tab }
+  function openPlayer(p, o = {}) {
+    const id = p.pid != null ? p.pid : p.id;
+    markBack();
+    state.cardDs = null; state.expanded = null;
+    state.cardWin = o.win ? { from: o.win.from || "", to: o.win.to || "", last: o.win.last || "" } : { from: "", to: "", last: "" };
+    state.split = o.split ? Object.assign({ hand: "all", venue: "all" }, o.split) : { hand: "all", venue: "all" };
+    if (o.tab) state.pbtab = o.tab;
+    state.x = { id, type: p.type, ds: o.ds || CUR.key };
+    savePrefs(); pageOpened = true;
+    if (location.hash === "#player/" + id) render(); else location.hash = "#player/" + id;   // the hashchange handler renders
+  }
+  function goBack() {
+    const b = backAt; backAt = null;
+    if (!b) { location.hash = "#home"; return; }
+    backRestore = b;
+    if (location.hash === b.hash) render(); else location.hash = b.hash;
+  }
+  const backButton = (small) => {
+    const b = el("button", "pbback" + (small ? " small" : ""), backAt ? `‹ Back to ${backAt.label}` : "‹ Home"); b.type = "button";
+    b.addEventListener("click", (e) => { e.stopPropagation(); goBack(); });
+    return b;
+  };
+  /* ---------- the band, Baseball-Reference's bio on the site's own plate (Sean, 8 Oct 2026: "make the bio section look like this ... obviously with the
+     theme of the site") ---------- */
+  const POS_WORD = { C: "Catcher", "1B": "First Baseman", "2B": "Second Baseman", "3B": "Third Baseman", SS: "Shortstop", OF: "Outfielder", LF: "Left Fielder", CF: "Center Fielder",
+                     RF: "Right Fielder", DH: "Designated Hitter", SP: "Starting Pitcher", RP: "Relief Pitcher", P: "Pitcher", TWP: "Two-Way Player" };
+  const handWord = (h) => ({ L: "Left", R: "Right", S: "Switch", B: "Switch" }[h] || h || "?");
+  const joinAnd = (xs) => (xs.length < 2 ? xs.join("") : xs.length === 2 ? xs.join(" and ") : xs.slice(0, -1).join(", ") + " and " + xs[xs.length - 1]);
+  const posWords = (p) => joinAnd(playedLabel(p).split(/,\s*/).map((c) => POS_WORD[c] || c));
+  const longDate = (iso) => { const d = iso ? new Date(iso + "T12:00:00Z") : null; return d && !isNaN(d) ? d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }) : null; };
+  // height as 5-8, with the metric in brackets the way B-Ref writes it
+  const htWtLine = (b) => {
+    if (!b || !b.ht) return null;
+    const m = String(b.ht).match(/(\d+)\D+(\d+)/), ft = m ? +m[1] : null, inch = m ? +m[2] : 0;
+    const cm = ft != null ? Math.round(ft * 30.48 + inch * 2.54) : null, kg = b.wt ? Math.round(b.wt * 0.4536) : null;
+    const hw = (m ? `${ft}-${inch}` : String(b.ht)) + (b.wt ? `, ${b.wt}lb` : "");
+    const met = [cm ? cm + "cm" : null, kg ? kg + "kg" : null].filter(Boolean).join(", ");
+    return met ? `${hw} (${met})` : hw;
+  };
+  const LEVEL_WORD = { MLB: "majors", AAA: "Triple-A", AA: "Double-A", "A+": "High-A", A: "Single-A" };
+  const AL_TEAMS = new Set(["BAL", "BOS", "NYY", "TB", "TOR", "CWS", "CLE", "DET", "KC", "MIN", "HOU", "LAA", "ATH", "OAK", "SEA", "TEX"]);
+  const leagueOf = (t) => (AL_TEAMS.has(teamCode(t)) ? "AL" : "NL");
+  let bioMore = false;                                        // "More bio, draft info" open (this visit)
+  // his official lines from hist/career.js: the season's (a traded player's TOT), and the career row
+  function careerLine(p, season) {
+    const rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null;
+    const rows = rec && rec[p.type] ? rec[p.type].filter((r) => r[0] === season) : [];
+    return rows.find((x) => x[1] === "TOT") || (rows.length === 1 ? rows[0] : null);
+  }
+  const careerRows = (p) => { const rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null; return rec && rec[p.type] ? rec[p.type] : []; };
+  // the summary line: this season and his career in groups with dividers (Sean, 8 Oct 2026: wOBA and xwOBA at the front, "BA with obp slg and ops")
+  function summaryBlock(p, st) {
+    const H = p.type === "H", box = el("div", "pbsum");
+    const full = (fn) => withWindow(NOWIN, () => withSplit({ hand: "all", venue: "all" }, fn));   // the band says the season whatever the card's filters
+    const m = full(() => V(p).m);
+    const groups = H ? [["wOBA", "xwOBA"], ["PA", "AB", "H", "HR"], ["R", "RBI", "SB"], ["BA", "OBP", "SLG", "OPS"]]
+                     : [[stuffSide() ? "xnERA" : "nERA", "ERA"], ["W", "L", "G", "GS", "IP"], ["H", "HR", "BB", "K"], ["WHIP", "K%", "BB%", "K-BB%"]];
+    const narrow = H ? new Set(["AB", "H", "R", "RBI", "SB"]) : new Set(["W", "L", "G", "GS", "H", "HR", "BB", "K", "WHIP"]);   // off a phone's line
+    const keys = groups.flat();
+    box.style.setProperty("--n", keys.length);
+    const head = el("div", "pbsrow pbshead"); head.append(el("span", "pbsl", "Summary"));
+    keys.forEach((k, i) => { const c = el("span", "pbsh" + (narrow.has(k) ? " pbx" : ""), k); if (groups.some((g) => g[0] === k && g !== groups[0])) c.classList.add("sep"); head.append(c); });
+    box.append(head);
+    const r = careerLine(p, +DS.season), rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null, car = rec ? rec[p.type + "C"] : null;
+    const f3 = (v) => (v == null ? "–" : fmtX(+v)), f2 = (v) => (v == null ? "–" : (+v).toFixed(2)), f1 = (v) => (v == null ? "–" : (+v).toFixed(1));
+    const pctOf = (n, d) => (n != null && d ? f1(100 * n / d) : "–");
+    const season = H
+      ? { wOBA: f3(m.woba), xwOBA: f3(m.xwd != null ? m.xwd : m.xwoba_dir), PA: r ? r[3] : V(p).pa, AB: r ? r[4] : "–", H: r ? r[6] : "–", HR: r ? r[9] : "–", R: r ? r[5] : "–", RBI: r ? r[10] : "–", SB: r ? r[11] : "–",
+          BA: r ? f3(r[14]) : f3(m.ba), OBP: r ? f3(r[15]) : "–", SLG: r ? f3(r[16]) : f3(m.slg), OPS: r ? f3(r[17]) : "–" }
+      : { nERA: f2(m.nera), xnERA: st && st.xnera != null ? f2(st.xnera) : "–", ERA: r ? f2(r[4]) : f2(m.era), W: r ? r[2] : "–", L: r ? r[3] : "–", G: r ? r[5] : (p.ctx || {}).G, GS: r ? r[6] : (p.ctx || {}).GS,
+          IP: r ? r[8] : fmtIP(V(p).ip), H: r ? r[9] : "–", HR: r ? r[10] : "–", BB: r ? r[11] : "–", K: r ? r[12] : "–", WHIP: r ? f2(r[13]) : "–",
+          "K%": r && r[16] ? pctOf(r[12], r[16]) : f1(m.k), "BB%": r && r[16] ? pctOf(r[11], r[16]) : f1(m.bb), "K-BB%": r && r[16] ? pctOf(r[12] - r[11], r[16]) : f1(m.k != null && m.bb != null ? m.k - m.bb : null) };
+    // the career: the record's own line, its wOBA / xwOBA (or K% / BB%) weighted over the seasons
+    let career = null;
+    if (car) {
+      if (H) {
+        let wn = 0, xn = 0, wd = 0, xd = 0;
+        for (const x of careerRows(p)) { const a = x[x.length - 1], pa = +x[3] || 0; if (Array.isArray(a) && pa) { if (a[0] != null) { wn += a[0] * pa; wd += pa; } if (a[1] != null) { xn += a[1] * pa; xd += pa; } } }
+        career = { wOBA: wd ? f3(wn / wd) : "–", xwOBA: xd ? f3(xn / xd) : "–", PA: car[1], AB: car[2], H: car[4], HR: car[7], R: car[3], RBI: car[8], SB: car[9], BA: f3(car[12]), OBP: f3(car[13]), SLG: f3(car[14]), OPS: f3(car[15]) };
+      } else {
+        let k = 0, bb = 0, bf = 0;
+        for (const x of careerRows(p)) { if (x[16]) { k += +x[12] || 0; bb += +x[11] || 0; bf += +x[16] || 0; } }
+        career = { nERA: "–", xnERA: "–", ERA: f2(car[2]), W: car[0], L: car[1], G: car[3], GS: car[4], IP: car[6], H: car[7], HR: car[8], BB: car[9], K: car[10], WHIP: f2(car[11]), "K%": pctOf(k, bf), "BB%": pctOf(bb, bf), "K-BB%": pctOf(k - bb, bf) };
+      }
+    }
+    const rowOf = (label, vals, cls) => {
+      const row = el("div", "pbsrow" + (cls ? " " + cls : "")); row.append(el("span", "pbsl", label));
+      keys.forEach((k) => { const v = vals ? vals[k] : "–", c = el("span", "pbsv" + (narrow.has(k) ? " pbx" : ""), v == null || v === "" ? "–" : String(v)); if (groups.some((g) => g[0] === k && g !== groups[0])) c.classList.add("sep"); row.append(c); });
+      return row;
+    };
+    box.append(rowOf(String(DS.season) + (DS.level && DS.level !== "MLB" ? " " + DS.level : ""), season, "cur"));
+    if (career) box.append(rowOf("Career", career));
+    else if (careerReady() && DS.level === "MLB") box.append(rowOf("Career", null));
+    return box;
+  }
+  // the B-Ref bio lines: positions, bats / throws, height and weight, born, team — and under More: full name, drafted, debut, birthplace
+  function bioLines(p, b, fs) {
+    const out = [];
+    const line = (html) => { const d = el("div", "pbl"); d.innerHTML = html; out.push(d); return d; };
+    const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    const pw = posWords(p);
+    line(`<b>${pw.includes(" and ") ? "Positions" : "Position"}:</b> ${esc(pw)}`);
+    const bats = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
+    const hands = [bats ? `<b>Bats:</b> ${handWord(bats)}` : null, thr ? `<b>Throws:</b> ${handWord(thr)}` : null].filter(Boolean);
+    if (hands.length) line(hands.join(" &nbsp;•&nbsp; "));
+    const hw = htWtLine(b); if (hw) line(esc(hw));
+    const age = b && b.age != null ? b.age : p.age, born = b && longDate(b.born);
+    if (born) line(`<b>Born:</b> ${esc(born)}${age != null ? " (Age " + age + ")" : ""}`); else if (age != null) line(`<b>Age:</b> ${age}`);
+    const tc = teamCode(p.team), full = DS.level === "MLB" ? (TEAM_FULL[tc] || TEAM_NAMES[tc] || p.team) : p.team;
+    const tl = line(`<b>Team:</b> <span class="pbteam">${esc(full)}</span> (${LEVEL_WORD[DS.level] || DS.level || "majors"})`);
+    if (DS.level === "MLB" && TEAM_NAMES[tc]) { const t = tl.querySelector(".pbteam"); t.title = `This season's ${TEAM_NAMES[tc]} on the Leaderboard`; t.setAttribute("role", "link"); t.tabIndex = 0;
+      t.addEventListener("click", (e) => { e.stopPropagation(); state.teamF = { kind: "team", v: tc }; state.expanded = null; savePrefs(); location.hash = "#leaderboard"; }); }
+    void fs;
+    return out;
+  }
+  function moreBio(p, b) {
+    const box = el("div", "pbmorebox"), esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    const line = (html) => { const d = el("div", "pbl"); d.innerHTML = html; box.append(d); };
+    if (!b) { line(`<i>${b === false ? "MLB's record isn't available right now." : "Loading MLB's record…"}</i>`); return box; }
+    if (b.full && b.full !== p.name) line(`<b>Full name:</b> ${esc(b.full)}`);
+    if (b.nick) line(`<b>Nickname:</b> ${esc(b.nick)}`);
+    if (b.city) line(`<b>Born in:</b> ${esc(b.city)}`);
+    const d = b.draft;
+    if (d) line(`<b>Drafted:</b> ${d.year}${d.rd ? `, round ${d.rd}` : ""}${d.no ? ` (#${d.no} overall)` : ""}${d.team ? ` by the ${esc(d.team)}` : ""}${d.school ? ` from ${esc(d.school)}` : ""}`);
+    else line(`<b>Drafted:</b> undrafted`);
+    const db = longDate(b.debut); if (db) line(`<b>MLB debut:</b> ${esc(db)}`);
+    return box;
+  }
+  // the page's band: the controls on top (Back, the season, Filters), the photo and the bio lines, the summary line at the foot
+  function pageHead(p, st, g, o) {
+    document.querySelectorAll(".phmodal").forEach((x) => x.remove());
+    const top = el("div", "cardtop phead pagehead"), plate = el("div", "mplate pbio");
+    const b = bio(p.id);
+    const ctl = el("div", "pbctl");
+    ctl.append(backButton(false), el("span", "pbsp"));
+    const title = pageTitle(p, o); title.classList.add("pinline", "pbyear");
+    for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
+    ctl.append(title);
+    const twoWay = typeSeg(p);
+    if (o.entry && !isMulti(o.key)) {
+      ctl.append(filtersTog(p));
+      const chips = viewChips(p); if (chips.childNodes.length) ctl.append(chips);
+    }
+    plate.append(ctl);
+    const main = el("div", "pbmain"), photo = el("div", "pbphoto"); photo.append(headshot(p.id, p.name)); main.append(photo);
+    const txt = el("div", "pbtext"), h2 = el("h2", null, p.name); h2.id = "modal-title"; txt.append(h2);
+    txt.append(...bioLines(p, b));
+    const more = el("button", "pbmore", bioMore ? "Less bio, draft info ▴" : "More bio, draft info ▾"); more.type = "button"; more.setAttribute("aria-expanded", String(bioMore));
+    more.addEventListener("click", (e) => { e.stopPropagation(); bioMore = !bioMore; render(); });
+    txt.append(more); if (bioMore) txt.append(moreBio(p, b));
+    main.append(txt); plate.append(main);
+    if (st && st.pct) plate.append(summaryBlock(p, st));
+    if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay); if (!state.cardTools && sum.childNodes.length) plate.append(sum); }
+    top.append(plate);
+    return top;
+  }
+  // the filter chips (each filter in effect with its own ×), as renderPlate draws them for a popup
+  function viewChips(p) {
+    const r = el("div", "mrank inctl");
+    if (state.cardTools) return r;
+    const chip = (text, clear) => { const c = el("span", "fchip"); c.append(text); const x = el("button", "fchipx", "×"); x.type = "button"; x.title = "Clear " + text; x.setAttribute("aria-label", x.title);
+      x.addEventListener("click", (e) => { e.stopPropagation(); clear(); savePrefs(); render(); }); c.append(x); r.append(c); };
+    const wl = winLabel(p.type), sp = state.split || {};
+    if (wl && wl !== "full season") chip(wl, () => { state.cardWin = { from: "", to: "", last: "" }; });
+    if (SPLIT.hand !== "all") chip("vs " + SPLIT.hand + "H" + (p.type === "P" ? "B" : "P"), () => { state.split = Object.assign({}, sp, { hand: "all" }); });
+    if (SPLIT.venue !== "all") chip(SPLIT.venue === "home" ? "Home" : "Away", () => { state.split = Object.assign({}, sp, { venue: "all" }); });
+    if (roleOf(SPLIT) !== "all") chip(roleOf(SPLIT) === "sp" ? "As SP" : roleOf(SPLIT) === "rp" ? "As RP" : "All as SP", () => { state.split = Object.assign({}, sp, { role: "all" }); });
+    return r;
+  }
+  // a phone's band condenses once you scroll (Sean, 8 Oct 2026: "just show like the player name, their position, the bats throws row as well, and then
+  // their stats for the current season and also the year and filters boxes up top"): a fixed bar that shows while the band is off the top
+  function condensedBar(p, st, g, o) {
+    const bar = el("div", "phcond"); bar.hidden = true;
+    const ctl = el("div", "pbctl"); ctl.append(backButton(true), el("span", "pbsp"));
+    const title = pageTitle(p, o); title.classList.add("pinline", "pbyear");
+    for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
+    ctl.append(title); if (o.entry && !isMulti(o.key)) ctl.append(filtersTog(p));
+    bar.append(ctl, el("div", "pcname", p.name));
+    const b = bio(p.id), bats = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
+    const l = el("div", "pcline"); l.innerHTML = [posWords(p).replace(/&/g, "&amp;"), bats ? `<b>Bats:</b> ${handWord(bats)}` : null, thr ? `<b>Throws:</b> ${handWord(thr)}` : null].filter(Boolean).join(" &nbsp;•&nbsp; ");
+    bar.append(l);
+    if (st && st.pct) {
+      const sum = summaryBlock(p, st), cur = sum.querySelector(".pbsrow.cur"), head = sum.querySelector(".pbshead");
+      if (cur && head) {
+        const tiles = el("div", "pctiles"), hs = [...head.querySelectorAll(".pbsh")], vs = [...cur.querySelectorAll(".pbsv")];
+        const keep = p.type === "H" ? ["wOBA", "xwOBA", "BA", "OBP", "SLG", "OPS"] : ["nERA", "xnERA", "ERA", "K%", "BB%", "K-BB%"];
+        hs.forEach((h, i) => { if (!keep.includes(h.textContent)) return; const t = el("div", "pctile"); t.append(el("i", null, h.textContent), el("b", null, vs[i] ? vs[i].textContent : "–")); tiles.append(t); });
+        tiles.style.setProperty("--n", tiles.childNodes.length); bar.append(tiles);
+      }
+    }
+    return bar;
+  }
+  // show the condensed bar while the band is scrolled off the top of a phone
+  let condTick = false;
+  const condSync = () => {
+    condTick = false;
+    const bar = document.querySelector("#xboard .phcond"), band = document.querySelector("#xboard .pagehead"); if (!bar || !band) return;
+    const off = band.getBoundingClientRect().bottom < 0;
+    if (bar.hidden === !off) return;
+    bar.hidden = !off; document.body.classList.toggle("pcond", off);
+  };
+  window.addEventListener("scroll", () => { if (!condTick && state.mode === "player" && mobileView()) { condTick = true; requestAnimationFrame(condSync); } }, { passive: true });
+  /* ---------- the season table, Baseball-Reference's in the site's dress (Sean, 8 Oct 2026) ---------- */
+  let sbMinors = false, sbAll = false;                         // Show minors; a phone's All N seasons (this visit)
+  const SB_H = ["G", "PA", "AB", "R", "H", "2B", "3B", "HR", "RBI", "SB", "BB", "K", "AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA"];
+  const SB_P = ["W", "L", "ERA", "FIP", "G", "GS", "IP", "H", "HR", "BB", "K", "WHIP", "K%", "BB%", "K-BB%", "Whiff%", "Strike%", "GB%"];
+  const SB_BEST_HI = { H: new Set(["G", "PA", "AB", "R", "H", "2B", "3B", "HR", "RBI", "SB", "BB", "AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA"]), P: new Set(["W", "G", "GS", "IP", "K", "K%", "K-BB%", "Whiff%", "Strike%", "GB%"]) };
+  const SB_BEST_LO = { H: new Set(), P: new Set(["ERA", "FIP", "WHIP", "BB%"]) };
+  // a line's value for a column: the record's counts, the rates recomputed for a sum, our numbers from its adv
+  function sbVal(H, l, k) {
+    const c = l.c, a = c.adv || {};
+    if (H) {
+      if (k === "wOBA") return a.woba; if (k === "xwOBA") return a.xwoba;
+      return c[k];
+    }
+    if (k === "FIP") return a.fip; if (k === "Whiff%") return a.whf; if (k === "Strike%") return a.strk; if (k === "GB%") return a.gb;
+    if (k === "K%") return c.BF ? 100 * c.K / c.BF : null; if (k === "BB%") return c.BF ? 100 * c.BB / c.BF : null; if (k === "K-BB%") return c.BF ? 100 * (c.K - c.BB) / c.BF : null;
+    return c[k];
+  }
+  const sbFmt = (k, v) => (v == null || v === "" ? "–" : ["AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA"].includes(k) ? fmtX(+v) : ["ERA", "FIP", "WHIP"].includes(k) ? (+v).toFixed(2) : /%$/.test(k) ? (+v).toFixed(1) : k === "IP" ? String(v) : String(v));
+  // a sum of lines: counts added, the rates recomputed, our numbers weighted by PA / BF (GB% too, which combineLines leaves out)
+  function sbCombine(H, lines) {
+    const c = combineLines(H, lines);
+    if (!H) { let n = 0, d = 0; for (const l of lines) { const v = (l.c.adv || {}).gb, w = Number(l.c.BF) || 0; if (v != null && w) { n += v * w; d += w; } } c.adv.gb = d ? n / d : null; }
+    return { c };
+  }
+  function seasonBlock(p, o) {
+    const H = p.type === "H", box = el("section", "sblock"), mob = mobileView();
+    const hd = el("div", "sbhead"); hd.append(el("h3", "sbtitle", H ? "Standard batting" : "Standard pitching"));
+    const mi = el("button", "linkbtn sblink", sbMinors ? "Hide minors" : "Show minors"); mi.type = "button";
+    mi.addEventListener("click", (e) => { e.stopPropagation(); sbMinors = !sbMinors; if (sbMinors) ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS); render(); });
+    const gl = el("button", "linkbtn sblink", "Glossary"); gl.type = "button"; gl.addEventListener("click", (e) => { e.stopPropagation(); state.textModal = { title: "Stat glossary", build: renderGlossary }; render(); });
+    hd.append(mi, gl); box.append(hd);
+    ensureScript("hist/career.js", careerReady);
+    if (!careerReady()) { box.append(el("p", "note", failed.has("hist/career.js") ? "hist/career.js hasn't been built — run build_career.py" : "Loading career stats…")); return box; }
+    if (sbMinors) ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS);
+    const lines = rawLines(p) || [], mlb = lines.filter((l) => l.mlb).sort((a, b) => a.season - b.season);
+    const LV = ["AAA", "AA", "A+", "A", "A-", "Rk"], lvName = (l) => ({ "A(Adv)": "A+", "A(Full)": "A", "A(Short)": "A-", ROK: "Rk" }[l] || l);
+    const milb = sbMinors && window.DRAFT_MINORS ? lines.filter((l) => !l.mlb && !l.combo && !l.team === false && l.team).sort((a, b) => a.season - b.season || LV.indexOf(lvName(a.level)) - LV.indexOf(lvName(b.level))) : [];
+    const cols = H ? SB_H : SB_P, b = bio(p.id);
+    const ageIn = (y) => {
+      if (b && b.born) { const d = new Date(b.born + "T12:00:00Z"); if (!isNaN(d)) { let a = y - d.getUTCFullYear(); if (d.getUTCMonth() > 5 || (d.getUTCMonth() === 5 && d.getUTCDate() > 30)) a--; return a; } }
+      return p.age != null ? p.age - (DS.season - y) : null;
+    };
+    // the career bests, to bold (100+ PA / BF seasons)
+    const best = {}; const qual = mlb.filter((l) => (H ? +l.c.PA : +l.c.BF) >= 100);
+    for (const k of cols) {
+      const vs = qual.map((l) => sbVal(H, l, k)).filter((v) => v != null && v !== "").map(Number).filter((v) => !isNaN(v));
+      if (vs.length > 1) best[k] = SB_BEST_HI[p.type].has(k) ? Math.max(...vs) : SB_BEST_LO[p.type].has(k) ? Math.min(...vs) : null;
+    }
+    const table = el("table", "sbt"), thead = el("thead"), tr = el("tr");
+    const lev = milb.length > 0;
+    for (const h of ["Season", "Age", "Team", ...(lev ? ["Lev"] : []), ...cols]) { const th = el("th", ["Season", "Team", "Lev"].includes(h) ? "l" : null, h); if (h === "Season") th.classList.add("f1"); if (h === "Age") th.classList.add("f2"); if (h === "Team") th.classList.add("f3"); tr.append(th); }
+    thead.append(tr); table.append(thead);
+    const tbody = el("tbody");
+    const cell = (txt, cls) => { const td = el("td", cls || null); if (txt instanceof Node) td.append(txt); else td.textContent = txt; return td; };
+    const row = (lead, l, cls, opts = {}) => {
+      const trr = el("tr", cls || null);
+      if (lead.length === 1) { const td = cell(lead[0], "l sbl f1"); td.colSpan = 3; trr.append(td); if (lev) trr.append(cell("", "l")); }
+      else { trr.append(cell(lead[0], "l f1"), cell(lead[1] == null ? "" : String(lead[1]), "f2"), cell(lead[2] || "", "l f3")); if (lev) trr.append(cell(lead[3] || "", "l")); }
+      for (const k of cols) {
+        const v = l ? sbVal(H, l, k) : null, td = cell(sbFmt(k, v));
+        if (opts.bold && best[k] != null && v != null && Number(v) === best[k]) td.classList.add("hi");
+        trr.append(td);
+      }
+      tbody.append(trr); return trr;
+    };
+    // the seasons: a phone shows the last three until All seasons is tapped (Sean, 8 Oct 2026: "i like the E option for the phone")
+    const years = [...new Set([...mlb, ...milb].map((l) => l.season))].sort((a, b) => a - b);
+    const shown = mob && !sbAll && years.length > 3 ? years.slice(-3) : years;
+    const splitRow = () => {   // the card's date filter or split as a row under the season (Sean, 8 Oct 2026: "In Split")
+      if (!(winIdx() || splitActive())) return;
+      const vl = viewLabel(p.type), lead = el("span", "sbsplit"); lead.append(el("i", null, "In Split"), el("small", null, vl));
+      const oo = fViewLine(p), m = V(p).m;
+      if (oo === "wait") { row([lead, null, ""], null, "insplit"); tbody.lastChild.children[tbody.lastChild.children.length - 1].textContent = "…"; return; }
+      if (!oo || oo.empty) { const trr = row([lead, null, ""], null, "insplit"); trr.title = "No games in this window"; return; }
+      const l = { c: {} };
+      if (H) {
+        const o2 = oo; l.c = { G: o2.G, PA: o2.PA, AB: o2.AB, R: o2.R, H: o2.H, "2B": o2["2B"], "3B": o2["3B"], HR: o2.HR, RBI: o2.RBI, SB: o2.SB, BB: o2.BB, K: o2.K,
+          AVG: o2.AB ? o2.H / o2.AB : null, OBP: (o2.AB + o2.BB + (o2.HBP || 0) + (o2.SF || 0)) ? (o2.H + o2.BB + (o2.HBP || 0)) / (o2.AB + o2.BB + (o2.HBP || 0) + (o2.SF || 0)) : null, SLG: o2.AB ? o2.TB / o2.AB : null };
+        l.c.OPS = l.c.OBP != null && l.c.SLG != null ? l.c.OBP + l.c.SLG : null;
+        l.c.adv = { woba: m.woba, xwoba: m.xwd != null ? m.xwd : m.xwoba_dir };
+      } else {
+        const o2 = oo, ip = o2.OUTS / 3;
+        l.c = { W: o2.W, L: o2.L, ERA: o2.OUTS ? 27 * o2.ER / o2.OUTS : null, G: o2.G, GS: o2.GS, IP: fmtIP(ip), H: o2.H, HR: o2.HR, BB: o2.BB, K: o2.K, BF: o2.BF, WHIP: ip ? (o2.H + o2.BB) / ip : null,
+          adv: { fip: m.fip, whf: m.whf, strk: m.strk, gb: m.gb } };
+      }
+      row([lead, null, ""], l, "insplit");
+    };
+    for (const y of shown) {
+      const ml = mlb.filter((l) => l.season === y);
+      for (const l of ml) {
+        const yr = el("span", "sbyr", String(y));
+        const trr = row([yr, ageIn(y), l.team, "MLB"], l, (y === +DS.season && DS.level === "MLB" ? "cur" : null), { bold: true });
+        if (l.team === "TOT") trr.title = "Two or more clubs that season";
+        if (y === +DS.season && DS.level === "MLB") splitRow();
+      }
+      for (const l of milb.filter((x) => x.season === y)) {
+        const trr = row([String(y), ageIn(y), l.team || "", lvName(l.level)], l, "milb" + (y === +DS.season && DS.level === lvName(l.level) ? " cur" : ""));
+        if (y === +DS.season && DS.level !== "MLB" && DS.level === lvName(l.level)) splitRow();
+        void trr;
+      }
+    }
+    if (mob && years.length > 3) {
+      const trr = el("tr", "sball"), td = el("td"); td.colSpan = 3 + (lev ? 1 : 0) + cols.length;
+      const bt = el("button", "linkbtn", sbAll ? "Last 3 seasons ▴" : `All ${years.length} seasons ▾`); bt.type = "button"; bt.addEventListener("click", (e) => { e.stopPropagation(); sbAll = !sbAll; render(); });
+      const inner = el("span", "sbin"); inner.append(bt); td.append(inner); trr.append(td); tbody.append(trr);   // sticky inside the wide cell, so it shows where the table is scrolled to
+    }
+    // the totals: his MLB years, a 162-game average, each club, each league
+    if (mlb.length) {
+      const n = new Set(mlb.map((l) => l.season)).size, tot = sbCombine(H, mlb);
+      row([`${n} Yr${n > 1 ? "s" : ""}`], tot, "tot first");
+      const G = +tot.c.G || 0, games = H ? G : mlb.reduce((a, l) => a + (l.season === 2020 ? 60 : 162), 0);   // a pitcher's per 162 team games
+      if (games) {
+        const avg = { c: Object.assign({}, tot.c) }, f = 162 / games;
+        for (const k of (H ? ["G", "PA", "AB", "R", "H", "2B", "3B", "HR", "RBI", "SB", "BB", "K"] : ["W", "L", "G", "GS", "H", "HR", "BB", "K"])) avg.c[k] = Math.round((+tot.c[k] || 0) * f);
+        if (!H) avg.c.IP = ipStr(ipNum(tot.c.IP) * f);
+        row(["162 Game Avg"], avg, "tot");
+      }
+      // each club: a traded year's clubs from the record's own club rows
+      const rec = window.DRAFT_CAREER[String(p.id)], keysMLB = H ? RAW_H : RAW_P, byClub = new Map();
+      const clubLines = {};
+      for (const r of (rec && rec[p.type + "T"]) || []) {
+        const c = {}; keysMLB.forEach((k, i) => { c[k] = r[2 + i]; });
+        const ex = r.slice(2 + keysMLB.length); if (H) { c.HBP = ex[0] || 0; c.SF = ex[1] || 0; } else { c.ER = ex[0]; c.BF = ex[1]; }
+        (clubLines[r[0]] = clubLines[r[0]] || []).push({ season: r[0], team: r[1], c: Object.assign(c, { adv: {} }) });
+      }
+      for (const l of mlb) {
+        const parts = l.team === "TOT" && clubLines[l.season] && clubLines[l.season].length > 1 ? clubLines[l.season] : [l];
+        for (const x of parts) (byClub.get(x.team) || byClub.set(x.team, []).get(x.team)).push(x);
+      }
+      const clubs = [...byClub].filter(([t]) => t && t !== "TOT");
+      if (clubs.length) {
+        const gap = () => { const g = el("tr", "gap"), td = el("td"); td.colSpan = 3 + (lev ? 1 : 0) + cols.length; g.append(td); tbody.append(g); };
+        gap();
+        for (const [t, ls] of clubs) { const yrs = new Set(ls.map((x) => x.season)).size; row([`${t} (${yrs} Yr${yrs > 1 ? "s" : ""})`], sbCombine(H, ls), "tot sub"); }
+        const byLg = new Map();
+        for (const [t, ls] of clubs) { const lg = leagueOf(t); (byLg.get(lg) || byLg.set(lg, []).get(lg)).push(...ls); }
+        gap();
+        for (const [lg, ls] of byLg) { const yrs = new Set(ls.map((x) => x.season)).size; row([`${lg} (${yrs} Yr${yrs > 1 ? "s" : ""})`], sbCombine(H, ls), "tot sub"); }
+      }
+    }
+    table.append(tbody);
+    const sc = el("div", "sbscroll"); sc.append(table); box.append(sc);
+    const note = el("p", "sbnote");
+    note.append(el("b", null, "Bold"), ` season totals: his career best in that column (100+ ${H ? "PA" : "batters faced"} seasons).`);
+    if (!H) note.append(" FIP, Whiff%, Strike% and GB% start in 2017, the first season the site carries.");
+    if (winIdx() || splitActive()) note.append(" ", el("b", null, "In Split"), ": the card's filters — " + viewLabel(p.type) + " — from the official game logs; the bars below rank him in that window.");
+    box.append(note);
+    if (sbMinors && !window.DRAFT_MINORS) box.append(el("p", "note", failed.has("hist/minors.js") ? "hist/minors.js hasn't been built." : "Loading minor-league seasons…"));
+    if (!mlb.length && !milb.length) box.append(el("p", "note", "No MLB seasons on record." + (sbMinors ? "" : " Show minors lists his minor-league lines.")));
+    return box;
+  }
   function renderExplore() {
     ensureIndex();
     const box = $("xboard"); box.innerHTML = "";
@@ -8872,7 +9243,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       const g = p.type === "H" ? "H" : p.primary;
       if (needsRows() && !DS.ready()) { DS.load(); box.append(cardTop(renderPlate(p, { rank: "–" }, g, g), chips(p))); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); box.append(c); return; }
       const st = pool(g).stats.get(p.type + p.id) || rankIn(g, p);
-      showPageCard((mb) => playerView(mb, { p, st, g, ref: g, entry, key, pick: goTo }));
+      // his page, not a popup over the page (Sean, 8 Oct 2026, from the Player Page Designs canvas): the band, the season table, the bars and the tabs flow down the page
+      playerView(box, { p, st, g, ref: g, entry, key, pick: goTo, page: true });
     })));
   }
   // His page IS his popup card — the same element, classes and code, so the two can't drift apart — only with no × and
@@ -8889,6 +9261,15 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   function playerView(box, o) {
     const { p, st, g, ref } = o;
     noteRecent(p);
+    if (o.page) {
+      box.append(pageHead(p, st, g, o), seasonBlock(p, o));
+      const pg = el("div", "ppage pageflow"), B = el("div", "pcol pcolB wide");
+      renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
+      pg.append(B);
+      box.append(pg, renderBelow(p, { st, g, ref }));
+      if (mobileView()) box.append(condensedBar(p, st, g, o));
+      return;
+    }
     box.append(playerHead(p, st, g, o));
     const page = el("div", "ppage");
     const B = el("div", "pcol pcolB wide");                   // one box, two columns of sections, for hitters and pitchers
@@ -9033,98 +9414,27 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   // The pinned header, the blue plate. A desktop lays it out in three: the cut-out and his lines on the left, the
   // season's title dead centre, and the filters — the dates and the split toggles — on the right. On a phone the filters fold behind one Filters button beside "full season", the Star goes up
   // by the name, and the title sits across the plate's foot.
-  function playerHead(p, st, g, o) {
-    document.querySelectorAll(".phmodal").forEach((x) => x.remove());
-    const top = el("div", "cardtop phead"), plate = renderPlate(p, st, g, g), mob = mobileView();
-    const F = el("div", "phfilt");
-    const star = plate.querySelector(":scope > div > .starbox"), mr = plate.querySelector(".mrank"), h2 = plate.querySelector("h2");
-    // the headshot in a framed tile with the Star button under it, on a desktop and a phone alike (an open Star panel
-    // goes under his lines, where it has the room)
-    const mug = plate.querySelector(":scope > .mug");
-    if (mug) { const col = el("div", "phmug"); mug.replaceWith(col); col.append(mug); }
-    // the Star is a ☆ / ★ right after his name (minimal pass 5, Sean, 30 Sep 2026), not a button under the photo; an open Star
-    // panel still goes under his lines, where it has the room
-    // no Star on the card (Sean, 7 Oct 2026: "get rid of the star feature across the site") — the saved stars and their sync stay, nothing draws them
-    if (star) star.remove();
-    const title = pageTitle(p, o);
-    // the season picker sits right under his name, "2026 ▾ MLB" (minimal pass 5, Sean, 30 Sep 2026) — not a row of its own
-    // across the band's foot on a phone or a column of its own on a desktop
-    title.classList.add("pinline");
-    for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
-    if (h2) h2.after(title); else plate.append(title);
-    // his team, positions, bats and age ride on the season line, a row saved (minimal pass 8, Sean, 30 Sep 2026 — idea 1 of the
-    // Card Header Comparison)
-    { const ml = plate.querySelector(".mline"), hd2 = title.querySelector(".pthd");
-      if (ml && hd2) {
-        // a line of its own under the year (Sean, 6 Oct 2026: "put the bio stuff below the year on its own line"); the bio joins it below
-        const s2 = el("div", "hbioline"); s2.append(el("span", "mlinein", ml.textContent)); title.append(s2); ml.remove();
-      } }
-    const finish = () => {                               // put the pieces where this layout wants them
-      if (mob) { if (F.childNodes.length) plate.append(F); }
-      else {
-        const wide = [...plate.children].filter((c) => c.classList.contains("htiles") || c.classList.contains("phctl") || c.classList.contains("hrow"));   // the tiles and the control row span the band (6 Oct 2026)
-        const left = el("div", "phleft"); left.append(...[...plate.childNodes].filter((c) => !wide.includes(c)));
-        plate.append(left, ...wide);
-        if (!F.classList.contains("phpop") && F.childNodes.length) { plate.append(F); plate.classList.add("phright"); }   // season chips: on the right
-      }
-      top.append(plate); return top;
-    };
-    if (!o.entry || isMulti(o.key)) { F.append(...renderSeasonChips(p, { curKey: o.key, goTo: o.pick })); return finish(); }
-    const grid = el("div", "phgrid");
-    const cell = (cap, cls, ...kids) => { const c = el("div", "phf" + (cls ? " " + cls : "")); c.append(el("span", "phcap", cap), ...kids.filter(Boolean)); grid.append(c); return c; };
-    // the Filters button beside "full season", on a desktop too: a phone opens them into the plate, a desktop in a
-    // panel hung under the button, so the plate itself stays one short row
+  // The Filters button (with a pitcher's Raw ▾ / Stuff ▾ beside it) and the window it opens — pulled out of playerHead (8 Oct 2026)
+  // so his page's band and the popup's share them. The window: the dates, hand, venue and role cells hung under the button,
+  // dressed like the Leaderboard's Filters dropdown, closed by a tap anywhere else or Escape; nothing is put in the band, so it never moves.
+  function filtersTog(p) {
     const open = !!state.cardTools;
-    // dressed as the Hitting / Pitching switch, same type and height, and sits beside it (Sean, 30 Sep 2026)
     const b = el("button", "segbtn small phfilt", open ? "Filters ▴" : "Filters ▾");
     b.type = "button"; b.setAttribute("aria-expanded", String(open)); b.setAttribute("aria-pressed", String(open));
     b.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = !state.cardTools; savePrefs(); render(); });
-    // Filters sits at the end of the PA · G line (Sean, 30 Sep 2026: "up and to the right of the PA and games played stat to
-    // make the header a bit smaller row wise"); the mrank line underneath only when something else is on it
     const tog = el("span", "phtog"), fs = el("div", "seg phfiltseg"); fs.append(b); tog.append(fs);
-    (plate.querySelector(".hstrip") || mr || plate).append(tog);
-    // Raw / Stuff is one dropdown in the season picker's dress, to the left of Filters (Sean, 5 Oct 2026: "one singular button ... the same
-    // style as like the mlb/aaa/AA button thing is and also how the year is") — the two-button switch had made the row twice as tall on a
-    // phone and left a blank over the bio
-    // ... and then in the Filters button's own dress, right beside it (Sean, 5 Oct 2026: "put it next to the filters button and make it
-    // look exactly like the filters button"): the same .seg / .segbtn as Filters, the pick list hung under it by ddList
-    // ... and since 7 Oct 2026 inside the Filters window (Sean: "move raw vs stuff to the filters buttons"): a Raw / Stuff segment at the top of
-    // the window like the two-way player's Hitting / Pitching switch, no corner button of its own
-    // ... and since 7 Oct 2026 (the same evening) a word under Filters again (Sean: "take the stuff and raw out of filters and do the same thing
-    // with it"): "Raw ▾" / "Stuff ▾" in the Filters word's dress, the pick list hung under it by ddList
     if (p.type === "P") {
       const side = (state.cardSide || "raw") === "stuff" ? "stuff" : "raw";
       const sb = el("button", "segbtn small phfilt phsidebtn", side === "stuff" ? "Stuff ▾" : "Raw ▾"); sb.type = "button"; sb.setAttribute("aria-label", "Raw or stuff");
       const dd = ddList(sb, [["raw", "Raw"], ["stuff", "Stuff"]], side, (k) => { state.cardSide = k; savePrefs(); render(); }, "side");
       const ss = el("div", "seg phfiltseg phsideseg"); ss.append(dd); tog.append(ss);
     }
-    // a two-way player's Hitting / Pitching switch lives in the Filters window now (Sean, 5 Oct 2026: "put the hitting and pitching button in
-    // the filters box so that you can eliminate that weird empty space gap"); it's taken off the plate here and put in the window below
-    const twoWay = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (twoWay) twoWay.remove();
-    // the proposed band (Sean, 6 Oct 2026: "Implement both of those"): the bio rides on the season line as plain words, the band's
-    // numbers are four tiles with their percentiles, and Filters / Raw sit on a row under the tiles with the view's name at the right
-    { const hs = plate.querySelector(".hstrip");
-      if (hs) {
-        const bioBox = hs.querySelector(".hbio"), hd2 = title.querySelector(".pthd");
-        if (bioBox && hd2) { bioBox.classList.add("inline"); fillBio(bioBox, p, bio(p.id)); const bl = title.querySelector(".hbioline"); if (bl) bl.append(bioBox); else { const s2 = el("div", "hbioline"); s2.append(bioBox); title.append(s2); } }
-        const facts = {}; for (const f of [...hs.querySelectorAll(".fact"), ...(hs._stats ? [...hs._stats.querySelectorAll(".fact")] : [])]) { const i = f.querySelector("i"), b = f.querySelector("b"); if (i && b) facts[i.textContent] = b.textContent; }
-        // Filters / Raw stacked in the band's empty top-right corner beside his lines (Sean, 6 Oct 2026: "put the filters and raw stuff
-        // buttons in that blank space in the top right"), the view's name under them only when a filter is on; the tiles follow
-        const ctl = el("div", "phctl"); ctl.append(tog);
-        // the filter chips ride under the Filters button instead of their own row over the facts (Sean, 7 Oct 2026: "that filter description box
-        // below the filter button not where it is now") — the chips say the view, so the small name is only for a chipless view
-        const vl = viewLabel(p.type);
-        if (mr && mr.querySelector(".fchip")) { mr.classList.add("inctl"); ctl.append(mr); }
-        else if (vl && vl !== "full season") ctl.append(el("span", "phview", vl));
-        // no tiles: the old facts row — PA or IP, then the season's line (nERA · ERA · K% · BB% · K-BB%, or the slash line) as small labels
-        // over values — spread across the band's foot on both layouts (Sean, 6 Oct 2026: "get rid of the boxes and put the stats that we had
-        // before back at the bottom of the header ... in the same format"); bandTiles stays in app.js, unused
-        const row = el("div", "hrow");
-        row.append(...[...hs.children].filter((c) => c.classList.contains("fact")));
-        if (hs._stats) row.append(...hs._stats.children);
-        plate.append(ctl); if (row.childNodes.length) plate.append(row);
-        hs.remove();
-      } }
+    return tog;
+  }
+  function filtersWindow(p, twoWay) {
+    const mob = mobileView(), open = !!state.cardTools;
+    const grid = el("div", "phgrid");
+    const cell = (cap, cls, ...kids) => { const c = el("div", "phf" + (cls ? " " + cls : "")); c.append(el("span", "phcap", cap), ...kids.filter(Boolean)); grid.append(c); return c; };
     let warn = null;
     if (open) {
       const sp = renderSplitPanel(p), seg = (n) => sp.querySelector(`.seg[aria-label="${n}"]`);
@@ -9163,7 +9473,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       ft.append(clear); win.append(x, body, ft);
       const ov = el("div", "phmodal"); ov.append(win); document.body.append(ov);
       const place = () => {                              // under the button, like placePop; a phone's spans the screen
-        const bt = document.querySelector(".phead .phfilt"); if (!bt || !ov.isConnected) return;
+        const bts = [...document.querySelectorAll(".phead .phfilt, .phcond .phfilt")].filter((x) => !x.classList.contains("phsidebtn"));
+        const bt = bts.find((x) => { const r = x.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }) || bts[0]; if (!bt || !ov.isConnected) return;
         const r = bt.getBoundingClientRect();
         win.style.top = Math.round(r.bottom + 6) + "px"; win.style.maxHeight = Math.max(220, innerHeight - r.bottom - 16) + "px";
         if (mobileView()) { win.style.left = "8px"; win.style.right = "8px"; win.style.width = "auto"; return; }
@@ -9171,7 +9482,87 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
         win.style.left = Math.round(Math.max(8, Math.min(r.left, innerWidth - w - 8))) + "px";
       };
       requestAnimationFrame(place); ov._place = place;
-    } else if (sum.childNodes.length) F.append(sum);
+    }
+    return sum;
+  }
+  function playerHead(p, st, g, o) {
+    document.querySelectorAll(".phmodal").forEach((x) => x.remove());
+    const top = el("div", "cardtop phead"), plate = renderPlate(p, st, g, g), mob = mobileView();
+    const F = el("div", "phfilt");
+    const star = plate.querySelector(":scope > div > .starbox"), mr = plate.querySelector(".mrank"), h2 = plate.querySelector("h2");
+    // the headshot in a framed tile with the Star button under it, on a desktop and a phone alike (an open Star panel
+    // goes under his lines, where it has the room)
+    const mug = plate.querySelector(":scope > .mug");
+    if (mug) { const col = el("div", "phmug"); mug.replaceWith(col); col.append(mug); }
+    // the Star is a ☆ / ★ right after his name (minimal pass 5, Sean, 30 Sep 2026), not a button under the photo; an open Star
+    // panel still goes under his lines, where it has the room
+    // no Star on the card (Sean, 7 Oct 2026: "get rid of the star feature across the site") — the saved stars and their sync stay, nothing draws them
+    if (star) star.remove();
+    const title = pageTitle(p, o);
+    // the season picker sits right under his name, "2026 ▾ MLB" (minimal pass 5, Sean, 30 Sep 2026) — not a row of its own
+    // across the band's foot on a phone or a column of its own on a desktop
+    title.classList.add("pinline");
+    for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
+    if (h2) h2.after(title); else plate.append(title);
+    // his team, positions, bats and age ride on the season line, a row saved (minimal pass 8, Sean, 30 Sep 2026 — idea 1 of the
+    // Card Header Comparison)
+    { const ml = plate.querySelector(".mline"), hd2 = title.querySelector(".pthd");
+      if (ml && hd2) {
+        // a line of its own under the year (Sean, 6 Oct 2026: "put the bio stuff below the year on its own line"); the bio joins it below
+        const s2 = el("div", "hbioline"); s2.append(el("span", "mlinein", ml.textContent)); title.append(s2); ml.remove();
+      } }
+    const finish = () => {                               // put the pieces where this layout wants them
+      if (mob) { if (F.childNodes.length) plate.append(F); }
+      else {
+        const wide = [...plate.children].filter((c) => c.classList.contains("htiles") || c.classList.contains("phctl") || c.classList.contains("hrow"));   // the tiles and the control row span the band (6 Oct 2026)
+        const left = el("div", "phleft"); left.append(...[...plate.childNodes].filter((c) => !wide.includes(c)));
+        plate.append(left, ...wide);
+        if (!F.classList.contains("phpop") && F.childNodes.length) { plate.append(F); plate.classList.add("phright"); }   // season chips: on the right
+      }
+      top.append(plate); return top;
+    };
+    if (!o.entry || isMulti(o.key)) { F.append(...renderSeasonChips(p, { curKey: o.key, goTo: o.pick })); return finish(); }
+    const open = !!state.cardTools;
+    const tog = filtersTog(p);
+    (plate.querySelector(".hstrip") || mr || plate).append(tog);
+    // Raw / Stuff is one dropdown in the season picker's dress, to the left of Filters (Sean, 5 Oct 2026: "one singular button ... the same
+    // style as like the mlb/aaa/AA button thing is and also how the year is") — the two-button switch had made the row twice as tall on a
+    // phone and left a blank over the bio
+    // ... and then in the Filters button's own dress, right beside it (Sean, 5 Oct 2026: "put it next to the filters button and make it
+    // look exactly like the filters button"): the same .seg / .segbtn as Filters, the pick list hung under it by ddList
+    // ... and since 7 Oct 2026 inside the Filters window (Sean: "move raw vs stuff to the filters buttons"): a Raw / Stuff segment at the top of
+    // the window like the two-way player's Hitting / Pitching switch, no corner button of its own
+    // ... and since 7 Oct 2026 (the same evening) a word under Filters again (Sean: "take the stuff and raw out of filters and do the same thing
+    // with it"): "Raw ▾" / "Stuff ▾" in the Filters word's dress, the pick list hung under it by ddList
+    // a two-way player's Hitting / Pitching switch lives in the Filters window now (Sean, 5 Oct 2026: "put the hitting and pitching button in
+    // the filters box so that you can eliminate that weird empty space gap"); it's taken off the plate here and put in the window below
+    const twoWay = plate.querySelector('.mrank .seg[aria-label="Hitting or pitching"]'); if (twoWay) twoWay.remove();
+    // the proposed band (Sean, 6 Oct 2026: "Implement both of those"): the bio rides on the season line as plain words, the band's
+    // numbers are four tiles with their percentiles, and Filters / Raw sit on a row under the tiles with the view's name at the right
+    { const hs = plate.querySelector(".hstrip");
+      if (hs) {
+        const bioBox = hs.querySelector(".hbio"), hd2 = title.querySelector(".pthd");
+        if (bioBox && hd2) { bioBox.classList.add("inline"); fillBio(bioBox, p, bio(p.id)); const bl = title.querySelector(".hbioline"); if (bl) bl.append(bioBox); else { const s2 = el("div", "hbioline"); s2.append(bioBox); title.append(s2); } }
+        const facts = {}; for (const f of [...hs.querySelectorAll(".fact"), ...(hs._stats ? [...hs._stats.querySelectorAll(".fact")] : [])]) { const i = f.querySelector("i"), b = f.querySelector("b"); if (i && b) facts[i.textContent] = b.textContent; }
+        // Filters / Raw stacked in the band's empty top-right corner beside his lines (Sean, 6 Oct 2026: "put the filters and raw stuff
+        // buttons in that blank space in the top right"), the view's name under them only when a filter is on; the tiles follow
+        const ctl = el("div", "phctl"); ctl.append(tog);
+        // the filter chips ride under the Filters button instead of their own row over the facts (Sean, 7 Oct 2026: "that filter description box
+        // below the filter button not where it is now") — the chips say the view, so the small name is only for a chipless view
+        const vl = viewLabel(p.type);
+        if (mr && mr.querySelector(".fchip")) { mr.classList.add("inctl"); ctl.append(mr); }
+        else if (vl && vl !== "full season") ctl.append(el("span", "phview", vl));
+        // no tiles: the old facts row — PA or IP, then the season's line (nERA · ERA · K% · BB% · K-BB%, or the slash line) as small labels
+        // over values — spread across the band's foot on both layouts (Sean, 6 Oct 2026: "get rid of the boxes and put the stats that we had
+        // before back at the bottom of the header ... in the same format"); bandTiles stays in app.js, unused
+        const row = el("div", "hrow");
+        row.append(...[...hs.children].filter((c) => c.classList.contains("fact")));
+        if (hs._stats) row.append(...hs._stats.children);
+        plate.append(ctl); if (row.childNodes.length) plate.append(row);
+        hs.remove();
+      } }
+    const sum = filtersWindow(p, twoWay);
+    if (!open && sum.childNodes.length) F.append(sum);
     return finish();
   }
   // a player is primarily a pitcher if he has pitching seasons and never a real hitting season (100+ PA)
@@ -9221,6 +9612,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   function renderGlobalSearch() {
     renderSearchList($("glist"), state.gq, (e) => {
       const t = primaryType(e), first = e.s.find((sv) => sv[2] === t);
+      markBack();   // the page's Back button returns here (8 Oct 2026)
       state.x = { id: e.id, type: t, ds: first[0] }; state.expanded = null; state.gq = ""; $("gq").value = ""; $("gq").blur();
       state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };   // a searched player always opens on his full season
       renderSearchList($("glist"), "", () => {});                      // close the list of hits

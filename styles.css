@@ -4558,3 +4558,111 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pbtable td.who { min-width: 130px; }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pbtable td.who .pbname { font-size: 14.5px !important; }
 :root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th.who, :root:root:root:root:root:root:root:root:root:root #pitchboard .pbtable thead th.n { box-shadow: none !important; }
+
+/* ---- his page (Sean, 8 Oct 2026, from the Player Page Designs canvas: "that is perfect implement that"): a name on a list goes to his page, not a popup —
+   a full-width page with no frame, the Baseball-Reference bio on the site's band (photo, name, position, bats / throws, height and weight, born, team,
+   a More bio button, the Summary line at the band's foot), a Back button where the × was, the season table under the band, the bars, the tabs;
+   a phone's band condenses once scrolled. Six roots: these sit over every earlier pass ---- */
+:root:root:root:root:root:root #xboard .pagehead { position: static; z-index: auto; }
+:root:root:root:root:root:root body[data-mode="player"] #xboard { border: 0; box-shadow: none; background: transparent; overflow: visible; }
+:root:root:root:root:root:root .phead .mplate.pbio { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 12px min(6vw, 96px) 12px; row-gap: 10px; }
+:root:root:root:root:root:root .pbctl { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+:root:root:root:root:root:root .pbctl .pbsp { flex: 1 1 auto; }
+:root:root:root:root:root:root .pbback { height: 28px; padding: 0 10px; border: 1px solid rgba(255,255,255,.75); border-radius: 4px; background: rgba(255,255,255,.14); color: var(--band-ink, #fff); font: 600 13px var(--body); white-space: nowrap; flex: none; cursor: pointer; }
+:root:root:root:root:root:root .pbback.small { height: 24px; font-size: 12px; }
+:root:root:root:root:root:root .pbctl .pbyear, :root:root:root:root:root:root .phcond .pbyear { flex: none; flex-basis: auto; width: auto; padding: 0; margin: 0; }
+:root:root:root:root:root:root .pbctl .phtog { display: flex; align-items: center; gap: 10px; margin: 0; }
+:root:root:root:root:root:root .pbctl .phfilt { margin-left: 0; }
+:root:root:root:root:root:root .pbctl .mrank.inctl { margin: 0; display: flex; gap: 6px; flex-wrap: wrap; }
+:root:root:root:root:root:root .pbctl .mrank.inctl .fchip { background: #fff; color: var(--ink); border: 1px solid rgba(255,255,255,.8); border-radius: 4px; }
+:root:root:root:root:root:root .pbmain { display: flex; gap: 22px; align-items: flex-start; }
+:root:root:root:root:root:root .pbphoto { width: 150px; height: 190px; flex: none; border: 2px solid #fff; border-radius: 4px; background: #e6ebf2; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; }
+:root:root:root:root:root:root .pbphoto .mug { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 0; border: 0; box-shadow: none; margin: 0; padding: 0; background: transparent; }
+:root:root:root:root:root:root .pbtext { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 auto; }
+:root:root:root:root:root:root .pbio .pbtext h2 { font: 700 44px var(--display); line-height: 1; margin: 0 0 2px; letter-spacing: 0.01em; }
+:root:root:root:root:root:root .pbl { font-size: 15px; line-height: 1.35; color: var(--band-ink, #fff); }
+:root:root:root:root:root:root .pbl b { font-weight: 700; color: inherit; }
+:root:root:root:root:root:root .pbteam { text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+:root:root:root:root:root:root .pbmore { align-self: flex-start; margin-top: 4px; height: 34px; padding: 0 16px; min-width: 260px; border: 1px solid rgba(255,255,255,.75); border-radius: 4px; background: rgba(255,255,255,.14); color: var(--band-ink, #fff); font: 600 14px var(--body); cursor: pointer; }
+:root:root:root:root:root:root .pbmorebox { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+/* the summary line at the band's foot: this season and his career, the columns in groups with dividers */
+:root:root:root:root:root:root .pbsum { border-top: 1px solid rgba(255,255,255,.45); padding-top: 6px; display: flex; flex-direction: column; }
+:root:root:root:root:root:root .pbsrow { display: grid; grid-template-columns: 80px repeat(var(--n), minmax(0, 1fr)); align-items: center; height: 30px; }
+:root:root:root:root:root:root .pbsrow.pbshead { height: 22px; }
+:root:root:root:root:root:root .pbsl { text-align: left; font-size: 13px; font-weight: 600; color: var(--band-ink, #fff); }
+:root:root:root:root:root:root .pbshead .pbsl { font-size: 11px; font-weight: 400; opacity: 0.9; }
+:root:root:root:root:root:root .pbsh { text-align: center; font-size: 11px; color: var(--band-ink, #fff); opacity: 0.9; white-space: nowrap; height: 100%; display: flex; align-items: center; justify-content: center; }
+:root:root:root:root:root:root .pbsv { text-align: center; font: 700 18px var(--display); font-variant-numeric: tabular-nums; color: var(--band-ink, #fff); height: 100%; display: flex; align-items: center; justify-content: center; }
+:root:root:root:root:root:root .pbsrow .sep { border-left: 1px solid rgba(255,255,255,.45); }
+/* the season table */
+:root:root:root:root:root:root .sblock { padding: 14px 0 0; display: flex; flex-direction: column; gap: 8px; }
+:root:root:root:root:root:root .sbhead { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+:root:root:root:root:root:root .sbtitle { margin: 0; font: 700 26px var(--display); color: var(--ink); letter-spacing: 0.01em; }
+:root:root:root:root:root:root .sblink { font-size: 13px; font-weight: 500; color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent-2); text-underline-offset: 2px; padding: 0; border: 0; background: none; cursor: pointer; }
+:root:root:root:root:root:root .sbscroll { overflow-x: auto; border: 1px solid var(--hair); border-radius: 4px; background: var(--surface); }
+:root:root:root:root:root:root .sbt { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root .sbt th { background: var(--band2, var(--accent-2)); color: #fff; font: 600 12px var(--body); height: 32px; padding: 0 6px; text-align: right; white-space: nowrap; border-right: 1px solid rgba(255,255,255,.45); border-bottom: 0; text-transform: none; letter-spacing: 0; }
+:root:root:root:root:root:root .sbt th.l { text-align: left; }
+:root:root:root:root:root:root .sbt th:last-child, :root:root:root:root:root:root .sbt td:last-child { border-right: 0; }
+:root:root:root:root:root:root .sbt td { border-top: 1px solid var(--hair); border-right: 1px solid var(--hair); padding: 0 6px; height: 30px; text-align: right; white-space: nowrap; background: var(--surface); color: var(--ink); font-weight: 400; }
+:root:root:root:root:root:root .sbt td.l { text-align: left; }
+:root:root:root:root:root:root .sbt .f1, :root:root:root:root:root:root .sbt .f2, :root:root:root:root:root:root .sbt .f3 { position: sticky; z-index: 1; }
+:root:root:root:root:root:root .sbt .f1 { left: 0; }
+:root:root:root:root:root:root .sbt .f2 { left: var(--sbw1, 60px); }
+:root:root:root:root:root:root .sbt .f3 { left: calc(var(--sbw1, 60px) + var(--sbw2, 40px)); }
+:root:root:root:root:root:root .sbt th.f1, :root:root:root:root:root:root .sbt th.f2, :root:root:root:root:root:root .sbt th.f3 { z-index: 2; }
+:root:root:root:root:root:root .sbt td.f3, :root:root:root:root:root:root .sbt td.sbl { border-right: 2px solid var(--ink); }
+:root:root:root:root:root:root .sbt th.f3 { border-right: 2px solid rgba(255,255,255,.8); }
+:root:root:root:root:root:root .sbt td.sbl { font-weight: 700; text-align: right; }
+:root:root:root:root:root:root .sbt .sbyr { text-decoration: underline; text-decoration-color: var(--accent-2); text-underline-offset: 2px; }
+:root:root:root:root:root:root .sbt tr.cur td { background: color-mix(in srgb, var(--accent-2) 24%, var(--surface)); font-weight: 600; }
+:root:root:root:root:root:root .sbt tr.insplit td { background: color-mix(in srgb, var(--accent-2) 12%, var(--surface)); font-weight: 500; }
+:root:root:root:root:root:root .sbt .sbsplit { display: flex; flex-direction: column; line-height: 1.1; }
+:root:root:root:root:root:root .sbt .sbsplit i { font-style: italic; }
+:root:root:root:root:root:root .sbt .sbsplit small { font-size: 10px; color: var(--muted); white-space: nowrap; }
+:root:root:root:root:root:root .sbt tr.insplit td { height: 36px; }
+:root:root:root:root:root:root .sbt td.hi { font-weight: 700; }
+:root:root:root:root:root:root .sbt tr.tot td { font-weight: 700; }
+:root:root:root:root:root:root .sbt tr.tot.first td { border-top: 2px solid var(--ink); }
+:root:root:root:root:root:root .sbt tr.gap td { height: 8px; padding: 0; background: color-mix(in srgb, var(--ink) 5%, var(--surface)); border-right: 0; }
+:root:root:root:root:root:root .sbt tr.sball td { text-align: left; height: 30px; padding: 0; }
+:root:root:root:root:root:root .sbt tr.sball .sbin { position: sticky; left: 0; display: inline-block; padding: 0 12px; }
+:root:root:root:root:root:root .sbt tr.milb td { color: var(--ink-2); }
+:root:root:root:root:root:root .sbnote { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.4; }
+/* the bars flow with the page, as wide as it is; the tabs under them */
+:root:root:root:root:root:root #xboard .ppage.pageflow { height: auto; min-height: 0; display: block; width: 100%; max-width: none; margin: 12px 0 0; }
+:root:root:root:root:root:root #xboard .ppage.pageflow > .pcol { overflow: visible; height: auto; min-height: 0; }
+:root:root:root:root:root:root #xboard .ppage.pageflow .pscroll { overflow: visible; flex: none; }
+/* a phone */
+:root:root:root:root:root:root[data-view="mobile"] .phead .mplate.pbio { padding: 10px 12px 8px; gap: 8px; row-gap: 8px; }
+:root:root:root:root:root:root[data-view="mobile"] .pbctl { gap: 8px; }
+:root:root:root:root:root:root[data-view="mobile"] .pbmain { gap: 12px; }
+:root:root:root:root:root:root[data-view="mobile"] .pbphoto { width: 96px; height: 128px; }
+:root:root:root:root:root:root[data-view="mobile"] .pbio .pbtext h2 { font-size: 28px; }
+:root:root:root:root:root:root[data-view="mobile"] .pbl { font-size: 12.5px; }
+:root:root:root:root:root:root[data-view="mobile"] .pbtext { gap: 3px; }
+:root:root:root:root:root:root[data-view="mobile"] .pbmore { min-width: 0; width: 100%; height: 32px; font-size: 13px; align-self: stretch; }
+:root:root:root:root:root:root[data-view="mobile"] .pbsrow { grid-template-columns: 58px; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); height: 26px; }
+:root:root:root:root:root:root[data-view="mobile"] .pbsrow.pbshead { height: 20px; }
+:root:root:root:root:root:root[data-view="mobile"] .pbx { display: none; }
+:root:root:root:root:root:root[data-view="mobile"] .pbsv { font-size: 15px; }
+:root:root:root:root:root:root[data-view="mobile"] .pbsh, :root:root:root:root:root:root[data-view="mobile"] .pbshead .pbsl { font-size: 10px; }
+:root:root:root:root:root:root[data-view="mobile"] .pbsl { font-size: 12px; }
+:root:root:root:root:root:root[data-view="mobile"] .sblock { padding: 10px 12px 0; }
+:root:root:root:root:root:root[data-view="mobile"] .sbtitle { font-size: 22px; }
+:root:root:root:root:root:root[data-view="mobile"] .sbt { font-size: 12px; }
+:root:root:root:root:root:root[data-view="mobile"] .sbt th { font-size: 11px; }
+:root:root:root:root:root:root[data-view="mobile"] #xboard .ppage.pageflow { padding-inline: 12px; }
+/* the condensed band, pinned once the band has scrolled off a phone's screen; the site header scrolls away there */
+:root:root:root:root:root:root .phcond { position: fixed; top: 0; left: 0; right: 0; z-index: 40; background: var(--band); color: var(--band-ink, #fff); border-bottom: 3px solid var(--stripe-line, #c8102e); padding: 8px 12px 6px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 2px 6px rgba(12,35,64,.18); }
+:root:root:root:root:root:root .phcond[hidden] { display: none; }
+:root:root:root:root:root:root .phcond .pbctl { gap: 8px; flex-wrap: nowrap; }
+:root:root:root:root:root:root .phcond .pbctl .phtog { display: flex; align-items: center; gap: 8px; margin: 0; }
+:root:root:root:root:root:root .phcond .pcname { font: 700 22px var(--display); line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root:root:root:root:root:root .phcond .pcline { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root:root:root:root:root:root .phcond .pctiles { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); border-top: 1px solid rgba(255,255,255,.45); padding-top: 4px; margin-top: 2px; }
+:root:root:root:root:root:root .phcond .pctile { display: flex; flex-direction: column; align-items: center; gap: 1px; border-right: 1px solid rgba(255,255,255,.45); }
+:root:root:root:root:root:root .phcond .pctile:last-child { border-right: 0; }
+:root:root:root:root:root:root .phcond .pctile i { font-style: normal; font-size: 9.5px; opacity: 0.9; }
+:root:root:root:root:root:root .phcond .pctile b { font: 700 15px var(--display); line-height: 1; }
+:root:root:root:root:root:root[data-view="mobile"] body[data-mode="player"] header.top { position: static; }
