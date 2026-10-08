@@ -4810,3 +4810,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .sbt td.sbl .sblab { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); white-space: nowrap; font-weight: 700 !important; color: #fff; }
 :root:root:root:root:root:root .sbt tr.tot td.sbl0 { border-right: 0; }
 :root:root:root:root:root:root .sbt tr.tot td.sbl { border-right: 2px solid var(--ink); }
+/* the totals' gaps as B-Ref draws them (Sean, 8 Oct 2026: "make the break between sections in the total area be exactly like baseball references"):
+   9px, a shade darker than the totals rows (B-Ref: #eee rows, #ddd gap), no column rules, the frozen Team edge running straight through */
+:root:root:root:root:root:root .sbt tr.gap td { height: 9px; padding: 0; background: color-mix(in srgb, var(--ink) 9%, var(--band2, var(--accent-2))) !important; border: 0 !important; }
+:root:root:root:root:root:root .sbt tr.gap td.f3 { border-right: 2px solid var(--ink) !important; }

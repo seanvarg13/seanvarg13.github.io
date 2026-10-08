@@ -2736,3 +2736,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Age / Team had stayed Age wider than the frozen pair once Age faded, so on a scrolled phone it covered G and its rule sat a column right of the
   rows' rule; now every total sits under its column and the frozen rule runs straight down. A long label ("162 Game Avg") can run off the left
   edge when scrolled, as B-Ref's does.
+* **The totals' gaps as B-Ref draws them (Sean, 8 Oct 2026: "make the break between sections in the total area be exactly like baseball
+  references")**: B-Ref's gap is a 9px strip a shade darker than its totals rows (#ddd under #eee), no column rules, its frozen-column edge
+  running straight through. `gap()` in `seasonBlock` is the frozen cells (`.f1` / `.f2` / `.f3`) plus one cell across the rest; the CSS at the end
+  of `styles.css` makes it 9px of the band blue with 9% ink mixed in, every border off but the 2px ink rule on the Team cell.
