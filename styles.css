@@ -4771,3 +4771,14 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .pthd { font-size: 24px; }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate.pbio .pbsum { align-self: stretch; width: 100%; box-sizing: border-box; }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .phtog > *, :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .phtog .segbtn { width: 100%; box-sizing: border-box; }
+/* the season table (Sean, 8 Oct 2026): air between the band and "Standard batting"; B-Ref's league-leader marks (bold = led his league, bold
+   italic = led MLB) and its key on the title row; the two totals rows bold, a cell gold where he holds an all-time MLB career record */
+:root:root:root:root:root:root #xboard .sblock { margin-top: 34px; }
+:root[data-view="mobile"]:root:root:root:root:root #xboard .sblock { margin-top: 26px; }
+:root:root:root:root:root:root .sbt td.lead { font-weight: 700 !important; }
+:root:root:root:root:root:root .sbt td.mlblead { font-style: italic; }
+:root:root:root:root:root:root .sbt tr.tot:not(.sub) td { font-weight: 700 !important; }
+:root:root:root:root:root:root .sbt td.record { background: #e8c547 !important; color: #2a2100 !important; font-weight: 700 !important; }
+:root:root:root:root:root:root .sblock .sbkey { margin-top: 8px; font-size: 12.5px; line-height: 1.6; color: var(--ink-2); }
+:root:root:root:root:root:root .sblock .sbkey b { font-weight: 700 !important; color: var(--ink); }
+:root:root:root:root:root:root .sblock .sbkey .sbgold { background: #e8c547; color: #2a2100; padding: 0 4px; border-radius: 2px; font-weight: 700 !important; }
