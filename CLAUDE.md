@@ -2716,3 +2716,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   2px ink rule after the label and every group rule run unbroken from the column names through the totals, the gaps and the club / league rows;
   `tr.tot td.sbl` carries the ink rule (it was white); the gaps are `--band2`, the totals' own blue, with no inner lines; N Yrs and 162 Game Avg
   have no heat map (wOBA / xwOBA / Sprint plain there); "Standard batting" starts 102px under the band (78 on a phone).
+* **Season and Team frozen, Age fades (Sean, 8 Oct 2026, from B-Ref on his phone: "do what baseball reference did with age where like when you scroll
+  it fades and you just see the year and team")**: in the season table only Season (`.f1`, left 0) and Team (`.f3`, left `--sbw1` — Season's width)
+  are sticky; Age (`.f2`) is an ordinary cell between them, so as the table scrolls sideways it slides under the two and Team ends up against Season.
+  `seasonBlock` sets `--sbage` on the table from the scroller's `scrollLeft` (1 → 0 over Age's own width, `--sbw2`) and Age's opacity follows it.
+  The totals / gap label cells span all three and stay frozen as before. Both layouts.
