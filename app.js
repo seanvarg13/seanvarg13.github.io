@@ -5557,7 +5557,14 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       const b = backRestore; backRestore = null;
       const put = () => { listScrollers().forEach((e, i) => { const v = b.s[i]; if (v) { e.scrollTop = v[0]; e.scrollLeft = v[1]; } }); if (b.y && Math.abs(window.scrollY - b.y) > 1) window.scrollTo(0, b.y); };
       put(); requestAnimationFrame(put);
-    } else if (state.mode === "player" && pageOpened) { pageOpened = false; window.scrollTo(0, 0); }
+    } else if (state.mode === "player") {
+      // a page just opened starts at the top — from a list (pageOpened), and from the search, a Similar name or a board (a different player
+      // or season than the last render; the page used to be a popup, so where the page behind it sat never mattered). A redraw of the
+      // same page (a filter, a tab, the bio fold) keeps its scroll
+      const k = state.x ? state.x.type + state.x.id + ":" + (state.x.ds || "") : "";
+      if (pageOpened || k !== pageKey) window.scrollTo(0, 0);
+      pageOpened = false; pageKey = k;
+    } else pageKey = "";
   }
   // A player's page is rebuilt on every pick (a season, a level, a tab, a filter). Rebuilt, it is briefly short and the
   // window snaps to the top, and its panels' own scrollers start over. On the same player, put them all back; if the
@@ -8850,7 +8857,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
 
   /* ---------- his page, from the lists (Sean, 8 Oct 2026: "when you're on a leaderboard and you select a player it brings you to their player
      page and instead of an x it has back to leaderboard button at the top which takes you back to the spot you were at on the leaderboard") ---------- */
-  let backAt = null, backRestore = null, pageOpened = false;   // where a page was opened from: the list page, its scroll and its rows' box
+  let backAt = null, backRestore = null, pageOpened = false, pageKey = "";   // where a page was opened from: the list page, its scroll and its rows' box; the page last drawn
   const BACK_LABEL = { leaderboard: "leaderboard", trending: "leaderboard", rankings: "rankings", draft: "draft board", pitches: "Pitching+", fantasy: "fantasy", home: "home",
                        claude: "Claude rankings", planner: "planner", eligibility: "eligibility", callups: "Call-up Watch", compare: "compare", mock: "mock draft", trends: "League Trends", appearance: "appearance" };
   const BACK_MODES = ["leaderboard", "trending", "rankings", "draft", "pitches", "fantasy", "claude", "planner", "eligibility"];   // the list pages Back returns to
@@ -8946,9 +8953,19 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
         career = { nERA: "–", xnERA: "–", ERA: f2(car[2]), W: car[0], L: car[1], G: car[3], GS: car[4], IP: car[6], H: car[7], HR: car[8], BB: car[9], K: car[10], WHIP: f2(car[11]), "K%": pctOf(k, bf), "BB%": pctOf(bb, bf), "K-BB%": pctOf(k - bb, bf) };
       }
     }
+    // the first pair heat-mapped as the Mix tab's Lg wOBA chips (Sean, 8 Oct 2026: "heat map these two like this"): wOBA / xwOBA (a pitcher's
+    // nERA / xnERA) as pills in the percentile colour among the full season's pool — the career row placed in the same pool
+    const pl = full(() => pool(H ? "H" : p.primary)), srt = (pl && pl.sorted) || {};
+    const pcOf = (key, v, hib) => (v == null || v === "–" || isNaN(+v) || !srt[key] || !srt[key].length ? null : insertPct(srt[key], hib ? +v : -+v));
+    const chipsOf = (vals) => (!vals ? {} : H ? { wOBA: pcOf("woba", vals.wOBA, true), xwOBA: pcOf("xwd", vals.xwOBA, true) } : { nERA: pcOf("nera", vals.nERA, false), xnERA: pcOf("xnera", vals.xnERA, false) });
     const rowOf = (label, vals, cls) => {
       const row = el("div", "pbsrow" + (cls ? " " + cls : "")); row.append(el("span", "pbsl", label));
-      keys.forEach((k) => { const v = vals ? vals[k] : "–", c = el("span", "pbsv" + (narrow.has(k) ? " pbx" : ""), v == null || v === "" ? "–" : String(v)); if (groups.some((g) => g[0] === k && g !== groups[0])) c.classList.add("sep"); row.append(c); });
+      const chips = chipsOf(vals);
+      keys.forEach((k) => {
+        const v = vals ? vals[k] : "–", text = v == null || v === "" ? "–" : String(v), c = el("span", "pbsv" + (narrow.has(k) ? " pbx" : ""));
+        if (chips[k] != null) { const chip = el("span", "uchip pbchip", text); paintBar(chip, chips[k]); chip.style.color = "#fff"; chip.title = ordinal(Math.round(chips[k])) + " percentile"; c.append(chip); } else c.textContent = text;
+        if (groups.some((g) => g[0] === k && g !== groups[0])) c.classList.add("sep"); row.append(c);
+      });
       return row;
     };
     box.append(rowOf(String(DS.season) + (DS.level && DS.level !== "MLB" ? " " + DS.level : ""), season, "cur"));
@@ -8995,6 +9012,9 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const top = el("div", "cardtop phead pagehead"), plate = el("div", "mplate pbio");
     const b = bio(p.id);
     const ctl = el("div", "pbctl");
+    // no list to go back to → no row for the controls: the year and Filters sit in the band's top-right corner over its empty side (Sean, 8 Oct 2026:
+    // "now that you got rid of the home button this blank space is not needed. Keep it for when the back to the leaderboard is needed but thats it")
+    if (!backAt && !mobileView()) plate.classList.add("nobk");
     ctl.append(backButton(false), el("span", "pbsp"));
     const title = pageTitle(p, o); title.classList.add("pinline", "pbyear");
     for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
@@ -9033,36 +9053,47 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   // a phone's band condenses once you scroll (Sean, 8 Oct 2026: "just show like the player name, their position, the bats throws row as well, and then
   // their stats for the current season and also the year and filters boxes up top"): a fixed bar that shows while the band is off the top
   function condensedBar(p, st, g, o) {
-    const bar = el("div", "phcond"); bar.hidden = true;
-    const ctl = el("div", "pbctl"); ctl.append(backButton(true), el("span", "pbsp"));
+    const mob = mobileView(), bar = el("div", "phcond" + (mob ? "" : " desk")); bar.hidden = true;
     const title = pageTitle(p, o); title.classList.add("pinline", "pbyear");
     for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
-    ctl.append(title); if (o.entry && !isMulti(o.key)) ctl.append(filtersTog(p));
-    bar.append(ctl, el("div", "pcname", p.name));
     const b = bio(p.id), bats = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
-    const l = el("div", "pcline"); l.innerHTML = [posWords(p).replace(/&/g, "&amp;"), bats ? `<b>Bats:</b> ${handWord(bats)}` : null, thr ? `<b>Throws:</b> ${handWord(thr)}` : null].filter(Boolean).join(" &nbsp;•&nbsp; ");
-    bar.append(l);
+    const line = el("div", "pcline"); line.innerHTML = [posWords(p).replace(/&/g, "&amp;"), bats ? `<b>Bats:</b> ${handWord(bats)}` : null, thr ? `<b>Throws:</b> ${handWord(thr)}` : null].filter(Boolean).join(" &nbsp;•&nbsp; ");
+    let tiles = null;
     if (st && st.pct) {
       const sum = summaryBlock(p, st), cur = sum.querySelector(".pbsrow.cur"), head = sum.querySelector(".pbshead");
       if (cur && head) {
-        const tiles = el("div", "pctiles"), hs = [...head.querySelectorAll(".pbsh")], vs = [...cur.querySelectorAll(".pbsv")];
+        tiles = el("div", "pctiles");
+        const hs = [...head.querySelectorAll(".pbsh")], vs = [...cur.querySelectorAll(".pbsv")];
         const keep = p.type === "H" ? ["wOBA", "xwOBA", "BA", "OBP", "SLG", "OPS"] : ["nERA", "xnERA", "ERA", "K%", "BB%", "K-BB%"];
         hs.forEach((h, i) => { if (!keep.includes(h.textContent)) return; const t = el("div", "pctile"); t.append(el("i", null, h.textContent), el("b", null, vs[i] ? vs[i].textContent : "–")); tiles.append(t); });
-        tiles.style.setProperty("--n", tiles.childNodes.length); bar.append(tiles);
+        tiles.style.setProperty("--n", tiles.childNodes.length);
       }
+    }
+    const tog = o.entry && !isMulti(o.key) ? filtersTog(p) : null;
+    if (mob) {   // a phone: the controls' line, the name, the position line, the tiles across
+      const ctl = el("div", "pbctl"); ctl.append(backButton(true), el("span", "pbsp"), title); if (tog) ctl.append(tog);
+      bar.append(ctl, el("div", "pcname", p.name), line); if (tiles) bar.append(tiles);
+    } else {     // a desktop, under the sticky site header: one row — Back, the name over the position line, the tiles, the year and Filters at the right
+      const who = el("div", "pcwho"); who.append(el("div", "pcname", p.name), line);
+      const ctl = el("div", "pcctl"); ctl.append(title); if (tog) ctl.append(tog);
+      if (backAt) bar.append(backButton(true)); bar.append(who); if (tiles) bar.append(tiles); bar.append(ctl);
     }
     return bar;
   }
-  // show the condensed bar while the band is scrolled off the top of a phone
+  // show the condensed bar while the band is scrolled off the top: at the top of a phone's screen (its site header scrolls away), under a
+  // desktop's sticky site header
   let condTick = false;
   const condSync = () => {
     condTick = false;
     const bar = document.querySelector("#xboard .phcond"), band = document.querySelector("#xboard .pagehead"); if (!bar || !band) return;
     const off = band.getBoundingClientRect().bottom < 0;
+    if (off) { const hd = document.querySelector("header.top"), hb = hd ? hd.getBoundingClientRect().bottom : 0; bar.style.top = Math.max(0, Math.round(hb)) + "px"; }
     if (bar.hidden === !off) return;
     bar.hidden = !off; document.body.classList.toggle("pcond", off);
   };
-  window.addEventListener("scroll", () => { if (!condTick && state.mode === "player" && mobileView()) { condTick = true; requestAnimationFrame(condSync); } }, { passive: true });
+  const condAsk = () => { if (!condTick && state.mode === "player") { condTick = true; requestAnimationFrame(condSync); } };
+  window.addEventListener("scroll", condAsk, { passive: true });
+  window.addEventListener("resize", condAsk);
   /* ---------- the season table, Baseball-Reference's in the site's dress (Sean, 8 Oct 2026) ---------- */
   let sbMinors = false, sbAll = false;                         // Show minors; a phone's All N seasons (this visit)
   const SB_H = ["G", "PA", "AB", "R", "H", "2B", "3B", "HR", "RBI", "SB", "BB", "K", "AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA"];
@@ -9270,7 +9301,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
       pg.append(B);
       box.append(pg, renderBelow(p, { st, g, ref }));
-      if (mobileView()) box.append(condensedBar(p, st, g, o));
+      box.append(condensedBar(p, st, g, o));   // the condensed band once scrolled, a phone's and a desktop's (Sean, 8 Oct 2026)
+      condSync();                              // now, not next frame: a Filters window opened from the bar places itself under it in the next frame
       return;
     }
     box.append(playerHead(p, st, g, o));
@@ -9478,8 +9510,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       const place = () => {                              // under the button, like placePop; a phone's spans the screen
         const bts = [...document.querySelectorAll(".phead .phfilt, .phcond .phfilt")].filter((x) => !x.classList.contains("phsidebtn"));
         const bt = bts.find((x) => { const r = x.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }) || bts[0]; if (!bt || !ov.isConnected) return;
-        const r = bt.getBoundingClientRect();
-        win.style.top = Math.round(r.bottom + 6) + "px"; win.style.maxHeight = Math.max(220, innerHeight - r.bottom - 16) + "px";
+        const r = bt.getBoundingClientRect(), cb = bt.closest(".phcond"), under = cb ? cb.getBoundingClientRect().bottom : r.bottom;   // from the condensed bar: under the whole bar
+        win.style.top = Math.round(under + 6) + "px"; win.style.maxHeight = Math.max(220, innerHeight - under - 16) + "px";
         if (mobileView()) { win.style.left = "8px"; win.style.right = "8px"; win.style.width = "auto"; return; }
         win.style.right = "auto"; win.style.width = ""; win.style.left = "0px"; const w = win.offsetWidth;
         win.style.left = Math.round(Math.max(8, Math.min(r.left, innerWidth - w - 8))) + "px";
