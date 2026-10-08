@@ -2543,3 +2543,23 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   seasons that carry `evfb / evld / evgb`), xwOBAcon = (xwOBA × PA − wBB × BB) / BBE: **EV on fly balls r .775** (next season's xwOBAcon .660), Avg EV .687
   (.577), EV on line drives .581 (.537), EV on ground balls .247 (.209); EV90 .716, Hard-Hit% .725, Barrel% .865. The three together add nothing over FB
   EV alone (R² .600 → .602); FB EV repeats year to year at r .755 (LD .683, GB .652, Avg EV .787).
+* **The desktop's condensed band, the bars at their old width, no controls row without a Back (Sean, 8 Oct 2026: "i want the desktop version to
+  have the same condensed header when i scroll down", "the percentile bars got longer than they were prior to this change, can you revert them back
+  to the same size", "now that you got rid of the home button this blank space is not needed. Keep it for when the back to the leaderboard is
+  needed but thats it")**: `condensedBar` draws on both layouts — a desktop's is one row (`.phcond.desk`: Back, the name over the position line,
+  the season's six tiles, the year and Filters / Raw at the right) pinned under the sticky site header (`condSync` sets its `top` from
+  `header.top`'s bottom; z-index 15 so the nav menus open over it), a phone's is the three-line bar as before at the top of the screen;
+  `condAsk` runs on scroll and resize, and `playerView` calls `condSync()` right after appending the bar so a Filters window opened from the bar
+  finds it shown — `place` hangs the window under the whole bar (`bt.closest(".phcond")`), not the button inside it. **The bars' box is the popup
+  card's 860px again**, centred (`#xboard .ppage.pageflow { width: min(100%, var(--pbox-w)) }` — the full-width page had stretched each chart
+  from 406 to 547px at 1300 wide). **No Back → no row**: `pageHead` gives the plate `nobk` when `backAt` is null on a desktop, and the controls
+  (the year, Filters / Raw, the filter chips) sit absolutely in the band's top-right corner over its empty side, the photo and bio starting at the
+  top (band 367 → 321px); a phone keeps the row, since its year and Filters are the row's two ends, now one line (the popup era's 96px right
+  padding and 68px minimum on `.ptitle.pinline` are cleared under `.pbctl`). **A page opened from anywhere starts at the top**: `render()` scrolls
+  to 0 when the player page's key (`state.x` type + id + ds, `pageKey`) differs from the last render's, not only on `pageOpened` — the search,
+  a Similar name and the boards set the hash directly, and a page opened while scrolled down (the page used to be a popup) opened scrolled.
+  **The Summary's first pair heat-mapped** (Sean, the same hour, from a crop of the Mix tab's Lg wOBA chips: "heat map these two like this"): wOBA
+  and xwOBA (a pitcher's nERA, and xnERA on the Stuff side) on both the season and the Career rows are `.uchip.pbchip` pills — `paintBar` in the
+  percentile colour among the **full season's** pool (`full(() => pool(g))`, `insertPct` on `pl.sorted.woba / xwd / nera / xnera`; the career value
+  placed in the same pool, so a career .318 reads 43rd among this season's 300+ PA hitters), white digits with the Mix tab's faint shadow, the
+  ordinal in the tooltip; a career nERA isn't built, so that cell stays "–".
