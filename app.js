@@ -9374,7 +9374,9 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     };
     const row = (lead, l, cls, opts = {}) => {
       const trr = el("tr", cls || null);
-      if (lead.length === 1) { const td = cell(lead[0], "l sbl f1"); td.colSpan = 3; trr.append(td); if (lev) trr.append(cell("", "l")); }
+      // a totals label sits in the frozen Team cell and spills left over Season, as B-Ref's does (Sean, 8 Oct 2026): a cell spanning Season / Age /
+      // Team stayed Age wider than the frozen pair once Age faded, so it covered G and its rule sat a column right of the rows' rule
+      if (lead.length === 1) { const lab = cell("", "l sbl f3"), sp = el("span", "sblab", lead[0]); lab.append(sp); trr.append(cell("", "l sbl0 f1"), cell("", "sbl0 f2"), lab); if (lev) trr.append(cell("", "l")); }
       else { trr.append(cell(lead[0], "l f1"), cell(lead[1] == null ? "" : String(lead[1]), "f2"), cell(lead[2] || "", "l f3")); if (lev) trr.append(cell(lead[3] || "", "l")); }
       for (const k of cols) {
         const v = l ? sbVal(H, l, k) : null, td = cell(sbFmt(k, v));
