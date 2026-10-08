@@ -134,7 +134,7 @@ def main():
                     rows = [by[k] for k in sorted(by)]
                     for r in rows:
                         m = ours.get((p["id"], r[0], t))
-                        r.append(None if not m else ([m.get("woba"), m.get("xwoba")] if t == "H"
+                        r.append(None if not m else ([m.get("woba"), m.get("xwoba_dir", m.get("xwoba"))] if t == "H"   # the site's xwOBA is the directional model (8 Oct 2026)
                                                      else [m.get("fip"), m.get("siera"), m.get("k"), m.get("bb"), m.get("kbb"), m.get("whf"), m.get("strk"),
                                                            m.get("gb"), m.get("pu")]))   # appended: the card's simple season table shows GB% / Popup%
                     rec[t] = rows
@@ -150,7 +150,7 @@ def main():
         out_rows = []
         for r in rows:
             m = ours_m.get((pid, r[0], t, r[1]))
-            adv = None if not m else ([m.get("woba"), m.get("xwoba"), m.get("whf")] if t == "H" else [m.get("fip"), m.get("siera"), m.get("whf"), m.get("strk"),
+            adv = None if not m else ([m.get("woba"), m.get("xwoba_dir", m.get("xwoba")), m.get("whf")] if t == "H" else [m.get("fip"), m.get("siera"), m.get("whf"), m.get("strk"),
                                                                                                       m.get("gb"), m.get("pu")])   # appended: GB% / Popup% for the minors' season table
             out_rows.append(list(r) + [adv])
         return out_rows
