@@ -8329,7 +8329,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   // wide enough (it takes the right-hand box's place too) that every bar keeps the length it has in one column.
   // EXPW / EXPB / EXPS are the directional model's xwOBA, xBA and xSLG, as everywhere.
   const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
-                       ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],   // EV by batted-ball type lives on the Mix tab (Sean, 8 Oct 2026)
+                       ["Batted-Ball Quality", ["evfb", "brl", "bs", "hh", "ev90", "maxev"]]],   // EV on fly balls in Avg EV's place (Sean, 8 Oct 2026: "swap avg ev with fly ball ev" — it tracks xwOBAcon at r .78 against Avg EV's .69); LD / GB EV on the Mix tab, Avg EV a column
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k", "xk"]],   // back on the right, at the top (Sean, 1 Oct 2026)
                        ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]]]];   // Air% back (Sean, 8 Oct 2026)   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right

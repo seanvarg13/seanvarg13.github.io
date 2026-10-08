@@ -2563,3 +2563,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   percentile colour among the **full season's** pool (`full(() => pool(g))`, `insertPct` on `pl.sorted.woba / xwd / nera / xnera`; the career value
   placed in the same pool, so a career .318 reads 43rd among this season's 300+ PA hitters), white digits with the Mix tab's faint shadow, the
   ordinal in the tooltip; a career nERA isn't built, so that cell stays "–".
+* **EV on fly balls in Avg EV's place on the hitter bars (Sean, 8 Oct 2026: "on the hitter percentile bars then can we swap avg ev with fly ball
+  ev")**: `PCT_COLS_H` Batted-Ball Quality = **EV on FB** · Barrel% · Bat Speed · Hard-Hit% · 90th% EV · Max EV (`evfb`, ranked by the pool since
+  `meta.hitterMetrics` carries it; a file built before 7 Oct 2026 has no value, so the row is skipped there). Avg EV stays a Leaderboard column
+  and in the build's card group; LD / GB EV stay on the Mix tab. The pick follows the finding above: FB EV tracks xwOBAcon at r .78 against Avg
+  EV's .69 and repeats year to year nearly as well (.76 vs .79).
