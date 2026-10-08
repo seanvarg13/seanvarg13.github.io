@@ -2730,3 +2730,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   them, and the totals' label cell has its white rule back; the gaps stay the band blue and the totals stay unheated (PR #473's other two
   changes). "Standard batting" starts 204px under the band (156 on a phone). The key's "Bold italic" is `b i` at 700 italic (the site-wide
   weight rule had reset the `<i>`).
+* **The totals' labels in B-Ref's place (Sean, 8 Oct 2026, beside Devers's B-Ref table: "make the bottom subtotals do what baseball reference
+  does")**: a totals row is three cells like a season row — an empty Season (`.f1`) and Age (`.f2`, `.sbl0`), and the label in the frozen Team
+  cell (`td.sbl.f3`, the text a `.sblab` span absolutely placed at its right, spilling left over the empty cells). The one cell spanning Season /
+  Age / Team had stayed Age wider than the frozen pair once Age faded, so on a scrolled phone it covered G and its rule sat a column right of the
+  rows' rule; now every total sits under its column and the frozen rule runs straight down. A long label ("162 Game Avg") can run off the left
+  edge when scrolled, as B-Ref's does.

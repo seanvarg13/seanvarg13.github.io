@@ -4803,3 +4803,10 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] .sbtab { height: 30px; padding: 0 12px; font: 400 13.5px var(--body) !important; }
 /* the key's "Bold italic" in bold italic (Sean, 8 Oct 2026) — the site-wide weight rule had reset the <i> inside the <b> */
 :root:root:root:root:root:root .sblock .sbkey b i { font-weight: 700 !important; font-style: italic; }
+/* the totals' label in B-Ref's place (Sean, 8 Oct 2026: "make the bottom subtotals do what baseball reference does"): it lives in the frozen Team
+   cell, right-aligned and spilling left over the empty Season (and, unscrolled, Age) cells, so every total sits under its column and the frozen
+   rule runs straight down from the season rows */
+:root:root:root:root:root:root .sbt td.sbl { position: sticky; overflow: visible; z-index: 3; }
+:root:root:root:root:root:root .sbt td.sbl .sblab { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); white-space: nowrap; font-weight: 700 !important; color: #fff; }
+:root:root:root:root:root:root .sbt tr.tot td.sbl0 { border-right: 0; }
+:root:root:root:root:root:root .sbt tr.tot td.sbl { border-right: 2px solid var(--ink); }
