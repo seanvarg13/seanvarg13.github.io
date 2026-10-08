@@ -4589,7 +4589,7 @@
     const dsKey = state.cardDs || CUR.key;
     if (dsKey !== CUR.key) ensureHist(dsKey);
     const ds0 = histDataset(dsKey), ds = ds0 && ds0.kind && !ds0.multi && !regularOf(ds0) ? null : ds0;   // spring / PS: its regular season too
-    if (!ds) { body.append(cardTop(renderPlate(p0, { rank: "–" }, "H", "H"), renderSeasonChips(p0)), el("p", "note", `Loading ${dsKey.startsWith("mlb-") ? dsKey.slice(4) : dsKey.replace("aaa-", "") + " Triple-A"} season…`)); return; }
+    if (!ds) { body.append(cardTop(renderPlate(p0, { rank: "–" }, "H", "H"), renderSeasonChips(p0)), el("p", "note pgload", `Loading ${dsKey.startsWith("mlb-") ? dsKey.slice(4) : dsKey.replace("aaa-", "") + " Triple-A"} season…`)); return; }
     withDataset(ds, () => withWindow(state.cardWin, () => withSplit(state.split, () => {
       const p = ds.players.find((q) => q.id === p0.id && q.type === p0.type) || p0;
       // ranked in the list's pool only when the card came off that list and it's his kind of list: the fantasy page has its
@@ -4598,7 +4598,7 @@
       const gl = groupFor(state.pos), own = p.type === "H" ? "H" : p.primary;
       const g = ds === CUR && state.mode !== "fantasy" && isPitcherGroup(gl) === (p.type === "P") ? gl : own;
       const ref = ds === CUR ? refFor(g) : g;
-      if (needsRows() && !DS.ready()) { DS.load(); body.append(cardTop(renderPlate(p, { rank: "–" }, g, ref), renderSeasonChips(p0))); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); body.append(c); return; }
+      if (needsRows() && !DS.ready()) { DS.load(); body.append(cardTop(renderPlate(p, { rank: "–" }, g, ref), renderSeasonChips(p0))); const c = el("div", "card"); c.append(el("p", "note pgload", "Loading game-by-game data…")); body.append(c); return; }
       const st = ref === g ? (pool(g).stats.get(p.type + p.id) || rankIn(g, p)) : rankIn(ref, p);
       // the popup is his page in a panel: the same title, plate, filters, sections and tabs, ranked in the list's pool
       ensureIndex();
@@ -5537,6 +5537,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const h = Math.round(Math.max(200, (vv ? vv.height : window.innerHeight) - top - 40));
     document.documentElement.style.setProperty("--modal-max", h + "px");
   }
+  let heldH = 0;                                     // the height his page is held at while a rebuild loads (render)
+  const pageKeyOf = () => (state.x ? state.x.type + state.x.id : "");
   let holdScroll = null, lastPlayerId = null;        // scroll still owed to a player's page (see keepScroll)
   // Where a list page was when a card opened over it (Sean, 28 Sep 2026: closing a card off the leaderboard "takes me right
   // back to the top"). On a phone the list is redrawn under the card and starts over, so it's noted while no card is up
@@ -5550,7 +5552,14 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const keep = keepScroll(), mb = cardSc(), open = !$("modal").hidden ? cardKey() : null, mtop = mb ? mb.scrollTop : 0;
     const wasCard = !$("modal").hidden;
     if (!wasCard) noteList();
-    renderNow(); setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage(); ddSync();
+    // his page, rebuilt on a year or a filter, is only a placeholder while that season or the day rows load: hold it at the height it had
+    // until the real page is in, so the window has somewhere to stay (Sean, 8 Oct 2026: "not shoot me back up to the top")
+    const xb = $("xboard"), samePg = state.mode === "player" && state.x && document.body.dataset.mode === "player" && pageKey === pageKeyOf();
+    const prevH = samePg ? xb.offsetHeight : 0;
+    renderNow();
+    if (samePg && xb.querySelector(".pgload")) { heldH = Math.max(heldH, prevH); xb.style.minHeight = heldH + "px"; }
+    else { heldH = 0; xb.style.minHeight = ""; }
+    setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage(); ddSync();
     if (!inBarModes.includes(state.mode)) seatFilters(null);   // Filters back on its toolbar off the Leaderboard / Trending
     if (ddOpen && !ddOpen.trig.isConnected) ddClose();   // a list whose opener was redrawn away
     keep();
@@ -5570,7 +5579,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       // a page just opened starts at the top — from a list (pageOpened), and from the search, a Similar name or a board (a different player
       // or season than the last render; the page used to be a popup, so where the page behind it sat never mattered). A redraw of the
       // same page (a filter, a tab, the bio fold) keeps its scroll
-      const k = state.x ? state.x.type + state.x.id + ":" + (state.x.ds || "") : "";
+      // another season of the same player is the same page: a year picked stays where it was (Sean, 8 Oct 2026)
+      const k = pageKeyOf();
       if (pageOpened || k !== pageKey) window.scrollTo(0, 0);
       pageOpened = false; pageKey = k;
     } else pageKey = "";
@@ -9430,7 +9440,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     ensureIndex();
     const box = $("xboard"); box.innerHTML = "";
     const x = state.x;
-    if (!indexReady()) { box.append(el("p", "xempty", failed.has("hist/index.js") ? "The player index (hist/index.js) hasn't been built yet." : "Loading…")); return; }
+    if (!indexReady()) { box.append(el("p", "xempty pgload", failed.has("hist/index.js") ? "The player index (hist/index.js) hasn't been built yet." : "Loading…")); return; }
     const entry = x.id != null ? window.DRAFT_INDEX.players.find((e) => e.id === x.id) : null;
     renderXDates(null);
     if (!entry) { box.append(Object.assign(el("p", "xempty"), { innerHTML: `Type a name in the search box at the top right to open a player's card.<br><b>${indexReady() ? window.DRAFT_INDEX.players.length + " players — " : ""}every MLB season from 2015 on, plus the minors (Triple-A from 2022, Double-A / High-A / Single-A from 2021)</b> — pick the year and level under his name; percentiles are against that season and level's own league.` })); return; }
@@ -9451,12 +9461,12 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     ensureHist(key);
     const ds0 = histDataset(key), ds = ds0 && ds0.kind && !ds0.multi && !regularOf(ds0) ? null : ds0;   // spring / PS: its regular season too
     renderXDates(ds);
-    if (!ds) { box.append(cardTop(stub(), chips({ id: entry.id, type }))); box.append(el("p", "xempty", failed.has(`hist/${key}.js`) ? `hist/${key}.js is missing — run build_history.py` : `Loading ${key.startsWith("mlb-") ? key.slice(4) : key.replace("aaa-", "") + " Triple-A"} season…`)); return; }
+    if (!ds) { box.append(cardTop(stub(), chips({ id: entry.id, type }))); box.append(el("p", "xempty pgload", failed.has(`hist/${key}.js`) ? `hist/${key}.js is missing — run build_history.py` : `Loading ${key.startsWith("mlb-") ? key.slice(4) : key.replace("aaa-", "") + " Triple-A"} season…`)); return; }
     withDataset(ds, () => withWindow(state.cardWin, () => withSplit(state.split, () => {
       const p = ds.players.find((q) => q.id === entry.id && q.type === type);
       if (!p) { box.append(cardTop(stub(), chips({ id: entry.id, type }))); box.append(el("p", "xempty", "No card for that season.")); return; }
       const g = p.type === "H" ? "H" : p.primary;
-      if (needsRows() && !DS.ready()) { DS.load(); box.append(cardTop(renderPlate(p, { rank: "–" }, g, g), chips(p))); const c = el("div", "card"); c.append(el("p", "note", "Loading game-by-game data…")); box.append(c); return; }
+      if (needsRows() && !DS.ready()) { DS.load(); box.append(cardTop(renderPlate(p, { rank: "–" }, g, g), chips(p))); const c = el("div", "card"); c.append(el("p", "note pgload", "Loading game-by-game data…")); box.append(c); return; }
       const st = pool(g).stats.get(p.type + p.id) || rankIn(g, p);
       // his page, not a popup over the page (Sean, 8 Oct 2026, from the Player Page Designs canvas): the band, the season table, the bars and the tabs flow down the page
       playerView(box, { p, st, g, ref: g, entry, key, pick: goTo, page: true });
