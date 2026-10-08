@@ -2672,3 +2672,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   draw (a `steps=mlb` run was dispatched after the merge; past seasons at the next rescore). **Found alongside**: since the EV-by-type change
   (7 Oct 2026) a `//` comment on `V()`'s hitter line had swallowed `brl` and `pull`, so a hitter's Barrel% and Pull Air% were missing under any
   date window or split — the fourth time a mid-line `//` has eaten code; it's `/* */` now.
+* **His page stays put on a year or a filter (Sean, 8 Oct 2026: "make the site basically stay in the spot i was at and not shoot me back up to
+  the top of a player page when i adjust the filters or change the year")**: `render()` scrolled to the top whenever the page's key changed, and
+  the key carried the season, so every year picked started over at the top; the key is type + id now (`pageKeyOf`) — another season of the same
+  player is the same page. And a rebuild that has to load first (that season's file, or the day rows for a window / split) drew a short
+  placeholder, which pulled the window up to it: those placeholders carry class `pgload` (in `renderExplore` and `playerView`), and while one is
+  up `render()` holds `#xboard` at the height it had (`heldH`, cleared once the real page is drawn), so `keepScroll` puts the reader back where
+  they were. A page opened from a list, the search, a Similar name or a board still starts at the top.
