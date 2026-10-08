@@ -14,7 +14,7 @@
   const LB_SETS = {
     H: [["Standard", ["woba", "ba", "slg", "dxba", "dxslg", "k", "bb"]],
         ["Advanced", ["woba", "xwdiff", "xwcon", "xk", "mixw", "babip", "xbabip", "bluck", "brel"]],
-        ["Batted ball", ["ev", "ev90", "maxev", "brl", "hh", "bs", "air", "pull", "gb", "pu"]],
+        ["Batted ball", ["ev", "evfb", "brfb", "fbq", "xhrfb", "ev90", "maxev", "brl", "hh", "bs", "air", "pull", "gb", "pu"]],   // fly-ball power after Avg EV (8 Oct 2026)
         ["Plate discipline", ["k", "xk", "bb", "whf", "osw", "zsw", "zcon", "ocon"]]],
     P: [["Standard", ["rating", "xnera", "era", "k", "bb", "kbb", "xkbb", "whf", "strk", "gb"]],   // xnERA right after the nERA headline (Sean, 6 Oct 2026: "put that next to nERA on the leaderboard")   // nERA is the headline column (6 Oct 2026)
         ["Advanced", ["rating", "xnera", "era", "fip", "siera", "xkbb", "ukb", "wsgp"]],
@@ -23,7 +23,7 @@
         ["Pitching+", ["pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "fbv", "ext"]]],   // Pitching+ back in place of Stuff+ (Sean, 6 Oct 2026: "make stuff+ back into pitching+ with the addition of the location and command thing")
   };
   const colLab = (m) => { const l = SHORT[m.key] || m.label; return m.unit === "%" && !l.includes("%") ? l + "%" : l; };
-  const SHORT = { foul: "Foul%", fpc: "Foul/Con", nfpc: "xFoul/Con", xnera: "xnERA", xkw: "Whiff−xK%", xkws: "xWhiff−P+ xK%", ncstr: "xCalled Strk", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strk Whiff", nfoul: "xFoul%", s2whf: "2-strk Whiff", s2sw: "2-strk Sw", s2zone: "2-strk Zone", xkf: "xK%", xks: "Pitching+ xK%", xbbf: "xBB%", xkbb: "x(K-BB)%", xkbbs: "Pitching+ x(K-BB)%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", pjwhf: "Proj Whiff", mixw: "Mix wOBA", nmix: "Mix xwOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", evfb: "EV FB", evld: "EV LD", evgb: "EV GB", brfb: "Brl FB", brld: "Brl LD", brgb: "Brl GB", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
+  const SHORT = { foul: "Foul%", fpc: "Foul/Con", nfpc: "xFoul/Con", xnera: "xnERA", xkw: "Whiff−xK%", xkws: "xWhiff−P+ xK%", ncstr: "xCalled Strk", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strk Whiff", nfoul: "xFoul%", s2whf: "2-strk Whiff", s2sw: "2-strk Sw", s2zone: "2-strk Zone", xkf: "xK%", xks: "Pitching+ xK%", xbbf: "xBB%", xkbb: "x(K-BB)%", xkbbs: "Pitching+ x(K-BB)%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", pjwhf: "Proj Whiff", mixw: "Mix wOBA", nmix: "Mix xwOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", evfb: "FB EV", evld: "EV LD", evgb: "EV GB", brfb: "FB Brl", brld: "Brl LD", brgb: "Brl GB", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
                tiers: "draft2027.tiers", tierNames: "draft2027.tierNames", sets: "draft2027.rankSets", extraPos: "draft2027.extraPos", stars: "draft2027.stars" };
   // Storage that cannot lose a saved list. A value that will not parse is left exactly where it is — its raw
@@ -297,9 +297,13 @@
                   { key: "xwcon", label: "xwOBAcon", hib: true, dec: 3, unit: "" },
                   // Base Running (Sean, 30 Sep 2026): Savant's sprint speed and the official steals, full season only
                   { key: "spd", label: "Sprint Speed", hib: true, dec: 1, unit: "ft/s" }, { key: "sb", label: "SB", hib: true, dec: 0, unit: "", int: true },
-                  { key: "sba", label: "SB Att.", hib: true, dec: 0, unit: "", int: true }, { key: "sbp", label: "SB%", hib: true, dec: 1, unit: "%" }];
+                  { key: "sba", label: "SB Att.", hib: true, dec: 0, unit: "", int: true }, { key: "sbp", label: "SB%", hib: true, dec: 1, unit: "%" },
+                  // fly-ball power (Sean, 8 Oct 2026: "FB EV, FB barrel rate, and then a composite average score of the percentile of both and also
+                  // ... expected hr to fb ratio"): FB Power = his EV on FB and Brl% on FB percentiles averaged, a 0-100 number coloured as itself
+                  // (the pool's, like the pitchers' Control); xHR/FB = the Mix tab's (xHrfb on that season's league, hrfbFill)
+                  { key: "fbq", label: "FB Power", hib: true, dec: 0, unit: "", int: true }, { key: "xhrfb", label: "xHR/FB", hib: true, dec: 1, unit: "%" }];
   // hitter stats that aren't on the card but can be Leaderboard / Trending columns
-  const LB_EXTRA_H = ["xwdiff", "xwcon", "xk", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp", "fpts", "fpg", "fppa"];
+  const LB_EXTRA_H = ["evfb", "brfb", "fbq", "xhrfb", "xwdiff", "xwcon", "xk", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp", "fpts", "fpg", "fppa"];
   const LB_EXTRA_P = ["rating", "xnera", "pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "nmix", "nfpc", "fpc", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "wgap", "pjwhf", "fpts", "fpg", "fpip", "fpgs"];   // Whiff vs exp. and the projected Whiff% (7 Oct 2026)   // Pitching+ family, xRating and the expected (Pitching+) columns off the lists (Sean, 6 Oct 2026: "get rid of pitching+ entirely and just go back to stuff+")   // pERA / pK% / pBB% / Pitching uERA off the lists (Sean, 4 Oct 2026: "I simply just want expected whiffs GBs and pus")   // Stuff uERA / Arsenal Opt. off the lists with Stuff+ (4 Oct 2026)
   const NEXT_KEYS = new Set(["xrat", "nwhf", "ngb", "npu", "nmix", "wgap", "pjwhf", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "nswstr", "ncsw", "ns2whf", "nfoul", "nfpc", "xnera"]);   // xFoul% of contact and xnERA (6 Oct 2026)   // xK% / Pitching+ xK% (4 Oct 2026)
   const XRW = { ksklx: 60, ctrl: 20, nmix: 20 };   // xRating = the Rating's shape with the stuff models driving whiffs and fouls (Sean, 5 Oct 2026): xStrikeout (xWhiff% / x2-strike Whiff% / xFoul% percentiles averaged) 60, Control 20, Mix xwOBA 20. Was Pitching+ x(K-BB)% 80 / Mix xwOBA 20;   // the Rating's shape (x(K-BB)% 80 / Mix wOBA 20, 4 Oct 2026) with the stuff-side pair: Pitching+ x(K-BB)% and Mix xwOBA. Was xks 55 / xbbf 35 / nmix 10;   // the xRating (Sean, 4 Oct 2026: "xrating xK% ... using their stuff expected whiff rates and stuff expected foul rates ... xBB% as standard ... mix xwoba based on their stuff"), 55 / 35 / 10   // xRating and the expected Mix wOBA too (4 Oct 2026)
@@ -603,6 +607,8 @@
     if (state.cmpCols && Array.isArray(state.cmpCols.P)) state.cmpCols.P = state.cmpCols.P.filter(gone); if (!gone(state.sort)) state.sort = "score"; }
   if (!state.lb.ratingFront) { const front = (L) => { if (!Array.isArray(L)) return; const i = L.indexOf("rating"); if (i >= 0) L.splice(i, 1); L.unshift("rating"); };   // the Rating column first (Sean, 6 Oct 2026)
     front(state.lb.P); for (const c of Object.values(state.cols || {})) if (c) front(c.P); state.lb.ratingFront = true; }
+  if (!state.lb.fbAdd) { const old = ["ev", "ev90", "maxev", "brl", "hh", "bs", "air", "pull", "gb", "pu"], L = state.lb.H;   // a saved Batted ball list takes the fly-ball columns (8 Oct 2026)
+    if (Array.isArray(L) && L.length === old.length && L.every((k, i) => k === old[i])) state.lb.H = LB_SETS.H[2][1].slice(); state.lb.fbAdd = true; }
   if (!state.lb.xneraFront) { const front = (L) => { if (!Array.isArray(L)) return; const i = L.indexOf("xnera"); if (i >= 0) L.splice(i, 1); L.unshift("xnera"); };   // xnERA beside the nERA headline (Sean, 6 Oct 2026)
     front(state.lb.P); for (const c of Object.values(state.cols || {})) if (c) front(c.P); state.lb.xneraFront = true; }
   if (state.cmp2 && state.cmp2.pick && Array.isArray(state.cmp2.pick.H)) state.cmp2.pick.H = state.cmp2.pick.H.filter((k) => k !== "pxw");
@@ -900,7 +906,7 @@
   function dropProvisional() { for (const k of provisional.val) valCache.delete(k); for (const k of provisional.pool) poolCache.delete(k); for (const k of provisional.rank) rankCache.delete(k); provisional.val.clear(); provisional.pool.clear(); provisional.rank.clear(); }
   function V(p) {
     const key = viewKey() + ":" + p.type + p.id;
-    if (valCache.has(key)) return fantFill(valCache.get(key), p);
+    if (valCache.has(key)) return hrfbFill(fantFill(valCache.get(key), p), p);
     if (needsRows()) provisional.val.add(key);
     let v;
     const w = winIdx() || { lo: 0, hi: seasonDays().length - 1 };
@@ -1022,7 +1028,19 @@
     // faced in the window — so a 30-PA week reads as mostly league average and the Recent / Last-N lists stop jumping
     if (state.tbl && state.tbl.shrink && needsDays() && v && v.m) v = Object.assign({}, v, { m: shrinkM(p, v) });
     valCache.set(key, v);
-    return fantFill(v, p);
+    return hrfbFill(fantFill(v, p), p);
+  }
+  // xHR/FB as a Leaderboard column (8 Oct 2026): the Mix tab's model on his view's FB EV / Barrel% / EV90 against that season's league
+  // (hrfbLeague: hist/career.js + career-bb.js, asked for by colsFor only while the column is showing). Regular MLB seasons 2015 on
+  const hxReady = () => !!(window.DRAFT_CAREER && window.DRAFT_CAREER_BB);
+  function hrfbFill(v, p) {
+    if (v._hx || p.type !== "H") return v;
+    const y = Number(DS.season);
+    if ((DS.level && DS.level !== "MLB") || DS.kind || DS.multi || !(y >= 2015)) { v._hx = true; return v; }
+    if (!hxReady()) return v;
+    const m = v.m, x = xHrfb({ evfb: m.evfb, brl: m.brl, ev90: m.ev90 }, hrfbLeague(y).lg);
+    v.m = Object.assign({}, m, { xhrfb: x == null ? null : Math.round(10 * x) / 10 }); v._hx = true;
+    return v;
   }
   // his fantasy points for the season under the current preset, filled in once fantasy.js (or that season's file) is here;
   // fantGen moves whenever the scoring is saved, so a preset change re-scores. A window, split, span or minors season has none
@@ -1059,7 +1077,7 @@
   const TREND_P = ["whf", "strk", "k", "bb", "era", "nera", "uera", "suera", "siera", "gb", "wsgp"];
   // every card metric in card order, fold-outs right after their parent (the Leaderboard's column order)
   const lbOrder = (g) => { const pit = isPitcherGroup(g), seen = new Set(), out = []; for (const grp of (pit ? CARD_P : CARD)) for (const m of grp.metrics) for (const x of [m, ...((pit ? SUB_P : SUB)[m.key] || [])]) if (!seen.has(x.key)) { seen.add(x.key); out.push(x); }
-    for (const k of pit ? LB_EXTRA_P : LB_EXTRA_H) { const x = [...(pit ? SIDE_P : SIDE_H), ...(pit ? FANT_P : FANT_H)].find((m) => m.key === k); if (x && !seen.has(k)) { seen.add(k); out.push(x); } }
+    for (const k of pit ? LB_EXTRA_P : LB_EXTRA_H) { const x = [...(pit ? SIDE_P : SIDE_H), ...(pit ? FANT_P : FANT_H), ...metricsFor(g)].find((m) => m.key === k); if (x && !seen.has(k)) { seen.add(k); out.push(x); } }
     return out; };
   // Year and Age: plain columns that always sit right after the name (no percentile)
   const PRE_COLS = { year: { key: "year", label: "Year" }, age: { key: "age", label: "Age" } };
@@ -1081,6 +1099,7 @@
   const moveColKey = (g, key, dir) => { const keys = colKeys(g).slice(), i = keys.indexOf(key), j = i + dir; if (i < 0 || j < 0 || j >= keys.length) return; [keys[i], keys[j]] = [keys[j], keys[i]]; setColKeys(g, keys); };
   const colsFor = (g) => {
     if (colKeys(g).some((k) => FANT_KEYS.has(k)) && FYEARS.includes(String(DS.season))) fEnsure(String(DS.season));   // points columns need the fantasy file
+    if (!isPitcherGroup(g) && colKeys(g).includes("xhrfb")) { ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady); }   // xHR/FB's league
     if (state.mode === "leaderboard") return lbCols(g);
     const keys = colKeys(g), all = allFor(g), dflt = metricsFor(g);
     return keys.map((k) => dflt.find((m) => m.key === k) || all.find((m) => m.key === k)).filter(Boolean);
@@ -1427,8 +1446,11 @@
   }
   const poolCache = new Map();
   // returns { list: players in pool, stats: Map key -> {pct: {metric: pctl}, score, rank} }
+  // a hitter pool built before xHR/FB's files arrived is redone once they're here — only while the column is showing, so a player page loading
+  // career.js for its season table doesn't throw its pool away (the 5 Oct lag)
+  const hxKey = (g) => (!isPitcherGroup(g) && colKeys(g).includes("xhrfb") ? ":hx" + hxReady() : "");
   function pool(g) {
-    const key = g + ":" + effMin(g) + ":" + (needsDays() ? listMin(g) : "") + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + (needsRows() ? daysReady() : "");
+    const key = g + ":" + effMin(g) + ":" + (needsDays() ? listMin(g) : "") + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + (needsRows() ? daysReady() : "") + hxKey(g);
     if (poolCache.has(key)) return poolCache.get(key);
     if (needsRows()) provisional.pool.add(key);
     const R = regularOf(DS), waiting = !!(DS.kind && !DS.multi && !R);   // its regular season still loading: don't keep this one
@@ -1458,6 +1480,7 @@
       rawBlend = list.map((_, i) => Object.entries(w).reduce((s, [k, v]) => s + (pct[k][i] ?? 50) * v, 0) / tot);
       const ranked = percentiles(rawBlend);                    // Formula 1: the blend is re-ranked as a percentile
       blend = rawBlend.map((b, i) => ranked[i] + b / 1000);    // exact blend breaks ties among equal percentiles
+      pct.fbq = list.map((_, i) => (pct.evfb && pct.brfb && pct.evfb[i] != null && pct.brfb[i] != null ? Math.round((pct.evfb[i] + pct.brfb[i]) / 2) : null));   // FB Power (8 Oct 2026)
     } else {
       // Mix wOBA's percentiles before the score (it weighs 15 since 4 Oct 2026): the pool's line-drive share first, the rest below reuses them
       { let ldN = 0, fbN = 0; for (const p of list) { const b = (V(p).ctx || {}).bbl; if (b) { ldN += (b.ld || [0])[0]; fbN += (b.fb || [0])[0]; } }
@@ -1650,6 +1673,7 @@
       // the headline itself when it isn't one of the listed stats (a Trending row), so it has a percentile to colour by
       if (pct[hk] == null && pm[hk] != null && pl.sorted[hk]) pct[hk] = insertPct(pl.sorted[hk], pm[hk]);
       pct.zmo = pm.zsw == null || pm.osw == null ? null : insertPct(pl.sorted.zmo, pm.zsw - pm.osw);
+      pct.fbq = pct.evfb != null && pct.brfb != null ? Math.round((pct.evfb + pct.brfb) / 2) : null;   // FB Power: the two percentiles averaged
       const w = DATA.meta.hitterWeights, tot = Object.values(w).reduce((a, b) => a + b, 0);
       const raw = Object.entries(w).reduce((s, [k, v]) => s + (pct[k] ?? 50) * v, 0) / tot;
       let above = 0; for (const s of pl.scores) if (s > score) above++;
@@ -1714,7 +1738,7 @@
   const rankCache = new Map();
   // percentiles, score and rank for pitcher p measured against pool g (SP, RP or P)
   function rankIn(g, p) {
-    const key = g + ":" + effMin(g) + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + (needsRows() ? daysReady() : "") + ":" + p.type + p.id;
+    const key = g + ":" + effMin(g) + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + (needsRows() ? daysReady() : "") + hxKey(g) + ":" + p.type + p.id;
     if (rankCache.has(key)) return rankCache.get(key);
     if (needsRows()) provisional.rank.add(key);
     const pl = pool(g);
@@ -2849,7 +2873,7 @@
   }
 
   // a metric's value for display: season / window values live on V(p).m, pool-derived ones (underlying ERA) on the stats
-  const metricValue = (m, pv, st) => (m.key === "rating" ? (st && st.score != null ? Math.round(st.score) : null) : m.key === "ukb" ? (st ? st.ukb : null) : m.key === "uera" ? (st ? st.uera : null) : m.key === "suera" ? (st ? st.suera : null) : m.key === "puera" ? (st ? st.puera : null)
+  const metricValue = (m, pv, st) => (m.key === "fbq" ? (st && st.pct ? st.pct.fbq : null) : m.key === "rating" ? (st && st.score != null ? Math.round(st.score) : null) : m.key === "ukb" ? (st ? st.ukb : null) : m.key === "uera" ? (st ? st.uera : null) : m.key === "suera" ? (st ? st.suera : null) : m.key === "puera" ? (st ? st.puera : null)
                                       : NEXT_KEYS.has(m.key) ? (st ? st[m.key] : null) : m.key === "mixw" && pv.m.mixw == null ? (st ? st.mixw : null)
                                       : m.key === "wsgp" ? (st ? st.wsgp : null) : m.key === "uk" ? (st ? st.uk : null)
                                       : m.key === "ubb" ? (st ? st.ubb : null) : m.key === "mera" ? (st ? st.mera : null) : pv.m[m.key]);
@@ -5305,6 +5329,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     ev: "Average exit velocity off the bat, bunts excluded.",
     brfb: "Brl% on FB: barrels per tracked fly ball (bunts out) — the share of his fly balls hit at a barrel's speed and angle. Where the home runs come from.",
     brld: "Brl% on LD: barrels per tracked line drive — the hardest liners in the barrel window, mostly extra-base hits.",
+    fbq: "FB Power: his EV on fly balls and Barrel% on fly balls, each as a percentile among the 300+ PA hitters, averaged — one 0-100 number for how hard he hits the ball in the air (it is its own colour). Seasons built before 8 Oct 2026 have no Barrel% on FB, so no FB Power.",
+    xhrfb: "xHR/FB: the home runs per fly ball his contact deserves — that season's league HR/FB moved +0.78 a mph of EV on fly balls and +0.74 a Barrel% point (2023 on; before that Barrel% and 90th% EV), the same number as the Mix tab's HR / FB table. Savant's fly balls, his line-drive homers counted in.",
     brgb: "Brl% on GB: barrels per tracked ground ball. Near zero for everyone — a barrel needs 8° or more of launch, so only a stung ball at the grounder / liner edge counts.",
     evfb: "EV on FB: average exit velocity on fly balls — the ones he hit, or for a pitcher the ones he allowed (the stringer's type, bunts and popups excluded). Hard fly balls are where the home runs are, for the hitter who hits them and against the pitcher who allows them; a soft fly-ball average with a high FB% is a hitter's warning sign.",
     evld: "EV on LD: average exit velocity on line drives, hit or allowed. A high line-drive rate is mostly noise year to year; the exit velocity on them is the part that repeats.",
