@@ -26,7 +26,7 @@ through the morning and each scheduled run only goes if it is past 4:40 in New Y
 yesterday yet. **That still wasn't enough** (27-28 Sep 2026: no scheduled run started before 10 am), so the real trigger is an
 **outside timer**: cron-job.org POSTs a `workflow_dispatch` with `auto=1` at 4:45 New York time (Sean's fine-grained token,
 Actions read/write on this repo only, lives there, not here); `auto=1` makes a manual run ask the same "already live?"
-question as a scheduled one. A Claude routine ("Site daily update kick", 4:50) checks and kicks it too; GitHub's schedule stays as the last backup. `tools/cloud.json` is the switch: `{"daily": true}` =
+question as a scheduled one. A Claude routine ("Site daily update kick", 4:50) checks and kicks it too; GitHub's schedule stays as the last backup. **The stale-checkout guard** (8 Oct 2026): a run's checkout is main as it was when the run began, so a `tools/` script merged mid-run used to be ignored and its old output published (4 Oct's data.js, 7-8 Oct's career.js); `cloud_daily.py` now adopts main's copy of every build script before each step (`adopt_main_tools`, compile-checked) and, before each publish, re-runs every step of the run whose script or an import (`DEPS`: build_history → build_data, build_milb → both) changed on main after it ran — from the first stale step on, twice at most. `tools/cloud.json` is the switch: `{"daily": true}` =
 the cloud publishes and the Mac's job and publisher stand down (they read the file from `main`); `false` = the Mac
 publishes and the schedule does nothing (a manual run still works: Actions → Daily update → Run workflow, with
 optional `steps`, `rescore` years and `dry`). The directional models are not in the repo: the Mac's publisher
@@ -2640,3 +2640,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   positions or the FanGraphs numbers, which is why wRC+ and WAR went blank on the live site; both files were patched back (scratch
   `patch_ext.py`: positions and `sab` from PR #463's files, 2026 refetched, then the new field: bWAR 17,057 of 17,073 rows, every 2015+
   qualified season's sprint speed, fly balls on every row). The next daily run uses the new script.
+* **OPS in the table, the WARs after SB; the cloud build's guard (Sean, 8 Oct 2026: "add ops after slg and before wrc+ and also put both fwar and bwar
+  after sb and only have a line break before fWAR and one after bWAR not in between the two", "yeah add the guard to the cloud build")**: `SB_H` = wOBA
+  xwOBA | G PA HR R RBI | BB% K% ISO HR/FB BABIP | AVG OBP SLG OPS wRC+ | Sprint SB | fWAR bWAR | Pos (the Playoffs view: … | AVG OBP SLG OPS | SB |
+  Pos). The guard is in §1: `adopt_main_tools` / `RAN` / `DEPS` in `tools/cloud_daily.py`, tested on a scratch repo (a step built with V1 of a
+  script, V2 merged before the publish → the step re-ran with V2 and main got V2's output).
