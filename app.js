@@ -9086,9 +9086,9 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       }
     }
     const tog = o.entry && !isMulti(o.key) ? filtersTog(p) : null;
-    if (mob) {   // a phone: the controls' line, the name, the position line, the tiles across
-      const ctl = el("div", "pbctl"); ctl.append(backButton(true), el("span", "pbsp"), title); if (tog) ctl.append(tog);
-      bar.append(ctl, el("div", "pcname", p.name), line); if (tiles) bar.append(tiles);
+    if (mob) {   // a phone: one line — Back, the name, the year, Filters — over the tiles, so the bar is the Summary block's height
+      const ctl = el("div", "pbctl"); if (backAt) { const bk = backButton(true); bk.textContent = "‹ Back"; ctl.append(bk); } ctl.append(el("div", "pcname", p.name), title); if (tog) ctl.append(tog);
+      bar.append(ctl); if (tiles) bar.append(tiles);
     } else {     // a desktop, under the sticky site header: one row — Back, the name over the position line, the tiles, the year and Filters at the right
       const who = el("div", "pcwho"); who.append(el("div", "pcname", p.name), line);
       const ctl = el("div", "pcctl"); ctl.append(title); if (tog) ctl.append(tog);
@@ -9102,8 +9102,13 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   const condSync = () => {
     condTick = false;
     const bar = document.querySelector("#xboard .phcond"), band = document.querySelector("#xboard .pagehead"); if (!bar || !band) return;
-    const off = band.getBoundingClientRect().bottom < 0;
-    if (off) { const hd = document.querySelector("header.top"), hb = hd ? hd.getBoundingClientRect().bottom : 0; bar.style.top = Math.max(0, Math.round(hb)) + "px"; }
+    // it takes over when the Summary block reaches the top (Sean, 8 Oct 2026: "the condensed version of the header shows up once i get to this
+    // point ... so that the header doesn't show up over the table ... the same height as that part too"): as tall as the Summary block down to
+    // the band's foot, so the bar's bottom sits where the band's was and covers nothing the band wasn't
+    const hd = document.querySelector("header.top"), hb = Math.max(0, Math.round(hd ? hd.getBoundingClientRect().bottom : 0));
+    const sum = band.querySelector(".pbsum"), sr = (sum || band).getBoundingClientRect(), br = band.getBoundingClientRect();
+    const off = sum ? sr.top <= hb + 0.5 : br.bottom < hb;
+    if (off) { bar.style.top = hb + "px"; if (sum) bar.style.height = Math.round(br.bottom - sr.top) + "px"; }
     if (bar.hidden === !off) return;
     bar.hidden = !off; document.body.classList.toggle("pcond", off);
   };

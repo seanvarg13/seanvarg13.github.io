@@ -2648,3 +2648,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **The season table's heat map fills the cell (Sean, 8 Oct 2026: "switch it over so the heat map is just the fill color of the entire cell and not
   this like circle thing")**: wOBA / xwOBA / Sprint cells are painted whole (`td.sbheat`, `pctStyle`'s fill and ink set `!important` inline so the
   totals rows' band colour gives way), bold; the `.sbchip` pills and their CSS are gone. The percentile is the cell's tooltip.
+* **The condensed bar takes over from the Summary block (Sean, 8 Oct 2026: "the condensed version of the header shows up once i get to this
+  point of scrolling ... so that the header doesn't show up over the table ... make it so the header is the same height as that part too ...
+  desktop as well as mobile")**: `condSync` shows `.phcond` once the band's Summary block (`.pbsum`) reaches the top — its top at the sticky site
+  header's bottom on a desktop, the screen's top on a phone — instead of once the whole band is gone, and sets the bar's height to the Summary
+  block's top → the band's foot (desktop ~105px, phone ~91), so the bar's bottom lands where the band's was and never covers the table. A phone's
+  bar is one line — ‹ Back (when there's a list), the name, the year, Filters — over the season / career tiles (the position line is dropped
+  there; a desktop keeps it under the name). CSS: the block at the end of `styles.css`.
