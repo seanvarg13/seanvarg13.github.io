@@ -2758,3 +2758,5 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **No white line under the totals' gaps (Sean, 8 Oct 2026: "you added a white line underneath the spacing on the totals while baseball reference
   doesn't have that")**: each totals row draws its white rule on its top edge (`border-collapse: separate`), so the row right after a gap showed one
   under the strip; `.sbt tr.gap + tr td` has no top border now.
+* **ISO behind OPS (Sean, 8 Oct 2026: "move iso to behind ops on the standard table")**: `SB_H` = wOBA xwOBA | G PA HR R RBI | BB% K% HR/FB BABIP |
+  AVG OBP SLG OPS ISO wRC+ | Sprint SB | fWAR bWAR | Pos.
