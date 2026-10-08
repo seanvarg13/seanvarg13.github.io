@@ -2763,3 +2763,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **2.5× the space above the table switch (Sean, 8 Oct 2026: "2.5x the white space gap between the header and that box with the different table
   selections")**: a hitter's `.sblock:has(.sbviews)` starts 350px under the band (was 140), 160px on a phone (was 64). Pitchers' pages (no bar) keep
   204 / 156.
+* **HR/FB is FanGraphs' (Sean, 8 Oct 2026: "James Woods hr to fb ratio was 30% last year and 26% this year ... those are what fangraphs states")**:
+  the season table's fly-ball count was MLB's (`flyOuts + flyHits + popOuts + popHits` from `yearByYearAdvanced`) — Statcast's stringer calls,
+  which call more balls line drives and fewer fly balls than FanGraphs' (Sports Info Solutions) data: Wood 2025 86 fly balls against FanGraphs'
+  101 (Statcast LD% 27.6 vs FanGraphs' 23.7), so his HR/FB read 36.0% against 30.7%; the league ran ~13% against FanGraphs' ~11-12%.
+  `build_career.py` now reads FanGraphs' `FB` per player-season from `fangraphs.com/api/leaders/major-league/data` (`fg_fly`, keyed by
+  `xMLBAMID`, cached in `.cache/sabr/fg-fb-<y>.json`, this season refetched after 18 hours; reachable from the cloud on 8 Oct 2026) into the
+  hitting rows' `[bWAR, sprint, fly balls]` array (`fb_season`), and a traded season's club rows get MLB's club count scaled to FanGraphs'
+  total (`fb_for`); MLB's count is the fallback when FanGraphs has none. `hist/career.js` patched in place the same day (scratch
+  `patch_fgfb.py`: 16,991 season rows, 2,012 club rows). Wood: 2024 20.5%, 2025 30.7%, 2026 26.8%. Rerun of the FB EV analysis on the new counts:
+  FB EV vs HR/FB r .814, Barrel% .847, FB EV + Barrel% R² .737 — unchanged; Cruz 2024-25 now reads 3-5 points under what his contact predicts.
