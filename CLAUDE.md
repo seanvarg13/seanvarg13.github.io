@@ -2740,3 +2740,18 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   references")**: B-Ref's gap is a 9px strip a shade darker than its totals rows (#ddd under #eee), no column rules, its frozen-column edge
   running straight through. `gap()` in `seasonBlock` is the frozen cells (`.f1` / `.f2` / `.f3`) plus one cell across the rest; the CSS at the end
   of `styles.css` makes it 9px of the band blue with 9% ink mixed in, every border off but the 2px ink rule on the Team cell.
+* **The season table's four views (Sean, 8 Oct 2026: "add in a bar that allows the ability to switch between the stats we currently have, a batted
+  ball quality table, a batted ball distribution table, and a plate discipline table", "put that bar ... somewhere towards the bottom of that white
+  space")**: a hitter's page has a `.sbviews` bar over the table's title — **Standard** (the FanGraphs line as before) · **Batted Ball Quality** (BBE |
+  Avg EV, EV90, Max EV | Hard-Hit%, Barrel%, Sweet-Spot% | FB / LD / GB EV | Bat Speed) · **Batted Ball Distribution** (BBE | GB%, LD%, FB%, PU% | Air%,
+  Pull Air% | Pull%, Cent%, Oppo% | Mix wOBA) · **Plate Discipline** (PA | K%, BB% | Swing%, Z-Swing%, O-Swing% | Contact%, Z-Contact%, O-Contact%,
+  Whiff%) — `sbTable` (per device, `draft2027.sbtable`), `SB_VIEWS`, `SBX` (column → key, direction, PA- or BBE-weighted), `SBX_COLS` / `SBX_BRK`
+  in `app.js`; the title follows the pick. Every season cell with a direction is heat-mapped among that season's qualified hitters (`sbxPool`: 300+
+  PA, 110 in 2020); Cent% / Oppo% / Swing% have none; the totals aren't heat-mapped. Totals: rates weighted by BBE (discipline by PA), Max EV the
+  max, BBE summed (scaled in the 162 Game Avg); a club / league total that includes a traded season reads "–" (`sbxCombine`: a traded season's
+  clubs have no Statcast line of their own). Regular season only — Playoffs switches back to Standard. The In Split row reads the view's own
+  numbers (`V(p).m`). **Data**: `hist/career-bb.js` (`window.DRAFT_CAREER_BB = {keys, p: {id: {year: [BBE, …keys]}}}`, ~1.1 MB, every MLB hitter-
+  season 2015 on from `data.js` and `hist/mlb-*.js`) written by `season_bb()` at the top of `build_career.py` (or alone: `build_career.py bb`),
+  loaded only when a Statcast table is picked (value-free in `ensureScript`'s list). Append keys at the end of `SBX_KEYS` only. Bat speed starts 2023,
+  EV by batted-ball type 2023. Pitchers' pages have no bar yet. The space over the table is 140px + the bar (64px + the 2 × 2 bar on a phone),
+  so the title sits about where it did.
