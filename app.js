@@ -9477,9 +9477,14 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       if (!post && clubs.length) {
         // the club rows, then the league rows, each group after a thin gap — always shown, B-Ref's spacing (Sean, 8 Oct 2026: "dont make the by
         // league or team splits a drop down anymore, and format them exactly like this row spacing wise"; the fold was the same day's)
-        // a gap is one cell across the table, as B-Ref draws it (Sean, 8 Oct 2026: rules carried through the gaps were tried and taken back —
-        // "you had it right the first time now that I look at baseball reference")
-        const gap = () => { const g = el("tr", "gap"), td = el("td"); td.colSpan = ncol; g.append(td); tbody.append(g); };
+        // a gap as B-Ref draws it (Sean, 8 Oct 2026: "make the break between sections in the total area be exactly like baseball references"):
+        // a strip a shade darker than the totals, no column rules, only the frozen Season / Team edge running through it — so the frozen
+        // pair are cells of their own and the rest is one cell
+        const gap = () => {
+          const g = el("tr", "gap");
+          g.append(el("td", "f1"), el("td", "f2"), el("td", "f3"));
+          const rest = el("td"); rest.colSpan = ncol - 3; g.append(rest); tbody.append(g);
+        };
         gap();
         for (const [t, ls] of clubs) { const yrs = new Set(ls.map((x) => x.season)).size; row([`${t} (${yrs} Yr${yrs > 1 ? "s" : ""})`], sbCombine(H, ls), "tot sub"); }
         const byLg = new Map();
