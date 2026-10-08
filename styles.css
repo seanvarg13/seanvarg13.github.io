@@ -4719,3 +4719,14 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .sbt tr.sbmore .linkbtn { font-size: 12px; font-weight: 600; color: var(--ink); text-decoration: none; padding: 0; border: 0; background: none; cursor: pointer; }
 :root:root:root:root:root:root[data-view="mobile"] .sbscroll { width: 100%; }
 :root:root:root:root:root:root[data-view="mobile"] .sbt { font-size: 12px; }
+/* boxy like B-Ref: square corners on the frame and the tabs, a firmer grid, every column name centred, the totals rows on the band
+   (Sean, 8 Oct 2026: "make it boxy like baseball reference and also center each column header and make the bottom totals rows blue as well") */
+:root:root:root:root:root:root .sbscroll { border-radius: 0; border-color: color-mix(in srgb, var(--ink) 22%, var(--surface)); }
+:root:root:root:root:root:root .sbtab { border-radius: 0; }
+:root:root:root:root:root:root .sbt th, :root:root:root:root:root:root .sbt th.l { text-align: center; }
+:root:root:root:root:root:root .sbt td { border-color: color-mix(in srgb, var(--ink) 16%, var(--surface)); }
+:root:root:root:root:root:root .sbt td.f3, :root:root:root:root:root:root .sbt td.sbl { border-right: 2px solid var(--ink); }
+:root:root:root:root:root:root .sbt tr.tot td { background: var(--band2, var(--accent-2)); color: #fff; font-weight: 700; border-color: rgba(255,255,255,.55); }
+:root:root:root:root:root:root .sbt tr.tot td.sbl, :root:root:root:root:root:root .sbt tr.tot td.f3 { color: #fff; border-right: 2px solid rgba(255,255,255,.85); }
+:root:root:root:root:root:root .sbt tr.tot.first td { border-top: 2px solid var(--ink); }
+:root:root:root:root:root:root .sbt tr.gap td { background: var(--surface); height: 6px; }
