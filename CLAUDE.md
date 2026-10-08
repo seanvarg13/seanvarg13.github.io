@@ -2807,4 +2807,5 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `st.pct.fbq`); **xHR/FB** (`xhrfb`) = the Mix tab's `xHrfb` on his view's FB EV / Barrel% / EV90 against that season's `hrfbLeague` —
   `hrfbFill` in `V()` (beside `fantFill`), regular MLB seasons 2015 on, needing `hist/career.js` + `career-bb.js`, which `colsFor` asks for
   only while the column is showing; `hxKey` puts their arrival in the pool / rank keys under the same condition, so a player page loading
-  career.js doesn't throw its pool away. SIDE_H defs, glossary entries; SHORT `evfb` / `brfb` read "FB EV" / "FB Brl".
+  career.js doesn't throw its pool away. SIDE_H defs, glossary entries; SHORT `evfb` / `brfb` read "FB EV" / "FB Brl". Filters ▸ Stats (`renderColPick`) lists the four right after Avg EV —
+  `evfb` / `brfb` are meta defs, not card metrics, so the picker had no box for them (fixed the same evening).
