@@ -2535,3 +2535,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the file was patched in place the same day — 7,367 rows). Still popups: the Mock Draft room and the Pitching+ board's spring cards (`renderModal`).
   Not built (B-Ref has them): the Postseason switch over the table and the Standard / Advanced column-set pills — per-season site stats beyond what
   career.js carries would need the season files. CSS: the block at the end of `styles.css` (six roots, over every earlier pass).
+* **Back only from a list (Sean, 8 Oct 2026, from Eldridge's page after a search: "could you get rid of the home button ... i just want the back to the
+  leaderboard button if i selected the player while on a leaderboard page")**: `markBack()` notes a list page only (`BACK_MODES`: Leaderboard / Recent,
+  Rankings, Draft board, Pitching+ board, Fantasy, Claude rankings, Planner, Eligibility) and clears `backAt` otherwise; the header search clears it too,
+  and `backButton` draws nothing without one — no "‹ Home" on a searched page or one opened from home.
+* **EV by batted-ball type vs xwOBAcon (Sean, 8 Oct 2026: "which one correlates best with xWOBACON")**: 300+ PA hitter-seasons 2023-26 (1,123; the
+  seasons that carry `evfb / evld / evgb`), xwOBAcon = (xwOBA × PA − wBB × BB) / BBE: **EV on fly balls r .775** (next season's xwOBAcon .660), Avg EV .687
+  (.577), EV on line drives .581 (.537), EV on ground balls .247 (.209); EV90 .716, Hard-Hit% .725, Barrel% .865. The three together add nothing over FB
+  EV alone (R² .600 → .602); FB EV repeats year to year at r .755 (LD .683, GB .652, Avg EV .787).
