@@ -7185,19 +7185,22 @@
       const lgX = lgOf("xbabip"), lgB = lgOf("babip");
       const pts = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.round(Math.abs(v) * 1000);   // BABIP points
       const b = buildUp("BABIP build-up", `${viewLabel(p.type) && viewLabel(p.type) !== "full season" ? viewLabel(p.type) + " · " : ""}± in BABIP points, against the season's qualified hitters`, "BABIP", fmtX, pts, 0.020);
-      let run = lgX, sum = 0;
-      b.row("League", null, lgX, fmtX, null, "→", lgX, "the qualified hitters' xBABIP, weighted by plate appearances");
+      // the ± column is a ledger that adds up (Sean, 9 Oct 2026: "I'm also getting lost with this math in the +/- column"): every ± is the step
+      // between the rounded running BABIPs, so the column sums exactly from the league's .300-ish start to his BABIP; Luck carries his BABIP as
+      // its running number, and the last row's ± is the whole trip from the start (not against the league's actual BABIP, a different baseline)
+      const R3 = (x) => Math.round(x * 1000) / 1000;
+      let run = lgX, prev = R3(lgX);
+      const step = (to) => { const c = R3(to), d = c - prev; prev = c; return d; };
+      b.row("League", null, lgX, fmtX, null, "→", lgX, "the qualified hitters' xBABIP, weighted by plate appearances — where the build-up starts");
       for (const k in XBAB) {
         const his = val(p, k), lg = lgOf(k), [lab, u] = XBAB_LAB[k], f = (x) => x.toFixed(1) + u;
         const d = his == null || lg == null ? null : XBAB[k] * (his - lg) / 1000;
-        if (d != null) { sum += d; run += d; }
-        b.row(lab, his, lg, f, pctAmong(ref.map((q) => val(q, k)).filter((z) => z != null), his, Math.sign(XBAB[k])), d, d == null ? null : run, XBAB_TIP[k]);
+        if (d != null) run += d;
+        b.row(lab, his, lg, f, pctAmong(ref.map((q) => val(q, k)).filter((z) => z != null), his, Math.sign(XBAB[k])), d == null ? null : step(run), d == null ? null : run, XBAB_TIP[k]);
       }
-      // no "seven together" or xBABIP band rows (Sean, 9 Oct 2026): the rest of his contact is a plain row whose running BABIP is his xBABIP,
-      // then Luck and BABIP close the table
-      b.row("Rest of Contact", null, null, fmtX, null, m.xbabip - run, m.xbabip, `what the directional model sees beyond the seven — the launch angles and spray of each ball — landing on his xBABIP ${fmtX(m.xbabip)}`);
-      b.band("Luck", m.babip - m.xbabip, null, "hits in play above or below what the contact deserved — it repeats year to year at only r .15");
-      b.band("BABIP", m.babip - lgB, m.babip, `his BABIP against the league's ${fmtX(lgB)}`);
+      b.row("Rest of Contact", null, null, fmtX, null, step(m.xbabip), m.xbabip, `what the directional model sees beyond the seven — the launch angles and spray of each ball — landing on his xBABIP ${fmtX(m.xbabip)}`);
+      b.band("Luck", step(m.babip), m.babip, "hits in play above or below what the contact deserved — it repeats year to year at only r .15");
+      b.band("BABIP", R3(m.babip) - R3(lgX), m.babip, `the whole trip: every step above added up, from the ${fmtX(lgX)} start to his ${fmtX(m.babip)} (the league's actual BABIP is ${fmtX(lgB)})`);
       w.append(b.done());
     } else w.append(el("p", "note", "No xBABIP for this view — it needs tracked balls in play."));
     w.append(babipSeasons(p));
