@@ -3027,3 +3027,14 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   dotted underline (`noteCell`, `.knotebtn`). A tap opens the note in a full-width row under it (`tr.knote`) and a second tap closes it; a phone has
   no hover. Rest of Contact's note says what it is: the part of his xBABIP the seven straight-line drivers don't capture — exact angles, where each
   ball went, the hard-and-well-aimed combinations. CSS at the end of `styles.css`.
+* **The filters area off; the year / level / Filters fixed on the screen as boxy buttons (Sean, 9 Oct 2026: "get rid of the filters box and make it so
+  the year, filters, and when applicable the level box stay in the exact same spot on your screen even when you scroll. so theyre not like actually
+  part of the header theyre just fixed in that location on the desktop and phone ... make them boxy buttons like this")**: `pageFilters` is no longer
+  drawn (it stays in `app.js`; so do `filterGrid` and the `.pgfilt` CSS). `pageHead` puts the year, the level (only when `lvWorth`, i.e. he has more
+  than one that year or it's a minors / postseason season; from `pageTitle(p, o)._picks`) and `filtersTog` (Filters ▾, and Raw ▾ for a pitcher) in a
+  `.pgfix` group. `pinFix()` (after each player-page render, on resize, and from the Filters window's `place`) leaves a same-size `.pgfixph`
+  placeholder in the band and fixes the group at its spot's document position, clamped 8px inside the screen. The group sits where it first draws at
+  the top of the page and never moves as the page scrolls, over whatever passes under it. Desktop: one row at the band's top-right, under the sticky
+  header. Phone: right-aligned, wrapping to two rows for a pitcher (`max-width: 196px`). The buttons are the Home / Away kind: white, a 1px `#c3d3e3`
+  edge, square, navy bold condensed type, 40px (34 on a phone); Filters goes blue while its window is open. The space over the season table is the
+  350 / 160px of before again. The CSS block is at the end of `styles.css`.
