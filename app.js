@@ -8226,8 +8226,9 @@
                         : [["Stuff+", "sp"], ["Whiff+", ""], ["BB+", "", "Batted-ball+"], ...PAIRH("The model's whiff rate per swing", "his actual Whiff%"),
                            ...PAIRH("The model's ground-ball rate on contact", "his actual GB%"), ...PAIRH("The model's popup rate on contact", "his actual popups per ball in play"),
                            ...PAIRH("The foul model's share of contact that goes foul — the pitch's traits, where it crossed and the batter's swing on it (a foul keeps the strikeout alive; a ball in play ends the PA)", "his actual fouls per contact")])];
-    const groups = [["Pitch", 3], ["Shape", 4], ["Grades vs type", P ? 4 : 3], ["Whiff%", 2], ["GB%", 2], ["PU%", 2], ["Foul%", 2], ...(P ? [["Called%", 2]] : [])];
-    const { tb, fin, gap, wrap } = brTable(groups, heads);
+    const groups = [["Pitch", 1], ["Usage", 2], ["Shape", 4], ["Grades vs type", P ? 4 : 3], ["Whiff%", 2], ["GB%", 2], ["PU%", 2], ["Foul%", 2], ...(P ? [["Called%", 2]] : [])];
+    const { t: tbl, tb, fin, gap, wrap } = brTable(groups, heads);
+    tbl.querySelector("tr.over th").classList.add("f1");   // "Pitch" over the frozen pitch column freezes with it (Sean, 9 Oct 2026)
     const f1n = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%");
     let inTot = false;   // the All pitches row is a band row: no heat on it, as on the season table
     const cellPlus = (v, cls) => { const td = el("td", "plus" + (cls ? " " + cls : ""), v == null ? "–" : String(Math.round(v))); if (v != null && !inTot) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } } return td; };

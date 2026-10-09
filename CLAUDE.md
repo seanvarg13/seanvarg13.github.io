@@ -3104,3 +3104,5 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **The Pitching+ tab's pitch column frozen (Sean, 9 Oct 2026, Messick's card: "make the pitch in this table be freeze paned")**: the arsenal
   table's Type column (its head, every pitch's name and All pitches) carries `f1`, so it stays at the left as the table slides sideways, with the
   season table's 2px stripe-red edge (the block at the end of `styles.css`). The over-header's group names slide with the columns.
+  **"Pitch" freezes with it** (Sean, the same hour: "like the pitch type"): the over-header's Pitch group is the Type column alone and its cell
+  carries `f1`; # and Use% are a **Usage** group of their own.
