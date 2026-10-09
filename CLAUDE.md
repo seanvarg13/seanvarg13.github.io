@@ -2923,3 +2923,24 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   get rid of that it happens on every table")**: the sorted / lit header cell on every table (the Leaderboard's `#colhead`, the Pitching+ board,
   home's and the card's B-Ref tables, `th.lit`) keeps its white wash and bold but no 3px `--stripe-line` under-rule — one `box-shadow: none` block
   at the end of `styles.css` over the four rules that drew it.
+* **His page's head is design A; only name / year / Filters pin (Sean, 9 Oct 2026, from the Player Header Redesigns canvas: "I like A can you do
+  that for both desktop and phone and on the desktop version don't include the like summary quality playing time things", "what gets pinned is the
+  name year and filters ... and nothing else", "make sure that the header is the only thing you take from a ... Keep [the table selection box] how
+  it is now")**: `pageHead` builds a white head, no band (`.pagehead.pha`, `.m` / `.d`): a phone has a row of Back / the year / Filters (Raw for a
+  pitcher) over the photo beside the name and `bioLines`; a desktop puts Back over the name and the year / Filters in the top-right corner (`.pharow`),
+  the bio lines in two columns. The year and Filters are square outlined buttons. **The Summary is a table** (`summaryBlock` → `table.pbst` inside
+  `.pbsum`): the column names on the blue band, gridlines, a red rule where a group ends (`ge`), xwOBA (a pitcher's nERA / xnERA) filled with its
+  percentile colour (`heatTd`), `.pbx` columns off a phone. There is no over-header group row on either layout. **Scrolling**: `condensedBar` is
+  now `.phpin`, a white bar with the name, the year and Filters only. `condSync` slides it in (an 0.18 s transform and fade) once the head's
+  name goes under the top: a phone's screen top, or under a desktop's sticky site header. A redraw while it shows keeps it in place (`pinOn` /
+  `pinKey`, `noanim`), and the Filters window hangs under it (`place` runs `condSync` first, then measures the bar's `style.top + offsetHeight`,
+  since a sliding bar's rect is mid-transform). The old tile bar (`.phcond`, `.pctiles`) is gone from the page, so the condensed-bar entries
+  above are history. The season table's switcher, the Regular Season / Playoffs tabs and the space over them are unchanged (an hour-long version that
+  merged them into one strip was taken back). CSS: the "design A" block at the end of `styles.css`.
+  **Same day**: (1) **with the minors in, the season table freezes Season and Lev** (Sean, from B-Ref's Register Batting on his phone: "when the
+  table includes minor leagues could you make it do this when I scroll"). The header is Season · Age · Lev · Team · …, Lev is the `f3` cell and the
+  club scrolls under it, the way B-Ref freezes Year / Lg with Aff sliding. Totals labels sit in the Lev cell. Without the minors, Team stays the frozen
+  second column. (2) **Every table's column names are bold** (Sean: "bold all of the table headers"): one rule at the end of `styles.css`
+  covers every `<th>` and `#colhead .h`. Its `:is(#xboard, #modal, #hub, body)` carries id weight, so it beats the per-table passes' `!important` font
+  shorthands. (3) **The pitchers' 162 Game Avg rates** read the unscaled line (`l.rc`) like the hitters' do. They had divided the scaled K and BB by the
+  unscaled BF (Skenes's K% read 10.0%).
