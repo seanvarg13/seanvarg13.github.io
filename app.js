@@ -1038,7 +1038,7 @@
     const y = Number(DS.season);
     if ((DS.level && DS.level !== "MLB") || DS.kind || DS.multi || !(y >= 2015)) { v._hx = true; return v; }
     if (!hxReady()) return v;
-    const m = v.m, x = xHrfb({ evfb: m.evfb, brl: m.brl, ev90: m.ev90 }, hrfbLeague(y).lg);
+    const m = v.m, x = xHrfb({ evfb: m.evfb, brfb: m.brfb, brld: m.brld, brl: m.brl, ev90: m.ev90 }, hrfbLeague(y).lg);
     v.m = Object.assign({}, m, { xhrfb: x == null ? null : Math.round(10 * x) / 10 }); v._hx = true;
     return v;
   }
@@ -5334,7 +5334,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     brfb: "Brl% on FB: barrels per tracked fly ball (bunts out) — the share of his fly balls hit at a barrel's speed and angle. Where the home runs come from.",
     brld: "Brl% on LD: barrels per tracked line drive — the hardest liners in the barrel window, mostly extra-base hits.",
     fbq: "FB Power: his EV on fly balls and Barrel% on fly balls, each as a percentile among the 300+ PA hitters, averaged — one 0-100 number for how hard he hits the ball in the air (it is its own colour). Seasons built before 8 Oct 2026 have no Barrel% on FB, so no FB Power.",
-    xhrfb: "xHR/FB: the home runs per fly ball his contact deserves — that season's league HR/FB moved +0.78 a mph of EV on fly balls and +0.74 a Barrel% point (2023 on; before that Barrel% and 90th% EV), the same number as the Mix tab's HR / FB table. Savant's fly balls, his line-drive homers counted in.",
+    xhrfb: "xHR/FB: the home runs per fly ball his contact deserves — that season's league HR/FB moved +0.37 a mph of EV on fly balls, +0.39 a point of Barrel% on fly balls and +0.22 a point of Barrel% on line drives (a liner over the fence counts as a fly ball here), the same number as the Mix tab's HR / FB table. Savant's fly balls, his line-drive homers counted in.",
     brgb: "Brl% on GB: barrels per tracked ground ball. Near zero for everyone — a barrel needs 8° or more of launch, so only a stung ball at the grounder / liner edge counts.",
     evfb: "EV on FB: average exit velocity on fly balls — the ones he hit, or for a pitcher the ones he allowed (the stringer's type, bunts and popups excluded). Hard fly balls are where the home runs are, for the hitter who hits them and against the pitcher who allows them; a soft fly-ball average with a high FB% is a hitter's warning sign.",
     evld: "EV on LD: average exit velocity on line drives, hit or allowed. A high line-drive rate is mostly noise year to year; the exit velocity on them is the part that repeats.",
@@ -6932,7 +6932,12 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   // 110 in 2020): +0.779 a mph of FB EV and +0.738 a Barrel% point from 2023 on (EV by type starts then), +1.037 a Barrel% point and +0.499 a mph
   // of EV90 before — fits over every 300+ PA hitter-season (scratch xhrfb.js; r .86 both, rmse 3.0 / 3.4 points), centred per season so the ball's
   // year (2019, 2022) doesn't read as his. xHR/FB forecast next season's HR/FB at r .68 against his own HR/FB's .65
-  const XHRFB = { a: { evfb: 0.779, brl: 0.738 }, b: { brl: 1.037, ev90: 0.499 } };
+  // Since 9 Oct 2026 (Sean: "it really should only factor in fly ball barrel rate") the fit is FB EV, Barrel% on fly balls and Barrel% on line
+  // drives (a homer Statcast calls a liner counts in the fly balls): every 300+ PA season 2015-26 after the rescore, centred the same way
+  // (scratch xhrfb2.js) — r .878 / rmse 3.27 held out by season against .857 / 3.54 for FB EV + overall Barrel%, next season's HR/FB .652
+  // against .655, the leftover repeating at .17 against .24. Pull Air% added .002 same-season and cost forecast; left out. a / b are the
+  // old fits, for a file without the fly-ball barrel rate
+  const XHRFB = { c: { evfb: 0.373, brfb: 0.391, brld: 0.217 }, a: { evfb: 0.779, brl: 0.738 }, b: { brl: 1.037, ev90: 0.499 } };
   const HRFB_LG = new Map();
   function hrfbLeague(y) {   // that season's league: HR/FB, FB-weighted FB EV / Barrel% / EV90, and the qualifiers' sorted values for the heat map
     if (HRFB_LG.has(y)) return HRFB_LG.get(y);
@@ -6943,7 +6948,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
       const l = mlbLine(true, r), fb = l.c.ext ? +l.c.ext[2] : 0, bx = sbxOf(id, y); if (!fb) continue;
       out.hr += +l.c.HR || 0; out.fb += fb; rows.push([l, fb, bx]);
       out.arr.hrfb.push(100 * (+l.c.HR || 0) / fb);
-      if (bx) for (const k of ["evfb", "brl", "ev90"]) if (bx[k] != null) { out.s[k] = (out.s[k] || 0) + bx[k] * fb; out.w[k] = (out.w[k] || 0) + fb; }
+      if (bx) for (const k of ["evfb", "brl", "ev90", "brfb", "brld"]) if (bx[k] != null) { out.s[k] = (out.s[k] || 0) + bx[k] * fb; out.w[k] = (out.w[k] || 0) + fb; }
     }
     const lg = { hrfb: out.fb ? 100 * out.hr / out.fb : null }; for (const k in out.s) lg[k] = out.s[k] / out.w[k];
     for (const [, , bx] of rows) if (bx) { if (bx.evfb != null) out.arr.evfb.push(bx.evfb); if (bx.brl != null) out.arr.brl.push(bx.brl); if (bx.brfb != null) out.arr.brfb.push(bx.brfb); const xv = xHrfb(bx, lg); if (xv != null) out.arr.x.push(xv); }
@@ -6952,7 +6957,8 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
   }
   function xHrfb(bx, lg) {
     if (!bx || !lg || lg.hrfb == null) return null;
-    const f = bx.evfb != null && lg.evfb != null && bx.brl != null ? XHRFB.a : bx.brl != null && bx.ev90 != null && lg.ev90 != null ? XHRFB.b : null;
+    const has = (ks) => ks.every((k) => bx[k] != null && lg[k] != null);
+    const f = has(["evfb", "brfb", "brld"]) ? XHRFB.c : has(["evfb", "brl"]) ? XHRFB.a : has(["brl", "ev90"]) ? XHRFB.b : null;
     if (!f) return null;
     let v = lg.hrfb; for (const k in f) v += f[k] * (bx[k] - lg[k]);
     return Math.max(0, v);
@@ -6967,7 +6973,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     if (!rows.length) { box.append(el("p", "note", "No MLB fly balls on record.")); return box; }
     const t = el("table", "ubt hrfbt"), th = el("tr");
     for (const [h, tip] of [["Season"], ["Team"], ["HR"], ["FB", "Fly balls + popups (Statcast's calls), his line-drive homers counted in"], ["HR/FB"], ["FB EV", "Exit velocity on fly balls (2023 on)"],
-      ["FB Brl%", "Barrels per fly ball (built from 8 Oct 2026; a season not yet rebuilt reads –)"], ["xHR/FB", "What his contact says: that season's league HR/FB moved by his FB EV and Barrel% against the league's (2023 on), Barrel% and EV90 before"], ["Diff", "HR/FB − xHR/FB: + = more homers than his contact says"]]) {
+      ["FB Brl%", "Barrels per fly ball (built from 8 Oct 2026; a season not yet rebuilt reads –)"], ["xHR/FB", "What his contact says: that season's league HR/FB moved by his FB EV, Barrel% on fly balls and Barrel% on line drives against the league's"], ["Diff", "HR/FB − xHR/FB: + = more homers than his contact says"]]) {
       const c = el("th", h === "Season" || h === "Team" ? "l" : null, h); if (tip) c.title = tip; th.append(c);
     }
     const thead = el("thead"); thead.append(th); t.append(thead);
