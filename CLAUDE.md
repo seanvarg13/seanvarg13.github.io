@@ -2854,3 +2854,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   column names had shown through it), and the columns run **Rk · Player · headline · stats · PA · Tm · Pos** — CSS `order` on the grid's items
   (the headline header carries `.brsc`) with a phone template to match (headline 54px, stats 50px, PA 50, Tm 42, Pos 96). Desktop keeps Tm / PA
   before the headline. The block at the end of `styles.css`.
+* **The season table's xwOBA is the bars' xwOBA; only xwOBA heat-mapped (Sean, 9 Oct 2026, Bellinger 2019: the table read .431 against .442 on
+  the bars — "make it so the xwoba that shows on the table ... is the same as the one in the percentile bars", "only xwoba is heatmapped not
+  woba")**: the bars show the directional model re-anchored to its season (`seasonXwDir`: `xwoba_dir` × `dirInfo().scale`, the season's
+  PA-weighted wOBA over its PA-weighted raw model value — 1.087 in 2015 falling to ~1.00 in 2026, ~1.04-1.10 in Triple-A), while
+  `hist/career.js` / `minors.js` carried the raw `xwoba_dir`. `build_career.py` now writes the scaled value (`dir_scale` per dataset, `xw_of`,
+  the same 20-hitter / model-on test as `dirInfo`), and both files were patched in place the same day (scratch `xwscale.py`: 7,538 MLB rows,
+  4,747 Triple-A rows, from each season file's raw value so a re-run never compounds). The season table's career / club / league totals,
+  its xwOBA heat pools and the Summary's career xwOBA all read those rows, so they move with it (Bellinger career .341 → .345). **wOBA is
+  plain** in the season table (`SB_HEAT` is xwOBA and Sprint) and in the band's Summary / the condensed bar (only xwOBA is a pill; a
+  pitcher's nERA / xnERA pills are unchanged).

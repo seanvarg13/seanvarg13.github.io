@@ -364,13 +364,32 @@ def main():
              for t in requests.get(f"https://statsapi.mlb.com/api/v1/teams?sportId=1&season={y}", headers=UA, timeout=60).json()["teams"]}
     # our advanced numbers per player-season
     ours = {}
+    # each dataset's directional xwOBA scale, as the site's dirInfo() takes it (the season's PA-weighted wOBA over its PA-weighted raw
+    # model value, 20+ hitters, the model actually on): the card's bars show xwoba_dir × this, so the season table does too (Sean,
+    # 9 Oct 2026: Bellinger 2019 read .431 in the table against .442 on the bars)
+    xsc = {}
+    def dir_scale(players):
+        w = d = 0.0; n = same = 0
+        for q in players:
+            mq = q.get("m") or {}; pa = q.get("pa") or 0
+            if q.get("type") != "H" or not pa or mq.get("woba") is None or mq.get("xwoba_dir") is None: continue
+            w += mq["woba"] * pa; d += mq["xwoba_dir"] * pa; n += 1
+            if abs(mq["xwoba_dir"] - mq["woba"]) < 0.0006: same += 1
+        return w / d if n >= 20 and d > 0 and same < 0.9 * n else None
+    def xw_of(mq, key):
+        x = mq.get("xwoba_dir")
+        if x is None: return mq.get("xwoba")
+        sc = xsc.get(key)
+        return round(x * sc, 3) if sc else x
     cur = load_js(HERE / "data.js", "window.DRAFT_DATA = ")
+    xsc[("mlb", cur["meta"]["season"])] = dir_scale(cur["players"])
     for p in cur["players"]:
         ours[(p["id"], cur["meta"]["season"], p["type"])] = p["m"]
     for f in sorted((HERE / "hist").glob("mlb-*.js")):
         raw = f.read_text(); ds = json.loads(raw[raw.index("= {") + 2:].rstrip().rstrip(";"))
         if ds.get("kind"):
             continue                                       # spring / postseason files are not season lines
+        xsc[("mlb", ds["season"])] = dir_scale(ds["players"])
         for p in ds["players"]:
             ours[(p["id"], ds["season"], p["type"])] = p["m"]
     # minor-league level seasons we've built: keyed by the API's level names
@@ -379,6 +398,8 @@ def main():
     for lv, names in LVL.items():
         for f in sorted((HERE / "hist").glob(f"{lv}-*.js")):
             raw = f.read_text(); ds = json.loads(raw[raw.index("= {") + 2:].rstrip().rstrip(";"))
+            for nm in names:
+                xsc[(nm, ds["season"])] = dir_scale(ds["players"])
             for p in ds["players"]:
                 for nm in names:
                     ours_m[(p["id"], ds["season"], p["type"], nm)] = p["m"]
@@ -486,7 +507,7 @@ def main():
                     rows = [by[k] for k in sorted(by)]
                     for r in rows:
                         m = ours.get((p["id"], r[0], t))
-                        r.append(None if not m else ([m.get("woba"), m.get("xwoba_dir", m.get("xwoba"))] if t == "H"   # the site's xwOBA is the directional model (8 Oct 2026)
+                        r.append(None if not m else ([m.get("woba"), xw_of(m, ("mlb", r[0]))] if t == "H"   # the site's xwOBA is the directional model (8 Oct 2026)
                                                      else [m.get("fip"), m.get("siera"), m.get("k"), m.get("bb"), m.get("kbb"), m.get("whf"), m.get("strk"),
                                                            m.get("gb"), m.get("pu")]))   # appended: the card's simple season table shows GB% / Popup%
                         if t == "H":
@@ -520,7 +541,7 @@ def main():
         out_rows = []
         for r in rows:
             m = ours_m.get((pid, r[0], t, r[1]))
-            adv = None if not m else ([m.get("woba"), m.get("xwoba_dir", m.get("xwoba")), m.get("whf")] if t == "H" else [m.get("fip"), m.get("siera"), m.get("whf"), m.get("strk"),
+            adv = None if not m else ([m.get("woba"), xw_of(m, (r[1], r[0])), m.get("whf")] if t == "H" else [m.get("fip"), m.get("siera"), m.get("whf"), m.get("strk"),
                                                                                                       m.get("gb"), m.get("pu")])   # appended: GB% / Popup% for the minors' season table
             out_rows.append(list(r) + [adv] + ([pos.get("|".join(map(str, r[:3])), "")] if t == "H" else []))   # then where he played (a cache written before 8 Oct 2026 has none)
         return out_rows
