@@ -6995,7 +6995,8 @@
     return wrap;
   }
   // The Mix tab: the bars grid as it was before 8 Oct 2026 (the table of that morning lasted an hour — Sean: "go back to the prior
-  // percentile bar batted ball mix table"), with Avg EV by batted-ball type under it
+  // percentile bar batted ball mix table"), with Avg EV by batted-ball type under it. The B-Ref table of 9 Oct 2026 came off the same day
+  // (Sean: "for batted ball mix tab go back to the percentile bar charts you had before"), and HR / FB by season moved to its own xHR/FB tab
   function renderMixTab(p, g) {
     const x = K().mix, pv = V(p), pl = pool(g);
     const cnt = (q) => {                                           // his balls by bucket and their total
@@ -7003,57 +7004,54 @@
       const n = c.slice(0, 9).reduce((a, b) => a + (b || 0), 0); return n ? { c: c.map((v) => v || 0), n } : null;
     };
     const mine = cnt(p);
-    if (!x || !x.v || !mine) { const w = el("div"); w.append(el("p", "note", "The batted-ball mix is built from this season's data on — this season's file doesn't have it yet."), hrfbTable(p)); return w; }
+    if (!x || !x.v || !mine) { const w = el("div"); w.append(el("p", "note", "The batted-ball mix is built from this season's data on — this season's file doesn't have it yet.")); return w; }
     const use = MIX_B.map((_, i) => i < mine.c.length);
     const val = (b) => (b === "x" ? x.v.x ?? ((x.v.ld_x || 0) + (x.v.fb_x || 0)) / 2 : x.v[b]);
     const others = pl.ref.map(cnt).filter(Boolean);
     const avg = (o) => o.c.reduce((a, n, i) => a + (use[i] ? n * (val(MIX_B[i][1]) || 0) : 0), 0) / o.n;   // his average ball's league value
-    const box = el("div", "rollbox uerabox mixbox mixtab brbox");
-    const hd = el("div", "rollhd"), st = pl.stats.get(p.type + p.id);
-    hd.append(el("span", "rollname", "Batted-ball mix"), el("span", "rollsub", `${mine.n} balls in play, no bunts · dearest first`));
+    const box = el("div", "rollbox uerabox mixbox mixtab");
+    const hd = el("div", "rollhd"), mw = pv.m.mixw, st = pl.stats.get(p.type + p.id);
+    hd.append(el("span", "rollname", "Batted-ball mix"), el("span", "rollsub", `${mine.n} balls in play, no bunts`));
     box.append(hd);
-    // a B-Ref table (Sean, 9 Oct 2026, the B-Ref Style Tables canvas): a row per bucket, dearest first — his balls, his share filling its cell
-    // in his percentile colour (more of the buckets worth more than the league's average ball counts as better), that percentile, and the
-    // league's wOBA on the bucket coloured cheapest blue to dearest red; Mix wOBA the band row under a gap
-    const mt = brTable([["", 1], ["His", 3], ["League", 1]], [["Batted ball", "l"], ["Balls", ""], ["Share", ""], ["Pctile", "", "His share's percentile among the season's qualifiers"], ["wOBA on it", "", "The league's wOBA on this kind of ball in play"]], "mixt");
+    const grid = el("div", "mixgrid mixgrid5");
+    grid.append(el("span"), el("span"), el("span", "mh", "Share"), el("span", "mh", "Lg wOBA"));
     const vals = MIX_B.map(([, b]) => val(b)).filter((v) => v != null), lo = Math.min(...vals), hi = Math.max(...vals);
     const rows = MIX_B.map(([k, b, name], i) => ({ i, b, name, v: val(b) })).filter((r) => use[r.i] && r.v != null && (r.b !== "x" || mine.c[r.i]))
       .sort((a, b) => b.v - a.v);                                  // dearest bucket first
     for (const r of rows) {
       const share = 100 * mine.c[r.i] / mine.n, dir = r.v >= x.lg ? 1 : -1;
-      const arr = others.map((o) => dir * 100 * o.c[r.i] / o.n).sort((a, b) => a - b), pc = arr.length ? insertPct(arr, dir * share) : null;
-      const tr = el("tr");
-      tr.append(el("td", "l nm", r.name), el("td", null, String(mine.c[r.i])), heatTd(el("td", null, share.toFixed(1) + "%"), pc), el("td", "xact", pc == null ? "–" : ordinal(Math.round(pc))),
-                heatTd(el("td", null, fmtX(r.v)), hi > lo ? Math.round(100 * (r.v - lo) / (hi - lo)) : 50));
-      mt.tb.append(mt.fin(tr));
+      const arr = others.map((o) => dir * 100 * o.c[r.i] / o.n).sort((a, b) => a - b);
+      const lgc = el("span", "mv lg"), chip = el("span", "uchip", fmtX(r.v));
+      paintBar(chip, hi > lo ? Math.round(100 * (r.v - lo) / (hi - lo)) : 50); chip.style.color = "#fff"; lgc.append(chip);
+      grid.append(el("span", "ml", r.name), svTrack(arr.length ? insertPct(arr, dir * share) : null), el("span", "mv", share.toFixed(1) + "%"), lgc);
     }
-    // the bottom line, Mix wOBA: the league's wOBA weighted by his shares, ranked among the qualifiers — the bar's own number and
-    // percentile, so the tab and the Batted-Ball Distribution bar always agree
+    // the bottom line, Mix wOBA: the league's wOBA weighted by his shares, ranked among the qualifiers and heat-mapped by that rank
+    // the bar's own number and percentile, so the tab and the Batted-Ball Distribution bar always agree
     const arr = others.map(avg).sort((a, b) => a - b), me = pv.m.mixw ?? avg(mine);
     const pct = st && st.pct && st.pct.mixw != null ? st.pct.mixw : arr.length ? insertPct(arr, me) : null;
-    { const tr = el("tr", "tot first"); tr.append(el("td", "l", "Mix wOBA"), el("td", null, String(mine.n)), el("td", null, "100%"), el("td", null, pct == null ? "" : ordinal(Math.round(pct))), el("td", null, fmtX(me)));
-      mt.tb.append(mt.gap(), mt.fin(tr)); }
-    box.append(mt.wrap);
-    // Avg EV and Barrel% by batted-ball type under the mix (Sean, 8 Oct 2026: "below it can you just show avg ev by FB LD and GB", "add barrel
-    // rate by each category too"; the ground-ball barrel row came off the same day): his number filling its cell in his percentile among the
-    // pool's qualifiers, the league's mean beside it — m.evfb / evld / evgb, m.brfb / brld (a window re-derives them from the day sums; no table
-    // on a file built before 7 Oct 2026)
-    if (["evfb", "evld", "evgb", "brfb", "brld"].some((k) => pv.m[k] != null)) {
-      const hd2 = el("div", "rollhd"); hd2.append(el("span", "rollname", "Contact by type"), el("span", "rollsub", "his number filled by its percentile among the season's qualifiers"));
-      const ct = brTable([["", 1], ["Avg EV", 2], ["Barrel%", 2]], [["Type", "l"], ["His", ""], ["Lg", "xact"], ["His", ""], ["Lg", "xact"]], "mixt");
-      const one = (k, pctU) => {
-        const v = k ? pv.m[k] : null, vals = k ? pl.ref.map((q) => V(q).m[k]).filter((z) => z != null).sort((a, b) => a - b) : [];
+    const tot = el("span", "mv lg"), chip = el("span", "uchip", fmtX(me));
+    paintBar(chip, pct); chip.style.color = "#fff"; tot.append(chip);
+    grid.append(el("span", "mdiv"), el("span", "ml mtot", "Mix wOBA"), svTrack(pct), el("span", "mv mn", pct == null ? "" : ordinal(pct)), tot);
+    // Avg EV by batted-ball type under the mix (Sean, 8 Oct 2026: "below it can you just show avg ev by FB LD and GB"): his percentile bar
+    // among the pool's qualifiers (the pool's own rank, else placed among them), his exit velocity on that type and the league's mean —
+    // m.evfb / evld / evgb (a window re-derives them from the day sums; "–" on a file built before 7 Oct 2026, and no block at all)
+    // and Barrel% by type under it (Sean, 8 Oct 2026: "add barrel rate by each category too so fb, ld, and gb"): barrels over the same tracked
+    // balls of each type (m.brfb / brld; no block on a file built before them). The ground-ball row came off the same day (Sean: "get rid of
+    // gb% barrel rate too") — a barrel needs 8°+ of launch, so it sat near zero for everyone; m.brgb is still built and a column
+    const typeBlock = (title, unit, rows) => {
+      if (!rows.some(([k]) => pv.m[k] != null)) return;
+      grid.append(el("span", "mdiv"), el("span", "ml mtot", title), el("span"), el("span", "mh", unit), el("span", "mh", "Lg"));
+      for (const [k, name] of rows) {
+        const v = pv.m[k], vals = pl.ref.map((q) => V(q).m[k]).filter((z) => z != null).sort((a, b) => a - b);
         const pc = st && st.pct && st.pct[k] != null ? st.pct[k] : v != null && vals.length >= 20 ? insertPct(vals, v) : null;
-        const lg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null, u = pctU ? "%" : "";
-        return [heatTd(el("td", null, v == null ? "–" : v.toFixed(1) + u), v == null ? null : pc), el("td", "xact", lg == null ? "–" : lg.toFixed(1) + u)];
-      };
-      for (const [name, e, b] of [["Fly balls", "evfb", "brfb"], ["Line drives", "evld", "brld"], ["Ground balls", "evgb", null]]) {
-        const tr = el("tr"); tr.append(el("td", "l nm", name), ...one(e), ...one(b, true)); ct.tb.append(ct.fin(tr));
+        const lg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+        grid.append(el("span", "ml", name), svTrack(pc), el("span", "mv", v == null ? "–" : v.toFixed(1) + (unit === "%" ? "%" : "")), el("span", "mv lg", lg == null ? "" : lg.toFixed(1) + (unit === "%" ? "%" : "")));
       }
-      box.append(hd2, ct.wrap);
-    }
-    const w = el("div"); w.append(box, hrfbTable(p));
-    return w;
+    };
+    typeBlock("Avg EV", "EV", [["evfb", "Fly balls"], ["evld", "Line drives"], ["evgb", "Ground balls"]]);
+    typeBlock("Barrel%", "%", [["brfb", "Fly balls"], ["brld", "Line drives"]]);
+    box.append(grid);
+    return box;
   }
   // HR/FB by season under the mix (Sean, 8 Oct 2026: "include a table that shows a players hr to fb ratio by year as well as their avg fb ev and
   // barrel rate and then their expected hr to fb ratio ... regardless of what year is currently filtered on show all years"): every MLB season of
@@ -7071,7 +7069,7 @@
   const HRFB_LG = new Map();
   function hrfbLeague(y) {   // that season's league: HR/FB, FB-weighted FB EV / Barrel% / EV90, and the qualifiers' sorted values for the heat map
     if (HRFB_LG.has(y)) return HRFB_LG.get(y);
-    const C = window.DRAFT_CAREER || {}, out = { hr: 0, fb: 0, s: {}, w: {}, arr: { hrfb: [], evfb: [], brl: [], brfb: [], x: [] } };
+    const C = window.DRAFT_CAREER || {}, out = { hr: 0, fb: 0, s: {}, w: {}, arr: { hrfb: [], evfb: [], brl: [], brfb: [], brld: [], ev90: [], x: [] } };
     const rows = [];
     for (const id in C) {
       const r = (C[id].H || []).find((q) => q[0] === y); if (!r || (+r[3] || 0) < (y === 2020 ? 110 : 300)) continue;
@@ -7081,7 +7079,7 @@
       if (bx) for (const k of ["evfb", "brl", "ev90", "brfb", "brld"]) if (bx[k] != null) { out.s[k] = (out.s[k] || 0) + bx[k] * fb; out.w[k] = (out.w[k] || 0) + fb; }
     }
     const lg = { hrfb: out.fb ? 100 * out.hr / out.fb : null }; for (const k in out.s) lg[k] = out.s[k] / out.w[k];
-    for (const [, , bx] of rows) if (bx) { if (bx.evfb != null) out.arr.evfb.push(bx.evfb); if (bx.brl != null) out.arr.brl.push(bx.brl); if (bx.brfb != null) out.arr.brfb.push(bx.brfb); const xv = xHrfb(bx, lg); if (xv != null) out.arr.x.push(xv); }
+    for (const [, , bx] of rows) if (bx) { if (bx.evfb != null) out.arr.evfb.push(bx.evfb); if (bx.brl != null) out.arr.brl.push(bx.brl); if (bx.brfb != null) out.arr.brfb.push(bx.brfb); if (bx.brld != null) out.arr.brld.push(bx.brld); if (bx.ev90 != null) out.arr.ev90.push(bx.ev90); const xv = xHrfb(bx, lg); if (xv != null) out.arr.x.push(xv); }
     for (const k in out.arr) out.arr[k].sort((a, b) => a - b);
     const res = { lg, arr: out.arr }; HRFB_LG.set(y, res); return res;
   }
@@ -7134,9 +7132,142 @@
     tb.append(gap(), fin(tr)); box.append(wrap);
     return box;
   }
+  // A build-up table for the xBABIP / xHR/FB tabs, in the K% build-up's dress (Sean, 9 Oct 2026: "create an xBABIP tab and then also create an
+  // xHR/FB tab too"): Step · His · Lg · ± · running, his number filling its cell in his percentile colour (oriented so red = pushes the stat
+  // up), the ± cell coloured by its sign (full at `full`), band rows under a gap. fmt prints the stat, fmtD its moves
+  function buildUp(title, sub, unit, fmt, fmtD, full) {
+    const box = el("div", "rollbox uerabox brbox kbox"), hd = el("div", "rollhd");
+    hd.append(el("span", "rollname", title), el("span", "rollsub", sub)); box.append(hd);
+    const signStyle = (v) => { const t = Math.min(1, Math.abs(v) / full), mix = (a, b) => a.map((x, i) => Math.round(x + (b[i] - x) * t)); const c = mix([214, 212, 206], v > 0 ? [216, 33, 41] : [54, 97, 173]); return { bg: `rgb(${c.join(",")})`, fg: t > (v > 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };
+    const { tb, fin, gap, wrap, ends } = brTable(null, [["Step", "l"], ["His", ""], ["Lg", ""], ["± " + unit, ""], [unit, ""]], "kbuild");
+    ends.add(0); ends.add(2);
+    const t0 = wrap.querySelector("thead tr"); t0.children[0].classList.add("ge"); t0.children[2].classList.add("ge");
+    let band = false;
+    const dCell = (v) => { const td = el("td", "kd", v == null ? "" : fmtD(v)); if (v != null && !band) { const s2 = signStyle(v); td.style.background = s2.bg; td.style.color = s2.fg; td.classList.add("heat"); } return td; };
+    const api = {
+      // a driver: his value (printed by its own f), the league's, his percentile, the move and the running stat
+      row(lab, his, lg, f, pc, d, run, tip) { const tr = el("tr"); if (tip) tr.title = tip;
+        const h = el("td", null, his == null ? "–" : f(his)); tr.append(el("td", "l nm", lab), band ? h : heatTd(h, his == null ? null : pc), el("td", "xact", lg == null ? "" : f(lg)), d === "→" ? el("td", "xact", "→") : dCell(d), el("td", "krk", run == null ? "" : fmt(run)));
+        tb.append(fin(tr)); },
+      band(lab, d, run, tip) { if (!band) { tb.append(gap()); band = true; } const tr = el("tr", "tot" + (tb.querySelector("tr.tot") ? "" : " first")); if (tip) tr.title = tip;
+        tr.append(el("td", "l nm", lab), el("td"), el("td"), dCell(d), el("td", "krk", run == null ? "" : fmt(run))); tb.append(fin(tr)); },
+      done() { box.append(wrap); return box; } };
+    return api;
+  }
+  // his percentile on a stat among a list, oriented so a higher percentile = a bigger push up on the stat being built (dir −1 flips it)
+  const pctAmong = (vals, v, dir) => { if (v == null || vals.length < 20) return null; return insertPct(vals.map((z) => dir * z).sort((a, b) => a - b), dir * v); };
+  // xBABIP tab (hitters; Sean, 9 Oct 2026, after asking why James Wood keeps a high BABIP: "Does it specifically have to do with how hard he hits
+  // GBs and LDs?"). The build-up: the league's xBABIP, moved by the seven things that drive it — a straight-line fit of xBABIP over every 300+ PA
+  // hitter-season 2015-26 (3,321), each against its season's PA-weighted league (scratch xbfit.js; held out by season r .767): +3.68 BABIP points
+  // a point of LD%, −2.89 a point of Popup% (a popup is all but an out), +2.00 a mph of GB EV, +1.26 a mph of LD EV, +5.92 a ft/s of sprint speed,
+  // +0.58 a point of Oppo% (the shift side), −0.77 a point of FB% — then what the directional model sees beyond them (launch angles, spray),
+  // landing on his xBABIP, then the luck (BABIP − xBABIP; it repeats year to year at r .15), landing on his BABIP. The card's dates and splits;
+  // the league is the pool's reference hitters. Under it, every MLB season of his from hist/career-bb.js
+  const XBAB = { ld: 3.68, pu: -2.89, evgb: 2.0, evld: 1.26, spd: 5.92, oppo: 0.58, fb: -0.77 };
+  const XBAB_LAB = { ld: ["LD%", "%"], pu: ["Popup%", "%"], evgb: ["GB EV", ""], evld: ["LD EV", ""], spd: ["Sprint", ""], oppo: ["Oppo%", "%"], fb: ["FB%", "%"] };
+  const XBAB_TIP = { ld: "line drives fall for hits about two times in three", pu: "a popup is all but an out — the fewer the better", evgb: "a harder grounder gets through the infield", evld: "a harder liner finds a gap",
+    spd: "speed beats out grounders (Savant's sprint speed, full season)", oppo: "the opposite field is where the infield doesn't shift its gloves", fb: "a fly ball in the park is mostly an out" };
+  function renderXbabipTab(p, g) {
+    const w = el("div", "xbtab"), pv = V(p), m = pv.m, pl = pool(g);
+    const val = (q, k) => { const mm = V(q).m; return k === "spd" ? mm.spd ?? (q.m && q.m.spd) : mm[k]; };
+    if (m.babip != null && m.xbabip != null) {
+      const ref = pl.ref.filter((q) => V(q).m.xbabip != null), lgOf = (k) => { let s = 0, n = 0; for (const q of ref) { const v = val(q, k), w0 = V(q).pa || 0; if (v != null && w0) { s += v * w0; n += w0; } } return n ? s / n : null; };
+      const lgX = lgOf("xbabip"), lgB = lgOf("babip");
+      const pts = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.round(Math.abs(v) * 1000);   // BABIP points
+      const b = buildUp("BABIP build-up", `${viewLabel(p.type) && viewLabel(p.type) !== "full season" ? viewLabel(p.type) + " · " : ""}± in BABIP points, against the season's qualified hitters`, "BABIP", fmtX, pts, 0.020);
+      let run = lgX, sum = 0;
+      b.row("League", null, lgX, fmtX, null, "→", lgX, "the qualified hitters' xBABIP, weighted by plate appearances");
+      for (const k in XBAB) {
+        const his = val(p, k), lg = lgOf(k), [lab, u] = XBAB_LAB[k], f = (x) => x.toFixed(1) + u;
+        const d = his == null || lg == null ? null : XBAB[k] * (his - lg) / 1000;
+        if (d != null) { sum += d; run += d; }
+        b.row(lab, his, lg, f, pctAmong(ref.map((q) => val(q, k)).filter((z) => z != null), his, Math.sign(XBAB[k])), d, d == null ? null : run, XBAB_TIP[k]);
+      }
+      b.band("The seven together", sum, null, "line drives, popups, grounder and liner exit velocity, speed, the opposite field and fly balls");
+      b.band("Rest of his contact", m.xbabip - run, null, "what the directional model sees beyond the seven — the launch angles and spray of each ball");
+      b.band("xBABIP", m.xbabip - lgX, m.xbabip, "what his contact deserved: the directional xBA's expected hits less his home runs, over his balls in play");
+      b.band("Luck", m.babip - m.xbabip, null, "hits in play above or below what the contact deserved — it repeats year to year at only r .15");
+      b.band("BABIP", m.babip - lgB, m.babip, `his BABIP against the league's ${fmtX(lgB)}`);
+      w.append(b.done());
+    } else w.append(el("p", "note", "No xBABIP for this view — it needs tracked balls in play."));
+    w.append(babipSeasons(p));
+    return w;
+  }
+  // his BABIP, xBABIP and their drivers by season, every MLB season whatever the card is on, heat-mapped among each season's qualified hitters;
+  // the career row weights each season by its batted balls
+  function babipSeasons(p) {
+    const box = el("div", "rollbox uerabox hrfbbox brbox"), hd = el("div", "rollhd");
+    hd.append(el("span", "rollname", "BABIP by season")); box.append(hd);
+    ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady);
+    if (!careerReady() || !sbxReady()) { box.append(el("p", "note", "Loading his seasons…")); return box; }
+    if (!window.DRAFT_CAREER_BB.keys.includes("xbabip")) { box.append(el("p", "note", "hist/career-bb.js doesn't carry BABIP yet.")); return box; }
+    const rec = window.DRAFT_CAREER[String(p.id)], rows = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).map((l) => ({ l, bx: sbxOf(p.id, l.season) })).filter((r) => r.bx && r.bx.babip != null).sort((a, b) => a.l.season - b.l.season);
+    if (!rows.length) { box.append(el("p", "note", "No MLB seasons with Statcast BABIP on record.")); return box; }
+    const COLS = [["babip", "BABIP", 1, fmtX], ["xbabip", "xBABIP", 1, fmtX], ["diff"], ["ld", "LD%", 1, (x) => x.toFixed(1) + "%"], ["pu", "PU%", -1, (x) => x.toFixed(1) + "%"], ["evgb", "GB EV", 1, (x) => x.toFixed(1)], ["evld", "LD EV", 1, (x) => x.toFixed(1)],
+                  ["oppo", "Oppo%", 1, (x) => x.toFixed(1) + "%"], ["spd", "Sprint", 1, (x) => x.toFixed(1)]];
+    const { tb, fin, gap, wrap } = brTable([["", 2], ["Results", 3], ["Batted balls", 5], ["", 1]],
+      [["Season", "l"], ["Team", "l"], ["BABIP", ""], ["xBABIP", "", "What his contact deserved"], ["Diff", "", "BABIP − xBABIP: + = more hits in play than his contact deserved"], ["LD%", ""], ["PU%", "", "Popups per batted ball"], ["GB EV", "", "Exit velocity on ground balls"], ["LD EV", "", "Exit velocity on line drives"], ["Oppo%", ""], ["Sprint", "", "Savant's sprint speed, ft/s"]], "hrfbt");
+    const S = {}, W = {};
+    for (const { l, bx } of rows) {
+      const y = l.season, tr = el("tr", y === +DS.season && DS.level === "MLB" ? "cur" : null), heatOk = +l.c.PA >= 100;
+      tr.append(el("td", "l nm", String(y)), el("td", "l", l.team || ""));
+      for (const [k, , dir, f] of COLS) {
+        if (k === "diff") { const d = bx.xbabip == null ? null : bx.babip - bx.xbabip, td = el("td", null, d == null ? "–" : (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(3).replace(/^0/, "")); if (d != null) td.classList.add(d >= 0 ? "pos" : "neg"); tr.append(td); continue; }
+        const v = bx[k], td = el("td", null, v == null ? "–" : f(v));
+        if (heatOk && v != null) { const pc = pctAmong(sbxPool(y, k), v, dir); if (pc != null) { heatTd(td, pc); td.title = ordinal(Math.round(pc)) + " percentile among that season's qualified hitters"; } }
+        tr.append(td);
+        const wt = k === "spd" ? 1 : +bx.bbe || 0; if (v != null && wt) { S[k] = (S[k] || 0) + v * wt; W[k] = (W[k] || 0) + wt; }
+      }
+      tb.append(fin(tr));
+    }
+    const tr = el("tr", "tot first"), c = (k, f) => el("td", null, W[k] ? f(S[k] / W[k]) : "–");
+    tr.append(el("td"), el("td", "l", `${rows.length} Yr${rows.length === 1 ? "" : "s"}`));
+    for (const [k, , , f] of COLS) {
+      if (k === "diff") { const d = W.babip && W.xbabip ? S.babip / W.babip - S.xbabip / W.xbabip : null; tr.append(el("td", null, d == null ? "–" : (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(3).replace(/^0/, ""))); continue; }
+      tr.append(c(k, f));
+    }
+    tb.append(gap(), fin(tr)); box.append(wrap);
+    return box;
+  }
+  // xHR/FB tab (Sean, 9 Oct 2026): the build-up for the card's season — that season's league HR/FB, moved by his FB EV, Barrel% on fly balls and
+  // Barrel% on line drives against the league's (XHRFB, the fit the table uses), landing on his xHR/FB, then the luck, landing on his HR/FB —
+  // and under it HR / FB by season (hrfbTable, moved here from the Mix tab). Full seasons from hist/career.js + career-bb.js, whatever the
+  // card's dates and splits (a window has no Savant fly-ball count); a card on a season he has no line for reads his latest one
+  const HRFB_LAB = { evfb: ["FB EV", "", "exit velocity on fly balls — a harder fly ball carries"], brfb: ["FB Brl%", "%", "barrels per fly ball — the fly balls hit hard enough at the right angle to leave"],
+    brld: ["LD Brl%", "%", "barrels per line drive — a homer Statcast calls a liner counts in his fly balls"], brl: ["Barrel%", "%", "barrels per batted ball"], ev90: ["EV90", "", "90th-percentile exit velocity"] };
+  function renderXhrfbTab(p) {
+    const w = el("div", "xbtab");
+    ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady);
+    if (careerReady() && sbxReady()) {
+      const rec = window.DRAFT_CAREER[String(p.id)], lines = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).filter((l) => l.c.ext && +l.c.ext[2] > 0).sort((a, b) => a.season - b.season);
+      const l = lines.find((q) => q.season === +DS.season && DS.level === "MLB") || lines[lines.length - 1];
+      if (l) {
+        const y = l.season, bx = sbxOf(p.id, y), L = hrfbLeague(y), lg = L.lg, hr = +l.c.HR || 0, fb = +l.c.ext[2], hf = 100 * hr / fb, xv = xHrfb(bx, lg);
+        const has = (ks) => bx && ks.every((k) => bx[k] != null && lg[k] != null);
+        const f = has(["evfb", "brfb", "brld"]) ? XHRFB.c : has(["evfb", "brl"]) ? XHRFB.a : has(["brl", "ev90"]) ? XHRFB.b : null;
+        const pct1 = (x) => x.toFixed(1) + "%", sg1 = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(1);
+        const b = buildUp(`HR/FB build-up · ${y}`, `${hr} HR on ${fb} fly balls · ± in HR/FB points, against that season's qualified hitters${y !== +DS.season ? " · his latest season" : ""}`, "HR/FB", pct1, sg1, 4);
+        let run = lg.hrfb;
+        b.row("League", null, lg.hrfb, pct1, null, "→", run, "the qualified hitters' home runs over their fly balls");
+        if (f && xv != null) {
+          for (const k in f) {
+            const [lab, u, tip] = HRFB_LAB[k], d = f[k] * (bx[k] - lg[k]); run += d;
+            const arr = L.arr[k] || [];
+            b.row(lab, bx[k], lg[k], (x) => x.toFixed(1) + u, arr.length >= 20 ? insertPct(arr, bx[k]) : null, d, run, tip);
+          }
+          b.band("xHR/FB", xv - lg.hrfb, xv, "what his fly-ball contact says");
+          b.band("Luck", hf - xv, null, "home runs above or below what the contact says — wind, parks, the wall; it repeats year to year at only r .17");
+        } else b.band("xHR/FB", null, null, "no fly-ball contact numbers for this season");
+        b.band("HR/FB", hf - lg.hrfb, hf, "his home runs over his fly balls (Statcast's calls, his line-drive homers counted in)");
+        w.append(b.done());
+      }
+    }
+    w.append(hrfbTable(p));
+    return w;
+  }
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["fantasy", "Fantasy"]];   // Season Stats is the page's own table now (8 Oct 2026)   // Compare came off the strip with the Compare page (Sean, 6 Oct 2026)
-  const BTABS_H = [["mix", "Mix"]];   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
+  const BTABS_H = [["mix", "Mix"], ["xbabip", "xBABIP"], ["xhrfb", "xHR/FB"]];   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
   const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"]];   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
@@ -7156,8 +7287,8 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => (tabs.find(([x]) => x === k) || [])[1];
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"]] : []), ["fantasy"],
-                    ["rolling", ...(p.type === "P" ? ["uera"] : ["mix", "babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["xbabip"], ["xhrfb"]] : []),
+                    ["rolling", ...(p.type === "P" ? ["uera"] : ["babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
     const go = (k) => { const y0 = bar.getBoundingClientRect().top, inPop = !!bar.closest("#modal-body"); state.pbtab = k; savePrefs(); render(); anchorTabs(y0, inPop, p); };
@@ -7215,6 +7346,10 @@
       body.append(roll || el("p", "note", "No game-by-game data for this season, so there's no rolling line."));
     } else if (pick === "mix") {
       body.append(renderMixTab(p, ref));
+    } else if (pick === "xbabip") {
+      body.append(renderXbabipTab(p, ref));
+    } else if (pick === "xhrfb") {
+      body.append(renderXhrfbTab(p));
     } else if (pick === "babip") {
       body.append(renderBabipTab(p, o.st));
     } else if (pick === "fantasy") {
