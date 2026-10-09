@@ -340,8 +340,13 @@ SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evg
             "sba"]                      # steal attempts (SB + CS), the season table's Baserunning view (Sean, 9 Oct 2026)
 
 
+# a pitcher's season numbers for his season table (Sean, 9 Oct 2026: "ERA, FIP, nERA, and SIERA ... k%, bb%, popup%, gb% ... whiff% and xBB%"):
+# nERA, SIERA, Popup% and the three strike rates xBB% is built from (the app runs XBBF on them), under "pkeys" / "pp" in the same file
+SBP_KEYS = ["nera", "siera", "pu", "strk", "fstrk", "b3strk"]
+
+
 def season_bb():
-    out = {}
+    out, pout = {}, {}
     files = [HERE / "data.js"] + sorted((HERE / "hist").glob("mlb-*.js"))
     for f in files:
         raw = f.read_text(); ds = json.loads(raw[raw.index("= {") + 2:].rstrip().rstrip(";"))
@@ -349,17 +354,21 @@ def season_bb():
             continue                                       # spring / postseason files are not season lines
         y = int(ds["meta"]["season"] if "meta" in ds else ds["season"])
         for p in ds["players"]:
+            r = lambda v, d=1: None if v is None or v != v else round(float(v), d)
+            if p.get("type") == "P":
+                pm = p.get("m") or {}
+                pout.setdefault(str(p["id"]), {})[str(y)] = [r(pm.get(k), 2 if k in ("nera", "siera") else 1) for k in SBP_KEYS]
+                continue
             if p.get("type") != "H":
                 continue
             m, cx = p.get("m") or {}, p.get("ctx") or {}
-            r = lambda v, d=1: None if v is None or v != v else round(float(v), d)
             mx = cx.get("mix") or []
             fbs = sum(mx[5:8]) if len(mx) >= 8 else 0      # MIX_COLS order: gb, pu, ld p/c/o, fb p/c/o, x
             val = lambda k: (100 * mx[5] / fbs if fbs else None) if k == "pullfb" else m.get(k)
             out.setdefault(str(p["id"]), {})[str(y)] = [cx.get("BBE")] + [r(val(k), 3 if k in ("mixw", "babip", "xbabip") else 1) for k in SBX_KEYS]
     path = HERE / "hist" / "career-bb.js"
-    path.write_text("window.DRAFT_CAREER_BB = " + json.dumps({"keys": SBX_KEYS, "p": out}, separators=(",", ":")) + ";\n")
-    print(f"OK {len(out)} hitters' batted-ball / discipline seasons -> {path.name} ({path.stat().st_size / 1e6:.1f} MB)", flush=True)
+    path.write_text("window.DRAFT_CAREER_BB = " + json.dumps({"keys": SBX_KEYS, "p": out, "pkeys": SBP_KEYS, "pp": pout}, separators=(",", ":")) + ";\n")
+    print(f"OK {len(out)} hitters' batted-ball / discipline seasons, {len(pout)} pitchers' -> {path.name} ({path.stat().st_size / 1e6:.1f} MB)", flush=True)
 
 
 def main():
