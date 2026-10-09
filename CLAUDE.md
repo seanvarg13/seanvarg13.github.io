@@ -3016,3 +3016,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   stacked on a phone. The space over the season table shrinks to 40px (24 on a phone) when the area is there. The band's year and Filters button
   stay. On a desktop `seasonBlock` sets the Regular Season / Playoffs strip's width to the table's (`sc.offsetWidth`, a ResizeObserver on the
   table), so the blue strip no longer runs past the table's right edge. CSS: the "filters area" block at the end of `styles.css`.
+* **The BABIP build-up's ± column adds up (Sean, 9 Oct 2026: "I'm also getting lost with this math in the +/- column")**: two things had made it
+  read wrong. Each ± was rounded on its own, so a row could show a ± that didn't take the BABIP above it to the one on its row. And the last row's ±
+  was his BABIP against the league's *actual* BABIP, a different starting point from the build-up's league xBABIP. Now every ± is the step between
+  the rounded running BABIPs (`step` / `R3` in `renderXbabipTab`), Luck carries his BABIP as its running number, and the BABIP row's ± is the whole
+  trip from the start (= the sum of every ± above it). The league's actual BABIP is in that row's tooltip. Schwarber 2026: .291 start, steps
+  summing to −11, BABIP .280.
