@@ -9351,10 +9351,12 @@
                      : [[stuffSide() ? "xnERA" : "nERA", "ERA"], ["W", "L", "G", "GS", "IP"], ["H", "HR", "BB", "K"], ["WHIP", "K%", "BB%", "K-BB%"]];
     const narrow = H ? new Set(["AB", "H", "R", "RBI", "SB"]) : new Set(["W", "L", "G", "GS", "H", "HR", "BB", "K", "WHIP"]);   // off a phone's line
     const keys = groups.flat();
-    box.style.setProperty("--n", keys.length);
-    const head = el("div", "pbsrow pbshead"); head.append(el("span", "pbsl", "Summary"));
-    keys.forEach((k, i) => { const c = el("span", "pbsh" + (narrow.has(k) ? " pbx" : ""), k); if (groups.some((g) => g[0] === k && g !== groups[0])) c.classList.add("sep"); head.append(c); });
-    box.append(head);
+    // a table in the season table's dress (Sean, 9 Oct 2026, design A of the Player Header Redesigns canvas): the column names on the blue band,
+    // gridlines, a red rule where a group ends, only xwOBA (a pitcher's nERA / xnERA) filled with its percentile colour
+    const gEnd = new Set(groups.slice(0, -1).map((gr) => gr[gr.length - 1]));
+    const t = el("table", "pbst"), th = el("thead"), hr = el("tr"); hr.append(el("th", "pbsl ge", ""));
+    keys.forEach((k) => hr.append(el("th", (narrow.has(k) ? "pbx" : "") + (gEnd.has(k) ? " ge" : ""), k)));
+    th.append(hr); t.append(th); const tb = el("tbody"); t.append(tb); box.append(t);
     const r = careerLine(p, +DS.season), rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null, car = rec ? rec[p.type + "C"] : null;
     const f3 = (v) => (v == null ? "–" : fmtX(+v)), f2 = (v) => (v == null ? "–" : (+v).toFixed(2)), f1 = (v) => (v == null ? "–" : (+v).toFixed(1));
     const pctOf = (n, d) => (n != null && d ? f1(100 * n / d) : "–");
@@ -9377,24 +9379,23 @@
         career = { nERA: "–", xnERA: "–", ERA: f2(car[2]), W: car[0], L: car[1], G: car[3], GS: car[4], IP: car[6], H: car[7], HR: car[8], BB: car[9], K: car[10], WHIP: f2(car[11]), "K%": pctOf(k, bf), "BB%": pctOf(bb, bf), "K-BB%": pctOf(k - bb, bf) };
       }
     }
-    // the first pair heat-mapped as the Mix tab's Lg wOBA chips (Sean, 8 Oct 2026: "heat map these two like this"): wOBA / xwOBA (a pitcher's
-    // nERA / xnERA) as pills in the percentile colour among the full season's pool — the career row placed in the same pool
+    // xwOBA (a pitcher's nERA / xnERA) filled with its percentile colour among the full season's pool — the career row placed in the same pool
     const pl = full(() => pool(H ? "H" : p.primary)), srt = (pl && pl.sorted) || {};
     const pcOf = (key, v, hib) => (v == null || v === "–" || isNaN(+v) || !srt[key] || !srt[key].length ? null : insertPct(srt[key], hib ? +v : -+v));
     const chipsOf = (vals) => (!vals ? {} : H ? { xwOBA: pcOf("xwd", vals.xwOBA, true) }   /* wOBA plain since 9 Oct 2026 */ : { nERA: pcOf("nera", vals.nERA, false), xnERA: pcOf("xnera", vals.xnERA, false) });
     const rowOf = (label, vals, cls) => {
-      const row = el("div", "pbsrow" + (cls ? " " + cls : "")); row.append(el("span", "pbsl", label));
+      const row = el("tr", cls || null); row.append(el("td", "pbsl ge", label));
       const chips = chipsOf(vals);
       keys.forEach((k) => {
-        const v = vals ? vals[k] : "–", text = v == null || v === "" ? "–" : String(v), c = el("span", "pbsv" + (narrow.has(k) ? " pbx" : ""));
-        if (chips[k] != null) { const chip = el("span", "uchip pbchip", text); paintBar(chip, chips[k]); chip.style.color = "#fff"; chip.title = ordinal(Math.round(chips[k])) + " percentile"; c.append(chip); } else c.textContent = text;
-        if (groups.some((g) => g[0] === k && g !== groups[0])) c.classList.add("sep"); row.append(c);
+        const v = vals ? vals[k] : "–", text = v == null || v === "" ? "–" : String(v), c = el("td", (narrow.has(k) ? "pbx" : "") + (gEnd.has(k) ? " ge" : ""), text);
+        if (chips[k] != null) { heatTd(c, chips[k]); c.title = ordinal(Math.round(chips[k])) + " percentile"; }
+        row.append(c);
       });
-      return row;
+      tb.append(row);
     };
-    box.append(rowOf(String(DS.season) + (DS.level && DS.level !== "MLB" ? " " + DS.level : ""), season, "cur"));
-    if (career) box.append(rowOf("Career", career));
-    else if (careerReady() && DS.level === "MLB") box.append(rowOf("Career", null));
+    rowOf(String(DS.season) + (DS.level && DS.level !== "MLB" ? " " + DS.level : ""), season, "cur");
+    if (career) rowOf("Career", career);
+    else if (careerReady() && DS.level === "MLB") rowOf("Career", null);
     return box;
   }
   // the B-Ref bio lines: positions, bats / throws, height and weight, born, team — and under More: full name, drafted, debut, birthplace
@@ -9431,16 +9432,16 @@
     const db = longDate(b.debut); if (db) line(`<b>MLB debut:</b> ${esc(db)}`);
     return box;
   }
-  // the page's band: the controls on top (Back, the season, Filters), the photo and the bio lines, the summary line at the foot
+  // his page's head, design A of the Player Header Redesigns canvas (Sean, 9 Oct 2026: "I like A can you do that for both desktop and phone"): no band —
+  // white, like the tables under it. A phone: a row of Back / the year / Filters, then the photo beside the name and bio lines, then the Summary
+  // table. A desktop: Back over the name, the year and Filters in the top-right corner, the bio in two columns, the Summary table across
   function pageHead(p, st, g, o) {
     document.querySelectorAll(".phmodal").forEach((x) => x.remove());
-    const top = el("div", "cardtop phead pagehead"), plate = el("div", "mplate pbio");
+    const mob = mobileView(), top = el("div", "pagehead pha" + (mob ? " m" : " d"));
     const b = bio(p.id);
-    const ctl = el("div", "pbctl");
-    // no list to go back to → no row for the controls: the year and Filters sit in the band's top-right corner over its empty side (Sean, 8 Oct 2026:
-    // "now that you got rid of the home button this blank space is not needed. Keep it for when the back to the leaderboard is needed but thats it")
-    if (!backAt && !mobileView()) plate.classList.add("nobk");
-    ctl.append(backButton(false), el("span", "pbsp"));
+    const ctl = el("div", "pbctl phactl");
+    if (mob && backAt) ctl.append(backButton(false));
+    ctl.append(el("span", "pbsp"));
     const title = pageTitle(p, o); title.classList.add("pinline", "pbyear");
     for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
     ctl.append(title);
@@ -9449,20 +9450,18 @@
       ctl.append(filtersTog(p));
       const chips = viewChips(p); if (chips.childNodes.length) ctl.append(chips);
     }
-    // a phone with no Back: no row either — the year and Filters stack at the right of the name, the bio wrapping round them (Sean, 8 Oct 2026:
-    // "put the filters and year on the right side and then get rid of that top space being there that those two buttons originally were in")
-    const ctlIn = !backAt && mobileView();
-    if (ctlIn) plate.classList.add("nobkm"); else plate.append(ctl);
-    const main = el("div", "pbmain"), photo = el("div", "pbphoto"); photo.append(headshot(p.id, p.name)); main.append(photo);
-    const txt = el("div", "pbtext"), h2 = el("h2", null, p.name); h2.id = "modal-title"; if (ctlIn) txt.append(ctl); txt.append(h2);
-    txt.append(...bioLines(p, b));
+    const main = el("div", "pbmain phamain"), photo = el("div", "pbphoto"); photo.append(headshot(p.id, p.name)); main.append(photo);
+    const txt = el("div", "pbtext");
+    if (!mob && backAt) txt.append(backButton(false));
+    const h2 = el("h2", null, p.name); h2.id = "modal-title"; txt.append(h2);
+    const lines = el("div", "pblines"); lines.append(...bioLines(p, b));
     const more = el("button", "pbmore", bioMore ? "Less bio, draft info ▴" : "More bio, draft info ▾"); more.type = "button"; more.setAttribute("aria-expanded", String(bioMore));
     more.addEventListener("click", (e) => { e.stopPropagation(); bioMore = !bioMore; render(); });
-    txt.append(more); if (bioMore) txt.append(moreBio(p, b));
-    main.append(txt); plate.append(main);
-    if (st && st.pct) plate.append(summaryBlock(p, st));
-    if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay); if (!state.cardTools && sum.childNodes.length) plate.append(sum); }
-    top.append(plate);
+    lines.append(more); txt.append(lines); if (bioMore) txt.append(moreBio(p, b));
+    main.append(txt);
+    if (mob) top.append(ctl, main); else { const row = el("div", "pharow"); row.append(main, ctl); top.append(row); }
+    if (st && st.pct) top.append(summaryBlock(p, st));
+    if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay); if (!state.cardTools && sum.childNodes.length) top.append(sum); }
     return top;
   }
   // the filter chips (each filter in effect with its own ×), as renderPlate draws them for a popup
@@ -9478,63 +9477,31 @@
     if (roleOf(SPLIT) !== "all") chip(roleOf(SPLIT) === "sp" ? "As SP" : roleOf(SPLIT) === "rp" ? "As RP" : "All as SP", () => { state.split = Object.assign({}, sp, { role: "all" }); });
     return r;
   }
-  // a phone's band condenses once you scroll (Sean, 8 Oct 2026: "just show like the player name, their position, the bats throws row as well, and then
-  // their stats for the current season and also the year and filters boxes up top"): a fixed bar that shows while the band is off the top
+  // once scrolled, only his name, the year and Filters stay at the top (Sean, 9 Oct 2026: "for the scrolling could you make it so what gets pinned
+  // is the name year and filters ... and nothing else"): a white bar that slides in as the head's name leaves the screen — at the top of a
+  // phone's screen (its site header scrolls away), under a desktop's sticky site header
   function condensedBar(p, st, g, o) {
-    const mob = mobileView(), bar = el("div", "phcond" + (mob ? "" : " desk")); bar.hidden = true;
+    // a redraw while it shows (a filter, the year) keeps it in place rather than sliding it in again
+    const bar = el("div", "phpin" + (mobileView() ? " m" : " d") + (pinOn && pageKeyOf() === pinKey ? " on noanim" : ""));
+    if (bar.classList.contains("noanim")) requestAnimationFrame(() => requestAnimationFrame(() => bar.classList.remove("noanim")));
     const title = pageTitle(p, o); title.classList.add("pinline", "pbyear");
     for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
-    const b = bio(p.id), bats = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
-    // the position as its code — 1B, OF, DH, SP … (Sean, 8 Oct 2026: "on the condensed one there make their position be the labels of like 1B, OF, DH")
-    const line = el("div", "pcline"); line.innerHTML = [playedLabel(p).replace(/&/g, "&amp;"), bats ? `<b>Bats:</b> ${handWord(bats)}` : null, thr ? `<b>Throws:</b> ${handWord(thr)}` : null].filter(Boolean).join(" &nbsp;•&nbsp; ");
-    let tiles = null;
-    if (st && st.pct) {
-      // the season's line and, under it, his career's (Sean, 8 Oct 2026: "add one more row and have it be their career stats, and then heat map
-      // the woba and xwoba here"): the Summary block's own cells, so the wOBA / xwOBA pills come over as they are
-      const sum = summaryBlock(p, st), rows = [...sum.querySelectorAll(".pbsrow:not(.pbshead)")], head = sum.querySelector(".pbshead");
-      const cur = rows.find((r) => r.classList.contains("cur")), car = rows.find((r) => !r.classList.contains("cur"));
-      if (cur && head) {
-        tiles = el("div", "pctiles");
-        const hs = [...head.querySelectorAll(".pbsh")], vs = [...cur.querySelectorAll(".pbsv")], cs = car ? [...car.querySelectorAll(".pbsv")] : null;
-        const keep = p.type === "H" ? ["wOBA", "xwOBA", "BA", "OBP", "SLG", "OPS"] : ["nERA", "xnERA", "ERA", "K%", "BB%", "K-BB%"];
-        const cell = (src) => { const c = src && src.querySelector(".pbchip"); if (c) { const k = c.cloneNode(true); k.classList.add("pcchip"); return k; } return src ? src.textContent : "–"; };
-        if (cs) { const lab = el("div", "pctile lab"), b = el("b", null, cur.querySelector(".pbsl").textContent), c = el("span", "pcc", "Career"); lab.append(el("i", null, "\u00a0"), b, c); tiles.append(lab); }   // a blank header line, so its rows sit level with the values
-        let n = 0;
-        hs.forEach((h, i) => {
-          if (!keep.includes(h.textContent)) return; n++;
-          const t = el("div", "pctile"), b = el("b"); b.append(cell(vs[i])); t.append(el("i", null, h.textContent), b);
-          if (cs) { const c = el("span", "pcc"); c.append(cell(cs[i])); t.append(c); }
-          tiles.append(t);
-        });
-        tiles.style.setProperty("--n", n); if (cs) tiles.classList.add("two");
-      }
-    }
-    const tog = o.entry && !isMulti(o.key) ? filtersTog(p) : null;
-    if (mob) {   // a phone: one line — Back, the name, the year, Filters — over the tiles, so the bar is the Summary block's height
-      const ctl = el("div", "pbctl"); if (backAt) { const bk = backButton(true); bk.textContent = "‹ Back"; ctl.append(bk); } ctl.append(el("div", "pcname", p.name), title); if (tog) ctl.append(tog);
-      bar.append(ctl); if (tiles) bar.append(tiles);
-    } else {     // a desktop, under the sticky site header: one row — Back, the name over the position line, the tiles, the year and Filters at the right
-      const who = el("div", "pcwho"); who.append(el("div", "pcname", p.name), line);
-      const ctl = el("div", "pcctl"); ctl.append(title); if (tog) ctl.append(tog);
-      if (backAt) bar.append(backButton(true)); bar.append(who); if (tiles) bar.append(tiles); bar.append(ctl);
-    }
+    const inner = el("div", "phpinrow"); inner.append(el("div", "pcname", p.name), title);
+    if (o.entry && !isMulti(o.key)) inner.append(filtersTog(p));
+    bar.append(inner);
     return bar;
   }
-  // show the condensed bar while the band is scrolled off the top: at the top of a phone's screen (its site header scrolls away), under a
-  // desktop's sticky site header
-  let condTick = false;
+  let condTick = false, pinOn = false, pinKey = "";
   const condSync = () => {
     condTick = false;
-    const bar = document.querySelector("#xboard .phcond"), band = document.querySelector("#xboard .pagehead"); if (!bar || !band) return;
-    // it takes over when the Summary block reaches the top (Sean, 8 Oct 2026: "the condensed version of the header shows up once i get to this
-    // point ... so that the header doesn't show up over the table ... the same height as that part too"): as tall as the Summary block down to
-    // the band's foot, so the bar's bottom sits where the band's was and covers nothing the band wasn't
-    const hd = document.querySelector("header.top"), hb = Math.max(0, Math.round(hd ? hd.getBoundingClientRect().bottom : 0));
-    const sum = band.querySelector(".pbsum"), sr = (sum || band).getBoundingClientRect(), br = band.getBoundingClientRect();
-    const off = sum ? sr.top <= hb + 0.5 : br.bottom < hb;
-    if (off) { bar.style.top = hb + "px"; if (sum) bar.style.height = Math.round(br.bottom - sr.top) + "px"; }
-    if (bar.hidden === !off) return;
-    bar.hidden = !off; document.body.classList.toggle("pcond", off);
+    const bar = document.querySelector("#xboard .phpin"), head = document.querySelector("#xboard .pagehead"); if (!bar || !head) return;
+    const hd = document.querySelector("header.top"), hr = hd ? hd.getBoundingClientRect() : null;
+    const hb = hr && getComputedStyle(hd).position !== "static" ? Math.max(0, Math.round(hr.bottom)) : 0;
+    const name = head.querySelector("h2"), nr = (name || head).getBoundingClientRect();
+    const on = nr.bottom <= hb + 1;                       // the head's name has gone under the top
+    bar.style.top = hb + "px"; pinOn = on; pinKey = pageKeyOf();
+    if (bar.classList.contains("on") === on) return;
+    bar.classList.toggle("on", on); bar.setAttribute("aria-hidden", String(!on)); document.body.classList.toggle("pcond", on);
   };
   const condAsk = () => { if (!condTick && state.mode === "player") { condTick = true; requestAnimationFrame(condSync); } };
   window.addEventListener("scroll", condAsk, { passive: true });
@@ -9671,7 +9638,8 @@
       return c[k];
     }
     if (k === "FIP") return a.fip; if (k === "Whiff%") return a.whf; if (k === "Strike%") return a.strk; if (k === "GB%") return a.gb;
-    if (k === "K%") return c.BF ? 100 * c.K / c.BF : null; if (k === "BB%") return c.BF ? 100 * c.BB / c.BF : null; if (k === "K-BB%") return c.BF ? 100 * (c.K - c.BB) / c.BF : null;
+    const r = l.rc || c;   // rates from the unscaled line — the 162-game average scales K and BB but not BF (it had read Skenes's K% as 10.0%)
+    if (k === "K%") return r.BF ? 100 * r.K / r.BF : null; if (k === "BB%") return r.BF ? 100 * r.BB / r.BF : null; if (k === "K-BB%") return r.BF ? 100 * (r.K - r.BB) / r.BF : null;
     return c[k];
   }
   const sbRuns = (v) => { const r = Math.round(10 * v) / 10; return (r < 0 ? "−" : "") + Math.abs(r).toFixed(1); };   // WAR in tenths
@@ -9819,8 +9787,10 @@
     const rec = H ? SB_RECORD.H : SB_RECORD.P, recQual = (l) => (H ? (+l.c.PA || 0) >= 3000 : ipNum(l.c.IP) >= 1000);
     const table = el("table", "sbt"), thead = el("thead"), tr = el("tr");
     const lev = milb.length > 0;
-    for (const h of ["Season", "Age", "Team", ...(lev ? ["Lev"] : []), ...cols, "Pos"]) {
-      const th = el("th", ["Season", "Team", "Lev", "Pos"].includes(h) ? "l" : null, h); if (h === "Season") th.classList.add("f1"); if (h === "Age") th.classList.add("f2"); if (h === "Team") th.classList.add("f3");
+    // with the minors in, the level is the second frozen column and the club scrolls (Sean, 9 Oct 2026, from B-Ref's Register Batting on his phone:
+    // "when the table includes minor leagues could you make it do this when I scroll" — Year and Lg frozen, Aff sliding under them)
+    for (const h of ["Season", "Age", ...(lev ? ["Lev", "Team"] : ["Team"]), ...cols, "Pos"]) {
+      const th = el("th", ["Season", "Team", "Lev", "Pos"].includes(h) ? "l" : null, h); if (h === "Season") th.classList.add("f1"); if (h === "Age") th.classList.add("f2"); if (h === (lev ? "Lev" : "Team")) th.classList.add("f3");
       if (gEnd.has(h)) th.classList.add("ge"); if (H && (SB_TIP[h] || SBX_TIP[h])) th.title = SB_TIP[h] || SBX_TIP[h];
       tr.append(th);
     }
@@ -9841,7 +9811,8 @@
       // a totals label sits in the frozen Team cell and spills left over Season, as B-Ref's does (Sean, 8 Oct 2026): a cell spanning Season / Age /
       // Team stayed Age wider than the frozen pair once Age faded, so it covered G and its rule sat a column right of the rows' rule
       if (lead.length === 1) { const lab = cell("", "l sbl f3"), sp = el("span", "sblab", lead[0]); lab.append(sp); trr.append(cell("", "l sbl0 f1"), cell("", "sbl0 f2"), lab); if (lev) trr.append(cell("", "l")); }
-      else { trr.append(cell(lead[0], "l f1"), cell(lead[1] == null ? "" : String(lead[1]), "f2"), cell(lead[2] || "", "l f3")); if (lev) trr.append(cell(lead[3] || "", "l")); }
+      else if (lev) trr.append(cell(lead[0], "l f1"), cell(lead[1] == null ? "" : String(lead[1]), "f2"), cell(lead[3] || "", "l f3"), cell(lead[2] || "", "l"));
+      else trr.append(cell(lead[0], "l f1"), cell(lead[1] == null ? "" : String(lead[1]), "f2"), cell(lead[2] || "", "l f3"));
       for (const k of cols) {
         const v = l ? sbVal(H, l, k) : null, td = cell(sbFmt(k, v));
         const xd = SBX[k];
@@ -10252,9 +10223,10 @@
       ft.append(clear); win.append(x, body, ft);
       const ov = el("div", "phmodal"); ov.append(win); document.body.append(ov);
       const place = () => {                              // under the button, like placePop; a phone's spans the screen
-        const bts = [...document.querySelectorAll(".phead .phfilt, .phcond .phfilt")].filter((x) => !x.classList.contains("phsidebtn"));
-        const bt = bts.find((x) => { const r = x.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }) || bts[0]; if (!bt || !ov.isConnected) return;
-        const r = bt.getBoundingClientRect(), cb = bt.closest(".phcond"), under = cb ? cb.getBoundingClientRect().bottom : r.bottom;   // from the condensed bar: under the whole bar
+        condSync();                                       // the pinned bar's state for this scroll, before picking its button
+        const bts = [...document.querySelectorAll(".phead .phfilt, .pha .phfilt, .phpin.on .phfilt")].filter((x) => !x.classList.contains("phsidebtn"));
+        const bt = bts.find((x) => x.closest(".phpin")) || bts.find((x) => { const r = x.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }) || bts[0];   // the pinned bar's while it shows if (!bt || !ov.isConnected) return;
+        const r = bt.getBoundingClientRect(), cb = bt.closest(".phpin"), under = cb ? (parseFloat(cb.style.top) || 0) + cb.offsetHeight : r.bottom;   // from the condensed bar: under the whole bar
         win.style.top = Math.round(under + 6) + "px"; win.style.maxHeight = Math.max(220, innerHeight - under - 16) + "px";
         if (mobileView()) { win.style.left = "8px"; win.style.right = "8px"; win.style.width = "auto"; return; }
         win.style.right = "auto"; win.style.width = ""; win.style.left = "0px"; const w = win.offsetWidth;
