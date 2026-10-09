@@ -5004,63 +5004,20 @@ header.top .wordmark { display: none; }
 /* No rule under the lit column name (Sean, 9 Oct 2026, from home: "the top row of the heatmapped column has that weird line there, can you get rid of that it happens on every table") — the lit wash and bold stay. */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root #colhead .h:is([aria-sort], .sorted), :root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colhead .h[aria-sort], :root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard thead th:has(.sortbtn.on), :root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt th.lit { box-shadow: none !important; }
 
-/* ---- his page's head, design A of the Player Header Redesigns canvas (Sean, 9 Oct 2026: "I like A can you do that for both desktop and phone ...
-   on the desktop version don't include the like summary quality playing time things", "what gets pinned is the name year and filters ... and
-   nothing else"): no band — white like the tables, square outlined controls, the photo beside the name and B-Ref's bio lines, the Summary as a
-   table in the season table's dress; once scrolled a white bar with the name, the year and Filters ---- */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha { position: static; background: transparent; color: var(--ink); padding: 18px min(6vw, 96px) 0; display: flex; flex-direction: column; gap: 16px; font-family: var(--body); border: 0; box-shadow: none; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha { padding: 10px 12px 0; gap: 12px; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pharow { display: flex; align-items: flex-start; gap: 24px; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pharow > .phamain { flex: 1 1 auto; min-width: 0; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .phactl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0; padding: 0; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pharow > .phactl { flex: none; justify-content: flex-end; max-width: 46%; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .phactl .pbsp { flex: 1 1 auto; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pharow > .phactl .pbsp { display: none; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbback { height: auto; padding: 0; border: 0 !important; border-radius: 0; background: transparent !important; color: var(--ink) !important; font: 600 14px var(--body) !important; text-decoration: none; cursor: pointer; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbback:hover { color: var(--stripe-line, #c8102e) !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbtext > .pbback { margin-bottom: 6px; align-self: flex-start; }
-/* the year (and the level when it says something), Filters and Raw: square outlined buttons */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard .pha, #xboard .phpin) .pbyear { margin: 0; padding: 0; flex: none; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard .pha, #xboard .phpin) .pbyear .pthd { display: flex; align-items: center; gap: 6px; margin: 0; padding: 0 !important; font: 600 14px var(--body) !important; color: var(--ink) !important; white-space: nowrap; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard .pha, #xboard .phpin) .pbyear .tsl, :root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard .pha, #xboard .phpin) .phtog .phfilt { height: 36px; padding: 0 12px !important; border: 1px solid color-mix(in srgb, var(--ink) 35%, var(--surface)) !important; border-radius: 0 !important; background: var(--surface) !important; color: var(--ink) !important; font: 600 14px var(--body) !important; text-decoration: none !important; box-shadow: none !important; line-height: 34px; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard .pha, #xboard .phpin) .pbyear .tsl::after { content: none; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard .pha, #xboard .phpin) .pbyear .tsel .tsl::before { content: none; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard .pha, #xboard .phpin) .pbyear .tsl { display: inline-flex; align-items: center; gap: 4px; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard .pha, #xboard .phpin) .pbyear .tsl::after { content: "▾"; font-size: 11px; opacity: 1; margin: 0; vertical-align: 0; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard .pha, #xboard .phpin) .phtog { display: flex; align-items: center; gap: 8px; margin: 0; position: static; flex-direction: row; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard .pha, #xboard .phpin) .phtog .phfiltseg { border: 0 !important; background: transparent !important; padding: 0; margin: 0; box-shadow: none !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard .pha, #xboard .phpin) .phtog .phfilt[aria-pressed="true"] { background: var(--band2, var(--accent-2)) !important; color: #fff !important; border-color: var(--band2, var(--accent-2)) !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard .pha, #xboard .phpin) .phtog .phfilt:hover { border-color: var(--ink) !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .mrank.inctl { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; width: 100%; justify-content: flex-end; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .mrank.inctl { justify-content: flex-start; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .mrank.inctl .fchip { background: var(--surface) !important; border: 1px solid color-mix(in srgb, var(--ink) 30%, var(--surface)) !important; border-radius: 0 !important; color: var(--ink) !important; font: 600 12.5px var(--body) !important; padding: 2px 4px 2px 8px; }
-/* the photo and the bio */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .phamain { display: flex; gap: 14px; align-items: flex-start; padding: 0; margin: 0; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbphoto { width: 108px; height: 144px; flex: none; border: 1px solid color-mix(in srgb, var(--ink) 20%, var(--surface)); background: var(--surface-2, #f3f6fa); overflow: hidden; display: flex; align-items: flex-end; justify-content: center; border-radius: 0; padding: 0; margin: 0; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbphoto { width: 84px; height: 112px; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbphoto .mug { width: 100% !important; height: 100% !important; max-width: none; object-fit: cover; object-position: center top; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: transparent !important; margin: 0 !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbtext { display: flex; flex-direction: column; min-width: 0; padding: 0; margin: 0; float: none; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbtext h2 { margin: 0 0 6px !important; padding: 0; font: 700 42px/1 var(--display) !important; color: var(--ink) !important; letter-spacing: 0; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbtext h2 { font-size: 30px !important; margin-bottom: 4px !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pblines { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); column-gap: 36px; row-gap: 2px; font-size: 15px; line-height: 1.4; color: var(--ink); }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pblines { display: flex; flex-direction: column; gap: 1px; font-size: 13.5px; line-height: 1.35; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pblines .pbl, :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbmorebox .pbl { color: var(--ink) !important; font-size: inherit; margin: 0; padding: 0; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbl b { font-weight: 700 !important; color: var(--ink) !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbteam { color: var(--ink) !important; text-decoration: underline; cursor: pointer; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbmore { height: auto; padding: 0; margin: 0; border: 0 !important; border-radius: 0; background: transparent !important; color: var(--ink) !important; font: 400 inherit/1.4 var(--body) !important; font-size: inherit !important; text-decoration: underline; text-align: left; cursor: pointer; justify-self: start; width: auto; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbmorebox { margin: 6px 0 0; padding: 0; background: transparent; border: 0; display: flex; flex-direction: column; gap: 2px; font-size: 14px; line-height: 1.4; color: var(--ink); }
-/* the Summary table */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbsum { display: block; margin: 0; padding: 0; border: 0; background: transparent; overflow-x: auto; max-width: 1120px; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbst { border-collapse: collapse; width: 100%; table-layout: fixed; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink); }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbst th { background: var(--band2, var(--accent-2)) !important; color: #fff !important; font: 600 12.5px var(--body) !important; height: 28px; padding: 0 4px; border: 1px solid rgba(255, 255, 255, .45); text-align: center; white-space: nowrap; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbst td { height: 28px; padding: 0 6px; border: 1px solid color-mix(in srgb, var(--ink) 16%, var(--surface)); text-align: right; background: var(--surface); color: var(--ink); white-space: nowrap; font-weight: 400; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbst td.heat { font-weight: 700 !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbst :is(td, th).pbsl { width: 66px; text-align: left; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbst :is(td, th).ge { border-right: 2px solid var(--stripe-line, #c8102e); }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbst { font-size: 12.5px; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbst :is(td, th) { padding: 0 3px; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbst :is(td, th).pbsl { width: 50px; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbst .pbx { display: none; }
+/* ---- once scrolled, only his name, the year and Filters stay at the top (Sean, 9 Oct 2026: "what gets pinned is the name year and filters ... and
+   nothing else"): a white bar that slides in as the band's name leaves the top, the year and Filters as square outlined buttons. Design A's head
+   (a white head, the Summary as a table) was built the same day and taken back ("scratch the header changes") ---- */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pbyear { margin: 0; padding: 0; flex: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pbyear .pthd { display: flex; align-items: center; gap: 6px; margin: 0; padding: 0 !important; font: 600 14px var(--body) !important; color: var(--ink) !important; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pbyear .tsl, :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phtog .phfilt { height: 36px; padding: 0 12px !important; border: 1px solid color-mix(in srgb, var(--ink) 35%, var(--surface)) !important; border-radius: 0 !important; background: var(--surface) !important; color: var(--ink) !important; font: 600 14px var(--body) !important; text-decoration: none !important; box-shadow: none !important; line-height: 34px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pbyear .tsl::after { content: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pbyear .tsel .tsl::before { content: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pbyear .tsl { display: inline-flex; align-items: center; gap: 4px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pbyear .tsl::after { content: "▾"; font-size: 11px; opacity: 1; margin: 0; vertical-align: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phtog { display: flex; align-items: center; gap: 8px; margin: 0; position: static; flex-direction: row; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phtog .phfiltseg { border: 0 !important; background: transparent !important; padding: 0; margin: 0; box-shadow: none !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phtog .phfilt[aria-pressed="true"] { background: var(--band2, var(--accent-2)) !important; color: #fff !important; border-color: var(--band2, var(--accent-2)) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phtog .phfilt:hover { border-color: var(--ink) !important; }
 /* the pinned bar: the name, the year, Filters — slides in as the head's name leaves the top */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin { position: fixed; left: 0; right: 0; top: 0; z-index: 15; display: block; height: auto; background: var(--surface); border-bottom: 2px solid var(--stripe-line, #c8102e); transform: translateY(-100%); opacity: 0; visibility: hidden; pointer-events: none; transition: transform .18s ease, opacity .18s ease, visibility 0s linear .18s; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin.on { transform: none; opacity: 1; visibility: visible; pointer-events: auto; transition: transform .18s ease, opacity .18s ease, visibility 0s; }
@@ -5068,13 +5025,9 @@ header.top .wordmark { display: none; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinrow { padding: 6px 12px; padding-top: calc(6px + env(safe-area-inset-top, 0px)); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pcname { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 24px/1.1 var(--display) !important; color: var(--ink) !important; }
 @media (prefers-reduced-motion: reduce) { :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin, :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin.on { transition: none; } }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard .pha, #xboard .phpin) .phtog .phfilt { display: inline-flex !important; align-items: center; justify-content: center; height: 36px !important; min-height: 0; width: auto !important; min-width: 0; line-height: 1 !important; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phtog .phfilt { display: inline-flex !important; align-items: center; justify-content: center; height: 36px !important; min-height: 0; width: auto !important; min-width: 0; line-height: 1 !important; white-space: nowrap; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin :is(.pbyear .tsl, .phtog .phfilt) { height: 32px !important; padding: 0 9px !important; font-size: 13.5px !important; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pcname { font-size: 22px !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbst td.heat { border-radius: 0 !important; box-shadow: none !important; outline: 0; background-clip: border-box !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha:not(.m) { padding-left: 0; padding-right: 0; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha:not(.m) .pbsum { max-width: 1142px; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pha .pbst th { font-size: 11.5px !important; padding: 0 1px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin.noanim { transition: none !important; }
 
 /* ---- every table's column names bold (Sean, 9 Oct 2026: "bold all of the table headers"): every <th> and the Leaderboard's / Recent's column-name

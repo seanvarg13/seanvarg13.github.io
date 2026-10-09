@@ -2944,3 +2944,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   covers every `<th>` and `#colhead .h`. Its `:is(#xboard, #modal, #hub, body)` carries id weight, so it beats the per-table passes' `!important` font
   shorthands. (3) **The pitchers' 162 Game Avg rates** read the unscaled line (`l.rc`) like the hitters' do. They had divided the scaled K and BB by the
   unscaled BF (Skenes's K% read 10.0%).
+* **Design A's head taken back, the pinned bar kept (Sean, 9 Oct 2026, an hour after PR #504: "Actually scratch the header changes")**: `pageHead`
+  and `summaryBlock` are PR #503's again: the blue band, the bio, and the Summary line with its xwOBA pills. The design A CSS (`.pha`, `.pbst`) is out of
+  `styles.css`. Kept from PR #504: the pinned name / year / Filters bar (`.phpin`, `condensedBar` / `condSync`, which watch the band's own `h2`), the
+  minors' Season + Lev freeze, the bold table headers and the pitchers' 162 Game Avg fix. The entry above describes the head as it was for that hour.
