@@ -8217,7 +8217,7 @@
     const rel = (v, a) => (v == null ? null : vsType && a != null ? v - a + 100 : v);
     // B-Ref's dress (Sean, 9 Oct 2026, from the B-Ref Style Tables canvas: "I want that for everything"): an over-header naming each group, the
     // expected / actual pairs as two columns (Exp, Act in grey), the grades filling their cells, All pitches a band row under a gap
-    const heads = [["Type", "l"], ["#", "", "Pitches thrown"], ["Use%", ""], ["Velo", ""], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin", ""],
+    const heads = [["Type", "l f1"], ["#", "", "Pitches thrown"], ["Use%", ""], ["Velo", ""], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin", ""],
                    ...(P ? [["Pitching+", "sp", "Stuff+ with location: the same pitch graded in the spot it was thrown"], ["Whiff+", "", "Pitching+'s whiff half"], ["BB+", "", "Pitching+'s batted-ball half"],
                            ["Loc+", "", "Location+: Pitching+ − Stuff+ + 100 — what his locations add (100 = an average pitcher's spots)"],
                            ...PAIRH("The whiff rate per swing the location-aware model expects", "his actual whiffs per swing"), ...PAIRH("The location-aware model's ground-ball rate on contact", "his actual GB%"), ...PAIRH("The location-aware model's popup rate on contact", "his actual popups per ball in play"),
@@ -8241,7 +8241,7 @@
     }
     for (const r of R) {
       const A = vsType ? typeAvg(r.pt) : null, tr = el("tr");
-      tr.append(el("td", "l nm", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(100 * r.n / tot)), el("td", null, f1n(r.velo)), el("td", null, f1n(r.ivb)), el("td", null, f1n(r.hb)),
+      tr.append(el("td", "l nm f1", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(100 * r.n / tot)), el("td", null, f1n(r.velo)), el("td", null, f1n(r.ivb)), el("td", null, f1n(r.hb)),
                 el("td", null, r.spin == null ? "–" : String(r.spin)),
                 ...(P ? [cellPlus(rel(r.pitp, A && A.t), "sp"), cellPlus(rel(r.whfpl, A && A.w)), cellPlus(rel(r.bbpl, A && A.b)), cellPlus(r.locp),
                          ...pair(r.xwhfl, r.whf), ...pair(r.xgbl, r.gb), ...pair(r.xpul, r.pu), ...pair(xFoulOf(r), r.foul), ...pair(r.xcstr == null ? null : r.xcstr + cshift, r.cstr)]
@@ -8259,7 +8259,7 @@
     const mv = filtered ? m : s0;                                   // a window / split: the card's own (filtered) grades
     const tv = vsType && relSum.n ? { t: relSum.t / relSum.n, w: relSum.w / relSum.n, b: relSum.b / relSum.n }
                                   : { t: mv.swhf == null ? mv.stuff : mv.swhf + mv.sbb - 100, w: mv.swhf, b: mv.sbb };
-    trt.append(el("td", "l", "All pitches"), el("td", null, String(tot)), el("td"), el("td"), el("td"), el("td"), el("td"),
+    trt.append(el("td", "l f1", "All pitches"), el("td", null, String(tot)), el("td"), el("td"), el("td"), el("td"), el("td"),
                ...(P ? [cellPlus(mv.pitch, "sp"), cellPlus(mv.pwhf), cellPlus(mv.pbb), cellPlus(mv.sloc),
                         ...pair(R0.some((r) => r.xwhfl != null) ? wxs("xwhfl", "sw") : null, act("whf", "sw")), ...pair(R0.some((r) => r.xgbl != null) ? wxs("xgbl", "bip") : null, act("gb", "bip")), ...pair(R0.some((r) => r.xpul != null) ? wxs("xpul", "bip") : null, act("pu", "bip")),
                         ...(() => { let n = 0, tx = 0, na = 0, ta = 0; for (const r of R0) { const c = con(r), x = xFoulOf(r); if (x != null && c) { n += c; tx += x * c; } if (r.foul != null && c) { na += c; ta += r.foul * c; } }

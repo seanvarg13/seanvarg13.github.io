@@ -5196,3 +5196,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar > .pbrow1 > .pbctl .pbsp { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .mplate.pbio.pbone { padding-top: 4px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar > .pgbname { flex: 1 1 0; min-width: 0; }
+/* the Pitching+ tab's pitch column frozen as the table slides sideways (Sean, 9 Oct 2026: "make the pitch in this table be freeze paned"), with the
+   frozen edge the season table's red rule */
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .stuffbox .sbt.brt .f1 { border-right: 2px solid var(--stripe-line); }
