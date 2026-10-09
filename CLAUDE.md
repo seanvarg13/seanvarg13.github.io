@@ -2864,3 +2864,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   its xwOBA heat pools and the Summary's career xwOBA all read those rows, so they move with it (Bellinger career .341 → .345). **wOBA is
   plain** in the season table (`SB_HEAT` is xwOBA and Sprint) and in the band's Summary / the condensed bar (only xwOBA is a pill; a
   pitcher's nERA / xnERA pills are unchanged).
+* **The Leaderboard's column names grow to fit (Sean, 9 Oct 2026, from a phone screenshot of his own list — "Pull Air%", "Bat speed", "FB Brl%"
+  cut off: "make it so the header row auto adjusts its height")**: under `body.brlb` every `#colhead .h` is at least 30px and as tall as its
+  wrapped, centred text, and the row takes the tallest (40px for two-line names on a 390px phone; a desktop's one-line names stay 30). The
+  block at the end of `styles.css`.
