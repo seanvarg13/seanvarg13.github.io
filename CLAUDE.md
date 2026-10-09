@@ -2948,3 +2948,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   and `summaryBlock` are PR #503's again: the blue band, the bio, and the Summary line with its xwOBA pills. The design A CSS (`.pha`, `.pbst`) is out of
   `styles.css`. Kept from PR #504: the pinned name / year / Filters bar (`.phpin`, `condensedBar` / `condSync`, which watch the band's own `h2`), the
   minors' Season + Lev freeze, the bold table headers and the pitchers' 162 Game Avg fix. The entry above describes the head as it was for that hour.
+* **The pinned bar carries the band's blue Summary (Sean, 9 Oct 2026: "make it so the blue summary stats show instead of the white ones ... when you
+  scroll and then also make it so that the name and filter and years button show above it")**: `condensedBar` appends the band's own `summaryBlock`
+  inside a `.phead .phpinband > .mplate.pbio`, so it wears the band's colours, pills and red stripe, under the white name / year / Filters row. `condSync`
+  turns the bar on as the band's `.pbsum` reaches the bottom of that row. The pinned Summary then sits exactly where the band's was, so there's no
+  slide (the transform is off when the bar carries it). Phone 135px, desktop 153px. His screenshot of the white stat tiles was the PR #503 bar.

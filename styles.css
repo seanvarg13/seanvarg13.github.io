@@ -5033,3 +5033,9 @@ header.top .wordmark { display: none; }
 /* ---- every table's column names bold (Sean, 9 Oct 2026: "bold all of the table headers"): every <th> and the Leaderboard's / Recent's column-name
    row. The :is() with ids carries id weight so it beats the per-table passes' !important font shorthands ---- */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #hub, body) :is(th, #colhead .h, #colhead .h *, th *) { font-weight: 700 !important; }
+/* the pinned bar carries the band's Summary under the name row (Sean, 9 Oct 2026): the band's own plate and colours, only its Summary, the red
+   stripe under it; it swaps in where the band's Summary is, so nothing slides */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin:has(.phpinband) { border-bottom: 0; transition: none; transform: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin:has(.phpinband):not(.on) { opacity: 0; visibility: hidden; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinband { position: static; margin: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinband .mplate.pbio { padding-top: 0; padding-bottom: 8px; min-height: 0; gap: 0; border-top: 0; }
