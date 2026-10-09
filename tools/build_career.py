@@ -336,7 +336,8 @@ SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evg
             "swing", "zsw", "osw", "con", "zcon", "ocon", "whf",
             "brfb", "brld",   # barrels per fly ball / line drive, xHR/FB's inputs (8-9 Oct 2026)
             "pullfb",         # Pull FB%: his pulled fly balls over his fly balls, from the Mix buckets (ctx.mix; Sean, 9 Oct 2026)
-            "babip", "xbabip", "spd"]   # the card's xBABIP tab by season: BABIP, the directional xBABIP, sprint speed (Sean, 9 Oct 2026)
+            "babip", "xbabip", "spd",   # the card's xBABIP tab by season: BABIP, the directional xBABIP, sprint speed (Sean, 9 Oct 2026)
+            "sba"]                      # steal attempts (SB + CS), the season table's Baserunning view (Sean, 9 Oct 2026)
 
 
 def season_bb():
