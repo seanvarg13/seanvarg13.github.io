@@ -3059,3 +3059,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   right. `bleedBar()` (after each player-page render and on resize) gives the bar negative side margins as wide as the page's gaps to the screen's
   edges and the same as padding, so it spans `clientWidth` (no sideways scroll) while its contents line up with the page. On a phone the buttons
   are a little tighter (7px padding, 14px type) so a pitcher's four fit beside his name.
+* **The filter bar in the header's blue (Sean, 9 Oct 2026: "make it blue and not white so it fits with the regular header")**: `.pgbar` is on
+  `--band2` with a 3px stripe-red rule under it like the site header's, his name white; the year / level / Filters / Raw buttons stay the white boxy
+  ones, with white edges.
