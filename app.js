@@ -9331,6 +9331,7 @@
     return met ? `${hw} (${met})` : hw;
   };
   const LEVEL_WORD = { MLB: "majors", AAA: "Triple-A", AA: "Double-A", "A+": "High-A", A: "Single-A" };
+  const SB_CLUB_ROWS = false;   // the season table's per-club / per-league totals (off since 9 Oct 2026)
   const AL_TEAMS = new Set(["BAL", "BOS", "NYY", "TB", "TOR", "CWS", "CLE", "DET", "KC", "MIN", "HOU", "LAA", "ATH", "OAK", "SEA", "TEX"]);
   const leagueOf = (t) => (AL_TEAMS.has(teamCode(t)) ? "AL" : "NL");
   let bioMore = false;                                        // "More bio, draft info" open (this visit)
@@ -9941,7 +9942,9 @@
         for (const x of parts) (byClub.get(x.team) || byClub.set(x.team, []).get(x.team)).push(x);
       }
       const clubs = [...byClub].filter(([t]) => t && t !== "TOT");
-      if (!post && clubs.length) {
+      // the club and league rows came off (Sean, 9 Oct 2026: "get rid of the non total career/years and 162 game total rows at the bottom") —
+      // the foot is N Yrs and 162 Game Avg alone; the block stays behind SB_CLUB_ROWS
+      if (SB_CLUB_ROWS && !post && clubs.length) {
         // the club rows, then the league rows, each group after a thin gap — always shown, B-Ref's spacing (Sean, 8 Oct 2026: "dont make the by
         // league or team splits a drop down anymore, and format them exactly like this row spacing wise"; the fold was the same day's)
         // a gap as B-Ref draws it (Sean, 8 Oct 2026: "make the break between sections in the total area be exactly like baseball references"):

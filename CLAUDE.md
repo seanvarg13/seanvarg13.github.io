@@ -2915,3 +2915,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   tr:nth-child(even)` but not `tot` / `gap` / `cur` / `ftot` / `fcur` rows, and not a cell carrying its own fill — `.heat`, `.sbheat`, `.hheat`, `.hot`,
   `.fsorted`, `.record`; inline heat colours win anyway since the table rule isn't `!important`). Checked on the Leaderboard, the Pitching+ board, Fantasy,
   home, the season table and the Pitching+ tab, phone and desktop.
+* **No banded rows; the season table's foot is N Yrs and 162 Game Avg alone (Sean, 9 Oct 2026: "get rid of the banded rows and also get rid of
+  the non total career/years and 162 game total rows at the bottom")**: the "Banded rows on every table" block is gone from `styles.css` (the
+  entry above is history — rows are plain again everywhere), and `seasonBlock` draws no club (`WSH (3 Yrs)`) or league (`NL (3 Yrs)`) rows or the
+  gaps between them — the block stays in `app.js` behind `SB_CLUB_ROWS = false`.
