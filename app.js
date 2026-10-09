@@ -9364,8 +9364,8 @@
   }
   const careerRows = (p) => { const rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null; return rec && rec[p.type] ? rec[p.type] : []; };
   // the summary line: this season and his career in groups with dividers (Sean, 8 Oct 2026: wOBA and xwOBA at the front, "BA with obp slg and ops")
-  function summaryBlock(p, st) {
-    const H = p.type === "H", box = el("div", "pbsum");
+  function summaryBlock(p, st, yearOnly) {
+    const H = p.type === "H", box = el("div", "pbsum" + (yearOnly ? " yonly" : ""));
     const full = (fn) => withWindow(NOWIN, () => withSplit({ hand: "all", venue: "all" }, fn));   // the band says the season whatever the card's filters
     const m = full(() => V(p).m);
     const groups = H ? [["wOBA", "xwOBA"], ["PA", "AB", "H", "HR"], ["R", "RBI", "SB"], ["BA", "OBP", "SLG", "OPS"]]
@@ -9373,7 +9373,7 @@
     const narrow = H ? new Set(["AB", "H", "R", "RBI", "SB"]) : new Set(["W", "L", "G", "GS", "H", "HR", "BB", "K", "WHIP"]);   // off a phone's line
     const keys = groups.flat();
     box.style.setProperty("--n", keys.length);
-    const head = el("div", "pbsrow pbshead"); head.append(el("span", "pbsl", "Summary"));
+    const head = el("div", "pbsrow pbshead"); if (!yearOnly) head.append(el("span", "pbsl", "Summary"));
     keys.forEach((k, i) => { const c = el("span", "pbsh" + (narrow.has(k) ? " pbx" : ""), k); if (groups.some((g) => g[0] === k && g !== groups[0])) c.classList.add("sep"); head.append(c); });
     box.append(head);
     const r = careerLine(p, +DS.season), rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null, car = rec ? rec[p.type + "C"] : null;
@@ -9404,7 +9404,7 @@
     const pcOf = (key, v, hib) => (v == null || v === "–" || isNaN(+v) || !srt[key] || !srt[key].length ? null : insertPct(srt[key], hib ? +v : -+v));
     const chipsOf = (vals) => (!vals ? {} : H ? { xwOBA: pcOf("xwd", vals.xwOBA, true) }   /* wOBA plain since 9 Oct 2026 */ : { nERA: pcOf("nera", vals.nERA, false), xnERA: pcOf("xnera", vals.xnERA, false) });
     const rowOf = (label, vals, cls) => {
-      const row = el("div", "pbsrow" + (cls ? " " + cls : "")); row.append(el("span", "pbsl", label));
+      const row = el("div", "pbsrow" + (cls ? " " + cls : "")); if (!yearOnly) row.append(el("span", "pbsl", label));
       const chips = chipsOf(vals);
       keys.forEach((k) => {
         const v = vals ? vals[k] : "–", text = v == null || v === "" ? "–" : String(v), c = el("span", "pbsv" + (narrow.has(k) ? " pbx" : ""));
@@ -9414,6 +9414,7 @@
       return row;
     };
     box.append(rowOf(String(DS.season) + (DS.level && DS.level !== "MLB" ? " " + DS.level : ""), season, "cur"));
+    if (yearOnly) return box;   /* the one header: the selected year alone (the career is the season table's N Yrs row) */
     if (career) box.append(rowOf("Career", career));
     else if (careerReady() && DS.level === "MLB") box.append(rowOf("Career", null));
     return box;
@@ -9452,6 +9453,30 @@
     const db = longDate(b.debut); if (db) line(`<b>MLB debut:</b> ${esc(db)}`);
     return box;
   }
+  // the one-line bio under the bar: positions, the team (a link to its Leaderboard), the hand (a hitter's B/T, a pitcher's LHP / RHP), height and
+  // weight, and his age that season (Sean, 9 Oct 2026: "condense all of the information into one header"); a phone reads codes and the club's
+  // abbreviation
+  function bioStrip(p, b) {
+    const d = el("div", "pbline"), H = p.type === "H", mob = mobileView(), dot = () => d.append(el("span", "pbdot", "·"));
+    const add = (t) => { if (d.childNodes.length) dot(); const s = typeof t === "string" ? el("span", null, t) : t; d.append(s); };
+    add(mob ? playedLabel(p) : posWords(p));
+    const tc = teamCode(p.team), mlb = DS.level === "MLB", full = mlb ? (TEAM_FULL[tc] || TEAM_NAMES[tc] || p.team) : p.team;
+    if (full) {
+      const t = el("span", "pbteam", (mob && mlb ? tc : full) + (mlb ? "" : " (" + (LEVEL_WORD[DS.level] || DS.level) + ")"));
+      if (mlb && TEAM_NAMES[tc]) { t.title = `This season's ${TEAM_NAMES[tc]} on the Leaderboard`; t.setAttribute("role", "link"); t.tabIndex = 0;
+        t.addEventListener("click", (e) => { e.stopPropagation(); state.teamF = { kind: "team", v: tc }; state.expanded = null; savePrefs(); location.hash = "#leaderboard"; }); }
+      add(t);
+    }
+    const bats = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
+    if (H) { if (bats && thr) add(`B/T ${bats}/${thr}`); else if (bats) add(`Bats ${bats}`); } else if (thr) add(thr === "L" ? "LHP" : "RHP");
+    if (b && b.ht) { const m = String(b.ht).match(/(\d+)\D+(\d+)/); add((m ? `${m[1]}-${m[2]}` : String(b.ht)) + (b.wt ? `, ${b.wt}` : "")); }
+    // his age in the season on the page (June 30, as B-Ref counts it), not today's
+    let age = null;
+    if (b && b.born) { const bd = new Date(b.born + "T12:00:00Z"); if (!isNaN(bd)) { age = +DS.season - bd.getUTCFullYear(); if (bd.getUTCMonth() > 5 || (bd.getUTCMonth() === 5 && bd.getUTCDate() > 30)) age--; } }
+    if (age == null && p.age != null) age = p.age;
+    if (age != null) add("Age " + age);
+    return d;
+  }
   // the page's band: the controls on top (Back, the season, Filters), the photo and the bio lines, the summary line at the foot
   function pageHead(p, st, g, o) {
     document.querySelectorAll(".phmodal").forEach((x) => x.remove());
@@ -9486,18 +9511,15 @@
     if (o.entry && !isMulti(o.key)) fx.append(filtersTog(p, slim));
     // the bar runs the screen's full width with his name at the left (Sean, 9 Oct 2026: "make it go across the screen fully and add the player
     // name to it and do the same for mobile") — bleedBar stretches it past the page's side margins
-    const bar = el("div", "pgbar"); bar.append(el("span", "pgbname", p.name), fx); top._bar = bar;
-    if (o.entry && !isMulti(o.key)) { const chips = viewChips(p); if (chips.childNodes.length) ctl.append(chips); }
-    // a phone with no Back: no row either — the year and Filters stack at the right of the name, the bio wrapping round them (Sean, 8 Oct 2026:
-    // "put the filters and year on the right side and then get rid of that top space being there that those two buttons originally were in")
-    const ctlIn = !backAt && mobileView();
-    if (ctlIn) plate.classList.add("nobkm"); else plate.append(ctl);
-    const main = el("div", "pbmain"), photo = el("div", "pbphoto"); photo.append(headshot(p.id, p.name)); main.append(photo);
-    const txt = el("div", "pbtext"), h2 = el("h2", null, p.name); h2.id = "modal-title"; if (ctlIn) txt.append(ctl); txt.append(h2);
-    txt.append(...bioLines(p, b));
-    // no "More bio, draft info" button (Sean, 9 Oct 2026: "get rid of the more bio draft info button"); moreBio stays, unused
-    main.append(txt); plate.append(main);
-    if (st && st.pct) plate.append(summaryBlock(p, st));
+    const bar = el("div", "pgbar"), nm = el("h2", "pgbname", p.name); nm.id = "modal-title"; bar.append(nm, fx); top._bar = bar;
+    let hasChips = false; if (o.entry && !isMulti(o.key)) { const chips = viewChips(p); if (chips.childNodes.length) { ctl.append(chips); hasChips = true; } }
+    // one header, no photo (Sean, 9 Oct 2026: "get rid of the headshot and then can we condense all of the information into one header with the stats
+    // of the selected year and the filters buttons"): the bar above (his name, the year, level, Filters, Raw) runs straight into the band, which is
+    // a row for Back and the filter chips only when there is one, one bio line, and the selected year's line — no second name, no career row
+    plate.classList.add("pbone");
+    const row1 = el("div", "pbrow1"); row1.append(bioStrip(p, b)); if (backAt || hasChips) row1.append(ctl);   /* Back and the chips at the bio line's right */
+    plate.append(row1);
+    if (st && st.pct) plate.append(summaryBlock(p, st, true));
     if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay, inWin); if (!state.cardTools && sum.childNodes.length) plate.append(sum); }
     top.append(plate);
     return top;
@@ -9523,6 +9545,12 @@
     bar.style.marginLeft = -L + "px"; bar.style.marginRight = -Rt + "px"; bar.style.paddingLeft = (L + pad) + "px"; bar.style.paddingRight = (Rt + pad) + "px";
   }
   window.addEventListener("resize", () => requestAnimationFrame(bleedBar));
+  // the bar and the band read as one header: the bar's red rule shows only once the band has scrolled up under it (class stuck)
+  function stickSync() {
+    const bar = document.querySelector("#xboard .pgbar"), band = document.querySelector("#xboard .pagehead"); if (!bar || !band) return;
+    bar.classList.toggle("stuck", band.getBoundingClientRect().bottom <= bar.getBoundingClientRect().bottom + 2);
+  }
+  window.addEventListener("scroll", () => requestAnimationFrame(stickSync), { passive: true });
   // His page's own filters area, in the space between the band and the season table (Sean, 9 Oct 2026: "fill that blank space with a filters area
   // that has every filter included in the filters button as well as the year and levels ones too"): Season and Level, Hitting / Pitching for a
   // two-way player, Raw / Stuff for a pitcher, then the Filters window's cells (dates, last N, hand, home / away, starts / relief) and Clear
@@ -10183,7 +10211,7 @@
     noteRecent(p);
     if (o.page) {
       const hd = pageHead(p, st, g, o);
-      box.append(...(hd._bar ? [hd._bar] : []), hd, seasonBlock(p, o)); requestAnimationFrame(bleedBar);   // the filters bar over the band; the filters area came off the same day (pageFilters stays, unused)
+      box.append(...(hd._bar ? [hd._bar] : []), hd, seasonBlock(p, o)); requestAnimationFrame(() => { bleedBar(); stickSync(); });   // the filters bar over the band; the filters area came off the same day (pageFilters stays, unused)
       const pg = el("div", "ppage pageflow"), B = el("div", "pcol pcolB wide");
       renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
       pg.append(B);

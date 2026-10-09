@@ -3082,3 +3082,17 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
       (Clemente), in that order, with the full names in the tooltip.
     - Left out: weekly / monthly awards, the minors and team awards.
     - Winners only: MLB's record has no vote finishes, so there is no B-Ref "MVP-1". Judge 2022: MVP, AS, SS, HA, MLB1.
+* **One header, no headshot (Sean, 9 Oct 2026: "maybe we get rid of the headshot and then can we condense all of the information into one
+  header with the stats of the selected year and the filters buttons")**: his page's head is now one blue block.
+  - **The sticky bar**: his name (the page's `h2#modal-title`, 28px; 20px on a phone, wrapping to two lines rather than cutting off) and the
+    year / level / Filters / Raw buttons. It runs straight into the band with no rule between them. Once the band has scrolled up under it,
+    the bar shows the red rule itself (`stickSync`, class `stuck`).
+  - **The band** (`.pbio.pbone`) has no photo and no second name. It holds:
+    - one bio line (`bioStrip`): positions, the team (a link to its Leaderboard; the club's code on a phone), B/T for a hitter or LHP / RHP for
+      a pitcher, height and weight, and **his age in the season shown** (June 30, B-Ref's way). Born, "(majors)" and the separate lines are gone.
+    - Back and the filter chips at that line's right, when there are any.
+    - the **selected year's line alone** (`summaryBlock(p, st, true)`, class `yonly`): no "Summary" / year label column and no Career row,
+      since the career is the season table's N Yrs row. It still shows the full season whatever the filters (the In Split row has the
+      filtered line).
+  - `bioLines`, the headshot's `.pbphoto` and the old `nobk` / `nobkm` layouts stay in `app.js` / `styles.css`, unused. CSS: the "one header"
+    block at the end of `styles.css`.
