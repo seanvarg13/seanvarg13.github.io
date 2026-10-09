@@ -3050,3 +3050,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   phone, where the header doesn't stick on this page. It is a white row, right-aligned, with a thin blue-grey rule under it. The fixed-spot pinning is
   gone: `pinFix` returns when the group is in the bar, and `playerView` no longer calls it. The Filters window's `place` looks for `.pgbar .phfilt`
   first. CSS at the end of `styles.css`.
+* **A phone's site header sticks on the player page again (Sean, 9 Oct 2026: "make it so the menu and search bar still scroll down with you on
+  mobile")**: the `position: static` the phone's `body[data-mode="player"] header.top` had for the old condensed bar is overridden to sticky at
+  0 (z-index 60). The filter bar sticks right under it at `--header-h`, and goes down with the header when the Menu is open. The block is at the end of
+  `styles.css`.

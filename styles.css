@@ -5122,3 +5122,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar .pgfix { position: static !important; flex-wrap: nowrap; max-width: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar .pgfix { flex-wrap: nowrap; max-width: none; gap: 6px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar .pgfix :is(.tsl, .phfilt, .segbtn) { height: 34px !important; padding: 0 9px !important; font-size: 15px !important; }
+/* a phone's site header (search and Menu) sticks on the player page again, the filter bar right under it (Sean, 9 Oct 2026: "make it so the menu
+   and search bar still scroll down with you on mobile") — it had been static there for the old condensed bar */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="player"] header.top { position: sticky; top: 0; z-index: 60; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar { top: var(--header-h, 0px); }
