@@ -3007,3 +3007,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   follows the same order.
 * **No "More bio, draft info" button (Sean, 9 Oct 2026: "get rid of the more bio draft info button")**: `pageHead` no longer draws the `.pbmore`
   fold; the bio lines end at Team. `moreBio` and `bioMore` stay in `app.js`, unused. Band 245px on a phone, 317 on a desktop.
+* **His page's own filters area; the season table's tab strip ends with the table (Sean, 9 Oct 2026: "fill that blank space with a filters area that
+  has every filter included in the filters button as well as the year and levels ones too", "on desktop get rid of this weird blue line that just comes
+  out for no reason when the table is done")**: `pageFilters(p, o)` sits between the band and the season table (`playerView`, page branch). It is a
+  framed box with a blue head ("Filters", Clear) holding Season and Level (`pageTitle(p, o)._picks.mk()`, the same picks as the band's year), Hitting /
+  Pitching for a two-way player (`typeSeg`), Raw / Stuff for a pitcher, and the Filters window's cells. Those come from `filterGrid(p, open, grid,
+  short)`, factored out of `filtersWindow`: From, To, Last N, hand, home / away, starts / relief. The cells are one wrapping row on a desktop and
+  stacked on a phone. The space over the season table shrinks to 40px (24 on a phone) when the area is there. The band's year and Filters button
+  stay. On a desktop `seasonBlock` sets the Regular Season / Playoffs strip's width to the table's (`sc.offsetWidth`, a ResizeObserver on the
+  table), so the blue strip no longer runs past the table's right edge. CSS: the "filters area" block at the end of `styles.css`.

@@ -9473,6 +9473,31 @@
     top.append(plate);
     return top;
   }
+  // His page's own filters area, in the space between the band and the season table (Sean, 9 Oct 2026: "fill that blank space with a filters area
+  // that has every filter included in the filters button as well as the year and levels ones too"): Season and Level, Hitting / Pitching for a
+  // two-way player, Raw / Stuff for a pitcher, then the Filters window's cells (dates, last N, hand, home / away, starts / relief) and Clear
+  function pageFilters(p, o) {
+    const box = el("div", "pgfilt"), hd = el("div", "pgfhd");
+    hd.append(el("span", "pgfname", "Filters"));
+    const clear = el("button", "linkbtn pgfclear", "Clear"); clear.type = "button";
+    clear.addEventListener("click", (e) => { e.stopPropagation(); state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; savePrefs(); render(); });
+    hd.append(clear); box.append(hd);
+    const grid = el("div", "phgrid pgfgrid"), cell = (cap, cls, ...kids) => { const c = el("div", "phf" + (cls ? " " + cls : "")); c.append(el("span", "phcap", cap), ...kids.filter(Boolean)); grid.append(c); return c; };
+    const t = pageTitle(p, o);
+    if (t._picks) { const [yr, lv] = t._picks.mk(); cell("Season", "pgfsel", yr); cell("Level", "pgfsel", lv); }
+    const tw = typeSeg(p); if (tw) cell("Hitting / Pitching", "", tw);
+    if (p.type === "P") {
+      const side = (state.cardSide || "raw") === "stuff" ? "stuff" : "raw", sg = el("div", "seg"); sg.setAttribute("role", "group");
+      for (const [k, l] of [["raw", "Raw"], ["stuff", "Stuff"]]) { const bt = el("button", "segbtn small", l); bt.type = "button"; bt.setAttribute("aria-pressed", String(k === side));
+        bt.addEventListener("click", (e) => { e.stopPropagation(); if (k !== side) { state.cardSide = k; savePrefs(); render(); } }); sg.append(bt); }
+      cell("Raw / Stuff", "", sg);
+    }
+    const { warn } = filterGrid(p, true, grid, false);
+    box.append(grid);
+    if (warn) box.append(warn);
+    if (state.daysLoading) box.append(el("span", "winnote", "Loading game-by-game data…"));
+    return box;
+  }
   // the filter chips (each filter in effect with its own ×), as renderPlate draws them for a popup
   function viewChips(p) {
     const r = el("div", "mrank inctl");
@@ -9979,6 +10004,10 @@
     }
     table.append(tbody);
     const sc = el("div", "sbscroll"); sc.append(table); if (!(post && !mlb.length)) box.append(sc);
+    // the Regular Season / Playoffs strip ends where the table does on a desktop (Sean, 9 Oct 2026: "get rid of this weird blue line that just
+    // comes out for no reason when the table is done"); a phone's table and strip are both the screen's width
+    if (!mobileView() && box.contains(sc)) { const fit = () => { if (sc.isConnected) tabs.style.width = sc.offsetWidth + "px"; };
+      requestAnimationFrame(fit); if (window.ResizeObserver) new ResizeObserver(fit).observe(table); }
     // B-Ref's frozen columns are the season and the team: Age slides out from between them as the table scrolls sideways, fading as it goes
     // (Sean, 8 Oct 2026: "when you scroll it fades and you just see the year and team"); the stylesheet keeps Team stuck right after Season
     sc.addEventListener("scroll", () => { const w = parseFloat(table.style.getPropertyValue("--sbw2")) || 40; table.style.setProperty("--sbage", Math.max(0, 1 - sc.scrollLeft / w).toFixed(3)); }, { passive: true });
@@ -10054,7 +10083,7 @@
     const { p, st, g, ref } = o;
     noteRecent(p);
     if (o.page) {
-      box.append(pageHead(p, st, g, o), seasonBlock(p, o));
+      box.append(pageHead(p, st, g, o), ...(o.entry && !isMulti(o.key) ? [pageFilters(p, o)] : []), seasonBlock(p, o));
       const pg = el("div", "ppage pageflow"), B = el("div", "pcol pcolB wide");
       renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
       pg.append(B);
@@ -10201,7 +10230,10 @@
     // alone; a year with minor-league seasons keeps the dropdown to pick the level, and a minors-only year names it
     const lvWorth = inYear(cur[1]).length > 1 || levelOf(cur[0]) !== "mlb" || keyKind(cur[0]);
     t.append(yr, ...(lvWorth ? [" ", lv] : []), " Percentiles");
-    hd.append(t);
+    hd.append(t); hd._picks = { yr, lv, mk: () => [titleSelect(String(cur[1]), years.map((y) => [String(y), String(y)]), (y) => yr._pick(y), "Season"), titleSelect(cur[0], inYear(cur[1]).map((sv) => [sv[0], (LEVELS[levelOf(sv[0])] || levelOf(sv[0])) + kt(sv[0])]), (k) => o.pick(k), "Level")] };
+    yr._pick = (y) => { const opts = inYear(Number(y)); if (!opts.length) return;
+      const hit = opts.find((sv) => levelOf(sv[0]) === levelOf(cur[0]) && keyKind(sv[0]) === keyKind(cur[0])) || opts.find((sv) => levelOf(sv[0]) === levelOf(cur[0]) && !keyKind(sv[0])) || opts[0];
+      if (hit[0] !== cur[0]) o.pick(hit[0]); };
     return hd;
   }
   // The pinned header, the blue plate. A desktop lays it out in three: the cut-out and his lines on the left, the
@@ -10224,9 +10256,8 @@
     }
     return tog;
   }
-  function filtersWindow(p, twoWay) {
-    const mob = mobileView(), open = !!state.cardTools;
-    const grid = el("div", "phgrid");
+  // the dates, last N, hand, venue and role cells — the Filters window's grid and the page's own filters area share them
+  function filterGrid(p, open = true, grid = el("div", "phgrid"), short = !mobileView()) {
     const cell = (cap, cls, ...kids) => { const c = el("div", "phf" + (cls ? " " + cls : "")); c.append(el("span", "phcap", cap), ...kids.filter(Boolean)); grid.append(c); return c; };
     let warn = null;
     if (open) {
@@ -10240,13 +10271,18 @@
         cell(`Last ${p.type === "P" ? "IP" : "PA"}`, "", lw);
       }
       const hand = seg("Handedness"), venue = seg("Venue");
-      if (!mob) { hand.firstChild.textContent = "All"; venue.firstChild.textContent = "Both"; }   // short enough for the plate's right third; the captions say which
+      if (short) { hand.firstChild.textContent = "All"; venue.firstChild.textContent = "Both"; }   // short enough for the plate's right third; the captions say which
       cell(p.type === "P" ? "Batters" : "Pitchers", "hand mfull", hand);      // under From, its buttons tight
       cell("Home / away", "w2 mfull", venue);                                   // under To and Last
       const role = seg("Role");                                                 // a swingman: his starts or relief outings
-      if (role) { if (!mob) role.firstChild.textContent = "Both"; cell("Starts / relief", "w3 mfull", role); }
+      if (role) { if (short) role.firstChild.textContent = "Both"; cell("Starts / relief", "w3 mfull", role); }
       warn = sp.querySelector(".splitwarn");
     }
+    return { grid, warn, cell };
+  }
+  function filtersWindow(p, twoWay) {
+    const open = !!state.cardTools;
+    const { grid, warn } = filterGrid(p, open);
     const sum = el("div", "phsum");                     // only when something needs saying: a split in force, days loading
     if (warn) sum.append(warn);
     if (state.daysLoading) sum.append(el("span", "winnote", "Loading game-by-game data…"));
