@@ -5000,3 +5000,6 @@ header.top .wordmark { display: none; }
 /* The Leaderboard's frozen Rk / Player cells carry their own row line (Sean, 9 Oct 2026: "fix the rank and name to have the border") —
    they're opaque so the sliding columns pass under them, which also hid the row's bottom rule behind them. */
 :root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main > :is(.rank, .who) { box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--ink) 16%, var(--surface)) !important; }
+
+/* No rule under the lit column name (Sean, 9 Oct 2026, from home: "the top row of the heatmapped column has that weird line there, can you get rid of that it happens on every table") — the lit wash and bold stay. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #colhead .h:is([aria-sort], .sorted), :root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colhead .h[aria-sort], :root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard thead th:has(.sortbtn.on), :root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt th.lit { box-shadow: none !important; }
