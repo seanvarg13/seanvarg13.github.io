@@ -3038,3 +3038,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   header. Phone: right-aligned, wrapping to two rows for a pitcher (`max-width: 196px`). The buttons are the Home / Away kind: white, a 1px `#c3d3e3`
   edge, square, navy bold condensed type, 40px (34 on a phone); Filters goes blue while its window is open. The space over the season table is the
   350 / 160px of before again. The CSS block is at the end of `styles.css`.
+* **A phone pitcher's fixed group is year over Filters (Sean, 9 Oct 2026: "for pitchers on the phone can you do just year and filters and have the level
+  and raw vs stuff go in the filters and put them both on the far right one on top of each other in that style")**: on a phone a pitcher's `.pgfix`
+  (class `stack`) holds only the year and Filters, one over the other at the same width, at the far right. The level (when `lvWorth`) and a Raw / Stuff
+  segment go into the Filters window: `filtersWindow(p, twoWay, extra)` draws each `[caption, node]` of `extra` under Hitting / Pitching, and
+  `filtersTog(p, noSide)` leaves out its Raw ▾. Hitters, and every desktop, are unchanged.
