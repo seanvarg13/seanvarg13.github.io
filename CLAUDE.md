@@ -3043,3 +3043,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (class `stack`) holds only the year and Filters, one over the other at the same width, at the far right. The level (when `lvWorth`) and a Raw / Stuff
   segment go into the Filters window: `filtersWindow(p, twoWay, extra)` draws each `[caption, node]` of `extra` under Hitting / Pitching, and
   `filtersTog(p, noSide)` leaves out its Raw ▾. Hitters, and every desktop, are unchanged.
+* **One sticky filter bar over the band (Sean, 9 Oct 2026: "make it so there is a single row header above the player card header that just has all the
+  filter buttons and scrolls down with you lets do that instead")**: `pageHead` puts the `.pgfix` group (year, level when `lvWorth`, Filters ▾, a
+  pitcher's Raw ▾ — on a phone too; the phone-pitcher stack of the entry above is history, `slim` is false) in a `.pgbar` that it hands back as
+  `top._bar`, and `playerView` puts it before the band. The bar is `position: sticky`: at `--header-h` under a desktop's sticky site header, at 0 on a
+  phone, where the header doesn't stick on this page. It is a white row, right-aligned, with a thin blue-grey rule under it. The fixed-spot pinning is
+  gone: `pinFix` returns when the group is in the bar, and `playerView` no longer calls it. The Filters window's `place` looks for `.pgbar .phfilt`
+  first. CSS at the end of `styles.css`.
