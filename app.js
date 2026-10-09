@@ -9519,8 +9519,8 @@
   // switch between the stats we currently have, a batted ball quality table, a batted ball distribution table, and a plate discipline table",
   // "towards the bottom of that white space"): the bar sits over the table's title; the numbers are hist/career-bb.js (build_career.py's
   // season_bb), loaded the first time a Statcast table is picked; per device
-  let sbTable = (() => { try { const v = localStorage.getItem("draft2027.sbtable"); return ["std", "bbq", "bbd", "pd"].includes(v) ? v : "std"; } catch (e) { return "std"; } })();
-  const SB_VIEWS = [["std", "Standard", "Standard batting"], ["bbq", "Batted Ball Quality", "Batted ball quality"], ["bbd", "Batted Ball Distribution", "Batted ball distribution"], ["pd", "Plate Discipline", "Plate discipline"]];
+  let sbTable = (() => { try { const v = localStorage.getItem("draft2027.sbtable"); return ["std", "bbq", "bbd", "pd", "br"].includes(v) ? v : "std"; } catch (e) { return "std"; } })();
+  const SB_VIEWS = [["std", "Standard", "Standard batting"], ["bbq", "Batted Ball Quality", "Batted ball quality"], ["bbd", "Batted Ball Distribution", "Batted ball distribution"], ["pd", "Plate Discipline", "Plate discipline"], ["br", "Baserunning", "Baserunning"]];
   // column → its key in the file (hi: higher is better, lo: lower, neither: no heat map); "pa" columns are weighted by PA in a sum, the rest by BBE
   const SBX = { "Avg EV": { k: "ev", hi: 1 }, EV90: { k: "ev90", hi: 1 }, "Max EV": { k: "maxev", hi: 1, max: 1 }, "Hard-Hit%": { k: "hh", hi: 1 }, "Barrel%": { k: "brl", hi: 1 },
     "Sweet-Spot%": { k: "ss", hi: 1 }, "Bat Speed": { k: "bs", hi: 1 }, "FB EV": { k: "evfb", hi: 1 }, "LD EV": { k: "evld", hi: 1 }, "GB EV": { k: "evgb", hi: 1 },
@@ -9531,8 +9531,12 @@
   const SBX_COLS = {
     bbq: ["BBE", "Avg EV", "EV90", "Max EV", "Hard-Hit%", "Barrel%", "Sweet-Spot%", "FB EV", "LD EV", "GB EV", "Bat Speed"],
     bbd: ["BBE", "GB%", "LD%", "FB%", "PU%", "Pull FB%", "Pull%", "Cent%", "Oppo%", "Mix wOBA"],   // Air% / Pull Air% out, Pull FB% in (Sean, 9 Oct 2026)
-    pd: ["PA", "K%", "BB%", "Swing%", "Z-Swing%", "O-Swing%", "Contact%", "Z-Contact%", "O-Contact%", "Whiff%"] };
-  const SBX_BRK = { bbq: ["Avg EV", "Hard-Hit%", "FB EV", "Bat Speed", "Pos"], bbd: ["GB%", "Pull FB%", "Pull%", "Mix wOBA", "Pos"], pd: ["K%", "Swing%", "Contact%", "Pos"] };
+    pd: ["PA", "K%", "BB%", "Swing%", "Z-Swing%", "O-Swing%", "Contact%", "Z-Contact%", "O-Contact%", "Whiff%"],
+    // Baserunning (Sean, 9 Oct 2026: "get rid of the sprint speed and steals from the standard table and add in a new baserunning table and on that
+    // one heat map the sprint speed"): the official steals, caught stealing from the attempts in the season files, Statcast's sprint speed and
+    // FanGraphs' baserunning runs
+    br: ["G", "PA", "SB", "CS", "SB%", "Sprint", "BsR"] };
+  const SBX_BRK = { br: ["SB", "Sprint", "BsR", "Pos"], bbq: ["Avg EV", "Hard-Hit%", "FB EV", "Bat Speed", "Pos"], bbd: ["GB%", "Pull FB%", "Pull%", "Mix wOBA", "Pos"], pd: ["K%", "Swing%", "Contact%", "Pos"] };
   const SBX_TIP = { BBE: "Batted balls tracked by Statcast", "Pull FB%": "Pulled fly balls over his fly balls", EV90: "90th-percentile exit velocity", "Sweet-Spot%": "Batted balls launched 8-32°", "FB EV": "Exit velocity on fly balls",
     "LD EV": "Exit velocity on line drives", "GB EV": "Exit velocity on ground balls", "Bat Speed": "Average bat speed on his competitive swings (2023 on)", "Air%": "Line drives and fly balls (no popups)",
     "Pull Air%": "Balls in the air pulled", "Mix wOBA": "The league's wOBA for each kind of ball he hit, averaged over his balls in play", "O-Swing%": "Swings at pitches out of the zone (chase)",
@@ -9553,6 +9557,7 @@
       for (const l of has) { const v = l.bx[d.k]; if (v == null) continue; if (d.max) { mx = mx == null ? v : Math.max(mx, v); continue; } const ww = d.pa ? +l.c.PA || 0 : +l.bx.bbe || 0; n += v * ww; w += ww; }
       o[d.k] = d.max ? mx : w ? n / w : null;
     }
+    o.sba = has.every((l) => l.bx.sba != null) ? has.reduce((a, l) => a + l.bx.sba, 0) : null;   // steal attempts add up
     return o;
   }
   // the heat map's pool for a Statcast column: that season's qualified hitters (300+ PA, 110 in 2020), from the two files
@@ -9605,15 +9610,17 @@
   // speed (heat-mapped) and SB as a group where BsR was; Off / Def / BsR gone
   // and then (Sean, the same night): OPS between SLG and wRC+, fWAR / bWAR after SB as one group (a rule before fWAR and after bWAR, none between)
   // ISO behind OPS (Sean, 8 Oct 2026: "move iso to behind ops on the standard table")
-  const SB_H = ["wOBA", "xwOBA", "G", "PA", "HR", "R", "RBI", "BB%", "K%", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "OPS", "ISO", "wRC+", "Sprint", "SB", "fWAR", "bWAR"];
-  const SB_BRK = { H: new Set(["G", "BB%", "HR/FB", "AVG", "Sprint", "fWAR", "Pos"]), P: new Set() };   // a heavier rule before each of these
-  const SB_FG = ["fWAR", "bWAR", "wRC+", "Sprint", "HR/FB"], SB_SAB = { "wRC+": 0, fWAR: 4 };   // SB_FG: not in MLB's postseason lines
+  const SB_H = ["wOBA", "xwOBA", "G", "PA", "HR", "R", "RBI", "BB%", "K%", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "OPS", "ISO", "wRC+", "fWAR", "bWAR"];   // Sprint / SB moved to Baserunning (9 Oct 2026)
+  const SB_BRK = { H: new Set(["G", "BB%", "HR/FB", "AVG", "fWAR", "Pos"]), P: new Set() };   // a heavier rule before each of these
+  const SB_FG = ["fWAR", "bWAR", "wRC+", "Sprint", "HR/FB", "BsR"], SB_SAB = { "wRC+": 0, BsR: 1, fWAR: 4 };   // SB_FG: not in MLB's postseason lines
   const SB_HEAT = new Set(["xwOBA"]);   // filled in their percentile colour among that season's qualified hitters — wOBA plain (Sean, 9 Oct 2026: "only xwoba is heatmapped not woba"), Sprint plain too ("get rid of the heat map on sprint speed")
   const SB_TIP = { "BB%": "Walks per plate appearance", "K%": "Strikeouts per plate appearance", ISO: "Isolated power: SLG minus AVG",
     BABIP: "Batting average on balls in play: (H − HR) / (AB − K − HR + SF)", wOBA: "The site's wOBA where the season is built (2015 on), FanGraphs' before",
     "HR/FB": "Home runs per fly ball, Savant's way: Statcast's fly balls and popups, with his line-drive homers counted as fly balls",
     "wRC+": "FanGraphs: runs created per PA, park and league adjusted, 100 = average", fWAR: "FanGraphs' wins above replacement — batting, fielding and, for a two-way player, pitching",
-    bWAR: "Baseball-Reference's wins above replacement — batting, fielding and, for a two-way player, pitching", Sprint: "Statcast sprint speed, feet per second (2015 on)" };
+    bWAR: "Baseball-Reference's wins above replacement — batting, fielding and, for a two-way player, pitching", Sprint: "Statcast sprint speed, feet per second (2015 on)",
+    CS: "Caught stealing: his steal attempts in the season's Statcast file less his official steals (2015 on)", "SB%": "Stolen bases per attempt",
+    BsR: "FanGraphs' baserunning runs above average: steals, caught stealing and taking extra bases" };
   const SB_P = ["W", "L", "ERA", "FIP", "G", "GS", "IP", "H", "HR", "BB", "K", "WHIP", "K%", "BB%", "K-BB%", "Whiff%", "Strike%", "GB%"];
   const SB_BEST_HI = { H: new Set(["G", "PA", "HR", "R", "RBI", "SB", "BB%", "ISO", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA", "wRC+", "Sprint", "fWAR", "bWAR"]), P: new Set(["W", "G", "GS", "IP", "K", "K%", "K-BB%", "Whiff%", "Strike%", "GB%"]) };
   const SB_BEST_LO = { H: new Set(["K%"]), P: new Set(["ERA", "FIP", "WHIP", "BB%"]) };
@@ -9625,6 +9632,8 @@
     const c = l.c, a = c.adv || {};
     if (H) {
       if (k === "BBE") return l.bx ? l.bx.bbe : null;
+      if (k === "CS") return l.bx && l.bx.sba != null ? Math.max(0, l.bx.sba - (+c.SB || 0)) : null;          // attempts from the season files less his official steals
+      if (k === "SB%") return l.bx && l.bx.sba ? 100 * Math.min(1, (+c.SB || 0) / l.bx.sba) : null;
       if (SBX[k]) return l.bx ? l.bx[SBX[k].k] : null;
       const r = l.rc || c;   // rates from the unscaled line (the 162-game average scales only the counts)
       if (k === "wOBA") return sbWoba(l); if (k === "xwOBA") return a.xwoba;
@@ -9653,7 +9662,7 @@
   // rates carry their % sign in this table (Sean, 8 Oct 2026: "for walk and k percentages can you add in the % in the tables")
   const sbFmt = (k, v) => (v == null || v === "" || (typeof v === "number" && isNaN(v)) ? "–" : k === "Mix wOBA" ? fmtX(+v) : k === "BBE" ? String(Math.round(+v))
     : ["Avg EV", "EV90", "Max EV", "FB EV", "LD EV", "GB EV", "Bat Speed"].includes(k) ? (+v).toFixed(1) : ["AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA", "ISO", "BABIP"].includes(k) ? fmtX(+v)
-    : ["ERA", "FIP", "WHIP"].includes(k) ? (+v).toFixed(2) : k === "wRC+" ? String(Math.round(+v)) : ["fWAR", "bWAR"].includes(k) ? sbRuns(+v) : k === "Sprint" ? (+v).toFixed(1)
+    : ["ERA", "FIP", "WHIP"].includes(k) ? (+v).toFixed(2) : k === "wRC+" ? String(Math.round(+v)) : ["fWAR", "bWAR", "BsR"].includes(k) ? sbRuns(+v) : k === "Sprint" ? (+v).toFixed(1)
     : /%$|\/FB$/.test(k) ? (+v).toFixed(1) + "%" : k === "IP" ? String(v) : String(v));
   // a sum of lines: counts added, the rates recomputed, our numbers weighted by PA / BF (GB% too, which combineLines leaves out)
   function sbCombine(H, lines) {
@@ -9823,7 +9832,7 @@
       for (const k of cols) {
         const v = l ? sbVal(H, l, k) : null, td = cell(sbFmt(k, v));
         const xd = SBX[k];
-        if (H && opts.heat != null && (SB_HEAT.has(k) || (xd && (xd.hi || xd.lo))) && v != null && !isNaN(+v)) {
+        if (H && opts.heat != null && (SB_HEAT.has(k) || (view === "br" && k === "Sprint") || (xd && (xd.hi || xd.lo))) && v != null && !isNaN(+v)) {
           const pool = xd ? (xd.lo ? sbxPool(opts.heat, xd.k).map((x) => -x).reverse() : sbxPool(opts.heat, xd.k)) : sbPool(opts.heat)[k];
           if (pool && pool.length >= 20) {   /* the whole cell filled in its percentile colour, not a pill (Sean, 8 Oct 2026) */
             const pc = insertPct(pool, xd && xd.lo ? -v : +v), sty = pctStyle(pc);
@@ -9904,7 +9913,7 @@
         if (H && tot.c.sab) avg.c.sab = tot.c.sab.map((v, i) => (v == null || i === 0 || i === 5 ? v : v * f));   // runs and WAR per 162 games; wRC+ / wOBA as they are
         if (H && tot.c.ext) avg.c.ext = [tot.c.ext[0] == null ? null : tot.c.ext[0] * f, tot.c.ext[1], tot.c.ext[2]];   // bWAR per 162; sprint as it is (HR/FB reads the unscaled line)
         if (H && tot.c.pw) avg.c.pw = tot.c.pw.map((v) => (v == null ? null : v * f));   // and his pitching WAR per 162
-        if (tot.bx) avg.bx = Object.assign({}, tot.bx, { bbe: Math.round((+tot.bx.bbe || 0) * f) });   // batted balls per 162; the rates as they are
+        if (tot.bx) avg.bx = Object.assign({}, tot.bx, { bbe: Math.round((+tot.bx.bbe || 0) * f), sba: tot.bx.sba == null ? null : Math.round(tot.bx.sba * f) });   // batted balls per 162; the rates as they are
         row(["162 Game Avg"], avg, "tot");
       }
       // each club: a traded year's clubs from the record's own club rows

@@ -2953,3 +2953,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   inside a `.phead .phpinband > .mplate.pbio`, so it wears the band's colours, pills and red stripe, under the white name / year / Filters row. `condSync`
   turns the bar on as the band's `.pbsum` reaches the bottom of that row. The pinned Summary then sits exactly where the band's was, so there's no
   slide (the transform is off when the bar carries it). Phone 135px, desktop 153px. His screenshot of the white stat tiles was the PR #503 bar.
+* **A Baserunning table; Sprint and SB off Standard (Sean, 9 Oct 2026: "get rid of the sprint speed and steals from the standard table and add in a new
+  baserunning table and on that one heat map the sprint speed")**: `SB_H` drops Sprint and SB, so Standard reads … OPS ISO wRC+ | fWAR bWAR | Pos.
+  `SB_VIEWS` gains **Baserunning** (`br`): G PA | SB CS SB% | Sprint | BsR | Pos (`SBX_COLS.br` / `SBX_BRK.br`).
+  - **SB** is the official count.
+  - **CS** is his steal attempts minus SB. The attempts are `m.sba` from the season files, appended to `SBX_KEYS` as **`sba`** (so `hist/career-bb.js`
+    carries it — regenerated the same day); `sbxCombine` sums it, and the 162-game average scales it.
+  - **SB%** is SB over attempts.
+  - **Sprint** is filled with its percentile colour among that season's qualified hitters (`sbPool`), in this view only.
+  - **BsR** is FanGraphs' baserunning runs (`sab[1]`, `SB_SAB.BsR`), summed in the totals and scaled per 162 games.
+  Regular season only, like the Statcast views. Seasons before 2015 and the minors read "–" for CS / SB%.
