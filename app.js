@@ -9484,7 +9484,9 @@
     }
     const twoWay = typeSeg(p);
     if (o.entry && !isMulti(o.key)) fx.append(filtersTog(p, slim));
-    const bar = el("div", "pgbar"); bar.append(fx); top._bar = bar;
+    // the bar runs the screen's full width with his name at the left (Sean, 9 Oct 2026: "make it go across the screen fully and add the player
+    // name to it and do the same for mobile") — bleedBar stretches it past the page's side margins
+    const bar = el("div", "pgbar"); bar.append(el("span", "pgbname", p.name), fx); top._bar = bar;
     if (o.entry && !isMulti(o.key)) { const chips = viewChips(p); if (chips.childNodes.length) ctl.append(chips); }
     // a phone with no Back: no row either — the year and Filters stack at the right of the name, the bio wrapping round them (Sean, 8 Oct 2026:
     // "put the filters and year on the right side and then get rid of that top space being there that those two buttons originally were in")
@@ -9511,6 +9513,16 @@
     fx.style.top = Math.round(r.top + scrollY) + "px"; fx.style.left = Math.round(Math.max(8, Math.min(r.left, innerWidth - r.width - 8))) + "px"; fx.classList.add("on");
   }
   window.addEventListener("resize", () => requestAnimationFrame(pinFix));
+  // the filter bar out to both edges of the screen: negative margins as wide as the page's side gaps, the same as padding so its contents stay
+  // in line with the page (the screen's width without the scrollbar, so nothing scrolls sideways)
+  function bleedBar() {
+    const bar = document.querySelector("#xboard .pgbar"); if (!bar) return;
+    bar.style.marginLeft = bar.style.marginRight = bar.style.paddingLeft = bar.style.paddingRight = "";
+    const r = bar.getBoundingClientRect(), L = Math.max(0, r.left), Rt = Math.max(0, document.documentElement.clientWidth - r.right);
+    const pad = mobileView() ? 12 : 0;
+    bar.style.marginLeft = -L + "px"; bar.style.marginRight = -Rt + "px"; bar.style.paddingLeft = (L + pad) + "px"; bar.style.paddingRight = (Rt + pad) + "px";
+  }
+  window.addEventListener("resize", () => requestAnimationFrame(bleedBar));
   // His page's own filters area, in the space between the band and the season table (Sean, 9 Oct 2026: "fill that blank space with a filters area
   // that has every filter included in the filters button as well as the year and levels ones too"): Season and Level, Hitting / Pitching for a
   // two-way player, Raw / Stuff for a pitcher, then the Filters window's cells (dates, last N, hand, home / away, starts / relief) and Clear
@@ -10122,7 +10134,7 @@
     noteRecent(p);
     if (o.page) {
       const hd = pageHead(p, st, g, o);
-      box.append(...(hd._bar ? [hd._bar] : []), hd, seasonBlock(p, o));   // the filters bar over the band; the filters area came off the same day (pageFilters stays, unused)
+      box.append(...(hd._bar ? [hd._bar] : []), hd, seasonBlock(p, o)); requestAnimationFrame(bleedBar);   // the filters bar over the band; the filters area came off the same day (pageFilters stays, unused)
       const pg = el("div", "ppage pageflow"), B = el("div", "pcol pcolB wide");
       renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
       pg.append(B);

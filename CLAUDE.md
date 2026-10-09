@@ -3054,3 +3054,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   mobile")**: the `position: static` the phone's `body[data-mode="player"] header.top` had for the old condensed bar is overridden to sticky at
   0 (z-index 60). The filter bar sticks right under it at `--header-h`, and goes down with the header when the Menu is open. The block is at the end of
   `styles.css`.
+* **The filter bar full width with his name (Sean, 9 Oct 2026: "on desktop can you make it go across the screen fully and add the player name to it and
+  do the same for mobile")**: `.pgbar` leads with `.pgbname` (his name, bold condensed, 24px / 18px on a phone, ellipsised) and the buttons at the
+  right. `bleedBar()` (after each player-page render and on resize) gives the bar negative side margins as wide as the page's gaps to the screen's
+  edges and the same as padding, so it spans `clientWidth` (no sideways scroll) while its contents line up with the page. On a phone the buttons
+  are a little tighter (7px padding, 14px type) so a pitcher's four fit beside his name.
