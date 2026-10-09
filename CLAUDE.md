@@ -2989,3 +2989,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   - **Playoffs view:** ERA | G GS IP | K% BB%.
   - **Before 2015:** seasons read "–" for the Statcast columns.
   - **Phone pinned row:** a pitcher's four buttons are tighter there so his name fits.
+* **No pinned bar on scroll (Sean, 9 Oct 2026: "ok maybe we actually just get rid of the scrolling headers and not have that at all")**: his page
+  no longer pins anything as it scrolls. `playerView` doesn't append `condensedBar` or call `condSync`, so the band, the Summary and the season
+  table just scroll with the page, and Filters lives on the band alone. `condensedBar` / `condSync` and the `.phpin` CSS stay in `app.js` /
+  `styles.css`, unused (`condSync` finds no bar and returns). The pinned-bar entries above (PRs #504-#509) are history.
