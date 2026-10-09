@@ -9351,12 +9351,10 @@
                      : [[stuffSide() ? "xnERA" : "nERA", "ERA"], ["W", "L", "G", "GS", "IP"], ["H", "HR", "BB", "K"], ["WHIP", "K%", "BB%", "K-BB%"]];
     const narrow = H ? new Set(["AB", "H", "R", "RBI", "SB"]) : new Set(["W", "L", "G", "GS", "H", "HR", "BB", "K", "WHIP"]);   // off a phone's line
     const keys = groups.flat();
-    // a table in the season table's dress (Sean, 9 Oct 2026, design A of the Player Header Redesigns canvas): the column names on the blue band,
-    // gridlines, a red rule where a group ends, only xwOBA (a pitcher's nERA / xnERA) filled with its percentile colour
-    const gEnd = new Set(groups.slice(0, -1).map((gr) => gr[gr.length - 1]));
-    const t = el("table", "pbst"), th = el("thead"), hr = el("tr"); hr.append(el("th", "pbsl ge", ""));
-    keys.forEach((k) => hr.append(el("th", (narrow.has(k) ? "pbx" : "") + (gEnd.has(k) ? " ge" : ""), k)));
-    th.append(hr); t.append(th); const tb = el("tbody"); t.append(tb); box.append(t);
+    box.style.setProperty("--n", keys.length);
+    const head = el("div", "pbsrow pbshead"); head.append(el("span", "pbsl", "Summary"));
+    keys.forEach((k, i) => { const c = el("span", "pbsh" + (narrow.has(k) ? " pbx" : ""), k); if (groups.some((g) => g[0] === k && g !== groups[0])) c.classList.add("sep"); head.append(c); });
+    box.append(head);
     const r = careerLine(p, +DS.season), rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null, car = rec ? rec[p.type + "C"] : null;
     const f3 = (v) => (v == null ? "–" : fmtX(+v)), f2 = (v) => (v == null ? "–" : (+v).toFixed(2)), f1 = (v) => (v == null ? "–" : (+v).toFixed(1));
     const pctOf = (n, d) => (n != null && d ? f1(100 * n / d) : "–");
@@ -9379,23 +9377,24 @@
         career = { nERA: "–", xnERA: "–", ERA: f2(car[2]), W: car[0], L: car[1], G: car[3], GS: car[4], IP: car[6], H: car[7], HR: car[8], BB: car[9], K: car[10], WHIP: f2(car[11]), "K%": pctOf(k, bf), "BB%": pctOf(bb, bf), "K-BB%": pctOf(k - bb, bf) };
       }
     }
-    // xwOBA (a pitcher's nERA / xnERA) filled with its percentile colour among the full season's pool — the career row placed in the same pool
+    // the first pair heat-mapped as the Mix tab's Lg wOBA chips (Sean, 8 Oct 2026: "heat map these two like this"): wOBA / xwOBA (a pitcher's
+    // nERA / xnERA) as pills in the percentile colour among the full season's pool — the career row placed in the same pool
     const pl = full(() => pool(H ? "H" : p.primary)), srt = (pl && pl.sorted) || {};
     const pcOf = (key, v, hib) => (v == null || v === "–" || isNaN(+v) || !srt[key] || !srt[key].length ? null : insertPct(srt[key], hib ? +v : -+v));
     const chipsOf = (vals) => (!vals ? {} : H ? { xwOBA: pcOf("xwd", vals.xwOBA, true) }   /* wOBA plain since 9 Oct 2026 */ : { nERA: pcOf("nera", vals.nERA, false), xnERA: pcOf("xnera", vals.xnERA, false) });
     const rowOf = (label, vals, cls) => {
-      const row = el("tr", cls || null); row.append(el("td", "pbsl ge", label));
+      const row = el("div", "pbsrow" + (cls ? " " + cls : "")); row.append(el("span", "pbsl", label));
       const chips = chipsOf(vals);
       keys.forEach((k) => {
-        const v = vals ? vals[k] : "–", text = v == null || v === "" ? "–" : String(v), c = el("td", (narrow.has(k) ? "pbx" : "") + (gEnd.has(k) ? " ge" : ""), text);
-        if (chips[k] != null) { heatTd(c, chips[k]); c.title = ordinal(Math.round(chips[k])) + " percentile"; }
-        row.append(c);
+        const v = vals ? vals[k] : "–", text = v == null || v === "" ? "–" : String(v), c = el("span", "pbsv" + (narrow.has(k) ? " pbx" : ""));
+        if (chips[k] != null) { const chip = el("span", "uchip pbchip", text); paintBar(chip, chips[k]); chip.style.color = "#fff"; chip.title = ordinal(Math.round(chips[k])) + " percentile"; c.append(chip); } else c.textContent = text;
+        if (groups.some((g) => g[0] === k && g !== groups[0])) c.classList.add("sep"); row.append(c);
       });
-      tb.append(row);
+      return row;
     };
-    rowOf(String(DS.season) + (DS.level && DS.level !== "MLB" ? " " + DS.level : ""), season, "cur");
-    if (career) rowOf("Career", career);
-    else if (careerReady() && DS.level === "MLB") rowOf("Career", null);
+    box.append(rowOf(String(DS.season) + (DS.level && DS.level !== "MLB" ? " " + DS.level : ""), season, "cur"));
+    if (career) box.append(rowOf("Career", career));
+    else if (careerReady() && DS.level === "MLB") box.append(rowOf("Career", null));
     return box;
   }
   // the B-Ref bio lines: positions, bats / throws, height and weight, born, team — and under More: full name, drafted, debut, birthplace
@@ -9432,16 +9431,16 @@
     const db = longDate(b.debut); if (db) line(`<b>MLB debut:</b> ${esc(db)}`);
     return box;
   }
-  // his page's head, design A of the Player Header Redesigns canvas (Sean, 9 Oct 2026: "I like A can you do that for both desktop and phone"): no band —
-  // white, like the tables under it. A phone: a row of Back / the year / Filters, then the photo beside the name and bio lines, then the Summary
-  // table. A desktop: Back over the name, the year and Filters in the top-right corner, the bio in two columns, the Summary table across
+  // the page's band: the controls on top (Back, the season, Filters), the photo and the bio lines, the summary line at the foot
   function pageHead(p, st, g, o) {
     document.querySelectorAll(".phmodal").forEach((x) => x.remove());
-    const mob = mobileView(), top = el("div", "pagehead pha" + (mob ? " m" : " d"));
+    const top = el("div", "cardtop phead pagehead"), plate = el("div", "mplate pbio");
     const b = bio(p.id);
-    const ctl = el("div", "pbctl phactl");
-    if (mob && backAt) ctl.append(backButton(false));
-    ctl.append(el("span", "pbsp"));
+    const ctl = el("div", "pbctl");
+    // no list to go back to → no row for the controls: the year and Filters sit in the band's top-right corner over its empty side (Sean, 8 Oct 2026:
+    // "now that you got rid of the home button this blank space is not needed. Keep it for when the back to the leaderboard is needed but thats it")
+    if (!backAt && !mobileView()) plate.classList.add("nobk");
+    ctl.append(backButton(false), el("span", "pbsp"));
     const title = pageTitle(p, o); title.classList.add("pinline", "pbyear");
     for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
     ctl.append(title);
@@ -9450,18 +9449,20 @@
       ctl.append(filtersTog(p));
       const chips = viewChips(p); if (chips.childNodes.length) ctl.append(chips);
     }
-    const main = el("div", "pbmain phamain"), photo = el("div", "pbphoto"); photo.append(headshot(p.id, p.name)); main.append(photo);
-    const txt = el("div", "pbtext");
-    if (!mob && backAt) txt.append(backButton(false));
-    const h2 = el("h2", null, p.name); h2.id = "modal-title"; txt.append(h2);
-    const lines = el("div", "pblines"); lines.append(...bioLines(p, b));
+    // a phone with no Back: no row either — the year and Filters stack at the right of the name, the bio wrapping round them (Sean, 8 Oct 2026:
+    // "put the filters and year on the right side and then get rid of that top space being there that those two buttons originally were in")
+    const ctlIn = !backAt && mobileView();
+    if (ctlIn) plate.classList.add("nobkm"); else plate.append(ctl);
+    const main = el("div", "pbmain"), photo = el("div", "pbphoto"); photo.append(headshot(p.id, p.name)); main.append(photo);
+    const txt = el("div", "pbtext"), h2 = el("h2", null, p.name); h2.id = "modal-title"; if (ctlIn) txt.append(ctl); txt.append(h2);
+    txt.append(...bioLines(p, b));
     const more = el("button", "pbmore", bioMore ? "Less bio, draft info ▴" : "More bio, draft info ▾"); more.type = "button"; more.setAttribute("aria-expanded", String(bioMore));
     more.addEventListener("click", (e) => { e.stopPropagation(); bioMore = !bioMore; render(); });
-    lines.append(more); txt.append(lines); if (bioMore) txt.append(moreBio(p, b));
-    main.append(txt);
-    if (mob) top.append(ctl, main); else { const row = el("div", "pharow"); row.append(main, ctl); top.append(row); }
-    if (st && st.pct) top.append(summaryBlock(p, st));
-    if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay); if (!state.cardTools && sum.childNodes.length) top.append(sum); }
+    txt.append(more); if (bioMore) txt.append(moreBio(p, b));
+    main.append(txt); plate.append(main);
+    if (st && st.pct) plate.append(summaryBlock(p, st));
+    if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay); if (!state.cardTools && sum.childNodes.length) plate.append(sum); }
+    top.append(plate);
     return top;
   }
   // the filter chips (each filter in effect with its own ×), as renderPlate draws them for a popup
