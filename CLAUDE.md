@@ -3002,3 +3002,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Rest of Contact and then after that just have the luck and final row")**: `renderXbabipTab` draws the seven drivers, then **Rest of Contact** as a plain
   row (± = xBABIP − the running total; its running BABIP is his xBABIP, the tooltip says so), then the Luck and BABIP band rows. "The seven together" and
   the xBABIP band row are gone.
+* **HR / FB by season: the raw counts first (Sean, 9 Oct 2026: "put the raw hr and fb columns first and then have the rest in the current order")**:
+  `hrfbTable` is Season · Team | **Raw**: HR · FB | **Fly-ball contact**: FB EV · FB Brl% | **HR / FB**: HR/FB · xHR/FB · Diff; the career row
+  follows the same order.
