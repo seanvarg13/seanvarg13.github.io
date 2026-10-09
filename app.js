@@ -7193,9 +7193,9 @@
         if (d != null) { sum += d; run += d; }
         b.row(lab, his, lg, f, pctAmong(ref.map((q) => val(q, k)).filter((z) => z != null), his, Math.sign(XBAB[k])), d, d == null ? null : run, XBAB_TIP[k]);
       }
-      b.band("The seven together", sum, null, "line drives, popups, grounder and liner exit velocity, speed, the opposite field and fly balls");
-      b.band("Rest of his contact", m.xbabip - run, null, "what the directional model sees beyond the seven — the launch angles and spray of each ball");
-      b.band("xBABIP", m.xbabip - lgX, m.xbabip, "what his contact deserved: the directional xBA's expected hits less his home runs, over his balls in play");
+      // no "seven together" or xBABIP band rows (Sean, 9 Oct 2026): the rest of his contact is a plain row whose running BABIP is his xBABIP,
+      // then Luck and BABIP close the table
+      b.row("Rest of Contact", null, null, fmtX, null, m.xbabip - run, m.xbabip, `what the directional model sees beyond the seven — the launch angles and spray of each ball — landing on his xBABIP ${fmtX(m.xbabip)}`);
       b.band("Luck", m.babip - m.xbabip, null, "hits in play above or below what the contact deserved — it repeats year to year at only r .15");
       b.band("BABIP", m.babip - lgB, m.babip, `his BABIP against the league's ${fmtX(lgB)}`);
       w.append(b.done());
