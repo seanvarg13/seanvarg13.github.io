@@ -2993,3 +2993,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   no longer pins anything as it scrolls. `playerView` doesn't append `condensedBar` or call `condSync`, so the band, the Summary and the season
   table just scroll with the page, and Filters lives on the band alone. `condensedBar` / `condSync` and the `.phpin` CSS stay in `app.js` /
   `styles.css`, unused (`condSync` finds no bar and returns). The pinned-bar entries above (PRs #504-#509) are history.
+* **The B-Ref tables' foot without the blue strip, red rules (Sean, 9 Oct 2026, the xHR/FB tab: "get rid of that weird blue thing separating the
+  table and their totals rows", "make the line breaks red")**: every `brTable` table (the card's xHR/FB, xBABIP, Mix and Pitching+ tables, the
+  Pitching+ board, home) hides its `tr.gap` row. The first totals row after it draws a 2px stripe-red rule on its top instead. Every group rule
+  (`.ge`) and the frozen column's edge (`.f3`) are stripe red, as on the season table. CSS only: the block at the end of `styles.css`. `gap()` still
+  builds the row, so taking the block out brings the strip back.
