@@ -5135,3 +5135,8 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar .pgfix { gap: 5px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar .pgfix :is(.tsl, .phfilt, .segbtn) { padding: 0 7px !important; font-size: 14px !important; gap: 4px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar .pgbname { font-weight: 700 !important; }
+/* the filter bar in the site header's blue, his name white, a red stripe under it like the header's (Sean, 9 Oct 2026: "make it blue and not white
+   so it fits with the regular header"); the buttons stay the white boxy ones */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar { background: var(--band2, var(--accent-2)) !important; border-bottom: 3px solid var(--stripe-line, #c8102e) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar .pgbname { color: #fff !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar .pgfix :is(.tsl, .phfilt, .segbtn) { border-color: #fff !important; }
