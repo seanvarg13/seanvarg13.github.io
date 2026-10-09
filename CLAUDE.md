@@ -2998,3 +2998,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Pitching+ board, home) hides its `tr.gap` row. The first totals row after it draws a 2px stripe-red rule on its top instead. Every group rule
   (`.ge`) and the frozen column's edge (`.f3`) are stripe red, as on the season table. CSS only: the block at the end of `styles.css`. `gap()` still
   builds the row, so taking the block out brings the strip back.
+* **The BABIP build-up trimmed (Sean, 9 Oct 2026: "make the blue seven together go away and then make the rest of his contact be a white column and say
+  Rest of Contact and then after that just have the luck and final row")**: `renderXbabipTab` draws the seven drivers, then **Rest of Contact** as a plain
+  row (± = xBABIP − the running total; its running BABIP is his xBABIP, the tooltip says so), then the Luck and BABIP band rows. "The seven together" and
+  the xBABIP band row are gone.
