@@ -2909,3 +2909,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (his latest if the card is on one he has no line for; full season, from the career files) — league HR/FB, then FB EV / FB Brl% / LD Brl% at `XHRFB`'s
   weights (the fallback fits' inputs on older files), xHR/FB, Luck, HR/FB — then `hrfbTable` (moved off the Mix tab). `hrfbLeague` keeps sorted `brld` /
   `ev90` too, for the build-up's heat.
+* **Banded rows on every table (Sean, 9 Oct 2026: "make every table have banded rows too")**: the block at the end of `styles.css` — `--band-row`
+  (ink at 6% over the surface) on every even data row: the `#rows` lists (Leaderboard / Recent / Rankings / Draft board, `li.row` but not the
+  `brgap` / `brtot` rows, the frozen Rk / Player cells too — `!important`, over the B-Ref pass's plain even rows) and every `<table>` (`tbody
+  tr:nth-child(even)` but not `tot` / `gap` / `cur` / `ftot` / `fcur` rows, and not a cell carrying its own fill — `.heat`, `.sbheat`, `.hheat`, `.hot`,
+  `.fsorted`, `.record`; inline heat colours win anyway since the table rule isn't `!important`). Checked on the Leaderboard, the Pitching+ board, Fantasy,
+  home, the season table and the Pitching+ tab, phone and desktop.
