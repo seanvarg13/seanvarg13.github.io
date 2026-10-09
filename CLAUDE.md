@@ -3062,3 +3062,23 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **The filter bar in the header's blue (Sean, 9 Oct 2026: "make it blue and not white so it fits with the regular header")**: `.pgbar` is on
   `--band2` with a 3px stripe-red rule under it like the site header's, his name white; the year / level / Filters / Raw buttons stay the white boxy
   ones, with white edges.
+* **The site header over the filter bar (Sean, 9 Oct 2026: "make it so the menu search goes over the new filter header thing")**: on the player
+  page `header.top` is z-index 60 on every layout. The header's menus and the search list sit inside its stacking context, and at the desktop's
+  20 they drew under the sticky `.pgbar`'s 40. The block is at the end of `styles.css`.
+* **B-Ref's table dimensions, K-BB% for pitchers, no FIP, an Awards column (Sean, 9 Oct 2026: "make the tables have baseball references dimensions
+  and font sizes and row heights and then also for pitchers after k% and bb% add in k-bb and heatmap it", "after positions like an awards column",
+  "for pitchers get rid of FIP")**:
+  - **Sizing**: every B-Ref-dressed table (his season table, the card tabs' tables, the Pitching+ board, home) and the Leaderboard's rows use
+    B-Ref's `stats_table` numbers, read off its stylesheet. That is 11px Verdana, line-height 1.25, 3px of side padding, ~23px rows, and column
+    names in the same 11px bold. The In Split row grows to its two lines, and the gap strips keep their height. The block is at the end of
+    `styles.css`.
+  - **Pitchers' season table**: `SB_P` = ERA nERA SIERA | G GS IP | K% BB% **K-BB%** PU% GB% | Whiff% xBB% | Pos | Awards.
+    - FIP is gone.
+    - K-BB% is filled with its percentile colour among that season's qualified pitchers (`sbPoolP`: an inning per team game, 60 in 2020, from
+      `hist/career.js`; `SB_HEAT_P`).
+  - **Awards** (both sides, regular season only) come from MLB's record of his awards. `awardsOf(p)` fetches
+    `people/<id>/awards` in the browser like the bio and holds them in `AWARDS` by id. It shows "…" while loading and blank on a failure.
+    - Kept: MVP, CYA, ROY, AS, GG, PG, SS, HA (Hank Aaron), REL (Reliever of the Year), CPOY, MLB1 / MLB2 (All-MLB), WS MVP, LCS MVP and RC
+      (Clemente), in that order, with the full names in the tooltip.
+    - Left out: weekly / monthly awards, the minors and team awards.
+    - Winners only: MLB's record has no vote finishes, so there is no B-Ref "MVP-1". Judge 2022: MVP, AS, SS, HA, MLB1.
