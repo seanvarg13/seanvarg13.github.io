@@ -7140,22 +7140,30 @@
   // A build-up table for the xBABIP / xHR/FB tabs, in the K% build-up's dress (Sean, 9 Oct 2026: "create an xBABIP tab and then also create an
   // xHR/FB tab too"): Step · His · Lg · ± · running, his number filling its cell in his percentile colour (oriented so red = pushes the stat
   // up), the ± cell coloured by its sign (full at `full`), band rows under a gap. fmt prints the stat, fmtD its moves
-  function buildUp(title, sub, unit, fmt, fmtD, full) {
+  // opts.bars: his percentile on each driver as a Savant bar in its own column, his number plain beside it (Sean, 9 Oct 2026, on the HR/FB build-up:
+  // "for the percentile of his batted ball quality for each use percentile bars")
+  function buildUp(title, sub, unit, fmt, fmtD, full, opts = {}) {
     const box = el("div", "rollbox uerabox brbox kbox"), hd = el("div", "rollhd");
     hd.append(el("span", "rollname", title), el("span", "rollsub", sub)); box.append(hd);
     const signStyle = (v) => { const t = Math.min(1, Math.abs(v) / full), mix = (a, b) => a.map((x, i) => Math.round(x + (b[i] - x) * t)); const c = mix([214, 212, 206], v > 0 ? [216, 33, 41] : [54, 97, 173]); return { bg: `rgb(${c.join(",")})`, fg: t > (v > 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };
-    const { tb, fin, gap, wrap, ends } = brTable(null, [["Step", "l"], ["His", ""], ["Lg", ""], ["± " + unit, ""], [unit, ""]], "kbuild");
-    ends.add(0); ends.add(2);
-    const t0 = wrap.querySelector("thead tr"); t0.children[0].classList.add("ge"); t0.children[2].classList.add("ge");
+    const B = !!opts.bars;
+    const { tb, fin, gap, wrap, ends } = brTable(null, [["Step", "l"], ...(B ? [[mobileView() ? "Pctile" : "Percentile", "kbarh"]] : []), ["His", ""], ["Lg", ""], ["± " + unit, ""], [unit, ""]], "kbuild" + (B ? " kbars" : ""));
+    const eLg = B ? 3 : 2; ends.add(0); ends.add(eLg);
+    const t0 = wrap.querySelector("thead tr"); t0.children[0].classList.add("ge"); t0.children[eLg].classList.add("ge");
+    const barTd = (pc) => { const td = el("td", "kbarc"); if (pc == null) return td; const s0 = pctStyle(pc), tr0 = el("div", "kbtrk"), fl = el("div", "kbfill"), bu = el("span", "kbub", String(Math.round(pc)));
+      fl.style.width = Math.max(4, Math.min(100, pc)) + "%"; fl.style.background = s0.bg; bu.style.left = Math.max(4, Math.min(100, pc)) + "%"; bu.style.background = s0.bg;
+      tr0.append(fl, bu); td.append(tr0); td.title = ordinal(Math.round(pc)) + " percentile among that season's qualified hitters"; return td; };
     let band = false;
     const dCell = (v) => { const td = el("td", "kd", v == null ? "" : fmtD(v)); if (v != null && !band) { const s2 = signStyle(v); td.style.background = s2.bg; td.style.color = s2.fg; td.classList.add("heat"); } return td; };
     const api = {
       // a driver: his value (printed by its own f), the league's, his percentile, the move and the running stat
       row(lab, his, lg, f, pc, d, run, tip) { const tr = el("tr"); if (tip) tr.title = tip;
-        const h = el("td", null, his == null ? "–" : f(his)); tr.append(el("td", "l nm", lab), band ? h : heatTd(h, his == null ? null : pc), el("td", "xact", lg == null ? "" : f(lg)), d === "→" ? el("td", "xact", "→") : dCell(d), el("td", "krk", run == null ? "" : fmt(run)));
+        const h = el("td", null, his == null ? "–" : f(his)); tr.append(el("td", "l nm", lab));
+        if (B) tr.append(barTd(his == null ? null : pc), h); else tr.append(band ? h : heatTd(h, his == null ? null : pc));
+        tr.append(el("td", "xact", lg == null ? "" : f(lg)), d === "→" ? el("td", "xact", "→") : dCell(d), el("td", "krk", run == null ? "" : fmt(run)));
         tb.append(fin(tr)); },
       band(lab, d, run, tip) { if (!band) { tb.append(gap()); band = true; } const tr = el("tr", "tot" + (tb.querySelector("tr.tot") ? "" : " first")); if (tip) tr.title = tip;
-        tr.append(el("td", "l nm", lab), el("td"), el("td"), dCell(d), el("td", "krk", run == null ? "" : fmt(run))); tb.append(fin(tr)); },
+        tr.append(el("td", "l nm", lab), ...(B ? [el("td")] : []), el("td"), el("td"), dCell(d), el("td", "krk", run == null ? "" : fmt(run))); tb.append(fin(tr)); },
       done() { box.append(wrap); return box; } };
     return api;
   }
@@ -7251,7 +7259,7 @@
         const has = (ks) => bx && ks.every((k) => bx[k] != null && lg[k] != null);
         const f = has(["evfb", "brfb", "brld"]) ? XHRFB.c : has(["evfb", "brl"]) ? XHRFB.a : has(["brl", "ev90"]) ? XHRFB.b : null;
         const pct1 = (x) => x.toFixed(1) + "%", sg1 = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(1);
-        const b = buildUp(`HR/FB build-up · ${y}`, `${hr} HR on ${fb} fly balls · ± in HR/FB points, against that season's qualified hitters${y !== +DS.season ? " · his latest season" : ""}`, "HR/FB", pct1, sg1, 4);
+        const b = buildUp(`HR/FB build-up · ${y}`, `${hr} HR on ${fb} fly balls · ± in HR/FB points, against that season's qualified hitters${y !== +DS.season ? " · his latest season" : ""}`, "HR/FB", pct1, sg1, 4, { bars: true });
         let run = lg.hrfb;
         b.row("League", null, lg.hrfb, pct1, null, "→", run, "the qualified hitters' home runs over their fly balls");
         if (f && xv != null) {
