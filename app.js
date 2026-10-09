@@ -9661,6 +9661,33 @@
   const TEAM_BY_ID = Object.fromEntries(Object.entries(TEAM_ID).map(([k, v]) => [v, k]));
   const OF_POS = { LF: "OF", CF: "OF", RF: "OF" };   // the site says OF everywhere
   const PSTATS = new Map();
+  // Awards (Sean, 9 Oct 2026: "after positions like an awards column for any awards the player won that year"): MLB's own record of a player's
+  // awards, fetched in the browser like the bio (people/<id>/awards, CORS open), kept to the season honours B-Ref's column carries plus a few
+  // MLB hands out now; weekly / monthly awards, the minors and team awards left out. Winners only — MLB's record has no vote finishes, so
+  // MVP / CYA / ROY read without B-Ref's "-1".
+  const AWARD_CODES = [["MVP", "MVP", "MVP"], ["CY", "CYA", "Cy Young"], ["ROY", "ROY", "Rookie of the Year"], ["AS", "AS", "All-Star"], ["GG", "GG", "Gold Glove"],
+    ["PG", "PG", "Platinum Glove"], ["SS", "SS", "Silver Slugger"], ["HAA", "HA", "Hank Aaron Award"], ["REL", "REL", "Reliever of the Year"], ["CPOY", "CPOY", "Comeback Player of the Year"]];
+  const AWARD_MLB = { MLBAFIRST: ["MLB1", "All-MLB First Team"], MLBSECOND: ["MLB2", "All-MLB Second Team"], WSMVP: ["WS MVP", "World Series MVP"],
+    ALCSMVP: ["LCS MVP", "ALCS MVP"], NLCSMVP: ["LCS MVP", "NLCS MVP"], MLBRC: ["RC", "Roberto Clemente Award"] };
+  const AWARD_ORDER = ["MVP", "CYA", "ROY", "AS", "GG", "PG", "SS", "HA", "REL", "CPOY", "MLB1", "MLB2", "WS MVP", "LCS MVP", "RC"];
+  const AWARDS = new Map();   // id → null while loading, false on a failure, else Map(season → [[short, long], …])
+  function awardsOf(p) {
+    if (AWARDS.has(p.id)) return AWARDS.get(p.id);
+    AWARDS.set(p.id, null);
+    fetch(`https://statsapi.mlb.com/api/v1/people/${p.id}/awards`).then((r) => r.json()).then((j) => {
+      const by = new Map();
+      for (const a of j.awards || []) {
+        const y = +a.season, id = a.id || ""; if (!y) continue;
+        let hit = AWARD_MLB[id] || null;
+        if (!hit) { const m = /^(AL|NL)(.+)$/.exec(id); if (m) { const c = AWARD_CODES.find((x) => x[0] === m[2]); if (c) hit = [c[1], m[1] + " " + c[2]]; } }
+        if (!hit) continue;
+        const l = by.get(y) || by.set(y, []).get(y); if (!l.some((x) => x[0] === hit[0])) l.push(hit);
+      }
+      for (const l of by.values()) l.sort((a, b) => AWARD_ORDER.indexOf(a[0]) - AWARD_ORDER.indexOf(b[0]));
+      AWARDS.set(p.id, by); render();
+    }).catch(() => { AWARDS.set(p.id, false); });
+    return null;
+  }
   function postLines(p) {
     const key = p.type + p.id;
     if (PSTATS.has(key)) return PSTATS.get(key);
@@ -9710,10 +9737,10 @@
     CS: "Caught stealing: his steal attempts in the season's Statcast file less his official steals (2015 on)", "SB%": "Stolen bases per attempt",
     BsR: "FanGraphs' baserunning runs above average: steals, caught stealing and taking extra bases",
     nERA: "Luck-neutral ERA: every ball in play at the league's value for its type", SIERA: "Skill-interactive ERA", "PU%": "Popups per batted ball",
-    "xBB%": "The walk rate his Strike%, first-pitch and three-ball strike rates imply" };
+    "xBB%": "The walk rate his Strike%, first-pitch and three-ball strike rates imply", "K-BB%": "Strikeouts less walks, per batter faced" };
   // a pitcher's table (Sean, 9 Oct 2026: "ERA, FIP, nERA, and SIERA then a line break / Then G, GS, IP, line break / Then k%, bb%, popup%, gb% then a
   // line break / Then whiff% and xBB% and then a line break and the position one at the end"); nERA / SIERA / PU% / xBB% come from career-bb.js's pp
-  const SB_P = ["ERA", "FIP", "nERA", "SIERA", "G", "GS", "IP", "K%", "BB%", "PU%", "GB%", "Whiff%", "xBB%"];
+  const SB_P = ["ERA", "nERA", "SIERA", "G", "GS", "IP", "K%", "BB%", "K-BB%", "PU%", "GB%", "Whiff%", "xBB%"];   // K-BB% after BB%, heat-mapped; FIP gone, nERA and SIERA kept (Sean, 9 Oct 2026)
   const SB_BEST_HI = { H: new Set(["G", "PA", "HR", "R", "RBI", "SB", "BB%", "ISO", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA", "wRC+", "Sprint", "fWAR", "bWAR"]), P: new Set(["W", "G", "GS", "IP", "K", "K%", "K-BB%", "Whiff%", "Strike%", "GB%"]) };
   const SB_BEST_LO = { H: new Set(["K%"]), P: new Set(["ERA", "FIP", "WHIP", "BB%"]) };
   // a line's value for a column: the record's counts, the rates recomputed for a sum, our numbers from its adv
@@ -9806,6 +9833,21 @@
     for (const k in out) out[k].sort((a, b) => a - b);
     SB_POOLS.set(y, out); return out;
   }
+  // a pitcher's K-BB% heat pool (Sean, 9 Oct 2026: "after k% and bb% add in k-bb and heatmap it"): every qualified pitcher that season — an
+  // inning per team game (162, 60 in 2020) — from the career record; season 0 = every qualified season 2015 on, for the totals rows
+  const SB_POOLS_P = new Map();
+  function sbPoolP(y) {
+    if (SB_POOLS_P.has(y)) return SB_POOLS_P.get(y);
+    const out = { "K-BB%": [] }, C = window.DRAFT_CAREER || {}, b = 2 + RAW_P.length, iK = 2 + RAW_P.indexOf("K"), iB = 2 + RAW_P.indexOf("BB"), iIP = 2 + RAW_P.indexOf("IP");
+    for (const id in C) for (const r of C[id].P || []) {
+      if (y ? r[0] !== y : r[0] < 2015) continue;
+      if (ipNum(r[iIP]) < (r[0] === 2020 ? 60 : 162)) continue;
+      const bf = +r[b + 1] || 0; if (bf) out["K-BB%"].push(100 * ((+r[iK] || 0) - (+r[iB] || 0)) / bf);
+    }
+    for (const k in out) out[k].sort((a, b) => a - b);
+    SB_POOLS_P.set(y, out); return out;
+  }
+  const SB_HEAT_P = new Set(["K-BB%"]);
   // League leaders, Baseball-Reference's way (Sean, 8 Oct 2026: "the bold indicates the player led the league and italics indicates they led the
   // MLB"): for a season, every column's best value in the AL, the NL and MLB from every player's line in hist/career.js — the file holds every
   // MLB player since 2015 with his whole career, so a season before 2015 is missing whoever had retired and isn't marked. Counts lead by the
@@ -9906,13 +9948,14 @@
     const lev = milb.length > 0;
     // with the minors in, the level is the second frozen column and the club scrolls (Sean, 9 Oct 2026, from B-Ref's Register Batting on his phone:
     // "when the table includes minor leagues could you make it do this when I scroll" — Year and Lg frozen, Aff sliding under them)
-    for (const h of ["Season", "Age", ...(lev ? ["Lev", "Team"] : ["Team"]), ...cols, "Pos"]) {
-      const th = el("th", ["Season", "Team", "Lev", "Pos"].includes(h) ? "l" : null, h); if (h === "Season") th.classList.add("f1"); if (h === "Age") th.classList.add("f2"); if (h === (lev ? "Lev" : "Team")) th.classList.add("f3");
+    const awd = post ? null : awardsOf(p);   // Map(season → awards) once MLB's record is in; the column waits for it
+    for (const h of ["Season", "Age", ...(lev ? ["Lev", "Team"] : ["Team"]), ...cols, "Pos", ...(post ? [] : ["Awards"])]) {
+      const th = el("th", ["Season", "Team", "Lev", "Pos", "Awards"].includes(h) ? "l" : null, h); if (h === "Awards") { th.classList.add("awd"); th.title = "Season awards from MLB's record: MVP, Cy Young (CYA), Rookie of the Year, All-Star (AS), Gold / Platinum Glove (GG / PG), Silver Slugger (SS), Hank Aaron (HA), Reliever of the Year (REL), Comeback Player (CPOY), All-MLB first / second team (MLB1 / MLB2), World Series / LCS MVP, Roberto Clemente (RC)"; } if (h === "Season") th.classList.add("f1"); if (h === "Age") th.classList.add("f2"); if (h === (lev ? "Lev" : "Team")) th.classList.add("f3");
       if (gEnd.has(h)) th.classList.add("ge"); if ((H || ["nERA", "SIERA", "PU%", "xBB%"].includes(h)) && (SB_TIP[h] || SBX_TIP[h])) th.title = SB_TIP[h] || SBX_TIP[h];
       tr.append(th);
     }
     thead.append(tr); table.append(thead);
-    const ncol = 3 + (lev ? 1 : 0) + cols.length + 1;   // every column, for a row that spans the table
+    const ncol = 3 + (lev ? 1 : 0) + cols.length + 1 + (post ? 0 : 1);   // every column, for a row that spans the table
     const tbody = el("tbody");
     const cell = (txt, cls) => { const td = el("td", cls || null); if (txt instanceof Node) td.append(txt); else td.textContent = txt; return td; };
     // Pos (Sean, 8 Oct 2026: "all the positions they played that year"): a hitter's from the record's fielding lines (DH included), most games
@@ -9933,12 +9976,12 @@
       for (const k of cols) {
         const v = l ? sbVal(H, l, k) : null, td = cell(sbFmt(k, v));
         const xd = SBX[k];
-        if (H && opts.heat != null && (SB_HEAT.has(k) || (view === "br" && k === "Sprint") || (xd && (xd.hi || xd.lo))) && v != null && !isNaN(+v)) {
-          const pool = xd ? (xd.lo ? sbxPool(opts.heat, xd.k).map((x) => -x).reverse() : sbxPool(opts.heat, xd.k)) : sbPool(opts.heat)[k];
+        if (opts.heat != null && (H ? (SB_HEAT.has(k) || (view === "br" && k === "Sprint") || (xd && (xd.hi || xd.lo))) : SB_HEAT_P.has(k)) && v != null && !isNaN(+v)) {
+          const pool = !H ? sbPoolP(opts.heat)[k] : xd ? (xd.lo ? sbxPool(opts.heat, xd.k).map((x) => -x).reverse() : sbxPool(opts.heat, xd.k)) : sbPool(opts.heat)[k];
           if (pool && pool.length >= 20) {   /* the whole cell filled in its percentile colour, not a pill (Sean, 8 Oct 2026) */
             const pc = insertPct(pool, xd && xd.lo ? -v : +v), sty = pctStyle(pc);
             td.classList.add("sbheat"); td.style.setProperty("background", sty.bg, "important"); td.style.setProperty("color", sty.fg, "important");
-            td.title = ordinal(Math.round(pc)) + " percentile among " + (opts.heat ? opts.heat + "'s" : "every 2015-on") + " qualified hitters";
+            td.title = ordinal(Math.round(pc)) + " percentile among " + (opts.heat ? opts.heat + "'s" : "every 2015-on") + " qualified " + (H ? "hitters" : "pitchers");
           }
         }
         if (opts.lead && v != null && v !== "") {
@@ -9960,6 +10003,12 @@
       const pp = opts.season ? posOf(l) : null, pt = cell(pp ? pp.map((x) => x[0]).join(", ") : (opts.season ? "–" : ""), "l pos");
       if (pp) pt.title = pp.map(([k, g]) => `${k}: ${g} G`).join(" · ");
       trr.append(pt);
+      if (!post) {   // his awards that season on an MLB season row; "…" while MLB's record loads
+        const al = opts.season && l && l.mlb !== false && opts.awards ? (awd ? awd.get(l.season) : null) : null;
+        const at = cell(al ? al.map((x) => x[0]).join(", ") : (opts.awards && awd === null ? "…" : ""), "l awd");
+        if (al) at.title = al.map((x) => x[1]).join(" · ");
+        trr.append(at);
+      }
       tbody.append(trr); return trr;
     };
     const years = [...new Set([...mlb, ...milb].map((l) => l.season))].sort((a, b) => a - b);   // every season, on a phone too (Sean, 8 Oct 2026)
@@ -9992,7 +10041,7 @@
         // a traded season whose clubs were all in one league leads that league on the TOT line; split across leagues it can only lead MLB here
         let lgTOT = null, lgName = l.team !== "TOT" ? leagueOf(l.team) : null;
         if (ld && l.team === "TOT") { const crec = window.DRAFT_CAREER[String(p.id)], cl = ((crec && crec[p.type + "T"]) || []).filter((r) => r[0] === y), lgs = new Set(cl.map((r) => leagueOf(r[1]))); if (lgs.size === 1) { lgName = [...lgs][0]; lgTOT = sbLeaders(H, y)[lgName]; } }
-        const trr = row([yr, ageIn(y), l.team, "MLB"], l, (y === +DS.season && DS.level === "MLB" ? "cur" : null), { lead: ld, lgTOT, lgName, season: true, heat: post ? null : y });
+        const trr = row([yr, ageIn(y), l.team, "MLB"], l, (y === +DS.season && DS.level === "MLB" ? "cur" : null), { lead: ld, lgTOT, lgName, season: true, heat: post ? null : y, awards: true });
         if (l.team === "TOT") trr.title = "Two or more clubs that season";
         if (!post && y === +DS.season && DS.level === "MLB") splitRow();
       }
