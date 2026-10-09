@@ -5044,3 +5044,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin { background: var(--band2, var(--accent-2)); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinrow { background: var(--band2, var(--accent-2)); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pcname { color: #fff !important; }
+/* a red line between the pinned name row and the Summary (Sean, 9 Oct 2026: "add a line break of red between it and the bottom part") */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinrow { border-bottom: 2px solid var(--stripe-line, #c8102e); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinband .pbsum { border-top: 0 !important; margin-top: 0; padding-top: 6px; }

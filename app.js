@@ -777,7 +777,7 @@
     setTimeout(() => { if (!daysReady() && !state.daysLoading) (window.requestIdleCallback || ((f) => f()))(() => { try { fetch(vsrc("days.js"), { priority: "low" }).catch(() => {}); } catch (e) {} }); }, 4000);
   const rowsOf = (p) => DS.rows(p);
   // Explore data: hist/index.js (who exists in which seasons) and hist/<key>.js per past season, loaded on demand
-  const loading = new Set(), failed = new Set();
+  const loading = new Set(), failed = new Set(), tries = new Map();
   function ensureScript(src, isReady) {
     if (isReady() || loading.has(src) || failed.has(src)) return;
     loading.add(src);
@@ -786,7 +786,10 @@
     // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
     // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
     sc.onload = () => { loading.delete(src); if (!/\/(?:index|career|career-bb|similar|minors|trends|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };
-    sc.onerror = () => { loading.delete(src); failed.add(src); render(); };
+    // a failed download (a phone on a weak signal, a publish mid-deploy) is tried twice more before it's given up on — career.js once failed
+    // for the whole visit and the season table said it hadn't been built (Sean's phone, 9 Oct 2026)
+    sc.onerror = () => { loading.delete(src); sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
+      if (n < 3) { setTimeout(() => ensureScript(src, isReady), 1500 * n); return; } failed.add(src); render(); };
     document.head.append(sc);
   }
   // The site is regular season only: spring-training and postseason datasets may still be built, but they're taken
@@ -3228,7 +3231,8 @@
     const box = el("div", "rawstats");
     if (!noHead) box.append(el("h3", null, "Season stats"));
     ensureScript("hist/career.js", careerReady);
-    if (!careerReady()) { box.append(el("p", "note", failed.has("hist/career.js") ? "hist/career.js hasn't been built — run build_career.py" : "Loading career stats…")); return box; }
+    if (!careerReady()) { if (failed.has("hist/career.js")) { const n = el("p", "note", "Couldn't load his career stats. "), rt = el("button", "linkbtn", "Try again"); rt.type = "button";
+      rt.addEventListener("click", (e) => { e.stopPropagation(); failed.delete("hist/career.js"); tries.delete("hist/career.js"); render(); }); n.append(rt); box.append(n); } else box.append(el("p", "note", "Loading career stats…")); return box; }
     const H = p.type === "H", mode = state.rawMode || "mlb";
     if (mode !== "mlb") ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS);
     const lines = rawLines(p) || [];
@@ -3392,7 +3396,8 @@
   function renderSeasonTable(p) {
     const box = el("div", "rawstats simple" + (p.type === "P" ? " pit" : ""));
     ensureScript("hist/career.js", careerReady);
-    if (!careerReady()) { box.append(el("p", "note", failed.has("hist/career.js") ? "hist/career.js hasn't been built — run build_career.py" : "Loading career stats…")); return box; }
+    if (!careerReady()) { if (failed.has("hist/career.js")) { const n = el("p", "note", "Couldn't load his career stats. "), rt = el("button", "linkbtn", "Try again"); rt.type = "button";
+      rt.addEventListener("click", (e) => { e.stopPropagation(); failed.delete("hist/career.js"); tries.delete("hist/career.js"); render(); }); n.append(rt); box.append(n); } else box.append(el("p", "note", "Loading career stats…")); return box; }
     // kept simple (Sean): PA, HR and the slash line for a hitter; IP, ERA and the four rates a pitcher owns for a pitcher
     const H = p.type === "H", cols = H ? ["PA", "HR", "AVG", "OBP", "SLG", "OPS"] : ["IP", "ERA", "K%", "BB%", "GB%", "Popup%"];
     const colsMLB = H ? cols : [...cols, "nERA"];   // nERA the last column (Sean, 4 Oct 2026: nERA where uERA was); the minors show the level's own
@@ -9782,7 +9787,8 @@
     }
     box.append(tabs);
     ensureScript("hist/career.js", careerReady);
-    if (!post && !careerReady()) { box.append(el("p", "note", failed.has("hist/career.js") ? "hist/career.js hasn't been built — run build_career.py" : "Loading career stats…")); return box; }
+    if (!post && !careerReady()) { if (failed.has("hist/career.js")) { const n = el("p", "note", "Couldn't load his career stats. "), rt = el("button", "linkbtn", "Try again"); rt.type = "button";
+      rt.addEventListener("click", (e) => { e.stopPropagation(); failed.delete("hist/career.js"); tries.delete("hist/career.js"); render(); }); n.append(rt); box.append(n); } else box.append(el("p", "note", "Loading career stats…")); return box; }
     if (sx && !sbxReady()) { box.append(el("p", "note", failed.has("hist/career-bb.js") ? "hist/career-bb.js hasn't been built — run build_career.py bb" : "Loading Statcast seasons…")); return box; }
     if (!post && sbMinors) ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS);
     const postState = post ? postLines(p) : undefined;   // null while MLB's record loads, false if it failed, else his postseason lines
