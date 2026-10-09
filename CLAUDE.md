@@ -2820,3 +2820,30 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   only while the column is showing; `hxKey` puts their arrival in the pool / rank keys under the same condition, so a player page loading
   career.js doesn't throw its pool away. SIDE_H defs, glossary entries; SHORT `evfb` / `brfb` read "FB EV" / "FB Brl". Filters ▸ Stats (`renderColPick`) lists the four right after Avg EV —
   `evfb` / `brfb` are meta defs, not card metrics, so the picker had no box for them (fixed the same evening).
+* **B-Ref's table everywhere (Sean, 9 Oct 2026, from the "B-Ref Style Tables" canvas: "I want that for everything that all looks absolutely
+  amazing")**: the season table's dress on the Leaderboard / Recent, the Pitching+ board and the card's Pitching+ and Mix tabs. **Card tabs and
+  board**: `brTable(groups, heads, cls)` in `app.js` (before `renderStuffTab`) builds a `table.sbt.brt` in a `.sbscroll.brscroll` — an over-header
+  row naming each group of columns (the band 9% darker), centred column names, a 2px ink rule where a group ends (`ends`, put on each row's cells by
+  `fin()`), `gap()` for the darker strip, totals as `tr.tot` band rows; `PAIRH` / `pair` make every expected / actual pair two columns, **Exp** and
+  **Act** (Act in grey, class `xact` — `.act` is the Draft board's sticky column, don't reuse it); `heatTd` fills a whole cell with `pctStyle`.
+  The Pitching+ tab's arsenal (Pitch: Type, #, Use% | Shape | Grades vs type | Whiff% · GB% · PU% · Foul% · Called% Exp / Act, All pitches a band
+  row), the K% build-up (`renderKArchetype`: Step · His · Lg · ± K% · K%, His filled by his percentile, ± by `signStyle`, the four together /
+  everything else / K% as band rows — still no K% on the first two and no His / Lg on the last), the Mix tab (`renderMixTab`: Batted ball · Balls ·
+  Share (filled) · Pctile · wOBA on it (filled cheapest blue → dearest red), Mix wOBA the band row; **Contact by type**: Avg EV and Barrel% His / Lg
+  for FB · LD · GB) and HR / FB by season (Actual | Fly-ball contact | Expected, the career an "N Yrs" band row). Their headings are `.brbox >
+  .rollhd .rollname` at the season table title's size. The **Pitching+ board** (`pitchBoardBody`): `table.sbt.brt.pbt` (no longer `.ftable` /
+  `.pbtable`) — Rk and Pitcher frozen (`f1` / `f3`, `--sbw1` measured), Tm · Role · T columns (the name line under the name is gone), both header
+  rows pinned (`--overh`), every column but the pitcher's facts sorts (Act columns sort by the actual rate), the sorted header lit with the red rule,
+  the sorted + column filled whole (Colour: all fills all four grades), a **League** band row (every pitch the filters let through, whatever the
+  minimum: grades by pitches, whiffs by swings, GB / PU by balls in play, fouls by contact). **The Leaderboard / Recent** (`body.brlb` while
+  `onePage()`): one 28px line a row (30 on a phone), gridlines, no banding (the bands asked for on 6 Oct give way to B-Ref's plain rows), **Tm**
+  after the name (`.brtm`), **PA / IP** before the headline (`.brpt`), **Pos** at the end (`.brpos`, `posShown`), the meta line under the name
+  hidden; the Result / Process band (`#colband`) is the over-header on both layouts, a run split at a user break; `brEnds` puts the 2px rule at
+  the end of each run (and after Tm and PA); the sorted column fills its cells (`paint()` sets `--heatfg` beside `--heat`) at the ordinary 13px,
+  bold — the big coloured headline digits are gone there; a value equal to the best in the qualified pool is **bold italic** (`brLeaders`, cached
+  per view); a **Qualified avg (N)** band row under a gap closes the last page (`brTotRows`: the reference pool, rates weighted by PA / batters
+  faced, PA / IP the plain mean). The grid template under `body.brlb` adds the three columns, so every `.grid` there (`#colhead`, `#colband`, the
+  rows, the gap and totals rows) carries the same cell count. The CSS is the two blocks at the end of `styles.css`; card / board rules are prefixed
+  `:is(#xboard, #modal, #pitchboard)` because a warm-pass `:is(#colhead .h, …, .rollname)` rule carries id specificity. Rankings / Draft board
+  keep their old rows (`brOn()` is `onePage()` only). The canvas also mocks the season table at 21px rows ("Season table — thinner rows",
+  a row-height tweak) — not built; Sean asked what it would look like.
