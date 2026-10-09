@@ -2868,3 +2868,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   cut off: "make it so the header row auto adjusts its height")**: under `body.brlb` every `#colhead .h` is at least 30px and as tall as its
   wrapped, centred text, and the row takes the tallest (40px for two-line names on a 390px phone; a desktop's one-line names stay 30). The
   block at the end of `styles.css`.
+* **Home in B-Ref tables (Sean, 9 Oct 2026, from the Home boards on the B-Ref Style Tables canvas: "implement all of those home page ones", and
+  "for the trending table ... add the actual PA ... and add IP too")**: `renderHome` draws sections (`section()`: a 26px title, a grey note and a
+  link over the red rule, `.hsec` / `.hsech` / `.hsecb`) of `brTable` tables (`table()` in `renderHome`: a `colgroup` of widths, the flexible
+  Player column, `.htb` fixed layout, a label band row or group names over the column names, group rules, the value column filled by
+  `heatTd`). **Last game day** leads full width: hitters Rk · Player · Tm | Box (H-AB, HR, BB, K) | Contact (Brl, Max EV) | xwOBA, starts Rk ·
+  Player · Tm | Box (IP, ER, K, BB) | Whiff% | Pitching+; a phone keeps Player · Tm · H-AB · HR · Brl · xwOBA and Player · Tm · IP · ER · K · P+.
+  Then three across from 1180px (one column below / on a phone): **leaders** (PA · wOBA · xwOBA; IP · ERA · nERA), **Trending** (PA in the last
+  100 · xwOBA; IP in the last 50 · nERA) and **Movers** (xwOBA / nERA and PA / IP in the 30 days, then Was · Now as filled percentile cells and a
+  red +Δ; a phone drops the window value and sample). The headshot rows (`.hbig`) aren't drawn on home any more; their CSS stays. The card /
+  board B-Ref rules' `:is(#xboard, #modal, #pitchboard)` prefix now carries `#hub` too. CSS: the block at the end of `styles.css`.

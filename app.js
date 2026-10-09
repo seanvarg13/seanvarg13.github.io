@@ -5305,12 +5305,13 @@
       }
       dc.append(row);
     }
-    // Design A (Sean, 7 Oct 2026, from the Home Page Designs canvas: "I like design A"): the last game day leads as one full-width card —
-    // headshot, a big name, a line of what he did, the value in its percentile colour — and leaders, Trending and the 2027 starters follow
-    // as three compact cards, hitters stacked over pitchers in each
+    // B-Ref tables (Sean, 9 Oct 2026, from the Home boards on the B-Ref Style Tables canvas: "implement all of those home page ones"): the last game
+    // day leads as two boxed tables (hitters, starts) under a red-ruled title, then leaders, Trending and Movers side by side (stacked on a phone),
+    // each a hitter table over a pitcher table in the season table's dress — the value column filled with its percentile colour
     const f3 = (x) => (x == null ? "–" : fmtX(x)), f2 = (x) => (x == null ? "–" : x.toFixed(2)), f0 = (x) => (x == null ? "–" : String(Math.round(x)));
     const puOf = (p) => V(p).m.nera;   // nERA (Sean, 4 Oct 2026: "Replace uERA with nERA"); in a window V() re-derives it from the day rows
     const inWin = (w, fn) => withWindow(w, () => withSplit(NONE, fn));
+    const PH = mobileView();
     // a value's colour is its place among the season's qualifiers: hitters 300+ PA by xwOBA, pitchers 100+ IP by nERA (lower better) and by Pitching+
     const sortedOf = (xs) => xs.filter((x) => x != null).sort((a, b) => a - b);
     let refH = [], refP = [], refSt = [];
@@ -5318,89 +5319,125 @@
       const H = DATA.players.filter((p) => p.type === "H" && (p.pa || 0) >= 300), P = DATA.players.filter((p) => p.type === "P" && (p.ip || 0) >= 100);
       refH = sortedOf(H.map((p) => V(p).m.xwd)); refP = sortedOf(P.map((p) => { const v = puOf(p); return v == null ? null : -v; })); refSt = sortedOf(P.map((p) => (p.m.pitch != null ? p.m.pitch : p.m.stuff)));
     });
-    const heat = (node, ref, v, neg) => { if (v == null || !ref.length) return; const s = pctStyle(insertPct(ref, neg ? -v : v)); if (s) { node.style.setProperty("--heat", s.bg); node.classList.add("heat"); } };
-    // every home list in the lead card's dress (Sean, 7 Oct 2026: "make all of the tables in this format where it shows the player headshot")
-    const list = (c, rows, ref, neg) => { const ol = el("ol", "hbig"); for (const [p, main, side, tab, raw] of rows) { const li = el("li"), bt = el("button", "hname", p.name); bt.type = "button"; bt.addEventListener("click", () => openCard(p, tab)); const v = el("b", "hval", main); heat(v, ref, raw, neg); const who = el("div", "hwho"); who.append(bt, el("span", "hsub", [p.team || "", side].filter(Boolean).join(" · "))); li.append(headshot(p.id, p.name), who, v); ol.append(li); } c.append(ol); return ol; };
-    const big = (c, rows, ref, tab, f) => { const ol = el("ol", "hbig"); for (const [p, v, sub] of rows) { const li = el("li"), bt = el("button", "hname", p.name); bt.type = "button"; bt.addEventListener("click", () => openCard(p, tab)); const val = el("b", "hval", f(v)); heat(val, ref, v); const who = el("div", "hwho"); who.append(bt, el("span", "hsub", sub)); li.append(headshot(p.id, p.name), who, val); ol.append(li); } c.append(ol); };
-    const two = (c) => { const t = el("div", "hthree htwo"); c.append(t); return t; };
+    const pcOf = (ref, v, neg) => (v == null || !ref.length ? null : insertPct(ref, neg ? -v : v));
     const goLB = (pos, sort, dir, win) => (e) => { e.preventDefault(); state.pos = pos; state.posAlso = []; state.sort = sort; state.dir = dir; if (win) state.win = win; savePrefs(); location.hash = "#leaderboard"; };
-    const col = (box, lab, rows, f, tab, go, ref, neg) => { const hd = el("h4"), a = el("a", "hmore", `${lab} →`); a.href = "#leaderboard"; a.addEventListener("click", go); hd.append(a); const c = el("div"); c.append(hd); list(c, rows.map(([p, v]) => [p, f(v), null, tab, v]), ref, neg); box.append(c); };
-    const NB = mobileView() ? 4 : 5, NH = 4, NP = 4;   // four a list (Sean, 7 Oct 2026: "the top 4 for each")
-    // the lead: the last game day — the best xwOBA games (3+ PA) and the best starts by Pitching+ (3+ IP) on the latest day in the day rows,
-    // with his line that day under the name (hits are in the day rows since 1 Oct 2026; an older file shows PA, BB and K)
-    { const days = m.days || [], lastDay = days.length - 1, when = days[lastDay] ? fmtDate(days[lastDay]) : "";
-      const nc = el("section", "hcard hlead"), hd = el("div", "hhead"); hd.append(el("h3", null, `Last game day${when ? " · " + when : ""}`));
-      const a = el("a", "hmore", "Leaderboard →"); a.href = "#leaderboard"; hd.append(a); nc.append(hd); box.insertBefore(nc, grid);
-      // the 24 MB day file is asked for once Home has painted and the phone is idle, not inside the first render (parsing it blocks the
-      // main thread for seconds on a phone; a tap on a list in that time felt dead — Sean, 5 Oct 2026)
-      if (!daysReady()) { nc.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); if (!state.daysLoading && !state.daysFailed) setTimeout(() => (window.requestIdleCallback || ((f) => f()))(() => { if (state.mode === "home" && !daysReady()) ensureDays(); }), 1200); }
+    // a section: the title, a grey note and a link over a red rule (the Leaderboard's title), then its tables
+    const section = (parent, title, sub, linkLab, go) => {
+      const s = el("section", "hsec"), hd = el("div", "hsech"); hd.append(el("h2", null, title)); if (sub) hd.append(el("span", null, sub));
+      if (linkLab) { const a = el("a", "hmore", linkLab); a.href = "#leaderboard"; if (go) a.addEventListener("click", go); hd.append(a); }
+      s.append(hd); const body = el("div", "hsecb"); s.append(body); parent.append(s); return body;
+    };
+    // one table: cols = [name, width (px, or null for the flexible name column), kind] — kind "rk" | "nm" | "c" | "heat" | "up" | "" ; ends = the
+    // column indexes a group rule follows; label = a band row over the names (the canvas's sub-head); over = [[label, span] …] group names instead
+    const table = (box, { label, over, cols, ends = [], rows, fixed }) => {
+      const E = new Set(ends), groups = over || (label ? [[label, cols.length]] : null);
+      const { t, tb, fin, wrap } = brTable(groups, cols.map(([h, , k]) => [h, k === "nm" ? "l" : k === "heat" ? "lit" : ""]), "htb" + (label ? " hlab" : ""));
+      [...t.tHead.rows].slice(-1)[0].querySelectorAll("th").forEach((c, i) => { if (E.has(i)) c.classList.add("ge"); });
+      const cg = el("colgroup"); for (const [, w] of cols) { const c = el("col"); if (w) c.style.width = w + "px"; cg.append(c); } t.prepend(cg);
+      if (fixed) t.style.width = cols.reduce((a, [, w]) => a + (w || 0), 0) + "px";
+      for (const r of rows) {
+        const tr = el("tr");
+        r.forEach((v, i) => {
+          const [, , k] = cols[i], td = el("td", [k === "nm" ? "l nm" : k === "rk" ? "rk" : k === "c" ? "c" : k === "up" ? "up" : "", E.has(i) ? "ge" : ""].filter(Boolean).join(" ") || null);
+          if (v && v.p) { const b = el("button", "pbname", v.p.name); b.type = "button"; b.title = v.p.name; b.addEventListener("click", () => openCard(v.p, v.tab)); td.append(b); }
+          else if (v && typeof v === "object") { td.textContent = v.v; heatTd(td, v.pc); }
+          else td.textContent = v == null ? "–" : String(v);
+          tr.append(td);
+        });
+        tb.append(fin(tr));
+      }
+      wrap.classList.add("hwrap"); box.append(wrap); return wrap;
+    };
+    const loading = (b) => b.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…"));
+    const NB = PH ? 4 : 5, NH = 4, NP = 4;   // four a list (Sean, 7 Oct 2026: "the top 4 for each")
+    const nm = (p, tab) => ({ p, tab });
+    // the lead: the last game day — the best xwOBA games (3+ PA) and the best starts by Pitching+ (3+ IP) on the latest day in the day rows
+    { const days = m.days || [], lastDay = days.length - 1, when = days[lastDay] ? new Date(days[lastDay] + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "";
+      const lb = section(box, "Last game day", when ? `${when} · best games by xwOBA (3+ PA) and starts by Pitching+ (3+ IP)` : null, null);
+      lb.classList.add("hlead2"); box.insertBefore(lb.parentNode, grid);
+      // the 24 MB day file is asked for once Home has painted and the phone is idle, not inside the first render (Sean, 5 Oct 2026)
+      if (!daysReady()) { loading(lb); if (!state.daysLoading && !state.daysFailed) setTimeout(() => (window.requestIdleCallback || ((f) => f()))(() => { if (state.mode === "home" && !daysReady()) ensureDays(); }), 1200); }
       else {
-        const nt = two(nc), hit = [], pit = [], n0 = (x) => (x == null ? 0 : Math.round(x));
+        const hit = [], pit = [], n0 = (x) => (x == null ? 0 : Math.round(x));
         inWin(NOWIN, () => {
           const D = window.DRAFT_DAYS || {};
           for (const p of DATA.players) {
             if (!(D[p.type + p.id] || []).some((r) => r[0] === lastDay)) continue;   // only who played that day (5 Oct 2026)
             if (p.type === "H") { const log = hitGameLog(p, lastDay); if (!Array.isArray(log)) continue; const g = log.find((x) => x.day === lastDay); if (!(g && (g.g.pa || 0) >= 3 && g.xw != null)) continue;
-              const G = g.g, parts = [p.team]; if (G.h != null && G.ab != null) parts.push(`${n0(G.h)}-${n0(G.ab)}`); else parts.push(`${n0(G.pa)} PA`);
-              if (G.hr) parts.push(`${n0(G.hr)} HR`); if (G.bb) parts.push(`${n0(G.bb)} BB`); if (G.k) parts.push(`${n0(G.k)} K`); if (G.brl) parts.push(`${n0(G.brl)} ${G.brl > 1 ? "barrels" : "barrel"}`); if (g.max != null) parts.push(`${g.max.toFixed(1)} max EV`);
-              hit.push([p, g.xw, parts.join(" · ")]); }
+              const G = g.g; hit.push({ p, v: g.xw, hab: G.h != null && G.ab != null ? `${n0(G.h)}-${n0(G.ab)}` : `${n0(G.pa)} PA`, hr: n0(G.hr), bb: n0(G.bb), k: n0(G.k), brl: n0(G.brl), max: g.max }); }
             else { const log = gameLog(p, lastDay); if (!Array.isArray(log)) continue; const g = log.find((x) => x.day === lastDay); if (!(g && g.sp && g.ip >= 3 && g.st != null)) continue;
-              const G = g.g, parts = [p.team, `${fmtIP(g.ip)} IP`, `${n0(G.er)} ER`, `${n0(G.k)} K`, `${n0(G.bb)} BB`]; if (g.whf != null) parts.push(`${Math.round(g.whf)}% whiffs`);
-              pit.push([p, g.st, parts.join(" · ")]); }
+              const G = g.g; pit.push({ p, v: g.st, ip: fmtIP(g.ip), er: n0(G.er), k: n0(G.k), bb: n0(G.bb), whf: g.whf }); }
           }
         });
-        hit.sort((a, b) => b[1] - a[1]); pit.sort((a, b) => b[1] - a[1]);
-        const side = (box, lab, rows, ref, tab, f) => { const c = el("div"); c.append(el("h4", null, lab)); big(c, rows, ref, tab, f); box.append(c); };
-        side(nt, "Hitters · xwOBA that game", hit.slice(0, NB), refH, "games", f3); side(nt, "Starts · Pitching+ that start", pit.slice(0, NB), refSt, "games", f0);
+        hit.sort((a, b) => b.v - a.v); pit.sort((a, b) => b.v - a.v);
+        const H5 = hit.slice(0, NB), P5 = pit.slice(0, NB), xw = (r) => ({ v: f3(r.v), pc: pcOf(refH, r.v) }), st = (r) => ({ v: f0(r.v), pc: pcOf(refSt, r.v) });
+        if (PH) {   // a phone's lead tables keep the columns that fit at 390px (the canvas's phone board)
+          table(lb, { label: "Hitters · by xwOBA", cols: [["Player", null, "nm"], ["Tm", 40, "c"], ["H-AB", 42, "c"], ["HR", 30], ["Brl", 30], ["xwOBA", 54, "heat"]], ends: [1, 4],
+            rows: H5.map((r) => [nm(r.p, "games"), r.p.team || "", r.hab, r.hr, r.brl, xw(r)]) });
+          table(lb, { label: "Starts · by Pitching+", cols: [["Player", null, "nm"], ["Tm", 40, "c"], ["IP", 34], ["ER", 28], ["K", 28], ["P+", 44, "heat"]], ends: [1, 4],
+            rows: P5.map((r) => [nm(r.p, "games"), r.p.team || "", r.ip, r.er, r.k, st(r)]) });
+        } else {
+          table(lb, { over: [["", 3], ["Box", 4], ["Contact", 2], ["", 1]], fixed: true, cols: [["Rk", 34, "rk"], ["Player", 170, "nm"], ["Tm", 46, "c"], ["H-AB", 50, "c"], ["HR", 38], ["BB", 38], ["K", 34], ["Brl", 38], ["Max EV", 60], ["xwOBA", 64, "heat"]],
+            rows: H5.map((r, i) => [i + 1, nm(r.p, "games"), r.p.team || "", r.hab, r.hr, r.bb, r.k, r.brl, r.max == null ? "–" : r.max.toFixed(1), xw(r)]) });
+          table(lb, { over: [["", 3], ["Box", 4], ["", 1], ["", 1]], fixed: true, cols: [["Rk", 34, "rk"], ["Player", 170, "nm"], ["Tm", 46, "c"], ["IP", 44], ["ER", 38], ["K", 38], ["BB", 38], ["Whiff%", 62], ["Pitching+", 76, "heat"]],
+            rows: P5.map((r, i) => [i + 1, nm(r.p, "games"), r.p.team || "", r.ip, r.er, r.k, r.bb, r.whf == null ? "–" : r.whf.toFixed(1) + "%", st(r)]) });
+        }
+        if (!hit.length && !pit.length) lb.append(el("p", "hnote", "Nobody qualifies that day."));
       }
     }
     // the season's leaders: xwOBA (300+ PA) over nERA (100+ IP)
-    const lc = card(`${m.season} leaders`, null, "#leaderboard", "Leaderboard →");
-    inWin(NOWIN, () => {
-      const hit = DATA.players.filter((p) => p.type === "H" && (p.pa || 0) >= 300).map((p) => [p, V(p).m.xwd]).filter((r) => r[1] != null).sort((a, b) => b[1] - a[1]).slice(0, NH);
-      const pit = DATA.players.filter((p) => p.type === "P" && (p.ip || 0) >= 100).map((p) => [p, puOf(p)]).filter((r) => r[1] != null).sort((a, b) => a[1] - b[1]).slice(0, NP);
-      col(lc, "xwOBA", hit, f3, null, goLB("ALL", "score", "desc"), refH); col(lc, "nERA · 100+ IP", pit, f2, "nera", goLB("ALLP", "nera", "asc"), refP, true);
-    });
-    // trending (Sean, 3 Oct 2026): hitters over their last 100 PA by xwOBA, pitchers over their last 50 IP by nERA — from the day rows, so
-    // the card says "loading" until days.js is in, then redraws itself
-    const tc = card("Trending", "last 100 PA · last 50 IP", null);
-    if (!daysReady()) tc.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…"));
-    else {
-      inWin({ from: "", to: "", last: "100" }, () => {
-        const hit = DATA.players.filter((p) => p.type === "H").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 75 && v.m.xwd != null).map(([p, v]) => [p, v.m.xwd]).sort((a, b) => b[1] - a[1]).slice(0, NH);
-        col(tc, "xwOBA, last 100 PA", hit, f3, null, goLB("ALL", "score", "desc", { from: "", to: "", last: "100" }), refH);
-      });
-      inWin({ from: "", to: "", last: "50" }, () => {
-        const pit = DATA.players.filter((p) => p.type === "P").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 37.5).map(([p]) => [p, puOf(p)]).filter((r) => r[1] != null).sort((a, b) => a[1] - b[1]).slice(0, NP);
-        col(tc, "nERA, last 50 IP", pit, f2, "nera", goLB("ALLP", "nera", "asc", { from: "", to: "", last: "50" }), refP, true);
+    const RK = PH ? 26 : 30, TM = PH ? 40 : 46;
+    { const b = section(grid, `${m.season} leaders`, "full season", "Leaderboard →");
+      inWin(NOWIN, () => {
+        const hit = DATA.players.filter((p) => p.type === "H" && (p.pa || 0) >= 300).map((p) => [p, V(p).m]).filter(([, v]) => v.xwd != null).sort((a, b) => b[1].xwd - a[1].xwd).slice(0, NH);
+        const pit = DATA.players.filter((p) => p.type === "P" && (p.ip || 0) >= 100).map((p) => [p, V(p).m]).filter(([, v]) => v.nera != null).sort((a, b) => a[1].nera - b[1].nera).slice(0, NP);
+        table(b, { label: "Hitters · 300+ PA", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["PA", 42], ["wOBA", 50], ["xwOBA", 54, "heat"]], ends: [2, 4],
+          rows: hit.map(([p, v], i) => [i + 1, nm(p), p.team || "", Math.round(p.pa || 0), f3(v.woba), { v: f3(v.xwd), pc: pcOf(refH, v.xwd) }]) });
+        table(b, { label: "Pitchers · 100+ IP", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["IP", 46], ["ERA", 46], ["nERA", 54, "heat"]], ends: [2, 4],
+          rows: pit.map(([p, v], i) => [i + 1, nm(p, "nera"), p.team || "", fmtIP(p.ip || 0), f2(v.era), { v: f2(v.nera), pc: pcOf(refP, v.nera, true) }]) });
       });
     }
-    // Movers (Sean, 7 Oct 2026: "instead of the Claude rankings could you add the movers thing that you have in C"): the biggest percentile jumps
-    // over the last 30 days against the full season — hitters by xwOBA (75+ PA in the window, ranked among the window's 75+ PA hitters), pitchers by
-    // nERA (20+ IP, among the window's 20+ IP pitchers) — each row "was → now" with his window number and sample under the name
-    { const days = m.days || [], from = days.length ? addDays(days[days.length - 1], -29) : "", win30 = { from: from && from > days[0] ? from : "", to: "", last: "" };
-      const mc = card("Movers", "last 30 days vs the season · percentile was → now", "#leaderboard", "Leaderboard →");
-      mc.querySelector(".hmore").addEventListener("click", goLB("ALL", "score", "desc", win30));
-      if (!daysReady()) mc.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…"));
+    // trending (Sean, 3 Oct 2026): hitters over their last 100 PA by xwOBA, pitchers over their last 50 IP by nERA — from the day rows; the PA / IP
+    // in the window is a column like the leaders' (Sean, 9 Oct 2026: "just add the actual PA ... and add IP too")
+    { const W100 = { from: "", to: "", last: "100" }, W50 = { from: "", to: "", last: "50" };
+      const b = section(grid, "Trending", "last 100 PA · last 50 IP", "Leaderboard →", goLB("ALL", "score", "desc", W100));
+      if (!daysReady()) loading(b);
       else {
-        const pill = (pc, strong) => { const s = el("span", "hpill", String(Math.round(pc))); if (strong) { const c = pctStyle(pc); if (c) { s.style.background = c.bg; s.style.color = c.fg; } } return s; };
-const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (const [p, was, now, v, n, unit] of rows) { const li = el("li"), bt = el("button", "hname", p.name); bt.type = "button"; bt.addEventListener("click", () => openCard(p, tab));
-            const mv = el("span", "hval hmove"); mv.append(pill(was, false), el("span", "harrow", "→"), pill(now, true));
-            const who = el("div", "hwho"); who.append(bt, el("span", "hsub", `${p.team || ""} · ${f(v)} over ${unit === "IP" ? fmtIP(n) : Math.round(n)} ${unit}`));
-            li.append(headshot(p.id, p.name), who, mv); ol.append(li); } c.append(ol); };
+        inWin(W100, () => {
+          const hit = DATA.players.filter((p) => p.type === "H").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 75 && v.m.xwd != null).sort((a, b) => b[1].m.xwd - a[1].m.xwd).slice(0, NH);
+          table(b, { label: "Hitters · last 100 PA", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["PA", 42], ["xwOBA", 58, "heat"]], ends: [2, 3],
+            rows: hit.map(([p, v], i) => [i + 1, nm(p), p.team || "", Math.round(v.sample), { v: f3(v.m.xwd), pc: pcOf(refH, v.m.xwd) }]) });
+        });
+        inWin(W50, () => {
+          const pit = DATA.players.filter((p) => p.type === "P").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 37.5 && v.m.nera != null).sort((a, b) => a[1].m.nera - b[1].m.nera).slice(0, NP);
+          table(b, { label: "Pitchers · last 50 IP", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["IP", 46], ["nERA", 58, "heat"]], ends: [2, 3],
+            rows: pit.map(([p, v], i) => [i + 1, nm(p, "nera"), p.team || "", fmtIP(v.sample), { v: f2(v.m.nera), pc: pcOf(refP, v.m.nera, true) }]) });
+        });
+      }
+    }
+    // Movers (Sean, 7 Oct 2026): the biggest percentile jumps over the last 30 days against the full season — hitters by xwOBA (75+ PA in the window,
+    // ranked among the window's 75+ PA hitters), pitchers by nERA (20+ IP, among the window's 20+ IP pitchers); Was / Now are percentiles
+    { const days = m.days || [], from = days.length ? addDays(days[days.length - 1], -29) : "", win30 = { from: from && from > days[0] ? from : "", to: "", last: "" };
+      const b = section(grid, "Movers", "last 30 days vs the season", "Leaderboard →", goLB("ALL", "score", "desc", win30));
+      if (!daysReady()) loading(b);
+      else {
         const seasonH = new Map(), seasonP = new Map();
         inWin(NOWIN, () => { for (const p of DATA.players) { if (p.type === "H" && (p.pa || 0) >= 300) { const v = V(p).m.xwd; if (v != null) seasonH.set(p, insertPct(refH, v)); } else if (p.type === "P" && (p.ip || 0) >= 100) { const v = puOf(p); if (v != null) seasonP.set(p, insertPct(refP, -v)); } } });
         const hit = [], pit = [];
         inWin(win30, () => {
           const H = DATA.players.filter((p) => p.type === "H").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 75 && v.m.xwd != null), P = DATA.players.filter((p) => p.type === "P").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 20 && v.m.nera != null);
           const sH = sortedOf(H.map(([, v]) => v.m.xwd)), sP = sortedOf(P.map(([, v]) => -v.m.nera));
-          for (const [p, v] of H) { const was = seasonH.get(p); if (was == null) continue; const now = insertPct(sH, v.m.xwd); hit.push([p, was, now, v.m.xwd, v.sample, "PA"]); }
-          for (const [p, v] of P) { const was = seasonP.get(p); if (was == null) continue; const now = insertPct(sP, -v.m.nera); pit.push([p, was, now, v.m.nera, v.sample, "IP"]); }
+          for (const [p, v] of H) { const was = seasonH.get(p); if (was == null) continue; hit.push([p, was, insertPct(sH, v.m.xwd), v.m.xwd, v.sample]); }
+          for (const [p, v] of P) { const was = seasonP.get(p); if (was == null) continue; pit.push([p, was, insertPct(sP, -v.m.nera), v.m.nera, v.sample]); }
         });
         const up = (r) => r[2] - r[1]; hit.sort((a, b) => up(b) - up(a)); pit.sort((a, b) => up(b) - up(a));
-        const sec = (lab) => { mc.append(el("h4", null, lab)); };
-        sec("Hitters · xwOBA"); mlist(mc, hit.slice(0, NH), null, f3); sec("Pitchers · nERA"); mlist(mc, pit.slice(0, NP), "nera", f2);
-        if (!hit.length && !pit.length) mc.append(el("p", "hnote", "Nobody qualifies in the window yet."));
+        const pc = (x) => ({ v: String(Math.round(x)), pc: x }), dl = (r) => "+" + Math.round(up(r));
+        const mv = (lab, rows, tab, vlab, f, unit, uf) => table(b, PH
+          ? { label: lab, cols: [["Player", null, "nm"], ["Tm", 40, "c"], ["Was", 38], ["Now", 38], ["Δ", 40, "up"]], ends: [1, 3], rows: rows.map((r) => [nm(r[0], tab), r[0].team || "", pc(r[1]), pc(r[2]), dl(r)]) }
+          : { label: lab, cols: [["Player", null, "nm"], ["Tm", 46, "c"], [vlab, 52], [unit, 42], ["Was", 40], ["Now", 40], ["Δ", 40, "up"]], ends: [1, 3, 5], rows: rows.map((r) => [nm(r[0], tab), r[0].team || "", f(r[3]), uf(r[4]), pc(r[1]), pc(r[2]), dl(r)]) });
+        if (hit.length) mv("Hitters · xwOBA percentile", hit.slice(0, NH), null, "xwOBA", f3, "PA", (x) => Math.round(x));
+        if (pit.length) mv("Pitchers · nERA percentile", pit.slice(0, NP), "nera", "nERA", f2, "IP", fmtIP);
+        if (!hit.length && !pit.length) b.append(el("p", "hnote", "Nobody qualifies in the window yet."));
       }
     }
     // no "Every page" tiles (Sean, 29 Sep 2026, the minimal pass): the header's menus already list them
