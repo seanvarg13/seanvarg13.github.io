@@ -2878,3 +2878,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   100 · xwOBA; IP in the last 50 · nERA) and **Movers** (xwOBA / nERA and PA / IP in the 30 days, then Was · Now as filled percentile cells and a
   red +Δ; a phone drops the window value and sample). The headshot rows (`.hbig`) aren't drawn on home any more; their CSS stays. The card /
   board B-Ref rules' `:is(#xboard, #modal, #pitchboard)` prefix now carries `#hub` too. CSS: the block at the end of `styles.css`.
+* **The season table's tabs and rules in red (Sean, 9 Oct 2026, Bregman's page: "make the upper grey be light blue and the regular season and
+  playoff buttons be the red ... make the line breaks red too")**: in `.sblock` the Regular Season / Playoffs strip is the light-blue band on both
+  layouts, the picked tab filled `--stripe-line` red with white type, the other plain white words; every 2px rule in the season table (after Team,
+  between groups, over the totals, down the gaps) is the stripe red. The block at the end of `styles.css`; the other B-Ref tables keep navy rules.
