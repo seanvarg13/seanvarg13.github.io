@@ -4951,3 +4951,9 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colhead > .brpos, :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #rows .row-main > .brpos { order: 8; }
 :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colhead > :nth-child(1) { background: var(--band2, var(--accent-2)) !important; position: sticky; left: 0; z-index: 4; }
 :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colhead > :nth-child(2) { position: sticky; left: var(--rankw, 22px); z-index: 4; }
+
+/* The Leaderboard's column names grow to fit (Sean, 9 Oct 2026: two-word names like "Pull Air%" / "Bat speed" were squeezed into a
+   30px row on a phone): every name cell is at least 30px and as tall as its text, wrapped and centred, and the row takes the tallest. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colhead { align-items: stretch !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colhead .h { height: auto !important; min-height: 30px !important; padding: 5px 4px !important; line-height: 1.15 !important; text-align: center !important; white-space: normal !important; overflow: visible !important; box-sizing: border-box !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colhead .h.left { text-align: left !important; }
