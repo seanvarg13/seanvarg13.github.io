@@ -2963,3 +2963,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   - **Sprint** is filled with its percentile colour among that season's qualified hitters (`sbPool`), in this view only.
   - **BsR** is FanGraphs' baserunning runs (`sab[1]`, `SB_SAB.BsR`), summed in the totals and scaled per 162 games.
   Regular season only, like the Statcast views. Seasons before 2015 and the minors read "–" for CS / SB%.
+* **The pinned name row is blue too (Sean, 9 Oct 2026: "make the upper white part be blue")**: `.phpin` and its `.phpinrow` are on `--band2` with a white
+  name, so the pinned bar reads as one blue block like the band: the name and the white year / level / Filters buttons over the Summary, with the
+  red stripe under it.

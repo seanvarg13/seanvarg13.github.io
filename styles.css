@@ -5039,3 +5039,8 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin:has(.phpinband):not(.on) { opacity: 0; visibility: hidden; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinband { position: static; margin: 0; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinband .mplate.pbio { padding-top: 0; padding-bottom: 8px; min-height: 0; gap: 0; border-top: 0; }
+/* the pinned name row on the band's blue too (Sean, 9 Oct 2026: "make the upper white part be blue"): white name, the year / level / Filters
+   buttons stay white */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin { background: var(--band2, var(--accent-2)); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinrow { background: var(--band2, var(--accent-2)); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pcname { color: #fff !important; }
