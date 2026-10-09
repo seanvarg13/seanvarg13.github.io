@@ -9490,9 +9490,9 @@
   // and then (Sean, the same night): OPS between SLG and wRC+, fWAR / bWAR after SB as one group (a rule before fWAR and after bWAR, none between)
   // ISO behind OPS (Sean, 8 Oct 2026: "move iso to behind ops on the standard table")
   const SB_H = ["wOBA", "xwOBA", "G", "PA", "HR", "R", "RBI", "BB%", "K%", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "OPS", "ISO", "wRC+", "Sprint", "SB", "fWAR", "bWAR"];
-  const SB_BRK = { H: new Set(["G", "BB%", "AVG", "Sprint", "fWAR", "Pos"]), P: new Set() };   // a heavier rule before each of these
+  const SB_BRK = { H: new Set(["G", "BB%", "HR/FB", "AVG", "Sprint", "fWAR", "Pos"]), P: new Set() };   // a heavier rule before each of these
   const SB_FG = ["fWAR", "bWAR", "wRC+", "Sprint", "HR/FB"], SB_SAB = { "wRC+": 0, fWAR: 4 };   // SB_FG: not in MLB's postseason lines
-  const SB_HEAT = new Set(["xwOBA", "Sprint"]);   // filled in their percentile colour among that season's qualified hitters — wOBA plain (Sean, 9 Oct 2026: "only xwoba is heatmapped not woba")
+  const SB_HEAT = new Set(["xwOBA"]);   // filled in their percentile colour among that season's qualified hitters — wOBA plain (Sean, 9 Oct 2026: "only xwoba is heatmapped not woba"), Sprint plain too ("get rid of the heat map on sprint speed")
   const SB_TIP = { "BB%": "Walks per plate appearance", "K%": "Strikeouts per plate appearance", ISO: "Isolated power: SLG minus AVG",
     BABIP: "Batting average on balls in play: (H − HR) / (AB − K − HR + SF)", wOBA: "The site's wOBA where the season is built (2015 on), FanGraphs' before",
     "HR/FB": "Home runs per fly ball, Savant's way: Statcast's fly balls and popups, with his line-drive homers counted as fly balls",

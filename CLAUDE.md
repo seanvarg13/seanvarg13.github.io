@@ -2882,3 +2882,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   playoff buttons be the red ... make the line breaks red too")**: in `.sblock` the Regular Season / Playoffs strip is the light-blue band on both
   layouts, the picked tab filled `--stripe-line` red with white type, the other plain white words; every 2px rule in the season table (after Team,
   between groups, over the totals, down the gaps) is the stripe red. The block at the end of `styles.css`; the other B-Ref tables keep navy rules.
+* **Sprint plain, a rule after K% (Sean, 9 Oct 2026: "get rid of the heat map on sprint speed", "put a line break in between k% and hr to fb
+  ratio")**: `SB_HEAT` is xwOBA alone, and `SB_BRK.H` has HR/FB, so the season table reads wOBA xwOBA | G PA HR R RBI | BB% K% | HR/FB BABIP |
+  AVG OBP SLG OPS ISO wRC+ | Sprint SB | fWAR bWAR | Pos.
