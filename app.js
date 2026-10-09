@@ -7153,14 +7153,22 @@
     ends.add(0); ends.add(2);
     const t0 = wrap.querySelector("thead tr"); t0.children[0].classList.add("ge"); t0.children[2].classList.add("ge");
     let band = false;
+    // a step's name, tapped, opens its note in a row under it and tapped again closes it (Sean, 9 Oct 2026: "if you click rest of contact a note
+    // pops up explaining it") — a phone has no hover for the tooltip; every step with a note gets one, marked with a dotted underline
+    const noteCell = (lab, tip, tr) => { const td = el("td", "l nm"); if (!tip) { td.append(lab); return td; }
+      const bt = el("button", "knotebtn", lab); bt.type = "button"; bt.setAttribute("aria-expanded", "false");
+      bt.addEventListener("click", (e) => { e.stopPropagation(); const nx = tr.nextElementSibling;
+        if (nx && nx.classList.contains("knote")) { nx.remove(); bt.setAttribute("aria-expanded", "false"); return; }
+        const nr = el("tr", "knote"), nc = el("td", null, tip); nc.colSpan = 5; nr.append(nc); tr.after(nr); bt.setAttribute("aria-expanded", "true"); });
+      td.append(bt); return td; };
     const dCell = (v) => { const td = el("td", "kd", v == null ? "" : fmtD(v)); if (v != null && !band) { const s2 = signStyle(v); td.style.background = s2.bg; td.style.color = s2.fg; td.classList.add("heat"); } return td; };
     const api = {
       // a driver: his value (printed by its own f), the league's, his percentile, the move and the running stat
       row(lab, his, lg, f, pc, d, run, tip) { const tr = el("tr"); if (tip) tr.title = tip;
-        const h = el("td", null, his == null ? "–" : f(his)); tr.append(el("td", "l nm", lab), band ? h : heatTd(h, his == null ? null : pc), el("td", "xact", lg == null ? "" : f(lg)), d === "→" ? el("td", "xact", "→") : dCell(d), el("td", "krk", run == null ? "" : fmt(run)));
+        const h = el("td", null, his == null ? "–" : f(his)); tr.append(noteCell(lab, tip, tr), band ? h : heatTd(h, his == null ? null : pc), el("td", "xact", lg == null ? "" : f(lg)), d === "→" ? el("td", "xact", "→") : dCell(d), el("td", "krk", run == null ? "" : fmt(run)));
         tb.append(fin(tr)); },
       band(lab, d, run, tip) { if (!band) { tb.append(gap()); band = true; } const tr = el("tr", "tot" + (tb.querySelector("tr.tot") ? "" : " first")); if (tip) tr.title = tip;
-        tr.append(el("td", "l nm", lab), el("td"), el("td"), dCell(d), el("td", "krk", run == null ? "" : fmt(run))); tb.append(fin(tr)); },
+        tr.append(noteCell(lab, tip, tr), el("td"), el("td"), dCell(d), el("td", "krk", run == null ? "" : fmt(run))); tb.append(fin(tr)); },
       done() { box.append(wrap); return box; } };
     return api;
   }
@@ -7198,7 +7206,7 @@
         if (d != null) run += d;
         b.row(lab, his, lg, f, pctAmong(ref.map((q) => val(q, k)).filter((z) => z != null), his, Math.sign(XBAB[k])), d == null ? null : step(run), d == null ? null : run, XBAB_TIP[k]);
       }
-      b.row("Rest of Contact", null, null, fmtX, null, step(m.xbabip), m.xbabip, `what the directional model sees beyond the seven — the launch angles and spray of each ball — landing on his xBABIP ${fmtX(m.xbabip)}`);
+      b.row("Rest of Contact", null, null, fmtX, null, step(m.xbabip), m.xbabip, `His xBABIP comes from the directional model, which prices every ball he put in play by its exit velocity, launch angle, direction and his speed. The seven rows above are a straight-line summary of the biggest pieces of that; Rest of Contact is everything they leave out — the exact angles (liners and hard grounders at hit-friendly angles versus topped or lofted balls), where each ball went, and the hard-and-well-aimed combinations an average can't see. It's the gap between his xBABIP (${fmtX(m.xbabip)}) and what the seven alone point to: + means the details of his contact earn more hits than those averages suggest, − fewer.`);
       b.band("Luck", step(m.babip), m.babip, "hits in play above or below what the contact deserved — it repeats year to year at only r .15");
       b.band("BABIP", R3(m.babip) - R3(lgX), m.babip, `the whole trip: every step above added up, from the ${fmtX(lgX)} start to his ${fmtX(m.babip)} (the league's actual BABIP is ${fmtX(lgB)})`);
       w.append(b.done());
