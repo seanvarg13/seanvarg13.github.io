@@ -7105,9 +7105,11 @@
     const rec = window.DRAFT_CAREER[String(p.id)], rows = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).filter((l) => l.c.ext && +l.c.ext[2] > 0).sort((a, b) => a.season - b.season);
     if (!rows.length) { box.append(el("p", "note", "No MLB fly balls on record.")); return box; }
     // a B-Ref table (Sean, 9 Oct 2026): over-headers, the cells heat-mapped whole, the career a band row under a gap
-    const { tb, fin, gap, wrap } = brTable([["", 2], ["Actual", 3], ["Fly-ball contact", 2], ["Expected", 2]],
-      [["Season", "l"], ["Team", "l"], ["HR", ""], ["FB", "", "Fly balls + popups (Statcast's calls), his line-drive homers counted in"], ["HR/FB", ""], ["FB EV", "", "Exit velocity on fly balls (2023 on)"],
-       ["FB Brl%", "", "Barrels per fly ball"], ["xHR/FB", "", "What his contact says: that season's league HR/FB moved by his FB EV, Barrel% on fly balls and Barrel% on line drives against the league's"], ["Diff", "", "HR/FB − xHR/FB: + = more homers than his contact says"]], "hrfbt");
+    // HR and fly balls with the fly-ball contact, then the ratio beside what it should have been (Sean, 9 Oct 2026: "put the fly ball contact ev and
+    // brl% with the hr and fb and then put the actual hr to fb ratio with the expected and differential")
+    const { tb, fin, gap, wrap } = brTable([["", 2], ["Fly-ball contact", 4], ["HR / FB", 3]],
+      [["Season", "l"], ["Team", "l"], ["HR", ""], ["FB", "", "Fly balls + popups (Statcast's calls), his line-drive homers counted in"], ["FB EV", "", "Exit velocity on fly balls (2023 on)"],
+       ["FB Brl%", "", "Barrels per fly ball"], ["HR/FB", "", "His home runs over his fly balls"], ["xHR/FB", "", "What his contact says: that season's league HR/FB moved by his FB EV, Barrel% on fly balls and Barrel% on line drives against the league's"], ["Diff", "", "HR/FB − xHR/FB: + = more homers than his contact says"]], "hrfbt");
     const heat = (td, arr, v, lo) => { if (v == null || !arr || arr.length < 20) return; const pc = insertPct(lo ? arr.map((z) => -z).reverse() : arr, lo ? -v : v), sty = pctStyle(pc); td.style.background = sty.bg; td.style.color = sty.fg; td.classList.add("hheat", "heat"); td.title = ordinal(Math.round(pc)) + " percentile among that season's qualified hitters"; };
     const sgn = (v) => (v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1));
     let H = 0, F = 0, eS = 0, eW = 0, bS = 0, bW = 0, xS = 0, xW = 0, hrX = 0, fbX = 0;
@@ -7116,9 +7118,9 @@
       const tr = el("tr", y === +DS.season && DS.level === "MLB" ? "cur" : null), cell = (v, cls) => { const td = el("td", cls || null, v); tr.append(td); return td; };
       const heatIf = +l.c.PA >= 100 ? heat : () => {};   // a cup of coffee isn't coloured against the qualifiers (Cruz 2021: 1 FB, 1 HR)
       cell(String(y), "l nm"); cell(l.team || "", "l"); cell(String(hr)); cell(String(fb));
-      heatIf(cell(hf.toFixed(1) + "%"), L.arr.hrfb, hf);
       heatIf(cell(bx && bx.evfb != null ? bx.evfb.toFixed(1) : "–"), L.arr.evfb, bx && bx.evfb);
       heatIf(cell(bx && bx.brfb != null ? bx.brfb.toFixed(1) + "%" : "–"), L.arr.brfb, bx && bx.brfb);   // fly balls only (Sean, 8 Oct 2026)
+      heatIf(cell(hf.toFixed(1) + "%"), L.arr.hrfb, hf);
       heatIf(cell(xv == null ? "–" : xv.toFixed(1) + "%"), L.arr.x, xv);
       const d = cell(xv == null ? "–" : sgn(hf - xv)); if (xv != null) d.classList.add(hf - xv >= 0 ? "pos" : "neg");
       tb.append(fin(tr));
@@ -7131,8 +7133,8 @@
     // have one, and Diff over those same seasons
     const tr = el("tr", "tot first"), cell = (v, cls) => { const td = el("td", cls || null, v); tr.append(td); return td; };
     const xc = xW ? xS / xW : null;
-    cell(""); cell(`${rows.length} Yr${rows.length === 1 ? "" : "s"}`, "l"); cell(String(H)); cell(String(F)); cell((100 * H / F).toFixed(1) + "%");
-    cell(eW ? (eS / eW).toFixed(1) : "–"); cell(bW ? (bS / bW).toFixed(1) + "%" : "–"); cell(xc == null ? "–" : xc.toFixed(1) + "%");
+    cell(""); cell(`${rows.length} Yr${rows.length === 1 ? "" : "s"}`, "l"); cell(String(H)); cell(String(F));
+    cell(eW ? (eS / eW).toFixed(1) : "–"); cell(bW ? (bS / bW).toFixed(1) + "%" : "–"); cell((100 * H / F).toFixed(1) + "%"); cell(xc == null ? "–" : xc.toFixed(1) + "%");
     cell(xc == null ? "–" : sgn(100 * hrX / fbX - xc));
     tb.append(gap(), fin(tr)); box.append(wrap);
     return box;
