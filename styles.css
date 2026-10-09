@@ -5047,13 +5047,3 @@ header.top .wordmark { display: none; }
 /* a red line between the pinned name row and the Summary (Sean, 9 Oct 2026: "add a line break of red between it and the bottom part") */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinrow { border-bottom: 2px solid var(--stripe-line, #c8102e); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinband .pbsum { border-top: 0 !important; margin-top: 0; padding-top: 6px; }
-/* the build-up's percentile bars (Sean, 9 Oct 2026): a Savant bar per driver, the bubble his percentile, in its own column */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .kbuild.kbars td.kbarc { width: 150px; min-width: 120px; padding: 0 16px 0 8px; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .kbuild.kbars .kbtrk { position: relative; height: 12px; background: color-mix(in srgb, var(--ink) 9%, var(--surface)); }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .kbuild.kbars .kbfill { position: absolute; left: 0; top: 0; bottom: 0; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .kbuild.kbars .kbub { position: absolute; top: 50%; transform: translate(-50%, -50%); min-width: 22px; height: 22px; padding: 0 3px; box-sizing: border-box; border-radius: 11px; border: 2px solid var(--surface); color: #fff; font: 700 11px/18px var(--body); text-align: center; font-variant-numeric: tabular-nums; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .kbuild.kbars th.kbarh { min-width: 120px; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .kbuild.kbars td.kbarc { width: 84px; min-width: 84px; padding: 0 12px 0 6px; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .kbuild.kbars th.kbarh { min-width: 84px; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .kbuild.kbars td.kbarc { width: 64px; min-width: 64px; padding: 0 12px 0 5px; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .kbuild.kbars th.kbarh { min-width: 64px; }
