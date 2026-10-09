@@ -3022,3 +3022,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the rounded running BABIPs (`step` / `R3` in `renderXbabipTab`), Luck carries his BABIP as its running number, and the BABIP row's ± is the whole
   trip from the start (= the sum of every ± above it). The league's actual BABIP is in that row's tooltip. Schwarber 2026: .291 start, steps
   summing to −11, BABIP .280.
+* **Tap a build-up step for its note (Sean, 9 Oct 2026: "within babip what is 'rest of contact' could you add a note to it so if you click rest of
+  contact a note pops up explaining it")**: in `buildUp` (the xBABIP and xHR/FB tabs) every step with a tooltip draws its name as a button with a
+  dotted underline (`noteCell`, `.knotebtn`). A tap opens the note in a full-width row under it (`tr.knote`) and a second tap closes it; a phone has
+  no hover. Rest of Contact's note says what it is: the part of his xBABIP the seven straight-line drivers don't capture — exact angles, where each
+  ball went, the hard-and-well-aimed combinations. CSS at the end of `styles.css`.

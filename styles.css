@@ -5085,3 +5085,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfilt .phf.mfull .seg { width: 100%; display: flex; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfilt .phf.mfull .segbtn { flex: 1 1 0; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfilt .segbtn { white-space: nowrap; font-size: 14px !important; padding: 0 8px; }
+
+/* a build-up step's note: the name is a button with a dotted underline, a tap opens the note in a row under it (Sean, 9 Oct 2026) */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .sbt.brt .knotebtn { font: inherit; font-weight: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; text-decoration: underline dotted; text-underline-offset: 3px; letter-spacing: 0; text-transform: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .sbt.brt tr.knote td { white-space: normal; text-align: left; font: 400 13px/1.45 var(--body); color: var(--ink); background: color-mix(in srgb, var(--band2, var(--accent-2)) 14%, var(--surface)) !important; padding: 8px 10px; height: auto; border-right: 0 !important; max-width: 0; }
