@@ -2966,3 +2966,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **The pinned name row is blue too (Sean, 9 Oct 2026: "make the upper white part be blue")**: `.phpin` and its `.phpinrow` are on `--band2` with a white
   name, so the pinned bar reads as one blue block like the band: the name and the white year / level / Filters buttons over the Summary, with the
   red stripe under it.
+* **A red line between the pinned name row and the Summary; lazy files retry (Sean, 9 Oct 2026: "add a line break of red between it and the bottom
+  part and also add back in the career stats")**: `.phpinrow` has a 2px `--stripe-line` rule under it, and the pinned Summary drops the band's hairline.
+  The career stats had vanished on his phone because `hist/career.js` (4.6 MB) failed to download once, and `ensureScript` marked it failed for the
+  whole visit. The season table then said "hasn't been built", and the Summary had no Career row or HR / OBP / OPS. `ensureScript` now tries a failed
+  file twice more (1.5 s, then 3 s; `tries`), and the season table's note says "Couldn't load his career stats. Try again", with a button, instead
+  of blaming the build.
