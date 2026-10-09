@@ -5183,3 +5183,16 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pbio.pbone .pbrow1 { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pbio.pbone .pbrow1 > .pbctl { flex: none; margin-left: auto; position: static; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pbio.pbone .pbrow1 > .pbctl .pbsp { display: none; }
+
+/* The bio line in the sticky bar (Sean, 9 Oct 2026: "make the bio stuff scroll with it too"): the bar wraps, the name and buttons on its first line,
+   the bio (with Back and the filter chips at its right) on a full-width second line; the band under it is the selected year's line alone. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar { flex-wrap: wrap; row-gap: 4px; padding-bottom: 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar > .pbrow1 { flex: 1 0 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px 16px; flex-wrap: wrap; min-width: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar .pbline { display: flex; flex-wrap: wrap; align-items: center; color: #fff; font: 500 15px/1.35 var(--body); min-width: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar .pbline { font-size: 13.5px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar .pbline .pbdot { margin: 0 8px; opacity: .75; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar .pbline .pbteam { color: #fff; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar > .pbrow1 > .pbctl { flex: none; margin-left: auto; position: static; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar > .pbrow1 > .pbctl .pbsp { display: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .mplate.pbio.pbone { padding-top: 4px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar > .pgbname { flex: 1 1 0; min-width: 0; }
