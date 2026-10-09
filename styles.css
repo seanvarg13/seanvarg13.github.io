@@ -5107,3 +5107,10 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfix :is(.tsl, .phfilt, .segbtn) { height: 36px !important; padding: 0 10px !important; font-size: 16px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfix { flex-wrap: wrap; justify-content: flex-end; max-width: 196px; row-gap: 6px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfix :is(.tsl, .phfilt, .segbtn) { height: 34px !important; padding: 0 9px !important; font-size: 15px !important; }
+/* a phone pitcher's year over Filters, the same width, at the far right (Sean, 9 Oct 2026) */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfix.stack { flex-direction: column; align-items: stretch; flex-wrap: nowrap; max-width: none; gap: 6px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfix.stack > * { width: 100% !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfix.stack :is(.tsl, .phfilt) { width: 100% !important; min-width: 96px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .phwin .phtwo .tsl { height: 34px; padding: 0 12px; border: 1px solid #c3d3e3; border-radius: 0; background: #fff; color: var(--ink); font: 700 16px/1 var(--display); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .phwin .phtwo .tsl::after { content: " ▾"; font-size: 12px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .phwin .phtwo .dd.solo .tsl::after { content: none; }

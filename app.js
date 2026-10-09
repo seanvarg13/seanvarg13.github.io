@@ -9467,10 +9467,20 @@
     // the year, the level (when he has more than one) and Filters (+ a pitcher's Raw ▾) as boxy buttons fixed to the spot on the screen where
     // they first draw, so they stay put as the page scrolls (Sean, 9 Oct 2026: "make it so the year, filters, and when applicable the level box
     // stay in the exact same spot on your screen even when you scroll ... on the desktop and phone ... make them boxy buttons") — pinFix
-    const fx = el("div", "pgfix"), pk = title._picks;
-    if (pk) { const [yr, lv] = pk.mk(); fx.append(yr); if (pk.lvWorth) fx.append(lv); } else fx.append(title);
+    // a pitcher on a phone keeps only the year and Filters there, stacked at the far right, and finds the level and Raw / Stuff inside the
+    // Filters window (Sean, 9 Oct 2026: "for pitchers on the phone can you do just year and filters and have the level and raw vs stuff go in
+    // the filters and put them both on the far right one on top of each other")
+    const slim = p.type === "P" && mobileView(), inWin = [];
+    const fx = el("div", "pgfix" + (slim ? " stack" : "")), pk = title._picks;
+    if (pk) { const [yr, lv] = pk.mk(); fx.append(yr); if (pk.lvWorth) { if (slim) inWin.push(["Level", lv]); else fx.append(lv); } } else fx.append(title);
+    if (slim) {
+      const side = (state.cardSide || "raw") === "stuff" ? "stuff" : "raw", sg = el("div", "seg"); sg.setAttribute("role", "group"); sg.setAttribute("aria-label", "Raw or stuff");
+      for (const [k, l] of [["raw", "Raw"], ["stuff", "Stuff"]]) { const bt = el("button", "segbtn small", l); bt.type = "button"; bt.setAttribute("aria-pressed", String(k === side));
+        bt.addEventListener("click", (e) => { e.stopPropagation(); if (k !== side) { state.cardSide = k; savePrefs(); render(); } }); sg.append(bt); }
+      inWin.push(["Raw / Stuff", sg]);
+    }
     const twoWay = typeSeg(p);
-    if (o.entry && !isMulti(o.key)) fx.append(filtersTog(p));
+    if (o.entry && !isMulti(o.key)) fx.append(filtersTog(p, slim));
     ctl.append(fx);
     if (o.entry && !isMulti(o.key)) { const chips = viewChips(p); if (chips.childNodes.length) ctl.append(chips); }
     // a phone with no Back: no row either — the year and Filters stack at the right of the name, the bio wrapping round them (Sean, 8 Oct 2026:
@@ -9483,7 +9493,7 @@
     // no "More bio, draft info" button (Sean, 9 Oct 2026: "get rid of the more bio draft info button"); moreBio stays, unused
     main.append(txt); plate.append(main);
     if (st && st.pct) plate.append(summaryBlock(p, st));
-    if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay); if (!state.cardTools && sum.childNodes.length) plate.append(sum); }
+    if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay, inWin); if (!state.cardTools && sum.childNodes.length) plate.append(sum); }
     top.append(plate);
     return top;
   }
@@ -10268,13 +10278,13 @@
   // The Filters button (with a pitcher's Raw ▾ / Stuff ▾ beside it) and the window it opens — pulled out of playerHead (8 Oct 2026)
   // so his page's band and the popup's share them. The window: the dates, hand, venue and role cells hung under the button,
   // dressed like the Leaderboard's Filters dropdown, closed by a tap anywhere else or Escape; nothing is put in the band, so it never moves.
-  function filtersTog(p) {
+  function filtersTog(p, noSide) {
     const open = !!state.cardTools;
     const b = el("button", "segbtn small phfilt", open ? "Filters ▴" : "Filters ▾");
     b.type = "button"; b.setAttribute("aria-expanded", String(open)); b.setAttribute("aria-pressed", String(open));
     b.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = !state.cardTools; savePrefs(); render(); });
     const tog = el("span", "phtog"), fs = el("div", "seg phfiltseg"); fs.append(b); tog.append(fs);
-    if (p.type === "P") {
+    if (p.type === "P" && !noSide) {
       const side = (state.cardSide || "raw") === "stuff" ? "stuff" : "raw";
       const sb = el("button", "segbtn small phfilt phsidebtn", side === "stuff" ? "Stuff ▾" : "Raw ▾"); sb.type = "button"; sb.setAttribute("aria-label", "Raw or stuff");
       const dd = ddList(sb, [["raw", "Raw"], ["stuff", "Stuff"]], side, (k) => { state.cardSide = k; savePrefs(); render(); }, "side");
@@ -10306,7 +10316,7 @@
     }
     return { grid, warn, cell };
   }
-  function filtersWindow(p, twoWay) {
+  function filtersWindow(p, twoWay, extra = []) {
     const open = !!state.cardTools;
     const { grid, warn } = filterGrid(p, open);
     const sum = el("div", "phsum");                     // only when something needs saying: a split in force, days loading
@@ -10322,6 +10332,7 @@
       x.addEventListener("click", (e) => { e.stopPropagation(); state.cardTools = false; savePrefs(); render(); });
       const body = el("div", "pop-body phwinbody");
       if (twoWay) { const tw = el("div", "phtwo"); tw.append(el("div", "phcap", "Hitting / Pitching"), twoWay); body.append(tw); }
+      for (const [cap, node] of extra) { const tw = el("div", "phtwo"); tw.append(el("div", "phcap", cap), node); body.append(tw); }   // a phone pitcher's Level and Raw / Stuff
       body.append(grid); if (sum.childNodes.length) body.append(sum);
       const ft = el("div", "popfoot phwinft"), clear = el("button", "linkbtn popclear", "Clear"); clear.type = "button";
       clear.addEventListener("click", (e) => { e.stopPropagation(); state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; savePrefs(); render(); });
