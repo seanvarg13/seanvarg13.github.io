@@ -10061,8 +10061,8 @@
       renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
       pg.append(B);
       box.append(pg, renderBelow(p, { st, g, ref }));
-      box.append(condensedBar(p, st, g, o));   // the condensed band once scrolled, a phone's and a desktop's (Sean, 8 Oct 2026)
-      condSync();                              // now, not next frame: a Filters window opened from the bar places itself under it in the next frame
+      // no bar pinned on scroll any more (Sean, 9 Oct 2026: "just get rid of the scrolling headers and not have that at all"); condensedBar /
+      // condSync stay below, unused — condSync finds no bar and returns
       return;
     }
     box.append(playerHead(p, st, g, o));
