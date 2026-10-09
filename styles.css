@@ -4986,3 +4986,13 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #hub .sbt.brt.htb td { padding: 0 5px; height: 30px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb td.c { padding: 0 3px; text-overflow: clip; }
 @media (min-width: 1180px) { :root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) .hub.home .hgrid .hsech > span { font-size: 12px; } :root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) .hub.home .hgrid .hsech { flex-wrap: nowrap; } :root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) .hub.home .hgrid .hsech > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; } }
+
+/* The season table's tabs and rules in the band's colours (Sean, 9 Oct 2026, Bregman's page on his phone: "make the upper grey be light blue and
+   the regular season and playoff buttons be the red ... make the line breaks red too"): the Regular Season / Playoffs strip is the light-blue
+   band on both layouts, the picked tab filled with the stripe red and the other plain white words; every 2px rule in the table — after Team,
+   between groups, over the totals, down the gaps — is the stripe red instead of navy. The season table only (.sblock). */
+:root:root:root:root:root:root:root:root:root:root:root:root:root .sblock .sbtabs { gap: 0; margin: 0 0 -8px; padding: 5px; background: var(--band2, var(--accent-2)) !important; border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--surface)); border-bottom: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .sblock .sbtab { height: 30px; padding: 0 12px; border: 0 !important; border-radius: 0 !important; background: transparent !important; color: #fff !important; font: 400 13.5px var(--body) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .sblock .sbtab.on { background: var(--stripe-line, #c8102e) !important; color: #fff !important; font-weight: 600 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .sblock .sbt :is(td, th):is(.ge, .f3, .sbl) { border-right-color: var(--stripe-line, #c8102e) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .sblock .sbt tr.tot.first td { border-top-color: var(--stripe-line, #c8102e) !important; }
