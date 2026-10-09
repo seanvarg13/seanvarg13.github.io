@@ -5000,3 +5000,12 @@ header.top .wordmark { display: none; }
 /* The Leaderboard's frozen Rk / Player cells carry their own row line (Sean, 9 Oct 2026: "fix the rank and name to have the border") —
    they're opaque so the sliding columns pass under them, which also hid the row's bottom rule behind them. */
 :root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main > :is(.rank, .who) { box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--ink) 16%, var(--surface)) !important; }
+
+/* Banded rows on every table (Sean, 9 Oct 2026: "make every table have banded rows too"): every other data row a shade of ink over the
+   surface — the Leaderboard / Recent / Rankings / Draft board rows (their frozen Rk / Player cells too), and every <table> on the site (the
+   season table, the card's tabs, the Pitching+ board, home, Fantasy). Totals, gaps and the current-season row keep their own fills, and a
+   heat-mapped cell keeps its colour (those are inline styles, which this rule doesn't override) */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root { --band-row: color-mix(in srgb, var(--ink) 6%, var(--surface)); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root body #rows > li.row:not(.brgap):not(.brtot):not(.selected):not(.open):nth-child(even) > .row-main,
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root body #rows > li.row:not(.brgap):not(.brtot):not(.selected):not(.open):nth-child(even) > .row-main > :is(.rank, .who) { background: var(--band-row) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(body, #xboard, #modal, #hub, #pitchboard, #fboard) table tbody tr:nth-child(even):not(.tot):not(.gap):not(.cur):not(.ftot):not(.fcur):not(.on):not(.sel) > td:not(.heat):not(.sbheat):not(.hheat):not(.hot):not(.fsorted):not(.record) { background: var(--band-row); }
