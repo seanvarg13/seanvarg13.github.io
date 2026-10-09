@@ -2919,3 +2919,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the non total career/years and 162 game total rows at the bottom")**: the "Banded rows on every table" block is gone from `styles.css` (the
   entry above is history — rows are plain again everywhere), and `seasonBlock` draws no club (`WSH (3 Yrs)`) or league (`NL (3 Yrs)`) rows or the
   gaps between them — the block stays in `app.js` behind `SB_CLUB_ROWS = false`.
+* **No red rule under the lit column name (Sean, 9 Oct 2026, from home: "the top row of the heatmapped column has that weird line there, can you
+  get rid of that it happens on every table")**: the sorted / lit header cell on every table (the Leaderboard's `#colhead`, the Pitching+ board,
+  home's and the card's B-Ref tables, `th.lit`) keeps its white wash and bold but no 3px `--stripe-line` under-rule — one `box-shadow: none` block
+  at the end of `styles.css` over the four rules that drew it.
