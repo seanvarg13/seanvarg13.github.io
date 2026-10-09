@@ -2976,3 +2976,5 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the expected and differential")**: `hrfbTable` is Season · Team | **Fly-ball contact**: HR · FB · FB EV · FB Brl% | **HR / FB**: HR/FB · xHR/FB · Diff,
   and the career row follows the same order. Same day: percentile bars in the HR/FB build-up were previewed (screenshots only) and declined — "it's
   fine how it is" — so the build-up keeps its heat-filled His cells.
+  **Then the contact first** (Sean, the same hour: "put the contact Ev and brl% first and then have the hr and fb fall into the second section and go
+  first"): Season · Team | **Fly-ball contact**: FB EV · FB Brl% | **HR / FB**: HR · FB · HR/FB · xHR/FB · Diff.
