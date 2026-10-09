@@ -2800,8 +2800,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   23.9%, 2026 33.3% vs 23.0%.
   **The Barrel% column is FB Brl%** (Sean, the same night: "make the barrel % be barrel % on fly balls only"): barrels per fly ball, `brfb`
   appended to `SBX_KEYS` in `build_career.py` (so `hist/career-bb.js` carries it), heat-mapped against `hrfbLeague`'s `arr.brfb`, the Career cell
-  weighted by fly balls; a season built before 8 Oct 2026 reads "–" until rescored (2015-2025 dispatched the same evening). xHR/FB still runs on
-  overall Barrel% — the fit predates the fly-ball rate.
+  weighted by fly balls; every season 2015-2026 carries it since the 8 Oct rescore (run 37855360025).
+  **xHR/FB refit on fly-ball barrels (Sean, 8-9 Oct 2026: "it really should only factor in fly ball barrel rate")**: `XHRFB.c` = +0.373 a mph of
+  FB EV, +0.391 a point of Barrel% on fly balls, +0.217 a point of Barrel% on line drives (a homer Statcast calls a liner sits in the fly-ball
+  count), each against that season's FB-weighted league (`hrfbLeague` carries `brfb` / `brld`); `brld` appended to `SBX_KEYS` after `brfb`.
+  Scratch `xhrfb2.js`, every 300+ PA hitter-season 2015-26 (3,321), held out by season: r .877 / rmse 3.29 against .856 / 3.54 for the old FB
+  EV + overall Barrel% fit (`XHRFB.a`), next season's HR/FB r .652 against .655 (own HR/FB .614), the leftover repeating year to year at .17
+  against .24. FB Brl% alone .855 / 3.54; FB EV + FB Brl% .864 / 3.45 but next season .623 — LD Brl% is what brings the forecast back; Pull
+  Air% / Pull% added ≤ .003 same-season and cost forecast; bat speed nothing. `a` / `b` stay as fallbacks for a file without the rates. Wood
+  2025 34.8% vs 27.8%, 2026 32.3 vs 31.4; Cruz 2024-25 21.0 / 21.3 vs 24.3 / 26.2, 2026 33.3 vs 26.7; Judge 2024 34.1 vs 31.8; Ohtani 2024 30.2 vs 28.8.
 * **Fly-ball power on the Leaderboard (Sean, 8 Oct 2026: "on the overall leaderboards page could you add FB EV, FB barrel rate, and then a
   composite average score of the percentile of both and also add expected hr to fb ratio there too")**: four hitter columns, in the **Batted
   ball** set right after Avg EV (`LB_SETS`; `state.lb.fbAdd` moves a saved list that still equals the old Batted ball set) and in

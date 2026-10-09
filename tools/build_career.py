@@ -334,7 +334,7 @@ def load_js(path, prefix):
 SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evgb",
             "gb", "ld", "fb", "pu", "air", "pull", "pullp", "cent", "oppo", "mixw",
             "swing", "zsw", "osw", "con", "zcon", "ocon", "whf",
-            "brfb"]   # barrels per fly ball, the Mix tab's HR / FB table (8 Oct 2026)
+            "brfb", "brld"]   # barrels per fly ball / line drive, xHR/FB's inputs (8-9 Oct 2026)
 
 
 def season_bb():
