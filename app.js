@@ -9490,6 +9490,10 @@
     const inner = el("div", "phpinrow"); inner.append(el("div", "pcname", p.name), title);
     if (o.entry && !isMulti(o.key)) inner.append(filtersTog(p));
     bar.append(inner);
+    // and under it the band's own Summary line, blue as it is in the band (Sean, 9 Oct 2026: "make it so the blue summary stats show instead of the
+    // white ones ... and then also make it so the name and filter and years button show above it"): it takes over just as the band's Summary
+    // slides under the name row, so the numbers don't move
+    if (st && st.pct) { const band = el("div", "phead phpinband"), plate = el("div", "mplate pbio"); plate.append(summaryBlock(p, st)); band.append(plate); bar.append(band); }
     return bar;
   }
   let condTick = false, pinOn = false, pinKey = "";
@@ -9499,7 +9503,9 @@
     const hd = document.querySelector("header.top"), hr = hd ? hd.getBoundingClientRect() : null;
     const hb = hr && getComputedStyle(hd).position !== "static" ? Math.max(0, Math.round(hr.bottom)) : 0;
     const name = head.querySelector("h2"), nr = (name || head).getBoundingClientRect();
-    const on = nr.bottom <= hb + 1;                       // the head's name has gone under the top
+    const sum = head.querySelector(".pbsum"), row = bar.querySelector(".phpinrow");
+    // with the Summary pinned: on as the band's Summary reaches the bottom of the name row; else once the band's name has gone under the top
+    const on = sum && bar.querySelector(".phpinband") ? sum.getBoundingClientRect().top <= hb + (row ? row.offsetHeight : 0) + 0.5 : nr.bottom <= hb + 1;
     bar.style.top = hb + "px"; pinOn = on; pinKey = pageKeyOf();
     if (bar.classList.contains("on") === on) return;
     bar.classList.toggle("on", on); bar.setAttribute("aria-hidden", String(!on)); document.body.classList.toggle("pcond", on);
