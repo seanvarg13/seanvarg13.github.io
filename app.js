@@ -23,7 +23,7 @@
         ["Pitching+", ["pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "fbv", "ext"]]],   // Pitching+ back in place of Stuff+ (Sean, 6 Oct 2026: "make stuff+ back into pitching+ with the addition of the location and command thing")
   };
   const colLab = (m) => { const l = SHORT[m.key] || m.label; return m.unit === "%" && !l.includes("%") ? l + "%" : l; };
-  const SHORT = { foul: "Foul%", fpc: "Foul/Con", nfpc: "xFoul/Con", xnera: "xnERA", xkw: "Whiff−xK%", xkws: "xWhiff−P+ xK%", ncstr: "xCalled Strk", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strk Whiff", nfoul: "xFoul%", s2whf: "2-strk Whiff", s2sw: "2-strk Sw", s2zone: "2-strk Zone", xkf: "xK%", xks: "Pitching+ xK%", xbbf: "xBB%", xkbb: "x(K-BB)%", xkbbs: "Pitching+ x(K-BB)%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", pjwhf: "Proj Whiff", mixw: "Mix wOBA", nmix: "Mix xwOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", evfb: "FB EV", evld: "EV LD", evgb: "EV GB", brfb: "FB Brl", brld: "Brl LD", brgb: "Brl GB", brl: "Brl%", pull: "Pull Air", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
+  const SHORT = { foul: "Foul%", fpc: "Foul/Con", nfpc: "xFoul/Con", xnera: "xnERA", xkw: "Whiff−xK%", xkws: "xWhiff−P+ xK%", ncstr: "xCalled Strk", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strk Whiff", nfoul: "xFoul%", s2whf: "2-strk Whiff", s2sw: "2-strk Sw", s2zone: "2-strk Zone", xkf: "xK%", xks: "Pitching+ xK%", xbbf: "xBB%", xkbb: "x(K-BB)%", xkbbs: "Pitching+ x(K-BB)%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", pjwhf: "Proj Whiff", mixw: "Mix wOBA", nmix: "Mix xwOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", evfb: "FB EV", evld: "EV LD", evgb: "EV GB", brfb: "FB Brl", brld: "Brl LD", brgb: "Brl GB", brl: "Brl%", pull: "Pull Air", pullfb: "Pull FB%", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
                tiers: "draft2027.tiers", tierNames: "draft2027.tierNames", sets: "draft2027.rankSets", extraPos: "draft2027.extraPos", stars: "draft2027.stars" };
   // Storage that cannot lose a saved list. A value that will not parse is left exactly where it is — its raw
@@ -269,8 +269,10 @@
   const SUB = DATA.meta.hitterSub || {};      // fold-out breakdown rows under a card metric (Air% -> FB%, LD%)
   // Batted-ball distribution, everywhere it is drawn: Air% (line drives and fly balls, never popups), Popup%, GB%,
   // then Pull Air%, as four plain rows (Air% back, Sean 8 Oct 2026: FB% / LD% and EV by type were a day's try). The Air% fold-out goes: its popup and ground-ball rows are rows of their own.
-  const BB_DIST = [{ key: "air", label: "Air%", hib: true, dec: 1, unit: "%" }, { key: "pu", label: "Popup%", hib: false, dec: 1, unit: "%" },
-                   { key: "gb", label: "GB%", hib: false, dec: 1, unit: "%" }, { key: "pull", label: "Pull Air%", hib: true, dec: 1, unit: "%" }];
+  // FB% and LD% in Air%'s place, Pull FB% in Pull Air%'s (Sean, 9 Oct 2026: "change air % to fb% and ld% ... make pull air % pull fb %")
+  const BB_DIST = [{ key: "fb", label: "FB%", hib: true, dec: 1, unit: "%" }, { key: "ld", label: "LD%", hib: true, dec: 1, unit: "%" },
+                   { key: "pu", label: "Popup%", hib: false, dec: 1, unit: "%" }, { key: "gb", label: "GB%", hib: false, dec: 1, unit: "%" },
+                   { key: "pullfb", label: "Pull FB%", hib: true, dec: 1, unit: "%" }];
   for (const g of CARD) if (/batted-ball distribution/i.test(g.group)) g.metrics = BB_DIST.map((m) => ({ ...m }));
   delete SUB.air; delete SUB.pull;
   for (const g of CARD) g.metrics = g.metrics.filter((m) => m.key !== "xws");     // Statcast's xwOBA (and its xBA / xSLG) is gone
@@ -1021,7 +1023,10 @@
       const xk = xKFrom(v.m), m = v.m, pa = v.pa, bbe = v.ctx && v.ctx.BBE, wbb = (K() && K().wbb) || 0.7;
       // xwOBAcon: his xwOBA less the walks' share, over his batted balls
       const con = m.xwd != null && m.bb != null && pa && bbe ? (m.xwd * pa - wbb * m.bb / 100 * pa) / bbe : null;
-      v.m = Object.assign({}, m, { xk: xk == null ? null : Math.round(10 * xk) / 10, xwcon: con == null ? null : Math.round(1000 * con) / 1000 });
+      // Pull FB%: his pulled fly balls over his fly balls, from the Mix buckets (MIX_B order: gb, pu, ld p/c/o, fb p/c/o, x), so a window re-derives it
+      const mx = v.ctx && v.ctx.mix, fbs = mx && mx.length >= 8 ? mx[5] + mx[6] + mx[7] : 0;
+      v.m = Object.assign({}, m, { xk: xk == null ? null : Math.round(10 * xk) / 10, xwcon: con == null ? null : Math.round(1000 * con) / 1000,
+                                  pullfb: fbs ? Math.round(1000 * mx[5] / fbs) / 10 : null });
     }
     // Regress small samples (Table format; Sean, 3 Oct 2026, from the model recommendations): in a date window or split, every
     // rate is pulled toward the pool's full-season average by how little he has played — w = n / (n + 120), n = his PA or batters
@@ -5494,6 +5499,7 @@
     pu: "Popups per ball in play. For a pitcher these are nearly automatic outs.",
     gb: "Ground balls per ball in play.",
     pull: "Pull Air%: balls hit in the air to his pull side, per ball in play. This is where home-run power shows up before the home runs do.",
+    pullfb: "Pull FB%: the share of his fly balls hit to his pull side (popups and line drives out). A pulled fly ball is the likeliest batted ball to leave the park.",
     pullp: "Every ball in play hit to his pull side, on the ground or in the air.",
     mixw: "For a pitcher: the league's wOBA per ball in play for the mix he allows — ground balls and popups as they are, the air balls split at the league's line-drive share, like uERA (lower is better). For a hitter: Mix wOBA: what his batted-ball distribution alone is worth, per ball in play. Every ball in play (no bunts) takes the league's average wOBA for its type and direction — ground balls, popups, and line drives and fly balls each pulled, straightaway or the other way — and Mix wOBA is the average over his. Walks and strikeouts don't enter it. So it rewards the mix (pulled air balls above all), not how hard he hit them. About .365 is average.",
     oppo: "Balls in play hit the other way.",
@@ -8613,7 +8619,7 @@
   const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
                        ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],   // Avg EV again (Sean, 8 Oct 2026: "swap fb EV with regular avg EV"); EV on FB / LD / GB on the Mix tab and as columns
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k", "xk"]],   // back on the right, at the top (Sean, 1 Oct 2026)
-                       ["Batted-Ball Distribution", ["air", "pu", "gb", "pull", "mixw"]]]];   // Air% back (Sean, 8 Oct 2026)   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
+                       ["Batted-Ball Distribution", ["fb", "ld", "pu", "gb", "pullfb", "mixw"]]]];   // Air% back (Sean, 8 Oct 2026)   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
   // Skills first (Sean, 4 Oct 2026: "make the first section called Skills and then add in gb% and popup% and mix woba"): the four rates the
   // Rating weighs plus Mix wOBA; Stuff is the one Pitching+ grade and its parts (Stuff+ no longer shown apart from it)
@@ -9408,16 +9414,16 @@
   // column → its key in the file (hi: higher is better, lo: lower, neither: no heat map); "pa" columns are weighted by PA in a sum, the rest by BBE
   const SBX = { "Avg EV": { k: "ev", hi: 1 }, EV90: { k: "ev90", hi: 1 }, "Max EV": { k: "maxev", hi: 1, max: 1 }, "Hard-Hit%": { k: "hh", hi: 1 }, "Barrel%": { k: "brl", hi: 1 },
     "Sweet-Spot%": { k: "ss", hi: 1 }, "Bat Speed": { k: "bs", hi: 1 }, "FB EV": { k: "evfb", hi: 1 }, "LD EV": { k: "evld", hi: 1 }, "GB EV": { k: "evgb", hi: 1 },
-    "GB%": { k: "gb", lo: 1 }, "LD%": { k: "ld", hi: 1 }, "FB%": { k: "fb", hi: 1 }, "PU%": { k: "pu", lo: 1 }, "Air%": { k: "air", hi: 1 }, "Pull Air%": { k: "pull", hi: 1 },
+    "GB%": { k: "gb", lo: 1 }, "LD%": { k: "ld", hi: 1 }, "FB%": { k: "fb", hi: 1 }, "PU%": { k: "pu", lo: 1 }, "Air%": { k: "air", hi: 1 }, "Pull Air%": { k: "pull", hi: 1 }, "Pull FB%": { k: "pullfb", hi: 1 },
     "Pull%": { k: "pullp", hi: 1 }, "Cent%": { k: "cent" }, "Oppo%": { k: "oppo" }, "Mix wOBA": { k: "mixw", hi: 1 },
     "Swing%": { k: "swing", pa: 1 }, "Z-Swing%": { k: "zsw", hi: 1, pa: 1 }, "O-Swing%": { k: "osw", lo: 1, pa: 1 }, "Contact%": { k: "con", hi: 1, pa: 1 },
     "Z-Contact%": { k: "zcon", hi: 1, pa: 1 }, "O-Contact%": { k: "ocon", hi: 1, pa: 1 }, "Whiff%": { k: "whf", lo: 1, pa: 1 } };
   const SBX_COLS = {
     bbq: ["BBE", "Avg EV", "EV90", "Max EV", "Hard-Hit%", "Barrel%", "Sweet-Spot%", "FB EV", "LD EV", "GB EV", "Bat Speed"],
-    bbd: ["BBE", "GB%", "LD%", "FB%", "PU%", "Air%", "Pull Air%", "Pull%", "Cent%", "Oppo%", "Mix wOBA"],
+    bbd: ["BBE", "GB%", "LD%", "FB%", "PU%", "Pull FB%", "Pull%", "Cent%", "Oppo%", "Mix wOBA"],   // Air% / Pull Air% out, Pull FB% in (Sean, 9 Oct 2026)
     pd: ["PA", "K%", "BB%", "Swing%", "Z-Swing%", "O-Swing%", "Contact%", "Z-Contact%", "O-Contact%", "Whiff%"] };
-  const SBX_BRK = { bbq: ["Avg EV", "Hard-Hit%", "FB EV", "Bat Speed", "Pos"], bbd: ["GB%", "Air%", "Pull%", "Mix wOBA", "Pos"], pd: ["K%", "Swing%", "Contact%", "Pos"] };
-  const SBX_TIP = { BBE: "Batted balls tracked by Statcast", EV90: "90th-percentile exit velocity", "Sweet-Spot%": "Batted balls launched 8-32°", "FB EV": "Exit velocity on fly balls",
+  const SBX_BRK = { bbq: ["Avg EV", "Hard-Hit%", "FB EV", "Bat Speed", "Pos"], bbd: ["GB%", "Pull FB%", "Pull%", "Mix wOBA", "Pos"], pd: ["K%", "Swing%", "Contact%", "Pos"] };
+  const SBX_TIP = { BBE: "Batted balls tracked by Statcast", "Pull FB%": "Pulled fly balls over his fly balls", EV90: "90th-percentile exit velocity", "Sweet-Spot%": "Batted balls launched 8-32°", "FB EV": "Exit velocity on fly balls",
     "LD EV": "Exit velocity on line drives", "GB EV": "Exit velocity on ground balls", "Bat Speed": "Average bat speed on his competitive swings (2023 on)", "Air%": "Line drives and fly balls (no popups)",
     "Pull Air%": "Balls in the air pulled", "Mix wOBA": "The league's wOBA for each kind of ball he hit, averaged over his balls in play", "O-Swing%": "Swings at pitches out of the zone (chase)",
     "Contact%": "Contact per swing", "Whiff%": "Misses per swing" };

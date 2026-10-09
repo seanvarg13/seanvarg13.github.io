@@ -2885,3 +2885,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **Sprint plain, a rule after K% (Sean, 9 Oct 2026: "get rid of the heat map on sprint speed", "put a line break in between k% and hr to fb
   ratio")**: `SB_HEAT` is xwOBA alone, and `SB_BRK.H` has HR/FB, so the season table reads wOBA xwOBA | G PA HR R RBI | BB% K% | HR/FB BABIP |
   AVG OBP SLG OPS ISO wRC+ | Sprint SB | fWAR bWAR | Pos.
+* **FB% / LD% / Pull FB% in Batted-Ball Distribution (Sean, 9 Oct 2026: "in batted ball distribution change air % to fb% and ld% / And make pull
+  air % pull fb %")**: the hitter card's section is FB% · LD% · Popup% · GB% · **Pull FB%** · Mix wOBA (`BB_DIST`, `PCT_COLS_H`); **Pull FB%**
+  (`pullfb`) = his pulled fly balls over his fly balls from the Mix buckets (`ctx.mix`: fb_p / (fb_p + fb_c + fb_o), popups and line drives out),
+  set in `V()` beside xK% so a window / split re-derives it from the day rows; glossary / `SHORT`. The season table's Batted Ball Distribution
+  view is BBE | GB% LD% FB% PU% | Pull FB% | Pull% Cent% Oppo% | Mix wOBA (Air% / Pull Air% out); `build_career.py` appends **`pullfb`** to
+  `SBX_KEYS` (computed from `ctx.mix` in `season_bb`), and `hist/career-bb.js` was regenerated the same day (`build_career.py bb`; it also picked
+  up the rescored seasons' EV / barrels by type that the old file lacked). Air% / Pull Air% stay Leaderboard columns.
