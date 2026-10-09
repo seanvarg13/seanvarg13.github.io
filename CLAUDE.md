@@ -2978,3 +2978,14 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   fine how it is" — so the build-up keeps its heat-filled His cells.
   **Then the contact first** (Sean, the same hour: "put the contact Ev and brl% first and then have the hr and fb fall into the second section and go
   first"): Season · Team | **Fly-ball contact**: FB EV · FB Brl% | **HR / FB**: HR · FB · HR/FB · xHR/FB · Diff.
+* **The pitchers' season table (Sean, 9 Oct 2026: "ERA, FIP, nERA, and SIERA then a line break / Then G, GS, IP, line break / Then k%, bb%, popup%, gb%
+  then a line break / Then whiff% and xBB% and then a line break and the position one at the end")**: `SB_P` = ERA FIP nERA SIERA | G GS IP | K% BB%
+  PU% GB% | Whiff% xBB% | Pos (`SB_BRK.P`). W, L, H, HR, BB, K, WHIP, K-BB% and Strike% are off it.
+  - **Where the numbers come from:** nERA, SIERA, PU% and the three strike rates for xBB% have no home in `hist/career.js`. `build_career.py`'s
+    `season_bb` now also writes every pitcher-season from `data.js` and `hist/mlb-*.js` into `hist/career-bb.js` as `pkeys` / `pp` (`SBP_KEYS`:
+    nera, siera, pu, strk, fstrk, b3strk). `seasonBlock` attaches them as `l.bp` (`sbpOf`).
+  - **xBB%** is `XBBF` run on those strike rates. The totals weight `bp` by batters faced (`sbCombine` returns `bp`), and the 162 Game Avg carries it.
+  - **In Split row:** reads the view's `V(p).m`.
+  - **Playoffs view:** ERA | G GS IP | K% BB%.
+  - **Before 2015:** seasons read "–" for the Statcast columns.
+  - **Phone pinned row:** a pitcher's four buttons are tighter there so his name fits.

@@ -5047,3 +5047,8 @@ header.top .wordmark { display: none; }
 /* a red line between the pinned name row and the Summary (Sean, 9 Oct 2026: "add a line break of red between it and the bottom part") */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinrow { border-bottom: 2px solid var(--stripe-line, #c8102e); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinband .pbsum { border-top: 0 !important; margin-top: 0; padding-top: 6px; }
+/* a pitcher's pinned row carries four buttons (year, level, Filters, Raw): tighter on a phone so his name isn't cut to "Zack …" */
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinrow { gap: 5px; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin :is(.pbyear .tsl, .phtog .phfilt) { padding: 0 7px !important; font-size: 13px !important; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pbyear .pthd, :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phtog { gap: 5px; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pcname { font-size: 20px !important; }
