@@ -4849,24 +4849,24 @@ header.top .wordmark { display: none; }
    .sbt dress on the card's Pitching+ and Mix tabs and the Pitching+ board — brTable() in app.js. An over-header row naming each group
    (the band a shade deeper), centred column names, a 2px rule where a group ends (.ge), Exp beside Act (Act in grey), heat maps that fill
    the cell, the sorted column name lit with the red rule, totals as band rows under a gap ---- */
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt { width: auto; border-radius: 0 !important; overflow: visible !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt th { text-align: center; background: var(--band2, var(--accent-2)) !important; color: #fff !important; font: 600 12.5px var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; height: 30px; padding: 0 5px; border-right: 1px solid rgba(255,255,255,.35) !important; border-bottom: 0 !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt th.ge { border-right: 2px solid var(--ink) !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt tr.over th { background: color-mix(in srgb, var(--ink) 9%, var(--band2, var(--accent-2))) !important; font-size: 11.5px !important; height: 24px; font-size: 11.5px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,.5); }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt td.xact { color: var(--muted); }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt tr.tot td.xact { color: #fff; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt td { border-radius: 0 !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt td.nm { font-weight: 600; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt td.c { text-align: center; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt td.rk { text-align: center; color: var(--muted); }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt td.heat { font-weight: 700 !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt th.lit { background: color-mix(in srgb, #fff 22%, var(--band2, var(--accent-2))) !important; box-shadow: inset 0 -3px 0 var(--stripe-line, #c8102e); font-weight: 700; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt th .sortbtn { background: none; border: 0; padding: 0; margin: 0; font: inherit; font-weight: inherit; color: #fff !important; cursor: pointer; text-decoration: none; letter-spacing: 0; text-transform: none; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt td .pbname { font: inherit; font-weight: 600; color: var(--ink); text-decoration: none; padding: 0; border: 0; background: none; cursor: pointer; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt td .pbname:hover { text-decoration: underline; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt td.kd { font-weight: 700; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt td.krk { font-weight: 600; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt tr.tot td.f1, :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard) .sbt.brt tr.tot td.f3 { background: var(--band2, var(--accent-2)); }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt { width: auto; border-radius: 0 !important; overflow: visible !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt th { text-align: center; background: var(--band2, var(--accent-2)) !important; color: #fff !important; font: 600 12.5px var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; height: 30px; padding: 0 5px; border-right: 1px solid rgba(255,255,255,.35) !important; border-bottom: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt th.ge { border-right: 2px solid var(--ink) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt tr.over th { background: color-mix(in srgb, var(--ink) 9%, var(--band2, var(--accent-2))) !important; font-size: 11.5px !important; height: 24px; font-size: 11.5px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,.5); }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt td.xact { color: var(--muted); }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt tr.tot td.xact { color: #fff; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt td { border-radius: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt td.nm { font-weight: 600; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt td.c { text-align: center; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt td.rk { text-align: center; color: var(--muted); }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt td.heat { font-weight: 700 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt th.lit { background: color-mix(in srgb, #fff 22%, var(--band2, var(--accent-2))) !important; box-shadow: inset 0 -3px 0 var(--stripe-line, #c8102e); font-weight: 700; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt th .sortbtn { background: none; border: 0; padding: 0; margin: 0; font: inherit; font-weight: inherit; color: #fff !important; cursor: pointer; text-decoration: none; letter-spacing: 0; text-transform: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt td .pbname { font: inherit; font-weight: 600; color: var(--ink); text-decoration: none; padding: 0; border: 0; background: none; cursor: pointer; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt td .pbname:hover { text-decoration: underline; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt td.kd { font-weight: 700; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt td.krk { font-weight: 600; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt tr.tot td.f1, :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt tr.tot td.f3 { background: var(--band2, var(--accent-2)); }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .brbox > .rollhd { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding-left: 0; }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .brbox > .rollhd .rollname { font: 700 24px var(--display) !important; color: var(--ink) !important; letter-spacing: 0.01em !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) .brbox > .rollhd .rollname { font-size: 21px !important; }
@@ -4957,3 +4957,32 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colhead { align-items: stretch !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colhead .h { height: auto !important; min-height: 30px !important; padding: 5px 4px !important; line-height: 1.15 !important; text-align: center !important; white-space: normal !important; overflow: visible !important; box-sizing: border-box !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colhead .h.left { text-align: left !important; }
+
+/* Home in B-Ref tables (Sean, 9 Oct 2026, from the Home boards on the B-Ref Style Tables canvas): the last game day's two boxed tables under a
+   red-ruled title, then leaders / Trending / Movers three across (one column on a phone or under 1180px), each a hitter table over a pitcher
+   table in the season table's dress. The .hgrid > * card dress (frame, radius, padding, clipping) is taken off the sections. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hgrid { grid-template-columns: minmax(0, 1fr); gap: 30px; align-items: start; }
+@media (min-width: 1180px) { :root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) .hub.home .hgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; } }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hsec { border: 0 !important; border-radius: 0 !important; overflow: visible !important; background: none !important; padding: 0 !important; box-shadow: none !important; min-width: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home > .hsec { margin: 4px 0 30px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hsech { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 2px solid var(--stripe-line, #c8102e); padding-bottom: 5px; margin-bottom: 10px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hsech h2 { margin: 0; font: 700 26px/1 var(--display) !important; color: var(--ink); letter-spacing: 0; text-transform: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hsech > span { font-size: 13px; color: var(--muted); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hsech .hmore { margin-left: auto; font-size: 13px; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hsecb { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hsecb.hlead2 { flex-direction: row; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hwrap { width: 100%; max-width: 100%; margin: 0; overflow-x: auto; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hlead2 .hwrap { width: max-content; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb { width: 100%; table-layout: fixed; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb td { height: 28px; padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb th { padding: 0 4px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb td.l .pbname { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb td.up { color: var(--stripe-line, #c8102e); font-weight: 700; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb.hlab tr.over th { text-align: left; padding-left: 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb th.l { text-align: center; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hsech h2 { font-size: 22px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hlead2 { flex-direction: column; gap: 12px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hlead2 .hwrap { width: 100%; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #hub .sbt.brt.htb td { padding: 0 5px; height: 30px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb td.c { padding: 0 3px; text-overflow: clip; }
+@media (min-width: 1180px) { :root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) .hub.home .hgrid .hsech > span { font-size: 12px; } :root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) .hub.home .hgrid .hsech { flex-wrap: nowrap; } :root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) .hub.home .hgrid .hsech > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; } }
