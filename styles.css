@@ -5163,3 +5163,23 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main .hot, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main > .score.hot { font-weight: 700 !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colhead .h { font: 700 11px/1.25 Verdana, Geneva, "DejaVu Sans", sans-serif !important; min-height: 23px !important; padding: 4px 3px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colband > * { font: 700 11px Verdana, Geneva, "DejaVu Sans", sans-serif !important; height: 21px; }
+
+/* One header (Sean, 9 Oct 2026: "get rid of the headshot and then can we condense all of the information into one header with the stats of the
+   selected year and the filters buttons"): the sticky bar (name, year, level, Filters, Raw) runs straight into the band under it — no rule between
+   them, the band's red stripe the header's foot; once the band has scrolled up under the bar, the bar wears the red rule itself (stuck). The band is
+   one bio line and the selected year's line, no photo and no second name. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar { border-bottom: 0 !important; padding-top: 10px; padding-bottom: 6px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar.stuck { box-shadow: 0 3px 0 var(--stripe-line, #c8102e); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar .pgbname { margin: 0; padding: 0; line-height: 1.1; font-size: 28px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar .pgbname { font-size: 20px; line-height: 1.05; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .mplate.pbio.pbone { padding-top: 0; padding-bottom: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pbio.pbone .pbline { display: flex; flex-wrap: wrap; align-items: center; color: #fff; font: 500 15px/1.35 var(--body); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pbio.pbone .pbline { font-size: 13.5px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pbio.pbone .pbline .pbdot { margin: 0 8px; opacity: .75; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pbio.pbone .pbline .pbteam { color: #fff; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pbio.pbone .pbsum.yonly { border-top: 1px solid rgba(255,255,255,.45); padding-top: 6px; margin: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pbio.pbone .pbsum.yonly .pbsrow { grid-template-columns: repeat(var(--n), minmax(0, 76px)); grid-auto-flow: row; justify-content: start; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pbio.pbone .pbsum.yonly .pbsrow { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.35fr); grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); justify-content: stretch; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pbio.pbone .pbrow1 { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pbio.pbone .pbrow1 > .pbctl { flex: none; margin-left: auto; position: static; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pbio.pbone .pbrow1 > .pbctl .pbsp { display: none; }
