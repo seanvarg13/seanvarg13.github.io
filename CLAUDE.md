@@ -2892,3 +2892,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   view is BBE | GB% LD% FB% PU% | Pull FB% | Pull% Cent% Oppo% | Mix wOBA (Air% / Pull Air% out); `build_career.py` appends **`pullfb`** to
   `SBX_KEYS` (computed from `ctx.mix` in `season_bb`), and `hist/career-bb.js` was regenerated the same day (`build_career.py bb`; it also picked
   up the rescored seasons' EV / barrels by type that the old file lacked). Air% / Pull Air% stay Leaderboard columns.
+* **The frozen Rk / Player cells ruled (Sean, 9 Oct 2026, from a phone screenshot: "fix the rank and name to have the border")**: the two sticky
+  cells are opaque so the sliding columns pass under them, which also covered the row's bottom hairline; each now draws its own (an inset
+  1px box-shadow in the row rule's colour, no layout shift) — the block at the end of `styles.css`. Both layouts.
