@@ -9464,12 +9464,15 @@
     ctl.append(backButton(false), el("span", "pbsp"));
     const title = pageTitle(p, o); title.classList.add("pinline", "pbyear");
     for (const n of [...title.querySelectorAll(".pthd")].flatMap((x) => [...x.childNodes])) if (n.nodeType === 3) n.textContent = n.textContent.replace(/\s*Percentiles\s*$/, "");
-    ctl.append(title);
+    // the year, the level (when he has more than one) and Filters (+ a pitcher's Raw ▾) as boxy buttons fixed to the spot on the screen where
+    // they first draw, so they stay put as the page scrolls (Sean, 9 Oct 2026: "make it so the year, filters, and when applicable the level box
+    // stay in the exact same spot on your screen even when you scroll ... on the desktop and phone ... make them boxy buttons") — pinFix
+    const fx = el("div", "pgfix"), pk = title._picks;
+    if (pk) { const [yr, lv] = pk.mk(); fx.append(yr); if (pk.lvWorth) fx.append(lv); } else fx.append(title);
     const twoWay = typeSeg(p);
-    if (o.entry && !isMulti(o.key)) {
-      ctl.append(filtersTog(p));
-      const chips = viewChips(p); if (chips.childNodes.length) ctl.append(chips);
-    }
+    if (o.entry && !isMulti(o.key)) fx.append(filtersTog(p));
+    ctl.append(fx);
+    if (o.entry && !isMulti(o.key)) { const chips = viewChips(p); if (chips.childNodes.length) ctl.append(chips); }
     // a phone with no Back: no row either — the year and Filters stack at the right of the name, the bio wrapping round them (Sean, 8 Oct 2026:
     // "put the filters and year on the right side and then get rid of that top space being there that those two buttons originally were in")
     const ctlIn = !backAt && mobileView();
@@ -9484,6 +9487,17 @@
     top.append(plate);
     return top;
   }
+  // pins the page's year / level / Filters group: a placeholder of its size keeps its place in the band and the group is fixed at that spot's
+  // position on the screen at the top of the page (its document offset), so it never moves as the page scrolls; re-measured on a resize
+  function pinFix() {
+    const fx = document.querySelector("#xboard .pgfix"); if (!fx) return;
+    let ph = fx.previousElementSibling; if (!ph || !ph.classList.contains("pgfixph")) { ph = el("span", "pgfixph"); fx.before(ph); }
+    fx.classList.remove("on"); fx.style.top = fx.style.left = ""; ph.style.width = ph.style.height = "0px";
+    const r = fx.getBoundingClientRect();
+    ph.style.width = r.width + "px"; ph.style.height = r.height + "px";
+    fx.style.top = Math.round(r.top + scrollY) + "px"; fx.style.left = Math.round(Math.max(8, Math.min(r.left, innerWidth - r.width - 8))) + "px"; fx.classList.add("on");
+  }
+  window.addEventListener("resize", () => requestAnimationFrame(pinFix));
   // His page's own filters area, in the space between the band and the season table (Sean, 9 Oct 2026: "fill that blank space with a filters area
   // that has every filter included in the filters button as well as the year and levels ones too"): Season and Level, Hitting / Pitching for a
   // two-way player, Raw / Stuff for a pitcher, then the Filters window's cells (dates, last N, hand, home / away, starts / relief) and Clear
@@ -10094,7 +10108,8 @@
     const { p, st, g, ref } = o;
     noteRecent(p);
     if (o.page) {
-      box.append(pageHead(p, st, g, o), ...(o.entry && !isMulti(o.key) ? [pageFilters(p, o)] : []), seasonBlock(p, o));
+      box.append(pageHead(p, st, g, o), seasonBlock(p, o));   // the filters area came off the same day (pageFilters stays, unused)
+      requestAnimationFrame(pinFix);
       const pg = el("div", "ppage pageflow"), B = el("div", "pcol pcolB wide");
       renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
       pg.append(B);
@@ -10241,7 +10256,7 @@
     // alone; a year with minor-league seasons keeps the dropdown to pick the level, and a minors-only year names it
     const lvWorth = inYear(cur[1]).length > 1 || levelOf(cur[0]) !== "mlb" || keyKind(cur[0]);
     t.append(yr, ...(lvWorth ? [" ", lv] : []), " Percentiles");
-    hd.append(t); hd._picks = { yr, lv, mk: () => [titleSelect(String(cur[1]), years.map((y) => [String(y), String(y)]), (y) => yr._pick(y), "Season"), titleSelect(cur[0], inYear(cur[1]).map((sv) => [sv[0], (LEVELS[levelOf(sv[0])] || levelOf(sv[0])) + kt(sv[0])]), (k) => o.pick(k), "Level")] };
+    hd.append(t); hd._picks = { yr, lv, lvWorth, mk: () => [titleSelect(String(cur[1]), years.map((y) => [String(y), String(y)]), (y) => yr._pick(y), "Season"), titleSelect(cur[0], inYear(cur[1]).map((sv) => [sv[0], (LEVELS[levelOf(sv[0])] || levelOf(sv[0])) + kt(sv[0])]), (k) => o.pick(k), "Level")] };
     yr._pick = (y) => { const opts = inYear(Number(y)); if (!opts.length) return;
       const hit = opts.find((sv) => levelOf(sv[0]) === levelOf(cur[0]) && keyKind(sv[0]) === keyKind(cur[0])) || opts.find((sv) => levelOf(sv[0]) === levelOf(cur[0]) && !keyKind(sv[0])) || opts[0];
       if (hit[0] !== cur[0]) o.pick(hit[0]); };
@@ -10313,7 +10328,7 @@
       ft.append(clear); win.append(x, body, ft);
       const ov = el("div", "phmodal"); ov.append(win); document.body.append(ov);
       const place = () => {                              // under the button, like placePop; a phone's spans the screen
-        condSync();                                       // the pinned bar's state for this scroll, before picking its button
+        condSync(); pinFix();                             // the pinned bar's state, and the page's fixed year / Filters group, before picking a button
         const bts = [...document.querySelectorAll(".phead .phfilt, .pha .phfilt, .phpin.on .phfilt")].filter((x) => !x.classList.contains("phsidebtn"));
         const bt = bts.find((x) => x.closest(".phpin")) || bts.find((x) => { const r = x.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }) || bts[0];   // the pinned bar's while it shows if (!bt || !ov.isConnected) return;
         const r = bt.getBoundingClientRect(), cb = bt.closest(".phpin"), under = cb ? (parseFloat(cb.style.top) || 0) + cb.offsetHeight : r.bottom;   // from the condensed bar: under the whole bar
