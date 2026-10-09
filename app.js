@@ -2412,6 +2412,10 @@
     const sp = lbSeasonPill(); if (sp) row.append(sp);   // Season ▾ in the row (6 Oct 2026, the proposed layout); the Filters tab still has the level / span controls
   }
   // the column-set pill: "Standard ▾", Custom when the list matches no set (tapping Custom opens Filters ▸ Stats)
+  function lbSetName() {   // the column set in effect, "Custom" when the list matches none
+    const g = groupFor(state.pos), pit = isPitcherGroup(g), cur = colKeys(g), same = (a, b) => a.length === b.length && a.every((k, i) => k === b[i]);
+    return (LB_SETS[pit ? "P" : "H"].map(([name, keys]) => [name, lbSetKeys(g, keys)]).find(([, set]) => same(set, cur)) || ["Custom"])[0];
+  }
   function lbSetPill() {
     const g = groupFor(state.pos), pit = isPitcherGroup(g), cur = colKeys(g);
     // no Hitters / Pitchers switch here (Sean, 3 Oct 2026: "get rid of the hitters/pitchers box") — the Position button has them
@@ -2419,7 +2423,7 @@
     // Stuff+ board's filters: it says the set in effect, Custom when the list matches none, and lists them all when tapped
     const same = (a, b) => a.length === b.length && a.every((k, i) => k === b[i]);
     const sets = LB_SETS[pit ? "P" : "H"].map(([name, keys]) => [name, lbSetKeys(g, keys)]);
-    const curName = (sets.find(([, set]) => same(set, cur)) || ["Custom"])[0];
+    const curName = lbSetName();
     const opts = [...sets.map(([name]) => [name, name]), ...(curName === "Custom" ? [["Custom", "Custom"]] : [])];
     const pick = (v) => {
       if (v === "Custom") { parkControls(); state.panelTab = "stats"; openPanel("stats"); return; }
@@ -2511,14 +2515,22 @@
     // no "Rank" over the numbers (minimal pass 5): they say what they are
     h.append(el("div", "h", editing ? (hasTiers ? "Rank · tier" : "Rk") : brOn() ? "Rk" : ""), el("div", "h left", ref === g ? "Player" : `Player · ranked vs ${POOL_NAME[ref]}`));
     const BR = brOn(), ends = BR ? brEnds(ms, g) : null;
-    if (BR) h.append(el("div", "h brtm ge", "Tm"));   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
+    if (BR) h.append(el("div", "h brtm ge", "Tm"));
+    // B-Ref's title over the table (Sean, 9 Oct 2026, from the canvas's phone board: "make it so it looks like the first image"):
+    // "Standard batting" / "Advanced pitching" … and what it's sorted by, over a red rule, outside the rows' scroller
+    { let tt = $("lbtitle"); const bs = $("bscroll");
+      if (!BR) { if (tt) tt.remove(); }
+      else { if (!tt) { tt = el("div", "lbtitle"); tt.id = "lbtitle"; } if (bs && tt.nextSibling !== bs) bs.before(tt);
+        const P0 = isPitcherGroup(g), set = lbSetName(), sk = state.sort, sm = ms.find((m) => m.key === sk);
+        const by = sk === "score" ? (P0 ? "nERA" : wobaHead() ? "wOBA" : HEAD.label) : sm ? colLab(sm) : sk === "name" ? "name" : sk === "age" ? "age" : sk === "year" ? "season" : "";
+        tt.innerHTML = ""; tt.append(el("h2", null, `${set === "Custom" ? "Your" : set} ${P0 ? "pitching" : "batting"}`), el("span", null, by ? `by ${by}` : "")); } }   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
     const head = (key, label, title) => { const h = editing ? Object.assign(el("div", "h", label), { title }) : sortButton(key, label, title); if (/^[a-z]/.test(label)) h.classList.add("lc"); return h; };
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
     for (const k of ["year", "age"]) h.style.setProperty("--pre" + (k === "year" ? 1 : 2), preOn(k) ? "var(--prew, 64px)" : "0px");
     for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const hb = on ? head(c.key, c.label, c.key === "year" ? "Season" : "Age that season") : el("div", "h"); hb.classList.add("pre"); if (!on) hb.classList.add("off"); h.append(hb); }
     if (BR) h.append(el("div", "h brpt ge", isPitcherGroup(g) ? "IP" : "PA"));
     { const woH = !isPitcherGroup(g) && wobaHead();
-      const sh = head("score", isPitcherGroup(g) ? "nERA" : woH ? "wOBA" : HEAD.label, woH ? "wOBA — no directional xwOBA at this level" : isPitcherGroup(g) ? `nERA, lowest first: ${DATA.meta.scoreNote.P}` : DATA.meta.scoreNote.H); /* "Rating" (Sean, 3 Oct 2026: "Score" said nothing) */ if (hasBreak(g, "score")) sh.classList.add("brk"); if (BR && ends.has("score")) sh.classList.add("ge"); h.append(sh); }
+      const sh = head("score", isPitcherGroup(g) ? "nERA" : woH ? "wOBA" : HEAD.label, woH ? "wOBA — no directional xwOBA at this level" : isPitcherGroup(g) ? `nERA, lowest first: ${DATA.meta.scoreNote.P}` : DATA.meta.scoreNote.H); /* "Rating" (Sean, 3 Oct 2026: "Score" said nothing) */ if (hasBreak(g, "score")) sh.classList.add("brk"); if (BR && ends.has("score")) sh.classList.add("ge"); if (BR) sh.classList.add("brsc"); h.append(sh); }
     // stat headers: click to sort (the column order is changed in the Table panel)
     for (const m of ms) {
       const hb = head(m.key, colLab(m), m.label + (m.hib ? " — higher is better" : " — lower is better"));
