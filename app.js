@@ -9470,7 +9470,10 @@
     // a pitcher on a phone keeps only the year and Filters there, stacked at the far right, and finds the level and Raw / Stuff inside the
     // Filters window (Sean, 9 Oct 2026: "for pitchers on the phone can you do just year and filters and have the level and raw vs stuff go in
     // the filters and put them both on the far right one on top of each other")
-    const slim = p.type === "P" && mobileView(), inWin = [];
+    // all of them in one bar of their own above the band that sticks to the top as the page scrolls (Sean, 9 Oct 2026: "make it so there is a
+    // single row header above the player card header that just has all the filter buttons and scrolls down with you") — the fixed spot (pinFix) and
+    // the phone pitcher's stack are history; slim stays false
+    const slim = false, inWin = [];
     const fx = el("div", "pgfix" + (slim ? " stack" : "")), pk = title._picks;
     if (pk) { const [yr, lv] = pk.mk(); fx.append(yr); if (pk.lvWorth) { if (slim) inWin.push(["Level", lv]); else fx.append(lv); } } else fx.append(title);
     if (slim) {
@@ -9481,7 +9484,7 @@
     }
     const twoWay = typeSeg(p);
     if (o.entry && !isMulti(o.key)) fx.append(filtersTog(p, slim));
-    ctl.append(fx);
+    const bar = el("div", "pgbar"); bar.append(fx); top._bar = bar;
     if (o.entry && !isMulti(o.key)) { const chips = viewChips(p); if (chips.childNodes.length) ctl.append(chips); }
     // a phone with no Back: no row either — the year and Filters stack at the right of the name, the bio wrapping round them (Sean, 8 Oct 2026:
     // "put the filters and year on the right side and then get rid of that top space being there that those two buttons originally were in")
@@ -9500,7 +9503,7 @@
   // pins the page's year / level / Filters group: a placeholder of its size keeps its place in the band and the group is fixed at that spot's
   // position on the screen at the top of the page (its document offset), so it never moves as the page scrolls; re-measured on a resize
   function pinFix() {
-    const fx = document.querySelector("#xboard .pgfix"); if (!fx) return;
+    const fx = document.querySelector("#xboard .pgfix"); if (!fx || fx.closest(".pgbar")) return;
     let ph = fx.previousElementSibling; if (!ph || !ph.classList.contains("pgfixph")) { ph = el("span", "pgfixph"); fx.before(ph); }
     fx.classList.remove("on"); fx.style.top = fx.style.left = ""; ph.style.width = ph.style.height = "0px";
     const r = fx.getBoundingClientRect();
@@ -10118,8 +10121,8 @@
     const { p, st, g, ref } = o;
     noteRecent(p);
     if (o.page) {
-      box.append(pageHead(p, st, g, o), seasonBlock(p, o));   // the filters area came off the same day (pageFilters stays, unused)
-      requestAnimationFrame(pinFix);
+      const hd = pageHead(p, st, g, o);
+      box.append(...(hd._bar ? [hd._bar] : []), hd, seasonBlock(p, o));   // the filters bar over the band; the filters area came off the same day (pageFilters stays, unused)
       const pg = el("div", "ppage pageflow"), B = el("div", "pcol pcolB wide");
       renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
       pg.append(B);
@@ -10340,7 +10343,7 @@
       const ov = el("div", "phmodal"); ov.append(win); document.body.append(ov);
       const place = () => {                              // under the button, like placePop; a phone's spans the screen
         condSync(); pinFix();                             // the pinned bar's state, and the page's fixed year / Filters group, before picking a button
-        const bts = [...document.querySelectorAll(".phead .phfilt, .pha .phfilt, .phpin.on .phfilt")].filter((x) => !x.classList.contains("phsidebtn"));
+        const bts = [...document.querySelectorAll(".pgbar .phfilt, .phead .phfilt, .pha .phfilt, .phpin.on .phfilt")].filter((x) => !x.classList.contains("phsidebtn"));
         const bt = bts.find((x) => x.closest(".phpin")) || bts.find((x) => { const r = x.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }) || bts[0];   // the pinned bar's while it shows if (!bt || !ov.isConnected) return;
         const r = bt.getBoundingClientRect(), cb = bt.closest(".phpin"), under = cb ? (parseFloat(cb.style.top) || 0) + cb.offsetHeight : r.bottom;   // from the condensed bar: under the whole bar
         win.style.top = Math.round(under + 6) + "px"; win.style.maxHeight = Math.max(220, innerHeight - under - 16) + "px";
