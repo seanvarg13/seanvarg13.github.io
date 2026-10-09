@@ -5052,3 +5052,10 @@ header.top .wordmark { display: none; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin :is(.pbyear .tsl, .phtog .phfilt) { padding: 0 7px !important; font-size: 13px !important; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pbyear .pthd, :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phtog { gap: 5px; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pcname { font-size: 20px !important; }
+
+/* the B-Ref tables' foot without the blue strip, their rules red (Sean, 9 Oct 2026, the xHR/FB tab: "get rid of that weird blue thing separating the
+   table and their totals rows", "make the line breaks red"): the gap row is hidden and the first totals row carries a 2px red rule instead; every
+   group rule and the frozen column's edge are the stripe red, as on the season table */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt tr.gap { display: none !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt tr.gap + tr.tot td { border-top: 2px solid var(--stripe-line, #c8102e) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub) .sbt.brt :is(td, th):is(.ge, .f3) { border-right-color: var(--stripe-line, #c8102e) !important; }
