@@ -2972,3 +2972,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   whole visit. The season table then said "hasn't been built", and the Summary had no Career row or HR / OBP / OPS. `ensureScript` now tries a failed
   file twice more (1.5 s, then 3 s; `tries`), and the season table's note says "Couldn't load his career stats. Try again", with a button, instead
   of blaming the build.
+* **HR / FB by season regrouped (Sean, 9 Oct 2026: "put the fly ball contact ev and brl% with the hr and fb and then put the actual hr to fb ratio with
+  the expected and differential")**: `hrfbTable` is Season · Team | **Fly-ball contact**: HR · FB · FB EV · FB Brl% | **HR / FB**: HR/FB · xHR/FB · Diff,
+  and the career row follows the same order. Same day: percentile bars in the HR/FB build-up were previewed (screenshots only) and declined — "it's
+  fine how it is" — so the build-up keeps its heat-filled His cells.
