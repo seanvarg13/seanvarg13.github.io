@@ -1887,7 +1887,7 @@
     if (pct != null) { const b = el("div", "bub" + (pct >= 100 ? " c3" : ""), pct); b.style.left = svAt(pct); b.style.background = s.bub; t.append(b); }
     return t;
   }
-  function paint(node, pct) { const s = pctStyle(pct); if (s) { node.style.background = s.bg; node.style.color = s.fg; node.style.setProperty("--heat", s.bg); } }   // --heat: a phone shows the sorted column as coloured digits on a clear ground (the warm pass, 6 Oct 2026)
+  function paint(node, pct) { const s = pctStyle(pct); if (s) { node.style.background = s.bg; node.style.color = s.fg; node.style.setProperty("--heat", s.bg); node.style.setProperty("--heatfg", s.fg); } }   // --heat: a phone shows the sorted column as coloured digits on a clear ground (the warm pass, 6 Oct 2026)
   // a percentile coloured as the player card's bars colour it: Savant's scale for the charts, the heat scale under
   // Classic meters (Sean: the Season Stats uERA chip matches the sliders), with dark or white text, whichever reads
   function paintBar(node, pct) {
@@ -2446,6 +2446,54 @@
     const lvl = String(levelOf(cur)).toLowerCase() !== "mlb" ? " " + (LEVEL_NAMES[levelOf(cur)] || levelOf(cur)) : "";
     const pl = pillSelect(String(year(cur)) + lvl, years.map((y) => [String(y), String(y)]), String(year(cur)), pick, "Season"); pl.classList.add("lbseasonpill"); pl.title = "Season"; return pl;
   }
+  // The Leaderboard / Recent in B-Ref's dress (Sean, 9 Oct 2026, the B-Ref Style Tables canvas: "I want that for everything"): one line a
+  // row with Tm after the name, the PA / IP column before the headline and Pos at the end; the Result / Process band as the over-header;
+  // a 2px rule where each run of columns ends (brEnds) and after Tm; the sorted column filling its cells; the qualified pool's leader in
+  // a column bold italic (brLeaders: MLB-wide, the pool the list ranks against); a Qualified avg band row at the foot
+  const brOn = () => onePage();
+  function brEnds(ms, g) {
+    const keys = ["score", ...ms.map((m) => m.key)], cat = (k) => (RESULT_KEYS.has(k) ? "R" : "P"), out = new Set();
+    keys.forEach((k, i) => { if (i < keys.length - 1 && cat(k) !== cat(keys[i + 1])) out.add(k); if (hasBreak(g, k)) out.add(k); });
+    if (keys.length) out.add(keys[keys.length - 1]);
+    return out;
+  }
+  const BRLEAD = new Map();
+  function brLeaders(g, ms) {
+    const pl = pool(g), key = DS.key + "|" + g + "|" + viewKey() + "|" + ms.map((m) => m.key).join(",");
+    if (BRLEAD.has(key)) return BRLEAD.get(key);
+    const best = {}, ref = pl.ref || [];
+    for (const m of ms) { if (m.int && !m.hib) continue;
+      let b = null; for (const q of ref) { const v = metricValue(m, V(q), pl.stats.get(q.type + q.id)); if (v == null || typeof v !== "number") continue; if (b == null || (m.hib ? v > b : v < b)) b = v; }
+      if (b != null) best[m.key] = b; }
+    const res = { best, ref: new Set(ref.map((q) => q.type + q.id)) }; if (BRLEAD.size > 40) BRLEAD.clear(); BRLEAD.set(key, res); return res;
+  }
+  // the Leaderboard's Qualified avg band row (B-Ref's totals): the reference pool's averages, rates weighted by PA / batters faced
+  function brTotRows(g, ms, stats, ends, preOn) {
+    const pl = pool(g), ref = pl.ref || []; if (!ref.length) return [];
+    const P = isPitcherGroup(g), wOf = (q) => (q.type === "P" ? V(q).bf || q.bf || 0 : V(q).pa || 0);
+    const avg = (f) => { let a = 0, n = 0; for (const q of ref) { const v = f(q), w = wOf(q); if (v == null || typeof v !== "number" || !w) continue; a += v * w; n += w; } return n ? a / n : null; };
+    const mean = (f) => { let a = 0, n = 0; for (const q of ref) { const v = f(q); if (v == null) continue; a += v; n++; } return n ? a / n : null; };
+    const gapLi = el("li", "row brgap"), li = el("li", "row brtot"), main = el("div", "row-main grid");
+    const mobile = document.documentElement.dataset.view === "mobile";
+    main.style.setProperty("--n", ms.length); main.style.setProperty("--act", "0px"); main.style.setProperty("--colw", state.mode === "trending" || ms.some((m) => m.showValue) ? "72px" : "56px");
+    main.style.setProperty("--rankw", mobile ? "22px" : "44px");
+    main.style.setProperty("--pre1", preOn("year") ? "var(--prew, 64px)" : "0px"); main.style.setProperty("--pre2", preOn("age") ? "var(--prew, 64px)" : "0px");
+    const who = el("div", "who"); who.append(el("div", "name", `Qualified avg (${ref.length})`));
+    main.append(el("div", "rank"), who, el("div", "brtm ge"), el("div", "pct pre off"), el("div", "pct pre off"));
+    const pt = mean((q) => (q.type === "P" ? V(q).ip : V(q).pa));
+    main.append(el("div", "brpt ge", pt == null ? "" : P ? fmtIP(pt) : String(Math.round(pt))));
+    const hv = P ? avg((q) => V(q).m.nera) : avg((q) => { const st = stats.get(q.type + q.id) || pl.stats.get(q.type + q.id); return st ? st.score : null; });
+    main.append(el("div", "score" + (ends.has("score") ? " ge" : ""), hv == null ? "–" : P ? hv.toFixed(2) : fmtX(hv)));
+    const pcts = el("div", "pcts");
+    for (const m of ms) {
+      const v = m.key === "rating" || m.key === "fbq" ? null : avg((q) => metricValue(m, V(q), pl.stats.get(q.type + q.id)));
+      pcts.append(el("div", "pct" + (ends.has(m.key) ? " ge" : ""), v == null ? "–" : fmt(v, m).replace(" mph", "").replace("%", "")));
+    }
+    main.append(pcts, el("div", "brpos"));
+    li.append(main);
+    const gm = el("div", "row-main grid"); gm.style.cssText = main.style.cssText; const bar = el("div", "brgapbar"); bar.style.gridColumn = "1 / -1"; gm.append(bar); gapLi.append(gm);   // the gap as wide as the table
+    return [gapLi, li];
+  }
   function renderColheadIn() {
     const g = groupFor(state.pos), ref = refFor(g);
     const ms = colsFor(g), trending = state.mode === "trending";
@@ -2461,20 +2509,24 @@
     const mobile = document.documentElement.dataset.view === "mobile";
     h.style.setProperty("--rankw", editing ? (mobile ? (hasTiers ? "108px" : "72px") : hasTiers ? "190px" : "134px") : mobile ? "22px" : "44px");
     // no "Rank" over the numbers (minimal pass 5): they say what they are
-    h.append(el("div", "h", editing ? (hasTiers ? "Rank · tier" : "My rank") : ""), el("div", "h left", ref === g ? "Player" : `Player · ranked vs ${POOL_NAME[ref]}`));   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
+    h.append(el("div", "h", editing ? (hasTiers ? "Rank · tier" : "Rk") : brOn() ? "Rk" : ""), el("div", "h left", ref === g ? "Player" : `Player · ranked vs ${POOL_NAME[ref]}`));
+    const BR = brOn(), ends = BR ? brEnds(ms, g) : null;
+    if (BR) h.append(el("div", "h brtm ge", "Tm"));   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
     const head = (key, label, title) => { const h = editing ? Object.assign(el("div", "h", label), { title }) : sortButton(key, label, title); if (/^[a-z]/.test(label)) h.classList.add("lc"); return h; };
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
     for (const k of ["year", "age"]) h.style.setProperty("--pre" + (k === "year" ? 1 : 2), preOn(k) ? "var(--prew, 64px)" : "0px");
     for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const hb = on ? head(c.key, c.label, c.key === "year" ? "Season" : "Age that season") : el("div", "h"); hb.classList.add("pre"); if (!on) hb.classList.add("off"); h.append(hb); }
+    if (BR) h.append(el("div", "h brpt ge", isPitcherGroup(g) ? "IP" : "PA"));
     { const woH = !isPitcherGroup(g) && wobaHead();
-      const sh = head("score", isPitcherGroup(g) ? "nERA" : woH ? "wOBA" : HEAD.label, woH ? "wOBA — no directional xwOBA at this level" : isPitcherGroup(g) ? `nERA, lowest first: ${DATA.meta.scoreNote.P}` : DATA.meta.scoreNote.H); /* "Rating" (Sean, 3 Oct 2026: "Score" said nothing) */ if (hasBreak(g, "score")) sh.classList.add("brk"); h.append(sh); }
+      const sh = head("score", isPitcherGroup(g) ? "nERA" : woH ? "wOBA" : HEAD.label, woH ? "wOBA — no directional xwOBA at this level" : isPitcherGroup(g) ? `nERA, lowest first: ${DATA.meta.scoreNote.P}` : DATA.meta.scoreNote.H); /* "Rating" (Sean, 3 Oct 2026: "Score" said nothing) */ if (hasBreak(g, "score")) sh.classList.add("brk"); if (BR && ends.has("score")) sh.classList.add("ge"); h.append(sh); }
     // stat headers: click to sort (the column order is changed in the Table panel)
     for (const m of ms) {
       const hb = head(m.key, colLab(m), m.label + (m.hib ? " — higher is better" : " — lower is better"));
-      hb.dataset.key = m.key; if (hasBreak(g, m.key)) hb.classList.add("brk");
+      hb.dataset.key = m.key; if (hasBreak(g, m.key)) hb.classList.add("brk"); if (BR && ends.has(m.key)) hb.classList.add("ge");
       holdNote(hb, () => colNote(m, g));
       h.append(hb);
     }
+    if (BR) h.append(el("div", "h brpos", "Pos"));
     if (state.mode === "draft") h.append(el("div", "h", ""));
     // Result / Process bands over the columns (6 Oct 2026, the proposed layout): outcomes on one side, skills on the other, each
     // contiguous run of columns under one word; the band row is a second grid with the header's own template
@@ -2482,10 +2534,12 @@
       if (onePage() && ms.length) {
         if (band.parentNode !== h.parentNode || band.nextSibling !== h) h.before(band);
         band.style.cssText = h.style.cssText; band.innerHTML = "";
-        band.append(el("div"), el("div"), el("div", "pre"), el("div", "pre"));
+        band.append(el("div"), el("div", BR ? "brfz" : null)); if (BR) band.append(el("div", "ge"));
+        band.append(el("div", "pre"), el("div", "pre")); if (BR) band.append(el("div", "ge"));
         const cat = (k) => (RESULT_KEYS.has(k) ? "Result" : "Process"), runs = [];
-        for (const k of ["score", ...ms.map((m) => m.key)]) { const c = cat(k); if (runs.length && runs[runs.length - 1][0] === c) runs[runs.length - 1][1]++; else runs.push([c, 1]); }
-        for (const [c, n] of runs) { const d = el("div", "band " + c.toLowerCase(), c); d.style.gridColumn = `span ${n}`; band.append(d); }
+        for (const k of ["score", ...ms.map((m) => m.key)]) { const c = cat(k); if (runs.length && runs[runs.length - 1][0] === c && !(BR && ends.has(runs[runs.length - 1][2]))) { runs[runs.length - 1][1]++; runs[runs.length - 1][2] = k; } else runs.push([c, 1, k]); }
+        for (const [c, n] of runs) { const d = el("div", "band " + c.toLowerCase() + (BR ? " ge" : ""), c); d.style.gridColumn = `span ${n}`; band.append(d); }
+        if (BR) band.append(el("div"));
       } else band.remove(); }
   }
   // what a column measures: an outcome (Result) or the process behind it; anything unlisted reads as Process
@@ -2583,6 +2637,7 @@
     };
     const ms = colsFor(g), trending = state.mode === "trending";
     const drafted = draftedIds();
+    const BR = brOn(), ends = BR ? brEnds(ms, g) : null, LD = BR ? brLeaders(g, ms) : null;
     const ol = $("rows"); ol.innerHTML = "";
     const empty = $("empty"); empty.hidden = list.length > 0; empty.innerHTML = "";
     if (needsRows() && !DS.ready()) {
@@ -2678,7 +2733,9 @@
         tag.append(x); meta.append(tag);
       }
       who.append(meta); main.append(who);
+      if (BR) main.append(el("div", "brtm ge", p.team || ""));
       for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const b = el("div", "pct pre", on ? preValue(c.key, p) : ""); if (!on) b.classList.add("off"); else { if (state.sort === c.key && !customOrder()) b.classList.add("sorted"); b.prepend(el("span", "lbl", c.label)); } main.append(b); }
+      if (BR) main.append(el("div", "brpt ge", p.type === "P" ? fmtIP(V(p).ip) : String(V(p).pa)));
       const nv = p.type === "P" ? V(p).m.nera : null, sc = el("div", "score", p.type === "H" ? fmtX(st.score) : nv == null ? "–" : nv.toFixed(2));
       // a pitcher's headline is his nERA itself (Sean, 6 Oct 2026: "show their actual nERA not their percentile"); the sort is still the
       // percentile, so lowest nERA first. (This comment had swallowed the paint below for a day — the column went unpainted and unmarked.)
@@ -2696,11 +2753,14 @@
           if ((state.tbl.heat || hot) && pct != null) { paint(b, pct); if (hot) b.classList.add("hot"); } }
         if (state.sort === m.key && !customOrder()) b.classList.add("sorted");
         if (hasBreak(g, m.key)) b.classList.add("brk");
-        b.title = `${m.label}: ${v == null ? "n/a" : fmt(v, m)} (${pct == null ? "n/a" : ordinal(pct)} pctl)`;
+        if (BR && ends.has(m.key)) b.classList.add("ge");
+        if (BR && LD.ref.has(p.type + p.id) && typeof v === "number" && LD.best[m.key] != null && Math.abs(v - LD.best[m.key]) < 1e-9) { b.classList.add("lead"); b.dataset.lead = "1"; }   // led the qualified pool: bold italic, B-Ref's MLB lead
+        b.title = `${m.label}: ${v == null ? "n/a" : fmt(v, m)} (${pct == null ? "n/a" : ordinal(pct)} pctl)${b.dataset.lead ? " — led the qualified pool" : ""}`;
         b.prepend(el("span", "lbl", colLab(m)));
         pcts.append(b);
       }
       main.append(pcts);
+      if (BR) { if (ends.has("score")) sc.classList.add("ge"); main.append(el("div", "brpos", posShown(p))); }
       if (state.mode === "draft") {
         const act = el("div", "act");
         const btn = el("button", "draftbtn", drafted.has(p.id) ? "Undo" : "Draft"); btn.type = "button";
@@ -2727,6 +2787,7 @@
         if (rankMode && !untiered && !tiers[t].length) { const dz = el("li", "tierdrop", "Drop players here"); dz.dataset.tier = t; frag.append(dz); }
       });
     } else { const rows = list.map((p, i) => [p, i]); rows.forEach(([p, i], j) => { if (onPage(i)) emitRow(p, i, rows, j); }); }
+    if (BR && list.length && pg.end >= (grouped ? at.size : list.length)) frag.append(...brTotRows(g, ms, stats, ends, preOn));   // the foot of the last page
     ol.append(frag);
     fitNameCol();
     if (mobileView()) requestAnimationFrame(() => { for (const nm of ol.querySelectorAll(".name")) { nm.style.fontSize = ""; nm.style.letterSpacing = ""; if (nm.scrollWidth > nm.clientWidth + 1) { nm.style.fontSize = "13px"; nm.style.letterSpacing = "-0.02em"; if (nm.scrollWidth > nm.clientWidth + 1) nm.style.fontSize = "11.5px"; } } });   // a long name steps down to 14 then 12.5px before it ellipsises (Sean, 6 Oct 2026: "fit the names in there")
@@ -2751,7 +2812,7 @@
       const nm = who.querySelector(".name");
       let own = nm ? textWidth(nm.textContent, nameFont) : 0;
       const ln = who.querySelector(".lname"); if (ln) own = Math.max(own, textWidth(ln.textContent, nameFont));
-      const meta = who.querySelector(".meta");                     // team · position · PA, laid out as a flex row
+      const meta = brOn() ? null : who.querySelector(".meta");    // team · position · PA, laid out as a flex row (hidden in the B-Ref dress)
       if (meta) {
         // measured off the canvas, not the layout: a computed style and an offsetWidth per row forced a layout for every one of
         // ~700 rows (a quarter of a second on a desktop, a second on a phone — Sean, 5 Oct 2026); the "· " between parts is CSS content
@@ -2765,7 +2826,7 @@
     const head = $("colhead").children[1];                          // "Player", or "Player · ranked vs …"
     if (head && head.textContent) w = Math.max(w, textWidth(head.textContent, fontOf(head)));
     const mobile = document.documentElement.dataset.view === "mobile";
-    const lo = mobile ? 116 : 180, hi = mobile ? 116 : 460;   // a phone keeps the name column narrow so more stat columns show (Sean, 6 Oct 2026); a long name ellipsises
+    const lo = mobile ? 116 : brOn() ? 130 : 180, hi = mobile ? 116 : 460;   // a phone keeps the name column narrow so more stat columns show (Sean, 6 Oct 2026); a long name ellipsises
     board.style.setProperty("--namew", Math.min(hi, Math.max(lo, Math.ceil(w + pad + 2))) + "px");
   }
   // ---- pages ----
@@ -4020,7 +4081,7 @@
   function pitchBoardBody(box, springK) {
     const sc = K().stuff, T = (sc && sc.types) || {}, F = DATA.meta.arsenalFields || ARSENAL;
     const typeAvg = (pt) => { const x = T[pt]; if (!x || !sc) return null; const [w, b] = typeParts(sc, x); return { w, b, t: w + b - 100 }; };
-    const rows = [];
+    const rows = [], popl = [];   // popl: every pitch the filters let through, whatever the minimum — the League row
     for (const p of DS.players) {
       if (p.type !== "P" || !p.ctx || !p.ctx.arsenal) continue;
       if (pb.hand !== "all" && p.throws !== pb.hand) continue;
@@ -4028,8 +4089,11 @@
       const R0 = p.ctx.arsenal.map((a) => xAdj(Object.fromEntries(F.map((k, i) => [k, a[i]])))), tot = R0.reduce((s, r) => s + r.n, 0);   // the season's level, Location+ shrunk by pitches (7 Oct 2026)
       const ao = arsenalOpt(R0), aopt = ao ? ao.opt : null;   // the pitcher's, on each of his rows
       for (const r of R0) {
-        if (r.n < pb.min || (pb.pt !== "all" && r.pt !== pb.pt)) continue;
+        if (pb.pt !== "all" && r.pt !== pb.pt) continue;
         const A = typeAvg(r.pt), rel = (v, a) => (v == null ? null : A ? v - a + 100 : v);
+        popl.push({ n: r.n, sw: r.sw || 0, bip: r.bip || 0, pitp: rel(r.pitp, A && A.t), whfpl: rel(r.whfpl, A && A.w), bbpl: rel(r.bbpl, A && A.b), locp: r.locp,
+                    xwhfl: r.xwhfl, whf: r.whf, xgbl: r.xgbl, gb: r.gb, xpul: r.xpul, pu: r.pu, xfoul: xFoulOf(r), foul: r.foul });
+        if (r.n < pb.min) continue;
         rows.push({ p, pt: r.pt, n: r.n, use: 100 * r.n / tot, velo: r.velo, ivb: r.ivb, hb: r.hb, spin: r.spin,
                     stuffp: rel(r.stuffp, A && A.t), whfp: rel(r.whfp, A && A.w), bbp: rel(r.bbp, A && A.b),
                     xwhf: r.xwhf, whf: r.whf, xgb: r.xgb, gb: r.gb, xpu: r.xpu, pu: r.pu, xfoul: xFoulOf(r), foul: r.foul, xwhfl: r.xwhfl, xgbl: r.xgbl, xpul: r.xpul, locp: r.locp,
@@ -4052,46 +4116,54 @@
     if (springKey()) bar.append(pillSelect(springK ? "Spring training" : `${DATA.meta.season} season`, [["season", `${DATA.meta.season} season`], ["spring", "Spring training"]], springK ? "spring" : "season", (v) => { pb.src = v; save(); }, "Games"));
     bar.append(el("span", "pbcount", `${rows.length} pitch${rows.length === 1 ? "" : "es"} · ${springK ? DS.label || "spring training" : DATA.meta.season} · graded against its own type`));
     box.append(bar);
-    // table
-    const cols = [["rk", "#", false], ["who", "Pitcher", false], ["pt", "Pitch", false], ["n", "Pitches", true], ["use", "Use%", true], ["velo", "Velo", true],
-                  ["ivb", "IVB", true], ["hb", "HB", true], ["spin", "Spin", true],   // one grade since 4 Oct 2026: the pitch with its location
-                  ["pitp", "Pitching+", true], ["whfpl", "Whiff+", true], ["bbpl", "BB+", true], ["locp", "Loc+", true],
-                  ["xwhfl", "xWhiff%", true], ["xgbl", "xGB%", true], ["xpul", "xPU%", true], ["xfoul", "xFoul%", true]];
-    const tips = { ivb: "Induced vertical break, inches", hb: "Horizontal break, inches (arm side +)", stuffp: "Stuff+ against the league's pitches of the same type (100 = average for its type)",
-                   whfp: "Whiff+ against its type", bbp: "Batted-ball+ against its type", xwhf: "The model's whiff rate per swing — actual under it", xgb: "The model's ground-ball rate on contact — actual under it",
-                   aopt: "Arsenal optimization, the pitcher's: how much his usage leans toward his own swing-and-miss pitches, in xWhiff points against a typical mix of the same pitches", xpu: "The model's popup rate on contact — actual under it", use: "Share of his pitches",
-                   xfoul: "The foul model's share of contact that goes foul (the pitch, its spot and the batter's swing) — actual under it",
-                   xwhfl: "The whiff rate per swing the location-aware model expects — actual under it", xgbl: "The location-aware model's ground-ball rate on contact — actual under it", xpul: "The location-aware model's popup rate on contact — actual under it",
+    // the table, in B-Ref's dress (Sean, 9 Oct 2026, the B-Ref Style Tables canvas: "I want that for everything"): Rk and Pitcher frozen,
+    // Tm / Role / T columns, an over-header naming each group, each expected / actual pair as two columns (Act in grey), the sorted + column
+    // filling its cells, and a League band row under a gap. Every column but the pitcher's facts sorts.
+    const tips = { ivb: "Induced vertical break, inches", hb: "Horizontal break, inches (arm side +)", use: "Share of his pitches",
+                   xwhfl: "The whiff rate per swing the location-aware model expects", xgbl: "The location-aware model's ground-ball rate on contact", xpul: "The location-aware model's popup rate on contact",
+                   xfoul: "The foul model's share of contact that goes foul (the pitch, its spot and the batter's swing)", whf: "Actual whiffs per swing", gb: "Actual ground balls per ball in play", pu: "Actual popups per ball in play", foul: "Actual fouls per contact",
                    pitp: "Pitching+: the pitch graded with its location, against its type (100 = average for its type)", whfpl: "Pitching+'s whiff half", bbpl: "Pitching+'s batted-ball half", locp: "Location+: Pitching+ − Stuff+ + 100 — what his spots add (100 = an average pitcher's)" };
-    const t = el("table", "ftable stufft pbtable"), th = el("thead"), hr = el("tr");
-    for (const [k, l, sortable] of cols) {
-      const c = el("th", k === "who" ? "who" : k === "rk" ? "n" : null);
-      if (sortable) { const b = el("button", "sortbtn" + (pb.sort === k ? " on" : ""), l + (pb.sort === k ? (pb.dir < 0 ? " ▾" : " ▴") : "")); b.type = "button";
-        b.addEventListener("click", () => { if (pb.sort === k) pb.dir = -pb.dir; else { pb.sort = k; pb.dir = -1; } save(); }); c.append(b); } else c.textContent = l;
-      if (tips[k]) c.title = tips[k];
-      hr.append(c);
-    }
-    th.append(hr); t.append(th);
-    const tb = el("tbody"), f1 = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1));   // the % is in the header (Sean, 3 Oct 2026)
+    const cols = [["rk", "Rk"], ["who", "Pitcher"], ["tm", "Tm"], ["role", "Role"], ["hand", "T"], ["pt", "Type"], ["n", "#"], ["use", "Use%"], ["velo", "Velo"], ["ivb", "IVB"], ["hb", "HB"], ["spin", "Spin"],
+                  ["pitp", "Pitching+"], ["whfpl", "Whiff+"], ["bbpl", "BB+"], ["locp", "Loc+"], ["xwhfl", "Exp"], ["whf", "Act"], ["xgbl", "Exp"], ["gb", "Act"], ["xpul", "Exp"], ["pu", "Act"], ["xfoul", "Exp"], ["foul", "Act"]];
+    const FIX = new Set(["rk", "who", "tm", "role", "hand", "pt"]), ACT = new Set(["whf", "gb", "pu", "foul"]);
+    const { t, tb, fin, gap, wrap } = brTable([["", 5], ["Pitch", 3], ["Shape", 4], ["Grades, 100 = average for the type", 4], ["Whiff%", 2], ["GB%", 2], ["PU%", 2], ["Foul%", 2]],
+      cols.map(([k, l]) => [l, [k === "who" || k === "pt" ? "l" : "", ACT.has(k) ? "xact" : "", k === "rk" ? "f1" : k === "who" ? "f3" : ""].filter(Boolean).join(" "), tips[k]]), "pbt");
+    { const hc = t.querySelector("thead tr:last-child").children;
+      cols.forEach(([k, l], i) => { if (FIX.has(k)) return; const c = hc[i], on = pb.sort === k;
+        const b = el("button", "sortbtn" + (on ? " on" : ""), l); b.type = "button"; c.textContent = ""; c.append(b); if (on) c.classList.add("lit");
+        b.addEventListener("click", () => { if (pb.sort === k) pb.dir = -pb.dir; else { pb.sort = k; pb.dir = -1; } save(); }); }); }
+    const f1 = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%");
     const heatAll = pb.heat === "all";   // the sorted column alone by default (Sean, 3 Oct 2026: seven coloured columns was the loudest thing on the site)
     const plus = (v, k) => { const td = el("td", "plus", v == null ? "–" : String(Math.round(v)));
-      if (v != null && (heatAll || pb.sort === k)) { const st = plusStyle(v); if (st) { if (pb.sort === k) { td.classList.add("hot"); td.style.setProperty("--heat", st.bg); } else { td.style.background = st.bg; td.style.color = st.fg; } } }   // the sorted column reads like the Leaderboard's: the value in its colour (Sean, 7 Oct 2026)
+      if (v != null && (heatAll || pb.sort === k)) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } }   // the whole cell, as on the season table (9 Oct 2026)
       return td; };
-    const pair = (x, a) => { const td = el("td", "xa"); td.append(el("b", null, pct(x)), el("i", null, a == null ? "–" : pct(a))); return td; };
+    const pair = (x, a) => [el("td", null, pct(x)), el("td", "xact", a == null ? "–" : pct(a))];
     rows.slice(0, 300).forEach((r, i) => {
-      const tr = el("tr"), who = el("td", "who"), btn = el("button", "linkbtn pbname", r.p.name); btn.type = "button";
+      const tr = el("tr"), who = el("td", "l nm f3"), btn = el("button", "linkbtn pbname", r.p.name); btn.type = "button";
       btn.addEventListener("click", () => {
         state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.pbtab = "pitching"; savePrefs();
         if (!springK) { openPlayer(r.p, { tab: "pitching" }); return; }   // his page (8 Oct 2026); the spring board still pops the spring card up
         state.cardDs = springK || null; state.expanded = "P" + r.p.id; render(); });   // off the spring board: his spring card
-      who.append(btn, el("small", null, ` ${r.p.team} · ${r.p.primary} · ${r.p.throws || ""}HP`));
-      tr.append(el("td", "n", String(i + 1)), who, el("td", null, PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(r.use)),
+      who.append(btn);
+      tr.append(el("td", "rk f1", String(i + 1)), who, el("td", "c", r.p.team || ""), el("td", "c", r.p.primary || ""), el("td", "c", r.p.throws || ""), el("td", "l", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(r.use)),
                 el("td", null, f1(r.velo)), el("td", null, f1(r.ivb)), el("td", null, f1(r.hb)), el("td", null, r.spin == null ? "–" : String(r.spin)),
-                plus(r.pitp, "pitp"), plus(r.whfpl, "whfpl"), plus(r.bbpl, "bbpl"), plus(r.locp, "locp"), pair(r.xwhfl, r.whf), pair(r.xgbl, r.gb), pair(r.xpul, r.pu), pair(r.xfoul, r.foul));
-      tb.append(tr);
+                plus(r.pitp, "pitp"), plus(r.whfpl, "whfpl"), plus(r.bbpl, "bbpl"), plus(r.locp, "locp"), ...pair(r.xwhfl, r.whf), ...pair(r.xgbl, r.gb), ...pair(r.xpul, r.pu), ...pair(r.xfoul, r.foul));
+      tb.append(fin(tr));
     });
-    t.append(tb);
-    const scroll = el("div", "fscroll pbscroll"); scroll.append(t); box.append(scroll);
+    // the League row: every pitch the filters let through (whatever the minimum) — grades by pitches, whiffs by swings, grounders and popups by
+    // balls in play, fouls by contact
+    if (rows.length) {
+      const wm = (k, w) => { let a = 0, n = 0; for (const q of popl) { const ww = w(q); if (q[k] != null && ww) { a += q[k] * ww; n += ww; } } return n ? a / n : null; };
+      const byN = (q) => q.n, bySw = (q) => q.sw, byBip = (q) => q.bip, byCon = (q) => q.sw * (1 - (q.whf || 0) / 100);
+      const g0 = (v) => el("td", null, v == null ? "–" : String(Math.round(v))), N = popl.reduce((a, q) => a + q.n, 0);
+      const tr = el("tr", "tot first");
+      tr.append(el("td", "f1"), el("td", "l f3", pb.pt === "all" ? "League, every pitch" : `League, every ${(PITCH_NAME[pb.pt] || pb.pt).toLowerCase()}`), el("td"), el("td"), el("td"), el("td"), el("td", null, String(N)), el("td"),
+                el("td"), el("td"), el("td"), el("td"), g0(wm("pitp", byN)), g0(wm("whfpl", byN)), g0(wm("bbpl", byN)), g0(wm("locp", byN)),
+                ...pair(wm("xwhfl", bySw), wm("whf", bySw)), ...pair(wm("xgbl", byBip), wm("gb", byBip)), ...pair(wm("xpul", byBip), wm("pu", byBip)), ...pair(wm("xfoul", byCon), wm("foul", byCon)));
+      tb.append(gap(), fin(tr));
+    }
+    wrap.className = "fscroll pbscroll brscroll"; box.append(wrap);
+    requestAnimationFrame(() => { const rk = t.querySelector("tbody td.f1"), ov = t.querySelector("tr.over"); if (rk) t.style.setProperty("--sbw1", rk.offsetWidth + "px"); if (ov) t.style.setProperty("--overh", ov.offsetHeight + "px"); });   // Pitcher freezes right after Rk
     box.append(el("p", "note", (rows.length > 300 ? "The top 300 shown. " : "") + "Each pitch is graded against the league's pitches of its own type on what the ball does (velocity, spin, movement, release, extension, arm angle, its gap to his fastball, how much he throws it and how deep his arsenal is) and where he throws it — 100 is average for that pitch type; Whiff+ and BB+ are the two halves, Loc+ what his spots add over the stuff alone. Under each x-rate is what actually happened. Full season; click a name for his card."));
   }
   // League Trends (Sean, 29 Sep 2026: "league wide trends by year ... to see how the landscapes change"): hist/trends.js,
@@ -5639,6 +5711,7 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude", other = pitches || player || compare || elig || hub || appear || fant;
     $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
+    document.body.classList.toggle("brlb", onePage());   // the Leaderboard / Recent in B-Ref's dress (9 Oct 2026)
     const T = state.tbl; document.body.dataset.heat = T.heat ? "on" : "off"; document.body.dataset.band = T.band ? "on" : "off"; document.body.dataset.sorthl = T.sortHl ? "on" : "off"; document.body.dataset.density = T.density;
     $("ctoolbar").hidden = !compare; $("cboard").hidden = !compare;
     $("eboard").hidden = !elig; pitchBoardEl().hidden = !pitches;
@@ -6880,48 +6953,50 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const val = (b) => (b === "x" ? x.v.x ?? ((x.v.ld_x || 0) + (x.v.fb_x || 0)) / 2 : x.v[b]);
     const others = pl.ref.map(cnt).filter(Boolean);
     const avg = (o) => o.c.reduce((a, n, i) => a + (use[i] ? n * (val(MIX_B[i][1]) || 0) : 0), 0) / o.n;   // his average ball's league value
-    const box = el("div", "rollbox uerabox mixbox mixtab");
-    const hd = el("div", "rollhd"), mw = pv.m.mixw, st = pl.stats.get(p.type + p.id);
-    hd.append(el("span", "rollname", "Batted-ball mix"), el("span", "rollsub", `${mine.n} balls in play, no bunts`));
+    const box = el("div", "rollbox uerabox mixbox mixtab brbox");
+    const hd = el("div", "rollhd"), st = pl.stats.get(p.type + p.id);
+    hd.append(el("span", "rollname", "Batted-ball mix"), el("span", "rollsub", `${mine.n} balls in play, no bunts · dearest first`));
     box.append(hd);
-    const grid = el("div", "mixgrid mixgrid5");
-    grid.append(el("span"), el("span"), el("span", "mh", "Share"), el("span", "mh", "Lg wOBA"));
+    // a B-Ref table (Sean, 9 Oct 2026, the B-Ref Style Tables canvas): a row per bucket, dearest first — his balls, his share filling its cell
+    // in his percentile colour (more of the buckets worth more than the league's average ball counts as better), that percentile, and the
+    // league's wOBA on the bucket coloured cheapest blue to dearest red; Mix wOBA the band row under a gap
+    const mt = brTable([["", 1], ["His", 3], ["League", 1]], [["Batted ball", "l"], ["Balls", ""], ["Share", ""], ["Pctile", "", "His share's percentile among the season's qualifiers"], ["wOBA on it", "", "The league's wOBA on this kind of ball in play"]], "mixt");
     const vals = MIX_B.map(([, b]) => val(b)).filter((v) => v != null), lo = Math.min(...vals), hi = Math.max(...vals);
     const rows = MIX_B.map(([k, b, name], i) => ({ i, b, name, v: val(b) })).filter((r) => use[r.i] && r.v != null && (r.b !== "x" || mine.c[r.i]))
       .sort((a, b) => b.v - a.v);                                  // dearest bucket first
     for (const r of rows) {
       const share = 100 * mine.c[r.i] / mine.n, dir = r.v >= x.lg ? 1 : -1;
-      const arr = others.map((o) => dir * 100 * o.c[r.i] / o.n).sort((a, b) => a - b);
-      const lgc = el("span", "mv lg"), chip = el("span", "uchip", fmtX(r.v));
-      paintBar(chip, hi > lo ? Math.round(100 * (r.v - lo) / (hi - lo)) : 50); chip.style.color = "#fff"; lgc.append(chip);
-      grid.append(el("span", "ml", r.name), svTrack(arr.length ? insertPct(arr, dir * share) : null), el("span", "mv", share.toFixed(1) + "%"), lgc);
+      const arr = others.map((o) => dir * 100 * o.c[r.i] / o.n).sort((a, b) => a - b), pc = arr.length ? insertPct(arr, dir * share) : null;
+      const tr = el("tr");
+      tr.append(el("td", "l nm", r.name), el("td", null, String(mine.c[r.i])), heatTd(el("td", null, share.toFixed(1) + "%"), pc), el("td", "xact", pc == null ? "–" : ordinal(Math.round(pc))),
+                heatTd(el("td", null, fmtX(r.v)), hi > lo ? Math.round(100 * (r.v - lo) / (hi - lo)) : 50));
+      mt.tb.append(mt.fin(tr));
     }
-    // the bottom line, Mix wOBA: the league's wOBA weighted by his shares, ranked among the qualifiers and heat-mapped by that rank
-    // the bar's own number and percentile, so the tab and the Batted-Ball Distribution bar always agree
+    // the bottom line, Mix wOBA: the league's wOBA weighted by his shares, ranked among the qualifiers — the bar's own number and
+    // percentile, so the tab and the Batted-Ball Distribution bar always agree
     const arr = others.map(avg).sort((a, b) => a - b), me = pv.m.mixw ?? avg(mine);
     const pct = st && st.pct && st.pct.mixw != null ? st.pct.mixw : arr.length ? insertPct(arr, me) : null;
-    const tot = el("span", "mv lg"), chip = el("span", "uchip", fmtX(me));
-    paintBar(chip, pct); chip.style.color = "#fff"; tot.append(chip);
-    grid.append(el("span", "mdiv"), el("span", "ml mtot", "Mix wOBA"), svTrack(pct), el("span", "mv mn", pct == null ? "" : ordinal(pct)), tot);
-    // Avg EV by batted-ball type under the mix (Sean, 8 Oct 2026: "below it can you just show avg ev by FB LD and GB"): his percentile bar
-    // among the pool's qualifiers (the pool's own rank, else placed among them), his exit velocity on that type and the league's mean —
-    // m.evfb / evld / evgb (a window re-derives them from the day sums; "–" on a file built before 7 Oct 2026, and no block at all)
-    // and Barrel% by type under it (Sean, 8 Oct 2026: "add barrel rate by each category too so fb, ld, and gb"): barrels over the same tracked
-    // balls of each type (m.brfb / brld; no block on a file built before them). The ground-ball row came off the same day (Sean: "get rid of
-    // gb% barrel rate too") — a barrel needs 8°+ of launch, so it sat near zero for everyone; m.brgb is still built and a column
-    const typeBlock = (title, unit, rows) => {
-      if (!rows.some(([k]) => pv.m[k] != null)) return;
-      grid.append(el("span", "mdiv"), el("span", "ml mtot", title), el("span"), el("span", "mh", unit), el("span", "mh", "Lg"));
-      for (const [k, name] of rows) {
-        const v = pv.m[k], vals = pl.ref.map((q) => V(q).m[k]).filter((z) => z != null).sort((a, b) => a - b);
+    { const tr = el("tr", "tot first"); tr.append(el("td", "l", "Mix wOBA"), el("td", null, String(mine.n)), el("td", null, "100%"), el("td", null, pct == null ? "" : ordinal(Math.round(pct))), el("td", null, fmtX(me)));
+      mt.tb.append(mt.gap(), mt.fin(tr)); }
+    box.append(mt.wrap);
+    // Avg EV and Barrel% by batted-ball type under the mix (Sean, 8 Oct 2026: "below it can you just show avg ev by FB LD and GB", "add barrel
+    // rate by each category too"; the ground-ball barrel row came off the same day): his number filling its cell in his percentile among the
+    // pool's qualifiers, the league's mean beside it — m.evfb / evld / evgb, m.brfb / brld (a window re-derives them from the day sums; no table
+    // on a file built before 7 Oct 2026)
+    if (["evfb", "evld", "evgb", "brfb", "brld"].some((k) => pv.m[k] != null)) {
+      const hd2 = el("div", "rollhd"); hd2.append(el("span", "rollname", "Contact by type"), el("span", "rollsub", "his number filled by its percentile among the season's qualifiers"));
+      const ct = brTable([["", 1], ["Avg EV", 2], ["Barrel%", 2]], [["Type", "l"], ["His", ""], ["Lg", "xact"], ["His", ""], ["Lg", "xact"]], "mixt");
+      const one = (k, pctU) => {
+        const v = k ? pv.m[k] : null, vals = k ? pl.ref.map((q) => V(q).m[k]).filter((z) => z != null).sort((a, b) => a - b) : [];
         const pc = st && st.pct && st.pct[k] != null ? st.pct[k] : v != null && vals.length >= 20 ? insertPct(vals, v) : null;
-        const lg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-        grid.append(el("span", "ml", name), svTrack(pc), el("span", "mv", v == null ? "–" : v.toFixed(1) + (unit === "%" ? "%" : "")), el("span", "mv lg", lg == null ? "" : lg.toFixed(1) + (unit === "%" ? "%" : "")));
+        const lg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null, u = pctU ? "%" : "";
+        return [heatTd(el("td", null, v == null ? "–" : v.toFixed(1) + u), v == null ? null : pc), el("td", "xact", lg == null ? "–" : lg.toFixed(1) + u)];
+      };
+      for (const [name, e, b] of [["Fly balls", "evfb", "brfb"], ["Line drives", "evld", "brld"], ["Ground balls", "evgb", null]]) {
+        const tr = el("tr"); tr.append(el("td", "l nm", name), ...one(e), ...one(b, true)); ct.tb.append(ct.fin(tr));
       }
-    };
-    typeBlock("Avg EV", "EV", [["evfb", "Fly balls"], ["evld", "Line drives"], ["evgb", "Ground balls"]]);
-    typeBlock("Barrel%", "%", [["brfb", "Fly balls"], ["brld", "Line drives"]]);
-    box.append(grid);
+      box.append(hd2, ct.wrap);
+    }
     const w = el("div"); w.append(box, hrfbTable(p));
     return w;
   }
@@ -6964,34 +7039,31 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     return Math.max(0, v);
   }
   function hrfbTable(p) {
-    const box = el("div", "rollbox uerabox hrfbbox");
+    const box = el("div", "rollbox uerabox hrfbbox brbox");
     const hd = el("div", "rollhd"); hd.append(el("span", "rollname", "HR / FB by season"));
     box.append(hd);
     ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady);
     if (!careerReady() || !sbxReady()) { box.append(el("p", "note", failed.has("hist/career-bb.js") ? "hist/career-bb.js hasn't been built." : "Loading his seasons…")); return box; }
     const rec = window.DRAFT_CAREER[String(p.id)], rows = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).filter((l) => l.c.ext && +l.c.ext[2] > 0).sort((a, b) => a.season - b.season);
     if (!rows.length) { box.append(el("p", "note", "No MLB fly balls on record.")); return box; }
-    const t = el("table", "ubt hrfbt"), th = el("tr");
-    for (const [h, tip] of [["Season"], ["Team"], ["HR"], ["FB", "Fly balls + popups (Statcast's calls), his line-drive homers counted in"], ["HR/FB"], ["FB EV", "Exit velocity on fly balls (2023 on)"],
-      ["FB Brl%", "Barrels per fly ball (built from 8 Oct 2026; a season not yet rebuilt reads –)"], ["xHR/FB", "What his contact says: that season's league HR/FB moved by his FB EV, Barrel% on fly balls and Barrel% on line drives against the league's"], ["Diff", "HR/FB − xHR/FB: + = more homers than his contact says"]]) {
-      const c = el("th", h === "Season" || h === "Team" ? "l" : null, h); if (tip) c.title = tip; th.append(c);
-    }
-    const thead = el("thead"); thead.append(th); t.append(thead);
-    const tb = el("tbody");
-    const heat = (td, arr, v, lo) => { if (v == null || !arr || arr.length < 20) return; const pc = insertPct(lo ? arr.map((z) => -z).reverse() : arr, lo ? -v : v), sty = pctStyle(pc); td.style.background = sty.bg; td.style.color = sty.fg; td.classList.add("hheat"); td.title = ordinal(Math.round(pc)) + " percentile among that season's qualified hitters"; };
+    // a B-Ref table (Sean, 9 Oct 2026): over-headers, the cells heat-mapped whole, the career a band row under a gap
+    const { tb, fin, gap, wrap } = brTable([["", 2], ["Actual", 3], ["Fly-ball contact", 2], ["Expected", 2]],
+      [["Season", "l"], ["Team", "l"], ["HR", ""], ["FB", "", "Fly balls + popups (Statcast's calls), his line-drive homers counted in"], ["HR/FB", ""], ["FB EV", "", "Exit velocity on fly balls (2023 on)"],
+       ["FB Brl%", "", "Barrels per fly ball"], ["xHR/FB", "", "What his contact says: that season's league HR/FB moved by his FB EV, Barrel% on fly balls and Barrel% on line drives against the league's"], ["Diff", "", "HR/FB − xHR/FB: + = more homers than his contact says"]], "hrfbt");
+    const heat = (td, arr, v, lo) => { if (v == null || !arr || arr.length < 20) return; const pc = insertPct(lo ? arr.map((z) => -z).reverse() : arr, lo ? -v : v), sty = pctStyle(pc); td.style.background = sty.bg; td.style.color = sty.fg; td.classList.add("hheat", "heat"); td.title = ordinal(Math.round(pc)) + " percentile among that season's qualified hitters"; };
     const sgn = (v) => (v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1));
     let H = 0, F = 0, eS = 0, eW = 0, bS = 0, bW = 0, xS = 0, xW = 0, hrX = 0, fbX = 0;
     for (const l of rows) {
       const y = l.season, hr = +l.c.HR || 0, fb = +l.c.ext[2], hf = 100 * hr / fb, bx = sbxOf(p.id, y), L = hrfbLeague(y), xv = xHrfb(bx, L.lg);
       const tr = el("tr", y === +DS.season && DS.level === "MLB" ? "cur" : null), cell = (v, cls) => { const td = el("td", cls || null, v); tr.append(td); return td; };
       const heatIf = +l.c.PA >= 100 ? heat : () => {};   // a cup of coffee isn't coloured against the qualifiers (Cruz 2021: 1 FB, 1 HR)
-      cell(String(y), "l"); cell(l.team || "", "l"); cell(String(hr)); cell(String(fb));
+      cell(String(y), "l nm"); cell(l.team || "", "l"); cell(String(hr)); cell(String(fb));
       heatIf(cell(hf.toFixed(1) + "%"), L.arr.hrfb, hf);
       heatIf(cell(bx && bx.evfb != null ? bx.evfb.toFixed(1) : "–"), L.arr.evfb, bx && bx.evfb);
       heatIf(cell(bx && bx.brfb != null ? bx.brfb.toFixed(1) + "%" : "–"), L.arr.brfb, bx && bx.brfb);   // fly balls only (Sean, 8 Oct 2026)
       heatIf(cell(xv == null ? "–" : xv.toFixed(1) + "%"), L.arr.x, xv);
       const d = cell(xv == null ? "–" : sgn(hf - xv)); if (xv != null) d.classList.add(hf - xv >= 0 ? "pos" : "neg");
-      tb.append(tr);
+      tb.append(fin(tr));
       H += hr; F += fb;
       if (bx && bx.evfb != null) { eS += bx.evfb * fb; eW += fb; }
       if (bx && bx.brfb != null) { bS += bx.brfb * fb; bW += fb; }
@@ -6999,13 +7071,12 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     }
     // career: HR / FB over every season; FB EV and FB Brl% weighted by fly balls; xHR/FB weighted by fly balls over the seasons that
     // have one, and Diff over those same seasons
-    const tr = el("tr", "tot"), cell = (v, cls) => { const td = el("td", cls || null, v); tr.append(td); return td; };
+    const tr = el("tr", "tot first"), cell = (v, cls) => { const td = el("td", cls || null, v); tr.append(td); return td; };
     const xc = xW ? xS / xW : null;
-    cell("Career", "l"); cell(""); cell(String(H)); cell(String(F)); cell((100 * H / F).toFixed(1) + "%");
+    cell(""); cell(`${rows.length} Yr${rows.length === 1 ? "" : "s"}`, "l"); cell(String(H)); cell(String(F)); cell((100 * H / F).toFixed(1) + "%");
     cell(eW ? (eS / eW).toFixed(1) : "–"); cell(bW ? (bS / bW).toFixed(1) + "%" : "–"); cell(xc == null ? "–" : xc.toFixed(1) + "%");
     cell(xc == null ? "–" : sgn(100 * hrX / fbX - xc));
-    tb.append(tr); t.append(tb);
-    const sc = el("div", "hrfbscroll"); sc.append(t); box.append(sc);
+    tb.append(gap(), fin(tr)); box.append(wrap);
     return box;
   }
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
@@ -7665,23 +7736,23 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const eff = {}; for (const k of Object.keys(W)) eff[k] = his[k] == null ? null : W[k] * (his[k] - lg[k]);
     const wOf = (k) => bf / (bf + KREL[k]);
     const f1 = (x) => (x == null ? "–" : x.toFixed(1)), sg = (x, d = 1) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(d));
-    const gap = his.k - kImplied(his.whf);
+    const gap0 = his.k - kImplied(his.whf);
     // the archetype: whiffs first (the biggest, most reliable dial), then whether he converts beyond them and which dial does it
     const dials = [["fpc", "fouls"], ["cstr", "called strikes"], ["s2d", "two-strike finishing"], ["bb", "walks"]].filter(([k]) => eff[k] != null).sort((a, b) => Math.abs(eff[b[0]]) - Math.abs(eff[a[0]]));
     const topPos = dials.filter(([k]) => eff[k] >= 0.5)[0], topNeg = dials.filter(([k]) => eff[k] <= -0.5)[0];
     const wp = pct.whf, POS = { fpc: "Foul-ball finisher", cstr: "Called-strike collector", s2d: "Two-strike closer", bb: "Strike-thrower" },
           NEG = { fpc: "Balls in play, not fouls", cstr: "No called strikes", s2d: "Can't finish with two strikes", bb: "Walks eat his strikeouts" };
     let name;
-    if (wp == null) name = gap >= 1.5 ? "Converts beyond his whiffs" : gap <= -1.5 ? "Leaks strikeouts" : "Average converter";
-    else if (wp >= 75) name = gap >= 1.5 ? "Swing-and-miss, and finishes" : gap <= -1.5 ? "Swing-and-miss that leaks strikeouts" : "Pure swing-and-miss";
-    else if (wp >= 40) name = gap >= 1.5 ? (topPos ? POS[topPos[0]] : "Converts beyond his whiffs") : gap <= -1.5 ? (topNeg ? NEG[topNeg[0]] : "Leaks strikeouts") : "Average whiffs, average conversion";
-    else name = gap >= 1.5 ? "Pitch-to-contact that converts" : gap <= -1.5 ? "Pitch-to-contact, and leaks strikeouts" : "Pitch-to-contact";
+    if (wp == null) name = gap0 >= 1.5 ? "Converts beyond his whiffs" : gap0 <= -1.5 ? "Leaks strikeouts" : "Average converter";
+    else if (wp >= 75) name = gap0 >= 1.5 ? "Swing-and-miss, and finishes" : gap0 <= -1.5 ? "Swing-and-miss that leaks strikeouts" : "Pure swing-and-miss";
+    else if (wp >= 40) name = gap0 >= 1.5 ? (topPos ? POS[topPos[0]] : "Converts beyond his whiffs") : gap0 <= -1.5 ? (topNeg ? NEG[topNeg[0]] : "Leaks strikeouts") : "Average whiffs, average conversion";
+    else name = gap0 >= 1.5 ? "Pitch-to-contact that converts" : gap0 <= -1.5 ? "Pitch-to-contact, and leaks strikeouts" : "Pitch-to-contact";
     const qual = [];
     if (st && st.pct) { if (st.pct.osw >= 70) qual.push("chase-driven"); else if (st.pct.zone >= 70) qual.push("in the zone"); if (st.pct.fbv >= 85) qual.push("velocity"); }
     // the simple read (Sean, 6 Oct 2026: the tables under the arsenal "look a bit busy / hard to understand"): the archetype, one line that
     // adds up — K%, what the whiffs alone say, the rest — and five rows in the card's own dress: the dial, his rate against the league, what
     // it is worth in K% points as a coloured pill, and whether a season of his size can call it skill. No per-pitch deltas, no seven columns.
-    const box = el("div", "kconv karch ksum"), hd = el("div", "rollhd");
+    const box = el("div", "kconv karch ksum brbox"), hd = el("div", "rollhd");
     hd.append(el("span", "rollname", name + (qual.length ? " · " + qual.join(", ") : "")));
     box.append(hd);
     // the equation (Sean, 6 Oct 2026: "the table that shows how each input contributes to their k% being higher than their whiff alone would
@@ -7694,32 +7765,35 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     // five plain columns (Sean, 6 Oct 2026: "the significant amount of words makes it tougher ... just show the stat and the league avg then
     // the impact to k% and then the updated k%"): the dial, his rate, the league's, the K%-point pill, the running K%. No sub-lines, no
     // percentiles, no Repeats? column; the tooltips keep the one-line explanations.
-    const rows = el("div", "krows kfive");
+    // a B-Ref table (Sean, 9 Oct 2026, the B-Ref Style Tables canvas): Step · His · Lg · ± K% · K%, his rate filling its cell in his percentile
+    // colour, the ± K% cell coloured by its sign, and the four together / everything else / K% as band rows under a gap
     const LAB = { whf: stuff ? "xWhiff%" : "Whiff%", fpc: stuff ? "xFouls / contact" : "Fouls / contact", cstr: stuff ? "xCalled Strike%" : "Called Strike%", s2d: stuff ? "x2-strike finishing" : "2-strike finishing", bb: stuff ? "xBB%" : "BB%" };
     const TIP = { whf: `${K} = −0.8 + 0.926 × Whiff% across every 100+ BF pitcher-season 2020-26`, s2d: "a whiff with two strikes is the strikeout itself — his two-strike whiff rate against his overall", cstr: "called strikes per pitch — a called strike keeps the count moving without contact", fpc: "the share of his contact that goes foul — a foul keeps the strikeout alive, a ball in play ends the plate appearance", bb: "a walk ends the plate appearance without a strikeout" };
-    const hdr = el("div", "krow khead"); hdr.append(el("span", null, "Step"), el("span", "kc", "His"), el("span", "kc", "Lg"), el("span", "kc", "± " + K), el("span", "kc", K)); rows.append(hdr);
-    // signed pills by sign, not by the percentile scale (Sean, 6 Oct 2026, Schlittler's +0.4 reading "light blue"): the scale's middle is a
+    // signed cells by sign, not by the percentile scale (Sean, 6 Oct 2026, Schlittler's +0.4 reading "light blue"): the scale's middle is a
     // pale teal, so a small plus looked like a minus. Neutral grey at 0, red deepening with a plus, blue with a minus, full at ±2.5 K% points.
-    const signStyle = (v) => { const t = Math.min(1, Math.abs(v) / 2.5), mix = (a, b) => a.map((x, i) => Math.round(x + (b[i] - x) * t)); const grey = [214, 212, 206], red = [216, 33, 41], blue = [54, 97, 173]; const c = mix(grey, v > 0 ? red : blue); return { bg: `rgb(${c.join(",")})`, fg: t > (v > 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };   // white sooner on the red side — ink on a mid red was hard to read (Sean, 6 Oct 2026); the faintest reds keep the ink
-    const pillOf = (v) => { const pill = el("span", "kpill", v == null ? "–" : sg(v)); if (v != null) { const s2 = Math.abs(v) < 0.05 ? { bg: "rgb(214,212,206)", fg: "var(--ink)" } : signStyle(v); pill.style.background = s2.bg; pill.style.color = s2.fg; } return pill; };
-    const num = (v, sgn, pc) => { const n = el("span", "knum" + (pc != null ? " kpill khis" : ""), v == null ? "–" : sgn ? sg(v) : f1(v)); if (pc != null) { const s2 = pctStyle(pc); if (s2) { n.style.background = s2.bg; n.style.color = s2.fg; } } return n; }, run = (v) => el("span", "krun", f1(v));
-    const row = (cls, lab, h, l, pill, running, tip, sgn, pc) => { const r = el("div", "krow" + (cls ? " " + cls : "")); if (tip) r.title = tip; r.append(el("span", "klab", lab), num(h, sgn, pc), num(l, sgn), pill, running); return r; };   /* His is a pill in his percentile colour on that stat (Sean, 6 Oct 2026) */
-    // two-strike finishing is the gap: his two-strike whiff rate minus his overall, signed, the league's the same (Sean, 6 Oct 2026)
-    const shown = (k) => [his[k], lg[k]], signed = (k) => k === "s2d";
+    const signStyle = (v) => { const t = Math.min(1, Math.abs(v) / 2.5), mix = (a, b) => a.map((x, i) => Math.round(x + (b[i] - x) * t)); const grey = [214, 212, 206], red = [216, 33, 41], blue = [54, 97, 173]; const c = mix(grey, v > 0 ? red : blue); return { bg: `rgb(${c.join(",")})`, fg: t > (v > 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };   // white sooner on the red side — ink on a mid red was hard to read (Sean, 6 Oct 2026)
+    const { tb, fin, gap, wrap, ends } = brTable(null, [["Step", "l"], ["His", ""], ["Lg", ""], ["± " + K, "", "K% points this moves him from the K% his whiffs alone imply"], [K, ""]], "kbuild");
+    ends.add(0); ends.add(2);
+    const t0 = wrap.querySelector("thead tr"); t0.children[0].classList.add("ge"); t0.children[2].classList.add("ge");
+    let band = false;
+    const dCell = (v) => { const td = el("td", "kd", v == null ? "–" : sg(v)); if (v != null && !band) { const s2 = Math.abs(v) < 0.05 ? { bg: "rgb(214,212,206)", fg: "var(--ink)" } : signStyle(v); td.style.background = s2.bg; td.style.color = s2.fg; td.classList.add("heat"); } return td; };
+    const hisCell = (v, sgn, pc) => { const td = el("td", null, v == null ? "–" : sgn ? sg(v) : f1(v)); return band ? td : heatTd(td, pc); };
+    const row = (cls, lab, h, l, d, running, tip, sgn, pc) => { const tr = el("tr", cls || null); if (tip) tr.title = tip;
+      tr.append(el("td", "l nm", lab), h === undefined ? el("td") : hisCell(h, sgn, pc), el("td", "xact", l == null ? "" : sgn ? sg(l) : f1(l)), d, el("td", "krk", running == null ? "" : f1(running))); tb.append(fin(tr)); };
     let runK = base, sum = 0;
-    { const r = row("kstart", LAB.whf, his.whf, lg.whf, el("span", "kpill kplain", "→"), run(runK), TIP.whf, false, pct.whf); rows.append(r); }
+    row("", LAB.whf, his.whf, lg.whf, el("td", "xact", "→"), runK, TIP.whf, false, pct.whf);
     for (const k of ["fpc", "cstr", "s2d", "bb"]) {
       if (his[k] != null) { sum += eff[k]; runK += eff[k]; }
-      const [h, l] = shown(k);
-      rows.append(row("", LAB[k], h, l, pillOf(eff[k]), run(his[k] == null ? null : runK), TIP[k], signed(k), pct[k]));
+      row("", LAB[k], his[k], lg[k], dCell(eff[k]), his[k] == null ? null : runK, TIP[k], k === "s2d", pct[k]);   // two-strike finishing is the gap, signed
     }
-    { const r = row("ksub", "The four together", null, null, pillOf(sum), el("span", "krun kblank", ""), "fouls, called strikes, two-strike finishing and walks — what the process explains of the gap over whiffs alone (Sean, 6 Oct 2026)"); rows.append(r); }
-    const rest = gap - sum; runK += rest;
-    // Everything else carries only its pill, and the K% row only the final pill and K% (Sean, 6 Oct 2026: "in the everything else row only
+    tb.append(gap()); band = true;
+    row("tot first", "The four together", undefined, null, dCell(sum), null, "fouls, called strikes, two-strike finishing and walks — what the process explains of the gap over whiffs alone (Sean, 6 Oct 2026)");
+    const rest = gap0 - sum;
+    // Everything else carries only its number, and the K% row only the final ± and K% (Sean, 6 Oct 2026: "in the everything else row only
     // show the 1.6 don't show the k% and then in the k% row only show the last two columns")
-    { const r = row("krest", "Everything else", null, null, pillOf(rest), el("span", "krun kblank", ""), "sequencing, luck — what the four don't explain"); rows.append(r); }
-    { const r = row("ktot", K, his.k, lg.k, pillOf(gap), run(his.k), stuff ? `the models' K%; his actual K% is ${f1(act.k)} · ${bf} batters faced` : `${bf} batters faced · the pill is the whole gap: K% − the K% his whiffs alone imply`, false, pct.k); r.querySelectorAll(".knum").forEach((n) => { n.textContent = ""; n.className = "knum kblank"; n.removeAttribute("style"); }); rows.append(r); }
-    box.append(rows);
+    row("tot", "Everything else", undefined, null, dCell(rest), null, "sequencing, luck — what the four don't explain");
+    row("tot", K, undefined, null, dCell(gap0), his.k, stuff ? `the models' K%; his actual K% is ${f1(act.k)} · ${bf} batters faced` : `${bf} batters faced · the whole gap: K% − the K% his whiffs alone imply`);
+    box.append(wrap);
     return box;
   }
   function renderKConv(p, st, R0, stuff) {
@@ -7881,8 +7955,27 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     box.append(el("p", "note", `Spring pitches are graded against MLB pitch types with their own park adjustment (desert air takes ride off a fastball). What carries from camp to the season is the physical side — velocity, movement, mix, and the Stuff+ / Pitching+ built on them; whiff, ground-ball and popup rates are a few dozen swings against a mix of regulars and minor leaguers and read dim here. Velocity ramps through March (the first week reads a mile low) and a reliever's one-inning outings read hot.${pc ? ` The ${y} season rows are what actually followed.` : ""}${AS.pitch == null ? " Pitching+ for this spring arrives when the file is rescored with the location models." : ""}`));
     return box;
   }
+  // B-Ref's table (Sean, 9 Oct 2026: the B-Ref Style Tables canvas, "I want that for everything"): the season table's .sbt dress for the
+  // card's tabs and the boards — an over-header row naming each group of columns, a 2px rule where a group ends (`ends`, put on every row's
+  // cells by fin()), totals as band rows under a gap, heat maps filling the whole cell. groups: [[label, span]] or null; heads: [[label, cls, title]]
+  function brTable(groups, heads, cls) {
+    const t = el("table", "sbt brt" + (cls ? " " + cls : "")), th = el("thead"), ends = new Set();
+    if (groups) { const o = el("tr", "over"); let at = 0;
+      groups.forEach(([lab, n], i) => { const c = el("th", null, lab || ""); if (n > 1) c.colSpan = n; at += n; if (i < groups.length - 1) { c.classList.add("ge"); ends.add(at - 1); } o.append(c); });
+      th.append(o); }
+    const hr = el("tr");
+    heads.forEach(([h, c, tip], i) => { const e = el("th", [c, ends.has(i) ? "ge" : ""].filter(Boolean).join(" ") || null, h); if (tip) e.title = tip; hr.append(e); });
+    th.append(hr); t.append(th);
+    const tb = el("tbody"); t.append(tb);
+    const fin = (tr) => { [...tr.children].forEach((td, i) => { if (ends.has(i)) td.classList.add("ge"); }); return tr; };
+    const gap = () => { const tr = el("tr", "gap"), td = el("td"); td.colSpan = heads.length; tr.append(td); return tr; };
+    const wrap = el("div", "sbscroll brscroll"); wrap.append(t);
+    return { t, tb, fin, gap, wrap, ends };
+  }
+  const PAIRH = (exp, act) => [["Exp", "", exp], ["Act", "xact", act]];   // an expected / actual pair's two column names
+  const heatTd = (td, pc) => { if (pc == null) return td; const s = pctStyle(pc); if (s) { td.style.background = s.bg; td.style.color = s.fg; td.classList.add("heat"); } return td; };
   function renderStuffTab(p, st, g, mode = "stuff") {
-    const box = el("div", "rollbox uerabox stuffbox"), P = mode === "pitching";
+    const box = el("div", "rollbox uerabox stuffbox brbox"), P = mode === "pitching";
     const rows = (p.ctx && p.ctx.arsenal) || [];
     const pv = V(p), m = pv.m;
     const hd = el("div", "rollhd"), vl = viewLabel(p.type) && viewLabel(p.type) !== "full season" ? ` · ${viewLabel(p.type)}` : "";
@@ -7911,22 +8004,23 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     // against all pitches until it's rebuilt
     const vsType = Object.keys(T).length > 0;
     const rel = (v, a) => (v == null ? null : vsType && a != null ? v - a + 100 : v);
-    const t = el("table", "ubt stufft"), th = el("thead"), hr = el("tr");
-    const heads = [["Pitch", "l"], ["Use", ""], ["Velo", ""], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin", ""],
+    // B-Ref's dress (Sean, 9 Oct 2026, from the B-Ref Style Tables canvas: "I want that for everything"): an over-header naming each group, the
+    // expected / actual pairs as two columns (Exp, Act in grey), the grades filling their cells, All pitches a band row under a gap
+    const heads = [["Type", "l"], ["#", "", "Pitches thrown"], ["Use%", ""], ["Velo", ""], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin", ""],
                    ...(P ? [["Pitching+", "sp", "Stuff+ with location: the same pitch graded in the spot it was thrown"], ["Whiff+", "", "Pitching+'s whiff half"], ["BB+", "", "Pitching+'s batted-ball half"],
                            ["Loc+", "", "Location+: Pitching+ − Stuff+ + 100 — what his locations add (100 = an average pitcher's spots)"],
-                           ["xWhiff", "", "The whiff rate per swing the location-aware model expects — his actual Whiff% under it"], ["xGB", "", "The location-aware model's ground-ball rate on contact — actual under it"], ["xPU", "", "The location-aware model's popup rate on contact — actual under it"],
-                           ["xFoul", "", "The foul model's share of contact that goes foul — the pitch's traits, where it crossed and the batter's swing on it — his actual foul rate per contact under it"],
-                           ["xCalled", "", "The command models' called-strike chance per pitch — P(taken) × P(called | taken) from the pitch's traits, its spot and the count, centred on the league's actual called-strike rate — his actual called strikes per pitch under it (Sean, 6 Oct 2026)"]]
-                        : [["Stuff+", "sp"], ["Whiff+", ""], ["BB+", "", "Batted-ball+"], ["xWhiff", "", "The model's whiff rate per swing — his actual Whiff% under it"],
-                           ["xGB", "", "The model's ground-ball rate on contact — actual GB% under it"], ["xPU", "", "The model's popup rate on contact — actual under it"],
-                           ["xFoul", "", "The foul model's share of contact that goes foul — the pitch's traits, where it crossed and the batter's swing on it — his actual foul rate per contact under it (a foul keeps the strikeout alive; a ball in play ends the PA)"]])];
-    for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
-    th.append(hr); t.append(th);
-    const tb = el("tbody");
+                           ...PAIRH("The whiff rate per swing the location-aware model expects", "his actual whiffs per swing"), ...PAIRH("The location-aware model's ground-ball rate on contact", "his actual GB%"), ...PAIRH("The location-aware model's popup rate on contact", "his actual popups per ball in play"),
+                           ...PAIRH("The foul model's share of contact that goes foul — the pitch's traits, where it crossed and the batter's swing on it", "his actual fouls per contact"),
+                           ...PAIRH("The command models' called-strike chance per pitch — P(taken) × P(called | taken) from the pitch's traits, its spot and the count, centred on the league's actual called-strike rate (Sean, 6 Oct 2026)", "his actual called strikes per pitch")]
+                        : [["Stuff+", "sp"], ["Whiff+", ""], ["BB+", "", "Batted-ball+"], ...PAIRH("The model's whiff rate per swing", "his actual Whiff%"),
+                           ...PAIRH("The model's ground-ball rate on contact", "his actual GB%"), ...PAIRH("The model's popup rate on contact", "his actual popups per ball in play"),
+                           ...PAIRH("The foul model's share of contact that goes foul — the pitch's traits, where it crossed and the batter's swing on it (a foul keeps the strikeout alive; a ball in play ends the PA)", "his actual fouls per contact")])];
+    const groups = [["Pitch", 3], ["Shape", 4], ["Grades vs type", P ? 4 : 3], ["Whiff%", 2], ["GB%", 2], ["PU%", 2], ["Foul%", 2], ...(P ? [["Called%", 2]] : [])];
+    const { tb, fin, gap, wrap } = brTable(groups, heads);
     const f1n = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%");
-    const cellPlus = (v, cls) => { const td = el("td", "plus" + (cls ? " " + cls : ""), v == null ? "–" : String(Math.round(v))); if (v != null) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; } } return td; };
-    const pair = (x, a) => { const td = el("td", "xa"); td.append(el("b", null, pct(x)), el("i", null, a == null ? "–" : pct(a))); return td; };
+    let inTot = false;   // the All pitches row is a band row: no heat on it, as on the season table
+    const cellPlus = (v, cls) => { const td = el("td", "plus" + (cls ? " " + cls : ""), v == null ? "–" : String(Math.round(v))); if (v != null && !inTot) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } } return td; };
+    const pair = (x, a) => [el("td", null, pct(x)), el("td", "xact", a == null ? "–" : pct(a))];   // Exp, then Act in grey
     const con = (r) => (r.sw || 0) * (1 - (r.whf || 0) / 100);   // the pitch's contacted swings — what the foul chance is over
     const LR = lgRatesP(), cshift = LR.xcstr != null && LR.cstr != null ? LR.cstr - LR.xcstr : 0;   // xCalled's centring: the fixed models read the newest season a little hot
     const relSum = { t: 0, w: 0, b: 0, n: 0 };
@@ -7936,15 +8030,15 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     }
     for (const r of R) {
       const A = vsType ? typeAvg(r.pt) : null, tr = el("tr");
-      tr.append(el("td", "l", PITCH_NAME[r.pt] || r.pt), el("td", null, pct(100 * r.n / tot)), el("td", null, f1n(r.velo)), el("td", null, f1n(r.ivb)), el("td", null, f1n(r.hb)),
+      tr.append(el("td", "l nm", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(100 * r.n / tot)), el("td", null, f1n(r.velo)), el("td", null, f1n(r.ivb)), el("td", null, f1n(r.hb)),
                 el("td", null, r.spin == null ? "–" : String(r.spin)),
                 ...(P ? [cellPlus(rel(r.pitp, A && A.t), "sp"), cellPlus(rel(r.whfpl, A && A.w)), cellPlus(rel(r.bbpl, A && A.b)), cellPlus(r.locp),
-                         pair(r.xwhfl, r.whf), pair(r.xgbl, r.gb), pair(r.xpul, r.pu), pair(xFoulOf(r), r.foul), pair(r.xcstr == null ? null : r.xcstr + cshift, r.cstr)]
+                         ...pair(r.xwhfl, r.whf), ...pair(r.xgbl, r.gb), ...pair(r.xpul, r.pu), ...pair(xFoulOf(r), r.foul), ...pair(r.xcstr == null ? null : r.xcstr + cshift, r.cstr)]
                       : [cellPlus(rel(r.stuffp, A && A.t), "sp"), cellPlus(rel(r.whfp, A && A.w)), cellPlus(rel(r.bbp, A && A.b)),
-                         pair(r.xwhf, r.whf), pair(r.xgb, r.gb), pair(r.xpu, r.pu), pair(xFoulOf(r), r.foul)]));
-      tb.append(tr);
+                         ...pair(r.xwhf, r.whf), ...pair(r.xgb, r.gb), ...pair(r.xpu, r.pu), ...pair(xFoulOf(r), r.foul)]));
+      tb.append(fin(tr));
     }
-    const s0 = p.m || {}, trt = el("tr", "ftot");
+    const s0 = p.m || {}, trt = el("tr", "tot first"); inTot = true;
     // his whole arsenal: each pitch's x-rates weighted by how often he throws it; the actual rates under them are his
     // real totals (whiffs per swing, grounders and popups per ball in play)
     const wx = (k) => (tot ? R0.reduce((s, r) => s + (r[k] || 0) * r.n, 0) / tot : null);
@@ -7954,21 +8048,20 @@ const mlist = (c, rows, tab, f) => { const ol = el("ol", "hbig hmovers"); for (c
     const mv = filtered ? m : s0;                                   // a window / split: the card's own (filtered) grades
     const tv = vsType && relSum.n ? { t: relSum.t / relSum.n, w: relSum.w / relSum.n, b: relSum.b / relSum.n }
                                   : { t: mv.swhf == null ? mv.stuff : mv.swhf + mv.sbb - 100, w: mv.swhf, b: mv.sbb };
-    trt.append(el("td", "l", "All pitches"), el("td", null, String(tot)), el("td"), el("td"), el("td"), el("td"),
+    trt.append(el("td", "l", "All pitches"), el("td", null, String(tot)), el("td"), el("td"), el("td"), el("td"), el("td"),
                ...(P ? [cellPlus(mv.pitch, "sp"), cellPlus(mv.pwhf), cellPlus(mv.pbb), cellPlus(mv.sloc),
-                        pair(R0.some((r) => r.xwhfl != null) ? wxs("xwhfl", "sw") : null, act("whf", "sw")), pair(R0.some((r) => r.xgbl != null) ? wxs("xgbl", "bip") : null, act("gb", "bip")), pair(R0.some((r) => r.xpul != null) ? wxs("xpul", "bip") : null, act("pu", "bip")),
-                        (() => { let n = 0, tx = 0, na = 0, ta = 0; for (const r of R0) { const c = con(r), x = xFoulOf(r); if (x != null && c) { n += c; tx += x * c; } if (r.foul != null && c) { na += c; ta += r.foul * c; } }
+                        ...pair(R0.some((r) => r.xwhfl != null) ? wxs("xwhfl", "sw") : null, act("whf", "sw")), ...pair(R0.some((r) => r.xgbl != null) ? wxs("xgbl", "bip") : null, act("gb", "bip")), ...pair(R0.some((r) => r.xpul != null) ? wxs("xpul", "bip") : null, act("pu", "bip")),
+                        ...(() => { let n = 0, tx = 0, na = 0, ta = 0; for (const r of R0) { const c = con(r), x = xFoulOf(r); if (x != null && c) { n += c; tx += x * c; } if (r.foul != null && c) { na += c; ta += r.foul * c; } }
                           const fa = na ? ta / na : m.foul != null && m.swing && m.whf != null && m.swing * (1 - m.whf / 100) > 0 ? m.foul / (m.swing * (1 - m.whf / 100)) * 100 : null;
                           return pair(n ? tx / n : null, fa); })(),
-                        pair(mv.ncstr != null ? mv.ncstr : m.ncstr, mv.cstr != null ? mv.cstr : m.cstr)]
-                     : [cellPlus(tv.t, "sp"), cellPlus(tv.w), cellPlus(tv.b), pair(wx("xwhf"), act("whf", "sw")), pair(wx("xgb"), act("gb", "bip")), pair(wx("xpu"), act("pu", "bip")),
-                        (() => { let n = 0, tx = 0, na = 0, ta = 0;   // expected fouls over his contact, actual over the contact that has a count
+                        ...pair(mv.ncstr != null ? mv.ncstr : m.ncstr, mv.cstr != null ? mv.cstr : m.cstr)]
+                     : [cellPlus(tv.t, "sp"), cellPlus(tv.w), cellPlus(tv.b), ...pair(wx("xwhf"), act("whf", "sw")), ...pair(wx("xgb"), act("gb", "bip")), ...pair(wx("xpu"), act("pu", "bip")),
+                        ...(() => { let n = 0, tx = 0, na = 0, ta = 0;   // expected fouls over his contact, actual over the contact that has a count
                           for (const r of R0) { const c = con(r), x = xFoulOf(r); if (x != null && c) { n += c; tx += x * c; } if (r.foul != null && c) { na += c; ta += r.foul * c; } }
                           // no per-pitch counts yet (a file built before 6 Oct 2026): his season's fouls per contact from the card's own rates
                           const fa = na ? ta / na : m.foul != null && m.swing && m.whf != null && m.swing * (1 - m.whf / 100) > 0 ? m.foul / (m.swing * (1 - m.whf / 100)) * 100 : null;
                           return pair(n ? tx / n : null, fa); })()]));
-    tb.append(trt); t.append(tb);
-    const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
+    tb.append(gap(), fin(trt)); box.append(wrap);
     if (P) { const xr = null, rt = null;   // the Rating · xRating line stays off (no xRating on the site, 6 Oct 2026)
       if (xr != null && rt != null) { const d = el("div", "aopt xrating"), gap = rt - xr;
         d.append(el("b", null, `Rating ${rt} · xRating ${xr}`), el("span", null, ` — xStrikeout 60, Control 20, Mix xwOBA 20 against the Rating's Strikeout 60, Control 20, Mix wOBA 20: the same skills with the whiffs, fouls and mix taken from what his stuff and spots say instead of his results.${Math.abs(gap) >= 8 ? ` His Rating runs ${Math.abs(gap)} ${gap > 0 ? "over" : "under"} what his pitches say; about half of a gap like that has closed the next season.` : " The two agree."}`));
