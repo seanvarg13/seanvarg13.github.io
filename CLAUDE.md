@@ -2895,3 +2895,17 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **The frozen Rk / Player cells ruled (Sean, 9 Oct 2026, from a phone screenshot: "fix the rank and name to have the border")**: the two sticky
   cells are opaque so the sliding columns pass under them, which also covered the row's bottom hairline; each now draws its own (an inset
   1px box-shadow in the row rule's colour, no layout shift) — the block at the end of `styles.css`. Both layouts.
+* **xBABIP and xHR/FB tabs; the Mix tab's bars back (Sean, 9 Oct 2026: "create an xBABIP tab and then also create an xHR/FB tab too", "for batted
+  ball mix tab go back to the percentile bar charts you had before")**: `BTABS_H` = Mix · xBABIP · xHR/FB (`renderBelow`'s groups give each its own
+  button). **Mix** is the bars grid of before the B-Ref pass (`renderMixTab` from 549bee0: the buckets' percentile bars, Lg wOBA chips, Mix wOBA, Avg EV
+  and Barrel% by type) with no HR / FB table under it. **xBABIP** (`renderXbabipTab`): a build-up in the K% build-up's dress (`buildUp`, a shared
+  helper) on the card's view — the pool's PA-weighted league xBABIP, moved by `XBAB` (a fit of xBABIP over every 300+ PA hitter-season 2015-26 on seven
+  drivers, each against its season's league, held out by season r .767, scratch `xbfit.js`: per point of LD% +3.68 BABIP points, Popup% −2.89, a mph
+  of GB EV +2.00, LD EV +1.26, a ft/s of sprint +5.92, Oppo% +0.58, FB% −0.77), the seven together, Rest of his contact (what the directional model sees
+  beyond them), xBABIP, Luck (BABIP − xBABIP, repeats at r .15), BABIP; then **BABIP by season** (`babipSeasons`: BABIP · xBABIP · Diff | LD% · PU% · GB EV
+  · LD EV · Oppo% | Sprint, heat-mapped among each season's qualifiers via `sbxPool`, the career row BBE-weighted). `build_career.py` appends **`babip`,
+  `xbabip`, `spd`** to `SBX_KEYS` (3 decimals for the first two) and `hist/career-bb.js` was regenerated. Wood 2026: league .291, popups +15, GB EV +9,
+  LD% +8, LD EV +8, oppo +4, the seven +45, xBABIP .340, luck +4, BABIP .344. **xHR/FB** (`renderXhrfbTab`): the HR/FB build-up for the card's season
+  (his latest if the card is on one he has no line for; full season, from the career files) — league HR/FB, then FB EV / FB Brl% / LD Brl% at `XHRFB`'s
+  weights (the fallback fits' inputs on older files), xHR/FB, Luck, HR/FB — then `hrfbTable` (moved off the Mix tab). `hrfbLeague` keeps sorted `brld` /
+  `ev90` too, for the build-up's heat.
