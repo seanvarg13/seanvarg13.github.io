@@ -9466,9 +9466,7 @@
     const main = el("div", "pbmain"), photo = el("div", "pbphoto"); photo.append(headshot(p.id, p.name)); main.append(photo);
     const txt = el("div", "pbtext"), h2 = el("h2", null, p.name); h2.id = "modal-title"; if (ctlIn) txt.append(ctl); txt.append(h2);
     txt.append(...bioLines(p, b));
-    const more = el("button", "pbmore", bioMore ? "Less bio, draft info ▴" : "More bio, draft info ▾"); more.type = "button"; more.setAttribute("aria-expanded", String(bioMore));
-    more.addEventListener("click", (e) => { e.stopPropagation(); bioMore = !bioMore; render(); });
-    txt.append(more); if (bioMore) txt.append(moreBio(p, b));
+    // no "More bio, draft info" button (Sean, 9 Oct 2026: "get rid of the more bio draft info button"); moreBio stays, unused
     main.append(txt); plate.append(main);
     if (st && st.pct) plate.append(summaryBlock(p, st));
     if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay); if (!state.cardTools && sum.childNodes.length) plate.append(sum); }

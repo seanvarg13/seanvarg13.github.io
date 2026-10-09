@@ -3005,3 +3005,5 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **HR / FB by season: the raw counts first (Sean, 9 Oct 2026: "put the raw hr and fb columns first and then have the rest in the current order")**:
   `hrfbTable` is Season · Team | **Raw**: HR · FB | **Fly-ball contact**: FB EV · FB Brl% | **HR / FB**: HR/FB · xHR/FB · Diff; the career row
   follows the same order.
+* **No "More bio, draft info" button (Sean, 9 Oct 2026: "get rid of the more bio draft info button")**: `pageHead` no longer draws the `.pbmore`
+  fold; the bio lines end at Team. `moreBio` and `bioMore` stay in `app.js`, unused. Band 245px on a phone, 317 on a desktop.
