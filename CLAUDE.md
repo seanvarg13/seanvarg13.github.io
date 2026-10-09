@@ -3096,3 +3096,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
       filtered line).
   - `bioLines`, the headshot's `.pbphoto` and the old `nobk` / `nobkm` layouts stay in `app.js` / `styles.css`, unused. CSS: the "one header"
     block at the end of `styles.css`.
+* **The bio line sticks with the bar (Sean, 9 Oct 2026: "make the bio stuff scroll with it too")**: `pageHead` puts the bio row (`.pbrow1`:
+  `bioStrip` plus Back and the filter chips) inside the sticky `.pgbar`, on a full-width second line under the name and buttons (the bar
+  wraps; the name is `flex-basis: 0` so a long one shrinks or wraps to two lines beside the buttons rather than taking its own line). The
+  band under the bar is the selected year's line alone, which scrolls away; the bar's red rule shows once it has (`stickSync`). CSS: the
+  "bio line in the sticky bar" block at the end of `styles.css`.

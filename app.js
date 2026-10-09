@@ -9518,7 +9518,7 @@
     // a row for Back and the filter chips only when there is one, one bio line, and the selected year's line — no second name, no career row
     plate.classList.add("pbone");
     const row1 = el("div", "pbrow1"); row1.append(bioStrip(p, b)); if (backAt || hasChips) row1.append(ctl);   /* Back and the chips at the bio line's right */
-    plate.append(row1);
+    bar.append(row1);   /* the bio rides in the sticky bar under his name (Sean, 9 Oct 2026: "make the bio stuff scroll with it too") */
     if (st && st.pct) plate.append(summaryBlock(p, st, true));
     if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay, inWin); if (!state.cardTools && sum.childNodes.length) plate.append(sum); }
     top.append(plate);
