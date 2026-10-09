@@ -2847,3 +2847,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `:is(#xboard, #modal, #pitchboard)` because a warm-pass `:is(#colhead .h, …, .rollname)` rule carries id specificity. Rankings / Draft board
   keep their old rows (`brOn()` is `onePage()` only). The canvas also mocks the season table at 21px rows ("Season table — thinner rows",
   a row-height tweak) — not built; Sean asked what it would look like.
+* **The phone Leaderboard as the canvas drew it (Sean, 9 Oct 2026, beside the canvas's "Leaderboard — phone" board: "make it so it looks like the
+  first image")**: a **title** over the table on both layouts — `#lbtitle` ("Standard batting" / "Advanced pitching" / "Your batting" for a custom
+  list, from `lbSetName()`, then "by xwOBA" / the sorted column) over a red rule, placed before `#bscroll` by `renderColheadIn`; on a phone the table
+  is a **framed box 12px in from each side**, the Result / Process over-header is hidden, the **Rk header cell is opaque and frozen** (the sliding
+  column names had shown through it), and the columns run **Rk · Player · headline · stats · PA · Tm · Pos** — CSS `order` on the grid's items
+  (the headline header carries `.brsc`) with a phone template to match (headline 54px, stats 50px, PA 50, Tm 42, Pos 96). Desktop keeps Tm / PA
+  before the headline. The block at the end of `styles.css`.

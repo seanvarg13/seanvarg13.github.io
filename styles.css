@@ -4928,3 +4928,26 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows > li.brgap > .row-main { height: 9px !important; border: 0 !important; background: color-mix(in srgb, var(--ink) 9%, var(--band2, var(--accent-2))) !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows > li.brgap > .row-main > .brgapbar { height: 9px !important; padding: 0 !important; border: 0 !important; background: none !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root body.brlb .colwrap { background: none !important; }
+/* the Leaderboard's title and a phone's table as the canvas drew it (Sean, 9 Oct 2026: "make it so it looks like the first image"): a
+   "Standard batting · by xwOBA" title over a red rule (#lbtitle, renderColheadIn); on a phone the table sits in a framed box 12px in from
+   each side, no Result / Process over-header, Rk and Player frozen (the Rk name opaque now), then the headline and the stats, with PA, Tm
+   and Pos moved to the end (CSS order on the grid's items, the template to match) */
+:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #lbtitle { display: flex; align-items: baseline; gap: 12px; margin: 4px 0 10px; padding-bottom: 5px; border-bottom: 2px solid var(--stripe-line, #c8102e); }
+:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #lbtitle h2 { margin: 0; font: 700 26px/1 var(--display) !important; color: var(--ink) !important; letter-spacing: 0.01em !important; text-transform: none !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #lbtitle span { font: 400 13px var(--body); color: var(--muted); }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #lbtitle { margin: 6px 12px 8px; padding-bottom: 4px; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #lbtitle h2 { font-size: 21px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #bscroll { margin: 0 12px !important; border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--surface)) !important; width: auto !important; max-width: calc(100% - 24px); }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colband { display: none !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb .grid { grid-template-columns: var(--rankw, 22px) var(--namew, 116px) var(--pre1, 0px) var(--pre2, 0px) 54px repeat(var(--n), 50px) 50px 42px 96px var(--act, 0px) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colhead > :nth-child(1), :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #rows .row-main > .rank { order: 1; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colhead > :nth-child(2), :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #rows .row-main > .who { order: 2; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colhead > .pre, :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #rows .row-main > .pre { order: 3; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colhead > .brsc, :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #rows .row-main > .score { order: 4; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colhead > [data-key], :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #rows .row-main .pcts > * { order: 5; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colhead > .brpt, :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #rows .row-main > .brpt { order: 6; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colhead > .brtm, :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #rows .row-main > .brtm { order: 7; border-right: 1px solid color-mix(in srgb, var(--ink) 16%, var(--surface)) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colhead > .brtm { border-right-color: rgba(255,255,255,.35) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colhead > .brpos, :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #rows .row-main > .brpos { order: 8; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colhead > :nth-child(1) { background: var(--band2, var(--accent-2)) !important; position: sticky; left: 0; z-index: 4; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colhead > :nth-child(2) { position: sticky; left: var(--rankw, 22px); z-index: 4; }
