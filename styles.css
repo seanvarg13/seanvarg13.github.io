@@ -5237,3 +5237,16 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 .pbline { margin-left: -18px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar3 .pbline .pbdot { width: 13px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar3 .pbline { margin-left: -13px; }
+/* the percentiles title's year and level as plain words again, Savant's dotted rule under a word only when there's another choice
+   (Sean, 9 Oct 2026: "like what we used to have where it just has the dots below if there is a filter ability there"); no boxes, no ▾ */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd { gap: 0 10px; align-items: baseline; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd > * { align-self: baseline; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .dd { height: auto !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .tsl { height: auto !important; padding: 0 0 7px !important; border: 0 !important; border-radius: 0 !important; color: var(--ink) !important;
+  font: 700 26px/1.2 var(--display) !important; background: radial-gradient(circle, var(--accent-2) 1.6px, transparent 1.8px) left bottom / 9px 4px repeat-x !important;
+  background-repeat: space no-repeat !important; cursor: pointer; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .tsl::after { content: none !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .dd.solo .tsl, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .tsl:disabled { background: none !important; padding-bottom: 0 !important; cursor: default; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .tsl:hover { background-color: transparent !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .pclv { font: 700 26px/1.2 var(--display); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard h3.pcthd .tsl, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard h3.pcthd .pclv { font-size: 22px !important; }

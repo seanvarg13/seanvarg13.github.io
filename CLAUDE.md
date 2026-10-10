@@ -3134,3 +3134,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the name over the bio row (`.pgbtxt`: `h2.pgbname`, then `.pbrow1` with the bio, Back and the chips) · Filters / Raw at the right. `bioStrip`
   wraps every item with its dot in a nowrap `.pbit`, and the line sits a dot's width left of a clipping box, so whichever item starts a line
   loses its dot — a bio that wraps never shows a dot at either end of a line. CSS at the end of `styles.css`.
+  **Plain words with Savant's dots (Sean, the same night: "like what we used to have where it just has the dots below if there is a filter ability
+  there")**: the title's year and level are plain heading words, no box and no ▾; a word wears the light-blue dotted rule under it (the old `.tsl`
+  radial-gradient) only when it has another choice — the year when he has more than one season (`ddList`'s `.solo` otherwise), the level when
+  `lvWorth`. The block at the end of `styles.css`.
