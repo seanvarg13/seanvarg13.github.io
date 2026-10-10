@@ -7929,6 +7929,10 @@
   // faced at which the stat is half signal. Whiff% and K% are the most reliable (k 97 / 128), two-strike finishing by far the least (818 —
   // a sixth of his pitches, so a season of it is mostly noise); fouls 198, called strikes 171, walks 261
   const KREL = { k: 128, whf: 97, s2d: 818, cstr: 171, fpc: 198, bb: 261, rest: 497 };   // rest: the K% the four dials leave over (scratch krest.js, 9 Oct 2026: yoy r .35, next season = 1.02 × the shrunk value)
+  // the running rate after the repeatable leftover is what his process says he should have (Sean, 10 Oct 2026: "after the everything else
+  // repeatables ... highlight it in yellow and bold it and after it put like the words expected k% and expected bb% ... literally just to the
+  // right of it don't adjust the table at all"): the cell is filled yellow and the words hang off its right edge (::after, out of the flow)
+  function expMark(tb, word) { const td = tb.lastElementChild && tb.lastElementChild.querySelector("td.krk"); if (td) { td.classList.add("kexp"); td.dataset.exp = document.documentElement.dataset.view === "mobile" ? word.replace("Expected ", "Exp.\n") : word; td.title = word; } }
   function renderKArchetype(p, st, g) {
     const pv = V(p), m = pv.m, L = lgRatesP(), stuff = stuffSide();
     if (!L.cstr || !L.foul || !L.swing || L.whf == null || L.s2whf == null || m.k == null || m.whf == null) return null;
@@ -8005,6 +8009,7 @@
     if (stuff) { runK += rest; row("", "Everything else", undefined, null, dCell(rest), runK, "what the four don't explain of the models' K%"); }
     else { const w = wOf("rest"), rep = w * rest, lk = rest - rep;
       runK += rep; row("", "Everything else, repeatable", undefined, null, dCell(rep), runK, `the share of what the four don't explain that carries to next season: ${Math.round(100 * w)}% of it at ${bf} batters faced`);
+      expMark(tb, "Expected K%");
       runK += lk; row("", "Everything else, luck", undefined, null, dCell(lk), runK, `the share that doesn't carry to next season`); }
     tb.append(gap()); band = true;
     row("tot first", K, undefined, null, dCell(gap0), his.k, stuff ? `the models' K%; his actual K% is ${f1(act.k)} · ${bf} batters faced` : `${bf} batters faced · the whole gap: K% − the K% his whiffs alone imply`);
@@ -8049,6 +8054,7 @@
     }
     const rest = m.bb - base - sum, w = bf / (bf + BBCONV.rest), rep = w * rest, lk = rest - rep;
     run += rep; row("", "Everything else, repeatable", undefined, null, dCell(rep), run, `the share of what the four don't explain that carries to next season: ${Math.round(100 * w)}% of it at ${bf} batters faced`);
+    expMark(tb, "Expected BB%");
     run += lk; row("", "Everything else, luck", undefined, null, dCell(lk), run, "the share that doesn't carry to next season");
     tb.append(gap()); band = true;
     row("tot first", "BB%", undefined, null, dCell(m.bb - base), m.bb, `${bf} batters faced · the whole gap: BB% − the BB% his Strike% alone implies`);
