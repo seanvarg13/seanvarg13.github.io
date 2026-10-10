@@ -5202,3 +5202,17 @@ header.top .wordmark { display: none; }
 /* the centred "2026 MLB Percentiles" title over the bars on his page (Sean, 9 Oct 2026), in the season table title's type */
 :root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd { margin: 40px 0 10px; text-align: center; font: 700 26px var(--display); color: var(--ink); letter-spacing: 0.01em; }
 :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard h3.pcthd { margin-top: 28px; font-size: 22px; }
+/* the year and level pickers in the percentiles title (Sean, 9 Oct 2026): the bar's boxy white buttons, at the title's type */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .dd { display: inline-flex; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .tsl { height: 40px; padding: 0 12px; border: 1px solid #c3d3e3; border-radius: 0; background: #fff; color: var(--ink); font: 700 24px/1 var(--display); box-shadow: none; cursor: pointer; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .tsl::after { content: " ▾"; font-size: 14px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .dd.solo .tsl::after { content: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .tsl:hover { background: #f3f7fb; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard h3.pcthd .tsl { height: 34px; padding: 0 9px; font-size: 20px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd :is(.tsl, .pclv) { font-weight: 700 !important; font-family: var(--display) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd > * { margin: 0 !important; align-self: center; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .tsl { margin: 0 !important; vertical-align: middle; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .dd { height: auto !important; line-height: 1 !important; align-items: center; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .tsl { border: 1px solid #c3d3e3 !important; background-image: none !important; text-decoration: none !important; box-shadow: none !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .dd { border: 0 !important; padding: 0 !important; }

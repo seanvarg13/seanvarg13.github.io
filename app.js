@@ -9549,7 +9549,9 @@
     // the phone pitcher's stack are history; slim stays false
     const slim = false, inWin = [];
     const fx = el("div", "pgfix" + (slim ? " stack" : "")), pk = title._picks;
-    if (pk) { const [yr, lv] = pk.mk(); fx.append(yr); if (pk.lvWorth) { if (slim) inWin.push(["Level", lv]); else fx.append(lv); } } else fx.append(title);
+    // the year and level moved out of the bar into the "2026 MLB Percentiles" title over the bars (Sean, 9 Oct 2026: "make it so that is where you
+    // filter by the year and by level so we no longer need the year button in the header or the level button") — playerView reads top._picks
+    top._picks = pk;
     if (slim) {
       const side = (state.cardSide || "raw") === "stuff" ? "stuff" : "raw", sg = el("div", "seg"); sg.setAttribute("role", "group"); sg.setAttribute("aria-label", "Raw or stuff");
       for (const [k, l] of [["raw", "Raw"], ["stuff", "Stuff"]]) { const bt = el("button", "segbtn small", l); bt.type = "button"; bt.setAttribute("aria-pressed", String(k === side));
@@ -10265,7 +10267,10 @@
       renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
       pg.append(B);
       // a centred title over the bars (Sean, 9 Oct 2026: "above the percentile bar stuff could you include a 2026 MLB Percentiles header")
-      const pt = el("h3", "pcthd", `${DS.season} ${DS.level || "MLB"}${KIND_TAG[DS.kind || ""] || ""} Percentiles`);
+      // and it is where the season and level are picked (9 Oct 2026): "2026 ▾ MLB ▾ Percentiles", the level a plain word when he has only the one
+      const pt = el("h3", "pcthd"), lvName = `${DS.level || "MLB"}${KIND_TAG[DS.kind || ""] || ""}`, pk = hd._picks;
+      if (pk) { const [yr, lv] = pk.mk(); pt.append(yr, " ", pk.lvWorth ? lv : el("span", "pclv", lvName), " Percentiles"); }
+      else pt.append(`${DS.season} ${lvName} Percentiles`);
       box.append(pt, pg, renderBelow(p, { st, g, ref }));
       // no bar pinned on scroll any more (Sean, 9 Oct 2026: "just get rid of the scrolling headers and not have that at all"); condensedBar /
       // condSync stay below, unused — condSync finds no bar and returns
