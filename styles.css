@@ -5262,3 +5262,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) table.sbt.kbuild td.krk.kexp::after { padding-right: 10px; }
 /* the xBABIP build-up's bottom BABIP row bold throughout, its label too (Sean, 10 Oct 2026: "bold the bottom babip row") */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) table.sbt.kbuild tr.kfinal td, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) table.sbt.kbuild tr.kfinal .knotebtn { font-weight: 700 !important; }
+/* an iPhone doesn't count an absolutely placed label in a scroller's width, so the K% / BB% tables (narrower than a phone) never scrolled to
+   their "Expected" words; on a phone a table with the mark carries a transparent 120px right border the words sit in, so the box itself is wider
+   and scrolls on every browser (Sean, 10 Oct 2026: "the exact same way you did for xbabip and xhr/fb") */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) table.sbt.kbuild:has(td.kexp) { border-right: 120px solid transparent !important; }
