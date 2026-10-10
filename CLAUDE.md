@@ -3221,3 +3221,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   mix, and `hist/career-bb.js` was regenerated (`build_career.py bb`; only `pullfb` changed). Raleigh 2025 / 2026: 20.4 / 19.6. The Batted Ball
   Quality tab's **Fly Balls ▸ Pull%** stays the share of his fly balls that were pulled (Sean: "in the batted ball quality tab i want it to remain
   what it is"), 45.2 for Raleigh 2026.
+* **xHR/FB on a minors card (Sean, 10 Oct 2026: "the xhr/fb tab does not update for minor leagues at all like the xbabip tab does")**: on a
+  minors dataset `renderXhrfbTab` builds the HR/FB build-up from the card's own level, season and view instead of his MLB career line —
+  `hrfbView(p)`: home runs from the day rows (`V()`'s hitter ctx carries `HR` in a window / split; the full season sums `rowsOf`), fly balls
+  = his fly balls + popups from the Mix buckets (a minors file can't tell which homers were liners, so they aren't added the way MLB's count
+  adds them), FB EV / FB Brl% / LD Brl% off `V(p).m`; `hrfbLevel(g)` = the same numbers over the card's reference pool (FB-weighted, 20
+  qualifiers needed), cached per `viewKey`. Same `XHRFB` weights against the level's league. Double-A and below have no tracked contact, so
+  they show League → HR/FB with "no expected HR/FB". The HR / FB by season table under it stays his MLB seasons. Tibbs (AAA 2026): league
+  14.1%, xHR/FB 24.8%, HR/FB 22.7%; last 150 PA 19.0 / 23.5.
