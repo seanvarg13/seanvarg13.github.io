@@ -7928,7 +7928,7 @@
   // a pitcher's two seasons, the noise c / BF the rest, so a season's value is w = BF / (BF + k) skill and (1 − w) noise, with k the batters
   // faced at which the stat is half signal. Whiff% and K% are the most reliable (k 97 / 128), two-strike finishing by far the least (818 —
   // a sixth of his pitches, so a season of it is mostly noise); fouls 198, called strikes 171, walks 261
-  const KREL = { k: 128, whf: 97, s2d: 818, cstr: 171, fpc: 198, bb: 261 };
+  const KREL = { k: 128, whf: 97, s2d: 818, cstr: 171, fpc: 198, bb: 261, rest: 497 };   // rest: the K% the four dials leave over (scratch krest.js, 9 Oct 2026: yoy r .35, next season = 1.02 × the shrunk value)
   function renderKArchetype(p, st, g) {
     const pv = V(p), m = pv.m, L = lgRatesP(), stuff = stuffSide();
     if (!L.cstr || !L.foul || !L.swing || L.whf == null || L.s2whf == null || m.k == null || m.whf == null) return null;
@@ -7997,13 +7997,17 @@
       if (his[k] != null) { sum += eff[k]; runK += eff[k]; }
       row("", LAB[k], his[k], lg[k], dCell(eff[k]), his[k] == null ? null : runK, TIP[k], k === "s2d", pct[k]);   // two-strike finishing is the gap, signed
     }
-    tb.append(gap()); band = true;
-    row("tot first", "The four together", undefined, null, dCell(sum), null, "fouls, called strikes, two-strike finishing and walks — what the process explains of the gap over whiffs alone (Sean, 6 Oct 2026)");
     const rest = gap0 - sum;
-    // Everything else carries only its number, and the K% row only the final ± and K% (Sean, 6 Oct 2026: "in the everything else row only
-    // show the 1.6 don't show the k% and then in the k% row only show the last two columns")
-    row("tot", "Everything else", undefined, null, dCell(rest), null, "sequencing, luck — what the four don't explain");
-    row("tot", K, undefined, null, dCell(gap0), his.k, stuff ? `the models' K%; his actual K% is ${f1(act.k)} · ${bf} batters faced` : `${bf} batters faced · the whole gap: K% − the K% his whiffs alone imply`);
+    // no "four together" row, and what the four don't explain is plain rows that keep the running K% going (Sean, 9 Oct 2026: "get rid of the
+    // row that says the four together and then make everything else white ... split into like actual predictable stuff and also pure luck").
+    // The split is the leftover's own reliability (KREL.rest): w = BF / (BF + 497) of it repeats, the rest is luck. The Stuff side's leftover is
+    // the models', not a season's sampling, so it stays one row there
+    if (stuff) { runK += rest; row("", "Everything else", undefined, null, dCell(rest), runK, "what the four don't explain of the models' K%"); }
+    else { const w = wOf("rest"), rep = w * rest, lk = rest - rep;
+      runK += rep; row("", "Everything else, repeatable", undefined, null, dCell(rep), runK, `the share of what the four don't explain that carries to next season: ${Math.round(100 * w)}% of it at ${bf} batters faced`);
+      runK += lk; row("", "Everything else, luck", undefined, null, dCell(lk), runK, `the share that doesn't carry to next season`); }
+    tb.append(gap()); band = true;
+    row("tot first", K, undefined, null, dCell(gap0), his.k, stuff ? `the models' K%; his actual K% is ${f1(act.k)} · ${bf} batters faced` : `${bf} batters faced · the whole gap: K% − the K% his whiffs alone imply`);
     box.append(wrap);
     return box;
   }

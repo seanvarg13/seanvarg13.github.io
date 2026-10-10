@@ -3106,3 +3106,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   season table's 2px stripe-red edge (the block at the end of `styles.css`). The over-header's group names slide with the columns.
   **"Pitch" freezes with it** (Sean, the same hour: "like the pitch type"): the over-header's Pitch group is the Type column alone and its cell
   carries `f1`; # and Use% are a **Usage** group of their own.
+* **The K% build-up without "The four together", the leftover split in two (Sean, 9 Oct 2026, Messick's card: "get rid of the row that says
+  the four together and then make everything else white ... split into like actual predictable stuff and also pure luck ... make them both
+  white")**: `renderKArchetype`'s table runs Whiff% · the four dials · **Everything else, repeatable** · **Everything else, luck** (plain rows
+  that keep the running K% going), then the K% band row. The split is the leftover's own reliability, `KREL.rest` = 497 (scratch `krest.js`:
+  K% − the K% Whiff% implies − the four dials, every 100+ BF pitcher-season 2020-26 against its season's 20+ BF league; year to year r .35,
+  talent sd 0.67 K% points, noise 225 / BF, and next season's leftover = 1.02 × the shrunk value): repeatable = BF / (BF + 497) of it (38% at
+  300 BF, 58% at 700), luck the rest. The Stuff side keeps one plain "Everything else" row (the models' leftover isn't sampling luck).
