@@ -1015,7 +1015,8 @@
               ctx: { wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, "K%": rate(t.k, t.pa), "BB%": rate(t.bb, t.pa), BBE: bipn, BIP: t.bbt || null, G: games,
                      mix: t.mxgb === undefined ? null : MIX_B.map(([k]) => t[k] || 0), mixsum: t.mixsum, mixn: t.mixn,
                      mixev: hasBk ? MIX_B.map((_, i) => mxn[i] ? [mxn[i], Math.round(10 * mxe[i] / mxn[i]) / 10] : null) : null,
-                     xbt: f.indexOf("bngb") < 0 || !(t.bngb + t.bnld + t.bnfb + t.bnpu) ? null : ["gb", "ld", "fb", "pu"].map((k) => [t["bn" + k], t["xh" + k]]) } };   // expected hits by batted-ball type (10 Oct 2026)   // [tracked balls, avg EV] by bucket, null on a file without evbk
+                     xbt: f.indexOf("bngb") < 0 || !(t.bngb + t.bnld + t.bnfb + t.bnpu) ? null : ["gb", "ld", "fb", "pu"].map((k) => [t["bn" + k], t["xh" + k]]),
+                     gbdir: f.indexOf("gbp") < 0 || !(t.gbp + t.gbc + t.gbo) ? null : [t.gbp, t.gbc, t.gbo] } };   /* ground balls pulled / centre / oppo (10 Oct 2026) */   // expected hits by batted-ball type (10 Oct 2026)   // [tracked balls, avg EV] by bucket, null on a file without evbk
       }
     }
     // xBB% (Sean, 4 Oct 2026: "below bb% add xBB%"): the walk formula — BB% on Strike%, first-pitch strike% and three-ball strike%, fitted over
@@ -7077,10 +7078,28 @@
       const pc = st && st.pct && st.pct[k] != null ? st.pct[k] : v != null && vals.length >= 20 ? insertPct(vals, v) : null;
       return R(k, label, v, pc, vals.length ? vals[Math.floor(vals.length / 2)] : null, f);
     };
+    // direction by type (Sean, 10 Oct 2026: "for fly balls ... pull %, and then for line drives ... pull %, also center %, and oppo %, and then for
+    // gbs ... oppo %"): shares of that type from the mix buckets (fly balls and liners) and the day rows' gbp / gbc / gbo (grounders), ranked among
+    // the pool's qualifiers. Coloured for BABIP / power (Savant 2025, non-HR balls in play): a pulled liner is a hit .659 against .589 centre / .588
+    // oppo, so LD Pull% is red-high and LD Centre% / Oppo% blue-high; an oppo grounder .354 against .306 centre / .198 pulled, so GB Oppo% red-high
+    const share = (fn, i) => (q) => { const a = fn(V(q).ctx || {}); if (!a) return null; const n = a.reduce((x, y) => x + y, 0); return n >= 10 ? 100 * a[i] / n : null; };
+    const fbA = (c) => (c.mix ? [c.mix[5], c.mix[6], c.mix[7]] : null), ldA = (c) => (c.mix ? [c.mix[2], c.mix[3], c.mix[4]] : null), gbA = (c) => c.gbdir;
+    const fromFn = (k, label, fn, hib, gloss) => {
+      const v = fn(p), vals = pl.ref.map(fn).filter((z) => z != null).sort((a, b) => a - b);
+      let pc = v != null && vals.length >= 20 ? insertPct(vals, v) : null; if (pc != null && !hib) pc = 100 - pc;
+      const r = R(k, label, v, pc, vals.length ? vals[Math.floor(vals.length / 2)] : null, one, gloss);
+      if (r) { r.hib = hib; r.m.hib = hib; }
+      return r;
+    };
     const sec = (title, rows) => ({ title, rows: rows.filter(Boolean) });
-    const left = [sec("Fly Balls", [fromPool("evfb", "Avg EV", one), fromPool("brfb", "Barrel%", one)]),
-                  sec("Line Drives", [fromPool("evld", "Avg EV", one), fromPool("brld", "Barrel%", one)]),
-                  sec("Ground Balls", [fromPool("evgb", "Avg EV", one)])].filter((s) => s.rows.length);
+    const left = [sec("Fly Balls", [fromPool("evfb", "Avg EV", one), fromPool("brfb", "Barrel%", one),
+                    fromFn("fbpull", "Pull%", share(fbA, 0), true, "the share of his fly balls hit to his pull side — the likeliest fly ball to leave the park")]),
+                  sec("Line Drives", [fromPool("evld", "Avg EV", one), fromPool("brld", "Barrel%", one),
+                    fromFn("ldpull", "Pull%", share(ldA, 0), true, "the share of his line drives pulled — a pulled liner falls for a hit most often (.659 in 2025 against .589 centre / .588 oppo)"),
+                    fromFn("ldcent", "Center%", share(ldA, 1), false, "the share of his line drives up the middle (a hit .589 in 2025, under a pulled liner's .659); lower is better for BABIP"),
+                    fromFn("ldoppo", "Oppo%", share(ldA, 2), false, "the share of his line drives to the opposite field (a hit .588 in 2025, under a pulled liner's .659); lower is better for BABIP")]),
+                  sec("Ground Balls", [fromPool("evgb", "Avg EV", one),
+                    fromFn("gboppo", "Oppo%", share(gbA, 2), true, "the share of his ground balls to the opposite field — the likeliest grounder to get through (.354 in 2025 against .306 centre / .198 pulled)")])].filter((s) => s.rows.length);
     const right = [sec("BABIP", [fromPool("xbabip", "xBABIP", fmtX), fromPool("babip", "BABIP", fmtX)])];
     // HR/FB: the season's line from the career files (home runs over Statcast's fly balls, his line-drive homers counted in), xHR/FB on his
     // fly-ball contact; MLB regular seasons only, the full season whatever the card's filters, ranked among that season's qualified hitters
