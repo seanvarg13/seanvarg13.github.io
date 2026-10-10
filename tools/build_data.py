@@ -116,7 +116,8 @@ HITTER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", 
               "evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn",   # EV sums and counts by batted-ball type (fly ball / line drive / grounder; 7 Oct 2026) so a window re-derives EV on FB / LD / GB   # wbh: wOBA value of his hits on balls in play (not HR) — BABIP reliance; hr: home runs (the fantasy page splits his official line by hand with these); mixsum / mixn = batted-ball mix value (Mix wOBA), mx* = its balls by bucket (mxx: air, no direction); dnum = directional-xwOBA numerator; evs = that row's exit velocities (no bunts); trailing fields (older files lack them): bbt = typed balls in play, bip = all balls in play, evn = EV-eligible (tracked, no bunt)
               "evbk",   # each evs entry's Mix bucket (MIX_COLS index, -1 outside the mix), so a window re-derives EV by bucket for the Mix tab (8 Oct 2026)
               "brfb", "brld", "brgb",   # barrels on fly balls / line drives / grounders (over evfbn / evldn / evgbn), the Mix tab's Barrel% by type (8 Oct 2026)
-              "xhgb", "xhld", "xhfb", "xhpu", "bngb", "bnld", "bnfb", "bnpu"]   # expected hits (directional xBA, less HR) and non-HR balls in play by type: the xBABIP tab's split of Rest of Contact (10 Oct 2026)
+              "xhgb", "xhld", "xhfb", "xhpu", "bngb", "bnld", "bnfb", "bnpu",
+              "gbp", "gbc", "gbo"]   # the mix's grounders pulled / straightaway / the other way: the Batted Ball Quality tab's grounder Oppo% (10 Oct 2026)   # expected hits (directional xBA, less HR) and non-HR balls in play by type: the xBABIP tab's split of Rest of Contact (10 Oct 2026)
 # The hitter card, grouped. key, label, higher-is-better, decimals, unit. Keys not in HITTER_METRICS are card-only.
 HITTER_CARD = [
     ("Outcomes",             [("woba", "wOBA", True, 3, ""), ("xws", "xwOBA", True, 3, ""), ("xwd", "dxwOBA", True, 3, "")]),
@@ -1020,6 +1021,9 @@ def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
            "w": round(float(wnum_.sum()) / den, 4) if den else 0.0,
            "v": {k: round(float(v), 4) for k, v in val.items()}}
     d["mixn"] = fin.astype(int)
+    gbk = fin & pd.Series(kind == "gb", index=d.index)              # the mix's grounders by direction (pulled / straightaway / the other way), for the
+    for t, c in (("gbp", "p"), ("gbc", "c"), ("gbo", "o")):           # Batted Ball Quality tab's grounder Oppo% (10 Oct 2026); no direction → none of the three
+        d[t] = (gbk & pd.Series(dirn == c, index=d.index)).astype(int)
     xs = d["mixb"].str.endswith("_x")
     for col, b in MIX_COLS.items():                               # each bucket's balls, for the Mix tab's shares
         hit = xs if b == "x" else d["mixb"].eq(b)
@@ -1376,8 +1380,8 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
               pulln=("pull", "sum"), ld=("ld", "sum"), gbh=("gbh", "sum"), puh=("puh", "sum"), bbt=("bbt", "sum"),
               bip=("bip", "sum"), evn=("evb", "sum"), oppn=("oppo", "sum"),
               mixsum=("mixv", "sum"), mixn=("mixn", "sum"), **{c: (c, "sum") for c in MIX_COLS},
-              **{c: (c, "sum") for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn", "brfb", "brld", "brgb") if c in d.columns})
-    for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn", "brfb", "brld", "brgb"):
+              **{c: (c, "sum") for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn", "brfb", "brld", "brgb", "gbp", "gbc", "gbo") if c in d.columns})
+    for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn", "brfb", "brld", "brgb", "gbp", "gbc", "gbo"):
         if c not in h.columns: h[c] = 0.0
     h["mixsum"] = h["mixsum"].round(4)
     h["evs"] = d[d["evb"]].groupby(HK)["launch_speed"].agg(lambda x: [round(float(v), 1) for v in x])
@@ -1740,6 +1744,8 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
             ia, ib = HITTER_DAY.index(f"bn{t}"), HITTER_DAY.index(f"xh{t}")
             xbt.append([int(sum(x[ia] for x in rows_d if len(x) > ia)), round(float(sum(x[ib] for x in rows_d if len(x) > ib)), 2)])
         if not any(n for n, _ in xbt): xbt = None
+        gbdir = [int(sum(x[HITTER_DAY.index(t)] for x in rows_d if len(x) > HITTER_DAY.index(t))) for t in ("gbp", "gbc", "gbo")]   # grounders by direction (10 Oct 2026)
+        if not any(gbdir): gbdir = None
         mixev = []                                                 # [tracked balls, avg EV] by Mix bucket, MIX_COLS order (8 Oct 2026)
         for i in range(len(MIX_COLS)):
             n = int(r.get(f"MXN{i}", 0) or 0); mixev.append([n, round(float(r[f"MXS{i}"]) / n, 1)] if n else None)
@@ -1753,7 +1759,7 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
                     "BBE": int(r.BBE), "BIP": int(r.BBT),
                     "mix": [int(r.get(c, 0) or 0) for c in MIX_COLS],         # balls by Mix bucket, MIX_COLS order
                     "mixev": mixev,
-                    "xbt": xbt},                                               # expected hits by batted-ball type, the xBABIP tab's split                                           # and [tracked balls, avg EV] by bucket — the Mix tab's EV column
+                    "xbt": xbt, "gbdir": gbdir},                                               # expected hits by batted-ball type, the xBABIP tab's split                                           # and [tracked balls, avg EV] by bucket — the Mix tab's EV column
         })
     return rows
 

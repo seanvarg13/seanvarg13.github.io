@@ -3203,3 +3203,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `HITTER_DAY`, so they add up to xBABIP's own numerator / denominator (checked on a synthetic frame, scratch `synth_xbt.py`); `build_hitters`
   writes **`ctx.xbt`** = `[[balls, expected hits]]` in GB / LD / FB / PU order (`XBT` in `app.js`), and `V()` re-derives it from the day rows in a
   window or split. A file built before the fields shows the single Rest of Contact row. 2026 carries it from the next build; past seasons at a rescore.
+* **Direction rows on the Batted Ball Quality tab (Sean, 10 Oct 2026: "for fly balls in that tab can you add pull %, and then for line drives can
+  you add pull %, also center %, and oppo %, and then for gbs can you add oppo %")**: `renderBbqTab` adds Fly Balls ▸ Pull%, Line Drives ▸ Pull% ·
+  Center% · Oppo% and Ground Balls ▸ Oppo%, each his share of that type ranked among the pool's qualifiers (10+ balls, 20 qualifiers needed).
+  Fly balls and liners come from the Mix buckets (`ctx.mix`); grounders from a new **`ctx.gbdir`** = `[pulled, straightaway, oppo]` (the build's
+  `gbp / gbc / gbo` flags in `pitch_flags`, appended to `HITTER_DAY`, re-derived in `V()` in a window). Coloured for BABIP and power, from
+  Savant's 2025 non-HR balls in play: a pulled liner is a hit .659 against .589 centre / .588 oppo (pulled stays best at equal EV up to ~105 mph),
+  so LD Pull% reads red when high and LD Center% / Oppo% blue when high; an oppo grounder is a hit .354 against .306 centre / .198 pulled, at every
+  EV band (lefties' oppo grounders .428), so GB Oppo% reads red when high. The grounder row shows once a build carries `gbdir` (2026 at the next
+  `steps=mlb` run, past seasons at a rescore).
