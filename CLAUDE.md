@@ -3229,3 +3229,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   qualifiers needed), cached per `viewKey`. Same `XHRFB` weights against the level's league. Double-A and below have no tracked contact, so
   they show League → HR/FB with "no expected HR/FB". The HR / FB by season table under it stays his MLB seasons. Tibbs (AAA 2026): league
   14.1%, xHR/FB 24.8%, HR/FB 22.7%; last 150 PA 19.0 / 23.5.
+* **Pull share of fly balls in xHR/FB (Sean, 10 Oct 2026, on Liam Hicks's 2026: "can you add the pull rate into the formula? and see if it works/cases
+  where it really would")**: `XHRFB.d` = +0.332 a mph of FB EV, +0.401 a point of FB Brl%, +0.218 a point of LD Brl%, **+0.094 a point of Pull FB%**
+  (`pfb` = the share of his fly balls he pulled, `pfbOf(o)` = pullfb / fb, since `pullfb` is a share of every ball in play), each against the
+  season's FB-weighted league; `hrfbFit(bx, lg)` picks the tier (d → c → a → b) for `xHrfb` and both build-ups, `sbxOf` / `hrfbFill` / `hrfbView`
+  carry `pfb`, `hrfbLeague` / `hrfbLevel` average it, and the build-up has a **Pull FB%** step after LD Brl%. Scratch `xhrfb3.js` / `xhrfb4.js`,
+  every 300+ PA hitter-season 2015-26: held out by season r .883 / rmse 3.21 against .877 / 3.29; on a hitter's year-to-year change r .740 against
+  .718, and for the 442 pairs whose pulled share moved 10+ points the miss on his HR/FB change drops 3.73 → 3.30 points; next season's HR/FB r .640
+  against .652 (it explains the season, it doesn't forecast better). Pull share's Savant Pull Air% / Pull% versions did a little less; a pull × FB EV
+  term (pull worth more on softer fly balls: +0.165 a point at 86 mph, +0.059 at 95) matched it on the changes and runs negative for slap hitters,
+  so it's out. Within a hitter's own change a pulled-share point is worth ~0.15. Hicks: 2025 pulled 28.6% → xHR/FB 5.7% (HR/FB 7.7%), 2026 35.1%
+  → 7.5% (12.0%) — the pull change is ~0.6-1 point of HR/FB (~1-1.5 homers), the rest of his jump is volume and luck. Most raised in 2026:
+  Arenado (50% pulled) 11.6 → 14.3, Paredes 8.0 → 10.6; most lowered: Turang (8%) 15.1 → 13.6.

@@ -1049,7 +1049,7 @@
     const y = Number(DS.season);
     if ((DS.level && DS.level !== "MLB") || DS.kind || DS.multi || !(y >= 2015)) { v._hx = true; return v; }
     if (!hxReady()) return v;
-    const m = v.m, x = xHrfb({ evfb: m.evfb, brfb: m.brfb, brld: m.brld, brl: m.brl, ev90: m.ev90 }, hrfbLeague(y).lg);
+    const m = v.m, x = xHrfb({ evfb: m.evfb, brfb: m.brfb, brld: m.brld, brl: m.brl, ev90: m.ev90, pfb: pfbOf(m) }, hrfbLeague(y).lg);
     v.m = Object.assign({}, m, { xhrfb: x == null ? null : Math.round(10 * x) / 10 }); v._hx = true;
     return v;
   }
@@ -7133,28 +7133,35 @@
   // (scratch xhrfb2.js) — r .878 / rmse 3.27 held out by season against .857 / 3.54 for FB EV + overall Barrel%, next season's HR/FB .652
   // against .655, the leftover repeating at .17 against .24. Pull Air% added .002 same-season and cost forecast; left out. a / b are the
   // old fits, for a file without the fly-ball barrel rate
-  const XHRFB = { c: { evfb: 0.373, brfb: 0.391, brld: 0.217 }, a: { evfb: 0.779, brl: 0.738 }, b: { brl: 1.037, ev90: 0.499 } };
+  // Since 10 Oct 2026 (Sean, on Liam Hicks's 2026: "can you add the pull rate into the formula?") d leads: the same three plus the share of his
+  // fly balls he pulled (pfb = Pull FB% over FB%), every 300+ PA season 2015-26 (scratch xhrfb3.js / xhrfb4.js): held out by season r .883 /
+  // rmse 3.21 against .877 / 3.29, and on a hitter's year-to-year change r .740 against .718 — for the 442 pairs whose pulled share moved 10+
+  // points the miss on his HR/FB change drops 3.73 → 3.30 points. Next season's HR/FB r .640 against .652: it describes the season, it doesn't
+  // forecast better. +0.094 HR/FB a point of pulled share (within a hitter's own change it's ~.15); a pull × FB EV term (pull matters more on
+  // softer fly balls) added nothing on the changes and runs negative for slap hitters, so it's out. c stays for a file without the rates
+  const XHRFB = { d: { evfb: 0.332, brfb: 0.401, brld: 0.218, pfb: 0.094 }, c: { evfb: 0.373, brfb: 0.391, brld: 0.217 }, a: { evfb: 0.779, brl: 0.738 }, b: { brl: 1.037, ev90: 0.499 } };
+  const pfbOf = (o) => (o && o.pullfb != null && o.fb ? Math.round(1000 * o.pullfb / o.fb) / 10 : null);   // share of his fly balls pulled (pullfb is a share of every ball in play)
+  const hrfbFit = (bx, lg) => { const has = (ks) => bx && lg && ks.every((k) => bx[k] != null && lg[k] != null); return has(["evfb", "brfb", "brld", "pfb"]) ? XHRFB.d : has(["evfb", "brfb", "brld"]) ? XHRFB.c : has(["evfb", "brl"]) ? XHRFB.a : has(["brl", "ev90"]) ? XHRFB.b : null; };
   const HRFB_LG = new Map();
   function hrfbLeague(y) {   // that season's league: HR/FB, FB-weighted FB EV / Barrel% / EV90, and the qualifiers' sorted values for the heat map
     if (HRFB_LG.has(y)) return HRFB_LG.get(y);
-    const C = window.DRAFT_CAREER || {}, out = { hr: 0, fb: 0, s: {}, w: {}, arr: { hrfb: [], evfb: [], brl: [], brfb: [], brld: [], ev90: [], x: [] } };
+    const C = window.DRAFT_CAREER || {}, out = { hr: 0, fb: 0, s: {}, w: {}, arr: { hrfb: [], evfb: [], brl: [], brfb: [], brld: [], ev90: [], pfb: [], x: [] } };
     const rows = [];
     for (const id in C) {
       const r = (C[id].H || []).find((q) => q[0] === y); if (!r || (+r[3] || 0) < (y === 2020 ? 110 : 300)) continue;
       const l = mlbLine(true, r), fb = l.c.ext ? +l.c.ext[2] : 0, bx = sbxOf(id, y); if (!fb) continue;
       out.hr += +l.c.HR || 0; out.fb += fb; rows.push([l, fb, bx]);
       out.arr.hrfb.push(100 * (+l.c.HR || 0) / fb);
-      if (bx) for (const k of ["evfb", "brl", "ev90", "brfb", "brld"]) if (bx[k] != null) { out.s[k] = (out.s[k] || 0) + bx[k] * fb; out.w[k] = (out.w[k] || 0) + fb; }
+      if (bx) for (const k of ["evfb", "brl", "ev90", "brfb", "brld", "pfb"]) if (bx[k] != null) { out.s[k] = (out.s[k] || 0) + bx[k] * fb; out.w[k] = (out.w[k] || 0) + fb; }
     }
     const lg = { hrfb: out.fb ? 100 * out.hr / out.fb : null }; for (const k in out.s) lg[k] = out.s[k] / out.w[k];
-    for (const [, , bx] of rows) if (bx) { if (bx.evfb != null) out.arr.evfb.push(bx.evfb); if (bx.brl != null) out.arr.brl.push(bx.brl); if (bx.brfb != null) out.arr.brfb.push(bx.brfb); if (bx.brld != null) out.arr.brld.push(bx.brld); if (bx.ev90 != null) out.arr.ev90.push(bx.ev90); const xv = xHrfb(bx, lg); if (xv != null) out.arr.x.push(xv); }
+    for (const [, , bx] of rows) if (bx) { if (bx.evfb != null) out.arr.evfb.push(bx.evfb); if (bx.brl != null) out.arr.brl.push(bx.brl); if (bx.brfb != null) out.arr.brfb.push(bx.brfb); if (bx.brld != null) out.arr.brld.push(bx.brld); if (bx.ev90 != null) out.arr.ev90.push(bx.ev90); if (bx.pfb != null) out.arr.pfb.push(bx.pfb); const xv = xHrfb(bx, lg); if (xv != null) out.arr.x.push(xv); }
     for (const k in out.arr) out.arr[k].sort((a, b) => a - b);
     const res = { lg, arr: out.arr }; HRFB_LG.set(y, res); return res;
   }
   function xHrfb(bx, lg) {
     if (!bx || !lg || lg.hrfb == null) return null;
-    const has = (ks) => ks.every((k) => bx[k] != null && lg[k] != null);
-    const f = has(["evfb", "brfb", "brld"]) ? XHRFB.c : has(["evfb", "brl"]) ? XHRFB.a : has(["brl", "ev90"]) ? XHRFB.b : null;
+    const f = hrfbFit(bx, lg);
     if (!f) return null;
     let v = lg.hrfb; for (const k in f) v += f[k] * (bx[k] - lg[k]);
     return Math.max(0, v);
@@ -7343,7 +7350,7 @@
   // Barrel% on line drives against the league's (XHRFB, the fit the table uses), landing on his xHR/FB, then the luck, landing on his HR/FB —
   // and under it HR / FB by season (hrfbTable, moved here from the Mix tab). Full seasons from hist/career.js + career-bb.js, whatever the
   // card's dates and splits (a window has no Savant fly-ball count); a card on a season he has no line for reads his latest one
-  const HRFB_LAB = { evfb: ["FB EV", "", "exit velocity on fly balls — a harder fly ball carries"], brfb: ["FB Brl%", "%", "barrels per fly ball — the fly balls hit hard enough at the right angle to leave"],
+  const HRFB_LAB = { pfb: ["Pull FB%", "%", "the share of his fly balls he pulled — a pulled fly ball has the shortest way out, so pulling more of them turns the same contact into more home runs"], evfb: ["FB EV", "", "exit velocity on fly balls — a harder fly ball carries"], brfb: ["FB Brl%", "%", "barrels per fly ball — the fly balls hit hard enough at the right angle to leave"],
     brld: ["LD Brl%", "%", "barrels per line drive — a homer Statcast calls a liner counts in his fly balls"], brl: ["Barrel%", "%", "barrels per batted ball"], ev90: ["EV90", "", "90th-percentile exit velocity"] };
   // the minors' HR/FB in the card's view (Sean, 10 Oct 2026: "the xhr/fb tab does not update for minor leagues at all like the xbabip tab
   // does"): home runs from the day rows, fly balls = his fly balls + popups from the Mix buckets (MLB's count is Statcast's fly balls +
@@ -7356,16 +7363,16 @@
     let hr = v.ctx && v.ctx.HR != null ? v.ctx.HR : null;
     if (hr == null) { const i = DF.H.indexOf("hr"); if (i >= 0) { hr = 0; for (const r of rowsOf(p) || []) hr += +r[i] || 0; } }
     const fb = mx && mx.length >= 8 ? (mx[1] || 0) + (mx[5] || 0) + (mx[6] || 0) + (mx[7] || 0) : 0;
-    const out = hr == null || !fb ? null : { hr, fb, evfb: m.evfb ?? null, brfb: m.brfb ?? null, brld: m.brld ?? null, brl: m.brl ?? null, ev90: m.ev90 ?? null };
+    const out = hr == null || !fb ? null : { hr, fb, evfb: m.evfb ?? null, brfb: m.brfb ?? null, brld: m.brld ?? null, brl: m.brl ?? null, ev90: m.ev90 ?? null, pfb: pfbOf(m) };
     HFV.set(key, out); return out;
   }
   function hrfbLevel(g) {
     const key = viewKey() + ":lg"; if (HFV.has(key)) return HFV.get(key);
-    const S = {}, W = {}, arr = { hrfb: [], evfb: [], brfb: [], brld: [], brl: [], ev90: [] }; let hr = 0, fb = 0, n = 0;
+    const S = {}, W = {}, arr = { hrfb: [], evfb: [], brfb: [], brld: [], brl: [], ev90: [], pfb: [] }; let hr = 0, fb = 0, n = 0;
     for (const q of pool(g).ref) {
       const x = hrfbView(q); if (!x) continue;
       n++; hr += x.hr; fb += x.fb; arr.hrfb.push(100 * x.hr / x.fb);
-      for (const k of ["evfb", "brfb", "brld", "brl", "ev90"]) if (x[k] != null) { S[k] = (S[k] || 0) + x[k] * x.fb; W[k] = (W[k] || 0) + x.fb; arr[k].push(x[k]); }
+      for (const k of ["evfb", "brfb", "brld", "brl", "ev90", "pfb"]) if (x[k] != null) { S[k] = (S[k] || 0) + x[k] * x.fb; W[k] = (W[k] || 0) + x.fb; arr[k].push(x[k]); }
     }
     const lg = { hrfb: n >= 20 && fb ? 100 * hr / fb : null }; for (const k in S) if (arr[k].length >= 20) lg[k] = S[k] / W[k];
     for (const k in arr) arr[k].sort((a, b) => a - b);
@@ -7378,8 +7385,7 @@
       if (!x || lg.hrfb == null) w.append(el("p", "note", "No HR/FB for this view — it needs his fly balls and a qualified pool at this level."));
       else {
         const hf = 100 * x.hr / x.fb, xv = xHrfb(x, lg);
-        const has = (ks) => ks.every((k) => x[k] != null && lg[k] != null);
-        const f = has(["evfb", "brfb", "brld"]) ? XHRFB.c : has(["evfb", "brl"]) ? XHRFB.a : has(["brl", "ev90"]) ? XHRFB.b : null;
+        const f = hrfbFit(x, lg);
         const pct1 = (z) => z.toFixed(1) + "%", sg1 = (z) => (z > 0 ? "+" : z < 0 ? "−" : "") + Math.abs(z).toFixed(1);
         const vl = viewLabel("H"), lev = DS.levelName || DS.level;
         const b = buildUp(`HR/FB build-up · ${DS.season} ${lev}`, `${vl && vl !== "full season" ? vl + " · " : ""}${x.hr} HR on ${x.fb} fly balls and popups · ± in HR/FB points, against the level's qualified hitters`, "HR/FB", pct1, sg1, 4);
@@ -7407,8 +7413,7 @@
       const l = lines.find((q) => q.season === +DS.season && DS.level === "MLB") || lines[lines.length - 1];
       if (l) {
         const y = l.season, bx = sbxOf(p.id, y), L = hrfbLeague(y), lg = L.lg, hr = +l.c.HR || 0, fb = +l.c.ext[2], hf = 100 * hr / fb, xv = xHrfb(bx, lg);
-        const has = (ks) => bx && ks.every((k) => bx[k] != null && lg[k] != null);
-        const f = has(["evfb", "brfb", "brld"]) ? XHRFB.c : has(["evfb", "brl"]) ? XHRFB.a : has(["brl", "ev90"]) ? XHRFB.b : null;
+        const f = hrfbFit(bx, lg);
         const pct1 = (x) => x.toFixed(1) + "%", sg1 = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(1);
         const b = buildUp(`HR/FB build-up · ${y}`, `${hr} HR on ${fb} fly balls · ± in HR/FB points, against that season's qualified hitters${y !== +DS.season ? " · his latest season" : ""}`, "HR/FB", pct1, sg1, 4);
         let run = lg.hrfb;
@@ -9868,7 +9873,7 @@
   // his season's numbers from the file as {bbe, ev, …}, or null
   function sbxOf(id, y) {
     const B = window.DRAFT_CAREER_BB, a = B && B.p[String(id)] && B.p[String(id)][String(y)];
-    if (!a) return null; const o = { bbe: a[0] }; B.keys.forEach((k, i) => { o[k] = a[i + 1]; }); return o;
+    if (!a) return null; const o = { bbe: a[0] }; B.keys.forEach((k, i) => { o[k] = a[i + 1]; }); o.pfb = pfbOf(o); return o;
   }
   // a pitcher's season numbers from the file's pp as {nera, siera, pu, strk, fstrk, b3strk}, or null
   function sbpOf(id, y) {
