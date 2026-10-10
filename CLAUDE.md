@@ -3175,6 +3175,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   BB% tables are narrower than a phone, so they never scrolled there (xBABIP / xHR/FB did only because those tables are wider than the screen). On a
   phone a `table.kbuild` holding a `td.kexp` carries a transparent 120px right border that the words sit in, so the table itself is wider and its box
   scrolls on every browser. The block at the end of `styles.css`.
+* **The xBABIP Luck row plain (Sean, 10 Oct 2026: "make the luck column be white again and not bolded blue")**: `renderXbabipTab` draws Luck as a
+  plain row (`b.row`) between the marked Expected BABIP and the bold BABIP band row, as the xHR/FB tab's Luck is; the PR #543 blue Luck row is history.
 * **Rest of Contact split by batted-ball type (Sean, 10 Oct 2026: "with rest of contact in xbabip is there a way to break any of those down into
   broader categories", then "keep the current 7 the way they are ... and then split out rest of contact")**: the xBABIP build-up keeps its seven
   driver rows and replaces the single Rest of Contact row with **Ground-ball contact · Line-drive contact · Fly-ball contact · Everything else**.
