@@ -7054,8 +7054,9 @@
         grid.append(el("span", "ml", name), svTrack(pc), el("span", "mv", v == null ? "–" : v.toFixed(1) + (unit === "%" ? "%" : "")), el("span", "mv lg", lg == null ? "" : lg.toFixed(1) + (unit === "%" ? "%" : "")));
       }
     };
-    typeBlock("Avg EV", "EV", [["evfb", "Fly balls"], ["evld", "Line drives"], ["evgb", "Ground balls"]]);
-    typeBlock("Barrel%", "%", [["brfb", "Fly balls"], ["brld", "Line drives"]]);
+    // the Avg EV / Barrel% by type blocks moved to the Batted Ball Quality tab (Sean, 10 Oct 2026: "get rid of the same batted ball quality stats
+    // at the bottom of the batted ball mix tab"); typeBlock stays for the record
+    if (false) { typeBlock("Avg EV", "EV", [["evfb", "Fly balls"], ["evld", "Line drives"], ["evgb", "Ground balls"]]); typeBlock("Barrel%", "%", [["brfb", "Fly balls"], ["brld", "Line drives"]]); }
     box.append(grid);
     return box;
   }
@@ -7064,31 +7065,25 @@
   // Barrel% by type blocks, then BABIP (xBABIP, BABIP — the card's view, ranked among the pool's qualifiers) and HR/FB (xHR/FB, HR/FB — the full
   // season from the career files, ranked among that season's qualified hitters, as the xHR/FB tab reads them)
   function renderBbqTab(p, g) {
+    // in the card's own percentile charts (Sean, 10 Oct 2026, from the card's Results / Batted-Ball Quality bars: "make the batted ball quality tab
+    // look like this and have it have sections of Fly Balls which has fly ball ev and barrel % then line drives with the same metrics and then gbs
+    // which just has gb ev and then have the babip and hr/fb one"): rows built by hand for pctChart, two columns like the card's
     const pv = V(p), pl = pool(g), st = pl.stats.get(p.type + p.id);
-    const box = el("div", "rollbox uerabox mixbox mixtab bbqtab");
-    const hd = el("div", "rollhd"); hd.append(el("span", "rollname", "Batted ball quality"));
-    const vw = viewLabel(p.type); if (vw && vw !== "full season") hd.append(el("span", "rollsub", vw));
-    box.append(hd);
-    const grid = el("div", "mixgrid mixgrid5");
-    let first = true;
-    const head = (title, unit) => { if (!first) grid.append(el("span", "mdiv")); first = false; grid.append(el("span", "ml mtot", title), el("span"), el("span", "mh", unit), el("span", "mh", "Lg")); };
-    const row = (name, v, pc, lg, f) => grid.append(el("span", "ml", name), svTrack(pc), el("span", "mv", v == null ? "–" : f(v)), el("span", "mv lg", lg == null ? "" : f(lg)));
-    const fromPool = (rows, unit, f) => {
-      if (!rows.some(([k]) => pv.m[k] != null)) return;
-      head(rows.title, unit);
-      for (const [k, name] of rows) {
-        const v = pv.m[k], vals = pl.ref.map((q) => V(q).m[k]).filter((z) => z != null).sort((a, b) => a - b);
-        const pc = st && st.pct && st.pct[k] != null ? st.pct[k] : v != null && vals.length >= 20 ? insertPct(vals, v) : null;
-        row(name, v, pc, vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null, f);
-      }
+    const R = (k, label, v, pc, lgv, f, gloss) => (v == null ? null : { k, label, v, value: f(v), pct: pc == null ? null : Math.round(pc), lg: lgv == null ? null : f(lgv), hib: true,
+      m: { key: k, label, hib: true }, gloss: gloss || GLOSS[k] || "", tip: `${label}: ${f(v)} · ${pc == null ? "n/a" : ordinal(Math.round(pc)) + " pctl"}` });
+    const one = (x) => x.toFixed(1);
+    const fromPool = (k, label, f) => {
+      const v = pv.m[k], vals = pl.ref.map((q) => V(q).m[k]).filter((z) => z != null).sort((a, b) => a - b);
+      const pc = st && st.pct && st.pct[k] != null ? st.pct[k] : v != null && vals.length >= 20 ? insertPct(vals, v) : null;
+      return R(k, label, v, pc, vals.length ? vals[Math.floor(vals.length / 2)] : null, f);
     };
-    const t = (title, rows) => Object.assign(rows, { title });
-    const one = (x) => x.toFixed(1), pc1 = (x) => x.toFixed(1) + "%";
-    fromPool(t("Avg EV", [["evfb", "Fly balls"], ["evld", "Line drives"], ["evgb", "Ground balls"]]), "EV", one);
-    fromPool(t("Barrel%", [["brfb", "Fly balls"], ["brld", "Line drives"]]), "%", pc1);
-    fromPool(t("BABIP", [["xbabip", "xBABIP"], ["babip", "BABIP"]]), "", fmtX);
+    const sec = (title, rows) => ({ title, rows: rows.filter(Boolean) });
+    const left = [sec("Fly Balls", [fromPool("evfb", "Avg EV", one), fromPool("brfb", "Barrel%", one)]),
+                  sec("Line Drives", [fromPool("evld", "Avg EV", one), fromPool("brld", "Barrel%", one)]),
+                  sec("Ground Balls", [fromPool("evgb", "Avg EV", one)])].filter((s) => s.rows.length);
+    const right = [sec("BABIP", [fromPool("xbabip", "xBABIP", fmtX), fromPool("babip", "BABIP", fmtX)])];
     // HR/FB: the season's line from the career files (home runs over Statcast's fly balls, his line-drive homers counted in), xHR/FB on his
-    // fly-ball contact; MLB regular seasons only, the full season whatever the card's filters
+    // fly-ball contact; MLB regular seasons only, the full season whatever the card's filters, ranked among that season's qualified hitters
     ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady);
     if (DS.level === "MLB" && !DS.kind && careerReady() && sbxReady()) {
       const y = +DS.season, rec = window.DRAFT_CAREER[String(p.id)];
@@ -7096,13 +7091,16 @@
       if (l) {
         const L = hrfbLeague(y), hf = 100 * (+l.c.HR || 0) / +l.c.ext[2], xv = xHrfb(sbxOf(p.id, y), L.lg);
         const at = (arr, v) => (v != null && arr.length >= 20 ? insertPct(arr, v) : null);
-        head("HR/FB", "%");
-        row("xHR/FB", xv, at(L.arr.x, xv), L.lg.hrfb, pc1);
-        row("HR/FB", hf, at(L.arr.hrfb, hf), L.lg.hrfb, pc1);
+        right.push(sec("HR/FB", [R("xhrfb", "xHR/FB", xv, at(L.arr.x, xv), L.lg.hrfb, one), R("hrfb", "HR/FB", hf, at(L.arr.hrfb, hf), L.lg.hrfb, one,
+          "his home runs over his fly balls (Statcast's calls, his line-drive homers counted in), the full season")]));
       }
     }
-    if (first) { box.append(el("p", "note", "No batted-ball quality numbers for this season's file.")); return box; }
-    box.append(grid);
+    const sets = [left, right.filter((s) => s.rows.length)].filter((s) => s.length);
+    const box = el("div", "pcttab bbqtab");
+    if (!sets.length) { box.append(el("p", "note", "No batted-ball quality numbers for this season's file.")); return box; }
+    const cols = el("div", "pctcols");
+    sets.forEach((gs, i) => cols.append(pctChart(gs, i, false)));
+    box.append(cols);
     return box;
   }
   // HR/FB by season under the mix (Sean, 8 Oct 2026: "include a table that shows a players hr to fb ratio by year as well as their avg fb ev and

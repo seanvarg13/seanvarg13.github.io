@@ -3186,7 +3186,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Quality** · xBABIP · xHR/FB (`renderBbqTab`, key `bbq`), drawn in the Mix tab's percentile-bar grid: Avg EV by type (FB · LD · GB), Barrel% by type
   (FB · LD), **BABIP** (xBABIP · BABIP, the card's view ranked among the pool's qualifiers, Lg the qualifiers' mean) and **HR/FB** (xHR/FB · HR/FB for
   the card's MLB regular season from `hist/career.js` + `career-bb.js`, ranked among that season's qualified hitters via `hrfbLeague`, Lg the league
-  HR/FB; full season whatever the filters). The Mix tab keeps its own EV / Barrel% blocks.
+  HR/FB; full season whatever the filters). **Then in the card's own charts** (Sean, the same evening, from the card's Results / Batted-Ball Quality
+  bars: "make the batted ball quality tab look like this and have it have sections of Fly Balls which has fly ball ev and barrel % then line drives
+  with the same metrics and then gbs which just has gb ev and then have the babip and hr/fb one", "get rid of the same batted ball quality stats at
+  the bottom of the batted ball mix tab"): `renderBbqTab` builds the rows by hand for `pctChart` in a `.pctcols` pair — left Fly Balls (Avg EV ·
+  Barrel%) · Line Drives (Avg EV · Barrel%) · Ground Balls (Avg EV), right BABIP (xBABIP · BABIP) · HR/FB (xHR/FB · HR/FB); a phone stacks them. The
+  Mix tab's Avg EV / Barrel% blocks are off (`typeBlock` stays, behind `if (false)`).
 * **Rest of Contact split by batted-ball type (Sean, 10 Oct 2026: "with rest of contact in xbabip is there a way to break any of those down into
   broader categories", then "keep the current 7 the way they are ... and then split out rest of contact")**: the xBABIP build-up keeps its seven
   driver rows and replaces the single Rest of Contact row with **Ground-ball contact · Line-drive contact · Fly-ball contact · Everything else**.
