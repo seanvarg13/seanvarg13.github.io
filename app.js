@@ -7169,6 +7169,8 @@
         tb.append(fin(tr)); },
       band(lab, d, run, tip) { if (!band) { tb.append(gap()); band = true; } const tr = el("tr", "tot" + (tb.querySelector("tr.tot") ? "" : " first")); if (tip) tr.title = tip;
         tr.append(noteCell(lab, tip, tr), el("td"), el("td"), dCell(d), el("td", "krk", run == null ? "" : fmt(run))); tb.append(fin(tr)); },
+      mark(word) { expMark(tb, word); },
+      tag(c) { tb.lastElementChild.classList.add(c); },   // the last row's running number as the expected one, yellow with the words beside it
       done() { box.append(wrap); return box; } };
     return api;
   }
@@ -7207,8 +7209,10 @@
         b.row(lab, his, lg, f, pctAmong(ref.map((q) => val(q, k)).filter((z) => z != null), his, Math.sign(XBAB[k])), d == null ? null : step(run), d == null ? null : run, XBAB_TIP[k]);
       }
       b.row("Rest of Contact", null, null, fmtX, null, step(m.xbabip), m.xbabip, `His xBABIP comes from the directional model, which prices every ball he put in play by its exit velocity, launch angle, direction and his speed. The seven rows above are a straight-line summary of the biggest pieces of that; Rest of Contact is everything they leave out — the exact angles (liners and hard grounders at hit-friendly angles versus topped or lofted balls), where each ball went, and the hard-and-well-aimed combinations an average can't see. It's the gap between his xBABIP (${fmtX(m.xbabip)}) and what the seven alone point to: + means the details of his contact earn more hits than those averages suggest, − fewer.`);
+      b.mark("Expected BABIP");   // the running BABIP after Rest of Contact is his xBABIP (Sean, 10 Oct 2026: "do the same thing for the xbabip table")
       b.band("Luck", step(m.babip), m.babip, "hits in play above or below what the contact deserved — it repeats year to year at only r .15");
       b.band("BABIP", R3(m.babip) - R3(lgX), m.babip, `the whole trip: every step above added up, from the ${fmtX(lgX)} start to his ${fmtX(m.babip)} (the league's actual BABIP is ${fmtX(lgB)})`);
+      b.tag("kfinal");   // the bottom BABIP row in bold (Sean, 10 Oct 2026)
       w.append(b.done());
     } else w.append(el("p", "note", "No xBABIP for this view — it needs tracked balls in play."));
     w.append(babipSeasons(p));
