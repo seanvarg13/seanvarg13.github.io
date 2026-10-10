@@ -9506,8 +9506,10 @@
   // weight, and his age that season (Sean, 9 Oct 2026: "condense all of the information into one header"); a phone reads codes and the club's
   // abbreviation
   function bioStrip(p, b) {
-    const d = el("div", "pbline"), H = p.type === "H", mob = mobileView(), dot = () => d.append(el("span", "pbdot", "·"));
-    const add = (t) => { if (d.childNodes.length) dot(); const s = typeof t === "string" ? el("span", null, t) : t; d.append(s); };
+    const d = el("div", "pbline"), H = p.type === "H", mob = mobileView();
+    // each dot rides with the item after it (a nowrap .pbit) and the line is pulled left by a dot's width under a clip, so whichever item starts a
+    // line has its dot cut off: a bio that wraps never shows a dot at either end of a line (9 Oct 2026)
+    const add = (t) => { const s = typeof t === "string" ? el("span", null, t) : t; const w = el("span", "pbit"); w.append(el("span", "pbdot", "·"), s); d.append(w); };   // every item carries a dot; the CSS clips the one starting each line
     add(mob ? playedLabel(p) : posWords(p));
     const tc = teamCode(p.team), mlb = DS.level === "MLB", full = mlb ? (TEAM_FULL[tc] || TEAM_NAMES[tc] || p.team) : p.team;
     if (full) {
@@ -9562,14 +9564,18 @@
     if (o.entry && !isMulti(o.key)) fx.append(filtersTog(p, slim));
     // the bar runs the screen's full width with his name at the left (Sean, 9 Oct 2026: "make it go across the screen fully and add the player
     // name to it and do the same for mobile") — bleedBar stretches it past the page's side margins
-    const bar = el("div", "pgbar"), nm = el("h2", "pgbname", p.name); nm.id = "modal-title"; bar.append(nm, fx); top._bar = bar;
+    const bar = el("div", "pgbar pgbar3"), nm = el("h2", "pgbname", p.name); nm.id = "modal-title";
+    // his headshot at the far left, the name beside it and the bio under the name (Sean, 9 Oct 2026: "add the head shot to the far left and then
+    // have the name next to it and push the bio stuff over with the name"), Filters / Raw at the right
+    const mug = el("div", "pgbmug"); mug.append(headshot(p.id, p.name));
+    const txt = el("div", "pgbtxt"); txt.append(nm); bar.append(mug, txt, fx); top._bar = bar;
     let hasChips = false; if (o.entry && !isMulti(o.key)) { const chips = viewChips(p); if (chips.childNodes.length) { ctl.append(chips); hasChips = true; } }
     // one header, no photo (Sean, 9 Oct 2026: "get rid of the headshot and then can we condense all of the information into one header with the stats
     // of the selected year and the filters buttons"): the bar above (his name, the year, level, Filters, Raw) runs straight into the band, which is
     // a row for Back and the filter chips only when there is one, one bio line, and the selected year's line — no second name, no career row
     plate.classList.add("pbone");
     const row1 = el("div", "pbrow1"); row1.append(bioStrip(p, b)); if (backAt || hasChips) row1.append(ctl);   /* Back and the chips at the bio line's right */
-    bar.append(row1);   /* the bio rides in the sticky bar under his name (Sean, 9 Oct 2026: "make the bio stuff scroll with it too") */
+    txt.append(row1);   /* the bio rides in the sticky bar under his name (Sean, 9 Oct 2026: "make the bio stuff scroll with it too") */
     if (st && st.pct) plate.append(summaryBlock(p, st, true));
     if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay, inWin); if (!state.cardTools && sum.childNodes.length) plate.append(sum); }
     top.append(plate);
