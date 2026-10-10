@@ -5250,3 +5250,5 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .tsl:hover { background-color: transparent !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .pclv { font: 700 26px/1.2 var(--display); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard h3.pcthd .tsl, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard h3.pcthd .pclv { font-size: 22px !important; }
+/* the Awards column's vote finishes (Sean, 10 Oct 2026): an award he won (or a first place in the voting) in bold, a lower finish plain */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) table.sbt td.awd b { font-weight: 700 !important; }

@@ -785,7 +785,7 @@
     // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
     // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
     // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
-    sc.onload = () => { loading.delete(src); if (!/\/(?:index|career|career-bb|similar|minors|trends|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };
+    sc.onload = () => { loading.delete(src); if (!/\/(?:index|career|career-bb|awards|similar|minors|trends|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };
     // a failed download (a phone on a weak signal, a publish mid-deploy) is tried twice more before it's given up on — career.js once failed
     // for the whole visit and the season table said it hadn't been built (Sean's phone, 9 Oct 2026)
     sc.onerror = () => { loading.delete(src); sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
@@ -9756,6 +9756,20 @@
     ALCSMVP: ["LCS MVP", "ALCS MVP"], NLCSMVP: ["LCS MVP", "NLCS MVP"], MLBRC: ["RC", "Roberto Clemente Award"] };
   const AWARD_ORDER = ["MVP", "CYA", "ROY", "AS", "GG", "PG", "SS", "HA", "REL", "CPOY", "MLB1", "MLB2", "WS MVP", "LCS MVP", "RC"];
   const AWARDS = new Map();   // id → null while loading, false on a failure, else Map(season → [[short, long], …])
+  // Vote finishes (Sean, 10 Oct 2026: "show like mvp-1, mvp-8, cya-1, cya-5, roy-1, roy-4 ... bold any award they won or came in first for"):
+  // hist/awards.js (tools/build_awards.py, the Lahman database's vote shares 1990 on, by MLB id) gives MVP / CYA / ROY a place; MLB's record
+  // still says who won (a season Lahman hasn't reached yet reads plain "MVP"). [text, title, won] in AWARD_ORDER, every award won in bold.
+  const VOTE_WORD = { MVP: "MVP", CYA: "Cy Young", ROY: "Rookie of the Year" };
+  function seasonAwards(awd, id, y) {
+    const won = awd ? awd.get(y) || [] : [], votes = ((window.DRAFT_VOTES || {})[id] || {})[y] || [];
+    if (!awd && !votes.length) return null;
+    const out = won.map(([k, long]) => {
+      const v = votes.find((x) => x[0] === k);
+      return [v ? `${k}-${v[1]}` : k, v && v[1] !== 1 ? `${long} (${ordinal(v[1])} in the voting)` : long, true];
+    });
+    for (const [k, n] of votes) if (!won.some((x) => x[0] === k)) out.push([`${k}-${n}`, `${VOTE_WORD[k]} voting: ${ordinal(n)}`, n === 1]);
+    return out.sort((a, b) => AWARD_ORDER.indexOf(a[0].replace(/-\d+$/, "")) - AWARD_ORDER.indexOf(b[0].replace(/-\d+$/, "")));
+  }
   function awardsOf(p) {
     if (AWARDS.has(p.id)) return AWARDS.get(p.id);
     AWARDS.set(p.id, null);
@@ -10034,8 +10048,9 @@
     // with the minors in, the level is the second frozen column and the club scrolls (Sean, 9 Oct 2026, from B-Ref's Register Batting on his phone:
     // "when the table includes minor leagues could you make it do this when I scroll" — Year and Lg frozen, Aff sliding under them)
     const awd = post ? null : awardsOf(p);   // Map(season → awards) once MLB's record is in; the column waits for it
+    if (!post) ensureScript("hist/awards.js", () => !!window.DRAFT_VOTES);   // vote finishes; the column shows MLB's winners until it lands
     for (const h of ["Season", "Age", ...(lev ? ["Lev", "Team"] : ["Team"]), ...cols, "Pos", ...(post ? [] : ["Awards"])]) {
-      const th = el("th", ["Season", "Team", "Lev", "Pos", "Awards"].includes(h) ? "l" : null, h); if (h === "Awards") { th.classList.add("awd"); th.title = "Season awards from MLB's record: MVP, Cy Young (CYA), Rookie of the Year, All-Star (AS), Gold / Platinum Glove (GG / PG), Silver Slugger (SS), Hank Aaron (HA), Reliever of the Year (REL), Comeback Player (CPOY), All-MLB first / second team (MLB1 / MLB2), World Series / LCS MVP, Roberto Clemente (RC)"; } if (h === "Season") th.classList.add("f1"); if (h === "Age") th.classList.add("f2"); if (h === (lev ? "Lev" : "Team")) th.classList.add("f3");
+      const th = el("th", ["Season", "Team", "Lev", "Pos", "Awards"].includes(h) ? "l" : null, h); if (h === "Awards") { th.classList.add("awd"); th.title = "Season awards from MLB's record, with MVP / Cy Young / Rookie of the Year vote finishes (MVP-8 = 8th in the voting; bold = won): MVP, Cy Young (CYA), Rookie of the Year, All-Star (AS), Gold / Platinum Glove (GG / PG), Silver Slugger (SS), Hank Aaron (HA), Reliever of the Year (REL), Comeback Player (CPOY), All-MLB first / second team (MLB1 / MLB2), World Series / LCS MVP, Roberto Clemente (RC)"; } if (h === "Season") th.classList.add("f1"); if (h === "Age") th.classList.add("f2"); if (h === (lev ? "Lev" : "Team")) th.classList.add("f3");
       if (gEnd.has(h)) th.classList.add("ge"); if ((H || ["nERA", "SIERA", "PU%", "xBB%"].includes(h)) && (SB_TIP[h] || SBX_TIP[h])) th.title = SB_TIP[h] || SBX_TIP[h];
       tr.append(th);
     }
@@ -10089,9 +10104,12 @@
       if (pp) pt.title = pp.map(([k, g]) => `${k}: ${g} G`).join(" · ");
       trr.append(pt);
       if (!post) {   // his awards that season on an MLB season row; "…" while MLB's record loads
-        const al = opts.season && l && l.mlb !== false && opts.awards ? (awd ? awd.get(l.season) : null) : null;
-        const at = cell(al ? al.map((x) => x[0]).join(", ") : (opts.awards && awd === null ? "…" : ""), "l awd");
-        if (al) at.title = al.map((x) => x[1]).join(" · ");
+        const al = opts.season && l && l.mlb !== false && opts.awards ? seasonAwards(awd, p.id, l.season) : null;
+        const at = cell(al && al.length ? "" : (opts.awards && awd === null ? "…" : ""), "l awd");
+        if (al && al.length) {
+          al.forEach(([t, , won], i) => { if (i) at.append(", "); at.append(won ? el("b", null, t) : t); });
+          at.title = al.map((x) => x[1]).join(" · ");
+        }
         trr.append(at);
       }
       tbody.append(trr); return trr;
