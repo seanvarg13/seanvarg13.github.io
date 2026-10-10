@@ -7280,10 +7280,14 @@
             const arr = L.arr[k] || [];
             b.row(lab, bx[k], lg[k], (x) => x.toFixed(1) + u, arr.length >= 20 ? insertPct(arr, bx[k]) : null, d, run, tip);
           }
-          b.band("xHR/FB", xv - lg.hrfb, xv, "what his fly-ball contact says");
-          b.band("Luck", hf - xv, null, "home runs above or below what the contact says — wind, parks, the wall; it repeats year to year at only r .17");
+          // no xHR/FB band row: the running number after the last driver is it, marked yellow with "Expected HR/FB" beside it, and Luck is a plain
+          // row that carries it on to his HR/FB (Sean, 10 Oct 2026: "get rid of the bolded xHR/FB row and do the same ... highlight bold text with the
+          // final one in LD brl% and then make luck white and make the bottom row bolded")
+          b.mark("Expected HR/FB");
+          b.row("Luck", null, null, pct1, null, hf - run, hf, "home runs above or below what the contact says — wind, parks, the wall; it repeats year to year at only r .17");
         } else b.band("xHR/FB", null, null, "no fly-ball contact numbers for this season");
         b.band("HR/FB", hf - lg.hrfb, hf, "his home runs over his fly balls (Statcast's calls, his line-drive homers counted in)");
+        b.tag("kfinal");
         w.append(b.done());
       }
     }
