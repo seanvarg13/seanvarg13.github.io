@@ -3177,6 +3177,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   scrolls on every browser. The block at the end of `styles.css`.
 * **The xBABIP Luck row plain (Sean, 10 Oct 2026: "make the luck column be white again and not bolded blue")**: `renderXbabipTab` draws Luck as a
   plain row (`b.row`) between the marked Expected BABIP and the bold BABIP band row, as the xHR/FB tab's Luck is; the PR #543 blue Luck row is history.
+* **Boxy buttons everywhere (Sean, 10 Oct 2026: "make all of the sites buttons be the like boxy mix instead of the softer edges ones")**: the
+  block at the end of `styles.css` (20 roots) sets `border-radius: 0 !important` on every button, pill, tab, segment, page number, search box
+  and input — the less-slop pass's 4px corners and the warm pass's pills give way to the player page's square year / Filters look. Cards, menus,
+  the popup and the circles (headshots, the bars' bubbles) keep theirs.
 * **Rest of Contact split by batted-ball type (Sean, 10 Oct 2026: "with rest of contact in xbabip is there a way to break any of those down into
   broader categories", then "keep the current 7 the way they are ... and then split out rest of contact")**: the xBABIP build-up keeps its seven
   driver rows and replaces the single Rest of Contact row with **Ground-ball contact · Line-drive contact · Fly-ball contact · Everything else**.

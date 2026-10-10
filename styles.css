@@ -5266,3 +5266,9 @@ header.top .wordmark { display: none; }
    their "Expected" words; on a phone a table with the mark carries a transparent 120px right border the words sit in, so the box itself is wider
    and scrolls on every browser (Sean, 10 Oct 2026: "the exact same way you did for xbabip and xhr/fb") */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) table.sbt.kbuild:has(td.kexp) { border-right: 120px solid transparent !important; }
+
+/* Boxy buttons everywhere (Sean, 10 Oct 2026: "make all of the sites buttons be the like boxy mix instead of the softer edges ones"): every
+   button, pill, tab, segment, page number, search box and input is square-cornered like the player page's year / Filters buttons — the
+   less-slop pass's 4px and the warm pass's pills give way. Cards, menus and the popup keep their corners; circles (headshots) are untouched */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(button, .btn, .tbtn, .pill, .seg, .segbtn, .btab, .tsl, .sbtab, .fchip, .linkpill, .tierbtn, .xseason, .fpage, .ftabs, .gsearch, #gq, .navtog, .posseg, .phfiltseg, .phsideseg, .pbback, .pbmore, .pnav, .pnavrow, .lbpills, .sbviews, .sbtabs, .popfoot, .ddsel, .ddbox, .showmore, .knotebtn, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea):not(.mug):not(.pgbmug):not(.hmug):not(.staricon):not(.rowstar) { border-radius: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(.btn, .tbtn, .pill, .seg, .segbtn, .btab, .sbtab, .fpage, .ftabs, .pnav, .pnavrow, .posseg, .lbpills, .sbviews, .sbtabs) :is(button, a, span, label, .pill) { border-radius: 0 !important; }
