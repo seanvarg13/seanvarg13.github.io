@@ -3175,3 +3175,14 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   BB% tables are narrower than a phone, so they never scrolled there (xBABIP / xHR/FB did only because those tables are wider than the screen). On a
   phone a `table.kbuild` holding a `td.kexp` carries a transparent 120px right border that the words sit in, so the table itself is wider and its box
   scrolls on every browser. The block at the end of `styles.css`.
+* **Rest of Contact split by batted-ball type (Sean, 10 Oct 2026: "with rest of contact in xbabip is there a way to break any of those down into
+  broader categories", then "keep the current 7 the way they are ... and then split out rest of contact")**: the xBABIP build-up keeps its seven
+  driver rows and replaces the single Rest of Contact row with **Ground-ball contact · Line-drive contact · Fly-ball contact · Everything else**.
+  Each type's row: His / Lg = his expected hit rate on that type's non-HR balls in play against the qualified hitters' (heat by his percentile
+  among them, 10+ balls), ± = his share of that type × (his rate − the league's), less what the rows above already credited to it (GB EV, Sprint
+  and Oppo% on grounders, LD EV on liners; fly balls have no row above). Everything else (popups, the mix priced exactly rather than on the
+  straight lines, untyped balls) is the remainder, so the rows still end on his xBABIP (marked "Expected BABIP"). **Build**: `pa_rows` keeps, per
+  type, the directional xBA less home runs (`xhgb xhld xhfb xhpu`) and the non-HR balls in play (`bngb bnld bnfb bnpu`), appended to
+  `HITTER_DAY`, so they add up to xBABIP's own numerator / denominator (checked on a synthetic frame, scratch `synth_xbt.py`); `build_hitters`
+  writes **`ctx.xbt`** = `[[balls, expected hits]]` in GB / LD / FB / PU order (`XBT` in `app.js`), and `V()` re-derives it from the day rows in a
+  window or split. A file built before the fields shows the single Rest of Contact row. 2026 carries it from the next build; past seasons at a rescore.

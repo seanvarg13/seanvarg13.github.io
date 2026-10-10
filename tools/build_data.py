@@ -115,7 +115,8 @@ HITTER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", 
               "mxgb", "mxpu", "mxldp", "mxldc", "mxldo", "mxfbp", "mxfbc", "mxfbo", "mxx", "hr", "wbh",
               "evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn",   # EV sums and counts by batted-ball type (fly ball / line drive / grounder; 7 Oct 2026) so a window re-derives EV on FB / LD / GB   # wbh: wOBA value of his hits on balls in play (not HR) — BABIP reliance; hr: home runs (the fantasy page splits his official line by hand with these); mixsum / mixn = batted-ball mix value (Mix wOBA), mx* = its balls by bucket (mxx: air, no direction); dnum = directional-xwOBA numerator; evs = that row's exit velocities (no bunts); trailing fields (older files lack them): bbt = typed balls in play, bip = all balls in play, evn = EV-eligible (tracked, no bunt)
               "evbk",   # each evs entry's Mix bucket (MIX_COLS index, -1 outside the mix), so a window re-derives EV by bucket for the Mix tab (8 Oct 2026)
-              "brfb", "brld", "brgb"]   # barrels on fly balls / line drives / grounders (over evfbn / evldn / evgbn), the Mix tab's Barrel% by type (8 Oct 2026)
+              "brfb", "brld", "brgb",   # barrels on fly balls / line drives / grounders (over evfbn / evldn / evgbn), the Mix tab's Barrel% by type (8 Oct 2026)
+              "xhgb", "xhld", "xhfb", "xhpu", "bngb", "bnld", "bnfb", "bnpu"]   # expected hits (directional xBA, less HR) and non-HR balls in play by type: the xBABIP tab's split of Rest of Contact (10 Oct 2026)
 # The hitter card, grouped. key, label, higher-is-better, decimals, unit. Keys not in HITTER_METRICS are card-only.
 HITTER_CARD = [
     ("Outcomes",             [("woba", "wOBA", True, 3, ""), ("xws", "xwOBA", True, 3, ""), ("xwd", "dxwOBA", True, 3, "")]),
@@ -1342,6 +1343,14 @@ def pa_rows(d: pd.DataFrame) -> pd.DataFrame:
     p.attrs["league_xwoba"] = round(lg, 4)
     p["dnum"] = directional_xwoba(p, bip & ~untracked, num, den)
     p["dbsum"], p["dssum"] = directional_bs(p, bip & ~untracked, bip)
+    # expected hits and balls in play by batted-ball type (Sean, 10 Oct 2026: "split out rest of contact"): the xBABIP tab breaks the part of
+    # his xBABIP its seven straight-line drivers miss into grounders / liners / fly balls. xh = the directional xBA on that type's balls in play
+    # less its home runs, bn = its non-HR balls in play, so the four add up to xBABIP's own numerator and denominator
+    bt = p["bb_type"] if "bb_type" in p.columns else pd.Series("", index=p.index)
+    for t, nm in (("gb", "ground_ball"), ("ld", "line_drive"), ("fb", "fly_ball"), ("pu", "popup")):
+        on = bip & bt.eq(nm)
+        p[f"xh{t}"] = np.where(on, p["dbsum"] - p["is_hr"].astype(float), 0.0)
+        p[f"bn{t}"] = (on & ~p["is_hr"].astype(bool)).astype(int)
     # outs recorded in this PA = outs at the start of the next PA of the half-inning (3 if it was the last),
     # which also captures runner outs during the PA; a game-ending half-inning stops at the event's own outs
     half = ["game_pk", "inning", "inning_topbot"]
@@ -1378,7 +1387,8 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                            k=("is_k", "sum"), wnum=("wnum", "sum"), wden=("wden", "sum"),
                            xnum=("xnum", "sum"), xden=("xden", "sum"), dnum=("dnum", "sum"),
                            h=("is_hit", "sum"), tb=("tb", "sum"), xbsum=("xbsum", "sum"), xssum=("xssum", "sum"),
-                           dbsum=("dbsum", "sum"), dssum=("dssum", "sum"), hr=("is_hr", "sum"), wbh=("w_bh", "sum"))
+                           dbsum=("dbsum", "sum"), dssum=("dssum", "sum"), hr=("is_hr", "sum"), wbh=("w_bh", "sum"),
+                           **{f"{k}{t}": (f"{k}{t}", "sum") for k in ("xh", "bn") for t in ("gb", "ld", "fb", "pu")})
     h = h.join(hp, how="left")
     h["evs"] = h["evs"].apply(lambda v: v if isinstance(v, list) else [])
     h["evbk"] = h["evbk"].apply(lambda v: v if isinstance(v, list) else []) if "evbk" in h.columns else [[] for _ in range(len(h))]
@@ -1425,7 +1435,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                     row.append(v)
                 else:
                     # xbsum / xssum are sums of per-ball probabilities: a day's bucket is well under 1, so int() would erase it
-                    row.append(round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stwl", "stws", "stbwl", "stbws", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps", "stcs", "stck", "stcso", "stcsi", "stcwi", "stcw", "stfl", "stfs", "stfw", "mixsum", "wbh", "evfbs", "evlds", "evgbs") else int(v))
+                    row.append(round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stwl", "stws", "stbwl", "stbws", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps", "stcs", "stck", "stcso", "stcsi", "stcwi", "stcw", "stfl", "stfs", "stfw", "mixsum", "wbh", "evfbs", "evlds", "evgbs", "xhgb", "xhld", "xhfb", "xhpu") else int(v))
             out.setdefault(int(pid), []).append(row)
         return out
     return pack(h, HITTER_DAY), pack(q, PITCHER_DAY)
@@ -1725,6 +1735,11 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
         own_bs = None if pd.isna(r["BatSpeed"]) else round(float(r["BatSpeed"]), 1)
         m["bs"] = round(float(bsp[pid]), 1) if pid in bsp.index and pd.notna(bsp[pid]) else own_bs
         m.update(baserunning(int(pid), info))
+        xbt = []                                                   # [non-HR balls in play, expected hits] by type GB / LD / FB / PU (10 Oct 2026)
+        for t in ("gb", "ld", "fb", "pu"):
+            ia, ib = HITTER_DAY.index(f"bn{t}"), HITTER_DAY.index(f"xh{t}")
+            xbt.append([int(sum(x[ia] for x in rows_d if len(x) > ia)), round(float(sum(x[ib] for x in rows_d if len(x) > ib)), 2)])
+        if not any(n for n, _ in xbt): xbt = None
         mixev = []                                                 # [tracked balls, avg EV] by Mix bucket, MIX_COLS order (8 Oct 2026)
         for i in range(len(MIX_COLS)):
             n = int(r.get(f"MXN{i}", 0) or 0); mixev.append([n, round(float(r[f"MXS{i}"]) / n, 1)] if n else None)
@@ -1737,7 +1752,8 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
                     "K%": m["k"], "BB%": m["bb"],
                     "BBE": int(r.BBE), "BIP": int(r.BBT),
                     "mix": [int(r.get(c, 0) or 0) for c in MIX_COLS],         # balls by Mix bucket, MIX_COLS order
-                    "mixev": mixev},                                           # and [tracked balls, avg EV] by bucket — the Mix tab's EV column
+                    "mixev": mixev,
+                    "xbt": xbt},                                               # expected hits by batted-ball type, the xBABIP tab's split                                           # and [tracked balls, avg EV] by bucket — the Mix tab's EV column
         })
     return rows
 
