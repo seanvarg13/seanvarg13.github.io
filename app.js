@@ -1028,8 +1028,9 @@
       const xk = xKFrom(v.m), m = v.m, pa = v.pa, bbe = v.ctx && v.ctx.BBE, wbb = (K() && K().wbb) || 0.7;
       // xwOBAcon: his xwOBA less the walks' share, over his batted balls
       const con = m.xwd != null && m.bb != null && pa && bbe ? (m.xwd * pa - wbb * m.bb / 100 * pa) / bbe : null;
-      // Pull FB%: his pulled fly balls over his fly balls, from the Mix buckets (MIX_B order: gb, pu, ld p/c/o, fb p/c/o, x), so a window re-derives it
-      const mx = v.ctx && v.ctx.mix, fbs = mx && mx.length >= 8 ? mx[5] + mx[6] + mx[7] : 0;
+      // Pull FB%: his pulled fly balls over all his balls in play (Sean, 10 Oct 2026: "the % of total batted balls that were pulled fly balls", not the
+      // share of his fly balls), from the Mix buckets (MIX_B order: gb, pu, ld p/c/o, fb p/c/o, x), so a window re-derives it
+      const mx = v.ctx && v.ctx.mix, fbs = mx && mx.length >= 8 ? mx.reduce((x, y) => x + (y || 0), 0) : 0;
       v.m = Object.assign({}, m, { xk: xk == null ? null : Math.round(10 * xk) / 10, xwcon: con == null ? null : Math.round(1000 * con) / 1000,
                                   pullfb: fbs ? Math.round(1000 * mx[5] / fbs) / 10 : null });
     }
@@ -5506,7 +5507,7 @@
     pu: "Popups per ball in play. For a pitcher these are nearly automatic outs.",
     gb: "Ground balls per ball in play.",
     pull: "Pull Air%: balls hit in the air to his pull side, per ball in play. This is where home-run power shows up before the home runs do.",
-    pullfb: "Pull FB%: the share of his fly balls hit to his pull side (popups and line drives out). A pulled fly ball is the likeliest batted ball to leave the park.",
+    pullfb: "Pull FB%: pulled fly balls as a share of all his balls in play (bunts out). A pulled fly ball is the likeliest batted ball to leave the park, so this is how often he hits the most valuable kind.",
     pullp: "Every ball in play hit to his pull side, on the ground or in the air.",
     mixw: "For a pitcher: the league's wOBA per ball in play for the mix he allows — ground balls and popups as they are, the air balls split at the league's line-drive share, like uERA (lower is better). For a hitter: Mix wOBA: what his batted-ball distribution alone is worth, per ball in play. Every ball in play (no bunts) takes the league's average wOBA for its type and direction — ground balls, popups, and line drives and fly balls each pulled, straightaway or the other way — and Mix wOBA is the average over his. Walks and strikeouts don't enter it. So it rewards the mix (pulled air balls above all), not how hard he hit them. About .365 is average.",
     oppo: "Balls in play hit the other way.",

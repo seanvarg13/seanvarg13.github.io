@@ -335,7 +335,7 @@ SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evg
             "gb", "ld", "fb", "pu", "air", "pull", "pullp", "cent", "oppo", "mixw",
             "swing", "zsw", "osw", "con", "zcon", "ocon", "whf",
             "brfb", "brld",   # barrels per fly ball / line drive, xHR/FB's inputs (8-9 Oct 2026)
-            "pullfb",         # Pull FB%: his pulled fly balls over his fly balls, from the Mix buckets (ctx.mix; Sean, 9 Oct 2026)
+            "pullfb",         # Pull FB%: his pulled fly balls over all his balls in play, from the Mix buckets (ctx.mix; Sean, 9-10 Oct 2026)
             "babip", "xbabip", "spd",   # the card's xBABIP tab by season: BABIP, the directional xBABIP, sprint speed (Sean, 9 Oct 2026)
             "sba"]                      # steal attempts (SB + CS), the season table's Baserunning view (Sean, 9 Oct 2026)
 
@@ -363,7 +363,7 @@ def season_bb():
                 continue
             m, cx = p.get("m") or {}, p.get("ctx") or {}
             mx = cx.get("mix") or []
-            fbs = sum(mx[5:8]) if len(mx) >= 8 else 0      # MIX_COLS order: gb, pu, ld p/c/o, fb p/c/o, x
+            fbs = sum(x or 0 for x in mx) if len(mx) >= 8 else 0      # every ball in the mix (MIX_COLS order: gb, pu, ld p/c/o, fb p/c/o, x)
             val = lambda k: (100 * mx[5] / fbs if fbs else None) if k == "pullfb" else m.get(k)
             out.setdefault(str(p["id"]), {})[str(y)] = [cx.get("BBE")] + [r(val(k), 3 if k in ("mixw", "babip", "xbabip") else 1) for k in SBX_KEYS]
     path = HERE / "hist" / "career-bb.js"

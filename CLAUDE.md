@@ -3215,3 +3215,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   **Then (Sean, the same evening: "remove direction from line drives since it really doesnt appear to matter", "for grounders basically just show
   pull rate and make it so higher pull rate for gbs is bad and lower better")**: Line Drives is Avg EV · Barrel% with no direction row, and Ground
   Balls is Avg EV · **Pull%** (`gbpull`, from `ctx.gbdir`, its percentile turned over so a low pull rate reads red). Fly Balls keeps Pull%.
+* **Pull FB% is a share of all balls in play (Sean, 10 Oct 2026: "i dont want the % of fbs pulled i want the % of total batted balls that were
+  pulled fly balls")**: the card's Batted-Ball Distribution bar `pullfb` (set in `V()`) is pulled fly balls over every ball in the Mix buckets
+  (`ctx.mix`, bunts out), and so is the season table's Batted Ball Distribution column — `season_bb` in `tools/build_career.py` divides by the whole
+  mix, and `hist/career-bb.js` was regenerated (`build_career.py bb`; only `pullfb` changed). Raleigh 2025 / 2026: 20.4 / 19.6. The Batted Ball
+  Quality tab's **Fly Balls ▸ Pull%** stays the share of his fly balls that were pulled (Sean: "in the batted ball quality tab i want it to remain
+  what it is"), 45.2 for Raleigh 2026.
