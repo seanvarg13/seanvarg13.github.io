@@ -545,6 +545,7 @@ Statcast's.
 | `tools/models/model3.py`, `model_bs.py` | the directional models' training scripts, in `model-workspace/` |
 | `tools/models/milb_translate.py` | fits `MILB_X` (the minors-to-MLB rate shifts) from `hist/`; repo only, run by hand |
 | `tools/build_proj27.py` | the Mock Draft's 2027 projections → `hist/proj-2027.js`; repo only, run by hand |
+| `tools/build_awards.py` | MVP / Cy Young / Rookie of the Year vote finishes → `hist/awards.js` from the Lahman database (SABR); repo only, run by hand each January |
 | `tools/add_baserunning.py` | fills the Base Running numbers into already-built `data.js` / `hist/mlb-YYYY.js`; repo only, run by hand |
 
 Not mirrored, on purpose: `github_site.json` / `netlify_site.json` (account config), `~/.github_token`,
@@ -3141,3 +3142,14 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **The Career row back under the year's line (Sean, 9 Oct 2026: "on the header where it has the current year stats can you add back the career
   stats below it too")**: the band's Summary is `summaryBlock(p, st)` again — the "Summary" label column, the season's row and the Career row
   (a pitcher's career nERA isn't built, so it reads "–"). The `yonly` mode stays in `summaryBlock`, unused.
+* **Vote finishes in the Awards column (Sean, 10 Oct 2026: "show like mvp-1, mvp-8, cya-1, cya-5, roy-1, roy-4, etc and bold any award they won or
+  came in first for", then "just show the voting results and award win and hold the win in the awards column I don't need a separate page")**:
+  MLB's record (`people/<id>/awards`) has winners only, so the placings come from the **Lahman database's vote shares** (SABR's 2025 release,
+  `AwardsSharePlayers.csv` from its Box folder — Baseball-Reference wasn't fetched): `tools/build_awards.py` (repo only, run by hand once SABR
+  publishes each January's update; its Box file ids are the 2025 release's and change with a new one) ranks every vote-getter within award × year
+  × league by points (a tie shares the better place), maps Lahman ids to MLB ids by birth date and last name against the Stats API's season
+  rosters (1990 on: 1,190 players, 2,963 finishes; 7 pre-2015 names unmatched) and writes **`hist/awards.js`** (`window.DRAFT_VOTES = {id: {year:
+  [["MVP", 2], ["ROY", 1]]}}`, 68 KB, value-free in `ensureScript`, loaded by `seasonBlock` on a regular-season table). `seasonAwards(awd, id, y)`
+  merges it with MLB's winners: MVP / CYA / ROY read "MVP-2" where Lahman has a place (plain "MVP" for a season it hasn't reached — 2026 until
+  the January 2027 release), every award he won is **bold** (`td.awd b`), a lower finish plain, the tooltip names the place ("MVP voting: 12th").
+  Judge 2017: MVP-2, **ROY-1**, **AS**, **SS**; Skenes 2024: MVP-19, CYA-3, **ROY-1**, **AS**, **MLB1**. No voting page (asked, then dropped).
