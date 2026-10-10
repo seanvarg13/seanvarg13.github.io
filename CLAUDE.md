@@ -3158,5 +3158,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   it don't adjust the table at all")**: the running K% / BB% on the "Everything else, repeatable" row (the rate his process says, before the luck
   row) is bold on yellow (`td.krk.kexp`, `expMark` in `app.js`, Raw side only — the Stuff side's single "Everything else" row ends at xK%), and the
   words hang off its right edge as an absolutely placed `::after` (`data-exp`), so no column moves; the K% / BB% tables' scroller and the
-  `.stuffbox` are `overflow: visible` so it shows. A phone has ~40px there: "Exp." over "K%" / "BB%" in the condensed face. The block at the end
-  of `styles.css`.
+  `.stuffbox` are `overflow: visible` so it shows. On a phone (~40px of room there) the words stay on one line and the tables' own box scrolls
+  sideways to them (`.brscroll:has(.kbuild)` is `overflow-x: auto` under `data-view="mobile"`; Sean, the same morning: "I like how it looks where
+  expected k% is one row I just want to be able to scroll that way on mobile too" — a stacked "Exp." / "K%" lasted an hour). The page itself
+  stays 390px wide. The block at the end of `styles.css`.

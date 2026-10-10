@@ -7932,7 +7932,7 @@
   // the running rate after the repeatable leftover is what his process says he should have (Sean, 10 Oct 2026: "after the everything else
   // repeatables ... highlight it in yellow and bold it and after it put like the words expected k% and expected bb% ... literally just to the
   // right of it don't adjust the table at all"): the cell is filled yellow and the words hang off its right edge (::after, out of the flow)
-  function expMark(tb, word) { const td = tb.lastElementChild && tb.lastElementChild.querySelector("td.krk"); if (td) { td.classList.add("kexp"); td.dataset.exp = document.documentElement.dataset.view === "mobile" ? word.replace("Expected ", "Exp.\n") : word; td.title = word; } }
+  function expMark(tb, word) { const td = tb.lastElementChild && tb.lastElementChild.querySelector("td.krk"); if (td) { td.classList.add("kexp"); td.dataset.exp = word; td.title = word; } }
   function renderKArchetype(p, st, g) {
     const pv = V(p), m = pv.m, L = lgRatesP(), stuff = stuffSide();
     if (!L.cstr || !L.foul || !L.swing || L.whf == null || L.s2whf == null || m.k == null || m.whf == null) return null;
