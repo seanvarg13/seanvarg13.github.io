@@ -3162,3 +3162,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   sideways to them (`.brscroll:has(.kbuild)` is `overflow-x: auto` under `data-view="mobile"`; Sean, the same morning: "I like how it looks where
   expected k% is one row I just want to be able to scroll that way on mobile too" — a stacked "Exp." / "K%" lasted an hour). The page itself
   stays 390px wide. The block at the end of `styles.css`.
+* **Expected BABIP marked; the BABIP row bold (Sean, 10 Oct 2026, Conine's xBABIP tab: "do the same thing for the xbabip table and make the luck row
+  blue and bold the bottom babip row")**: `buildUp` gains `mark(word)` (→ `expMark`) and `tag(cls)`; `renderXbabipTab` marks the running BABIP after
+  Rest of Contact (= his xBABIP) yellow with "Expected BABIP" to its right (a phone scrolls the table's box to it, as the K% / BB% tables do) and
+  tags the bottom BABIP row `kfinal`, bold throughout including its label. The Luck row was already on the blue band and is unchanged. The xHR/FB
+  build-up has no mark.
