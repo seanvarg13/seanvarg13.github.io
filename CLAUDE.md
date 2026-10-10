@@ -3170,3 +3170,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   brl% and then make luck white and make the bottom row bolded")**: `renderXhrfbTab` has no xHR/FB band row; the running HR/FB after LD Brl% is
   marked "Expected HR/FB", Luck is a plain white row (± = HR/FB − that running number, carrying it to his HR/FB), and the HR/FB band row is
   `kfinal`. A season without the contact numbers still shows its "xHR/FB –" band row.
+* **The K% / BB% tables scroll to their words on an iPhone too (Sean, 10 Oct 2026: "make the pitcher k and bb tables the exact same way you did for
+  xbabip and xhr/fb with how I can now scroll")**: an iPhone doesn't count the absolutely placed "Expected …" label in a scroller's width, and the K% /
+  BB% tables are narrower than a phone, so they never scrolled there (xBABIP / xHR/FB did only because those tables are wider than the screen). On a
+  phone a `table.kbuild` holding a `td.kexp` carries a transparent 120px right border that the words sit in, so the table itself is wider and its box
+  scrolls on every browser. The block at the end of `styles.css`.
