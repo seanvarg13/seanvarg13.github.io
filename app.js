@@ -7059,6 +7059,52 @@
     box.append(grid);
     return box;
   }
+  // Batted Ball Quality tab (Sean, 10 Oct 2026: "add a tab that is batted ball quality that shows these numbers and then also has a subgroup of
+  // babip showing xbabip percentile bar and babip percentile bar and then hr/fb which shows xhr/fb and actual hr/fb"): the Mix tab's Avg EV and
+  // Barrel% by type blocks, then BABIP (xBABIP, BABIP — the card's view, ranked among the pool's qualifiers) and HR/FB (xHR/FB, HR/FB — the full
+  // season from the career files, ranked among that season's qualified hitters, as the xHR/FB tab reads them)
+  function renderBbqTab(p, g) {
+    const pv = V(p), pl = pool(g), st = pl.stats.get(p.type + p.id);
+    const box = el("div", "rollbox uerabox mixbox mixtab bbqtab");
+    const hd = el("div", "rollhd"); hd.append(el("span", "rollname", "Batted ball quality"));
+    const vw = viewLabel(p.type); if (vw && vw !== "full season") hd.append(el("span", "rollsub", vw));
+    box.append(hd);
+    const grid = el("div", "mixgrid mixgrid5");
+    let first = true;
+    const head = (title, unit) => { if (!first) grid.append(el("span", "mdiv")); first = false; grid.append(el("span", "ml mtot", title), el("span"), el("span", "mh", unit), el("span", "mh", "Lg")); };
+    const row = (name, v, pc, lg, f) => grid.append(el("span", "ml", name), svTrack(pc), el("span", "mv", v == null ? "–" : f(v)), el("span", "mv lg", lg == null ? "" : f(lg)));
+    const fromPool = (rows, unit, f) => {
+      if (!rows.some(([k]) => pv.m[k] != null)) return;
+      head(rows.title, unit);
+      for (const [k, name] of rows) {
+        const v = pv.m[k], vals = pl.ref.map((q) => V(q).m[k]).filter((z) => z != null).sort((a, b) => a - b);
+        const pc = st && st.pct && st.pct[k] != null ? st.pct[k] : v != null && vals.length >= 20 ? insertPct(vals, v) : null;
+        row(name, v, pc, vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null, f);
+      }
+    };
+    const t = (title, rows) => Object.assign(rows, { title });
+    const one = (x) => x.toFixed(1), pc1 = (x) => x.toFixed(1) + "%";
+    fromPool(t("Avg EV", [["evfb", "Fly balls"], ["evld", "Line drives"], ["evgb", "Ground balls"]]), "EV", one);
+    fromPool(t("Barrel%", [["brfb", "Fly balls"], ["brld", "Line drives"]]), "%", pc1);
+    fromPool(t("BABIP", [["xbabip", "xBABIP"], ["babip", "BABIP"]]), "", fmtX);
+    // HR/FB: the season's line from the career files (home runs over Statcast's fly balls, his line-drive homers counted in), xHR/FB on his
+    // fly-ball contact; MLB regular seasons only, the full season whatever the card's filters
+    ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady);
+    if (DS.level === "MLB" && !DS.kind && careerReady() && sbxReady()) {
+      const y = +DS.season, rec = window.DRAFT_CAREER[String(p.id)];
+      const l = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).find((q) => q.season === y && q.c.ext && +q.c.ext[2] > 0);
+      if (l) {
+        const L = hrfbLeague(y), hf = 100 * (+l.c.HR || 0) / +l.c.ext[2], xv = xHrfb(sbxOf(p.id, y), L.lg);
+        const at = (arr, v) => (v != null && arr.length >= 20 ? insertPct(arr, v) : null);
+        head("HR/FB", "%");
+        row("xHR/FB", xv, at(L.arr.x, xv), L.lg.hrfb, pc1);
+        row("HR/FB", hf, at(L.arr.hrfb, hf), L.lg.hrfb, pc1);
+      }
+    }
+    if (first) { box.append(el("p", "note", "No batted-ball quality numbers for this season's file.")); return box; }
+    box.append(grid);
+    return box;
+  }
   // HR/FB by season under the mix (Sean, 8 Oct 2026: "include a table that shows a players hr to fb ratio by year as well as their avg fb ev and
   // barrel rate and then their expected hr to fb ratio ... regardless of what year is currently filtered on show all years"): every MLB season of
   // his from hist/career.js (HR, Savant's fly balls with his line-drive homers) and hist/career-bb.js (FB EV, Barrel%, EV90), whatever season the
@@ -7319,7 +7365,7 @@
   }
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["fantasy", "Fantasy"]];   // Season Stats is the page's own table now (8 Oct 2026)   // Compare came off the strip with the Compare page (Sean, 6 Oct 2026)
-  const BTABS_H = [["mix", "Mix"], ["xbabip", "xBABIP"], ["xhrfb", "xHR/FB"]];   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
+  const BTABS_H = [["mix", "Mix"], ["bbq", "Batted Ball Quality"], ["xbabip", "xBABIP"], ["xhrfb", "xHR/FB"]];   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
   const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"]];   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
@@ -7339,7 +7385,7 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => (tabs.find(([x]) => x === k) || [])[1];
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["xbabip"], ["xhrfb"]] : []),
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["xbabip"], ["xhrfb"]] : []),
                     ["rolling", ...(p.type === "P" ? ["uera"] : ["babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
@@ -7398,6 +7444,8 @@
       body.append(roll || el("p", "note", "No game-by-game data for this season, so there's no rolling line."));
     } else if (pick === "mix") {
       body.append(renderMixTab(p, ref));
+    } else if (pick === "bbq") {
+      body.append(renderBbqTab(p, ref));
     } else if (pick === "xbabip") {
       body.append(renderXbabipTab(p, ref));
     } else if (pick === "xhrfb") {

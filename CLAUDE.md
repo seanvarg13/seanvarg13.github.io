@@ -3181,6 +3181,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   block at the end of `styles.css` (20 roots) sets `border-radius: 0 !important` on every button, pill, tab, segment, page number, search box
   and input — the less-slop pass's 4px corners and the warm pass's pills give way to the player page's square year / Filters look. Cards, menus,
   the popup and the circles (headshots, the bars' bubbles) keep theirs.
+* **A Batted Ball Quality tab (Sean, 10 Oct 2026: "add a tab that is batted ball quality that shows these numbers and then also has a subgroup of
+  babip showing xbabip percentile bar and babip percentile bar and then hr/fb which shows xhr/fb and actual hr/fb")**: `BTABS_H` = Mix · **Batted Ball
+  Quality** · xBABIP · xHR/FB (`renderBbqTab`, key `bbq`), drawn in the Mix tab's percentile-bar grid: Avg EV by type (FB · LD · GB), Barrel% by type
+  (FB · LD), **BABIP** (xBABIP · BABIP, the card's view ranked among the pool's qualifiers, Lg the qualifiers' mean) and **HR/FB** (xHR/FB · HR/FB for
+  the card's MLB regular season from `hist/career.js` + `career-bb.js`, ranked among that season's qualified hitters via `hrfbLeague`, Lg the league
+  HR/FB; full season whatever the filters). The Mix tab keeps its own EV / Barrel% blocks.
 * **Rest of Contact split by batted-ball type (Sean, 10 Oct 2026: "with rest of contact in xbabip is there a way to break any of those down into
   broader categories", then "keep the current 7 the way they are ... and then split out rest of contact")**: the xBABIP build-up keeps its seven
   driver rows and replaces the single Rest of Contact row with **Ground-ball contact · Line-drive contact · Fly-ball contact · Everything else**.
