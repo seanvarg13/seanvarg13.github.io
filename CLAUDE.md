@@ -3153,3 +3153,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   merges it with MLB's winners: MVP / CYA / ROY read "MVP-2" where Lahman has a place (plain "MVP" for a season it hasn't reached — 2026 until
   the January 2027 release), every award he won is **bold** (`td.awd b`), a lower finish plain, the tooltip names the place ("MVP voting: 12th").
   Judge 2017: MVP-2, **ROY-1**, **AS**, **SS**; Skenes 2024: MVP-19, CYA-3, **ROY-1**, **AS**, **MLB1**. No voting page (asked, then dropped).
+* **Expected K% / BB% marked in the build-ups (Sean, 10 Oct 2026, Misiorowski's Pitching+ tab: "after the everything else repeatables k% can you
+  highlight it in yellow and bold it and after it put like the words expected k% and expected bb% ... make the text literally just to the right of
+  it don't adjust the table at all")**: the running K% / BB% on the "Everything else, repeatable" row (the rate his process says, before the luck
+  row) is bold on yellow (`td.krk.kexp`, `expMark` in `app.js`, Raw side only — the Stuff side's single "Everything else" row ends at xK%), and the
+  words hang off its right edge as an absolutely placed `::after` (`data-exp`), so no column moves; the K% / BB% tables' scroller and the
+  `.stuffbox` are `overflow: visible` so it shows. A phone has ~40px there: "Exp." over "K%" / "BB%" in the condensed face. The block at the end
+  of `styles.css`.
