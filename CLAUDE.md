@@ -3138,3 +3138,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   there")**: the title's year and level are plain heading words, no box and no ▾; a word wears the light-blue dotted rule under it (the old `.tsl`
   radial-gradient) only when it has another choice — the year when he has more than one season (`ddList`'s `.solo` otherwise), the level when
   `lvWorth`. The block at the end of `styles.css`.
+* **The Career row back under the year's line (Sean, 9 Oct 2026: "on the header where it has the current year stats can you add back the career
+  stats below it too")**: the band's Summary is `summaryBlock(p, st)` again — the "Summary" label column, the season's row and the Career row
+  (a pitcher's career nERA isn't built, so it reads "–"). The `yonly` mode stays in `summaryBlock`, unused.
