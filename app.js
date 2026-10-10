@@ -8011,6 +8011,50 @@
     box.append(wrap);
     return box;
   }
+  // The walk build-up (Sean, 9 Oct 2026: "below that could you have a table that is the same but is for walk rate"): his BB% from what his
+  // Strike% alone implies, then four dials at the same Strike% and the leftover split into repeatable and luck, as the K% table does. Every
+  // 100+ BF pitcher-season 2020-26, each rate against its season's 20+ BF league, BF-weighted (scratch bbfit.js): Strike% alone −0.786 BB% a
+  // point (R² .58), then on what it leaves 1st-pitch Strike% +0.028, 3-ball Strike% −0.202, Whiff% +0.107, Zone% +0.134 (R² .84 with them) —
+  // at the same Strike%, strikes that are whiffs bunch in two-strike counts and in-zone strikes leave fewer chased ones, so both walk a little
+  // more; three-ball strikes are the walk itself. The leftover repeats at k 929 (bbrest.js; next season = 1.01 × the shrunk value). Walks
+  // have no stuff model, so both sides read his actual rates
+  const BBCONV = { strk: -0.786, fstrk: 0.028, b3strk: -0.202, whf: 0.107, zone: 0.134, rest: 929 };
+  function renderBBBuild(p, st, g) {
+    const pv = V(p), m = pv.m, L = lgRatesP(), bf = pv.bf || p.bf || 0;
+    if (!bf || m.bb == null || m.strk == null || L.bb == null || L.strk == null) return null;
+    const f1 = (x) => (x == null ? "–" : x.toFixed(1)), sg = (x) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(1));
+    // fewer walks is the good side, so a minus is red here and a plus blue — the K% table's scale turned over
+    const signStyle = (v) => { const t = Math.min(1, Math.abs(v) / 2.5), mix = (a, b) => a.map((x, i) => Math.round(x + (b[i] - x) * t)); const c = mix([214, 212, 206], v < 0 ? [216, 33, 41] : [54, 97, 173]); return { bg: `rgb(${c.join(",")})`, fg: t > (v < 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };
+    const box = el("div", "kconv karch ksum brbox bbbuild"), hd = el("div", "rollhd");
+    hd.append(el("span", "rollname", "Walk rate")); box.append(hd);
+    const { tb, fin, gap, wrap, ends } = brTable(null, [["Step", "l"], ["His", ""], ["Lg", ""], ["± BB%", "", "BB% points this moves him from the BB% his Strike% alone implies"], ["BB%", ""]], "kbuild");
+    ends.add(0); ends.add(2);
+    const t0 = wrap.querySelector("thead tr"); t0.children[0].classList.add("ge"); t0.children[2].classList.add("ge");
+    let band = false;
+    const pct = (k) => (st && st.pct && st.pct[k] != null ? st.pct[k] : null);
+    const dCell = (v) => { const td = el("td", "kd", v == null ? "–" : sg(v)); if (v != null && !band) { const s2 = Math.abs(v) < 0.05 ? { bg: "rgb(214,212,206)", fg: "var(--ink)" } : signStyle(v); td.style.background = s2.bg; td.style.color = s2.fg; td.classList.add("heat"); } return td; };
+    const row = (cls, lab, h, l, d, running, tip, pc) => { const tr = el("tr", cls || null); if (tip) tr.title = tip;
+      tr.append(el("td", "l nm", lab), h === undefined ? el("td") : (band ? el("td", null, f1(h)) : heatTd(el("td", null, f1(h)), pc)), el("td", "xact", l == null ? "" : f1(l)), d, el("td", "krk", running == null ? "" : f1(running))); tb.append(fin(tr)); };
+    const base = L.bb + BBCONV.strk * (m.strk - L.strk);
+    let run = base, sum = 0;
+    row("", "Strike%", m.strk, L.strk, el("td", "xact", "→"), run, `BB% = the league's ${f1(L.bb)} − 0.786 a point of Strike% over the league's, across every 100+ BF pitcher-season 2020-26`, pct("strk"));
+    const DL = [["fstrk", "1st-pitch Strike%", "first pitches that are strikes — at the same Strike% it adds little on its own"],
+                ["b3strk", "3-ball Strike%", "strikes with three balls — the pitch a walk is decided on"],
+                ["whf", "Whiff%", "at the same Strike%, a whiff-heavy pitcher's strikes bunch in two-strike counts, so he walks a little more"],
+                ["zone", "Zone%", "at the same Strike%, more pitches in the zone means fewer chased strikes, so a little more walks"]];
+    for (const [k, lab, tip] of DL) {
+      const e = m[k] == null || L[k] == null ? null : BBCONV[k] * (m[k] - L[k]);
+      if (e != null) { sum += e; run += e; }
+      row("", lab, m[k], L[k], dCell(e), e == null ? null : run, tip, pct(k));
+    }
+    const rest = m.bb - base - sum, w = bf / (bf + BBCONV.rest), rep = w * rest, lk = rest - rep;
+    run += rep; row("", "Everything else, repeatable", undefined, null, dCell(rep), run, `the share of what the four don't explain that carries to next season: ${Math.round(100 * w)}% of it at ${bf} batters faced`);
+    run += lk; row("", "Everything else, luck", undefined, null, dCell(lk), run, "the share that doesn't carry to next season");
+    tb.append(gap()); band = true;
+    row("tot first", "BB%", undefined, null, dCell(m.bb - base), m.bb, `${bf} batters faced · the whole gap: BB% − the BB% his Strike% alone implies`);
+    box.append(wrap);
+    return box;
+  }
   function renderKConv(p, st, R0, stuff) {
     const m = V(p).m, L = lgRatesP(); if (!L.cstr || !L.foul || !L.swing || L.whf == null) return null;
     const lgFpc = 100 * L.foul / (L.swing * (1 - L.whf / 100)), lgC = L.cstr, cshift = L.xcstr != null ? L.cstr - L.xcstr : 0;   // the command models read the newest season a little hot
@@ -8187,7 +8231,7 @@
     const wrap = el("div", "sbscroll brscroll"); wrap.append(t);
     return { t, tb, fin, gap, wrap, ends };
   }
-  const PAIRH = (exp, act) => [["Exp", "", exp], ["Act", "xact", act]];   // an expected / actual pair's two column names
+  const PAIRH = (exp, act) => [["Act", "xact", act], ["Exp", "", exp]];   // actual first (Sean, 9 Oct 2026: "put actual before expected")   // an expected / actual pair's two column names
   const heatTd = (td, pc) => { if (pc == null) return td; const s = pctStyle(pc); if (s) { td.style.background = s.bg; td.style.color = s.fg; td.classList.add("heat"); } return td; };
   function renderStuffTab(p, st, g, mode = "stuff") {
     const box = el("div", "rollbox uerabox stuffbox brbox"), P = mode === "pitching";
@@ -8202,7 +8246,7 @@
     if (!rows.length) {   // no pitch tracking (Double-A and below): no arsenal table, but the strikeout profile and the whiffs-to-strikeouts
       // summary read the calls, swings and fouls Gameday does carry (Sean, 6 Oct 2026: "add these functionalities to the minor league pitchers too")
       box.append(el("p", "note", DS.level && DS.level !== "MLB" ? "No pitch tracking at this level, so there's no arsenal to grade — the strikeout profile below reads the calls, swings and fouls the feed does carry." : "The arsenal table comes with the next build of this season's data."));
-      if (P) { const ka = renderKArchetype(p, st, g); if (ka) box.append(ka); }   // the Whiffs to strikeouts tables came off (6 Oct 2026); renderKConv stays
+      if (P) { const ka = renderKArchetype(p, st, g); if (ka) box.append(ka); const bw = renderBBBuild(p, st, g); if (bw) box.append(bw); }   // the Whiffs to strikeouts tables came off (6 Oct 2026); renderKConv stays
       return box; }
     const av = arsenalView(p), filtered = Array.isArray(av);
     if (av === "loading") box.append(el("p", "note", "Loading his pitches game by game…"));
@@ -8236,7 +8280,7 @@
     const f1n = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%");
     let inTot = false;   // the All pitches row is a band row: no heat on it, as on the season table
     const cellPlus = (v, cls) => { const td = el("td", "plus" + (cls ? " " + cls : ""), v == null ? "–" : String(Math.round(v))); if (v != null && !inTot) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } } return td; };
-    const pair = (x, a) => [el("td", null, pct(x)), el("td", "xact", a == null ? "–" : pct(a))];   // Exp, then Act in grey
+    const pair = (x, a) => [el("td", "xact", a == null ? "–" : pct(a)), el("td", null, pct(x))];   // Act in grey, then Exp (9 Oct 2026)
     const con = (r) => (r.sw || 0) * (1 - (r.whf || 0) / 100);   // the pitch's contacted swings — what the foul chance is over
     const LR = lgRatesP(), cshift = LR.xcstr != null && LR.cstr != null ? LR.cstr - LR.xcstr : 0;   // xCalled's centring: the fixed models read the newest season a little hot
     const relSum = { t: 0, w: 0, b: 0, n: 0 };
@@ -8288,7 +8332,7 @@
       if (roleNorm(SPLIT)) { const d = el("div", "aopt spnorm");
         d.append(el("b", null, "All innings as a starter"), el("span", null, ": every pitch he threw, with the days he relieved read as a starter — their expected whiff, ground-ball and popup rates moved by the reliever-to-starter effect from history (about −0.9 whiff points, −0.8 ground-ball points and +0.1 popup points for a typical reliever, more the better his relief numbers). So xWhiff / xGB / xPU here and in the Pitching+ table, Mix xwOBA, xRating and the whiff check are what the whole season says about him in the rotation; his actual rates, Pitching+ and the start days are as they were."));
         box.append(d); }
-      const ka = renderKArchetype(p, st, g); if (ka) box.append(ka);   // strikeout profile: archetype, skill / noise (6 Oct 2026)
+      const ka = renderKArchetype(p, st, g); if (ka) box.append(ka); const bw = renderBBBuild(p, st, g); if (bw) box.append(bw);   // strikeout profile, then the walk build-up (9 Oct 2026);: archetype, skill / noise (6 Oct 2026)
       }   // the whiff check and the notes under the tab are off (Sean, 6 Oct 2026: "i dont think we need any of that wording below")
     // how well his usage leans on his whiff pitches (arsenalOpt), with where that ranks among the season's pitchers
     const EXTRAS = false;   // Arsenal Opt. and Stuff uERA under the table are off (Sean, 6 Oct 2026: "just have a stuff+ tab that shows expected whiff rates and gb% and pop up%")
@@ -10220,7 +10264,9 @@
       const pg = el("div", "ppage pageflow"), B = el("div", "pcol pcolB wide");
       renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
       pg.append(B);
-      box.append(pg, renderBelow(p, { st, g, ref }));
+      // a centred title over the bars (Sean, 9 Oct 2026: "above the percentile bar stuff could you include a 2026 MLB Percentiles header")
+      const pt = el("h3", "pcthd", `${DS.season} ${DS.level || "MLB"}${KIND_TAG[DS.kind || ""] || ""} Percentiles`);
+      box.append(pt, pg, renderBelow(p, { st, g, ref }));
       // no bar pinned on scroll any more (Sean, 9 Oct 2026: "just get rid of the scrolling headers and not have that at all"); condensedBar /
       // condSync stay below, unused — condSync finds no bar and returns
       return;

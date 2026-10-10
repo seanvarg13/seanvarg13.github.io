@@ -3113,3 +3113,14 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   K% − the K% Whiff% implies − the four dials, every 100+ BF pitcher-season 2020-26 against its season's 20+ BF league; year to year r .35,
   talent sd 0.67 K% points, noise 225 / BF, and next season's leftover = 1.02 × the shrunk value): repeatable = BF / (BF + 497) of it (38% at
   300 BF, 58% at 700), luck the rest. The Stuff side keeps one plain "Everything else" row (the models' leftover isn't sampling luck).
+* **A walk build-up, Actual before Expected, a percentiles title (Sean, 9 Oct 2026: "below that could you have a table that is the same but is
+  for walk rate", "in the pitching plus table put actual before expected", "above the percentile bar stuff could you include a 2026 MLB
+  Percentiles header that is centered")**:
+  - **Walk rate** (`renderBBBuild` / `BBCONV`, under the K% build-up on the Pitching+ tab, MLB and minors): BB% from what his Strike% alone
+    implies (the league's BB% − 0.786 a point of Strike% over the league's), then 1st-pitch Strike% +0.028, 3-ball Strike% −0.202, Whiff%
+    +0.107, Zone% +0.134 a point over the league (each on what Strike% leaves; scratch `bbfit.js`, every 100+ BF pitcher-season 2020-26 against its
+    season's 20+ BF league, BF-weighted: Strike% alone R² .58, with the four .84), then Everything else, repeatable / luck at the leftover's own
+    reliability (`BBCONV.rest` 929, `bbrest.js`: next season = 1.01 × the shrunk value), the BB% band row last. The ± pills are coloured the K%
+    table's way turned over (fewer walks red). No stuff model for walks, so both sides read his actual rates.
+  - **Act before Exp** on the Pitching+ tab's arsenal table (`PAIRH`, the tab's own `pair`; Act stays grey). The Pitching+ board keeps Exp first.
+  - **"2026 MLB Percentiles"** (`h3.pcthd`, the dataset's season, level and kind) centred over the bars on his page, in the season table title's type.
