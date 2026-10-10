@@ -5216,3 +5216,24 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .dd { height: auto !important; line-height: 1 !important; align-items: center; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .tsl { border: 1px solid #c3d3e3 !important; background-image: none !important; text-decoration: none !important; box-shadow: none !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard h3.pcthd .dd { border: 0 !important; padding: 0 !important; }
+/* the sticky bar with his headshot (Sean, 9 Oct 2026): photo at the far left, the name over the bio beside it, Filters / Raw at the right */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar.pgbar3 { flex-wrap: nowrap; align-items: center; gap: 14px; row-gap: 0; padding-top: 10px; padding-bottom: 10px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 > .pgbmug { flex: none; width: 64px; height: 64px; border-radius: 50%; overflow: hidden; background: rgba(255,255,255,.92); box-shadow: 0 0 0 2px #fff; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 > .pgbmug .mug { width: 100% !important; height: 100% !important; object-fit: cover; object-position: center top; display: block; border: 0 !important; border-radius: 0 !important; background: none !important; margin: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 > .pgbtxt { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 > .pgbtxt > .pgbname { flex: none; margin: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 > .pgbtxt > .pbrow1 { display: flex; align-items: center; justify-content: space-between; gap: 6px 16px; flex-wrap: wrap; min-width: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 > .pgbtxt > .pbrow1 > .pbctl { flex: none; margin-left: auto; position: static; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 > .pgbtxt > .pbrow1 > .pbctl .pbsp { display: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 > .pgfix { flex: none; align-self: center; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar.pgbar3 { gap: 10px; padding-top: 8px; padding-bottom: 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar3 > .pgbmug { width: 50px; height: 50px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar3 > .pgbtxt { gap: 2px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar3 .pbline { font-size: 12.5px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar3 .pbline .pbdot { margin: 0 5px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pbline .pbit { display: inline-flex; align-items: center; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 > .pgbtxt { overflow: hidden; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 .pbline .pbdot { display: inline-block; width: 18px; margin: 0 !important; text-align: center; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 .pbline { margin-left: -18px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar3 .pbline .pbdot { width: 13px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar3 .pbline { margin-left: -13px; }

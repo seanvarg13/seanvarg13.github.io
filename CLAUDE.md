@@ -3129,3 +3129,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Filters ▾ (and a pitcher's Raw ▾) only; `pageHead` hands the season picks over as `top._picks` and `playerView` builds the title from them —
   "2026 ▾ MLB ▾ Percentiles", the year a boxy button, the level a button when `lvWorth` (another level that year, a minors or postseason season)
   and a plain word otherwise (`.pclv`). The CSS is the end of `styles.css` (the `.dd` wrapper's dotted rule and height are cleared there).
+* **The headshot back in the bar (Sean, 9 Oct 2026, Messick's page: "add the head shot to the far left and then have the name next to it and push
+  the bio stuff over with the name")**: the sticky bar (`.pgbar.pgbar3`) is the round headshot (`.pgbmug`, 64px / 50px on a phone) · a column of
+  the name over the bio row (`.pgbtxt`: `h2.pgbname`, then `.pbrow1` with the bio, Back and the chips) · Filters / Raw at the right. `bioStrip`
+  wraps every item with its dot in a nowrap `.pbit`, and the line sits a dot's width left of a clipping box, so whichever item starts a line
+  loses its dot — a bio that wraps never shows a dot at either end of a line. CSS at the end of `styles.css`.
