@@ -3165,5 +3165,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **Expected BABIP marked; the BABIP row bold (Sean, 10 Oct 2026, Conine's xBABIP tab: "do the same thing for the xbabip table and make the luck row
   blue and bold the bottom babip row")**: `buildUp` gains `mark(word)` (→ `expMark`) and `tag(cls)`; `renderXbabipTab` marks the running BABIP after
   Rest of Contact (= his xBABIP) yellow with "Expected BABIP" to its right (a phone scrolls the table's box to it, as the K% / BB% tables do) and
-  tags the bottom BABIP row `kfinal`, bold throughout including its label. The Luck row was already on the blue band and is unchanged. The xHR/FB
-  build-up has no mark.
+  tags the bottom BABIP row `kfinal`, bold throughout including its label. The Luck row was already on the blue band and is unchanged.
+  **xHR/FB the same way (Sean, minutes later: "get rid of the bolded xHR/FB row and do the same ... highlight bold text with the final one in LD
+  brl% and then make luck white and make the bottom row bolded")**: `renderXhrfbTab` has no xHR/FB band row; the running HR/FB after LD Brl% is
+  marked "Expected HR/FB", Luck is a plain white row (± = HR/FB − that running number, carrying it to his HR/FB), and the HR/FB band row is
+  `kfinal`. A season without the contact numbers still shows its "xHR/FB –" band row.
