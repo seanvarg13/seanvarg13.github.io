@@ -3212,3 +3212,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   so LD Pull% reads red when high and LD Center% / Oppo% blue when high; an oppo grounder is a hit .354 against .306 centre / .198 pulled, at every
   EV band (lefties' oppo grounders .428), so GB Oppo% reads red when high. The grounder row shows once a build carries `gbdir` (2026 at the next
   `steps=mlb` run, past seasons at a rescore).
+  **Then (Sean, the same evening: "remove direction from line drives since it really doesnt appear to matter", "for grounders basically just show
+  pull rate and make it so higher pull rate for gbs is bad and lower better")**: Line Drives is Avg EV · Barrel% with no direction row, and Ground
+  Balls is Avg EV · **Pull%** (`gbpull`, from `ctx.gbdir`, its percentile turned over so a low pull rate reads red). Fly Balls keeps Pull%.
