@@ -3124,3 +3124,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     table's way turned over (fewer walks red). No stuff model for walks, so both sides read his actual rates.
   - **Act before Exp** on the Pitching+ tab's arsenal table (`PAIRH`, the tab's own `pair`; Act stays grey). The Pitching+ board keeps Exp first.
   - **"2026 MLB Percentiles"** (`h3.pcthd`, the dataset's season, level and kind) centred over the bars on his page, in the season table title's type.
+* **The year and level are picked in the percentiles title (Sean, 9 Oct 2026: "make it so that is where you filter by the year and by level so we
+  no longer need the year button in the header or the level button just filters and then for pitchers raw vs stuff")**: the sticky bar holds
+  Filters ▾ (and a pitcher's Raw ▾) only; `pageHead` hands the season picks over as `top._picks` and `playerView` builds the title from them —
+  "2026 ▾ MLB ▾ Percentiles", the year a boxy button, the level a button when `lvWorth` (another level that year, a minors or postseason season)
+  and a plain word otherwise (`.pclv`). The CSS is the end of `styles.css` (the `.dd` wrapper's dotted rule and height are cleared there).
