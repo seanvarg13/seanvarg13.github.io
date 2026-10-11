@@ -353,6 +353,7 @@ TW_XBAB = {"ld": 3.64, "pu": -3.15, "evgb": 2.11, "evld": 1.2, "ldp": 0.27, "spd
 TW_XHRFB = [{"evfb": 0.332, "brfb": 0.401, "brld": 0.218, "pfb": 0.094}, {"evfb": 0.373, "brfb": 0.391, "brld": 0.217},
             {"evfb": 0.779, "brl": 0.738}, {"brl": 1.037, "ev90": 0.499}]
 TW_W = {"bb": 0.69, "hbp": 0.72, "s": 0.88, "d": 1.25, "hr": 2.03}
+TW_ACT = 0.5   # share of his actual K% / BB% in the talent pieces (app.js TW.act)
 
 
 def _tw_inputs(p):
@@ -411,6 +412,9 @@ def talent_of(i, L):
     if any(m.get(k) is None or L["k"].get(k) is None for k in w) or L["k"].get("k") is None: return None
     xk = L["k"]["k"] + c + sum(w[k] * (m[k] - L["k"][k]) for k in w)
     xbb = L["bb"] + sum(v * (m[k] - L[k]) for k, v in TW_XBB.items() if m.get(k) is not None and L.get(k) is not None)
+    # half his actual K% / BB%, half the expected rate (app.js TW.act): the blend forecast next season's K%, BB% and wOBA better than either alone
+    if m.get("k") is not None: xk = TW_ACT * m["k"] + (1 - TW_ACT) * xk
+    if m.get("bb") is not None: xbb = TW_ACT * m["bb"] + (1 - TW_ACT) * xbb
     hbp = (i["hbp"] or 0) / i["pa"]
     bx = {"evfb": m.get("evfb"), "brfb": m.get("brfb"), "brld": m.get("brld"), "pfb": i["pfb"], "brl": m.get("brl"), "ev90": m.get("ev90")}
     fit = next((f for f in TW_XHRFB if all(bx[k] is not None and L["hr"].get(k) is not None for k in f)), None)

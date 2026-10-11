@@ -3313,3 +3313,18 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   were patched in place the same day (scratch `patchtw.js`: zone% seen and HR from the day files, HBP from `career.js` / `minors.js`). The
   minors read on the level's own league with MLB's weights; Double-A and below have no tracked contact, so no talent xwOBA. A span of seasons
   has none either.
+* **Talent xwOBA takes half his actual K% and BB%; richer xK% / xBB% tested (Sean, 11 Oct 2026: "Yeah sure", to blending them, then "not sure if
+  there is a better xk and xbb model or not but look at that too")**: talent xwOBA's K% piece is half his K%, half xK% (`XKH`), and its BB% piece
+  half his BB%, half xBB% (`TW_XBB`) — `TW.act` 0.5 in `app.js` (`talentCore` keeps the fits as `xkFit` / `xbbFit`), `TW_ACT` in
+  `tools/build_career.py` (`talent_of`), `hist/career-bb.js` regenerated. Why (scratch `twk.js`, the same 1,819 back-to-back 300+ PA pairs): K% and
+  BB% settle faster than anything else a hitter does — next season's K% r .831 from his K%, .806 from xK%, .834 half and half (best 70 / 30, .836);
+  BB% .712 / .711 / .735 (best 50 / 50); talent xwOBA's next-season wOBA r .536 → .542, and 300 PA is still the projection's best regression. The
+  Talent tab's build-up steps read K% / BB% (the tooltip gives both halves); its Talent vs actual table shows the fits, xK% / xBB%, against his
+  rates. **Tested and left out** (scratch `xkb.js` / `twn.js`; season-centred, held out by season; hitter fouls per contact = (swings − whiffs −
+  balls in play) / (swings − whiffs) from the day rows): an xK% with fouls per contact added (whf .854, zsw −.282, osw −.284, strk .597, fpc .498)
+  is much better same-season (r .931 → .967, 2.16 → 1.51 points) and next season (.806 → .823), and an xBB% with fouls per contact, Whiff% and
+  Barrel% a little better (.873 → .895 same, .709 → .726 next) — but both make talent xwOBA worse (.528 / .533): a hitter who fouls a lot strikes
+  out more, yet those extra strikeouts cost him nothing in next season's wOBA (next wOBA on talent + the new − old xK% gap: weight 0.0000, where
+  his actual K% − xK% carries −.0011 a point). P/PA, strike rate seen, age, pitches-seen zone rates and fits trained on next season's rate added
+  ≤ .01. The splits of extra bases into doubles / triples (.522), HBP shrunk or set to the league (.533; HBP repeats at r .65) and pieces of
+  BABIP noise / luck put back (+.004, not talent) were tested the same day and left out. The site's displayed hitter xK% is unchanged.

@@ -7154,7 +7154,7 @@
   const pfbOf = (o) => (o && o.pullfb != null && o.fb ? Math.round(1000 * o.pullfb / o.fb) / 10 : null);   // share of his fly balls pulled (pullfb is a share of every ball in play)
   // Talent xwOBA (Sean, 11 Oct 2026: "an xwoba based purely on their talent and completely removes noise ... their batted ball mix, k rate, bb rate,
   // xbabip minus luck and noise, and xHR/fb rate"): wOBA rebuilt from expected rates only, never his actual hits, walks or strikeouts —
-  //   K: xK% (XKH, the hitter fit) · BB: xBB% (TW_XBB below) · HBP: his own rate (no process behind it)
+  //   K: half his K%, half xK% (XKH, the hitter fit) · BB: half his BB%, half xBB% (TW_XBB below) — TW.act · HBP: his own rate (no process behind it)
   //   HR: xHR/FB (XHRFB, against the dataset's own HR over fly balls + popups) on his fly balls + popups per ball in play (the Mix buckets)
   //   hits on the other balls in play: the eight-driver xBABIP (XBAB — the xBABIP tab's build-up stopped before Noise and Luck)
   //   extra bases per hit: the directional model's xSLG / xBA less those home runs
@@ -7167,7 +7167,13 @@
   // noise, and 300 PA of league average is the regression that forecasts next season's wOBA best (xwOBA needs 525). build_career.py's
   // talent_of is the same arithmetic for the season table (hist/career-bb.js txw) — keep the two in step
   const TW_XBB = { osw: -0.448, zsw: -0.030, ocon: 0.034, zcon: -0.113, zsn: -0.539, ev90: 0.056 };
-  const TW = { bb: 0.69, hbp: 0.72, s: 0.88, d: 1.25, hr: 2.03, k: 300 };
+  // act (Sean, 11 Oct 2026, "yeah sure" to the blend): K% and BB% are half his actual rate, half the expected one. Both settle faster than anything
+  // else a hitter does, so a season's K% / BB% is mostly skill and the expected rate misses part of it — 300+ PA pairs 2015-26: next season's K%
+  // r .831 actual / .806 xK% / .834 half and half, BB% .712 / .711 / .735; talent xwOBA's next-season wOBA r .536 → .542. A richer xK% with fouls
+  // per contact (r .823 on its own) and xBB% with fouls / whiffs / Barrel% (.726) were tested the same day and made talent xwOBA worse (.528 /
+  // .533): a hitter who fouls a lot strikes out more but his extra strikeouts cost him nothing in next season's wOBA. Pieces of BABIP noise / luck
+  // put back added .004 more and were left out (they aren't talent)
+  const TW = { bb: 0.69, hbp: 0.72, s: 0.88, d: 1.25, hr: 2.03, k: 300, act: 0.5 };
   const twMix = (c) => (c && c.mix && c.mix.length >= 8 ? c.mix : null);
   function twInputs(m, c, pa, ab, hbp) {
     const mx = twMix(c), tot = mx ? mx.reduce((a, b) => a + (b || 0), 0) : 0;
@@ -7195,8 +7201,9 @@
   }
   function talentCore(I, L) {
     const m = I.m; if (!I.mx || !I.pa || !I.ab || m.dxba == null || m.dxslg == null || L.xbabip == null || L.hr.hrfb == null || L.scale == null || I.fbs == null) return null;
-    const xk = xKFrom(m); if (xk == null) return null;
-    let xbb = L.bb; for (const k in TW_XBB) if (m[k] != null && L[k] != null) xbb += TW_XBB[k] * (m[k] - L[k]);
+    const xkFit = xKFrom(m); if (xkFit == null) return null;
+    let xbbFit = L.bb; for (const k in TW_XBB) if (m[k] != null && L[k] != null) xbbFit += TW_XBB[k] * (m[k] - L[k]);
+    const xk = m.k == null ? xkFit : TW.act * m.k + (1 - TW.act) * xkFit, xbb = m.bb == null ? xbbFit : TW.act * m.bb + (1 - TW.act) * xbbFit;
     const hbp = (I.hbp || 0) / I.pa;
     const bx = { evfb: m.evfb, brfb: m.brfb, brld: m.brld, pfb: I.pfb, brl: m.brl, ev90: m.ev90 }, f = hrfbFit(bx, L.hr); if (!f) return null;
     let xhf = L.hr.hrfb; const dh = {}; for (const k in f) { dh[k] = f[k] * (bx[k] - L.hr[k]); xhf += dh[k]; } xhf = Math.max(0, xhf);
@@ -7207,7 +7214,7 @@
     const tph = Math.min(1.7, Math.max(1, (m.dxslg * I.ab - 4 * xhr) / Math.max(1, m.dxba * I.ab - xhr)));
     const vh = TW.s + (tph - 1) * (TW.d - TW.s);
     const raw = TW.bb * xbb / 100 + TW.hbp * hbp + bip * (hrb * TW.hr + (1 - hrb) * xbab * vh);
-    return { xk, xbb, hbp, xhf, dh, fit: f, fbs: I.fbs, hrb, xbab, dv, tph, vh, bip, raw, bx, I };
+    return { xk, xbb, xkFit, xbbFit, hbp, xhf, dh, fit: f, fbs: I.fbs, hrb, xbab, dv, tph, vh, bip, raw, bx, I };
   }
   // the same arithmetic on a set of pieces, for the Talent tab's build-up (each step swaps one league piece for his)
   const twRaw = (c) => { const bip = Math.max(0, 1 - c.xk / 100 - c.xbb / 100 - c.hbp), hrb = c.xhf / 100 * c.fbs, vh = TW.s + (c.tph - 1) * (TW.d - TW.s);
@@ -7465,7 +7472,7 @@
     if (!t) { w.append(el("p", "note", DS.multi ? "No talent xwOBA for a span of seasons — pick one season." : "No talent xwOBA for this view — it needs tracked batted balls (exit velocity, the directional model) and a qualified pool.")); return w; }
     const L = t.L, sc = L.scale, wob = (c) => twRaw(c) * sc;
     const f3 = (x) => fmtX(x), pct1 = (x) => x.toFixed(1) + "%", pts = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x) * 1000);
-    const lgK = (lgRatesH().k || 0) - 0.08;
+    const lgK = (lgRatesH().k || 0) - 0.08 * (1 - TW.act);   // the league's blend: its K% and its xK% (XKH's −0.08)
     const cur = { xk: lgK, xbb: L.bb, hbp: L.hbp, xhf: L.hr.hrfb, fbs: L.fbs, xbab: L.xbabip, tph: L.tph };
     const vl = viewLabel("H");
     const b = buildUp(`Talent xwOBA build-up · ${DS.season}${DS.level && DS.level !== "MLB" ? " " + (DS.levelName || DS.level) : ""}`, `${vl && vl !== "full season" ? vl + " · " : ""}${v.pa} PA · ± in wOBA points, against the season's 300+ PA hitters`, "wOBA", f3, pts, 0.020);
@@ -7474,8 +7481,8 @@
     b.row("League", null, wob(cur), f3, null, "→", wob(cur), "the season's 300+ PA hitters' pieces, put together the same way — where the build-up starts (scaled to their real wOBA)");
     const pc = (k, his, dir) => { const vals = []; for (const q of pool("H").ref) { const x = V(q).tal; if (x && x[k] != null) vals.push(x[k]); } return pctAmong(vals, his, dir); };
     const steps = [
-      ["xK%", "xk", t.xk, lgK, pct1, -1, `the strikeout rate his whiffs, swing decisions and the strikes he sees come with (his actual K%: ${m.k != null ? pct1(m.k) : "–"}) — fewer strikeouts, more balls in play`],
-      ["xBB%", "xbb", t.xbb, L.bb, pct1, 1, `the walk rate his chase rate, zone swings, contact and the share of pitches he sees in the zone come with (his actual BB%: ${m.bb != null ? pct1(m.bb) : "–"})`],
+      ["K%", "xk", t.xk, lgK, pct1, -1, `half his actual K% (${m.k != null ? pct1(m.k) : "–"}), half his xK% (${pct1(t.xkFit)}: the strikeout rate his whiffs, swing decisions and the strikes he sees come with) — a season's K% is mostly skill, and the half-and-half forecast next season's K% better than either alone`],
+      ["BB%", "xbb", t.xbb, L.bb, pct1, 1, `half his actual BB% (${m.bb != null ? pct1(m.bb) : "–"}), half his xBB% (${pct1(t.xbbFit)}: the walk rate his chase rate, zone swings, contact and the share of pitches he sees in the zone come with) — the half-and-half forecast next season's BB% better than either alone`],
       ["HBP", "hbp", t.hbp, L.hbp, (x) => pct1(100 * x), 1, "his own hit-by-pitch rate per plate appearance — there's no process to model, so it stands as it is"],
       ["xHR/FB", "xhf", t.xhf, L.hr.hrfb, pct1, 1, `home runs per fly ball + popup his fly-ball EV, Barrel% on fly balls and liners and pulled fly balls deserve, against the season's own HR / (fly balls + popups); it can sit a little off the xHR/FB tab, which counts Savant's fly balls`],
       ["Fly balls", "fbs", t.fbs, L.fbs, (x) => pct1(100 * x), 1, "fly balls + popups per ball in play: how often xHR/FB gets its chance"],
@@ -7492,7 +7499,7 @@
     const actHf = hr != null && t.I.fbn ? 100 * hr / t.I.fbn : null;
     const actTph = hr != null && m.ba != null && m.slg != null && ab && m.ba * ab - hr > 0 ? (m.slg * ab - 4 * hr) / (m.ba * ab - hr) : null;
     const sg = (x, f) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + f(Math.abs(x)));
-    for (const [lab, a, x, f, fd] of [["K%", t.xk, m.k, pct1, (z) => z.toFixed(1)], ["BB%", t.xbb, m.bb, pct1, (z) => z.toFixed(1)], ["HR/FB", t.xhf, actHf, pct1, (z) => z.toFixed(1)],
+    for (const [lab, a, x, f, fd] of [["xK%", t.xkFit, m.k, pct1, (z) => z.toFixed(1)], ["xBB%", t.xbbFit, m.bb, pct1, (z) => z.toFixed(1)], ["HR/FB", t.xhf, actHf, pct1, (z) => z.toFixed(1)],
                                        ["BABIP", t.xbab, m.babip, f3, (z) => fmtX(z)], ["Bases per hit (no HR)", t.tph, actTph, (z) => z.toFixed(2), (z) => z.toFixed(2)], ["wOBA", m.txw, m.woba, f3, (z) => fmtX(z)], ["xwOBA", m.txw, m.xwd, f3, (z) => fmtX(z)]]) {
       const tr = el("tr", lab === "wOBA" || lab === "xwOBA" ? "tot" : null);
       tr.append(el("td", "l nm", lab), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)));
