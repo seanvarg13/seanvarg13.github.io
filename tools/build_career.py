@@ -354,6 +354,7 @@ TW_XHRFB = [{"evfb": 0.332, "brfb": 0.401, "brld": 0.218, "pfb": 0.094}, {"evfb"
             {"evfb": 0.779, "brl": 0.738}, {"brl": 1.037, "ev90": 0.499}]
 TW_W = {"bb": 0.69, "hbp": 0.72, "s": 0.88, "d": 1.25, "hr": 2.03}
 TW_ACT = 0.5   # share of his actual K% / BB% in the talent pieces (app.js TW.act)
+TW_HF = (0.104, {"evfb": 1.365, "ev90": 0.828, "pfb": 0.096})   # the HR piece on exit velocity alone (app.js TW_HF); XHRFB the fallback
 
 
 def _tw_inputs(p):
@@ -393,6 +394,7 @@ def talent_league(players, ref_pa):
     L["hr"] = {"hrfb": 100 * hr / fb if fb else None}
     for k in ("evfb", "brfb", "brld", "pfb", "brl", "ev90"):
         L["hr"][k] = wavg(F, lambda i: i[k] if k == "pfb" else i["m"].get(k), lambda i: i["fbn"])
+    L["twh"] = {k: wavg(F, lambda i: i[k] if k == "pfb" else i["m"].get(k), lambda i: i["pa"]) for k in TW_HF[1]}
     L["scale"] = 1.0
     a = b = 0.0
     for i in I:
@@ -417,9 +419,13 @@ def talent_of(i, L):
     if m.get("bb") is not None: xbb = TW_ACT * m["bb"] + (1 - TW_ACT) * xbb
     hbp = (i["hbp"] or 0) / i["pa"]
     bx = {"evfb": m.get("evfb"), "brfb": m.get("brfb"), "brld": m.get("brld"), "pfb": i["pfb"], "brl": m.get("brl"), "ev90": m.get("ev90")}
-    fit = next((f for f in TW_XHRFB if all(bx[k] is not None and L["hr"].get(k) is not None for k in f)), None)
-    if fit is None: return None
-    xhf = max(0.0, L["hr"]["hrfb"] + sum(v * (bx[k] - L["hr"][k]) for k, v in fit.items()))
+    twh = L.get("twh") or {}
+    if all(bx[k] is not None and twh.get(k) is not None for k in TW_HF[1]):
+        xhf = max(0.0, L["hr"]["hrfb"] + TW_HF[0] + sum(v * (bx[k] - twh[k]) for k, v in TW_HF[1].items()))
+    else:
+        fit = next((f for f in TW_XHRFB if all(bx[k] is not None and L["hr"].get(k) is not None for k in f)), None)
+        if fit is None: return None
+        xhf = max(0.0, L["hr"]["hrfb"] + sum(v * (bx[k] - L["hr"][k]) for k, v in fit.items()))
     hrb = xhf / 100 * i["fbs"]
     xbab = L["xbabip"]
     for k, v in TW_XBAB.items():
