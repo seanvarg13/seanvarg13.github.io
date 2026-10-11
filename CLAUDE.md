@@ -3363,3 +3363,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   season's wOBA r .5476 → .5488. The row's Lg is still the whole league's GB Pull% (61% in 2026; righties 56, lefties 65). `hist/career-bb.js`
   regenerated, app and build within .0005. Line drives: pulling is best for both sides (same hitter, pull − oppo +.06 BABIP, +.11 wOBA), so LD
   Pull% stays one weight. Kody Clemens (bats left) 2026: GB Pull% −11 BABIP points, Noise −10.
+* **The desktop Leaderboard in a window again; one Filters button (Sean, 11 Oct 2026: "i dont really like the look of this not being a separate
+  window can you make it like that again, and then also make it so there is no hitters rp sp stuff since that is in the filters button")**: on a
+  desktop the Leaderboard / Recent `main.wrap` is a card again — a hairline frame (ink at 22%), 6px corners, the surface, 14px / 18px of padding —
+  and the rows' box `#bscroll` has its own hairline frame and hugs its columns (`width: max-content`, at most the card's width), as a phone's has
+  been since 9 Oct; only the rows scroll, as before (the block at the end of `styles.css`). `renderToolButtons` under `onePage()` draws one
+  Filters button on both layouts, labelled with who's listed ("Hitters filters", "SP filters (1)" — `posBtnLabel`); the desktop's Hitters · SP ·
+  RP segment (`.posseg`) is gone, the choice being the dropdown's Position tab. The Standard ▾ and season pills stay beside it.

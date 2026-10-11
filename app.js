@@ -4863,25 +4863,11 @@
       box.append(b);
     };
     // the position shows on the button when it isn't everyone ("SS · Filters"), so the one button still says what's listed
-    if (onePage() && phonePages()) {   // a phone (Sean, 6 Oct 2026: "move the hitters rp sp custom and year into the filters button"): one Filters button
+    if (onePage()) {   // one Filters button on both layouts (a phone since 6 Oct 2026: "move the hitters rp sp custom and year into the filters button";
+      // a desktop since 11 Oct 2026: "make it so there is no hitters rp sp stuff since that is in the filters button")
       // that says who's listed; the Hitters / SP / RP choice is the dropdown's Position tab, the column set and season sit at the top of its Stats / Filters tabs
       const n = ["filters", "splits", "dates"].filter(popActive).length, pos = posBtnLabel();
       add("grp", `${pos === "All pitchers" ? "Pitchers" : pos === "All hitters" ? "Hitters" : pos} filters${n ? ` (${n})` : ""}`, grpOpen, n > 0);   /* "SP filters", no interpunct (the less-slop pass) */
-      return;
-    }
-    if (onePage()) {   // the Leaderboard / Recent, since the proposed layout (Sean, 6 Oct 2026: "Implement both of those"): a Hitters · SP · RP
-      // segment, then one Filters button whose dropdown holds the tabs (Position · Filters · Stats · Splits · Dates) — the six buttons of 3 Oct are history
-      const pit = isPitcherGroup(groupFor(state.pos)), sel = posSel(), seg = el("div", "seg posseg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Who");
-      const hitLab = !pit && popActive("positions") ? posBtnLabel() : "Hitters";
-      for (const [pos, label, on] of [["ALL", hitLab, !pit], ["SP", "SP", pit && sel.length === 1 && sel[0] === "SP"], ["RP", "RP", pit && sel.length === 1 && sel[0] === "RP"]]) {
-        const b = el("button", "segbtn small", label); b.type = "button"; b.setAttribute("aria-pressed", String(on)); b.dataset.pos = pos;
-        b.title = pos === "ALL" ? "Hitters — tap again for a position" : pos === "SP" ? "Starters" : "Relievers";
-        b.addEventListener("click", (e) => { e.stopPropagation(); if (pos === "ALL" && !pit) { if (state.panel === "positions") closePanel(false); else openPanel("positions"); return; } togglePos(pos); });
-        seg.append(b);
-      }
-      box.append(seg);
-      const n = ["filters", "splits", "dates"].filter(popActive).length;
-      add("grp", "Filters" + (n ? ` · ${n}` : ""), grpOpen, n > 0);
       return;
     }
     const n = ["filters", "splits", "dates"].filter(popActive).length, pos = popActive("positions") ? posBtnLabel() + " " : "";
