@@ -5325,3 +5325,18 @@ header.top .wordmark { display: none; }
    on a desktop the Leaderboard / Recent board takes its table's width and sits centred, so Filters, the count and the title start at the
    table's left edge and the title's red rule runs the table's width. */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #board { align-self: center !important; width: fit-content !important; max-width: 100% !important; min-width: 0 !important; margin-left: auto !important; margin-right: auto !important; }
+
+/* The header's page words evened out (Sean, 11 Oct 2026: "could you fix how this header looks button wise"): on a desktop every page word —
+   Home, Leaders, Pitching+, Fantasy ▾, ⋯ — is the same white condensed 17px / 600 with 22px between them (they had 2-3px), Fantasy's word the
+   links' weight (it was 500), its ▾ tucked 3px after the word and lined up on its middle, the ⋯ menu its dots alone with no ▾, the current page's
+   white rule under its word only, and the search box 28px clear of the words. A phone's ☰ Menu is untouched. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes { gap: 22px !important; align-items: center !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > a, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel { align-items: center !important; gap: 3px !important;
+  padding: 6px 0 !important; font: 600 17px/1.2 var(--display) !important; color: var(--onband) !important; letter-spacing: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel .modesel-txt { font: inherit !important; color: inherit !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel .chev { margin: 1px 0 0 !important; width: 9px; height: 6px; opacity: .85; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > #moresel .chev { display: none !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > #moresel .modesel-txt { font-size: 22px !important; line-height: 1 !important; letter-spacing: 1px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > a:hover, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel:hover, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel.open { box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--onband) 45%, transparent) !important; background: transparent !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > a[aria-current="page"], :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--onband) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .gsearch { margin-left: 28px !important; }
