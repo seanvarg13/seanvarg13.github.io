@@ -5372,3 +5372,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .prow:has(> #lbseason) { display: block !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop #lbseason { width: 100% !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop #lbseason .spanseg { overflow: visible !important; }
+/* A phone's Leaderboard lists everyone (Sean, 11 Oct 2026): rows off the screen skip layout and paint until they scroll near, so 540 rows cost
+   about what 25 did. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #rows > li.row { content-visibility: auto; contain-intrinsic-size: auto 23px; }

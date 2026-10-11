@@ -3401,3 +3401,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   gone from it (`renderLbTabs` removes its row under `onePage()`; `lbSetPill` / `lbSeasonPill` stay in `app.js`, unused there), and the title sits right
   under that row, so the table starts ~50px higher and is that much taller. Rankings / Draft board keep their Filters tab. CSS: the blocks at the end
   of `styles.css`.
+* **A phone's Leaderboard lists everyone again (Sean, 11 Oct 2026: "on the phone can you make it table wise include the whole dataset so we dont need
+  the page buttons, be prepared to keep them in just in case i do not like the speed")**: `PHONE_ALL = true` in `app.js` (beside `phonePages`) makes
+  `pageWindow` one page on a phone too, so there are no page numbers, the count reads "267 hitters · 2026 · 300+ PA", and Dates ▸ Minimum has no Per
+  page. **To put the pages back, set `PHONE_ALL = false`** — everything else is unchanged. Kept fast: each phone row carries `content-visibility:
+  auto; contain-intrinsic-size: auto 23px` (the real row height, so a restored scroll lands right), so rows off the screen skip layout and paint;
+  `fitNameCol` returns at once on a phone (its width is fixed at 116px — reading styles there forced a layout of every row); and the phone's
+  long-name step-down measures on a canvas (`textWidth`) instead of reading each row back. Headless at 4× CPU, switching to all 541 pitchers:
+  ~6 s listing everyone before these, ~3.4 s after, against ~1.1 s for 25 a page.
