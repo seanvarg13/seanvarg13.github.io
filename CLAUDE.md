@@ -3426,3 +3426,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Qualified avg / gap rows as `--statcols`, which both `body.brlb .grid` templates read in place of `repeat(var(--n), …)` (the fallback when it's
   unset). A two-word name still wraps ("FB Power" stays 50px); one that can't ("xHR/FB%" 66, "Hard-Hit%" 74, "xwOBA−wOBA" 100) gets its room.
   Headless on a phone and a desktop, every column set plus a custom one: no header overflows and every column name sits on its column.
+* **The phone's page bar is the table's last row (Sean, 11 Oct 2026, from his phone: "make it like it would be another row of the table with the
+  buttons inside and make it grey colored ... right now it looks like a separate part of the table")**: `renderPager` moves `#pagerbot` into
+  `#bscroll` after `#rows` while it's the phone bar (and back after the box otherwise), where it is `position: sticky` at the box's foot and left
+  edge — one grey row (ink at 9% on the surface) the width of the visible box with a row hairline over it, 36px with 26px page buttons and Per
+  page. The box loses its 14px bottom padding (the blank strip under the last row) and hugs its rows when they don't fill it (`flex: 0 1 auto`
+  under `:has(> #pagerbot.phbot)`). Scrolling, the bar stays at the box's foot; at the end the last row sits right on it. The block at the end of
+  `styles.css`.
