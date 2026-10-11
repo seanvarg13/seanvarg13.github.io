@@ -351,7 +351,9 @@ SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evg
 TW_XK = (-0.08, {"whf": 0.989, "zsw": -0.212, "osw": -0.272, "strk": 0.523})
 TW_XBB = {"osw": -0.448, "zsw": -0.030, "ocon": 0.034, "zcon": -0.113, "zsn": -0.539, "ev90": 0.056}
 # GB Pull% joined (11 Oct 2026): the share of his grounders pulled, × his grounders' share of his non-HR balls in play like Sprint (app.js XBAB)
-TW_XBAB = {"ld": 3.74, "pu": -3.14, "evgb": 2.03, "gbp": -0.95, "evld": 1.21, "ldp": 0.28, "spd": 14 * 0.83, "oppo": 0.40, "fb": -0.73}
+# and by batter side (11 Oct 2026; app.js XBAB_GBP): "gbp" is only the sign, TW_XBAB_GBP the weight for his side, a switch hitter 70% lefty
+TW_XBAB = {"ld": 3.73, "pu": -3.16, "evgb": 2.05, "gbp": -1, "evld": 1.24, "ldp": 0.29, "spd": 14 * 0.83, "oppo": 0.41, "fb": -0.72}
+TW_XBAB_GBP = {"R": -0.61, "L": -1.48, "S": 0.3 * -0.61 + 0.7 * -1.48}
 TW_XHRFB = [{"evfb": 0.332, "brfb": 0.401, "brld": 0.218, "pfb": 0.094}, {"evfb": 0.373, "brfb": 0.391, "brld": 0.217},
             {"evfb": 0.779, "brl": 0.738}, {"brl": 1.037, "ev90": 0.499}]
 TW_W = {"bb": 0.69, "hbp": 0.72, "s": 0.88, "d": 1.25, "hr": 2.03}
@@ -371,7 +373,7 @@ def _tw_inputs(p):
     gd = cx.get("gbdir"); gn = sum(gd) if gd else 0
     return {"m": m, "mx": mx, "fbn": fbn, "pa": p.get("pa") or 0, "ab": p.get("ab") or 0, "hbp": cx.get("HBP"), "hr": cx.get("HR"),
             "pfb": 100 * mx[5] / fb3 if fb3 else None, "ldp": 100 * mx[2] / ld3 if ld3 else None,
-            "fbs": fbn / tot if tot else None, "gbs": 100 * xbt[0][0] / xn if xn else m.get("gb"), "gbp": 100 * gd[0] / gn if gn else None}
+            "fbs": fbn / tot if tot else None, "gbs": 100 * xbt[0][0] / xn if xn else m.get("gb"), "gbp": 100 * gd[0] / gn if gn else None, "bats": p.get("bats")}
 
 
 def talent_league(players, ref_pa):
@@ -436,6 +438,7 @@ def talent_of(i, L):
         his = i[k] if k in ("ldp", "gbp") else m.get(k)
         lg = L.get(k); g = i["gbs"] if k in ("spd", "gbp") else 100
         if his is None or lg is None or g is None: continue
+        if k == "gbp": v = TW_XBAB_GBP.get(i["bats"], -0.95)
         xbab += v * (his - lg) * g / 100 / 1000
     bip = max(0.0, 1 - xk / 100 - xbb / 100 - hbp); xhr = hrb * bip * i["pa"]
     tph = min(1.7, max(1.0, (m["dxslg"] * i["ab"] - 4 * xhr) / max(1.0, m["dxba"] * i["ab"] - xhr)))

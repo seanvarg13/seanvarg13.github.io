@@ -3353,3 +3353,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   a rescore); `build_career.py` appends **`gbp`** to `SBX_KEYS` and the BABIP-by-season table has a GB Pull% column; `hist/career-bb.js`
   regenerated (app and build talent xwOBA agree within .0005 over 7,530 seasons). The Noise row's note now says what's left: angles, where liners
   and fly balls went. Kody Clemens 2026 (78.3% of grounders pulled against 61.1%): −6 BABIP points, Noise −18 → −14.
+* **GB Pull% weighted by batter side (Sean, 11 Oct 2026: "factor in the batter side for the xbabip model since it clearly makes a difference")**:
+  every 2024-26 grounder from Savant (scratch `dirfetch.py` / `dirbb.py`, 155,000 grounders, 89,000 liners), the same hitter-season's oppo −
+  pull BABIP: righty +.089, lefty +.261 (a lefty's pulled grounder .170 BABIP, his oppo one .429; a righty's .215 / .306). `XBAB.gbp` is now only
+  the sign and **`XBAB_GBP`** / `xbabW(k, bats)` give his side's weight — **righty −0.61, lefty −1.48, switch hitter 70% lefty** (he bats left
+  against the right-handers he mostly faces), from `p.bats`; the other drivers refit with it (scratch `gbside.js`: ld 3.73, pu −3.16, evgb 2.05,
+  evld 1.24, ldp 0.29, oppo 0.41, fb −0.72; held out r .7751 → .7769, next season's BABIP .3658 → .3672; a separate lefty level term and centring
+  each side on its own league added nothing). Talent xwOBA carries it (`twInputs(…, bats)`, `TW_XBAB_GBP` in `tools/build_career.py`): next
+  season's wOBA r .5476 → .5488. The row's Lg is still the whole league's GB Pull% (61% in 2026; righties 56, lefties 65). `hist/career-bb.js`
+  regenerated, app and build within .0005. Line drives: pulling is best for both sides (same hitter, pull − oppo +.06 BABIP, +.11 wOBA), so LD
+  Pull% stays one weight. Kody Clemens (bats left) 2026: GB Pull% −11 BABIP points, Noise −10.
