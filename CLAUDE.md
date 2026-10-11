@@ -3241,3 +3241,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   so it's out. Within a hitter's own change a pulled-share point is worth ~0.15. Hicks: 2025 pulled 28.6% → xHR/FB 5.7% (HR/FB 7.7%), 2026 35.1%
   → 7.5% (12.0%) — the pull change is ~0.6-1 point of HR/FB (~1-1.5 homers), the rest of his jump is volume and luck. Most raised in 2026:
   Arenado (50% pulled) 11.6 → 14.3, Paredes 8.0 → 10.6; most lowered: Turang (8%) 15.1 → 13.6.
+* **LD Pull% in the xBABIP build-up; what the contact rows are (Sean, 11 Oct 2026: "can you add LD Direction or maybe call it LD Pull %? And then
+  for grounders and fly balls what explains the contact one for them")**: `XBAB` is eight drivers — **LD Pull%** (`ldp`, the share of his line
+  drives pulled, from `ctx.mix`: ld_p / (ld_p + ld_c + ld_o)) after LD EV, refit with it (scratch `xbfit8.js`, same 3,321 hitter-seasons: ld 3.64,
+  pu −3.16, evgb 2.13, evld 1.18, ldp 0.27, spd 5.90, oppo 0.84, fb −0.93; held out r .767 → .769). Line-drive contact now subtracts LD EV and LD
+  Pull%. The type rows' notes say what's left in each (scratch `typex.js` / `resyty.js`, every 300+ PA hitter-season 2015-26): a grounder's
+  expected hit rate is mostly speed and EV (R² .45 with Oppo%), its leftover the angle (low and hard vs a chopper) and where in the infield,
+  repeating at r .22; a liner's leftover beyond EV and pull is the angle inside the band and which liners he hit, r .05 (noise); a fly ball's
+  in-park hit rate is flat across FB EV (~.11-.12 — hard ones leave or are caught at the track), the leftover is bloops and flares, r .19. The
+  "Everything else" note says eight.
+
