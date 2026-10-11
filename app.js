@@ -2844,7 +2844,14 @@
     if (BR && list.length && pg.end >= (grouped ? at.size : list.length)) frag.append(...brTotRows(g, ms, stats, ends, preOn));   // the foot of the last page
     ol.append(frag);
     fitNameCol();
-    if (mobileView()) requestAnimationFrame(() => { for (const nm of ol.querySelectorAll(".name")) { nm.style.fontSize = ""; nm.style.letterSpacing = ""; if (nm.scrollWidth > nm.clientWidth + 1) { nm.style.fontSize = "13px"; nm.style.letterSpacing = "-0.02em"; if (nm.scrollWidth > nm.clientWidth + 1) nm.style.fontSize = "11.5px"; } } });   // a long name steps down to 14 then 12.5px before it ellipsises (Sean, 6 Oct 2026: "fit the names in there")
+    if (mobileView()) requestAnimationFrame(() => {   // a long name steps down to 13 then 11.5px before it ellipsises (Sean, 6 Oct 2026: "fit the names in there")
+      // measured on a canvas, not by reading each row back (that forced a layout per row — seconds once a phone lists everyone, 11 Oct 2026)
+      const names = [...ol.querySelectorAll(".name")]; if (!names.length) return;
+      for (const nm of names) { nm.style.fontSize = ""; nm.style.letterSpacing = ""; }
+      const cs = getComputedStyle(names[0]), room = names[0].clientWidth - 1, base = parseFloat(cs.fontSize) || 15, fam = cs.fontFamily, wt = cs.fontWeight;
+      const fits = (t, px, ls) => textWidth(t, `${wt} ${px}px ${fam}`) + ls * px * t.length <= room;
+      for (const nm of names) { const t = nm.textContent; if (fits(t, base, 0)) continue; nm.style.fontSize = "13px"; nm.style.letterSpacing = "-0.02em"; if (!fits(t, 13, -0.02)) nm.style.fontSize = "11.5px"; }
+    });
   }
   // The name column is as wide as the widest name on the page, so every row's stats start in the same place.
   // Each row is its own grid, so a single long name would otherwise push that row's columns out of line; the
@@ -2858,6 +2865,7 @@
   function fitNameCol() {
     const board = $("board"), first = $("rows").querySelector(".who");
     if (!first) { board.style.removeProperty("--namew"); return; }
+    if (document.documentElement.dataset.view === "mobile") { board.style.setProperty("--namew", "116px"); return; }   // a phone's is fixed: nothing to measure (reading styles here forced a layout of every row — 11 Oct 2026)
     const cs = getComputedStyle(first), pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
     const fontOf = (n) => { const c = getComputedStyle(n); return `${c.fontStyle} ${c.fontWeight} ${c.fontSize} ${c.fontFamily}`; };
     const nameFont = fontOf(first.querySelector(".name"));
@@ -2892,8 +2900,11 @@
   // ... on a desktop. A phone pages them again (Sean, 5 Oct 2026: "on mobile maybe we add back in the pages aspect?") — 700 rows built and laid out at
   // once was most of a phone's first draw; the row keeps the one-page dress (the six buttons, the Standard pill, the Min box), the page numbers sit on a line of their own under it
   const phonePages = () => onePage() && mobileView();
+  // a phone's Leaderboard lists everyone too (Sean, 11 Oct 2026: "include the whole dataset so we dont need the page buttons, be prepared to keep
+  // them in just in case i do not like the speed") — false puts the 25-a-page numbers back
+  const PHONE_ALL = true;
   function pageWindow(total, runs) {
-    const size = phonePages() ? state.pageSize || 25 : onePage() ? 0 : state.pageSize || 0;
+    const size = phonePages() ? (PHONE_ALL ? 0 : state.pageSize || 25) : onePage() ? 0 : state.pageSize || 0;
     let starts = [0];
     if (size && runs && runs.length) {
       starts = []; let filled = 0;
@@ -11390,7 +11401,7 @@
       const minNode = trending ? $("trendminfield") : $("minfield");
       const b = el("div", "psec"); b.append(el("h4", null, "Minimum"));
       const r = el("div", "prow"); r.append(minNode);
-      if (phonePages()) r.append(perPageField((n) => { state.pageSize = n; state.page = 1; savePrefs(); renderRows(); }));
+      if (phonePages() && !PHONE_ALL) r.append(perPageField((n) => { state.pageSize = n; state.page = 1; savePrefs(); renderRows(); }));
       b.append(r);
       if (!trending) b.append(el("p", "note", lbMulti() ? "The minimum is per season; a combined span multiplies it by the seasons in it." : `The minimum is who is listed; percentiles are always against ${pit ? "pitchers with 300+ batters faced" : "hitters with 300+ PA"} on the season.`));
       w.append(b);
