@@ -3269,4 +3269,20 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (side-controlled) and the model's 5.4; the other weights refit with it fixed (scratch `spd3.js`: ld 3.64, pu −3.15, evgb 2.11, evld 1.20, ldp
   0.27, oppo 0.86, fb −0.94; held out r .770). 2026: Simpson +15, Witt +12, Elly +6, Ohtani +2, Schwarber −7, Olson −10, Alonso −13. Elly's
   realized infield hits run under his speed three years running (43 on 463 against ~53); that lands in Luck, not Sprint.
+* **The Fantasy tables in B-Ref's dress (Sean, 11 Oct 2026: "make all of the fantasy tables be the baseball reference table design that we have for
+  everything else")**: every table under Fantasy is a `table.sbt.brt` now — the column names on the band, gridlines, 11px Verdana rows, a 2px red
+  rule where a group ends, heat filling whole cells.
+  - **Fantasy page** (`renderFTable`, class `fbt`): Rk · Player frozen (`f1` / `f3`, `--sbw1` measured), Tm and Pos their own columns (the name line
+    under the name is gone), the column names `sortbtn`s with the sorted one lit (`th.lit`), the sorted column and Trend / Δ filled by `heatTd`;
+    the rows' box is `.fscroll.brscroll` with its header pinned on a desktop; a phone keeps the floating copy of the header (`fFloatHead`, now
+    `sbt brt fbt fhead-table`, given the same `--sbw1`).
+  - **Claude rankings** (`cltbl`, plus `pbt` for the Pitching+ board's pinned headers): Rk · Pitcher frozen, Tm · Age, over-header groups
+    "2027 projection" / "2026", Proj pts and Pts/GS filled; a row still opens his comment (`clcomment`), a name opens his page.
+  - **Weekly Planner** (`pwt`, built by `brTable`): Pitcher / Hitter · Tm · Role or Pos as columns, projected points bold.
+  - **The card's Fantasy tab**: By season (`fantyrs`, the current season `cur`, Total a band row, Pts/PA filled) and the game log (`fantlog`).
+  - **Mock Draft room**: the player list (`mktable`: ADP · Player · Tm · Pos · Proj · $ · action), Teams (`mkteams`), a team's roster (`mkteam`,
+    with a Slot / Player / Proj / $ header now) and the final standings (`mkdone`).
+  CSS: every `:is(#xboard, #modal, #pitchboard, #hub)` B-Ref rule now names `#fboard` too, and the block "The Fantasy tables in B-Ref's dress" at
+  the end of `styles.css`. The old `.ftable` / `.pwtable` / `.cltable` rules stay but no table carries those classes on these pages. Headless phone
+  and desktop on each (the planner with a mocked schedule).
 
