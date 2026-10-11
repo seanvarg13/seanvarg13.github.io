@@ -5403,3 +5403,10 @@ header.top .wordmark { display: none; }
   background: color-mix(in srgb, var(--ink) 9%, var(--surface)) !important; border: 0 !important; border-top: 1px solid color-mix(in srgb, var(--ink) 18%, var(--surface)) !important; padding: 4px 8px !important; min-height: 36px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #board #bscroll > #pagerbot .pnav .pbtn { min-width: 26px !important; height: 26px !important; min-height: 26px !important; line-height: 24px !important; padding: 0 5px !important; font-size: 12.5px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #board #bscroll > #pagerbot .phsize select, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #board #bscroll > #pagerbot .phsize .dd { height: 26px !important; min-height: 26px !important; }
+
+/* Every table in the Leaderboard's frame (Sean, 11 Oct 2026: "make it so that all tables are the same format with the outline and shadow"): the
+   scroller round each table — his season table and the card tabs' B-Ref tables (.sbscroll / .brscroll), the Pitching+ board, Fantasy, the Claude
+   rankings and the planner (.fscroll / .pbscroll), home's tables, the older card tables (.stuffscroll / .rawscroll), Rankings / the Draft board
+   (.board-scroll) — gets #bscroll's firmer 1px edge (ink at 45%), the surface behind it and the same soft shadow. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #board) :is(.sbscroll, .brscroll, .fscroll, .pbscroll, .stuffscroll, .rawscroll, .board-scroll) {
+  border: 1px solid color-mix(in srgb, var(--ink) 45%, var(--surface)) !important; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08) !important; background: var(--surface) !important; }
