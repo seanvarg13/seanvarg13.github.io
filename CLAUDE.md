@@ -3409,3 +3409,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `fitNameCol` returns at once on a phone (its width is fixed at 116px — reading styles there forced a layout of every row); and the phone's
   long-name step-down measures on a canvas (`textWidth`) instead of reading each row back. Headless at 4× CPU, switching to all 541 pitchers:
   ~6 s listing everyone before these, ~3.4 s after, against ~1.1 s for 25 a page.
+  **Then pages again, the numbers under the table** (Sean, minutes later: "on mobile have separate pages and ... make the page buttons be locked in at
+  the bottom of the table so they're always there and make it so that is where you scroll between pages and select how many per page"):
+  `PHONE_ALL = false`; a phone's page size is `phSize()` = `state.lb.phSize` (25 by default, 25 / 50 / 100 / All, kept apart from Rankings'
+  `pageSize`), and `renderPager` draws the ‹ 1 2 … › numbers and a **Per page** select into `#pagerbot` (class `phbot`) — the bar right under the
+  rows' box, inside the table's frame, always on screen since only the rows scroll. The top line keeps the count ("1–25 of 267"); Dates ▸ Minimum has
+  no Per page. The content-visibility rows and the canvas name-fit stay (they help a 100 / All page too). CSS at the end of `styles.css`.

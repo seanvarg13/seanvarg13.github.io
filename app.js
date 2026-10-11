@@ -2902,9 +2902,10 @@
   const phonePages = () => onePage() && mobileView();
   // a phone's Leaderboard lists everyone too (Sean, 11 Oct 2026: "include the whole dataset so we dont need the page buttons, be prepared to keep
   // them in just in case i do not like the speed") — false puts the 25-a-page numbers back
-  const PHONE_ALL = true;
+  const PHONE_ALL = false;   // pages again, their numbers and Per page in a bar pinned under the table (Sean, 11 Oct 2026: "on mobile have separate pages ... page buttons ... locked in at the bottom of the table")
+  const phSize = () => (state.lb && state.lb.phSize != null ? state.lb.phSize : 25);   // a phone's rows a page (0 = everyone); kept apart from Rankings' pageSize
   function pageWindow(total, runs) {
-    const size = phonePages() ? (PHONE_ALL ? 0 : state.pageSize || 25) : onePage() ? 0 : state.pageSize || 0;
+    const size = phonePages() ? (PHONE_ALL ? 0 : phSize()) : onePage() ? 0 : state.pageSize || 0;
     let starts = [0];
     if (size && runs && runs.length) {
       starts = []; let filled = 0;
@@ -2967,6 +2968,8 @@
     { const old = box.nextElementSibling; if (old && old.classList.contains("pnavrow")) old.remove(); }   // a phone's page numbers, redrawn below
     const go = (n) => { state.page = Math.min(pg.pages, Math.max(1, n)); (onChange || renderRows)(); const top = box.closest(".board, .fboard") || box; const sb = top.querySelector(".board-scroll, .fscroll"); if (sb) sb.scrollTop = 0; const y = top.getBoundingClientRect().top + window.scrollY - 8; if (window.scrollY > y) window.scrollTo({ top: y }); };
     const setSize = (n) => { state.pageSize = n; state.page = 1; savePrefs(); (onChange || renderRows)(); };
+    const bot = !onChange && box.id === "pagertop" ? $("pagerbot") : null, botOn = !!bot && phonePages() && !PHONE_ALL;   // a phone's page numbers + Per page, under the table
+    if (bot) { bot.innerHTML = ""; bot.hidden = !botOn || !total; bot.classList.toggle("phbot", botOn); }
     if (!total) { box.hidden = true; if (!onChange) seatFilters(null); return; }
     box.hidden = false;
     { const g = groupFor(state.pos), pit = isPitcherGroup(g);   // the Stuff+ board's count line at the right (Sean, 3 Oct 2026)
@@ -2983,7 +2986,13 @@
         const x = b(String(n), n, `Page ${n}`, false); if (n === pg.page) x.setAttribute("aria-current", "page"); nav.append(x); last = n;
       }
       nav.append(b("›", pg.page + 1, "Next page", pg.page === pg.pages));
-      if (phonePages() && box.id === "pagertop") { const pc = box.querySelector(".pcount"); if (pc) box.append(pc); nav.classList.add("inbar"); box.append(nav); } else box.append(nav);   /* a phone: the count and the small page numbers ride on the Filters button's line (Sean, 6 Oct 2026) */   // a phone: the count left, small page numbers right on one line (Sean, 6 Oct 2026: pages back, "put it in the upper gap on the right")   // a phone: the count and the page numbers share one line (Sean, 6 Oct 2026: the table started too far down)
+      if (botOn) bot.append(nav); else if (phonePages() && box.id === "pagertop") { const pc = box.querySelector(".pcount"); if (pc) box.append(pc); nav.classList.add("inbar"); box.append(nav); } else box.append(nav);   /* a phone: the count and the small page numbers ride on the Filters button's line (Sean, 6 Oct 2026) */   // a phone: the count left, small page numbers right on one line (Sean, 6 Oct 2026: pages back, "put it in the upper gap on the right")   // a phone: the count and the page numbers share one line (Sean, 6 Oct 2026: the table started too far down)
+    }
+    if (botOn) {   // Per page beside the numbers
+      const sz = el("label", "field psize phsize"); sz.append(el("span", null, "Per page"));
+      const sel = el("select"); for (const n of [25, 50, 100, 0]) { const o = el("option", null, n ? String(n) : "All"); o.value = String(n); if (n === phSize()) o.selected = true; sel.append(o); }
+      sel.addEventListener("change", () => { state.lb.phSize = Number(sel.value); state.page = 1; savePrefs(); renderRows(); const sb = $("bscroll"); if (sb) sb.scrollTop = 0; });
+      sz.append(sel); bot.append(sz);
     }
     if (onChange) box.append(perPageField(setSize));    // the list pages keep theirs in Filters (minimal pass 4); Fantasy here
     if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs();
@@ -11401,7 +11410,6 @@
       const minNode = trending ? $("trendminfield") : $("minfield");
       const b = el("div", "psec"); b.append(el("h4", null, "Minimum"));
       const r = el("div", "prow"); r.append(minNode);
-      if (phonePages() && !PHONE_ALL) r.append(perPageField((n) => { state.pageSize = n; state.page = 1; savePrefs(); renderRows(); }));
       b.append(r);
       if (!trending) b.append(el("p", "note", lbMulti() ? "The minimum is per season; a combined span multiplies it by the seasons in it." : `The minimum is who is listed; percentiles are always against ${pit ? "pitchers with 300+ batters faced" : "hitters with 300+ PA"} on the season.`));
       w.append(b);
