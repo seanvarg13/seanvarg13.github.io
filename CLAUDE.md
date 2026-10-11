@@ -3433,3 +3433,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   page. The box loses its 14px bottom padding (the blank strip under the last row) and hugs its rows when they don't fill it (`flex: 0 1 auto`
   under `:has(> #pagerbot.phbot)`). Scrolling, the bar stays at the box's foot; at the end the last row sits right on it. The block at the end of
   `styles.css`.
+* **"Hitting Leaderboard" / "Pitchers Leaderboard" (Sean, 11 Oct 2026: "get rid of the your batting and make it say 'Hitting Leaderboard' for cases
+  when hitters are selected and make it say 'Pitchers Leaderboard' when pitchers are selected")**: `#lbtitle`'s heading (`renderColheadIn`) is one of
+  the two, whatever the column set; the grey "by xwOBA" / sorted-column note beside it stays. `lbSetName()` no longer names the title.
