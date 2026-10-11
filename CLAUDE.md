@@ -3286,3 +3286,30 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the end of `styles.css`. The old `.ftable` / `.pwtable` / `.cltable` rules stay but no table carries those classes on these pages. Headless phone
   and desktop on each (the planner with a mocked schedule).
 
+* **Talent xwOBA (Sean, 11 Oct 2026: "a true talent xwoba ... based purely on their talent and completely removes noise ... batted ball mix, k
+  rate, bb rate, xbabip minus luck and noise, and xHR/fb rate", then "add it to the leaderboard and add a build tab for it ... after xwoba on the
+  player page stat table ... a percentile bar above xwoba ... for every season")**: wOBA rebuilt from expected rates only — **xK%** (the hitter
+  fit, `xKFrom`), **xBB%** (`TW_XBB`: the league's BB% moved by Chase% −0.448 a point, Z-Swing% −0.030, O-Contact% +0.034, Z-Contact% −0.113,
+  the share of his pitches in the zone −0.539 — pitchers attack a hitter without power — and EV90 +0.056; every 300+ PA hitter-season 2015-26
+  against its season, held out by season r .86 / 1.5 points), his own **HBP** rate, **xHR/FB** (`XHRFB` against the dataset's own HR over fly
+  balls + popups) on his fly balls + popups per ball in play (the Mix buckets), the **eight-driver xBABIP** (`XBAB`, the xBABIP tab stopped
+  before Noise / Luck) on the other balls in play, and the directional model's **extra bases per hit** ((xSLG − 4·HR) / (xBA − HR)), at linear
+  weights `TW` (BB .69, HBP .72, 1B .88, 2B 1.25, HR 2.03), each dataset scaled so its 300+ PA hitters average their real wOBA
+  (`talentLeague`, full-season league per `DS.key`; `talentCore`, `talentOf(p, v)` on the view in `V()` → `m.txw`, and `v.tal` keeps the
+  pieces). **Talent proj.** (`txwp`) = league wOBA + (talent − league) × PA / (PA + 300). Tested (scratch `twcore.js` / `twtest.js`, 1,819
+  back-to-back 300+ PA seasons 2015-26): next season's wOBA r .536 against xwOBA .437 and wOBA .479; year to year .663 (xwOBA .539); the
+  projection's regression of 300 PA forecasts best (xwOBA needs 525); its pieces repeat better than the rates they replace (xK% .85 / K% .83,
+  xBB% .78 / BB% .71, the drivers' xBABIP .60 / BABIP .41, xHR/FB .74 / HR/FB .62). Where: `SIDE_H` / `LB_EXTRA_H` columns **Talent xwOBA**
+  and **Talent proj.**, first in the hitters' Standard and Advanced sets after the xwOBA headline (`state.lb.twAdd` moves a saved list that
+  still equals either set once), Filters ▸ Stats after wOBA; the card's Results bar above xwOBA (`PCT_COLS_H`); a **Talent** card tab
+  (`BTABS_H`, `renderTalentTab`): the build-up from the league's pieces swapping in his one at a time (xK%, xBB%, HBP, xHR/FB, fly balls,
+  xBABIP, extra bases — `twRaw`) to his talent xwOBA (marked yellow), then Next season (full season only), and a **Talent vs actual** table
+  (K%, BB%, HR/FB, BABIP, bases per hit, wOBA, xwOBA); and the season table's **Talent xwOBA** column after xwOBA (`SB_H`, `SBX["Talent
+  xwOBA"]`, heat-mapped among the season's qualifiers, the totals by PA over the seasons that have one, In Split from the view; not in
+  Playoffs) from `hist/career-bb.js` **`txw`** (appended to `SBX_KEYS`; `build_career.py`'s `talent_league` / `talent_of` are the same
+  arithmetic on each season file — 7,530 of 7,539 hitter-seasons 2015-26, within .0005 of the app). **Data**: the build now writes `m.zsn`
+  (Zone% seen, `ZoneSeen_pct`), `ctx.HR` and `ctx.HBP` on every hitter and appends **`hbp`** to `HITTER_DAY` (so a window re-derives the HBP
+  rate; older files use the season's); `V()` re-derives `zsn` from `zpit` / `opit`. `data.js`, every `hist/mlb-YYYY.js` and every minors file
+  were patched in place the same day (scratch `patchtw.js`: zone% seen and HR from the day files, HBP from `career.js` / `minors.js`). The
+  minors read on the level's own league with MLB's weights; Double-A and below have no tracked contact, so no talent xwOBA. A span of seasons
+  has none either.
