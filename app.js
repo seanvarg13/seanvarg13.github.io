@@ -2427,6 +2427,7 @@
     let row = $("lbtabs");
     if (!row) { row = el("div", "lbtabs"); row.id = "lbtabs"; }
     const on = ["leaderboard", "trending"].includes(state.mode) && !phonePages(), top = $("pagertop");   // a phone's pills live in the dropdown (lbPills)
+    if (onePage()) { row.remove(); return; }   // the set is picked on the Stats tab and the season on Dates now (Sean, 11 Oct 2026), so no pills beside the button
     row.hidden = !on; if (!on) { row.remove(); return; }
     { const pc = top.querySelector(".pcount"); if (row.parentNode !== top || (pc && row.nextSibling !== pc)) top.insertBefore(row, pc); }   // before the count, which keeps the right edge   // in the filter row, under the buttons (Sean, 3 Oct 2026: "all of this stuff ... in the upper area where filters is")
     row.innerHTML = "";
@@ -2437,6 +2438,25 @@
   function lbSetName() {   // the column set in effect, "Custom" when the list matches none
     const g = groupFor(state.pos), pit = isPitcherGroup(g), cur = colKeys(g), same = (a, b) => a.length === b.length && a.every((k, i) => k === b[i]);
     return (LB_SETS[pit ? "P" : "H"].map(([name, keys]) => [name, lbSetKeys(g, keys)]).find(([, set]) => same(set, cur)) || ["Custom"])[0];
+  }
+  // the column sets as a row of buttons: one tap ticks that set's stats (Sean, 11 Oct 2026); Custom shows, pressed, when the ticks match none
+  function lbSetButtons() {
+    const g = groupFor(state.pos), pit = isPitcherGroup(g), curName = lbSetName();
+    const box = el("div", "lbpills lbsetbtns"), sg = el("div", "seg"); sg.setAttribute("role", "group"); sg.setAttribute("aria-label", "Stat sets");
+    for (const [name] of LB_SETS[pit ? "P" : "H"]) {
+      const b = el("button", "segbtn", name); b.type = "button"; b.setAttribute("aria-pressed", String(curName === name));
+      b.addEventListener("click", (e) => { e.stopPropagation(); lbApplySet(name); });
+      sg.append(b);
+    }
+    if (curName === "Custom") { const b = el("button", "segbtn", "Custom"); b.type = "button"; b.disabled = true; b.setAttribute("aria-pressed", "true"); b.title = "Your own ticks below"; sg.append(b); }
+    box.append(sg); return box;
+  }
+  function lbApplySet(v) {
+    const g = groupFor(state.pos), pit = isPitcherGroup(g), same = (a, b) => a.length === b.length && a.every((k, i) => k === b[i]);
+    const set = (LB_SETS[pit ? "P" : "H"].map(([name, keys]) => [name, lbSetKeys(g, keys)]).find(([name]) => name === v) || [])[1]; if (!set || same(set, colKeys(g))) return;
+    setColKeys(g, set);
+    if (!["score", "blend", "name", "sample", "age", "year"].includes(state.sort) && !set.includes(state.sort)) { state.sort = "score"; state.dir = "desc"; }
+    ensureSortValid(); savePrefs(); render();
   }
   function lbSetPill() {
     const g = groupFor(state.pos), pit = isPitcherGroup(g), cur = colKeys(g);
@@ -2466,7 +2486,7 @@
     const years = [...new Set(keys.map(year))].sort((x, y) => y - x);
     const inYear = (y) => keys.filter((k) => year(k) === y).sort((p, q) => LEVEL_ORDER.indexOf(levelOf(p)) - LEVEL_ORDER.indexOf(levelOf(q)));
     const span = state.lbTo && state.lbTo > year(cur);
-    if (span) { const b = el("button", "pill lbseasonpill", `${year(cur)}–${String(state.lbTo).slice(2)} ▾`); b.type = "button"; b.title = "A span of seasons — set in Filters"; b.addEventListener("click", (e) => { e.stopPropagation(); parkControls(); state.panelTab = "filters"; openPanel("filters"); }); return b; }
+    if (span) { const b = el("button", "pill lbseasonpill", `${year(cur)}–${String(state.lbTo).slice(2)} ▾`); b.type = "button"; b.title = "A span of seasons — set in Dates"; b.addEventListener("click", (e) => { e.stopPropagation(); parkControls(); state.panelTab = "dates"; openPanel("dates"); }); return b; }
     const pick = (y) => { const opts = inYear(Number(y)), k = opts.find((x) => levelOf(x) === levelOf(cur) && !keyKind(x)) || opts.find((x) => levelOf(x) === levelOf(cur)) || opts[0];
       state.lbDs = k === CUR.key ? null : k; if (state.lbTo && state.lbTo <= year(k)) state.lbTo = null; state.page = 1; state.win = { from: "", to: "", last: "" }; state.expanded = null; savePrefs(); render(); };
     const lvl = String(levelOf(cur)).toLowerCase() !== "mlb" ? " " + (LEVEL_NAMES[levelOf(cur)] || levelOf(cur)) : "";
@@ -2957,7 +2977,7 @@
     if (onChange) box.append(perPageField(setSize));    // the list pages keep theirs in Filters (minimal pass 4); Fantasy here
     if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs();
       if (phonePages()) { const pc = box.querySelector(".pcount"), nv = box.querySelector(".pnav"); if (pc) box.append(pc); if (nv) box.append(nv); }   /* after the Filters button */   // a phone: Min IP rides after the pills; the count is on the page-number line
-      else { box.append(el("span", "lbbreak")); const pc = box.querySelector(".pcount"); if (pc) box.append(pc); if (mfKeep) { mfKeep.classList.add("topmin"); if (box.lastElementChild !== mfKeep) box.append(mfKeep); } } } }   // the count and the Min box on a quiet line under the controls (6 Oct 2026); the Min box moves only when it isn't already last   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
+      else { const pc = box.querySelector(".pcount");   /* the count right beside the Filters button (Sean, 11 Oct 2026) */ if (pc) box.append(pc); if (mfKeep) { mfKeep.classList.add("topmin"); if (box.lastElementChild !== mfKeep) box.append(mfKeep); } } } }   // the count and the Min box on a quiet line under the controls (6 Oct 2026); the Min box moves only when it isn't already last   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
   }
   function perPageField(setSize) {
     const sz = el("label", "field psize"); sz.append(el("span", null, "Per page"));
@@ -4692,6 +4712,7 @@
     if (!POPPED.has(state.panel)) $("pop").hidden = true;
     else if (state.keepPop && !$("pop").hidden) return;                // typing in the panel's minimum: leave the panel be
     if (state.panel === "positions" && listNow) { renderPositionsPanel(); return; }
+    if (state.panel === "filters" && listNow && onePage()) state.panel = state.panelTab = "dates";   // the Filters tab folded into Dates there (11 Oct 2026)
     if (state.panel === "filters" && listNow) { renderFilterPanel(); return; }
     if (state.panel === "splits" && listNow && state.mode === "leaderboard") { renderSplitsPanel(); return; }
     if (state.panel === "dates" && listNow) { renderDatesPanel(); return; }
@@ -4845,7 +4866,7 @@
   // and since the minimal pass 5 (Sean, 30 Sep 2026) the position picker is its first tab, so Filters is the toolbar's only button
   const GRP_TABS = [["positions", "Position"], ["filters", "Filters"], ["stats", "Stats"], ["splits", "Splits"], ["dates", "Dates"], ["table", "Table format"]];
   const GRP = new Set(GRP_TABS.map(([k]) => k));
-  const grpTabsNow = () => GRP_TABS.filter(([k]) => k !== "splits" || state.mode === "leaderboard");
+  const grpTabsNow = () => GRP_TABS.filter(([k]) => (k !== "splits" || state.mode === "leaderboard") && !(k === "filters" && onePage()));   // no Filters tab on the Leaderboard / Recent (Sean, 11 Oct 2026): its season and minimum live on Dates, the name search on Position
   function renderToolButtons() {
     const box = $("tbtns");
     if (!box) return;
@@ -4857,7 +4878,7 @@
       b.setAttribute("aria-expanded", String(on)); b.setAttribute("aria-haspopup", "true");
       b.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (k === "grp") { if (grpOpen) closePanel(false); else openPanel(grpTabsNow().some(([t]) => t === state.panelTab) ? state.panelTab : "filters"); }
+        if (k === "grp") { if (grpOpen) closePanel(false); else openPanel(grpTabsNow().some(([t]) => t === state.panelTab) ? state.panelTab : onePage() ? "positions" : "filters"); }
         else if (state.panel === k) closePanel(false); else openPanel(k);
       });
       box.append(b);
@@ -4910,7 +4931,7 @@
     pop.hidden = false; body.innerHTML = "";
     pop.classList.toggle("grppop", GRP.has(state.panel));
     if (GRP.has(state.panel)) { state.panelTab = state.panel; body.append(grpTabs()); pop.classList.remove("notabs");
-      if (onePage() && phonePages() && state.panel === "stats") { const pr = el("div", "lbpills"); pr.append(lbSetPill()); body.append(pr); } }   // a phone's Standard ▾ pill rides at the top of the Stats tab (6 Oct 2026); the Filters tab already has the Season row   // one Filters button again (6 Oct 2026), so the tabs ride in the dropdown
+      if (onePage() && state.panel === "stats") body.append(lbSetButtons()); }   // the column sets as buttons at the top of the Stats tab, both layouts (Sean, 11 Oct 2026: "select advanced and it selects all of the advanced stats")   // a phone's Standard ▾ pill rides at the top of the Stats tab (6 Oct 2026); the Filters tab already has the Season row   // one Filters button again (6 Oct 2026), so the tabs ride in the dropdown
     return body;
   }
   // the panel hangs under its own button, clamped to the window, and never taller than the room below it
@@ -11262,6 +11283,11 @@
       }
       secb.append(grid); w.append(secb);
     }
+    if (onePage()) {   // the name search moved here from the Filters tab; no team box (Sean, 11 Oct 2026: "i dont need the team filter box")
+      const b = el("div", "psec"); b.append(el("h4", null, "Player")); const r = el("div", "prow"); r.append($("searchbox"));
+      if (state.teamF) { const c = el("button", "btn btn-quiet tchip", `${teamLabel(state.teamF)} ×`); c.type = "button"; c.title = "Show every team"; c.addEventListener("click", (e) => { e.stopPropagation(); state.teamF = null; state.expanded = null; savePrefs(); render(); }); r.append(c); }
+      b.append(r); w.prepend(b); w.prepend(h2);
+    }
     w.append(el("p", "note", "Tick as many as you like — the list is everyone eligible at any of them, and the percentiles come from the first one's pool. Hitters and pitchers can't be mixed, and picking both starters and relievers just gives you all pitchers."));
     body.append(w);
   }
@@ -11330,12 +11356,14 @@
     const g = groupFor(state.pos), pit = isPitcherGroup(g), unit = pit ? "IP" : "PA", trending = state.mode === "trending";
     const w = el("div", "textmodal panel");
     const h2 = el("h2", null, "Dates"); h2.id = "modal-title"; w.append(h2);
+    const one = onePage();   // the Leaderboard / Recent: the season and the minimum ride here too (Sean, 11 Oct 2026: "put the year stuff in the dates as well as the minimum pa")
+    if (one && state.mode === "leaderboard") { const b = el("div", "psec"); b.append(el("h4", null, "Season and level")); const r = el("div", "prow"); r.append($("lbseason")); b.append(r); w.append(b); }
     if (trending) {
       const sec = el("div", "psec"); sec.append(el("h4", null, "Span")); const row = el("div", "prow"); row.append($("trendnfield"), $("trendunit")); sec.append(row);
-      sec.append(el("p", "note", "Each player's most recent plate appearances / innings, or everyone's last N calendar days. The minimum inside the span is on the Filters tab."));
+      sec.append(el("p", "note", `Each player's most recent plate appearances / innings, or everyone's last N calendar days. The minimum inside the span is ${one ? "below" : "on the Filters tab"}.`));
       w.append(sec);
     } else if (lbMulti()) {
-      const sec = el("div", "psec"); sec.append(el("h4", null, "Dates")); sec.append(el("p", "note", "A span of seasons is always the whole of each season — pick one season (Filters) for a date range.")); w.append(sec);
+      const sec = el("div", "psec"); sec.append(el("h4", null, "Dates")); sec.append(el("p", "note", `A span of seasons is always the whole of each season — pick one season (${one ? "above" : "Filters"}) for a date range.`)); w.append(sec);
     } else {
       const sec = el("div", "psec"); sec.append(el("h4", null, "Dates"));
       const kinds = el("div", "seg"); kinds.setAttribute("role", "group");
@@ -11358,8 +11386,18 @@
       sec.append(el("p", "note", cur === "days" ? `Everyone's games in the last N days through ${DATA.meta.through}; the Min ${unit} box scales to the window's share of the season.` : cur === "last" ? `Each player's most recent ${unit === "IP" ? "innings" : "plate appearances"} . Every stat and percentile is rebuilt from those games; anyone with three quarters of N is listed.` : cur === "range" ? "A blank side means the season's start or end. Every stat and percentile is rebuilt from those games." : "Full-season numbers."));
       w.append(sec);
     }
+    if (one) {
+      const minNode = trending ? $("trendminfield") : $("minfield");
+      const b = el("div", "psec"); b.append(el("h4", null, "Minimum"));
+      const r = el("div", "prow"); r.append(minNode);
+      if (phonePages()) r.append(perPageField((n) => { state.pageSize = n; state.page = 1; savePrefs(); renderRows(); }));
+      b.append(r);
+      if (!trending) b.append(el("p", "note", lbMulti() ? "The minimum is per season; a combined span multiplies it by the seasons in it." : `The minimum is who is listed; percentiles are always against ${pit ? "pitchers with 300+ batters faced" : "hitters with 300+ PA"} on the season.`));
+      w.append(b);
+    }
     popFoot(body, w, panelButtons(() => { if (!trending) state.win = { from: "", to: "", last: "" }; state.expanded = null; render(); }));
     renderDates(); renderTrendTools();
+    if (one) { renderMin(); renderLbTools(); }
   }
   // "Table" panel: how the list is drawn
   function renderTablePanel() {

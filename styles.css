@@ -5352,3 +5352,23 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > a:hover, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel:hover, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel.open { background: color-mix(in srgb, #fff 18%, transparent) !important; box-shadow: none !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > a[aria-current="page"], :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel[aria-current="page"] { background: #fff !important; color: var(--ink) !important; border-color: #fff !important; box-shadow: none !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .gsearch { margin-left: 0 !important; }
+
+/* The Leaderboard's top row: the Filters button and the count beside it, then the title right under (Sean, 11 Oct 2026: "make the grey text that says
+   what the table is filtered on go next to the filter buttons ... move the header of the table the your batting up and make the table a bit taller").
+   The Stats tab's set buttons (.lbsetbtns) and the Position tab's team chip. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #pagertop { align-items: center !important; padding-bottom: 4px !important; gap: 12px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #pagertop .pcount { margin-left: 2px !important; align-self: center !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #lbtitle { margin: 0 0 8px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .lbsetbtns { margin: 10px 0 4px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .lbsetbtns .seg { display: flex; flex-wrap: wrap; gap: 6px; border: 0; background: transparent; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .lbsetbtns .segbtn { border: 1px solid var(--line-soft, #c3d3e3) !important; padding: 6px 12px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .lbsetbtns .segbtn[aria-pressed="true"] { background: var(--btn, var(--ink)) !important; color: var(--btn-ink, #fff) !important; border-color: var(--btn, var(--ink)) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .lbsetbtns .segbtn:disabled { opacity: 1; cursor: default; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .tchip { margin-left: 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop #lbseason { display: flex !important; flex-flow: row wrap !important; align-items: center !important; gap: 8px !important; background: transparent !important; padding: 0 !important; border: 0 !important; width: auto !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop #lbseason .spanseg { display: flex !important; flex-flow: row nowrap !important; gap: 0 !important; flex-basis: 100% !important; width: auto !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop #lbseason .spanseg .segbtn { width: auto !important; flex: 0 0 auto !important; white-space: nowrap !important; padding: 6px 12px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop #lbseason .splbl { margin: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .prow:has(> #lbseason) { display: block !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop #lbseason { width: 100% !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop #lbseason .spanseg { overflow: visible !important; }

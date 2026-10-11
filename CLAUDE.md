@@ -3387,3 +3387,17 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   **Then buttons** (Sean, minutes later: "can you make them buttons"): each page is a square button on the blue band — a 1px white edge, white
   words, 32px tall like the search box, 8px apart, padding 14px; the current page filled white with navy words (no underline), hover and an open
   menu a white wash; the search box sits 26px after the ⋯ (the header's own gap). The next block at the end of `styles.css`.
+* **The Leaderboard's dropdown and top row slimmed (Sean, 11 Oct 2026: "get rid of the filters tab here, put the year stuff in the dates as well as the
+  minimum pa, and then i dont need the team filter box ... make the grey text that says what the table is filtered on go next to the filter buttons,
+  and get rid of the year one ... put the like custom advanced batted ball stuff in the stats tab ... select advanced and it selects all of the advanced
+  stats ... move the header of the table the your batting up and make the table a bit taller")**: on the Leaderboard / Recent (`onePage()`, both
+  layouts) the Filters dropdown's tabs are Position · Stats · Splits · Dates · Table format — `grpTabsNow` drops `filters`, a saved `panel` /
+  `panelTab` of filters opens Dates (`renderModal`), and the button opens on Position by default. **Dates** leads with Season and level (`#lbseason`,
+  One / Multiple seasons in a row, the year and level pickers beside "Season") and ends with **Minimum** (the Min PA / IP box, Per page on a phone,
+  the pool note; Recent's own minimum there too). **Position** starts with the name search (`#searchbox`); there is no team box — a team picked from a
+  player's page shows as a "NYY ×" chip there to clear it. **Stats** starts with the column sets as buttons (`lbSetButtons` / `lbApplySet`: Standard ·
+  Advanced · Batted ball · Plate discipline (· Pitching+ for pitchers), one tap ticks that set; a pressed, disabled Custom when the ticks match none).
+  The row above the table is the Filters button with the count right beside it ("267 hitters · 2026 · 300+ PA"); the Standard ▾ and season pills are
+  gone from it (`renderLbTabs` removes its row under `onePage()`; `lbSetPill` / `lbSeasonPill` stay in `app.js`, unused there), and the title sits right
+  under that row, so the table starts ~50px higher and is that much taller. Rankings / Draft board keep their Filters tab. CSS: the blocks at the end
+  of `styles.css`.
