@@ -5584,7 +5584,7 @@
     sb: "Stolen bases, official. For the whole season only.",
     sba: "Stolen-base attempts: stolen bases plus caught stealing, official. For the whole season only.",
     sbp: "Stolen-base success rate: stolen bases over attempts. Blank without an attempt. For the whole season only.",
-    txw: "Talent xwOBA: his wOBA rebuilt from expected rates only, never his actual hits, walks or strikeouts — xK% (his whiffs, swing decisions and the strikes he sees), xBB% (his chase rate, zone swings, contact and how often pitchers come into the zone on him), his HBP rate, xHR/FB (FB EV, Barrel% on fly and line drives, how much he pulls his fly balls) on his fly balls and popups, and the eight-driver xBABIP (line drives, popups, grounder and liner EV, pull, speed, oppo, fly balls — no Noise, no Luck) on the rest, with the directional model's extra bases per hit. Scaled so the season's 300+ PA hitters average their real wOBA. It predicts next season's wOBA better than xwOBA does (r .54 vs .44, 2015-26) and repeats year to year at .66 (xwOBA .54). The Talent tab shows the build-up.",
+    txw: "Talent xwOBA: his wOBA rebuilt from expected rates only, never his actual hits, walks or strikeouts — xK% (his whiffs, swing decisions and the strikes he sees), xBB% (his chase rate, zone swings, contact and how often pitchers come into the zone on him), his HBP rate, xHR/FB (FB EV, Barrel% on fly and line drives, how much he pulls his fly balls) on his fly balls and popups, and the nine-driver xBABIP (line drives, popups, grounder and liner EV, grounder and liner pull, speed, oppo, fly balls — no Noise, no Luck) on the rest, with the directional model's extra bases per hit. Scaled so the season's 300+ PA hitters average their real wOBA. It predicts next season's wOBA better than xwOBA does (r .54 vs .44, 2015-26) and repeats year to year at .66 (xwOBA .54). The Talent tab shows the build-up.",
     txwp: "Talent proj.: next season's wOBA from his talent xwOBA — the league average plus his gap to it × PA / (PA + 300). One season's inputs still carry sampling noise, and 300 PA of league average is the regression that forecast next season's wOBA best (xwOBA needs about 525). A full season is the one to read; in a window it is the same arithmetic on fewer plate appearances.",
     xk: "Expected K%: the strikeout rate his Whiff%, Z-Swing%, O-Swing% and the share of strikes he sees have historically come with (fitted over every 100+ PA hitter-season since 2015). It lands within about 1.7 points of a regular's real K%; a K% well above it says he's striking out more than his swings and misses explain (two-strike trouble, taking strike three), well below it that he's beating them. His own K% is still the steadier guide to next year's — the two averaged are best.",
     xwdiff: "xwOBA − wOBA: what his contact, walks and strikeouts deserved (the site's xwOBA) minus what he actually got. Above zero he's been unlucky — his results should rise toward his xwOBA; below zero he's been lucky. +.030 is a lot. Every point is a thousandth of wOBA.",
@@ -7156,7 +7156,7 @@
   // xbabip minus luck and noise, and xHR/fb rate"): wOBA rebuilt from expected rates only, never his actual hits, walks or strikeouts —
   //   K: half his K%, half xK% (XKH, the hitter fit) · BB: half his BB%, half xBB% (TW_XBB below) — TW.act · HBP: his own rate (no process behind it)
   //   HR: xHR/FB on exit velocity alone (TW_HF; XHRFB as the fallback), against the dataset's own HR over fly balls + popups, on his fly balls + popups per ball in play (the Mix buckets)
-  //   hits on the other balls in play: the eight-driver xBABIP (XBAB — the xBABIP tab's build-up stopped before Noise and Luck)
+  //   hits on the other balls in play: the nine-driver xBABIP (XBAB — the xBABIP tab's build-up stopped before Noise and Luck)
   //   extra bases per hit: the directional model's xSLG / xBA less those home runs
   // each piece at FanGraphs-style linear weights, and the season scaled so its 300+ PA hitters average their real wOBA. xBB% = the league's BB%
   // moved by Chase% (−0.45 a point), Z-Swing% (−0.03), O-Contact% (+0.03), Z-Contact% (−0.11), the share of pitches he sees in the zone (−0.54:
@@ -7185,9 +7185,9 @@
   function twInputs(m, c, pa, ab, hbp) {
     const mx = twMix(c), tot = mx ? mx.reduce((a, b) => a + (b || 0), 0) : 0;
     const fbn = mx ? (mx[1] || 0) + (mx[5] || 0) + (mx[6] || 0) + (mx[7] || 0) : 0, fb3 = mx ? (mx[5] || 0) + (mx[6] || 0) + (mx[7] || 0) : 0, ld3 = mx ? (mx[2] || 0) + (mx[3] || 0) + (mx[4] || 0) : 0;
-    const x = c && c.xbt, xn = x ? x.reduce((a, z) => a + z[0], 0) : 0;
+    const x = c && c.xbt, xn = x ? x.reduce((a, z) => a + z[0], 0) : 0, gd = c && c.gbdir, gn = gd ? gd[0] + gd[1] + gd[2] : 0;
     return { m, mx, fbn, pa, ab, hbp, hr: c ? c.HR : null, pfb: fb3 ? 100 * mx[5] / fb3 : null, ldp: ld3 ? 100 * mx[2] / ld3 : null,
-             fbs: tot ? fbn / tot : null, gbs: xn ? 100 * x[0][0] / xn : m.gb };
+             fbs: tot ? fbn / tot : null, gbs: xn ? 100 * x[0][0] / xn : m.gb, gbp: gn ? 100 * gd[0] / gn : null };
   }
   const TWL = new Map();
   function talentLeague() {      // the dataset's full-season league for the pieces (its 300+ PA hitters, PA-weighted) and the wOBA scale
@@ -7196,7 +7196,7 @@
     const wavg = (rows, f, wt) => { let s = 0, w = 0; for (const r of rows) { const v = f(r), x = wt(r); if (v == null || !isFinite(v) || !x) continue; s += v * x; w += x; } return w ? s / w : null; };
     const L = {};
     for (const k of ["bb", "osw", "zsw", "ocon", "zcon", "zsn", "ev90", "woba", "xbabip", "ld", "pu", "evgb", "evld", "spd", "oppo", "fb"]) L[k] = wavg(I, (i) => i.m[k], (i) => i.pa);
-    L.ldp = wavg(I, (i) => i.ldp, (i) => i.pa);
+    L.ldp = wavg(I, (i) => i.ldp, (i) => i.pa); L.gbp = wavg(I, (i) => i.gbp, (i) => i.pa);
     const F = I.filter((i) => i.mx && i.hr != null && i.fbn), fb = F.reduce((a, i) => a + i.fbn, 0);
     L.hr = { hrfb: fb ? 100 * F.reduce((a, i) => a + i.hr, 0) / fb : null };
     for (const k of ["evfb", "brfb", "brld", "pfb", "brl", "ev90"]) L.hr[k] = wavg(F, (i) => (k === "pfb" ? i.pfb : i.m[k]), (i) => i.fbn);
@@ -7218,7 +7218,7 @@
     let xhf = L.hr.hrfb + (ev ? TW_HF.c : 0); const dh = {}; for (const k in f) { dh[k] = f[k] * (bx[k] - (ev ? L.twh : L.hr)[k]); xhf += dh[k]; } xhf = Math.max(0, xhf);
     const hrb = xhf / 100 * I.fbs;
     let xbab = L.xbabip; const dv = {};
-    for (const k in XBAB) { const his = k === "ldp" ? I.ldp : m[k], lg = L[k], g = k === "spd" ? I.gbs : 100; if (his == null || lg == null || g == null) continue; dv[k] = XBAB[k] * (his - lg) * g / 100 / 1000; xbab += dv[k]; }
+    for (const k in XBAB) { const his = k === "ldp" || k === "gbp" ? I[k] : m[k], lg = L[k], g = k === "spd" || k === "gbp" ? I.gbs : 100; if (his == null || lg == null || g == null) continue; dv[k] = XBAB[k] * (his - lg) * g / 100 / 1000; xbab += dv[k]; }
     const bip = Math.max(0, 1 - xk / 100 - xbb / 100 - hbp), xhr = hrb * bip * I.pa;
     const tph = Math.min(1.7, Math.max(1, (m.dxslg * I.ab - 4 * xhr) / Math.max(1, m.dxba * I.ab - xhr)));
     const vh = TW.s + (tph - 1) * (TW.d - TW.s);
@@ -7360,9 +7360,15 @@
   // liners and fly balls ~0); 83% of grounders are fielded in the infield. So the row is 14 × 0.83 × (his sprint − the league's) × his grounders'
   // share of his non-HR balls in play (ctx.xbt; GB% where a file lacks it) — 5.1 BABIP points a ft/s at the league's 44%, against actual BABIP's
   // own 5.0 and the model's 5.4; the others refit around it (scratch spd3.js, held out r .770)
-  const XBAB = { ld: 3.64, pu: -3.15, evgb: 2.11, evld: 1.2, ldp: 0.27, spd: 14 * 0.83, oppo: 0.86, fb: -0.94 };
-  const XBAB_LAB = { ld: ["LD%", "%"], pu: ["Popup%", "%"], evgb: ["GB EV", ""], evld: ["LD EV", ""], ldp: ["LD Pull%", "%"], spd: ["Sprint", ""], oppo: ["Oppo%", "%"], fb: ["FB%", "%"] };
-  const XBAB_TIP = { ld: "line drives fall for hits about two times in three", pu: "a popup is all but an out — the fewer the better", evgb: "a harder grounder gets through the infield", evld: "a harder liner finds a gap",
+  // GB Pull% joined as a ninth (Sean, 11 Oct 2026: "add in ground ball direction to the xbabip formula since that isnt really something noisy"):
+  // the share of his grounders pulled (ctx.gbdir), × his grounders' share of his non-HR balls in play like Sprint, since it only touches
+  // grounders. Every 2015-26 grounder from Savant's play-by-play (scratch gbdirfetch.py / gbfit.js — the build's own definition, identical to
+  // 2026's gbdir), refit with Sprint fixed: −0.95 (−0.90 before the 2023 shift ban, −0.99 since), Oppo% .86 → .40 (overall Oppo% had been
+  // carrying the grounders' direction), held out r .770 → .775, next season's BABIP r .386 → .389; GB pull repeats year to year like a habit
+  const XBAB = { ld: 3.74, pu: -3.14, evgb: 2.03, gbp: -0.95, evld: 1.21, ldp: 0.28, spd: 14 * 0.83, oppo: 0.40, fb: -0.73 };
+  const XBAB_LAB = { ld: ["LD%", "%"], pu: ["Popup%", "%"], evgb: ["GB EV", ""], gbp: ["GB Pull%", "%"], evld: ["LD EV", ""], ldp: ["LD Pull%", "%"], spd: ["Sprint", ""], oppo: ["Oppo%", "%"], fb: ["FB%", "%"] };
+  const XBAB_TIP = { ld: "line drives fall for hits about two times in three", pu: "a popup is all but an out — the fewer the better", evgb: "a harder grounder gets through the infield",
+    gbp: "the share of his ground balls pulled — a pulled grounder goes right at the infield's thickest side and is a hit about .198 of the time, against ~.306 up the middle and ~.354 the other way; it moves BABIP only through his grounders, so the row is −0.95 × (his GB Pull% − the league's) × his grounders' share of his non-HR balls in play", evld: "a harder liner finds a gap",
     ldp: "the share of his line drives he pulled — a pulled liner falls in about .659 of the time, one up the middle or the other way about .589",
     spd: "speed beats out infield grounders and does nothing else: each ft/s adds .014 to his hit rate on grounders an infielder fields (83% of grounders), so the row is 14 × 0.83 × (his sprint − the league's) × his grounders' share of his non-HR balls in play (Savant's sprint speed, full season)", oppo: "the opposite field is where the infield doesn't shift its gloves", fb: "a fly ball in the park is mostly an out" };
   function renderXbabipTab(p, g) {
@@ -7371,6 +7377,7 @@
     const val = (q, k) => {
       const v = V(q), mm = v.m;
       if (k === "ldp") { const mx = (v.ctx && v.ctx.mix) || (q.ctx && q.ctx.mix), n = mx ? mx[2] + mx[3] + mx[4] : 0; return n ? 100 * mx[2] / n : null; }
+      if (k === "gbp") { const gd = v.ctx && "gbdir" in v.ctx ? v.ctx.gbdir : q.ctx && q.ctx.gbdir, n = gd ? gd[0] + gd[1] + gd[2] : 0; return n ? 100 * gd[0] / n : null; }
       return k === "spd" ? mm.spd ?? (q.m && q.m.spd) : mm[k];
     };
     if (m.babip != null && m.xbabip != null) {
@@ -7387,15 +7394,15 @@
       b.row("League", null, lgX, fmtX, null, "→", lgX, "the qualified hitters' xBABIP, weighted by plate appearances — where the build-up starts");
       for (const k in XBAB) {
         const his = val(p, k), lg = lgOf(k), [lab, u] = XBAB_LAB[k], f = (x) => x.toFixed(1) + u;
-        const gbs = k === "spd" ? gbShare(p) : 100;   /* sprint works through his grounders: times their share of his non-HR balls in play */
+        const gbs = k === "spd" || k === "gbp" ? gbShare(p) : 100;   /* sprint and grounder direction work through his grounders: times their share of his non-HR balls in play */
         const d = his == null || lg == null || gbs == null ? null : XBAB[k] * (his - lg) * gbs / 100 / 1000;
         if (d != null) { run += d; dk[k] = d; }
         b.row(lab, his, lg, f, pctAmong(ref.map((q) => val(q, k)).filter((z) => z != null), his, Math.sign(XBAB[k])), d == null ? null : step(run), d == null ? null : run, XBAB_TIP[k]);
       }
-      // one Noise row for everything the eight don't place (Sean, 11 Oct 2026: "group those into everything else and call everything else noise"):
+      // one Noise row for everything the nine don't place (Sean, 11 Oct 2026: "group those into everything else and call everything else noise"):
       // the by-type split of 10 Oct (ground-ball / line-drive / fly-ball contact, from ctx.xbt) is gone — its leftovers repeat year to year at
       // r .22 / .05 / .19 (scratch resyty.js), so they read as noise; ctx.xbt is still built
-      b.row("Noise", null, null, fmtX, null, step(m.xbabip), m.xbabip, "What the eight rows above don't place: the exact angle of each ball (a grounder hit low and through against a chopper, a 12° liner against a 22° one, a flare that drops), which part of the field each went to, and the hard-and-well-aimed combinations an average can't see. It barely repeats from one season to the next, so treat it as noise.");
+      b.row("Noise", null, null, fmtX, null, step(m.xbabip), m.xbabip, "What the nine rows above don't place: the exact angle of each ball (a grounder hit low and through against a chopper, a 12° liner against a 22° one, a flare that drops), where each line drive and fly ball went, and the hard-and-well-aimed combinations an average can't see. It barely repeats from one season to the next, so treat it as noise.");
       b.mark("Expected BABIP");   // the running BABIP after Rest of Contact is his xBABIP (Sean, 10 Oct 2026: "do the same thing for the xbabip table")
       b.row("Luck", null, null, fmtX, null, step(m.babip), m.babip, "hits in play above or below what the contact deserved — it repeats year to year at only r .15");   // a plain row, like xHR/FB's (Sean, 10 Oct 2026: "white again and not bolded blue")
       b.band("BABIP", R3(m.babip) - R3(lgX), m.babip, `the whole trip: every step above added up, from the ${fmtX(lgX)} start to his ${fmtX(m.babip)} (the league's actual BABIP is ${fmtX(lgB)})`);
@@ -7416,9 +7423,9 @@
     const rec = window.DRAFT_CAREER[String(p.id)], rows = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).map((l) => ({ l, bx: sbxOf(p.id, l.season) })).filter((r) => r.bx && r.bx.babip != null).sort((a, b) => a.l.season - b.l.season);
     if (!rows.length) { box.append(el("p", "note", "No MLB seasons with Statcast BABIP on record.")); return box; }
     const COLS = [["babip", "BABIP", 1, fmtX], ["xbabip", "xBABIP", 1, fmtX], ["diff"], ["ld", "LD%", 1, (x) => x.toFixed(1) + "%"], ["pu", "PU%", -1, (x) => x.toFixed(1) + "%"], ["evgb", "GB EV", 1, (x) => x.toFixed(1)], ["evld", "LD EV", 1, (x) => x.toFixed(1)],
-                  ["oppo", "Oppo%", 1, (x) => x.toFixed(1) + "%"], ["spd", "Sprint", 1, (x) => x.toFixed(1)]];
-    const { tb, fin, gap, wrap } = brTable([["", 2], ["Results", 3], ["Batted balls", 5], ["", 1]],
-      [["Season", "l"], ["Team", "l"], ["BABIP", ""], ["xBABIP", "", "What his contact deserved"], ["Diff", "", "BABIP − xBABIP: + = more hits in play than his contact deserved"], ["LD%", ""], ["PU%", "", "Popups per batted ball"], ["GB EV", "", "Exit velocity on ground balls"], ["LD EV", "", "Exit velocity on line drives"], ["Oppo%", ""], ["Sprint", "", "Savant's sprint speed, ft/s"]], "hrfbt");
+                  ["gbp", "GB Pull%", -1, (x) => x.toFixed(1) + "%"], ["oppo", "Oppo%", 1, (x) => x.toFixed(1) + "%"], ["spd", "Sprint", 1, (x) => x.toFixed(1)]];
+    const { tb, fin, gap, wrap } = brTable([["", 2], ["Results", 3], ["Batted balls", 6], ["", 1]],
+      [["Season", "l"], ["Team", "l"], ["BABIP", ""], ["xBABIP", "", "What his contact deserved"], ["Diff", "", "BABIP − xBABIP: + = more hits in play than his contact deserved"], ["LD%", ""], ["PU%", "", "Popups per batted ball"], ["GB EV", "", "Exit velocity on ground balls"], ["LD EV", "", "Exit velocity on line drives"], ["GB Pull%", "", "The share of his ground balls pulled — lower is better for BABIP"], ["Oppo%", ""], ["Sprint", "", "Savant's sprint speed, ft/s"]], "hrfbt");
     const S = {}, W = {};
     for (const { l, bx } of rows) {
       const y = l.season, tr = el("tr", y === +DS.season && DS.level === "MLB" ? "cur" : null), heatOk = +l.c.PA >= 100;
@@ -7495,7 +7502,7 @@
       ["HBP", "hbp", t.hbp, L.hbp, (x) => pct1(100 * x), 1, "his own hit-by-pitch rate per plate appearance — there's no process to model, so it stands as it is"],
       ["xHR/FB", "xhf", t.xhf, L.hr.hrfb, pct1, 1, `home runs per fly ball + popup his exit velocity alone deserves — FB EV, EV90 and pulled fly balls, no barrels (a launch-angle window inside the fly ball) — against the season's own HR / (fly balls + popups); the xHR/FB tab reads barrels too, so the two differ`],
       ["Fly balls", "fbs", t.fbs, L.fbs, (x) => pct1(100 * x), 1, "fly balls + popups per ball in play: how often xHR/FB gets its chance"],
-      ["xBABIP", "xbab", t.xbab, L.xbabip, f3, 1, `the xBABIP tab's eight drivers (line drives, popups, grounder and liner EV, liner pull, speed on grounders, oppo, fly balls) with no Noise or Luck row (his actual BABIP: ${m.babip != null ? f3(m.babip) : "–"})`],
+      ["xBABIP", "xbab", t.xbab, L.xbabip, f3, 1, `the xBABIP tab's nine drivers (line drives, popups, grounder and liner EV, grounder and liner pull, speed on grounders, oppo, fly balls) with no Noise or Luck row (his actual BABIP: ${m.babip != null ? f3(m.babip) : "–"})`],
       ["Extra bases", "tph", t.tph, L.tph, (x) => x.toFixed(2), 1, "total bases per hit that isn't a home run, from the directional model's xSLG and xBA — how many of his hits it expects to go for extra bases"]];
     for (const [lab, k, his, lg, f, dir, tip] of steps) { cur[k] = his; const run = wob(cur); b.row(lab, his, lg, f, pc(k, his, dir), step(run), run, tip); }
     b.mark("Talent xwOBA");
@@ -10130,7 +10137,7 @@
   const SB_BRK = { H: new Set(["G", "BB%", "HR/FB", "AVG", "fWAR", "Pos"]), P: new Set(["G", "K%", "Whiff%", "Pos"]) };   // a heavier rule before each of these
   const SB_FG = ["fWAR", "bWAR", "wRC+", "Sprint", "HR/FB", "BsR"], SB_SAB = { "wRC+": 0, BsR: 1, fWAR: 4 };   // SB_FG: not in MLB's postseason lines
   const SB_HEAT = new Set(["xwOBA"]);   // filled in their percentile colour among that season's qualified hitters — wOBA plain (Sean, 9 Oct 2026: "only xwoba is heatmapped not woba"), Sprint plain too ("get rid of the heat map on sprint speed")
-  const SB_TIP = { "Talent xwOBA": "His wOBA rebuilt from expected rates only — xK%, xBB%, xHR/FB, the eight-driver xBABIP and the model's extra bases — no luck or noise (the Talent tab on his card shows the build-up)", "BB%": "Walks per plate appearance", "K%": "Strikeouts per plate appearance", ISO: "Isolated power: SLG minus AVG",
+  const SB_TIP = { "Talent xwOBA": "His wOBA rebuilt from expected rates only — xK%, xBB%, xHR/FB, the nine-driver xBABIP and the model's extra bases — no luck or noise (the Talent tab on his card shows the build-up)", "BB%": "Walks per plate appearance", "K%": "Strikeouts per plate appearance", ISO: "Isolated power: SLG minus AVG",
     BABIP: "Batting average on balls in play: (H − HR) / (AB − K − HR + SF)", wOBA: "The site's wOBA where the season is built (2015 on), FanGraphs' before",
     "HR/FB": "Home runs per fly ball, Savant's way: Statcast's fly balls and popups, with his line-drive homers counted as fly balls",
     "wRC+": "FanGraphs: runs created per PA, park and league adjusted, 100 = average", fWAR: "FanGraphs' wins above replacement — batting, fielding and, for a two-way player, pitching",

@@ -338,7 +338,8 @@ SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evg
             "pullfb",         # Pull FB%: his pulled fly balls over all his balls in play, from the Mix buckets (ctx.mix; Sean, 9-10 Oct 2026)
             "babip", "xbabip", "spd",   # the card's xBABIP tab by season: BABIP, the directional xBABIP, sprint speed (Sean, 9 Oct 2026)
             "sba",                      # steal attempts (SB + CS), the season table's Baserunning view (Sean, 9 Oct 2026)
-            "txw"]                      # talent xwOBA, the season table's column after xwOBA (Sean, 11 Oct 2026) — talent_season() below
+            "txw",                      # talent xwOBA, the season table's column after xwOBA (Sean, 11 Oct 2026) — talent_season() below
+            "gbp"]                      # GB Pull%: the share of his grounders pulled (ctx.gbdir), an xBABIP driver (11 Oct 2026)
 
 
 # Talent xwOBA (Sean, 11 Oct 2026: "an xwoba based purely on their talent ... their batted ball mix, k rate, bb rate, xbabip minus luck and noise,
@@ -349,7 +350,8 @@ SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evg
 # wOBA r .536 (xwOBA .437, wOBA .479), year to year .663 (xwOBA .539)
 TW_XK = (-0.08, {"whf": 0.989, "zsw": -0.212, "osw": -0.272, "strk": 0.523})
 TW_XBB = {"osw": -0.448, "zsw": -0.030, "ocon": 0.034, "zcon": -0.113, "zsn": -0.539, "ev90": 0.056}
-TW_XBAB = {"ld": 3.64, "pu": -3.15, "evgb": 2.11, "evld": 1.2, "ldp": 0.27, "spd": 14 * 0.83, "oppo": 0.86, "fb": -0.94}
+# GB Pull% joined (11 Oct 2026): the share of his grounders pulled, × his grounders' share of his non-HR balls in play like Sprint (app.js XBAB)
+TW_XBAB = {"ld": 3.74, "pu": -3.14, "evgb": 2.03, "gbp": -0.95, "evld": 1.21, "ldp": 0.28, "spd": 14 * 0.83, "oppo": 0.40, "fb": -0.73}
 TW_XHRFB = [{"evfb": 0.332, "brfb": 0.401, "brld": 0.218, "pfb": 0.094}, {"evfb": 0.373, "brfb": 0.391, "brld": 0.217},
             {"evfb": 0.779, "brl": 0.738}, {"brl": 1.037, "ev90": 0.499}]
 TW_W = {"bb": 0.69, "hbp": 0.72, "s": 0.88, "d": 1.25, "hr": 2.03}
@@ -366,9 +368,10 @@ def _tw_inputs(p):
     fb3 = (mx[5] or 0) + (mx[6] or 0) + (mx[7] or 0) if mx else 0
     ld3 = (mx[2] or 0) + (mx[3] or 0) + (mx[4] or 0) if mx else 0
     xbt = cx.get("xbt"); xn = sum(z[0] for z in xbt) if xbt else 0
+    gd = cx.get("gbdir"); gn = sum(gd) if gd else 0
     return {"m": m, "mx": mx, "fbn": fbn, "pa": p.get("pa") or 0, "ab": p.get("ab") or 0, "hbp": cx.get("HBP"), "hr": cx.get("HR"),
             "pfb": 100 * mx[5] / fb3 if fb3 else None, "ldp": 100 * mx[2] / ld3 if ld3 else None,
-            "fbs": fbn / tot if tot else None, "gbs": 100 * xbt[0][0] / xn if xn else m.get("gb")}
+            "fbs": fbn / tot if tot else None, "gbs": 100 * xbt[0][0] / xn if xn else m.get("gb"), "gbp": 100 * gd[0] / gn if gn else None}
 
 
 def talent_league(players, ref_pa):
@@ -389,6 +392,7 @@ def talent_league(players, ref_pa):
     for k in ("bb", "osw", "zsw", "ocon", "zcon", "zsn", "ev90", "woba", "xbabip", "ld", "pu", "evgb", "evld", "spd", "oppo", "fb"):
         L[k] = wavg(I, lambda i: i["m"].get(k), lambda i: i["pa"])
     L["ldp"] = wavg(I, lambda i: i["ldp"], lambda i: i["pa"])
+    L["gbp"] = wavg(I, lambda i: i["gbp"], lambda i: i["pa"])
     F = [i for i in I if i["mx"] and i["hr"] is not None and i["fbn"]]
     hr, fb = sum(i["hr"] for i in F), sum(i["fbn"] for i in F)
     L["hr"] = {"hrfb": 100 * hr / fb if fb else None}
@@ -429,8 +433,8 @@ def talent_of(i, L):
     hrb = xhf / 100 * i["fbs"]
     xbab = L["xbabip"]
     for k, v in TW_XBAB.items():
-        his = i["ldp"] if k == "ldp" else m.get(k)
-        lg = L.get(k); g = i["gbs"] if k == "spd" else 100
+        his = i[k] if k in ("ldp", "gbp") else m.get(k)
+        lg = L.get(k); g = i["gbs"] if k in ("spd", "gbp") else 100
         if his is None or lg is None or g is None: continue
         xbab += v * (his - lg) * g / 100 / 1000
     bip = max(0.0, 1 - xk / 100 - xbb / 100 - hbp); xhr = hrb * bip * i["pa"]
@@ -466,7 +470,8 @@ def season_bb():
             mx = cx.get("mix") or []
             fbs = sum(x or 0 for x in mx) if len(mx) >= 8 else 0      # every ball in the mix (MIX_COLS order: gb, pu, ld p/c/o, fb p/c/o, x)
             tw = talent_of(_tw_inputs(p), TL)
-            val = lambda k: (100 * mx[5] / fbs if fbs else None) if k == "pullfb" else tw if k == "txw" else m.get(k)
+            gd = cx.get("gbdir"); gn = sum(gd) if gd else 0
+            val = lambda k: (100 * mx[5] / fbs if fbs else None) if k == "pullfb" else tw if k == "txw" else (100 * gd[0] / gn if gn else None) if k == "gbp" else m.get(k)
             out.setdefault(str(p["id"]), {})[str(y)] = [cx.get("BBE")] + [r(val(k), 3 if k in ("mixw", "babip", "xbabip", "txw") else 1) for k in SBX_KEYS]
     path = HERE / "hist" / "career-bb.js"
     path.write_text("window.DRAFT_CAREER_BB = " + json.dumps({"keys": SBX_KEYS, "p": out, "pkeys": SBP_KEYS, "pp": pout}, separators=(",", ":")) + ";\n")
