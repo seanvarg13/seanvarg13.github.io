@@ -2521,7 +2521,7 @@
     const mean = (f) => { let a = 0, n = 0; for (const q of ref) { const v = f(q); if (v == null) continue; a += v; n++; } return n ? a / n : null; };
     const gapLi = el("li", "row brgap"), li = el("li", "row brtot"), main = el("div", "row-main grid");
     const mobile = document.documentElement.dataset.view === "mobile";
-    main.style.setProperty("--n", ms.length); main.style.setProperty("--act", "0px"); main.style.setProperty("--colw", state.mode === "trending" || ms.some((m) => m.showValue) ? "72px" : "56px");
+    setStatCols(main, ms); main.style.setProperty("--n", ms.length); main.style.setProperty("--act", "0px"); main.style.setProperty("--colw", state.mode === "trending" || ms.some((m) => m.showValue) ? "72px" : "56px");
     main.style.setProperty("--rankw", mobile ? "22px" : "44px");
     main.style.setProperty("--pre1", preOn("year") ? "var(--prew, 64px)" : "0px"); main.style.setProperty("--pre2", preOn("age") ? "var(--prew, 64px)" : "0px");
     const who = el("div", "who"); who.append(el("div", "name", `Qualified avg (${ref.length})`));
@@ -2550,7 +2550,7 @@
       // iPhone, Sean 26 Sep 2026). Anywhere the page itself scrolls it sits above the box and sticks to the screen.
       if (FROZEN_MODES.includes(state.mode)) { if (wrapEl.parentNode !== bs) bs.insertBefore(wrapEl, bs.firstChild); }
       else if (wrapEl.parentNode !== board) board.insertBefore(wrapEl, bs); }
-    h.style.setProperty("--n", ms.length); h.style.setProperty("--act", state.mode === "draft" ? "78px" : "0px"); h.style.setProperty("--colw", trending || ms.some((m) => m.showValue) ? "72px" : "56px");
+    setStatCols(h, ms); h.style.setProperty("--n", ms.length); h.style.setProperty("--act", state.mode === "draft" ? "78px" : "0px"); h.style.setProperty("--colw", trending || ms.some((m) => m.showValue) ? "72px" : "56px");
     const editing = state.mode === "rankings" && state.editRanks, hasTiers = editing && (state.tiers[state.pos] || []).length;
     const mobile = document.documentElement.dataset.view === "mobile";
     h.style.setProperty("--rankw", editing ? (mobile ? (hasTiers ? "108px" : "72px") : hasTiers ? "190px" : "134px") : mobile ? "22px" : "44px");
@@ -2725,7 +2725,7 @@
       const exp = state.expanded === ck && (state.cardDs || null) === cds;
       if (exp) li.classList.add("open");
       const main = el("div", "row-main grid");
-      main.style.setProperty("--n", ms.length); main.style.setProperty("--act", state.mode === "draft" ? "78px" : "0px"); main.style.setProperty("--colw", trending || ms.some((m) => m.showValue) ? "72px" : "56px");
+      setStatCols(main, ms); main.style.setProperty("--n", ms.length); main.style.setProperty("--act", state.mode === "draft" ? "78px" : "0px"); main.style.setProperty("--colw", trending || ms.some((m) => m.showValue) ? "72px" : "56px");
       const mobile = document.documentElement.dataset.view === "mobile";
       main.style.setProperty("--rankw", rankMode ? (mobile ? (allTiers.length ? "108px" : "72px") : allTiers.length ? "190px" : "134px") : mobile ? "22px" : "44px");
       main.style.setProperty("--pre1", preOn("year") ? "var(--prew, 64px)" : "0px"); main.style.setProperty("--pre2", preOn("age") ? "var(--prew, 64px)" : "0px");
@@ -2861,6 +2861,22 @@
     measureCtx = measureCtx || document.createElement("canvas").getContext("2d");
     if (font !== measureFont) { measureCtx.font = font; measureFont = font; }   // setting the font re-parses it: once per font, not per row
     return measureCtx.measureText(text).width;
+  }
+  // each stat column as wide as the longest word of its name needs (Sean, 11 Oct 2026: "xHR/FB%" ran into BABIP on a phone): the
+  // header's 11px bold Verdana, 3px of padding each side and a little air, never under the column's old width. One string, set on
+  // the header and on every row, so the grid template stays the same across them.
+  const statColsMemo = new Map();
+  function statCols(ms, base) {
+    const k = base + "|" + ms.map((m) => m.key).join(",");
+    if (statColsMemo.has(k)) return statColsMemo.get(k);
+    const F = '700 11px Verdana, Geneva, "DejaVu Sans", sans-serif';
+    const v = ms.map((m) => { const w = Math.max(0, ...String(colLab(m)).split(/\s+/).map((s) => textWidth(s, F))); return Math.max(base, Math.ceil(w + 10)) + "px"; }).join(" ");
+    statColsMemo.set(k, v); return v;
+  }
+  function setStatCols(node, ms) {
+    if (!brOn() || !ms.length) { node.style.removeProperty("--statcols"); return; }
+    const mobile = document.documentElement.dataset.view === "mobile";
+    node.style.setProperty("--statcols", statCols(ms, mobile ? 50 : state.mode === "trending" || ms.some((m) => m.showValue) ? 72 : 56));
   }
   function fitNameCol() {
     const board = $("board"), first = $("rows").querySelector(".who");

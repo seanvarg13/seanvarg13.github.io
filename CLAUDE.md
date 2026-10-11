@@ -3419,3 +3419,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the header's red line to the Filters button equals the gap from the button's foot to the title's capitals — ~8px on a phone (`#pagertop`
   padding-top 4px, `#lbtitle` margin-top 2px), ~12px on a desktop (`#pagertop` margin-top −6px, `#lbtitle` margin-top 5px; the title's box sits
   ~3px above its caps). The block at the end of `styles.css`.
+* **Stat columns as wide as their names (Sean, 11 Oct 2026, from a phone screenshot of "FB Power", "xHR/FB%" running into "BABIP", "xBABIP":
+  "make it so stuff like this gets auto fixed column width wise")**: on the Leaderboard / Recent (`brOn()`) each stat column is as wide as the
+  longest word of its name needs — `statCols(ms, base)` measures it on the canvas in the header's 11px bold Verdana, + 10px, never under the old
+  width (50px on a phone, 56 / 72 on a desktop), memoised per column list — and `setStatCols` puts the string on the header, every row and the
+  Qualified avg / gap rows as `--statcols`, which both `body.brlb .grid` templates read in place of `repeat(var(--n), …)` (the fallback when it's
+  unset). A two-word name still wraps ("FB Power" stays 50px); one that can't ("xHR/FB%" 66, "Hard-Hit%" 74, "xwOBA−wOBA" 100) gets its room.
+  Headless on a phone and a desktop, every column set plus a custom one: no header overflows and every column name sits on its column.
