@@ -3328,3 +3328,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   his actual K% − xK% carries −.0011 a point). P/PA, strike rate seen, age, pitches-seen zone rates and fits trained on next season's rate added
   ≤ .01. The splits of extra bases into doubles / triples (.522), HBP shrunk or set to the league (.533; HBP repeats at r .65) and pieces of
   BABIP noise / luck put back (+.004, not talent) were tested the same day and left out. The site's displayed hitter xK% is unchanged.
+* **Talent xwOBA's HR piece on exit velocity alone (Sean, 11 Oct 2026: "represent the skills a player has that lead to production ... hitting fly
+  balls and ignoring the intricate launch angles within those fly balls", then "ship #1")**: inside talent xwOBA, xHR/FB = the season's HR / (fly
+  balls + popups) + 0.104 + 1.365 a mph of FB EV + 0.828 a mph of EV90 + 0.096 a point of Pull FB% (the share of his fly balls pulled), each against
+  the season's 300+ PA hitters PA-weighted (`TW_HF` / `L.twh` in `app.js`, `TW_HF` / `L["twh"]` in `tools/build_career.py`; `XHRFB` the fallback
+  for a file without FB EV / EV90) — no barrels, a launch-angle window inside the fly ball. Every 300+ PA hitter-season 2015-26 (scratch `tw3.js`):
+  a season's HR/FB r .845 against the barrel fit's .883 but next season's .690 against .668; talent xwOBA's next-season wOBA r (held out by season)
+  .551 → .556, year to year .682 → .709. The xHR/FB tab keeps the barrel fit (it explains the season). `hist/career-bb.js` regenerated; app and
+  build agree within .0005 over 7,530 seasons. **Tested the same day and not shipped**: the extra-bases piece rebuilt from skill rates instead of
+  the directional model (−.008 — the per-ball model knows something about doubles the rates don't); sprint speed beyond its BABIP role (+) and
+  overall Pull% (−) as extra steps (+.009 together, weights fitted on next season); age in Talent proj. (+.01, aging rather than a skill). Every other
+  skill stat (Whiff%, chase, contact, Barrel%, LD%, FB%, FB EV …) added nothing on top of talent xwOBA for next season's wOBA. Sean can have the
+  speed / pull steps or the age term if he asks.
