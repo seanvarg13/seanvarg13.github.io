@@ -7257,11 +7257,14 @@
   // LD Pull% joined as an eighth (Sean, 11 Oct 2026: "can you add LD Direction or maybe call it LD Pull %"): the share of his line drives he
   // pulled, from the Mix buckets; refit with it (scratch xbfit8.js: held out r .767 → .769, the other weights barely move; a pulled liner is a
   // hit .659 against ~.589 up the middle or the other way, 2026 hitters pulling under a third of their liners .611 against .642 over 48%)
-  const XBAB = { ld: 3.64, pu: -3.16, evgb: 2.13, evld: 1.18, ldp: 0.27, spd: 5.9, oppo: 0.84, fb: -0.93 };
+  // Sprint scaled by his grounders (Sean, 11 Oct 2026: "Yeah I'd like it to scale"): speed's worth is in grounders — per ft/s a grounder's
+  // expected hit rate gains ~12.6 points, a liner or fly ball ~0 — so the Sprint row is 13.58 × (his sprint − the league's) × his GB% / 100,
+  // refit with the rest (scratch spd2.js: held out r .769 → .771); a slow fly-ball hitter is charged less, a fast fly-ball hitter credited less
+  const XBAB = { ld: 3.67, pu: -3.14, evgb: 2.15, evld: 1.23, ldp: 0.26, spd: 13.58, oppo: 0.84, fb: -0.91 };
   const XBAB_LAB = { ld: ["LD%", "%"], pu: ["Popup%", "%"], evgb: ["GB EV", ""], evld: ["LD EV", ""], ldp: ["LD Pull%", "%"], spd: ["Sprint", ""], oppo: ["Oppo%", "%"], fb: ["FB%", "%"] };
   const XBAB_TIP = { ld: "line drives fall for hits about two times in three", pu: "a popup is all but an out — the fewer the better", evgb: "a harder grounder gets through the infield", evld: "a harder liner finds a gap",
     ldp: "the share of his line drives he pulled — a pulled liner falls in about .659 of the time, one up the middle or the other way about .589",
-    spd: "speed beats out grounders (Savant's sprint speed, full season)", oppo: "the opposite field is where the infield doesn't shift its gloves", fb: "a fly ball in the park is mostly an out" };
+    spd: "speed beats out grounders (Savant's sprint speed, full season) — worth about 13.6 BABIP points a ft/s on a hitter who hits only grounders, so it's scaled by his GB%: a fly-ball hitter's speed (or lack of it) counts for less", oppo: "the opposite field is where the infield doesn't shift its gloves", fb: "a fly ball in the park is mostly an out" };
   function renderXbabipTab(p, g) {
     const w = el("div", "xbtab"), pv = V(p), m = pv.m, pl = pool(g);
     const val = (q, k) => {
@@ -7283,7 +7286,8 @@
       b.row("League", null, lgX, fmtX, null, "→", lgX, "the qualified hitters' xBABIP, weighted by plate appearances — where the build-up starts");
       for (const k in XBAB) {
         const his = val(p, k), lg = lgOf(k), [lab, u] = XBAB_LAB[k], f = (x) => x.toFixed(1) + u;
-        const d = his == null || lg == null ? null : XBAB[k] * (his - lg) / 1000;
+        const gbs = k === "spd" ? val(p, "gb") : 100;   /* sprint works through his grounders: times his GB% */
+        const d = his == null || lg == null || gbs == null ? null : XBAB[k] * (his - lg) * gbs / 100 / 1000;
         if (d != null) { run += d; dk[k] = d; }
         b.row(lab, his, lg, f, pctAmong(ref.map((q) => val(q, k)).filter((z) => z != null), his, Math.sign(XBAB[k])), d == null ? null : step(run), d == null ? null : run, XBAB_TIP[k]);
       }
