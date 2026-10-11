@@ -3259,4 +3259,14 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   works through grounders only — a grounder's expected hit rate gains ~12.6 points a ft/s, a liner or fly ball ~0. The Sprint row is now
   `XBAB.spd` 13.58 × (his sprint − the league's) × his GB% / 100, the others refit with it (scratch `spd2.js`: ld 3.67, pu −3.14, evgb 2.15, evld 1.23,
   ldp 0.26, oppo 0.84, fb −0.91; held out r .769 → .771). 2026: Olson −12 → −11, Witt +16 → +13, Schwarber −10 → −7; the difference goes to Noise.
+* **Sprint = speed's measured mechanism (Sean, 11 Oct 2026: "re evaluate and see if the sprint speed impact on total babip is truly as big", "only
+  about 83% of grounders it may apply to and then that is likely also only say 40-50% of non homer batted balls")**: every 2024-26 grounder from
+  Savant's play-by-play (scratch `gbsav2.py` / `gbyrs.py` / `spdre.py`, 812 hitter-seasons, the fielder from `hit_location`): speed moves the infield
+  hit rate +.014 a ft/s with batting side and grounder EV held equal (side: an all-lefty hitter −.022, the short throw from the right side; the
+  league .088, infield hit rate repeating at r .46) and nothing else — grounders reaching the outfield +.0005 a ft/s, liners / fly balls ~0. 83% of
+  grounders are fielded in the infield. The row is `XBAB.spd` = 14 × 0.83 × (his sprint − the league's) × his grounders' share of his non-HR balls
+  in play (`gbShare`, from `ctx.xbt`; GB% for a file without it) — 5.1 BABIP points a ft/s at the league's 44%, against actual BABIP's 5.0
+  (side-controlled) and the model's 5.4; the other weights refit with it fixed (scratch `spd3.js`: ld 3.64, pu −3.15, evgb 2.11, evld 1.20, ldp
+  0.27, oppo 0.86, fb −0.94; held out r .770). 2026: Simpson +15, Witt +12, Elly +6, Ohtani +2, Schwarber −7, Olson −10, Alonso −13. Elly's
+  realized infield hits run under his speed three years running (43 on 463 against ~53); that lands in Luck, not Sprint.
 
