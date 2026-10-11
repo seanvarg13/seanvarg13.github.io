@@ -3376,3 +3376,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   **Centred, a border and a shadow** (Sean, the same evening: "can you center the table on the page and give it a border and shadow"): the
   rows' box sits in the middle of the page on a desktop (`margin: 0 auto`), with a firmer 1px edge (ink at 45%), the surface behind it and a
   soft shadow on both layouts — the one shadow on the site, asked for. Filters, the count and the title stay at the left.
+  **The controls over the table** (Sean, minutes later: "make it so the other label and the filter buttons above are over the table"): on a
+  desktop `#board` is `width: fit-content` and centred, so it takes the table's width — Filters, the count and the title start at the table's
+  left edge and the title's red rule runs the table's width (capped at the page's, where a wide list scrolls inside its box).

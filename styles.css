@@ -5321,3 +5321,7 @@ header.top .wordmark { display: none; }
    Leaderboard / Recent rows' box sits in the middle of the page on a desktop, a firmer 1px edge and a soft shadow on both layouts. */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #bscroll { border: 1px solid color-mix(in srgb, var(--ink) 45%, var(--surface)) !important; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08) !important; background: var(--surface) !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #bscroll { margin-left: auto !important; margin-right: auto !important; margin-bottom: 14px !important; }
+/* The controls and the title over the table (Sean, 11 Oct 2026: "make it so the other label and the filter buttons above are over the table"):
+   on a desktop the Leaderboard / Recent board takes its table's width and sits centred, so Filters, the count and the title start at the
+   table's left edge and the title's red rule runs the table's width. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #board { align-self: center !important; width: fit-content !important; max-width: 100% !important; min-width: 0 !important; margin-left: auto !important; margin-right: auto !important; }
