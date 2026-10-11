@@ -3340,3 +3340,16 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   overall Pull% (−) as extra steps (+.009 together, weights fitted on next season); age in Talent proj. (+.01, aging rather than a skill). Every other
   skill stat (Whiff%, chase, contact, Barrel%, LD%, FB%, FB EV …) added nothing on top of talent xwOBA for next season's wOBA. Sean can have the
   speed / pull steps or the age term if he asks.
+* **GB Pull% in xBABIP (Sean, 11 Oct 2026: "add in ground ball direction to the xbabip formula since that isnt really something noisy like the
+  specific launch angle within a line drive")**: `XBAB` is nine drivers — **GB Pull%** (`gbp`, the share of his grounders pulled, `ctx.gbdir`)
+  after GB EV, scaled like Sprint by his grounders' share of his non-HR balls in play (it only touches grounders): ld 3.74, pu −3.14, evgb 2.03,
+  **gbp −0.95**, evld 1.21, ldp 0.28, spd 14 × 0.83 (fixed), oppo 0.40, fb −0.73. Fitted on every 2015-26 grounder from Savant's play-by-play
+  (scratch `gbdirfetch.py` / `gbfit.js`, `hc_x / hc_y` through the build's own pull line — 2026 matches the build's `gbdir` exactly), every
+  300+ PA hitter-season (3,321), held out by season r .770 → .775; the weight is steady across the shift ban (−0.90 for 2015-22, −0.99 for
+  2023-26); overall Oppo% falls .86 → .40 because it had been carrying the grounders' direction; next season's BABIP from the drivers r .386 →
+  .389; talent xwOBA (which uses the same drivers — `TW_XBAB` in `tools/build_career.py`, `talentCore` in `app.js`) forecasts next season's
+  wOBA at r .5476 against .5473. **Data**: `hist/mlb-2015…2025.js` patched in place the same day with `ctx.gbdir` from that play-by-play
+  (scratch `patchgbdir.js`; their day rows still lack `gbp / gbc / gbo`, so a date window or split on a past season shows "–" for the row until
+  a rescore); `build_career.py` appends **`gbp`** to `SBX_KEYS` and the BABIP-by-season table has a GB Pull% column; `hist/career-bb.js`
+  regenerated (app and build talent xwOBA agree within .0005 over 7,530 seasons). The Noise row's note now says what's left: angles, where liners
+  and fly balls went. Kody Clemens 2026 (78.3% of grounders pulled against 61.1%): −6 BABIP points, Noise −18 → −14.
