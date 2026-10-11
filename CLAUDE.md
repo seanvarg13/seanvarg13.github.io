@@ -3370,3 +3370,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   been since 9 Oct; only the rows scroll, as before (the block at the end of `styles.css`). `renderToolButtons` under `onePage()` draws one
   Filters button on both layouts, labelled with who's listed ("Hitters filters", "SP filters (1)" — `posBtnLabel`); the desktop's Hitters · SP ·
   RP segment (`.posseg`) is gone, the choice being the dropdown's Position tab. The Standard ▾ and season pills stay beside it.
+  **Then only the table** (Sean, minutes later: "make it so the only window is for the leaderboard itself"): the card round the page is gone again
+  (`main.wrap` frameless as before); the framed, column-hugging `#bscroll` is the one window. Filters, the pills, the count and the title sit on
+  the page ground over it.

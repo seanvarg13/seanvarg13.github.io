@@ -5313,8 +5313,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .sbt.mktable td.nm .mkptag { display: inline-block; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .sbt.mkteam td.mkslot { text-align: left; color: var(--muted); }
 
-/* The Leaderboard in a window again on a desktop (Sean, 11 Oct 2026: "i dont really like the look of this not being a separate window can you make it
-   like that again"): the page's card — a hairline frame, 6px corners, the surface, padding inside — and the table in its own framed box that hugs
-   its columns, as a phone's has been since 9 Oct. Only the rows scroll, as before. */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb main.wrap { border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--surface)) !important; border-radius: 6px !important; background: var(--surface) !important; padding: 14px 18px 10px !important; box-sizing: border-box !important; }
+/* The Leaderboard's table in a window on a desktop (Sean, 11 Oct 2026: "i dont really like the look of this not being a separate window can you
+   make it like that again", then "make it so the only window is for the leaderboard itself"): no card round the page, just the table in its own
+   framed box that hugs its columns, as a phone's has been since 9 Oct. Only the rows scroll, as before. */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #bscroll { border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--surface)) !important; width: max-content !important; max-width: 100% !important; }
