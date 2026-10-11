@@ -192,7 +192,8 @@ EV ≥ 95. Sweet-spot is 9-31° full credit and 8° / 32° half credit (the roun
 bunts, as Savant's do. Bat speed averages **competitive swings** — everything at or above the hitter's own 10th
 percentile swing speed, which is Savant's roughly-hardest-90% rule.
 
-**xwOBA is the directional model, and only that** (Sean, 24 Sep 2026: "get rid of statcast xwoba completely").
+**Since 11 Oct 2026 the site's xwOBA is talent xwOBA** (§8, "Talent xwOBA is the xwOBA"); what follows describes the batted-ball model, which
+feeds it and still stands where talent can't be built. **xwOBA was the directional model, and only that** (Sean, 24 Sep 2026: "get rid of statcast xwoba completely").
 Everywhere the site says xwOBA, xBA or xSLG — the headline, the rank, the leaderboards, the cards, the player page,
 the rolling chart, the fantasy xPts — it means Sean's model (`xwd` / `dxba` / `dxslg` in `app.js`; the old
 Statcast/Directional toggle and the `xws` column are gone). The build still carries Savant's `est_woba`/`est_ba`/
@@ -3436,3 +3437,25 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **"Hitting Leaderboard" / "Pitchers Leaderboard" (Sean, 11 Oct 2026: "get rid of the your batting and make it say 'Hitting Leaderboard' for cases
   when hitters are selected and make it say 'Pitchers Leaderboard' when pitchers are selected")**: `#lbtitle`'s heading (`renderColheadIn`) is one of
   the two, whatever the column set; the grey "by xwOBA" / sorted-column note beside it stays. `lbSetName()` no longer names the title.
+* **Every table framed like the Leaderboard (Sean, 11 Oct 2026: "make it so that all tables are the same format with the outline and shadow")**:
+  the scroller round each table — his season table and the card tabs' B-Ref tables (`.sbscroll` / `.brscroll`), the Pitching+ board, Fantasy,
+  the Claude rankings and the planner (`.fscroll` / `.pbscroll`), home's tables, the older card tables (`.stuffscroll` / `.rawscroll`),
+  Rankings / the Draft board (`.board-scroll`) — has `#bscroll`'s 1px edge (ink at 45%), the surface behind it and the same soft shadow. One
+  rule at the end of `styles.css`, anchored on `:is(#xboard, #modal, #pitchboard, #hub, #fboard, #board)`.
+* **Talent xwOBA is the xwOBA (Sean, 11 Oct 2026: "could we maybe get rid of talent xWOBA and then simply just make talent xWOBA the actual xWOBA
+  ... before doing this can we see how first half talent xwoba predicts second half woba", then "yes make talent xwoba the new xwoba")**: the test
+  (scratch `half.js` / `halfstat.js`, the site's own code in a headless page, every hitter-season 2015-26 split at its middle game day, each column
+  centred on its season): 2,411 hitter-seasons with 150+ PA in both halves, second-half wOBA from first-half talent xwOBA r .424 against the
+  directional model's .367 and wOBA's .313 (100+ PA a half .410 / .353; 200+ .457 / .400), ahead in all eleven seasons, the two averaged .406;
+  Talent proj. .431. **In `app.js`**: `V()` sets `m.xwd` / `m.xwoba` to the talent number wherever `talentOf` builds one (and `xwdiff` from it),
+  keeping the batted-ball model's own as **`m.dxw`** (xwOBAcon is computed before the swap and stays on the model) — so the hitters' headline,
+  rank, percentiles, Leaderboard, home lists, Similar, the card's bar and the Summary all read talent; a span of seasons, a level with no
+  tracked contact, or a dataset without a qualified pool keeps the model's number. The **Talent xwOBA** column / bar / season-table column are
+  gone (`txw` dropped from saved lists on load; `SB_H` is wOBA · xwOBA · …, the xwOBA column reads `hist/career-bb.js` `txw` through `sbVal`,
+  falling back to the model's for a minors line or an unbuilt season, heat-mapped against `sbxPool(…, "txw")`; the season leaders read it once
+  career-bb.js is in — `SB_LEADS` keys on it); the Summary's Career xwOBA is talent PA-weighted over his seasons; **Talent proj.** is
+  **xwOBA proj.** (`txwp`); the card's **Talent** tab is the **xwOBA** tab (key `talent`; "xwOBA build-up", its "Expected vs actual" table ends
+  with "Batted-ball model" = `m.dxw`); the glossary's xwOBA entry describes the build. Per-game xwOBA (Game Logs, home's Last game day) and the
+  cross-season Similar file (`hist/similar.js`) stay the batted-ball model — a game is too small to build talent from. Judge 2026: xwOBA .389
+  (model .407, wOBA .369) on the list, the card, the Summary and the season table alike.
+
