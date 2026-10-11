@@ -4420,45 +4420,44 @@
     const P = new Map(DATA.players.filter((p) => p.type === "P").map((p) => [p.id, p]));
     const scored = D27.rows.map((r) => val(r)), ppsAll = scored.map((r) => r.pps), ptsAll = scored.map((r) => r.pts);
     const pctIn = (arr, v) => Math.round(100 * arr.filter((x) => x < v).length / arr.length);
-    const paint = (td, pc) => { const st = pctStyle(pc); if (st) { td.style.background = st.bg; td.style.color = st.fg; } };
     const f1 = (v) => v == null ? "–" : (+v).toFixed(1), f2 = (v) => v == null ? "–" : (+v).toFixed(2), f0 = (v) => v == null ? "–" : String(Math.round(v));
     const cols = [["tier", "Tier"], ["pts", "Proj pts"], ["pps", "Pts/GS"], ["gs", "GS"], ["gs26", "2026 GS"], ["pps26", "2026 Pts/GS"], ["nera", "nERA"], ["xnera", "xnERA"], ["k", "K%"], ["bb", "BB%"], ["whf", "Whiff%"], ["pitch", "Pitching+"], ["fbv", "Velo"], ["late", "Aug 1 on"]];
-    const t = el("table", "ftable stufft pbtable cltable"), th = el("thead"), hr = el("tr");
-    hr.append(el("th", "n", "#"), el("th", "who", "Pitcher"));
-    for (const [k, lab] of cols) { const c = el("th", null, lab); if (k === "late") c.title = "nERA and K% from August 1 on (25+ IP)"; if (k === "pts") c.title = "Projected 2027 ESPN points: per start × projected starts"; hr.append(c); }
-    th.append(hr); t.append(th);
-    const tb = el("tbody");
+    // B-Ref's table (Sean, 11 Oct 2026): Rk and Pitcher frozen, Tm / Age columns, the projection and the 2026 line under over-header groups,
+    // the projected points filling their cells; a row still opens his comment, a name his page
+    const groups = [["", 4], ["2027 projection", 4], ["2026", 9], ["", 1]];
+    const heads = [["Rk", "f1"], ["Pitcher", "l f3"], ["Tm"], ["Age"], ...cols.map(([k, lab]) => [lab, "", k === "late" ? "nERA and K% from August 1 on (25+ IP)" : k === "pts" ? "Projected 2027 points: per start × projected starts" : null])];
+    const { t, tb, fin, wrap } = brTable(groups, heads, "pbt cltbl");
     rows.forEach((r) => {
-      const tr = el("tr", "clrow" + ((cl.all || cl.open[r.id]) ? " open" : "")), who = el("td", "who"), p = P.get(r.id);
+      const tr = el("tr", "clrow" + ((cl.all || cl.open[r.id]) ? " open" : "")), who = el("td", "l nm f3"), p = P.get(r.id);
       const nm = p ? el("button", "linkbtn pbname", r.name) : el("span", "pbname", r.name);
-      if (p) { nm.type = "button"; nm.addEventListener("click", (e) => { e.stopPropagation(); openCard(p); }); }
-      who.append(nm, el("small", null, ` ${r.team || ""} · ${r.age}`));
-      tr.append(el("td", "n", String(rankOf.get(r.id) || r.rk)), who);
+      if (p) { nm.type = "button"; nm.addEventListener("click", (e) => { e.stopPropagation(); openPlayer(p); }); }
+      who.append(nm);
+      tr.append(el("td", "rk f1", String(rankOf.get(r.id) || r.rk)), who, el("td", "c", r.team || ""), el("td", "c", r.age == null ? "–" : String(r.age)));
       for (const [k] of cols) {
         let td;
-        if (k === "tier") td = el("td", "cltier", "T" + r.tier);
-        else if (k === "pts") { td = el("td", null, f0(r.pts)); paint(td, pctIn(ptsAll, r.pts)); }
-        else if (k === "pps") { td = el("td", null, f1(r.pps)); paint(td, pctIn(ppsAll, r.pps)); }
-        else if (k === "late") td = el("td", "cllate", r.late ? `${f2(r.late.nera)} · ${f1(r.late.k)}%` : "–");
+        if (k === "tier") td = el("td", "c cltier", "T" + r.tier);
+        else if (k === "pts") td = heatTd(el("td", null, f0(r.pts)), pctIn(ptsAll, r.pts));
+        else if (k === "pps") td = heatTd(el("td", null, f1(r.pps)), pctIn(ppsAll, r.pps));
+        else if (k === "late") td = el("td", "c cllate", r.late ? `${f2(r.late.nera)} · ${f1(r.late.k)}%` : "–");
         else if (k === "nera" || k === "xnera") td = el("td", null, f2(r[k]));
         else if (k === "pitch" || k === "gs" || k === "gs26") td = el("td", null, f0(r[k]));
         else td = el("td", null, f1(r[k]));
         tr.append(td);
       }
       tr.addEventListener("click", () => { cl.open[r.id] = !cl.open[r.id]; render(); });
-      tb.append(tr);
+      tb.append(fin(tr));
       if (cl.all || cl.open[r.id]) {
-        const cr = el("tr", "clcomment"), td = el("td"); td.colSpan = cols.length + 2;
+        const cr = el("tr", "clcomment"), td = el("td"); td.colSpan = cols.length + 4;
         const hist = r.hist.map((h) => `${h.y}: ${h.gs ?? "–"} GS, nERA ${f2(h.nera)}, K% ${f1(h.k)}, BB% ${f1(h.bb)}, Pitching+ ${f0(h.pitch)}${h.pps != null ? `, ${f1(h.pps)} pts/start` : ""}`);
         const mins = (r.minors || []).map((m) => `${m.lvl.toUpperCase()} 2026: ${m.bf} BF, K% ${f1(m.k)}, BB% ${f1(m.bb)}${m.stuff != null ? `, Stuff+ ${f0(m.stuff)}` : ""}`);
-        const wrap = el("div", "clwrap");   // sticky to the left edge, so on a phone the comment stays in view while the table scrolls sideways
-        wrap.append(el("p", "clc", r.comment));
-        if (hist.length || mins.length) wrap.append(el("p", "clh", [...hist, ...mins].join(" · ")));
-        td.append(wrap); cr.append(td); tb.append(cr);
+        const cw = el("div", "clwrap");   // sticky to the left edge, so on a phone the comment stays in view while the table scrolls sideways
+        cw.append(el("p", "clc", r.comment));
+        if (hist.length || mins.length) cw.append(el("p", "clh", [...hist, ...mins].join(" · ")));
+        td.append(cw); cr.append(td); tb.append(cr);
       }
     });
-    t.append(tb);
-    const scroll = el("div", "fscroll pbscroll"); scroll.append(t); box.append(scroll);
+    wrap.className = "fscroll pbscroll brscroll"; box.append(wrap);
+    requestAnimationFrame(() => { const rk = t.querySelector("tbody td.f1"), ov = t.querySelector("tr.over"); if (rk) t.style.setProperty("--sbw1", rk.offsetWidth + "px"); if (ov) t.style.setProperty("--overh", ov.offsetHeight + "px"); });
     box.append(el("p", "note", `Points are under the ${pre.name} scoring picked above (the Fantasy page's presets); the ranking was built under ESPN standard and each pitcher's projected per-start line is re-scored here, keeping his process adjustment. ${D27.method}`));
   }
   // Weekly Planner (Sean, 29 Sep 2026): the Monday-to-Sunday week's schedule and probable starters, fetched from the MLB Stats API
@@ -4525,28 +4524,28 @@
       return { r, gs, L: opp.filter((q) => q.throws === "L").length, R: opp.filter((q) => q.throws === "R").length, perG: r.o.G ? r.pts / r.o.G : null, proj: r.o.G ? gs.length * r.pts / r.o.G : null }; });
     const f1 = (x) => (x == null ? "–" : x.toFixed(1)), f2x = (x) => (x == null ? "–" : x.toFixed(2));
     const openCard = (q) => openPlayer(q);
-    const nameCell = (q, sub) => { const td = el("td", "pwho"), b = el("button", "linkbtn pwname", q.name); b.type = "button"; b.addEventListener("click", () => openCard(q)); td.append(b, el("small", null, " " + sub)); return td; };
+    // B-Ref's tables (Sean, 11 Oct 2026): the name, Tm and role / position as their own columns, the projected points bold
+    const nameCell = (q) => { const td = el("td", "l nm"), b = el("button", "linkbtn pbname", q.name); b.type = "button"; b.addEventListener("click", () => openCard(q)); td.append(b); return td; };
     const table = (title, heads, rows) => {
       const sec = el("div", "pwsec"); sec.append(el("h4", "pwh", title));
       if (!rows.length) { sec.append(el("p", "note", pw.scope === "stars" ? "Nobody here — star players on their cards, or switch to Everyone." : "Nobody this week.")); return sec; }
-      const t = el("table", "pwtable"), th = el("thead"), hr = el("tr");
-      for (const [h, c] of heads) hr.append(el("th", c || null, h)); th.append(hr); t.append(th);
-      const tb = el("tbody"); for (const tr of rows) tb.append(tr); t.append(tb);
-      const sc = el("div", "pwscroll"); sc.append(t); sec.append(sc); return sec;
+      const { tb, wrap } = brTable(null, heads, "pwt");
+      for (const tr of rows) tb.append(tr);
+      wrap.classList.add("pwscroll"); sec.append(wrap); return sec;
     };
     const dayTag = (x) => `${new Date(x.date + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short" })} ${x.home ? "vs" : "@"} ${x.opp}`;
     // two-start pitchers, everyone, best projection first
     const two = pRows.filter((x) => x.two).sort((a, b) => (b.proj ?? -1e9) - (a.proj ?? -1e9));
-    box.append(table(`Two-start pitchers (${two.length})`, [["Pitcher", "pwho"], ["Proj pts"], ["Starts"], ["Pts / start"]],
-      two.map((x) => { const tr = el("tr"); tr.append(nameCell(x.r.p, `${x.r.p.team} · ${x.r.p.primary}`), el("td", "pwp", f1(x.proj)), el("td", "l", x.st.map(dayTag).join(" · ")), el("td", null, f1(x.perS))); return tr; })));
+    box.append(table(`Two-start pitchers (${two.length})`, [["Pitcher", "l"], ["Tm"], ["Role"], ["Proj pts"], ["Starts", "l"], ["Pts / start"]],
+      two.map((x) => { const tr = el("tr"); tr.append(nameCell(x.r.p), el("td", "c", x.r.p.team || ""), el("td", "c", x.r.p.primary || ""), el("td", "kd", f1(x.proj)), el("td", "l", x.st.map(dayTag).join(" · ")), el("td", null, f1(x.perS))); return tr; })));
     const mineP = pRows.filter((x) => pick(x.r) && (x.st.length || x.r.p.primary === "RP")).sort((a, b) => (b.proj ?? -1e9) - (a.proj ?? -1e9)).slice(0, pw.scope === "all" ? 60 : 200);
-    box.append(table(pw.scope === "stars" ? "Your pitchers" : "Pitchers (top 60)", [["Pitcher", "pwho"], ["Proj pts"], ["This week"], ["Pts / start · relief"]],
-      mineP.map((x) => { const tr = el("tr"); tr.append(nameCell(x.r.p, `${x.r.p.team} · ${x.r.p.primary}`), el("td", "pwp", f1(x.proj)), el("td", "l", x.st.length ? x.st.map(dayTag).join(" · ") : `${x.tg} team games, no probable start`),
+    box.append(table(pw.scope === "stars" ? "Your pitchers" : "Pitchers (top 60)", [["Pitcher", "l"], ["Tm"], ["Role"], ["Proj pts"], ["This week", "l"], ["Pts / start · relief"]],
+      mineP.map((x) => { const tr = el("tr"); tr.append(nameCell(x.r.p), el("td", "c", x.r.p.team || ""), el("td", "c", x.r.p.primary || ""), el("td", "kd", f1(x.proj)), el("td", "l", x.st.length ? x.st.map(dayTag).join(" · ") : `${x.tg} team games, no probable start`),
         el("td", null, `${f1(x.perS)} · ${f1(x.perR)}`)); return tr; })));
     const mineH = hRows.sort((a, b) => (b.proj ?? -1e9) - (a.proj ?? -1e9)).slice(0, pw.scope === "all" ? 60 : 200);
-    box.append(table(pw.scope === "stars" ? "Your hitters" : "Hitters (top 60)", [["Hitter", "pwho"], ["Proj pts"], ["Games"], ["vs LHP / RHP"], ["Pts / G"]],
-      mineH.map((x) => { const tr = el("tr"); tr.append(nameCell(x.r.p, `${x.r.p.team} · ${x.r.p.primary || ""}`), el("td", "pwp", f1(x.proj)), el("td", null, String(x.gs.length)),
-        el("td", null, `${x.L} / ${x.R}`), el("td", null, f2x(x.perG))); return tr; })));
+    box.append(table(pw.scope === "stars" ? "Your hitters" : "Hitters (top 60)", [["Hitter", "l"], ["Tm"], ["Pos"], ["Proj pts"], ["Games"], ["vs LHP / RHP"], ["Pts / G"]],
+      mineH.map((x) => { const tr = el("tr"); tr.append(nameCell(x.r.p), el("td", "c", x.r.p.team || ""), el("td", "c", x.r.p.primary || ""), el("td", "kd", f1(x.proj)), el("td", null, String(x.gs.length)),
+        el("td", "c", `${x.L} / ${x.R}`), el("td", null, f2x(x.perG))); return tr; })));
     box.append(el("p", "note", "The week's schedule and probable starters come straight from MLB when the page opens; clubs name starters a few days ahead, so later days fill in as the week nears. Projected points = starts × his points per start (relievers: the club's games × how often he's pitched × his points per relief outing; hitters: games × points per game), this season, under the scoring picked on the Fantasy page. vs LHP / RHP counts the opposing probable starters named so far. ★ = starred."));
   }
   let trResize;
@@ -6420,11 +6419,13 @@
     if (mobileView()) renderPager(pagerBot, shown.length, pg, redraw);
     wrap.append(pagerTop);
     if (box._fbar) { box._fbar.classList.add("inbar"); pagerTop.prepend(box._fbar); }   // a redraw clears the wrap; the bar goes back in
-    const table = el("table", "ftable"), thead = el("thead"), tr = el("tr");
-    tr.append(el("th", "n", ""), el("th", "who", "Player"));
+    // B-Ref's table (Sean, 11 Oct 2026: "make all of the fantasy tables be the baseball reference table design"): Rk and Player frozen,
+    // Tm and Pos their own columns, the column names on the band with the sorted one lit, the sorted column (and Trend / Δ) filling its cells
+    const table = el("table", "sbt brt fbt"), thead = el("thead"), tr = el("tr");
+    tr.append(el("th", "f1", "Rk"), el("th", "l f3", "Player"), el("th", null, "Tm"), el("th", "ge", "Pos"));
     for (const c of cols) {
-      const th = el("th", c.num ? "num" : "txt"); const b = el("button", "h", c.label); b.type = "button"; if (c.title) b.title = c.title;
-      if (c.label === sortKey) th.setAttribute("aria-sort", f.dir === "asc" ? "ascending" : "descending");
+      const th = el("th"), on = c.label === sortKey, b = el("button", "h sortbtn" + (on ? " on" : ""), c.label); b.type = "button"; if (c.title) b.title = c.title;
+      if (on) { th.setAttribute("aria-sort", f.dir === "asc" ? "ascending" : "descending"); th.classList.add("lit"); }
       b.addEventListener("click", () => { if (f.sort === c.label) f.dir = f.dir === "asc" ? "desc" : "asc"; else { f.sort = c.label; f.dir = c.low ? "asc" : "desc"; } renderFTable(box); });
       th.append(b); tr.append(th);
     }
@@ -6433,12 +6434,12 @@
     shown.slice(pg.start, pg.end).forEach((r, k) => {
       const i = pg.start + k;
       const trr = el("tr"); trr.tabIndex = 0;
-      trr.append(el("td", "n", String(i + 1)));
-      const who = el("td", "who"); who.append(el("b", null, r.p.name), el("small", null, ` ${r.p.team} · ${fPos(r.p).join(", ") || r.p.primary || ""}`)); trr.append(who);
+      const who = el("td", "l nm f3"); who.append(el("span", "pbname", r.p.name));
+      trr.append(el("td", "rk f1", String(i + 1)), who, el("td", "c", r.p.team || ""), el("td", "c ge", fPos(r.p).join(", ") || r.p.primary || ""));
       cols.forEach((c, j) => {
-        const v = c.get(r), td = el("td", c.num ? "num" : "txt", c.fmt ? c.fmt(v) : String(v ?? "–"));
-        // colour only what you're sorting by, plus the signed Trend / Δ (every rate column in red and blue was a wall of colour)
-        if (c.paint && v != null && (c.label === sortKey || c.label === "Trend" || c.label === "Δ")) { const pct = pcts[c.label][i]; if (pct != null) paint(td, pct); td.classList.add("pc"); if (c.label === sortKey) td.classList.add("fsorted"); }
+        const v = c.get(r), td = el("td", c.num ? null : "c", c.fmt ? c.fmt(v) : String(v ?? "–"));
+        // colour only what you're sorting by, plus the signed Trend / Δ — the whole cell, as on every B-Ref table
+        if (c.paint && v != null && (c.label === sortKey || c.label === "Trend" || c.label === "Δ")) { const pct = pcts[c.label][i]; if (pct != null) heatTd(td, pct); }
         trr.append(td);
       });
       // the table's place is noted first: its card opens without a full render, and closing one redraws the table from the top
@@ -6447,7 +6448,8 @@
       tbody.append(trr);
     });
     table.append(tbody);
-    const scroll = el("div", "fscroll"); scroll.append(table); wrap.append(scroll); if (mobileView()) wrap.append(pagerBot);
+    const scroll = el("div", "fscroll brscroll"); scroll.append(table); wrap.append(scroll); if (mobileView()) wrap.append(pagerBot);
+    requestAnimationFrame(() => { const rk = table.querySelector("td.f1") || table.querySelector("th.f1"); if (rk) table.style.setProperty("--sbw1", rk.offsetWidth + "px"); });   // Player freezes right after Rk
     fFloatHead(wrap, scroll, table);
     if (!shown.length) wrap.append(el("p", "xempty", "No players match."));
     const wtxt = Object.entries(P.w[f.grp]).filter(([, v]) => Number(v)).map(([k, v]) => `${k} ${v > 0 ? "+" : ""}${v}`).join(", ");
@@ -6460,13 +6462,14 @@
   // phone: a copy of the header row that sticks to the top of the screen while the page scrolls (it overlays the real
   // header exactly while the table top is in view), kept aligned with the columns as the table is dragged sideways
   function fFloatHead(wrap, scroll, table) {
-    const head = el("div", "fhead"), clip = el("div", "fhead-clip"), t2 = el("table", "ftable fhead-table");
+    const head = el("div", "fhead"), clip = el("div", "fhead-clip"), t2 = el("table", "sbt brt fbt fhead-table");
     t2.append(table.tHead.cloneNode(true)); clip.append(t2); head.append(clip);
     wrap.insertBefore(head, scroll);
     const size = () => {
       const src = table.tHead.querySelectorAll("th"), dst = t2.querySelectorAll("th");
       src.forEach((th, i) => { const w = th.getBoundingClientRect().width + "px"; dst[i].style.width = w; dst[i].style.minWidth = w; dst[i].style.maxWidth = w; });
       t2.style.width = table.getBoundingClientRect().width + "px"; clip.style.width = scroll.clientWidth + "px";
+      const rk = table.querySelector("td.f1") || table.querySelector("th.f1"); if (rk) { table.style.setProperty("--sbw1", rk.offsetWidth + "px"); t2.style.setProperty("--sbw1", rk.offsetWidth + "px"); }   // Player freezes right after Rk in the copy too
       clip.scrollLeft = scroll.scrollLeft;
     };
     requestAnimationFrame(size); setTimeout(size, 300);
@@ -6802,29 +6805,26 @@
     if (L) for (const yy of Object.keys(L.years).sort().reverse()) { const a = L.years[yy][grp === "H" ? "hitters" : "pitchers"][p.id]; if (a) { const o = fLineObj(L, grp, a); if (o.G) rows.push([yy, o]); } }
     if (vw && vw.G) for (const r of rows) if (r[0] === y) r[1] = vw;
     if (!rows.length) { wrap.append(el("p", "note", L ? "No MLB seasons to show." : failed.has("hist/fantasy-lines.js") ? "Past seasons aren't built yet." : "Loading past seasons…")); return wrap; }
-    const t = el("table", "ubt fantyrs"), th = el("thead"), hr = el("tr");
     const heads = grp === "H" ? ["Season", "G", "PA", "PA/G", "Pts", "Pts/G", "Pts/PA"] : ["Season", "G", "GS", "IP", "Pts", "Pts/G"];   // PA/G behind PA (Sean, 2 Oct 2026)
-    for (const h of heads) hr.append(el("th", h === "Season" ? "l" : null, h));
-    th.append(hr); t.append(th);
-    const tb = el("tbody");
+    const { tb, fin, gap, wrap: bw } = brTable(null, heads.map((h) => [h, h === "Season" ? "l" : ""]), "fantyrs");   // B-Ref's table (11 Oct 2026)
     let tp = 0, tg = 0, tpa = 0;
     const f3 = (x) => (x == null || !isFinite(x) ? "–" : x.toFixed(3));
     for (const [yy, o] of rows) {
-      const pts = fPts(w, o), r = el("tr", yy === y ? "fcur" : null); tp += pts; tg += o.G; tpa += o.PA || 0;
+      const pts = fPts(w, o), r = el("tr", yy === y ? "cur" : null); tp += pts; tg += o.G; tpa += o.PA || 0;
       const yc = el("td", "l", yy); if (vw && vw.G && yy === y && vlab) yc.append(el("small", null, ` · ${vlab}`));
       r.append(yc, el("td", null, String(o.G)));
       if (grp === "H") r.append(el("td", null, String(o.PA)), el("td", null, f2(o.G ? o.PA / o.G : null)));
       else r.append(el("td", null, String(o.GS)), el("td", null, outsIP(o.OUTS)));
-      r.append(el("td", "fp" + (pts < 0 ? " neg" : ""), f1(pts)), el("td", null, f2(pts / o.G)));
-      if (grp === "H") { const v = o.PA ? pts / o.PA : null, td = el("td", "ppa", f3(v)), pc = ppaPct && v != null ? ppaPct(v) : null; if (pc != null) paint(td, pc); r.append(td); }   // coloured against this season's qualified hitters
-      tb.append(r);
+      r.append(el("td", "kd", f1(pts)), el("td", null, f2(pts / o.G)));
+      if (grp === "H") { const v = o.PA ? pts / o.PA : null, pc = ppaPct && v != null ? ppaPct(v) : null; r.append(heatTd(el("td", null, f3(v)), pc)); }   // coloured against this season's qualified hitters
+      tb.append(fin(r));
     }
     if (rows.length > 1) {
-      const r = el("tr", "ftot"); r.append(el("td", "l", "Total"), el("td", null, String(tg)));
+      const r = el("tr", "tot first"); r.append(el("td", "l", "Total"), el("td", null, String(tg)));
       if (grp === "H") r.append(el("td", null, String(tpa)), el("td", null, f2(tg ? tpa / tg : null))); else r.append(el("td"), el("td"));
-      r.append(el("td", "fp", f1(tp)), el("td", null, f2(tp / tg))); if (grp === "H") r.append(el("td", null, f3(tpa ? tp / tpa : null))); tb.append(r);
+      r.append(el("td", null, f1(tp)), el("td", null, f2(tp / tg))); if (grp === "H") r.append(el("td", null, f3(tpa ? tp / tpa : null))); tb.append(gap(), fin(r));
     }
-    t.append(tb); wrap.append(t);
+    wrap.append(bw);
     if (L && rows.some(([yy]) => yy !== cur)) wrap.append(el("p", "note", "Past seasons are scored from the official season line: cycles and game-winning RBI aren't in it, so they count zero there; per-start points need game logs, so they're this season only."));
     return wrap;
   }
@@ -6895,20 +6895,17 @@
       const miss = Object.keys(w).filter((k) => Number(w[k]) && o.games[0][k] === undefined && !["IP", "OUT", "G", "SVHD", "RW", "RL", "QS", "NH", "PG"].includes(k));
       const all = FANT_OPEN.has(p.id), games = o.games.slice().reverse(), show = all ? games : games.slice(0, 10);
       box.append(el("h4", "fanth", "Game log"));
-      const gt = el("table", "ubt fantlog"), gh = el("thead"), ghr = el("tr");
-      for (const h of ["Date", "", "IP", "K", "ER", "H", "BB", "Dec", "Pts"]) ghr.append(el("th", h === "Date" ? "l" : null, h));
-      gh.append(ghr); gt.append(gh);
-      const gb = el("tbody");
+      const { tb: gb, wrap: gw } = brTable(null, ["Date", "", "IP", "K", "ER", "H", "BB", "Dec", "Pts"].map((h) => [h, h === "Date" ? "l" : ""]), "fantlog");   // B-Ref's table (11 Oct 2026)
       for (const g of show) {
         const d = String(g.date), iso = `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`, pts = fPts(w, g);
         const dec = [g.W && "W", g.L && "L", g.SV && "SV", g.HD && "HD", g.BS && "BS"].filter(Boolean).join(" ");
         const r = el("tr");
-        r.append(el("td", "l", fmtDate(iso)), el("td", "fgs", g.GS ? "GS" : ""), el("td", null, outsIP(g.OUTS)),
+        r.append(el("td", "l", fmtDate(iso)), el("td", "c", g.GS ? "GS" : ""), el("td", null, outsIP(g.OUTS)),
                  el("td", null, String(g.K)), el("td", null, String(g.ER)), el("td", null, String(g.H)), el("td", null, String(g.BB)),
-                 el("td", "fdec", dec), el("td", "fp" + (pts < 0 ? " neg" : ""), f1(pts)));
+                 el("td", "c", dec), el("td", "kd" + (pts < 0 ? " neg" : ""), f1(pts)));
         gb.append(r);
       }
-      gt.append(gb); box.append(gt);
+      box.append(gw);
       if (games.length > 10) {
         const more = el("button", "btn btn-quiet tbtn", all ? "Show the last ten" : `Show all ${games.length} games`); more.type = "button";
         more.addEventListener("click", () => { if (all) FANT_OPEN.delete(p.id); else FANT_OPEN.add(p.id); render(); });
@@ -11829,15 +11826,15 @@
     let rows = mkPool().filter((x) => (!mkUI.hide || !taken.has(x.k)) && (mkUI.pos === "ALL" || (mkUI.pos === "DH" ? x.type === "H" : x.elig.includes(mkUI.pos))) && (!nq || norm(x.name).includes(nq)));
     if (mkUI.sort === "proj") rows.sort((a, b) => b.mine - a.mine); else if (mkUI.sort === "val") rows.sort((a, b) => mkVal(b.k) - mkVal(a.k) || a.adp - b.adp);
     rows = rows.slice(0, 250);
-    const t = el("table", "pwtable mktable"), th = el("thead"), hr = el("tr");
-    for (const [h, c] of [["ADP", null], ["Player", "pwho"], ["Proj", null], ...(auc ? [["$", null]] : []), ["", null]]) hr.append(el("th", c, h));
+    const t = el("table", "sbt brt mktable"), th = el("thead"), hr = el("tr");   // B-Ref's table (Sean, 11 Oct 2026)
+    for (const [h, c] of [["ADP", null], ["Player", "l"], ["Tm", null], ["Pos", null], ["Proj", null], ...(auc ? [["$", null]] : []), ["", null]]) hr.append(el("th", c, h));
     th.append(hr); t.append(th); const tb = el("tbody");
     for (const x of rows) {
       const tr = el("tr"); const gone = taken.has(x.k); if (gone) tr.className = "mkgone";
-      const who = el("td", "pwho"); const nb = el("button", "linkbtn pwname", x.name); nb.type = "button"; nb.addEventListener("click", () => mkOpenCard(x));
+      const who = el("td", "l nm"); const nb = el("button", "linkbtn pbname", x.name); nb.type = "button"; nb.addEventListener("click", () => mkOpenCard(x));
       const tag = el("span", "mkptag", x.elig[0] === "DH" ? "DH" : x.elig[0]); tag.style.background = POSCLR[x.elig[0]] || "#5d6d7e";
-      who.append(tag, nb, el("small", null, ` ${x.team} · ${mkPosTag(x)}`));
-      tr.append(el("td", null, String(x.adp)), who, el("td", null, String(Math.round(x.mine))));
+      who.append(tag, nb);
+      tr.append(el("td", "rk", String(x.adp)), who, el("td", "c", x.team || ""), el("td", "c", mkPosTag(x)), el("td", "kd", String(Math.round(x.mine))));
       if (auc) tr.append(el("td", null, mkVal(x.k) ? `$${mkVal(x.k)}` : "–"));
       const act = el("td", "mkact");
       if (gone) { const l = mk.log.find((l) => l.k === x.k); act.append(el("small", null, `${mk.teams[l.t].me ? "You" : mk.teams[l.t].name}${l.cost ? " $" + l.cost : ""}`)); }
@@ -11857,13 +11854,13 @@
     // every team at a glance (Sean, 2 Oct 2026: "see the current budget and max bid for every team"): money left, the most it can bid
     // (keeping $1 for each other open spot), spots left and its projected points; a name opens that team's roster
     if (which === "teams") {
-      const auc = mk.set.type === "auction", A = mk.auc, tb = el("table", "pwtable mkteams"), hd = el("tr");
-      for (const h of ["Team", ...(auc ? ["Left", "Max bid"] : []), "Spots", "Proj"]) hd.append(el("th", h === "Team" ? null : "n", h));
+      const auc = mk.set.type === "auction", A = mk.auc, tb = el("table", "sbt brt mkteams"), hd = el("tr");
+      for (const h of ["Team", ...(auc ? ["Left", "Max bid"] : []), "Spots", "Proj"]) hd.append(el("th", h === "Team" ? "l" : null, h));
       const body = el("tbody");
       mk.teams.forEach((t, i) => {
         const tr = el("tr"); if (t.me) tr.classList.add("mkmine");
         const nb = el("button", "linkbtn", t.me ? "Your team" : t.name); nb.type = "button"; nb.addEventListener("click", () => { mkUI.boardTeam = i; if (mobileView()) mkUI.tab = "team"; else mkUI.side = "team"; mkDraw(); });
-        const c = el("td", "pwho"); c.append(nb); if (auc && A && A.phase === "bid" && A.high === i) c.append(el("small", null, " · high bid"));
+        const c = el("td", "l nm"); c.append(nb); if (auc && A && A.phase === "bid" && A.high === i) c.append(el("small", null, " · high bid"));
         tr.append(c);
         if (auc) tr.append(el("td", "n", `$${t.budget}`), el("td", "n", mkOpen(t) > 0 ? `$${mkMaxBid(t)}` : "–"));
         tr.append(el("td", "n", String(mkOpen(t))), el("td", "n", String(Math.round(t.picks.reduce((a, q) => a + (mkP(q.k)?.mine || 0), 0)))));
@@ -11877,10 +11874,11 @@
       const sel = el("select", "mksel"); mk.teams.forEach((x, i) => { const o = el("option", null, x.name); o.value = i; o.selected = i === teamI; sel.append(o); }); sel.addEventListener("change", () => { mkUI.boardTeam = +sel.value; mkDraw(); });
       w.append(sel);
       const ps = t.picks.map((q) => mkP(q.k)), a = mkAssign(ps, mk.set.roster);
-      const tb = el("table", "pwtable mkteam"); const body = el("tbody");
+      const tb = el("table", "sbt brt mkteam"); const body = el("tbody");
+      { const hd = el("tr"); for (const h of ["Slot", "Player", "Proj", ...(mk.set.type === "auction" ? ["$"] : [])]) hd.append(el("th", h === "Player" ? "l" : null, h)); const th = el("thead"); th.append(hd); tb.append(th); }
       a.slots.forEach((s, i) => { const o = a.own[i], x = o >= 0 ? ps[o] : null, tr = el("tr"); tr.append(el("td", "mkslot", MK_SLOTS.find(([k]) => k === s)[1]));
-        const c = el("td", "pwho"); if (x) { const b = el("button", "linkbtn pwname", x.name); b.type = "button"; b.addEventListener("click", () => mkOpenCard(x)); c.append(b, el("small", null, ` ${x.team} · ${mkPosTag(x)}`)); } else c.append(el("small", null, "—"));
-        tr.append(c, el("td", null, x ? String(Math.round(x.mine)) : ""), el("td", null, x && mk.set.type === "auction" ? `$${t.picks[o].cost}` : ""));
+        const c = el("td", "l nm"); if (x) { const b = el("button", "linkbtn pbname", x.name); b.type = "button"; b.addEventListener("click", () => mkOpenCard(x)); c.append(b, el("small", null, ` ${x.team} · ${mkPosTag(x)}`)); } else c.append(el("small", null, "—"));
+        tr.append(c, el("td", null, x ? String(Math.round(x.mine)) : "")); if (mk.set.type === "auction") tr.append(el("td", null, x ? `$${t.picks[o].cost}` : ""));
         body.append(tr); });
       tb.append(body); w.append(tb);
       const startPts = a.own.reduce((s, o, i) => s + (o >= 0 && a.slots[i] !== "BN" ? ps[o].mine : 0), 0);
@@ -11918,9 +11916,9 @@
     const w = el("div", "mkset");
     w.append(el("h2", "mkh", "Draft complete"));
     const rows = mk.teams.map((t, i) => { const ps = t.picks.map((q) => mkP(q.k)), a = mkAssign(ps, mk.set.roster); return { t, i, pts: a.own.reduce((s, o, j) => s + (o >= 0 && a.slots[j] !== "BN" ? ps[o].mine : 0), 0) }; }).sort((a, b) => b.pts - a.pts);
-    const tb = el("table", "pwtable"), hd = el("tr"); for (const h of ["#", "Team", "Starters' projected points"]) hd.append(el("th", h === "Team" ? "pwho" : null, h));
+    const tb = el("table", "sbt brt mkdone"), hd = el("tr"); for (const h of ["#", "Team", "Starters' projected points"]) hd.append(el("th", h === "Team" ? "l" : null, h));
     const th = el("thead"); th.append(hd); tb.append(th); const body = el("tbody");
-    rows.forEach((r, n) => { const tr = el("tr"); if (r.t.me) tr.className = "mkmine"; tr.append(el("td", null, String(n + 1)), el("td", "pwho", r.t.name), el("td", null, String(Math.round(r.pts)))); body.append(tr); });
+    rows.forEach((r, n) => { const tr = el("tr"); if (r.t.me) tr.className = "mkmine"; tr.append(el("td", "rk", String(n + 1)), el("td", "l nm", r.t.name), el("td", "kd", String(Math.round(r.pts)))); body.append(tr); });
     tb.append(body); w.append(tb);
     mkUI.boardTeam = mk.me; w.append(el("h4", "pwh", "Your team")); w.append(mkSidePane("team"));
     const again = el("button", "btn mkgo", "New mock draft"); again.type = "button"; again.addEventListener("click", () => { mk = null; mkSave(); render(); });
