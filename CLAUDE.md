@@ -3384,3 +3384,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   was 500) with its ▾ 3px after it, the ⋯ menu is its dots alone (no ▾), the current page's white rule sits under its word only, and the search
   box is 28px clear of the words. A phone's ☰ Menu is untouched. The block at the end of `styles.css`; its rules name `.modes > a` /
   `.modes > .modesel` but set no `display` (an `inline-flex` there showed the hidden Leaderboards menu and Appearance link).
+  **Then buttons** (Sean, minutes later: "can you make them buttons"): each page is a square button on the blue band — a 1px white edge, white
+  words, 32px tall like the search box, 8px apart, padding 14px; the current page filled white with navy words (no underline), hover and an open
+  menu a white wash; the search box sits 26px after the ⋯ (the header's own gap). The next block at the end of `styles.css`.
