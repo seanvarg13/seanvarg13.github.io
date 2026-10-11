@@ -3250,4 +3250,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   repeating at r .22; a liner's leftover beyond EV and pull is the angle inside the band and which liners he hit, r .05 (noise); a fly ball's
   in-park hit rate is flat across FB EV (~.11-.12 — hard ones leave or are caught at the track), the leftover is bloops and flares, r .19. The
   "Everything else" note says eight.
+* **One Noise row (Sean, 11 Oct 2026: "group those into everything else and call everything else noise")**: the xBABIP build-up runs the eight
+  drivers, then a single **Noise** row (the step to his xBABIP, marked "Expected BABIP"), Luck, BABIP — the Ground-ball / Line-drive / Fly-ball
+  contact rows and "Everything else" of the two entries above are gone (their leftovers repeat at r .22 / .05 / .19). `ctx.xbt` and the day
+  fields stay built and unread.
 
