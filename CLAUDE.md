@@ -3254,4 +3254,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   drivers, then a single **Noise** row (the step to his xBABIP, marked "Expected BABIP"), Luck, BABIP — the Ground-ball / Line-drive / Fly-ball
   contact rows and "Everything else" of the two entries above are gone (their leftovers repeat at r .22 / .05 / .19). `ctx.xbt` and the day
   fields stay built and unread.
+* **Sprint scaled by grounders (Sean, 11 Oct 2026: "How real is the sprint speed adjustment to babip? ... Matt Olson's -12", then "Yeah I'd like it
+  to scale")**: speed is real (actual BABIP takes 6.2 points a ft/s against the model's 5.9, and BABIP − xBABIP doesn't track speed, r .03) but it
+  works through grounders only — a grounder's expected hit rate gains ~12.6 points a ft/s, a liner or fly ball ~0. The Sprint row is now
+  `XBAB.spd` 13.58 × (his sprint − the league's) × his GB% / 100, the others refit with it (scratch `spd2.js`: ld 3.67, pu −3.14, evgb 2.15, evld 1.23,
+  ldp 0.26, oppo 0.84, fb −0.91; held out r .769 → .771). 2026: Olson −12 → −11, Witt +16 → +13, Schwarber −10 → −7; the difference goes to Noise.
 
