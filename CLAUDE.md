@@ -3373,3 +3373,6 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   **Then only the table** (Sean, minutes later: "make it so the only window is for the leaderboard itself"): the card round the page is gone again
   (`main.wrap` frameless as before); the framed, column-hugging `#bscroll` is the one window. Filters, the pills, the count and the title sit on
   the page ground over it.
+  **Centred, a border and a shadow** (Sean, the same evening: "can you center the table on the page and give it a border and shadow"): the
+  rows' box sits in the middle of the page on a desktop (`margin: 0 auto`), with a firmer 1px edge (ink at 45%), the surface behind it and a
+  soft shadow on both layouts — the one shadow on the site, asked for. Filters, the count and the title stay at the left.
