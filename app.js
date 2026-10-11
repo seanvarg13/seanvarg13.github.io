@@ -7182,17 +7182,17 @@
   // fit (XHRFB) — it explains the season, this one is the skill. Falls back to XHRFB on a file without FB EV / EV90
   const TW_HF = { c: 0.104, w: { evfb: 1.365, ev90: 0.828, pfb: 0.096 } };
   const twMix = (c) => (c && c.mix && c.mix.length >= 8 ? c.mix : null);
-  function twInputs(m, c, pa, ab, hbp) {
+  function twInputs(m, c, pa, ab, hbp, bats) {
     const mx = twMix(c), tot = mx ? mx.reduce((a, b) => a + (b || 0), 0) : 0;
     const fbn = mx ? (mx[1] || 0) + (mx[5] || 0) + (mx[6] || 0) + (mx[7] || 0) : 0, fb3 = mx ? (mx[5] || 0) + (mx[6] || 0) + (mx[7] || 0) : 0, ld3 = mx ? (mx[2] || 0) + (mx[3] || 0) + (mx[4] || 0) : 0;
     const x = c && c.xbt, xn = x ? x.reduce((a, z) => a + z[0], 0) : 0, gd = c && c.gbdir, gn = gd ? gd[0] + gd[1] + gd[2] : 0;
     return { m, mx, fbn, pa, ab, hbp, hr: c ? c.HR : null, pfb: fb3 ? 100 * mx[5] / fb3 : null, ldp: ld3 ? 100 * mx[2] / ld3 : null,
-             fbs: tot ? fbn / tot : null, gbs: xn ? 100 * x[0][0] / xn : m.gb, gbp: gn ? 100 * gd[0] / gn : null };
+             fbs: tot ? fbn / tot : null, gbs: xn ? 100 * x[0][0] / xn : m.gb, gbp: gn ? 100 * gd[0] / gn : null, bats };
   }
   const TWL = new Map();
   function talentLeague() {      // the dataset's full-season league for the pieces (its 300+ PA hitters, PA-weighted) and the wOBA scale
     if (TWL.has(DS.key)) return TWL.get(DS.key);
-    const ref = DS.players.filter((q) => q.type === "H" && (q.pa || 0) >= (DS.refPA || 300) && q.m), I = ref.map((q) => twInputs(q.m, q.ctx, q.pa, q.ab, q.ctx && q.ctx.HBP));
+    const ref = DS.players.filter((q) => q.type === "H" && (q.pa || 0) >= (DS.refPA || 300) && q.m), I = ref.map((q) => twInputs(q.m, q.ctx, q.pa, q.ab, q.ctx && q.ctx.HBP, q.bats));
     const wavg = (rows, f, wt) => { let s = 0, w = 0; for (const r of rows) { const v = f(r), x = wt(r); if (v == null || !isFinite(v) || !x) continue; s += v * x; w += x; } return w ? s / w : null; };
     const L = {};
     for (const k of ["bb", "osw", "zsw", "ocon", "zcon", "zsn", "ev90", "woba", "xbabip", "ld", "pu", "evgb", "evld", "spd", "oppo", "fb"]) L[k] = wavg(I, (i) => i.m[k], (i) => i.pa);
@@ -7218,7 +7218,7 @@
     let xhf = L.hr.hrfb + (ev ? TW_HF.c : 0); const dh = {}; for (const k in f) { dh[k] = f[k] * (bx[k] - (ev ? L.twh : L.hr)[k]); xhf += dh[k]; } xhf = Math.max(0, xhf);
     const hrb = xhf / 100 * I.fbs;
     let xbab = L.xbabip; const dv = {};
-    for (const k in XBAB) { const his = k === "ldp" || k === "gbp" ? I[k] : m[k], lg = L[k], g = k === "spd" || k === "gbp" ? I.gbs : 100; if (his == null || lg == null || g == null) continue; dv[k] = XBAB[k] * (his - lg) * g / 100 / 1000; xbab += dv[k]; }
+    for (const k in XBAB) { const his = k === "ldp" || k === "gbp" ? I[k] : m[k], lg = L[k], g = k === "spd" || k === "gbp" ? I.gbs : 100; if (his == null || lg == null || g == null) continue; dv[k] = xbabW(k, I.bats) * (his - lg) * g / 100 / 1000; xbab += dv[k]; }
     const bip = Math.max(0, 1 - xk / 100 - xbb / 100 - hbp), xhr = hrb * bip * I.pa;
     const tph = Math.min(1.7, Math.max(1, (m.dxslg * I.ab - 4 * xhr) / Math.max(1, m.dxba * I.ab - xhr)));
     const vh = TW.s + (tph - 1) * (TW.d - TW.s);
@@ -7234,7 +7234,7 @@
     if (DS.multi) return null;
     const L = talentLeague(), m = v.m.spd == null && p.m && p.m.spd != null ? Object.assign({}, v.m, { spd: p.m.spd }) : v.m;
     const hbp = v.ctx && v.ctx.HBP != null ? v.ctx.HBP : p.ctx && p.ctx.HBP != null && p.pa ? p.ctx.HBP / p.pa * (v.pa || 0) : 0;
-    const t = talentCore(twInputs(m, v.ctx, v.pa, v.ab, hbp), L); if (!t) return null;
+    const t = talentCore(twInputs(m, v.ctx, v.pa, v.ab, hbp, p.bats), L); if (!t) return null;
     t.L = L; t.txw = t.raw * L.scale; t.txwp = L.woba == null ? null : L.woba + (t.txw - L.woba) * v.pa / (v.pa + TW.k);
     return t;
   }
@@ -7365,10 +7365,18 @@
   // grounders. Every 2015-26 grounder from Savant's play-by-play (scratch gbdirfetch.py / gbfit.js — the build's own definition, identical to
   // 2026's gbdir), refit with Sprint fixed: −0.95 (−0.90 before the 2023 shift ban, −0.99 since), Oppo% .86 → .40 (overall Oppo% had been
   // carrying the grounders' direction), held out r .770 → .775, next season's BABIP r .386 → .389; GB pull repeats year to year like a habit
-  const XBAB = { ld: 3.74, pu: -3.14, evgb: 2.03, gbp: -0.95, evld: 1.21, ldp: 0.28, spd: 14 * 0.83, oppo: 0.40, fb: -0.73 };
+  // and by batter side (Sean, 11 Oct 2026: "factor in the batter side for the xbabip model since it clearly makes a difference"): every 2024-26
+  // grounder, same hitter-season, oppo − pull BABIP +.089 for a righty and +.261 for a lefty (a lefty's pulled grounder goes into the first and
+  // second basemen with the short throw — BABIP .170, the worst ball in play — and his oppo one through the left side, .429). Refit with a weight
+  // for each side (scratch gbside.js, same 3,321 hitter-seasons): righty −0.61, lefty −1.48, a switch hitter 70% lefty (he bats left against
+  // the right-handers he mostly faces); held out r .7751 → .7769, next season's BABIP .3658 → .3672; a separate lefty level term added nothing.
+  // XBAB.gbp is only the sign; xbabW gives the weight for his side
+  const XBAB = { ld: 3.73, pu: -3.16, evgb: 2.05, gbp: -1, evld: 1.24, ldp: 0.29, spd: 14 * 0.83, oppo: 0.41, fb: -0.72 };
+  const XBAB_GBP = { R: -0.61, L: -1.48, S: 0.3 * -0.61 + 0.7 * -1.48 };
+  const xbabW = (k, bats) => (k === "gbp" ? XBAB_GBP[bats] ?? -0.95 : XBAB[k]);
   const XBAB_LAB = { ld: ["LD%", "%"], pu: ["Popup%", "%"], evgb: ["GB EV", ""], gbp: ["GB Pull%", "%"], evld: ["LD EV", ""], ldp: ["LD Pull%", "%"], spd: ["Sprint", ""], oppo: ["Oppo%", "%"], fb: ["FB%", "%"] };
   const XBAB_TIP = { ld: "line drives fall for hits about two times in three", pu: "a popup is all but an out — the fewer the better", evgb: "a harder grounder gets through the infield",
-    gbp: "the share of his ground balls pulled — a pulled grounder goes right at the infield's thickest side and is a hit about .198 of the time, against ~.306 up the middle and ~.354 the other way; it moves BABIP only through his grounders, so the row is −0.95 × (his GB Pull% − the league's) × his grounders' share of his non-HR balls in play", evld: "a harder liner finds a gap",
+    gbp: "the share of his ground balls pulled — a pulled grounder goes right at the infield's thickest side and is a hit about .198 of the time, against ~.306 up the middle and ~.354 the other way; it moves BABIP only through his grounders, so the row is his side's weight × (his GB Pull% − the league's) × his grounders' share of his non-HR balls in play — −0.61 for a righty, −1.48 for a lefty (whose pulled grounders go into the right side's short throw: BABIP .170 pulled against .429 the other way), a switch hitter in between", evld: "a harder liner finds a gap",
     ldp: "the share of his line drives he pulled — a pulled liner falls in about .659 of the time, one up the middle or the other way about .589",
     spd: "speed beats out infield grounders and does nothing else: each ft/s adds .014 to his hit rate on grounders an infielder fields (83% of grounders), so the row is 14 × 0.83 × (his sprint − the league's) × his grounders' share of his non-HR balls in play (Savant's sprint speed, full season)", oppo: "the opposite field is where the infield doesn't shift its gloves", fb: "a fly ball in the park is mostly an out" };
   function renderXbabipTab(p, g) {
@@ -7395,7 +7403,7 @@
       for (const k in XBAB) {
         const his = val(p, k), lg = lgOf(k), [lab, u] = XBAB_LAB[k], f = (x) => x.toFixed(1) + u;
         const gbs = k === "spd" || k === "gbp" ? gbShare(p) : 100;   /* sprint and grounder direction work through his grounders: times their share of his non-HR balls in play */
-        const d = his == null || lg == null || gbs == null ? null : XBAB[k] * (his - lg) * gbs / 100 / 1000;
+        const d = his == null || lg == null || gbs == null ? null : xbabW(k, p.bats) * (his - lg) * gbs / 100 / 1000;
         if (d != null) { run += d; dk[k] = d; }
         b.row(lab, his, lg, f, pctAmong(ref.map((q) => val(q, k)).filter((z) => z != null), his, Math.sign(XBAB[k])), d == null ? null : step(run), d == null ? null : run, XBAB_TIP[k]);
       }
