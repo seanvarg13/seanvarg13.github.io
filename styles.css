@@ -5387,3 +5387,9 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #board #pagerbot.phbot { background: var(--surface) !important; border: 1px solid color-mix(in srgb, var(--ink) 45%, var(--surface)) !important; border-top: 0 !important; padding: 6px 8px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #board #pagerbot .phsize > span { display: inline !important; font-size: 12px !important; color: var(--muted) !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #board #pagerbot .pnav .pbtn { min-width: 30px !important; height: 30px !important; padding: 0 6px !important; font-size: 13px !important; }
+/* The Filters row sits midway between the header's red line and the title (Sean, 11 Oct 2026: "make the filter button have equal distance between the
+   red line and the your batting"): the same gap above the button as from its foot to the title's letters (the title's box runs ~2-3px above its caps). */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #pagertop { padding-top: 4px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #lbtitle { margin-top: 2px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #pagertop { margin-top: -6px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #lbtitle { margin-top: 5px !important; }

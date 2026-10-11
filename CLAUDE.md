@@ -3415,3 +3415,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `pageSize`), and `renderPager` draws the ‹ 1 2 … › numbers and a **Per page** select into `#pagerbot` (class `phbot`) — the bar right under the
   rows' box, inside the table's frame, always on screen since only the rows scroll. The top line keeps the count ("1–25 of 267"); Dates ▸ Minimum has
   no Per page. The content-visibility rows and the canvas name-fit stay (they help a 100 / All page too). CSS at the end of `styles.css`.
+* **The Filters row midway (Sean, 11 Oct 2026: "make the filter button have equal distance between the red line and the your batting")**: the gap from
+  the header's red line to the Filters button equals the gap from the button's foot to the title's capitals — ~8px on a phone (`#pagertop`
+  padding-top 4px, `#lbtitle` margin-top 2px), ~12px on a desktop (`#pagertop` margin-top −6px, `#lbtitle` margin-top 5px; the title's box sits
+  ~3px above its caps). The block at the end of `styles.css`.
