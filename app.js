@@ -2563,9 +2563,9 @@
     { let tt = $("lbtitle"); const bs = $("bscroll");
       if (!BR) { if (tt) tt.remove(); }
       else { if (!tt) { tt = el("div", "lbtitle"); tt.id = "lbtitle"; } if (bs && tt.nextSibling !== bs) bs.before(tt);
-        const P0 = isPitcherGroup(g), set = lbSetName(), sk = state.sort, sm = ms.find((m) => m.key === sk);
+        const P0 = isPitcherGroup(g), sk = state.sort, sm = ms.find((m) => m.key === sk);
         const by = sk === "score" ? (P0 ? "nERA" : wobaHead() ? "wOBA" : HEAD.label) : sm ? colLab(sm) : sk === "name" ? "name" : sk === "age" ? "age" : sk === "year" ? "season" : "";
-        tt.innerHTML = ""; tt.append(el("h2", null, `${set === "Custom" ? "Your" : set} ${P0 ? "pitching" : "batting"}`), el("span", null, by ? `by ${by}` : "")); } }   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
+        tt.innerHTML = ""; tt.append(el("h2", null, P0 ? "Pitchers Leaderboard" : "Hitting Leaderboard"), el("span", null, by ? `by ${by}` : "")); } }   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
     const head = (key, label, title) => { const h = editing ? Object.assign(el("div", "h", label), { title }) : sortButton(key, label, title); if (/^[a-z]/.test(label)) h.classList.add("lc"); return h; };
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
     for (const k of ["year", "age"]) h.style.setProperty("--pre" + (k === "year" ? 1 : 2), preOn(k) ? "var(--prew, 64px)" : "0px");
