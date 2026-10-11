@@ -3379,3 +3379,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   **The controls over the table** (Sean, minutes later: "make it so the other label and the filter buttons above are over the table"): on a
   desktop `#board` is `width: fit-content` and centred, so it takes the table's width — Filters, the count and the title start at the table's
   left edge and the title's red rule runs the table's width (capped at the page's, where a wide list scrolls inside its box).
+* **The header's page words evened out (Sean, 11 Oct 2026: "could you fix how this header looks button wise")**: on a desktop Home · Leaders ·
+  Pitching+ · Fantasy ▾ · ⋯ are one white condensed 17px / 600 with 22px between them (they had 2-3px); Fantasy's word has the links' weight (it
+  was 500) with its ▾ 3px after it, the ⋯ menu is its dots alone (no ▾), the current page's white rule sits under its word only, and the search
+  box is 28px clear of the words. A phone's ☰ Menu is untouched. The block at the end of `styles.css`; its rules name `.modes > a` /
+  `.modes > .modesel` but set no `display` (an `inline-flex` there showed the hidden Leaderboards menu and Appearance link).
