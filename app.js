@@ -7254,13 +7254,21 @@
   // landing on his xBABIP, then the luck (BABIP − xBABIP; it repeats year to year at r .15), landing on his BABIP. The card's dates and splits;
   // the league is the pool's reference hitters. Under it, every MLB season of his from hist/career-bb.js
   const XBT = ["gb", "ld", "fb", "pu"];   // ctx.xbt's order: [non-HR balls in play, expected hits] by batted-ball type
-  const XBAB = { ld: 3.68, pu: -2.89, evgb: 2.0, evld: 1.26, spd: 5.92, oppo: 0.58, fb: -0.77 };
-  const XBAB_LAB = { ld: ["LD%", "%"], pu: ["Popup%", "%"], evgb: ["GB EV", ""], evld: ["LD EV", ""], spd: ["Sprint", ""], oppo: ["Oppo%", "%"], fb: ["FB%", "%"] };
+  // LD Pull% joined as an eighth (Sean, 11 Oct 2026: "can you add LD Direction or maybe call it LD Pull %"): the share of his line drives he
+  // pulled, from the Mix buckets; refit with it (scratch xbfit8.js: held out r .767 → .769, the other weights barely move; a pulled liner is a
+  // hit .659 against ~.589 up the middle or the other way, 2026 hitters pulling under a third of their liners .611 against .642 over 48%)
+  const XBAB = { ld: 3.64, pu: -3.16, evgb: 2.13, evld: 1.18, ldp: 0.27, spd: 5.9, oppo: 0.84, fb: -0.93 };
+  const XBAB_LAB = { ld: ["LD%", "%"], pu: ["Popup%", "%"], evgb: ["GB EV", ""], evld: ["LD EV", ""], ldp: ["LD Pull%", "%"], spd: ["Sprint", ""], oppo: ["Oppo%", "%"], fb: ["FB%", "%"] };
   const XBAB_TIP = { ld: "line drives fall for hits about two times in three", pu: "a popup is all but an out — the fewer the better", evgb: "a harder grounder gets through the infield", evld: "a harder liner finds a gap",
+    ldp: "the share of his line drives he pulled — a pulled liner falls in about .659 of the time, one up the middle or the other way about .589",
     spd: "speed beats out grounders (Savant's sprint speed, full season)", oppo: "the opposite field is where the infield doesn't shift its gloves", fb: "a fly ball in the park is mostly an out" };
   function renderXbabipTab(p, g) {
     const w = el("div", "xbtab"), pv = V(p), m = pv.m, pl = pool(g);
-    const val = (q, k) => { const mm = V(q).m; return k === "spd" ? mm.spd ?? (q.m && q.m.spd) : mm[k]; };
+    const val = (q, k) => {
+      const v = V(q), mm = v.m;
+      if (k === "ldp") { const mx = (v.ctx && v.ctx.mix) || (q.ctx && q.ctx.mix), n = mx ? mx[2] + mx[3] + mx[4] : 0; return n ? 100 * mx[2] / n : null; }
+      return k === "spd" ? mm.spd ?? (q.m && q.m.spd) : mm[k];
+    };
     if (m.babip != null && m.xbabip != null) {
       const ref = pl.ref.filter((q) => V(q).m.xbabip != null), lgOf = (k) => { let s = 0, n = 0; for (const q of ref) { const v = val(q, k), w0 = V(q).pa || 0; if (v != null && w0) { s += v * w0; n += w0; } } return n ? s / n : null; };
       const lgX = lgOf("xbabip"), lgB = lgOf("babip");
@@ -7292,14 +7300,19 @@
         const R = XBT.map((_, i) => (lgN[i] ? lgH[i] / lgN[i] : null)), r = mine.map(([n, h]) => (n ? h / n : null)), sh = mine.map(([n]) => n / myN);
         const Q = (i) => (r[i] == null || R[i] == null ? 0 : sh[i] * (r[i] - R[i]));
         const pctT = (i) => pctAmong(refT.filter((z) => z[i][0] >= 10).map((z) => z[i][1] / z[i][0]), r[i], 1);
+        // what each leftover is, from every 300+ PA hitter-season 2015-26 (scratch typex.js / resyty.js): grounders' expected hit rate is mostly
+        // speed and EV (R² .45 with Oppo%) and their leftover repeats year to year at r .22 — angle (a chopper vs a hard low grounder) and where
+        // in the infield; liners' leftover beyond EV and pull repeats at r .05 — which liners he happened to hit, noise; fly balls' isn't EV at all
+        // (a non-HR fly ball's hit rate is flat across FB EV, ~.11-.12: hard ones leave or are caught at the track) — it's bloops and flares at
+        // low angles, repeating at r .19
         const parts = [[0, "Ground-ball contact", Q(0) - (dk.evgb || 0) - (dk.spd || 0) - (dk.oppo || 0),
-                        "His grounders' expected hit rate (His) against the league's (Lg), beyond what their exit velocity, his sprint speed and his opposite-field rate already added above — the launch angles off the bat and where the grounders went (pulled into the shift, up the middle, through the holes)."],
-                       [1, "Line-drive contact", Q(1) - (dk.evld || 0),
-                        "His liners' expected hit rate against the league's, beyond what their exit velocity added above — line drives hit at the right angle and to open grass fall more often."],
+                        "His grounders beyond their exit velocity, his speed and his opposite-field rate: mostly the angle (a hard grounder hit low and through, against a chopper or a topped ball the infield waits on) and which part of the infield they went to. A bit of skill — it repeats year to year at r .22."],
+                       [1, "Line-drive contact", Q(1) - (dk.evld || 0) - (dk.ldp || 0),
+                        "His liners beyond their exit velocity and how many he pulled: the angle inside the line-drive band (a 12° liner falls in far more often than a 22° one an outfielder runs down) and which liners he happened to hit. Mostly noise — it repeats year to year at r .05."],
                        [2, "Fly-ball contact", Q(2),
-                        "His fly balls' expected hit rate against the league's. No row above covers fly-ball quality: hard fly balls to the gaps fall in, soft ones to centre are outs."]];
+                        "His fly balls in the park. Exit velocity barely matters here (a hard fly ball leaves or is caught at the track); what falls in is bloops and flares — fly balls hit softly at low angles over the infield. Mostly noise — it repeats year to year at r .19."]];
         for (const [i, lab, d, tip] of parts) { run += d; b.row(lab, r[i], R[i], fmtX, pctT(i), step(run), run, tip); }
-        b.row("Everything else", null, null, fmtX, null, step(m.xbabip), m.xbabip, "What the three rows above and the seven before them don't place: his popups, his batted-ball mix priced exactly (the LD% / Popup% / FB% rows are straight lines through it) and the odd ball the stringer gave no type.");
+        b.row("Everything else", null, null, fmtX, null, step(m.xbabip), m.xbabip, "What the three rows above and the eight before them don't place: his popups, his batted-ball mix priced exactly (the LD% / Popup% / FB% rows are straight lines through it) and the odd ball the stringer gave no type.");
       } else b.row("Rest of Contact", null, null, fmtX, null, step(m.xbabip), m.xbabip, `His xBABIP comes from the directional model, which prices every ball he put in play by its exit velocity, launch angle, direction and his speed. The seven rows above are a straight-line summary of the biggest pieces of that; Rest of Contact is everything they leave out — the exact angles (liners and hard grounders at hit-friendly angles versus topped or lofted balls), where each ball went, and the hard-and-well-aimed combinations an average can't see. It's the gap between his xBABIP (${fmtX(m.xbabip)}) and what the seven alone point to: + means the details of his contact earn more hits than those averages suggest, − fewer.`);
       b.mark("Expected BABIP");   // the running BABIP after Rest of Contact is his xBABIP (Sean, 10 Oct 2026: "do the same thing for the xbabip table")
       b.row("Luck", null, null, fmtX, null, step(m.babip), m.babip, "hits in play above or below what the contact deserved — it repeats year to year at only r .15");   // a plain row, like xHR/FB's (Sean, 10 Oct 2026: "white again and not bolded blue")
