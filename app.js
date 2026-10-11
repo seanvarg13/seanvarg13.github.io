@@ -12,8 +12,8 @@
   const LB_SLIM = { H: ["woba", "ev", "brl", "hh", "osw", "whf", "k", "bb"], P: ["k", "bb", "whf", "strk", "gb", "era", "uera", "suera"] };
   // the Leaderboard's column-set tabs (Sean, 3 Oct 2026, from the redesign prototype); renderLbTabs draws them
   const LB_SETS = {
-    H: [["Standard", ["woba", "ba", "slg", "dxba", "dxslg", "k", "bb"]],
-        ["Advanced", ["woba", "xwdiff", "xwcon", "xk", "mixw", "babip", "xbabip", "bluck", "brel"]],
+    H: [["Standard", ["txw", "txwp", "woba", "ba", "slg", "dxba", "dxslg", "k", "bb"]],   // talent xwOBA and its projection after the xwOBA headline (Sean, 11 Oct 2026)
+        ["Advanced", ["txw", "txwp", "woba", "xwdiff", "xwcon", "xk", "mixw", "babip", "xbabip", "bluck", "brel"]],
         ["Batted ball", ["ev", "evfb", "brfb", "fbq", "xhrfb", "ev90", "maxev", "brl", "hh", "bs", "air", "pull", "gb", "pu"]],   // fly-ball power after Avg EV (8 Oct 2026)
         ["Plate discipline", ["k", "xk", "bb", "whf", "osw", "zsw", "zcon", "ocon"]]],
     P: [["Standard", ["rating", "xnera", "era", "k", "bb", "kbb", "xkbb", "whf", "strk", "gb"]],   // xnERA right after the nERA headline (Sean, 6 Oct 2026: "put that next to nERA on the leaderboard")   // nERA is the headline column (6 Oct 2026)
@@ -23,7 +23,7 @@
         ["Pitching+", ["pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "fbv", "ext"]]],   // Pitching+ back in place of Stuff+ (Sean, 6 Oct 2026: "make stuff+ back into pitching+ with the addition of the location and command thing")
   };
   const colLab = (m) => { const l = SHORT[m.key] || m.label; return m.unit === "%" && !l.includes("%") ? l + "%" : l; };
-  const SHORT = { foul: "Foul%", fpc: "Foul/Con", nfpc: "xFoul/Con", xnera: "xnERA", xkw: "Whiff−xK%", xkws: "xWhiff−P+ xK%", ncstr: "xCalled Strk", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strk Whiff", nfoul: "xFoul%", s2whf: "2-strk Whiff", s2sw: "2-strk Sw", s2zone: "2-strk Zone", xkf: "xK%", xks: "Pitching+ xK%", xbbf: "xBB%", xkbb: "x(K-BB)%", xkbbs: "Pitching+ x(K-BB)%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", pjwhf: "Proj Whiff", mixw: "Mix wOBA", nmix: "Mix xwOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", evfb: "FB EV", evld: "EV LD", evgb: "EV GB", brfb: "FB Brl", brld: "Brl LD", brgb: "Brl GB", brl: "Brl%", pull: "Pull Air", pullfb: "Pull FB%", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
+  const SHORT = { txw: "Talent xwOBA", txwp: "Talent proj.", foul: "Foul%", fpc: "Foul/Con", nfpc: "xFoul/Con", xnera: "xnERA", xkw: "Whiff−xK%", xkws: "xWhiff−P+ xK%", ncstr: "xCalled Strk", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strk Whiff", nfoul: "xFoul%", s2whf: "2-strk Whiff", s2sw: "2-strk Sw", s2zone: "2-strk Zone", xkf: "xK%", xks: "Pitching+ xK%", xbbf: "xBB%", xkbb: "x(K-BB)%", xkbbs: "Pitching+ x(K-BB)%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", pjwhf: "Proj Whiff", mixw: "Mix wOBA", nmix: "Mix xwOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", evfb: "FB EV", evld: "EV LD", evgb: "EV GB", brfb: "FB Brl", brld: "Brl LD", brgb: "Brl GB", brl: "Brl%", pull: "Pull Air", pullfb: "Pull FB%", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
                tiers: "draft2027.tiers", tierNames: "draft2027.tierNames", sets: "draft2027.rankSets", extraPos: "draft2027.extraPos", stars: "draft2027.stars" };
   // Storage that cannot lose a saved list. A value that will not parse is left exactly where it is — its raw
@@ -303,9 +303,11 @@
                   // fly-ball power (Sean, 8 Oct 2026: "FB EV, FB barrel rate, and then a composite average score of the percentile of both and also
                   // ... expected hr to fb ratio"): FB Power = his EV on FB and Brl% on FB percentiles averaged, a 0-100 number coloured as itself
                   // (the pool's, like the pitchers' Control); xHR/FB = the Mix tab's (xHrfb on that season's league, hrfbFill)
-                  { key: "fbq", label: "FB Power", hib: true, dec: 0, unit: "", int: true }, { key: "xhrfb", label: "xHR/FB", hib: true, dec: 1, unit: "%" }];
+                  { key: "fbq", label: "FB Power", hib: true, dec: 0, unit: "", int: true }, { key: "xhrfb", label: "xHR/FB", hib: true, dec: 1, unit: "%" },
+                  // talent xwOBA and its next-season projection (Sean, 11 Oct 2026) — talentOf
+                  { key: "txw", label: "Talent xwOBA", hib: true, dec: 3, unit: "" }, { key: "txwp", label: "Talent proj.", hib: true, dec: 3, unit: "" }];
   // hitter stats that aren't on the card but can be Leaderboard / Trending columns
-  const LB_EXTRA_H = ["evfb", "brfb", "fbq", "xhrfb", "xwdiff", "xwcon", "xk", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp", "fpts", "fpg", "fppa"];
+  const LB_EXTRA_H = ["txw", "txwp", "evfb", "brfb", "fbq", "xhrfb", "xwdiff", "xwcon", "xk", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp", "fpts", "fpg", "fppa"];
   const LB_EXTRA_P = ["rating", "xnera", "pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "nmix", "nfpc", "fpc", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "wgap", "pjwhf", "fpts", "fpg", "fpip", "fpgs"];   // Whiff vs exp. and the projected Whiff% (7 Oct 2026)   // Pitching+ family, xRating and the expected (Pitching+) columns off the lists (Sean, 6 Oct 2026: "get rid of pitching+ entirely and just go back to stuff+")   // pERA / pK% / pBB% / Pitching uERA off the lists (Sean, 4 Oct 2026: "I simply just want expected whiffs GBs and pus")   // Stuff uERA / Arsenal Opt. off the lists with Stuff+ (4 Oct 2026)
   const NEXT_KEYS = new Set(["xrat", "nwhf", "ngb", "npu", "nmix", "wgap", "pjwhf", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "nswstr", "ncsw", "ns2whf", "nfoul", "nfpc", "xnera"]);   // xFoul% of contact and xnERA (6 Oct 2026)   // xK% / Pitching+ xK% (4 Oct 2026)
   const XRW = { ksklx: 60, ctrl: 20, nmix: 20 };   // xRating = the Rating's shape with the stuff models driving whiffs and fouls (Sean, 5 Oct 2026): xStrikeout (xWhiff% / x2-strike Whiff% / xFoul% percentiles averaged) 60, Control 20, Mix xwOBA 20. Was Pitching+ x(K-BB)% 80 / Mix xwOBA 20;   // the Rating's shape (x(K-BB)% 80 / Mix wOBA 20, 4 Oct 2026) with the stuff-side pair: Pitching+ x(K-BB)% and Mix xwOBA. Was xks 55 / xbbf 35 / nmix 10;   // the xRating (Sean, 4 Oct 2026: "xrating xK% ... using their stuff expected whiff rates and stuff expected foul rates ... xBB% as standard ... mix xwoba based on their stuff"), 55 / 35 / 10   // xRating and the expected Mix wOBA too (4 Oct 2026)
@@ -609,6 +611,8 @@
     if (state.cmpCols && Array.isArray(state.cmpCols.P)) state.cmpCols.P = state.cmpCols.P.filter(gone); if (!gone(state.sort)) state.sort = "score"; }
   if (!state.lb.ratingFront) { const front = (L) => { if (!Array.isArray(L)) return; const i = L.indexOf("rating"); if (i >= 0) L.splice(i, 1); L.unshift("rating"); };   // the Rating column first (Sean, 6 Oct 2026)
     front(state.lb.P); for (const c of Object.values(state.cols || {})) if (c) front(c.P); state.lb.ratingFront = true; }
+  if (!state.lb.twAdd) { const L = state.lb.H, olds = [["woba", "ba", "slg", "dxba", "dxslg", "k", "bb"], ["woba", "xwdiff", "xwcon", "xk", "mixw", "babip", "xbabip", "bluck", "brel"]];   // a saved Standard / Advanced list takes the talent columns (11 Oct 2026)
+    olds.forEach((o, j) => { if (Array.isArray(L) && L.length === o.length && L.every((k, i) => k === o[i])) state.lb.H = LB_SETS.H[j][1].slice(); }); state.lb.twAdd = true; }
   if (!state.lb.fbAdd) { const old = ["ev", "ev90", "maxev", "brl", "hh", "bs", "air", "pull", "gb", "pu"], L = state.lb.H;   // a saved Batted ball list takes the fly-ball columns (8 Oct 2026)
     if (Array.isArray(L) && L.length === old.length && L.every((k, i) => k === old[i])) state.lb.H = LB_SETS.H[2][1].slice(); state.lb.fbAdd = true; }
   if (!state.lb.xneraFront) { const front = (L) => { if (!Array.isArray(L)) return; const i = L.indexOf("xnera"); if (i >= 0) L.splice(i, 1); L.unshift("xnera"); };   // xnERA beside the nERA headline (Sean, 6 Oct 2026)
@@ -1000,6 +1004,7 @@
                    dxba: !t.ab ? null : t.dbsum !== undefined ? Math.round(1000 * t.dbsum / t.ab) / 1000 : t.xbsum !== undefined && dirInfo().ok ? Math.round(1000 * t.xbsum / t.ab) / 1000 : null,
                    dxslg: !t.ab ? null : t.dssum !== undefined ? Math.round(1000 * t.dssum / t.ab) / 1000 : t.xssum !== undefined && dirInfo().ok ? Math.round(1000 * t.xssum / t.ab) / 1000 : null,
                    osw: rate(t.osw, t.opit), zsw: rate(t.zsw, t.zpit), zcon: rate(t.zcon, t.zsw), ocon: rate(t.ocon, t.osw), whf: rate(t.whf, t.sw),
+                   zsn: rate(t.zpit, t.zpit + t.opit),   /* the share of his pitches in the zone: the talent xwOBA's xBB% (11 Oct 2026) */
                    xwoba: noEV ? null : xwDir, xwd: noEV ? null : xwDir,   // the directional model
                    xwdiff: noEV || xwDir == null || !t.wden ? null : Math.round(1000 * (xwDir - t.wnum / t.wden)) / 1000,
                    woba: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null,
@@ -1015,6 +1020,7 @@
               ctx: { wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, "K%": rate(t.k, t.pa), "BB%": rate(t.bb, t.pa), BBE: bipn, BIP: t.bbt || null, G: games, HR: f.indexOf("hr") < 0 ? null : t.hr,   /* home runs in the view, for a minors xHR/FB (10 Oct 2026) */
                      mix: t.mxgb === undefined ? null : MIX_B.map(([k]) => t[k] || 0), mixsum: t.mixsum, mixn: t.mixn,
                      mixev: hasBk ? MIX_B.map((_, i) => mxn[i] ? [mxn[i], Math.round(10 * mxe[i] / mxn[i]) / 10] : null) : null,
+                     HBP: f.indexOf("hbp") < 0 ? null : t.hbp,   /* hit-by-pitches in the view, the talent xwOBA's HBP rate (11 Oct 2026; older files: the season's rate) */
                      xbt: f.indexOf("bngb") < 0 || !(t.bngb + t.bnld + t.bnfb + t.bnpu) ? null : ["gb", "ld", "fb", "pu"].map((k) => [t["bn" + k], t["xh" + k]]),
                      gbdir: f.indexOf("gbp") < 0 || !(t.gbp + t.gbc + t.gbo) ? null : [t.gbp, t.gbc, t.gbo] } };   /* ground balls pulled / centre / oppo (10 Oct 2026) */   // expected hits by batted-ball type (10 Oct 2026)   // [tracked balls, avg EV] by bucket, null on a file without evbk
       }
@@ -1033,6 +1039,11 @@
       const mx = v.ctx && v.ctx.mix, fbs = mx && mx.length >= 8 ? mx.reduce((x, y) => x + (y || 0), 0) : 0;
       v.m = Object.assign({}, m, { xk: xk == null ? null : Math.round(10 * xk) / 10, xwcon: con == null ? null : Math.round(1000 * con) / 1000,
                                   pullfb: fbs ? Math.round(1000 * mx[5] / fbs) / 10 : null });
+    }
+    // talent xwOBA and its next-season projection on the view (Sean, 11 Oct 2026) — talentOf below
+    if (p.type === "H" && v.m && v.m.txw === undefined) {
+      const t = talentOf(p, v);
+      v.m = Object.assign({}, v.m, { txw: t ? Math.round(1000 * t.txw) / 1000 : null, txwp: t ? Math.round(1000 * t.txwp) / 1000 : null }); v.tal = t;
     }
     // Regress small samples (Table format; Sean, 3 Oct 2026, from the model recommendations): in a date window or split, every
     // rate is pulled toward the pool's full-season average by how little he has played — w = n / (n + 120), n = his PA or batters
@@ -4966,6 +4977,7 @@
         groups.push({ group: "Expected (Pitching+)", metrics: nx });
       }
       else {
+        for (const k of ["txwp", "txw"]) if (!after("woba", k)) groups.push({ group: "Outcomes", metrics: [side(k)].filter(Boolean) });   // talent xwOBA (11 Oct 2026)
         if (!after("woba", "xwdiff")) groups.push({ group: "Outcomes", metrics: [side("xwdiff")].filter(Boolean) });
         if (!after("k", "xk")) groups.push({ group: "Outcomes", metrics: [side("xk")].filter(Boolean) });
         for (const [a, k] of [["xwdiff", "xwcon"]]) if (!after(a, k)) groups.push({ group: "Outcomes", metrics: [side(k)].filter(Boolean) });
@@ -5572,6 +5584,8 @@
     sb: "Stolen bases, official. For the whole season only.",
     sba: "Stolen-base attempts: stolen bases plus caught stealing, official. For the whole season only.",
     sbp: "Stolen-base success rate: stolen bases over attempts. Blank without an attempt. For the whole season only.",
+    txw: "Talent xwOBA: his wOBA rebuilt from expected rates only, never his actual hits, walks or strikeouts — xK% (his whiffs, swing decisions and the strikes he sees), xBB% (his chase rate, zone swings, contact and how often pitchers come into the zone on him), his HBP rate, xHR/FB (FB EV, Barrel% on fly and line drives, how much he pulls his fly balls) on his fly balls and popups, and the eight-driver xBABIP (line drives, popups, grounder and liner EV, pull, speed, oppo, fly balls — no Noise, no Luck) on the rest, with the directional model's extra bases per hit. Scaled so the season's 300+ PA hitters average their real wOBA. It predicts next season's wOBA better than xwOBA does (r .54 vs .44, 2015-26) and repeats year to year at .66 (xwOBA .54). The Talent tab shows the build-up.",
+    txwp: "Talent proj.: next season's wOBA from his talent xwOBA — the league average plus his gap to it × PA / (PA + 300). One season's inputs still carry sampling noise, and 300 PA of league average is the regression that forecast next season's wOBA best (xwOBA needs about 525). A full season is the one to read; in a window it is the same arithmetic on fewer plate appearances.",
     xk: "Expected K%: the strikeout rate his Whiff%, Z-Swing%, O-Swing% and the share of strikes he sees have historically come with (fitted over every 100+ PA hitter-season since 2015). It lands within about 1.7 points of a regular's real K%; a K% well above it says he's striking out more than his swings and misses explain (two-strike trouble, taking strike three), well below it that he's beating them. His own K% is still the steadier guide to next year's — the two averaged are best.",
     xwdiff: "xwOBA − wOBA: what his contact, walks and strikeouts deserved (the site's xwOBA) minus what he actually got. Above zero he's been unlucky — his results should rise toward his xwOBA; below zero he's been lucky. +.030 is a lot. Every point is a thousandth of wOBA.",
     babip: "BABIP: batting average on balls in play — hits that aren't home runs, over balls in play that aren't home runs (sac flies count). It swings a lot by chance: a hitter's BABIP from one season to the next holds only loosely.",
@@ -7138,6 +7152,76 @@
   // softer fly balls) added nothing on the changes and runs negative for slap hitters, so it's out. c stays for a file without the rates
   const XHRFB = { d: { evfb: 0.332, brfb: 0.401, brld: 0.218, pfb: 0.094 }, c: { evfb: 0.373, brfb: 0.391, brld: 0.217 }, a: { evfb: 0.779, brl: 0.738 }, b: { brl: 1.037, ev90: 0.499 } };
   const pfbOf = (o) => (o && o.pullfb != null && o.fb ? Math.round(1000 * o.pullfb / o.fb) / 10 : null);   // share of his fly balls pulled (pullfb is a share of every ball in play)
+  // Talent xwOBA (Sean, 11 Oct 2026: "an xwoba based purely on their talent and completely removes noise ... their batted ball mix, k rate, bb rate,
+  // xbabip minus luck and noise, and xHR/fb rate"): wOBA rebuilt from expected rates only, never his actual hits, walks or strikeouts —
+  //   K: xK% (XKH, the hitter fit) · BB: xBB% (TW_XBB below) · HBP: his own rate (no process behind it)
+  //   HR: xHR/FB (XHRFB, against the dataset's own HR over fly balls + popups) on his fly balls + popups per ball in play (the Mix buckets)
+  //   hits on the other balls in play: the eight-driver xBABIP (XBAB — the xBABIP tab's build-up stopped before Noise and Luck)
+  //   extra bases per hit: the directional model's xSLG / xBA less those home runs
+  // each piece at FanGraphs-style linear weights, and the season scaled so its 300+ PA hitters average their real wOBA. xBB% = the league's BB%
+  // moved by Chase% (−0.45 a point), Z-Swing% (−0.03), O-Contact% (+0.03), Z-Contact% (−0.11), the share of pitches he sees in the zone (−0.54:
+  // pitchers attack a hitter without power) and EV90 (+0.06), every 300+ PA hitter-season 2015-26 against its season, held out by season r .86 /
+  // 1.5 points. Tested 2015-26 (scratch twcore.js, 1,819 back-to-back 300+ PA pairs): next season's wOBA r .536 (xwOBA .437, wOBA .479), year to year
+  // .663 (xwOBA .539); its pieces repeat better than the actual rates they replace (xK% .85 vs K% .83, xBB% .78 / .71, xBABIP drivers .60 / BABIP
+  // .41, xHR/FB .74 / HR/FB .62). Talent proj. = league wOBA + (talent − league) × PA / (PA + 300): one season's inputs still carry sampling
+  // noise, and 300 PA of league average is the regression that forecasts next season's wOBA best (xwOBA needs 525). build_career.py's
+  // talent_of is the same arithmetic for the season table (hist/career-bb.js txw) — keep the two in step
+  const TW_XBB = { osw: -0.448, zsw: -0.030, ocon: 0.034, zcon: -0.113, zsn: -0.539, ev90: 0.056 };
+  const TW = { bb: 0.69, hbp: 0.72, s: 0.88, d: 1.25, hr: 2.03, k: 300 };
+  const twMix = (c) => (c && c.mix && c.mix.length >= 8 ? c.mix : null);
+  function twInputs(m, c, pa, ab, hbp) {
+    const mx = twMix(c), tot = mx ? mx.reduce((a, b) => a + (b || 0), 0) : 0;
+    const fbn = mx ? (mx[1] || 0) + (mx[5] || 0) + (mx[6] || 0) + (mx[7] || 0) : 0, fb3 = mx ? (mx[5] || 0) + (mx[6] || 0) + (mx[7] || 0) : 0, ld3 = mx ? (mx[2] || 0) + (mx[3] || 0) + (mx[4] || 0) : 0;
+    const x = c && c.xbt, xn = x ? x.reduce((a, z) => a + z[0], 0) : 0;
+    return { m, mx, fbn, pa, ab, hbp, hr: c ? c.HR : null, pfb: fb3 ? 100 * mx[5] / fb3 : null, ldp: ld3 ? 100 * mx[2] / ld3 : null,
+             fbs: tot ? fbn / tot : null, gbs: xn ? 100 * x[0][0] / xn : m.gb };
+  }
+  const TWL = new Map();
+  function talentLeague() {      // the dataset's full-season league for the pieces (its 300+ PA hitters, PA-weighted) and the wOBA scale
+    if (TWL.has(DS.key)) return TWL.get(DS.key);
+    const ref = DS.players.filter((q) => q.type === "H" && (q.pa || 0) >= (DS.refPA || 300) && q.m), I = ref.map((q) => twInputs(q.m, q.ctx, q.pa, q.ab, q.ctx && q.ctx.HBP));
+    const wavg = (rows, f, wt) => { let s = 0, w = 0; for (const r of rows) { const v = f(r), x = wt(r); if (v == null || !isFinite(v) || !x) continue; s += v * x; w += x; } return w ? s / w : null; };
+    const L = {};
+    for (const k of ["bb", "osw", "zsw", "ocon", "zcon", "zsn", "ev90", "woba", "xbabip", "ld", "pu", "evgb", "evld", "spd", "oppo", "fb"]) L[k] = wavg(I, (i) => i.m[k], (i) => i.pa);
+    L.ldp = wavg(I, (i) => i.ldp, (i) => i.pa);
+    const F = I.filter((i) => i.mx && i.hr != null && i.fbn), fb = F.reduce((a, i) => a + i.fbn, 0);
+    L.hr = { hrfb: fb ? 100 * F.reduce((a, i) => a + i.hr, 0) / fb : null };
+    for (const k of ["evfb", "brfb", "brld", "pfb", "brl", "ev90"]) L.hr[k] = wavg(F, (i) => (k === "pfb" ? i.pfb : i.m[k]), (i) => i.fbn);
+    L.hbp = wavg(I, (i) => (i.hbp || 0) / i.pa, (i) => i.pa); L.fbs = wavg(I, (i) => i.fbs, (i) => i.pa);
+    L.scale = 1; let a = 0, b = 0, tw = 0, tn = 0;
+    for (const i of I) { const t = talentCore(i, L); if (t && i.m.woba != null) { a += t.raw * i.pa; b += i.m.woba * i.pa; tw += t.tph * i.pa; tn += i.pa; } }
+    L.scale = a ? b / a : null; L.tph = tn ? tw / tn : null; L.n = ref.length;
+    TWL.set(DS.key, L); return L;
+  }
+  function talentCore(I, L) {
+    const m = I.m; if (!I.mx || !I.pa || !I.ab || m.dxba == null || m.dxslg == null || L.xbabip == null || L.hr.hrfb == null || L.scale == null || I.fbs == null) return null;
+    const xk = xKFrom(m); if (xk == null) return null;
+    let xbb = L.bb; for (const k in TW_XBB) if (m[k] != null && L[k] != null) xbb += TW_XBB[k] * (m[k] - L[k]);
+    const hbp = (I.hbp || 0) / I.pa;
+    const bx = { evfb: m.evfb, brfb: m.brfb, brld: m.brld, pfb: I.pfb, brl: m.brl, ev90: m.ev90 }, f = hrfbFit(bx, L.hr); if (!f) return null;
+    let xhf = L.hr.hrfb; const dh = {}; for (const k in f) { dh[k] = f[k] * (bx[k] - L.hr[k]); xhf += dh[k]; } xhf = Math.max(0, xhf);
+    const hrb = xhf / 100 * I.fbs;
+    let xbab = L.xbabip; const dv = {};
+    for (const k in XBAB) { const his = k === "ldp" ? I.ldp : m[k], lg = L[k], g = k === "spd" ? I.gbs : 100; if (his == null || lg == null || g == null) continue; dv[k] = XBAB[k] * (his - lg) * g / 100 / 1000; xbab += dv[k]; }
+    const bip = Math.max(0, 1 - xk / 100 - xbb / 100 - hbp), xhr = hrb * bip * I.pa;
+    const tph = Math.min(1.7, Math.max(1, (m.dxslg * I.ab - 4 * xhr) / Math.max(1, m.dxba * I.ab - xhr)));
+    const vh = TW.s + (tph - 1) * (TW.d - TW.s);
+    const raw = TW.bb * xbb / 100 + TW.hbp * hbp + bip * (hrb * TW.hr + (1 - hrb) * xbab * vh);
+    return { xk, xbb, hbp, xhf, dh, fit: f, fbs: I.fbs, hrb, xbab, dv, tph, vh, bip, raw, bx, I };
+  }
+  // the same arithmetic on a set of pieces, for the Talent tab's build-up (each step swaps one league piece for his)
+  const twRaw = (c) => { const bip = Math.max(0, 1 - c.xk / 100 - c.xbb / 100 - c.hbp), hrb = c.xhf / 100 * c.fbs, vh = TW.s + (c.tph - 1) * (TW.d - TW.s);
+    return TW.bb * c.xbb / 100 + TW.hbp * c.hbp + bip * (hrb * TW.hr + (1 - hrb) * c.xbab * vh); };
+  // his talent xwOBA on the card's view: the view's rates against the dataset's full-season league (as xK% does); a window without the HBP day
+  // field takes his season HBP rate, and sprint speed is the season's
+  function talentOf(p, v) {
+    if (DS.multi) return null;
+    const L = talentLeague(), m = v.m.spd == null && p.m && p.m.spd != null ? Object.assign({}, v.m, { spd: p.m.spd }) : v.m;
+    const hbp = v.ctx && v.ctx.HBP != null ? v.ctx.HBP : p.ctx && p.ctx.HBP != null && p.pa ? p.ctx.HBP / p.pa * (v.pa || 0) : 0;
+    const t = talentCore(twInputs(m, v.ctx, v.pa, v.ab, hbp), L); if (!t) return null;
+    t.L = L; t.txw = t.raw * L.scale; t.txwp = L.woba == null ? null : L.woba + (t.txw - L.woba) * v.pa / (v.pa + TW.k);
+    return t;
+  }
   const hrfbFit = (bx, lg) => { const has = (ks) => bx && lg && ks.every((k) => bx[k] != null && lg[k] != null); return has(["evfb", "brfb", "brld", "pfb"]) ? XHRFB.d : has(["evfb", "brfb", "brld"]) ? XHRFB.c : has(["evfb", "brl"]) ? XHRFB.a : has(["brl", "ev90"]) ? XHRFB.b : null; };
   const HRFB_LG = new Map();
   function hrfbLeague(y) {   // that season's league: HR/FB, FB-weighted FB EV / Barrel% / EV90, and the qualifiers' sorted values for the heat map
@@ -7373,6 +7457,50 @@
     for (const k in arr) arr[k].sort((a, b) => a - b);
     const res = { lg, arr }; HFV.set(key, res); return res;
   }
+  // Talent tab (Sean, 11 Oct 2026: "add it to the leaderboard and add a build tab for it"): talent xwOBA built up from the league's, one piece at
+  // a time — each step swaps a league piece for his expected one and shows what it moves (in wOBA points), landing on his talent xwOBA, then the
+  // next-season projection; under it, each piece beside what actually happened, which is the luck and noise the number leaves out
+  function renderTalentTab(p) {
+    const w = el("div", "xbtab"), v = V(p), t = v.tal, m = v.m;
+    if (!t) { w.append(el("p", "note", DS.multi ? "No talent xwOBA for a span of seasons — pick one season." : "No talent xwOBA for this view — it needs tracked batted balls (exit velocity, the directional model) and a qualified pool.")); return w; }
+    const L = t.L, sc = L.scale, wob = (c) => twRaw(c) * sc;
+    const f3 = (x) => fmtX(x), pct1 = (x) => x.toFixed(1) + "%", pts = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x) * 1000);
+    const lgK = (lgRatesH().k || 0) - 0.08;
+    const cur = { xk: lgK, xbb: L.bb, hbp: L.hbp, xhf: L.hr.hrfb, fbs: L.fbs, xbab: L.xbabip, tph: L.tph };
+    const vl = viewLabel("H");
+    const b = buildUp(`Talent xwOBA build-up · ${DS.season}${DS.level && DS.level !== "MLB" ? " " + (DS.levelName || DS.level) : ""}`, `${vl && vl !== "full season" ? vl + " · " : ""}${v.pa} PA · ± in wOBA points, against the season's 300+ PA hitters`, "wOBA", f3, pts, 0.020);
+    const R3 = (x) => Math.round(x * 1000) / 1000; let prev = R3(wob(cur));
+    const step = (to) => { const c = R3(to), d = c - prev; prev = c; return d; };
+    b.row("League", null, wob(cur), f3, null, "→", wob(cur), "the season's 300+ PA hitters' pieces, put together the same way — where the build-up starts (scaled to their real wOBA)");
+    const pc = (k, his, dir) => { const vals = []; for (const q of pool("H").ref) { const x = V(q).tal; if (x && x[k] != null) vals.push(x[k]); } return pctAmong(vals, his, dir); };
+    const steps = [
+      ["xK%", "xk", t.xk, lgK, pct1, -1, `the strikeout rate his whiffs, swing decisions and the strikes he sees come with (his actual K%: ${m.k != null ? pct1(m.k) : "–"}) — fewer strikeouts, more balls in play`],
+      ["xBB%", "xbb", t.xbb, L.bb, pct1, 1, `the walk rate his chase rate, zone swings, contact and the share of pitches he sees in the zone come with (his actual BB%: ${m.bb != null ? pct1(m.bb) : "–"})`],
+      ["HBP", "hbp", t.hbp, L.hbp, (x) => pct1(100 * x), 1, "his own hit-by-pitch rate per plate appearance — there's no process to model, so it stands as it is"],
+      ["xHR/FB", "xhf", t.xhf, L.hr.hrfb, pct1, 1, `home runs per fly ball + popup his fly-ball EV, Barrel% on fly balls and liners and pulled fly balls deserve, against the season's own HR / (fly balls + popups); it can sit a little off the xHR/FB tab, which counts Savant's fly balls`],
+      ["Fly balls", "fbs", t.fbs, L.fbs, (x) => pct1(100 * x), 1, "fly balls + popups per ball in play: how often xHR/FB gets its chance"],
+      ["xBABIP", "xbab", t.xbab, L.xbabip, f3, 1, `the xBABIP tab's eight drivers (line drives, popups, grounder and liner EV, liner pull, speed on grounders, oppo, fly balls) with no Noise or Luck row (his actual BABIP: ${m.babip != null ? f3(m.babip) : "–"})`],
+      ["Extra bases", "tph", t.tph, L.tph, (x) => x.toFixed(2), 1, "total bases per hit that isn't a home run, from the directional model's xSLG and xBA — how many of his hits it expects to go for extra bases"]];
+    for (const [lab, k, his, lg, f, dir, tip] of steps) { cur[k] = his; const run = wob(cur); b.row(lab, his, lg, f, pc(k, his, dir), step(run), run, tip); }
+    b.mark("Talent xwOBA");
+    if (m.txwp != null && !needsDays()) b.band("Next season", step(m.txwp), m.txwp, `talent proj.: the league's wOBA (${f3(L.woba)}) plus his gap to it × PA / (PA + ${TW.k}) — ${v.pa} PA keep ${Math.round(100 * v.pa / (v.pa + TW.k))}% of it. One season's pieces still carry sampling noise; ${TW.k} PA of league average is the regression that forecast next season's wOBA best`);
+    w.append(b.done());
+    // each piece beside what happened: the gap is what the number leaves out
+    const box = el("div", "rollbox uerabox brbox"), hd = el("div", "rollhd"); hd.append(el("span", "rollname", "Talent vs actual"), el("span", "rollsub", "what each piece expects beside what happened — the gap is the luck and noise left out")); box.append(hd);
+    const { tb, fin, wrap } = brTable(null, [["Piece", "l"], ["Talent", ""], ["Actual", ""], ["Diff", "", "actual − talent"]], "twvs");
+    const hr = v.ctx && v.ctx.HR != null ? v.ctx.HR : null, ab = v.ab || 0;
+    const actHf = hr != null && t.I.fbn ? 100 * hr / t.I.fbn : null;
+    const actTph = hr != null && m.ba != null && m.slg != null && ab && m.ba * ab - hr > 0 ? (m.slg * ab - 4 * hr) / (m.ba * ab - hr) : null;
+    const sg = (x, f) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + f(Math.abs(x)));
+    for (const [lab, a, x, f, fd] of [["K%", t.xk, m.k, pct1, (z) => z.toFixed(1)], ["BB%", t.xbb, m.bb, pct1, (z) => z.toFixed(1)], ["HR/FB", t.xhf, actHf, pct1, (z) => z.toFixed(1)],
+                                       ["BABIP", t.xbab, m.babip, f3, (z) => fmtX(z)], ["Bases per hit (no HR)", t.tph, actTph, (z) => z.toFixed(2), (z) => z.toFixed(2)], ["wOBA", m.txw, m.woba, f3, (z) => fmtX(z)], ["xwOBA", m.txw, m.xwd, f3, (z) => fmtX(z)]]) {
+      const tr = el("tr", lab === "wOBA" || lab === "xwOBA" ? "tot" : null);
+      tr.append(el("td", "l nm", lab), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)));
+      tb.append(fin(tr));
+    }
+    box.append(wrap); w.append(box);
+    return w;
+  }
   function renderXhrfbTab(p) {
     const w = el("div", "xbtab");
     if (DS.level && DS.level !== "MLB") {   // a minors card: the card's own level, season and view
@@ -7435,7 +7563,7 @@
   }
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["fantasy", "Fantasy"]];   // Season Stats is the page's own table now (8 Oct 2026)   // Compare came off the strip with the Compare page (Sean, 6 Oct 2026)
-  const BTABS_H = [["mix", "Mix"], ["bbq", "Batted Ball Quality"], ["xbabip", "xBABIP"], ["xhrfb", "xHR/FB"]];   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
+  const BTABS_H = [["mix", "Mix"], ["bbq", "Batted Ball Quality"], ["xbabip", "xBABIP"], ["xhrfb", "xHR/FB"], ["talent", "Talent"]];   // Talent xwOBA's build-up (Sean, 11 Oct 2026)   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
   const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"]];   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
@@ -7455,7 +7583,7 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => (tabs.find(([x]) => x === k) || [])[1];
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["xbabip"], ["xhrfb"]] : []),
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["xbabip"], ["xhrfb"], ["talent"]] : []),
                     ["rolling", ...(p.type === "P" ? ["uera"] : ["babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
@@ -7520,6 +7648,8 @@
       body.append(renderXbabipTab(p, ref));
     } else if (pick === "xhrfb") {
       body.append(renderXhrfbTab(p));
+    } else if (pick === "talent") {
+      body.append(renderTalentTab(p));
     } else if (pick === "babip") {
       body.append(renderBabipTab(p, o.st));
     } else if (pick === "fantasy") {
@@ -8976,7 +9106,7 @@
   // A hitter's percentile box is two columns of headed sections, the card's own groups plus the expected three —
   // wide enough (it takes the right-hand box's place too) that every bar keeps the length it has in one column.
   // EXPW / EXPB / EXPS are the directional model's xwOBA, xBA and xSLG, as everywhere.
-  const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
+  const PCT_COLS_H = [[["Results", ["woba", "txw", "EXPW", "EXPB", "EXPS"]],   // talent xwOBA above xwOBA (Sean, 11 Oct 2026)    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
                        ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],   // Avg EV again (Sean, 8 Oct 2026: "swap fb EV with regular avg EV"); EV on FB / LD / GB on the Mix tab and as columns
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k", "xk"]],   // back on the right, at the top (Sean, 1 Oct 2026)
                        ["Batted-Ball Distribution", ["fb", "ld", "pu", "gb", "pullfb", "mixw"]]]];   // Air% back (Sean, 8 Oct 2026)   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
@@ -9051,7 +9181,7 @@
   const OUTCOME_LABEL = { mixw: "Mix wOBA", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", evfb: "EV on FB", evld: "EV on LD", evgb: "EV on GB", brfb: "Brl% on FB", brld: "Brl% on LD", brgb: "Brl% on GB", fb: "FB%", ld: "LD%", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
-                          babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", aopt: "Arsenal Opt.", sloc: "Location+", pitch: "Pitching+", pwhf: "Whiff+ (loc)", pbb: "Batted-ball+ (loc)", xwcon: "xwOBAcon", fpts: "Pts", fpg: "Pts/G", fppa: "Pts/PA", fpip: "Pts/IP", fpgs: "Pts/GS",
+                          babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", txw: "Talent xwOBA", txwp: "Talent proj.", aopt: "Arsenal Opt.", sloc: "Location+", pitch: "Pitching+", pwhf: "Whiff+ (loc)", pbb: "Batted-ball+ (loc)", xwcon: "xwOBAcon", fpts: "Pts", fpg: "Pts/G", fppa: "Pts/PA", fpip: "Pts/IP", fpgs: "Pts/GS",
                           spd: "Sprint Speed", sb: "SB", sba: "SB Att.", sbp: "SB%" };
   const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", fstrk: "1st-pitch Strike%", b3strk: "3-ball Strike%", xbbf: "xBB%", xkf: "xK%", xks: "Pitching+ xK%", xkbb: "x(K-BB)%", xkbbs: "x(K-BB)%", xkw: "Whiff% − xK%", xkws: "xWhiff% − xK%", rating: "Rating", ctrl: "Control", foul: "Foul%", fpc: "Foul% of contact", nfpc: "xFoul% of contact", xnera: "xnERA", csw: "CSW%", s2whf: "2-strike Whiff%", s2sw: "2-strike Swing%", s2zone: "2-strike Zone%", nwhf: "xWhiff%", ncstr: "xCalled Strike%", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strike Whiff%", nfoul: "xFoul%", ubb: "uBB%", zcon: "Z-Contact%", swing: "Swing%", cstr: "Called Strike%", swstr: "SwStr%", nmix: "Mix xwOBA", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+", sloc: "Location+" });   // a pitcher's O-Swing% is his chase rate
   // the percentile bars behind the xK% and xBB% tabs (Sean, 4 Oct 2026: "a tab that shows the same expected strikeout percentile bars that we
@@ -9850,7 +9980,8 @@
     "GB%": { k: "gb", lo: 1 }, "LD%": { k: "ld", hi: 1 }, "FB%": { k: "fb", hi: 1 }, "PU%": { k: "pu", lo: 1 }, "Air%": { k: "air", hi: 1 }, "Pull Air%": { k: "pull", hi: 1 }, "Pull FB%": { k: "pullfb", hi: 1 },
     "Pull%": { k: "pullp", hi: 1 }, "Cent%": { k: "cent" }, "Oppo%": { k: "oppo" }, "Mix wOBA": { k: "mixw", hi: 1 },
     "Swing%": { k: "swing", pa: 1 }, "Z-Swing%": { k: "zsw", hi: 1, pa: 1 }, "O-Swing%": { k: "osw", lo: 1, pa: 1 }, "Contact%": { k: "con", hi: 1, pa: 1 },
-    "Z-Contact%": { k: "zcon", hi: 1, pa: 1 }, "O-Contact%": { k: "ocon", hi: 1, pa: 1 }, "Whiff%": { k: "whf", lo: 1, pa: 1 } };
+    "Z-Contact%": { k: "zcon", hi: 1, pa: 1 }, "O-Contact%": { k: "ocon", hi: 1, pa: 1 }, "Whiff%": { k: "whf", lo: 1, pa: 1 },
+    "Talent xwOBA": { k: "txw", hi: 1, pa: 1 } };   // the Standard table's column after xwOBA, heat-mapped like it among the season's qualifiers (Sean, 11 Oct 2026)
   const SBX_COLS = {
     bbq: ["BBE", "Avg EV", "EV90", "Max EV", "Hard-Hit%", "Barrel%", "Sweet-Spot%", "FB EV", "LD EV", "GB EV", "Bat Speed"],
     bbd: ["BBE", "GB%", "LD%", "FB%", "PU%", "Pull FB%", "Pull%", "Cent%", "Oppo%", "Mix wOBA"],   // Air% / Pull Air% out, Pull FB% in (Sean, 9 Oct 2026)
@@ -9979,11 +10110,11 @@
   // speed (heat-mapped) and SB as a group where BsR was; Off / Def / BsR gone
   // and then (Sean, the same night): OPS between SLG and wRC+, fWAR / bWAR after SB as one group (a rule before fWAR and after bWAR, none between)
   // ISO behind OPS (Sean, 8 Oct 2026: "move iso to behind ops on the standard table")
-  const SB_H = ["wOBA", "xwOBA", "G", "PA", "HR", "R", "RBI", "BB%", "K%", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "OPS", "ISO", "wRC+", "fWAR", "bWAR"];   // Sprint / SB moved to Baserunning (9 Oct 2026)
+  const SB_H = ["wOBA", "xwOBA", "Talent xwOBA", "G", "PA", "HR", "R", "RBI", "BB%", "K%", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "OPS", "ISO", "wRC+", "fWAR", "bWAR"];   // Sprint / SB moved to Baserunning (9 Oct 2026)
   const SB_BRK = { H: new Set(["G", "BB%", "HR/FB", "AVG", "fWAR", "Pos"]), P: new Set(["G", "K%", "Whiff%", "Pos"]) };   // a heavier rule before each of these
   const SB_FG = ["fWAR", "bWAR", "wRC+", "Sprint", "HR/FB", "BsR"], SB_SAB = { "wRC+": 0, BsR: 1, fWAR: 4 };   // SB_FG: not in MLB's postseason lines
   const SB_HEAT = new Set(["xwOBA"]);   // filled in their percentile colour among that season's qualified hitters — wOBA plain (Sean, 9 Oct 2026: "only xwoba is heatmapped not woba"), Sprint plain too ("get rid of the heat map on sprint speed")
-  const SB_TIP = { "BB%": "Walks per plate appearance", "K%": "Strikeouts per plate appearance", ISO: "Isolated power: SLG minus AVG",
+  const SB_TIP = { "Talent xwOBA": "His wOBA rebuilt from expected rates only — xK%, xBB%, xHR/FB, the eight-driver xBABIP and the model's extra bases — no luck or noise (the Talent tab on his card shows the build-up)", "BB%": "Walks per plate appearance", "K%": "Strikeouts per plate appearance", ISO: "Isolated power: SLG minus AVG",
     BABIP: "Batting average on balls in play: (H − HR) / (AB − K − HR + SF)", wOBA: "The site's wOBA where the season is built (2015 on), FanGraphs' before",
     "HR/FB": "Home runs per fly ball, Savant's way: Statcast's fly balls and popups, with his line-drive homers counted as fly balls",
     "wRC+": "FanGraphs: runs created per PA, park and league adjusted, 100 = average", fWAR: "FanGraphs' wins above replacement — batting, fielding and, for a two-way player, pitching",
@@ -10037,7 +10168,7 @@
   const sbRuns = (v) => { const r = Math.round(10 * v) / 10; return (r < 0 ? "−" : "") + Math.abs(r).toFixed(1); };   // WAR in tenths
   // rates carry their % sign in this table (Sean, 8 Oct 2026: "for walk and k percentages can you add in the % in the tables")
   const sbFmt = (k, v) => (v == null || v === "" || (typeof v === "number" && isNaN(v)) ? "–" : k === "Mix wOBA" ? fmtX(+v) : k === "BBE" ? String(Math.round(+v))
-    : ["Avg EV", "EV90", "Max EV", "FB EV", "LD EV", "GB EV", "Bat Speed"].includes(k) ? (+v).toFixed(1) : ["AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA", "ISO", "BABIP"].includes(k) ? fmtX(+v)
+    : ["Avg EV", "EV90", "Max EV", "FB EV", "LD EV", "GB EV", "Bat Speed"].includes(k) ? (+v).toFixed(1) : ["AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA", "Talent xwOBA", "ISO", "BABIP"].includes(k) ? fmtX(+v)
     : ["ERA", "FIP", "WHIP", "nERA", "SIERA"].includes(k) ? (+v).toFixed(2) : k === "wRC+" ? String(Math.round(+v)) : ["fWAR", "bWAR", "BsR"].includes(k) ? sbRuns(+v) : k === "Sprint" ? (+v).toFixed(1)
     : /%$|\/FB$/.test(k) ? (+v).toFixed(1) + "%" : k === "IP" ? String(v) : String(v));
   // a sum of lines: counts added, the rates recomputed, our numbers weighted by PA / BF (GB% too, which combineLines leaves out)
@@ -10185,9 +10316,11 @@
     const lines = post ? [] : (rawLines(p) || []), mlb = post ? (Array.isArray(postState) ? postState : []) : lines.filter((l) => l.mlb).sort((a, b) => a.season - b.season);
     const LV = ["AAA", "AA", "A+", "A", "A-", "Rk"], lvName = (l) => ({ "A(Adv)": "A+", "A(Full)": "A", "A(Short)": "A-", ROK: "Rk" }[l] || l);
     const milb = !post && sbMinors && window.DRAFT_MINORS ? lines.filter((l) => !l.mlb && !l.combo && !l.team === false && l.team).sort((a, b) => a.season - b.season || LV.indexOf(lvName(a.level)) - LV.indexOf(lvName(b.level))) : [];
-    if (sx) for (const l of mlb) l.bx = sbxOf(p.id, l.season);
+    // talent xwOBA rides in the Standard table after xwOBA (Sean, 11 Oct 2026), so a hitter's regular-season table reads hist/career-bb.js too
+    const bxOn = H && !post && !sx; if (bxOn) ensureScript("hist/career-bb.js", sbxReady);
+    if (sx || (bxOn && sbxReady())) for (const l of mlb) l.bx = sbxOf(p.id, l.season);
     if (!H && !post) { ensureScript("hist/career-bb.js", sbxReady); if (sbxReady()) for (const l of mlb) l.bp = sbpOf(p.id, l.season); }   // a pitcher's nERA / SIERA / PU% / xBB%
-    const cols = sx ? SBX_COLS[view] : post ? (H ? SB_H.filter((k) => !["wOBA", "xwOBA", ...SB_FG].includes(k)) : SB_P.filter((k) => !["FIP", "nERA", "SIERA", "PU%", "GB%", "Whiff%", "xBB%"].includes(k))) : (H ? SB_H : SB_P), b = bio(p.id);
+    const cols = sx ? SBX_COLS[view] : post ? (H ? SB_H.filter((k) => !["wOBA", "xwOBA", "Talent xwOBA", ...SB_FG].includes(k)) : SB_P.filter((k) => !["FIP", "nERA", "SIERA", "PU%", "GB%", "Whiff%", "xBB%"].includes(k))) : (H ? SB_H : SB_P), b = bio(p.id);
     // the group rules: a column whose next column starts a group ends one (FanGraphs' heavier lines)
     const allCols = [...cols, "Pos"], brk = new Set(sx ? SBX_BRK[view] : SB_BRK[p.type] || []); if (post && H) brk.add("SB");   /* no Sprint in October: SB keeps its own group */
     const gEnd = new Set(allCols.filter((k, i) => i + 1 < allCols.length && brk.has(allCols[i + 1])));
@@ -10282,7 +10415,7 @@
           AVG: o2.AB ? o2.H / o2.AB : null, OBP: (o2.AB + o2.BB + (o2.HBP || 0) + (o2.SF || 0)) ? (o2.H + o2.BB + (o2.HBP || 0)) / (o2.AB + o2.BB + (o2.HBP || 0) + (o2.SF || 0)) : null, SLG: o2.AB ? o2.TB / o2.AB : null };
         l.c.OPS = l.c.OBP != null && l.c.SLG != null ? l.c.OBP + l.c.SLG : null;
         l.c.adv = { woba: m.woba, xwoba: m.xwd != null ? m.xwd : m.xwoba_dir };
-        if (sx) { l.bx = { bbe: (V(p).ctx || {}).BBE }; for (const d of Object.values(SBX)) l.bx[d.k] = m[d.k]; }
+        if (sx || bxOn) { l.bx = { bbe: (V(p).ctx || {}).BBE }; for (const d of Object.values(SBX)) l.bx[d.k] = m[d.k]; }
       } else {
         const o2 = oo, ip = o2.OUTS / 3;
         l.c = { W: o2.W, L: o2.L, ERA: o2.OUTS ? 27 * o2.ER / o2.OUTS : null, G: o2.G, GS: o2.GS, IP: fmtIP(ip), H: o2.H, HR: o2.HR, BB: o2.BB, K: o2.K, BF: o2.BF, WHIP: ip ? (o2.H + o2.BB) / ip : null,
@@ -10313,6 +10446,7 @@
     if (mlb.length) {
       const n = new Set(mlb.map((l) => l.season)).size, tot = sbCombine(H, mlb);
       if (sx) tot.bx = sbxCombine(mlb);
+      else if (bxOn) { let a = 0, w = 0; for (const l of mlb) { const v = l.bx && l.bx.txw, pa = +l.c.PA || 0; if (v == null || !pa) continue; a += v * pa; w += pa; } tot.bx = { txw: w ? a / w : null }; }   // talent xwOBA over the seasons that have one, by PA
       row([`${n} Yr${n > 1 ? "s" : ""}`], tot, "tot first", { record: !post });   // no heat map on the totals rows (Sean, 8 Oct 2026)
       const G = +tot.c.G || 0, games = H ? G : mlb.reduce((a, l) => a + (l.season === 2020 ? 60 : 162), 0);   // a pitcher's per 162 team games
       if (!post && games) {

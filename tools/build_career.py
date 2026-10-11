@@ -337,7 +337,97 @@ SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evg
             "brfb", "brld",   # barrels per fly ball / line drive, xHR/FB's inputs (8-9 Oct 2026)
             "pullfb",         # Pull FB%: his pulled fly balls over all his balls in play, from the Mix buckets (ctx.mix; Sean, 9-10 Oct 2026)
             "babip", "xbabip", "spd",   # the card's xBABIP tab by season: BABIP, the directional xBABIP, sprint speed (Sean, 9 Oct 2026)
-            "sba"]                      # steal attempts (SB + CS), the season table's Baserunning view (Sean, 9 Oct 2026)
+            "sba",                      # steal attempts (SB + CS), the season table's Baserunning view (Sean, 9 Oct 2026)
+            "txw"]                      # talent xwOBA, the season table's column after xwOBA (Sean, 11 Oct 2026) — talent_season() below
+
+
+# Talent xwOBA (Sean, 11 Oct 2026: "an xwoba based purely on their talent ... their batted ball mix, k rate, bb rate, xbabip minus luck and noise,
+# and xHR/fb rate"): wOBA rebuilt from expected rates only — xK% (the site's hitter fit), xBB% (chase, zone swing, contact rates, the share of
+# pitches he sees in the zone, EV90), his HBP, xHR/FB on his fly balls + popups, the eight-driver xBABIP on the rest (no Noise, no Luck) and
+# the directional model's extra bases per hit — each season scaled so its 300+ PA hitters average their real wOBA. app.js's talentOf /
+# talentLeague are the same arithmetic on the card's view; keep the two in step. Fitted / tested 2015-26 (scratch twcore.js): next season's
+# wOBA r .536 (xwOBA .437, wOBA .479), year to year .663 (xwOBA .539)
+TW_XK = (-0.08, {"whf": 0.989, "zsw": -0.212, "osw": -0.272, "strk": 0.523})
+TW_XBB = {"osw": -0.448, "zsw": -0.030, "ocon": 0.034, "zcon": -0.113, "zsn": -0.539, "ev90": 0.056}
+TW_XBAB = {"ld": 3.64, "pu": -3.15, "evgb": 2.11, "evld": 1.2, "ldp": 0.27, "spd": 14 * 0.83, "oppo": 0.86, "fb": -0.94}
+TW_XHRFB = [{"evfb": 0.332, "brfb": 0.401, "brld": 0.218, "pfb": 0.094}, {"evfb": 0.373, "brfb": 0.391, "brld": 0.217},
+            {"evfb": 0.779, "brl": 0.738}, {"brl": 1.037, "ev90": 0.499}]
+TW_W = {"bb": 0.69, "hbp": 0.72, "s": 0.88, "d": 1.25, "hr": 2.03}
+
+
+def _tw_inputs(p):
+    m, cx = p.get("m") or {}, p.get("ctx") or {}
+    mx = cx.get("mix") or []
+    if len(mx) < 8: mx = None
+    tot = sum(x or 0 for x in mx) if mx else 0
+    fbn = (mx[1] or 0) + (mx[5] or 0) + (mx[6] or 0) + (mx[7] or 0) if mx else 0
+    fb3 = (mx[5] or 0) + (mx[6] or 0) + (mx[7] or 0) if mx else 0
+    ld3 = (mx[2] or 0) + (mx[3] or 0) + (mx[4] or 0) if mx else 0
+    xbt = cx.get("xbt"); xn = sum(z[0] for z in xbt) if xbt else 0
+    return {"m": m, "mx": mx, "fbn": fbn, "pa": p.get("pa") or 0, "ab": p.get("ab") or 0, "hbp": cx.get("HBP"), "hr": cx.get("HR"),
+            "pfb": 100 * mx[5] / fb3 if fb3 else None, "ldp": 100 * mx[2] / ld3 if ld3 else None,
+            "fbs": fbn / tot if tot else None, "gbs": 100 * xbt[0][0] / xn if xn else m.get("gb")}
+
+
+def talent_league(players, ref_pa):
+    H = [p for p in players if p.get("type") == "H"]
+    def wavg(rows, key_fn, w_fn):
+        s = w = 0.0
+        for q in rows:
+            v, wt = key_fn(q), w_fn(q)
+            if v is None or not wt: continue
+            s += v * wt; w += wt
+        return s / w if w else None
+    L = {"k": {}}
+    k20 = [q for q in H if (q.get("pa") or 0) >= 20]
+    for k in ("k", "whf", "zsw", "osw", "strk"):
+        L["k"][k] = wavg(k20, lambda q: (q.get("m") or {}).get(k), lambda q: q["pa"])
+    ref = [q for q in H if (q.get("pa") or 0) >= ref_pa]
+    I = [_tw_inputs(q) for q in ref]
+    for k in ("bb", "osw", "zsw", "ocon", "zcon", "zsn", "ev90", "woba", "xbabip", "ld", "pu", "evgb", "evld", "spd", "oppo", "fb"):
+        L[k] = wavg(I, lambda i: i["m"].get(k), lambda i: i["pa"])
+    L["ldp"] = wavg(I, lambda i: i["ldp"], lambda i: i["pa"])
+    F = [i for i in I if i["mx"] and i["hr"] is not None and i["fbn"]]
+    hr, fb = sum(i["hr"] for i in F), sum(i["fbn"] for i in F)
+    L["hr"] = {"hrfb": 100 * hr / fb if fb else None}
+    for k in ("evfb", "brfb", "brld", "pfb", "brl", "ev90"):
+        L["hr"][k] = wavg(F, lambda i: i[k] if k == "pfb" else i["m"].get(k), lambda i: i["fbn"])
+    L["scale"] = 1.0
+    a = b = 0.0
+    for i in I:
+        t = talent_of(i, L)
+        if t is not None and i["m"].get("woba") is not None: a += t * i["pa"]; b += i["m"]["woba"] * i["pa"]
+    L["scale"] = b / a if a else None
+    return L
+
+
+def talent_of(i, L):
+    """his raw talent wOBA (times L['scale'] once that is set), or None"""
+    m = i["m"]
+    if not i["mx"] or not i["pa"] or not i["ab"] or m.get("dxba") is None or m.get("dxslg") is None or L.get("xbabip") is None \
+            or L["hr"]["hrfb"] is None or L.get("scale") is None or i["fbs"] is None:
+        return None
+    c, w = TW_XK
+    if any(m.get(k) is None or L["k"].get(k) is None for k in w) or L["k"].get("k") is None: return None
+    xk = L["k"]["k"] + c + sum(w[k] * (m[k] - L["k"][k]) for k in w)
+    xbb = L["bb"] + sum(v * (m[k] - L[k]) for k, v in TW_XBB.items() if m.get(k) is not None and L.get(k) is not None)
+    hbp = (i["hbp"] or 0) / i["pa"]
+    bx = {"evfb": m.get("evfb"), "brfb": m.get("brfb"), "brld": m.get("brld"), "pfb": i["pfb"], "brl": m.get("brl"), "ev90": m.get("ev90")}
+    fit = next((f for f in TW_XHRFB if all(bx[k] is not None and L["hr"].get(k) is not None for k in f)), None)
+    if fit is None: return None
+    xhf = max(0.0, L["hr"]["hrfb"] + sum(v * (bx[k] - L["hr"][k]) for k, v in fit.items()))
+    hrb = xhf / 100 * i["fbs"]
+    xbab = L["xbabip"]
+    for k, v in TW_XBAB.items():
+        his = i["ldp"] if k == "ldp" else m.get(k)
+        lg = L.get(k); g = i["gbs"] if k == "spd" else 100
+        if his is None or lg is None or g is None: continue
+        xbab += v * (his - lg) * g / 100 / 1000
+    bip = max(0.0, 1 - xk / 100 - xbb / 100 - hbp); xhr = hrb * bip * i["pa"]
+    tph = min(1.7, max(1.0, (m["dxslg"] * i["ab"] - 4 * xhr) / max(1.0, m["dxba"] * i["ab"] - xhr)))
+    vh = TW_W["s"] + (tph - 1) * (TW_W["d"] - TW_W["s"])
+    raw = TW_W["bb"] * xbb / 100 + TW_W["hbp"] * hbp + bip * (hrb * TW_W["hr"] + (1 - hrb) * xbab * vh)
+    return raw * L["scale"]
 
 
 # a pitcher's season numbers for his season table (Sean, 9 Oct 2026: "ERA, FIP, nERA, and SIERA ... k%, bb%, popup%, gb% ... whiff% and xBB%"):
@@ -353,6 +443,7 @@ def season_bb():
         if ds.get("kind"):
             continue                                       # spring / postseason files are not season lines
         y = int(ds["meta"]["season"] if "meta" in ds else ds["season"])
+        TL = talent_league(ds["players"], ds.get("refPA") or (ds.get("meta") or {}).get("refMinPA") or 300)
         for p in ds["players"]:
             r = lambda v, d=1: None if v is None or v != v else round(float(v), d)
             if p.get("type") == "P":
@@ -364,8 +455,9 @@ def season_bb():
             m, cx = p.get("m") or {}, p.get("ctx") or {}
             mx = cx.get("mix") or []
             fbs = sum(x or 0 for x in mx) if len(mx) >= 8 else 0      # every ball in the mix (MIX_COLS order: gb, pu, ld p/c/o, fb p/c/o, x)
-            val = lambda k: (100 * mx[5] / fbs if fbs else None) if k == "pullfb" else m.get(k)
-            out.setdefault(str(p["id"]), {})[str(y)] = [cx.get("BBE")] + [r(val(k), 3 if k in ("mixw", "babip", "xbabip") else 1) for k in SBX_KEYS]
+            tw = talent_of(_tw_inputs(p), TL)
+            val = lambda k: (100 * mx[5] / fbs if fbs else None) if k == "pullfb" else tw if k == "txw" else m.get(k)
+            out.setdefault(str(p["id"]), {})[str(y)] = [cx.get("BBE")] + [r(val(k), 3 if k in ("mixw", "babip", "xbabip", "txw") else 1) for k in SBX_KEYS]
     path = HERE / "hist" / "career-bb.js"
     path.write_text("window.DRAFT_CAREER_BB = " + json.dumps({"keys": SBX_KEYS, "p": out, "pkeys": SBP_KEYS, "pp": pout}, separators=(",", ":")) + ";\n")
     print(f"OK {len(out)} hitters' batted-ball / discipline seasons, {len(pout)} pitchers' -> {path.name} ({path.stat().st_size / 1e6:.1f} MB)", flush=True)
