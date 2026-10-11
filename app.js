@@ -2986,6 +2986,8 @@
     const setSize = (n) => { state.pageSize = n; state.page = 1; savePrefs(); (onChange || renderRows)(); };
     const bot = !onChange && box.id === "pagertop" ? $("pagerbot") : null, botOn = !!bot && phonePages() && !PHONE_ALL;   // a phone's page numbers + Per page, under the table
     if (bot) { bot.innerHTML = ""; bot.hidden = !botOn || !total; bot.classList.toggle("phbot", botOn); }
+    if (bot) { const bs = $("bscroll");   // a phone's bar is the table's last row: inside the rows' box, held at its foot (Sean, 11 Oct 2026)
+      if (botOn) { if (bot.parentNode !== bs) bs.append(bot); } else if (bot.parentNode === bs) bs.after(bot); }
     if (!total) { box.hidden = true; if (!onChange) seatFilters(null); return; }
     box.hidden = false;
     { const g = groupFor(state.pos), pit = isPitcherGroup(g);   // the Stuff+ board's count line at the right (Sean, 3 Oct 2026)

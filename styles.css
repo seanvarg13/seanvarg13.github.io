@@ -5393,3 +5393,13 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #lbtitle { margin-top: 2px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #pagertop { margin-top: -6px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #lbtitle { margin-top: 5px !important; }
+
+/* The phone's page bar is the table's last row (Sean, 11 Oct 2026, from his phone: "make it like it would be another row of the table with the
+   buttons inside and make it grey colored"): #pagerbot sits inside #bscroll after the rows, sticky at the box's foot and left edge (one row as
+   wide as the visible box, whatever the sideways scroll), grey, a row hairline over it; the box hugs its rows when they don't fill it and
+   loses the bottom padding that left a blank strip under the last row. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #bscroll:has(> #pagerbot.phbot) { padding-bottom: 0 !important; flex: 0 1 auto !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #board #bscroll > #pagerbot.phbot { position: sticky; left: 0; bottom: 0; z-index: 4; box-sizing: border-box; width: 100%; margin: 0 !important;
+  background: color-mix(in srgb, var(--ink) 9%, var(--surface)) !important; border: 0 !important; border-top: 1px solid color-mix(in srgb, var(--ink) 18%, var(--surface)) !important; padding: 4px 8px !important; min-height: 36px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #board #bscroll > #pagerbot .pnav .pbtn { min-width: 26px !important; height: 26px !important; min-height: 26px !important; line-height: 24px !important; padding: 0 5px !important; font-size: 12.5px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #board #bscroll > #pagerbot .phsize select, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #board #bscroll > #pagerbot .phsize .dd { height: 26px !important; min-height: 26px !important; }
