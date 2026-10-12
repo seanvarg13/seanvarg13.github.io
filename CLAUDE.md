@@ -3546,3 +3546,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     argument.
   - Every step's name opens its weight and a one-line note.
   - **Checked:** Yordan 2026 xK% 15.1 / xBB% 16.5 (IBB +4.9 of it); Judge 29.4 / 14.8.
+* **Buttons lifted like the tables (Sean, 12 Oct 2026, from the Leaderboard's Filters: "make it so even the filter button here has a shadow and do so
+  for other buttons like this too")**: these controls get a smaller version of the tables' soft shadow (`0 2px 8px` at 14% plus `0 1px 2px` at 10%):
+  - the lists' Filters and toolbar buttons (`.tbtn`, `.btn`)
+  - the boards' pills, Draft, and each segment as one piece (`.seg`)
+  - the player page's Filters / Raw and the season table's view bar (`.sbviews`)
+  - the card's tabs (`.btab`)
+
+  Page numbers, links and anything inside a table, a segment or a dropdown stay flat. One rule at the end of `styles.css`.
