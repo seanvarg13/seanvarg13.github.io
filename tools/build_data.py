@@ -118,7 +118,8 @@ HITTER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", 
               "brfb", "brld", "brgb",   # barrels on fly balls / line drives / grounders (over evfbn / evldn / evgbn), the Mix tab's Barrel% by type (8 Oct 2026)
               "xhgb", "xhld", "xhfb", "xhpu", "bngb", "bnld", "bnfb", "bnpu",
               "gbp", "gbc", "gbo",
-              "hbp"]   # hit-by-pitches, so a window re-derives the talent xwOBA's HBP rate (11 Oct 2026); the mix's grounders pulled / straightaway / the other way: the Batted Ball Quality tab's grounder Oppo% (10 Oct 2026)   # expected hits (directional xBA, less HR) and non-HR balls in play by type: the xBABIP tab's split of Rest of Contact (10 Oct 2026)
+              "hbp",
+              "ibb"]   # intentional walks, so a window re-derives xBB%'s IBB rate (12 Oct 2026); hbp: hit-by-pitches, so a window re-derives the talent xwOBA's HBP rate (11 Oct 2026); the mix's grounders pulled / straightaway / the other way: the Batted Ball Quality tab's grounder Oppo% (10 Oct 2026)   # expected hits (directional xBA, less HR) and non-HR balls in play by type: the xBABIP tab's split of Rest of Contact (10 Oct 2026)
 # The hitter card, grouped. key, label, higher-is-better, decimals, unit. Keys not in HITTER_METRICS are card-only.
 HITTER_CARD = [
     ("Outcomes",             [("woba", "wOBA", True, 3, ""), ("xws", "xwOBA", True, 3, ""), ("xwd", "dxwOBA", True, 3, "")]),
@@ -1081,13 +1082,14 @@ def pa_outcomes(d: pd.DataFrame, key: str) -> pd.DataFrame:
     p["is_bb"] = ev.isin(["walk", "intent_walk"])
     p["is_k"] = ev.isin(["strikeout", "strikeout_double_play"])
     p["is_hbp"] = ev.eq("hit_by_pitch")
+    p["is_ibb"] = ev.eq("intent_walk")
     p["is_sf"] = ev.isin(["sac_fly", "sac_fly_double_play"])
     p["tb"] = ev.map(HITS).fillna(0.0)
     p["is_hit"] = ev.isin(HITS)
     p["pa"] = ~ev.isin(["truncated_pa", "catcher_interf"]) | ev.eq("catcher_interf")
     g = p.groupby(key)
     o = g.agg(PA=("pa", "sum"), wnum=("wnum", "sum"), wden=("wden", "sum"),
-              BB=("is_bb", "sum"), K=("is_k", "sum"), HBP=("is_hbp", "sum"),
+              BB=("is_bb", "sum"), K=("is_k", "sum"), HBP=("is_hbp", "sum"), IBB=("is_ibb", "sum"),
               SF=("is_sf", "sum"), TB=("tb", "sum"), H=("is_hit", "sum"))
     o["wOBA"] = o.wnum / o.wden.replace(0, np.nan)
     AB = o.PA - o.BB - o.HBP - o.SF
@@ -1150,6 +1152,7 @@ def hitter_metrics(d: pd.DataFrame) -> pd.DataFrame:
     r["ZContact_pct"] = 100 * f.ZCon / f.ZSw.replace(0, np.nan)
     r["OContact_pct"] = 100 * f.OCon / f.OSw.replace(0, np.nan)
     r["Whiff_pct"] = 100 * f.Whiffs / f.Swings.replace(0, np.nan)
+    r["FoulCon_pct"] = 100 * (f.Swings - f.Whiffs - f.BIP) / (f.Swings - f.Whiffs).replace(0, np.nan)   # fouls over his contact: xBB% (12 Oct 2026)
     r["MixSum"], r["MixN"] = f.MixSum, f.MixN
     for col in MIX_COLS:
         r[col] = f[col]
@@ -1159,7 +1162,7 @@ def hitter_metrics(d: pd.DataFrame) -> pd.DataFrame:
     o = pa_outcomes(d, "batter")
     o["AB"] = o.PA - o.BB - o.HBP - o.SF
     o["BA"] = o.H / o.AB.replace(0, np.nan)
-    return r.join(o[["PA", "AB", "HBP", "wOBA", "OPS", "BA", "SLG", "K_pct", "BB_pct"]], how="inner")
+    return r.join(o[["PA", "AB", "HBP", "IBB", "wOBA", "OPS", "BA", "SLG", "K_pct", "BB_pct"]], how="inner")
 
 
 def pitcher_metrics(d: pd.DataFrame) -> pd.DataFrame:
@@ -1315,6 +1318,7 @@ def pa_rows(d: pd.DataFrame) -> pd.DataFrame:
     p["is_k"] = ev.isin(["strikeout", "strikeout_double_play"])
     p["is_hr"] = ev.eq("home_run")
     p["is_hbp"] = ev.eq("hit_by_pitch")
+    p["is_ibb"] = ev.eq("intent_walk")
     p["is_hit"] = ev.isin(HITS)
     p["tb"] = ev.map(HITS).fillna(0.0)
     p["pa"] = ~ev.isin(["truncated_pa"])
@@ -1393,7 +1397,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                            k=("is_k", "sum"), wnum=("wnum", "sum"), wden=("wden", "sum"),
                            xnum=("xnum", "sum"), xden=("xden", "sum"), dnum=("dnum", "sum"),
                            h=("is_hit", "sum"), tb=("tb", "sum"), xbsum=("xbsum", "sum"), xssum=("xssum", "sum"),
-                           dbsum=("dbsum", "sum"), dssum=("dssum", "sum"), hr=("is_hr", "sum"), wbh=("w_bh", "sum"), hbp=("is_hbp", "sum"),
+                           dbsum=("dbsum", "sum"), dssum=("dssum", "sum"), hr=("is_hr", "sum"), wbh=("w_bh", "sum"), hbp=("is_hbp", "sum"), ibb=("is_ibb", "sum"),
                            **{f"{k}{t}": (f"{k}{t}", "sum") for k in ("xh", "bn") for t in ("gb", "ld", "fb", "pu")})
     h = h.join(hp, how="left")
     h["evs"] = h["evs"].apply(lambda v: v if isinstance(v, list) else [])
@@ -1736,10 +1740,12 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
         m["con"] = None if pd.isna(r["Whiff_pct"]) else round(100 - float(r["Whiff_pct"]), 1)
         for key, col in [("ev90", "EV90"), ("maxev", "maxEV"), ("hh", "HardHit_pct"), ("ss", "SweetSpot_pct"),
                          ("strk", "Strike_pct"), ("swing", "Swing_pct"), ("pullp", "Pull_pct"), ("oppo", "Oppo_pct"), ("cent", "Cent_pct"), ("npull", "NonPull_pct"), ("ld", "LD_pct"),
-                         ("gb", "GB_pct"), ("pu", "PU_pct"), ("fb", "FB_pct"), ("zsn", "ZoneSeen_pct")]:
+                         ("gb", "GB_pct"), ("pu", "PU_pct"), ("fb", "FB_pct"), ("zsn", "ZoneSeen_pct"), ("fcon", "FoulCon_pct")]:
             m[key] = None if pd.isna(r[col]) else round(float(r[col]), 1)
         own_bs = None if pd.isna(r["BatSpeed"]) else round(float(r["BatSpeed"]), 1)
         m["bs"] = round(float(bsp[pid]), 1) if pid in bsp.index and pd.notna(bsp[pid]) else own_bs
+        ibb_n = int(r.IBB) if "IBB" in r and pd.notna(r.IBB) else None
+        m["ibbr"] = round(100 * ibb_n / int(r.PA), 2) if ibb_n is not None and r.PA else None   # intentional walks per 100 PA: xBB% (12 Oct 2026)
         m.update(baserunning(int(pid), info))
         xbt = []                                                   # [non-HR balls in play, expected hits] by type GB / LD / FB / PU (10 Oct 2026)
         for t in ("gb", "ld", "fb", "pu"):
@@ -1763,7 +1769,7 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
                     "mixev": mixev,
                     "xbt": xbt, "gbdir": gbdir,
                     # home runs and hit-by-pitches: the talent xwOBA's league HR/FB and HBP rate (11 Oct 2026)
-                    "HR": int(sum(x[HITTER_DAY.index("hr")] for x in rows_d)), "HBP": int(r.HBP) if "HBP" in r and pd.notna(r.HBP) else None},                                               # expected hits by batted-ball type, the xBABIP tab's split                                           # and [tracked balls, avg EV] by bucket — the Mix tab's EV column
+                    "HR": int(sum(x[HITTER_DAY.index("hr")] for x in rows_d)), "HBP": int(r.HBP) if "HBP" in r and pd.notna(r.HBP) else None, "IBB": ibb_n},                                               # expected hits by batted-ball type, the xBABIP tab's split                                           # and [tracked balls, avg EV] by bucket — the Mix tab's EV column
         })
     return rows
 

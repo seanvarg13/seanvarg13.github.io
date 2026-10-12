@@ -1005,6 +1005,7 @@
                    dxslg: !t.ab ? null : t.dssum !== undefined ? Math.round(1000 * t.dssum / t.ab) / 1000 : t.xssum !== undefined && dirInfo().ok ? Math.round(1000 * t.xssum / t.ab) / 1000 : null,
                    osw: rate(t.osw, t.opit), zsw: rate(t.zsw, t.zpit), zcon: rate(t.zcon, t.zsw), ocon: rate(t.ocon, t.osw), whf: rate(t.whf, t.sw),
                    zsn: rate(t.zpit, t.zpit + t.opit),   /* the share of his pitches in the zone: the talent xwOBA's xBB% (11 Oct 2026) */
+                   fcon: t.bip > 0 ? rate(t.sw - t.whf - t.bip, t.sw - t.whf) : null,   /* fouls over his contact: xBB% (12 Oct 2026) */
                    xwoba: noEV ? null : xwDir, xwd: noEV ? null : xwDir,   // the directional model
                    xwdiff: noEV || xwDir == null || !t.wden ? null : Math.round(1000 * (xwDir - t.wnum / t.wden)) / 1000,
                    woba: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null,
@@ -1020,6 +1021,7 @@
               ctx: { wOBA: t.wden ? Math.round(1000 * t.wnum / t.wden) / 1000 : null, "K%": rate(t.k, t.pa), "BB%": rate(t.bb, t.pa), BBE: bipn, BIP: t.bbt || null, G: games, HR: f.indexOf("hr") < 0 ? null : t.hr,   /* home runs in the view, for a minors xHR/FB (10 Oct 2026) */
                      mix: t.mxgb === undefined ? null : MIX_B.map(([k]) => t[k] || 0), mixsum: t.mixsum, mixn: t.mixn,
                      mixev: hasBk ? MIX_B.map((_, i) => mxn[i] ? [mxn[i], Math.round(10 * mxe[i] / mxn[i]) / 10] : null) : null,
+                     IBB: f.indexOf("ibb") < 0 ? null : t.ibb,   /* intentional walks in the view: xBB% (12 Oct 2026; older files: the season's rate) */
                      HBP: f.indexOf("hbp") < 0 ? null : t.hbp,   /* hit-by-pitches in the view, the talent xwOBA's HBP rate (11 Oct 2026; older files: the season's rate) */
                      xbt: f.indexOf("bngb") < 0 || !(t.bngb + t.bnld + t.bnfb + t.bnpu) ? null : ["gb", "ld", "fb", "pu"].map((k) => [t["bn" + k], t["xh" + k]]),
                      gbdir: f.indexOf("gbp") < 0 || !(t.gbp + t.gbc + t.gbo) ? null : [t.gbp, t.gbc, t.gbo] } };   /* ground balls pulled / centre / oppo (10 Oct 2026) */   // expected hits by batted-ball type (10 Oct 2026)   // [tracked balls, avg EV] by bucket, null on a file without evbk
@@ -1037,7 +1039,10 @@
       // Pull FB%: his pulled fly balls over all his balls in play (Sean, 10 Oct 2026: "the % of total batted balls that were pulled fly balls", not the
       // share of his fly balls), from the Mix buckets (MIX_B order: gb, pu, ld p/c/o, fb p/c/o, x), so a window re-derives it
       const mx = v.ctx && v.ctx.mix, fbs = mx && mx.length >= 8 ? mx.reduce((x, y) => x + (y || 0), 0) : 0;
+      // intentional walks per 100 PA in the view (xBB%, 12 Oct 2026): a window without the day field takes his season rate
+      const ibb = v.ctx && v.ctx.IBB != null ? v.ctx.IBB : p.ctx && p.ctx.IBB != null && p.pa ? p.ctx.IBB / p.pa * (pa || 0) : null;
       v.m = Object.assign({}, m, { xk: xk == null ? null : Math.round(10 * xk) / 10, xwcon: con == null ? null : Math.round(1000 * con) / 1000,
+                                  ibbr: ibb != null && pa ? Math.round(10000 * ibb / pa) / 100 : null,
                                   pullfb: fbs ? Math.round(1000 * mx[5] / fbs) / 10 : null });
     }
     // talent xwOBA and its next-season projection on the view (Sean, 11 Oct 2026) — talentOf below
@@ -5551,7 +5556,7 @@
     woba: "Weighted on-base average: every way of reaching base, each weighted by what it is actually worth. About .320 is league average, .400 is a star.",
     ba: "Batting average — hits per at-bat.",
     slg: "Slugging — total bases per at-bat.",
-    xwoba: "Expected wOBA: his wOBA rebuilt from expected rates only, never his actual hits — xK% (his whiffs, swing decisions and the strikes he sees) and xBB% (his chase rate, zone swings, contact and how often pitchers come into the zone on him), each half his actual rate; his HBP rate; xHR/FB from his exit velocity (FB EV, EV90, how much he pulls his fly balls) on his fly balls and popups; the nine-driver xBABIP (line drives, popups, grounder and liner EV, grounder and liner pull, speed, oppo, fly balls — no Noise, no Luck) on the rest; and the batted-ball model's extra bases per hit (exit velocity, launch angle, pull and spray angle, sprint speed). Scaled so the season's 300+ PA hitters average their real wOBA. First-half xwOBA calls second-half wOBA at r .42 (the batted-ball model alone .37, wOBA .31) and next season's at .55. A span of seasons or an untracked level shows the batted-ball model's number. The xwOBA tab shows the build-up.",
+    xwoba: "Expected wOBA: his wOBA rebuilt from expected rates only, never his actual hits — xK% (his whiffs, swing decisions and the strikes he sees) and xBB% (his chase rate, zone swings, contact, how often pitchers come into the zone on him, how many of his batted balls go foul and his intentional walks), each half his actual rate; his HBP rate; xHR/FB from his exit velocity (FB EV, EV90, how much he pulls his fly balls) on his fly balls and popups; the nine-driver xBABIP (line drives, popups, grounder and liner EV, grounder and liner pull, speed, oppo, fly balls — no Noise, no Luck) on the rest; and the batted-ball model's extra bases per hit (exit velocity, launch angle, pull and spray angle, sprint speed). Scaled so the season's 300+ PA hitters average their real wOBA. First-half xwOBA calls second-half wOBA at r .42 (the batted-ball model alone .37, wOBA .31) and next season's at .55. A span of seasons or an untracked level shows the batted-ball model's number. The xwOBA tab shows the build-up.",
     dxba: "Expected batting average — the same directional model, scored as hits per at-bat.",
     dxslg: "Expected slugging — the same directional model, scored as total bases per at-bat.",
     ev: "Average exit velocity off the bat, bunts excluded.",
@@ -7253,7 +7258,16 @@
   // .41, xHR/FB .74 / HR/FB .62). Talent proj. = league wOBA + (talent − league) × PA / (PA + 300): one season's inputs still carry sampling
   // noise, and 300 PA of league average is the regression that forecasts next season's wOBA best (xwOBA needs 525). build_career.py's
   // talent_of is the same arithmetic for the season table (hist/career-bb.js txw) — keep the two in step
-  const TW_XBB = { osw: -0.448, zsw: -0.030, ocon: 0.034, zcon: -0.113, zsn: -0.539, ev90: 0.056 };
+  // + intentional walks and fouls per contact (Sean, 12 Oct 2026: "Ok add those two into it", after "certain hitters like cal Raleigh and peak
+  // ohtani and even yordan walk more than their chase rates suggest ... more feared"): the swing model can't see an intentional walk, and BB%
+  // counts them (ibbr = IBB per 100 PA, +1.11 a point — Judge 2025 5.3, Yordan 2026 4.8); a hitter who fouls pitches off (fcon = fouls over his
+  // contact, +0.18 a point) keeps the plate appearance going and gives ball four more chances. Refit on the same 3,036 hitter-seasons, held out by
+  // season: r .863 → .903, error 1.49 → 1.26 BB% points (2026: .871 → .914, 1.41 → 1.17), next season's BB% r .719 → .736, and talent xwOBA's
+  // next-season wOBA r .5489 → .5499. Where's the "waste pitch" effect? Feared hitters do see more pitches far off the plate (r .31 with xwOBA),
+  // but Zone% seen and Chase% already carry it. 3-ball chase, 2-strike fouls and edge calls explained more of a season and forecast nothing
+  // (scratch fear/). TW_XBB0 is the fit without the two, for a file or level that doesn't carry them (the minors)
+  const TW_XBB = { osw: -0.413, zsw: -0.067, ocon: 0.017, zcon: -0.047, zsn: -0.446, ev90: 0.011, ibbr: 1.109, fcon: 0.177 };
+  const TW_XBB0 = { osw: -0.448, zsw: -0.030, ocon: 0.034, zcon: -0.113, zsn: -0.539, ev90: 0.056 };
   // act (Sean, 11 Oct 2026, "yeah sure" to the blend): K% and BB% are half his actual rate, half the expected one. Both settle faster than anything
   // else a hitter does, so a season's K% / BB% is mostly skill and the expected rate misses part of it — 300+ PA pairs 2015-26: next season's K%
   // r .831 actual / .806 xK% / .834 half and half, BB% .712 / .711 / .735; talent xwOBA's next-season wOBA r .536 → .542. A richer xK% with fouls
@@ -7286,7 +7300,7 @@
     const ref = DS.players.filter((q) => q.type === "H" && (q.pa || 0) >= (DS.refPA || 300) && q.m), I = ref.map((q) => twInputs(q.m, q.ctx, q.pa, q.ab, q.ctx && q.ctx.HBP, q.bats));
     const wavg = (rows, f, wt) => { let s = 0, w = 0; for (const r of rows) { const v = f(r), x = wt(r); if (v == null || !isFinite(v) || !x) continue; s += v * x; w += x; } return w ? s / w : null; };
     const L = {};
-    for (const k of ["bb", "osw", "zsw", "ocon", "zcon", "zsn", "ev90", "woba", "xbabip", "ld", "pu", "evgb", "evld", "spd", "oppo", "fb"]) L[k] = wavg(I, (i) => i.m[k], (i) => i.pa);
+    for (const k of ["bb", "osw", "zsw", "ocon", "zcon", "zsn", "ev90", "ibbr", "fcon", "woba", "xbabip", "ld", "pu", "evgb", "evld", "spd", "oppo", "fb"]) L[k] = wavg(I, (i) => i.m[k], (i) => i.pa);
     L.ldp = wavg(I, (i) => i.ldp, (i) => i.pa); L.gbp = wavg(I, (i) => i.gbp, (i) => i.pa);
     const F = I.filter((i) => i.mx && i.hr != null && i.fbn), fb = F.reduce((a, i) => a + i.fbn, 0);
     L.hr = { hrfb: fb ? 100 * F.reduce((a, i) => a + i.hr, 0) / fb : null };
@@ -7301,7 +7315,8 @@
   function talentCore(I, L) {
     const m = I.m; if (!I.mx || !I.pa || !I.ab || m.dxba == null || m.dxslg == null || L.xbabip == null || L.hr.hrfb == null || L.scale == null || I.fbs == null) return null;
     const xkFit = xKFrom(m); if (xkFit == null) return null;
-    let xbbFit = L.bb; for (const k in TW_XBB) if (m[k] != null && L[k] != null) xbbFit += TW_XBB[k] * (m[k] - L[k]);
+    const XB = m.ibbr != null && m.fcon != null && L.ibbr != null && L.fcon != null ? TW_XBB : TW_XBB0;
+    let xbbFit = L.bb; for (const k in XB) if (m[k] != null && L[k] != null) xbbFit += XB[k] * (m[k] - L[k]);
     const xk = m.k == null ? xkFit : TW.act * m.k + (1 - TW.act) * xkFit, xbb = m.bb == null ? xbbFit : TW.act * m.bb + (1 - TW.act) * xbbFit;
     const hbp = (I.hbp || 0) / I.pa;
     const bx = { evfb: m.evfb, brfb: m.brfb, brld: m.brld, pfb: I.pfb, brl: m.brl, ev90: m.ev90 };
@@ -7607,7 +7622,7 @@
     const pc = (k, his, dir) => { const vals = []; for (const q of pool("H").ref) { const x = V(q).tal; if (x && x[k] != null) vals.push(x[k]); } return pctAmong(vals, his, dir); };
     const steps = [
       ["K%", "xk", t.xk, lgK, pct1, -1, `half his actual K% (${m.k != null ? pct1(m.k) : "–"}), half his xK% (${pct1(t.xkFit)}: the strikeout rate his whiffs, swing decisions and the strikes he sees come with) — a season's K% is mostly skill, and the half-and-half forecast next season's K% better than either alone`],
-      ["BB%", "xbb", t.xbb, L.bb, pct1, 1, `half his actual BB% (${m.bb != null ? pct1(m.bb) : "–"}), half his xBB% (${pct1(t.xbbFit)}: the walk rate his chase rate, zone swings, contact and the share of pitches he sees in the zone come with) — the half-and-half forecast next season's BB% better than either alone`],
+      ["BB%", "xbb", t.xbb, L.bb, pct1, 1, `half his actual BB% (${m.bb != null ? pct1(m.bb) : "–"}), half his xBB% (${pct1(t.xbbFit)}: the walk rate his chase rate, zone swings, contact, the share of pitches he sees in the zone, his fouls per contact and his intentional walks come with) — the half-and-half forecast next season's BB% better than either alone`],
       ["HBP", "hbp", t.hbp, L.hbp, (x) => pct1(100 * x), 1, "his own hit-by-pitch rate per plate appearance — there's no process to model, so it stands as it is"],
       ["xHR/FB", "xhf", t.xhf, L.hr.hrfb, pct1, 1, `home runs per fly ball + popup his exit velocity alone deserves — FB EV, EV90 and pulled fly balls, no barrels (a launch-angle window inside the fly ball) — against the season's own HR / (fly balls + popups); the xHR/FB tab reads barrels too, so the two differ`],
       ["Fly balls", "fbs", t.fbs, L.fbs, (x) => pct1(100 * x), 1, "fly balls + popups per ball in play: how often xHR/FB gets its chance"],
