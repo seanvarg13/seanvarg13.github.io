@@ -3459,3 +3459,20 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   cross-season Similar file (`hist/similar.js`) stay the batted-ball model — a game is too small to build talent from. Judge 2026: xwOBA .389
   (model .407, wOBA .369) on the list, the card, the Summary and the season table alike.
 
+* **The pooled projection for call-ups (Sean, 12 Oct 2026: "could you build the pooled projection, obviously we have to be careful bc the AAA
+  average was 0.346 which is much higher than the mlb avg of 0.327")**: a hitter with 30+ Triple-A PA in a regular MLB season 2022 on gets
+  **xwOBA proj.** (`txwp`) built from both lines (`aaaFill` / `AAAP` in `app.js`, after `hrfbFill` in `V()`'s return):
+  lgMLB + (PA_mlb × (xwOBA − lgMLB) + PA_aaa × (0.6 × (xwOBA_aaa − lgAAA) − .035) + 300 × −.030) / (PA_mlb + PA_aaa + 300). His Triple-A xwOBA is
+  measured against the Triple-A league and only 0.6 of that edge carries, less 35 points (a league-average Triple-A hitter is about .035 under
+  MLB average); the regression's 300 PA sit 30 points under the MLB league, where call-ups land, not at it. Fitted held out by season (scratch
+  `pool6.js` / `pool7.js`) on every hitter with 30+ Triple-A PA 2022-25 against his next MLB season's wOBA (100+ PA, 613): error 42.7 → 37.5 wOBA
+  points, bias +19 → 0 (the MLB-only number ran 19 points high on call-ups), r .14 → .21; for those with MLB time too (478) r .19 → .24; age
+  added nothing; Triple-A PA counting more or less than MLB ones gained ~.01 of r and was left at 1 for plainness. Triple-A performance itself
+  barely ranks call-ups (r ~.1 for Triple-A-only players — they're a pre-selected group); most of the gain is the level. The MLB-only number is
+  kept as `txwm`. **Data**: `hist/aaa-tw.js` (`window.DRAFT_AAA_TW = {lg: {year: wOBA}, p: {id: {year: [PA, txw]}}}`, 86 KB, value-free in
+  `ensureScript`) from `aaa_talent()` in `tools/build_career.py` (run with `main()`, or alone as `build_career.py aaa`; the same `talent_of` on
+  each `hist/aaa-YYYY.js`, within .00005 of the app), loaded by `colsFor` while the xwOBA proj. column shows and by the xwOBA tab; the pool / rank
+  keys carry its arrival (`hxKey`'s `:ap`). The **xwOBA tab** shows a "Triple-A · N PA" row (his Triple-A xwOBA, the league's, → its MLB
+  equivalent) before the Next season band, whose note gives the three parts and the MLB-only number. Full season only — a window or split keeps
+  the MLB-only arithmetic. Leo Bernal 2026: 102 MLB PA at .352, 432 Triple-A PA at .381 (league .346) → MLB-equivalent .313 → pooled .312 (MLB
+  alone .334). 342 of 2026's MLB hitters have 30+ Triple-A PA.

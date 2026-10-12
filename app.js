@@ -789,7 +789,7 @@
     // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
     // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
     // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
-    sc.onload = () => { loading.delete(src); if (!/\/(?:index|career|career-bb|awards|similar|minors|trends|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };
+    sc.onload = () => { loading.delete(src); if (!/\/(?:index|career|career-bb|aaa-tw|awards|similar|minors|trends|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };
     // a failed download (a phone on a weak signal, a publish mid-deploy) is tried twice more before it's given up on — career.js once failed
     // for the whole visit and the season table said it hadn't been built (Sean's phone, 9 Oct 2026)
     sc.onerror = () => { loading.delete(src); sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
@@ -915,7 +915,7 @@
   function dropProvisional() { for (const k of provisional.val) valCache.delete(k); for (const k of provisional.pool) poolCache.delete(k); for (const k of provisional.rank) rankCache.delete(k); provisional.val.clear(); provisional.pool.clear(); provisional.rank.clear(); }
   function V(p) {
     const key = viewKey() + ":" + p.type + p.id;
-    if (valCache.has(key)) return hrfbFill(fantFill(valCache.get(key), p), p);
+    if (valCache.has(key)) return aaaFill(hrfbFill(fantFill(valCache.get(key), p), p), p);
     if (needsRows()) provisional.val.add(key);
     let v;
     const w = winIdx() || { lo: 0, hi: seasonDays().length - 1 };
@@ -1055,7 +1055,32 @@
     // faced in the window — so a 30-PA week reads as mostly league average and the Recent / Last-N lists stop jumping
     if (state.tbl && state.tbl.shrink && needsDays() && v && v.m) v = Object.assign({}, v, { m: shrinkM(p, v) });
     valCache.set(key, v);
-    return hrfbFill(fantFill(v, p), p);
+    return aaaFill(hrfbFill(fantFill(v, p), p), p);
+  }
+  // The pooled projection (Sean, 12 Oct 2026: "could you build the pooled projection, obviously we have to be careful bc the AAA average was
+  // 0.346 which is much higher than the mlb avg of 0.327"): a hitter with Triple-A time that season has his xwOBA proj. built from both lines.
+  // His Triple-A xwOBA is put in MLB terms as his edge over the Triple-A league × 0.6, less .035 (a league-average Triple-A hitter is ~35 points
+  // under MLB average), and the regression's 300 ghost PA sit .030 under the MLB league (where call-ups land), not at it:
+  //   proj = lgMLB + (PA_mlb × (xwOBA − lgMLB) + PA_aaa × (0.6 × (xwOBA_aaa − lgAAA) − .035) + 300 × −.030) / (PA_mlb + PA_aaa + 300)
+  // Fitted held out by season on every hitter with 30+ Triple-A PA, 2022-25 → next season's MLB wOBA with 100+ PA (scratch pool6.js, 613): error
+  // 42.7 → 37.5 wOBA points, bias +19 → 0 (the MLB-only number ran 19 points high on call-ups), r .14 → .21; age added nothing. Full season of a
+  // regular MLB season 2022 on, hist/aaa-tw.js (build_career.py's aaa_talent) — asked for by colsFor while the column shows and by the xwOBA tab
+  const AAAP = { b: 0.6, c: -0.035, p0: -0.03, min: 30 };
+  const aaaReady = () => !!window.DRAFT_AAA_TW;
+  const aaaOn = () => !((DS.level && DS.level !== "MLB") || DS.kind || DS.multi || !(Number(DS.season) >= 2022));
+  function aaaFill(v, p) {
+    if (v._ap || p.type !== "H" || !v.m) return v;
+    if (!aaaOn() || needsDays() || splitActive()) { v._ap = true; return v; }
+    if (!aaaReady()) return v;
+    const W = window.DRAFT_AAA_TW, y = String(DS.season), A = ((W.p || {})[p.id] || {})[y], la = (W.lg || {})[y];
+    v._ap = true;
+    if (!A || A[0] < AAAP.min || la == null) return v;
+    const L = talentLeague(); if (!L || L.woba == null) return v;
+    const t = v.tal, pm = t && v.pa ? v.pa : 0, em = pm ? t.txw - L.woba : 0, pa = A[0], ea = AAAP.b * (A[1] - la) + AAAP.c;
+    const pj = L.woba + (pm * em + pa * ea + TW.k * AAAP.p0) / (pm + pa + TW.k);
+    v.aaa = { pa, txw: A[1], lg: la, eq: L.woba + ea, pm, mlb: v.m.txwp, proj: pj, lgm: L.woba };
+    v.m = Object.assign({}, v.m, { txwm: v.m.txwp, txwp: Math.round(1000 * pj) / 1000 });
+    return v;
   }
   // xHR/FB as a Leaderboard column (8 Oct 2026): the Mix tab's model on his view's FB EV / Barrel% / EV90 against that season's league
   // (hrfbLeague: hist/career.js + career-bb.js, asked for by colsFor only while the column is showing). Regular MLB seasons 2015 on
@@ -1127,6 +1152,7 @@
   const colsFor = (g) => {
     if (colKeys(g).some((k) => FANT_KEYS.has(k)) && FYEARS.includes(String(DS.season))) fEnsure(String(DS.season));   // points columns need the fantasy file
     if (!isPitcherGroup(g) && colKeys(g).includes("xhrfb")) { ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady); }   // xHR/FB's league
+    if (!isPitcherGroup(g) && colKeys(g).includes("txwp") && aaaOn()) ensureScript("hist/aaa-tw.js", aaaReady);   // the pooled projection's Triple-A lines
     if (state.mode === "leaderboard") return lbCols(g);
     const keys = colKeys(g), all = allFor(g), dflt = metricsFor(g);
     return keys.map((k) => dflt.find((m) => m.key === k) || all.find((m) => m.key === k)).filter(Boolean);
@@ -1475,7 +1501,7 @@
   // returns { list: players in pool, stats: Map key -> {pct: {metric: pctl}, score, rank} }
   // a hitter pool built before xHR/FB's files arrived is redone once they're here — only while the column is showing, so a player page loading
   // career.js for its season table doesn't throw its pool away (the 5 Oct lag)
-  const hxKey = (g) => (!isPitcherGroup(g) && colKeys(g).includes("xhrfb") ? ":hx" + hxReady() : "");
+  const hxKey = (g) => (!isPitcherGroup(g) && colKeys(g).includes("xhrfb") ? ":hx" + hxReady() : "") + (!isPitcherGroup(g) && colKeys(g).includes("txwp") && aaaOn() ? ":ap" + aaaReady() : "");
   function pool(g) {
     const key = g + ":" + effMin(g) + ":" + (needsDays() ? listMin(g) : "") + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + (needsRows() ? daysReady() : "") + hxKey(g);
     if (poolCache.has(key)) return poolCache.get(key);
@@ -5635,7 +5661,7 @@
     sba: "Stolen-base attempts: stolen bases plus caught stealing, official. For the whole season only.",
     sbp: "Stolen-base success rate: stolen bases over attempts. Blank without an attempt. For the whole season only.",
     txw: "Talent xwOBA: the name xwOBA had before 11 Oct 2026 — see xwOBA.",
-    txwp: "xwOBA proj.: next season's wOBA from his xwOBA — the league average plus his gap to it × PA / (PA + 300). One season's inputs still carry sampling noise, and 300 PA of league average is the regression that forecast next season's wOBA best (xwOBA needs about 525). A full season is the one to read; in a window it is the same arithmetic on fewer plate appearances.",
+    txwp: "xwOBA proj.: next season's wOBA from his xwOBA — the league average plus his gap to it × PA / (PA + 300). One season's inputs still carry sampling noise, and 300 PA of league average is the regression that forecast next season's wOBA best (xwOBA needs about 525). A full season is the one to read; in a window it is the same arithmetic on fewer plate appearances. A hitter with 30+ Triple-A PA that season (2022 on) gets a pooled one: his Triple-A xwOBA in MLB terms (0.6 of his edge over the Triple-A league, less 35 points) counts PA for PA beside his MLB line, and the 300 PA of regression sit at a call-up's level, 30 points under the MLB league — the MLB line alone ran 19 points high on call-ups' next seasons.",
     xk: "Expected K%: the strikeout rate his Whiff%, Z-Swing%, O-Swing% and the share of strikes he sees have historically come with (fitted over every 100+ PA hitter-season since 2015). It lands within about 1.7 points of a regular's real K%; a K% well above it says he's striking out more than his swings and misses explain (two-strike trouble, taking strike three), well below it that he's beating them. His own K% is still the steadier guide to next year's — the two averaged are best.",
     xwdiff: "xwOBA − wOBA: what his contact, walks and strikeouts deserved (the site's xwOBA) minus what he actually got. Above zero he's been unlucky — his results should rise toward his xwOBA; below zero he's been lucky. +.030 is a lot. Every point is a thousandth of wOBA.",
     babip: "BABIP: batting average on balls in play — hits that aren't home runs, over balls in play that aren't home runs (sac flies count). It swings a lot by chance: a hitter's BABIP from one season to the next holds only loosely.",
@@ -7564,7 +7590,12 @@
       ["Extra bases", "tph", t.tph, L.tph, (x) => x.toFixed(2), 1, "total bases per hit that isn't a home run, from the directional model's xSLG and xBA — how many of his hits it expects to go for extra bases"]];
     for (const [lab, k, his, lg, f, dir, tip] of steps) { cur[k] = his; const run = wob(cur); b.row(lab, his, lg, f, pc(k, his, dir), step(run), run, tip); }
     b.mark("xwOBA");
-    if (m.txwp != null && !needsDays()) b.band("Next season", step(m.txwp), m.txwp, `xwOBA proj.: the league's wOBA (${f3(L.woba)}) plus his gap to it × PA / (PA + ${TW.k}) — ${v.pa} PA keep ${Math.round(100 * v.pa / (v.pa + TW.k))}% of it. One season's pieces still carry sampling noise; ${TW.k} PA of league average is the regression that forecast next season's wOBA best`);
+    if (aaaOn() && !needsDays()) ensureScript("hist/aaa-tw.js", aaaReady);
+    const A = v.aaa;
+    if (A) b.row(`Triple-A · ${A.pa} PA`, A.txw, A.lg, f3, null, "→", A.eq, `his Triple-A xwOBA (${f3(A.txw)}) against the Triple-A league (${f3(A.lg)}), put in MLB terms: 0.6 of his ${pts(A.txw - A.lg)} edge, less 35 points (a league-average Triple-A hitter is about .035 under MLB average) → ${f3(A.eq)} against the MLB league's ${f3(A.lgm)}`);
+    if (m.txwp != null && !needsDays()) b.band("Next season", step(m.txwp), m.txwp, A
+      ? `xwOBA proj., pooled: ${A.pm} MLB PA at his xwOBA (${f3(m.xwd)}), ${A.pa} Triple-A PA at their MLB equivalent (${f3(A.eq)}) and ${TW.k} PA at a call-up's level (${f3(A.lgm + AAAP.p0)}, 30 points under the MLB league) — the MLB line alone would say ${A.mlb != null ? f3(A.mlb) : "–"}. Fitted on every hitter with Triple-A time 2022-25 against his next MLB season: the MLB-only number ran 19 points high on call-ups`
+      : `xwOBA proj.: the league's wOBA (${f3(L.woba)}) plus his gap to it × PA / (PA + ${TW.k}) — ${v.pa} PA keep ${Math.round(100 * v.pa / (v.pa + TW.k))}% of it. One season's pieces still carry sampling noise; ${TW.k} PA of league average is the regression that forecast next season's wOBA best`);
     w.append(b.done());
     // each piece beside what happened: the gap is what the number leaves out
     const box = el("div", "rollbox uerabox brbox"), hd = el("div", "rollhd"); hd.append(el("span", "rollname", "Expected vs actual"), el("span", "rollsub", "what each piece expects beside what happened — the gap is the luck and noise left out")); box.append(hd);

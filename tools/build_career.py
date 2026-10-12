@@ -481,8 +481,31 @@ def season_bb():
     print(f"OK {len(out)} hitters' batted-ball / discipline seasons, {len(pout)} pitchers' -> {path.name} ({path.stat().st_size / 1e6:.1f} MB)", flush=True)
 
 
+# Triple-A talent xwOBA for the pooled projection (Sean, 12 Oct 2026: "could you build the pooled projection, obviously we have to be careful bc
+# the AAA average was 0.346 which is much higher than the mlb avg of 0.327"): every Triple-A hitter-season's PA, talent xwOBA and his league's
+# wOBA (the 270+ PA hitters, as talent_league takes it), so app.js can pool a called-up hitter's Triple-A line into his xwOBA proj. without the
+# 5 MB season file. hist/aaa-tw.js = {lg: {year: wOBA}, p: {id: {year: [PA, txw]}}}; 2022 on (Triple-A Statcast)
+def aaa_talent():
+    out, lg = {}, {}
+    for f in sorted((HERE / "hist").glob("aaa-*.js")):
+        raw = f.read_text(); ds = json.loads(raw[raw.index("= {") + 2:].rstrip().rstrip(";"))
+        y = int(ds["season"])
+        if y < 2022: continue
+        TL = talent_league(ds["players"], ds.get("refPA") or 300)
+        if TL.get("woba") is None: continue
+        lg[str(y)] = round(TL["woba"], 4)
+        for p in ds["players"]:
+            if p.get("type") != "H" or not p.get("pa"): continue
+            tw = talent_of(_tw_inputs(p), TL)
+            if tw is not None: out.setdefault(str(p["id"]), {})[str(y)] = [p["pa"], round(tw, 4)]
+    path = HERE / "hist" / "aaa-tw.js"
+    path.write_text("window.DRAFT_AAA_TW = " + json.dumps({"lg": lg, "p": out}, separators=(",", ":")) + ";\n")
+    print(f"OK {len(out)} Triple-A hitters' talent xwOBA, {', '.join(sorted(lg))} -> {path.name} ({path.stat().st_size / 1e3:.0f} KB)", flush=True)
+
+
 def main():
     season_bb()
+    aaa_talent()
     idx = load_js(HERE / "hist" / "index.js", "window.DRAFT_INDEX = ")
     ids = [e["id"] for e in idx["players"]]
     teams = {t["id"]: t["abbreviation"] for y in range(2000, 2027)
@@ -689,4 +712,4 @@ def main():
 
 if __name__ == "__main__":
     import sys
-    season_bb() if sys.argv[1:] == ["bb"] else main()
+    (season_bb(), aaa_talent()) if sys.argv[1:] == ["bb"] else aaa_talent() if sys.argv[1:] == ["aaa"] else main()
