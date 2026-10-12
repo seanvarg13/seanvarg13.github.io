@@ -3510,3 +3510,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   edge (`.score`) and, on a phone, the frozen Player column's edge (`.who`, `.h.left`). The block at the end of `styles.css` makes them
   `--stripe-line`. Checked by a headless sweep of every page and every player-page tab on both layouts for any 1.5px+ dark-blue cell border:
   none left.
+* **Talent xwOBA on a span of seasons (Sean, 12 Oct 2026: "when I go to the leaderboard xwoba is still based on that old xwoba model not the talent
+  noise free one we made")**: single seasons, date windows and splits already read talent, but Filters ▸ Multiple seasons still showed the batted-ball
+  model (`talentOf` returned null under `DS.multi`). Now **Each season** reads that season's talent xwOBA (`withDataset(p.src, …)` on `p.real`), a
+  **Combined** line is his seasons' talent xwOBA weighted by their PA in the view (`p.parts`, each part's `V(q)` on its own dataset — the season
+  table's career row does the same: Judge 2015-26 .418, 2024-26 .428 where the model had .457), and a **last-N** window inside a span is scored on
+  his latest season's league. A combined line has no xwOBA proj. (`txwp` null; the V() line guards a null so it isn't printed as .000).
