@@ -3516,3 +3516,22 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   **Combined** line is his seasons' talent xwOBA weighted by their PA in the view (`p.parts`, each part's `V(q)` on its own dataset — the season
   table's career row does the same: Judge 2015-26 .418, 2024-26 .428 where the model had .457), and a **last-N** window inside a span is scored on
   his latest season's league. A combined line has no xwOBA proj. (`txwp` null; the V() line guards a null so it isn't printed as .000).
+* **xBB% sees intentional walks and fouls (Sean, 12 Oct 2026: "certain hitters like cal Raleigh and peak ohtani and even yordan walk more than
+  their chase rates suggest, I wonder if they are more feared and get more waste pitches", then "What if you did just general foul rate", "Ok add
+  those two into it")**: the hitters' xBB% (talent xwOBA's walk piece, `TW_XBB` in `app.js` and `tools/build_career.py`) adds **intentional walks
+  per 100 PA** (`ibbr`, +1.109 a point — BB% counts them and no swing rate can see them) and **fouls per contact** (`fcon` = (swings − whiffs −
+  balls in play) / (swings − whiffs), +0.177 a point — a foul keeps the plate appearance going and gives ball four more chances); the rest refit:
+  Chase% −0.413, Z-Swing% −0.067, O-Contact% +0.017, Z-Contact% −0.047, Zone% seen −0.446, EV90 +0.011 (EV90 had been standing in for the feared
+  slugger the IBB rate now carries). Scratch `fear/` (every 2015-26 pitch from pybaseball's cache, 3,036 300+ PA hitter-seasons, held out by
+  season): r .863 → .903, error 1.49 → 1.26 BB% points (2026 .871 → .914, 1.41 → 1.17), next season's BB% r .719 → .736, talent xwOBA's
+  next-season wOBA r .5489 → .5499. The gap between BB% and the old xBB% repeated at r .38 — for Ohtani, Yordan and Judge it was nearly all
+  intentional walks (their gaps without them +1.4 → −0.3, +2.0 → +0.4, +2.4 → +0.8); Raleigh's was fouls with two strikes and his three-ball
+  laying off. **Tested and left out**: "waste pitches" (feared hitters do see more pitches far off the plate, r .31 with xwOBA, but Zone% seen and
+  Chase% already carry it — distance outside the zone and waste% added nothing), zone rate with three balls, chase rate with three balls, two-strike
+  fouls, calls on taken edge pitches (repeats at .64, ABS-era called balls up) and xwOBA as a "fear" term — each explained more of a season (r up to
+  .951) but forecast next year's BB% and wOBA no better or worse. **Data**: `data.js` and every `hist/mlb-YYYY.js` were patched in place (scratch
+  `fear/patchfc.js`: `m.fcon` from each season's day rows, `ctx.IBB` / `m.ibbr` from Statcast's `intent_walk` events); `build_data.py` now writes
+  `FoulCon_pct` → `m.fcon`, `IBB` → `ctx.IBB` / `m.ibbr`, and appends **`ibb`** to `HITTER_DAY` (a window re-derives `fcon` from `sw` / `whf` /
+  `bip` and `ibbr` from `ibb`, or his season rate on a file without it — `V()`); `hist/career-bb.js` regenerated (`build_career.py bb`). The fit
+  without the two (`TW_XBB0`) stands where a file or level doesn't carry them (the minors), so their numbers don't move. Yordan 2026 xBB% 11.8
+  → 16.5 (BB% 15.8), xwOBA .432 → .439; Ohtani 12.6, Soto 15.3, Raleigh 11.1 (13.6).
