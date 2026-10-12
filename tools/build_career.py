@@ -6,7 +6,7 @@ season from MLB's sabermetrics stat (the season table's FanGraphs columns, 8 Oct
 [bWAR, sprint speed, fly balls]: Baseball-Reference's batting WAR (war_daily_bat.txt), Savant's sprint speed from our season
 files, and fly balls + popups from MLB's yearByYearAdvanced for HR/FB (8 Oct 2026); then his pitching WAR that season [FanGraphs,
 Baseball-Reference] or null, so a two-way player's fWAR / bWAR are the totals.  Usage: python3 build_career.py"""
-import csv, io, json, time
+import csv, io, json, re, time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import requests
@@ -484,20 +484,59 @@ def season_bb():
 # Triple-A talent xwOBA for the pooled projection (Sean, 12 Oct 2026: "could you build the pooled projection, obviously we have to be careful bc
 # the AAA average was 0.346 which is much higher than the mlb avg of 0.327"): every Triple-A hitter-season's PA, talent xwOBA and his league's
 # wOBA (the 270+ PA hitters, as talent_league takes it), so app.js can pool a called-up hitter's Triple-A line into his xwOBA proj. without the
-# 5 MB season file. hist/aaa-tw.js = {lg: {year: wOBA}, p: {id: {year: [PA, txw]}}}; 2022 on (Triple-A Statcast)
+# 5 MB season file. hist/aaa-tw.js = {lg: {year: wOBA}, p: {id: {year: [PA, txw(, 1 = rehab-only)]}}}; 2022 on (Triple-A Statcast)
+# A rehab stint isn't a call-up (Sean, 12 Oct 2026, on Vinnie Pasquantino: "played in AAA last year bc of a rehab assignment but the projection
+# is treating him like he was called up"): MLB's transaction log says "sent … on a rehab assignment to …" for those, and "optioned", "recalled",
+# "selected the contract", "outrighted", a minor-league contract or an assignment to the minors for real Triple-A time. A season with a rehab
+# assignment and none of the others is rehab-only — its Triple-A line gets a 1 as the third element and app.js leaves it out of the pooling.
+# One league-wide request a season, reduced to {pid: [rehab, other]} and cached in .cache/sabr/tx-<y>.json; this season refetched after 18 hours.
+# None when the API can't be had (every line then pools, as before)
+TX_CALL = re.compile(r"optioned|outrighted|recalled|selected the contract|minor league contract|assigned [^.]* to [^.]*(Triple-A|AAA|minor)|returned [^.]* to ", re.I)
+def tx_season(y, fresh):
+    f = SABR / f"tx-{y}.json"
+    if f.exists() and (not fresh or time.time() - f.stat().st_mtime < 18 * 3600):
+        try:
+            return json.loads(f.read_text())
+        except ValueError:
+            pass
+    try:
+        r = requests.get("https://statsapi.mlb.com/api/v1/transactions", headers=UA, timeout=120,
+                         params={"sportId": 1, "startDate": f"{y}-01-01", "endDate": f"{y}-12-31"})
+        r.raise_for_status(); tx = r.json().get("transactions") or []
+    except Exception as e:
+        print(f"  transactions {y} unavailable:", e, flush=True)
+        try:
+            return json.loads(f.read_text()) if f.exists() else None
+        except ValueError:
+            return None
+    out = {}
+    for t in tx:
+        pid, d = (t.get("person") or {}).get("id"), t.get("description") or ""
+        if not pid: continue
+        o = out.setdefault(str(pid), [0, 0])
+        if "rehab assignment" in d: o[0] = 1
+        elif TX_CALL.search(d): o[1] = 1
+    SABR.mkdir(parents=True, exist_ok=True); f.write_text(json.dumps(out))
+    return out
+
+
 def aaa_talent():
     out, lg = {}, {}
-    for f in sorted((HERE / "hist").glob("aaa-*.js")):
+    files = sorted(f for f in (HERE / "hist").glob("aaa-*.js") if f.stem[4:].isdigit()); last = max((int(f.stem[4:]) for f in files), default=0)   # not aaa-tw.js itself
+    for f in files:
         raw = f.read_text(); ds = json.loads(raw[raw.index("= {") + 2:].rstrip().rstrip(";"))
         y = int(ds["season"])
         if y < 2022: continue
         TL = talent_league(ds["players"], ds.get("refPA") or 300)
         if TL.get("woba") is None: continue
         lg[str(y)] = round(TL["woba"], 4)
+        tx = tx_season(y, y == last) or {}
         for p in ds["players"]:
             if p.get("type") != "H" or not p.get("pa"): continue
             tw = talent_of(_tw_inputs(p), TL)
-            if tw is not None: out.setdefault(str(p["id"]), {})[str(y)] = [p["pa"], round(tw, 4)]
+            if tw is None: continue
+            o = tx.get(str(p["id"])) or [0, 0]
+            out.setdefault(str(p["id"]), {})[str(y)] = [p["pa"], round(tw, 4)] + ([1] if o[0] and not o[1] else [])
     path = HERE / "hist" / "aaa-tw.js"
     path.write_text("window.DRAFT_AAA_TW = " + json.dumps({"lg": lg, "p": out}, separators=(",", ":")) + ";\n")
     print(f"OK {len(out)} Triple-A hitters' talent xwOBA, {', '.join(sorted(lg))} -> {path.name} ({path.stat().st_size / 1e3:.0f} KB)", flush=True)
