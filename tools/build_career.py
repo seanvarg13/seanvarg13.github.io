@@ -349,7 +349,9 @@ SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evg
 # talentLeague are the same arithmetic on the card's view; keep the two in step. Fitted / tested 2015-26 (scratch twcore.js): next season's
 # wOBA r .536 (xwOBA .437, wOBA .479), year to year .663 (xwOBA .539)
 TW_XK = (-0.08, {"whf": 0.989, "zsw": -0.212, "osw": -0.272, "strk": 0.523})
-TW_XBB = {"osw": -0.448, "zsw": -0.030, "ocon": 0.034, "zcon": -0.113, "zsn": -0.539, "ev90": 0.056}
+# xBB% with intentional walks per 100 PA and fouls per contact (12 Oct 2026, app.js TW_XBB); TW_XBB0 without them for a file that lacks the two
+TW_XBB = {"osw": -0.413, "zsw": -0.067, "ocon": 0.017, "zcon": -0.047, "zsn": -0.446, "ev90": 0.011, "ibbr": 1.109, "fcon": 0.177}
+TW_XBB0 = {"osw": -0.448, "zsw": -0.030, "ocon": 0.034, "zcon": -0.113, "zsn": -0.539, "ev90": 0.056}
 # GB Pull% joined (11 Oct 2026): the share of his grounders pulled, × his grounders' share of his non-HR balls in play like Sprint (app.js XBAB)
 # and by batter side (11 Oct 2026; app.js XBAB_GBP): "gbp" is only the sign, TW_XBAB_GBP the weight for his side, a switch hitter 70% lefty
 TW_XBAB = {"ld": 3.73, "pu": -3.16, "evgb": 2.05, "gbp": -1, "evld": 1.24, "ldp": 0.29, "spd": 14 * 0.83, "oppo": 0.41, "fb": -0.72}
@@ -391,7 +393,7 @@ def talent_league(players, ref_pa):
         L["k"][k] = wavg(k20, lambda q: (q.get("m") or {}).get(k), lambda q: q["pa"])
     ref = [q for q in H if (q.get("pa") or 0) >= ref_pa]
     I = [_tw_inputs(q) for q in ref]
-    for k in ("bb", "osw", "zsw", "ocon", "zcon", "zsn", "ev90", "woba", "xbabip", "ld", "pu", "evgb", "evld", "spd", "oppo", "fb"):
+    for k in ("bb", "osw", "zsw", "ocon", "zcon", "zsn", "ev90", "ibbr", "fcon", "woba", "xbabip", "ld", "pu", "evgb", "evld", "spd", "oppo", "fb"):
         L[k] = wavg(I, lambda i: i["m"].get(k), lambda i: i["pa"])
     L["ldp"] = wavg(I, lambda i: i["ldp"], lambda i: i["pa"])
     L["gbp"] = wavg(I, lambda i: i["gbp"], lambda i: i["pa"])
@@ -419,7 +421,8 @@ def talent_of(i, L):
     c, w = TW_XK
     if any(m.get(k) is None or L["k"].get(k) is None for k in w) or L["k"].get("k") is None: return None
     xk = L["k"]["k"] + c + sum(w[k] * (m[k] - L["k"][k]) for k in w)
-    xbb = L["bb"] + sum(v * (m[k] - L[k]) for k, v in TW_XBB.items() if m.get(k) is not None and L.get(k) is not None)
+    xb = TW_XBB if all(m.get(k) is not None and L.get(k) is not None for k in ("ibbr", "fcon")) else TW_XBB0
+    xbb = L["bb"] + sum(v * (m[k] - L[k]) for k, v in xb.items() if m.get(k) is not None and L.get(k) is not None)
     # half his actual K% / BB%, half the expected rate (app.js TW.act): the blend forecast next season's K%, BB% and wOBA better than either alone
     if m.get("k") is not None: xk = TW_ACT * m["k"] + (1 - TW_ACT) * xk
     if m.get("bb") is not None: xbb = TW_ACT * m["bb"] + (1 - TW_ACT) * xbb
