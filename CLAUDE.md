@@ -3476,3 +3476,14 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   equivalent) before the Next season band, whose note gives the three parts and the MLB-only number. Full season only — a window or split keeps
   the MLB-only arithmetic. Leo Bernal 2026: 102 MLB PA at .352, 432 Triple-A PA at .381 (league .346) → MLB-equivalent .313 → pooled .312 (MLB
   alone .334). 342 of 2026's MLB hitters have 30+ Triple-A PA.
+* **Rehab stints aren't pooled (Sean, 12 Oct 2026, on Vinnie Pasquantino: "played in AAA last year bc of a rehab assignment but the projection
+  is treating him like he was called up so it's deflating his projection")**: `aaa_talent()` in `tools/build_career.py` reads MLB's transaction
+  log (`tx_season`: one league-wide `transactions?sportId=1` request a season, reduced to {pid: [rehab, other]}, cached in
+  `.cache/sabr/tx-<y>.json`, this season refetched after 18 hours). A season with a "rehab assignment" and no option, recall, contract
+  selection, outright, minor-league contract or assignment to the minors (`TX_CALL`) is rehab-only, and its `hist/aaa-tw.js` entry carries a
+  third element `1`. `aaaFill` in `app.js` leaves those out (`v.aaaRehab`), so he projects as the MLB regular he is, and the xwOBA tab shows a
+  "Triple-A · N PA rehab" row with nothing pooled. 179 Triple-A hitter-seasons 2022-26 are rehab-only (Pasquantino 2026: 32 PA → xwOBA proj.
+  .334 → .347; Jackson Holliday 2026 too). Refitting the pooled projection without them (scratch `aaa/refit.js`) gave the same weights (0.6,
+  −.035, −.030). Found alongside, not changed: the regular MLB-only xwOBA proj. runs ~11 points high in level for regulars (250+ PA, no
+  Triple-A, 2022-25 → next season: bias +11.5), so regulars' and call-ups' projections aren't on quite the same footing — a −.030 prior for
+  everyone zeroes it (rank order within the regulars barely moves); offered to Sean, not built.

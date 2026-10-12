@@ -1065,6 +1065,7 @@
   // Fitted held out by season on every hitter with 30+ Triple-A PA, 2022-25 → next season's MLB wOBA with 100+ PA (scratch pool6.js, 613): error
   // 42.7 → 37.5 wOBA points, bias +19 → 0 (the MLB-only number ran 19 points high on call-ups), r .14 → .21; age added nothing. Full season of a
   // regular MLB season 2022 on, hist/aaa-tw.js (build_career.py's aaa_talent) — asked for by colsFor while the column shows and by the xwOBA tab
+  // A season whose Triple-A time was only rehab assignments (third element 1, from MLB's transaction log; Sean, 12 Oct 2026, on Pasquantino) isn't pooled
   const AAAP = { b: 0.6, c: -0.035, p0: -0.03, min: 30 };
   const aaaReady = () => !!window.DRAFT_AAA_TW;
   const aaaOn = () => !((DS.level && DS.level !== "MLB") || DS.kind || DS.multi || !(Number(DS.season) >= 2022));
@@ -1074,6 +1075,7 @@
     if (!aaaReady()) return v;
     const W = window.DRAFT_AAA_TW, y = String(DS.season), A = ((W.p || {})[p.id] || {})[y], la = (W.lg || {})[y];
     v._ap = true;
+    if (A && A[2]) { v.aaaRehab = A[0]; return v; }   // a rehab stint (MLB's transaction log), not a call-up — he projects as the MLB regular he is
     if (!A || A[0] < AAAP.min || la == null) return v;
     const L = talentLeague(); if (!L || L.woba == null) return v;
     const t = v.tal, pm = t && v.pa ? v.pa : 0, em = pm ? t.txw - L.woba : 0, pa = A[0], ea = AAAP.b * (A[1] - la) + AAAP.c;
@@ -7593,6 +7595,7 @@
     if (aaaOn() && !needsDays()) ensureScript("hist/aaa-tw.js", aaaReady);
     const A = v.aaa;
     if (A) b.row(`Triple-A · ${A.pa} PA`, A.txw, A.lg, f3, null, "→", A.eq, `his Triple-A xwOBA (${f3(A.txw)}) against the Triple-A league (${f3(A.lg)}), put in MLB terms: 0.6 of his ${pts(A.txw - A.lg)} edge, less 35 points (a league-average Triple-A hitter is about .035 under MLB average) → ${f3(A.eq)} against the MLB league's ${f3(A.lgm)}`);
+    if (v.aaaRehab) b.row(`Triple-A · ${v.aaaRehab} PA rehab`, null, null, f3, null, "→", null, "a rehab assignment (MLB's transaction log), not a call-up: left out of the projection, which is his MLB line alone");
     if (m.txwp != null && !needsDays()) b.band("Next season", step(m.txwp), m.txwp, A
       ? `xwOBA proj., pooled: ${A.pm} MLB PA at his xwOBA (${f3(m.xwd)}), ${A.pa} Triple-A PA at their MLB equivalent (${f3(A.eq)}) and ${TW.k} PA at a call-up's level (${f3(A.lgm + AAAP.p0)}, 30 points under the MLB league) — the MLB line alone would say ${A.mlb != null ? f3(A.mlb) : "–"}. Fitted on every hitter with Triple-A time 2022-25 against his next MLB season: the MLB-only number ran 19 points high on call-ups`
       : `xwOBA proj.: the league's wOBA (${f3(L.woba)}) plus his gap to it × PA / (PA + ${TW.k}) — ${v.pa} PA keep ${Math.round(100 * v.pa / (v.pa + TW.k))}% of it. One season's pieces still carry sampling noise; ${TW.k} PA of league average is the regression that forecast next season's wOBA best`);
