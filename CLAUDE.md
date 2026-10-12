@@ -3504,3 +3504,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   it there for good. The Leaderboard's empty note now counts ("Loading those seasons… 2 of 4") and, when a member failed, reads "Couldn't load
   2024. Try again" — the button clears `failed` / `tries` for those files and the span's `multiCache` entry and redraws (headless: 2024 blocked →
   the message; unblocked + Try again → 25 rows).
+* **Every table's line breaks red (Sean, 12 Oct 2026: "make it so the line breaks on EVERY single table in this site is red and not the navy
+  blue")**: the B-Ref tables (season table, card tabs, Pitching+ board, home, Fantasy) were already stripe red; the Leaderboard / Recent grid
+  (`body.brlb`) still drew navy on its group rules (`.ge`: the Result / Process over-header, Tm, PA / IP, a user break), the headline column's
+  edge (`.score`) and, on a phone, the frozen Player column's edge (`.who`, `.h.left`). The block at the end of `styles.css` makes them
+  `--stripe-line`. Checked by a headless sweep of every page and every player-page tab on both layouts for any 1.5px+ dark-blue cell border:
+  none left.
