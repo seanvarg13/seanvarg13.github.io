@@ -3570,3 +3570,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   - **Judge 2026:** bases per hit −20, HR/FB +11, BABIP −3, IBB −3 → −23. The build's expected bases per hit (1.62) is high because his talent HR/FB
     sits under his actual one, which leaves more of his xSLG for non-HR hits.
   - Diff no longer prints "−0.00".
+* **BABIP noise / luck rows and a Share column (Sean, 12 Oct 2026: "include luck and noise in that too so add a row for that", "an additional column
+  showing how much each piece truly contributes to the woba vs xwoba gap")**: in the xwOBA tab's Expected vs actual table:
+  - **BABIP is two rows**, as on the xBABIP tab:
+    - **BABIP noise**: the drivers' xBABIP → the directional model's `m.xbabip`.
+    - **BABIP luck**: `m.xbabip` → his BABIP.
+    - With the other pieces held, wOBA is a straight line in BABIP, so BABIP's ± splits by the two steps' sizes.
+  - **Share** (the last column) is each row's part of all the movement between xwOBA and wOBA, whichever way it pushed: |±| over the sum of every
+    row's |±|. The rows add to 100%, and the ± column carries the direction.
+    - A signed share of the net gap was tried first and read −160% where two pieces pulled against each other.
+    - It reads "–" when the rows move less than 2 points in all.
+  - **Yordan 2026:** BABIP noise +16 (36%), IBB −10 (23%), HR/FB −7 (16%), K% −5 (11%), luck +1.
+  - **Judge 2026:** BABIP luck −20 (25%), bases per hit −20 (25%), noise +17 (22%), HR/FB +11 (14%).

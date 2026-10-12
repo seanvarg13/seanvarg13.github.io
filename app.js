@@ -7640,7 +7640,7 @@
     w.append(b.done());
     // each piece beside what happened: the gap is what the number leaves out
     const box = el("div", "rollbox uerabox brbox"), hd = el("div", "rollhd"); hd.append(el("span", "rollname", "Expected vs actual"), el("span", "rollsub", "what each piece expects beside what happened, and how much of his wOBA − xwOBA gap each one accounts for, biggest first")); box.append(hd);
-    const { tb, fin, wrap } = brTable(null, [["Piece", "l"], ["Expected", ""], ["Actual", ""], ["Diff", "", "actual − expected"], ["± wOBA", "", "how many wOBA points this piece's gap moved his wOBA away from his xwOBA (+ = it raised his wOBA)"]], "twvs");
+    const { tb, fin, wrap } = brTable(null, [["Piece", "l"], ["Expected", ""], ["Actual", ""], ["Diff", "", "actual − expected"], ["± wOBA", "", "how many wOBA points this piece's gap moved his wOBA away from his xwOBA (+ = it raised his wOBA)"], ["Share", "", "this piece's part of all the movement between his xwOBA and his wOBA, whichever way it pushed (the ± column says which) — the rows add to 100%"]], "twvs");
     const hr = v.ctx && v.ctx.HR != null ? v.ctx.HR : null, ab = v.ab || 0;
     const actHf = hr != null && t.I.fbn ? 100 * hr / t.I.fbn : null;
     const actTph = hr != null && m.ba != null && m.slg != null && ab && m.ba * ab - hr > 0 ? (m.slg * ab - 4 * hr) / (m.ba * ab - hr) : null;
@@ -7662,28 +7662,41 @@
     // rounded to whole wOBA points so the column adds up to the wOBA row's gap exactly (Sean on the BABIP build-up, 9 Oct: "getting lost with
     // this math"); the rounding's odd point lands in Everything else
     for (const k of ks) eff[k] = R3(eff[k]);
+    // BABIP split into noise and luck (Sean, 12 Oct 2026: "include luck and noise in that too so add a row for that"), as the xBABIP tab splits it:
+    // noise = the drivers' xBABIP → the directional model's xBABIP (the angles and spots the drivers can't see), luck = that → his BABIP. wOBA is a
+    // straight line in BABIP with the other pieces held, so BABIP's ± splits by the two steps' sizes
+    const bD = m.babip != null ? m.babip - t.xbab : null;
+    if (eff.xbab != null && m.xbabip != null && bD && Math.abs(bD) > 1e-9) { eff.bn = R3(eff.xbab * (m.xbabip - t.xbab) / bD); eff.bl = R3(eff.xbab - eff.bn); }
     const rest = m.woba != null ? R3(R3(m.woba) - R3(m.txw) - ks.reduce((a0, k) => a0 + eff[k], 0)) : null;
     const effStyle = (d) => { const tt = Math.min(1, Math.abs(d) / 0.020), mix = (a0, b0) => a0.map((x, i) => Math.round(x + (b0[i] - x) * tt)); const c = mix([214, 212, 206], d > 0 ? [216, 33, 41] : [54, 97, 173]); return { bg: `rgb(${c.join(",")})`, fg: tt > (d > 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };
+    // Share = each row's part of all the movement, whichever way it pushed — a signed share of the net gap read −160% when two pieces pulled
+    // against each other. It needs the rows first, so the cells are filled after the table is built
+    const shareCells = [];
+    const shareTd = (d) => { const td = el("td", "xact"); if (d != null) shareCells.push([td, d]); return td; };
     const effTd = (d, tot) => { const td = el("td", "kd", d == null ? "" : pts(d)); if (d != null && !tot) { const s2 = effStyle(d); td.style.background = s2.bg; td.style.color = s2.fg; td.classList.add("heat"); } return td; };
     const pieces = [["xK%", "xk", t.xkFit, m.k, pct1, (z) => z.toFixed(1), "expected is the strikeout fit alone; his xwOBA uses half his K% and half the fit, so the ± is what his whole K% did beyond that blend"],
                     ["xBB%", "xbb", t.xbbFit, m.bb, pct1, (z) => z.toFixed(1), "expected is the walk fit alone; his xwOBA uses half his BB% and half the fit, so the ± is what his whole BB% did beyond that blend"],
                     ["HR/FB", "xhf", t.xhf, actHf, pct1, (z) => z.toFixed(1), "home runs per fly ball + popup against what his exit velocity deserves"],
-                    ["BABIP", "xbab", t.xbab, m.babip, f3, (z) => fmtX(z), "hits on non-HR balls in play against the drivers' xBABIP"],
+                    ...(eff.bn != null ? [["BABIP noise", "bn", t.xbab, m.xbabip, f3, (z) => fmtX(z), "the drivers' xBABIP against the directional model's xBABIP: the exact angles and where each ball went, which the drivers can't see and which barely repeat — the xBABIP tab's Noise row"],
+                                          ["BABIP luck", "bl", m.xbabip, m.babip, f3, (z) => fmtX(z), "his BABIP against the directional model's xBABIP: hits in play above or below what the contact deserved, repeating year to year at r .15 — the xBABIP tab's Luck row"]]
+                                        : [["BABIP", "xbab", t.xbab, m.babip, f3, (z) => fmtX(z), "hits on non-HR balls in play against the drivers' xBABIP"]]),
                     ["Bases per hit (no HR)", "tph", t.tph, actTph, (z) => z.toFixed(2), (z) => z.toFixed(2), "total bases per non-HR hit against the directional model's"],
                     ["Intentional walks", "ibb", L.ibbr, m.ibbr, (z) => z.toFixed(2), (z) => z.toFixed(2), "per 100 PA, the league's beside his: they count in BB% but not in wOBA, so walks handed out on purpose more than the league's rate take his wOBA below what his pieces add up to"]]
       .sort((x, y) => Math.abs(eff[y[1]] || 0) - Math.abs(eff[x[1]] || 0));
     for (const [lab, k, a, x, f, fd, tip] of pieces) {
       const tr = el("tr"); tr.title = tip;
-      tr.append(el("td", "l nm", lab), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), effTd(k in eff ? eff[k] : null));
+      tr.append(el("td", "l nm", lab), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), effTd(k in eff ? eff[k] : null), shareTd(k in eff ? eff[k] : null));
       tb.append(fin(tr));
     }
     if (rest != null) { const tr = el("tr"); tr.title = "what's left between his pieces put back together at their actual values and his real wOBA: the build's fixed linear weights, triples, sacrifice flies and the season's scale — small, and not about his skill";
-      tr.append(el("td", "l nm", "Everything else"), el("td"), el("td", "xact"), el("td"), effTd(rest)); tb.append(fin(tr)); }
+      tr.append(el("td", "l nm", "Everything else"), el("td"), el("td", "xact"), el("td"), effTd(rest), shareTd(rest)); tb.append(fin(tr)); }
     for (const [lab, a, x, f, fd] of [["wOBA", m.txw, m.woba, f3, (z) => fmtX(z)], ["Batted-ball model", m.txw, m.dxw, f3, (z) => fmtX(z)]]) {   /* the directional model's own xwOBA beside his */
       const tr = el("tr", "tot");
-      tr.append(el("td", "l nm", lab), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), effTd(lab === "wOBA" && a != null && x != null ? x - a : null, true));
+      tr.append(el("td", "l nm", lab), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), effTd(lab === "wOBA" && a != null && x != null ? x - a : null, true), el("td", null, lab === "wOBA" && shareCells.length ? "100%" : ""));
       tb.append(fin(tr));
     }
+    { const tot = shareCells.reduce((a0, [, d]) => a0 + Math.abs(d), 0);
+      for (const [td, d] of shareCells) td.textContent = tot >= 0.002 ? Math.round(100 * Math.abs(d) / tot) + "%" : "–"; }
     box.append(wrap); w.append(box);
     return w;
   }
