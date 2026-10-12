@@ -3554,3 +3554,19 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   - the card's tabs (`.btab`)
 
   Page numbers, links and anything inside a table, a segment or a dropdown stay flat. One rule at the end of `styles.css`.
+* **What makes wOBA differ from xwOBA (Sean, 12 Oct 2026: "In the expected vs actual wOBA table can you also add a piece that shows which pieces
+  contribute the most to his wOBA being different than his xwoba")**: the xwOBA tab's **Expected vs actual** table has a **± wOBA** column, and its
+  piece rows are sorted biggest effect first.
+  - **How it's worked out:** each piece of the xwOBA build is swapped from what the build uses to what actually happened: K% and BB% (the build
+    uses half his rate and half the fit), HR/FB, BABIP, and bases per non-HR hit. Each swap's change in wOBA is averaged over every order of
+    swapping, so no piece gets extra credit for going first and the shares add up exactly.
+  - **An Intentional walks row:** his IBB per 100 PA beside the league's. Intentional walks count in BB% but not in wOBA, and the build's scale
+    already takes out the league's share. Yordan 2026: −10 points of a −10 gap.
+  - **Everything else:** what's left between the all-actual rebuild and his real wOBA (fixed linear weights, triples, sacrifice flies, the scale).
+  - **Totals:** every number is rounded to whole wOBA points so the column adds to the wOBA row's gap, with the rounding's odd point in Everything
+    else. The wOBA row carries the gap uncoloured, and the pieces are coloured by sign (red = raised his wOBA).
+  - **Checked:** 45 qualified 2026 hitters, Everything else averages 1.9 points (max 4); Judge's −7 is the outlier.
+  - **Yordan 2026:** BABIP +17, IBB −10, HR/FB −7, K% −5 → −10.
+  - **Judge 2026:** bases per hit −20, HR/FB +11, BABIP −3, IBB −3 → −23. The build's expected bases per hit (1.62) is high because his talent HR/FB
+    sits under his actual one, which leaves more of his xSLG for non-HR hits.
+  - Diff no longer prints "−0.00".

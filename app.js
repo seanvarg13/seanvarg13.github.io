@@ -7639,16 +7639,49 @@
       : `xwOBA proj.: his ${v.pa} PA at his xwOBA (${f3(m.xwd)}) and ${TW.k} PA at ${f3(L.woba + TW.p0)} — 30 points under the league's ${f3(L.woba)}, where every hitter who plays regresses (the league is its 300+ PA regulars). One season's pieces still carry sampling noise; this is the regression that forecast next season's wOBA best (2015-26: error 38.3 → 36.1 wOBA points against regressing to the league, whose projections ran 12 points high)`);
     w.append(b.done());
     // each piece beside what happened: the gap is what the number leaves out
-    const box = el("div", "rollbox uerabox brbox"), hd = el("div", "rollhd"); hd.append(el("span", "rollname", "Expected vs actual"), el("span", "rollsub", "what each piece expects beside what happened — the gap is the luck and noise left out")); box.append(hd);
-    const { tb, fin, wrap } = brTable(null, [["Piece", "l"], ["Expected", ""], ["Actual", ""], ["Diff", "", "actual − expected"]], "twvs");
+    const box = el("div", "rollbox uerabox brbox"), hd = el("div", "rollhd"); hd.append(el("span", "rollname", "Expected vs actual"), el("span", "rollsub", "what each piece expects beside what happened, and how much of his wOBA − xwOBA gap each one accounts for, biggest first")); box.append(hd);
+    const { tb, fin, wrap } = brTable(null, [["Piece", "l"], ["Expected", ""], ["Actual", ""], ["Diff", "", "actual − expected"], ["± wOBA", "", "how many wOBA points this piece's gap moved his wOBA away from his xwOBA (+ = it raised his wOBA)"]], "twvs");
     const hr = v.ctx && v.ctx.HR != null ? v.ctx.HR : null, ab = v.ab || 0;
     const actHf = hr != null && t.I.fbn ? 100 * hr / t.I.fbn : null;
     const actTph = hr != null && m.ba != null && m.slg != null && ab && m.ba * ab - hr > 0 ? (m.slg * ab - 4 * hr) / (m.ba * ab - hr) : null;
-    const sg = (x, f) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + f(Math.abs(x)));
-    for (const [lab, a, x, f, fd] of [["xK%", t.xkFit, m.k, pct1, (z) => z.toFixed(1)], ["xBB%", t.xbbFit, m.bb, pct1, (z) => z.toFixed(1)], ["HR/FB", t.xhf, actHf, pct1, (z) => z.toFixed(1)],
-                                       ["BABIP", t.xbab, m.babip, f3, (z) => fmtX(z)], ["Bases per hit (no HR)", t.tph, actTph, (z) => z.toFixed(2), (z) => z.toFixed(2)], ["wOBA", m.txw, m.woba, f3, (z) => fmtX(z)], ["Batted-ball model", m.txw, m.dxw, f3, (z) => fmtX(z)]]) {   /* the directional model's own xwOBA beside his */
-      const tr = el("tr", lab === "wOBA" || lab === "Batted-ball model" ? "tot" : null);
-      tr.append(el("td", "l nm", lab), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)));
+    const sg = (x, f) => { if (x == null) return "–"; const t0 = f(Math.abs(x)); return (/[1-9]/.test(t0) ? (x > 0 ? "+" : x < 0 ? "−" : "") : "") + t0; };   /* no sign on a gap that rounds to nothing */
+    // which pieces make wOBA differ from xwOBA (Sean, 12 Oct 2026: "add a piece that shows which pieces contribute the most to his wOBA being
+    // different than his xwoba"): the xwOBA build's pieces swapped one at a time from what the build uses to what happened (his actual K% and BB%
+    // for the half-and-half rates, his HR/FB, BABIP and bases per hit), each swap's change in wOBA averaged over every order of swapping — so a
+    // piece isn't credited more for going first and the shares add up exactly; what's left between that all-actual rebuild and his real wOBA
+    // (fixed linear weights, triples, sacrifice flies, the season's scale) is Everything else. Intentional walks are their own row
+    // intentional walks count in BB% but not in wOBA (its bookkeeping drops them), and the build's scale already takes out the league's share,
+    // so a hitter walked on purpose more than the league reads a wOBA under his pieces — his rate over the league's comes off the walks
+    const cur0 = { xk: t.xk, xbb: t.xbb, hbp: t.hbp, xhf: t.xhf, fbs: t.fbs, xbab: t.xbab, tph: t.tph, ibb: 0 };
+    const act = { xk: m.k, xbb: m.bb, xhf: actHf, xbab: m.babip, tph: actTph, ibb: m.ibbr != null && L.ibbr != null ? m.ibbr - L.ibbr : null }, ks = Object.keys(act).filter((k) => act[k] != null);
+    const wobI = (c) => wob(Object.assign({}, c, { xbb: c.xbb - c.ibb }));
+    const perms = (a) => (a.length <= 1 ? [a] : a.flatMap((x, i) => perms([...a.slice(0, i), ...a.slice(i + 1)]).map((r) => [x, ...r])));
+    const eff = {}; for (const k of ks) eff[k] = 0;
+    const P = perms(ks);
+    for (const o of P) { const c = Object.assign({}, cur0); let prev = wobI(c); for (const k of o) { c[k] = act[k]; const w0 = wobI(c); eff[k] += (w0 - prev) / P.length; prev = w0; } }
+    // rounded to whole wOBA points so the column adds up to the wOBA row's gap exactly (Sean on the BABIP build-up, 9 Oct: "getting lost with
+    // this math"); the rounding's odd point lands in Everything else
+    for (const k of ks) eff[k] = R3(eff[k]);
+    const rest = m.woba != null ? R3(R3(m.woba) - R3(m.txw) - ks.reduce((a0, k) => a0 + eff[k], 0)) : null;
+    const effStyle = (d) => { const tt = Math.min(1, Math.abs(d) / 0.020), mix = (a0, b0) => a0.map((x, i) => Math.round(x + (b0[i] - x) * tt)); const c = mix([214, 212, 206], d > 0 ? [216, 33, 41] : [54, 97, 173]); return { bg: `rgb(${c.join(",")})`, fg: tt > (d > 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };
+    const effTd = (d, tot) => { const td = el("td", "kd", d == null ? "" : pts(d)); if (d != null && !tot) { const s2 = effStyle(d); td.style.background = s2.bg; td.style.color = s2.fg; td.classList.add("heat"); } return td; };
+    const pieces = [["xK%", "xk", t.xkFit, m.k, pct1, (z) => z.toFixed(1), "expected is the strikeout fit alone; his xwOBA uses half his K% and half the fit, so the ± is what his whole K% did beyond that blend"],
+                    ["xBB%", "xbb", t.xbbFit, m.bb, pct1, (z) => z.toFixed(1), "expected is the walk fit alone; his xwOBA uses half his BB% and half the fit, so the ± is what his whole BB% did beyond that blend"],
+                    ["HR/FB", "xhf", t.xhf, actHf, pct1, (z) => z.toFixed(1), "home runs per fly ball + popup against what his exit velocity deserves"],
+                    ["BABIP", "xbab", t.xbab, m.babip, f3, (z) => fmtX(z), "hits on non-HR balls in play against the drivers' xBABIP"],
+                    ["Bases per hit (no HR)", "tph", t.tph, actTph, (z) => z.toFixed(2), (z) => z.toFixed(2), "total bases per non-HR hit against the directional model's"],
+                    ["Intentional walks", "ibb", L.ibbr, m.ibbr, (z) => z.toFixed(2), (z) => z.toFixed(2), "per 100 PA, the league's beside his: they count in BB% but not in wOBA, so walks handed out on purpose more than the league's rate take his wOBA below what his pieces add up to"]]
+      .sort((x, y) => Math.abs(eff[y[1]] || 0) - Math.abs(eff[x[1]] || 0));
+    for (const [lab, k, a, x, f, fd, tip] of pieces) {
+      const tr = el("tr"); tr.title = tip;
+      tr.append(el("td", "l nm", lab), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), effTd(k in eff ? eff[k] : null));
+      tb.append(fin(tr));
+    }
+    if (rest != null) { const tr = el("tr"); tr.title = "what's left between his pieces put back together at their actual values and his real wOBA: the build's fixed linear weights, triples, sacrifice flies and the season's scale — small, and not about his skill";
+      tr.append(el("td", "l nm", "Everything else"), el("td"), el("td", "xact"), el("td"), effTd(rest)); tb.append(fin(tr)); }
+    for (const [lab, a, x, f, fd] of [["wOBA", m.txw, m.woba, f3, (z) => fmtX(z)], ["Batted-ball model", m.txw, m.dxw, f3, (z) => fmtX(z)]]) {   /* the directional model's own xwOBA beside his */
+      const tr = el("tr", "tot");
+      tr.append(el("td", "l nm", lab), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), effTd(lab === "wOBA" && a != null && x != null ? x - a : null, true));
       tb.append(fin(tr));
     }
     box.append(wrap); w.append(box);
