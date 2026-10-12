@@ -3487,3 +3487,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   −.035, −.030). Found alongside, not changed: the regular MLB-only xwOBA proj. runs ~11 points high in level for regulars (250+ PA, no
   Triple-A, 2022-25 → next season: bias +11.5), so regulars' and call-ups' projections aren't on quite the same footing — a −.030 prior for
   everyone zeroes it (rank order within the regulars barely moves); offered to Sean, not built.
+* **One regression for every projection (Sean, 12 Oct 2026: "Sure, this ends up being a more accurate projection when you test correct")**:
+  xwOBA proj. (`txwp`) for everyone is now his PA at his xwOBA plus **250 PA at 30 points under the league** (`TW.k` 250, `TW.p0` −.030 in
+  `app.js`; `talentOf` and `aaaFill` both read them), where it was 300 PA at the league itself. The league is its 300+ PA regulars, and a hitter
+  regresses toward everyone who plays: every 100+ PA hitter 2015-25 against his next season's wOBA (100+ PA, 3,699; scratch `prior.js`, held out
+  by season — −.030 won 10 of 11 folds, −.025 the other; 250 PA all 11): error 38.3 → 36.1 wOBA points, bias +11.8 → −0.7, r .488 → .497; 250+ PA
+  regulars with no Triple-A time (2022-25, 901): error 34.9 → 32.6, bias +11.5 → +1.4. The call-ups' pooled formula already used −.030 (fitted at
+  300 PA; 250 scores them the same, 37.3), so regulars and call-ups are on the same footing now. Every projection drops ~8-15 points; order among
+  regulars barely moves. 2026: Pasquantino .339, Spencer Jones .327, Leo Bernal .313, Judge (285 PA) .346.

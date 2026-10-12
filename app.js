@@ -1061,12 +1061,13 @@
   // 0.346 which is much higher than the mlb avg of 0.327"): a hitter with Triple-A time that season has his xwOBA proj. built from both lines.
   // His Triple-A xwOBA is put in MLB terms as his edge over the Triple-A league × 0.6, less .035 (a league-average Triple-A hitter is ~35 points
   // under MLB average), and the regression's 300 ghost PA sit .030 under the MLB league (where call-ups land), not at it:
-  //   proj = lgMLB + (PA_mlb × (xwOBA − lgMLB) + PA_aaa × (0.6 × (xwOBA_aaa − lgAAA) − .035) + 300 × −.030) / (PA_mlb + PA_aaa + 300)
+  //   proj = lgMLB + (PA_mlb × (xwOBA − lgMLB) + PA_aaa × (0.6 × (xwOBA_aaa − lgAAA) − .035) + 250 × −.030) / (PA_mlb + PA_aaa + 250)
+  // (fitted at 300 PA; since 12 Oct 2026 everyone's regression is 250 PA at −.030, which scores the call-ups the same — 37.3 either way)
   // Fitted held out by season on every hitter with 30+ Triple-A PA, 2022-25 → next season's MLB wOBA with 100+ PA (scratch pool6.js, 613): error
   // 42.7 → 37.5 wOBA points, bias +19 → 0 (the MLB-only number ran 19 points high on call-ups), r .14 → .21; age added nothing. Full season of a
   // regular MLB season 2022 on, hist/aaa-tw.js (build_career.py's aaa_talent) — asked for by colsFor while the column shows and by the xwOBA tab
   // A season whose Triple-A time was only rehab assignments (third element 1, from MLB's transaction log; Sean, 12 Oct 2026, on Pasquantino) isn't pooled
-  const AAAP = { b: 0.6, c: -0.035, p0: -0.03, min: 30 };
+  const AAAP = { b: 0.6, c: -0.035, min: 30 };   // the regression (TW.k PA at TW.p0) is everyone's
   const aaaReady = () => !!window.DRAFT_AAA_TW;
   const aaaOn = () => !((DS.level && DS.level !== "MLB") || DS.kind || DS.multi || !(Number(DS.season) >= 2022));
   function aaaFill(v, p) {
@@ -1079,7 +1080,7 @@
     if (!A || A[0] < AAAP.min || la == null) return v;
     const L = talentLeague(); if (!L || L.woba == null) return v;
     const t = v.tal, pm = t && v.pa ? v.pa : 0, em = pm ? t.txw - L.woba : 0, pa = A[0], ea = AAAP.b * (A[1] - la) + AAAP.c;
-    const pj = L.woba + (pm * em + pa * ea + TW.k * AAAP.p0) / (pm + pa + TW.k);
+    const pj = L.woba + (pm * em + pa * ea + TW.k * TW.p0) / (pm + pa + TW.k);
     v.aaa = { pa, txw: A[1], lg: la, eq: L.woba + ea, pm, mlb: v.m.txwp, proj: pj, lgm: L.woba };
     v.m = Object.assign({}, v.m, { txwm: v.m.txwp, txwp: Math.round(1000 * pj) / 1000 });
     return v;
@@ -5663,7 +5664,7 @@
     sba: "Stolen-base attempts: stolen bases plus caught stealing, official. For the whole season only.",
     sbp: "Stolen-base success rate: stolen bases over attempts. Blank without an attempt. For the whole season only.",
     txw: "Talent xwOBA: the name xwOBA had before 11 Oct 2026 — see xwOBA.",
-    txwp: "xwOBA proj.: next season's wOBA from his xwOBA — the league average plus his gap to it × PA / (PA + 300). One season's inputs still carry sampling noise, and 300 PA of league average is the regression that forecast next season's wOBA best (xwOBA needs about 525). A full season is the one to read; in a window it is the same arithmetic on fewer plate appearances. A hitter with 30+ Triple-A PA that season (2022 on) gets a pooled one: his Triple-A xwOBA in MLB terms (0.6 of his edge over the Triple-A league, less 35 points) counts PA for PA beside his MLB line, and the 300 PA of regression sit at a call-up's level, 30 points under the MLB league — the MLB line alone ran 19 points high on call-ups' next seasons.",
+    txwp: "xwOBA proj.: next season's wOBA from his xwOBA — his PA at his xwOBA plus 250 PA at 30 points under the league average, as a weighted average. One season's inputs still carry sampling noise, and that regression forecast next season's wOBA best (2015-26: regressing to the league itself ran 12 points high; the league is its 300+ PA regulars, and a hitter regresses toward everyone who plays). A full season is the one to read; in a window it is the same arithmetic on fewer plate appearances. A hitter with 30+ Triple-A PA that season (2022 on) gets a pooled one: his Triple-A xwOBA in MLB terms (0.6 of his edge over the Triple-A league, less 35 points) counts PA for PA beside his MLB line. A rehab assignment isn't pooled.",
     xk: "Expected K%: the strikeout rate his Whiff%, Z-Swing%, O-Swing% and the share of strikes he sees have historically come with (fitted over every 100+ PA hitter-season since 2015). It lands within about 1.7 points of a regular's real K%; a K% well above it says he's striking out more than his swings and misses explain (two-strike trouble, taking strike three), well below it that he's beating them. His own K% is still the steadier guide to next year's — the two averaged are best.",
     xwdiff: "xwOBA − wOBA: what his contact, walks and strikeouts deserved (the site's xwOBA) minus what he actually got. Above zero he's been unlucky — his results should rise toward his xwOBA; below zero he's been lucky. +.030 is a lot. Every point is a thousandth of wOBA.",
     babip: "BABIP: batting average on balls in play — hits that aren't home runs, over balls in play that aren't home runs (sac flies count). It swings a lot by chance: a hitter's BABIP from one season to the next holds only loosely.",
@@ -7251,7 +7252,11 @@
   // per contact (r .823 on its own) and xBB% with fouls / whiffs / Barrel% (.726) were tested the same day and made talent xwOBA worse (.528 /
   // .533): a hitter who fouls a lot strikes out more but his extra strikeouts cost him nothing in next season's wOBA. Pieces of BABIP noise / luck
   // put back added .004 more and were left out (they aren't talent)
-  const TW = { bb: 0.69, hbp: 0.72, s: 0.88, d: 1.25, hr: 2.03, k: 300, act: 0.5 };
+  // k / p0: the projection's regression — 250 PA at 30 points under the league (Sean, 12 Oct 2026: "this ends up being a more accurate projection
+  // when you test correct"). 300 PA at the league itself had every regular's xwOBA proj. ~12 points high (every 100+ PA hitter 2015-25 → next
+  // season, 3,699: bias +11.8 → −0.7, error 38.3 → 36.1 wOBA points, r .488 → .497; held out by season, −.030 in 10 of 11 folds, 250 in all 11)
+  // — the league average is the 300+ PA regulars', and a hitter regresses toward everyone who plays, not toward them
+  const TW = { bb: 0.69, hbp: 0.72, s: 0.88, d: 1.25, hr: 2.03, k: 250, p0: -0.03, act: 0.5 };
   // the HR piece on exit velocity alone (Sean, 11 Oct 2026: "represent the skills a player has that lead to production ... hitting fly balls and
   // ignoring the intricate launch angles within those fly balls", then "ship #1"): HR / (fly balls + popups) = the season's own rate + 1.365 a mph
   // of FB EV + 0.828 a mph of EV90 + 0.096 a point of Pull FB%, each against the season's 300+ PA hitters (PA-weighted) — no barrels, which are a
@@ -7313,7 +7318,7 @@
     const L = talentLeague(), m = v.m.spd == null && p.m && p.m.spd != null ? Object.assign({}, v.m, { spd: p.m.spd }) : v.m;
     const hbp = v.ctx && v.ctx.HBP != null ? v.ctx.HBP : p.ctx && p.ctx.HBP != null && p.pa ? p.ctx.HBP / p.pa * (v.pa || 0) : 0;
     const t = talentCore(twInputs(m, v.ctx, v.pa, v.ab, hbp, p.bats), L); if (!t) return null;
-    t.L = L; t.txw = t.raw * L.scale; t.txwp = L.woba == null ? null : L.woba + (t.txw - L.woba) * v.pa / (v.pa + TW.k);
+    t.L = L; t.txw = t.raw * L.scale; t.txwp = L.woba == null ? null : L.woba + ((t.txw - L.woba) * v.pa + TW.k * TW.p0) / (v.pa + TW.k);
     return t;
   }
   const hrfbFit = (bx, lg) => { const has = (ks) => bx && lg && ks.every((k) => bx[k] != null && lg[k] != null); return has(["evfb", "brfb", "brld", "pfb"]) ? XHRFB.d : has(["evfb", "brfb", "brld"]) ? XHRFB.c : has(["evfb", "brl"]) ? XHRFB.a : has(["brl", "ev90"]) ? XHRFB.b : null; };
@@ -7597,8 +7602,8 @@
     if (A) b.row(`Triple-A · ${A.pa} PA`, A.txw, A.lg, f3, null, "→", A.eq, `his Triple-A xwOBA (${f3(A.txw)}) against the Triple-A league (${f3(A.lg)}), put in MLB terms: 0.6 of his ${pts(A.txw - A.lg)} edge, less 35 points (a league-average Triple-A hitter is about .035 under MLB average) → ${f3(A.eq)} against the MLB league's ${f3(A.lgm)}`);
     if (v.aaaRehab) b.row(`Triple-A · ${v.aaaRehab} PA rehab`, null, null, f3, null, "→", null, "a rehab assignment (MLB's transaction log), not a call-up: left out of the projection, which is his MLB line alone");
     if (m.txwp != null && !needsDays()) b.band("Next season", step(m.txwp), m.txwp, A
-      ? `xwOBA proj., pooled: ${A.pm} MLB PA at his xwOBA (${f3(m.xwd)}), ${A.pa} Triple-A PA at their MLB equivalent (${f3(A.eq)}) and ${TW.k} PA at a call-up's level (${f3(A.lgm + AAAP.p0)}, 30 points under the MLB league) — the MLB line alone would say ${A.mlb != null ? f3(A.mlb) : "–"}. Fitted on every hitter with Triple-A time 2022-25 against his next MLB season: the MLB-only number ran 19 points high on call-ups`
-      : `xwOBA proj.: the league's wOBA (${f3(L.woba)}) plus his gap to it × PA / (PA + ${TW.k}) — ${v.pa} PA keep ${Math.round(100 * v.pa / (v.pa + TW.k))}% of it. One season's pieces still carry sampling noise; ${TW.k} PA of league average is the regression that forecast next season's wOBA best`);
+      ? `xwOBA proj., pooled: ${A.pm} MLB PA at his xwOBA (${f3(m.xwd)}), ${A.pa} Triple-A PA at their MLB equivalent (${f3(A.eq)}) and ${TW.k} PA at ${f3(A.lgm + TW.p0)} (30 points under the MLB league, everyone's regression) — the MLB line alone would say ${A.mlb != null ? f3(A.mlb) : "–"}. Fitted on every hitter with Triple-A time 2022-25 against his next MLB season`
+      : `xwOBA proj.: his ${v.pa} PA at his xwOBA (${f3(m.xwd)}) and ${TW.k} PA at ${f3(L.woba + TW.p0)} — 30 points under the league's ${f3(L.woba)}, where every hitter who plays regresses (the league is its 300+ PA regulars). One season's pieces still carry sampling noise; this is the regression that forecast next season's wOBA best (2015-26: error 38.3 → 36.1 wOBA points against regressing to the league, whose projections ran 12 points high)`);
     w.append(b.done());
     // each piece beside what happened: the gap is what the number leaves out
     const box = el("div", "rollbox uerabox brbox"), hd = el("div", "rollhd"); hd.append(el("span", "rollname", "Expected vs actual"), el("span", "rollsub", "what each piece expects beside what happened — the gap is the luck and noise left out")); box.append(hd);
