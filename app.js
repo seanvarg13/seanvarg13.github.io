@@ -5902,7 +5902,15 @@
       if (key !== CUR.key) {
         ensureHist(key);
         const ds = histDataset(key);
-        if (!ds) { renderLbTools(); $("rows").innerHTML = ""; $("colhead").innerHTML = ""; const e = $("empty"); e.hidden = false; e.textContent = failed.has(`hist/${key}.js`) ? `hist/${key}.js is missing.` : isMulti(key) ? "Loading those seasons…" : "Loading that season…"; renderModal(); return; }
+        if (!ds) { renderLbTools(); $("rows").innerHTML = ""; $("colhead").innerHTML = ""; const e = $("empty"); e.hidden = false; e.textContent = failed.has(`hist/${key}.js`) ? `hist/${key}.js is missing.` : isMulti(key) ? "Loading those seasons…" : "Loading that season…";
+          // a span waits for every season in it: say how far along it is, and if one season's file failed its three tries, say which and
+          // offer to try again — it used to read "Loading those seasons…" for good (Sean's phone, 12 Oct 2026)
+          const mp = isMulti(key) && indexReady() ? parseMulti(key) : null;
+          if (mp) { const mem = mp.members.filter((k) => builtKeys().includes(k)), bad = mem.filter((k) => failed.has(`hist/${k}.js`)), got = mem.filter((k) => k === CUR.key || (window.DRAFT_HIST && window.DRAFT_HIST[k])).length;
+            if (bad.length) { e.textContent = `Couldn't load ${bad.map((k) => k.split("-")[1]).join(", ")}. `; const t = el("button", "linkpill", "Try again"); t.type = "button";
+              t.addEventListener("click", () => { for (const k of bad) { failed.delete(`hist/${k}.js`); tries.delete(`hist/${k}.js`); } multiCache.delete(key); render(); }); e.append(t); }
+            else if (mem.length > 1) e.textContent = `Loading those seasons… ${got} of ${mem.length}`; }
+          renderModal(); return; }
         withDataset(ds, run);
       } else run();
     } else listRender();

@@ -3495,3 +3495,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   regulars with no Triple-A time (2022-25, 901): error 34.9 → 32.6, bias +11.5 → +1.4. The call-ups' pooled formula already used −.030 (fitted at
   300 PA; 250 scores them the same, 37.3), so regulars and call-ups are on the same footing now. Every projection drops ~8-15 points; order among
   regulars barely moves. 2026: Pasquantino .339, Spencer Jones .327, Leo Bernal .313, Judge (285 PA) .346.
+* **A phone's ☰ Menu as buttons; a span that can't load says so (Sean, 12 Oct 2026, from his phone: "Could we change how these buttons on the
+  menu looks")**: the open menu's pages are a two-column grid of square buttons in the desktop header's dress — a 1px white edge, white condensed
+  17px words centred, 42px tall, 8px apart — the current page filled white with navy words (no underline), Fantasy ▾ / More ▾ the same buttons.
+  The block at the end of `styles.css`; its selectors carry `:not([hidden]):not(.modes-aux)` because forcing `display` on every `.modes` child had
+  un-hidden the old Leaders ▾ menu (`#lbsel`, hidden by `pitchBoardEl`) and the Appearance link. **And** his screenshot sat on "Loading those
+  seasons…" with an empty table: a span of seasons waits for every member's file, and a member that failed its three tries (`ensureScript`) left
+  it there for good. The Leaderboard's empty note now counts ("Loading those seasons… 2 of 4") and, when a member failed, reads "Couldn't load
+  2024. Try again" — the button clears `failed` / `tries` for those files and the span's `multiCache` entry and redraws (headless: 2024 blocked →
+  the message; unblocked + Try again → 25 rows).
