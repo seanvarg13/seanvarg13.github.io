@@ -3535,3 +3535,14 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `bip` and `ibbr` from `ibb`, or his season rate on a file without it — `V()`); `hist/career-bb.js` regenerated (`build_career.py bb`). The fit
   without the two (`TW_XBB0`) stands where a file or level doesn't carry them (the minors), so their numbers don't move. Yordan 2026 xBB% 11.8
   → 16.5 (BB% 15.8), xwOBA .432 → .439; Ohtani 12.6, Soto 15.3, Raleigh 11.1 (13.6).
+* **An xK% / xBB% tab (Sean, 12 Oct 2026: "a tab that shows the build up of xBB% as well as xK% and also how they compare to league avg and how
+  that component contributes to the build up. Essentially the identical table that the other tabs have")**: `BTABS_H` ends with **xK% / xBB%**
+  (`renderXkBbTab`, key `xkbb`). There are two `buildUp` tables in the other tabs' dress: Step · His · Lg · ± · running rate.
+  - **xK%** starts at the league's K% (20+ PA hitters, `lgRatesH`), plus `XKH`'s −0.08 constant. Then come Whiff%, Z-Swing%, Chase% and Strike%
+    seen at their weights, landing on the card's xK%, which is marked yellow "Expected K%". Then Luck, and the K% band row.
+  - **xBB%** starts at the 300+ PA hitters' BB% (`talentLeague`). Then come `TW_XBB`'s eight inputs (`TW_XBB0`'s six on a file without IBB and
+    fouls), landing on `tal.xbbFit` ("Expected BB%"). Then Luck and BB%.
+  - **Colours:** His cells are coloured so red is good for him, and so are the ± pills. The K% table's ± is turned over: `buildUp` takes a `flip`
+    argument.
+  - Every step's name opens its weight and a one-line note.
+  - **Checked:** Yordan 2026 xK% 15.1 / xBB% 16.5 (IBB +4.9 of it); Judge 29.4 / 14.8.

@@ -7428,10 +7428,10 @@
   // A build-up table for the xBABIP / xHR/FB tabs, in the K% build-up's dress (Sean, 9 Oct 2026: "create an xBABIP tab and then also create an
   // xHR/FB tab too"): Step · His · Lg · ± · running, his number filling its cell in his percentile colour (oriented so red = pushes the stat
   // up), the ± cell coloured by its sign (full at `full`), band rows under a gap. fmt prints the stat, fmtD its moves
-  function buildUp(title, sub, unit, fmt, fmtD, full) {
+  function buildUp(title, sub, unit, fmt, fmtD, full, flip) {   // flip: a move up is the bad way (a hitter's K%), so its ± reads blue
     const box = el("div", "rollbox uerabox brbox kbox"), hd = el("div", "rollhd");
     hd.append(el("span", "rollname", title), el("span", "rollsub", sub)); box.append(hd);
-    const signStyle = (v) => { const t = Math.min(1, Math.abs(v) / full), mix = (a, b) => a.map((x, i) => Math.round(x + (b[i] - x) * t)); const c = mix([214, 212, 206], v > 0 ? [216, 33, 41] : [54, 97, 173]); return { bg: `rgb(${c.join(",")})`, fg: t > (v > 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };
+    const signStyle = (v0) => { const v = flip ? -v0 : v0; const t = Math.min(1, Math.abs(v) / full), mix = (a, b) => a.map((x, i) => Math.round(x + (b[i] - x) * t)); const c = mix([214, 212, 206], v > 0 ? [216, 33, 41] : [54, 97, 173]); return { bg: `rgb(${c.join(",")})`, fg: t > (v > 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };
     const { tb, fin, gap, wrap, ends } = brTable(null, [["Step", "l"], ["His", ""], ["Lg", ""], ["± " + unit, ""], [unit, ""]], "kbuild");
     ends.add(0); ends.add(2);
     const t0 = wrap.querySelector("thead tr"); t0.children[0].classList.add("ge"); t0.children[2].classList.add("ge");
@@ -7654,6 +7654,56 @@
     box.append(wrap); w.append(box);
     return w;
   }
+  // xK% / xBB% tab (hitters; Sean, 12 Oct 2026: "a tab that shows the build up of xBB% as well as xK% and also how they compare to league avg and
+  // how that component contributes to the build up. Essentially the identical table that the other tabs have"): each fit laid out a step at a
+  // time — the league's rate, then each input's weight × (his − the league's), landing on the fit (marked yellow), then the luck to his actual
+  // rate. xK% is XKH against the 20+ PA hitters (lgRatesH, the league the card's xK% uses); xBB% is talent xwOBA's walk fit (TW_XBB, TW_XBB0
+  // without the IBB / foul inputs) against the 300+ PA hitters (talentLeague). His cells are coloured so red = good for him: fewer strikeouts,
+  // more walks; the K% ± is turned over the same way
+  const XKB_LAB = { whf: ["Whiff%", "swings and misses per swing — the big one: +0.99 K% a point"], zsw: ["Z-Swing%", "swings at strikes: a hitter who goes after strikes takes fewer called third strikes"],
+    osw: ["Chase%", "swings at pitches out of the zone (O-Swing%)"], strk: ["Strike% seen", "the share of the pitches he sees that are strikes (called, swinging, foul or in play) — pitchers who get ahead get more two-strike counts"],
+    ocon: ["O-Contact%", "contact on swings out of the zone"], zcon: ["Z-Contact%", "contact on swings at strikes"], zsn: ["Zone% seen", "the share of pitches he sees in the zone — pitchers who attack a hitter without power give him fewer balls"],
+    ev90: ["EV90", "his 90th-percentile exit velocity: a little respect from pitchers beyond what the IBB rate carries"], ibbr: ["IBB / 100 PA", "intentional walks per 100 plate appearances — BB% counts them and no swing rate can see them"],
+    fcon: ["Fouls / contact", "the share of his contact that goes foul — a foul keeps the plate appearance alive and gives ball four more chances"] };
+  function renderXkBbTab(p, g) {
+    const w = el("div", "xbtab"), v = V(p), m = v.m, ref = pool(g).ref;
+    const vl = viewLabel("H"), pre = vl && vl !== "full season" ? vl + " · " : "";
+    const pct1 = (x) => x.toFixed(1) + "%", pts = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(1);
+    const R1 = (x) => Math.round(x * 10) / 10;
+    const vals = (k) => ref.map((q) => V(q).m[k]).filter((z) => z != null);
+    // one build-up: start at the league's rate (+ the fit's constant), each input's move, the fit, luck, his rate. good: −1 when a lower rate is better
+    const build = (title, unit, lg0, c, W, L, fit, act, good, tips, fitTip) => {
+      const b = buildUp(title, `${pre}${v.pa} PA · ± in ${unit} points, against the league's hitters`, unit, pct1, pts, 2.5, good < 0);
+      let run = lg0 + c, prev = R1(run);
+      const step = (to) => { const r = R1(to), d = r - prev; prev = r; return d; };
+      b.row("League", null, lg0, pct1, null, "→", run, tips.lg);
+      for (const k in W) {
+        const his = m[k], lg = L[k], [lab, tip] = XKB_LAB[k], f = k === "ev90" ? (x) => x.toFixed(1) : k === "ibbr" ? (x) => x.toFixed(2) : pct1;
+        const d = his == null || lg == null ? null : W[k] * (his - lg); if (d != null) run += d;
+        const wt = (W[k] > 0 ? "+" : "−") + Math.abs(W[k]).toFixed(3);
+        b.row(lab, his, lg, f, pctAmong(vals(k), his, good * Math.sign(W[k])), d == null ? null : step(run), d == null ? null : run, `${tip} (${wt} ${unit} a point${k === "ev90" ? " — a mph" : ""} against the league's)`);
+      }
+      b.mark("Expected " + unit);
+      if (act == null) { b.band(unit, null, null, "no actual rate in this view"); return b.done(); }
+      b.row("Luck", null, null, pct1, null, step(act), act, `${unit} above or below what his process says — ${fitTip}`);
+      b.band(unit, R1(act) - R1(lg0 + c), act, `the whole trip: every step above added up, from the ${pct1(lg0 + c)} start to his ${pct1(act)}`);
+      b.tag("kfinal");
+      return b.done();
+    };
+    const LH = lgRatesH(), fk = XKH[0];
+    if (m.xk != null && LH.k != null) w.append(build(`xK% build-up · ${DS.season}`, "K%", LH.k, fk.c, fk.w, LH, m.xk, m.k, -1,
+      { lg: `the league's K% (hitters with 20+ PA, weighted by PA)${fk.c ? `, ${pts(fk.c)} for the fit's constant` : ""} — where the build-up starts` },
+      "the fit's error is ~1.7 K% points on a 300+ PA hitter, and his own K% is a slightly better guide to next season's than xK% (half and half is best, which is what his xwOBA uses)"));
+    else w.append(el("p", "note", "No xK% for this view — it needs swing and whiff data."));
+    const t = v.tal, L = t && t.L;
+    if (t && L && L.bb != null) {
+      const XB = m.ibbr != null && m.fcon != null && L.ibbr != null && L.fcon != null ? TW_XBB : TW_XBB0;
+      w.append(build(`xBB% build-up · ${DS.season}`, "BB%", L.bb, 0, XB, L, t.xbbFit, m.bb, 1,
+        { lg: "the season's 300+ PA hitters' BB%, weighted by PA — where the build-up starts" },
+        "the fit's error is ~1.3 BB% points; half his BB% and half xBB% forecast next season's best, which is what his xwOBA uses"));
+    } else w.append(el("p", "note", DS.multi ? "No xBB% build-up for a span of seasons — pick one season." : "No xBB% for this view — it needs tracked contact and a qualified pool."));
+    return w;
+  }
   function renderXhrfbTab(p) {
     const w = el("div", "xbtab");
     if (DS.level && DS.level !== "MLB") {   // a minors card: the card's own level, season and view
@@ -7716,7 +7766,7 @@
   }
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["fantasy", "Fantasy"]];   // Season Stats is the page's own table now (8 Oct 2026)   // Compare came off the strip with the Compare page (Sean, 6 Oct 2026)
-  const BTABS_H = [["mix", "Mix"], ["bbq", "Batted Ball Quality"], ["xbabip", "xBABIP"], ["xhrfb", "xHR/FB"], ["talent", "xwOBA"]];   // Talent xwOBA's build-up (Sean, 11 Oct 2026)   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
+  const BTABS_H = [["mix", "Mix"], ["bbq", "Batted Ball Quality"], ["xbabip", "xBABIP"], ["xhrfb", "xHR/FB"], ["talent", "xwOBA"], ["xkbb", "xK% / xBB%"]];   // Talent xwOBA's build-up (Sean, 11 Oct 2026)   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
   const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"]];   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
@@ -7736,7 +7786,7 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => (tabs.find(([x]) => x === k) || [])[1];
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["xbabip"], ["xhrfb"], ["talent"]] : []),
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["xbabip"], ["xhrfb"], ["talent"], ["xkbb"]] : []),
                     ["rolling", ...(p.type === "P" ? ["uera"] : ["babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
@@ -7803,6 +7853,8 @@
       body.append(renderXhrfbTab(p));
     } else if (pick === "talent") {
       body.append(renderTalentTab(p));
+    } else if (pick === "xkbb") {
+      body.append(renderXkBbTab(p, ref));
     } else if (pick === "babip") {
       body.append(renderBabipTab(p, o.st));
     } else if (pick === "fantasy") {
