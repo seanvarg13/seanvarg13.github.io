@@ -3582,3 +3582,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     - It reads "–" when the rows move less than 2 points in all.
   - **Yordan 2026:** BABIP noise +16 (36%), IBB −10 (23%), HR/FB −7 (16%), K% −5 (11%), luck +1.
   - **Judge 2026:** BABIP luck −20 (25%), bases per hit −20 (25%), noise +17 (22%), HR/FB +11 (14%).
+* **The Intentional walks row relabelled (Sean, 12 Oct 2026, Yordan's xwOBA tab: "Why are more intentional walks than expected hurting yordans
+  woba vs xwoba here im confused", then "Yeah relabel it")**: the row is **Intentional walks (not in wOBA)**, and its note says it's bookkeeping,
+  not something he did. wOBA leaves intentional walks out entirely. His xwOBA's walk piece runs on his BB%, which counts them, at a walk's value,
+  and the scale takes out only the league's share. So the more he's walked on purpose beyond the league's rate, the higher his xwOBA sits over his
+  wOBA. xwOBA itself is unchanged; taking intentional walks out of its walk piece was the other option, not taken. Every piece's name in the
+  Expected vs actual table now opens its note on a tap, as the build-ups' steps do (`noteTd`, `.knotebtn` / `tr.knote`). The note's text is
+  pinned to the visible width, since the table scrolls sideways on a phone.

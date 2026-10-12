@@ -7674,6 +7674,15 @@
     const shareCells = [];
     const shareTd = (d) => { const td = el("td", "xact"); if (d != null) shareCells.push([td, d]); return td; };
     const effTd = (d, tot) => { const td = el("td", "kd", d == null ? "" : pts(d)); if (d != null && !tot) { const s2 = effStyle(d); td.style.background = s2.bg; td.style.color = s2.fg; td.classList.add("heat"); } return td; };
+    // a piece's name, tapped, opens its note in a row under it, as the build-ups' steps do (a phone has no hover)
+    const noteTd = (lab, tip, tr) => { const td = el("td", "l nm"), bt = el("button", "knotebtn", lab); bt.type = "button"; bt.setAttribute("aria-expanded", "false");
+      bt.addEventListener("click", (e) => { e.stopPropagation(); const nx = tr.nextElementSibling;
+        if (nx && nx.classList.contains("knote")) { nx.remove(); bt.setAttribute("aria-expanded", "false"); return; }
+        const nr = el("tr", "knote"), nc = el("td"), sc = tr.closest(".brscroll"), tx = el("div", null, tip); nc.colSpan = 6;
+        /* the table scrolls sideways on a phone, so the note sits in the visible part of it */
+        if (sc) { tx.style.position = "sticky"; tx.style.left = "10px"; tx.style.width = Math.max(200, sc.clientWidth - 22) + "px"; }
+        nc.append(tx); nr.append(nc); tr.after(nr); bt.setAttribute("aria-expanded", "true"); });
+      td.append(bt); return td; };
     const pieces = [["xK%", "xk", t.xkFit, m.k, pct1, (z) => z.toFixed(1), "expected is the strikeout fit alone; his xwOBA uses half his K% and half the fit, so the ± is what his whole K% did beyond that blend"],
                     ["xBB%", "xbb", t.xbbFit, m.bb, pct1, (z) => z.toFixed(1), "expected is the walk fit alone; his xwOBA uses half his BB% and half the fit, so the ± is what his whole BB% did beyond that blend"],
                     ["HR/FB", "xhf", t.xhf, actHf, pct1, (z) => z.toFixed(1), "home runs per fly ball + popup against what his exit velocity deserves"],
@@ -7681,11 +7690,13 @@
                                           ["BABIP luck", "bl", m.xbabip, m.babip, f3, (z) => fmtX(z), "his BABIP against the directional model's xBABIP: hits in play above or below what the contact deserved, repeating year to year at r .15 — the xBABIP tab's Luck row"]]
                                         : [["BABIP", "xbab", t.xbab, m.babip, f3, (z) => fmtX(z), "hits on non-HR balls in play against the drivers' xBABIP"]]),
                     ["Bases per hit (no HR)", "tph", t.tph, actTph, (z) => z.toFixed(2), (z) => z.toFixed(2), "total bases per non-HR hit against the directional model's"],
-                    ["Intentional walks", "ibb", L.ibbr, m.ibbr, (z) => z.toFixed(2), (z) => z.toFixed(2), "per 100 PA, the league's beside his: they count in BB% but not in wOBA, so walks handed out on purpose more than the league's rate take his wOBA below what his pieces add up to"]]
+                    // bookkeeping, not something he did (Sean, 12 Oct 2026: "Why are more intentional walks than expected hurting yordans woba vs xwoba
+                    // here im confused", then "Yeah relabel it")
+                    ["Intentional walks (not in wOBA)", "ibb", L.ibbr, m.ibbr, (z) => z.toFixed(2), (z) => z.toFixed(2), "per 100 PA, the league's beside his. A counting difference, not a mark against him: wOBA leaves intentional walks out entirely, while his xwOBA's walk piece runs on his BB%, which counts them, at a walk's value (the scale takes out only the league's share). So the more he's walked on purpose beyond the league's rate, the more his xwOBA sits above his wOBA — nothing he did wrong"]]
       .sort((x, y) => Math.abs(eff[y[1]] || 0) - Math.abs(eff[x[1]] || 0));
     for (const [lab, k, a, x, f, fd, tip] of pieces) {
       const tr = el("tr"); tr.title = tip;
-      tr.append(el("td", "l nm", lab), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), effTd(k in eff ? eff[k] : null), shareTd(k in eff ? eff[k] : null));
+      tr.append(noteTd(lab, tip, tr), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), effTd(k in eff ? eff[k] : null), shareTd(k in eff ? eff[k] : null));
       tb.append(fin(tr));
     }
     if (rest != null) { const tr = el("tr"); tr.title = "what's left between his pieces put back together at their actual values and his real wOBA: the build's fixed linear weights, triples, sacrifice flies and the season's scale — small, and not about his skill";
