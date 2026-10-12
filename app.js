@@ -1048,7 +1048,7 @@
       // against the directional model's .367 over 2015-26). The model's own number stays as dxw (xwOBAcon, the Talent tab's contact line); where
       // talent can't be built (a span of seasons, an untracked level) the directional one stands
       const sw = tx == null ? {} : { xwd: tx, xwoba: tx, xwdiff: v.m.woba != null ? Math.round(1000 * (tx - v.m.woba)) / 1000 : null };
-      v.m = Object.assign({}, v.m, { txw: tx, txwp: t ? Math.round(1000 * t.txwp) / 1000 : null, dxw: v.m.xwd ?? null }, sw); v.tal = t;
+      v.m = Object.assign({}, v.m, { txw: tx, txwp: t && t.txwp != null ? Math.round(1000 * t.txwp) / 1000 : null, dxw: v.m.xwd ?? null }, sw); v.tal = t;
     }
     // Regress small samples (Table format; Sean, 3 Oct 2026, from the model recommendations): in a date window or split, every
     // rate is pulled toward the pool's full-season average by how little he has played — w = n / (n + 120), n = his PA or batters
@@ -7322,7 +7322,17 @@
   // his talent xwOBA on the card's view: the view's rates against the dataset's full-season league (as xK% does); a window without the HBP day
   // field takes his season HBP rate, and sprint speed is the season's
   function talentOf(p, v) {
-    if (DS.multi) return null;
+    // a span of seasons (Sean, 12 Oct 2026: "when I go to the leaderboard xwoba is still based on that old xwoba model"): talent is built on one
+    // season's league, so each season keeps its own — Each season reads that season's, and a Combined line is his seasons' talent xwOBA weighted
+    // by their PA in the view (the season table's career row does the same). A last-N window can run across seasons, so it's scored on his
+    // latest season's league. A combined line has no projection
+    if (DS.multi) {
+      if (DS.each) return p.src && p.real ? withDataset(p.src, () => talentOf(p.real, v)) : null;
+      if (lastN(WIN || listWin())) { const lp = (p.parts || [])[p.parts.length - 1], t = lp && withDataset(lp[0], () => talentOf(lp[1], v)); return t ? { txw: t.txw, txwp: null, span: true } : null; }
+      let s = 0, n = 0;
+      for (const [d, q] of p.parts || []) { const pv = withDataset(d, () => V(q)); if (pv && pv.m && pv.m.txw != null && pv.pa) { s += pv.m.txw * pv.pa; n += pv.pa; } }
+      return n ? { txw: s / n, txwp: null, span: true } : null;
+    }
     const L = talentLeague(), m = v.m.spd == null && p.m && p.m.spd != null ? Object.assign({}, v.m, { spd: p.m.spd }) : v.m;
     const hbp = v.ctx && v.ctx.HBP != null ? v.ctx.HBP : p.ctx && p.ctx.HBP != null && p.pa ? p.ctx.HBP / p.pa * (v.pa || 0) : 0;
     const t = talentCore(twInputs(m, v.ctx, v.pa, v.ab, hbp, p.bats), L); if (!t) return null;
