@@ -296,7 +296,8 @@ def build_season(y, d, P, pos, xt, xc, ngs, tt=None, tc=None):
 
 
 # ---------- team-seasons: coaches and RB usage ----------
-def team_seasons(y, games, players, t, c, snaps, pos, staff):
+HC_FIX = {"Klint Kubliak": "Klint Kubiak"}   # nfldata's games list misspells him; Wikipedia's staffs are the spelling the coaches join on
+def team_seasons(y, games, players, t, c, snaps, pos, staff, current=False):
     g = games[(games.season == y) & (games.game_type == "REG")]
     hc = defaultdict(list)
     ab = {"OAK": "LV", "SD": "LAC", "STL": "LA"}   # the games list keeps the old codes; play-by-play uses today's
@@ -307,6 +308,12 @@ def team_seasons(y, games, players, t, c, snaps, pos, staff):
     for tm in sorted(hc):
         coaches = [x for x in hc[tm] if isinstance(x, str)]
         head = max(set(coaches), key=coaches.count) if coaches else None
+        head = HC_FIX.get(head, head)
+        # the season in progress: nfldata's games list can still carry last year's coach (2026: Gannon for Arizona, Morris for
+        # Atlanta, McDermott for Buffalo), so Wikipedia's staff wins when the games list's man isn't on it
+        ws = staff.get(f"{y}:{tm}") or {}
+        if current and ws.get("hc") and head != ws["hc"] and head not in {n for _, n in ws.get("off") or []}:
+            head = ws["hc"]
         rbs = [p for p in players if p["pos"] in ("RB", "FB") and tm in (p["tms"] or [])]
         # RB touches on this team (a traded back counts only his weeks here)
         tc = c[(c.posteam == tm) & c.pid.map(lambda i: pos.get(i) in ("RB", "FB"))]
@@ -331,6 +338,7 @@ def team_seasons(y, games, players, t, c, snaps, pos, staff):
         team_tg = t[t.posteam == tm]
         rec = dict(
             tm=tm, hc=head, oc=(staff.get(f"{y}:{tm}") or {}).get("oc"), pc=(staff.get(f"{y}:{tm}") or {}).get("pc"),
+            st=(staff.get(f"{y}:{tm}") or {}).get("off") or [],   # the whole offensive staff, [role, name], for the coaches' histories
             rbcar=len(tc), rbtgt=len(tt), tmtgt=len(team_tg), tmcar=int(len(c[c.posteam == tm])),
             rb1g=len(w1), rb1car=round(100 * float(sh.get(rb1["id"], 0)), 1),
             rb1opp=round(100 * (len(hc1[hc1.pid == rb1["id"]]) + len(ht1[ht1.pid == rb1["id"]])) / max(len(hc1) + len(ht1), 1), 1),
@@ -392,7 +400,7 @@ def main():
     career = defaultdict(dict)
     for y in sorted(T):
         players, t, c, plays, snaps = build_season(y, d, P, pos, xt[y], xc[y], d["ngs_rush"], tt[y], tc[y])
-        tsea = team_seasons(y, d["games"], players, t, c, snaps, pos, staff)
+        tsea = team_seasons(y, d["games"], players, t, c, snaps, pos, staff, current=(y == a.current))
         teams_all[y] = tsea
         # position ranks by PPR points and by expected points, for the season table
         for key in ("fp", "xfp"):

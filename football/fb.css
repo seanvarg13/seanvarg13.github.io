@@ -133,6 +133,10 @@ table.br { border-collapse: separate; border-spacing: 0; font: 11px/1.25 var(--t
 /* coach verdict chips */
 .tag { display: inline-block; padding: 1px 7px; font: 700 12px var(--body); color: #fff; }
 .verdict { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 8px 0 0; font-size: 14px; color: var(--ink-2); }
+.csearch { height: 32px; width: 180px; max-width: 100%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 0 8px; border-radius: 0; font: inherit; font-size: 14px; }
+/* a coach's stints: one club and its seasons a line, the jobs after it */
+.stints { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 3px; font-size: 14px; color: var(--ink-2); }
+.stints a { font-weight: 700; }
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0; border: 1px solid var(--edge); background: var(--surface); box-shadow: var(--shadow); margin-top: 12px; }
 .kpis div { padding: 10px 12px; border-right: 1px solid var(--line); }
 .kpis div:last-child { border-right: 0; }
