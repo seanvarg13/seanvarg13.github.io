@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       staff:
-        description: "refresh the coordinators from Wikipedia for these seasons (e.g. 2026); blank keeps staff.json"
+        description: "also re-read these seasons' staffs from Wikipedia (e.g. 2024,2025); this season's is always re-read"
         default: ""
       dry:
         description: "build but don't publish"
@@ -66,9 +66,12 @@ jobs:
           key: fb-cache-${{ github.run_id }}
           restore-keys: fb-cache-
 
-      - name: Coordinators
-        if: steps.gate.outputs.go == 'true' && inputs.staff != ''
-        run: python tools/fb/build_staff.py --out football/data/staff.json --refresh "${{ inputs.staff }}"
+      # every run re-reads this season's staffs (a coach fired mid-season), plus any seasons named in the staff input
+      - name: Coaching staffs
+        if: steps.gate.outputs.go == 'true'
+        run: |
+          season=$(python -c "import datetime as d; t=d.date.today(); print(t.year if t.month >= 8 else t.year - 1)")
+          python tools/fb/build_staff.py --out football/data/staff.json --cache .cache/fb/wiki --refresh "$season${{ inputs.staff && ',' || '' }}${{ inputs.staff }}"
 
       - name: Build
         if: steps.gate.outputs.go == 'true'

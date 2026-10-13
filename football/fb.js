@@ -456,14 +456,41 @@
   }
 
   // ---------- Coaches ----------
+  // a coach's history is every team-season he was on the offensive staff, in any role (Sean, 13 Oct 2026: "do it based on who is on
+  // the offense ... include every team he coached on"): teams.js carries each team-season's offensive staff as [role, name] (`st`,
+  // Wikipedia's final staff that season), plus the head coach from the games list and the coordinator / play-caller
+  const ROLE_CATS = [["HC", /^(interim )?head coach/i], ["OC", /offensive coordinator/i], ["PGC", /pass(ing)? game coordinator/i], ["RGC", /run(ning)? game coordinator/i],
+                     ["QB", /quarterback/i], ["RB", /running back/i], ["WR", /wide receiver/i], ["TE", /tight end/i], ["OL", /offensive line/i]];
+  const roleCat = (role) => { for (const [c, re] of ROLE_CATS) if (re.test(role)) return c; return "Asst"; };
+  const CAT_WORD = { HC: "head coach", OC: "coordinator", PC: "play-caller", PGC: "pass game coord.", RGC: "run game coord.", QB: "QBs", RB: "RBs", WR: "WRs", TE: "TEs", OL: "O-line", Asst: "assistant" };
+  let CS_MEMO = null;
   function coachSeasons() {
+    if (CS_MEMO) return CS_MEMO;
     const out = new Map();
     for (const y of SEASONS) for (const r of TEAMS[y] || []) {
-      const add = (name, role) => { if (!name) return; for (const n of String(name).split(" / ")) { const k = n.trim(); if (!k) continue; if (!out.has(k)) out.set(k, []); out.get(k).push(Object.assign({ y, role }, r)); } };
-      add(r.hc, "HC"); add(r.oc, "OC"); if (r.pc && r.pc !== r.hc) add(r.pc, "PC");
+      const here = new Map();
+      const put = (n, role) => { n = String(n || "").trim(); if (!n) return; let e = here.get(n); if (!e) here.set(n, (e = { roles: [], cats: new Set() })); if (!e.roles.includes(role)) e.roles.push(role); e.cats.add(roleCat(role)); };
+      for (const [role, n] of r.st || []) put(n, role);
+      for (const n of String(r.hc || "").split(" / ")) put(n, "Head coach");
+      for (const n of String(r.oc || "").split(" / ")) put(n, "Offensive coordinator");
+      if (r.pc) { put(r.pc, "Head coach"); here.get(r.pc).cats.add("PC"); }
+      for (const [n, e] of here) {
+        if (e.cats.has("OC") && !r.pc) e.cats.add("PC");
+        if (!out.has(n)) out.set(n, []);
+        out.get(n).push(Object.assign({}, r, { y, roles: e.roles, cats: e.cats }));
+      }
     }
+    return (CS_MEMO = out);
+  }
+  const catLine = (rs) => { const c = {}; for (const r of rs) for (const k of r.cats) if (k !== "PC" || !r.cats.has("HC")) c[k] = (c[k] || 0) + 1; return ROLE_CATS.map((x) => x[0]).concat(["PC", "Asst"]).filter((k) => c[k]).map((k) => `${k} ${c[k]}`).join(" · "); };
+  // his stints: consecutive seasons with one club, with the jobs he held there
+  function stints(rs) {
+    const norm = (x) => x.toLowerCase().replace(/passing game/g, "pass game").replace(/running game/g, "run game");   // the pages write a title two ways
+    const add = (L, x) => { if (!L.roles.some((z) => norm(z) === norm(x))) L.roles.push(x); };
+    const out = []; for (const r of rs) { let L = out[out.length - 1]; if (!(L && L.tm === r.tm && r.y === L.y1 + 1)) out.push((L = { tm: r.tm, y0: r.y, y1: r.y, roles: [] })); L.y1 = r.y; for (const x of r.roles) add(L, x); }
     return out;
   }
+  const yrs = (a, b) => (a === b ? String(a) : `${a}–${String(b).slice(2)}`);
   const agg = (rs) => { const n = rs.length, avg = (f) => { const v = rs.map(f).filter((x) => x != null && isFinite(x)); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
     return { n, car: avg((r) => r.rb1car), opp: avg((r) => r.rb1opp), eff: avg((r) => r.eff), tgt: avg((r) => share(r.rbtgt, r.tmtgt)), snp: avg((r) => r.rbs[0].snp), gl: avg((r) => r.rb1gl),
              cow: rs.filter((r) => r.rb1car >= COW_YR).length, com: rs.filter((r) => r.rb1car < COM_YR).length }; };
@@ -471,57 +498,70 @@
   const COW = 68, COM = 60, COW_YR = 72, COM_YR = 58;
   function verdict(a) { return a.car == null ? ["–", 50] : a.car >= COW ? ["Bell cow", 85] : a.car >= COM ? ["Lead back + change of pace", 62] : ["Committee", 18]; }
   function leagueAvg() { const all = SEASONS.flatMap((y) => TEAMS[y] || []); return agg(all); }
+  const ROLE_PICK = { hc: (r) => r.cats.has("HC"), oc: (r) => r.cats.has("OC") || r.cats.has("PC"), all: () => true };
 
   function coaches(main) {
     main.textContent = "";
-    main.append(el("h1", "ttl", "Coaches and their backfields"), el("p", "sub", "Every head coach and offensive coordinator since 2016, by how they've split running back work. A coach's average counts each season he held the job once."));
+    const pick = ROLE_PICK[S.coachRole] ? S.coachRole : "hc";
+    main.append(el("h1", "ttl", "Coaches and their backfields"), el("p", "sub", "Every coach on an offensive staff since 2016, by how his teams split running back work in the seasons he was there. A coach's average counts each of those seasons once."));
     const tools = el("div", "tools"), seg = el("div", "seg");
-    for (const [k, lab] of [["hc", "Head coaches"], ["oc", "Coordinators"]]) { const b = el("button", null, lab); b.type = "button"; b.setAttribute("aria-pressed", S.coachRole === k); b.addEventListener("click", () => { S.coachRole = k; save(); route(); }); seg.append(b); }
+    for (const [k, lab] of [["hc", "Head coaches"], ["oc", "Coordinators"], ["all", "Every offensive coach"]]) { const b = el("button", null, lab); b.type = "button"; b.setAttribute("aria-pressed", pick === k); b.addEventListener("click", () => { S.coachRole = k; save(); route(); }); seg.append(b); }
     const mb = el("label", "minbox"), mi = el("input"); mi.type = "number"; mi.min = 1; mi.max = 11; mi.value = S.coachMin; mi.id = "coachmin"; mb.append("Min seasons", mi);
     mi.addEventListener("change", () => { S.coachMin = Math.max(1, +mi.value || 1); save(); route(); });
-    tools.append(seg, mb); main.append(tools);
-    const CS = coachSeasons(), role = S.coachRole === "oc" ? ["OC", "PC"] : ["HC"], L = leagueAvg();
-    let rows = [...CS.entries()].map(([n, rs]) => [n, rs.filter((r) => role.includes(r.role))]).filter(([, rs]) => rs.length >= S.coachMin).map(([n, rs]) => ({ n, rs, a: agg(rs) }));
+    const q = el("input", "csearch"); q.type = "search"; q.placeholder = "Find a coach"; q.setAttribute("aria-label", "Find a coach");
+    tools.append(seg, mb, q); main.append(tools);
+    const CS = coachSeasons(), L = leagueAvg();
+    // the averages are over the seasons in the role picked; Teams / Roles still say where else he's been
+    let rows = [...CS.entries()].map(([n, all]) => ({ n, all, rs: all.filter(ROLE_PICK[pick]) })).filter((x) => x.rs.length >= S.coachMin).map((x) => Object.assign(x, { a: agg(x.rs) }));
     const sortK = S.cSort || "car", dir = S.cDir || -1;
     rows.sort((x, z) => { const a = x.a[sortK], b = z.a[sortK]; if (a == null) return 1; if (b == null) return -1; return dir * (a - b); });
     const sb = (k) => () => { if (S.cSort === k) S.cDir = -(S.cDir || -1); else { S.cSort = k; S.cDir = -1; } save(); route(); };
-    const t = table([{ cols: [{ h: "Coach", cls: "l fz" }, { h: "Seasons", onSort: sb("n"), lit: sortK === "n" }, { h: "Teams", cls: "l" }, { h: "Style", cls: "l" }], end: 1 },
+    const t = table([{ cols: [{ h: "Coach", cls: "l fz" }, { h: "Seasons", onSort: sb("n"), lit: sortK === "n" }, { h: "Teams", cls: "l" }, { h: "Every job", cls: "l", t: "Seasons in each job across his whole offensive-staff history: HC head coach, OC coordinator, PC play-caller, PGC / RGC pass / run game coordinator, QB / RB / WR / TE / OL position coach" }, { h: "Style", cls: "l" }], end: 1 },
                      { name: "Lead back (in his games)", end: 1, cols: [{ h: "Car%", onSort: sb("car"), lit: sortK === "car" }, { h: "Opp%", onSort: sb("opp"), lit: sortK === "opp" }, { h: "Snap%", onSort: sb("snp"), lit: sortK === "snp" }, { h: "GL%", onSort: sb("gl"), lit: sortK === "gl" }] },
                      { name: "Backfield", end: 1, cols: [{ h: "Backs used", onSort: sb("eff"), lit: sortK === "eff" }, { h: "Bell-cow yrs", onSort: sb("cow"), lit: sortK === "cow", t: "Seasons his lead back took 72%+ of RB carries in his games (the top third of team-seasons)" }, { h: "Committee yrs", onSort: sb("com"), lit: sortK === "com", t: "Seasons his lead back took under 58% (the bottom third)" }] },
                      { name: "Passing game", end: 1, cols: [{ h: "RB Tgt%", onSort: sb("tgt"), lit: sortK === "tgt" }] }], { tall: true });
     const carAll = rows.map((r) => r.a.car).filter((v) => v != null).sort((a, b) => a - b), pr = (v) => { let lo = 0; for (const x of carAll) if (x < v) lo++; return 100 * lo / Math.max(carAll.length - 1, 1); };
     for (const r of rows) {
-      const teams = [...new Set(r.rs.map((x) => x.tm))].join(", "), [vd, vp] = verdict(r.a), tag = el("span", "tag", vd), vc = td(null, "l"); paint(tag, vp); tag.classList.remove("heat"); vc.append(tag);
+      const teams = [...new Set(r.all.map((x) => x.tm))].join(", "), [vd, vp] = verdict(r.a), tag = el("span", "tag", vd), vc = td(null, "l"); paint(tag, vp); tag.classList.remove("heat"); vc.append(tag);
       const car = td(pc(r.a.car)); paint(car, pr(r.a.car));
-      t.addRow([cellLink(r.n, "#coach/" + encodeURIComponent(r.n), "l fz"), td(String(r.a.n)), td(teams, "l"), vc, car, td(pc(r.a.opp)), td(pc(r.a.snp, 0)), td(pc(r.a.gl, 0)), td(num(r.a.eff, 2)), td(String(r.a.cow)), td(String(r.a.com)), td(pc(r.a.tgt))]);
+      const tr = t.addRow([cellLink(r.n, "#coach/" + encodeURIComponent(r.n), "l fz"), td(String(r.a.n)), td(teams, "l"), td(catLine(r.all), "l"), vc, car, td(pc(r.a.opp)), td(pc(r.a.snp, 0)), td(pc(r.a.gl, 0)), td(num(r.a.eff, 2)), td(String(r.a.cow)), td(String(r.a.com)), td(pc(r.a.tgt))]);
+      tr.dataset.k = r.n.toLowerCase();
     }
-    t.addRow([td("League, 2016–" + String(CUR).slice(2), "l fz"), td(String(L.n)), td(""), td(""), td(pc(L.car)), td(pc(L.opp)), td(pc(L.snp, 0)), td(pc(L.gl, 0)), td(num(L.eff, 2)), td(String(L.cow)), td(String(L.com)), td(pc(L.tgt))], "tot first");
-    main.append(t.box, el("p", "note", "Style: Bell cow when his lead backs averaged 68%+ of RB carries in their games (the top third of coaches), Committee under 60% (the bottom third), and between them a lead back with a change of pace. A lead back takes 64% of the carries in his games in a typical season. Coordinators come from each team-season's Wikipedia page; where a head coach called plays himself and no coordinator is listed, he's counted as the play-caller."));
+    t.addRow([td("League, 2016–" + String(CUR).slice(2), "l fz"), td(String(L.n)), td(""), td(""), td(""), td(pc(L.car)), td(pc(L.opp)), td(pc(L.snp, 0)), td(pc(L.gl, 0)), td(num(L.eff, 2)), td(String(L.cow)), td(String(L.com)), td(pc(L.tgt))], "tot first");
+    q.addEventListener("input", () => { const s = q.value.trim().toLowerCase(); t.querySelectorAll("tbody tr[data-k]").forEach((tr) => { tr.hidden = !!s && !tr.dataset.k.includes(s); }); });
+    requestAnimationFrame(() => { const first = t.querySelector("tbody td.fz"); if (first) t.style.setProperty("--fzw", first.offsetWidth + "px"); });
+    main.append(t.box, el("p", "note", `${rows.length} coaches. Head coaches and Coordinators average only the seasons in that job; Every offensive coach averages every season he was on the staff, position coach included. Style: Bell cow when his lead backs averaged 68%+ of RB carries in their games (the top third of coaches), Committee under 60% (the bottom third), and between them a lead back with a change of pace. A lead back takes 64% of the carries in his games in a typical season. Staffs are each season's final staff on Wikipedia, so a coach let go mid-season isn't listed that year (a head coach always is, from the games).`));
   }
 
   function coachPage(main, name) {
-    name = decodeURIComponent(name); const CS = coachSeasons(), rs = (CS.get(name) || []).sort((a, b) => a.y - b.y);
+    name = decodeURIComponent(name); const rs = [...(coachSeasons().get(name) || [])].sort((a, b) => a.y - b.y);
     main.textContent = "";
     if (!rs.length) { main.append(el("p", "load", "No seasons for that coach.")); return; }
     const a = agg(rs), L = leagueAvg(), [vd, vp] = verdict(a);
     main.append(el("h1", "ttl", name));
     const v = el("div", "verdict"), tag = el("span", "tag", vd); paint(tag, vp); tag.classList.remove("heat");
-    v.append(tag, `${rs.length} season${rs.length > 1 ? "s" : ""}: ${[...new Set(rs.map((r) => `${r.role === "HC" ? "head coach" : r.role === "PC" ? "play-caller" : "coordinator"}, ${r.tm}`))].join(" · ")}`); main.append(v);
+    v.append(tag, `${rs.length} season${rs.length > 1 ? "s" : ""} on an offensive staff · ${catLine(rs)}`); main.append(v);
+    // where he's been, stint by stint
+    const st = el("ul", "stints");
+    for (const s of stints(rs)) { const li = el("li"); li.append(link(`${s.tm} ${yrs(s.y0, s.y1)}`, `#team/${s.tm}/${s.y1}`), " — " + s.roles.join(", ")); st.append(li); }
+    main.append(st);
     const k = el("div", "kpis"), kp = (lab, val, lg) => { const d = el("div"); d.append(el("b", null, val), el("small", null, `${lab} · league ${lg}`)); k.append(d); };
     kp("Lead back's carry share", pc(a.car), pc(L.car)); kp("Lead back's snap share", pc(a.snp, 0), pc(L.snp, 0)); kp("Backs used", num(a.eff, 2), num(L.eff, 2)); kp("RB share of targets", pc(a.tgt), pc(L.tgt)); kp("Lead back's goal-line share", pc(a.gl, 0), pc(L.gl, 0));
     main.append(k);
     main.append(el("h3", "secttl", "Season by season"));
-    const t = table([{ cols: [{ h: "Season", cls: "fz" }, { h: "Tm" }, { h: "Role" }], end: 1 }, { name: "Lead back, in his games", end: 1, cols: [{ h: "RB1", cls: "l" }, { h: "G" }, { h: "Car%" }, { h: "Opp%" }, { h: "Snap%" }, { h: "GL%" }, { h: "FP/Opp" }] },
+    const t = table([{ cols: [{ h: "Season", cls: "fz" }, { h: "Tm" }, { h: "His job", cls: "l" }, { h: "Head coach", cls: "l" }], end: 1 }, { name: "Lead back, in his games", end: 1, cols: [{ h: "RB1", cls: "l" }, { h: "G" }, { h: "Car%" }, { h: "Opp%" }, { h: "Snap%" }, { h: "GL%" }, { h: "FP/Opp" }] },
                      { name: "Second back", end: 1, cols: [{ h: "RB2", cls: "l" }, { h: "Car%" }, { h: "FP/Opp" }, { h: "Next yr Car%", t: "The same back's carry share the following season, wherever he played" }] }, { name: "Backfield", end: 1, cols: [{ h: "Backs used" }, { h: "RB Tgt%" }] }]);
     const allCar = SEASONS.flatMap((y) => (TEAMS[y] || []).map((r) => r.rb1car)).sort((x, z) => x - z), pr = (val) => { let lo = 0; for (const x of allCar) if (x < val) lo++; return 100 * lo / Math.max(allCar.length - 1, 1); };
     for (const r of rs) {
       const b1 = r.rbs[0], b2 = r.rbs[1], car = td(pc(r.rb1car)); paint(car, pr(r.rb1car));
       const f1 = fpo(b1), f2 = b2 ? fpo(b2) : null, f2c = td(num(f2, 2)); if (f2 != null && f1 != null && f2 > f1 + 0.1) { f2c.style.color = "var(--stripe)"; f2c.style.fontWeight = "700"; }
       let nxt = "–"; if (b2) { const nx = (TEAMS[r.y + 1] || []).find((x) => x.rbs.some((b) => b.id === b2.id)); if (nx) { const i = nx.rbs.findIndex((b) => b.id === b2.id), all = nx.rbcar || 1; nxt = pc(100 * nx.rbs[i].car / all) + (nx.tm !== r.tm ? ` (${nx.tm})` : ""); } }
-      t.addRow([cellLink(String(r.y), `#team/${r.tm}/${r.y}`, "fz"), td(r.tm), td(r.role), cellLink(b1.n, "#player/" + b1.id), td(String(r.rb1g)), car, td(pc(r.rb1opp)), td(b1.snp == null ? "–" : Math.round(b1.snp) + "%"), td(r.rb1gl == null ? "–" : pc(r.rb1gl, 0)), td(num(f1, 2)),
+      const job = td(r.roles.join(", ") + (r.cats.has("PC") && !r.cats.has("OC") ? " (called plays)" : ""), "l");
+      const hcc = td(null, "l"); if (r.hc && r.hc !== name) hcc.append(link(r.hc, "#coach/" + encodeURIComponent(r.hc))); else hcc.textContent = r.hc === name ? "himself" : "–";
+      t.addRow([cellLink(String(r.y), `#team/${r.tm}/${r.y}`, "fz"), td(r.tm), job, hcc, cellLink(b1.n, "#player/" + b1.id), td(String(r.rb1g)), car, td(pc(r.rb1opp)), td(b1.snp == null ? "–" : Math.round(b1.snp) + "%"), td(r.rb1gl == null ? "–" : pc(r.rb1gl, 0)), td(num(f1, 2)),
                 b2 ? cellLink(b2.n, "#player/" + b2.id) : td("–"), td(pc(r.rb2car)), f2c, td(nxt), td(num(r.eff, 2)), td(pc(share(r.rbtgt, r.tmtgt)))]);
     }
-    main.append(t.box, el("p", "note", "Car% is coloured against every team-season since 2016. An RB2's FP/Opp in red beat the lead back's; Next yr Car% shows whether he got more of the work the following season (his share of that team's RB carries over the whole season)."));
+    main.append(t.box, el("p", "note", "Every season he was on an offensive staff, in whatever job. Car% is coloured against every team-season since 2016. An RB2's FP/Opp in red beat the lead back's; Next yr Car% shows whether he got more of the work the following season (his share of that team's RB carries over the whole season)."));
   }
 
   // ---------- routing ----------

@@ -3642,15 +3642,37 @@ and committee seasons, RB target share, a Style tag — **Bell cow** when his le
 58%; a typical lead back takes 64%); **a coach's page** (`#coach/<name>`: every season with RB1 / RB2 and whether the RB2 got more work
 the next year).
 
-**Coordinators** (`tools/fb/build_staff.py`): each team-season's Wikipedia page read raw (`index.php?action=raw`, one request a second
-— the API and REST endpoints answer 429 from shared IPs), the Staff section's "Offensive coordinator –" lines (several = a change in the
-season), the infobox's `off_coach` as the fallback; "de facto" / none = the head coach called plays (`pc`). The season in progress lists
-no staff on its page — it transcludes `{{<Team> staff}}`, which the script then reads (so a mid-season firing shows only the new man).
-All 352 team-seasons 2016-26; 22 past ones have no coordinator listed (mostly Shanahan / McVay-style head coaches calling plays).
+**Coaching staffs** (`tools/fb/build_staff.py`; Sean, 13 Oct 2026: "For the play caller stuff do it based on who is on the offense / So if
+Mike LaFleur is on that team for his history include every team he coached on"): each team-season's Wikipedia page read raw
+(`index.php?action=raw`, one request a second — the API and REST endpoints answer 429 from shared IPs), cached in `.cache/fb/wiki/`
+(`--reparse` re-reads them all with no requests). From its **final staff** (`{{NFL final staff}}`'s Head Coaches + Offensive Coaches
+blocks — some pages spell the keys `head_coach =` / `offensive =` — or, for the season in progress, the club's `{{<Team> staff}}`
+template, `;Head coach(es)` or bold `Head coaches` up to the defensive coaches) every offensive coach as `[role, name]` (`off` in
+`staff.json`, `st` in `teams.js`; defensive / special-teams / strength assistants out, "Vacant" out), plus the coordinator (the Staff
+lines, else the infobox's `off_coach`; "de facto" / none = the head coach called plays, `pc`). Spellings folded to one per coach
+(`canon`: "T. J." = "T.J.", case), Jr. / Sr. kept apart (Tony Sparano and Tony Sparano Jr.). 822 coaches, all 352 team-seasons,
+a median 11 offensive coaches each; 23 past team-seasons name no coordinator. The head coach is the games list's (the one who coached
+the most games, so interims count), except in the season in progress, where nfldata still had last year's man (2026: Gannon, Morris,
+McDermott) — Wikipedia's wins when the games list's coach isn't on the staff (`team_seasons(…, current=)`); `HC_FIX` mends
+"Klint Kubliak". Every run of the workflow re-reads this season's staffs.
+
+**A coach's history** (`coachSeasons` in `fb.js`) is every team-season he was on the offensive staff, in any job: each job is sorted into
+HC / OC / PC (play-caller: the coordinator, or a head coach with none) / PGC / RGC / QB / RB / WR / TE / OL / Asst (`ROLE_CATS`). Coaches
+page: **Head coaches**, **Coordinators** (OC or play-caller) or **Every offensive coach** — the averages are over the seasons in the job
+picked, the Teams and Every job columns over his whole history, a Find a coach box. A coach's page: his stints (club, seasons, jobs —
+"ATL 2016 offensive assistant · SF 2017–20 pass game specialist / coordinator · NYJ 2021–22 OC · LA 2023–25 OC · ARI 2026 head coach" for
+Mike LaFleur), the averages over every season, and a season table with his job and that year's head coach. Staffs are the season's
+final staff, so a coach let go mid-season isn't listed that year (a head coach always is, from the games).
 
 **Updates**: `.github/workflows/football.yml` — Monday, Tuesday and Friday at 11:20 UTC September to mid-February (after Sunday, Monday
 night and Thursday night games; nflverse refreshes overnight), and by hand (Actions → Football update; `staff` input refreshes those
-seasons' coordinators, `dry` builds without publishing). It publishes like `cloud_daily.py`: the built `football/data/` kept aside, reset
+seasons' staffs on top of this season's, `dry` builds without publishing). It publishes like `cloud_daily.py`: the built `football/data/` kept aside, reset
 to main, put back, stamped, one plain commit on top of main, never a force-push. The baseball daily run doesn't touch `football/`. **A Mac
 publish that mirrors the whole deploy folder (if `tools/cloud.json` is ever set back to false) would drop `football/`, as with `xyz/`** —
 put it back from git history (the workflow only rewrites `football/data/` and the stamp).
+
+**Football to-dos** (Sean, 13 Oct 2026, parked until he says go):
+* *Staff history's niche logistics* ("we can figure out the more niche logistics there later"): weighting a season by his job
+  (play-caller vs position coach), mid-season firings and hirings (the final staff misses a fired coordinator — Greg Roman, Buffalo 2016),
+  who actually called plays when the title doesn't say, title changes within a season.
+* *A projection model* that would have seen Gibbs's big year, Bucky Irving, Chuba Hubbard, Christian Watson and Parker Washington coming.
