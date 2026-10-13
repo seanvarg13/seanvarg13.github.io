@@ -1,0 +1,1419 @@
+{
+"2016:ARI": {
+"hc": "Bruce Arians",
+"oc": "Harold Goodwin"
+},
+"2016:ATL": {
+"hc": "Dan Quinn",
+"oc": "Kyle Shanahan"
+},
+"2016:BAL": {
+"hc": "John Harbaugh",
+"oc": "Marc Trestman"
+},
+"2016:BUF": {
+"hc": "Rex Ryan",
+"oc": null
+},
+"2016:CAR": {
+"hc": "Ron Rivera",
+"oc": "Mike Shula"
+},
+"2016:CHI": {
+"hc": "John Fox",
+"oc": "Dowell Loggains"
+},
+"2016:CIN": {
+"hc": "Marvin Lewis",
+"oc": "Ken Zampese"
+},
+"2016:CLE": {
+"hc": "Hue Jackson",
+"oc": null
+},
+"2016:DAL": {
+"hc": "Jason Garrett",
+"oc": "Scott Linehan"
+},
+"2016:DEN": {
+"hc": "Gary KubiakJoe DeCamillis",
+"oc": "Rick Dennison"
+},
+"2016:DET": {
+"hc": "Jim Caldwell",
+"oc": "Jim Bob Cooter"
+},
+"2016:GB": {
+"hc": "Mike McCarthy",
+"oc": "Edgar Bennett"
+},
+"2016:HOU": {
+"hc": "Bill O'Brien",
+"oc": "George Godsey"
+},
+"2016:IND": {
+"hc": "Chuck Pagano",
+"oc": "Rob Chudzinski"
+},
+"2016:JAX": {
+"hc": "Gus Bradley",
+"oc": "Greg Olson"
+},
+"2016:KC": {
+"hc": "Andy Reid",
+"oc": "Brad Childress"
+},
+"2016:LA": {
+"hc": "Jeff Fisher",
+"oc": null
+},
+"2016:LAC": {
+"hc": null,
+"oc": "Ken Whisenhunt"
+},
+"2016:LV": {
+"hc": "Jack Del Rio",
+"oc": "Bill Musgrave"
+},
+"2016:MIA": {
+"hc": "Adam Gase",
+"oc": "Clyde Christensen"
+},
+"2016:MIN": {
+"hc": "Mike Zimmer Mike Priefer",
+"oc": null
+},
+"2016:NE": {
+"hc": "Bill Belichick",
+"oc": "Josh McDaniels"
+},
+"2016:NO": {
+"hc": "Sean Payton",
+"oc": "Pete Carmichael"
+},
+"2016:NYG": {
+"hc": "Ben McAdoo",
+"oc": "Mike Sullivan"
+},
+"2016:NYJ": {
+"hc": "Todd Bowles",
+"oc": "Chan Gailey"
+},
+"2016:PHI": {
+"hc": "Doug Pederson",
+"oc": "Frank Reich"
+},
+"2016:PIT": {
+"hc": "Mike Tomlin",
+"oc": "Todd Haley"
+},
+"2016:SEA": {
+"hc": "Pete Carroll",
+"oc": "Darrell Bevell"
+},
+"2016:SF": {
+"hc": "Chip Kelly",
+"oc": "Curtis Modkins"
+},
+"2016:TB": {
+"hc": "Dirk Koetter",
+"oc": "Todd Monken"
+},
+"2016:TEN": {
+"hc": "Mike Mularkey",
+"oc": "Terry Robiskie"
+},
+"2016:WAS": {
+"hc": "Jay Gruden",
+"oc": "Sean McVay"
+},
+"2017:ARI": {
+"hc": "Bruce Arians",
+"oc": "Harold Goodwin"
+},
+"2017:ATL": {
+"hc": "Dan Quinn",
+"oc": "Steve Sarkisian"
+},
+"2017:BAL": {
+"hc": "John Harbaugh",
+"oc": "Marty Mornhinweg"
+},
+"2017:BUF": {
+"hc": "Sean McDermott",
+"oc": "Rick Dennison"
+},
+"2017:CAR": {
+"hc": "Ron Rivera",
+"oc": "Mike Shula"
+},
+"2017:CHI": {
+"hc": "John Fox",
+"oc": "Dowell Loggains"
+},
+"2017:CIN": {
+"hc": "Marvin Lewis",
+"oc": "Ken Zampese"
+},
+"2017:CLE": {
+"hc": "Hue Jackson",
+"oc": null
+},
+"2017:DAL": {
+"hc": "Jason Garrett",
+"oc": "Scott Linehan"
+},
+"2017:DEN": {
+"hc": "Vance Joseph",
+"oc": "Mike McCoy"
+},
+"2017:DET": {
+"hc": "Jim Caldwell",
+"oc": "Jim Bob Cooter"
+},
+"2017:GB": {
+"hc": "Mike McCarthy",
+"oc": "Edgar Bennett"
+},
+"2017:HOU": {
+"hc": "Bill O'Brien",
+"oc": null
+},
+"2017:IND": {
+"hc": "Chuck Pagano",
+"oc": "Rob Chudzinski"
+},
+"2017:JAX": {
+"hc": "Doug Marrone",
+"oc": "Nathaniel Hackett"
+},
+"2017:KC": {
+"hc": "Andy Reid",
+"oc": "Matt Nagy"
+},
+"2017:LA": {
+"hc": "Sean McVay",
+"oc": "Matt LaFleur"
+},
+"2017:LAC": {
+"hc": "Anthony Lynn",
+"oc": "Ken Whisenhunt"
+},
+"2017:LV": {
+"hc": "Jack Del Rio",
+"oc": "Todd Downing"
+},
+"2017:MIA": {
+"hc": "Adam Gase",
+"oc": "Clyde Christensen"
+},
+"2017:MIN": {
+"hc": "Mike Zimmer",
+"oc": "Pat Shurmur"
+},
+"2017:NE": {
+"hc": "Bill Belichick",
+"oc": "Josh McDaniels"
+},
+"2017:NO": {
+"hc": "Sean Payton",
+"oc": "Pete Carmichael"
+},
+"2017:NYG": {
+"hc": "Ben McAdoo",
+"oc": "Mike Sullivan"
+},
+"2017:NYJ": {
+"hc": "Todd Bowles",
+"oc": "John Morton"
+},
+"2017:PHI": {
+"hc": "Doug Pederson",
+"oc": "Frank Reich"
+},
+"2017:PIT": {
+"hc": "Mike Tomlin",
+"oc": "Todd Haley"
+},
+"2017:SEA": {
+"hc": "Pete Carroll",
+"oc": "Darrell Bevell"
+},
+"2017:SF": {
+"hc": "Kyle Shanahan",
+"oc": null,
+"pc": "Kyle Shanahan"
+},
+"2017:TB": {
+"hc": "Dirk Koetter",
+"oc": "Todd Monken"
+},
+"2017:TEN": {
+"hc": "Mike Mularkey",
+"oc": "Terry Robiskie"
+},
+"2017:WAS": {
+"hc": "Jay Gruden",
+"oc": "Matt Cavanaugh"
+},
+"2018:ARI": {
+"hc": "Steve Wilks",
+"oc": "Mike McCoy"
+},
+"2018:ATL": {
+"hc": "Dan Quinn",
+"oc": "Steve Sarkisian"
+},
+"2018:BAL": {
+"hc": "John Harbaugh",
+"oc": "Marty Mornhinweg"
+},
+"2018:BUF": {
+"hc": "Sean McDermott",
+"oc": "Brian Daboll"
+},
+"2018:CAR": {
+"hc": "Ron Rivera",
+"oc": "Norv Turner"
+},
+"2018:CHI": {
+"hc": "Matt Nagy",
+"oc": "Mark Helfrich"
+},
+"2018:CIN": {
+"hc": "Marvin Lewis",
+"oc": "Bill Lazor"
+},
+"2018:CLE": {
+"hc": "Hue Jackson",
+"oc": "Todd Haley"
+},
+"2018:DAL": {
+"hc": "Jason Garrett",
+"oc": "Scott Linehan"
+},
+"2018:DEN": {
+"hc": "Vance Joseph",
+"oc": "Bill Musgrave"
+},
+"2018:DET": {
+"hc": "Matt Patricia",
+"oc": "Jim Bob Cooter"
+},
+"2018:GB": {
+"hc": "Mike McCarthy",
+"oc": null
+},
+"2018:HOU": {
+"hc": "Bill O'Brien",
+"oc": null
+},
+"2018:IND": {
+"hc": "Frank Reich",
+"oc": "Nick Sirianni"
+},
+"2018:JAX": {
+"hc": "Doug Marrone",
+"oc": "Nathaniel Hackett"
+},
+"2018:KC": {
+"hc": "Andy Reid",
+"oc": "Eric Bieniemy"
+},
+"2018:LA": {
+"hc": "Sean McVay",
+"oc": null,
+"pc": "Sean McVay"
+},
+"2018:LAC": {
+"hc": "Anthony Lynn",
+"oc": "Ken Whisenhunt"
+},
+"2018:LV": {
+"hc": "Jon Gruden",
+"oc": "Greg Olson"
+},
+"2018:MIA": {
+"hc": "Adam Gase",
+"oc": "Dowell Loggains"
+},
+"2018:MIN": {
+"hc": "Mike Zimmer",
+"oc": null
+},
+"2018:NE": {
+"hc": "Bill Belichick",
+"oc": "Josh McDaniels"
+},
+"2018:NO": {
+"hc": "Sean Payton",
+"oc": "Pete Carmichael"
+},
+"2018:NYG": {
+"hc": "Pat Shurmur",
+"oc": "Mike Shula"
+},
+"2018:NYJ": {
+"hc": "Todd Bowles",
+"oc": "Jeremy Bates"
+},
+"2018:PHI": {
+"hc": "Doug Pederson",
+"oc": "Mike Groh"
+},
+"2018:PIT": {
+"hc": "Mike Tomlin",
+"oc": "Randy Fichtner"
+},
+"2018:SEA": {
+"hc": "Pete Carroll",
+"oc": "Brian Schottenheimer"
+},
+"2018:SF": {
+"hc": "Kyle Shanahan",
+"oc": null,
+"pc": "Kyle Shanahan"
+},
+"2018:TB": {
+"hc": "Dirk Koetter",
+"oc": "Todd Monken"
+},
+"2018:TEN": {
+"hc": "Mike Vrabel",
+"oc": "Matt LaFleur"
+},
+"2018:WAS": {
+"hc": "Jay Gruden",
+"oc": "Matt Cavanaugh"
+},
+"2019:ARI": {
+"hc": "Kliff Kingsbury",
+"oc": null
+},
+"2019:ATL": {
+"hc": "Dan Quinn",
+"oc": "Dirk Koetter"
+},
+"2019:BAL": {
+"hc": "John Harbaugh",
+"oc": "Greg Roman"
+},
+"2019:BUF": {
+"hc": "Sean McDermott",
+"oc": "Brian Daboll"
+},
+"2019:CAR": {
+"hc": "Ron Rivera",
+"oc": null
+},
+"2019:CHI": {
+"hc": "Matt Nagy",
+"oc": "Mark Helfrich"
+},
+"2019:CIN": {
+"hc": "Zac Taylor",
+"oc": "Brian Callahan"
+},
+"2019:CLE": {
+"hc": "Freddie Kitchens",
+"oc": "Todd Monken"
+},
+"2019:DAL": {
+"hc": "Jason Garrett",
+"oc": "Kellen Moore"
+},
+"2019:DEN": {
+"hc": "Vic Fangio",
+"oc": "Rich Scangarello"
+},
+"2019:DET": {
+"hc": "Matt Patricia",
+"oc": "Darrell Bevell"
+},
+"2019:GB": {
+"hc": "Matt LaFleur",
+"oc": "Nathaniel Hackett"
+},
+"2019:HOU": {
+"hc": "Bill O'Brien",
+"oc": "Tim Kelly"
+},
+"2019:IND": {
+"hc": "Frank Reich",
+"oc": "Nick Sirianni"
+},
+"2019:JAX": {
+"hc": "Doug Marrone",
+"oc": "John DeFilippo"
+},
+"2019:KC": {
+"hc": "Andy Reid",
+"oc": "Eric Bieniemy"
+},
+"2019:LA": {
+"hc": "Sean McVay",
+"oc": null,
+"pc": "Sean McVay"
+},
+"2019:LAC": {
+"hc": "Anthony Lynn",
+"oc": null
+},
+"2019:LV": {
+"hc": "Jon Gruden",
+"oc": "Greg Olson"
+},
+"2019:MIA": {
+"hc": "Brian Flores",
+"oc": "Chad O'Shea"
+},
+"2019:MIN": {
+"hc": "Mike Zimmer",
+"oc": "Kevin Stefanski"
+},
+"2019:NE": {
+"hc": "Bill Belichick",
+"oc": "Josh McDaniels"
+},
+"2019:NO": {
+"hc": "Sean Payton",
+"oc": "Pete Carmichael"
+},
+"2019:NYG": {
+"hc": "Pat Shurmur",
+"oc": "Mike Shula"
+},
+"2019:NYJ": {
+"hc": "Adam Gase",
+"oc": "Dowell Loggains"
+},
+"2019:PHI": {
+"hc": "Doug Pederson",
+"oc": "Mike Groh"
+},
+"2019:PIT": {
+"hc": "Mike Tomlin",
+"oc": "Randy Fichtner"
+},
+"2019:SEA": {
+"hc": "Pete Carroll",
+"oc": "Brian Schottenheimer"
+},
+"2019:SF": {
+"hc": "Kyle Shanahan",
+"oc": null,
+"pc": "Kyle Shanahan"
+},
+"2019:TB": {
+"hc": "Bruce Arians",
+"oc": "Byron Leftwich"
+},
+"2019:TEN": {
+"hc": "Mike Vrabel",
+"oc": "Arthur Smith"
+},
+"2019:WAS": {
+"hc": "Jay Gruden",
+"oc": "Kevin O'Connell"
+},
+"2020:ARI": {
+"hc": "Kliff Kingsbury",
+"oc": null
+},
+"2020:ATL": {
+"hc": "Dan Quinn",
+"oc": "Dirk Koetter"
+},
+"2020:BAL": {
+"hc": "John Harbaugh",
+"oc": "Greg Roman"
+},
+"2020:BUF": {
+"hc": "Sean McDermott",
+"oc": "Brian Daboll"
+},
+"2020:CAR": {
+"hc": "Matt Rhule",
+"oc": "Joe Brady"
+},
+"2020:CHI": {
+"hc": "Matt Nagy",
+"oc": "Bill Lazor"
+},
+"2020:CIN": {
+"hc": "Zac Taylor",
+"oc": "Brian Callahan"
+},
+"2020:CLE": {
+"hc": "Kevin Stefanski",
+"oc": "Alex Van Pelt"
+},
+"2020:DAL": {
+"hc": "Mike McCarthy",
+"oc": "Kellen Moore"
+},
+"2020:DEN": {
+"hc": "Vic Fangio",
+"oc": "Pat Shurmur"
+},
+"2020:DET": {
+"hc": "Matt Patricia",
+"oc": null
+},
+"2020:GB": {
+"hc": "Matt LaFleur",
+"oc": "Nathaniel Hackett"
+},
+"2020:HOU": {
+"hc": "Bill O'Brien",
+"oc": "Tim Kelly"
+},
+"2020:IND": {
+"hc": "Frank Reich",
+"oc": "Nick Sirianni"
+},
+"2020:JAX": {
+"hc": "Doug Marrone",
+"oc": "Jay Gruden"
+},
+"2020:KC": {
+"hc": "Andy Reid",
+"oc": "Eric Bieniemy"
+},
+"2020:LA": {
+"hc": "Sean McVay",
+"oc": "Kevin O'Connell"
+},
+"2020:LAC": {
+"hc": "Anthony Lynn",
+"oc": "Shane Steichen"
+},
+"2020:LV": {
+"hc": "Jon Gruden",
+"oc": "Greg Olson"
+},
+"2020:MIA": {
+"hc": "Brian Flores",
+"oc": "Chan Gailey"
+},
+"2020:MIN": {
+"hc": "Mike Zimmer",
+"oc": null
+},
+"2020:NE": {
+"hc": "Bill Belichick",
+"oc": "Josh McDaniels"
+},
+"2020:NO": {
+"hc": "Sean Payton",
+"oc": "Pete Carmichael"
+},
+"2020:NYG": {
+"hc": "Joe Judge",
+"oc": "Jason Garrett"
+},
+"2020:NYJ": {
+"hc": "Adam Gase",
+"oc": "Dowell Loggains"
+},
+"2020:PHI": {
+"hc": "Doug Pederson",
+"oc": null
+},
+"2020:PIT": {
+"hc": "Mike Tomlin",
+"oc": "Randy Fichtner"
+},
+"2020:SEA": {
+"hc": "Pete Carroll",
+"oc": "Brian Schottenheimer"
+},
+"2020:SF": {
+"hc": "Kyle Shanahan",
+"oc": null,
+"pc": "Kyle Shanahan"
+},
+"2020:TB": {
+"hc": "Bruce Arians",
+"oc": "Byron Leftwich"
+},
+"2020:TEN": {
+"hc": "Mike Vrabel",
+"oc": "Arthur Smith"
+},
+"2020:WAS": {
+"hc": "Ron Rivera",
+"oc": "Scott Turner"
+},
+"2021:ARI": {
+"hc": "Kliff Kingsbury",
+"oc": "| def_coach = Vance Joseph"
+},
+"2021:ATL": {
+"hc": "Arthur Smith",
+"oc": "Dave Ragone"
+},
+"2021:BAL": {
+"hc": "John Harbaugh",
+"oc": "Greg Roman"
+},
+"2021:BUF": {
+"hc": "Sean McDermott",
+"oc": "Brian Daboll"
+},
+"2021:CAR": {
+"hc": "Matt Rhule",
+"oc": "Joe Brady"
+},
+"2021:CHI": {
+"hc": "Matt NagyChris Tabor",
+"oc": "Bill Lazor"
+},
+"2021:CIN": {
+"hc": "Zac Taylor",
+"oc": "Brian Callahan"
+},
+"2021:CLE": {
+"hc": "Kevin Stefanski",
+"oc": "Alex Van Pelt"
+},
+"2021:DAL": {
+"hc": "Mike McCarthy",
+"oc": "Kellen Moore"
+},
+"2021:DEN": {
+"hc": "Vic Fangio",
+"oc": "Pat Shurmur"
+},
+"2021:DET": {
+"hc": "Dan Campbell",
+"oc": "Anthony Lynn"
+},
+"2021:GB": {
+"hc": "Matt LaFleur",
+"oc": "Nathaniel Hackett"
+},
+"2021:HOU": {
+"hc": "David Culley",
+"oc": "Tim Kelly"
+},
+"2021:IND": {
+"hc": "Frank Reich",
+"oc": "Marcus Brady"
+},
+"2021:JAX": {
+"hc": "Urban Meyer",
+"oc": "Brian Schottenheimer"
+},
+"2021:KC": {
+"hc": "Andy Reid",
+"oc": "Eric Bieniemy"
+},
+"2021:LA": {
+"hc": "Sean McVay",
+"oc": "Kevin O'Connell"
+},
+"2021:LAC": {
+"hc": "Brandon Staley",
+"oc": "Joe Lombardi"
+},
+"2021:LV": {
+"hc": "Jon Gruden",
+"oc": "Greg Olson"
+},
+"2021:MIA": {
+"hc": "Brian Flores",
+"oc": null
+},
+"2021:MIN": {
+"hc": "Mike Zimmer",
+"oc": "Klint Kubiak"
+},
+"2021:NE": {
+"hc": "Bill Belichick",
+"oc": "Josh McDaniels"
+},
+"2021:NO": {
+"hc": "Sean Payton",
+"oc": "Pete Carmichael"
+},
+"2021:NYG": {
+"hc": "Joe Judge",
+"oc": "Jason Garrett"
+},
+"2021:NYJ": {
+"hc": "Robert Saleh",
+"oc": "Mike LaFleur"
+},
+"2021:PHI": {
+"hc": "Nick Sirianni",
+"oc": "Shane Steichen"
+},
+"2021:PIT": {
+"hc": "Mike Tomlin",
+"oc": "Matt Canada"
+},
+"2021:SEA": {
+"hc": "Pete Carroll",
+"oc": "Shane Waldron"
+},
+"2021:SF": {
+"hc": "Kyle Shanahan",
+"oc": "Mike McDaniel"
+},
+"2021:TB": {
+"hc": "Bruce Arians",
+"oc": "Byron Leftwich"
+},
+"2021:TEN": {
+"hc": "Mike Vrabel",
+"oc": "Todd Downing"
+},
+"2021:WAS": {
+"hc": "Ron Rivera",
+"oc": "Scott Turner"
+},
+"2022:ARI": {
+"hc": "Kliff Kingsbury",
+"oc": null
+},
+"2022:ATL": {
+"hc": "Arthur Smith",
+"oc": "Dave Ragone"
+},
+"2022:BAL": {
+"hc": "John Harbaugh",
+"oc": "Greg Roman"
+},
+"2022:BUF": {
+"hc": "Sean McDermott",
+"oc": "Ken Dorsey"
+},
+"2022:CAR": {
+"hc": "Matt Rhule",
+"oc": "Ben McAdoo"
+},
+"2022:CHI": {
+"hc": "Matt Eberflus",
+"oc": "Luke Getsy"
+},
+"2022:CIN": {
+"hc": "Zac Taylor",
+"oc": "Brian Callahan"
+},
+"2022:CLE": {
+"hc": "Kevin Stefanski",
+"oc": "Alex Van Pelt"
+},
+"2022:DAL": {
+"hc": "Mike McCarthy",
+"oc": "Kellen Moore"
+},
+"2022:DEN": {
+"hc": "Nathaniel Hackett",
+"oc": "Justin Outten"
+},
+"2022:DET": {
+"hc": "Dan Campbell",
+"oc": "Ben Johnson"
+},
+"2022:GB": {
+"hc": "Matt LaFleur",
+"oc": "Adam Stenavich"
+},
+"2022:HOU": {
+"hc": "Lovie Smith",
+"oc": "Pep Hamilton"
+},
+"2022:IND": {
+"hc": "Frank Reich",
+"oc": null
+},
+"2022:JAX": {
+"hc": "Doug Pederson",
+"oc": "Press Taylor"
+},
+"2022:KC": {
+"hc": "Andy Reid",
+"oc": "Eric Bieniemy"
+},
+"2022:LA": {
+"hc": "Sean McVay",
+"oc": "Liam Coen"
+},
+"2022:LAC": {
+"hc": "Brandon Staley",
+"oc": "Joe Lombardi"
+},
+"2022:LV": {
+"hc": "Josh McDaniels",
+"oc": "Mick Lombardi"
+},
+"2022:MIA": {
+"hc": "Mike McDaniel",
+"oc": "Frank Smith"
+},
+"2022:MIN": {
+"hc": "Kevin O'Connell",
+"oc": "Wes Phillips"
+},
+"2022:NE": {
+"hc": "Bill Belichick",
+"oc": null
+},
+"2022:NO": {
+"hc": "Dennis Allen",
+"oc": "Pete Carmichael"
+},
+"2022:NYG": {
+"hc": "Brian Daboll",
+"oc": "Mike Kafka"
+},
+"2022:NYJ": {
+"hc": "Robert Saleh",
+"oc": "Mike LaFleur"
+},
+"2022:PHI": {
+"hc": "Nick Sirianni",
+"oc": "Shane Steichen"
+},
+"2022:PIT": {
+"hc": "Mike Tomlin",
+"oc": "Matt Canada"
+},
+"2022:SEA": {
+"hc": "Pete Carroll",
+"oc": "Shane Waldron"
+},
+"2022:SF": {
+"hc": "Kyle Shanahan",
+"oc": null,
+"pc": "Kyle Shanahan"
+},
+"2022:TB": {
+"hc": "Todd Bowles",
+"oc": "Byron Leftwich"
+},
+"2022:TEN": {
+"hc": "Mike Vrabel",
+"oc": "Todd Downing"
+},
+"2022:WAS": {
+"hc": "Ron Rivera",
+"oc": "Scott Turner"
+},
+"2023:ARI": {
+"hc": "Jonathan Gannon",
+"oc": "Drew Petzing"
+},
+"2023:ATL": {
+"hc": "Arthur Smith",
+"oc": "Dave Ragone"
+},
+"2023:BAL": {
+"hc": "John Harbaugh",
+"oc": "Todd Monken"
+},
+"2023:BUF": {
+"hc": "Sean McDermott",
+"oc": "Ken Dorsey; fired after Week 10"
+},
+"2023:CAR": {
+"hc": "Frank Reich",
+"oc": "Thomas Brown"
+},
+"2023:CHI": {
+"hc": "Matt Eberflus",
+"oc": "Luke Getsy"
+},
+"2023:CIN": {
+"hc": "Zac Taylor",
+"oc": "Brian Callahan"
+},
+"2023:CLE": {
+"hc": "Kevin Stefanski",
+"oc": "Alex Van Pelt"
+},
+"2023:DAL": {
+"hc": "Mike McCarthy",
+"oc": "Brian Schottenheimer"
+},
+"2023:DEN": {
+"hc": "Sean Payton",
+"oc": "Joe Lombardi"
+},
+"2023:DET": {
+"hc": "Dan Campbell",
+"oc": "Ben Johnson"
+},
+"2023:GB": {
+"hc": "Matt LaFleur",
+"oc": "Adam Stenavich"
+},
+"2023:HOU": {
+"hc": "DeMeco Ryans",
+"oc": "Bobby Slowik"
+},
+"2023:IND": {
+"hc": "Shane Steichen",
+"oc": "Jim Bob Cooter"
+},
+"2023:JAX": {
+"hc": "Doug Pederson",
+"oc": "Press Taylor"
+},
+"2023:KC": {
+"hc": "Andy Reid",
+"oc": "Matt Nagy"
+},
+"2023:LA": {
+"hc": "Sean McVay",
+"oc": "Mike LaFleur"
+},
+"2023:LAC": {
+"hc": "Brandon Staley",
+"oc": "Kellen Moore"
+},
+"2023:LV": {
+"hc": "Josh McDaniels",
+"oc": "Mick Lombardi; fired on October 31"
+},
+"2023:MIA": {
+"hc": "Mike McDaniel",
+"oc": "Frank Smith"
+},
+"2023:MIN": {
+"hc": "Kevin O'Connell",
+"oc": "Wes Phillips"
+},
+"2023:NE": {
+"hc": "Bill Belichick",
+"oc": "Bill O'Brien"
+},
+"2023:NO": {
+"hc": "Dennis Allen",
+"oc": "Pete Carmichael"
+},
+"2023:NYG": {
+"hc": "Brian Daboll",
+"oc": "Mike Kafka"
+},
+"2023:NYJ": {
+"hc": "Robert Saleh",
+"oc": "Nathaniel Hackett"
+},
+"2023:PHI": {
+"hc": "Nick Sirianni",
+"oc": "Brian Johnson"
+},
+"2023:PIT": {
+"hc": "Mike Tomlin",
+"oc": "Matt Canada; fired after Week 11"
+},
+"2023:SEA": {
+"hc": "Pete Carroll",
+"oc": "Shane Waldron"
+},
+"2023:SF": {
+"hc": "Kyle Shanahan",
+"oc": null,
+"pc": "Kyle Shanahan"
+},
+"2023:TB": {
+"hc": "Todd Bowles",
+"oc": "Dave Canales"
+},
+"2023:TEN": {
+"hc": "Mike Vrabel",
+"oc": "Tim Kelly"
+},
+"2023:WAS": {
+"hc": "Ron Rivera",
+"oc": "Eric Bieniemy"
+},
+"2024:ARI": {
+"hc": "Jonathan Gannon",
+"oc": "Drew Petzing"
+},
+"2024:ATL": {
+"hc": "Raheem Morris",
+"oc": "Zac Robinson"
+},
+"2024:BAL": {
+"hc": "John Harbaugh",
+"oc": "Todd Monken"
+},
+"2024:BUF": {
+"hc": "Sean McDermott",
+"oc": "Joe Brady"
+},
+"2024:CAR": {
+"hc": "Dave Canales",
+"oc": "Brad Idzik"
+},
+"2024:CHI": {
+"hc": "Matt Eberflus",
+"oc": "Shane Waldron"
+},
+"2024:CIN": {
+"hc": "Zac Taylor",
+"oc": "Dan Pitcher"
+},
+"2024:CLE": {
+"hc": "Kevin Stefanski",
+"oc": "Ken Dorsey"
+},
+"2024:DAL": {
+"hc": "Mike McCarthy",
+"oc": "Brian Schottenheimer"
+},
+"2024:DEN": {
+"hc": "Sean Payton",
+"oc": "Joe Lombardi"
+},
+"2024:DET": {
+"hc": "Dan Campbell",
+"oc": "Ben Johnson"
+},
+"2024:GB": {
+"hc": "Matt LaFleur",
+"oc": "Adam Stenavich"
+},
+"2024:HOU": {
+"hc": "DeMeco Ryans",
+"oc": "Bobby Slowik"
+},
+"2024:IND": {
+"hc": "Shane Steichen",
+"oc": "Jim Bob Cooter"
+},
+"2024:JAX": {
+"hc": "Doug Pederson",
+"oc": "Press Taylor"
+},
+"2024:KC": {
+"hc": "Andy Reid",
+"oc": "Matt Nagy"
+},
+"2024:LA": {
+"hc": "Sean McVay",
+"oc": "Mike LaFleur"
+},
+"2024:LAC": {
+"hc": "Jim Harbaugh",
+"oc": "Greg Roman"
+},
+"2024:LV": {
+"hc": "Antonio Pierce",
+"oc": "Luke Getsy"
+},
+"2024:MIA": {
+"hc": "Mike McDaniel",
+"oc": "Frank Smith"
+},
+"2024:MIN": {
+"hc": "Kevin O'Connell",
+"oc": "Wes Phillips"
+},
+"2024:NE": {
+"hc": "Jerod Mayo",
+"oc": "Alex Van Pelt"
+},
+"2024:NO": {
+"hc": "Dennis Allen",
+"oc": "Klint Kubiak"
+},
+"2024:NYG": {
+"hc": "Brian Daboll",
+"oc": null
+},
+"2024:NYJ": {
+"hc": "Robert Saleh",
+"oc": "Nathaniel Hackett"
+},
+"2024:PHI": {
+"hc": "Nick Sirianni",
+"oc": "Kellen Moore"
+},
+"2024:PIT": {
+"hc": "Mike Tomlin",
+"oc": "Arthur Smith"
+},
+"2024:SEA": {
+"hc": "Mike Macdonald",
+"oc": "Ryan Grubb"
+},
+"2024:SF": {
+"hc": "Kyle Shanahan",
+"oc": null,
+"pc": "Kyle Shanahan"
+},
+"2024:TB": {
+"hc": "Todd Bowles",
+"oc": "Liam Coen"
+},
+"2024:TEN": {
+"hc": "Brian Callahan",
+"oc": "Nick Holz"
+},
+"2024:WAS": {
+"hc": "Dan Quinn",
+"oc": "Kliff Kingsbury"
+},
+"2025:ARI": {
+"hc": "Jonathan Gannon",
+"oc": "Drew Petzing"
+},
+"2025:ATL": {
+"hc": "Raheem Morris",
+"oc": "Zac Robinson"
+},
+"2025:BAL": {
+"hc": "John Harbaugh",
+"oc": "Todd Monken"
+},
+"2025:BUF": {
+"hc": "Sean McDermott",
+"oc": "Joe Brady"
+},
+"2025:CAR": {
+"hc": "Dave Canales",
+"oc": "Brad Idzik"
+},
+"2025:CHI": {
+"hc": "Ben Johnson",
+"oc": "Declan Doyle"
+},
+"2025:CIN": {
+"hc": "Zac Taylor",
+"oc": "Dan Pitcher"
+},
+"2025:CLE": {
+"hc": "Kevin Stefanski",
+"oc": "Tommy Rees"
+},
+"2025:DAL": {
+"hc": "Brian Schottenheimer",
+"oc": "Klayton Adams"
+},
+"2025:DEN": {
+"hc": "Sean Payton",
+"oc": "Joe Lombardi"
+},
+"2025:DET": {
+"hc": "Dan Campbell",
+"oc": "John Morton"
+},
+"2025:GB": {
+"hc": "Matt LaFleur",
+"oc": "Adam Stenavich"
+},
+"2025:HOU": {
+"hc": "DeMeco Ryans",
+"oc": "Nick Caley"
+},
+"2025:IND": {
+"hc": "Shane Steichen",
+"oc": "Jim Bob Cooter"
+},
+"2025:JAX": {
+"hc": "Liam Coen",
+"oc": "Grant Udinski"
+},
+"2025:KC": {
+"hc": "Andy Reid",
+"oc": "Matt Nagy"
+},
+"2025:LA": {
+"hc": "Sean McVay",
+"oc": "Mike LaFleur"
+},
+"2025:LAC": {
+"hc": "Jim Harbaugh",
+"oc": "Greg Roman"
+},
+"2025:LV": {
+"hc": "Pete Carroll",
+"oc": null
+},
+"2025:MIA": {
+"hc": "Mike McDaniel",
+"oc": "Frank Smith"
+},
+"2025:MIN": {
+"hc": "Kevin O'Connell",
+"oc": "Wes Phillips"
+},
+"2025:NE": {
+"hc": "Mike Vrabel",
+"oc": "Josh McDaniels"
+},
+"2025:NO": {
+"hc": "Kellen Moore",
+"oc": "Doug Nussmeier"
+},
+"2025:NYG": {
+"hc": "Brian Daboll",
+"oc": "Tim Kelly"
+},
+"2025:NYJ": {
+"hc": "Aaron Glenn",
+"oc": "Tanner Engstrand"
+},
+"2025:PHI": {
+"hc": "Nick Sirianni",
+"oc": "Kevin Patullo"
+},
+"2025:PIT": {
+"hc": "Mike Tomlin",
+"oc": "Arthur Smith"
+},
+"2025:SEA": {
+"hc": "Mike Macdonald",
+"oc": "Klint Kubiak"
+},
+"2025:SF": {
+"hc": "Kyle Shanahan",
+"oc": "Klay Kubiak"
+},
+"2025:TB": {
+"hc": "Todd Bowles",
+"oc": "Josh Grizzard"
+},
+"2025:TEN": {
+"hc": "Brian Callahan",
+"oc": "Nick Holz"
+},
+"2025:WAS": {
+"hc": "Dan Quinn",
+"oc": "Kliff Kingsbury"
+},
+"2026:ARI": {
+"hc": "Mike LaFleur",
+"oc": "Nathaniel Hackett"
+},
+"2026:ATL": {
+"hc": "Kevin Stefanski",
+"oc": "Tommy Rees"
+},
+"2026:BAL": {
+"hc": "Jesse Minter",
+"oc": "Declan Doyle"
+},
+"2026:BUF": {
+"hc": "Joe Brady",
+"oc": "Pete Carmichael"
+},
+"2026:CAR": {
+"hc": "Dave Canales",
+"oc": "Brad Idzik"
+},
+"2026:CHI": {
+"hc": "Ben Johnson",
+"oc": "Press Taylor"
+},
+"2026:CIN": {
+"hc": "Zac Taylor",
+"oc": "Dan Pitcher"
+},
+"2026:CLE": {
+"hc": "Todd Monken",
+"oc": "Travis Switzer"
+},
+"2026:DAL": {
+"hc": "Brian Schottenheimer",
+"oc": "Klayton Adams"
+},
+"2026:DEN": {
+"hc": "Sean Payton",
+"oc": "Davis Webb"
+},
+"2026:DET": {
+"hc": "Dan Campbell",
+"oc": "Drew Petzing"
+},
+"2026:GB": {
+"hc": "Matt LaFleur",
+"oc": "Adam Stenavich"
+},
+"2026:HOU": {
+"hc": "DeMeco Ryans",
+"oc": "Nick Caley"
+},
+"2026:IND": {
+"hc": "Shane Steichen",
+"oc": "Jim Bob Cooter"
+},
+"2026:JAX": {
+"hc": "Liam Coen",
+"oc": "Grant Udinski"
+},
+"2026:KC": {
+"hc": "Andy Reid",
+"oc": "Eric Bieniemy"
+},
+"2026:LA": {
+"hc": "Sean McVay",
+"oc": "Nathan Scheelhaase"
+},
+"2026:LAC": {
+"hc": "Jim Harbaugh",
+"oc": "Mike McDaniel"
+},
+"2026:LV": {
+"hc": "Klint Kubiak",
+"oc": "Andrew Janocko"
+},
+"2026:MIA": {
+"hc": "Jeff Hafley",
+"oc": "Bobby Slowik"
+},
+"2026:MIN": {
+"hc": "Kevin O'Connell",
+"oc": "Wes Phillips"
+},
+"2026:NE": {
+"hc": "Mike Vrabel",
+"oc": "Josh McDaniels"
+},
+"2026:NO": {
+"hc": "Kellen Moore",
+"oc": "Doug Nussmeier"
+},
+"2026:NYG": {
+"hc": "John Harbaugh",
+"oc": "Matt Nagy"
+},
+"2026:NYJ": {
+"hc": "Aaron Glenn",
+"oc": "Frank Reich"
+},
+"2026:PHI": {
+"hc": "Nick Sirianni",
+"oc": "Sean Mannion"
+},
+"2026:PIT": {
+"hc": "Mike McCarthy",
+"oc": "Brian Angelichio"
+},
+"2026:SEA": {
+"hc": "Mike Macdonald",
+"oc": "Brian Fleury"
+},
+"2026:SF": {
+"hc": "Kyle Shanahan",
+"oc": "Klay Kubiak"
+},
+"2026:TB": {
+"hc": "Todd Bowles",
+"oc": "Zac Robinson"
+},
+"2026:TEN": {
+"hc": "Robert Saleh",
+"oc": "Brian Daboll"
+},
+"2026:WAS": {
+"hc": "Dan Quinn",
+"oc": "David Blough"
+}
+}
