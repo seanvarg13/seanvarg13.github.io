@@ -5455,7 +5455,18 @@ header.top .wordmark { display: none; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root #xboard .pbil { font-size: 13.5px; }
 /* the popup's × on its own strip across the bar's top (Sean, 13 Oct 2026: "shift all of it down to make room for the x"): the headshot, name, bio and
    Filters / Raw keep the same places relative to each other as on the full page; the bar is taller by the ×'s height and a gap */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard.xpop .pgbar.pgbar3.xbar { padding-top: 52px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar.pgbar3.xbar { padding-top: 52px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard.xpop .pgbar.xbar > .xpopx { position: absolute; top: 10px; margin: 0 !important; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard.xpop .pgbar.pgbar3.xbar { padding-top: 44px; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar.pgbar3.xbar { padding-top: 44px; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard.xpop .pgbar.xbar > .xpopx { top: 8px; }
+
+/* the filter chips on the top strip (Sean, 13 Oct 2026: "make it go on the same row as the X. And even in cases where there is no X have it do the
+   same thing"): right-aligned, left of the × in the popup, at the strip's right on the full page, centred on the ×'s line; the strip holds them
+   on one line and a long set slides sideways rather than wrapping into the headshot */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar.xbar > .pgchips { position: absolute; top: 10px; height: 34px; margin: 0 !important; max-width: none; display: flex; flex-wrap: nowrap; justify-content: flex-start; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar.xbar > .pgchips::-webkit-scrollbar { display: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar.xbar > .pgchips .fchip { flex: none; display: inline-flex; align-items: center; gap: 2px; height: 26px; padding: 0 2px 0 8px; background: #ffffff; color: var(--ink); border: 1px solid rgba(255,255,255,.85); border-radius: 0; font-size: 13px; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar.xbar > .pgchips .fchipx { border: 0; background: none; color: var(--ink-2); font-size: 15px; line-height: 1; padding: 0 5px; cursor: pointer; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar.xbar > .pgchips { top: 8px; height: 30px; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar.xbar > .pgchips .fchip { height: 24px; font-size: 12.5px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar.xbar > .pgchips > :first-child { margin-left: auto; }

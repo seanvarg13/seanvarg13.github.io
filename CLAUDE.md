@@ -3661,6 +3661,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     `sbPoolP` reads nERA from `hist/career-bb.js`'s `pp`, negated, and caches per season and per whether that file is in yet. `SB_HEAT_P` is
     K-BB% and nERA; `SB_LO_P` turns nERA over.
 
+* **The filter chips on the ×'s row (Sean, 13 Oct 2026, Baty's popup with "last 100 PA ×" under his bio: "make it go on the same row as the X. And
+  even in cases where there is no X have it do the same thing")**: `pageHead` puts `viewChips` (class `pgchips`) straight in the sticky bar and gives
+  the bar the `xbar` strip; `bleedBar` places them at the strip's right, left of the × in the popup (`right` = the bar's right padding + the ×'s
+  width + 10px), at the right edge on the full page. One line, centred on the ×'s line, sliding sideways if a set is too long. The headshot, name,
+  bio and Filters / Raw keep their places: in the popup nothing moves when a chip appears; on the full page the bar grows the same strip (36px on a
+  phone, 42 on a desktop) only while a filter is on. Back stays at the bio line's right.
 * **The pre-Verdana table font, on trial (Sean, 13 Oct 2026: "can you try that old font style as of oct 9 I may want to reverse it so be prepared")**:
   the "Baseball-Reference's table dimensions" block of 9 Oct (11px Verdana, 23px rows, 3px padding on every B-Ref table and the Leaderboard's
   rows / column names) is out of `styles.css`; the tables are back in the site's own type and sizes (Source Sans 3 / the condensed face, ~28-30px
