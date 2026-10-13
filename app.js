@@ -4177,7 +4177,9 @@
       if (nav && lb && !nav.querySelector('a[data-mode="pitches"]')) {
         const a = el("a", null, "Pitching+"); a.href = "#pitches"; a.dataset.mode = "pitches"; a.title = "Every pitcher's pitches graded";
         lb.after(a); if (fan) a.after(fan);
-      } }
+      }
+      // the football site (Sean, 13 Oct 2026) lives at /football/, its own page with a Baseball link back
+      if (nav && !nav.querySelector("a.fblink")) { const f = el("a", "fblink", "Football"); f.href = "football/"; f.title = "The fantasy football site"; (fan || nav.lastElementChild).after(f); } }
     // League Trends, Call-up Watch and Compare left the menus (Sean, 6 Oct 2026: "eliminate the league trends, call up watch and compare");
     // their renderers stay below, and #trends / #callups / #compare land on home
     // Compare lives in this menu, not the header (minimal pass 5, Sean, 30 Sep 2026): Home · Fantasy · Leaderboards · More

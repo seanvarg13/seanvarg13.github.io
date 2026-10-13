@@ -3589,3 +3589,68 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   wOBA. xwOBA itself is unchanged; taking intentional walks out of its walk piece was the other option, not taken. Every piece's name in the
   Expected vs actual table now opens its note on a tap, as the build-ups' steps do (`noteTd`, `.knotebtn` / `tr.knote`). The note's text is
   pinned to the visible width, since the table scrolls sideways on a phone.
+
+---
+
+## 10. The football site — seanvarg13.github.io/football/
+
+Sean, 13 Oct 2026: "I'd be curious what a fantasy football website in the exact same nature of this site would look like", then
+"Could we also do coaching staff history stuff ... cases like Chuba Hubbard this year, Bucky Irving where ppl thought they'd be in
+committees but they in fact were not plus cases like Jaylen Warren at rb with points per touch reviving usage and also how coaches
+utilize RBs in the pass game and historically feed their bell cow or rb1 or if it's truly a 1a / Let's make this happen". A site of
+its own in `football/`, same dress as the baseball site (the light-blue band with the red stripe, B-Ref tables, Savant percentile bars,
+boxy buttons, Barlow Condensed + Source Sans 3), PPR scoring throughout. The baseball header carries a **Football** link
+(`a.fblink`, made in `pitchBoardEl`); the football header has **Baseball** back.
+
+**Files**: `football/index.html` (stamped by `tools/fb/publish_fb.py`: `?v=` = sha1 of every loaded file and `data/*.js`),
+`football/fb.js` (one IIFE, no framework — the baseball site's habits), `football/fb.css`, and generated `football/data/`:
+`fb-<season>.js` (`window.FB[y] = {meta, players}`, a player's weekly rows named by `meta.wfields` — append only),
+`index.js` (`FB_INDEX`: name, position, seasons, bio, headshot, draft), `teams.js` (`FB_TEAMS`: every team-season's coaches and RB
+usage), `career.js` (`FB_CAREER`: season lines + position ranks, loaded with a player page), `staff.json` (coordinators).
+
+**Data** (`tools/fb/build_fb.py --cache .cache/fb --out football/data --seasons 2016-2026 --current 2026`, ~7 min, everything anonymous
+from nflverse's GitHub releases): play-by-play 2016 on, participation (who was on the field — a route = a dropback he was out for;
+the season in progress has no participation yet, so its routes are snap share × team dropbacks, `meta.estRoutes`), snap counts
+(PFR ids mapped through `players.parquet`), Next Gen rushing (RYOE), `players.parquet` for bios / headshots, nfldata's `games.csv`
+for the head coach game by game (OAK / SD / STL read as LV / LAC / LA). PPR points per player-week: catches, yards / 10, TDs, passing
+(yards / 25, 4 a TD, −2 an INT — for anyone who threw), −2 a lost fumble on an offensive snap, +2 a two-point conversion, kneel-down
+yards, and 6 for any touchdown he scored on a kickoff or punt — 2025 against nflverse's `fantasy_points_ppr`: 87% to the tenth,
+mean gap 0.12 points a season, none over 3.5 (what's left: a few laterals and odd plays). A week with points but no offensive snap
+(a kick-return touchdown) gets its own row.
+
+**xFP** (expected PPR points): two `HistGradientBoostingRegressor`s price every target (air yards, yard line, down, distance, pass
+location, shotgun, position, a flag when air yards are missing) and every carry (yard line, down, distance, run location / gap,
+shotgun, position, scramble) by what a play like it scores, and two more give the touchdown chance alone (xTD), fitted
+leave-one-season-out on every finished season and anchored so each season's xFP sums to its real points. A player's xFP / game,
+FPOE / game (points over expected), TDOE.
+
+**Pages** (hash routes): **Leaders** (`#leaders`, WR / TE / RB / QB, any season, B-Ref table with Basic / Usage / Efficiency / Fantasy
+groups — Route%, TPRR, target and air-yard share, aDOT, WOPR, red-zone targets, YPRR, CROE, YACOE, carry share, snap share, opportunities
+/ game, goal-line carries, RYOE, FP / opportunity, EPA / dropback, CPOE … — the sorted column heat-filled, a Qualified avg row;
+qualifying: WR / TE 200 routes or 40 targets, RB 90 carries + targets, QB 200 dropbacks, scaled by weeks played in a season in
+progress); **a player's page** (`#player/<gsis id>`: the band with bio and FP / G · xFP / G · FPOE / G chips, Savant bars by section
+against his position's qualifiers, an **xFP build-up** tab — the league's per-game xFP with his routes, targets per route, xFP per
+target and rushing xFP swapped in one at a time, marked yellow at his xFP / G, then TD luck and the rest to his FP / G, plus a "where
+the gap comes from" table — a **Game log** tab, a **Backfield** tab for RBs, and a season-by-season table with **each season's head
+coach and offensive coordinator**, linked); **Backfields** (`#backfields`: every team's lead-back carry / opportunity / snap / goal-line
+share **in the games the lead back played**, so an injury doesn't read as a committee, RB2, effective backs used = 1 / Σ share², RB share
+of targets, FP per opportunity for RB1 and RB2 — RB2 in red when he out-produced the lead back per touch, the Jaylen Warren case);
+**a team's backfield** (`#team/<TM>/<season>`: week-by-week carry-split bars and each back's snap% / carries / targets / FP);
+**Coaches** (`#coaches`, head coaches or coordinators, min seasons: lead-back shares averaged over the seasons he held the job, bell-cow
+and committee seasons, RB target share, a Style tag — **Bell cow** when his lead backs averaged 68%+ of RB carries in their games,
+**Committee** under 60%, a lead back with a change of pace between; cut at the league's thirds of coaches 2016-25, single seasons 72% /
+58%; a typical lead back takes 64%); **a coach's page** (`#coach/<name>`: every season with RB1 / RB2 and whether the RB2 got more work
+the next year).
+
+**Coordinators** (`tools/fb/build_staff.py`): each team-season's Wikipedia page read raw (`index.php?action=raw`, one request a second
+— the API and REST endpoints answer 429 from shared IPs), the Staff section's "Offensive coordinator –" lines (several = a change in the
+season), the infobox's `off_coach` as the fallback; "de facto" / none = the head coach called plays (`pc`). The season in progress lists
+no staff on its page — it transcludes `{{<Team> staff}}`, which the script then reads (so a mid-season firing shows only the new man).
+All 352 team-seasons 2016-26; 22 past ones have no coordinator listed (mostly Shanahan / McVay-style head coaches calling plays).
+
+**Updates**: `.github/workflows/football.yml` — Monday, Tuesday and Friday at 11:20 UTC September to mid-February (after Sunday, Monday
+night and Thursday night games; nflverse refreshes overnight), and by hand (Actions → Football update; `staff` input refreshes those
+seasons' coordinators, `dry` builds without publishing). It publishes like `cloud_daily.py`: the built `football/data/` kept aside, reset
+to main, put back, stamped, one plain commit on top of main, never a force-push. The baseball daily run doesn't touch `football/`. **A Mac
+publish that mirrors the whole deploy folder (if `tools/cloud.json` is ever set back to false) would drop `football/`, as with `xyz/`** —
+put it back from git history (the workflow only rewrites `football/data/` and the stamp).
