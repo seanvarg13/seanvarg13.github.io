@@ -10368,12 +10368,14 @@
   // hist/awards.js (tools/build_awards.py, the Lahman database's vote shares 1990 on, by MLB id) gives MVP / CYA / ROY a place; MLB's record
   // still says who won (a season Lahman hasn't reached yet reads plain "MVP"). [text, title, won] in AWARD_ORDER, every award won in bold.
   const VOTE_WORD = { MVP: "MVP", CYA: "Cy Young", ROY: "Rookie of the Year" };
+  // only the three voted awards are bold when won (Sean, 13 Oct 2026: "only like Roy mvp cy young wins get bolded not ss or as etc")
+  const BIG3 = new Set(["MVP", "CYA", "ROY"]);
   function seasonAwards(awd, id, y) {
     const won = awd ? awd.get(y) || [] : [], votes = ((window.DRAFT_VOTES || {})[id] || {})[y] || [];
     if (!awd && !votes.length) return null;
     const out = won.map(([k, long]) => {
       const v = votes.find((x) => x[0] === k);
-      return [v ? `${k}-${v[1]}` : k, v && v[1] !== 1 ? `${long} (${ordinal(v[1])} in the voting)` : long, true];
+      return [v ? `${k}-${v[1]}` : k, v && v[1] !== 1 ? `${long} (${ordinal(v[1])} in the voting)` : long, BIG3.has(k)];
     });
     for (const [k, n] of votes) if (!won.some((x) => x[0] === k)) out.push([`${k}-${n}`, `${VOTE_WORD[k]} voting: ${ordinal(n)}`, n === 1]);
     return out.sort((a, b) => AWARD_ORDER.indexOf(a[0].replace(/-\d+$/, "")) - AWARD_ORDER.indexOf(b[0].replace(/-\d+$/, "")));
@@ -10544,18 +10546,22 @@
   // a pitcher's K-BB% heat pool (Sean, 9 Oct 2026: "after k% and bb% add in k-bb and heatmap it"): every qualified pitcher that season — an
   // inning per team game (162, 60 in 2020) — from the career record; season 0 = every qualified season 2015 on, for the totals rows
   const SB_POOLS_P = new Map();
+  // nERA too (Sean, 13 Oct 2026: "heat map on their leaderboard table on their player page their nERA"), from hist/career-bb.js's pitcher seasons,
+  // stored negated (lower is better); the cache key carries whether that file is in, so a pool built before it isn't kept empty
   function sbPoolP(y) {
-    if (SB_POOLS_P.has(y)) return SB_POOLS_P.get(y);
-    const out = { "K-BB%": [] }, C = window.DRAFT_CAREER || {}, b = 2 + RAW_P.length, iK = 2 + RAW_P.indexOf("K"), iB = 2 + RAW_P.indexOf("BB"), iIP = 2 + RAW_P.indexOf("IP");
+    const ck = y + ":" + sbxReady();
+    if (SB_POOLS_P.has(ck)) return SB_POOLS_P.get(ck);
+    const out = { "K-BB%": [], nERA: [] }, C = window.DRAFT_CAREER || {}, b = 2 + RAW_P.length, iK = 2 + RAW_P.indexOf("K"), iB = 2 + RAW_P.indexOf("BB"), iIP = 2 + RAW_P.indexOf("IP");
     for (const id in C) for (const r of C[id].P || []) {
       if (y ? r[0] !== y : r[0] < 2015) continue;
       if (ipNum(r[iIP]) < (r[0] === 2020 ? 60 : 162)) continue;
       const bf = +r[b + 1] || 0; if (bf) out["K-BB%"].push(100 * ((+r[iK] || 0) - (+r[iB] || 0)) / bf);
+      const q = sbpOf(id, r[0]); if (q && q.nera != null) out.nERA.push(-q.nera);
     }
     for (const k in out) out[k].sort((a, b) => a - b);
-    SB_POOLS_P.set(y, out); return out;
+    SB_POOLS_P.set(ck, out); return out;
   }
-  const SB_HEAT_P = new Set(["K-BB%"]);
+  const SB_HEAT_P = new Set(["K-BB%", "nERA"]), SB_LO_P = new Set(["nERA"]);
   // League leaders, Baseball-Reference's way (Sean, 8 Oct 2026: "the bold indicates the player led the league and italics indicates they led the
   // MLB"): for a season, every column's best value in the AL, the NL and MLB from every player's line in hist/career.js — the file holds every
   // MLB player since 2015 with his whole career, so a season before 2015 is missing whoever had retired and isn't marked. Counts lead by the
@@ -10690,7 +10696,7 @@
         if (opts.heat != null && (H ? (SB_HEAT.has(k) || (view === "br" && k === "Sprint") || (xd && (xd.hi || xd.lo))) : SB_HEAT_P.has(k)) && v != null && !isNaN(+v)) {
           const pool = !H ? sbPoolP(opts.heat)[k] : xd ? (xd.lo ? sbxPool(opts.heat, xd.k).map((x) => -x).reverse() : sbxPool(opts.heat, xd.k)) : sbPool(opts.heat)[k];
           if (pool && pool.length >= 20) {   /* the whole cell filled in its percentile colour, not a pill (Sean, 8 Oct 2026) */
-            const pc = insertPct(pool, xd && xd.lo ? -v : +v), sty = pctStyle(pc);
+            const pc = insertPct(pool, (xd && xd.lo) || (!H && SB_LO_P.has(k)) ? -v : +v), sty = pctStyle(pc);
             td.classList.add("sbheat"); td.style.setProperty("background", sty.bg, "important"); td.style.setProperty("color", sty.fg, "important");
             td.title = ordinal(Math.round(pc)) + " percentile among " + (opts.heat ? opts.heat + "'s" : "every 2015-on") + " qualified " + (H ? "hitters" : "pitchers");
           }
