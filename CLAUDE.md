@@ -3645,6 +3645,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   right-hand column (`.pgright`): the × at its top right, Filters / Raw under it. The bar grows a little taller and the bio keeps the full page's
   width. `bleedBar` also stopped double-insetting a phone's popup (its own 12px padding plus the bleed's 12), so the bar's contents start 12px
   in as on the full page; that had cost the bio 22px of room there.
+* **Red outlines, three bold awards, nERA heat-mapped (Sean, 13 Oct 2026: "for all of the boxes and tables could you make the outer outline be red",
+  "for the awards column only like Roy mvp cy young wins get bolded not ss or as etc", "for pitchers can you heat map ... their nERA")**:
+  - **Outlines**: every table's scroller, the Leaderboard's rows box (and a phone's page bar), the season table's switch, the Bio box and the
+    desktop popup window have a `--stripe-line` red outline. It's the last block of `styles.css`, which sets only the border colour, so the
+    shadows stay.
+  - **Awards**: `seasonAwards` bolds a win only for MVP / CYA / ROY (`BIG3`); AS, SS, GG and the rest are plain even when won.
+  - **nERA heat**: the pitchers' season table fills nERA by its percentile among that season's qualified pitchers (an inning per team game).
+    `sbPoolP` reads nERA from `hist/career-bb.js`'s `pp`, negated, and caches per season and per whether that file is in yet. `SB_HEAT_P` is
+    K-BB% and nERA; `SB_LO_P` turns nERA over.
 
 ---
 
