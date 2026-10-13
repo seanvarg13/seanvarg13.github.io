@@ -3679,6 +3679,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   pitcher) cell with its percentile colour from the card's own view stats (`o.st.pct.xwd`, else the headline key; `pct.nera`) — the same pool the
   percentile bars rank him in under the filter, so the cell and the bar agree (Baty last 100 PA: .387, 96th). The tooltip says "Nth percentile in
   this window". The other In Split cells stay plain.
+* **The menu's buttons in the Filters / Raw dress (Sean, 13 Oct 2026, the phone's ☰ Menu open over Wheeler's page: "make the menu buttons the
+  same style as the filters and raw vs stuff ones are")**: the phone's open menu (Home · Leaders · Pitching+ · Fantasy ▾ · More ▾), its ☰ Menu / ×
+  Close toggle and a desktop's header pages are white with navy bold condensed words, a 1px white edge, square, with the buttons' soft lift — the
+  player page's Filters / Raw look. The current page is filled navy with white words (it had been the white one); an open Fantasy ▾ / More ▾ and a
+  hover take the Filters button's pale hover. The block at the end of `styles.css`; the earlier white-outline blocks for both stay underneath.
 ---
 
 ## 10. The football site moved out
