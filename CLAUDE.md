@@ -3622,6 +3622,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   screen and not have those white margin things")**: `#xboard.xpop`'s side padding (20px, 12px on a phone) had inset the blue band and its
   Summary while the sticky bar above it bleeds to the edges; `.pagehead` in the popup takes the same negative side margins, so the band spans the
   popup's full width (a phone's whole screen) and the Summary sits where the full page puts it. The block at the end of `styles.css`.
+* **No white pulled over the popup's bar (Sean, 13 Oct 2026, Sale's popup on his phone: "when I scroll up this white thing doesn't
+  happen")**: iOS rubber-banded `#xboard.xpop` past its top and showed its white ground above the sticky bar; the popup's
+  `overscroll-behavior` is `none` (was `contain`, which only stops the scroll chaining to the list, not the element's own bounce).
 
 ---
 
