@@ -11743,10 +11743,11 @@
   const mkSave = () => { try { if (mk) localStorage.setItem("draft2027.mockdraft", JSON.stringify(mk)); else localStorage.removeItem("draft2027.mockdraft"); } catch {} };
   // the scoring the room's Proj column and team totals use: one of the saved Fantasy presets, picked at setup (Sean, 2 Oct 2026)
   const mkScoring = () => { const id = mk ? mk.set.scoring : mkSet.scoring; return fpresets().find((p) => p.id === id) || fpreset(); };
-  const mkReady = () => !!(fData(String(DATA.meta.season)) && window.DRAFT_PROJ27);
+  const mkReady = () => !!(fData(String(DATA.meta.season)) && window.DRAFT_PROJ27 && window.DRAFT_ADP27);
   function mkEnsure() {
     fEnsure(String(DATA.meta.season));
     ensureScript("hist/proj-2027.js", () => !!window.DRAFT_PROJ27);
+    ensureScript("hist/adp-2027.js", () => !!window.DRAFT_ADP27);
   }
   // the pool, built once per scoring: every 2026 MLB player with a projection, his eligibility, role and projected points
   let mkPoolCache = null;
@@ -11774,10 +11775,32 @@
       const pt = pool[pi]; if (pt.espn < 50 && pt.mine < 50) continue;
       h.espn += pt.espn; h.mine += pt.mine; h.two = { espn: pt.espn, mine: pt.mine, ip: pt.time }; pool.splice(pi, 1);
     }
-    // the ranking is the room's own: value over replacement under the scoring, teams and roster picked at setup — what every team in
-    // a real league is drafting for (the early 2027 expert lists were category-based, which is why they read odd in a points room)
+    // the projection's own order: value over replacement under the scoring, teams and roster picked at setup
     const vor = mkVOR(pool, S.teams, S.roster, "mine");
-    pool.sort((a, b) => vor.get(b.k) - vor.get(a.k) || b.mine - a.mine);
+    const byV = [...pool].sort((a, b) => vor.get(b.k) - vor.get(a.k) || b.mine - a.mine), prank = new Map(byV.map((x, i) => [x.k, i + 1]));
+    // the ADP is the 2027 lists' median again (Sean, 13 Oct 2026: "new rankings public for 2027 that you can incorporate into a mock draft
+    // board" — hist/adp-2027.js: Baseball America's top 350 and NBC's top 450 overall, ESPN's 50, Yahoo's 25, CBS's and RotoWire's
+    // position lists); the projection only places the players no list names, and never ahead of where the lists run out at his rank
+    const AD = window.DRAFT_ADP27 || {}, A = AD.ranks || {}, SW = {}; for (const x of AD.sources || []) SW[x.key] = x.weight || 1;
+    const posOrder = {};                                   // the projection's own order at each position, for the position lists
+    // a DH list ranks the DH-only bats (Díaz, Rooker), so it's matched against them, not every hitter
+    const dhOnly = (x) => x.type === "H" && !x.elig.some((e) => e !== "DH" && e !== "UTIL");
+    for (const x of byV) for (const s of [...x.elig.filter((e) => e !== "DH"), dhOnly(x) ? "DH" : null]) if (s) (posOrder[s] = posOrder[s] || []).push(x.k);
+    const wmedian = (v) => { v.sort((p, q) => p[0] - q[0]); const tot = v.reduce((s, x) => s + x[1], 0); let acc = 0; for (let i = 0; i < v.length; i++) { acc += v[i][1]; if (acc >= tot / 2) return acc === tot / 2 && i + 1 < v.length ? (v[i][0] + v[i + 1][0]) / 2 : v[i][0]; } return v[v.length - 1][0]; };
+    for (const x of pool) {
+      const a = A[x.k], votes = [];   // keyed by type + id: Ohtani the hitter and the pitcher share an id
+      if (a) for (const src in a) {
+        if (Array.isArray(a[src])) {   // a position list: where that position's n-th player falls in the projection
+          const best = Math.min(...a[src].map(([pos, n]) => { const list = posOrder[pos] || []; const at = list[Math.min(n, list.length) - 1]; return at ? prank.get(at) : 999; }));
+          if (best < 999) votes.push([best, SW[src] || 1]);
+        } else if (a[src] > 0) votes.push([a[src], SW[src] || 1]);
+      }
+      // the median, not the mean: one list's odd placement shouldn't drag a player the rest agree on
+      x.votes = votes.length; x.cons = votes.length ? wmedian(votes) : null;
+    }
+    const listed = pool.filter((x) => x.cons != null).map((x) => x.cons).sort((p, q) => p - q), deep = listed.length ? listed[listed.length - 1] : 0;
+    for (const x of pool) if (x.cons == null) { const r = prank.get(x.k); x.cons = Math.max(r, Math.min(deep, 60 + r)) + 0.5; }
+    pool.sort((a, b) => a.cons - b.cons || b.mine - a.mine);
     pool.forEach((x, i) => { x.adp = i + 1; });
     mkPoolCache = { sig, pool, map: new Map(pool.map((x) => [x.k, x])) };
     return pool;
@@ -12107,7 +12130,10 @@
       s.addEventListener("change", () => { mkSet.scoring = s.value; mkSaveSet(); });
       row("Scoring", s, "Your saved scoring settings (Fantasy ▸ Scoring settings): the Proj column, the draft order every team follows and the final standings all use it."); }
     const go = el("button", "btn mkgo", "Start draft"); go.type = "button"; go.disabled = !mkSlotList(mkSet.roster).length; go.addEventListener("click", mkStart); w.append(go);
-    { const J = window.DRAFT_PROJ27, s = el("details", "mksrc"); s.append(el("summary", null, "Where the 2027 rankings come from"));
+    { const AD = window.DRAFT_ADP27; if (AD) { const s = el("details", "mksrc"); s.append(el("summary", null, "Where the 2027 ADP comes from"));
+      s.append(el("p", "note", "The draft order is the median of the 2027 rankings published so far (a July list at half weight). They are category-league rankings, so a closer or a base stealer can sit differently from a points league's view — Proj is this site's own projection under your scoring. A player no list names is placed by the projection, behind the listed players at his rank."));
+      const ul = el("ul"); for (const x of AD.sources) { const li = el("li"); const a = el("a", null, x.name); a.href = x.url; a.target = "_blank"; a.rel = "noopener"; li.append(a, ` · ${fmtDate(x.date)}`); ul.append(li); } s.append(ul); w.append(s); }
+      const J = window.DRAFT_PROJ27, s = el("details", "mksrc"); s.append(el("summary", null, "Where the Proj column comes from"));
       s.append(el("p", "note", "A 2027 projection for every player (Marcel, the system Steamer and ZiPS are measured against: the last three seasons weighted 5 / 4 / 3, pulled toward the league and aged, with hits, total bases and earned runs moved halfway to what Statcast expected, and playing time that doesn't punish a regular for one injured season), scored with the scoring above and ranked by value over replacement for this room's teams and roster. Steamer and ZiPS 2027 aren't out until November." + (J ? ` Built ${fmtDate(J.built)}.` : "")));
       w.append(s); }
     box.append(w);
