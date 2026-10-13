@@ -5446,3 +5446,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root #xboard.xpop .xpopx:hover { background: rgba(255, 255, 255, .18); }
 :root[data-view="mobile"]:root:root:root:root:root #xboard.xpop { inset: 0; width: 100vw; margin: 0; border: 0; box-shadow: none; padding: 0 12px 28px; }
 :root[data-view="mobile"]:root:root:root:root:root #xboard.xpop .xpopx { width: 30px; height: 30px; font-size: 22px; margin: 4px 0 0 6px; }
+/* the band runs the popup's full width (Sean, 13 Oct 2026, Wheeler's popup on his phone: "make it so the like stats header there extends the full
+   screen and not have those white margin things"): the popup's side padding had inset the band while the sticky bar above it bleeds edge to edge */
+:root:root:root:root:root:root:root:root #xboard.xpop .pagehead { margin-left: -20px; margin-right: -20px; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root #xboard.xpop .pagehead { margin-left: -12px; margin-right: -12px; }
