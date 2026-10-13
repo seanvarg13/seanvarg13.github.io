@@ -10089,7 +10089,9 @@
       const born = longDate(b.born), age = b.age != null ? b.age : p.age;
       if (born) line("Born", `${esc(born)}${b.city ? " in " + esc(b.city) : ""}${age != null ? ` (Age ${age})` : ""}`);
       const d = b.draft;
-      const rd = d && d.rd ? (/^\d+$/.test(String(d.rd)) ? ordinal(+d.rd) + " round" : "round " + esc(d.rd)) : null;
+      // MLB writes the competitive-balance rounds as C-A / C-B (Snell 2011 read "the round C-A")
+      const cb = d && /^C-?([AB])$/i.exec(String(d.rd || ""));
+      const rd = d && d.rd ? (/^\d+$/.test(String(d.rd)) ? ordinal(+d.rd) + " round" : cb ? "Competitive Balance Round " + cb[1].toUpperCase() : "round " + esc(d.rd)) : null;
       if (d) line("Draft", `${d.team ? "Drafted by the " + esc(d.team) : "Drafted"} in ${rd ? "the " + rd + " of " : ""}the ${d.year} MLB Draft${d.no ? ` (#${d.no} overall)` : ""}`);
       else line("Draft", "Undrafted (signed as an amateur free agent)");
       if (d && d.school) line("School", esc(d.school));
@@ -10167,10 +10169,12 @@
     // have the name next to it and push the bio stuff over with the name"), Filters / Raw at the right
     const mug = el("div", "pgbmug"); mug.append(headshot(p.id, p.name));
     const txt = el("div", "pgbtxt"); txt.append(nm); bar.append(mug, txt, fx); top._bar = bar;
-    // the popup's × sits over Filters / Raw at the right, so the bio keeps the bar's width and only the bar grows (Sean, 13 Oct 2026: "make it so the x
-    // button gets placed above the filters or raw vs stuff button and all that changes is the height of the freeze paned header")
+    // the popup's × on a strip of its own across the bar's top, so the headshot, name, bio and Filters / Raw sit exactly as they do without it, just
+    // lower (Sean, 13 Oct 2026: "the player head shot name and bio are in the same position in comparison to the filters and raw vs stuff button when
+    // there is the x and when there isn't so essentially just shift all of it down to make room for the x") — the bar gets class xbar and the × is
+    // placed at its top right (bleedBar lines it up with the bar's right padding)
     if (xPop) { const x = el("button", "xpopx", "×"); x.type = "button"; x.setAttribute("aria-label", "Close"); x.addEventListener("click", (e) => { e.stopPropagation(); closeXPop(); });
-      const rt = el("div", "pgright"); fx.replaceWith(rt); rt.append(x, fx); }
+      bar.classList.add("xbar"); bar.append(x); }
     let hasChips = false; if (o.entry && !isMulti(o.key)) { const chips = viewChips(p); if (chips.childNodes.length) { ctl.append(chips); hasChips = true; } }
     // one header, no photo (Sean, 9 Oct 2026: "get rid of the headshot and then can we condense all of the information into one header with the stats
     // of the selected year and the filters buttons"): the bar above (his name, the year, level, Filters, Raw) runs straight into the band, which is
@@ -10207,6 +10211,7 @@
     // like the full page's (the bio got 22px less room in the popup)
     const pl = xPop && pad ? pad : L + pad, pr = xPop && pad ? pad : Rt + pad;
     bar.style.marginLeft = -L + "px"; bar.style.marginRight = -Rt + "px"; bar.style.paddingLeft = pl + "px"; bar.style.paddingRight = pr + "px";
+    const xbtn = bar.querySelector(":scope > .xpopx"); if (xbtn) xbtn.style.right = pr + "px";
   }
   window.addEventListener("resize", () => requestAnimationFrame(bleedBar));
   // the bar and the band read as one header: the bar's red rule shows only once the band has scrolled up under it (class stuck)

@@ -3645,6 +3645,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   right-hand column (`.pgright`): the × at its top right, Filters / Raw under it. The bar grows a little taller and the bio keeps the full page's
   width. `bleedBar` also stopped double-insetting a phone's popup (its own 12px padding plus the bleed's 12), so the bar's contents start 12px
   in as on the full page; that had cost the bio 22px of room there.
+* **The × on a strip of its own (Sean, 13 Oct 2026, Snell's popup: "make it so the player head shot name and bio are in the same position in
+  comparison to the filters and raw vs stuff button when there is the x and when there isn't so essentially just shift all of it down to make room
+  for the x")**: the `.pgright` column of the entry above is gone. In the popup the sticky bar carries class `xbar`: 52px of top padding (44 on a
+  phone) and the × absolutely placed in it at the top right (`bleedBar` sets its `right` to the bar's own right padding, so it lines up over
+  Raw / Filters). Everything under it — headshot, name, bio, Filters / Raw — lays out exactly as on the full page, moved down 42px on a desktop and
+  36px on a phone. Same pass: the Bio box's draft line reads "Competitive Balance Round A" where MLB's record says round "C-A".
 * **Red outlines, three bold awards, nERA heat-mapped (Sean, 13 Oct 2026: "for all of the boxes and tables could you make the outer outline be red",
   "for the awards column only like Roy mvp cy young wins get bolded not ss or as etc", "for pitchers can you heat map ... their nERA")**:
   - **Outlines**: every table's scroller, the Leaderboard's rows box, the season table's switch, the Bio box and the desktop popup had a
