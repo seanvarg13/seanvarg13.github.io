@@ -2902,13 +2902,15 @@
     return measureCtx.measureText(text).width;
   }
   // each stat column as wide as the longest word of its name needs (Sean, 11 Oct 2026: "xHR/FB%" ran into BABIP on a phone): the
-  // header's 11px bold Verdana, 3px of padding each side and a little air, never under the column's old width. One string, set on
+  // header's own font (measured off a column name), 3px of padding each side and a little air, never under the column's old width. One string, set on
   // the header and on every row, so the grid template stays the same across them.
-  const statColsMemo = new Map();
+  const statColsMemo = new Map(), headFont = {};
   function statCols(ms, base) {
-    const k = base + "|" + ms.map((m) => m.key).join(",");
+    const vw = document.documentElement.dataset.view || "";   // the header's own font, read once per layout (a style read per row would force layouts)
+    if (!headFont[vw]) { const hc = document.querySelector("#colhead .h:not(.left)"), cs = hc && getComputedStyle(hc); if (cs && cs.fontSize) headFont[vw] = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`; }
+    const F = headFont[vw] || '700 11px Verdana, Geneva, "DejaVu Sans", sans-serif';
+    const k = F + "|" + base + "|" + ms.map((m) => m.key).join(",");
     if (statColsMemo.has(k)) return statColsMemo.get(k);
-    const F = '700 11px Verdana, Geneva, "DejaVu Sans", sans-serif';
     const v = ms.map((m) => { const w = Math.max(0, ...String(colLab(m)).split(/\s+/).map((s) => textWidth(s, F))); return Math.max(base, Math.ceil(w + 10)) + "px"; }).join(" ");
     statColsMemo.set(k, v); return v;
   }

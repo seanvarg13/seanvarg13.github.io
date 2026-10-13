@@ -3661,6 +3661,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     `sbPoolP` reads nERA from `hist/career-bb.js`'s `pp`, negated, and caches per season and per whether that file is in yet. `SB_HEAT_P` is
     K-BB% and nERA; `SB_LO_P` turns nERA over.
 
+* **The pre-Verdana table font, on trial (Sean, 13 Oct 2026: "can you try that old font style as of oct 9 I may want to reverse it so be prepared")**:
+  the "Baseball-Reference's table dimensions" block of 9 Oct (11px Verdana, 23px rows, 3px padding on every B-Ref table and the Leaderboard's
+  rows / column names) is out of `styles.css`; the tables are back in the site's own type and sizes (Source Sans 3 / the condensed face, ~28-30px
+  rows — fewer rows a screen on a phone, long names ellipsised), the same table design otherwise. The block's one non-font rule (the awards
+  column left-aligned, no wrap) stays. `statCols` now measures the Leaderboard's column widths in the header's own computed font (read once per
+  layout, `headFont`) instead of a fixed Verdana string, so they fit either way. **To go back to Verdana: revert this PR** (the block is
+  the 19 lines removed from just before "/* One header (Sean, 9 Oct 2026").
 ---
 
 ## 10. The football site moved out
