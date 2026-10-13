@@ -5432,3 +5432,17 @@ header.top .wordmark { display: none; }
    tables' soft shadow. Page numbers, links and anything inside a table, a segment or a dropdown stay flat. */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(main, #xboard, #pitchboard, #fboard, #hub, #board) :is(.tbtn, .btn, .pill, .draftbtn, .seg, .sbviews, .btab):not(table *, .seg *, #pop *, .pop *, .phwin *, .ddlist *, .pnav *, .linkbtn) {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14), 0 1px 2px rgba(0, 0, 0, 0.10) !important; }
+
+/* his page as a popup over the Leaderboard / Recent (Sean, 13 Oct 2026: "when you click on a player it does open up a pop up window of their
+   player page ... similar to what we once had"): #xboard itself, fixed over the list, its own scroller; the sticky bar sticks to its top */
+:root:root:root:root:root:root body.xpopon { overflow: hidden; }
+:root:root:root:root:root:root .xpopbg { position: fixed; inset: 0; z-index: 70; background: rgba(12, 35, 64, .45); }
+:root:root:root:root:root:root #xboard.xpop { position: fixed; z-index: 71; inset: 24px 0; margin: 0 auto; width: min(1180px, calc(100vw - 48px));
+  overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  background: var(--surface, #fff); border: 1px solid color-mix(in srgb, var(--ink) 45%, transparent); box-shadow: 0 18px 50px rgba(0, 0, 0, .28); padding: 0 20px 28px; }
+:root:root:root:root:root:root #xboard.xpop .pgbar { top: 0 !important; }
+:root:root:root:root:root:root #xboard.xpop .xpopx { flex: 0 0 auto; align-self: flex-start; margin: 8px 0 0 10px; width: 34px; height: 34px; padding: 0; border: 1px solid #fff;
+  background: transparent; color: #fff; font: 600 24px/1 var(--body); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 0; box-shadow: none; }
+:root:root:root:root:root:root #xboard.xpop .xpopx:hover { background: rgba(255, 255, 255, .18); }
+:root[data-view="mobile"]:root:root:root:root:root #xboard.xpop { inset: 0; width: 100vw; margin: 0; border: 0; box-shadow: none; padding: 0 12px 28px; }
+:root[data-view="mobile"]:root:root:root:root:root #xboard.xpop .xpopx { width: 30px; height: 30px; font-size: 22px; margin: 4px 0 0 6px; }

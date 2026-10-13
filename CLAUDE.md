@@ -3605,6 +3605,19 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   open (three drafts as of 2 Oct, no public ADP table yet); when a real 2027 ADP is published, add it to the file as an overall source.
   Skenes reads ADP 42 (BA 54, NBC 29, CBS SP16, RotoWire SP17); Ohtani 1, Crow-Armstrong 2, Witt 3, Elly 4, Misiorowski 5.
 
+* **The Leaderboard pops his page up again (Sean, 13 Oct 2026: "with the leaderboard could we actually make it so when you click on a player it
+  does open up a pop up window of their player page and not takes you to their player page, similar to what we once had")**: on the
+  Leaderboard / Recent (`POP_MODES`) `openPlayer` no longer goes to `#player/<id>` — it sets `state.x` (and the list's window / split, as
+  before), notes the list (`xPopList`) and sets `xPop`; `renderNow` draws the list as ever, then `renderExplore()` into **`#xboard` shown as a
+  fixed window over it** (class `xpop`, a `.xpopbg` backdrop, `body.xpopon`), so it is his whole page — the sticky bar, band, season table,
+  bars and tabs — not the old card. The bar gets a **×** (`.xpopx`) in place of Back; ×, the backdrop or Escape close it (`closeXPop`, which
+  hands `xPopList` to `backRestore` so the rows' box is where it was), and any hash change drops it. Inside it: the sticky bar sticks to the
+  window's top, `bleedBar` measures against the window, `stickSync` follows its scroll (the window scroll listener is `capture`), a redraw of
+  the same player keeps the window's scroll, `playerwide` stays off so the list behind keeps its width, and the bio / postseason fetches and
+  the two-way switch redraw it (`pageNow()` = player mode or the popup). Desktop: 24px from the top and bottom, up to 1,180px wide; a phone:
+  full screen. Rankings, the Draft board, the Pitching+ board, Fantasy, home and the Claude rankings still go to his page; a Similar name or
+  the search inside the popup goes to the full page. CSS at the end of `styles.css`.
+
 ---
 
 ## 10. The football site moved out
