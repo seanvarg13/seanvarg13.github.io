@@ -3674,6 +3674,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   column left-aligned, no wrap) stays. `statCols` now measures the Leaderboard's column widths in the header's own computed font (read once per
   layout, `headFont`) instead of a fixed Verdana string, so they fit either way. **To go back to Verdana: revert this PR** (the block is
   the 19 lines removed from just before "/* One header (Sean, 9 Oct 2026").
+* **The In Split row's xwOBA / nERA heat-mapped in its window (Sean, 13 Oct 2026, Wheeler's last-50-IP page: "make it so the in split rows nERA and
+  for hitters xwOBA get heat mapped by the split time frame")**: `seasonBlock`'s `splitRow` fills the In Split row's xwOBA (a hitter) or nERA (a
+  pitcher) cell with its percentile colour from the card's own view stats (`o.st.pct.xwd`, else the headline key; `pct.nera`) — the same pool the
+  percentile bars rank him in under the filter, so the cell and the bar agree (Baty last 100 PA: .387, 96th). The tooltip says "Nth percentile in
+  this window". The other In Split cells stay plain.
 ---
 
 ## 10. The football site moved out

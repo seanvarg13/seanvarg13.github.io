@@ -10762,7 +10762,14 @@
           adv: { fip: m.fip, whf: m.whf, strk: m.strk, gb: m.gb } };
         l.bp = { nera: m.nera, siera: m.siera, pu: m.pu, strk: m.strk, fstrk: m.fstrk, b3strk: m.b3strk };
       }
-      row([lead, null, ""], l, "insplit");
+      const trr = row([lead, null, ""], l, "insplit");
+      // the In Split xwOBA / nERA filled by its percentile in that window (Sean, 13 Oct 2026: "heat mapped by the split time frame"): the card's
+      // own view stats (o.st), the same pool the percentile bars rank him in under the filter
+      const hk = H ? "xwOBA" : "nERA", ci = cols.indexOf(hk), sp = o.st && o.st.pct, pc = !sp ? null : H ? (sp.xwd != null ? sp.xwd : sp[HEAD.key]) : sp.nera;   /* the bars rank xwOBA as xwd */
+      if (ci >= 0 && pc != null) {
+        const td = trr.children[(lev ? 4 : 3) + ci];
+        if (td && td.textContent && td.textContent !== "–") { const sty = pctStyle(pc); td.classList.add("sbheat"); td.style.setProperty("background", sty.bg, "important"); td.style.setProperty("color", sty.fg, "important"); td.title = ordinal(Math.round(pc)) + " percentile in this window"; }
+      }
     };
     for (const y of years) {
       const ml = mlb.filter((l) => l.season === y);
