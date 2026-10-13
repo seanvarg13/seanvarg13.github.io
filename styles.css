@@ -5453,3 +5453,19 @@ header.top .wordmark { display: none; }
 /* no white pulled down over the popup's bar (Sean, 13 Oct 2026, Sale's popup on his phone: "when I scroll up this white thing doesn't happen"):
    iOS rubber-bands a scroller past its top and shows its white ground above the sticky bar; `none` (not `contain`) stops the element's own bounce */
 :root:root:root:root:root:root:root:root #xboard.xpop { overscroll-behavior: none; }
+/* B-Ref's bio box between the band and the table switch, the same air above and below it (Sean, 13 Oct 2026: "include a box that is equidistant
+   from the header and the type of stats box that has like the bio stats that baseball references page had"): framed like the tables, a band-blue
+   head, B-Ref's lines (bold label, plain value) in two columns on a desktop */
+:root:root:root:root:root:root:root:root #xboard .pbinfo { margin: 72px 0 0; width: min(100%, 680px); border: 1px solid color-mix(in srgb, var(--ink) 45%, transparent);
+  background: var(--surface, #fff); box-shadow: 0 2px 10px rgba(0, 0, 0, .12), 0 1px 3px rgba(0, 0, 0, .08); }
+:root:root:root:root:root:root:root:root #xboard .pbinfo + .sblock, :root:root:root:root:root:root:root:root #xboard .pbinfo + .sblock:has(.sbviews) { margin-top: 58px !important; }
+:root:root:root:root:root:root:root:root #xboard .pbinfohd { background: var(--band2, var(--accent-2)); color: #fff; font: 700 15px/1 var(--body); font-weight: 700 !important; padding: 9px 12px; border-bottom: 2px solid var(--stripe-line, #c8102e); }
+:root:root:root:root:root:root:root:root #xboard .pbinfobd { display: grid; grid-template-columns: 1fr; gap: 5px; padding: 12px 14px 14px; }
+:root:root:root:root:root:root:root:root #xboard .pbil { font: 400 14px/1.4 var(--body); color: var(--ink); min-width: 0; }
+:root:root:root:root:root:root:root:root #xboard .pbil b { font-weight: 700 !important; }
+:root:root:root:root:root:root:root:root #xboard .pbil.pbfull { grid-column: 1 / -1; font: 700 17px/1.3 var(--body); font-weight: 700 !important; }
+:root:root:root:root:root:root:root:root #xboard .pbil.pbwait { color: var(--ink-2); font-style: italic; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root #xboard .pbinfo { margin: 36px 12px 0; width: auto; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root #xboard .pbinfo + .sblock, :root[data-view="mobile"]:root:root:root:root:root:root:root #xboard .pbinfo + .sblock:has(.sbviews) { margin-top: 26px !important; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root #xboard .pbinfobd { grid-template-columns: 1fr; gap: 4px; padding: 10px 12px 12px; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root #xboard .pbil { font-size: 13.5px; }

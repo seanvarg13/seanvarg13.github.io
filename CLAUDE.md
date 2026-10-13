@@ -3625,6 +3625,20 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **No white pulled over the popup's bar (Sean, 13 Oct 2026, Sale's popup on his phone: "when I scroll up this white thing doesn't
   happen")**: iOS rubber-banded `#xboard.xpop` past its top and showed its white ground above the sticky bar; the popup's
   `overscroll-behavior` is `none` (was `contain`, which only stops the scroll chaining to the list, not the element's own bounce).
+* **A Bio box between the band and the table switch (Sean, 13 Oct 2026, Elly's popup: "in the white space here can you include a box that is
+  equidistant from the header and the type of stats box that has like the bio stats that baseball references page had")**: `bioBox(p, b)` in
+  `app.js`, appended by `playerView` between the band and `seasonBlock` on his page and in the popup. It is framed like the tables, with a band-blue
+  "Bio" head over a red rule. Inside are B-Ref's lines from MLB's record (`bio()`):
+  - his full name in bold
+  - Position(s), Bats • Throws, and height / weight with the metric
+  - Born: date in city (current age)
+  - Draft: team, round, the pick overall (or "Undrafted (signed as an amateur free agent)"), and School when the draft names one
+  - Debut and Nickname
+  - Team (level)
+
+  It says "Loading MLB's record…" until the fetch lands. Spacing: 72px of air above and below on a desktop (box width up to 680px, one column),
+  36px on a phone. The `.sblock`'s margin under the box is cut so the gap to the switch (a pitcher's table title) matches; the 350 / 160px
+  space of before is gone wherever the box is. The block is at the end of `styles.css`.
 
 ---
 

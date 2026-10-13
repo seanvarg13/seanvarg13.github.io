@@ -10071,6 +10071,35 @@
     const db = longDate(b.debut); if (db) line(`<b>MLB debut:</b> ${esc(db)}`);
     return box;
   }
+  // B-Ref's bio box in the white space between the band and the table switch (Sean, 13 Oct 2026: "in the white space here can you include a box
+  // that is equidistant from the header and the type of stats box that has like the bio stats that baseball references page had")
+  function bioBox(p, b) {
+    const box = el("section", "pbinfo"), esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    box.append(el("div", "pbinfohd", "Bio"));
+    const body = el("div", "pbinfobd"); box.append(body);
+    const line = (k, v) => { const d = el("div", "pbil"); d.innerHTML = `<b>${k}:</b> ${v}`; body.append(d); };
+    if (b && b.full) { const n = el("div", "pbil pbfull", b.full); body.append(n); }
+    const pw = posWords(p);
+    line(/ and |,/.test(pw) ? "Positions" : "Position", esc(pw));
+    const bats = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
+    if (bats || thr) { const d = el("div", "pbil"); d.innerHTML = [bats ? `<b>Bats:</b> ${handWord(bats)}` : null, thr ? `<b>Throws:</b> ${handWord(thr)}` : null].filter(Boolean).join(" &nbsp;•&nbsp; "); body.append(d); }
+    const hw = htWtLine(b); if (hw) { const d = el("div", "pbil", hw); body.append(d); }
+    if (!b) { body.append(el("div", "pbil pbwait", b === false ? "MLB's record isn't available right now." : "Loading MLB's record…")); }
+    else {
+      const born = longDate(b.born), age = b.age != null ? b.age : p.age;
+      if (born) line("Born", `${esc(born)}${b.city ? " in " + esc(b.city) : ""}${age != null ? ` (Age ${age})` : ""}`);
+      const d = b.draft;
+      const rd = d && d.rd ? (/^\d+$/.test(String(d.rd)) ? ordinal(+d.rd) + " round" : "round " + esc(d.rd)) : null;
+      if (d) line("Draft", `${d.team ? "Drafted by the " + esc(d.team) : "Drafted"} in ${rd ? "the " + rd + " of " : ""}the ${d.year} MLB Draft${d.no ? ` (#${d.no} overall)` : ""}`);
+      else line("Draft", "Undrafted (signed as an amateur free agent)");
+      if (d && d.school) line("School", esc(d.school));
+      const db = longDate(b.debut); if (db) line("Debut", esc(db));
+      if (b.nick) line("Nickname", esc(b.nick));
+    }
+    const tc = teamCode(p.team), mlb = DS.level === "MLB", full = mlb ? (TEAM_FULL[tc] || TEAM_NAMES[tc] || p.team) : p.team;
+    if (full) line("Team", `${esc(full)} (${mlb ? "majors" : (LEVEL_WORD[DS.level] || DS.level)})`);
+    return box;
+  }
   // the one-line bio under the bar: positions, the team (a link to its Leaderboard), the hand (a hitter's B/T, a pitcher's LHP / RHP), height and
   // weight, and his age that season (Sean, 9 Oct 2026: "condense all of the information into one header"); a phone reads codes and the club's
   // abbreviation
@@ -10863,7 +10892,7 @@
     noteRecent(p);
     if (o.page) {
       const hd = pageHead(p, st, g, o);
-      box.append(...(hd._bar ? [hd._bar] : []), hd, seasonBlock(p, o)); requestAnimationFrame(() => { bleedBar(); stickSync(); });   // the filters bar over the band; the filters area came off the same day (pageFilters stays, unused)
+      box.append(...(hd._bar ? [hd._bar] : []), hd, bioBox(p, bio(p.id)), seasonBlock(p, o)); requestAnimationFrame(() => { bleedBar(); stickSync(); });   // the filters bar over the band; the filters area came off the same day (pageFilters stays, unused)
       const pg = el("div", "ppage pageflow"), B = el("div", "pcol pcolB wide");
       renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
       pg.append(B);
