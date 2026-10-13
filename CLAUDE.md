@@ -3618,6 +3618,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   full screen. Rankings, the Draft board, the Pitching+ board, Fantasy, home and the Claude rankings still go to his page; a Similar name or
   the search inside the popup goes to the full page. CSS at the end of `styles.css`.
 
+* **The popup's band edge to edge (Sean, 13 Oct 2026, Wheeler's popup on his phone: "make it so the like stats header there extends the full
+  screen and not have those white margin things")**: `#xboard.xpop`'s side padding (20px, 12px on a phone) had inset the blue band and its
+  Summary while the sticky bar above it bleeds to the edges; `.pagehead` in the popup takes the same negative side margins, so the band spans the
+  popup's full width (a phone's whole screen) and the Summary sits where the full page puts it. The block at the end of `styles.css`.
+
 ---
 
 ## 10. The football site moved out
