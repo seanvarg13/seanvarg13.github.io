@@ -4046,9 +4046,9 @@
     return seg;
   }
   function goType(p, entry, t) {
-    const cur = entry.s.find((sv) => sv[2] === p.type && sv[0] === (state.mode === "player" ? state.x.ds : state.cardDs || CUR.key));
+    const cur = entry.s.find((sv) => sv[2] === p.type && sv[0] === (pageNow() ? state.x.ds : state.cardDs || CUR.key));
     const first = (cur && entry.s.find((sv) => sv[2] === t && sv[1] === cur[1])) || entry.s.find((sv) => sv[2] === t);
-    if (state.mode === "player") { state.x = { id: entry.id, type: t, ds: first[0] }; savePrefs(); render(); return; }
+    if (pageNow()) { state.x = { id: entry.id, type: t, ds: first[0] }; savePrefs(); render(); return; }
     const ds = (state.cardDs && histDataset(state.cardDs)) || CUR;      // in a popup: the other half of the same season, when this list has it
     if (ds.players.some((q) => q.id === p.id && q.type === t)) { state.expanded = t + p.id; render(); return; }
     state.expanded = null; state.x = { id: entry.id, type: t, ds: first[0] }; savePrefs(); location.hash = "#player/" + entry.id;
@@ -5769,7 +5769,7 @@
       }
     }
     const pg = document.querySelector("#xboard .ppage");
-    document.body.classList.toggle("playerwide", !!pg && !mobileView());
+    document.body.classList.toggle("playerwide", !!pg && !mobileView() && !xPop);
     const root = document.documentElement;
     if (!pg || mobileView()) { root.style.removeProperty("--ppage-top"); return; }
     // the boxes run from under the header to the bottom of the window, the way Savant's fill the screen; the site's
@@ -5820,7 +5820,9 @@
     // until the real page is in, so the window has somewhere to stay (Sean, 8 Oct 2026: "not shoot me back up to the top")
     const xb = $("xboard"), samePg = state.mode === "player" && state.x && document.body.dataset.mode === "player" && pageKey === pageKeyOf();
     const prevH = samePg ? xb.offsetHeight : 0;
+    const popTop = xPop && !xPopNew && xb.classList.contains("xpop") ? xb.scrollTop : 0;
     renderNow();
+    if (xPop) { xb.scrollTop = popTop; xPopNew = false; }
     if (samePg && xb.querySelector(".pgload")) { heldH = Math.max(heldH, prevH); xb.style.minHeight = heldH + "px"; }
     else { heldH = 0; xb.style.minHeight = ""; }
     setCardTop(); sizeModal(); renderToolButtons(); placePop(); sizePPage(); ddSync();
@@ -5869,7 +5871,8 @@
   function renderNow() {
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude", other = pitches || player || compare || elig || hub || appear || fant;
-    $("xboard").hidden = !player; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
+    if (xPop && !POP_MODES.includes(state.mode)) xPop = false;   // another page: the popup goes with the list it came from
+    $("xboard").hidden = !player && !xPop; $("xboard").classList.toggle("xpop", xPop); document.body.classList.toggle("xpopon", xPop); xPopBg().hidden = !xPop; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
     document.body.classList.toggle("brlb", onePage());   // the Leaderboard / Recent in B-Ref's dress (9 Oct 2026)
     const T = state.tbl; document.body.dataset.heat = T.heat ? "on" : "off"; document.body.dataset.band = T.band ? "on" : "off"; document.body.dataset.sorthl = T.sortHl ? "on" : "off"; document.body.dataset.density = T.density;
@@ -5920,6 +5923,14 @@
       } else run();
     } else listRender();
     renderModal();
+    if (xPop) renderExplore();
+  }
+  // the popup's backdrop: a tap on it closes the popup
+  let xPopBgEl = null;
+  function xPopBg() {
+    if (xPopBgEl) return xPopBgEl;
+    xPopBgEl = el("div", "xpopbg"); xPopBgEl.hidden = true; xPopBgEl.addEventListener("click", closeXPop);
+    $("xboard").before(xPopBgEl); return xPopBgEl;
   }
 
   // Mobile / desktop layout switch (footer of every page and the Appearance page)
@@ -9859,8 +9870,8 @@
                                                 team: (d.team || {}).name, school: (d.school || {}).name } : null });
       for (const n of document.querySelectorAll(`.hbio[data-bio="${id}"]`)) {
         fillBio(n, n._p, BIO.get(id)); delete n.dataset.bio; }
-      if (state.mode === "player") render();
-    }).catch(() => { BIO.set(id, false); if (state.mode === "player") render(); });   // false: asked and refused, so the page stops saying "Loading"
+      if (pageNow()) render();
+    }).catch(() => { BIO.set(id, false); if (pageNow()) render(); });   // false: asked and refused, so the page stops saying "Loading"
     return null;
   }
   // the left panel, laid out after Savant's: his action shot as a banner, the cut-out over it, the rest centred
@@ -9897,7 +9908,13 @@
 
   /* ---------- his page, from the lists (Sean, 8 Oct 2026: "when you're on a leaderboard and you select a player it brings you to their player
      page and instead of an x it has back to leaderboard button at the top which takes you back to the spot you were at on the leaderboard") ---------- */
-  let backAt = null, backRestore = null, pageOpened = false, pageKey = "";   // where a page was opened from: the list page, its scroll and its rows' box; the page last drawn
+  let backAt = null, backRestore = null, pageOpened = false, pageKey = "";
+  // on the Leaderboard / Recent a name opens his page as a popup over the list, not a trip to the page (Sean, 13 Oct 2026: "when you click on a
+  // player it does open up a pop up window of their player page and not takes you to their player page, similar to what we once had"): the same
+  // page (renderExplore into #xboard), shown as a fixed window over the list with a backdrop, closed by ×, the backdrop or Escape
+  const POP_MODES = ["leaderboard", "trending"];
+  let xPop = false, xPopNew = false, xPopList = null;
+  const pageNow = () => state.mode === "player" || xPop;   // where a page was opened from: the list page, its scroll and its rows' box; the page last drawn
   const BACK_LABEL = { leaderboard: "leaderboard", trending: "leaderboard", rankings: "rankings", draft: "draft board", pitches: "Pitching+", fantasy: "fantasy", home: "home",
                        claude: "Claude rankings", planner: "planner", eligibility: "eligibility", callups: "Call-up Watch", compare: "compare", mock: "mock draft", trends: "League Trends", appearance: "appearance" };
   const BACK_MODES = ["leaderboard", "trending", "rankings", "draft", "pitches", "fantasy", "claude", "planner", "eligibility"];   // the list pages Back returns to
@@ -9909,15 +9926,19 @@
   // a name on a list: his page for that season, with the list's window and split carried over; o: { ds, win, split, tab }
   function openPlayer(p, o = {}) {
     const id = p.pid != null ? p.pid : p.id;
-    markBack();
+    const pop = POP_MODES.includes(state.mode);
+    if (pop) { noteList(); if (!xPop) xPopList = listAt; } else markBack();   // the list as it was when the first popup opened, put back on close
     state.cardDs = null; state.expanded = null;
     state.cardWin = o.win ? { from: o.win.from || "", to: o.win.to || "", last: o.win.last || "" } : { from: "", to: "", last: "" };
     state.split = o.split ? Object.assign({ hand: "all", venue: "all" }, o.split) : { hand: "all", venue: "all" };
     if (o.tab) state.pbtab = o.tab;
     state.x = { id, type: p.type, ds: o.ds || CUR.key };
-    savePrefs(); pageOpened = true;
+    savePrefs();
+    if (pop) { xPop = true; xPopNew = true; render(); return; }
+    pageOpened = true;
     if (location.hash === "#player/" + id) render(); else location.hash = "#player/" + id;   // the hashchange handler renders
   }
+  function closeXPop() { if (!xPop) return; xPop = false; backRestore = xPopList; xPopList = null; render(); }
   function goBack() {
     const b = backAt; backAt = null;
     if (!b) { location.hash = "#home"; return; }
@@ -9925,7 +9946,7 @@
     if (location.hash === b.hash) render(); else location.hash = b.hash;
   }
   const backButton = (small) => {
-    if (!backAt) return el("span", "pbnoback");               // no list to go back to: nothing where the button would be
+    if (!backAt || xPop) return el("span", "pbnoback");               // no list to go back to: nothing where the button would be
     const b = el("button", "pbback" + (small ? " small" : ""), `‹ Back to ${backAt.label}`); b.type = "button";
     b.addEventListener("click", (e) => { e.stopPropagation(); goBack(); });
     return b;
@@ -10117,6 +10138,7 @@
     // have the name next to it and push the bio stuff over with the name"), Filters / Raw at the right
     const mug = el("div", "pgbmug"); mug.append(headshot(p.id, p.name));
     const txt = el("div", "pgbtxt"); txt.append(nm); bar.append(mug, txt, fx); top._bar = bar;
+    if (xPop) { const x = el("button", "xpopx", "×"); x.type = "button"; x.setAttribute("aria-label", "Close"); x.addEventListener("click", (e) => { e.stopPropagation(); closeXPop(); }); bar.append(x); }
     let hasChips = false; if (o.entry && !isMulti(o.key)) { const chips = viewChips(p); if (chips.childNodes.length) { ctl.append(chips); hasChips = true; } }
     // one header, no photo (Sean, 9 Oct 2026: "get rid of the headshot and then can we condense all of the information into one header with the stats
     // of the selected year and the filters buttons"): the bar above (his name, the year, level, Filters, Raw) runs straight into the band, which is
@@ -10145,7 +10167,9 @@
   function bleedBar() {
     const bar = document.querySelector("#xboard .pgbar"); if (!bar) return;
     bar.style.marginLeft = bar.style.marginRight = bar.style.paddingLeft = bar.style.paddingRight = "";
-    const r = bar.getBoundingClientRect(), L = Math.max(0, r.left), Rt = Math.max(0, document.documentElement.clientWidth - r.right);
+    const r = bar.getBoundingClientRect(), xb = $("xboard"), xr = xb.getBoundingClientRect();
+    const box = xPop ? { l: xr.left + xb.clientLeft, r: xr.left + xb.clientLeft + xb.clientWidth } : { l: 0, r: document.documentElement.clientWidth };
+    const L = Math.max(0, r.left - box.l), Rt = Math.max(0, box.r - r.right);
     const pad = mobileView() ? 12 : 0;
     bar.style.marginLeft = -L + "px"; bar.style.marginRight = -Rt + "px"; bar.style.paddingLeft = (L + pad) + "px"; bar.style.paddingRight = (Rt + pad) + "px";
   }
@@ -10155,7 +10179,7 @@
     const bar = document.querySelector("#xboard .pgbar"), band = document.querySelector("#xboard .pagehead"); if (!bar || !band) return;
     bar.classList.toggle("stuck", band.getBoundingClientRect().bottom <= bar.getBoundingClientRect().bottom + 2);
   }
-  window.addEventListener("scroll", () => requestAnimationFrame(stickSync), { passive: true });
+  window.addEventListener("scroll", () => requestAnimationFrame(stickSync), { passive: true, capture: true });   // capture: the popup's own scroll too
   // His page's own filters area, in the space between the band and the season table (Sean, 9 Oct 2026: "fill that blank space with a filters area
   // that has every filter included in the filters button as well as the year and levels ones too"): Season and Level, Hitting / Pitching for a
   // two-way player, Raw / Stuff for a pitcher, then the Filters window's cells (dates, last N, hand, home / away, starts / relief) and Clear
@@ -10363,8 +10387,8 @@
         (by.get(y) || by.set(y, []).get(y)).push({ season: y, team, c, mlb: true, pos: posAt(y) });
       }
       const out = [...by].map(([y, ls]) => (ls.length === 1 ? ls[0] : { season: y, team: "TOT", c: sbCombine(H, ls).c, mlb: true, pos: posAt(y) })).sort((a, b) => a.season - b.season);
-      PSTATS.set(key, out); if (state.mode === "player") render();
-    }).catch(() => { PSTATS.set(key, false); if (state.mode === "player") render(); });
+      PSTATS.set(key, out); if (pageNow()) render();
+    }).catch(() => { PSTATS.set(key, false); if (pageNow()) render(); });
     return null;
   }
   // a hitter's columns are FanGraphs' batting dashboard, with its group rules (Sean, 8 Oct 2026, from Ohtani's FanGraphs table: "make it so
@@ -12392,7 +12416,7 @@
   const statSorted = () => !!(customOrder() && state.rankSort && !state.editRanks);
   // a tab with a saved order of its own: column sorting is off there, the order is the order
   const customOrder = () => { const s = orderSource(); return !!(s && (s.ranks[state.pos] || []).length); };
-  window.addEventListener("hashchange", () => { readMode(); state.expanded = null; if (POPPED.has(state.panel)) { state.panel = null; $("pop").hidden = true; parkControls(); } render(); });   // a toolbar dropdown doesn't follow you to another page
+  window.addEventListener("hashchange", () => { readMode(); xPop = false; state.expanded = null; if (POPPED.has(state.panel)) { state.panel = null; $("pop").hidden = true; parkControls(); } render(); });   // a toolbar dropdown doesn't follow you to another page
   $("search").addEventListener("input", (e) => { state.q = e.target.value; state.expanded = null; renderRows(); });
   $("sort").addEventListener("change", (e) => { state.sort = e.target.value; state.dir = state.sort === "name" ? "asc" : "desc"; savePrefs(); render(); });
   let minTimer;
@@ -12546,6 +12570,7 @@
     const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
     if (e.key === "/" && !typing) { e.preventDefault(); $("search").focus(); }
     if (e.key === "Escape" && (state.expanded || state.textModal || state.tierPick || state.colPick || state.panel)) closeModal();
+    else if (e.key === "Escape" && xPop && !document.querySelector(".phmodal") && !ddOpen) closeXPop();
   });
 
   // phone: the column header lives above the scroll box; keep it aligned with the rows sideways (either can be dragged)
