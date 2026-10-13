@@ -5469,5 +5469,8 @@ header.top .wordmark { display: none; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root #xboard .pbinfo + .sblock, :root[data-view="mobile"]:root:root:root:root:root:root:root #xboard .pbinfo + .sblock:has(.sbviews) { margin-top: 26px !important; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root #xboard .pbinfobd { grid-template-columns: 1fr; gap: 4px; padding: 10px 12px 12px; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root #xboard .pbil { font-size: 13.5px; }
-/* the bio line's break: height, weight and age on a second row (Sean, 13 Oct 2026: "so it looks more balanced") */
-:root:root:root:root:root:root:root:root #xboard .pbline .pbbrk { flex-basis: 100%; height: 0; }
+/* the popup's × over Filters / Raw (Sean, 13 Oct 2026: "the x button gets placed above the filters or raw vs stuff button and all that changes is the
+   height of the freeze paned header"): a right-hand column, the × at its top right, the buttons under it */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 > .pgright { flex: none; align-self: center; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 > .pgright > .xpopx { margin: 0 !important; align-self: flex-end; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar3 > .pgright { gap: 6px; }

@@ -10118,9 +10118,6 @@
     }
     const bats = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
     if (H) { if (bats && thr) add(`B/T ${bats}/${thr}`); else if (bats) add(`Bats ${bats}`); } else if (thr) add(thr === "L" ? "LHP" : "RHP");
-    // height, weight and age on a second line of their own (Sean, 13 Oct 2026: "the height and weight are on the second row with age so it looks
-    // more balanced"); a full-width break in the wrapping line, so the line after it starts with its dot clipped like any wrap
-    d.append(el("span", "pbbrk"));
     if (b && b.ht) { const m = String(b.ht).match(/(\d+)\D+(\d+)/); add((m ? `${m[1]}-${m[2]}` : String(b.ht)) + (b.wt ? `, ${b.wt}` : "")); }
     // his age in the season on the page (June 30, as B-Ref counts it), not today's
     let age = null;
@@ -10170,7 +10167,10 @@
     // have the name next to it and push the bio stuff over with the name"), Filters / Raw at the right
     const mug = el("div", "pgbmug"); mug.append(headshot(p.id, p.name));
     const txt = el("div", "pgbtxt"); txt.append(nm); bar.append(mug, txt, fx); top._bar = bar;
-    if (xPop) { const x = el("button", "xpopx", "×"); x.type = "button"; x.setAttribute("aria-label", "Close"); x.addEventListener("click", (e) => { e.stopPropagation(); closeXPop(); }); bar.append(x); }
+    // the popup's × sits over Filters / Raw at the right, so the bio keeps the bar's width and only the bar grows (Sean, 13 Oct 2026: "make it so the x
+    // button gets placed above the filters or raw vs stuff button and all that changes is the height of the freeze paned header")
+    if (xPop) { const x = el("button", "xpopx", "×"); x.type = "button"; x.setAttribute("aria-label", "Close"); x.addEventListener("click", (e) => { e.stopPropagation(); closeXPop(); });
+      const rt = el("div", "pgright"); fx.replaceWith(rt); rt.append(x, fx); }
     let hasChips = false; if (o.entry && !isMulti(o.key)) { const chips = viewChips(p); if (chips.childNodes.length) { ctl.append(chips); hasChips = true; } }
     // one header, no photo (Sean, 9 Oct 2026: "get rid of the headshot and then can we condense all of the information into one header with the stats
     // of the selected year and the filters buttons"): the bar above (his name, the year, level, Filters, Raw) runs straight into the band, which is
@@ -10203,7 +10203,10 @@
     const box = xPop ? { l: xr.left + xb.clientLeft, r: xr.left + xb.clientLeft + xb.clientWidth } : { l: 0, r: document.documentElement.clientWidth };
     const L = Math.max(0, r.left - box.l), Rt = Math.max(0, box.r - r.right);
     const pad = mobileView() ? 12 : 0;
-    bar.style.marginLeft = -L + "px"; bar.style.marginRight = -Rt + "px"; bar.style.paddingLeft = (L + pad) + "px"; bar.style.paddingRight = (Rt + pad) + "px";
+    // a phone's popup is the whole screen: its own 12px side padding plus the bleed's 12 had inset the bar twice, so its contents start 12px in
+    // like the full page's (the bio got 22px less room in the popup)
+    const pl = xPop && pad ? pad : L + pad, pr = xPop && pad ? pad : Rt + pad;
+    bar.style.marginLeft = -L + "px"; bar.style.marginRight = -Rt + "px"; bar.style.paddingLeft = pl + "px"; bar.style.paddingRight = pr + "px";
   }
   window.addEventListener("resize", () => requestAnimationFrame(bleedBar));
   // the bar and the band read as one header: the bar's red rule shows only once the band has scrolled up under it (class stuck)
