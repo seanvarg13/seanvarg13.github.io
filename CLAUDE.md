@@ -3591,6 +3591,20 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   pinned to the visible width, since the table scrolls sideways on a phone.
 
 
+* **The 2027 ADP is the published lists' median again (Sean, 13 Oct 2026: "Are there any new rankings public for 2027 that you can
+  incorporate into a mock draft board")**: `hist/adp-2027.js` (`window.DRAFT_ADP27`, `ranks` keyed type+id, `sources` with a `weight`)
+  now carries **Baseball America's top 350** (James Anderson, 10 Oct, draft-and-hold) and **NBC's top 450** (13 Jul, at half weight — it
+  predates the second half) as overall ranks beside the 2 Oct entries (ESPN's top 50, Yahoo's top 25, CBS's and RotoWire's position
+  lists); 452 players, built by scratch `adp/build.py` (names matched to `data.js` by type, team as the tiebreaker; a player with no 2026
+  MLB line — Steele, Westburg, Pablo López, the prospects — is skipped, since the pool has no projection for him anyway). `mkPool` is
+  the 2 Oct median code again with weights: a listed player's ADP is the weighted median of his overall ranks and, for a position list,
+  where that position's n-th player falls in the projection's order; the projection (value over replacement under the room's scoring)
+  only places the players no list names, behind the listed ones at his rank (+60 cap, as before). Proj and the $ curve are unchanged;
+  `mkEnsure` loads the file, the setup screen's "Where the 2027 ADP comes from" lists the sources and dates. Still category-based lists,
+  so a closer sits higher than a points room would put him — the note says so. The NFBC's first Draft Champions rooms for 2027 are
+  open (three drafts as of 2 Oct, no public ADP table yet); when a real 2027 ADP is published, add it to the file as an overall source.
+  Skenes reads ADP 42 (BA 54, NBC 29, CBS SP16, RotoWire SP17); Ohtani 1, Crow-Armstrong 2, Witt 3, Elly 4, Misiorowski 5.
+
 ---
 
 ## 10. The football site moved out
