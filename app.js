@@ -10118,6 +10118,9 @@
     }
     const bats = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
     if (H) { if (bats && thr) add(`B/T ${bats}/${thr}`); else if (bats) add(`Bats ${bats}`); } else if (thr) add(thr === "L" ? "LHP" : "RHP");
+    // height, weight and age on a second line of their own (Sean, 13 Oct 2026: "the height and weight are on the second row with age so it looks
+    // more balanced"); a full-width break in the wrapping line, so the line after it starts with its dot clipped like any wrap
+    d.append(el("span", "pbbrk"));
     if (b && b.ht) { const m = String(b.ht).match(/(\d+)\D+(\d+)/); add((m ? `${m[1]}-${m[2]}` : String(b.ht)) + (b.wt ? `, ${b.wt}` : "")); }
     // his age in the season on the page (June 30, as B-Ref counts it), not today's
     let age = null;
