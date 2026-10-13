@@ -3639,9 +3639,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   It says "Loading MLB's record…" until the fetch lands. Spacing: 72px of air above and below on a desktop (box width up to 680px, one column),
   36px on a phone. The `.sblock`'s margin under the box is cut so the gap to the switch (a pitcher's table title) matches; the 350 / 160px
   space of before is gone wherever the box is. The block is at the end of `styles.css`.
-* **Height, weight and age on the bio line's second row (Sean, 13 Oct 2026, Reynolds's popup: "make it so in the header the height and weight are
-  on the second row with age so it looks more balanced")**: `bioStrip` puts a full-width break (`.pbbrk`, `flex-basis: 100%`) before height /
-  weight, so the bar reads "OF, DH · PIT · B/T S/R" over "6-2, 210 · Age 31" on both layouts; the second row's leading dot is clipped like any wrap.
+* **The popup's × over Filters / Raw (Sean, 13 Oct 2026: "scratch the bio adjustment ... the bio stats get split into two rows bc the x pushed the
+  filters ... make it so the x button gets placed above the filters or raw vs stuff button and all that changes is the height of the freeze paned
+  header")**: the forced second bio row of an hour before (`.pbbrk`) is gone. In the popup `pageHead` wraps the × and the `.pgfix` group in a
+  right-hand column (`.pgright`): the × at its top right, Filters / Raw under it. The bar grows a little taller and the bio keeps the full page's
+  width. `bleedBar` also stopped double-insetting a phone's popup (its own 12px padding plus the bleed's 12), so the bar's contents start 12px
+  in as on the full page; that had cost the bio 22px of room there.
 
 ---
 
