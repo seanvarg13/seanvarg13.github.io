@@ -3747,6 +3747,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   then an All pitches table; class `springbr` (the old `.springbox` card frame and `.springt` table are unused). **nERA** (`renderLuckBox`): Type |
   Balls in play: BIP · Share | wOBA allowed: His · Lg · Diff (Diff filled: red = the type has gone his way, blue = hurt him), and an "All balls in
   play" band row (his wOBA and the league's at his mix). CSS at the end of `styles.css`.
+* **The card's tabs in the Filters / Raw dress (Sean, 14 Oct 2026, from a crop of the two buttons: "make the bottom of player page/card buttons be in
+  this format")**: `.btabs .btab` on his page and the popup is white, square, navy 700 18px condensed type (16px on a phone), 40px tall (36), a 1px
+  `#c3d3e3` edge and the buttons' soft lift; the picked tab is filled the band's blue with white type, as Filters is while its window is open. The
+  block at the end of `styles.css`; the earlier tab dresses (red outline, light blue, navy outline) are history.
 ---
 
 ## 10. The football site moved out
