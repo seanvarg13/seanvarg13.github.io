@@ -3757,9 +3757,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   keys) and now **actual** (`whf` / `gb` / `pu`, only on pitches with 20+ swings / 15+ balls in play, `TYPE_MIN`, in the pool and on the cell). The
   Pitching+ tab fills both Act and Exp per pitch (pool through `xAdj`, `adj` true); the Spring tab fills them per row, the spring row against last
   season's pitches (else this season's) and each season's row against its own, on raw rows. All pitches / totals rows stay plain; higher = red.
-* **A phone's card tabs at the Filters / Raw size (Sean, 14 Oct 2026: "make it so the bottom tab buttons size is the same as the filter and raw
-  buttons")**: on a phone `.btabs .btab` is 36px tall (height and min-height), 14px type, 7px side padding — the sticky bar's buttons' own numbers;
-  a desktop's were already the same 40px / 18px / 14px.
+* **A phone's card tabs in the Filters / Raw type size (Sean, 14 Oct 2026: "the buttons can be bigger than the filters and raw I just want the font
+  size to be the same")**: on a phone `.btabs .btab` is 14px type like the sticky bar's buttons, keeping its own 38px height and 11px padding (a
+  36px / 7px version lasted minutes). A desktop's were already 18px both.
 ---
 
 ## 10. The football site moved out
