@@ -5492,3 +5492,11 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(.sbscroll, .brscroll, .fscroll, .pbscroll, .stuffscroll, .rawscroll, .board-scroll, #bscroll, .glogscroll, .pwscroll, .hrfbscroll, .cmp-scroll, .tblcard, .colwrap, .fhead-clip, .mklist, .mkside, .mkboardw, .cwrap, .hub table, .hsecb) { overscroll-behavior-x: none !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(body.brlb #bscroll, #board .board-scroll, #pitchboard > .pbscroll, .mklist, .mkside) { overscroll-behavior-y: none !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) #fboard .fscroll { overscroll-behavior-y: none !important; }
+/* Column names as big as the numbers under them (Sean, 14 Oct 2026, Eldridge's season table: "why does it feel like the column header font sizes
+   are smaller than the in table text like the SF looks bigger than Team"): every table's column names had run 0.5-1.5px under its cells (11px
+   over 12px on a phone's season table). A <th> now takes its table's own size — the size its cells read — on every table; the over-header's
+   group names keep theirs. The card tabs' B-Ref tables (Fantasy's By season and log, the build-ups) had their cells at 12.5px
+   over a 13px / 12px table; they read the table's size too. The Leaderboard's column names match its 13px values. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, body) table tr:not(.over) > th { font-size: inherit !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt tbody td { font-size: inherit !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colhead .h { font-size: 13px !important; }

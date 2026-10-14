@@ -3691,6 +3691,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   boxes, home's tables) is `overscroll-behavior-x: none` — iOS's sideways rubber-band is gone (`contain`, which several had, keeps the bounce).
   The standing list boxes, the only scrollers on their pages, are `overscroll-behavior-y: none` too; Fantasy's box on a phone still hands vertical
   scrolls to the page. The block at the end of `styles.css`.
+* **Column names as big as the cells (Sean, 14 Oct 2026, Eldridge's season table: "why does it feel like the column header font sizes are
+  smaller than the in table text like the SF looks bigger than Team")**: every table's `<th>` ran 0.5-1.5px under its cells (the phone's season
+  table 11px over 12px). Every column name now takes its table's own size (`tr:not(.over) > th { font-size: inherit }`, id-anchored so it beats
+  the B-Ref passes); the over-header's group names keep 11.5px. The card tabs' B-Ref tables, whose cells were a fixed 12.5px, read the table's
+  size too (13px desktop / 12px phone). The Leaderboard's column names are 13px like its values. The block at the end of `styles.css`.
 ---
 
 ## 10. The football site moved out
