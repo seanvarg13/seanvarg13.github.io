@@ -8693,7 +8693,7 @@
     return null;
   }
   function renderSpringTab(p) {
-    const box = el("div", "rollbox uerabox stuffbox springbox"), sf = springFor();
+    const box = el("div", "rollbox uerabox stuffbox brbox springbr"), sf = springFor();
     if (!sf) return box;
     const y = sf.y, sh = window.DRAFT_HIST && window.DRAFT_HIST[sf.k], yy = (n) => "'" + String(n).slice(2);
     const keyOf = (yr) => (yr === DATA.meta.season ? CUR.key : `mlb-${yr}`), dsOf = (k) => (k === CUR.key ? CUR : histDataset(k));
@@ -8735,47 +8735,46 @@
     for (const pt of types) { if (flag(pt) || !bS[pt] || !bP[pt] || bS[pt].n < 10) continue; const d = use(bS, tS, pt) - use(bP, tP, pt); if (Math.abs(d) >= 8) parts.push(`${(PITCH_NAME[pt] || pt).toLowerCase()} ${Math.round(use(bP, tP, pt))}% → ${Math.round(use(bS, tS, pt))}%`); }
     const sample = `${ps.bf} BF · ${tS} pitches · ${ps.ctx && ps.ctx.G != null ? ps.ctx.G + " G" : ""}`.replace(/ · $/, "");
     hd.append(el("span", "rollsub", sample + (pp ? ` · vs ${y - 1}: ` + (parts.length ? parts.join(" · ") : "the same arsenal as last season") : ` · his first MLB spring here — nothing from ${y - 1} to compare`)));
-    // the table: a pitch, then its spring line, last season's, the change, and the season after once built
-    const t = el("table", "ubt stufft springt"), th = el("thead"), hr = el("tr");
-    const heads = [["Pitch", "l"], ["", "l src"], ["Use", "", "Share of his pitches"], ["Velo", ""], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin", ""],
+    // a table per pitch in B-Ref's dress (Sean, 14 Oct 2026: "a table in the format I attached ... for each pitch it is a new table with headers
+    // again bc the current format is hard ish to follow"): the pitch's name over its own table — Season | Usage | Shape | Grades vs type | Whiff% ·
+    // GB% · PU% as Act / Exp pairs — rows spring, last season, the change (a band row) and the season after once built
+    const heads = [["Season", "l f1"], ["#", "", "Pitches thrown"], ["Use%", "", "Share of his pitches"], ["Velo", ""], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin", ""],
                    ["Stuff+", "sp", "The pitch against its own type, in its own season's league"], ["Pitching+", "sp", "Stuff+ with location — the spring file needs the location models (a rescore) to carry it"],
-                   ["xWhiff", "", "The model's whiff rate per swing (location-aware where the file has it)"], ["xGB", "", "The model's ground-ball rate on contact"], ["xPU", "", "The model's popup rate on contact"],
-                   ["Whiff", "dim", "His actual whiff rate per swing — a few dozen swings in spring"], ["GB", "dim", "Actual ground-ball rate on contact"], ["PU", "dim", "Actual popup rate on contact"], ["Pitches", "dim"]];
-    for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
-    th.append(hr); t.append(th);
-    const tb = el("tbody");
+                   ...PAIRH("The model's whiff rate per swing (location-aware where the file has it)", "his actual whiffs per swing — a few dozen swings in spring"), ...PAIRH("The model's ground-ball rate on contact", "his actual GB%"), ...PAIRH("The model's popup rate on contact", "his actual popups per ball in play")];
+    const groups = [["", 1], ["Usage", 2], ["Shape", 4], ["Grades vs type", 2], ["Whiff%", 2], ["GB%", 2], ["PU%", 2]];
     const f1n = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%"), i0 = (x) => (x == null ? "–" : String(Math.round(x)));
-    const cellPlus = (v, cls) => { const td = el("td", "plus" + (cls ? " " + cls : ""), i0(v)); if (v != null) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; } } return td; };
-    const dimTd = (txt, tt) => { const td = el("td", "dim", txt); if (tt) td.title = tt; return td; };
-    const valueRow = (lab, L, cls) => { const tr = el("tr", cls || null); tr.append(el("td", "l src", lab));
-      if (!L) { for (let i = 0; i < 14; i++) tr.append(el("td", i === 0 ? "dim" : null, "–")); return tr; }
-      tr.append(el("td", null, L.all ? "" : pct(L.use)), el("td", null, f1n(L.velo)), el("td", null, f1n(L.ivb)), el("td", null, f1n(L.hb)), el("td", null, L.spin == null ? "–" : String(L.spin)),
-                cellPlus(L.stuff, "sp"), cellPlus(L.pitch, "sp"), el("td", null, pct(L.xwhf)), el("td", null, pct(L.xgb)), el("td", null, pct(L.xpu)),
-                dimTd(pct(L.whf), L.sw != null ? `${L.sw} swings` : null), dimTd(pct(L.gb), L.bip != null ? `${L.bip} balls in play` : null), dimTd(pct(L.pu), L.bip != null ? `${L.bip} balls in play` : null), dimTd(String(L.n)));
+    const cellPlus = (v, heat) => { const td = el("td", "plus sp", i0(v)); if (v != null && heat) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } } return td; };
+    const actTd = (txt, tt) => { const td = el("td", "xact", txt); if (tt) td.title = tt; return td; };
+    const valueRow = (lab, L, cls) => { const tr = el("tr", cls || null); tr.append(el("td", "l f1", lab));
+      if (!L) { for (let i = 0; i < heads.length - 1; i++) tr.append(el("td", null, "–")); return tr; }
+      tr.append(el("td", null, String(L.n)), el("td", null, L.all ? "" : pct(L.use)), el("td", null, f1n(L.velo)), el("td", null, f1n(L.ivb)), el("td", null, f1n(L.hb)), el("td", null, L.spin == null ? "–" : String(L.spin)),
+                cellPlus(L.stuff, true), cellPlus(L.pitch, true),
+                actTd(pct(L.whf), L.sw != null ? `${L.sw} swings` : null), el("td", null, pct(L.xwhf)),
+                actTd(pct(L.gb), L.bip != null ? `${L.bip} balls in play` : null), el("td", null, pct(L.xgb)),
+                actTd(pct(L.pu), L.bip != null ? `${L.bip} balls in play` : null), el("td", null, pct(L.xpu)));
       return tr; };
-    // the change, coloured where a direction is a verdict: velo, the grades and the expected rates (shape and use are just facts)
-    const dCell = (a, b, d, scale, pctFmt) => { const td = el("td", "dlt"); if (a == null || b == null) { td.textContent = "–"; return td; } const v = a - b; td.textContent = sg(v, d) + (pctFmt ? "" : ""); if (scale) paint(td, Math.max(2, Math.min(98, Math.round(50 + scale * v)))); return td; };
-    const deltaRow = (A, B) => { const tr = el("tr", "sdelta"); tr.append(el("td", "l src", "Δ"));
-      if (!A || !B) { for (let i = 0; i < 14; i++) tr.append(el("td", null, "–")); return tr; }
-      tr.append(A.all ? el("td") : dCell(A.use, B.use, 0), dCell(A.velo, B.velo, 1, 12), dCell(A.ivb, B.ivb, 1), dCell(A.hb, B.hb, 1), dCell(A.spin, B.spin, 0),
-                dCell(A.stuff, B.stuff, 0, 2.2), dCell(A.pitch, B.pitch, 0, 2.2), dCell(A.xwhf, B.xwhf, 1, 3), dCell(A.xgb, B.xgb, 1, 1.5), dCell(A.xpu, B.xpu, 1, 3),
-                dimTd(A.whf != null && B.whf != null ? sg(A.whf - B.whf) : "–"), dimTd(A.gb != null && B.gb != null ? sg(A.gb - B.gb) : "–"), dimTd(A.pu != null && B.pu != null ? sg(A.pu - B.pu) : "–"), el("td"));
+    // the change, coloured where a direction is a verdict: velo, the grades and the expected rates (shape, use and the actual rates are just facts)
+    const dCell = (a, b, d, scale, cls) => { const td = el("td", cls || null); if (a == null || b == null) { td.textContent = "–"; return td; } const v = a - b; td.textContent = Math.abs(v) < 0.5 * 10 ** -d ? (0).toFixed(d) : sg(v, d); if (scale) heatTd(td, Math.max(2, Math.min(98, Math.round(50 + scale * v)))); return td; };
+    const deltaRow = (A, B) => { const tr = el("tr", "sdelta"); tr.append(el("td", "l f1", "Change"));
+      if (!A || !B) { for (let i = 0; i < heads.length - 1; i++) tr.append(el("td", null, "–")); return tr; }
+      tr.append(el("td"), A.all ? el("td") : dCell(A.use, B.use, 1), dCell(A.velo, B.velo, 1, 12), dCell(A.ivb, B.ivb, 1), dCell(A.hb, B.hb, 1), dCell(A.spin, B.spin, 0),
+                dCell(A.stuff, B.stuff, 0, 2.2), dCell(A.pitch, B.pitch, 0, 2.2),
+                dCell(A.whf, B.whf, 1, 0, "xact"), dCell(A.xwhf, B.xwhf, 1, 3), dCell(A.gb, B.gb, 1, 0, "xact"), dCell(A.xgb, B.xgb, 1, 1.5), dCell(A.pu, B.pu, 1, 0, "xact"), dCell(A.xpu, B.xpu, 1, 3));
       return tr; };
     const block = (name, S_, P_, C_, f) => {
-      const n = 2 + (pp ? 1 : 0) + (pc ? 1 : 0), first = el("tr", "sph"), nm = el("td", "l pname"); nm.rowSpan = n; nm.append(name);
-      if (f) nm.append(el("span", "sflag " + f, f));
-      first.append(nm);
-      const r1 = valueRow(`Spring ${yy(y)}`, S_); for (const c of [...r1.childNodes]) first.append(c);
-      tb.append(first);
-      if (pp) tb.append(valueRow(`${yy(y - 1)} season`, P_));
-      tb.append(deltaRow(S_, P_));
-      if (pc) tb.append(valueRow(`${yy(y)} season`, C_, "scur"));
+      const h = el("div", "rollhd sphd"), nm = el("span", "rollname", name); h.append(nm);
+      if (f) h.append(el("span", "sflag " + f, f === "new" ? "new pitch" : "dropped"));
+      const { tb, fin, wrap } = brTable(groups, heads, "spt");
+      wrap.querySelector("tr.over th").classList.add("f1");
+      tb.append(fin(valueRow(`Spring ${yy(y)}`, S_)));
+      if (pp) tb.append(fin(valueRow(`${yy(y - 1)} season`, P_)));
+      if (pp) tb.append(fin(deltaRow(S_, P_)));
+      if (pc) tb.append(fin(valueRow(`${yy(y)} season`, C_, "scur")));
+      box.append(h, wrap);
     };
     for (const pt of types) block(PITCH_NAME[pt] || pt, LS(bS[pt]), LP(bP[pt]), LC(bC[pt]), flag(pt));
     block("All pitches", AS, AP, AC, null);
-    t.append(tb);
-    const wrap = el("div", "stuffscroll"); wrap.append(t); box.append(wrap);
-    box.append(el("p", "note", `Spring pitches are graded against MLB pitch types with their own park adjustment (desert air takes ride off a fastball). What carries from camp to the season is the physical side — velocity, movement, mix, and the Stuff+ / Pitching+ built on them; whiff, ground-ball and popup rates are a few dozen swings against a mix of regulars and minor leaguers and read dim here. Velocity ramps through March (the first week reads a mile low) and a reliever's one-inning outings read hot.${pc ? ` The ${y} season rows are what actually followed.` : ""}${AS.pitch == null ? " Pitching+ for this spring arrives when the file is rescored with the location models." : ""}`));
+    box.append(el("p", "note", `Spring pitches are graded against MLB pitch types with their own park adjustment (desert air takes ride off a fastball). What carries from camp to the season is the physical side — velocity, movement, mix, and the Stuff+ / Pitching+ built on them; the actual whiff, ground-ball and popup rates (Act, in grey) are a few dozen swings against a mix of regulars and minor leaguers. Velocity ramps through March (the first week reads a mile low) and a reliever's one-inning outings read hot.${pc ? ` The ${y} season rows are what actually followed.` : ""}${AS.pitch == null ? " Pitching+ for this spring arrives when the file is rescored with the location models." : ""}`));
     return box;
   }
   // B-Ref's table (Sean, 9 Oct 2026: the B-Ref Style Tables canvas, "I want that for everything"): the season table's .sbt dress for the
@@ -8797,6 +8796,20 @@
   }
   const PAIRH = (exp, act) => [["Act", "xact", act], ["Exp", "", exp]];   // actual first (Sean, 9 Oct 2026: "put actual before expected")   // an expected / actual pair's two column names
   const heatTd = (td, pc) => { if (pc == null) return td; const s = pctStyle(pc); if (s) { td.style.background = s.bg; td.style.color = s.fg; td.classList.add("heat"); } return td; };
+  // a pitch's expected rate against the league's pitches of its own type (Sean, 14 Oct 2026: "heat map the expected whiff rates gb rates and pop up
+  // rates on the pitching+ table"): every pitcher's 30+ of that type in the card's season, the same level shift (xAdj) as the table's own numbers.
+  // Whiffs, grounders and popups are all good for a pitcher, so higher reads red. Per dataset, built once
+  const typeXCache = new Map();
+  function typeXPct(pt, k, v) {
+    if (v == null || !pt) return null;
+    let C = typeXCache.get(DS.key);
+    if (!C) { C = {}; for (const q of DS.players) { if (q.type !== "P") continue; const R = arsenalRows(q); if (!R) continue;
+        for (const r0 of R) { if (!r0 || r0.n < 30) continue; const r = xAdj(r0), T = C[r.pt] || (C[r.pt] = {});
+          for (const f of ["xwhfl", "xgbl", "xpul", "xwhf", "xgb", "xpu"]) if (r[f] != null) (T[f] || (T[f] = [])).push(r[f]); } }
+      for (const T of Object.values(C)) for (const a of Object.values(T)) a.sort((x, y) => x - y);
+      typeXCache.set(DS.key, C); }
+    const a = C[pt] && C[pt][k]; return a && a.length >= 10 ? insertPct(a, v) : null;
+  }
   function renderStuffTab(p, st, g, mode = "stuff") {
     const box = el("div", "rollbox uerabox stuffbox brbox"), P = mode === "pitching";
     const rows = (p.ctx && p.ctx.arsenal) || [];
@@ -8844,7 +8857,8 @@
     const f1n = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%");
     let inTot = false;   // the All pitches row is a band row: no heat on it, as on the season table
     const cellPlus = (v, cls) => { const td = el("td", "plus" + (cls ? " " + cls : ""), v == null ? "–" : String(Math.round(v))); if (v != null && !inTot) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } } return td; };
-    const pair = (x, a) => [el("td", "xact", a == null ? "–" : pct(a)), el("td", null, pct(x))];   // Act in grey, then Exp (9 Oct 2026)
+    const pair = (x, a, pc) => [el("td", "xact", a == null ? "–" : pct(a)), inTot ? el("td", null, pct(x)) : heatTd(el("td", null, pct(x)), pc)];   // Act in grey, then Exp (9 Oct 2026); pc heat-maps Exp against the pitch's type (14 Oct 2026)
+    const xp = (r, k) => typeXPct(r.pt, k, r[k]);
     const con = (r) => (r.sw || 0) * (1 - (r.whf || 0) / 100);   // the pitch's contacted swings — what the foul chance is over
     const LR = lgRatesP(), cshift = LR.xcstr != null && LR.cstr != null ? LR.cstr - LR.xcstr : 0;   // xCalled's centring: the fixed models read the newest season a little hot
     const relSum = { t: 0, w: 0, b: 0, n: 0 };
@@ -8857,9 +8871,9 @@
       tr.append(el("td", "l nm f1", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(100 * r.n / tot)), el("td", null, f1n(r.velo)), el("td", null, f1n(r.ivb)), el("td", null, f1n(r.hb)),
                 el("td", null, r.spin == null ? "–" : String(r.spin)),
                 ...(P ? [cellPlus(rel(r.pitp, A && A.t), "sp"), cellPlus(rel(r.whfpl, A && A.w)), cellPlus(rel(r.bbpl, A && A.b)), cellPlus(r.locp),
-                         ...pair(r.xwhfl, r.whf), ...pair(r.xgbl, r.gb), ...pair(r.xpul, r.pu), ...pair(xFoulOf(r), r.foul), ...pair(r.xcstr == null ? null : r.xcstr + cshift, r.cstr)]
+                         ...pair(r.xwhfl, r.whf, xp(r, "xwhfl")), ...pair(r.xgbl, r.gb, xp(r, "xgbl")), ...pair(r.xpul, r.pu, xp(r, "xpul")), ...pair(xFoulOf(r), r.foul), ...pair(r.xcstr == null ? null : r.xcstr + cshift, r.cstr)]
                       : [cellPlus(rel(r.stuffp, A && A.t), "sp"), cellPlus(rel(r.whfp, A && A.w)), cellPlus(rel(r.bbp, A && A.b)),
-                         ...pair(r.xwhf, r.whf), ...pair(r.xgb, r.gb), ...pair(r.xpu, r.pu), ...pair(xFoulOf(r), r.foul)]));
+                         ...pair(r.xwhf, r.whf, xp(r, "xwhf")), ...pair(r.xgb, r.gb, xp(r, "xgb")), ...pair(r.xpu, r.pu, xp(r, "xpu")), ...pair(xFoulOf(r), r.foul)]));
       tb.append(fin(tr));
     }
     const s0 = p.m || {}, trt = el("tr", "tot first"); inTot = true;
@@ -9286,7 +9300,7 @@
     if (p.type !== "P" || !bbl || !c || !c.bbw) return null;
     const names = { gb: "Ground balls", ld: "Line drives", fb: "Fly balls", pu: "Popups" };
     const n = Object.values(bbl).reduce((s, x) => s + (x[0] || 0), 0);
-    const box = el("div", "rollbox uerabox luckbox");
+    const box = el("div", "rollbox uerabox luckbox brbox");
     const hd = el("div", "rollhd");
     const era = pv.m.era, nera = pv.m.nera;
     hd.append(el("span", "rollname", nera == null ? "Batted-ball luck" : `Luck-neutral ERA ${nera.toFixed(2)}`));
@@ -9298,22 +9312,28 @@
     }
     box.append(hd);
     box.title = `Luck-neutral ERA gives every ball in play the league's average wOBA for its type (ground ball ${fmtX(c.bbw.gb)}, line drive ${fmtX(c.bbw.ld)}, fly ball ${fmtX(c.bbw.fb)}, popup ${fmtX(c.bbw.pu)}), so BABIP and HR/FB luck wash out while strikeouts, walks and a ground-ball profile keep their value. Diff is his wOBA allowed minus the league's, in points; red means the type has hurt him more than it should.`;
-    const t = el("table", "ubt");
-    t.append(colgroup([null, 44, 54, 56, 50, 54]));
-    const hr = el("tr");
-    for (const h of ["", "BIP", "Share", "wOBA", "Lg", "Diff"]) hr.append(el("th", h ? null : "l", h));
-    const th = el("thead"); th.append(hr); t.append(th);
-    const tb = el("tbody");
+    // B-Ref's dress (Sean, 14 Oct 2026: "make the nERA table follow that same format"): Batted ball | Balls in play | wOBA allowed, Diff filled
+    // by its size (red = the type has gone his way, blue = it has hurt him), all balls in play a band row under a gap
+    const { tb, fin, gap, wrap } = brTable([["", 1], ["Balls in play", 2], ["wOBA allowed", 3]],
+      [["Type", "l f1"], ["BIP", "", "Balls in play of this type"], ["Share", "", "Share of his balls in play"], ["His", "", "The wOBA hitters have had on his balls of this type"], ["Lg", "", "The league's wOBA on this type"], ["Diff", "", "His minus the league's, in wOBA points"]]);
+    wrap.querySelector("tr.over th").classList.add("f1");
+    let sw = 0, sl = 0, nw = 0;
     for (const k of ["gb", "ld", "fb", "pu"]) {
       const [cnt, w] = bbl[k] || [0, null], lg = c.bbw[k];
       const d = w == null ? null : Math.round(1000 * (w - lg));
-      const r = el("tr"), dc = el("td", "dcell");
-      dc.append(el("span", "chip2 " + (d == null ? "even" : d > 15 ? "unlucky" : d < -15 ? "lucky" : "even"), d == null ? "–" : (d > 0 ? "+" : "") + d));
-      r.append(el("td", "l", names[k]), el("td", null, String(cnt)), el("td", null, n ? (100 * cnt / n).toFixed(1) + "%" : "–"),
-               el("td", "exp", w == null ? "–" : fmtX(w)), el("td", null, fmtX(lg)), dc);
-      tb.append(r);
+      if (w != null && cnt) { sw += w * cnt; sl += lg * cnt; nw += cnt; }
+      const dc = el("td", null, d == null ? "–" : (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d));
+      if (d != null) heatTd(dc, Math.max(2, Math.min(98, Math.round(50 - 0.6 * d))));
+      const tr = el("tr"); tr.append(el("td", "l f1", names[k]), el("td", null, String(cnt)), el("td", null, n ? (100 * cnt / n).toFixed(1) + "%" : "–"),
+                                     el("td", null, w == null ? "–" : fmtX(w)), el("td", null, fmtX(lg)), dc);
+      tb.append(fin(tr));
     }
-    t.append(tb); box.append(t);
+    const dt = nw ? Math.round(1000 * (sw - sl) / nw) : null;
+    const trt = el("tr", "tot first"); trt.append(el("td", "l f1", "All balls in play"), el("td", null, String(n)), el("td", null, n ? "100%" : "–"),
+                                                  el("td", null, nw ? fmtX(sw / nw) : "–"), el("td", null, nw ? fmtX(sl / nw) : "–"),
+                                                  el("td", null, dt == null ? "–" : (dt > 0 ? "+" : dt < 0 ? "−" : "") + Math.abs(dt)));
+    tb.append(gap(), fin(trt));
+    box.append(wrap);
     return box;
   }
   // the pitcher's version of the same foot panel: what his process says the ERA should be, against what it is

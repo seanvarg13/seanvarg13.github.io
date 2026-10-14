@@ -3736,6 +3736,17 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   before first paint; `TABLE_SANS` is now only the site default (false = B-Ref). Picking one clears the Leaderboard's measured column widths
   (`headFont`, `statColsMemo`) so they re-fit in the new type; "Follow the site default" clears the device's pick too. The empty "Percentile bars"
   row (its control came off on 6 Oct) is gone from Appearance.
+* **Heat on the Pitching+ tab's expected rates; the Spring and nERA tabs as B-Ref tables (Sean, 14 Oct 2026: "heat map the expected whiff rates gb
+  rates and pop up rates on the pitching+ table", "update the spring tab to basically be a table in the format I attached and also make it so for each
+  pitch it is a new table with headers again", "make the nERA table follow that same format")**: on the Pitching+ tab each pitch's **Exp** Whiff% /
+  GB% / PU% cell is filled by its percentile among the league's pitches **of the same type** that season (every pitcher's 30+ of it, after the same
+  `xAdj` level shift as the table — `typeXPct` / `typeXCache` per dataset; higher = red for all three, they're all good for a pitcher); Act, Foul%,
+  Called% and the All pitches band row stay plain. **Spring** (`renderSpringTab`): a heading per pitch (with a "new pitch" / "dropped" tag) over its own
+  `brTable` — Season (frozen) | Usage: # · Use% | Shape: Velo · IVB · HB · Spin | Grades vs type: Stuff+ · Pitching+ | Whiff% · GB% · PU% as Act / Exp
+  pairs — rows Spring 'YY, 'YY−1 season, Change (faint band; velo, grades and expected rates heat-filled by direction) and the 'YY season once built,
+  then an All pitches table; class `springbr` (the old `.springbox` card frame and `.springt` table are unused). **nERA** (`renderLuckBox`): Type |
+  Balls in play: BIP · Share | wOBA allowed: His · Lg · Diff (Diff filled: red = the type has gone his way, blue = hurt him), and an "All balls in
+  play" band row (his wOBA and the league's at his mix). CSS at the end of `styles.css`.
 ---
 
 ## 10. The football site moved out
