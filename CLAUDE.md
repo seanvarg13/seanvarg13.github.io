@@ -3696,6 +3696,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   table 11px over 12px). Every column name now takes its table's own size (`tr:not(.over) > th { font-size: inherit }`, id-anchored so it beats
   the B-Ref passes); the over-header's group names keep 11.5px. The card tabs' B-Ref tables, whose cells were a fixed 12.5px, read the table's
   size too (13px desktop / 12px phone). The Leaderboard's column names are 13px like its values. The block at the end of `styles.css`.
+* **Baseball-Reference's table type back, the Source Sans tables saved behind a switch (Sean, 14 Oct 2026: "go back to the baseball reference
+  style of the table again, save what this current format is though I might want to switch back again")**: the 9 Oct Verdana block (11px
+  Verdana, ~23px rows, 3px padding on every B-Ref table and the Leaderboard's rows / column names) is back at the end of `styles.css`, every
+  rule under `:root:not(.tsans)` with more roots than the 14 Oct column-name rule, so it wins on names and cells alike. **To switch back to the
+  Source Sans tables of 13-14 Oct, set `TABLE_SANS = true` at the top of `themes.js`** (it puts class `tsans` on `<html>`); nothing else
+  changes. `statCols` measures in the header's computed font, so the Leaderboard's column widths fit either way.
 ---
 
 ## 10. The football site moved out
