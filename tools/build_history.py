@@ -8,6 +8,7 @@ Reuses build_data.py season by season: same metrics, same directional xwOBA mode
 constants (derived per season). Rows are per player x handedness x venue (no date dimension), so the
 card's vs-LHP/RHP and home/away splits work for past seasons; date windows do not.
 """
+import re
 import sys, json, datetime as dt
 from pathlib import Path
 import numpy as np
@@ -127,6 +128,12 @@ def build_season(year: int, kind: str = "reg"):
            f"({path.stat().st_size / 1e6:.1f} MB) + {dpath.name} ({dpath.stat().st_size / 1e6:.1f} MB)")
 
 
+def season_file(f):
+    """a season's dataset (mlb-2025.js, aaa-2026.js, mlb-2026-post.js), not a file that shares the prefix — hist/aaa-tw.js (the pooled
+    projection's Triple-A numbers, 12 Oct 2026) matched "aaa-*.js" and broke the index every minors run until 14 Oct 2026"""
+    return re.fullmatch(r"(mlb|aaa|aa|ap|a)-\d{4}(-[a-z]+)?", f.stem) is not None
+
+
 def build_index():
     """hist/index.js: every player across the current season and all built seasons, for the Explore search."""
     players = {}
@@ -139,7 +146,7 @@ def build_index():
     for p in cur["players"]:
         add(p["id"], p["name"], p["team"], p["type"], curkey, cur["meta"]["season"],
             p["pa"] if p["type"] == "H" else round(p["ip"], 1), p["primary"])
-    files = sorted(OUT.glob("mlb-*.js")) + [f for lv in ("aaa", "aa", "ap", "a") for f in sorted(OUT.glob(f"{lv}-*.js"))]   # MLB, then each minor-league level
+    files = [f for f in sorted(OUT.glob("mlb-*.js")) + [f for lv in ("aaa", "aa", "ap", "a") for f in sorted(OUT.glob(f"{lv}-*.js"))] if season_file(f)]   # MLB, then each minor-league level
     for f in files:
         raw = f.read_text(); ds = json.loads(raw[raw.index("= {") + 2:].rstrip().rstrip(";"))
         for p in ds["players"]:
@@ -152,7 +159,7 @@ def build_index():
         e["s"].sort(key=lambda x: (-x[1], x[2], lvl(x[0]), kind(x[0])))
     seasons = [f"mlb-{cur['meta']['season']}"] + sorted((f.stem for f in OUT.glob("mlb-*.js")), key=lambda k: (-int(k.split("-")[1]), kind(k)))
     for lv in ("aaa", "aa", "ap", "a"):
-        seasons += sorted((f.stem for f in OUT.glob(f"{lv}-*.js")), reverse=True)
+        seasons += sorted((f.stem for f in OUT.glob(f"{lv}-*.js") if season_file(f)), reverse=True)
     idx = {"seasons": list(dict.fromkeys(seasons)), "players": sorted(players.values(), key=lambda e: e["name"])}
     (OUT / "index.js").write_text("window.DRAFT_INDEX = " + json.dumps(idx, separators=(",", ":")) + ";\n")
     bd.log(f"index: {len(idx['players'])} players, seasons {idx['seasons']}")
