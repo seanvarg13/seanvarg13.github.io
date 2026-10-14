@@ -3721,6 +3721,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   globs in `build_history.build_index` and `build_career.py`'s minors loop, which then read it as a season (`KeyError: 'players'`), so every daily
   minors step (search index, career files, fantasy) stopped at the index. `season_file(f)` in `build_history.py` keeps only `<level>-YYYY[-kind]`
   files and `build_career.py` skips a non-year stem. Name any new `hist/` file so it doesn't start with `mlb-`, `aaa-`, `aa-`, `ap-` or `a-`.
+* **The tables at 12px (Sean, 14 Oct 2026: "would it work if you made the font size 12 and changed nothing else", then "yeah do it")**: the B-Ref
+  block's type (cells, column names, the Leaderboard's rows and over-header) is 12px instead of 11px; row heights (23px) and padding unchanged, the
+  tables ~7% wider (Judge's season table 888 → 953px). Checked headless: nothing clipped, every row still 23px.
 ---
 
 ## 10. The football site moved out
