@@ -5525,3 +5525,14 @@ header.top .wordmark { display: none; }
 :root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main .hot, :root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main > .score.hot { font-weight: 700 !important; }
 :root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colhead .h { font: 700 12px/1.25 var(--body, "Source Sans 3", sans-serif) !important; min-height: 23px !important; padding: 4px 3px !important; }
 :root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colband > * { font: 700 12px var(--body, "Source Sans 3", sans-serif) !important; height: 21px; }
+/* The Spring tab as a table per pitch (Sean, 14 Oct 2026: "for each pitch it is a new table with headers again"): the pitch's name over its own
+   B-Ref table, a size under the tab's title; the change row on a faint band so it reads as the comparison */
+:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .springbr > .rollhd.sphd { margin-top: 14px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .springbr > .rollhd.sphd .rollname { font-size: 19px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) .springbr > .rollhd.sphd .rollname { font-size: 17px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .springbr .brscroll { margin: 4px 0 6px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .springbr .sflag { display: inline-block; padding: 0 6px; font-size: 11px; line-height: 18px; border: 1px solid var(--line-soft, #c9ced6); color: var(--ink-2); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .springbr .sflag.new { border-color: var(--stripe-line, #c8102e); color: var(--ink); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .springbr .spt tr.sdelta td:not(.heat) { background: color-mix(in srgb, var(--ink) 5%, var(--surface, #fff)); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .springbr .spt tr.scur td.f1 { font-weight: 600; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .springbr > .note { margin-top: 12px; }
