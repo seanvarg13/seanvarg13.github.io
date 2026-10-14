@@ -1,9 +1,19 @@
 /* Colour schemes and fonts. Loaded in <head> before the page paints; sets the scheme's tokens inline on <html>
    (see the token roles at the top of styles.css) and swaps the Google Fonts link for the chosen type.
    The Appearance page (app.js) reads DRAFT_THEMES.schemes / .fonts and calls DRAFT_THEMES.set(). */
-/* Table type: false = Baseball-Reference's 11px Verdana (Sean, 14 Oct 2026); true = the site's Source Sans tables of 13-14 Oct. */
+/* Table style — the site default: false = the Baseball-Reference tables (12px, 23px rows); true = the Source Sans tables of 13-14 Oct (column
+   names the size of their cells, ~28-30px rows). Each device can pick its own in Appearance ▸ Tables (draft2027.tables; Sean, 14 Oct 2026). */
 const TABLE_SANS = false;
-if (TABLE_SANS) document.documentElement.classList.add("tsans");
+window.DRAFT_TABLES = (function () {
+  const KEY = "draft2027.tables";
+  const own = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
+  const get = () => own() || (TABLE_SANS ? "classic" : "bref");
+  const apply = () => document.documentElement.classList.toggle("tsans", get() === "classic");
+  const set = (v) => { try { localStorage.setItem(KEY, v); } catch (e) { /* the switch still applies for this visit */ } document.documentElement.classList.toggle("tsans", v === "classic"); };
+  const clear = () => { try { localStorage.removeItem(KEY); } catch (e) { /* */ } apply(); };
+  apply();
+  return { get, set, own, clear };
+})();
 window.DRAFT_THEMES = (function () {
   const W = "rgba(255, 255, 255, ";
   // type on a dark fill / on a light fill
@@ -137,8 +147,8 @@ window.DRAFT_THEMES = (function () {
   // Mobile / desktop layout. "auto" follows the screen (phones get the compact layout); "desktop" on a phone
   // widens the viewport so the full layout shows zoomed out, like Safari's "Request Desktop Website".
   const viewPref = () => (["mobile", "desktop"].includes(get(LS.view)) ? get(LS.view) : (["mobile", "desktop"].includes(DEFAULTS.view) ? DEFAULTS.view : "auto"));
-  const hasOwn = () => [LS.scheme, LS.font, LS.theme, LS.view].some((k) => get(k) != null);
-  const useDefaults = () => { for (const k of [LS.scheme, LS.font, LS.theme, LS.view]) { try { localStorage.removeItem(k); } catch { /* */ } } delete root.dataset.theme; apply(); applyView(); };
+  const hasOwn = () => [LS.scheme, LS.font, LS.theme, LS.view].some((k) => get(k) != null) || !!window.DRAFT_TABLES.own();
+  const useDefaults = () => { for (const k of [LS.scheme, LS.font, LS.theme, LS.view]) { try { localStorage.removeItem(k); } catch { /* */ } } delete root.dataset.theme; apply(); applyView(); window.DRAFT_TABLES.clear(); };
   const smallScreen = () => matchMedia("(max-width: 700px)").matches || (navigator.maxTouchPoints > 1 && Math.min(screen.width, screen.height) <= 700);
   function applyView() {
     const pref = viewPref(), small = smallScreen();

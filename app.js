@@ -6723,8 +6723,11 @@
     row("Light or dark", null, segOf("Light or dark", [["system", "Match device"], ["light", "Light"], ["dark", "Dark"]], cur.theme, (v) => { T.set({ theme: v }); renderAppearance(); }));
     row("Layout", "Auto gives a phone the compact layout; Desktop on a phone shows the full layout zoomed out.",
       segOf("Layout", [["auto", "Auto"], ["mobile", "Mobile"], ["desktop", "Desktop"]], T.viewPref(), (v) => { T.setView(v); renderAppearance(); }));
-    row("Percentile bars", "How the bars on a player's card are drawn.",
-      );   // the Percentile bars switch (Savant charts / Classic meters) came off with the standard rows (6 Oct 2026)
+    // the tables' type (Sean, 14 Oct 2026: "a button switch in the appearance tab ... between the current b ref styles and that oct 9th style"):
+    // per device; the Leaderboard re-measures its column widths in the new type (statCols reads the header's computed font once per layout)
+    if (window.DRAFT_TABLES) row("Tables", "Baseball-Reference: 12px type, compact 23px rows. Classic: the larger type with column names the size of the numbers, roomier rows.",
+      segOf("Tables", [["bref", "Baseball-Reference"], ["classic", "Classic"]], window.DRAFT_TABLES.get(), (v) => {
+        window.DRAFT_TABLES.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderAppearance(); }));
     // type: one line per font, set in that font
     T.preloadFonts();
     const fg = el("div", "fonts");
