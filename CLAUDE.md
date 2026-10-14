@@ -3771,6 +3771,18 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (Whiff% / GB% / PU% / Foul% / Called%) are filled by `typePct` among the league's pitches of the same type (`ap`; `foul` and `cstr` joined the pool,
   foul needs 20+ swings like Whiff%), the Exp cells plain; the Spring tab's Act cells the same and its Change row colours the actual deltas instead of the
   expected ones. The entry above (Exp only) is history.
+* **The pitchers' 162 Game Avg per games on the active roster (Sean, 14 Oct 2026: "for the pitchers 162 game average make the calculations
+  based on how many days they were on the active roster and pro rate those stats to if they were on it for 162 days")**: it had scaled his
+  career by 162 team games for every season he pitched (60 in 2020), so a September call-up or an IL year counted as a full one. Now each
+  season counts the **team games he spent on the active roster** — every regular-season box score lists the whole active staff (`pitchers` +
+  `bullpen`), so a full season on the roster is 162 and the row is his career × 162 / the sum (never fewer than the games he pitched). **Build**:
+  `active_season(y, fresh)` in `tools/build_career.py` (one slim box-score request a game, `fields=teams,away,home,pitchers,bullpen`, 24
+  threads, ~90 s a season; a finished season cached as `.cache/sabr/act-<y>.json` `{ok, p: {pid: games}}`, this season's per-game lists in
+  `act-<y>-games.json` so a daily run fetches only new games) appends the count to every pitching row after `[fWAR, bWAR]` (index 20; `null`
+  before 2009 — 2008's box scores list ~10 pitchers a side, earlier ones fewer — a season whose median team-game lists under 11 is left out, and the app counts
+  such a season as a full one). `hist/career.js` patched in place the same day. **App**: `mlbLine` reads it as `c.ag`; `seasonBlock`'s `actOf`;
+  the row's tooltip gives the games. Wheeler 2025: 118 games on the roster (IL from mid-August), Skenes 2025 162, Cole 2025 none.
+
 ---
 
 ## 10. The football site moved out

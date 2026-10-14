@@ -3289,7 +3289,7 @@
     if (H) { c.HBP = extra[0] || 0; c.SF = extra[1] || 0; } else { c.ER = extra[0]; c.BF = extra[1]; }
     c.adv = !Array.isArray(a) ? {} : H ? { woba: a[0], xwoba: a[1], whf: null } : { fip: a[0], siera: a[1], whf: a[5], strk: a[6], gb: a[7], pu: a[8] };
     if (H) { c.sab = Array.isArray(r[base + 4]) ? r[base + 4] : null; c.ext = Array.isArray(r[base + 5]) ? r[base + 5] : null; c.pw = Array.isArray(r[base + 6]) ? r[base + 6] : null; }
-    else c.pw = Array.isArray(r[base + 4]) ? r[base + 4] : null;   // a pitcher's WAR [FanGraphs, B-Ref] after a blank positions slot (14 Oct 2026)   // FanGraphs' [wRC+, BsR, Off, Def, WAR, wOBA]; [bWAR, sprint speed, fly balls]; his pitching WAR [FanGraphs, B-Ref] (8 Oct 2026)
+    else { c.pw = Array.isArray(r[base + 4]) ? r[base + 4] : null; c.ag = typeof r[base + 5] === "number" ? r[base + 5] : null; }   /* then the team games he spent on the active roster (14 Oct 2026; 2009 on) */   // a pitcher's WAR [FanGraphs, B-Ref] after a blank positions slot (14 Oct 2026)   // FanGraphs' [wRC+, BsR, Off, Def, WAR, wOBA]; [bWAR, sprint speed, fly balls]; his pitching WAR [FanGraphs, B-Ref] (8 Oct 2026)
     return { season: r[0], level: "MLB", team: r[1], c, mlb: true, pos: posPairs(r[base + 3]) };
   }
   function rawLines(p) {
@@ -10839,7 +10839,11 @@
       if (sx) tot.bx = sbxCombine(mlb);
       else if (bxOn) { let a = 0, w = 0; for (const l of mlb) { const v = l.bx && l.bx.txw, pa = +l.c.PA || 0; if (v == null || !pa) continue; a += v * pa; w += pa; } tot.bx = { txw: w ? a / w : null }; }   // talent xwOBA over the seasons that have one, by PA
       row([`${n} Yr${n > 1 ? "s" : ""}`], tot, "tot first", { record: !post });   // no heat map on the totals rows (Sean, 8 Oct 2026)
-      const G = +tot.c.G || 0, games = H ? G : mlb.reduce((a, l) => a + (l.season === 2020 ? 60 : 162), 0);   // a pitcher's per 162 team games
+      // a pitcher's per 162 games on the active roster (Sean, 14 Oct 2026: "based on how many days they were on the active roster and pro rate
+      // those stats to if they were on it for 162 days"): each season counts the team games he was on the active roster (build_career.py reads
+      // every box score's staff list, 2009 on), never fewer than the games he pitched; a season without the count (before 2009) counts as a full one
+      const G = +tot.c.G || 0, actOf = (l) => (l.c.ag != null ? Math.max(l.c.ag, +l.c.G || 0) : l.season === 2020 ? 60 : 162);
+      const games = H ? G : mlb.reduce((a, l) => a + actOf(l), 0);
       if (!post && games) {
         const avg = { c: Object.assign({}, tot.c), rc: tot.c, bp: tot.bp }, f = 162 / games;
         for (const k of (H ? ["G", "PA", "AB", "R", "H", "2B", "3B", "HR", "RBI", "SB", "BB", "K"] : ["W", "L", "G", "GS", "H", "HR", "BB", "K"])) avg.c[k] = Math.round((+tot.c[k] || 0) * f);
@@ -10848,7 +10852,8 @@
         if (H && tot.c.ext) avg.c.ext = [tot.c.ext[0] == null ? null : tot.c.ext[0] * f, tot.c.ext[1], tot.c.ext[2]];   // bWAR per 162; sprint as it is (HR/FB reads the unscaled line)
         if (tot.c.pw) avg.c.pw = tot.c.pw.map((v) => (v == null ? null : v * f));   // and his pitching WAR per 162 (a pitcher's too)
         if (tot.bx) avg.bx = Object.assign({}, tot.bx, { bbe: Math.round((+tot.bx.bbe || 0) * f), sba: tot.bx.sba == null ? null : Math.round(tot.bx.sba * f) });   // batted balls per 162; the rates as they are
-        row(["162 Game Avg"], avg, "tot");
+        const tra = row(["162 Game Avg"], avg, "tot");
+        if (!H && tra) tra.title = `Per 162 games on the active roster: his career over ${games} team games on it` + (mlb.some((l) => l.c.ag == null) ? " (a season before 2009 counted as a full one)" : "");
       }
       // each club: a traded year's clubs from the record's own club rows
       const rec = window.DRAFT_CAREER[String(p.id)], keysMLB = H ? RAW_H : RAW_P, byClub = new Map();

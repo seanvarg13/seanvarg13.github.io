@@ -523,6 +523,65 @@ def tx_season(y, fresh):
     return out
 
 
+# How many of his club's games a pitcher spent on the active roster each season (Sean, 14 Oct 2026: "for the pitchers 162 game average make
+# the calculations based on how many days they were on the active roster and pro rate those stats to if they were on it for 162 days"): every
+# regular-season box score lists the whole active staff, the pitchers who pitched and the bullpen who didn't, so a pitcher's count is the games
+# his name is on those lists; a full season on the roster is 162, so the season table's 162 Game Avg scales his career by 162 over the sum.
+# Box scores list the full staff from 2009 (2008 and earlier carry ~10 names a side), so a season whose median team-game lists under 11
+# pitchers is left out (None, and the app counts that season as a full one). One slim box-score request a game, threaded; a finished season is
+# cached in .cache/sabr/act-<y>.json as {pid: games}, and this season keeps its per-game lists in act-<y>-games.json so a daily run fetches only
+# the new games. None when the API can't be had.
+ACT_FROM = 2009
+def active_season(y, fresh):
+    f, fg = SABR / f"act-{y}.json", SABR / f"act-{y}-games.json"
+    if f.exists() and not fresh:
+        try:
+            d = json.loads(f.read_text()); return d.get("p") if d.get("ok") else None
+        except ValueError:
+            pass
+    try:
+        js = requests.get("https://statsapi.mlb.com/api/v1/schedule", headers=UA, timeout=120,
+                          params={"sportId": 1, "season": y, "gameType": "R", "fields": "dates,games,gamePk,status,abstractGameState,codedGameState"}).json()
+    except Exception as e:
+        print(f"  schedule {y} unavailable:", e, flush=True); return None
+    pks = sorted({g["gamePk"] for d in js.get("dates", []) for g in d.get("games", [])
+                  if (g.get("status") or {}).get("abstractGameState") == "Final" and (g.get("status") or {}).get("codedGameState") not in ("D", "C")})
+    games = {}
+    if fg.exists():
+        try:
+            games = json.loads(fg.read_text())
+        except ValueError:
+            games = {}
+    def box(pk):
+        for attempt in range(3):
+            try:
+                t = requests.get(f"https://statsapi.mlb.com/api/v1/game/{pk}/boxscore", headers=UA, timeout=30,
+                                 params={"fields": "teams,away,home,pitchers,bullpen"}).json()["teams"]
+                return [sorted(set(t[s].get("pitchers", []) + t[s].get("bullpen", []))) for s in ("away", "home")]
+            except Exception:
+                time.sleep(2 + 2 * attempt)
+        return None
+    todo = [pk for pk in pks if str(pk) not in games]
+    with ThreadPoolExecutor(max_workers=24) as ex:
+        for pk, b in zip(todo, ex.map(box, todo)):
+            if b is not None:
+                games[str(pk)] = b
+    SABR.mkdir(parents=True, exist_ok=True)
+    if fresh:
+        fg.write_text(json.dumps(games, separators=(",", ":")))
+    sides = sorted(len(s) for b in games.values() for s in b)
+    ok = bool(sides) and sides[len(sides) // 2] >= 11 and len(games) >= 0.97 * len(pks)
+    out = {}
+    for b in games.values():
+        for s in b:
+            for pid in s:
+                out[str(pid)] = out.get(str(pid), 0) + 1
+    if not fresh and len(games) >= 0.97 * len(pks):
+        f.write_text(json.dumps({"ok": ok, "p": out}, separators=(",", ":")))
+    print(f"  active rosters {y}: {len(games)} of {len(pks)} games, median staff {sides[len(sides) // 2] if sides else 0}{'' if ok else ' (left out)'}", flush=True)
+    return out if ok else None
+
+
 def aaa_talent():
     out, lg = {}, {}
     files = sorted(f for f in (HERE / "hist").glob("aaa-*.js") if f.stem[4:].isdigit()); last = max((int(f.stem[4:]) for f in files), default=0)   # not aaa-tw.js itself
@@ -655,6 +714,12 @@ def main():
         b = bwp.get(f"{pid}|{y}", {}).get(club)
         f = sabr_p_for(y).get(str(pid)) if not club else None
         return None if b is None and f is None else [f, b]
+    act = {}
+    def act_for(pid, y):                                   # team games on the active roster that season, or None (before 2009 / unavailable)
+        if y < ACT_FROM: return None
+        if y not in act:
+            act[y] = active_season(y, fresh=y >= now) or {}
+        return act[y].get(str(pid))
     ht_ext = {}                                            # (pid, season, club) -> [bWAR, None, fly balls], appended to HT rows after their FanGraphs numbers
     for i in range(0, len(ids), 80):
         chunk = ids[i:i + 80]
@@ -722,6 +787,7 @@ def main():
                         else:
                             r.append("")                       # a pitcher's row: a blank where a hitter's positions sit, so the index matches,
                             r.append(pw_for(p["id"], r[0]))    # then his pitching WAR [FanGraphs, B-Ref] (Sean, 14 Oct 2026: fWAR / bWAR on the pitchers' table)
+                            r.append(act_for(p["id"], r[0]))   # then the team games he was on the active roster, for the 162 Game Avg (14 Oct 2026)
                     rec[t] = rows
             if rec:
                 out[str(p["id"])] = rec
