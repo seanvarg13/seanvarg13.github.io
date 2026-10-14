@@ -3684,6 +3684,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Close toggle and a desktop's header pages are white with navy bold condensed words, a 1px white edge, square, with the buttons' soft lift — the
   player page's Filters / Raw look. The current page is filled navy with white words (it had been the white one); an open Fantasy ▾ / More ▾ and a
   hover take the Filters button's pale hover. The block at the end of `styles.css`; the earlier white-outline blocks for both stay underneath.
+* **The season table's tabs framed; no bounce in any table (Sean, 14 Oct 2026, Bauers's popup: "make the top part of this table have the
+  outline too ... get rid of the like bouncy thing ... make sure none of the tables on the site have that")**: the Regular Season / Playoffs
+  strip (`.sblock .sbtabs`) has the table's 45%-ink edge and soft shadow (clipped at its foot, so it runs into the table's own), and every box a
+  table scrolls in (`.sbscroll`, `.brscroll`, `.fscroll`, `.pbscroll`, `#bscroll`, `.board-scroll`, the game-log, planner, HR/FB, compare and Mock
+  boxes, home's tables) is `overscroll-behavior-x: none` — iOS's sideways rubber-band is gone (`contain`, which several had, keeps the bounce).
+  The standing list boxes, the only scrollers on their pages, are `overscroll-behavior-y: none` too; Fantasy's box on a phone still hands vertical
+  scrolls to the page. The block at the end of `styles.css`.
 ---
 
 ## 10. The football site moved out
