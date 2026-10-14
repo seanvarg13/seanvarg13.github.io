@@ -3702,6 +3702,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   rule under `:root:not(.tsans)` with more roots than the 14 Oct column-name rule, so it wins on names and cells alike. **To switch back to the
   Source Sans tables of 13-14 Oct, set `TABLE_SANS = true` at the top of `themes.js`** (it puts class `tsans` on `<html>`); nothing else
   changes. `statCols` measures in the header's computed font, so the Leaderboard's column widths fit either way.
+* **The B-Ref tables in Source Sans (Sean, 14 Oct 2026, minutes later: "keep everything about the table the same but go back to the most recent
+  font, don't change the table font size or any of the spacing")**: the restored block's `font-family` is `var(--body)` (Source Sans 3) in place of
+  Verdana; every size, row height and padding is still B-Ref's (11px, 23px rows, 3px). `TABLE_SANS` in `themes.js` still switches to the 13-14 Oct
+  tables (bigger type and rows) as well.
 ---
 
 ## 10. The football site moved out
