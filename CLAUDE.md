@@ -3751,6 +3751,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   this format")**: `.btabs .btab` on his page and the popup is white, square, navy 700 18px condensed type (16px on a phone), 40px tall (36), a 1px
   `#c3d3e3` edge and the buttons' soft lift; the picked tab is filled the band's blue with white type, as Filters is while its window is open. The
   block at the end of `styles.css`; the earlier tab dresses (red outline, light blue, navy outline) are history.
+* **Whiff / GB / PU heat by pitch type, actual too (Sean, 14 Oct 2026: "for each pitches heat maps for whiff rates gb rates and pop up rates, make
+  sure it is heatmapped for that pitch specifically not for all pitches in general")**: `typePct(ds, adj, row, key)` (replaces `typeXPct`) ranks a
+  pitch's rate among every pitcher's pitches **of the same type** in a dataset (30+ thrown) — expected (`xwhfl` / `xgbl` / `xpul`, or the stuff-only
+  keys) and now **actual** (`whf` / `gb` / `pu`, only on pitches with 20+ swings / 15+ balls in play, `TYPE_MIN`, in the pool and on the cell). The
+  Pitching+ tab fills both Act and Exp per pitch (pool through `xAdj`, `adj` true); the Spring tab fills them per row, the spring row against last
+  season's pitches (else this season's) and each season's row against its own, on raw rows. All pitches / totals rows stay plain; higher = red.
 ---
 
 ## 10. The football site moved out

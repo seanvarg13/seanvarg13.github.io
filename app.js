@@ -8713,7 +8713,7 @@
     // a pitch against its own type, in its own file's league (the spring file grades against MLB types already)
     const relOf = (ds, c) => { const sc = c && c.stuff, T = (sc && sc.types) || {}; return (pt, v, part) => { const x = T[pt]; if (v == null || !x) return v; const [w, b] = stuffParts(sc, x[1], x[2], x[3], c.lgERA, x[4], x[5]); return v - (part === "w" ? w : part === "b" ? b : w + b - 100) + 100; }; };
     const relS = relOf(sh, sh.consts), relP = relOf(prev, prev && (prev.hist ? window.DRAFT_HIST[prevK].consts : prev.consts)), relC = relOf(cur, cur && (cur.hist ? window.DRAFT_HIST[curK].consts : cur.consts));
-    const line = (R, t, rel, m) => (r) => (r ? { use: 100 * r.n / t, n: r.n, velo: r.velo, ivb: r.ivb, hb: r.hb, spin: r.spin, stuff: rel(r.pt, r.stuffp), pitch: rel(r.pt, r.pitp), xwhf: r.xwhfl ?? r.xwhf, xgb: r.xgbl ?? r.xgb, xpu: r.xpul ?? r.xpu, whf: r.whf, gb: r.gb, pu: r.pu, sw: r.sw, bip: r.bip } : null);
+    const line = (R, t, rel, m) => (r) => (r ? { pt: r.pt, kw: r.xwhfl != null ? "xwhfl" : "xwhf", kg: r.xgbl != null ? "xgbl" : "xgb", kp: r.xpul != null ? "xpul" : "xpu", use: 100 * r.n / t, n: r.n, velo: r.velo, ivb: r.ivb, hb: r.hb, spin: r.spin, stuff: rel(r.pt, r.stuffp), pitch: rel(r.pt, r.pitp), xwhf: r.xwhfl ?? r.xwhf, xgb: r.xgbl ?? r.xgb, xpu: r.xpul ?? r.xpu, whf: r.whf, gb: r.gb, pu: r.pu, sw: r.sw, bip: r.bip } : null);
     const LS = line(RS, tS, relS), LP = line(RP, tP, relP), LC = line(RC, tC, relC);
     const byPt = (R) => Object.fromEntries(R.map((r) => [r.pt, r]));
     const bS = byPt(RS), bP = byPt(RP), bC = byPt(RC);
@@ -8744,14 +8744,18 @@
     const groups = [["", 1], ["Usage", 2], ["Shape", 4], ["Grades vs type", 2], ["Whiff%", 2], ["GB%", 2], ["PU%", 2]];
     const f1n = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%"), i0 = (x) => (x == null ? "–" : String(Math.round(x)));
     const cellPlus = (v, heat) => { const td = el("td", "plus sp", i0(v)); if (v != null && heat) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } } return td; };
-    const actTd = (txt, tt) => { const td = el("td", "xact", txt); if (tt) td.title = tt; return td; };
+    // whiff / ground-ball / popup cells filled by where the pitch ranks among that season's pitches of its own type (14 Oct 2026) — the spring
+    // row against last season's (else this season's), each season's row against its own; the actual rates only on 20+ swings / 15+ balls in play
+    const poolOf = (lab) => (lab.startsWith("Spring") ? prev || cur : lab.startsWith(yy(y - 1)) ? prev : cur);
     const valueRow = (lab, L, cls) => { const tr = el("tr", cls || null); tr.append(el("td", "l f1", lab));
       if (!L) { for (let i = 0; i < heads.length - 1; i++) tr.append(el("td", null, "–")); return tr; }
+      const ds = poolOf(lab), hx = (td, k, v) => (L.all ? td : heatTd(td, typePct(ds, false, L, k, v)));
+      const actTd = (txt, tt, k, v) => { const td = el("td", "xact", txt); if (tt) td.title = tt; return hx(td, k, v); };
       tr.append(el("td", null, String(L.n)), el("td", null, L.all ? "" : pct(L.use)), el("td", null, f1n(L.velo)), el("td", null, f1n(L.ivb)), el("td", null, f1n(L.hb)), el("td", null, L.spin == null ? "–" : String(L.spin)),
                 cellPlus(L.stuff, true), cellPlus(L.pitch, true),
-                actTd(pct(L.whf), L.sw != null ? `${L.sw} swings` : null), el("td", null, pct(L.xwhf)),
-                actTd(pct(L.gb), L.bip != null ? `${L.bip} balls in play` : null), el("td", null, pct(L.xgb)),
-                actTd(pct(L.pu), L.bip != null ? `${L.bip} balls in play` : null), el("td", null, pct(L.xpu)));
+                actTd(pct(L.whf), L.sw != null ? `${L.sw} swings` : null, "whf", L.whf), hx(el("td", null, pct(L.xwhf)), L.kw, L.xwhf),
+                actTd(pct(L.gb), L.bip != null ? `${L.bip} balls in play` : null, "gb", L.gb), hx(el("td", null, pct(L.xgb)), L.kg, L.xgb),
+                actTd(pct(L.pu), L.bip != null ? `${L.bip} balls in play` : null, "pu", L.pu), hx(el("td", null, pct(L.xpu)), L.kp, L.xpu));
       return tr; };
     // the change, coloured where a direction is a verdict: velo, the grades and the expected rates (shape, use and the actual rates are just facts)
     const dCell = (a, b, d, scale, cls) => { const td = el("td", cls || null); if (a == null || b == null) { td.textContent = "–"; return td; } const v = a - b; td.textContent = Math.abs(v) < 0.5 * 10 ** -d ? (0).toFixed(d) : sg(v, d); if (scale) heatTd(td, Math.max(2, Math.min(98, Math.round(50 + scale * v)))); return td; };
@@ -8796,19 +8800,24 @@
   }
   const PAIRH = (exp, act) => [["Act", "xact", act], ["Exp", "", exp]];   // actual first (Sean, 9 Oct 2026: "put actual before expected")   // an expected / actual pair's two column names
   const heatTd = (td, pc) => { if (pc == null) return td; const s = pctStyle(pc); if (s) { td.style.background = s.bg; td.style.color = s.fg; td.classList.add("heat"); } return td; };
-  // a pitch's expected rate against the league's pitches of its own type (Sean, 14 Oct 2026: "heat map the expected whiff rates gb rates and pop up
-  // rates on the pitching+ table"): every pitcher's 30+ of that type in the card's season, the same level shift (xAdj) as the table's own numbers.
-  // Whiffs, grounders and popups are all good for a pitcher, so higher reads red. Per dataset, built once
+  // a pitch's whiff / ground-ball / popup rate against the league's pitches of its own type (Sean, 14 Oct 2026: "heat map the expected whiff rates gb
+  // rates and pop up rates on the pitching+ table", then "make sure it is heatmapped for that pitch specifically not for all pitches in general"): a
+  // slider's rate among every pitcher's sliders in that dataset (30+ thrown), expected and actual alike — the actual ones among pitches with 20+ swings
+  // (Whiff%) or 15+ balls in play (GB% / PU%), and only on a pitch that has as many itself (TYPE_MIN). adj: the pool's rows through xAdj, as the
+  // Pitching+ table's numbers are; the Spring tab ranks raw rows against the raw pool. Higher is better for a pitcher on all three, so red. Per dataset
+  const TYPE_MIN = { whf: ["sw", 20], gb: ["bip", 15], pu: ["bip", 15] };
+  const typeOk = (r, k) => !TYPE_MIN[k] || (r[TYPE_MIN[k][0]] || 0) >= TYPE_MIN[k][1];
   const typeXCache = new Map();
-  function typeXPct(pt, k, v) {
-    if (v == null || !pt) return null;
-    let C = typeXCache.get(DS.key);
-    if (!C) { C = {}; for (const q of DS.players) { if (q.type !== "P") continue; const R = arsenalRows(q); if (!R) continue;
-        for (const r0 of R) { if (!r0 || r0.n < 30) continue; const r = xAdj(r0), T = C[r.pt] || (C[r.pt] = {});
-          for (const f of ["xwhfl", "xgbl", "xpul", "xwhf", "xgb", "xpu"]) if (r[f] != null) (T[f] || (T[f] = [])).push(r[f]); } }
-      for (const T of Object.values(C)) for (const a of Object.values(T)) a.sort((x, y) => x - y);
-      typeXCache.set(DS.key, C); }
-    const a = C[pt] && C[pt][k]; return a && a.length >= 10 ? insertPct(a, v) : null;
+  function typePct(ds, adj, r, k, v = r && r[k]) {
+    if (!ds || !r || v == null || !r.pt || !typeOk(r, k)) return null;
+    const key = ds.key + (adj ? ":x" : ":r"); let C = typeXCache.get(key);
+    if (!C) { C = {}; const F = (ds.meta && ds.meta.arsenalFields) || DATA.meta.arsenalFields;
+      for (const q of ds.players || []) { const a = q.type === "P" && q.ctx && q.ctx.arsenal; if (!a || !F) continue;
+        for (const row of a) { const r0 = Object.fromEntries(F.map((f, i) => [f, row[i]])); if (!(r0.n >= 30)) continue; const x = adj ? xAdj(r0) : r0, T = C[x.pt] || (C[x.pt] = {});
+          for (const f of ["xwhfl", "xgbl", "xpul", "xwhf", "xgb", "xpu", "whf", "gb", "pu"]) if (x[f] != null && typeOk(x, f)) (T[f] || (T[f] = [])).push(x[f]); } }
+      for (const T of Object.values(C)) for (const arr of Object.values(T)) arr.sort((x, y) => x - y);
+      typeXCache.set(key, C); }
+    const arr = C[r.pt] && C[r.pt][k]; return arr && arr.length >= 10 ? insertPct(arr, v) : null;
   }
   function renderStuffTab(p, st, g, mode = "stuff") {
     const box = el("div", "rollbox uerabox stuffbox brbox"), P = mode === "pitching";
@@ -8857,8 +8866,8 @@
     const f1n = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%");
     let inTot = false;   // the All pitches row is a band row: no heat on it, as on the season table
     const cellPlus = (v, cls) => { const td = el("td", "plus" + (cls ? " " + cls : ""), v == null ? "–" : String(Math.round(v))); if (v != null && !inTot) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } } return td; };
-    const pair = (x, a, pc) => [el("td", "xact", a == null ? "–" : pct(a)), inTot ? el("td", null, pct(x)) : heatTd(el("td", null, pct(x)), pc)];   // Act in grey, then Exp (9 Oct 2026); pc heat-maps Exp against the pitch's type (14 Oct 2026)
-    const xp = (r, k) => typeXPct(r.pt, k, r[k]);
+    const pair = (x, a, pc, pa) => [inTot ? el("td", "xact", a == null ? "–" : pct(a)) : heatTd(el("td", "xact", a == null ? "–" : pct(a)), pa), inTot ? el("td", null, pct(x)) : heatTd(el("td", null, pct(x)), pc)];   // Act in grey, then Exp (9 Oct 2026); pc / pa heat-map Exp / Act against the pitch's own type (14 Oct 2026)
+    const xp = (r, k) => typePct(DS, true, r, k), ap = (r, k) => typePct(DS, true, r, k);
     const con = (r) => (r.sw || 0) * (1 - (r.whf || 0) / 100);   // the pitch's contacted swings — what the foul chance is over
     const LR = lgRatesP(), cshift = LR.xcstr != null && LR.cstr != null ? LR.cstr - LR.xcstr : 0;   // xCalled's centring: the fixed models read the newest season a little hot
     const relSum = { t: 0, w: 0, b: 0, n: 0 };
@@ -8871,9 +8880,9 @@
       tr.append(el("td", "l nm f1", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(100 * r.n / tot)), el("td", null, f1n(r.velo)), el("td", null, f1n(r.ivb)), el("td", null, f1n(r.hb)),
                 el("td", null, r.spin == null ? "–" : String(r.spin)),
                 ...(P ? [cellPlus(rel(r.pitp, A && A.t), "sp"), cellPlus(rel(r.whfpl, A && A.w)), cellPlus(rel(r.bbpl, A && A.b)), cellPlus(r.locp),
-                         ...pair(r.xwhfl, r.whf, xp(r, "xwhfl")), ...pair(r.xgbl, r.gb, xp(r, "xgbl")), ...pair(r.xpul, r.pu, xp(r, "xpul")), ...pair(xFoulOf(r), r.foul), ...pair(r.xcstr == null ? null : r.xcstr + cshift, r.cstr)]
+                         ...pair(r.xwhfl, r.whf, xp(r, "xwhfl"), ap(r, "whf")), ...pair(r.xgbl, r.gb, xp(r, "xgbl"), ap(r, "gb")), ...pair(r.xpul, r.pu, xp(r, "xpul"), ap(r, "pu")), ...pair(xFoulOf(r), r.foul), ...pair(r.xcstr == null ? null : r.xcstr + cshift, r.cstr)]
                       : [cellPlus(rel(r.stuffp, A && A.t), "sp"), cellPlus(rel(r.whfp, A && A.w)), cellPlus(rel(r.bbp, A && A.b)),
-                         ...pair(r.xwhf, r.whf, xp(r, "xwhf")), ...pair(r.xgb, r.gb, xp(r, "xgb")), ...pair(r.xpu, r.pu, xp(r, "xpu")), ...pair(xFoulOf(r), r.foul)]));
+                         ...pair(r.xwhf, r.whf, xp(r, "xwhf"), ap(r, "whf")), ...pair(r.xgb, r.gb, xp(r, "xgb"), ap(r, "gb")), ...pair(r.xpu, r.pu, xp(r, "xpu"), ap(r, "pu")), ...pair(xFoulOf(r), r.foul)]));
       tb.append(fin(tr));
     }
     const s0 = p.m || {}, trt = el("tr", "tot first"); inTot = true;
