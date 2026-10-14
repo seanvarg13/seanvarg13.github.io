@@ -3706,6 +3706,17 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   font, don't change the table font size or any of the spacing")**: the restored block's `font-family` is `var(--body)` (Source Sans 3) in place of
   Verdana; every size, row height and padding is still B-Ref's (11px, 23px rows, 3px). `TABLE_SANS` in `themes.js` still switches to the 13-14 Oct
   tables (bigger type and rows) as well.
+* **fWAR / bWAR on the pitchers' season table (Sean, 14 Oct 2026: "at the end of the pitcher tables after the whiff and xbb section can you add the
+  same fwar and bwar section that position players have right before the position and awards section")**: `SB_P` ends … | Whiff% xBB% | **fWAR
+  bWAR** | Pos | Awards (`SB_BRK.P` has fWAR, so the rules sit before fWAR and after bWAR), his **pitching** WAR — FanGraphs' (MLB's sabermetrics
+  stat, `group=pitching`) and Baseball-Reference's (`war_daily_pitch.txt`). Regular season only (Playoffs drops them); the totals add up (blank if a
+  piece he pitched in lacks it), the 162 Game Avg scales them, and they count for the league leaders (`SB_COUNT.P`, `SB_BEST_HI.P`). **Data**:
+  `build_career.py` appends to every pitching row `""` (the slot a hitter's positions take, so the index lines up) then `[fWAR, bWAR]` (`pw_for`),
+  and to every `PT` club row `[fWAR, bWAR]` after ER / BF (`sabr_pitch_clubs` + the stint's B-Ref number); a failed B-Ref fetch carries the last
+  build's pitching bWAR over, as for batting. In `app.js` `mlbLine` reads it at `base + 4`, `clubLine` / `seasonBlock`'s club parse at `ex[2]`,
+  `sbVal` / `sbCombine` handle it. `hist/career.js` was patched in place the same day with FanGraphs' numbers (12,619 pitching seasons, 2,596
+  club rows; scratch `pwar/`) and bWAR where a hitter row already carried it; the next `build_career.py` run (the daily's minors step, dispatched
+  after the merge) fills Baseball-Reference's for every season.
 ---
 
 ## 10. The football site moved out

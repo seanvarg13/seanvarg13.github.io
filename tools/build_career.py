@@ -631,7 +631,19 @@ def main():
             print("  no earlier career.js to carry bWAR from:", e, flush=True)
     # pitching WAR, so a hitter who also pitched carries both (Sean, 8 Oct 2026: "for bwar and fwar include all war so like include both pitching and
     # hitting for ohtani"): Baseball-Reference's per stint, FanGraphs' per season (and per club for a traded season, below)
-    bwp = bref_war(fresh=True, kind="pitch") or {}
+    bwp = bref_war(fresh=True, kind="pitch")
+    if bwp is None:                                        # as with bWAR above: the last build's pitching bWAR carries over
+        bwp = {}
+        try:
+            prev = load_js(HERE / "hist" / "career.js", "window.DRAFT_CAREER = ")
+            ip, ipt = 2 + len(PIT) + len(PIT_X) + 2, 2 + len(PIT) + len(PIT_X)   # a pitcher's row: ours, a blank, then [fWAR, bWAR]; a club row: [fWAR, bWAR]
+            for pid, rec in prev.items():
+                for key, i, club in (("P", ip, False), ("PT", ipt, True), ("H", 24, False), ("HT", 22, True)):
+                    for r in rec.get(key, []):
+                        if len(r) > i and isinstance(r[i], list) and r[i][1] is not None:
+                            bwp.setdefault(f"{pid}|{r[0]}", {})[r[1] if club else ""] = r[i][1]
+        except Exception as e:
+            print("  no earlier career.js to carry pitching bWAR from:", e, flush=True)
     sabr_p = {}
     def sabr_p_for(y):
         if y not in sabr_p:
@@ -705,6 +717,9 @@ def main():
                             r.append(sabr_for(r[0]).get(str(p["id"])))   # then FanGraphs' wRC+ / BsR / Off / Def / WAR / wOBA (or null)
                             r.append([bw.get(f"{p['id']}|{r[0]}", {}).get(""), (m or {}).get("spd"), fb_season(p["id"], r[0], r[1], fb_by)])   # then bWAR, sprint speed, fly balls
                             r.append(pw_for(p["id"], r[0]))   # then his pitching WAR [FanGraphs, B-Ref] that season, or null
+                        else:
+                            r.append("")                       # a pitcher's row: a blank where a hitter's positions sit, so the index matches,
+                            r.append(pw_for(p["id"], r[0]))    # then his pitching WAR [FanGraphs, B-Ref] (Sean, 14 Oct 2026: fWAR / bWAR on the pitchers' table)
                     rec[t] = rows
             if rec:
                 out[str(p["id"])] = rec
@@ -721,7 +736,16 @@ def main():
                     if pw is not None:
                         pw[0] = sabr_pitch_clubs(pid, y, teams, fresh=y >= now).get(r[1])
                     r.append(pw)
-    print(f"  FanGraphs numbers: {len(sabr)} seasons, {len(tr)} traded seasons split by club", flush=True)
+    # a pitcher's traded season: each club's pitching WAR [FanGraphs, B-Ref], appended to the PT rows after ER / BF (14 Oct 2026)
+    trp = sorted({(pid, r[0]) for pid, rec in out.items() for r in rec.get("PT", [])})
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        for (pid, y), clubs in zip(trp, ex.map(lambda a: sabr_pitch_clubs(a[0], a[1], teams, fresh=a[1] >= now), trp)):
+            for r in out[pid]["PT"]:
+                if r[0] == y:
+                    b = bwp.get(f"{pid}|{y}", {}).get(r[1])
+                    f = clubs.get(r[1])
+                    r.append(None if b is None and f is None else [f, b])
+    print(f"  FanGraphs numbers: {len(sabr)} seasons, {len(tr)} traded seasons split by club, {len(trp)} traded pitching seasons", flush=True)
     # minor-league lines: threaded, cached; players on this season's board are refreshed every run
     current = {p["id"] for p in cur["players"]}
     todo = [(pid, pid in current) for pid in ids]
