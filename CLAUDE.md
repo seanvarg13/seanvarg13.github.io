@@ -3730,6 +3730,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (12px, 23px rows) stays in `styles.css` under `:root:not(.tsans)`; set `TABLE_SANS = false` to bring it back.
 * **And back to the B-Ref tables (Sean, 14 Oct 2026, minutes later: "never mind go back to the baseball reference style")**: `TABLE_SANS = false` —
   the 12px Source Sans B-Ref tables with 23px rows. The entry above is history.
+* **Appearance ▸ Tables (Sean, 14 Oct 2026: "a button switch in the appearance tab that allows me to switch between the current b ref styles and
+  that oct 9th style with the header and table font being the same size")**: a Baseball-Reference / Classic segment, per device —
+  `window.DRAFT_TABLES` in `themes.js` (`get` / `set` / `own` / `clear`, localStorage `draft2027.tables`) puts class `tsans` on `<html>` for Classic
+  before first paint; `TABLE_SANS` is now only the site default (false = B-Ref). Picking one clears the Leaderboard's measured column widths
+  (`headFont`, `statColsMemo`) so they re-fit in the new type; "Follow the site default" clears the device's pick too. The empty "Percentile bars"
+  row (its control came off on 6 Oct) is gone from Appearance.
 ---
 
 ## 10. The football site moved out
