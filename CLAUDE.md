@@ -3767,6 +3767,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **Heat on Exp only, everywhere (Sean, 14 Oct 2026: "make it so all of whiff gb popup called and foul only have a heat map for expected and not
   actual")**: the Pitching+ tab's Act cells (Whiff% / GB% / PU% / Foul% / Called%) and the Spring tab's Act cells are all plain grey; only the Exp
   cells carry `typePct`'s by-pitch-type heat. The actual keys stay in `typePct`'s pool (unused) in case they're wanted back.
+* **Heat on Act, not Exp (Sean, 14 Oct 2026, an hour later: "put the heat map on the actual instead of the expected")**: the Pitching+ tab's Act cells
+  (Whiff% / GB% / PU% / Foul% / Called%) are filled by `typePct` among the league's pitches of the same type (`ap`; `foul` and `cstr` joined the pool,
+  foul needs 20+ swings like Whiff%), the Exp cells plain; the Spring tab's Act cells the same and its Change row colours the actual deltas instead of the
+  expected ones. The entry above (Exp only) is history.
 ---
 
 ## 10. The football site moved out
