@@ -8814,7 +8814,8 @@
     if (!C) { C = {}; const F = (ds.meta && ds.meta.arsenalFields) || DATA.meta.arsenalFields;
       for (const q of ds.players || []) { const a = q.type === "P" && q.ctx && q.ctx.arsenal; if (!a || !F) continue;
         for (const row of a) { const r0 = Object.fromEntries(F.map((f, i) => [f, row[i]])); if (!(r0.n >= 30)) continue; const x = adj ? xAdj(r0) : r0, T = C[x.pt] || (C[x.pt] = {});
-          for (const f of ["xwhfl", "xgbl", "xpul", "xwhf", "xgb", "xpu", "whf", "gb", "pu"]) if (x[f] != null && typeOk(x, f)) (T[f] || (T[f] = [])).push(x[f]); } }
+          x.xfo = xFoulOf(x);   // the expected foul share the table shows (swing-aware, else location, else stuff-only)
+          for (const f of ["xwhfl", "xgbl", "xpul", "xwhf", "xgb", "xpu", "whf", "gb", "pu", "xfo", "xcstr"]) if (x[f] != null && typeOk(x, f)) (T[f] || (T[f] = [])).push(x[f]); } }
       for (const T of Object.values(C)) for (const arr of Object.values(T)) arr.sort((x, y) => x - y);
       typeXCache.set(key, C); }
     const arr = C[r.pt] && C[r.pt][k]; return arr && arr.length >= 10 ? insertPct(arr, v) : null;
@@ -8868,6 +8869,10 @@
     const cellPlus = (v, cls) => { const td = el("td", "plus" + (cls ? " " + cls : ""), v == null ? "–" : String(Math.round(v))); if (v != null && !inTot) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } } return td; };
     const pair = (x, a, pc, pa) => [inTot ? el("td", "xact", a == null ? "–" : pct(a)) : heatTd(el("td", "xact", a == null ? "–" : pct(a)), pa), inTot ? el("td", null, pct(x)) : heatTd(el("td", null, pct(x)), pc)];   // Act in grey, then Exp (9 Oct 2026); pc / pa heat-map Exp / Act against the pitch's own type (14 Oct 2026)
     const xp = (r, k) => typePct(DS, true, r, k), ap = (r, k) => typePct(DS, true, r, k);
+    // Foul% and Called% heat only on Exp (Sean, 14 Oct 2026: "also show the heat maps for fouls and called strikes, but only ... the expected column"):
+    // more fouls on contact and more called strikes both help a strikeout, so higher is red; called strikes rank on the raw chance (the centring
+    // shift is the same for every pitch, so it doesn't move a percentile)
+    const xfp = (r) => typePct(DS, true, r, "xfo", xFoulOf(r)), xcp = (r) => typePct(DS, true, r, "xcstr");
     const con = (r) => (r.sw || 0) * (1 - (r.whf || 0) / 100);   // the pitch's contacted swings — what the foul chance is over
     const LR = lgRatesP(), cshift = LR.xcstr != null && LR.cstr != null ? LR.cstr - LR.xcstr : 0;   // xCalled's centring: the fixed models read the newest season a little hot
     const relSum = { t: 0, w: 0, b: 0, n: 0 };
@@ -8880,9 +8885,9 @@
       tr.append(el("td", "l nm f1", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(100 * r.n / tot)), el("td", null, f1n(r.velo)), el("td", null, f1n(r.ivb)), el("td", null, f1n(r.hb)),
                 el("td", null, r.spin == null ? "–" : String(r.spin)),
                 ...(P ? [cellPlus(rel(r.pitp, A && A.t), "sp"), cellPlus(rel(r.whfpl, A && A.w)), cellPlus(rel(r.bbpl, A && A.b)), cellPlus(r.locp),
-                         ...pair(r.xwhfl, r.whf, xp(r, "xwhfl"), ap(r, "whf")), ...pair(r.xgbl, r.gb, xp(r, "xgbl"), ap(r, "gb")), ...pair(r.xpul, r.pu, xp(r, "xpul"), ap(r, "pu")), ...pair(xFoulOf(r), r.foul), ...pair(r.xcstr == null ? null : r.xcstr + cshift, r.cstr)]
+                         ...pair(r.xwhfl, r.whf, xp(r, "xwhfl"), ap(r, "whf")), ...pair(r.xgbl, r.gb, xp(r, "xgbl"), ap(r, "gb")), ...pair(r.xpul, r.pu, xp(r, "xpul"), ap(r, "pu")), ...pair(xFoulOf(r), r.foul, xfp(r)), ...pair(r.xcstr == null ? null : r.xcstr + cshift, r.cstr, xcp(r))]
                       : [cellPlus(rel(r.stuffp, A && A.t), "sp"), cellPlus(rel(r.whfp, A && A.w)), cellPlus(rel(r.bbp, A && A.b)),
-                         ...pair(r.xwhf, r.whf, xp(r, "xwhf"), ap(r, "whf")), ...pair(r.xgb, r.gb, xp(r, "xgb"), ap(r, "gb")), ...pair(r.xpu, r.pu, xp(r, "xpu"), ap(r, "pu")), ...pair(xFoulOf(r), r.foul)]));
+                         ...pair(r.xwhf, r.whf, xp(r, "xwhf"), ap(r, "whf")), ...pair(r.xgb, r.gb, xp(r, "xgb"), ap(r, "gb")), ...pair(r.xpu, r.pu, xp(r, "xpu"), ap(r, "pu")), ...pair(xFoulOf(r), r.foul, xfp(r))]));
       tb.append(fin(tr));
     }
     const s0 = p.m || {}, trt = el("tr", "tot first"); inTot = true;

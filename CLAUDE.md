@@ -3760,6 +3760,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **A phone's card tabs in the Filters / Raw type size (Sean, 14 Oct 2026: "the buttons can be bigger than the filters and raw I just want the font
   size to be the same")**: on a phone `.btabs .btab` is 14px type like the sticky bar's buttons, keeping its own 38px height and 11px padding (a
   36px / 7px version lasted minutes). A desktop's were already 18px both.
+* **Foul% and Called% heat on Exp only (Sean, 14 Oct 2026: "also show the heat maps for fouls and called strikes, but only show the heat maps for the
+  expected column not the actual")**: on the Pitching+ tab each pitch's expected Foul% (`xFoulOf`, pool key `xfo`) and expected Called% (`xcstr`, ranked
+  raw — the league centring is one shift for every pitch) are filled by `typePct` among the league's pitches of the same type, higher = red (both help a
+  strikeout); their Act cells stay plain grey. Whiff% / GB% / PU% keep heat on both Act and Exp.
 ---
 
 ## 10. The football site moved out
