@@ -3728,6 +3728,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   regular text ... the one we just had before we went to the baseball reference style")**: `TABLE_SANS = true` in `themes.js` — the 13-14 Oct tables
   (column names the size of their cells: 12px on a phone's season table, 13px on a desktop and the Leaderboard; ~28-30px rows). The B-Ref block
   (12px, 23px rows) stays in `styles.css` under `:root:not(.tsans)`; set `TABLE_SANS = false` to bring it back.
+* **And back to the B-Ref tables (Sean, 14 Oct 2026, minutes later: "never mind go back to the baseball reference style")**: `TABLE_SANS = false` —
+  the 12px Source Sans B-Ref tables with 23px rows. The entry above is history.
 ---
 
 ## 10. The football site moved out
