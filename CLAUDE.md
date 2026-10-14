@@ -3717,6 +3717,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `sbVal` / `sbCombine` handle it. `hist/career.js` was patched in place the same day with FanGraphs' numbers (12,619 pitching seasons, 2,596
   club rows; scratch `pwar/`) and bWAR where a hitter row already carried it; the next `build_career.py` run (the daily's minors step, dispatched
   after the merge) fills Baseball-Reference's for every season.
+* **The minors step had been failing since 12 Oct 2026 — fixed 14 Oct**: `hist/aaa-tw.js` (the pooled projection's file) matched the `aaa-*.js`
+  globs in `build_history.build_index` and `build_career.py`'s minors loop, which then read it as a season (`KeyError: 'players'`), so every daily
+  minors step (search index, career files, fantasy) stopped at the index. `season_file(f)` in `build_history.py` keeps only `<level>-YYYY[-kind]`
+  files and `build_career.py` skips a non-year stem. Name any new `hist/` file so it doesn't start with `mlb-`, `aaa-`, `aa-`, `ap-` or `a-`.
 ---
 
 ## 10. The football site moved out

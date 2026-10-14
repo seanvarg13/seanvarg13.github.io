@@ -587,6 +587,8 @@ def main():
     ours_m = {}
     for lv, names in LVL.items():
         for f in sorted((HERE / "hist").glob(f"{lv}-*.js")):
+            if not f.stem[len(lv) + 1:].isdigit():           # a season file only — not hist/aaa-tw.js (14 Oct 2026)
+                continue
             raw = f.read_text(); ds = json.loads(raw[raw.index("= {") + 2:].rstrip().rstrip(";"))
             for nm in names:
                 xsc[(nm, ds["season"])] = dir_scale(ds["players"])
