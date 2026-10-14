@@ -3764,6 +3764,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   expected column not the actual")**: on the Pitching+ tab each pitch's expected Foul% (`xFoulOf`, pool key `xfo`) and expected Called% (`xcstr`, ranked
   raw — the league centring is one shift for every pitch) are filled by `typePct` among the league's pitches of the same type, higher = red (both help a
   strikeout); their Act cells stay plain grey. Whiff% / GB% / PU% keep heat on both Act and Exp.
+* **Heat on Exp only, everywhere (Sean, 14 Oct 2026: "make it so all of whiff gb popup called and foul only have a heat map for expected and not
+  actual")**: the Pitching+ tab's Act cells (Whiff% / GB% / PU% / Foul% / Called%) and the Spring tab's Act cells are all plain grey; only the Exp
+  cells carry `typePct`'s by-pitch-type heat. The actual keys stay in `typePct`'s pool (unused) in case they're wanted back.
 ---
 
 ## 10. The football site moved out
