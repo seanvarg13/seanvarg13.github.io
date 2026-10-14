@@ -3724,6 +3724,10 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 * **The tables at 12px (Sean, 14 Oct 2026: "would it work if you made the font size 12 and changed nothing else", then "yeah do it")**: the B-Ref
   block's type (cells, column names, the Leaderboard's rows and over-header) is 12px instead of 11px; row heights (23px) and padding unchanged, the
   tables ~7% wider (Judge's season table 888 → 953px). Checked headless: nothing clipped, every row still 23px.
+* **Back to the Source Sans tables (Sean, 14 Oct 2026: "go back to the prior format ... the one from oct 9 but had the same size header font as the
+  regular text ... the one we just had before we went to the baseball reference style")**: `TABLE_SANS = true` in `themes.js` — the 13-14 Oct tables
+  (column names the size of their cells: 12px on a phone's season table, 13px on a desktop and the Leaderboard; ~28-30px rows). The B-Ref block
+  (12px, 23px rows) stays in `styles.css` under `:root:not(.tsans)`; set `TABLE_SANS = false` to bring it back.
 ---
 
 ## 10. The football site moved out

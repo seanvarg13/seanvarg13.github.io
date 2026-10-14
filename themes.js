@@ -2,7 +2,7 @@
    (see the token roles at the top of styles.css) and swaps the Google Fonts link for the chosen type.
    The Appearance page (app.js) reads DRAFT_THEMES.schemes / .fonts and calls DRAFT_THEMES.set(). */
 /* Table type: false = Baseball-Reference's 11px Verdana (Sean, 14 Oct 2026); true = the site's Source Sans tables of 13-14 Oct. */
-const TABLE_SANS = false;
+const TABLE_SANS = true;
 if (TABLE_SANS) document.documentElement.classList.add("tsans");
 window.DRAFT_THEMES = (function () {
   const W = "rgba(255, 255, 255, ";
