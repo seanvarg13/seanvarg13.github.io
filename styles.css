@@ -5536,3 +5536,15 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .springbr .spt tr.sdelta td:not(.heat) { background: color-mix(in srgb, var(--ink) 5%, var(--surface, #fff)); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .springbr .spt tr.scur td.f1 { font-weight: 600; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .springbr > .note { margin-top: 12px; }
+/* The card's tabs in the Filters / Raw buttons' dress (Sean, 14 Oct 2026, from a crop of the two: "make the bottom of player page/card buttons be in
+   this format"): white, square, navy bold condensed type, a thin blue-grey edge and the buttons' soft lift; the picked tab filled in the band's blue
+   with white type, as Filters is while its window is open */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .btabs .btab {
+  display: inline-flex !important; align-items: center; justify-content: center; height: 40px !important; padding: 0 14px !important;
+  background: #ffffff !important; color: var(--ink) !important; border: 1px solid #c3d3e3 !important; border-radius: 0 !important;
+  font: 700 18px/1 var(--display) !important; letter-spacing: 0 !important; text-transform: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14), 0 1px 2px rgba(0, 0, 0, 0.10) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .btabs .btab:hover { background: #f3f7fb !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .btabs :is(.btab.on, .btab[aria-selected="true"], .btab[aria-pressed="true"]) { background: var(--band2, var(--accent-2)) !important; color: #ffffff !important; border-color: var(--band2, var(--accent-2)) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .btabs .btab :is(b, span) { color: inherit !important; font-weight: 700 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) .btabs .btab { height: 36px !important; padding: 0 11px !important; font-size: 16px !important; }
