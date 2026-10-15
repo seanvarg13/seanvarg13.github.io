@@ -172,16 +172,16 @@ Compare column with Mix xwOBA. Steadier year to year than the Rating; about half
 **nERA in uERA's place** (4 Oct 2026): the card's band, its tab strip (Pitching+ · nERA), Season Stats' last column, the home page's
 pitcher lists and the Leaderboard's Standard set all read the luck-neutral ERA instead of uERA.
 
-**Pitchers, skill only** (15 Oct 2026; Sean: "weed out anything luck entirely from the site ... eliminate on the pitchers side everything that is
-not true skill and not predictive at all"): the pitchers' headline is **pERA** — pK% and pBB% (the forward fits, never his K% or BB%) on the
-Pitching+ expected ground-ball / popup mix through nERA's bookkeeping — lowest first; the **Rating** is his p(K-BB)% percentile; the card's bars are
-Skills (pK% · pBB% · p(K-BB)%), Swing & Miss (Proj. Whiff% · xWhiff%), Batted Ball (xGB% · xPU% · Mix xwOBA) and Stuff (Pitching+ · FB velo ·
-Extension), one set with no Raw / Stuff switch (a level without pitch tracking shows uK% / uBB% / u(K-BB)%, Whiff%, GB% / Popup% / Mix wOBA
-instead); the band's Summary reads pERA in nERA's place over his official record; the Leaderboard's and Recent view's pitcher sets, Filters ▸ Stats,
-home's pitcher lists and the Pitching+ board carry only the expected rates and the grades; the nERA tab, the K% / BB% build-ups and the per-pitch
-actual rates are gone; the season table keeps his official record (ERA, G, GS, IP, K%, BB%, K-BB%, WAR) and no site measure. Why: year to year at
-300 BF, pK% repeats at .84 against K%'s .72, pBB% .60 / BB% .55, xGB% .90 / GB% .77, xPU% .87 / PU% .61, Proj. Whiff% .82 / Whiff% .75, p(K-BB)%
-.70 / K-BB% .66, pERA .69 / nERA .52; 3-ball Strike% .35, 1st-pitch .51, Called .63, 2-strike Whiff% .66 (scratch audit/, 15 Oct 2026).
+**A Skills side for pitchers** (15 Oct 2026; Sean: "I want to only measure and include stats that are truly predictive, measures of skill, and
+not luck or noise at all", then "put back the stuff that was in there under the raw button and then keep what you have right now under skills"):
+the card's Raw ▾ / Skills ▾ dropdown (Skills in Stuff's place) — Raw is the card as it was; Skills is Skills (pK% · pBB% · p(K-BB)%), Swing & Miss
+(Proj. Whiff% · xWhiff%), Batted Ball (xGB% · xPU% · Mix xwOBA) and Stuff (Pitching+ · FB velo · Extension), every bar a piece that carries forward
+(a level without pitch tracking shows uK% / uBB% / u(K-BB)%, Whiff%, GB% / Popup% / Mix wOBA); on that side the band's Summary reads pERA in nERA's
+place and the Pitching+ tab's table shows the expected columns alone. The Leaderboard has a **Skills** column set (Rating · pERA · pK% · pBB% ·
+p(K-BB)% · Proj. Whiff% · xWhiff% · xGB% · xPU% · Mix xwOBA · Pitching+) beside the old ones. Why these: year to year at 300 BF, pK% repeats at .84
+against K%'s .72, pBB% .60 / BB% .55, xGB% .90 / GB% .77, xPU% .87 / PU% .61, Proj. Whiff% .82 / Whiff% .75, p(K-BB)% .70 / K-BB% .66, pERA .69 / nERA
+.52 (scratch audit/, 15 Oct 2026). A skill-only pitcher side (pERA the headline, a p(K-BB)% Rating, the outcome stats off every list) was live for an
+hour as PR #633 and came back at Sean's say.
 
 **Simpler cards** (4 Oct 2026, later): the pERA tab, the Pitching uERA box and both Game Logs tabs came off the cards; the Pitching+
 tab is the per-pitch table (expected whiffs, ground balls and popups against actual) and the whiff check, and the Leaderboard's Projected
