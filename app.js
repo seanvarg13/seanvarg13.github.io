@@ -7540,12 +7540,12 @@
         if (d != null) { run += d; dk[k] = d; }
         b.row(lab, his, lg, f, pctAmong(ref.map((q) => val(q, k)).filter((z) => z != null), his, Math.sign(XBAB[k])), d == null ? null : step(run), d == null ? null : run, XBAB_TIP[k]);
       }
-      // one Noise row for everything the nine don't place (Sean, 11 Oct 2026: "group those into everything else and call everything else noise"):
-      // the by-type split of 10 Oct (ground-ball / line-drive / fly-ball contact, from ctx.xbt) is gone — its leftovers repeat year to year at
-      // r .22 / .05 / .19 (scratch resyty.js), so they read as noise; ctx.xbt is still built
-      b.row("Noise", null, null, fmtX, null, step(m.xbabip), m.xbabip, "What the nine rows above don't place: the exact angle of each ball (a grounder hit low and through against a chopper, a 12° liner against a 22° one, a flare that drops), where each line drive and fly ball went, and the hard-and-well-aimed combinations an average can't see. It barely repeats from one season to the next, so treat it as noise.");
-      b.mark("Expected BABIP");   // the running BABIP after Rest of Contact is his xBABIP (Sean, 10 Oct 2026: "do the same thing for the xbabip table")
-      b.row("Luck", null, null, fmtX, null, step(m.babip), m.babip, "hits in play above or below what the contact deserved — it repeats year to year at only r .15");   // a plain row, like xHR/FB's (Sean, 10 Oct 2026: "white again and not bolded blue")
+      // the nine drivers are the expected BABIP, and noise and luck are one row (Sean, 15 Oct 2026: "make it so the expected babip is everything
+      // that comes before noise and before luck and make noise and luck one row"): the running BABIP after FB% is marked, and the next row
+      // carries his BABIP; the directional model's xBABIP (the old stop between the two) is in the row's note
+      b.mark("Expected BABIP");
+      const e0 = prev;   /* the expected BABIP as rounded, before the row's step moves it */
+      b.row("Noise + luck", null, null, fmtX, null, step(m.babip), m.babip, `Everything the nine rows above don't place. Noise: the exact angle of each ball (a grounder hit low and through against a chopper, a 12° liner against a 22° one, a flare that drops), where each line drive and fly ball went, the hard-and-well-aimed combinations an average can't see. Luck: hits in play above or below what the contact deserved. The batted-ball model, scoring each ball, puts his BABIP at ${fmtX(m.xbabip)} — ${pts(R3(m.xbabip) - e0)} of this row is what it sees, the other ${pts(R3(m.babip) - R3(m.xbabip))} is luck. Neither repeats much from one season to the next (r .2 and .15).`);
       b.band("BABIP", R3(m.babip) - R3(lgX), m.babip, `the whole trip: every step above added up, from the ${fmtX(lgX)} start to his ${fmtX(m.babip)} (the league's actual BABIP is ${fmtX(lgB)})`);
       b.tag("kfinal");   // the bottom BABIP row in bold (Sean, 10 Oct 2026)
       w.append(b.done());
