@@ -3937,12 +3937,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   3-ball Strike% .35, 1st-pitch .51, BB% .55, PU% .61, Strike% .62, Called .63. Sean knows all of it and chose the site as it was; don't bring the
   Skills side, the pERA headline or a p(K-BB)% Rating back unasked.
 
-* **The card's tabs and the bar's Filters ▾ / Raw ▾ identical (Sean, 15 Oct 2026, Messick's card on his phone: "I'd like the text boldness size and
-  everything to be identical")**: the type already matched (700 Barlow Condensed, 18px on a desktop / 14px on a phone, line-height 1); the block at
-  the end of `styles.css` matches the box — a phone's `.btabs .btab` is 36px tall with 7px of side padding like the sticky bar's buttons (it was 38 /
-  11), and the bar's buttons (`.pgbar .pgfix` `.phfilt` / `.phsidebtn`) get the tabs' soft lift back (the 12 Oct "Buttons lifted" rule had lost to
-  the sticky-bar rule's `box-shadow: none`). Checked by computed style on both layouts: every property equal but the edge colour — white on the blue
-  bar, `#c3d3e3` on the white tab strip, where a white edge would vanish. The four tabs still fit one row at 390px.
+* **The card's tabs copy the bar's Filters ▾ / Raw ▾, and so does the popup's × (Sean, 15 Oct 2026, Messick's card on his phone: "I'd like the
+  text boldness size and everything to be identical", then "the bottom four to copy the filters and raw button not the other way around / And also
+  make the x button the same style as well")**: the type already matched (700 Barlow Condensed, 18px on a desktop / 14px on a phone, line-height 1);
+  the block at the end of `styles.css` gives `.btabs .btab` the bar's box — 40px / 36px tall, 14px / 7px of side padding, **no shadow** (the
+  tabs' lift is gone; the bar's buttons never had one — a version that lifted the bar's buttons instead lasted an hour, PR #636) — and makes the
+  popup's × (`.pgbar.xbar > .xpopx`) the same button, square at the height, white with the navy × in that type. Checked by computed style in the
+  popup on both layouts: every property equal but the edge colour, which stays white on the blue bar and `#c3d3e3` on the white tab strip, where a
+  white edge would vanish. The `box-shadow: none` rule carries `:not(#pop *)` for a second id, since the 12 Oct "Buttons lifted" rule's own
+  `:not(#pop *)` gives it two.
 
 ---
 
