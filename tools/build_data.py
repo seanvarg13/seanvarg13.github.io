@@ -137,15 +137,61 @@ def park_factor(parks: dict, code: str, year: int, side: str):
     return Y[str(yy)].get(side)
 
 
+def park_venue(parks: dict, code: str, year: int) -> str:
+    """the venue key (a park in one configuration) for a club's code that season"""
+    for a, b, v in parks.get("venue", {}).get(code, []):
+        if a <= year <= b:
+            return v
+    return code
+
+
+def park_cells(d: pd.DataFrame, year: int) -> pd.DataFrame:
+    """Each ball in play's park effect (Sean, 15 Oct 2026: "I want the outcome to be stadium neutral, so for all of the ones in history in coors or
+    t mobile etc I want them to be adjusted to neutral"): the table's "cells" — per venue x batter side x Mix bucket x exit-velocity band, the
+    park-aware outcome model's chance of a home run, of a non-HR hit and its expected non-HR bases on that kind of ball at that park, less the
+    park-blind model's (the league-average park for that ball), from every tracked ball 2015-26 (tools/build_parks.py). Adds pkh / pkb / pkx
+    per pitch (the PA-ending ball in play's effect; 0 elsewhere), summed per day so a window re-derives them and the season line reads them
+    whole (park_fields). A ball with no exit velocity takes its bucket's all-band mean; one outside the thirty parks, or a frame without the
+    table, reads 0"""
+    parks = load_parks()
+    d["pkh"] = 0.0; d["pkb"] = 0.0; d["pkx"] = 0.0
+    C = (parks or {}).get("cells")
+    if not C or "pk" not in d.columns or "mixc" not in d.columns:
+        return d
+    edges = parks.get("edges") or [85, 92, 97, 102, 106]
+    on = d["pk"].ge(0) & d["mixc"].ge(0) & d["mixc"].le(7)
+    if not on.any():
+        return d
+    sub = d.loc[on]
+    ev_ = pd.to_numeric(sub["launch_speed"], errors="coerce")
+    band = np.where(ev_.notna(), np.searchsorted(edges, ev_.fillna(0).to_numpy(), side="right"), len(edges) + 1)
+    ven = {i: park_venue(parks, c, year) for i, c in enumerate(PARK_CODES)}
+    # neutral = that season's league-average park: the cells pool a venue's seasons, so each season's mean cell value per typed ball in play
+    # (the table's "centre"; the latest season's for one it doesn't have) comes off every ball, and a season's park effects sum to zero
+    cen = parks.get("centre") or {}
+    c0 = cen.get(str(year)) or (cen[max(cen, key=int)] if cen else [0.0, 0.0, 0.0])
+    out = np.zeros((len(sub), 3))
+    for j, (pk, side, bk, bd) in enumerate(zip(sub["pk"].to_numpy(), sub["stand"].to_numpy(), sub["mixc"].to_numpy(), band)):
+        cell = C.get(ven[int(pk)], {}).get(side, {}).get(str(int(bk)))
+        if cell and cell[int(bd)]:
+            out[j] = cell[int(bd)]
+    out -= np.array(c0)
+    d.loc[on, "pkh"] = out[:, 0]; d.loc[on, "pkb"] = out[:, 1]; d.loc[on, "pkx"] = out[:, 2]
+    return d
+
+
 def park_fields(rows_d: list, bats: str, year: int) -> tuple:
-    """(m fields, ctx.pk3) from a hitter's day rows: his parks' residuals weighted by his fly balls, non-HR balls in play, non-HR hits and PA
-    there, by the side he hit from (a switch hitter bats left against the right-handers the row's hand flag marks), and his top three parks by PA"""
+    """(m fields, ctx.pk3) from a hitter's day rows: what his parks did to his batted balls, ball by ball (the day rows' pkh / pkb / pkx sums —
+    HR/FB points, BABIP points and bases per non-HR hit against the same balls at a neutral park), his parks' K% / BB% residuals weighted by
+    his PA there, by the side he hit from (a switch hitter bats left against the right-handers the row's hand flag marks), and his top three
+    parks by PA. A file whose day rows lack the sums reads the venue-mean exposure for the three contact pieces instead"""
     parks = load_parks()
     out = {"pkhr": None, "pkbab": None, "pkxb": None, "pkk": None, "pkbb": None}
     if not parks or not rows_d:
         return out, None
-    I = {k: HITTER_DAY.index(k) for k in ("pk", "hand", "pa", "hr", "h", "bip", "mxpu", "mxfbp", "mxfbc", "mxfbo")}
+    I = {k: HITTER_DAY.index(k) for k in ("pk", "hand", "pa", "hr", "h", "bip", "tb", "mxpu", "mxfbp", "mxfbc", "mxfbo", "pkh", "pkb", "pkx")}
     acc, byv = {}, {}
+    S = {"fb": 0, "nh": 0, "nhh": 0, "nb": 0, "pkh": 0.0, "pkb": 0.0, "pkx": 0.0}; has = False
     for r in rows_d:
         if len(r) <= I["pk"] or r[I["pk"]] is None or r[I["pk"]] < 0:
             continue
@@ -153,9 +199,13 @@ def park_fields(rows_d: list, bats: str, year: int) -> tuple:
         f = park_factor(parks, PARK_CODES[r[I["pk"]]], year, side)
         code = PARK_CODES[r[I["pk"]]]
         byv[code] = byv.get(code, 0) + int(r[I["pa"]] or 0)
+        hr = r[I["hr"]] or 0
+        S["fb"] += (r[I["mxpu"]] or 0) + (r[I["mxfbp"]] or 0) + (r[I["mxfbc"]] or 0) + (r[I["mxfbo"]] or 0)
+        S["nh"] += (r[I["bip"]] or 0) - hr; S["nhh"] += (r[I["h"]] or 0) - hr; S["nb"] += (r[I["tb"]] or 0) - 4 * hr
+        if len(r) > I["pkx"] and r[I["pkh"]] is not None:
+            has = True; S["pkh"] += r[I["pkh"]] or 0; S["pkb"] += r[I["pkb"]] or 0; S["pkx"] += r[I["pkx"]] or 0
         if not f:
             continue
-        hr = r[I["hr"]] or 0
         for k, i, w in (("hr", 0, (r[I["mxpu"]] or 0) + (r[I["mxfbp"]] or 0) + (r[I["mxfbc"]] or 0) + (r[I["mxfbo"]] or 0)), ("bab", 1, (r[I["bip"]] or 0) - hr),
                         ("xb", 2, (r[I["h"]] or 0) - hr), ("k", 3, r[I["pa"]] or 0), ("bb", 4, r[I["pa"]] or 0)):
             if w and f[i] is not None:
@@ -163,8 +213,19 @@ def park_fields(rows_d: list, bats: str, year: int) -> tuple:
     for k, key, d in (("hr", "pkhr", 2), ("bab", "pkbab", 1), ("xb", "pkxb", 3), ("k", "pkk", 2), ("bb", "pkbb", 2)):
         a = acc.get(k)
         out[key] = round(a[0] / a[1], d) if a and a[1] else None
+    if has:
+        out.update(park_neutral(S))
     top = sorted(byv.items(), key=lambda z: -z[1])[:3]
     return out, ([[c, n] for c, n in top] if top else None)
+
+
+def park_neutral(S: dict) -> dict:
+    """pkhr / pkbab / pkxb from the per-ball sums: his HR/FB, BABIP and bases per non-HR hit less the same balls' at a neutral park — a home run the
+    park gave is a non-HR ball in play at neutral (so the neutral BABIP's denominator gains it), a hit the park gave comes off the hits"""
+    nhh, nh, nb = S["nhh"] - S["pkb"], S["nh"] + S["pkh"], S["nb"] - S["pkx"]
+    return {"pkhr": round(100 * S["pkh"] / S["fb"], 2) if S["fb"] else None,
+            "pkbab": round(1000 * (S["nhh"] / S["nh"] - nhh / nh), 1) if S["nh"] and nh > 0 else None,
+            "pkxb": round(S["nb"] / S["nhh"] - nb / nhh, 3) if S["nhh"] and nhh > 0 else None}
 AIR_TYPES = {"fly_ball", "line_drive", "popup"}
 OUTS = {"strikeout": 1, "strikeout_double_play": 2, "field_out": 1, "force_out": 1, "grounded_into_double_play": 2,
         "double_play": 2, "triple_play": 3, "sac_fly": 1, "sac_bunt": 1, "sac_fly_double_play": 2,
@@ -185,7 +246,8 @@ HITTER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", 
               "gbp", "gbc", "gbo",
               "hbp",
               "ibb",
-              "pk"]   # intentional walks, so a window re-derives xBB%'s IBB rate (12 Oct 2026); hbp: hit-by-pitches, so a window re-derives the talent xwOBA's HBP rate (11 Oct 2026); the mix's grounders pulled / straightaway / the other way: the Batted Ball Quality tab's grounder Oppo% (10 Oct 2026)   # expected hits (directional xBA, less HR) and non-HR balls in play by type: the xBABIP tab's split of Rest of Contact (10 Oct 2026)
+              "pk",
+              "pkh", "pkb", "pkx"]   # the park's effect on his balls in play that day, ball by ball: home runs, non-HR hits and non-HR bases over what the same balls do at a neutral park (hist/parks.js cells; 15 Oct 2026)   # intentional walks, so a window re-derives xBB%'s IBB rate (12 Oct 2026); hbp: hit-by-pitches, so a window re-derives the talent xwOBA's HBP rate (11 Oct 2026); the mix's grounders pulled / straightaway / the other way: the Batted Ball Quality tab's grounder Oppo% (10 Oct 2026)   # expected hits (directional xBA, less HR) and non-HR balls in play by type: the xBABIP tab's split of Rest of Contact (10 Oct 2026)
 # The hitter card, grouped. key, label, higher-is-better, decimals, unit. Keys not in HITTER_METRICS are card-only.
 HITTER_CARD = [
     ("Outcomes",             [("woba", "wOBA", True, 3, ""), ("xws", "xwOBA", True, 3, ""), ("xwd", "dxwOBA", True, 3, "")]),
@@ -1118,6 +1180,7 @@ def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
     d["phome"] = 1 - d["bhome"]
     # the park: the home team's index in PARK_CODES (-1 when the code isn't one of the thirty — the minors, or a frame without home_team)
     d["pk"] = d["home_team"].astype(str).replace(PARK_ALIAS).map({c: i for i, c in enumerate(PARK_CODES)}).fillna(-1).astype(int) if "home_team" in d.columns else -1
+    d = park_cells(d, SEASON)                                     # each ball's park effect on HR, hits and bases, from the table's cells (15 Oct 2026)
     d["cs"] = d["description"].eq("called_strike")
     d["fbt"] = d["bip"] & d["bb_type"].eq("fly_ball")
     d["pu"] = d["bip"] & d["bb_type"].eq("popup")
@@ -1455,10 +1518,13 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
               bip=("bip", "sum"), evn=("evb", "sum"), oppn=("oppo", "sum"),
               mixsum=("mixv", "sum"), mixn=("mixn", "sum"), **{c: (c, "sum") for c in MIX_COLS},
               **{c: (c, "sum") for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn", "brfb", "brld", "brgb", "gbp", "gbc", "gbo") if c in d.columns},
+              **{c: (c, "sum") for c in ("pkh", "pkb", "pkx") if c in d.columns},   # the park's effect on his balls that day, ball by ball (15 Oct 2026)
               **({"pk": ("pk", "first")} if "pk" in d.columns else {}))   # the park that day (15 Oct 2026)
     for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn", "brfb", "brld", "brgb", "gbp", "gbc", "gbo"):
         if c not in h.columns: h[c] = 0.0
     if "pk" not in h.columns: h["pk"] = -1
+    for c in ("pkh", "pkb", "pkx"):
+        if c not in h.columns: h[c] = 0.0
     h["mixsum"] = h["mixsum"].round(4)
     h["evs"] = d[d["evb"]].groupby(HK)["launch_speed"].agg(lambda x: [round(float(v), 1) for v in x])
     if "mixc" in d.columns:                                       # the same balls in the same order: their Mix buckets (8 Oct 2026)
@@ -1515,7 +1581,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                     row.append(v)
                 else:
                     # xbsum / xssum are sums of per-ball probabilities: a day's bucket is well under 1, so int() would erase it
-                    row.append(round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stwl", "stws", "stbwl", "stbws", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps", "stcs", "stck", "stcso", "stcsi", "stcwi", "stcw", "stfl", "stfs", "stfw", "mixsum", "wbh", "evfbs", "evlds", "evgbs", "xhgb", "xhld", "xhfb", "xhpu") else int(v))
+                    row.append(round(float(v), 3) if f in ("pkh", "pkb", "pkx") else round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stwl", "stws", "stbwl", "stbws", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps", "stcs", "stck", "stcso", "stcsi", "stcwi", "stcw", "stfl", "stfs", "stfw", "mixsum", "wbh", "evfbs", "evlds", "evgbs", "xhgb", "xhld", "xhfb", "xhpu") else int(v))
             out.setdefault(int(pid), []).append(row)
         return out
     return pack(h, HITTER_DAY), pack(q, PITCHER_DAY)
