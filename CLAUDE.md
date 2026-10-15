@@ -3914,39 +3914,33 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     BABIP .257 (official counts) / HR/FB 8.4%, the career row .304 / 10.5%; Aug 1 – Sep 27 from the day rows: BABIP .328 (+13 at his parks).
     Judge 2025: BABIP .382 (raw .376, Yankee Stadium −6), HR/FB 29.5% (30.6%, +1.1). The league's 300+ PA hitters' park effects average ~0.
 
-* **Pitchers, skill only (Sean, 15 Oct 2026: "I want to only measure and include stats that are truly predictive, measures of skill, and not
-  luck or noise at all ... eliminate on the pitchers side everything that is not true skill and not predictive at all")**: every pitcher view
-  reads the pieces that carry forward and nothing the results handed him. **The headline is pERA** (`st.pera`, lowest first; `val()` sorts the
-  `score` key by it, the hero cell shows it coloured by `pct.pera`, `PERA_NOTE` is its header / tooltip): `peraOf(p, pj, pctS, so)` =
-  `stuffUeraCore(…, next = true)` — `nextKBB`'s pK% / pBB% on `projRates`' expected mix through nERA's bookkeeping — or, on a level without pitch
-  tracking (no arsenal), the same-season process fits (`impliedKBB`: uK% / uBB%) on his actual mix. **The Rating is the p(K-BB)% percentile**
-  (`meta.pitcherWeights = { pkbb: 100 }`, forced in app.js at load and `PITCHER_SCORE_WEIGHTS` in `build_data.py`; `data.js` patched): `pool()`
-  builds `pes0` (every listed pitcher's pERA) before the score and ranks `nk / nbb / pkbb / pera` there (`ldAir0` from the Mix wOBA block), the
-  PK block reuses it (`pkbb` joined it), `placeIn` does the same (`pe0` before the score). **The card** (`PCT_COLS_P`, one set — `stuffSide()` is
-  false, the Raw ▾ / Stuff ▾ dropdown is off in `filtersTog`, `PCT_COLS_PS` unused): Skills (pK% · pBB% · p(K-BB)%) · Swing & Miss (Proj. Whiff%
-  · xWhiff%) | Batted Ball (xGB% · xPU% · Mix xwOBA) · Stuff (Pitching+ · FB velo · Extension); `PCT_COLS_P0` for a level without pitch
-  tracking (uK% · uBB% · u(K-BB)% · Whiff% | GB% · Popup% · Mix wOBA · velo · extension; `pctColsP()` picks by whether anyone in the dataset has
-  `m.pitch`; `uk` / `ubb` got `SIDE_P` defs). `BTABS_P` = Pitching+ (+ Spring): the nERA tab is off (`renderLuckBox` stays); the Pitching+ tab's
-  table shows the expected columns only (xWhiff% · xGB% · xPU% · xFoul%, each filled by its place among the league's pitches of its type;
-  the Act columns and the xCalled pair are gone) and nothing under it — the K% build-up and the walk build-up came off (`renderKArchetype` /
-  `renderBBBuild` stay). **The band**: `seasonLine` returns `skillFacts(st)` for a pitcher (pERA · pK% · pBB% · p(K-BB)% · Proj. Whiff%, the
-  view's own); `summaryBlock` reads pERA in nERA's place over his official record. **Lists**: `LB_SETS.P` Standard = Rating · pK% · pBB% ·
-  p(K-BB)% · Proj. Whiff% · xGB% · xPU% · Pitching+, Advanced adds xWhiff% · Mix xwOBA · Stuff+ · Location+ · velo · extension, Batted ball =
-  xGB% · xPU% · Mix xwOBA, Pitching+ as before (Plate discipline is gone); `TREND_P` (the Recent view's default) is the Standard set;
-  `LB_EXTRA_P` / `SKILL_P` are the skill keys, `RETIRED_P` is every other pitcher key (K%, BB%, K-BB%, Whiff%, the strike rates, the mix, ERA /
-  nERA / SIERA, the EV allowed, the xK% family, uERA …) — out of Sort by, and `state.lb.skillP` resets every saved pitcher list to the new
-  Standard once (a retired sort key goes back to the headline); `renderColPick` keeps only `SKILL_P` for pitchers (groups Stuff · Pitching+ ·
-  Skills · Fantasy points); `NEXT_KEYS` carries `nk / nbb / pkbb / pera`. **Home**: `puOf` is pERA (`peraOf` on `projRates`, `LDA` the league's
-  line-drive share), the leaders / Trending / Movers pitcher lists read it, ERA left the leaders table. **The Pitching+ board**: expected
-  columns only (`pair` is one cell; an Act sort key falls back to `pitp`). **The season table** (`SB_P`) is his official record — ERA · G · GS ·
-  IP · K% · BB% · K-BB% · fWAR · bWAR · Pos · Awards; nERA / SIERA / PU% / GB% / Whiff% / xBB% came off (`career-bb.js`'s `pp` still carries
-  them). Glossary: `pera`, `nk`, `nbb`, `pkbb`, `rating`, `pjwhf` rewritten. **Why** (scratch `audit/`, year to year 300+ BF both seasons and
-  first half → second half 2021-26): pK% repeats .84 / predicts the second half .71 against K%'s .72 / .65; pBB% .60 / .53 vs BB% .55 / .48;
-  Proj. Whiff% .82 / .78 vs Whiff% .75 / .74; xGB% .90 / .74 vs GB% .77 / .68; xPU% .87 / .56 vs PU% .61 / .47; pERA repeats .69 vs nERA .52
-  and predicts next season's ERA / nERA / points per inning .41 / .61 / .56 against .35 / .54 / .49 (starters 150+ BF); p(K-BB)% repeats .70
-  vs K-BB% .66 and forecasts next season's points per start at .61 against the Whiff% 50 / xBB% 50 Rating's .50. Everything retired is still
-  computed underneath. The hitter side is unchanged (talent xwOBA already is this). Not built: pERA / pK% by season in `hist/career-bb.js` for
-  the season table (needs the fits ported to `build_career.py`).
+* **A Skills side for pitchers (Sean, 15 Oct 2026: "I want to only measure and include stats that are truly predictive, measures of skill, and
+  not luck or noise at all ... eliminate on the pitchers side everything that is not true skill and not predictive at all", then, an hour after a
+  skill-only pitcher side went live as PR #633: "I still want the old generic expected stats for pitchers I more or less meant with pitching+ I only
+  wanted stuff that measure skill ... put back the stuff that was in there under the raw button and then keep what you have right now under
+  skills")**: the pitcher side is as it was before PR #633 — nERA the headline, the Whiff% 50 / xBB% 50 Rating, the Raw bars, the Leaderboard's
+  sets, the Stats picker, home, the season table, the Pitching+ board, the Recent defaults — and the card's second side is **Skills** in Stuff's
+  place (the dropdown's value stays `"stuff"`, its label "Skills ▾"; `filtersTog`): `PCT_COLS_PS` = Skills (pK% · pBB% · p(K-BB)%) · Swing & Miss
+  (Proj. Whiff% · xWhiff%) | Batted Ball (xGB% · xPU% · Mix xwOBA) · Stuff (Pitching+ · FB velo · Extension) — every bar a piece that carries
+  forward, labelled through `STUFF_LABELS` / `OUTCOME_LABEL_P`; a level without pitch tracking shows `PCT_COLS_P0` (uK% · uBB% · u(K-BB)% · Whiff% |
+  GB% · Popup% · Mix wOBA · velo · extension; `pctColsS()` picks by whether anyone in the dataset has `m.pitch`; `uk` / `ubb` got `SIDE_P` defs).
+  On the Skills side the band's facts are `skillFacts(st)` (pERA · pK% · pBB% · p(K-BB)% · Proj. Whiff%, the view's own) and the Summary reads
+  pERA in nERA's place (`pcOf("pera", …)`); the Pitching+ tab's table shows the expected columns only (xWhiff% · xGB% · xPU% · xFoul%, each filled by
+  its place among the league's pitches of its type; `SK` in `renderStuffTab`) with nothing under it — the Raw side keeps the Act / Exp pairs, the
+  xCalled pair and the K% / BB% build-ups. The old Stuff side (xK%, x2-strike Whiff%, xCalled Strike%, xFoul% of contact, xBB%, the strike rates,
+  xnERA on the band) is history. **Lists**: a **Skills** column set (`LB_SETS.P`, after Standard: Rating · pERA · pK% · pBB% · p(K-BB)% · Proj.
+  Whiff% · xWhiff% · xGB% · xPU% · Mix xwOBA · Pitching+), `pera / nk / nbb` back in `LB_EXTRA_P` and out of `RETIRED_P` and the `gone` list (they
+  were retired on 4 Oct 2026), **`pkbb`** = p(K-BB)% (`SIDE_P` def, the pool's PK block and `placeIn`, `NEXT_KEYS` — which also carries `nk / nbb /
+  pera` now so `metricValue` reads them off the stats), the picker's "Expected (Pitching+)" group renamed "Skills (what carries forward)".
+  `peraOf(p, pj, pctS, so)` builds pERA (the PK block and `placeIn`): the forward fits on the expected mix, or, with no arsenal, the same-season
+  process fits (`impliedKBB`) on his actual mix; Proj. Whiff% falls back to his Whiff% there. `state.lb.skillBack` puts a pitcher list the skill-only
+  hour had reset back to Standard once. Glossary: `pera`, `nk`, `nbb`, `pjwhf` rewritten, `pkbb` added. **Why these pieces** (scratch `audit/`, year to
+  year at 300+ BF and first half → second half 2021-26): pK% repeats .84 / predicts the second half .71 against K%'s .72 / .65; pBB% .60 / .53 vs
+  BB% .55 / .48; Proj. Whiff% .82 / .78 vs Whiff% .75 / .74; xGB% .90 / .74 vs GB% .77 / .68; xPU% .87 / .56 vs PU% .61 / .47; pERA repeats .69 vs
+  nERA .52 and predicts next season's ERA / nERA / points per inning .41 / .61 / .56 against .35 / .54 / .49 (starters 150+ BF); p(K-BB)% repeats
+  .70 vs K-BB% .66 and forecasts next season's points per start at .61 against the Whiff% / xBB% Rating's .50 — on the lists as the Skills set, not the
+  Rating (Sean kept the old one). The noisiest Raw rows at 300 BF: 3-ball Strike% .35, 1st-pitch .51, BB% .55, PU% .61, Strike% .62, Called .63.
+  Not built: pERA / pK% by season in `hist/career-bb.js` for the season table (the fits would have to be ported to `build_career.py`).
 
 ---
 
