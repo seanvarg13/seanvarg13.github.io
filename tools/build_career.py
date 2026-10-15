@@ -339,7 +339,8 @@ SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evg
             "babip", "xbabip", "spd",   # the card's xBABIP tab by season: BABIP, the directional xBABIP, sprint speed (Sean, 9 Oct 2026)
             "sba",                      # steal attempts (SB + CS), the season table's Baserunning view (Sean, 9 Oct 2026)
             "txw",                      # talent xwOBA, the season table's column after xwOBA (Sean, 11 Oct 2026) — talent_season() below
-            "gbp"]                      # GB Pull%: the share of his grounders pulled (ctx.gbdir), an xBABIP driver (11 Oct 2026)
+            "gbp",                      # GB Pull%: the share of his grounders pulled (ctx.gbdir), an xBABIP driver (11 Oct 2026)
+            "xbabd"]                    # the nine drivers' xBABIP — the site's xBABIP since 15 Oct 2026 (xbab_drivers below; "xbabip" stays the model's)
 
 
 # Talent xwOBA (Sean, 11 Oct 2026: "an xwoba based purely on their talent ... their batted ball mix, k rate, bb rate, xbabip minus luck and noise,
@@ -412,6 +413,19 @@ def talent_league(players, ref_pa):
     return L
 
 
+def xbab_drivers(i, L):
+    """the nine drivers' xBABIP (app.js xbabDrivers): the league's model xBABIP moved by each driver against the league, or None"""
+    if L.get("xbabip") is None: return None
+    m, xbab, n = i["m"], L["xbabip"], 0
+    for k, v in TW_XBAB.items():
+        his = i[k] if k in ("ldp", "gbp") else m.get(k)
+        lg = L.get(k); g = i["gbs"] if k in ("spd", "gbp") else 100
+        if his is None or lg is None or g is None: continue
+        if k == "gbp": v = TW_XBAB_GBP.get(i["bats"], -0.95)
+        xbab += v * (his - lg) * g / 100 / 1000; n += 1
+    return xbab if n else None
+
+
 def talent_of(i, L):
     """his raw talent wOBA (times L['scale'] once that is set), or None"""
     m = i["m"]
@@ -436,13 +450,8 @@ def talent_of(i, L):
         if fit is None: return None
         xhf = max(0.0, L["hr"]["hrfb"] + sum(v * (bx[k] - L["hr"][k]) for k, v in fit.items()))
     hrb = xhf / 100 * i["fbs"]
-    xbab = L["xbabip"]
-    for k, v in TW_XBAB.items():
-        his = i[k] if k in ("ldp", "gbp") else m.get(k)
-        lg = L.get(k); g = i["gbs"] if k in ("spd", "gbp") else 100
-        if his is None or lg is None or g is None: continue
-        if k == "gbp": v = TW_XBAB_GBP.get(i["bats"], -0.95)
-        xbab += v * (his - lg) * g / 100 / 1000
+    xbab = xbab_drivers(i, L)
+    if xbab is None: return None
     bip = max(0.0, 1 - xk / 100 - xbb / 100 - hbp); xhr = hrb * bip * i["pa"]
     tph = min(1.7, max(1.0, (m["dxslg"] * i["ab"] - 4 * xhr) / max(1.0, m["dxba"] * i["ab"] - xhr)))
     vh = TW_W["s"] + (tph - 1) * (TW_W["d"] - TW_W["s"])
@@ -475,10 +484,10 @@ def season_bb():
             m, cx = p.get("m") or {}, p.get("ctx") or {}
             mx = cx.get("mix") or []
             fbs = sum(x or 0 for x in mx) if len(mx) >= 8 else 0      # every ball in the mix (MIX_COLS order: gb, pu, ld p/c/o, fb p/c/o, x)
-            tw = talent_of(_tw_inputs(p), TL)
+            ti = _tw_inputs(p); tw = talent_of(ti, TL); xd = xbab_drivers(ti, TL)
             gd = cx.get("gbdir"); gn = sum(gd) if gd else 0
-            val = lambda k: (100 * mx[5] / fbs if fbs else None) if k == "pullfb" else tw if k == "txw" else (100 * gd[0] / gn if gn else None) if k == "gbp" else m.get(k)
-            out.setdefault(str(p["id"]), {})[str(y)] = [cx.get("BBE")] + [r(val(k), 3 if k in ("mixw", "babip", "xbabip", "txw") else 1) for k in SBX_KEYS]
+            val = lambda k: (100 * mx[5] / fbs if fbs else None) if k == "pullfb" else tw if k == "txw" else xd if k == "xbabd" else (100 * gd[0] / gn if gn else None) if k == "gbp" else m.get(k)
+            out.setdefault(str(p["id"]), {})[str(y)] = [cx.get("BBE")] + [r(val(k), 3 if k in ("mixw", "babip", "xbabip", "txw", "xbabd") else 1) for k in SBX_KEYS]
     path = HERE / "hist" / "career-bb.js"
     path.write_text("window.DRAFT_CAREER_BB = " + json.dumps({"keys": SBX_KEYS, "p": out, "pkeys": SBP_KEYS, "pp": pout}, separators=(",", ":")) + ";\n")
     print(f"OK {len(out)} hitters' batted-ball / discipline seasons, {len(pout)} pitchers' -> {path.name} ({path.stat().st_size / 1e6:.1f} MB)", flush=True)

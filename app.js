@@ -1054,6 +1054,19 @@
       // talent can't be built (a span of seasons, an untracked level) the directional one stands
       const sw = tx == null ? {} : { xwd: tx, xwoba: tx, xwdiff: v.m.woba != null ? Math.round(1000 * (tx - v.m.woba)) / 1000 : null };
       v.m = Object.assign({}, v.m, { txw: tx, txwp: t && t.txwp != null ? Math.round(1000 * t.txwp) / 1000 : null, dxw: v.m.xwd ?? null }, sw); v.tal = t;
+      // the drivers' xBABIP IS the xBABIP (Sean, 15 Oct 2026 — xbabDrivers): the batted-ball model's number stays as xbabipm (the build-up's
+      // league is the PA-weighted mean of it; a game log's luck still reads it, a game being too small for the drivers); where the drivers can't
+      // be built (a combined span, an untracked level) the model's stands. BABIP luck is re-priced on the new gap at the same wOBA value per hit
+      const d = t && t.xbab != null ? { xbab: t.xbab, dv: t.dv, L: t.L } : driversOf(p, v);
+      if (d && d.xbab != null) {
+        const xd = Math.round(1000 * d.xbab) / 1000, xm = v.m.xbabip, sw2 = { xbabipm: xm ?? null, xbabip: xd };
+        if (v.m.bluck != null && v.m.babip != null && xm != null) {
+          const gm = v.m.babip - xm, gd = v.m.babip - xd;
+          if (Math.abs(gm) >= 5e-4) sw2.bluck = Math.round(10 * v.m.bluck * gd / gm) / 10;
+          else { const x = (v.ctx && v.ctx.xbt) || (p.ctx && p.ctx.xbt), den = x ? x.reduce((a0, z) => a0 + z[0], 0) : 0; if (den && v.pa) sw2.bluck = Math.round(10 * 1000 * gd * den * (t && t.vh ? t.vh : TW.s) / v.pa) / 10; }
+        }
+        v.m = Object.assign({}, v.m, sw2); v.xbd = d;
+      }
     }
     // Regress small samples (Table format; Sean, 3 Oct 2026, from the model recommendations): in a date window or split, every
     // rate is pulled toward the pool's full-season average by how little he has played — w = n / (n + 120), n = his PA or batters
@@ -5676,8 +5689,8 @@
     xk: "Expected K%: the strikeout rate his Whiff%, Z-Swing%, O-Swing% and the share of strikes he sees have historically come with (fitted over every 100+ PA hitter-season since 2015). It lands within about 1.7 points of a regular's real K%; a K% well above it says he's striking out more than his swings and misses explain (two-strike trouble, taking strike three), well below it that he's beating them. His own K% is still the steadier guide to next year's — the two averaged are best.",
     xwdiff: "xwOBA − wOBA: what his contact, walks and strikeouts deserved (the site's xwOBA) minus what he actually got. Above zero he's been unlucky — his results should rise toward his xwOBA; below zero he's been lucky. +.030 is a lot. Every point is a thousandth of wOBA.",
     babip: "BABIP: batting average on balls in play — hits that aren't home runs, over balls in play that aren't home runs (sac flies count). It swings a lot by chance: a hitter's BABIP from one season to the next holds only loosely.",
-    xbabip: "xBABIP: the BABIP his contact should have produced — the site's hitting model (exit velocity, launch angle, spray and pull direction, sprint speed) gives every ball in play its chance of being a hit; his expected hits, less his home runs, over his non-HR balls in play.",
-    bluck: "BABIP luck: his hits in play above (or below) what his contact deserved, turned into wOBA points at the value of his own average hit in play. +20 means his wOBA sits about .020 above what his balls in play earned — the part most likely to fall away. Shown as a warning: more luck is coloured as more risk.",
+    xbabip: "xBABIP: the BABIP his batted-ball profile should produce — the season's expected BABIP moved by nine things he controls, each against the league's qualified hitters: line-drive rate, popup rate, exit velocity on grounders and on liners, how often he pulls his grounders (weighted by his batting side) and his liners, sprint speed on his grounders, Oppo% and fly-ball rate (the xBABIP tab's build-up). The exact angle and spot of each ball is left out on purpose: the hitting model's read of those sat 14 points off this in a typical season and that part repeated at r .18 year to year, the same as luck, while this number repeats at .56 and forecasts next season's BABIP as well.",
+    bluck: "BABIP luck: his hits in play above (or below) what his xBABIP (the nine drivers) deserved, turned into wOBA points at the value of his own average hit in play. +20 means his wOBA sits about .020 above what his balls in play earned — the part most likely to fall away. Shown as a warning: more luck is coloured as more risk.",
     brel: "BIP reliance: the share of his wOBA that comes from hits on balls in play (singles, doubles and triples) rather than walks, hit-by-pitches and home runs. The higher it is, the more a normal BABIP swing moves his production — a slap hitter lives on it, a three-true-outcomes slugger barely notices. The league runs from about 30% to 90%, middle 58%.",
     swhf: "Whiff+: the whiff half of Stuff+ — how often swings at his pitches should miss, on their traits alone, turned into runs through uK% (100 = average).",
     sbb: "Batted-ball+: the contact half of Stuff+ — how often his pitches, put in play, should become ground balls and popups rather than air balls, priced at the league's value for each (100 = average).",
@@ -7340,13 +7353,30 @@
     const ev = Object.keys(TW_HF.w).every((k) => bx[k] != null && L.twh && L.twh[k] != null), f = ev ? TW_HF.w : hrfbFit(bx, L.hr); if (!f) return null;
     let xhf = L.hr.hrfb + (ev ? TW_HF.c : 0); const dh = {}; for (const k in f) { dh[k] = f[k] * (bx[k] - (ev ? L.twh : L.hr)[k]); xhf += dh[k]; } xhf = Math.max(0, xhf);
     const hrb = xhf / 100 * I.fbs;
-    let xbab = L.xbabip; const dv = {};
-    for (const k in XBAB) { const his = k === "ldp" || k === "gbp" ? I[k] : m[k], lg = L[k], g = k === "spd" || k === "gbp" ? I.gbs : 100; if (his == null || lg == null || g == null) continue; dv[k] = xbabW(k, I.bats) * (his - lg) * g / 100 / 1000; xbab += dv[k]; }
+    const D = xbabDrivers(I, L); if (!D) return null; const { xbab, dv } = D;
     const bip = Math.max(0, 1 - xk / 100 - xbb / 100 - hbp), xhr = hrb * bip * I.pa;
     const tph = Math.min(1.7, Math.max(1, (m.dxslg * I.ab - 4 * xhr) / Math.max(1, m.dxba * I.ab - xhr)));
     const vh = TW.s + (tph - 1) * (TW.d - TW.s);
     const raw = TW.bb * xbb / 100 + TW.hbp * hbp + bip * (hrb * TW.hr + (1 - hrb) * xbab * vh);
     return { xk, xbb, xkFit, xbbFit, hbp, xhf, dh, fit: f, fbs: I.fbs, hrb, xbab, dv, tph, vh, bip, raw, bx, I };
+  }
+  // the nine drivers' xBABIP: the league's expected BABIP (its 300+ PA hitters' batted-ball-model xBABIP, PA-weighted — the model's number is
+  // only the starting point) moved by each driver against the league. Since 15 Oct 2026 this IS the site's xBABIP (Sean: "keep the drivers only
+  // one ... make sure for everything that mentions xBABIP ... it uses the drivers version and not the noise inclusive one") — the model's own
+  // number, scoring each ball's exact angle and spot, read 14 BABIP points off it in a typical season and that part repeated at only r .18, the
+  // same as luck, while the drivers' number repeats at .56 against the model's .42 and forecasts next season's BABIP as well (scratch xbn/)
+  function xbabDrivers(I, L) {
+    if (!L || L.xbabip == null) return null;
+    let xbab = L.xbabip, n = 0; const dv = {};
+    for (const k in XBAB) { const his = k === "ldp" || k === "gbp" ? I[k] : I.m[k], lg = L[k], g = k === "spd" || k === "gbp" ? I.gbs : 100; if (his == null || lg == null || g == null) continue; dv[k] = xbabW(k, I.bats) * (his - lg) * g / 100 / 1000; xbab += dv[k]; n++; }
+    return n ? { xbab, dv, n } : null;
+  }
+  // the drivers on the card's view, for V(): the view's rates against the dataset's full-season league, as talentOf does; a combined span of
+  // seasons has no one league, so it keeps the model's number, an each-season line reads its own season's
+  function driversOf(p, v) {
+    if (DS.multi) return DS.each && p.src && p.real ? withDataset(p.src, () => driversOf(p.real, v)) : null;
+    const L = talentLeague(), m = v.m.spd == null && p.m && p.m.spd != null ? Object.assign({}, v.m, { spd: p.m.spd }) : v.m;
+    const d = xbabDrivers(twInputs(m, v.ctx, v.pa, v.ab, 0, p.bats), L); if (d) d.L = L; return d;
   }
   // the same arithmetic on a set of pieces, for the Talent tab's build-up (each step swaps one league piece for his)
   const twRaw = (c) => { const bip = Math.max(0, 1 - c.xk / 100 - c.xbb / 100 - c.hbp), hrb = c.xhf / 100 * c.fbs, vh = TW.s + (c.tph - 1) * (TW.d - TW.s);
@@ -7514,38 +7544,35 @@
     spd: "speed beats out infield grounders and does nothing else: each ft/s adds .014 to his hit rate on grounders an infielder fields (83% of grounders), so the row is 14 × 0.83 × (his sprint − the league's) × his grounders' share of his non-HR balls in play (Savant's sprint speed, full season)", oppo: "the opposite field is where the infield doesn't shift its gloves", fb: "a fly ball in the park is mostly an out" };
   function renderXbabipTab(p, g) {
     const w = el("div", "xbtab"), pv = V(p), m = pv.m, pl = pool(g);
-    const gbShare = (q) => { const v = V(q), x = (v.ctx && "xbt" in v.ctx ? v.ctx.xbt : q.ctx && q.ctx.xbt), n = x ? x.reduce((a, z) => a + z[0], 0) : 0; return n ? 100 * x[0][0] / n : val(q, "gb"); };
     const val = (q, k) => {
       const v = V(q), mm = v.m;
       if (k === "ldp") { const mx = (v.ctx && v.ctx.mix) || (q.ctx && q.ctx.mix), n = mx ? mx[2] + mx[3] + mx[4] : 0; return n ? 100 * mx[2] / n : null; }
       if (k === "gbp") { const gd = v.ctx && "gbdir" in v.ctx ? v.ctx.gbdir : q.ctx && q.ctx.gbdir, n = gd ? gd[0] + gd[1] + gd[2] : 0; return n ? 100 * gd[0] / n : null; }
       return k === "spd" ? mm.spd ?? (q.m && q.m.spd) : mm[k];
     };
-    if (m.babip != null && m.xbabip != null) {
-      const ref = pl.ref.filter((q) => V(q).m.xbabip != null), lgOf = (k) => { let s = 0, n = 0; for (const q of ref) { const v = val(q, k), w0 = V(q).pa || 0; if (v != null && w0) { s += v * w0; n += w0; } } return n ? s / n : null; };
-      const lgX = lgOf("xbabip"), lgB = lgOf("babip");
-      const pts = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.round(Math.abs(v) * 1000);   // BABIP points
+    const D = pv.xbd;   /* the nine drivers on the view against the dataset's full-season league — the same number as the card's xBABIP (V()) */
+    if (D && m.babip != null && m.xbabip != null) {
+      const ref = pl.ref.filter((q) => V(q).m.xbabip != null), L = D.L;
+      const lgB = (() => { let s0 = 0, n = 0; for (const q of ref) { const b0 = V(q).m.babip, w0 = V(q).pa || 0; if (b0 != null && w0) { s0 += b0 * w0; n += w0; } } return n ? s0 / n : null; })();
+      const lgX = L.xbabip;
+      const pts = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x) * 1000);   // BABIP points
       const b = buildUp("BABIP build-up", `${viewLabel(p.type) && viewLabel(p.type) !== "full season" ? viewLabel(p.type) + " · " : ""}± in BABIP points, against the season's qualified hitters`, "BABIP", fmtX, pts, 0.020);
       // the ± column is a ledger that adds up (Sean, 9 Oct 2026: "I'm also getting lost with this math in the +/- column"): every ± is the step
       // between the rounded running BABIPs, so the column sums exactly from the league's .300-ish start to his BABIP; Luck carries his BABIP as
       // its running number, and the last row's ± is the whole trip from the start (not against the league's actual BABIP, a different baseline)
       const R3 = (x) => Math.round(x * 1000) / 1000;
-      let run = lgX, prev = R3(lgX); const dk = {};
-      const step = (to) => { const c = R3(to), d = c - prev; prev = c; return d; };
-      b.row("League", null, lgX, fmtX, null, "→", lgX, "the qualified hitters' xBABIP, weighted by plate appearances — where the build-up starts");
+      let run = lgX, prev = R3(lgX);
+      const step = (to) => { const c = R3(to), d0 = c - prev; prev = c; return d0; };
+      b.row("League", null, lgX, fmtX, null, "→", lgX, "the season's qualified hitters' expected BABIP, weighted by plate appearances — where the build-up starts");
       for (const k in XBAB) {
-        const his = val(p, k), lg = lgOf(k), [lab, u] = XBAB_LAB[k], f = (x) => x.toFixed(1) + u;
-        const gbs = k === "spd" || k === "gbp" ? gbShare(p) : 100;   /* sprint and grounder direction work through his grounders: times their share of his non-HR balls in play */
-        const d = his == null || lg == null || gbs == null ? null : xbabW(k, p.bats) * (his - lg) * gbs / 100 / 1000;
-        if (d != null) { run += d; dk[k] = d; }
-        b.row(lab, his, lg, f, pctAmong(ref.map((q) => val(q, k)).filter((z) => z != null), his, Math.sign(XBAB[k])), d == null ? null : step(run), d == null ? null : run, XBAB_TIP[k]);
+        const his = val(p, k), lg = L[k], [lab, u] = XBAB_LAB[k], f = (x) => x.toFixed(1) + u, d0 = D.dv[k];   /* a driver the view can't build (an older season's day rows) shows no step */
+        if (d0 != null) run += d0;
+        b.row(lab, his, lg, f, pctAmong(ref.map((q) => val(q, k)).filter((z) => z != null), his, Math.sign(XBAB[k])), d0 == null ? null : step(run), d0 == null ? null : run, XBAB_TIP[k]);
       }
-      // the nine drivers are the expected BABIP, and noise and luck are one row (Sean, 15 Oct 2026: "make it so the expected babip is everything
-      // that comes before noise and before luck and make noise and luck one row"): the running BABIP after FB% is marked, and the next row
-      // carries his BABIP; the directional model's xBABIP (the old stop between the two) is in the row's note
+      // the nine drivers are the expected BABIP (Sean, 15 Oct 2026: "keep the drivers only one"): the running BABIP after FB% is marked, and one
+      // Luck row carries it to his BABIP — the batted-ball model's own read of each ball is inside that row, by his choice
       b.mark("Expected BABIP");
-      const e0 = prev;   /* the expected BABIP as rounded, before the row's step moves it */
-      b.row("Noise + luck", null, null, fmtX, null, step(m.babip), m.babip, `Everything the nine rows above don't place. Noise: the exact angle of each ball (a grounder hit low and through against a chopper, a 12° liner against a 22° one, a flare that drops), where each line drive and fly ball went, the hard-and-well-aimed combinations an average can't see. Luck: hits in play above or below what the contact deserved. The batted-ball model, scoring each ball, puts his BABIP at ${fmtX(m.xbabip)} — ${pts(R3(m.xbabip) - e0)} of this row is what it sees, the other ${pts(R3(m.babip) - R3(m.xbabip))} is luck. Neither repeats much from one season to the next (r .2 and .15).`);
+      b.row("Luck", null, null, fmtX, null, step(m.babip), m.babip, "Hits in play above or below what the nine drivers say he deserved. The exact angle and spot of each ball — a grounder hit low and through against a chopper, a flare that drops, where each liner went — is in here on purpose: that part repeats from one season to the next at only r .2, the same as plain luck.");
       b.band("BABIP", R3(m.babip) - R3(lgX), m.babip, `the whole trip: every step above added up, from the ${fmtX(lgX)} start to his ${fmtX(m.babip)} (the league's actual BABIP is ${fmtX(lgB)})`);
       b.tag("kfinal");   // the bottom BABIP row in bold (Sean, 10 Oct 2026)
       w.append(b.done());
@@ -7563,7 +7590,8 @@
     if (!window.DRAFT_CAREER_BB.keys.includes("xbabip")) { box.append(el("p", "note", "hist/career-bb.js doesn't carry BABIP yet.")); return box; }
     const rec = window.DRAFT_CAREER[String(p.id)], rows = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).map((l) => ({ l, bx: sbxOf(p.id, l.season) })).filter((r) => r.bx && r.bx.babip != null).sort((a, b) => a.l.season - b.l.season);
     if (!rows.length) { box.append(el("p", "note", "No MLB seasons with Statcast BABIP on record.")); return box; }
-    const COLS = [["babip", "BABIP", 1, fmtX], ["xbabip", "xBABIP", 1, fmtX], ["diff"], ["ld", "LD%", 1, (x) => x.toFixed(1) + "%"], ["pu", "PU%", -1, (x) => x.toFixed(1) + "%"], ["evgb", "GB EV", 1, (x) => x.toFixed(1)], ["evld", "LD EV", 1, (x) => x.toFixed(1)],
+    const XK = window.DRAFT_CAREER_BB.keys.includes("xbabd") ? "xbabd" : "xbabip";   /* the drivers' xBABIP (build_career.py, 15 Oct 2026); the model's on an older file */
+    const COLS = [["babip", "BABIP", 1, fmtX], [XK, "xBABIP", 1, fmtX], ["diff"], ["ld", "LD%", 1, (x) => x.toFixed(1) + "%"], ["pu", "PU%", -1, (x) => x.toFixed(1) + "%"], ["evgb", "GB EV", 1, (x) => x.toFixed(1)], ["evld", "LD EV", 1, (x) => x.toFixed(1)],
                   ["gbp", "GB Pull%", -1, (x) => x.toFixed(1) + "%"], ["oppo", "Oppo%", 1, (x) => x.toFixed(1) + "%"], ["spd", "Sprint", 1, (x) => x.toFixed(1)]];
     const { tb, fin, gap, wrap } = brTable([["", 2], ["Results", 3], ["Batted balls", 6], ["", 1]],
       [["Season", "l"], ["Team", "l"], ["BABIP", ""], ["xBABIP", "", "What his contact deserved"], ["Diff", "", "BABIP − xBABIP: + = more hits in play than his contact deserved"], ["LD%", ""], ["PU%", "", "Popups per batted ball"], ["GB EV", "", "Exit velocity on ground balls"], ["LD EV", "", "Exit velocity on line drives"], ["GB Pull%", "", "The share of his ground balls pulled — lower is better for BABIP"], ["Oppo%", ""], ["Sprint", "", "Savant's sprint speed, ft/s"]], "hrfbt");
@@ -7572,7 +7600,7 @@
       const y = l.season, tr = el("tr", y === +DS.season && DS.level === "MLB" ? "cur" : null), heatOk = +l.c.PA >= 100;
       tr.append(el("td", "l nm", String(y)), el("td", "l", l.team || ""));
       for (const [k, , dir, f] of COLS) {
-        if (k === "diff") { const d = bx.xbabip == null ? null : bx.babip - bx.xbabip, td = el("td", null, d == null ? "–" : (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(3).replace(/^0/, "")); if (d != null) td.classList.add(d >= 0 ? "pos" : "neg"); tr.append(td); continue; }
+        if (k === "diff") { const d = bx[XK] == null ? null : bx.babip - bx[XK], td = el("td", null, d == null ? "–" : (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(3).replace(/^0/, "")); if (d != null) td.classList.add(d >= 0 ? "pos" : "neg"); tr.append(td); continue; }
         const v = bx[k], td = el("td", null, v == null ? "–" : f(v));
         if (heatOk && v != null) { const pc = pctAmong(sbxPool(y, k), v, dir); if (pc != null) { heatTd(td, pc); td.title = ordinal(Math.round(pc)) + " percentile among that season's qualified hitters"; } }
         tr.append(td);
@@ -7583,7 +7611,7 @@
     const tr = el("tr", "tot first"), c = (k, f) => el("td", null, W[k] ? f(S[k] / W[k]) : "–");
     tr.append(el("td"), el("td", "l", `${rows.length} Yr${rows.length === 1 ? "" : "s"}`));
     for (const [k, , , f] of COLS) {
-      if (k === "diff") { const d = W.babip && W.xbabip ? S.babip / W.babip - S.xbabip / W.xbabip : null; tr.append(el("td", null, d == null ? "–" : (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(3).replace(/^0/, ""))); continue; }
+      if (k === "diff") { const d = W.babip && W[XK] ? S.babip / W.babip - S[XK] / W[XK] : null; tr.append(el("td", null, d == null ? "–" : (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(3).replace(/^0/, ""))); continue; }
       tr.append(c(k, f));
     }
     tb.append(gap(), fin(tr)); box.append(wrap);
@@ -7679,11 +7707,8 @@
     // rounded to whole wOBA points so the column adds up to the wOBA row's gap exactly (Sean on the BABIP build-up, 9 Oct: "getting lost with
     // this math"); the rounding's odd point lands in Everything else
     for (const k of ks) eff[k] = R3(eff[k]);
-    // BABIP split into noise and luck (Sean, 12 Oct 2026: "include luck and noise in that too so add a row for that"), as the xBABIP tab splits it:
-    // noise = the drivers' xBABIP → the directional model's xBABIP (the angles and spots the drivers can't see), luck = that → his BABIP. wOBA is a
-    // straight line in BABIP with the other pieces held, so BABIP's ± splits by the two steps' sizes
-    const bD = m.babip != null ? m.babip - t.xbab : null;
-    if (eff.xbab != null && m.xbabip != null && bD && Math.abs(bD) > 1e-9) { eff.bn = R3(eff.xbab * (m.xbabip - t.xbab) / bD); eff.bl = R3(eff.xbab - eff.bn); }
+    // BABIP is one row, the drivers' xBABIP against his BABIP (Sean, 15 Oct 2026: the drivers' number is the xBABIP; the noise / luck split of
+    // 12 Oct against the batted-ball model is gone with it)
     const rest = m.woba != null ? R3(R3(m.woba) - R3(m.txw) - ks.reduce((a0, k) => a0 + eff[k], 0)) : null;
     const effStyle = (d) => { const tt = Math.min(1, Math.abs(d) / 0.020), mix = (a0, b0) => a0.map((x, i) => Math.round(x + (b0[i] - x) * tt)); const c = mix([214, 212, 206], d > 0 ? [216, 33, 41] : [54, 97, 173]); return { bg: `rgb(${c.join(",")})`, fg: tt > (d > 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };
     // Share = each row's part of all the movement, whichever way it pushed — a signed share of the net gap read −160% when two pieces pulled
@@ -7703,9 +7728,7 @@
     const pieces = [["xK%", "xk", t.xkFit, m.k, pct1, (z) => z.toFixed(1), "expected is the strikeout fit alone; his xwOBA uses half his K% and half the fit, so the ± is what his whole K% did beyond that blend"],
                     ["xBB%", "xbb", t.xbbFit, m.bb, pct1, (z) => z.toFixed(1), "expected is the walk fit alone; his xwOBA uses half his BB% and half the fit, so the ± is what his whole BB% did beyond that blend"],
                     ["HR/FB", "xhf", t.xhf, actHf, pct1, (z) => z.toFixed(1), "home runs per fly ball + popup against what his exit velocity deserves"],
-                    ...(eff.bn != null ? [["BABIP noise", "bn", t.xbab, m.xbabip, f3, (z) => fmtX(z), "the drivers' xBABIP against the directional model's xBABIP: the exact angles and where each ball went, which the drivers can't see and which barely repeat — the xBABIP tab's Noise row"],
-                                          ["BABIP luck", "bl", m.xbabip, m.babip, f3, (z) => fmtX(z), "his BABIP against the directional model's xBABIP: hits in play above or below what the contact deserved, repeating year to year at r .15 — the xBABIP tab's Luck row"]]
-                                        : [["BABIP", "xbab", t.xbab, m.babip, f3, (z) => fmtX(z), "hits on non-HR balls in play against the drivers' xBABIP"]]),
+                    ["BABIP", "xbab", t.xbab, m.babip, f3, (z) => fmtX(z), "hits on non-HR balls in play against the drivers' xBABIP (the xBABIP tab's Luck row): the exact angle and spot of each ball included, since that part repeats year to year at only r .2"],
                     ["Bases per hit (no HR)", "tph", t.tph, actTph, (z) => z.toFixed(2), (z) => z.toFixed(2), "total bases per non-HR hit against the directional model's"],
                     // bookkeeping, not something he did (Sean, 12 Oct 2026: "Why are more intentional walks than expected hurting yordans woba vs xwoba
                     // here im confused", then "Yeah relabel it")
@@ -9304,7 +9327,7 @@
       const bb = babipFrom(G), v = el("p", "gverdict");
       v.append(el("span", "chip2 " + (pick.luck >= 0.3 ? "lucky" : pick.luck <= -0.3 ? "unlucky" : "even"), pick.luck >= 0.3 ? "lucky" : pick.luck <= -0.3 ? "unlucky" : "about right"),
         ` His results were worth ${Math.abs(pick.luck).toFixed(1)} run${Math.abs(pick.luck) >= 0.95 && Math.abs(pick.luck) < 1.05 ? "" : "s"} ${pick.luck >= 0 ? "more" : "less"} than the contact and plate appearances behind them (wOBA ${fmtX(pick.woba)} against xwOBA ${fmtX(pick.xw)})` +
-        (bb.babip != null && bb.xbabip != null ? `; BABIP ${fmtX(bb.babip)} against an expected ${fmtX(bb.xbabip)}.` : "."));
+        (bb.babip != null && bb.xbabip != null ? `; BABIP ${fmtX(bb.babip)} against the batted-ball model's ${fmtX(bb.xbabip)} for those balls.` : "."));
       bx.append(v); det.append(bx);
     }
     box.append(det);

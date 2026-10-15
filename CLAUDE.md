@@ -3790,6 +3790,27 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   minus the model's is luck. Davis 2015: expected .286, Noise + luck +33 (+28 / +5), BABIP .319. Only the build-up changed: the xBABIP bar,
   column and BABIP-by-season table are still the model's.
 
+* **The drivers' xBABIP is the xBABIP (Sean, 15 Oct 2026: "let's keep the drivers only one then. Make sure for everything that mentions xBABIP
+  though like in batted ball quality and in the xwoba build up it uses the drivers version of xBABIP and not the noise inclusive one")**: the
+  nine-driver number (the build-up before Noise / Luck) is `m.xbabip` everywhere — `V()` swaps it in right after the talent block (the way talent
+  xwOBA replaced xwOBA), keeping the batted-ball model's own as **`m.xbabipm`**; `xbabDrivers(I, L)` (factored out of `talentCore`) and
+  `driversOf(p, v)` (the view's inputs against `talentLeague()`'s full-season league, as `talentOf`) build it, `v.xbd` keeps the pieces. So the
+  Leaderboard / Compare column, the pool's percentiles, the Batted Ball Quality tab's BABIP bars, the In Split rows and the xwOBA tab all read it;
+  **BABIP luck** (`bluck`) is re-priced on the new gap at the same wOBA value per hit (scaled from the build's; the talent value per hit over his
+  non-HR balls in play when the model's gap rounds to zero). The **xBABIP tab** reads the same pieces (`pv.xbd`: the League row is the model's
+  PA-weighted league, the Lg column the full-season league, each step `dv[k]`), so Expected BABIP equals the card's bar exactly, in a window too;
+  one **Luck** row follows (no model mention). The **xwOBA tab**'s Expected vs actual has one BABIP row (drivers → BABIP; the noise / luck pair of
+  12 Oct is gone). **BABIP by season** reads **`xbabd`** from `hist/career-bb.js` (appended to `SBX_KEYS`; `xbab_drivers(i, L)` factored out of
+  `talent_of` in `build_career.py`; the file regenerated — 7,535 of 7,539 seasons carry it; `xbabip` there stays the model's). A game log's luck
+  line still names the batted-ball model (a game is too small for the drivers); a combined span of seasons keeps the model's number. Glossary
+  entries for `xbabip` / `bluck` rewritten. **Why** (scratch `xbn/`, every 300+ PA hitter-season 2015-26, 3,321): model − drivers (the noise)
+  mean |gap| 14 BABIP points, sd 18, 38% of seasons over 15; BABIP − drivers 22 / sd 28; BABIP − model 19 / sd 24. The noise repeats year to year
+  at r .18 (luck .19; next year's = 0.18 × this year's; of 823 seasons with 15+ of it, 63% keep the sign, 27% stay 15+ the same way) and tracks
+  no stat the files carry above r .23; a career-average noise spreads 9.3 points against 7.0 from chance, so ~6 points of it per hitter is real
+  (Belt / Greene / Morel +26, Straw / Khris Davis / Nicky Lopez −24) — a "repeatable" slice from his own history (n / (n + 1,800) balls in play)
+  is the one refinement left, not built. The drivers' number repeats at .56 (model .42, BABIP .37) and forecasts next season's BABIP at r .369 /
+  mean error 26.6 (model .347 / 28.7); the model explains the same season better (r .76 vs .62). Davis 2015: .286 (model .314, BABIP .319).
+
 ---
 
 ## 10. The football site moved out
