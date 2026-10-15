@@ -3783,6 +3783,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   such a season as a full one). `hist/career.js` patched in place the same day. **App**: `mlbLine` reads it as `c.ag`; `seasonBlock`'s `actOf`;
   the row's tooltip gives the games. Wheeler 2025: 118 games on the roster (IL from mid-August), Skenes 2025 162, Cole 2025 none.
 
+* **Expected BABIP = the nine drivers; Noise + luck one row (Sean, 15 Oct 2026: "make it so the expected babip is everything that comes before
+  noise and before luck and make noise and luck one row")**: the xBABIP tab's build-up marks the running BABIP after FB% (the last driver)
+  yellow "Expected BABIP", then one **Noise + luck** row carries it to his BABIP, then the BABIP band row. The row's note splits it: the
+  directional model's xBABIP (`m.xbabip`, the old stop between Noise and Luck) minus the drivers' number is what the model sees, his BABIP
+  minus the model's is luck. Davis 2015: expected .286, Noise + luck +33 (+28 / +5), BABIP .319. Only the build-up changed: the xBABIP bar,
+  column and BABIP-by-season table are still the model's.
+
 ---
 
 ## 10. The football site moved out
