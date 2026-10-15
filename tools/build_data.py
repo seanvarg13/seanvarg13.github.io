@@ -100,6 +100,71 @@ MIX_COLS = {"mxgb": "gb", "mxpu": "pu", "mxldp": "ld_p", "mxldc": "ld_c", "mxldo
             "mxfbo": "fb_o", "mxx": "x"}                                  # x = an air ball with no direction
 MIX = None          # the batted-ball mix's league values for the dataset being built (set by pitch_flags)
 PULL_LINE = 16      # spray angle (deg toward the pull side) beyond which a ball is "pulled"; 16 matches Savant's Pull Air% best
+# The park table (hist/parks.js, tools/build_parks.py; 15 Oct 2026): per venue x season x batter side, the park's residual on HR per fly ball +
+# popup (points), hits per non-HR ball in play (BABIP points), bases per non-HR hit and K% / BB% per PA (points), given the contact. A hitter's
+# day row carries the park's index in PARK_CODES (the order of the table's "codes"), and his season line his parks' residuals weighted by where
+# he hit (m.pkhr / pkbab / pkxb / pkk / pkbb) plus his top parks by PA (ctx.pk3) — the talent xwOBA's park-neutral K% / BB% halves and the
+# xwOBA tab's Stadium row (app.js parkExposure does the same from the day rows in a window)
+PARK_CODES = ["ATH", "ATL", "AZ", "BAL", "BOS", "CHC", "CIN", "CLE", "COL", "CWS", "DET", "HOU", "KC", "LAA", "LAD", "MIA", "MIL", "MIN", "NYM", "NYY",
+              "PHI", "PIT", "SD", "SEA", "SF", "STL", "TB", "TEX", "TOR", "WSH"]
+PARK_ALIAS = {"OAK": "ATH"}
+_PARKS = None
+
+
+def load_parks() -> dict | None:
+    """the park table from hist/parks.js (None when it isn't there — then no park fields are written)"""
+    global _PARKS
+    if _PARKS is None:
+        f = HERE / "hist" / "parks.js"
+        try:
+            _PARKS = json.loads(f.read_text().split(" = ", 1)[1].strip().rstrip(";")) if f.exists() else False
+        except (ValueError, IndexError):
+            _PARKS = False
+    return _PARKS or None
+
+
+def park_factor(parks: dict, code: str, year: int, side: str):
+    """[hr, bab, xb, k, bb] for that park that season and batter side, or None (the latest season the venue has when the year is past it)"""
+    ven = code
+    for a, b, v in parks.get("venue", {}).get(code, []):
+        if a <= year <= b:
+            ven = v; break
+    Y = parks.get("f", {}).get(ven)
+    if not Y:
+        return None
+    ys = sorted(int(k) for k in Y)
+    yy = year if str(year) in Y else (max(z for z in ys if z <= year) if any(z <= year for z in ys) else ys[0])
+    return Y[str(yy)].get(side)
+
+
+def park_fields(rows_d: list, bats: str, year: int) -> tuple:
+    """(m fields, ctx.pk3) from a hitter's day rows: his parks' residuals weighted by his fly balls, non-HR balls in play, non-HR hits and PA
+    there, by the side he hit from (a switch hitter bats left against the right-handers the row's hand flag marks), and his top three parks by PA"""
+    parks = load_parks()
+    out = {"pkhr": None, "pkbab": None, "pkxb": None, "pkk": None, "pkbb": None}
+    if not parks or not rows_d:
+        return out, None
+    I = {k: HITTER_DAY.index(k) for k in ("pk", "hand", "pa", "hr", "h", "bip", "mxpu", "mxfbp", "mxfbc", "mxfbo")}
+    acc, byv = {}, {}
+    for r in rows_d:
+        if len(r) <= I["pk"] or r[I["pk"]] is None or r[I["pk"]] < 0:
+            continue
+        side = ("L" if r[I["hand"]] else "R") if bats == "S" else (bats or "R")
+        f = park_factor(parks, PARK_CODES[r[I["pk"]]], year, side)
+        code = PARK_CODES[r[I["pk"]]]
+        byv[code] = byv.get(code, 0) + int(r[I["pa"]] or 0)
+        if not f:
+            continue
+        hr = r[I["hr"]] or 0
+        for k, i, w in (("hr", 0, (r[I["mxpu"]] or 0) + (r[I["mxfbp"]] or 0) + (r[I["mxfbc"]] or 0) + (r[I["mxfbo"]] or 0)), ("bab", 1, (r[I["bip"]] or 0) - hr),
+                        ("xb", 2, (r[I["h"]] or 0) - hr), ("k", 3, r[I["pa"]] or 0), ("bb", 4, r[I["pa"]] or 0)):
+            if w and f[i] is not None:
+                a = acc.setdefault(k, [0.0, 0.0]); a[0] += f[i] * w; a[1] += w
+    for k, key, d in (("hr", "pkhr", 2), ("bab", "pkbab", 1), ("xb", "pkxb", 3), ("k", "pkk", 2), ("bb", "pkbb", 2)):
+        a = acc.get(k)
+        out[key] = round(a[0] / a[1], d) if a and a[1] else None
+    top = sorted(byv.items(), key=lambda z: -z[1])[:3]
+    return out, ([[c, n] for c, n in top] if top else None)
 AIR_TYPES = {"fly_ball", "line_drive", "popup"}
 OUTS = {"strikeout": 1, "strikeout_double_play": 2, "field_out": 1, "force_out": 1, "grounded_into_double_play": 2,
         "double_play": 2, "triple_play": 3, "sac_fly": 1, "sac_bunt": 1, "sac_fly_double_play": 2,
@@ -119,7 +184,8 @@ HITTER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", 
               "xhgb", "xhld", "xhfb", "xhpu", "bngb", "bnld", "bnfb", "bnpu",
               "gbp", "gbc", "gbo",
               "hbp",
-              "ibb"]   # intentional walks, so a window re-derives xBB%'s IBB rate (12 Oct 2026); hbp: hit-by-pitches, so a window re-derives the talent xwOBA's HBP rate (11 Oct 2026); the mix's grounders pulled / straightaway / the other way: the Batted Ball Quality tab's grounder Oppo% (10 Oct 2026)   # expected hits (directional xBA, less HR) and non-HR balls in play by type: the xBABIP tab's split of Rest of Contact (10 Oct 2026)
+              "ibb",
+              "pk"]   # intentional walks, so a window re-derives xBB%'s IBB rate (12 Oct 2026); hbp: hit-by-pitches, so a window re-derives the talent xwOBA's HBP rate (11 Oct 2026); the mix's grounders pulled / straightaway / the other way: the Batted Ball Quality tab's grounder Oppo% (10 Oct 2026)   # expected hits (directional xBA, less HR) and non-HR balls in play by type: the xBABIP tab's split of Rest of Contact (10 Oct 2026)
 # The hitter card, grouped. key, label, higher-is-better, decimals, unit. Keys not in HITTER_METRICS are card-only.
 HITTER_CARD = [
     ("Outcomes",             [("woba", "wOBA", True, 3, ""), ("xws", "xwOBA", True, 3, ""), ("xwd", "dxwOBA", True, 3, "")]),
@@ -1050,6 +1116,8 @@ def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
     d["bhand"] = d["stand"].eq("R").astype(int)            # pitcher split: batter side
     d["bhome"] = d["inning_topbot"].eq("Bot").astype(int)  # batter is the home team
     d["phome"] = 1 - d["bhome"]
+    # the park: the home team's index in PARK_CODES (-1 when the code isn't one of the thirty — the minors, or a frame without home_team)
+    d["pk"] = d["home_team"].astype(str).replace(PARK_ALIAS).map({c: i for i, c in enumerate(PARK_CODES)}).fillna(-1).astype(int) if "home_team" in d.columns else -1
     d["cs"] = d["description"].eq("called_strike")
     d["fbt"] = d["bip"] & d["bb_type"].eq("fly_ball")
     d["pu"] = d["bip"] & d["bb_type"].eq("popup")
@@ -1386,9 +1454,11 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
               pulln=("pull", "sum"), ld=("ld", "sum"), gbh=("gbh", "sum"), puh=("puh", "sum"), bbt=("bbt", "sum"),
               bip=("bip", "sum"), evn=("evb", "sum"), oppn=("oppo", "sum"),
               mixsum=("mixv", "sum"), mixn=("mixn", "sum"), **{c: (c, "sum") for c in MIX_COLS},
-              **{c: (c, "sum") for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn", "brfb", "brld", "brgb", "gbp", "gbc", "gbo") if c in d.columns})
+              **{c: (c, "sum") for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn", "brfb", "brld", "brgb", "gbp", "gbc", "gbo") if c in d.columns},
+              **({"pk": ("pk", "first")} if "pk" in d.columns else {}))   # the park that day (15 Oct 2026)
     for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn", "brfb", "brld", "brgb", "gbp", "gbc", "gbo"):
         if c not in h.columns: h[c] = 0.0
+    if "pk" not in h.columns: h["pk"] = -1
     h["mixsum"] = h["mixsum"].round(4)
     h["evs"] = d[d["evb"]].groupby(HK)["launch_speed"].agg(lambda x: [round(float(v), 1) for v in x])
     if "mixc" in d.columns:                                       # the same balls in the same order: their Mix buckets (8 Oct 2026)
@@ -1754,6 +1824,8 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
         if not any(n for n, _ in xbt): xbt = None
         gbdir = [int(sum(x[HITTER_DAY.index(t)] for x in rows_d if len(x) > HITTER_DAY.index(t))) for t in ("gbp", "gbc", "gbo")]   # grounders by direction (10 Oct 2026)
         if not any(gbdir): gbdir = None
+        pkf, pk3 = park_fields(rows_d, r["bats"], SEASON)           # his parks' residuals and his top parks (15 Oct 2026)
+        m.update(pkf)
         mixev = []                                                 # [tracked balls, avg EV] by Mix bucket, MIX_COLS order (8 Oct 2026)
         for i in range(len(MIX_COLS)):
             n = int(r.get(f"MXN{i}", 0) or 0); mixev.append([n, round(float(r[f"MXS{i}"]) / n, 1)] if n else None)
@@ -1769,7 +1841,8 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
                     "mixev": mixev,
                     "xbt": xbt, "gbdir": gbdir,
                     # home runs and hit-by-pitches: the talent xwOBA's league HR/FB and HBP rate (11 Oct 2026)
-                    "HR": int(sum(x[HITTER_DAY.index("hr")] for x in rows_d)), "HBP": int(r.HBP) if "HBP" in r and pd.notna(r.HBP) else None, "IBB": ibb_n},                                               # expected hits by batted-ball type, the xBABIP tab's split                                           # and [tracked balls, avg EV] by bucket — the Mix tab's EV column
+                    "HR": int(sum(x[HITTER_DAY.index("hr")] for x in rows_d)), "HBP": int(r.HBP) if "HBP" in r and pd.notna(r.HBP) else None, "IBB": ibb_n,
+                    "pk3": pk3},                                                             # his top three parks by PA, [[code, PA]] (15 Oct 2026)                                               # expected hits by batted-ball type, the xBABIP tab's split                                           # and [tracked balls, avg EV] by bucket — the Mix tab's EV column
         })
     return rows
 

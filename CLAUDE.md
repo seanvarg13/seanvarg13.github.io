@@ -3826,6 +3826,45 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   season he has no MLB line for (a minors card) gets the row at the foot, labelled with the level; the totals rows leave it out. The xBABIP
   build-up already followed the view. Bolte Aug 1 – Sep 27: 8 HR on 22, xHR/FB 29.3% against 36.4%; xBABIP .359 against .420.
 
+* **Park factors: the stadium's effect on his wOBA, and a park-neutral xwOBA (Sean, 15 Oct 2026: "In the xwoba tab on the actual vs expected
+  table could you add a stadium impact that accounts for all stadium related impacts to their woba like hr to fb impact babip impact elevation
+  environment etc"; "I'd like the xwoba to be stadium adjusted actually so can we add in stadium impacts, but I'd also like it to be stadium
+  neutral if that makes sense so it can measure just pure true skill not stadium impacted")**:
+  - **The table** — `hist/parks.js` (`window.DRAFT_PARKS`, 30 KB, `tools/build_parks.py`, repo only, run by hand each winter and after a park
+    changes): per venue × season × batter side, the park's residual on what happened *given the contact* — a park-blind outcome model (out /
+    1B / 2B / 3B / HR from EV, launch angle, pull angle and batter side, `HistGradientBoostingClassifier` on every tracked ball in play 2015-26,
+    every park pooled) scores each ball, and a venue-season-side is its mean (actual − expected) per unit: **HR per fly ball + popup** (points),
+    **non-HR hits per non-HR ball in play** (BABIP points), **bases per non-HR hit**, each centred on that season's league; **K% and BB% per PA**
+    against the batter's and the pitcher's own season rate away from the park (both sides pooled). A venue is a park in one configuration
+    (`VENUE`: Truist 2017, Globe Life Field 2020, Steinbrenner Field 2025, Sutter Health Park 2025, Buffalo 2020 / the three-park 2021 / the
+    renovated Rogers Centre 2023, Camden's left field 2022-24 and 2025, loanDepot's fences 2020, Tal's Hill gone 2017, Comerica's fences 2023,
+    Chase's humidor 2018); a season's factor pools the venue's seasons Y−2..Y (the nearest three when fewer exist) shrunk by n / (n + k), k
+    from the variance decomposition (the per-unit noise over the spread of the true park effects: ~120 fly balls, 1,200 balls in play, 220
+    hits, 700 PA for K%, 2,900 for BB%; the true spreads 1.9 HR/FB points, 9.6 BABIP points, .06 bases, 1.5 K% points, 0.5 BB%). Cross-checked
+    against Savant's 3-year park factors by side (2026): HR r .81, BACON .79, SO .83, BB .61, 2B .76 — a different method (theirs is home vs
+    away totals, this is given the contact), so the levels differ while the parks line up. 2024-26: Coors BABIP +26 / +22 points (L / R),
+    Fenway +12 / +18, Oracle HR −3.0 / −0.7, Dodger +1.2 / +2.3, Citizens Bank +2.8 / +2.2, T-Mobile K% +3.5 and BABIP −15, Busch K% −1.9.
+    Every park's `home_team` comes with the pitch, so the park is the nominal home team's (the odd neutral-site game counts as its). The inputs
+    themselves barely move with the park (a hitter's FB EV at Coors reads −0.7 mph against his elsewhere, Detroit +0.9, LD% at Coors +2 — mostly
+    tracking calibration; not adjusted).
+  - **Per hitter** — `m.pkhr / pkbab / pkxb / pkk / pkbb`: his parks' residuals weighted by his fly balls + popups, non-HR balls in play, non-HR
+    hits and PA there, by the side he hit from (a switch hitter by each PA's), and `ctx.pk3` = his top three parks by PA. `build_data.py`
+    (`park_fields`, from the day rows + `load_parks()`; `PARK_CODES` / `PARK_ALIAS`) writes them, and **`pk`** — the park's index in the table's
+    `codes` — is appended to `HITTER_DAY`, so `V()` re-derives the exposure in a window (`parkExposure`; the table loads with days.js or when a
+    window first needs it, and its arrival empties only the provisional caches). `data.js`, every `hist/mlb-YYYY.js` and every day file were
+    patched in place from the PA data (scratch `park/patch_pk.py`; the past seasons' day rows, 77 fields, are padded with nulls to the global
+    field list's 82 and `pk` sits at 82 — `V()`'s row loop skips a null like a missing field). `tools/build_career.py`'s `talent_of` takes
+    the same halves (`m.pkk / pkbb`), and `hist/career-bb.js` was regenerated (4,815 of 7,530 seasons moved, almost all by a point or two).
+  - **xwOBA is park-neutral**: `talentCore`'s actual K% / BB% halves are his rates less his parks' effect on them (the contact pieces are read
+    off his contact and don't carry the park). **xwOBA in his parks** (`xwpk`, column "xwOBA, his parks" in `SIDE_H` / `LB_EXTRA_H` / Filters ▸
+    Stats after xwOBA proj., `talentCore`'s `rawPk`) is the same pieces with his parks' residual put back on each — a Rockie a few points up,
+    a Giant down. The **xwOBA tab**: an "In his parks" row under the marked xwOBA (the Next season band still steps from xwOBA), and
+    **Stadium** as a piece in Expected vs actual — the actual pieces enter park-neutral and a Stadium toggle in the Shapley swap puts the parks
+    back, so the piece rows say what he did beyond the park and the Stadium row what the parks did (Expected "neutral", Actual his top park and
+    share; the note lists the five residuals and where he hit; a piece's Diff cell names the park-neutral actual its ± is priced on). Tovar
+    2026: xwOBA .282, in his parks .296 (Coors 48% of his PA: BABIP +9 points, HR/FB +0.3, K% −0.8), wOBA .270 — Stadium +14 of a −12 gap,
+    HR/FB −13, BABIP −9. Judge 2025: Stadium −1 (Yankee Stadium HR +0.7 but BABIP −6). Glossary `xwpk`, the xwOBA entry.
+
 ---
 
 ## 10. The football site moved out

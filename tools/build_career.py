@@ -438,8 +438,9 @@ def talent_of(i, L):
     xb = TW_XBB if all(m.get(k) is not None and L.get(k) is not None for k in ("ibbr", "fcon")) else TW_XBB0
     xbb = L["bb"] + sum(v * (m[k] - L[k]) for k, v in xb.items() if m.get(k) is not None and L.get(k) is not None)
     # half his actual K% / BB%, half the expected rate (app.js TW.act): the blend forecast next season's K%, BB% and wOBA better than either alone
-    if m.get("k") is not None: xk = TW_ACT * m["k"] + (1 - TW_ACT) * xk
-    if m.get("bb") is not None: xbb = TW_ACT * m["bb"] + (1 - TW_ACT) * xbb
+    # — the actual halves park-neutral (15 Oct 2026, app.js talentCore): less his parks' effect on them (m.pkk / pkbb, build_data.py from hist/parks.js)
+    if m.get("k") is not None: xk = TW_ACT * (m["k"] - (m.get("pkk") or 0)) + (1 - TW_ACT) * xk
+    if m.get("bb") is not None: xbb = TW_ACT * (m["bb"] - (m.get("pkbb") or 0)) + (1 - TW_ACT) * xbb
     hbp = (i["hbp"] or 0) / i["pa"]
     bx = {"evfb": m.get("evfb"), "brfb": m.get("brfb"), "brld": m.get("brld"), "pfb": i["pfb"], "brl": m.get("brl"), "ev90": m.get("ev90")}
     twh = L.get("twh") or {}
