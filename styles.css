@@ -5556,3 +5556,11 @@ header.top .wordmark { display: none; }
 /* The park-neutral number in a build-up (15 Oct 2026): a second marked running number — the BABIP / HR/FB his balls would have at a neutral
    park, after Luck and before Stadium — in a pale blue so it isn't mistaken for the yellow Expected one */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) table.sbt.kbuild td.krk.kexp.kneut { background: #cfe3f7 !important; }
+
+/* The card's tabs and the sticky bar's Filters ▾ / Raw ▾ identical (Sean, 15 Oct 2026, Messick's card on his phone: "I'd like the text boldness
+   size and everything to be identical"): the type already matched (700, Barlow Condensed, 18px / 14px on a phone, line-height 1); now the box does
+   too — a phone's tabs are the bar's 36px with 7px of side padding (they had 38 / 11), and the bar's buttons get back the soft lift the 12 Oct pass
+   meant them to have (the sticky-bar rule had set it to none), so both sets are lifted alike. The only difference left is the edge colour: white on
+   the blue bar, #c3d3e3 on the white tab strip, where a white edge would vanish */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) .btabs .btab { height: 36px !important; min-height: 0 !important; padding: 0 7px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar .pgfix :is(.tsl, .phfilt, .segbtn) { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14), 0 1px 2px rgba(0, 0, 0, 0.10) !important; }

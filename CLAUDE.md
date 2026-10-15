@@ -3937,6 +3937,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   3-ball Strike% .35, 1st-pitch .51, BB% .55, PU% .61, Strike% .62, Called .63. Sean knows all of it and chose the site as it was; don't bring the
   Skills side, the pERA headline or a p(K-BB)% Rating back unasked.
 
+* **The card's tabs and the bar's Filters ▾ / Raw ▾ identical (Sean, 15 Oct 2026, Messick's card on his phone: "I'd like the text boldness size and
+  everything to be identical")**: the type already matched (700 Barlow Condensed, 18px on a desktop / 14px on a phone, line-height 1); the block at
+  the end of `styles.css` matches the box — a phone's `.btabs .btab` is 36px tall with 7px of side padding like the sticky bar's buttons (it was 38 /
+  11), and the bar's buttons (`.pgbar .pgfix` `.phfilt` / `.phsidebtn`) get the tabs' soft lift back (the 12 Oct "Buttons lifted" rule had lost to
+  the sticky-bar rule's `box-shadow: none`). Checked by computed style on both layouts: every property equal but the edge colour — white on the blue
+  bar, `#c3d3e3` on the white tab strip, where a white edge would vanish. The four tabs still fit one row at 390px.
+
 ---
 
 ## 10. The football site moved out
