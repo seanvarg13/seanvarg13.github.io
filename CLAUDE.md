@@ -3811,6 +3811,21 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   is the one refinement left, not built. The drivers' number repeats at .56 (model .42, BABIP .37) and forecasts next season's BABIP at r .369 /
   mean error 26.6 (model .347 / 28.7); the model explains the same season better (r .76 vs .62). Davis 2015: .286 (model .314, BABIP .319).
 
+* **The xHR/FB and xBABIP tabs follow the card's filters; In Split rows on both by-season tables (Sean, 15 Oct 2026, Henry Bolte's popup on
+  Aug 1 – Sep 27: "Allow the top table to be on the given filter split and allow the second table to add an additional row for the given split
+  from the filters and do the same for xbabip as well make that go to the split from the filters")**: `renderXhrfbTab`'s MLB branch builds
+  the HR/FB build-up on the view whenever a date window or split is on (`winIdx() || splitActive()`), the way the minors branch always did —
+  `hrfbView(p)` (his HR from the day rows, fly balls + popups from the Mix buckets, FB EV / FB Brl% / LD Brl% / Pull FB% off `V(p).m`) against
+  `hrfbLevel("H")` (the same numbers over the card's reference pool in that view; it now keeps each hitter's xHR/FB in `arr.x` for the heat), the
+  sub-head naming the view and "against the qualified hitters in this view"; a card with no filter keeps the full-season build-up from the career
+  files. A window has no Savant fly-ball count, so his line-drive homers aren't counted in there (the HR/FB row's tooltip says so; a point or so
+  of HR/FB). **In Split rows** (`tr.insplit`, the season table's lead and tint): `hrfbTable` adds one under the card's season — HR, FB, FB EV,
+  FB Brl%, HR/FB, xHR/FB (= the build-up's Expected HR/FB) and Diff from the view, each cell ranked among the window's qualified hitters — and
+  `babipSeasons(p, g)` one with the view's BABIP, the nine drivers' xBABIP in that view (`V(p).m.xbabip`, = the build-up's Expected BABIP),
+  Diff and the drivers (`xbabVal`, hoisted out of `renderXbabipTab`; sprint speed the season's), ranked among `pool(g).ref` in the view; a
+  season he has no MLB line for (a minors card) gets the row at the foot, labelled with the level; the totals rows leave it out. The xBABIP
+  build-up already followed the view. Bolte Aug 1 – Sep 27: 8 HR on 22, xHR/FB 29.3% against 36.4%; xBABIP .359 against .420.
+
 ---
 
 ## 10. The football site moved out

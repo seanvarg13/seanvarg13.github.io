@@ -7445,10 +7445,31 @@
        ["FB EV", "", "Exit velocity on fly balls (2023 on)"], ["FB Brl%", "", "Barrels per fly ball"], ["HR/FB", "", "His home runs over his fly balls"], ["xHR/FB", "", "What his contact says: that season's league HR/FB moved by his FB EV, Barrel% on fly balls and Barrel% on line drives against the league's"], ["Diff", "", "HR/FB − xHR/FB: + = more homers than his contact says"]], "hrfbt");
     const heat = (td, arr, v, lo) => { if (v == null || !arr || arr.length < 20) return; const pc = insertPct(lo ? arr.map((z) => -z).reverse() : arr, lo ? -v : v), sty = pctStyle(pc); td.style.background = sty.bg; td.style.color = sty.fg; td.classList.add("hheat", "heat"); td.title = ordinal(Math.round(pc)) + " percentile among that season's qualified hitters"; };
     const sgn = (v) => (v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1));
-    let H = 0, F = 0, eS = 0, eW = 0, bS = 0, bW = 0, xS = 0, xW = 0, hrX = 0, fbX = 0;
+    // the card's date filter or split as a row under its season (Sean, 15 Oct 2026: "allow the second table to add an additional row for the
+    // given split from the filters"): his HR and fly balls + popups from the day rows in that view, the contact off the view, xHR/FB against
+    // the card's reference pool in the same view (hrfbLevel — the build-up above uses the same league), each cell ranked among that pool
+    const filt = !!(winIdx() || splitActive());
+    const splitTr = () => {
+      const x = hrfbView(p), LV = hrfbLevel("H"), lgv = LV.lg, vl = viewLabel("H"), lev = DS.level && DS.level !== "MLB" ? (DS.levelName || DS.level) + " · " : "";
+      const tr = el("tr", "insplit"), lead = el("span", "sbsplit"); lead.append(el("i", null, "In Split"), el("small", null, lev + vl));
+      const cell = (v, cls) => { const td = el("td", cls || null, v); tr.append(td); return td; };
+      const heatV = (td, arr, v) => { if (v == null || !arr || arr.length < 20) return; const pc = insertPct(arr, v), sty = pctStyle(pc); td.style.background = sty.bg; td.style.color = sty.fg; td.classList.add("hheat", "heat"); td.title = ordinal(Math.round(pc)) + " percentile among the qualified hitters in this window"; };
+      cell("", "l nm").append(lead); cell("", "l");
+      if (!x) { for (let i = 0; i < 7; i++) cell("–"); tr.title = "No fly balls in this window"; return fin(tr); }
+      const hf = 100 * x.hr / x.fb, xv = lgv.hrfb == null ? null : xHrfb(x, lgv);
+      cell(String(x.hr)); cell(String(x.fb)).title = "Fly balls + popups in this view (Statcast's calls; a window can't count his line-drive homers in)";
+      heatV(cell(x.evfb != null ? x.evfb.toFixed(1) : "–"), LV.arr.evfb, x.evfb);
+      heatV(cell(x.brfb != null ? x.brfb.toFixed(1) + "%" : "–"), LV.arr.brfb, x.brfb);
+      heatV(cell(hf.toFixed(1) + "%"), LV.arr.hrfb, hf);
+      heatV(cell(xv == null ? "–" : xv.toFixed(1) + "%"), LV.arr.x, xv);
+      const d = cell(xv == null ? "–" : sgn(hf - xv)); if (xv != null) d.classList.add(hf - xv >= 0 ? "pos" : "neg");
+      return fin(tr);
+    };
+    let H = 0, F = 0, eS = 0, eW = 0, bS = 0, bW = 0, xS = 0, xW = 0, hrX = 0, fbX = 0, splitIn = false;
     for (const l of rows) {
       const y = l.season, hr = +l.c.HR || 0, fb = +l.c.ext[2], hf = 100 * hr / fb, bx = sbxOf(p.id, y), L = hrfbLeague(y), xv = xHrfb(bx, L.lg);
-      const tr = el("tr", y === +DS.season && DS.level === "MLB" ? "cur" : null), cell = (v, cls) => { const td = el("td", cls || null, v); tr.append(td); return td; };
+      const cur = y === +DS.season && DS.level === "MLB";
+      const tr = el("tr", cur ? "cur" : null), cell = (v, cls) => { const td = el("td", cls || null, v); tr.append(td); return td; };
       const heatIf = +l.c.PA >= 100 ? heat : () => {};   // a cup of coffee isn't coloured against the qualifiers (Cruz 2021: 1 FB, 1 HR)
       cell(String(y), "l nm"); cell(l.team || "", "l"); cell(String(hr)); cell(String(fb));
       heatIf(cell(bx && bx.evfb != null ? bx.evfb.toFixed(1) : "–"), L.arr.evfb, bx && bx.evfb);
@@ -7457,11 +7478,13 @@
       heatIf(cell(xv == null ? "–" : xv.toFixed(1) + "%"), L.arr.x, xv);
       const d = cell(xv == null ? "–" : sgn(hf - xv)); if (xv != null) d.classList.add(hf - xv >= 0 ? "pos" : "neg");
       tb.append(fin(tr));
+      if (filt && cur) { tb.append(splitTr()); splitIn = true; }
       H += hr; F += fb;
       if (bx && bx.evfb != null) { eS += bx.evfb * fb; eW += fb; }
       if (bx && bx.brfb != null) { bS += bx.brfb * fb; bW += fb; }
       if (xv != null) { xS += xv * fb; xW += fb; hrX += hr; fbX += fb; }
     }
+    if (filt && !splitIn) tb.append(splitTr());   // a minors season, or one he has no MLB line for: the view's row closes the seasons
     // career: HR / FB over every season; FB EV and FB Brl% weighted by fly balls; xHR/FB weighted by fly balls over the seasons that
     // have one, and Diff over those same seasons
     const tr = el("tr", "tot first"), cell = (v, cls) => { const td = el("td", cls || null, v); tr.append(td); return td; };
@@ -7542,14 +7565,16 @@
     gbp: "the share of his ground balls pulled — a pulled grounder goes right at the infield's thickest side and is a hit about .198 of the time, against ~.306 up the middle and ~.354 the other way; it moves BABIP only through his grounders, so the row is his side's weight × (his GB Pull% − the league's) × his grounders' share of his non-HR balls in play — −0.61 for a righty, −1.48 for a lefty (whose pulled grounders go into the right side's short throw: BABIP .170 pulled against .429 the other way), a switch hitter in between", evld: "a harder liner finds a gap",
     ldp: "the share of his line drives he pulled — a pulled liner falls in about .659 of the time, one up the middle or the other way about .589",
     spd: "speed beats out infield grounders and does nothing else: each ft/s adds .014 to his hit rate on grounders an infielder fields (83% of grounders), so the row is 14 × 0.83 × (his sprint − the league's) × his grounders' share of his non-HR balls in play (Savant's sprint speed, full season)", oppo: "the opposite field is where the infield doesn't shift its gloves", fb: "a fly ball in the park is mostly an out" };
+  // a hitter's value on an xBABIP driver in the view: LD Pull% and GB Pull% from the Mix buckets / gbdir, sprint speed the season's (a window has none)
+  const xbabVal = (q, k) => {
+    const v = V(q), mm = v.m;
+    if (k === "ldp") { const mx = (v.ctx && v.ctx.mix) || (q.ctx && q.ctx.mix), n = mx ? mx[2] + mx[3] + mx[4] : 0; return n ? 100 * mx[2] / n : null; }
+    if (k === "gbp") { const gd = v.ctx && "gbdir" in v.ctx ? v.ctx.gbdir : q.ctx && q.ctx.gbdir, n = gd ? gd[0] + gd[1] + gd[2] : 0; return n ? 100 * gd[0] / n : null; }
+    return k === "spd" ? mm.spd ?? (q.m && q.m.spd) : mm[k];
+  };
   function renderXbabipTab(p, g) {
     const w = el("div", "xbtab"), pv = V(p), m = pv.m, pl = pool(g);
-    const val = (q, k) => {
-      const v = V(q), mm = v.m;
-      if (k === "ldp") { const mx = (v.ctx && v.ctx.mix) || (q.ctx && q.ctx.mix), n = mx ? mx[2] + mx[3] + mx[4] : 0; return n ? 100 * mx[2] / n : null; }
-      if (k === "gbp") { const gd = v.ctx && "gbdir" in v.ctx ? v.ctx.gbdir : q.ctx && q.ctx.gbdir, n = gd ? gd[0] + gd[1] + gd[2] : 0; return n ? 100 * gd[0] / n : null; }
-      return k === "spd" ? mm.spd ?? (q.m && q.m.spd) : mm[k];
-    };
+    const val = xbabVal;
     const D = pv.xbd;   /* the nine drivers on the view against the dataset's full-season league — the same number as the card's xBABIP (V()) */
     if (D && m.babip != null && m.xbabip != null) {
       const ref = pl.ref.filter((q) => V(q).m.xbabip != null), L = D.L;
@@ -7577,12 +7602,12 @@
       b.tag("kfinal");   // the bottom BABIP row in bold (Sean, 10 Oct 2026)
       w.append(b.done());
     } else w.append(el("p", "note", "No xBABIP for this view — it needs tracked balls in play."));
-    w.append(babipSeasons(p));
+    w.append(babipSeasons(p, g));
     return w;
   }
   // his BABIP, xBABIP and their drivers by season, every MLB season whatever the card is on, heat-mapped among each season's qualified hitters;
   // the career row weights each season by its batted balls
-  function babipSeasons(p) {
+  function babipSeasons(p, g) {
     const box = el("div", "rollbox uerabox hrfbbox brbox"), hd = el("div", "rollhd");
     hd.append(el("span", "rollname", "BABIP by season")); box.append(hd);
     ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady);
@@ -7596,18 +7621,39 @@
     const { tb, fin, gap, wrap } = brTable([["", 2], ["Results", 3], ["Batted balls", 6], ["", 1]],
       [["Season", "l"], ["Team", "l"], ["BABIP", ""], ["xBABIP", "", "What his contact deserved"], ["Diff", "", "BABIP − xBABIP: + = more hits in play than his contact deserved"], ["LD%", ""], ["PU%", "", "Popups per batted ball"], ["GB EV", "", "Exit velocity on ground balls"], ["LD EV", "", "Exit velocity on line drives"], ["GB Pull%", "", "The share of his ground balls pulled — lower is better for BABIP"], ["Oppo%", ""], ["Sprint", "", "Savant's sprint speed, ft/s"]], "hrfbt");
     const S = {}, W = {};
+    // the card's date filter or split as a row under its season (Sean, 15 Oct 2026: "do the same for xbabip as well make that go to the split from
+    // the filters"): the view's BABIP, the nine drivers' xBABIP in that view (the card's own, V()) and the drivers off the view, each ranked among the
+    // card's reference pool in the same view; sprint speed is the season's
+    const filt = !!(winIdx() || splitActive()), fmtD = (d) => (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(3).replace(/^0/, "");
+    const splitTr = () => {
+      const pv = V(p), m = pv.m, ref = g ? pool(g).ref : [], vl = viewLabel("H"), lev = DS.level && DS.level !== "MLB" ? (DS.levelName || DS.level) + " · " : "";
+      const tr = el("tr", "insplit"), lead = el("span", "sbsplit"); lead.append(el("i", null, "In Split"), el("small", null, lev + vl));
+      const ltd = el("td", "l nm"); ltd.append(lead); tr.append(ltd, el("td", "l", ""));
+      const among = (vals, v, dir) => pctAmong(vals.filter((z) => z != null), v, dir);
+      for (const [k, , dir, f] of COLS) {
+        if (k === "diff") { const d = m.xbabip == null || m.babip == null ? null : m.babip - m.xbabip, td = el("td", null, d == null ? "–" : fmtD(d)); if (d != null) td.classList.add(d >= 0 ? "pos" : "neg"); tr.append(td); continue; }
+        const v = k === "babip" || k === XK ? m[k === XK ? "xbabip" : "babip"] : xbabVal(p, k), td = el("td", null, v == null ? "–" : f(v));
+        if (v != null && ref.length) { const pc = among(ref.map((q) => (k === "babip" || k === XK ? V(q).m[k === XK ? "xbabip" : "babip"] : xbabVal(q, k))), v, dir); if (pc != null) { heatTd(td, pc); td.title = ordinal(Math.round(pc)) + " percentile among the qualified hitters in this window"; } }
+        tr.append(td);
+      }
+      if (m.babip == null) tr.title = "No balls in play in this window";
+      return fin(tr);
+    };
+    let splitIn = false;
     for (const { l, bx } of rows) {
-      const y = l.season, tr = el("tr", y === +DS.season && DS.level === "MLB" ? "cur" : null), heatOk = +l.c.PA >= 100;
+      const y = l.season, cur = y === +DS.season && DS.level === "MLB", tr = el("tr", cur ? "cur" : null), heatOk = +l.c.PA >= 100;
       tr.append(el("td", "l nm", String(y)), el("td", "l", l.team || ""));
       for (const [k, , dir, f] of COLS) {
-        if (k === "diff") { const d = bx[XK] == null ? null : bx.babip - bx[XK], td = el("td", null, d == null ? "–" : (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(3).replace(/^0/, "")); if (d != null) td.classList.add(d >= 0 ? "pos" : "neg"); tr.append(td); continue; }
+        if (k === "diff") { const d = bx[XK] == null ? null : bx.babip - bx[XK], td = el("td", null, d == null ? "–" : fmtD(d)); if (d != null) td.classList.add(d >= 0 ? "pos" : "neg"); tr.append(td); continue; }
         const v = bx[k], td = el("td", null, v == null ? "–" : f(v));
         if (heatOk && v != null) { const pc = pctAmong(sbxPool(y, k), v, dir); if (pc != null) { heatTd(td, pc); td.title = ordinal(Math.round(pc)) + " percentile among that season's qualified hitters"; } }
         tr.append(td);
         const wt = k === "spd" ? 1 : +bx.bbe || 0; if (v != null && wt) { S[k] = (S[k] || 0) + v * wt; W[k] = (W[k] || 0) + wt; }
       }
       tb.append(fin(tr));
+      if (filt && cur) { tb.append(splitTr()); splitIn = true; }
     }
+    if (filt && !splitIn) tb.append(splitTr());   // a minors season, or one he has no MLB line for: the view's row closes the seasons
     const tr = el("tr", "tot first"), c = (k, f) => el("td", null, W[k] ? f(S[k] / W[k]) : "–");
     tr.append(el("td"), el("td", "l", `${rows.length} Yr${rows.length === 1 ? "" : "s"}`));
     for (const [k, , , f] of COLS) {
@@ -7639,13 +7685,14 @@
   }
   function hrfbLevel(g) {
     const key = viewKey() + ":lg"; if (HFV.has(key)) return HFV.get(key);
-    const S = {}, W = {}, arr = { hrfb: [], evfb: [], brfb: [], brld: [], brl: [], ev90: [], pfb: [] }; let hr = 0, fb = 0, n = 0;
+    const S = {}, W = {}, arr = { hrfb: [], evfb: [], brfb: [], brld: [], brl: [], ev90: [], pfb: [], x: [] }, xs = []; let hr = 0, fb = 0, n = 0;
     for (const q of pool(g).ref) {
       const x = hrfbView(q); if (!x) continue;
-      n++; hr += x.hr; fb += x.fb; arr.hrfb.push(100 * x.hr / x.fb);
+      n++; hr += x.hr; fb += x.fb; arr.hrfb.push(100 * x.hr / x.fb); xs.push(x);
       for (const k of ["evfb", "brfb", "brld", "brl", "ev90", "pfb"]) if (x[k] != null) { S[k] = (S[k] || 0) + x[k] * x.fb; W[k] = (W[k] || 0) + x.fb; arr[k].push(x[k]); }
     }
     const lg = { hrfb: n >= 20 && fb ? 100 * hr / fb : null }; for (const k in S) if (arr[k].length >= 20) lg[k] = S[k] / W[k];
+    if (lg.hrfb != null) for (const x of xs) { const xv = xHrfb(x, lg); if (xv != null) arr.x.push(xv); }   /* each hitter's xHR/FB in the view, for the In Split row's heat (15 Oct 2026) */
     for (const k in arr) arr[k].sort((a, b) => a - b);
     const res = { lg, arr }; HFV.set(key, res); return res;
   }
@@ -7803,27 +7850,31 @@
   }
   function renderXhrfbTab(p) {
     const w = el("div", "xbtab");
-    if (DS.level && DS.level !== "MLB") {   // a minors card: the card's own level, season and view
+    const minors = !!(DS.level && DS.level !== "MLB"), filt = !!(winIdx() || splitActive());
+    // a minors card, or an MLB card with a date window / split on (Sean, 15 Oct 2026: "allow the top table to be on the given filter split"): the
+    // card's own level, season and view — his HR and fly balls from the day rows, against the same numbers over the card's reference pool in that
+    // view (a window has no Savant fly-ball count, so his line-drive homers can't be counted in as the season table does)
+    if (minors || filt) {
       const x = hrfbView(p), L = hrfbLevel("H"), lg = L.lg;
-      if (!x || lg.hrfb == null) w.append(el("p", "note", "No HR/FB for this view — it needs his fly balls and a qualified pool at this level."));
+      if (!x || lg.hrfb == null) w.append(el("p", "note", `No HR/FB for this view — it needs his fly balls and a qualified pool${minors ? " at this level" : " in this window"}.`));
       else {
         const hf = 100 * x.hr / x.fb, xv = xHrfb(x, lg);
         const f = hrfbFit(x, lg);
         const pct1 = (z) => z.toFixed(1) + "%", sg1 = (z) => (z > 0 ? "+" : z < 0 ? "−" : "") + Math.abs(z).toFixed(1);
-        const vl = viewLabel("H"), lev = DS.levelName || DS.level;
-        const b = buildUp(`HR/FB build-up · ${DS.season} ${lev}`, `${vl && vl !== "full season" ? vl + " · " : ""}${x.hr} HR on ${x.fb} fly balls and popups · ± in HR/FB points, against the level's qualified hitters`, "HR/FB", pct1, sg1, 4);
+        const vl = viewLabel("H"), lev = DS.levelName || DS.level, who = minors ? "the level's qualified hitters" : "the qualified hitters in this view";
+        const b = buildUp(`HR/FB build-up · ${DS.season}${minors ? " " + lev : ""}`, `${vl && vl !== "full season" ? vl + " · " : ""}${x.hr} HR on ${x.fb} fly balls and popups · ± in HR/FB points, against ${who}`, "HR/FB", pct1, sg1, 4);
         let run = lg.hrfb;
-        b.row("League", null, lg.hrfb, pct1, null, "→", run, `the ${lev} qualified hitters' home runs over their fly balls and popups`);
+        b.row("League", null, lg.hrfb, pct1, null, "→", run, `the ${minors ? lev + " " : ""}qualified hitters' home runs over their fly balls and popups${filt ? " in this view" : ""}`);
         if (f && xv != null) {
           for (const k in f) {
             const [lab, u, tip] = HRFB_LAB[k], d = f[k] * (x[k] - lg[k]); run += d;
             const arr = L.arr[k] || [];
-            b.row(lab, x[k], lg[k], (z) => z.toFixed(1) + u, arr.length >= 20 ? insertPct(arr, x[k]) : null, d, run, tip + " (MLB's weights, against the level's league)");
+            b.row(lab, x[k], lg[k], (z) => z.toFixed(1) + u, arr.length >= 20 ? insertPct(arr, x[k]) : null, d, run, tip + (minors ? " (MLB's weights, against the level's league)" : " (against the qualified hitters in this view)"));
           }
           b.mark("Expected HR/FB");
           b.row("Luck", null, null, pct1, null, hf - run, hf, "home runs above or below what the contact says — wind, parks, the wall; it repeats year to year at only r .17");
-        } else b.band("xHR/FB", null, null, "no tracked fly-ball contact at this level, so no expected HR/FB — just his actual rate");
-        b.band("HR/FB", hf - lg.hrfb, hf, "his home runs over his fly balls and popups at this level");
+        } else b.band("xHR/FB", null, null, minors ? "no tracked fly-ball contact at this level, so no expected HR/FB — just his actual rate" : "no fly-ball contact numbers in this view, so no expected HR/FB — just his actual rate");
+        b.band("HR/FB", hf - lg.hrfb, hf, `his home runs over his fly balls and popups${minors ? " at this level" : " in this view (Statcast's calls; a window can't count his line-drive homers in, the way the season table does)"}`);
         b.tag("kfinal");
         w.append(b.done());
       }
