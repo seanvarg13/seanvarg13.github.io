@@ -3897,15 +3897,22 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     .401 → .394, brld .218 → .219, pfb .094 (held out by season r .883 → .892, rmse 3.21 → 3.06, next season's HR/FB r .640 → .647); talent
     xwOBA's `TW_HF` c .104 → .096, evfb 1.365 → 1.364, ev90 .828 → .822, pfb .096 → .097 (.834 → .843, next season .674 → .682) — in `app.js`
     and `tools/build_career.py` (`TW_XHRFB[0]`, `TW_HF`), `hist/career-bb.js` regenerated with **`pkhr` / `pkbab`** appended to `SBX_KEYS`.
-  - **The tabs**: on the xBABIP and xHR/FB build-ups Luck lands on his **park-neutral** BABIP / HR/FB (a second marked running number, pale
-    blue, `kneut` — `expMark` / `buildUp.mark` take a class) and a **Stadium** row carries it to his actual one (its note names the parks and
-    how the cell reads); the HR / FB by season and BABIP by season tables have a **Park** column (career-bb.js, the card's own line for this
-    season, the view's for the In Split row) and their **Diff is beyond the park** (HR/FB − Park − xHR/FB, BABIP − Park − xBABIP); the xwOBA
-    tab's Stadium row and "In his parks" read the ball-by-ball pieces automatically (same `m.pk*` keys); **BABIP luck** (`bluck`) is on the
-    park-neutral gap. Glossary `xbabip` / `bluck` / `xhrfb` / `xwpk` / `xwoba` say so. Tovar 2026 (Coors 48% of his PA): expected BABIP .272 →
-    Luck −17 → park-neutral .255 → Stadium +12 → BABIP .267; HR/FB expected 10.8 → Luck −2.4 → neutral 8.4 → Stadium +1.0 → 9.4; Aug 1 – Sep 27
-    from the day rows: Stadium +13 BABIP / +0.6 HR/FB; the xwOBA tab's Stadium +17 of a −12 gap (the venue-mean version had read +14 / +0.3 HR/FB
-    / +9 BABIP). Judge 2025: Park −6 BABIP points (Yankee Stadium's hits), +1.1 HR/FB. The league's 300+ PA hitters average 0.03 / −0.05.
+  - **The outputs themselves are park-neutral (Sean, an hour later: "Do you get that? Like I want stadium impacts stripped out of the outputs
+    per say")** — the first cut had kept the raw BABIP / HR/FB as the final numbers with a Stadium row under them; that lasted an hour. Now
+    **`m.babip` is park-neutral in `V()`** (the raw one stays as `m.babipr`): his balls in play at a neutral park, everywhere the site reads
+    BABIP — the Leaderboard column, the pool's percentiles, the Batted Ball Quality bars, the tabs, the by-season tables, the season table's
+    BABIP column (`sbVal`, via each line's `bx.pkbab`; the totals through `sbxCombine`, the In Split row through the view's) — and **HR/FB** is
+    park-neutral wherever it shows (the xHR/FB tab, HR / FB by season, the Batted Ball Quality bar, the season table's column, the heat pools
+    `hrfbLeague` / `hrfbLevel` / `sbxPool("babipn")`). The xBABIP / xHR/FB build-ups run League → drivers → Expected (marked) → Luck → the
+    park-neutral number as the band row, and a **note under the table** gives his raw number and what his parks added ("In his parks he hit
+    .267: +12 points, Coors Field 48%"); the by-season tables keep the **Park** column as what his parks added (raw = shown + Park) with Diff =
+    shown − expected; the xwOBA tab's Expected vs actual has every actual piece park-neutral, its **wOBA row is his park-neutral wOBA** (his wOBA
+    less what the parks did to his actual pieces, `pkEff`) and an **In his parks** row after it carries his raw wOBA and the park's ± (the Stadium
+    piece inside the Shapley swap is gone with it); **BABIP luck** (`bluck`) is on the neutral BABIP. The `kneut` second mark and the Stadium rows
+    are out of the tabs (`expMark` keeps its class argument). Glossary `babip` / `xbabip` / `bluck` / `xhrfb` say so. Tovar 2026 (Coors 48% of
+    his PA): BABIP .255 (his parks .267, +12), HR/FB 8.4% (9.4%, +1.0), wOBA .253 at a neutral park (.270, +17); the season table's 2026 line
+    BABIP .257 (official counts) / HR/FB 8.4%, the career row .304 / 10.5%; Aug 1 – Sep 27 from the day rows: BABIP .328 (+13 at his parks).
+    Judge 2025: BABIP .382 (raw .376, Yankee Stadium −6), HR/FB 29.5% (30.6%, +1.1). The league's 300+ PA hitters' park effects average ~0.
 
 ---
 
