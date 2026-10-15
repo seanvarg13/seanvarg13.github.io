@@ -16,11 +16,22 @@ hist/parks.js — per venue x season x batter side, the park's residual on what 
     about 120 fly balls, 1,200 balls in play, 220 hits, 700 PA for K%, 2,900 for BB%).
   * The app (parkExposure) and build_data.py (park_fields) weight a hitter's parks by his fly balls / balls in play / hits / PA there, by the side
     he hit from; the talent xwOBA takes the K% / BB% halves less that, and the xwOBA tab's Stadium row is the whole effect on his actual wOBA.
+  * Ball by ball (Sean, later the same day: "what would a 98 mph line drive x launch angle do in a neutral stadium ... for all of the ones in
+    history in coors or t mobile etc I want them to be adjusted to neutral"): a second, park-aware outcome model (the same inputs plus the season
+    and the venue as a category) beside a park-blind one with the season; each tracked ball's park effect is aware(ball, its park) − blind(ball)
+    on P(HR), P(non-HR hit) and expected non-HR bases, averaged into "cells" per venue × batter side × Mix bucket (the build's: GB, PU, LD and
+    FB each pulled / straightaway / the other way) × exit-velocity band (<85, 85-92, 92-97, 97-102, 102-106, 106+, plus the bucket's all-band
+    mean for a ball with no exit velocity), a cell's deviation from its bucket's mean shrunk by n / (n + 60), and each season's mean cell value
+    per typed ball in play ("centre") taken off every ball so that neutral is that season's league-average park. build_data.py (park_cells) gives
+    every ball in play its cell's three numbers, sums them per day (pkh / pkb / pkx) and park_fields turns a season's sums into his HR/FB, BABIP
+    and bases per hit less the same balls at a neutral park (m.pkhr / pkbab / pkxb); the app does the same for a window. Coors turns a 97-106 mph
+    fly ball into a homer 7 points more often than a neutral park, Oracle 6-8 less; Fenway makes a 92-102 mph fly ball a hit ~.10 more often
+    (the Monster); T-Mobile takes ~.03 off every fly ball's hit chance. The venue-mean factors above stay for K% / BB% (per PA, no ball to score).
 
 Cross-checked against Savant's 3-year park factors (2026, by side): HR r .81, BACON r .79, SO r .83, BB r .61, 2B r .76 — a different method
 (theirs is home vs away totals; this is given the contact), so the levels differ while the parks line up.
 
-Usage: python3 build_parks.py            (writes hist/parks.js; a few minutes — the model fit is most of it)
+Usage: python3 build_parks.py            (writes hist/parks.js; ~10 minutes — the three model fits are most of it)
        python3 build_parks.py --from 2015 --through 2026
 """
 import argparse, collections, datetime, glob, json, os, sys, time
@@ -156,6 +167,59 @@ def pooled(R, K, ven, y, side, c):
     return round(float(s / n * n / (n + K[c]) * sc), 3 if c == "xb" else 2)
 
 
+BUCKETS = ["gb", "pu", "ld_p", "ld_c", "ld_o", "fb_p", "fb_c", "fb_o"]   # build_data.py's MIX_COLS order (without the no-direction "x")
+EDGES = [85, 92, 97, 102, 106]
+K_CELL = 60
+
+
+def cells(D):
+    """per venue x side x Mix bucket x EV band: the park-aware model's chance of a HR, of a non-HR hit and its non-HR bases on that kind of ball at
+    that park, less the park-blind model's (the league-average park for that ball) — {ven: {side: {bucket index: [[dhr, dhit, dbases] x 6 bands, all]}}}"""
+    kw = dict(max_iter=300, learning_rate=0.1, max_leaf_nodes=63, min_samples_leaf=200, l2_regularization=1.0, random_state=0)
+    bt = D.bb_type.fillna("")
+    kind = np.select([bt.eq("ground_ball"), bt.eq("popup"), bt.eq("line_drive"), bt.eq("fly_ball")], ["gb", "pu", "ld", "fb"], "")
+    pull = D.pull.to_numpy(dtype=float)
+    dirn = np.where(pull > 16, "p", np.where(pull < -16, "o", np.where(np.isnan(pull), "x", "c")))
+    mixb = np.where(np.isin(kind, ["ld", "fb"]), np.char.add(np.char.add(kind.astype(str), "_"), dirn.astype(str)), kind)
+    bk = pd.Series(mixb).map({b: i for i, b in enumerate(BUCKETS)}).fillna(-1).astype(int).to_numpy()
+    T = D[D.trk & (bk >= 0)]; bkT = bk[(D.trk & (bk >= 0)).to_numpy()]
+    vens = sorted(D.ven.unique()); VI = {v: i for i, v in enumerate(vens)}
+    X0 = np.column_stack([T.ev.values, T.la.values, T.pull.values, T.stand.eq("R").values.astype(float), T.y.values.astype(float)])
+    Xa = np.column_stack([X0, T.ven.map(VI).values.astype(float)])
+    yv = np.where(T.hr, 4, np.where(T.s3, 3, np.where(T.s2, 2, np.where(T.s1, 1, 0))))
+    c0 = HistGradientBoostingClassifier(**kw).fit(X0, yv); print("  park-blind model:", c0.n_iter_, "rounds", flush=True)
+    ca = HistGradientBoostingClassifier(categorical_features=[5], **kw).fit(Xa, yv); print("  park-aware model:", ca.n_iter_, "rounds", flush=True)
+    P0, Pa = c0.predict_proba(X0), ca.predict_proba(Xa)
+    F = pd.DataFrame({"ven": T.ven.values, "stand": T.stand.values, "bk": bkT, "band": np.searchsorted(EDGES, T.ev.values, side="right"),
+                      "dhr": Pa[:, 4] - P0[:, 4], "dhit": Pa[:, 1:4].sum(1) - P0[:, 1:4].sum(1), "db": (Pa[:, 1] + 2 * Pa[:, 2] + 3 * Pa[:, 3]) - (P0[:, 1] + 2 * P0[:, 2] + 3 * P0[:, 3])})
+    C = F.groupby(["ven", "stand", "bk", "band"]).agg(n=("dhr", "size"), dhr=("dhr", "mean"), dhit=("dhit", "mean"), db=("db", "mean")).reset_index()
+    A = F.groupby(["ven", "stand", "bk"]).agg(dhr=("dhr", "mean"), dhit=("dhit", "mean"), db=("db", "mean")).reset_index()
+    C = C.merge(A.rename(columns={"dhr": "ahr", "dhit": "ahit", "db": "ab"}), on=["ven", "stand", "bk"], how="left")
+    for c, a in (("dhr", "ahr"), ("dhit", "ahit"), ("db", "ab")):
+        C[c] = C[a] + (C[c] - C[a]) * C.n / (C.n + K_CELL)
+    out = {}
+    for r in C.itertuples():
+        out.setdefault(r.ven, {}).setdefault(r.stand, {}).setdefault(str(int(r.bk)), [None] * 7)[int(r.band)] = [round(float(r.dhr), 4), round(float(r.dhit), 4), round(float(r.db), 4)]
+    for r in A.itertuples():
+        out.setdefault(r.ven, {}).setdefault(r.stand, {}).setdefault(str(int(r.bk)), [None] * 7)[6] = [round(float(r.dhr), 4), round(float(r.dhit), 4), round(float(r.db), 4)]
+    # the centre: per season, the mean cell value per typed ball in play (every ball in play the build gives a cell — tracked by its band, untracked
+    # by its bucket's all-band mean), so that "neutral" is that season's league-average park and a season's effects sum to zero
+    look = {}
+    for ven, S in out.items():
+        for side, Bk in S.items():
+            for bk, L in Bk.items():
+                for i, v in enumerate(L):
+                    if v: look[(ven, side, int(bk), i)] = v
+    ok = D.bip & (bk >= 0)
+    allb = pd.DataFrame({"y": D.y[ok].values, "ven": D.ven[ok].values, "stand": D.stand[ok].values, "bk": bk[ok.to_numpy()],
+                         "band": np.where(D.ev[ok].notna(), np.searchsorted(EDGES, D.ev[ok].fillna(0).values, side="right"), 6)})
+    vals = np.array([look.get((v, s, int(b), int(d)), (0.0, 0.0, 0.0)) for v, s, b, d in zip(allb.ven, allb.stand, allb.bk, allb.band)])
+    cen = {}
+    for y in sorted(allb.y.unique()):
+        m = (allb.y == y).to_numpy(); cen[str(int(y))] = [round(float(x), 5) for x in vals[m].mean(0)]
+    return out, cen
+
+
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--from", dest="y0", type=int, default=2015); ap.add_argument("--through", dest="y1", type=int, default=datetime.date.today().year)
     a = ap.parse_args(); t0 = time.time()
@@ -167,7 +231,9 @@ def main():
     for ven in sorted(R.ven.unique()):
         for y in sorted(R[R.ven == ven].y.unique()):
             F.setdefault(ven, {})[str(int(y))] = {side: [pooled(R, K, ven, int(y), side, c) for c in COMP] for side in ("L", "R")}
-    out = {"v": 1, "built": datetime.date.today().isoformat(), "keys": list(COMP), "codes": CODES, "venue": VENUE, "names": NAMES, "f": F}
+    C, cen = cells(D)
+    out = {"v": 2, "built": datetime.date.today().isoformat(), "keys": list(COMP), "codes": CODES, "venue": VENUE, "names": NAMES, "f": F,
+           "edges": EDGES, "buckets": BUCKETS, "cellKeys": ["dhr", "dhit", "dbases"], "cells": C, "centre": cen}
     OUT.write_text("window.DRAFT_PARKS = " + json.dumps(out, separators=(",", ":")) + ";\n")
     print(f"wrote {OUT} ({OUT.stat().st_size} bytes, {len(F)} venues) in {time.time() - t0:.0f}s")
 

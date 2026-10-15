@@ -3865,6 +3865,48 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     2026: xwOBA .282, in his parks .296 (Coors 48% of his PA: BABIP +9 points, HR/FB +0.3, K% −0.8), wOBA .270 — Stadium +14 of a −12 gap,
     HR/FB −13, BABIP −9. Judge 2025: Stadium −1 (Yankee Stadium HR +0.7 but BABIP −6). Glossary `xwpk`, the xwOBA entry.
 
+* **Park-neutral outcomes, ball by ball (Sean, 15 Oct 2026: "what would a 98 mph line drive x launch angle do in a neutral stadium / Like I
+  want the outcome to be stadium neutral, so for all of the ones in history in coors or t mobile etc I want them to be adjusted to neutral and
+  then that be what the xbabip and xhr/fb is based on")**: what was already neutral — the directional model's per-ball expectations (every park
+  pooled, no park input: the league-average park for that ball) and the xBABIP drivers (they read his contact, not where it landed) — stays;
+  what wasn't — his actual HR/FB, BABIP and bases per hit (so the Luck rows, which a Rockie's park sat inside) and the HR fits' targets — is
+  neutralized ball by ball now.
+  - **The cells** (`tools/build_parks.py` `cells()`, `hist/parks.js` v2 `cells` / `edges` / `buckets` / `centre`, 147 KB): a second outcome
+    model beside the park-blind one, the same inputs (EV, launch angle, pull angle, side) plus the season and **the venue as a category**
+    (`HistGradientBoostingClassifier`, every tracked ball 2015-26, 1.38M); each ball's park effect = aware(ball, its park) − blind(ball) on
+    P(HR), P(non-HR hit) and expected non-HR bases, averaged into cells per venue × batter side × Mix bucket (the build's eight: GB, PU, LD and
+    FB each pulled / straightaway / the other way) × exit-velocity band (<85, 85-92, 92-97, 97-102, 102-106, 106+, plus the bucket's all-band
+    mean for a ball with no exit velocity), a cell's deviation from its bucket's mean shrunk by n / (n + 60), and **centred per season** (the
+    mean cell value per typed ball in play that season comes off every ball, so neutral is that season's league-average park and a season's
+    effects sum to zero — uncentred, the pooled cells drifted +0.2 HR/FB points / +0.5 BABIP points league-wide in 2025-26). What they say:
+    Coors turns a 97-106 mph fly ball into a homer 7 points more often than neutral (+.07) and gives a 97-102 mph fly ball .06 more hits; Oracle
+    takes 6-8 points off the same fly balls; Fenway gives a 92-102 mph fly ball ~.10 more hits (the Monster's doubles) and takes 5-6 HR points off
+    102+; T-Mobile takes .02-.03 off every fly ball's hit chance; Yankee Stadium adds 3 HR points to a 92-102 mph fly ball and takes 3-4 off
+    102+ (the porches against the deep middle). The exact per-ball effects (both models' difference ball by ball) and the cells agree per
+    hitter-season at r .77 on HR / .83 on hits — the rest is the two trees' disagreement on a given ball, which the cells average out, so the
+    cells are what ships (the build, the patch and the app all read the same table). The venue-mean factors (`f`) stay for K% / BB% per PA.
+  - **Build**: `park_cells` in `build_data.py` gives every PA-ending ball in play its cell's three numbers less the season's centre (`pkh` /
+    `pkb` / `pkx` per pitch, 0 outside the thirty parks or without the table), `daily()` sums them, **`pkh pkb pkx` are appended to
+    `HITTER_DAY`** (3 dp), and `park_fields` turns a season's sums into `m.pkhr / pkbab / pkxb` through `park_neutral`: his HR/FB, BABIP and
+    bases per non-HR hit less the same balls' at a neutral park — a home run the park gave is a non-HR ball in play at neutral (the neutral
+    BABIP's denominator gains it), a hit it gave comes off the hits; `pkk / pkbb` and `ctx.pk3` as before. `data.js`, every `hist/mlb-YYYY.js`
+    and every day file were patched in place from the PA data (scratch `neutral/patch_neutral.py`; `meta.dayFields.H` 83 → 86), and `app.js`
+    `V()` re-derives the three from the window's rows (`parkNeutral`, the same arithmetic) with the venue-mean exposure as the fallback for
+    rows without the sums.
+  - **The fits refit on park-neutral home runs** (scratch `neutral/refit.py`, the same recipes as before): `XHRFB.d` evfb .332 → .345, brfb
+    .401 → .394, brld .218 → .219, pfb .094 (held out by season r .883 → .892, rmse 3.21 → 3.06, next season's HR/FB r .640 → .647); talent
+    xwOBA's `TW_HF` c .104 → .096, evfb 1.365 → 1.364, ev90 .828 → .822, pfb .096 → .097 (.834 → .843, next season .674 → .682) — in `app.js`
+    and `tools/build_career.py` (`TW_XHRFB[0]`, `TW_HF`), `hist/career-bb.js` regenerated with **`pkhr` / `pkbab`** appended to `SBX_KEYS`.
+  - **The tabs**: on the xBABIP and xHR/FB build-ups Luck lands on his **park-neutral** BABIP / HR/FB (a second marked running number, pale
+    blue, `kneut` — `expMark` / `buildUp.mark` take a class) and a **Stadium** row carries it to his actual one (its note names the parks and
+    how the cell reads); the HR / FB by season and BABIP by season tables have a **Park** column (career-bb.js, the card's own line for this
+    season, the view's for the In Split row) and their **Diff is beyond the park** (HR/FB − Park − xHR/FB, BABIP − Park − xBABIP); the xwOBA
+    tab's Stadium row and "In his parks" read the ball-by-ball pieces automatically (same `m.pk*` keys); **BABIP luck** (`bluck`) is on the
+    park-neutral gap. Glossary `xbabip` / `bluck` / `xhrfb` / `xwpk` / `xwoba` say so. Tovar 2026 (Coors 48% of his PA): expected BABIP .272 →
+    Luck −17 → park-neutral .255 → Stadium +12 → BABIP .267; HR/FB expected 10.8 → Luck −2.4 → neutral 8.4 → Stadium +1.0 → 9.4; Aug 1 – Sep 27
+    from the day rows: Stadium +13 BABIP / +0.6 HR/FB; the xwOBA tab's Stadium +17 of a −12 gap (the venue-mean version had read +14 / +0.3 HR/FB
+    / +9 BABIP). Judge 2025: Park −6 BABIP points (Yankee Stadium's hits), +1.1 HR/FB. The league's 300+ PA hitters average 0.03 / −0.05.
+
 ---
 
 ## 10. The football site moved out

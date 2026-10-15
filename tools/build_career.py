@@ -340,7 +340,8 @@ SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evg
             "sba",                      # steal attempts (SB + CS), the season table's Baserunning view (Sean, 9 Oct 2026)
             "txw",                      # talent xwOBA, the season table's column after xwOBA (Sean, 11 Oct 2026) — talent_season() below
             "gbp",                      # GB Pull%: the share of his grounders pulled (ctx.gbdir), an xBABIP driver (11 Oct 2026)
-            "xbabd"]                    # the nine drivers' xBABIP — the site's xBABIP since 15 Oct 2026 (xbab_drivers below; "xbabip" stays the model's)
+            "xbabd",                    # the nine drivers' xBABIP — the site's xBABIP since 15 Oct 2026 (xbab_drivers below; "xbabip" stays the model's)
+            "pkhr", "pkbab"]            # what his parks did to his HR/FB (points) and BABIP (points), ball by ball (build_data.py park_fields; 15 Oct 2026) — the HR / FB and BABIP by season tables' Park columns
 
 
 # Talent xwOBA (Sean, 11 Oct 2026: "an xwoba based purely on their talent ... their batted ball mix, k rate, bb rate, xbabip minus luck and noise,
@@ -357,11 +358,11 @@ TW_XBB0 = {"osw": -0.448, "zsw": -0.030, "ocon": 0.034, "zcon": -0.113, "zsn": -
 # and by batter side (11 Oct 2026; app.js XBAB_GBP): "gbp" is only the sign, TW_XBAB_GBP the weight for his side, a switch hitter 70% lefty
 TW_XBAB = {"ld": 3.73, "pu": -3.16, "evgb": 2.05, "gbp": -1, "evld": 1.24, "ldp": 0.29, "spd": 14 * 0.83, "oppo": 0.41, "fb": -0.72}
 TW_XBAB_GBP = {"R": -0.61, "L": -1.48, "S": 0.3 * -0.61 + 0.7 * -1.48}
-TW_XHRFB = [{"evfb": 0.332, "brfb": 0.401, "brld": 0.218, "pfb": 0.094}, {"evfb": 0.373, "brfb": 0.391, "brld": 0.217},
+TW_XHRFB = [{"evfb": 0.345, "brfb": 0.394, "brld": 0.219, "pfb": 0.094}, {"evfb": 0.373, "brfb": 0.391, "brld": 0.217},
             {"evfb": 0.779, "brl": 0.738}, {"brl": 1.037, "ev90": 0.499}]
 TW_W = {"bb": 0.69, "hbp": 0.72, "s": 0.88, "d": 1.25, "hr": 2.03}
 TW_ACT = 0.5   # share of his actual K% / BB% in the talent pieces (app.js TW.act)
-TW_HF = (0.104, {"evfb": 1.365, "ev90": 0.828, "pfb": 0.096})   # the HR piece on exit velocity alone (app.js TW_HF); XHRFB the fallback
+TW_HF = (0.096, {"evfb": 1.364, "ev90": 0.822, "pfb": 0.097})   # the HR piece on exit velocity alone (app.js TW_HF), fitted on park-neutral home runs since 15 Oct 2026; XHRFB the fallback
 
 
 def _tw_inputs(p):

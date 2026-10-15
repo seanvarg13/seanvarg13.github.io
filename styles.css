@@ -5552,3 +5552,7 @@ header.top .wordmark { display: none; }
    font size to be the same"): 14px, as the sticky bar's buttons are on a phone; the tabs keep their own 38px height and 11px padding (a desktop's
    type was already 18px both) */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) .btabs .btab { font-size: 14px !important; }
+
+/* The park-neutral number in a build-up (15 Oct 2026): a second marked running number — the BABIP / HR/FB his balls would have at a neutral
+   park, after Luck and before Stadium — in a pale blue so it isn't mistaken for the yellow Expected one */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) table.sbt.kbuild td.krk.kexp.kneut { background: #cfe3f7 !important; }
