@@ -172,16 +172,11 @@ Compare column with Mix xwOBA. Steadier year to year than the Rating; about half
 **nERA in uERA's place** (4 Oct 2026): the card's band, its tab strip (Pitching+ · nERA), Season Stats' last column, the home page's
 pitcher lists and the Leaderboard's Standard set all read the luck-neutral ERA instead of uERA.
 
-**A Skills side for pitchers** (15 Oct 2026; Sean: "I want to only measure and include stats that are truly predictive, measures of skill, and
-not luck or noise at all", then "put back the stuff that was in there under the raw button and then keep what you have right now under skills"):
-the card's Raw ▾ / Skills ▾ dropdown (Skills in Stuff's place) — Raw is the card as it was; Skills is Skills (pK% · pBB% · p(K-BB)%), Swing & Miss
-(Proj. Whiff% · xWhiff%), Batted Ball (xGB% · xPU% · Mix xwOBA) and Stuff (Pitching+ · FB velo · Extension), every bar a piece that carries forward
-(a level without pitch tracking shows uK% / uBB% / u(K-BB)%, Whiff%, GB% / Popup% / Mix wOBA); on that side the band's Summary reads pERA in nERA's
-place and the Pitching+ tab's table shows the expected columns alone. The Leaderboard has a **Skills** column set (Rating · pERA · pK% · pBB% ·
-p(K-BB)% · Proj. Whiff% · xWhiff% · xGB% · xPU% · Mix xwOBA · Pitching+) beside the old ones. Why these: year to year at 300 BF, pK% repeats at .84
-against K%'s .72, pBB% .60 / BB% .55, xGB% .90 / GB% .77, xPU% .87 / PU% .61, Proj. Whiff% .82 / Whiff% .75, p(K-BB)% .70 / K-BB% .66, pERA .69 / nERA
-.52 (scratch audit/, 15 Oct 2026). A skill-only pitcher side (pERA the headline, a p(K-BB)% Rating, the outcome stats off every list) was live for an
-hour as PR #633 and came back at Sean's say.
+**The pitcher side's round trip** (15 Oct 2026): after a model audit Sean asked for a skill-only pitcher side (pERA the headline, a p(K-BB)%
+Rating, the card and lists on pK% / pBB% / the expected rates — PR #633), then for the old stats back with the skill set as the card's second side
+(PR #634), then for everything exactly as it was ("get rid of the p stuff and just bring back the stuff vs raw and bring back everything I had you
+eliminate"). The site is as it was before #633: nERA the headline, the Whiff% / xBB% Rating, the Raw ▾ / Stuff ▾ dropdown, every list and tab. The
+audit's numbers are in CLAUDE.md §8 for the record.
 
 **Simpler cards** (4 Oct 2026, later): the pERA tab, the Pitching uERA box and both Game Logs tabs came off the cards; the Pitching+
 tab is the per-pitch table (expected whiffs, ground balls and popups against actual) and the whiff check, and the Leaderboard's Projected
