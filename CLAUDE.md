@@ -4124,6 +4124,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   distribution's part of BABIP, the rest is contact quality and speed by design. 2026's per-bucket BABIP: GB .249, PU .017, LD pulled .659 /
   centre .582 / oppo .606, FB pulled .142 / centre .104 / oppo .115 (non-HR balls; pulled fly balls leave the park 37% of the time).
 
+* **A phone's build-up tables end at their last column (Sean, 16 Oct 2026, from Judge's xwOBA tab on his phone: "make the table end where it ends and
+  make the bold xwoba wording not be like part of the table like it is now")**: the transparent right border of 10 Oct (120px on the card's tabs, 70px
+  in the flaw popup) had drawn the yellow value's word — xwOBA, Expected BABIP, Expected K% … — inside the table's frame as a blank extra column. On a
+  phone the framed box (`.brscroll`) hugs the table (`width: max-content`, as a desktop's does) with `overflow: visible`, the word hangs outside it at
+  12px, and the tab's box (`.brbox` / `.stuffbox`, the popup's `.fxbuild`) scrolls sideways when the table plus the word is wider than the screen (a
+  pitcher's BB% build-up); the page itself stays 390px wide. The block beside the 10 Oct rules in `styles.css`.
+
 ---
 
 ## 10. The football site moved out

@@ -5249,7 +5249,13 @@ header.top .wordmark { display: none; }
 /* an iPhone doesn't count an absolutely placed label in a scroller's width, so the K% / BB% tables (narrower than a phone) never scrolled to
    their "Expected" words; on a phone a table with the mark carries a transparent 120px right border the words sit in, so the box itself is wider
    and scrolls on every browser (Sean, 10 Oct 2026: "the exact same way you did for xbabip and xhr/fb") */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) table.sbt.kbuild:has(td.kexp) { border-right: 120px solid transparent !important; }
+/* the table ends where it ends (Sean, 16 Oct 2026, from his phone: "make the table end where it ends and make the bold xwoba wording not be
+   like part of the table like it is now"): no transparent border — on a phone the framed box hugs the table (max-content, as a desktop's does) and
+   the word hangs outside the frame; the tab's box scrolls sideways to it when the table plus the word is wider than the screen */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) table.sbt.kbuild:has(td.kexp) { border-right: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) .brscroll:has(table.kbuild td.kexp) { width: max-content !important; max-width: none !important; overflow: visible !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) .brbox:has(table.kbuild td.kexp), :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) .stuffbox:has(table.kbuild td.kexp) { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) table.sbt.kbuild td.krk.kexp::after { font-size: 12px; margin-left: 6px; padding-right: 12px; }
 
 /* Boxy buttons everywhere (Sean, 10 Oct 2026: "make all of the sites buttons be the like boxy mix instead of the softer edges ones"): every
    button, pill, tab, segment, page number, search box and input is square-cornered like the player page's year / Filters buttons — the
@@ -5679,4 +5685,7 @@ header.top .wordmark { display: none; }
 /* the yellow xwOBA mark and its word, as on the card's tab (those rules are anchored on #xboard / #modal) */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild table.sbt.kbuild td.krk.kexp { background: #ffe14d !important; color: #141414 !important; font-weight: 700 !important; position: relative; overflow: visible; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild table.sbt.kbuild td.krk.kexp::after { content: attr(data-exp); position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 8px; white-space: nowrap; font-weight: 700; color: var(--ink); background: none; pointer-events: none; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild table.sbt.kbuild:has(td.kexp) { border-right: 70px solid transparent !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild table.sbt.kbuild:has(td.kexp) { border-right: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild .brscroll:has(table.kbuild td.kexp) { width: max-content; max-width: none; overflow: visible; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild:has(table.kbuild td.kexp) { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild table.sbt.kbuild td.krk.kexp::after { font-size: 12px; margin-left: 6px; padding-right: 12px; }
