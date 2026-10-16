@@ -7850,7 +7850,7 @@
     w.append(b.done());
     // each piece beside what happened: the gap is what the number leaves out
     const box = el("div", "rollbox uerabox brbox"), hd = el("div", "rollhd"); hd.append(el("span", "rollname", "Expected vs actual"), el("span", "rollsub", "what each piece expects beside what happened, and how much of his wOBA − xwOBA gap each one accounts for, biggest first")); box.append(hd);
-    const { tb, fin, wrap } = brTable(null, [["Piece", "l"], ["Expected", ""], ["Actual", "", "what happened, at a neutral park — his parks' effect on each piece taken out, ball by ball (the In his parks row has his raw wOBA)"], ["Diff", "", "actual − expected, both park-neutral"], ["± wOBA", "", "how many wOBA points this piece's gap moved his wOBA away from his xwOBA (+ = it raised his wOBA)"], ["Share", "", "this piece's part of all the movement between his xwOBA and his wOBA, whichever way it pushed (the ± column says which) — the rows add to 100%"]], "twvs");
+    const { tb, fin, wrap } = brTable(null, [["Piece", "l"], ["Expected", ""], ["Actual", "", "what happened, at a neutral park — his parks' effect on each piece taken out, ball by ball (the In his parks row has his raw wOBA)"], ["± wOBA", "", "how many wOBA points this piece's gap moved his wOBA away from his xwOBA (+ = it raised his wOBA)"], ["Share", "", "this piece's part of all the movement between his xwOBA and his wOBA, whichever way it pushed (the ± column says which) — the rows add to 100%"]], "twvs");
     const hr = v.ctx && v.ctx.HR != null ? v.ctx.HR : null, ab = v.ab || 0;
     const actHf = hr != null && t.I.fbn ? 100 * hr / t.I.fbn : null;
     const actTph = hr != null && m.ba != null && m.slg != null && ab && m.ba * ab - hr > 0 ? (m.slg * ab - 4 * hr) / (m.ba * ab - hr) : null;
@@ -7899,7 +7899,7 @@
     const noteTd = (lab, tip, tr) => { const td = el("td", "l nm"), bt = el("button", "knotebtn", lab); bt.type = "button"; bt.setAttribute("aria-expanded", "false");
       bt.addEventListener("click", (e) => { e.stopPropagation(); const nx = tr.nextElementSibling;
         if (nx && nx.classList.contains("knote")) { nx.remove(); bt.setAttribute("aria-expanded", "false"); return; }
-        const nr = el("tr", "knote"), nc = el("td"), sc = tr.closest(".brscroll"), tx = el("div", null, tip); nc.colSpan = 6;
+        const nr = el("tr", "knote"), nc = el("td"), sc = tr.closest(".brscroll"), tx = el("div", null, tip); nc.colSpan = 5;
         /* the table scrolls sideways on a phone, so the note sits in the visible part of it */
         if (sc) { tx.style.position = "sticky"; tx.style.left = "10px"; tx.style.width = Math.max(200, sc.clientWidth - 22) + "px"; }
         nc.append(tx); nr.append(nc); tr.after(nr); bt.setAttribute("aria-expanded", "true"); });
@@ -7911,26 +7911,25 @@
                     ["Bases per hit (no HR)", "tph", t.tph, act.tph, (z) => z.toFixed(2), (z) => z.toFixed(2), "total bases per non-HR hit at a neutral park against the directional model's"],
                     // bookkeeping, not something he did (Sean, 12 Oct 2026: "Why are more intentional walks than expected hurting yordans woba vs xwoba
                     // here im confused", then "Yeah relabel it")
-                    ["Intentional walks (not in wOBA)", "ibb", L.ibbr, m.ibbr, (z) => z.toFixed(2), (z) => z.toFixed(2), "per 100 PA, the league's beside his. A counting difference, not a mark against him: wOBA leaves intentional walks out entirely, while his xwOBA's walk piece runs on his BB%, which counts them, at a walk's value (the scale takes out only the league's share). So the more he's walked on purpose beyond the league's rate, the more his xwOBA sits above his wOBA — nothing he did wrong"],
+                    ["IBB", "ibb", L.ibbr, m.ibbr, (z) => z.toFixed(2), (z) => z.toFixed(2), "intentional walks per 100 PA (not in wOBA), the league's beside his. A counting difference, not a mark against him: wOBA leaves intentional walks out entirely, while his xwOBA's walk piece runs on his BB%, which counts them, at a walk's value (the scale takes out only the league's share). So the more he's walked on purpose beyond the league's rate, the more his xwOBA sits above his wOBA — nothing he did wrong"],
                    ].sort((x, y) => Math.abs(eff[y[1]] || 0) - Math.abs(eff[x[1]] || 0));
     for (const [lab, k, a, x, f, fd, tip] of pieces) {
       const tr = el("tr"); tr.title = tip;
-      const dtd = el("td", null, a == null || x == null ? "–" : sg(x - a, fd));
-      tr.append(noteTd(lab, tip, tr), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), dtd, effTd(k in eff ? eff[k] : null), shareTd(k in eff ? eff[k] : null));
+      tr.append(noteTd(lab, tip, tr), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), effTd(k in eff ? eff[k] : null), shareTd(k in eff ? eff[k] : null));
       tb.append(fin(tr));
     }
     if (rest != null) { const tr = el("tr"); tr.title = "what's left between his pieces put back together at their actual values and his real wOBA: the build's fixed linear weights, triples, sacrifice flies and the season's scale — small, and not about his skill";
-      tr.append(el("td", "l nm", "Everything else"), el("td"), el("td", "xact"), el("td"), effTd(rest), shareTd(rest)); tb.append(fin(tr)); }
+      tr.append(el("td", "l nm", "Everything else"), el("td"), el("td", "xact"), effTd(rest), shareTd(rest)); tb.append(fin(tr)); }
     for (const [lab, a, x, f, fd] of [["wOBA", m.txw, wobaN, f3, (z) => fmtX(z)]]) {   /* his park-neutral wOBA against his xwOBA */
       const tr = el("tr", "tot"); tr.title = pk ? `his wOBA at a neutral park: his ${f3(m.woba)} less what his parks did to it (${pts(pkEff)}, the row under)` : "";
-      tr.append(el("td", "l nm", lab), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), effTd(lab === "wOBA" && a != null && x != null ? x - a : null, true), el("td", null, lab === "wOBA" && shareCells.length ? "100%" : ""));
+      tr.append(el("td", "l nm", lab), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), effTd(lab === "wOBA" && a != null && x != null ? x - a : null, true), el("td", null, lab === "wOBA" && shareCells.length ? "100%" : ""));
       tb.append(fin(tr));
     }
     // what his parks added, after the park-neutral wOBA (the raw wOBA is here): the pieces put back together with the park residuals on them
     if (pk && m.woba != null) { const tr = el("tr", "pkrow"), tip = `his wOBA in his parks: ${parkPieces(pk)} — where he hit: ${parkWhere(p, v)}. Home runs, hits and bases ball by ball (each of his balls in play at the park it was hit in against the same ball at a neutral park: hist/parks.js's cells by park, batting side, batted-ball type, direction and exit velocity), strikeouts and walks by the park's residual per PA where he hit`;
-      tr.title = tip; tr.append(noteTd("In his parks", tip, tr), el("td", "xact", parkTop(p, v)), el("td", "xact", f3(m.woba)), el("td", null, sg(pkEff, (z) => fmtX(z))), el("td", "kd", pts(pkEff)), el("td", "xact", "")); tb.append(fin(tr)); }
+      tr.title = tip; tr.append(noteTd("In his parks", tip, tr), el("td", "xact", parkTop(p, v)), el("td", "xact", f3(m.woba)), el("td", "kd", pts(pkEff)), el("td", "xact", "")); tb.append(fin(tr)); }
     { const tr = el("tr", "tot");   /* the directional model's own xwOBA beside his */
-      tr.append(el("td", "l nm", "Batted-ball model"), el("td", null, m.txw == null ? "–" : f3(m.txw)), el("td", "xact", m.dxw == null ? "–" : f3(m.dxw)), el("td", null, m.txw == null || m.dxw == null ? "–" : sg(m.dxw - m.txw, (z) => fmtX(z))), effTd(null, true), el("td", null, ""));
+      tr.append(el("td", "l nm", "Batted-ball model"), el("td", null, m.txw == null ? "–" : f3(m.txw)), el("td", "xact", m.dxw == null ? "–" : f3(m.dxw)), effTd(null, true), el("td", null, ""));
       tb.append(fin(tr)); }
     { const tot = shareCells.reduce((a0, [, d]) => a0 + Math.abs(d), 0);
       for (const [td, d] of shareCells) td.textContent = tot >= 0.002 ? Math.round(100 * Math.abs(d) / tot) + "%" : "–"; }

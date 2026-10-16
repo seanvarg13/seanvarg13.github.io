@@ -4012,6 +4012,18 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   to the Next season band. Judge 2026 (age 34, 285 PA at .391; 2025 .422 on 679, 2024 .455 on 704): regressed .386, age −12 → .374 (the one-season
   number .354). Yordan .400, Trout (34) .344.
 
+* **The Expected vs actual table without its Diff column; the IBB row (Sean, 16 Oct 2026, Wood's xwOBA tab on his phone: "get rid of the
+  differential column, and make intentional walks be IBB so that column can be shorter and it can all fit without the need to scroll")**: the
+  xwOBA tab's Expected vs actual is Piece · Expected · Actual · ± wOBA · Share (no Diff on any row; a note row spans five), and the intentional
+  walks row is labelled **IBB** (its note still says they're not in wOBA). Headless at 390px: the table is 322px in a 328px box, no scroll.
+  **HBP and extra bases re-examined the same day** (Sean: "I'm also curious about hbp in xwoba ... Also the extra bases component too"; scratch
+  `audit/h_hbp_xb.py` / `h_xb2.py`, 1,819 / 3,699 pairs as above): HBP rate repeats at r .65 (k ~270 PA), moves xwOBA by 6 points (sd) and no
+  process explains it (a skills fit r .19) — league, shrunk or fitted versions change the projection by ≤ .001, so it stays his own rate. The
+  extra-bases piece (xSLG / xBA with the talent xHR taken out) tracks his actual bases per non-HR hit at only r .18 same-season / .03 next —
+  it is mostly the talent-HR − actual-HR gap (r −.52), a power residual — yet it carries forecast value (league in its place: next-season r
+  .551 → .536; actual HR instead of xHR .537; a skills fit .544); half model / half his actual bases per hit is the one version that measures
+  better (.557 / projection .562, RMSE 30.1 → 29.8), second-decimal. Not shipped; offered.
+
 ---
 
 ## 10. The football site moved out
