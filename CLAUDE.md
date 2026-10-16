@@ -3954,6 +3954,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   at 23+), and a disabled ‹ / › on the first / last page keeps its full ink, edge and surface (the `.pbtn:disabled` 40% opacity had faded it),
   only the cursor saying it's inert. Headless: bar 44, header row 44, buttons 30, arrows at opacity 1 on pages 1 and 2. Desktop unchanged.
 
+* **A bigger ×, bigger tab buttons with the shadow back, the text as it was (Sean, 16 Oct 2026: "make the x a little bit bigger, and then make the
+  bottom tabs the actual button itself a bit bigger and give it back the shadow, but don't make the text bigger")**: the block at the end of
+  `styles.css` — the popup's × is 46px (42 on a phone; the bar's strip over the buttons grows to 58 / 52px of top padding and the filter chips' row
+  to the ×'s height), and `.btabs .btab` is 46px tall with 18px of side padding (42 / 11 on a phone) with the soft lift again; their type stays
+  Filters ▾'s 18px / 14px 700 condensed. Headless: × 46 / 42, tabs 46 / 42, Filters 40 / 36, the four tabs on one row at 390px.
+
 ---
 
 ## 10. The football site moved out
