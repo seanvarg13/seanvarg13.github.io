@@ -648,6 +648,7 @@
     ranks: load(LS.ranks, {}),       // manual rankings per tab: {ALL: ["H670541", ...], SS: [...], SP: [...]}
     tiers: load(LS.tiers, {}),       // tier members per tab: {ALL: [["H1", "H2"], ["H5"]]} — independent of the rank order
     tierView: prefs.tierView || "tiers",
+    poolAll: false,                  // the board's Not tiered pool unfolded (per visit)
     panelTab: prefs.panelTab || "filters",         // which tab the Filters popup opens on
     rankSort: !!prefs.rankSort,                    // Rankings: a stat sort running inside the tiers
     // a card's comparison: two sides, each with its own season, split and date range
@@ -2204,7 +2205,7 @@
     const ref = refFor(g);
     const q = opts.all ? "" : state.q.trim().toLowerCase();
     const drafted = draftedIds();
-    const hideDrafted = !opts.all && state.mode === "draft" && !state.showDrafted;
+    const hideDrafted = !opts.all && state.mode === "draft" && !state.showDrafted && !boardOn();   // the board keeps the drafted in place, struck through
     const src = orderSource(), trending = state.mode === "trending";
     let out = (trending ? list.concat(pool(g).tail) : list).filter(inPosSel);   // Trending: full-season minimums don't apply
     if (trending) out = out.filter((p) => sample(p) >= trendMin(g));
@@ -2274,9 +2275,9 @@
   let dragKey = null, dropMark = null;
   function clearDropMark() { if (dropMark) { dropMark.el.classList.remove("dragover", "dragover-below"); dropMark = null; } }
   function dropTarget(e) {
-    const li = e.target.closest && e.target.closest("#rows > li");
+    const li = e.target.closest && e.target.closest("#rows li.brow, #rows li.tier, #rows > li");   // the board's rows and tiers, or the list's
     if (!li) return null;
-    if (li.classList.contains("tierhead") || li.classList.contains("tierdrop")) return { el: li, head: true };
+    if (li.classList.contains("tierhead") || li.classList.contains("tierdrop") || li.classList.contains("tier")) return { el: li, head: true };
     const r = li.getBoundingClientRect();
     return { el: li, below: e.clientY > r.top + r.height / 2 };
   }
@@ -2295,6 +2296,7 @@
     const t = dropTarget(e); const k = dragKey; clearDropMark(); dragKey = null;
     if (!t) return;
     const tiers = tierLists(), idx = tierIndex(tiers), rest = fullOrder().filter((q) => q !== k);   // the order without him
+    if (t.head && t.el.dataset.tier === "new") { setTier([k], "new", true); render(); return; }   // the board's + Add tier column: a new tier holding him
     if (t.head) {                                          // tier header / empty-tier box: join that tier, at its top
       const tier = Number(t.el.dataset.tier);
       setTier([k], tier < tiers.length ? tier + 1 : 0, true);
@@ -2310,7 +2312,7 @@
   });
   // edit-mode selection: plain click and cmd/ctrl-click toggle a row, shift-click selects the range from the last click
   function toggleSel(key, e) {
-    const order = [...document.querySelectorAll("#rows .row")].map((li) => li.dataset.key);   // as displayed
+    const order = [...document.querySelectorAll("#rows li[data-key]")].map((li) => li.dataset.key);   // as displayed (the list's rows or the board's)
     if (e && e.shiftKey && state.selAnchor && order.includes(state.selAnchor)) {
       const a = order.indexOf(state.selAnchor), b = order.indexOf(key);
       const range = order.slice(Math.min(a, b), Math.max(a, b) + 1);
@@ -2369,7 +2371,7 @@
   }
   const addTier = () => insertTier(tierLists().length);
   // the bottom-most selected player as displayed (the "Add tier below…" anchor)
-  const selBottom = () => { const s = new Set(state.selKeys); return [...document.querySelectorAll("#rows .row")].map((li) => li.dataset.key).filter((k) => s.has(k)).pop() || null; };
+  const selBottom = () => { const s = new Set(state.selKeys); return [...document.querySelectorAll("#rows li[data-key]")].map((li) => li.dataset.key).filter((k) => s.has(k)).pop() || null; };
   // a tier boundary right below this player: everyone shown above him in his section, through him, becomes a tier
   function tierBelow(key) {
     const tiers = tierLists(), idx = tierIndex(tiers), full = fullOrder();
@@ -2698,7 +2700,91 @@
   // row with Tm after the name, the PA / IP column before the headline and Pos at the end; the Result / Process band as the over-header;
   // a 2px rule where each run of columns ends (brEnds) and after Tm; the sorted column filling its cells; the qualified pool's leader in
   // a column bold italic (brLeaders: MLB-wide, the pool the list ranks against); a Qualified avg band row at the foot
-  const brOn = () => onePage() || state.mode === "rankings" || state.mode === "draft";   // Rankings / Draft mode too (Sean, 16 Oct 2026: "formatted like all the other tables are")
+  const brOn = () => onePage();   // the Leaderboard / Recent; Rankings / Draft mode wore it for a day (16 Oct 2026) and are the tier board now (boardOn)
+  // ---- the Rankings tier board (Sean, 16 Oct 2026: "no stats get shown all it is is the player name and their position eligibility ... make
+  // it so I can tier it and see it all on one page"; design A of the Tier Board Mock-ups): one column per tier across the page, each only
+  // as tall as its tier, Not tiered under them in four columns (a phone stacks the tiers and lists the pool in one). A row is rank · name ·
+  // eligibility (posLabel). Edit rankings: a drag handle and a tick on every row, ✎ / × on each tier, a "+ Add tier" column (drop a name on
+  // it for a new tier holding him), the drop targets the list had (a row's top / bottom half, a tier). Draft mode: a Draft button a row, the
+  // drafted struck through where they stand so the board keeps its shape. Replaces the stat table on Rankings / Draft mode — the Leaderboard
+  // keeps every column — and with it the Tiers / List switch, the pages and the Show drafted box.
+  const boardOn = () => state.mode === "rankings" || state.mode === "draft";
+  const POOL_SHOW = 48;   // Not tiered shows this many before its Show all
+  function renderBoard({ list, g, rankMode, src, tiers, idx, fullRank, rankOf, groups }) {
+    void idx; void fullRank; void g;
+    const ol = $("rows"); ol.className = "rows boardlist"; ol.innerHTML = "";
+    renderPager($("pagertop"), list.length, { start: 0, end: list.length, size: 0, pages: 1, page: 1 });   // Filters, the count, Draft mode's bar — no pages
+    const drafted = draftedIds(), listDs = DS === CUR ? null : DS.key, draftMode = state.mode === "draft";
+    const names = ((src && src.names) || {})[state.pos] || [], T = tiers.length;
+    const row = (p, i) => {
+      const key = p.type + p.id, li = el("li", "brow"); li.dataset.key = key;
+      if (drafted.has(p.id)) li.classList.add("drafted");
+      if (rankMode) {
+        if (state.selKeys.includes(key)) li.classList.add("selected");
+        const h = el("span", "h", "⋮⋮"); h.title = "Drag to reorder, or into a tier"; li.append(h);
+        const cb = el("input", "selbox"); cb.type = "checkbox"; cb.checked = state.selKeys.includes(key); cb.setAttribute("aria-label", `Select ${p.name}`);
+        cb.addEventListener("click", (e) => { e.stopPropagation(); toggleSel(key, e); }); li.append(cb);
+        li.draggable = true;
+        li.addEventListener("dragstart", (e) => { dragKey = key; li.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", key); } catch {} });
+        li.addEventListener("dragend", () => { dragKey = null; li.classList.remove("dragging"); clearDropMark(); });
+      }
+      li.append(el("span", "rk", String(rankOf(p, i))));
+      const nm = el("span", "nm", p.name); nm.title = `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`; li.append(nm);
+      li.append(el("span", "pos", posLabel(p)));
+      if (draftMode) {
+        const b = el("button", "draftbtn", drafted.has(p.id) ? "Undo" : "Draft"); b.type = "button";
+        b.setAttribute("aria-label", (drafted.has(p.id) ? "Return to board: " : "Mark drafted: ") + p.name);
+        b.addEventListener("click", (e) => { e.stopPropagation(); drafted.has(p.id) ? undraft(p.id) : draft(p); }); li.append(b);
+      }
+      li.addEventListener("click", (e) => { if (rankMode) { toggleSel(key, e); return; } openPlayer(p, { ds: p.dsKey ? (p.dsKey === CUR.key ? null : p.dsKey) : listDs }); });
+      return li;
+    };
+    const head = (t, untiered) => {
+      const th = el("div", "th");
+      if (!untiered) {
+        th.append(el("span", "t", `T${t + 1}`));
+        const nm = names[t] || "";
+        const lbl = el("span", "tname" + (nm ? "" : " plain"), nm || `Tier ${t + 1}`);
+        if (rankMode) {
+          lbl.classList.add("editable"); lbl.title = "Click to name this tier";
+          lbl.addEventListener("click", () => {
+            const inp = el("input", "tiername"); inp.value = nm; inp.placeholder = `Name for tier ${t + 1}`; inp.maxLength = 40;
+            const done = () => { setTierName(t, inp.value.trim()); };
+            inp.addEventListener("keydown", (e) => { if (e.key === "Enter") done(); if (e.key === "Escape") render(); });
+            inp.addEventListener("blur", done); inp.addEventListener("click", (e) => e.stopPropagation());
+            lbl.replaceWith(inp); inp.focus();
+          });
+        }
+        th.append(lbl);
+        if (rankMode) {
+          const ed = el("span", "ed");
+          const pen = el("button", "pen", "✎"); pen.type = "button"; pen.title = nm ? "Rename this tier" : "Give this tier a name"; pen.addEventListener("click", () => lbl.click());
+          const x = el("button", "unadd", "×"); x.type = "button"; x.title = "Remove this tier (its players return to Not tiered)"; x.addEventListener("click", () => removeTier(t));
+          ed.append(pen, x); th.append(ed);
+        }
+      } else th.append(el("span", "tname", T ? "Not tiered" : TAB_LABEL[state.pos] || state.pos));
+      const n = groups[t].length;
+      th.append(el("span", "n", `${n} player${n === 1 ? "" : "s"}${untiered && T ? (rankMode ? " · drag one into a tier" : " · the rest of the list") : ""}`));
+      return th;
+    };
+    const frag = document.createDocumentFragment();
+    groups.forEach((rows, t) => {
+      if (t === T) return;   // the pool comes last, under the columns
+      const li = el("li", "tier"); li.dataset.tier = t;
+      li.append(head(t, false));
+      const body = el("ol", "tbody"); rows.forEach(([p, i]) => body.append(row(p, i))); li.append(body);
+      if (rankMode && !rows.length) li.append(el("div", "tdz", "Drop players here"));
+      frag.append(li);
+    });
+    if (rankMode) { const add = el("li", "tier add"); add.dataset.tier = "new"; add.append(el("span", null, "+ Add tier")); add.title = "An empty tier at the end — or drop a name here for a new tier holding him"; add.addEventListener("click", () => addTier()); frag.append(add); }
+    { const rows = groups[T], li = el("li", "tier pool"); li.dataset.tier = T;
+      li.append(head(T, true));
+      const all = state.poolAll || rows.length <= POOL_SHOW + 8;   // a few over the line aren't worth a fold
+      const body = el("ol", "tbody"); (all ? rows : rows.slice(0, POOL_SHOW)).forEach(([p, i]) => body.append(row(p, i))); li.append(body);
+      if (rows.length > POOL_SHOW + 8) { const f = el("button", "foot", all ? "Show fewer ▴" : `Show all ${rows.length} ▾`); f.type = "button"; f.addEventListener("click", () => { state.poolAll = !state.poolAll; renderRows(); }); li.append(f); }
+      frag.append(li); }
+    ol.append(frag);
+  }
   function brEnds(ms, g) {
     const keys = ["score", ...ms.map((m) => m.key)], cat = (k) => (RESULT_KEYS.has(k) ? "R" : "P"), out = new Set();
     keys.forEach((k, i) => { if (i < keys.length - 1 && cat(k) !== cat(keys[i + 1])) out.add(k); if (hasBreak(g, k)) out.add(k); });
@@ -2763,7 +2849,7 @@
     // B-Ref's title over the table (Sean, 9 Oct 2026, from the canvas's phone board: "make it so it looks like the first image"):
     // "Standard batting" / "Advanced pitching" … and what it's sorted by, over a red rule, outside the rows' scroller
     { let tt = $("lbtitle"); const bs = $("bscroll");
-      if (!BR) { if (tt) tt.remove(); }
+      if (!BR && !boardOn()) { if (tt) tt.remove(); }
       else { if (!tt) { tt = el("div", "lbtitle"); tt.id = "lbtitle"; } if (bs && tt.nextSibling !== bs) bs.before(tt);
         const P0 = isPitcherGroup(g), sk = state.sort, sm = ms.find((m) => m.key === sk);
         const by = sk === "score" ? (P0 ? "nERA" : wsLab(wobaHead() ? "wOBA" : HEAD.label)) : sm ? colLab(sm) : sk === "name" ? "name" : sk === "age" ? "age" : sk === "year" ? "season" : "";
@@ -2859,7 +2945,7 @@
     const { list, stats, g, ref, manual } = visiblePlayers();
     const rankMode = state.mode === "rankings" && state.editRanks;
     const src = orderSource();
-    const allTiers = src ? tierLists(state.pos, src) : [], tiers = showTiers() ? allTiers : [];
+    const allTiers = src ? tierLists(state.pos, src) : [], tiers = showTiers() || boardOn() ? allTiers : [];   // the board is always by tier
     const idx = tierIndex(allTiers);
     const fullRank = new Map(src ? visiblePlayers({ all: true }).list.map((p, i) => [p.type + p.id, i + 1]) : []);
     const rankOf = (p, i) => (src ? fullRank.get(p.type + p.id) || i + 1 : i + 1);
@@ -2895,7 +2981,7 @@
     const ms = colsFor(g), trending = state.mode === "trending";
     const drafted = draftedIds();
     const BR = brOn(), ends = BR ? brEnds(ms, g) : null, LD = BR ? brLeaders(g, ms) : null;
-    const ol = $("rows"); ol.innerHTML = "";
+    const ol = $("rows"); ol.innerHTML = ""; ol.className = "rows";
     const empty = $("empty"); empty.hidden = list.length > 0; empty.innerHTML = "";
     if (needsRows() && !DS.ready()) {
       empty.hidden = false; ol.innerHTML = "";
@@ -2905,6 +2991,7 @@
     if (!pool(g).list.length) {
       empty.append(`No ${isPitcherGroup(g) ? "pitchers" : "hitters"} reach ${listMin(g)} ${sampleLabel(g)} ${DS.kind ? "in these games" : "this season"}${needsDays() ? " with games in this range" : ""}. Lower the minimum.`);
     } else if (!list.length) empty.textContent = "No players match.";
+    if (boardOn()) { renderBoard({ list, g, rankMode, src, tiers, idx, fullRank, rankOf, groups }); return; }   // Rankings / Draft mode: the tier board
     const frag = document.createDocumentFragment();
     const listDs = DS === CUR ? null : DS.key;   // the season this list is drawn from (captured now: click handlers run later)
     const listSplit = state.mode === "leaderboard" ? { hand: SPLIT.hand, venue: SPLIT.venue } : null;
@@ -3085,7 +3172,7 @@
     node.style.setProperty("--statcols", statCols(ms, mobile ? 50 : state.mode === "trending" || ms.some((m) => m.showValue) ? 72 : 56));
   }
   function fitNameCol() {
-    const board = $("board"), first = $("rows").querySelector(".who");
+    const board = $("board"), first = $("rows").querySelector(".row .who");
     if (!first) { board.style.removeProperty("--namew"); return; }
     if (document.documentElement.dataset.view === "mobile") { board.style.setProperty("--namew", "116px"); return; }   // a phone's is fixed: nothing to measure (reading styles here forced a layout of every row — 11 Oct 2026)
     const cs = getComputedStyle(first), pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
@@ -3198,7 +3285,8 @@
     box.hidden = false;
     { const g = groupFor(state.pos), pit = isPitcherGroup(g);   // the Stuff+ board's count line at the right (Sean, 3 Oct 2026)
       const who = onePage() ? ` ${pit ? "pitchers" : "hitters"} · ${DS.season}${state.mode === "leaderboard" ? ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}` : ""}` : "";   /* a desktop keeps the fuller count beside its page range (16 Oct 2026) */
-      box.append(el("span", "pcount", pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}${mobileView() ? "" : who}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total}${who}` : `${total} players`)); }
+      const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}`; })() : null;   // the board: tiers · tiered · listed
+      box.append(el("span", "pcount", bc != null ? bc : pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}${mobileView() ? "" : who}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total}${who}` : `${total} players`)); }
     if (pg.pages > 1) {
       const nav = el("div", "pnav");
       const b = (label, n, title, dis) => { const x = el("button", "pbtn", label); x.type = "button"; x.title = title; x.disabled = dis; x.addEventListener("click", () => go(n)); return x; };
@@ -5321,7 +5409,7 @@
     $("rankclear").hidden = !state.editRanks || !ns;
     const idx = tierIndex(tierLists());
     $("rankuntier").hidden = !state.editRanks; $("rankuntier").disabled = !state.selKeys.some((k) => idx.has(k));
-    renderViewSeg("rankview", tn > 0);
+    renderViewSeg("rankview", tn > 0 && !boardOn());
     $("rankreset").disabled = !(n || tn);
     const sc = $("ranksortclear"), byStat = statSorted();
     sc.hidden = !byStat;
@@ -5555,7 +5643,8 @@
     $("undo").disabled = n === 0;
     $("undo").textContent = n ? `Undo ${state.drafted[n - 1].name.split(" ").slice(-1)[0]}` : "Undo last";
     $("showdrafted").checked = state.showDrafted;
-    const src = orderSource(); renderViewSeg("draftview", !!(src && (src.tiers[state.pos] || []).length));
+    const src = orderSource(); renderViewSeg("draftview", !!(src && (src.tiers[state.pos] || []).length) && !boardOn());
+    { const lab = $("showdrafted").closest("label"); if (lab) lab.hidden = boardOn(); }   // the board shows the drafted struck through
   }
   // Tiers / List switch (Rankings and Draft): group by tier, or the raw rank order
   function renderViewSeg(id, show) {
@@ -6252,7 +6341,8 @@
     if (xPop && !POP_MODES.includes(state.mode)) xPop = false;   // another page: the popup goes with the list it came from
     $("xboard").hidden = !player && !xPop; $("xboard").classList.toggle("xpop", xPop); document.body.classList.toggle("xpopon", xPop); xPopBg().hidden = !xPop; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
-    document.body.classList.toggle("brlb", brOn());   // the Leaderboard / Recent in B-Ref's dress (9 Oct 2026); Rankings / Draft mode too (16 Oct 2026)
+    document.body.classList.toggle("brlb", brOn());   // the Leaderboard / Recent in B-Ref's dress (9 Oct 2026)
+    document.body.classList.toggle("boardon", boardOn());   // Rankings / Draft mode: the tier board (16 Oct 2026)
     const T = state.tbl; document.body.dataset.heat = T.heat ? "on" : "off"; document.body.dataset.band = T.band ? "on" : "off"; document.body.dataset.sorthl = T.sortHl ? "on" : "off"; document.body.dataset.density = T.density;
     $("ctoolbar").hidden = !compare; $("cboard").hidden = !compare;
     $("eboard").hidden = !elig; pitchBoardEl().hidden = !pitches;
@@ -12066,7 +12156,7 @@
   function renderToolSummary() {
     const g = groupFor(state.pos), pit = isPitcherGroup(g), unit = pit ? "IP" : "PA";
     const sortSel = $("sort"), opt = sortSel.options[sortSel.selectedIndex];
-    const stats = [customOrder() ? "my order" : opt ? `by ${opt.textContent.replace(/ pctl$/, "")}` : "", `${colsFor(g).length} stats`].filter(Boolean).join(" · ");
+    const stats = [customOrder() ? "my order" : opt ? `by ${opt.textContent.replace(/ pctl$/, "")}` : "", boardOn() ? "" : `${colsFor(g).length} stats`].filter(Boolean).join(" · ");   // the board shows no stats
     const mob = document.documentElement.dataset.view === "mobile";
     const bits = [];
     if (state.mode === "leaderboard") { if (state.lbSplit.hand !== "all") bits.push(`vs ${state.lbSplit.hand}H${pit ? "B" : "P"}`); if (state.lbSplit.venue !== "all") bits.push(state.lbSplit.venue); }

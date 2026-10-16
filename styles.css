@@ -5764,3 +5764,78 @@ body[data-mode="settings"] main.wrap > .notes { display: none; }
 :root:root:root:root:root:root #pagertop > #drafttools { display: flex !important; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-left: 12px; }
 :root:root:root:root:root:root #pagertop > #drafttools[hidden] { display: none !important; }
 :root:root:root:root:root:root[data-view="mobile"] #pagertop > #drafttools { flex: 1 1 100%; margin-left: 0; }
+
+/* The Rankings tier board (Sean, 16 Oct 2026: "no stats get shown all it is is the player name and their position eligibility ... tier it
+   and see it all on one page"; design A of the Tier Board Mock-ups). body.boardon on Rankings / Draft mode: the column names hide, the rows'
+   box holds a flex row of tier columns (li.tier: a blue head, rank · name · eligibility rows) with the Not tiered pool a full-width block
+   under them, its rows flowing in four columns. Edit rankings adds the handle, tick, ✎ / ×, the dashed Add tier column and the drop marks;
+   Draft mode a Draft button a row and the drafted struck through. A phone stacks the tiers and lists the pool in one column. */
+body.boardon #colwrap { display: none !important; }
+body.boardon #rows.boardlist { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; width: 100% !important; min-width: 0 !important; box-sizing: border-box; margin: 0; padding: 12px 14px 16px; list-style: none; }
+body.boardon #rows.boardlist > li.tier { flex: 1 1 0; min-width: 150px; max-width: 100%; box-sizing: border-box; margin: 0; padding: 0; list-style: none; position: relative; background: var(--surface); border: 1px solid color-mix(in srgb, var(--ink) 45%, var(--surface)); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08); }
+body.boardon #rows.boardlist > li.tier > .th { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; background: var(--band2, var(--accent-2)); color: #fff; font: 700 15px/1 var(--display); white-space: nowrap; overflow: hidden; }
+body.boardon #rows.boardlist > li.tier > .th .t { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 20px; padding: 0 5px; background: #fff; color: var(--ink); font: 800 12px/1 var(--display); flex: none; }
+body.boardon #rows.boardlist > li.tier > .th .tname { overflow: hidden; text-overflow: ellipsis; }
+body.boardon #rows.boardlist > li.tier > .th .tname.plain { font-weight: 600; opacity: .92; }
+body.boardon #rows.boardlist > li.tier > .th .tname.editable { cursor: text; border-bottom: 1px dashed rgba(255, 255, 255, .7); }
+body.boardon #rows.boardlist > li.tier > .th .tiername { height: 22px; width: 120px; min-width: 0; padding: 0 5px; border: 1px solid #fff; border-radius: 0; background: #fff; color: var(--ink); font: 600 12.5px var(--body); }
+body.boardon #rows.boardlist > li.tier > .th .n { margin-left: auto; font: 500 12px var(--body); color: rgba(255, 255, 255, .9); flex: none; }
+body.boardon #rows.boardlist > li.tier > .th .ed { display: inline-flex; gap: 4px; margin-left: auto; flex: none; }
+body.boardon #rows.boardlist > li.tier > .th .ed + .n { display: none; }   /* editing: the controls take the count's room */
+body.boardon #rows.boardlist > li.tier > .th .ed button { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin: 0; padding: 0; border: 0; border-radius: 0; background: rgba(255, 255, 255, .22); color: #fff; font: 600 12px/1 var(--body); box-shadow: none; cursor: pointer; }
+body.boardon #rows.boardlist > li.tier > .th .ed button:hover { background: #fff; color: var(--ink); }
+body.boardon #rows.boardlist > li.tier.pool > .th { background: var(--surface-2); color: var(--ink-2); border-bottom: 1px solid var(--hair); }
+body.boardon #rows.boardlist > li.tier.pool > .th .n { color: var(--muted); }
+body.boardon #rows.boardlist > li.tier > .tbody { list-style: none; margin: 0; padding: 0; }
+body.boardon #rows.boardlist li.brow { display: flex; align-items: center; gap: 8px; height: 27px; padding: 0 8px 0 6px; margin: 0; border-top: 1px solid var(--hair); background: var(--surface); cursor: pointer; list-style: none; min-width: 0; }
+body.boardon #rows.boardlist li.brow:first-child { border-top: 0; }
+body.boardon #rows.boardlist li.brow:hover { background: color-mix(in srgb, var(--accent-2) 10%, var(--surface)); }
+body.boardon #rows.boardlist li.brow .rk { width: 22px; flex: none; text-align: right; color: var(--muted); font: 400 12px var(--body); font-variant-numeric: tabular-nums; }
+body.boardon #rows.boardlist li.brow .nm { flex: 1 1 auto; min-width: 0; font: 500 13.5px var(--body); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.boardon #rows.boardlist li.brow .pos { flex: none; font: 400 12px var(--body); color: var(--muted); white-space: nowrap; }
+body.boardon #rows.boardlist li.brow .h { flex: none; width: 9px; margin-right: -2px; color: #b8c2d0; font-size: 13px; letter-spacing: -2px; cursor: grab; }
+body.boardon #rows.boardlist li.brow:has(> .selbox) { gap: 6px; }   /* editing: the handle and tick take the least room they can */
+body.boardon #rows.boardlist li.brow .selbox { flex: none; width: 14px; height: 14px; margin: 0; accent-color: var(--band2, var(--accent-2)); }
+body.boardon #rows.boardlist li.brow .draftbtn { flex: none; height: 20px; min-height: 0; padding: 0 8px; margin: 0; border: 1px solid #c3d3e3; border-radius: 0; background: #fff; color: var(--ink); font: 600 11px/1 var(--body); letter-spacing: 0; box-shadow: none; }
+body.boardon #rows.boardlist li.brow .draftbtn:hover { background: var(--band2, var(--accent-2)); border-color: var(--band2, var(--accent-2)); color: #fff; }
+body.boardon #rows.boardlist li.brow.drafted .nm { color: var(--muted); text-decoration: line-through; }
+body.boardon #rows.boardlist li.brow.drafted .pos, body.boardon #rows.boardlist li.brow.drafted .rk { opacity: .6; }
+body.boardon #rows.boardlist li.brow.selected { background: color-mix(in srgb, var(--accent-2) 22%, var(--surface)); box-shadow: inset 3px 0 0 var(--accent-2); }
+body.boardon #rows.boardlist li.brow.dragging { opacity: .35; }
+body.boardon #rows.boardlist li.brow.dragover { box-shadow: inset 0 3px 0 var(--stripe-line, #c8102e); }
+body.boardon #rows.boardlist li.brow.dragover-below { box-shadow: inset 0 -3px 0 var(--stripe-line, #c8102e); }
+body.boardon #rows.boardlist > li.tier.dragover { box-shadow: inset 0 0 0 2px var(--accent-2), 0 4px 16px rgba(0, 0, 0, 0.12); }
+body.boardon #rows.boardlist > li.tier > .tdz { margin: 6px 8px 8px; padding: 6px 10px; border: 2px dashed var(--hair); text-align: center; color: var(--muted); font: 400 12px var(--body); }
+body.boardon #rows.boardlist > li.tier.add { flex: 0 0 120px; min-height: 120px; display: flex; align-items: center; justify-content: center; border: 2px dashed #c3d3e3; background: none; box-shadow: none; color: var(--muted); font: 700 16px/1 var(--display); cursor: pointer; text-align: center; }
+body.boardon #rows.boardlist > li.tier.add:hover, body.boardon #rows.boardlist > li.tier.add.dragover { border-color: var(--accent-2); color: var(--accent-2); box-shadow: none; }
+body.boardon #rows.boardlist > li.tier.pool { flex: 1 1 100%; }
+body.boardon #rows.boardlist > li.tier.pool > .tbody { column-count: 4; column-gap: 0; }
+body.boardon #rows.boardlist > li.tier.pool > .tbody li.brow { break-inside: avoid; border-top: 1px solid var(--hair); border-right: 1px solid var(--hair); }
+body.boardon #rows.boardlist > li.tier.pool > .foot { display: block; width: 100%; margin: 0; padding: 8px 10px; border: 0; border-top: 1px solid var(--hair); border-radius: 0; background: var(--surface-2); color: var(--ink); text-align: left; font: 600 12.5px var(--body); box-shadow: none; cursor: pointer; }
+body.boardon #rows.boardlist > li.tier.pool > .foot:hover { background: color-mix(in srgb, var(--accent-2) 14%, var(--surface)); }
+body.boardon #rows.boardlist li.brow .pos.lc { text-transform: none; }
+body.boardon #lbtitle { display: flex; align-items: baseline; gap: 12px; margin: 5px 0 8px; padding-bottom: 5px; border-bottom: 2px solid var(--stripe-line, #c8102e); }
+body.boardon #lbtitle h2 { margin: 0; font: 700 26px/1 var(--display) !important; color: var(--ink) !important; letter-spacing: 0.01em !important; text-transform: none !important; }
+body.boardon #lbtitle span { font: 400 13px var(--body); color: var(--muted); }
+:root[data-view="mobile"] body.boardon #lbtitle { margin: 2px 12px 8px; padding-bottom: 4px; }
+:root[data-view="mobile"] body.boardon #lbtitle h2 { font-size: 21px !important; }
+:root[data-view="mobile"] body.boardon .pager .pcount { display: inline; flex: 1 1 auto; font-size: 12px; color: var(--muted); white-space: normal; }
+body.boardon #rows.boardlist > li.tier:not(.pool):not(.add) { max-width: 360px; }   /* a name and his positions never need more */
+:root[data-view="mobile"] body.boardon #rows.boardlist { flex-direction: column; gap: 10px; padding: 8px 8px 12px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier { flex: none; width: 100%; min-width: 0; }
+:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier.add { min-height: 48px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier.pool > .tbody { column-count: 1; }
+:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier.pool > .tbody li.brow { border-right: 0; }
+:root[data-view="mobile"] body.boardon #rows.boardlist li.brow { height: 30px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist li.brow .nm { font-size: 14.5px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist li.brow .pos { font-size: 12.5px; }
+
+/* The phone's Rankings bar wraps (16 Oct 2026, with the tier board): a nowrap bar had squeezed the Tiers / List switch, Edit rankings and
+   Draft mode into a 97px column beside the list's name and Save…, clipping the switch to "Tiers | Li" and wrapping each button to two lines */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="rankings"] #setbar { flex-wrap: wrap !important; gap: 6px 8px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="rankings"] #setbar #ranktools { flex: 1 1 100% !important; flex-wrap: wrap !important; gap: 6px 8px !important; min-width: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="rankings"] #setbar #ranktools > * { flex: none !important; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="rankings"] #setbar #ranktools .seg { overflow: visible !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="rankings"] #setbar #listsbtn { flex: 1 1 auto !important; min-width: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="rankings"] #setbar #setsave { flex: none !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #ranktools #rankdraft { margin-left: 0 !important; }
