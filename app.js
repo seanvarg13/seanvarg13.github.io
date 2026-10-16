@@ -5494,7 +5494,10 @@
   const FX = { elite: 30, flaw: -10, gain: 5, pa: 75, minPA: 200 };   // minPA 200, not the pool's 300: Roman Anthony's 242 PA (Sean named him)
   // the words are the build-up's own piece names (Sean, 16 Oct 2026: "for the skills he is elite at ... literally repeat those so for garrett
   // mitchell show xbabip and hr/fb")
-  const FX_PCS = [["K%", "xk", (x) => x.toFixed(1) + "%", "K%"], ["BB%", "xbb", (x) => x.toFixed(1) + "%", "BB%"], ["xHR/FB", "xhf", (x) => x.toFixed(1) + "%", "xHR/FB"],
+  // the skills themselves (Sean, 16 Oct 2026: "only use the skills in the xwoba build up, so instead of k% use xk% etc"): the strikeout and walk
+  // pieces are the fits (xK%, xBB% — the fifth entry, the key on V(p).tal), not the half-and-half the build blends; a move in the fit is carried
+  // into his build's piece point for point
+  const FX_PCS = [["xK%", "xk", (x) => x.toFixed(1) + "%", "xK%", "xkFit"], ["xBB%", "xbb", (x) => x.toFixed(1) + "%", "xBB%", "xbbFit"], ["xHR/FB", "xhf", (x) => x.toFixed(1) + "%", "xHR/FB"],
                   ["Fly ball%", "fbs", (x) => Math.round(100 * x) + "%", "Fly ball%"], ["xBABIP", "xbab", fmtX, "xBABIP"], ["XB/hit", "tph", (x) => x.toFixed(2), "XB/hit"]];
   // the page's windows (Sean, 16 Oct 2026: "the past months or x days ... different players across different timelines"): last N days from the
   // last game day, or his last N PA; the window's minimum scales with it (75 PA for 30 days, ¾ of N for a last-N window)
@@ -5531,7 +5534,8 @@
     const rows = [], cand = new Map();
     if (L) {
       const wob = (c) => twRaw(c) * L.scale, lg = { xk: lgK, xbb: L.bb, hbp: L.hbp, xhf: L.hr.hrfb, fbs: L.fbs, xbab: L.xbabip, tph: L.tph }, base = wob(lg);
-      const pieces = (t) => FX_PCS.map(([lab, k, f, word]) => ({ lab, k, f, word, v: t[k], eff: 1000 * (wob(Object.assign({}, lg, { [k]: t[k] })) - base) }));
+      const lgv = { xkFit: (lgRatesH().k || 0) - 0.08, xbbFit: L.bb };   // the league's own fits (XKH's −0.08 constant; xBB% is centred on the league)
+      const pieces = (t) => FX_PCS.map(([lab, k, f, word, vk]) => { const v = vk ? t[vk] : t[k], his = vk ? lg[k] + (v - lgv[vk]) : v; return { lab, k, vk: vk || k, f, word, v, eff: 1000 * (wob(Object.assign({}, lg, { [k]: his })) - base) }; });
       for (const [p, t] of season) {
         // "one or two things holding them back": his two worst pieces at the flaw line both count (Mitchell: K% and fly balls)
         const ps = pieces(t).sort((a, b) => b.eff - a.eff), flaws = ps.slice(-2).filter((z) => z.eff <= FX.flaw);
@@ -5541,9 +5545,9 @@
       if (daysReady() || prevMode) inWin(win30, () => {
         for (const [p, c] of cand) {
           const cp = prevMode ? curById.get(p.id) : p, v = cp && V(cp); if (!v || (prevMode ? (cp.pa || 0) : v.sample) < minPA || !v.tal) continue; const xw = wob(c.own); let best = null;
-          for (const flaw of c.flaws) { const now = v.tal[flaw.k]; if (now == null) continue; const held = wob(Object.assign({}, c.own, { [flaw.k]: now })), gain = 1000 * (held - xw); if (!best || gain > best.gain) best = { flaw, now, held, gain }; }
+          for (const flaw of c.flaws) { const now = v.tal[flaw.vk]; if (now == null) continue; const held = wob(Object.assign({}, c.own, { [flaw.k]: c.own[flaw.k] + (now - flaw.v) })), gain = 1000 * (held - xw); if (!best || gain > best.gain) best = { flaw, now, held, gain }; }
           if (!best || best.gain < FX.gain) continue;
-          const n = prevMode ? (cp.pa || 0) : v.sample; let cred = n / (n + FX_K[best.flaw.k]); const pr = prior.get(p), pv = pr && pr[best.flaw.k];
+          const n = prevMode ? (cp.pa || 0) : v.sample; let cred = n / (n + FX_K[best.flaw.k]); const pr = prior.get(p), pv = pr && pr[best.flaw.vk];
           let witness = null;
           if (pv != null) { const mid = (best.flaw.v + best.now) / 2, up = best.now > best.flaw.v; const past = up ? pv >= mid : pv <= mid, against = up ? pv < best.flaw.v : pv > best.flaw.v; if (past) { cred = 1 - (1 - cred) * 0.5; witness = "for"; } else if (against) { cred *= 0.7; witness = "against"; } else witness = "between"; }
           rows.push({ p: cp, base: p, flaw: best.flaw, elite: c.ps.slice(0, 2), strengths: c.ps.slice(0, 2).map((z) => z.word).join(", "), was: best.flaw.v, now: best.now, xw, held: best.held, gain: best.gain, pa: n, cred, cgain: best.gain * cred, prior: pv, witness });
@@ -5562,8 +5566,8 @@
   // flaw piece and what the build reads for it, then each piece he's elite at the same way. Percentiles among the season's 300+ PA hitters on the
   // left, among the window's qualifiers (the page's minimum) on the right
   const FX_IN = {
-    xk: [["k", "K%", false], ["xk", "xK%", false], ["whf", "Whiff%", false], ["zsw", "Z-Swing%", true], ["osw", "Chase%", false], ["strk", "Strike% seen", false]],
-    xbb: [["bb", "BB%", true], ["@xbbFit", "xBB%", true], ["osw", "Chase%", false], ["zsw", "Z-Swing%", false], ["ocon", "O-Contact%", true], ["zcon", "Z-Contact%", false], ["zsn", "Zone% seen", false], ["ev90", "90th% EV", true], ["ibbr", "IBB / 100 PA", true], ["fcon", "Fouls / contact", true]],
+    xk: [["xk", "xK%", false], ["k", "K%", false], ["whf", "Whiff%", false], ["zsw", "Z-Swing%", true], ["osw", "Chase%", false], ["strk", "Strike% seen", false]],
+    xbb: [["@xbbFit", "xBB%", true], ["bb", "BB%", true], ["osw", "Chase%", false], ["zsw", "Z-Swing%", false], ["ocon", "O-Contact%", true], ["zcon", "Z-Contact%", false], ["zsn", "Zone% seen", false], ["ev90", "90th% EV", true], ["ibbr", "IBB / 100 PA", true], ["fcon", "Fouls / contact", true]],
     xhf: [["@xhf", "xHR/FB", true], ["evfb", "FB EV", true], ["brfb", "FB Brl%", true], ["brld", "LD Brl%", true], ["@pfb", "Pull FB%", true]],
     fbs: [["@fbs100", "Fly ball%", true], ["fb", "FB%", true], ["pu", "Popup%", false], ["ld", "LD%", true], ["gb", "GB%", false]],
     xbab: [["xbabip", "xBABIP", true], ["ld", "LD%", true], ["pu", "Popup%", false], ["evgb", "GB EV", true], ["@gbp", "GB Pull%", false], ["evld", "LD EV", true], ["@ldp", "LD Pull%", true], ["spd", "Sprint", true], ["oppo", "Oppo%", true], ["fb", "FB%", false]],
@@ -5578,6 +5582,12 @@
     const pcs = FX_PCS.map(([lab, k]) => ({ lab, k }));
     const secs = [["xwOBA", [["xwd", "xwOBA", true]]], [r.flaw.lab + " — the flaw", FX_IN[r.flaw.k]], ...r.elite.map((e) => [e.lab + " — elite", FX_IN[e.k]])];
     const fmtV = (k, x) => { const d = FX_FMT[k] ?? 1; return d === 3 ? fmtX(x) : x.toFixed(d); };
+    // then the hitter card's own sections (Sean, 16 Oct 2026: "below that it also shows batted ball mix, batted ball quality, etc all of the
+    // stuff on the player card ... for both splits"): every PCT_COLS_H section, its rows resolved the way the card's are (the metric defs,
+    // EXPW → xwd …), each split ranked among the same hitters as the rows above
+    const all = allFor("H"), exp = expKeys();
+    const cardSecs = PCT_COLS_H.flat().map(([title, keys]) => [title, keys.map((k0) => { if (typeof k0 !== "string") return null; const k = exp[k0] || k0, m = all.find((x) => x.key === k);
+      return m ? { k, m, label: OUTCOME_LABEL[k0] || OUTCOME_LABEL[k] || PCT_LABEL[k] || m.label, hib: m.hib } : null; }).filter(Boolean)]);
     // one chart: every row's value and percentile in that view
     const chart = (w, title, qual, sample, ds = DS, who = r.p) => {
       let groups = null;
@@ -5587,7 +5597,16 @@
         const pv = V(who);
         groups = secs.map(([title, rows]) => ({ title, rows: rows.map(([k, label, hib]) => { const x = fxVal(pv, k, r.p); if (x == null) return null; const a = arr(k); let pc = a.length >= 20 ? insertPct(a, x) : null; if (pc != null && !hib) pc = 100 - pc;
           return { k, label, v: x, value: fmtV(k, x), pct: pc == null ? null : Math.round(pc), lg: a.length ? fmtV(k, a[Math.floor(a.length / 2)]) : null, hib, m: { key: k, label, hib }, gloss: GLOSS[k] || "", tip: `${label}: ${fmtV(k, x)} · ${pc == null ? "n/a" : ordinal(Math.round(pc)) + " pctl"}` }; }).filter(Boolean) })).filter((g) => g.rows.length);
+        const carr = {}, cArr = (m) => carr[m.key] || (carr[m.key] = ref.map(([q, v]) => metricValue(m, v, null)).filter((z) => z != null).sort((a, b) => a - b));
+        for (const [title, items] of cardSecs) {
+          const rows = items.map(({ k, m, label, hib }) => { const x = metricValue(m, pv, null); if (x == null) return null; const a = cArr(m), fv = (z) => fmt(z, { ...m, unit: "" });
+            let pc = a.length >= 20 ? insertPct(a, x) : null; if (pc != null && !hib) pc = 100 - pc;
+            return { k, label, v: x, value: fv(x), pct: pc == null ? null : Math.round(pc), lg: a.length ? fv(a[Math.floor(a.length / 2)]) : null, hib, m: { key: k, label, hib }, gloss: GLOSS[{ xwd: "xwoba" }[k]] || GLOSS[k] || "", tip: `${label}: ${fmt(x, m)} · ${pc == null ? "n/a" : ordinal(Math.round(pc)) + " pctl"}${hib ? "" : " (lower is better)"}` }; }).filter(Boolean);
+          if (rows.length) groups.push({ title, rows });
+        }
         const hd = el("div", "fxchd"); hd.append(el("b", null, title), el("span", null, `${Math.round(pv.sample || 0)} PA · ${sample}`)); groups.hd = hd;
+        // and the xwOBA build-up for the split (Sean, the same ask: "at the bottom it also shows this table breakout of their xwoba for both splits")
+        groups.bu = xwBuildUp(who, pv, `xwOBA build-up · ${title}`);
       }));
       return groups;
     };
@@ -5600,7 +5619,7 @@
     const wit = r.witness ? ` · ${DATA.meta.season - 1}: ${r.flaw.f(r.prior)} (${r.witness === "for" ? "backs the move" : r.witness === "against" ? "the other way" : "in between"})` : "";
     head.append(nm, el("span", "fxsub", `${r.p.team || ""} · xwOBA ${fmtX(r.xw)} → ${fmtX(r.held)} if his ${r.flaw.lab} held at ${r.flaw.f(r.now)} (+${Math.round(r.gain)}) · credibility ${Math.round(100 * r.cred)}%${wit} · elite at ${r.elite.map((e) => e.lab).join(" and ")}`));
     const body = el("div", "pop-body phwinbody fxbody"), cols = el("div", "pctcols");
-    for (const [G, i] of [[G1, 0], [G2, 1]]) { const c = el("div", "fxcol"); c.append(G.hd, pctChart(G, i, false)); cols.append(c); }
+    for (const [G, i] of [[G1, 0], [G2, 1]]) { const c = el("div", "fxcol"); c.append(G.hd, pctChart(G, i, false)); if (G.bu) { const bx = el("div", "fxbuild"); bx.append(G.bu); c.append(bx); } cols.append(c); }
     body.append(cols);
     win.append(x, head, body);
     const ov = el("div", "phmodal fxmodal"); ov.append(win); document.body.append(ov);
@@ -7989,15 +8008,16 @@
   // Talent tab (Sean, 11 Oct 2026: "add it to the leaderboard and add a build tab for it"): talent xwOBA built up from the league's, one piece at
   // a time — each step swaps a league piece for his expected one and shows what it moves (in wOBA points), landing on his talent xwOBA, then the
   // next-season projection; under it, each piece beside what actually happened, which is the luck and noise the number leaves out
-  function renderTalentTab(p) {
-    const w = el("div", "xbtab"), v = V(p), t = v.tal, m = v.m;
-    if (!t) { w.append(el("p", "note", DS.multi ? "No xwOBA build-up for a span of seasons — pick one season." : "No xwOBA build-up for this view — it needs tracked batted balls (exit velocity, the directional model) and a qualified pool.")); return w; }
+  // the xwOBA build-up table on its own (16 Oct 2026: the Fixing-the-flaw popup draws it for each split too): League → the seven pieces → xwOBA
+  // (marked) → In his parks, on the view's V(p).tal; null without a talent build
+  function xwBuildUp(p, v, title) {
+    const t = v.tal, m = v.m; if (!t) return null;
     const L = t.L, sc = L.scale, wob = (c) => twRaw(c) * sc;
     const f3 = (x) => fmtX(x), pct1 = (x) => x.toFixed(1) + "%", pts = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x) * 1000), sg1 = (z) => (z > 0 ? "+" : z < 0 ? "−" : "") + Math.abs(z).toFixed(1);
     const lgK = (lgRatesH().k || 0) - 0.08 * (1 - TW.act);   // the league's blend: its K% and its xK% (XKH's −0.08)
     const cur = { xk: lgK, xbb: L.bb, hbp: L.hbp, xhf: L.hr.hrfb, fbs: L.fbs, xbab: L.xbabip, tph: L.tph };
     const vl = viewLabel("H");
-    const b = buildUp(`xwOBA build-up · ${DS.season}${DS.level && DS.level !== "MLB" ? " " + (DS.levelName || DS.level) : ""}`, `${vl && vl !== "full season" ? vl + " · " : ""}${v.pa} PA · ± in wOBA points, against the season's 300+ PA hitters`, "wOBA", f3, pts, 0.020);
+    const b = buildUp(title || `xwOBA build-up · ${DS.season}${DS.level && DS.level !== "MLB" ? " " + (DS.levelName || DS.level) : ""}`, `${vl && vl !== "full season" ? vl + " · " : ""}${v.pa} PA · ± in wOBA points, against the season's 300+ PA hitters`, "wOBA", f3, pts, 0.020);
     const R3 = (x) => Math.round(x * 1000) / 1000; let prev = R3(wob(cur));
     const step = (to) => { const c = R3(to), d = c - prev; prev = c; return d; };
     b.row("League", null, wob(cur), f3, null, "→", wob(cur), "the season's 300+ PA hitters' pieces, put together the same way — where the build-up starts (scaled to their real wOBA)");
@@ -8017,7 +8037,16 @@
     if (m.xwpk != null && t.pk) { const atXw = prev; ensureParks();
       b.row("In his parks", null, null, f3, null, R3(m.xwpk) - atXw, m.xwpk, `what the same skills read in his season's parks: ${parkPieces(t.pk)} — ${parkWhere(p, v)}; the stadium's whole effect on his actual wOBA is the Stadium row below`);
       prev = atXw; }
-    w.append(b.done());
+    return b.done();
+  }
+  function renderTalentTab(p) {
+    const w = el("div", "xbtab"), v = V(p), t = v.tal, m = v.m;
+    if (!t) { w.append(el("p", "note", DS.multi ? "No xwOBA build-up for a span of seasons — pick one season." : "No xwOBA build-up for this view — it needs tracked batted balls (exit velocity, the directional model) and a qualified pool.")); return w; }
+    const L = t.L, sc = L.scale, wob = (c) => twRaw(c) * sc;
+    const f3 = (x) => fmtX(x), pct1 = (x) => x.toFixed(1) + "%", pts = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x) * 1000);
+    const R3 = (x) => Math.round(x * 1000) / 1000; let prev = 0;
+    const step = (to) => { const c = R3(to), d = c - prev; prev = c; return d; };
+    w.append(xwBuildUp(p, v));
     // the projection is its own table (Sean, 16 Oct 2026: "make the projection piece a separate third table so it doesn't make the xwoba build
     // up table too long"): it starts from his xwOBA and steps to next season
     if (projOn() && !needsDays()) { ensureScript("hist/career-bb.js", sbxReady); if (aaaOn()) ensureScript("hist/aaa-tw.js", aaaReady); }

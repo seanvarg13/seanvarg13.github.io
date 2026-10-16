@@ -4096,6 +4096,20 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   2025 season…" until the file is in. 27 Sep 2026: last 30 days by credibility Goodman 62%, Schwarber 67%, Mayo 63%, Neto 68%; 2026 vs 2025 Blaze
   Alexander (K% 30.7 → 21.1, 83%), Varsho (26.6 → 18.7, 90%), Arenado (xHR/FB 6.6 → 13.9), Trout (K% 29.6 → 24.4, 91%).
 
+* **The flaw popup carries the card's sections and each split's xwOBA build-up; the pieces are the fits (Sean, 16 Oct 2026, Cagliano's popup:
+  "below that it also shows batted ball mix, batted ball quality, etc all of the stuff on the player card ... for both splits. And then it at the
+  bottom it also shows this table breakout of their xwoba for both splits", then "for the flaws once again only use the skills in the xwoba build
+  up, so instead of k% use xk% etc")**: `flawPop`'s `chart()` appends every `PCT_COLS_H` section (Results, Batted-Ball Quality, Swing Decisions,
+  Contact, Batted-Ball Distribution — `cardSecs`, rows resolved the card's way: the metric defs, `expKeys()`, `metricValue`, `OUTCOME_LABEL`)
+  under the xwOBA / flaw / elite sections, each split ranked among the same hitters as the rows above, and under each chart the split's xwOBA
+  build-up (`.fxbuild`) — **`xwBuildUp(p, v, title)`**, the build-up table factored out of `renderTalentTab` (League → the seven pieces → xwOBA
+  marked → In his parks on the view's `V(p).tal`; the tab calls it and keeps the projection and Expected vs actual tables). The mark's yellow
+  cell and word have popup rules at the end of `styles.css` (the card's are anchored on `#xboard` / `#modal`). **The strikeout and walk pieces
+  are xK% and xBB%** (`FX_PCS`'s fifth entry names the key on `tal`: `xkFit` / `xbbFit`), not the half-and-half the build blends: a piece's
+  effect is the fit's gap to the league's own fit (`lgv`: the league's K% − 0.08, `L.bb`) carried into the build's piece, and If it held moves
+  the build's piece by the fit's change (`c.own[k] + (now − was)`), so his season xwOBA stays his; the witness reads the fit too; the popup's
+  K% / BB% sections lead with xK% / xBB%. Goodman, last 30 days: xK% 27.9 → 20.6, +32.
+
 ---
 
 ## 10. The football site moved out
