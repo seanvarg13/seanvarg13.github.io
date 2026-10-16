@@ -5498,21 +5498,36 @@
                   ["Fly ball%", "fbs", (x) => Math.round(100 * x) + "%", "Fly ball%"], ["xBABIP", "xbab", fmtX, "xBABIP"], ["XB/hit", "tph", (x) => x.toFixed(2), "XB/hit"]];
   // the page's windows (Sean, 16 Oct 2026: "the past months or x days ... different players across different timelines"): last N days from the
   // last game day, or his last N PA; the window's minimum scales with it (75 PA for 30 days, ¾ of N for a last-N window)
-  const FX_WINS = [["14", "Last 14 days"], ["30", "Last 30 days"], ["45", "Last 45 days"], ["60", "Last 60 days"], ["90", "Last 90 days"], ["pa100", "Last 100 PA"], ["pa150", "Last 150 PA"]];
-  const fxSet = Object.assign({ win: "30" }, load("draft2027.flaws", {}));
+  const FX_WINS = [["14", "Last 14 days"], ["30", "Last 30 days"], ["45", "Last 45 days"], ["60", "Last 60 days"], ["90", "Last 90 days"], ["pa100", "Last 100 PA"], ["pa150", "Last 150 PA"], ["prev", "This season vs last"]];
+  const fxSet = Object.assign({ win: "30", sort: "cred" }, load("draft2027.flaws", {}));
+  // credibility (Sean, 16 Oct 2026: "see which ones are most credible first"): how much of the window's move is likely real — the piece's
+  // reliability at the window's PA, n / (n + k), k from how fast each settles (K% ~60 PA, BB% ~120, a fly-ball share ~110, the drivers'
+  // xBABIP ~220, xHR/FB ~250 — it rides on ~30 fly balls a hundred PA — extra bases per hit ~300); then last season as a witness: a prior
+  // season already past the midpoint of the move raises it halfway to certain, one on the far side of this season's value lowers it. The
+  // "credible gain" is the gain × that, the page's default order
+  const FX_K = { xk: 60, xbb: 120, xhf: 250, fbs: 110, xbab: 220, tph: 300 };
+  const fxPrevKey = () => `mlb-${DATA.meta.season - 1}`, fxPrevDS = () => histDataset(fxPrevKey());
   const fxWin = (id) => { const days = DATA.meta.days || [], last = days[days.length - 1];
     if (String(id).startsWith("pa")) { const n = +String(id).slice(2); return { w: { from: "", to: "", last: String(n) }, pa: Math.round(0.75 * n), label: `last ${n} PA` }; }
     const n = +id || 30, from = last ? addDays(last, -(n - 1)) : ""; return { w: { from: from && from > days[0] ? from : "", to: "", last: "" }, pa: Math.min(150, Math.max(40, Math.round(FX.pa * n / 30))), label: `last ${n} days` }; };
   const flawCache = new Map();
   function flawRows(winId = "30") {
-    const key = DS.key + ":" + daysReady() + ":" + winId; if (flawCache.has(key)) return flawCache.get(key);
+    const prevDS = fxPrevDS(), prevMode = winId === "prev";
+    const key = DS.key + ":" + daysReady() + ":" + winId + ":" + !!prevDS; if (flawCache.has(key)) return flawCache.get(key);
     const inWin = (w, fn) => withWindow(w, () => withSplit(NONE, fn));
-    const FW = fxWin(winId), win30 = FW.w, minPA = FW.pa;
+    // this season vs last (Sean, 16 Oct 2026: "compare this season vs last too"): the base is last season's full-season pieces on that season's
+    // league, the "window" this season's full season, players matched by id; last season's file is asked for by the page
+    if (prevMode && !prevDS) { const out = { rows: [], cand: 0, loading: true, label: "this season", minPA: FX.minPA }; return out; }
+    const FW = prevMode ? { w: NOWIN, pa: FX.minPA, label: `${DATA.meta.season} vs ${DATA.meta.season - 1}` } : fxWin(winId), win30 = FW.w, minPA = FW.pa;
+    const baseDS = prevMode ? prevDS : DS, curById = new Map(DATA.players.filter((q) => q.type === "H").map((q) => [q.id, q]));
     const season = new Map(); let L = null, lgK = 0;
-    inWin(NOWIN, () => {
-      for (const p of DATA.players) { if (p.type !== "H" || (p.pa || 0) < FX.minPA) continue; const t = V(p).tal; if (!t || !t.L) continue; season.set(p, t); L = L || t.L; }
+    withDataset(baseDS, () => inWin(NOWIN, () => {
+      for (const p of DS.players) { if (p.type !== "H" || (p.pa || 0) < FX.minPA) continue; if (prevMode && !curById.has(p.id)) continue; const t = V(p).tal; if (!t || !t.L) continue; season.set(p, t); L = L || t.L; }
       lgK = (lgRatesH().k || 0) - 0.08 * (1 - TW.act);
-    });
+    }));
+    // last season's pieces as the witness for the credibility (a window mode only; the prev mode's witness would be two seasons back)
+    const prior = new Map();
+    if (!prevMode && prevDS) withDataset(prevDS, () => inWin(NOWIN, () => { for (const [p] of season) { const q = DS.players.find((z) => z.type === "H" && z.id === p.id); if (!q || (q.pa || 0) < 100) continue; const t = V(q).tal; if (t) prior.set(p, t); } }));
     const rows = [], cand = new Map();
     if (L) {
       const wob = (c) => twRaw(c) * L.scale, lg = { xk: lgK, xbb: L.bb, hbp: L.hbp, xhf: L.hr.hrfb, fbs: L.fbs, xbab: L.xbabip, tph: L.tph }, base = wob(lg);
@@ -5523,17 +5538,21 @@
         if (ps[0].eff + ps[1].eff < FX.elite || !flaws.length) continue;
         cand.set(p, { t, ps, flaws, own: { xk: t.xk, xbb: t.xbb, hbp: t.hbp, xhf: t.xhf, fbs: t.fbs, xbab: t.xbab, tph: t.tph } });
       }
-      if (daysReady()) inWin(win30, () => {
+      if (daysReady() || prevMode) inWin(win30, () => {
         for (const [p, c] of cand) {
-          const v = V(p); if (!v || v.sample < minPA || !v.tal) continue; const xw = wob(c.own); let best = null;
+          const cp = prevMode ? curById.get(p.id) : p, v = cp && V(cp); if (!v || (prevMode ? (cp.pa || 0) : v.sample) < minPA || !v.tal) continue; const xw = wob(c.own); let best = null;
           for (const flaw of c.flaws) { const now = v.tal[flaw.k]; if (now == null) continue; const held = wob(Object.assign({}, c.own, { [flaw.k]: now })), gain = 1000 * (held - xw); if (!best || gain > best.gain) best = { flaw, now, held, gain }; }
           if (!best || best.gain < FX.gain) continue;
-          rows.push({ p, flaw: best.flaw, elite: c.ps.slice(0, 2), strengths: c.ps.slice(0, 2).map((z) => z.word).join(", "), was: best.flaw.v, now: best.now, xw, held: best.held, gain: best.gain, pa: v.sample });
+          const n = prevMode ? (cp.pa || 0) : v.sample; let cred = n / (n + FX_K[best.flaw.k]); const pr = prior.get(p), pv = pr && pr[best.flaw.k];
+          let witness = null;
+          if (pv != null) { const mid = (best.flaw.v + best.now) / 2, up = best.now > best.flaw.v; const past = up ? pv >= mid : pv <= mid, against = up ? pv < best.flaw.v : pv > best.flaw.v; if (past) { cred = 1 - (1 - cred) * 0.5; witness = "for"; } else if (against) { cred *= 0.7; witness = "against"; } else witness = "between"; }
+          rows.push({ p: cp, base: p, flaw: best.flaw, elite: c.ps.slice(0, 2), strengths: c.ps.slice(0, 2).map((z) => z.word).join(", "), was: best.flaw.v, now: best.now, xw, held: best.held, gain: best.gain, pa: n, cred, cgain: best.gain * cred, prior: pv, witness });
         }
       });
       rows.sort((a, b) => b.gain - a.gain);
+      rows.forEach((r, i) => { r.rkGain = i + 1; });
     }
-    const out = { rows, cand: cand.size, win30, label: FW.label, minPA };
+    const out = { rows, cand: cand.size, win30, label: FW.label, minPA, prevMode, baseDS };
     flawCache.set(key, out); return out;
   }
   const flawNote = (R) => `Each piece of his xwOBA build-up against the league in wOBA points: elite = his two best are worth +${FX.elite} together, the flaw = his two worst at ${FX.flaw} or under. ${R ? R.label[0].toUpperCase() + R.label.slice(1) : "Last 30 days"} = that piece over that window (${R ? R.minPA : FX.pa}+ PA); If it held = his season xwOBA with only that piece at the window's value, ranked by the gain (${FX.gain}+ points).`;
@@ -5555,28 +5574,31 @@
     switch (k) { case "@xbbFit": return t.xbbFit; case "@xhf": return t.xhf; case "@pfb": return t.I.pfb; case "@fbs100": return 100 * t.fbs; case "@gbp": return t.I.gbp; case "@ldp": return t.I.ldp; case "@tph": return t.tph; } return null; };
   function flawPop(r, winId) {
     document.querySelectorAll(".phmodal").forEach((x) => x.remove());
-    const FW = fxWin(winId), inWin = (w, fn) => withWindow(w, () => withSplit(NONE, fn));
+    const prevMode = winId === "prev", FW = prevMode ? { w: NOWIN, pa: 300, label: String(DATA.meta.season) } : fxWin(winId), inWin = (w, fn) => withWindow(w, () => withSplit(NONE, fn));
     const pcs = FX_PCS.map(([lab, k]) => ({ lab, k }));
     const secs = [["xwOBA", [["xwd", "xwOBA", true]]], [r.flaw.lab + " — the flaw", FX_IN[r.flaw.k]], ...r.elite.map((e) => [e.lab + " — elite", FX_IN[e.k]])];
     const fmtV = (k, x) => { const d = FX_FMT[k] ?? 1; return d === 3 ? fmtX(x) : x.toFixed(d); };
     // one chart: every row's value and percentile in that view
-    const chart = (w, title, qual, sample) => {
+    const chart = (w, title, qual, sample, ds = DS, who = r.p) => {
       let groups = null;
-      inWin(w, () => {
+      withDataset(ds, () => inWin(w, () => {
         const ref = DATA.players.filter((q) => q.type === "H").map((q) => [q, V(q)]).filter(([q, v]) => v && qual(q, v));
         const sorted = {}; const arr = (k) => sorted[k] || (sorted[k] = ref.map(([q, v]) => fxVal(v, k, q)).filter((z) => z != null).sort((a, b) => a - b));
-        const pv = V(r.p);
+        const pv = V(who);
         groups = secs.map(([title, rows]) => ({ title, rows: rows.map(([k, label, hib]) => { const x = fxVal(pv, k, r.p); if (x == null) return null; const a = arr(k); let pc = a.length >= 20 ? insertPct(a, x) : null; if (pc != null && !hib) pc = 100 - pc;
           return { k, label, v: x, value: fmtV(k, x), pct: pc == null ? null : Math.round(pc), lg: a.length ? fmtV(k, a[Math.floor(a.length / 2)]) : null, hib, m: { key: k, label, hib }, gloss: GLOSS[k] || "", tip: `${label}: ${fmtV(k, x)} · ${pc == null ? "n/a" : ordinal(Math.round(pc)) + " pctl"}` }; }).filter(Boolean) })).filter((g) => g.rows.length);
         const hd = el("div", "fxchd"); hd.append(el("b", null, title), el("span", null, `${Math.round(pv.sample || 0)} PA · ${sample}`)); groups.hd = hd;
-      });
+      }));
       return groups;
     };
-    const G1 = chart(NOWIN, "Full season", (q) => (q.pa || 0) >= 300, "percentiles among the 300+ PA hitters");
-    const G2 = chart(FW.w, FW.label[0].toUpperCase() + FW.label.slice(1), (q, v) => v.sample >= FW.pa, `among hitters with ${FW.pa}+ PA in the window`);
+    const G1 = prevMode ? chart(NOWIN, String(DATA.meta.season - 1), (q) => (q.pa || 0) >= 300, `percentiles among ${DATA.meta.season - 1}'s 300+ PA hitters`, fxPrevDS(), r.base)
+                        : chart(NOWIN, "Full season", (q) => (q.pa || 0) >= 300, "percentiles among the 300+ PA hitters");
+    const G2 = prevMode ? chart(NOWIN, String(DATA.meta.season), (q) => (q.pa || 0) >= 300, "percentiles among the 300+ PA hitters")
+                        : chart(FW.w, FW.label[0].toUpperCase() + FW.label.slice(1), (q, v) => v.sample >= FW.pa, `among hitters with ${FW.pa}+ PA in the window`);
     const win = el("div", "phwin pop fxwin"), x = el("button", "pop-close", "×"); x.type = "button"; x.setAttribute("aria-label", "Close");
     const head = el("div", "fxhead"); const nm = el("button", "linkbtn fxname", r.p.name); nm.type = "button"; nm.addEventListener("click", () => openPlayer(r.p, { tab: "talent" }));
-    head.append(nm, el("span", "fxsub", `${r.p.team || ""} · xwOBA ${fmtX(r.xw)} → ${fmtX(r.held)} if his ${r.flaw.lab} held at ${r.flaw.f(r.now)} (+${Math.round(r.gain)}) · elite at ${r.elite.map((e) => e.lab).join(" and ")}`));
+    const wit = r.witness ? ` · ${DATA.meta.season - 1}: ${r.flaw.f(r.prior)} (${r.witness === "for" ? "backs the move" : r.witness === "against" ? "the other way" : "in between"})` : "";
+    head.append(nm, el("span", "fxsub", `${r.p.team || ""} · xwOBA ${fmtX(r.xw)} → ${fmtX(r.held)} if his ${r.flaw.lab} held at ${r.flaw.f(r.now)} (+${Math.round(r.gain)}) · credibility ${Math.round(100 * r.cred)}%${wit} · elite at ${r.elite.map((e) => e.lab).join(" and ")}`));
     const body = el("div", "pop-body phwinbody fxbody"), cols = el("div", "pctcols");
     for (const [G, i] of [[G1, 0], [G2, 1]]) { const c = el("div", "fxcol"); c.append(G.hd, pctChart(G, i, false)); cols.append(c); }
     body.append(cols);
@@ -5593,30 +5615,36 @@
     const save = () => { try { localStorage.setItem("draft2027.flaws", JSON.stringify(fxSet)); } catch {} render(); };
     const wlab = (FX_WINS.find((w) => w[0] === fxSet.win) || FX_WINS[1])[1];
     bar.append(pillSelect(wlab, FX_WINS, fxSet.win, (v) => { fxSet.win = v; save(); }, "Window"));
-    if (!daysReady()) { if (!state.daysLoading && !state.daysFailed) ensureDays(); page.append(bar, el("p", "note", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); return; }
-    const R = flawRows(fxSet.win), { rows, cand } = R, W = wlab.replace("Last ", "Last ");
-    bar.append(el("span", "pbcount", `${rows.length} hitters · ${cand} elite with a flaw · ${DATA.meta.season} · ${R.label} vs the season`));
+    bar.append(pillSelect(fxSet.sort === "gain" ? "Biggest gain" : "Most credible", [["cred", "Most credible"], ["gain", "Biggest gain"]], fxSet.sort, (v) => { fxSet.sort = v; save(); }, "Order"));
+    const prevMode = fxSet.win === "prev", Y = DATA.meta.season, Y0 = Y - 1;
+    ensureHist(fxPrevKey());   // last season: the base in the vs-last mode, the credibility's witness otherwise
+    if (!prevMode && !daysReady()) { if (!state.daysLoading && !state.daysFailed) ensureDays(); page.append(bar, el("p", "note", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); return; }
+    const R = flawRows(fxSet.win), { cand } = R, rows = R.rows.slice().sort((a, b) => fxSet.sort === "gain" ? b.gain - a.gain : b.cgain - a.cgain), W = prevMode ? String(Y) : wlab;
+    if (R.loading) { page.append(bar, el("p", "note", `Loading the ${Y0} season…`)); return; }
+    bar.append(el("span", "pbcount", prevMode ? `${rows.length} hitters · ${cand} elite with a flaw in ${Y0} · ${Y} vs ${Y0}` : `${rows.length} hitters · ${cand} elite with a flaw · ${Y} · ${R.label} vs the season`));
     page.append(bar);
-    const title = el("div", "fxtitle"); title.append(el("h2", null, "Fixing the flaw"), el("span", null, `elite at most of it, one piece holding him back — that piece over the ${R.label} vs the season · tap a name for the bars`)); page.append(title);
+    const title = el("div", "fxtitle"); title.append(el("h2", null, "Fixing the flaw"), el("span", null, prevMode ? `elite at most of ${Y0}, one piece holding him back — that piece in ${Y} vs ${Y0} · tap a name for the bars` : `elite at most of it, one piece holding him back — that piece over the ${R.label} vs the season · tap a name for the bars`)); page.append(title);
     const f3 = (x) => (x == null ? "–" : fmtX(x)), refH = [];
-    withWindow(NOWIN, () => withSplit(NONE, () => { for (const p of DATA.players) if (p.type === "H" && (p.pa || 0) >= 300) { const v = V(p).m.xwd; if (v != null) refH.push(v); } })); refH.sort((a, b) => a - b);
+    withDataset(R.baseDS || DS, () => withWindow(NOWIN, () => withSplit(NONE, () => { for (const p of DS.players) if (p.type === "H" && (p.pa || 0) >= 300) { const v = V(p).m.xwd; if (v != null) refH.push(v); } }))); refH.sort((a, b) => a - b);
+    const S0 = prevMode ? String(Y0) : "Season", credTip = `how much of the move is likely real: the piece's reliability at the window's PA, then last season as a witness (a prior season already past the midpoint of the move raises it, one on the far side lowers it)`;
     const heads = PH
-      ? [["Rk", "f1"], ["Player", "l f3"], ["Flaw"], ["xwOBA"], ["If held"], ["Δ"]]
-      : [["Rk", "f1"], ["Player", "l f3"], ["Tm"], ["Elite at"], ["Piece"], ["Season"], [W, "", `the flaw piece over the ${R.label}`], ["PA", "", `plate appearances in the ${R.label}`], ["Season"], ["If it held"], ["Δ", "", "wOBA points gained if the flaw piece held at the window's value"]];
-    const groups = PH ? [["", 2], ["The flaw", 1], ["xwOBA", 3]] : [["", 4], ["The flaw", 4], ["xwOBA", 3]];   // the board's pinned header reserves the over row's height, so a phone has one too
+      ? [["Rk", "f1"], ["Player", "l f3"], ["Flaw"], ["Cred", "", credTip], ["xwOBA"], ["If held"], ["Δ"]]
+      : [["Rk", "f1"], ["Player", "l f3"], ["Tm"], ["Elite at"], ["Piece"], [S0], [W, "", prevMode ? `the flaw piece this season` : `the flaw piece over the ${R.label}`], ["PA", "", prevMode ? "this season's plate appearances" : `plate appearances in the ${R.label}`], ["Credible", "", credTip], [S0], ["If it held"], ["Δ", "", "wOBA points gained if the flaw piece held at the window's value"]];
+    const groups = PH ? [["", 2], ["The flaw", 2], ["xwOBA", 3]] : [["", 4], ["The flaw", 5], ["xwOBA", 3]];   // the board's pinned header reserves the over row's height, so a phone has one too
     const { t, tb, fin, wrap } = brTable(groups, heads, "pbt flawt");
     requestAnimationFrame(() => { const rk = t.querySelector("tbody td.f1"), ov = t.querySelector("tr.over"); if (rk) t.style.setProperty("--sbw1", rk.offsetWidth + "px"); if (ov) t.style.setProperty("--overh", ov.offsetHeight + "px"); });   // Player freezes right after Rk
     rows.forEach((r, i) => {
       const tr = el("tr"), who = el("td", "l nm f3"), b = el("button", "linkbtn pbname", r.p.name); b.type = "button"; b.addEventListener("click", () => flawPop(r, fxSet.win)); who.append(b);
       const held = heatTd(el("td", "c", f3(r.held)), refH.length ? insertPct(refH, r.held) : null), dl = el("td", "c up", "+" + Math.round(r.gain)); dl.style.color = "var(--stripe-line, #c8102e)"; dl.style.fontWeight = "700";
+      const cred = heatTd(el("td", "c", Math.round(100 * r.cred) + "%"), Math.round(100 * r.cred)); cred.title = r.witness ? `${Y0}: ${r.flaw.f(r.prior)} — ${r.witness === "for" ? "backs the move" : r.witness === "against" ? "the other way" : "in between"}` : prevMode ? "this season's PA against the piece's reliability" : `no ${Y0} line`;
       tr.append(el("td", "rk f1", String(i + 1)), who);
-      if (PH) tr.append(el("td", "c", `${r.flaw.lab} ${r.flaw.f(r.was)} → ${r.flaw.f(r.now)}`), el("td", "c", f3(r.xw)), held, dl);
-      else tr.append(el("td", "c", r.p.team || ""), el("td", "c", r.strengths), el("td", "c", r.flaw.lab), el("td", "c", r.flaw.f(r.was)), el("td", "c", r.flaw.f(r.now)), el("td", "c", String(Math.round(r.pa))), el("td", "c", f3(r.xw)), held, dl);
+      if (PH) tr.append(el("td", "c", `${r.flaw.lab} ${r.flaw.f(r.was)} → ${r.flaw.f(r.now)}`), cred, el("td", "c", f3(r.xw)), held, dl);
+      else tr.append(el("td", "c", r.p.team || ""), el("td", "c", r.strengths), el("td", "c", r.flaw.lab), el("td", "c", r.flaw.f(r.was)), el("td", "c", r.flaw.f(r.now)), el("td", "c", String(Math.round(r.pa))), cred, el("td", "c", f3(r.xw)), held, dl);
       tb.append(fin(tr));
     });
     if (!rows.length) page.append(el("p", "note", "Nobody with an elite base and a flaw that's moved in the window yet."));
     else { wrap.classList.add("pbscroll"); page.append(wrap); }
-    page.append(el("p", "note", flawNote(R)));
+    page.append(el("p", "note", flawNote(R) + (prevMode ? ` Here the base is ${Y0}'s full season (its own league) and the move is ${Y}'s full season.` : "") + ` Credible = the piece's reliability at the window's PA, with last season as a witness; the default order is the gain × that.`));
   }
   function renderHome() {
     const box = $("hub"); box.innerHTML = ""; box.classList.add("home");
