@@ -4027,6 +4027,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   it is mostly the talent-HR − actual-HR gap (r −.52), a power residual — yet it carries forecast value (league in its place: next-season r
   .551 → .536; actual HR instead of xHR .537; a skills fit .544); half model / half his actual bases per hit is the one version that measures
   better (.557 / projection .562, RMSE 30.1 → 29.8), second-decimal. Not shipped; offered.
+* **The projection is its own table on the xwOBA tab (Sean, 16 Oct 2026, Wood's build-up on his phone: "Can you make the projection piece a
+  separate third table so it doesn't make the xwoba build up table too long")**: the xwOBA build-up ends at xwOBA (and In his parks); a second
+  `buildUp` in `renderTalentTab`, **Next season · 2027**, starts from an "xwOBA · 2026" row and carries the prior-season rows, the Triple-A /
+  rehab rows, Regression, Age and the Next season band (the single-season fallback band too), between the build-up and Expected vs actual. Drawn
+  only when there is a projection (`hasProj`: a regular MLB full season, no window or split).
 
 ---
 
