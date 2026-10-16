@@ -119,7 +119,7 @@
       }
     } catch (e) { sync.err = e.message || String(e); syncSave(); }
     finally { syncBusy = false; }
-    try { if (state.mode === "appearance") render(); } catch {}   // (state is declared further down)
+    try { if (state.mode === "settings") render(); } catch {}   // (state is declared further down)
   }
   // a pull when the site opens and whenever it comes back to the front; a push a few seconds after anything is saved
   if (sync.token) {
@@ -582,6 +582,7 @@
   if (prefs.v !== 2) { delete prefs.min; prefs.v = 2; }     // hitter minimum switched from AB to PA
   const state = {
     mode: "rankings",
+    setTab: "glossary",                        // the Settings page's open tab (#settings/<tab>; 16 Oct 2026)
     posAlso: Array.isArray(prefs.posAlso) ? prefs.posAlso : [],
     ptab: prefs.ptab || "",
     rollPA: prefs.rollPA >= 25 && prefs.rollPA <= 300 && prefs.rollPA % 25 === 0 ? prefs.rollPA : 100,
@@ -6031,9 +6032,9 @@
     swhf: "Whiff+: the whiff half of Stuff+ — how often swings at his pitches should miss, on their traits alone, turned into runs through uK% (100 = average).",
     sbb: "Batted-ball+: the contact half of Stuff+ — how often his pitches, put in play, should become ground balls and popups rather than air balls, priced at the league's value for each (100 = average).",
   };
-  function renderGlossary() {
+  function renderGlossary(g0, noCredit) {
     const box = el("div", "glossary");
-    const g = groupFor(state.pos), pit = isPitcherGroup(g);
+    const g = g0 || groupFor(state.pos), pit = isPitcherGroup(g);
     const groups = pit ? CARD_P : CARD, SUBS = pit ? SUB_P : SUB, seen = new Set();
     for (const grp of groups) for (const m of grp.metrics) for (const x of [m, ...(SUBS[m.key] || [])]) {
       if (seen.has(x.key) || !GLOSS[x.key]) continue;
@@ -6043,7 +6044,7 @@
       box.append(d);
     }
     // the data and credit lines that used to sit under every page and the home page (minimal pass 5, Sean, 30 Sep 2026)
-    { const m = DATA.meta, f = el("div", "gcredit");
+    if (!noCredit) { const m = DATA.meta, f = el("div", "gcredit");
       f.append(el("p", "note", `Statcast ${m.season} through ${m.through}, built ${m.built} UTC. xwOBA, xBA and xSLG are the directional model's; uK%, uBB% and uERA are what a pitcher's process has historically been worth.`),
                el("p", "note", CREDIT));
       box.append(f); }
@@ -6062,7 +6063,7 @@
         else a.removeAttribute("aria-current");
       }
     }
-    document.title = { pitches: "Sean's Site · Stuff+", draft: "Sean's Site · Draft board", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", appearance: "Sean's Site · Appearance", fantasy: "Sean's Site · Fantasy" }[state.mode] || "Sean's Site";
+    document.title = { pitches: "Sean's Site · Stuff+", draft: "Sean's Site · Draft board", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", settings: "Sean's Site · Settings", fantasy: "Sean's Site · Fantasy" }[state.mode] || "Sean's Site";
     const m = DATA.meta;
     const thr = new Date(m.through + "T12:00:00"); $("stamp").innerHTML = `through <b>${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</b>`; $("stamp").title = `${m.season} Statcast through ${m.through} (built ${m.built})`;
     const notes = $("notes"); notes.innerHTML = "";
@@ -6075,13 +6076,8 @@
     if (["leaderboard", "trending"].includes(state.mode)) notes.append(el("p", "note lbnote", state.mode === "leaderboard"
       ? `Everyone over the minimum, a page at a time (the page numbers and Per page are under the table). Each number is coloured by its percentile among the season's qualifiers (hitters with ${REF_PA}+ PA, pitchers ${REF_PA}+ batters faced); click a column name to sort, click a name for his card.`
       : `Who's hot over the span set in Filters ▸ Dates, on one page; each number coloured by its percentile among the season's qualifiers on their numbers in the same span. Click a name for his card over that span.`));
-    const keyTxt = l1, mm = $("moremenu"); mm.innerHTML = "";
-    const li = (n) => { const x = el("li"); x.append(n); mm.append(x); };
-    const app = el("a", null, "Appearance"); app.href = "#appearance"; if (state.mode === "appearance") app.setAttribute("aria-current", "page"); li(app);
-    if (onePage()) { const tf = el("button", "linkbtn", "Table format"); tf.type = "button"; tf.addEventListener("click", () => { parkControls(); state.panelTab = "table"; openPanel("table"); }); li(tf); }   // off the Leaderboard's row (Sean, 3 Oct 2026)
-    const btns = { append: (...ns) => ns.forEach((n) => { if (!n.classList.contains("nsep")) li(n); }) };
-    const link = (label, build) => { const b = el("button", "linkbtn", label); b.type = "button"; b.addEventListener("click", () => { state.textModal = { title: label, build }; render(); }); return b; };
-    btns.append(link("Colour key", () => { const b = el("div", "prose"); b.append(keyTxt); return b; }));
+    // the More menu is gone (Sean, 16 Oct 2026: "Make the three dots thing at the end one button ... call it settings"): the colour key and
+    // the how-to prose are kept here for the Settings page (renderSettings), every page's blurb whatever page is open
     const prose = [];
     prose.push(Object.assign(el("div"), { innerHTML: `<b>Eligibility</b> — a hitter is listed at every position where he played ${ESPN.posGames}+ games this season, counting MLB and minor-league games together (ESPN's rule for call-ups), OF combined, DH counts; pitchers are SP with ${ESPN.spIP}+ IP as a starter and RP with ${ESPN.rpIP}+ IP in relief. Add anything ESPN gives him that the games don't from his card. <b>Pools</b> — every hitter percentile is measured against hitters with <b>${REF_PA}+ PA</b> on the season, any position; every pitcher percentile against pitchers with <b>${REF_PA}+ batters faced</b>, starters and relievers together. That population never changes — a date range or split only changes the numbers being compared — and the <b>Min PA / Min IP</b> boxes only set who is listed: a player under the bar is placed against that same population rather than reshaping it.` }));
     prose.push(Object.assign(el("div"), { innerHTML: `<b>xwOBA</b> — the directional model, and only that: every ball in play scored on its exit velocity, launch angle, spray and pull angle and the batter's sprint speed, so where he hit the ball counts too, with strikeouts, walks and hit-by-pitches counting as themselves. It is summed from the same day-by-day rows, so windows and splits follow it, re-anchored each season so the league's average is its real wOBA, and blank in the minors, which have no xwOBA model (wOBA heads the lists there). <b>xBA</b> and <b>xSLG</b> are the same recipe's — a past MLB season not yet rescored for them shows Statcast's until it is. <b>Batted-ball definitions</b> follow Savant's leaderboards: BBE is every ball in play, Avg EV / 90th% / max EV skip bunts, Barrel%, Hard-Hit% and Sweet-Spot% are per ball in play. Seasons before 2020 have a few percent of untracked balls that Savant's public feed fills with placeholder values, so an Avg EV there can sit a tenth or two off the leaderboard.` }));
@@ -6090,15 +6086,11 @@
     prose.push(Object.assign(el("div"), { innerHTML: `<b>Hitters</b> rank by ${m.scoreNote.H}; the colour is its percentile in the pool. <b>Skills blend</b> (in the Sort menu and on each card) is the ${m.scoreNote.blend}. <b>Pitcher score</b> — ${m.scoreNote.P}.` }));
     prose.push(Object.assign(el("div"), { innerHTML: `<b>Position for 2027</b> — on a pitcher's card, switch SP / RP to move him to the other list and pool (a reliever expected to start next year, say). It's remembered in this browser and shows on his row as "SP (was RP)".` }));
     prose.push(Object.assign(el("div"), { innerHTML: `Air% and Pull Air% use Baseball Savant's batted-ball direction; everything else is computed from pitch-level Statcast. AB and IP are official MLB totals. Built ${m.built}.` }));
-    if (state.mode === "rankings") prose.push(Object.assign(el("div"), { innerHTML: `<b>Rankings</b> — the model's order until you touch a tab (sort by any column, or pick a sort up top), then your own order, one list per tab, plus tiers that are separate from the order: a tier holds whoever you put in it and lists them by rank, so tier 1 can be ranks 1, 2, 3, 5 while rank 4 sits at the top of <b>Not tiered</b>. <b>Tiers / List</b> switches between the tiered view and the raw order. Press <b>Edit rankings</b> to change anything: tick players (click, Cmd/Ctrl-click, Shift-click for a range), then <b>Move…</b> puts them in a tier (or a new one) and <b>Untier</b> sends them back to Not tiered. The rank box, ▲ ▼ and dragging change the order; dragging into another tier's section also moves him there. <b>Add tier</b> adds an empty tier at the bottom; with a player ticked it becomes <b>+ Tier below</b> — a boundary right under him, splitting his tier (or cutting a tier off the top of Not tiered). <b>+ tier above</b> on any tier header slots an empty tier in there. ✎ gives a tier a nickname; × removes it. Outside edit mode, clicking a player opens his card. Players you haven't touched follow the big board beneath the ones you have; everyone under the Min PA / IP box is listed after them (most playing time first, PA in amber) so nobody is missing but small samples never push a qualifier around. The bar at the top says which list you're editing: pick a saved list from the menu to open it, <b>Save</b> writes your changes back to it, <b>Save as…</b> keeps a copy under a new name, and <b>New list</b> closes it and starts fresh from the model's order. Rename and Delete act on the open list; Export / Import move lists between browsers as text. The Draft page can draft from your working rankings or any saved set (Draft from).` }));
-    if (state.mode === "leaderboard") prose.push(Object.assign(el("div"), { innerHTML: `<b>Leaderboard</b> — every hitter or pitcher over the Min PA / IP box, for any season and level you pick (MLB from 2015, the minors from 2021), with the stats you choose (<b>Columns…</b>). The vs-L / R and home / away toggles redraw every number and percentile from those plate appearances only (the comparison group stays the season's qualifiers on their numbers in the same split); ERA needs full games, so it's blank in a handedness split. Each cell shows the number, coloured by where it ranks among the season's qualifiers; click a heading to sort, click it again to flip. Dates and Last-N work here too, and the position tabs narrow the list.` }));
-    if (state.mode === "trending") prose.push(Object.assign(el("div"), { innerHTML: `<b>Trending</b> — who's hot right now. The position tabs use the same eligibility as everywhere else (${ESPN.posGames}+ games at a position this season, plus anything you've added). Hitters are ordered by ${HEAD.label} over each player's last N plate appearances (or the last N days); pitchers by the average of their Whiff% and Strike% percentiles over their last N innings (or days), with K%, BB%, ERA, SIERA and GB% for that span alongside. Full-season minimums don't apply here — <b>at least</b> sets how much playing time a player needs inside the span to be listed. The chips show the actual number, coloured by where it ranks among the season's qualifiers on their numbers in the same span. Click a player for his card over that span.` }));
-    if (state.mode === "draft") prose.push(Object.assign(el("div"), { innerHTML: `<b>Draft mode</b> — <b>Draft from</b> picks the order: the big board, your working rankings, or any set you saved on the Rankings page (tiers included). Drafted players are saved in this browser, so you can close the tab and come back mid-draft. “Show drafted” keeps them on the board, dimmed.` }));
-    btns.append(el("span", "nsep", "·"), link("Stat glossary", renderGlossary), el("span", "nsep", "·"), link("How this page works", () => { const b = el("div", "prose"); b.append(...prose); return b; }),
-      el("span", "nsep", "·"), renderViewSwitch());
-    // the data's date lives here now, not in the desktop header (Sean, 30 Sep 2026, minimal pass 4)
-    { const x = el("li", "morestamp"); const thr = new Date(m.through + "T12:00:00");
-      x.textContent = `Games through ${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`; x.title = `${m.season} Statcast through ${m.through} (built ${m.built})`; mm.append(x); }
+    prose.push(Object.assign(el("div"), { innerHTML: `<b>Rankings</b> — the model's order until you touch a tab (sort by any column, or pick a sort up top), then your own order, one list per tab, plus tiers that are separate from the order: a tier holds whoever you put in it and lists them by rank, so tier 1 can be ranks 1, 2, 3, 5 while rank 4 sits at the top of <b>Not tiered</b>. <b>Tiers / List</b> switches between the tiered view and the raw order. Press <b>Edit rankings</b> to change anything: tick players (click, Cmd/Ctrl-click, Shift-click for a range), then <b>Move…</b> puts them in a tier (or a new one) and <b>Untier</b> sends them back to Not tiered. The rank box, ▲ ▼ and dragging change the order; dragging into another tier's section also moves him there. <b>Add tier</b> adds an empty tier at the bottom; with a player ticked it becomes <b>+ Tier below</b> — a boundary right under him, splitting his tier (or cutting a tier off the top of Not tiered). <b>+ tier above</b> on any tier header slots an empty tier in there. ✎ gives a tier a nickname; × removes it. Outside edit mode, clicking a player opens his card. Players you haven't touched follow the big board beneath the ones you have; everyone under the Min PA / IP box is listed after them (most playing time first, PA in amber) so nobody is missing but small samples never push a qualifier around. The bar at the top says which list you're editing: pick a saved list from the menu to open it, <b>Save</b> writes your changes back to it, <b>Save as…</b> keeps a copy under a new name, and <b>New list</b> closes it and starts fresh from the model's order. Rename and Delete act on the open list; Export / Import move lists between browsers as text. The Draft page can draft from your working rankings or any saved set (Draft from).` }));
+    prose.push(Object.assign(el("div"), { innerHTML: `<b>Leaderboard</b> — every hitter or pitcher over the Min PA / IP box, for any season and level you pick (MLB from 2015, the minors from 2021), with the stats you choose (<b>Columns…</b>). The vs-L / R and home / away toggles redraw every number and percentile from those plate appearances only (the comparison group stays the season's qualifiers on their numbers in the same split); ERA needs full games, so it's blank in a handedness split. Each cell shows the number, coloured by where it ranks among the season's qualifiers; click a heading to sort, click it again to flip. Dates and Last-N work here too, and the position tabs narrow the list.` }));
+    prose.push(Object.assign(el("div"), { innerHTML: `<b>Trending</b> — who's hot right now. The position tabs use the same eligibility as everywhere else (${ESPN.posGames}+ games at a position this season, plus anything you've added). Hitters are ordered by ${HEAD.label} over each player's last N plate appearances (or the last N days); pitchers by the average of their Whiff% and Strike% percentiles over their last N innings (or days), with K%, BB%, ERA, SIERA and GB% for that span alongside. Full-season minimums don't apply here — <b>at least</b> sets how much playing time a player needs inside the span to be listed. The chips show the actual number, coloured by where it ranks among the season's qualifiers on their numbers in the same span. Click a player for his card over that span.` }));
+    prose.push(Object.assign(el("div"), { innerHTML: `<b>Draft mode</b> — <b>Draft from</b> picks the order: the big board, your working rankings, or any set you saved on the Rankings page (tiers included). Drafted players are saved in this browser, so you can close the tab and come back mid-draft. “Show drafted” keeps them on the board, dimmed.` }));
+    chromeBits = { key: l1, prose };
   }
 
   // the comparison's column heads stick under the card's pinned plate, so they need its height
@@ -6222,7 +6214,7 @@
   }
   function renderNow() {
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
-    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws", other = pitches || player || compare || elig || hub || appear || fant;
+    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws", other = pitches || player || compare || elig || hub || appear || fant;
     if (xPop && !POP_MODES.includes(state.mode)) xPop = false;   // another page: the popup goes with the list it came from
     $("xboard").hidden = !player && !xPop; $("xboard").classList.toggle("xpop", xPop); document.body.classList.toggle("xpopon", xPop); xPopBg().hidden = !xPop; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
@@ -6234,7 +6226,7 @@
     renderChrome();
     if (state.textModal) { renderTextModal(); } else if (other) { $("modal").hidden = true; lockPage(false); parkControls(); $("modal-body").innerHTML = ""; }
     if (hub) { $("hub").classList.toggle("home", home); renderHome(); renderModal(); return; }
-    if (appear) { renderAppearance(); return; }
+    if (appear) { renderSettings(); return; }
     if (fant) { renderFantasy(); renderModal(); return; }
     if (player) {                                        // his page is a card of its own (showPageCard); a settings panel takes its place, over the pattern
       renderExplore();
@@ -7041,8 +7033,8 @@
   // no background pattern any more (Sean, 30 Sep 2026: "get rid of the background swirls"): the pages sit on a plain pale
   // ground of the scheme's colour (styles.css, :root.nopattern)
   document.documentElement.classList.add("nopattern");
-  function renderAppearance() {
-    const T = window.DRAFT_THEMES, box = $("pboard"); box.innerHTML = "";
+  function renderAppearance(box) {
+    const T = window.DRAFT_THEMES; box.innerHTML = "";
     if (!T) { box.append(el("p", "xempty", "themes.js didn't load.")); return; }
     const cur = T.current();
     const head = el("div", "ahd"); head.append(el("h2", "ahead", "Appearance"), el("p", "hublead", "Colours, type and layout. Each device follows the site default until you pick something on it; the phone app and Safari count as separate devices."));
@@ -7066,21 +7058,21 @@
       const dots = el("div", "spv-dots");
       for (const c of [L.rule, L["accent-2"], L.btn || L["accent-2"], L.pop || L["accent-2-text"]]) { const i = el("i"); i.style.background = c; dots.append(i); }
       b.append(bar, dots, el("span", "sname", sc.name));
-      b.addEventListener("click", () => { T.set({ scheme: id }); renderAppearance(); });
+      b.addEventListener("click", () => { T.set({ scheme: id }); renderSettings(); });
       sg.append(b);
     }
     row("Colour scheme", "The site's colours. The percentile colours (blue cold, red hot) are the same in every scheme.", sg);
-    row("Light or dark", null, segOf("Light or dark", [["system", "Match device"], ["light", "Light"], ["dark", "Dark"]], cur.theme, (v) => { T.set({ theme: v }); renderAppearance(); }));
+    row("Light or dark", null, segOf("Light or dark", [["system", "Match device"], ["light", "Light"], ["dark", "Dark"]], cur.theme, (v) => { T.set({ theme: v }); renderSettings(); }));
     row("Layout", "Auto gives a phone the compact layout; Desktop on a phone shows the full layout zoomed out.",
-      segOf("Layout", [["auto", "Auto"], ["mobile", "Mobile"], ["desktop", "Desktop"]], T.viewPref(), (v) => { T.setView(v); renderAppearance(); }));
+      segOf("Layout", [["auto", "Auto"], ["mobile", "Mobile"], ["desktop", "Desktop"]], T.viewPref(), (v) => { T.setView(v); renderSettings(); }));
     // the tables' type (Sean, 14 Oct 2026: "a button switch in the appearance tab ... between the current b ref styles and that oct 9th style"):
     // per device; the Leaderboard re-measures its column widths in the new type (statCols reads the header's computed font once per layout)
     // wOBA or wRC+ (Sean, 16 Oct 2026): the display scale for every wOBA-scale number — the stored numbers, pools and percentiles are the same either way
     row("wOBA scale", "wOBA as it is, or the same numbers as wRC+ / xwRC+: 100 is the league's average that season, 120 is 20% better — each season against its own league, so seasons compare. Nothing is re-ranked; only what prints changes.",
-      segOf("wOBA scale", [["woba", "wOBA"], ["wrc", "wRC+"]], WRC_PREF.get(), (v) => { WRC_PREF.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderAppearance(); }));
+      segOf("wOBA scale", [["woba", "wOBA"], ["wrc", "wRC+"]], WRC_PREF.get(), (v) => { WRC_PREF.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderSettings(); }));
     if (window.DRAFT_TABLES) row("Tables", "Baseball-Reference: 12px type, compact 23px rows. Classic: the larger type with column names the size of the numbers, roomier rows.",
       segOf("Tables", [["bref", "Baseball-Reference"], ["classic", "Classic"]], window.DRAFT_TABLES.get(), (v) => {
-        window.DRAFT_TABLES.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderAppearance(); }));
+        window.DRAFT_TABLES.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderSettings(); }));
     // type: one line per font, set in that font
     T.preloadFonts();
     const fg = el("div", "fonts");
@@ -7089,7 +7081,7 @@
       const h = el("span", "ffname", f.name); h.style.fontFamily = f.display;
       const body = el("span", "fbody", "Yordan Alvarez · .442 xwOBA · 94.2 mph"); body.style.fontFamily = f.body;
       b.append(h, body);
-      b.addEventListener("click", () => { T.set({ font: id }); renderAppearance(); });
+      b.addEventListener("click", () => { T.set({ font: id }); renderSettings(); });
       fg.append(b);
     }
     row("Font", null, fg);
@@ -7112,6 +7104,36 @@
     const sb = renderSyncBox(), sh = sb.querySelector("h3"), sn = sb.querySelector(":scope > p.note");
     if (sh) sh.remove(); if (sn) sn.remove();
     row("Sync across devices", "Fantasy scoring, stars, the draft board and rankings, kept the same on every device you connect (a private note on your GitHub). Colours and layout stay each device's own.", sb);
+  }
+  // Settings (Sean, 16 Oct 2026: "Make the three dots thing at the end one button dont have it drop the other stuff down and call it settings and
+  // have the stat glossary, appearance, color key, and how this page works just be on that page and each be a different button at the top for it"):
+  // one page in #pboard (the Appearance page's white card) with four tabs across the top in the Filters button's dress; a tab is a link to
+  // #settings/<tab>, so Back works and a tab can be sent as a link. The glossary lists hitters then pitchers with the data and credit lines once at
+  // the end; Colour key and How this page works are the lines the More menu's windows used to open (renderChrome leaves them in chromeBits);
+  // Games through … sits at the page's foot, where the More menu had it.
+  let chromeBits = null;
+  function renderSettings() {
+    const box = $("pboard"); box.innerHTML = "";
+    const tab = SET_TABS.some(([k]) => k === state.setTab) ? state.setTab : "glossary";
+    const head = el("div", "ahd shd"); head.append(el("h2", "ahead", "Settings")); box.append(head);
+    const tabs = el("div", "btabs stabs");
+    for (const [k, label] of SET_TABS) { const a = el("a", "btab", label); a.href = "#settings/" + k; if (k === tab) { a.classList.add("on"); a.setAttribute("aria-current", "page"); } tabs.append(a); }
+    box.append(tabs);
+    const body = el("div", "sbody"); box.append(body);
+    const lead = (title, note) => { const h = el("div", "ahd"); h.append(el("h2", "ahead", title)); if (note) h.append(el("p", "hublead", note)); body.append(h); };
+    if (tab === "appearance") renderAppearance(body);   // its own head and rows
+    else if (tab === "glossary") {
+      lead("Stat glossary", "Every stat the cards and lists carry, in the cards' order — hitters first, then pitchers.");
+      for (const [g, word] of [["H", "Hitters"], ["P", "Pitchers"]]) { body.append(el("h3", "sgh", word), renderGlossary(g, g === "H")); }
+    } else if (tab === "key") {
+      lead("Colour key", "How every heat-mapped number, bar and bubble is coloured.");
+      const b = el("div", "prose"); if (chromeBits) b.append(chromeBits.key); body.append(b);
+    } else {
+      lead("How this page works", "What each page shows and where the numbers come from.");
+      const b = el("div", "prose"); if (chromeBits) b.append(...chromeBits.prose); body.append(b);
+    }
+    { const m = DATA.meta, thr = new Date(m.through + "T12:00:00"), x = el("p", "sstamp", `Games through ${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`);
+      x.title = `${m.season} Statcast through ${m.through} (built ${m.built})`; box.append(x); }
   }
 
   /* ---------- Explore: any player, any season ---------- */
@@ -10470,7 +10492,7 @@
   let xPop = false, xPopNew = false, xPopList = null;
   const pageNow = () => state.mode === "player" || xPop;   // where a page was opened from: the list page, its scroll and its rows' box; the page last drawn
   const BACK_LABEL = { leaderboard: "leaderboard", trending: "leaderboard", rankings: "rankings", draft: "draft board", pitches: "Pitching+", fantasy: "fantasy", home: "home",
-                       claude: "Claude rankings", planner: "planner", eligibility: "eligibility", callups: "Call-up Watch", compare: "compare", mock: "mock draft", trends: "League Trends", appearance: "appearance" };
+                       claude: "Claude rankings", planner: "planner", eligibility: "eligibility", callups: "Call-up Watch", compare: "compare", mock: "mock draft", trends: "League Trends", settings: "settings" };
   const BACK_MODES = ["leaderboard", "trending", "rankings", "draft", "pitches", "fantasy", "claude", "flaws", "planner", "eligibility"];   // the list pages Back returns to
   function markBack() {
     if (state.mode === "player") return;                      // from one page to another: the first list is still where Back goes
@@ -12360,14 +12382,11 @@
 
   /* ---------- wiring ---------- */
   // the header's two dropdowns: the draft + fantasy pages, and the two leaderboards
-  // "More" (Sean, 29 Sep 2026, the minimal pass): Appearance, and the colour key / glossary / how-to / layout switch that
-  // used to sit under every list, gathered in one header menu. Made here because index.html doesn't round-trip.
-  { const w = el("div", "modesel"); w.id = "moresel"; w.dataset.mode = "more";
-    const t = el("span", "modesel-txt", "More"); t.id = "moreseltxt";
-    const b = el("button", "modesel-btn"); b.type = "button"; b.setAttribute("aria-haspopup", "true"); b.setAttribute("aria-expanded", "false"); b.setAttribute("aria-controls", "moremenu"); b.setAttribute("aria-label", "More");
-    const ul = el("ul", "modemenu"); ul.id = "moremenu";
-    w.append(t, document.querySelector("#lbsel .chev").cloneNode(true), b, ul);
-    document.querySelector(".modes").append(w); }
+  // "Settings" (Sean, 16 Oct 2026: "Make the three dots thing at the end one button dont have it drop the other stuff down and call it settings"):
+  // the ⋯ More menu of 29 Sep 2026 is gone; one header button opens the Settings page (renderSettings) with the glossary, Appearance, the colour
+  // key and the how-to as its tabs. Made here because index.html doesn't round-trip.
+  { const nav = document.querySelector(".modes");
+    if (nav && !nav.querySelector('a[data-mode="settings"]')) { const a = el("a", null, "Settings"); a.href = "#settings"; a.dataset.mode = "settings"; a.title = "Stat glossary, appearance, the colour key and how the pages work"; nav.append(a); } }
   /* ---------- Mock Draft (Sean, 2 Oct 2026: "practice mock drafts ... snake and auction ... function very very similar to espns") ----------
      A draft room against computer teams. The order everyone drafts from is a 2027 consensus: the site's own points projection
      (2024-26 official lines under ESPN's standard scoring, weighted to this year, regressed, aged) ranked by value over
@@ -13019,14 +13038,17 @@
   const NAV_GROUPS = [
     { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "eligibility", "fantasy", "planner", "mock", "claude"] },
     { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaders", short: "Leaders", modes: ["leaderboard", "trending"] },   // Stuff+ (#pitches) is its own header tab (3 Oct 2026)
-    { key: "more", sel: "moresel", txt: "moreseltxt", menu: "moremenu", label: "⋯", short: "More", modes: ["appearance"] },
-  ];
+  ];   // Settings (#settings) is a plain header link, not a menu (16 Oct 2026); the ⋯ More group it replaced is gone
+  const SET_TABS = [["glossary", "Stat glossary"], ["appearance", "Appearance"], ["key", "Colour key"], ["how", "How this page works"]];
   function readMode() {
     const h = location.hash.replace("#", "");
     const pm = h.match(/^player\/(\d+)$/);
     if (pm) { state.mode = "player"; const id = Number(pm[1]); if (state.x.id !== id) { state.x = { id, type: null, ds: null }; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; } return; }
     if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["leaders", "trending", "whatif", "settings"].includes(v) ? v : "leaders"; return; }
-    state.mode = ["home", "draft", "rankings", "eligibility", "trending", "leaderboard", "pitches", "planner", "mock", "claude", "flaws", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
+    if (h === "settings" || h.startsWith("settings/") || h === "appearance") {   // #appearance is the old More menu's link and the Mac template's hidden one
+      state.mode = "settings"; const v = h === "appearance" ? "appearance" : h.split("/")[1];
+      if (SET_TABS.some(([k]) => k === v)) state.setTab = v; return; }
+    state.mode = ["home", "draft", "rankings", "eligibility", "trending", "leaderboard", "pitches", "planner", "mock", "claude", "flaws"].includes(h) ? h : h === "explore" ? "player" : "home";
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {
@@ -13233,7 +13255,7 @@
     try { st = await (await fetch("/api/status", { cache: "no-store" })).json(); } catch { return; }
     if (!st || typeof st.running !== "boolean") return;
     const box = $("updater"), btn = $("upbtn"), pub = $("pubbtn"), link = $("publink"), log = $("uplog"), end = $("upend");
-    box.hidden = false; window.DRAFT_LOCAL = true; if (state.mode === "appearance") renderAppearance();
+    box.hidden = false; window.DRAFT_LOCAL = true; if (state.mode === "settings") renderSettings();
     const y = new Date(); y.setDate(y.getDate() - 1); end.value = y.toISOString().slice(0, 10);
     const last = (s) => s.log[s.log.length - 1] || "";
     const show = (s) => {

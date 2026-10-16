@@ -4174,6 +4174,20 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the file delayed 3 s: no heat; the fix: heat). `sbxPool` now keeps a pool only once `DRAFT_CAREER_BB` is in, like `sbPoolP`'s `sbxReady()` key.
   `hrfbLeague` has the same shape but every caller waits for both files first (`hxReady`), so it's left alone.
 
+* **Settings in place of the ⋯ More menu (Sean, 16 Oct 2026: "Make the three dots thing at the end one button dont have it drop the other stuff down
+  and call it settings and have the stat glossary, appearance, color key, and how this page works just be on that page and each be a different button
+  at the top for it")**: the header is Home · Leaders · Pitching+ · Fixing the flaw · Fantasy ▾ · **Settings** — a plain link made in `app.js` where
+  the `#moresel` menu used to be built (index.html doesn't round-trip; its hidden `.modes-aux` Appearance link stays, and `#appearance` still works),
+  the `more` entry is out of `NAV_GROUPS`. **The page** (`renderSettings`, mode `settings`, in `#pboard` — the Appearance page's white card) opens
+  with four tabs across the top in the Filters button's dress (`.btabs.stabs`, the CSS block at the end of `styles.css`; each tab a link to
+  `#settings/<tab>`, `SET_TABS` beside `NAV_GROUPS`, `state.setTab` the open one, `readMode` routes them): **Stat glossary** (hitters' cards' stats
+  then pitchers' — `renderGlossary(g, noCredit)` takes a group now, the data / credit lines once at the end), **Appearance** (`renderAppearance(box)`
+  draws into the tab's body; its redraws go through `renderSettings`), **Colour key** and **How this page works** (the lines the More menu's windows
+  used to open — `renderChrome` builds them as before and leaves them in `chromeBits`; every page's blurb shows whatever page you came from) — and
+  "Games through …" at the foot. Gone with the menu: its Table format shortcut (the Leaderboard's Filters ▸ Table format tab has it) and the layout
+  switch (Appearance ▸ Layout is the same control). `BACK_LABEL` / the `document.title` map say `settings`; the sync pull and the local updater
+  redraw the Settings page where they redrew Appearance.
+
 ---
 
 ## 10. The football site moved out
