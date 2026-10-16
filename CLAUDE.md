@@ -3947,6 +3947,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   white edge would vanish. The `box-shadow: none` rule carries `:not(#pop *)` for a second id, since the 12 Oct "Buttons lifted" rule's own
   `:not(#pop *)` gives it two.
 
+* **The phone's page bar and column-name row even at 44px, the arrows always drawn (Sean, 16 Oct 2026, from the pitchers' Leaderboard on his
+  phone: "make the bottom bar slightly taller and make it so the back and forward arrows never disappear when scrolling through pages as well and
+  you can make the header row slightly taller too to make sure the bottom bar and header row are even height")**: the block at the end of
+  `styles.css` — `#pagerbot.phbot` is 44px (was 36) with 30px buttons and select, `body.brlb #colhead .h` has a 44px minimum (the names had sat
+  at 23+), and a disabled ‹ / › on the first / last page keeps its full ink, edge and surface (the `.pbtn:disabled` 40% opacity had faded it),
+  only the cursor saying it's inert. Headless: bar 44, header row 44, buttons 30, arrows at opacity 1 on pages 1 and 2. Desktop unchanged.
+
 ---
 
 ## 10. The football site moved out
