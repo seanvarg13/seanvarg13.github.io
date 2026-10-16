@@ -7850,7 +7850,7 @@
     w.append(b.done());
     // each piece beside what happened: the gap is what the number leaves out
     const box = el("div", "rollbox uerabox brbox"), hd = el("div", "rollhd"); hd.append(el("span", "rollname", "Expected vs actual"), el("span", "rollsub", "what each piece expects beside what happened, and how much of his wOBA − xwOBA gap each one accounts for, biggest first")); box.append(hd);
-    const { tb, fin, wrap } = brTable(null, [["Piece", "l"], ["Expected", ""], ["Actual", "", "what happened, at a neutral park — his parks' effect on each piece taken out, ball by ball (the In his parks row has his raw wOBA)"], ["± wOBA", "", "how many wOBA points this piece's gap moved his wOBA away from his xwOBA (+ = it raised his wOBA)"], ["Share", "", "this piece's part of all the movement between his xwOBA and his wOBA, whichever way it pushed (the ± column says which) — the rows add to 100%"]], "twvs");
+    const { tb, fin, wrap } = brTable(null, [["Piece", "l"], ["Actual", "", "what happened, at a neutral park — his parks' effect on each piece taken out, ball by ball (the In his parks row has his raw wOBA); filled with his percentile on it among the pool's qualifiers"], ["Expected", ""], ["Diff", "", "actual − expected, both park-neutral"], ["± wOBA", "", "how many wOBA points this piece's gap moved his wOBA away from his xwOBA (+ = it raised his wOBA)"], ["Share", "", "this piece's part of all the movement between his xwOBA and his wOBA, whichever way it pushed (the ± column says which) — the rows add to 100%"]], "twvs");
     const hr = v.ctx && v.ctx.HR != null ? v.ctx.HR : null, ab = v.ab || 0;
     const actHf = hr != null && t.I.fbn ? 100 * hr / t.I.fbn : null;
     const actTph = hr != null && m.ba != null && m.slg != null && ab && m.ba * ab - hr > 0 ? (m.slg * ab - 4 * hr) / (m.ba * ab - hr) : null;
@@ -7893,13 +7893,22 @@
     // Share = each row's part of all the movement, whichever way it pushed — a signed share of the net gap read −160% when two pieces pulled
     // against each other. It needs the rows first, so the cells are filled after the table is built
     const shareCells = [];
+    // the Actual column heat-mapped (Sean, 16 Oct 2026: "put the actual column before expected and heat map the actual column too"): his
+    // park-neutral actual piece placed among the pool's qualifiers' own (each at a neutral park too), good way up — K% turned over
+    const ACT_OF = { xk: (q) => (q.m.k == null ? null : q.m.k - (q.tal && q.tal.pk ? q.tal.pk.k : 0)), xbb: (q) => (q.m.bb == null ? null : q.m.bb - (q.tal && q.tal.pk ? q.tal.pk.bb : 0)),
+      xhf: (q) => (q.ctx && q.ctx.HR != null && q.tal && q.tal.I && q.tal.I.fbn ? 100 * q.ctx.HR / q.tal.I.fbn - (q.tal.pk ? q.tal.pk.hr : 0) : null), xbab: (q) => q.m.babip ?? null,
+      tph: (q) => { const h0 = q.ctx && q.ctx.HR != null ? q.ctx.HR : null, a0 = q.ab || 0; return h0 != null && q.m.ba != null && q.m.slg != null && a0 && q.m.ba * a0 - h0 > 0 ? (q.m.slg * a0 - 4 * h0) / (q.m.ba * a0 - h0) - (q.tal && q.tal.pk ? q.tal.pk.xb : 0) : null; },
+      woba: (q) => q.m.woba ?? null };
+    const ACT_DIR = { xk: -1, xbb: 1, xhf: 1, xbab: 1, tph: 1, woba: 1 };
+    const pcA = (k, his) => { if (his == null || !ACT_OF[k]) return null; const vals = []; for (const q of pool("H").ref) { const x0 = ACT_OF[k](V(q)); if (x0 != null && isFinite(x0)) vals.push(x0); } return vals.length >= 20 ? pctAmong(vals, his, ACT_DIR[k]) : null; };
+    const actTd = (k, x, f) => { const td = el("td", "xact", x == null ? "–" : f(x)); const pc0 = k === "ibb" ? null : pcA(k, x); return pc0 == null ? td : heatTd(td, pc0); };
     const shareTd = (d) => { const td = el("td", "xact"); if (d != null) shareCells.push([td, d]); return td; };
     const effTd = (d, tot) => { const td = el("td", "kd", d == null ? "" : pts(d)); if (d != null && !tot) { const s2 = effStyle(d); td.style.background = s2.bg; td.style.color = s2.fg; td.classList.add("heat"); } return td; };
     // a piece's name, tapped, opens its note in a row under it, as the build-ups' steps do (a phone has no hover)
     const noteTd = (lab, tip, tr) => { const td = el("td", "l nm"), bt = el("button", "knotebtn", lab); bt.type = "button"; bt.setAttribute("aria-expanded", "false");
       bt.addEventListener("click", (e) => { e.stopPropagation(); const nx = tr.nextElementSibling;
         if (nx && nx.classList.contains("knote")) { nx.remove(); bt.setAttribute("aria-expanded", "false"); return; }
-        const nr = el("tr", "knote"), nc = el("td"), sc = tr.closest(".brscroll"), tx = el("div", null, tip); nc.colSpan = 5;
+        const nr = el("tr", "knote"), nc = el("td"), sc = tr.closest(".brscroll"), tx = el("div", null, tip); nc.colSpan = 6;
         /* the table scrolls sideways on a phone, so the note sits in the visible part of it */
         if (sc) { tx.style.position = "sticky"; tx.style.left = "10px"; tx.style.width = Math.max(200, sc.clientWidth - 22) + "px"; }
         nc.append(tx); nr.append(nc); tr.after(nr); bt.setAttribute("aria-expanded", "true"); });
@@ -7915,22 +7924,19 @@
                    ].sort((x, y) => Math.abs(eff[y[1]] || 0) - Math.abs(eff[x[1]] || 0));
     for (const [lab, k, a, x, f, fd, tip] of pieces) {
       const tr = el("tr"); tr.title = tip;
-      tr.append(noteTd(lab, tip, tr), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), effTd(k in eff ? eff[k] : null), shareTd(k in eff ? eff[k] : null));
+      tr.append(noteTd(lab, tip, tr), actTd(k, x, f), el("td", null, a == null ? "–" : f(a)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), effTd(k in eff ? eff[k] : null), shareTd(k in eff ? eff[k] : null));
       tb.append(fin(tr));
     }
     if (rest != null) { const tr = el("tr"); tr.title = "what's left between his pieces put back together at their actual values and his real wOBA: the build's fixed linear weights, triples, sacrifice flies and the season's scale — small, and not about his skill";
-      tr.append(el("td", "l nm", "Everything else"), el("td"), el("td", "xact"), effTd(rest), shareTd(rest)); tb.append(fin(tr)); }
+      tr.append(el("td", "l nm", "Everything else"), el("td", "xact"), el("td"), el("td"), effTd(rest), shareTd(rest)); tb.append(fin(tr)); }
     for (const [lab, a, x, f, fd] of [["wOBA", m.txw, wobaN, f3, (z) => fmtX(z)]]) {   /* his park-neutral wOBA against his xwOBA */
       const tr = el("tr", "tot"); tr.title = pk ? `his wOBA at a neutral park: his ${f3(m.woba)} less what his parks did to it (${pts(pkEff)}, the row under)` : "";
-      tr.append(el("td", "l nm", lab), el("td", null, a == null ? "–" : f(a)), el("td", "xact", x == null ? "–" : f(x)), effTd(lab === "wOBA" && a != null && x != null ? x - a : null, true), el("td", null, lab === "wOBA" && shareCells.length ? "100%" : ""));
+      tr.append(el("td", "l nm", lab), actTd("woba", x, f), el("td", null, a == null ? "–" : f(a)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), effTd(lab === "wOBA" && a != null && x != null ? x - a : null, true), el("td", null, lab === "wOBA" && shareCells.length ? "100%" : ""));
       tb.append(fin(tr));
     }
     // what his parks added, after the park-neutral wOBA (the raw wOBA is here): the pieces put back together with the park residuals on them
     if (pk && m.woba != null) { const tr = el("tr", "pkrow"), tip = `his wOBA in his parks: ${parkPieces(pk)} — where he hit: ${parkWhere(p, v)}. Home runs, hits and bases ball by ball (each of his balls in play at the park it was hit in against the same ball at a neutral park: hist/parks.js's cells by park, batting side, batted-ball type, direction and exit velocity), strikeouts and walks by the park's residual per PA where he hit`;
-      tr.title = tip; tr.append(noteTd("In his parks", tip, tr), el("td", "xact", parkTop(p, v)), el("td", "xact", f3(m.woba)), el("td", "kd", pts(pkEff)), el("td", "xact", "")); tb.append(fin(tr)); }
-    { const tr = el("tr", "tot");   /* the directional model's own xwOBA beside his */
-      tr.append(el("td", "l nm", "Batted-ball model"), el("td", null, m.txw == null ? "–" : f3(m.txw)), el("td", "xact", m.dxw == null ? "–" : f3(m.dxw)), effTd(null, true), el("td", null, ""));
-      tb.append(fin(tr)); }
+      tr.title = tip; tr.append(noteTd("In his parks", tip, tr), el("td", "xact", f3(m.woba)), el("td", "xact", parkTop(p, v)), el("td", null, sg(pkEff, (z) => fmtX(z))), el("td", "kd", pts(pkEff)), el("td", "xact", "")); tb.append(fin(tr)); }
     { const tot = shareCells.reduce((a0, [, d]) => a0 + Math.abs(d), 0);
       for (const [td, d] of shareCells) td.textContent = tot >= 0.002 ? Math.round(100 * Math.abs(d) / tot) + "%" : "–"; }
     box.append(wrap); w.append(box);
