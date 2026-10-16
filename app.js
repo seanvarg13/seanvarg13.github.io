@@ -2698,7 +2698,7 @@
   // row with Tm after the name, the PA / IP column before the headline and Pos at the end; the Result / Process band as the over-header;
   // a 2px rule where each run of columns ends (brEnds) and after Tm; the sorted column filling its cells; the qualified pool's leader in
   // a column bold italic (brLeaders: MLB-wide, the pool the list ranks against); a Qualified avg band row at the foot
-  const brOn = () => onePage();
+  const brOn = () => onePage() || state.mode === "rankings" || state.mode === "draft";   // Rankings / Draft mode too (Sean, 16 Oct 2026: "formatted like all the other tables are")
   function brEnds(ms, g) {
     const keys = ["score", ...ms.map((m) => m.key)], cat = (k) => (RESULT_KEYS.has(k) ? "R" : "P"), out = new Set();
     keys.forEach((k, i) => { if (i < keys.length - 1 && cat(k) !== cat(keys[i + 1])) out.add(k); if (hasBreak(g, k)) out.add(k); });
@@ -2767,7 +2767,8 @@
       else { if (!tt) { tt = el("div", "lbtitle"); tt.id = "lbtitle"; } if (bs && tt.nextSibling !== bs) bs.before(tt);
         const P0 = isPitcherGroup(g), sk = state.sort, sm = ms.find((m) => m.key === sk);
         const by = sk === "score" ? (P0 ? "nERA" : wsLab(wobaHead() ? "wOBA" : HEAD.label)) : sm ? colLab(sm) : sk === "name" ? "name" : sk === "age" ? "age" : sk === "year" ? "season" : "";
-        tt.innerHTML = ""; tt.append(el("h2", null, P0 ? "Pitchers Leaderboard" : "Hitting Leaderboard"), el("span", null, by ? `by ${by}` : "")); } }   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
+        const page = state.mode === "rankings" ? "Rankings" : state.mode === "draft" ? "Draft mode" : "Leaderboard", own = customOrder() && !state.rankSort;   // Rankings / Draft mode (16 Oct 2026)
+        tt.innerHTML = ""; tt.append(el("h2", null, `${P0 ? "Pitchers" : "Hitting"} ${page}`), el("span", null, own ? "your order" : by ? `by ${by}` : "")); } }   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
     const head = (key, label, title) => { const h = editing ? Object.assign(el("div", "h", label), { title }) : sortButton(key, label, title); if (/^[a-z]/.test(label)) h.classList.add("lc"); return h; };
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
     for (const k of ["year", "age"]) h.style.setProperty("--pre" + (k === "year" ? 1 : 2), preOn(k) ? "var(--prew, 64px)" : "0px");
@@ -2783,7 +2784,7 @@
       h.append(hb);
     }
     if (BR) h.append(el("div", "h brpos", "Pos"));
-    if (state.mode === "draft") h.append(el("div", "h", ""));
+    if (state.mode === "draft") h.append(el("div", "h act", ""));
     // Result / Process bands over the columns (6 Oct 2026, the proposed layout): outcomes on one side, skills on the other, each
     // contiguous run of columns under one word; the band row is a second grid with the header's own template
     { let band = $("colband"); if (!band) { band = el("div", "colhead grid colband"); band.id = "colband"; }
@@ -3044,7 +3045,7 @@
         if (rankMode && !untiered && !tiers[t].length) { const dz = el("li", "tierdrop", "Drop players here"); dz.dataset.tier = t; frag.append(dz); }
       });
     } else { const rows = list.map((p, i) => [p, i]); rows.forEach(([p, i], j) => { if (onPage(i)) emitRow(p, i, rows, j); }); WRC_CTX = null; WRC_ROW = null; }
-    if (BR && list.length && pg.end >= (grouped ? at.size : list.length)) frag.append(...brTotRows(g, ms, stats, ends, preOn));   // the foot of the last page
+    if (BR && onePage() && list.length && pg.end >= (grouped ? at.size : list.length)) frag.append(...brTotRows(g, ms, stats, ends, preOn));   // the foot of the Leaderboard's last page (not a ranked list's)
     ol.append(frag);
     fitNameCol();
     if (mobileView()) requestAnimationFrame(() => {   // a long name steps down to 13 then 11.5px before it ellipsises (Sean, 6 Oct 2026: "fit the names in there")
@@ -3185,7 +3186,7 @@
     { const tb = $("tbtns"); if (tb && box.contains(tb)) seatFilters(null); }   // out of the bar before it is cleared
     // the Min PA / IP box stays put while the bar is redrawn (a move would blur it mid-typing; cleared with innerHTML it would be lost)
     const mfKeep = null;   // the Min box lives in the Filters panel again (6 Oct 2026)
-    for (const n of [...box.children]) { if (n === mfKeep) continue; if (n.id === "minfield") $("park").append(n); else n.remove(); }
+    for (const n of [...box.children]) { if (n === mfKeep) continue; if (n.id === "minfield" || n.id === "drafttools") $("park").append(n); else n.remove(); }   // the Draft bar is parked, not dropped (16 Oct 2026)
     { const old = box.nextElementSibling; if (old && old.classList.contains("pnavrow")) old.remove(); }   // a phone's page numbers, redrawn below
     const go = (n) => { state.page = Math.min(pg.pages, Math.max(1, n)); (onChange || renderRows)(); const top = box.closest(".board, .fboard") || box; const sb = top.querySelector(".board-scroll, .fscroll"); if (sb) sb.scrollTop = 0; const y = top.getBoundingClientRect().top + window.scrollY - 8; if (window.scrollY > y) window.scrollTo({ top: y }); };
     const setSize = (n) => { state.pageSize = n; state.page = 1; savePrefs(); (onChange || renderRows)(); };
@@ -3219,6 +3220,9 @@
       sz.append(sel); bot.append(sz);
     }
     if (onChange) box.append(perPageField(setSize));    // the list pages keep theirs in Filters (minimal pass 4); Fantasy here
+    // Draft mode's own controls ride in this bar (16 Oct 2026): the drafted count, Draft from, Undo, Show drafted, Exit — the toolbar row they
+    // lived in is hidden on the list pages (body.filtbar, 30 Sep 2026), so the Draft board had shown none of them
+    if (!onChange && state.mode === "draft" && box.id === "pagertop") { const dt = $("drafttools"); if (dt) box.append(dt); }
     if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs();
       if (phonePages()) { const pc = box.querySelector(".pcount"), nv = box.querySelector(".pnav"); if (pc) box.append(pc); if (nv) box.append(nv); }   /* after the Filters button */   // a phone: Min IP rides after the pills; the count is on the page-number line
       else { const pc = box.querySelector(".pcount");   /* the count right beside the Filters button (Sean, 11 Oct 2026) */ if (pc) box.append(pc); if (mfKeep) { mfKeep.classList.add("topmin"); if (box.lastElementChild !== mfKeep) box.append(mfKeep); } } } }   // the count and the Min box on a quiet line under the controls (6 Oct 2026); the Min box moves only when it isn't already last   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
@@ -4356,9 +4360,12 @@
     return b;
   };
   pitchBoardEl();
-  { const mm = $("modemenu"); if (mm && !mm.querySelector('a[href="#planner"]') && !offSeason()) { const li = el("li"); const a = el("a", null, "Weekly Planner"); a.href = "#planner"; li.append(a); mm.append(li); } }
-  { const mm = $("modemenu"); if (mm && !mm.querySelector('a[href="#mock"]')) { const li = el("li"); const a = el("a", null, "Mock Draft"); a.href = "#mock"; li.append(a); mm.append(li); } }   // Sean, 2 Oct 2026
-  { const mm = $("modemenu"); if (mm && !mm.querySelector('a[href="#claude"]')) { const li = el("li"); const a = el("a", null, "Claude rankings"); a.href = "#claude"; li.append(a); mm.append(li); } }   // Sean, 6 Oct 2026   // not in the off-season: no games to plan
+  // the Fantasy menu is Rankings · Fantasy leaderboard · Mock draft · Scoring settings (Sean, 16 Oct 2026: "lets keep the rankings page, and
+  // integrate that and the draft board so basically with rankings to go into draft mode you hit draft mode ... lets keep the mock draft page as
+  // well and scoring settings / and then get rid of the rest"): rebuilt here since index.html's list (Draft board, Eligibility, Fantasy trending)
+  // doesn't round-trip. The Draft board is Rankings' Draft mode now; Eligibility, the Weekly Planner, Claude rankings and What if are off the menus
+  // and routes (their renderers stay, unreachable)
+  { const mm = $("modemenu"); if (mm) { mm.innerHTML = ""; for (const [h, l] of [["#rankings", "Rankings"], ["#fantasy/leaders", "Fantasy leaderboard"], ["#mock", "Mock draft"], ["#fantasy/settings", "Scoring settings"]]) { const li = el("li"), a = el("a", null, l); a.href = h; li.append(a); mm.append(li); } } }
   // Draft Mode is gone (Sean, 28 Sep 2026: the home page does its job); the Mac's index.html template may still list it
   { const dm = document.querySelector('#modemenu a[href="#draftmode"]'); if (dm) dm.closest("li").remove(); }
   // Trending lives inside the Leaderboard and the Fantasy leaderboard now (Season / Recent, 1 Oct 2026): off both menus
@@ -5294,6 +5301,9 @@
     const on = state.mode === "rankings";
     $("ranktools").hidden = !on;
     if (!on) return;
+    // Draft mode (Sean, 16 Oct 2026: "with rankings to go into draft mode you hit draft mode"): the Draft board, drafting from these rankings
+    { let b = $("rankdraft"); if (!b) { b = el("button", "btn rankdraft", "Draft mode"); b.id = "rankdraft"; b.type = "button"; b.title = "Draft from these rankings: tick players off as they go";
+        b.addEventListener("click", () => { if (hasWorking() || currentSetName()) state.draftOrder = "mine"; location.hash = "#draft"; }); $("ranktools").append(b); } }
     const n = (state.ranks[state.pos] || []).length, tn = (state.tiers[state.pos] || []).length;
     const tabLabel = TAB_LABEL[state.pos] || state.pos;
     $("rankcount").textContent = tabLabel;                    // the tab, nothing else — the row is short on room
@@ -5533,6 +5543,7 @@
     const on = state.mode === "draft";
     $("drafttools").hidden = !on;
     if (!on) return;
+    { let b = $("draftexit"); if (!b) { b = el("button", "btn btn-quiet draftexit", "Exit draft mode"); b.id = "draftexit"; b.type = "button"; b.title = "Back to the rankings"; b.addEventListener("click", () => { location.hash = "#rankings"; }); $("drafttools").append(b); } }   // 16 Oct 2026
     const dsel = $("draftorder"); dsel.innerHTML = "";
     const cur = currentSetName(), names = Object.keys(state.rankSets).sort((x, y) => x.localeCompare(y));
     for (const [v, l] of [["board", "Big board order"], ["mine", cur ? `My rankings (working copy of “${cur}”)` : "My rankings (working)"], ...names.map((n) => ["set:" + n, "Saved: " + n])]) { const o = el("option", null, l); o.value = v; dsel.append(o); }
@@ -5759,7 +5770,7 @@
       const dc = card(`${m.season + 1} draft prep`, null, null);
       dc.classList.add("hprepcard");
       const row = el("div", "hprep");
-      for (const [h, l, sub] of [["#rankings", "Rankings", "your order for next year"], ["#draft", "Draft board", "everyone who can be drafted"], ["#eligibility", "Eligibility", "positions for next year"]]) {
+      for (const [h, l, sub] of [["#rankings", "Rankings", "your order for next year"], ["#draft", "Draft mode", "tick players off as they go"]]) {
         const a = el("a", "hpreplink"); a.href = h; a.append(el("b", null, l), el("span", null, sub)); row.append(a);
       }
       dc.append(row);
@@ -6087,7 +6098,7 @@
         else a.removeAttribute("aria-current");
       }
     }
-    document.title = { pitches: "Sean's Site · Stuff+", draft: "Sean's Site · Draft board", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", settings: "Sean's Site · Settings", fantasy: "Sean's Site · Fantasy" }[state.mode] || "Sean's Site";
+    document.title = { pitches: "Sean's Site · Stuff+", draft: "Sean's Site · Draft mode", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", settings: "Sean's Site · Settings", fantasy: "Sean's Site · Fantasy" }[state.mode] || "Sean's Site";
     const m = DATA.meta;
     const thr = new Date(m.through + "T12:00:00"); $("stamp").innerHTML = `through <b>${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</b>`; $("stamp").title = `${m.season} Statcast through ${m.through} (built ${m.built})`;
     const notes = $("notes"); notes.innerHTML = "";
@@ -6106,14 +6117,13 @@
     prose.push(Object.assign(el("div"), { innerHTML: `<b>Eligibility</b> — a hitter is listed at every position where he played ${ESPN.posGames}+ games this season, counting MLB and minor-league games together (ESPN's rule for call-ups), OF combined, DH counts; pitchers are SP with ${ESPN.spIP}+ IP as a starter and RP with ${ESPN.rpIP}+ IP in relief. Add anything ESPN gives him that the games don't from his card. <b>Pools</b> — every hitter percentile is measured against hitters with <b>${REF_PA}+ PA</b> on the season, any position; every pitcher percentile against pitchers with <b>${REF_PA}+ batters faced</b>, starters and relievers together. That population never changes — a date range or split only changes the numbers being compared — and the <b>Min PA / Min IP</b> boxes only set who is listed: a player under the bar is placed against that same population rather than reshaping it.` }));
     prose.push(Object.assign(el("div"), { innerHTML: `<b>xwOBA</b> — the directional model, and only that: every ball in play scored on its exit velocity, launch angle, spray and pull angle and the batter's sprint speed, so where he hit the ball counts too, with strikeouts, walks and hit-by-pitches counting as themselves. It is summed from the same day-by-day rows, so windows and splits follow it, re-anchored each season so the league's average is its real wOBA, and blank in the minors, which have no xwOBA model (wOBA heads the lists there). <b>xBA</b> and <b>xSLG</b> are the same recipe's — a past MLB season not yet rescored for them shows Statcast's until it is. <b>Batted-ball definitions</b> follow Savant's leaderboards: BBE is every ball in play, Avg EV / 90th% / max EV skip bunts, Barrel%, Hard-Hit% and Sweet-Spot% are per ball in play. Seasons before 2020 have a few percent of untracked balls that Savant's public feed fills with placeholder values, so an Avg EV there can sit a tenth or two off the leaderboard.` }));
     prose.push(Object.assign(el("div"), { innerHTML: `<b>Splits</b> — open a player and pick vs LHP / RHP (vs LHB / RHB for pitchers) and home / away at the top of his card. His card is redrawn from those plate appearances and ranked against the season's qualifiers on their numbers in the same split; the list itself stays unsplit. Pitcher IP in a handedness split is the outs recorded against that side. <b>Dates</b> — type a from and/or to date (a blank side means the season's start or end) and every stat and percentile is recomputed from those games only. Who qualifies never changes: the comparison group is always the players who meet the season bar (hitters ${REF_PA}+ PA, pitchers ${REF_PA}+ batters faced), each measured on his own numbers in that range — even a very short one. Past seasons work the same once their day-by-day file loads. Inside a window, Air% and Pull Air% come from Statcast batted-ball data (pull = spray angle beyond ${m.pullLine}°, which tracks Savant within about half a point); the full-season view uses Savant's published numbers.` }));
-    prose.push(Object.assign(el("div"), { innerHTML: `<b>Eligibility</b> — hitters: ${ESPN.posGames}+ games at a position in ${m.season} (outfield combined, DH counts). Pitchers: SP with ${ESPN.spIP}+ innings as a starter, RP with ${ESPN.rpIP}+ innings in relief — either or both; stats are always the full season. Add any position from a player's card; the <b>Eligibility</b> page lists what you've added.` }));
     prose.push(Object.assign(el("div"), { innerHTML: `<b>Hitters</b> rank by ${m.scoreNote.H}; the colour is its percentile in the pool. <b>Skills blend</b> (in the Sort menu and on each card) is the ${m.scoreNote.blend}. <b>Pitcher score</b> — ${m.scoreNote.P}.` }));
     prose.push(Object.assign(el("div"), { innerHTML: `<b>Position for 2027</b> — on a pitcher's card, switch SP / RP to move him to the other list and pool (a reliever expected to start next year, say). It's remembered in this browser and shows on his row as "SP (was RP)".` }));
     prose.push(Object.assign(el("div"), { innerHTML: `Air% and Pull Air% use Baseball Savant's batted-ball direction; everything else is computed from pitch-level Statcast. AB and IP are official MLB totals. Built ${m.built}.` }));
     prose.push(Object.assign(el("div"), { innerHTML: `<b>Rankings</b> — the model's order until you touch a tab (sort by any column, or pick a sort up top), then your own order, one list per tab, plus tiers that are separate from the order: a tier holds whoever you put in it and lists them by rank, so tier 1 can be ranks 1, 2, 3, 5 while rank 4 sits at the top of <b>Not tiered</b>. <b>Tiers / List</b> switches between the tiered view and the raw order. Press <b>Edit rankings</b> to change anything: tick players (click, Cmd/Ctrl-click, Shift-click for a range), then <b>Move…</b> puts them in a tier (or a new one) and <b>Untier</b> sends them back to Not tiered. The rank box, ▲ ▼ and dragging change the order; dragging into another tier's section also moves him there. <b>Add tier</b> adds an empty tier at the bottom; with a player ticked it becomes <b>+ Tier below</b> — a boundary right under him, splitting his tier (or cutting a tier off the top of Not tiered). <b>+ tier above</b> on any tier header slots an empty tier in there. ✎ gives a tier a nickname; × removes it. Outside edit mode, clicking a player opens his card. Players you haven't touched follow the big board beneath the ones you have; everyone under the Min PA / IP box is listed after them (most playing time first, PA in amber) so nobody is missing but small samples never push a qualifier around. The bar at the top says which list you're editing: pick a saved list from the menu to open it, <b>Save</b> writes your changes back to it, <b>Save as…</b> keeps a copy under a new name, and <b>New list</b> closes it and starts fresh from the model's order. Rename and Delete act on the open list; Export / Import move lists between browsers as text. The Draft page can draft from your working rankings or any saved set (Draft from).` }));
     prose.push(Object.assign(el("div"), { innerHTML: `<b>Leaderboard</b> — every hitter or pitcher over the Min PA / IP box, for any season and level you pick (MLB from 2015, the minors from 2021), with the stats you choose (<b>Columns…</b>). The vs-L / R and home / away toggles redraw every number and percentile from those plate appearances only (the comparison group stays the season's qualifiers on their numbers in the same split); ERA needs full games, so it's blank in a handedness split. Each cell shows the number, coloured by where it ranks among the season's qualifiers; click a heading to sort, click it again to flip. Dates and Last-N work here too, and the position tabs narrow the list.` }));
     prose.push(Object.assign(el("div"), { innerHTML: `<b>Trending</b> — who's hot right now. The position tabs use the same eligibility as everywhere else (${ESPN.posGames}+ games at a position this season, plus anything you've added). Hitters are ordered by ${HEAD.label} over each player's last N plate appearances (or the last N days); pitchers by the average of their Whiff% and Strike% percentiles over their last N innings (or days), with K%, BB%, ERA, SIERA and GB% for that span alongside. Full-season minimums don't apply here — <b>at least</b> sets how much playing time a player needs inside the span to be listed. The chips show the actual number, coloured by where it ranks among the season's qualifiers on their numbers in the same span. Click a player for his card over that span.` }));
-    prose.push(Object.assign(el("div"), { innerHTML: `<b>Draft mode</b> — <b>Draft from</b> picks the order: the big board, your working rankings, or any set you saved on the Rankings page (tiers included). Drafted players are saved in this browser, so you can close the tab and come back mid-draft. “Show drafted” keeps them on the board, dimmed.` }));
+    prose.push(Object.assign(el("div"), { innerHTML: `<b>Draft mode</b> — press <b>Draft mode</b> on the Rankings page. <b>Draft from</b> picks the order: the big board, your working rankings, or any set you saved on the Rankings page (tiers included). Drafted players are saved in this browser, so you can close the tab and come back mid-draft. “Show drafted” keeps them on the board, dimmed; <b>Exit draft mode</b> goes back to the rankings.` }));
     chromeBits = { key: l1, prose };
   }
 
@@ -6242,7 +6252,7 @@
     if (xPop && !POP_MODES.includes(state.mode)) xPop = false;   // another page: the popup goes with the list it came from
     $("xboard").hidden = !player && !xPop; $("xboard").classList.toggle("xpop", xPop); document.body.classList.toggle("xpopon", xPop); xPopBg().hidden = !xPop; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
-    document.body.classList.toggle("brlb", onePage());   // the Leaderboard / Recent in B-Ref's dress (9 Oct 2026)
+    document.body.classList.toggle("brlb", brOn());   // the Leaderboard / Recent in B-Ref's dress (9 Oct 2026); Rankings / Draft mode too (16 Oct 2026)
     const T = state.tbl; document.body.dataset.heat = T.heat ? "on" : "off"; document.body.dataset.band = T.band ? "on" : "off"; document.body.dataset.sorthl = T.sortHl ? "on" : "off"; document.body.dataset.density = T.density;
     $("ctoolbar").hidden = !compare; $("cboard").hidden = !compare;
     $("eboard").hidden = !elig; pitchBoardEl().hidden = !pitches;
@@ -6689,7 +6699,7 @@
     fEnsure(y);
     // the page: one pill instead of four buttons (minimal pass 5, Sean, 30 Sep 2026 — a 2×2 grid of them on a phone)
     // Trending is the Leaderboard over recent games (1 Oct 2026): one page in the pill, a Season / Recent switch beside it
-    const PAGES = [["leaders", "Leaderboard"], ["whatif", "What if"], ["settings", "Scoring settings"]], pv0 = f.view === "trending" ? "leaders" : f.view;
+    const PAGES = [["leaders", "Leaderboard"], ["settings", "Scoring settings"]], pv0 = f.view === "trending" ? "leaders" : f.view;   // What if is gone (Sean, 16 Oct 2026: "get rid of the rest")
     const vp = pillSelect((PAGES.find(([v]) => v === pv0) || PAGES[0])[1], PAGES, pv0, (v) => { location.hash = `#fantasy/${v}`; }, "Page");
     vp.classList.add("fpage");
     if (f.view === "settings") { const top = el("div", "fbar"); top.append(vp); box.append(top); renderFSettings(box); return; }
@@ -10511,7 +10521,7 @@
   const pageNow = () => state.mode === "player" || xPop;   // where a page was opened from: the list page, its scroll and its rows' box; the page last drawn
   const BACK_LABEL = { leaderboard: "leaderboard", trending: "leaderboard", rankings: "rankings", draft: "draft board", pitches: "Pitching+", fantasy: "fantasy", home: "home",
                        claude: "Claude rankings", planner: "planner", eligibility: "eligibility", callups: "Call-up Watch", compare: "compare", mock: "mock draft", trends: "League Trends", settings: "settings" };
-  const BACK_MODES = ["leaderboard", "trending", "rankings", "draft", "pitches", "fantasy", "claude", "flaws", "planner", "eligibility"];   // the list pages Back returns to
+  const BACK_MODES = ["leaderboard", "trending", "rankings", "draft", "pitches", "fantasy", "flaws"];   // the list pages Back returns to
   function markBack() {
     if (state.mode === "player") return;                      // from one page to another: the first list is still where Back goes
     if (!BACK_MODES.includes(state.mode)) { backAt = null; return; }   // home and the search give no Back (Sean, 8 Oct 2026: "get rid of the home button")
@@ -13054,7 +13064,7 @@
     w.append(brd, again); box.append(w);
   }
   const NAV_GROUPS = [
-    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "eligibility", "fantasy", "planner", "mock", "claude"] },
+    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "fantasy", "mock"] },   // Eligibility, the Planner and Claude rankings left the menu (16 Oct 2026)
     { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaders", short: "Leaders", modes: ["leaderboard", "trending"] },   // Stuff+ (#pitches) is its own header tab (3 Oct 2026)
   ];   // Settings (#settings) is a plain header link, not a menu (16 Oct 2026); the ⋯ More group it replaced is gone
   const SET_TABS = [["glossary", "Stat glossary"], ["appearance", "Appearance"], ["key", "Colour key"], ["how", "How this page works"]];
@@ -13062,11 +13072,11 @@
     const h = location.hash.replace("#", "");
     const pm = h.match(/^player\/(\d+)$/);
     if (pm) { state.mode = "player"; const id = Number(pm[1]); if (state.x.id !== id) { state.x = { id, type: null, ds: null }; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; } return; }
-    if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["leaders", "trending", "whatif", "settings"].includes(v) ? v : "leaders"; return; }
+    if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["leaders", "trending", "settings"].includes(v) ? v : "leaders"; return; }   // What if is off the page (16 Oct 2026)
     if (h === "settings" || h.startsWith("settings/") || h === "appearance") {   // #appearance is the old More menu's link and the Mac template's hidden one
       state.mode = "settings"; const v = h === "appearance" ? "appearance" : h.split("/")[1];
       if (SET_TABS.some(([k]) => k === v)) state.setTab = v; return; }
-    state.mode = ["home", "draft", "rankings", "eligibility", "trending", "leaderboard", "pitches", "planner", "mock", "claude", "flaws"].includes(h) ? h : h === "explore" ? "player" : "home";
+    state.mode = ["home", "draft", "rankings", "trending", "leaderboard", "pitches", "mock", "flaws"].includes(h) ? h : h === "explore" ? "player" : "home";   // #eligibility / #planner / #claude land on home (16 Oct 2026)
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {
