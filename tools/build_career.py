@@ -341,7 +341,8 @@ SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evg
             "txw",                      # talent xwOBA, the season table's column after xwOBA (Sean, 11 Oct 2026) — talent_season() below
             "gbp",                      # GB Pull%: the share of his grounders pulled (ctx.gbdir), an xBABIP driver (11 Oct 2026)
             "xbabd",                    # the nine drivers' xBABIP — the site's xBABIP since 15 Oct 2026 (xbab_drivers below; "xbabip" stays the model's)
-            "pkhr", "pkbab"]            # what his parks did to his HR/FB (points) and BABIP (points), ball by ball (build_data.py park_fields; 15 Oct 2026) — the HR / FB and BABIP by season tables' Park columns
+            "pkhr", "pkbab",            # what his parks did to his HR/FB (points) and BABIP (points), ball by ball (build_data.py park_fields; 15 Oct 2026) — the HR / FB and BABIP by season tables' Park columns
+            "pa"]                       # his PA that season — xwOBA proj. weights his last two seasons' talent by it (app.js projFill; 16 Oct 2026); the file also carries "lg": {season: the talent league's wOBA}
 
 
 # Talent xwOBA (Sean, 11 Oct 2026: "an xwoba based purely on their talent ... their batted ball mix, k rate, bb rate, xbabip minus luck and noise,
@@ -467,7 +468,7 @@ SBP_KEYS = ["nera", "siera", "pu", "strk", "fstrk", "b3strk"]
 
 
 def season_bb():
-    out, pout = {}, {}
+    out, pout, lgs = {}, {}, {}
     files = [HERE / "data.js"] + sorted((HERE / "hist").glob("mlb-*.js"))
     for f in files:
         raw = f.read_text(); ds = json.loads(raw[raw.index("= {") + 2:].rstrip().rstrip(";"))
@@ -475,6 +476,7 @@ def season_bb():
             continue                                       # spring / postseason files are not season lines
         y = int(ds["meta"]["season"] if "meta" in ds else ds["season"])
         TL = talent_league(ds["players"], ds.get("refPA") or (ds.get("meta") or {}).get("refMinPA") or 300)
+        if TL.get("woba") is not None: lgs[str(y)] = round(TL["woba"], 4)   # the season's talent league (its 300+ PA hitters' wOBA), what each season's talent is measured against
         for p in ds["players"]:
             r = lambda v, d=1: None if v is None or v != v else round(float(v), d)
             if p.get("type") == "P":
@@ -488,10 +490,10 @@ def season_bb():
             fbs = sum(x or 0 for x in mx) if len(mx) >= 8 else 0      # every ball in the mix (MIX_COLS order: gb, pu, ld p/c/o, fb p/c/o, x)
             ti = _tw_inputs(p); tw = talent_of(ti, TL); xd = xbab_drivers(ti, TL)
             gd = cx.get("gbdir"); gn = sum(gd) if gd else 0
-            val = lambda k: (100 * mx[5] / fbs if fbs else None) if k == "pullfb" else tw if k == "txw" else xd if k == "xbabd" else (100 * gd[0] / gn if gn else None) if k == "gbp" else m.get(k)
-            out.setdefault(str(p["id"]), {})[str(y)] = [cx.get("BBE")] + [r(val(k), 3 if k in ("mixw", "babip", "xbabip", "txw", "xbabd") else 1) for k in SBX_KEYS]
+            val = lambda k: (100 * mx[5] / fbs if fbs else None) if k == "pullfb" else tw if k == "txw" else xd if k == "xbabd" else (100 * gd[0] / gn if gn else None) if k == "gbp" else p.get("pa") if k == "pa" else m.get(k)
+            out.setdefault(str(p["id"]), {})[str(y)] = [cx.get("BBE")] + [(int(val(k)) if val(k) is not None else None) if k == "pa" else r(val(k), 3 if k in ("mixw", "babip", "xbabip", "txw", "xbabd") else 1) for k in SBX_KEYS]
     path = HERE / "hist" / "career-bb.js"
-    path.write_text("window.DRAFT_CAREER_BB = " + json.dumps({"keys": SBX_KEYS, "p": out, "pkeys": SBP_KEYS, "pp": pout}, separators=(",", ":")) + ";\n")
+    path.write_text("window.DRAFT_CAREER_BB = " + json.dumps({"keys": SBX_KEYS, "p": out, "pkeys": SBP_KEYS, "pp": pout, "lg": lgs}, separators=(",", ":")) + ";\n")
     print(f"OK {len(out)} hitters' batted-ball / discipline seasons, {len(pout)} pitchers' -> {path.name} ({path.stat().st_size / 1e6:.1f} MB)", flush=True)
 
 

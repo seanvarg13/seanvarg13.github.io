@@ -3996,6 +3996,22 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `html` (`:root[data-view="mobile"]:has(body[data-mode="player"])`) takes the band's blue, so both bounces are blue (the top one meets the blue
   header) while body keeps its white under the bars and tables. The block at the end of `styles.css`.
 
+* **xwOBA proj. with his last two seasons and an age curve (Sean, 16 Oct 2026: "you had a prior recommendation under (1) for the projected xwoba
+  for the next year and it involved stuff like age and other stuff, can you implement that")**: `projFill(v, p)` in `app.js` (in place of `aaaFill`,
+  the last step of every hitter `V()`) builds `txwp` from this season's talent xwOBA against its league **plus his last two seasons' talent against
+  their own leagues, weighted by PA × .4 (last season) / .2 (the one before)** (`TWP.w`; `hist/career-bb.js` now carries **`pa`**, appended to
+  `SBX_KEYS`, and a top-level **`lg`** = each season's talent league wOBA — `season_bb` in `tools/build_career.py`, the file regenerated), the Triple-A
+  line where there is one (the 12 Oct pooling, unchanged), everyone's 250 PA at 30 points under the league, and then **an age curve** (`ageAdj`): a
+  piecewise line in his age this season (knots 24 / 27 / 30 / 33) fitted on what the multi-season projection missed by age — 21 +13, 23 +6, 25 +2,
+  26 0, 28 −2, 30 −5, 32 −9, 34 −12, 36 −14 wOBA points (ages clamped to 19-41). Scratch `audit/h_proj.py` / `h_age2.py`, every 100+ PA hitter-season
+  2015-25 against his next season's wOBA (100+ PA, 3,699 pairs), held out by season: r .499 → .513 with the two seasons → .522 with the curve, error
+  36.8 → 36.2 wOBA points; 300+ PA both years .555 → .558 / 30.5 → 29.8. Full season of a regular MLB season only; a window, split, minors season or
+  span keeps the one-season arithmetic (`talentOf`'s, kept as `m.txwm`). `colsFor` loads career-bb.js (and aaa-tw.js) while the column shows and the
+  pool / rank key carries their arrival (`hxKey`); until it's in, the one-season number plus the age curve shows and the fill runs again. The **xwOBA
+  tab** has a row per prior season ("2025 · 679 PA": his talent vs that league, →), the Triple-A row, a **Regression** row and an **Age N** row stepping
+  to the Next season band. Judge 2026 (age 34, 285 PA at .391; 2025 .422 on 679, 2024 .455 on 704): regressed .386, age −12 → .374 (the one-season
+  number .354). Yordan .400, Trout (34) .344.
+
 ---
 
 ## 10. The football site moved out
