@@ -15,12 +15,14 @@
     H: [["Standard", ["txwp", "woba", "ba", "slg", "dxba", "dxslg", "k", "bb"]],   // talent xwOBA and its projection after the xwOBA headline (Sean, 11 Oct 2026)
         ["Advanced", ["txwp", "woba", "xwdiff", "xwcon", "xk", "mixw", "babip", "xbabip", "bluck", "brel"]],
         ["Batted ball", ["ev", "evfb", "brfb", "fbq", "xhrfb", "ev90", "maxev", "brl", "hh", "bs", "air", "pull", "gb", "pu"]],   // fly-ball power after Avg EV (8 Oct 2026)
-        ["Plate discipline", ["k", "xk", "bb", "whf", "osw", "zsw", "zcon", "ocon"]]],
+        ["Plate discipline", ["k", "xk", "bb", "whf", "osw", "zsw", "zcon", "ocon"]],
+        ["Fantasy", ["fpts", "fpg", "fppa", "fpab", "fpwk", "xfpts", "xfpg", "xfppa", "xfpab", "xfpwk"]]],   // points per unit and expected (Sean, 16 Oct 2026)
     P: [["Standard", ["rating", "xnera", "era", "k", "bb", "kbb", "xkbb", "whf", "strk", "gb"]],   // xnERA right after the nERA headline (Sean, 6 Oct 2026: "put that next to nERA on the leaderboard")   // nERA is the headline column (6 Oct 2026)
         ["Advanced", ["rating", "xnera", "era", "fip", "siera", "xkbb", "ukb", "wsgp"]],
         ["Batted ball", ["gb", "pu", "ev", "hh", "brl"]],
         ["Plate discipline", ["whf", "strk", "zone", "osw", "swing", "zcon", "csw", "swstr"]],
-        ["Pitching+", ["pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "fbv", "ext"]]],   // Pitching+ back in place of Stuff+ (Sean, 6 Oct 2026: "make stuff+ back into pitching+ with the addition of the location and command thing")
+        ["Pitching+", ["pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "fbv", "ext"]],
+        ["Fantasy", ["fpts", "fpg", "fpgs", "fpip", "fpwk", "xfpts", "xfpg", "xfpgs", "xfpip", "xfpwk"]]],   // points per unit and expected (Sean, 16 Oct 2026)   // Pitching+ back in place of Stuff+ (Sean, 6 Oct 2026: "make stuff+ back into pitching+ with the addition of the location and command thing")
   };
   const colLab = (m) => { const l0 = SHORT[m.key] || m.label, l = WS_VAL.has(m.key) || WS_DIF.has(m.key) ? wsLab(l0) : l0; return m.unit === "%" && !l.includes("%") ? l + "%" : l; };
   const SHORT = { txwp: "xwOBA proj.", xwpk: "xwOBA parks", foul: "Foul%", fpc: "Foul/Con", nfpc: "xFoul/Con", xnera: "xnERA", xkw: "Whiff−xK%", xkws: "xWhiff−P+ xK%", ncstr: "xCalled Strk", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strk Whiff", nfoul: "xFoul%", s2whf: "2-strk Whiff", s2sw: "2-strk Sw", s2zone: "2-strk Zone", xkf: "xK%", xks: "Pitching+ xK%", xbbf: "xBB%", xkbb: "x(K-BB)%", xkbbs: "Pitching+ x(K-BB)%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", pjwhf: "Proj Whiff", mixw: "Mix wOBA", mixbab: "Mix xBABIP", nmix: "Mix xwOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", evfb: "FB EV", evld: "EV LD", evgb: "EV GB", brfb: "FB Brl", brld: "Brl LD", brgb: "Brl GB", brl: "Brl%", pull: "Pull Air", pullfb: "Pull FB%", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG" };
@@ -352,19 +354,24 @@
                   // stadium neutral"): xwOBA is the neutral one; this is xwOBA with his parks' effect on each piece put back — talentCore's rawPk
                   { key: "xwpk", label: "xwOBA, his parks", hib: true, dec: 3, unit: "" }];
   // hitter stats that aren't on the card but can be Leaderboard / Trending columns
-  const LB_EXTRA_H = ["txwp", "xwpk", "evfb", "brfb", "fbq", "xhrfb", "xwdiff", "xwcon", "xk", "mixbab", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp", "fpts", "fpg", "fppa"];
-  const LB_EXTRA_P = ["rating", "xnera", "pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "nmix", "nfpc", "fpc", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "wgap", "pjwhf", "fpts", "fpg", "fpip", "fpgs"];   // Whiff vs exp. and the projected Whiff% (7 Oct 2026)   // Pitching+ family, xRating and the expected (Pitching+) columns off the lists (Sean, 6 Oct 2026: "get rid of pitching+ entirely and just go back to stuff+")   // pERA / pK% / pBB% / Pitching uERA off the lists (Sean, 4 Oct 2026: "I simply just want expected whiffs GBs and pus")   // Stuff uERA / Arsenal Opt. off the lists with Stuff+ (4 Oct 2026)
+  const LB_EXTRA_H = ["txwp", "xwpk", "evfb", "brfb", "fbq", "xhrfb", "xwdiff", "xwcon", "xk", "mixbab", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp", "fpts", "fpg", "fppa", "fpab", "fpwk", "xfpts", "xfpg", "xfppa", "xfpab", "xfpwk"];
+  const LB_EXTRA_P = ["rating", "xnera", "pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "nmix", "nfpc", "fpc", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "wgap", "pjwhf", "fpts", "fpg", "fpgs", "fpip", "fpwk", "xfpts", "xfpg", "xfpgs", "xfpip", "xfpwk"];   // Whiff vs exp. and the projected Whiff% (7 Oct 2026)   // Pitching+ family, xRating and the expected (Pitching+) columns off the lists (Sean, 6 Oct 2026: "get rid of pitching+ entirely and just go back to stuff+")   // pERA / pK% / pBB% / Pitching uERA off the lists (Sean, 4 Oct 2026: "I simply just want expected whiffs GBs and pus")   // Stuff uERA / Arsenal Opt. off the lists with Stuff+ (4 Oct 2026)
   const NEXT_KEYS = new Set(["xrat", "nwhf", "ngb", "npu", "nmix", "wgap", "pjwhf", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "nswstr", "ncsw", "ns2whf", "nfoul", "nfpc", "xnera"]);   // xFoul% of contact and xnERA (6 Oct 2026)   // xK% / Pitching+ xK% (4 Oct 2026)
   const XRW = { ksklx: 60, ctrl: 20, nmix: 20 };   // xRating = the Rating's shape with the stuff models driving whiffs and fouls (Sean, 5 Oct 2026): xStrikeout (xWhiff% / x2-strike Whiff% / xFoul% percentiles averaged) 60, Control 20, Mix xwOBA 20. Was Pitching+ x(K-BB)% 80 / Mix xwOBA 20;   // the Rating's shape (x(K-BB)% 80 / Mix wOBA 20, 4 Oct 2026) with the stuff-side pair: Pitching+ x(K-BB)% and Mix xwOBA. Was xks 55 / xbbf 35 / nmix 10;   // the xRating (Sean, 4 Oct 2026: "xrating xK% ... using their stuff expected whiff rates and stuff expected foul rates ... xBB% as standard ... mix xwoba based on their stuff"), 55 / 35 / 10   // xRating and the expected Mix wOBA too (4 Oct 2026)
   // still computed and on the pool's stats, but off every list, panel and sort (Sean, 4 Oct 2026: one Pitching+; "get rid of pERA and pitching+ uERA")
   const RETIRED_P = new Set(["suera", "aopt", "puera", "pera", "nk", "nbb", "uera", "xrat", "stuff", "swhf", "sbb"]);   // Pitching+ and the expected columns back, Stuff+ and the xRating off (Sean, 6 Oct 2026)   // Stuff+ back, the Pitching+ family / xRating / expected columns retired (6 Oct 2026)   // uERA too (Sean, 4 Oct 2026: "Replace uERA with nERA")   // pera / nk / nbb still on the pool's stats, just not listed   // next season's (pERA and the projected rates), read off the pool's stats
   // fantasy points as list columns (Sean, 1 Oct 2026: "on the fantasy rankings and draft board ... points per game and points per PA"):
   // the official season line under the current scoring preset (fantasy.js), full season only — fantFill puts them on V(p)
-  const FANT_H = [{ key: "fpts", label: "Pts", hib: true, dec: 0, unit: "", int: true, showValue: true }, { key: "fpg", label: "Pts/G", hib: true, dec: 2, unit: "", showValue: true },
-                  { key: "fppa", label: "Pts/PA", hib: true, dec: 3, unit: "", showValue: true }];
-  const FANT_P = [{ key: "fpts", label: "Pts", hib: true, dec: 0, unit: "", int: true, showValue: true }, { key: "fpg", label: "Pts/G", hib: true, dec: 2, unit: "", showValue: true },
-                  { key: "fpip", label: "Pts/IP", hib: true, dec: 2, unit: "", showValue: true }, { key: "fpgs", label: "Pts/GS", hib: true, dec: 1, unit: "", showValue: true }];
-  const FANT_KEYS = new Set(["fpts", "fpg", "fppa", "fpip", "fpgs"]);
+  // ... per at-bat and per week too, and the expected family of each (Sean, 16 Oct 2026: "the fantasy points per start, per game, per IP, per PA,
+  // per at bat, per week and then also add expected of those as well to the regular leaderboard"): xPts is a hitter's line at his directional
+  // xBA / xSLG with runs and RBI moved by xwOBA ÷ wOBA (fXLine), a pitcher's luck-neutral line — earned runs at his nERA, the balls in play at league
+  // value for their type (fPLines' N) — each spread over his starts for the per-start number
+  const fd = (key, label, dec, int) => ({ key, label, hib: true, dec, unit: "", int: !!int, showValue: true });
+  const FANT_H = [fd("fpts", "Pts", 0, true), fd("fpg", "Pts/G", 2), fd("fppa", "Pts/PA", 3), fd("fpab", "Pts/AB", 3), fd("fpwk", "Pts/Wk", 1),
+                  fd("xfpts", "xPts", 0, true), fd("xfpg", "xPts/G", 2), fd("xfppa", "xPts/PA", 3), fd("xfpab", "xPts/AB", 3), fd("xfpwk", "xPts/Wk", 1)];
+  const FANT_P = [fd("fpts", "Pts", 0, true), fd("fpg", "Pts/G", 2), fd("fpgs", "Pts/GS", 1), fd("fpip", "Pts/IP", 2), fd("fpwk", "Pts/Wk", 1),
+                  fd("xfpts", "xPts", 0, true), fd("xfpg", "xPts/G", 2), fd("xfpgs", "xPts/GS", 1), fd("xfpip", "xPts/IP", 2), fd("xfpwk", "xPts/Wk", 1)];
+  const FANT_KEYS = new Set([...FANT_H, ...FANT_P].map((m) => m.key));
   // Arsenal optimization (Sean, 28 Sep 2026: "how much the pitcher optimizes their arsenal %s to throw pitches that on
   // average get more swing and miss"): his pitches' xWhiff averaged by how often he actually throws each, minus the same
   // pitches averaged at a typical mix — the league's usage of each of those pitch types (among pitchers who throw it),
@@ -1251,22 +1258,29 @@
   let fantGen = 0;
   function fantFill(v, p) {
     if (v._fg === fantGen) return v;
-    const y = String(DS.season), none = { fpts: null, fpg: null, fppa: null, fpip: null, fpgs: null };
+    const y = String(DS.season), none = {}; for (const k of FANT_KEYS) none[k] = null;
     if ((DS.level && DS.level !== "MLB") || DS.kind || DS.multi || needsDays() || SPLIT.hand !== "all" || SPLIT.venue !== "all" || roleOf(SPLIT) !== "all" || !FYEARS.includes(y)) {
       v.m = Object.assign({}, v.m, none); v._fg = fantGen; return v;
     }
     const F = fData(y); if (!F) return v;                       // not here yet: asked for by colsFor when a points column is showing
     const w = fpreset().w, out = Object.assign({}, none);
+    const rd = (x, d) => (x == null ? null : Math.round(x * 10 ** d) / 10 ** d), per = (t, n, d) => (n ? rd(t / n, d) : null);
+    const weeks = (games) => (games && games.length ? new Set(games.map((g) => weekOf(g.date))).size : 0);   // Monday-to-Sunday weeks with a game
     if (p.type === "H") {
       const o = fHit(F, p.id);
-      if (o) { out.fpts = Math.round(fPts(w.H, o)); out.fpg = o.G ? Math.round(100 * fPts(w.H, o) / o.G) / 100 : null; out.fppa = o.PA ? Math.round(1000 * fPts(w.H, o) / o.PA) / 1000 : null; }
+      if (o) {
+        const wk = weeks(fGamesOf(F, "H", p.id));
+        const fill = (x, L) => { if (!L) return; const t = fPts(w.H, L); out[x + "fpts"] = Math.round(t); out[x + "fpg"] = per(t, o.G, 2); out[x + "fppa"] = per(t, o.PA, 3); out[x + "fpab"] = per(t, o.AB, 3); out[x + "fpwk"] = per(t, wk, 1); };
+        fill("", o); fill("x", fXLine(o, v));
+      }
     } else {
       const o = fPit(F, p.id);
       if (o) {
-        const t = fPts(w.P, o), st = o.games.filter((g) => g.GS);
-        out.fpts = Math.round(t); out.fpg = o.games.length ? Math.round(100 * t / o.games.length) / 100 : null;
-        out.fpip = o.IP ? Math.round(100 * t / o.IP) / 100 : null;
-        out.fpgs = st.length ? Math.round(10 * st.reduce((s, g) => s + fPts(w.P, g), 0) / st.length) / 10 : null;
+        const st = o.games.filter((g) => g.GS), wk = weeks(o.games);
+        const fill = (x, L, games) => { if (!L) return; const t = fPts(w.P, L); out[x + "fpts"] = Math.round(t); out[x + "fpg"] = per(t, o.games.length, 2); out[x + "fpip"] = per(t, o.IP, 2);
+          out[x + "fpgs"] = st.length ? rd(games.filter((g) => g.GS).reduce((a, g) => a + fPts(w.P, g), 0) / st.length, 1) : null; out[x + "fpwk"] = per(t, wk, 1); };
+        fill("", o, o.games);
+        const N = fPLines(o, v, null).N; if (N) fill("x", N, fSpread(o, N, o.games));   // the luck-neutral line spread back over his games for the per-start number
       }
     }
     v.m = Object.assign({}, v.m, out); v._fg = fantGen;
@@ -2786,7 +2800,7 @@
   }
   // what a column measures: an outcome (Result) or the process behind it; anything unlisted reads as Process
   const RESULT_KEYS = new Set(["score", "rating", "nera", "xnera", "era", "fip", "siera", "mera", "uera", "k", "bb", "kbb", "xk", "xkf", "xbbf", "xkbb", "xkbbs", "xks", "uk", "ubb", "ukb", "nk", "nbb", "pera",
-                               "woba", "xwd", "xws", "xwdiff", "xwcon", "avg", "ba", "obp", "slg", "ops", "hr", "babip", "xbabip", "bluck", "brel", "dxba", "dxslg", "xba", "xslg", "sb", "sba", "sbp", "fpts", "fpg", "fppa", "fpip", "fpgs", "xpts", "npts", "upts"]);
+                               "woba", "xwd", "xws", "xwdiff", "xwcon", "avg", "ba", "obp", "slg", "ops", "hr", "babip", "xbabip", "bluck", "brel", "dxba", "dxslg", "xba", "xslg", "sb", "sba", "sbp", "fpts", "fpg", "fppa", "fpab", "fpwk", "fpip", "fpgs", "xfpts", "xfpg", "xfppa", "xfpab", "xfpwk", "xfpip", "xfpgs", "xpts", "npts", "upts"]);
   // press and hold a column name for its note (minimal pass 7, Sean, 30 Sep 2026) — a tap still sorts. The note: what the
   // stat is (the glossary) and the middle of the pool the list ranks against
   function colNote(m, g) {
@@ -5228,7 +5242,8 @@
           const at = groups.find((grp) => grp.metrics.some((m) => m.key === "ev"));
           if (at) at.metrics.splice(at.metrics.findIndex((m) => m.key === "ev") + 1, 0, ...fbm); else groups.push({ group: "Fly-ball power", metrics: fbm }); }
       } }
-    groups.push({ group: "Fantasy points", metrics: pit ? FANT_P : FANT_H });   // under the current scoring preset (Sean, 1 Oct 2026)
+    { const fm = pit ? FANT_P : FANT_H;   // under the current scoring preset (Sean, 1 Oct 2026); the expected family its own group (16 Oct 2026)
+      groups.push({ group: "Fantasy points", metrics: fm.filter((m) => !m.key.startsWith("x")) }, { group: "Expected fantasy points", metrics: fm.filter((m) => m.key.startsWith("x")) }); }
     const seen = new Set();
     const grid = el("div", "colgrid");
     { // Year and Age always sit right after the name
@@ -6013,8 +6028,17 @@
     fpts: "Fantasy points for the season under your current scoring settings (Fantasy ▸ Scoring settings), from the official box scores. Full season only.",
     fpg: "Fantasy points per game played, under your current scoring settings. Full season only.",
     fppa: "Fantasy points per plate appearance, under your current scoring settings — rate value that doesn't depend on playing time. Full season only.",
+    fpab: "Fantasy points per at-bat, under your current scoring settings. Full season only.",
+    fpwk: "Fantasy points per week played — the Monday-to-Sunday weeks with at least one game — under your current scoring settings. Full season only.",
     fpip: "Fantasy points per inning pitched, under your current scoring settings. Full season only.",
     fpgs: "Fantasy points per start (his starts only), under your current scoring settings. Full season only.",
+    xfpts: "Expected fantasy points: the season's line with the luck taken out. A hitter's hits and total bases at his directional xBA / xSLG over the same at bats (the extra-base mix scaled to hit both), his runs and RBI moved by his xwOBA ÷ wOBA, walks, strikeouts and steals as they happened. A pitcher's earned runs at his nERA and his hits, homers and total bases allowed at the league's value for the balls in play he gave up, strikeouts, walks, wins, saves and holds as they happened. Under your current scoring settings, full season only.",
+    xfpg: "Expected fantasy points per game played (see xPts). Full season only.",
+    xfppa: "Expected fantasy points per plate appearance (see xPts). Full season only.",
+    xfpab: "Expected fantasy points per at-bat (see xPts). Full season only.",
+    xfpwk: "Expected fantasy points per week played (see xPts). Full season only.",
+    xfpip: "Expected fantasy points per inning pitched (see xPts). Full season only.",
+    xfpgs: "Expected fantasy points per start — the expected line spread over his starts by the same ratios (see xPts). Full season only.",
     xwcon: "xwOBA on contact: the directional model's value of his average batted ball — xwOBA with his walks taken out, spread over his balls in play. League average is about .375.",
     spd: "Sprint Speed: Baseball Savant's feet per second in his fastest one-second window, averaged over the top two-thirds of his competitive runs (5+ of them). About 27 is average, 30 is elite. For the whole season only.",
     sb: "Stolen bases, official. For the whole season only.",
@@ -6628,47 +6652,34 @@
     if (fLeadCache.size > 12) fLeadCache.delete(fLeadCache.keys().next().value);
     return res;
   }
-  function fLeadCols(grp, basis, trending) {
+  // the Fantasy Leaderboard's columns (Sean, 16 Oct 2026: "get rid of a lot of the stats and keep the ones that matter which are the points per
+  // unit of measurement and expected points per unit of measurement ... per start, per game, per IP, per PA, per at bat, per week and then also
+  // add expected of those"): three groups over the column names — Points, Expected points (a hitter's xPts: the directional xBA / xSLG line;
+  // a pitcher's: the luck-neutral line, earned runs at his nERA, shown as xPts too) and Playing time. Trending keeps the season rate and the
+  // Trend inside Points. The Actual / Expected / Both and Luck-neutral / Underlying bases are gone (fLeadRows still builds the underlying line)
+  function fLeadCols(grp, trending) {
     const num = (get, fmt, opts = {}) => Object.assign({ get, fmt, num: true }, opts);
     const f3 = (x) => (x == null ? "–" : x.toFixed(3));
     const o = (k, fmt = f0) => num((r) => r.o[k], fmt);
     const ln = (r, b) => (b ? r[b] : r);                         // the actual line, or an expected one
-    const pre = { "": "", x: "x", n: "n", u: "u" };
-    const tot = (b) => [`${pre[b]}Pts`, num((r) => (ln(r, b) ? ln(r, b).pts : null), f1, { paint: true })];
+    const pre = { "": "", x: "x", n: "x" };                      // a pitcher's expected family is the luck-neutral line
+    const tot = (b) => [`${pre[b]}Pts`, num((r) => (ln(r, b) ? ln(r, b).pts : null), f1, { paint: true, title: b ? "Expected points" : "Points" })];
     const perG = (b) => [`${pre[b]}Pts/G`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.o.G) : null), f2, { paint: true, title: grp === "P" ? "Points per appearance" : "Points per game" })];
     const perAB = (b) => [`${pre[b]}Pts/AB`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.o.AB) : null), f3, { paint: true })];
     const perPA = (b) => [`${pre[b]}Pts/PA`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.o.PA) : null), f3, { paint: true })];
     const perWk = (b) => [`${pre[b]}Pts/Wk`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.weeks) : null), f1, { paint: true, title: "Points per week he played (Monday to Sunday weeks with at least one game)" })];
     const perGS = (b) => [`${pre[b]}Pts/GS`, num((r) => (ln(r, b) && r.starts.length ? ln(r, b).ptsS / r.starts.length : null), f2, { paint: true, title: "Points per start" })];
     const perIP = (b) => [`${pre[b]}Pts/IP`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.o.IP) : null), f2, { paint: true })];
-    const delta = (b) => ["Δ", num((r) => (r[b] ? r[b].pts - r.pts : null), fDelta, { paint: true, title: "Expected points minus actual" })];
-    const arrow = (lab, k, b, dec = 0) => [lab, { get: (r) => `${dec ? r.o[k].toFixed(dec) : Math.round(r.o[k])} → ${r[b] ? (dec ? r[b].o[k].toFixed(dec) : f0(r[b].o[k])) : "–"}` }];
-    const why = (lab, b, k, fmt, opts) => [lab, num((r) => (r[b] ? r[b].o.why[k] : null), fmt, opts)];
     const wk = ["Wks", num((r) => r.weeks, f0, { title: "Weeks with at least one game" })];
-    const cols = [];
-    if (grp === "H") {
-      const line = [["G", o("G")], ["PA", o("PA")], ["AB", o("AB")]];
-      if (basis === "x") cols.push(tot("x"), perG("x"), perPA("x"), perAB("x"), perWk("x"), tot(""), delta("x"), arrow("H → xH", "H", "x"), arrow("TB → xTB", "TB", "x"),
-        arrow("R → xR", "R", "x"), arrow("RBI → xRBI", "RBI", "x"), why("xBA", "x", "xba", (x) => fmtX(x)), why("xSLG", "x", "xslg", (x) => fmtX(x)),
-        why("xwOBA", "x", "xw", (x) => fmtX(x)), why("wOBA", "x", "woba", (x) => fmtX(x)), ...line);
-      else if (basis === "both") cols.push(tot(""), tot("x"), delta("x"), perG(""), perG("x"), perPA(""), perPA("x"), perAB(""), perAB("x"), perWk(""), perWk("x"), ...line, wk);
-      else cols.push(tot(""), perG(""), perPA(""), perAB(""), perWk(""), ...line, wk, ["R", o("R")], ["HR", o("HR")], ["RBI", o("RBI")], ["SB", o("SB")], ["BB", o("BB")], ["K", o("K")],
-        ["AVG", num((r) => div(r.o.H, r.o.AB), (x) => fmtX(x))], ["OBP", num((r) => div(r.o.H + r.o.BB + r.o.HBP, r.o.AB + r.o.BB + r.o.HBP + r.o.SF), (x) => fmtX(x))],
-        ["SLG", num((r) => div(r.o.TB, r.o.AB), (x) => fmtX(x))]);
-    } else {
-      const line = [["G", o("G")], ["GS", o("GS")], ["IP", num((r) => r.o.IP, (x) => fmtIP(x))]];
-      if (basis === "n") cols.push(tot("n"), perG("n"), perGS("n"), perIP("n"), perWk("n"), tot(""), delta("n"), arrow("H → nH", "H", "n"), arrow("ER → nER", "ER", "n"),
-        ["ERA", num((r) => div(r.o.ER * 9, r.o.IP), f2, { low: true })], why("nERA", "n", "nera", f2, { low: true }), ...line);
-      else if (basis === "u") cols.push(tot("u"), perG("u"), perGS("u"), perIP("u"), perWk("u"), tot(""), delta("u"), arrow("K → uK", "K", "u"), arrow("BB → uBB", "BB", "u"),
-        arrow("ER → uER", "ER", "u"), why("uK%", "u", "uk", f1), why("uBB%", "u", "ubb", f1, { low: true }), why("uERA", "u", "uera", f2, { low: true }), ...line);
-      else if (basis === "all") cols.push(tot(""), tot("n"), tot("u"), perG(""), perG("n"), perG("u"), perGS(""), perGS("n"), perGS("u"), perWk(""), perWk("n"), perWk("u"), ...line);
-      else cols.push(tot(""), perG(""), perGS(""), ["Pts/RP", num((r) => (r.relief.length ? r.ptsR / r.relief.length : null), f2, { paint: true, title: "Points per relief appearance" })],
-        perIP(""), perWk(""), ...line, wk, ["W", o("W")], ["SV", o("SV")], ["HD", o("HD")], ["K", o("K", f0)], ["BB", o("BB", f0)], ["H", o("H", f0)], ["ER", o("ER", f0)],
-        ["ERA", num((r) => div(r.o.ER * 9, r.o.IP), f2, { low: true })], ["WHIP", num((r) => div(r.o.H + r.o.BB, r.o.IP), f2, { low: true })], ["QS", o("QS", f0)]);
-    }
-    if (trending) cols.splice(2, 0, ["Szn Pts/G", num((r) => r.szn, f2, { title: "Points per game over his whole season" })],
-      ["Trend", num((r) => (r.szn == null ? null : div(r.pts, r.o.G) - r.szn), (x) => (x == null ? "–" : (x >= 0 ? "+" : "") + x.toFixed(2)), { paint: true, title: "Points per game in the window minus his season rate" })]);
-    return cols.map(([label, c]) => Object.assign({ label }, c));
+    const G = (name, list) => list.map(([label, c]) => Object.assign({ label, grp: name }, c));
+    const cols = grp === "H"
+      ? [...G("Points", [tot(""), perG(""), perPA(""), perAB(""), perWk("")]), ...G("Expected points", [tot("x"), perG("x"), perPA("x"), perAB("x"), perWk("x")]),
+         ...G("Playing time", [["G", o("G")], ["PA", o("PA")], ["AB", o("AB")], wk])]
+      : [...G("Points", [tot(""), perG(""), perGS(""), perIP(""), perWk("")]), ...G("Expected points", [tot("n"), perG("n"), perGS("n"), perIP("n"), perWk("n")]),
+         ...G("Playing time", [["G", o("G")], ["GS", o("GS")], ["IP", num((r) => r.o.IP, (x) => fmtIP(x))], wk])];
+    if (trending) cols.splice(2, 0, ...G("Points", [["Szn Pts/G", num((r) => r.szn, f2, { title: "Points per game over his whole season" })],
+      ["Trend", num((r) => (r.szn == null ? null : div(r.pts, r.o.G) - r.szn), (x) => (x == null ? "–" : (x >= 0 ? "+" : "") + x.toFixed(2)), { paint: true, title: "Points per game in the window minus his season rate" })]]));
+    return cols;
   }
 
   // ----- page -----
@@ -6744,8 +6755,6 @@
     else bits.push(f.win.from || f.win.to ? `${f.win.from ? fmtDate(f.win.from) : "opening day"} – ${f.win.to ? fmtDate(f.win.to) : "latest"}` : "full season");
     if (f.hand !== "all") bits.push(`vs ${f.hand}H${pit ? "B" : "P"}`);
     if (f.venue !== "all") bits.push(f.venue);
-    const B = { x: "expected", both: "actual + expected", n: "luck-neutral", u: "underlying", all: "all three" }[f.basis[f.grp]];
-    if (B) bits.push(B + " points");
     if (f.q) bits.push(`"${f.q}"`);
     bits.push(f.view === "trending" ? `${f.tmin[f.grp]}+ ${pit ? "IP" : "PA"} in span` : `${pit ? f.minP : f.minH}+ ${pit ? "IP" : "PA"}`);
     return bits.join(" · ");
@@ -6778,8 +6787,6 @@
     }
     row.append(seg("Handedness", [["all", "All"], ["L", pit ? "vs LHB" : "vs LHP"], ["R", pit ? "vs RHB" : "vs RHP"]], f.hand, (v) => { f.hand = v; }));
     row.append(seg("Venue", [["all", "All"], ["home", "Home"], ["away", "Away"]], f.venue, (v) => { f.venue = v; }));
-    row.append(seg("Points", pit ? [["act", "Actual"], ["n", "Luck-neutral"], ["u", "Underlying"], ["all", "All three"]] : [["act", "Actual"], ["x", "Expected"], ["both", "Both"]],
-                   f.basis[f.grp], (v) => { f.basis[f.grp] = v; }));
     return row;
   }
   function fLeadNote(P, wtxt, y, F, spec, n) {
@@ -6791,8 +6798,8 @@
       `${y} official game logs through ${F.through}, ${win}${split ? ", " + split : ""}; ${n} ${pit ? "pitchers" : "hitters"} with ${f.view === "trending" ? `${f.tmin[f.grp]}+ ${pit ? "IP" : "PA"} in it` : `${pit ? f.minP : f.minH}+ ${pit ? "IP" : "PA"} on the season`}.`,
       "Per week = points over the Monday-to-Sunday weeks he played in (at least one game)."];
     if (spec.hand !== "all") parts.push(`Handedness isn't in a box score, so each game's line is shared out by that day's Statcast plate appearances against each side (hits by hits, total bases by total bases, runs and RBI by wOBA production, steals by times on base, the rest by ${pit ? "batters faced" : "plate appearances"}); per game counts the games he faced that side.`);
-    if (!pit && f.basis.H !== "act") parts.push("Expected (xPts): hits and total bases at his directional xBA / xSLG over the same at bats, the extra-base mix scaled to hit both; runs and RBI moved by his xwOBA ÷ wOBA (production drives both, and the model can't place runners); walks, strikeouts and steals as they happened.");
-    if (pit && f.basis.P !== "act") parts.push("Luck-neutral (nPts): strikeouts and walks as they happened, earned runs at his luck-neutral ERA, hits / homers / total bases moved by what his balls in play were worth at league value for their type against what they produced. Underlying (uPts): the same, with strikeouts and walks at his uK% / uBB% and earned runs at his uERA, hits scaled to the balls in play those rates leave. Wins, saves, holds and quality starts as they happened; per start spreads each category over his starts by the same ratios.");
+    parts.push(pit ? "Expected (xPts): strikeouts and walks as they happened, earned runs at his luck-neutral ERA (nERA), hits / homers / total bases moved by what his balls in play were worth at league value for their type against what they produced; wins, saves, holds and quality starts as they happened; per start spreads each category over his starts by the same ratios."
+      : "Expected (xPts): hits and total bases at his directional xBA / xSLG over the same at bats, the extra-base mix scaled to hit both; runs and RBI moved by his xwOBA ÷ wOBA (production drives both, and the model can't place runners); walks, strikeouts and steals as they happened.");
     if (f.view === "trending") parts.push("Trend = points per game in the window minus his season rate.");
     return parts.join(" ");
   }
@@ -6863,7 +6870,7 @@
     }
     const qq = f.q.trim().toLowerCase();
     let shown = inPos.filter((r) => !qq || r.p.name.toLowerCase().includes(qq) || (r.p.team || "").toLowerCase().includes(qq));
-    const cols = lead ? fLeadCols(f.grp, f.basis[f.grp], f.view === "trending") : fColumns(f.view, f.grp);
+    const cols = lead ? fLeadCols(f.grp, f.view === "trending") : fColumns(f.view, f.grp);
     const sortKey = f.sort && cols.some((c) => c.label === f.sort) ? f.sort : cols[0].label;
     const sc = cols.find((c) => c.label === sortKey);
     const dir = f.dir === "asc" ? 1 : -1;
@@ -6884,13 +6891,22 @@
     // B-Ref's table (Sean, 11 Oct 2026: "make all of the fantasy tables be the baseball reference table design"): Rk and Player frozen,
     // Tm and Pos their own columns, the column names on the band with the sorted one lit, the sorted column (and Trend / Δ) filling its cells
     const table = el("table", "sbt brt fbt"), thead = el("thead"), tr = el("tr");
+    // the over-header (16 Oct 2026): Points · Expected points · Playing time over the column names where the columns carry a group, a red rule
+    // where one ends (brTable's tr.over, by hand here since the header's cells are sort buttons)
+    const ends = new Set();
+    if (cols.some((c) => c.grp)) {
+      const over = el("tr", "over"), lead = el("th", "ge", ""); lead.colSpan = 4; over.append(lead);
+      for (let i = 0; i < cols.length;) { let j = i; while (j + 1 < cols.length && cols[j + 1].grp === cols[i].grp) j++;
+        const c = el("th", null, cols[i].grp || ""); if (j > i) c.colSpan = j - i + 1; if (j < cols.length - 1) { c.classList.add("ge"); ends.add(j); } over.append(c); i = j + 1; }
+      thead.append(over);
+    }
     tr.append(el("th", "f1", "Rk"), el("th", "l f3", "Player"), el("th", null, "Tm"), el("th", "ge", "Pos"));
-    for (const c of cols) {
-      const th = el("th"), on = c.label === sortKey, b = el("button", "h sortbtn" + (on ? " on" : ""), c.label); b.type = "button"; if (c.title) b.title = c.title;
+    cols.forEach((c, j) => {
+      const th = el("th", ends.has(j) ? "ge" : null), on = c.label === sortKey, b = el("button", "h sortbtn" + (on ? " on" : ""), c.label); b.type = "button"; if (c.title) b.title = c.title;
       if (on) { th.setAttribute("aria-sort", f.dir === "asc" ? "ascending" : "descending"); th.classList.add("lit"); }
       b.addEventListener("click", () => { if (f.sort === c.label) f.dir = f.dir === "asc" ? "desc" : "asc"; else { f.sort = c.label; f.dir = c.low ? "asc" : "desc"; } renderFTable(box); });
       th.append(b); tr.append(th);
-    }
+    });
     thead.append(tr); table.append(thead);
     const tbody = el("tbody");
     shown.slice(pg.start, pg.end).forEach((r, k) => {
@@ -6900,6 +6916,7 @@
       trr.append(el("td", "rk f1", String(i + 1)), who, el("td", "c", r.p.team || ""), el("td", "c ge", fPos(r.p).join(", ") || r.p.primary || ""));
       cols.forEach((c, j) => {
         const v = c.get(r), td = el("td", c.num ? null : "c", c.fmt ? c.fmt(v) : String(v ?? "–"));
+        if (ends.has(j)) td.classList.add("ge");
         // colour only what you're sorting by, plus the signed Trend / Δ — the whole cell, as on every B-Ref table
         if (c.paint && v != null && (c.label === sortKey || c.label === "Trend" || c.label === "Δ")) { const pct = pcts[c.label][i]; if (pct != null) heatTd(td, pct); }
         trr.append(td);
@@ -6911,7 +6928,8 @@
     });
     table.append(tbody);
     const scroll = el("div", "fscroll brscroll"); scroll.append(table); wrap.append(scroll); if (mobileView()) wrap.append(pagerBot);
-    requestAnimationFrame(() => { const rk = table.querySelector("td.f1") || table.querySelector("th.f1"); if (rk) table.style.setProperty("--sbw1", rk.offsetWidth + "px"); });   // Player freezes right after Rk
+    requestAnimationFrame(() => { const rk = table.querySelector("td.f1") || table.querySelector("th.f1"); if (rk) table.style.setProperty("--sbw1", rk.offsetWidth + "px");
+      const ov = table.querySelector("tr.over"); if (ov) table.style.setProperty("--overh", ov.offsetHeight + "px"); });   // Player freezes right after Rk; the column names pin under the over row
     fFloatHead(wrap, scroll, table);
     if (!shown.length) wrap.append(el("p", "xempty", "No players match."));
     const wtxt = Object.entries(P.w[f.grp]).filter(([, v]) => Number(v)).map(([k, v]) => `${k} ${v > 0 ? "+" : ""}${v}`).join(", ");
@@ -10029,7 +10047,7 @@
   const OUTCOME_LABEL = { mixw: "Mix wOBA", mixbab: "Mix xBABIP", woba: "wOBA", xwd: "xwOBA", ev: "Avg EV", evfb: "EV on FB", evld: "EV on LD", evgb: "EV on GB", brfb: "Brl% on FB", brld: "Brl% on LD", brgb: "Brl% on GB", fb: "FB%", ld: "LD%", brl: "Barrel%", bs: "Bat Speed", hh: "Hard-Hit%", ev90: "90th% EV",
                           maxev: "Max EV", zsw: "Z-Swing%", osw: "O-Swing%", zmo: "Z−O Swing%", swing: "Swing%", bb: "BB%", zcon: "Z-Contact%", ocon: "O-Contact%",
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
-                          babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", txwp: "xwOBA proj.", xwpk: "xwOBA, his parks", aopt: "Arsenal Opt.", sloc: "Location+", pitch: "Pitching+", pwhf: "Whiff+ (loc)", pbb: "Batted-ball+ (loc)", xwcon: "xwOBAcon", fpts: "Pts", fpg: "Pts/G", fppa: "Pts/PA", fpip: "Pts/IP", fpgs: "Pts/GS",
+                          babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", txwp: "xwOBA proj.", xwpk: "xwOBA, his parks", aopt: "Arsenal Opt.", sloc: "Location+", pitch: "Pitching+", pwhf: "Whiff+ (loc)", pbb: "Batted-ball+ (loc)", xwcon: "xwOBAcon", fpts: "Pts", fpg: "Pts/G", fppa: "Pts/PA", fpab: "Pts/AB", fpwk: "Pts/Wk", fpip: "Pts/IP", fpgs: "Pts/GS", xfpts: "xPts", xfpg: "xPts/G", xfppa: "xPts/PA", xfpab: "xPts/AB", xfpwk: "xPts/Wk", xfpip: "xPts/IP", xfpgs: "xPts/GS",
                           spd: "Sprint Speed", sb: "SB", sba: "SB Att.", sbp: "SB%" };
   const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", fstrk: "1st-pitch Strike%", b3strk: "3-ball Strike%", xbbf: "xBB%", xkf: "xK%", xks: "Pitching+ xK%", xkbb: "x(K-BB)%", xkbbs: "x(K-BB)%", xkw: "Whiff% − xK%", xkws: "xWhiff% − xK%", rating: "Rating", ctrl: "Control", foul: "Foul%", fpc: "Foul% of contact", nfpc: "xFoul% of contact", xnera: "xnERA", csw: "CSW%", s2whf: "2-strike Whiff%", s2sw: "2-strike Swing%", s2zone: "2-strike Zone%", nwhf: "xWhiff%", ncstr: "xCalled Strike%", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strike Whiff%", nfoul: "xFoul%", ubb: "uBB%", zcon: "Z-Contact%", swing: "Swing%", cstr: "Called Strike%", swstr: "SwStr%", nmix: "Mix xwOBA", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+", sloc: "Location+" });   // a pitcher's O-Swing% is his chase rate
   // the percentile bars behind the xK% and xBB% tabs (Sean, 4 Oct 2026: "a tab that shows the same expected strikeout percentile bars that we
