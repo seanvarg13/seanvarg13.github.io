@@ -3983,6 +3983,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   so `.btabs .btab` takes the bar's buttons' 1px white edge and no shadow (the block at the end of `styles.css`); the blue-grey edge and the lift
   are gone. Computed style on both layouts: edge and shadow equal to Filters ▾ / Raw ▾ and the ×; the tabs keep their own 50 / 46px height.
 
+* **Blue under the home bar on a phone's full page too (Sean, 16 Oct 2026, Jensen's page: "I'm still seeing the bottom white area")**: the
+  phone body's bottom padding for the iPhone's home-bar inset (`env(safe-area-inset-bottom)`, 34px on his phone, 0 headless — which is why the
+  13 Oct-style check missed it) sat under the blue section as a white strip. On the player page it's 0 and `.pbelow2` carries the inset in its
+  own padding (`calc(24px + env(...))`), as the popup already did; the wrapper's and `#xboard`'s bottom margin / padding / border are 0 there too
+  (a last pixel of white). Checked headless with every `env(safe-area-inset-bottom)` swapped for 34px: 0px under the blue. The block at the
+  end of `styles.css`.
+
 ---
 
 ## 10. The football site moved out
