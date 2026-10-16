@@ -5712,3 +5712,29 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #board #bscroll > #pagerbot .phsize { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #board #bscroll > #pagerbot .phsize > span { display: inline !important; font-size: 12.5px !important; color: var(--muted) !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #board #bscroll > #pagerbot .phsize select, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #board #bscroll > #pagerbot .phsize .dd { height: 30px !important; min-height: 30px !important; font-size: 13px; }
+
+/* Settings (Sean, 16 Oct 2026: "Make the three dots thing at the end one button dont have it drop the other stuff down and call it settings and have
+   the stat glossary, appearance, color key, and how this page works just be on that page and each be a different button at the top for it"): the ⋯
+   More menu is gone — Settings is a header button like Home · Leaders · Pitching+, and its page is the Appearance page's white card (#pboard) with
+   four tabs across the top in the Filters button's dress (white, square, navy 700 condensed type, the picked one filled the band's blue with white
+   type, no lift — the card's own tabs' rules are anchored on #xboard / #modal, so these are their twin for #pboard), the tab's content under them:
+   the glossary hitters then pitchers, the colour key and the how-to as the More menu's windows had them, Games through … at the foot. */
+body[data-mode="settings"] main.wrap > .notes { display: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pboard .stabs { display: flex !important; flex-wrap: wrap; justify-content: flex-start !important; gap: 14px; margin: 0 0 22px; padding: 0; border: 0; background: none; box-shadow: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pboard .stabs .btab { display: inline-flex !important; align-items: center; justify-content: center; height: 40px !important; min-height: 0 !important; padding: 0 14px !important;
+  background: #ffffff !important; color: var(--ink) !important; border: 1px solid #c3d3e3 !important; border-radius: 0 !important;
+  font: 700 18px/1 var(--display) !important; letter-spacing: 0 !important; text-transform: none !important; text-decoration: none !important; box-shadow: none !important; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pboard .stabs .btab:hover { background: #f3f7fb !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pboard .stabs .btab.on { background: var(--band2, var(--accent-2)) !important; color: #ffffff !important; border-color: var(--band2, var(--accent-2)) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #pboard .stabs { gap: 8px; margin-bottom: 16px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #pboard .stabs .btab { height: 36px !important; padding: 0 10px !important; font-size: 14px !important; flex: 1 1 auto; }   /* the row wraps where it must: three on the first line, the long one on its own */
+#pboard .ahd.shd { padding-bottom: 12px; }
+#pboard .sbody .ahd { padding-bottom: 10px; }
+#pboard .sgh { margin: 18px 0 8px; font: 700 17px/1.2 var(--display); color: var(--ink); }
+#pboard .sbody > .sgh:first-of-type { margin-top: 6px; }
+#pboard .sbody .glossary { margin: 0; }
+#pboard .sbody .prose { display: grid; gap: 12px; margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+#pboard .sbody .prose b { color: var(--ink); }
+#pboard .sbody .prose .scale { display: inline-flex; gap: 3px; vertical-align: middle; margin-inline: 4px; }
+#pboard .sbody .prose .scale i { width: 14px; height: 10px; display: inline-block; }
+#pboard .sstamp { margin: 24px 0 4px; padding-top: 10px; border-top: 1px solid var(--hair); font-size: 12.5px; color: var(--muted); }
