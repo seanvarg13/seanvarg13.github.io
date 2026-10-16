@@ -4057,6 +4057,16 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   fly-ball share 26% → 8%, Anthony's K% up), so they're off it — the card says who moved, not who should. A window piece on ~100 PA is noisy by nature
   (a K% half his actual rate; xHR/FB on ~30 fly balls); the "if it held" number takes the rest of his game as it is.
 
+* **Fixing the flaw is a page (Sean, 16 Oct 2026, from the card on his phone: "make it so I can expand the fixing the flaw table and see the whole
+  table of it, like maybe make it its own page and it'll have its own button page on the menu")**: the card's arithmetic is `flawRows()` (before
+  `renderHome`; `FX` / `FX_PCS` / `flawNote` beside it, cached per dataset and whether days.js is in), and **`#flaws`** (`renderFlaws`, mode `flaws`,
+  in the Pitching+ board's standing card like the Claude rankings — every `[data-mode="claude"]` rule in `styles.css` names `flaws` too) lists every
+  row it ranks: a `brTable` (`pbt flawt`, Rk and Player frozen) with Rk · Player · Tm · Elite at | The flaw: Piece · Season · Last 30 · PA | xwOBA:
+  Season · If it held (filled) · Δ, on a phone Rk · Player · Flaw · xwOBA · If held · Δ; the count line says "33 hitters · 111 elite with a flaw";
+  a name opens his page on the xwOBA tab; the rules note under it. The page asks for the day rows itself (`ensureDays`, "Loading game-by-game
+  data…" until then). **The header** has a **Fixing the flaw** button after Pitching+ (`pitchBoardEl`; `readMode`, `renderNow`'s `pitches` set,
+  `listMode`, `BACK_MODES`), and home's card keeps its five / four rows with a "Full list →" link to the page in the Leaderboard link's place.
+
 ---
 
 ## 10. The football site moved out

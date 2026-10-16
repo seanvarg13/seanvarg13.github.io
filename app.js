@@ -4270,6 +4270,9 @@
         const a = el("a", null, "Pitching+"); a.href = "#pitches"; a.dataset.mode = "pitches"; a.title = "Every pitcher's pitches graded";
         lb.after(a); if (fan) a.after(fan);
       } }
+    // Fixing the flaw is a page of its own in the header (Sean, 16 Oct 2026: "its own button page on the menu")
+    { const nav = document.querySelector(".modes"), pt = nav && nav.querySelector('a[data-mode="pitches"]');
+      if (pt && !nav.querySelector('a[data-mode="flaws"]')) { const a = el("a", null, "Fixing the flaw"); a.href = "#flaws"; a.dataset.mode = "flaws"; a.title = "Elite hitters whose one weak piece has moved over the last 30 days"; pt.after(a); } }
     // League Trends, Call-up Watch and Compare left the menus (Sean, 6 Oct 2026: "eliminate the league trends, call up watch and compare");
     // their renderers stay below, and #trends / #callups / #compare land on home
     // Compare lives in this menu, not the header (minimal pass 5, Sean, 30 Sep 2026): Home · Fantasy · Leaderboards · More
@@ -4898,7 +4901,7 @@
     modal.classList.remove("pcard"); document.body.classList.remove("cardpop");
     const key = state.expanded;
     // the Mock Draft's names pop the card up over the room too (Sean, 2 Oct 2026), and so does a Similar player's name from inside one
-    const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy", "pitches", "home", "mock", "claude"].includes(state.mode);
+    const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy", "pitches", "home", "mock", "claude", "flaws"].includes(state.mode);
     if (key && listMode && state.cardDs && !histDataset(state.cardDs)) ensureHist(state.cardDs);   // a past season's card: its file first
     const src = state.cardDs && histDataset(state.cardDs) ? histDataset(state.cardDs).players : DATA.players;
     const p0 = key && listMode ? (src.find((q) => q.type + q.id === key) || DATA.players.find((q) => q.type + q.id === key)
@@ -5483,6 +5486,76 @@
   const whenBuilt = (b) => { const d = b ? new Date(b.replace(" ", "T") + "Z") : null; return d && !isNaN(d) ? d.toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }) : b || ""; };
   // November 1 to March 15, New York time: no regular-season games, so home turns to next year and the Weekly Planner steps aside
   function offSeason() { const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" })), mo = d.getMonth() + 1, dy = d.getDate(); return mo >= 11 || mo <= 2 || (mo === 3 && dy <= 15); }
+  // Fixing the flaw — the rows for home's card and the page (Sean, 16 Oct 2026: "expand the fixing the flaw table and see the whole table ...
+  // its own page"): every 200+ PA hitter's xwOBA build-up pieces on the full season, each swapped alone into the league's set and priced in
+  // wOBA points; elite = his two best worth FX.elite together, the flaws = his two worst at FX.flaw or under; each flaw piece re-read over the
+  // last 30 days (FX.pa+ PA) and "if it held" = his season build with only that piece at the window's value, the row's flaw the one that moved
+  // most, ranked by the gain. Cached per dataset until the day rows change
+  const FX = { elite: 30, flaw: -10, gain: 5, pa: 75, minPA: 200 };   // minPA 200, not the pool's 300: Roman Anthony's 242 PA (Sean named him)
+  const FX_PCS = [["K%", "xk", (x) => x.toFixed(1) + "%", "contact"], ["BB%", "xbb", (x) => x.toFixed(1) + "%", "walks"], ["xHR/FB", "xhf", (x) => x.toFixed(1) + "%", "power"],
+                  ["Fly ball%", "fbs", (x) => Math.round(100 * x) + "%", "fly balls"], ["xBABIP", "xbab", fmtX, "BABIP skills"], ["XB/hit", "tph", (x) => x.toFixed(2), "extra bases"]];
+  const flawCache = new Map();
+  function flawRows() {
+    const key = DS.key + ":" + daysReady(); if (flawCache.has(key)) return flawCache.get(key);
+    const inWin = (w, fn) => withWindow(w, () => withSplit(NONE, fn));
+    const days = DATA.meta.days || [], from = days.length ? addDays(days[days.length - 1], -29) : "", win30 = { from: from && from > days[0] ? from : "", to: "", last: "" };
+    const season = new Map(); let L = null, lgK = 0;
+    inWin(NOWIN, () => {
+      for (const p of DATA.players) { if (p.type !== "H" || (p.pa || 0) < FX.minPA) continue; const t = V(p).tal; if (!t || !t.L) continue; season.set(p, t); L = L || t.L; }
+      lgK = (lgRatesH().k || 0) - 0.08 * (1 - TW.act);
+    });
+    const rows = [], cand = new Map();
+    if (L) {
+      const wob = (c) => twRaw(c) * L.scale, lg = { xk: lgK, xbb: L.bb, hbp: L.hbp, xhf: L.hr.hrfb, fbs: L.fbs, xbab: L.xbabip, tph: L.tph }, base = wob(lg);
+      const pieces = (t) => FX_PCS.map(([lab, k, f, word]) => ({ lab, k, f, word, v: t[k], eff: 1000 * (wob(Object.assign({}, lg, { [k]: t[k] })) - base) }));
+      for (const [p, t] of season) {
+        // "one or two things holding them back": his two worst pieces at the flaw line both count (Mitchell: K% and fly balls)
+        const ps = pieces(t).sort((a, b) => b.eff - a.eff), flaws = ps.slice(-2).filter((z) => z.eff <= FX.flaw);
+        if (ps[0].eff + ps[1].eff < FX.elite || !flaws.length) continue;
+        cand.set(p, { t, ps, flaws, own: { xk: t.xk, xbb: t.xbb, hbp: t.hbp, xhf: t.xhf, fbs: t.fbs, xbab: t.xbab, tph: t.tph } });
+      }
+      if (daysReady()) inWin(win30, () => {
+        for (const [p, c] of cand) {
+          const v = V(p); if (!v || v.sample < FX.pa || !v.tal) continue; const xw = wob(c.own); let best = null;
+          for (const flaw of c.flaws) { const now = v.tal[flaw.k]; if (now == null) continue; const held = wob(Object.assign({}, c.own, { [flaw.k]: now })), gain = 1000 * (held - xw); if (!best || gain > best.gain) best = { flaw, now, held, gain }; }
+          if (!best || best.gain < FX.gain) continue;
+          rows.push({ p, flaw: best.flaw, strengths: c.ps.slice(0, 2).map((z) => z.word).join(", "), was: best.flaw.v, now: best.now, xw, held: best.held, gain: best.gain, pa: v.sample });
+        }
+      });
+      rows.sort((a, b) => b.gain - a.gain);
+    }
+    const out = { rows, cand: cand.size, win30 };
+    flawCache.set(key, out); return out;
+  }
+  const flawNote = () => `Each piece of his xwOBA build-up against the league in wOBA points: elite = his two best are worth +${FX.elite} together, the flaw = his two worst at ${FX.flaw} or under. Last 30 = that piece over his last 30 days (${FX.pa}+ PA); If it held = his season xwOBA with only that piece at the window's value, ranked by the gain (${FX.gain}+ points).`;
+  // the page (#flaws): every row the card ranks, in the Pitching+ board's standing card; the day rows are asked for here (home waits for idle)
+  function renderFlaws() {
+    const box = pitchBoardEl(); box.innerHTML = "";
+    const bar = el("div", "pbfilters"), PH = mobileView();
+    if (!daysReady()) { if (!state.daysLoading && !state.daysFailed) ensureDays(); bar.append(el("span", "pbcount", "Fixing the flaw")); box.append(bar, el("p", "note", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); return; }
+    const { rows, cand } = flawRows();
+    bar.append(el("span", "pbcount", `${rows.length} hitters · ${cand} elite with a flaw · ${DATA.meta.season} · last 30 days vs the season`));
+    box.append(bar);
+    const f3 = (x) => (x == null ? "–" : fmtX(x)), refH = [];
+    withWindow(NOWIN, () => withSplit(NONE, () => { for (const p of DATA.players) if (p.type === "H" && (p.pa || 0) >= 300) { const v = V(p).m.xwd; if (v != null) refH.push(v); } })); refH.sort((a, b) => a - b);
+    const heads = PH
+      ? [["Rk", "f1"], ["Player", "l f3"], ["Flaw"], ["xwOBA"], ["If held"], ["Δ"]]
+      : [["Rk", "f1"], ["Player", "l f3"], ["Tm"], ["Elite at"], ["Piece"], ["Season"], ["Last 30"], ["PA", "", "plate appearances in the last 30 days"], ["Season"], ["If it held"], ["Δ", "", "wOBA points gained if the flaw piece held at its last-30-day value"]];
+    const groups = PH ? [["", 2], ["The flaw", 1], ["xwOBA", 3]] : [["", 4], ["The flaw", 4], ["xwOBA", 3]];   // the board's pinned header reserves the over row's height, so a phone has one too
+    const { t, tb, fin, wrap } = brTable(groups, heads, "pbt flawt");
+    requestAnimationFrame(() => { const rk = t.querySelector("tbody td.f1"), ov = t.querySelector("tr.over"); if (rk) t.style.setProperty("--sbw1", rk.offsetWidth + "px"); if (ov) t.style.setProperty("--overh", ov.offsetHeight + "px"); });   // Player freezes right after Rk
+    rows.forEach((r, i) => {
+      const tr = el("tr"), who = el("td", "l nm f3"), b = el("button", "linkbtn pbname", r.p.name); b.type = "button"; b.addEventListener("click", () => openPlayer(r.p, { tab: "talent" })); who.append(b);
+      const held = heatTd(el("td", "c", f3(r.held)), refH.length ? insertPct(refH, r.held) : null), dl = el("td", "c up", "+" + Math.round(r.gain)); dl.style.color = "var(--stripe-line, #c8102e)"; dl.style.fontWeight = "700";
+      tr.append(el("td", "rk f1", String(i + 1)), who);
+      if (PH) tr.append(el("td", "c", `${r.flaw.lab} ${r.flaw.f(r.was)} → ${r.flaw.f(r.now)}`), el("td", "c", f3(r.xw)), held, dl);
+      else tr.append(el("td", "c", r.p.team || ""), el("td", "c", r.strengths), el("td", "c", r.flaw.lab), el("td", "c", r.flaw.f(r.was)), el("td", "c", r.flaw.f(r.now)), el("td", "c", String(Math.round(r.pa))), el("td", "c", f3(r.xw)), held, dl);
+      tb.append(fin(tr));
+    });
+    if (!rows.length) box.append(el("p", "note", "Nobody with an elite base and a flaw that's moved in the window yet."));
+    else { wrap.classList.add("pbscroll"); box.append(wrap); }
+    box.append(el("p", "note", flawNote()));
+  }
   function renderHome() {
     const box = $("hub"); box.innerHTML = ""; box.classList.add("home");
     const m = DATA.meta, dayName = new Date(m.through + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
@@ -5640,55 +5713,19 @@
         if (!hit.length && !pit.length) b.append(el("p", "hnote", "Nobody qualifies in the window yet."));
       }
     }
-    // Fixing the flaw (Sean, 16 Oct 2026: "guys that are very elite at a few skills and have like one or two things holding them back like
-    // Garrett Mitchell (gb rate or k rate), James wood (same thing), Roman Anthony ... an indicator thing like the movers table where it shows
-    // players like that that have recently improved on the big flaw skill"): every 300+ PA hitter's xwOBA build-up pieces (K%, BB%, xHR/FB,
-    // fly balls, xBABIP, extra bases — each swapped alone into the league's set, in wOBA points); elite = his two best pieces are worth FX.elite
-    // together, the flaw = his worst piece at FX.flaw or under. Then the same piece over his last 30 days (V()'s talent pieces in the window, the
-    // same league): "if it held" = his season build with the flaw piece at the window's value, and the card ranks by that gain — the rest of his
-    // game is taken as it is, so the number says what the flaw alone is worth, not that the window's hot streak is real
-    { const days = m.days || [], from = days.length ? addDays(days[days.length - 1], -29) : "", win30 = { from: from && from > days[0] ? from : "", to: "", last: "" };
-      const FX = { elite: 30, flaw: -10, gain: 5, pa: 75, minPA: 200 };   // minPA 200, not the pool's 300: Roman Anthony's 242 PA (Sean named him)
-      const fx = section(box, "Fixing the flaw", "elite at most of it, one piece holding him back — that piece over the last 30 days vs the season", "Leaderboard →", goLB("ALL", "score", "desc", win30));
+    // Fixing the flaw (Sean, 16 Oct 2026): the top of flawRows() above — the whole list is its own page, #flaws (Sean, the same day:
+    // "make it its own page and it'll have its own button page on the menu")
+    { const fx = section(box, "Fixing the flaw", "elite at most of it, one piece holding him back — that piece over the last 30 days vs the season", "Full list →", (e) => { e.preventDefault(); location.hash = "#flaws"; });
       fx.classList.add("hlead2"); fx.classList.add("hflaw");
       if (!daysReady()) loading(fx);
       else {
-        const PCS = [["K%", "xk", (x) => x.toFixed(1) + "%", "contact"], ["BB%", "xbb", (x) => x.toFixed(1) + "%", "walks"], ["xHR/FB", "xhf", (x) => x.toFixed(1) + "%", "power"],
-                     ["Fly ball%", "fbs", (x) => Math.round(100 * x) + "%", "fly balls"], ["xBABIP", "xbab", f3, "BABIP skills"], ["XB/hit", "tph", (x) => x.toFixed(2), "extra bases"]];
-        const season = new Map(); let L = null, lgK = 0;
-        inWin(NOWIN, () => {
-          for (const p of DATA.players) { if (p.type !== "H" || (p.pa || 0) < FX.minPA) continue; const t = V(p).tal; if (!t || !t.L) continue; season.set(p, t); L = L || t.L; }
-          lgK = (lgRatesH().k || 0) - 0.08 * (1 - TW.act);
-        });
-        const rows = [];
-        if (L) {
-          const wob = (c) => twRaw(c) * L.scale, lg = { xk: lgK, xbb: L.bb, hbp: L.hbp, xhf: L.hr.hrfb, fbs: L.fbs, xbab: L.xbabip, tph: L.tph }, base = wob(lg);
-          const pieces = (t) => PCS.map(([lab, k, f, word]) => ({ lab, k, f, word, v: t[k], eff: 1000 * (wob(Object.assign({}, lg, { [k]: t[k] })) - base) }));
-          const cand = new Map();
-          for (const [p, t] of season) {
-            // "one or two things holding them back": his two worst pieces at the flaw line both count (Mitchell: K% and fly balls), and the
-            // one that moved most in the window is the row's
-            const ps = pieces(t).sort((a, b) => b.eff - a.eff), flaws = ps.slice(-2).filter((z) => z.eff <= FX.flaw);
-            if (ps[0].eff + ps[1].eff < FX.elite || !flaws.length) continue;
-            cand.set(p, { t, ps, flaws, own: { xk: t.xk, xbb: t.xbb, hbp: t.hbp, xhf: t.xhf, fbs: t.fbs, xbab: t.xbab, tph: t.tph } });
-          }
-          inWin(win30, () => {
-            for (const [p, c] of cand) {
-              const v = V(p); if (!v || v.sample < FX.pa || !v.tal) continue; const xw = wob(c.own); let best = null;
-              for (const flaw of c.flaws) { const now = v.tal[flaw.k]; if (now == null) continue; const held = wob(Object.assign({}, c.own, { [flaw.k]: now })), gain = 1000 * (held - xw); if (!best || gain > best.gain) best = { flaw, now, held, gain }; }
-              if (!best || best.gain < FX.gain) continue;
-              rows.push({ p, flaw: best.flaw, strengths: c.ps.slice(0, 2).map((z) => z.word).join(", "), was: best.flaw.v, now: best.now, xw, held: best.held, gain: best.gain, pa: v.sample });
-            }
-          });
-          rows.sort((a, b) => b.gain - a.gain);
-        }
-        const show = rows.slice(0, NB), xw = (x) => ({ v: f3(x), pc: pcOf(refH, x) }), dl = (r) => "+" + Math.round(r.gain), fl = (r) => `${r.flaw.lab} ${r.flaw.f(r.was)} → ${r.flaw.f(r.now)}`;
+        const show = flawRows().rows.slice(0, NB), xw = (x) => ({ v: f3(x), pc: pcOf(refH, x) }), dl = (r) => "+" + Math.round(r.gain), fl = (r) => `${r.flaw.lab} ${r.flaw.f(r.was)} → ${r.flaw.f(r.now)}`;
         if (!show.length) fx.append(el("p", "hnote", "Nobody with an elite base and a flaw that's moved in the window yet."));
         else if (PH) table(fx, { label: "Hitters · the flaw over the last 30 days", cols: [["Player", null, "nm"], ["Flaw", 112, "c"], ["xwOBA", 50], ["If held", 54, "heat"], ["Δ", 36, "up"]], ends: [1, 2],
             rows: show.map((r) => [nm(r.p, "talent"), fl(r), f3(r.xw), xw(r.held), dl(r)]) });
         else table(fx, { over: [["", 3], ["The flaw", 3], ["xwOBA", 3]], fixed: true, cols: [["Player", 170, "nm"], ["Tm", 46, "c"], ["Elite at", 150, "c"], ["Piece", 70, "c"], ["Season", 60], ["Last 30", 60], ["Season", 60], ["If it held", 70, "heat"], ["Δ", 44, "up"]],
             rows: show.map((r) => [nm(r.p, "talent"), r.p.team || "", r.strengths, r.flaw.lab, r.flaw.f(r.was), r.flaw.f(r.now), f3(r.xw), xw(r.held), dl(r)]) });
-        if (show.length) fx.append(el("p", "hnote", `Each piece of his xwOBA build-up against the league in wOBA points: elite = his two best are worth +${FX.elite} together, the flaw = his worst at ${FX.flaw} or under. Last 30 = that piece over his last 30 days (${FX.pa}+ PA); If it held = his season xwOBA with only that piece at the window's value.`));
+        if (show.length) fx.append(el("p", "hnote", flawNote()));
       }
     }
     // no "Every page" tiles (Sean, 29 Sep 2026, the minimal pass): the header's menus already list them
@@ -6014,7 +6051,7 @@
   }
   function renderNow() {
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
-    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude", other = pitches || player || compare || elig || hub || appear || fant;
+    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "appearance", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws", other = pitches || player || compare || elig || hub || appear || fant;
     if (xPop && !POP_MODES.includes(state.mode)) xPop = false;   // another page: the popup goes with the list it came from
     $("xboard").hidden = !player && !xPop; $("xboard").classList.toggle("xpop", xPop); document.body.classList.toggle("xpopon", xPop); xPopBg().hidden = !xPop; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
@@ -6040,6 +6077,7 @@
     if (state.mode === "planner") { renderPlanner(); renderModal(); return; }
     if (state.mode === "mock") { renderMock(); renderModal(); return; }
     if (state.mode === "claude") { renderClaude(); renderModal(); return; }
+    if (state.mode === "flaws") { renderFlaws(); renderModal(); return; }
     if (pitches) { renderPitchBoard(); renderModal(); return; }
     const listRender = () => {
       ensureView();
@@ -10245,7 +10283,7 @@
   const pageNow = () => state.mode === "player" || xPop;   // where a page was opened from: the list page, its scroll and its rows' box; the page last drawn
   const BACK_LABEL = { leaderboard: "leaderboard", trending: "leaderboard", rankings: "rankings", draft: "draft board", pitches: "Pitching+", fantasy: "fantasy", home: "home",
                        claude: "Claude rankings", planner: "planner", eligibility: "eligibility", callups: "Call-up Watch", compare: "compare", mock: "mock draft", trends: "League Trends", appearance: "appearance" };
-  const BACK_MODES = ["leaderboard", "trending", "rankings", "draft", "pitches", "fantasy", "claude", "planner", "eligibility"];   // the list pages Back returns to
+  const BACK_MODES = ["leaderboard", "trending", "rankings", "draft", "pitches", "fantasy", "claude", "flaws", "planner", "eligibility"];   // the list pages Back returns to
   function markBack() {
     if (state.mode === "player") return;                      // from one page to another: the first list is still where Back goes
     if (!BACK_MODES.includes(state.mode)) { backAt = null; return; }   // home and the search give no Back (Sean, 8 Oct 2026: "get rid of the home button")
@@ -12796,7 +12834,7 @@
     const pm = h.match(/^player\/(\d+)$/);
     if (pm) { state.mode = "player"; const id = Number(pm[1]); if (state.x.id !== id) { state.x = { id, type: null, ds: null }; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; } return; }
     if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["leaders", "trending", "whatif", "settings"].includes(v) ? v : "leaders"; return; }
-    state.mode = ["home", "draft", "rankings", "eligibility", "trending", "leaderboard", "pitches", "planner", "mock", "claude", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
+    state.mode = ["home", "draft", "rankings", "eligibility", "trending", "leaderboard", "pitches", "planner", "mock", "claude", "flaws", "appearance"].includes(h) ? h : h === "explore" ? "player" : "home";
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {
