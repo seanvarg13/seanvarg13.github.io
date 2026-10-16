@@ -4166,6 +4166,14 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   phone one that set Rankings' `pageSize` and did nothing there). CSS: the desktop bar block at the end of `styles.css`. The "one big page" entries
   of 3 and 11 Oct are history for the desktop; `PHONE_ALL` still lists everyone on a phone when true.
 
+* **The season table's heat survives a slow file (Sean, 16 Oct 2026, Eduardo Valencia's page: "make it so the heatmapped stats still get heatmapped
+  even with the row being highlighted")**: the current-season row (`tr.cur`, the pale-blue tint) showed its xwOBA plain. The highlight wasn't the
+  cause — a heat cell's colour is set inline with `!important`, which beats every stylesheet rule — the race was: `sbxPool(y, key)` builds the
+  season's qualified-hitter pool from `hist/career-bb.js` and cached whatever it built under `y:key`, so when that file (1+ MB) landed after the
+  table's first draw on a slow line, the empty pool it had cached was reused by the re-render and the cell never got its colour (headless, with
+  the file delayed 3 s: no heat; the fix: heat). `sbxPool` now keeps a pool only once `DRAFT_CAREER_BB` is in, like `sbPoolP`'s `sbxReady()` key.
+  `hrfbLeague` has the same shape but every caller waits for both files first (`hxReady`), so it's left alone.
+
 ---
 
 ## 10. The football site moved out
@@ -4182,3 +4190,17 @@ live at https://seanvarg13.github.io/fantasy-basketball/, with its own CLAUDE.md
 home-screen app — built like the football one, as a repo of its own (Sean created the empty repo and turned Pages on by hand; neither this
 session's GitHub credential nor the workflow token may create repositories or Pages sites). Nothing here links to it. Basketball work
 happens in that repo, not this one.
+
+**The home-screen icons** (Sean, 16 Oct 2026, from two photos — "a black figure out jake bauers how he looks here", "the black figure of braylon
+mullins" — then "crop the player as a png", "make those silhouettes, and also make the baseball and basketballs cartoonish", "make sure the
+silhouettes are clean", "add an outline to bauers too and make both of them have a shadow", "bauers have an all sides shadow so the white doesnt
+blend in with the baseball", and finally "i simply want the baseball and basketball to be more cartoonish like the above images", "dont have the
+shadow at the bottom or below the balls"): `icons/icon-{512,192,180,32}.png` here (Bauers, the baseball) and in the basketball repo (Mullins'
+jump shot, the basketball). The figures are SAM cut-outs of his photos smoothed on a fine grid (scratch `/tmp/claude-0/sil/bauers-smooth.png`,
+`mullins-hires-cut.png`), drawn black with a thin cream outline — Bauers 98% of the icon's height and bottom-bled with a shadow on every side,
+Mullins 94% centred with a drop shadow — over the sites' Carolina blue. The balls are drawn after his two reference drawings (scratch
+`icons2.py`): the baseball a flat cream ball with a soft highlight blob at the upper left, a shaded crescent at the lower right and two thick red
+seams with V stitches, no outline; the basketball cel-shaded — a lighter region over the top right, a darker shadow side at the lower left and
+under the lower seam, a mid rim band — with thick black seams in the reference's perspective, a light edge on one side and a grey bevel on the
+other. No ground shadow under either (asked for, then taken off). iOS keeps the icon it saved: remove the web app and add it again to see a new
+one.

@@ -10912,8 +10912,8 @@
     const C = window.DRAFT_CAREER || {}, B = window.DRAFT_CAREER_BB, out = [];
     // "babipn": BABIP less what his parks added (pkbab), the park-neutral BABIP the tables show (15 Oct 2026)
     if (B) { const i = B.keys.indexOf(key === "babipn" ? "babip" : key) + 1, j = key === "babipn" ? B.keys.indexOf("pkbab") + 1 : 0; for (const id in B.p) { const a = B.p[id][String(y)]; if (!a || a[i] == null) continue; const r = ((C[id] || {}).H || []).find((x) => x[0] === y); if (r && (+r[3] || 0) >= (y === 2020 ? 110 : 300)) out.push(+a[i] - (j > 0 && a[j] != null ? a[j] / 1000 : 0)); } }
-    out.sort((a, b) => a - b); SBX_POOLS.set(id0, out); return out;
-  }
+    out.sort((a, b) => a - b); if (B) SBX_POOLS.set(id0, out); return out;   // a pool built before hist/career-bb.js is in isn't kept: on a slow line the file landed after the
+  }   // table's first draw, the empty pool was cached and the re-render reused it, so the current season's xwOBA drew without its heat (Valencia, 16 Oct 2026)
   // his postseason lines, MLB's official ones fetched in the browser like the bio (Sean, 8 Oct 2026: "add in the postseason and regular season
   // ability thing"): type+id → null while it loads, false if it failed, else [{season, team, c}] oldest first, a traded October as TOT
   const TEAM_BY_ID = Object.fromEntries(Object.entries(TEAM_ID).map(([k, v]) => [v, k]));
