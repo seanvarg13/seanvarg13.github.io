@@ -5671,3 +5671,12 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .fxwin .fxchd span { font: 400 12px var(--body); color: var(--muted); }
 :root:root:root:root:root:root[data-view="mobile"] .phmodal.fxmodal { padding: 8px; }
 :root:root:root:root:root:root[data-view="mobile"] .phwin.fxwin { max-height: calc(100dvh - 16px); }
+/* The flaw popup's build-ups (Sean, 16 Oct 2026): the card's sections under the flaw / elite ones, then each split's xwOBA build-up */
+.fxbuild { margin-top: 14px; }
+.fxbuild .kbuild { font-size: 12px; }
+.fxbuild .rollhd { padding-left: 3px; }
+.fxcol { min-width: 0; }
+/* the yellow xwOBA mark and its word, as on the card's tab (those rules are anchored on #xboard / #modal) */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild table.sbt.kbuild td.krk.kexp { background: #ffe14d !important; color: #141414 !important; font-weight: 700 !important; position: relative; overflow: visible; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild table.sbt.kbuild td.krk.kexp::after { content: attr(data-exp); position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 8px; white-space: nowrap; font-weight: 700; color: var(--ink); background: none; pointer-events: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild table.sbt.kbuild:has(td.kexp) { border-right: 70px solid transparent !important; }
