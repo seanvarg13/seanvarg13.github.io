@@ -3960,6 +3960,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   to the ×'s height), and `.btabs .btab` is 46px tall with 18px of side padding (42 / 11 on a phone) with the soft lift again; their type stays
   Filters ▾'s 18px / 14px 700 condensed. Headless: × 46 / 42, tabs 46 / 42, Filters 40 / 36, the four tabs on one row at 390px.
 
+* **Blue below the bars (Sean, 16 Oct 2026, Messick's Spring tab: "After the similar players stuff, have a red line break like at the bottom of the
+  player header and then make everything below it blue. And then keep the buttons how they are (maybe increase the button size a bit but don't touch
+  the text) and then when the tab pops up it looks how it does but the stuff outside of the tab below the red line area is the blue color")**: the
+  block at the end of `styles.css` — on his page and in the popup the `.pbelow2` section (the tab strip and the open tab's white box) sits on the
+  band's blue (`--band2`) under a 3px stripe-red rule right after the Similar row, bleeding to the screen's edges the way the band does (the desktop
+  page's `min(6vw, 96px)`, the popup's 20 / 12px, a phone page already edge to edge); the white tab box keeps its 860px width, centred
+  (`.btabbody`). The tabs are 50px / 46px tall on a phone, type unchanged. The card in `#modal` (the Mock Draft room, the board's spring cards) is
+  untouched. Headless on page and popup, phone and desktop: the section spans the viewport, the box 860 / 364px.
+
 ---
 
 ## 10. The football site moved out
