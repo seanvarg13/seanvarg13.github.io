@@ -4083,6 +4083,19 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the page is a `.flawpage` (`width: fit-content; margin: 0 auto` on a desktop, the pill / count, a `#lbtitle`-style title and the note at `width: 0;
   min-width: 100%` so the table sets the width), the table's box scrolling inside it. CSS: the block at the end of `styles.css`.
 
+* **Credibility and this season vs last (Sean, 16 Oct 2026: "give me the ability to see which ones are most credible first or up top and also allow
+  me to be able to compare this season vs last too", "make sure to keep the if it held piece though i love that")**: every row carries **Credible**
+  (`cred`, a heat-filled column on both layouts) = the flaw piece's reliability at the window's PA, n / (n + k) with `FX_K` (K% 60, BB% 120, fly-ball
+  share 110, xBABIP 220, xHR/FB 250, XB/hit 300), then **last season as a witness** (the page always asks for `hist/mlb-<Y−1>.js`): his prior-season
+  value already past the midpoint of the move lifts it halfway to certain ("backs the move", the cell's tooltip and the popup's head), one on the far
+  side of this season's value cuts it to 70% ("the other way"), in between leaves it. An **Order** pill — **Most credible** (the default: gain × cred,
+  `fxSet.sort`) or Biggest gain. **This season vs last** is the window pill's last entry (`winId "prev"`): the base is last season's full-season
+  pieces on that season's league (`withDataset(fxPrevDS())`, 200+ PA, matched to this season's players by id), the move is this season's full
+  season (200+ PA), the columns read 2025 / 2026, the Elite at / flaw are 2025's, "If it held" = his 2025 build with the piece at its 2026 value, the
+  credibility this season's PA alone (no witness); the popup's two charts are 2025 (among 2025's 300+ PA hitters, `r.base`) and 2026. "Loading the
+  2025 season…" until the file is in. 27 Sep 2026: last 30 days by credibility Goodman 62%, Schwarber 67%, Mayo 63%, Neto 68%; 2026 vs 2025 Blaze
+  Alexander (K% 30.7 → 21.1, 83%), Varsho (26.6 → 18.7, 90%), Arenado (xHR/FB 6.6 → 13.9), Trout (K% 29.6 → 24.4, 91%).
+
 ---
 
 ## 10. The football site moved out
