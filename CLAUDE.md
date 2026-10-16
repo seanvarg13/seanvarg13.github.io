@@ -4136,6 +4136,22 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (700 Barlow Condensed, 18px / 14px on a phone, the white edge, no shadow); the box now does too — 40px tall with 14px of side padding on a desktop,
   36px / 7px on a phone — and the strip's gap is 14px (was 8). The block at the end of `styles.css`. The 46 / 50px tabs of the 16 Oct entries above are history.
 
+* **wRC+ as a display scale (Sean, 16 Oct 2026: "what would change if we changed the scale of woba and xwoba to be on the wRC+ scale", then "keep
+  the stored numbers and then yeah add a display switch on the appearance tab")**: **Appearance ▸ wOBA scale** (wOBA / wRC+, per device,
+  `draft2027.wrc`; `WRC_PREF` / `wrcOn()` in `app.js`, beside `K()`) prints every wOBA-scale number as wRC+ / xwRC+ = 100 × (1 + (wOBA −
+  league wOBA) / wobaScale / league runs per PA), each dataset against its own league (`wrcLg`: the dataset's `consts.lgwOBA` when it's loaded,
+  else `WRC_LGW` — every season file's league wOBA, MLB and minors, baked in; `WRC_RPA` — MLB runs per PA by season from the official lines,
+  the latest season's for a year it lacks and for the minors, since it only sets the scale). A difference (xwOBA − wOBA, a build-up's ±
+  column, a flaw's Δ) prints in wRC+ points (`wrcPts` / `wsD`). **Nothing stored, pooled or ranked changes** — a straight line through wOBA keeps
+  every percentile and sort; only `fmt()` (keys in `WS_VAL` / `WS_DIF`), `colLab`, the bars' labels / tap note, the Leaderboard's headline
+  cell / title / Qualified avg (an each-season span row through `WRC_CTX` = its own season), the Summary (the Career row PA-weighted season by
+  season), the season table (`sbLgKey` per line, a minors line against its level; the N Yrs / 162 Game Avg rows PA-weighted through
+  `wrcTot`), home's tables, the Fixing-the-flaw card / page / popup, the xwOBA tab's three tables (`fw` / `fwv` / `ptsW`), the game log's
+  per-game chips and the tab's name (`labOf`) read the switch; `wsLab` turns "xwOBA proj." into "xwRC+ proj." and so on. **Left on the wOBA
+  scale on purpose**: Mix wOBA / Mix xwOBA and xwOBAcon (per ball in play, a different league), BABIP luck (wOBA points), the build-ups' notes
+  (they explain the arithmetic in wOBA), Similar's file, Fantasy's xPts. FanGraphs' wRC+ in the season table is theirs (park-adjusted, their
+  wOBA) and can sit a few points from ours. Judge 2026: wOBA .369 → 136, xwOBA .389 → 153; 2024 .457 → 199 (FanGraphs 218, park-adjusted).
+
 ---
 
 ## 10. The football site moved out
