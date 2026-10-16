@@ -4067,6 +4067,22 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   data…" until then). **The header** has a **Fixing the flaw** button after Pitching+ (`pitchBoardEl`; `readMode`, `renderNow`'s `pitches` set,
   `listMode`, `BACK_MODES`), and home's card keeps its five / four rows with a "Full list →" link to the page in the Leaderboard link's place.
 
+* **The page's windows, the bars popup, the build-up's names, centred (Sean, 16 Oct 2026, from the page on his desktop: "this can be a thing where it
+  can recognize players over the past months or x days", "when i select the player ... a pop up window that shows ... at the top his season long xwoba,
+  then below his k% and then below that all of the inputs that go into his k% and for all of them have it be the percentile bars", "for the skills he is
+  elite at show that for the skills in the xwoba build up ... xbabip and xhr/fb for garrett mitchell", "make it look like the leaderboards one where it
+  is centered on the page")**: `flawRows(winId)` takes a window — `FX_WINS` (last 14 / 30 / 45 / 60 / 90 days from the last game day, last 100 / 150
+  PA), a pill on the page (`fxSet.win`, `draft2027.flaws`; `fxWin` scales the window's minimum: 75 PA for 30 days, 40-150 by length, ¾ of N for a
+  last-N) — the home card stays on 30 days; the **Elite at** column and the popup's words are the build-up's own piece names (`FX_PCS`: K%, BB%,
+  xHR/FB, Fly ball%, xBABIP, XB/hit — "xHR/FB, xBABIP" for Mitchell), the row keeps `elite` = his two best pieces. **A name opens `flawPop`** (a
+  `.phmodal.fxmodal` over the page, `.fxwin`: × / backdrop / Escape close; his name in the head opens his xwOBA tab): two `pctChart`s side by side
+  (stacked on a phone) — **Full season** (percentiles among the 300+ PA hitters) and the window (among hitters at the window's minimum) — each with
+  xwOBA, then the flaw piece and the inputs the build reads for it (`FX_IN`: K% → K%, xK%, Whiff%, Z-Swing%, Chase%, Strike% seen; BB% → BB%, xBB%, the
+  eight xBB% inputs; xHR/FB → FB EV, FB Brl%, LD Brl%, Pull FB%; Fly ball% → FB%, Popup%, LD%, GB%; xBABIP → the nine drivers; XB/hit → xSLG, xBA, Brl%,
+  EV90), then each elite piece the same way; `fxVal` reads `V(q).m` or the talent pieces (`@` keys), sprint is the season's in a window. **Centred**:
+  the page is a `.flawpage` (`width: fit-content; margin: 0 auto` on a desktop, the pill / count, a `#lbtitle`-style title and the note at `width: 0;
+  min-width: 100%` so the table sets the width), the table's box scrolling inside it. CSS: the block at the end of `styles.css`.
+
 ---
 
 ## 10. The football site moved out

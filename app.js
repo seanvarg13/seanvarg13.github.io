@@ -5492,13 +5492,22 @@
   // last 30 days (FX.pa+ PA) and "if it held" = his season build with only that piece at the window's value, the row's flaw the one that moved
   // most, ranked by the gain. Cached per dataset until the day rows change
   const FX = { elite: 30, flaw: -10, gain: 5, pa: 75, minPA: 200 };   // minPA 200, not the pool's 300: Roman Anthony's 242 PA (Sean named him)
-  const FX_PCS = [["K%", "xk", (x) => x.toFixed(1) + "%", "contact"], ["BB%", "xbb", (x) => x.toFixed(1) + "%", "walks"], ["xHR/FB", "xhf", (x) => x.toFixed(1) + "%", "power"],
-                  ["Fly ball%", "fbs", (x) => Math.round(100 * x) + "%", "fly balls"], ["xBABIP", "xbab", fmtX, "BABIP skills"], ["XB/hit", "tph", (x) => x.toFixed(2), "extra bases"]];
+  // the words are the build-up's own piece names (Sean, 16 Oct 2026: "for the skills he is elite at ... literally repeat those so for garrett
+  // mitchell show xbabip and hr/fb")
+  const FX_PCS = [["K%", "xk", (x) => x.toFixed(1) + "%", "K%"], ["BB%", "xbb", (x) => x.toFixed(1) + "%", "BB%"], ["xHR/FB", "xhf", (x) => x.toFixed(1) + "%", "xHR/FB"],
+                  ["Fly ball%", "fbs", (x) => Math.round(100 * x) + "%", "Fly ball%"], ["xBABIP", "xbab", fmtX, "xBABIP"], ["XB/hit", "tph", (x) => x.toFixed(2), "XB/hit"]];
+  // the page's windows (Sean, 16 Oct 2026: "the past months or x days ... different players across different timelines"): last N days from the
+  // last game day, or his last N PA; the window's minimum scales with it (75 PA for 30 days, ¾ of N for a last-N window)
+  const FX_WINS = [["14", "Last 14 days"], ["30", "Last 30 days"], ["45", "Last 45 days"], ["60", "Last 60 days"], ["90", "Last 90 days"], ["pa100", "Last 100 PA"], ["pa150", "Last 150 PA"]];
+  const fxSet = Object.assign({ win: "30" }, load("draft2027.flaws", {}));
+  const fxWin = (id) => { const days = DATA.meta.days || [], last = days[days.length - 1];
+    if (String(id).startsWith("pa")) { const n = +String(id).slice(2); return { w: { from: "", to: "", last: String(n) }, pa: Math.round(0.75 * n), label: `last ${n} PA` }; }
+    const n = +id || 30, from = last ? addDays(last, -(n - 1)) : ""; return { w: { from: from && from > days[0] ? from : "", to: "", last: "" }, pa: Math.min(150, Math.max(40, Math.round(FX.pa * n / 30))), label: `last ${n} days` }; };
   const flawCache = new Map();
-  function flawRows() {
-    const key = DS.key + ":" + daysReady(); if (flawCache.has(key)) return flawCache.get(key);
+  function flawRows(winId = "30") {
+    const key = DS.key + ":" + daysReady() + ":" + winId; if (flawCache.has(key)) return flawCache.get(key);
     const inWin = (w, fn) => withWindow(w, () => withSplit(NONE, fn));
-    const days = DATA.meta.days || [], from = days.length ? addDays(days[days.length - 1], -29) : "", win30 = { from: from && from > days[0] ? from : "", to: "", last: "" };
+    const FW = fxWin(winId), win30 = FW.w, minPA = FW.pa;
     const season = new Map(); let L = null, lgK = 0;
     inWin(NOWIN, () => {
       for (const p of DATA.players) { if (p.type !== "H" || (p.pa || 0) < FX.minPA) continue; const t = V(p).tal; if (!t || !t.L) continue; season.set(p, t); L = L || t.L; }
@@ -5516,45 +5525,98 @@
       }
       if (daysReady()) inWin(win30, () => {
         for (const [p, c] of cand) {
-          const v = V(p); if (!v || v.sample < FX.pa || !v.tal) continue; const xw = wob(c.own); let best = null;
+          const v = V(p); if (!v || v.sample < minPA || !v.tal) continue; const xw = wob(c.own); let best = null;
           for (const flaw of c.flaws) { const now = v.tal[flaw.k]; if (now == null) continue; const held = wob(Object.assign({}, c.own, { [flaw.k]: now })), gain = 1000 * (held - xw); if (!best || gain > best.gain) best = { flaw, now, held, gain }; }
           if (!best || best.gain < FX.gain) continue;
-          rows.push({ p, flaw: best.flaw, strengths: c.ps.slice(0, 2).map((z) => z.word).join(", "), was: best.flaw.v, now: best.now, xw, held: best.held, gain: best.gain, pa: v.sample });
+          rows.push({ p, flaw: best.flaw, elite: c.ps.slice(0, 2), strengths: c.ps.slice(0, 2).map((z) => z.word).join(", "), was: best.flaw.v, now: best.now, xw, held: best.held, gain: best.gain, pa: v.sample });
         }
       });
       rows.sort((a, b) => b.gain - a.gain);
     }
-    const out = { rows, cand: cand.size, win30 };
+    const out = { rows, cand: cand.size, win30, label: FW.label, minPA };
     flawCache.set(key, out); return out;
   }
-  const flawNote = () => `Each piece of his xwOBA build-up against the league in wOBA points: elite = his two best are worth +${FX.elite} together, the flaw = his two worst at ${FX.flaw} or under. Last 30 = that piece over his last 30 days (${FX.pa}+ PA); If it held = his season xwOBA with only that piece at the window's value, ranked by the gain (${FX.gain}+ points).`;
+  const flawNote = (R) => `Each piece of his xwOBA build-up against the league in wOBA points: elite = his two best are worth +${FX.elite} together, the flaw = his two worst at ${FX.flaw} or under. ${R ? R.label[0].toUpperCase() + R.label.slice(1) : "Last 30 days"} = that piece over that window (${R ? R.minPA : FX.pa}+ PA); If it held = his season xwOBA with only that piece at the window's value, ranked by the gain (${FX.gain}+ points).`;
+  // tap a name on the page (Sean, 16 Oct 2026: "a pop up window that shows a comparison of their percentile for the given improvement and then it
+  // shows the pieces that go into it ... at the top his season long xwoba, then below his k% and then below that all of the inputs that go into his
+  // k% and for all of them have it be the percentile bars"): two charts of the card's bars — the full season and the window — xwOBA first, the
+  // flaw piece and what the build reads for it, then each piece he's elite at the same way. Percentiles among the season's 300+ PA hitters on the
+  // left, among the window's qualifiers (the page's minimum) on the right
+  const FX_IN = {
+    xk: [["k", "K%", false], ["xk", "xK%", false], ["whf", "Whiff%", false], ["zsw", "Z-Swing%", true], ["osw", "Chase%", false], ["strk", "Strike% seen", false]],
+    xbb: [["bb", "BB%", true], ["@xbbFit", "xBB%", true], ["osw", "Chase%", false], ["zsw", "Z-Swing%", false], ["ocon", "O-Contact%", true], ["zcon", "Z-Contact%", false], ["zsn", "Zone% seen", false], ["ev90", "90th% EV", true], ["ibbr", "IBB / 100 PA", true], ["fcon", "Fouls / contact", true]],
+    xhf: [["@xhf", "xHR/FB", true], ["evfb", "FB EV", true], ["brfb", "FB Brl%", true], ["brld", "LD Brl%", true], ["@pfb", "Pull FB%", true]],
+    fbs: [["@fbs100", "Fly ball%", true], ["fb", "FB%", true], ["pu", "Popup%", false], ["ld", "LD%", true], ["gb", "GB%", false]],
+    xbab: [["xbabip", "xBABIP", true], ["ld", "LD%", true], ["pu", "Popup%", false], ["evgb", "GB EV", true], ["@gbp", "GB Pull%", false], ["evld", "LD EV", true], ["@ldp", "LD Pull%", true], ["spd", "Sprint", true], ["oppo", "Oppo%", true], ["fb", "FB%", false]],
+    tph: [["@tph", "XB / hit", true], ["dxslg", "xSLG", true], ["dxba", "xBA", true], ["brl", "Barrel%", true], ["ev90", "90th% EV", true]],
+  };
+  const FX_FMT = { xwd: 3, k: 1, xk: 1, whf: 1, zsw: 1, osw: 1, strk: 1, bb: 1, "@xbbFit": 1, ocon: 1, zcon: 1, zsn: 1, ev90: 1, ibbr: 1, fcon: 1, "@xhf": 1, evfb: 1, brfb: 1, brld: 1, "@pfb": 1, "@fbs100": 0, fb: 1, pu: 1, ld: 1, gb: 1, xbabip: 3, evgb: 1, "@gbp": 1, evld: 1, "@ldp": 1, spd: 1, oppo: 1, "@tph": 2, dxslg: 3, dxba: 3, brl: 1 };
+  const fxVal = (v, k, p) => { if (!v) return null; if (k === "spd") return v.m.spd ?? (p && p.m ? p.m.spd : null); if (k[0] !== "@") return v.m[k]; const t = v.tal; if (!t) return null;   /* sprint is the season's in a window */
+    switch (k) { case "@xbbFit": return t.xbbFit; case "@xhf": return t.xhf; case "@pfb": return t.I.pfb; case "@fbs100": return 100 * t.fbs; case "@gbp": return t.I.gbp; case "@ldp": return t.I.ldp; case "@tph": return t.tph; } return null; };
+  function flawPop(r, winId) {
+    document.querySelectorAll(".phmodal").forEach((x) => x.remove());
+    const FW = fxWin(winId), inWin = (w, fn) => withWindow(w, () => withSplit(NONE, fn));
+    const pcs = FX_PCS.map(([lab, k]) => ({ lab, k }));
+    const secs = [["xwOBA", [["xwd", "xwOBA", true]]], [r.flaw.lab + " — the flaw", FX_IN[r.flaw.k]], ...r.elite.map((e) => [e.lab + " — elite", FX_IN[e.k]])];
+    const fmtV = (k, x) => { const d = FX_FMT[k] ?? 1; return d === 3 ? fmtX(x) : x.toFixed(d); };
+    // one chart: every row's value and percentile in that view
+    const chart = (w, title, qual, sample) => {
+      let groups = null;
+      inWin(w, () => {
+        const ref = DATA.players.filter((q) => q.type === "H").map((q) => [q, V(q)]).filter(([q, v]) => v && qual(q, v));
+        const sorted = {}; const arr = (k) => sorted[k] || (sorted[k] = ref.map(([q, v]) => fxVal(v, k, q)).filter((z) => z != null).sort((a, b) => a - b));
+        const pv = V(r.p);
+        groups = secs.map(([title, rows]) => ({ title, rows: rows.map(([k, label, hib]) => { const x = fxVal(pv, k, r.p); if (x == null) return null; const a = arr(k); let pc = a.length >= 20 ? insertPct(a, x) : null; if (pc != null && !hib) pc = 100 - pc;
+          return { k, label, v: x, value: fmtV(k, x), pct: pc == null ? null : Math.round(pc), lg: a.length ? fmtV(k, a[Math.floor(a.length / 2)]) : null, hib, m: { key: k, label, hib }, gloss: GLOSS[k] || "", tip: `${label}: ${fmtV(k, x)} · ${pc == null ? "n/a" : ordinal(Math.round(pc)) + " pctl"}` }; }).filter(Boolean) })).filter((g) => g.rows.length);
+        const hd = el("div", "fxchd"); hd.append(el("b", null, title), el("span", null, `${Math.round(pv.sample || 0)} PA · ${sample}`)); groups.hd = hd;
+      });
+      return groups;
+    };
+    const G1 = chart(NOWIN, "Full season", (q) => (q.pa || 0) >= 300, "percentiles among the 300+ PA hitters");
+    const G2 = chart(FW.w, FW.label[0].toUpperCase() + FW.label.slice(1), (q, v) => v.sample >= FW.pa, `among hitters with ${FW.pa}+ PA in the window`);
+    const win = el("div", "phwin pop fxwin"), x = el("button", "pop-close", "×"); x.type = "button"; x.setAttribute("aria-label", "Close");
+    const head = el("div", "fxhead"); const nm = el("button", "linkbtn fxname", r.p.name); nm.type = "button"; nm.addEventListener("click", () => openPlayer(r.p, { tab: "talent" }));
+    head.append(nm, el("span", "fxsub", `${r.p.team || ""} · xwOBA ${fmtX(r.xw)} → ${fmtX(r.held)} if his ${r.flaw.lab} held at ${r.flaw.f(r.now)} (+${Math.round(r.gain)}) · elite at ${r.elite.map((e) => e.lab).join(" and ")}`));
+    const body = el("div", "pop-body phwinbody fxbody"), cols = el("div", "pctcols");
+    for (const [G, i] of [[G1, 0], [G2, 1]]) { const c = el("div", "fxcol"); c.append(G.hd, pctChart(G, i, false)); cols.append(c); }
+    body.append(cols);
+    win.append(x, head, body);
+    const ov = el("div", "phmodal fxmodal"); ov.append(win); document.body.append(ov);
+    const close = () => { ov.remove(); document.removeEventListener("keydown", esc); };
+    const esc = (e) => { if (e.key === "Escape") close(); };
+    x.addEventListener("click", close); ov.addEventListener("click", (e) => { if (e.target === ov) close(); }); document.addEventListener("keydown", esc);
+  }
   // the page (#flaws): every row the card ranks, in the Pitching+ board's standing card; the day rows are asked for here (home waits for idle)
   function renderFlaws() {
     const box = pitchBoardEl(); box.innerHTML = "";
-    const bar = el("div", "pbfilters"), PH = mobileView();
-    if (!daysReady()) { if (!state.daysLoading && !state.daysFailed) ensureDays(); bar.append(el("span", "pbcount", "Fixing the flaw")); box.append(bar, el("p", "note", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); return; }
-    const { rows, cand } = flawRows();
-    bar.append(el("span", "pbcount", `${rows.length} hitters · ${cand} elite with a flaw · ${DATA.meta.season} · last 30 days vs the season`));
-    box.append(bar);
+    const page = el("div", "flawpage"), bar = el("div", "pbfilters"), PH = mobileView(); box.append(page);
+    const save = () => { try { localStorage.setItem("draft2027.flaws", JSON.stringify(fxSet)); } catch {} render(); };
+    const wlab = (FX_WINS.find((w) => w[0] === fxSet.win) || FX_WINS[1])[1];
+    bar.append(pillSelect(wlab, FX_WINS, fxSet.win, (v) => { fxSet.win = v; save(); }, "Window"));
+    if (!daysReady()) { if (!state.daysLoading && !state.daysFailed) ensureDays(); page.append(bar, el("p", "note", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); return; }
+    const R = flawRows(fxSet.win), { rows, cand } = R, W = wlab.replace("Last ", "Last ");
+    bar.append(el("span", "pbcount", `${rows.length} hitters · ${cand} elite with a flaw · ${DATA.meta.season} · ${R.label} vs the season`));
+    page.append(bar);
+    const title = el("div", "fxtitle"); title.append(el("h2", null, "Fixing the flaw"), el("span", null, `elite at most of it, one piece holding him back — that piece over the ${R.label} vs the season · tap a name for the bars`)); page.append(title);
     const f3 = (x) => (x == null ? "–" : fmtX(x)), refH = [];
     withWindow(NOWIN, () => withSplit(NONE, () => { for (const p of DATA.players) if (p.type === "H" && (p.pa || 0) >= 300) { const v = V(p).m.xwd; if (v != null) refH.push(v); } })); refH.sort((a, b) => a - b);
     const heads = PH
       ? [["Rk", "f1"], ["Player", "l f3"], ["Flaw"], ["xwOBA"], ["If held"], ["Δ"]]
-      : [["Rk", "f1"], ["Player", "l f3"], ["Tm"], ["Elite at"], ["Piece"], ["Season"], ["Last 30"], ["PA", "", "plate appearances in the last 30 days"], ["Season"], ["If it held"], ["Δ", "", "wOBA points gained if the flaw piece held at its last-30-day value"]];
+      : [["Rk", "f1"], ["Player", "l f3"], ["Tm"], ["Elite at"], ["Piece"], ["Season"], [W, "", `the flaw piece over the ${R.label}`], ["PA", "", `plate appearances in the ${R.label}`], ["Season"], ["If it held"], ["Δ", "", "wOBA points gained if the flaw piece held at the window's value"]];
     const groups = PH ? [["", 2], ["The flaw", 1], ["xwOBA", 3]] : [["", 4], ["The flaw", 4], ["xwOBA", 3]];   // the board's pinned header reserves the over row's height, so a phone has one too
     const { t, tb, fin, wrap } = brTable(groups, heads, "pbt flawt");
     requestAnimationFrame(() => { const rk = t.querySelector("tbody td.f1"), ov = t.querySelector("tr.over"); if (rk) t.style.setProperty("--sbw1", rk.offsetWidth + "px"); if (ov) t.style.setProperty("--overh", ov.offsetHeight + "px"); });   // Player freezes right after Rk
     rows.forEach((r, i) => {
-      const tr = el("tr"), who = el("td", "l nm f3"), b = el("button", "linkbtn pbname", r.p.name); b.type = "button"; b.addEventListener("click", () => openPlayer(r.p, { tab: "talent" })); who.append(b);
+      const tr = el("tr"), who = el("td", "l nm f3"), b = el("button", "linkbtn pbname", r.p.name); b.type = "button"; b.addEventListener("click", () => flawPop(r, fxSet.win)); who.append(b);
       const held = heatTd(el("td", "c", f3(r.held)), refH.length ? insertPct(refH, r.held) : null), dl = el("td", "c up", "+" + Math.round(r.gain)); dl.style.color = "var(--stripe-line, #c8102e)"; dl.style.fontWeight = "700";
       tr.append(el("td", "rk f1", String(i + 1)), who);
       if (PH) tr.append(el("td", "c", `${r.flaw.lab} ${r.flaw.f(r.was)} → ${r.flaw.f(r.now)}`), el("td", "c", f3(r.xw)), held, dl);
       else tr.append(el("td", "c", r.p.team || ""), el("td", "c", r.strengths), el("td", "c", r.flaw.lab), el("td", "c", r.flaw.f(r.was)), el("td", "c", r.flaw.f(r.now)), el("td", "c", String(Math.round(r.pa))), el("td", "c", f3(r.xw)), held, dl);
       tb.append(fin(tr));
     });
-    if (!rows.length) box.append(el("p", "note", "Nobody with an elite base and a flaw that's moved in the window yet."));
-    else { wrap.classList.add("pbscroll"); box.append(wrap); }
-    box.append(el("p", "note", flawNote()));
+    if (!rows.length) page.append(el("p", "note", "Nobody with an elite base and a flaw that's moved in the window yet."));
+    else { wrap.classList.add("pbscroll"); page.append(wrap); }
+    page.append(el("p", "note", flawNote(R)));
   }
   function renderHome() {
     const box = $("hub"); box.innerHTML = ""; box.classList.add("home");
@@ -5725,7 +5787,7 @@
             rows: show.map((r) => [nm(r.p, "talent"), fl(r), f3(r.xw), xw(r.held), dl(r)]) });
         else table(fx, { over: [["", 3], ["The flaw", 3], ["xwOBA", 3]], fixed: true, cols: [["Player", 170, "nm"], ["Tm", 46, "c"], ["Elite at", 150, "c"], ["Piece", 70, "c"], ["Season", 60], ["Last 30", 60], ["Season", 60], ["If it held", 70, "heat"], ["Δ", 44, "up"]],
             rows: show.map((r) => [nm(r.p, "talent"), r.p.team || "", r.strengths, r.flaw.lab, r.flaw.f(r.was), r.flaw.f(r.now), f3(r.xw), xw(r.held), dl(r)]) });
-        if (show.length) fx.append(el("p", "hnote", flawNote()));
+        if (show.length) fx.append(el("p", "hnote", flawNote(flawRows())));
       }
     }
     // no "Every page" tiles (Sean, 29 Sep 2026, the minimal pass): the header's menus already list them

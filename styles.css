@@ -5647,3 +5647,27 @@ header.top .wordmark { display: none; }
    the document's canvas — body's white ground, since html has none and body's propagates. On the player page html gets the band's blue, so the
    canvas (both bounces; the top one meets the blue header) is blue while body keeps its white */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"]:has(body[data-mode="player"]) { background: var(--band2, var(--accent-2)) !important; }
+
+/* Fixing the flaw, the page (Sean, 16 Oct 2026): the table centred like the Leaderboard's, its window pill, count and title over it starting at
+   the table's left edge; a name opens a window of the card's bars (full season beside the window) */
+:root:root:root:root:root:root body[data-mode="flaws"] #pitchboard { align-items: center; }
+:root:root:root:root:root:root body[data-mode="flaws"] #pitchboard > .flawpage { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; width: fit-content; max-width: 100%; margin: 0 auto; }
+:root:root:root:root:root:root body[data-mode="flaws"] .flawpage > .pbfilters { margin: 0 0 6px; }
+:root:root:root:root:root:root body[data-mode="flaws"] .flawpage > .pbscroll { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: none; }
+:root:root:root:root:root:root body[data-mode="flaws"] .flawpage > :is(.note, .fxtitle, .pbfilters) { width: 0; min-width: 100%; box-sizing: border-box; }   /* the table sets the page's width; the text takes it */
+:root:root:root:root:root:root body[data-mode="flaws"] .fxtitle { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 0 0 8px; padding-bottom: 5px; border-bottom: 2px solid var(--stripe-line, #c8102e); }
+:root:root:root:root:root:root body[data-mode="flaws"] .fxtitle h2 { margin: 0; font: 700 26px/1 var(--display) !important; color: var(--ink) !important; letter-spacing: 0.01em !important; text-transform: none !important; }
+:root:root:root:root:root:root body[data-mode="flaws"] .fxtitle span { font: 400 13px var(--body); color: var(--muted); }
+:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] #pitchboard > .flawpage { width: 100%; }
+:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxtitle h2 { font-size: 21px !important; }
+:root:root:root:root:root:root .phmodal.fxmodal { background: rgba(12, 35, 64, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+:root:root:root:root:root:root .phwin.fxwin { position: relative; width: 960px; max-width: 100%; max-height: calc(100dvh - 32px); display: flex; flex-direction: column; overflow: hidden; }
+:root:root:root:root:root:root .fxwin .fxhead { padding: 14px 44px 8px 16px; border-bottom: 2px solid var(--stripe-line, #c8102e); display: flex; flex-direction: column; gap: 4px; }
+:root:root:root:root:root:root .fxwin .fxname { font: 700 24px/1.1 var(--display); color: var(--ink); background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
+:root:root:root:root:root:root .fxwin .fxsub { font: 400 13px var(--body); color: var(--muted); }
+:root:root:root:root:root:root .fxwin .fxbody { padding: 10px 8px 16px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+:root:root:root:root:root:root .fxwin .fxchd { display: flex; align-items: baseline; gap: 10px; padding: 0 0 2px 8px; }
+:root:root:root:root:root:root .fxwin .fxchd b { font: 700 17px/1 var(--display); color: var(--ink); }
+:root:root:root:root:root:root .fxwin .fxchd span { font: 400 12px var(--body); color: var(--muted); }
+:root:root:root:root:root:root[data-view="mobile"] .phmodal.fxmodal { padding: 8px; }
+:root:root:root:root:root:root[data-view="mobile"] .phwin.fxwin { max-height: calc(100dvh - 16px); }
