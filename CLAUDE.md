@@ -4012,10 +4012,14 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   to the Next season band. Judge 2026 (age 34, 285 PA at .391; 2025 .422 on 679, 2024 .455 on 704): regressed .386, age −12 → .374 (the one-season
   number .354). Yordan .400, Trout (34) .344.
 
-* **The Expected vs actual table without its Diff column; the IBB row (Sean, 16 Oct 2026, Wood's xwOBA tab on his phone: "get rid of the
-  differential column, and make intentional walks be IBB so that column can be shorter and it can all fit without the need to scroll")**: the
-  xwOBA tab's Expected vs actual is Piece · Expected · Actual · ± wOBA · Share (no Diff on any row; a note row spans five), and the intentional
-  walks row is labelled **IBB** (its note still says they're not in wOBA). Headless at 390px: the table is 322px in a 328px box, no scroll.
+* **The Expected vs actual table: Actual first and heat-mapped, Diff kept, the IBB row, no Batted-ball model row (Sean, 16 Oct 2026, Wood's
+  xwOBA tab on his phone: "make intentional walks be IBB", then "keep the diff column ... get rid of the batted ball model row at the bottom ...
+  put the actual column before expected and heat map the actual column too"; a Diff-less version lasted an hour)**: the table is Piece · **Actual** ·
+  Expected · Diff · ± wOBA · Share. The Actual cell of every piece but IBB, and the wOBA row's, is filled with his percentile on that park-neutral
+  value among the pool's qualifiers (`ACT_OF` / `ACT_DIR` / `pcA` / `actTd` in `renderTalentTab`: each qualifier's own K% / BB% / HR/FB / BABIP /
+  bases per non-HR hit less his parks' effect, K% turned over so red is good, 20 needed); the intentional walks row is labelled **IBB** (its note
+  still says they're not in wOBA); the In his parks row reads his raw wOBA, then the park share, the park's ± and its points; the Batted-ball
+  model row (the directional model's xwOBA beside his) is gone — `m.dxw` is still built. A note row spans six.
   **HBP and extra bases re-examined the same day** (Sean: "I'm also curious about hbp in xwoba ... Also the extra bases component too"; scratch
   `audit/h_hbp_xb.py` / `h_xb2.py`, 1,819 / 3,699 pairs as above): HBP rate repeats at r .65 (k ~270 PA), moves xwOBA by 6 points (sd) and no
   process explains it (a skills fit r .19) — league, shrunk or fitted versions change the projection by ≤ .001, so it stays his own rate. The
