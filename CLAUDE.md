@@ -4040,6 +4040,23 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   build is over fly balls + popups (its league 13.9% in 2026), the tab over Savant's fly-ball count (13.7%) — the step's note says so. The 11 Oct
   test had the EV-only fit a hair better at next season's wOBA (r .556 vs .551); Sean took the consistency.
 
+* **Fixing the flaw on home (Sean, 16 Oct 2026: "guys that are very elite at a few skills and have like one or two things holding them back like
+  Garrett Mitchell (gb rate or k rate), James wood (same thing), Roman Anthony (same thing) ... an indicator thing like the movers table where it shows
+  players like that that have recently improved on the big flaw skill that's holding them back")**: a fourth home section under the three-across grid
+  (`renderHome`, after Movers; class `hflaw` on an `hlead2` section), from the day rows like Movers (`loading` until days.js is in). For every hitter
+  with 200+ PA (`FX.minPA` — Anthony's 242) the xwOBA build-up's pieces off `V(p).tal` on the full season — K% (`xk`), BB% (`xbb`), xHR/FB (`xhf`),
+  fly balls (`fbs`), xBABIP (`xbab`), extra bases (`tph`); HBP left out — each swapped alone into the league's set and priced in wOBA points
+  (`twRaw` × the league scale, as the tab's build-up does). **Elite** = his two best pieces worth +30 together (`FX.elite`); the **flaw** = his two
+  worst pieces at −10 or under (`FX.flaw` — "one or two things"). Then under the last 30 days (Movers' `win30`, 75+ PA) the same pieces from the
+  window's `V(p).tal` (talent is built against the full-season league in a window too), **If it held** = his season build with only that flaw piece at
+  the window's value, the row's flaw the one that gained most, the gain ≥ 5 points (`FX.gain`), ranked by it, five rows (four on a phone). Desktop:
+  Player · Tm · Elite at (the two best pieces' words) | The flaw: Piece · Season · Last 30 | xwOBA: Season · If it held (filled by its place among the
+  season's 300+ PA xwOBAs) · Δ; a phone: Player · Flaw ("K% 29.6% → 21.0%") · xwOBA · If held · Δ; a name opens his xwOBA tab; a note under the table
+  says the rules. On 27 Sep 2026 it reads Goodman (K% 29.6 → 21.0, +38), Sanoja (xHR/FB), Betts (xHR/FB), Schwarber (K%), Mayo (K%); Mitchell is 12th
+  (K% 32.0 → 29.2, +12 — his fly-ball share went the other way), Wood and Anthony qualify as candidates but neither flaw moved in the window (Wood's
+  fly-ball share 26% → 8%, Anthony's K% up), so they're off it — the card says who moved, not who should. A window piece on ~100 PA is noisy by nature
+  (a K% half his actual rate; xHR/FB on ~30 fly balls); the "if it held" number takes the rest of his game as it is.
+
 ---
 
 ## 10. The football site moved out
