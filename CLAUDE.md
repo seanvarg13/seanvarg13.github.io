@@ -4205,6 +4205,25 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   in `LB_SETS` on both sides (the Stats tab's buttons), the Stats panel's "Fantasy points" and "Expected fantasy points" groups, `LB_EXTRA_H / _P`,
   `RESULT_KEYS`, `SHORT` and glossary entries.
 
+* **Rankings in the table dress with a Draft mode; the Fantasy menu down to four (Sean, 16 Oct 2026: "lets keep the rankings page, and integrate
+  that and the draft board so basically with rankings to go into draft mode you hit draft mode, and lets also make it formatted like all the other
+  tables are. / and lets keep the mock draft page as well and scoring settings / and then get rid of the rest")**: **the Fantasy menu** is Rankings ·
+  Fantasy leaderboard · Mock draft · Scoring settings (rebuilt in `app.js` after `pitchBoardEl`, since index.html's list doesn't round-trip);
+  **Eligibility, the Weekly Planner, Claude rankings and the Fantasy page's What if** are off the menus and routes (`readMode` sends `#eligibility` /
+  `#planner` / `#claude` home and `#fantasy/whatif` to the leaderboard; `NAV_GROUPS`' Fantasy group is `rankings draft fantasy mock`; `BACK_MODES`
+  trimmed; home's off-season draft-prep card links Rankings and Draft mode) — `renderEligibility`, `renderPlanner`, `renderClaude` and the What-if
+  columns stay in `app.js`, unreachable, and `hist/claude-2027.js` stays built. **Rankings and Draft mode wear the B-Ref dress**: `brOn()` is
+  `onePage() || rankings || draft` and `body.brlb` follows it, so the Leaderboard's rules draw them — Rk · Player · Tm · PA · the headline · the stats ·
+  Pos, the title over the red rule ("Hitting Rankings by xwOBA", "your order" once the list is his own; "Pitchers Draft mode"), the sorted column
+  filled, a long name ellipsised; the Qualified avg foot is the Leaderboard's alone (`onePage()`). What they add gets its room in the block at the end
+  of `styles.css` (80 roots, over the B-Ref dimensions block): an Edit rankings row is 34px for its tick box · drag handle · rank box · ▲▼ · tier box,
+  and the **Draft** column (`.act`, the Draft board's sticky right column since the first day — header cell `h act` now, so a phone orders it last)
+  is opaque with a 2px ink rule, so it reads as a pinned column where it covers Pos until the box is scrolled. **Draft mode** is a button at the right
+  of the Rankings bar (`#rankdraft` in `renderRankTools`: sets Draft from to "My rankings" when there is a working list, then `#draft`) and **Exit
+  draft mode** at the right of the Draft bar (`#draftexit` in `renderDraftTools` → `#rankings`); the Draft page's own row (the drafted count, Draft
+  from, Undo, Show drafted) shows on a desktop again — the eighth minimal pass's `body.filtbar` rule had hidden `#toolrow` there with the Leaderboard's.
+  The how-to prose says so; the Draft board's `document.title` is "Draft mode".
+
 ---
 
 ## 10. The football site moved out
