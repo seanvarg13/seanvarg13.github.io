@@ -4188,6 +4188,23 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   switch (Appearance ▸ Layout is the same control). `BACK_LABEL` / the `document.title` map say `settings`; the sync pull and the local updater
   redraw the Settings page where they redrew Appearance.
 
+* **Fantasy points per unit, and expected (Sean, 16 Oct 2026: "to the fantasy leaderboard page lets get rid of a lot of the stats and keep the ones
+  that matter which are the points per unit of measurement and expected points per unit of measurement. so lets add the fantasy points per start, per
+  game, per IP, per PA, per at bat, per week and then also add expected of those as well to the regular leaderboard as an option to incliude fantasy
+  stats")**: **the Fantasy Leaderboard** (`fLeadCols(grp, trending)`) is three groups over the column names — **Points** (Pts · Pts/G · Pts/PA · Pts/AB ·
+  Pts/Wk; pitchers Pts · Pts/G · Pts/GS · Pts/IP · Pts/Wk), **Expected points** (the same as xPts — a hitter's line at his directional xBA / xSLG with
+  runs and RBI moved by xwOBA ÷ wOBA, `fXLine`; a pitcher's luck-neutral line, earned runs at his nERA and the balls in play at league value for their
+  type, `fPLines`' N — the underlying uPts family is still built by `fLeadRows`, unused) and **Playing time** (G · PA · AB · Wks / G · GS · IP · Wks);
+  Recent keeps Szn Pts/G and Trend inside Points. `renderFTable` draws the over row by hand (`tr.over`, a red rule where a group ends on the header and
+  every cell, `--overh` so the column names pin under it; CSS at the end of `styles.css`). The Filters fold's **Points basis** segment (Actual /
+  Expected / Both, Luck-neutral / Underlying / All three) is gone, with its line in the summary; the note explains xPts for both sides. **The regular
+  Leaderboard**: `FANT_H` is Pts · Pts/G · Pts/PA · **Pts/AB · Pts/Wk** and **xPts · xPts/G · xPts/PA · xPts/AB · xPts/Wk** (`fpab fpwk xfpts xfpg xfppa
+  xfpab xfpwk`), `FANT_P` Pts · Pts/G · Pts/GS · Pts/IP · **Pts/Wk** and **xPts · xPts/G · xPts/GS · xPts/IP · xPts/Wk** (`fpwk xfpts xfpg xfpgs xfpip
+  xfpwk`) — `fantFill` builds every one from the official line and the game logs (weeks = Monday-to-Sunday weeks with a game; a pitcher's expected per
+  start spreads the luck-neutral line over his games, `fSpread`), full season of the last three MLB seasons only as before; a **Fantasy** column set
+  in `LB_SETS` on both sides (the Stats tab's buttons), the Stats panel's "Fantasy points" and "Expected fantasy points" groups, `LB_EXTRA_H / _P`,
+  `RESULT_KEYS`, `SHORT` and glossary entries.
+
 ---
 
 ## 10. The football site moved out
