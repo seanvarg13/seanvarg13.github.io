@@ -2699,6 +2699,13 @@
   // a 2px rule where each run of columns ends (brEnds) and after Tm; the sorted column filling its cells; the qualified pool's leader in
   // a column bold italic (brLeaders: MLB-wide, the pool the list ranks against); a Qualified avg band row at the foot
   const brOn = () => onePage() || state.mode === "rankings" || state.mode === "draft";   // Rankings / Draft mode too (Sean, 16 Oct 2026: "formatted like all the other tables are")
+  // how tiers draw in the B-Ref dress (Sean, 16 Oct 2026, three mock-ups): "section" — a plain row with the tier's name in the frozen Player
+  // cell under a 2px red rule, like every other break on the site; "column" — a Tier column beside Rk (and a red rule where a tier starts;
+  // the section rows come back while editing, since that is where tiers are named, added and removed); "band" — the old blue strip, but as a
+  // grid row with its label frozen, in the gap strip's deeper blue so it isn't the header's. Per device (draft2027.tierStyle) until Sean picks one.
+  const TIER_STYLES = ["section", "column", "band"];
+  const tierStyle = () => { let v = null; try { v = localStorage.getItem("draft2027.tierStyle"); } catch {} return TIER_STYLES.includes(v) ? v : "section"; };
+  const tierColOn = () => { if (!brOn() || tierStyle() !== "column" || (state.mode === "rankings" && state.editRanks) || !showTiers()) return false; const src = orderSource(); return !!(src && tierLists(state.pos, src).length); };
   function brEnds(ms, g) {
     const keys = ["score", ...ms.map((m) => m.key)], cat = (k) => (RESULT_KEYS.has(k) ? "R" : "P"), out = new Set();
     keys.forEach((k, i) => { if (i < keys.length - 1 && cat(k) !== cat(keys[i + 1])) out.add(k); if (hasBreak(g, k)) out.add(k); });
@@ -2757,7 +2764,10 @@
     const mobile = document.documentElement.dataset.view === "mobile";
     h.style.setProperty("--rankw", editing ? (mobile ? (hasTiers ? "108px" : "72px") : hasTiers ? "190px" : "134px") : mobile ? "22px" : "44px");
     // no "Rank" over the numbers (minimal pass 5): they say what they are
-    h.append(el("div", "h", editing ? (hasTiers ? "Rank · tier" : "Rk") : brOn() ? "Rk" : ""), el("div", "h left", ref === g ? "Player" : `Player · ranked vs ${POOL_NAME[ref]}`));
+    const TC = tierColOn(); document.body.classList.toggle("tiercol", TC);   // the Tier column (tierStyle "column"): a track between Rk and Player
+    h.append(el("div", "h", editing ? (hasTiers ? "Rank · tier" : "Rk") : brOn() ? "Rk" : ""));
+    if (TC) h.append(el("div", "h brtier", "Tier"));
+    h.append(el("div", "h left", ref === g ? "Player" : `Player · ranked vs ${POOL_NAME[ref]}`));
     const BR = brOn(), ends = BR ? brEnds(ms, g) : null;
     if (BR) h.append(el("div", "h brtm ge", "Tm"));
     // B-Ref's title over the table (Sean, 9 Oct 2026, from the canvas's phone board: "make it so it looks like the first image"):
@@ -2866,9 +2876,28 @@
     // group the visible rows by tier (the untiered section is index tiers.length); rows stay in rank order
     const groups = Array.from({ length: tiers.length + 1 }, () => []);
     list.forEach((p, i) => { const k = p.type + p.id; groups[tiers.length && idx.has(k) ? idx.get(k) : tiers.length].push([p, i]); });
+    // one row-main with the list's grid variables (every row, a tier row and an empty tier's drop zone share it)
+    const gridMain = () => {
+      const main = el("div", "row-main grid");
+      setStatCols(main, ms); main.style.setProperty("--n", ms.length); main.style.setProperty("--act", state.mode === "draft" ? "78px" : "0px"); main.style.setProperty("--colw", trending || ms.some((m) => m.showValue) ? "72px" : "56px");
+      const mobile = document.documentElement.dataset.view === "mobile";
+      main.style.setProperty("--rankw", rankMode ? (mobile ? (allTiers.length ? "108px" : "72px") : allTiers.length ? "190px" : "134px") : mobile ? "22px" : "44px");
+      main.style.setProperty("--pre1", preOn("year") ? "var(--prew, 64px)" : "0px"); main.style.setProperty("--pre2", preOn("age") ? "var(--prew, 64px)" : "0px");
+      return main;
+    };
     const tierHeader = (t) => {
       const th = el("li", "tierhead"); const untiered = t === tiers.length;
-      if (untiered) { th.classList.add("untiered"); th.append(el("span", "tierlbl", "Not tiered")); th.append(el("small", null, `${groups[t].length} players${rankMode ? " — tick players and use Move to tier…, or drag them into a tier" : ""}`)); }
+      // in the B-Ref dress a tier row is a grid row of the table (16 Oct 2026): the tier in the Rk cell, its name in the frozen Player cell
+      // (spilling right over the empty rest of the row, so a phone keeps it in view as the stats slide), the controls after the name
+      let into = th;
+      if (BR) {
+        th.classList.add("tierrow", TS); if (rankMode) th.classList.add("editing");
+        const main = gridMain(); const rk = el("div", "rank", untiered ? "" : `T${t + 1}`); into = el("div", "who"); const rest = el("div", "tierrest");
+        // placed outright: a phone's cells carry `order`, and an auto-placed cell behind an explicitly placed one had landed on a second grid row
+        rk.style.gridArea = "1 / 1"; into.style.gridArea = "1 / 2"; rest.style.gridArea = "1 / 3 / 2 / -1";
+        main.append(rk, into, rest); th.append(main);
+      }
+      if (untiered) { th.classList.add("untiered"); into.append(el("span", "tierlbl", "Not tiered")); into.append(el("small", null, `${groups[t].length} players${rankMode && !BR ? " — tick players and use Move to tier…, or drag them into a tier" : ""}`)); if (rankMode && BR) into.title = "Tick players and use Move to tier…, or drag them into a tier"; }
       else {
         const nm = ((src.names || {})[state.pos] || [])[t] || "";
         const lbl = el("span", "tierlbl", `Tier ${t + 1}${nm ? " · " + nm : ""}`);
@@ -2882,19 +2911,21 @@
             lbl.replaceWith(inp); inp.focus();
           });
         }
-        th.append(lbl);
-        if (rankMode) { const pen = el("button", "pen", "✎"); pen.type = "button"; pen.title = nm ? "Rename this tier" : "Give this tier a nickname"; pen.addEventListener("click", () => lbl.click()); th.append(pen); }
+        into.append(lbl);
+        if (rankMode) { const pen = el("button", "pen", "✎"); pen.type = "button"; pen.title = nm ? "Rename this tier" : "Give this tier a nickname"; pen.addEventListener("click", () => lbl.click()); into.append(pen); }
         const ranks = tiers[t].map((k) => fullRank.get(k)).filter(Boolean);
-        th.append(el("small", null, ranks.length ? `${ranks.length} player${ranks.length === 1 ? "" : "s"} · ranks ${Math.min(...ranks)}–${Math.max(...ranks)}` : "empty"));
-        if (rankMode) { const x = el("button", "unadd", "×"); x.type = "button"; x.title = "Remove this tier (players return to Not tiered)"; x.addEventListener("click", () => removeTier(t)); th.append(x); }
+        into.append(el("small", null, ranks.length ? `${ranks.length} player${ranks.length === 1 ? "" : "s"} · ranks ${Math.min(...ranks)}–${Math.max(...ranks)}` : "empty"));
+        if (rankMode) { const x = el("button", "unadd", "×"); x.type = "button"; x.title = "Remove this tier (players return to Not tiered)"; x.addEventListener("click", () => removeTier(t)); into.append(x); }
       }
-      if (rankMode) { const plus = el("button", "pen plus", "+ tier above"); plus.type = "button"; plus.title = untiered ? "Add an empty tier above Not tiered" : `Insert an empty tier above tier ${t + 1}`; plus.addEventListener("click", () => insertTier(t)); th.append(plus); }
+      if (rankMode) { const plus = el("button", "pen plus", "+ tier above"); plus.type = "button"; plus.title = untiered ? "Add an empty tier above Not tiered" : `Insert an empty tier above tier ${t + 1}`; plus.addEventListener("click", () => insertTier(t)); into.append(plus); }
       th.dataset.tier = t;
       return th;
     };
+    const tierName = (t) => ((src && src.names || {})[state.pos] || [])[t] || "";
     const ms = colsFor(g), trending = state.mode === "trending";
     const drafted = draftedIds();
     const BR = brOn(), ends = BR ? brEnds(ms, g) : null, LD = BR ? brLeaders(g, ms) : null;
+    const TS = BR ? tierStyle() : "flex", TC = tierColOn();   // the Tier column: no tier rows, a cell beside Rk, a red rule where a tier starts
     const ol = $("rows"); ol.innerHTML = "";
     const empty = $("empty"); empty.hidden = list.length > 0; empty.innerHTML = "";
     if (needsRows() && !DS.ready()) {
@@ -2920,7 +2951,7 @@
     const onPage = (i) => { const d = grouped ? at.get(i) : i; return d != null && d >= pg.start && d < pg.end; };
     renderPager($("pagertop"), list.length, pg);   // no pager under the rows: the card stands still, so the top one is always in view (Sean)
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
-    const emitRow = (p, i, rows, j) => {          // rows / j: the displayed section and his place in it (▲ ▼ swap with neighbours)
+    const emitRow = (p, i, rows, j, tierMark = -1) => {          // rows / j: the displayed section and his place in it (▲ ▼ swap with neighbours); tierMark: his tier when he's its first row on the page
       const st = stats.get(p.type + p.id);
       WRC_CTX = p.src && p.src.consts ? p.src : null; WRC_ROW = p;   /* an each-season row prints wRC+ against its own season, a combined line part by part (16 Oct 2026) */
       const li = el("li", "row"); li.dataset.key = p.type + p.id;
@@ -2928,11 +2959,7 @@
       const ck = p.type + (p.pid ?? p.id), cds = p.dsKey ? (p.dsKey === CUR.key ? null : p.dsKey) : listDs;   // the card: the real player in his own season
       const exp = state.expanded === ck && (state.cardDs || null) === cds;
       if (exp) li.classList.add("open");
-      const main = el("div", "row-main grid");
-      setStatCols(main, ms); main.style.setProperty("--n", ms.length); main.style.setProperty("--act", state.mode === "draft" ? "78px" : "0px"); main.style.setProperty("--colw", trending || ms.some((m) => m.showValue) ? "72px" : "56px");
-      const mobile = document.documentElement.dataset.view === "mobile";
-      main.style.setProperty("--rankw", rankMode ? (mobile ? (allTiers.length ? "108px" : "72px") : allTiers.length ? "190px" : "134px") : mobile ? "22px" : "44px");
-      main.style.setProperty("--pre1", preOn("year") ? "var(--prew, 64px)" : "0px"); main.style.setProperty("--pre2", preOn("age") ? "var(--prew, 64px)" : "0px");
+      const main = gridMain();
       if (rankMode) {
         const key = p.type + p.id;
         const ctl = el("div", "rankctl");
@@ -2965,6 +2992,12 @@
         li.addEventListener("dragend", () => { dragKey = null; li.classList.remove("dragging"); clearDropMark(); });
       } else {
         main.append(el("div", "rank", rankOf(p, i)));
+      }
+      if (TC) {                                              // the Tier column: the tier's label on its first row of the page, blank below
+        const tc = el("div", "brtier"); const t = tiers.length && idx.has(p.type + p.id) ? idx.get(p.type + p.id) : tiers.length, un = t === tiers.length;
+        if (tierMark >= 0) { li.classList.add("tierfirst"); tc.append(el("span", "tierlbl", un ? "–" : `T${t + 1}${tierName(t) && !mobileView() ? " " + tierName(t) : ""}`)); }
+        tc.title = un ? "Not tiered" : `Tier ${t + 1}${tierName(t) ? " · " + tierName(t) : ""}`; if (un) tc.classList.add("untd");
+        main.append(tc);
       }
       const who = el("div", "who");
       const nameEl = el("div", "name", p.name);
@@ -3040,9 +3073,15 @@
         const here = rows.some(([, i]) => onPage(i));
         if (!rankMode && !here) return;                        // Draft page / later pages: skip tiers with nothing to show
         if (rankMode && !here && !(state.page === 1 && !rows.length)) return;   // empty tiers show once, on page 1
-        frag.append(tierHeader(t));
-        rows.forEach(([p, i], j) => { if (onPage(i)) emitRow(p, i, rows, j); }); WRC_CTX = null; WRC_ROW = null;
-        if (rankMode && !untiered && !tiers[t].length) { const dz = el("li", "tierdrop", "Drop players here"); dz.dataset.tier = t; frag.append(dz); }
+        if (!TC) frag.append(tierHeader(t));
+        let first = true;
+        rows.forEach(([p, i], j) => { if (onPage(i)) { emitRow(p, i, rows, j, first ? t : -1); first = false; } }); WRC_CTX = null; WRC_ROW = null;
+        if (rankMode && !untiered && !tiers[t].length) {
+          const dz = el("li", "tierdrop"); dz.dataset.tier = t;
+          if (BR) { dz.classList.add("tierrow"); const main = gridMain(); const c = el("div", "tierdz"); c.style.gridColumn = "1 / -1"; c.append(el("span", "tierdzin", "Drop players here")); main.append(c); dz.append(main); }
+          else dz.textContent = "Drop players here";
+          frag.append(dz);
+        }
       });
     } else { const rows = list.map((p, i) => [p, i]); rows.forEach(([p, i], j) => { if (onPage(i)) emitRow(p, i, rows, j); }); WRC_CTX = null; WRC_ROW = null; }
     if (BR && onePage() && list.length && pg.end >= (grouped ? at.size : list.length)) frag.append(...brTotRows(g, ms, stats, ends, preOn));   // the foot of the Leaderboard's last page (not a ranked list's)
@@ -3085,7 +3124,7 @@
     node.style.setProperty("--statcols", statCols(ms, mobile ? 50 : state.mode === "trending" || ms.some((m) => m.showValue) ? 72 : 56));
   }
   function fitNameCol() {
-    const board = $("board"), first = $("rows").querySelector(".who");
+    const board = $("board"), first = $("rows").querySelector(".row .who");   // a player's cell, not a tier row's (which has no name)
     if (!first) { board.style.removeProperty("--namew"); return; }
     if (document.documentElement.dataset.view === "mobile") { board.style.setProperty("--namew", "116px"); return; }   // a phone's is fixed: nothing to measure (reading styles here forced a layout of every row — 11 Oct 2026)
     const cs = getComputedStyle(first), pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
