@@ -4032,6 +4032,13 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `buildUp` in `renderTalentTab`, **Next season · 2027**, starts from an "xwOBA · 2026" row and carries the prior-season rows, the Triple-A /
   rehab rows, Regression, Age and the Next season band (the single-season fallback band too), between the build-up and Expected vs actual. Drawn
   only when there is a projection (`hasProj`: a regular MLB full season, no window or split).
+* **xwOBA's HR piece is the barrel fit (Sean, 16 Oct 2026, Anthony's 2025 build-up reading xHR/FB 23.7% against the xHR/FB tab's 26.9%:
+  "switch it so both include barrel %")**: `talentCore` prices his fly balls with `XHRFB` (FB EV, FB Brl%, LD Brl%, Pull FB% — the xHR/FB tab's
+  own fit, through `hrfbFit` against `L.hr`) instead of the exit-velocity-only `TW_HF` of 11 Oct; `TW_USE_EV = false` in `app.js` and
+  `tools/build_career.py` (`TW_HF` stays for the record, `true` puts it back). `hist/career-bb.js` and `hist/aaa-tw.js` regenerated; app and
+  file agree (Anthony 2026 .321, Wood .386, Judge .394, Soto .398). The build-up's xHR/FB and the tab's can still sit a few tenths apart: the
+  build is over fly balls + popups (its league 13.9% in 2026), the tab over Savant's fly-ball count (13.7%) — the step's note says so. The 11 Oct
+  test had the EV-only fit a hair better at next season's wOBA (r .556 vs .551); Sean took the consistency.
 
 ---
 

@@ -7354,7 +7354,7 @@
   // Talent xwOBA (Sean, 11 Oct 2026: "an xwoba based purely on their talent and completely removes noise ... their batted ball mix, k rate, bb rate,
   // xbabip minus luck and noise, and xHR/fb rate"): wOBA rebuilt from expected rates only, never his actual hits, walks or strikeouts —
   //   K: half his K%, half xK% (XKH, the hitter fit) · BB: half his BB%, half xBB% (TW_XBB below) — TW.act · HBP: his own rate (no process behind it)
-  //   HR: xHR/FB on exit velocity alone (TW_HF; XHRFB as the fallback), against the dataset's own HR over fly balls + popups, on his fly balls + popups per ball in play (the Mix buckets)
+  //   HR: xHR/FB on the barrel fit (XHRFB, the xHR/FB tab's; TW_HF, exit velocity alone, was it 11-16 Oct 2026), against the dataset's own HR over fly balls + popups, on his fly balls + popups per ball in play (the Mix buckets)
   //   hits on the other balls in play: the nine-driver xBABIP (XBAB — the xBABIP tab's build-up stopped before Noise and Luck)
   //   extra bases per hit: the directional model's xSLG / xBA less those home runs
   // each piece at FanGraphs-style linear weights, and the season scaled so its 300+ PA hitters average their real wOBA. xBB% = the league's BB%
@@ -7396,7 +7396,7 @@
   // it, hist/parks.js's cells): XHRFB.d evfb .332 → .345, brfb .401 → .394, brld .218 → .219, pfb .094 (held out by season r .883 → .892, rmse
   // 3.21 → 3.06, next season's HR/FB r .640 → .647); TW_HF c .104 → .096, evfb 1.365 → 1.364, ev90 .828 → .822, pfb .096 → .097 (.834 → .843,
   // next season .674 → .682). The park had been noise in the target; the weights barely move, the fits read a little cleaner
-  const TW_HF = { c: 0.096, w: { evfb: 1.364, ev90: 0.822, pfb: 0.097 } };
+  const TW_HF = { c: 0.096, w: { evfb: 1.364, ev90: 0.822, pfb: 0.097 } }, TW_USE_EV = false;   // false since 16 Oct 2026: the barrel fit (XHRFB) is the HR piece
   const twMix = (c) => (c && c.mix && c.mix.length >= 8 ? c.mix : null);
   function twInputs(m, c, pa, ab, hbp, bats) {
     const mx = twMix(c), tot = mx ? mx.reduce((a, b) => a + (b || 0), 0) : 0;
@@ -7435,7 +7435,9 @@
     const xk = m.k == null ? xkFit : TW.act * (m.k - pkk) + (1 - TW.act) * xkFit, xbb = m.bb == null ? xbbFit : TW.act * (m.bb - pkbb) + (1 - TW.act) * xbbFit;
     const hbp = (I.hbp || 0) / I.pa;
     const bx = { evfb: m.evfb, brfb: m.brfb, brld: m.brld, pfb: I.pfb, brl: m.brl, ev90: m.ev90 };
-    const ev = Object.keys(TW_HF.w).every((k) => bx[k] != null && L.twh && L.twh[k] != null), f = ev ? TW_HF.w : hrfbFit(bx, L.hr); if (!f) return null;
+    // the barrel fit, the xHR/FB tab's own (Sean, 16 Oct 2026, Anthony's 23.7 against the tab's 26.9: "switch it so both include barrel %");
+    // TW_HF (exit velocity alone) stays for the record — TW_USE_EV turns it back on
+    const ev = TW_USE_EV && Object.keys(TW_HF.w).every((k) => bx[k] != null && L.twh && L.twh[k] != null), f = ev ? TW_HF.w : hrfbFit(bx, L.hr); if (!f) return null;
     let xhf = L.hr.hrfb + (ev ? TW_HF.c : 0); const dh = {}; for (const k in f) { dh[k] = f[k] * (bx[k] - (ev ? L.twh : L.hr)[k]); xhf += dh[k]; } xhf = Math.max(0, xhf);
     const hrb = xhf / 100 * I.fbs;
     const D = xbabDrivers(I, L); if (!D) return null; const { xbab, dv } = D;
@@ -7825,7 +7827,7 @@
       ["K%", "xk", t.xk, lgK, pct1, -1, `half his actual K% (${m.k != null ? pct1(m.k) : "–"}${t.pk && t.pk.k ? `, less his parks' ${sg1(t.pk.k)} on it` : ""}), half his xK% (${pct1(t.xkFit)}: the strikeout rate his whiffs, swing decisions and the strikes he sees come with) — a season's K% is mostly skill, and the half-and-half forecast next season's K% better than either alone`],
       ["BB%", "xbb", t.xbb, L.bb, pct1, 1, `half his actual BB% (${m.bb != null ? pct1(m.bb) : "–"}${t.pk && t.pk.bb ? `, less his parks' ${sg1(t.pk.bb)} on it` : ""}), half his xBB% (${pct1(t.xbbFit)}: the walk rate his chase rate, zone swings, contact, the share of pitches he sees in the zone, his fouls per contact and his intentional walks come with) — the half-and-half forecast next season's BB% better than either alone`],
       ["HBP", "hbp", t.hbp, L.hbp, (x) => pct1(100 * x), 1, "his own hit-by-pitch rate per plate appearance — there's no process to model, so it stands as it is"],
-      ["xHR/FB", "xhf", t.xhf, L.hr.hrfb, pct1, 1, `home runs per fly ball + popup his exit velocity alone deserves — FB EV, EV90 and pulled fly balls, no barrels (a launch-angle window inside the fly ball) — against the season's own HR / (fly balls + popups); the xHR/FB tab reads barrels too, so the two differ`],
+      ["xHR/FB", "xhf", t.xhf, L.hr.hrfb, pct1, 1, `home runs per fly ball + popup his contact deserves — the xHR/FB tab's fit: FB EV, Barrel% on fly balls and on line drives, pulled fly balls — against the season's own HR / (fly balls + popups), so it can sit a few tenths off the tab's, which is over fly balls alone`],
       ["Fly balls", "fbs", t.fbs, L.fbs, (x) => pct1(100 * x), 1, "fly balls + popups per ball in play: how often xHR/FB gets its chance"],
       ["xBABIP", "xbab", t.xbab, L.xbabip, f3, 1, `the xBABIP tab's nine drivers (line drives, popups, grounder and liner EV, grounder and liner pull, speed on grounders, oppo, fly balls) with no Noise or Luck row (his actual BABIP: ${m.babip != null ? f3(m.babip) : "–"})`],
       ["Extra bases", "tph", t.tph, L.tph, (x) => x.toFixed(2), 1, "total bases per hit that isn't a home run, from the directional model's xSLG and xBA — how many of his hits it expects to go for extra bases"]];
