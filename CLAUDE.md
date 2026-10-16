@@ -3969,6 +3969,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (`.btabbody`). The tabs are 50px / 46px tall on a phone, type unchanged. The card in `#modal` (the Mock Draft room, the board's spring cards) is
   untouched. Headless on page and popup, phone and desktop: the section spans the viewport, the box 860 / 364px.
 
+* **The picked tab in the open-Filters dress, the × at its old size, blue to the foot (Sean, 16 Oct 2026, Tolle's popup: "Make it so the bottom tabs
+  when selected have the same behavior as the filters button and also make the box of the x the same height and length as it originally was same
+  dimensions just give it this style it has now and even make the x the same size it was before too and then also make the white at the bottom be
+  blue too")**: the block at the end of `styles.css` — the picked tab is filled the band's blue with white type and a **1px white edge**, as Filters
+  is while its window is open (its edge had been the blue, so on the blue ground it read as a bare word); the popup's × is its original 34px box
+  (30 on a phone) with the 24px / 22px `--body` glyph, in the white box with the navy × (the strip over the bar is 52 / 44px again, the chips' row
+  34 / 30); the popup's 28px bottom padding is inside the blue section (plus the home-bar inset on a phone), and on a desktop page the body's 48px
+  bottom padding is the blue's own, so nothing white shows under it. Headless: 0-1px under the blue on page and popup, both layouts.
+
 ---
 
 ## 10. The football site moved out

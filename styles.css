@@ -5608,3 +5608,23 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pbelow2 > .btabs { padding: 6px 0 2px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .btabs .btab:not(#pop *) { height: 50px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) .btabs .btab:not(#pop *) { height: 46px !important; }
+
+/* The picked tab in the open-Filters dress, the × at its old size, blue to the foot (Sean, 16 Oct 2026, Tolle's popup: "Make it so the bottom tabs
+   when selected have the same behavior as the filters button and also make the box of the x the same height and length as it originally was same
+   dimensions just give it this style it has now and even make the x the same size it was before too and then also make the white at the bottom be
+   blue too"): the picked tab is filled the band's blue with white type and a 1px white edge, as Filters is while its window is open (its edge had
+   been the blue, so on the blue ground the picked tab read as a bare word); the × is its original 34px box (30 on a phone) with the 24px / 22px
+   glyph it had, in the white box with the navy × (the strip over the bar is 52 / 44px again, the chips' row 34 / 30); the popup's bottom padding
+   moves inside the blue section (plus the home-bar inset on a phone), so the blue runs to the popup's foot */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .btabs :is(.btab.on, .btab[aria-selected="true"], .btab[aria-pressed="true"]):not(#pop *) { background: var(--band2, var(--accent-2)) !important; color: #ffffff !important; border-color: #ffffff !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard.xpop .pgbar.xbar > .xpopx { width: 34px !important; height: 34px !important; font: 600 24px/1 var(--body) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar.pgbar3.xbar { padding-top: 52px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar.xbar > .pgchips { height: 34px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard.xpop .pgbar.xbar > .xpopx { width: 30px !important; height: 30px !important; font-size: 22px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar.pgbar3.xbar { padding-top: 44px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar.xbar > .pgchips { height: 30px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard.xpop { padding-bottom: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard.xpop .pbelow2 { padding-bottom: 28px; min-height: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard.xpop .pbelow2 { padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body[data-mode="player"] { padding-bottom: 0 !important; }   /* the page's 48px of body padding was a white strip under the blue; it's the blue's own padding now */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body[data-mode="player"] #xboard:not(.xpop) .pbelow2 { padding-bottom: 48px; }
