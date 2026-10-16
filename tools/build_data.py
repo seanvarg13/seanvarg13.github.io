@@ -1150,6 +1150,19 @@ def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
     MIX = {"lg": round(per, 4), "f": round(float(fin.sum()) / den, 4) if den else 0.0,
            "w": round(float(wnum_.sum()) / den, 4) if den else 0.0,
            "v": {k: round(float(v), 4) for k, v in val.items()}}
+    # Mix xBABIP (Sean, 16 Oct 2026: "how optimal their batted ball distribution is for maximizing babip"): each bucket's BABIP — non-HR hits over
+    # non-HR balls in play — and its home-run share, so a hitter's mix can be priced for hits in play the way Mix wOBA prices it for wOBA
+    hr_ = ev_.eq("home_run"); hit_ = ev_.isin(["single", "double", "triple"])
+    bab, hsh = {}, {}
+    for b, idx in d[fin].groupby(d["mixb"][fin]).groups.items():
+        n_ = len(idx); nh = int(hr_[idx].sum())
+        bab[b] = round(float(hit_[idx].sum()) / (n_ - nh), 4) if n_ > nh else None; hsh[b] = round(nh / n_, 4)
+    for t in ("ld", "fb"):
+        typ = fin & pd.Series(kind == t, index=d.index)
+        if typ.any():
+            n_ = int(typ.sum()); nh = int(hr_[typ].sum()); bab[f"{t}_x"] = round(float(hit_[typ].sum()) / max(n_ - nh, 1), 4); hsh[f"{t}_x"] = round(nh / n_, 4)
+    MIX["bab"] = bab; MIX["h"] = hsh
+    MIX["lgbab"] = round(float(hit_[fin].sum()) / max(int(fin.sum()) - int(hr_[fin].sum()), 1), 4) if fin.any() else None
     d["mixn"] = fin.astype(int)
     gbk = fin & pd.Series(kind == "gb", index=d.index)              # the mix's grounders by direction (pulled / straightaway / the other way), for the
     for t, c in (("gbp", "p"), ("gbc", "c"), ("gbo", "o")):           # Batted Ball Quality tab's grounder Oppo% (10 Oct 2026); no direction → none of the three
@@ -1161,6 +1174,8 @@ def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
     d["mixv"] = d["mixb"].map(MIX["v"]).where(fin, 0.0).fillna(0.0)
     if (fin & xs).any():                                          # the no-direction row: what those balls are priced at
         MIX["v"]["x"] = round(float(d["mixv"][fin & xs].mean()), 4)
+        nx = int((fin & xs).sum()); nhx = int(hr_[fin & xs].sum())
+        MIX["bab"]["x"] = round(float(hit_[fin & xs].sum()) / max(nx - nhx, 1), 4); MIX["h"]["x"] = round(nhx / nx, 4)
     bunt = d["des"].astype(str).str.contains("bunt", case=False) | d["events"].astype(str).str.contains("bunt")
     d["bunt"] = bunt
     d["evb"] = bbe & ~bunt                                  # EV-eligible: tracked and not a bunt (Savant's Avg EV skips bunts)

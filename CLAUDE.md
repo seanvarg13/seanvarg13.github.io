@@ -4110,6 +4110,20 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the build's piece by the fit's change (`c.own[k] + (now − was)`), so his season xwOBA stays his; the witness reads the fit too; the popup's
   K% / BB% sections lead with xK% / xBB%. Goodman, last 30 days: xK% 27.9 → 20.6, +32.
 
+* **Mix xBABIP (Sean, 16 Oct 2026: "in batted ball distribution can you add in Mix xBABIP below mix xwoba, and make it the same thing that basically
+  looks at how optimal their batted ball distribution is for maximizing babip / obviously this ignores quality ev and barrel rate but that is what i
+  want for that specific bar")**: the league's BABIP for each Mix bucket — non-HR hits per non-HR ball in play on ground balls, popups, and line drives
+  and fly balls each pulled / straightaway / the other way — averaged over his balls in play by bucket, each bucket's balls counted at the share
+  that stays in the park (`mixBab(mx)` / `MIX_BK` in `app.js`, set on `V(p).m.mixbab` beside `pullfb`, so a window / split re-derives it from `ctx.mix`;
+  a no-direction ball takes its types' mean). **Data**: `consts.mix` carries **`bab`** (per bucket, plus `ld_x` / `fb_x` / `x`), **`h`** (the bucket's
+  home-run share) and **`lgbab`** — `pitch_flags` in `tools/build_data.py` writes them beside `v`; `data.js` and `hist/mlb-2015…2025.js` were patched
+  from `pa_all.parquet` with the build's own bucket logic (scratch `mixbab/calc.py` → `mixbab.json`); the minors have none yet (no bar there until a
+  rescore). On the card: `PCT_COLS_H` Batted-Ball Distribution ends Mix wOBA · **Mix xBABIP**; a `SIDE_H` def (the pool ranks it, 300+ PA), in
+  `LB_EXTRA_H` so it draws as a Leaderboard column (Filters ▸ Stats), `SHORT` / `OUTCOME_LABEL` / glossary. 2026, 300+ PA: mean .291, sd .015; top
+  Troy Johnston .334, Jung .328, Kwan .327; bottom Raleigh .239, Mullins .246; r .49 with BABIP and .60 with the drivers' xBABIP — the mix is the
+  distribution's part of BABIP, the rest is contact quality and speed by design. 2026's per-bucket BABIP: GB .249, PU .017, LD pulled .659 /
+  centre .582 / oppo .606, FB pulled .142 / centre .104 / oppo .115 (non-HR balls; pulled fly balls leave the park 37% of the time).
+
 ---
 
 ## 10. The football site moved out
