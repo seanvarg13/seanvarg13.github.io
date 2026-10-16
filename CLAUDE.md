@@ -3978,6 +3978,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   34 / 30); the popup's 28px bottom padding is inside the blue section (plus the home-bar inset on a phone), and on a desktop page the body's 48px
   bottom padding is the blue's own, so nothing white shows under it. Headless: 0-1px under the blue on page and popup, both layouts.
 
+* **The tabs' outline exactly Filters' (Sean, 16 Oct 2026, Ohtani's popup: "The bottom buttons outline style looks a bit different than the
+  filter and raw, I think it might be something to do with the shadow or whatever but make it the same")**: on the blue ground a white edge reads,
+  so `.btabs .btab` takes the bar's buttons' 1px white edge and no shadow (the block at the end of `styles.css`); the blue-grey edge and the lift
+  are gone. Computed style on both layouts: edge and shadow equal to Filters ▾ / Raw ▾ and the ×; the tabs keep their own 50 / 46px height.
+
 ---
 
 ## 10. The football site moved out
