@@ -5640,6 +5640,57 @@
         if (!hit.length && !pit.length) b.append(el("p", "hnote", "Nobody qualifies in the window yet."));
       }
     }
+    // Fixing the flaw (Sean, 16 Oct 2026: "guys that are very elite at a few skills and have like one or two things holding them back like
+    // Garrett Mitchell (gb rate or k rate), James wood (same thing), Roman Anthony ... an indicator thing like the movers table where it shows
+    // players like that that have recently improved on the big flaw skill"): every 300+ PA hitter's xwOBA build-up pieces (K%, BB%, xHR/FB,
+    // fly balls, xBABIP, extra bases — each swapped alone into the league's set, in wOBA points); elite = his two best pieces are worth FX.elite
+    // together, the flaw = his worst piece at FX.flaw or under. Then the same piece over his last 30 days (V()'s talent pieces in the window, the
+    // same league): "if it held" = his season build with the flaw piece at the window's value, and the card ranks by that gain — the rest of his
+    // game is taken as it is, so the number says what the flaw alone is worth, not that the window's hot streak is real
+    { const days = m.days || [], from = days.length ? addDays(days[days.length - 1], -29) : "", win30 = { from: from && from > days[0] ? from : "", to: "", last: "" };
+      const FX = { elite: 30, flaw: -10, gain: 5, pa: 75, minPA: 200 };   // minPA 200, not the pool's 300: Roman Anthony's 242 PA (Sean named him)
+      const fx = section(box, "Fixing the flaw", "elite at most of it, one piece holding him back — that piece over the last 30 days vs the season", "Leaderboard →", goLB("ALL", "score", "desc", win30));
+      fx.classList.add("hlead2"); fx.classList.add("hflaw");
+      if (!daysReady()) loading(fx);
+      else {
+        const PCS = [["K%", "xk", (x) => x.toFixed(1) + "%", "contact"], ["BB%", "xbb", (x) => x.toFixed(1) + "%", "walks"], ["xHR/FB", "xhf", (x) => x.toFixed(1) + "%", "power"],
+                     ["Fly ball%", "fbs", (x) => Math.round(100 * x) + "%", "fly balls"], ["xBABIP", "xbab", f3, "BABIP skills"], ["XB/hit", "tph", (x) => x.toFixed(2), "extra bases"]];
+        const season = new Map(); let L = null, lgK = 0;
+        inWin(NOWIN, () => {
+          for (const p of DATA.players) { if (p.type !== "H" || (p.pa || 0) < FX.minPA) continue; const t = V(p).tal; if (!t || !t.L) continue; season.set(p, t); L = L || t.L; }
+          lgK = (lgRatesH().k || 0) - 0.08 * (1 - TW.act);
+        });
+        const rows = [];
+        if (L) {
+          const wob = (c) => twRaw(c) * L.scale, lg = { xk: lgK, xbb: L.bb, hbp: L.hbp, xhf: L.hr.hrfb, fbs: L.fbs, xbab: L.xbabip, tph: L.tph }, base = wob(lg);
+          const pieces = (t) => PCS.map(([lab, k, f, word]) => ({ lab, k, f, word, v: t[k], eff: 1000 * (wob(Object.assign({}, lg, { [k]: t[k] })) - base) }));
+          const cand = new Map();
+          for (const [p, t] of season) {
+            // "one or two things holding them back": his two worst pieces at the flaw line both count (Mitchell: K% and fly balls), and the
+            // one that moved most in the window is the row's
+            const ps = pieces(t).sort((a, b) => b.eff - a.eff), flaws = ps.slice(-2).filter((z) => z.eff <= FX.flaw);
+            if (ps[0].eff + ps[1].eff < FX.elite || !flaws.length) continue;
+            cand.set(p, { t, ps, flaws, own: { xk: t.xk, xbb: t.xbb, hbp: t.hbp, xhf: t.xhf, fbs: t.fbs, xbab: t.xbab, tph: t.tph } });
+          }
+          inWin(win30, () => {
+            for (const [p, c] of cand) {
+              const v = V(p); if (!v || v.sample < FX.pa || !v.tal) continue; const xw = wob(c.own); let best = null;
+              for (const flaw of c.flaws) { const now = v.tal[flaw.k]; if (now == null) continue; const held = wob(Object.assign({}, c.own, { [flaw.k]: now })), gain = 1000 * (held - xw); if (!best || gain > best.gain) best = { flaw, now, held, gain }; }
+              if (!best || best.gain < FX.gain) continue;
+              rows.push({ p, flaw: best.flaw, strengths: c.ps.slice(0, 2).map((z) => z.word).join(", "), was: best.flaw.v, now: best.now, xw, held: best.held, gain: best.gain, pa: v.sample });
+            }
+          });
+          rows.sort((a, b) => b.gain - a.gain);
+        }
+        const show = rows.slice(0, NB), xw = (x) => ({ v: f3(x), pc: pcOf(refH, x) }), dl = (r) => "+" + Math.round(r.gain), fl = (r) => `${r.flaw.lab} ${r.flaw.f(r.was)} → ${r.flaw.f(r.now)}`;
+        if (!show.length) fx.append(el("p", "hnote", "Nobody with an elite base and a flaw that's moved in the window yet."));
+        else if (PH) table(fx, { label: "Hitters · the flaw over the last 30 days", cols: [["Player", null, "nm"], ["Flaw", 112, "c"], ["xwOBA", 50], ["If held", 54, "heat"], ["Δ", 36, "up"]], ends: [1, 2],
+            rows: show.map((r) => [nm(r.p, "talent"), fl(r), f3(r.xw), xw(r.held), dl(r)]) });
+        else table(fx, { over: [["", 3], ["The flaw", 3], ["xwOBA", 3]], fixed: true, cols: [["Player", 170, "nm"], ["Tm", 46, "c"], ["Elite at", 150, "c"], ["Piece", 70, "c"], ["Season", 60], ["Last 30", 60], ["Season", 60], ["If it held", 70, "heat"], ["Δ", 44, "up"]],
+            rows: show.map((r) => [nm(r.p, "talent"), r.p.team || "", r.strengths, r.flaw.lab, r.flaw.f(r.was), r.flaw.f(r.now), f3(r.xw), xw(r.held), dl(r)]) });
+        if (show.length) fx.append(el("p", "hnote", `Each piece of his xwOBA build-up against the league in wOBA points: elite = his two best are worth +${FX.elite} together, the flaw = his worst at ${FX.flaw} or under. Last 30 = that piece over his last 30 days (${FX.pa}+ PA); If it held = his season xwOBA with only that piece at the window's value.`));
+      }
+    }
     // no "Every page" tiles (Sean, 29 Sep 2026, the minimal pass): the header's menus already list them
     // the data line and the credit live in the Stat glossary now (minimal pass 5, Sean, 30 Sep 2026)
   }
