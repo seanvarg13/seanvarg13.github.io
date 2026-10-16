@@ -3990,6 +3990,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (a last pixel of white). Checked headless with every `env(safe-area-inset-bottom)` swapped for 34px: 0px under the blue. The block at the
   end of `styles.css`.
 
+* **The page's own bounce blue on a phone (Sean, 16 Oct 2026: the white "doesn't show up when I select a player page from the leaderboard but
+  when I just search a player it still does")**: the popup can't bounce (`overscroll-behavior: none`), the full page can, and iOS paints the pull
+  past the foot with the document's canvas — body's white ground, since `html` has none and body's propagates to it. On a phone's player page
+  `html` (`:root[data-view="mobile"]:has(body[data-mode="player"])`) takes the band's blue, so both bounces are blue (the top one meets the blue
+  header) while body keeps its white under the bars and tables. The block at the end of `styles.css`.
+
 ---
 
 ## 10. The football site moved out

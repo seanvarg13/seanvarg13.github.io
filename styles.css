@@ -5641,3 +5641,9 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="player"] { padding-bottom: 0 !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="player"] #xboard:not(.xpop) .pbelow2 { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); margin-bottom: 0 !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body[data-mode="player"] :is(main.wrap, #xboard:not(.xpop)) { margin-bottom: 0 !important; padding-bottom: 0 !important; border-bottom: 0 !important; }
+
+/* The page's own bounce on a phone (Sean, 16 Oct 2026: the white "doesn't show up when I select a player page from the leaderboard but when I
+   just search a player it still does"): the popup can't bounce (overscroll none), the full page can, and iOS paints the pull past the foot with
+   the document's canvas — body's white ground, since html has none and body's propagates. On the player page html gets the band's blue, so the
+   canvas (both bounces; the top one meets the blue header) is blue while body keeps its white */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"]:has(body[data-mode="player"]) { background: var(--band2, var(--accent-2)) !important; }
