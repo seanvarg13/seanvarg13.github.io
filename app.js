@@ -277,11 +277,17 @@
                     "aaa-2022": 0.3375, "aaa-2023": 0.3526, "aaa-2024": 0.3407, "aaa-2025": 0.3381, "aaa-2026": 0.3397, "aa-2021": 0.3184, "aa-2022": 0.3269, "aa-2023": 0.3225, "aa-2024": 0.3027, "aa-2025": 0.302, "aa-2026": 0.3283,
                     "ap-2021": 0.3192, "ap-2022": 0.3142, "ap-2023": 0.3142, "ap-2024": 0.3043, "ap-2025": 0.3051, "ap-2026": 0.3342, "a-2021": 0.3203, "a-2022": 0.3158, "a-2023": 0.3133, "a-2024": 0.3054, "a-2025": 0.3061, "a-2026": 0.3295 };   // each season file's consts.lgwOBA, for a line whose file isn't loaded (the season table, the Summary's career)
   let WRC_CTX = null;   // a row's own dataset while the Leaderboard draws an each-season span (renderRowsIn sets it)
+  const wrcLgMemo = new Map();   // a loaded season file's league, by key (its constants never change once in)
   const wrcLg = (key) => {
-    const ds = key ? null : (WRC_CTX || DS);
-    if (ds) { const c = ds.consts || {}, lg = c.lgwOBA != null ? c.lgwOBA : WRC_LGW[ds.key]; return { lg, sc: c.wobaScale || 1.25, y: +ds.season }; }
-    const y = +((String(key).match(/(\d{4})/) || [])[1]) || +DS.season, ds2 = key === DS.key ? DS : null;
-    return { lg: ds2 && ds2.consts && ds2.consts.lgwOBA != null ? ds2.consts.lgwOBA : WRC_LGW[key] != null ? WRC_LGW[key] : (DS.consts || {}).lgwOBA, sc: 1.25, y };
+    const ds = key ? (key === CUR.key ? CUR : key === DS.key ? DS : null) : (WRC_CTX || DS);
+    if (ds && !ds.multi) { const c = ds.consts || {}, lg = c.lgwOBA != null ? c.lgwOBA : WRC_LGW[ds.key]; return { lg, sc: c.wobaScale || 1.25, y: +ds.season }; }
+    if (key) {
+      if (wrcLgMemo.has(key)) return wrcLgMemo.get(key);
+      const h = window.DRAFT_HIST && window.DRAFT_HIST[key], hd = h ? histDataset(key) : null;   /* a spring / postseason file reads its regular season's league */
+      if (hd && hd.consts && hd.consts.lgwOBA != null) { const r = { lg: hd.consts.lgwOBA, sc: hd.consts.wobaScale || 1.25, y: +hd.season }; wrcLgMemo.set(key, r); return r; }
+    }
+    const k2 = key || (ds && ds.key) || "", y = +((String(k2).match(/(\d{4})/) || [])[1]) || +DS.season;
+    return { lg: WRC_LGW[k2] != null ? WRC_LGW[k2] : (DS.consts || {}).lgwOBA, sc: 1.25, y };   /* a span's own "league" is its seasons' mean — the rows go through wrcRow instead */
   };
   const wrcRpa = (y) => WRC_RPA[y] || WRC_RPA[Math.max(...Object.keys(WRC_RPA).map(Number))];
   const wrcOf = (v, key) => { const L = wrcLg(key); return L.lg == null ? null : 100 * (1 + (v - L.lg) / L.sc / wrcRpa(L.y)); };
@@ -290,7 +296,16 @@
   const wsV = (v, key) => { if (v == null || isNaN(+v)) return "–"; const r = wrcOf(+v, key); return r == null ? "–" : String(Math.round(r)); };   // a wOBA-scale value as wRC+
   const wsD = (dv, key) => { const r = Math.round(wrcPts(dv, key)); return (r > 0 ? "+" : r < 0 ? "−" : "") + Math.abs(r); };               // a wOBA difference in wRC+ points
   const fw = (v, key) => (v == null || isNaN(+v) ? "–" : wrcOn() ? wsV(+v, key) : fmtX(+v));                                                 // wOBA or wRC+, whichever is on
-  const wsLab = (t) => (wrcOn() && typeof t === "string" ? t.replace(/xwOBA/g, "xwRC+").replace(/(^|[^xA-Za-z])wOBA/g, "$1wRC+") : t);        // "xwOBA proj." → "xwRC+ proj."; never on "Mix wOBA" (callers pass only the wOBA-scale labels)
+  const wsLab = (t) => (wrcOn() && typeof t === "string" ? t.replace(/xwOBA/g, "xwRC+").replace(/(^|[^xA-Za-z])wOBA/g, "$1wRC+") : t);
+  // a list row's wRC+ in a span of seasons (Sean, 16 Oct 2026: "it isnt actually sorting by wRC+ here" — a 2015-26 each-season list sorted on
+  // the stored xwOBA, and across seasons that isn't the wRC+ order): an each-season row against its own season, a combined line PA-weighted over
+  // its parts, each part on its own season's league; anything else on the dataset in effect
+  let WRC_ROW = null;   // the row being drawn (renderRowsIn), so fmt() can price a combined line part by part
+  const wrcRow = (p, k, v) => {
+    if (p && p.parts && p.parts.length) { let a = 0, w = 0; for (const [d, q] of p.parts) { const pv = withDataset(d, () => V(q)), x = pv && pv.m ? pv.m[k] : null, pa = pv ? pv.pa : 0; if (x == null || !pa) continue; const r = wrcOf(x, d.key); if (r == null) continue; a += r * pa; w += pa; } return w ? a / w : v == null ? null : wrcOf(v); }
+    return v == null ? null : wrcOf(v, p && p.src ? p.src.key : undefined);
+  };
+  const wsRowV = (p, k, v) => { const r = wrcRow(p, k, v); return r == null ? "–" : String(Math.round(r)); };        // "xwOBA proj." → "xwRC+ proj."; never on "Mix wOBA" (callers pass only the wOBA-scale labels)
   // every metric that needs a percentile: the card groups plus the row bubbles
   const union = (card, row) => { const seen = new Map(); for (const g of card) for (const m of g.metrics) if (!seen.has(m.key)) seen.set(m.key, m); for (const m of row) if (!seen.has(m.key)) seen.set(m.key, m); return [...seen.values()]; };
   const SUB = DATA.meta.hitterSub || {};      // fold-out breakdown rows under a card metric (Air% -> FB%, LD%)
@@ -2087,7 +2102,7 @@
 
   /* ---------- formatting ---------- */
   function fmt(v, m) {
-    if (wrcOn() && m && m.key) { if (WS_VAL.has(m.key)) return wsV(v); if (WS_DIF.has(m.key)) return wsD(v); }   // the wRC+ display scale (16 Oct 2026)
+    if (wrcOn() && m && m.key) { if (WS_VAL.has(m.key)) return WRC_ROW && WRC_ROW.parts ? wsRowV(WRC_ROW, m.key, v) : wsV(v); if (WS_DIF.has(m.key)) return wsD(v); }   // the wRC+ display scale (16 Oct 2026)
     if (m.sign) { const a = Math.abs(v), t = m.dec === 3 ? a.toFixed(3).replace(/^0/, "") : a.toFixed(m.dec ?? 1); return (v > 0 ? "+" : v < 0 ? "−" : "") + t + (m.unit || ""); }   // signed gaps: +.024 / −.018
     if (m.int) return String(Math.round(v));                   // counts (steals)
     return m.dec === 3 ? fmtX(v) : m.dec === 2 ? v.toFixed(2) : m.unit === "%" ? v.toFixed(1) + "%" : v.toFixed(1) + (m.unit ? " " + m.unit : ""); }
@@ -2190,6 +2205,10 @@
     const stats = new Map(out.concat(tail).map((p) => [p.type + p.id, ref === g ? pool(g).stats.get(p.type + p.id) : rankIn(ref, p)]));   // pool() places every listed player
     const st = (p) => stats.get(p.type + p.id);
     const val = (p) => {
+      if (wrcOn() && DS.multi) {   /* a span under the wRC+ scale sorts on the converted value: season by season the order is the same, across seasons it isn't */
+        const hk = key === "score" && p.type === "H" ? (wobaHead() ? "woba" : HEAD.key) : WS_VAL.has(key) ? key : null;
+        if (hk) return wrcRow(p, hk, key === "score" ? st(p).score : V(p).m[key]);
+        if (WS_DIF.has(key)) { const v0 = V(p).m[key]; return v0 == null ? null : wrcPts(v0, p.src ? p.src.key : undefined); } }
       if (key === "score") { if (p.type === "P") { const n = V(p).m.nera; return n == null ? null : -n; } return st(p).score; }   // a pitcher's headline sorts by his nERA itself, lowest first on "desc" (6 Oct 2026) — the percentile tied the under-minimum players
       if (key === "rating") return st(p).score;
       if (key === "blend") return st(p).blend;
@@ -2887,7 +2906,7 @@
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
     const emitRow = (p, i, rows, j) => {          // rows / j: the displayed section and his place in it (▲ ▼ swap with neighbours)
       const st = stats.get(p.type + p.id);
-      WRC_CTX = p.src && p.src.consts ? p.src : null;   /* an each-season row prints wRC+ against its own season (16 Oct 2026) */
+      WRC_CTX = p.src && p.src.consts ? p.src : null; WRC_ROW = p;   /* an each-season row prints wRC+ against its own season, a combined line part by part (16 Oct 2026) */
       const li = el("li", "row"); li.dataset.key = p.type + p.id;
       if (drafted.has(p.id)) li.classList.add("drafted");
       const ck = p.type + (p.pid ?? p.id), cds = p.dsKey ? (p.dsKey === CUR.key ? null : p.dsKey) : listDs;   // the card: the real player in his own season
@@ -2959,7 +2978,7 @@
       if (BR) main.append(el("div", "brtm ge", p.team || ""));
       for (const c of [PRE_COLS.year, PRE_COLS.age]) { const on = preOn(c.key); const b = el("div", "pct pre", on ? preValue(c.key, p) : ""); if (!on) b.classList.add("off"); else { if (state.sort === c.key && !customOrder()) b.classList.add("sorted"); b.prepend(el("span", "lbl", c.label)); } main.append(b); }
       if (BR) main.append(el("div", "brpt ge", p.type === "P" ? fmtIP(V(p).ip) : String(V(p).pa)));
-      const nv = p.type === "P" ? V(p).m.nera : null, sc = el("div", "score", p.type === "H" ? fw(st.score) : nv == null ? "–" : nv.toFixed(2));
+      const nv = p.type === "P" ? V(p).m.nera : null, sc = el("div", "score", p.type === "H" ? (wrcOn() && p.parts ? wsRowV(p, wobaHead() ? "woba" : HEAD.key, st.score) : fw(st.score)) : nv == null ? "–" : nv.toFixed(2));
       // a pitcher's headline is his nERA itself (Sean, 6 Oct 2026: "show their actual nERA not their percentile"); the sort is still the
       // percentile, so lowest nERA first. (This comment had swallowed the paint below for a day — the column went unpainted and unmarked.)
       if (state.tbl.heat || (state.sort === "score" && !customOrder())) { const sp = p.type === "P" && st.pct && st.pct.nera != null ? st.pct.nera : st.scorePct != null ? st.scorePct : p.type === "H" && st.pct ? st.pct[HEAD.key] : null;   /* a pitcher's headline is coloured by nERA's own percentile, not the Rating's (6 Oct 2026) */ if (sp != null) { paint(sc, sp); if (state.sort === "score" && !customOrder()) sc.classList.add("hot", "hero"); } }   /* hero: the value in its percentile colour, no pill under it (Sean, 6 Oct 2026: "dont have like the percentile thing below it") */ if (state.sort === "score" && !customOrder()) sc.classList.add("sorted"); if (hasBreak(g, "score")) sc.classList.add("brk");
@@ -3006,10 +3025,10 @@
         if (!rankMode && !here) return;                        // Draft page / later pages: skip tiers with nothing to show
         if (rankMode && !here && !(state.page === 1 && !rows.length)) return;   // empty tiers show once, on page 1
         frag.append(tierHeader(t));
-        rows.forEach(([p, i], j) => { if (onPage(i)) emitRow(p, i, rows, j); }); WRC_CTX = null;
+        rows.forEach(([p, i], j) => { if (onPage(i)) emitRow(p, i, rows, j); }); WRC_CTX = null; WRC_ROW = null;
         if (rankMode && !untiered && !tiers[t].length) { const dz = el("li", "tierdrop", "Drop players here"); dz.dataset.tier = t; frag.append(dz); }
       });
-    } else { const rows = list.map((p, i) => [p, i]); rows.forEach(([p, i], j) => { if (onPage(i)) emitRow(p, i, rows, j); }); WRC_CTX = null; }
+    } else { const rows = list.map((p, i) => [p, i]); rows.forEach(([p, i], j) => { if (onPage(i)) emitRow(p, i, rows, j); }); WRC_CTX = null; WRC_ROW = null; }
     if (BR && list.length && pg.end >= (grouped ? at.size : list.length)) frag.append(...brTotRows(g, ms, stats, ends, preOn));   // the foot of the last page
     ol.append(frag);
     fitNameCol();
@@ -3086,13 +3105,13 @@
   const onePage = () => ["leaderboard", "trending"].includes(state.mode);   // the Leaderboard / Recent list everyone, like the Stuff+ board (Sean, 3 Oct 2026)
   // ... on a desktop. A phone pages them again (Sean, 5 Oct 2026: "on mobile maybe we add back in the pages aspect?") — 700 rows built and laid out at
   // once was most of a phone's first draw; the row keeps the one-page dress (the six buttons, the Standard pill, the Min box), the page numbers sit on a line of their own under it
-  const phonePages = () => onePage() && mobileView();
+  const phonePages = () => onePage();   // and a desktop since 16 Oct 2026 (Sean: "make it so the desktop version also has the pages on leaderboards instead of just one big leaderboard"): the same bar under the table, 50 a page there
   // a phone's Leaderboard lists everyone too (Sean, 11 Oct 2026: "include the whole dataset so we dont need the page buttons, be prepared to keep
   // them in just in case i do not like the speed") — false puts the 25-a-page numbers back
   const PHONE_ALL = false;   // pages again, their numbers and Per page in a bar pinned under the table (Sean, 11 Oct 2026: "on mobile have separate pages ... page buttons ... locked in at the bottom of the table")
-  const phSize = () => (state.lb && state.lb.phSize != null ? state.lb.phSize : 25);   // a phone's rows a page (0 = everyone); kept apart from Rankings' pageSize
+  const phSize = () => (state.lb && state.lb.phSize != null ? state.lb.phSize : mobileView() ? 25 : 50);   // the Leaderboard's rows a page (0 = everyone), 25 on a phone / 50 on a desktop; kept apart from Rankings' pageSize
   function pageWindow(total, runs) {
-    const size = phonePages() ? (PHONE_ALL ? 0 : phSize()) : onePage() ? 0 : state.pageSize || 0;
+    const size = phonePages() ? (PHONE_ALL && mobileView() ? 0 : phSize()) : state.pageSize || 0;
     let starts = [0];
     if (size && runs && runs.length) {
       starts = []; let filled = 0;
@@ -3155,14 +3174,15 @@
     { const old = box.nextElementSibling; if (old && old.classList.contains("pnavrow")) old.remove(); }   // a phone's page numbers, redrawn below
     const go = (n) => { state.page = Math.min(pg.pages, Math.max(1, n)); (onChange || renderRows)(); const top = box.closest(".board, .fboard") || box; const sb = top.querySelector(".board-scroll, .fscroll"); if (sb) sb.scrollTop = 0; const y = top.getBoundingClientRect().top + window.scrollY - 8; if (window.scrollY > y) window.scrollTo({ top: y }); };
     const setSize = (n) => { state.pageSize = n; state.page = 1; savePrefs(); (onChange || renderRows)(); };
-    const bot = !onChange && box.id === "pagertop" ? $("pagerbot") : null, botOn = !!bot && phonePages() && !PHONE_ALL;   // a phone's page numbers + Per page, under the table
+    const bot = !onChange && box.id === "pagertop" ? $("pagerbot") : null, botOn = !!bot && phonePages() && !(PHONE_ALL && mobileView());   // a phone's page numbers + Per page, under the table
     if (bot) { bot.innerHTML = ""; bot.hidden = !botOn || !total; bot.classList.toggle("phbot", botOn); }
     if (bot) { const bs = $("bscroll");   // a phone's bar is the table's last row: inside the rows' box, held at its foot (Sean, 11 Oct 2026)
       if (botOn) { if (bot.parentNode !== bs) bs.append(bot); } else if (bot.parentNode === bs) bs.after(bot); }
     if (!total) { box.hidden = true; if (!onChange) seatFilters(null); return; }
     box.hidden = false;
     { const g = groupFor(state.pos), pit = isPitcherGroup(g);   // the Stuff+ board's count line at the right (Sean, 3 Oct 2026)
-      box.append(el("span", "pcount", pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total} ${pit ? "pitchers" : "hitters"} · ${DS.season}${state.mode === "leaderboard" ? ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}` : ""}` : `${total} players`)); }
+      const who = onePage() ? ` ${pit ? "pitchers" : "hitters"} · ${DS.season}${state.mode === "leaderboard" ? ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}` : ""}` : "";   /* a desktop keeps the fuller count beside its page range (16 Oct 2026) */
+      box.append(el("span", "pcount", pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}${mobileView() ? "" : who}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total}${who}` : `${total} players`)); }
     if (pg.pages > 1) {
       const nav = el("div", "pnav");
       const b = (label, n, title, dis) => { const x = el("button", "pbtn", label); x.type = "button"; x.title = title; x.disabled = dis; x.addEventListener("click", () => go(n)); return x; };
@@ -6053,7 +6073,7 @@
     // window, then the layout switch
     // ... and since the minimal pass (Sean, 29 Sep 2026) not under the table at all: they live in the header's More menu
     if (["leaderboard", "trending"].includes(state.mode)) notes.append(el("p", "note lbnote", state.mode === "leaderboard"
-      ? `Everyone over the minimum, on one page. Each number is coloured by its percentile among the season's qualifiers (hitters with ${REF_PA}+ PA, pitchers ${REF_PA}+ batters faced); click a column name to sort, click a name for his card.`
+      ? `Everyone over the minimum, a page at a time (the page numbers and Per page are under the table). Each number is coloured by its percentile among the season's qualifiers (hitters with ${REF_PA}+ PA, pitchers ${REF_PA}+ batters faced); click a column name to sort, click a name for his card.`
       : `Who's hot over the span set in Filters ▸ Dates, on one page; each number coloured by its percentile among the season's qualifiers on their numbers in the same span. Click a name for his card over that span.`));
     const keyTxt = l1, mm = $("moremenu"); mm.innerHTML = "";
     const li = (n) => { const x = el("li"); x.append(n); mm.append(x); };
@@ -12164,7 +12184,7 @@
     if (sorting || pit || minNode) {
       const b = el("div", "psec"); b.append(el("h4", null, onePage() ? "Minimum" : "Order and minimum"));
       const r = el("div", "prow"); if (sorting && !onePage()) r.append(sf); if (minNode) r.append(minNode);   // no Sort by on the Leaderboard — the column tapped sorts (Sean, 6 Oct 2026) if (pit) r.append($("reffield"));
-      if (!onePage() || phonePages()) r.append(perPageField((n) => { state.pageSize = n; state.page = 1; savePrefs(); renderRows(); }));   // everyone is on one page there
+      if (!onePage()) r.append(perPageField((n) => { state.pageSize = n; state.page = 1; savePrefs(); renderRows(); }));   // the Leaderboard's Per page is in the bar under its table
       b.append(r);
       if (minNode && !trending) b.append(el("p", "note", lbMulti() ? "The minimum is per season; a combined span multiplies it by the seasons in it." : `The minimum is who is listed; percentiles are always against ${pit ? "pitchers with 300+ batters faced" : "hitters with 300+ PA"} on the season.`));
       if (pit) b.append(el("p", "note", "Rank vs sets the pool a pitcher's percentiles are measured against — his own (starters or relievers) or all pitchers."));
