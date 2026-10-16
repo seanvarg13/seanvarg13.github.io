@@ -958,7 +958,7 @@
   function dropProvisional() { for (const k of provisional.val) valCache.delete(k); for (const k of provisional.pool) poolCache.delete(k); for (const k of provisional.rank) rankCache.delete(k); provisional.val.clear(); provisional.pool.clear(); provisional.rank.clear(); }
   function V(p) {
     const key = viewKey() + ":" + p.type + p.id;
-    if (valCache.has(key)) return aaaFill(hrfbFill(fantFill(valCache.get(key), p), p), p);
+    if (valCache.has(key)) return projFill(hrfbFill(fantFill(valCache.get(key), p), p), p);
     if (needsRows()) provisional.val.add(key);
     let v;
     const w = winIdx() || { lo: 0, hi: seasonDays().length - 1 };
@@ -1132,7 +1132,7 @@
     // faced in the window — so a 30-PA week reads as mostly league average and the Recent / Last-N lists stop jumping
     if (state.tbl && state.tbl.shrink && needsDays() && v && v.m) v = Object.assign({}, v, { m: shrinkM(p, v) });
     valCache.set(key, v);
-    return aaaFill(hrfbFill(fantFill(v, p), p), p);
+    return projFill(hrfbFill(fantFill(v, p), p), p);
   }
   // The pooled projection (Sean, 12 Oct 2026: "could you build the pooled projection, obviously we have to be careful bc the AAA average was
   // 0.346 which is much higher than the mlb avg of 0.327"): a hitter with Triple-A time that season has his xwOBA proj. built from both lines.
@@ -1147,19 +1147,36 @@
   const AAAP = { b: 0.6, c: -0.035, min: 30 };   // the regression (TW.k PA at TW.p0) is everyone's
   const aaaReady = () => !!window.DRAFT_AAA_TW;
   const aaaOn = () => !((DS.level && DS.level !== "MLB") || DS.kind || DS.multi || !(Number(DS.season) >= 2022));
-  function aaaFill(v, p) {
-    if (v._ap || p.type !== "H" || !v.m) return v;
-    if (!aaaOn() || needsDays() || splitActive()) { v._ap = true; return v; }
-    if (!aaaReady()) return v;
-    const W = window.DRAFT_AAA_TW, y = String(DS.season), A = ((W.p || {})[p.id] || {})[y], la = (W.lg || {})[y];
-    v._ap = true;
-    if (A && A[2]) { v.aaaRehab = A[0]; return v; }   // a rehab stint (MLB's transaction log), not a call-up — he projects as the MLB regular he is
-    if (!A || A[0] < AAAP.min || la == null) return v;
-    const L = talentLeague(); if (!L || L.woba == null) return v;
-    const t = v.tal, pm = t && v.pa ? v.pa : 0, em = pm ? t.txw - L.woba : 0, pa = A[0], ea = AAAP.b * (A[1] - la) + AAAP.c;
-    const pj = L.woba + (pm * em + pa * ea + TW.k * TW.p0) / (pm + pa + TW.k);
-    v.aaa = { pa, txw: A[1], lg: la, eq: L.woba + ea, pm, mlb: v.m.txwp, proj: pj, lgm: L.woba };
-    v.m = Object.assign({}, v.m, { txwm: v.m.txwp, txwp: Math.round(1000 * pj) / 1000 });
+  // xwOBA proj. is a multi-season projection with an age curve (Sean, 16 Oct 2026, from the model audit: "the projected xwoba for the next year and it
+  // involved stuff like age and other stuff, can you implement that"): his last two seasons' talent xwOBA count beside this season's, each against its
+  // own season's league and weighted by its PA × .4 (last season) / .2 (the one before) — hist/career-bb.js carries txw, pa and the league per season —
+  // then the Triple-A line where there is one (as above), then everyone's 250 PA at 30 points under the league, and an age curve on the result: a
+  // piecewise line in his age this season (knots 24 / 27 / 30 / 33), fitted on what the multi-season projection missed by age — 21 +13, 23 +6, 25 +2,
+  // 26 0, 28 −2, 30 −5, 32 −9, 34 −12, 36 −14 wOBA points (scratch audit/h_proj.py, h_age2.py: every 100+ PA hitter-season 2015-25 against his next
+  // season's wOBA with 100+ PA, 3,699 pairs, held out by season: r .499 → .513 with the two seasons, .522 with the age curve, error 36.8 → 36.2 wOBA
+  // points; 300+ PA both seasons .555 → .558 / 30.5 → 29.8). Full season of a regular MLB season; a window or split, a minors season or a span keeps the
+  // one-season arithmetic (talentOf's). Until career-bb.js is in, the one-season number plus the age curve shows and the fill runs again on the next call
+  const TWP = { w: [0.4, 0.2], age: { c: -11.197, s: -3.523, k: [[24, 2.217], [27, -0.007], [30, -0.538], [33, 0.696]], lo: 19, hi: 41 } };
+  const ageAdj = (a0) => { if (a0 == null || !isFinite(a0)) return 0; const a = Math.min(TWP.age.hi, Math.max(TWP.age.lo, a0)); let s = TWP.age.c + TWP.age.s * (a - 28); for (const [kn, b] of TWP.age.k) s += b * Math.max(0, a - kn); return s / 1000; };
+  const projOn = () => !((DS.level && DS.level !== "MLB") || DS.kind || DS.multi);
+  function projFill(v, p) {
+    if (v._pj || p.type !== "H" || !v.m) return v;
+    const t = v.tal, L = t && t.L;
+    if (!projOn() || needsDays() || splitActive() || !t || L == null || L.woba == null || t.txwp == null) { v._pj = true; return v; }
+    const y = Number(DS.season), ready = sbxReady() && (!aaaOn() || aaaReady());
+    const pm = v.pa || 0, em = t.txw - L.woba; let num = pm * em, den = pm;
+    const parts = { pm, em, prior: [], aaa: null, rehab: null, lgm: L.woba, mlb: t.txwp, ready };
+    if (ready) {
+      const C = window.DRAFT_CAREER_BB, rows = (C.p || {})[p.id] || {}, iPa = C.keys.indexOf("pa"), iTw = C.keys.indexOf("txw");
+      if (iPa >= 0) TWP.w.forEach((wt, i) => { const yy = String(y - 1 - i), r = rows[yy], lg = (C.lg || {})[yy]; if (!r || lg == null) return; const pa = r[1 + iPa], tw = r[1 + iTw]; if (!pa || tw == null) return; num += wt * pa * (tw - lg); den += wt * pa; parts.prior.push({ y: yy, pa, tw, lg, wt }); });
+      if (aaaOn()) { const W = window.DRAFT_AAA_TW, A = ((W.p || {})[p.id] || {})[String(y)], la = (W.lg || {})[String(y)];
+        if (A && A[2]) parts.rehab = A[0];   // a rehab stint (MLB's transaction log), not a call-up — he projects as the MLB regular he is
+        else if (A && A[0] >= AAAP.min && la != null) { const ea = AAAP.b * (A[1] - la) + AAAP.c; num += A[0] * ea; den += A[0]; parts.aaa = { pa: A[0], txw: A[1], lg: la, eq: L.woba + ea }; } }
+      v._pj = true;
+    }
+    const reg = L.woba + (num + TW.k * TW.p0) / (den + TW.k), age = ageAdj(p.age), pj = reg + age;
+    Object.assign(parts, { reg, age, ageN: p.age, proj: pj }); v.proj = parts;
+    v.m = Object.assign({}, v.m, { txwm: t.txwp, txwp: Math.round(1000 * pj) / 1000 });
     return v;
   }
   // xHR/FB as a Leaderboard column (8 Oct 2026): the Mix tab's model on his view's FB EV / Barrel% / EV90 against that season's league
@@ -1232,7 +1249,7 @@
   const colsFor = (g) => {
     if (colKeys(g).some((k) => FANT_KEYS.has(k)) && FYEARS.includes(String(DS.season))) fEnsure(String(DS.season));   // points columns need the fantasy file
     if (!isPitcherGroup(g) && colKeys(g).includes("xhrfb")) { ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady); }   // xHR/FB's league
-    if (!isPitcherGroup(g) && colKeys(g).includes("txwp") && aaaOn()) ensureScript("hist/aaa-tw.js", aaaReady);   // the pooled projection's Triple-A lines
+    if (!isPitcherGroup(g) && colKeys(g).includes("txwp") && projOn()) { ensureScript("hist/career-bb.js", sbxReady); if (aaaOn()) ensureScript("hist/aaa-tw.js", aaaReady); }   // the projection's prior seasons and Triple-A lines
     if (state.mode === "leaderboard") return lbCols(g);
     const keys = colKeys(g), all = allFor(g), dflt = metricsFor(g);
     return keys.map((k) => dflt.find((m) => m.key === k) || all.find((m) => m.key === k)).filter(Boolean);
@@ -1581,7 +1598,7 @@
   // returns { list: players in pool, stats: Map key -> {pct: {metric: pctl}, score, rank} }
   // a hitter pool built before xHR/FB's files arrived is redone once they're here — only while the column is showing, so a player page loading
   // career.js for its season table doesn't throw its pool away (the 5 Oct lag)
-  const hxKey = (g) => (!isPitcherGroup(g) && colKeys(g).includes("xhrfb") ? ":hx" + hxReady() : "") + (!isPitcherGroup(g) && colKeys(g).includes("txwp") && aaaOn() ? ":ap" + aaaReady() : "");
+  const hxKey = (g) => (!isPitcherGroup(g) && colKeys(g).includes("xhrfb") ? ":hx" + hxReady() : "") + (!isPitcherGroup(g) && colKeys(g).includes("txwp") && projOn() ? ":ap" + sbxReady() + (aaaOn() ? aaaReady() : "") : "");
   function pool(g) {
     const key = g + ":" + effMin(g) + ":" + (needsDays() ? listMin(g) : "") + ":" + refMin(g) + ":" + poolVersion + ":" + viewKey() + ":" + (needsRows() ? daysReady() : "") + hxKey(g);
     if (poolCache.has(key)) return poolCache.get(key);
@@ -5745,7 +5762,7 @@
     sbp: "Stolen-base success rate: stolen bases over attempts. Blank without an attempt. For the whole season only.",
     txw: "Talent xwOBA: the name xwOBA had before 11 Oct 2026 — see xwOBA.",
     xwpk: "xwOBA in his parks: his xwOBA with the parks he hit in put back — home runs per fly ball, hits on non-HR balls in play and bases per hit by what his parks did to his own balls, ball by ball (each at the park it was hit in against a neutral park), strikeouts and walks by the parks' residual per PA where he hit. xwOBA itself is park-neutral, the skill; this is what the same skills read in his season's parks (a Rockie a few points higher, a Giant a few lower). The xwOBA tab's Stadium row is the same effect on his actual wOBA.",
-    txwp: "xwOBA proj.: next season's wOBA from his xwOBA — his PA at his xwOBA plus 250 PA at 30 points under the league average, as a weighted average. One season's inputs still carry sampling noise, and that regression forecast next season's wOBA best (2015-26: regressing to the league itself ran 12 points high; the league is its 300+ PA regulars, and a hitter regresses toward everyone who plays). A full season is the one to read; in a window it is the same arithmetic on fewer plate appearances. A hitter with 30+ Triple-A PA that season (2022 on) gets a pooled one: his Triple-A xwOBA in MLB terms (0.6 of his edge over the Triple-A league, less 35 points) counts PA for PA beside his MLB line. A rehab assignment isn't pooled.",
+    txwp: "xwOBA proj.: next season's wOBA from his xwOBA — this season's and his last two (each against its own season's league, weighted by PA × 1 / .4 / .2) plus 250 PA at 30 points under the league average, as a weighted average, then an age curve (what hitters his age gained or lost the next year: 23 +6, 26 0, 30 −5, 34 −12 wOBA points). One season's inputs still carry sampling noise, and that regression forecast next season's wOBA best (2015-26: regressing to the league itself ran 12 points high; the league is its 300+ PA regulars, and a hitter regresses toward everyone who plays). A full season is the one to read; in a window it is the same arithmetic on fewer plate appearances. A hitter with 30+ Triple-A PA that season (2022 on) gets a pooled one: his Triple-A xwOBA in MLB terms (0.6 of his edge over the Triple-A league, less 35 points) counts PA for PA beside his MLB line. A rehab assignment isn't pooled.",
     xk: "Expected K%: the strikeout rate his Whiff%, Z-Swing%, O-Swing% and the share of strikes he sees have historically come with (fitted over every 100+ PA hitter-season since 2015). It lands within about 1.7 points of a regular's real K%; a K% well above it says he's striking out more than his swings and misses explain (two-strike trouble, taking strike three), well below it that he's beating them. His own K% is still the steadier guide to next year's — the two averaged are best.",
     xwdiff: "xwOBA − wOBA: what his contact, walks and strikeouts deserved (the site's xwOBA) minus what he actually got. Above zero he's been unlucky — his results should rise toward his xwOBA; below zero he's been lucky. +.030 is a lot. Every point is a thousandth of wOBA.",
     babip: "BABIP: batting average on balls in play — hits that aren't home runs, over balls in play that aren't home runs (sac flies count) — park-neutral since 15 Oct 2026: every ball in play scored at a neutral park (what his parks added, ball by ball, is the by-season table's Park column; a Rockie's reads lower than his raw one, a Mariner's higher). It swings a lot by chance: a hitter's BABIP from one season to the next holds only loosely.",
@@ -7819,13 +7836,17 @@
     if (m.xwpk != null && t.pk) { const atXw = prev; ensureParks();
       b.row("In his parks", null, null, f3, null, R3(m.xwpk) - atXw, m.xwpk, `what the same skills read in his season's parks: ${parkPieces(t.pk)} — ${parkWhere(p, v)}; the stadium's whole effect on his actual wOBA is the Stadium row below`);
       prev = atXw; }
-    if (aaaOn() && !needsDays()) ensureScript("hist/aaa-tw.js", aaaReady);
-    const A = v.aaa;
-    if (A) b.row(`Triple-A · ${A.pa} PA`, A.txw, A.lg, f3, null, "→", A.eq, `his Triple-A xwOBA (${f3(A.txw)}) against the Triple-A league (${f3(A.lg)}), put in MLB terms: 0.6 of his ${pts(A.txw - A.lg)} edge, less 35 points (a league-average Triple-A hitter is about .035 under MLB average) → ${f3(A.eq)} against the MLB league's ${f3(A.lgm)}`);
-    if (v.aaaRehab) b.row(`Triple-A · ${v.aaaRehab} PA rehab`, null, null, f3, null, "→", null, "a rehab assignment (MLB's transaction log), not a call-up: left out of the projection, which is his MLB line alone");
-    if (m.txwp != null && !needsDays()) b.band("Next season", step(m.txwp), m.txwp, A
-      ? `xwOBA proj., pooled: ${A.pm} MLB PA at his xwOBA (${f3(m.xwd)}), ${A.pa} Triple-A PA at their MLB equivalent (${f3(A.eq)}) and ${TW.k} PA at ${f3(A.lgm + TW.p0)} (30 points under the MLB league, everyone's regression) — the MLB line alone would say ${A.mlb != null ? f3(A.mlb) : "–"}. Fitted on every hitter with Triple-A time 2022-25 against his next MLB season`
-      : `xwOBA proj.: his ${v.pa} PA at his xwOBA (${f3(m.xwd)}) and ${TW.k} PA at ${f3(L.woba + TW.p0)} — 30 points under the league's ${f3(L.woba)}, where every hitter who plays regresses (the league is its 300+ PA regulars). One season's pieces still carry sampling noise; this is the regression that forecast next season's wOBA best (2015-26: error 38.3 → 36.1 wOBA points against regressing to the league, whose projections ran 12 points high)`);
+    if (projOn() && !needsDays()) { ensureScript("hist/career-bb.js", sbxReady); if (aaaOn()) ensureScript("hist/aaa-tw.js", aaaReady); }
+    const PJ = v.proj, A = PJ && PJ.aaa, agew = (a) => a == null ? "–" : a + (a === 1 ? " year" : "");
+    if (PJ && !needsDays()) {
+      for (const q of PJ.prior) b.row(`${q.y} · ${q.pa} PA`, q.tw, q.lg, f3, null, "→", null, `his ${q.y} xwOBA (${f3(q.tw)}) against that season's league (${f3(q.lg)}): a ${pts(q.tw - q.lg)} edge, counted at ${q.wt} × his ${q.pa} PA beside this season's — last season at .4, the one before at .2`);
+      if (A) b.row(`Triple-A · ${A.pa} PA`, A.txw, A.lg, f3, null, "→", A.eq, `his Triple-A xwOBA (${f3(A.txw)}) against the Triple-A league (${f3(A.lg)}), put in MLB terms: 0.6 of his ${pts(A.txw - A.lg)} edge, less 35 points (a league-average Triple-A hitter is about .035 under MLB average) → ${f3(A.eq)} against the MLB league's ${f3(PJ.lgm)}, counted PA for PA`);
+      if (PJ.rehab) b.row(`Triple-A · ${PJ.rehab} PA rehab`, null, null, f3, null, "→", null, "a rehab assignment (MLB's transaction log), not a call-up: left out of the projection");
+      if (!PJ.ready) b.row("Prior seasons", null, null, f3, null, "→", null, "loading his earlier seasons…");
+      b.row("Regression", null, null, f3, null, step(PJ.reg), PJ.reg, `${PJ.prior.length || A ? "his seasons' talent, weighted by PA, " : "his " + v.pa + " PA at his xwOBA "}plus ${TW.k} PA at ${f3(PJ.lgm + TW.p0)} — 30 points under the league's ${f3(PJ.lgm)}, where every hitter who plays regresses (the league is its 300+ PA regulars; the ${TW.k} / −.030 regression forecast next season's wOBA best, 2015-26)`);
+      b.row(`Age ${PJ.ageN == null ? "–" : PJ.ageN}`, null, null, f3, null, step(PJ.proj), PJ.proj, `the age curve: what hitters of his age this season gained or lost the next year beyond the regression (a piecewise line, 2015-26: 21 +13, 23 +6, 26 0, 28 −2, 30 −5, 32 −9, 34 −12, 36 −14 wOBA points)`);
+      b.band("Next season", R3(PJ.proj) - R3(m.xwd), PJ.proj, `xwOBA proj.: ${PJ.prior.length ? "this season and his last " + agew(PJ.prior.length).replace("year", "season") + (PJ.prior.length > 1 ? "s" : "") + " at PA × 1 / .4 / .2" : "this season"}${A ? ", his Triple-A line in MLB terms" : ""}, ${TW.k} PA of regression, then his age — the one-season number alone would say ${PJ.mlb != null ? f3(PJ.mlb) : "–"}. Held out by season 2015-26, 100+ PA both years: the two seasons and the age curve take the error from 36.8 to 36.2 wOBA points (r .499 → .522)`);
+    } else if (m.txwp != null && !needsDays()) b.band("Next season", step(m.txwp), m.txwp, `xwOBA proj.: his ${v.pa} PA at his xwOBA (${f3(m.xwd)}) and ${TW.k} PA at ${f3(L.woba + TW.p0)} — 30 points under the league's ${f3(L.woba)}, where every hitter who plays regresses`);
     w.append(b.done());
     // each piece beside what happened: the gap is what the number leaves out
     const box = el("div", "rollbox uerabox brbox"), hd = el("div", "rollhd"); hd.append(el("span", "rollname", "Expected vs actual"), el("span", "rollsub", "what each piece expects beside what happened, and how much of his wOBA − xwOBA gap each one accounts for, biggest first")); box.append(hd);
