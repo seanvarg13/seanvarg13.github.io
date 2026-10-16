@@ -363,6 +363,7 @@ TW_XHRFB = [{"evfb": 0.345, "brfb": 0.394, "brld": 0.219, "pfb": 0.094}, {"evfb"
             {"evfb": 0.779, "brl": 0.738}, {"brl": 1.037, "ev90": 0.499}]
 TW_W = {"bb": 0.69, "hbp": 0.72, "s": 0.88, "d": 1.25, "hr": 2.03}
 TW_ACT = 0.5   # share of his actual K% / BB% in the talent pieces (app.js TW.act)
+TW_USE_EV = False   # since 16 Oct 2026 the barrel fit (TW_XHRFB, the xHR/FB tab's) is the HR piece, as in app.js; True puts exit velocity alone back
 TW_HF = (0.096, {"evfb": 1.364, "ev90": 0.822, "pfb": 0.097})   # the HR piece on exit velocity alone (app.js TW_HF), fitted on park-neutral home runs since 15 Oct 2026; XHRFB the fallback
 
 
@@ -446,7 +447,7 @@ def talent_of(i, L):
     hbp = (i["hbp"] or 0) / i["pa"]
     bx = {"evfb": m.get("evfb"), "brfb": m.get("brfb"), "brld": m.get("brld"), "pfb": i["pfb"], "brl": m.get("brl"), "ev90": m.get("ev90")}
     twh = L.get("twh") or {}
-    if all(bx[k] is not None and twh.get(k) is not None for k in TW_HF[1]):
+    if TW_USE_EV and all(bx[k] is not None and twh.get(k) is not None for k in TW_HF[1]):
         xhf = max(0.0, L["hr"]["hrfb"] + TW_HF[0] + sum(v * (bx[k] - twh[k]) for k, v in TW_HF[1].items()))
     else:
         fit = next((f for f in TW_XHRFB if all(bx[k] is not None and L["hr"].get(k) is not None for k in f)), None)
