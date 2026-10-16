@@ -4152,6 +4152,20 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (they explain the arithmetic in wOBA), Similar's file, Fantasy's xPts. FanGraphs' wRC+ in the season table is theirs (park-adjusted, their
   wOBA) and can sit a few points from ours. Judge 2026: wOBA .369 → 136, xwOBA .389 → 153; 2024 .457 → 199 (FanGraphs 218, park-adjusted).
 
+* **A span sorts on xwRC+; a desktop's Leaderboard pages (Sean, 16 Oct 2026, from a 2015-26 each-season list under the wRC+ switch: "it isnt
+  actually sorting by wRC+ here", and "make it so the desktop version also has the pages on leaderboards instead of just one big leaderboard")**:
+  (1) the list sorted on the stored xwOBA, and across seasons that isn't the wRC+ order (each season's league differs — Judge 2024's .457 is 199,
+  Trout 2019's .4xx 193). Under the switch and a span (`DS.multi`), `val()` sorts a wOBA-scale key (the hitters' headline, `WS_VAL`, `WS_DIF`)
+  on the converted value: `wrcRow(p, k, v)` — an each-season row against its own season (`p.src`), a **combined** line PA-weighted over its parts
+  with each part on its own season's league — and `fmt()` / the headline cell print a combined line the same way (`WRC_ROW`, set beside `WRC_CTX`
+  in `emitRow`); `wrcLg(key)` reads a loaded season file's own constants (`histDataset`, memoised) before the baked `WRC_LGW` table, so the
+  current season's row in a span is on its own league, not the span's mean. (2) `phonePages()` is `onePage()` on both layouts: a desktop's
+  Leaderboard / Recent lists `phSize()` rows a page (50 there, 25 on a phone; `state.lb.phSize`) with the phone's bar — ‹ 1 2 3 … › and Per page
+  (25 / 50 / 100 / All) as the table's last row, sticky at the rows' box's foot — and the count reads "1–50 of 267 hitters · 2026 · 300+ PA"; the
+  Qualified avg row closes the last page. The Filters panel's Minimum section has no Per page on the Leaderboard on either layout (it had kept a
+  phone one that set Rankings' `pageSize` and did nothing there). CSS: the desktop bar block at the end of `styles.css`. The "one big page" entries
+  of 3 and 11 Oct are history for the desktop; `PHONE_ALL` still lists everyone on a phone when true.
+
 ---
 
 ## 10. The football site moved out
