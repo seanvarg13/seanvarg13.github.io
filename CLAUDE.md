@@ -4226,6 +4226,30 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
 
 ---
 
+* **The Rankings tier board (Sean, 16 Oct 2026: "how would yu recommend the tiering system so that it like doesnt look odd on the tables",
+  then, after two mock-up pages, "How about this, let's instead make it so no stats get shown all it is is the player name and their position
+  eligibility. Can we make it so I can tier it and see it all on one page", "Yeah do A")**: Rankings and Draft mode are a **board**, not a stat
+  table — `boardOn()` / `renderBoard` in `app.js` (right after `brOn`, which is the Leaderboard / Recent alone again), `body.boardon`, the CSS
+  block "The Rankings tier board" at the end of `styles.css`. One column per tier across the page (`li.tier` in `ol#rows.boardlist`, a flex row;
+  each as tall as its tier, at most 360px wide), a blue head with the T1 / T2 badge, the tier's name and its count, and rows of rank · name ·
+  eligibility (`posLabel`) only; **Not tiered** is a full-width block under the columns whose rows flow in four columns, the first 48 shown and a
+  "Show all N ▾" foot (`state.poolAll`, per visit); with no tiers it is one block named for the tab ("All hitters"). A phone stacks the tiers and
+  lists the pool in one column. The count beside Filters reads "5 tiers · 42 tiered · 662 hitters" (`renderPager`), the title stays ("Hitting
+  Rankings · your order"), the column names (`#colwrap`) hide, there are no pages. **Edit rankings**: every row gets a drag handle and a tick (the
+  rank box, ▲▼ and tier box of the table are gone — Move… / Untier / + Add tier / + Tier below work off the ticks as before), each tier's head
+  gets ✎ (rename in place) and × (remove), a dashed **+ Add tier** column ends the row (a click adds an empty tier; dropping a name on it makes a
+  new tier holding him — `data-tier="new"` in the drop handler), and the drop targets are the list's: a row's top / bottom half, a tier's column
+  (joins at its top), the pool (untiers). `dropTarget` reads `#rows li.brow, #rows li.tier`; `toggleSel` / `selBottom` read `#rows li[data-key]`.
+  **Draft mode**: a Draft button a row, the drafted struck through where they stand so the board keeps its shape (`visiblePlayers` never hides
+  them on the board; the Show drafted box is hidden), Undo / Draft from / Reset board as before. Gone with the table on these two pages: the stat
+  columns and column sets, sorting by a stat (a sort left on from before still orders the rows — the "By xwOBA ×" button clears it), the
+  Tiers / List switch (`renderViewSeg` off), the pages and the tool summary's "N stats". The Leaderboard keeps every column. **The round before
+  it**: three dresses for tier rows inside the table (a plain row under a red rule, a Tier column, the blue band as a grid row) were built
+  behind `draft2027.tierStyle`, shot on both layouts (the "Tier Row Mock-ups" page) and **dropped unshipped** when Sean asked for the board
+  instead; only their phone toolbar fix stayed — the phone's Rankings bar wraps now (the Tiers / List switch had clipped to "Tiers | Li" and
+  Edit rankings / Draft mode wrapped in a 97px column). The board was mocked first too ("Tier Board Mock-ups": A board columns, B cheat sheet,
+  C blocks; scratch `board/gen.js`); he picked A. `fitNameCol` reads a player's cell, not a tier row's.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
