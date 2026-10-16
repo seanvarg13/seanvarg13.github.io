@@ -4174,3 +4174,11 @@ The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` her
 it so the baseball and football apps/sites are two different ones not one intertwined one"): **`seanvarg13/fantasy-football`**, live at
 https://seanvarg13.github.io/fantasy-football/, with its own CLAUDE.md, build scripts, update workflow and home-screen app. Nothing here
 links to it; `football/index.html` is only a forwarding page for an old bookmark. Football work happens in that repo, not this one.
+
+## 11. The basketball site is its own repo
+
+Sean asked for a fantasy basketball site on 16 Oct 2026 ("ok could we make a basketball site too"): **`seanvarg13/fantasy-basketball`**,
+live at https://seanvarg13.github.io/fantasy-basketball/, with its own CLAUDE.md, build scripts (pbpstats + ESPN), nightly update and
+home-screen app — built like the football one, as a repo of its own (Sean created the empty repo and turned Pages on by hand; neither this
+session's GitHub credential nor the workflow token may create repositories or Pages sites). Nothing here links to it. Basketball work
+happens in that repo, not this one.
