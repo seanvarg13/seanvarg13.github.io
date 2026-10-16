@@ -5689,3 +5689,11 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild .brscroll:has(table.kbuild td.kexp) { width: max-content; max-width: none; overflow: visible; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild:has(table.kbuild td.kexp) { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild table.sbt.kbuild td.krk.kexp::after { font-size: 12px; margin-left: 6px; padding-right: 12px; }
+
+/* The card's tabs are the Filters button's box, further apart (Sean, 16 Oct 2026, Mitchell's card on his phone: "get the bottom tab buttons to have a
+   bit more spacing in between them and give them the exact same size text format everything identical to the filters button"): the type already
+   matched; now the box does too — 40px tall with 14px of side padding on a desktop, 36px / 7px on a phone, the bar's `min-height` — and the
+   strip's gap is 14px instead of 8 */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .btabs .btab:not(#pop *) { height: 40px !important; min-height: 36px !important; padding: 0 14px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) .btabs .btab:not(#pop *) { height: 36px !important; padding: 0 7px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .btabs { gap: 14px !important; }

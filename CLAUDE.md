@@ -4131,6 +4131,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   12px, and the tab's box (`.brbox` / `.stuffbox`, the popup's `.fxbuild`) scrolls sideways when the table plus the word is wider than the screen (a
   pitcher's BB% build-up); the page itself stays 390px wide. The block beside the 10 Oct rules in `styles.css`.
 
+* **The card's tabs in the Filters button's box, 14px apart (Sean, 16 Oct 2026, Mitchell's card on his phone: "get the bottom tab buttons to have a bit
+  more spacing in between them and give them the exact same size text format everything identical to the filters button")**: the type already matched
+  (700 Barlow Condensed, 18px / 14px on a phone, the white edge, no shadow); the box now does too — 40px tall with 14px of side padding on a desktop,
+  36px / 7px on a phone — and the strip's gap is 14px (was 8). The block at the end of `styles.css`. The 46 / 50px tabs of the 16 Oct entries above are history.
+
 ---
 
 ## 10. The football site moved out
