@@ -4175,13 +4175,10 @@ it so the baseball and football apps/sites are two different ones not one intert
 https://seanvarg13.github.io/fantasy-football/, with its own CLAUDE.md, build scripts, update workflow and home-screen app. Nothing here
 links to it; `football/index.html` is only a forwarding page for an old bookmark. Football work happens in that repo, not this one.
 
-## 11. The basketball site (interim home here)
+## 11. The basketball site is its own repo
 
-Sean asked for a fantasy basketball site on 16 Oct 2026 ("ok could we make a basketball site too"), built like the football one as a
-repo of its own — **`seanvarg13/fantasy-basketball`** — but this session's GitHub credential can't create repositories, so until Sean
-creates that (an empty public repo with that name; then a session adds it and pushes) the site lives at **`/basketball/`** here, the way
-football began. It is a plain copy of that repo's files (`basketball/index.html`, `bb.js`, `bb.css`, `manifest.json`, `icons/`, `data/`),
-self-contained (relative paths, its own stamps), and nothing here builds or touches it: the daily cloud build publishes only the files
-its run wrote, so the folder survives it. Its data refreshes only when that repo's nightly update exists — so move it as soon as the repo
-does and replace this folder with a forwarding page like `football/index.html`. How it is built, its sources (pbpstats, ESPN), its talent
-accuracies, xFP and projections are in that repo's `CLAUDE.md` (a copy is in `basketball/CLAUDE.md` while it lives here).
+Sean asked for a fantasy basketball site on 16 Oct 2026 ("ok could we make a basketball site too"): **`seanvarg13/fantasy-basketball`**,
+live at https://seanvarg13.github.io/fantasy-basketball/, with its own CLAUDE.md, build scripts (pbpstats + ESPN), nightly update and
+home-screen app — built like the football one, as a repo of its own (Sean created the empty repo and turned Pages on by hand; neither this
+session's GitHub credential nor the workflow token may create repositories or Pages sites). Nothing here links to it. Basketball work
+happens in that repo, not this one.
