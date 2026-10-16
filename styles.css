@@ -5628,3 +5628,8 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard.xpop .pbelow2 { padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body[data-mode="player"] { padding-bottom: 0 !important; }   /* the page's 48px of body padding was a white strip under the blue; it's the blue's own padding now */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body[data-mode="player"] #xboard:not(.xpop) .pbelow2 { padding-bottom: 48px; }
+
+/* The tabs' outline exactly Filters' (Sean, 16 Oct 2026, Ohtani's popup: "The bottom buttons outline style looks a bit different than the filter
+   and raw, I think it might be something to do with the shadow or whatever but make it the same"): on the blue ground a white edge reads now, so the
+   tabs take the bar's buttons' 1px white edge and no shadow — the blue-grey edge and the lift of the two entries above are gone */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .btabs .btab:not(#pop *) { border: 1px solid #ffffff !important; box-shadow: none !important; }
