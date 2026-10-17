@@ -2709,9 +2709,9 @@
   // him, a tap on a drafted name undoes it, the drafted struck through where they stand so the board keeps its shape (the mock's way — a
   // Draft button a row, built first, had cut names in the tier columns; his page is a search away while drafting). Replaces the stat table
   // on Rankings / Draft mode — the Leaderboard keeps every column — and with it the Tiers / List switch, the pages and the Show drafted box.
-  // A phone (Sean, 16 Oct 2026, from his phone: "This is what it looks like on mobile which is not what it looks like on desktop" — a single
-  // long column): two tiers across and the pool in two columns at a compact size, the desktop's board scaled; Edit rankings opens it out to
-  // one column (a tick needs the room; a touch can't drag, so no handle). ol.edit / ol.draft carry the mode for the stylesheet.
+  // A phone stacks the tiers and lists the pool in one column (two tiers across and a two-column pool lasted an hour on 16 Oct 2026 — Sean:
+  // "how it looked before was fine you can put it back to that"); a touch can't drag, so a phone's edit rows draw no handle. ol.edit / ol.draft
+  // carry the mode for the stylesheet (a desktop's edit mode holds a tier column to 230px).
   const boardOn = () => state.mode === "rankings" || state.mode === "draft";
   const POOL_SHOW = 48;   // Not tiered shows this many before its Show all
   function renderBoard({ list, g, rankMode, src, tiers, idx, fullRank, rankOf, groups }) {
