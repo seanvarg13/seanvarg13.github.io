@@ -87,8 +87,7 @@ Views on one data set:
   the columns (the first 48, then Show all). Edit rankings: drag a name into a tier or between tiers, tick
   names for Move… / Untier, rename a tier with ✎, remove it with ×, + Add tier (drop a name on it for a
   new tier). One list per tab, saved in the browser; save named sets, load them back, export/import as
-  text. The Leaderboard keeps every stat column. A phone shows two tiers across and the pool in two
-  columns, the desktop's board scaled down; Edit rankings opens it out to one column.
+  text. The Leaderboard keeps every stat column. A phone stacks the tiers and lists the pool in one column.
 - **Draft** — `draft.html` (or `index.html#draft`): the same board; tap a name to mark him drafted (tap
   again to undo) and he's struck through where he stands; drafted players are remembered in the browser (localStorage)
   with Undo / Show drafted / Reset. Order: big board, your working rankings, or any saved set (tiers shown).

@@ -5770,8 +5770,7 @@ body[data-mode="settings"] main.wrap > .notes { display: none; }
    box holds a flex row of tier columns (li.tier: a blue head, rank · name · eligibility rows) with the Not tiered pool a full-width block
    under them, its rows flowing in four columns. Edit rankings adds the handle, tick, ✎ / ×, the dashed Add tier column and the drop marks
    (and holds a tier column to 230px, wrapping the board, so the controls don't cut the names); Draft mode strikes the drafted through (a
-   tap drafts). A phone: two tiers across and the pool in two columns at a compact size (the rules at the foot of the block), Edit rankings
-   opened out to one column. */
+   tap drafts). A phone stacks the tiers and lists the pool in one column (the rules at the foot of the block). */
 body.boardon #colwrap { display: none !important; }
 body.boardon #rows.boardlist { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; width: 100% !important; min-width: 0 !important; box-sizing: border-box; margin: 0; padding: 12px 14px 16px; list-style: none; }
 body.boardon #rows.boardlist > li.tier { flex: 1 1 0; min-width: 150px; max-width: 100%; box-sizing: border-box; margin: 0; padding: 0; list-style: none; position: relative; background: var(--surface); border: 1px solid color-mix(in srgb, var(--ink) 45%, var(--surface)); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08); }
@@ -5823,32 +5822,16 @@ body.boardon #lbtitle span { font: 400 13px var(--body); color: var(--muted); }
 body.boardon #rows.boardlist > li.tier:not(.pool):not(.add) { max-width: 360px; }   /* a name and his positions never need more */
 body.boardon #rows.boardlist.edit > li.tier:not(.pool):not(.add) { min-width: 230px; }   /* editing: the handle and tick take ~35px, so a column under 230 cut names at 1300 wide — the board wraps instead */
 body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
-/* the phone's board (Sean, 16 Oct 2026, from his phone: "This is what it looks like on mobile which is not what it looks like on desktop" —
-   one long column): two tiers across and the pool in two columns, rows 25px with 12px names, the desktop's board scaled to 390px (about one
-   name in twenty-five ellipsises, mostly a long name with three positions). Edit rankings (ol.edit) opens it out to one column with the rows
-   as they were, since a tick needs the room; Draft mode keeps the compact board and drafts on a tap (no button). */
-:root[data-view="mobile"] body.boardon #rows.boardlist { gap: 8px; padding: 8px 8px 12px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier:not(.pool):not(.add) { flex: 1 1 calc(50% - 4px); min-width: calc(50% - 4px); max-width: calc(50% - 4px); }
-:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier.add { flex: 1 1 100%; max-width: 100%; min-height: 48px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier > .th { height: 30px; padding: 0 8px; gap: 6px; font-size: 14px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier > .th .t { min-width: 24px; height: 18px; font-size: 11px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier > .th .n { font-size: 11px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier.pool > .tbody { column-count: 2; }
-:root[data-view="mobile"] body.boardon #rows.boardlist li.brow { height: 25px; gap: 5px; padding: 0 5px 0 4px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist li.brow .rk { width: 17px; font-size: 10.5px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist li.brow .nm { font-size: 12px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist li.brow .pos { font-size: 10.5px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist.edit { flex-direction: column; gap: 10px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist.edit > li.tier:not(.pool):not(.add) { flex: none; width: 100%; min-width: 0; max-width: 100%; }
-:root[data-view="mobile"] body.boardon #rows.boardlist.edit > li.tier > .th { height: 34px; padding: 0 10px; gap: 8px; font-size: 15px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist.edit > li.tier > .th .t { min-width: 26px; height: 20px; font-size: 12px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist.edit > li.tier > .th .n { font-size: 12px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist.edit > li.tier.pool > .tbody { column-count: 1; }
-:root[data-view="mobile"] body.boardon #rows.boardlist.edit > li.tier.pool > .tbody li.brow { border-right: 0; }
-:root[data-view="mobile"] body.boardon #rows.boardlist.edit li.brow { height: 30px; gap: 6px; padding: 0 8px 0 6px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist.edit li.brow .rk { width: 22px; font-size: 12px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist.edit li.brow .nm { font-size: 14.5px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist.edit li.brow .pos { font-size: 12.5px; }
+/* a phone stacks the tiers and lists the pool in one column (two tiers across and a two-column pool lasted an hour on 16 Oct 2026 —
+   Sean: "how it looked before was fine you can put it back to that") */
+:root[data-view="mobile"] body.boardon #rows.boardlist { flex-direction: column; gap: 10px; padding: 8px 8px 12px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier { flex: none; width: 100%; min-width: 0; }
+:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier.add { min-height: 48px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier.pool > .tbody { column-count: 1; }
+:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier.pool > .tbody li.brow { border-right: 0; }
+:root[data-view="mobile"] body.boardon #rows.boardlist li.brow { height: 30px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist li.brow .nm { font-size: 14.5px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist li.brow .pos { font-size: 12.5px; }
 
 /* The phone's Rankings bar wraps (16 Oct 2026, with the tier board): a nowrap bar had squeezed the Tiers / List switch, Edit rankings and
    Draft mode into a 97px column beside the list's name and Save…, clipping the switch to "Tiers | Li" and wrapping each button to two lines */
