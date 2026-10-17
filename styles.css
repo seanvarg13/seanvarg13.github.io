@@ -5768,8 +5768,10 @@ body[data-mode="settings"] main.wrap > .notes { display: none; }
 /* The Rankings tier board (Sean, 16 Oct 2026: "no stats get shown all it is is the player name and their position eligibility ... tier it
    and see it all on one page"; design A of the Tier Board Mock-ups). body.boardon on Rankings / Draft mode: the column names hide, the rows'
    box holds a flex row of tier columns (li.tier: a blue head, rank · name · eligibility rows) with the Not tiered pool a full-width block
-   under them, its rows flowing in four columns. Edit rankings adds the handle, tick, ✎ / ×, the dashed Add tier column and the drop marks;
-   Draft mode a Draft button a row and the drafted struck through. A phone stacks the tiers and lists the pool in one column. */
+   under them, its rows flowing in four columns. Edit rankings adds the handle, tick, ✎ / ×, the dashed Add tier column and the drop marks
+   (and holds a tier column to 230px, wrapping the board, so the controls don't cut the names); Draft mode strikes the drafted through (a
+   tap drafts). A phone: two tiers across and the pool in two columns at a compact size (the rules at the foot of the block), Edit rankings
+   opened out to one column. */
 body.boardon #colwrap { display: none !important; }
 body.boardon #rows.boardlist { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; width: 100% !important; min-width: 0 !important; box-sizing: border-box; margin: 0; padding: 12px 14px 16px; list-style: none; }
 body.boardon #rows.boardlist > li.tier { flex: 1 1 0; min-width: 150px; max-width: 100%; box-sizing: border-box; margin: 0; padding: 0; list-style: none; position: relative; background: var(--surface); border: 1px solid color-mix(in srgb, var(--ink) 45%, var(--surface)); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08); }
@@ -5789,15 +5791,13 @@ body.boardon #rows.boardlist > li.tier.pool > .th .n { color: var(--muted); }
 body.boardon #rows.boardlist > li.tier > .tbody { list-style: none; margin: 0; padding: 0; }
 body.boardon #rows.boardlist li.brow { display: flex; align-items: center; gap: 8px; height: 27px; padding: 0 8px 0 6px; margin: 0; border-top: 1px solid var(--hair); background: var(--surface); cursor: pointer; list-style: none; min-width: 0; }
 body.boardon #rows.boardlist li.brow:first-child { border-top: 0; }
-body.boardon #rows.boardlist li.brow:hover { background: color-mix(in srgb, var(--accent-2) 10%, var(--surface)); }
+@media (hover: hover) { body.boardon #rows.boardlist li.brow:hover { background: color-mix(in srgb, var(--accent-2) 10%, var(--surface)); } }   /* a pointer only: a tapped row on an iPhone kept the tint */
 body.boardon #rows.boardlist li.brow .rk { width: 22px; flex: none; text-align: right; color: var(--muted); font: 400 12px var(--body); font-variant-numeric: tabular-nums; }
 body.boardon #rows.boardlist li.brow .nm { flex: 1 1 auto; min-width: 0; font: 500 13.5px var(--body); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.boardon #rows.boardlist li.brow .pos { flex: none; font: 400 12px var(--body); color: var(--muted); white-space: nowrap; }
 body.boardon #rows.boardlist li.brow .h { flex: none; width: 9px; margin-right: -2px; color: #b8c2d0; font-size: 13px; letter-spacing: -2px; cursor: grab; }
 body.boardon #rows.boardlist li.brow:has(> .selbox) { gap: 6px; }   /* editing: the handle and tick take the least room they can */
 body.boardon #rows.boardlist li.brow .selbox { flex: none; width: 14px; height: 14px; margin: 0; accent-color: var(--band2, var(--accent-2)); }
-body.boardon #rows.boardlist li.brow .draftbtn { flex: none; height: 20px; min-height: 0; padding: 0 8px; margin: 0; border: 1px solid #c3d3e3; border-radius: 0; background: #fff; color: var(--ink); font: 600 11px/1 var(--body); letter-spacing: 0; box-shadow: none; }
-body.boardon #rows.boardlist li.brow .draftbtn:hover { background: var(--band2, var(--accent-2)); border-color: var(--band2, var(--accent-2)); color: #fff; }
 body.boardon #rows.boardlist li.brow.drafted .nm { color: var(--muted); text-decoration: line-through; }
 body.boardon #rows.boardlist li.brow.drafted .pos, body.boardon #rows.boardlist li.brow.drafted .rk { opacity: .6; }
 body.boardon #rows.boardlist li.brow.selected { background: color-mix(in srgb, var(--accent-2) 22%, var(--surface)); box-shadow: inset 3px 0 0 var(--accent-2); }
@@ -5812,7 +5812,7 @@ body.boardon #rows.boardlist > li.tier.pool { flex: 1 1 100%; }
 body.boardon #rows.boardlist > li.tier.pool > .tbody { column-count: 4; column-gap: 0; }
 body.boardon #rows.boardlist > li.tier.pool > .tbody li.brow { break-inside: avoid; border-top: 1px solid var(--hair); border-right: 1px solid var(--hair); }
 body.boardon #rows.boardlist > li.tier.pool > .foot { display: block; width: 100%; margin: 0; padding: 8px 10px; border: 0; border-top: 1px solid var(--hair); border-radius: 0; background: var(--surface-2); color: var(--ink); text-align: left; font: 600 12.5px var(--body); box-shadow: none; cursor: pointer; }
-body.boardon #rows.boardlist > li.tier.pool > .foot:hover { background: color-mix(in srgb, var(--accent-2) 14%, var(--surface)); }
+@media (hover: hover) { body.boardon #rows.boardlist > li.tier.pool > .foot:hover { background: color-mix(in srgb, var(--accent-2) 14%, var(--surface)); } }
 body.boardon #rows.boardlist li.brow .pos.lc { text-transform: none; }
 body.boardon #lbtitle { display: flex; align-items: baseline; gap: 12px; margin: 5px 0 8px; padding-bottom: 5px; border-bottom: 2px solid var(--stripe-line, #c8102e); }
 body.boardon #lbtitle h2 { margin: 0; font: 700 26px/1 var(--display) !important; color: var(--ink) !important; letter-spacing: 0.01em !important; text-transform: none !important; }
@@ -5821,14 +5821,34 @@ body.boardon #lbtitle span { font: 400 13px var(--body); color: var(--muted); }
 :root[data-view="mobile"] body.boardon #lbtitle h2 { font-size: 21px !important; }
 :root[data-view="mobile"] body.boardon .pager .pcount { display: inline; flex: 1 1 auto; font-size: 12px; color: var(--muted); white-space: normal; }
 body.boardon #rows.boardlist > li.tier:not(.pool):not(.add) { max-width: 360px; }   /* a name and his positions never need more */
-:root[data-view="mobile"] body.boardon #rows.boardlist { flex-direction: column; gap: 10px; padding: 8px 8px 12px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier { flex: none; width: 100%; min-width: 0; }
-:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier.add { min-height: 48px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier.pool > .tbody { column-count: 1; }
-:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier.pool > .tbody li.brow { border-right: 0; }
-:root[data-view="mobile"] body.boardon #rows.boardlist li.brow { height: 30px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist li.brow .nm { font-size: 14.5px; }
-:root[data-view="mobile"] body.boardon #rows.boardlist li.brow .pos { font-size: 12.5px; }
+body.boardon #rows.boardlist.edit > li.tier:not(.pool):not(.add) { min-width: 230px; }   /* editing: the handle and tick take ~35px, so a column under 230 cut names at 1300 wide — the board wraps instead */
+body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
+/* the phone's board (Sean, 16 Oct 2026, from his phone: "This is what it looks like on mobile which is not what it looks like on desktop" —
+   one long column): two tiers across and the pool in two columns, rows 25px with 12px names, the desktop's board scaled to 390px (about one
+   name in twenty-five ellipsises, mostly a long name with three positions). Edit rankings (ol.edit) opens it out to one column with the rows
+   as they were, since a tick needs the room; Draft mode keeps the compact board and drafts on a tap (no button). */
+:root[data-view="mobile"] body.boardon #rows.boardlist { gap: 8px; padding: 8px 8px 12px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier:not(.pool):not(.add) { flex: 1 1 calc(50% - 4px); min-width: calc(50% - 4px); max-width: calc(50% - 4px); }
+:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier.add { flex: 1 1 100%; max-width: 100%; min-height: 48px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier > .th { height: 30px; padding: 0 8px; gap: 6px; font-size: 14px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier > .th .t { min-width: 24px; height: 18px; font-size: 11px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier > .th .n { font-size: 11px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist > li.tier.pool > .tbody { column-count: 2; }
+:root[data-view="mobile"] body.boardon #rows.boardlist li.brow { height: 25px; gap: 5px; padding: 0 5px 0 4px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist li.brow .rk { width: 17px; font-size: 10.5px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist li.brow .nm { font-size: 12px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist li.brow .pos { font-size: 10.5px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist.edit { flex-direction: column; gap: 10px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist.edit > li.tier:not(.pool):not(.add) { flex: none; width: 100%; min-width: 0; max-width: 100%; }
+:root[data-view="mobile"] body.boardon #rows.boardlist.edit > li.tier > .th { height: 34px; padding: 0 10px; gap: 8px; font-size: 15px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist.edit > li.tier > .th .t { min-width: 26px; height: 20px; font-size: 12px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist.edit > li.tier > .th .n { font-size: 12px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist.edit > li.tier.pool > .tbody { column-count: 1; }
+:root[data-view="mobile"] body.boardon #rows.boardlist.edit > li.tier.pool > .tbody li.brow { border-right: 0; }
+:root[data-view="mobile"] body.boardon #rows.boardlist.edit li.brow { height: 30px; gap: 6px; padding: 0 8px 0 6px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist.edit li.brow .rk { width: 22px; font-size: 12px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist.edit li.brow .nm { font-size: 14.5px; }
+:root[data-view="mobile"] body.boardon #rows.boardlist.edit li.brow .pos { font-size: 12.5px; }
 
 /* The phone's Rankings bar wraps (16 Oct 2026, with the tier board): a nowrap bar had squeezed the Tiers / List switch, Edit rankings and
    Draft mode into a 97px column beside the list's name and Save…, clipping the switch to "Tiers | Li" and wrapping each button to two lines */

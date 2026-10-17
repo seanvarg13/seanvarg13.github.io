@@ -2705,23 +2705,28 @@
   // it so I can tier it and see it all on one page"; design A of the Tier Board Mock-ups): one column per tier across the page, each only
   // as tall as its tier, Not tiered under them in four columns (a phone stacks the tiers and lists the pool in one). A row is rank · name ·
   // eligibility (posLabel). Edit rankings: a drag handle and a tick on every row, ✎ / × on each tier, a "+ Add tier" column (drop a name on
-  // it for a new tier holding him), the drop targets the list had (a row's top / bottom half, a tier). Draft mode: a Draft button a row, the
-  // drafted struck through where they stand so the board keeps its shape. Replaces the stat table on Rankings / Draft mode — the Leaderboard
-  // keeps every column — and with it the Tiers / List switch, the pages and the Show drafted box.
+  // it for a new tier holding him), the drop targets the list had (a row's top / bottom half, a tier). Draft mode: a tap on a name drafts
+  // him, a tap on a drafted name undoes it, the drafted struck through where they stand so the board keeps its shape (the mock's way — a
+  // Draft button a row, built first, had cut names in the tier columns; his page is a search away while drafting). Replaces the stat table
+  // on Rankings / Draft mode — the Leaderboard keeps every column — and with it the Tiers / List switch, the pages and the Show drafted box.
+  // A phone (Sean, 16 Oct 2026, from his phone: "This is what it looks like on mobile which is not what it looks like on desktop" — a single
+  // long column): two tiers across and the pool in two columns at a compact size, the desktop's board scaled; Edit rankings opens it out to
+  // one column (a tick needs the room; a touch can't drag, so no handle). ol.edit / ol.draft carry the mode for the stylesheet.
   const boardOn = () => state.mode === "rankings" || state.mode === "draft";
   const POOL_SHOW = 48;   // Not tiered shows this many before its Show all
   function renderBoard({ list, g, rankMode, src, tiers, idx, fullRank, rankOf, groups }) {
     void idx; void fullRank; void g;
-    const ol = $("rows"); ol.className = "rows boardlist"; ol.innerHTML = "";
+    const ol = $("rows"), draftMode = state.mode === "draft", mobile = document.documentElement.dataset.view === "mobile";
+    ol.className = "rows boardlist" + (rankMode ? " edit" : "") + (draftMode ? " draft" : ""); ol.innerHTML = "";
     renderPager($("pagertop"), list.length, { start: 0, end: list.length, size: 0, pages: 1, page: 1 });   // Filters, the count, Draft mode's bar — no pages
-    const drafted = draftedIds(), listDs = DS === CUR ? null : DS.key, draftMode = state.mode === "draft";
+    const drafted = draftedIds(), listDs = DS === CUR ? null : DS.key;
     const names = ((src && src.names) || {})[state.pos] || [], T = tiers.length;
     const row = (p, i) => {
       const key = p.type + p.id, li = el("li", "brow"); li.dataset.key = key;
       if (drafted.has(p.id)) li.classList.add("drafted");
       if (rankMode) {
         if (state.selKeys.includes(key)) li.classList.add("selected");
-        const h = el("span", "h", "⋮⋮"); h.title = "Drag to reorder, or into a tier"; li.append(h);
+        if (!mobile) { const h = el("span", "h", "⋮⋮"); h.title = "Drag to reorder, or into a tier"; li.append(h); }   // a touch can't drag: the ticks and Move… do it there
         const cb = el("input", "selbox"); cb.type = "checkbox"; cb.checked = state.selKeys.includes(key); cb.setAttribute("aria-label", `Select ${p.name}`);
         cb.addEventListener("click", (e) => { e.stopPropagation(); toggleSel(key, e); }); li.append(cb);
         li.draggable = true;
@@ -2731,12 +2736,8 @@
       li.append(el("span", "rk", String(rankOf(p, i))));
       const nm = el("span", "nm", p.name); nm.title = `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`; li.append(nm);
       li.append(el("span", "pos", posLabel(p)));
-      if (draftMode) {
-        const b = el("button", "draftbtn", drafted.has(p.id) ? "Undo" : "Draft"); b.type = "button";
-        b.setAttribute("aria-label", (drafted.has(p.id) ? "Return to board: " : "Mark drafted: ") + p.name);
-        b.addEventListener("click", (e) => { e.stopPropagation(); drafted.has(p.id) ? undraft(p.id) : draft(p); }); li.append(b);
-      }
-      li.addEventListener("click", (e) => { if (rankMode) { toggleSel(key, e); return; } openPlayer(p, { ds: p.dsKey ? (p.dsKey === CUR.key ? null : p.dsKey) : listDs }); });
+      if (draftMode) li.title = drafted.has(p.id) ? "Tap to return him to the board" : "Tap to mark him drafted";
+      li.addEventListener("click", (e) => { if (rankMode) { toggleSel(key, e); return; } if (draftMode) { drafted.has(p.id) ? undraft(p.id) : draft(p); return; } openPlayer(p, { ds: p.dsKey ? (p.dsKey === CUR.key ? null : p.dsKey) : listDs }); });
       return li;
     };
     const head = (t, untiered) => {
@@ -3285,7 +3286,7 @@
     box.hidden = false;
     { const g = groupFor(state.pos), pit = isPitcherGroup(g);   // the Stuff+ board's count line at the right (Sean, 3 Oct 2026)
       const who = onePage() ? ` ${pit ? "pitchers" : "hitters"} · ${DS.season}${state.mode === "leaderboard" ? ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}` : ""}` : "";   /* a desktop keeps the fuller count beside its page range (16 Oct 2026) */
-      const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}`; })() : null;   // the board: tiers · tiered · listed
+      const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}${state.mode === "draft" ? " · tap to draft, tap again to undo" : ""}`; })() : null;   // the board: tiers · tiered · listed (Draft mode has no buttons)
       box.append(el("span", "pcount", bc != null ? bc : pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}${mobileView() ? "" : who}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total}${who}` : `${total} players`)); }
     if (pg.pages > 1) {
       const nav = el("div", "pnav");

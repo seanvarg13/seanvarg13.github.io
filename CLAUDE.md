@@ -4250,6 +4250,22 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Edit rankings / Draft mode wrapped in a 97px column). The board was mocked first too ("Tier Board Mock-ups": A board columns, B cheat sheet,
   C blocks; scratch `board/gen.js`); he picked A. `fitNameCol` reads a player's cell, not a tier row's.
 
+* **The phone's board is the desktop's scaled down; Draft mode drafts on a tap (Sean, 16 Oct 2026, from his phone's Rankings on the C tab, one
+  long column of 113 names: "This is what it looks like on mobile which is not what it looks like on desktop")**: on a phone the board shows
+  **two tiers across** (each `calc(50% − 4px)`) and **the pool in two columns**, rows 25px with 12px names and 10.5px ranks / positions, the
+  tier heads 30px — about one name in twenty-five ellipsises (a long name with three positions: "Christian Encarnacion-Strand / 1B, 3B, DH");
+  **Edit rankings opens it out to one column** with the rows as they were (`ol.edit`: a tick needs the room; a touch can't drag, so a phone's
+  rows draw no handle — the ticks and Move… / Untier do it there). **Draft mode has no Draft button anywhere now** (`ol.draft`): the mock Sean
+  picked drafted on a tap, a button a row had cut names in the tier columns on a 1300px desktop ("Yordan Alvarez" in a 232px column) and had
+  no room at all two-up on a phone — a tap on a name drafts him, a tap on a drafted name returns him to the board, the count line says so
+  ("5 tiers · 42 tiered · 662 hitters · tap to draft, tap again to undo"); his page is a search away while drafting. On a desktop, Edit
+  rankings holds a tier column to 230px and the Add tier box to 110px (`#rows.boardlist.edit`), so with five tiers at 1300 wide the handle
+  and tick no longer cut the names (the Add tier box wraps under the board when there's no room for it). The row hover tint is `@media
+  (hover: hover)` only — a tapped row on an iPhone had kept it (Mickey Gasper's pale-blue row in his screenshot). The phone's Rankings bar
+  wrap (the entry above) is unchanged. Tiers and rankings are still per device (localStorage) unless Appearance ▸ Sync across devices is on.
+  Checked headless on both layouts in view / edit / Draft modes with tiers seeded: no script errors; names cut — phone view 4 of 90, desktop
+  view 0, edit 3 (the pool's long names), Draft 0; a tap drafts and a second tap undoes on both layouts, Undo last follows.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
