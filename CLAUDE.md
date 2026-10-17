@@ -4294,4 +4294,9 @@ Mullins 94% centred with a drop shadow — over the sites' Carolina blue. The ba
 seams with V stitches, no outline; the basketball cel-shaded — a lighter region over the top right, a darker shadow side at the lower left and
 under the lower seam, a mid rim band — with thick black seams in the reference's perspective, a light edge on one side and a grey bevel on the
 other. No ground shadow under either (asked for, then taken off). iOS keeps the icon it saved: remove the web app and add it again to see a new
-one.
+one — **and removing it deletes everything the app stored** (17 Oct 2026: Sean's saved rankings lists were gone from his phone the day after the
+icon change; a home-screen web app has its own localStorage, separate from Safari's, and a re-added app starts empty — rankings, tiers, drafted
+players, fantasy presets, Appearance). Never suggest remove-and-re-add again without saying so and having him Export his lists (Rankings lists ▸
+Export) or turn Sync across devices on first. The sync pull itself can no longer drop the lists: `syncNow` keeps this device's saved lists when
+the gist's copy is empty or missing (and pushes them back), and backs up the copy it replaces the way `save()` does, so Rankings lists' Restore
+line can bring them back.
