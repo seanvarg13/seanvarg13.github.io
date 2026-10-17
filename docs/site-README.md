@@ -87,9 +87,10 @@ Views on one data set:
   the columns (the first 48, then Show all). Edit rankings: drag a name into a tier or between tiers, tick
   names for Move… / Untier, rename a tier with ✎, remove it with ×, + Add tier (drop a name on it for a
   new tier). One list per tab, saved in the browser; save named sets, load them back, export/import as
-  text. The Leaderboard keeps every stat column.
-- **Draft** — `draft.html` (or `index.html#draft`): same board plus a *Draft* button per
-  player that removes them; drafted players are remembered in the browser (localStorage)
+  text. The Leaderboard keeps every stat column. A phone shows two tiers across and the pool in two
+  columns, the desktop's board scaled down; Edit rankings opens it out to one column.
+- **Draft** — `draft.html` (or `index.html#draft`): the same board; tap a name to mark him drafted (tap
+  again to undo) and he's struck through where he stands; drafted players are remembered in the browser (localStorage)
   with Undo / Show drafted / Reset. Order: big board, your working rankings, or any saved set (tiers shown).
 - **Explore** — `index.html#explore`: any player, any season (see below); date windows for the current season.
 - **Compare** — `index.html#compare`: up to four players side by side, each with its own season.
@@ -441,8 +442,8 @@ on by itself in Each-season mode). Clicking a line opens that season's card, or 
 
 The draft pages (Rankings / Draft board / Eligibility) sit in the header's **Fantasy** dropdown rather than a second nav
 row (the old Draft Mode overview page was removed 28 Sep 2026 — the home page covers it). Rankings and Draft mode
-list every player, with no minimum PA / IP, on the tier board (Draft mode adds a Draft button a row and strikes the
-drafted through where they stand). Opening a player's card and
+list every player, with no minimum PA / IP, on the tier board (Draft mode strikes the drafted through where they
+stand: tap a name to draft him, tap again to undo). Opening a player's card and
 closing it leaves the page exactly where it was (`lockPage` reads the scroll position *before* `body.modal-open`
 makes the page `position: fixed`, which would otherwise collapse it to zero).
 
