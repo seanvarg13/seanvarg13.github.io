@@ -111,6 +111,11 @@
         const L = local[k], R = remote[k] === undefined ? null : remote[k], B = base ? base[k] : undefined;
         out[k] = L === R ? L : base && L === B ? R : base && R === B ? L : syncMerge(k, L, R);
       }
+      // the saved rankings lists never go to a pull (17 Oct 2026, after Sean's phone lost its lists): an empty or missing copy on the gist
+      // keeps this device's and pushes it back (so deleting the last list on another device brings it back here — rare, and deletable
+      // again), and the copy being replaced goes to the browser's backup first, the way save() keeps it, so Rankings lists can Restore it
+      { const parse = (t) => { try { return JSON.parse(t || "null"); } catch { return null; } }, lv = parse(local[LS.sets]);
+        if (out[LS.sets] !== local[LS.sets] && !noSets(lv)) { if (noSets(parse(out[LS.sets]))) out[LS.sets] = local[LS.sets]; else { try { localStorage.setItem(BAK, local[LS.sets]); } catch {} } } }
       const here = SYNC_KEYS.filter((k) => out[k] !== local[k]), there = SYNC_KEYS.some((k) => out[k] !== (remote[k] === undefined ? null : remote[k]));
       for (const k of here) { try { if (out[k] == null) localStorage.removeItem(k); else localStorage.setItem(k, out[k]); } catch {} }
       if (there) await gh("PATCH", `/gists/${id}`, syncBlob(out));
