@@ -7194,6 +7194,9 @@
     // wOBA or wRC+ (Sean, 16 Oct 2026): the display scale for every wOBA-scale number — the stored numbers, pools and percentiles are the same either way
     row("wOBA scale", "wOBA as it is, or the same numbers as wRC+ / xwRC+: 100 is the league's average that season, 120 is 20% better — each season against its own league, so seasons compare. Nothing is re-ranked; only what prints changes.",
       segOf("wOBA scale", [["woba", "wOBA"], ["wrc", "wRC+"]], WRC_PREF.get(), (v) => { WRC_PREF.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderSettings(); }));
+    // the whole site's look (Sean, 17 Oct 2026): today's, or Windows Classic on Bliss — per device (DRAFT_SKIN in themes.js)
+    if (window.DRAFT_SKIN) row("Look", "Today: the site as it is. Windows Classic: Bliss behind every page, a grey taskbar, every table a classic window. The colours of the numbers are the same in both.",
+      segOf("Look", [["today", "Today"], ["w2k", "Windows Classic"]], window.DRAFT_SKIN.get(), (v) => { window.DRAFT_SKIN.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderSettings(); }));
     if (window.DRAFT_TABLES) row("Tables", "Baseball-Reference: 12px type, compact 23px rows. Classic: the larger type with column names the size of the numbers, roomier rows.",
       segOf("Tables", [["bref", "Baseball-Reference"], ["classic", "Classic"]], window.DRAFT_TABLES.get(), (v) => {
         window.DRAFT_TABLES.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderSettings(); }));

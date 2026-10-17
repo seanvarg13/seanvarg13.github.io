@@ -4267,6 +4267,18 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   when there's no room for it); a phone's edit rows draw no handle (a touch can't drag; the ticks and Move… / Untier do it there). The row
   hover tint is `@media (hover: hover)` only — a tapped row on an iPhone had kept it (Mickey Gasper's pale-blue row in his screenshot).
 
+* **Windows Classic, a look you pick (Sean, 17 Oct 2026: Jon Anderson's "make the whole website look like it was built in 1997" post, then an XP Bliss
+  screenshot, then Windows Classic on Bliss — "Can you do that")**: Settings ▸ Appearance ▸ **Look**: Today / Windows Classic, per device —
+  `window.DRAFT_SKIN` in `themes.js` (localStorage `draft2027.skin`, class **`w2k`** on `<html>` before first paint; Site default / "Follow the site
+  default" clear it with the rest). The block "Windows Classic" at the end of `styles.css`, every selector `:root.w2k` + 129 roots + four or five
+  `:not(#id)`s so it beats the site's deepest passes: **Bliss** fixed behind every page (`icons/bliss.jpg`, cropped from Sean's screenshot with the
+  taskbar, Recycle Bin and pointer taken out; the publisher copies `icons/` whole), the header as the grey `#d4d0c8` taskbar (Home with a red ⊞,
+  every page a raised button, the current one pressed in), Tahoma everywhere, every table a classic window (`#lbtitle` / `.hsech` the navy →
+  `#a6caf0` title bar with a grey _ □ ✕ box, the scroller the grey body, grey raised column names, white rows), the Bio box and the season table's
+  tab strip grey, Settings in a grey window, the notes under a list a yellow tooltip box, the player band and sticky bar in the title bar's
+  gradient. Heat colours are untouched. The 1997 (starfield, Comic Sans) and XP Luna versions were previews only (scratch `y97.css` / `xp.css`).
+  Delete the block and `DRAFT_SKIN` to remove it. Not dressed yet: the Filters dropdowns' insides keep today's look (their frame is grey).
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

@@ -4,6 +4,17 @@
 /* Table style — the site default: false = the Baseball-Reference tables (12px, 23px rows); true = the Source Sans tables of 13-14 Oct (column
    names the size of their cells, ~28-30px rows). Each device can pick its own in Appearance ▸ Tables (draft2027.tables; Sean, 14 Oct 2026). */
 const TABLE_SANS = false;
+/* Look — Today's site or Windows Classic on Bliss (Sean, 17 Oct 2026); per device, draft2027.skin, class w2k on <html> before first paint. */
+window.DRAFT_SKIN = (function () {
+  const KEY = "draft2027.skin";
+  const own = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
+  const get = () => own() || "today";
+  const apply = () => document.documentElement.classList.toggle("w2k", get() === "w2k");
+  const set = (v) => { try { localStorage.setItem(KEY, v); } catch (e) { /* this visit only */ } document.documentElement.classList.toggle("w2k", v === "w2k"); };
+  const clear = () => { try { localStorage.removeItem(KEY); } catch (e) { /* */ } apply(); };
+  apply();
+  return { get, set, own, clear };
+})();
 window.DRAFT_TABLES = (function () {
   const KEY = "draft2027.tables";
   const own = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
@@ -147,8 +158,8 @@ window.DRAFT_THEMES = (function () {
   // Mobile / desktop layout. "auto" follows the screen (phones get the compact layout); "desktop" on a phone
   // widens the viewport so the full layout shows zoomed out, like Safari's "Request Desktop Website".
   const viewPref = () => (["mobile", "desktop"].includes(get(LS.view)) ? get(LS.view) : (["mobile", "desktop"].includes(DEFAULTS.view) ? DEFAULTS.view : "auto"));
-  const hasOwn = () => [LS.scheme, LS.font, LS.theme, LS.view].some((k) => get(k) != null) || !!window.DRAFT_TABLES.own();
-  const useDefaults = () => { for (const k of [LS.scheme, LS.font, LS.theme, LS.view]) { try { localStorage.removeItem(k); } catch { /* */ } } delete root.dataset.theme; apply(); applyView(); window.DRAFT_TABLES.clear(); };
+  const hasOwn = () => [LS.scheme, LS.font, LS.theme, LS.view].some((k) => get(k) != null) || !!window.DRAFT_TABLES.own() || !!window.DRAFT_SKIN.own();
+  const useDefaults = () => { for (const k of [LS.scheme, LS.font, LS.theme, LS.view]) { try { localStorage.removeItem(k); } catch { /* */ } } delete root.dataset.theme; apply(); applyView(); window.DRAFT_TABLES.clear(); window.DRAFT_SKIN.clear(); };
   const smallScreen = () => matchMedia("(max-width: 700px)").matches || (navigator.maxTouchPoints > 1 && Math.min(screen.width, screen.height) <= 700);
   function applyView() {
     const pref = viewPref(), small = smallScreen();
