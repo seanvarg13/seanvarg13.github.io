@@ -4323,6 +4323,35 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `[data-mode="home"] main.wrap` is transparent), and the bubble-digit rule carries `:is(#xboard, #modal, body)` because the band's
   `#xboard .svpct text { fill: #000 }` rule outranked a class-only white. Source: scratch `w2k/block.css`, expanded by `w2k/expand.py` (`@W` =
   the desktop prefix, `@M` = the same with `[data-view="mobile"]` on the root).
+  **More Windows (Sean, 18 Oct 2026: "look into how to make the windows classic model more windows classic and just better and more classic
+  and more windows etc")**: `app.js` builds the chrome once, whatever the look, after the phone's menu toggle — `w2kIcon()` draws the 32 × 32
+  pixel-style icons (window, list, baseball, wrench, trophy, folder, gear, bin, magnifier, power, the four-colour flag) as inline SVG — and the
+  block shows it under `.w2k` (one unprefixed rule hides `.w2kstart / .w2kmenu / .w2ktray / .w2kdlg / .w2kdlgbg / .w2kicons` without the class).
+  **The taskbar**: a **Start** button (the flag, bold, pressed while open) first in `header.top`; the page buttons carry a little window icon
+  (`.modes > a::before`); the search is the **Address** bar on a desktop (`.gsearch::before`); a sunken **tray with the clock** (`.w2ktray`,
+  `toLocaleTimeString` every 20 s) at the right, desktop only; the phone's ☰ Menu is hidden since Start lists the pages. **The Start menu**
+  (`.w2kmenu`, absolute under the header): the vertical "Sean's Site" banner, Home · Leaderboard · Pitching+ · Fixing the flaw, a grey
+  "Fantasy" group with Rankings · Fantasy leaderboard · Mock draft · Scoring settings, etched separators, Find a player… (focuses the search),
+  Settings, **Shut Down…** — the classic dialog (`.w2kdlg` over a transparent `.w2kdlgbg`: "What do you want the computer to do?", Switch to
+  the Today look / Stay in Windows Classic, OK / Cancel; OK on the first calls `DRAFT_SKIN.set("today")` and re-renders, the way out without
+  finding Settings). Menu items are `button.w2kmi` (excluded from the raised-button rule); a click elsewhere, Escape or a page change closes the
+  menu. **Window chrome**: the title bar carries a 16 × 14 window icon and reads "Leaderboard - Sean's Site" (and so on per page), its
+  `_ □ ✕` are three real bevelled buttons (one 50 × 14 SVG in `main.wrap::after` — minimize and maximize adjacent, close set apart, as Win95
+  drew them), and the window goes **inactive** (grey gradient, `#c0c0c0` title) while a player's popup covers it (`@W.xpopon`); home's section
+  windows wear the same icon and buttons; the status bar (`#notes`) has the dotted **resize grip** at its corner. **Dialogs**: `#pop` (the
+  Leaderboard's Filters) and `.phwin` (the card's Filters window, the Fixing-the-flaw popup titled so) get a navy title bar ("Filters") with the
+  × as a 16 × 14 title button; the player popup's × the same. **Group boxes**: `pctSvg`'s Classic branch draws each percentile section as an
+  etched frame (a `#808080` rect with a white one offset by 1px) with the section name sitting on the frame's top edge over a grey patch
+  (`textWidth` sizes it), instead of the name over a rule. **Selected row**: the season shown in the season table (`tr.cur`) is navy with white
+  type, a list view's selection; heat cells keep their fill. **Classic scrollbars** (WebKit / Blink; an iPhone draws its own): 16px, the
+  checkerboard track, bevelled thumb and arrow buttons (`::-webkit-scrollbar*` under the prefix and on `:root.w2k`). **Desktop icons** on home
+  (`w2kIcons()` prepended in `renderHome`): Leaderboard · Pitching+ · Fixing the flaw · Rankings · Fantasy · Settings · Recycle Bin (opens
+  Settings ▸ Appearance — where the look is thrown away), a column down the left on a desktop (`.hub.home` padded 92px for it — an `@D` prefix in the expander, since a
+  `:not([data-view])` tacked onto `@W` lands on body, where the attribute never is), wrapping rows across the top on a phone, white labels
+  with a shadow, the label navy on hover. The Filters dropdown's tabs (`#pop .ptab`) have 3px / 9px of room round their words. Headless on both layouts with every piece open (menu, dialog,
+  Filters, bars, the season table) and the Today look checked untouched (no Start, tray or icons shown; 25 bubbles / 75 ticks / 5 rules on
+  Judge's page). Not done, on purpose: a bottom taskbar (every sticky offset on the site hangs off the header's height) and a menu bar in the
+  windows (menus that do nothing are a trap; the real ones would be a page's filters, which the Filters button already is).
 
 ## 10. The football site moved out
 

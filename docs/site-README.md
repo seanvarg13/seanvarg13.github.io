@@ -832,7 +832,7 @@ winning a clash. A pull that changes anything reloads the page once. Appearance 
 Crimson Tide, Clemson — plus font and light / dark. Schemes are defined in `themes.js` as the token roles
 described at the top of `styles.css`; add one by adding an entry there. Saved per browser. Also the background pattern
 (on / off, per device). **Look** (17 Oct 2026, per device): Today, or **Windows Classic** — Bliss behind every page, every page a classic window with a navy title bar and a grey body, a grey
-taskbar header, every table drawn as a 1997 bevelled-cell table, MS Sans Serif (Helvetica / Arial where a device lacks it) at 1997's 11px throughout, the percentile bars as Savant's in a sunken field with square bubbles; the numbers' colours are the same in both.
+taskbar header with a Start button and the classic Start menu (the pages, Find a player, Settings, Shut Down… which offers the Today look), a tray clock, every table drawn as a 1997 bevelled-cell table, MS Sans Serif (Helvetica / Arial where a device lacks it) at 1997's 11px throughout, the percentile bars as Savant's in a sunken field with square bubbles inside etched group boxes, classic scrollbars, title-bar icons and buttons, desktop icons on home; the numbers' colours are the same in both.
 
 **Hands-off**: `bash install_schedule.sh` installs a launchd job that runs `daily_update.py` (MLB + minors
 through yesterday, then `publish_github.py`) every day at 5:30 am and logs to `logs/daily.log`. It publishes
