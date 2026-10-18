@@ -4294,6 +4294,16 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   selector with `:is()`, never by inserting a comma. (2) The Fantasy page's floating header copy (`fFloatHead`) is a fixed-layout table whose first
   row has been the four colspan over-header cells since 16 Oct, so its name columns came out equal (57px each on a phone) and sat off the real
   ones; `size()` now gives the copy a `colgroup` of the real names row's widths.
+  **All the way old-school (Sean, 18 Oct 2026: "make the entirety of the tables like the font and the table itself be that old school format and
+  the percentile bars too, so just completely everything")**: under the look every table (the Leaderboard's grid, his season table, the card
+  tabs', the Pitching+ board, Fantasy, home) is `<table border=1>` as Netscape drew it — each cell its own inset bevel on white, the column
+  names raised and bold on grey (the sorted one pressed), the group rules a 2px dark line, 11px Tahoma (Verdana on an iPhone) with 20px rows
+  (21 on the Leaderboard), the scroller an outset grey frame; a heat cell keeps the ink its fill chose (the colour rule skips cells with an
+  inline background), and the totals' labels (`.sblab`, white on the band in the Today look) are black. **The percentile bars are Win95
+  progress bars**: `pctSvg`'s `W2K` branch (it reads the `w2k` class on `<html>`) draws a sunken white field, the fill as 6px blocks in the
+  percentile's colour and the number on a raised grey tag (`.w2knum`) kept inside the field, no ticks or dashed rules; the Mix tab's HTML
+  tracks (`.svtrack`) get the same through CSS (a `mask-image` cuts the fill into blocks, the `.bub` becomes the tag). Savant's drawing is
+  untouched when the class is off (25 bubbles, 75 ticks on Judge's page, checked).
 
 ## 10. The football site moved out
 
