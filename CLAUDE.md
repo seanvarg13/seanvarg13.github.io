@@ -4453,6 +4453,26 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     gone. The grid's third card is **Movers**: the top 8 of `flawRows()` over the last 30 days by Δ — Player · Flaw ("xHR/FB 8.0 → 16.1", the %
     signs dropped so it fits) · xwOBA · If held (filled) · Δ — with "Full list →" to the page. Pitchers have no movers list now.
 
+* **A Jets colour scheme (Sean, 18 Oct 2026: "add a New York jets color theme where it is basically just the white and green and no tertiary
+  color. I like how they don't have outlines and it is just the green and white")**: Settings ▸ Appearance ▸ Colour scheme ▸ **Jets**, per device
+  like every scheme (Titans stays the site default).
+  - **Colours** (`jets` in `themes.js`): Legacy Green `#115740` (the team's own since 2024; the same shade as 2019's Gotham Green) and white. The
+    type, buttons, bands and rules are all that green, with pale green-greys for hairlines and the alternate surface. The stripe the other schemes
+    draw under a band is the band's own green here, so it vanishes, and the table group rules are green. Dark mode is the same on a near-black green.
+  - **The percentile / heat colours stay Savant's red and blue** — they're data, the same in every scheme.
+  - **No outlines** (the `:root[data-scheme="jets"]` block at the end of `styles.css`; `:not(#j1)…:not(#j4)` carry four ids' weight over the deepest
+    id-anchored passes): no edge on any button, tab, pill, page number, box, window or table frame; the shadows stay, so a box still stands off the page.
+  - **Controls without their edges**:
+    - The lists' Filters button and the pills are filled green with white type; open, they are a pale green.
+    - White buttons on the green bands (the header's pages, Filters / Raw, the card's tabs, the phone's menu) keep green type, in dark mode too.
+    - The header's current page and the card's picked tab are the green itself with white type, not a filled box.
+    - The picked Regular Season / Playoffs tab is white on the green strip.
+    - The Summary on the player's band reads white.
+  - **Selectors**: a selector inside `:is()` lends the whole rule its weight, so the block keeps id- and `:not()`-heavy selectors in rules of their own
+    (`#xboard .pgfix …` and `.btabs .btab:not(.on)…` had outweighed the current page's white).
+  - **Found while checking it**: the Titans scheme's dark mode has the same white-on-white trouble on the header's pages and Filters / Raw (their
+    ink token turns near-white there). Not fixed; the Jets block only fixes its own.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
