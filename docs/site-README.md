@@ -831,7 +831,7 @@ winning a clash. A pull that changes anything reloads the page once. Appearance 
 (Titans navy and the red stripe, with Carolina blue on the banner instead of Titans blue), Purple,
 Crimson Tide, Clemson — plus font and light / dark. Schemes are defined in `themes.js` as the token roles
 described at the top of `styles.css`; add one by adding an entry there. Saved per browser. Also the background pattern
-(on / off, per device). **Look** (17 Oct 2026, per device): Today, or **Windows Classic** — Bliss behind every page, a grey
+(on / off, per device). **Look** (17 Oct 2026, per device): Today, or **Windows Classic** — Bliss behind every page, every page a classic window with a navy title bar and a grey body, a grey
 taskbar header, every table a classic window with a navy title bar; the numbers' colours are the same in both.
 
 **Hands-off**: `bash install_schedule.sh` installs a launchd job that runs `daily_update.py` (MLB + minors

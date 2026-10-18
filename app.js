@@ -7054,6 +7054,8 @@
     const size = () => {
       const src = table.tHead.querySelectorAll("th"), dst = t2.querySelectorAll("th");
       src.forEach((th, i) => { const w = th.getBoundingClientRect().width + "px"; dst[i].style.width = w; dst[i].style.minWidth = w; dst[i].style.maxWidth = w; });
+      { const names = table.tHead.rows[table.tHead.rows.length - 1].cells; let cg = t2.querySelector("colgroup"); if (!cg) { cg = el("colgroup"); t2.insertBefore(cg, t2.firstChild); } cg.innerHTML = "";
+        for (const th of names) { const c = el("col"); c.style.width = th.getBoundingClientRect().width + "px"; cg.append(c); } }   // a fixed-layout table sizes its columns from the first row, and since the over-header (16 Oct 2026) that row is four colspans — the copy's name columns came out equal and sat off the real ones on a phone
       t2.style.width = table.getBoundingClientRect().width + "px"; clip.style.width = scroll.clientWidth + "px";
       const rk = table.querySelector("td.f1") || table.querySelector("th.f1"); if (rk) { table.style.setProperty("--sbw1", rk.offsetWidth + "px"); t2.style.setProperty("--sbw1", rk.offsetWidth + "px"); }   // Player freezes right after Rk in the copy too
       clip.scrollLeft = scroll.scrollLeft;

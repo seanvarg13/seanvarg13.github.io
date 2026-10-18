@@ -4268,16 +4268,32 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   hover tint is `@media (hover: hover)` only — a tapped row on an iPhone had kept it (Mickey Gasper's pale-blue row in his screenshot).
 
 * **Windows Classic, a look you pick (Sean, 17 Oct 2026: Jon Anderson's "make the whole website look like it was built in 1997" post, then an XP Bliss
-  screenshot, then Windows Classic on Bliss — "Can you do that")**: Settings ▸ Appearance ▸ **Look**: Today / Windows Classic, per device —
+  screenshot, then Windows Classic on Bliss — "Can you do that"; tidied 18 Oct 2026: "Some of the stuff on the windows version looks off and not
+  like clean or doesn't fit properly can you fix that and optimize it")**: Settings ▸ Appearance ▸ **Look**: Today / Windows Classic, per device —
   `window.DRAFT_SKIN` in `themes.js` (localStorage `draft2027.skin`, class **`w2k`** on `<html>` before first paint; Site default / "Follow the site
-  default" clear it with the rest). The block "Windows Classic" at the end of `styles.css`, every selector `:root.w2k` + 129 roots + four or five
-  `:not(#id)`s so it beats the site's deepest passes: **Bliss** fixed behind every page (`icons/bliss.jpg`, cropped from Sean's screenshot with the
-  taskbar, Recycle Bin and pointer taken out; the publisher copies `icons/` whole), the header as the grey `#d4d0c8` taskbar (Home with a red ⊞,
-  every page a raised button, the current one pressed in), Tahoma everywhere, every table a classic window (`#lbtitle` / `.hsech` the navy →
-  `#a6caf0` title bar with a grey _ □ ✕ box, the scroller the grey body, grey raised column names, white rows), the Bio box and the season table's
-  tab strip grey, Settings in a grey window, the notes under a list a yellow tooltip box, the player band and sticky bar in the title bar's
-  gradient. Heat colours are untouched. The 1997 (starfield, Comic Sans) and XP Luna versions were previews only (scratch `y97.css` / `xp.css`).
-  Delete the block and `DRAFT_SKIN` to remove it. Not dressed yet: the Filters dropdowns' insides keep today's look (their frame is grey).
+  default" clear it with the rest). One block, "Windows Classic", at the end of `styles.css` (scratch `w2k/block.css` is the readable source: `@W`
+  stands for the prefix `:root.w2k` + 129 roots + `body:not(#q1)…:not(#q5)`, which beats the site's deepest passes; the Python that expands it is in
+  the scratch folder too). **Bliss** fixed behind every page (`icons/bliss.jpg`, Sean's screenshot with the taskbar, Recycle Bin and pointer taken
+  out; the publisher copies `icons/` whole); the header the grey `#d4d0c8` taskbar (Home with a red ⊞, every page a raised button, the current one
+  pressed in); Tahoma; **every page one window** — `main.wrap` is the grey body with an outset bevel, its `::before` the navy → `#a6caf0` title bar
+  naming the page (per `body[data-mode]`: Leaderboard, Pitching+, Fixing the flaw, Rankings, Draft mode, Fantasy, Mock draft, Settings) and its
+  `::after` the `_ □ ✕` box; home is the desktop (the date line a white desktop-icon label, each section its own window with `.hsech` as the title
+  bar and `.hsecb` the grey body); the player page and the popup wear the band as their title bar over a grey body (the `.pbelow2` section and the
+  tab boxes are grey too, the headings black, the percentile bars' type black on the grey). **Tables** are white sunken list views (`#bscroll`,
+  `.sbscroll`, `.brscroll`, `.fscroll`, `.pbscroll`, `.board-scroll` …) with raised grey column names, the sorted one pressed, every red group rule
+  grey (`.ge`, `.f3`, the totals' top rule), the yellow `td.kexp` and gold `td.record` cells kept; `#lbtitle` a plain bold heading inside the
+  window; the notes a grey status bar at the window's foot; `#pagertop` / the counts black. **Names are links** (`button.pbname`, `.linkbtn`,
+  `.knotebtn`, `.simname`, `#rows .name`: navy, no bevel, underline on hover), not buttons; the dropdowns (`#pop`, `.phwin`, `.ddmenu`, the header
+  menus) grey windows with the open tab pressed and menu items navy on hover; inputs white sunken. The scheme's tokens (`--ink`, `--surface`,
+  `--muted`, `--band2` …) are re-pinned on body inside the look, so a dark-mode phone draws the same light windows. Heat colours untouched. The
+  1997 (starfield, Comic Sans) and XP Luna versions were previews only. Delete the block and `DRAFT_SKIN` to remove it.
+  **Found while tidying, fixed in every look (18 Oct 2026)**: (1) 37 selector lists in `styles.css` had been mangled when `[data-mode="mock"]`
+  rules were widened to name `claude` / `flaws` — `body[data-mode="mock"],[data-mode="claude"],[data-mode="flaws"] .mkhist { display: none }`
+  reads as three selectors, the first a bare `body[data-mode="mock"]`, so on a phone the Mock Draft page's **body was `display: none`** (blank
+  since 6 Oct) and every mobile room rule landed on body instead of its element; they're `body:is([data-mode="mock"], …) .mkhist` now. Widen a
+  selector with `:is()`, never by inserting a comma. (2) The Fantasy page's floating header copy (`fFloatHead`) is a fixed-layout table whose first
+  row has been the four colspan over-header cells since 16 Oct, so its name columns came out equal (57px each on a phone) and sat off the real
+  ones; `size()` now gives the copy a `colgroup` of the real names row's widths.
 
 ## 10. The football site moved out
 
