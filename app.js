@@ -4479,9 +4479,10 @@
         const a = el("a", null, "Pitching+"); a.href = "#pitches"; a.dataset.mode = "pitches"; a.title = "Every pitcher's pitches graded";
         lb.after(a); if (fan) a.after(fan);
       } }
-    // Fixing the flaw is a page of its own in the header (Sean, 16 Oct 2026: "its own button page on the menu")
+    // Fixing the flaw is a page of its own in the header (Sean, 16 Oct 2026: "its own button page on the menu"), called Movers since it took the
+    // home card of that name in (Sean, 18 Oct 2026: "get rid of movers and call fixing the flaw 'movers'"); the mode keeps its old key, flaws
     { const nav = document.querySelector(".modes"), pt = nav && nav.querySelector('a[data-mode="pitches"]');
-      if (pt && !nav.querySelector('a[data-mode="flaws"]')) { const a = el("a", null, "Fixing the flaw"); a.href = "#flaws"; a.dataset.mode = "flaws"; a.title = "Elite hitters whose one weak piece has moved over the last 30 days"; pt.after(a); } }
+      if (pt && !nav.querySelector('a[data-mode="flaws"]')) { const a = el("a", null, "Movers"); a.href = "#movers"; a.dataset.mode = "flaws"; a.title = "Elite hitters whose weak piece has moved lately, by the xwOBA it adds if the move held all year"; pt.after(a); } }
     // League Trends, Call-up Watch and Compare left the menus (Sean, 6 Oct 2026: "eliminate the league trends, call up watch and compare");
     // their renderers stay below, and #trends / #callups / #compare land on home
     // Compare lives in this menu, not the header (minimal pass 5, Sean, 30 Sep 2026): Home · Fantasy · Leaderboards · More
@@ -5704,7 +5705,7 @@
   const whenBuilt = (b) => { const d = b ? new Date(b.replace(" ", "T") + "Z") : null; return d && !isNaN(d) ? d.toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }) : b || ""; };
   // November 1 to March 15, New York time: no regular-season games, so home turns to next year and the Weekly Planner steps aside
   function offSeason() { const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" })), mo = d.getMonth() + 1, dy = d.getDate(); return mo >= 11 || mo <= 2 || (mo === 3 && dy <= 15); }
-  // Fixing the flaw — the rows for home's card and the page (Sean, 16 Oct 2026: "expand the fixing the flaw table and see the whole table ...
+  // Movers (Fixing the flaw until 18 Oct 2026) — the rows for home's card and the page (Sean, 16 Oct 2026: "expand the fixing the flaw table and see the whole table ...
   // its own page"): every 200+ PA hitter's xwOBA build-up pieces on the full season, each swapped alone into the league's set and priced in
   // wOBA points; elite = his two best worth FX.elite together, the flaws = his two worst at FX.flaw or under; each flaw piece re-read over the
   // last 30 days (FX.pa+ PA) and "if it held" = his season build with only that piece at the window's value, the row's flaw the one that moved
@@ -5720,7 +5721,10 @@
   // the page's windows (Sean, 16 Oct 2026: "the past months or x days ... different players across different timelines"): last N days from the
   // last game day, or his last N PA; the window's minimum scales with it (75 PA for 30 days, ¾ of N for a last-N window)
   const FX_WINS = [["14", "Last 14 days"], ["30", "Last 30 days"], ["45", "Last 45 days"], ["60", "Last 60 days"], ["90", "Last 90 days"], ["pa100", "Last 100 PA"], ["pa150", "Last 150 PA"], ["prev", "This season vs last"]];
-  const fxSet = Object.assign({ win: "30", sort: "cred" }, load("draft2027.flaws", {}));
+  const fxSet = Object.assign({ win: "30", sort: "gain" }, load("draft2027.flaws", {}));
+  // Movers sorts by the xwOBA the move adds if it held all year (Sean, 18 Oct 2026: "sort it by the delta of xwoba on the season if the stat or key flaw
+  // that moved or improved held for the whole year"): a device that kept the old default, Most credible, starts on it once; picking Most credible again stays
+  if (!fxSet.mv1) { fxSet.sort = "gain"; fxSet.mv1 = 1; try { localStorage.setItem("draft2027.flaws", JSON.stringify(fxSet)); } catch {} }
   // credibility (Sean, 16 Oct 2026: "see which ones are most credible first"): how much of the window's move is likely real — the piece's
   // reliability at the window's PA, n / (n + k), k from how fast each settles (K% ~60 PA, BB% ~120, a fly-ball share ~110, the drivers'
   // xBABIP ~220, xHR/FB ~250 — it rides on ~30 fly balls a hundred PA — extra bases per hit ~300); then last season as a witness: a prior
@@ -5849,22 +5853,22 @@
     const esc = (e) => { if (e.key === "Escape") close(); };
     x.addEventListener("click", close); ov.addEventListener("click", (e) => { if (e.target === ov) close(); }); document.addEventListener("keydown", esc);
   }
-  // the page (#flaws): every row the card ranks, in the Pitching+ board's standing card; the day rows are asked for here (home waits for idle)
+  // the page (#movers, mode flaws): every row the card ranks, in the Pitching+ board's standing card; the day rows are asked for here (home waits for idle)
   function renderFlaws() {
     const box = pitchBoardEl(); box.innerHTML = "";
     const page = el("div", "flawpage"), bar = el("div", "pbfilters"), PH = mobileView(); box.append(page);
     const save = () => { try { localStorage.setItem("draft2027.flaws", JSON.stringify(fxSet)); } catch {} render(); };
     const wlab = (FX_WINS.find((w) => w[0] === fxSet.win) || FX_WINS[1])[1];
     bar.append(pillSelect(wlab, FX_WINS, fxSet.win, (v) => { fxSet.win = v; save(); }, "Window"));
-    bar.append(pillSelect(fxSet.sort === "gain" ? "Biggest gain" : "Most credible", [["cred", "Most credible"], ["gain", "Biggest gain"]], fxSet.sort, (v) => { fxSet.sort = v; save(); }, "Order"));
+    bar.append(pillSelect(fxSet.sort === "cred" ? "Most credible" : "Biggest Δ xwOBA", [["gain", "Biggest Δ xwOBA"], ["cred", "Most credible"]], fxSet.sort, (v) => { fxSet.sort = v; save(); }, "Order"));
     const prevMode = fxSet.win === "prev", Y = DATA.meta.season, Y0 = Y - 1;
     ensureHist(fxPrevKey());   // last season: the base in the vs-last mode, the credibility's witness otherwise
     if (!prevMode && !daysReady()) { if (!state.daysLoading && !state.daysFailed) ensureDays(); page.append(bar, el("p", "note", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); return; }
-    const R = flawRows(fxSet.win), { cand } = R, rows = R.rows.slice().sort((a, b) => fxSet.sort === "gain" ? b.gain - a.gain : b.cgain - a.cgain), W = prevMode ? String(Y) : wlab;
+    const R = flawRows(fxSet.win), { cand } = R, rows = R.rows.slice().sort((a, b) => fxSet.sort === "cred" ? b.cgain - a.cgain : b.gain - a.gain), W = prevMode ? String(Y) : wlab;
     if (R.loading) { page.append(bar, el("p", "note", `Loading the ${Y0} season…`)); return; }
     bar.append(el("span", "pbcount", prevMode ? `${rows.length} hitters · ${cand} elite with a flaw in ${Y0} · ${Y} vs ${Y0}` : `${rows.length} hitters · ${cand} elite with a flaw · ${Y} · ${R.label} vs the season`));
     page.append(bar);
-    const title = el("div", "fxtitle"); title.append(el("h2", null, "Fixing the flaw"), el("span", null, prevMode ? `elite at most of ${Y0}, one piece holding him back — that piece in ${Y} vs ${Y0} · tap a name for the bars` : `elite at most of it, one piece holding him back — that piece over the ${R.label} vs the season · tap a name for the bars`)); page.append(title);
+    const title = el("div", "fxtitle"); title.append(el("h2", null, "Movers"), el("span", null, prevMode ? `elite at most of ${Y0}, one piece holding him back — that piece in ${Y} vs ${Y0} · tap a name for the bars` : `elite at most of it, one piece holding him back — that piece over the ${R.label} vs the season · tap a name for the bars`)); page.append(title);
     const f3 = (x) => (x == null ? "–" : fmtX(x)), refH = [];
     withDataset(R.baseDS || DS, () => withWindow(NOWIN, () => withSplit(NONE, () => { for (const p of DS.players) if (p.type === "H" && (p.pa || 0) >= 300) { const v = V(p).m.xwd; if (v != null) refH.push(v); } }))); refH.sort((a, b) => a - b);
     const S0 = prevMode ? String(Y0) : "Season", credTip = `how much of the move is likely real: the piece's reliability at the window's PA, then last season as a witness (a prior season already past the midpoint of the move raises it, one on the far side lowers it)`;
@@ -5885,7 +5889,7 @@
     });
     if (!rows.length) page.append(el("p", "note", "Nobody with an elite base and a flaw that's moved in the window yet."));
     else { wrap.classList.add("pbscroll"); page.append(wrap); }
-    page.append(el("p", "note", flawNote(R) + (prevMode ? ` Here the base is ${Y0}'s full season (its own league) and the move is ${Y}'s full season.` : "") + ` Credible = the piece's reliability at the window's PA, with last season as a witness; the default order is the gain × that.`));
+    page.append(el("p", "note", flawNote(R) + (prevMode ? ` Here the base is ${Y0}'s full season (its own league) and the move is ${Y}'s full season.` : "") + ` Credible = the piece's reliability at the window's PA, with last season as a witness. Biggest Δ xwOBA orders by Δ; Most credible by Δ × that.`));
   }
   function renderHome() {
     const box = $("hub"); box.innerHTML = ""; box.classList.add("home");
@@ -6023,44 +6027,20 @@
         });
       }
     }
-    // Movers (Sean, 7 Oct 2026): the biggest percentile jumps over the last 30 days against the full season — hitters by xwOBA (75+ PA in the window,
-    // ranked among the window's 75+ PA hitters), pitchers by nERA (20+ IP, among the window's 20+ IP pitchers); Was / Now are percentiles
-    { const days = m.days || [], from = days.length ? addDays(days[days.length - 1], -29) : "", win30 = { from: from && from > days[0] ? from : "", to: "", last: "" };
-      const b = section(grid, "Movers", "last 30 days vs the season", "Leaderboard →", goLB("ALL", "score", "desc", win30));
+    // Movers (Sean, 18 Oct 2026: "combine movers and fixing the flaw ... make it called movers and sort it by the delta of xwoba on the season if the
+    // stat or key flaw that moved or improved held for the whole year"): the top of flawRows() — hitters elite at most of their build whose weak piece
+    // moved over the last 30 days, by Δ, the xwOBA the move adds if it held all year (If held − his season's). The whole list, with its windows, is the
+    // Movers page (#movers). It takes the grid's third card from the percentile-jump Movers (7 Oct: hitters by xwOBA, pitchers by nERA, now gone), and
+    // the full-width Fixing the flaw section under the grid with it
+    { const b = section(grid, "Movers", "last 30 days · if it held", "Full list →", (e) => { e.preventDefault(); location.hash = "#movers"; });
       if (!daysReady()) loading(b);
       else {
-        const seasonH = new Map(), seasonP = new Map();
-        inWin(NOWIN, () => { for (const p of DATA.players) { if (p.type === "H" && (p.pa || 0) >= 300) { const v = V(p).m.xwd; if (v != null) seasonH.set(p, insertPct(refH, v)); } else if (p.type === "P" && (p.ip || 0) >= 100) { const v = puOf(p); if (v != null) seasonP.set(p, insertPct(refP, -v)); } } });
-        const hit = [], pit = [];
-        inWin(win30, () => {
-          const H = DATA.players.filter((p) => p.type === "H").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 75 && v.m.xwd != null), P = DATA.players.filter((p) => p.type === "P").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 20 && v.m.nera != null);
-          const sH = sortedOf(H.map(([, v]) => v.m.xwd)), sP = sortedOf(P.map(([, v]) => -v.m.nera));
-          for (const [p, v] of H) { const was = seasonH.get(p); if (was == null) continue; hit.push([p, was, insertPct(sH, v.m.xwd), v.m.xwd, v.sample]); }
-          for (const [p, v] of P) { const was = seasonP.get(p); if (was == null) continue; pit.push([p, was, insertPct(sP, -v.m.nera), v.m.nera, v.sample]); }
-        });
-        const up = (r) => r[2] - r[1]; hit.sort((a, b) => up(b) - up(a)); pit.sort((a, b) => up(b) - up(a));
-        const pc = (x) => ({ v: String(Math.round(x)), pc: x }), dl = (r) => "+" + Math.round(up(r));
-        const mv = (lab, rows, tab, vlab, f, unit, uf) => table(b, PH
-          ? { label: lab, cols: [["Player", null, "nm"], ["Tm", 40, "c"], ["Was", 38], ["Now", 38], ["Δ", 40, "up"]], ends: [1, 3], rows: rows.map((r) => [nm(r[0], tab), r[0].team || "", pc(r[1]), pc(r[2]), dl(r)]) }
-          : { label: lab, cols: [["Player", null, "nm"], ["Tm", 46, "c"], [vlab, 52], [unit, 42], ["Was", 40], ["Now", 40], ["Δ", 40, "up"]], ends: [1, 3, 5], rows: rows.map((r) => [nm(r[0], tab), r[0].team || "", f(r[3]), uf(r[4]), pc(r[1]), pc(r[2]), dl(r)]) });
-        if (hit.length) mv(wsLab("Hitters · xwOBA percentile"), hit.slice(0, NH), null, wsLab("xwOBA"), fw, "PA", (x) => Math.round(x));
-        if (pit.length) mv("Pitchers · nERA percentile", pit.slice(0, NP), "nera", "nERA", f2, "IP", fmtIP);
-        if (!hit.length && !pit.length) b.append(el("p", "hnote", "Nobody qualifies in the window yet."));
-      }
-    }
-    // Fixing the flaw (Sean, 16 Oct 2026): the top of flawRows() above — the whole list is its own page, #flaws (Sean, the same day:
-    // "make it its own page and it'll have its own button page on the menu")
-    { const fx = section(box, "Fixing the flaw", "elite at most of it, one piece holding him back — that piece over the last 30 days vs the season", "Full list →", (e) => { e.preventDefault(); location.hash = "#flaws"; });
-      fx.classList.add("hlead2"); fx.classList.add("hflaw");
-      if (!daysReady()) loading(fx);
-      else {
-        const show = flawRows().rows.slice(0, NB), xw = (x) => ({ v: fw(x), pc: pcOf(refH, x) }), dl = (r) => "+" + Math.round(wrcOn() ? wrcPts(r.gain / 1000) : r.gain), fl = (r) => `${r.flaw.lab} ${r.flaw.f(r.was)} → ${r.flaw.f(r.now)}`;
-        if (!show.length) fx.append(el("p", "hnote", "Nobody with an elite base and a flaw that's moved in the window yet."));
-        else if (PH) table(fx, { label: "Hitters · the flaw over the last 30 days", cols: [["Player", null, "nm"], ["Flaw", 112, "c"], [wsLab("xwOBA"), 50], ["If held", 54, "heat"], ["Δ", 36, "up"]], ends: [1, 2],
-            rows: show.map((r) => [nm(r.p, "talent"), fl(r), fw(r.xw), xw(r.held), dl(r)]) });
-        else table(fx, { over: [["", 3], ["The flaw", 3], [wsLab("xwOBA"), 3]], fixed: true, cols: [["Player", 170, "nm"], ["Tm", 46, "c"], ["Elite at", 150, "c"], ["Piece", 70, "c"], ["Season", 60], ["Last 30", 60], ["Season", 60], ["If it held", 70, "heat"], ["Δ", 44, "up"]],
-            rows: show.map((r) => [nm(r.p, "talent"), r.p.team || "", r.strengths, r.flaw.lab, r.flaw.f(r.was), r.flaw.f(r.now), fw(r.xw), xw(r.held), dl(r)]) });
-        if (show.length) fx.append(el("p", "hnote", flawNote(flawRows())));
+        // the move without its % signs (the piece's name says it's a rate), so "xHR/FB 11.3 → 17.2" fits the card's column on a phone and in the grid
+        const show = flawRows().rows.slice(0, NH + NP), xw = (x) => ({ v: fw(x), pc: pcOf(refH, x) }), dl = (r) => "+" + Math.round(wrcOn() ? wrcPts(r.gain / 1000) : r.gain),
+              np = (z) => String(z).replace(/%$/, ""), fl = (r) => `${r.flaw.lab} ${np(r.flaw.f(r.was))} → ${np(r.flaw.f(r.now))}`;
+        if (!show.length) b.append(el("p", "hnote", "Nobody with an elite base and a flaw that's moved in the window yet."));
+        else table(b, { label: "Hitters · elite but for one flaw", cols: [["Player", null, "nm"], ["Flaw", 118, "c"], [wsLab("xwOBA"), 50], ["If held", 48, "heat"], ["Δ", 32, "up"]], ends: [1, 2],
+          rows: show.map((r) => [nm(r.p, "talent"), fl(r), fw(r.xw), xw(r.held), dl(r)]) });
       }
     }
     // no "Every page" tiles (Sean, 29 Sep 2026, the minimal pass): the header's menus already list them
@@ -6237,7 +6217,7 @@
         else a.removeAttribute("aria-current");
       }
     }
-    document.title = { pitches: "Sean's Site · Stuff+", draft: "Sean's Site · Draft mode", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", settings: "Sean's Site · Settings", fantasy: "Sean's Site · Fantasy" }[state.mode] || "Sean's Site";
+    document.title = { pitches: "Sean's Site · Stuff+", draft: "Sean's Site · Draft mode", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", settings: "Sean's Site · Settings", fantasy: "Sean's Site · Fantasy", flaws: "Sean's Site · Movers" }[state.mode] || "Sean's Site";
     const m = DATA.meta;
     const thr = new Date(m.through + "T12:00:00"); $("stamp").innerHTML = `through <b>${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</b>`; $("stamp").title = `${m.season} Statcast through ${m.through} (built ${m.built})`;
     const notes = $("notes"); notes.innerHTML = "";
@@ -10631,7 +10611,7 @@
   let xPop = false, xPopNew = false, xPopList = null;
   const pageNow = () => state.mode === "player" || xPop;   // where a page was opened from: the list page, its scroll and its rows' box; the page last drawn
   const BACK_LABEL = { leaderboard: "leaderboard", trending: "leaderboard", rankings: "rankings", draft: "draft board", pitches: "Pitching+", fantasy: "fantasy", home: "home",
-                       claude: "Claude rankings", planner: "planner", eligibility: "eligibility", callups: "Call-up Watch", compare: "compare", mock: "mock draft", trends: "League Trends", settings: "settings" };
+                       claude: "Claude rankings", planner: "planner", eligibility: "eligibility", callups: "Call-up Watch", compare: "compare", mock: "mock draft", trends: "League Trends", settings: "settings", flaws: "movers" };
   const BACK_MODES = ["leaderboard", "trending", "rankings", "draft", "pitches", "fantasy", "flaws"];   // the list pages Back returns to
   function markBack() {
     if (state.mode === "player") return;                      // from one page to another: the first list is still where Back goes
@@ -13190,7 +13170,7 @@
     if (h === "settings" || h.startsWith("settings/") || h === "appearance") {   // #appearance is the old More menu's link and the Mac template's hidden one
       state.mode = "settings"; const v = h === "appearance" ? "appearance" : h.split("/")[1];
       if (SET_TABS.some(([k]) => k === v)) state.setTab = v; return; }
-    state.mode = ["home", "draft", "rankings", "trending", "leaderboard", "pitches", "mock", "flaws"].includes(h) ? h : h === "explore" ? "player" : "home";   // #eligibility / #planner / #claude land on home (16 Oct 2026)
+    state.mode = ["home", "draft", "rankings", "trending", "leaderboard", "pitches", "mock", "flaws"].includes(h) ? h : h === "movers" ? "flaws" : h === "explore" ? "player" : "home";   // #movers is the Movers page (18 Oct 2026); #flaws its old name   // #eligibility / #planner / #claude land on home (16 Oct 2026)
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {
