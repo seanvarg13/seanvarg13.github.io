@@ -4440,6 +4440,18 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   - Also: `splitLabel(type)` takes the card's player, so a pitcher's card says "vs LHB" whatever the Leaderboard's position (it read "vs LHP"
     while the list was on hitters).
 
+* **Movers is Fixing the flaw (Sean, 18 Oct 2026: "combine movers and fixing the flaw / Make it called movers and sort it by the delta of xwoba
+  on the season if the stat or key flaw that 'moved' or improved held for the whole year / ... basically get rid of movers and call fixing the
+  flaw 'movers'")**:
+  - **The page**: the header's "Fixing the flaw" button is **Movers** (`#movers`; `#flaws` still lands there). The mode keeps its old key,
+    `flaws`, so the CSS and `BACK_MODES` are unchanged; the tab title says Movers and Back says "Back to movers". The page's title is Movers;
+    its window pill (14-90 days, last 100 / 150 PA, this season vs last), the credibility column and the bars popup are as they were.
+  - **Order**: **Biggest Δ xwOBA** — the xwOBA the move adds if it held all year, If it held − Season — is the default and listed first; Most
+    credible (Δ × credibility) is the other. `fxSet.mv1` moves a device that kept the old default (Most credible) to Δ once.
+  - **Home**: the 7 Oct Movers card (percentile jumps, hitters by xwOBA and pitchers by nERA) and the full-width Fixing the flaw section are
+    gone. The grid's third card is **Movers**: the top 8 of `flawRows()` over the last 30 days by Δ — Player · Flaw ("xHR/FB 8.0 → 16.1", the %
+    signs dropped so it fits) · xwOBA · If held (filled) · Δ — with "Full list →" to the page. Pitchers have no movers list now.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
