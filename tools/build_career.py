@@ -342,7 +342,8 @@ SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evg
             "gbp",                      # GB Pull%: the share of his grounders pulled (ctx.gbdir), an xBABIP driver (11 Oct 2026)
             "xbabd",                    # the nine drivers' xBABIP — the site's xBABIP since 15 Oct 2026 (xbab_drivers below; "xbabip" stays the model's)
             "pkhr", "pkbab",            # what his parks did to his HR/FB (points) and BABIP (points), ball by ball (build_data.py park_fields; 15 Oct 2026) — the HR / FB and BABIP by season tables' Park columns
-            "pa"]                       # his PA that season — xwOBA proj. weights his last two seasons' talent by it (app.js projFill; 16 Oct 2026); the file also carries "lg": {season: the talent league's wOBA}
+            "pa",                       # his PA that season — xwOBA proj. weights his last two seasons' talent by it (app.js projFill; 16 Oct 2026); the file also carries "lg": {season: the talent league's wOBA}
+            "txwpk"]                    # xwOBA with his parks put back on each piece (Sean, 18 Oct 2026: the site's xwOBA includes the park; "txw" stays the park-neutral one) — talent_of(..., park=True)
 
 
 # Talent xwOBA (Sean, 11 Oct 2026: "an xwoba based purely on their talent ... their batted ball mix, k rate, bb rate, xbabip minus luck and noise,
@@ -429,8 +430,9 @@ def xbab_drivers(i, L):
     return xbab if n else None
 
 
-def talent_of(i, L):
-    """his raw talent wOBA (times L['scale'] once that is set), or None"""
+def talent_of(i, L, park=False):
+    """his raw talent wOBA (times L['scale'] once that is set), or None; park=True puts his parks' residual back on every piece (app.js talentCore's
+    rawPk — the site's xwOBA since 18 Oct 2026), None when the season carries no park numbers"""
     m = i["m"]
     if not i["mx"] or not i["pa"] or not i["ab"] or m.get("dxba") is None or m.get("dxslg") is None or L.get("xbabip") is None \
             or L["hr"]["hrfb"] is None or L.get("scale") is None or i["fbs"] is None:
@@ -460,6 +462,16 @@ def talent_of(i, L):
     tph = min(1.7, max(1.0, (m["dxslg"] * i["ab"] - 4 * xhr) / max(1.0, m["dxba"] * i["ab"] - xhr)))
     vh = TW_W["s"] + (tph - 1) * (TW_W["d"] - TW_W["s"])
     raw = TW_W["bb"] * xbb / 100 + TW_W["hbp"] * hbp + bip * (hrb * TW_W["hr"] + (1 - hrb) * xbab * vh)
+    if park:
+        # the same skills in the parks he hit in (Sean, 18 Oct 2026: "for Hunter Goodman and other say Rockies players I want to see their park
+        # factor included in their xwOBA since it does impact their production and will next year too"): K%, BB%, xHR/FB, xBABIP and bases per
+        # hit each moved by his parks' residual on it (m.pkk / pkbb / pkhr / pkbab / pkxb), the pieces put back together the same way
+        if all(m.get(k) is None for k in ("pkhr", "pkbab", "pkxb", "pkk", "pkbb")): return None
+        g = lambda k: m.get(k) or 0
+        xk, xbb, xhf, xbab, tph = xk + g("pkk"), xbb + g("pkbb"), xhf + g("pkhr"), xbab + g("pkbab") / 1000, tph + g("pkxb")
+        bip = max(0.0, 1 - xk / 100 - xbb / 100 - hbp); hrb = xhf / 100 * i["fbs"]
+        vh = TW_W["s"] + (tph - 1) * (TW_W["d"] - TW_W["s"])
+        raw = TW_W["bb"] * xbb / 100 + TW_W["hbp"] * hbp + bip * (hrb * TW_W["hr"] + (1 - hrb) * xbab * vh)
     return raw * L["scale"]
 
 
@@ -489,10 +501,10 @@ def season_bb():
             m, cx = p.get("m") or {}, p.get("ctx") or {}
             mx = cx.get("mix") or []
             fbs = sum(x or 0 for x in mx) if len(mx) >= 8 else 0      # every ball in the mix (MIX_COLS order: gb, pu, ld p/c/o, fb p/c/o, x)
-            ti = _tw_inputs(p); tw = talent_of(ti, TL); xd = xbab_drivers(ti, TL)
+            ti = _tw_inputs(p); tw = talent_of(ti, TL); xd = xbab_drivers(ti, TL); twp = talent_of(ti, TL, park=True)
             gd = cx.get("gbdir"); gn = sum(gd) if gd else 0
-            val = lambda k: (100 * mx[5] / fbs if fbs else None) if k == "pullfb" else tw if k == "txw" else xd if k == "xbabd" else (100 * gd[0] / gn if gn else None) if k == "gbp" else p.get("pa") if k == "pa" else m.get(k)
-            out.setdefault(str(p["id"]), {})[str(y)] = [cx.get("BBE")] + [(int(val(k)) if val(k) is not None else None) if k == "pa" else r(val(k), 3 if k in ("mixw", "babip", "xbabip", "txw", "xbabd") else 1) for k in SBX_KEYS]
+            val = lambda k: (100 * mx[5] / fbs if fbs else None) if k == "pullfb" else tw if k == "txw" else twp if k == "txwpk" else xd if k == "xbabd" else (100 * gd[0] / gn if gn else None) if k == "gbp" else p.get("pa") if k == "pa" else m.get(k)
+            out.setdefault(str(p["id"]), {})[str(y)] = [cx.get("BBE")] + [(int(val(k)) if val(k) is not None else None) if k == "pa" else r(val(k), 3 if k in ("mixw", "babip", "xbabip", "txw", "xbabd", "txwpk") else 1) for k in SBX_KEYS]
     path = HERE / "hist" / "career-bb.js"
     path.write_text("window.DRAFT_CAREER_BB = " + json.dumps({"keys": SBX_KEYS, "p": out, "pkeys": SBP_KEYS, "pp": pout, "lg": lgs}, separators=(",", ":")) + ";\n")
     print(f"OK {len(out)} hitters' batted-ball / discipline seasons, {len(pout)} pitchers' -> {path.name} ({path.stat().st_size / 1e6:.1f} MB)", flush=True)

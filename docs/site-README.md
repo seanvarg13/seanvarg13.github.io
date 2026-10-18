@@ -994,3 +994,15 @@ The foul model that feeds Pitching+ xK% also sees the batter's swing on each con
 direction, swing-path tilt, intercept point; bat tracking, 2024 on). Scored season by season on models trained on the other seasons, the fit
 with a pitcher's foul-on-contact rate goes from r ~.75 (location) to ~.77, and the pitchers the old models missed most (Skenes high, Sasaki
 and Phillips low) come most of the way in. Pitches without a tracked swing, and every season before 2024, use the location model.
+
+### xwOBA carries his parks (18 Oct 2026)
+
+The site's xwOBA puts his parks back on every piece of the build: K%, BB%, xHR/FB, xBABIP and bases per hit each move by what the parks he
+hit in did to them. The skills underneath are still measured at a neutral park. On the xwOBA tab the build-up ends with a **Park factor** row:
+the step before it is his park-neutral xwOBA (light blue), and the park row lands on his xwOBA (gold). Hunter Goodman 2026 reads .335 at a
+neutral park and .354 with Coors.
+
+Leaderboard ▸ Filters ▸ Stats has the switch, under the column sets: **With his parks** (the default) or **Park-neutral**. It is per device
+and site-wide, so the cards, the season table, the projection and home follow it. Park-neutral xwOBA and xwOBA, his parks are also columns of
+their own. Including the parks explains a season a little better (r .846 against .835) and forecasts next season about as well overall. It
+forecasts better for hitters who stay with their club and worse for those who move.

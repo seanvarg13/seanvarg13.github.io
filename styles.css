@@ -5843,6 +5843,15 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="rankings"] #setbar #setsave { flex: none !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #ranktools #rankdraft { margin-left: 0 !important; }
 
+/* xwOBA with his parks / park-neutral (Sean, 18 Oct 2026): the switch under the Stats tab's set buttons, in their dress; the build-up's
+   park-neutral number light blue in the Fixing-the-flaw popup too (the card's rule is anchored on #xboard / #modal) */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .xwpsw { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin: 0 0 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .xwpsw .plbl { font-weight: 600; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .xwpsw .seg { display: flex; flex-wrap: wrap; gap: 6px; border: 0; background: transparent; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .xwpsw .segbtn { border: 1px solid var(--line-soft, #c3d3e3) !important; padding: 6px 12px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .xwpsw .segbtn[aria-pressed="true"] { background: var(--btn, var(--ink)) !important; color: var(--btn-ink, #fff) !important; border-color: var(--btn, var(--ink)) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild table.sbt.kbuild td.krk.kexp.kneut { background: #cfe3f7 !important; }
+
 /* Windows Classic (Sean, 17 Oct 2026, from Jon Anderson's 1997 post and a Windows Classic-on-Bliss screenshot: "Can you do that"; tidied 18 Oct
    2026 at "some of the stuff on the windows version looks off and not like clean or doesn't fit properly"): a whole-site look picked per device
    in Settings ▸ Appearance ▸ Look (DRAFT_SKIN in themes.js puts class w2k on <html>). Bliss fixed behind every page (icons/bliss.jpg, the
