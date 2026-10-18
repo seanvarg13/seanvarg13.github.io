@@ -4417,6 +4417,29 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     - Leaderboard: ‹ / › / Per page at x 27 / 231 / 324 on a 390px phone, 151 / 355 / 1093 on a desktop.
     - Fantasy: 24 / 264 on a phone, top and bottom bars; 584 / 824 on a desktop.
 
+* **Game Logs back on a pitcher's card, every outing with its nERA (Sean, 18 Oct 2026: "For pitcher could we come up with a tab that is game logs /
+  This tab should show each outing and include IP, pitches, nERA, k, bb, k-bb%, gb%, pu% and heat map the nERA / And on the yesterdays game thing
+  on the home page sort it by nERA instead of pitching+")**: `BTABS_P` = Pitching+ · nERA · **Game Logs** (key `games`; a built Spring tab still
+  goes before nERA). `renderGameLogs` keeps its Regular season / Postseason switch, which now hugs its two buttons.
+  - **The table** (`renderGamesTab`, in B-Ref's dress; the 29 Sep log — Pitching+ by outing, its chart, the tap-a-game pitch breakdown — is gone):
+    Date (frozen; a pitcher who both started and relieved gets a small grey SP / RP) · Opp | IP · Pit | **nERA** | K · BB · K-BB% | GB% · PU%, oldest
+    first, the outings shown summed as an "N games" band row (its nERA is the season's when nothing is filtered: Skenes 3.17, Manaea 4.27).
+  - **Opp** is MLB's own game log for the season (`oppLog`: `people/<id>/stats?stats=gameLog`, fetched in the browser like the bio, the postseason's
+    with `gameType=P`); "@" on the road, "…" while it loads.
+  - **An outing's nERA** (`dayNERA`) is V()'s formula on that day's sums (`sumOutings`: the day rows per game day, every hand). A dominant outing
+    can read below zero (a fifth of 2026's relief outings, 2% of its starts): the line is straight in wOBA allowed, as a tiny sample's season
+    nERA already can be.
+  - **Its colour** is its place among the season's outings of its kind (`outingPool`: every pitcher's starts, or relief outings, that season — the
+    middle start 4.20, the middle relief outing 3.83; a postseason log ranks among its year's regular season). Not among the season's pitchers:
+    one outing swings far wider than a season.
+  - **Which outings**: the card's dates (a last-N window takes the same days its numbers use), home / away and SP / RP. A batter-hand split
+    doesn't cut an outing in two; a note under the table says so.
+  - **Home's Last game day** ranks the starts (3+ IP) by that start's nERA, lowest first, in Pitching+'s place: `sumOutings` + `dayNERA` for the
+    day, ER from the `:er` rows, Whiff% from the day's sums, filled the same way. A name opens his page on Game Logs. Short starts can lead (26
+    Sep: Brent Suter's 3-inning opener at −0.14).
+  - Also: `splitLabel(type)` takes the card's player, so a pitcher's card says "vs LHB" whatever the Leaderboard's position (it read "vs LHP"
+    while the list was on hitters).
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
