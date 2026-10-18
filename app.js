@@ -9771,8 +9771,8 @@
     return wrap;
   }
   // Game Logs (Sean, 18 Oct 2026: "a tab that is game logs ... each outing and include IP, pitches, nERA, k, bb, k-bb%, gb%, pu% and heat map the
-  // nERA"): every outing of the card's season from the day rows, oldest first, in B-Ref's game-log dress — Date (frozen) and Opp, then nERA | Pit |
-  // IP · K · BB · K-BB% | GB% · PU%, the outings shown summed as the totals row. An outing's nERA is the season's formula on that day's sums (dayNERA), filled
+  // nERA"): every outing of the card's season from the day rows, oldest first, in B-Ref's game-log dress — Date (frozen) and Opp, then nERA |
+  // IP · K · BB · K-BB% | GB% · PU% (no pitch count since the same evening), the outings shown summed as the totals row. An outing's nERA is the season's formula on that day's sums (dayNERA), filled
   // by its place among the season's outings of its kind (outingPool: a start among starts, a relief outing among relief outings — one outing swings far
   // wider than a season, so it isn't ranked among the season's pitchers). The card's dates, home / away and SP / RP pick which outings show; a
   // batter-hand split doesn't cut an outing in two. Opp is MLB's own game log (oppLog), fetched like the bio. It replaces the 29 Sep log (Pitching+ by
@@ -9855,8 +9855,8 @@
     // nERA leads the numbers, then Pit, then the rest as they were (Sean, 18 Oct 2026: "put nERA first, then pitches then everything as is")
     const { t, tb, fin, gap, wrap, ends } = brTable(null, [["Date", "l f1"], ["Opp", "l", "The other side (@ = on the road), from MLB's game log"],
       ["nERA", "", "Luck-neutral ERA that outing: every ball in play at the league's value for its type, his strikeouts and walks as they were — coloured by its place among the season's starts (a relief outing among relief outings)"],
-      ["Pit", "", "Pitches thrown"], ["IP"], ["K"], ["BB"], ["K-BB%"], ["GB%", "", "Ground balls per ball in play"], ["PU%", "", "Popups per ball in play"]], "glbt");
-    for (const i of [1, 2, 3, 7]) ends.add(i);   // the rule after Pit, before IP (Sean, 18 Oct 2026: "Put the line break after pitches and before IP")
+      ["IP"], ["K"], ["BB"], ["K-BB%"], ["GB%", "", "Ground balls per ball in play"], ["PU%", "", "Popups per ball in play"]], "glbt");
+    for (const i of [1, 2, 6]) ends.add(i);   // no Pit column (Sean, 18 Oct 2026: "Actually get rid of pitches in that"), so the rule after nERA leads into IP
     [...t.tHead.rows[0].children].forEach((h, i) => { if (ends.has(i)) h.classList.add("ge"); });
     for (const g of games) {
       const iso = src.days && src.days[g.day], dc = el("td", "l f1", iso ? fmtDate(iso) : "–");
@@ -9865,13 +9865,13 @@
       const v = dayNERA(g, c), nc = el("td", null, mi(v, 2)), pp = outPct(pool, g.gs, v);
       if (pp != null) { heatTd(nc, pp); nc.title = `${ordinal(Math.round(pp))} percentile among the season's ${g.gs ? "starts" : "relief outings"}`; }
       const tr = el("tr");
-      tr.append(dc, el("td", "l", os ? os.map(([o, h]) => (h ? o : "@ " + o)).join(", ") : opp === null ? "…" : "–"), nc, el("td", null, String(g.pit)), el("td", null, fmtIP(g.outs / 3)),
+      tr.append(dc, el("td", "l", os ? os.map(([o, h]) => (h ? o : "@ " + o)).join(", ") : opp === null ? "…" : "–"), nc, el("td", null, fmtIP(g.outs / 3)),
                 el("td", null, String(g.k)), el("td", null, String(g.bb)), el("td", null, kbb(g)), el("td", null, pc(g.gb, g.bip)), el("td", null, pc(g.pu, g.bip)));
       tb.append(fin(tr));
     }
     const T = { w: games.every((g) => g.w) }; for (const k of OUT_F) T[k] = games.reduce((a, g) => a + g[k], 0);
     const trt = el("tr", "tot first");
-    trt.append(el("td", "l f1", `${games.length} ${games.length === 1 ? "game" : "games"}`), el("td"), el("td", null, mi(dayNERA(T, c), 2)), el("td", null, String(T.pit)), el("td", null, fmtIP(T.outs / 3)),
+    trt.append(el("td", "l f1", `${games.length} ${games.length === 1 ? "game" : "games"}`), el("td"), el("td", null, mi(dayNERA(T, c), 2)), el("td", null, fmtIP(T.outs / 3)),
                el("td", null, String(T.k)), el("td", null, String(T.bb)), el("td", null, kbb(T)), el("td", null, pc(T.gb, T.bip)), el("td", null, pc(T.pu, T.bip)));
     tb.append(gap(), fin(trt));
     box.append(wrap);
