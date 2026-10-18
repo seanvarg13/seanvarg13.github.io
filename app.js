@@ -10453,6 +10453,7 @@
   }
   function pctSvg(groups, W, scale = true) {
     const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
+    const W2K = document.documentElement.classList.contains("w2k");   // Windows Classic (Sean, 18 Oct 2026: "the percentile bars too"): a Win95 progress bar — a sunken white field, the fill as blocks in the percentile's colour, the number on a raised tag at the fill's end
     const r6 = W - 40, VW = W < 420 ? 41 : 45, bar = r6 - 40 - 85 - VW;
     // centred (Sean, 1 Oct 2026: Savant's bars back, the length they had, "but now center them"): the rows' block — the dashed
     // label column through the value — moves 20 left, so it sits 40 in from each side of the section rule (20 + 20 either way);
@@ -10496,17 +10497,27 @@
         M.append(mk("title", {}, r.tip));
         const on = r.pct != null, s = on ? savantStyle(r.pct) : null;
         const B = mk("g", { transform: "translate(85,0)", opacity: on ? 1 : 0.35 });
-        B.append(mk("rect", { class: "svline", width: bar, height: 5, y: 7.5 }));
-        if (on) B.append(mk("rect", { width: x(r.pct), height: 20, y: 0, fill: s.bg }));
-        for (const tx of [x(50) - 1, 11, bar - 13]) B.append(mk("rect", { class: "svtick", width: 2, height: 20, x: tx }));
+        if (W2K) {
+          B.append(mk("rect", { width: bar, height: 20, fill: "#808080" }), mk("rect", { x: 1, y: 1, width: bar - 1, height: 19, fill: "#ffffff" }));   // dark top-left, light bottom-right: sunken
+          if (on) { const end = Math.max(3, Math.min(bar - 3, x(r.pct))); for (let bx = 3; bx < end - 1; bx += 8) B.append(mk("rect", { x: bx, y: 3, width: Math.min(6, end - bx), height: 14, fill: s.bg })); }
+        } else {
+          B.append(mk("rect", { class: "svline", width: bar, height: 5, y: 7.5 }));
+          if (on) B.append(mk("rect", { width: x(r.pct), height: 20, y: 0, fill: s.bg }));
+          for (const tx of [x(50) - 1, 11, bar - 13]) B.append(mk("rect", { class: "svtick", width: 2, height: 20, x: tx }));
+        }
         M.append(B);
         const L = mk("text", { class: "svlbl" + (r.sub ? " svsub" : "") + (r.fold ? " svfold" : ""), x: 80, y: 10, "text-anchor": "end" }, (r.fold ? (r.fold.open ? "▾ " : "▸ ") : "") + r.label);
         M.append(L);
         M.append(mk("text", { class: "svlbl", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));
         // a fold-out parent: tapping the name opens / closes its rows; the bar still opens the note
         M.addEventListener("click", (e) => { e.stopPropagation(); if (r.fold && e.target === L) { state.open[r.fold.key] = !r.fold.open; savePrefs(); render(); return; } statPop(M, r); });
-        if (!first_) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + VW},-1.5` }));
-        if (on) {
+        if (!first_ && !W2K) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + VW},-1.5` }));
+        if (on && W2K) {                                             // the number on a raised grey tag, kept inside the field
+          const C = mk("g", { transform: `translate(${85 + Math.max(12, Math.min(bar - 12, x(r.pct)))},10)` });
+          C.append(mk("rect", { x: -12, y: -8, width: 24, height: 16, fill: "#404040" }), mk("rect", { x: -12, y: -8, width: 23, height: 15, fill: "#ffffff" }), mk("rect", { x: -11, y: -7, width: 21, height: 13, fill: "#d4d0c8" }));
+          C.append(mk("text", { class: "svnum w2knum", y: 1 }, r.pct));
+          M.append(C);
+        } else if (on) {
           const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
           C.append(mk("circle", { class: "svbulb", r: 10, fill: s.bub }));
           C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : ""), y: 1 }, r.pct));   // Savant's bubble
