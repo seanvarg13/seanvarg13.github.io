@@ -4422,8 +4422,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   on the home page sort it by nERA instead of pitching+")**: `BTABS_P` = Pitching+ · nERA · **Game Logs** (key `games`; a built Spring tab still
   goes before nERA). `renderGameLogs` keeps its Regular season / Postseason switch, which now hugs its two buttons.
   - **The table** (`renderGamesTab`, in B-Ref's dress; the 29 Sep log — Pitching+ by outing, its chart, the tap-a-game pitch breakdown — is gone):
-    Date (frozen; a pitcher who both started and relieved gets a small grey SP / RP) · Opp | IP · Pit | **nERA** | K · BB · K-BB% | GB% · PU%, oldest
-    first, the outings shown summed as an "N games" band row (its nERA is the season's when nothing is filtered: Skenes 3.17, Manaea 4.27).
+    Date (frozen; a pitcher who both started and relieved gets a small grey SP / RP) · Opp | **nERA** | Pit · IP | K · BB · K-BB% | GB% · PU% (nERA
+    first among the numbers, then Pit — Sean, the same evening: "put nERA first, then pitches then everything as is"), oldest first, the outings
+    shown summed as an "N games" band row (its nERA is the season's when nothing is filtered: Skenes 3.17, Manaea 4.27).
   - **Opp** is MLB's own game log for the season (`oppLog`: `people/<id>/stats?stats=gameLog`, fetched in the browser like the bio, the postseason's
     with `gameType=P`); "@" on the road, "…" while it loads.
   - **An outing's nERA** (`dayNERA`) is V()'s formula on that day's sums (`sumOutings`: the day rows per game day, every hand). A dominant outing
