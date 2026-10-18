@@ -65,11 +65,11 @@ window.DRAFT_THEMES = (function () {
     },
     // the New York Jets (Sean, 18 Oct 2026: "basically just the white and green and no tertiary color. I like how they don't have outlines and it is
     // just the green and white"): Legacy Green (#115740, the team's own, 2024 on) and white. Type, buttons, bands and every rule are the green — the
-    // stripe the other schemes draw under a band is the band's own colour here, so it vanishes; styles.css's ":root[data-scheme=jets]" block takes the
-    // outlines off the buttons and boxes. The percentile colours stay Savant's (they're data)
+    // stripe the other schemes draw under a band is the band's own colour here, so it vanishes; `flat` sets data-flat on <html>, and styles.css's
+    // ":root[data-flat]" block takes the outlines off the buttons and boxes. The percentile colours stay Savant's (they're data)
     jets: {
-      name: "Jets", blurb: "New York Jets — Legacy Green and white, nothing else: green type, green bands with white type, no stripes and no outlines.",
-      light: { accent: "#115740", "accent-2": "#115740", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.85)", "on-fill-wash": W + "0.14)", "on-fill-wash-2": W + "0.24)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
+      name: "Jets", flat: true, blurb: "New York Jets — Legacy Green and white, nothing else: green type, green bands with white type, no stripes and no outlines.",
+      light: { "flat-ink": "#115740", accent: "#115740", "accent-2": "#115740", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.85)", "on-fill-wash": W + "0.14)", "on-fill-wash-2": W + "0.24)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
                "accent-2-text": "#115740", pop: "#ffffff", rule: "#dfeae5", "stripe-line": "#115740", "accent-wash": "rgba(17, 87, 64, 0.08)", ink: "#115740", "ink-2": "#3f6b5d", hover: "#eef5f2",
                page: "#ffffff", surface: "#ffffff", "surface-2": "#f1f7f4", hair: "#dfeae5", rail: "#c8dad2", stripe: "#ffffff", band: "#ffffff", plate: "#dfeae5", muted: "#6c8a7f",
                btn: "#115740", "btn-ink": "#ffffff", "btn-line": "transparent", "tab-fill": "#115740",
@@ -79,6 +79,35 @@ window.DRAFT_THEMES = (function () {
               page: "#08140f", surface: "#0e2119", "surface-2": "#132b21", hair: "#1f4436", rail: "#2a5646", stripe: "#08140f", band: "#0e2119", plate: "#1f4436", muted: "#88a398",
               btn: "#1d7a57", "btn-ink": "#ffffff", "btn-line": "transparent", "tab-fill": "#1d7a57",
               ground: "#08140f", "line-soft": "#1f4436", frame: "#1f4436", secrule: "#1f4436", "accent-ink": "#ffffff", "band-ink": "#eef6f2", svtext: "#eef6f2", svrule: "#1f4436", pctrack: "#173328" },
+    },
+    // the Jets look in the two blues (Sean, 18 Oct 2026: "another two jets ones but one with the titans blue and another with the unc blue"): the
+    // blue and white, no stripes, no outlines (flat). Both blues are too pale to read as type on white (Titans blue 3.2:1, Carolina 2.3:1), so the
+    // type — and --flat-ink, the white buttons' type — is a deeper shade of the same blue, as dark as the Jets green (8.4:1 / 8.8:1)
+    "jets-titans": {
+      name: "Jets · Titans blue", flat: true, blurb: "The Jets look in Titans blue: the blue and white, nothing else — blue bands with white type, the type a deeper shade of the blue, no stripes and no outlines.",
+      light: { "flat-ink": "#1d4f81", accent: "#1d4f81", "accent-2": "#4b92db", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.85)", "on-fill-wash": W + "0.14)", "on-fill-wash-2": W + "0.24)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
+               "accent-2-text": "#2966a3", pop: "#ffffff", rule: "#dce6f1", "stripe-line": "#4b92db", "accent-wash": "rgba(75, 146, 219, 0.1)", ink: "#1d4f81", "ink-2": "#425e7b", hover: "#edf3fa",
+               page: "#ffffff", surface: "#ffffff", "surface-2": "#f0f5fb", hair: "#dce6f1", rail: "#c4d5e8", stripe: "#ffffff", band: "#ffffff", plate: "#dce6f1", muted: "#6e8091",
+               btn: "#4b92db", "btn-ink": "#ffffff", "btn-line": "transparent", "tab-fill": "#4b92db",
+               ground: "#ffffff", "line-soft": "#dce6f1", frame: "#dce6f1", secrule: "#dce6f1", "accent-ink": "#ffffff", "band-ink": "#1d4f81", svtext: "#1d4f81", svrule: "#dce6f1", pctrack: "#e5eef8" },
+      dark: { accent: "#8cc0f0", "accent-2": "#4b92db", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.85)", "on-fill-wash": W + "0.12)", "on-fill-wash-2": W + "0.22)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
+              "accent-2-text": "#8cc0f0", pop: "#0c1d33", rule: "#1d3858", "stripe-line": "#4b92db", "accent-wash": "rgba(75, 146, 219, 0.22)", ink: "#eef4fb", "ink-2": "#bccbdd", hover: "#12284a",
+              page: "#071322", surface: "#0c1d33", "surface-2": "#11263f", hair: "#1d3858", rail: "#284a72", stripe: "#071322", band: "#0c1d33", plate: "#1d3858", muted: "#8aa0ba",
+              btn: "#4b92db", "btn-ink": "#ffffff", "btn-line": "transparent", "tab-fill": "#4b92db",
+              ground: "#071322", "line-soft": "#1d3858", frame: "#1d3858", secrule: "#1d3858", "accent-ink": "#ffffff", "band-ink": "#eef4fb", svtext: "#eef4fb", svrule: "#1d3858", pctrack: "#15304f" },
+    },
+    "jets-unc": {
+      name: "Jets · UNC blue", flat: true, blurb: "The Jets look in Carolina blue: the blue and white, nothing else — Carolina bands with white type, the type a deeper shade of the blue, no stripes and no outlines.",
+      light: { "flat-ink": "#204e6f", accent: "#204e6f", "accent-2": "#7bafd4", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.85)", "on-fill-wash": W + "0.14)", "on-fill-wash-2": W + "0.24)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
+               "accent-2-text": "#336e99", pop: "#ffffff", rule: "#dde8ef", "stripe-line": "#7bafd4", "accent-wash": "rgba(123, 175, 212, 0.14)", ink: "#204e6f", "ink-2": "#46657c", hover: "#edf4f9",
+               page: "#ffffff", surface: "#ffffff", "surface-2": "#f0f6fa", hair: "#dde8ef", rail: "#c6d8e3", stripe: "#ffffff", band: "#ffffff", plate: "#dde8ef", muted: "#6c8393",
+               btn: "#7bafd4", "btn-ink": "#ffffff", "btn-line": "transparent", "tab-fill": "#7bafd4",
+               ground: "#ffffff", "line-soft": "#dde8ef", frame: "#dde8ef", secrule: "#dde8ef", "accent-ink": "#ffffff", "band-ink": "#204e6f", svtext: "#204e6f", svrule: "#dde8ef", pctrack: "#e6eff5" },
+      dark: { accent: "#9cc6e8", "accent-2": "#7bafd4", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.85)", "on-fill-wash": W + "0.12)", "on-fill-wash-2": W + "0.22)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
+              "accent-2-text": "#9cc6e8", pop: "#0c1e2b", rule: "#1d3a4f", "stripe-line": "#7bafd4", "accent-wash": "rgba(123, 175, 212, 0.22)", ink: "#eef5fa", "ink-2": "#bccfdc", hover: "#12293a",
+              page: "#07131c", surface: "#0c1e2b", "surface-2": "#112736", hair: "#1d3a4f", rail: "#284c66", stripe: "#07131c", band: "#0c1e2b", plate: "#1d3a4f", muted: "#88a2b4",
+              btn: "#7bafd4", "btn-ink": "#ffffff", "btn-line": "transparent", "tab-fill": "#7bafd4",
+              ground: "#07131c", "line-soft": "#1d3a4f", frame: "#1d3a4f", secrule: "#1d3a4f", "accent-ink": "#ffffff", "band-ink": "#eef5fa", svtext: "#eef5fa", svrule: "#1d3a4f", pctrack: "#15303f" },
     },
     "titans-unc": {
       name: "Titans · Carolina", blurb: "Tennessee in Carolina blue — Titans navy type, the red stripe, UNC blue across the banner.",
@@ -140,6 +169,7 @@ window.DRAFT_THEMES = (function () {
     for (const [k, v] of Object.entries(tokens)) root.style.setProperty("--" + k, v);
     setKeys = Object.keys(tokens);
     root.dataset.scheme = cur.scheme;
+    root.toggleAttribute("data-flat", !!sc.flat);   // the Jets look: styles.css takes every outline off under it
     const f = F[cur.font];
     root.style.setProperty("--display", f.display);
     root.style.setProperty("--body", f.body);

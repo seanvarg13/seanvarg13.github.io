@@ -4473,6 +4473,22 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     (`#xboard .pgfix …` and `.btabs .btab:not(.on)…` had outweighed the current page's white).
   - **Found while checking it**: the Titans scheme's dark mode has the same white-on-white trouble on the header's pages and Filters / Raw (their
     ink token turns near-white there). Not fixed; the Jets block only fixes its own.
+* **Jets · Titans blue and Jets · UNC blue (Sean, 18 Oct 2026: "Could you do another two jets ones but one with the titans blue and another with
+  the unc blue")**: two more schemes in Settings ▸ Appearance ▸ Colour scheme, right after Jets, per device (Titans stays the site default).
+  - **Colours** (`jets-titans` / `jets-unc` in `themes.js`): Titans' own light blue `#4b92db` (the Titans scheme's blue until it became Carolina on
+    6 Oct) and the site's Carolina blue `#7bafd4`, each with white and nothing else. The bands, buttons, tab fills, the stripe (so it vanishes) and
+    the table group rules are the blue.
+  - **The type is a deeper shade of the same blue** (`#1d4f81` / `#204e6f`, as dark as the Jets green: 8.4 / 8.8 : 1 on white), since neither blue
+    reads as text on white (3.2 / 2.3 : 1); links and accent type are a mid shade (`#2966a3` / `#336e99`). White type on the blue bands and
+    buttons, as on the Titans scheme. Dark mode: a near-black blue page, the same blue bands and buttons, light type.
+  - **How the three share the look**: a scheme carries `flat: true` and `apply()` sets `data-flat` on `<html>`; the Jets block at the end of
+    `styles.css` keys on `:root[data-flat]` instead of the Jets scheme's name, and its hard-coded Legacy Green is **`--flat-ink`**, each flat
+    scheme's type colour (set in its light tokens, so it holds in dark mode for the white buttons, the picked Regular Season tab and an open
+    pill). The refactor alone left Jets pixel for pixel as it was: 36 page pairs, phone and desktop, light and dark, the old files routed in
+    against the new ones (scratch `flat/regress.js`). A new flat scheme is one `flat: true` entry with a `flat-ink`.
+  - **Found and fixed for all three**: the 1px line between the site header and the player's bar (white in light mode, the page's dark in dark
+    mode). The block's rule colouring main's top edge had four ids' weight and lost to the block's own frames rule, whose `:is()` carries
+    `#bscroll`; it has a fifth now, and the header runs straight into the bar.
 
 ## 10. The football site moved out
 
