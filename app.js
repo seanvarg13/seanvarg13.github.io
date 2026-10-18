@@ -9771,8 +9771,8 @@
     return wrap;
   }
   // Game Logs (Sean, 18 Oct 2026: "a tab that is game logs ... each outing and include IP, pitches, nERA, k, bb, k-bb%, gb%, pu% and heat map the
-  // nERA"): every outing of the card's season from the day rows, oldest first, in B-Ref's game-log dress — Date (frozen) and Opp, then nERA | Pit · IP |
-  // K · BB · K-BB% | GB% · PU%, the outings shown summed as the totals row. An outing's nERA is the season's formula on that day's sums (dayNERA), filled
+  // nERA"): every outing of the card's season from the day rows, oldest first, in B-Ref's game-log dress — Date (frozen) and Opp, then nERA | Pit |
+  // IP · K · BB · K-BB% | GB% · PU%, the outings shown summed as the totals row. An outing's nERA is the season's formula on that day's sums (dayNERA), filled
   // by its place among the season's outings of its kind (outingPool: a start among starts, a relief outing among relief outings — one outing swings far
   // wider than a season, so it isn't ranked among the season's pitchers). The card's dates, home / away and SP / RP pick which outings show; a
   // batter-hand split doesn't cut an outing in two. Opp is MLB's own game log (oppLog), fetched like the bio. It replaces the 29 Sep log (Pitching+ by
@@ -9856,7 +9856,7 @@
     const { t, tb, fin, gap, wrap, ends } = brTable(null, [["Date", "l f1"], ["Opp", "l", "The other side (@ = on the road), from MLB's game log"],
       ["nERA", "", "Luck-neutral ERA that outing: every ball in play at the league's value for its type, his strikeouts and walks as they were — coloured by its place among the season's starts (a relief outing among relief outings)"],
       ["Pit", "", "Pitches thrown"], ["IP"], ["K"], ["BB"], ["K-BB%"], ["GB%", "", "Ground balls per ball in play"], ["PU%", "", "Popups per ball in play"]], "glbt");
-    for (const i of [1, 2, 4, 7]) ends.add(i);
+    for (const i of [1, 2, 3, 7]) ends.add(i);   // the rule after Pit, before IP (Sean, 18 Oct 2026: "Put the line break after pitches and before IP")
     [...t.tHead.rows[0].children].forEach((h, i) => { if (ends.has(i)) h.classList.add("ge"); });
     for (const g of games) {
       const iso = src.days && src.days[g.day], dc = el("td", "l f1", iso ? fmtDate(iso) : "–");
