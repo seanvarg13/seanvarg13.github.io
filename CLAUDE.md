@@ -4399,6 +4399,24 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   - Kept, since they fixed every look: the 37 selector lists rewritten with `:is()` and the Fantasy page's floating-header `colgroup`.
   - Don't bring the look back unasked.
 
+* **The page bar's arrows hold still (Sean, 18 Oct 2026, from the Leaderboard's bar on his phone: "Make it so the two arrows are stable and
+  never change positions. Make it so there is the arrow then page 1 then dots then the current page, then dots then the last page then the
+  other arrow")**: `renderPager` draws ‹, then five fixed slots, then › (`.pnav.pslots`). It's used by the Leaderboard / Recent bar under the
+  table and by Fantasy.
+  - **The slots**:
+    - In the middle of the list: ‹ 1 … c … N ›.
+    - Near the ends, the neighbours fill the slots: ‹ 1 2 3 … N › on page 1 or 2, and ‹ 1 … N−2 N−1 N › on the last two pages.
+    - Five pages or fewer: all of them, centred in the five slots, with empty `.pslot` cells either side.
+  - **Equal cells**: the seven cells are one CSS grid row (`grid-auto-columns: 1fr`), each as wide as the widest button. The page numbers have no
+    side padding, so a two-digit page can't widen its cell (on a desktop "10" had pushed › 6px right). The block is at the end of `styles.css`.
+  - **Fantasy's count**: Fantasy's "101–150 of 465" sits in the same row before the arrows. It now holds the width of its widest label, the last
+    page's: the shown label and a hidden copy sit in one grid cell (`.pcfix` / `.pcg`; the digits are tabular). Its inner spans inherit the
+    count's 600 weight (a site-wide rule had set them to 500).
+  - **No hover underline on a phone** (`@media (hover: none)`), so a tapped › doesn't stay underlined after the page turns.
+  - **Checked headless**, every page at 25 and 50 a page:
+    - Leaderboard: ‹ / › / Per page at x 27 / 231 / 324 on a 390px phone, 151 / 355 / 1093 on a desktop.
+    - Fantasy: 24 / 264 on a phone, top and bottom bars; 584 / 824 on a desktop.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

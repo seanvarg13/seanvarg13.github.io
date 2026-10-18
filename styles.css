@@ -5851,3 +5851,22 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .xwpsw .segbtn { border: 1px solid var(--line-soft, #c3d3e3) !important; padding: 6px 12px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop .xwpsw .segbtn[aria-pressed="true"] { background: var(--btn, var(--ink)) !important; color: var(--btn-ink, #fff) !important; border-color: var(--btn, var(--ink)) !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .fxbuild table.sbt.kbuild td.krk.kexp.kneut { background: #cfe3f7 !important; }
+
+/* The page bar in fixed slots (Sean, 18 Oct 2026, from the Leaderboard's bar on his phone: "Make it so the two arrows are stable and never change
+   positions"): renderPager draws ‹, five slots and › (.pslots) as one row of seven equal cells, each as wide as the widest button, so the arrows,
+   the numbers' slots and Per page stay where they are as the pages turn. flex: none so a tight bar can't squeeze the cells under the buttons */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .pnav.pslots { display: grid !important; grid-auto-flow: column !important; grid-auto-columns: 1fr !important; grid-template-columns: none !important;
+  gap: 4px !important; align-items: center !important; justify-content: start !important; flex: none !important; flex-wrap: nowrap !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .pnav.pslots > * { width: 100% !important; box-sizing: border-box !important; margin: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .pnav.pslots > :is(.pgap, .pslot) { display: block !important; text-align: center !important; padding: 0 !important; }
+/* the numbers centred with no side padding, so a two-digit page can't widen its cell past the buttons' minimum width (on a desktop "10" had
+   pushed › 6px right); the second rule carries the bar's ids, since its own padding rule does */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .pnav.pslots > .pbtn { padding-left: 0 !important; padding-right: 0 !important; text-align: center !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body #board #bscroll > #pagerbot .pnav.pslots > .pbtn { padding-left: 0 !important; padding-right: 0 !important; }
+/* Fantasy's count holds its widest label's width (renderPager's .pcfix: the shown label and a hidden last-page one in one grid cell), so the
+   arrows after it stay put too; and a phone shows no hover underline, so a tapped › doesn't stay underlined after the page turns */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .pcount .pcfix { display: inline-grid !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .pcount .pcfix, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .pcount .pcfix > * { font-weight: inherit !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .pcount .pcfix > * { grid-area: 1 / 1 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .pcount .pcfix > .pcg { visibility: hidden !important; }
+@media (hover: none) { :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .pager .pbtn:hover { text-decoration: none !important; } }
