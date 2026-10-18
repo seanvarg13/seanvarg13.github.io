@@ -10497,9 +10497,9 @@
         M.append(mk("title", {}, r.tip));
         const on = r.pct != null, s = on ? savantStyle(r.pct) : null;
         const B = mk("g", { transform: "translate(85,0)", opacity: on ? 1 : 0.35 });
-        if (W2K) {
-          B.append(mk("rect", { width: bar, height: 20, fill: "#808080" }), mk("rect", { x: 1, y: 1, width: bar - 1, height: 19, fill: "#ffffff" }));   // dark top-left, light bottom-right: sunken
-          if (on) { const end = Math.max(3, Math.min(bar - 3, x(r.pct))); for (let bx = 3; bx < end - 1; bx += 8) B.append(mk("rect", { x: bx, y: 3, width: Math.min(6, end - bx), height: 14, fill: s.bg })); }
+        if (W2K) {                                                   // a sunken white field (dark top-left, light bottom-right) and one smooth fill — the blocks of the first cut read busy (Sean, 18 Oct 2026: "easier on the eye")
+          B.append(mk("rect", { width: bar, height: 20, fill: "#808080" }), mk("rect", { x: 1, y: 1, width: bar - 1, height: 19, fill: "#ffffff" }));
+          if (on) B.append(mk("rect", { x: 2, y: 2, width: Math.max(0, Math.min(bar - 4, x(r.pct) - 2)), height: 16, fill: s.bg }));
         } else {
           B.append(mk("rect", { class: "svline", width: bar, height: 5, y: 7.5 }));
           if (on) B.append(mk("rect", { width: x(r.pct), height: 20, y: 0, fill: s.bg }));
@@ -10508,14 +10508,14 @@
         M.append(B);
         const L = mk("text", { class: "svlbl" + (r.sub ? " svsub" : "") + (r.fold ? " svfold" : ""), x: 80, y: 10, "text-anchor": "end" }, (r.fold ? (r.fold.open ? "▾ " : "▸ ") : "") + r.label);
         M.append(L);
-        M.append(mk("text", { class: "svlbl", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));
+        M.append(mk("text", { class: "svlbl svvl", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));   // svvl: the value, so a look can weight it apart from the label
         // a fold-out parent: tapping the name opens / closes its rows; the bar still opens the note
         M.addEventListener("click", (e) => { e.stopPropagation(); if (r.fold && e.target === L) { state.open[r.fold.key] = !r.fold.open; savePrefs(); render(); return; } statPop(M, r); });
         if (!first_ && !W2K) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + VW},-1.5` }));
-        if (on && W2K) {                                             // the number on a raised grey tag, kept inside the field
-          const C = mk("g", { transform: `translate(${85 + Math.max(12, Math.min(bar - 12, x(r.pct)))},10)` });
-          C.append(mk("rect", { x: -12, y: -8, width: 24, height: 16, fill: "#404040" }), mk("rect", { x: -12, y: -8, width: 23, height: 15, fill: "#ffffff" }), mk("rect", { x: -11, y: -7, width: 21, height: 13, fill: "#d4d0c8" }));
-          C.append(mk("text", { class: "svnum w2knum", y: 1 }, r.pct));
+        if (on && W2K) {                                             // Savant's bubble squared: a flat square in the darker shade at the fill's end, white digits, kept inside the field
+          const C = mk("g", { transform: `translate(${85 + Math.max(9, Math.min(bar - 9, x(r.pct)))},10)` });
+          C.append(mk("rect", { x: -9, y: -9, width: 18, height: 18, fill: s.bub }));
+          C.append(mk("text", { class: "svnum w2knum" + (r.pct >= 100 ? " c3" : ""), y: 1 }, r.pct));
           M.append(C);
         } else if (on) {
           const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
