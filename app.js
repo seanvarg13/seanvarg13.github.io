@@ -5881,7 +5881,6 @@
     // one quiet line for when the numbers run through (Sean, 29 Sep 2026, the minimal pass: the hero's title, its own
     // search and the four page buttons all repeated the header, so they went)
     const hero = el("p", "hline", `${m.season} MLB · games through ${dayName} · updated ${whenBuilt(m.built)}`); box.append(hero);
-    box.prepend(w2kIcons());   // Windows Classic: home is the desktop, so it has desktop icons (CSS hides them in the Today look)
     const grid = el("div", "hgrid"); box.append(grid);
     const card = (title, sub, link, linkLab) => {
       const c = el("section", "hcard"), hd = el("div", "hhead"); hd.append(el("h3", null, title));
@@ -7225,9 +7224,6 @@
     // wOBA or wRC+ (Sean, 16 Oct 2026): the display scale for every wOBA-scale number — the stored numbers, pools and percentiles are the same either way
     row("wOBA scale", "wOBA as it is, or the same numbers as wRC+ / xwRC+: 100 is the league's average that season, 120 is 20% better — each season against its own league, so seasons compare. Nothing is re-ranked; only what prints changes.",
       segOf("wOBA scale", [["woba", "wOBA"], ["wrc", "wRC+"]], WRC_PREF.get(), (v) => { WRC_PREF.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderSettings(); }));
-    // the whole site's look (Sean, 17 Oct 2026): today's, or Windows Classic on Bliss — per device (DRAFT_SKIN in themes.js)
-    if (window.DRAFT_SKIN) row("Look", "Today: the site as it is. Windows Classic: Bliss behind every page, a grey taskbar, every table a classic window. The colours of the numbers are the same in both.",
-      segOf("Look", [["today", "Today"], ["w2k", "Windows Classic"]], window.DRAFT_SKIN.get(), (v) => { window.DRAFT_SKIN.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderSettings(); }));
     if (window.DRAFT_TABLES) row("Tables", "Baseball-Reference: 12px type, compact 23px rows. Classic: the larger type with column names the size of the numbers, roomier rows.",
       segOf("Tables", [["bref", "Baseball-Reference"], ["classic", "Classic"]], window.DRAFT_TABLES.get(), (v) => {
         window.DRAFT_TABLES.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderSettings(); }));
@@ -10499,7 +10495,6 @@
   }
   function pctSvg(groups, W, scale = true) {
     const mk = (t, at, txt) => { const n = document.createElementNS(SVG_NS, t); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; return n; };
-    const W2K = document.documentElement.classList.contains("w2k");   // Windows Classic (Sean, 18 Oct 2026: "the percentile bars too"): a Win95 progress bar — a sunken white field, the fill as blocks in the percentile's colour, the number on a raised tag at the fill's end
     const r6 = W - 40, VW = W < 420 ? 41 : 45, bar = r6 - 40 - 85 - VW;
     // centred (Sean, 1 Oct 2026: Savant's bars back, the length they had, "but now center them"): the rows' block — the dashed
     // label column through the value — moves 20 left, so it sits 40 in from each side of the section rule (20 + 20 either way);
@@ -10523,15 +10518,8 @@
     }
     groups.forEach((g, gi) => {
       const first = gi === 0 && scale, G = mk("g", { class: "svgrp", transform: `translate(0,${y})` });
-      if (W2K) {   // Windows Classic (18 Oct 2026): each section an etched group box, its name breaking the frame's top edge as a dialog's does
-        const rowsH = g.rows.reduce((a, r) => a + (r.gap ? 12 : 23), 0), top0 = 30, bot = 44 + (first ? 20 : 0) + rowsH + 4;
-        G.append(mk("rect", { x: 1.5, y: top0 + 1.5, width: r6 - 2, height: bot - top0, fill: "none", stroke: "#ffffff" }), mk("rect", { x: 0.5, y: top0 + 0.5, width: r6 - 2, height: bot - top0, fill: "none", stroke: "#808080" }));
-        let tw = g.title.length * 6.6; try { tw = textWidth(g.title, "700 12px Helvetica, Arial, sans-serif"); } catch (e) { /* the estimate */ }
-        G.append(mk("rect", { x: 7, y: top0 - 7, width: tw + 8, height: 14, fill: "#d4d0c8" }), mk("text", { class: "svsecname", x: 11, y: top0 + 4 }, g.title));
-      } else {
-        G.append(mk("rect", { class: "svsecrule", x: 0, y: 34, width: r6, height: 2 }));
-        G.append(mk("text", { class: "svsecname", x: 0, y: 28 }, g.title));
-      }
+      G.append(mk("rect", { class: "svsecrule", x: 0, y: 34, width: r6, height: 2 }));
+      G.append(mk("text", { class: "svsecname", x: 0, y: 28 }, g.title));
       if (first) {                                               // POOR / AVERAGE / GREAT, each arrow over its tick
         const S = mk("g", { transform: `translate(${IND + 85},54)` });
         const tri = (cx) => `M${cx},2L${cx - 3},8L${cx + 3},8Z`;
@@ -10550,27 +10538,17 @@
         M.append(mk("title", {}, r.tip));
         const on = r.pct != null, s = on ? savantStyle(r.pct) : null;
         const B = mk("g", { transform: "translate(85,0)", opacity: on ? 1 : 0.35 });
-        if (W2K) {                                                   // a sunken white field (dark top-left, light bottom-right) and one smooth fill — the blocks of the first cut read busy (Sean, 18 Oct 2026: "easier on the eye")
-          B.append(mk("rect", { width: bar, height: 20, fill: "#808080" }), mk("rect", { x: 1, y: 1, width: bar - 1, height: 19, fill: "#ffffff" }));
-          if (on) B.append(mk("rect", { x: 2, y: 2, width: Math.max(0, Math.min(bar - 4, x(r.pct) - 2)), height: 16, fill: s.bg }));
-        } else {
-          B.append(mk("rect", { class: "svline", width: bar, height: 5, y: 7.5 }));
-          if (on) B.append(mk("rect", { width: x(r.pct), height: 20, y: 0, fill: s.bg }));
-          for (const tx of [x(50) - 1, 11, bar - 13]) B.append(mk("rect", { class: "svtick", width: 2, height: 20, x: tx }));
-        }
+        B.append(mk("rect", { class: "svline", width: bar, height: 5, y: 7.5 }));
+        if (on) B.append(mk("rect", { width: x(r.pct), height: 20, y: 0, fill: s.bg }));
+        for (const tx of [x(50) - 1, 11, bar - 13]) B.append(mk("rect", { class: "svtick", width: 2, height: 20, x: tx }));
         M.append(B);
         const L = mk("text", { class: "svlbl" + (r.sub ? " svsub" : "") + (r.fold ? " svfold" : ""), x: 80, y: 10, "text-anchor": "end" }, (r.fold ? (r.fold.open ? "▾ " : "▸ ") : "") + r.label);
         M.append(L);
         M.append(mk("text", { class: "svlbl svvl", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));   // svvl: the value, so a look can weight it apart from the label
         // a fold-out parent: tapping the name opens / closes its rows; the bar still opens the note
         M.addEventListener("click", (e) => { e.stopPropagation(); if (r.fold && e.target === L) { state.open[r.fold.key] = !r.fold.open; savePrefs(); render(); return; } statPop(M, r); });
-        if (!first_ && !W2K) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + VW},-1.5` }));
-        if (on && W2K) {                                             // Savant's bubble squared: a flat square in the darker shade at the fill's end, white digits, kept inside the field
-          const C = mk("g", { transform: `translate(${85 + Math.max(9, Math.min(bar - 9, x(r.pct)))},10)` });
-          C.append(mk("rect", { x: -9, y: -9, width: 18, height: 18, fill: s.bub }));
-          C.append(mk("text", { class: "svnum w2knum" + (r.pct >= 100 ? " c3" : ""), y: 1 }, r.pct));
-          M.append(C);
-        } else if (on) {
+        if (!first_) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + VW},-1.5` }));
+        if (on) {
           const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
           C.append(mk("circle", { class: "svbulb", r: 10, fill: s.bub }));
           C.append(mk("text", { class: "svnum" + (r.pct >= 100 ? " c3" : ""), y: 1 }, r.pct));   // Savant's bubble
@@ -13432,62 +13410,6 @@
     window.addEventListener("hashchange", () => setNav(false));
     document.addEventListener("click", (e) => { if (document.body.classList.contains("navopen") && !hdr.contains(e.target) && !e.target.closest(".modemenu")) setNav(false); });
     hdr.querySelectorAll(".modes > a").forEach((a) => a.addEventListener("click", () => setNav(false))); }
-
-  // Windows Classic's chrome (Sean, 18 Oct 2026: "more windows classic and just better and more classic and more windows"): a Start button
-  // with the flag that opens the classic Start menu (the pages with icons, Find a player, Settings, Shut Down… which offers the Today look),
-  // a tray with the clock, and the desktop icons home shows. Built once, whatever the look; the stylesheet shows it only under .w2k
-  function w2kIcon(name, size = 16) {
-    const P = {   // 32 × 32 pixel-ish drawings
-      window: "<rect x='1' y='3' width='30' height='26' fill='#fff' stroke='#000'/><rect x='2' y='4' width='28' height='6' fill='#0a246a'/><rect x='24' y='5' width='4' height='4' fill='#d4d0c8' stroke='#000'/>",
-      list: "<path d='M6 2h14l6 6v22H6z' fill='#fff' stroke='#000'/><path d='M20 2v6h6' fill='#d4d0c8' stroke='#000'/><path d='M9 12h12M9 16h14M9 20h14M9 24h10' stroke='#808080' stroke-width='2'/>",
-      ball: "<circle cx='16' cy='16' r='13' fill='#fff' stroke='#000'/><path d='M8 5q-4 11 0 22M24 5q4 11 0 22' fill='none' stroke='#c00' stroke-width='1.6'/><path d='M7 9l3 1M6 13l3 .5M6 19l3-.5M7 23l3-1M25 9l-3 1M26 13l-3 .5M26 19l-3-.5M25 23l-3-1' stroke='#c00'/>",
-      wrench: "<path d='M22 3a7 7 0 0 0-6 10L4 25l3 3 12-12a7 7 0 0 0 10-6l-5 2-3-3 2-5z' fill='#c0c0c0' stroke='#000'/>",
-      trophy: "<path d='M9 3h14v9a7 7 0 0 1-14 0z' fill='#e8c547' stroke='#000'/><path d='M9 6H4v3a5 5 0 0 0 5 4M23 6h5v3a5 5 0 0 1-5 4' fill='none' stroke='#000'/><path d='M13 19h6v5h-6zM9 24h14v5H9z' fill='#808080' stroke='#000'/>",
-      folder: "<path d='M2 7h10l3 3h15v17H2z' fill='#f0d060' stroke='#000'/><path d='M2 12h28v15H2z' fill='#ffe68a' stroke='#000'/>",
-      gear: "<g fill='#808080' stroke='#000'><rect x='13' y='2' width='6' height='28'/><rect x='2' y='13' width='28' height='6'/><g transform='rotate(45 16 16)'><rect x='13' y='3' width='6' height='26'/><rect x='3' y='13' width='26' height='6'/></g><circle cx='16' cy='16' r='9'/></g><circle cx='16' cy='16' r='3.5' fill='#d4d0c8' stroke='#000'/>",
-      bin: "<path d='M7 9h18l-2 21H9z' fill='#c0c0c0' stroke='#000'/><rect x='5' y='6' width='22' height='3' fill='#808080' stroke='#000'/><rect x='12' y='3' width='8' height='3' fill='#808080' stroke='#000'/><path d='M12 12v15M16 12v15M20 12v15' stroke='#808080'/>",
-      find: "<circle cx='13' cy='13' r='9' fill='#fff' stroke='#000' stroke-width='2'/><path d='M20 20l9 9' stroke='#000' stroke-width='4'/><path d='M8 11a5 5 0 0 1 4-4' fill='none' stroke='#808080'/>",
-      power: "<rect x='3' y='4' width='26' height='18' fill='#0a246a' stroke='#000'/><rect x='6' y='7' width='20' height='12' fill='#7bafd4'/><rect x='10' y='24' width='12' height='4' fill='#808080' stroke='#000'/><path d='M16 9v5' stroke='#fff' stroke-width='2'/><path d='M12 11a5 5 0 1 0 8 0' fill='none' stroke='#fff' stroke-width='2'/>",
-      flag: "<path d='M2 9q7-5 14 0t14 0v14q-7 5-14 0t-14 0z' fill='#000'/><path d='M4 10q5-3 11 0v6q-6-3-11 0z' fill='#e13b2b'/><path d='M17 10q5-3 11 0v6q-6-3-11 0z' fill='#39a03a'/><path d='M4 17q5-3 11 0v5q-6-3-11 0z' fill='#2b6ed6'/><path d='M17 17q5-3 11 0v5q-6-3-11 0z' fill='#f2c418'/>",
-    };
-    return `<svg viewBox="0 0 32 32" width="${size}" height="${size}" aria-hidden="true" shape-rendering="geometricPrecision">${P[name] || P.window}</svg>`;
-  }
-  const W2K_PAGES = [["#home", "Home", "window"], ["#leaderboard", "Leaderboard", "list"], ["#pitches", "Pitching+", "ball"], ["#flaws", "Fixing the flaw", "wrench"], ["#rankings", "Rankings", "trophy"], ["#fantasy/leaders", "Fantasy leaderboard", "folder"], ["#mock", "Mock draft", "folder"], ["#fantasy/settings", "Scoring settings", "folder"], ["#settings", "Settings", "gear"]];
-  function w2kIcons() {   // the desktop's icons on home
-    const d = el("div", "w2kicons");
-    for (const [h, lab, ic] of [["#leaderboard", "Leaderboard", "list"], ["#pitches", "Pitching+", "ball"], ["#flaws", "Fixing the flaw", "wrench"], ["#rankings", "Rankings", "trophy"], ["#fantasy/leaders", "Fantasy", "folder"], ["#settings", "Settings", "gear"], ["#settings/appearance", "Recycle Bin", "bin"]]) {
-      const a = el("a", "w2kicon"); a.href = h; a.innerHTML = w2kIcon(ic, 32); a.append(el("span", null, lab)); if (lab === "Recycle Bin") a.title = "Where the Windows Classic look can be thrown away: Settings ▸ Appearance ▸ Look"; d.append(a);
-    }
-    return d;
-  }
-  { const hdr = document.querySelector("header.top");
-    const start = el("button", "w2kstart"); start.type = "button"; start.innerHTML = w2kIcon("flag", 18) + "<span>Start</span>"; start.setAttribute("aria-haspopup", "true"); start.setAttribute("aria-expanded", "false");
-    const menu = el("div", "w2kmenu"); menu.setAttribute("role", "menu");
-    const band = el("div", "w2kband"); band.append(el("span", null, "Sean's Site")); menu.append(band);
-    const item = (lab, ic, go) => { const b = el("button", "w2kmi"); b.type = "button"; b.innerHTML = w2kIcon(ic, 16); b.append(el("span", null, lab)); b.addEventListener("click", (e) => { e.stopPropagation(); setMenu(false); go(); }); menu.append(b); return b; };
-    for (const [h, lab, ic] of W2K_PAGES.slice(0, 4)) item(lab, ic, () => { location.hash = h; });
-    menu.append(el("div", "w2kgrp", "Fantasy"));
-    for (const [h, lab, ic] of W2K_PAGES.slice(4, 8)) item(lab, ic, () => { location.hash = h; }).classList.add("sub");
-    menu.append(el("hr"));
-    item("Find a player…", "find", () => { const q = $("gq"); if (q) { q.focus(); q.select(); } });
-    item("Settings", "gear", () => { location.hash = "#settings"; });
-    menu.append(el("hr"));
-    // Shut Down…: the classic dialog, offering the Today look (the way out of Windows Classic without finding the Settings page)
-    const bg = el("div", "w2kdlgbg"), dlg = el("div", "w2kdlg"); dlg.setAttribute("role", "dialog"); dlg.setAttribute("aria-label", "Shut Down Windows");
-    dlg.innerHTML = `<div class="w2kdlgt"><span>Shut Down Windows</span></div><div class="w2kdlgb">${w2kIcon("power", 32)}<div><p>What do you want the computer to do?</p>
-      <label><input type="radio" name="w2ksd" value="today" checked> Switch to the Today look</label><label><input type="radio" name="w2ksd" value="stay"> Stay in Windows Classic</label></div></div><div class="w2kdlgf"><button type="button" class="w2kok">OK</button><button type="button" class="w2kcancel">Cancel</button></div>`;
-    const closeDlg = () => { bg.classList.remove("on"); dlg.classList.remove("on"); };
-    dlg.querySelector(".w2kcancel").addEventListener("click", closeDlg); bg.addEventListener("click", closeDlg);
-    dlg.querySelector(".w2kok").addEventListener("click", () => { const v = dlg.querySelector("input[name=w2ksd]:checked"); closeDlg(); if (v && v.value === "today" && window.DRAFT_SKIN) { window.DRAFT_SKIN.set("today"); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); render(); } });
-    item("Shut Down…", "power", () => { bg.classList.add("on"); dlg.classList.add("on"); });
-    const setMenu = (on) => { menu.classList.toggle("on", on); start.classList.toggle("on", on); start.setAttribute("aria-expanded", String(on)); };
-    start.addEventListener("click", (e) => { e.stopPropagation(); setMenu(!menu.classList.contains("on")); });
-    document.addEventListener("click", (e) => { if (menu.classList.contains("on") && !menu.contains(e.target)) setMenu(false); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") { setMenu(false); closeDlg(); } });
-    window.addEventListener("hashchange", () => setMenu(false));
-    const tray = el("div", "w2ktray"), clock = el("span", "w2kclock"); tray.append(clock);
-    const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }; tick(); setInterval(tick, 20000);
-    hdr.prepend(start); hdr.append(menu, tray); document.body.append(bg, dlg); }
 
   // keep the sticky column header just under the sticky toolbar
   const tb = document.querySelector(".toolbar:not(.xtoolbar)"), hd = document.querySelector("header.top");

@@ -4385,6 +4385,20 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     31 wOBA points (the neutral one ran 23 points under them).
   - **2026**: Goodman .335 → .354 (xwOBA proj. .321 → .336), Rumfield .316 → .334; Yordan .435 either way.
 
+* **Windows Classic is gone (Sean, 18 Oct 2026, from his player page: "the grey background and everything being that gray is making everything
+  very busy and hard to distinguish", then, while design options for it were being drawn up, "We can eliminate the windows look I don't need
+  it")**: the whole look is out of the site, so the entries above about it ("Windows Classic, a look you pick", "All the way old-school", "MS Sans
+  Serif, calmer bars, grey totals", "More Windows") are history.
+  - **`styles.css`**: the "Windows Classic" block that ran to the end of the file is deleted.
+  - **`app.js`**: the Start button, Start menu, tray clock, Shut Down dialog, desktop icons (`w2kIcon`, `W2K_PAGES`, `w2kIcons`, the chrome
+    builder), the Appearance ▸ Look row and `pctSvg`'s W2K branch (the group boxes, sunken fields and square bubbles) are deleted; `pctSvg` is
+    its Today drawing only.
+  - **`themes.js`**: `DRAFT_SKIN` is deleted, and a device that had picked the look drops its saved `draft2027.skin` on its next load, so
+    every device draws the Today look.
+  - **`icons/bliss.jpg`** is deleted.
+  - Kept, since they fixed every look: the 37 selector lists rewritten with `:is()` and the Fantasy page's floating-header `colgroup`.
+  - Don't bring the look back unasked.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
