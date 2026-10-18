@@ -5870,3 +5870,9 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .pcount .pcfix > * { grid-area: 1 / 1 !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .pcount .pcfix > .pcg { visibility: hidden !important; }
 @media (hover: none) { :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .pager .pbtn:hover { text-decoration: none !important; } }
+
+/* Game Logs (Sean, 18 Oct 2026): a pitcher who both started and relieved has his role, small and grey, after each date */
+:root:root:root :is(#xboard, #modal) .gamelogbox td .glrole { margin-left: 4px; font-size: 10px; font-weight: 600; color: var(--muted); }
+:root:root:root :is(#xboard, #modal) .gamelogbox .sbt td, :root:root:root :is(#xboard, #modal) .gamelogbox .sbt th { white-space: nowrap; }
+/* the Regular season / Postseason switch over a log hugs its two buttons (it had stretched the box's width, a white strip either side) */
+:root:root:root :is(#xboard, #modal) .glwrap > .seg.glkind { display: flex !important; width: fit-content !important; max-width: 100%; margin: 0 auto 12px !important; }

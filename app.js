@@ -936,14 +936,14 @@
   const needsRows = () => needsDays() || !!DS.aggregate;   // a combined span always sums rows, window or not
   const ensureView = () => { if (needsRows() && !DS.ready()) DS.load(); };   // fetch whatever the current view needs
   const viewKey = () => DS.key + ":" + winKey() + ":" + SPLIT.hand + ":" + SPLIT.venue + ":" + roleOf(SPLIT) + (state.tbl && state.tbl.shrink ? ":rg" : "") + (XWN ? ":xn" : "");   // :rg — small samples regressed (Table format); :xn — xwOBA park-neutral (18 Oct 2026)
-  const splitLabel = () => {
+  const splitLabel = (type) => {   // type: the card's player — a pitcher's card says "vs LHB" whatever the list's position (18 Oct 2026)
     const parts = [];
-    if (SPLIT.hand !== "all") parts.push("vs " + SPLIT.hand + "H" + (isPitcherGroup(groupFor(state.pos)) ? "B" : "P"));
+    if (SPLIT.hand !== "all") parts.push("vs " + SPLIT.hand + "H" + ((type ? type === "P" : isPitcherGroup(groupFor(state.pos))) ? "B" : "P"));
     if (SPLIT.venue !== "all") parts.push(SPLIT.venue === "home" ? "home" : "away");
     if (roleOf(SPLIT) !== "all") parts.push(roleWord(SPLIT));
     return parts.join(" · ");
   };
-  const viewLabel = (type) => [winLabel(type), splitLabel()].filter(Boolean).join(" · ");
+  const viewLabel = (type) => [winLabel(type), splitLabel(type)].filter(Boolean).join(" · ");
 
   // fill derived hitter metrics that older data files may lack
   // The directional model scales its predictions by the league's mean wOBA on contact, and the model's own
@@ -5916,12 +5916,13 @@
     const puOf = (p) => V(p).m.nera;   // nERA (Sean, 4 Oct 2026: "Replace uERA with nERA"); in a window V() re-derives it from the day rows
     const inWin = (w, fn) => withWindow(w, () => withSplit(NONE, fn));
     const PH = mobileView();
-    // a value's colour is its place among the season's qualifiers: hitters 300+ PA by xwOBA, pitchers 100+ IP by nERA (lower better) and by Pitching+
+    // a value's colour is its place among the season's qualifiers: hitters 300+ PA by xwOBA, pitchers 100+ IP by nERA (lower better); a start's nERA
+    // on the last game day among the season's starts (outingPool)
     const sortedOf = (xs) => xs.filter((x) => x != null).sort((a, b) => a - b);
-    let refH = [], refP = [], refSt = [];
+    let refH = [], refP = [];
     inWin(NOWIN, () => {
       const H = DATA.players.filter((p) => p.type === "H" && (p.pa || 0) >= 300), P = DATA.players.filter((p) => p.type === "P" && (p.ip || 0) >= 100);
-      refH = sortedOf(H.map((p) => V(p).m.xwd)); refP = sortedOf(P.map((p) => { const v = puOf(p); return v == null ? null : -v; })); refSt = sortedOf(P.map((p) => (p.m.pitch != null ? p.m.pitch : p.m.stuff)));
+      refH = sortedOf(H.map((p) => V(p).m.xwd)); refP = sortedOf(P.map((p) => { const v = puOf(p); return v == null ? null : -v; }));
     });
     const pcOf = (ref, v, neg) => (v == null || !ref.length ? null : insertPct(ref, neg ? -v : v));
     const goLB = (pos, sort, dir, win) => (e) => { e.preventDefault(); state.pos = pos; state.posAlso = []; state.sort = sort; state.dir = dir; if (win) state.win = win; savePrefs(); location.hash = "#leaderboard"; };
@@ -5955,9 +5956,10 @@
     const loading = (b) => b.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…"));
     const NB = PH ? 4 : 5, NH = 4, NP = 4;   // four a list (Sean, 7 Oct 2026: "the top 4 for each")
     const nm = (p, tab) => ({ p, tab });
-    // the lead: the last game day — the best xwOBA games (3+ PA) and the best starts by Pitching+ (3+ IP) on the latest day in the day rows
+    // the lead: the last game day — the best xwOBA games (3+ PA) and the best starts by nERA (3+ IP; Sean, 18 Oct 2026: "sort it by nERA instead of
+    // pitching+") on the latest day in the day rows, the start's nERA filled by its place among the season's starts like the Game Logs tab's
     { const days = m.days || [], lastDay = days.length - 1, when = days[lastDay] ? new Date(days[lastDay] + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "";
-      const lb = section(box, "Last game day", when ? `${when} · best games by xwOBA (3+ PA) and starts by Pitching+ (3+ IP)` : null, null);
+      const lb = section(box, "Last game day", when ? `${when} · best games by xwOBA (3+ PA) and starts by nERA (3+ IP)` : null, null);
       lb.classList.add("hlead2"); box.insertBefore(lb.parentNode, grid);
       // the 24 MB day file is asked for once Home has painted and the phone is idle, not inside the first render (Sean, 5 Oct 2026)
       if (!daysReady()) { loading(lb); if (!state.daysLoading && !state.daysFailed) setTimeout(() => (window.requestIdleCallback || ((f) => f()))(() => { if (state.mode === "home" && !daysReady()) ensureDays(); }), 1200); }
@@ -5969,22 +5971,24 @@
             if (!(D[p.type + p.id] || []).some((r) => r[0] === lastDay)) continue;   // only who played that day (5 Oct 2026)
             if (p.type === "H") { const log = hitGameLog(p, lastDay); if (!Array.isArray(log)) continue; const g = log.find((x) => x.day === lastDay); if (!(g && (g.g.pa || 0) >= 3 && g.xw != null)) continue;
               const G = g.g; hit.push({ p, v: g.xw, hab: G.h != null && G.ab != null ? `${n0(G.h)}-${n0(G.ab)}` : `${n0(G.pa)} PA`, hr: n0(G.hr), bb: n0(G.bb), k: n0(G.k), brl: n0(G.brl), max: g.max }); }
-            else { const log = gameLog(p, lastDay); if (!Array.isArray(log)) continue; const g = log.find((x) => x.day === lastDay); if (!(g && g.sp && g.ip >= 3 && g.st != null)) continue;
-              const G = g.g; pit.push({ p, v: g.st, ip: fmtIP(g.ip), er: n0(G.er), k: n0(G.k), bb: n0(G.bb), whf: g.whf }); }
+            else { const o = sumOutings((D[p.type + p.id] || []).filter((r) => r[0] === lastDay)).get(lastDay), v = dayNERA(o, K()); if (!(o && o.gs && o.outs >= 9 && v != null)) continue;
+              const er = (D[p.type + p.id + ":er"] || []).reduce((a, [d, , e]) => a + (d === lastDay ? e : 0), 0);
+              pit.push({ p, v, ip: fmtIP(o.outs / 3), er, k: o.k, bb: o.bb, whf: o.sw ? 100 * o.whf / o.sw : null }); }
           }
         });
-        hit.sort((a, b) => b.v - a.v); pit.sort((a, b) => b.v - a.v);
-        const H5 = hit.slice(0, NB), P5 = pit.slice(0, NB), xw = (r) => ({ v: fw(r.v), pc: pcOf(refH, r.v) }), st = (r) => ({ v: f0(r.v), pc: pcOf(refSt, r.v) });
+        hit.sort((a, b) => b.v - a.v); pit.sort((a, b) => a.v - b.v);   // nERA: lowest first
+        const opool = outingPool(), H5 = hit.slice(0, NB), P5 = pit.slice(0, NB), xw = (r) => ({ v: fw(r.v), pc: pcOf(refH, r.v) }),
+              ne = (r) => ({ v: (r.v < 0 ? "−" : "") + Math.abs(r.v).toFixed(2), pc: outPct(opool, 1, r.v) });
         if (PH) {   // a phone's lead tables keep the columns that fit at 390px (the canvas's phone board)
           table(lb, { label: wsLab("Hitters · by xwOBA"), cols: [["Player", null, "nm"], ["Tm", 40, "c"], ["H-AB", 42, "c"], ["HR", 30], ["Brl", 30], [wsLab("xwOBA"), 54, "heat"]], ends: [1, 4],
             rows: H5.map((r) => [nm(r.p, "games"), r.p.team || "", r.hab, r.hr, r.brl, xw(r)]) });
-          table(lb, { label: "Starts · by Pitching+", cols: [["Player", null, "nm"], ["Tm", 40, "c"], ["IP", 34], ["ER", 28], ["K", 28], ["P+", 44, "heat"]], ends: [1, 4],
-            rows: P5.map((r) => [nm(r.p, "games"), r.p.team || "", r.ip, r.er, r.k, st(r)]) });
+          table(lb, { label: "Starts · by nERA", cols: [["Player", null, "nm"], ["Tm", 40, "c"], ["IP", 34], ["ER", 28], ["K", 28], ["nERA", 48, "heat"]], ends: [1, 4],
+            rows: P5.map((r) => [nm(r.p, "games"), r.p.team || "", r.ip, r.er, r.k, ne(r)]) });
         } else {
           table(lb, { over: [["", 3], ["Box", 4], ["Contact", 2], ["", 1]], fixed: true, cols: [["Rk", 34, "rk"], ["Player", 170, "nm"], ["Tm", 46, "c"], ["H-AB", 50, "c"], ["HR", 38], ["BB", 38], ["K", 34], ["Brl", 38], ["Max EV", 60], [wsLab("xwOBA"), 64, "heat"]],
             rows: H5.map((r, i) => [i + 1, nm(r.p, "games"), r.p.team || "", r.hab, r.hr, r.bb, r.k, r.brl, r.max == null ? "–" : r.max.toFixed(1), xw(r)]) });
-          table(lb, { over: [["", 3], ["Box", 4], ["", 1], ["", 1]], fixed: true, cols: [["Rk", 34, "rk"], ["Player", 170, "nm"], ["Tm", 46, "c"], ["IP", 44], ["ER", 38], ["K", 38], ["BB", 38], ["Whiff%", 62], ["Pitching+", 76, "heat"]],
-            rows: P5.map((r, i) => [i + 1, nm(r.p, "games"), r.p.team || "", r.ip, r.er, r.k, r.bb, r.whf == null ? "–" : r.whf.toFixed(1) + "%", st(r)]) });
+          table(lb, { over: [["", 3], ["Box", 4], ["", 1], ["", 1]], fixed: true, cols: [["Rk", 34, "rk"], ["Player", 170, "nm"], ["Tm", 46, "c"], ["IP", 44], ["ER", 38], ["K", 38], ["BB", 38], ["Whiff%", 62], ["nERA", 76, "heat"]],
+            rows: P5.map((r, i) => [i + 1, nm(r.p, "games"), r.p.team || "", r.ip, r.er, r.k, r.bb, r.whf == null ? "–" : r.whf.toFixed(1) + "%", ne(r)]) });
         }
         if (!hit.length && !pit.length) lb.append(el("p", "hnote", "Nobody qualifies that day."));
       }
@@ -8557,7 +8561,7 @@
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["fantasy", "Fantasy"]];   // Season Stats is the page's own table now (8 Oct 2026)   // Compare came off the strip with the Compare page (Sean, 6 Oct 2026)
   const BTABS_H = [["mix", "Mix"], ["bbq", "Batted Ball Quality"], ["xbabip", "xBABIP"], ["xhrfb", "xHR/FB"], ["talent", "xwOBA"], ["xkbb", "xK% / xBB%"]];   // Talent xwOBA's build-up (Sean, 11 Oct 2026)   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
-  const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"]];   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
+  const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"], ["games", "Game Logs"]];   // Game Logs back, every outing with its nERA (Sean, 18 Oct 2026)   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -8576,7 +8580,7 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => { const l = (tabs.find(([x]) => x === k) || [])[1]; return k === "talent" ? wsLab(l) : l; };
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["xbabip"], ["xhrfb"], ["talent"], ["xkbb"]] : []),
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"], ["games"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["xbabip"], ["xhrfb"], ["talent"], ["xkbb"]] : []),
                     ["rolling", ...(p.type === "P" ? ["uera"] : ["babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
@@ -9786,159 +9790,111 @@
     wrap.append(q ? withDataset(ds, () => draw(q)) : el("p", "note", `No ${(KINDS.find(([k]) => k === keyKind(key)) || [, "games"])[1].toLowerCase()} games for him in ${keyYear(key)}.`));
     return wrap;
   }
+  // Game Logs (Sean, 18 Oct 2026: "a tab that is game logs ... each outing and include IP, pitches, nERA, k, bb, k-bb%, gb%, pu% and heat map the
+  // nERA"): every outing of the card's season from the day rows, oldest first, in B-Ref's game-log dress — Date (frozen) and Opp, then IP · Pit | nERA |
+  // K · BB · K-BB% | GB% · PU%, the outings shown summed as the totals row. An outing's nERA is the season's formula on that day's sums (dayNERA), filled
+  // by its place among the season's outings of its kind (outingPool: a start among starts, a relief outing among relief outings — one outing swings far
+  // wider than a season, so it isn't ranked among the season's pitchers). The card's dates, home / away and SP / RP pick which outings show; a
+  // batter-hand split doesn't cut an outing in two. Opp is MLB's own game log (oppLog), fetched like the bio. It replaces the 29 Sep log (Pitching+ by
+  // outing, a tap for the day's pitches and batted-ball luck), off the strip since 4 Oct
+  const OUT_F = ["outs", "pit", "bf", "k", "bb", "hbp", "sw", "whf", "wnum", "wden", "wbip", "gb", "ld", "fbt", "pu", "bip"];
+  function sumOutings(rows) {                                         // his day rows summed per game day, every hand: day → { the sums, gs, home, w }
+    const f = DF.P, I = OUT_F.map((k) => f.indexOf(k)), gi = f.indexOf("gs"), wi = f.indexOf("wbip"), by = new Map();
+    for (const r of rows) {
+      let g = by.get(r[0]);
+      if (!g) { g = { day: r[0], home: r[2], gs: 0, w: false }; for (const k of OUT_F) g[k] = 0; by.set(r[0], g); }
+      OUT_F.forEach((k, j) => { const v = r[I[j]]; if (typeof v === "number") g[k] += v; });
+      if (r[gi]) g.gs = 1; if (typeof r[wi] === "number") g.w = true;   // w: the row carries the batted-ball sums nERA needs (files built before them don't)
+    }
+    return by;
+  }
+  // an outing's nERA: V()'s on one day's sums — every ball in play at the league's wOBA for its type (an untyped one at the league's), his strikeouts,
+  // walks and HBP as they were, on the ERA scale. The line is straight in wOBA allowed, so a dominant outing can read below zero, as a few batters'
+  // season nERA can (a fifth of 2026's relief outings, 2% of its starts)
+  function dayNERA(g, c) {
+    if (!g || !g.w || !g.wden || !c || !c.bbw) return null;
+    const ut = Math.max(0, g.bip - g.gb - g.ld - g.fbt - g.pu);
+    const x = g.wnum - g.wbip + g.gb * c.bbw.gb + g.ld * c.bbw.ld + g.fbt * c.bbw.fb + g.pu * c.bbw.pu + ut * c.bbw.ut;
+    return c.lgERA + (x / g.wden - c.lgwOBA) / c.wobaScale * c.pa9;
+  }
+  // every outing of the season by kind, for the colours (2026: the middle start 4.20, a quarter of them under 2.97; the middle relief outing 3.83, with
+  // a fifth under zero) — negated, so higher is better for insertPct. A postseason log ranks among its year's regular season, as its card does
+  const outPool = new Map();
+  function outingPool() {
+    const ds = DS.kind ? regularOf(DS) : DS; if (!ds || ds.multi) return null;
+    if (outPool.has(ds.key)) return outPool.get(ds.key);
+    const src = withDataset(ds, () => gameDays({ type: "P", id: 0 }));   // asks for that season's day file when it isn't in yet
+    if (!src || src === "loading") return null;
+    const D = ds.key === CUR.key ? window.DRAFT_DAYS : window.DRAFT_HIST_DAYS && window.DRAFT_HIST_DAYS[ds.key], c = withDataset(ds, () => K());
+    if (!D) return null;
+    const sp = [], rp = [];
+    for (const k in D) { if (k[0] !== "P" || k.includes(":")) continue;
+      for (const g of sumOutings(D[k]).values()) { const v = dayNERA(g, c); if (v != null) (g.gs ? sp : rp).push(-v); } }
+    sp.sort((a, b) => a - b); rp.sort((a, b) => a - b);
+    const out = { sp, rp }; outPool.set(ds.key, out); return out;
+  }
+  const outPct = (pool, sp, v) => { const a = pool && (sp ? pool.sp : pool.rp); return a && a.length >= 50 && v != null ? insertPct(a, -v) : null; };
+  // who he faced each game: MLB's per-game log for the season (regular season or October), date → [[opponent, at home]] — null while it loads,
+  // false when it couldn't be reached
+  const OPPS = new Map();
+  function oppLog(p, y, gt) {
+    const key = `${p.type}${p.id}:${y}:${gt}`;
+    if (OPPS.has(key)) return OPPS.get(key);
+    OPPS.set(key, null);
+    fetch(`https://statsapi.mlb.com/api/v1/people/${p.id}/stats?stats=gameLog&group=${p.type === "H" ? "hitting" : "pitching"}&season=${y}&gameType=${gt}`).then((r) => r.json()).then((j) => {
+      const by = new Map();
+      for (const sp of ((j.stats || [])[0] || {}).splits || []) { if (!sp.date || !sp.opponent) continue;
+        const o = TEAM_BY_ID[sp.opponent.id] || sp.opponent.abbreviation || ""; (by.get(sp.date) || by.set(sp.date, []).get(sp.date)).push([o, !!sp.isHome]); }
+      OPPS.set(key, by); if (pageNow()) render();
+    }).catch(() => { OPPS.set(key, false); if (pageNow()) render(); });
+    return null;
+  }
   function renderGamesTab(p) {
-    const box = el("div", "rollbox uerabox gamesbox");
-    const log = gameLog(p), sea = p.m && (p.m.pitch != null ? p.m.pitch : p.m.stuff);
-    const hd = el("div", "rollhd");
-    hd.append(el("span", "rollname", "Game by game"), el("span", "rollsub", sea == null ? "every appearance" : `Pitching+ each outing against his season ${Math.round(sea)}`));
+    const box = el("div", "rollbox uerabox brbox gamelogbox"), hd = el("div", "rollhd");
+    const vl = viewLabel(p.type), filt = !!vl && vl !== "full season", post = keyKind(DS.key) === "post";
+    hd.append(el("span", "rollname", "Game Logs"), el("span", "rollsub", filt ? vl : post ? "every postseason outing" : "every outing"));
     box.append(hd);
-    if (log === "loading") { box.append(el("p", "note", "Loading his games…")); return box; }
-    if (!log || !log.length) { box.append(el("p", "note", "No game-by-game rows for this season.")); return box; }
-    // Stuff+ by outing: a dot a game against his season line (starts filled, relief hollow)
-    const pts = [...log].reverse().filter((g) => g.st != null);
-    if (pts.length >= 2) {
-      const W = mobileView() ? 360 : 640, H = 120, L = 34, R = 10, T = 10, B = 18, vals = pts.map((g) => g.st).concat(sea != null ? [sea] : []);
-      let lo = Math.min(...vals), hi = Math.max(...vals); const pad = Math.max(4, (hi - lo) * 0.1); lo -= pad; hi += pad;
-      const X = (i) => L + (pts.length > 1 ? i / (pts.length - 1) : 0.5) * (W - L - R), Y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
-      const step = hi - lo > 60 ? 20 : hi - lo > 25 ? 10 : 5, g = [];
-      for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) g.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" class="trgrid"/><text x="${L - 5}" y="${Y(v) + 4}" text-anchor="end" class="trax">${v}</text>`);
-      if (sea != null) g.push(`<line x1="${L}" x2="${W - R}" y1="${Y(sea)}" y2="${Y(sea)}" class="gsea"/><text x="${L + 4}" y="${T + 8}" class="trax">dashed: season ${Math.round(sea)} · hollow: relief</text>`);
-      g.push(`<path class="trline gline" d="${pts.map((q, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(q.st).toFixed(1)}`).join("")}"/>`);
-      pts.forEach((q, i) => g.push(`<circle cx="${X(i)}" cy="${Y(q.st)}" r="4" class="trdot${q.sp ? "" : " part"}${state.gameDay === q.day ? " on" : ""}"><title>${fmtDate(q.date)} · Pitching+ ${Math.round(q.st)} · ${q.sp ? "start" : "relief"}</title></circle><circle cx="${X(i)}" cy="${Y(q.st)}" r="11" class="trhit" data-day="${q.day}"/>`));
-      const ch = el("div", "trchart gchart"); ch.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">${g.join("")}</svg>`;
-      ch.querySelectorAll(".trhit").forEach((c) => c.addEventListener("click", () => { state.gameDay = Number(c.dataset.day); render(); }));
-      box.append(ch);
+    const src = gameDays(p);
+    if (src === "loading") { box.append(el("p", "note", "Loading his games…")); return box; }
+    if (!src || !src.rows.length) { box.append(el("p", "note", "No game-by-game rows for this season.")); return box; }
+    // which outings: the card's dates (a last-N window takes the same most-recent days its numbers do), home / away and SP / RP — not the batter's hand
+    const w = winIdx() || { lo: 0, hi: 1e9 }, hand = SPLIT.hand === "all" ? -1 : SPLIT.hand === "R" ? 1 : 0, home = SPLIT.venue === "all" ? -1 : SPLIT.venue === "home" ? 1 : 0, role = roleFilt(SPLIT);
+    const all = sumOutings(src.rows), okG = (g) => (home < 0 || g.home === home) && (role < 0 || g.gs === role);
+    let lo = w.lo;
+    if (w.last) {
+      const oi = DF.P.indexOf("outs"), gi = DF.P.indexOf("gs"), byDay = new Map();
+      for (const r of src.rows) if (r[0] <= w.hi && (hand < 0 || r[1] === hand) && (home < 0 || r[2] === home) && (role < 0 || (r[gi] ? 1 : 0) === role)) byDay.set(r[0], (byDay.get(r[0]) || 0) + r[oi]);
+      let acc = 0; lo = w.hi + 1;
+      for (const d of [...byDay.keys()].sort((x, y) => y - x)) { acc += byDay.get(d); lo = d; if (acc >= 3 * w.last) break; }
     }
-    const pick = log.find((g) => g.day === state.gameDay) || log[0];
-    // the log, oldest first (Sean, 29 Sep 2026), in three blocks split by a rule: his stuff (Stuff+, Δ vs season), the start's
-    // results (IP, ER, K, BB, K%, BB%, BIP luck), then the underlying rates (Whiff%, Strike%, Zone%, Chase%, GB%, PU%) — rates
-    // red / blue when 3+ points better / worse than his season. Tap a row for that day's box score, pitches and luck below.
-    const t = el("table", "ubt stufft glog"), th = el("thead"), gr = el("tr", "ggrp"), hr = el("tr");
-    const RES = [["K%", "k", 1], ["BB%", "bb", 0]], UND = [["Whiff%", "whf", 1], ["Strike%", "strk", 1], ["GB%", "gb", 1], ["PU%", "pu", 1]];   // Zone% / Chase% dropped (Sean)
-    const rtTip = "That day";
-    const heads = [["Date", "l"], ["Pitching+", "", "Pitching+ that day, every pitch with its location against its own type"], ["Δ", "gend", "Pitching+ that day minus his season"],
-                   ["IP"], ["ER"], ...RES.map(([h]) => [h, "rt", rtTip]),
-                   ["uERA", "gend lc", "Underlying ERA that day: his uK% and uBB% from the day's Whiff%, Strike% and swing rates, on the balls in play he allowed at the league's value for each type — coloured by where it would rank among the season's pitchers"],
-                   ...UND.map(([h]) => [h, "rt", rtTip])];
-    for (const [lab, n, c] of [["Stuff", 3, "gend"], ["Start results", 5, "gend"], ["Underlying", 4, ""]]) { const e = el("th", c || null, lab); e.colSpan = n; gr.append(e); }
-    for (const [h, c, tt] of heads) { const e = el("th", c || null, h); if (tt) e.title = tt; hr.append(e); }
-    th.append(gr, hr); t.append(th);
-    const tb = el("tbody"), pc = (x) => (x == null ? "–" : x.toFixed(1));
-    const rate = (g, [, k]) => el("td", "rt", pc(g[k]));
-    // uERA that day (Sean, 29 Sep 2026: in place of K-BB%, the one coloured cell in the results): the day's rates through the
-    // season's uK% / uBB% fits and its balls in play at the league's value per type, as a chip coloured like Season Stats'
-    const sorted = (pool(p.primary === "RP" ? "RP" : "SP") || {}).sorted || {};
-    const ueraOf = (g) => {
-      const G = g.g, pv = { role: p.primary, ex: arsenalExtras(p), m: { whf: g.whf, strk: g.strk, zone: g.zone, osw: g.osw, swing: g.swing, zcon: g.zcon, k: g.k, bb: g.bb },
-                            ctx: { bbl: { gb: [G.gb, G.wgb], ld: [G.ld, G.wld], fb: [G.fbt, G.wfb], pu: [G.pu, G.wpu] }, PAw: G.bf, HBP: G.hbp } };
-      const v = underlyingERA(pv, impliedKBB(pv, null, sorted), sorted);
-      return v == null ? null : { v, pct: sorted.uera ? insertPct(sorted.uera, -v) : null };
-    };
-    const ueraTd = (u) => { const td = el("td", "gend uera"), chip = el("span", "uchip", u ? u.v.toFixed(2) : "–");
-      if (u && u.pct != null) { paintBar(chip, u.pct); chip.style.color = "#fff"; chip.classList.add("on"); td.title = `uERA ${u.v.toFixed(2)} · would be ${ordinal(u.pct)} pctl among the season's pitchers`; }
-      td.append(chip); return td; };
-    let onRow = null;
-    for (const g of [...log].reverse()) {
-      const tr = el("tr", g === pick ? "on" : null); tr.tabIndex = 0; if (g === pick) onRow = tr;
-      const stc = el("td", "plus", g.st == null ? "–" : String(Math.round(g.st))); if (g.st != null) { const ps = plusStyle(g.st); if (ps) { stc.style.background = ps.bg; stc.style.color = ps.fg; } }
-      const dl = g.st != null && sea != null ? g.st - sea : null;
-      const dc = el("td", "l"); dc.append(g.date ? fmtDate(g.date) : "–", el("span", "role", g.sp ? " SP" : " RP"));
-      tr.append(dc, stc, el("td", "gend dlt", dl == null ? "–" : signed(dl, 0)),
-                el("td", null, fmtIP(g.ip)), el("td", null, g.g.er == null ? "–" : String(g.g.er)),
-                ...RES.map((r) => rate(g, r)), ueraTd(ueraOf(g)),
-                ...UND.map((r) => rate(g, r)));
-      const go = () => { state.gameDay = g.day; render(); };
-      tr.addEventListener("click", go); tr.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
-      tb.append(tr);
+    const games = [...all.values()].filter((g) => g.day >= lo && g.day <= w.hi && okG(g)).sort((a, b) => a.day - b.day);
+    if (!games.length) { box.append(el("p", "note", "No outings in this view.")); return box; }
+    const c = K(), pool = outingPool(), both = bothRoles(p), opp = oppLog(p, keyYear(DS.key), post ? "P" : "R");
+    const mi = (x, d) => (x == null ? "–" : (x < 0 ? "−" : "") + Math.abs(x).toFixed(d));
+    const pc = (n, d) => (d ? (100 * n / d).toFixed(1) + "%" : "–"), kbb = (g) => (g.bf ? mi(100 * (g.k - g.bb) / g.bf, 1) + "%" : "–");
+    const { t, tb, fin, gap, wrap, ends } = brTable(null, [["Date", "l f1"], ["Opp", "l", "The other side (@ = on the road), from MLB's game log"], ["IP"], ["Pit", "", "Pitches thrown"],
+      ["nERA", "", "Luck-neutral ERA that outing: every ball in play at the league's value for its type, his strikeouts and walks as they were — coloured by its place among the season's starts (a relief outing among relief outings)"],
+      ["K"], ["BB"], ["K-BB%"], ["GB%", "", "Ground balls per ball in play"], ["PU%", "", "Popups per ball in play"]], "glbt");
+    for (const i of [1, 3, 4, 7]) ends.add(i);
+    [...t.tHead.rows[0].children].forEach((h, i) => { if (ends.has(i)) h.classList.add("ge"); });
+    for (const g of games) {
+      const iso = src.days && src.days[g.day], dc = el("td", "l f1", iso ? fmtDate(iso) : "–");
+      if (both) dc.append(el("span", "glrole", g.gs ? "SP" : "RP"));
+      const os = opp && iso ? opp.get(iso) : null;
+      const v = dayNERA(g, c), nc = el("td", null, mi(v, 2)), pp = outPct(pool, g.gs, v);
+      if (pp != null) { heatTd(nc, pp); nc.title = `${ordinal(Math.round(pp))} percentile among the season's ${g.gs ? "starts" : "relief outings"}`; }
+      const tr = el("tr");
+      tr.append(dc, el("td", "l", os ? os.map(([o, h]) => (h ? o : "@ " + o)).join(", ") : opp === null ? "…" : "–"), el("td", null, fmtIP(g.outs / 3)), el("td", null, String(g.pit)), nc,
+                el("td", null, String(g.k)), el("td", null, String(g.bb)), el("td", null, kbb(g)), el("td", null, pc(g.gb, g.bip)), el("td", null, pc(g.pu, g.bip)));
+      tb.append(fin(tr));
     }
-    const s0 = p.m || {}, tot = el("tr", "ftot");
-    const sluck = log.reduce((a, g) => a + (g.luck || 0), 0), ser = log.reduce((a, g) => a + (g.g.er || 0), 0);
-    tot.append(el("td", "l", "Season"), el("td", "plus", sea == null ? "–" : String(Math.round(sea))), el("td", "gend"),
-               el("td", null, fmtIP(log.reduce((a, g) => a + g.ip, 0))), el("td", null, String(ser)),
-               ...RES.map(([, k]) => el("td", "rt", pc(s0[k]))),
-               ueraTd((() => { const v = underlyingERA(p, impliedKBB(p, null, sorted), sorted); return v == null ? null : { v, pct: sorted.uera ? insertPct(sorted.uera, -v) : null }; })()),
-               ...UND.map(([, k]) => el("td", "rt", pc(s0[k]))));
-    tb.append(tot); t.append(tb);
-    const sw = el("div", "stuffscroll glogscroll"); sw.append(t); box.append(sw);
-    // oldest first puts the latest game at the bottom: open with the picked row in view
-    if (onRow) requestAnimationFrame(() => { const top = onRow.offsetTop - sw.clientHeight + onRow.offsetHeight + 8; if (top > 0) sw.scrollTop = top; });
-    // the picked game
-    const det = el("div", "gdetail");
-    det.append(el("h4", "gdhd", `${pick.date ? fmtDate(pick.date) : ""} · ${pick.sp ? "start" : "relief"} · ${fmtIP(pick.ip)} IP, ${pick.g.er ?? "–"} ER, ${pick.g.k} K, ${pick.g.bb} BB, ${pick.g.bf} BF, ${pick.g.pit} pitches`));
-    // the day's rates, each over his season's
-    { const bx = el("div", "gpart"); bx.append(el("div", "gsub", "Box score — that day, his season under it"));
-      const grid = el("div", "gbox");
-      for (const [lab, k, hib] of [["K%", "k", 1], ["BB%", "bb", 0], ["Whiff%", "whf", 1], ["Strike%", "strk", 1], ["Zone%", "zone", 1], ["Chase%", "osw", 1], ["GB%", "gb", 1], ["Popup%", "pu", 1]]) {
-        const v = pick[k], sv = s0[k], d = v != null && sv != null ? v - sv : null, c = el("div", "gtile");
-        const big = el("b", "gv" + (d == null || Math.abs(d) < 3 ? "" : (d > 0) === !!hib ? " up" : " down"), pc(v));
-        c.append(el("span", "gl", lab), big, el("i", null, `season ${pc(sv)}`)); grid.append(c);
-      }
-      bx.append(grid); det.append(bx); }
-    const gp = gamePitches(p, pick.day), SP = seasonPitches(p);
-    const pt = el("div", "gpart");
-    pt.append(el("div", "gsub", "Every pitch that day — his season under each number"));
-    if (gp === "loading") pt.append(el("p", "note", "Loading his pitches game by game…"));
-    else if (!gp || !gp.length) pt.append(el("p", "note", "No graded pitches that day."));
-    else {
-      const t2 = el("table", "ubt stufft gpt"), h2 = el("tr");
-      const cols = [["Pitch", "l"], ["#", "", "Pitches thrown"], ["Pitching+"], ["Δ", "", "Pitching+ that day minus his season's for the pitch"], ["Whiff+"], ["BB+", "", "Batted-ball+"],
-                    ["Use", "", "Share of his pitches"], ["Velo"], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin"],
-                    ["xWhiff", "", "The model's whiff rate per swing"], ["Whiff%", "", "Whiffs per swing (hover for whiffs / swings that day)"],
-                    ["xGB", "", "The model's ground-ball rate on contact"], ["GB%", "", "Ground balls per ball in play (hover for the count)"], ["xPU", "", "The model's popup rate on contact"], ["PU%", "", "Popups per ball in play"]];
-      for (const [h, c, tt] of cols) { const e = el("th", c || null, h); if (tt) e.title = tt; h2.append(e); }
-      const th2 = el("thead"); th2.append(h2); t2.append(th2);
-      const b2 = el("tbody"), plusTd = (v, sv) => { const td = el("td", "plus xa"); const b = el("b", null, v == null ? "–" : String(Math.round(v))); if (v != null) { const ps = plusStyle(v); if (ps) { td.style.background = ps.bg; td.style.color = ps.fg; } } td.append(b, el("i", null, sv == null ? "–" : String(Math.round(sv)))); return td; };
-      const two = (a, b, d = 1) => { const td = el("td", "xa"); td.append(el("b", null, a == null ? "–" : a.toFixed(d)), el("i", null, b == null ? "–" : b.toFixed(d))); return td; };
-      const tip = (td, t) => { td.title = t; return td; };
-      const dlt = (d, thr) => el("td", "dlt " + (d == null ? "" : d >= thr ? "up" : d <= -thr ? "down" : ""), d == null ? "–" : signed(d, 0));
-      const n0 = gp.reduce((a, r) => a + r.n, 0), tot2 = { n: 0, st: 0, w: 0, b: 0 };
-      for (const r of gp) {
-        const S = SP[r.pt] || {}, ok = r.n >= 5, tr = el("tr");
-        tr.append(el("td", "l", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)),
-                  plusTd(ok ? r.st : null, S.st), dlt(ok && r.st != null && S.st != null ? r.st - S.st : null, 5), plusTd(ok ? r.w : null, S.w), plusTd(ok ? r.b : null, S.b),
-                  two(100 * r.n / n0, S.use), two(r.velo, S.velo), two(r.ivb, S.ivb), two(r.hb, S.hb), two(r.spin, S.spin, 0),
-                  two(r.xwhf, S.xwhf), tip(two(r.whf, S.whf), `${r.wh} whiffs on ${r.sw} swings`), two(r.xgb, S.xgb), tip(two(r.gb, S.gb), `${r.bipgb} of ${r.bip} balls in play`), two(r.xpu, S.xpu), tip(two(r.pu, S.pu), `${r.bippu} of ${r.bip} balls in play`));
-        b2.append(tr);
-        if (r.st != null) { tot2.n += r.n; tot2.st += r.st * r.n; tot2.w += r.w * r.n; tot2.b += r.b * r.n; }
-      }
-      const wx = (k) => gp.reduce((a, r) => a + (r[k] || 0) * r.n, 0) / n0, sb = gp.reduce((a, r) => a + r.bip, 0), ssw = gp.reduce((a, r) => a + r.sw, 0), swh = gp.reduce((a, r) => a + r.wh, 0);
-      const Sv = Object.values(SP), sn = Sv.reduce((a, r) => a + (r.n || 0), 0), swx = (k) => (sn ? Sv.reduce((a, r) => a + (r[k] || 0) * (r.n || 0), 0) / sn : null);
-      const tr = el("tr", "ftot"), gt = tot2.n ? tot2.st / tot2.n : pick.st;
-      tr.append(el("td", "l", "All pitches"), el("td", null, String(n0)), plusTd(gt, sea), dlt(gt != null && sea != null ? gt - sea : null, 3),
-                plusTd(tot2.n ? tot2.w / tot2.n : pick.swhf, s0.swhf), plusTd(tot2.n ? tot2.b / tot2.n : pick.sbb, s0.sbb), el("td"), el("td"), el("td"), el("td"), el("td"),
-                two(wx("xwhf"), swx("xwhf")), tip(two(ssw ? 100 * swh / ssw : null, s0.whf), `${swh} whiffs on ${ssw} swings`),
-                two(wx("xgb"), swx("xgb")), tip(two(sb ? 100 * gp.reduce((a, r) => a + r.bipgb, 0) / sb : null, s0.gb), `${sb} balls in play`), two(wx("xpu"), swx("xpu")), two(sb ? 100 * gp.reduce((a, r) => a + r.bippu, 0) / sb : null, s0.pu));
-      b2.append(tr); t2.append(b2);
-      const w2 = el("div", "stuffscroll gframe"); w2.append(t2); pt.append(w2);
-    }
-    det.append(pt);
-    // batted-ball luck that day
-    const c = K(), lk = el("div", "gpart");
-    lk.append(el("div", "gsub", "Batted-ball luck"));
-    if (!c || !c.bbw) lk.append(el("p", "note", "No batted-ball values for this season."));
-    else {
-      const t3 = el("table", "ubt gluck"), h3 = el("tr");
-      for (const h of ["", "BIP", "wOBA", "Lg", "Runs"]) h3.append(el("th", h ? null : "l", h));
-      const th3 = el("thead"); th3.append(h3); t3.append(th3);
-      const b3 = el("tbody"), names = { gb: "Ground balls", ld: "Line drives", fb: "Fly balls", pu: "Popups" };
-      for (const k of ["gb", "ld", "fb", "pu"]) {
-        const [n, w] = pick.T[k], r = n ? (w - n * c.bbw[k]) / (c.wobaScale || 1.25) : null, tr = el("tr");
-        tr.append(el("td", "l", names[k]), el("td", null, String(n || 0)), el("td", null, n ? fmtX(w / n) : "–"), el("td", null, fmtX(c.bbw[k])), el("td", "lk " + luckCls(r == null ? null : r * 2), r == null ? "–" : signed(r)));
-        b3.append(tr);
-      }
-      const tr = el("tr", "ftot"), nb = ["gb", "ld", "fb", "pu"].reduce((a, k) => a + (pick.T[k][0] || 0), 0), wb = ["gb", "ld", "fb", "pu"].reduce((a, k) => a + (pick.T[k][1] || 0), 0),
-            lgb = ["gb", "ld", "fb", "pu"].reduce((a, k) => a + (pick.T[k][0] || 0) * c.bbw[k], 0);
-      tr.append(el("td", "l", "All balls in play"), el("td", null, String(nb)), el("td", null, nb ? fmtX(wb / nb) : "–"), el("td", null, nb ? fmtX(lgb / nb) : "–"), el("td", "lk " + luckCls(pick.luck), signed(pick.luck)));
-      b3.append(tr); t3.append(b3); { const fr = el("div", "gframe"); fr.append(t3); lk.append(fr); }
-      if (pick.luck != null) {
-        const v = el("p", "gverdict"); v.append(el("span", "chip2 " + (pick.luck >= 0.5 ? "unlucky" : pick.luck <= -0.5 ? "lucky" : "even"), luckWord(pick.luck)),
-          ` ${pick.luck >= 0 ? "His balls in play cost him" : "His balls in play saved him"} ${Math.abs(pick.luck).toFixed(1)} run${Math.abs(pick.luck) >= 0.95 && Math.abs(pick.luck) < 1.05 ? "" : "s"} against league-average results on the same kinds of contact.`);
-        lk.append(v);
-      }
-    }
-    det.append(lk);
-    box.append(det);
-    box.append(el("p", "note", "Every appearance this season, whatever the card's dates or splits. Stuff+ grades each pitch that day on its traits against the league's pitches of its type — 100 is average — and Δ is that day against his season (under each grade). A game's grade on a handful of pitches is noisy; a pitch he threw fewer than 5 times isn't graded on its own. BIP luck gives each ball in play the league's wOBA for its type (ground ball, line drive, fly ball, popup) and counts what he actually allowed above or below that, in runs: + means the balls fell in against him."));
+    const T = { w: games.every((g) => g.w) }; for (const k of OUT_F) T[k] = games.reduce((a, g) => a + g[k], 0);
+    const trt = el("tr", "tot first");
+    trt.append(el("td", "l f1", `${games.length} ${games.length === 1 ? "game" : "games"}`), el("td"), el("td", null, fmtIP(T.outs / 3)), el("td", null, String(T.pit)), el("td", null, mi(dayNERA(T, c), 2)),
+               el("td", null, String(T.k)), el("td", null, String(T.bb)), el("td", null, kbb(T)), el("td", null, pc(T.gb, T.bip)), el("td", null, pc(T.pu, T.bip)));
+    tb.append(gap(), fin(trt));
+    box.append(wrap);
+    if (hand >= 0) box.append(el("p", "note", "Each row is the whole outing: the batter-hand split doesn't cut a game in two."));
     return box;
   }
   // Hitter Game Logs (Sean, 29 Sep 2026): the pitchers' tab for a hitter — every game this season from the day rows, whatever the
