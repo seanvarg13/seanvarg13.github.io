@@ -5893,6 +5893,10 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root[data-flat]:not(#j1):not(#j2):not(#j3):not(#j4) :is(.tbtn, .pill):not(.on):not([aria-expanded="true"]):not(.solo) { background: var(--btn) !important; color: var(--btn-ink) !important; }
 :root[data-flat]:not(#j1):not(#j2):not(#j3):not(#j4) :is(.tbtn, .pill):is(.on, [aria-expanded="true"]) { background: color-mix(in srgb, var(--accent-2) 16%, #ffffff) !important; color: var(--flat-ink) !important; }
 :root[data-flat]:not(#j1):not(#j2):not(#j3):not(#j4) :is(.pop-close, #pboard, .hub, #fboard, .pagehead) { border-color: transparent !important; }
+/* no white ring round a table (Sean, 18 Oct 2026: "On the jets theme a lot of the tables have a white outline and shadows get rid of the white outline
+   and just keep the shadow"): a frame's transparent 1px edge let its own white ground show round the coloured header rows and the Bio box's head, so
+   the frames have no edge at all here and a table meets its shadow directly */
+:root[data-flat]:not(#j1):not(#j2):not(#j3):not(#j4) :is(#bscroll, .board-scroll, .sbscroll, .brscroll, .fscroll, .pbscroll, .stuffscroll, .rawscroll, .gframe, .pbinfo, #pop, .phwin, .ddmenu, .ddlist, .hcard) { border-width: 0 !important; }
 :root[data-flat]:not(#j1):not(#j2):not(#j3):not(#j4):not(#j5) body[data-mode="player"] main.wrap { border-top-color: var(--accent-2) !important; }   /* the 1px line between the header and the band was main's white through its transparent edge; a fifth id, since the frames rule above carries #bscroll in its :is() and had kept the line white */
 /* the white buttons keep the scheme's type colour (--flat-ink) in dark mode too (their ink token turns near-white there, white on white), and the
    header's current page is the band's colour itself with white type, not a filled box */

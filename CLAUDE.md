@@ -4489,6 +4489,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   - **Found and fixed for all three**: the 1px line between the site header and the player's bar (white in light mode, the page's dark in dark
     mode). The block's rule colouring main's top edge had four ids' weight and lost to the block's own frames rule, whose `:is()` carries
     `#bscroll`; it has a fifth now, and the header runs straight into the bar.
+* **No white ring round the tables in the flat schemes (Sean, 18 Oct 2026: "On the jets theme a lot of the tables have a white outline and shadows
+  get rid of the white outline and just keep the shadow")**: the flat block had made each table frame's 1px edge transparent, and the frame's own
+  white ground showed through it as a ring round the coloured header rows (and the Bio box's head). Under `[data-flat]` those frames have no edge
+  at all (`border-width: 0` on `#bscroll`, `.board-scroll`, `.sbscroll`, `.brscroll`, `.fscroll`, `.pbscroll`, `.stuffscroll`, `.rawscroll`,
+  `.gframe`, `.pbinfo`, `#pop`, `.phwin`, `.ddmenu`, `.ddlist`, `.hcard`), so a table meets its shadow directly; the shadows stay. All three flat
+  schemes share it.
 
 ## 10. The football site moved out
 
