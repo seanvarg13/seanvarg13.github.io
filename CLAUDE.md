@@ -192,7 +192,7 @@ EV ≥ 95. Sweet-spot is 9-31° full credit and 8° / 32° half credit (the roun
 bunts, as Savant's do. Bat speed averages **competitive swings** — everything at or above the hitter's own 10th
 percentile swing speed, which is Savant's roughly-hardest-90% rule.
 
-**Since 11 Oct 2026 the site's xwOBA is talent xwOBA** (§8, "Talent xwOBA is the xwOBA"); what follows describes the batted-ball model, which
+**Since 11 Oct 2026 the site's xwOBA is talent xwOBA** (§8, "Talent xwOBA is the xwOBA"), and since 18 Oct 2026 it carries his parks unless a switch says park-neutral (§8, "xwOBA carries his parks"); what follows describes the batted-ball model, which
 feeds it and still stands where talent can't be built. **xwOBA was the directional model, and only that** (Sean, 24 Sep 2026: "get rid of statcast xwoba completely").
 Everywhere the site says xwOBA, xBA or xSLG — the headline, the rank, the leaderboards, the cards, the player page,
 the rolling chart, the fantasy xPts — it means Sean's model (`xwd` / `dxba` / `dxslg` in `app.js`; the old
@@ -4352,6 +4352,38 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Filters, bars, the season table) and the Today look checked untouched (no Start, tray or icons shown; 25 bubbles / 75 ticks / 5 rules on
   Judge's page). Not done, on purpose: a bottom taskbar (every sticky offset on the site hangs off the header's height) and a menu bar in the
   windows (menus that do nothing are a trap; the real ones would be a page's filters, which the Filters button already is).
+
+* **xwOBA carries his parks; a switch for park-neutral (Sean, 18 Oct 2026, from Goodman's and Rumfield's xwOBA tabs: "maybe for the xwoba we do
+  include the park factor in the build and include it in the xwoba, and then what we do is we have an option on the leaderboards that allows us to
+  switch between park neutral and raw ... on the build up make it the last piece and next to the piece before the park factor goes in make it say
+  park-neutral xwoba, and then make xwOBA be the piece after the park factor goes in", "for Hunter Goodman and other say Rockies players I want to
+  see their park factor included in their xwOBA since it does impact their production and will next year too")**:
+  - **The number**: the site's xwOBA (`m.xwd` / `m.xwoba` / `m.txw`) is the in-his-parks one — talentCore's `rawPk`, every expected piece (K%, BB%,
+    xHR/FB, xBABIP, bases per hit) moved by his parks' residual — wherever the season has park numbers. The skills are still measured
+    park-neutral, so the build-up's pieces and Fixing the flaw's elite / flaw picks don't move. `talentOf` keeps both (`t.txwN` park-neutral,
+    `t.xwpk` in his parks, `t.parkIn`, `t.txw` the one in use) and `V()` adds **`m.xwn`**, a Leaderboard column "Park-neutral xwOBA" beside "xwOBA,
+    his parks" (those two always mean one thing; xwOBA itself follows the switch).
+  - **The switch**: Leaderboard ▸ Filters ▸ Stats, a row under the column sets — xwOBA: With his parks · Park-neutral (`xwParkSwitch`; per device,
+    `draft2027.xwpark`, `XWN` / `setXwPark` beside `wrcOn`). `viewKey` carries `:xn`, so every value, pool, percentile and sort follows, and so do
+    the cards, the season table, the Summary, home, Fixing the flaw (its cache key) and the projection. The Leaderboard's title reads "by
+    park-neutral xwOBA" while it's on.
+  - **The build-up** (`xwBuildUp`): Extra bases lands on the park-neutral number, marked light blue "Park-neutral xwOBA" (`kneut`); then a **Park
+    factor** row (His = his top park and its share of his PA, ± = what his parks add) lands on the gold "xwOBA". Under the park-neutral switch the
+    gold sits on Extra bases ("xwOBA") and the park row's number reads "xwOBA with his parks" in light blue. A season without park numbers (the
+    minors) ends at Extra bases, gold. On a phone the longer word hangs past the frame and the tab's box scrolls to it, as the other marks do.
+  - **Expected vs actual** works in the same place as the xwOBA: with his parks, the expected pieces carry his parks and the actual ones are as they
+    happened (raw K%, BB%, HR/FB, BABIP, bases per hit, heat among the qualifiers' raw rates), the wOBA row is his raw wOBA against his xwOBA, and
+    there's no park row (the park sits on both sides; each piece's Diff is the same as at a neutral park). Under the switch it's the neutral table
+    with the In his parks row, as before.
+  - **Season table and projection**: `hist/career-bb.js` carries **`txwpk`** (appended to `SBX_KEYS`; `talent_of(..., park=True)` in
+    `tools/build_career.py`; the file regenerated — every older value unchanged). `sbxOf` hands it out as `txw` unless the switch is on (keeping
+    `txwn`); `sbxPool(…, "txw")` and the season leaders' cache key follow; `projFill` takes his last two seasons with their parks when this one has
+    them.
+  - **Tested** (scratch `parkxw/test.py` on the audit table, every 100+ PA hitter 2015-25 against next season's wOBA): the same season r .846 with
+    parks against .835 (300+ PA); next season a wash overall (.550 / .546 at 300+ PA, .482 / .483 at 100+), a little better for hitters who stayed
+    with their club (.576 / .568) and a little worse for those who moved (.412 / .424). The projection's miss for Rockies who stayed fell from 37 to
+    31 wOBA points (the neutral one ran 23 points under them).
+  - **2026**: Goodman .335 → .354 (xwOBA proj. .321 → .336), Rumfield .316 → .334; Yordan .435 either way.
 
 ## 10. The football site moved out
 
