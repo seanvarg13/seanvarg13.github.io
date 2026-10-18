@@ -3315,17 +3315,29 @@
     { const g = groupFor(state.pos), pit = isPitcherGroup(g);   // the Stuff+ board's count line at the right (Sean, 3 Oct 2026)
       const who = onePage() ? ` ${pit ? "pitchers" : "hitters"} · ${DS.season}${state.mode === "leaderboard" ? ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}` : ""}` : "";   /* a desktop keeps the fuller count beside its page range (16 Oct 2026) */
       const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}${state.mode === "draft" ? " · tap to draft, tap again to undo" : ""}`; })() : null;   // the board: tiers · tiered · listed (Draft mode has no buttons)
-      box.append(el("span", "pcount", bc != null ? bc : pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}${mobileView() ? "" : who}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total}${who}` : `${total} players`)); }
+      const ct = bc != null ? bc : pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}${mobileView() ? "" : who}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total}${who}` : `${total} players`;
+      const pc = el("span", "pcount", ct);
+      // Fantasy's count shares the row with the page numbers, so it holds the width of its widest label (the last page's; the digits are
+      // tabular) under the one it shows, and the arrows don't slide as "1–50" turns into "101–150" (18 Oct 2026)
+      if (onChange && pg.size && pg.pages > 1) { pc.textContent = ""; const w = el("span", "pcfix"), g = el("span", "pcg", `${(pg.pages - 1) * pg.size + 1}–${total} of ${total}`); g.setAttribute("aria-hidden", "true"); w.append(el("span", null, ct), g); pc.append(w); }
+      box.append(pc); }
     if (pg.pages > 1) {
       const nav = el("div", "pnav");
       const b = (label, n, title, dis) => { const x = el("button", "pbtn", label); x.type = "button"; x.title = title; x.disabled = dis; x.addEventListener("click", () => go(n)); return x; };
       nav.append(b("‹", pg.page - 1, "Previous page", pg.page === 1));   // no « / » (minimal pass 5): the first and last pages are numbered anyway
-      const near = document.documentElement.dataset.view === "mobile" ? 1 : 2;
-      const nums = new Set([1, pg.pages, ...Array.from({ length: 2 * near + 1 }, (_, i) => pg.page - near + i)].filter((n) => n >= 1 && n <= pg.pages));
-      let last = 0;
-      for (const n of [...nums].sort((a, c) => a - c)) {
-        if (n - last > 1) nav.append(el("span", "pgap", "…"));
-        const x = b(String(n), n, `Page ${n}`, false); if (n === pg.page) x.setAttribute("aria-current", "page"); nav.append(x); last = n;
+      // five slots between the arrows, every cell the same width, so neither arrow ever moves (Sean, 18 Oct 2026: "Make it so the two arrows are
+      // stable and never change positions ... the arrow then page 1 then dots then the current page, then dots then the last page then the other
+      // arrow"): ‹ 1 … c … N ›, and at the ends the neighbours fill the slots (‹ 1 2 3 … N ›, ‹ 1 … N−2 N−1 N ›); five pages or fewer are all
+      // shown, centred in the five. 0 is the dots, null an empty slot
+      const P = pg.pages, c = pg.page;
+      const slots = P <= 5 ? [...Array(Math.floor((5 - P) / 2)).fill(null), ...Array.from({ length: P }, (_, i) => i + 1)]
+        : c <= 2 ? [1, 2, 3, 0, P] : c >= P - 1 ? [1, 0, P - 2, P - 1, P] : [1, 0, c, 0, P];
+      while (slots.length < 5) slots.push(null);
+      nav.classList.add("pslots");
+      for (const n of slots) {
+        if (n == null) { nav.append(el("span", "pslot")); continue; }
+        if (n === 0) { nav.append(el("span", "pgap", "…")); continue; }
+        const x = b(String(n), n, `Page ${n}`, false); if (n === c) x.setAttribute("aria-current", "page"); nav.append(x);
       }
       nav.append(b("›", pg.page + 1, "Next page", pg.page === pg.pages));
       if (botOn) bot.append(nav); else if (phonePages() && box.id === "pagertop") { const pc = box.querySelector(".pcount"); if (pc) box.append(pc); nav.classList.add("inbar"); box.append(nav); } else box.append(nav);   /* a phone: the count and the small page numbers ride on the Filters button's line (Sean, 6 Oct 2026) */   // a phone: the count left, small page numbers right on one line (Sean, 6 Oct 2026: pages back, "put it in the upper gap on the right")   // a phone: the count and the page numbers share one line (Sean, 6 Oct 2026: the table started too far down)
