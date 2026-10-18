@@ -4495,6 +4495,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   at all (`border-width: 0` on `#bscroll`, `.board-scroll`, `.sbscroll`, `.brscroll`, `.fscroll`, `.pbscroll`, `.stuffscroll`, `.rawscroll`,
   `.gframe`, `.pbinfo`, `#pop`, `.phwin`, `.ddmenu`, `.ddlist`, `.hcard`), so a table meets its shadow directly; the shadows stay. All three flat
   schemes share it.
+* **The season table's years plain, the selected season unshaded (Sean, 18 Oct 2026, Bregman's page on his phone: "the year does not need the
+  underline here and I think we can eliminate the highlighting of the row of the selected year")**: the `.sbt .sbyr` underline and the two
+  `tr.cur td` tints (`.sbt`, `table.hrfbt`) are deleted from `styles.css`, so the years are plain type and the season shown is a row like any
+  other, in every scheme and in every B-Ref table that tinted it (the season table, HR / FB and BABIP by season, the Fantasy tab's By season).
+  The In Split row keeps its tint (it isn't a season), and the rows still carry class `cur`. The earlier entries' "the current season tinted"
+  is history.
 
 ## 10. The football site moved out
 

@@ -4614,8 +4614,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .sbt td.f3, :root:root:root:root:root:root .sbt td.sbl { border-right: 2px solid var(--ink); }
 :root:root:root:root:root:root .sbt th.f3 { border-right: 2px solid rgba(255,255,255,.8); }
 :root:root:root:root:root:root .sbt td.sbl { font-weight: 700; text-align: right; }
-:root:root:root:root:root:root .sbt .sbyr { text-decoration: underline; text-decoration-color: var(--accent-2); text-underline-offset: 2px; }
-:root:root:root:root:root:root .sbt tr.cur td { background: color-mix(in srgb, var(--accent-2) 24%, var(--surface)); font-weight: 600; }
 :root:root:root:root:root:root .sbt tr.insplit td { background: color-mix(in srgb, var(--accent-2) 12%, var(--surface)); font-weight: 500; }
 :root:root:root:root:root:root .sbt .sbsplit { display: flex; flex-direction: column; line-height: 1.1; }
 :root:root:root:root:root:root .sbt .sbsplit i { font-style: italic; }
@@ -4842,7 +4840,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root table.hrfbt td.hheat { font-weight: 700 !important; }
 :root:root:root:root:root:root table.hrfbt td.pos { color: #b3261e; font-weight: 600 !important; }
 :root:root:root:root:root:root table.hrfbt td.neg { color: #2f5fa8; font-weight: 600 !important; }
-:root:root:root:root:root:root table.hrfbt tr.cur td { background: color-mix(in srgb, var(--accent-2) 14%, var(--surface)); }
 :root:root:root:root:root:root table.hrfbt tr.tot td { font-weight: 700 !important; border-top: 2px solid var(--ink); }
 :root:root:root:root:root:root .hrfbbox .rollhd { padding-left: 3px; }
 /* ---- B-Ref tables everywhere (Sean, 9 Oct 2026, the B-Ref Style Tables canvas: "I want that for everything"): the season table's
