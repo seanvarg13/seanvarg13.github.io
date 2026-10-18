@@ -4304,6 +4304,25 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   percentile's colour and the number on a raised grey tag (`.w2knum`) kept inside the field, no ticks or dashed rules; the Mix tab's HTML
   tracks (`.svtrack`) get the same through CSS (a `mask-image` cuts the fill into blocks, the `.bub` becomes the tag). Savant's drawing is
   untouched when the class is off (25 bubbles, 75 ticks on Judge's page, checked).
+  **MS Sans Serif, calmer bars, grey totals (Sean, 18 Oct 2026, from Acuña's season table, the bars and a Chicago95 Appearance dialog: "make
+  the bottom two rows of the table like the grey color", "anything you can do to make the percentile bars easier on the eye", "make the default
+  font when in windows mode MSSans Serif and make it look like that. Keep it at the Barlow current one when it is in today mode")**: (1) the
+  look's type is **`--w2kfont`** = `"MS Sans Serif", "Microsoft Sans Serif", Helvetica, Arial, sans-serif` — the bitmap face where a machine has
+  it, else Helvetica / Arial, which is how his screenshot rendered it — at **11px everywhere** (8pt, 1997's one size: menus, buttons, labels,
+  notes, cells; bold carries the hierarchy, title bars 11px bold) but the player's name (18px / 16px on a phone), the × glyphs (16px), the draft
+  clock (20px) and the window-internal headings (`#lbtitle h2`, `.sbtitle`, `.pcthd`, `.rollname`, `.ahead`, `.sgh`, `.mkh`, 12px bold); a
+  phone's inputs and selects stay 16px (under that an iPhone zooms into a focused box). Tahoma is gone from the block; the Today look's fonts
+  are untouched (nothing in the block applies without the class). (2) **The bars** are Savant's drawing in a sunken white field: one smooth fill
+  in the percentile's colour and the bubble squared — an 18px flat square in the darker shade (`s.bub`) at the fill's end with white digits
+  (`.w2knum`, 8.5px for a 100), the name bold and the value plain (the value text carries **`svvl`** now, harmless to the Today look); the Mix
+  tab's HTML tracks the same (`.svtrack .bub` an 18px square, the `mask-image` blocks gone). The first cut's block fill and raised tag were the
+  busy part. (3) **The totals rows** (N Yrs / 162 Game Avg / All pitches, the Leaderboard's Qualified avg) are the window's grey `#d4d0c8`,
+  bold — they had drawn white because the cells' white rule mixed `#rows` and `table td` in one `:is()`, which lends every mixed rule an id's
+  weight; the `#rows` side and the `table` side are separate rules now and the totals / gap / current-season rules carry `:is(#rows, table)` so
+  they outrank the cells. Also: home's windows sit straight on Bliss again (the warm pass's white page card had sat under them —
+  `[data-mode="home"] main.wrap` is transparent), and the bubble-digit rule carries `:is(#xboard, #modal, body)` because the band's
+  `#xboard .svpct text { fill: #000 }` rule outranked a class-only white. Source: scratch `w2k/block.css`, expanded by `w2k/expand.py` (`@W` =
+  the desktop prefix, `@M` = the same with `[data-view="mobile"]` on the root).
 
 ## 10. The football site moved out
 
