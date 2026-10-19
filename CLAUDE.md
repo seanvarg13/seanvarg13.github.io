@@ -4501,6 +4501,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   other, in every scheme and in every B-Ref table that tinted it (the season table, HR / FB and BABIP by season, the Fantasy tab's By season).
   The In Split row keeps its tint (it isn't a season), and the rows still carry class `cur`. The earlier entries' "the current season tinted"
   is history.
+* **The Leaderboard comes back to the exact spot after a player's popup (Sean, 19 Oct 2026, two phone screenshots: rows 27-44 before opening a
+  player, rows 33-50 after closing him — "I want it to leave me in the exact same spot")**: a phone draws only the rows near the screen and reserves
+  the rest at a placeholder height (`content-visibility: auto` on `body.brlb #rows > li.row`, 11 Oct 2026), and that height was a fixed 23px — the
+  Baseball-Reference tables' row. On the Classic tables (Appearance ▸ Tables) a row is 30px, so when the closed popup redrew the list and put the old
+  scroll back, the rows above the screen counted 23px each and it landed rows away (Chromium five rows up, his iPhone six down). `renderRowsIn` now
+  measures the first drawn row (that one row is kept drawn) and sets `--rowh` on `#rows`; the rule reads `contain-intrinsic-size: auto var(--rowh,
+  23px)` and skips the gap and totals rows (9px / 30px). Every regular row is one height in both looks (269 of 269). Checked headless on a 393px
+  phone, both table looks, 25 / 50 / 100 / All a page, from 30%, 62% and the bottom of the rows: 24 of 24 open-and-close round trips back to the same
+  pixel and the same sideways scroll.
 
 ## 10. The football site moved out
 

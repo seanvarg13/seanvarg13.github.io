@@ -3164,6 +3164,10 @@
     if (BR && onePage() && list.length && pg.end >= (grouped ? at.size : list.length)) frag.append(...brTotRows(g, ms, stats, ends, preOn));   // the foot of the Leaderboard's last page (not a ranked list's)
     ol.append(frag);
     fitNameCol();
+    // a phone draws only the rows near the screen and reserves the rest at a placeholder height (content-visibility, styles.css): that height
+    // is the drawn row's own, measured here — the guessed 23px put a scroll put back after a player's popup rows away from where it was on
+    // the Classic tables' 30px rows (Sean, 19 Oct 2026: closing his page "brings me to the spot ... where I am in the second screenshot")
+    if (mobileView() && BR) { const r0 = ol.querySelector("li.row:not(.brgap):not(.brtot)"); if (r0) { r0.style.contentVisibility = "visible"; const h = r0.getBoundingClientRect().height; if (h > 0) ol.style.setProperty("--rowh", h + "px"); } }
     if (mobileView()) requestAnimationFrame(() => {   // a long name steps down to 13 then 11.5px before it ellipsises (Sean, 6 Oct 2026: "fit the names in there")
       // measured on a canvas, not by reading each row back (that forced a layout per row — seconds once a phone lists everyone, 11 Oct 2026)
       const names = [...ol.querySelectorAll(".name")]; if (!names.length) return;

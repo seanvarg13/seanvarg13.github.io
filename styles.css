@@ -5361,7 +5361,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pop #lbseason .spanseg { overflow: visible !important; }
 /* A phone's Leaderboard lists everyone (Sean, 11 Oct 2026): rows off the screen skip layout and paint until they scroll near, so 540 rows cost
    about what 25 did. */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #rows > li.row { content-visibility: auto; contain-intrinsic-size: auto 23px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #rows > li.row:not(.brgap):not(.brtot) { content-visibility: auto; contain-intrinsic-size: auto var(--rowh, 23px); }   /* --rowh: the drawn row's height (renderRowsIn), so a scroll put back lands on the same row (19 Oct 2026) */
 /* A phone's pages under the table (Sean, 11 Oct 2026: "page buttons ... locked in at the bottom of the table so they're always there and ... where you
    scroll between pages and select how many per page"): #pagerbot, right under the rows' box, which takes the height left above it. */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #pagerbot.phbot { display: flex !important; align-items: center; justify-content: space-between; gap: 8px; flex: 0 0 auto;
