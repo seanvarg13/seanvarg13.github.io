@@ -3341,24 +3341,7 @@
       if (onChange && pg.size && pg.pages > 1) { pc.textContent = ""; const w = el("span", "pcfix"), g = el("span", "pcg", `${(pg.pages - 1) * pg.size + 1}–${total} of ${total}`); g.setAttribute("aria-hidden", "true"); w.append(el("span", null, ct), g); pc.append(w); }
       box.append(pc); }
     if (pg.pages > 1) {
-      const nav = el("div", "pnav");
-      const b = (label, n, title, dis) => { const x = el("button", "pbtn", label); x.type = "button"; x.title = title; x.disabled = dis; x.addEventListener("click", () => go(n)); return x; };
-      nav.append(b("‹", pg.page - 1, "Previous page", pg.page === 1));   // no « / » (minimal pass 5): the first and last pages are numbered anyway
-      // five slots between the arrows, every cell the same width, so neither arrow ever moves (Sean, 18 Oct 2026: "Make it so the two arrows are
-      // stable and never change positions ... the arrow then page 1 then dots then the current page, then dots then the last page then the other
-      // arrow"): ‹ 1 … c … N ›, and at the ends the neighbours fill the slots (‹ 1 2 3 … N ›, ‹ 1 … N−2 N−1 N ›); five pages or fewer are all
-      // shown, centred in the five. 0 is the dots, null an empty slot
-      const P = pg.pages, c = pg.page;
-      const slots = P <= 5 ? [...Array(Math.floor((5 - P) / 2)).fill(null), ...Array.from({ length: P }, (_, i) => i + 1)]
-        : c <= 2 ? [1, 2, 3, 0, P] : c >= P - 1 ? [1, 0, P - 2, P - 1, P] : [1, 0, c, 0, P];
-      while (slots.length < 5) slots.push(null);
-      nav.classList.add("pslots");
-      for (const n of slots) {
-        if (n == null) { nav.append(el("span", "pslot")); continue; }
-        if (n === 0) { nav.append(el("span", "pgap", "…")); continue; }
-        const x = b(String(n), n, `Page ${n}`, false); if (n === c) x.setAttribute("aria-current", "page"); nav.append(x);
-      }
-      nav.append(b("›", pg.page + 1, "Next page", pg.page === pg.pages));
+      const nav = pageNav(pg, go);
       if (botOn) bot.append(nav); else if (phonePages() && box.id === "pagertop") { const pc = box.querySelector(".pcount"); if (pc) box.append(pc); nav.classList.add("inbar"); box.append(nav); } else box.append(nav);   /* a phone: the count and the small page numbers ride on the Filters button's line (Sean, 6 Oct 2026) */   // a phone: the count left, small page numbers right on one line (Sean, 6 Oct 2026: pages back, "put it in the upper gap on the right")   // a phone: the count and the page numbers share one line (Sean, 6 Oct 2026: the table started too far down)
     }
     if (botOn) {   // Per page beside the numbers
@@ -3374,6 +3357,27 @@
     if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs();
       if (phonePages()) { const pc = box.querySelector(".pcount"), nv = box.querySelector(".pnav"); if (pc) box.append(pc); if (nv) box.append(nv); }   /* after the Filters button */   // a phone: Min IP rides after the pills; the count is on the page-number line
       else { const pc = box.querySelector(".pcount");   /* the count right beside the Filters button (Sean, 11 Oct 2026) */ if (pc) box.append(pc); if (mfKeep) { mfKeep.classList.add("topmin"); if (box.lastElementChild !== mfKeep) box.append(mfKeep); } } } }   // the count and the Min box on a quiet line under the controls (6 Oct 2026); the Min box moves only when it isn't already last   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
+  }
+  // ‹, the page numbers and › (no « / », minimal pass 5: the first and last pages are numbered anyway). Five slots between the arrows, every cell
+  // the same width, so neither arrow ever moves (Sean, 18 Oct 2026: "Make it so the two arrows are stable and never change positions ... the arrow
+  // then page 1 then dots then the current page, then dots then the last page then the other arrow"): ‹ 1 … c … N ›, and at the ends the
+  // neighbours fill the slots (‹ 1 2 3 … N ›, ‹ 1 … N−2 N−1 N ›); five pages or fewer are all shown, centred in the five. 0 is the dots, null an
+  // empty slot
+  function pageNav(pg, go) {
+    const nav = el("div", "pnav pslots");
+    const b = (label, n, title, dis) => { const x = el("button", "pbtn", label); x.type = "button"; x.title = title; x.disabled = dis; x.addEventListener("click", () => go(n)); return x; };
+    nav.append(b("‹", pg.page - 1, "Previous page", pg.page === 1));
+    const P = pg.pages, c = pg.page;
+    const slots = P <= 5 ? [...Array(Math.floor((5 - P) / 2)).fill(null), ...Array.from({ length: P }, (_, i) => i + 1)]
+      : c <= 2 ? [1, 2, 3, 0, P] : c >= P - 1 ? [1, 0, P - 2, P - 1, P] : [1, 0, c, 0, P];
+    while (slots.length < 5) slots.push(null);
+    for (const n of slots) {
+      if (n == null) { nav.append(el("span", "pslot")); continue; }
+      if (n === 0) { nav.append(el("span", "pgap", "…")); continue; }
+      const x = b(String(n), n, `Page ${n}`, false); if (n === c) x.setAttribute("aria-current", "page"); nav.append(x);
+    }
+    nav.append(b("›", pg.page + 1, "Next page", pg.page === pg.pages));
+    return nav;
   }
   function perPageField(setSize) {
     const sz = el("label", "field psize"); sz.append(el("span", null, "Per page"));
@@ -4520,6 +4524,10 @@
   // Trending lives inside the Leaderboard and the Fantasy leaderboard now (Season / Recent, 1 Oct 2026): off both menus
   for (const h of ["#trending", "#fantasy/trending"]) { const a = document.querySelector(`.modemenu a[href="${h}"]`); if (a) a.closest("li").remove(); }
   const pb = Object.assign({ pt: "all", hand: "all", role: "all", min: 100, sort: "pitp", dir: -1 }, load("draft2027.pitchboard", {}));
+  // a phone's Filters panel on the board (Sean, 20 Oct 2026): open across redraws so several filters can be set, shut by a tap elsewhere or a page change
+  let pbOpen = false;
+  document.addEventListener("click", (e) => { if (pbOpen && !e.target.closest(".pbfpanel, .pbfbtn, .ddmenu")) { pbOpen = false; render(); } });
+  window.addEventListener("hashchange", () => { pbOpen = false; });
   if (["stuffp", "whfp", "bbp", "xwhf", "xgb", "xpu", "aopt"].includes(pb.sort)) pb.sort = "pitp";   // Pitching+ again (6 Oct 2026); the stuff-only columns left the board   // the location columns left the board (6 Oct 2026: Stuff+ again)   // the stuff-only columns left the board (4 Oct 2026)
   // spring training (Sean, 29 Sep 2026: "track a pitchers stuff in spring training"): the board can read this spring's dataset
   // (hist/mlb-<year>-spring.js, graded by the MLB models against MLB pitch types) — next year's spring once it exists, else this one's
@@ -4564,17 +4572,32 @@
     rows.sort((a, b) => (a[key] == null) - (b[key] == null) || dir * ((a[key] ?? 0) - (b[key] ?? 0)) || b.n - a.n);
     // filters
     const save = () => { save_(); render(); }, save_ = () => { try { localStorage.setItem("draft2027.pitchboard", JSON.stringify(pb)); } catch {} };
-    const bar = el("div", "pbfilters");
+    const bar = el("div", "pbfilters"), PH = mobileView();
     const types = [...new Set(DS.players.filter((p) => p.type === "P" && p.ctx && p.ctx.arsenal).flatMap((p) => p.ctx.arsenal.map((a) => a[0])))]
       .filter((t) => T[t]).sort((a, b) => (T[b][0] || 0) - (T[a][0] || 0));
-    bar.append(pillSelect(pb.pt === "all" ? "All pitches" : PITCH_NAME[pb.pt] || pb.pt, [["all", "All pitches"], ...types.map((t) => [t, PITCH_NAME[t] || t])], pb.pt, (v) => { pb.pt = v; save(); }, "Pitch"));
-    bar.append(pillSelect(pb.hand === "all" ? "Both hands" : pb.hand === "R" ? "Righties" : "Lefties", [["all", "Both hands"], ["R", "Righties"], ["L", "Lefties"]], pb.hand, (v) => { pb.hand = v; save(); }, "Throws"));
-    bar.append(pillSelect(pb.role === "all" ? "SP + RP" : pb.role, [["all", "SP + RP"], ["SP", "SP"], ["RP", "RP"]], pb.role, (v) => { pb.role = v; save(); }, "Role"));
-    bar.append(pillSelect(`${pb.min}+ pitches`, [25, 50, 100, 200, 400, 800].map((n) => [String(n), `${n}+ pitches`]), String(pb.min), (v) => { pb.min = Number(v); save(); }, "Minimum"));
-    bar.append(pillSelect(pb.heat === "all" ? "Colour: all" : "Colour: sorted", [["sorted", "Colour the sorted column"], ["all", "Colour every + column"]], pb.heat === "all" ? "all" : "sorted", (v) => { pb.heat = v; save(); }, "Colour"));
+    const pills = [
+      ["Pitch", pillSelect(pb.pt === "all" ? "All pitches" : PITCH_NAME[pb.pt] || pb.pt, [["all", "All pitches"], ...types.map((t) => [t, PITCH_NAME[t] || t])], pb.pt, (v) => { pb.pt = v; save(); }, "Pitch")],
+      ["Throws", pillSelect(pb.hand === "all" ? "Both hands" : pb.hand === "R" ? "Righties" : "Lefties", [["all", "Both hands"], ["R", "Righties"], ["L", "Lefties"]], pb.hand, (v) => { pb.hand = v; save(); }, "Throws")],
+      ["Role", pillSelect(pb.role === "all" ? "SP + RP" : pb.role, [["all", "SP + RP"], ["SP", "SP"], ["RP", "RP"]], pb.role, (v) => { pb.role = v; save(); }, "Role")],
+      ["Minimum", pillSelect(`${pb.min}+ pitches`, [25, 50, 100, 200, 400, 800].map((n) => [String(n), `${n}+ pitches`]), String(pb.min), (v) => { pb.min = Number(v); save(); }, "Minimum")],
+      ["Colour", pillSelect(pb.heat === "all" ? "Colour: all" : "Colour: sorted", [["sorted", "Colour the sorted column"], ["all", "Colour every + column"]], pb.heat === "all" ? "all" : "sorted", (v) => { pb.heat = v; save(); }, "Colour")]];
     // Games: Spring training (back at Sean's ask, 6 Oct 2026, with the card's Spring tab) — next year's spring once it's built, else this one's
-    if (springKey()) bar.append(pillSelect(springK ? "Spring training" : `${DATA.meta.season} season`, [["season", `${DATA.meta.season} season`], ["spring", "Spring training"]], springK ? "spring" : "season", (v) => { pb.src = v; save(); }, "Games"));
-    bar.append(el("span", "pbcount", `${rows.length} pitch${rows.length === 1 ? "" : "es"} · ${springK ? DS.label || "spring training" : DATA.meta.season} · graded against its own type`));
+    if (springKey()) pills.push(["Games", pillSelect(springK ? "Spring training" : `${DATA.meta.season} season`, [["season", `${DATA.meta.season} season`], ["spring", "Spring training"]], springK ? "spring" : "season", (v) => { pb.src = v; save(); }, "Games")]);
+    const cnt = `${rows.length} pitch${rows.length === 1 ? "" : "es"} · ${springK ? DS.label || "spring training" : DATA.meta.season}`;
+    if (PH) {
+      // a phone (Sean, 20 Oct 2026, mock 12): one Filters button, the six pills in a panel under it — they had taken three rows over the table
+      const nOn = [pb.pt !== "all", pb.hand !== "all", pb.role !== "all", pb.min !== 100, pb.heat === "all", !!springK].filter(Boolean).length;
+      const fb = el("button", "btn btn-quiet tbtn pbfbtn" + (pbOpen ? " on" : ""), "Filters" + (nOn ? ` (${nOn})` : "")); fb.type = "button"; fb.setAttribute("aria-expanded", String(pbOpen));
+      fb.addEventListener("click", (e) => { e.stopPropagation(); pbOpen = !pbOpen; render(); });
+      bar.classList.add("pbfph"); bar.append(fb, el("span", "pbcount", cnt));
+      if (pbOpen) {
+        const pan = el("div", "pop pbfpanel"), x = el("button", "pop-close", "×"); x.type = "button"; x.setAttribute("aria-label", "Close");
+        x.addEventListener("click", (e) => { e.stopPropagation(); pbOpen = false; render(); });
+        const hd = el("div", "pbfhd"); hd.append(el("span", null, "Filters"), x); pan.append(hd);
+        for (const [lab, pl] of pills) { const r = el("div", "pbfrow"); r.append(el("span", "pbflab", lab), pl); pan.append(r); }
+        bar.append(pan);
+      }
+    } else { for (const [, pl] of pills) bar.append(pl); bar.append(el("span", "pbcount", cnt + " · graded against its own type")); }
     box.append(bar);
     // the table, in B-Ref's dress (Sean, 9 Oct 2026, the B-Ref Style Tables canvas: "I want that for everything"): Rk and Pitcher frozen,
     // Tm / Role / T columns, an over-header naming each group, each expected / actual pair as two columns (Act in grey), the sorted + column
@@ -4586,10 +4609,14 @@
     const cols = [["rk", "Rk"], ["who", "Pitcher"], ["tm", "Tm"], ["role", "Role"], ["hand", "T"], ["pt", "Type"], ["n", "#"], ["use", "Use%"], ["velo", "Velo"], ["ivb", "IVB"], ["hb", "HB"], ["spin", "Spin"],
                   ["pitp", "Pitching+"], ["whfpl", "Whiff+"], ["bbpl", "BB+"], ["locp", "Loc+"], ["xwhfl", "Exp"], ["whf", "Act"], ["xgbl", "Exp"], ["gb", "Act"], ["xpul", "Exp"], ["pu", "Act"], ["xfoul", "Exp"], ["foul", "Act"]];
     const FIX = new Set(["rk", "who", "tm", "role", "hand", "pt"]), ACT = new Set(["whf", "gb", "pu", "foul"]);
-    const { t, tb, fin, gap, wrap } = brTable([["", 5], ["Pitch", 3], ["Shape", 4], ["Grades, 100 = average for the type", 4], ["Whiff%", 2], ["GB%", 2], ["PU%", 2], ["Foul%", 2]],
-      cols.map(([k, l]) => [l, [k === "who" || k === "pt" ? "l" : "", ACT.has(k) ? "xact" : "", k === "rk" ? "f1" : k === "who" ? "f3" : ""].filter(Boolean).join(" "), tips[k]]), "pbt");
+    // a phone reads the grade beside the name (Sean, 20 Oct 2026, mock 12): Pitching+ moves up after Pitcher, a rule after it — it had sat off the
+    // right edge. ORD reorders the header, every row and the League row the same way
+    const ORD = PH ? [0, 1, 12, ...cols.map((_, i) => i).filter((i) => i > 1 && i !== 12)] : null, ord = (a) => (ORD ? ORD.map((i) => a[i]) : a);
+    const { t, tb, fin, gap, wrap } = brTable(PH ? [["", 3], ["", 3], ["Pitch", 3], ["Shape", 4], ["Grades vs type", 3], ["Whiff%", 2], ["GB%", 2], ["PU%", 2], ["Foul%", 2]]
+                                                : [["", 5], ["Pitch", 3], ["Shape", 4], ["Grades, 100 = average for the type", 4], ["Whiff%", 2], ["GB%", 2], ["PU%", 2], ["Foul%", 2]],
+      ord(cols).map(([k, l]) => [l, [k === "who" || k === "pt" ? "l" : "", ACT.has(k) ? "xact" : "", k === "rk" ? "f1" : k === "who" ? "f3" : ""].filter(Boolean).join(" "), tips[k]]), "pbt");
     { const hc = t.querySelector("thead tr:last-child").children;
-      cols.forEach(([k, l], i) => { if (FIX.has(k)) return; const c = hc[i], on = pb.sort === k;
+      ord(cols).forEach(([k, l], i) => { if (FIX.has(k)) return; const c = hc[i], on = pb.sort === k;
         const b = el("button", "sortbtn" + (on ? " on" : ""), l); b.type = "button"; c.textContent = ""; c.append(b); if (on) c.classList.add("lit");
         b.addEventListener("click", () => { if (pb.sort === k) pb.dir = -pb.dir; else { pb.sort = k; pb.dir = -1; } save(); }); }); }
     const f1 = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%");
@@ -4605,9 +4632,9 @@
         if (!springK) { openPlayer(r.p, { tab: "pitching" }); return; }   // his page (8 Oct 2026); the spring board still pops the spring card up
         state.cardDs = springK || null; state.expanded = "P" + r.p.id; render(); });   // off the spring board: his spring card
       who.append(btn);
-      tr.append(el("td", "rk f1", String(i + 1)), who, el("td", "c", r.p.team || ""), el("td", "c", r.p.primary || ""), el("td", "c", r.p.throws || ""), el("td", "l", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(r.use)),
+      tr.append(...ord([el("td", "rk f1", String(i + 1)), who, el("td", "c", r.p.team || ""), el("td", "c", r.p.primary || ""), el("td", "c", r.p.throws || ""), el("td", "l", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(r.use)),
                 el("td", null, f1(r.velo)), el("td", null, f1(r.ivb)), el("td", null, f1(r.hb)), el("td", null, r.spin == null ? "–" : String(r.spin)),
-                plus(r.pitp, "pitp"), plus(r.whfpl, "whfpl"), plus(r.bbpl, "bbpl"), plus(r.locp, "locp"), ...pair(r.xwhfl, r.whf), ...pair(r.xgbl, r.gb), ...pair(r.xpul, r.pu), ...pair(r.xfoul, r.foul));
+                plus(r.pitp, "pitp"), plus(r.whfpl, "whfpl"), plus(r.bbpl, "bbpl"), plus(r.locp, "locp"), ...pair(r.xwhfl, r.whf), ...pair(r.xgbl, r.gb), ...pair(r.xpul, r.pu), ...pair(r.xfoul, r.foul)]));
       tb.append(fin(tr));
     });
     // the League row: every pitch the filters let through (whatever the minimum) — grades by pitches, whiffs by swings, grounders and popups by
@@ -4617,9 +4644,9 @@
       const byN = (q) => q.n, bySw = (q) => q.sw, byBip = (q) => q.bip, byCon = (q) => q.sw * (1 - (q.whf || 0) / 100);
       const g0 = (v) => el("td", null, v == null ? "–" : String(Math.round(v))), N = popl.reduce((a, q) => a + q.n, 0);
       const tr = el("tr", "tot first");
-      tr.append(el("td", "f1"), el("td", "l f3", pb.pt === "all" ? "League, every pitch" : `League, every ${(PITCH_NAME[pb.pt] || pb.pt).toLowerCase()}`), el("td"), el("td"), el("td"), el("td"), el("td", null, String(N)), el("td"),
+      tr.append(...ord([el("td", "f1"), el("td", "l f3", pb.pt === "all" ? "League, every pitch" : `League, every ${(PITCH_NAME[pb.pt] || pb.pt).toLowerCase()}`), el("td"), el("td"), el("td"), el("td"), el("td", null, String(N)), el("td"),
                 el("td"), el("td"), el("td"), el("td"), g0(wm("pitp", byN)), g0(wm("whfpl", byN)), g0(wm("bbpl", byN)), g0(wm("locp", byN)),
-                ...pair(wm("xwhfl", bySw), wm("whf", bySw)), ...pair(wm("xgbl", byBip), wm("gb", byBip)), ...pair(wm("xpul", byBip), wm("pu", byBip)), ...pair(wm("xfoul", byCon), wm("foul", byCon)));
+                ...pair(wm("xwhfl", bySw), wm("whf", bySw)), ...pair(wm("xgbl", byBip), wm("gb", byBip)), ...pair(wm("xpul", byBip), wm("pu", byBip)), ...pair(wm("xfoul", byCon), wm("foul", byCon))]));
       tb.append(gap(), fin(tr));
     }
     wrap.className = "fscroll pbscroll brscroll"; box.append(wrap);
@@ -6834,7 +6861,8 @@
     const o = (k, fmt = f0) => num((r) => r.o[k], fmt);
     const ln = (r, b) => (b ? r[b] : r);                         // the actual line, or an expected one
     const pre = { "": "", x: "x", n: "x" };                      // a pitcher's expected family is the luck-neutral line
-    const tot = (b) => [`${pre[b]}Pts`, num((r) => (ln(r, b) ? ln(r, b).pts : null), f1, { paint: true, title: b ? "Expected points" : "Points" })];
+    const fw = (x) => (x == null ? "–" : Math.abs(x - Math.round(x)) < 0.05 ? String(Math.round(x)) : x.toFixed(1));   // 542, not 542.0 (Sean, 20 Oct 2026); a preset with halves keeps its tenth
+    const tot = (b) => [`${pre[b]}Pts`, num((r) => (ln(r, b) ? ln(r, b).pts : null), b ? f1 : fw, { paint: true, title: b ? "Expected points" : "Points" })];
     const perG = (b) => [`${pre[b]}Pts/G`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.o.G) : null), f2, { paint: true, title: grp === "P" ? "Points per appearance" : "Points per game" })];
     const perAB = (b) => [`${pre[b]}Pts/AB`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.o.AB) : null), f3, { paint: true })];
     const perPA = (b) => [`${pre[b]}Pts/PA`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.o.PA) : null), f3, { paint: true })];
@@ -7052,11 +7080,11 @@
     const fsig = ["f", f.view, f.grp, f.pos, f.year, f.q, sortKey, f.dir, f.minH, f.minP, fpreset().id, shown.length, JSON.stringify(spec)].join("|");
     if (fsig !== state.pageSig) { state.pageSig = fsig; state.page = 1; }
     const pg = pageWindow(shown.length);
-    const pagerTop = el("div", "pager"), pagerBot = el("div", "pager");
+    const pagerTop = el("div", "pager"), PH = mobileView();
     const redraw = () => renderFTable(box);
-    renderPager(pagerTop, shown.length, pg, redraw);
-    // a pager under the rows only where the page itself scrolls (Fantasy on a phone); elsewhere the top one never leaves view
-    if (mobileView()) renderPager(pagerBot, shown.length, pg, redraw);
+    // a phone (Sean, 20 Oct 2026, mock 13): the top keeps the control row alone and the page numbers and Per page are the table's last row, the
+    // Leaderboard's grey bar — they had taken two rows over the table and a pager under it
+    if (!PH) renderPager(pagerTop, shown.length, pg, redraw);
     wrap.append(pagerTop);
     if (box._fbar) { box._fbar.classList.add("inbar"); pagerTop.prepend(box._fbar); }   // a redraw clears the wrap; the bar goes back in
     // B-Ref's table (Sean, 11 Oct 2026: "make all of the fantasy tables be the baseball reference table design"): Rk and Player frozen,
@@ -7098,7 +7126,12 @@
       tbody.append(trr);
     });
     table.append(tbody);
-    const scroll = el("div", "fscroll brscroll"); scroll.append(table); wrap.append(scroll); if (mobileView()) wrap.append(pagerBot);
+    const scroll = el("div", "fscroll brscroll"); scroll.append(table); wrap.append(scroll);
+    if (PH && shown.length) {
+      const go = (n) => { state.page = Math.min(pg.pages, Math.max(1, n)); redraw(); const y = wrap.getBoundingClientRect().top + window.scrollY - 8; if (window.scrollY > y) window.scrollTo({ top: y }); };
+      const bar = el("div", "fphbot"); if (pg.pages > 1) bar.append(pageNav(pg, go));
+      bar.append(perPageField((n) => { state.pageSize = n; state.page = 1; savePrefs(); redraw(); })); scroll.append(bar);
+    }
     requestAnimationFrame(() => { const rk = table.querySelector("td.f1") || table.querySelector("th.f1"); if (rk) table.style.setProperty("--sbw1", rk.offsetWidth + "px");
       const ov = table.querySelector("tr.over"); if (ov) table.style.setProperty("--overh", ov.offsetHeight + "px"); });   // Player freezes right after Rk; the column names pin under the over row
     fFloatHead(wrap, scroll, table);
@@ -10823,11 +10856,7 @@
     const body = el("div", "pbinfobd"); box.append(body);
     const line = (k, v) => { const d = el("div", "pbil"); d.innerHTML = `<b>${k}:</b> ${v}`; body.append(d); };
     if (b && b.full) { const n = el("div", "pbil pbfull", b.full); body.append(n); }
-    const pw = posWords(p);
-    line(/ and |,/.test(pw) ? "Positions" : "Position", esc(pw));
-    const bats = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
-    if (bats || thr) { const d = el("div", "pbil"); d.innerHTML = [bats ? `<b>Bats:</b> ${handWord(bats)}` : null, thr ? `<b>Throws:</b> ${handWord(thr)}` : null].filter(Boolean).join(" &nbsp;•&nbsp; "); body.append(d); }
-    const hw = htWtLine(b); if (hw) { const d = el("div", "pbil", hw); body.append(d); }
+    // only what the bar over it doesn't say (Sean, 20 Oct 2026): positions, bats / throws, height / weight and the team are on the bio line
     if (!b) { body.append(el("div", "pbil pbwait", b === false ? "MLB's record isn't available right now." : "Loading MLB's record…")); }
     else {
       const born = longDate(b.born), age = b.age != null ? b.age : p.age;
@@ -10842,8 +10871,6 @@
       const db = longDate(b.debut); if (db) line("Debut", esc(db));
       if (b.nick) line("Nickname", esc(b.nick));
     }
-    const tc = teamCode(p.team), mlb = DS.level === "MLB", full = mlb ? (TEAM_FULL[tc] || TEAM_NAMES[tc] || p.team) : p.team;
-    if (full) line("Team", `${esc(full)} (${mlb ? "majors" : (LEVEL_WORD[DS.level] || DS.level)})`);
     return box;
   }
   // the one-line bio under the bar: positions, the team (a link to its Leaderboard), the hand (a hitter's B/T, a pitcher's LHP / RHP), height and
@@ -11376,9 +11403,14 @@
     const view = H ? sbTable : "std";
     if (H) {   // the table switch, at the foot of the space over the table (Sean, 8 Oct 2026)
       const bar = el("div", "sbviews");
-      for (const [k, lab] of SB_VIEWS) {
+      const pick = (k) => { if (sbTable === k) return; sbTable = k; try { localStorage.setItem("draft2027.sbtable", k); } catch (er) { /* private window */ } if (k !== "std") sbKind = "reg"; render(); };
+      if (mobileView()) {   // a phone: one "Standard ▾" in the Leaderboard's Filters dress (Sean, 20 Oct 2026) — the five buttons took three rows over the table
+        bar.classList.add("sbviewsdd");
+        const bt = el("button", "btn btn-quiet tbtn sbviewdd", SB_VIEWS.find((v) => v[0] === view)[1] + " ▾"); bt.type = "button";
+        bar.append(ddList(bt, SB_VIEWS.map(([k, lab]) => [k, lab]), view, pick));
+      } else for (const [k, lab] of SB_VIEWS) {
         const bt = el("button", "sbview" + (view === k ? " on" : ""), lab); bt.type = "button"; bt.setAttribute("aria-pressed", String(view === k));
-        bt.addEventListener("click", (e) => { e.stopPropagation(); if (sbTable === k) return; sbTable = k; try { localStorage.setItem("draft2027.sbtable", k); } catch (er) { /* private window */ } if (k !== "std") sbKind = "reg"; render(); });
+        bt.addEventListener("click", (e) => { e.stopPropagation(); pick(k); });
         bar.append(bt);
       }
       box.append(bar);
