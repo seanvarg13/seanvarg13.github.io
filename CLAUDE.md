@@ -22,8 +22,9 @@ This repo is **two things at once**:
 `.github/workflows/daily.yml` runs `tools/cloud_daily.py` at 4:45 New York time — the same build scripts from
 `tools/`, the same steps as the Mac's `daily_update.py`, published as a plain commit on top of `main` (never a
 force-push), with the download caches kept between runs. GitHub starts scheduled runs late on busy mornings (hours, sometimes), so the workflow has backup times
-through the morning and each scheduled run only goes if it is past 4:40 in New York and `data.js` isn't through
-yesterday yet. **That still wasn't enough** (27-28 Sep 2026: no scheduled run started before 10 am), so the real trigger is an
+through the morning and each scheduled run only goes if it is past 4:40 in New York and MLB's schedule shows a game finished
+since one of the site's files last built (`tools/whats_new.py`, 20 Oct 2026; until then the test was `data.js` not being through
+yesterday, which after the regular season rebuilt everything every morning — see §8). **That still wasn't enough** (27-28 Sep 2026: no scheduled run started before 10 am), so the real trigger is an
 **outside timer**: cron-job.org POSTs a `workflow_dispatch` with `auto=1` (Sean's fine-grained token,
 Actions read/write on this repo only, lives there, not here); `auto=1` makes a manual run ask the same "already live?"
 question as a scheduled one. **It fires at 08:15 UTC** (4:15 New York in summer, 3:15 in winter, not the 4:45 it was meant to), and the
@@ -551,6 +552,7 @@ Statcast's.
 | `tools/build_proj27.py` | the Mock Draft's 2027 projections → `hist/proj-2027.js`; repo only, run by hand |
 | `tools/build_awards.py` | MVP / Cy Young / Rookie of the Year vote finishes → `hist/awards.js` from the Lahman database (SABR); repo only, run by hand each January |
 | `tools/add_baserunning.py` | fills the Base Running numbers into already-built `data.js` / `hist/mlb-YYYY.js`; repo only, run by hand |
+| `tools/whats_new.py` | the morning run's "anything new?" — MLB's schedule against each file's last game day; repo only, run by the workflow |
 
 Not mirrored, on purpose: `github_site.json` / `netlify_site.json` (account config), `~/.github_token`,
 `.cache/`, `logs/`, `*.joblib`, `pa_all.parquet`.
@@ -4540,6 +4542,26 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     band, `inkOn`). Checked by a contrast sweep of every page, phone and desktop, light and dark (nothing under 2.2:1 left but the
     over-headers the sweep can't read), and by computed colours on twelve pages: light mode is unchanged on Titans, Jets and UNC but for that
     swatch, and on Warm but for the Summary.
+
+* **No build without a new game (Sean, 20 Oct 2026, from a second list of fourteen, in another chat: "ok do 1,2,3,4,5,6, 7, 8,9" — item 2,
+  stop the no-op republishes)**: through the postseason the morning run rebuilt the regular season, the four minor-league levels and every
+  file on top of them each day, twice on most days (20 Oct: 09:14 and 10:06 UTC, then 14:03 and 14:43), with no new game in any of them.
+  Every publish reloads his phone and re-downloads days.js (~9 MB), and the rebuilds weren't byte-identical (3,256 of 132,869 day rows
+  moved between two of them, the Stuff+ / Pitching+ sums). Three causes: the gate called a day done only when `data.js` was through
+  yesterday, which it never is after the regular season; the 4:50 routine ("Site daily update kick") started a plain manual run, which
+  builds everything; and a plain run's mlb step rebuilds the regular season whatever is new.
+  - **`tools/whats_new.py`** (standard library, so the gate runs it before Python is set up) reads the last game day each file holds —
+    `data.js` for the regular season, `hist/mlb-<y>-post.js` (Sep–Nov), `hist/mlb-<y>-spring.js` (Feb–Mar), `hist/<aaa|aa|ap|a>-<y>.js` —
+    and asks MLB's schedule for a game of that kind final after it, through yesterday. MLB's API not answering counts as everything new.
+  - **The gate** (scheduled runs and `auto=1`) stands down when nothing is new, or when any of those files was built after 13:00 UTC today
+    (the old backstop, now over every file's `built`), and prints what it found ("nothing new through 2026-10-19").
+  - **`cloud_daily.py --steps auto`**, what those runs now call: the regular season only with new MLB games (then fantasy, the index and
+    career), the postseason and spring with their own games (+ the index), each minor-league level with its own (+ the index and career),
+    at most two publishes (MLB early, the rest after). An October game day builds the postseason file and the index alone; data.js and
+    days.js stay as they were. A manual run without `auto` (Actions → Daily update → Run workflow) builds every step as before; `post` and
+    `spring` are step names of their own now, and a manual `--steps mlb` in October publishes the postseason file it builds (it used to
+    sit unpublished until the minors step's publish).
+  - **The routine's prompt** dispatches with `auto=1` now and counts a run that stood down as done (updated the same day).
 
 ## 10. The football site moved out
 
