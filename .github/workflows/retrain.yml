@@ -74,6 +74,12 @@ jobs:
           echo "pins: $pins"
           python -m pip install $pins pybaseball requests pyarrow
 
+      - name: Headless Chrome (home's lists, hist/home.js)
+        run: |
+          npm install --no-save --no-audit --no-fund --prefix "$RUNNER_TEMP/pw" playwright-core@1.56.1
+          echo "NODE_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
+          echo "PW_CHANNEL=chrome" >> "$GITHUB_ENV"
+
       - name: Put back the models on ${{ inputs.restore }} (no training)
         if: inputs.restore != ''
         run: |

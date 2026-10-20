@@ -96,6 +96,18 @@ def _run(*args):
     return code == 0
 
 
+def node(*args):
+    """A Node script from tools/ that drives headless Chrome (build_home.cjs). False when Node or playwright isn't here."""
+    if not shutil.which("node"):
+        say(f"    (no Node here — skipping {args[0]})")
+        return False
+    say("$ node " + " ".join(args))
+    code = subprocess.run(["node", *args]).returncode
+    if code:
+        say(f"!! {args[0]} exited with code {code}")
+    return code == 0
+
+
 def git(*args, check=True, capture=False):
     r = subprocess.run(["git", *args], check=check, text=True, capture_output=capture)
     return r.stdout.strip() if capture else r.returncode
@@ -274,8 +286,10 @@ def main():
         sys.exit(0)
     ok = True
     if mlb:
-        # League Trends (hist/trends.js) re-sums the season just built; a failure there costs only that page
-        ok = run("build_data.py", "--end", end) and (run("build_trends.py") or True) and (run("build_similar.py") or True) and publish("MLB", end, a.dry)
+        # League Trends (hist/trends.js) re-sums the season just built; a failure there costs only that page. hist/home.js (20 Oct 2026): home's
+        # day-file lists, computed by the site's own code on the new files — without it home loads the day rows and computes them itself
+        ok = (run("build_data.py", "--end", end) and (run("build_trends.py") or True) and (run("build_similar.py") or True)
+              and (node("tools/build_home.cjs") or True) and publish("MLB", end, a.dry))
     parts = []
     # spring training (Sean, 29 Sep 2026: track a pitcher's stuff in spring) — Stuff+ graded against MLB pitch types — and the
     # postseason (30 Sep 2026: MLB PS on the cards); a failure in either costs only its own file
