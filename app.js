@@ -911,7 +911,7 @@
     // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
     // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
     // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
-    sc.onload = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|aaa-tw|awards|similar|minors|trends|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
+    sc.onload = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|aaa-tw|awards|similar|minors|trends|home|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
     // a failed download (a phone on a weak signal, a publish mid-deploy) is tried twice more before it's given up on — career.js once failed
     // for the whole visit and the season table said it hadn't been built (Sean's phone, 9 Oct 2026)
     sc.onerror = () => { loading.delete(src); sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
@@ -5853,6 +5853,34 @@
     const out = { rows, cand: cand.size, win30, label: FW.label, minPA, prevMode, baseDS };
     flawCache.set(key, out); return out;
   }
+  // pitchers on Movers (Sean, 20 Oct 2026, item 9 of the recommendations: "velocity and Pitching+ risers over the last 30 days"): his fastball velocity
+  // and Pitching+ over the window against his season before it — the stuff side moves first and holds (spring to season: FB velo r .87, Stuff+ .64)
+  // — ranked by the Pitching+ gain. A PA window means nothing to a pitcher, so those read 30 days; This season vs last compares his full seasons. He
+  // needs 120 pitches in a 30-day window (scaled with its length, 60-250) and 300 before it (or last season)
+  const PM_BASE = 300, pmCache = new Map();
+  function pitchMovers(winId = "30") {
+    const prevMode = winId === "prev", prevDS = fxPrevDS();
+    const key = DS.key + ":" + daysReady() + ":" + winId + ":" + !!prevDS; if (pmCache.has(key)) return pmCache.get(key);
+    if (prevMode && !prevDS) return { rows: [], loading: true };
+    if (!prevMode && !daysReady()) return { rows: [], wait: true };
+    const inWin = (w, fn) => withWindow(w, () => withSplit(NONE, fn));
+    const days = DATA.meta.days || [], last = days[days.length - 1], n = String(winId).startsWith("pa") ? 30 : (+winId || 30);
+    const from = last ? addDays(last, -(n - 1)) : "", minN = prevMode ? PM_BASE : Math.min(250, Math.max(60, Math.round(120 * n / 30)));
+    const take = (v) => (v && v.m ? { fb: v.m.fbv, pp: v.m.pitch, n: (v.ctx && v.ctx.Pitches) || 0 } : null);
+    const was = new Map(), rows = [];
+    if (prevMode) withDataset(prevDS, () => inWin(NOWIN, () => { for (const q of DS.players) if (q.type === "P") { const t = take(V(q)); if (t && t.n >= PM_BASE) was.set(q.id, t); } }));
+    else if (from && from > days[0]) inWin({ from: days[0], to: addDays(from, -1), last: "" }, () => { for (const p of DATA.players) if (p.type === "P") { const t = take(V(p)); if (t && t.n >= PM_BASE) was.set(p.id, t); } });
+    inWin(prevMode ? NOWIN : { from, to: "", last: "" }, () => {
+      for (const p of DATA.players) {
+        const w0 = p.type === "P" && was.get(p.id); if (!w0) continue;
+        const t = take(V(p)); if (!t || t.n < minN || t.pp == null || w0.pp == null) continue;
+        rows.push({ p, fbWas: w0.fb, fbNow: t.fb, dFb: w0.fb != null && t.fb != null ? t.fb - w0.fb : null, pWas: w0.pp, pNow: t.pp, dP: t.pp - w0.pp, n: t.n });
+      }
+    });
+    rows.sort((a, b) => b.dP - a.dP);
+    const out = { rows: rows.filter((r) => r.dP > 0), label: prevMode ? `${DATA.meta.season} vs ${DATA.meta.season - 1}` : `last ${n} days`, minN, all: rows.length };
+    pmCache.set(key, out); return out;
+  }
   const flawNote = (R) => `Each piece of his xwOBA build-up against the league in wOBA points: elite = his two best are worth +${FX.elite} together, the flaw = his two worst at ${FX.flaw} or under. ${R ? R.label[0].toUpperCase() + R.label.slice(1) : "Last 30 days"} = that piece over that window (${R ? R.minPA : FX.pa}+ PA); If it held = his season xwOBA with only that piece at the window's value, ranked by the gain (${FX.gain}+ points).`;
   // tap a name on the page (Sean, 16 Oct 2026: "a pop up window that shows a comparison of their percentile for the given improvement and then it
   // shows the pieces that go into it ... at the top his season long xwoba, then below his k% and then below that all of the inputs that go into his
@@ -5958,7 +5986,80 @@
     if (!rows.length) page.append(el("p", "note", "Nobody with an elite base and a flaw that's moved in the window yet."));
     else { wrap.classList.add("pbscroll"); page.append(wrap); }
     page.append(el("p", "note", flawNote(R) + (prevMode ? ` Here the base is ${Y0}'s full season (its own league) and the move is ${Y}'s full season.` : "") + ` Credible = the piece's reliability at the window's PA, with last season as a witness. Biggest Δ xwOBA orders by Δ; Most credible by Δ × that.`));
+    // the pitchers (20 Oct 2026): Pitching+ and fastball velocity over the window against his season before it, by the Pitching+ gain
+    const M = pitchMovers(fxSet.win), PW = prevMode ? String(Y) : M.label === "last 30 days" && String(fxSet.win).startsWith("pa") ? "Last 30 days" : wlab, PB = prevMode ? String(Y0) : "Before";
+    const pt = el("div", "fxtitle fxpit"); pt.append(el("h2", null, "Pitchers"), el("span", null, M.loading ? "" : `Pitching+ and fastball velocity, ${prevMode ? `${Y} vs ${Y0}` : `the ${M.label} vs his season before them`} · ${M.rows.length} up · tap a name for his Pitching+ tab`)); page.append(pt);
+    if (M.loading) { page.append(el("p", "note", `Loading the ${Y0} season…`)); return; }
+    const f1 = (x) => (x == null ? "–" : x.toFixed(1)), sg = (x, d = 1) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(d));
+    const pheads = PH ? [["Rk", "f1"], ["Pitcher", "l f3"], ["FB velo"], ["Pitching+"], ["Δ"]]
+      : [["Rk", "f1"], ["Pitcher", "l f3"], ["Tm"], ["Role"], [PB], [PW], ["Δ"], [PB], [PW], ["Δ"], ["Pitches", "", prevMode ? "this season's pitches" : `pitches in the ${M.label}`]];
+    const pgroups = PH ? [["", 2], ["", 3]] : [["", 4], ["FB velo", 3], ["Pitching+", 3], ["", 1]];
+    const P2 = brTable(pgroups, pheads, "pbt flawt");
+    requestAnimationFrame(() => { const rk = P2.t.querySelector("tbody td.f1"), ov = P2.t.querySelector("tr.over"); if (rk) P2.t.style.setProperty("--sbw1", rk.offsetWidth + "px"); if (ov) P2.t.style.setProperty("--overh", ov.offsetHeight + "px"); });
+    const up = (txt, on) => { const td = el("td", "c up", txt); if (on) { td.style.color = "var(--stripe-line, #c8102e)"; td.style.fontWeight = "700"; } return td; };
+    const ppTd = (v) => { const td = el("td", "c", v == null ? "–" : String(Math.round(v))); const st = v == null ? null : plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } return td; };
+    M.rows.forEach((r, i) => {
+      const tr = el("tr"), who = el("td", "l nm f3"), b = el("button", "linkbtn pbname", r.p.name); b.type = "button";
+      b.addEventListener("click", () => { state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; savePrefs(); openPlayer(r.p, { tab: "pitching" }); }); who.append(b);
+      tr.append(el("td", "rk f1", String(i + 1)), who);
+      if (PH) tr.append(el("td", "c", `${f1(r.fbWas)} → ${f1(r.fbNow)}`), ppTd(r.pNow), up("+" + Math.round(r.dP), true));
+      else tr.append(el("td", "c", r.p.team || ""), el("td", "c", r.p.primary || ""), el("td", "c", f1(r.fbWas)), el("td", "c", f1(r.fbNow)), up(sg(r.dFb), r.dFb != null && r.dFb >= 0.5),
+                     el("td", "c", String(Math.round(r.pWas))), ppTd(r.pNow), up("+" + Math.round(r.dP), true), el("td", "c", String(r.n)));
+      P2.tb.append(P2.fin(tr));
+    });
+    if (!M.rows.length) page.append(el("p", "note", "No pitcher's Pitching+ is up over the window yet."));
+    else { P2.wrap.classList.add("pbscroll"); page.append(P2.wrap); }
+    page.append(el("p", "note", `${prevMode ? `His full ${Y} season against his ${Y0} (${PM_BASE}+ pitches each)` : `His ${M.label} (${M.minN}+ pitches) against his season before them (${PM_BASE}+)`}: Pitching+ grades every pitch on its shape, release and spot against its type (100 = average); FB velo is his primary fastball. A PA window reads 30 days for pitchers.`));
   }
+  // home's day-file lists — the last game day, Trending, Movers — as data (Sean, 20 Oct 2026, item 1 of the recommendations: home without the day
+  // file). The daily build runs homeLive() headless once data.js and days.js are built (tools/build_home.cjs, window.__homeData) and writes
+  // hist/home.js, so a fresh home reads ~10 KB instead of downloading and parsing the 31 MB day file (12 s on a phone). The page computes the lists
+  // itself whenever the day rows are in anyway (a window or split elsewhere loaded them), and when the file can't be used: older than data.js, or
+  // the park-neutral switch or Regress small samples on (the file holds the defaults)
+  const HOME_V = 1;
+  let homeMemo = null;
+  function homeLive() {
+    const key = DATA.meta.built + ":" + XWN + ":" + !!state.tbl.shrink + ":" + DS.key; if (homeMemo && homeMemo.key === key) return homeMemo.val;
+    const inWin = (w, fn) => withWindow(w, () => withSplit(NONE, fn)), days = DATA.meta.days || [], lastDay = days.length - 1, n0 = (x) => (x == null ? 0 : Math.round(x));
+    const out = { v: HOME_V, built: DATA.meta.built, day: days[lastDay] || "" };
+    // the last game day: the best xwOBA games (3+ PA) and the best starts by nERA (3+ IP), the start's colour its place among the season's starts
+    { const hit = [], pit = [];
+      inWin(NOWIN, () => {
+        const D = window.DRAFT_DAYS || {};
+        for (const p of DATA.players) {
+          if (!(D[p.type + p.id] || []).some((r) => r[0] === lastDay)) continue;   // only who played that day (5 Oct 2026)
+          if (p.type === "H") { const log = hitGameLog(p, lastDay); if (!Array.isArray(log)) continue; const g = log.find((x) => x.day === lastDay); if (!(g && (g.g.pa || 0) >= 3 && g.xw != null)) continue;
+            const G = g.g; hit.push({ id: p.id, v: g.xw, hab: G.h != null && G.ab != null ? `${n0(G.h)}-${n0(G.ab)}` : `${n0(G.pa)} PA`, hr: n0(G.hr), bb: n0(G.bb), k: n0(G.k), brl: n0(G.brl), max: g.max }); }
+          else { const o = sumOutings((D[p.type + p.id] || []).filter((r) => r[0] === lastDay)).get(lastDay), v = dayNERA(o, K()); if (!(o && o.gs && o.outs >= 9 && v != null)) continue;
+            const er = (D[p.type + p.id + ":er"] || []).reduce((a, [d, , e]) => a + (d === lastDay ? e : 0), 0);
+            pit.push({ id: p.id, v, ip: fmtIP(o.outs / 3), er, k: o.k, bb: o.bb, whf: o.sw ? 100 * o.whf / o.sw : null }); }
+        }
+      });
+      hit.sort((a, b) => b.v - a.v); pit.sort((a, b) => a.v - b.v);   // nERA: lowest first
+      const opool = outingPool(); for (const r of pit.slice(0, 5)) r.pc = outPct(opool, 1, r.v);
+      out.last = { hit: hit.slice(0, 5), pit: pit.slice(0, 5) }; }
+    // trending: hitters over their last 100 PA by xwOBA (75+ in the window), pitchers over their last 50 IP by nERA (37.5+)
+    { const t = { hit: [], pit: [] };
+      inWin({ from: "", to: "", last: "100" }, () => { t.hit = DATA.players.filter((p) => p.type === "H").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 75 && v.m.xwd != null).sort((a, b) => b[1].m.xwd - a[1].m.xwd).slice(0, 4).map(([p, v]) => ({ id: p.id, n: v.sample, xwd: v.m.xwd })); });
+      inWin({ from: "", to: "", last: "50" }, () => { t.pit = DATA.players.filter((p) => p.type === "P").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 37.5 && v.m.nera != null).sort((a, b) => a[1].m.nera - b[1].m.nera).slice(0, 4).map(([p, v]) => ({ id: p.id, n: v.sample, nera: v.m.nera })); });
+      out.trend = t; }
+    // movers: the hitters whose flaw moved over the last 30 days (flawRows), the pitchers whose Pitching+ did (pitchMovers); the move without its % signs
+    const np = (z) => String(z).replace(/%$/, "");
+    out.movers = flawRows().rows.slice(0, 4).map((r) => ({ id: r.p.id, fl: `${r.flaw.lab} ${np(r.flaw.f(r.was))} → ${np(r.flaw.f(r.now))}`, xw: r.xw, held: r.held, gain: r.gain }));
+    out.pmovers = pitchMovers("30").rows.slice(0, 4).map((r) => ({ id: r.p.id, fbWas: r.fbWas, fbNow: r.fbNow, pWas: r.pWas, pNow: r.pNow, dP: r.dP }));
+    homeMemo = { key, val: out }; return out;
+  }
+  function homeLists() {
+    if (daysReady()) return homeLive();
+    const H = window.DRAFT_HOME;
+    return H && H.v === HOME_V && H.built === DATA.meta.built && !XWN && !state.tbl.shrink && DS.key === CUR.key ? H : null;
+  }
+  // the daily build's hook (tools/build_home.cjs): the lists as hist/home.js carries them, once the day rows are in
+  window.__homeData = () => new Promise((res, rej) => {
+    if (XWN || state.tbl.shrink) return rej(new Error("the park-neutral switch or Regress small samples is on — the file holds the defaults"));
+    ensureDays(); const t0 = Date.now();
+    (function wait() { if (daysReady()) return res(homeLive()); if (state.daysFailed || Date.now() - t0 > 240000) return rej(new Error("the day rows didn't load")); setTimeout(wait, 250); })();
+  });
   function renderHome() {
     const box = $("hub"); box.innerHTML = ""; box.classList.add("home");
     const m = DATA.meta, dayName = new Date(m.through + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
@@ -6028,29 +6129,23 @@
     const loading = (b) => b.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…"));
     const NB = PH ? 4 : 5, NH = 4, NP = 4;   // four a list (Sean, 7 Oct 2026: "the top 4 for each")
     const nm = (p, tab) => ({ p, tab });
+    // the lists: hist/home.js until the day rows are in (homeLists); a file that's missing, stale or off the defaults asks for the day rows instead,
+    // once Home has painted and the phone is idle (5 Oct 2026)
+    const HL = homeLists(), PL = new Map(DATA.players.map((p) => [p.type + p.id, p])), who = (t, r) => Object.assign({}, r, { p: PL.get(t + r.id) });
+    if (!HL && !daysReady()) {
+      if (!window.DRAFT_HOME && !failed.has("hist/home.js")) ensureScript("hist/home.js", () => !!window.DRAFT_HOME);
+      else if (!state.daysLoading && !state.daysFailed) setTimeout(() => (window.requestIdleCallback || ((f) => f()))(() => { if (state.mode === "home" && !daysReady()) ensureDays(); }), 1200);
+    }
     // the lead: the last game day — the best xwOBA games (3+ PA) and the best starts by nERA (3+ IP; Sean, 18 Oct 2026: "sort it by nERA instead of
     // pitching+") on the latest day in the day rows, the start's nERA filled by its place among the season's starts like the Game Logs tab's
     { const days = m.days || [], lastDay = days.length - 1, when = days[lastDay] ? new Date(days[lastDay] + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "";
       const lb = section(box, "Last game day", when ? `${when} · best games by xwOBA (3+ PA) and starts by nERA (3+ IP)` : null, null);
       lb.classList.add("hlead2"); box.insertBefore(lb.parentNode, grid);
-      // the 24 MB day file is asked for once Home has painted and the phone is idle, not inside the first render (Sean, 5 Oct 2026)
-      if (!daysReady()) { loading(lb); if (!state.daysLoading && !state.daysFailed) setTimeout(() => (window.requestIdleCallback || ((f) => f()))(() => { if (state.mode === "home" && !daysReady()) ensureDays(); }), 1200); }
+      if (!HL) loading(lb);
       else {
-        const hit = [], pit = [], n0 = (x) => (x == null ? 0 : Math.round(x));
-        inWin(NOWIN, () => {
-          const D = window.DRAFT_DAYS || {};
-          for (const p of DATA.players) {
-            if (!(D[p.type + p.id] || []).some((r) => r[0] === lastDay)) continue;   // only who played that day (5 Oct 2026)
-            if (p.type === "H") { const log = hitGameLog(p, lastDay); if (!Array.isArray(log)) continue; const g = log.find((x) => x.day === lastDay); if (!(g && (g.g.pa || 0) >= 3 && g.xw != null)) continue;
-              const G = g.g; hit.push({ p, v: g.xw, hab: G.h != null && G.ab != null ? `${n0(G.h)}-${n0(G.ab)}` : `${n0(G.pa)} PA`, hr: n0(G.hr), bb: n0(G.bb), k: n0(G.k), brl: n0(G.brl), max: g.max }); }
-            else { const o = sumOutings((D[p.type + p.id] || []).filter((r) => r[0] === lastDay)).get(lastDay), v = dayNERA(o, K()); if (!(o && o.gs && o.outs >= 9 && v != null)) continue;
-              const er = (D[p.type + p.id + ":er"] || []).reduce((a, [d, , e]) => a + (d === lastDay ? e : 0), 0);
-              pit.push({ p, v, ip: fmtIP(o.outs / 3), er, k: o.k, bb: o.bb, whf: o.sw ? 100 * o.whf / o.sw : null }); }
-          }
-        });
-        hit.sort((a, b) => b.v - a.v); pit.sort((a, b) => a.v - b.v);   // nERA: lowest first
-        const opool = outingPool(), H5 = hit.slice(0, NB), P5 = pit.slice(0, NB), xw = (r) => ({ v: fw(r.v), pc: pcOf(refH, r.v) }),
-              ne = (r) => ({ v: (r.v < 0 ? "−" : "") + Math.abs(r.v).toFixed(2), pc: outPct(opool, 1, r.v) });
+        const hit = HL.last.hit.map((r) => who("H", r)).filter((r) => r.p), pit = HL.last.pit.map((r) => who("P", r)).filter((r) => r.p);
+        const H5 = hit.slice(0, NB), P5 = pit.slice(0, NB), xw = (r) => ({ v: fw(r.v), pc: pcOf(refH, r.v) }),
+              ne = (r) => ({ v: (r.v < 0 ? "−" : "") + Math.abs(r.v).toFixed(2), pc: r.pc });
         if (PH) {   // a phone's lead tables keep the columns that fit at 390px (the canvas's phone board)
           table(lb, { label: wsLab("Hitters · by xwOBA"), cols: [["Player", null, "nm"], ["Tm", 40, "c"], ["H-AB", 42, "c"], ["HR", 30], ["Brl", 30], [wsLab("xwOBA"), 54, "heat"]], ends: [1, 4],
             rows: H5.map((r) => [nm(r.p, "games"), r.p.team || "", r.hab, r.hr, r.brl, xw(r)]) });
@@ -6081,18 +6176,13 @@
     // in the window is a column like the leaders' (Sean, 9 Oct 2026: "just add the actual PA ... and add IP too")
     { const W100 = { from: "", to: "", last: "100" }, W50 = { from: "", to: "", last: "50" };
       const b = section(grid, "Trending", "last 100 PA · last 50 IP", "Leaderboard →", goLB("ALL", "score", "desc", W100));
-      if (!daysReady()) loading(b);
+      if (!HL) loading(b);
       else {
-        inWin(W100, () => {
-          const hit = DATA.players.filter((p) => p.type === "H").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 75 && v.m.xwd != null).sort((a, b) => b[1].m.xwd - a[1].m.xwd).slice(0, NH);
-          table(b, { label: "Hitters · last 100 PA", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["PA", 42], [wsLab("xwOBA"), 58, "heat"]], ends: [2, 3],
-            rows: hit.map(([p, v], i) => [i + 1, nm(p), p.team || "", Math.round(v.sample), { v: fw(v.m.xwd), pc: pcOf(refH, v.m.xwd) }]) });
-        });
-        inWin(W50, () => {
-          const pit = DATA.players.filter((p) => p.type === "P").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 37.5 && v.m.nera != null).sort((a, b) => a[1].m.nera - b[1].m.nera).slice(0, NP);
-          table(b, { label: "Pitchers · last 50 IP", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["IP", 46], ["nERA", 58, "heat"]], ends: [2, 3],
-            rows: pit.map(([p, v], i) => [i + 1, nm(p, "nera"), p.team || "", fmtIP(v.sample), { v: f2(v.m.nera), pc: pcOf(refP, v.m.nera, true) }]) });
-        });
+        const hit = HL.trend.hit.map((r) => who("H", r)).filter((r) => r.p).slice(0, NH), pit = HL.trend.pit.map((r) => who("P", r)).filter((r) => r.p).slice(0, NP);
+        table(b, { label: "Hitters · last 100 PA", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["PA", 42], [wsLab("xwOBA"), 58, "heat"]], ends: [2, 3],
+          rows: hit.map((r, i) => [i + 1, nm(r.p), r.p.team || "", Math.round(r.n), { v: fw(r.xwd), pc: pcOf(refH, r.xwd) }]) });
+        table(b, { label: "Pitchers · last 50 IP", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["IP", 46], ["nERA", 58, "heat"]], ends: [2, 3],
+          rows: pit.map((r, i) => [i + 1, nm(r.p, "nera"), r.p.team || "", fmtIP(r.n), { v: f2(r.nera), pc: pcOf(refP, r.nera, true) }]) });
       }
     }
     // Movers (Sean, 18 Oct 2026: "combine movers and fixing the flaw ... make it called movers and sort it by the delta of xwoba on the season if the
@@ -6100,15 +6190,18 @@
     // moved over the last 30 days, by Δ, the xwOBA the move adds if it held all year (If held − his season's). The whole list, with its windows, is the
     // Movers page (#movers). It takes the grid's third card from the percentile-jump Movers (7 Oct: hitters by xwOBA, pitchers by nERA, now gone), and
     // the full-width Fixing the flaw section under the grid with it
-    { const b = section(grid, "Movers", "last 30 days · if it held", "Full list →", (e) => { e.preventDefault(); location.hash = "#movers"; });
-      if (!daysReady()) loading(b);
+    { const b = section(grid, "Movers", "last 30 days · if it held · Pitching+", "Full list →", (e) => { e.preventDefault(); location.hash = "#movers"; });
+      if (!HL) loading(b);
       else {
-        // the move without its % signs (the piece's name says it's a rate), so "xHR/FB 11.3 → 17.2" fits the card's column on a phone and in the grid
-        const show = flawRows().rows.slice(0, NH + NP), xw = (x) => ({ v: fw(x), pc: pcOf(refH, x) }), dl = (r) => "+" + Math.round(wrcOn() ? wrcPts(r.gain / 1000) : r.gain),
-              np = (z) => String(z).replace(/%$/, ""), fl = (r) => `${r.flaw.lab} ${np(r.flaw.f(r.was))} → ${np(r.flaw.f(r.now))}`;
+        // four hitters whose flaw moved and four pitchers whose Pitching+ did (20 Oct 2026); the move without its % signs (the piece's name says it's
+        // a rate), so "xHR/FB 11.3 → 17.2" fits the card's column on a phone and in the grid
+        const show = HL.movers.map((r) => who("H", r)).filter((r) => r.p).slice(0, NH), pshow = (HL.pmovers || []).map((r) => who("P", r)).filter((r) => r.p).slice(0, NP);
+        const xw = (x) => ({ v: fw(x), pc: pcOf(refH, x) }), dl = (r) => "+" + Math.round(wrcOn() ? wrcPts(r.gain / 1000) : r.gain), v1 = (x) => (x == null ? "–" : x.toFixed(1));
         if (!show.length) b.append(el("p", "hnote", "Nobody with an elite base and a flaw that's moved in the window yet."));
         else table(b, { label: "Hitters · elite but for one flaw", cols: [["Player", null, "nm"], ["Flaw", 118, "c"], [wsLab("xwOBA"), 50], ["If held", 48, "heat"], ["Δ", 32, "up"]], ends: [1, 2],
-          rows: show.map((r) => [nm(r.p, "talent"), fl(r), fw(r.xw), xw(r.held), dl(r)]) });
+          rows: show.map((r) => [nm(r.p, "talent"), r.fl, fw(r.xw), xw(r.held), dl(r)]) });
+        if (pshow.length) table(b, { label: "Pitchers · Pitching+ up", cols: [["Player", null, "nm"], ["FB velo", 118, "c"], ["Before", 50], ["Now", 48, "heat"], ["Δ", 32, "up"]], ends: [1, 2],
+          rows: pshow.map((r) => [nm(r.p, "pitching"), `${v1(r.fbWas)} → ${v1(r.fbNow)}`, Math.round(r.pWas), { v: Math.round(r.pNow), pc: Math.max(1, Math.min(99, Math.round(50 + 2.2 * (r.pNow - 100)))) }, "+" + Math.round(r.dP)]) });
       }
     }
     // no "Every page" tiles (Sean, 29 Sep 2026, the minimal pass): the header's menus already list them

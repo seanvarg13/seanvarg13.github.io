@@ -554,6 +554,7 @@ Statcast's.
 | `tools/build_awards.py` | MVP / Cy Young / Rookie of the Year vote finishes → `hist/awards.js` from the Lahman database (SABR); repo only, run by hand each January |
 | `tools/add_baserunning.py` | fills the Base Running numbers into already-built `data.js` / `hist/mlb-YYYY.js`; repo only, run by hand |
 | `tools/whats_new.py` | the morning run's "anything new?" — MLB's schedule against each file's last game day; repo only, run by the workflow |
+| `tools/build_home.cjs`, `tools/headless.cjs` | home's day-file lists → `hist/home.js`, by the site's own code in headless Chrome; repo only, run by `cloud_daily.py` |
 
 Not mirrored, on purpose: `github_site.json` / `netlify_site.json` (account config), `~/.github_token`,
 `.cache/`, `logs/`, `*.joblib`, `pa_all.parquet`.
@@ -4583,6 +4584,27 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     pager under the table is gone); a page turn scrolls back to the table's top. `pageNav(pg, go)` is the page-number row both bars draw (factored
     out of `renderPager`, same five slots). **The Pts total prints whole** on both layouts (542, not 542.0; a preset with halves keeps its tenth);
     xPts and the rates keep their decimals.
+
+* **Home without the day file; pitchers on Movers (Sean, 20 Oct 2026, items 1 and 9 of the fourteen: "home without days.js", "pitchers in Movers:
+  velocity and Pitching+ risers over the last 30 days")**:
+  - **`hist/home.js`** (`window.DRAFT_HOME`, ~2 KB): home's three day-file lists — the last game day, Trending, Movers — as data, computed by the
+    site's own code: `homeLive()` in `app.js` (the code the sections ran inline before, moved out unchanged, memoised per build / park switch /
+    Regress / dataset) and the hook `window.__homeData()` (loads the day rows, returns `homeLive()`). **`tools/build_home.cjs`** opens the
+    freshly built site headless (`tools/headless.cjs`: a static server on the repo root and playwright — `playwright-core` from npm on the runner
+    driving its Chrome, `PW_CHANNEL=chrome`, `NODE_PATH`; the preinstalled playwright in a Claude session), calls the hook and writes the file;
+    `cloud_daily.py` runs it after `build_similar.py` (`node()`, non-fatal), and the three workflows install `playwright-core@1.56.1` first.
+  - **`homeLists()`** is what home reads: the day rows when they're in (a window or split elsewhere loaded them), else the file when it's from the
+    same build as `data.js` (`built`), version `HOME_V` and the defaults (no park-neutral switch, no Regress small samples) — else nothing yet,
+    and home asks for the day rows on idle as before. home.js is in `ensureScript`'s value-free list. Checked headless: a fresh home fills in
+    ~2 s on a 4×-throttled phone with **no** day-file request (12 s and ~10 MB before), and the file's tables are text-identical to the live
+    ones on both layouts.
+  - **Pitchers on Movers** (`pitchMovers(winId)`): his primary fastball velocity and Pitching+ over the window against his season before it (the
+    day rows' `fbv` / Pitching+ sums through `V()`), ranked by the Pitching+ gain; 120 pitches in a 30-day window (scaled 60-250 with its
+    length) and 300 before it; a PA window reads 30 days for pitchers; This season vs last compares his full seasons (300+ pitches each). The
+    Movers page has a **Pitchers** table under the hitters' (Rk · Pitcher · Tm · Role | FB velo Before · Window · Δ | Pitching+ Before · Window
+    (heat) · Δ | Pitches; a phone: Pitcher · FB velo "95.1 → 96.4" · Pitching+ · Δ); a name opens his Pitching+ tab. Home's Movers card is four
+    hitters and four pitchers ("Pitchers · Pitching+ up": FB velo, Before, Now, Δ). 27 Sep 2026, last 30 days: Whitlock 120 → 145, Medina
+    108 → 129, Wrobleski 92 → 113 (+1.5 mph); 2026 vs 2025: Sasaki 85 → 111 (+1.8 mph), Andrew Alvarez 78 → 102.
 
 ## 10. The football site moved out
 
