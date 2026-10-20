@@ -134,13 +134,21 @@ def sha1(path):
 
 def restamp():
     """publish.stamp(), on the repo root: strip the last publish's stamps back to the template, then version every
-    file reference with ?v=<sha1> and write the DRAFT_BUILD map and build.json exactly as the Mac's publisher does."""
+    file reference with ?v=<sha1> and write the DRAFT_BUILD map and build.json exactly as the Mac's publisher does.
+    Finished seasons' day / arsenal files are packed first (tools/pack_hist.py), so the map lists one form of each."""
+    try:
+        if TOOLS not in sys.path:
+            sys.path.insert(0, TOOLS)
+        import pack_hist
+        pack_hist.pack(ROOT, log=say)
+    except Exception as e:                                 # noqa: BLE001 — unpacked files still publish (and still load)
+        say(f"!! pack_hist: {type(e).__name__}: {e}")
     html = open("index.html").read()
     html = re.sub(r'<script>window\.DRAFT_BUILD=.*?</script>\n?', "", html)
     html = re.sub(r'\?v=[0-9a-f]{10}"', '"', html)
     with open("index.html", "w") as f:
         f.write(html)
-    wanted = [r for r in TOP if os.path.exists(r)] + sorted(f"hist/{n}" for n in os.listdir("hist") if n.endswith(".js"))
+    wanted = [r for r in TOP if os.path.exists(r)] + sorted(f"hist/{n}" for n in os.listdir("hist") if n.endswith((".js", ".js.gz")))
     ver = {rel: sha1(rel)[:10] for rel in wanted}
     build = hashlib.sha1("".join(f"{k}:{v}" for k, v in sorted(ver.items())).encode()).hexdigest()[:10]
     for rel, v in ver.items():

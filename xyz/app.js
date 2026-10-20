@@ -660,13 +660,23 @@
   const rowsOf = (p) => DS.rows(p);
   // Explore data: hist/index.js (who exists in which seasons) and hist/<key>.js per past season, loaded on demand
   const loading = new Set(), failed = new Set();
-  function ensureScript(src, isReady) {
+  // since 20 Oct 2026 a finished season's day and arsenal files are stored gzipped beside the live site (hist/days-2025.js.gz;
+  // tools/pack_hist.py): when the plain file isn't there, this frozen copy fetches the .gz, unzips it in the browser and runs that
+  async function gunzipUrl(path) {
+    const r = await fetch(path); if (!r.ok) throw new Error("HTTP " + r.status);
+    const buf = await r.arrayBuffer(), h = new Uint8Array(buf, 0, Math.min(2, buf.byteLength));
+    const js = h[0] === 0x1f && h[1] === 0x8b ? await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).blob() : new Blob([buf]);
+    return URL.createObjectURL(new Blob([js], { type: "text/javascript" }));
+  }
+  function ensureScript(src, isReady, gz) {
     if (isReady() || loading.has(src) || failed.has(src)) return;
     loading.add(src);
-    const sc = document.createElement("script"); sc.src = vsrc(src);
-    sc.onload = () => { loading.delete(src); valCache.clear(); poolCache.clear(); rankCache.clear(); render(); if (state.gq) renderGlobalSearch(); };
-    sc.onerror = () => { loading.delete(src); failed.add(src); render(); };
-    document.head.append(sc);
+    const go = (url) => { const sc = document.createElement("script"); sc.src = url;
+      sc.onload = () => { if (gz) URL.revokeObjectURL(url); loading.delete(src); valCache.clear(); poolCache.clear(); rankCache.clear(); render(); if (state.gq) renderGlobalSearch(); };
+      sc.onerror = () => { loading.delete(src); sc.remove(); if (!gz && /^hist\/(?:days|ars)-/.test(src)) { ensureScript(src, isReady, true); return; } failed.add(src); render(); };
+      document.head.append(sc); };
+    if (gz) gunzipUrl(src + ".gz").then(go, () => { loading.delete(src); failed.add(src); render(); });
+    else go(vsrc(src));
   }
   // The site is regular season only: spring-training and postseason datasets may still be built, but they're taken
   // out of the index the moment it arrives, so no season picker anywhere ever offers one
