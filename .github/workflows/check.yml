@@ -1,0 +1,30 @@
+# The page check (Sean, 20 Oct 2026): every pull request's site — every page and card tab, at a phone's size and a desktop's, in headless Chrome
+# (tools/check_site.cjs). Red when a page throws a script error, draws nothing, or asks for a file of ours that isn't there. The daily build runs
+# the same check (--quick) before each publish and stops when it fails.
+name: Page check
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: page-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Headless Chrome
+        run: |
+          npm install --no-save --no-audit --no-fund --prefix "$RUNNER_TEMP/pw" playwright-core@1.56.1
+          echo "NODE_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
+          echo "PW_CHANNEL=chrome" >> "$GITHUB_ENV"
+
+      - name: Every page, phone and desktop
+        run: node tools/check_site.cjs

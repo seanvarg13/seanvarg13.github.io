@@ -6133,7 +6133,8 @@
     // once Home has painted and the phone is idle (5 Oct 2026)
     const HL = homeLists(), PL = new Map(DATA.players.map((p) => [p.type + p.id, p])), who = (t, r) => Object.assign({}, r, { p: PL.get(t + r.id) });
     if (!HL && !daysReady()) {
-      if (!window.DRAFT_HOME && !failed.has("hist/home.js")) ensureScript("hist/home.js", () => !!window.DRAFT_HOME);
+      // (a published site lists the file in its build map; one without it goes straight to the day rows, no 404)
+      if (!window.DRAFT_HOME && !failed.has("hist/home.js") && (!window.DRAFT_BUILD || window.DRAFT_BUILD["hist/home.js"])) ensureScript("hist/home.js", () => !!window.DRAFT_HOME);
       else if (!state.daysLoading && !state.daysFailed) setTimeout(() => (window.requestIdleCallback || ((f) => f()))(() => { if (state.mode === "home" && !daysReady()) ensureDays(); }), 1200);
     }
     // the lead: the last game day — the best xwOBA games (3+ PA) and the best starts by nERA (3+ IP; Sean, 18 Oct 2026: "sort it by nERA instead of
@@ -13546,7 +13547,7 @@
   // "Update data" / "Publish" — available when the page is served by serve.py (local or --phone), which can
   // run the build scripts and push the result to Netlify
   (async function updater() {
-    if (!/^https?:$/.test(location.protocol)) return;
+    if (!/^https?:$/.test(location.protocol) || /\.github\.io$/.test(location.hostname)) return;   // the live site has no serve.py to ask (its /api/status was a 404 on every load)
     let st;
     try { st = await (await fetch("/api/status", { cache: "no-store" })).json(); } catch { return; }
     if (!st || typeof st.running !== "boolean") return;
