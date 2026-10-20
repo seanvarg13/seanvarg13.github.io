@@ -64,7 +64,7 @@
   // against what was last synced: a key changed on one side takes that side; changed on both, the fantasy presets and
   // the keyed lists (stars, ranks …) are merged, anything else keeps this device's. A pull that changes anything here
   // reloads the page once, so every screen reads the new copy.
-  const SYNC_KEYS = [LS.drafted, LS.extra, LS.roles, LS.ranks, LS.tiers, LS.tierNames, LS.sets, LS.extraPos, LS.stars, "draft2027.fantasy"];
+  const SYNC_KEYS = [LS.drafted, LS.extra, LS.roles, LS.ranks, LS.tiers, LS.tierNames, LS.sets, LS.extraPos, LS.stars, "draft2027.fantasy", "draft2027.auction"];
   const SYNC_LS = "draft2027.sync", GIST_FILE = "sean-site-sync.json", GIST_DESC = "Sean's Site: saved settings (synced by the site)";
   const sync = Object.assign({ token: "", gist: "", base: null, at: "", err: "" }, load(SYNC_LS, {}));
   const syncSave = () => { try { localStorage.setItem(SYNC_LS, JSON.stringify(sync)); } catch {} };
@@ -2763,6 +2763,7 @@
     renderPager($("pagertop"), list.length, { start: 0, end: list.length, size: 0, pages: 1, page: 1 });   // Filters, the count, Draft mode's bar — no pages
     const drafted = draftedIds(), listDs = DS === CUR ? null : DS.key;
     const names = ((src && src.names) || {})[state.pos] || [], T = tiers.length;
+    const AUC = draftMode && auc.on, AV = AUC ? aucValues() : null;
     const row = (p, i) => {
       const key = p.type + p.id, li = el("li", "brow"); li.dataset.key = key;
       if (drafted.has(p.id)) li.classList.add("drafted");
@@ -2778,9 +2779,11 @@
       li.append(el("span", "rk", String(rankOf(p, i))));
       const nm = el("span", "nm", p.name); nm.title = `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`; li.append(nm);
       { const ib = ilBadge(p); if (ib) li.append(ib); }
+      if (AUC) { const d = drafted.has(p.id) ? state.drafted.find((z) => z.id === p.id) : null, v = d ? null : AV && AV.val(p);   // the price and the team once sold, else his value
+        if (d && d.price != null) li.append(el("span", "aucv sold", `$${d.price} · ${aucName(d.team)}`)); else if (v != null) li.append(el("span", "aucv", "$" + v)); }
       li.append(el("span", "pos", posLabel(p)));
-      if (draftMode) li.title = drafted.has(p.id) ? "Tap to return him to the board" : "Tap to mark him drafted";
-      li.addEventListener("click", (e) => { if (rankMode) { toggleSel(key, e); return; } if (draftMode) { drafted.has(p.id) ? undraft(p.id) : draft(p); return; } openPlayer(p, { ds: p.dsKey ? (p.dsKey === CUR.key ? null : p.dsKey) : listDs }); });
+      if (draftMode) li.title = drafted.has(p.id) ? "Tap to return him to the board" : AUC ? "Tap to record who bought him and for how much" : "Tap to mark him drafted";
+      li.addEventListener("click", (e) => { if (rankMode) { toggleSel(key, e); return; } if (draftMode) { if (drafted.has(p.id)) undraft(p.id); else if (AUC) { aucPick = p; aucSheetSync(); } else draft(p); return; } openPlayer(p, { ds: p.dsKey ? (p.dsKey === CUR.key ? null : p.dsKey) : listDs }); });
       return li;
     };
     const head = (t, untiered) => {
@@ -2812,6 +2815,7 @@
       return th;
     };
     const frag = document.createDocumentFragment();
+    if (AUC) frag.append(aucTeamsBlock());   // the room's money over the board
     groups.forEach((rows, t) => {
       if (t === T) return;   // the pool comes last, under the columns
       const li = el("li", "tier"); li.dataset.tier = t;
@@ -2828,6 +2832,7 @@
       if (rows.length > POOL_SHOW + 8) { const f = el("button", "foot", all ? "Show fewer ▴" : `Show all ${rows.length} ▾`); f.type = "button"; f.addEventListener("click", () => { state.poolAll = !state.poolAll; renderRows(); }); li.append(f); }
       frag.append(li); }
     ol.append(frag);
+    aucSheetSync();
   }
   function brEnds(ms, g) {
     const keys = ["score", ...ms.map((m) => m.key)], cat = (k) => (RESULT_KEYS.has(k) ? "R" : "P"), out = new Set();
@@ -3335,7 +3340,7 @@
     box.hidden = false;
     { const g = groupFor(state.pos), pit = isPitcherGroup(g);   // the Stuff+ board's count line at the right (Sean, 3 Oct 2026)
       const who = onePage() ? ` ${pit ? "pitchers" : "hitters"} · ${DS.season}${state.mode === "leaderboard" ? ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}` : ""}` : "";   /* a desktop keeps the fuller count beside its page range (16 Oct 2026) */
-      const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}${state.mode === "draft" ? " · tap to draft, tap again to undo" : ""}`; })() : null;   // the board: tiers · tiered · listed (Draft mode has no buttons)
+      const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}${state.mode === "draft" ? (auc.on ? " · tap a name to record his sale, tap again to undo" : " · tap to draft, tap again to undo") : ""}`; })() : null;   // the board: tiers · tiered · listed (Draft mode has no buttons)
       const ct = bc != null ? bc : pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}${mobileView() ? "" : who}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total}${who}` : `${total} players`;
       const pc = el("span", "pcount", ct);
       // Fantasy's count shares the row with the page numbers, so it holds the width of its widest label (the last page's; the digits are
@@ -5202,6 +5207,83 @@
   }
   function undraft(id) { state.drafted = state.drafted.filter((d) => d.id !== id); save(LS.drafted, state.drafted); render(); }
   function undoLast() { state.drafted.pop(); save(LS.drafted, state.drafted); render(); }
+  // Draft mode for an auction (Sean, 20 Oct 2026, item 7 of the recommendations: "record price and team per pick, every team's money left and max bid,
+  // inflation-adjusted values"): with Auction on, a tap on a name opens a sheet at the foot of the screen — who bought him and for how much, prefilled
+  // with his value — and the Teams table over the board keeps every team's money, open spots and max bid (money left less $1 for each other open
+  // spot). His value is the Mock draft's $ (mkDollars: Sean's league's prices laid on the 2027 ADP) for this room's teams and budget, moved by the
+  // room's inflation — the money left (less $1 a spot) against what the best players left are worth. The picks ride in the drafted list (price, team),
+  // so Sync carries them, and Undo takes the last one back; the room's settings are draft2027.auction (synced too)
+  const auc = Object.assign({ on: false, teams: 14, budget: 200, names: [], me: 0 }, load("draft2027.auction", {}));
+  const aucSave = () => save("draft2027.auction", auc);
+  const aucName = (i) => auc.names[i] || `Team ${i + 1}`;
+  const aucSpots = () => mkSlotList(mkSet.roster).length;
+  function aucTeams() {
+    const S = aucSpots(), T = Array.from({ length: auc.teams }, (_, i) => ({ i, n: 0, spent: 0 }));
+    for (const d of state.drafted) if (d.team != null && T[d.team]) { T[d.team].n++; T[d.team].spent += d.price || 0; }
+    for (const t of T) { t.left = auc.budget - t.spent; t.open = Math.max(0, S - t.n); t.max = t.open ? Math.max(0, t.left - (t.open - 1)) : 0; }
+    return T;
+  }
+  let aucBase = null;
+  function aucValues() {
+    if (!mkReady()) { mkEnsure(); return null; }
+    mkPool(); const sig = JSON.stringify([auc.teams, auc.budget, mkSet.roster, mkPoolCache && mkPoolCache.sig]);
+    if (!aucBase || aucBase.sig !== sig) aucBase = { sig, m: mkDollars({ teams: auc.teams, budget: auc.budget, roster: mkSet.roster }) };
+    const base = aucBase.m, T = aucTeams(), gone = new Set(state.drafted.map((d) => d.id));
+    const open = T.reduce((a, t) => a + t.open, 0), money = T.reduce((a, t) => a + Math.max(0, t.left), 0) - open;
+    const worth = mkPool().filter((x) => !gone.has(x.id)).slice(0, open).reduce((a, x) => a + Math.max(0, (base.get(x.k) || 0) - 1), 0);
+    const inf = worth > 0 ? Math.max(0.5, Math.min(2, money / worth)) : 1;
+    return { base, inf, T, money: money + open, val: (p) => { const b = base.get(p.type + p.id); return b ? Math.max(1, Math.round(1 + (b - 1) * inf)) : null; } };
+  }
+  let aucPick = null, aucLastTeam = null;
+  function aucSheetSync() {
+    let sh = $("aucsheet");
+    if (!(state.mode === "draft" && auc.on && aucPick)) { if (sh) sh.remove(); return; }
+    if (sh && sh.dataset.k === String(aucPick.id)) return;   // the same player: keep what's been typed
+    if (!sh) { sh = el("div", "aucsheet"); sh.id = "aucsheet"; document.body.append(sh); }
+    sh.innerHTML = ""; sh.dataset.k = String(aucPick.id);
+    const p = aucPick, AV = aucValues(), T = AV ? AV.T : aucTeams(), v = AV ? AV.val(p) : null, b = AV ? AV.base.get(p.type + p.id) : null;
+    const hd = el("div", "auchead"), x = el("button", "pop-close", "×"); x.type = "button"; x.setAttribute("aria-label", "Close");
+    x.addEventListener("click", () => { aucPick = null; aucSheetSync(); });
+    hd.append(el("b", null, p.name), el("span", null, [posLabel(p), p.team].filter(Boolean).join(" · ")), x); sh.append(hd);
+    sh.append(el("p", "aucnote", v == null ? (AV ? "No 2027 value for him" : "Loading the 2027 values…") : `Worth $${b} · the room's inflation ×${AV.inf.toFixed(2)} → $${v}`));
+    const sel = el("select"); T.forEach((t) => { const o = el("option", null, aucName(t.i) + (t.i === auc.me ? " (you)" : "")); o.value = String(t.i); sel.append(o); });
+    sel.value = String(aucLastTeam != null && aucLastTeam < auc.teams ? aucLastTeam : auc.me);
+    const inp = el("input"); inp.type = "number"; inp.inputMode = "numeric"; inp.min = "1"; inp.value = String(v || 1);
+    const go = el("button", "btn", "Sold"); go.type = "button";
+    const info = el("p", "aucnote");
+    const upd = () => { const t = T[+sel.value], pr = Math.round(+inp.value || 0); info.textContent = `${aucName(t.i)}: $${t.left} left · ${t.open} spot${t.open === 1 ? "" : "s"} open · max bid $${t.max}${pr > t.max ? ` — $${pr} is over it` : ""}`; info.classList.toggle("warn", pr > t.max); };
+    const sold = () => { const pr = Math.round(+inp.value || 0); if (pr < 1) { inp.focus(); return; }
+      aucLastTeam = +sel.value; state.drafted.push({ id: p.id, name: p.name, t: Date.now(), price: pr, team: +sel.value }); save(LS.drafted, state.drafted); aucPick = null; render(); };
+    sel.addEventListener("change", upd); inp.addEventListener("input", upd); go.addEventListener("click", sold); inp.addEventListener("keydown", (e) => { if (e.key === "Enter") sold(); });
+    const lab = (t, c) => { const l = el("label", "aucf"); l.append(el("span", null, t), c); return l; };
+    const row = el("div", "aucrow"); row.append(lab("Sold to", sel), lab("for $", inp), go); sh.append(row, info); upd();
+  }
+  // the Teams table over the board: the room's settings, its inflation, and every team's money
+  function aucTeamsBlock() {
+    const li = el("li", "auchd"), AV = aucValues(), T = AV ? AV.T : aucTeams(), S = aucSpots();
+    const set = el("div", "aucset");
+    const nsel = el("select"); for (let n = 4; n <= 20; n++) { const o = el("option", null, String(n)); o.value = String(n); nsel.append(o); } nsel.value = String(auc.teams);
+    nsel.addEventListener("change", () => { auc.teams = +nsel.value; if (auc.me >= auc.teams) auc.me = 0; aucSave(); render(); });
+    const bud = el("input"); bud.type = "number"; bud.inputMode = "numeric"; bud.min = "1"; bud.value = String(auc.budget);
+    bud.addEventListener("change", () => { auc.budget = Math.max(1, Math.round(+bud.value || 200)); aucSave(); render(); });
+    const me = el("select"); for (let i = 0; i < auc.teams; i++) { const o = el("option", null, aucName(i)); o.value = String(i); me.append(o); } me.value = String(auc.me);
+    me.addEventListener("change", () => { auc.me = +me.value; aucSave(); render(); });
+    const lab = (t, c) => { const l = el("label", "aucf"); l.append(el("span", null, t), c); return l; };
+    set.append(lab("Teams", nsel), lab("Budget $", bud), lab("You", me), el("span", "aucinf", AV ? `${S} spots a team · $${AV.money} left in the room · inflation ×${AV.inf.toFixed(2)}` : "Loading the 2027 values…"));
+    li.append(set);
+    // teams across, the money down (five rows whatever the room's size; a phone slides it sideways under the frozen labels), max bid first
+    const { t, tb, wrap } = brTable(null, [["", "l f1"], ...T.map((r) => [aucName(r.i), r.i === auc.me ? "me" : ""])], "auct");
+    T.forEach((r, k) => { const th = t.tHead.rows[0].cells[k + 1], nm = el("button", "linkbtn", aucName(r.i) + (r.i === auc.me ? " (you)" : "")); nm.type = "button"; nm.title = "Rename this team";
+      nm.addEventListener("click", () => ask("Rename the team", "", (v) => { auc.names[r.i] = String(v || "").trim(); aucSave(); render(); }, { value: aucName(r.i), button: "Save" }));
+      th.textContent = ""; th.append(nm); });
+    for (const [lab, f, cls, tip] of [["Max bid", (r) => "$" + r.max, "aucmax", "Money left less $1 for each other open spot"], ["Left", (r) => "$" + r.left], ["Open", (r) => String(r.open), null, `Spots left of ${S}`], ["Players", (r) => String(r.n)], ["Spent", (r) => "$" + r.spent]]) {
+      const tr = el("tr", cls || null), c0 = el("td", "l f1", lab); if (tip) c0.title = tip; tr.append(c0);
+      for (const r of T) tr.append(el("td", r.i === auc.me ? "me" : null, f(r)));
+      tb.append(tr);
+    }
+    wrap.classList.add("aucwrap"); li.append(wrap);
+    return li;
+  }
   function resetBoard() {
     if (!state.drafted.length) return;
     ask("Reset the draft board?", `Returns all ${state.drafted.length} drafted players to the board.`, () => { state.drafted = []; save(LS.drafted, state.drafted); render(); });
@@ -5744,6 +5826,8 @@
     $("drafttools").hidden = !on;
     if (!on) return;
     { let b = $("draftexit"); if (!b) { b = el("button", "btn btn-quiet draftexit", "Exit draft mode"); b.id = "draftexit"; b.type = "button"; b.title = "Back to the rankings"; b.addEventListener("click", () => { location.hash = "#rankings"; }); $("drafttools").append(b); } }   // 16 Oct 2026
+    { let sg = $("draftkind"); if (!sg) { sg = el("div", "seg draftkind"); sg.id = "draftkind"; sg.setAttribute("role", "group"); sg.setAttribute("aria-label", "Snake or auction"); $("drafttools").prepend(sg); }   // 20 Oct 2026
+      sg.innerHTML = ""; for (const [v, l] of [[false, "Snake"], [true, "Auction"]]) { const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(!!auc.on === v)); b.addEventListener("click", () => { if (!!auc.on === v) return; auc.on = v; aucPick = null; aucSave(); render(); }); sg.append(b); } }
     const dsel = $("draftorder"); dsel.innerHTML = "";
     const cur = currentSetName(), names = Object.keys(state.rankSets).sort((x, y) => x.localeCompare(y));
     for (const [v, l] of [["board", "Big board order"], ["mine", cur ? `My rankings (working copy of “${cur}”)` : "My rankings (working)"], ...names.map((n) => ["set:" + n, "Saved: " + n])]) { const o = el("option", null, l); o.value = v; dsel.append(o); }
@@ -6531,6 +6615,7 @@
   }
   function renderNow() {
     if (!window.DRAFT_IL && window.DRAFT_BUILD && window.DRAFT_BUILD["hist/injuries.js"]) ensureScript("hist/injuries.js", () => !!window.DRAFT_IL);   // ~10 KB: the IL badges
+    if (state.mode !== "draft" && $("aucsheet")) { aucPick = null; $("aucsheet").remove(); }   // the auction sheet is Draft mode's
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws", other = pitches || player || compare || elig || hub || appear || fant;
     if (xPop && !POP_MODES.includes(state.mode)) xPop = false;   // another page: the popup goes with the list it came from
@@ -13532,6 +13617,7 @@
     if (e.key === "/" && !typing) { e.preventDefault(); $("search").focus(); }
     if (e.key === "Escape" && (state.expanded || state.textModal || state.tierPick || state.colPick || state.panel)) closeModal();
     else if (e.key === "Escape" && xPop && !document.querySelector(".phmodal") && !ddOpen) closeXPop();
+    else if (e.key === "Escape" && aucPick && $("aucsheet")) { aucPick = null; aucSheetSync(); }   // the auction's sale sheet
   });
 
   // phone: the column header lives above the scroll box; keep it aligned with the rows sideways (either can be dragged)
