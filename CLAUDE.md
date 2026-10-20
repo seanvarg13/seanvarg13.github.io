@@ -4636,6 +4636,23 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `.nmtx`), the Rankings / Draft board and Fantasy (this season's lines only); on his page the bio line carries **60-day IL** in the same red
   whatever season the page is on (it's today's status). Brent Rooker: "On the 60-day IL since Jun 9 · Bone bruise in left knee".
 
+* **Auction Draft mode (Sean, 20 Oct 2026, item 7 of the fourteen: "auction support in Draft mode — price and team per pick, every team's money
+  left and max bid, inflation-adjusted values")**: Draft mode's bar has a **Snake | Auction** switch (`#draftkind`; `auc.on`, the room in
+  `draft2027.auction` — teams, budget, team names, which one is his — in `SYNC_KEYS`). With Auction on:
+  - **Every row shows his value** (`.aucv`): the Mock draft's $ for his ADP rank (`mkDollars` on this room's teams and budget, Sean's league's
+    price curve) moved by the room's **inflation** — the money left above $1 an open spot against what the best players left are worth
+    (`aucValues`, held to ×0.5-2). A sold player's row shows his price and buyer instead ("$50 · Team 3").
+  - **A tap opens the sale sheet** at the foot of the screen (`#aucsheet`, `aucSheetSync`): who bought him (the last buyer picked, else his own
+    team) and for how much (his value to start), what that team has left, its open spots and max bid, in red when the price is over it; Sold
+    (or Enter) records it, × or Escape closes it. The pick rides in the drafted list with `price` / `team`, so Sync carries it and Undo takes it
+    back; a tap on a sold name returns him to the board, as in a snake draft.
+  - **The Teams table over the board** (`aucTeamsBlock`, `li.auchd`): the room's settings (Teams 4-20, Budget $, You), the spots a team, the money
+    left in the room and the inflation, then the teams across and the money down — Max bid (money left less $1 for each other open spot) · Left ·
+    Open · Players · Spent — his own column tinted, a team's name renamed by a tap; a phone slides it sideways under the frozen labels (~210px tall
+    on a desktop for 14 teams, where the first cut's 14 rows down had pushed the board off the screen).
+  - Snake works as before (a tap drafts, nothing priced). Checked headless on both layouts: 14 × $200 reads 25 spots, $2800, ×0.99; Yordan $58,
+    Ohtani $97; selling Yordan to Team 3 for $50 leaves it $150 / 24 open / $127 max bid and the row "$50 · Team 3"; Undo puts it all back.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
