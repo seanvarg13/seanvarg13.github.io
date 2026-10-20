@@ -24,9 +24,12 @@ This repo is **two things at once**:
 force-push), with the download caches kept between runs. GitHub starts scheduled runs late on busy mornings (hours, sometimes), so the workflow has backup times
 through the morning and each scheduled run only goes if it is past 4:40 in New York and `data.js` isn't through
 yesterday yet. **That still wasn't enough** (27-28 Sep 2026: no scheduled run started before 10 am), so the real trigger is an
-**outside timer**: cron-job.org POSTs a `workflow_dispatch` with `auto=1` at 4:45 New York time (Sean's fine-grained token,
+**outside timer**: cron-job.org POSTs a `workflow_dispatch` with `auto=1` (Sean's fine-grained token,
 Actions read/write on this repo only, lives there, not here); `auto=1` makes a manual run ask the same "already live?"
-question as a scheduled one. A Claude routine ("Site daily update kick", 4:50) checks and kicks it too; GitHub's schedule stays as the last backup. **The stale-checkout guard** (8 Oct 2026): a run's checkout is main as it was when the run began, so a `tools/` script merged mid-run used to be ignored and its old output published (4 Oct's data.js, 7-8 Oct's career.js); `cloud_daily.py` now adopts main's copy of every build script before each step (`adopt_main_tools`, compile-checked) and, before each publish, re-runs every step of the run whose script or an import (`DEPS`: build_history → build_data, build_milb → both) changed on main after it ran — from the first stale step on, twice at most. `tools/cloud.json` is the switch: `{"daily": true}` =
+question as a scheduled one. **It fires at 08:15 UTC** (4:15 New York in summer, 3:15 in winter, not the 4:45 it was meant to), and the
+gate's "too early before 4:40" turned every one of its runs away until 20 Oct 2026; an `auto=1` run now counts from 3:00 New York
+(every night game is final and on Savant by then) while the scheduled runs keep 4:40, which is what lets only the right one of the
+8:45 / 9:45 UTC pair through across daylight saving. A Claude routine ("Site daily update kick", 4:50) checks and kicks it too; GitHub's schedule stays as the last backup. **The stale-checkout guard** (8 Oct 2026): a run's checkout is main as it was when the run began, so a `tools/` script merged mid-run used to be ignored and its old output published (4 Oct's data.js, 7-8 Oct's career.js); `cloud_daily.py` now adopts main's copy of every build script before each step (`adopt_main_tools`, compile-checked) and, before each publish, re-runs every step of the run whose script or an import (`DEPS`: build_history → build_data, build_milb → both) changed on main after it ran — from the first stale step on, twice at most. `tools/cloud.json` is the switch: `{"daily": true}` =
 the cloud publishes and the Mac's job and publisher stand down (they read the file from `main`); `false` = the Mac
 publishes and the schedule does nothing (a manual run still works: Actions → Daily update → Run workflow, with
 optional `steps`, `rescore` years and `dry`). The directional models are not in the repo: the Mac's publisher
@@ -4510,6 +4513,33 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   23px)` and skips the gap and totals rows (9px / 30px). Every regular row is one height in both looks (269 of 269). Checked headless on a 393px
   phone, both table looks, 25 / 50 / 100 / All a page, from 30%, 62% and the bottom of the rows: 24 of 24 open-and-close round trips back to the same
   pixel and the same sideways scroll.
+
+* **The 20 Oct recommendations, first four (Sean, 20 Oct 2026, from a list of seven: "Ok do 1, 2, 3, 4, 5, and 6")**:
+  - **The morning timer builds** (§1): cron-job.org's run comes at 08:15 UTC and the gate had called it early every morning, so the site
+    waited for GitHub's late schedule or the 4:50 routine. `.github/workflows/daily.yml`'s gate reads `AUTO`: an `auto=1` run counts from
+    3:00 New York, a scheduled one from 4:40 as before.
+  - **Rankings and Draft mode open in a projection's order**: sorted by raw xwOBA / nERA with no minimum, the boards led with 10-11 PA hitters
+    (Rowdy Tellez and Nick Solak on the 1B tab, Freeman 34th) and 3-inning pitchers. With the sort on the headline (`score`) and a board
+    showing (`boardOn()`), `visiblePlayers` orders by `boardProj(p)`: a hitter's **xwOBA proj.** (`m.txwp`, the regressed two-season number
+    with the age curve; career-bb.js / aaa-tw.js are asked for while it shows), a pitcher's nERA with **80 IP at the league's** added
+    (`NREG`; `neraLeague()` = the 20+ IP pitchers' IP-weighted nERA in the view) — fitted on every pitcher-season 2015-25 against his next
+    season's nERA with 40+ IP (3,500 pairs: r .40 raw → .46; 80 IP the best of 40-130). The title, the Sort by option and the phone's summary
+    say "by xwOBA proj." / "by nERA, regressed by innings"; a stat picked in Filters, or his own order, still wins. The Leaderboard is unchanged.
+  - **His rankings protected**: they live in this browser only unless Sync is on (17 Oct 2026). While this device holds a saved list or a
+    working order and Sync is off, Rankings shows a line over the board (`renderSyncNudge`, `#syncnudge` before the title): "Your rankings are
+    saved only in this browser …", **Turn on Sync across devices** (goes to Settings ▸ Appearance and scrolls to the sync row, `state.goSync`,
+    `#syncbox`), **Export** (`exportSets`) and **Not now** (hides it 30 days on this device, `draft2027.syncNudge`). With Sync on but failing
+    (an expired key) it says "Sync isn't working (…), so your rankings aren't backed up" with a link to fix it. Draft mode doesn't show it.
+  - **Dark mode on every scheme**: Titans' dark ink is near-white, so every white button that writes in `--ink` (the header's pages, Filters /
+    Raw, the card's tabs, the Settings tabs, the phone's Menu / Close) read white on white, and the player band's Summary read near-white on
+    its light blue (2.1:1). `themes.js` now sets **`--ink-day`** (the light palette's ink, in both modes) and **`--band2-ink`** (`pickInk`: the
+    band's own ink if it reads at 4.5:1 on `--accent-2`, else the light ink, white or near-black, whichever reads); the 14 white-button rules
+    in `styles.css` write in `var(--ink-day, var(--ink))`, the one ink-filled button fills with it, and the Summary (`.pbsl / .pbsh / .pbsv`, flat
+    schemes excepted — they keep white by design) is `--band2-ink`. Warm's band had been near-black type on near-black in both modes, and its
+    Appearance swatch named the scheme in its band's colour; both read now (the swatch's word picks white or near-black only when it matches its
+    band, `inkOn`). Checked by a contrast sweep of every page, phone and desktop, light and dark (nothing under 2.2:1 left but the
+    over-headers the sweep can't read), and by computed colours on twelve pages: light mode is unchanged on Titans, Jets and UNC but for that
+    swatch, and on Warm but for the Summary.
 
 ## 10. The football site moved out
 

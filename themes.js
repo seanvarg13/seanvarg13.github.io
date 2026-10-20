@@ -159,6 +159,9 @@ window.DRAFT_THEMES = (function () {
   });
   const isDark = () => root.dataset.theme === "dark" || (root.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
   let setKeys = [];
+  const lumOf = (hex) => { const m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return null; const v = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4))); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+  const pickInk = (bg, cands) => { const lb = lumOf(bg); if (lb == null) return cands[0]; let best = cands[0], bc = 0;
+    for (const c of cands) { const l = lumOf(c); if (l == null) continue; const r = (Math.max(l, lb) + 0.05) / (Math.min(l, lb) + 0.05); if (r >= 4.5) return c; if (r > bc) { bc = r; best = c; } } return best; };
 
   function apply() {
     const cur = current();
@@ -168,6 +171,12 @@ window.DRAFT_THEMES = (function () {
     for (const k of setKeys) if (!(k in tokens)) root.style.removeProperty("--" + k);
     for (const [k, v] of Object.entries(tokens)) root.style.setProperty("--" + k, v);
     setKeys = Object.keys(tokens);
+    // the light palette's ink in dark mode too: a white button or the light band keeps it (20 Oct 2026 — the dark ink is near-white, and the
+    // header's pages, Filters / Raw and the Settings tabs read white on white)
+    root.style.setProperty("--ink-day", sc.light.ink);
+    // the ink for type on the band colour (accent-2), picked by contrast: the band ink where it reads (4.5:1), else the light palette's ink, white
+    // or near-black, whichever reads best (20 Oct 2026: Titans' dark mode had near-white on its light blue, Warm near-black on near-black)
+    root.style.setProperty("--band2-ink", pickInk(tokens["accent-2"], [tokens["band-ink"], sc.light.ink, "#ffffff", "#141414"]));
     root.dataset.scheme = cur.scheme;
     root.toggleAttribute("data-flat", !!sc.flat);   // the Jets look: styles.css takes every outline off under it
     const f = F[cur.font];
