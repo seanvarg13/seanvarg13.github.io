@@ -33,7 +33,8 @@ gate's "too early before 4:40" turned every one of its runs away until 20 Oct 20
 8:45 / 9:45 UTC pair through across daylight saving. A Claude routine ("Site daily update kick", 4:50) checks and kicks it too; GitHub's schedule stays as the last backup. **The stale-checkout guard** (8 Oct 2026): a run's checkout is main as it was when the run began, so a `tools/` script merged mid-run used to be ignored and its old output published (4 Oct's data.js, 7-8 Oct's career.js); `cloud_daily.py` now adopts main's copy of every build script before each step (`adopt_main_tools`, compile-checked) and, before each publish, re-runs every step of the run whose script or an import (`DEPS`: build_history → build_data, build_milb → both) changed on main after it ran — from the first stale step on, twice at most. `tools/cloud.json` is the switch: `{"daily": true}` =
 the cloud publishes and the Mac's job and publisher stand down (they read the file from `main`); `false` = the Mac
 publishes and the schedule does nothing (a manual run still works: Actions → Daily update → Run workflow, with
-optional `steps`, `rescore` years and `dry`). The directional models are not in the repo: the Mac's publisher
+optional `steps`, `rescore` years and `dry`; `steps` defaults to `auto`, which builds only what has new games — name the steps,
+e.g. `mlb,minors`, to rebuild them anyway). The directional models are not in the repo: the Mac's publisher
 uploads `model-workspace/*.joblib` and `versions.json` (the Python + package versions they were pickled with) to the
 repo's **`models` release**, which the workflow downloads and pins against. **Retraining can run in the cloud too**
 (30 Sep 2026): Actions → Retrain models (`.github/workflows/retrain.yml`) fetches every regular-season PA 2015-now
@@ -4561,7 +4562,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     days.js stay as they were. A manual run without `auto` (Actions → Daily update → Run workflow) builds every step as before; `post` and
     `spring` are step names of their own now, and a manual `--steps mlb` in October publishes the postseason file it builds (it used to
     sit unpublished until the minors step's publish).
-  - **The routine's prompt** dispatches with `auto=1` now and counts a run that stood down as done (updated the same day).
+  - **A plain manual run is auto too**: the routine's prompt can only be changed from the chat it posts into, and it dispatches with no
+    inputs, so the workflow's `steps` input defaults to **`auto`** now — a run started with no inputs (the routine's, or the Run workflow
+    button left as it is) asks `whats_new.py` first, at any hour, with no 13:00 backstop. **To rebuild whatever is new, name the steps**
+    (`steps: mlb,minors`, `mlb`, `post` …) or pass a rescore. A green run that stood down counts as done for the routine (its prompt
+    already says an off day's "through" won't move).
 
 ## 10. The football site moved out
 

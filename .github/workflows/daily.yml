@@ -19,8 +19,8 @@ on:
   workflow_dispatch:
     inputs:
       steps:
-        description: "mlb, minors, post, spring (comma-separated); auto = only what has new games"
-        default: "mlb,minors"
+        description: "auto = only what has new games since its last build; or mlb, minors, post, spring (comma-separated) to rebuild those whatever is new"
+        default: "auto"
       rescore:
         description: "rebuild past seasons instead (e.g. 2015 2016 … 2025); blank for the daily run"
         default: ""
@@ -56,6 +56,25 @@ jobs:
         id: gate
         run: |
           go=true
+          # a manual run left at steps=auto (the default since 20 Oct 2026 — the 4:50 routine starts one with no inputs) still
+          # asks whether anything is new (tools/whats_new.py), but at any hour; one that names its steps or a rescore just builds
+          if [ "${{ github.event_name }}" != "schedule" ] && [ "${{ github.event.inputs.auto }}" != "1" ] && [ -z "${{ github.event.inputs.rescore }}" ] && [ "${{ github.event.inputs.steps }}" = "auto" ]; then
+            go=$(python3 - <<'PY'
+          import datetime as dt, sys, zoneinfo
+          sys.path.insert(0, "tools")
+          import whats_new
+          ny = dt.datetime.now(zoneinfo.ZoneInfo("America/New_York"))
+          try:
+              res = whats_new.check((ny.date() - dt.timedelta(days=1)).isoformat())
+              print("  " + whats_new.describe(res), file=sys.stderr)
+              print("true" if whats_new.steps(res) else "false")
+          except Exception as e:
+              print(f"  MLB's schedule didn't answer ({type(e).__name__}: {e}) — building", file=sys.stderr)
+              print("true")
+          PY
+            )
+            echo "manual run, steps=auto → go=$go"
+          fi
           # the outside timer (cron-job.org, 28 Sep 2026 — GitHub's own schedule kept starting hours late or not at all)
           # starts a manual run with auto=1, which asks the same questions as a scheduled one
           if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event.inputs.auto }}" = "1" ]; then
