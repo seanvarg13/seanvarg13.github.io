@@ -4568,6 +4568,22 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     (`steps: mlb,minors`, `mlb`, `post` …) or pass a rescore. A green run that stood down counts as done for the routine (its prompt
     already says an off day's "through" won't move).
 
+* **Four phone tidy-ups from the 20 Oct mockups (Sean, 20 Oct 2026, after mock-ups of each: "ok do 10, do 11 with one drop down, and do 12 and do
+  13")**:
+  - **The Bio box says only what the bar doesn't** (both layouts): the full name, Born, Draft, School, Debut and Nickname (`bioBox`); the
+    Positions, Bats • Throws, height / weight and Team lines are gone (the sticky bar's bio line carries them). A phone's table switch moves up ~92px.
+  - **The season table's switch is one dropdown on a phone**: "Standard ▾" in the Leaderboard's Filters-button dress (white, the rail edge, square,
+    the lift; `.sbviewsdd` / `.sbviewdd`, `ddList` over `SB_VIEWS`) instead of the five buttons in a three-row block. A desktop keeps the row.
+  - **The Pitching+ board on a phone**: one **Filters** button (the count, "1992 pitches · 2026", beside it; "Filters (2)" when two are set) opens a
+    panel under it (`.pop.pbfpanel`, `pbOpen`: open across redraws so several can be set, shut by ×, a tap elsewhere or a page change) with the six
+    pills — Pitch, Throws, Role, Minimum, Colour, Games — each with its label; and **Pitching+ sits right after Pitcher** with a red rule after it
+    (`ORD` reorders the header, every row and the League row; the groups read "", "", Pitch, Shape, "Grades vs type" …). A desktop is unchanged.
+  - **Fantasy on a phone**: the top keeps only the control row (Leaderboard ▾ · Season / Recent · Filters ▾); the page numbers and Per page are the
+    Leaderboard's grey 44px bar as the table's last row (`.fphbot` inside `.fscroll`, sticky at the frame's left as the table slides sideways; the
+    pager under the table is gone); a page turn scrolls back to the table's top. `pageNav(pg, go)` is the page-number row both bars draw (factored
+    out of `renderPager`, same five slots). **The Pts total prints whole** on both layouts (542, not 542.0; a preset with halves keeps its tenth);
+    xPts and the rates keep their decimals.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
