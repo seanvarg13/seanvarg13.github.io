@@ -911,7 +911,7 @@
     // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
     // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
     // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
-    sc.onload = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|aaa-tw|awards|similar|minors|trends|home|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
+    sc.onload = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|aaa-tw|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
     // a failed download (a phone on a weak signal, a publish mid-deploy) is tried twice more before it's given up on — career.js once failed
     // for the whole visit and the season table said it hadn't been built (Sean's phone, 9 Oct 2026)
     sc.onerror = () => { loading.delete(src); sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
@@ -2777,6 +2777,7 @@
       }
       li.append(el("span", "rk", String(rankOf(p, i))));
       const nm = el("span", "nm", p.name); nm.title = `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`; li.append(nm);
+      { const ib = ilBadge(p); if (ib) li.append(ib); }
       li.append(el("span", "pos", posLabel(p)));
       if (draftMode) li.title = drafted.has(p.id) ? "Tap to return him to the board" : "Tap to mark him drafted";
       li.addEventListener("click", (e) => { if (rankMode) { toggleSel(key, e); return; } if (draftMode) { drafted.has(p.id) ? undraft(p.id) : draft(p); return; } openPlayer(p, { ds: p.dsKey ? (p.dsKey === CUR.key ? null : p.dsKey) : listDs }); });
@@ -3101,6 +3102,7 @@
       const nameEl = el("div", "name", p.name);
       // the ★ after a starred name on Rankings / the Draft board is gone with the star feature (Sean, 7 Oct 2026)
       who.append(nameEl);
+      { const ib = ilBadge(p); if (ib) { nameEl.textContent = ""; nameEl.classList.add("hasil"); nameEl.append(el("span", "nmtx", p.name), ib); } }   // the IL badge holds its place; the name ellipsises before it
       // just his positions and playing time under the name (Sean, 29 Sep 2026); team and hand are in the name's tooltip
       nameEl.title = nameEl.title || `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`;
       const meta = el("div", "meta");
@@ -6528,6 +6530,7 @@
     };
   }
   function renderNow() {
+    if (!window.DRAFT_IL && window.DRAFT_BUILD && window.DRAFT_BUILD["hist/injuries.js"]) ensureScript("hist/injuries.js", () => !!window.DRAFT_IL);   // ~10 KB: the IL badges
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws", other = pitches || player || compare || elig || hub || appear || fant;
     if (xPop && !POP_MODES.includes(state.mode)) xPop = false;   // another page: the popup goes with the list it came from
@@ -7205,7 +7208,7 @@
     shown.slice(pg.start, pg.end).forEach((r, k) => {
       const i = pg.start + k;
       const trr = el("tr"); trr.tabIndex = 0;
-      const who = el("td", "l nm f3"); who.append(el("span", "pbname", r.p.name));
+      const who = el("td", "l nm f3"); who.append(el("span", "pbname", r.p.name)); { const ib = ilBadge(r.p, +y === +DATA.meta.season); if (ib) who.append(ib); }
       trr.append(el("td", "rk f1", String(i + 1)), who, el("td", "c", r.p.team || ""), el("td", "c ge", fPos(r.p).join(", ") || r.p.primary || ""));
       cols.forEach((c, j) => {
         const v = c.get(r), td = el("td", c.num ? null : "c", c.fmt ? c.fmt(v) : String(v ?? "–"));
@@ -10726,6 +10729,17 @@
     return wrap;
   }
   // his height, weight and bat/throw from MLB's own record — one small request per player, cached for the session
+  // the injured list (Sean, 20 Oct 2026, item 8 of the recommendations: "injured list badges on rows and cards, from MLB's data"): hist/injuries.js,
+  // written each build from every club's 40-man roster (tools/build_injuries.py) — {id: [D7 | D10 | D15 | D60, the injury, the day he went on it]}.
+  // Shown only while the file is fresh (ten days), so the list doesn't outlive the season once the builds stop for the winter
+  const IL_WORD = { D7: "7-day IL", D10: "10-day IL", D15: "15-day IL", D60: "60-day IL" };
+  function ilOf(p) {
+    const I = window.DRAFT_IL; if (!I || !p || !I.p || !(Date.now() - Date.parse(I.asOf + "T12:00:00Z") < 10 * 864e5)) return null;
+    const r = I.p[p.id]; return r ? { code: r[0], note: (r[1] || "").replace(/\.$/, ""), since: r[2] || "", word: IL_WORD[r[0]] || "Injured list" } : null;
+  }
+  const ilTip = (x) => `On the ${x.word}${x.since ? " since " + new Date(x.since + "T12:00:00Z").toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}${x.note ? " · " + x.note : ""}`;
+  // a row's badge (IL60), the full words in its tooltip; null when he's healthy, the file is stale or the list isn't this season's
+  function ilBadge(p, cur = DS.key === CUR.key) { const x = cur && ilOf(p); if (!x) return null; const b = el("span", "ilb", "IL" + x.code.slice(1)); b.title = ilTip(x); return b; }
   const BIO = new Map();
   function bio(id) {
     if (BIO.has(id)) return BIO.get(id);
@@ -10991,6 +11005,7 @@
     if (b && b.born) { const bd = new Date(b.born + "T12:00:00Z"); if (!isNaN(bd)) { age = +DS.season - bd.getUTCFullYear(); if (bd.getUTCMonth() > 5 || (bd.getUTCMonth() === 5 && bd.getUTCDate() > 30)) age--; } }
     if (age == null && p.age != null) age = p.age;
     if (age != null) add("Age " + age);
+    { const x = ilOf(p); if (x) { const t = el("span", "pbil60", x.word); t.title = ilTip(x); add(t); } }   // today's injured list, whatever season the page is on
     return d;
   }
   // the page's band: the controls on top (Back, the season, Filters), the photo and the bio lines, the summary line at the foot
