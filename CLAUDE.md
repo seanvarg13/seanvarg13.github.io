@@ -555,6 +555,7 @@ Statcast's.
 | `tools/add_baserunning.py` | fills the Base Running numbers into already-built `data.js` / `hist/mlb-YYYY.js`; repo only, run by hand |
 | `tools/whats_new.py` | the morning run's "anything new?" — MLB's schedule against each file's last game day; repo only, run by the workflow |
 | `tools/build_home.cjs`, `tools/headless.cjs` | home's day-file lists → `hist/home.js`, by the site's own code in headless Chrome; repo only, run by `cloud_daily.py` |
+| `tools/check_site.cjs` | the page check, every page at phone and desktop size; repo only, run on pull requests (`check.yml`) and before each cloud publish |
 
 Not mirrored, on purpose: `github_site.json` / `netlify_site.json` (account config), `~/.github_token`,
 `.cache/`, `logs/`, `*.joblib`, `pa_all.parquet`.
@@ -4605,6 +4606,22 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     (heat) · Δ | Pitches; a phone: Pitcher · FB velo "95.1 → 96.4" · Pitching+ · Δ); a name opens his Pitching+ tab. Home's Movers card is four
     hitters and four pitchers ("Pitchers · Pitching+ up": FB velo, Before, Now, Δ). 27 Sep 2026, last 30 days: Whitlock 120 → 145, Medina
     108 → 129, Wrobleski 92 → 113 (+1.5 mph); 2026 vs 2025: Sasaki 85 → 111 (+1.8 mph), Andrew Alvarez 78 → 102.
+
+* **The page check (Sean, 20 Oct 2026, item 4 of the fourteen: "an automatic page check, phone and desktop, that blocks anything that errors")**:
+  **`tools/check_site.cjs`** opens the site in this folder headless (`tools/headless.cjs`) at 390×844 (touch) and 1300×900 and walks it: home
+  (until its lists fill), the Leaderboard (hitters, a second page, pitchers, a last-100-PA window from home's Trending link, 2025), a player popup
+  off the list, Rankings, Draft mode, the Pitching+ board, Movers (and a flaw popup), Fantasy, the Mock draft, every Settings tab, Judge's and
+  Skenes's pages (every card tab; the season table's five views — the phone through its dropdown), and a minors-only hitter's card — 32 steps,
+  ~90 s. A step **fails** on a script error (uncaught, or an unhandled rejection), on a 4xx / 5xx from the site's own address (`/api/status`
+  excepted — serve.py's), or when its page doesn't draw what it should (a row count, a table); it gives up at once after a script error.
+  Pictures and fonts from elsewhere are left out; MLB's API calls go through (each has its `.catch`). `--quick` is 14 steps (home, the
+  Leaderboard, pitchers, the board, Fantasy, both player pages). Exit 0 passed, 1 a page broke, 2 the check couldn't run.
+  - **`.github/workflows/check.yml`**: on every pull request (and by hand) — red when a page breaks.
+  - **`cloud_daily.py`'s publish** runs `--quick` on the tree it's about to push (after the restamp, once a publish): a failure stops the
+    publish and the run (main keeps what it has); a check that couldn't run (no Node or browser) publishes and says so.
+  - Checked by breaking the board on purpose: both steps fail in 0.3 s, exit 1.
+  - Found alongside: the live page asked `/api/status` (serve.py's updater) on every load and got a 404; `updater()` skips it on `*.github.io`.
+    Home asks for `hist/home.js` only when the build map lists it (a site without the file goes straight to the day rows).
 
 ## 10. The football site moved out
 

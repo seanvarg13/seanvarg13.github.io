@@ -108,6 +108,17 @@ def node(*args):
     return code == 0
 
 
+def page_check():
+    """The page check (tools/check_site.cjs --quick) on the tree about to be pushed: True when every page drew without an error, False when one
+    broke, None when the check couldn't run here (no Node, no browser) — that publishes, and says so."""
+    if not shutil.which("node"):
+        say("    (page check: no Node here — publishing unchecked)")
+        return None
+    say("$ node tools/check_site.cjs --quick")
+    code = subprocess.run(["node", "tools/check_site.cjs", "--quick"]).returncode
+    return True if code == 0 else False if code == 1 else None
+
+
 def git(*args, check=True, capture=False):
     r = subprocess.run(["git", *args], check=check, text=True, capture_output=capture)
     return r.stdout.strip() if capture else r.returncode
@@ -158,6 +169,8 @@ def publish(label, end, dry):
     """Commit the build's outputs on top of main as it is now, and push. Returns True when main has them."""
     if dry:
         say(f"--- (dry run) would publish: {label}; build id {restamp()}")
+        if page_check() is False:
+            say("!! the page check failed — a real run would not publish this")
         return True
     # the guard: re-run, with main's scripts, every step of this run built with a copy main has since replaced (twice at most —
     # a merge landing during the re-run gets one more pass; the third publishes what it has and says so)
@@ -196,6 +209,16 @@ def publish(label, end, dry):
         if not git("status", "--porcelain", "--untracked-files=no", capture=True):
             say("--- nothing changed since the last publish")
             return True
+        # the page check (Sean, 20 Oct 2026: "blocks anything that errors"): the site exactly as it's about to be pushed, at a phone's size and a
+        # desktop's — a page that throws, draws nothing or misses a file of ours stops the publish, and main keeps what it has. Once per publish
+        if attempt == 0:
+            chk = page_check()
+            if chk is False:
+                say("!! the page check failed — not publishing; main keeps what it has")
+                git("reset", "-q", "--hard", "origin/main")
+                return False
+            if chk is None:
+                say("    (the page check couldn't run here — publishing unchecked)")
         n = len(git("diff", "--cached", "--name-only", capture=True).splitlines())
         git("commit", "-q", "-m", f"site through {end} ({n} files changed) — {label}, GitHub Actions")
         if git("push", "-q", "origin", "HEAD:main", check=False) == 0:
