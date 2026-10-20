@@ -556,6 +556,7 @@ Statcast's.
 | `tools/whats_new.py` | the morning run's "anything new?" — MLB's schedule against each file's last game day; repo only, run by the workflow |
 | `tools/build_home.cjs`, `tools/headless.cjs` | home's day-file lists → `hist/home.js`, by the site's own code in headless Chrome; repo only, run by `cloud_daily.py` |
 | `tools/check_site.cjs` | the page check, every page at phone and desktop size; repo only, run on pull requests (`check.yml`) and before each cloud publish |
+| `tools/build_injuries.py` | today's injured list from every club's 40-man roster → `hist/injuries.js`; repo only, run by `cloud_daily.py` |
 
 Not mirrored, on purpose: `github_site.json` / `netlify_site.json` (account config), `~/.github_token`,
 `.cache/`, `logs/`, `*.joblib`, `pa_all.parquet`.
@@ -4622,6 +4623,18 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   - Checked by breaking the board on purpose: both steps fail in 0.3 s, exit 1.
   - Found alongside: the live page asked `/api/status` (serve.py's updater) on every load and got a 404; `updater()` skips it on `*.github.io`.
     Home asks for `hist/home.js` only when the build map lists it (a site without the file goes straight to the day rows).
+
+* **Injured-list badges (Sean, 20 Oct 2026, item 8 of the fourteen: "injured list badges on rows and cards, from MLB's data")**:
+  **`tools/build_injuries.py`** (standard library) reads every club's 40-man roster from the Stats API — the status code (D7 / D10 / D15 /
+  D60) and the injury as the roster's note — and the season's transactions for the day he went on the list (the latest "placed … on the
+  N-day injured list", or the date it was made retroactive to), and writes **`hist/injuries.js`** (`window.DRAFT_IL = {asOf, season, p: {id:
+  [code, injury, since]}}`, ~10 KB; 20 Oct 2026: 171 players, every one D60 — the 10- and 15-day lists empty into it when the season ends).
+  `cloud_daily.py` runs it with the MLB build, else with whatever the run builds (non-fatal). In `app.js` (`ilOf`, `ilBadge`, `ilTip`,
+  `IL_WORD`, beside `bio()`): the file loads with the page when the build map lists it (value-free in `ensureScript`) and counts only while
+  `asOf` is within ten days, so the badges don't outlive the season once the builds stop for the winter. A red **IL60** (IL10, IL15, IL7)
+  after the name — the injury and the day in its tooltip — on the Leaderboard / Recent (the name ellipsises before it: `.name.hasil` /
+  `.nmtx`), the Rankings / Draft board and Fantasy (this season's lines only); on his page the bio line carries **60-day IL** in the same red
+  whatever season the page is on (it's today's status). Brent Rooker: "On the 60-day IL since Jun 9 · Bone bruise in left knee".
 
 ## 10. The football site moved out
 
