@@ -1341,6 +1341,18 @@
     return keys.map((k) => dflt.find((m) => m.key === k) || all.find((m) => m.key === k)).filter(Boolean);
   };
   const sample = (p) => V(p).sample;   // PA for hitters, IP for pitchers
+  // Rankings and Draft mode open in a projection's order (Sean, 20 Oct 2026, from the recommendations: the boards sorted by raw xwOBA and nERA
+  // with no minimum led with 1-, 10- and 11-PA hitters, and the pitchers' with 3-inning starters and position players who threw an inning):
+  // hitters by xwOBA proj. (projFill), pitchers by nERA with NREG.k innings at the league's — the 20+ IP pitchers' IP-weighted nERA — added,
+  // fitted on every pitcher-season 2015-25 against his next season's nERA with 40+ IP (3,500 pairs: r .40 raw → .46, error .65; 80 IP best of
+  // 40-130, the prior the league's within .05). A stat picked on the Leaderboard still orders the board as before
+  const NREG = { k: 80, min: 20 };
+  const nregCache = new Map();
+  const neraLeague = () => { const k = DS.key + ":" + viewKey(); if (nregCache.has(k)) return nregCache.get(k);
+    let s = 0, w = 0; for (const q of DS.players) { if (q.type !== "P") continue; const n = V(q).m.nera, ip = sample(q); if (n == null || !(ip >= NREG.min)) continue; s += ip * n; w += ip; }
+    const v = w ? s / w : K().lgERA; nregCache.set(k, v); return v; };
+  const boardProj = (p) => { if (p.type === "H") { const v = V(p).m.txwp; return v == null ? null : v; }
+    const n = V(p).m.nera, ip = sample(p) || 0; return n == null ? null : (ip * n + NREG.k * neraLeague()) / (ip + NREG.k); };
   const addedPos = (p) => (DS.hist ? [] : state.extraPos[p.id] || []);
   const hasExtra = (p, g) => addedPos(p).includes(g);
   function addPos(p, pos) {
@@ -2234,6 +2246,8 @@
     if (state.teamF && !opts.all) { out = out.filter(teamOK); tail = tail.filter(teamOK); }
     if (hideDrafted) { out = out.filter((p) => !drafted.has(p.id)); tail = tail.filter((p) => !drafted.has(p.id)); }
     const key = state.sort, dir = state.dir === "asc" ? 1 : -1;
+    const proj = key === "score" && boardOn();   // Rankings / Draft mode: the projection's order (boardProj)
+    if (proj && !isPitcherGroup(g) && projOn()) { ensureScript("hist/career-bb.js", sbxReady); if (aaaOn()) ensureScript("hist/aaa-tw.js", aaaReady); }
     const stats = new Map(out.concat(tail).map((p) => [p.type + p.id, ref === g ? pool(g).stats.get(p.type + p.id) : rankIn(ref, p)]));   // pool() places every listed player
     const st = (p) => stats.get(p.type + p.id);
     const val = (p) => {
@@ -2241,6 +2255,7 @@
         const hk = key === "score" && p.type === "H" ? (wobaHead() ? "woba" : HEAD.key) : WS_VAL.has(key) ? key : null;
         if (hk) return wrcRow(p, hk, key === "score" ? st(p).score : V(p).m[key]);
         if (WS_DIF.has(key)) { const v0 = V(p).m[key]; return v0 == null ? null : wrcPts(v0, p.src ? p.src.key : undefined); } }
+      if (proj) { const v = boardProj(p); return v == null ? null : p.type === "P" ? -v : v; }
       if (key === "score") { if (p.type === "P") { const n = V(p).m.nera; return n == null ? null : -n; } return st(p).score; }   // a pitcher's headline sorts by his nERA itself, lowest first on "desc" (6 Oct 2026) — the percentile tied the under-minimum players
       if (key === "rating") return st(p).score;
       if (key === "blend") return st(p).blend;
@@ -2506,7 +2521,7 @@
   function renderSortSelect() {
     const g = groupFor(state.pos);
     const sel = $("sort"); sel.innerHTML = "";
-    const opts = [["score", isPitcherGroup(g) ? "nERA" : HEAD.label], ...(isPitcherGroup(g) ? [] : [["blend", "Skills blend pctl"]]),
+    const opts = [["score", boardOn() ? (isPitcherGroup(g) ? "nERA, regressed by innings" : wsLab("xwOBA proj.")) : isPitcherGroup(g) ? "nERA" : HEAD.label], ...(isPitcherGroup(g) ? [] : [["blend", "Skills blend pctl"]]),   /* the boards open in the projection's order (20 Oct 2026) */
                   ...(isPitcherGroup(g) ? ALL_P.filter((m) => !RETIRED_P.has(m.key)) : ALL_H.filter((m) => m.key !== HEAD.key && m.key !== HEAD_DUP)).map((m) => [m.key, m.label + " pctl"]),
                   ["sample", isPitcherGroup(g) ? "Innings pitched" : "Plate appearances"], ...(preCols().some((c) => c.key === "year") ? [["year", "Year"]] : []), ["age", "Age"], ["name", "Name"]];
     for (const [v, l] of opts) { const o = el("option", null, l); o.value = v; sel.append(o); }
@@ -2880,7 +2895,7 @@
       if (!BR && !boardOn()) { if (tt) tt.remove(); }
       else { if (!tt) { tt = el("div", "lbtitle"); tt.id = "lbtitle"; } if (bs && tt.nextSibling !== bs) bs.before(tt);
         const P0 = isPitcherGroup(g), sk = state.sort, sm = ms.find((m) => m.key === sk);
-        const by = sk === "score" ? (P0 ? "nERA" : wsLab(wobaHead() ? "wOBA" : HEAD.label)) : sm ? colLab(sm) : sk === "name" ? "name" : sk === "age" ? "age" : sk === "year" ? "season" : "";
+        const by = sk === "score" ? (boardOn() ? (P0 ? "nERA, regressed by innings" : wsLab("xwOBA proj.")) : P0 ? "nERA" : wsLab(wobaHead() ? "wOBA" : HEAD.label)) : sm ? colLab(sm) : sk === "name" ? "name" : sk === "age" ? "age" : sk === "year" ? "season" : "";
         const page = state.mode === "rankings" ? "Rankings" : state.mode === "draft" ? "Draft mode" : "Leaderboard", own = customOrder() && !state.rankSort;   // Rankings / Draft mode (16 Oct 2026)
         const pn = !P0 && XWN, xwBy = by === wsLab("xwOBA");   /* the switch is on (18 Oct 2026): "by park-neutral xwOBA", or the sort and then the note */
         tt.innerHTML = ""; tt.append(el("h2", null, `${P0 ? "Pitchers" : "Hitting"} ${page}`), el("span", null, (own ? "your order" : by ? `by ${pn && xwBy ? "park-neutral " : ""}${by}` : "") + (pn && (own || !xwBy) ? " · park-neutral xwOBA" : ""))); } }   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
@@ -5431,8 +5446,30 @@
     const w = winIdx();
     $("trendnote").textContent = state.daysLoading ? "Loading game-by-game data…" : w ? (w.last ? `each player's ${winLabel()}` : `${winLabel()} · ${w.hi - w.lo + 1} game days`) : "full season";
   }
+  // the rankings live only in this browser unless Sync is on (Sean's phone lost every list on 17 Oct 2026 when the home-screen app was added
+  // again): while this device holds a list and Sync is off — or on and failing — a line over the board says so, with the fix (Settings ▸
+  // Appearance ▸ Sync across devices) and Export; Not now hides it for 30 days on this device (20 Oct 2026, from the recommendations)
+  const NUDGE_LS = "draft2027.syncNudge", NUDGE_DAYS = 30;
+  function renderSyncNudge() {
+    let n = $("syncnudge"); const bs = $("bscroll");
+    let quiet = 0; try { quiet = Number(localStorage.getItem(NUDGE_LS)) || 0; } catch {}
+    const show = state.mode === "rankings" && bs && (!noSets(state.rankSets) || hasWorking()) && (sync.token ? !!sync.err : Date.now() - quiet > NUDGE_DAYS * 864e5);
+    if (!show) { if (n) n.remove(); return; }
+    if (!n) { n = el("div", "syncnudge"); n.id = "syncnudge"; n.setAttribute("role", "note"); }
+    const tt = $("lbtitle"), at = tt && tt.parentElement === bs.parentElement ? tt : bs; if (n.nextSibling !== at) at.before(n);
+    n.innerHTML = "";
+    const go = el("button", "linkbtn", sync.token ? "Fix it in Settings" : "Turn on Sync across devices"); go.type = "button";
+    go.addEventListener("click", () => { state.goSync = true; location.hash = "#settings/appearance"; });
+    if (sync.token) { n.append(el("b", null, "Sync isn't working"), ` (${sync.err}), so your rankings aren't backed up. `, go); return; }
+    const ex = el("button", "linkbtn", "Export"); ex.type = "button"; ex.addEventListener("click", exportSets);
+    const nn = el("button", "linkbtn quiet", "Not now"); nn.type = "button";
+    nn.addEventListener("click", () => { try { localStorage.setItem(NUDGE_LS, String(Date.now())); } catch {} n.remove(); });
+    n.append(el("b", null, "Your rankings are saved only in this browser."), " Removing the home-screen app or clearing the site's data erases them. ", go,
+      " keeps a copy on your GitHub, or ", ex, " one. ", nn);
+  }
   function renderRankTools() {
     const on = state.mode === "rankings";
+    renderSyncNudge();
     $("ranktools").hidden = !on;
     if (!on) return;
     // Draft mode (Sean, 16 Oct 2026: "with rankings to go into draft mode you hit draft mode"): the Draft board, drafting from these rankings
@@ -7203,12 +7240,16 @@
       for (const [v, l] of opts) { const b = el("button", "segbtn", l); b.type = "button"; b.setAttribute("aria-pressed", String(v === on)); b.addEventListener("click", () => pick(v)); seg.append(b); }
       return seg;
     };
-    // colour schemes: a swatch each (the banner with the site's name, then its colours), the blurb on hover
+    // colour schemes: a swatch each (the banner with the site's name, then its colours), the blurb on hover; the name in the scheme's ink on its
+    // band unless the two are the same colour (Warm's were), then white or near-black, whichever reads
+    const lumOf = (hex) => { const m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return null; const v = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4))); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+    const contrastOf = (a, b) => { const x = lumOf(a), y = lumOf(b); return x == null || y == null ? 21 : (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+    const inkOn = (bg, ink) => (contrastOf(bg, ink) >= 1.5 ? ink : contrastOf(bg, "#ffffff") >= contrastOf(bg, "#141414") ? "#ffffff" : "#141414");
     const sg = el("div", "schemes");
     for (const [id, sc] of Object.entries(T.schemes)) {
       const L = sc.light, b = el("button", "scheme"); b.type = "button"; b.title = sc.blurb || ""; b.setAttribute("aria-pressed", String(id === cur.scheme));
       const bar = el("div", "spv-bar"); bar.style.background = L["accent-2"]; bar.style.borderBottom = `3px solid ${L.rule}`;
-      const word = el("span", "spv-word", "Sean's Site"); word.style.color = L["accent-2-ink"]; bar.append(word);
+      const word = el("span", "spv-word", "Sean's Site"); word.style.color = inkOn(L["accent-2"], L["accent-2-ink"]); bar.append(word);   /* Warm's ink was its own band's colour (20 Oct 2026) */
       const dots = el("div", "spv-dots");
       for (const c of [L.rule, L["accent-2"], L.btn || L["accent-2"], L.pop || L["accent-2-text"]]) { const i = el("i"); i.style.background = c; dots.append(i); }
       b.append(bar, dots, el("span", "sname", sc.name));
@@ -7256,6 +7297,7 @@
     }
     row("Site default", "What a device shows before you pick anything on it.", def);
     const sb = renderSyncBox(), sh = sb.querySelector("h3"), sn = sb.querySelector(":scope > p.note");
+    sb.id = "syncbox";
     if (sh) sh.remove(); if (sn) sn.remove();
     row("Sync across devices", "Fantasy scoring, stars, the draft board and rankings, kept the same on every device you connect (a private note on your GitHub). Colours and layout stay each device's own.", sb);
   }
@@ -7288,6 +7330,8 @@
     }
     { const m = DATA.meta, thr = new Date(m.through + "T12:00:00"), x = el("p", "sstamp", `Games through ${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`);
       x.title = `${m.season} Statcast through ${m.through} (built ${m.built})`; box.append(x); }
+
+    if (state.goSync && tab === "appearance") { state.goSync = false; requestAnimationFrame(() => { const sb = $("syncbox"); if (sb) sb.scrollIntoView({ block: "center" }); }); }   // from the Rankings nudge
   }
 
   /* ---------- Explore: any player, any season ---------- */
