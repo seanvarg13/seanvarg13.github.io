@@ -427,6 +427,7 @@ def build_season(year: int, level: str = "aaa"):
         "hist": True, "airNoPU": True, "daysFile": f"days-{key}.js",
         "tracked": round(tracked, 3), "noStatcast": tracked < 0.5,        # no EV / zone data: hitters rank by wOBA, no xwOBA
         "games": int(n_games), "refPA": ref_pa, "consts": consts, "days": days_list,
+        "dayFields": {"H": bd.HITTER_DAY, "P": bd.PITCHER_DAY},   # the rows' layout: the page reads a file without it by the 20 Oct 2026 lists
         "through": str(d.game_date.max())[:10], "built": dt.datetime.now().strftime("%Y-%m-%d %H:%M"),
         "players": hitters + pitchers,
         "rows": {**{f"H{k}": v for k, v in rows_h.items() if any(h["id"] == k for h in hitters)},
@@ -438,7 +439,7 @@ def build_season(year: int, level: str = "aaa"):
                     + json.dumps(ds, separators=(",", ":")) + ";\n")
     hid = {h["id"] for h in hitters}; pid = {q["id"] for q in pitchers}
     daily = {**{f"H{k}": v for k, v in daily_h.items() if k in hid}, **{f"P{k}": v for k, v in daily_p.items() if k in pid}}
-    # earned runs by game for the card's ERA inside a date range (same shape as days.js)
+    # earned runs by game for the card's ERA inside a date range (same shape as days-p.js)
     for q in pitchers:
         er = [(days[g[0]], g[1], g[2]) for g in people[q["id"]]["games"] if g[0] in days]
         if er:

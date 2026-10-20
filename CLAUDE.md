@@ -14,7 +14,7 @@ This file is for whoever picks the work up. Read it before changing anything.
 
 This repo is **two things at once**:
 
-1. **The published site.** `index.html`, `app.js`, `styles.css`, `data.js`, `days.js`, `fantasy.js`, `hist/*.js`
+1. **The published site.** `index.html`, `app.js`, `styles.css`, `data.js`, `days-h.js`, `days-p.js`, `fantasy.js`, `hist/*.js`
    at the repo root are what GitHub Pages serves. They are *build output* mirrored from a Mac.
 2. **A mirror of the build scripts**, under `tools/`. Those are the real source of the data pipeline.
 
@@ -56,7 +56,7 @@ uploaded, and the fallback if the switch is ever set back to `false`.
     this repo (main)                     Sean's Mac
     tools/build_data.py    --pull-->     draft-site/build_data.py     (sync_tools.py, before every build)
                                               |
-                                              | build_data.py / build_milb.py / ... write data.js, days.js, hist/
+                                              | build_data.py / build_milb.py / ... write data.js, days-h/p.js, hist/
                                               v
     root *.js, index.html  <--push--     draft-site-deploy/           (publish_github.py, force-push to main)
     tools/*                <--push--     the same scripts, mirrored back
@@ -119,7 +119,7 @@ last publish, the Mac keeps its copy and the repo's lands in `logs/tools-conflic
 | `themes.js` | colour schemes and fonts; sets scheme tokens on `<html>` before first paint |
 | `defaults.js` | the site-wide Appearance default, written by `serve.py` |
 | `data.js` | **generated** — `window.DRAFT_DATA`, the current season |
-| `days.js` | **generated** — `window.DRAFT_DAYS`, per-game rows for splits and date windows (~14 MB, loaded on demand) |
+| `days-h.js`, `days-p.js` | **generated** — `window.DRAFT_DAYS`, per-game rows for splits and date windows, hitters' and pitchers' (with the `:er` rows) in a file each (16.6 / 12.0 MB since 20 Oct 2026; one `days.js` before), each loaded only when a view needs that side |
 | `fantasy.js` | **generated** — official counting stats + game logs for the fantasy pages |
 | `hist/` | **generated** — one file per past season/level, plus `index.js` (search index), `career.js`, `minors.js` |
 | `build.json` | `{build, at}` — the running page polls it and reloads itself when the id moves |
@@ -149,7 +149,7 @@ Everything is fetched anonymously — no API keys anywhere in this pipeline.
 
 | script | writes | notes |
 |---|---|---|
-| `build_data.py [--end DATE]` | `data.js`, `days.js` | the current season. Every MLB player who played ships (`MIN_PA_HITTER` / `MIN_BF_PITCHER` = 1, since 24 Sep 2026 — a 12-BF start had left River Ryan off the site); league constants still come from 20+ BF (`CONST_MIN_BF`), and the minors keep a 20 floor. ~1-2 min on a warm cache. All the knobs (`SEASON`, `GAME_TYPES`, `DEFAULT_MIN`, `REF_MIN_PA`, `PULL_LINE`, metric lists, card layout, score weights) are constants at the top |
+| `build_data.py [--end DATE]` | `data.js`, `days-h.js`, `days-p.js` | the current season. Every MLB player who played ships (`MIN_PA_HITTER` / `MIN_BF_PITCHER` = 1, since 24 Sep 2026 — a 12-BF start had left River Ryan off the site); league constants still come from 20+ BF (`CONST_MIN_BF`), and the minors keep a 20 floor. ~1-2 min on a warm cache. All the knobs (`SEASON`, `GAME_TYPES`, `DEFAULT_MIN`, `REF_MIN_PA`, `PULL_LINE`, metric lists, card layout, score weights) are constants at the top |
 | `build_history.py [years…]` | `hist/mlb-YYYY.js` (+ days) | re-runs `build_data.py` season by season for 2015-2025. `build_history.py index` rebuilds `hist/index.js` (the search index). `spring 2026 2025` / `post 2025 2024` build those game types as their own datasets — but the site is regular
 season only now: `indexReady()` in `app.js` drops them from the index, so nothing offers them. Rows are player × handedness × venue — no date dimension, so past seasons have splits but not date windows |
 | `build_milb.py [aaa|aa|ap|a] [year]` | `hist/<level>-YYYY.js` | Triple-A has real Statcast; lower levels have batted-ball type and location, and the zone from Gameday's pitch plot (`plot_zone`). **No bat speed** in the minors; the directional models run with sprint speed blank (Triple-A only scores — nothing else is tracked) |
@@ -167,9 +167,13 @@ season only now: `indexReady()` in `app.js` drops them from the index, so nothin
   pitcherSub, consts, scoreNote` — i.e. **the card layout and the league constants ship with the data**, so adding
   a stat is usually a change in `build_data.py`'s constants plus a label in `app.js`.
 * A player is `{id, name, team, type: "H"|"P", primary, pos, age, pa|bf, ab|ip, m: {…every metric…}, ctx: {…}}`.
-* `days.js` → `window.DRAFT_DAYS["H592450"] = [[…], …]`, one array per game day, fields named by
-  `meta.dayFields.H` / `.P` (`HITTER_DAY` / `PITCHER_DAY` in `build_data.py`). Splits, date windows and the
-  rolling chart all sum these rows. **Appending a field is safe; reordering breaks every older `hist/` file.**
+* `days-h.js` / `days-p.js` → `window.DRAFT_DAYS["H592450"] = [[…], …]` (each `Object.assign`s its side in), one array per game day,
+  fields named by `meta.dayFields.H` / `.P` (`HITTER_DAY` / `PITCHER_DAY` in `build_data.py`). Splits, date windows and the
+  rolling chart all sum these rows. **Every file names its own layout since 20 Oct 2026**: data.js's `meta.dayFields` for this season,
+  `"dayFields"` on a `hist/` file built since; a file without one is read by the lists as they stood that day (`LEGACY_DF` in `app.js`,
+  `LEGACY_H` in `build_trends.py`). So a field can now leave the build — files built before keep it and are read by their own layout.
+  `DF` in `app.js` follows the dataset in effect (`DS`); code reading another dataset's rows asks `dfOf(that one)`, and a span of seasons
+  whose files disagree remaps its members' rows to every field any of them carries (`remapRows`).
 * `meta.consts` (the `K()` accessor in `app.js`) = `{lgERA, fipC, sieraShift, bbw:{gb,ld,fb,pu,ut}, lgwOBA,
   wobaScale: 1.25, pa9, wbb, whbp}` — derived per dataset, so a past season uses its own.
 
@@ -549,6 +553,7 @@ Statcast's.
 | `tools/models/model3.py`, `model_bs.py` | the directional models' training scripts, in `model-workspace/` |
 | `tools/models/milb_translate.py` | fits `MILB_X` (the minors-to-MLB rate shifts) from `hist/`; repo only, run by hand |
 | `tools/build_proj27.py` | the Mock Draft's 2027 projections → `hist/proj-2027.js`; repo only, run by hand |
+| `tools/build_offseason.py` | the real 2027 projections (FanGraphs' Steamer / ZiPS) and ADP (NFBC, ESPN) once they're out → `hist/proj-2027.js` / `hist/adp-2027.js`; repo only, run by the twice-monthly off-season check (§8) |
 | `tools/build_awards.py` | MVP / Cy Young / Rookie of the Year vote finishes → `hist/awards.js` from the Lahman database (SABR); repo only, run by hand each January |
 | `tools/add_baserunning.py` | fills the Base Running numbers into already-built `data.js` / `hist/mlb-YYYY.js`; repo only, run by hand |
 
@@ -604,7 +609,7 @@ is deploy-limited.
   grow ~84px each time. That bug has been fixed twice; do not reintroduce it.
 * Code style: dense, comment *why* not *what*, prose comments in Sean's voice, no ceremony. `app.js` is one IIFE
   with no build step, no framework, no dependencies. Keep it that way.
-* The site must work offline-ish and load fast on a phone: `days.js` and `hist/*` load on demand only.
+* The site must work offline-ish and load fast on a phone: `days-h.js` / `days-p.js` and `hist/*` load on demand only, and only the side a view needs.
 * `README.md` (→ `docs/site-README.md` here) is the long-form manual and is kept up to date with real changes.
   It is deliberately **not** served by the site.
 
@@ -4540,6 +4545,46 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     band, `inkOn`). Checked by a contrast sweep of every page, phone and desktop, light and dark (nothing under 2.2:1 left but the
     over-headers the sweep can't read), and by computed colours on twelve pages: light mode is unchanged on Titans, Jets and UNC but for that
     swatch, and on Warm but for the Summary.
+
+* **The 20 Oct recommendations, the speed pass and the off-season refresh (items 4 and 6 of the same list)**:
+  - **The day rows, one file a side and leaner**: `days.js` (31.2 MB, 8.1 MB over the wire) is `days-h.js` (16.6 MB, 3.7 gzipped) and
+    `days-p.js` (12.0 MB, 3.7), and a view loads only the side it needs (`CUR.ready(t)` / `CUR.load(t)` / `ensureDays(t)`, `daysIn`, `sideOf(g)`;
+    the list's `ensureView(side)`, `V()` and the pool / rank keys by side; Game Logs and Movers ask for theirs; home takes both). Opening one of this
+    season's cards no longer loads any (`ensureHist(CUR.key)` had been calling `ensureDays()`: every player page fetched and parsed the whole 31 MB
+    file); a filter or Game Logs loads his side. Eleven fields nothing read left the rows: `evbk` (EV by Mix bucket), `xhgb xhld xhfb xhpu` (expected
+    hits by type; `ctx.xbt` keeps its shape with the second element null) and the command sums `stco stcso stci stcsi stcwi stcw` (`stcn stcs stck`
+    stay, xCalled reads them). Past seasons' files keep them and are read by `LEGACY_DF` (§3). Checked with the old and new code side by side
+    (scratch `speed/eq.js`): every player's `V()` under seven windows and splits, the pools, a past season, the postseason, two spans of seasons
+    (one file of each layout) and the outing pool came out identical, the game logs identical but for the retired fields; home, a 30-day hitters'
+    and pitchers' Leaderboard, Judge vs LHP and Skenes' game log render the same text; each page loads only its file (scratch `speed/loads.js`).
+    `build_trends.py` reads the new files — and stops adding `evbk`'s bucket codes to the exit velocities (League Trends' EV90 read ~101 for
+    every season, 103.5-105 now; the page is off the menus). Build side: `HITTER_DAY` / `PITCHER_DAY` without the eleven, `build_history.py` /
+    `build_milb.py` write `"dayFields"`, `cloud_daily.py` / `publish.py` publish the two files, `data.js` and the two files were made from the
+    current `days.js` the same way (scratch `speed/split.py`). The frozen `/xyz/` copy (3 Oct) still asks for `days.js`, so its date windows and
+    splits say the file is missing; the rest of it works, and the `xyz-layout` branch is the real backup. A day file that fails to download is
+    tried twice more (1.5 s, 3 s) and then left until a reload (`loadDays`, `daysBad` by side — a pitchers' failure no longer stops a hitters'
+    view); before, every redraw asked for it again, ~40 requests a second for as long as the page stayed open (scratch `speed/fail.js`). A span
+    of seasons with a date window or last-N (Filters ▸ Multiple seasons) renders exactly as before with only its side's file in (`speed/span.js`).
+  - **Dead code out**: every top-level declaration in `app.js` nothing referenced, round by round until none were left (ESLint's no-unused-vars
+    + a TypeScript cut, scratch `prune/prune.js`): 60 of them, 79 KB — the old cards (`renderCard`, `renderHitterCard`, `renderPitcherCard`,
+    `renderRawStats`, `renderSavantPlate`, Player apps), `pctRows`, `bandTiles`, `condensedBar`, `pageFilters`, `bioLines` / `moreBio`,
+    `sideSwitch`, `gameLog` / `gamePitches` / `seasonPitches`, `renderKConv`, `renderXkBreakdown`, `renderWhiffCheck` / `WGAP`,
+    `renderAsStarter`, `showPageCard` and the like (git has them, before this entry's merge). The unreachable renderers that are still
+    referenced (`renderTrends`, `renderCallups`, Compare, `renderPlanner`, `renderClaude` …) stay, as before. In `styles.css`, the 508 rules
+    whose selectors need a class or id nothing in `app.js` / `themes.js` / `index.html` produces (a prefix built in code counts as produced;
+    scratch `cssprune/analyze.py`): 56 KB, 42 of them `.phcond`. Checked by every element's full computed style before and after in ~100
+    states — every page and card tab, open menus and dialogs, phone and desktop, light and dark. app.js 1.31 MB → 1.23 (411 → 391 KB gzipped),
+    styles.css 699 → 642 KB (124 → 116).
+  - **The off-season refresh**: `tools/build_offseason.py` — `check`, `proj` (FanGraphs' Steamer, and ZiPS once out: every category they project,
+    averaged per PA / per out, Steamer's playing time; build_proj27.py's Marcel fills the rest and the players they don't project → `hist/proj-2027.js`
+    with `systems`), `nfbc` (NFBC's ADP from its drafts since 1 Oct 2026, 20+ needed → an `nfbc` source, weight 2, in `hist/adp-2027.js`),
+    `espn` (ESPN's own ADP once its 2027 game opens → `espnadp`, weight 2). Each writes only when its source has 2027 data. On 20 Oct: FanGraphs
+    still served 2026 (its page title says the season; the API answers a Safari user agent, a bare "Mozilla/5.0" gets Cloudflare's challenge), NFBC
+    had no drafts since 1 Oct, ESPN had no 2027 game. Exercised with this year's Steamer / ZiPS and last winter's NFBC drafts standing in (1,084
+    of 1,337 players matched) and the Mock Draft loaded with them. The Mock Draft's projection note names the systems once they're in. A
+    **scheduled task, "Off-season data check"**, fires into this session on the 1st and 15th, November through March, 8:41 New York: it runs the
+    check and any step that's out, publishes, tells Sean in a line, looks for SABR's Lahman release with 2026 in January-March (`build_awards.py`'s
+    `FILES` then point at the new Box files), says nothing when nothing is new, and disables itself once everything is in.
 
 ## 10. The football site moved out
 
