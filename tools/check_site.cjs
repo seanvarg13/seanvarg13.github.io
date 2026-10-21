@@ -67,6 +67,12 @@ function minorsId() {
         await pg.evaluate(() => { const a = [...document.querySelectorAll("#hub .hsec")].find((s) => /Trending/.test(s.innerText)); a.querySelector(".hmore").click(); });
         await until(() => location.hash === "#leaderboard"); await count("#rows > li.row", 10, 120000); });
       await step("leaderboard, 2025", async () => { await prefs({ pos: "ALL", lbDs: "mlb-2025" }); await pg.reload({ waitUntil: "load" }); await count("#rows > li.row", 20, 90000); await prefs({ lbDs: null }); });
+      // a finished season's day rows are stored gzipped (tools/pack_hist.py): a 2025 starter's game log reads hist/days-2025.js.gz
+      await step("a 2025 game log (gzipped)", async () => { await prefs({ pos: "SP", lbDs: "mlb-2025" }); await pg.reload({ waitUntil: "load" }); await count("#rows > li.row", 20, 90000);
+        await pg.evaluate(() => document.querySelector("#rows > li.row .name, #rows > li.row .who").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
+        await pg.evaluate(() => { const b = [...document.querySelectorAll("#xboard .btabs .btab")].find((x) => /Game Logs/.test(x.textContent)); if (b) b.click(); });
+        await count("#xboard table.glbt tbody tr", 3, 90000);
+        await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); await prefs({ pos: "ALL", lbDs: null }); });
       await step("a player popup", async () => { await pg.reload({ waitUntil: "load" }); await hash("#leaderboard"); await count("#rows > li.row", 20);
         await pg.evaluate(() => document.querySelector("#rows > li.row .name, #rows > li.row .who").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
         await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); });

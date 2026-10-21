@@ -123,7 +123,7 @@ last publish, the Mac keeps its copy and the repo's lands in `logs/tools-conflic
 | `data.js` | **generated** — `window.DRAFT_DATA`, the current season |
 | `days.js` | **generated** — `window.DRAFT_DAYS`, per-game rows for splits and date windows (~14 MB, loaded on demand) |
 | `fantasy.js` | **generated** — official counting stats + game logs for the fantasy pages |
-| `hist/` | **generated** — one file per past season/level, plus `index.js` (search index), `career.js`, `minors.js` |
+| `hist/` | **generated** — one file per past season/level, plus `index.js` (search index), `career.js`, `minors.js`; a finished season's day and arsenal files are gzipped, `hist/days-2025.js.gz` (§8, "The site under 1 GB") |
 | `build.json` | `{build, at}` — the running page polls it and reloads itself when the id moves |
 | `manifest.json`, `icons/` | home-screen web app |
 | `tools/` | the mirrored build scripts (see §5) |
@@ -557,6 +557,7 @@ Statcast's.
 | `tools/build_home.cjs`, `tools/headless.cjs` | home's day-file lists → `hist/home.js`, by the site's own code in headless Chrome; repo only, run by `cloud_daily.py` |
 | `tools/check_site.cjs` | the page check, every page at phone and desktop size; repo only, run on pull requests (`check.yml`) and before each cloud publish |
 | `tools/build_injuries.py` | today's injured list from every club's 40-man roster → `hist/injuries.js`; repo only, run by `cloud_daily.py` |
+| `tools/pack_hist.py` | gzips a finished season's `hist/days-*.js` / `hist/ars-*.js` into `.js.gz` and removes the plain copy; run by `cloud_daily.restamp()` and the Mac's `publish.py` |
 
 Not mirrored, on purpose: `github_site.json` / `netlify_site.json` (account config), `~/.github_token`,
 `.cache/`, `logs/`, `*.joblib`, `pa_all.parquet`.
@@ -4652,6 +4653,28 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     on a desktop for 14 teams, where the first cut's 14 rows down had pushed the board off the screen).
   - Snake works as before (a tap drafts, nothing priced). Checked headless on both layouts: 14 × $200 reads 25 spots, $2800, ×0.99; Yordan $58,
     Ohtani $97; selling Yordan to Team 3 for $50 leaves it $150 / 24 open / $127 max bid and the row "$50 · Team 3"; Undo puts it all back.
+
+* **The site under 1 GB (Sean, 20 Oct 2026, item 3 of the fourteen: "the site under GitHub Pages' 1 GB limit")**: the published site was
+  1.27 GB, ~920 MB of it the day and arsenal files of finished seasons (`hist/days-2015…2025.js`, `hist/ars-…`, the minors', postseasons' and
+  springs'), which only the site reads and only a rescore rewrites. They're stored gzipped now — **`hist/<name>.js.gz`**, 58 files, 915 MB →
+  228 MB — and the site is 562 MB.
+  - **`tools/pack_hist.py`** packs every plain day / arsenal file of a season before data.js's (`finished(name, season)`: `days-` / `ars-`, an
+    optional level, the year, an optional `-post` / `-spring`) with gzip level 6 and mtime 0 (the same content always gives the same bytes), and
+    removes the plain copy. **`cloud_daily.restamp()` runs it first**, so every publish and every merge (the stamps are recomputed by restamp)
+    packs whatever a run or a patch wrote plain, and the build map lists `.js.gz` files. The Mac's `publish.py` packs into its deploy folder the
+    same way (it's in `sync_tools`' FILES; without it the files would go up plain and still load).
+  - **The current season's files stay plain** (`days.js`, `hist/ars-2026.js`, the minors' 2026, this October's and spring's): they're rebuilt
+    every morning in season, and git keeps a day's change to a plain file as a small delta where a gzipped one is a whole new blob. When data.js's
+    season moves on, the first publish packs the old one.
+  - **In `app.js`**, `ensureScript` asks the build map (`isGz`): a gzipped file is fetched, unzipped by the browser (`DecompressionStream`,
+    iOS / Safari 16.4 and up) and run as a script from a blob (`gunzipUrl`), so the onload, the cache rules and the retries are as before; a
+    response that comes back already unzipped runs as it is; with no map (the Mac's local server) it tries the `.gz` and then the plain file.
+    The frozen `/xyz/` copy's loader falls back to the `.gz` when a plain day file 404s.
+  - **To change a packed file** (a patch script): read it with `gzip.open` (Python) or `zlib.gunzipSync` (Node), write the plain `.js`, and the
+    next restamp packs it — a plain file beside a `.gz` is taken as the newer one.
+  - **Checks**: the page check has a step that opens a 2025 starter's Game Logs (`hist/days-2025.js.gz`); headless, the vs LHB view of his
+    Pitching+ tab reads `hist/ars-2025.js.gz`; all 34 steps pass. The repository itself (history included) is ~1.9 GB — GitHub's 1 GB for a
+    Pages repo is a recommendation; the published site is what's capped.
 
 ## 10. The football site moved out
 

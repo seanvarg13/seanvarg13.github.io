@@ -904,19 +904,34 @@
   }
   // Explore data: hist/index.js (who exists in which seasons) and hist/<key>.js per past season, loaded on demand
   const loading = new Set(), failed = new Set(), tries = new Map();
+  // A finished season's day and arsenal files are stored gzipped, hist/days-2025.js.gz and so on (Sean, 20 Oct 2026, item 3 of the
+  // recommendations: the site under GitHub Pages' 1 GB — they were ~920 MB of its 1.27 GB; tools/pack_hist.py). The build map says which
+  // form a file is in; a gzipped one is fetched, unzipped by the browser and run as a script from a blob, so everything after the load —
+  // the onload below, the retries — is as it was. A server that unzipped it on the way (a local one) hands over plain text: run as it is
+  const isGz = (src) => (window.DRAFT_BUILD ? !!window.DRAFT_BUILD[src + ".gz"] : /^hist\/(?:days|ars)-/.test(src));
+  async function gunzipUrl(path) {
+    const r = await fetch(vsrc(path)); if (!r.ok) throw new Error("HTTP " + r.status);
+    const buf = await r.arrayBuffer(), h = new Uint8Array(buf, 0, Math.min(2, buf.byteLength));
+    const js = h[0] === 0x1f && h[1] === 0x8b ? await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).blob() : new Blob([buf]);
+    return URL.createObjectURL(new Blob([js], { type: "text/javascript" }));
+  }
   function ensureScript(src, isReady) {
     if (isReady() || loading.has(src) || failed.has(src)) return;
     loading.add(src);
-    const sc = document.createElement("script"); sc.src = vsrc(src);
     // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
     // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
     // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
-    sc.onload = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|aaa-tw|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
+    const arrived = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|aaa-tw|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
     // a failed download (a phone on a weak signal, a publish mid-deploy) is tried twice more before it's given up on — career.js once failed
     // for the whole visit and the season table said it hadn't been built (Sean's phone, 9 Oct 2026)
-    sc.onerror = () => { loading.delete(src); sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
+    const fail = (sc) => { loading.delete(src); if (sc) sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
       if (n < 3) { setTimeout(() => ensureScript(src, isReady), 1500 * n); return; } failed.add(src); render(); };
-    document.head.append(sc);
+    const run = (url, blob) => { const sc = document.createElement("script"); sc.src = url;
+      sc.onload = () => { if (blob) URL.revokeObjectURL(url); arrived(); };
+      sc.onerror = () => { if (blob) URL.revokeObjectURL(url); fail(sc); };
+      document.head.append(sc); };
+    if (isGz(src)) gunzipUrl(src + ".gz").then((u) => run(u, true), () => (window.DRAFT_BUILD ? fail() : run(src)));   // no map (a local server): the plain file, if that's what there is
+    else run(vsrc(src));
   }
   // The site is regular season only: spring-training and postseason datasets may still be built, but they're taken
   // out of the index the moment it arrives, so no season picker anywhere ever offers one

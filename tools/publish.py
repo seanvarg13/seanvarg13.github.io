@@ -46,12 +46,20 @@ def sync():
     """Mirror the site files (not the build scripts or caches) into the deploy folder."""
     for sub in ("hist", "icons"):
         os.makedirs(os.path.join(DEPLOY, sub), exist_ok=True)
-    wanted = {}
+    try:                                                   # a finished season's day / arsenal files go up gzipped (pack_hist.py,
+        import pack_hist                                   # 20 Oct 2026), so the site stays under GitHub Pages' 1 GB
+        season = pack_hist.season_of(HERE)
+    except Exception:                                      # noqa: BLE001 — without it they go up plain, and still load
+        pack_hist, season = None, None
+    wanted, packed = {}, {}
     for name in TOP:
         wanted[name] = os.path.join(HERE, name)
     for name in sorted(os.listdir(os.path.join(HERE, "hist"))):
         if name.endswith(".js"):
-            wanted["hist/" + name] = os.path.join(HERE, "hist", name)
+            if pack_hist and pack_hist.finished(name, season):
+                packed["hist/" + name + ".gz"] = os.path.join(HERE, "hist", name)
+            else:
+                wanted["hist/" + name] = os.path.join(HERE, "hist", name)
     copied = 0
     for rel, src in wanted.items():
         dst = os.path.join(DEPLOY, rel)
@@ -64,6 +72,13 @@ def sync():
         if not same:
             shutil.copy2(src, dst)
             copied += 1
+    for rel, src in packed.items():                        # gzipped again only when its source changed since (same mtime kept on it)
+        dst, s = os.path.join(DEPLOY, rel), os.stat(src)
+        if not os.path.exists(dst) or int(os.path.getmtime(dst)) != int(s.st_mtime):
+            pack_hist.gz_file(src, dst)
+            os.utime(dst, (s.st_atime, s.st_mtime))
+            copied += 1
+        wanted[rel] = src
     for name in os.listdir(os.path.join(DEPLOY, "hist")):      # drop files that no longer exist upstream
         if "hist/" + name not in wanted:
             os.remove(os.path.join(DEPLOY, "hist", name))
