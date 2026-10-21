@@ -1005,3 +1005,11 @@ Leaderboard ▸ Filters ▸ Stats has the switch, under the column sets: **With 
 and site-wide, so the cards, the season table, the projection and home follow it. Park-neutral xwOBA and xwOBA, his parks are also columns of
 their own. Including the parks explains a season a little better (r .846 against .835) and forecasts next season about as well overall. It
 forecasts better for hitters who stay with their club and worse for those who move.
+
+### Similar players inside the Leaderboard's popup (21 Oct 2026)
+
+On the Leaderboard (and Recent) a player's page opens as a popup over the list. A Similar name in that popup now opens the similar player
+in the same popup, with the × still going back to the Leaderboard where you left it. Under a date window or split (last 100 PA, vs LHP …)
+he opens in the same window and split he was matched in. On a full-season card the cross-season matches ("Seiya Suzuki '25") open that
+season. Before, a tap under a window seemed to do nothing (his card was being drawn underneath the popup), and with no window it went to
+his full page, which has no ×.

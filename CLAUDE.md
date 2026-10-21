@@ -3630,8 +3630,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   window's top, `bleedBar` measures against the window, `stickSync` follows its scroll (the window scroll listener is `capture`), a redraw of
   the same player keeps the window's scroll, `playerwide` stays off so the list behind keeps its width, and the bio / postseason fetches and
   the two-way switch redraw it (`pageNow()` = player mode or the popup). Desktop: 24px from the top and bottom, up to 1,180px wide; a phone:
-  full screen. Rankings, the Draft board, the Pitching+ board, Fantasy, home and the Claude rankings still go to his page; a Similar name or
-  the search inside the popup goes to the full page. CSS at the end of `styles.css`.
+  full screen. Rankings, the Draft board, the Pitching+ board, Fantasy, home and the Claude rankings still go to his page; the search inside
+  the popup goes to the full page (a Similar name did too until 21 Oct 2026; it stays in the popup now, below). CSS at the end of `styles.css`.
 
 * **The popup's band edge to edge (Sean, 13 Oct 2026, Wheeler's popup on his phone: "make it so the like stats header there extends the full
   screen and not have those white margin things")**: `#xboard.xpop`'s side padding (20px, 12px on a phone) had inset the blue band and its
@@ -4737,6 +4737,30 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     files go through `ensureScript`'s gz path and are read by `LEGACY_DF` as the plain ones were; `pack_hist.py` looks only in `hist/`, so this
     season's two files at the root stay plain whatever the season. None of the 508 stylesheet rules is one the merged code can reach (the
     analysis re-run on it), and nothing `app.js` gained references a removed declaration (ESLint's no-undef on the merged file).
+
+* **A Similar name in the Leaderboard's popup stays in the popup (Sean, 21 Oct 2026, from a phone recording of Devers's popup under "last 100 PA":
+  "when I select a similar player card this is what happens ... Make sure this doesn't happen at all", and "when I select a similar player it no
+  longer gives me the x at the top right to be able to go back to the leaderboard easily")**: two bugs, one cause. `similarRow`'s handlers didn't
+  know about the popup (`xPop`).
+  - **Under a date window or split** the Similar row is the same-season match, and a tap set `state.expanded`. `renderModal` then drew the old
+    `#modal` card at z-index 50, under the popup's 71, so it was out of sight. Each tap only redrew the popup (the headshot flickered), and the
+    card showed up only once the popup was closed. Headless: Devers last 100 PA → Carter Jensen, the card under the popup for as long as it stayed open.
+  - **With no window** the row is the cross-season match, and a tap went to `#player/<id>`. The hash change dropped the popup, leaving the full
+    page with no × and no Back.
+  - **The fix**: both handlers call **`simPop(id, type, ds)`** (beside `closeXPop`) when the popup is up. It sets `state.x`, clears
+    `state.expanded` / `state.cardDs`, sets `xPopNew` (the popup starts at its top) and renders. The similar player's page takes the popup's
+    place, and the × closes back to the Leaderboard as it was left (`xPopList` is untouched).
+  - **What the similar player opens in**:
+    - The same-season match keeps the card's window and split (the ones he was matched in) and the card's season and level. The key is
+      captured when the row is drawn (`dk`); `DS` at tap time is the page's own, and that was a quiet bug on the full page for a past
+      season's card.
+    - The cross-season match opens that season's full season, as before.
+  - **Guard**: `renderNow` clears `state.expanded` whenever the popup is up, so no old-style card is ever drawn under it again.
+  - **Unchanged**: the full page and the `#modal` cards (the Mock Draft room, the Pitching+ board's spring cards) keep their own paths.
+  - **Speed**: headless, a tap draws the next player in 60-130 ms on a phone (up to ~260 ms on a desktop when a past season's file loads).
+  - **The page check** (`tools/check_site.cjs`, `simTap`) taps the first Similar name in the popup on both layouts: under "last 100 PA" in that
+    step, and on the full season in "a player popup". It requires the popup to show him with the × and `#modal` hidden. Against the old
+    `app.js` all four steps fail (timed out after 90 s); with the fix, all 34 pass.
 
 ## 10. The football site moved out
 
