@@ -46,6 +46,11 @@ function minorsId() {
         if (Date.now() - t0 > ms) throw new Error(`timed out after ${ms / 1000} s`); await pg.waitForTimeout(250); } };
     const count = (sel, n, ms) => until(([s, k]) => document.querySelectorAll(s).length >= k, [sel, n], ms);
     const clickAll = async (sel) => { const n = await pg.$$eval(sel, (a) => a.length); for (let i = 0; i < n; i++) { await pg.evaluate(([s, k]) => { const b = document.querySelectorAll(s)[k]; if (b) b.click(); }, [sel, i]); await pg.waitForTimeout(500); } return n; };
+    // a Similar name in the Leaderboard's popup opens him in the popup, the × still there (Sean, 21 Oct 2026: under a last-N-PA window it drew his
+    // old-style card under the popup, out of sight; with no window it went to his full page, which has no ×)
+    const simTap = async () => { await count("#xboard.xpop .simname", 1, 60000);
+      const who = await pg.evaluate(() => { const b = document.querySelector("#xboard.xpop .simname"), w = b.textContent.replace(/ '\d\d$/, ""); b.click(); return w; });
+      await until((w) => { const n = document.querySelector("#xboard.xpop .pgbname"); return !!(n && n.textContent.startsWith(w) && document.querySelector("#xboard.xpop .xpopx") && document.getElementById("modal").hidden && document.querySelector("#xboard.xpop table.sbt tbody tr")); }, who, 90000); };
     const prefs = async (patch) => { await pg.evaluate((p) => { let o = {}; try { o = JSON.parse(localStorage.getItem("draft2027.prefs") || "{}"); } catch (e) {} Object.assign(o, { v: 2 }, p); localStorage.setItem("draft2027.prefs", JSON.stringify(o)); }, patch); };
     const step = async (label, fn) => {
       steps++; const n0 = stepAt = errs.length, t0 = Date.now(); let thrown = null;
@@ -65,7 +70,9 @@ function minorsId() {
     if (!QUICK) {
       await step("leaderboard, last 100 PA", async () => { await prefs({ pos: "ALL" }); await pg.reload({ waitUntil: "load" }); await hash("#home"); await count("#hub .hsec .hmore", 2);
         await pg.evaluate(() => { const a = [...document.querySelectorAll("#hub .hsec")].find((s) => /Trending/.test(s.innerText)); a.querySelector(".hmore").click(); });
-        await until(() => location.hash === "#leaderboard"); await count("#rows > li.row", 10, 120000); });
+        await until(() => location.hash === "#leaderboard"); await count("#rows > li.row", 10, 120000);
+        await pg.evaluate(() => document.querySelector("#rows > li.row .name, #rows > li.row .who").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
+        await simTap(); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); });
       await step("leaderboard, 2025", async () => { await prefs({ pos: "ALL", lbDs: "mlb-2025" }); await pg.reload({ waitUntil: "load" }); await count("#rows > li.row", 20, 90000); await prefs({ lbDs: null }); });
       // a finished season's day rows are stored gzipped (tools/pack_hist.py): a 2025 starter's game log reads hist/days-2025.js.gz
       await step("a 2025 game log (gzipped)", async () => { await prefs({ pos: "SP", lbDs: "mlb-2025" }); await pg.reload({ waitUntil: "load" }); await count("#rows > li.row", 20, 90000);
@@ -75,7 +82,7 @@ function minorsId() {
         await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); await prefs({ pos: "ALL", lbDs: null }); });
       await step("a player popup", async () => { await pg.reload({ waitUntil: "load" }); await hash("#leaderboard"); await count("#rows > li.row", 20);
         await pg.evaluate(() => document.querySelector("#rows > li.row .name, #rows > li.row .who").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
-        await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); });
+        await simTap(); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); });
       await step("rankings", async () => { await hash("#rankings"); await count("#rows li", 5); });
       await step("draft mode", async () => { await hash("#draft"); await count("#rows li", 5); });
     }

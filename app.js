@@ -6268,6 +6268,7 @@
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws", other = pitches || player || compare || elig || hub || appear || fant;
     if (xPop && !POP_MODES.includes(state.mode)) xPop = false;   // another page: the popup goes with the list it came from
+    if (xPop) state.expanded = null;   // never an old-style card under the popup, where it can't be seen (Sean's recording, 21 Oct 2026)
     $("xboard").hidden = !player && !xPop; $("xboard").classList.toggle("xpop", xPop); document.body.classList.toggle("xpopon", xPop); xPopBg().hidden = !xPop; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
     document.body.dataset.mode = state.mode;
     document.body.classList.toggle("brlb", brOn());   // the Leaderboard / Recent in B-Ref's dress (9 Oct 2026)
@@ -9862,9 +9863,11 @@
         b.addEventListener("click", (e) => {
           e.stopPropagation();
           state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };
+          const ds = yr === DATA.meta.season ? CUR.key : `mlb-${yr}`;
+          if (xPop) { simPop(id, p.type, ds); return; }   // in the Leaderboard's popup: his page in the popup, the × still back to the list
           // inside a popup card it stays a popup — his card for that season over the same page, closed back to it
           if (state.mode !== "player" && state.expanded) { state.cardDs = yr === DATA.meta.season ? null : `mlb-${yr}`; state.expanded = p.type + id; render(); return; }
-          state.x = { id, type: p.type, ds: yr === DATA.meta.season ? CUR.key : `mlb-${yr}` }; state.expanded = null;
+          state.x = { id, type: p.type, ds }; state.expanded = null;
           savePrefs(); location.hash = "#player/" + id; if (state.mode === "player") render();
         });
         row.append(b);
@@ -9887,11 +9890,16 @@
     if (!out.length) return null;
     out.sort((a, b) => a[0] - b[0]);
     const row = el("div", "simrow"); row.append(el("span", "simlbl", "Similar"));
+    const dk = DS.key;   // the card's season and level (the row is drawn inside its dataset; at a tap DS is the page's own again)
     for (const [, q, style, skill] of out.slice(0, 5)) {
       const b = el("button", "simname", q.name); b.type = "button"; b.title = `${q.name} · ${q.team} — style match ${Math.round(100 - style)}, skill match ${Math.round(100 - skill)}`;
+      // he opens in the card's window and split, the ones he was matched in. In the Leaderboard's popup he takes the popup's place; this
+      // used to draw his old-style card underneath it, out of sight, so a tap seemed to do nothing until the popup was closed (Sean's
+      // recording, 21 Oct 2026, under "last 100 PA")
       b.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (state.mode === "player") { state.x = { id: q.id, type: q.type, ds: DS.key }; savePrefs(); location.hash = "#player/" + q.id; render(); }
+        if (xPop) simPop(q.id, q.type, dk);
+        else if (state.mode === "player") { state.x = { id: q.id, type: q.type, ds: dk }; savePrefs(); location.hash = "#player/" + q.id; render(); }
         else { state.expanded = q.type + q.id; render(); }
       });
       row.append(b);
@@ -10145,6 +10153,10 @@
     if (location.hash === "#player/" + id) render(); else location.hash = "#player/" + id;   // the hashchange handler renders
   }
   function closeXPop() { if (!xPop) return; xPop = false; backRestore = xPopList; xPopList = null; render(); }
+  // a Similar name in the popup (Sean, 21 Oct 2026: "when I select a similar player it no longer gives me the x at the top right to be able
+  // to go back to the leaderboard easily"): his page in the popup's place, from its top, and the × still closes back to the list as it was
+  // left. It used to go to his full page, which has neither a × nor a Back
+  function simPop(id, type, ds) { state.x = { id, type, ds }; state.expanded = null; state.cardDs = null; xPopNew = true; savePrefs(); render(); }
   function goBack() {
     const b = backAt; backAt = null;
     if (!b) { location.hash = "#home"; return; }
