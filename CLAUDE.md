@@ -4676,6 +4676,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     Pitching+ tab reads `hist/ars-2025.js.gz`; all 34 steps pass. The repository itself (history included) is ~1.9 GB — GitHub's 1 GB for a
     Pages repo is a recommendation; the published site is what's capped.
 
+* **The IL badge beside his name (Sean, 21 Oct 2026, Nick Kurtz's popup on his phone: "Can you put the IL thing next to their name instead of where
+  it is")**: on his page and in the popup the red **60-day IL** sits right after his name in the sticky bar (`pageHead`: the name and the badge share
+  a `.pgbnrow`, the badge `.pgbil`, the injury and the day in its tooltip as before), no longer as the bio line's last item (`bioStrip`). The badge
+  flows after the name's last word with no break before it, so a phone's two-line name carries it on the second line ("Carson / Whisenhunt 60-day
+  IL"); only when the last word and the badge can't fit the column does `bleedBar` let it take a line of its own (`.ilwrap`, re-measured when a
+  font finishes loading). The row takes the name's own font, so the bar is the height it was (desktop 84px either way; a phone's Kurtz bar is 7px
+  shorter now the bio doesn't wrap). **The badge's red is fixed** (`#c8102e`) on the rows (`.ilb`) and the bar: it had borrowed `--stripe-line`,
+  which is transparent on Warm / UNC (an invisible badge on the Leaderboard's white rows) and the band's own colour on the flat schemes.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
