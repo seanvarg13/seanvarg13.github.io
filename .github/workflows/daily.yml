@@ -19,8 +19,8 @@ on:
   workflow_dispatch:
     inputs:
       steps:
-        description: "mlb, minors, or mlb,minors"
-        default: "mlb,minors"
+        description: "auto = only what has new games since its last build; or mlb, minors, post, spring (comma-separated) to rebuild those whatever is new"
+        default: "auto"
       rescore:
         description: "rebuild past seasons instead (e.g. 2015 2016 … 2025); blank for the daily run"
         default: ""
@@ -56,6 +56,25 @@ jobs:
         id: gate
         run: |
           go=true
+          # a manual run left at steps=auto (the default since 20 Oct 2026 — the 4:50 routine starts one with no inputs) still
+          # asks whether anything is new (tools/whats_new.py), but at any hour; one that names its steps or a rescore just builds
+          if [ "${{ github.event_name }}" != "schedule" ] && [ "${{ github.event.inputs.auto }}" != "1" ] && [ -z "${{ github.event.inputs.rescore }}" ] && [ "${{ github.event.inputs.steps }}" = "auto" ]; then
+            go=$(python3 - <<'PY'
+          import datetime as dt, sys, zoneinfo
+          sys.path.insert(0, "tools")
+          import whats_new
+          ny = dt.datetime.now(zoneinfo.ZoneInfo("America/New_York"))
+          try:
+              res = whats_new.check((ny.date() - dt.timedelta(days=1)).isoformat())
+              print("  " + whats_new.describe(res), file=sys.stderr)
+              print("true" if whats_new.steps(res) else "false")
+          except Exception as e:
+              print(f"  MLB's schedule didn't answer ({type(e).__name__}: {e}) — building", file=sys.stderr)
+              print("true")
+          PY
+            )
+            echo "manual run, steps=auto → go=$go"
+          fi
           # the outside timer (cron-job.org, 28 Sep 2026 — GitHub's own schedule kept starting hours late or not at all)
           # starts a manual run with auto=1, which asks the same questions as a scheduled one
           if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event.inputs.auto }}" = "1" ]; then
@@ -66,11 +85,11 @@ jobs:
               echo "tools/cloud.json has the cloud off — the Mac publishes"; go=false
             else
               go=$(AUTO="${{ github.event.inputs.auto }}" python3 - <<'PY'
-          import datetime as dt, json, os, zoneinfo
+          import datetime as dt, os, sys, zoneinfo
+          sys.path.insert(0, "tools")
+          import whats_new
           ny = dt.datetime.now(zoneinfo.ZoneInfo("America/New_York"))
-          raw = open("data.js").read(); m = json.loads(raw[raw.index("= {") + 2:].rstrip().rstrip(";"))["meta"]
           yday = (ny.date() - dt.timedelta(days=1)).isoformat()
-          built = m.get("built", "")                       # the build's UTC time, "YYYY-MM-DD HH:MM"
           now_utc = dt.datetime.now(dt.timezone.utc)
           # the outside timer has fired at 08:15 UTC since it went live (4:15 here in summer, 3:15 in winter) and stood down as
           # "early" every morning until 20 Oct 2026; its start counts from 3:00 (every night game is final and on Savant by then).
@@ -80,9 +99,25 @@ jobs:
           # first games are later in the month); a manual run without auto still builds
           if (ny.month, ny.day) >= (11, 15) or (ny.month, ny.day) < (2, 15):
               early = True
-          done = m.get("through", "") >= yday or (built[:10] == now_utc.date().isoformat() and built[11:13] >= "13")
-          # (an off day never reaches yesterday; a build after 13:00 UTC today counts as done so the backups stop)
-          print("false" if early or done else "true")
+          go = not early
+          if go:
+              # is there anything new? (Sean, 20 Oct 2026: through the postseason every morning rebuilt the regular season and the
+              # minors, twice some days, with no new game in either, and each publish reloads his phone.) tools/whats_new.py checks
+              # MLB's schedule for a game final since each file's last game day: data.js, the postseason, spring training, each
+              # minor-league level. Nothing new means no build; the build step then runs only the steps that have something
+              try:
+                  res = whats_new.check(yday)
+                  print("  " + whats_new.describe(res), file=sys.stderr)
+                  go = bool(whats_new.steps(res))
+                  # a file built after 13:00 UTC today counts as done, so a game Savant hasn't posted can't keep the backups
+                  # rebuilding all day
+                  b = whats_new.last_built()
+                  if go and b[:10] == now_utc.date().isoformat() and b[11:13] >= "13":
+                      print(f"  already built today at {b[11:]} UTC — the backups stand down", file=sys.stderr)
+                      go = False
+              except Exception as e:                       # MLB's schedule didn't answer: build, as before
+                  print(f"  MLB's schedule didn't answer ({type(e).__name__}: {e}) — building", file=sys.stderr)
+          print("true" if go else "false")
           PY
               )
               echo "New York $(TZ=America/New_York date '+%H:%M') · data through $(grep -o '"through": *"[^"]*"' data.js | head -1) → go=$go"
@@ -116,6 +151,13 @@ jobs:
           echo "pins: $pins"
           python -m pip install $pins pybaseball requests pyarrow
 
+      - name: Headless Chrome (home's lists, hist/home.js)
+        if: steps.gate.outputs.go == 'true'
+        run: |
+          npm install --no-save --no-audit --no-fund --prefix "$RUNNER_TEMP/pw" playwright-core@1.56.1
+          echo "NODE_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
+          echo "PW_CHANNEL=chrome" >> "$GITHUB_ENV"
+
       - name: Restore the download caches
         if: steps.gate.outputs.go == 'true'
         uses: actions/cache/restore@v4
@@ -133,6 +175,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           args=""
           if [ -n "${{ inputs.rescore }}" ]; then args="--rescore ${{ inputs.rescore }}";
+          # a scheduled run and the outside timer's (auto=1) build only what has new games since its last build (tools/whats_new.py)
+          elif [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.auto }}" = "1" ]; then args="--steps auto";
           elif [ -n "${{ inputs.steps }}" ]; then args="--steps ${{ inputs.steps }}"; fi
           [ "${{ inputs.dry }}" = "true" ] && args="$args --dry"
           python tools/cloud_daily.py $args

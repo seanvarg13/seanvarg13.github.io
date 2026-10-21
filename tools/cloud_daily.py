@@ -10,7 +10,8 @@ commit on top of whatever main is by then — never a force-push — so an edit 
 the build's outputs are set aside, main is fetched fresh, the outputs are put back, the page is re-stamped, and
 the commit is pushed (retried if main moved again).
 
-    python3 tools/cloud_daily.py                      # the whole day, as the schedule runs it
+    python3 tools/cloud_daily.py --steps auto         # the morning run: only what has new games (tools/whats_new.py)
+    python3 tools/cloud_daily.py                      # every step, new games or not (a manual run)
     python3 tools/cloud_daily.py --steps mlb          # just the MLB build + publish
     python3 tools/cloud_daily.py --end 2026-04-01 --dry   # build a short season, don't publish (testing)
     python3 tools/cloud_daily.py --rescore 2025 2024  # rebuild past seasons (directional xBA / xSLG), then publish
@@ -95,6 +96,29 @@ def _run(*args):
     return code == 0
 
 
+def node(*args):
+    """A Node script from tools/ that drives headless Chrome (build_home.cjs). False when Node or playwright isn't here."""
+    if not shutil.which("node"):
+        say(f"    (no Node here — skipping {args[0]})")
+        return False
+    say("$ node " + " ".join(args))
+    code = subprocess.run(["node", *args]).returncode
+    if code:
+        say(f"!! {args[0]} exited with code {code}")
+    return code == 0
+
+
+def page_check():
+    """The page check (tools/check_site.cjs --quick) on the tree about to be pushed: True when every page drew without an error, False when one
+    broke, None when the check couldn't run here (no Node, no browser) — that publishes, and says so."""
+    if not shutil.which("node"):
+        say("    (page check: no Node here — publishing unchecked)")
+        return None
+    say("$ node tools/check_site.cjs --quick")
+    code = subprocess.run(["node", "tools/check_site.cjs", "--quick"]).returncode
+    return True if code == 0 else False if code == 1 else None
+
+
 def git(*args, check=True, capture=False):
     r = subprocess.run(["git", *args], check=check, text=True, capture_output=capture)
     return r.stdout.strip() if capture else r.returncode
@@ -110,13 +134,21 @@ def sha1(path):
 
 def restamp():
     """publish.stamp(), on the repo root: strip the last publish's stamps back to the template, then version every
-    file reference with ?v=<sha1> and write the DRAFT_BUILD map and build.json exactly as the Mac's publisher does."""
+    file reference with ?v=<sha1> and write the DRAFT_BUILD map and build.json exactly as the Mac's publisher does.
+    Finished seasons' day / arsenal files are packed first (tools/pack_hist.py), so the map lists one form of each."""
+    try:
+        if TOOLS not in sys.path:
+            sys.path.insert(0, TOOLS)
+        import pack_hist
+        pack_hist.pack(ROOT, log=say)
+    except Exception as e:                                 # noqa: BLE001 — unpacked files still publish (and still load)
+        say(f"!! pack_hist: {type(e).__name__}: {e}")
     html = open("index.html").read()
     html = re.sub(r'<script>window\.DRAFT_BUILD=.*?</script>\n?', "", html)
     html = re.sub(r'\?v=[0-9a-f]{10}"', '"', html)
     with open("index.html", "w") as f:
         f.write(html)
-    wanted = [r for r in TOP if os.path.exists(r)] + sorted(f"hist/{n}" for n in os.listdir("hist") if n.endswith(".js"))
+    wanted = [r for r in TOP if os.path.exists(r)] + sorted(f"hist/{n}" for n in os.listdir("hist") if n.endswith((".js", ".js.gz")))
     ver = {rel: sha1(rel)[:10] for rel in wanted}
     build = hashlib.sha1("".join(f"{k}:{v}" for k, v in sorted(ver.items())).encode()).hexdigest()[:10]
     for rel, v in ver.items():
@@ -145,6 +177,8 @@ def publish(label, end, dry):
     """Commit the build's outputs on top of main as it is now, and push. Returns True when main has them."""
     if dry:
         say(f"--- (dry run) would publish: {label}; build id {restamp()}")
+        if page_check() is False:
+            say("!! the page check failed — a real run would not publish this")
         return True
     # the guard: re-run, with main's scripts, every step of this run built with a copy main has since replaced (twice at most —
     # a merge landing during the re-run gets one more pass; the third publishes what it has and says so)
@@ -183,6 +217,16 @@ def publish(label, end, dry):
         if not git("status", "--porcelain", "--untracked-files=no", capture=True):
             say("--- nothing changed since the last publish")
             return True
+        # the page check (Sean, 20 Oct 2026: "blocks anything that errors"): the site exactly as it's about to be pushed, at a phone's size and a
+        # desktop's — a page that throws, draws nothing or misses a file of ours stops the publish, and main keeps what it has. Once per publish
+        if attempt == 0:
+            chk = page_check()
+            if chk is False:
+                say("!! the page check failed — not publishing; main keeps what it has")
+                git("reset", "-q", "--hard", "origin/main")
+                return False
+            if chk is None:
+                say("    (the page check couldn't run here — publishing unchecked)")
         n = len(git("diff", "--cached", "--name-only", capture=True).splitlines())
         git("commit", "-q", "-m", f"site through {end} ({n} files changed) — {label}, GitHub Actions")
         if git("push", "-q", "origin", "HEAD:main", check=False) == 0:
@@ -213,7 +257,7 @@ def pages_build():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--end", help="last day to build (default: yesterday, New York time)")
-    ap.add_argument("--steps", default="mlb,minors", help="mlb, minors, or both (comma-separated)")
+    ap.add_argument("--steps", default="mlb,minors", help="mlb, minors, post, spring (comma-separated), or auto: what has new games")
     ap.add_argument("--rescore", nargs="*", help="rebuild these past seasons instead of the daily steps")
     ap.add_argument("--dry", action="store_true", help="build but don't publish")
     a = ap.parse_args()
@@ -240,25 +284,61 @@ def main():
         ok = ok and run("build_history.py", "index") and run("build_career.py") and (run("build_trends.py") or True) and (run("build_similar.py") or True) and publish(f"rescored {' '.join(toks)}", end, a.dry)
         sys.exit(0 if ok else 1)
     steps = set(a.steps.split(","))
+    new = None
+    if "auto" in steps:
+        # the morning run (Sean, 20 Oct 2026): only the steps with a game finished since their file's last build. Through the
+        # postseason every morning had rebuilt the regular season and the minors, twice some days, with nothing new in either,
+        # and every publish reloads his phone. MLB's schedule not answering builds the whole day, as before
+        sys.path.insert(0, TOOLS)
+        import whats_new
+        try:
+            res = whats_new.check(end)
+            new = res["new"]
+            say("--- " + whats_new.describe(res))
+        except Exception as e:                           # noqa: BLE001
+            say(f"--- MLB's schedule didn't answer ({type(e).__name__}: {e}) — building the whole day")
+            steps = {"mlb", "minors"}
+    if new is not None:
+        mlb, spring, post = bool(new["mlb"]), bool(new["spring"]), bool(new["post"])
+        levels = [lv for lv in ("aaa", "aa", "ap", "a") if lv in new["minors"]]
+        fantasy = mlb                                    # the official lines and game logs move only with MLB games
+        career = mlb or bool(levels)                     # career.js, career-bb.js, aaa-tw.js read the season files
+        index = mlb or spring or post or bool(levels)    # the search index lists every season, kind and level he has
+    else:
+        # a manual run: what the named steps always built (mlb brings spring in Feb / Mar and the postseason Sep-Nov)
+        mlb = "mlb" in steps
+        spring = "spring" in steps or (mlb and end[5:7] in ("02", "03"))
+        post = "post" in steps or (mlb and end[5:7] in ("09", "10", "11"))
+        levels = ["aaa", "aa", "ap", "a"] if "minors" in steps else []
+        fantasy = career = "minors" in steps
+        index = fantasy or spring or post
+    if not (mlb or spring or post or levels):
+        say("=== nothing new since the last build — no build, no publish")
+        sys.exit(0)
     ok = True
-    if "mlb" in steps:
-        # League Trends (hist/trends.js) re-sums the season just built; a failure there costs only that page
-        ok = run("build_data.py", "--end", end) and (run("build_trends.py") or True) and (run("build_similar.py") or True) and publish("MLB", end, a.dry)
-        # spring training (Sean, 29 Sep 2026: track a pitcher's stuff in spring): through March, rebuild this spring's dataset too —
-        # Stuff+ graded against MLB pitch types — and publish it; a failure costs only the spring file
-        if ok and end[5:7] in ("02", "03") and run("build_history.py", "spring", year):
-            publish("spring training", end, a.dry)
-        # the postseason (Sean, 30 Sep 2026: MLB PS on the cards): from late September into November, rebuild this October's
-        # dataset every morning (no games yet = no file, harmlessly); the index step below then offers it on the cards
-        if ok and end[5:7] in ("09", "10", "11"):
-            run("build_history.py", "post", year)
-    if ok and "minors" in steps:
-        ok = (run("build_milb.py", "aaa", year)
-              and run("build_milb.py", "aa", "ap", "a", year)
-              and run("build_fantasy.py")
-              and run("build_history.py", "index")
-              and run("build_career.py")
-              and publish("minors, fantasy, index, career", end, a.dry))
+    if mlb:
+        # League Trends (hist/trends.js) re-sums the season just built; a failure there costs only that page. hist/home.js (20 Oct 2026): home's
+        # day-file lists, computed by the site's own code on the new files — without it home loads the day rows and computes them itself
+        ok = (run("build_data.py", "--end", end) and (run("build_trends.py") or True) and (run("build_similar.py") or True)
+              and (node("tools/build_home.cjs") or True) and (_run("tools/build_injuries.py") or True) and publish("MLB", end, a.dry))
+    parts = []
+    # spring training (Sean, 29 Sep 2026: track a pitcher's stuff in spring) — Stuff+ graded against MLB pitch types — and the
+    # postseason (30 Sep 2026: MLB PS on the cards); a failure in either costs only its own file
+    if ok and spring and run("build_history.py", "spring", year):
+        parts.append("spring training")
+    if ok and post and run("build_history.py", "post", year):
+        parts.append("postseason")
+    if ok and levels:
+        low = [lv for lv in levels if lv != "aaa"]
+        ok = ("aaa" not in levels or run("build_milb.py", "aaa", year)) and (not low or run("build_milb.py", *low, year))
+        parts.append("minors" if len(levels) == 4 else "minors (" + ", ".join(levels) + ")")
+    if ok and (fantasy or index or career or parts):
+        if not mlb:   # the injured list (hist/injuries.js, 20 Oct 2026) rides with the MLB build, else with whatever this run builds
+            _run("tools/build_injuries.py")
+        ok = ((not fantasy or run("build_fantasy.py"))
+              and (not index or run("build_history.py", "index"))
+              and (not career or run("build_career.py"))
+              and publish(", ".join(parts + ["fantasy"] * fantasy + ["index"] * index + ["career"] * career), end, a.dry))
     say(f"=== {dt.datetime.now(ZoneInfo('America/New_York')):%F %T} {'done' if ok else 'FAILED'}")
     sys.exit(0 if ok else 1)
 

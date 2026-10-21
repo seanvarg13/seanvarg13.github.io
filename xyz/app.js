@@ -154,7 +154,7 @@
     days: DATA.meta.days,
     rows: (p) => (window.DRAFT_DAYS && window.DRAFT_DAYS[p.type + p.id]) || [],
     er: (p) => (window.DRAFT_DAYS && window.DRAFT_DAYS[p.type + p.id + ":er"]) || [],
-    ready: () => !!window.DRAFT_DAYS,
+    ready: () => !!window.DRAFT_DAYS_BOTH,   // both day files in (20 Oct 2026: days.js became days-h.js + days-p.js on the live site)
     load: () => ensureDays(),
   };
   let DS = CUR;
@@ -642,13 +642,19 @@
     check();
     document.addEventListener("visibilitychange", () => { if (!document.hidden) check(); });
   }
+  // since 20 Oct 2026 the live site's day rows are two files, hitters' and pitchers' (days-h.js, days-p.js; same rows, a few fields
+  // this copy never read taken out of the middle — the fields it reads keep their places): this copy loads both, then goes on as before
+  const DAYS_FILES = ["days-h.js", "days-p.js"];
   function ensureDays() {
     if (daysReady() || state.daysLoading) return;
     state.daysLoading = true;
-    const sc = document.createElement("script"); sc.src = vsrc("days.js");
-    sc.onload = () => { state.daysLoading = false; valCache.clear(); poolCache.clear(); rankCache.clear(); render(); };
-    sc.onerror = () => { state.daysLoading = false; state.daysFailed = true; render(); };
-    document.head.append(sc);
+    let left = DAYS_FILES.length;
+    for (const f of DAYS_FILES) {
+      const sc = document.createElement("script"); sc.src = vsrc(f);
+      sc.onload = () => { if (--left) return; window.DRAFT_DAYS_BOTH = true; state.daysLoading = false; valCache.clear(); poolCache.clear(); rankCache.clear(); render(); };
+      sc.onerror = () => { state.daysLoading = false; state.daysFailed = true; render(); };
+      document.head.append(sc);
+    }
   }
   // Warm the game-by-game file in the background (Sean, 28 Sep 2026: faster filters on the phone). A date range or split
   // needs every player's games — each card is ranked against the whole pool in the same window — so the file can't be split
@@ -656,17 +662,27 @@
   // site settles it's fetched quietly into the browser's cache (not run: parsing waits until a filter asks for it). The file
   // is versioned, so this happens once per daily update; skipped when the phone has data saver on.
   if (!(navigator.connection && navigator.connection.saveData))
-    setTimeout(() => { if (!daysReady() && !state.daysLoading) (window.requestIdleCallback || ((f) => f()))(() => { try { fetch(vsrc("days.js"), { priority: "low" }).catch(() => {}); } catch (e) {} }); }, 4000);
+    setTimeout(() => { if (!daysReady() && !state.daysLoading) (window.requestIdleCallback || ((f) => f()))(() => { try { for (const f of DAYS_FILES) fetch(vsrc(f), { priority: "low" }).catch(() => {}); } catch (e) {} }); }, 4000);
   const rowsOf = (p) => DS.rows(p);
   // Explore data: hist/index.js (who exists in which seasons) and hist/<key>.js per past season, loaded on demand
   const loading = new Set(), failed = new Set();
-  function ensureScript(src, isReady) {
+  // since 20 Oct 2026 a finished season's day and arsenal files are stored gzipped beside the live site (hist/days-2025.js.gz;
+  // tools/pack_hist.py): when the plain file isn't there, this frozen copy fetches the .gz, unzips it in the browser and runs that
+  async function gunzipUrl(path) {
+    const r = await fetch(path); if (!r.ok) throw new Error("HTTP " + r.status);
+    const buf = await r.arrayBuffer(), h = new Uint8Array(buf, 0, Math.min(2, buf.byteLength));
+    const js = h[0] === 0x1f && h[1] === 0x8b ? await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).blob() : new Blob([buf]);
+    return URL.createObjectURL(new Blob([js], { type: "text/javascript" }));
+  }
+  function ensureScript(src, isReady, gz) {
     if (isReady() || loading.has(src) || failed.has(src)) return;
     loading.add(src);
-    const sc = document.createElement("script"); sc.src = vsrc(src);
-    sc.onload = () => { loading.delete(src); valCache.clear(); poolCache.clear(); rankCache.clear(); render(); if (state.gq) renderGlobalSearch(); };
-    sc.onerror = () => { loading.delete(src); failed.add(src); render(); };
-    document.head.append(sc);
+    const go = (url) => { const sc = document.createElement("script"); sc.src = url;
+      sc.onload = () => { if (gz) URL.revokeObjectURL(url); loading.delete(src); valCache.clear(); poolCache.clear(); rankCache.clear(); render(); if (state.gq) renderGlobalSearch(); };
+      sc.onerror = () => { loading.delete(src); sc.remove(); if (!gz && /^hist\/(?:days|ars)-/.test(src)) { ensureScript(src, isReady, true); return; } failed.add(src); render(); };
+      document.head.append(sc); };
+    if (gz) gunzipUrl(src + ".gz").then(go, () => { loading.delete(src); failed.add(src); render(); });
+    else go(vsrc(src));
   }
   // The site is regular season only: spring-training and postseason datasets may still be built, but they're taken
   // out of the index the moment it arrives, so no season picker anywhere ever offers one
@@ -2022,7 +2038,7 @@
     const empty = $("empty"); empty.hidden = list.length > 0; empty.innerHTML = "";
     if (needsRows() && !DS.ready()) {
       empty.hidden = false; ol.innerHTML = "";
-      empty.textContent = state.daysFailed ? "Couldn't load days.js — the game-by-game data file is missing." : "Loading game-by-game data…";
+      empty.textContent = state.daysFailed ? "Couldn't load the game-by-game data files." : "Loading game-by-game data…";
       return;
     }
     if (!pool(g).list.length) {
@@ -5058,7 +5074,7 @@
     if (grp === "P" && !F.gk.includes("HOME")) return { wait: `The ${y} fantasy file predates home / away game logs — it is rebuilt by the next fantasy build.` };
     if (spec.days) { const end = ds.days ? ds.days[ds.days.length - 1] : String(F.through).slice(0, 10); spec.lo = ymdOf(addDays(/^\d{4}-/.test(end) ? end : `${y}-11-30`, 1 - spec.days)); }
     if (filt && ds.days) { const ready = withDataset(ds, () => withWindow({ from: ds.days[0], to: "", last: "" }, () => ds.ready())); if (!ready) { withDataset(ds, () => withWindow({ from: ds.days[0], to: "", last: "" }, () => ds.load())); return { wait: "Loading the game-by-game file…" }; } }
-    const sig = [y, grp, JSON.stringify(spec), JSON.stringify(w), state.f.view, ds.key, !!window.DRAFT_DAYS].join("|");
+    const sig = [y, grp, JSON.stringify(spec), JSON.stringify(w), state.f.view, ds.key, !!window.DRAFT_DAYS_BOTH].join("|");
     if (fLeadCache.has(sig)) return fLeadCache.get(sig);
     const out = [];
     withDataset(ds, () => {
@@ -6487,7 +6503,7 @@
   function gameDays(p) {
     if (DS.multi) return null;
     if (DS.key === CUR.key) {
-      if (!window.DRAFT_DAYS) { if (state.daysFailed) return null; ensureDays(); return "loading"; }
+      if (!window.DRAFT_DAYS_BOTH) { if (state.daysFailed) return null; ensureDays(); return "loading"; }
       return { rows: window.DRAFT_DAYS[p.type + p.id] || [], er: window.DRAFT_DAYS[p.type + p.id + ":er"] || [], days: DATA.meta.days };
     }
     const h = window.DRAFT_HIST && window.DRAFT_HIST[DS.key]; if (!h || !h.days) return null;

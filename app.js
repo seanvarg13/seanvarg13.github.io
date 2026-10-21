@@ -64,7 +64,7 @@
   // against what was last synced: a key changed on one side takes that side; changed on both, the fantasy presets and
   // the keyed lists (stars, ranks …) are merged, anything else keeps this device's. A pull that changes anything here
   // reloads the page once, so every screen reads the new copy.
-  const SYNC_KEYS = [LS.drafted, LS.extra, LS.roles, LS.ranks, LS.tiers, LS.tierNames, LS.sets, LS.extraPos, LS.stars, "draft2027.fantasy"];
+  const SYNC_KEYS = [LS.drafted, LS.extra, LS.roles, LS.ranks, LS.tiers, LS.tierNames, LS.sets, LS.extraPos, LS.stars, "draft2027.fantasy", "draft2027.auction"];
   const SYNC_LS = "draft2027.sync", GIST_FILE = "sean-site-sync.json", GIST_DESC = "Sean's Site: saved settings (synced by the site)";
   const sync = Object.assign({ token: "", gist: "", base: null, at: "", err: "" }, load(SYNC_LS, {}));
   const syncSave = () => { try { localStorage.setItem(SYNC_LS, JSON.stringify(sync)); } catch {} };
@@ -937,19 +937,34 @@
   }
   // Explore data: hist/index.js (who exists in which seasons) and hist/<key>.js per past season, loaded on demand
   const loading = new Set(), failed = new Set(), tries = new Map();
+  // A finished season's day and arsenal files are stored gzipped, hist/days-2025.js.gz and so on (Sean, 20 Oct 2026, item 3 of the
+  // recommendations: the site under GitHub Pages' 1 GB — they were ~920 MB of its 1.27 GB; tools/pack_hist.py). The build map says which
+  // form a file is in; a gzipped one is fetched, unzipped by the browser and run as a script from a blob, so everything after the load —
+  // the onload below, the retries — is as it was. A server that unzipped it on the way (a local one) hands over plain text: run as it is
+  const isGz = (src) => (window.DRAFT_BUILD ? !!window.DRAFT_BUILD[src + ".gz"] : /^hist\/(?:days|ars)-/.test(src));
+  async function gunzipUrl(path) {
+    const r = await fetch(vsrc(path)); if (!r.ok) throw new Error("HTTP " + r.status);
+    const buf = await r.arrayBuffer(), h = new Uint8Array(buf, 0, Math.min(2, buf.byteLength));
+    const js = h[0] === 0x1f && h[1] === 0x8b ? await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).blob() : new Blob([buf]);
+    return URL.createObjectURL(new Blob([js], { type: "text/javascript" }));
+  }
   function ensureScript(src, isReady) {
     if (isReady() || loading.has(src) || failed.has(src)) return;
     loading.add(src);
-    const sc = document.createElement("script"); sc.src = vsrc(src);
     // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
     // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
     // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
-    sc.onload = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|aaa-tw|awards|similar|minors|trends|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
+    const arrived = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|aaa-tw|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
     // a failed download (a phone on a weak signal, a publish mid-deploy) is tried twice more before it's given up on — career.js once failed
     // for the whole visit and the season table said it hadn't been built (Sean's phone, 9 Oct 2026)
-    sc.onerror = () => { loading.delete(src); sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
+    const fail = (sc) => { loading.delete(src); if (sc) sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
       if (n < 3) { setTimeout(() => ensureScript(src, isReady), 1500 * n); return; } failed.add(src); render(); };
-    document.head.append(sc);
+    const run = (url, blob) => { const sc = document.createElement("script"); sc.src = url;
+      sc.onload = () => { if (blob) URL.revokeObjectURL(url); arrived(); };
+      sc.onerror = () => { if (blob) URL.revokeObjectURL(url); fail(sc); };
+      document.head.append(sc); };
+    if (isGz(src)) gunzipUrl(src + ".gz").then((u) => run(u, true), () => (window.DRAFT_BUILD ? fail() : run(src)));   // no map (a local server): the plain file, if that's what there is
+    else run(vsrc(src));
   }
   // The site is regular season only: spring-training and postseason datasets may still be built, but they're taken
   // out of the index the moment it arrives, so no season picker anywhere ever offers one
@@ -2785,6 +2800,7 @@
     renderPager($("pagertop"), list.length, { start: 0, end: list.length, size: 0, pages: 1, page: 1 });   // Filters, the count, Draft mode's bar — no pages
     const drafted = draftedIds(), listDs = DS === CUR ? null : DS.key;
     const names = ((src && src.names) || {})[state.pos] || [], T = tiers.length;
+    const AUC = draftMode && auc.on, AV = AUC ? aucValues() : null;
     const row = (p, i) => {
       const key = p.type + p.id, li = el("li", "brow"); li.dataset.key = key;
       if (drafted.has(p.id)) li.classList.add("drafted");
@@ -2799,9 +2815,12 @@
       }
       li.append(el("span", "rk", String(rankOf(p, i))));
       const nm = el("span", "nm", p.name); nm.title = `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`; li.append(nm);
+      { const ib = ilBadge(p); if (ib) li.append(ib); }
+      if (AUC) { const d = drafted.has(p.id) ? state.drafted.find((z) => z.id === p.id) : null, v = d ? null : AV && AV.val(p);   // the price and the team once sold, else his value
+        if (d && d.price != null) li.append(el("span", "aucv sold", `$${d.price} · ${aucName(d.team)}`)); else if (v != null) li.append(el("span", "aucv", "$" + v)); }
       li.append(el("span", "pos", posLabel(p)));
-      if (draftMode) li.title = drafted.has(p.id) ? "Tap to return him to the board" : "Tap to mark him drafted";
-      li.addEventListener("click", (e) => { if (rankMode) { toggleSel(key, e); return; } if (draftMode) { drafted.has(p.id) ? undraft(p.id) : draft(p); return; } openPlayer(p, { ds: p.dsKey ? (p.dsKey === CUR.key ? null : p.dsKey) : listDs }); });
+      if (draftMode) li.title = drafted.has(p.id) ? "Tap to return him to the board" : AUC ? "Tap to record who bought him and for how much" : "Tap to mark him drafted";
+      li.addEventListener("click", (e) => { if (rankMode) { toggleSel(key, e); return; } if (draftMode) { if (drafted.has(p.id)) undraft(p.id); else if (AUC) { aucPick = p; aucSheetSync(); } else draft(p); return; } openPlayer(p, { ds: p.dsKey ? (p.dsKey === CUR.key ? null : p.dsKey) : listDs }); });
       return li;
     };
     const head = (t, untiered) => {
@@ -2833,6 +2852,7 @@
       return th;
     };
     const frag = document.createDocumentFragment();
+    if (AUC) frag.append(aucTeamsBlock());   // the room's money over the board
     groups.forEach((rows, t) => {
       if (t === T) return;   // the pool comes last, under the columns
       const li = el("li", "tier"); li.dataset.tier = t;
@@ -2849,6 +2869,7 @@
       if (rows.length > POOL_SHOW + 8) { const f = el("button", "foot", all ? "Show fewer ▴" : `Show all ${rows.length} ▾`); f.type = "button"; f.addEventListener("click", () => { state.poolAll = !state.poolAll; renderRows(); }); li.append(f); }
       frag.append(li); }
     ol.append(frag);
+    aucSheetSync();
   }
   function brEnds(ms, g) {
     const keys = ["score", ...ms.map((m) => m.key)], cat = (k) => (RESULT_KEYS.has(k) ? "R" : "P"), out = new Set();
@@ -3123,6 +3144,7 @@
       const nameEl = el("div", "name", p.name);
       // the ★ after a starred name on Rankings / the Draft board is gone with the star feature (Sean, 7 Oct 2026)
       who.append(nameEl);
+      { const ib = ilBadge(p); if (ib) { nameEl.textContent = ""; nameEl.classList.add("hasil"); nameEl.append(el("span", "nmtx", p.name), ib); } }   // the IL badge holds its place; the name ellipsises before it
       // just his positions and playing time under the name (Sean, 29 Sep 2026); team and hand are in the name's tooltip
       nameEl.title = nameEl.title || `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`;
       const meta = el("div", "meta");
@@ -3355,7 +3377,7 @@
     box.hidden = false;
     { const g = groupFor(state.pos), pit = isPitcherGroup(g);   // the Stuff+ board's count line at the right (Sean, 3 Oct 2026)
       const who = onePage() ? ` ${pit ? "pitchers" : "hitters"} · ${DS.season}${state.mode === "leaderboard" ? ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}` : ""}` : "";   /* a desktop keeps the fuller count beside its page range (16 Oct 2026) */
-      const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}${state.mode === "draft" ? " · tap to draft, tap again to undo" : ""}`; })() : null;   // the board: tiers · tiered · listed (Draft mode has no buttons)
+      const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}${state.mode === "draft" ? (auc.on ? " · tap a name to record his sale, tap again to undo" : " · tap to draft, tap again to undo") : ""}`; })() : null;   // the board: tiers · tiered · listed (Draft mode has no buttons)
       const ct = bc != null ? bc : pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}${mobileView() ? "" : who}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total}${who}` : `${total} players`;
       const pc = el("span", "pcount", ct);
       // Fantasy's count shares the row with the page numbers, so it holds the width of its widest label (the last page's; the digits are
@@ -3363,24 +3385,7 @@
       if (onChange && pg.size && pg.pages > 1) { pc.textContent = ""; const w = el("span", "pcfix"), g = el("span", "pcg", `${(pg.pages - 1) * pg.size + 1}–${total} of ${total}`); g.setAttribute("aria-hidden", "true"); w.append(el("span", null, ct), g); pc.append(w); }
       box.append(pc); }
     if (pg.pages > 1) {
-      const nav = el("div", "pnav");
-      const b = (label, n, title, dis) => { const x = el("button", "pbtn", label); x.type = "button"; x.title = title; x.disabled = dis; x.addEventListener("click", () => go(n)); return x; };
-      nav.append(b("‹", pg.page - 1, "Previous page", pg.page === 1));   // no « / » (minimal pass 5): the first and last pages are numbered anyway
-      // five slots between the arrows, every cell the same width, so neither arrow ever moves (Sean, 18 Oct 2026: "Make it so the two arrows are
-      // stable and never change positions ... the arrow then page 1 then dots then the current page, then dots then the last page then the other
-      // arrow"): ‹ 1 … c … N ›, and at the ends the neighbours fill the slots (‹ 1 2 3 … N ›, ‹ 1 … N−2 N−1 N ›); five pages or fewer are all
-      // shown, centred in the five. 0 is the dots, null an empty slot
-      const P = pg.pages, c = pg.page;
-      const slots = P <= 5 ? [...Array(Math.floor((5 - P) / 2)).fill(null), ...Array.from({ length: P }, (_, i) => i + 1)]
-        : c <= 2 ? [1, 2, 3, 0, P] : c >= P - 1 ? [1, 0, P - 2, P - 1, P] : [1, 0, c, 0, P];
-      while (slots.length < 5) slots.push(null);
-      nav.classList.add("pslots");
-      for (const n of slots) {
-        if (n == null) { nav.append(el("span", "pslot")); continue; }
-        if (n === 0) { nav.append(el("span", "pgap", "…")); continue; }
-        const x = b(String(n), n, `Page ${n}`, false); if (n === c) x.setAttribute("aria-current", "page"); nav.append(x);
-      }
-      nav.append(b("›", pg.page + 1, "Next page", pg.page === pg.pages));
+      const nav = pageNav(pg, go);
       if (botOn) bot.append(nav); else if (phonePages() && box.id === "pagertop") { const pc = box.querySelector(".pcount"); if (pc) box.append(pc); nav.classList.add("inbar"); box.append(nav); } else box.append(nav);   /* a phone: the count and the small page numbers ride on the Filters button's line (Sean, 6 Oct 2026) */   // a phone: the count left, small page numbers right on one line (Sean, 6 Oct 2026: pages back, "put it in the upper gap on the right")   // a phone: the count and the page numbers share one line (Sean, 6 Oct 2026: the table started too far down)
     }
     if (botOn) {   // Per page beside the numbers
@@ -3396,6 +3401,27 @@
     if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs();
       if (phonePages()) { const pc = box.querySelector(".pcount"), nv = box.querySelector(".pnav"); if (pc) box.append(pc); if (nv) box.append(nv); }   /* after the Filters button */   // a phone: Min IP rides after the pills; the count is on the page-number line
       else { const pc = box.querySelector(".pcount");   /* the count right beside the Filters button (Sean, 11 Oct 2026) */ if (pc) box.append(pc); if (mfKeep) { mfKeep.classList.add("topmin"); if (box.lastElementChild !== mfKeep) box.append(mfKeep); } } } }   // the count and the Min box on a quiet line under the controls (6 Oct 2026); the Min box moves only when it isn't already last   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
+  }
+  // ‹, the page numbers and › (no « / », minimal pass 5: the first and last pages are numbered anyway). Five slots between the arrows, every cell
+  // the same width, so neither arrow ever moves (Sean, 18 Oct 2026: "Make it so the two arrows are stable and never change positions ... the arrow
+  // then page 1 then dots then the current page, then dots then the last page then the other arrow"): ‹ 1 … c … N ›, and at the ends the
+  // neighbours fill the slots (‹ 1 2 3 … N ›, ‹ 1 … N−2 N−1 N ›); five pages or fewer are all shown, centred in the five. 0 is the dots, null an
+  // empty slot
+  function pageNav(pg, go) {
+    const nav = el("div", "pnav pslots");
+    const b = (label, n, title, dis) => { const x = el("button", "pbtn", label); x.type = "button"; x.title = title; x.disabled = dis; x.addEventListener("click", () => go(n)); return x; };
+    nav.append(b("‹", pg.page - 1, "Previous page", pg.page === 1));
+    const P = pg.pages, c = pg.page;
+    const slots = P <= 5 ? [...Array(Math.floor((5 - P) / 2)).fill(null), ...Array.from({ length: P }, (_, i) => i + 1)]
+      : c <= 2 ? [1, 2, 3, 0, P] : c >= P - 1 ? [1, 0, P - 2, P - 1, P] : [1, 0, c, 0, P];
+    while (slots.length < 5) slots.push(null);
+    for (const n of slots) {
+      if (n == null) { nav.append(el("span", "pslot")); continue; }
+      if (n === 0) { nav.append(el("span", "pgap", "…")); continue; }
+      const x = b(String(n), n, `Page ${n}`, false); if (n === c) x.setAttribute("aria-current", "page"); nav.append(x);
+    }
+    nav.append(b("›", pg.page + 1, "Next page", pg.page === pg.pages));
+    return nav;
   }
   function perPageField(setSize) {
     const sz = el("label", "field psize"); sz.append(el("span", null, "Per page"));
@@ -4162,6 +4188,10 @@
   // Trending lives inside the Leaderboard and the Fantasy leaderboard now (Season / Recent, 1 Oct 2026): off both menus
   for (const h of ["#trending", "#fantasy/trending"]) { const a = document.querySelector(`.modemenu a[href="${h}"]`); if (a) a.closest("li").remove(); }
   const pb = Object.assign({ pt: "all", hand: "all", role: "all", min: 100, sort: "pitp", dir: -1 }, load("draft2027.pitchboard", {}));
+  // a phone's Filters panel on the board (Sean, 20 Oct 2026): open across redraws so several filters can be set, shut by a tap elsewhere or a page change
+  let pbOpen = false;
+  document.addEventListener("click", (e) => { if (pbOpen && !e.target.closest(".pbfpanel, .pbfbtn, .ddmenu")) { pbOpen = false; render(); } });
+  window.addEventListener("hashchange", () => { pbOpen = false; });
   if (["stuffp", "whfp", "bbp", "xwhf", "xgb", "xpu", "aopt"].includes(pb.sort)) pb.sort = "pitp";   // Pitching+ again (6 Oct 2026); the stuff-only columns left the board   // the location columns left the board (6 Oct 2026: Stuff+ again)   // the stuff-only columns left the board (4 Oct 2026)
   // spring training (Sean, 29 Sep 2026: "track a pitchers stuff in spring training"): the board can read this spring's dataset
   // (hist/mlb-<year>-spring.js, graded by the MLB models against MLB pitch types) — next year's spring once it exists, else this one's
@@ -4206,17 +4236,32 @@
     rows.sort((a, b) => (a[key] == null) - (b[key] == null) || dir * ((a[key] ?? 0) - (b[key] ?? 0)) || b.n - a.n);
     // filters
     const save = () => { save_(); render(); }, save_ = () => { try { localStorage.setItem("draft2027.pitchboard", JSON.stringify(pb)); } catch {} };
-    const bar = el("div", "pbfilters");
+    const bar = el("div", "pbfilters"), PH = mobileView();
     const types = [...new Set(DS.players.filter((p) => p.type === "P" && p.ctx && p.ctx.arsenal).flatMap((p) => p.ctx.arsenal.map((a) => a[0])))]
       .filter((t) => T[t]).sort((a, b) => (T[b][0] || 0) - (T[a][0] || 0));
-    bar.append(pillSelect(pb.pt === "all" ? "All pitches" : PITCH_NAME[pb.pt] || pb.pt, [["all", "All pitches"], ...types.map((t) => [t, PITCH_NAME[t] || t])], pb.pt, (v) => { pb.pt = v; save(); }, "Pitch"));
-    bar.append(pillSelect(pb.hand === "all" ? "Both hands" : pb.hand === "R" ? "Righties" : "Lefties", [["all", "Both hands"], ["R", "Righties"], ["L", "Lefties"]], pb.hand, (v) => { pb.hand = v; save(); }, "Throws"));
-    bar.append(pillSelect(pb.role === "all" ? "SP + RP" : pb.role, [["all", "SP + RP"], ["SP", "SP"], ["RP", "RP"]], pb.role, (v) => { pb.role = v; save(); }, "Role"));
-    bar.append(pillSelect(`${pb.min}+ pitches`, [25, 50, 100, 200, 400, 800].map((n) => [String(n), `${n}+ pitches`]), String(pb.min), (v) => { pb.min = Number(v); save(); }, "Minimum"));
-    bar.append(pillSelect(pb.heat === "all" ? "Colour: all" : "Colour: sorted", [["sorted", "Colour the sorted column"], ["all", "Colour every + column"]], pb.heat === "all" ? "all" : "sorted", (v) => { pb.heat = v; save(); }, "Colour"));
+    const pills = [
+      ["Pitch", pillSelect(pb.pt === "all" ? "All pitches" : PITCH_NAME[pb.pt] || pb.pt, [["all", "All pitches"], ...types.map((t) => [t, PITCH_NAME[t] || t])], pb.pt, (v) => { pb.pt = v; save(); }, "Pitch")],
+      ["Throws", pillSelect(pb.hand === "all" ? "Both hands" : pb.hand === "R" ? "Righties" : "Lefties", [["all", "Both hands"], ["R", "Righties"], ["L", "Lefties"]], pb.hand, (v) => { pb.hand = v; save(); }, "Throws")],
+      ["Role", pillSelect(pb.role === "all" ? "SP + RP" : pb.role, [["all", "SP + RP"], ["SP", "SP"], ["RP", "RP"]], pb.role, (v) => { pb.role = v; save(); }, "Role")],
+      ["Minimum", pillSelect(`${pb.min}+ pitches`, [25, 50, 100, 200, 400, 800].map((n) => [String(n), `${n}+ pitches`]), String(pb.min), (v) => { pb.min = Number(v); save(); }, "Minimum")],
+      ["Colour", pillSelect(pb.heat === "all" ? "Colour: all" : "Colour: sorted", [["sorted", "Colour the sorted column"], ["all", "Colour every + column"]], pb.heat === "all" ? "all" : "sorted", (v) => { pb.heat = v; save(); }, "Colour")]];
     // Games: Spring training (back at Sean's ask, 6 Oct 2026, with the card's Spring tab) — next year's spring once it's built, else this one's
-    if (springKey()) bar.append(pillSelect(springK ? "Spring training" : `${DATA.meta.season} season`, [["season", `${DATA.meta.season} season`], ["spring", "Spring training"]], springK ? "spring" : "season", (v) => { pb.src = v; save(); }, "Games"));
-    bar.append(el("span", "pbcount", `${rows.length} pitch${rows.length === 1 ? "" : "es"} · ${springK ? DS.label || "spring training" : DATA.meta.season} · graded against its own type`));
+    if (springKey()) pills.push(["Games", pillSelect(springK ? "Spring training" : `${DATA.meta.season} season`, [["season", `${DATA.meta.season} season`], ["spring", "Spring training"]], springK ? "spring" : "season", (v) => { pb.src = v; save(); }, "Games")]);
+    const cnt = `${rows.length} pitch${rows.length === 1 ? "" : "es"} · ${springK ? DS.label || "spring training" : DATA.meta.season}`;
+    if (PH) {
+      // a phone (Sean, 20 Oct 2026, mock 12): one Filters button, the six pills in a panel under it — they had taken three rows over the table
+      const nOn = [pb.pt !== "all", pb.hand !== "all", pb.role !== "all", pb.min !== 100, pb.heat === "all", !!springK].filter(Boolean).length;
+      const fb = el("button", "btn btn-quiet tbtn pbfbtn" + (pbOpen ? " on" : ""), "Filters" + (nOn ? ` (${nOn})` : "")); fb.type = "button"; fb.setAttribute("aria-expanded", String(pbOpen));
+      fb.addEventListener("click", (e) => { e.stopPropagation(); pbOpen = !pbOpen; render(); });
+      bar.classList.add("pbfph"); bar.append(fb, el("span", "pbcount", cnt));
+      if (pbOpen) {
+        const pan = el("div", "pop pbfpanel"), x = el("button", "pop-close", "×"); x.type = "button"; x.setAttribute("aria-label", "Close");
+        x.addEventListener("click", (e) => { e.stopPropagation(); pbOpen = false; render(); });
+        const hd = el("div", "pbfhd"); hd.append(el("span", null, "Filters"), x); pan.append(hd);
+        for (const [lab, pl] of pills) { const r = el("div", "pbfrow"); r.append(el("span", "pbflab", lab), pl); pan.append(r); }
+        bar.append(pan);
+      }
+    } else { for (const [, pl] of pills) bar.append(pl); bar.append(el("span", "pbcount", cnt + " · graded against its own type")); }
     box.append(bar);
     // the table, in B-Ref's dress (Sean, 9 Oct 2026, the B-Ref Style Tables canvas: "I want that for everything"): Rk and Pitcher frozen,
     // Tm / Role / T columns, an over-header naming each group, each expected / actual pair as two columns (Act in grey), the sorted + column
@@ -4228,10 +4273,14 @@
     const cols = [["rk", "Rk"], ["who", "Pitcher"], ["tm", "Tm"], ["role", "Role"], ["hand", "T"], ["pt", "Type"], ["n", "#"], ["use", "Use%"], ["velo", "Velo"], ["ivb", "IVB"], ["hb", "HB"], ["spin", "Spin"],
                   ["pitp", "Pitching+"], ["whfpl", "Whiff+"], ["bbpl", "BB+"], ["locp", "Loc+"], ["xwhfl", "Exp"], ["whf", "Act"], ["xgbl", "Exp"], ["gb", "Act"], ["xpul", "Exp"], ["pu", "Act"], ["xfoul", "Exp"], ["foul", "Act"]];
     const FIX = new Set(["rk", "who", "tm", "role", "hand", "pt"]), ACT = new Set(["whf", "gb", "pu", "foul"]);
-    const { t, tb, fin, gap, wrap } = brTable([["", 5], ["Pitch", 3], ["Shape", 4], ["Grades, 100 = average for the type", 4], ["Whiff%", 2], ["GB%", 2], ["PU%", 2], ["Foul%", 2]],
-      cols.map(([k, l]) => [l, [k === "who" || k === "pt" ? "l" : "", ACT.has(k) ? "xact" : "", k === "rk" ? "f1" : k === "who" ? "f3" : ""].filter(Boolean).join(" "), tips[k]]), "pbt");
+    // a phone reads the grade beside the name (Sean, 20 Oct 2026, mock 12): Pitching+ moves up after Pitcher, a rule after it — it had sat off the
+    // right edge. ORD reorders the header, every row and the League row the same way
+    const ORD = PH ? [0, 1, 12, ...cols.map((_, i) => i).filter((i) => i > 1 && i !== 12)] : null, ord = (a) => (ORD ? ORD.map((i) => a[i]) : a);
+    const { t, tb, fin, gap, wrap } = brTable(PH ? [["", 3], ["", 3], ["Pitch", 3], ["Shape", 4], ["Grades vs type", 3], ["Whiff%", 2], ["GB%", 2], ["PU%", 2], ["Foul%", 2]]
+                                                : [["", 5], ["Pitch", 3], ["Shape", 4], ["Grades, 100 = average for the type", 4], ["Whiff%", 2], ["GB%", 2], ["PU%", 2], ["Foul%", 2]],
+      ord(cols).map(([k, l]) => [l, [k === "who" || k === "pt" ? "l" : "", ACT.has(k) ? "xact" : "", k === "rk" ? "f1" : k === "who" ? "f3" : ""].filter(Boolean).join(" "), tips[k]]), "pbt");
     { const hc = t.querySelector("thead tr:last-child").children;
-      cols.forEach(([k, l], i) => { if (FIX.has(k)) return; const c = hc[i], on = pb.sort === k;
+      ord(cols).forEach(([k, l], i) => { if (FIX.has(k)) return; const c = hc[i], on = pb.sort === k;
         const b = el("button", "sortbtn" + (on ? " on" : ""), l); b.type = "button"; c.textContent = ""; c.append(b); if (on) c.classList.add("lit");
         b.addEventListener("click", () => { if (pb.sort === k) pb.dir = -pb.dir; else { pb.sort = k; pb.dir = -1; } save(); }); }); }
     const f1 = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%");
@@ -4247,9 +4296,9 @@
         if (!springK) { openPlayer(r.p, { tab: "pitching" }); return; }   // his page (8 Oct 2026); the spring board still pops the spring card up
         state.cardDs = springK || null; state.expanded = "P" + r.p.id; render(); });   // off the spring board: his spring card
       who.append(btn);
-      tr.append(el("td", "rk f1", String(i + 1)), who, el("td", "c", r.p.team || ""), el("td", "c", r.p.primary || ""), el("td", "c", r.p.throws || ""), el("td", "l", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(r.use)),
+      tr.append(...ord([el("td", "rk f1", String(i + 1)), who, el("td", "c", r.p.team || ""), el("td", "c", r.p.primary || ""), el("td", "c", r.p.throws || ""), el("td", "l", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(r.use)),
                 el("td", null, f1(r.velo)), el("td", null, f1(r.ivb)), el("td", null, f1(r.hb)), el("td", null, r.spin == null ? "–" : String(r.spin)),
-                plus(r.pitp, "pitp"), plus(r.whfpl, "whfpl"), plus(r.bbpl, "bbpl"), plus(r.locp, "locp"), ...pair(r.xwhfl, r.whf), ...pair(r.xgbl, r.gb), ...pair(r.xpul, r.pu), ...pair(r.xfoul, r.foul));
+                plus(r.pitp, "pitp"), plus(r.whfpl, "whfpl"), plus(r.bbpl, "bbpl"), plus(r.locp, "locp"), ...pair(r.xwhfl, r.whf), ...pair(r.xgbl, r.gb), ...pair(r.xpul, r.pu), ...pair(r.xfoul, r.foul)]));
       tb.append(fin(tr));
     });
     // the League row: every pitch the filters let through (whatever the minimum) — grades by pitches, whiffs by swings, grounders and popups by
@@ -4259,9 +4308,9 @@
       const byN = (q) => q.n, bySw = (q) => q.sw, byBip = (q) => q.bip, byCon = (q) => q.sw * (1 - (q.whf || 0) / 100);
       const g0 = (v) => el("td", null, v == null ? "–" : String(Math.round(v))), N = popl.reduce((a, q) => a + q.n, 0);
       const tr = el("tr", "tot first");
-      tr.append(el("td", "f1"), el("td", "l f3", pb.pt === "all" ? "League, every pitch" : `League, every ${(PITCH_NAME[pb.pt] || pb.pt).toLowerCase()}`), el("td"), el("td"), el("td"), el("td"), el("td", null, String(N)), el("td"),
+      tr.append(...ord([el("td", "f1"), el("td", "l f3", pb.pt === "all" ? "League, every pitch" : `League, every ${(PITCH_NAME[pb.pt] || pb.pt).toLowerCase()}`), el("td"), el("td"), el("td"), el("td"), el("td", null, String(N)), el("td"),
                 el("td"), el("td"), el("td"), el("td"), g0(wm("pitp", byN)), g0(wm("whfpl", byN)), g0(wm("bbpl", byN)), g0(wm("locp", byN)),
-                ...pair(wm("xwhfl", bySw), wm("whf", bySw)), ...pair(wm("xgbl", byBip), wm("gb", byBip)), ...pair(wm("xpul", byBip), wm("pu", byBip)), ...pair(wm("xfoul", byCon), wm("foul", byCon)));
+                ...pair(wm("xwhfl", bySw), wm("whf", bySw)), ...pair(wm("xgbl", byBip), wm("gb", byBip)), ...pair(wm("xpul", byBip), wm("pu", byBip)), ...pair(wm("xfoul", byCon), wm("foul", byCon))]));
       tb.append(gap(), fin(tr));
     }
     wrap.className = "fscroll pbscroll brscroll"; box.append(wrap);
@@ -4815,6 +4864,83 @@
   }
   function undraft(id) { state.drafted = state.drafted.filter((d) => d.id !== id); save(LS.drafted, state.drafted); render(); }
   function undoLast() { state.drafted.pop(); save(LS.drafted, state.drafted); render(); }
+  // Draft mode for an auction (Sean, 20 Oct 2026, item 7 of the recommendations: "record price and team per pick, every team's money left and max bid,
+  // inflation-adjusted values"): with Auction on, a tap on a name opens a sheet at the foot of the screen — who bought him and for how much, prefilled
+  // with his value — and the Teams table over the board keeps every team's money, open spots and max bid (money left less $1 for each other open
+  // spot). His value is the Mock draft's $ (mkDollars: Sean's league's prices laid on the 2027 ADP) for this room's teams and budget, moved by the
+  // room's inflation — the money left (less $1 a spot) against what the best players left are worth. The picks ride in the drafted list (price, team),
+  // so Sync carries them, and Undo takes the last one back; the room's settings are draft2027.auction (synced too)
+  const auc = Object.assign({ on: false, teams: 14, budget: 200, names: [], me: 0 }, load("draft2027.auction", {}));
+  const aucSave = () => save("draft2027.auction", auc);
+  const aucName = (i) => auc.names[i] || `Team ${i + 1}`;
+  const aucSpots = () => mkSlotList(mkSet.roster).length;
+  function aucTeams() {
+    const S = aucSpots(), T = Array.from({ length: auc.teams }, (_, i) => ({ i, n: 0, spent: 0 }));
+    for (const d of state.drafted) if (d.team != null && T[d.team]) { T[d.team].n++; T[d.team].spent += d.price || 0; }
+    for (const t of T) { t.left = auc.budget - t.spent; t.open = Math.max(0, S - t.n); t.max = t.open ? Math.max(0, t.left - (t.open - 1)) : 0; }
+    return T;
+  }
+  let aucBase = null;
+  function aucValues() {
+    if (!mkReady()) { mkEnsure(); return null; }
+    mkPool(); const sig = JSON.stringify([auc.teams, auc.budget, mkSet.roster, mkPoolCache && mkPoolCache.sig]);
+    if (!aucBase || aucBase.sig !== sig) aucBase = { sig, m: mkDollars({ teams: auc.teams, budget: auc.budget, roster: mkSet.roster }) };
+    const base = aucBase.m, T = aucTeams(), gone = new Set(state.drafted.map((d) => d.id));
+    const open = T.reduce((a, t) => a + t.open, 0), money = T.reduce((a, t) => a + Math.max(0, t.left), 0) - open;
+    const worth = mkPool().filter((x) => !gone.has(x.id)).slice(0, open).reduce((a, x) => a + Math.max(0, (base.get(x.k) || 0) - 1), 0);
+    const inf = worth > 0 ? Math.max(0.5, Math.min(2, money / worth)) : 1;
+    return { base, inf, T, money: money + open, val: (p) => { const b = base.get(p.type + p.id); return b ? Math.max(1, Math.round(1 + (b - 1) * inf)) : null; } };
+  }
+  let aucPick = null, aucLastTeam = null;
+  function aucSheetSync() {
+    let sh = $("aucsheet");
+    if (!(state.mode === "draft" && auc.on && aucPick)) { if (sh) sh.remove(); return; }
+    if (sh && sh.dataset.k === String(aucPick.id)) return;   // the same player: keep what's been typed
+    if (!sh) { sh = el("div", "aucsheet"); sh.id = "aucsheet"; document.body.append(sh); }
+    sh.innerHTML = ""; sh.dataset.k = String(aucPick.id);
+    const p = aucPick, AV = aucValues(), T = AV ? AV.T : aucTeams(), v = AV ? AV.val(p) : null, b = AV ? AV.base.get(p.type + p.id) : null;
+    const hd = el("div", "auchead"), x = el("button", "pop-close", "×"); x.type = "button"; x.setAttribute("aria-label", "Close");
+    x.addEventListener("click", () => { aucPick = null; aucSheetSync(); });
+    hd.append(el("b", null, p.name), el("span", null, [posLabel(p), p.team].filter(Boolean).join(" · ")), x); sh.append(hd);
+    sh.append(el("p", "aucnote", v == null ? (AV ? "No 2027 value for him" : "Loading the 2027 values…") : `Worth $${b} · the room's inflation ×${AV.inf.toFixed(2)} → $${v}`));
+    const sel = el("select"); T.forEach((t) => { const o = el("option", null, aucName(t.i) + (t.i === auc.me ? " (you)" : "")); o.value = String(t.i); sel.append(o); });
+    sel.value = String(aucLastTeam != null && aucLastTeam < auc.teams ? aucLastTeam : auc.me);
+    const inp = el("input"); inp.type = "number"; inp.inputMode = "numeric"; inp.min = "1"; inp.value = String(v || 1);
+    const go = el("button", "btn", "Sold"); go.type = "button";
+    const info = el("p", "aucnote");
+    const upd = () => { const t = T[+sel.value], pr = Math.round(+inp.value || 0); info.textContent = `${aucName(t.i)}: $${t.left} left · ${t.open} spot${t.open === 1 ? "" : "s"} open · max bid $${t.max}${pr > t.max ? ` — $${pr} is over it` : ""}`; info.classList.toggle("warn", pr > t.max); };
+    const sold = () => { const pr = Math.round(+inp.value || 0); if (pr < 1) { inp.focus(); return; }
+      aucLastTeam = +sel.value; state.drafted.push({ id: p.id, name: p.name, t: Date.now(), price: pr, team: +sel.value }); save(LS.drafted, state.drafted); aucPick = null; render(); };
+    sel.addEventListener("change", upd); inp.addEventListener("input", upd); go.addEventListener("click", sold); inp.addEventListener("keydown", (e) => { if (e.key === "Enter") sold(); });
+    const lab = (t, c) => { const l = el("label", "aucf"); l.append(el("span", null, t), c); return l; };
+    const row = el("div", "aucrow"); row.append(lab("Sold to", sel), lab("for $", inp), go); sh.append(row, info); upd();
+  }
+  // the Teams table over the board: the room's settings, its inflation, and every team's money
+  function aucTeamsBlock() {
+    const li = el("li", "auchd"), AV = aucValues(), T = AV ? AV.T : aucTeams(), S = aucSpots();
+    const set = el("div", "aucset");
+    const nsel = el("select"); for (let n = 4; n <= 20; n++) { const o = el("option", null, String(n)); o.value = String(n); nsel.append(o); } nsel.value = String(auc.teams);
+    nsel.addEventListener("change", () => { auc.teams = +nsel.value; if (auc.me >= auc.teams) auc.me = 0; aucSave(); render(); });
+    const bud = el("input"); bud.type = "number"; bud.inputMode = "numeric"; bud.min = "1"; bud.value = String(auc.budget);
+    bud.addEventListener("change", () => { auc.budget = Math.max(1, Math.round(+bud.value || 200)); aucSave(); render(); });
+    const me = el("select"); for (let i = 0; i < auc.teams; i++) { const o = el("option", null, aucName(i)); o.value = String(i); me.append(o); } me.value = String(auc.me);
+    me.addEventListener("change", () => { auc.me = +me.value; aucSave(); render(); });
+    const lab = (t, c) => { const l = el("label", "aucf"); l.append(el("span", null, t), c); return l; };
+    set.append(lab("Teams", nsel), lab("Budget $", bud), lab("You", me), el("span", "aucinf", AV ? `${S} spots a team · $${AV.money} left in the room · inflation ×${AV.inf.toFixed(2)}` : "Loading the 2027 values…"));
+    li.append(set);
+    // teams across, the money down (five rows whatever the room's size; a phone slides it sideways under the frozen labels), max bid first
+    const { t, tb, wrap } = brTable(null, [["", "l f1"], ...T.map((r) => [aucName(r.i), r.i === auc.me ? "me" : ""])], "auct");
+    T.forEach((r, k) => { const th = t.tHead.rows[0].cells[k + 1], nm = el("button", "linkbtn", aucName(r.i) + (r.i === auc.me ? " (you)" : "")); nm.type = "button"; nm.title = "Rename this team";
+      nm.addEventListener("click", () => ask("Rename the team", "", (v) => { auc.names[r.i] = String(v || "").trim(); aucSave(); render(); }, { value: aucName(r.i), button: "Save" }));
+      th.textContent = ""; th.append(nm); });
+    for (const [lab, f, cls, tip] of [["Max bid", (r) => "$" + r.max, "aucmax", "Money left less $1 for each other open spot"], ["Left", (r) => "$" + r.left], ["Open", (r) => String(r.open), null, `Spots left of ${S}`], ["Players", (r) => String(r.n)], ["Spent", (r) => "$" + r.spent]]) {
+      const tr = el("tr", cls || null), c0 = el("td", "l f1", lab); if (tip) c0.title = tip; tr.append(c0);
+      for (const r of T) tr.append(el("td", r.i === auc.me ? "me" : null, f(r)));
+      tb.append(tr);
+    }
+    wrap.classList.add("aucwrap"); li.append(wrap);
+    return li;
+  }
   function resetBoard() {
     if (!state.drafted.length) return;
     ask("Reset the draft board?", `Returns all ${state.drafted.length} drafted players to the board.`, () => { state.drafted = []; save(LS.drafted, state.drafted); render(); });
@@ -5347,6 +5473,8 @@
     $("drafttools").hidden = !on;
     if (!on) return;
     { let b = $("draftexit"); if (!b) { b = el("button", "btn btn-quiet draftexit", "Exit draft mode"); b.id = "draftexit"; b.type = "button"; b.title = "Back to the rankings"; b.addEventListener("click", () => { location.hash = "#rankings"; }); $("drafttools").append(b); } }   // 16 Oct 2026
+    { let sg = $("draftkind"); if (!sg) { sg = el("div", "seg draftkind"); sg.id = "draftkind"; sg.setAttribute("role", "group"); sg.setAttribute("aria-label", "Snake or auction"); $("drafttools").prepend(sg); }   // 20 Oct 2026
+      sg.innerHTML = ""; for (const [v, l] of [[false, "Snake"], [true, "Auction"]]) { const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(!!auc.on === v)); b.addEventListener("click", () => { if (!!auc.on === v) return; auc.on = v; aucPick = null; aucSave(); render(); }); sg.append(b); } }
     const dsel = $("draftorder"); dsel.innerHTML = "";
     const cur = currentSetName(), names = Object.keys(state.rankSets).sort((x, y) => x.localeCompare(y));
     for (const [v, l] of [["board", "Big board order"], ["mine", cur ? `My rankings (working copy of “${cur}”)` : "My rankings (working)"], ...names.map((n) => ["set:" + n, "Saved: " + n])]) { const o = el("option", null, l); o.value = v; dsel.append(o); }
@@ -5458,6 +5586,34 @@
     const out = { rows, cand: cand.size, win30, label: FW.label, minPA, prevMode, baseDS };
     flawCache.set(key, out); return out;
   }
+  // pitchers on Movers (Sean, 20 Oct 2026, item 9 of the recommendations: "velocity and Pitching+ risers over the last 30 days"): his fastball velocity
+  // and Pitching+ over the window against his season before it — the stuff side moves first and holds (spring to season: FB velo r .87, Stuff+ .64)
+  // — ranked by the Pitching+ gain. A PA window means nothing to a pitcher, so those read 30 days; This season vs last compares his full seasons. He
+  // needs 120 pitches in a 30-day window (scaled with its length, 60-250) and 300 before it (or last season)
+  const PM_BASE = 300, pmCache = new Map();
+  function pitchMovers(winId = "30") {
+    const prevMode = winId === "prev", prevDS = fxPrevDS();
+    const key = DS.key + ":" + daysReady("P") + ":" + winId + ":" + !!prevDS; if (pmCache.has(key)) return pmCache.get(key);
+    if (prevMode && !prevDS) return { rows: [], loading: true };
+    if (!prevMode && !daysReady("P")) return { rows: [], wait: true };   // the pitchers' day rows (days-p.js)
+    const inWin = (w, fn) => withWindow(w, () => withSplit(NONE, fn));
+    const days = DATA.meta.days || [], last = days[days.length - 1], n = String(winId).startsWith("pa") ? 30 : (+winId || 30);
+    const from = last ? addDays(last, -(n - 1)) : "", minN = prevMode ? PM_BASE : Math.min(250, Math.max(60, Math.round(120 * n / 30)));
+    const take = (v) => (v && v.m ? { fb: v.m.fbv, pp: v.m.pitch, n: (v.ctx && v.ctx.Pitches) || 0 } : null);
+    const was = new Map(), rows = [];
+    if (prevMode) withDataset(prevDS, () => inWin(NOWIN, () => { for (const q of DS.players) if (q.type === "P") { const t = take(V(q)); if (t && t.n >= PM_BASE) was.set(q.id, t); } }));
+    else if (from && from > days[0]) inWin({ from: days[0], to: addDays(from, -1), last: "" }, () => { for (const p of DATA.players) if (p.type === "P") { const t = take(V(p)); if (t && t.n >= PM_BASE) was.set(p.id, t); } });
+    inWin(prevMode ? NOWIN : { from, to: "", last: "" }, () => {
+      for (const p of DATA.players) {
+        const w0 = p.type === "P" && was.get(p.id); if (!w0) continue;
+        const t = take(V(p)); if (!t || t.n < minN || t.pp == null || w0.pp == null) continue;
+        rows.push({ p, fbWas: w0.fb, fbNow: t.fb, dFb: w0.fb != null && t.fb != null ? t.fb - w0.fb : null, pWas: w0.pp, pNow: t.pp, dP: t.pp - w0.pp, n: t.n });
+      }
+    });
+    rows.sort((a, b) => b.dP - a.dP);
+    const out = { rows: rows.filter((r) => r.dP > 0), label: prevMode ? `${DATA.meta.season} vs ${DATA.meta.season - 1}` : `last ${n} days`, minN, all: rows.length };
+    pmCache.set(key, out); return out;
+  }
   const flawNote = (R) => `Each piece of his xwOBA build-up against the league in wOBA points: elite = his two best are worth +${FX.elite} together, the flaw = his two worst at ${FX.flaw} or under. ${R ? R.label[0].toUpperCase() + R.label.slice(1) : "Last 30 days"} = that piece over that window (${R ? R.minPA : FX.pa}+ PA); If it held = his season xwOBA with only that piece at the window's value, ranked by the gain (${FX.gain}+ points).`;
   // tap a name on the page (Sean, 16 Oct 2026: "a pop up window that shows a comparison of their percentile for the given improvement and then it
   // shows the pieces that go into it ... at the top his season long xwoba, then below his k% and then below that all of the inputs that go into his
@@ -5536,7 +5692,8 @@
     bar.append(pillSelect(fxSet.sort === "cred" ? "Most credible" : "Biggest Δ xwOBA", [["gain", "Biggest Δ xwOBA"], ["cred", "Most credible"]], fxSet.sort, (v) => { fxSet.sort = v; save(); }, "Order"));
     const prevMode = fxSet.win === "prev", Y = DATA.meta.season, Y0 = Y - 1;
     ensureHist(fxPrevKey());   // last season: the base in the vs-last mode, the credibility's witness otherwise
-    if (!prevMode && !daysReady("H")) { ensureDays("H"); page.append(bar, el("p", "note", daysBad.H ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); return; }
+    if (!prevMode) ensureDays();   // both sides: the hitters' rows for the flaws, the pitchers' for Pitching+ (the pitchers' table waits for its own)
+    if (!prevMode && !daysReady("H")) { page.append(bar, el("p", "note", daysBad.H ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); return; }
     const R = flawRows(fxSet.win), { cand } = R, rows = R.rows.slice().sort((a, b) => fxSet.sort === "cred" ? b.cgain - a.cgain : b.gain - a.gain), W = prevMode ? String(Y) : wlab;
     if (R.loading) { page.append(bar, el("p", "note", `Loading the ${Y0} season…`)); return; }
     bar.append(el("span", "pbcount", prevMode ? `${rows.length} hitters · ${cand} elite with a flaw in ${Y0} · ${Y} vs ${Y0}` : `${rows.length} hitters · ${cand} elite with a flaw · ${Y} · ${R.label} vs the season`));
@@ -5563,7 +5720,81 @@
     if (!rows.length) page.append(el("p", "note", "Nobody with an elite base and a flaw that's moved in the window yet."));
     else { wrap.classList.add("pbscroll"); page.append(wrap); }
     page.append(el("p", "note", flawNote(R) + (prevMode ? ` Here the base is ${Y0}'s full season (its own league) and the move is ${Y}'s full season.` : "") + ` Credible = the piece's reliability at the window's PA, with last season as a witness. Biggest Δ xwOBA orders by Δ; Most credible by Δ × that.`));
+    // the pitchers (20 Oct 2026): Pitching+ and fastball velocity over the window against his season before it, by the Pitching+ gain
+    const M = pitchMovers(fxSet.win), PW = prevMode ? String(Y) : M.label === "last 30 days" && String(fxSet.win).startsWith("pa") ? "Last 30 days" : wlab, PB = prevMode ? String(Y0) : "Before";
+    const pt = el("div", "fxtitle fxpit"); pt.append(el("h2", null, "Pitchers"), el("span", null, M.loading || M.wait ? "" : `Pitching+ and fastball velocity, ${prevMode ? `${Y} vs ${Y0}` : `the ${M.label} vs his season before them`} · ${M.rows.length} up · tap a name for his Pitching+ tab`)); page.append(pt);
+    if (M.loading) { page.append(el("p", "note", `Loading the ${Y0} season…`)); return; }
+    if (M.wait) { page.append(el("p", "note", daysBad.P ? "Couldn't load the pitchers' game-by-game data." : "Loading the pitchers' game-by-game data…")); return; }
+    const f1 = (x) => (x == null ? "–" : x.toFixed(1)), sg = (x, d = 1) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(d));
+    const pheads = PH ? [["Rk", "f1"], ["Pitcher", "l f3"], ["FB velo"], ["Pitching+"], ["Δ"]]
+      : [["Rk", "f1"], ["Pitcher", "l f3"], ["Tm"], ["Role"], [PB], [PW], ["Δ"], [PB], [PW], ["Δ"], ["Pitches", "", prevMode ? "this season's pitches" : `pitches in the ${M.label}`]];
+    const pgroups = PH ? [["", 2], ["", 3]] : [["", 4], ["FB velo", 3], ["Pitching+", 3], ["", 1]];
+    const P2 = brTable(pgroups, pheads, "pbt flawt");
+    requestAnimationFrame(() => { const rk = P2.t.querySelector("tbody td.f1"), ov = P2.t.querySelector("tr.over"); if (rk) P2.t.style.setProperty("--sbw1", rk.offsetWidth + "px"); if (ov) P2.t.style.setProperty("--overh", ov.offsetHeight + "px"); });
+    const up = (txt, on) => { const td = el("td", "c up", txt); if (on) { td.style.color = "var(--stripe-line, #c8102e)"; td.style.fontWeight = "700"; } return td; };
+    const ppTd = (v) => { const td = el("td", "c", v == null ? "–" : String(Math.round(v))); const st = v == null ? null : plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } return td; };
+    M.rows.forEach((r, i) => {
+      const tr = el("tr"), who = el("td", "l nm f3"), b = el("button", "linkbtn pbname", r.p.name); b.type = "button";
+      b.addEventListener("click", () => { state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; savePrefs(); openPlayer(r.p, { tab: "pitching" }); }); who.append(b);
+      tr.append(el("td", "rk f1", String(i + 1)), who);
+      if (PH) tr.append(el("td", "c", `${f1(r.fbWas)} → ${f1(r.fbNow)}`), ppTd(r.pNow), up("+" + Math.round(r.dP), true));
+      else tr.append(el("td", "c", r.p.team || ""), el("td", "c", r.p.primary || ""), el("td", "c", f1(r.fbWas)), el("td", "c", f1(r.fbNow)), up(sg(r.dFb), r.dFb != null && r.dFb >= 0.5),
+                     el("td", "c", String(Math.round(r.pWas))), ppTd(r.pNow), up("+" + Math.round(r.dP), true), el("td", "c", String(r.n)));
+      P2.tb.append(P2.fin(tr));
+    });
+    if (!M.rows.length) page.append(el("p", "note", "No pitcher's Pitching+ is up over the window yet."));
+    else { P2.wrap.classList.add("pbscroll"); page.append(P2.wrap); }
+    page.append(el("p", "note", `${prevMode ? `His full ${Y} season against his ${Y0} (${PM_BASE}+ pitches each)` : `His ${M.label} (${M.minN}+ pitches) against his season before them (${PM_BASE}+)`}: Pitching+ grades every pitch on its shape, release and spot against its type (100 = average); FB velo is his primary fastball. A PA window reads 30 days for pitchers.`));
   }
+  // home's day-file lists — the last game day, Trending, Movers — as data (Sean, 20 Oct 2026, item 1 of the recommendations: home without the day
+  // file). The daily build runs homeLive() headless once data.js and days.js are built (tools/build_home.cjs, window.__homeData) and writes
+  // hist/home.js, so a fresh home reads ~10 KB instead of downloading and parsing the 31 MB day file (12 s on a phone). The page computes the lists
+  // itself whenever the day rows are in anyway (a window or split elsewhere loaded them), and when the file can't be used: older than data.js, or
+  // the park-neutral switch or Regress small samples on (the file holds the defaults)
+  const HOME_V = 1;
+  let homeMemo = null;
+  function homeLive() {
+    const key = DATA.meta.built + ":" + XWN + ":" + !!state.tbl.shrink + ":" + DS.key; if (homeMemo && homeMemo.key === key) return homeMemo.val;
+    const inWin = (w, fn) => withWindow(w, () => withSplit(NONE, fn)), days = DATA.meta.days || [], lastDay = days.length - 1, n0 = (x) => (x == null ? 0 : Math.round(x));
+    const out = { v: HOME_V, built: DATA.meta.built, day: days[lastDay] || "" };
+    // the last game day: the best xwOBA games (3+ PA) and the best starts by nERA (3+ IP), the start's colour its place among the season's starts
+    { const hit = [], pit = [];
+      inWin(NOWIN, () => {
+        const D = window.DRAFT_DAYS || {};
+        for (const p of DATA.players) {
+          if (!(D[p.type + p.id] || []).some((r) => r[0] === lastDay)) continue;   // only who played that day (5 Oct 2026)
+          if (p.type === "H") { const log = hitGameLog(p, lastDay); if (!Array.isArray(log)) continue; const g = log.find((x) => x.day === lastDay); if (!(g && (g.g.pa || 0) >= 3 && g.xw != null)) continue;
+            const G = g.g; hit.push({ id: p.id, v: g.xw, hab: G.h != null && G.ab != null ? `${n0(G.h)}-${n0(G.ab)}` : `${n0(G.pa)} PA`, hr: n0(G.hr), bb: n0(G.bb), k: n0(G.k), brl: n0(G.brl), max: g.max }); }
+          else { const o = sumOutings((D[p.type + p.id] || []).filter((r) => r[0] === lastDay)).get(lastDay), v = dayNERA(o, K()); if (!(o && o.gs && o.outs >= 9 && v != null)) continue;
+            const er = (D[p.type + p.id + ":er"] || []).reduce((a, [d, , e]) => a + (d === lastDay ? e : 0), 0);
+            pit.push({ id: p.id, v, ip: fmtIP(o.outs / 3), er, k: o.k, bb: o.bb, whf: o.sw ? 100 * o.whf / o.sw : null }); }
+        }
+      });
+      hit.sort((a, b) => b.v - a.v); pit.sort((a, b) => a.v - b.v);   // nERA: lowest first
+      const opool = outingPool(); for (const r of pit.slice(0, 5)) r.pc = outPct(opool, 1, r.v);
+      out.last = { hit: hit.slice(0, 5), pit: pit.slice(0, 5) }; }
+    // trending: hitters over their last 100 PA by xwOBA (75+ in the window), pitchers over their last 50 IP by nERA (37.5+)
+    { const t = { hit: [], pit: [] };
+      inWin({ from: "", to: "", last: "100" }, () => { t.hit = DATA.players.filter((p) => p.type === "H").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 75 && v.m.xwd != null).sort((a, b) => b[1].m.xwd - a[1].m.xwd).slice(0, 4).map(([p, v]) => ({ id: p.id, n: v.sample, xwd: v.m.xwd })); });
+      inWin({ from: "", to: "", last: "50" }, () => { t.pit = DATA.players.filter((p) => p.type === "P").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 37.5 && v.m.nera != null).sort((a, b) => a[1].m.nera - b[1].m.nera).slice(0, 4).map(([p, v]) => ({ id: p.id, n: v.sample, nera: v.m.nera })); });
+      out.trend = t; }
+    // movers: the hitters whose flaw moved over the last 30 days (flawRows), the pitchers whose Pitching+ did (pitchMovers); the move without its % signs
+    const np = (z) => String(z).replace(/%$/, "");
+    out.movers = flawRows().rows.slice(0, 4).map((r) => ({ id: r.p.id, fl: `${r.flaw.lab} ${np(r.flaw.f(r.was))} → ${np(r.flaw.f(r.now))}`, xw: r.xw, held: r.held, gain: r.gain }));
+    out.pmovers = pitchMovers("30").rows.slice(0, 4).map((r) => ({ id: r.p.id, fbWas: r.fbWas, fbNow: r.fbNow, pWas: r.pWas, pNow: r.pNow, dP: r.dP }));
+    homeMemo = { key, val: out }; return out;
+  }
+  function homeLists() {
+    if (daysReady()) return homeLive();
+    const H = window.DRAFT_HOME;
+    return H && H.v === HOME_V && H.built === DATA.meta.built && !XWN && !state.tbl.shrink && DS.key === CUR.key ? H : null;
+  }
+  // the daily build's hook (tools/build_home.cjs): the lists as hist/home.js carries them, once the day rows are in
+  window.__homeData = () => new Promise((res, rej) => {
+    if (XWN || state.tbl.shrink) return rej(new Error("the park-neutral switch or Regress small samples is on — the file holds the defaults"));
+    ensureDays(); const t0 = Date.now();
+    (function wait() { if (daysReady()) return res(homeLive()); if (state.daysFailed || Date.now() - t0 > 240000) return rej(new Error("the day rows didn't load")); setTimeout(wait, 250); })();
+  });
   function renderHome() {
     const box = $("hub"); box.innerHTML = ""; box.classList.add("home");
     const m = DATA.meta, dayName = new Date(m.through + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
@@ -5633,29 +5864,24 @@
     const loading = (b) => b.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…"));
     const NB = PH ? 4 : 5, NH = 4, NP = 4;   // four a list (Sean, 7 Oct 2026: "the top 4 for each")
     const nm = (p, tab) => ({ p, tab });
+    // the lists: hist/home.js until the day rows are in (homeLists); a file that's missing, stale or off the defaults asks for the day rows instead,
+    // once Home has painted and the phone is idle (5 Oct 2026)
+    const HL = homeLists(), PL = new Map(DATA.players.map((p) => [p.type + p.id, p])), who = (t, r) => Object.assign({}, r, { p: PL.get(t + r.id) });
+    if (!HL && !daysReady()) {
+      // (a published site lists the file in its build map; one without it goes straight to the day rows, no 404)
+      if (!window.DRAFT_HOME && !failed.has("hist/home.js") && (!window.DRAFT_BUILD || window.DRAFT_BUILD["hist/home.js"])) ensureScript("hist/home.js", () => !!window.DRAFT_HOME);
+      else if (!state.daysLoading && !state.daysFailed) setTimeout(() => (window.requestIdleCallback || ((f) => f()))(() => { if (state.mode === "home" && !daysReady()) ensureDays(); }), 1200);
+    }
     // the lead: the last game day — the best xwOBA games (3+ PA) and the best starts by nERA (3+ IP; Sean, 18 Oct 2026: "sort it by nERA instead of
     // pitching+") on the latest day in the day rows, the start's nERA filled by its place among the season's starts like the Game Logs tab's
     { const days = m.days || [], lastDay = days.length - 1, when = days[lastDay] ? new Date(days[lastDay] + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "";
       const lb = section(box, "Last game day", when ? `${when} · best games by xwOBA (3+ PA) and starts by nERA (3+ IP)` : null, null);
       lb.classList.add("hlead2"); box.insertBefore(lb.parentNode, grid);
-      // the 24 MB day file is asked for once Home has painted and the phone is idle, not inside the first render (Sean, 5 Oct 2026)
-      if (!daysReady()) { loading(lb); if (!state.daysLoading && !state.daysFailed) setTimeout(() => (window.requestIdleCallback || ((f) => f()))(() => { if (state.mode === "home" && !daysReady()) ensureDays(); }), 1200); }
+      if (!HL) loading(lb);
       else {
-        const hit = [], pit = [], n0 = (x) => (x == null ? 0 : Math.round(x));
-        inWin(NOWIN, () => {
-          const D = window.DRAFT_DAYS || {};
-          for (const p of DATA.players) {
-            if (!(D[p.type + p.id] || []).some((r) => r[0] === lastDay)) continue;   // only who played that day (5 Oct 2026)
-            if (p.type === "H") { const log = hitGameLog(p, lastDay); if (!Array.isArray(log)) continue; const g = log.find((x) => x.day === lastDay); if (!(g && (g.g.pa || 0) >= 3 && g.xw != null)) continue;
-              const G = g.g; hit.push({ p, v: g.xw, hab: G.h != null && G.ab != null ? `${n0(G.h)}-${n0(G.ab)}` : `${n0(G.pa)} PA`, hr: n0(G.hr), bb: n0(G.bb), k: n0(G.k), brl: n0(G.brl), max: g.max }); }
-            else { const o = sumOutings((D[p.type + p.id] || []).filter((r) => r[0] === lastDay)).get(lastDay), v = dayNERA(o, K()); if (!(o && o.gs && o.outs >= 9 && v != null)) continue;
-              const er = (D[p.type + p.id + ":er"] || []).reduce((a, [d, , e]) => a + (d === lastDay ? e : 0), 0);
-              pit.push({ p, v, ip: fmtIP(o.outs / 3), er, k: o.k, bb: o.bb, whf: o.sw ? 100 * o.whf / o.sw : null }); }
-          }
-        });
-        hit.sort((a, b) => b.v - a.v); pit.sort((a, b) => a.v - b.v);   // nERA: lowest first
-        const opool = outingPool(), H5 = hit.slice(0, NB), P5 = pit.slice(0, NB), xw = (r) => ({ v: fw(r.v), pc: pcOf(refH, r.v) }),
-              ne = (r) => ({ v: (r.v < 0 ? "−" : "") + Math.abs(r.v).toFixed(2), pc: outPct(opool, 1, r.v) });
+        const hit = HL.last.hit.map((r) => who("H", r)).filter((r) => r.p), pit = HL.last.pit.map((r) => who("P", r)).filter((r) => r.p);
+        const H5 = hit.slice(0, NB), P5 = pit.slice(0, NB), xw = (r) => ({ v: fw(r.v), pc: pcOf(refH, r.v) }),
+              ne = (r) => ({ v: (r.v < 0 ? "−" : "") + Math.abs(r.v).toFixed(2), pc: r.pc });
         if (PH) {   // a phone's lead tables keep the columns that fit at 390px (the canvas's phone board)
           table(lb, { label: wsLab("Hitters · by xwOBA"), cols: [["Player", null, "nm"], ["Tm", 40, "c"], ["H-AB", 42, "c"], ["HR", 30], ["Brl", 30], [wsLab("xwOBA"), 54, "heat"]], ends: [1, 4],
             rows: H5.map((r) => [nm(r.p, "games"), r.p.team || "", r.hab, r.hr, r.brl, xw(r)]) });
@@ -5686,18 +5912,13 @@
     // in the window is a column like the leaders' (Sean, 9 Oct 2026: "just add the actual PA ... and add IP too")
     { const W100 = { from: "", to: "", last: "100" }, W50 = { from: "", to: "", last: "50" };
       const b = section(grid, "Trending", "last 100 PA · last 50 IP", "Leaderboard →", goLB("ALL", "score", "desc", W100));
-      if (!daysReady()) loading(b);
+      if (!HL) loading(b);
       else {
-        inWin(W100, () => {
-          const hit = DATA.players.filter((p) => p.type === "H").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 75 && v.m.xwd != null).sort((a, b) => b[1].m.xwd - a[1].m.xwd).slice(0, NH);
-          table(b, { label: "Hitters · last 100 PA", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["PA", 42], [wsLab("xwOBA"), 58, "heat"]], ends: [2, 3],
-            rows: hit.map(([p, v], i) => [i + 1, nm(p), p.team || "", Math.round(v.sample), { v: fw(v.m.xwd), pc: pcOf(refH, v.m.xwd) }]) });
-        });
-        inWin(W50, () => {
-          const pit = DATA.players.filter((p) => p.type === "P").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 37.5 && v.m.nera != null).sort((a, b) => a[1].m.nera - b[1].m.nera).slice(0, NP);
-          table(b, { label: "Pitchers · last 50 IP", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["IP", 46], ["nERA", 58, "heat"]], ends: [2, 3],
-            rows: pit.map(([p, v], i) => [i + 1, nm(p, "nera"), p.team || "", fmtIP(v.sample), { v: f2(v.m.nera), pc: pcOf(refP, v.m.nera, true) }]) });
-        });
+        const hit = HL.trend.hit.map((r) => who("H", r)).filter((r) => r.p).slice(0, NH), pit = HL.trend.pit.map((r) => who("P", r)).filter((r) => r.p).slice(0, NP);
+        table(b, { label: "Hitters · last 100 PA", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["PA", 42], [wsLab("xwOBA"), 58, "heat"]], ends: [2, 3],
+          rows: hit.map((r, i) => [i + 1, nm(r.p), r.p.team || "", Math.round(r.n), { v: fw(r.xwd), pc: pcOf(refH, r.xwd) }]) });
+        table(b, { label: "Pitchers · last 50 IP", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["IP", 46], ["nERA", 58, "heat"]], ends: [2, 3],
+          rows: pit.map((r, i) => [i + 1, nm(r.p, "nera"), r.p.team || "", fmtIP(r.n), { v: f2(r.nera), pc: pcOf(refP, r.nera, true) }]) });
       }
     }
     // Movers (Sean, 18 Oct 2026: "combine movers and fixing the flaw ... make it called movers and sort it by the delta of xwoba on the season if the
@@ -5705,15 +5926,18 @@
     // moved over the last 30 days, by Δ, the xwOBA the move adds if it held all year (If held − his season's). The whole list, with its windows, is the
     // Movers page (#movers). It takes the grid's third card from the percentile-jump Movers (7 Oct: hitters by xwOBA, pitchers by nERA, now gone), and
     // the full-width Fixing the flaw section under the grid with it
-    { const b = section(grid, "Movers", "last 30 days · if it held", "Full list →", (e) => { e.preventDefault(); location.hash = "#movers"; });
-      if (!daysReady("H")) loading(b);
+    { const b = section(grid, "Movers", "last 30 days · if it held · Pitching+", "Full list →", (e) => { e.preventDefault(); location.hash = "#movers"; });
+      if (!HL) loading(b);
       else {
-        // the move without its % signs (the piece's name says it's a rate), so "xHR/FB 11.3 → 17.2" fits the card's column on a phone and in the grid
-        const show = flawRows().rows.slice(0, NH + NP), xw = (x) => ({ v: fw(x), pc: pcOf(refH, x) }), dl = (r) => "+" + Math.round(wrcOn() ? wrcPts(r.gain / 1000) : r.gain),
-              np = (z) => String(z).replace(/%$/, ""), fl = (r) => `${r.flaw.lab} ${np(r.flaw.f(r.was))} → ${np(r.flaw.f(r.now))}`;
+        // four hitters whose flaw moved and four pitchers whose Pitching+ did (20 Oct 2026); the move without its % signs (the piece's name says it's
+        // a rate), so "xHR/FB 11.3 → 17.2" fits the card's column on a phone and in the grid
+        const show = HL.movers.map((r) => who("H", r)).filter((r) => r.p).slice(0, NH), pshow = (HL.pmovers || []).map((r) => who("P", r)).filter((r) => r.p).slice(0, NP);
+        const xw = (x) => ({ v: fw(x), pc: pcOf(refH, x) }), dl = (r) => "+" + Math.round(wrcOn() ? wrcPts(r.gain / 1000) : r.gain), v1 = (x) => (x == null ? "–" : x.toFixed(1));
         if (!show.length) b.append(el("p", "hnote", "Nobody with an elite base and a flaw that's moved in the window yet."));
         else table(b, { label: "Hitters · elite but for one flaw", cols: [["Player", null, "nm"], ["Flaw", 118, "c"], [wsLab("xwOBA"), 50], ["If held", 48, "heat"], ["Δ", 32, "up"]], ends: [1, 2],
-          rows: show.map((r) => [nm(r.p, "talent"), fl(r), fw(r.xw), xw(r.held), dl(r)]) });
+          rows: show.map((r) => [nm(r.p, "talent"), r.fl, fw(r.xw), xw(r.held), dl(r)]) });
+        if (pshow.length) table(b, { label: "Pitchers · Pitching+ up", cols: [["Player", null, "nm"], ["FB velo", 118, "c"], ["Before", 50], ["Now", 48, "heat"], ["Δ", 32, "up"]], ends: [1, 2],
+          rows: pshow.map((r) => [nm(r.p, "pitching"), `${v1(r.fbWas)} → ${v1(r.fbNow)}`, Math.round(r.pWas), { v: Math.round(r.pNow), pc: Math.max(1, Math.min(99, Math.round(50 + 2.2 * (r.pNow - 100)))) }, "+" + Math.round(r.dP)]) });
       }
     }
     // no "Every page" tiles (Sean, 29 Sep 2026, the minimal pass): the header's menus already list them
@@ -6039,6 +6263,8 @@
     };
   }
   function renderNow() {
+    if (!window.DRAFT_IL && window.DRAFT_BUILD && window.DRAFT_BUILD["hist/injuries.js"]) ensureScript("hist/injuries.js", () => !!window.DRAFT_IL);   // ~10 KB: the IL badges
+    if (state.mode !== "draft" && $("aucsheet")) { aucPick = null; $("aucsheet").remove(); }   // the auction sheet is Draft mode's
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws", other = pitches || player || compare || elig || hub || appear || fant;
     if (xPop && !POP_MODES.includes(state.mode)) xPop = false;   // another page: the popup goes with the list it came from
@@ -6450,7 +6676,8 @@
     const o = (k, fmt = f0) => num((r) => r.o[k], fmt);
     const ln = (r, b) => (b ? r[b] : r);                         // the actual line, or an expected one
     const pre = { "": "", x: "x", n: "x" };                      // a pitcher's expected family is the luck-neutral line
-    const tot = (b) => [`${pre[b]}Pts`, num((r) => (ln(r, b) ? ln(r, b).pts : null), f1, { paint: true, title: b ? "Expected points" : "Points" })];
+    const fw = (x) => (x == null ? "–" : Math.abs(x - Math.round(x)) < 0.05 ? String(Math.round(x)) : x.toFixed(1));   // 542, not 542.0 (Sean, 20 Oct 2026); a preset with halves keeps its tenth
+    const tot = (b) => [`${pre[b]}Pts`, num((r) => (ln(r, b) ? ln(r, b).pts : null), b ? f1 : fw, { paint: true, title: b ? "Expected points" : "Points" })];
     const perG = (b) => [`${pre[b]}Pts/G`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.o.G) : null), f2, { paint: true, title: grp === "P" ? "Points per appearance" : "Points per game" })];
     const perAB = (b) => [`${pre[b]}Pts/AB`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.o.AB) : null), f3, { paint: true })];
     const perPA = (b) => [`${pre[b]}Pts/PA`, num((r) => (ln(r, b) ? div(ln(r, b).pts, r.o.PA) : null), f3, { paint: true })];
@@ -6657,11 +6884,11 @@
     const fsig = ["f", f.view, f.grp, f.pos, f.year, f.q, sortKey, f.dir, f.minH, f.minP, fpreset().id, shown.length, JSON.stringify(spec)].join("|");
     if (fsig !== state.pageSig) { state.pageSig = fsig; state.page = 1; }
     const pg = pageWindow(shown.length);
-    const pagerTop = el("div", "pager"), pagerBot = el("div", "pager");
+    const pagerTop = el("div", "pager"), PH = mobileView();
     const redraw = () => renderFTable(box);
-    renderPager(pagerTop, shown.length, pg, redraw);
-    // a pager under the rows only where the page itself scrolls (Fantasy on a phone); elsewhere the top one never leaves view
-    if (mobileView()) renderPager(pagerBot, shown.length, pg, redraw);
+    // a phone (Sean, 20 Oct 2026, mock 13): the top keeps the control row alone and the page numbers and Per page are the table's last row, the
+    // Leaderboard's grey bar — they had taken two rows over the table and a pager under it
+    if (!PH) renderPager(pagerTop, shown.length, pg, redraw);
     wrap.append(pagerTop);
     if (box._fbar) { box._fbar.classList.add("inbar"); pagerTop.prepend(box._fbar); }   // a redraw clears the wrap; the bar goes back in
     // B-Ref's table (Sean, 11 Oct 2026: "make all of the fantasy tables be the baseball reference table design"): Rk and Player frozen,
@@ -6688,7 +6915,7 @@
     shown.slice(pg.start, pg.end).forEach((r, k) => {
       const i = pg.start + k;
       const trr = el("tr"); trr.tabIndex = 0;
-      const who = el("td", "l nm f3"); who.append(el("span", "pbname", r.p.name));
+      const who = el("td", "l nm f3"); who.append(el("span", "pbname", r.p.name)); { const ib = ilBadge(r.p, +y === +DATA.meta.season); if (ib) who.append(ib); }
       trr.append(el("td", "rk f1", String(i + 1)), who, el("td", "c", r.p.team || ""), el("td", "c ge", fPos(r.p).join(", ") || r.p.primary || ""));
       cols.forEach((c, j) => {
         const v = c.get(r), td = el("td", c.num ? null : "c", c.fmt ? c.fmt(v) : String(v ?? "–"));
@@ -6703,7 +6930,12 @@
       tbody.append(trr);
     });
     table.append(tbody);
-    const scroll = el("div", "fscroll brscroll"); scroll.append(table); wrap.append(scroll); if (mobileView()) wrap.append(pagerBot);
+    const scroll = el("div", "fscroll brscroll"); scroll.append(table); wrap.append(scroll);
+    if (PH && shown.length) {
+      const go = (n) => { state.page = Math.min(pg.pages, Math.max(1, n)); redraw(); const y = wrap.getBoundingClientRect().top + window.scrollY - 8; if (window.scrollY > y) window.scrollTo({ top: y }); };
+      const bar = el("div", "fphbot"); if (pg.pages > 1) bar.append(pageNav(pg, go));
+      bar.append(perPageField((n) => { state.pageSize = n; state.page = 1; savePrefs(); redraw(); })); scroll.append(bar);
+    }
     requestAnimationFrame(() => { const rk = table.querySelector("td.f1") || table.querySelector("th.f1"); if (rk) table.style.setProperty("--sbw1", rk.offsetWidth + "px");
       const ov = table.querySelector("tr.over"); if (ov) table.style.setProperty("--overh", ov.offsetHeight + "px"); });   // Player freezes right after Rk; the column names pin under the over row
     fFloatHead(wrap, scroll, table);
@@ -9849,6 +10081,17 @@
     return wrap;
   }
   // his height, weight and bat/throw from MLB's own record — one small request per player, cached for the session
+  // the injured list (Sean, 20 Oct 2026, item 8 of the recommendations: "injured list badges on rows and cards, from MLB's data"): hist/injuries.js,
+  // written each build from every club's 40-man roster (tools/build_injuries.py) — {id: [D7 | D10 | D15 | D60, the injury, the day he went on it]}.
+  // Shown only while the file is fresh (ten days), so the list doesn't outlive the season once the builds stop for the winter
+  const IL_WORD = { D7: "7-day IL", D10: "10-day IL", D15: "15-day IL", D60: "60-day IL" };
+  function ilOf(p) {
+    const I = window.DRAFT_IL; if (!I || !p || !I.p || !(Date.now() - Date.parse(I.asOf + "T12:00:00Z") < 10 * 864e5)) return null;
+    const r = I.p[p.id]; return r ? { code: r[0], note: (r[1] || "").replace(/\.$/, ""), since: r[2] || "", word: IL_WORD[r[0]] || "Injured list" } : null;
+  }
+  const ilTip = (x) => `On the ${x.word}${x.since ? " since " + new Date(x.since + "T12:00:00Z").toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}${x.note ? " · " + x.note : ""}`;
+  // a row's badge (IL60), the full words in its tooltip; null when he's healthy, the file is stale or the list isn't this season's
+  function ilBadge(p, cur = DS.key === CUR.key) { const x = cur && ilOf(p); if (!x) return null; const b = el("span", "ilb", "IL" + x.code.slice(1)); b.title = ilTip(x); return b; }
   const BIO = new Map();
   function bio(id) {
     if (BIO.has(id)) return BIO.get(id);
@@ -10007,11 +10250,7 @@
     const body = el("div", "pbinfobd"); box.append(body);
     const line = (k, v) => { const d = el("div", "pbil"); d.innerHTML = `<b>${k}:</b> ${v}`; body.append(d); };
     if (b && b.full) { const n = el("div", "pbil pbfull", b.full); body.append(n); }
-    const pw = posWords(p);
-    line(/ and |,/.test(pw) ? "Positions" : "Position", esc(pw));
-    const bats = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
-    if (bats || thr) { const d = el("div", "pbil"); d.innerHTML = [bats ? `<b>Bats:</b> ${handWord(bats)}` : null, thr ? `<b>Throws:</b> ${handWord(thr)}` : null].filter(Boolean).join(" &nbsp;•&nbsp; "); body.append(d); }
-    const hw = htWtLine(b); if (hw) { const d = el("div", "pbil", hw); body.append(d); }
+    // only what the bar over it doesn't say (Sean, 20 Oct 2026): positions, bats / throws, height / weight and the team are on the bio line
     if (!b) { body.append(el("div", "pbil pbwait", b === false ? "MLB's record isn't available right now." : "Loading MLB's record…")); }
     else {
       const born = longDate(b.born), age = b.age != null ? b.age : p.age;
@@ -10026,8 +10265,6 @@
       const db = longDate(b.debut); if (db) line("Debut", esc(db));
       if (b.nick) line("Nickname", esc(b.nick));
     }
-    const tc = teamCode(p.team), mlb = DS.level === "MLB", full = mlb ? (TEAM_FULL[tc] || TEAM_NAMES[tc] || p.team) : p.team;
-    if (full) line("Team", `${esc(full)} (${mlb ? "majors" : (LEVEL_WORD[DS.level] || DS.level)})`);
     return box;
   }
   // the one-line bio under the bar: positions, the team (a link to its Leaderboard), the hand (a hitter's B/T, a pitcher's LHP / RHP), height and
@@ -10096,7 +10333,11 @@
     // his headshot at the far left, the name beside it and the bio under the name (Sean, 9 Oct 2026: "add the head shot to the far left and then
     // have the name next to it and push the bio stuff over with the name"), Filters / Raw at the right
     const mug = el("div", "pgbmug"); mug.append(headshot(p.id, p.name));
-    const txt = el("div", "pgbtxt"); txt.append(nm); bar.append(mug, txt, fx); top._bar = bar;
+    // today's injured list rides right after his name, whatever season the page is on (Sean, 21 Oct 2026: "Can you put the IL thing next to their
+    // name instead of where it is" — it had been the bio line's last item), flowing with the name's last word when a phone wraps it (bleedBar)
+    const nrow = el("div", "pgbnrow"); nrow.append(nm);
+    { const x = ilOf(p); if (x) { const t = el("span", "pgbil", x.word); t.title = ilTip(x); nrow.append(t); } }
+    const txt = el("div", "pgbtxt"); txt.append(nrow); bar.append(mug, txt, fx); top._bar = bar;
     // the popup's × on a strip of its own across the bar's top, so the headshot, name, bio and Filters / Raw sit exactly as they do without it, just
     // lower (Sean, 13 Oct 2026: "the player head shot name and bio are in the same position in comparison to the filters and raw vs stuff button when
     // there is the x and when there isn't so essentially just shift all of it down to make room for the x") — the bar gets class xbar and the × is
@@ -10144,8 +10385,12 @@
     bar.style.marginLeft = -L + "px"; bar.style.marginRight = -Rt + "px"; bar.style.paddingLeft = pl + "px"; bar.style.paddingRight = pr + "px";
     const xbtn = bar.querySelector(":scope > .xpopx"); if (xbtn) xbtn.style.right = pr + "px";
     const chp = bar.querySelector(":scope > .pgchips"); if (chp) { chp.style.right = pr + (xbtn ? xbtn.offsetWidth + 10 : 0) + "px"; chp.style.left = pl + "px"; }
+    // the IL badge keeps to his name's last word (the row doesn't break before it, so a phone wraps "Carson / Whisenhunt 60-day IL"); only when even
+    // the last word and the badge don't fit the column may the badge take a line of its own
+    const nr = bar.querySelector(".pgbnrow"); if (nr && nr.querySelector(".pgbil")) { nr.classList.remove("ilwrap"); if (nr.scrollWidth > nr.clientWidth + 1) nr.classList.add("ilwrap"); }
   }
   window.addEventListener("resize", () => requestAnimationFrame(bleedBar));
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", () => requestAnimationFrame(bleedBar));   // the name's width once its face has loaded
   // the bar and the band read as one header: the bar's red rule shows only once the band has scrolled up under it (class stuck)
   function stickSync() {
     const bar = document.querySelector("#xboard .pgbar"), band = document.querySelector("#xboard .pagehead"); if (!bar || !band) return;
@@ -10517,9 +10762,14 @@
     const view = H ? sbTable : "std";
     if (H) {   // the table switch, at the foot of the space over the table (Sean, 8 Oct 2026)
       const bar = el("div", "sbviews");
-      for (const [k, lab] of SB_VIEWS) {
+      const pick = (k) => { if (sbTable === k) return; sbTable = k; try { localStorage.setItem("draft2027.sbtable", k); } catch (er) { /* private window */ } if (k !== "std") sbKind = "reg"; render(); };
+      if (mobileView()) {   // a phone: one "Standard ▾" in the Leaderboard's Filters dress (Sean, 20 Oct 2026) — the five buttons took three rows over the table
+        bar.classList.add("sbviewsdd");
+        const bt = el("button", "btn btn-quiet tbtn sbviewdd", SB_VIEWS.find((v) => v[0] === view)[1] + " ▾"); bt.type = "button";
+        bar.append(ddList(bt, SB_VIEWS.map(([k, lab]) => [k, lab]), view, pick));
+      } else for (const [k, lab] of SB_VIEWS) {
         const bt = el("button", "sbview" + (view === k ? " on" : ""), lab); bt.type = "button"; bt.setAttribute("aria-pressed", String(view === k));
-        bt.addEventListener("click", (e) => { e.stopPropagation(); if (sbTable === k) return; sbTable = k; try { localStorage.setItem("draft2027.sbtable", k); } catch (er) { /* private window */ } if (k !== "std") sbKind = "reg"; render(); });
+        bt.addEventListener("click", (e) => { e.stopPropagation(); pick(k); });
         bar.append(bt);
       }
       box.append(bar);
@@ -12526,6 +12776,7 @@
     if (e.key === "/" && !typing) { e.preventDefault(); $("search").focus(); }
     if (e.key === "Escape" && (state.expanded || state.textModal || state.tierPick || state.colPick || state.panel)) closeModal();
     else if (e.key === "Escape" && xPop && !document.querySelector(".phmodal") && !ddOpen) closeXPop();
+    else if (e.key === "Escape" && aucPick && $("aucsheet")) { aucPick = null; aucSheetSync(); }   // the auction's sale sheet
   });
 
   // phone: the column header lives above the scroll box; keep it aligned with the rows sideways (either can be dragged)
@@ -12556,7 +12807,7 @@
   // "Update data" / "Publish" — available when the page is served by serve.py (local or --phone), which can
   // run the build scripts and push the result to Netlify
   (async function updater() {
-    if (!/^https?:$/.test(location.protocol)) return;
+    if (!/^https?:$/.test(location.protocol) || /\.github\.io$/.test(location.hostname)) return;   // the live site has no serve.py to ask (its /api/status was a 404 on every load)
     let st;
     try { st = await (await fetch("/api/status", { cache: "no-store" })).json(); } catch { return; }
     if (!st || typeof st.running !== "boolean") return;

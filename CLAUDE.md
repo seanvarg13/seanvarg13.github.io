@@ -22,8 +22,9 @@ This repo is **two things at once**:
 `.github/workflows/daily.yml` runs `tools/cloud_daily.py` at 4:45 New York time — the same build scripts from
 `tools/`, the same steps as the Mac's `daily_update.py`, published as a plain commit on top of `main` (never a
 force-push), with the download caches kept between runs. GitHub starts scheduled runs late on busy mornings (hours, sometimes), so the workflow has backup times
-through the morning and each scheduled run only goes if it is past 4:40 in New York and `data.js` isn't through
-yesterday yet. **That still wasn't enough** (27-28 Sep 2026: no scheduled run started before 10 am), so the real trigger is an
+through the morning and each scheduled run only goes if it is past 4:40 in New York and MLB's schedule shows a game finished
+since one of the site's files last built (`tools/whats_new.py`, 20 Oct 2026; until then the test was `data.js` not being through
+yesterday, which after the regular season rebuilt everything every morning — see §8). **That still wasn't enough** (27-28 Sep 2026: no scheduled run started before 10 am), so the real trigger is an
 **outside timer**: cron-job.org POSTs a `workflow_dispatch` with `auto=1` (Sean's fine-grained token,
 Actions read/write on this repo only, lives there, not here); `auto=1` makes a manual run ask the same "already live?"
 question as a scheduled one. **It fires at 08:15 UTC** (4:15 New York in summer, 3:15 in winter, not the 4:45 it was meant to), and the
@@ -32,7 +33,8 @@ gate's "too early before 4:40" turned every one of its runs away until 20 Oct 20
 8:45 / 9:45 UTC pair through across daylight saving. A Claude routine ("Site daily update kick", 4:50) checks and kicks it too; GitHub's schedule stays as the last backup. **The stale-checkout guard** (8 Oct 2026): a run's checkout is main as it was when the run began, so a `tools/` script merged mid-run used to be ignored and its old output published (4 Oct's data.js, 7-8 Oct's career.js); `cloud_daily.py` now adopts main's copy of every build script before each step (`adopt_main_tools`, compile-checked) and, before each publish, re-runs every step of the run whose script or an import (`DEPS`: build_history → build_data, build_milb → both) changed on main after it ran — from the first stale step on, twice at most. `tools/cloud.json` is the switch: `{"daily": true}` =
 the cloud publishes and the Mac's job and publisher stand down (they read the file from `main`); `false` = the Mac
 publishes and the schedule does nothing (a manual run still works: Actions → Daily update → Run workflow, with
-optional `steps`, `rescore` years and `dry`). The directional models are not in the repo: the Mac's publisher
+optional `steps`, `rescore` years and `dry`; `steps` defaults to `auto`, which builds only what has new games — name the steps,
+e.g. `mlb,minors`, to rebuild them anyway). The directional models are not in the repo: the Mac's publisher
 uploads `model-workspace/*.joblib` and `versions.json` (the Python + package versions they were pickled with) to the
 repo's **`models` release**, which the workflow downloads and pins against. **Retraining can run in the cloud too**
 (30 Sep 2026): Actions → Retrain models (`.github/workflows/retrain.yml`) fetches every regular-season PA 2015-now
@@ -121,7 +123,7 @@ last publish, the Mac keeps its copy and the repo's lands in `logs/tools-conflic
 | `data.js` | **generated** — `window.DRAFT_DATA`, the current season |
 | `days-h.js`, `days-p.js` | **generated** — `window.DRAFT_DAYS`, per-game rows for splits and date windows, hitters' and pitchers' (with the `:er` rows) in a file each (16.6 / 12.0 MB since 20 Oct 2026; one `days.js` before), each loaded only when a view needs that side |
 | `fantasy.js` | **generated** — official counting stats + game logs for the fantasy pages |
-| `hist/` | **generated** — one file per past season/level, plus `index.js` (search index), `career.js`, `minors.js` |
+| `hist/` | **generated** — one file per past season/level, plus `index.js` (search index), `career.js`, `minors.js`; a finished season's day and arsenal files are gzipped, `hist/days-2025.js.gz` (§8, "The site under 1 GB") |
 | `build.json` | `{build, at}` — the running page polls it and reloads itself when the id moves |
 | `manifest.json`, `icons/` | home-screen web app |
 | `tools/` | the mirrored build scripts (see §5) |
@@ -157,7 +159,7 @@ season only now: `indexReady()` in `app.js` drops them from the index, so nothin
 | `build_fantasy.py lines [years…]` | `hist/fantasy-lines.js` | every past season's official lines (2015 on, no game logs) for the card's Fantasy ▸ By season table; static, rebuilt by hand when a season ends |
 | `build_career.py` | `hist/career.js`, `hist/minors.js` | season-by-season + career tables on every card. Reads the search index, so run it **after** `build_history.py index` |
 | `build_similar.py` | `hist/similar.js` | every qualified MLB player-season 2015-now ranked within its season (+ under-the-line players ranked against them), hand / role and pitch mix — the cards' cross-season Similar line. Seconds; after `build_data.py` and after a rescore, non-fatal |
-| `build_trends.py` | `hist/trends.js` | League Trends: every MLB season's league totals (hitting rates pooled over every pitch / swing / batted ball from `hist/mlb-YYYY.js` rows + this season's `days.js`) and per pitch type from each pitcher's `ctx.arsenal` (usage, velo, IVB, HB, spin, Whiff%, xWhiff, GB%). A few seconds; runs after `build_data.py` (and after a rescore), non-fatal |
+| `build_trends.py` | `hist/trends.js` | League Trends: every MLB season's league totals (hitting rates pooled over every pitch / swing / batted ball from `hist/mlb-YYYY.js` rows + this season's `days-h.js`) and per pitch type from each pitcher's `ctx.arsenal` (usage, velo, IVB, HB, spin, Whiff%, xWhiff, GB%). A few seconds; runs after `build_data.py` (and after a rescore), non-fatal |
 | `serve.py` | — | local server on :8787 with an "Update data" button; `--phone` binds to the LAN |
 
 ### Shapes
@@ -556,6 +558,11 @@ Statcast's.
 | `tools/build_offseason.py` | the real 2027 projections (FanGraphs' Steamer / ZiPS) and ADP (NFBC, ESPN) once they're out → `hist/proj-2027.js` / `hist/adp-2027.js`; repo only, run by the twice-monthly off-season check (§8) |
 | `tools/build_awards.py` | MVP / Cy Young / Rookie of the Year vote finishes → `hist/awards.js` from the Lahman database (SABR); repo only, run by hand each January |
 | `tools/add_baserunning.py` | fills the Base Running numbers into already-built `data.js` / `hist/mlb-YYYY.js`; repo only, run by hand |
+| `tools/whats_new.py` | the morning run's "anything new?" — MLB's schedule against each file's last game day; repo only, run by the workflow |
+| `tools/build_home.cjs`, `tools/headless.cjs` | home's day-file lists → `hist/home.js`, by the site's own code in headless Chrome; repo only, run by `cloud_daily.py` |
+| `tools/check_site.cjs` | the page check, every page at phone and desktop size; repo only, run on pull requests (`check.yml`) and before each cloud publish |
+| `tools/build_injuries.py` | today's injured list from every club's 40-man roster → `hist/injuries.js`; repo only, run by `cloud_daily.py` |
+| `tools/pack_hist.py` | gzips a finished season's `hist/days-*.js` / `hist/ars-*.js` into `.js.gz` and removes the plain copy; run by `cloud_daily.restamp()` and the Mac's `publish.py` |
 
 Not mirrored, on purpose: `github_site.json` / `netlify_site.json` (account config), `~/.github_token`,
 `.cache/`, `logs/`, `*.joblib`, `pa_all.parquet`.
@@ -4546,6 +4553,143 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     over-headers the sweep can't read), and by computed colours on twelve pages: light mode is unchanged on Titans, Jets and UNC but for that
     swatch, and on Warm but for the Summary.
 
+* **No build without a new game (Sean, 20 Oct 2026, from a second list of fourteen, in another chat: "ok do 1,2,3,4,5,6, 7, 8,9" — item 2,
+  stop the no-op republishes)**: through the postseason the morning run rebuilt the regular season, the four minor-league levels and every
+  file on top of them each day, twice on most days (20 Oct: 09:14 and 10:06 UTC, then 14:03 and 14:43), with no new game in any of them.
+  Every publish reloads his phone and re-downloads days.js (~9 MB), and the rebuilds weren't byte-identical (3,256 of 132,869 day rows
+  moved between two of them, the Stuff+ / Pitching+ sums). Three causes: the gate called a day done only when `data.js` was through
+  yesterday, which it never is after the regular season; the 4:50 routine ("Site daily update kick") started a plain manual run, which
+  builds everything; and a plain run's mlb step rebuilds the regular season whatever is new.
+  - **`tools/whats_new.py`** (standard library, so the gate runs it before Python is set up) reads the last game day each file holds —
+    `data.js` for the regular season, `hist/mlb-<y>-post.js` (Sep–Nov), `hist/mlb-<y>-spring.js` (Feb–Mar), `hist/<aaa|aa|ap|a>-<y>.js` —
+    and asks MLB's schedule for a game of that kind final after it, through yesterday. MLB's API not answering counts as everything new.
+  - **The gate** (scheduled runs and `auto=1`) stands down when nothing is new, or when any of those files was built after 13:00 UTC today
+    (the old backstop, now over every file's `built`), and prints what it found ("nothing new through 2026-10-19").
+  - **`cloud_daily.py --steps auto`**, what those runs now call: the regular season only with new MLB games (then fantasy, the index and
+    career), the postseason and spring with their own games (+ the index), each minor-league level with its own (+ the index and career),
+    at most two publishes (MLB early, the rest after). An October game day builds the postseason file and the index alone; data.js and
+    days.js stay as they were. A manual run without `auto` (Actions → Daily update → Run workflow) builds every step as before; `post` and
+    `spring` are step names of their own now, and a manual `--steps mlb` in October publishes the postseason file it builds (it used to
+    sit unpublished until the minors step's publish).
+  - **A plain manual run is auto too**: the routine's prompt can only be changed from the chat it posts into, and it dispatches with no
+    inputs, so the workflow's `steps` input defaults to **`auto`** now — a run started with no inputs (the routine's, or the Run workflow
+    button left as it is) asks `whats_new.py` first, at any hour, with no 13:00 backstop. **To rebuild whatever is new, name the steps**
+    (`steps: mlb,minors`, `mlb`, `post` …) or pass a rescore. A green run that stood down counts as done for the routine (its prompt
+    already says an off day's "through" won't move).
+
+* **Four phone tidy-ups from the 20 Oct mockups (Sean, 20 Oct 2026, after mock-ups of each: "ok do 10, do 11 with one drop down, and do 12 and do
+  13")**:
+  - **The Bio box says only what the bar doesn't** (both layouts): the full name, Born, Draft, School, Debut and Nickname (`bioBox`); the
+    Positions, Bats • Throws, height / weight and Team lines are gone (the sticky bar's bio line carries them). A phone's table switch moves up ~92px.
+  - **The season table's switch is one dropdown on a phone**: "Standard ▾" in the Leaderboard's Filters-button dress (white, the rail edge, square,
+    the lift; `.sbviewsdd` / `.sbviewdd`, `ddList` over `SB_VIEWS`) instead of the five buttons in a three-row block. A desktop keeps the row.
+  - **The Pitching+ board on a phone**: one **Filters** button (the count, "1992 pitches · 2026", beside it; "Filters (2)" when two are set) opens a
+    panel under it (`.pop.pbfpanel`, `pbOpen`: open across redraws so several can be set, shut by ×, a tap elsewhere or a page change) with the six
+    pills — Pitch, Throws, Role, Minimum, Colour, Games — each with its label; and **Pitching+ sits right after Pitcher** with a red rule after it
+    (`ORD` reorders the header, every row and the League row; the groups read "", "", Pitch, Shape, "Grades vs type" …). A desktop is unchanged.
+  - **Fantasy on a phone**: the top keeps only the control row (Leaderboard ▾ · Season / Recent · Filters ▾); the page numbers and Per page are the
+    Leaderboard's grey 44px bar as the table's last row (`.fphbot` inside `.fscroll`, sticky at the frame's left as the table slides sideways; the
+    pager under the table is gone); a page turn scrolls back to the table's top. `pageNav(pg, go)` is the page-number row both bars draw (factored
+    out of `renderPager`, same five slots). **The Pts total prints whole** on both layouts (542, not 542.0; a preset with halves keeps its tenth);
+    xPts and the rates keep their decimals.
+
+* **Home without the day file; pitchers on Movers (Sean, 20 Oct 2026, items 1 and 9 of the fourteen: "home without days.js", "pitchers in Movers:
+  velocity and Pitching+ risers over the last 30 days")**:
+  - **`hist/home.js`** (`window.DRAFT_HOME`, ~2 KB): home's three day-file lists — the last game day, Trending, Movers — as data, computed by the
+    site's own code: `homeLive()` in `app.js` (the code the sections ran inline before, moved out unchanged, memoised per build / park switch /
+    Regress / dataset) and the hook `window.__homeData()` (loads the day rows, returns `homeLive()`). **`tools/build_home.cjs`** opens the
+    freshly built site headless (`tools/headless.cjs`: a static server on the repo root and playwright — `playwright-core` from npm on the runner
+    driving its Chrome, `PW_CHANNEL=chrome`, `NODE_PATH`; the preinstalled playwright in a Claude session), calls the hook and writes the file;
+    `cloud_daily.py` runs it after `build_similar.py` (`node()`, non-fatal), and the three workflows install `playwright-core@1.56.1` first.
+  - **`homeLists()`** is what home reads: the day rows when they're in (a window or split elsewhere loaded them), else the file when it's from the
+    same build as `data.js` (`built`), version `HOME_V` and the defaults (no park-neutral switch, no Regress small samples) — else nothing yet,
+    and home asks for the day rows on idle as before. home.js is in `ensureScript`'s value-free list. Checked headless: a fresh home fills in
+    ~2 s on a 4×-throttled phone with **no** day-file request (12 s and ~10 MB before), and the file's tables are text-identical to the live
+    ones on both layouts.
+  - **Pitchers on Movers** (`pitchMovers(winId)`): his primary fastball velocity and Pitching+ over the window against his season before it (the
+    day rows' `fbv` / Pitching+ sums through `V()`), ranked by the Pitching+ gain; 120 pitches in a 30-day window (scaled 60-250 with its
+    length) and 300 before it; a PA window reads 30 days for pitchers; This season vs last compares his full seasons (300+ pitches each). The
+    Movers page has a **Pitchers** table under the hitters' (Rk · Pitcher · Tm · Role | FB velo Before · Window · Δ | Pitching+ Before · Window
+    (heat) · Δ | Pitches; a phone: Pitcher · FB velo "95.1 → 96.4" · Pitching+ · Δ); a name opens his Pitching+ tab. Home's Movers card is four
+    hitters and four pitchers ("Pitchers · Pitching+ up": FB velo, Before, Now, Δ). 27 Sep 2026, last 30 days: Whitlock 120 → 145, Medina
+    108 → 129, Wrobleski 92 → 113 (+1.5 mph); 2026 vs 2025: Sasaki 85 → 111 (+1.8 mph), Andrew Alvarez 78 → 102.
+
+* **The page check (Sean, 20 Oct 2026, item 4 of the fourteen: "an automatic page check, phone and desktop, that blocks anything that errors")**:
+  **`tools/check_site.cjs`** opens the site in this folder headless (`tools/headless.cjs`) at 390×844 (touch) and 1300×900 and walks it: home
+  (until its lists fill), the Leaderboard (hitters, a second page, pitchers, a last-100-PA window from home's Trending link, 2025), a player popup
+  off the list, Rankings, Draft mode, the Pitching+ board, Movers (and a flaw popup), Fantasy, the Mock draft, every Settings tab, Judge's and
+  Skenes's pages (every card tab; the season table's five views — the phone through its dropdown), and a minors-only hitter's card — 32 steps,
+  ~90 s. A step **fails** on a script error (uncaught, or an unhandled rejection), on a 4xx / 5xx from the site's own address (`/api/status`
+  excepted — serve.py's), or when its page doesn't draw what it should (a row count, a table); it gives up at once after a script error.
+  Pictures and fonts from elsewhere are left out; MLB's API calls go through (each has its `.catch`). `--quick` is 14 steps (home, the
+  Leaderboard, pitchers, the board, Fantasy, both player pages). Exit 0 passed, 1 a page broke, 2 the check couldn't run.
+  - **`.github/workflows/check.yml`**: on every pull request (and by hand) — red when a page breaks.
+  - **`cloud_daily.py`'s publish** runs `--quick` on the tree it's about to push (after the restamp, once a publish): a failure stops the
+    publish and the run (main keeps what it has); a check that couldn't run (no Node or browser) publishes and says so.
+  - Checked by breaking the board on purpose: both steps fail in 0.3 s, exit 1.
+  - Found alongside: the live page asked `/api/status` (serve.py's updater) on every load and got a 404; `updater()` skips it on `*.github.io`.
+    Home asks for `hist/home.js` only when the build map lists it (a site without the file goes straight to the day rows).
+
+* **Injured-list badges (Sean, 20 Oct 2026, item 8 of the fourteen: "injured list badges on rows and cards, from MLB's data")**:
+  **`tools/build_injuries.py`** (standard library) reads every club's 40-man roster from the Stats API — the status code (D7 / D10 / D15 /
+  D60) and the injury as the roster's note — and the season's transactions for the day he went on the list (the latest "placed … on the
+  N-day injured list", or the date it was made retroactive to), and writes **`hist/injuries.js`** (`window.DRAFT_IL = {asOf, season, p: {id:
+  [code, injury, since]}}`, ~10 KB; 20 Oct 2026: 171 players, every one D60 — the 10- and 15-day lists empty into it when the season ends).
+  `cloud_daily.py` runs it with the MLB build, else with whatever the run builds (non-fatal). In `app.js` (`ilOf`, `ilBadge`, `ilTip`,
+  `IL_WORD`, beside `bio()`): the file loads with the page when the build map lists it (value-free in `ensureScript`) and counts only while
+  `asOf` is within ten days, so the badges don't outlive the season once the builds stop for the winter. A red **IL60** (IL10, IL15, IL7)
+  after the name — the injury and the day in its tooltip — on the Leaderboard / Recent (the name ellipsises before it: `.name.hasil` /
+  `.nmtx`), the Rankings / Draft board and Fantasy (this season's lines only); on his page the bio line carries **60-day IL** in the same red
+  whatever season the page is on (it's today's status). Brent Rooker: "On the 60-day IL since Jun 9 · Bone bruise in left knee".
+
+* **Auction Draft mode (Sean, 20 Oct 2026, item 7 of the fourteen: "auction support in Draft mode — price and team per pick, every team's money
+  left and max bid, inflation-adjusted values")**: Draft mode's bar has a **Snake | Auction** switch (`#draftkind`; `auc.on`, the room in
+  `draft2027.auction` — teams, budget, team names, which one is his — in `SYNC_KEYS`). With Auction on:
+  - **Every row shows his value** (`.aucv`): the Mock draft's $ for his ADP rank (`mkDollars` on this room's teams and budget, Sean's league's
+    price curve) moved by the room's **inflation** — the money left above $1 an open spot against what the best players left are worth
+    (`aucValues`, held to ×0.5-2). A sold player's row shows his price and buyer instead ("$50 · Team 3").
+  - **A tap opens the sale sheet** at the foot of the screen (`#aucsheet`, `aucSheetSync`): who bought him (the last buyer picked, else his own
+    team) and for how much (his value to start), what that team has left, its open spots and max bid, in red when the price is over it; Sold
+    (or Enter) records it, × or Escape closes it. The pick rides in the drafted list with `price` / `team`, so Sync carries it and Undo takes it
+    back; a tap on a sold name returns him to the board, as in a snake draft.
+  - **The Teams table over the board** (`aucTeamsBlock`, `li.auchd`): the room's settings (Teams 4-20, Budget $, You), the spots a team, the money
+    left in the room and the inflation, then the teams across and the money down — Max bid (money left less $1 for each other open spot) · Left ·
+    Open · Players · Spent — his own column tinted, a team's name renamed by a tap; a phone slides it sideways under the frozen labels (~210px tall
+    on a desktop for 14 teams, where the first cut's 14 rows down had pushed the board off the screen).
+  - Snake works as before (a tap drafts, nothing priced). Checked headless on both layouts: 14 × $200 reads 25 spots, $2800, ×0.99; Yordan $58,
+    Ohtani $97; selling Yordan to Team 3 for $50 leaves it $150 / 24 open / $127 max bid and the row "$50 · Team 3"; Undo puts it all back.
+
+* **The site under 1 GB (Sean, 20 Oct 2026, item 3 of the fourteen: "the site under GitHub Pages' 1 GB limit")**: the published site was
+  1.27 GB, ~920 MB of it the day and arsenal files of finished seasons (`hist/days-2015…2025.js`, `hist/ars-…`, the minors', postseasons' and
+  springs'), which only the site reads and only a rescore rewrites. They're stored gzipped now — **`hist/<name>.js.gz`**, 58 files, 915 MB →
+  228 MB — and the site is 562 MB.
+  - **`tools/pack_hist.py`** packs every plain day / arsenal file of a season before data.js's (`finished(name, season)`: `days-` / `ars-`, an
+    optional level, the year, an optional `-post` / `-spring`) with gzip level 6 and mtime 0 (the same content always gives the same bytes), and
+    removes the plain copy. **`cloud_daily.restamp()` runs it first**, so every publish and every merge (the stamps are recomputed by restamp)
+    packs whatever a run or a patch wrote plain, and the build map lists `.js.gz` files. The Mac's `publish.py` packs into its deploy folder the
+    same way (it's in `sync_tools`' FILES; without it the files would go up plain and still load).
+  - **The current season's files stay plain** (`days.js`, `hist/ars-2026.js`, the minors' 2026, this October's and spring's): they're rebuilt
+    every morning in season, and git keeps a day's change to a plain file as a small delta where a gzipped one is a whole new blob. When data.js's
+    season moves on, the first publish packs the old one.
+  - **In `app.js`**, `ensureScript` asks the build map (`isGz`): a gzipped file is fetched, unzipped by the browser (`DecompressionStream`,
+    iOS / Safari 16.4 and up) and run as a script from a blob (`gunzipUrl`), so the onload, the cache rules and the retries are as before; a
+    response that comes back already unzipped runs as it is; with no map (the Mac's local server) it tries the `.gz` and then the plain file.
+    The frozen `/xyz/` copy's loader falls back to the `.gz` when a plain day file 404s.
+  - **To change a packed file** (a patch script): read it with `gzip.open` (Python) or `zlib.gunzipSync` (Node), write the plain `.js`, and the
+    next restamp packs it — a plain file beside a `.gz` is taken as the newer one.
+  - **Checks**: the page check has a step that opens a 2025 starter's Game Logs (`hist/days-2025.js.gz`); headless, the vs LHB view of his
+    Pitching+ tab reads `hist/ars-2025.js.gz`; all 34 steps pass. The repository itself (history included) is ~1.9 GB — GitHub's 1 GB for a
+    Pages repo is a recommendation; the published site is what's capped.
+
+* **The IL badge beside his name (Sean, 21 Oct 2026, Nick Kurtz's popup on his phone: "Can you put the IL thing next to their name instead of where
+  it is")**: on his page and in the popup the red **60-day IL** sits right after his name in the sticky bar (`pageHead`: the name and the badge share
+  a `.pgbnrow`, the badge `.pgbil`, the injury and the day in its tooltip as before), no longer as the bio line's last item (`bioStrip`). The badge
+  flows after the name's last word with no break before it, so a phone's two-line name carries it on the second line ("Carson / Whisenhunt 60-day
+  IL"); only when the last word and the badge can't fit the column does `bleedBar` let it take a line of its own (`.ilwrap`, re-measured when a
+  font finishes loading). The row takes the name's own font, so the bar is the height it was (desktop 84px either way; a phone's Kurtz bar is 7px
+  shorter now the bio doesn't wrap). **The badge's red is fixed** (`#c8102e`) on the rows (`.ilb`) and the bar: it had borrowed `--stripe-line`,
+  which is transparent on Warm / UNC (an invisible badge on the Leaderboard's white rows) and the band's own colour on the flat schemes.
+
 * **The 20 Oct recommendations, the speed pass and the off-season refresh (items 4 and 6 of the same list)**:
   - **The day rows, one file a side and leaner**: `days.js` (31.2 MB, 8.1 MB over the wire) is `days-h.js` (16.6 MB, 3.7 gzipped) and
     `days-p.js` (12.0 MB, 3.7), and a view loads only the side it needs (`CUR.ready(t)` / `CUR.load(t)` / `ensureDays(t)`, `daysIn`, `sideOf(g)`;
@@ -4560,8 +4704,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     `build_trends.py` reads the new files — and stops adding `evbk`'s bucket codes to the exit velocities (League Trends' EV90 read ~101 for
     every season, 103.5-105 now; the page is off the menus). Build side: `HITTER_DAY` / `PITCHER_DAY` without the eleven, `build_history.py` /
     `build_milb.py` write `"dayFields"`, `cloud_daily.py` / `publish.py` publish the two files, `data.js` and the two files were made from the
-    current `days.js` the same way (scratch `speed/split.py`). The frozen `/xyz/` copy (3 Oct) still asks for `days.js`, so its date windows and
-    splits say the file is missing; the rest of it works, and the `xyz-layout` branch is the real backup. A day file that fails to download is
+    current `days.js` the same way (scratch `speed/split.py`). The frozen `/xyz/` copy (3 Oct) loads both files (`DAYS_FILES` in `xyz/app.js`,
+    ready once both are in): every field it reads sits before the eleven in the old layout, so its own reads and past seasons' rows keep their
+    places. A day file that fails to download is
     tried twice more (1.5 s, 3 s) and then left until a reload (`loadDays`, `daysBad` by side — a pitchers' failure no longer stops a hitters'
     view); before, every redraw asked for it again, ~40 requests a second for as long as the page stayed open (scratch `speed/fail.js`). A span
     of seasons with a date window or last-N (Filters ▸ Multiple seasons) renders exactly as before with only its side's file in (`speed/span.js`).
@@ -4586,6 +4731,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     **scheduled task, "Off-season data check"**, fires into this session on the 1st and 15th, November through March, 8:41 New York: it runs the
     check and any step that's out, publishes, tells Sean in a line, looks for SABR's Lahman release with 2026 in January-March (`build_awards.py`'s
     `FILES` then point at the new Box files), says nothing when nothing is new, and disables itself once everything is in.
+  - **With the other chat's work of the same day** (merged on top of it): `hist/home.js` is built from both day files (`window.__homeData` asks
+    for both; home uses the file until both are in, then computes the lists itself as before); the Movers page asks for both, its hitters'
+    table waits for `days-h.js` and its pitchers' (`pitchMovers`) for `days-p.js`, each with its own "Loading…"; the gzipped past seasons' day
+    files go through `ensureScript`'s gz path and are read by `LEGACY_DF` as the plain ones were; `pack_hist.py` looks only in `hist/`, so this
+    season's two files at the root stay plain whatever the season. None of the 508 stylesheet rules is one the merged code can reach (the
+    analysis re-run on it), and nothing `app.js` gained references a removed declaration (ESLint's no-undef on the merged file).
 
 ## 10. The football site moved out
 
