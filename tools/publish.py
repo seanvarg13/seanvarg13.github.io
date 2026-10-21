@@ -20,7 +20,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DEPLOY = os.path.join(os.path.dirname(HERE), "draft-site-deploy")
 SITE_FILE = os.path.join(HERE, "netlify_site.json")
 API = "https://api.netlify.com/api/v1"
-TOP = ["index.html", "app.js", "styles.css", "themes.js", "defaults.js", "data.js", "days.js", "fantasy.js", "manifest.json",
+TOP = ["index.html", "app.js", "styles.css", "themes.js", "defaults.js", "data.js", "days-h.js", "days-p.js", "fantasy.js", "manifest.json",
        "icons/icon-32.png", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png"]
 
 
@@ -98,7 +98,7 @@ def stamp(wanted):
     Hosts tell browsers to keep these files for a while, and a home-screen web app holds them longer still, so a
     publish could leave an iPhone on the old code. Here each file gets a ?v=<hash of its contents> in the page:
     unchanged files keep their address (and stay cached), changed ones get a new one and are fetched at once. The
-    files app.js loads by itself (days.js, hist/…) are versioned through the DRAFT_BUILD map it reads.
+    files app.js loads by itself (days-h.js, days-p.js, hist/…) are versioned through the DRAFT_BUILD map it reads.
     """
     ver = {rel: sha1(os.path.join(DEPLOY, rel))[:10] for rel in wanted}
     build = hashlib.sha1("".join(f"{k}:{v}" for k, v in sorted(ver.items())).encode()).hexdigest()[:10]

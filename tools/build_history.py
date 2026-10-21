@@ -106,6 +106,7 @@ def build_season(year: int, kind: str = "reg"):
     ds = {
         "key": key, "label": f"{year} {K['label']}", "season": year, "level": "MLB", "kind": kind if kind != "reg" else "", "hist": True, "airNoPU": True,
         "games": int(n_games), "refPA": ref_pa, "consts": consts, "days": days_list, "daysFile": f"days-{year}{K['suffix']}.js",
+        "dayFields": {"H": bd.HITTER_DAY, "P": bd.PITCHER_DAY},   # the rows' layout: the page reads a file without it by the 20 Oct 2026 lists
         "through": str(d.game_date.max())[:10], "built": dt.datetime.now().strftime("%Y-%m-%d %H:%M"),
         "players": hitters + pitchers,
         "rows": {**{f"H{k}": v for k, v in rows_h.items() if any(h["id"] == k for h in hitters)},

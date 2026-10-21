@@ -304,9 +304,9 @@ The card is ranked against everyone's numbers in the same split (pool minimum pr
 list stays unsplit. Combines with the global Dates window.
 
 **Dates**: from / to boxes on the list and on every card; a blank side means the season's start
-or end. Past seasons use `hist/days-YYYY.js` (per-game rows, ~10 MB each, loaded on demand). `days.js`
-carries per-game rows (split by handedness) for every player, loaded the first time a window or
-split is chosen, and the page re-aggregates them —
+or end. Past seasons use `hist/days-YYYY.js` (per-game rows, ~10 MB each, loaded on demand). This season's
+per-game rows (split by handedness) are `days-h.js` (hitters) and `days-p.js` (pitchers), each loaded the first time
+a window or split on its side is chosen, and the page re-aggregates them —
 every metric, AB / IP, pool and percentile. Full season uses Savant's exact Air% / Pull Air%
 and official AB / IP; windows rebuild them from Statcast (Pull Air% within ~0.5 pts of Savant).
 
@@ -408,7 +408,7 @@ a line in `GLOSS`), and **How this page works** for the eligibility / pools / sp
 | `app.js`        | rendering, sorting, draft state        |
 | `styles.css`    | light + dark themes                    |
 | `data.js`       | generated — season values (`window.DRAFT_DATA`) |
-| `days.js`       | generated — per-game split rows, loaded on demand |
+| `days-h.js`, `days-p.js` | generated — per-game split rows, hitters' and pitchers', each loaded on demand |
 | `build_data.py` | data pipeline (current season)         |
 | `build_history.py` | past seasons for Explore -> `hist/` |
 | `build_milb.py` | Triple-A seasons (Savant minors Statcast) -> `hist/aaa-YYYY.js` |

@@ -24,9 +24,9 @@ TOOLS = os.path.join(ROOT, "tools")
 os.chdir(ROOT)
 SCRIPTS = ["build_data.py", "build_history.py", "build_milb.py", "build_fantasy.py", "build_career.py", "build_trends.py", "build_similar.py"]
 # what the site serves: the same list publish.py stamps, plus every hist/ file
-TOP = ["index.html", "app.js", "styles.css", "themes.js", "defaults.js", "data.js", "days.js", "fantasy.js", "manifest.json",
+TOP = ["index.html", "app.js", "styles.css", "themes.js", "defaults.js", "data.js", "days-h.js", "days-p.js", "fantasy.js", "manifest.json",
        "icons/icon-32.png", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png"]
-OUTPUTS = ["data.js", "days.js", "fantasy.js"]            # plus hist/*.js — what a build writes
+OUTPUTS = ["data.js", "days-h.js", "days-p.js", "fantasy.js"]   # plus hist/*.js — what a build writes (the day rows one file a side since 20 Oct 2026)
 
 
 def say(msg):

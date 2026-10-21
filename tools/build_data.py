@@ -233,6 +233,10 @@ OUTS = {"strikeout": 1, "strikeout_double_play": 2, "field_out": 1, "force_out":
 NON_AB = {"walk", "intent_walk", "hit_by_pitch", "sac_fly", "sac_fly_double_play", "sac_bunt", "sac_bunt_double_play",
           "catcher_interf", "truncated_pa"}
 # per-day row layouts shipped to the page (data.js -> meta.dayFields); day = index into meta.days
+# Fields leave a layout only with its file saying so (20 Oct 2026, the speed pass): data.js carries the current season's lists, every
+# hist/ file written from here on carries its own ("dayFields"), and the page reads a file without one by the lists as they were on
+# 20 Oct 2026 (LEGACY_DF in app.js, LEGACY_H in build_trends.py). Taken out then, unread since the features that used them left: evbk
+# (EV by Mix bucket), xhgb / xhld / xhfb / xhpu (expected hits by type) and the command sums stco / stcso / stci / stcsi / stcwi / stcw.
 # rows are per player-day-handedness (hand: 0 = vs LHP/LHB, 1 = vs RHP/RHB; home: 1 = home game); evs = that
 # row's exit velocities (bbe and avg EV derive from it)
 HITTER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", "osw", "zcon", "ocon", "brl",
@@ -240,9 +244,8 @@ HITTER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", 
               "bbe", "evsum", "dnum", "pulln", "ld", "gbh", "puh", "evs", "bbt", "bip", "evn", "oppn", "h", "tb", "xbsum", "xssum", "dbsum", "dssum", "mixsum", "mixn",
               "mxgb", "mxpu", "mxldp", "mxldc", "mxldo", "mxfbp", "mxfbc", "mxfbo", "mxx", "hr", "wbh",
               "evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn",   # EV sums and counts by batted-ball type (fly ball / line drive / grounder; 7 Oct 2026) so a window re-derives EV on FB / LD / GB   # wbh: wOBA value of his hits on balls in play (not HR) — BABIP reliance; hr: home runs (the fantasy page splits his official line by hand with these); mixsum / mixn = batted-ball mix value (Mix wOBA), mx* = its balls by bucket (mxx: air, no direction); dnum = directional-xwOBA numerator; evs = that row's exit velocities (no bunts); trailing fields (older files lack them): bbt = typed balls in play, bip = all balls in play, evn = EV-eligible (tracked, no bunt)
-              "evbk",   # each evs entry's Mix bucket (MIX_COLS index, -1 outside the mix), so a window re-derives EV by bucket for the Mix tab (8 Oct 2026)
               "brfb", "brld", "brgb",   # barrels on fly balls / line drives / grounders (over evfbn / evldn / evgbn), the Mix tab's Barrel% by type (8 Oct 2026)
-              "xhgb", "xhld", "xhfb", "xhpu", "bngb", "bnld", "bnfb", "bnpu",
+              "bngb", "bnld", "bnfb", "bnpu",
               "gbp", "gbc", "gbo",
               "hbp",
               "ibb",
@@ -273,7 +276,7 @@ PITCHER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "strk", "bip", "gb", "
                "ld", "wbip", "wgb", "wld", "wfb", "wpu", "evn", "h", "stn", "stw", "stg", "stp", "stbw", "stbg", "stbp",
                "stf", "std", "stbf", "stbd", "stnl", "stwl", "stws", "stbwl", "stbws",   # over the pitches swung at: whiff chance with location, stuff-only on the same swings, the types' means of each (Location+)
                "stnb", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps",   # the same over the balls in play for the GB / PU chances (Pitching+)
-               "stcn", "stcs", "stck", "stco", "stcso", "stci", "stcsi", "stcwi", "stcw",   # command (3 Oct 2026)
+               "stcn", "stcs", "stck",   # command (3 Oct 2026): graded pitches, their swing and strike chances (xCalled Strike%)
                "fp", "fps", "b3", "b3s", "s2", "s2sw", "s2wh", "s2z",   # count states (3 Oct 2026): first pitches and the strikes among them, three-ball pitches and strikes, two-strike pitches and their swings, whiffs and in-zone pitches
                "stnf", "stfl", "stfs", "stfw",   # fouls with location (stfw: and the batter's swing) (4 Oct 2026): pitches contacted, the foul chance where each crossed and the stuff-only one on the same contact: pitches graded for it; their summed swing and strike chances; out-of-zone pitches and their swing chances; in-zone pitches, their swing chances and swing-and-miss chances; swing-and-miss chances on every pitch   # stb*: the league means of each graded pitch's own type (Stuff+ is graded against pitch type); h: hits allowed (fantasy splits by hand); stn / stw / stg / stp: graded pitches and their summed whiff, ground-ball and popup chances (Stuff); luck-neutral ERA inputs: line drives, wOBA numerator on balls in play and by type; evn = EV-eligible balls (no bunts)
                "evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn"]   # EV allowed by batted-ball type (7 Oct 2026): sums and counts of the EV-eligible fly balls / line drives / grounders, so a window re-derives EV on FB / LD / GB
@@ -1180,8 +1183,8 @@ def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
     d["bunt"] = bunt
     d["evb"] = bbe & ~bunt                                  # EV-eligible: tracked and not a bunt (Savant's Avg EV skips bunts)
     d["ev"] = d["launch_speed"].where(d["evb"], 0.0)
-    # each ball's Mix bucket as an index into MIX_COLS (an air ball with no direction is "x"; -1 when it isn't in the mix), so the
-    # day rows can carry a bucket for every entry of their evs list (evbk) and a window re-derives EV by bucket for the Mix tab (8 Oct 2026)
+    # each ball's Mix bucket as an index into MIX_COLS (an air ball with no direction is "x"; -1 when it isn't in the mix): ctx.mixev's EV by
+    # bucket (8 Oct 2026; the day rows carried the buckets as evbk until 20 Oct 2026, unread since the Mix tab went back to its bars)
     mi = {b: i for i, b in enumerate(MIX_COLS.values())}
     mb = d["mixb"].astype(str); mb = mb.where(~mb.str.endswith("_x"), "x")
     d["mixc"] = np.where(d["mixn"].astype(bool), mb.map(mi).fillna(-1), -1).astype(int)
@@ -1542,8 +1545,6 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
         if c not in h.columns: h[c] = 0.0
     h["mixsum"] = h["mixsum"].round(4)
     h["evs"] = d[d["evb"]].groupby(HK)["launch_speed"].agg(lambda x: [round(float(v), 1) for v in x])
-    if "mixc" in d.columns:                                       # the same balls in the same order: their Mix buckets (8 Oct 2026)
-        h["evbk"] = d[d["evb"]].groupby(HK)["mixc"].agg(lambda x: [int(v) for v in x])
     hp = p.groupby(HK).agg(pa=("pa", "sum"), ab=("ab", "sum"), bb=("is_bb", "sum"),
                            k=("is_k", "sum"), wnum=("wnum", "sum"), wden=("wden", "sum"),
                            xnum=("xnum", "sum"), xden=("xden", "sum"), dnum=("dnum", "sum"),
@@ -1552,7 +1553,6 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                            **{f"{k}{t}": (f"{k}{t}", "sum") for k in ("xh", "bn") for t in ("gb", "ld", "fb", "pu")})
     h = h.join(hp, how="left")
     h["evs"] = h["evs"].apply(lambda v: v if isinstance(v, list) else [])
-    h["evbk"] = h["evbk"].apply(lambda v: v if isinstance(v, list) else []) if "evbk" in h.columns else [[] for _ in range(len(h))]
     h = h.fillna(0)
     # pitchers
     PK = ["pitcher", "game_date", "bhand", "phome"]
@@ -1592,7 +1592,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
             row = [days[str(date)[:10]], int(hand), int(home)]
             for f in fields[3:]:
                 v = r[f]
-                if f in ("evs", "evbk"):
+                if f == "evs":
                     row.append(v)
                 else:
                     # xbsum / xssum are sums of per-ball probabilities: a day's bucket is well under 1, so int() would erase it
@@ -1604,7 +1604,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
 
 # a pitcher's arsenal day by day, so the Stuff tab's table follows the card's dates and splits: one row per
 # game day x batter hand x venue x pitch type (fields = meta.arsDayFields), in hist/ars-<key>.js — its own file, loaded
-# only when the Stuff tab is open with a window or split (it's ~8 MB a season; days.js is big enough). Sums, so
+# only when the Stuff tab is open with a window or split (it's ~8 MB a season; the day files are big enough). Sums, so
 # any set of rows adds up: graded pitches, the model's whiff / grounder / popup chances, velocity, break and spin
 # (spin over spn pitches that had it), swings, whiffs, balls in play, grounders and popups that actually happened.
 ARS_DAY = ["day", "hand", "home", "gs", "pt", "n", "w", "g", "p", "velo", "ivb", "hb", "spin", "spn", "sw", "wh", "bip", "gb", "pu",
@@ -1898,10 +1898,10 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
         ibb_n = int(r.IBB) if "IBB" in r and pd.notna(r.IBB) else None
         m["ibbr"] = round(100 * ibb_n / int(r.PA), 2) if ibb_n is not None and r.PA else None   # intentional walks per 100 PA: xBB% (12 Oct 2026)
         m.update(baserunning(int(pid), info))
-        xbt = []                                                   # [non-HR balls in play, expected hits] by type GB / LD / FB / PU (10 Oct 2026)
+        xbt = []                                                   # [non-HR balls in play, null] by type GB / LD / FB / PU (10 Oct 2026; the expected hits left the day rows 20 Oct 2026)
         for t in ("gb", "ld", "fb", "pu"):
-            ia, ib = HITTER_DAY.index(f"bn{t}"), HITTER_DAY.index(f"xh{t}")
-            xbt.append([int(sum(x[ia] for x in rows_d if len(x) > ia)), round(float(sum(x[ib] for x in rows_d if len(x) > ib)), 2)])
+            ia = HITTER_DAY.index(f"bn{t}")
+            xbt.append([int(sum(x[ia] for x in rows_d if len(x) > ia)), None])
         if not any(n for n, _ in xbt): xbt = None
         gbdir = [int(sum(x[HITTER_DAY.index(t)] for x in rows_d if len(x) > HITTER_DAY.index(t))) for t in ("gbp", "gbc", "gbo")]   # grounders by direction (10 Oct 2026)
         if not any(gbdir): gbdir = None
@@ -2132,8 +2132,15 @@ def main():
         write_arsenal_days(f"mlb-{SEASON}", {k: v for k, v in arsenal_daily(d, days).items() if k in pit_ids})
     except Exception as e:                                  # noqa: BLE001 — the per-day arsenal is a nicety; the table then stays season-long
         log(f"  !! arsenal by day skipped: {type(e).__name__}: {e}")
-    (HERE / "days.js").write_text("window.DRAFT_DAYS = " + json.dumps(days_out, separators=(",", ":")) + ";\n")
-    log(f"    data.js {(HERE / 'data.js').stat().st_size / 1e6:.1f} MB, days.js {(HERE / 'days.js').stat().st_size / 1e6:.1f} MB")
+    # one file a side (20 Oct 2026, the speed pass): a hitters' window or split loads days-h.js, a pitchers' days-p.js (the :er rows ride
+    # with the pitchers), and only a page that needs both (home) takes both; each merges into window.DRAFT_DAYS
+    for side, name in (("H", "days-h.js"), ("P", "days-p.js")):
+        part = {k: v for k, v in days_out.items() if k[0] == side}
+        (HERE / name).write_text("window.DRAFT_DAYS = window.DRAFT_DAYS || {};\nObject.assign(window.DRAFT_DAYS, "
+                                 + json.dumps(part, separators=(",", ":")) + ");\n")
+    (HERE / "days.js").unlink(missing_ok=True)                 # the one file it was until then
+    log(f"    data.js {(HERE / 'data.js').stat().st_size / 1e6:.1f} MB, days-h.js {(HERE / 'days-h.js').stat().st_size / 1e6:.1f} MB, "
+        f"days-p.js {(HERE / 'days-p.js').stat().st_size / 1e6:.1f} MB")
     log(f"OK  {len(hitters)} hitters, {len(pitchers)} pitchers -> data.js  ({time.time()-t0:.0f}s)")
 
 

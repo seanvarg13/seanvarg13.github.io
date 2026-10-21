@@ -215,9 +215,6 @@ button { cursor: pointer; }
 .datesbar .lastin { width: 60px; }
 .winnote { color: var(--accent-2); font-size: 12.5px; font-weight: 600; }
 .winnote:empty { display: none; }
-.addbox { position: relative; flex: 0 1 240px; min-width: 180px; }
-.addbox input { width: 100%; height: 34px; border: 1px dashed var(--accent); background: var(--surface); border-radius: 0; padding: 0 10px; }
-.addbox input:focus { border-style: solid; }
 .addlist {
   position: absolute; top: calc(100% + 4px); right: 0; z-index: 5; margin: 0; padding: 4px; list-style: none;
   min-width: 100%; width: max-content; max-width: min(420px, 90vw);
@@ -341,16 +338,11 @@ button { cursor: pointer; }
 .ctx div { border-top: 1px solid var(--hair); padding-top: 6px; }
 .ctx dt { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .ctx dd { margin: 0; font-family: var(--display); font-weight: 600; font-size: 20px; font-variant-numeric: tabular-nums; }
-.ctx .posline { grid-column: 1 / -1; }
-.ctx .posline dd { font-family: var(--body); font-size: 13px; font-weight: 500; color: var(--ink-2); }
 .card .side { display: grid; gap: 16px; align-content: start; }
 /* hitter card: grouped meters */
 .hcard { display: block; }
 .hstrip { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-bottom: 10px; font-size: 12.5px; color: var(--muted); }
 .hchip b { font-family: var(--display); font-size: 17px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
-.hgroups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 36px; max-width: 1000px; }
-.hcol { display: grid; gap: 14px; align-content: start; }
-.hgroup h4 { margin: 0 0 6px; font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-2); border-bottom: 1px solid var(--hair); padding-bottom: 3px; }
 .hcard .meter { grid-template-columns: 138px minmax(80px, 200px) 72px; }
 .hcard .meter .val { white-space: nowrap; }
 .hcard .note { margin-top: 14px; }
@@ -361,11 +353,9 @@ button { cursor: pointer; }
 .pbelow .cmp { margin-top: 0; }
 .pbelow.solo { grid-template-columns: 1fr; }
 @media (max-width: 900px) { .pbelow { grid-template-columns: 1fr; } }
-@media (max-width: 900px) { .hgroups { grid-template-columns: 1fr; } .hcard .meter { grid-template-columns: 96px minmax(80px, 200px) 66px; } }
-.roleswitch h3 { margin-bottom: 6px; }
+@media (max-width: 900px) {  .hcard .meter { grid-template-columns: 96px minmax(80px, 200px) 66px; } }
 .seg { display: inline-flex; padding: 3px; background: var(--surface); border: 1px solid var(--hair); border-radius: 0; gap: 2px; }
 .segbtn { border: 0; background: transparent; border-radius: 0; padding: 4px 16px; font-family: var(--display); font-weight: 600; font-size: 16px; letter-spacing: 0.05em; color: var(--ink-2); }
-.roleswitch .note { margin: 8px 0 0; }
 .splitbar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 12px; }
 .splitbar.full { grid-column: 1 / -1; margin-bottom: 0; }
 .splitwarn { font-size: 12.5px; font-weight: 600; color: var(--ink); background: var(--accent-wash); border-radius: 0; padding: 4px 10px; }
@@ -373,8 +363,6 @@ button { cursor: pointer; }
 .linkbtn { border: 0; background: none; padding: 0; color: var(--accent-2); font: inherit; font-weight: 600; text-decoration: underline; }
 /* Saved rankings popover */
 .menu { position: relative; }
-.menupop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; min-width: 280px; max-width: 360px; background: var(--surface); border: 1px solid var(--hair); border-radius: 0; box-shadow: var(--shadow); padding: 6px; }
-.menupop .note { margin: 6px 8px; }
 .mrow { display: flex; align-items: center; gap: 4px; padding: 2px 4px 2px 8px; border-radius: 0; }
 .mrow:hover { background: var(--surface-2); }
 .mrow .open { flex: 1; min-width: 0; display: grid; text-align: left; border: 0; background: none; padding: 5px 0; font: inherit; color: var(--ink); cursor: pointer; }
@@ -384,9 +372,7 @@ button { cursor: pointer; }
 .mrow[aria-current] .open b::before { content: "● "; font-size: 9px; vertical-align: 2px; }
 .mrow .pen { border: 0; background: transparent; color: var(--muted); font-size: 14px; padding: 0 4px; cursor: pointer; }
 .mrow .pen:hover { color: var(--accent-2); }
-.mfoot { border-top: 1px solid var(--hair); margin-top: 6px; padding: 8px 8px 4px; display: flex; gap: 14px; font-size: 12.5px; }
 .cmp { margin-top: 18px; }
-.cmp-scroll { overflow-x: auto; }
 .cmp table { border-collapse: separate; border-spacing: 0 4px; font-size: 13px; min-width: 460px; }
 .cmp th { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; text-align: center; padding: 0 4px 2px; }
 .cmp th.l, .cmp td.l { text-align: left; }
@@ -504,8 +490,6 @@ body.modal-open { overflow: hidden; }
 .tierlbl.editable { cursor: text; border-bottom: 1px dashed transparent; }
 .tierlbl.editable:hover { border-bottom-color: var(--accent-2); }
 .tiername { font: inherit; font-size: 15px; height: 26px; border: 1px solid var(--accent); border-radius: 0; padding: 0 8px; background: var(--surface); color: var(--ink); width: 220px; }
-.rankctl .tierbtn { border: 1px solid var(--hair); background: var(--surface); color: var(--muted); height: 22px; padding: 0 6px; border-radius: 0; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; }
-.rankctl .tierbtn:hover, .rankctl .tierbtn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .textmodal { padding: 20px 22px 22px; display: grid; gap: 10px; }
 .textmodal h2 { margin: 0; font-family: var(--display); font-size: 24px; font-weight: 700; }
 .textmodal textarea { width: 100%; min-height: 220px; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; border: 1px solid var(--hair); border-radius: 0; padding: 10px; background: var(--surface); color: var(--ink); resize: vertical; }
@@ -647,7 +631,6 @@ header.top {
 .mplate .mug.initials { background: var(--surface-2); }
 .xseason { border-radius: 0; }
 .card h3 { color: var(--ink); font-size: 12.5px; letter-spacing: 0.06em; }
-.hgroup h4 { color: var(--accent); font-size: 12.5px; letter-spacing: 0.08em; border-bottom: 2px solid var(--accent); }
 .meter .track { border-radius: 0; border: 0; background: var(--surface-2); }
 .meter .track::after { background: var(--rail); }
 .meter .fill { border-radius: 0; }
@@ -736,7 +719,6 @@ header.top {
 .tierhead.untiered { background: var(--surface-2); color: var(--ink-2); }
 .tierhead.untiered small, .tierhead.untiered .plus { color: var(--muted); }
 .tierhead.untiered .plus { border-color: var(--hair); }
-.hgroup h4 { color: var(--accent-2-text); border-bottom-color: var(--accent-2-text); }
 .card h3 { color: var(--accent); }
 .cgrid .cgroup { color: var(--accent-2-text); border-bottom-color: var(--accent-2-text); }
 .textmodal h2 { color: var(--accent); }
@@ -770,10 +752,6 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 /* pitcher card: batted-ball luck */
 .luck { margin-top: 16px; }
 .luck h3 { margin: 0 0 6px; }
-.luckline { margin: 0 0 8px; font-size: 13px; }
-.luckline .lucky { color: var(--accent-2-text); font-weight: 700; }
-.luckline .unlucky { color: var(--red, #c8102e); font-weight: 700; }
-.luckline .even { color: var(--muted); }
 .luck table { border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .luck th, .luck td { padding: 4px 10px; text-align: right; border-bottom: 1px solid var(--hair); }
 .luck th { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
@@ -807,12 +785,6 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 .hub { padding: 22px 0 10px; }
 .hub h2 { margin: 0 0 6px; font-size: 26px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--accent); }
 .hublead { margin: 0 0 18px; font-size: 14px; color: var(--ink-2); max-width: 760px; }
-.hubgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
-.hubcard { display: flex; flex-direction: column; gap: 10px; padding: 18px 18px 16px; border: 1px solid var(--hair); border-top: 4px solid var(--accent-2); background: var(--surface); color: var(--ink); text-decoration: none; }
-.hubcard:hover { background: var(--accent-wash); }
-.hubcard h3 { margin: 0; font-size: 17px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-2-text); }
-.hubcard p { margin: 0; font-size: 13.5px; color: var(--ink-2); flex: 1; }
-.hubcard .btn { align-self: flex-start; display: inline-flex; align-items: center; }
 .hub .note { margin-top: 16px; font-size: 12.5px; color: var(--muted); }
 .colpick { max-width: 900px; }
 .colgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px 24px; margin: 10px 0 14px; }
@@ -829,7 +801,6 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 
 .colhead .h.lc, .colhead button.h.lc { text-transform: none; letter-spacing: 0.02em; }
 
-.mbar { display: none; }
 /* ---------- mobile view (data-view="mobile": phones by default; switchable at the foot of every page) ---------- */
 /* header: wordmark row, then search, then a scrolling tab strip */
 :root[data-view="mobile"] header.top { flex-wrap: wrap; gap: 0 10px; padding: 0 12px 6px; min-height: 0; }
@@ -848,9 +819,6 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 :root[data-view="mobile"] .subnav a { white-space: nowrap; padding: 8px 10px 6px; font-size: 11.5px; }
 /* toolbar: not sticky, filters folded behind one button */
 :root[data-view="mobile"] .toolbar { position: static; padding-block: 4px 6px; gap: 6px; }
-:root[data-view="mobile"] .mbar { display: flex; align-items: center; gap: 10px; padding-top: 2px; }
-:root[data-view="mobile"] .mbar .btn { height: 30px; font-size: 11px; padding: 0 10px; }
-:root[data-view="mobile"] .msum { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 :root[data-view="mobile"] .toolrow { gap: 8px 10px; }
 :root[data-view="mobile"] .drafttools { gap: 6px; }
 :root[data-view="mobile"] .search { flex: 1 1 100%; min-width: 0; }
@@ -874,22 +842,16 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 :root[data-view="mobile"] .rawscroll, :root[data-view="mobile"] .luck, :root[data-view="mobile"] .ukbb { overflow-x: auto; max-width: 100%; }
 :root[data-view="mobile"] .modal-close { top: 8px; right: 8px; }
 :root[data-view="mobile"] .modal-panel .card.hcard { padding: 10px 12px 18px; }
-:root[data-view="mobile"] .hgroups { grid-template-columns: minmax(0, 1fr); }
 :root[data-view="mobile"] .meter, :root[data-view="mobile"] .hcard .meter, :root[data-view="mobile"] .meter.sub { grid-template-columns: 76px minmax(60px, 1fr) 54px; }
 :root[data-view="mobile"] .pbelow { grid-template-columns: 1fr; }
 :root[data-view="mobile"] .cwrap { overflow-x: auto; justify-content: flex-start; }
 /* hub, appearance, footer */
 :root[data-view="mobile"] .hub { padding: 12px 0 6px; }
 :root[data-view="mobile"] .hub h2 { font-size: 20px; }
-:root[data-view="mobile"] .hubgrid { grid-template-columns: 1fr; gap: 8px; }
-:root[data-view="mobile"] .hubcard { padding: 12px 12px 10px; }
 :root[data-view="mobile"] .schemes, :root[data-view="mobile"] .fonts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 :root[data-view="mobile"] .fontcard .fhead { font-size: 16px; }
 :root[data-view="mobile"] .notes { font-size: 11.5px; }
 /* the view switch in the footer */
-.viewsw { margin-top: 10px; font-size: 11.5px; color: var(--muted); }
-.viewsw .linkbtn { font-size: 11.5px; }
-.viewsw .linkbtn[aria-pressed="true"] { color: var(--ink); text-decoration: none; font-weight: 700; }
 
 /* ---------- Appearance page ---------- */
 .aboard { padding: 18px 0 30px; }
@@ -900,22 +862,12 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 .scheme:hover, .fontcard:hover { border-color: var(--accent-2); }
 .scheme[aria-pressed="true"], .fontcard[aria-pressed="true"] { border-color: var(--accent-2-text); box-shadow: 0 0 0 2px var(--accent-2-text); }
 .scheme .sname, .fontcard .sname { padding: 4px 12px 0; font-family: var(--display); font-weight: 700; font-size: 14px; }
-.scheme .sblurb, .fontcard .sblurb { padding: 0 12px; font-size: 12px; color: var(--muted); }
 .scheme[aria-pressed="true"] .sname::after, .fontcard[aria-pressed="true"] .sname::after { content: " · in use"; font-weight: 400; color: var(--accent-2-text); }
 .spv { display: flex; flex-direction: column; gap: 8px; background: var(--page); padding-bottom: 8px; }
 .spv-bar { display: flex; align-items: center; gap: 6px; padding: 0 10px; height: 34px; margin-bottom: 4px; font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: 0.03em; text-transform: uppercase; }
-.spv-tab { margin-left: auto; font-size: 10px; letter-spacing: 0.08em; }
-.spv-row { display: flex; align-items: center; gap: 10px; padding: 0 10px; }
-.spv-btn { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; padding: 5px 9px; border-radius: 0; }
-.spv-chip { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-.spv-tier { margin: 0 10px; padding: 3px 8px; font-family: var(--display); font-weight: 700; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
-.spv-meters { display: flex; flex-direction: column; gap: 4px; padding: 0 10px; }
-.spv-meter { height: 8px; background: var(--mid); border-radius: 0; overflow: hidden; }
-.spv-meter i { display: block; height: 100%; }
 .fontcard { padding-top: 12px; }
 .fontcard .fhead { padding: 0 12px; font-size: 20px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: var(--accent); }
 .fontcard .fbody { padding: 0 12px; font-size: 13.5px; }
-.fontcard .fnums { padding: 0 12px 6px; font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--hair); }
 .aboard .note { margin-top: 18px; font-size: 12.5px; color: var(--muted); }
 .modes a.modes-aux { margin-left: auto; font-size: 11px; opacity: 0.9; }
 @media (min-width: 901px) { .modes a.modes-aux { margin-left: 4px; } }
@@ -930,7 +882,6 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 
 /* ---------- Fantasy points ---------- */
 .fboard { padding: 0 0 30px; }
-.fsubnav { margin-bottom: 8px; }
 .fbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 0 6px; }
 .fbar .field select { height: 32px; }
 .fbar .fq { height: 32px; border: 1px solid var(--hair); background: var(--surface); border-radius: 0; padding: 0 10px; font-size: 13px; width: 200px; }
@@ -1007,7 +958,6 @@ header.top { background: var(--accent-2); border-bottom: 3px solid var(--rule); 
 :root[data-view="mobile"] .modes { margin-top: 2px; }
 :root[data-view="mobile"] .subnav a { padding: 7px 9px 5px; }
 :root[data-view="mobile"] .postabs .postab { padding: 6px 8px; font-size: 12px; }
-:root[data-view="mobile"] .mbar { padding-top: 0; }
 :root[data-view="mobile"] .pager { flex-wrap: nowrap; justify-content: space-between; gap: 6px; }
 :root[data-view="mobile"] .pcount { font-size: 11px; }
 :root[data-view="mobile"] .pbtn.pend { display: none; }
@@ -1112,7 +1062,6 @@ body.modal-open { position: fixed; inset: 0; width: 100%; overflow: hidden; }
 :root[data-view="mobile"] .subnav a[aria-current="page"] { background: var(--btn); border-color: var(--btn); color: var(--btn-ink); }
 :root[data-view="mobile"] .postabs { padding: 6px 0; }
 :root[data-view="mobile"] .postabs .postab { flex: none; }
-:root[data-view="mobile"] .fsubnav { margin-bottom: 4px; }
 
 /* phone: tables are as tall as their page — the page is the only vertical scroll; headers float at the top of the screen */
 .colwrap { position: sticky; top: 0; z-index: 3; }
@@ -1231,7 +1180,6 @@ body.modal-open { position: fixed; inset: 0; width: 100%; overflow: hidden; }
 :root:not([data-view="mobile"]) .postabs .postab small { opacity: 0.85; }
 :root:not([data-view="mobile"]) .pbtn { border-color: var(--btn-line); color: var(--accent); }
 :root:not([data-view="mobile"]) .pbtn:disabled { border-color: var(--hair); }
-:root:not([data-view="mobile"]) .fsubnav { margin-bottom: 4px; }
 
 /* stars & notes */
 .starbox { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; }
@@ -1241,19 +1189,12 @@ body.modal-open { position: fixed; inset: 0; width: 100%; overflow: hidden; }
 .starpanel { flex-basis: 100%; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: var(--surface); color: var(--ink); border: 1px solid var(--hair); border-radius: 0; max-width: 560px; }
 .starpanel .field select { height: 32px; max-width: 100%; }
 .starpanel textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--hair); border-radius: 0; padding: 8px; font: inherit; font-size: 13px; resize: vertical; background: var(--surface); color: var(--ink); }
-.rowstar { color: #e0a04a; font-size: 12px; cursor: help; }
 .tbtn.on { background: var(--accent-wash); }
 :root[data-view="mobile"] .starpanel textarea { font-size: 16px; }
 .kindseg { margin-left: 4px; }
 :root[data-view="mobile"] .kindseg { flex-basis: 100%; }
 
 /* card sections that fold (Underlying K/BB, Batted-ball luck, Season by season) */
-.fold-sec { margin-top: 14px; }
-.foldhead { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; padding: 8px 0; border: 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); background: none; color: var(--accent-2-text); font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
-.foldhead .arrow { color: var(--muted); font-size: 12px; }
-.foldhead[aria-expanded="true"] { border-bottom: 0; }
-.fold-sec .luck, .fold-sec .rawstats { margin-top: 4px; }
-.cardnotes { margin-top: 16px; }
 /* the pitcher Results group: a dotted rule between the real ERA and the expected run-prevention numbers */
 .meters.results .meter:nth-child(n) { position: relative; }
 .meters.results .meter.after-era, .meters .meter.ruled { border-top: 2px dotted var(--rail); padding-top: 8px; margin-top: 6px; }
@@ -1284,7 +1225,6 @@ body.modal-open { position: fixed; inset: 0; width: 100%; overflow: hidden; }
 .fhead { z-index: 5; }
 .rank, .rankctl, .who, .act, .ftable td.n, .ftable td.who { z-index: 2; }
 .ftable th.n { width: 34px; min-width: 34px; }
-.rawseg { margin: 4px 0 8px; }
 .rawstats .fold { margin-left: 2px; }
 
 /* phone: the toolbar pins at the top like the Mac's, but compact; the column header pins right under it */
@@ -1326,25 +1266,10 @@ body.modal-open { position: fixed; inset: 0; width: 100%; overflow: hidden; }
 :root[data-view="mobile"] .pct { margin: 0 2px; height: 24px; }
 
 /* Included stats: column order strip */
-.colorder { margin: 6px 0 14px; }
-.colorder h4 { margin: 0 0 6px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-2-text); border-bottom: 1px solid var(--hair); padding-bottom: 3px; }
-.orderstrip { display: flex; flex-wrap: wrap; gap: 6px; }
-.ochip { display: inline-flex; align-items: center; border: 1px solid var(--btn-line); border-radius: 0; background: var(--surface); font-size: 12px; font-weight: 700; }
-.ochip .olbl { padding: 0 6px; }
 .omove { border: 0; background: transparent; color: var(--accent-2-text); font-size: 10px; padding: 6px 6px; cursor: pointer; }
 .omove:disabled { color: var(--hair); cursor: default; }
 .omove:hover:not(:disabled) { background: var(--accent-wash); }
 /* the leaner underlying K / BB table */
-.ukbbt { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; min-width: 320px; }
-.ukbbt th { font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; text-align: right; padding: 0 12px 6px; border-bottom: 1px solid var(--hair); }
-.ukbbt th.l { text-align: left; padding-left: 0; }
-.ukbbt td { text-align: right; padding: 7px 12px; border-bottom: 1px solid var(--surface-2); }
-.ukbbt td.l { text-align: left; padding-left: 0; }
-.ukbbt td.l b { display: block; font-size: 13px; }
-.ukbbt td.l small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; margin-top: 1px; }
-.ukbbt td.lucky { color: var(--accent-2-text); font-weight: 700; }
-.ukbbt td.unlucky { color: var(--red, #c8102e); font-weight: 700; }
-.ukbbt td.even { color: var(--muted); }
 .who, .colhead .h:nth-child(2) { padding-left: 10px; }
 :root[data-view="mobile"] .who, :root[data-view="mobile"] .colhead .h:nth-child(2) { padding-left: 6px; }
 .hstrip { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
@@ -1431,8 +1356,6 @@ body[data-density="compact"] .meta { font-size: 11px; }
 .colhead .h.brk, .pct.brk, .score.brk { position: relative; }
 .colhead .h.brk::after, .pct.brk::after, .score.brk::after { content: ""; position: absolute; right: -6px; top: -7px; bottom: -7px; border-right: 1px solid var(--rail); }
 .colhead .h.brk::after { top: -8px; bottom: -8px; }
-.ochip .obrk { border: 0; background: transparent; color: var(--muted); font-size: 11px; padding: 6px 5px; cursor: pointer; border-left: 1px solid var(--hair); }
-.ochip .obrk.on { color: var(--accent-2-text); font-weight: 700; }
 
 /* Year / Age columns: plain values right after the name, never heat-mapped */
 .pct.pre { background: transparent !important; color: var(--ink) !important; font-variant-numeric: tabular-nums; }
@@ -1442,25 +1365,9 @@ body[data-density="compact"] .meta { font-size: 11px; }
 #lbseason .topill.solo .pill { color: var(--muted); }
 
 /* Filters tucked away: only a slim pinned bar stays, so they can be brought back from anywhere in a long table */
-.tbhide { margin-left: auto; border: 0; background: transparent; color: var(--muted); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; padding: 4px 8px; border-radius: 0; white-space: nowrap; }
-.tbhide:hover { background: var(--surface-2); color: var(--ink); }
-:root[data-view="mobile"] .tbhide { padding: 0 6px; min-height: 32px; font-size: 13px; }
-:root[data-view="mobile"] .tbhide span { display: none; }
-#tbfold { display: flex; align-items: center; gap: 10px; min-height: 30px; min-width: 0; }
-.tbfoldbtn { flex: none; border: 1px solid var(--btn-line, var(--hair)); background: var(--btn, var(--surface-2)); color: var(--btn-ink, var(--ink)); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; cursor: pointer; padding: 5px 10px; border-radius: 0; }
-.tbfoldsum { font-size: 12px; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-body.tb-folded .toolbar:not(.xtoolbar) > :not(.tbfold):not(#setrow) { display: none !important; }
-body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
-:root[data-view="mobile"] .tbfoldbtn { min-height: 30px; padding: 0 9px; font-size: 11.5px; }
 
 /* Toolbar rows: positions + search + Team on the first row, everything else on one scrolling second row */
-.tabrow { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.tabstrip { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
-.tabstrip::-webkit-scrollbar { display: none; }
-.tabstrip .postabs, :root:not([data-view="mobile"]) .tabstrip .postabs, :root[data-view="mobile"] .tabstrip .postabs { flex: none; flex-wrap: nowrap; overflow: visible; touch-action: auto; }
-.tabstrip .search { flex: 1 1 200px; min-width: 150px; max-width: 340px; position: relative; }   /* keeps the sr-only label inside the scrolling row */
-.tabstrip .search input { width: 100%; }
-.tabstrip #teambtn { flex: none; }
+   /* keeps the sr-only label inside the scrolling row */
 .teamclear { flex: none; }
 .toolrow, :root[data-view="mobile"] .toolrow { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; align-items: center; gap: 10px 14px; min-width: 0; }
 .toolrow::-webkit-scrollbar { display: none; }
@@ -1468,9 +1375,7 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 .tools .tsum { flex: none; max-width: 420px; }
 .drafttools, :root[data-view="mobile"] .drafttools { flex: none; flex-wrap: nowrap; white-space: nowrap; }
 #lbtools .spick, #lbseason { flex-wrap: nowrap; white-space: nowrap; }
-.tbhide { flex: none; margin-left: 0; }
 :root[data-view="mobile"] .tabstrip, :root[data-view="mobile"] .toolrow { touch-action: pan-x; overscroll-behavior-x: contain; }
-:root[data-view="mobile"] .tabstrip .search { flex: 0 0 150px; min-width: 150px; }
 .spick .pill.lvl { min-width: 120px; }
 #lbseason .splbl { margin-left: 4px; }
 :root[data-view="mobile"] .tsum { display: inline; font-size: 11px; white-space: nowrap; flex-basis: auto; }
@@ -1611,7 +1516,6 @@ body.tb-folded .toolbar:not(.xtoolbar) { padding-block: 4px; }
 /* The counting stats ride on the plate now, beside the headshot */
 .mplate .hstrip { margin: 4px 0 0; gap: 4px 14px; color: var(--accent-2-dim); flex-basis: 100%; font-size: 12.5px; }
 .mplate .hstrip .hchip b { color: var(--accent-2-ink); font-size: 16px; }
-.mplate .mrank .vlabel { color: var(--accent-2-dim); }
 :root[data-view="mobile"] .mplate .hstrip { gap: 3px 10px; font-size: 11.5px; }
 :root[data-view="mobile"] .mplate .hstrip .hchip b { font-size: 14px; }
 /* the searched player's page runs edge to edge on the phone, like the popup card */
@@ -1638,22 +1542,10 @@ body.modal-open header.top { z-index: 60; }
 
 /* Hide filters and bring them back from the same corner: one control that stays put whether the
    filters are open or tucked away, at the right-hand end of the toolbar's top row either way. */
-.tbfold { justify-content: flex-end; }
-.tbfoldsum { flex: 1 1 auto; text-align: left; }
-.tbhide, .tbfoldbtn {
-  flex: none; margin-left: auto; order: 2;
-  border: 1px solid var(--btn-line, var(--hair)); background: transparent; color: var(--ink-2);
-  font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
-  padding: 4px 9px; border-radius: 0; white-space: nowrap; cursor: pointer; min-height: 24px;
-}
-.tbhide:hover, .tbfoldbtn:hover { background: var(--btn); border-color: var(--btn); color: var(--btn-ink); }
-:root[data-view="mobile"] .tbhide, :root[data-view="mobile"] .tbfoldbtn { min-height: 32px; padding: 0 10px; font-size: 12px; }
-:root[data-view="mobile"] .tbhide span, :root[data-view="mobile"] .tbfoldbtn span { display: none; }
 /* The rankings row: the grey bar carries the list and the editing tools, and Hide filters sits beside it as its
    own button, so the bar stops short of it. */
 .setrow { display: flex; align-items: stretch; gap: 8px; min-width: 0; }
 .setrow > .setbar { flex: 1 1 auto; min-width: 0; }
-.setrow > .tbhide { flex: none; align-self: center; margin: 0; }
 .setbar #ranktools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; flex: 1 1 100%; min-width: 0; }
 :root[data-view="mobile"] .setrow { gap: 6px; }
 :root[data-view="mobile"] .setbar #ranktools { gap: 6px; }
@@ -1707,13 +1599,7 @@ body.modal-open header.top { z-index: 60; }
 
 /* One button, one size: "Hide filters" and "Filters" sit in the same box so nothing shifts when it toggles,
    and on the Rankings page it is as tall as the grey bar beside it. */
-.tbhide, .tbfoldbtn {
-  width: 124px; height: 34px; min-height: 0; padding: 0; gap: 4px;
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.setrow > .tbhide { height: auto; align-self: stretch; }
-:root[data-view="mobile"] .tbhide, :root[data-view="mobile"] .tbfoldbtn { width: 42px; height: 32px; min-height: 0; padding: 0; }
-:root[data-view="mobile"] .setrow > .tbhide { height: 32px; align-self: center; }   /* the phone's bar is two lines: don't stretch a 42px button down it */
+   /* the phone's bar is two lines: don't stretch a 42px button down it */
 
 /* the position is a pill now, not a strip of tabs */
 .postabpill { min-width: 168px; height: 34px; }
@@ -1735,18 +1621,8 @@ body.modal-open header.top { z-index: 60; }
   background: var(--surface) !important; color: var(--ink-2);
   border: 2px solid var(--ink-2); box-shadow: 0 0 0 2px var(--surface); opacity: 0.9; z-index: 2;
 }
-.cmpnote { margin: -4px 0 10px; font-weight: 600; color: var(--ink-2); }
-.cmpnote .cmpkey { font-weight: 400; color: var(--muted); }
-.cmppill.on { border-color: var(--accent-2); }
-.mchips .cmppill, .xseasons .cmppill { background: var(--surface); border-color: var(--surface); }
-.mchips .cmppill.on, .xseasons .cmppill.on { background: var(--accent-2); border-color: var(--accent-2); color: var(--accent-2-ink); }
 
 /* ---------- Home: section headings above each grid of cards ---------- */
-.hub .hubsec { display: flex; align-items: center; gap: 10px; margin: 24px 0 10px; font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
-.hub .hubsec::after { content: ""; flex: 1; height: 1px; background: var(--hair); }
-.hub .hubsec:first-of-type { margin-top: 4px; }
-:root[data-view="mobile"] .hub .hubsec { margin: 16px 0 8px; font-size: 11.5px; }
-.hub .hubgrid.one { grid-template-columns: minmax(260px, 360px); }
 
 /* ---------- Header menus (Savant-style): the opener is a menu, not a page ----------
    The list is position: fixed so the mobile nav's own sideways scroll can't clip it; app.js
@@ -1780,14 +1656,6 @@ body.modal-open header.top { z-index: 60; }
 
 /* A comparison column's heading: season, split and dates, stacked over the sample line */
 .cmpctl { display: grid; gap: 5px; margin: 4px 0 5px; }
-.cmpsel {
-  width: 100%; min-width: 0; height: 28px; padding: 0 22px 0 8px; border: 1px solid var(--hair); border-radius: 0;
-  background: var(--surface); color: var(--ink); font: 600 12px/1 var(--body); cursor: pointer;
-  -webkit-appearance: none; appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-  background-position: calc(100% - 12px) 12px, calc(100% - 8px) 12px; background-size: 4px 4px, 4px 4px; background-repeat: no-repeat;
-}
-.cmpsel:hover, .cmpsel:focus { border-color: var(--accent-2); }
 .cmpdates { display: flex; align-items: center; gap: 3px; }
 .cmpdate {
   flex: 1 1 0; min-width: 0; height: 26px; padding: 0 4px; border: 1px solid var(--hair); border-radius: 0;
@@ -1797,7 +1665,6 @@ body.modal-open header.top { z-index: 60; }
 .cmpdash { color: var(--muted); font-size: 11px; }
 .cmpgrid .chead .plate { text-align: left; }
 .cmpgrid .chead .cmeta { justify-content: flex-start; font-size: 11px; }
-:root[data-view="mobile"] .cmpsel { height: 26px; font-size: 11px; padding-right: 18px; }
 :root[data-view="mobile"] .cmpdate { height: 24px; font-size: 10px; padding: 0 2px; }
 /* the phone has room for one date box per line, and the plate must never push the grid wider */
 .cmpgrid .chead, .cmpgrid .chead .plate, .cmpctl { min-width: 0; }
@@ -1841,9 +1708,6 @@ body.modal-open header.top { z-index: 60; }
 .cmpgrid .chead h3 { font-size: 13px; }
 
 /* The stat glossary: one box per stat, and the page's own explanation folded away under it */
-.notes .fold-sec { margin-top: 10px; }
-.notes .foldhead { font-family: var(--display); font-weight: 700; font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); background: none; border: 0; padding: 6px 0; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-.notes .foldhead:hover { color: var(--accent-2-text); }
 .glossary { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin: 6px 0 4px; }
 .gitem { padding: 10px 12px; background: var(--surface); border: 1px solid var(--hair); border-top: 3px solid var(--accent-2); }
 .gitem b { display: block; font-family: var(--display); font-size: 13.5px; color: var(--accent); letter-spacing: 0.02em; }
@@ -1886,40 +1750,15 @@ body.modal-open header.top { z-index: 60; }
 :root:not([data-view="mobile"]) .cmpgrid { justify-content: center; }
 
 /* ---- uERA and batted-ball luck: the leaderboard's own table, rigid columns and all ---- */
-.tblcard { margin: 6px 0 8px; width: max-content; max-width: 100%; }
 /* the batted-ball mix rides beside the uERA table: a label, a small bar, the rate uERA uses */
-.uerarow { display: flex; flex-wrap: wrap; gap: 4px 22px; align-items: flex-start; }
-.mixcol { margin: 10px 0 8px; }
-.mixhead { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
-.mixrow { display: grid; grid-template-columns: 78px 124px 46px; align-items: center; gap: 8px; height: 27px; }
-.mixrow .mlbl { font-size: 12px; color: var(--ink-2); text-align: right; }
-.mixrow .mval { font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
-.mixfoot { font-size: 11px; color: var(--muted); margin-top: 3px; text-align: right; }
-.tblcard table { width: auto; table-layout: fixed; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }   /* auto + a colgroup = the table is exactly as wide as its columns */
-.tblcard thead th { background: var(--band); color: var(--band-ink); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em;
-  text-transform: uppercase; text-align: center; padding: 6px 10px; white-space: nowrap;
-  border: 1px solid var(--accent-2); border-bottom-width: 2px; }
-.tblcard tbody td { text-align: center; padding: 5px 10px; border: 1px solid var(--hair); color: var(--ink); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
-.tblcard tbody tr:nth-child(even) td { background: var(--stripe); }
-.tblcard tbody tr:hover td { background: var(--hover); }
-.tblcard td.l, .tblcard th.l { text-align: center; font-weight: 700; }   /* beats the old .luck td.l left-align */
-.tblcard td.l b { font-size: 12.5px; font-weight: 700; color: var(--ink); }
-.tblcard td.exp { color: var(--accent-2-text); }          /* the expected column is the point of the table */
-.tblcard td.own { font-weight: 700; }
-.tblcard td.lg { color: var(--ink-2); font-weight: 400; }
+   /* auto + a colgroup = the table is exactly as wide as its columns */
+   /* beats the old .luck td.l left-align */
+          /* the expected column is the point of the table */
 /* the head strip: the one number the table is about, then the real one beside it */
-.tblhead { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 8px; padding: 6px 10px;
-  width: 0; min-width: 100%;   /* the strip stretches to the table but never makes the card wider than it */
-  background: var(--accent-wash); border-bottom: 1px solid var(--hair); font-size: 13px; }
-.tblhead b { font-size: 14px; color: var(--ink); letter-spacing: 0.01em; }
-.tblhead .tsub { color: var(--ink-2); }
-.tblhead .tsep { color: var(--muted); }
 .chip2 { display: inline-block; min-width: 42px; padding: 1px 7px; border-radius: 0; font-weight: 700; font-size: 11.5px; text-align: center; }
 .chip2.lucky { background: var(--accent-wash); color: var(--accent-2-text); box-shadow: inset 0 0 0 1px var(--accent-2); }
 .chip2.unlucky { background: rgba(200, 16, 46, 0.12); color: var(--red, #c8102e); box-shadow: inset 0 0 0 1px rgba(200, 16, 46, 0.45); }
 .chip2.even { background: var(--surface-2); color: var(--muted); box-shadow: inset 0 0 0 1px var(--hair); }
-:root[data-view="mobile"] .tblcard { overflow-x: auto; width: auto; }
-:root[data-view="mobile"] .tblcard table { width: 100%; min-width: 340px; }
 
 /* ---- desktop: a popup or player card fits the window and scrolls inside itself, so it never drifts ---- */
 :root:not([data-view="mobile"]) .modal { display: flex; align-items: center; justify-content: center; overflow: hidden;
@@ -1966,28 +1805,8 @@ body.playerwide .wrap, body.playerwide .top { max-width: none; padding-inline: m
   background: var(--surface); border: 1px solid var(--accent-2); border-radius: 0; overflow: hidden; }
 .pcol > * { flex: none; }
 .pscroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: auto; padding: 4px 16px 12px; }
-.ppage .pcolC .note { font-size: 11px; color: var(--muted); margin: 8px 0 0; }
-.pcolA .rawstats { margin-top: 0; }
 
 /* the player card, laid out after Savant's: his action shot as a banner, the cut-out over it, the rest centred */
-.splate { position: relative; text-align: center; padding: 0 14px 10px; background: var(--surface); }
-.splate .sbanner { height: 124px; margin: 0 -14px; background-size: cover; background-position: 50% 18%;
-  background-repeat: no-repeat; background-color: var(--surface-2); }
-.splate .mug { display: block; width: 80px; height: 80px; margin: -46px auto 0; position: relative;
-  border-radius: 50%; object-fit: cover; object-position: top; background: var(--surface);
-  border: 3px solid var(--surface); box-shadow: none; }
-.splate .mug.initials { display: grid; place-items: center; font-family: var(--display); font-weight: 700;
-  font-size: 26px; color: var(--ink-2); background: var(--surface-2); }
-.splate h2 { margin: 6px 0 0; font-family: var(--display); font-weight: 500; font-size: 30px; line-height: 1.08;
-  letter-spacing: 0; color: var(--ink); }
-.splate .steam { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 5px;
-  font-size: 14px; color: var(--ink-2); }
-.splate .slogo { width: 19px; height: 19px; flex: none; }
-.splate .sbio { margin-top: 5px; font-size: 12px; color: var(--ink-2); }
-.splate .sdraft { margin-top: 3px; font-size: 11.5px; color: var(--muted); }
-.splate .sdraft b { color: var(--ink-2); font-weight: 700; }
-:root[data-view="mobile"] .splate .sbanner { height: 140px; }
-:root[data-view="mobile"] .splate h2 { font-size: 23px; }
 /* the player page's pinned header: the blue plate edge to edge, every filter in its right-hand side */
 body.playerwide #xboard { overflow: visible; border: 0; box-shadow: none; }   /* no outline round the page, as on a phone; the header runs to the window's edges */
 body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
@@ -2022,8 +1841,6 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .phf input:disabled { opacity: 0.55; }
 .phlast { display: flex; gap: 6px; align-items: center; }
 .phlast .unadd { color: var(--band-ink); }
-.phstatic { display: flex; align-items: center; height: 28px; padding: 0 10px; font-size: 13px; font-weight: 600;
-  color: var(--band-ink); border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 0; white-space: nowrap; }
 .phsum { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 10px; font-size: 12px; color: var(--band-ink); }
 .phsum .winnote { color: var(--band-ink); opacity: 0.85; }
 .phsum .splitwarn .linkbtn { color: inherit; }
@@ -2072,8 +1889,6 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
   background-image: radial-gradient(circle, var(--accent-2) 1.5px, transparent 1.7px);
   background-size: 9px 4px; background-repeat: repeat-x; }
 .pctbox .pctfoot { margin: 9px 0 0; font-size: 10.5px; color: var(--muted); text-align: center; }
-.ppage .hgroups { grid-template-columns: minmax(0, 1fr); max-width: none; }
-.ppage .hcol, .ppage .hgroup { min-width: 0; }
 /* bars styled after Savant's: a full-width light track, the fill from the left edge, a round marker at its end,
    a dashed rule under each row, and the poor / average / great scale over the top of the first one */
 .ppage .meter, .ppage .hcard .meter { grid-template-columns: minmax(0, 1fr) minmax(60px, 1.5fr) 56px; gap: 10px; font-size: 12.5px; }
@@ -2085,32 +1900,18 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .ppage .meter .bub { font-size: 12px; font-weight: 700; box-shadow: 0 0 0 2px var(--surface); }
 .ppage .meter .val { font-weight: 600; }
 .ppage .meters { gap: 0; padding-top: 0; }
-.ppage .fold-sec { margin-top: 6px; }
-.ppage .fold-sec:first-child { margin-top: 0; }
-.ppage .foldhead { font-size: 11.5px; padding: 5px 0; letter-spacing: 0.05em; }
 .ppage .rawstats table { font-size: 11.5px; }
 .ppage .meters { padding-top: 2px; }
-.pcolC .cardnotes { margin: 0; }
 :root[data-view="mobile"] .ppage { grid-template-columns: 1fr; height: auto; min-height: 0; }
 /* on the phone the player page runs edge to edge, but its boxes keep a 12px white margin from the screen's sides */
 :root[data-view="mobile"] .ppage { padding-inline: 12px; }
 :root[data-view="mobile"] .pbelow2 { margin-inline: 12px; }
 /* and the narrower card still fits the season table whole, down to a 360px phone */
-:root[data-view="mobile"] .pcolA .pscroll { padding-inline: 10px; }
-:root[data-view="mobile"] .pcolA .heatcard table { min-width: 0; }
-:root[data-view="mobile"] .pcolA .heatcard col:first-child { width: 58px !important; }   /* beats the 74px the colgroup sets inline */
-:root[data-view="mobile"] .pcolA .heatcard thead th, :root[data-view="mobile"] .pcolA .heatcard tbody td { padding-inline: 2px; font-size: 11px; }
-@media (max-width: 385px) {
-  :root[data-view="mobile"] .pcolA .heatcard col:first-child { width: 50px !important; }
-  :root[data-view="mobile"] .pcolA .heatcard thead th, :root[data-view="mobile"] .pcolA .heatcard tbody td { padding-inline: 1px; font-size: 10px; }
-}
+   /* beats the 74px the colgroup sets inline */
 :root[data-view="mobile"] .pcol { overflow: visible; }
 :root[data-view="mobile"] .pscroll { overflow: visible; }
 
 /* the third panel's tab strip and the rolling line under it */
-.ppage .ptabs.xtabs { gap: 4px; margin: 0 0 8px; flex-wrap: nowrap; }
-.ppage .ptabs.xtabs .ptab { flex: 1 1 0; min-width: 0; font-size: 10px; padding: 0 4px; height: 25px;
-  letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ppage .ptabbody .meters + .meters { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--rule); }
 /* the rolling line under the Advanced panel's bars, set like them (see rollSvg in app.js) */
 .rollbox { margin-top: 14px; }
@@ -2146,8 +1947,6 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
   font: 400 11.5px/1.25 var(--body); color: var(--svtext); }
 .rolltip b { font-size: 13px; color: var(--ink); }
 .rolltip[hidden] { display: none; }
-.rollhd .rollseg { flex: none; }
-.rollhd .rollseg .segbtn { height: 22px; min-height: 22px; padding: 0 6px; font-size: 11px; letter-spacing: 0; }
 .rollbox .rollnone { margin: 6px 0 0; font-size: 12px; color: var(--svtext); }
 /* the right box: every section at once, each under the same heading the middle box uses */
 .xsec + .xsec { margin-top: 16px; }
@@ -2158,7 +1957,6 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .rollsvg { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--body); }
 .rollsvg text { font-size: 12px; fill: var(--svtext); dominant-baseline: middle; font-variant-numeric: normal; }
 .rollsvg .rtick, .rollsvg .rnow { text-anchor: end; }
-.rollsvg .rnow { font-weight: 700; fill: var(--ink); }
 .rollsvg .rmon { text-anchor: start; }
 .rollsvg .rlglbl { text-anchor: end; font-size: 10px; letter-spacing: 0.04em; }
 .rollsvg .raxis { stroke: var(--svtext); stroke-width: 1; }
@@ -2170,63 +1968,15 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 
 /* the card's season table, sized to match Savant's (in the site's text face since 30 Sep 2026): 12.8px in #333, bold headings between two
    1px black rules, 18px rows with no padding, the season on screen in pale yellow, the career line on grey */
-.heatcard { width: 100%; max-width: none; margin: 8px 0 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: none; }
-.heatcard table { width: 100%; table-layout: auto; border-collapse: collapse; font: 400 12.8px/18.3px var(--body); color: var(--svtitle); }   /* columns sized to their numbers, as Savant's are */
-.heatcard thead th { padding: 4px 3px; font-size: 12.8px; font-weight: 700; line-height: 18.3px; letter-spacing: 0; text-transform: none;
-  text-align: right; background: var(--surface); color: var(--svtitle); border: 0; border-top: 1px solid var(--svhead); border-bottom: 1px solid var(--svhead); white-space: nowrap; }
-.heatcard tbody td { padding: 0 3px; height: 18.3px; font-size: 12.8px; line-height: 18.3px; font-weight: 400; text-align: right;
-  border: 0; background: none; color: var(--svtitle); white-space: nowrap; }
-.heatcard tbody tr { cursor: pointer; }
-.heatcard tbody tr:nth-child(even) td { background: none; }
-.heatcard tbody tr.here td { background: #fdfbc8; }
-.heatcard tbody tr:hover td { background: var(--hover); }
-.heatcard tbody tr.cartot td { background: #c2c2c2; font-weight: 700; color: #333333; }
-.heatcard tbody tr.cartot { cursor: default; }
-.heatcard td.l, .heatcard th.l { text-align: left; padding-left: 2px; font-weight: 400; }
-.heatcard tbody tr.cartot td.l { font-weight: 700; }
-:root[data-theme="dark"] .heatcard tbody tr.here td { background: rgba(253, 251, 200, 0.16); }
-:root[data-theme="dark"] .heatcard tbody tr.cartot td { background: #4a4a4a; color: #eeeeee; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .heatcard tbody tr.here td { background: rgba(253, 251, 200, 0.16); }
-  :root:not([data-theme="light"]) .heatcard tbody tr.cartot td { background: #4a4a4a; color: #eeeeee; }
-}
+   /* columns sized to their numbers, as Savant's are */
 
 /* Player apps: every filter on a row of its own, a column of labels down the left and the controls lined up after it */
-.pappshd { font-family: var(--display); font-weight: 400; font-size: 17px; letter-spacing: 0; color: var(--ink);
-  text-align: center; margin: 12px 0 10px; }
-.papps { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 8px 10px; }
-.papps .parow { display: contents; }
-.papps .palbl { min-width: 0; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--svtext); }
-.papps .parow > :not(.palbl) { min-width: 0; justify-self: start; }
-.papps .seg { display: inline-flex; flex-wrap: nowrap; max-width: 100%; }
-.papps .segbtn { font-size: 11px; padding: 0 9px; height: 28px; min-height: 28px; white-space: nowrap; }
 /* the date boxes and the Last box: plain bordered fields on the card's own white, never the band's white-on-colour */
-.papps .datesbar, .papps .lastrow { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; margin: 0; padding: 0; }
-.papps .datesbar .to, .papps .lastrow .to { color: var(--svtext); font-size: 12px; }
-.papps .datesbar input[type="date"], .papps .lastin { height: 28px; min-width: 0; border: 1px solid var(--hair); border-radius: 0;
-  background: var(--surface); color: var(--ink); padding: 0 6px; font: 400 13px/1 var(--body); }
-.papps .datesbar input[type="date"] { width: 124px; }
-.papps .lastin { width: 64px; }
-.papps .datesbar input:disabled, .papps .lastin:disabled { opacity: 0.45; }
-.papps .unadd { height: 28px; }
-.papps .splitwarn { grid-column: 1 / -1; font-size: 12px; color: var(--svtext); }
-.papps .tbtn { height: 28px; font-size: 11px; }
-:root[data-view="mobile"] .papps { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
-:root[data-view="mobile"] .papps .datesbar input[type="date"], :root[data-view="mobile"] .papps .lastin { font-size: 16px; height: 34px; }   /* 16px: iOS won't zoom */
-:root[data-view="mobile"] .papps .datesbar input[type="date"] { width: auto; flex: 1 1 0; -webkit-appearance: none; appearance: none; text-align: left; }
-:root[data-view="mobile"] .papps .datesbar { width: 100%; }
-:root[data-view="mobile"] .papps .parow > .datesbar { justify-self: stretch; }
-:root[data-view="mobile"] .papps .segbtn { height: 32px; min-height: 32px; font-size: 11px; padding: 0 10px; }
-:root:not([data-view="mobile"]) .ppage.cmp2page { grid-template-columns: minmax(0, 1fr); }
-.cmp2page .pcolB .card { padding: 0; background: none; border: 0; grid-template-columns: minmax(0, 1fr); }
+   /* 16px: iOS won't zoom */
 
 .pacts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.papps .starbox { margin-top: 0; }
 
 /* the bars keep their own spacing at the top of the panel; the chart sits at the foot of the third one */
-.pcolC .pscroll { display: flex; flex-direction: column; }
-.pcolC .ptabbody { display: flex; flex-direction: column; }
-.pcolC .note { margin-top: 10px; }
 
 /* the strip under the three boxes: Savant hangs its tabs there, and the panels open beneath them */
 .pbelow2 { margin: 12px 0 18px; }
@@ -2245,8 +1995,6 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .btabbody .rawstats { margin: 0; }
 .btabbody .note { margin: 10px 0 0; font-size: 12px; color: var(--muted); max-width: 70ch; }
 :root[data-view="mobile"] .btab { flex: 1 1 0; padding: 0 6px; font-size: 10.5px; letter-spacing: 0.02em; }
-.btabbody .hgroups { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px 32px; max-width: none; }
-.btabbody .hgroup h4 { margin: 0 0 4px; }
 .btabbody .meter { grid-template-columns: 150px minmax(60px, 1fr) 64px; }
 
 /* ---- Percentile bars: every one on the site is Savant's, in the same pixels as the player page's chart ----
@@ -2307,7 +2055,6 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
    pitcher's second box) at exactly the widths they had beside it, centred under the header */
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB { grid-column: 2 / span 2; }
-:root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolC { grid-column: 4 / span 2; }
 :root:not([data-view="mobile"]) .ppage:not(.cmp2page) > .pcolB.wide { grid-column: 2 / span 4; }
 /* ...but that left a sixth of the window blank on each side of it. The box now hugs its two chart columns: a fixed width
    keeps every bar the length it had, and the tabs and their panels under it take the same width */
@@ -2318,9 +2065,7 @@ body.playerwide #xboard .phead { margin-inline: calc(-1 * min(6vw, 96px)); }
 .pctcols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; align-items: start; }
 :root[data-view="mobile"] .pctcols { grid-template-columns: minmax(0, 1fr); }
 .pctsample { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; padding: 2px 20px 6px; font-family: var(--body); }
-.pctsample .pslbl { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--svtext); margin-right: -4px; }
 .pctsample b { font-size: 16px; font-weight: 700; color: var(--svhead); }
-.pctsample .psu { font-size: 12px; color: var(--svtext); }
 /* the percentile chart itself is one SVG drawn to Savant's numbers (see pctSvg in app.js); these are only its inks */
 .svchart { width: 100%; }
 .svpct { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--body); }
@@ -2418,9 +2163,6 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 /* on the band a pressed box keeps its white (the site's hover wash is see-through, which reads as blue there) */
 .mplate .ddbox:hover, .mplate .ddbox:focus, .mplate .ddbox.ddon { background: var(--surface); border-color: var(--ddline); }
 /* the phone's plate: the Star up by the name, Filters beside "full season", and the season's title pinned at its foot */
-.phname { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.phname h2 { min-width: 0; }
-.phname .starbox { flex: none; margin: 0; }
 :root[data-view="mobile"] .phead .mrank { margin-top: 4px; }
 :root[data-view="mobile"] .phead .ptitle { flex-basis: 100%; padding: 4px 0 0; }
 .phead .ptitle { padding: 0; }
@@ -2431,7 +2173,6 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root[data-view="mobile"] .phead .pthd { font-size: 19px; }
 :root[data-view="mobile"] .modal.pcard .phead .mplate { padding-left: 12px; }          /* as on the phone's page */
 :root[data-view="mobile"] .modal.pcard .phead .ptitle { flex-basis: calc(100% + 46px); margin-right: -46px; }   /* centred on the card: the 58px kept clear for the × isn't the title's */
-.phname .starbtn.staricon { width: 34px; padding: 0; font-size: 18px; line-height: 1; }
 :root[data-view="mobile"] .phead .mrank .phtoggle { height: 30px; padding: 0 12px; }
 /* a desktop's plate in three: the cut-out and his lines, the season's title dead centre, the filters on the right —
    equal outer columns, so the title sits over the middle of the page */
@@ -2439,12 +2180,10 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
   align-items: center; column-gap: 22px; }
 .phleft { grid-area: left; display: flex; align-items: center; gap: 22px; min-width: 0; align-self: stretch; }
 .phleft > div { align-self: center; min-width: 0; }
-.phmid { grid-area: mid; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 :root:not([data-view="mobile"]) .phead .phfilt { grid-area: right; }
 /* a narrower window can't fit the three across: the title takes its own centred row under them */
 @media (max-width: 1300px) {
   :root:not([data-view="mobile"]) .phead .mplate { grid-template-columns: 1fr auto; grid-template-areas: "left right" "mid mid"; row-gap: 8px; }
-  :root:not([data-view="mobile"]) .phmid { flex-direction: row; justify-content: center; gap: 18px; }
 }
 :root:not([data-view="mobile"]) .phead .phfilt { justify-self: end; margin-left: 0; }
 :root:not([data-view="mobile"]) .modal.pcard .phead .mplate { padding-inline: 58px; }   /* even sides round the centred title; the × sits in the right one */
@@ -2510,7 +2249,6 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 :root:not([data-view="mobile"]) .phead .mplate, :root:not([data-view="mobile"]) .modal.pcard .phead .mplate {
   grid-template-columns: auto 1fr; grid-template-areas: "left mid"; align-items: center; row-gap: 0; }
 :root:not([data-view="mobile"]) .phead .mplate.phright { grid-template-columns: auto 1fr auto; grid-template-areas: "left mid right"; }
-:root:not([data-view="mobile"]) .phead .phmid { flex-direction: row; justify-content: center; align-self: center; }
 @media (max-width: 1300px) {
   :root:not([data-view="mobile"]) .phead .mplate { grid-template-columns: auto 1fr; grid-template-areas: "left mid"; }
 }
@@ -2618,19 +2356,16 @@ button.pill.ddbox { font-family: inherit; text-align: left; }
 .fanttop { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
 .fanttop .field { display: flex; align-items: center; gap: 8px; margin: 0; }
 .fanttop .field > span { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--svtext); }
-.fantedit { font-size: 12px; color: var(--accent-2-text); }
 .fanttiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; margin: 6px 0 14px; }
 .fanttile { border: 1px solid var(--hair); background: var(--surface); padding: 8px 10px; display: flex; flex-direction: column; gap: 1px;
             box-shadow: none; }
 .fanttile b { font-size: 20px; font-variant-numeric: tabular-nums; color: var(--ink); line-height: 1.1; }
 .fanttile span { font-size: 11px; color: var(--svtext); }
 .fanttile i { font-style: normal; font-size: 11px; font-weight: 700; color: var(--accent-2-text); }
-.uerabox .ubt.fantcats td.fw { color: var(--svtext); }
 .uerabox .ubt td.fp { font-weight: 700; }
 .uerabox .ubt td.fp.neg { color: #c0392b; }
 .uerabox .ubt tr.ftot td { border-top: 2px solid var(--ink); font-weight: 700; }
 .fanth { margin: 16px 0 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-2-text); }
-.uerabox .ubt.fantlog td.fgs, .uerabox .ubt.fantlog td.fdec { color: var(--svtext); font-size: 11.5px; }
 .fantbox > .tbtn { margin-top: 8px; }
 :root[data-view="mobile"] .fanttile b { font-size: 17px; }
 :root[data-view="mobile"] .uerabox .ubt.fantlog td, :root[data-view="mobile"] .uerabox .ubt.fantlog th { padding-left: 2px; padding-right: 2px; font-size: 12px; }
@@ -2748,17 +2483,12 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
 /* the notes footer: colour key + layout switch on the left, Stat glossary / How this page works buttons on the right,
    each opening an info window instead of a fold-out (Sean, 26 Sep 2026) */
 .notes { display: flex; align-items: center; justify-content: space-between; gap: 10px 24px; flex-wrap: wrap; }
-.notesleft { display: grid; gap: 2px; min-width: 0; flex: 1 1 420px; line-height: 1.4; }
-.notesbtns { display: flex; gap: 8px; flex: none; }
 .modal-panel:has(.infomodal) { width: min(920px, calc(100vw - 32px)); max-width: none; }
 .infomodal { max-height: calc(100dvh - 110px); grid-template-rows: auto minmax(0, 1fr) auto; }
 .infomodal .infobody { overflow-y: auto; overscroll-behavior: contain; min-height: 0; padding-right: 4px; }
 .infomodal .row { justify-content: flex-end; }
-:root[data-view="mobile"] .notesbtns { width: 100%; }
-:root[data-view="mobile"] .notesbtns .btn { flex: 1 1 0; }
 :root[data-view="mobile"] .infomodal { max-height: calc(100dvh - 60px); padding: 14px; }
 :root[data-view="mobile"] main.wrap > .notes { font-size: 11px; gap: 6px; margin-top: 6px; }
-:root[data-view="mobile"] .notesbtns .btn { padding: 6px 4px; font-size: 11px; white-space: nowrap; min-height: 0; }
 .phf.w3 { grid-column: 1 / -1; justify-self: end; }
 .uerabox .ubt.fantyrs tr.fcur td { background: var(--accent-wash); font-weight: 700; }   /* the season the tab is showing */
 /* Titans: the header buttons are outlined in the banner stripe's red (Sean, 26 Sep 2026) */
@@ -2782,7 +2512,6 @@ body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],
    last player (Sean, 26 Sep 2026) */
 body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"]) .board > .board-scroll,
 :root:not([data-view="mobile"]) body[data-mode="fantasy"] .ftable-wrap > .fscroll { padding-bottom: 14px; }
-.stuffbox .stuffvs { margin: 0 0 10px; }
 .btabbody > .uerabox.stuffbox { max-width: 1080px; }   /* the arsenal table has sixteen columns */
 /* the rows' box doesn't rubber-band: an iPhone pulled past the first row left a blank gap above it (Sean, 26 Sep 2026) */
 :root:not([data-view="mobile"]) body[data-mode="fantasy"] .ftable-wrap > .fscroll { overscroll-behavior: none; }
@@ -2958,14 +2687,8 @@ body:is([data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-m
 .hub.home .hnote { margin: 4px 0 8px; font-size: 12.5px; color: var(--muted); }
 .hub.home h4 { margin: 10px 0 4px; font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .hub.home .htwo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; }
-.hub.home .hthree { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 18px; }
-.hub.home .hlist { margin: 0; padding: 0; list-style: none; counter-reset: h; }
-.hub.home .hlist li { counter-increment: h; display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; grid-template-areas: "n name val" "n team side"; column-gap: 8px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--hair); }
-.hub.home .hlist li::before { content: counter(h); grid-area: n; font-size: 12px; color: var(--muted); font-weight: 700; }
 .hub.home .hname { grid-area: name; justify-self: start; padding: 0; border: 0; background: none; font: inherit; font-size: 14px; font-weight: 700; color: var(--ink); cursor: pointer; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 .hub.home .hname:hover { color: var(--accent-2-text); text-decoration: underline; }
-.hub.home .hteam { grid-area: team; font-size: 11.5px; color: var(--muted); }
-.hub.home .hval { grid-area: val; font-size: 14px; font-variant-numeric: tabular-nums; color: var(--ink); }
 .hub.home .hside { grid-area: side; justify-self: end; font-size: 11px; color: var(--muted); }
 .hub.home > .note { margin-top: 14px; padding: 8px 12px; background: var(--surface); border-radius: 0; }
 :root[data-view="mobile"] .hub.home { padding: 10px 10px 20px; }
@@ -2982,7 +2705,6 @@ body[data-mode="home"] main.wrap > .notes { display: none; }   /* the lists' per
 /* a two-way card's Hitting / Pitching toggle and Filters share one line on a phone instead of stacking (a taller band) */
 :root[data-view="mobile"] .phead .mrank { column-gap: 6px; }
 :root[data-view="mobile"] .phead .mrank .seg button { padding-inline: 7px; }
-:root[data-view="mobile"] .phead .mrank .vlabel:has(+ .seg) { flex-basis: 100%; }
 /* and a phone's touch on the card can only move it up and down (or zoom): iOS would still rubber-band a box sideways
    under a diagonal drag. The tab row, the stat strip and the tables are scrollers of their own, so they still slide */
 :root[data-view="mobile"] .modal.pcard :is(.modal-panel, #modal-body, .cardscroll) { touch-action: pan-y pinch-zoom; overscroll-behavior-x: none; }
@@ -2992,11 +2714,6 @@ body[data-mode="home"] main.wrap > .notes { display: none; }   /* the lists' per
 .toolrow, :root[data-view="mobile"] .toolrow { flex-wrap: wrap; overflow: visible; }
 .drafttools, :root[data-view="mobile"] .drafttools { flex: 0 1 auto; flex-wrap: wrap; white-space: normal; }
 /*  - the list's foot is one line of links: the colour scale, Colour key · Stat glossary · How this page works · Layout */
-.notes .noteline { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; line-height: 1.5; }
-.notes .noteline .scale { margin: 0 2px 0 0; }
-.notes .noteline .nsep { color: var(--hair); }
-.notes .noteline .viewsw { display: inline; }
-.notes .noteline .linkbtn { font-size: inherit; }
 /*  - a quiet pager: plain numbers, only the current page filled */
 :root:root .pager .pbtn, :root:root:not([data-view="mobile"]) .pager .pbtn, :root:root[data-view="mobile"] .pager .pbtn { border: 0; background: transparent; color: var(--accent); }
 :root:root .pager .pbtn[aria-current="page"] { background: var(--rule); color: #fff; }
@@ -3007,7 +2724,6 @@ body[data-mode="home"] main.wrap > .notes { display: none; }   /* the lists' per
 body[data-sorthl="on"] .pct.sorted, body[data-sorthl="on"] .score.sorted { box-shadow: none; }
 :root:root:root .toolrow > .tools { flex: 1 1 100%; min-width: 0; flex-wrap: wrap; }
 :root:root:root .toolrow .tbtns { flex-wrap: wrap; min-width: 0; }
-.notes .noteline .viewsw { margin: 0; }
 body[data-sorthl="on"] .pct.sorted:not(.hot), body[data-sorthl="on"] .score.sorted:not(.hot),
 body[data-sorthl="on"][data-heat="off"] .pct.sorted:not(.hot), body[data-sorthl="on"][data-heat="off"] .score.sorted:not(.hot) { background: transparent !important; font-weight: 800; color: var(--ink); }
 /*  - the pattern behind the pages at a fifth of its strength, both of its layers */
@@ -3041,7 +2757,6 @@ body[data-mode="appearance"] main.wrap > .notes { display: none; }
 #pboard .scheme .spv-dots { display: flex; gap: 4px; padding: 8px 10px 2px; }
 #pboard .scheme .spv-dots i { width: 14px; height: 14px; display: block; }
 #pboard .scheme .sname { padding: 4px 10px 0; font-size: 13px; }
-#pboard .scheme .sblurb { display: none; }
 #pboard .fonts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
 #pboard .fontcard { gap: 4px; padding: 10px 12px; border: 1px solid var(--hair); background: var(--surface); cursor: pointer; }
 #pboard .fontcard[aria-pressed="true"] { border: 2px solid var(--rule); box-shadow: none; }
@@ -3062,18 +2777,13 @@ body[data-mode="appearance"] main.wrap > .notes { display: none; }
 #pboard .sitedef .note, #pboard .sitedef > span { margin: 0; }
 /* Fantasy, calmer (Sean, 28 Sep 2026: "funky and somewhat overwhelming"): the secondary filters fold behind one button with a
    one-line summary beside it; the note under the table is two lines until you open it */
-.fbar .fsum { font-size: 12px; color: var(--muted); align-self: center; }
 .fbar .fltbtn.on { background: var(--rule); color: #fff; }
 .fnote:not(.open) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .fnotemore { font-size: 12px; margin: 2px 0 0; align-self: flex-start; }
-:root[data-view="mobile"] .fbar .fsum { flex: 1 1 100%; }
 /* the Fantasy page isn't a board inside the card, so no second frame round it (everything sat against that line); the table
    gets the 1px frame instead, like the other lists */
 :root:root:root body[data-mode="fantasy"] main.wrap #fboard { border: 0; padding-top: 8px; }
 :root:root body[data-mode="fantasy"] .ftable-wrap { border: 1px solid var(--rule); }
-:root[data-view="mobile"] .fsubnav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; overflow: visible; }
-:root[data-view="mobile"] .fsubnav a { text-align: center; margin: 0; }
-:root[data-view="mobile"] .fbar .fsum { flex: 1 1 140px; }
 /* the leaderboards' coloured column fills its cells edge to edge down the rows, as the Fantasy tables' do (Sean, 28 Sep 2026) */
 #rows .row-main > .hot, #rows .row-main .pcts > .hot { align-self: stretch; margin: -8px 0; height: auto; min-height: 0; font-weight: 700; box-shadow: none; }
 :root[data-view="mobile"] #rows .row-main > .hot, :root[data-view="mobile"] #rows .row-main .pcts > .hot { margin: -4px 0; }
@@ -3146,9 +2856,6 @@ body:is([data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-m
 .trtable thead th.yr { z-index: 2; }
 
 /* Games tab (pitcher card): Stuff+ by appearance, the box line, the picked game's pitches and batted-ball luck */
-.gamesbox .gchart { margin: 4px 0 8px; }
-.gamesbox .gchart .gsea { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 3; }
-.gamesbox .gchart .trdot.on { stroke: var(--ink); stroke-width: 2.5; r: 6; }
 .gamesbox .glogscroll { max-height: 320px; overflow: auto; border: 1px solid var(--hair); }
 .gamesbox .ubt.glog th { position: sticky; top: 0; z-index: 1; }
 .gamesbox .ubt.glog td, .gamesbox .ubt.glog th, .gamesbox .ubt.gpt td, .gamesbox .ubt.gpt th { white-space: nowrap; text-align: center; font-variant-numeric: tabular-nums; }
@@ -3161,13 +2868,9 @@ body:is([data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-m
 .gamesbox td.lk.unlucky { color: #c8102e; font-weight: 700; }
 .gamesbox td.lk.lucky { color: var(--accent-2-text); font-weight: 700; }
 .gamesbox .gdetail { margin-top: 12px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
-.gamesbox .ubt.gluck { max-width: 460px; }
 .gamesbox .gdetail .gdhd { grid-column: 1 / -1; margin: 0; font-size: 13px; color: var(--ink); }
 .gamesbox .gsub { font-weight: 700; font-size: 12px; margin: 0 0 4px; border-bottom: 2px solid var(--accent-2); padding-bottom: 2px; }
-.gamesbox .ubt.gpt td.plus.xa b, .gamesbox .ubt.gpt td.xa b { display: block; font-weight: 700; }
-.gamesbox .ubt.gpt td.xa i { display: block; font-style: normal; font-size: 11px; opacity: 0.8; }
 .gamesbox .gverdict { font-size: 12px; margin: 6px 0 0; }
-.gamesbox .ubt.gluck { width: 100%; }
 .gamesbox .gbox { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
 .gamesbox .gtile { border: 1px solid var(--hair); padding: 6px 4px; text-align: center; display: flex; flex-direction: column; gap: 1px; }
 .gamesbox .gtile .gl { font-size: 11px; color: var(--muted); font-weight: 600; }
@@ -3178,8 +2881,6 @@ body:is([data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-m
 :root[data-view="mobile"] .gamesbox .gbox { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .gamesbox .ubt.glog { width: 100%; }
 .gamesbox .ubt.glog td { padding-top: 7px; padding-bottom: 7px; }
-.gamesbox .ubt.gpt td.l, .gamesbox .ubt.gpt th:first-child { position: sticky; left: 0; background: var(--surface); z-index: 1; }
-.gamesbox .ubt.gpt td, .gamesbox .ubt.gpt th { padding-left: 6px; padding-right: 6px; }
 .btabbody > .uerabox.gamesbox { max-width: 1200px; }   /* the per-pitch table has nineteen columns */
 .gamesbox .glogscroll, .gamesbox .gchart { max-width: 820px; }
 .gamesbox .gbox { max-width: 820px; }
@@ -3218,13 +2919,9 @@ body:is([data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-m
 .gamesbox .glogscroll { border: 1px solid var(--rule); }
 /* Game Logs, 29 Sep 2026 (Sean): the pitch and luck tables wear the log's thin navy frame, and the log's Season row is frozen
    at the foot of its box — grey and bold — so the full-season line is always in view while the games scroll */
-.gamesbox .gframe { border: 1px solid var(--rule); }
-.gamesbox .gframe > .ubt.gluck { max-width: none; }
 .gamesbox .gpart:has(> .gframe > .ubt.gluck) { max-width: 460px; }
 :root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog tr.ftot td { position: sticky; bottom: 0; z-index: 2; background: var(--surface-2); font-weight: 700; color: var(--ink); border-top: 2px solid var(--rule); }
 :root:root :is(#modal, #xboard) .btabbody .gamesbox .ubt.glog tr.ftot td.l { z-index: 3; }
-.gamesbox .gframe .ubt td.l, .gamesbox .gframe .ubt th.l, .gamesbox .gframe .ubt th:first-child { padding-left: 8px; }
-.gamesbox .gframe .ubt td:last-child, .gamesbox .gframe .ubt th:last-child { padding-right: 8px; }
 /* the card's Fantasy tab: points per PA coloured by percentile (Sean, 29 Sep 2026) */
 .fantbox .fanttile b.ppachip { display: inline-block; align-self: flex-start; padding: 0 6px; }
 .fantbox .ubt.fantyrs td.ppa { font-weight: 700; text-align: center; }
@@ -3242,18 +2939,8 @@ body:is([data-mode="planner"],[data-mode="mock"],[data-mode="claude"],[data-mode
 .pwsec { margin: 0 0 14px; }
 .pwsec .pwh { margin: 0 0 6px; font-size: 13px; color: var(--ink); border-bottom: 2px solid var(--accent-2); padding-bottom: 3px; }
 .pwsec .pwscroll { max-height: 360px; overflow: auto; border: 1px solid var(--rule); }
-.pwtable td.l { text-align: left; white-space: nowrap; }
-.pwtable td.pwp { font-weight: 700; }
 .pbfilters .pwweek { font-weight: 700; color: var(--ink); min-width: 9em; text-align: center; }
 /* the planner's tables: the Leaderboard's pale header, names left, numbers centred */
-.pwtable { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
-.pwtable thead th { position: sticky; top: 0; z-index: 1; background: var(--surface-2); color: var(--muted); font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em;
-  text-transform: uppercase; padding: 7px 8px; border-bottom: 2px solid var(--accent-2); text-align: center; white-space: nowrap; }
-.pwtable thead th.pwho { text-align: left; }
-.pwtable td { padding: 6px 8px; border-bottom: 1px dashed var(--hair); text-align: center; font-variant-numeric: tabular-nums; }
-.pwtable td.pwho { text-align: left; white-space: nowrap; }
-.pwtable td.pwho small { color: var(--muted); }
-.pwtable .pwname { font-weight: 700; color: var(--ink); text-decoration: none; }
 :root[data-view="mobile"] body:is([data-mode="planner"],[data-mode="mock"],[data-mode="claude"],[data-mode="flaws"]) #pitchboard > .note { display: block; }   /* the loading / off-season notes are the page here */
 
 /* ---------- The minimal pass, second round (Sean, 29 Sep 2026: "do all of those changes") ----------
@@ -3287,10 +2974,6 @@ body:is([data-mode="planner"],[data-mode="mock"],[data-mode="claude"],[data-mode
 .modemenu li .linkbtn { display: block; width: 100%; margin: 0; padding: 1px 12px; border: 0; background: none; color: var(--ink); text-align: left;
   font-family: var(--display); font-size: 19px; font-weight: 400; line-height: 1.45; text-decoration: none; cursor: pointer; white-space: nowrap; }
 .modemenu li .linkbtn:hover, .modemenu li .linkbtn:focus-visible { background: var(--hover); outline: none; }
-.modemenu li .viewsw { padding: 6px 12px 4px; margin-top: 2px; border-top: 1px solid var(--hair); font-size: 13px; color: var(--muted); white-space: nowrap; }
-.modemenu li .viewsw .linkbtn { display: inline; width: auto; padding: 0; font-family: inherit; font-size: 13px; color: var(--accent); }
-.modemenu li .viewsw .linkbtn[aria-pressed="true"] { color: var(--ink); font-weight: 600; }
-.modemenu li .viewsw .linkbtn:hover { background: none; text-decoration: underline; }
 
 /* 4. the Filters dropdown: its four panels as tabs across the top, so the panels' own titles go */
 #pop.grppop #pop-body > .textmodal > h2#modal-title { display: none; }
@@ -3438,7 +3121,6 @@ body[data-mode="rankings"] #rankcount { display: none; }
 :root:root .fnote:not(.open) { display: none; }
 /* the data's date moved from the desktop header into the More menu */
 .stamp { display: none !important; }
-#moremenu .morestamp { padding: 8px 14px 6px; border-top: 1px solid var(--hair); color: var(--muted); font-size: 12.5px; cursor: default; }
 /* the per-page box sits in Filters beside the minimum */
 .prow .psize { display: inline-flex; align-items: center; gap: 6px; }
 .prow .psize { margin-left: 0; }
@@ -3452,15 +3134,9 @@ body[data-mode="rankings"] #rankcount { display: none; }
 .svpct .svnum { font-size: 12px; }
 .svpct .svline { fill: color-mix(in srgb, var(--ink) 7%, var(--surface)); }
 .svpct .svlbl { fill: var(--ink); font-weight: 600; }
-.svpct .svlbl.svval { fill: var(--ink-2); font-weight: 400; }
 .svpct .svsecrule { fill: var(--ink); }
 /* minimal pass 5 (Sean, 30 Sep 2026) */
 /* the Star is a ☆ / ★ right after the player's name */
-:root:root .phead h2 .starbox.staricon { display: inline-flex; vertical-align: middle; margin: 0 0 0 8px; position: relative; }
-:root:root .phead h2 .staricon .starbtn { border: 0 !important; background: none !important; box-shadow: none !important; padding: 0 2px; min-height: 0; height: auto; font-size: 0.8em; line-height: 1;
-  color: var(--muted); font-family: var(--body); cursor: pointer; }
-:root:root .phead h2 .staricon .starbtn.on { color: var(--ink); }
-:root:root .phead h2 .staricon .starbtn:hover { color: var(--ink); }
 /* the season picker under the name, left-aligned, in the title's own type */
 :root:root .phead .ptitle.pinline { flex-basis: auto; margin: 2px 0 2px; padding: 0; text-align: left; }
 :root:root .phead .ptitle.pinline .pthd { font-size: 19px; }
@@ -3482,7 +3158,6 @@ body[data-mode="rankings"] #rankcount { display: none; }
 .phead .hstrip .seg { vertical-align: middle; }
 :root[data-view="mobile"] .phead .hstrip .seg button { padding-inline: 6px; }
 .phead .phtog + .seg { margin-left: 0; }
-.phead h2 .phshare { border: 0; background: none; padding: 0 0 0 10px; font: 600 12.5px var(--body); color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; vertical-align: middle; cursor: pointer; }
 .svchart { position: relative; }
 .svpct .svrow { cursor: pointer; }
 .statpop { position: absolute; left: 16px; right: 16px; z-index: 5; background: var(--surface); border: 1px solid var(--rule); padding: 8px 10px; font-size: 12.5px; line-height: 1.4; color: var(--ink); }
@@ -3551,7 +3226,6 @@ body[data-mode="rankings"] #rankcount { display: none; }
 :root:root:not([data-view="mobile"]) #rows .row-main > .rank { align-items: flex-end; }
 :root:root:not([data-view="mobile"]) #rows .row-main > .who, :root:root:not([data-view="mobile"]) #colhead > .h.left { box-shadow: none; border-right: 1px solid var(--hair); }
 /* the Fantasy table the same (desktop): the sorted column's fill stops at each row's rule instead of running through it */
-:root:root:not([data-view="mobile"]) .ftable:not(.pbtable) tbody td.fsorted { background-clip: padding-box; border-left: 0; border-right: 0; }
 /* Minimal pass 8 (Sean, 30 Sep 2026). The card: team, positions, bats and age on the season line in the text face */
 .phead .pthd .mlinein { font-family: var(--body); font-size: 12.5px; color: var(--ink-2); letter-spacing: 0; white-space: normal; vertical-align: 1px; }
 :root:root .hub.home .hline { font-size: 12px; color: var(--muted); margin-bottom: 10px; }   /* the data line, small and grey (minimal pass 8) */
@@ -3744,10 +3418,6 @@ tr.mkmine td { background: var(--accent-wash, var(--surface-2)); }
 /* Column-set tabs over the Leaderboard / Recent (Sean, 3 Oct 2026, from the redesign prototype): Hitters / Pitchers, then
    Standard · Advanced · Batted ball · Plate discipline (· Stuff) as underlined text tabs; the row stays put above the rows' box */
 .lbtabs { display: flex; align-items: center; gap: 4px 14px; padding: 6px 12px 0; background: var(--surface); border-bottom: 1px solid var(--hair); flex: none; }
-.lbtabs .lbside { margin-bottom: 6px; flex: none; }
-.lbtabs .lbside .segbtn { white-space: nowrap; }
-.lbtabs .lbtabrow { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; min-width: 0; align-self: stretch; }
-.lbtabs .lbtabrow::-webkit-scrollbar { display: none; }
 .lbtabs .lbtab { appearance: none; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; font-weight: 600; padding: 6px 10px 8px; margin-bottom: -1px; border-bottom: 2px solid transparent; white-space: nowrap; cursor: pointer; }
 .lbtabs .lbtab:hover { color: var(--ink); }
 .lbtabs .lbtab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
@@ -3773,13 +3443,10 @@ tr.mkmine td { background: var(--accent-wash, var(--surface-2)); }
    filters is"), a line under the buttons; the rows' box is then the whole framed table. The filter buttons are one per tab of the
    dropdown (Position · Filters · Stats · Splits · Dates · Table), each filled light blue while open or in effect */
 :root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop #lbtabs { display: inline-flex; align-items: center; gap: 8px; flex: none; border: 0; background: none; padding: 0; margin: 0; }
-:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop #lbtabs .lbside { margin: 0; }
 :root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) .board > .board-scroll { border-top: 1px solid var(--hair); }
 :root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop > .tbtns { display: inline-flex; flex-wrap: wrap; gap: 6px; }
 :root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop > .tbtns { gap: 4px; }
 :root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop .tbtns .tbtn { padding: 0 8px; font-size: 11.5px; }
-.quickwin { flex-wrap: wrap; gap: 6px; }
-.quickwin .btn.on { background: var(--accent-2); color: var(--rule); border-color: var(--accent-2); }
 /* the dropdown without its tab row (the Leaderboard's buttons are the tabs): the panel's content starts at the top */
 #pop.grppop.notabs #pop-body > .textmodal { padding-top: 6px; }
 /* the Min PA / IP box in the Leaderboard's top row (Sean, 3 Oct 2026), dressed like the buttons beside it */
@@ -3789,8 +3456,6 @@ tr.mkmine td { background: var(--accent-wash, var(--surface-2)); }
 /* the Leaderboard's table in a plain navy outline (Sean, 3 Oct 2026: "to the leaderboard tables can you add an outline") */
 :root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) .board > .board-scroll { border: 1px solid var(--rule); }
 /* home: two columns per card (leaders, trending) and no wordmark (Sean, 3 Oct 2026: "get rid of Sean's Site on it too") */
-.hub.home .hthree.htwo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-:root[data-view="mobile"] .hub.home .hthree.htwo { grid-template-columns: minmax(0, 1fr); }
 header.top .wordmark { display: none; }
 /* the Leaderboard's column names in the Stuff+ table's header format (Sean, 3 Oct 2026): the same 11px grey labels on the pale
    ground, but the Stuff+ board's taller row (8px above and below) */
@@ -3845,8 +3510,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root .simrow .simname:hover { text-decoration: underline; }
 :root:root:root:root .simrow .simname + .simname::before { content: "· "; color: var(--muted); }
 /* home lists: the team line quieter, the value a touch bigger (item 13) */
-:root:root:root:root .hub.home .hteam { font-size: 11px; }
-:root:root:root:root .hub.home .hval { font-size: 13.5px; }
 /* the card's tables whatever their class (Season Stats has none), and the game log's, in the same skin */
 :root:root:root:root:root .btabbody table th, :root:root:root:root:root .gamesbox table th { font-size: 11px; color: var(--muted); font-weight: 400; background: var(--surface-2); border-bottom: 1px solid var(--hair); padding-top: 8px; padding-bottom: 8px; }
 :root:root:root:root:root .btabbody table td, :root:root:root:root:root .gamesbox table td { font-size: 13px; height: 46px; box-sizing: border-box; font-variant-numeric: tabular-nums; }
@@ -3855,7 +3518,7 @@ header.top .wordmark { display: none; }
 /* the card's own table rules carry #modal / #xboard, so the skin needs them too */
 :root:root:root #modal .btabbody table thead th, :root:root:root #xboard .btabbody table thead th, :root:root:root #modal .btabbody table th, :root:root:root #xboard .btabbody table th { font-size: 11px; color: var(--muted); font-weight: 400; background: var(--surface-2); border-bottom: 1px solid var(--hair); padding-top: 8px; padding-bottom: 8px; }
 :root:root:root #modal .btabbody table td, :root:root:root #xboard .btabbody table td { font-size: 13px; height: 46px; box-sizing: border-box; font-variant-numeric: tabular-nums; }
-@media (min-width: 1180px) { :root:not([data-view="mobile"]) .hub.home .hname { font-size: 13px; } :root:not([data-view="mobile"]) .hub.home .hval { font-size: 13px; } }   /* three cards across: names a touch smaller so fewer clip */
+@media (min-width: 1180px) { :root:not([data-view="mobile"]) .hub.home .hname { font-size: 13px; }  }   /* three cards across: names a touch smaller so fewer clip */
 /* table headers navy with white text (Sean, 3 Oct 2026: "make the tables headers be navy and white text"); the sorted column name
    light blue on the navy */
 :root:root:root:root:root #colhead, :root:root:root:root:root #colhead .h, :root:root:root:root:root #colhead .h:first-child, :root:root:root:root:root #colhead .h:nth-child(2) { background: var(--rule); color: #fff; }
@@ -3923,36 +3586,13 @@ header.top .wordmark { display: none; }
 /* Whiffs to strikeouts (6 Oct 2026): the Pitching+ tab's conversion table under the arsenal table, and the four-dial summary under it */
 .stuffbox .kconv { margin-top: 22px; }
 .stuffbox .kconv .rollhd { margin-bottom: 6px; }
-.stuffbox .kconv2 { margin-top: 8px; }
-.stuffbox .kconv2 td.l { white-space: nowrap; }
-.stuffbox .kconvt td:not(.l), .stuffbox .kconvt th:not(.l) { text-align: right; }
 
 /* Spring tab (Sean, 6 Oct 2026): a pitch's spring line, last season's, the change and the season after, in the Pitching+ table's dress */
-.springbox .springt td.l.pname { font-weight: 600; vertical-align: top; white-space: nowrap; }
-.springbox .springt td.src, .springbox .springt th.src { text-align: left; color: var(--ink-2, #4a5563); white-space: nowrap; font-size: 11px; }
-.springbox .springt tr.sph td { border-top: 1px solid var(--line-soft, #c9ced6); }
-.springbox .springt td.dim, .springbox .springt th.dim { color: var(--svtext, #6b7280); }
-.springbox .springt tr.sdelta td { font-size: 11.5px; }
-.springbox .springt tr.scur td { color: var(--ink-2, #4a5563); }
-.springbox .springt .sflag { display: inline-block; margin-left: 6px; padding: 0 5px; font-size: 10px; border: 1px solid var(--line-soft, #c9ced6); color: var(--ink-2, #4a5563); }
-.springbox .springt .sflag.new { border-color: var(--accent-2, #7fb3e0); color: var(--ink); }
-.springbox .note { margin-top: 10px; }
 
 /* Strikeout profile (6 Oct 2026): the archetype line, the why, and the dials' skill / noise table on the Pitching+ tab */
-.stuffbox .karch .karchwhy { margin: 2px 0 8px; }
-.stuffbox .karcht td.l { white-space: nowrap; }
 
 /* Claude rankings (Sean, 6 Oct 2026): the Fantasy menu's 2027 starter list — a row per pitcher in the Stuff+ board's table, tap it for the comment */
-.cltable tr.clrow { cursor: pointer; }
-.cltable tr.clrow.open td { background: var(--surface-2); }
-.cltable td.cltier { color: var(--muted); }
-.cltable td.cllate { white-space: nowrap; }
-.cltable tr.clcomment td { white-space: normal; padding: 10px 14px 14px; border-bottom: 1px solid var(--rule); background: var(--surface); text-align: left; }
-.cltable .clwrap { position: sticky; left: 10px; display: block; max-width: min(92ch, calc(100vw - 72px)); text-align: left; }
-.cltable .clc { margin: 0 0 6px; font-size: 13.5px; line-height: 1.45; max-width: 92ch; }
-.cltable .clh { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.4; }
 .pbfilters .pbsearch { height: 34px; padding: 0 10px; border: 1px solid var(--line-soft); background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; min-width: 180px; }
-:root[data-view="mobile"] .cltable tr.clcomment td { padding: 8px 10px 12px; }
 
 /* ============================================================================================================
    The warm pass (Sean, 6 Oct 2026: "convert the site to the formatting and theme that you believe ... would be most
@@ -4062,7 +3702,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .svpct .svline { fill: var(--pctrack); rx: 2.5px; }
 :root:root:root:root:root:root .svpct rect[fill]:not(.svline):not(.svsecrule):not(.svtick) { rx: 3px; }
 :root:root:root:root:root:root .svpct .svlbl { fill: var(--ink); font-size: 12.5px; font-weight: 600 !important; }
-:root:root:root:root:root:root .svpct .svlbl.svval { fill: var(--ink); font-weight: 700 !important; font-family: var(--display); font-size: 14px; }
 :root:root:root:root:root:root .svpct .svsecrule { fill: var(--hair); }
 :root:root:root:root:root:root .svpct .svbulb { stroke: var(--surface); stroke-width: 2.5; }
 :root:root:root:root:root:root .svpct .svsample, :root:root:root:root:root:root .svpct .svslbl { fill: var(--muted); }
@@ -4075,34 +3714,21 @@ header.top .wordmark { display: none; }
 
 /* the card's standard rows (6 Oct 2026): label · track · percentile pill · value */
 :root:root:root:root:root:root .pctstd { position: relative; padding: 4px 0 8px; }
-:root:root:root:root:root:root .prowhead { display: grid; grid-template-columns: 118px 1fr 40px 54px; gap: 10px; align-items: end; padding: 6px 0 2px; font-size: 10.5px !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; color: var(--muted) !important; }
-:root:root:root:root:root:root .prowhead span:nth-child(2) { text-align: left; } :root:root:root:root:root:root .prowhead span:nth-child(4) { text-align: right; }
-:root:root:root:root:root:root .psec { padding: 10px 0 2px; }
-:root:root:root:root:root:root .psecname { font-size: 11px !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; color: var(--muted) !important; padding: 0 0 6px; border-bottom: 1px solid var(--hair); margin-bottom: 4px; }
+ :root:root:root:root:root:root .psec { padding: 10px 0 2px; }
 :root:root:root:root:root:root .prow { display: grid; grid-template-columns: 118px 1fr 40px 54px; gap: 10px; align-items: center; min-height: 32px; cursor: pointer; border-radius: 8px; }
 :root:root:root:root:root:root .prow:hover { background: var(--accent-wash); }
 :root:root:root:root:root:root .prow.sub .plbl { padding-left: 14px; color: var(--ink-2); font-size: 12.5px; }
-:root:root:root:root:root:root .prowgap { height: 10px; }
 :root:root:root:root:root:root .plbl { border: 0; background: transparent; padding: 0; text-align: left; font: inherit; font-size: 13.5px; color: var(--ink); font-weight: 600 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
-:root:root:root:root:root:root .ptrk { position: relative; height: 10px; border-radius: 5px; background: var(--pctrack); overflow: hidden; }
-:root:root:root:root:root:root .pfill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; }
-:root:root:root:root:root:root .ppct { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; height: 24px; border-radius: 12px; font-size: 12.5px; font-weight: 700 !important; font-variant-numeric: tabular-nums; }
-:root:root:root:root:root:root .prow.none .ppct { background: var(--surface-2); color: var(--muted); }
 :root:root:root:root:root:root .pval { font-family: var(--display); font-size: 17px; font-weight: 700 !important; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
 :root:root:root:root:root:root[data-view="mobile"] .prow, :root:root:root:root:root:root[data-view="mobile"] .prowhead { grid-template-columns: 130px 1fr 36px 48px; gap: 8px; }
 :root:root:root:root:root:root[data-view="mobile"] .plbl { font-size: 13px; }
 :root:root:root:root:root:root .pctstd .statpop { left: 0; right: 0; }
 
 /* the Pitching+ tab's strikeout profile, simplified (6 Oct 2026): one line that adds up, five dial rows in the card's dress */
-:root:root:root:root:root:root .ksum .ksumline { margin: 2px 0 10px; font-size: 14px; color: var(--ink-2); }
-:root:root:root:root:root:root .ksum .ksumline b { color: var(--ink); font-weight: 700 !important; }
-:root:root:root:root:root:root .krows { display: flex; flex-direction: column; }
 :root:root:root:root:root:root .krow { display: grid; grid-template-columns: 1fr 56px 110px; gap: 12px; align-items: center; min-height: 44px; border-top: 1px solid var(--hair); }
 :root:root:root:root:root:root .kname { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-:root:root:root:root:root:root .klab { font-size: 14px; font-weight: 600 !important; color: var(--ink); }
 :root:root:root:root:root:root .ksub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 :root:root:root:root:root:root .kpill { display: inline-flex; align-items: center; justify-content: center; height: 26px; border-radius: 13px; font-size: 13px; font-weight: 700 !important; font-variant-numeric: tabular-nums; background: var(--surface-2); color: var(--muted); }
-:root:root:root:root:root:root .kword { font-size: 12px; color: var(--muted); text-align: right; }
 :root:root:root:root:root:root[data-view="mobile"] .krow { grid-template-columns: 1fr 52px 92px; gap: 8px; }
 
 /* softer edges inside the card (Sean, 6 Oct 2026: "if you think the player cards should have softer edges thats great too") */
@@ -4111,22 +3737,12 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .mplate .headshot, :root:root:root:root:root:root .mplate img, :root:root:root:root:root:root .hs, :root:root:root:root:root:root .avatar { border-radius: 50% !important; }
 :root:root:root:root:root:root .stuffbox .stufft td.plus, :root:root:root:root:root:root td.plus, :root:root:root:root:root:root .heat { border-radius: 8px; }
 
-:root:root:root:root:root:root .krow.khead { min-height: 26px; border-top: 0; font-size: 10.5px !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; color: var(--muted) !important; }
-:root:root:root:root:root:root .krow.khead .kc { text-align: center; } :root:root:root:root:root:root .krow.khead .kr { text-align: right; }
-:root:root:root:root:root:root .krow.ktot { border-top: 2px solid var(--hair); }
-:root:root:root:root:root:root .krow.ktot .klab, :root:root:root:root:root:root .krow.krest .klab { font-weight: 700 !important; }
-:root:root:root:root:root:root .krow.krest .kpill { background: var(--surface-2) !important; color: var(--ink) !important; }
+ :root:root:root:root:root:root .krow.krest .kpill { background: var(--surface-2) !important; color: var(--ink) !important; }
 :root:root:root:root:root:root .rollbox .rollhd { padding-left: 1px; }   /* the tracked 11px small caps' first letter has a negative side bearing and the box clips — "▸ITCHING+" (6 Oct 2026) */
 /* the K% build-up (Sean, 6 Oct 2026): Step · K% pts · running K% · Repeats? */
 :root:root:root:root:root:root .krow { grid-template-columns: 1fr 56px 52px 110px; }
 :root:root:root:root:root:root[data-view="mobile"] .krow { grid-template-columns: 1fr 50px 44px 84px; gap: 6px; }
-:root:root:root:root:root:root .krun { font-family: var(--display); font-size: 17px; font-weight: 700 !important; color: var(--ink); text-align: center; font-variant-numeric: tabular-nums; }
-:root:root:root:root:root:root .krow.kstart .krun, :root:root:root:root:root:root .krow.ktot .krun { font-size: 19px; }
-:root:root:root:root:root:root .krow.kstart .kpill:not(.khis) { background: none !important; }
-:root:root:root:root:root:root .krow.ktot .krun { color: var(--ink); }
 :root:root:root:root:root:root .krow.krest { border-top: 2px solid var(--hair); }
-:root:root:root:root:root:root .krow.ktot { border-top: 1px solid var(--hair); border-bottom: 2px solid var(--ink); }
-:root:root:root:root:root:root .krow.ktot .kname .ksub { font-weight: 400 !important; }
 :root:root:root:root:root:root[data-view="mobile"] .ksub { white-space: normal; overflow: visible; }   /* a phone wraps the league / percentile line instead of cutting it */
 /* ---- the proposed layout, built (Sean, 6 Oct 2026: "Implement both of those") ----
    Leaderboard: one control row (Hitters · SP · RP, Filters, Standard ▾, Season ▾), the count and Min box on a quiet line under it,
@@ -4134,12 +3750,8 @@ header.top .wordmark { display: none; }
    Card: the bio on the season line, four tiles with percentiles, Filters / Raw under them with the view's name at the right. */
 :root:root:root:root:root:root #pagertop { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 :root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop { flex-wrap: wrap; overflow: visible; gap: 6px; padding: 0 0 6px; }
-:root:root:root:root:root:root #pagertop .lbbreak { flex-basis: 100%; height: 0; margin: 0; padding: 0; }
 :root:root:root:root:root:root body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop .pcount { margin-left: 2px; display: inline; font-size: 12.5px; color: var(--muted); }
 :root:root:root:root:root:root #pagertop > #minfield.topmin { margin-left: auto; }
-:root:root:root:root:root:root #pagertop .posseg { display: inline-flex; border: 1px solid var(--line-soft); border-radius: 18px; overflow: hidden; background: var(--surface); }
-:root:root:root:root:root:root #pagertop .posseg .segbtn { height: 34px; min-height: 34px; padding: 0 13px; border: 0; border-radius: 0; background: transparent; color: var(--ink-2); font-size: 13.5px; }
-:root:root:root:root:root:root #pagertop .posseg .segbtn[aria-pressed="true"] { background: var(--btn, var(--ink)); color: var(--btn-ink, var(--ground, var(--surface))); }
 :root:root:root:root:root:root #pagertop .lbtabs { display: inline-flex; gap: 8px; padding: 0; margin: 0; }
 :root:root:root:root:root:root #pagertop .tbtns { display: inline-flex; }
 /* the bands */
@@ -4149,7 +3761,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root #colhead { border-bottom: 1px solid var(--hair); }
 /* the headline cell */
 :root:root:root:root:root:root .score.hero, :root:root:root:root:root:root[data-view="mobile"] .score.hero { background: transparent !important; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--heat) !important; font-size: 19px; line-height: 1; }
-:root:root:root:root:root:root .score.hero .ppill { font-style: normal; font-family: var(--body); font-size: 10px; font-weight: 700 !important; color: #fff; background: var(--heat); border-radius: 8px; padding: 1px 6px; line-height: 13px; letter-spacing: 0; }
 /* the card band */
 :root:root:root:root:root:root .phead .pthd .hbio.inline { display: inline; font-family: var(--body); font-size: 12.5px; color: var(--ink-2); letter-spacing: 0; white-space: normal; vertical-align: 1px; }
 :root:root:root:root:root:root .phead .htiles { display: flex; gap: 8px; width: 100%; flex-basis: 100%; grid-column: 1 / -1; grid-area: auto; }
@@ -4166,8 +3777,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] .phead .tile { padding: 7px 8px; border-radius: 12px; }
 :root:root:root:root:root:root[data-view="mobile"] .phead .tile .v { font-size: 21px; }
 :root:root:root:root:root:root[data-view="mobile"] .phead .mplate { gap: 8px 12px; }
-:root:root:root:root:root:root #pagertop .posseg .segbtn { border: 0 !important; border-radius: 0 !important; height: 34px !important; min-height: 34px !important; box-shadow: none !important; }
-:root:root:root:root:root:root #pagertop .posseg .segbtn + .segbtn { border-left: 1px solid var(--line-soft) !important; }
 :root:root:root:root:root:root[data-view="mobile"] .phead .tile .p { white-space: normal; line-height: 1.2; }
 :root:root:root:root:root:root .phead .phleft { align-self: center; }
 :root:root:root:root:root:root .score.hero { font-size: 19px !important; font-weight: 800 !important; font-family: var(--display); }
@@ -4260,25 +3869,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop .pgap { font-size: 12px; color: var(--muted); padding: 0 1px; }
 :root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"]) #pagertop { padding: 0 8px 4px; }
 /* the K% build-up in five plain columns (Sean, 6 Oct 2026: "just show the stat and the league avg then the impact to k% and then the updated k%") */
-:root:root:root:root:root:root .krows.kfive .krow { grid-template-columns: 1fr 52px 52px 60px 56px; gap: 8px; min-height: 40px; }
-:root:root:root:root:root:root[data-view="mobile"] .krows.kfive .krow { grid-template-columns: 1fr 44px 44px 54px 48px; gap: 5px; min-height: 38px; }
-:root:root:root:root:root:root .krows.kfive .klab { font-size: 14px; font-weight: 600 !important; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-:root:root:root:root:root:root[data-view="mobile"] .krows.kfive .klab { font-size: 13px; }
-:root:root:root:root:root:root .krows.kfive .knum { font-variant-numeric: tabular-nums; text-align: center; font-size: 14px; color: var(--ink); }
-:root:root:root:root:root:root .krows.kfive .knum:nth-child(3) { color: var(--muted); }
-:root:root:root:root:root:root .krows.kfive .kpill { justify-self: center; min-width: 48px; text-align: center; }
-:root:root:root:root:root:root .krows.kfive .kpill.kplain { background: none !important; color: var(--muted) !important; }
-:root:root:root:root:root:root .krows.kfive .krun { font-size: 16px; }
-:root:root:root:root:root:root .krows.kfive .krow.ktot .krun, :root:root:root:root:root:root .krows.kfive .krow.kstart .krun { font-size: 17px; }
-:root:root:root:root:root:root .krows.kfive .krow.ktot .knum:nth-child(2) { font-weight: 700; }
-:root:root:root:root:root:root .krows.kfive .knum.khis { justify-self: center; min-width: 44px; padding: 3px 6px; border-radius: 999px; font-weight: 700 !important; font-size: 13px; }
-:root:root:root:root:root:root[data-view="mobile"] .krows.kfive .knum.khis { min-width: 40px; padding: 3px 4px; font-size: 12.5px; }
-:root:root:root:root:root:root .krows.kfive .krow.ksub { border-top: 2px solid var(--hair); }
-:root:root:root:root:root:root .krows.kfive .krow.ksub .klab { font-weight: 700 !important; }
-:root:root:root:root:root:root .krows.kfive .krow.krest { border-top: 1px solid var(--hair); }
 /* the subtotal row stands out (Sean, 6 Oct 2026: "make the row color different so it clearly stands out as a subtotal"), no running K% on it */
-:root:root:root:root:root:root .krows.kfive .krow.ksub { background: color-mix(in srgb, var(--ink) 6%, var(--surface)); margin: 0 -10px; padding: 0 10px; border-radius: 8px; border-top: 0; }
-:root:root:root:root:root:root .krows.kfive .krow.ksub + .krow.krest { border-top: 0; }
 
 /* age · height · weight on their own line under team · positions · hand (Sean, 6 Oct 2026) */
 :root:root:root:root:root:root .phead .hbioline .hbio.inline .hbio2 { display: block; font-size: 13px; color: var(--ink-2); margin-top: 1px; }
@@ -4330,9 +3921,6 @@ header.top .wordmark { display: none; }
 /* 2. controls: squared, one segment */
 :root:root:root:root:root:root :is(.btn, .tbtn, .segbtn, .btab, .pill, .fpage button, .ftabs button, .pbfilters button, .pbfilters .pill, .xseason, .pnav button, .pnavrow button, .popfoot .btn, .tierbtn, .linkpill) { border-radius: 4px !important; border-color: var(--rail) !important; font-weight: 500 !important; }
 :root:root:root:root:root:root .seg, :root:root:root:root:root:root .phfiltseg { border-radius: 4px !important; }
-:root:root:root:root:root:root #pagertop .posseg { border: 1px solid var(--accent-2); border-radius: 4px; }
-:root:root:root:root:root:root #pagertop .posseg .segbtn { border-radius: 0 !important; border: 0 !important; border-right: 1px solid var(--accent-2) !important; }
-:root:root:root:root:root:root #pagertop .posseg .segbtn:last-child { border-right: 0 !important; }
 :root:root:root:root:root:root .gsearch input, :root:root:root:root:root:root .gsearch, :root:root:root:root:root:root #gq, :root:root:root:root:root:root .navtog, :root:root:root:root:root:root header.top .btn { border-radius: 4px !important; }
 :root:root:root:root:root:root .pop, :root:root:root:root:root:root #pop, :root:root:root:root:root:root .phwin, :root:root:root:root:root:root .ddlist, :root:root:root:root:root:root .menu, :root:root:root:root:root:root .dropdown { border-radius: 6px !important; }
 :root:root:root:root:root:root main.wrap, :root:root:root:root:root:root body main.wrap { border-radius: 6px; }
@@ -4447,7 +4035,6 @@ header.top .wordmark { display: none; }
 /* the rule over the facts is back, the dividers stay gone; Raw / Stuff lives in the Filters window (Sean, 7 Oct 2026: "put back the border on
    top of the stats we don't need the one in between them, and let's move raw vs stuff to the filters buttons") */
 :root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate > .hrow { border-top: 1px solid var(--onband-line); padding-top: 2px; }
-.phwin .phtwo.phside2 .seg .segbtn[aria-pressed="true"] { background: var(--btn, var(--ink)); color: var(--btn-ink, var(--ground)); }
 /* the card's filter chips under the Filters button (Sean, 7 Oct 2026), right-aligned, white on the band like the button */
 :root:root:root:root:root:root:root:root:root .phead .phctl .mrank.inctl { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; margin: 4px 0 0; max-width: 180px; }
 :root:root:root:root:root:root:root:root:root .phead .phctl .mrank.inctl .fchip { background: #ffffff; color: #111111; border: 1px solid var(--stripe-line, #c8102e); border-radius: 0; font-size: 12px; padding: 2px 6px; }
@@ -4505,33 +4092,15 @@ header.top .wordmark { display: none; }
 /* home, design A (Sean, 7 Oct 2026, from the Home Page Designs canvas: "I like design A"): the last game day as a full-width lead card with headshots,
    big names, a line of what he did and the value in its percentile colour; leaders, Trending and the 2027 starters as three compact cards under it */
 .hub.home .hcard.hlead { margin-bottom: 18px; }
-.hub.home .hbig { margin: 0; padding: 0; list-style: none; }
-.hub.home .hbig li { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; column-gap: 10px; align-items: center; min-height: 58px; border-top: 1px solid var(--hair); }
-.hub.home .hbig .mug { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; object-position: top; background: var(--surface-2, #f3f6fa); }
-.hub.home .hbig .mug.initials { width: 34px; height: 34px; border-radius: 50%; background: var(--surface-2, #f3f6fa); }
-.hub.home .hbig .hwho { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-:root:root:root:root:root:root:root .hub.home .hbig .hname { font-family: var(--display); font-size: 20px; font-weight: 700; }
-.hub.home .hbig .hsub { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-:root:root:root:root:root:root:root .hub.home .hbig .hval { font-family: var(--display); font-size: 26px; font-weight: 700; }
-:root:root:root:root:root:root:root .hub.home .hval.heat { color: var(--heat) !important; }
-:root:root:root:root:root:root:root .hub.home .hlist .hval { font-family: var(--display); font-size: 17px; }
-:root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hbig .hname { font-size: 18px; }
-:root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hbig .hval { font-size: 22px; }
-:root:root:root:root:root:root:root .hub.home .hbig .hval, :root:root:root:root:root:root:root .hub.home .hbig .hname { grid-area: auto; }   /* the .hlist grid areas don't exist on the lead rows */
+   /* the .hlist grid areas don't exist on the lead rows */
 /* home Movers (Sean, 7 Oct 2026): "was → now" percentile pills in the value's place */
 .hub.home .hmove { display: inline-flex; align-items: center; gap: 5px; }
-.hub.home .hpill { min-width: 28px; text-align: center; padding: 2px 6px; border-radius: 10px; font: 700 12px var(--body); background: color-mix(in srgb, var(--ink) 12%, var(--surface)); color: var(--ink); }
-.hub.home .harrow { font-size: 12px; color: var(--muted); }
-.hub.home .hmovers .hteam { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* every home list wears the lead card's rows (Sean, 7 Oct 2026); the Movers pills sit in the value slot */
-:root:root:root:root:root:root:root .hub.home .hbig .hval.hmove { font-size: 13px; display: inline-flex; }
-:root:root:root:root:root:root:root .hub.home .hbig .hval.hmove .hpill { font-size: 12px; }
 /* the band tidied (Sean, 7 Oct 2026, from Reynolds's card): the filter chip quiet, Filters level with the ×, a smaller phone headshot, no star */
 :root:root:root:root:root:root:root:root:root:root .phead .phctl .mrank.inctl .fchip { border: 1px solid var(--onband-line, rgba(255,255,255,.6)); color: var(--ink); background: var(--surface, #ffffff); }
 :root:root:root:root:root:root:root:root:root:root .phead .phctl .mrank.inctl .fchipx { color: var(--muted); }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .phctl { top: 8px; right: 52px; }   /* the ×'s own line (it sits at 8px / 8px, 34px wide) */
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate .mug { width: 60px; height: 60px; }
-:root:root:root:root:root:root:root:root:root:root .staricon, :root:root:root:root:root:root:root:root:root:root .rowstar { display: none !important; }
 /* the Pitching+ board in the Leaderboard's dress (Sean, 7 Oct 2026: "make the pitching+ table look exactly like the leaderboards one"): the
    blue band of column names with the sorted one lit and red-ruled, banded 52px rows with no cell rules, plain names over a muted line, the
    sorted column's value big in its colour on a clear ground, no frame round the rows */
@@ -4575,16 +4144,9 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .pbctl .phfilt { margin-left: 0; }
 :root:root:root:root:root:root .pbctl .mrank.inctl { margin: 0; display: flex; gap: 6px; flex-wrap: wrap; }
 :root:root:root:root:root:root .pbctl .mrank.inctl .fchip { background: #fff; color: var(--ink-day, var(--ink)); border: 1px solid rgba(255,255,255,.8); border-radius: 4px; }
-:root:root:root:root:root:root .pbmain { display: flex; gap: 22px; align-items: flex-start; }
-:root:root:root:root:root:root .pbphoto { width: 150px; height: 190px; flex: none; border: 2px solid #fff; border-radius: 4px; background: #e6ebf2; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; }
-:root:root:root:root:root:root .pbphoto .mug { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 0; border: 0; box-shadow: none; margin: 0; padding: 0; background: transparent; }
-:root:root:root:root:root:root .pbtext { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 auto; }
-:root:root:root:root:root:root .pbio .pbtext h2 { font: 700 44px var(--display); line-height: 1; margin: 0 0 2px; letter-spacing: 0.01em; }
 :root:root:root:root:root:root .pbl { font-size: 15px; line-height: 1.35; color: var(--band-ink, #fff); }
 :root:root:root:root:root:root .pbl b { font-weight: 700; color: inherit; }
 :root:root:root:root:root:root .pbteam { text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
-:root:root:root:root:root:root .pbmore { align-self: flex-start; margin-top: 4px; height: 34px; padding: 0 16px; min-width: 260px; border: 1px solid rgba(255,255,255,.75); border-radius: 4px; background: rgba(255,255,255,.14); color: var(--band-ink, #fff); font: 600 14px var(--body); cursor: pointer; }
-:root:root:root:root:root:root .pbmorebox { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
 /* the summary line at the band's foot: this season and his career, the columns in groups with dividers */
 :root:root:root:root:root:root .pbsum { border-top: 1px solid rgba(255,255,255,.45); padding-top: 6px; display: flex; flex-direction: column; }
 :root:root:root:root:root:root .pbsrow { display: grid; grid-template-columns: 80px repeat(var(--n), minmax(0, 1fr)); align-items: center; height: 30px; }
@@ -4624,7 +4186,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .sbt tr.tot.first td { border-top: 2px solid var(--ink); }
 :root:root:root:root:root:root .sbt tr.gap td { height: 8px; padding: 0; background: color-mix(in srgb, var(--ink) 5%, var(--surface)); border-right: 0; }
 :root:root:root:root:root:root .sbt tr.milb td { color: var(--ink-2); }
-:root:root:root:root:root:root .sbnote { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.4; }
 /* the bars flow with the page, as wide as it is; the tabs under them */
 :root:root:root:root:root:root #xboard .ppage.pageflow { height: auto; min-height: 0; display: block; width: min(100%, var(--pbox-w)); max-width: none; margin: 12px auto 0; }   /* the popup card's 860px, centred (Sean, 8 Oct 2026: the bars "got longer") */
 :root:root:root:root:root:root #xboard .ppage.pageflow > .pcol { overflow: visible; height: auto; min-height: 0; }
@@ -4632,12 +4193,7 @@ header.top .wordmark { display: none; }
 /* a phone */
 :root:root:root:root:root:root[data-view="mobile"] .phead .mplate.pbio { padding: 10px 12px 8px; gap: 8px; row-gap: 8px; }
 :root:root:root:root:root:root[data-view="mobile"] .pbctl { gap: 8px; }
-:root:root:root:root:root:root[data-view="mobile"] .pbmain { gap: 12px; }
-:root:root:root:root:root:root[data-view="mobile"] .pbphoto { width: 96px; height: 128px; }
-:root:root:root:root:root:root[data-view="mobile"] .pbio .pbtext h2 { font-size: 28px; }
 :root:root:root:root:root:root[data-view="mobile"] .pbl { font-size: 12.5px; }
-:root:root:root:root:root:root[data-view="mobile"] .pbtext { gap: 3px; }
-:root:root:root:root:root:root[data-view="mobile"] .pbmore { min-width: 0; width: 100%; height: 32px; font-size: 13px; align-self: stretch; }
 :root:root:root:root:root:root[data-view="mobile"] .pbsrow { grid-template-columns: 58px; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); height: 26px; }
 :root:root:root:root:root:root[data-view="mobile"] .pbsrow.pbshead { height: 20px; }
 :root:root:root:root:root:root[data-view="mobile"] .pbx { display: none; }
@@ -4650,31 +4206,9 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root[data-view="mobile"] .sbt th { font-size: 11px; }
 :root:root:root:root:root:root[data-view="mobile"] #xboard .ppage.pageflow { padding-inline: 12px; }
 /* the condensed band, pinned once the band has scrolled off a phone's screen; the site header scrolls away there */
-:root:root:root:root:root:root .phcond { position: fixed; top: 0; left: 0; right: 0; z-index: 40; background: var(--band); color: var(--band-ink, #fff); border-bottom: 3px solid var(--stripe-line, #c8102e); padding: 8px 12px 6px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 2px 6px rgba(12,35,64,.18); }
-:root:root:root:root:root:root .phcond[hidden] { display: none; }
-:root:root:root:root:root:root .phcond .pbctl { gap: 8px; flex-wrap: nowrap; }
-:root:root:root:root:root:root .phcond .pbctl .phtog { display: flex; align-items: center; gap: 8px; margin: 0; }
-:root:root:root:root:root:root .phcond .pcname { font: 700 22px var(--display); line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-:root:root:root:root:root:root .phcond .pcline { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-:root:root:root:root:root:root .phcond .pctiles { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); border-top: 1px solid rgba(255,255,255,.45); padding-top: 4px; margin-top: 2px; }
-:root:root:root:root:root:root .phcond .pctile { display: flex; flex-direction: column; align-items: center; gap: 1px; border-right: 1px solid rgba(255,255,255,.45); }
-:root:root:root:root:root:root .phcond .pctile:last-child { border-right: 0; }
-:root:root:root:root:root:root .phcond .pctile i { font-style: normal; font-size: 9.5px; opacity: 0.9; }
-:root:root:root:root:root:root .phcond .pctile b { font: 700 15px var(--display); line-height: 1; }
 :root:root:root:root:root:root[data-view="mobile"] body[data-mode="player"] header.top { position: static; }
 /* the condensed band on a desktop too (Sean, 8 Oct 2026): one row under the sticky site header — Back, the name over the position line, the
    season's tiles, the year and Filters at the right; it sits under the header's own layer so the nav menus still open over it */
-:root:root:root:root:root:root .phcond { z-index: 15; }
-:root:root:root:root:root:root .phcond.desk { flex-direction: row; align-items: center; gap: 22px; padding: 6px min(6vw, 96px); }
-:root:root:root:root:root:root .phcond.desk .pcwho { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 0 1 auto; }
-:root:root:root:root:root:root .phcond.desk .pcname { font-size: 24px; }
-:root:root:root:root:root:root .phcond.desk .pcline { font-size: 13px; }
-:root:root:root:root:root:root .phcond.desk .pctiles { flex: 1 1 auto; max-width: 620px; border-top: 0; padding: 0; margin: 0 auto; }
-:root:root:root:root:root:root .phcond.desk .pctile i { font-size: 10.5px; }
-:root:root:root:root:root:root .phcond.desk .pctile b { font-size: 18px; }
-:root:root:root:root:root:root .phcond.desk .pcctl { display: flex; align-items: center; gap: 14px; margin-left: auto; flex: none; }
-:root:root:root:root:root:root .phcond.desk .pcctl .phtog { display: flex; align-items: center; gap: 10px; margin: 0; }
-:root:root:root:root:root:root .phcond.desk .pbyear .pthd { font-size: 22px; }
 /* no Back button → no controls row: the year, Filters and the chips sit in the band's top-right corner over its empty side, and the photo and bio start
    at the top (Sean, 8 Oct 2026: "this blank space is not needed. Keep it for when the back to the leaderboard is needed but thats it"); a phone keeps
    the row (its year and Filters are its two ends) */
@@ -4690,15 +4224,6 @@ header.top .wordmark { display: none; }
 /* the condensed bar's tiles with a Career row under the season's (Sean, 8 Oct 2026: "add one more row and have it be their career stats, and then
    heat map the woba and xwoba here"): a row-label tile first (the year over Career), every value row a fixed height so the pills and the plain
    numbers line up across the tiles */
-:root:root:root:root:root:root .phcond .pctiles.two { grid-template-columns: auto repeat(var(--n), minmax(0, 1fr)); }
-:root:root:root:root:root:root .phcond .pctile b, :root:root:root:root:root:root .phcond .pctile .pcc { height: 18px; display: flex; align-items: center; justify-content: center; font: 700 15px var(--display); line-height: 1; font-variant-numeric: tabular-nums; }
-:root:root:root:root:root:root .phcond .pctile.lab { align-items: flex-end; padding-right: 8px; border-right: 1px solid rgba(255,255,255,.45); }
-:root:root:root:root:root:root .phcond .pctile.lab b, :root:root:root:root:root:root .phcond .pctile.lab .pcc { font: 600 9.5px var(--body); opacity: .9; }
-:root:root:root:root:root:root .phcond .pctile .uchip.pcchip { font-size: 12px; padding: 0 7px; min-width: 3.2em; line-height: 1.3; height: auto; display: inline-block; }
-:root:root:root:root:root:root .phcond.desk .pctiles { max-width: 720px; }
-:root:root:root:root:root:root .phcond.desk .pctile b, :root:root:root:root:root:root .phcond.desk .pctile .pcc { height: 22px; font-size: 18px; }
-:root:root:root:root:root:root .phcond.desk .pctile.lab b, :root:root:root:root:root:root .phcond.desk .pctile.lab .pcc { font-size: 10.5px; }
-:root:root:root:root:root:root .phcond.desk .pctile .uchip.pcchip { font-size: 14px; padding: 1px 9px; }
 /* the season table at Baseball-Reference's dimensions (Sean, 8 Oct 2026: "the same dimensions as theirs does cause i like how theirs fits cleanly"):
    its own width, not the page's — 13px type in cells 5px wide of padding and 28px tall, the frame hugging the table (a phone's still spans the
    screen and scrolls); the Regular Season / Playoffs tabs on the table's top edge; the club and league rows behind a ▸ under the 162-game average */
@@ -4710,9 +4235,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .sbtabs { display: flex; gap: 3px; margin: 2px 0 -8px; }
 :root:root:root:root:root:root .sbtab { height: 30px; padding: 0 14px; border: 1px solid var(--hair); border-bottom: 0; border-radius: 4px 4px 0 0; background: var(--surface-2); color: var(--ink); font: 600 13px var(--body); cursor: pointer; }
 :root:root:root:root:root:root .sbtab.on { background: var(--btn, var(--accent-2)); color: var(--btn-ink, #fff); border-color: var(--btn, var(--accent-2)); }
-:root:root:root:root:root:root .sbt tr.sbmore td { text-align: left; height: 26px; padding: 0; border-right: 0; }
-:root:root:root:root:root:root .sbt tr.sbmore .sbin { position: sticky; left: 0; display: inline-block; padding: 0 10px; }
-:root:root:root:root:root:root .sbt tr.sbmore .linkbtn { font-size: 12px; font-weight: 600; color: var(--ink); text-decoration: none; padding: 0; border: 0; background: none; cursor: pointer; }
 :root:root:root:root:root:root[data-view="mobile"] .sbscroll { width: 100%; }
 :root:root:root:root:root:root[data-view="mobile"] .sbt { font-size: 12px; }
 /* boxy like B-Ref: square corners on the frame and the tabs, a firmer grid, every column name centred, the totals rows on the band
@@ -4742,33 +4264,11 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .sbt td.sbheat { font-weight: 700; }   /* wOBA / xwOBA / Sprint: the cell itself is the heat map */
 /* the condensed bar takes over from the Summary block at its height (Sean, 8 Oct 2026): app.js sets the height; the content centres in it,
    and a phone's bar is one line — Back, the name, the year, Filters — over the tiles */
-:root:root:root:root:root:root .phcond { box-sizing: border-box; justify-content: center; overflow: hidden; }
-:root:root:root:root:root:root .phcond.desk { padding-top: 0; padding-bottom: 0; }
-:root:root:root:root:root:root .phcond:not(.desk) { padding: 4px 12px 4px; gap: 2px; }
-:root:root:root:root:root:root .phcond:not(.desk) .pbctl { gap: 10px; min-width: 0; }
-:root:root:root:root:root:root .phcond:not(.desk) .pcname { flex: 1 1 auto; min-width: 0; font-size: 19px; }
-:root:root:root:root:root:root .phcond:not(.desk) .pbback.small { flex: none; padding: 2px 6px; font-size: 12px; }
-:root:root:root:root:root:root .phcond:not(.desk) .pctiles { margin-top: 0; padding-top: 2px; }
-:root:root:root:root:root:root .phcond:not(.desk) .pbyear .pthd { font-size: 20px; }
-:root:root:root:root:root:root .phcond:not(.desk) .pbctl .phtog { gap: 6px; }
-:root:root:root:root:root:root .phcond:not(.desk) .phtog .segbtn, :root:root:root:root:root:root .phcond:not(.desk) .phtog .phfilt { min-height: 0; height: 26px; padding: 0 8px; font-size: 14px; line-height: 24px; }
-:root:root:root:root:root:root .phcond:not(.desk) .pctile i { font-size: 9px; line-height: 11px; }
 /* a phone's player page (Sean, 8 Oct 2026): the headshot fills its tile (an older 60px card rule had shrunk it to a stamp), the year and Filters
    stack at the right of the name with no row of their own, and the Summary's wOBA / xwOBA pills get wider columns so they don't run together */
-:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate.pbio .pbphoto .mug { width: 100%; height: 100%; margin: 0; object-fit: cover; object-position: center top; }
-:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext { display: block; }
-:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > * + * { margin-top: 3px; }
-:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl { float: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin: 0 0 4px 10px; }
-:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl + h2 { margin-top: 0; }
-:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbctl .pbsp, :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbctl .pbnoback { display: none; }
-:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbmore { display: block; clear: both; margin-top: 8px; }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbsrow { grid-template-columns: 50px minmax(0, 1.35fr) minmax(0, 1.35fr); grid-auto-columns: minmax(0, 1fr); }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbsv .uchip.pbchip { min-width: 0; max-width: calc(100% - 4px); padding: 1px 5px; font-size: 13.5px; }
-:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate.pbio .pbmain { align-self: stretch; width: 100%; box-sizing: border-box; }
-:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .phtog { flex-direction: column; align-items: stretch; gap: 6px; }
-:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .pthd { font-size: 24px; }
 :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phead .mplate.pbio .pbsum { align-self: stretch; width: 100%; box-sizing: border-box; }
-:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .phtog > *, :root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbio.nobkm .pbtext > .pbctl .phtog .segbtn { width: 100%; box-sizing: border-box; }
 /* the season table (Sean, 8 Oct 2026): air between the band and "Standard batting"; B-Ref's league-leader marks (bold = led his league, bold
    italic = led MLB) and its key on the title row; the two totals rows bold, a cell gold where he holds an all-time MLB career record */
 :root:root:root:root:root:root #xboard .sblock { margin-top: 204px; }
@@ -4833,7 +4333,6 @@ header.top .wordmark { display: none; }
 /* HR / FB by season on the Mix tab (Sean, 8 Oct 2026): every MLB season in the card-table dress, the rates heat-mapped among that season's
    qualified hitters (the whole cell), Diff signed in red (more homers than his contact) / blue (fewer), a bold Career row */
 :root:root:root:root:root:root .hrfbbox { margin-top: 18px; }
-:root:root:root:root:root:root .hrfbscroll { overflow-x: auto; max-width: 100%; }
 :root:root:root:root:root:root table.hrfbt { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 :root:root:root:root:root:root table.hrfbt td, :root:root:root:root:root:root table.hrfbt th { text-align: right; white-space: nowrap; padding: 5px 8px; }
 :root:root:root:root:root:root table.hrfbt td.l, :root:root:root:root:root:root table.hrfbt th.l { text-align: left; }
@@ -4907,7 +4406,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main > .score, :root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main > .score.hero { font: 400 13px var(--body) !important; color: var(--ink) !important; background: none !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main .hot, :root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main > .score.hot { background: var(--heat) !important; color: var(--heatfg, #fff) !important; font: 700 13px var(--body) !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main .lead { font-weight: 700 !important; font-style: italic !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main .ppill { display: none !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows > li.brgap { height: 9px; background: color-mix(in srgb, var(--ink) 9%, var(--band2, var(--accent-2))) !important; list-style: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows > li.brtot > .row-main { background: var(--band2, var(--accent-2)) !important; border-bottom: 1px solid rgba(255,255,255,.5) !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows > li.brtot > .row-main > *, :root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows > li.brtot > .row-main .pcts > *, :root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows > li.brtot .who .name { color: #fff !important; font-weight: 700 !important; border-right-color: rgba(255,255,255,.4) !important; }
@@ -5020,12 +4518,9 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin.on { transform: none; opacity: 1; visibility: visible; pointer-events: auto; transition: transform .18s ease, opacity .18s ease, visibility 0s; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinrow { display: flex; align-items: center; gap: 8px; padding: 8px min(6vw, 96px); }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinrow { padding: 6px 12px; padding-top: calc(6px + env(safe-area-inset-top, 0px)); }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pcname { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 24px/1.1 var(--display) !important; color: var(--ink) !important; }
 @media (prefers-reduced-motion: reduce) { :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin, :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin.on { transition: none; } }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phtog .phfilt { display: inline-flex !important; align-items: center; justify-content: center; height: 36px !important; min-height: 0; width: auto !important; min-width: 0; line-height: 1 !important; white-space: nowrap; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin :is(.pbyear .tsl, .phtog .phfilt) { height: 32px !important; padding: 0 9px !important; font-size: 13.5px !important; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pcname { font-size: 22px !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin.noanim { transition: none !important; }
 
 /* ---- every table's column names bold (Sean, 9 Oct 2026: "bold all of the table headers"): every <th> and the Leaderboard's / Recent's column-name
    row. The :is() with ids carries id weight so it beats the per-table passes' !important font shorthands ---- */
@@ -5040,7 +4535,6 @@ header.top .wordmark { display: none; }
    buttons stay white */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin { background: var(--band2, var(--accent-2)); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinrow { background: var(--band2, var(--accent-2)); }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pcname { color: #fff !important; }
 /* a red line between the pinned name row and the Summary (Sean, 9 Oct 2026: "add a line break of red between it and the bottom part") */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinrow { border-bottom: 2px solid var(--stripe-line, #c8102e); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinband .pbsum { border-top: 0 !important; margin-top: 0; padding-top: 6px; }
@@ -5048,7 +4542,6 @@ header.top .wordmark { display: none; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phpinrow { gap: 5px; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin :is(.pbyear .tsl, .phtog .phfilt) { padding: 0 7px !important; font-size: 13px !important; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pbyear .pthd, :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .phtog { gap: 5px; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .phpin .pcname { font-size: 20px !important; }
 
 /* the B-Ref tables' foot without the blue strip, their rules red (Sean, 9 Oct 2026, the xHR/FB tab: "get rid of that weird blue thing separating the
    table and their totals rows", "make the line breaks red"): the gap row is hidden and the first totals row carries a 2px red rule instead; every
@@ -5061,27 +4554,6 @@ header.top .wordmark { display: none; }
    filter included in the filters button as well as the year and levels ones too"): a framed box in the season table's dress — a blue head with
    "Filters" and Clear, then the cells (Season, Level, Hitting / Pitching, Raw / Stuff, From, To, Last N, hand, home / away, starts / relief) in
    one wrapping row; the table's space above shrinks to make room */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt { margin: 40px 0 0; border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--surface)); background: var(--surface); border-radius: 0 !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfilt { margin: 22px 12px 0; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt .pgfhd { display: flex; align-items: center; justify-content: space-between; background: var(--band2, var(--accent-2)); color: #fff; padding: 0 12px; height: 34px; border-bottom: 2px solid var(--stripe-line, #c8102e); }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt .pgfname { font: 700 16px var(--display); color: #fff; letter-spacing: 0; text-transform: none; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt .pgfclear { color: #fff !important; font: 600 13px var(--body); text-decoration: underline; background: none; border: 0; padding: 0; cursor: pointer; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt .pgfgrid { display: flex !important; flex-wrap: wrap; gap: 12px 18px; padding: 12px; grid-template-columns: none !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt .phf { display: flex; flex-direction: column; gap: 4px; min-width: 0; grid-column: auto !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt .phcap { font: 600 12px var(--body); color: var(--ink-2, var(--muted)); letter-spacing: 0; text-transform: none; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt input[type="date"], :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt .lastin { height: 32px; border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--surface)) !important; border-radius: 0 !important; padding: 0 6px; font: 400 14px var(--body); background: var(--surface); color: var(--ink); }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt .seg { border-radius: 0 !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt .segbtn { border-radius: 0 !important; height: 32px; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt .tsl { height: 32px; min-width: 76px; padding: 0 10px; border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--surface)); border-radius: 0 !important; background: var(--surface); color: var(--ink); font: 600 15px var(--body) !important; text-align: left; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt .splitwarn, :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt .winnote { display: block; padding: 0 12px 10px; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt + .sblock, :root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt + .sblock:has(.sbviews) { margin-top: 40px !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfilt + .sblock, :root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfilt + .sblock:has(.sbviews) { margin-top: 24px !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt .pgfgrid { justify-content: flex-start !important; align-items: flex-end; background: var(--surface) !important; margin: 0 !important; width: auto !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgfilt .phf { align-items: flex-start !important; justify-content: flex-start !important; margin: 0 !important; width: auto !important; flex: 0 0 auto; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfilt .phf.mfull { flex: 1 1 100%; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfilt .phf.mfull .seg { width: 100%; display: flex; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfilt .phf.mfull .segbtn { flex: 1 1 0; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgfilt .segbtn { white-space: nowrap; font-size: 14px !important; padding: 0 8px; }
 
 /* a build-up step's note: the name is a button with a dotted underline, a tap opens the note in a row under it (Sean, 9 Oct 2026) */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .sbt.brt .knotebtn { font: inherit; font-weight: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; text-decoration: underline dotted; text-underline-offset: 3px; letter-spacing: 0; text-transform: none; }
@@ -5322,8 +4794,6 @@ header.top .wordmark { display: none; }
   padding: 6px 0 !important; font: 600 17px/1.2 var(--display) !important; color: var(--onband) !important; letter-spacing: 0 !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel .modesel-txt { font: inherit !important; color: inherit !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel .chev { margin: 1px 0 0 !important; width: 9px; height: 6px; opacity: .85; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > #moresel .chev { display: none !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > #moresel .modesel-txt { font-size: 22px !important; line-height: 1 !important; letter-spacing: 1px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > a:hover, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel:hover, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel.open { box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--onband) 45%, transparent) !important; background: transparent !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > a[aria-current="page"], :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--onband) !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .gsearch { margin-left: 28px !important; }
@@ -5335,7 +4805,6 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > a, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel { box-sizing: border-box !important; height: 32px !important; padding: 0 14px !important;
   border: 1px solid color-mix(in srgb, #fff 75%, transparent) !important; border-radius: 0 !important; background: transparent !important;
   color: #fff !important; box-shadow: none !important; justify-content: center !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > #moresel { padding: 0 10px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > a:hover, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel:hover, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel.open { background: color-mix(in srgb, #fff 18%, transparent) !important; box-shadow: none !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > a[aria-current="page"], :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .modes > .modesel[aria-current="page"] { background: #fff !important; color: var(--ink-day, var(--ink)) !important; border-color: #fff !important; box-shadow: none !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) header.top .gsearch { margin-left: 0 !important; }

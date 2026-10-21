@@ -4,7 +4,7 @@ build_trends.py — league-wide averages by season, for the League Trends page (
 wide trends by year ... to see how the landscapes change").
 
 Output: hist/trends.js (window.DRAFT_TRENDS), a few KB. Every MLB regular season the site has: 2015-2025 from hist/mlb-YYYY.js,
-the current one from data.js + days.js.
+the current one from data.js + days-h.js.
 
 Hitting: exact league totals — every hitter's raw counts summed (the per-player × hand × venue rows of a past season, the per-
 game rows of this one), then turned into rates, so a league rate is pitches / swings / batted balls pooled, not an average of
@@ -24,9 +24,20 @@ HIST = ROOT / "hist"
 TYPES = ["FF", "SI", "FC", "SL", "ST", "CU", "KC", "SV", "CH", "FS"]           # the pitch types worth a column
 
 
+# the hitters' day-row layout as it stood on 20 Oct 2026: a hist/ file without its own "dayFields" is read by it (build_data.py)
+LEGACY_H = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", "osw", "zcon", "ocon", "brl", "air", "pullair", "pa", "ab", "bb", "k",
+            "wnum", "wden", "xnum", "xden", "hh", "ss", "strk", "bsn", "bssum", "bbe", "evsum", "dnum", "pulln", "ld", "gbh", "puh", "evs", "bbt", "bip",
+            "evn", "oppn", "h", "tb", "xbsum", "xssum", "dbsum", "dssum", "mixsum", "mixn", "mxgb", "mxpu", "mxldp", "mxldc", "mxldo", "mxfbp", "mxfbc",
+            "mxfbo", "mxx", "hr", "wbh", "evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn", "evbk", "brfb", "brld", "brgb", "xhgb", "xhld", "xhfb",
+            "xhpu", "bngb", "bnld", "bnfb", "bnpu", "gbp", "gbc", "gbo", "hbp", "ibb", "pk", "pkh", "pkb", "pkx"]
+
+
 def load_js(path):
     s = path.read_text()
-    i = s.index("= {") + 2 if "DRAFT_HIST[" in s else s.index("{")
+    if "Object.assign(" in s:                                  # days-h.js / days-p.js: window.DRAFT_DAYS = ... || {}; Object.assign(window.DRAFT_DAYS, {...});
+        i = s.index("{", s.index("Object.assign("))
+    else:
+        i = s.index("= {") + 2 if "DRAFT_HIST[" in s else s.index("{")
     return json.loads(s[i:s.rindex("}") + 1])
 
 
@@ -39,8 +50,8 @@ def hitting(rows, F, air_no_pu):
             if i >= len(r) or k in ("day", "hand", "home"):
                 continue
             v = r[i]
-            if k in ("evs", "evbk"):   # the day rows' two list fields: exit velocities and their Mix buckets
-                if isinstance(v, list):
+            if k in ("evs", "evbk"):   # the day rows' two list fields: exit velocities and (in files from 8-20 Oct 2026) their Mix buckets
+                if k == "evs" and isinstance(v, list):   # the buckets were going into the EVs too until 20 Oct 2026 (EV90 read low; the page is off the menus)
                     evs.extend(v)
                 continue
             if isinstance(v, (int, float)):
@@ -117,10 +128,12 @@ def main():
         rows = [r for k, rs in (d.get("rows") or {}).items() if k.startswith("H") for r in rs]
         if not rows:
             continue
-        # a past season's rows start player × hand × venue, then the same fields as the current season's day rows
-        years[int(m.group(1))] = {"H": hitting(rows, FH, d.get("airNoPU")), "T": pitching(d["players"], FA) if FA else {},
+        # a past season's rows start player × hand × venue, then the fields its file names (the 20 Oct 2026 layout when it names none)
+        years[int(m.group(1))] = {"H": hitting(rows, (d.get("dayFields") or {}).get("H") or LEGACY_H, d.get("airNoPU")), "T": pitching(d["players"], FA) if FA else {},
                                   "lgERA": (d.get("consts") or {}).get("lgERA")}
-    days = ROOT / "days.js"
+    days = ROOT / "days-h.js"                                   # the hitters' day rows (one file a side since 20 Oct 2026)
+    if not days.exists():
+        days = ROOT / "days.js"
     if days.exists():
         dd = load_js(days)
         rows = [r for k, rs in dd.items() if k.startswith("H") for r in rs]

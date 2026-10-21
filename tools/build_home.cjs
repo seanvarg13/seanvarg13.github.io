@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // hist/home.js: home's day-file lists — the last game day, Trending, Movers — computed by the site's own code (window.__homeData in app.js) on the
-// freshly built data.js and days.js, so a fresh home reads ~10 KB instead of downloading and parsing the 31 MB day file (Sean, 20 Oct 2026, item 1
+// freshly built data.js and day files (days-h.js, days-p.js), so a fresh home reads ~10 KB instead of downloading and parsing them (Sean, 20 Oct 2026, item 1
 // of the recommendations). Run by cloud_daily.py after build_data.py; non-fatal there — without the file, or with one older than data.js, home loads
 // the day rows and computes the lists itself, as it always did.
 //
