@@ -4572,8 +4572,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     `renderAsStarter`, `showPageCard` and the like (git has them, before this entry's merge). The unreachable renderers that are still
     referenced (`renderTrends`, `renderCallups`, Compare, `renderPlanner`, `renderClaude` …) stay, as before. In `styles.css`, the 508 rules
     whose selectors need a class or id nothing in `app.js` / `themes.js` / `index.html` produces (a prefix built in code counts as produced;
-    scratch `cssprune/analyze.py`): 56 KB, 42 of them `.phcond`. Checked by every element's full computed style before and after in ~100
-    states — every page and card tab, open menus and dialogs, phone and desktop, light and dark. app.js 1.31 MB → 1.23 (411 → 391 KB gzipped),
+    scratch `cssprune/analyze.py`): 56 KB, 42 of them `.phcond`. Checked by every element's full computed style (custom properties included,
+    sorted by name — the browser lists custom properties in an order that follows which ones the sheet declares) before and after in 92
+    states (scratch `cssprune/cs2.js`): 28 pages, card tabs, menus and dialogs on a phone and a desktop, 18 of them in dark mode too. app.js 1.31 MB → 1.23 (411 → 391 KB gzipped),
     styles.css 699 → 642 KB (124 → 116).
   - **The off-season refresh**: `tools/build_offseason.py` — `check`, `proj` (FanGraphs' Steamer, and ZiPS once out: every category they project,
     averaged per PA / per out, Steamer's playing time; build_proj27.py's Marcel fills the rest and the players they don't project → `hist/proj-2027.js`
