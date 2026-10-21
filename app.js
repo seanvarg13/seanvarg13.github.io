@@ -11105,7 +11105,6 @@
     if (b && b.born) { const bd = new Date(b.born + "T12:00:00Z"); if (!isNaN(bd)) { age = +DS.season - bd.getUTCFullYear(); if (bd.getUTCMonth() > 5 || (bd.getUTCMonth() === 5 && bd.getUTCDate() > 30)) age--; } }
     if (age == null && p.age != null) age = p.age;
     if (age != null) add("Age " + age);
-    { const x = ilOf(p); if (x) { const t = el("span", "pbil60", x.word); t.title = ilTip(x); add(t); } }   // today's injured list, whatever season the page is on
     return d;
   }
   // the page's band: the controls on top (Back, the season, Filters), the photo and the bio lines, the summary line at the foot
@@ -11148,7 +11147,11 @@
     // his headshot at the far left, the name beside it and the bio under the name (Sean, 9 Oct 2026: "add the head shot to the far left and then
     // have the name next to it and push the bio stuff over with the name"), Filters / Raw at the right
     const mug = el("div", "pgbmug"); mug.append(headshot(p.id, p.name));
-    const txt = el("div", "pgbtxt"); txt.append(nm); bar.append(mug, txt, fx); top._bar = bar;
+    // today's injured list rides right after his name, whatever season the page is on (Sean, 21 Oct 2026: "Can you put the IL thing next to their
+    // name instead of where it is" — it had been the bio line's last item), flowing with the name's last word when a phone wraps it (bleedBar)
+    const nrow = el("div", "pgbnrow"); nrow.append(nm);
+    { const x = ilOf(p); if (x) { const t = el("span", "pgbil", x.word); t.title = ilTip(x); nrow.append(t); } }
+    const txt = el("div", "pgbtxt"); txt.append(nrow); bar.append(mug, txt, fx); top._bar = bar;
     // the popup's × on a strip of its own across the bar's top, so the headshot, name, bio and Filters / Raw sit exactly as they do without it, just
     // lower (Sean, 13 Oct 2026: "the player head shot name and bio are in the same position in comparison to the filters and raw vs stuff button when
     // there is the x and when there isn't so essentially just shift all of it down to make room for the x") — the bar gets class xbar and the × is
@@ -11196,8 +11199,12 @@
     bar.style.marginLeft = -L + "px"; bar.style.marginRight = -Rt + "px"; bar.style.paddingLeft = pl + "px"; bar.style.paddingRight = pr + "px";
     const xbtn = bar.querySelector(":scope > .xpopx"); if (xbtn) xbtn.style.right = pr + "px";
     const chp = bar.querySelector(":scope > .pgchips"); if (chp) { chp.style.right = pr + (xbtn ? xbtn.offsetWidth + 10 : 0) + "px"; chp.style.left = pl + "px"; }
+    // the IL badge keeps to his name's last word (the row doesn't break before it, so a phone wraps "Carson / Whisenhunt 60-day IL"); only when even
+    // the last word and the badge don't fit the column may the badge take a line of its own
+    const nr = bar.querySelector(".pgbnrow"); if (nr && nr.querySelector(".pgbil")) { nr.classList.remove("ilwrap"); if (nr.scrollWidth > nr.clientWidth + 1) nr.classList.add("ilwrap"); }
   }
   window.addEventListener("resize", () => requestAnimationFrame(bleedBar));
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", () => requestAnimationFrame(bleedBar));   // the name's width once its face has loaded
   // the bar and the band read as one header: the bar's red rule shows only once the band has scrolled up under it (class stuck)
   function stickSync() {
     const bar = document.querySelector("#xboard .pgbar"), band = document.querySelector("#xboard .pagehead"); if (!bar || !band) return;
