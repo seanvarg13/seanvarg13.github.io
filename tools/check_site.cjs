@@ -88,10 +88,15 @@ function minorsId() {
     }
     await step("pitching+ board", async () => { await hash("#pitches"); await count("#pitchboard table tbody tr", 20); });
     if (!QUICK) await step("movers", async () => { await hash("#movers"); await count(".flawpage table tbody tr", 1, 120000);
-      await pg.evaluate(() => document.querySelector(".flawpage table tbody tr .pbname").click()); await count(".fxwin", 1); await pg.keyboard.press("Escape");
-      // the pitchers and a position through the Position pill (23 Oct 2026), then back, so the next run starts where this one did
+      await pg.evaluate(() => document.querySelector(".flawpage table tbody tr .pbname").click()); await count(".fxwin", 1);
+      // his name in the flaw popup opens his page as the Leaderboard's popup over Movers, the flaw popup gone (23 Oct 2026)
+      await pg.evaluate(() => document.querySelector(".fxwin .fxname").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
+      await until(() => !document.querySelector(".fxwin") && !!document.querySelector("#xboard.xpop .xpopx")); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop"));
+      // the pitchers and a position through the Position pill (23 Oct 2026), then back, so the next run starts where this one did; a pitcher's row opens the popup too
       for (const sd of ["All pitchers", "SS", "All hitters"]) { await pg.evaluate((t) => { document.querySelector(".fxbar .pill").click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === t).click(); }, sd);
-        await until((t) => document.querySelector(".fxbar .pill")?.textContent.trim() === t && document.querySelectorAll(".flawpage table tbody tr").length > 0, sd, 120000); } });
+        await until((t) => document.querySelector(".fxbar .pill")?.textContent.trim() === t && document.querySelectorAll(".flawpage table tbody tr").length > 0, sd, 120000);
+        if (sd === "All pitchers") { await pg.evaluate(() => document.querySelector(".flawpage table tbody tr .pbname").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
+          await until(() => location.hash === "#movers" && !document.querySelector("#xboard .pbback")); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); } } });
     await step("fantasy", async () => { await hash("#fantasy"); await count("#fboard table tbody tr", 10, 90000); });
     if (!QUICK) {
       await step("mock draft", async () => { await hash("#mock"); await until(() => document.querySelector("#pitchboard") && document.querySelector("#pitchboard").innerText.length > 50); });
