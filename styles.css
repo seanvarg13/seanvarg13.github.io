@@ -4432,6 +4432,8 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root body.brlb #lbtitle span { font: 400 13px var(--body); color: var(--muted); }
 :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #lbtitle { margin: 6px 12px 8px; padding-bottom: 4px; }
 :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #lbtitle h2 { font-size: 21px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #lbtitle { flex-wrap: wrap; row-gap: 2px; }   /* a long note drops under the title rather than breaking it in two (23 Oct 2026) */
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #lbtitle h2 { white-space: nowrap; }
 :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #bscroll { margin: 0 12px !important; border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--surface)) !important; width: auto !important; max-width: calc(100% - 24px); }
 :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #colband { display: none !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb .grid { grid-template-columns: var(--rankw, 22px) var(--namew, 116px) var(--pre1, 0px) var(--pre2, 0px) 54px var(--statcols, repeat(var(--n), 50px)) 50px 42px 96px var(--act, 0px) !important; }
@@ -4464,6 +4466,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hsech h2 { margin: 0; font: 700 26px/1 var(--display) !important; color: var(--ink); letter-spacing: 0; text-transform: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hsech > span { font-size: 13px; color: var(--muted); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hsech .hmore { margin-left: auto; font-size: 13px; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hsech .hmore + .hmore { margin-left: 0; }   /* the Last game day's second link sits beside the first (23 Oct 2026) */
 :root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hsecb { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hsecb.hlead2 { flex-direction: row; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hwrap { width: 100%; max-width: 100%; margin: 0; overflow-x: auto; }
