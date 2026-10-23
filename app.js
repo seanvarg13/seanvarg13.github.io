@@ -6681,7 +6681,8 @@
     let br = 1;
     if (bbl && c.bbw) {
       let act = 0, neu = 0;
-      for (const t of ["gb", "ld", "fb", "pu"]) { const [cnt, w] = bbl[t] || [0, null]; if (!cnt || w == null) continue; act += cnt * w; neu += cnt * c.bbw[t]; }
+      const av = airValue(c);   /* his liners and flies at the one air-ball value, as nERA prices them (23 Oct 2026) */
+      for (const t of ["gb", "ld", "fb", "pu"]) { const [cnt, w] = bbl[t] || [0, null]; if (!cnt || w == null) continue; act += cnt * w; neu += cnt * (av != null && (t === "ld" || t === "fb") ? av : c.bbw[t]); }
       if (act > 0) br = neu / act;
     }
     const nera = pv.m.nera;
@@ -9790,7 +9791,7 @@
     }
     box.append(hd);
     const av = airValue(c);
-    box.title = `Luck-neutral ERA gives every ball in play the league's average wOBA for its kind (ground ball ${fmtX(c.bbw.gb)}, popup ${fmtX(c.bbw.pu)}, ${av != null ? `any ball in the air ${fmtX(av)} — line drives and fly balls alike, since the split between them is noise` : `line drive ${fmtX(c.bbw.ld)}, fly ball ${fmtX(c.bbw.fb)}`}), so BABIP, HR/FB and the liner / fly split wash out while strikeouts, walks and a ground-ball profile keep their value. Diff is his wOBA allowed minus the league's, in points; red means the type has hurt him more than it should.`;
+    box.title = `Luck-neutral ERA gives every ball in play the league's average wOBA for its kind (ground ball ${fmtX(c.bbw.gb)}, popup ${fmtX(c.bbw.pu)}, ${av != null ? `any ball in the air ${fmtX(av)} — line drives and fly balls alike, since the split between them is noise` : `line drive ${fmtX(c.bbw.ld)}, fly ball ${fmtX(c.bbw.fb)}`}), so BABIP, HR/FB and the liner / fly split wash out while strikeouts, walks and a ground-ball profile keep their value. Diff is his wOBA allowed minus the league's on that type, in points; red means the type has gone his way, blue that it has hurt him.`;
     // B-Ref's dress (Sean, 14 Oct 2026: "make the nERA table follow that same format"): Batted ball | Balls in play | wOBA allowed, Diff filled
     // by its size (red = the type has gone his way, blue = it has hurt him), all balls in play a band row under a gap
     const { tb, fin, gap, wrap } = brTable([["", 1], ["Balls in play", 2], ["wOBA allowed", 3]],
