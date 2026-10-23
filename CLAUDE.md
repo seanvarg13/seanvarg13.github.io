@@ -5034,6 +5034,15 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     (C: .594 / .617 / .346) loses a third of the same-season fit — a popup is a real skill. **HBP at the league rate** (D: .542 / .657 / .346):
     nothing.
 
+* **A searched player's page starts at the top on an iPhone (Sean, 23 Oct 2026, a recording: Skenes's page, searched from Connelly Early's
+  scrolled page, opened at Early's scroll)**: `render()` scrolled a newly opened page to the top, but picking a name from the header search
+  blurs the box, and iOS puts the page's scroll back where it was before the box was tapped once the keyboard has gone — after that
+  `scrollTo`. `toTop(k)` (beside `render()`) keeps the top **owed** for a moment: re-made on the next frame, at 60 / 200 / 450 / 800 / 1200 ms
+  and when the visual viewport settles (the keyboard leaving), until the reader moves the page himself (wheel, touch, a key, a pointer),
+  another page is drawn, or 1.5 s pass. A programmatic scroll in that moment would be undone too — none happens on a fresh page
+  (`anchorTabs` runs on a tab tap, which clears it). The page check has a "search from a scrolled page" step on both layouts that mimics the
+  restore (a blur handler scrolling back after 120 ms) and fails on the old code.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

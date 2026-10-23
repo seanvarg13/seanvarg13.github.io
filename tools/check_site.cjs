@@ -107,6 +107,18 @@ function minorsId() {
       if (!QUICK) { const v = await pg.$$(".sbviews .sbview"); if (v.length) await clickAll(".sbviews .sbview");
         else { const n = await pg.$$eval(".sbviews .sbviewdd", (a) => a.length); if (n) for (let i = 0; i < 5; i++) { await pg.evaluate(() => document.querySelector(".sbviewdd").click()); await pg.waitForTimeout(200); await pg.evaluate((k) => { const b = document.querySelectorAll(".ddmenu .ddi")[k]; if (b) b.click(); }, i); await pg.waitForTimeout(500); } } } });
     await step("pitcher page", async () => { await hash("#player/694973"); await count("table.sbt tbody tr", 2, 60000); await clickAll(".btabs .btab"); });
+    // a name picked from the header search opens his page at the top, through an iPhone putting the page's scroll back once the keyboard has gone
+    // (Sean, 23 Oct 2026: Skenes's page, searched from a scrolled page, opened at that page's scroll) — the restore after the blur mimicked
+    await step("search from a scrolled page", async () => {
+      await pg.evaluate(() => window.scrollTo(0, 600)); await pg.waitForTimeout(1600);   // past the open's own "to the top" moment
+      if (!(await pg.evaluate(() => window.scrollY > 100))) throw new Error("the page didn't scroll down");
+      await pg.evaluate(() => { const gq = document.getElementById("gq"), y = window.scrollY; gq.addEventListener("blur", () => setTimeout(() => window.scrollTo(0, y), 120), { once: true }); });
+      await pg.focus("#gq"); await pg.type("#gq", "Judge"); await count("#glist .addhit", 1);
+      await pg.evaluate(() => [...document.querySelectorAll("#glist .addhit")].find((x) => /^Aaron Judge/.test(x.textContent)).click());
+      await until(() => { const n = document.querySelector("#xboard .pgbname"); return !!(n && /Aaron Judge/.test(n.textContent) && document.querySelector("table.sbt tbody tr")); });
+      await pg.waitForTimeout(1500);
+      const y = await pg.evaluate(() => window.scrollY); if (y > 1) throw new Error(`Judge's page opened at ${y}px, not the top`);
+    });
     if (mid) await step("a minors card", async () => { await hash("#player/" + mid); await count("table.sbt tbody tr", 1, 90000); await clickAll(".btabs .btab"); });
     await ctx.close();
   }

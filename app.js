@@ -6321,11 +6321,25 @@
       // same page (a filter, a tab, the bio fold) keeps its scroll
       // another season of the same player is the same page: a year picked stays where it was (Sean, 8 Oct 2026)
       const k = pageKeyOf();
-      if (pageOpened || k !== pageKey) window.scrollTo(0, 0);
+      if (pageOpened || k !== pageKey) toTop(k);
       pageOpened = false; pageKey = k;
     } else pageKey = "";
     requestAnimationFrame(footSync);
   }
+  // A page just opened goes to the top — and stays there through an iPhone's keyboard going away. Picking a name from the header search
+  // blurs the box, and iOS puts the page's scroll back where it was before the box was tapped once the keyboard has gone, over the scrollTo
+  // made a moment before (Sean, 23 Oct 2026: Skenes's page, searched from Connelly Early's, opened at Early's scroll). So the top stays
+  // owed for a moment: re-made on the next frames, after the keyboard's animation and when the visual viewport settles, until the reader
+  // moves the page himself or another page is drawn.
+  let topOwed = null;
+  function toTop(k) {
+    window.scrollTo(0, 0); topOwed = { k, at: Date.now() };
+    const again = () => { if (!topOwed || topOwed.k !== k || state.mode !== "player" || pageKeyOf() !== k) return; if (window.scrollY > 0) window.scrollTo(0, 0); };
+    requestAnimationFrame(again); [60, 200, 450, 800, 1200].forEach((ms) => setTimeout(again, ms));
+    setTimeout(() => { if (topOwed && topOwed.k === k) topOwed = null; }, 1500);
+  }
+  ["wheel", "touchmove", "keydown", "pointerdown"].forEach((t) => window.addEventListener(t, () => { topOwed = null; }, { passive: true }));
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", () => { if (topOwed && Date.now() - topOwed.at < 1500 && state.mode === "player" && pageKeyOf() === topOwed.k && window.scrollY > 0) window.scrollTo(0, 0); });
   // A player's page is rebuilt on every pick (a season, a level, a tab, a filter). Rebuilt, it is briefly short and the
   // window snaps to the top, and its panels' own scrollers start over. On the same player, put them all back; if the
   // page is still loading and too short to reach that point, hold on to it for the next redraw, until the reader scrolls.
