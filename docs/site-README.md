@@ -1051,12 +1051,30 @@ and scrolls inside it.
 
 - **Hitters**: elite hitters whose one weak piece has moved, by the xwOBA the move adds if it held all year (or Most credible). The window pill
   has every window, the last-N-PA ones included.
-- **Pitchers**: Pitching+ and fastball velocity over the window against his season before it, by the Pitching+ gain. A pitcher has no PA
-  window, so his list offers the day windows and This season vs last; a PA window picked on the hitters' side reads 30 days here.
+- **Pitchers**: his nERA over the window against his season before it, by how far it fell (see below). A pitcher has no PA window, so his
+  list offers the day windows and This season vs last; a PA window picked on the hitters' side reads 30 days here.
 
 The window is shared between the two sides, and the page remembers the side you were on. The count sits beside the pills ("32 hitters ·
-106 elite with a flaw", "172 of 336 pitchers up"). The explanation is folded under the table behind **More about these numbers**. Home's
+106 elite with a flaw", "133 of 260 pitchers with nERA down"). The explanation is folded under the table behind **More about these numbers**. Home's
 Movers card has **Hitters →** and **Pitchers →** links that open the page on that side and on its 30 days.
 
 On a phone the ☰ Menu lays its six pages out three across and two down (Home · Leaders · Pitching+ over Movers · Fantasy ▾ · Settings),
 so it takes less of the screen.
+
+### Pitchers on Movers by nERA (23 Oct 2026)
+
+The pitchers' side of Movers ranks pitchers by how much their **nERA** fell over the window against their season before it. Pitching+ is
+no longer on the page or on home's Movers card.
+
+- **Columns**: nERA before, over the window (coloured among the season's 100+ IP pitchers) and the change, then K-BB% and fastball velocity
+  before and over the window, so you can see whether the drop came from strikeouts and walks or from contact. Then his innings in the window
+  and **Credible**.
+- **Credible** is how much of the move is likely real. nERA settles at about 220 batters faced (odd and even outings split within each
+  season, 2024-26), so a reliever's 30 days (~45 batters) is about a sixth real and a starter's (~130) about a third. Last season's nERA counts
+  as a witness the way it does for hitters: it raises the number if it was already near the new level, and lowers it if it was on the far side.
+- **Order** is shared with the hitters' side: **Biggest nERA drop**, or **Most credible** (the drop × its credibility).
+- **Minimums**: 10 innings in a 30-day window (scaled with the window, 5-25) and 20 before it. This season vs last needs 20 innings in each.
+- **A name** opens his page on that window's dates, at his Game Logs, so the outings that moved it are right there (the band's In Split row
+  shows the window's line against the season's).
+
+Home's card shows the top four: K-BB% before → now, nERA before and now, and the change.
