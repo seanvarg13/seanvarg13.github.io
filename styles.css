@@ -5502,3 +5502,19 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:not(#t1):not(#t2):not(#t3):not(#t4):not(#t5)[data-theme="dark"] :is(#xboard, #modal) .btabs :is(.btab.on, .btab[aria-selected="true"], .btab[aria-pressed="true"]):not(#pop *) { background: #ffffff !important; color: var(--ink-day, #0c2340) !important; }
 :root:not(#t1):not(#t2):not(#t3):not(#t4):not(#t5)[data-scheme="warm"] :is(#xboard, #modal) .btabs :is(.btab.on, .btab[aria-selected="true"], .btab[aria-pressed="true"]):not(#pop *) { background: #ffffff !important; color: var(--ink-day, #141414) !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"].pgfoot:has(body[data-mode="player"]) { background: var(--surface, #ffffff) !important; }
+/* Movers up top (Sean, 23 Oct 2026: "the ability up top to filter by pitchers or hitters/by position and then make the table big and fit the whole
+   screen like on the leaderboards page"): one row of pills — position, window, order — with the count beside them on a desktop and under the title
+   on a phone, the explanation's link at the title row's right and its note under the title, so the table starts where the Leaderboard's does and runs
+   to the foot; a desktop's table as wide as the Leaderboard's (its columns spread), a wider table scrolling inside its frame as before */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root body[data-mode="flaws"] .fxtitle .fxmore { margin-left: auto; align-self: center; font-size: 12.5px; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root body[data-mode="flaws"] .flawpage > .fxnote { margin: 0 0 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body[data-mode="flaws"] #pitchboard > .flawpage { min-width: min(100%, 1020px); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body[data-mode="flaws"] #pitchboard .flawpage > .pbscroll.brscroll { width: 100%; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body[data-mode="flaws"] #pitchboard .flawpage > .pbscroll > table.flawt { width: 100% !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .flawpage > .fxbar { gap: 8px 6px; margin: 0 0 4px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] #pitchboard .flawpage > .pbscroll.brscroll { width: 100%; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] #pitchboard .flawpage > .pbscroll > table.flawt { min-width: 100%; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxbar > .pbcount { display: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxbar > .pill { padding-left: 10px !important; padding-right: 10px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxtitle { flex-wrap: nowrap; gap: 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxtitle .fxsub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
