@@ -827,7 +827,8 @@ seconds after anything is saved. Per key, against what was last synced: changed 
 both (or on a device's first connect), the fantasy presets are merged by id and keyed lists by key, this device
 winning a clash. A pull that changes anything reloads the page once. Appearance stays per device.
 
-**Appearance** (More ▸ Appearance): colour scheme — Carolina blue (default), Carolina navy, Titans, Titans · Carolina
+**Appearance** (Settings ▸ Appearance): colour scheme — Warm, Carolina blue, Carolina navy, Titans (default), Jets (Legacy Green and
+white, no stripes or outlines), the same flat Jets look in Titans blue, UNC blue and mint (**Jets · Mint**, 23 Oct 2026), Titans · Carolina
 (Titans navy and the red stripe, with Carolina blue on the banner instead of Titans blue), Purple,
 Crimson Tide, Clemson — plus font and light / dark. Schemes are defined in `themes.js` as the token roles
 described at the top of `styles.css`; add one by adding an entry there. Saved per browser. Also the background pattern

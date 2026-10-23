@@ -4779,6 +4779,17 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     own mean prediction isn't 1, and nothing re-anchors them at display the way `dirInfo` does for xwOBA (`dxba` = `dbsum / ab`, the xBABIP
     `(dbsum − HR) / (BIP − HR)`). So a past season's Luck rows and BABIP luck carry a league-wide offset. r is unaffected. Offered, not built.
 
+* **Jets · Mint (Sean, 23 Oct 2026: "Can you add a jets style color scheme but make it like a mint green")**: a fourth flat scheme in Settings ▸
+  Appearance ▸ Colour scheme, after Jets · UNC blue, per device (Titans stays the site default). `jets-mint` in `themes.js` is one `flat: true`
+  entry, built like the two blues:
+  - **Mint** (`#3eb489`) is the bands, buttons, tab fills, the stripe (so it vanishes) and the table group rules.
+  - White type on the mint reads at 2.6:1, a little better than Carolina's 2.3.
+  - The type and `--flat-ink` are a deep shade of the same green (`#165a42`, 8.2:1 on white); links are a mid one (`#1f7a5a`, 5.3:1).
+  - Dark mode keeps the mint bands on a near-black green page with light type.
+
+  Nothing else changed: the `:root[data-flat]` block in `styles.css` does the rest, and only its comment names the mint. Checked headless on a
+  phone and a desktop, light and dark (the Leaderboard, a player popup, home, Settings): no script errors, the scheme and `data-flat` applied.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
