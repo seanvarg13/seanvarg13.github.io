@@ -5020,11 +5020,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     types apart on a file built before. **App**: `airValue(c)` (`bbw.air`, else `consts.stuff.vair` — the same number the stuff grades already
     carried, within .0002 on every regular season — else null, which prices the types apart) in `V()`'s window nERA and `dayNERA` (Game Logs,
     home's last game day); the nERA tab's table keeps a Lg wOBA per type but its All balls in play row is priced at the one air value (the title
-    and the Lg tooltip say so); the glossary entry. uERA / Stuff uERA / Pitching uERA, Mix wOBA and xnERA already split the air balls at the
+    and the Lg tooltip say so); the glossary entry; the fantasy pages' luck-neutral line (`fPLines`: its hits / homers / total bases scaled by his balls in play at league value) prices the liners and flies at the air value too, and the nERA tab's title says red = the type went his way (it had it backwards). uERA / Stuff uERA / Pitching uERA, Mix wOBA and xnERA already split the air balls at the
     pool's liner share (`sorted.ldAir`), so they don't move, and nERA now sits on xnERA's footing.
   - **Data**: `data.js`, every `hist/mlb-YYYY.js` and the postseason / spring files re-priced in place from their day rows (scratch
     `nera/patch.py`: the old formula first rebuilt every stored nERA to the cent — 10,000 pitchers, no mismatch — then the new one; `bbw.air /
-    la` put on each file's constants; the minors' files aren't touched — their next rescore builds it through `league_constants`);
+    la` put on each file's constants; the minors' files were done the same evening — every `hist/<aaa|aa|ap|a>-YYYY.js`, 2021-26, from each file's own pitchers' type counts — since `airValue` reads Triple-A's and the FSL's `consts.stuff.vair`, which had a window there pricing air balls alike while the stored full-season nERA didn't; 300+ BF move sd 0.12-0.14, as in the majors);
     `hist/career-bb.js` (the season table's nERA column, `pp`), `hist/similar.js` and `hist/home.js` regenerated.
   - **Tested and not shipped** (the same study; Sean can have any of them): **contact quality on the air balls** — the league's air value moved
     by his hard-hit rate over the league's (F): same-season ERA r .708, next season .352, year to year .527; by barrels (G) .711 / .352 / .532;

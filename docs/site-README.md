@@ -1137,3 +1137,5 @@ liners and fly balls together; ground balls and popups keep their own. Only the 
   5.24, Jameson Taillon 4.41 → 4.75); most moves are under a quarter of a run.
 - Everywhere nERA shows — the Leaderboard, the band, the season table, Game Logs' outings, home — and every past season, re-priced.
 - The nERA tab still lists his wOBA on each type against the league's; the All balls in play row is priced at the one air value.
+- The minor-league seasons (Triple-A down to Single-A, 2021-26) are re-priced too, and the fantasy pages' luck-neutral line prices his
+  liners and fly balls at the same air value.
