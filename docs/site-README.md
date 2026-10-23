@@ -1025,3 +1025,20 @@ xwOBA and pitchers by that game's nERA, with percentiles against the qualified p
 Any date range that covers one game day works the same way. On one game day a hitter's xwOBA and xBABIP are the batted-ball model's for
 that game, the same numbers the Game Logs and home's tables show: one game is too small to build the skills from. The xwOBA and xBABIP
 tabs say so and ask for wider dates for their build-ups. A pitcher who faced batters without getting an out is listed too.
+
+### xSLG from skills, and the xSLG tab (23 Oct 2026)
+
+xSLG is built from a hitter's skills the way xwOBA is, instead of the batted-ball model pricing each ball. It is total bases per at-bat from:
+
+- his K% and BB% (half his actual rate, half the expected one) and his HBP;
+- his fly balls × xHR/FB for the home runs;
+- the drivers' xBABIP for the other hits;
+- extra bases per hit that isn't a home run. Half of this comes from a skills fit (GB%, sprint speed, line-drive exit velocity, Pull%) and half from the batted-ball model.
+
+It carries his parks unless Leaderboard ▸ Filters ▸ Stats says park-neutral, like xwOBA. The batted-ball model's xSLG explains a season a little better
+(r .90 against .87), but the skills one forecasts better: second-half SLG r .45 against .42 (his first-half SLG .37), next season's SLG .53
+against .50 (his SLG .47).
+
+The hitter card has an **xSLG** tab after xwOBA. It builds from the league's pieces to his xSLG one step at a time, then the park, the luck and his
+SLG, and under it his SLG and xSLG by season. The Leaderboard's xSLG column, the card's xSLG bar and Fantasy's expected total bases all read
+the new number.

@@ -201,7 +201,7 @@ EV ≥ 95. Sweet-spot is 9-31° full credit and 8° / 32° half credit (the roun
 bunts, as Savant's do. Bat speed averages **competitive swings** — everything at or above the hitter's own 10th
 percentile swing speed, which is Savant's roughly-hardest-90% rule.
 
-**Since 11 Oct 2026 the site's xwOBA is talent xwOBA** (§8, "Talent xwOBA is the xwOBA"), and since 18 Oct 2026 it carries his parks unless a switch says park-neutral (§8, "xwOBA carries his parks"); what follows describes the batted-ball model, which
+**Since 11 Oct 2026 the site's xwOBA is talent xwOBA** (§8, "Talent xwOBA is the xwOBA"), and since 18 Oct 2026 it carries his parks unless a switch says park-neutral (§8, "xwOBA carries his parks"); since 23 Oct 2026 xSLG is built from the same skills (§8, "xSLG from skills"); what follows describes the batted-ball model, which
 feeds it and still stands where talent can't be built. **xwOBA was the directional model, and only that** (Sean, 24 Sep 2026: "get rid of statcast xwoba completely").
 Everywhere the site says xwOBA, xBA or xSLG — the headline, the rank, the leaderboards, the cards, the player page,
 the rolling chart, the fantasy xPts — it means Sean's model (`xwd` / `dxba` / `dxslg` in `app.js`; the old
@@ -4805,6 +4805,37 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     the heading instead of breaking it), the count "1–50 of 295 hitters · Sun, Sep 27 · everyone who played" (a phone's All-per-page count drops the
     last part), `winLabel` prints a one-day range as "Sep 27" (chips, Dates), "1 game day" in the Dates / Recent notes, and the Dates tab's range note
     explains the one-day rule. Also fixed: the Last N note's stray space ("plate appearances .").
+
+* **xSLG from skills, and an xSLG tab (Sean, 23 Oct 2026: "for xSLG in the directional model can we do the same thing or idea as xbabip and
+  xwoba where we make it skills based and take out any noise and then also add in a tab build up for it")**: the site's xSLG (`m.dxslg`, the
+  Leaderboard column, the card's Results bar, the pool's percentiles, the In Split rows, Fantasy's xPts total bases) is slugging rebuilt from the
+  xwOBA build's own pieces; the batted-ball model's xSLG stays as **`m.dxslgm`** (`talentCore` reads it for the extra-bases piece, Movers' XB/hit
+  inputs list it as "Model xSLG").
+  - **The build** (`XSLG`, `slgRaw`, `talentCore`'s `xs`, `talentOf`'s `xslgN / xslgPk / xslg`): per PA, his talent K% and BB% (half actual,
+    half expected, as xwOBA), his HBP, fly balls + popups × xHR/FB for the home runs, the drivers' xBABIP for the other hits, and **extra bases
+    per non-HR hit** = half the model's (the xwOBA build's `tph`, re-centred on the league's real bases per non-HR hit and held to 1.0-1.8: `tm`)
+    and half a skills fit (`sk`: the league's bases per non-HR hit moved by GB% −.0030 a point, sprint +.0156 a ft/s, LD EV +.0057 a mph, Pull%
+    +.0020 a point; tiers without sprint speed — Triple-A — or LD EV follow). Total bases over at-bats (at-bats = PA less walks, HBP and his own
+    sacrifice share `o`), scaled so the season's 300+ PA hitters average their real SLG (`L.sslg`, .99-1.04; `talentLeague` also carries `tphA`,
+    `o`, `gb`, `pullp`, `slg`). With his parks unless the park-neutral switch is on, exactly as xwOBA. A span: each season its own, a combined line
+    at-bat-weighted. One game day, an untracked level: the model's.
+  - **Why** (scratch `xslg/`, the site's own `V()` headless on every hitter-season 2015-26, each season centred): second-half SLG from first-half
+    xSLG r .454 (the model's .420, his SLG .366, 2,411 seasons with 150+ PA a half); next season's SLG .528 (.503 / .468, 2,217 back-to-back 300+ PA
+    pairs); year to year .624 (.584); the same season .865 against the model's .900. All-model extra bases .449 / .525, all-skills .447 / .518,
+    league-average .436 / .508 — half and half was best in both. The model's extra-bases piece alone predicts next season's actual bases per hit at
+    r .09 (it's mostly a power residual: the model's total bases beyond the talent home runs), the skills fit .37, his own rate .33. xwOBA keeps the
+    model's extra bases (the blend cost it .001-.002 on both tests).
+  - **The tab** (`BTABS_H` … xwOBA · **xSLG** · xK% / xBB%; `renderXslgTab`, `xslgBuildUp`): a `buildUp` from League (the qualifiers' pieces) through
+    K% · BB% · HBP, sacrifices · Fly balls · xHR/FB · xBABIP · Extra bases · skills · Extra bases · model to the park-neutral xSLG (light blue),
+    the Park factor row to xSLG (gold; reversed under the switch), then Luck and the SLG band row — each ± the step between rounded running
+    numbers, so the column adds up (Judge 2026: .412 → K% −45, BB% −12, fly balls +16, xHR/FB +137, xBABIP +3, extra bases +4 / +27 → .543
+    park-neutral, Yankee Stadium −14 → .529, luck −23 → .506). Walks and HBP read as small minuses: they aren't at-bats, so they only raise the share
+    of his at-bats that are strikeouts. Under it **SLG by season** (`slgSeasons`: Season · Team · AB | SLG · xSLG · Diff, heat among that season's
+    qualifiers, the career row AB-weighted, an In Split row under a filter; class `slgt`, whose phone frame hugs the table).
+  - **Data**: `tools/build_career.py` (`TW_XSLG`, `xslg_of`, `talent_of(..., out=)`, `talent_league`'s `tphA / o / tph / sslg`) writes **`xslg`**
+    (park-neutral) and **`xslgpk`** (with his parks) at the end of `SBX_KEYS`; `hist/career-bb.js` regenerated (7,530 of 7,539 hitter-seasons; every
+    existing value unchanged). `sbxOf` hands out `xslg` with parks unless the switch is on (keeping `xslgn`), `sbxPool(y, "xslg")` likewise;
+    `sbxSlgPool` is the season's qualifiers' official SLG from `hist/career.js`. App and file agree within .001.
 
 ## 10. The football site moved out
 
