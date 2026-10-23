@@ -88,7 +88,10 @@ function minorsId() {
     }
     await step("pitching+ board", async () => { await hash("#pitches"); await count("#pitchboard table tbody tr", 20); });
     if (!QUICK) await step("movers", async () => { await hash("#movers"); await count(".flawpage table tbody tr", 1, 120000);
-      await pg.evaluate(() => document.querySelector(".flawpage table tbody tr .pbname").click()); await count(".fxwin", 1); await pg.keyboard.press("Escape"); });
+      await pg.evaluate(() => document.querySelector(".flawpage table tbody tr .pbname").click()); await count(".fxwin", 1); await pg.keyboard.press("Escape");
+      // the other side of the Hitters | Pitchers switch (23 Oct 2026), then back, so the next run starts where this one did
+      for (const sd of ["Pitchers", "Hitters"]) { await pg.evaluate((t) => [...document.querySelectorAll(".fxside .segbtn")].find((x) => x.textContent === t).click(), sd);
+        await until((t) => document.querySelector(".fxside .segbtn[aria-pressed='true']")?.textContent === t && document.querySelectorAll(".flawpage table tbody tr").length > 0, sd, 120000); } });
     await step("fantasy", async () => { await hash("#fantasy"); await count("#fboard table tbody tr", 10, 90000); });
     if (!QUICK) {
       await step("mock draft", async () => { await hash("#mock"); await until(() => document.querySelector("#pitchboard") && document.querySelector("#pitchboard").innerText.length > 50); });

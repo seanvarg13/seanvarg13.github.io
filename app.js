@@ -4179,7 +4179,7 @@
     // Fixing the flaw is a page of its own in the header (Sean, 16 Oct 2026: "its own button page on the menu"), called Movers since it took the
     // home card of that name in (Sean, 18 Oct 2026: "get rid of movers and call fixing the flaw 'movers'"); the mode keeps its old key, flaws
     { const nav = document.querySelector(".modes"), pt = nav && nav.querySelector('a[data-mode="pitches"]');
-      if (pt && !nav.querySelector('a[data-mode="flaws"]')) { const a = el("a", null, "Movers"); a.href = "#movers"; a.dataset.mode = "flaws"; a.title = "Elite hitters whose weak piece has moved lately, by the xwOBA it adds if the move held all year"; pt.after(a); } }
+      if (pt && !nav.querySelector('a[data-mode="flaws"]')) { const a = el("a", null, "Movers"); a.href = "#movers"; a.dataset.mode = "flaws"; a.title = "Elite hitters whose weak piece has moved lately, and pitchers whose Pitching+ is up"; pt.after(a); } }
     // League Trends, Call-up Watch and Compare left the menus (Sean, 6 Oct 2026: "eliminate the league trends, call up watch and compare");
     // their renderers stay below, and #trends / #callups / #compare land on home
     // Compare lives in this menu, not the header (minimal pass 5, Sean, 30 Sep 2026): Home · Fantasy · Leaderboards · More
@@ -5692,55 +5692,78 @@
     const esc = (e) => { if (e.key === "Escape") close(); };
     x.addEventListener("click", close); ov.addEventListener("click", (e) => { if (e.target === ov) close(); }); document.addEventListener("keydown", esc);
   }
-  // the page (#movers, mode flaws): every row the card ranks, in the Pitching+ board's standing card; the day rows are asked for here (home waits for idle)
+  // the page (#movers, mode flaws): every row the card ranks, in the Pitching+ board's standing card. One side at a time under a Hitters | Pitchers
+  // switch (Sean, 23 Oct 2026: "the table is so small and I also have no way of switching between pitchers and hitters"): the two tables and their
+  // notes had shared the card's height, so a phone's hitters' table was its header alone; now the one table takes the card, the window pill and the
+  // count ride on the switch's row, and the explanation folds behind "More about these numbers". Only the side shown asks for its day rows
+  let fxNoteOpen = false;
   function renderFlaws() {
     const box = pitchBoardEl(); box.innerHTML = "";
-    const page = el("div", "flawpage"), bar = el("div", "pbfilters"), PH = mobileView(); box.append(page);
+    const page = el("div", "flawpage"), bar = el("div", "pbfilters fxbar"), PH = mobileView(); box.append(page); page.append(bar);
     const save = () => { try { localStorage.setItem("draft2027.flaws", JSON.stringify(fxSet)); } catch {} render(); };
-    const wlab = (FX_WINS.find((w) => w[0] === fxSet.win) || FX_WINS[1])[1];
-    bar.append(pillSelect(wlab, FX_WINS, fxSet.win, (v) => { fxSet.win = v; save(); }, "Window"));
-    bar.append(pillSelect(fxSet.sort === "cred" ? "Most credible" : "Biggest Δ xwOBA", [["gain", "Biggest Δ xwOBA"], ["cred", "Most credible"]], fxSet.sort, (v) => { fxSet.sort = v; save(); }, "Order"));
-    const prevMode = fxSet.win === "prev", Y = DATA.meta.season, Y0 = Y - 1;
-    ensureHist(fxPrevKey());   // last season: the base in the vs-last mode, the credibility's witness otherwise
-    if (!prevMode) ensureDays();   // both sides: the hitters' rows for the flaws, the pitchers' for Pitching+ (the pitchers' table waits for its own)
-    if (!prevMode && !daysReady("H")) { page.append(bar, el("p", "note", daysBad.H ? "Couldn't load the game-by-game data." : "Loading game-by-game data…")); return; }
-    const R = flawRows(fxSet.win), { cand } = R, rows = R.rows.slice().sort((a, b) => fxSet.sort === "cred" ? b.cgain - a.cgain : b.gain - a.gain), W = prevMode ? String(Y) : wlab;
-    if (R.loading) { page.append(bar, el("p", "note", `Loading the ${Y0} season…`)); return; }
-    bar.append(el("span", "pbcount", prevMode ? `${rows.length} hitters · ${cand} elite with a flaw in ${Y0} · ${Y} vs ${Y0}` : `${rows.length} hitters · ${cand} elite with a flaw · ${Y} · ${R.label} vs the season`));
-    page.append(bar);
-    const title = el("div", "fxtitle"); title.append(el("h2", null, "Movers"), el("span", null, prevMode ? `elite at most of ${Y0}, one piece holding him back — that piece in ${Y} vs ${Y0} · tap a name for the bars` : `elite at most of it, one piece holding him back — that piece over the ${R.label} vs the season · tap a name for the bars`)); page.append(title);
-    const f3 = (x) => (x == null ? "–" : fmtX(x)), refH = [];
-    withDataset(R.baseDS || DS, () => withWindow(NOWIN, () => withSplit(NONE, () => { for (const p of DS.players) if (p.type === "H" && (p.pa || 0) >= 300) { const v = V(p).m.xwd; if (v != null) refH.push(v); } }))); refH.sort((a, b) => a - b);
-    const S0 = prevMode ? String(Y0) : "Season", credTip = `how much of the move is likely real: the piece's reliability at the window's PA, then last season as a witness (a prior season already past the midpoint of the move raises it, one on the far side lowers it)`;
-    const heads = PH
-      ? [["Rk", "f1"], ["Player", "l f3"], ["Flaw"], ["Cred", "", credTip], [wsLab("xwOBA")], ["If held"], ["Δ"]]
-      : [["Rk", "f1"], ["Player", "l f3"], ["Tm"], ["Elite at"], ["Piece"], [S0], [W, "", prevMode ? `the flaw piece this season` : `the flaw piece over the ${R.label}`], ["PA", "", prevMode ? "this season's plate appearances" : `plate appearances in the ${R.label}`], ["Credible", "", credTip], [S0], ["If it held"], ["Δ", "", "wOBA points gained if the flaw piece held at the window's value"]];
-    const groups = PH ? [["", 2], ["The flaw", 2], [wsLab("xwOBA"), 3]] : [["", 4], ["The flaw", 5], [wsLab("xwOBA"), 3]];   // the board's pinned header reserves the over row's height, so a phone has one too
-    const { t, tb, fin, wrap } = brTable(groups, heads, "pbt flawt");
-    requestAnimationFrame(() => { const rk = t.querySelector("tbody td.f1"), ov = t.querySelector("tr.over"); if (rk) t.style.setProperty("--sbw1", rk.offsetWidth + "px"); if (ov) t.style.setProperty("--overh", ov.offsetHeight + "px"); });   // Player freezes right after Rk
-    rows.forEach((r, i) => {
-      const tr = el("tr"), who = el("td", "l nm f3"), b = el("button", "linkbtn pbname", r.p.name); b.type = "button"; b.addEventListener("click", () => flawPop(r, fxSet.win)); who.append(b);
-      const held = heatTd(el("td", "c", fw(r.held)), refH.length ? insertPct(refH, r.held) : null), dl = el("td", "c up", "+" + Math.round(wrcOn() ? wrcPts(r.gain / 1000) : r.gain)); dl.style.color = "var(--stripe-line, #c8102e)"; dl.style.fontWeight = "700";
-      const cred = heatTd(el("td", "c", Math.round(100 * r.cred) + "%"), Math.round(100 * r.cred)); cred.title = r.witness ? `${Y0}: ${r.flaw.f(r.prior)} — ${r.witness === "for" ? "backs the move" : r.witness === "against" ? "the other way" : "in between"}` : prevMode ? "this season's PA against the piece's reliability" : `no ${Y0} line`;
-      tr.append(el("td", "rk f1", String(i + 1)), who);
-      if (PH) tr.append(el("td", "c", `${r.flaw.lab} ${r.flaw.f(r.was)} → ${r.flaw.f(r.now)}`), cred, el("td", "c", fw(r.xw)), held, dl);
-      else tr.append(el("td", "c", r.p.team || ""), el("td", "c", r.strengths), el("td", "c", r.flaw.lab), el("td", "c", r.flaw.f(r.was)), el("td", "c", r.flaw.f(r.now)), el("td", "c", String(Math.round(r.pa))), cred, el("td", "c", fw(r.xw)), held, dl);
-      tb.append(fin(tr));
-    });
-    if (!rows.length) page.append(el("p", "note", "Nobody with an elite base and a flaw that's moved in the window yet."));
-    else { wrap.classList.add("pbscroll"); page.append(wrap); }
-    page.append(el("p", "note", flawNote(R) + (prevMode ? ` Here the base is ${Y0}'s full season (its own league) and the move is ${Y}'s full season.` : "") + ` Credible = the piece's reliability at the window's PA, with last season as a witness. Biggest Δ xwOBA orders by Δ; Most credible by Δ × that.`));
+    const side = fxSet.side === "P" ? "P" : "H", prevMode = fxSet.win === "prev", Y = DATA.meta.season, Y0 = Y - 1;
+    const seg = el("div", "seg fxside"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Hitters or pitchers");
+    for (const [v, l] of [["H", "Hitters"], ["P", "Pitchers"]]) {
+      const b = el("button", "segbtn", l); b.type = "button"; b.setAttribute("aria-pressed", String(side === v));
+      b.addEventListener("click", () => { if (side === v) return; fxSet.side = v; save(); }); seg.append(b);
+    }
+    // a pitcher has no PA window (one reads 30 days), so his side lists the day windows and This season vs last
+    const wcur = side === "P" && String(fxSet.win).startsWith("pa") ? "30" : String(fxSet.win), wlab = (FX_WINS.find((w) => w[0] === wcur) || FX_WINS[1])[1];
+    bar.append(seg, pillSelect(wlab, side === "P" ? FX_WINS.filter(([k]) => !k.startsWith("pa")) : FX_WINS, wcur, (v) => { fxSet.win = v; save(); }, "Window"));
+    if (side === "H") bar.append(pillSelect(fxSet.sort === "cred" ? "Most credible" : "Biggest Δ xwOBA", [["gain", "Biggest Δ xwOBA"], ["cred", "Most credible"]], fxSet.sort, (v) => { fxSet.sort = v; save(); }, "Order"));
+    const count = el("span", "pbcount"); bar.append(count);
+    const title = (h, sub) => { const t = el("div", "fxtitle"); t.append(el("h2", null, h), el("span", null, sub)); page.append(t); };
+    const say = (txt) => page.append(el("p", "note", txt));
+    const more = (txt) => {   // the explanation, folded the way Fantasy's is
+      const n = el("p", "note fxnote" + (fxNoteOpen ? " open" : ""), txt), b = el("button", "linkbtn fxmore", fxNoteOpen ? "Less" : "More about these numbers"); b.type = "button";
+      b.addEventListener("click", () => { fxNoteOpen = !fxNoteOpen; n.classList.toggle("open", fxNoteOpen); b.textContent = fxNoteOpen ? "Less" : "More about these numbers"; });
+      page.append(n, b);
+    };
+    if (side === "H" || prevMode) ensureHist(fxPrevKey());   // last season: the base in the vs-last mode, the hitters' credibility witness otherwise
+    if (!prevMode) ensureDays(side);
+    const W = prevMode ? String(Y) : wlab, f1 = (x) => (x == null ? "–" : x.toFixed(1));
+    // the Player column freezes right after Rk; the board's pinned header reserves the over row's height, so a phone has one too
+    const pin = (t) => requestAnimationFrame(() => { const rk = t.querySelector("tbody td.f1"), ov = t.querySelector("tr.over"); if (rk) t.style.setProperty("--sbw1", rk.offsetWidth + "px"); if (ov) t.style.setProperty("--overh", ov.offsetHeight + "px"); });
+    if (side === "H") {
+      const by = `by Δ xwOBA ${fxSet.sort === "cred" ? "× credibility" : "if it held"}`;
+      title("Hitting Movers", PH ? by : `elite but for one piece, and that piece moved · ${by}`);   // a phone keeps the title to one line
+      if (!prevMode && !daysReady("H")) { say(daysBad.H ? "Couldn't load the game-by-game data." : "Loading game-by-game data…"); return; }
+      const R = flawRows(fxSet.win), { cand } = R, rows = R.rows.slice().sort((a, b) => fxSet.sort === "cred" ? b.cgain - a.cgain : b.gain - a.gain);
+      if (R.loading) { say(`Loading the ${Y0} season…`); return; }
+      count.textContent = `${rows.length} hitters · ${cand} elite with a flaw${prevMode ? ` in ${Y0}` : ""}`;
+      const refH = [], noPct = (x) => x.replace("%", "");   // a phone's Flaw column drops the % signs, as home's card does (the piece's name says it's a rate)
+      withDataset(R.baseDS || DS, () => withWindow(NOWIN, () => withSplit(NONE, () => { for (const p of DS.players) if (p.type === "H" && (p.pa || 0) >= 300) { const v = V(p).m.xwd; if (v != null) refH.push(v); } }))); refH.sort((a, b) => a - b);
+      const S0 = prevMode ? String(Y0) : "Season", credTip = `how much of the move is likely real: the piece's reliability at the window's PA, then last season as a witness (a prior season already past the midpoint of the move raises it, one on the far side lowers it)`;
+      const heads = PH
+        ? [["Rk", "f1"], ["Player", "l f3"], ["Flaw"], ["Cred", "", credTip], [wsLab("xwOBA")], ["If held"], ["Δ"]]
+        : [["Rk", "f1"], ["Player", "l f3"], ["Tm"], ["Elite at"], ["Piece"], [S0], [W, "", prevMode ? `the flaw piece this season` : `the flaw piece over the ${R.label}`], ["PA", "", prevMode ? "this season's plate appearances" : `plate appearances in the ${R.label}`], ["Credible", "", credTip], [S0], ["If it held"], ["Δ", "", "wOBA points gained if the flaw piece held at the window's value"]];
+      const groups = PH ? [["", 2], ["The flaw", 2], [wsLab("xwOBA"), 3]] : [["", 4], ["The flaw", 5], [wsLab("xwOBA"), 3]];
+      const { t, tb, fin, wrap } = brTable(groups, heads, "pbt flawt"); pin(t);
+      rows.forEach((r, i) => {
+        const tr = el("tr"), who = el("td", "l nm f3"), b = el("button", "linkbtn pbname", r.p.name); b.type = "button"; b.addEventListener("click", () => flawPop(r, fxSet.win)); who.append(b);
+        const held = heatTd(el("td", "c", fw(r.held)), refH.length ? insertPct(refH, r.held) : null), dl = el("td", "c up", "+" + Math.round(wrcOn() ? wrcPts(r.gain / 1000) : r.gain)); dl.style.color = "var(--stripe-line, #c8102e)"; dl.style.fontWeight = "700";
+        const cred = heatTd(el("td", "c", Math.round(100 * r.cred) + "%"), Math.round(100 * r.cred)); cred.title = r.witness ? `${Y0}: ${r.flaw.f(r.prior)} — ${r.witness === "for" ? "backs the move" : r.witness === "against" ? "the other way" : "in between"}` : prevMode ? "this season's PA against the piece's reliability" : `no ${Y0} line`;
+        tr.append(el("td", "rk f1", String(i + 1)), who);
+        if (PH) tr.append(el("td", "c", `${r.flaw.lab} ${noPct(r.flaw.f(r.was))} → ${noPct(r.flaw.f(r.now))}`), cred, el("td", "c", fw(r.xw)), held, dl);
+        else tr.append(el("td", "c", r.p.team || ""), el("td", "c", r.strengths), el("td", "c", r.flaw.lab), el("td", "c", r.flaw.f(r.was)), el("td", "c", r.flaw.f(r.now)), el("td", "c", String(Math.round(r.pa))), cred, el("td", "c", fw(r.xw)), held, dl);
+        tb.append(fin(tr));
+      });
+      if (!rows.length) say("Nobody with an elite base and a flaw that's moved in the window yet.");
+      else { wrap.classList.add("pbscroll"); page.append(wrap); }
+      more(flawNote(R) + (prevMode ? ` Here the base is ${Y0}'s full season (its own league) and the move is ${Y}'s full season.` : "") + ` Credible = the piece's reliability at the window's PA, with last season as a witness. Biggest Δ xwOBA orders by Δ; Most credible by Δ × that. Tap a name for his bars, the full season beside the window.`);
+      return;
+    }
     // the pitchers (20 Oct 2026): Pitching+ and fastball velocity over the window against his season before it, by the Pitching+ gain
-    const M = pitchMovers(fxSet.win), PW = prevMode ? String(Y) : M.label === "last 30 days" && String(fxSet.win).startsWith("pa") ? "Last 30 days" : wlab, PB = prevMode ? String(Y0) : "Before";
-    const pt = el("div", "fxtitle fxpit"); pt.append(el("h2", null, "Pitchers"), el("span", null, M.loading || M.wait ? "" : `Pitching+ and fastball velocity, ${prevMode ? `${Y} vs ${Y0}` : `the ${M.label} vs his season before them`} · ${M.rows.length} up · tap a name for his Pitching+ tab`)); page.append(pt);
-    if (M.loading) { page.append(el("p", "note", `Loading the ${Y0} season…`)); return; }
-    if (M.wait) { page.append(el("p", "note", daysBad.P ? "Couldn't load the pitchers' game-by-game data." : "Loading the pitchers' game-by-game data…")); return; }
-    const f1 = (x) => (x == null ? "–" : x.toFixed(1)), sg = (x, d = 1) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(d));
+    title("Pitching Movers", PH ? "by the Pitching+ gain" : "Pitching+ up over the window · by the gain");
+    const M = pitchMovers(wcur), PB = prevMode ? String(Y0) : "Before";
+    if (M.loading) { say(`Loading the ${Y0} season…`); return; }
+    if (M.wait) { say(daysBad.P ? "Couldn't load the pitchers' game-by-game data." : "Loading the pitchers' game-by-game data…"); return; }
+    count.textContent = `${M.rows.length} of ${M.all} pitchers up`;
+    const sg = (x, d = 1) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(d));
     const pheads = PH ? [["Rk", "f1"], ["Pitcher", "l f3"], ["FB velo"], ["Pitching+"], ["Δ"]]
-      : [["Rk", "f1"], ["Pitcher", "l f3"], ["Tm"], ["Role"], [PB], [PW], ["Δ"], [PB], [PW], ["Δ"], ["Pitches", "", prevMode ? "this season's pitches" : `pitches in the ${M.label}`]];
-    const pgroups = PH ? [["", 2], ["", 3]] : [["", 4], ["FB velo", 3], ["Pitching+", 3], ["", 1]];
-    const P2 = brTable(pgroups, pheads, "pbt flawt");
-    requestAnimationFrame(() => { const rk = P2.t.querySelector("tbody td.f1"), ov = P2.t.querySelector("tr.over"); if (rk) P2.t.style.setProperty("--sbw1", rk.offsetWidth + "px"); if (ov) P2.t.style.setProperty("--overh", ov.offsetHeight + "px"); });
+      : [["Rk", "f1"], ["Pitcher", "l f3"], ["Tm"], ["Role"], [PB], [W], ["Δ"], [PB], [W], ["Δ"], ["Pitches", "", prevMode ? "this season's pitches" : `pitches in the ${M.label}`]];
+    const pgroups = PH ? [["", 2], [prevMode ? `${Y} vs ${Y0}` : `${W} vs before`, 3]] : [["", 4], ["FB velo", 3], ["Pitching+", 3], ["", 1]];
+    const P2 = brTable(pgroups, pheads, "pbt flawt"); pin(P2.t);
     const up = (txt, on) => { const td = el("td", "c up", txt); if (on) { td.style.color = "var(--stripe-line, #c8102e)"; td.style.fontWeight = "700"; } return td; };
     const ppTd = (v) => { const td = el("td", "c", v == null ? "–" : String(Math.round(v))); const st = v == null ? null : plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } return td; };
     M.rows.forEach((r, i) => {
@@ -5752,9 +5775,9 @@
                      el("td", "c", String(Math.round(r.pWas))), ppTd(r.pNow), up("+" + Math.round(r.dP), true), el("td", "c", String(r.n)));
       P2.tb.append(P2.fin(tr));
     });
-    if (!M.rows.length) page.append(el("p", "note", "No pitcher's Pitching+ is up over the window yet."));
+    if (!M.rows.length) say("No pitcher's Pitching+ is up over the window yet.");
     else { P2.wrap.classList.add("pbscroll"); page.append(P2.wrap); }
-    page.append(el("p", "note", `${prevMode ? `His full ${Y} season against his ${Y0} (${PM_BASE}+ pitches each)` : `His ${M.label} (${M.minN}+ pitches) against his season before them (${PM_BASE}+)`}: Pitching+ grades every pitch on its shape, release and spot against its type (100 = average); FB velo is his primary fastball. A PA window reads 30 days for pitchers.`));
+    more(`${prevMode ? `His full ${Y} season against his ${Y0} (${PM_BASE}+ pitches each)` : `His ${M.label} (${M.minN}+ pitches) against his season before them (${PM_BASE}+)`}: Pitching+ grades every pitch on its shape, release and spot against its type (100 = average); FB velo is his primary fastball, and a red Δ is half a mph or more. Ordered by the Pitching+ gain. A last-N-PA window picked on the hitters' side reads 30 days here. Tap a name for his Pitching+ tab.`);
   }
   // home's day-file lists — the last game day, Trending, Movers — as data (Sean, 20 Oct 2026, item 1 of the recommendations: home without the day
   // file). The daily build runs homeLive() headless once data.js and days.js are built (tools/build_home.cjs, window.__homeData) and writes
@@ -5941,7 +5964,10 @@
     // moved over the last 30 days, by Δ, the xwOBA the move adds if it held all year (If held − his season's). The whole list, with its windows, is the
     // Movers page (#movers). It takes the grid's third card from the percentile-jump Movers (7 Oct: hitters by xwOBA, pitchers by nERA, now gone), and
     // the full-width Fixing the flaw section under the grid with it
-    { const b = section(grid, "Movers", "last 30 days · if it held · Pitching+", "Full list →", (e) => { e.preventDefault(); location.hash = "#movers"; });
+    // each side's list opens the page on that side and the card's 30 days (23 Oct 2026: the page shows one side at a time)
+    { const goMv = (sd) => (e) => { e.preventDefault(); fxSet.side = sd; fxSet.win = "30"; try { localStorage.setItem("draft2027.flaws", JSON.stringify(fxSet)); } catch {} location.hash = "#movers"; };
+      const b = section(grid, "Movers", "last 30 days", "Hitters →", goMv("H"));
+      { const a = el("a", "hmore", "Pitchers →"); a.href = "#movers"; a.title = "Every pitcher whose Pitching+ is up over the last 30 days"; a.addEventListener("click", goMv("P")); b.parentNode.querySelector(".hsech").append(a); }
       if (!HL) loading(b);
       else {
         // four hitters whose flaw moved and four pitchers whose Pitching+ did (20 Oct 2026); the move without its % signs (the piece's name says it's

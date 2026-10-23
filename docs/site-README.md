@@ -1042,3 +1042,21 @@ against .50 (his SLG .47).
 The hitter card has an **xSLG** tab after xwOBA. It builds from the league's pieces to his xSLG one step at a time, then the park, the luck and his
 SLG, and under it his SLG and xSLG by season. The Leaderboard's xSLG column, the card's xSLG bar and Fantasy's expected total bases all read
 the new number.
+
+### The Movers page, one side at a time (23 Oct 2026)
+
+The Movers page shows one list at a time under a **Hitters | Pitchers** switch at the top of the page (on a phone it spans the width). The
+two tables used to share the page's height, so on a phone the hitters' table was its header alone. Now the list shown takes the whole page
+and scrolls inside it.
+
+- **Hitters**: elite hitters whose one weak piece has moved, by the xwOBA the move adds if it held all year (or Most credible). The window pill
+  has every window, the last-N-PA ones included.
+- **Pitchers**: Pitching+ and fastball velocity over the window against his season before it, by the Pitching+ gain. A pitcher has no PA
+  window, so his list offers the day windows and This season vs last; a PA window picked on the hitters' side reads 30 days here.
+
+The window is shared between the two sides, and the page remembers the side you were on. The count sits beside the pills ("32 hitters ·
+106 elite with a flaw", "172 of 336 pitchers up"). The explanation is folded under the table behind **More about these numbers**. Home's
+Movers card has **Hitters →** and **Pitchers →** links that open the page on that side and on its 30 days.
+
+On a phone the ☰ Menu lays its six pages out three across and two down (Home · Leaders · Pitching+ over Movers · Fantasy ▾ · Settings),
+so it takes less of the screen.
