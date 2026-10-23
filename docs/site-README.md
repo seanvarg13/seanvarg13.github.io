@@ -1078,3 +1078,10 @@ no longer on the page or on home's Movers card.
   shows the window's line against the season's).
 
 Home's card shows the top four: K-BB% before → now, nERA before and now, and the change.
+
+### The player page's tabs (23 Oct 2026)
+
+Below the percentile bars and Similar, the area with the tabs is white again, as the rest of the page is. The tab buttons carry the
+colour instead: each is the band's colour with white text and the same soft shadow as Filters and Raw, the same size as before. The tab
+that's open is the scheme's dark ink (navy on Titans, dark green on the Jets schemes), or white in dark mode. On a phone, the colour
+iOS shows when you bounce past the bottom of the page is white too.

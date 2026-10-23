@@ -4894,6 +4894,23 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     with Wrobleski (61%), Speier, Taylor Rogers and Framber Valdez (67%), whose 2025 nERAs back their moves; Gibson (no 2025 line) is fifth at 17%.
     2026 vs 2025: Mason Montgomery, Latz, Misiorowski, Bryse Wilson.
 
+* **The tabs filled, the area under them white (Sean, 23 Oct 2026, Luis Medina's page on his phone: "make it so that bottom area is not that
+  color like that and is white and the buttons are actually that color with white text and then still the same size and shadow and
+  whatnot")**: the "Blue below the bars" section of 16 Oct is white again, and the tabs carry the colour instead. The block is at the end of
+  `styles.css`; its five `:not(#tN)` ids outweigh the flat schemes' four.
+  - **The section**: `.pbelow2` on his page and in the popup keeps its place, padding and the 3px stripe rule over it, but is transparent. It
+    shows the page's surface: white on Titans and the Jets schemes, Warm's off-white, the dark surface in dark mode.
+  - **The tabs**: every tab is the band's colour (`--band2`) with white type and the soft lift the Filters / Raw segment carries (`0 2px 8px`
+    at 14%, `0 1px 2px` at 10% — the tabs had lost it on 16 Oct while Filters' `.seg` kept it). Same box and type: 40px / 36px, Barlow
+    Condensed 700 18px / 14px. A desktop hover darkens the colour 14%.
+  - **The picked tab** is the scheme's deep ink (`--ink-day`: navy on Titans, deep green on the Jets schemes) with white type, as the 7 Oct
+    blue tabs had a navy picked one. In dark mode (that ink is the page's own) and on Warm (whose band is its ink) it is white with the ink's
+    type.
+  - **A phone's bounce**: what iOS shows past the page's ends (the html canvas, band-coloured on the player page since 16 Oct so the top
+    bounce meets the header) turns the surface colour while you're in the page's lower half — `footSync()` toggles `pgfoot` on `<html>`
+    from the scroll listener and after every render. A bounce at the foot is white and one at the top still meets the header.
+  - The card in `#modal` (Mock Draft room, spring cards) takes the same tab colours.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

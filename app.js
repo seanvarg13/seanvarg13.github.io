@@ -6304,6 +6304,7 @@
       if (pageOpened || k !== pageKey) window.scrollTo(0, 0);
       pageOpened = false; pageKey = k;
     } else pageKey = "";
+    requestAnimationFrame(footSync);
   }
   // A player's page is rebuilt on every pick (a season, a level, a tab, a filter). Rebuilt, it is briefly short and the
   // window snaps to the top, and its panels' own scrollers start over. On the same player, put them all back; if the
@@ -10599,7 +10600,13 @@
     const bar = document.querySelector("#xboard .pgbar"), band = document.querySelector("#xboard .pagehead"); if (!bar || !band) return;
     bar.classList.toggle("stuck", band.getBoundingClientRect().bottom <= bar.getBoundingClientRect().bottom + 2);
   }
-  window.addEventListener("scroll", () => requestAnimationFrame(stickSync), { passive: true, capture: true });   // capture: the popup's own scroll too
+  // what a phone shows past the page's ends as it bounces (the html canvas) follows the end you're at: the band's colour at the top, where it meets
+  // the header, and white past the foot once the area under the bars went white (Sean, 23 Oct 2026) — the lower half of a player page sets pgfoot
+  function footSync() {
+    const r = document.documentElement, max = r.scrollHeight - innerHeight;
+    r.classList.toggle("pgfoot", state.mode === "player" && max > 0 && window.scrollY > max / 2);
+  }
+  window.addEventListener("scroll", () => requestAnimationFrame(() => { stickSync(); footSync(); }), { passive: true, capture: true });   // capture: the popup's own scroll too
   // the filter chips (each filter in effect with its own ×), as renderPlate draws them for a popup
   function viewChips(p) {
     const r = el("div", "mrank inctl");
