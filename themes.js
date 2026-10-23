@@ -109,6 +109,22 @@ window.DRAFT_THEMES = (function () {
               btn: "#7bafd4", "btn-ink": "#ffffff", "btn-line": "transparent", "tab-fill": "#7bafd4",
               ground: "#07131c", "line-soft": "#1d3a4f", frame: "#1d3a4f", secrule: "#1d3a4f", "accent-ink": "#ffffff", "band-ink": "#eef5fa", svtext: "#eef5fa", svrule: "#1d3a4f", pctrack: "#15303f" },
     },
+    // the Jets look in mint (Sean, 23 Oct 2026: "a jets style color scheme but make it like a mint green"): Mint (#3eb489) and white, no stripes,
+    // no outlines (flat). White type on the mint bands reads at 2.6:1, a little better than Carolina's 2.3; mint is too pale to read as type on
+    // white, so the type and --flat-ink are a deep shade of the same green (8.2:1), the links a mid one (5.3:1)
+    "jets-mint": {
+      name: "Jets · Mint", flat: true, blurb: "The Jets look in mint: mint and white, nothing else — mint bands with white type, the type a deep shade of the green, no stripes and no outlines.",
+      light: { "flat-ink": "#165a42", accent: "#165a42", "accent-2": "#3eb489", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.85)", "on-fill-wash": W + "0.14)", "on-fill-wash-2": W + "0.24)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
+               "accent-2-text": "#1f7a5a", pop: "#ffffff", rule: "#dbeee6", "stripe-line": "#3eb489", "accent-wash": "rgba(62, 180, 137, 0.12)", ink: "#165a42", "ink-2": "#3c6c5c", hover: "#edf7f3",
+               page: "#ffffff", surface: "#ffffff", "surface-2": "#eff8f4", hair: "#dbeee6", rail: "#c3e1d5", stripe: "#ffffff", band: "#ffffff", plate: "#dbeee6", muted: "#6a8c80",
+               btn: "#3eb489", "btn-ink": "#ffffff", "btn-line": "transparent", "tab-fill": "#3eb489",
+               ground: "#ffffff", "line-soft": "#dbeee6", frame: "#dbeee6", secrule: "#dbeee6", "accent-ink": "#ffffff", "band-ink": "#165a42", svtext: "#165a42", svrule: "#dbeee6", pctrack: "#e4f3ed" },
+      dark: { accent: "#86e0bd", "accent-2": "#3eb489", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.85)", "on-fill-wash": W + "0.12)", "on-fill-wash-2": W + "0.22)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
+              "accent-2-text": "#86e0bd", pop: "#0d221d", rule: "#1e463b", "stripe-line": "#3eb489", "accent-wash": "rgba(62, 180, 137, 0.22)", ink: "#eef7f4", "ink-2": "#bad6cd", hover: "#13302a",
+              page: "#071512", surface: "#0d221d", "surface-2": "#122b25", hair: "#1e463b", rail: "#295a4c", stripe: "#071512", band: "#0d221d", plate: "#1e463b", muted: "#86a59b",
+              btn: "#3eb489", "btn-ink": "#ffffff", "btn-line": "transparent", "tab-fill": "#3eb489",
+              ground: "#071512", "line-soft": "#1e463b", frame: "#1e463b", secrule: "#1e463b", "accent-ink": "#ffffff", "band-ink": "#eef7f4", svtext: "#eef7f4", svrule: "#1e463b", pctrack: "#16352d" },
+    },
     "titans-unc": {
       name: "Titans · Carolina", blurb: "Tennessee in Carolina blue — Titans navy type, the red stripe, UNC blue across the banner.",
       light: { accent: "#0c2340", "accent-2": "#7bafd4", ...onLight("#0c2340", "rgba(12, 35, 64, 0.85)"), "accent-2-text": "#4b9cd3", pop: "#ffffff", rule: "#0c2340", "stripe-line": "#c8102e", "accent-wash": "rgba(123, 175, 212, 0.24)", ink: "#0c2340", "ink-2": "#35465f", hover: "#eaf2f9", band: "#0c2340" },

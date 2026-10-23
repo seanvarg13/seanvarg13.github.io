@@ -5343,14 +5343,14 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 /* the Regular season / Postseason switch over a log hugs its two buttons (it had stretched the box's width, a white strip either side) */
 :root:root:root :is(#xboard, #modal) .glwrap > .seg.glkind { display: flex !important; width: fit-content !important; max-width: 100%; margin: 0 auto 12px !important; }
 
-/* The flat schemes — Jets, and the Jets look in Titans blue and in UNC blue (Sean, 18 Oct 2026: "a New York jets color theme where it is basically
+/* The flat schemes — Jets, and the Jets look in Titans blue, in UNC blue and in mint (Sean, 18 / 23 Oct 2026: "a New York jets color theme where it is basically
    just the white and green and no tertiary color. I like how they don't have outlines and it is just the green and white", then "another two jets
    ones but one with the titans blue and another with the unc blue"). themes.js gives every token the scheme's one colour or white and sets
    html[data-flat]; here, only under it, the outlines come off: no edge on any button, tab, pill, box or table frame (the shadows stay, so a box still
    stands off the page). The Summary on the player's band reads white on the colour, the picked Regular Season / Playoffs tab is white on the
    coloured strip (the stripe colour it used is the strip's own here), and the lists' Filters button and the pills are filled with the colour and
    white type, so a white button doesn't vanish on a white page once its edge is gone. --flat-ink is the scheme's type colour — the green itself, a
-   deeper shade of the blue for the two blues (they're too pale to read as text) — and it stays that in dark mode. :not(#j1)…:not(#j4) carry four
+   deeper shade of the colour for the two blues and the mint (they're too pale to read as text) — and it stays that in dark mode. :not(#j1)…:not(#j4) carry four
    ids' weight, over the deepest id-anchored passes. */
 :root[data-flat]:not(#j1):not(#j2):not(#j3):not(#j4) :is(.btn, .tbtn, .pill, .pbtn, .segbtn, .seg, .tsl, .phfilt, .btab, .bsub, .sbtab, .sbtabs, .sbviews, .xpopx, .ptab, .draftbtn, .fchip, .modes > a, .modes > .modesel, .navtog) { border-color: transparent !important; }
 :root[data-flat]:not(#j1):not(#j2):not(#j3):not(#j4) :is(#bscroll, .board-scroll, .sbscroll, .brscroll, .fscroll, .pbscroll, .stuffscroll, .rawscroll, .gframe, .pbinfo, #pop, .phwin, .ddmenu, .ddlist, .hcard, main.wrap, .pgbar, .pbsum) { border-color: transparent !important; outline-color: transparent !important; }
