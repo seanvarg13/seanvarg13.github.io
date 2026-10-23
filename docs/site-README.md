@@ -1057,3 +1057,6 @@ and scrolls inside it.
 The window is shared between the two sides, and the page remembers the side you were on. The count sits beside the pills ("32 hitters ·
 106 elite with a flaw", "172 of 336 pitchers up"). The explanation is folded under the table behind **More about these numbers**. Home's
 Movers card has **Hitters →** and **Pitchers →** links that open the page on that side and on its 30 days.
+
+On a phone the ☰ Menu lays its six pages out three across and two down (Home · Leaders · Pitching+ over Movers · Fantasy ▾ · Settings),
+so it takes less of the screen.

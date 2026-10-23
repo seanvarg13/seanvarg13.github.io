@@ -4859,6 +4859,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     grey line is "last 30 days", so both links fit on a desktop's 375px card.
   - **The page check**'s Movers step taps Pitchers and back, requiring rows each time (`tools/check_site.cjs`).
 
+* **A phone's ☰ Menu three across (Sean, 23 Oct 2026, the menu open over the Movers page: "make the menu buttons here be a 2x3 instead of the 3x2
+  it currently is")**: the open menu's six buttons are three columns by two rows — Home · Leaders · Pitching+ over Movers · Fantasy ▾ ·
+  Settings — `grid-template-columns: repeat(3, minmax(0, 1fr))` in the 12 Oct menu block of `styles.css` (it was `1fr 1fr`, three rows of two).
+  Each button is 118px wide on a 393px phone (112 at 375), no word clipped; Fantasy ▾'s dropdown still hangs inside the screen. The menu is
+  50px shorter.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
