@@ -5473,3 +5473,5 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .aucsheet .aucnote.warn { color: var(--stripe-line, #c8102e); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .aucsheet .aucrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .aucsheet .aucrow .btn { height: 32px; padding: 0 18px; }
+/* the xSLG tab's SLG by season (23 Oct 2026): six columns, narrower than a phone, so its frame hugs the table as it does on a desktop */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) .brscroll:has(> table.slgt) { width: max-content !important; max-width: 100% !important; }
