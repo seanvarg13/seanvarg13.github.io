@@ -4837,6 +4837,28 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     existing value unchanged). `sbxOf` hands out `xslg` with parks unless the switch is on (keeping `xslgn`), `sbxPool(y, "xslg")` likewise;
     `sbxSlgPool` is the season's qualifiers' official SLG from `hist/career.js`. App and file agree within .001.
 
+* **The Movers page shows one side at a time (Sean, 23 Oct 2026, from his phone on Jets · Mint: "for the movers page this looks bad the table
+  is so small and I also have no way of switching between pitchers and hitters fix this")**: the hitters' and pitchers' tables, their titles
+  and their two long notes had shared the standing card's height. That left the phone's hitters' table at 41px (its header alone) and the
+  pitchers' at 209px; on a desktop they were 64 / 325.
+  - **The switch**: `renderFlaws` draws one side, `fxSet.side` ("H" / "P", saved in `draft2027.flaws`). A **Hitters | Pitchers** `.seg.fxside`
+    leads the control row (`.pbfilters.fxbar`). On a phone it spans the row, a button a half.
+  - **The row**: the window pill, the hitters' Order pill, and the count at the right ("32 hitters · 106 elite with a flaw" / "172 of 336
+    pitchers up").
+    - The pitchers' window list leaves out the last-N-PA windows (`wcur`): a PA window picked on the hitters' side reads 30 days there.
+    - The window is shared between the sides.
+  - **The title**: "Hitting Movers" / "Pitching Movers" with a short grey line (the sort). A desktop adds what the list is.
+  - **The table** (`flex: 0 1 auto`) hugs its rows and scrolls inside the card when they don't fit (phone 553-621px, desktop 682).
+  - **The note**: the explanation folds under the table behind **More about these numbers** (`.fxnote`, `fxNoteOpen` per visit, Fantasy's
+    pattern). Open, it keeps its full height (`flex: none`, max 9em) and the table gives up the room.
+  - **Day rows**: only the side shown asks for its file (`ensureDays(side)`). Last season is asked for by the hitters' side (the witness) and by
+    either side in This season vs last.
+  - **Phone details**: the hitters' Flaw column drops the % signs, as home's card does. The pitchers' over-row names the window ("Last 30 days
+    vs before", "2026 vs 2025") instead of an empty band.
+  - **Home**: the Movers card's header has **Hitters →** / **Pitchers →** (`goMv`: sets the side and the card's 30 days, then `#movers`). Its
+    grey line is "last 30 days", so both links fit on a desktop's 375px card.
+  - **The page check**'s Movers step taps Pitchers and back, requiring rows each time (`tools/check_site.cjs`).
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

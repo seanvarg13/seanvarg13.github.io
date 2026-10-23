@@ -5475,3 +5475,14 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .aucsheet .aucrow .btn { height: 32px; padding: 0 18px; }
 /* the xSLG tab's SLG by season (23 Oct 2026): six columns, narrower than a phone, so its frame hugs the table as it does on a desktop */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) .brscroll:has(> table.slgt) { width: max-content !important; max-width: 100% !important; }
+
+/* The Movers page, one side at a time (Sean, 23 Oct 2026: "the table is so small and I also have no way of switching between pitchers and
+   hitters"): a Hitters | Pitchers switch leads the control row (on a phone it spans the row, a button a half), the one table hugs its rows and
+   scrolls inside the card when they don't fit, and the explanation folds behind "More about these numbers" the way Fantasy's does */
+:root:root:root:root:root:root:root body[data-mode="flaws"] .flawpage > .pbscroll { flex: 0 1 auto; }
+:root:root:root:root:root:root:root body[data-mode="flaws"] .fxbar .pbcount:empty { display: none; }
+:root:root:root:root:root:root:root body[data-mode="flaws"] .flawpage > .fxnote:not(.open) { display: none; }
+:root:root:root:root:root:root:root body[data-mode="flaws"] .flawpage > .fxnote { flex: none; margin: 8px 0 0; max-height: 9em; overflow-y: auto; }   /* open, the table gives up the room (a scroller would shrink to a line) */
+:root:root:root:root:root:root:root body[data-mode="flaws"] .flawpage > .fxmore { align-self: flex-start; margin: 8px 0 0; font-size: 12.5px; }
+:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxbar > .fxside { flex: 1 1 100%; display: flex; }
+:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxbar > .fxside > .segbtn { flex: 1 1 0; justify-content: center; }
