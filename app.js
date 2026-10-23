@@ -1154,7 +1154,7 @@
         if (hasBB && t.wden) {
           const untyped = Math.max(0, t.bip - t.gb - t.ld - t.fbt - t.pu);
           const av = airValue(c), xair = av != null ? (t.ld + t.fbt) * av : t.ld * c.bbw.ld + t.fbt * c.bbw.fb;   // liners and flies alike (23 Oct 2026)
-          const xnum = t.wnum - t.wbip + t.gb * c.bbw.gb + xair + t.pu * c.bbw.pu + untyped * c.bbw.ut;
+          const xnum = t.wnum - (t.wk || 0) - t.wbip + t.gb * c.bbw.gb + xair + t.pu * c.bbw.pu + untyped * c.bbw.ut;   /* a strikeout the batter reached on is a strikeout (23 Oct 2026) */
           nera = r2(c.lgERA + (xnum / t.wden - c.lgwOBA) / c.wobaScale * c.pa9);
           bbl = { gb: [t.gb, t.gb ? Math.round(1000 * t.wgb / t.gb) / 1000 : null], ld: [t.ld, t.ld ? Math.round(1000 * t.wld / t.ld) / 1000 : null],
                   fb: [t.fbt, t.fbt ? Math.round(1000 * t.wfb / t.fbt) / 1000 : null], pu: [t.pu, t.pu ? Math.round(1000 * t.wpu / t.pu) / 1000 : null] };
@@ -6088,7 +6088,7 @@
     era: "Earned runs per nine innings, from official game logs.",
     fip: "Fielding-independent pitching: strikeouts, walks, hit batters and home runs only, scaled to look like an ERA.",
     siera: "Skill-interactive ERA: FIP's inputs plus how he uses the ground, shifted so the league averages its real ERA.",
-    nera: "Luck-neutral ERA: his strikeouts, walks and hit batters as they were, and every ball in play re-scored at what the league gets on that kind of ball — a ground ball's value, a popup's, and one value for every ball in the air (line drives and fly balls alike: whether an air ball reads as a liner or a fly is noise, so only how many he allows counts). BABIP, HR/FB and the liner / fly split wash out; a ground-ball or popup profile keeps its value.",
+    nera: "Luck-neutral ERA: his strikeouts (a strikeout the batter reached on, a wild pitch or passed ball, is still a strikeout), walks and hit batters as they were, and every ball in play re-scored at what the league gets on that kind of ball — a ground ball's value, a popup's, and one value for every ball in the air (line drives and fly balls alike: whether an air ball reads as a liner or a fly is noise, so only how many he allows counts). BABIP, HR/FB and the liner / fly split wash out; a ground-ball or popup profile keeps its value.",
     uera: "Underlying ERA: what his whiff, strike and batted-ball rates say his ERA should be. Strikeouts come in at the rate his Whiff%, Strike%, Swing%, Z-Contact%, Chase% and Zone% have historically come with, walks at the rate his Strike%, Zone%, Chase%, Swing%, Z-Contact% and Whiff% have historically come with, his ground-ball and popup shares stand, and the air balls that are left are split into line drives and fly balls at the league's rate — then every ball in play is worth the league's average for its type.",
     ukb: "Underlying K-BB%: uK% minus uBB% — what his swing-and-miss and strike-throwing say the gap should be, with the results taken out of it.",
     uk: "uK%: the strikeout rate his process implies — what pitchers with his Whiff%, Strike%, Swing%, Z-Contact%, Chase% and Zone% (each against the league's) have historically struck out. Whiff% and Strike% carry it, about +0.9 K% a point each; more swings mean fewer strikeouts (−0.5 a point).",
@@ -9586,7 +9586,7 @@
   // wider than a season, so it isn't ranked among the season's pitchers). The card's dates, home / away and SP / RP pick which outings show; a
   // batter-hand split doesn't cut an outing in two. Opp is MLB's own game log (oppLog), fetched like the bio. It replaces the 29 Sep log (Pitching+ by
   // outing, a tap for the day's pitches and batted-ball luck), off the strip since 4 Oct
-  const OUT_F = ["outs", "pit", "bf", "k", "bb", "hbp", "sw", "whf", "wnum", "wden", "wbip", "gb", "ld", "fbt", "pu", "bip"];
+  const OUT_F = ["outs", "pit", "bf", "k", "bb", "hbp", "sw", "whf", "wnum", "wden", "wbip", "gb", "ld", "fbt", "pu", "bip", "wk"];
   function sumOutings(rows, f = DF.P) {                               // his day rows summed per game day, every hand: day → { the sums, gs, home, w }; f: their layout
     const I = OUT_F.map((k) => f.indexOf(k)), gi = f.indexOf("gs"), wi = f.indexOf("wbip"), by = new Map();
     for (const r of rows) {
@@ -9604,7 +9604,7 @@
     if (!g || !g.w || !g.wden || !c || !c.bbw) return null;
     const ut = Math.max(0, g.bip - g.gb - g.ld - g.fbt - g.pu);
     const av = airValue(c), xair = av != null ? (g.ld + g.fbt) * av : g.ld * c.bbw.ld + g.fbt * c.bbw.fb;
-    const x = g.wnum - g.wbip + g.gb * c.bbw.gb + xair + g.pu * c.bbw.pu + ut * c.bbw.ut;
+    const x = g.wnum - (g.wk || 0) - g.wbip + g.gb * c.bbw.gb + xair + g.pu * c.bbw.pu + ut * c.bbw.ut;   /* a strikeout the batter reached on is a strikeout (23 Oct 2026) */
     return c.lgERA + (x / g.wden - c.lgwOBA) / c.wobaScale * c.pa9;
   }
   // every outing of the season by kind, for the colours (2026: the middle start 4.20, a quarter of them under 2.97; the middle relief outing 3.83, with

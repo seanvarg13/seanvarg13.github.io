@@ -5054,6 +5054,18 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   iPhones and iPads only (`IOS`). `window.__healViewport` is the hook the page check's "viewport heal" step runs on a desktop, where it must
   leave a scrolled page and a sideways-scrolled table exactly as they were. Not reproducible here — Sean's phone is the test.
 
+* **A strikeout the batter reached on is a strikeout in nERA (Sean, 23 Oct 2026, Connelly Early's May 15 start reading 3.77 on 6 K / 0 BB / 46.7% GB:
+  "leave that as a strikeout and not count it against the pitcher as a batter reaching")**: Statcast prices a strikeout the batter reached on
+  (a wild pitch, a passed ball — Baldwin in the 3rd that day) at .7, a walk's value, and nERA had inherited it as a free pass. The build's
+  `pa_rows` keeps that value as `w_k`, `pitcher_metrics` sums it (`wK`), `neutral_era` takes it off, and **`wk`** is appended to `PITCHER_DAY` so
+  `V()`'s window nERA and `dayNERA` (Game Logs, home's last game day) take it off too (`t.wk || 0`: a file without the field reads 0). The
+  pitcher's wOBA allowed is untouched (Savant's number; the hitter's side the same). Every season's `m.nera` was re-priced in place (scratch
+  `early/patch_wk.py`: each pitcher-day row's value beyond .7 × (walks + HBP), with Savant's intentional walks per season put back since they're
+  out of `wnum` — every regular-season row a clean multiple of .7, none negative; 52 such strikeouts in 2026, 50-120 a season), `data.js`'s
+  day rows carry `wk` (its layout names it); past seasons' day files keep their layout, so a window on one still prices the reach as a walk until
+  a rescore. `hist/career-bb.js`, `similar.js` and `home.js` regenerated. Early 2026: 4.14 → 4.09, the start 3.77 → 2.79; the biggest 300+ BF
+  moves are ~0.1 (Burke 4.02 → 3.93, Clippard 2015 5.16 → 5.02).
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

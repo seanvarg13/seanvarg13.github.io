@@ -1124,6 +1124,11 @@ league's pieces to his xISO one step at a time (strikeouts and walks, fly balls 
 bases), then the park, the luck and his ISO; under it, his ISO and xISO by season. It follows the card's dates and splits. xSLG is still on the
 Leaderboard and the card's Results bars.
 
+### A strikeout the batter reached on is a strikeout in nERA (23 Oct 2026)
+
+Statcast prices a strikeout the batter reached on (a wild pitch, a passed ball) at .7, a walk's value, and nERA had charged it as a free pass. It
+comes off now, in the season number, in a date window and in each outing's nERA on Game Logs; the pitcher's wOBA allowed is unchanged.
+
 ### nERA prices every ball in the air alike (23 Oct 2026)
 
 nERA used to price a pitcher's line drives at the league's wOBA on a line drive and his fly balls at a fly ball's. Whether an air ball is
