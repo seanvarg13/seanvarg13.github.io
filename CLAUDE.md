@@ -5003,6 +5003,37 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   - xSLG itself is unchanged: still the Leaderboard column, the card's Results bar and Fantasy's expected total bases. The xSLG tab
     (`xslgBuildUp`, `slgSeasons`, `sbxSlgPool`) is gone from `app.js`; the "xSLG from skills" entry above describes its build.
 
+* **nERA prices every ball in the air alike (Sean, 23 Oct 2026: "adjust on the baseball site the nERA formula to be neutral to fb and line
+  drive ratio, so for every pitcher just assume that their non gb and pu batted balls have the same ratio of line drive to fly ball, all that
+  changes is volume, and look for any other things that could improve it")**: a pitcher's line drives and fly balls are priced together at the
+  league's wOBA over both (`bbw.air`, with `bbw.la` the league's liner share behind it; 2026 .524, where a liner was .645 and a fly ball .417),
+  his ground balls and popups at their own league values as before — so his liner / fly split no longer moves his nERA, only how many balls he
+  lets in the air, on the ground and straight up.
+  - **Why** (scratch `nera/study.py`, every 300+ BF pitcher-season 2015-26: 2,140 seasons, 1,577 back-to-back pairs): the liner share of a
+    pitcher's air balls repeats year to year at r .58 raw but .32 once his ground-ball rate is held (a sinkerballer's air balls are liners), and
+    it adds .005 to next season's ERA beyond the new nERA — mostly noise, and partly the stringer's convention (the league's liner share of air
+    balls ran from 57% in 2015 to 47% in 2026). The new nERA repeats at .540 against .519, forecasts next season's ERA at r .346 against .337
+    (starters .354 / .344, relievers .301 / .292), explains this season's ERA the same (.669 / .667) and next season's ESPN points per inning
+    the same (−.454). 2026, 300+ BF: the move's sd 0.12, at most 0.38 — liner-heavy Wandy Peralta 4.83 → 4.48, Pallante 4.34 → 4.08, Andrew
+    Alvarez 4.13 → 3.91; fly-ball-heavy Lauer 4.86 → 5.24, Taillon 4.41 → 4.75, Jacob Lopez 4.14 → 4.45.
+  - **Build**: `league_constants` adds `bbw.air` / `bbw.la`; `neutral_era` prices `nLD + nFB` at `bbw.air` when the file carries it, the four
+    types apart on a file built before. **App**: `airValue(c)` (`bbw.air`, else `consts.stuff.vair` — the same number the stuff grades already
+    carried, within .0002 on every regular season — else null, which prices the types apart) in `V()`'s window nERA and `dayNERA` (Game Logs,
+    home's last game day); the nERA tab's table keeps a Lg wOBA per type but its All balls in play row is priced at the one air value (the title
+    and the Lg tooltip say so); the glossary entry. uERA / Stuff uERA / Pitching uERA, Mix wOBA and xnERA already split the air balls at the
+    pool's liner share (`sorted.ldAir`), so they don't move, and nERA now sits on xnERA's footing.
+  - **Data**: `data.js`, every `hist/mlb-YYYY.js` and the postseason / spring files re-priced in place from their day rows (scratch
+    `nera/patch.py`: the old formula first rebuilt every stored nERA to the cent — 10,000 pitchers, no mismatch — then the new one; `bbw.air /
+    la` put on each file's constants; the minors' files aren't touched — their next rescore builds it through `league_constants`);
+    `hist/career-bb.js` (the season table's nERA column, `pp`), `hist/similar.js` and `hist/home.js` regenerated.
+  - **Tested and not shipped** (the same study; Sean can have any of them): **contact quality on the air balls** — the league's air value moved
+    by his hard-hit rate over the league's (F): same-season ERA r .708, next season .352, year to year .527; by barrels (G) .711 / .352 / .532;
+    both (H) .723 / .355 / .528, relievers' next-season ERA .343 against .301 — it explains more of the season and a hair more of the next,
+    repeats less, and nERA stops being "his mix at league value". **GB% / PU% shrunk toward the league** by batters faced (E, 150 BF: .561 /
+    .660 / .349; 300 BF: .572 / .650 / .348): steadier, but an expectation rather than what he allowed. **Popups folded in with the air balls**
+    (C: .594 / .617 / .346) loses a third of the same-season fit — a popup is a real skill. **HBP at the league rate** (D: .542 / .657 / .346):
+    nothing.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

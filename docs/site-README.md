@@ -1123,3 +1123,17 @@ xISO calls the other half's at r .68 (xSLG .58), and next season's ISO at .67 (x
 league's pieces to his xISO one step at a time (strikeouts and walks, fly balls and xHR/FB, the hits on the ground and on line drives, the extra
 bases), then the park, the luck and his ISO; under it, his ISO and xISO by season. It follows the card's dates and splits. xSLG is still on the
 Leaderboard and the card's Results bars.
+
+### nERA prices every ball in the air alike (23 Oct 2026)
+
+nERA used to price a pitcher's line drives at the league's wOBA on a line drive and his fly balls at a fly ball's. Whether an air ball is
+called a liner or a fly is mostly noise (it repeats at r .32 year to year once his ground-ball rate is held, and the stringer's convention
+has drifted — 57% of air balls were liners in 2015, 47% in 2026), so now every ball in the air takes one value, the league's wOBA over its
+liners and fly balls together; ground balls and popups keep their own. Only the volume of air balls counts.
+
+- It repeats better (r .54 year to year, was .52) and forecasts next season's ERA a little better (.35, was .34), with this season's ERA
+  explained the same.
+- Liner-heavy pitchers come down (Wandy Peralta 4.83 → 4.48, Andre Pallante 4.34 → 4.08), fly-ball-heavy ones go up (Eric Lauer 4.86 →
+  5.24, Jameson Taillon 4.41 → 4.75); most moves are under a quarter of a run.
+- Everywhere nERA shows — the Leaderboard, the band, the season table, Game Logs' outings, home — and every past season, re-priced.
+- The nERA tab still lists his wOBA on each type against the league's; the All balls in play row is priced at the one air value.
