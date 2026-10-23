@@ -1942,8 +1942,11 @@ def league_constants(pit: pd.DataFrame, people: dict) -> dict:
         typed = sum(int(pit[f"n{t.upper()}"].sum()) for t in BB_TYPES)
         bbw = {t: round(float(pit[f"w{t.upper()}"].sum() / max(1, pit[f"n{t.upper()}"].sum())), 4) for t in BB_TYPES}
         bbw["ut"] = round(float(pit.wBIP.sum() / max(1, pit.nBIP.sum())), 4)    # untyped balls in play: the BIP average
-        # a line drive or fly ball, the two pooled: nERA prices both at it, so a pitcher's LD / FB split washes out (Sean, 23 Oct 2026)
-        bbw["air"] = round(float((pit.wLD.sum() + pit.wFB.sum()) / max(1, pit.nLD.sum() + pit.nFB.sum())), 4)
+        # one value for every ball in the air (Sean, 23 Oct 2026: nERA "neutral to fb and line drive ratio"): the league's wOBA over its line
+        # drives and fly balls together, and the line-drive share behind it — nERA prices a pitcher's air balls at this, whatever his own split
+        nair = int(pit.nLD.sum() + pit.nFB.sum())
+        bbw["air"] = round(float((pit.wLD.sum() + pit.wFB.sum()) / max(1, nair)), 4)
+        bbw["la"] = round(float(pit.nLD.sum() / max(1, nair)), 4)
         out.update({"bbw": bbw, "lgwOBA": round(float(pit.wnum.sum() / pit.wden.sum()), 4), "wobaScale": WOBA_SCALE,
                     "pa9": round(float(9 * pit.BF.sum() / (pit.outs.sum() / 3)), 2),
                     "wbb": round(float(pit.wUBB.sum() / max(1, pit.nUBB.sum())), 3),      # wOBA value of a walk / a hit by pitch
@@ -1958,18 +1961,20 @@ def league_constants(pit: pd.DataFrame, people: dict) -> dict:
 
 
 def neutral_era(r, consts) -> float | None:
-    """Luck-neutral ERA: every ball in play gets the league's average wOBA for its batted-ball type (ground ball,
-    popup, and line drives and fly balls together as air balls), strikeouts / walks / HBP stay as they were, and the
-    result is put on the ERA scale around the league ERA using the wOBA scale and league PA per nine — so BABIP and
-    HR/FB luck wash out while a ground-ball profile keeps its value. Since 23 Oct 2026 a line drive and a fly ball are
-    priced alike (bbw["air"]; Sean: "assume that their non gb and pu batted balls have the same ratio of line drive to
-    fly ball, all that changes is volume")."""
+    """Luck-neutral ERA: every ball in play gets the league's average wOBA for its batted-ball type — a ground ball's, a
+    popup's, and ONE value for every ball in the air (line drives and fly balls alike, since 23 Oct 2026: whether an air
+    ball reads as a liner or a fly is mostly noise — the share repeats at r .32 once the ground-ball profile is held and
+    says nothing about next season — so only the volume of air balls counts; bbw["air"], a file without it prices the
+    two types apart as before); strikeouts / walks / HBP stay as they were, and the result is put on the ERA scale around
+    the league ERA using the wOBA scale and league PA per nine — so BABIP, HR/FB and the liner / fly split wash out
+    while a ground-ball or popup profile keeps its value."""
     if "bbw" not in consts or not r.wden:
         return None
-    w = dict(consts["bbw"])
-    if w.get("air") is not None:
-        w["ld"] = w["fb"] = w["air"]
-    xnum = r.wnum - r.wBIP + sum(r[f"n{t.upper()}"] * w[t] for t in BB_TYPES)
+    bbw = consts["bbw"]
+    if bbw.get("air") is not None:
+        xnum = r.wnum - r.wBIP + r.nGB * bbw["gb"] + r.nPU * bbw["pu"] + (r.nLD + r.nFB) * bbw["air"]
+    else:
+        xnum = r.wnum - r.wBIP + sum(r[f"n{t.upper()}"] * bbw[t] for t in BB_TYPES)
     untyped = r.nBIP - sum(r[f"n{t.upper()}"] for t in BB_TYPES)
     xnum += untyped * consts["bbw"]["ut"]
     xw = xnum / r.wden

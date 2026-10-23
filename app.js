@@ -296,19 +296,6 @@
     return ds;
   }
   const K = () => DS.consts;                // league ERA, FIP constant, SIERA shift of the dataset in effect
-  // nERA's yardstick for an air ball (Sean, 23 Oct 2026: "for every pitcher just assume that their non gb and pu batted balls have the same ratio of
-  // line drive to fly ball, all that changes is volume"): a line drive and a fly ball priced alike, at the league's wOBA on the two together, so
-  // only his share of air balls moves nERA. consts.bbw.air since that day; a file without it takes it from its own pitchers' counts
-  const airMemo = new WeakMap();
-  function airW(c) {
-    if (!c || !c.bbw) return null;
-    if (c.bbw.air != null) return c.bbw.air;
-    if (airMemo.has(c)) return airMemo.get(c);
-    let nl = 0, nf = 0;
-    for (const p of (DS && DS.players) || []) { const b = p.type === "P" && p.ctx && p.ctx.bbl; if (b) { nl += (b.ld || [0])[0]; nf += (b.fb || [0])[0]; } }
-    const v = nl + nf ? (nl * c.bbw.ld + nf * c.bbw.fb) / (nl + nf) : (c.bbw.ld + c.bbw.fb) / 2;
-    airMemo.set(c, v); return v;
-  }
   // wRC+ as a display scale (Sean, 16 Oct 2026: "keep the stored numbers and then yeah add a display switch on the appearance tab"): every
   // wOBA-scale number the site prints — wOBA, xwOBA, xwOBA proj., xwOBA in his parks, the batted-ball model's — can show as wRC+ / xwRC+,
   // 100 × (1 + (wOBA − league wOBA) / wobaScale / league runs per PA), each dataset against its own league (a minors season against its level's);
@@ -1166,7 +1153,8 @@
         let nera = null, bbl = null;
         if (hasBB && t.wden) {
           const untyped = Math.max(0, t.bip - t.gb - t.ld - t.fbt - t.pu);
-          const xnum = t.wnum - t.wbip + t.gb * c.bbw.gb + (t.ld + t.fbt) * airW(c) + t.pu * c.bbw.pu + untyped * c.bbw.ut;   /* LD and FB alike (23 Oct 2026) */
+          const av = airValue(c), xair = av != null ? (t.ld + t.fbt) * av : t.ld * c.bbw.ld + t.fbt * c.bbw.fb;   // liners and flies alike (23 Oct 2026)
+          const xnum = t.wnum - t.wbip + t.gb * c.bbw.gb + xair + t.pu * c.bbw.pu + untyped * c.bbw.ut;
           nera = r2(c.lgERA + (xnum / t.wden - c.lgwOBA) / c.wobaScale * c.pa9);
           bbl = { gb: [t.gb, t.gb ? Math.round(1000 * t.wgb / t.gb) / 1000 : null], ld: [t.ld, t.ld ? Math.round(1000 * t.wld / t.ld) / 1000 : null],
                   fb: [t.fbt, t.fbt ? Math.round(1000 * t.wfb / t.fbt) / 1000 : null], pu: [t.pu, t.pu ? Math.round(1000 * t.wpu / t.pu) / 1000 : null] };
@@ -1738,6 +1726,10 @@
   // underlying ERA: his uK% and uBB% put on the batted balls he allowed, every ball in play worth the league's value
   // for its type — his ground-ball and popup shares stand, the air balls that are left are split into line drives and
   // fly balls at the population's ratio. Luck-neutral ERA on top of process-implied K and BB.
+  // nERA's price for a ball in the air (Sean, 23 Oct 2026: "neutral to fb and line drive ratio ... all that changes is volume"): the league's wOBA
+  // over its line drives and fly balls together (consts.bbw.air, built since 23 Oct 2026; the Stuff+ constants' vair is the same number on an
+  // older file); null on a file with neither, where nERA prices the two types apart as it used to
+  function airValue(c) { return c && c.bbw && c.bbw.air != null ? c.bbw.air : c && c.stuff && c.stuff.vair != null ? c.stuff.vair : null; }
   function underlyingERA(pv, ik, sorted) {
     const c = K(), ctx = pv.ctx || {}, bbl = ctx.bbl;
     if (!c.bbw || c.wbb == null || !bbl || !ctx.PAw || !ik) return null;
@@ -5826,7 +5818,7 @@
   // hist/home.js, so a fresh home reads ~10 KB instead of downloading and parsing the 31 MB day file (12 s on a phone). The page computes the lists
   // itself whenever the day rows are in anyway (a window or split elsewhere loaded them), and when the file can't be used: older than data.js, or
   // the park-neutral switch or Regress small samples on (the file holds the defaults)
-  const HOME_V = 3;   // 2: the pitchers' movers by nERA (23 Oct 2026); 3: nERA with line drives and fly balls priced alike (the same day). A file of an older shape is left for the day rows
+  const HOME_V = 2;   // 2: the pitchers' movers by nERA (23 Oct 2026); a file of an older shape is left for the day rows
   let homeMemo = null;
   function homeLive() {
     const key = DATA.meta.built + ":" + XWN + ":" + !!state.tbl.shrink + ":" + DS.key; if (homeMemo && homeMemo.key === key) return homeMemo.val;
@@ -6096,7 +6088,7 @@
     era: "Earned runs per nine innings, from official game logs.",
     fip: "Fielding-independent pitching: strikeouts, walks, hit batters and home runs only, scaled to look like an ERA.",
     siera: "Skill-interactive ERA: FIP's inputs plus how he uses the ground, shifted so the league averages its real ERA.",
-    nera: "Luck-neutral ERA: his actual batted balls, each re-scored at what that type of ball is worth league-wide, so the bounces come out. Ground balls and popups at their own values; line drives and fly balls together as air balls at one value, the league's wOBA on the two pooled, so his line-drive / fly-ball split washes out and only how many air balls he allows counts. Strikeouts, walks and HBP as they were.",
+    nera: "Luck-neutral ERA: his strikeouts, walks and hit batters as they were, and every ball in play re-scored at what the league gets on that kind of ball — a ground ball's value, a popup's, and one value for every ball in the air (line drives and fly balls alike: whether an air ball reads as a liner or a fly is noise, so only how many he allows counts). BABIP, HR/FB and the liner / fly split wash out; a ground-ball or popup profile keeps its value.",
     uera: "Underlying ERA: what his whiff, strike and batted-ball rates say his ERA should be. Strikeouts come in at the rate his Whiff%, Strike%, Swing%, Z-Contact%, Chase% and Zone% have historically come with, walks at the rate his Strike%, Zone%, Chase%, Swing%, Z-Contact% and Whiff% have historically come with, his ground-ball and popup shares stand, and the air balls that are left are split into line drives and fly balls at the league's rate — then every ball in play is worth the league's average for its type.",
     ukb: "Underlying K-BB%: uK% minus uBB% — what his swing-and-miss and strike-throwing say the gap should be, with the results taken out of it.",
     uk: "uK%: the strikeout rate his process implies — what pitchers with his Whiff%, Strike%, Swing%, Z-Contact%, Chase% and Zone% (each against the league's) have historically struck out. Whiff% and Strike% carry it, about +0.9 K% a point each; more swings mean fewer strikeouts (−0.5 a point).",
@@ -6675,7 +6667,8 @@
     let br = 1;
     if (bbl && c.bbw) {
       let act = 0, neu = 0;
-      for (const t of ["gb", "ld", "fb", "pu"]) { const [cnt, w] = bbl[t] || [0, null]; if (!cnt || w == null) continue; act += cnt * w; neu += cnt * (t === "ld" || t === "fb" ? airW(c) : c.bbw[t]); }   // air balls at one value, as nERA
+      const av = airValue(c);   /* his liners and flies at the one air-ball value, as nERA prices them (23 Oct 2026) */
+      for (const t of ["gb", "ld", "fb", "pu"]) { const [cnt, w] = bbl[t] || [0, null]; if (!cnt || w == null) continue; act += cnt * w; neu += cnt * (av != null && (t === "ld" || t === "fb") ? av : c.bbw[t]); }
       if (act > 0) br = neu / act;
     }
     const nera = pv.m.nera;
@@ -9596,7 +9589,8 @@
   function dayNERA(g, c) {
     if (!g || !g.w || !g.wden || !c || !c.bbw) return null;
     const ut = Math.max(0, g.bip - g.gb - g.ld - g.fbt - g.pu);
-    const x = g.wnum - g.wbip + g.gb * c.bbw.gb + (g.ld + g.fbt) * airW(c) + g.pu * c.bbw.pu + ut * c.bbw.ut;
+    const av = airValue(c), xair = av != null ? (g.ld + g.fbt) * av : g.ld * c.bbw.ld + g.fbt * c.bbw.fb;
+    const x = g.wnum - g.wbip + g.gb * c.bbw.gb + xair + g.pu * c.bbw.pu + ut * c.bbw.ut;
     return c.lgERA + (x / g.wden - c.lgwOBA) / c.wobaScale * c.pa9;
   }
   // every outing of the season by kind, for the colours (2026: the middle start 4.20, a quarter of them under 2.97; the middle relief outing 3.83, with
@@ -9782,39 +9776,23 @@
       hd.append(sub);
     }
     box.append(hd);
-    const aw = airW(c);
-    box.title = `Luck-neutral ERA gives every ball in play the league's average wOBA for its type (ground ball ${fmtX(c.bbw.gb)}, popup ${fmtX(c.bbw.pu)}, and line drives and fly balls together as air balls at ${fmtX(aw)}), so BABIP and HR/FB luck wash out, and so does his line-drive / fly-ball split, while strikeouts, walks and a ground-ball profile keep their value. Diff is his wOBA allowed minus the league's, in points; red means the type has gone his way, blue that it has hurt him.`;
+    const av = airValue(c);
+    box.title = `Luck-neutral ERA gives every ball in play the league's average wOBA for its kind (ground ball ${fmtX(c.bbw.gb)}, popup ${fmtX(c.bbw.pu)}, ${av != null ? `any ball in the air ${fmtX(av)} — line drives and fly balls alike, since the split between them is noise` : `line drive ${fmtX(c.bbw.ld)}, fly ball ${fmtX(c.bbw.fb)}`}), so BABIP, HR/FB and the liner / fly split wash out while strikeouts, walks and a ground-ball profile keep their value. Diff is his wOBA allowed minus the league's on that type, in points; red means the type has gone his way, blue that it has hurt him.`;
     // B-Ref's dress (Sean, 14 Oct 2026: "make the nERA table follow that same format"): Batted ball | Balls in play | wOBA allowed, Diff filled
     // by its size (red = the type has gone his way, blue = it has hurt him), all balls in play a band row under a gap
     const { tb, fin, gap, wrap } = brTable([["", 1], ["Balls in play", 2], ["wOBA allowed", 3]],
-      [["Type", "l f1"], ["BIP", "", "Balls in play of this type"], ["Share", "", "Share of his balls in play"], ["His", "", "The wOBA hitters have had on his balls of this type"], ["Lg", "", "The league's wOBA on this type"], ["Diff", "", "His minus the league's, in wOBA points"]]);
+      [["Type", "l f1"], ["BIP", "", "Balls in play of this type"], ["Share", "", "Share of his balls in play"], ["His", "", "The wOBA hitters have had on his balls of this type"], ["Lg", "", "The league's wOBA on this type (nERA prices his line drives and fly balls alike, at the league's air-ball value — the All balls in play row)"], ["Diff", "", "His minus the league's, in wOBA points"]]);
     wrap.querySelector("tr.over th").classList.add("f1");
-    // line drives and fly balls as one row, priced at the air-ball value as nERA prices them (Sean, 23 Oct 2026); his own split in the row's note
     let sw = 0, sl = 0, nw = 0;
-    const [ldN, ldW] = bbl.ld || [0, null], [fbN, fbW] = bbl.fb || [0, null], airN = (ldN || 0) + (fbN || 0);
-    const airWo = airN ? ((ldN || 0) * (ldW || 0) + (fbN || 0) * (fbW || 0)) / airN : null;
-    const lgLa = c.bbw.ld !== c.bbw.fb ? (aw - c.bbw.fb) / (c.bbw.ld - c.bbw.fb) : null;
-    const rows = [["gb", names.gb, bbl.gb || [0, null], c.bbw.gb, ""],
-                  ["air", "Air balls (LD + FB)", [airN, airWo], aw, airN ? `${ldN || 0} line drives${ldW != null ? ` (${fmtX(ldW)})` : ""} and ${fbN || 0} fly balls${fbW != null ? ` (${fmtX(fbW)})` : ""}: ${Math.round(100 * (ldN || 0) / airN)}% line drives${lgLa != null ? ` against the league's ${Math.round(100 * lgLa)}%` : ""}. nERA prices both at ${fmtX(aw)}, the league's wOBA on the two together, so only how many air balls he allows counts, not the split` : ""],
-                  ["pu", names.pu, bbl.pu || [0, null], c.bbw.pu, ""]];
-    for (const [k, lab, [cnt, w], lg, note] of rows) {
+    for (const k of ["gb", "ld", "fb", "pu"]) {
+      const [cnt, w] = bbl[k] || [0, null], lg = c.bbw[k], priced = av != null && (k === "ld" || k === "fb") ? av : lg;   // the total prices air balls as nERA does
       const d = w == null ? null : Math.round(1000 * (w - lg));
-      if (w != null && cnt) { sw += w * cnt; sl += lg * cnt; nw += cnt; }
+      if (w != null && cnt) { sw += w * cnt; sl += priced * cnt; nw += cnt; }
       const dc = el("td", null, d == null ? "–" : (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d));
       if (d != null) heatTd(dc, Math.max(2, Math.min(98, Math.round(50 - 0.6 * d))));
-      const tr = el("tr"); if (note) tr.title = note;
-      tr.append(el("td", "l f1", lab), el("td", null, String(cnt)), el("td", null, n ? (100 * cnt / n).toFixed(1) + "%" : "–"),
-                el("td", null, w == null ? "–" : fmtX(w)), el("td", null, fmtX(lg)), dc);
+      const tr = el("tr"); tr.append(el("td", "l f1", names[k]), el("td", null, String(cnt)), el("td", null, n ? (100 * cnt / n).toFixed(1) + "%" : "–"),
+                                     el("td", null, w == null ? "–" : fmtX(w)), el("td", null, fmtX(lg)), dc);
       tb.append(fin(tr));
-      if (k === "air" && airN) {                                       // the split itself, for the record: his counts and wOBA, no yardstick of its own
-        for (const [sub, sn, swo] of [["Line drives", ldN || 0, ldW], ["Fly balls", fbN || 0, fbW]]) {
-          const st = el("tr", "lsub"); st.title = note;
-          const lt = el("td", "l f1"), ls = el("span", null, sub); ls.style.marginLeft = "12px"; lt.append(ls);   // stepped in under its row
-          st.append(lt, el("td", null, String(sn)), el("td", null, n ? (100 * sn / n).toFixed(1) + "%" : "–"),
-                    el("td", null, swo == null ? "–" : fmtX(swo)), el("td", null, "–"), el("td", null, ""));
-          tb.append(fin(st));
-        }
-      }
     }
     const dt = nw ? Math.round(1000 * (sw - sl) / nw) : null;
     const trt = el("tr", "tot first"); trt.append(el("td", "l f1", "All balls in play"), el("td", null, String(n)), el("td", null, n ? "100%" : "–"),

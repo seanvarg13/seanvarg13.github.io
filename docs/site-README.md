@@ -1124,10 +1124,18 @@ league's pieces to his xISO one step at a time (strikeouts and walks, fly balls 
 bases), then the park, the luck and his ISO; under it, his ISO and xISO by season. It follows the card's dates and splits. xSLG is still on the
 Leaderboard and the card's Results bars.
 
-### nERA treats line drives and fly balls alike (23 Oct 2026)
+### nERA prices every ball in the air alike (23 Oct 2026)
 
-nERA re-scores every ball in play at what its type is worth league-wide. Line drives and fly balls are now one type, the air ball, priced at the
-league's wOBA on the two together (.524 in 2026). So a pitcher's line-drive / fly-ball split no longer moves his nERA; only how many air balls he
-allows does. The nERA tab shows Ground balls, Air balls (LD + FB) and Popups, with his line-drive and fly-ball split in two quieter rows under the
-air row for reference. Over 2015-2026 the new nERA repeats a little better year to year (r .52 → .54) and forecasts next season's ERA a little
-better (.37 → .38).
+nERA used to price a pitcher's line drives at the league's wOBA on a line drive and his fly balls at a fly ball's. Whether an air ball is
+called a liner or a fly is mostly noise (it repeats at r .32 year to year once his ground-ball rate is held, and the stringer's convention
+has drifted — 57% of air balls were liners in 2015, 47% in 2026), so now every ball in the air takes one value, the league's wOBA over its
+liners and fly balls together; ground balls and popups keep their own. Only the volume of air balls counts.
+
+- It repeats better (r .54 year to year, was .52) and forecasts next season's ERA a little better (.35, was .34), with this season's ERA
+  explained the same.
+- Liner-heavy pitchers come down (Wandy Peralta 4.83 → 4.48, Andre Pallante 4.34 → 4.08), fly-ball-heavy ones go up (Eric Lauer 4.86 →
+  5.24, Jameson Taillon 4.41 → 4.75); most moves are under a quarter of a run.
+- Everywhere nERA shows — the Leaderboard, the band, the season table, Game Logs' outings, home — and every past season, re-priced.
+- The nERA tab still lists his wOBA on each type against the league's; the All balls in play row is priced at the one air value.
+- The minor-league seasons (Triple-A down to Single-A, 2021-26) are re-priced too, and the fantasy pages' luck-neutral line prices his
+  liners and fly balls at the same air value.
