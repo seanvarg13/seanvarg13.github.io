@@ -1109,3 +1109,9 @@ The Movers page has one row up top: **Position ▾** (all hitters or one positio
 order. A hitter's position is his fantasy eligibility, as on the Leaderboard. On a phone the three pills fit one line and the count moves next
 to the title, so the table starts about where the Leaderboard's does and runs to the bottom of the screen; on a desktop the table is as wide as
 the Leaderboard's. The explanation is behind **About** (or **More about these numbers**) at the right of the title.
+
+### Movers opens players as a popup (23 Oct 2026)
+
+On Movers, a pitcher's name, or a hitter's name in his bars window, opens the player as a popup over the page, the same way the Leaderboard
+does. There's a **×** in the top-right corner, with any date window as a chip beside it and Filters / Raw under it, in place of "‹ Back to
+movers". Closing it (the ×, a tap outside it on a desktop, or Escape) puts Movers back exactly where you were.

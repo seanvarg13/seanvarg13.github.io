@@ -4966,6 +4966,21 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   - **Home's** Hitters → / Pitchers → links reset the position to All. The page check picks All pitchers, SS and All hitters through the pill.
   - CSS: the "Movers up top" block at the end of `styles.css`.
 
+* **Movers opens a player in the Leaderboard's popup (Sean, 23 Oct 2026, Sheehan's page off Movers with "‹ Back to movers" under his bio: "Can this
+  be the same x in the top right below the filter like on the leaderboard")**: `POP_MODES` is `leaderboard · trending · flaws`. On Movers a
+  pitcher's row and a hitter's name in the flaw popup open his page as the popup over the page:
+  - The × is in the top-right corner with the filter chips to its left ("Aug 29 – Sep 27 ×" for a 30-day window) and Filters / Raw under it,
+    as on the Leaderboard.
+  - There is no Back button.
+  - ×, the backdrop or Escape closes it to Movers with the table where it was (`xPopList` → `backRestore`).
+  - A Similar name stays in the popup.
+  - `renderNow`'s flaws branch draws the popup after the page.
+  - **The table keeps its place**: `renderFlaws` rebuilds its table box on every render, so a redraw under the popup started it at the top. While
+    the popup is up, `render()` now puts every list scroller back from the `listAt` it noted at its own top. On the Leaderboard that is a no-op.
+  - The flaw popup closes itself (and its Escape listener) before opening the page.
+  - Home's Movers card still opens his full page (home gives no Back).
+  - The page check's Movers step opens both a hitter (through the flaw popup) and a pitcher, and closes each popup with Escape.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

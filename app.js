@@ -5691,7 +5691,7 @@
     const G2 = prevMode ? chart(NOWIN, String(DATA.meta.season), (q) => (q.pa || 0) >= 300, "percentiles among the 300+ PA hitters")
                         : chart(FW.w, FW.label[0].toUpperCase() + FW.label.slice(1), (q, v) => v.sample >= FW.pa, `among hitters with ${FW.pa}+ PA in the window`);
     const win = el("div", "phwin pop fxwin"), x = el("button", "pop-close", "×"); x.type = "button"; x.setAttribute("aria-label", "Close");
-    const head = el("div", "fxhead"); const nm = el("button", "linkbtn fxname", r.p.name); nm.type = "button"; nm.addEventListener("click", () => openPlayer(r.p, { tab: "talent" }));
+    const head = el("div", "fxhead"); const nm = el("button", "linkbtn fxname", r.p.name); nm.type = "button"; nm.addEventListener("click", () => { close(); openPlayer(r.p, { tab: "talent" }); });
     const wit = r.witness ? ` · ${DATA.meta.season - 1}: ${r.flaw.f(r.prior)} (${r.witness === "for" ? "backs the move" : r.witness === "against" ? "the other way" : "in between"})` : "";
     head.append(nm, el("span", "fxsub", `${r.p.team || ""} · ${wsLab("xwOBA")} ${fw(r.xw)} → ${fw(r.held)} if his ${r.flaw.lab} held at ${r.flaw.f(r.now)} (+${Math.round(wrcOn() ? wrcPts(r.gain / 1000) : r.gain)}) · credibility ${Math.round(100 * r.cred)}%${wit} · elite at ${r.elite.map((e) => e.lab).join(" and ")}`));
     const body = el("div", "pop-body phwinbody fxbody"), cols = el("div", "pctcols");
@@ -6296,6 +6296,8 @@
     if (!inBarModes.includes(state.mode)) seatFilters(null);   // Filters back on its toolbar off the Leaderboard / Trending
     if (ddOpen && !ddOpen.trig.isConnected) ddClose();   // a list whose opener was redrawn away
     keep();
+    // the list under the popup stays where it was while the popup redraws: Movers rebuilds its table on every render, which started its box over
+    if (xPop && listAt && listAt.mode === state.mode) listScrollers().forEach((e, i) => { const v = listAt.s[i]; if (v && (e.scrollTop !== v[0] || e.scrollLeft !== v[1])) { e.scrollTop = v[0]; e.scrollLeft = v[1]; } });
     // put the list back under a card the moment it opens too, not only when it closes (Sean, 7 Oct 2026: the list behind the card "jumps back
     // to the top ... and then when I exit it jumps back to where I was") — the modal is fixed, so the rows' box is free to sit where it was
     if ((wasCard || !$("modal").hidden) && listAt && listAt.mode === state.mode) {
@@ -6368,7 +6370,7 @@
     if (state.mode === "planner") { renderPlanner(); renderModal(); return; }
     if (state.mode === "mock") { renderMock(); renderModal(); return; }
     if (state.mode === "claude") { renderClaude(); renderModal(); return; }
-    if (state.mode === "flaws") { renderFlaws(); renderModal(); return; }
+    if (state.mode === "flaws") { renderFlaws(); renderModal(); if (xPop) renderExplore(); return; }
     if (pitches) { renderPitchBoard(); renderModal(); return; }
     const listRender = () => {
       ensureView(sideOf(groupFor(state.pos)));
@@ -10336,7 +10338,9 @@
   // on the Leaderboard / Recent a name opens his page as a popup over the list, not a trip to the page (Sean, 13 Oct 2026: "when you click on a
   // player it does open up a pop up window of their player page and not takes you to their player page, similar to what we once had"): the same
   // page (renderExplore into #xboard), shown as a fixed window over the list with a backdrop, closed by ×, the backdrop or Escape
-  const POP_MODES = ["leaderboard", "trending"];
+  // Movers too (Sean, 23 Oct 2026, Sheehan's page off Movers: "Can this be the same x in the top right below the filter like on the leaderboard"):
+  // a pitcher's row, or a hitter's name in the flaw popup, opens the same popup over Movers in place of his page with "‹ Back to movers"
+  const POP_MODES = ["leaderboard", "trending", "flaws"];
   let xPop = false, xPopNew = false, xPopList = null;
   const pageNow = () => state.mode === "player" || xPop;   // where a page was opened from: the list page, its scroll and its rows' box; the page last drawn
   const BACK_LABEL = { leaderboard: "leaderboard", trending: "leaderboard", rankings: "rankings", draft: "draft board", pitches: "Pitching+", fantasy: "fantasy", home: "home",
