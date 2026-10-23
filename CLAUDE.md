@@ -4762,6 +4762,23 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     step, and on the full season in "a player popup". It requires the popup to show him with the × and `#modal` hidden. Against the old
     `app.js` all four steps fail (timed out after 90 s); with the fix, all 34 pass.
 
+* **Ball-by-ball vs skills on the same season (Sean, 23 Oct 2026: "Are the xwoba and xBABIP models that do a ball by ball measure instead of the
+  pure skills measure more accurate for same season predictions?")**: a research answer, nothing on the site changed. Scratch `samess/`: the site's
+  own `V()` run headless on every hitter-season 2015-26, each season split at its middle game day, every column centred on its season before r.
+  - **The same full season** (300+ PA, 3,036 hitter-seasons): the batted-ball model's xwOBA (`m.dxw`) tracks his wOBA at r .890, the site's xwOBA
+    at .835 (a typical miss of 12.6 against 15.1 points). The model's xBABIP (`m.xbabipm`) tracks his BABIP at .800, the drivers' at .652 (16.1
+    against 20.2 points). The model is ahead in all 11 seasons on both. Giving the skills build his whole K% / BB% only takes it to .847, so the
+    edge is the pricing of each ball's exact speed, angle and direction.
+  - **First half to second half** (both halves 150+ PA, 2,411): second-half wOBA from the site's xwOBA r .416, the model's .367, first-half wOBA
+    .313 (the site's ahead 11 of 11). Second-half BABIP from the drivers' xBABIP .282, the model's .266, first-half BABIP .239 (the drivers ahead 7
+    of 11; a 25 model / 75 drivers blend .294, the one blend that helped — blending the xwOBAs only lost). Half to half, the site's xwOBA repeats at
+    .59, the model's at .44; the drivers' xBABIP at .46, the model's at .32.
+  - **Next season** (300+ PA both, 1,819): wOBA .562 against .522; BABIP .434 against .412.
+  - **The xBABIP's level is off in past seasons**: league BABIP − xBABIP (100+ PA hitters, by balls in play) 2015 +18 points, 2016-19 +8 to +12,
+    2021 −2, 2023 −4, 2025 −7, 2026 +1, both versions alike. The build rescales xBA / xSLG to the season's league rate on contact, but the model's
+    own mean prediction isn't 1, and nothing re-anchors them at display the way `dirInfo` does for xwOBA (`dxba` = `dbsum / ab`, the xBABIP
+    `(dbsum − HR) / (BIP − HR)`). So a past season's Luck rows and BABIP luck carry a league-wide offset. r is unaffected. Offered, not built.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
