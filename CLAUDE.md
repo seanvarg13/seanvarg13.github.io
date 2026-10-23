@@ -511,6 +511,9 @@ better.
 wOBA for its batted-ball type, strikeouts/walks/HBP stay as they were, result put on the ERA scale the same way.
 BABIP and HR/FB luck wash out while a ground-ball profile keeps its value. (uERA is nERA *on top of*
 process-implied K and BB.)
+**Since 23 Oct 2026 a line drive and a fly ball are one type, the air ball**, priced at the league's wOBA on the two pooled
+(`consts.bbw.air`), so a pitcher's line-drive / fly-ball split washes out and only how many air balls he allows counts (§8, "nERA neutral
+to the line-drive / fly-ball split").
 
 **WSGP** (`wsgpFrom`): the flat average of his Whiff%, Strike%, GB% and Popup% **percentiles** — the four rates a
 pitcher owns before a ball is fielded. Percentiles are against whichever pool is in effect, so a split, a date
@@ -5002,6 +5005,40 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     `xiso` with his parks unless the switch is on (keeping `xison`); `sbxPool`'s park variant covers it.
   - xSLG itself is unchanged: still the Leaderboard column, the card's Results bar and Fantasy's expected total bases. The xSLG tab
     (`xslgBuildUp`, `slgSeasons`, `sbxSlgPool`) is gone from `app.js`; the "xSLG from skills" entry above describes its build.
+
+* **nERA neutral to the line-drive / fly-ball split (Sean, 23 Oct 2026: "Can we adjust the nERA formula to be neutral to fb and line drive ratio, so
+  for every pitcher just assume that their non gb and pu batted balls have the same ratio of line drive to fly ball, all that changes is volume")**:
+  nERA prices a ground ball and a popup at the league's wOBA for each, as before, and every line drive and fly ball at one value, the league's wOBA
+  on the two pooled. That value is the league's line-drive share of air balls times the line-drive value plus the rest at the fly-ball value. 2026:
+  LD .645, FB .417, 46.9% line drives, so an air ball is .524. His share of air balls still counts; how they split between liners and fly balls
+  doesn't. uERA already split air balls at the population's ratio, so the two now agree.
+  - **Build**: `league_constants` writes **`bbw["air"]`** = (wLD + wFB) / (nLD + nFB) over the whole population; `neutral_era` prices `nLD` and `nFB`
+    at it (a consts without `air` falls back to the per-type values).
+  - **Season files**: `data.js` and every `hist/` season file (MLB 2015-25, the postseasons and springs, every minors level 2021-26) were patched in
+    place (scratch `nera/patch.py`). Each got `consts.bbw.air` from its own pitchers' type counts. Each pitcher's `m.nera` moved by exactly the
+    formula's change: ((LD + FB) × air − LD × ld − FB × fb) / his wOBA PA (`ctx.PAw`) ÷ wobaScale × PA per nine. Formats were kept byte for byte.
+    `hist/career-bb.js` (the season table's nERA), `hist/similar.js` (nERA is in the pitchers' skill list) and `hist/home.js` (`HOME_V` 3) were
+    regenerated; only pitchers' nERA moved in them.
+  - **App**: `airW(c)` (beside `K()`) is `c.bbw.air`, or for a file without it the value from that dataset's own pitchers' counts. Its users:
+    - `V()`'s window / split nERA and `dayNERA` (Game Logs, home's Last game day, the outing pool).
+    - `fPLines`' luck-neutral hit scaling on the fantasy pages.
+    - The **nERA tab**: Ground balls · **Air balls (LD + FB)** at the air value · Popups. Two quieter rows under the air row carry his line-drive
+      and fly-ball counts and wOBA (`tr.lsub`, no yardstick). The row's note gives his line-drive share against the league's.
+    - The tab's note now says red = the type went his way (the colours already did; the note had it backwards).
+    - The glossary.
+  - **Checks**: the patched full-season nERA matches the app's recompute over a window covering the season within .01 for all 539 pitchers with 20+
+    IP. Skenes' Game Logs foot reads 3.06, as his season does. No script errors on phone or desktop.
+  - **What it does** (scratch `nera/bt.py`, every season file 2015-26):
+    - At 300+ BF the shift has an sd of 0.12 runs in 2017-26, 0.2-0.26 in 2015-16 (when Statcast called many more balls liners). The league
+      mean barely moves (±.01).
+    - Year to year (1,088 back-to-back 300+ BF pairs) r .519 → .541; next season's ERA .367 → .383; same-season r with ERA about the same (2026
+      .676 → .687).
+    - A pitcher's line-drive share of air balls does repeat (r .58), mostly because a fly-ball pitcher's air balls lean fly ball. nERA no longer
+      credits or charges it.
+  - **2026**:
+    - Fly-ball-heavy pitchers rise: Lauer 4.86 → 5.24, Taillon 4.41 → 4.75, Jacob Lopez 4.14 → 4.45.
+    - Liner-heavy ones fall: Wandy Peralta 4.83 → 4.48, Pallante 4.34 → 4.08.
+    - Skenes 3.17 → 3.06, Skubal 2.82 → 2.76, Wheeler 2.87 → 2.83, Sale 2.96 → 2.89.
 
 ## 10. The football site moved out
 

@@ -1123,3 +1123,11 @@ xISO calls the other half's at r .68 (xSLG .58), and next season's ISO at .67 (x
 league's pieces to his xISO one step at a time (strikeouts and walks, fly balls and xHR/FB, the hits on the ground and on line drives, the extra
 bases), then the park, the luck and his ISO; under it, his ISO and xISO by season. It follows the card's dates and splits. xSLG is still on the
 Leaderboard and the card's Results bars.
+
+### nERA treats line drives and fly balls alike (23 Oct 2026)
+
+nERA re-scores every ball in play at what its type is worth league-wide. Line drives and fly balls are now one type, the air ball, priced at the
+league's wOBA on the two together (.524 in 2026). So a pitcher's line-drive / fly-ball split no longer moves his nERA; only how many air balls he
+allows does. The nERA tab shows Ground balls, Air balls (LD + FB) and Popups, with his line-drive and fly-ball split in two quieter rows under the
+air row for reference. Over 2015-2026 the new nERA repeats a little better year to year (r .52 → .54) and forecasts next season's ERA a little
+better (.37 → .38).

@@ -1942,6 +1942,8 @@ def league_constants(pit: pd.DataFrame, people: dict) -> dict:
         typed = sum(int(pit[f"n{t.upper()}"].sum()) for t in BB_TYPES)
         bbw = {t: round(float(pit[f"w{t.upper()}"].sum() / max(1, pit[f"n{t.upper()}"].sum())), 4) for t in BB_TYPES}
         bbw["ut"] = round(float(pit.wBIP.sum() / max(1, pit.nBIP.sum())), 4)    # untyped balls in play: the BIP average
+        # a line drive or fly ball, the two pooled: nERA prices both at it, so a pitcher's LD / FB split washes out (Sean, 23 Oct 2026)
+        bbw["air"] = round(float((pit.wLD.sum() + pit.wFB.sum()) / max(1, pit.nLD.sum() + pit.nFB.sum())), 4)
         out.update({"bbw": bbw, "lgwOBA": round(float(pit.wnum.sum() / pit.wden.sum()), 4), "wobaScale": WOBA_SCALE,
                     "pa9": round(float(9 * pit.BF.sum() / (pit.outs.sum() / 3)), 2),
                     "wbb": round(float(pit.wUBB.sum() / max(1, pit.nUBB.sum())), 3),      # wOBA value of a walk / a hit by pitch
@@ -1957,12 +1959,17 @@ def league_constants(pit: pd.DataFrame, people: dict) -> dict:
 
 def neutral_era(r, consts) -> float | None:
     """Luck-neutral ERA: every ball in play gets the league's average wOBA for its batted-ball type (ground ball,
-    line drive, fly ball, popup), strikeouts / walks / HBP stay as they were, and the result is put on the ERA
-    scale around the league ERA using the wOBA scale and league PA per nine — so BABIP and HR/FB luck wash out
-    while a ground-ball profile keeps its value."""
+    popup, and line drives and fly balls together as air balls), strikeouts / walks / HBP stay as they were, and the
+    result is put on the ERA scale around the league ERA using the wOBA scale and league PA per nine — so BABIP and
+    HR/FB luck wash out while a ground-ball profile keeps its value. Since 23 Oct 2026 a line drive and a fly ball are
+    priced alike (bbw["air"]; Sean: "assume that their non gb and pu batted balls have the same ratio of line drive to
+    fly ball, all that changes is volume")."""
     if "bbw" not in consts or not r.wden:
         return None
-    xnum = r.wnum - r.wBIP + sum(r[f"n{t.upper()}"] * consts["bbw"][t] for t in BB_TYPES)
+    w = dict(consts["bbw"])
+    if w.get("air") is not None:
+        w["ld"] = w["fb"] = w["air"]
+    xnum = r.wnum - r.wBIP + sum(r[f"n{t.upper()}"] * w[t] for t in BB_TYPES)
     untyped = r.nBIP - sum(r[f"n{t.upper()}"] for t in BB_TYPES)
     xnum += untyped * consts["bbw"]["ut"]
     xw = xnum / r.wden

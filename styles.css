@@ -5518,3 +5518,7 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxbar > .pill { padding-left: 10px !important; padding-right: 10px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxtitle { flex-wrap: nowrap; gap: 8px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxtitle .fxsub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+/* The nERA tab: the line-drive / fly-ball split under the air-ball row (Sean, 23 Oct 2026). nERA prices the two alike, so the rows carry
+   his counts and wOBA for the record, no yardstick of their own — quieter (the label is stepped in by app.js) */
+:root:root:root:root:root:root:root:root :is(#xboard, #modal) table.sbt.brt tr.lsub td { color: var(--muted); }
