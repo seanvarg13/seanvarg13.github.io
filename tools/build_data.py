@@ -279,7 +279,8 @@ PITCHER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "strk", "bip", "gb", "
                "stcn", "stcs", "stck",   # command (3 Oct 2026): graded pitches, their swing and strike chances (xCalled Strike%)
                "fp", "fps", "b3", "b3s", "s2", "s2sw", "s2wh", "s2z",   # count states (3 Oct 2026): first pitches and the strikes among them, three-ball pitches and strikes, two-strike pitches and their swings, whiffs and in-zone pitches
                "stnf", "stfl", "stfs", "stfw",   # fouls with location (stfw: and the batter's swing) (4 Oct 2026): pitches contacted, the foul chance where each crossed and the stuff-only one on the same contact: pitches graded for it; their summed swing and strike chances; out-of-zone pitches and their swing chances; in-zone pitches, their swing chances and swing-and-miss chances; swing-and-miss chances on every pitch   # stb*: the league means of each graded pitch's own type (Stuff+ is graded against pitch type); h: hits allowed (fantasy splits by hand); stn / stw / stg / stp: graded pitches and their summed whiff, ground-ball and popup chances (Stuff); luck-neutral ERA inputs: line drives, wOBA numerator on balls in play and by type; evn = EV-eligible balls (no bunts)
-               "evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn"]   # EV allowed by batted-ball type (7 Oct 2026): sums and counts of the EV-eligible fly balls / line drives / grounders, so a window re-derives EV on FB / LD / GB
+               "evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn",   # EV allowed by batted-ball type (7 Oct 2026): sums and counts of the EV-eligible fly balls / line drives / grounders, so a window re-derives EV on FB / LD / GB
+               "wk"]   # the wOBA value Statcast put on his strikeouts — a batter who reached on a wild pitch or passed ball reads .7, like a walk; nERA takes it off (23 Oct 2026)
 # per-game earned runs (from MLB game logs) ride along as "P<id>:er" rows: [day, home, er]
 FASTBALLS = {"FF", "SI", "FT"}
 PITCHER_CARD = [
@@ -1368,7 +1369,7 @@ def pitcher_metrics(d: pd.DataFrame) -> pd.DataFrame:
     pa = pa_rows(d)
     pr = pa.groupby("pitcher").agg(HR=("is_hr", "sum"), HBP=("is_hbp", "sum"), Kn=("is_k", "sum"),
                                    BBn=("is_bb", "sum"), outs=("outs", "sum"),
-                                   wnum=("wnum", "sum"), wden=("wden", "sum"), nBIP=("t_bip", "sum"), wBIP=("w_bip", "sum"),
+                                   wnum=("wnum", "sum"), wden=("wden", "sum"), nBIP=("t_bip", "sum"), wBIP=("w_bip", "sum"), wK=("w_k", "sum"),
                                    nGB=("t_gb", "sum"), wGB=("w_gb", "sum"), nLD=("t_ld", "sum"), wLD=("w_ld", "sum"),
                                    nFB=("t_fb", "sum"), wFB=("w_fb", "sum"), nPU=("t_pu", "sum"), wPU=("w_pu", "sum"),
                                    nUBB=("t_ubb", "sum"), wUBB=("w_ubb", "sum"), wHBP=("w_hbp", "sum"))
@@ -1483,6 +1484,7 @@ def pa_rows(d: pd.DataFrame) -> pd.DataFrame:
     p["t_ubb"] = ev.eq("walk")
     p["w_ubb"] = p["wnum"].where(p["t_ubb"], 0.0)
     p["w_hbp"] = p["wnum"].where(p["is_hbp"], 0.0)
+    p["w_k"] = p["wnum"].where(p["is_k"], 0.0)                        # a strikeout the batter reached on (a wild pitch, a passed ball) carries .7 in Statcast's bookkeeping
     p["w_bh"] = p["wnum"].where(p["is_hit"] & ~p["is_hr"], 0.0)       # hits in play: what BABIP swings move
     # xwOBA (matches Savant's leaderboard to ~.001): balls in play take their xwOBA, K/BB/HBP their actual
     # wOBA value, untracked balls in play are dropped from both sides, and an intentional walk counts as a
@@ -1577,7 +1579,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
     qp = p.groupby(PK).agg(bf=("pa", "size"), k=("is_k", "sum"), bb=("is_bb", "sum"),
                            outs=("outs", "sum"), wnum=("wnum", "sum"), wden=("wden", "sum"),
                            hr=("is_hr", "sum"), hbp=("is_hbp", "sum"), h=("is_hit", "sum"),
-                           ld=("t_ld", "sum"), wbip=("w_bip", "sum"), wgb=("w_gb", "sum"), wld=("w_ld", "sum"), wfb=("w_fb", "sum"), wpu=("w_pu", "sum"))
+                           ld=("t_ld", "sum"), wbip=("w_bip", "sum"), wgb=("w_gb", "sum"), wld=("w_ld", "sum"), wfb=("w_fb", "sum"), wpu=("w_pu", "sum"), wk=("w_k", "sum"))
     q = q.join(qp, how="left").fillna(0)
     for c in ["stn", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stnl", "stwl", "stws", "stbwl", "stbws", "stnb", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps",
               "stcn", "stcs", "stck", "stco", "stcso", "stci", "stcsi", "stcwi", "stcw", "stnf", "stfl", "stfs", "stfw",
@@ -1596,7 +1598,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                     row.append(v)
                 else:
                     # xbsum / xssum are sums of per-ball probabilities: a day's bucket is well under 1, so int() would erase it
-                    row.append(round(float(v), 3) if f in ("pkh", "pkb", "pkx") else round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stwl", "stws", "stbwl", "stbws", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps", "stcs", "stck", "stcso", "stcsi", "stcwi", "stcw", "stfl", "stfs", "stfw", "mixsum", "wbh", "evfbs", "evlds", "evgbs", "xhgb", "xhld", "xhfb", "xhpu") else int(v))
+                    row.append(round(float(v), 3) if f in ("pkh", "pkb", "pkx") else round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "wk", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stwl", "stws", "stbwl", "stbws", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps", "stcs", "stck", "stcso", "stcsi", "stcwi", "stcw", "stfl", "stfs", "stfw", "mixsum", "wbh", "evfbs", "evlds", "evgbs", "xhgb", "xhld", "xhfb", "xhpu") else int(v))
             out.setdefault(int(pid), []).append(row)
         return out
     return pack(h, HITTER_DAY), pack(q, PITCHER_DAY)
@@ -1967,14 +1969,16 @@ def neutral_era(r, consts) -> float | None:
     says nothing about next season — so only the volume of air balls counts; bbw["air"], a file without it prices the
     two types apart as before); strikeouts / walks / HBP stay as they were, and the result is put on the ERA scale around
     the league ERA using the wOBA scale and league PA per nine — so BABIP, HR/FB and the liner / fly split wash out
-    while a ground-ball or popup profile keeps its value."""
+    while a ground-ball or popup profile keeps its value. A strikeout is a strikeout: the .7 Statcast puts on one the
+    batter reached on (a wild pitch, a passed ball) comes off (wK; Sean, 23 Oct 2026, Early's May 15 start)."""
     if "bbw" not in consts or not r.wden:
         return None
     bbw = consts["bbw"]
+    wk = float(getattr(r, "wK", 0.0) or 0.0)
     if bbw.get("air") is not None:
-        xnum = r.wnum - r.wBIP + r.nGB * bbw["gb"] + r.nPU * bbw["pu"] + (r.nLD + r.nFB) * bbw["air"]
+        xnum = r.wnum - wk - r.wBIP + r.nGB * bbw["gb"] + r.nPU * bbw["pu"] + (r.nLD + r.nFB) * bbw["air"]
     else:
-        xnum = r.wnum - r.wBIP + sum(r[f"n{t.upper()}"] * bbw[t] for t in BB_TYPES)
+        xnum = r.wnum - wk - r.wBIP + sum(r[f"n{t.upper()}"] * bbw[t] for t in BB_TYPES)
     untyped = r.nBIP - sum(r[f"n{t.upper()}"] for t in BB_TYPES)
     xnum += untyped * consts["bbw"]["ut"]
     xw = xnum / r.wden
