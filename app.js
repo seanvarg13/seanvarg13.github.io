@@ -800,12 +800,17 @@
     return { lo, hi, from: w.from, to: w.to, last: w.last };
   }
   const winKey = () => { const w = winIdx(); return w ? w.lo + "-" + w.hi + (w.last ? "L" + w.last : "") : winRequested() ? "pending" : "all"; };
+  // a window of one game day (Sean, 23 Oct 2026, home's Last game day: "allow me the ability to go to a leaderboard for that game day so I can see
+  // everyone leaderboard wise for that game day"): everyone who played is listed (listMin, the pool's active), and a hitter's xwOBA / xBABIP are the
+  // batted-ball model's for that game, as the Game Logs and home's tables read them — a game is too small to build the skills from (V())
+  const oneDay = () => { const w = winIdx(); return !!w && !w.last && w.lo === w.hi; };
+  const gameDayName = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
   const fmtDate = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString(undefined, { month: "short", day: "numeric" });
   const lastUnit = (type) => ((type ? type === "P" : isPitcherGroup(groupFor(state.pos))) ? "IP" : "PA");
   const winLabel = (type) => {
     const w = winIdx(); if (!w) return "full season";
     if (w.last) return `last ${w.last} ${lastUnit(type)}${w.to < seasonLast() ? ` through ${fmtDate(w.to)}` : ""}`;
-    return `${fmtDate(w.from)} – ${fmtDate(w.to)}`;
+    return w.from === w.to ? fmtDate(w.from) : `${fmtDate(w.from)} – ${fmtDate(w.to)}`;
   };
 
   // The list always shows the unsplit view; a player's card can be drawn for a split. SPLIT is the split in
@@ -839,6 +844,7 @@
     if (!m || !needsDays() || state.mode === "trending") return m;
     const w = winDates(); if (!w) return m;
     if (w.last) return Math.min(m, Math.max(1, Math.round(0.75 * w.last)));
+    if (oneDay()) return isPitcherGroup(g) ? 0 : 1;   // one game day: everyone who played (a reliever who got no out counts too, via the pool's active)
     const days = seasonDays(), n = days.filter((d) => d >= w.from && d <= w.to).length;
     return Math.max(1, Math.round(m * n / Math.max(1, days.length)));
   }
@@ -1231,7 +1237,7 @@
     }
     // talent xwOBA and its next-season projection on the view (Sean, 11 Oct 2026) — talentOf below
     if (p.type === "H" && v.m && v.m.txw === undefined) {
-      const t = talentOf(p, v);
+      const od = oneDay(), t = od ? null : talentOf(p, v);   // one game day: the batted-ball model's xwOBA and xBABIP (oneDay)
       const tx = t ? Math.round(1000 * t.txw) / 1000 : null;
       // talent xwOBA IS the xwOBA (Sean, 11 Oct 2026: "make talent xwoba the new xwoba" — first-half talent xwOBA called second-half wOBA at r .424
       // against the directional model's .367 over 2015-26). The model's own number stays as dxw (xwOBAcon, the Talent tab's contact line); where
@@ -1245,7 +1251,7 @@
       // park — the raw BABIP less what his parks did to it, ball by ball (m.pkbab, the per-ball park sums) — everywhere the site reads m.babip
       // (the column, the pool's percentiles, the bars, the tabs, the by-season tables); the raw one stays as babipr for the "in his parks" notes
       if (v.m.babip != null && v.m.pkbab != null) v.m = Object.assign({}, v.m, { babipr: v.m.babip, babip: Math.round(1000 * (v.m.babip - v.m.pkbab / 1000)) / 1000 });
-      const d = t && t.xbab != null ? { xbab: t.xbab, dv: t.dv, L: t.L } : driversOf(p, v);
+      const d = t && t.xbab != null ? { xbab: t.xbab, dv: t.dv, L: t.L } : od ? null : driversOf(p, v);
       if (d && d.xbab != null) {
         const xd = Math.round(1000 * d.xbab) / 1000, xm = v.m.xbabip, sw2 = { xbabipm: xm ?? null, xbabip: xd };
         if (v.m.bluck != null && v.m.babip != null && xm != null) {
@@ -1755,7 +1761,7 @@
     if (R) return kindPool(g, R, key);
     const all = DS.players.filter((p) => inGroup(p, g));
     // qualification is by full-season PA / IP; inside a date range or split, only players who actually appeared count
-    const active = (p) => !needsDays() || V(p).sample > 0;
+    const od = oneDay(), active = (p) => !needsDays() || V(p).sample > 0 || (od && p.type === "P" && (V(p).bf || 0) > 0);   // one game day: a pitcher who faced a batter
     // the listing minimum is playing time inside the window when one is set (a date range's innings, not the season's)
     const smp = (p) => (needsDays() ? V(p).sample : seasonSample(p));
     const listed = all.filter((p) => (smp(p) >= listMin(g) || hasExtra(p, g)) && active(p));
@@ -1951,7 +1957,7 @@
   // spring or October line is placed among them, so a 99 is "as good as a top-1% regular season" over however few PA
   function kindPool(g, R, key) {
     const ref = withDataset(R, () => { if (!R.ready(sideOf(g))) R.load(sideOf(g)); return withWindow(NOWIN, () => pool(g)); });
-    const active = (p) => !needsDays() || V(p).sample > 0, smp = (p) => (needsDays() ? V(p).sample : seasonSample(p));
+    const od = oneDay(), active = (p) => !needsDays() || V(p).sample > 0 || (od && p.type === "P" && (V(p).bf || 0) > 0), smp = (p) => (needsDays() ? V(p).sample : seasonSample(p));
     const all = DS.players.filter((p) => inGroup(p, g) && active(p));
     const listed = all.filter((p) => smp(p) >= listMin(g) || hasExtra(p, g)), ls = new Set(listed);
     const tail = all.filter((p) => !ls.has(p)).sort((x, y) => smp(y) - smp(x));
@@ -2678,7 +2684,7 @@
     $("dlastunit").textContent = lastUnit(); $("dfrom").disabled = !!lastN(state.win); $("dfrom").title = lastN(state.win) ? "Clear Last to use a start date" : "Blank = season start";
     $("dclear").hidden = !winRequested();
     const w = winIdx();
-    $("winnote").textContent = state.daysLoading ? "Loading game-by-game data…" : w ? (w.last ? `each player's ${winLabel()}` : `${winLabel()} · ${w.hi - w.lo + 1} game days`) : "";
+    $("winnote").textContent = state.daysLoading ? "Loading game-by-game data…" : w ? (w.last ? `each player's ${winLabel()}` : `${winLabel()} · ${w.hi - w.lo + 1} game day${w.hi === w.lo ? "" : "s"}`) : "";
   }
   function renderMin() {
     const g = groupFor(state.pos);
@@ -2941,7 +2947,8 @@
         const by = sk === "score" ? (boardOn() ? (P0 ? "nERA, regressed by innings" : wsLab("xwOBA proj.")) : P0 ? "nERA" : wsLab(wobaHead() ? "wOBA" : HEAD.label)) : sm ? colLab(sm) : sk === "name" ? "name" : sk === "age" ? "age" : sk === "year" ? "season" : "";
         const page = state.mode === "rankings" ? "Rankings" : state.mode === "draft" ? "Draft mode" : "Leaderboard", own = customOrder() && !state.rankSort;   // Rankings / Draft mode (16 Oct 2026)
         const pn = !P0 && XWN, xwBy = by === wsLab("xwOBA");   /* the switch is on (18 Oct 2026): "by park-neutral xwOBA", or the sort and then the note */
-        tt.innerHTML = ""; tt.append(el("h2", null, `${P0 ? "Pitchers" : "Hitting"} ${page}`), el("span", null, (own ? "your order" : by ? `by ${pn && xwBy ? "park-neutral " : ""}${by}` : "") + (pn && (own || !xwBy) ? " · park-neutral xwOBA" : ""))); } }   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
+        const od = BR && oneDay() ? (mobileView() ? fmtDate : gameDayName)(seasonDays()[winIdx().lo]) + " · " : "";   /* one game day (23 Oct 2026): "Sun, Sep 27 · by xwOBA" ("Sep 27" on a phone) */
+        tt.innerHTML = ""; tt.append(el("h2", null, `${P0 ? "Pitchers" : "Hitting"} ${page}`), el("span", null, od + (own ? "your order" : by ? `by ${pn && xwBy ? "park-neutral " : ""}${by}` : "") + (pn && (own || !xwBy) ? " · park-neutral xwOBA" : ""))); } }   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
     const head = (key, label, title) => { const h = editing ? Object.assign(el("div", "h", label), { title }) : sortButton(key, label, title); if (/^[a-z]/.test(label)) h.classList.add("lc"); return h; };
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
     for (const k of ["year", "age"]) h.style.setProperty("--pre" + (k === "year" ? 1 : 2), preOn(k) ? "var(--prew, 64px)" : "0px");
@@ -3376,7 +3383,8 @@
     if (!total) { box.hidden = true; if (!onChange) seatFilters(null); return; }
     box.hidden = false;
     { const g = groupFor(state.pos), pit = isPitcherGroup(g);   // the Stuff+ board's count line at the right (Sean, 3 Oct 2026)
-      const who = onePage() ? ` ${pit ? "pitchers" : "hitters"} · ${DS.season}${state.mode === "leaderboard" ? ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}` : ""}` : "";   /* a desktop keeps the fuller count beside its page range (16 Oct 2026) */
+      const od = onePage() && oneDay() ? seasonDays()[winIdx().lo] : null;   /* one game day: its date, everyone who played (23 Oct 2026) */
+      const who = onePage() ? ` ${pit ? "pitchers" : "hitters"} · ${od ? (mobileView() ? fmtDate(od) : gameDayName(od)) : DS.season}${state.mode === "leaderboard" ? (od ? (mobileView() ? "" : " · everyone who played") : ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}`) : ""}` : "";   /* a desktop keeps the fuller count beside its page range (16 Oct 2026) */
       const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}${state.mode === "draft" ? (auc.on ? " · tap a name to record his sale, tap again to undo" : " · tap to draft, tap again to undo") : ""}`; })() : null;   // the board: tiers · tiered · listed (Draft mode has no buttons)
       const ct = bc != null ? bc : pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}${mobileView() ? "" : who}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total}${who}` : `${total} players`;
       const pc = el("span", "pcount", ct);
@@ -5202,7 +5210,7 @@
     $("trendminunit").textContent = (pit ? "IP" : "PA") + " in that span";
     $("trendchip").textContent = pit ? "Score = Whiff% + Strike% pctl" : `Hot bats · by ${HEAD.label}`;
     const w = winIdx();
-    $("trendnote").textContent = state.daysLoading ? "Loading game-by-game data…" : w ? (w.last ? `each player's ${winLabel()}` : `${winLabel()} · ${w.hi - w.lo + 1} game days`) : "full season";
+    $("trendnote").textContent = state.daysLoading ? "Loading game-by-game data…" : w ? (w.last ? `each player's ${winLabel()}` : `${winLabel()} · ${w.hi - w.lo + 1} game day${w.hi === w.lo ? "" : "s"}`) : "full season";
   }
   // the rankings live only in this browser unless Sync is on (Sean's phone lost every list on 17 Oct 2026 when the home-screen app was added
   // again): while this device holds a list and Sync is off — or on and failing — a line over the board says so, with the fix (Settings ▸
@@ -5833,7 +5841,7 @@
       refH = sortedOf(H.map((p) => V(p).m.xwd)); refP = sortedOf(P.map((p) => { const v = puOf(p); return v == null ? null : -v; }));
     });
     const pcOf = (ref, v, neg) => (v == null || !ref.length ? null : insertPct(ref, neg ? -v : v));
-    const goLB = (pos, sort, dir, win) => (e) => { e.preventDefault(); state.pos = pos; state.posAlso = []; state.sort = sort; state.dir = dir; if (win) state.win = win; savePrefs(); location.hash = "#leaderboard"; };
+    const goLB = (pos, sort, dir, win) => (e) => { e.preventDefault(); state.pos = pos; state.posAlso = []; state.sort = sort; state.dir = dir; if (win) state.win = Object.assign({}, win); savePrefs(); location.hash = "#leaderboard"; };
     // a section: the title, a grey note and a link over a red rule (the Leaderboard's title), then its tables
     const section = (parent, title, sub, linkLab, go) => {
       const s = el("section", "hsec"), hd = el("div", "hsech"); hd.append(el("h2", null, title)); if (sub) hd.append(el("span", null, sub));
@@ -5875,7 +5883,12 @@
     // the lead: the last game day — the best xwOBA games (3+ PA) and the best starts by nERA (3+ IP; Sean, 18 Oct 2026: "sort it by nERA instead of
     // pitching+") on the latest day in the day rows, the start's nERA filled by its place among the season's starts like the Game Logs tab's
     { const days = m.days || [], lastDay = days.length - 1, when = days[lastDay] ? new Date(days[lastDay] + "T12:00:00Z").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "";
-      const lb = section(box, "Last game day", when ? `${when} · best games by xwOBA (3+ PA) and starts by nERA (3+ IP)` : null, null);
+      // its Leaderboard (Sean, 23 Oct 2026: "allow me the ability to go to a leaderboard for that game day so I can see everyone leaderboard wise for
+      // that game day"): the day as a date range of one game day — everyone who played, hitters by that game's xwOBA, pitchers by its nERA (oneDay)
+      const W1 = days[lastDay] ? { from: days[lastDay], to: days[lastDay], last: "" } : null;
+      const lb = section(box, "Last game day", when ? `${when} · best games by xwOBA (3+ PA) and starts by nERA (3+ IP)` : null, W1 ? "All hitters →" : null, W1 ? goLB("ALL", "score", "desc", W1) : null);
+      if (W1) { const a = el("a", "hmore", "All pitchers →"); a.href = "#leaderboard"; a.title = `Every pitcher who pitched ${when}, by nERA`; a.addEventListener("click", goLB("ALLP", "score", "desc", W1)); lb.parentNode.querySelector(".hsech").append(a);
+        lb.parentNode.querySelector(".hsech .hmore").title = `Every hitter who played ${when}, by xwOBA`; }
       lb.classList.add("hlead2"); box.insertBefore(lb.parentNode, grid);
       if (!HL) loading(lb);
       else {
@@ -7903,7 +7916,7 @@
       b.tag("kfinal");   // the bottom BABIP row in bold (Sean, 10 Oct 2026)
       w.append(b.done());
       if (m.pkbab != null && m.babipr != null) w.append(el("p", "note pknote", `BABIP is park-neutral — every ball in play scored at a neutral park (hist/parks.js: each ball's chance of a hit at the park it was hit in against the same ball at a neutral park, by park, batting side, batted-ball type, direction and exit velocity). In his parks he hit ${fmtX(m.babipr)}: ${pts(m.pkbab / 1000)} points, ${parkWhere(p, pv)}.`));
-    } else w.append(el("p", "note", "No xBABIP for this view — it needs tracked balls in play."));
+    } else w.append(el("p", "note", oneDay() ? "One game day: the xBABIP here is the batted-ball model's for that game — the drivers' build-up needs more than one game. Widen the dates for it." : "No xBABIP for this view — it needs tracked balls in play."));
     w.append(babipSeasons(p, g));
     return w;
   }
@@ -8044,7 +8057,7 @@
   }
   function renderTalentTab(p) {
     const w = el("div", "xbtab"), v = V(p), t = v.tal, m = v.m;
-    if (!t) { w.append(el("p", "note", DS.multi ? "No xwOBA build-up for a span of seasons — pick one season." : "No xwOBA build-up for this view — it needs tracked batted balls (exit velocity, the directional model) and a qualified pool.")); return w; }
+    if (!t) { w.append(el("p", "note", DS.multi ? "No xwOBA build-up for a span of seasons — pick one season." : oneDay() ? "One game day: the xwOBA here is the batted-ball model's for that game, as the Game Logs read it — a game is too small to build the skills from. Widen the dates for the build-up." : "No xwOBA build-up for this view — it needs tracked batted balls (exit velocity, the directional model) and a qualified pool.")); return w; }
     const L = t.L, sc = L.scale, wob = (c) => twRaw(c) * sc;
     const f3 = (x) => fmtX(x), pct1 = (x) => x.toFixed(1) + "%", pts = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x) * 1000);
     const R3 = (x) => Math.round(x * 1000) / 1000; let prev = 0;
@@ -11848,7 +11861,7 @@
       const row = el("div", "prow");
       if (cur === "range") row.append($("daterange")); else if (cur === "days") row.append($("daysfield")); else if (cur === "last") row.append($("lastfield"));   // Last N: the number and nothing else (Sean, 3 Oct 2026 — the presets and the To date went)
       if (cur !== "season") sec.append(row);
-      sec.append(el("p", "note", cur === "days" ? `Everyone's games in the last N days through ${DATA.meta.through}; the Min ${unit} box scales to the window's share of the season.` : cur === "last" ? `Each player's most recent ${unit === "IP" ? "innings" : "plate appearances"} . Every stat and percentile is rebuilt from those games; anyone with three quarters of N is listed.` : cur === "range" ? "A blank side means the season's start or end. Every stat and percentile is rebuilt from those games." : "Full-season numbers."));
+      sec.append(el("p", "note", cur === "days" ? `Everyone's games in the last N days through ${DATA.meta.through}; the Min ${unit} box scales to the window's share of the season.` : cur === "last" ? `Each player's most recent ${unit === "IP" ? "innings" : "plate appearances"}. Every stat and percentile is rebuilt from those games; anyone with three quarters of N is listed.` : cur === "range" ? (oneDay() ? "One game day: everyone who played is listed, and a hitter's xwOBA and xBABIP are the batted-ball model's for that game, as the Game Logs read them — a game is too small to build the skills from. Percentiles are against the qualified players who played that day." : "A blank side means the season's start or end. Every stat and percentile is rebuilt from those games.") : "Full-season numbers."));
       w.append(sec);
     }
     if (one) {

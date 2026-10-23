@@ -1014,3 +1014,14 @@ in the same popup, with the × still going back to the Leaderboard where you lef
 he opens in the same window and split he was matched in. On a full-season card the cross-season matches ("Seiya Suzuki '25") open that
 season. Before, a tap under a window seemed to do nothing (his card was being drawn underneath the popup), and with no window it went to
 his full page, which has no ×.
+
+### The last game day's Leaderboard (23 Oct 2026)
+
+Home's **Last game day** card has two links over its tables, **All hitters →** and **All pitchers →**. Each opens the Leaderboard on that
+one game day (Filters ▸ Dates, a date range from that day to that day): everyone who played that day is listed, hitters by that game's
+xwOBA and pitchers by that game's nERA, with percentiles against the qualified players who played. The title and the count say the day
+("Hitting Leaderboard · Sun, Sep 27 · by xwOBA"; "295 hitters · Sun, Sep 27 · everyone who played").
+
+Any date range that covers one game day works the same way. On one game day a hitter's xwOBA and xBABIP are the batted-ball model's for
+that game, the same numbers the Game Logs and home's tables show: one game is too small to build the skills from. The xwOBA and xBABIP
+tabs say so and ask for wider dates for their build-ups. A pitcher who faced batters without getting an out is listed too.

@@ -4790,6 +4790,22 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Nothing else changed: the `:root[data-flat]` block in `styles.css` does the rest, and only its comment names the mint. Checked headless on a
   phone and a desktop, light and dark (the Leaderboard, a player popup, home, Settings): no script errors, the scheme and `data-flat` applied.
 
+* **The last game day's Leaderboard (Sean, 23 Oct 2026: "on the last game day allow me the ability to go to a leaderboard for that game day so I
+  can see everyone leaderboard wise for that game day")**: home's Last game day section carries **All hitters →** / **All pitchers →** in its
+  header (`section()`'s link plus a second `.hmore`, beside it by the `.hmore + .hmore` rule at the home block in `styles.css`), each a `goLB`
+  to the Leaderboard with `state.win` a date range of that one day (`goLB` copies the window now, so the shared object isn't mutated).
+  **One game day** (`oneDay()`, beside `winKey`: a window, not last-N, whose `lo === hi`) works for any range that covers one game day:
+  - **Who's listed**: `listMin` is 1 PA / 0 IP, and the pool's `active` (in `pool()` and `kindPool`) counts a pitcher who faced a batter without
+    recording an out (25 Sep: Bennett Sousa and Justin Bruihl). Otherwise a pitcher is active on his innings, as before.
+  - **The numbers**: `V()` skips `talentOf` and `driversOf` on one game day, so a hitter's xwOBA / xBABIP are the batted-ball model's (`dirFor`'s scale ×
+    `dnum / wden`), the same number `hitGameLog` gives the Game Logs and home's tables (Bregman 27 Sep: 1.226 on both). Talent xwOBA and its
+    projection read "–" there; the xwOBA and xBABIP tabs say "One game day: … Widen the dates for the build-up." Pitchers are unchanged
+    (nERA is the day rows' arithmetic either way).
+  - **Labels**: the title reads "Hitting Leaderboard · Sun, Sep 27 · by xwOBA" ("Sep 27" on a phone, where the title row now wraps the note under
+    the heading instead of breaking it), the count "1–50 of 295 hitters · Sun, Sep 27 · everyone who played" (a phone's All-per-page count drops the
+    last part), `winLabel` prints a one-day range as "Sep 27" (chips, Dates), "1 game day" in the Dates / Recent notes, and the Dates tab's range note
+    explains the one-day rule. Also fixed: the Last N note's stray space ("plate appearances .").
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
