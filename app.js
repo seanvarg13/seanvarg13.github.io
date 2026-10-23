@@ -10658,6 +10658,32 @@
     r.classList.toggle("pgfoot", state.mode === "player" && max > 0 && window.scrollY > max / 2);
   }
   window.addEventListener("scroll", () => requestAnimationFrame(() => { stickSync(); footSync(); }), { passive: true, capture: true });   // capture: the popup's own scroll too
+  // An iPhone's keyboard can leave the window the wrong size behind it, in a home-screen web app most of all: once the box has blurred and the
+  // keyboard gone, the page can't be scrolled to its foot by about the keyboard's height — on every page, until the app is quit (Sean, 23 Oct
+  // 2026, a recording: Early's and Skenes's pages stopped at the season table, the bars' foot and the tabs out of reach). WebKit measures the
+  // window again when a full-size element leaves the layout and comes back, so after a keyboard episode (a text box blurred with nothing else
+  // focused; the visual viewport grown back) and once at the start (the state outlives a reload) the body is flipped display: none and back in
+  // one task — no paint in between — and the page and every scroller are put back where they were. iPhones and iPads only.
+  const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const HEAL_SCROLLERS = "#bscroll, .board-scroll, .sbscroll, .brscroll, .fscroll, .pbscroll, .stuffscroll, .rawscroll, .gframe, .pscroll, .cardscroll, #modal-body, .pop, .ddmenu, .modes, .btabs, .tabstrip, .toolrow, .hstrip, .cwrap, .mklist, .mkside, .fhclip, .xpop";
+  const typing = () => { const a = document.activeElement; return !!(a && a !== document.body && a.matches && a.matches("input:not([type=button]):not([type=submit]):not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable]")); };
+  function healViewport() {
+    if (typing()) return;
+    const x = window.scrollX, y = window.scrollY;
+    const kept = [...document.querySelectorAll(HEAL_SCROLLERS)].filter((e) => e.scrollTop || e.scrollLeft).map((e) => [e, e.scrollTop, e.scrollLeft]);
+    const b = document.body, was = b.style.display;
+    b.style.display = "none"; void b.offsetHeight; b.style.display = was;
+    kept.forEach(([e, t, l]) => { e.scrollTop = t; e.scrollLeft = l; });
+    if (Math.abs(window.scrollY - y) > 0 || Math.abs(window.scrollX - x) > 0) window.scrollTo(x, y);
+  }
+  window.__healViewport = healViewport;   // the page check runs it on a desktop, where it never runs on its own
+  let healT = [];
+  const healSoon = () => { healT.forEach(clearTimeout); healT = [150, 500, 1000].map((ms) => setTimeout(healViewport, ms)); };
+  if (IOS) {
+    document.addEventListener("focusout", (e) => { const t = e.target; if (t && t.matches && t.matches("input, textarea, select, [contenteditable]")) healSoon(); }, true);
+    if (window.visualViewport) { let vh = window.visualViewport.height; window.visualViewport.addEventListener("resize", () => { const h = window.visualViewport.height; if (h > vh + 40) healSoon(); vh = h; }); }
+    setTimeout(healViewport, 1500);
+  }
   // the filter chips (each filter in effect with its own ×), as renderPlate draws them for a popup
   function viewChips(p) {
     const r = el("div", "mrank inctl");

@@ -119,6 +119,17 @@ function minorsId() {
       await pg.waitForTimeout(1500);
       const y = await pg.evaluate(() => window.scrollY); if (y > 1) throw new Error(`Judge's page opened at ${y}px, not the top`);
     });
+    // the iPhone's viewport heal (23 Oct 2026) flips the body's display and back and puts every scroller back: run by hand here, it must leave the
+    // page and a sideways-scrolled table exactly where they were
+    await step("viewport heal", async () => {
+      // a table that scrolls sideways (a phone's season table; a desktop's fit, so there may be none)
+      await pg.evaluate(() => { window.scrollTo(0, 500); window.__sc = [...document.querySelectorAll("#xboard .sbscroll, #xboard .brscroll")].find((e) => e.scrollWidth > e.clientWidth + 10) || null; if (window.__sc) window.__sc.scrollLeft = 120; }); await pg.waitForTimeout(1600);
+      const before = await pg.evaluate(() => [window.scrollY, window.__sc ? window.__sc.scrollLeft : -1]);
+      await pg.evaluate(() => window.__healViewport()); await pg.waitForTimeout(300);
+      const after = await pg.evaluate(() => [window.scrollY, window.__sc ? window.__sc.scrollLeft : -1, !!document.querySelector("#xboard .pgbname")]);
+      if (before[0] < 100 || (before[1] >= 0 && before[1] < 50)) throw new Error(`the page didn't scroll first (${before})`);
+      if (Math.abs(after[0] - before[0]) > 2 || Math.abs(after[1] - before[1]) > 2 || !after[2]) throw new Error(`the heal moved the page: ${before} → ${after}`);
+    });
     if (mid) await step("a minors card", async () => { await hash("#player/" + mid); await count("table.sbt tbody tr", 1, 90000); await clickAll(".btabs .btab"); });
     await ctx.close();
   }
