@@ -1092,3 +1092,20 @@ With a date range, last-N-PA window or split on the card, the Batted Ball Qualit
 like the rest of the tab. They're built the way the xHR/FB tab builds them under a filter: his home runs over his fly balls and popups in
 the view, against the qualified hitters in the same view. The full season still reads his season line. A minors card's tab shows the HR/FB
 rows for its level too.
+
+### xISO on the Batted Ball Quality tab (23 Oct 2026)
+
+The Batted Ball Quality tab's power rows are **xISO** and **ISO** now, in place of xHR/FB and HR/FB. ISO is slugging minus batting average,
+the extra bases per at-bat. xISO is the same thing from his skills: xSLG minus a batting average built from the same pieces (strikeouts and
+walks, fly balls and how hard they're hit, the hits on the ground and on line drives, the extra bases). Like the rest of the tab, both follow
+the card's dates and splits.
+
+It's the better power read: first-half xISO calls second-half ISO at r .59 (his own ISO .53, xHR/FB .52), next season's at .67 (.63), and it
+settles in about half the plate appearances ISO needs. The xHR/FB tab is unchanged.
+
+### Movers: position up top (23 Oct 2026)
+
+The Movers page has one row up top: **Position ▾** (all hitters or one position, all pitchers, starters or relievers), the window and the
+order. A hitter's position is his fantasy eligibility, as on the Leaderboard. On a phone the three pills fit one line and the count moves next
+to the title, so the table starts about where the Leaderboard's does and runs to the bottom of the screen; on a desktop the table is as wide as
+the Leaderboard's. The explanation is behind **About** (or **More about these numbers**) at the right of the title.

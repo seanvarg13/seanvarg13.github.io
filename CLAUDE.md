@@ -4925,6 +4925,47 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   - Herrera: last 100 PA 5 HR on 17 → HR/FB 28.6 (96th) / xHR/FB 25.3 (94th); vs LHP 13.9 / 13.8; the season 14.5 / 14.7.
   - A minors card's tab now has the HR/FB section too (its view's numbers; no xHR/FB below Triple-A, nothing tracked).
 
+* **xISO in place of HR/FB on the Batted Ball Quality tab (Sean, 23 Oct 2026: "to not over complicate this maybe what we do is instead have it be
+  xISO? I'm not sure if that would be more or less accurate tho")**: the tab's right column is BABIP (xBABIP · BABIP) and **ISO** (xISO · ISO), both
+  on the card's view, so a date window or split follows with nothing special. The HR/FB section of the entry above is history on this tab (the
+  xHR/FB tab and its by-season table are unchanged), and the tab no longer loads the career files.
+  - **xISO** = xSLG less an xBA built from the same skills pieces. `baRaw(c)` beside `slgRaw` is hits per at-bat on the build's pieces (home runs
+    from fly balls × xHR/FB, the other hits from the drivers' xBABIP, the at-bats what walks, HBP and sacrifices leave). `talentCore`'s `xs` carries
+    `bra` / `braPk` (park-neutral / in his parks), `talentLeague` scales it so the season's 300+ PA hitters' AB-weighted xBA is their real BA (`L.sba`,
+    beside `L.sslg`), and `talentOf` sets `t.xba` and `t.xiso` with xSLG's own park choice (the park-neutral switch follows). A span: each season
+    its own, a combined line at-bat-weighted; one game day or an untracked level has none.
+  - **On `V(p).m`**: `xiso` (the talent block) and `iso` = SLG − BA (every hitter view). Not Leaderboard columns. The site's xBA is still the
+    batted-ball model's (`m.dxba`), so xISO can sit a few points off xSLG − xBA; the glossary says so.
+  - **Why** (scratch `xslg/iso.py`, every hitter-season 2015-26 split at its middle game day, 2,411 with 150+ PA a half, each season centred):
+    - Second-half ISO from first-half xISO r .587, against his own ISO's .525, the batted-ball model's xSLG − xBA .564, skills xSLG − the model's
+      xBA .569, and xHR/FB's .518 (xHR/FB calls second-half HR/FB at .597, HR/FB itself .542).
+    - It settles in about half the PA ISO needs: half-to-half k 125 PA (44% real at 100 PA) against ISO's 244 (29%); xHR/FB 117 (46%).
+    - Next season's ISO (1,819 back-to-back 300+ PA pairs): .666 from xISO, .627 from ISO, .646 from the model's, .591 from xHR/FB.
+    - The same half: xISO vs ISO r .909 (the model's .913).
+  - **Checks**: 2026's 300+ PA hitters average xISO .165 and ISO .165 (AB-weighted; xBA .2507 against BA .2509). Herrera: full season xISO .148 /
+    ISO .141, last 100 PA .229 / .196, vs LHP .174 / .158. Raleigh .234 / .186, Ohtani .242 / .236, Arraez .098 / .108, Goodman .268 / .284.
+
+* **Movers: position up top, the table as big as the Leaderboard's (Sean, 23 Oct 2026: "For the movers I want the ability up top to filter by pitchers
+  or hitters/by position and then make the table big and fit the whole screen like on the leaderboards page")**:
+  - **One row of pills** (`.fxbar`): **Position** (in place of the Hitters | Pitchers switch), the window and the order, the count at the right on
+    a desktop.
+    - The Position pill lists Hitters (All hitters, C, 1B, 2B, 3B, SS, OF, DH) and Pitchers (All pitchers, SP, RP) under headings (`ddOpenOn`'s
+      `[null, heading]` rows).
+    - `fxSet.pos` holds the pick and sets `fxSet.side`; a position that doesn't belong to the side reads as All.
+    - A hitter's position is his fantasy eligibility (`eligiblePositions`, the Leaderboard's filter); a pitcher's SP / RP is `pitcherRoles`
+      (starting / relief innings), so a swingman shows under both.
+    - The list is ranked on everyone and then narrowed, so Rk renumbers within the position.
+  - **A phone's pills say it short** so the three fit one line at 393px: "All hitters ▾ · 30 days ▾ · Δ xwOBA ▾" ("nERA drop", "Credible",
+    "2026 vs 2025"; the dropdowns keep the long names). Their padding is 10px there and the count moves to the title's grey line ("32 hitters",
+    "10 at SS", "66 RP").
+  - **The explanation's link** is at the title row's right ("More about these numbers" / "About" on a phone), its note opening under the title,
+    so nothing sits under the table.
+  - **The table**: phone, it starts at 144px (was 215; the Leaderboard's 128) and runs to 837 of 852, the pitchers' stretched to the page's width;
+    desktop, it is at least 1,020px wide (the Leaderboard's width at 1300), its columns spread (`min-width: min(100%, 1020px)` on `.flawpage`,
+    the table `width: 100%`), from 164px to 872 of 900.
+  - **Home's** Hitters → / Pitchers → links reset the position to All. The page check picks All pitchers, SS and All hitters through the pill.
+  - CSS: the "Movers up top" block at the end of `styles.css`.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

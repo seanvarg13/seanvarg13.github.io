@@ -1233,7 +1233,8 @@
       const ibb = v.ctx && v.ctx.IBB != null ? v.ctx.IBB : p.ctx && p.ctx.IBB != null && p.pa ? p.ctx.IBB / p.pa * (pa || 0) : null;
       v.m = Object.assign({}, m, { xk: xk == null ? null : Math.round(10 * xk) / 10, xwcon: con == null ? null : Math.round(1000 * con) / 1000,
                                   ibbr: ibb != null && pa ? Math.round(10000 * ibb / pa) / 100 : null,
-                                  pullfb: fbs ? Math.round(1000 * mx[5] / fbs) / 10 : null, mixbab: mixBab(mx) });
+                                  pullfb: fbs ? Math.round(1000 * mx[5] / fbs) / 10 : null, mixbab: mixBab(mx),
+                                  iso: m.slg != null && m.ba != null ? Math.round(1000 * (m.slg - m.ba)) / 1000 : null });   /* ISO, the Batted Ball Quality tab's (23 Oct 2026) */
     }
     // talent xwOBA and its next-season projection on the view (Sean, 11 Oct 2026) — talentOf below
     if (p.type === "H" && v.m && v.m.txw === undefined) {
@@ -1245,7 +1246,7 @@
       const sw = tx == null ? {} : { xwd: tx, xwoba: tx, xwdiff: v.m.woba != null ? Math.round(1000 * (tx - v.m.woba)) / 1000 : null };
       // xSLG from skills IS the xSLG (Sean, 23 Oct 2026 — XSLG); the batted-ball model's stays as dxslgm (talentCore's extra bases read it)
       const xsl = t && t.xslg != null ? Math.round(1000 * t.xslg) / 1000 : null;
-      v.m = Object.assign({}, v.m, { txw: tx, txwp: t && t.txwp != null ? Math.round(1000 * t.txwp) / 1000 : null, xwpk: t && t.xwpk != null ? Math.round(1000 * t.xwpk) / 1000 : null, xwn: t && t.txwN != null ? Math.round(1000 * t.txwN) / 1000 : null, dxw: v.m.xwd ?? null, dxslgm: v.m.dxslg ?? null }, sw, xsl == null ? {} : { dxslg: xsl }); v.tal = t;   /* xwpk: the same skills in his parks (15 Oct 2026); xwn: park-neutral, and txw / xwd are whichever the switch says (18 Oct 2026) */
+      v.m = Object.assign({}, v.m, { xiso: t && t.xiso != null ? Math.round(1000 * t.xiso) / 1000 : null, txw: tx, txwp: t && t.txwp != null ? Math.round(1000 * t.txwp) / 1000 : null, xwpk: t && t.xwpk != null ? Math.round(1000 * t.xwpk) / 1000 : null, xwn: t && t.txwN != null ? Math.round(1000 * t.txwN) / 1000 : null, dxw: v.m.xwd ?? null, dxslgm: v.m.dxslg ?? null }, sw, xsl == null ? {} : { dxslg: xsl }); v.tal = t;   /* xwpk: the same skills in his parks (15 Oct 2026); xwn: park-neutral, and txw / xwd are whichever the switch says (18 Oct 2026) */
       // the drivers' xBABIP IS the xBABIP (Sean, 15 Oct 2026 — xbabDrivers): the batted-ball model's number stays as xbabipm (the build-up's
       // league is the PA-weighted mean of it; a game log's luck still reads it, a game being too small for the drivers); where the drivers can't
       // be built (a combined span, an untracked level) the model's stands. BABIP luck is re-priced on the new gap at the same wOBA value per hit
@@ -5712,23 +5713,31 @@
     const page = el("div", "flawpage"), bar = el("div", "pbfilters fxbar"), PH = mobileView(); box.append(page); page.append(bar);
     const save = () => { try { localStorage.setItem("draft2027.flaws", JSON.stringify(fxSet)); } catch {} render(); };
     const side = fxSet.side === "P" ? "P" : "H", prevMode = fxSet.win === "prev", Y = DATA.meta.season, Y0 = Y - 1;
-    const seg = el("div", "seg fxside"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Hitters or pitchers");
-    for (const [v, l] of [["H", "Hitters"], ["P", "Pitchers"]]) {
-      const b = el("button", "segbtn", l); b.type = "button"; b.setAttribute("aria-pressed", String(side === v));
-      b.addEventListener("click", () => { if (side === v) return; fxSet.side = v; save(); }); seg.append(b);
-    }
-    // a pitcher has no PA window (one reads 30 days), so his side lists the day windows and This season vs last
+    // the side and the position in one pill up top (Sean, 23 Oct 2026: "the ability up top to filter by pitchers or hitters/by position"), in place
+    // of the Hitters | Pitchers switch: the hitters' positions and the pitchers' roles under their headings, a hitter's position his fantasy
+    // eligibility as the Leaderboard's filter reads it (eligiblePositions), a pitcher's SP / RP by his starts and relief innings. The table is
+    // ranked on everyone and then narrowed, so Rk is his place among that position's movers
+    const pos = (side === "P" ? PIT_TABS : HIT_TABS).includes(fxSet.pos) ? fxSet.pos : side === "P" ? "ALLP" : "ALL", allPos = pos === "ALL" || pos === "ALLP";
+    const inPos2 = (p) => allPos || eligiblePositions(p).includes(pos);
+    const posOpts = [[null, "Hitters"], ...HIT_TABS.map((k) => [k, TAB_LABEL[k] || k]), [null, "Pitchers"], ...PIT_TABS.map((k) => [k, TAB_LABEL[k] || k])];
+    // a pitcher has no PA window (one reads 30 days), so his side lists the day windows and This season vs last; a phone's pills say it short, so
+    // the three sit on one line and the table starts where the Leaderboard's does
     const wcur = side === "P" && String(fxSet.win).startsWith("pa") ? "30" : String(fxSet.win), wlab = (FX_WINS.find((w) => w[0] === wcur) || FX_WINS[1])[1];
-    bar.append(seg, pillSelect(wlab, side === "P" ? FX_WINS.filter(([k]) => !k.startsWith("pa")) : FX_WINS, wcur, (v) => { fxSet.win = v; save(); }, "Window"));
-    { const big = side === "H" ? "Biggest Δ xwOBA" : "Biggest nERA drop";   // the order is shared: by the move, or by the move × its credibility
-      bar.append(pillSelect(fxSet.sort === "cred" ? "Most credible" : big, [["gain", big], ["cred", "Most credible"]], fxSet.sort, (v) => { fxSet.sort = v; save(); }, "Order")); }
+    const big = side === "H" ? "Biggest Δ xwOBA" : "Biggest nERA drop";   // the order is shared: by the move, or by the move × its credibility
+    const short = (t) => (PH ? t.replace(/^Last /, "").replace("This season vs last", `${Y} vs ${Y0}`).replace(/^Biggest /, "").replace("Most credible", "Credible") : t);
+    bar.append(pillSelect(TAB_LABEL[pos] || pos, posOpts, pos, (v) => { fxSet.pos = v; fxSet.side = PIT_TABS.includes(v) ? "P" : "H"; save(); }, "Position"),
+               pillSelect(short(wlab), side === "P" ? FX_WINS.filter(([k]) => !k.startsWith("pa")) : FX_WINS, wcur, (v) => { fxSet.win = v; save(); }, "Window"),
+               pillSelect(short(fxSet.sort === "cred" ? "Most credible" : big), [["gain", big], ["cred", "Most credible"]], fxSet.sort, (v) => { fxSet.sort = v; save(); }, "Order"));
     const count = el("span", "pbcount"); bar.append(count);
-    const title = (h, sub) => { const t = el("div", "fxtitle"); t.append(el("h2", null, h), el("span", null, sub)); page.append(t); };
+    let trow = null;   // the title row: the heading, a line under it (a phone's carries the count), and the explanation's link at its right
+    const title = (h, sub) => { trow = el("div", "fxtitle"); trow.append(el("h2", null, h), el("span", "fxsub", sub)); page.append(trow); };
+    const subCount = (txt) => { const sp = trow && trow.querySelector(".fxsub"); if (sp && PH) sp.textContent = txt; };
     const say = (txt) => page.append(el("p", "note", txt));
-    const more = (txt) => {   // the explanation, folded the way Fantasy's is
-      const n = el("p", "note fxnote" + (fxNoteOpen ? " open" : ""), txt), b = el("button", "linkbtn fxmore", fxNoteOpen ? "Less" : "More about these numbers"); b.type = "button";
-      b.addEventListener("click", () => { fxNoteOpen = !fxNoteOpen; n.classList.toggle("open", fxNoteOpen); b.textContent = fxNoteOpen ? "Less" : "More about these numbers"; });
-      page.append(n, b);
+    const more = (txt) => {   // the explanation, folded the way Fantasy's is, its link in the title row and the note under it
+      const lab = () => (fxNoteOpen ? "Less" : PH ? "About" : "More about these numbers");
+      const n = el("p", "note fxnote" + (fxNoteOpen ? " open" : ""), txt), b = el("button", "linkbtn fxmore", lab()); b.type = "button";
+      b.addEventListener("click", () => { fxNoteOpen = !fxNoteOpen; n.classList.toggle("open", fxNoteOpen); b.textContent = lab(); });
+      if (trow) { trow.append(b); trow.after(n); } else page.append(n, b);
     };
     ensureHist(fxPrevKey());   // last season: the base in the vs-last mode, the credibility's witness otherwise (both sides)
     if (!prevMode) ensureDays(side);
@@ -5739,9 +5748,10 @@
       const by = `by Δ xwOBA ${fxSet.sort === "cred" ? "× credibility" : "if it held"}`;
       title("Hitting Movers", PH ? by : `elite but for one piece, and that piece moved · ${by}`);   // a phone keeps the title to one line
       if (!prevMode && !daysReady("H")) { say(daysBad.H ? "Couldn't load the game-by-game data." : "Loading game-by-game data…"); return; }
-      const R = flawRows(fxSet.win), { cand } = R, rows = R.rows.slice().sort((a, b) => fxSet.sort === "cred" ? b.cgain - a.cgain : b.gain - a.gain);
+      const R = flawRows(fxSet.win), { cand } = R, rows = R.rows.filter((r) => inPos2(r.p)).sort((a, b) => fxSet.sort === "cred" ? b.cgain - a.cgain : b.gain - a.gain);
       if (R.loading) { say(`Loading the ${Y0} season…`); return; }
-      count.textContent = `${rows.length} hitters · ${cand} elite with a flaw${prevMode ? ` in ${Y0}` : ""}`;
+      count.textContent = allPos ? `${rows.length} hitters · ${cand} elite with a flaw${prevMode ? ` in ${Y0}` : ""}` : `${rows.length} at ${pos} · ${R.rows.length} hitters · ${cand} elite with a flaw${prevMode ? ` in ${Y0}` : ""}`;
+      subCount(allPos ? `${rows.length} hitters` : `${rows.length} at ${pos}`);
       const refH = [], noPct = (x) => x.replace("%", "");   // a phone's Flaw column drops the % signs, as home's card does (the piece's name says it's a rate)
       withDataset(R.baseDS || DS, () => withWindow(NOWIN, () => withSplit(NONE, () => { for (const p of DS.players) if (p.type === "H" && (p.pa || 0) >= 300) { const v = V(p).m.xwd; if (v != null) refH.push(v); } }))); refH.sort((a, b) => a - b);
       const S0 = prevMode ? String(Y0) : "Season", credTip = `how much of the move is likely real: the piece's reliability at the window's PA, then last season as a witness (a prior season already past the midpoint of the move raises it, one on the far side lowers it)`;
@@ -5759,7 +5769,7 @@
         else tr.append(el("td", "c", r.p.team || ""), el("td", "c", r.strengths), el("td", "c", r.flaw.lab), el("td", "c", r.flaw.f(r.was)), el("td", "c", r.flaw.f(r.now)), el("td", "c", String(Math.round(r.pa))), cred, el("td", "c", fw(r.xw)), held, dl);
         tb.append(fin(tr));
       });
-      if (!rows.length) say("Nobody with an elite base and a flaw that's moved in the window yet.");
+      if (!rows.length) say(allPos ? "Nobody with an elite base and a flaw that's moved in the window yet." : `No ${pos} with an elite base and a flaw that's moved in the window yet.`);
       else { wrap.classList.add("pbscroll"); page.append(wrap); }
       more(flawNote(R) + (prevMode ? ` Here the base is ${Y0}'s full season (its own league) and the move is ${Y}'s full season.` : "") + ` Credible = the piece's reliability at the window's PA, with last season as a witness. Biggest Δ xwOBA orders by Δ; Most credible by Δ × that. Tap a name for his bars, the full season beside the window.`);
       return;
@@ -5771,8 +5781,9 @@
     const M = pitchMovers(wcur), PB = prevMode ? String(Y0) : "Before";
     if (M.loading) { say(`Loading the ${Y0} season…`); return; }
     if (M.wait) { say(daysBad.P ? "Couldn't load the pitchers' game-by-game data." : "Loading the pitchers' game-by-game data…"); return; }
-    count.textContent = `${M.rows.length} of ${M.all} pitchers with nERA down`;
-    const prow = M.rows.slice().sort((a, b) => fxSet.sort === "cred" ? b.cgain - a.cgain : a.dN - b.dN);
+    const prow = M.rows.filter((r) => inPos2(r.p)).sort((a, b) => fxSet.sort === "cred" ? b.cgain - a.cgain : a.dN - b.dN);
+    count.textContent = allPos ? `${M.rows.length} of ${M.all} pitchers with nERA down` : `${prow.length} ${pos} · ${M.rows.length} of ${M.all} pitchers with nERA down`;
+    subCount(allPos ? `${prow.length} pitchers` : `${prow.length} ${pos}`);
     const refP = [];   // a window's nERA is coloured by its place among the season's 100+ IP pitchers, as home's lists are
     withWindow(NOWIN, () => withSplit(NONE, () => { for (const p of DATA.players) if (p.type === "P" && (p.ip || 0) >= 100) { const v = V(p).m.nera; if (v != null) refP.push(-v); } })); refP.sort((a, b) => a - b);
     const f2 = (x) => (x == null ? "–" : x.toFixed(2)), pc1 = (x) => (x == null ? "–" : x.toFixed(1) + "%"), n1 = (x) => (x == null ? "–" : x.toFixed(1));
@@ -5793,7 +5804,7 @@
                      el("td", "c", n1(r.fbWas)), el("td", "c", n1(r.fbNow)), el("td", "c", fmtIP(r.ip)), cred);
       P2.tb.append(P2.fin(tr));
     });
-    if (!prow.length) say("No pitcher's nERA is down over the window yet.");
+    if (!prow.length) say(allPos ? "No pitcher's nERA is down over the window yet." : `No ${pos === "SP" ? "starter" : "reliever"}'s nERA is down over the window yet.`);
     else { P2.wrap.classList.add("pbscroll"); page.append(P2.wrap); }
     more(`${prevMode ? `His full ${Y} season against his ${Y0} (${PM_BASE}+ IP each)` : `His ${M.label} (${M.minN}+ IP) against his season before them (${PM_BASE}+ IP)`}: nERA is his ERA with the luck taken out — every ball in play at the league's value for its type, his strikeouts, walks and HBP as they were — so a drop is his strikeouts, walks or batted-ball mix getting better, not his defence or the bounces. Δ is his nERA over the window minus before, red as it falls. K-BB% and FB velo say where the move came from. Credible = how much of it is likely real: nERA settles at about ${PM_K} batters faced (odd and even outings, 2024-26), so his batters faced in the window over that plus ${PM_K}, raised when last season's nERA already sat past the middle of the move, lowered when it sat on the far side. Biggest nERA drop orders by Δ; Most credible by Δ × that. A last-N-PA window picked on the hitters' side reads 30 days here. Tap a name for his page on that window, at his Game Logs.`);
   }
@@ -5983,7 +5994,7 @@
     // Movers page (#movers). It takes the grid's third card from the percentile-jump Movers (7 Oct: hitters by xwOBA, pitchers by nERA, now gone), and
     // the full-width Fixing the flaw section under the grid with it
     // each side's list opens the page on that side and the card's 30 days (23 Oct 2026: the page shows one side at a time)
-    { const goMv = (sd) => (e) => { e.preventDefault(); fxSet.side = sd; fxSet.win = "30"; try { localStorage.setItem("draft2027.flaws", JSON.stringify(fxSet)); } catch {} location.hash = "#movers"; };
+    { const goMv = (sd) => (e) => { e.preventDefault(); fxSet.side = sd; fxSet.pos = sd === "P" ? "ALLP" : "ALL"; fxSet.win = "30"; try { localStorage.setItem("draft2027.flaws", JSON.stringify(fxSet)); } catch {} location.hash = "#movers"; };
       const b = section(grid, "Movers", "last 30 days", "Hitters →", goMv("H"));
       { const a = el("a", "hmore", "Pitchers →"); a.href = "#movers"; a.title = "Every pitcher whose nERA fell over the last 30 days"; a.addEventListener("click", goMv("P")); b.parentNode.querySelector(".hsech").append(a); }
       if (!HL) loading(b);
@@ -6008,6 +6019,8 @@
     woba: "Weighted on-base average: every way of reaching base, each weighted by what it is actually worth. About .320 is league average, .400 is a star. Appearance ▸ wOBA scale shows every wOBA-scale number as wRC+ instead — 100 × (1 + (wOBA − the league's) / 1.25 / the league's runs per PA), each season against its own league: 100 is average, 120 is 20% better. Same numbers, same ranks; only the scale changes.",
     ba: "Batting average — hits per at-bat.",
     slg: "Slugging — total bases per at-bat.",
+    iso: "Isolated power — slugging minus batting average: the extra bases per at-bat beyond a single (a double 1, a triple 2, a home run 3).",
+    xiso: "Expected isolated power: xSLG less an xBA built from the same skills pieces — his K% and BB% (half his actual rate, half the expected one), fly balls × xHR/FB for the home runs, the drivers' xBABIP for the other hits and the extra-bases piece — so the extra bases per at-bat his skills say, with his parks unless Leaderboard ▸ Filters ▸ Stats says park-neutral. First-half xISO calls second-half ISO at r .59 (his ISO .53, xHR/FB .52) and next season's at .67 (.63), and it settles in about half the plate appearances ISO needs. Its xBA isn't the site's xBA (the batted-ball model's), so it can sit a few points off xSLG − xBA.",
     xwoba: "Expected wOBA: his wOBA rebuilt from expected rates only, never his actual hits — xK% (his whiffs, swing decisions and the strikes he sees) and xBB% (his chase rate, zone swings, contact, how often pitchers come into the zone on him, how many of his batted balls go foul and his intentional walks), each half his actual rate; his HBP rate; xHR/FB from his exit velocity (FB EV, EV90, how much he pulls his fly balls) on his fly balls and popups; the nine-driver xBABIP (line drives, popups, grounder and liner EV, grounder and liner pull, speed, oppo, fly balls — no Noise, no Luck) on the rest; and the batted-ball model's extra bases per hit (exit velocity, launch angle, pull and spray angle, sprint speed). Scaled so the season's 300+ PA hitters average their real wOBA. With his parks: the skills are measured park-neutral (the K% and BB% halves less his parks' effect on them, the contact pieces read off his contact and not where it landed, the HR fits fitted on park-neutral home runs — every ball 2015-26 at the park it was hit in against a neutral park, hist/parks.js), and then his parks are put back on every piece (the build-up's Park factor row), since where he plays shapes what he produces and will again if he stays. Leaderboard ▸ Filters ▸ Stats switches the whole site to the park-neutral number (also its own column, Park-neutral xwOBA). First-half xwOBA calls second-half wOBA at r .42 (the batted-ball model alone .37, wOBA .31) and next season's at .55. A span of seasons or an untracked level shows the batted-ball model's number. The xwOBA tab shows the build-up.",
     dxba: "Expected batting average — the same directional model, scored as hits per at-bat.",
     dxslg: "Expected slugging, built from his skills the way xwOBA is (since 23 Oct 2026): total bases per at-bat from his K% and BB% (half his actual rate, half the expected one), his fly balls × xHR/FB for the home runs, the drivers' xBABIP for the other hits, and extra bases per hit that isn't a home run, half from a skills fit (GB%, sprint speed, LD EV, Pull%) and half from the batted-ball model — with his parks unless Leaderboard ▸ Filters ▸ Stats says park-neutral. First-half xSLG calls second-half SLG at r .45 (the batted-ball model alone .42, his SLG .37) and next season's at .53 (.50 / .47). The xSLG tab shows the build-up. On one game day, a span of seasons or an untracked level it's the batted-ball model's number.",
@@ -7564,33 +7577,10 @@
                   sec("Line Drives", [fromPool("evld", "Avg EV", one), fromPool("brld", "Barrel%", one)]),
                   sec("Ground Balls", [fromPool("evgb", "Avg EV", one),
                     fromFn("gbpull", "Pull%", share(gbA, 0), false, "the share of his ground balls pulled — the likeliest grounder to be an out (a hit .198 in 2025 against .306 centre / .354 oppo); lower is better")])].filter((s) => s.rows.length);
-    const right = [sec("BABIP", [fromPool("xbabip", "xBABIP", fmtX), fromPool("babip", "BABIP", fmtX)])];
-    // HR/FB: the season's line from the career files (home runs over Statcast's fly balls, his line-drive homers counted in), xHR/FB on his
-    // fly-ball contact, ranked among that season's qualified hitters. Under a date window or split (Sean, 23 Oct 2026, Herrera's last 100 PA:
-    // "I don't think the xbabip or xhr/fb that are showing in this tab are filtered by the dates I think those are full season" — the BABIP rows
-    // were the view's, these were the season's) and on a minors card, the card's own view instead, as the xHR/FB tab builds it: his home runs and
-    // fly balls + popups from the day rows (hrfbView) against the same numbers over the view's qualified hitters (hrfbLevel)
-    const minors = !!(DS.level && DS.level !== "MLB"), filt = !!(winIdx() || splitActive());
-    if (minors || filt) {
-      const x = hrfbView(p), L = hrfbLevel("H");
-      if (x && L.lg.hrfb != null) {
-        const at = (arr, v) => (v != null && arr.length >= 20 ? insertPct(arr, v) : null), pkH = minors ? null : (pv.m.pkhr ?? null);
-        const hf = 100 * x.hr / x.fb - (pkH || 0), xv = xHrfb(x, L.lg);
-        right.push(sec("HR/FB", [R("xhrfb", "xHR/FB", xv, at(L.arr.x, xv), L.lg.hrfb, one), R("hrfb", "HR/FB", hf, at(L.arr.hrfb, hf), L.lg.hrfb, one,
-          `his home runs over his fly balls and popups in this view${pkH == null ? "" : " at a neutral park"} (${x.hr} on ${x.fb}; a window can't tell which homers were liners, so they aren't counted in), ranked among the ${minors ? "level's" : "view's"} qualified hitters`)]));
-      }
-    }
-    ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady);
-    if (!minors && !filt && DS.level === "MLB" && !DS.kind && careerReady() && sbxReady()) {
-      const y = +DS.season, rec = window.DRAFT_CAREER[String(p.id)];
-      const l = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).find((q) => q.season === y && q.c.ext && +q.c.ext[2] > 0);
-      if (l) {
-        const L = hrfbLeague(y), bx = sbxOf(p.id, y), hf = 100 * (+l.c.HR || 0) / +l.c.ext[2] - (bx && bx.pkhr != null ? bx.pkhr : 0), xv = xHrfb(bx, L.lg);   /* park-neutral (15 Oct 2026) */
-        const at = (arr, v) => (v != null && arr.length >= 20 ? insertPct(arr, v) : null);
-        right.push(sec("HR/FB", [R("xhrfb", "xHR/FB", xv, at(L.arr.x, xv), L.lg.hrfb, one), R("hrfb", "HR/FB", hf, at(L.arr.hrfb, hf), L.lg.hrfb, one,
-          "his home runs over his fly balls at a neutral park (Statcast's calls, his line-drive homers counted in), the full season — what his parks added is the xHR/FB tab's Park column")]));
-      }
-    }
+    // ISO in HR/FB's old place (Sean, 23 Oct 2026: "to not over complicate this maybe what we do is instead have it be xISO?"): xISO is xSLG less
+    // the xBA on the same skills pieces (talentOf), on the card's view, so a date window or split follows; ISO is his own SLG − BA in that view
+    const right = [sec("BABIP", [fromPool("xbabip", "xBABIP", fmtX), fromPool("babip", "BABIP", fmtX)]),
+                   sec("ISO", [fromPool("xiso", "xISO", fmtX), fromPool("iso", "ISO", fmtX)])];
     const sets = [left, right.filter((s) => s.rows.length)].filter((s) => s.length);
     const box = el("div", "pcttab bbqtab");
     if (!sets.length) { box.append(el("p", "note", "No batted-ball quality numbers for this season's file.")); return box; }
@@ -7708,7 +7698,11 @@
     for (const i of I) { const t = talentCore(i, L); if (t && i.m.woba != null) { a += t.raw * i.pa; b += i.m.woba * i.pa; tw += t.tph * i.pa; tn += i.pa; } }
     L.scale = a ? b / a : null; L.tph = tn ? tw / tn : null; L.n = ref.length;
     // xSLG's scale: its 300+ PA hitters' at-bat-weighted xSLG on their real SLG (talentCore builds its pieces once L.tph is in)
-    L.sslg = null; if (L.tph != null && L.tphA != null) { let a2 = 0, b2 = 0; for (const i of I) { const t = talentCore(i, L); if (t && t.xs && t.xs.raw != null && i.m.slg != null) { a2 += t.xs.raw * i.ab; b2 += i.m.slg * i.ab; } } L.sslg = a2 ? b2 / a2 : null; }
+    // and xISO's xBA the same way, on their real BA (L.sba)
+    L.sslg = L.sba = null;
+    if (L.tph != null && L.tphA != null) { let a2 = 0, b2 = 0, a3 = 0, b3 = 0; for (const i of I) { const t = talentCore(i, L); if (!t || !t.xs) continue;
+      if (t.xs.raw != null && i.m.slg != null) { a2 += t.xs.raw * i.ab; b2 += i.m.slg * i.ab; } if (t.xs.bra != null && i.m.ba != null) { a3 += t.xs.bra * i.ab; b3 += i.m.ba * i.ab; } }
+      L.sslg = a2 ? b2 / a2 : null; L.sba = a3 ? b3 / a3 : null; }
     TWL.set(DS.key, L); return L;
   }
   function talentCore(I, L) {
@@ -7745,7 +7739,8 @@
       if (sk != null) {
         const tm = Math.min(1.8, Math.max(1, L.tphA + (tph - L.tph))), tx = Math.min(1.8, Math.max(1, XSLG.a * tm + (1 - XSLG.a) * sk));   /* a hit is a base at least */
         const o = Math.max(0, (I.pa - I.ab) / I.pa - (m.bb != null ? m.bb / 100 : xbb / 100) - hbp), c0 = { xk, xbb, hbp, xhf, fbs: I.fbs, xbab, tph: tx, o };
-        xs = { sk, tm, tx, o, c0, raw: slgRaw(c0), rawPk: pk ? slgRaw(Object.assign({}, c0, { xk: xk + pk.k, xbb: xbb + pk.bb, xhf: xhf + pk.hr, xbab: xbab + pk.bab / 1000, tph: tx + pk.xb })) : null };
+        const cPk = pk ? Object.assign({}, c0, { xk: xk + pk.k, xbb: xbb + pk.bb, xhf: xhf + pk.hr, xbab: xbab + pk.bab / 1000, tph: tx + pk.xb }) : null;
+        xs = { sk, tm, tx, o, c0, raw: slgRaw(c0), rawPk: cPk ? slgRaw(cPk) : null, bra: baRaw(c0), braPk: cPk ? baRaw(cPk) : null };
       }
     }
     return { xk, xbb, xkFit, xbbFit, hbp, xhf, dh, fit: f, fbs: I.fbs, hrb, xbab, dv, tph, vh, bip, raw, bx, I, pk, rawPk, xs };
@@ -7779,6 +7774,9 @@
   // walks, HBP and sacrifices (o) leave
   const slgRaw = (c) => { const bip = Math.max(0, 1 - c.xk / 100 - c.xbb / 100 - c.hbp), hrb = c.xhf / 100 * c.fbs, ab = 1 - c.xbb / 100 - c.hbp - (c.o || 0);
     return ab > 0 ? bip * (4 * hrb + (1 - hrb) * c.xbab * c.tph) / ab : null; };
+  // and hits per at-bat on the same pieces — xISO's own xBA (xISO = xSLG − this, 23 Oct 2026); the site's xBA stays the batted-ball model's
+  const baRaw = (c) => { const bip = Math.max(0, 1 - c.xk / 100 - c.xbb / 100 - c.hbp), hrb = c.xhf / 100 * c.fbs, ab = 1 - c.xbb / 100 - c.hbp - (c.o || 0);
+    return ab > 0 ? bip * (hrb + (1 - hrb) * c.xbab) / ab : null; };
   // his talent xwOBA on the card's view: the view's rates against the dataset's full-season league (as xK% does); a window without the HBP day
   // field takes his season HBP rate, and sprint speed is the season's
   function talentOf(p, v) {
@@ -7788,12 +7786,13 @@
     // latest season's league. A combined line has no projection
     if (DS.multi) {
       if (DS.each) return p.src && p.real ? withDataset(p.src, () => talentOf(p.real, v)) : null;
-      if (lastN(WIN || listWin())) { const lp = (p.parts || [])[p.parts.length - 1], t = lp && withDataset(lp[0], () => talentOf(lp[1], v)); return t ? { txw: t.txw, txwN: t.txwN, xwpk: t.xwpk, txwp: null, xslg: t.xslg, span: true } : null; }
-      let s = 0, n = 0, sn = 0, nn = 0, sp = 0, np = 0, ss = 0, sa = 0;
+      if (lastN(WIN || listWin())) { const lp = (p.parts || [])[p.parts.length - 1], t = lp && withDataset(lp[0], () => talentOf(lp[1], v)); return t ? { txw: t.txw, txwN: t.txwN, xwpk: t.xwpk, txwp: null, xslg: t.xslg, xiso: t.xiso ?? null, span: true } : null; }
+      let s = 0, n = 0, sn = 0, nn = 0, sp = 0, np = 0, ss = 0, sa = 0, si = 0, ai = 0;
       for (const [d, q] of p.parts || []) { const pv = withDataset(d, () => V(q)); if (!pv || !pv.m || !pv.pa) continue;
         if (pv.m.txw != null) { s += pv.m.txw * pv.pa; n += pv.pa; } if (pv.m.xwn != null) { sn += pv.m.xwn * pv.pa; nn += pv.pa; } if (pv.m.xwpk != null) { sp += pv.m.xwpk * pv.pa; np += pv.pa; }
-        if (pv.m.dxslgm != null && pv.m.dxslg != null && pv.ab) { ss += pv.m.dxslg * pv.ab; sa += pv.ab; } }   /* xSLG: his seasons' skills xSLG by at-bats */
-      return n ? { txw: s / n, txwN: nn ? sn / nn : null, xwpk: np ? sp / np : null, txwp: null, xslg: sa ? ss / sa : null, span: true } : null;
+        if (pv.m.dxslgm != null && pv.m.dxslg != null && pv.ab) { ss += pv.m.dxslg * pv.ab; sa += pv.ab; }   /* xSLG: his seasons' skills xSLG by at-bats */
+        if (pv.m.xiso != null && pv.ab) { si += pv.m.xiso * pv.ab; ai += pv.ab; } }   /* xISO likewise */
+      return n ? { txw: s / n, txwN: nn ? sn / nn : null, xwpk: np ? sp / np : null, txwp: null, xslg: sa ? ss / sa : null, xiso: ai ? si / ai : null, span: true } : null;
     }
     const L = talentLeague(), m = v.m.spd == null && p.m && p.m.spd != null ? Object.assign({}, v.m, { spd: p.m.spd }) : v.m;
     const hbp = v.ctx && v.ctx.HBP != null ? v.ctx.HBP : p.ctx && p.ctx.HBP != null && p.pa ? p.ctx.HBP / p.pa * (v.pa || 0) : 0;
@@ -7802,6 +7801,12 @@
     // the site's xwOBA carries his parks unless the switch says park-neutral (18 Oct 2026); a season without park numbers (the minors) has the one
     t.parkIn = !XWN && t.xwpk != null; t.txw = t.parkIn ? t.xwpk : t.txwN;
     if (t.xs && L.sslg != null && t.xs.raw != null) { t.xslgN = t.xs.raw * L.sslg; t.xslgPk = t.xs.rawPk == null ? null : t.xs.rawPk * L.sslg; t.xslg = t.parkIn && t.xslgPk != null ? t.xslgPk : t.xslgN; }   /* xSLG follows the same park switch (23 Oct 2026) */
+    // xISO = xSLG less the xBA on the same pieces, with the same park choice (Sean, 23 Oct 2026: "maybe what we do is instead have it be xISO? I'm
+    // not sure if that would be more or less accurate tho" — in the Batted Ball Quality tab's HR/FB place). Tested the way xSLG was (scratch xslg/
+    // iso.py, 2,411 hitter-seasons with 150+ PA a half, each season centred): second-half ISO from first-half xISO r .587 against his ISO's .525,
+    // the batted-ball model's xSLG − xBA .564 and xHR/FB's .518; next season's ISO .666 (his ISO .627, xHR/FB .591); it settles in about half the
+    // PA ISO needs (44% real at 100 PA against 29%), and xHR/FB about the same as xISO (46%). The skills xSLG less the model's xBA did worse (.569)
+    if (t.xslg != null && t.xs.bra != null && L.sba != null) { const pkB = t.parkIn && t.xslgPk != null && t.xs.braPk != null; t.xba = (pkB ? t.xs.braPk : t.xs.bra) * L.sba; t.xiso = (pkB ? t.xslgPk : t.xslgN) - t.xba; }
     t.txwp = L.woba == null ? null : L.woba + ((t.txw - L.woba) * v.pa + TW.k * TW.p0) / (v.pa + TW.k);
     return t;
   }
