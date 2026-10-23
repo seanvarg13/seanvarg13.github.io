@@ -344,7 +344,8 @@ SBX_KEYS = ["ev", "ev90", "maxev", "hh", "brl", "ss", "bs", "evfb", "evld", "evg
             "pkhr", "pkbab",            # what his parks did to his HR/FB (points) and BABIP (points), ball by ball (build_data.py park_fields; 15 Oct 2026) — the HR / FB and BABIP by season tables' Park columns
             "pa",                       # his PA that season — xwOBA proj. weights his last two seasons' talent by it (app.js projFill; 16 Oct 2026); the file also carries "lg": {season: the talent league's wOBA}
             "txwpk",                    # xwOBA with his parks put back on each piece (Sean, 18 Oct 2026: the site's xwOBA includes the park; "txw" stays the park-neutral one) — talent_of(..., park=True)
-            "xslg", "xslgpk"]           # xSLG from skills at a neutral park and with his parks (Sean, 23 Oct 2026; xslg_of below, app.js XSLG) — the card's SLG by season
+            "xslg", "xslgpk",           # xSLG from skills at a neutral park and with his parks (Sean, 23 Oct 2026; xslg_of below, app.js XSLG)
+            "xiso", "xisopk"]           # xISO, xSLG less the xBA the same pieces make, neutral / with his parks (Sean, 23 Oct 2026; xiso_of below) — the card's ISO by season
 
 
 # Talent xwOBA (Sean, 11 Oct 2026: "an xwoba based purely on their talent ... their batted ball mix, k rate, bb rate, xbabip minus luck and noise,
@@ -440,6 +441,12 @@ def talent_league(players, ref_pa):
         x = xslg_of(i, L, scaled=False)
         if x is not None and i["m"].get("slg") is not None: a += x * i["ab"]; b += i["m"]["slg"] * i["ab"]
     L["sslg"] = b / a if a else None
+    # and xBA's (app.js L.sba), for xISO: its qualifiers' at-bat-weighted xBA from the same pieces on their real BA
+    a = b = 0.0
+    for i in I:
+        x = _xs_parts(i, L)
+        if x is not None and i["m"].get("ba") is not None: a += x[1] * i["ab"]; b += i["m"]["ba"] * i["ab"]
+    L["sba"] = b / a if a else None
     return L
 
 
@@ -506,6 +513,21 @@ def xslg_of(i, L, park=False, scaled=True):
     """his xSLG from skills (app.js talentCore's xs / talentOf's xslgN, xslgPk), or None: the talent pieces as total bases per at-bat, the extra
     bases half the model's tph re-centred on the league's real bases per non-HR hit and half TW_XSLG's skills fit; park=True moves every piece by
     his parks' residual as talent_of does"""
+    x = _xs_parts(i, L, park)
+    if x is None: return None
+    if not scaled: return x[0]
+    return x[0] * L["sslg"] if L.get("sslg") else None
+
+
+def xiso_of(i, L, park=False):
+    """his xISO (app.js talentOf's xiso): xSLG less the xBA the same pieces make — hits per at-bat (app.js baRaw), scaled by L['sba'] — or None"""
+    x = _xs_parts(i, L, park)
+    if x is None or not L.get("sslg") or not L.get("sba"): return None
+    return x[0] * L["sslg"] - x[1] * L["sba"]
+
+
+def _xs_parts(i, L, park=False):
+    """(total bases, hits) per at-bat from the talent pieces, unscaled (app.js slgRaw, baRaw), or None"""
     m, c = i["m"], {}
     if L.get("tph") is None or L.get("tphA") is None or talent_of(i, L, out=c) is None: return None
     tier = next((T for T in TW_XSLG[1] if all(m.get(k) is not None and L.get(k) is not None for k in T)), None)
@@ -521,9 +543,7 @@ def xslg_of(i, L, park=False, scaled=True):
         xk, xbb, xhf, xbab, tx = xk + g("pkk"), xbb + g("pkbb"), xhf + g("pkhr"), xbab + g("pkbab") / 1000, tx + g("pkxb")
     bip = max(0.0, 1 - xk / 100 - xbb / 100 - hbp); hrb = xhf / 100 * i["fbs"]; ab = 1 - xbb / 100 - hbp - o
     if ab <= 0: return None
-    raw = bip * (4 * hrb + (1 - hrb) * xbab * tx) / ab
-    if not scaled: return raw
-    return raw * L["sslg"] if L.get("sslg") else None
+    return bip * (4 * hrb + (1 - hrb) * xbab * tx) / ab, bip * (hrb + (1 - hrb) * xbab) / ab
 
 
 # a pitcher's season numbers for his season table (Sean, 9 Oct 2026: "ERA, FIP, nERA, and SIERA ... k%, bb%, popup%, gb% ... whiff% and xBB%"):
@@ -552,10 +572,10 @@ def season_bb():
             m, cx = p.get("m") or {}, p.get("ctx") or {}
             mx = cx.get("mix") or []
             fbs = sum(x or 0 for x in mx) if len(mx) >= 8 else 0      # every ball in the mix (MIX_COLS order: gb, pu, ld p/c/o, fb p/c/o, x)
-            ti = _tw_inputs(p); tw = talent_of(ti, TL); xd = xbab_drivers(ti, TL); twp = talent_of(ti, TL, park=True); xs, xsp = xslg_of(ti, TL), xslg_of(ti, TL, park=True)
+            ti = _tw_inputs(p); tw = talent_of(ti, TL); xd = xbab_drivers(ti, TL); twp = talent_of(ti, TL, park=True); xs, xsp = xslg_of(ti, TL), xslg_of(ti, TL, park=True); xi, xip = xiso_of(ti, TL), xiso_of(ti, TL, park=True)
             gd = cx.get("gbdir"); gn = sum(gd) if gd else 0
-            val = lambda k: (100 * mx[5] / fbs if fbs else None) if k == "pullfb" else tw if k == "txw" else twp if k == "txwpk" else xd if k == "xbabd" else xs if k == "xslg" else xsp if k == "xslgpk" else (100 * gd[0] / gn if gn else None) if k == "gbp" else p.get("pa") if k == "pa" else m.get(k)
-            out.setdefault(str(p["id"]), {})[str(y)] = [cx.get("BBE")] + [(int(val(k)) if val(k) is not None else None) if k == "pa" else r(val(k), 3 if k in ("mixw", "babip", "xbabip", "txw", "xbabd", "txwpk", "xslg", "xslgpk") else 1) for k in SBX_KEYS]
+            val = lambda k: (100 * mx[5] / fbs if fbs else None) if k == "pullfb" else tw if k == "txw" else twp if k == "txwpk" else xd if k == "xbabd" else xs if k == "xslg" else xsp if k == "xslgpk" else xi if k == "xiso" else xip if k == "xisopk" else (100 * gd[0] / gn if gn else None) if k == "gbp" else p.get("pa") if k == "pa" else m.get(k)
+            out.setdefault(str(p["id"]), {})[str(y)] = [cx.get("BBE")] + [(int(val(k)) if val(k) is not None else None) if k == "pa" else r(val(k), 3 if k in ("mixw", "babip", "xbabip", "txw", "xbabd", "txwpk", "xslg", "xslgpk", "xiso", "xisopk") else 1) for k in SBX_KEYS]
     path = HERE / "hist" / "career-bb.js"
     path.write_text("window.DRAFT_CAREER_BB = " + json.dumps({"keys": SBX_KEYS, "p": out, "pkeys": SBP_KEYS, "pp": pout, "lg": lgs}, separators=(",", ":")) + ";\n")
     print(f"OK {len(out)} hitters' batted-ball / discipline seasons, {len(pout)} pitchers' -> {path.name} ({path.stat().st_size / 1e6:.1f} MB)", flush=True)

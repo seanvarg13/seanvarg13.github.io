@@ -4966,6 +4966,43 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   - **Home's** Hitters → / Pitchers → links reset the position to All. The page check picks All pitchers, SS and All hitters through the pill.
   - CSS: the "Movers up top" block at the end of `styles.css`.
 
+* **Movers opens a player in the Leaderboard's popup (Sean, 23 Oct 2026, Sheehan's page off Movers with "‹ Back to movers" under his bio: "Can this
+  be the same x in the top right below the filter like on the leaderboard")**: `POP_MODES` is `leaderboard · trending · flaws`. On Movers a
+  pitcher's row and a hitter's name in the flaw popup open his page as the popup over the page:
+  - The × is in the top-right corner with the filter chips to its left ("Aug 29 – Sep 27 ×" for a 30-day window) and Filters / Raw under it,
+    as on the Leaderboard.
+  - There is no Back button.
+  - ×, the backdrop or Escape closes it to Movers with the table where it was (`xPopList` → `backRestore`).
+  - A Similar name stays in the popup.
+  - `renderNow`'s flaws branch draws the popup after the page.
+  - **The table keeps its place**: `renderFlaws` rebuilds its table box on every render, so a redraw under the popup started it at the top. While
+    the popup is up, `render()` now puts every list scroller back from the `listAt` it noted at its own top. On the Leaderboard that is a no-op.
+  - The flaw popup closes itself (and its Escape listener) before opening the page.
+  - Home's Movers card still opens his full page (home gives no Back).
+  - The page check's Movers step opens both a hitter (through the flaw popup) and a pitcher, and closes each popup with Escape.
+
+* **The xISO tab in the xSLG tab's place (Sean, 23 Oct 2026: "And also use xISO for the xSLG tab instead (if xISO is more predictive or stable or
+  better than xSLG)")**: it is. Every hitter-season 2015-26, the site's own `V()` headless, each season centred (scratch `xslg/`):
+  - **Steadier**: half to half xISO repeats at r .68 against xSLG's .58 (it settles in ~125 PA against ~197), year to year .74 against .65.
+  - **A better forecast of its own stat**: next season's ISO from xISO .67, next season's SLG from xSLG .57.
+  - What xSLG does better is forecast wOBA (.50 against .41), since it carries batting average; xwOBA already does that (.56).
+  - **The tab** (`BTABS_H` … xwOBA · **xISO** · xK% / xBB%; key `xiso`, a saved `pbtab` of `xslg` moves to it): `xisoBuildUp(p, v)`, the xSLG
+    build-up's steps (League · K% · BB% · HBP, sacrifices · Fly balls · xHR/FB · xBABIP · Extra bases · skills · Extra bases · model), each running
+    number = `slgRaw(c) × L.sslg − baRaw(c) × L.sba` (xSLG less the xBA the same pieces make, both scaled to the season's 300+ PA hitters), to the
+    park-neutral xISO (light blue), the Park factor row to xISO (gold; reversed under the park-neutral switch, as xwOBA's), Luck, and the **ISO**
+    band row (his SLG − AVG). It ends exactly on the card's xISO (`m.xiso`, `talentOf`'s `t.xiso`), in a window or split too. The League row's note
+    gives the qualifiers' own ISO (`L.iso`, AB-weighted, in `talentLeague`). Judge 2026: .164 → K% −18, BB% −4, fly balls +12, xHR/FB +111, xBABIP
+    0, extra bases +4 / +27 → .296 park-neutral, Yankee Stadium −9 → .287, luck −19 → ISO .268; last 100 PA xISO .187 against ISO .104. Goodman:
+    .246 park-neutral, Coors +22 → .268, ISO .284. Arraez .098 / .108.
+  - **ISO by season** (`isoSeasons`, in `slgSeasons`' place: Season · Team · AB | ISO · xISO · Diff, heat among that season's qualifiers — ISO from
+    `hist/career.js`'s official AVG / SLG (`isoLine`, `sbxIsoPool`), xISO from `hist/career-bb.js` (`sbxPool(y, "xiso")`) — the career row
+    AB-weighted, an In Split row under a filter from the view's `m.iso` / `m.xiso`).
+  - **Data**: `tools/build_career.py` appends **`xiso`** (park-neutral) and **`xisopk`** (with his parks) to `SBX_KEYS` (`xiso_of`, sharing
+    `_xs_parts` with `xslg_of`; `talent_league` carries `sba`); `hist/career-bb.js` regenerated (only the two columns are new). `sbxOf` hands out
+    `xiso` with his parks unless the switch is on (keeping `xison`); `sbxPool`'s park variant covers it.
+  - xSLG itself is unchanged: still the Leaderboard column, the card's Results bar and Fantasy's expected total bases. The xSLG tab
+    (`xslgBuildUp`, `slgSeasons`, `sbxSlgPool`) is gone from `app.js`; the "xSLG from skills" entry above describes its build.
+
 * **nERA prices every ball in the air alike (Sean, 23 Oct 2026: "adjust on the baseball site the nERA formula to be neutral to fb and line
   drive ratio, so for every pitcher just assume that their non gb and pu batted balls have the same ratio of line drive to fly ball, all that
   changes is volume, and look for any other things that could improve it")**: a pitcher's line drives and fly balls are priced together at the
