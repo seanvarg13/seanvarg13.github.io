@@ -5043,6 +5043,17 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   (`anchorTabs` runs on a tab tap, which clears it). The page check has a "search from a scrolled page" step on both layouts that mimics the
   restore (a blur handler scrolling back after 120 ms) and fails on the old code.
 
+* **The iPhone's keyboard leaves the page unable to reach its foot — the viewport heal (Sean, 23 Oct 2026, the same recording: "I can't fully
+  scroll down on it anymore" — Early's and Skenes's pages both stopped with the season table under the bar, the bars' foot and the tabs out of
+  reach by about a keyboard's height)**: WebKit in a home-screen web app can keep the window the wrong size once the keyboard has been up and
+  gone (a known standalone bug; the layout engine itself scrolls the page to its foot — checked in playwright's WebKit at 402 × 874 — and so does
+  Chromium, so it's the device's viewport, not the CSS). The documented remedy is to make WebKit measure the window again: `healViewport()` (in
+  `app.js` beside `footSync`) flips the body `display: none` and back in one task (no paint between) and puts the page and every scroller
+  (`HEAL_SCROLLERS`) back where they were; `healSoon()` runs it at 150 / 500 / 1000 ms after a text box blurs with nothing else focused and
+  whenever the visual viewport grows back by 40px+ (the keyboard leaving), and once 1.5 s after the start (the state outlives a reload).
+  iPhones and iPads only (`IOS`). `window.__healViewport` is the hook the page check's "viewport heal" step runs on a desktop, where it must
+  leave a scrolled page and a sideways-scrolled table exactly as they were. Not reproducible here — Sean's phone is the test.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
