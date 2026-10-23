@@ -5486,3 +5486,19 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root:root body[data-mode="flaws"] .flawpage > .fxmore { align-self: flex-start; margin: 8px 0 0; font-size: 12.5px; }
 :root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxbar > .fxside { flex: 1 1 100%; display: flex; }
 :root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxbar > .fxside > .segbtn { flex: 1 1 0; justify-content: center; }
+
+/* The tabs filled, the area under them white (Sean, 23 Oct 2026, Luis Medina's page on his phone: "make it so that bottom area is not that color
+   like that and is white and the buttons are actually that color with white text and then still the same size and shadow and whatnot"): the
+   .pbelow2 section keeps its place, padding and the stripe rule over it but shows the page's own surface (white on Titans and the Jets schemes);
+   every tab is the band's colour with white type and the soft lift the Filters / Raw segment carries (the 14 Oct one), in the same 40px / 36px box
+   and type. The picked tab is the scheme's deep ink with white type (the 7 Oct blue tabs had a navy picked one); in dark mode, where that ink is
+   the page's own, and on Warm, whose band is its ink, the picked one is white with the ink's type instead. A phone's canvas past the foot turns
+   white in the page's lower half (pgfoot, footSync), so a bounce at the foot matches the white and one at the top still meets the header */
+:root:not(#t1):not(#t2):not(#t3):not(#t4):not(#t5) #xboard .pbelow2 { background: transparent !important; }
+:root:not(#t1):not(#t2):not(#t3):not(#t4):not(#t5) :is(#xboard, #modal) .btabs .btab:not(#pop *) { background: var(--band2, var(--accent-2)) !important; color: #ffffff !important; border-color: transparent !important; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14), 0 1px 2px rgba(0, 0, 0, 0.10) !important; }
+:root:not(#t1):not(#t2):not(#t3):not(#t4):not(#t5) :is(#xboard, #modal) .btabs :is(.btab.on, .btab[aria-selected="true"], .btab[aria-pressed="true"]):not(#pop *) { background: var(--ink-day, var(--ink)) !important; color: #ffffff !important; }
+@media (hover: hover) { :root:not(#t1):not(#t2):not(#t3):not(#t4):not(#t5) :is(#xboard, #modal) .btabs .btab:not(.on):not([aria-selected="true"]):not([aria-pressed="true"]):not(#pop *):hover { background: color-mix(in srgb, var(--band2, var(--accent-2)) 86%, #000000) !important; } }
+@media (prefers-color-scheme: dark) { :root:not(#t1):not(#t2):not(#t3):not(#t4):not(#t5):not([data-theme="light"]) :is(#xboard, #modal) .btabs :is(.btab.on, .btab[aria-selected="true"], .btab[aria-pressed="true"]):not(#pop *) { background: #ffffff !important; color: var(--ink-day, #0c2340) !important; } }
+:root:not(#t1):not(#t2):not(#t3):not(#t4):not(#t5)[data-theme="dark"] :is(#xboard, #modal) .btabs :is(.btab.on, .btab[aria-selected="true"], .btab[aria-pressed="true"]):not(#pop *) { background: #ffffff !important; color: var(--ink-day, #0c2340) !important; }
+:root:not(#t1):not(#t2):not(#t3):not(#t4):not(#t5)[data-scheme="warm"] :is(#xboard, #modal) .btabs :is(.btab.on, .btab[aria-selected="true"], .btab[aria-pressed="true"]):not(#pop *) { background: #ffffff !important; color: var(--ink-day, #141414) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"].pgfoot:has(body[data-mode="player"]) { background: var(--surface, #ffffff) !important; }
