@@ -4911,6 +4911,20 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     from the scroll listener and after every render. A bounce at the foot is white and one at the top still meets the header.
   - The card in `#modal` (Mock Draft room, spring cards) takes the same tab colours.
 
+* **The Batted Ball Quality tab's HR/FB follows the card's filters (Sean, 23 Oct 2026, Iván Herrera's popup on last 100 PA: "the batted
+  ball stuff appears to be but I don't think the xbabip or xhr/fb that are showing in this tab are filtered by the dates I think those are full
+  season")**: the BABIP rows were already the view's (`V(p).m.xbabip` / `babip`; Herrera last 100 PA .300 / .241 against the season's .287 /
+  .282). The HR/FB rows were the season's line from the career files, "the full season whatever the filters" since 10 Oct.
+  - **Under a date window or split** (`winIdx() || splitActive()`) and on a minors card, `renderBbqTab` builds HR/FB from the card's own view,
+    as the xHR/FB tab's window branch does:
+    - `hrfbView(p)`: his home runs and fly balls + popups from the day rows.
+    - xHR/FB = `xHrfb(x, L.lg)` against `hrfbLevel("H")`, the same numbers over the view's qualified hitters, ranked among `L.arr.x`.
+    - HR/FB at a neutral park: less the view's `m.pkhr`; none on a minors card. Ranked among `L.arr.hrfb`.
+    - The row's note says a window can't tell which homers were liners, so they aren't counted in.
+  - **The full season** keeps the career-file line.
+  - Herrera: last 100 PA 5 HR on 17 → HR/FB 28.6 (96th) / xHR/FB 25.3 (94th); vs LHP 13.9 / 13.8; the season 14.5 / 14.7.
+  - A minors card's tab now has the HR/FB section too (its view's numbers; no xHR/FB below Triple-A, nothing tracked).
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

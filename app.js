@@ -7566,9 +7566,22 @@
                     fromFn("gbpull", "Pull%", share(gbA, 0), false, "the share of his ground balls pulled — the likeliest grounder to be an out (a hit .198 in 2025 against .306 centre / .354 oppo); lower is better")])].filter((s) => s.rows.length);
     const right = [sec("BABIP", [fromPool("xbabip", "xBABIP", fmtX), fromPool("babip", "BABIP", fmtX)])];
     // HR/FB: the season's line from the career files (home runs over Statcast's fly balls, his line-drive homers counted in), xHR/FB on his
-    // fly-ball contact; MLB regular seasons only, the full season whatever the card's filters, ranked among that season's qualified hitters
+    // fly-ball contact, ranked among that season's qualified hitters. Under a date window or split (Sean, 23 Oct 2026, Herrera's last 100 PA:
+    // "I don't think the xbabip or xhr/fb that are showing in this tab are filtered by the dates I think those are full season" — the BABIP rows
+    // were the view's, these were the season's) and on a minors card, the card's own view instead, as the xHR/FB tab builds it: his home runs and
+    // fly balls + popups from the day rows (hrfbView) against the same numbers over the view's qualified hitters (hrfbLevel)
+    const minors = !!(DS.level && DS.level !== "MLB"), filt = !!(winIdx() || splitActive());
+    if (minors || filt) {
+      const x = hrfbView(p), L = hrfbLevel("H");
+      if (x && L.lg.hrfb != null) {
+        const at = (arr, v) => (v != null && arr.length >= 20 ? insertPct(arr, v) : null), pkH = minors ? null : (pv.m.pkhr ?? null);
+        const hf = 100 * x.hr / x.fb - (pkH || 0), xv = xHrfb(x, L.lg);
+        right.push(sec("HR/FB", [R("xhrfb", "xHR/FB", xv, at(L.arr.x, xv), L.lg.hrfb, one), R("hrfb", "HR/FB", hf, at(L.arr.hrfb, hf), L.lg.hrfb, one,
+          `his home runs over his fly balls and popups in this view${pkH == null ? "" : " at a neutral park"} (${x.hr} on ${x.fb}; a window can't tell which homers were liners, so they aren't counted in), ranked among the ${minors ? "level's" : "view's"} qualified hitters`)]));
+      }
+    }
     ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady);
-    if (DS.level === "MLB" && !DS.kind && careerReady() && sbxReady()) {
+    if (!minors && !filt && DS.level === "MLB" && !DS.kind && careerReady() && sbxReady()) {
       const y = +DS.season, rec = window.DRAFT_CAREER[String(p.id)];
       const l = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).find((q) => q.season === y && q.c.ext && +q.c.ext[2] > 0);
       if (l) {

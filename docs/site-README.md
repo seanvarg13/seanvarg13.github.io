@@ -1085,3 +1085,10 @@ Below the percentile bars and Similar, the area with the tabs is white again, as
 colour instead: each is the band's colour with white text and the same soft shadow as Filters and Raw, the same size as before. The tab
 that's open is the scheme's dark ink (navy on Titans, dark green on the Jets schemes), or white in dark mode. On a phone, the colour
 iOS shows when you bounce past the bottom of the page is white too.
+
+### The Batted Ball Quality tab follows the filters (23 Oct 2026)
+
+With a date range, last-N-PA window or split on the card, the Batted Ball Quality tab's HR/FB rows (xHR/FB and HR/FB) are now for that view,
+like the rest of the tab. They're built the way the xHR/FB tab builds them under a filter: his home runs over his fly balls and popups in
+the view, against the qualified hitters in the same view. The full season still reads his season line. A minors card's tab shows the HR/FB
+rows for its level too.
