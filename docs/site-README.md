@@ -1115,3 +1115,11 @@ the Leaderboard's. The explanation is behind **About** (or **More about these nu
 On Movers, a pitcher's name, or a hitter's name in his bars window, opens the player as a popup over the page, the same way the Leaderboard
 does. There's a **×** in the top-right corner, with any date window as a chip beside it and Filters / Raw under it, in place of "‹ Back to
 movers". Closing it (the ×, a tap outside it on a desktop, or Escape) puts Movers back exactly where you were.
+
+### The xISO tab (23 Oct 2026)
+
+The hitter card's **xSLG** tab is an **xISO** tab now. xISO is the steadier number and the better forecast of its own stat: half a season's
+xISO calls the other half's at r .68 (xSLG .58), and next season's ISO at .67 (xSLG calls next season's SLG at .57). The tab builds from the
+league's pieces to his xISO one step at a time (strikeouts and walks, fly balls and xHR/FB, the hits on the ground and on line drives, the extra
+bases), then the park, the luck and his ISO; under it, his ISO and xISO by season. It follows the card's dates and splits. xSLG is still on the
+Leaderboard and the card's Results bars.
