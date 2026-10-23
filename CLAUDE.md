@@ -4851,8 +4851,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   - **The table** (`flex: 0 1 auto`) hugs its rows and scrolls inside the card when they don't fit (phone 553-621px, desktop 682).
   - **The note**: the explanation folds under the table behind **More about these numbers** (`.fxnote`, `fxNoteOpen` per visit, Fantasy's
     pattern). Open, it keeps its full height (`flex: none`, max 9em) and the table gives up the room.
-  - **Day rows**: only the side shown asks for its file (`ensureDays(side)`). Last season is asked for by the hitters' side (the witness) and by
-    either side in This season vs last.
+  - **Day rows**: only the side shown asks for its file (`ensureDays(side)`). Last season is asked for by both sides (the witness, or the base in
+    This season vs last).
   - **Phone details**: the hitters' Flaw column drops the % signs, as home's card does. The pitchers' over-row names the window ("Last 30 days
     vs before", "2026 vs 2025") instead of an empty band.
   - **Home**: the Movers card's header has **Hitters →** / **Pitchers →** (`goMv`: sets the side and the card's 30 days, then `#movers`). Its
@@ -4864,6 +4864,35 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Settings — `grid-template-columns: repeat(3, minmax(0, 1fr))` in the 12 Oct menu block of `styles.css` (it was `1fr 1fr`, three rows of two).
   Each button is 118px wide on a 393px phone (112 at 375), no word clipped; Fantasy ▾'s dropdown still hangs inside the screen. The menu is
   50px shorter.
+
+* **Pitchers on Movers by nERA, not Pitching+ (Sean, 23 Oct 2026: "make the movers for pitchers focus on nERA and not pitching+")**:
+  `pitchMovers(winId)` ranks his nERA over the window against his season before it. The Pitching+ / fastball-velocity ranking of 20 Oct is
+  history.
+  - **Rows**: `{ nWas, nNow, dN (now − before, negative = better), kbbWas / kbbNow, fbWas / fbNow, ip, bf (ctx.PAw), cred, cgain, prior,
+    witness }`, ordered by `dN` (lowest first). Only drops are kept, and `all` counts every qualifier.
+  - **Minimums**: 10 IP in a 30-day window (`Math.round(10 · n / 30)`, held to 5-25) and `PM_BASE` = 20 IP before it. This season vs last
+    needs 20 IP in each full season.
+  - **Credibility**: `bf / (bf + PM_K)`, with `PM_K` = 220 batters faced.
+    - Measured on odd / even outings within a season, by `sumOutings` + `dayNERA` (the Game Logs' arithmetic, which matches `p.m.nera` within
+      .005): 2024-26 pooled, 1,067 pitcher-seasons with 200+ BF, split-half r .48 at 204 BF a half (true-talent sd 0.57 runs).
+    - By season k was 279 / 250 / 156 (2024 / 2025 / 2026). In 2026 nERA and K-BB% settle alike (k 156 / 154).
+    - Last season's nERA (100+ BF) is the witness, with the hitters' rule: past the middle of the move raises it halfway to certain, beyond the
+      before value × 0.7. Both sides ask for last season's file (the list redraws with the witness once it lands).
+  - **The page** (`renderFlaws`' pitchers half):
+    - The Order pill is on both sides now (shared `fxSet.sort`): Biggest nERA drop / Most credible.
+    - Columns: Rk · Pitcher · Tm · Role | nERA Before · window · Δ | K-BB% Before · window | FB velo Before · window | IP · Credible. A phone has
+      Rk · Pitcher · K-BB% (was → now) · Cred · nERA · Δ under a "Last 30 days vs before" band.
+    - The window's nERA is coloured among the season's 100+ IP pitchers (home's `refP` rule). Δ prints "−2.41", in the hitters' Δ colour.
+    - Count: "133 of 260 pitchers with nERA down".
+    - A name opens his page on that window's dates at Game Logs: `openPlayer(p, { win: M.win, tab: "games" })`, full season in This season vs
+      last.
+  - **Home**: the card's second table is "Pitchers · nERA down" (Player · K-BB% · Before · Now · Δ), and a name opens Game Logs.
+    - `homeLive`'s `pmovers` carry `kbbWas / kbbNow / nWas / nNow / dN`, and `HOME_V` is 2, so a file of the old shape is left for the day rows.
+    - `hist/home.js` was rebuilt here with `tools/build_home.cjs`: only `pmovers` and `v` changed. `build_home.cjs` runs only after a regular-season
+      MLB build, so in October nothing else would have rebuilt it.
+  - 27 Sep 2026, last 30 days: Cade Gibson 5.26 → 1.00 (K-BB% 7 → 22), Vesia 3.89 → 0.00, Warren, Sheehan 3.58 → 0.88. Most credible leads
+    with Wrobleski (61%), Speier, Taylor Rogers and Framber Valdez (67%), whose 2025 nERAs back their moves; Gibson (no 2025 line) is fifth at 17%.
+    2026 vs 2025: Mason Montgomery, Latz, Misiorowski, Bryse Wilson.
 
 ## 10. The football site moved out
 

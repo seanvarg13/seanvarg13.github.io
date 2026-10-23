@@ -5596,11 +5596,14 @@
     const out = { rows, cand: cand.size, win30, label: FW.label, minPA, prevMode, baseDS };
     flawCache.set(key, out); return out;
   }
-  // pitchers on Movers (Sean, 20 Oct 2026, item 9 of the recommendations: "velocity and Pitching+ risers over the last 30 days"): his fastball velocity
-  // and Pitching+ over the window against his season before it — the stuff side moves first and holds (spring to season: FB velo r .87, Stuff+ .64)
-  // — ranked by the Pitching+ gain. A PA window means nothing to a pitcher, so those read 30 days; This season vs last compares his full seasons. He
-  // needs 120 pitches in a 30-day window (scaled with its length, 60-250) and 300 before it (or last season)
-  const PM_BASE = 300, pmCache = new Map();
+  // pitchers on Movers by nERA (Sean, 23 Oct 2026: "make the movers for pitchers focus on nERA and not pitching+"; Pitching+ and fastball velocity
+  // before, 20 Oct): his nERA over the window against his season before it, ranked by the drop, with K-BB% and fastball velocity beside it to say
+  // where a move came from. nERA settles at about 220 batters faced (PM_K: odd / even outings, 2024-26 pooled, 1,067 pitcher-seasons with 200+ BF,
+  // split-half r .48 at 204 BF a half — K-BB% the same in 2026), so a 30-day move is a fifth to a third real: the credibility is that reliability at
+  // his window's batters faced, with last season's nERA as the witness the hitters' side uses. A PA window means nothing to a pitcher, so those read
+  // 30 days; This season vs last compares his full seasons. He needs 10 IP in a 30-day window (scaled with its length, 5-25) and 20 before it (or
+  // last season)
+  const PM_K = 220, PM_BASE = 20, pmCache = new Map();
   function pitchMovers(winId = "30") {
     const prevMode = winId === "prev", prevDS = fxPrevDS();
     const key = DS.key + ":" + daysReady("P") + ":" + winId + ":" + !!prevDS; if (pmCache.has(key)) return pmCache.get(key);
@@ -5608,20 +5611,27 @@
     if (!prevMode && !daysReady("P")) return { rows: [], wait: true };   // the pitchers' day rows (days-p.js)
     const inWin = (w, fn) => withWindow(w, () => withSplit(NONE, fn));
     const days = DATA.meta.days || [], last = days[days.length - 1], n = String(winId).startsWith("pa") ? 30 : (+winId || 30);
-    const from = last ? addDays(last, -(n - 1)) : "", minN = prevMode ? PM_BASE : Math.min(250, Math.max(60, Math.round(120 * n / 30)));
-    const take = (v) => (v && v.m ? { fb: v.m.fbv, pp: v.m.pitch, n: (v.ctx && v.ctx.Pitches) || 0 } : null);
-    const was = new Map(), rows = [];
-    if (prevMode) withDataset(prevDS, () => inWin(NOWIN, () => { for (const q of DS.players) if (q.type === "P") { const t = take(V(q)); if (t && t.n >= PM_BASE) was.set(q.id, t); } }));
-    else if (from && from > days[0]) inWin({ from: days[0], to: addDays(from, -1), last: "" }, () => { for (const p of DATA.players) if (p.type === "P") { const t = take(V(p)); if (t && t.n >= PM_BASE) was.set(p.id, t); } });
-    inWin(prevMode ? NOWIN : { from, to: "", last: "" }, () => {
+    const from = last ? addDays(last, -(n - 1)) : "", minN = prevMode ? PM_BASE : Math.min(25, Math.max(5, Math.round(10 * n / 30)));
+    const win = prevMode ? NOWIN : { from: from && from > days[0] ? from : "", to: "", last: "" };
+    const take = (v) => (v && v.m && v.m.nera != null ? { nera: v.m.nera, kbb: v.m.kbb, fb: v.m.fbv, ip: v.sample || 0, bf: (v.ctx && v.ctx.PAw) || 0 } : null);
+    const was = new Map(), prior = new Map(), rows = [];
+    if (prevMode) withDataset(prevDS, () => inWin(NOWIN, () => { for (const q of DS.players) if (q.type === "P") { const t = take(V(q)); if (t && t.ip >= PM_BASE) was.set(q.id, t); } }));
+    else if (win.from) {
+      inWin({ from: days[0], to: addDays(win.from, -1), last: "" }, () => { for (const p of DATA.players) if (p.type === "P") { const t = take(V(p)); if (t && t.ip >= PM_BASE) was.set(p.id, t); } });
+      if (prevDS) withDataset(prevDS, () => inWin(NOWIN, () => { for (const q of DS.players) if (q.type === "P" && was.has(q.id)) { const t = take(V(q)); if (t && t.bf >= 100) prior.set(q.id, t.nera); } }));
+    }
+    inWin(win, () => {
       for (const p of DATA.players) {
         const w0 = p.type === "P" && was.get(p.id); if (!w0) continue;
-        const t = take(V(p)); if (!t || t.n < minN || t.pp == null || w0.pp == null) continue;
-        rows.push({ p, fbWas: w0.fb, fbNow: t.fb, dFb: w0.fb != null && t.fb != null ? t.fb - w0.fb : null, pWas: w0.pp, pNow: t.pp, dP: t.pp - w0.pp, n: t.n });
+        const t = take(V(p)); if (!t || t.ip < minN) continue;
+        const d = t.nera - w0.nera, pv = prior.get(p.id); let cred = t.bf / (t.bf + PM_K), witness = null;
+        if (pv != null && d) { const mid = (w0.nera + t.nera) / 2, down = d < 0; const past = down ? pv <= mid : pv >= mid, against = down ? pv > w0.nera : pv < w0.nera;
+          if (past) { cred = 1 - (1 - cred) * 0.5; witness = "for"; } else if (against) { cred *= 0.7; witness = "against"; } else witness = "between"; }
+        rows.push({ p, nWas: w0.nera, nNow: t.nera, dN: d, kbbWas: w0.kbb, kbbNow: t.kbb, fbWas: w0.fb, fbNow: t.fb, ip: t.ip, bf: t.bf, cred, cgain: -d * cred, prior: pv, witness });
       }
     });
-    rows.sort((a, b) => b.dP - a.dP);
-    const out = { rows: rows.filter((r) => r.dP > 0), label: prevMode ? `${DATA.meta.season} vs ${DATA.meta.season - 1}` : `last ${n} days`, minN, all: rows.length };
+    rows.sort((a, b) => a.dN - b.dN);
+    const out = { rows: rows.filter((r) => r.dN < 0), label: prevMode ? `${DATA.meta.season} vs ${DATA.meta.season - 1}` : `last ${n} days`, minN, all: rows.length, win };
     pmCache.set(key, out); return out;
   }
   const flawNote = (R) => `Each piece of his xwOBA build-up against the league in wOBA points: elite = his two best are worth +${FX.elite} together, the flaw = his two worst at ${FX.flaw} or under. ${R ? R.label[0].toUpperCase() + R.label.slice(1) : "Last 30 days"} = that piece over that window (${R ? R.minPA : FX.pa}+ PA); If it held = his season xwOBA with only that piece at the window's value, ranked by the gain (${FX.gain}+ points).`;
@@ -5710,7 +5720,8 @@
     // a pitcher has no PA window (one reads 30 days), so his side lists the day windows and This season vs last
     const wcur = side === "P" && String(fxSet.win).startsWith("pa") ? "30" : String(fxSet.win), wlab = (FX_WINS.find((w) => w[0] === wcur) || FX_WINS[1])[1];
     bar.append(seg, pillSelect(wlab, side === "P" ? FX_WINS.filter(([k]) => !k.startsWith("pa")) : FX_WINS, wcur, (v) => { fxSet.win = v; save(); }, "Window"));
-    if (side === "H") bar.append(pillSelect(fxSet.sort === "cred" ? "Most credible" : "Biggest Δ xwOBA", [["gain", "Biggest Δ xwOBA"], ["cred", "Most credible"]], fxSet.sort, (v) => { fxSet.sort = v; save(); }, "Order"));
+    { const big = side === "H" ? "Biggest Δ xwOBA" : "Biggest nERA drop";   // the order is shared: by the move, or by the move × its credibility
+      bar.append(pillSelect(fxSet.sort === "cred" ? "Most credible" : big, [["gain", big], ["cred", "Most credible"]], fxSet.sort, (v) => { fxSet.sort = v; save(); }, "Order")); }
     const count = el("span", "pbcount"); bar.append(count);
     const title = (h, sub) => { const t = el("div", "fxtitle"); t.append(el("h2", null, h), el("span", null, sub)); page.append(t); };
     const say = (txt) => page.append(el("p", "note", txt));
@@ -5719,7 +5730,7 @@
       b.addEventListener("click", () => { fxNoteOpen = !fxNoteOpen; n.classList.toggle("open", fxNoteOpen); b.textContent = fxNoteOpen ? "Less" : "More about these numbers"; });
       page.append(n, b);
     };
-    if (side === "H" || prevMode) ensureHist(fxPrevKey());   // last season: the base in the vs-last mode, the hitters' credibility witness otherwise
+    ensureHist(fxPrevKey());   // last season: the base in the vs-last mode, the credibility's witness otherwise (both sides)
     if (!prevMode) ensureDays(side);
     const W = prevMode ? String(Y) : wlab, f1 = (x) => (x == null ? "–" : x.toFixed(1));
     // the Player column freezes right after Rk; the board's pinned header reserves the over row's height, so a phone has one too
@@ -5753,38 +5764,45 @@
       more(flawNote(R) + (prevMode ? ` Here the base is ${Y0}'s full season (its own league) and the move is ${Y}'s full season.` : "") + ` Credible = the piece's reliability at the window's PA, with last season as a witness. Biggest Δ xwOBA orders by Δ; Most credible by Δ × that. Tap a name for his bars, the full season beside the window.`);
       return;
     }
-    // the pitchers (20 Oct 2026): Pitching+ and fastball velocity over the window against his season before it, by the Pitching+ gain
-    title("Pitching Movers", PH ? "by the Pitching+ gain" : "Pitching+ up over the window · by the gain");
+    // the pitchers (23 Oct 2026): his nERA over the window against his season before it, by the drop (or the drop × its credibility); K-BB% and
+    // fastball velocity say where it came from. A name opens his page on that window's Game Logs
+    const pby = fxSet.sort === "cred" ? "by the nERA drop × credibility" : "by the nERA drop";
+    title("Pitching Movers", PH ? pby : `nERA over the window against his season before it · ${pby}`);
     const M = pitchMovers(wcur), PB = prevMode ? String(Y0) : "Before";
     if (M.loading) { say(`Loading the ${Y0} season…`); return; }
     if (M.wait) { say(daysBad.P ? "Couldn't load the pitchers' game-by-game data." : "Loading the pitchers' game-by-game data…"); return; }
-    count.textContent = `${M.rows.length} of ${M.all} pitchers up`;
-    const sg = (x, d = 1) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(d));
-    const pheads = PH ? [["Rk", "f1"], ["Pitcher", "l f3"], ["FB velo"], ["Pitching+"], ["Δ"]]
-      : [["Rk", "f1"], ["Pitcher", "l f3"], ["Tm"], ["Role"], [PB], [W], ["Δ"], [PB], [W], ["Δ"], ["Pitches", "", prevMode ? "this season's pitches" : `pitches in the ${M.label}`]];
-    const pgroups = PH ? [["", 2], [prevMode ? `${Y} vs ${Y0}` : `${W} vs before`, 3]] : [["", 4], ["FB velo", 3], ["Pitching+", 3], ["", 1]];
+    count.textContent = `${M.rows.length} of ${M.all} pitchers with nERA down`;
+    const prow = M.rows.slice().sort((a, b) => fxSet.sort === "cred" ? b.cgain - a.cgain : a.dN - b.dN);
+    const refP = [];   // a window's nERA is coloured by its place among the season's 100+ IP pitchers, as home's lists are
+    withWindow(NOWIN, () => withSplit(NONE, () => { for (const p of DATA.players) if (p.type === "P" && (p.ip || 0) >= 100) { const v = V(p).m.nera; if (v != null) refP.push(-v); } })); refP.sort((a, b) => a - b);
+    const f2 = (x) => (x == null ? "–" : x.toFixed(2)), pc1 = (x) => (x == null ? "–" : x.toFixed(1) + "%"), n1 = (x) => (x == null ? "–" : x.toFixed(1));
+    const pcredTip = `how much of the move is likely real: nERA settles at about ${PM_K} batters faced, so his batters faced in the window over that plus ${PM_K}, then last season's nERA as a witness (already past the middle of the move raises it, on the far side lowers it)`;
+    const pheads = PH ? [["Rk", "f1"], ["Pitcher", "l f3"], ["K-BB%"], ["Cred", "", pcredTip], ["nERA"], ["Δ"]]
+      : [["Rk", "f1"], ["Pitcher", "l f3"], ["Tm"], ["Role"], [PB], [W], ["Δ", "", `his nERA over the ${M.label} minus before it`], [PB], [W], [PB], [W], ["IP", "", prevMode ? "this season's innings" : `innings in the ${M.label}`], ["Credible", "", pcredTip]];
+    const pgroups = PH ? [["", 2], [prevMode ? `${Y} vs ${Y0}` : `${W} vs before`, 4]] : [["", 4], ["nERA", 3], ["K-BB%", 2], ["FB velo", 2], ["", 2]];
     const P2 = brTable(pgroups, pheads, "pbt flawt"); pin(P2.t);
-    const up = (txt, on) => { const td = el("td", "c up", txt); if (on) { td.style.color = "var(--stripe-line, #c8102e)"; td.style.fontWeight = "700"; } return td; };
-    const ppTd = (v) => { const td = el("td", "c", v == null ? "–" : String(Math.round(v))); const st = v == null ? null : plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } return td; };
-    M.rows.forEach((r, i) => {
+    prow.forEach((r, i) => {
       const tr = el("tr"), who = el("td", "l nm f3"), b = el("button", "linkbtn pbname", r.p.name); b.type = "button";
-      b.addEventListener("click", () => { state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; savePrefs(); openPlayer(r.p, { tab: "pitching" }); }); who.append(b);
+      b.addEventListener("click", () => openPlayer(r.p, { win: prevMode ? null : M.win, tab: "games" })); who.append(b);
+      const now = heatTd(el("td", "c", f2(r.nNow)), refP.length ? insertPct(refP, -r.nNow) : null);
+      const dl = el("td", "c up", "−" + Math.abs(r.dN).toFixed(2)); dl.style.color = "var(--stripe-line, #c8102e)"; dl.style.fontWeight = "700";
+      const cred = heatTd(el("td", "c", Math.round(100 * r.cred) + "%"), Math.round(100 * r.cred)); cred.title = r.witness ? `${Y0}: ${f2(r.prior)} nERA — ${r.witness === "for" ? "backs the move" : r.witness === "against" ? "the other way" : "in between"}` : prevMode ? "this season's batters faced against nERA's reliability" : `no ${Y0} line`;
       tr.append(el("td", "rk f1", String(i + 1)), who);
-      if (PH) tr.append(el("td", "c", `${f1(r.fbWas)} → ${f1(r.fbNow)}`), ppTd(r.pNow), up("+" + Math.round(r.dP), true));
-      else tr.append(el("td", "c", r.p.team || ""), el("td", "c", r.p.primary || ""), el("td", "c", f1(r.fbWas)), el("td", "c", f1(r.fbNow)), up(sg(r.dFb), r.dFb != null && r.dFb >= 0.5),
-                     el("td", "c", String(Math.round(r.pWas))), ppTd(r.pNow), up("+" + Math.round(r.dP), true), el("td", "c", String(r.n)));
+      if (PH) tr.append(el("td", "c", `${n1(r.kbbWas)} → ${n1(r.kbbNow)}`), cred, now, dl);
+      else tr.append(el("td", "c", r.p.team || ""), el("td", "c", r.p.primary || ""), el("td", "c", f2(r.nWas)), now, dl, el("td", "c", pc1(r.kbbWas)), el("td", "c", pc1(r.kbbNow)),
+                     el("td", "c", n1(r.fbWas)), el("td", "c", n1(r.fbNow)), el("td", "c", fmtIP(r.ip)), cred);
       P2.tb.append(P2.fin(tr));
     });
-    if (!M.rows.length) say("No pitcher's Pitching+ is up over the window yet.");
+    if (!prow.length) say("No pitcher's nERA is down over the window yet.");
     else { P2.wrap.classList.add("pbscroll"); page.append(P2.wrap); }
-    more(`${prevMode ? `His full ${Y} season against his ${Y0} (${PM_BASE}+ pitches each)` : `His ${M.label} (${M.minN}+ pitches) against his season before them (${PM_BASE}+)`}: Pitching+ grades every pitch on its shape, release and spot against its type (100 = average); FB velo is his primary fastball, and a red Δ is half a mph or more. Ordered by the Pitching+ gain. A last-N-PA window picked on the hitters' side reads 30 days here. Tap a name for his Pitching+ tab.`);
+    more(`${prevMode ? `His full ${Y} season against his ${Y0} (${PM_BASE}+ IP each)` : `His ${M.label} (${M.minN}+ IP) against his season before them (${PM_BASE}+ IP)`}: nERA is his ERA with the luck taken out — every ball in play at the league's value for its type, his strikeouts, walks and HBP as they were — so a drop is his strikeouts, walks or batted-ball mix getting better, not his defence or the bounces. Δ is his nERA over the window minus before, red as it falls. K-BB% and FB velo say where the move came from. Credible = how much of it is likely real: nERA settles at about ${PM_K} batters faced (odd and even outings, 2024-26), so his batters faced in the window over that plus ${PM_K}, raised when last season's nERA already sat past the middle of the move, lowered when it sat on the far side. Biggest nERA drop orders by Δ; Most credible by Δ × that. A last-N-PA window picked on the hitters' side reads 30 days here. Tap a name for his page on that window, at his Game Logs.`);
   }
   // home's day-file lists — the last game day, Trending, Movers — as data (Sean, 20 Oct 2026, item 1 of the recommendations: home without the day
   // file). The daily build runs homeLive() headless once data.js and days.js are built (tools/build_home.cjs, window.__homeData) and writes
   // hist/home.js, so a fresh home reads ~10 KB instead of downloading and parsing the 31 MB day file (12 s on a phone). The page computes the lists
   // itself whenever the day rows are in anyway (a window or split elsewhere loaded them), and when the file can't be used: older than data.js, or
   // the park-neutral switch or Regress small samples on (the file holds the defaults)
-  const HOME_V = 1;
+  const HOME_V = 2;   // 2: the pitchers' movers by nERA (23 Oct 2026); a file of an older shape is left for the day rows
   let homeMemo = null;
   function homeLive() {
     const key = DATA.meta.built + ":" + XWN + ":" + !!state.tbl.shrink + ":" + DS.key; if (homeMemo && homeMemo.key === key) return homeMemo.val;
@@ -5811,10 +5829,10 @@
       inWin({ from: "", to: "", last: "100" }, () => { t.hit = DATA.players.filter((p) => p.type === "H").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 75 && v.m.xwd != null).sort((a, b) => b[1].m.xwd - a[1].m.xwd).slice(0, 4).map(([p, v]) => ({ id: p.id, n: v.sample, xwd: v.m.xwd })); });
       inWin({ from: "", to: "", last: "50" }, () => { t.pit = DATA.players.filter((p) => p.type === "P").map((p) => [p, V(p)]).filter(([, v]) => v.sample >= 37.5 && v.m.nera != null).sort((a, b) => a[1].m.nera - b[1].m.nera).slice(0, 4).map(([p, v]) => ({ id: p.id, n: v.sample, nera: v.m.nera })); });
       out.trend = t; }
-    // movers: the hitters whose flaw moved over the last 30 days (flawRows), the pitchers whose Pitching+ did (pitchMovers); the move without its % signs
+    // movers: the hitters whose flaw moved over the last 30 days (flawRows), the pitchers whose nERA fell (pitchMovers); the move without its % signs
     const np = (z) => String(z).replace(/%$/, "");
     out.movers = flawRows().rows.slice(0, 4).map((r) => ({ id: r.p.id, fl: `${r.flaw.lab} ${np(r.flaw.f(r.was))} → ${np(r.flaw.f(r.now))}`, xw: r.xw, held: r.held, gain: r.gain }));
-    out.pmovers = pitchMovers("30").rows.slice(0, 4).map((r) => ({ id: r.p.id, fbWas: r.fbWas, fbNow: r.fbNow, pWas: r.pWas, pNow: r.pNow, dP: r.dP }));
+    out.pmovers = pitchMovers("30").rows.slice(0, 4).map((r) => ({ id: r.p.id, kbbWas: r.kbbWas, kbbNow: r.kbbNow, nWas: r.nWas, nNow: r.nNow, dN: r.dN }));   // by nERA since 23 Oct 2026
     homeMemo = { key, val: out }; return out;
   }
   function homeLists() {
@@ -5967,18 +5985,19 @@
     // each side's list opens the page on that side and the card's 30 days (23 Oct 2026: the page shows one side at a time)
     { const goMv = (sd) => (e) => { e.preventDefault(); fxSet.side = sd; fxSet.win = "30"; try { localStorage.setItem("draft2027.flaws", JSON.stringify(fxSet)); } catch {} location.hash = "#movers"; };
       const b = section(grid, "Movers", "last 30 days", "Hitters →", goMv("H"));
-      { const a = el("a", "hmore", "Pitchers →"); a.href = "#movers"; a.title = "Every pitcher whose Pitching+ is up over the last 30 days"; a.addEventListener("click", goMv("P")); b.parentNode.querySelector(".hsech").append(a); }
+      { const a = el("a", "hmore", "Pitchers →"); a.href = "#movers"; a.title = "Every pitcher whose nERA fell over the last 30 days"; a.addEventListener("click", goMv("P")); b.parentNode.querySelector(".hsech").append(a); }
       if (!HL) loading(b);
       else {
-        // four hitters whose flaw moved and four pitchers whose Pitching+ did (20 Oct 2026); the move without its % signs (the piece's name says it's
-        // a rate), so "xHR/FB 11.3 → 17.2" fits the card's column on a phone and in the grid
+        // four hitters whose flaw moved and four pitchers whose nERA fell (20 Oct 2026; by nERA, not Pitching+, since 23 Oct); the move without its %
+        // signs (the piece's name says it's a rate), so "xHR/FB 11.3 → 17.2" fits the card's column on a phone and in the grid
         const show = HL.movers.map((r) => who("H", r)).filter((r) => r.p).slice(0, NH), pshow = (HL.pmovers || []).map((r) => who("P", r)).filter((r) => r.p).slice(0, NP);
         const xw = (x) => ({ v: fw(x), pc: pcOf(refH, x) }), dl = (r) => "+" + Math.round(wrcOn() ? wrcPts(r.gain / 1000) : r.gain), v1 = (x) => (x == null ? "–" : x.toFixed(1));
         if (!show.length) b.append(el("p", "hnote", "Nobody with an elite base and a flaw that's moved in the window yet."));
         else table(b, { label: "Hitters · elite but for one flaw", cols: [["Player", null, "nm"], ["Flaw", 118, "c"], [wsLab("xwOBA"), 50], ["If held", 48, "heat"], ["Δ", 32, "up"]], ends: [1, 2],
           rows: show.map((r) => [nm(r.p, "talent"), r.fl, fw(r.xw), xw(r.held), dl(r)]) });
-        if (pshow.length) table(b, { label: "Pitchers · Pitching+ up", cols: [["Player", null, "nm"], ["FB velo", 118, "c"], ["Before", 50], ["Now", 48, "heat"], ["Δ", 32, "up"]], ends: [1, 2],
-          rows: pshow.map((r) => [nm(r.p, "pitching"), `${v1(r.fbWas)} → ${v1(r.fbNow)}`, Math.round(r.pWas), { v: Math.round(r.pNow), pc: Math.max(1, Math.min(99, Math.round(50 + 2.2 * (r.pNow - 100)))) }, "+" + Math.round(r.dP)]) });
+        const f2 = (x) => (x == null ? "–" : x.toFixed(2));
+        if (pshow.length) table(b, { label: "Pitchers · nERA down", cols: [["Player", null, "nm"], ["K-BB%", 104, "c"], ["Before", 46], ["Now", 46, "heat"], ["Δ", 42, "up"]], ends: [1, 2],
+          rows: pshow.map((r) => [nm(r.p, "games"), `${v1(r.kbbWas)} → ${v1(r.kbbNow)}`, f2(r.nWas), { v: f2(r.nNow), pc: pcOf(refP, r.nNow, true) }, "−" + Math.abs(r.dN).toFixed(2)]) });
       }
     }
     // no "Every page" tiles (Sean, 29 Sep 2026, the minimal pass): the header's menus already list them
