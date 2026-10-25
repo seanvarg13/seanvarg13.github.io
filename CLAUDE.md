@@ -5122,7 +5122,9 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     **running wOBA his actual pieces build from the league's** (`lgC` → `actS`, the same every-order average as the ± column but from the
     league's end; Everything else carries what the table doesn't break out — his HBP rate, how often he puts the ball in the air, the fixed
     weights — so the last step lands on his wOBA exactly), as the build-up above does it with his expected pieces. **Share is gone** with the
-    room it took; the gutters are `td.tvgap` (14px, nothing in them) and the note row spans 11 columns.
+    room it took; the note row spans 11 columns. The gutters are `td.tvgap`, 14px wide with **no ground and no rules** (Sean, an hour later:
+    "make it so the cells are like not there so its essentially empty white space") — transparent, `border: 0`, so the band, the totals' stripe
+    and every row rule stop at the gap and the two comparisons read as two tables; the column after each gap takes a left edge of its own.
 
 ## 10. The football site moved out
 

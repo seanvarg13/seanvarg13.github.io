@@ -4355,8 +4355,12 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td.xact { color: var(--muted); }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt tr.tot td.xact { color: #fff; }
 /* Expected vs actual runs two comparisons a blank column apart (Sean, 25 Oct 2026: "then have an empty column ... then have a blank column
-   again"): the gutter is narrow and carries nothing, the row's rules running straight through it. */
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .sbt.brt.twvs :is(th, td).tvgap { width: 14px; min-width: 14px; padding: 0 !important; }
+   again", then "make it so the cells are like not there so its essentially empty white space"): the gutter has no ground and no rules, so the
+   two comparisons read as two tables with the page between them, and the column after each gap takes a left edge of its own. */
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .sbt.brt.twvs :is(th, td).tvgap { width: 14px; min-width: 14px; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .sbt.brt.twvs td.tvgap + td { border-left: 1px solid var(--hair); }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .sbt.brt.twvs tr.tot td.tvgap + td { border-left-color: rgba(255,255,255,.55); }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .sbt.brt.twvs th.tvgap + th { border-left: 1px solid rgba(255,255,255,.35); }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td { border-radius: 0 !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td.nm { font-weight: 600; }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td.c { text-align: center; }
