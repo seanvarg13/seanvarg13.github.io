@@ -302,7 +302,7 @@ def main():
         mlb, spring, post = bool(new["mlb"]), bool(new["spring"]), bool(new["post"])
         levels = [lv for lv in ("aaa", "aa", "ap", "a") if lv in new["minors"]]
         fantasy = mlb                                    # the official lines and game logs move only with MLB games
-        career = mlb or bool(levels)                     # career.js, career-bb.js, aaa-tw.js read the season files
+        career = mlb or bool(levels)                     # career.js and career-bb.js read the season files
         index = mlb or spring or post or bool(levels)    # the search index lists every season, kind and level he has
     else:
         # a manual run: what the named steps always built (mlb brings spring in Feb / Mar and the postseason Sep-Nov)
