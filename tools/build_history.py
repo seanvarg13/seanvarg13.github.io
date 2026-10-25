@@ -130,8 +130,8 @@ def build_season(year: int, kind: str = "reg"):
 
 
 def season_file(f):
-    """a season's dataset (mlb-2025.js, aaa-2026.js, mlb-2026-post.js), not a file that shares the prefix — hist/aaa-tw.js (the pooled
-    projection's Triple-A numbers, 12 Oct 2026) matched "aaa-*.js" and broke the index every minors run until 14 Oct 2026"""
+    """a season's dataset (mlb-2025.js, aaa-2026.js, mlb-2026-post.js), not a file that shares the prefix — the pooled projection's
+    hist/aaa-tw.js matched "aaa-*.js" and broke the index every minors run until 14 Oct 2026 (that file is gone since 25 Oct 2026)"""
     return re.fullmatch(r"(mlb|aaa|aa|ap|a)-\d{4}(-[a-z]+)?", f.stem) is not None
 
 

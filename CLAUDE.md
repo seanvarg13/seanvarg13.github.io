@@ -4533,10 +4533,12 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   - **Rankings and Draft mode open in a projection's order**: sorted by raw xwOBA / nERA with no minimum, the boards led with 10-11 PA hitters
     (Rowdy Tellez and Nick Solak on the 1B tab, Freeman 34th) and 3-inning pitchers. With the sort on the headline (`score`) and a board
     showing (`boardOn()`), `visiblePlayers` orders by `boardProj(p)`: a hitter's **xwOBA proj.** (`m.txwp`, the regressed two-season number
-    with the age curve; career-bb.js / aaa-tw.js are asked for while it shows), a pitcher's nERA with **80 IP at the league's** added
+    with the age curve; career-bb.js / aaa-tw.js are asked for while it shows — **since 25 Oct 2026 it is his xwOBA itself**, the projection
+    being gone), a pitcher's nERA with **80 IP at the league's** added
     (`NREG`; `neraLeague()` = the 20+ IP pitchers' IP-weighted nERA in the view) — fitted on every pitcher-season 2015-25 against his next
     season's nERA with 40+ IP (3,500 pairs: r .40 raw → .46; 80 IP the best of 40-130). The title, the Sort by option and the phone's summary
-    say "by xwOBA proj." / "by nERA, regressed by innings"; a stat picked in Filters, or his own order, still wins. The Leaderboard is unchanged.
+    say "by xwOBA" (it said "by xwOBA proj." until 25 Oct 2026) / "by nERA, regressed by innings"; a stat picked in Filters, or his own order,
+    still wins. The Leaderboard is unchanged.
   - **His rankings protected**: they live in this browser only unless Sync is on (17 Oct 2026). While this device holds a saved list or a
     working order and Sync is off, Rankings shows a line over the board (`renderSyncNudge`, `#syncnudge` before the title): "Your rankings are
     saved only in this browser …", **Turn on Sync across devices** (goes to Settings ▸ Appearance and scrolls to the sync row, `state.goSync`,
@@ -5101,6 +5103,20 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   column with `overflow: clip`, and on a phone the rows' scroller ends flush with its padding box — the clip edge — so the soft edge under the
   frame was cut off on every list page (the sides were fine). The wrap keeps **14px under it** now; `body.filtbar`'s `padding-bottom: 0` had to be
   outranked for it. Verified against the real page: without it the pixels under the frame go straight to white, with it they ramp back up.
+* **The next-season xwOBA projection is gone, and Expected vs actual reads expected first (Sean, 25 Oct 2026: "can we get rid of the next
+  season xwoba projection" — asked how far: "get rid of the next season xwoba projection everywhere, i dont want it to exist anymore" — and
+  "for the expected vs actual xwoba table can we have it start with expected then actual and can it also show the xwoba build up vs the league
+  avg like the expected table shows")**:
+  - **Out of `app.js`**: `projFill`, `projOn`, `TWP` / `ageAdj` (the age curve), `AAAP` / `aaaOn` / `aaaReady` (the pooled Triple-A line),
+    `t.txwp` in the talent build with `TW.k` / `TW.p0`, the `txwp` metric and its place in the Standard / Advanced column sets, `LB_EXTRA_H`,
+    the colour-scale sets, the glossary entry, and the **"Next season" table** on the card's xwOBA tab. `boardProj` now reads a hitter's own
+    xwOBA (`HEAD.key`, or wOBA at a level without the model), so Rankings / Draft open "by xwOBA".
+  - **Out of the build**: `build_career.py`'s `aaa_talent()` and the transaction-log helper that kept rehab stints out of it (`tx_season`,
+    `TX_CALL`), and **`hist/aaa-tw.js` is deleted**. Nothing reads it any more.
+  - **Expected vs actual** (the xwOBA tab's second table) now runs **Piece · Expected · Actual · League · Diff · ± wOBA · Share**: the two
+    columns swapped back (they had been Actual first since 16 Oct), and a **League** column carries the season's qualified hitters' own rate on
+    each piece (`lgRatesH().k`, `L.bb`, `L.hr.hrfb`, `L.xbabip`, `L.tph`, `L.ibbr`, `L.woba`), in the build-up's muted dress, so the table
+    measures him against the league the way the build-up above it does. Diff is still actual − expected; the note row spans 7 columns now.
 
 ## 10. The football site moved out
 

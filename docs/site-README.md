@@ -1162,3 +1162,13 @@ or a name search. A phone reads the same line; it used to be cut to "1–50 of 2
 
 On a phone the framed table also keeps its soft shadow at the bottom now; the page's clip had been cutting it off — as it had been cutting the top
 off the filter bar on a desktop.
+
+### The next-season projection is gone; Expected vs actual starts with expected (25 Oct 2026)
+
+The **xwOBA proj.** number — next season's wOBA from his last seasons, a regression and an age curve — is gone from the site: the card's "Next
+season" table, the Leaderboard column, the glossary entry and the Triple-A file behind it. Rankings and Draft mode still open in a sensible
+order, now by his own xwOBA (pitchers unchanged: nERA with 80 IP at the league's added).
+
+The xwOBA tab's second table, **Expected vs actual**, now reads Piece · Expected · Actual · League · Diff · ± wOBA · Share — expected first, and
+a League column with the season's qualified hitters' own rate on each piece, so it measures him against the league the way the build-up above it
+does.
