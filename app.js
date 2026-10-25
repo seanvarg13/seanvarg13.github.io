@@ -3395,9 +3395,20 @@
     box.hidden = false;
     { const g = groupFor(state.pos), pit = isPitcherGroup(g);   // the Stuff+ board's count line at the right (Sean, 3 Oct 2026)
       const od = onePage() && oneDay() ? seasonDays()[winIdx().lo] : null;   /* one game day: its date, everyone who played (23 Oct 2026) */
-      const who = onePage() ? ` ${pit ? "pitchers" : "hitters"} · ${od ? (mobileView() ? fmtDate(od) : gameDayName(od)) : DS.season}${state.mode === "leaderboard" ? (od ? (mobileView() ? "" : " · everyone who played") : ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}`) : ""}` : "";   /* a desktop keeps the fuller count beside its page range (16 Oct 2026) */
+      // what the list is: who, the season (or the one game day), the minimum — and then everything in effect, the window, the splits, a team
+      // or a name search, so the line says it on a phone too (Sean, 25 Oct 2026: "when i apply any sort of split or filter it does not show that
+      // filter or split it just says 1-50 of 227 by xwOBA, i want to see the time and date filters and splits and whatnot")
+      const bits = [];
+      if (onePage()) {
+        if (state.mode === "trending") { const t = trendCfg(); bits.push(t.unit === "days" ? `last ${t.days} days` : `last ${t[t.unit]} ${pit ? "IP" : "PA"}`); }
+        else if (!od && winIdx()) bits.push(state.win.days ? `last ${state.win.days} days` : winLabel());
+        if (state.mode === "leaderboard") { const sp = state.lbSplit; if (sp.hand !== "all") bits.push(`vs ${sp.hand}H${pit ? "B" : "P"}`); if (sp.venue !== "all") bits.push(sp.venue); }
+        if (state.teamF) bits.push(state.teamF.kind === "team" ? TEAM_NAMES[state.teamF.v] || state.teamF.v : state.teamF.v);
+        if (state.q) bits.push(`“${state.q}”`);
+      }
+      const who = onePage() ? ` ${pit ? "pitchers" : "hitters"} · ${od ? (mobileView() ? fmtDate(od) : gameDayName(od)) : DS.season}${state.mode === "leaderboard" ? (od ? (mobileView() ? "" : " · everyone who played") : ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}`) : ""}${bits.map((b) => " · " + b).join("")}` : "";   /* its own line since 25 Oct 2026, so a phone reads it too */
       const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}${state.mode === "draft" ? (auc.on ? " · tap a name to record his sale, tap again to undo" : " · tap to draft, tap again to undo") : ""}`; })() : null;   // the board: tiers · tiered · listed (Draft mode has no buttons)
-      const ct = bc != null ? bc : pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}${mobileView() ? "" : who}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total}${who}` : `${total} players`;
+      const ct = bc != null ? bc : pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}${who}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total}${who}` : `${total} players`;
       const pc = el("span", "pcount", ct);
       // Fantasy's count shares the row with the page numbers, so it holds the width of its widest label (the last page's; the digits are
       // tabular) under the one it shows, and the arrows don't slide as "1–50" turns into "101–150" (18 Oct 2026)
