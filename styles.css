@@ -4314,15 +4314,18 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root .sbt tr.gap td.f3 { border-right: 2px solid var(--ink) !important; }
 /* the season table's switch — Standard · Batted Ball Quality · Batted Ball Distribution · Plate Discipline — at the foot of the space over the
    table (Sean, 8 Oct 2026: "put that bar ... somewhere towards the bottom of that white space"): boxy like the table, the picked one the button
-   blue; a phone's is a 2 × 2 grid across the screen. The space above it is the old gap less the bar, so the title sits where it did */
+   blue. The space above it is the old gap less the bar, so the title sits where it did. A phone draws the same bar and scrolls it sideways
+   (Sean, 25 Oct 2026: "on mobile this is a drop down, can we instead make it a scrollable bar exactly like this on mobile instead") — the
+   2 × 2 grid and the "Standard ▾" dropdown it became on 20 Oct are both gone. A pitcher's Raw / Stuff is the same bar (25 Oct 2026). */
 :root:root:root:root:root:root #xboard .sblock:has(.sbviews) { margin-top: 140px; }
 :root[data-view="mobile"]:root:root:root:root:root #xboard .sblock:has(.sbviews) { margin-top: 64px; }
 :root:root:root:root:root:root .sbviews { display: inline-flex; align-self: flex-start; margin-bottom: 22px; border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--surface)); background: var(--surface-2); padding: 4px; gap: 4px; }
 :root:root:root:root:root:root .sbview { height: 34px; padding: 0 16px; border: 0; border-radius: 0; background: transparent; color: var(--ink); font: 500 13.5px var(--body); cursor: pointer; white-space: nowrap; }
 :root:root:root:root:root:root .sbview:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
 :root:root:root:root:root:root .sbview.on { background: var(--btn, var(--accent-2)); color: var(--btn-ink, #fff); font-weight: 600 !important; }
-:root[data-view="mobile"]:root:root:root:root:root .sbviews { display: grid; grid-template-columns: 1fr 1fr; align-self: stretch; margin-bottom: 14px; }
-:root[data-view="mobile"]:root:root:root:root:root .sbview { height: 34px; padding: 0 6px; font-size: 13px; }
+:root[data-view="mobile"]:root:root:root:root:root .sbviews { display: flex; flex-wrap: nowrap; align-self: stretch; margin-bottom: 14px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+:root[data-view="mobile"]:root:root:root:root:root .sbviews::-webkit-scrollbar { width: 0; height: 0; }
+:root[data-view="mobile"]:root:root:root:root:root .sbview { flex: 0 0 auto; height: 34px; padding: 0 12px; font-size: 13px; }
 /* no white line under a gap (Sean, 8 Oct 2026: "you added a white line underneath the spacing on the totals while baseball reference doesn't
    have that"): each totals row draws its white rule on its top edge, so the row after a gap loses it */
 :root:root:root:root:root:root .sbt tr.gap + tr td { border-top: 0 !important; }
@@ -5387,13 +5390,8 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root body #board .syncnudge .linkbtn.quiet { margin-left: 2px; color: var(--muted); font-weight: 400 !important; }
 :root[data-flat]:root:root #board .syncnudge { border-color: transparent; background: var(--surface-2, #f3f6fa); }
 
-/* The phone's season-table switch as one dropdown (Sean, 20 Oct 2026: "do 11 with one drop down"): "Standard ▾" in the Leaderboard's Filters
-   button's dress — white, the rail edge, square, the lift — over the list of the five tables; the bar round it is nothing. A desktop keeps the
-   row of buttons. */
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(main, #xboard) .sbviews.sbviewsdd:not(#q1) { display: block; align-self: flex-start; margin-bottom: 14px; padding: 0; border: 0; background: none; box-shadow: none !important; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(main, #xboard) .sbviewsdd .dd { display: inline-block; height: auto; padding: 0; background: none; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(main, #xboard) .sbviewsdd .sbviewdd { display: inline-flex; align-items: center; height: 32px; min-height: 32px; padding: 0 14px; background: #fff; color: var(--ink-day, var(--ink)); border: 1px solid var(--rail, #c9d3e0) !important; border-radius: 0 !important; font: 600 14px/1 var(--body) !important; white-space: nowrap; cursor: pointer; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(main, #xboard) .sbviewsdd .sbviewdd.ddon { background: color-mix(in srgb, var(--accent-2) 18%, #fff); }
+/* The phone's season-table switch was one "Standard ▾" dropdown from 20 Oct 2026 to 25 Oct 2026, when it went back to the bar, scrollable
+   (the rules that dressed it are gone with it). */
 
 /* The phone's Pitching+ board (Sean, 20 Oct 2026: "do 12"): one Filters button in the Leaderboard's dress with the count beside it, the six pills
    in a panel hung under it (the dropdowns' dress, .pop), a label left of each; Pitching+ sits after the name (app.js reorders the columns) */
