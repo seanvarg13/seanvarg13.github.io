@@ -4361,6 +4361,9 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .sbt.brt.twvs td.tvgap + td { border-left: 1px solid var(--hair); }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .sbt.brt.twvs tr.tot td.tvgap + td { border-left-color: rgba(255,255,255,.55); }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .sbt.brt.twvs th.tvgap + th { border-left: 1px solid rgba(255,255,255,.35); }
+/* the Piece column frozen as the table slides sideways (Sean, 25 Oct 2026: "freeze pane the piece column on the expected vs actual table"),
+   with the Pitching+ tab's red frozen edge */
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .sbt.brt.twvs .f1 { border-right: 2px solid var(--stripe-line); }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td { border-radius: 0 !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td.nm { font-weight: 600; }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td.c { text-align: center; }

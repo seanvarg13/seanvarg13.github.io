@@ -8272,7 +8272,7 @@
     // happened, then what happened against the league, and last the running wOBA his actual pieces build from the league's — the build-up
     // above does the same with his expected ones. Share is gone with the room it took.
     const UN = wrcOn() ? "wRC+" : "wOBA";
-    const { tb, fin, wrap } = brTable(null, [["Piece", "l"],
+    const { tb, fin, wrap } = brTable(null, [["Piece", "l f1"],
       ["Expected", "", (inPk ? "what his skills read in his parks — each expected piece with his parks' residual on it, as in his xwOBA" : "what his skills read at a neutral park") + "; filled with his percentile on it among the pool's qualifiers' own expected pieces"],
       ["Actual", "xact", inPk ? "what happened, in his parks — his raw rates" : "what happened, at a neutral park — his parks' effect on each piece taken out, ball by ball (the In his parks row has his raw wOBA)"],
       ["Diff", "", inPk ? "actual − expected, both in his parks (the park moves both sides alike, so the gap is the same as at a neutral park)" : "actual − expected, both park-neutral"],
@@ -8349,7 +8349,7 @@
     const ptsE = (d) => (wrcOn() ? wsD(d) : pts(d));
     const effTd = (d, tot) => { const td = el("td", "kd", d == null ? "" : ptsE(d)); if (d != null && !tot) { const s2 = effStyle(d); td.style.background = s2.bg; td.style.color = s2.fg; td.classList.add("heat"); } return td; };
     // a piece's name, tapped, opens its note in a row under it, as the build-ups' steps do (a phone has no hover)
-    const noteTd = (lab, tip, tr) => { const td = el("td", "l nm"), bt = el("button", "knotebtn", lab); bt.type = "button"; bt.setAttribute("aria-expanded", "false");
+    const noteTd = (lab, tip, tr) => { const td = el("td", "l nm f1"), bt = el("button", "knotebtn", lab); bt.type = "button"; bt.setAttribute("aria-expanded", "false");
       bt.addEventListener("click", (e) => { e.stopPropagation(); const nx = tr.nextElementSibling;
         if (nx && nx.classList.contains("knote")) { nx.remove(); bt.setAttribute("aria-expanded", "false"); return; }
         const nr = el("tr", "knote"), nc = el("td"), sc = tr.closest(".brscroll"), tx = el("div", null, tip); nc.colSpan = 11;
@@ -8389,10 +8389,10 @@
       tb.append(fin(tr));
     }
     if (rest != null) { const tr = el("tr"); tr.title = "what's left between his pieces put back together at their actual values and his real wOBA: the build's fixed linear weights, triples, sacrifice flies and the season's scale — small, and not about his skill";
-      tr.append(el("td", "l nm", "Everything else"), el("td"), el("td", "xact"), el("td"), gapTd(), el("td"), el("td", "xact"), el("td"), gapTd(), effTd(rest), runTd(restL)); tb.append(fin(tr)); }
+      tr.append(el("td", "l nm f1", "Everything else"), el("td"), el("td", "xact"), el("td"), gapTd(), el("td"), el("td", "xact"), el("td"), gapTd(), effTd(rest), runTd(restL)); tb.append(fin(tr)); }
     for (const [lab, a, x, f, fd] of [[wsLab("wOBA"), m.txw, wAct, (z) => fw(z), (z) => (wrcOn() ? Math.abs(wrcPts(z)).toFixed(0) : fmtX(z))]]) {   /* his wOBA against his xwOBA, both in his parks (or both at a neutral park under the switch) */
       const tr = el("tr", "tot"); tr.title = inPk ? `his wOBA as it happened against his xwOBA, both in his parks (his parks added ${pts(pkEff)} to his wOBA and about the same to his xwOBA)` : pk ? `his wOBA at a neutral park: his ${f3(m.woba)} less what his parks did to it (${pts(pkEff)}, the row under)` : "";
-      tr.append(el("td", "l nm", lab), expTd("woba", a, f), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), gapTd(),
+      tr.append(el("td", "l nm f1", lab), expTd("woba", a, f), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), gapTd(),
                 actTd("woba", x, f, ""), el("td", "xact", L.woba == null ? "–" : f(L.woba)), el("td", null, L.woba == null || x == null ? "–" : sg(x - L.woba, fd)), gapTd(),
                 effTd(a != null && x != null ? x - a : null, true), el("td", "krk", x == null ? "" : f(x)));
       tb.append(fin(tr));
