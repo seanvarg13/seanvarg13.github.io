@@ -5125,6 +5125,11 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     room it took; the note row spans 11 columns. The gutters are `td.tvgap`, 14px wide with **no ground and no rules** (Sean, an hour later:
     "make it so the cells are like not there so its essentially empty white space") — transparent, `border: 0`, so the band, the totals' stripe
     and every row rule stop at the gap and the two comparisons read as two tables; the column after each gap takes a left edge of its own.
+* **The Piece column frozen on Expected vs actual (Sean, 25 Oct 2026: "Could you freeze pane the piece column on the expected vs actual
+  table")**: the table's first column (its head, every piece, Everything else, the wOBA band row and In his parks) carries `f1`, so it stays
+  put while the rest slides under it, with the Pitching+ tab's 2px stripe-red edge (`.twvs .f1`, the rule after the `tvgap` ones in
+  `styles.css`). The note a tapped piece opens isn't frozen (it spans the table; its text already sits in the visible part). A desktop's table
+  fits without sliding; a phone's slides ~215px.
 
 ## 10. The football site moved out
 

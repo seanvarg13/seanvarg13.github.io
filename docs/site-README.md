@@ -1173,3 +1173,5 @@ The xwOBA tab's second table, **Expected vs actual**, now holds two comparisons 
 **Actual · League · Diff**, then **± wOBA** and a running **wOBA** column. Expected and the second Actual are heat-mapped against the season's
 qualified hitters; League is their own rate on each piece. The last column starts at the league's wOBA and puts his actual pieces in one row at a
 time, landing on his wOBA — the build-up above it does the same with his expected pieces. (The Share column is gone.)
+
+The table's **Piece** column is frozen: on a phone, where the table slides sideways, the piece names stay at the left with a red edge and the numbers slide under them.
