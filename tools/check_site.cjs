@@ -65,6 +65,10 @@ function minorsId() {
       await until(() => !/Loading game-by-game/.test(document.querySelector("#hub").innerText), null, 120000);
     });
     await step("leaderboard, hitters", async () => { await hash("#leaderboard"); await count("#rows > li.row", 20);
+      // the filters are a row of buttons, one per page, each opening its own dropdown (25 Oct 2026)
+      await count("#tbtns .sbviews .sbview", 5);
+      for (const k of ["positions", "stats", "dates"]) { await pg.evaluate((p) => document.querySelector('#tbtns [data-panel="' + p + '"]').click(), k); await until(() => !document.getElementById("pop").hidden); }
+      await pg.evaluate(() => document.querySelector('#tbtns [data-panel="dates"]').click()); await until(() => document.getElementById("pop").hidden);
       if (await pg.$("#pagerbot .pbtn[title='Next page']:not([disabled])")) { await pg.evaluate(() => document.querySelector("#pagerbot .pbtn[title='Next page']").click()); await until(() => { const c = document.querySelector("#pagerbot [aria-current]"); return c && c.textContent === "2"; }); } });
     await step("leaderboard, pitchers", async () => { await prefs({ pos: "SP" }); await pg.reload({ waitUntil: "load" }); await count("#rows > li.row", 20); });
     if (!QUICK) {

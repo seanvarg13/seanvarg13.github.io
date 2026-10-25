@@ -5076,6 +5076,23 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   table in place of the `Raw ▾` dropdown that sat beside Filters on the band — `pageHead` now passes `filtersTog(p, true)`. The old-style
   popup card (`playerHead`, no season block — only the spring board still opens one) keeps its `Raw ▾`, since it has nowhere else to put it.
   The page check clicks the bar on the hitter page and on the pitcher page, where it puts him back on Raw afterwards.
+* **The Leaderboard's filters are that bar too, and the title line is the count (Sean, 25 Oct 2026: "on mobile and desktop can you make the
+  filters button on the leaderboard the exactly same style as how that player card bar thing is you just added, and so each page on the filters
+  is its own button", then "you can get rid of the hitting leaderboard text and put all the rest of the text on that row/level/area" and "so the
+  top row or area is the button area with all the filters buttons and when you hit them they bring their own drop down and then the next row or
+  area where hitting leaderboards used to be is the remaining text")**: on the Leaderboard and Recent the one "SP filters" button is now **a
+  `.sbview` for each page of it** — Position · Stats · Splits · Dates · Table format — drawn by the card's `viewBar()`, which takes a fourth
+  argument to decorate each button (`data-panel`, the aria, and `.set` — a red dot — when that page has something in effect). Each opens its own
+  panel under itself; `placePop` already hung the panel on `[data-panel]`, and `popBody` drops the dropdown's own tab row there (`.notabs`), since
+  the bar is the tabs. The row above is the buttons alone: `#lbtitle` loses the words "Hitting Leaderboard" and carries the **count** instead
+  (`renderPager` moves `.pcount` into it) with what the list is sorted by after it. Rankings / Draft keep their single Filters button. The page
+  check opens three of the pages and shuts the last.
+
+* **The framed table's bottom shadow on a phone (Sean, 25 Oct 2026: "on mobile on the leaderboard page, the leaderboard table itself doesnt have
+  a shadow at the bottom of the leaderboard, fix that too and fix that if it it an issue anywhere else")**: `main.wrap` is a fixed-height flex
+  column with `overflow: clip`, and on a phone the rows' scroller ends flush with its padding box — the clip edge — so the soft edge under the
+  frame was cut off on every list page (the sides were fine). The wrap keeps **14px under it** now; `body.filtbar`'s `padding-bottom: 0` had to be
+  outranked for it. Verified against the real page: without it the pixels under the frame go straight to white, with it they ramp back up.
 
 ## 10. The football site moved out
 

@@ -2956,7 +2956,10 @@
         const page = state.mode === "rankings" ? "Rankings" : state.mode === "draft" ? "Draft mode" : "Leaderboard", own = customOrder() && !state.rankSort;   // Rankings / Draft mode (16 Oct 2026)
         const pn = !P0 && XWN, xwBy = by === wsLab("xwOBA");   /* the switch is on (18 Oct 2026): "by park-neutral xwOBA", or the sort and then the note */
         const od = BR && oneDay() ? (mobileView() ? fmtDate : gameDayName)(seasonDays()[winIdx().lo]) + " · " : "";   /* one game day (23 Oct 2026): "Sun, Sep 27 · by xwOBA" ("Sep 27" on a phone) */
-        tt.innerHTML = ""; tt.append(el("h2", null, `${P0 ? "Pitchers" : "Hitting"} ${page}`), el("span", null, od + (own ? "your order" : by ? `by ${pn && xwBy ? "park-neutral " : ""}${by}` : "") + (pn && (own || !xwBy) ? " · park-neutral xwOBA" : ""))); } }   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
+        // the Leaderboard / Recent drop the words "Hitting Leaderboard" and give the line to the count instead (Sean, 25 Oct 2026: "you can
+        // get rid of the hitting leaderboard text and put all the rest of the text on that row/level/area") — renderPager moves .pcount in here
+        tt.innerHTML = ""; if (!onePage()) tt.append(el("h2", null, `${P0 ? "Pitchers" : "Hitting"} ${page}`));
+        tt.append(el("span", null, od + (own ? "your order" : by ? `by ${pn && xwBy ? "park-neutral " : ""}${by}` : "") + (pn && (own || !xwBy) ? " · park-neutral xwOBA" : ""))); } }   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
     const head = (key, label, title) => { const h = editing ? Object.assign(el("div", "h", label), { title }) : sortButton(key, label, title); if (/^[a-z]/.test(label)) h.classList.add("lc"); return h; };
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
     for (const k of ["year", "age"]) h.style.setProperty("--pre" + (k === "year" ? 1 : 2), preOn(k) ? "var(--prew, 64px)" : "0px");
@@ -3415,8 +3418,11 @@
     // lived in is hidden on the list pages (body.filtbar, 30 Sep 2026), so the Draft board had shown none of them
     if (!onChange && state.mode === "draft" && box.id === "pagertop") { const dt = $("drafttools"); if (dt) box.append(dt); }
     if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs();
-      if (phonePages()) { const pc = box.querySelector(".pcount"), nv = box.querySelector(".pnav"); if (pc) box.append(pc); if (nv) box.append(nv); }   /* after the Filters button */   // a phone: Min IP rides after the pills; the count is on the page-number line
-      else { const pc = box.querySelector(".pcount");   /* the count right beside the Filters button (Sean, 11 Oct 2026) */ if (pc) box.append(pc); if (mfKeep) { mfKeep.classList.add("topmin"); if (box.lastElementChild !== mfKeep) box.append(mfKeep); } } } }   // the count and the Min box on a quiet line under the controls (6 Oct 2026); the Min box moves only when it isn't already last   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
+      // the count moves down to the title's line, in the place "Hitting Leaderboard" had (Sean, 25 Oct 2026), so the row above is the
+      // filter buttons alone; it rides back in the bar if that line isn't drawn
+      const tt = $("lbtitle"), pc = box.querySelector(".pcount");
+      if (tt && pc) { tt.querySelectorAll(".pcount").forEach((x) => x.remove()); tt.prepend(pc); }
+      const nv = box.querySelector(".pnav"); if (nv) box.append(nv); } }   // the count and the Min box on a quiet line under the controls (6 Oct 2026); the Min box moves only when it isn't already last   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
   }
   // ‹, the page numbers and › (no « / », minimal pass 5: the first and last pages are numbered anyway). Five slots between the arrows, every cell
   // the same width, so neither arrow ever moves (Sean, 18 Oct 2026: "Make it so the two arrows are stable and never change positions ... the arrow
@@ -5072,11 +5078,18 @@
       box.append(b);
     };
     // the position shows on the button when it isn't everyone ("SS · Filters"), so the one button still says what's listed
-    if (onePage()) {   // one Filters button on both layouts (a phone since 6 Oct 2026: "move the hitters rp sp custom and year into the filters button";
-      // a desktop since 11 Oct 2026: "make it so there is no hitters rp sp stuff since that is in the filters button")
-      // that says who's listed; the Hitters / SP / RP choice is the dropdown's Position tab, the column set and season sit at the top of its Stats / Filters tabs
-      const n = ["filters", "splits", "dates"].filter(popActive).length, pos = posBtnLabel();
-      add("grp", `${pos === "All pitchers" ? "Pitchers" : pos === "All hitters" ? "Hitters" : pos} filters${n ? ` (${n})` : ""}`, grpOpen, n > 0);   /* "SP filters", no interpunct (the less-slop pass) */
+    // one Filters button on both layouts from 6 Oct 2026 ("move the hitters rp sp custom and year into the filters button") to 25 Oct 2026,
+    // when it became **a button for each page of it**, in the player card's switch dress (Sean: "make the filters button on the leaderboard the
+    // exact same style as how that player card bar thing is ... and so each page on the filters is its own button"): Position · Stats · Splits ·
+    // Dates · Table format, each hanging its own dropdown under itself (placePop reads data-panel), a phone scrolling the row sideways. A page
+    // with something in effect is marked (.set); who is listed is on the line under it, with the count.
+    if (onePage()) {
+      const bar = viewBar(grpTabsNow(), state.panel, (k) => { if (state.panel === k) closePanel(false); else openPanel(k); }, (b, k) => {
+        b.dataset.panel = k; b.setAttribute("aria-haspopup", "true"); b.setAttribute("aria-expanded", String(state.panel === k));
+        if (popActive(k)) b.classList.add("set");
+      });
+      bar.classList.add("lbviews");
+      box.append(bar);
       return;
     }
     const n = ["filters", "splits", "dates"].filter(popActive).length, pos = popActive("positions") ? posBtnLabel() + " " : "";
@@ -5108,7 +5121,8 @@
     const pop = $("pop"), body = $("pop-body");
     pop.hidden = false; body.innerHTML = "";
     pop.classList.toggle("grppop", GRP.has(state.panel));
-    if (GRP.has(state.panel)) { state.panelTab = state.panel; body.append(grpTabs()); pop.classList.remove("notabs");
+    if (GRP.has(state.panel)) { state.panelTab = state.panel; pop.classList.toggle("notabs", onePage());   /* the Leaderboard's tabs are the buttons outside now (25 Oct 2026) */
+      if (!onePage()) body.append(grpTabs());
       if (onePage() && state.panel === "stats") { body.append(lbSetButtons()); if (!isPitcherGroup(groupFor(state.pos))) body.append(xwParkSwitch()); } }   // the column sets as buttons at the top of the Stats tab, both layouts (Sean, 11 Oct 2026: "select advanced and it selects all of the advanced stats")   // a phone's Standard ▾ pill rides at the top of the Stats tab (6 Oct 2026); the Filters tab already has the Season row   // one Filters button again (6 Oct 2026), so the tabs ride in the dropdown
     return body;
   }
@@ -11052,11 +11066,12 @@
   // the switch itself, one row of boxy buttons with the picked one blue. A phone scrolls it sideways instead of folding it into a dropdown
   // (Sean, 25 Oct 2026: "on mobile this is a drop down, can we instead make it a scrollable bar exactly like this on mobile instead"), so the
   // picked one is brought into view when the row is wider than the screen.
-  function viewBar(opts, cur, pick) {
+  function viewBar(opts, cur, pick, each) {
     const bar = el("div", "sbviews");
     for (const [k, lab] of opts) {
       const bt = el("button", "sbview" + (cur === k ? " on" : ""), lab); bt.type = "button"; bt.setAttribute("aria-pressed", String(cur === k));
       bt.addEventListener("click", (e) => { e.stopPropagation(); pick(k); });
+      if (each) each(bt, k);
       bar.append(bt);
     }
     requestAnimationFrame(() => {

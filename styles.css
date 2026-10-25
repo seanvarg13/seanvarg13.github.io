@@ -5393,6 +5393,23 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 /* The phone's season-table switch was one "Standard ▾" dropdown from 20 Oct 2026 to 25 Oct 2026, when it went back to the bar, scrollable
    (the rules that dressed it are gone with it). */
 
+/* The Leaderboard's filters as that same bar (Sean, 25 Oct 2026: "make the filters button on the leaderboard the exactly same style as how that
+   player card bar thing is you just added, and so each page on the filters is its own button"): one .sbview per page of the dropdown, sitting in
+   the row the one "SP filters" button had, each opening its own panel under itself. The row above is the buttons alone; the count and what the
+   list is sorted by moved down to the title's line (#lbtitle), where "Hitting Leaderboard" was. */
+:root:root:root:root:root:root:root:root .tbtns .sbviews.lbviews { margin: 0; max-width: 100%; }
+:root:root:root:root:root:root:root:root .pager .tbtns:has(.lbviews) { flex: 1 1 auto; min-width: 0; }
+:root:root:root:root:root:root:root:root .sbview.set:not(.on) { font-weight: 600 !important; }
+:root:root:root:root:root:root:root:root .sbview.set:not(.on)::after { content: " •"; color: var(--stripe-line, #c8102e); }
+:root:root:root:root:root:root:root:root #lbtitle .pcount { font: 600 14px var(--body) !important; color: var(--ink) !important; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root #lbtitle .pcount { font-size: 13px !important; }
+
+/* The framed table's shadow needs room inside the clip (Sean, 25 Oct 2026: "on mobile on the leaderboard page, the leaderboard table itself
+   doesnt have a shadow at the bottom of the leaderboard, fix that too and fix that if it is an issue anywhere else"): main.wrap is a fixed-height
+   flex column with overflow: clip, and on a phone the scroller ends flush with its bottom edge, so the soft edge under the frame was cut off on
+   every list page. 14px of room under it. */
+:root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-mode="mock"],[data-mode="claude"],[data-mode="flaws"]) main.wrap { padding-bottom: 14px; }   /* over body.filtbar's padding-bottom: 0 above */
+
 /* The phone's Pitching+ board (Sean, 20 Oct 2026: "do 12"): one Filters button in the Leaderboard's dress with the count beside it, the six pills
    in a panel hung under it (the dropdowns' dress, .pop), a label left of each; Pitching+ sits after the name (app.js reorders the columns) */
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .pbfilters.pbfph { position: relative; flex-wrap: nowrap; gap: 12px; margin: 0 0 10px; }
