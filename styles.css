@@ -4853,7 +4853,10 @@ header.top .wordmark { display: none; }
    red line and the your batting"): the same gap above the button as from its foot to the title's letters (the title's box runs ~2-3px above its caps). */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #pagertop { padding-top: 4px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #lbtitle { margin-top: 2px !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #pagertop { margin-top: -6px !important; }
+/* ... and since the row is the bar of filter buttons (25 Oct 2026) it is not pulled up any more: main.wrap clips at its padding box, so -6px
+   sliced the top off the bar and left its buttons looking off-centre (Sean: "the top of it is cut off and thus it does not look like the buttons
+   are centered"). 6px down instead, which also keeps the bar's lift inside the clip. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #pagertop { margin-top: 6px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body.brlb #lbtitle { margin-top: 5px !important; }
 
 /* The phone's page bar is the table's last row (Sean, 11 Oct 2026, from his phone: "make it like it would be another row of the table with the

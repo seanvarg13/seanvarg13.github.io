@@ -5087,6 +5087,14 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   the bar is the tabs. The row above is the buttons alone: `#lbtitle` loses the words "Hitting Leaderboard" and carries the **count** instead
   (`renderPager` moves `.pcount` into it) with what the list is sorted by after it. Rankings / Draft keep their single Filters button. The page
   check opens three of the pages and shuts the last.
+  - **The row is not pulled up any more** (Sean, the same evening, the Table format button hovered: "the top of it is cut off and thus it does
+    not look like the buttons are centered"): `#pagertop` had `margin-top: -6px` from 11 Oct, to centre the one small Filters button between the
+    header's rule and the title. `main.wrap` clips at its padding box, so with a 44px bar there the top 6px — box, hover highlight and lift — were
+    sliced off. It sits 6px **down** now.
+  - **The line says what is in effect** (Sean: "on mobile currently when i apply any sort of split or filter it does not show that filter or
+    split it just says 1-50 of 227 by xwOBA, i want to see the time and date filters and splits and whatnot"): the count was cut to
+    "1–50 of 227" on a phone because it shared the row with the Filters button. It has its own line now, so a phone gets the full one, and both
+    layouts add the window ("last 30 days", or the dates), the split (vs LHP, home / away), a team filter and a name search after the minimum.
 
 * **The framed table's bottom shadow on a phone (Sean, 25 Oct 2026: "on mobile on the leaderboard page, the leaderboard table itself doesnt have
   a shadow at the bottom of the leaderboard, fix that too and fix that if it it an issue anywhere else")**: `main.wrap` is a fixed-height flex

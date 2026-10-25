@@ -1157,5 +1157,8 @@ in the same place over his season table — and the band over his card keeps onl
 The one "SP filters" button is now one button for each page of it — Position · Stats · Splits · Dates · Table format — in the same bar the player
 card uses for its tables, on both layouts, scrolling sideways on a phone if it has to. Each opens its own dropdown under itself, and a page with
 something in effect carries a red dot. The row under it, where "Hitting Leaderboard" used to be, is the count — "1–50 of 499 hitters · 2026 · 75+
-PA in the window" — and what the list is sorted by. On a phone the framed table also keeps its soft shadow at the bottom now; the page's clip had
-been cutting it off.
+PA in the window" — and what the list is sorted by, plus anything else in effect: the date window, the split (vs LHP, home / away), a team filter
+or a name search. A phone reads the same line; it used to be cut to "1–50 of 227" because it shared the row with the Filters button.
+
+On a phone the framed table also keeps its soft shadow at the bottom now; the page's clip had been cutting it off — as it had been cutting the top
+off the filter bar on a desktop.
