@@ -1144,3 +1144,10 @@ liners and fly balls together; ground balls and popups keep their own. Only the 
 - The nERA tab still lists his wOBA on each type against the league's; the All balls in play row is priced at the one air value.
 - The minor-league seasons (Triple-A down to Single-A, 2021-26) are re-priced too, and the fantasy pages' luck-neutral line prices his
   liners and fly balls at the same air value.
+
+### The season table's switch on a phone, and a pitcher's Raw / Stuff (25 Oct 2026)
+
+On a phone the switch over the season table — Standard · Batted Ball Quality · Batted Ball Distribution · Plate Discipline · Baserunning — is
+the desktop's row of buttons again, scrolled sideways with a finger instead of folded into the "Standard ▾" dropdown it was from 20 Oct; the
+table you are on is brought into view. A pitcher has no tables to switch between, so that spot carries **Raw / Stuff** instead — the same bar,
+in the same place over his season table — and the band over his card keeps only Filters, no "Raw ▾" beside it.

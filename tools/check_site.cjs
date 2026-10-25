@@ -104,9 +104,10 @@ function minorsId() {
     }
     await step("hitter page", async () => { await hash("#player/592450"); await count("table.sbt tbody tr", 5, 60000);
       await clickAll(".btabs .btab");
-      if (!QUICK) { const v = await pg.$$(".sbviews .sbview"); if (v.length) await clickAll(".sbviews .sbview");
-        else { const n = await pg.$$eval(".sbviews .sbviewdd", (a) => a.length); if (n) for (let i = 0; i < 5; i++) { await pg.evaluate(() => document.querySelector(".sbviewdd").click()); await pg.waitForTimeout(200); await pg.evaluate((k) => { const b = document.querySelectorAll(".ddmenu .ddi")[k]; if (b) b.click(); }, i); await pg.waitForTimeout(500); } } } });
-    await step("pitcher page", async () => { await hash("#player/694973"); await count("table.sbt tbody tr", 2, 60000); await clickAll(".btabs .btab"); });
+      if (!QUICK) { await count(".sbviews .sbview", 5); await clickAll(".sbviews .sbview"); } });   // the five tables, a row of buttons on both layouts again (25 Oct 2026)
+    await step("pitcher page", async () => { await hash("#player/694973"); await count("table.sbt tbody tr", 2, 60000); await clickAll(".btabs .btab");
+      await clickAll(".sbviews .sbview");   // Raw / Stuff, the hitter's table switch in a pitcher's dress (25 Oct 2026)
+      await pg.evaluate(() => { const b = document.querySelector(".sbviews .sbview"); if (b) b.click(); }); });   // and back to Raw
     // a name picked from the header search opens his page at the top, through an iPhone putting the page's scroll back once the keyboard has gone
     // (Sean, 23 Oct 2026: Skenes's page, searched from a scrolled page, opened at that page's scroll) — the restore after the blur mimicked
     await step("search from a scrolled page", async () => {

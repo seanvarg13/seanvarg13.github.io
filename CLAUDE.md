@@ -4583,6 +4583,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     Positions, Bats • Throws, height / weight and Team lines are gone (the sticky bar's bio line carries them). A phone's table switch moves up ~92px.
   - **The season table's switch is one dropdown on a phone**: "Standard ▾" in the Leaderboard's Filters-button dress (white, the rail edge, square,
     the lift; `.sbviewsdd` / `.sbviewdd`, `ddList` over `SB_VIEWS`) instead of the five buttons in a three-row block. A desktop keeps the row.
+    **Undone 25 Oct 2026**: a phone draws the row too and scrolls it sideways (the entry at the end of this section).
   - **The Pitching+ board on a phone**: one **Filters** button (the count, "1992 pitches · 2026", beside it; "Filters (2)" when two are set) opens a
     panel under it (`.pop.pbfpanel`, `pbOpen`: open across redraws so several can be set, shut by ×, a tap elsewhere or a page change) with the six
     pills — Pitch, Throws, Role, Minimum, Colour, Games — each with its label; and **Pitching+ sits right after Pitcher** with a red rule after it
@@ -5065,6 +5066,16 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   day rows carry `wk` (its layout names it); past seasons' day files keep their layout, so a window on one still prices the reach as a walk until
   a rescore. `hist/career-bb.js`, `similar.js` and `home.js` regenerated. Early 2026: 4.14 → 4.09, the start 3.77 → 2.79; the biggest 300+ BF
   moves are ~0.1 (Burke 4.02 → 3.93, Clippard 2015 5.16 → 5.02).
+* **The phone's table switch scrolls, and a pitcher's Raw / Stuff joins it (Sean, 25 Oct 2026, his card on a phone: "on mobile this is a drop
+  down, can we instead make it a scrollable bar exactly like this on mobile instead", then "could we also for pitchers make the raw vs stuff
+  button be that exact same thing and in that exact same area so it no longer sits on the header")**: the five tables are the desktop's row of
+  boxy buttons on a phone too — one row across the screen that scrolls sideways (`.sbviews` is `display: flex; overflow-x: auto`, no
+  scrollbar, the buttons `flex: 0 0 auto`), with the picked one brought into view when the row is wider than the screen. The 20 Oct
+  "Standard ▾" dropdown is gone, `.sbviewsdd` / `.sbviewdd` rules and all. The bar itself is **`viewBar(opts, cur, pick)`**, which
+  `seasonBlock` draws for both sides: a hitter's five tables, and a **pitcher's Raw / Stuff**, the same bar in the same spot over his season
+  table in place of the `Raw ▾` dropdown that sat beside Filters on the band — `pageHead` now passes `filtersTog(p, true)`. The old-style
+  popup card (`playerHead`, no season block — only the spring board still opens one) keeps its `Raw ▾`, since it has nowhere else to put it.
+  The page check clicks the bar on the hitter page and on the pitcher page, where it puts him back on Raw afterwards.
 
 ## 10. The football site moved out
 

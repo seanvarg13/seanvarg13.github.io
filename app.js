@@ -10581,7 +10581,7 @@
       inWin.push(["Raw / Stuff", sg]);
     }
     const twoWay = typeSeg(p);
-    if (o.entry && !isMulti(o.key)) fx.append(filtersTog(p, slim));
+    if (o.entry && !isMulti(o.key)) fx.append(filtersTog(p, true));   /* no Raw ▾ beside Filters any more: a pitcher picks his side over the season table (Sean, 25 Oct 2026) */
     // the bar runs the screen's full width with his name at the left (Sean, 9 Oct 2026: "make it go across the screen fully and add the player
     // name to it and do the same for mobile") — bleedBar stretches it past the page's side margins
     const bar = el("div", "pgbar pgbar3"), nm = el("h2", "pgbname", p.name); nm.id = "modal-title";
@@ -10722,6 +10722,9 @@
   // season_bb), loaded the first time a Statcast table is picked; per device
   let sbTable = (() => { try { const v = localStorage.getItem("draft2027.sbtable"); return ["std", "bbq", "bbd", "pd", "br"].includes(v) ? v : "std"; } catch (e) { return "std"; } })();
   const SB_VIEWS = [["std", "Standard", "Standard batting"], ["bbq", "Batted Ball Quality", "Batted ball quality"], ["bbd", "Batted Ball Distribution", "Batted ball distribution"], ["pd", "Plate Discipline", "Plate discipline"], ["br", "Baserunning", "Baserunning"]];
+  // a pitcher has no tables to switch between, so that spot carries his Raw / Stuff instead (Sean, 25 Oct 2026: "for pitchers make the raw vs
+  // stuff button be that exact same thing and in that exact same area so it no longer sits on the header")
+  const SIDE_VIEWS = [["raw", "Raw"], ["stuff", "Stuff"]];
   // column → its key in the file (hi: higher is better, lo: lower, neither: no heat map); "pa" columns are weighted by PA in a sum, the rest by BBE
   const SBX = { "Avg EV": { k: "ev", hi: 1 }, EV90: { k: "ev90", hi: 1 }, "Max EV": { k: "maxev", hi: 1, max: 1 }, "Hard-Hit%": { k: "hh", hi: 1 }, "Barrel%": { k: "brl", hi: 1 },
     "Sweet-Spot%": { k: "ss", hi: 1 }, "Bat Speed": { k: "bs", hi: 1 }, "FB EV": { k: "evfb", hi: 1 }, "LD EV": { k: "evld", hi: 1 }, "GB EV": { k: "evgb", hi: 1 },
@@ -11046,23 +11049,33 @@
     H: { G: 3562, PA: 15890, HR: 762, R: 2295, RBI: 2297, SB: 1406, AVG: 0.3664, OBP: 0.4817, SLG: 0.6897, OPS: 1.1636 },
     P: { W: 511, L: 316, G: 1252, GS: 815, IP: 7356, H: 7092, HR: 522, BB: 2795, K: 5714, ERA: 1.82, WHIP: 0.9678 } };
   const SB_RECORD_LO = new Set(["ERA", "WHIP"]);
+  // the switch itself, one row of boxy buttons with the picked one blue. A phone scrolls it sideways instead of folding it into a dropdown
+  // (Sean, 25 Oct 2026: "on mobile this is a drop down, can we instead make it a scrollable bar exactly like this on mobile instead"), so the
+  // picked one is brought into view when the row is wider than the screen.
+  function viewBar(opts, cur, pick) {
+    const bar = el("div", "sbviews");
+    for (const [k, lab] of opts) {
+      const bt = el("button", "sbview" + (cur === k ? " on" : ""), lab); bt.type = "button"; bt.setAttribute("aria-pressed", String(cur === k));
+      bt.addEventListener("click", (e) => { e.stopPropagation(); pick(k); });
+      bar.append(bt);
+    }
+    requestAnimationFrame(() => {
+      const on = bar.querySelector(".sbview.on");
+      if (!on || !bar.isConnected || bar.scrollWidth <= bar.clientWidth + 1) return;
+      const r = on.getBoundingClientRect(), br = bar.getBoundingClientRect();
+      bar.scrollLeft += r.left - br.left - (br.width - r.width) / 2;
+    });
+    return bar;
+  }
   function seasonBlock(p, o) {
     const H = p.type === "H", box = el("section", "sblock");
     const view = H ? sbTable : "std";
-    if (H) {   // the table switch, at the foot of the space over the table (Sean, 8 Oct 2026)
-      const bar = el("div", "sbviews");
-      const pick = (k) => { if (sbTable === k) return; sbTable = k; try { localStorage.setItem("draft2027.sbtable", k); } catch (er) { /* private window */ } if (k !== "std") sbKind = "reg"; render(); };
-      if (mobileView()) {   // a phone: one "Standard ▾" in the Leaderboard's Filters dress (Sean, 20 Oct 2026) — the five buttons took three rows over the table
-        bar.classList.add("sbviewsdd");
-        const bt = el("button", "btn btn-quiet tbtn sbviewdd", SB_VIEWS.find((v) => v[0] === view)[1] + " ▾"); bt.type = "button";
-        bar.append(ddList(bt, SB_VIEWS.map(([k, lab]) => [k, lab]), view, pick));
-      } else for (const [k, lab] of SB_VIEWS) {
-        const bt = el("button", "sbview" + (view === k ? " on" : ""), lab); bt.type = "button"; bt.setAttribute("aria-pressed", String(view === k));
-        bt.addEventListener("click", (e) => { e.stopPropagation(); pick(k); });
-        bar.append(bt);
-      }
-      box.append(bar);
-    }
+    // the table switch, at the foot of the space over the table (Sean, 8 Oct 2026); a pitcher's Raw / Stuff rides in that same spot, in the
+    // same dress, and is off the band above (Sean, 25 Oct 2026)
+    if (H) box.append(viewBar(SB_VIEWS.map(([k, lab]) => [k, lab]), view,
+      (k) => { if (sbTable === k) return; sbTable = k; try { localStorage.setItem("draft2027.sbtable", k); } catch (er) { /* private window */ } if (k !== "std") sbKind = "reg"; render(); }));
+    else box.append(viewBar(SIDE_VIEWS, stuffSide() ? "stuff" : "raw",
+      (k) => { if ((stuffSide() ? "stuff" : "raw") === k) return; state.cardSide = k; savePrefs(); render(); }));
     const sx = view !== "std";   // a Statcast table: regular season only, read from hist/career-bb.js
     if (sx) ensureScript("hist/career-bb.js", sbxReady);
     const hd = el("div", "sbhead"); hd.append(el("h3", "sbtitle", H ? SB_VIEWS.find((v) => v[0] === view)[2] : "Standard pitching"));
