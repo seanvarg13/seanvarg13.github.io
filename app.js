@@ -8266,7 +8266,23 @@
     const box = el("div", "rollbox uerabox brbox"), hd = el("div", "rollhd"); hd.append(el("span", "rollname", "Expected vs actual"), el("span", "rollsub", "what each piece expects beside what happened, and how much of his wOBA − xwOBA gap each one accounts for, biggest first")); box.append(hd);
     // in his parks when the site's xwOBA is (18 Oct 2026): the expected pieces with his parks on them, the actual ones as they happened
     const inPk = !!(t.parkIn && t.pk && PK_KEYS.some((k) => m[k] != null)), nzw = inPk ? "in his parks, as it happened" : "at a neutral park";
-    const { tb, fin, wrap } = brTable(null, [["Piece", "l"], ["Expected", "", inPk ? "what his skills read in his parks — each expected piece with his parks' residual on it, as in his xwOBA" : "what his skills read at a neutral park"], ["Actual", "", inPk ? "what happened, in his parks — his raw rates; filled with his percentile on it among the pool's qualifiers" : "what happened, at a neutral park — his parks' effect on each piece taken out, ball by ball (the In his parks row has his raw wOBA); filled with his percentile on it among the pool's qualifiers"], ["League", "", "the season's 300+ PA hitters' own rate on that piece, as the build-up above measures him against"], ["Diff", "", inPk ? "actual − expected, both in his parks (the park moves both sides alike, so the gap is the same as at a neutral park)" : "actual − expected, both park-neutral"], [wrcOn() ? "± wRC+" : "± wOBA", "", wsLab("how many wOBA points this piece's gap moved his wOBA away from his xwOBA (+ = it raised his wOBA)")], ["Share", "", "this piece's part of all the movement between his xwOBA and his wOBA, whichever way it pushed (the ± column says which) — the rows add to 100%"]], "twvs");
+    // two comparisons on one line, a blank column apart (Sean, 25 Oct 2026: "expected (heat mapped), actual, differential, and then have an
+    // empty column, then have actual (heat mapped), league avg, differential, then have a blank column again, then have the +/- woba and then
+    // have the final column be the build up on top of the league avg woba like it does with the expected table"): his skills against what
+    // happened, then what happened against the league, and last the running wOBA his actual pieces build from the league's — the build-up
+    // above does the same with his expected ones. Share is gone with the room it took.
+    const UN = wrcOn() ? "wRC+" : "wOBA";
+    const { tb, fin, wrap } = brTable(null, [["Piece", "l"],
+      ["Expected", "", (inPk ? "what his skills read in his parks — each expected piece with his parks' residual on it, as in his xwOBA" : "what his skills read at a neutral park") + "; filled with his percentile on it among the pool's qualifiers' own expected pieces"],
+      ["Actual", "xact", inPk ? "what happened, in his parks — his raw rates" : "what happened, at a neutral park — his parks' effect on each piece taken out, ball by ball (the In his parks row has his raw wOBA)"],
+      ["Diff", "", inPk ? "actual − expected, both in his parks (the park moves both sides alike, so the gap is the same as at a neutral park)" : "actual − expected, both park-neutral"],
+      ["", "tvgap"],
+      ["Actual", "", "the same number again, filled with his percentile on it among the pool's qualifiers"],
+      ["League", "xact", "the season's 300+ PA hitters' own rate on that piece, as the build-up above measures him against"],
+      ["Diff", "", "actual − the league's"],
+      ["", "tvgap"],
+      ["± " + UN, "", wsLab("how many wOBA points this piece's gap moved his wOBA away from his xwOBA (+ = it raised his wOBA)")],
+      [UN, "", wsLab("the running wOBA: the league's pieces with his actual ones put in, one row at a time (every order averaged, as the ± column is), landing on his wOBA — the build-up above does it with his expected pieces")]], "twvs");
     const hr = v.ctx && v.ctx.HR != null ? v.ctx.HR : null, ab = v.ab || 0;
     const actHf = hr != null && t.I.fbn ? 100 * hr / t.I.fbn : null;
     const actTph = hr != null && m.ba != null && m.slg != null && ab && m.ba * ab - hr > 0 ? (m.slg * ab - 4 * hr) / (m.ba * ab - hr) : null;
@@ -8312,9 +8328,6 @@
     // 12 Oct against the batted-ball model is gone with it)
     const rest = wAct != null ? R3(R3(wAct) - R3(m.txw) - ks.reduce((a0, k) => a0 + eff[k], 0)) : null;
     const effStyle = (d) => { const tt = Math.min(1, Math.abs(d) / 0.020), mix = (a0, b0) => a0.map((x, i) => Math.round(x + (b0[i] - x) * tt)); const c = mix([214, 212, 206], d > 0 ? [216, 33, 41] : [54, 97, 173]); return { bg: `rgb(${c.join(",")})`, fg: tt > (d > 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };
-    // Share = each row's part of all the movement, whichever way it pushed — a signed share of the net gap read −160% when two pieces pulled
-    // against each other. It needs the rows first, so the cells are filled after the table is built
-    const shareCells = [];
     // the Actual column heat-mapped (Sean, 16 Oct 2026: "put the actual column before expected and heat map the actual column too"): his
     // park-neutral actual piece placed among the pool's qualifiers' own (each at a neutral park too), good way up — K% turned over
     const pq = (q, k) => (!inPk && q.tal && q.tal.pk ? q.tal.pk[k] : 0);   /* in his parks the qualifiers are ranked as they hit too */
@@ -8324,21 +8337,40 @@
       woba: (q) => q.m.woba ?? null };
     const ACT_DIR = { xk: -1, xbb: 1, xhf: 1, xbab: 1, tph: 1, woba: 1 };
     const pcA = (k, his) => { if (his == null || !ACT_OF[k]) return null; const vals = []; for (const q of pool("H").ref) { const x0 = ACT_OF[k](V(q)); if (x0 != null && isFinite(x0)) vals.push(x0); } return vals.length >= 20 ? pctAmong(vals, his, ACT_DIR[k]) : null; };
-    const actTd = (k, x, f) => { const td = el("td", "xact", x == null ? "–" : f(x)); const pc0 = k === "ibb" ? null : pcA(k, x); return pc0 == null ? td : heatTd(td, pc0); };
-    const shareTd = (d) => { const td = el("td", "xact"); if (d != null) shareCells.push([td, d]); return td; };
+    const actTd = (k, x, f, cls) => { const td = el("td", cls === undefined ? "xact" : cls || null, x == null ? "–" : f(x)); const pc0 = k === "ibb" ? null : pcA(k, x); return pc0 == null ? td : heatTd(td, pc0); };
+    // the expected column is heat-mapped too (Sean, 25 Oct 2026): his expected piece among the qualifiers' own, in his parks when the table is
+    const pqA = (q, k) => (inPk && q.tal && q.tal.pk ? q.tal.pk[k] : 0);
+    const EXP_OF = { xk: (q) => (q.tal && q.tal.xkFit != null ? q.tal.xkFit + pqA(q, "k") : null), xbb: (q) => (q.tal && q.tal.xbbFit != null ? q.tal.xbbFit + pqA(q, "bb") : null),
+      xhf: (q) => (q.tal && q.tal.xhf != null ? q.tal.xhf + pqA(q, "hr") : null), xbab: (q) => (q.tal && q.tal.xbab != null ? q.tal.xbab + pqA(q, "bab") / 1000 : null),
+      tph: (q) => (q.tal && q.tal.tph != null ? q.tal.tph + pqA(q, "xb") : null), woba: (q) => q.m.txw ?? null };
+    const pcE = (k, his) => { if (his == null || !EXP_OF[k]) return null; const vals = []; for (const q of pool("H").ref) { const x0 = EXP_OF[k](V(q)); if (x0 != null && isFinite(x0)) vals.push(x0); } return vals.length >= 20 ? pctAmong(vals, his, ACT_DIR[k]) : null; };
+    const expTd = (k, x, f) => { const td = el("td", null, x == null ? "–" : f(x)); const pc0 = k === "ibb" ? null : pcE(k, x); return pc0 == null ? td : heatTd(td, pc0); };
+    const gapTd = () => el("td", "tvgap");
     const ptsE = (d) => (wrcOn() ? wsD(d) : pts(d));
     const effTd = (d, tot) => { const td = el("td", "kd", d == null ? "" : ptsE(d)); if (d != null && !tot) { const s2 = effStyle(d); td.style.background = s2.bg; td.style.color = s2.fg; td.classList.add("heat"); } return td; };
     // a piece's name, tapped, opens its note in a row under it, as the build-ups' steps do (a phone has no hover)
     const noteTd = (lab, tip, tr) => { const td = el("td", "l nm"), bt = el("button", "knotebtn", lab); bt.type = "button"; bt.setAttribute("aria-expanded", "false");
       bt.addEventListener("click", (e) => { e.stopPropagation(); const nx = tr.nextElementSibling;
         if (nx && nx.classList.contains("knote")) { nx.remove(); bt.setAttribute("aria-expanded", "false"); return; }
-        const nr = el("tr", "knote"), nc = el("td"), sc = tr.closest(".brscroll"), tx = el("div", null, tip); nc.colSpan = 7;
+        const nr = el("tr", "knote"), nc = el("td"), sc = tr.closest(".brscroll"), tx = el("div", null, tip); nc.colSpan = 11;
         /* the table scrolls sideways on a phone, so the note sits in the visible part of it */
         if (sc) { tx.style.position = "sticky"; tx.style.left = "10px"; tx.style.width = Math.max(200, sc.clientWidth - 22) + "px"; }
         nc.append(tx); nr.append(nc); tr.after(nr); bt.setAttribute("aria-expanded", "true"); });
       td.append(bt); return td; };
     const ex = (z, d) => (z == null || !inPk ? z : z + d);   /* an expected piece in his parks */
     const lgOf = { xk: lgRatesH().k ?? null, xbb: L.bb, xhf: L.hr && L.hr.hrfb, xbab: L.xbabip, tph: L.tph, ibb: L.ibbr };   /* the league's own rate on each piece (Sean, 25 Oct 2026: "show the xwoba build up vs the league avg like the expected table shows") */
+    // the running column: the league's own pieces, then his actual ones put in one at a time, every order averaged (the ± column's arithmetic,
+    // from a different start) — so the rows walk the league's wOBA up or down to his. What the table doesn't break out (his hit-by-pitch rate,
+    // how often he puts the ball in the air, the fixed weights) rides in Everything else, so the last step lands on his wOBA exactly
+    const lgC = { xk: lgOf.xk, xbb: L.bb, hbp: L.hbp, xhf: L.hr && L.hr.hrfb, fbs: L.fbs, xbab: L.xbabip, tph: L.tph, ibb: 0 };
+    const lgOK = Object.values(lgC).every((x) => x != null);
+    const effL = {}; for (const k of ks) effL[k] = 0;
+    if (lgOK) { for (const o of P) { const c = Object.assign({}, lgC); let pv = wobI(c); for (const k of o) { c[k] = actS[k]; const w0 = wobI(c); effL[k] += (w0 - pv) / P.length; pv = w0; } }
+      for (const k of ks) effL[k] = R3(effL[k]); }
+    const lgW = lgOK ? R3(wobI(lgC)) : null;
+    const restL = lgOK && wAct != null ? R3(R3(wAct) - lgW - ks.reduce((a0, k) => a0 + effL[k], 0)) : null;
+    let run = lgW;
+    const runTd = (d) => { if (run == null || d == null) return el("td", "krk"); run = R3(run + d); return el("td", "krk", fw(run)); };
     const pieces = [["xK%", "xk", ex(t.xkFit, pk && pk.k), actS.xk, pct1, (z) => z.toFixed(1), `expected is the strikeout fit alone${inPk ? " with his parks on it" : ""}; his xwOBA uses half his K% and half the fit, so the ± is what his whole K% did beyond that blend (his K% ${nzw})`],
                     ["xBB%", "xbb", ex(t.xbbFit, pk && pk.bb), actS.xbb, pct1, (z) => z.toFixed(1), `expected is the walk fit alone${inPk ? " with his parks on it" : ""}; his xwOBA uses half his BB% and half the fit, so the ± is what his whole BB% did beyond that blend (his BB% ${nzw})`],
                     ["HR/FB", "xhf", ex(t.xhf, pk && pk.hr), actS.xhf, pct1, (z) => z.toFixed(1), `home runs per fly ball + popup ${nzw} against what his exit velocity deserves${inPk ? " in the same parks" : ""}`],
@@ -8351,21 +8383,24 @@
     for (const [lab, k, a, x, f, fd, tip] of pieces) {
       const tr = el("tr"); tr.title = tip;
       const lg = lgOf[k];
-      tr.append(noteTd(lab, tip, tr), el("td", null, a == null ? "–" : f(a)), actTd(k, x, f), el("td", "xact", lg == null ? "–" : f(lg)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), effTd(k in eff ? eff[k] : null), shareTd(k in eff ? eff[k] : null));
+      tr.append(noteTd(lab, tip, tr), expTd(k, a, f), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), gapTd(),
+                actTd(k, x, f, ""), el("td", "xact", lg == null ? "–" : f(lg)), el("td", null, lg == null || x == null ? "–" : sg(x - lg, fd)), gapTd(),
+                effTd(k in eff ? eff[k] : null), runTd(k in effL ? effL[k] : 0));
       tb.append(fin(tr));
     }
     if (rest != null) { const tr = el("tr"); tr.title = "what's left between his pieces put back together at their actual values and his real wOBA: the build's fixed linear weights, triples, sacrifice flies and the season's scale — small, and not about his skill";
-      tr.append(el("td", "l nm", "Everything else"), el("td"), el("td", "xact"), el("td", "xact"), el("td"), effTd(rest), shareTd(rest)); tb.append(fin(tr)); }
+      tr.append(el("td", "l nm", "Everything else"), el("td"), el("td", "xact"), el("td"), gapTd(), el("td"), el("td", "xact"), el("td"), gapTd(), effTd(rest), runTd(restL)); tb.append(fin(tr)); }
     for (const [lab, a, x, f, fd] of [[wsLab("wOBA"), m.txw, wAct, (z) => fw(z), (z) => (wrcOn() ? Math.abs(wrcPts(z)).toFixed(0) : fmtX(z))]]) {   /* his wOBA against his xwOBA, both in his parks (or both at a neutral park under the switch) */
       const tr = el("tr", "tot"); tr.title = inPk ? `his wOBA as it happened against his xwOBA, both in his parks (his parks added ${pts(pkEff)} to his wOBA and about the same to his xwOBA)` : pk ? `his wOBA at a neutral park: his ${f3(m.woba)} less what his parks did to it (${pts(pkEff)}, the row under)` : "";
-      tr.append(el("td", "l nm", lab), el("td", null, a == null ? "–" : f(a)), actTd("woba", x, f), el("td", "xact", L.woba == null ? "–" : f(L.woba)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), effTd(a != null && x != null ? x - a : null, true), el("td", null, shareCells.length ? "100%" : ""));
+      tr.append(el("td", "l nm", lab), expTd("woba", a, f), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), gapTd(),
+                actTd("woba", x, f, ""), el("td", "xact", L.woba == null ? "–" : f(L.woba)), el("td", null, L.woba == null || x == null ? "–" : sg(x - L.woba, fd)), gapTd(),
+                effTd(a != null && x != null ? x - a : null, true), el("td", "krk", x == null ? "" : f(x)));
       tb.append(fin(tr));
     }
     // what his parks added, after the park-neutral wOBA (the raw wOBA is here): the pieces put back together with the park residuals on them
     if (pk && !inPk && m.woba != null) { const tr = el("tr", "pkrow"), tip = `his wOBA in his parks: ${parkPieces(pk)} — where he hit: ${parkWhere(p, v)}. Home runs, hits and bases ball by ball (each of his balls in play at the park it was hit in against the same ball at a neutral park: hist/parks.js's cells by park, batting side, batted-ball type, direction and exit velocity), strikeouts and walks by the park's residual per PA where he hit`;
-      tr.title = tip; tr.append(noteTd("In his parks", tip, tr), el("td", "xact", parkTop(p, v)), el("td", "xact", fw(m.woba)), el("td", "xact"), el("td", null, sg(pkEff, (z) => (wrcOn() ? Math.abs(wrcPts(z)).toFixed(0) : fmtX(z)))), el("td", "kd", ptsE(pkEff)), el("td", "xact", "")); tb.append(fin(tr)); }
-    { const tot = shareCells.reduce((a0, [, d]) => a0 + Math.abs(d), 0);
-      for (const [td, d] of shareCells) td.textContent = tot >= 0.002 ? Math.round(100 * Math.abs(d) / tot) + "%" : "–"; }
+      tr.title = tip; tr.append(noteTd("In his parks", tip, tr), el("td", "xact", parkTop(p, v)), el("td", "xact", fw(m.woba)), el("td", null, sg(pkEff, (z) => (wrcOn() ? Math.abs(wrcPts(z)).toFixed(0) : fmtX(z)))), gapTd(),
+                el("td"), el("td", "xact"), el("td"), gapTd(), el("td", "kd", ptsE(pkEff)), el("td", "krk", fw(m.woba))); tb.append(fin(tr)); }
     box.append(wrap); w.append(box);
     return w;
   }

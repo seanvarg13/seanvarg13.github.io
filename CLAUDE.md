@@ -5113,10 +5113,16 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     xwOBA (`HEAD.key`, or wOBA at a level without the model), so Rankings / Draft open "by xwOBA".
   - **Out of the build**: `build_career.py`'s `aaa_talent()` and the transaction-log helper that kept rehab stints out of it (`tx_season`,
     `TX_CALL`), and **`hist/aaa-tw.js` is deleted**. Nothing reads it any more.
-  - **Expected vs actual** (the xwOBA tab's second table) now runs **Piece · Expected · Actual · League · Diff · ± wOBA · Share**: the two
-    columns swapped back (they had been Actual first since 16 Oct), and a **League** column carries the season's qualified hitters' own rate on
-    each piece (`lgRatesH().k`, `L.bb`, `L.hr.hrfb`, `L.xbabip`, `L.tph`, `L.ibbr`, `L.woba`), in the build-up's muted dress, so the table
-    measures him against the league the way the build-up above it does. Diff is still actual − expected; the note row spans 7 columns now.
+  - **Expected vs actual** (the xwOBA tab's second table) now runs **Piece · Expected · Actual · Diff ·   · Actual · League · Diff ·   ·
+    ± wOBA · wOBA** (Sean, the same evening, with the column list in his own words): **two comparisons a blank column apart** — his skills
+    against what happened, then what happened against the league — and the running build-up last. Expected leads and is **heat-mapped** too
+    (`pcE` / `EXP_OF`: his expected piece among the qualifiers' own expected ones, with each man's park residual on it when the table is in his
+    parks); the Actual column is printed twice, muted in the first pair and heat-mapped in the second. **League** is the season's qualified
+    hitters' own rate on each piece (`lgRatesH().k`, `L.bb`, `L.hr.hrfb`, `L.xbabip`, `L.tph`, `L.ibbr`, `L.woba`). The last column is the
+    **running wOBA his actual pieces build from the league's** (`lgC` → `actS`, the same every-order average as the ± column but from the
+    league's end; Everything else carries what the table doesn't break out — his HBP rate, how often he puts the ball in the air, the fixed
+    weights — so the last step lands on his wOBA exactly), as the build-up above does it with his expected pieces. **Share is gone** with the
+    room it took; the gutters are `td.tvgap` (14px, nothing in them) and the note row spans 11 columns.
 
 ## 10. The football site moved out
 
