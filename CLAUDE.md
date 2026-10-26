@@ -5144,6 +5144,14 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   own; the xwOBA build-up's (22.1) is its blend of the 20+ PA league's K% and xK%. The 11-column Expected vs actual table and its CSS (`.twvs`,
   `.tvgap`, the frozen Piece column) are gone; the entries above about it are history.
 
+* **No window note over the Leaderboard; the Splits rows stacked (Sean, 26 Oct 2026, the desktop Leaderboard on last 100 PA: "that text in the top
+  left is making the table appear much smaller than it can on desktop, and i think it is unnecessary and repeats what is already shown", then "on the
+  splits filter pop up, put the pitcher handedness and the home vs away on different rows")**: the toolbar's `#winnote` ("each player's last 100 PA")
+  is blank on the Leaderboard / Recent (`renderDates`, under `onePage()`), so the toolbar row it had kept open on a desktop (and an empty one on a
+  phone) hides and the table starts that much higher; the count line over the table already names the window, and it now says "loading
+  game-by-game data…" while the day rows load (`renderPager`'s `bits`). Rankings / Draft mode keep the note. The Splits dropdown's two segments,
+  All pitchers · vs LHP · vs RHP and Home + away · Home · Away, are rows of their own (`.panel .lbsplit` a column, 10px apart).
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

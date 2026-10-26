@@ -2646,7 +2646,10 @@
     $("dlastunit").textContent = lastUnit(); $("dfrom").disabled = !!lastN(state.win); $("dfrom").title = lastN(state.win) ? "Clear Last to use a start date" : "Blank = season start";
     $("dclear").hidden = !winRequested();
     const w = winIdx();
-    $("winnote").textContent = state.daysLoading ? "Loading game-by-game data…" : w ? (w.last ? `each player's ${winLabel()}` : `${winLabel()} · ${w.hi - w.lo + 1} game day${w.hi === w.lo ? "" : "s"}`) : "";
+    // not on the Leaderboard / Recent (Sean, 26 Oct 2026: "that text in the top left is making the table appear much smaller than it can on
+    // desktop ... it is unnecessary and repeats what is already shown"): the count line over the table names the window and says when the
+    // day rows are loading, so the note's own row is gone there
+    $("winnote").textContent = onePage() ? "" : state.daysLoading ? "Loading game-by-game data…" : w ? (w.last ? `each player's ${winLabel()}` : `${winLabel()} · ${w.hi - w.lo + 1} game day${w.hi === w.lo ? "" : "s"}`) : "";
   }
   function renderMin() {
     const g = groupFor(state.pos);
@@ -3359,6 +3362,7 @@
         if (state.mode === "leaderboard") { const sp = state.lbSplit; if (sp.hand !== "all") bits.push(`vs ${sp.hand}H${pit ? "B" : "P"}`); if (sp.venue !== "all") bits.push(sp.venue); }
         if (state.teamF) bits.push(state.teamF.kind === "team" ? TEAM_NAMES[state.teamF.v] || state.teamF.v : state.teamF.v);
         if (state.q) bits.push(`“${state.q}”`);
+        if (state.daysLoading) bits.push("loading game-by-game data…");
       }
       const who = onePage() ? ` ${pit ? "pitchers" : "hitters"} · ${od ? (mobileView() ? fmtDate(od) : gameDayName(od)) : DS.season}${state.mode === "leaderboard" ? (od ? (mobileView() ? "" : " · everyone who played") : ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}`) : ""}${bits.map((b) => " · " + b).join("")}` : "";   /* its own line since 25 Oct 2026, so a phone reads it too */
       const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}${state.mode === "draft" ? (auc.on ? " · tap a name to record his sale, tap again to undo" : " · tap to draft, tap again to undo") : ""}`; })() : null;   // the board: tiers · tiered · listed (Draft mode has no buttons)
