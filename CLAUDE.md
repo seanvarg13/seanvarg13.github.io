@@ -5131,6 +5131,19 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `styles.css`). The note a tapped piece opens isn't frozen (it spans the table; its text already sits in the visible part). A desktop's table
   fits without sliding; a phone's slides ~215px.
 
+* **A wOBA build-up in Expected vs actual's place (Sean, 26 Oct 2026, Yordan's xwOBA tab on his phone: "Could you instead just make it a woba
+  build up table and make identical to the expected xwoba table but use actual instead of expected")**: the xwOBA tab is two `buildUp` tables, the
+  xwOBA build-up and under it **wOBA build-up** (`wobaBuildUp(p, v)`, after `xwBuildUp`): Step · His · Lg · ± wOBA · wOBA, the same dress, steps
+  in the same order with what happened in each — K%, BB% (intentional walks in), HBP, HR/FB, Fly balls, BABIP, Extra bases (total bases per non-HR
+  hit) — each at a neutral park, swapped one at a time into the season's 300+ PA hitters' own actual pieces (`L.k` / `L.babip` joined
+  `talentLeague`'s list; `L.tphA` the league's bases per non-HR hit), His filled by his percentile among the pool's qualifiers on the same
+  park-neutral number. Then **IBB** (his intentional walks per PA beside the league's, the walks wOBA leaves out coming back off) and **Everything
+  else** (the fixed weights, triples, sacrifice flies, the scale) land on his park-neutral wOBA (light blue), and **Park factor** on his wOBA
+  (gold). Every ± is the step between rounded running numbers, so the column adds up. Yordan 2026: .329 → K% +19, BB% +22, HBP +1, HR/FB +28,
+  fly balls +20, BABIP +23, extra bases +1, IBB −10, everything else −4 → .429 park-neutral, his parks 0 → .429. The Lg K% (21.1) is the 300+ PA hitters'
+  own; the xwOBA build-up's (22.1) is its blend of the 20+ PA league's K% and xK%. The 11-column Expected vs actual table and its CSS (`.twvs`,
+  `.tvgap`, the frozen Piece column) are gone; the entries above about it are history.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

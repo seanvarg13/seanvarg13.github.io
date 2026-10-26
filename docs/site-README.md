@@ -1175,3 +1175,12 @@ qualified hitters; League is their own rate on each piece. The last column start
 time, landing on his wOBA — the build-up above it does the same with his expected pieces. (The Share column is gone.)
 
 The table's **Piece** column is frozen: on a phone, where the table slides sideways, the piece names stay at the left with a red edge and the numbers slide under them.
+
+### A wOBA build-up in place of Expected vs actual (26 Oct 2026)
+
+The xwOBA tab's second table is now a **wOBA build-up**, laid out exactly like the xwOBA build-up above it — Step · His · Lg · ± wOBA · wOBA —
+but with what actually happened in each step: his K%, BB%, HBP rate, HR/FB, fly-ball share, BABIP and bases per non-HR hit, each at a neutral
+park, put in one at a time from the season's 300+ PA hitters' own. Then **IBB** takes off the intentional walks (wOBA leaves them out, the BB%
+row counted them), **Everything else** carries what the pieces don't (fixed weights, triples, sacrifice flies), landing on his park-neutral wOBA
+(light blue), and **Park factor** lands on his wOBA (gold). Read the two tables side by side: a row where his actual piece beat his expected one
+is where his wOBA got ahead of his xwOBA. The old Expected vs actual table is gone.
