@@ -7684,7 +7684,7 @@
     const ref = DS.players.filter((q) => q.type === "H" && (q.pa || 0) >= (DS.refPA || 300) && q.m), I = ref.map((q) => twInputs(q.m, q.ctx, q.pa, q.ab, q.ctx && q.ctx.HBP, q.bats));
     const wavg = (rows, f, wt) => { let s = 0, w = 0; for (const r of rows) { const v = f(r), x = wt(r); if (v == null || !isFinite(v) || !x) continue; s += v * x; w += x; } return w ? s / w : null; };
     const L = {};
-    for (const k of ["bb", "osw", "zsw", "ocon", "zcon", "zsn", "ev90", "ibbr", "fcon", "woba", "xbabip", "ld", "pu", "evgb", "evld", "spd", "oppo", "fb", "gb", "pullp", "slg"]) L[k] = wavg(I, (i) => i.m[k], (i) => i.pa);
+    for (const k of ["k", "babip", "bb", "osw", "zsw", "ocon", "zcon", "zsn", "ev90", "ibbr", "fcon", "woba", "xbabip", "ld", "pu", "evgb", "evld", "spd", "oppo", "fb", "gb", "pullp", "slg"]) L[k] = wavg(I, (i) => i.m[k], (i) => i.pa);
     // xSLG's (XSLG): the league's real bases per hit that isn't a home run, park-neutral, and its at-bats' sacrifice share
     { let tb = 0, h1 = 0; for (const i of I) { const m0 = i.m; if (m0.slg == null || m0.ba == null || i.hr == null || !i.ab) continue; const h = m0.ba * i.ab - i.hr; if (h <= 0) continue; tb += m0.slg * i.ab - 4 * i.hr - (m0.pkxb || 0) * h; h1 += h; } L.tphA = h1 ? tb / h1 : null; }
     L.o = wavg(I, (i) => (i.m.bb == null ? null : Math.max(0, (i.pa - i.ab) / i.pa - i.m.bb / 100 - (i.hbp || 0) / i.pa)), (i) => i.pa);
@@ -8255,153 +8255,64 @@
     w.append(isoSeasons(p, g));
     return w;
   }
+  // wOBA build-up (Sean, 26 Oct 2026, from Yordan's xwOBA tab: "make it a woba build up table and make identical to the expected xwoba table
+  // but use actual instead of expected"), in the Expected vs actual table's place: the xwOBA build-up's steps in its order, each with what
+  // happened — his K%, BB%, HBP, HR/FB, fly balls, BABIP and bases per non-HR hit, each at a neutral park — swapped into the league's own actual
+  // pieces one at a time; then the two things the pieces don't carry (intentional walks: BB% counts them and wOBA doesn't; Everything else:
+  // the fixed weights, triples, sacrifice flies, the scale), landing on his park-neutral wOBA, then his parks to his wOBA. Every ± is the step
+  // between the rounded running numbers, so the column adds up
+  function wobaBuildUp(p, v) {
+    const t = v.tal, m = v.m; if (!t || m.woba == null) return null;
+    const L = t.L, sc = L.scale, pk = t.pk && PK_KEYS.some((k) => m[k] != null) ? t.pk : null;
+    const wob = (c) => twRaw(Object.assign({}, c, { xbb: c.xbb - (c.ibb || 0) })) * sc;
+    const f3 = (x) => fmtX(x), pct1 = (x) => x.toFixed(1) + "%", sg1 = (z) => (z > 0 ? "+" : z < 0 ? "−" : "") + Math.abs(z).toFixed(1), pts = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x) * 1000);
+    const pkOf = (q, k) => (q.tal && q.tal.pk ? q.tal.pk[k] || 0 : 0);
+    // his actual pieces at a neutral park (m.babip already is); the same for each qualifier, for the His colour
+    const hfOf = (q) => (q.ctx && q.ctx.HR != null && q.tal && q.tal.I && q.tal.I.fbn ? 100 * q.ctx.HR / q.tal.I.fbn - pkOf(q, "hr") : null);
+    const tphOf = (q) => { const h0 = q.ctx && q.ctx.HR != null ? q.ctx.HR : null, a0 = q.ab || 0; return h0 != null && q.m.ba != null && q.m.slg != null && a0 && q.m.ba * a0 - h0 > 0 ? (q.m.slg * a0 - 4 * h0) / (q.m.ba * a0 - h0) - pkOf(q, "xb") : null; };
+    const GET = { xk: (q) => (q.m.k == null ? null : q.m.k - pkOf(q, "k")), xbb: (q) => (q.m.bb == null ? null : q.m.bb - pkOf(q, "bb")), hbp: (q) => (q.tal ? q.tal.hbp : null),
+      xhf: hfOf, fbs: (q) => (q.tal ? q.tal.fbs : null), xbab: (q) => q.m.babip ?? null, tph: tphOf };
+    const ref = pool("H").ref, pc = (k, his, dir) => { const vals = []; for (const q of ref) { const x0 = GET[k](V(q)); if (x0 != null && isFinite(x0)) vals.push(x0); } return pctAmong(vals, his, dir); };
+    const lg0 = { xk: L.k, xbb: L.bb, hbp: L.hbp, xhf: L.hr && L.hr.hrfb, fbs: L.fbs, xbab: L.babip, tph: L.tphA, ibb: 0 };
+    if (Object.values(lg0).some((x) => x == null)) return null;
+    const cur = Object.assign({}, lg0), me = Object.assign({}, v, { tal: t });
+    const vl = viewLabel("H");
+    const W = wrcOn(), fwv = (x) => fw(x), ptsW = W ? (x) => wsD(x) : pts;
+    const b = buildUp(wsLab(`wOBA build-up · ${DS.season}${DS.level && DS.level !== "MLB" ? " " + (DS.levelName || DS.level) : ""}`), `${vl && vl !== "full season" ? vl + " · " : ""}${v.pa} PA · ± in ${W ? "wRC+" : "wOBA"} points, against the season's 300+ PA hitters`, W ? "wRC+" : "wOBA", fwv, ptsW, 0.020);
+    const R3 = (x) => Math.round(x * 1000) / 1000; let prev = R3(wob(cur));
+    const step = (to) => { const c = R3(to), d = c - prev; prev = c; return d; };
+    b.row("League", null, wob(cur), fwv, null, "→", wob(cur), `the season's 300+ PA hitters' own pieces, put together the same way — where the build-up starts (their wOBA: ${L.woba != null ? f3(L.woba) : "–"})`);
+    const nzp = (k, raw, f) => (pk && pk[k] ? `, at a neutral park (his ${f(raw)} less his parks' ${sg1(pk[k])} on it)` : "");
+    const steps = [
+      ["K%", "xk", GET.xk(me), L.k, pct1, -1, `his strikeout rate${m.k != null ? nzp("k", m.k, pct1) : ""}`],
+      ["BB%", "xbb", GET.xbb(me), L.bb, pct1, 1, `his walk rate, intentional walks included${m.bb != null ? nzp("bb", m.bb, pct1) : ""} — the IBB row takes those back off, since wOBA leaves them out`],
+      ["HBP", "hbp", t.hbp, L.hbp, (x) => pct1(100 * x), 1, "his hit-by-pitch rate per plate appearance"],
+      ["HR/FB", "xhf", hfOf(me), L.hr.hrfb, pct1, 1, `his home runs per fly ball + popup at a neutral park — each fly ball against the same ball at a neutral park${pk && pk.hr ? ` (his parks added ${sg1(pk.hr)})` : ""}`],
+      ["Fly balls", "fbs", t.fbs, L.fbs, (x) => pct1(100 * x), 1, "fly balls + popups per ball in play: how often a home run gets its chance"],
+      ["BABIP", "xbab", m.babip ?? null, L.babip, f3, 1, `his hits on balls in play that aren't home runs, at a neutral park${m.babipr != null ? ` (his raw BABIP ${f3(m.babipr)})` : ""}`],
+      ["Extra bases", "tph", tphOf(me), L.tphA, (x) => x.toFixed(2), 1, `total bases per hit that isn't a home run, at a neutral park${pk && pk.xb ? ` (his parks added ${sg1(pk.xb)})` : ""}`]];
+    for (const [lab, k, his, lg, f, dir, tip] of steps) {
+      if (his == null || !isFinite(his)) { b.row(lab, null, lg, f, null, null, null, tip + " — not on record for this view, so the league's stands"); continue; }
+      cur[k] = his; const run = wob(cur); b.row(lab, his, lg, f, pc(k, his, dir), step(run), run, tip);
+    }
+    if (m.ibbr != null && L.ibbr != null) { cur.ibb = m.ibbr - L.ibbr; const run = wob(cur);
+      b.row("IBB", m.ibbr, L.ibbr, pct1, null, step(run), run, "intentional walks per plate appearance, his beside the league's. wOBA leaves them out, while the BB% row priced every walk — so his rate over the league's comes back off here (the scale already takes out the league's share)"); }
+    // what the pieces don't carry, so the build-up lands on his wOBA exactly: the build's fixed linear weights, triples, sacrifice flies, the scale
+    const pkEff = pk ? wob(Object.assign({}, cur, { xk: cur.xk + pk.k, xbb: cur.xbb + pk.bb, xhf: cur.xhf + pk.hr, xbab: cur.xbab + pk.bab / 1000, tph: cur.tph + pk.xb })) - wob(cur) : 0;
+    const wN = R3(m.woba - pkEff);
+    b.row("Everything else", null, null, fwv, null, step(wN), wN, "what's left between his pieces put back together and his real wOBA: the build's fixed linear weights, triples, sacrifice flies and the season's scale — small, and not about his skill");
+    if (pk) {
+      b.mark(wsLab("Park-neutral wOBA"), "kneut");
+      b.row("Park factor", parkTop(p, v), null, (x) => x, null, step(m.woba), m.woba, `his parks put back on every piece: ${parkPieces(pk)} — ${parkWhere(p, v)}. Home runs, hits and bases ball by ball (each of his balls at the park it was hit in against the same ball at a neutral park), strikeouts and walks by the parks' residual per PA where he hit`);
+    }
+    b.mark(wsLab("wOBA"));
+    return b.done();
+  }
   function renderTalentTab(p) {
-    const w = el("div", "xbtab"), v = V(p), t = v.tal, m = v.m;
-    if (!t) { w.append(el("p", "note", DS.multi ? "No xwOBA build-up for a span of seasons — pick one season." : oneDay() ? "One game day: the xwOBA here is the batted-ball model's for that game, as the Game Logs read it — a game is too small to build the skills from. Widen the dates for the build-up." : "No xwOBA build-up for this view — it needs tracked batted balls (exit velocity, the directional model) and a qualified pool.")); return w; }
-    const L = t.L, sc = L.scale, wob = (c) => twRaw(c) * sc;
-    const f3 = (x) => fmtX(x), pct1 = (x) => x.toFixed(1) + "%", pts = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x) * 1000);
-    const R3 = (x) => Math.round(x * 1000) / 1000;
+    const w = el("div", "xbtab"), v = V(p);
+    if (!v.tal) { w.append(el("p", "note", DS.multi ? "No xwOBA build-up for a span of seasons — pick one season." : oneDay() ? "One game day: the xwOBA here is the batted-ball model's for that game, as the Game Logs read it — a game is too small to build the skills from. Widen the dates for the build-up." : "No xwOBA build-up for this view — it needs tracked batted balls (exit velocity, the directional model) and a qualified pool.")); return w; }
     w.append(xwBuildUp(p, v));
-    // each piece beside what happened: the gap is what the number leaves out
-    const box = el("div", "rollbox uerabox brbox"), hd = el("div", "rollhd"); hd.append(el("span", "rollname", "Expected vs actual"), el("span", "rollsub", "what each piece expects beside what happened, and how much of his wOBA − xwOBA gap each one accounts for, biggest first")); box.append(hd);
-    // in his parks when the site's xwOBA is (18 Oct 2026): the expected pieces with his parks on them, the actual ones as they happened
-    const inPk = !!(t.parkIn && t.pk && PK_KEYS.some((k) => m[k] != null)), nzw = inPk ? "in his parks, as it happened" : "at a neutral park";
-    // two comparisons on one line, a blank column apart (Sean, 25 Oct 2026: "expected (heat mapped), actual, differential, and then have an
-    // empty column, then have actual (heat mapped), league avg, differential, then have a blank column again, then have the +/- woba and then
-    // have the final column be the build up on top of the league avg woba like it does with the expected table"): his skills against what
-    // happened, then what happened against the league, and last the running wOBA his actual pieces build from the league's — the build-up
-    // above does the same with his expected ones. Share is gone with the room it took.
-    const UN = wrcOn() ? "wRC+" : "wOBA";
-    const { tb, fin, wrap } = brTable(null, [["Piece", "l f1"],
-      ["Expected", "", (inPk ? "what his skills read in his parks — each expected piece with his parks' residual on it, as in his xwOBA" : "what his skills read at a neutral park") + "; filled with his percentile on it among the pool's qualifiers' own expected pieces"],
-      ["Actual", "xact", inPk ? "what happened, in his parks — his raw rates" : "what happened, at a neutral park — his parks' effect on each piece taken out, ball by ball (the In his parks row has his raw wOBA)"],
-      ["Diff", "", inPk ? "actual − expected, both in his parks (the park moves both sides alike, so the gap is the same as at a neutral park)" : "actual − expected, both park-neutral"],
-      ["", "tvgap"],
-      ["Actual", "", "the same number again, filled with his percentile on it among the pool's qualifiers"],
-      ["League", "xact", "the season's 300+ PA hitters' own rate on that piece, as the build-up above measures him against"],
-      ["Diff", "", "actual − the league's"],
-      ["", "tvgap"],
-      ["± " + UN, "", wsLab("how many wOBA points this piece's gap moved his wOBA away from his xwOBA (+ = it raised his wOBA)")],
-      [UN, "", wsLab("the running wOBA: the league's pieces with his actual ones put in, one row at a time (every order averaged, as the ± column is), landing on his wOBA — the build-up above does it with his expected pieces")]], "twvs");
-    const hr = v.ctx && v.ctx.HR != null ? v.ctx.HR : null, ab = v.ab || 0;
-    const actHf = hr != null && t.I.fbn ? 100 * hr / t.I.fbn : null;
-    const actTph = hr != null && m.ba != null && m.slg != null && ab && m.ba * ab - hr > 0 ? (m.slg * ab - 4 * hr) / (m.ba * ab - hr) : null;
-    const sg = (x, f) => { if (x == null) return "–"; const t0 = f(Math.abs(x)); return (/[1-9]/.test(t0) ? (x > 0 ? "+" : x < 0 ? "−" : "") : "") + t0; };   /* no sign on a gap that rounds to nothing */
-    // which pieces make wOBA differ from xwOBA (Sean, 12 Oct 2026: "add a piece that shows which pieces contribute the most to his wOBA being
-    // different than his xwoba"): the xwOBA build's pieces swapped one at a time from what the build uses to what happened (his actual K% and BB%
-    // for the half-and-half rates, his HR/FB, BABIP and bases per hit), each swap's change in wOBA averaged over every order of swapping — so a
-    // piece isn't credited more for going first and the shares add up exactly; what's left between that all-actual rebuild and his real wOBA
-    // (fixed linear weights, triples, sacrifice flies, the season's scale) is Everything else. Intentional walks are their own row
-    // intentional walks count in BB% but not in wOBA (its bookkeeping drops them), and the build's scale already takes out the league's share,
-    // so a hitter walked on purpose more than the league reads a wOBA under his pieces — his rate over the league's comes off the walks
-    // Stadium (Sean, 15 Oct 2026: "a stadium impact that accounts for all stadium related impacts to their woba like hr to fb impact babip impact
-    // elevation environment etc"): his parks' residual on each actual piece (K%, BB%, HR/FB, BABIP, bases per hit — the park table weighted by
-    // where he hit) is one more toggle in the swap: the actual pieces enter park-neutral, and Stadium puts the parks back. So the piece rows say
-    // what he did beyond the park, and the Stadium row what the parks did
-    // the park stripped out of the outputs (Sean, 15 Oct 2026: "I want stadium impacts stripped out of the outputs per se"): every actual piece
-    // enters park-neutral (m.babip already is; K%, BB%, HR/FB and bases per hit less his parks' effect on them), the wOBA row's actual is his
-    // park-neutral wOBA (his wOBA less what the parks did to it: the pieces put back together with and without the park residuals), and what his
-    // parks added is one row after it, outside the swap — the Stadium piece inside the swap lasted an hour
-    const pk = t.pk && PK_KEYS.some((k) => m[k] != null) ? t.pk : null;
-    const cur0 = { xk: t.xk, xbb: t.xbb, hbp: t.hbp, xhf: t.xhf, fbs: t.fbs, xbab: t.xbab, tph: t.tph, ibb: 0 };
-    const act = { xk: m.k == null ? null : m.k - (pk ? pk.k : 0), xbb: m.bb == null ? null : m.bb - (pk ? pk.bb : 0), xhf: actHf == null ? null : actHf - (pk ? pk.hr : 0), xbab: m.babip ?? null, tph: actTph == null ? null : actTph - (pk ? pk.xb : 0),
-                  ibb: m.ibbr != null && L.ibbr != null ? m.ibbr - L.ibbr : null }, ks = Object.keys(act).filter((k) => act[k] != null);
-    const wobI = (c) => wob(Object.assign({}, c, { xbb: c.xbb - c.ibb }));
-    const withPk = (c) => (pk ? Object.assign({}, c, { xk: c.xk + pk.k, xbb: c.xbb + pk.bb, xhf: c.xhf + pk.hr, xbab: c.xbab + pk.bab / 1000, tph: c.tph + pk.xb }) : c);
-    const cAct = Object.assign({}, cur0); for (const k of ks) cAct[k] = act[k];
-    const pkEff = pk ? wobI(withPk(cAct)) - wobI(cAct) : 0;   /* what his parks did to his wOBA, on his actual pieces */
-    const wobaN = m.woba == null ? null : Math.round(1000 * (m.woba - pkEff)) / 1000;   /* his park-neutral wOBA */
-    // the site's xwOBA carries his parks (18 Oct 2026), so the table works in his parks: every expected piece with his parks' residual on it and
-    // every actual piece as it happened (his raw K%, BB%, HR/FB, BABIP, bases per hit), the swap from one to the other, and the wOBA row his raw
-    // wOBA against his xwOBA — the park sits on both sides and drops out of the gap, so there's no park row. Under the park-neutral switch both
-    // sides are at a neutral park and the In his parks row after it carries his raw wOBA, as before
-    const sh = (c) => { const o = Object.assign({}, c); if (inPk) for (const [k, d] of [["xk", pk.k], ["xbb", pk.bb], ["xhf", pk.hr], ["xbab", pk.bab / 1000], ["tph", pk.xb]]) if (o[k] != null) o[k] += d; return o; };
-    const base0 = sh(cur0), actS = sh(act), wAct = inPk ? m.woba : wobaN;
-    const perms = (a) => (a.length <= 1 ? [a] : a.flatMap((x, i) => perms([...a.slice(0, i), ...a.slice(i + 1)]).map((r) => [x, ...r])));
-    const eff = {}; for (const k of ks) eff[k] = 0;
-    const P = perms(ks);
-    for (const o of P) { const c = Object.assign({}, base0); let prev = wobI(c); for (const k of o) { c[k] = actS[k]; const w0 = wobI(c); eff[k] += (w0 - prev) / P.length; prev = w0; } }
-    // rounded to whole wOBA points so the column adds up to the wOBA row's gap exactly (Sean on the BABIP build-up, 9 Oct: "getting lost with
-    // this math"); the rounding's odd point lands in Everything else
-    for (const k of ks) eff[k] = R3(eff[k]);
-    // BABIP is one row, the drivers' xBABIP against his BABIP (Sean, 15 Oct 2026: the drivers' number is the xBABIP; the noise / luck split of
-    // 12 Oct against the batted-ball model is gone with it)
-    const rest = wAct != null ? R3(R3(wAct) - R3(m.txw) - ks.reduce((a0, k) => a0 + eff[k], 0)) : null;
-    const effStyle = (d) => { const tt = Math.min(1, Math.abs(d) / 0.020), mix = (a0, b0) => a0.map((x, i) => Math.round(x + (b0[i] - x) * tt)); const c = mix([214, 212, 206], d > 0 ? [216, 33, 41] : [54, 97, 173]); return { bg: `rgb(${c.join(",")})`, fg: tt > (d > 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };
-    // the Actual column heat-mapped (Sean, 16 Oct 2026: "put the actual column before expected and heat map the actual column too"): his
-    // park-neutral actual piece placed among the pool's qualifiers' own (each at a neutral park too), good way up — K% turned over
-    const pq = (q, k) => (!inPk && q.tal && q.tal.pk ? q.tal.pk[k] : 0);   /* in his parks the qualifiers are ranked as they hit too */
-    const ACT_OF = { xk: (q) => (q.m.k == null ? null : q.m.k - pq(q, "k")), xbb: (q) => (q.m.bb == null ? null : q.m.bb - pq(q, "bb")),
-      xhf: (q) => (q.ctx && q.ctx.HR != null && q.tal && q.tal.I && q.tal.I.fbn ? 100 * q.ctx.HR / q.tal.I.fbn - pq(q, "hr") : null), xbab: (q) => (inPk ? q.m.babipr ?? q.m.babip : q.m.babip) ?? null,
-      tph: (q) => { const h0 = q.ctx && q.ctx.HR != null ? q.ctx.HR : null, a0 = q.ab || 0; return h0 != null && q.m.ba != null && q.m.slg != null && a0 && q.m.ba * a0 - h0 > 0 ? (q.m.slg * a0 - 4 * h0) / (q.m.ba * a0 - h0) - pq(q, "xb") : null; },
-      woba: (q) => q.m.woba ?? null };
-    const ACT_DIR = { xk: -1, xbb: 1, xhf: 1, xbab: 1, tph: 1, woba: 1 };
-    const pcA = (k, his) => { if (his == null || !ACT_OF[k]) return null; const vals = []; for (const q of pool("H").ref) { const x0 = ACT_OF[k](V(q)); if (x0 != null && isFinite(x0)) vals.push(x0); } return vals.length >= 20 ? pctAmong(vals, his, ACT_DIR[k]) : null; };
-    const actTd = (k, x, f, cls) => { const td = el("td", cls === undefined ? "xact" : cls || null, x == null ? "–" : f(x)); const pc0 = k === "ibb" ? null : pcA(k, x); return pc0 == null ? td : heatTd(td, pc0); };
-    // the expected column is heat-mapped too (Sean, 25 Oct 2026): his expected piece among the qualifiers' own, in his parks when the table is
-    const pqA = (q, k) => (inPk && q.tal && q.tal.pk ? q.tal.pk[k] : 0);
-    const EXP_OF = { xk: (q) => (q.tal && q.tal.xkFit != null ? q.tal.xkFit + pqA(q, "k") : null), xbb: (q) => (q.tal && q.tal.xbbFit != null ? q.tal.xbbFit + pqA(q, "bb") : null),
-      xhf: (q) => (q.tal && q.tal.xhf != null ? q.tal.xhf + pqA(q, "hr") : null), xbab: (q) => (q.tal && q.tal.xbab != null ? q.tal.xbab + pqA(q, "bab") / 1000 : null),
-      tph: (q) => (q.tal && q.tal.tph != null ? q.tal.tph + pqA(q, "xb") : null), woba: (q) => q.m.txw ?? null };
-    const pcE = (k, his) => { if (his == null || !EXP_OF[k]) return null; const vals = []; for (const q of pool("H").ref) { const x0 = EXP_OF[k](V(q)); if (x0 != null && isFinite(x0)) vals.push(x0); } return vals.length >= 20 ? pctAmong(vals, his, ACT_DIR[k]) : null; };
-    const expTd = (k, x, f) => { const td = el("td", null, x == null ? "–" : f(x)); const pc0 = k === "ibb" ? null : pcE(k, x); return pc0 == null ? td : heatTd(td, pc0); };
-    const gapTd = () => el("td", "tvgap");
-    const ptsE = (d) => (wrcOn() ? wsD(d) : pts(d));
-    const effTd = (d, tot) => { const td = el("td", "kd", d == null ? "" : ptsE(d)); if (d != null && !tot) { const s2 = effStyle(d); td.style.background = s2.bg; td.style.color = s2.fg; td.classList.add("heat"); } return td; };
-    // a piece's name, tapped, opens its note in a row under it, as the build-ups' steps do (a phone has no hover)
-    const noteTd = (lab, tip, tr) => { const td = el("td", "l nm f1"), bt = el("button", "knotebtn", lab); bt.type = "button"; bt.setAttribute("aria-expanded", "false");
-      bt.addEventListener("click", (e) => { e.stopPropagation(); const nx = tr.nextElementSibling;
-        if (nx && nx.classList.contains("knote")) { nx.remove(); bt.setAttribute("aria-expanded", "false"); return; }
-        const nr = el("tr", "knote"), nc = el("td"), sc = tr.closest(".brscroll"), tx = el("div", null, tip); nc.colSpan = 11;
-        /* the table scrolls sideways on a phone, so the note sits in the visible part of it */
-        if (sc) { tx.style.position = "sticky"; tx.style.left = "10px"; tx.style.width = Math.max(200, sc.clientWidth - 22) + "px"; }
-        nc.append(tx); nr.append(nc); tr.after(nr); bt.setAttribute("aria-expanded", "true"); });
-      td.append(bt); return td; };
-    const ex = (z, d) => (z == null || !inPk ? z : z + d);   /* an expected piece in his parks */
-    const lgOf = { xk: lgRatesH().k ?? null, xbb: L.bb, xhf: L.hr && L.hr.hrfb, xbab: L.xbabip, tph: L.tph, ibb: L.ibbr };   /* the league's own rate on each piece (Sean, 25 Oct 2026: "show the xwoba build up vs the league avg like the expected table shows") */
-    // the running column: the league's own pieces, then his actual ones put in one at a time, every order averaged (the ± column's arithmetic,
-    // from a different start) — so the rows walk the league's wOBA up or down to his. What the table doesn't break out (his hit-by-pitch rate,
-    // how often he puts the ball in the air, the fixed weights) rides in Everything else, so the last step lands on his wOBA exactly
-    const lgC = { xk: lgOf.xk, xbb: L.bb, hbp: L.hbp, xhf: L.hr && L.hr.hrfb, fbs: L.fbs, xbab: L.xbabip, tph: L.tph, ibb: 0 };
-    const lgOK = Object.values(lgC).every((x) => x != null);
-    const effL = {}; for (const k of ks) effL[k] = 0;
-    if (lgOK) { for (const o of P) { const c = Object.assign({}, lgC); let pv = wobI(c); for (const k of o) { c[k] = actS[k]; const w0 = wobI(c); effL[k] += (w0 - pv) / P.length; pv = w0; } }
-      for (const k of ks) effL[k] = R3(effL[k]); }
-    const lgW = lgOK ? R3(wobI(lgC)) : null;
-    const restL = lgOK && wAct != null ? R3(R3(wAct) - lgW - ks.reduce((a0, k) => a0 + effL[k], 0)) : null;
-    let run = lgW;
-    const runTd = (d) => { if (run == null || d == null) return el("td", "krk"); run = R3(run + d); return el("td", "krk", fw(run)); };
-    const pieces = [["xK%", "xk", ex(t.xkFit, pk && pk.k), actS.xk, pct1, (z) => z.toFixed(1), `expected is the strikeout fit alone${inPk ? " with his parks on it" : ""}; his xwOBA uses half his K% and half the fit, so the ± is what his whole K% did beyond that blend (his K% ${nzw})`],
-                    ["xBB%", "xbb", ex(t.xbbFit, pk && pk.bb), actS.xbb, pct1, (z) => z.toFixed(1), `expected is the walk fit alone${inPk ? " with his parks on it" : ""}; his xwOBA uses half his BB% and half the fit, so the ± is what his whole BB% did beyond that blend (his BB% ${nzw})`],
-                    ["HR/FB", "xhf", ex(t.xhf, pk && pk.hr), actS.xhf, pct1, (z) => z.toFixed(1), `home runs per fly ball + popup ${nzw} against what his exit velocity deserves${inPk ? " in the same parks" : ""}`],
-                    ["BABIP", "xbab", ex(t.xbab, pk && pk.bab / 1000), actS.xbab, f3, (z) => fmtX(z), `hits on non-HR balls in play ${nzw} against the drivers' xBABIP${inPk ? " in the same parks" : ""} (the xBABIP tab's Luck row): the exact angle and spot of each ball included, since that part repeats year to year at only r .2`],
-                    ["Bases per hit (no HR)", "tph", ex(t.tph, pk && pk.xb), actS.tph, (z) => z.toFixed(2), (z) => z.toFixed(2), `total bases per non-HR hit ${nzw} against the directional model's${inPk ? " in the same parks" : ""}`],
-                    // bookkeeping, not something he did (Sean, 12 Oct 2026: "Why are more intentional walks than expected hurting yordans woba vs xwoba
-                    // here im confused", then "Yeah relabel it")
-                    ["IBB", "ibb", L.ibbr, m.ibbr, (z) => z.toFixed(2), (z) => z.toFixed(2), "intentional walks per 100 PA (not in wOBA), the league's beside his. A counting difference, not a mark against him: wOBA leaves intentional walks out entirely, while his xwOBA's walk piece runs on his BB%, which counts them, at a walk's value (the scale takes out only the league's share). So the more he's walked on purpose beyond the league's rate, the more his xwOBA sits above his wOBA — nothing he did wrong"],
-                   ].sort((x, y) => Math.abs(eff[y[1]] || 0) - Math.abs(eff[x[1]] || 0));
-    for (const [lab, k, a, x, f, fd, tip] of pieces) {
-      const tr = el("tr"); tr.title = tip;
-      const lg = lgOf[k];
-      tr.append(noteTd(lab, tip, tr), expTd(k, a, f), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), gapTd(),
-                actTd(k, x, f, ""), el("td", "xact", lg == null ? "–" : f(lg)), el("td", null, lg == null || x == null ? "–" : sg(x - lg, fd)), gapTd(),
-                effTd(k in eff ? eff[k] : null), runTd(k in effL ? effL[k] : 0));
-      tb.append(fin(tr));
-    }
-    if (rest != null) { const tr = el("tr"); tr.title = "what's left between his pieces put back together at their actual values and his real wOBA: the build's fixed linear weights, triples, sacrifice flies and the season's scale — small, and not about his skill";
-      tr.append(el("td", "l nm f1", "Everything else"), el("td"), el("td", "xact"), el("td"), gapTd(), el("td"), el("td", "xact"), el("td"), gapTd(), effTd(rest), runTd(restL)); tb.append(fin(tr)); }
-    for (const [lab, a, x, f, fd] of [[wsLab("wOBA"), m.txw, wAct, (z) => fw(z), (z) => (wrcOn() ? Math.abs(wrcPts(z)).toFixed(0) : fmtX(z))]]) {   /* his wOBA against his xwOBA, both in his parks (or both at a neutral park under the switch) */
-      const tr = el("tr", "tot"); tr.title = inPk ? `his wOBA as it happened against his xwOBA, both in his parks (his parks added ${pts(pkEff)} to his wOBA and about the same to his xwOBA)` : pk ? `his wOBA at a neutral park: his ${f3(m.woba)} less what his parks did to it (${pts(pkEff)}, the row under)` : "";
-      tr.append(el("td", "l nm f1", lab), expTd("woba", a, f), el("td", "xact", x == null ? "–" : f(x)), el("td", null, a == null || x == null ? "–" : sg(x - a, fd)), gapTd(),
-                actTd("woba", x, f, ""), el("td", "xact", L.woba == null ? "–" : f(L.woba)), el("td", null, L.woba == null || x == null ? "–" : sg(x - L.woba, fd)), gapTd(),
-                effTd(a != null && x != null ? x - a : null, true), el("td", "krk", x == null ? "" : f(x)));
-      tb.append(fin(tr));
-    }
-    // what his parks added, after the park-neutral wOBA (the raw wOBA is here): the pieces put back together with the park residuals on them
-    if (pk && !inPk && m.woba != null) { const tr = el("tr", "pkrow"), tip = `his wOBA in his parks: ${parkPieces(pk)} — where he hit: ${parkWhere(p, v)}. Home runs, hits and bases ball by ball (each of his balls in play at the park it was hit in against the same ball at a neutral park: hist/parks.js's cells by park, batting side, batted-ball type, direction and exit velocity), strikeouts and walks by the park's residual per PA where he hit`;
-      tr.title = tip; tr.append(noteTd("In his parks", tip, tr), el("td", "xact", parkTop(p, v)), el("td", "xact", fw(m.woba)), el("td", null, sg(pkEff, (z) => (wrcOn() ? Math.abs(wrcPts(z)).toFixed(0) : fmtX(z)))), gapTd(),
-                el("td"), el("td", "xact"), el("td"), gapTd(), el("td", "kd", ptsE(pkEff)), el("td", "krk", fw(m.woba))); tb.append(fin(tr)); }
-    box.append(wrap); w.append(box);
+    const wb = wobaBuildUp(p, v); if (wb) w.append(wb);
     return w;
   }
   // xK% / xBB% tab (hitters; Sean, 12 Oct 2026: "a tab that shows the build up of xBB% as well as xK% and also how they compare to league avg and
