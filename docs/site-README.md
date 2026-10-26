@@ -1184,3 +1184,9 @@ park, put in one at a time from the season's 300+ PA hitters' own. Then **IBB** 
 row counted them), **Everything else** carries what the pieces don't (fixed weights, triples, sacrifice flies), landing on his park-neutral wOBA
 (light blue), and **Park factor** lands on his wOBA (gold). Read the two tables side by side: a row where his actual piece beat his expected one
 is where his wOBA got ahead of his xwOBA. The old Expected vs actual table is gone.
+
+### The Leaderboard without the window note; the Splits rows stacked (26 Oct 2026)
+
+With a date window on (say last 100 PA), the Leaderboard no longer puts "each player's last 100 PA" on a line of its own above the filter
+buttons — the count line over the table already says it — so the table starts higher. While the game-by-game data is loading, the count line
+says so. In the Splits dropdown, the batter / pitcher hand choice and Home + away · Home · Away are on separate rows.
