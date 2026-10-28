@@ -1236,3 +1236,15 @@ points — with Everything else carrying the league's scale and the pieces' inte
 the skills behind them (whiffs, chase, contact, exit velocity, barrels, the batted-ball mix, sprint speed), each year's value with its
 percentile among that year's qualified hitters and the move in percentile points. A pitcher's shows the Spring tab's per-pitch tables with
 last season over this one and the change, headed by what moved: velocity, the grades, a new or dropped pitch, a usage swing.
+
+### vs Pitch type (28 Oct 2026)
+
+A hitter's card has a **vs Pitch type** tab (after Batted Ball Quality): a row for fastballs 95+ (four-seamers, sinkers and cutters at 95 mph or
+more), fastballs under 95, breaking balls and offspeed — the pitches he saw and their share, his swings and Whiff%, the plate appearances that
+ended on one with his wOBA and the batted-ball model's xwOBA, and that xwOBA against his on every pitch in points (what the group costs him or
+gives him). Whiff%, wOBA and xwOBA are coloured by his percentile among the qualified hitters on the same rate; All pitches is his total and the
+League rows under it are the qualified hitters' own. It follows the card's dates and splits. A plate appearance counts toward the pitch that ended
+it, as Savant's splits do; xwOBA here is the batted-ball model's (each ball in play priced by its speed, angle and direction), not the skills build
+the card leads with, so All pitches can sit a few points from his xwOBA. The same twelve numbers are Leaderboard columns (Filters ▸ Stats ▸ Vs
+pitch type: wOBA / xwOBA / Whiff% against each group) — sort by xwOBA vs FB 95+ to find the hitters who can't hit velocity, and the ones who don't
+care. A season's file built before 28 Oct 2026 carries no pitch-type sums until it is rebuilt; the tab says so and the columns read "–".
