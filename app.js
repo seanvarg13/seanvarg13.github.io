@@ -8530,8 +8530,8 @@
   }
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["fantasy", "Fantasy"]];   // Season Stats is the page's own table now (8 Oct 2026)   // Compare came off the strip with the Compare page (Sean, 6 Oct 2026)
-  const BTABS_H = [["mix", "Mix"], ["bbq", "Batted Ball Quality"], ["xbabip", "xBABIP"], ["xhrfb", "xHR/FB"], ["talent", "xwOBA"], ["xiso", "xISO"], ["xkbb", "xK% / xBB%"]];   // xISO's build-up, in xSLG's place (Sean, 23 Oct 2026)   // Talent xwOBA's build-up (Sean, 11 Oct 2026)   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
-  const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"], ["games", "Game Logs"], ["work", "Workload"]];   // Workload (28 Oct 2026)   // Game Logs back, every outing with its nERA (Sean, 18 Oct 2026)   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
+  const BTABS_H = [["mix", "Mix"], ["bbq", "Batted Ball Quality"], ["xbabip", "xBABIP"], ["xhrfb", "xHR/FB"], ["talent", "xwOBA"], ["xiso", "xISO"], ["xkbb", "xK% / xBB%"], ["yoy", "Year over year"]];   // Year over year (28 Oct 2026)   // xISO's build-up, in xSLG's place (Sean, 23 Oct 2026)   // Talent xwOBA's build-up (Sean, 11 Oct 2026)   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
+  const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"], ["games", "Game Logs"], ["work", "Workload"], ["yoy", "Year over year"]];   // Workload (28 Oct 2026)   // Game Logs back, every outing with its nERA (Sean, 18 Oct 2026)   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -8551,7 +8551,7 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => { const l = (tabs.find(([x]) => x === k) || [])[1]; return k === "talent" ? wsLab(l) : l; };
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"], ["games"], ["work"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["xbabip"], ["xhrfb"], ["talent"], ["xiso"], ["xkbb"]] : []),
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"], ["games"], ["work"], ["yoy"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["xbabip"], ["xhrfb"], ["talent"], ["xiso"], ["xkbb"], ["yoy"]] : []),
                     ["rolling", ...(p.type === "P" ? ["uera"] : ["babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
@@ -8642,6 +8642,8 @@
       body.append(renderGameLogs(p));
     } else if (pick === "work") {
       body.append(renderWorkTab(p));
+    } else if (pick === "yoy") {
+      body.append(renderYoyTab(p, ref));
     } else if (pick === "drivers") {
       body.append(renderDriversTab(p, o.st, g));
     } else if (pick === "nera") {
@@ -9264,6 +9266,74 @@
     for (const y of [S + 1, S]) { const k = `mlb-${y}-spring`; if ((built ? built.includes(k) : !failed.has(`hist/${k}.js`)) && (y === DS.season || y === DS.season + 1)) return { k, y }; }
     return null;
   }
+  // The per-pitch comparison the Spring tab and a pitcher's Year over year tab share (28 Oct 2026, from the Spring tab's code): rows of seasons —
+  // each a player object with ctx.arsenal, the consts its grades are against (a pitch against its own type in its own file's league) and the
+  // dataset its actual rates are ranked in — a table per pitch and one for all with the change between `newer` and `older` as a band row after
+  // row `changeAt`; returns the head's one-line read of what moved (velo, the grades, a new or dropped pitch, a usage swing) and each row's pitch count
+  function arsenalCompare(box, rows, o) {
+    const objs = (q) => ((q && q.ctx && q.ctx.arsenal) || []).map((a) => Object.fromEntries(ARSENAL.map((k, i) => [k, a[i]])));
+    const tot = (R) => R.reduce((s, r) => s + r.n, 0);
+    const relOf = (c) => { const sc = c && c.stuff, T = (sc && sc.types) || {}; return (pt, v, part) => { const x = T[pt]; if (v == null || !x) return v; const [w, b] = stuffParts(sc, x[1], x[2], x[3], c.lgERA, x[4], x[5]); return v - (part === "w" ? w : part === "b" ? b : w + b - 100) + 100; }; };
+    const line = (R, t, rel, m) => (r) => (r ? { pt: r.pt, kw: r.xwhfl != null ? "xwhfl" : "xwhf", kg: r.xgbl != null ? "xgbl" : "xgb", kp: r.xpul != null ? "xpul" : "xpu", use: 100 * r.n / t, n: r.n, velo: r.velo, ivb: r.ivb, hb: r.hb, spin: r.spin,
+      stuff: rel(r.pt, r.stuffp, "s"), pitch: r.pitp == null ? null : rel(r.pt, r.pitp, "s"), xwhf: r.xwhfl != null ? r.xwhfl : r.xwhf, xgb: r.xgbl != null ? r.xgbl : r.xgb, xpu: r.xpul != null ? r.xpul : r.xpu, whf: r.whf, gb: r.gb, pu: r.pu, sw: r.sw, bip: r.bip } : null);
+    const all = (q, R, t) => { if (!q) return null; const m = q.m || {}, wx = (k, k2) => { const R1 = R.filter((r) => (r[k] ?? r[k2]) != null), n = tot(R1); return n ? R1.reduce((s, r) => s + (r[k] ?? r[k2]) * r.n, 0) / n : null; };
+      return { use: t, n: t, velo: m.fbv, ivb: null, hb: null, spin: null, stuff: m.stuff, pitch: m.pitch, xwhf: wx("xwhfl", "xwhf"), xgb: wx("xgbl", "xgb"), xpu: wx("xpul", "xpu"), whf: m.whf, gb: m.gb, pu: m.pu, sw: null, bip: null, all: true }; };
+    const S = rows.map((r) => { const R = objs(r.q), t = tot(R); return Object.assign({ R, t, by: Object.fromEntries(R.map((x) => [x.pt, x])), L: line(R, t, relOf(r.c)), A: all(r.q, R, t) }, r); });
+    const N = S[o.newer], O = S[o.older], use = (sd, pt) => (sd.by[pt] && sd.t ? 100 * sd.by[pt].n / sd.t : 0);
+    const types = [...new Set(S.flatMap((sd) => sd.R.map((r) => r.pt)))]
+      .filter((pt) => (N.by[pt] && N.by[pt].n >= o.minNew) || S.some((sd) => use(sd, pt) >= 3))
+      .sort((a, b) => (N.by[b] ? N.by[b].n : 0) - (N.by[a] ? N.by[a].n : 0) || use(O, b) - use(O, a));
+    const has = (sd) => !!sd.q;
+    const flag = (pt) => (!has(O) ? null : N.by[pt] && N.by[pt].n >= o.minNew && use(O, pt) < 2 ? "new" : use(O, pt) >= 5 && N.t >= o.minTot && (!N.by[pt] || N.by[pt].n < 3 || (o.season && use(N, pt) < 1)) ? "gone" : null);
+    // the head's one-line read: what moved from the older season to the newer
+    const parts = [], sg = (x, d = 1) => (x > 0 ? "+" : "−") + Math.abs(x).toFixed(d);
+    if (has(O) && has(N)) {
+      const AN = N.A, AO = O.A;
+      if (AN.velo != null && AO.velo != null && Math.abs(AN.velo - AO.velo) >= 0.5) parts.push(`FB velo ${sg(AN.velo - AO.velo)}`);
+      if (AN.stuff != null && AO.stuff != null && Math.abs(AN.stuff - AO.stuff) >= 3) parts.push(`Stuff+ ${Math.round(AO.stuff)} → ${Math.round(AN.stuff)}`);
+      if (AN.pitch != null && AO.pitch != null && Math.abs(AN.pitch - AO.pitch) >= 3) parts.push(`Pitching+ ${Math.round(AO.pitch)} → ${Math.round(AN.pitch)}`);
+      for (const pt of types) { const f = flag(pt); if (f === "new") parts.push(`new ${(PITCH_NAME[pt] || pt).toLowerCase()} (${Math.round(use(N, pt))}%)`); else if (f === "gone") parts.push(`${(PITCH_NAME[pt] || pt).toLowerCase()} dropped (was ${Math.round(use(O, pt))}%)`); }
+      for (const pt of types) { if (flag(pt) || !N.by[pt] || !O.by[pt] || N.by[pt].n < 10) continue; const d = use(N, pt) - use(O, pt); if (Math.abs(d) >= 8) parts.push(`${(PITCH_NAME[pt] || pt).toLowerCase()} ${Math.round(use(O, pt))}% → ${Math.round(use(N, pt))}%`); }
+    }
+    const TIP = Object.assign({ pitch: "Stuff+ with location — a file needs the location models (a rescore) to carry it", whf: "his actual whiffs per swing", pu: "his actual popup rate" }, o.tips || {});   // the Spring tab's own words
+    const heads = [["Season", "l f1"], ["#", "", "Pitches thrown"], ["Use%", "", "Share of his pitches"], ["Velo", ""], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin", ""],
+                   ["Stuff+", "sp", "The pitch against its own type, in its own season's league"], ["Pitching+", "sp", TIP.pitch],
+                   ...PAIRH("The model's whiff rate per swing (location-aware where the file has it)", TIP.whf), ...PAIRH("The model's ground-ball rate on contact", "his actual GB%"), ...PAIRH("The model's popup rate on contact", TIP.pu)];
+    const groups = [["", 1], ["Usage", 2], ["Shape", 4], ["Grades vs type", 2], ["Whiff%", 2], ["GB%", 2], ["PU%", 2]];
+    const f1n = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%"), i0 = (x) => (x == null ? "–" : String(Math.round(x)));
+    const cellPlus = (v, heat) => { const td = el("td", "plus sp", i0(v)); if (v != null && heat) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } } return td; };
+    // whiff / ground-ball / popup cells filled by where the pitch ranks among that season's pitches of its own type (14 Oct 2026) — each row
+    // against its own pool (the spring row against last season's pitches); the actual rates only on 20+ swings / 15+ balls in play
+    const valueRow = (sd, L) => { const tr = el("tr", sd.cls || null); tr.append(el("td", "l f1", sd.lab));
+      if (!L) { for (let i = 0; i < heads.length - 1; i++) tr.append(el("td", null, "–")); return tr; }
+      const hx = (td, k, v) => (L.all || !sd.pool ? td : heatTd(td, typePct(sd.pool, false, L, k, v)));
+      const actTd = (txt, tt, k, v) => { const td = el("td", "xact", txt); if (tt) td.title = tt; return hx(td, k, v); };   // the heat on the actual rates, as on the Pitching+ tab (14 Oct 2026)
+      tr.append(el("td", null, String(L.n)), el("td", null, L.all ? "" : pct(L.use)), el("td", null, f1n(L.velo)), el("td", null, f1n(L.ivb)), el("td", null, f1n(L.hb)), el("td", null, L.spin == null ? "–" : String(L.spin)),
+                cellPlus(L.stuff, true), cellPlus(L.pitch, true),
+                actTd(pct(L.whf), L.sw != null ? `${L.sw} swings` : null, "whf", L.whf), el("td", null, pct(L.xwhf)),
+                actTd(pct(L.gb), L.bip != null ? `${L.bip} balls in play` : null, "gb", L.gb), el("td", null, pct(L.xgb)),
+                actTd(pct(L.pu), L.bip != null ? `${L.bip} balls in play` : null, "pu", L.pu), el("td", null, pct(L.xpu)));
+      return tr; };
+    // the change, coloured where a direction is a verdict: velo, the grades and the expected rates (shape, use and the actual rates are just facts)
+    const dCell = (a, b, d, scale, cls) => { const td = el("td", cls || null); if (a == null || b == null) { td.textContent = "–"; return td; } const v = a - b; td.textContent = Math.abs(v) < 0.5 * 10 ** -d ? (0).toFixed(d) : sg(v, d); if (scale) heatTd(td, Math.max(2, Math.min(98, Math.round(50 + scale * v)))); return td; };
+    const deltaRow = (A, B) => { const tr = el("tr", "sdelta"); tr.append(el("td", "l f1", "Change"));
+      if (!A || !B) { for (let i = 0; i < heads.length - 1; i++) tr.append(el("td", null, "–")); return tr; }
+      tr.append(el("td"), A.all ? el("td") : dCell(A.use, B.use, 1), dCell(A.velo, B.velo, 1, 12), dCell(A.ivb, B.ivb, 1), dCell(A.hb, B.hb, 1), dCell(A.spin, B.spin, 0),
+                dCell(A.stuff, B.stuff, 0, 2.2), dCell(A.pitch, B.pitch, 0, 2.2),
+                dCell(A.whf, B.whf, 1, 3, "xact"), dCell(A.xwhf, B.xwhf, 1), dCell(A.gb, B.gb, 1, 1.5, "xact"), dCell(A.xgb, B.xgb, 1), dCell(A.pu, B.pu, 1, 3, "xact"), dCell(A.xpu, B.xpu, 1));
+      return tr; };
+    const block = (name, Ls, f) => {   // Ls: a line per row (null where he had none); the change after row changeAt
+      const h = el("div", "rollhd sphd"), nm = el("span", "rollname", name); h.append(nm);
+      if (f) h.append(el("span", "sflag " + f, f === "new" ? "new pitch" : "dropped"));
+      const { tb, fin, wrap } = brTable(groups, heads, "spt");
+      wrap.querySelector("tr.over th").classList.add("f1");
+      S.forEach((sd, i) => { if (has(sd)) tb.append(fin(valueRow(sd, Ls[i]))); if (i === o.changeAt && has(N) && has(O)) tb.append(fin(deltaRow(Ls[o.newer], Ls[o.older]))); });
+      box.append(h, wrap);
+    };
+    for (const pt of types) block(PITCH_NAME[pt] || pt, S.map((sd) => sd.L(sd.by[pt])), flag(pt));
+    block("All pitches", S.map((sd) => sd.A), null);
+    return { parts, types, tot: S.map((sd) => sd.t), all: S.map((sd) => sd.A) };
+  }
   function renderSpringTab(p) {
     const box = el("div", "rollbox uerabox stuffbox brbox springbr"), sf = springFor();
     if (!sf) return box;
@@ -9280,77 +9350,12 @@
     const find = (ds) => (ds ? ds.players.find((q) => q.type === "P" && q.id === p.id) : null);
     const ps = find(sh), pp = find(prev), pc = find(cur);
     if (!ps) { hd.append(el("span", "rollsub", "no tracked pitches")); box.append(el("p", "note", `No ${y} spring training pitches tracked for him${pp ? ` — his ${y - 1} arsenal is on the Pitching+ tab of that season's card` : ""}.`)); return box; }
-    const objs = (q) => ((q && q.ctx && q.ctx.arsenal) || []).map((a) => Object.fromEntries(ARSENAL.map((k, i) => [k, a[i]])));
-    const RS = objs(ps), RP = objs(pp), RC = objs(pc), tot = (R) => R.reduce((s, r) => s + r.n, 0), tS = tot(RS), tP = tot(RP), tC = tot(RC);
-    // a pitch against its own type, in its own file's league (the spring file grades against MLB types already)
-    const relOf = (ds, c) => { const sc = c && c.stuff, T = (sc && sc.types) || {}; return (pt, v, part) => { const x = T[pt]; if (v == null || !x) return v; const [w, b] = stuffParts(sc, x[1], x[2], x[3], c.lgERA, x[4], x[5]); return v - (part === "w" ? w : part === "b" ? b : w + b - 100) + 100; }; };
-    const relS = relOf(sh, sh.consts), relP = relOf(prev, prev && (prev.hist ? window.DRAFT_HIST[prevK].consts : prev.consts)), relC = relOf(cur, cur && (cur.hist ? window.DRAFT_HIST[curK].consts : cur.consts));
-    const line = (R, t, rel, m) => (r) => (r ? { pt: r.pt, kw: r.xwhfl != null ? "xwhfl" : "xwhf", kg: r.xgbl != null ? "xgbl" : "xgb", kp: r.xpul != null ? "xpul" : "xpu", use: 100 * r.n / t, n: r.n, velo: r.velo, ivb: r.ivb, hb: r.hb, spin: r.spin, stuff: rel(r.pt, r.stuffp), pitch: rel(r.pt, r.pitp), xwhf: r.xwhfl ?? r.xwhf, xgb: r.xgbl ?? r.xgb, xpu: r.xpul ?? r.xpu, whf: r.whf, gb: r.gb, pu: r.pu, sw: r.sw, bip: r.bip } : null);
-    const LS = line(RS, tS, relS), LP = line(RP, tP, relP), LC = line(RC, tC, relC);
-    const byPt = (R) => Object.fromEntries(R.map((r) => [r.pt, r]));
-    const bS = byPt(RS), bP = byPt(RP), bC = byPt(RC);
-    const use = (b, t, pt) => (b[pt] && t ? 100 * b[pt].n / t : 0);
-    const types = [...new Set([...RS.map((r) => r.pt), ...RP.map((r) => r.pt), ...RC.map((r) => r.pt)])]
-      .filter((pt) => (bS[pt] && bS[pt].n >= 5) || use(bP, tP, pt) >= 3 || use(bC, tC, pt) >= 3)
-      .sort((a, b) => (bS[b] ? bS[b].n : 0) - (bS[a] ? bS[a].n : 0) || use(bP, tP, b) - use(bP, tP, a));
-    const flag = (pt) => (pp && bS[pt] && bS[pt].n >= 5 && use(bP, tP, pt) < 2 ? "new" : pp && use(bP, tP, pt) >= 5 && tS >= 40 && (!bS[pt] || bS[pt].n < 3) ? "gone" : null);
-    // the whole arsenal: the card's own grades, the expected rates weighted by pitches (xWhiff), the actual rates his season's
-    const all = (q, R, t, rel) => { if (!q) return null; const m = q.m || {}, wx = (k, k2) => { const R1 = R.filter((r) => (r[k] ?? r[k2]) != null), n = tot(R1); return n ? R1.reduce((s, r) => s + (r[k] ?? r[k2]) * r.n, 0) / n : null; };
-      return { use: t, n: t, velo: m.fbv, ivb: null, hb: null, spin: null, stuff: m.stuff, pitch: m.pitch, xwhf: wx("xwhfl", "xwhf"), xgb: wx("xgbl", "xgb"), xpu: wx("xpul", "xpu"), whf: m.whf, gb: m.gb, pu: m.pu, sw: null, bip: null, all: true }; };
-    const AS = all(ps, RS, tS), AP = all(pp, RP, tP), AC = all(pc, RC, tC);
-    // the head's one-line read: what moved from last season to camp
-    const parts = [], f1 = (x) => x.toFixed(1), sg = (x, d = 1) => (x > 0 ? "+" : "−") + Math.abs(x).toFixed(d);
-    if (AP && AS.velo != null && AP.velo != null && Math.abs(AS.velo - AP.velo) >= 0.5) parts.push(`FB velo ${sg(AS.velo - AP.velo)}`);
-    if (AP && AS.stuff != null && AP.stuff != null && Math.abs(AS.stuff - AP.stuff) >= 3) parts.push(`Stuff+ ${Math.round(AP.stuff)} → ${Math.round(AS.stuff)}`);
-    if (AP && AS.pitch != null && AP.pitch != null && Math.abs(AS.pitch - AP.pitch) >= 3) parts.push(`Pitching+ ${Math.round(AP.pitch)} → ${Math.round(AS.pitch)}`);
-    for (const pt of types) { const f = flag(pt); if (f === "new") parts.push(`new ${(PITCH_NAME[pt] || pt).toLowerCase()} (${Math.round(use(bS, tS, pt))}%)`); else if (f === "gone") parts.push(`${(PITCH_NAME[pt] || pt).toLowerCase()} dropped (was ${Math.round(use(bP, tP, pt))}%)`); }
-    for (const pt of types) { if (flag(pt) || !bS[pt] || !bP[pt] || bS[pt].n < 10) continue; const d = use(bS, tS, pt) - use(bP, tP, pt); if (Math.abs(d) >= 8) parts.push(`${(PITCH_NAME[pt] || pt).toLowerCase()} ${Math.round(use(bP, tP, pt))}% → ${Math.round(use(bS, tS, pt))}%`); }
-    const sample = `${ps.bf} BF · ${tS} pitches · ${ps.ctx && ps.ctx.G != null ? ps.ctx.G + " G" : ""}`.replace(/ · $/, "");
-    hd.append(el("span", "rollsub", sample + (pp ? ` · vs ${y - 1}: ` + (parts.length ? parts.join(" · ") : "the same arsenal as last season") : ` · his first MLB spring here — nothing from ${y - 1} to compare`)));
-    // a table per pitch in B-Ref's dress (Sean, 14 Oct 2026: "a table in the format I attached ... for each pitch it is a new table with headers
-    // again bc the current format is hard ish to follow"): the pitch's name over its own table — Season | Usage | Shape | Grades vs type | Whiff% ·
-    // GB% · PU% as Act / Exp pairs — rows spring, last season, the change (a band row) and the season after once built
-    const heads = [["Season", "l f1"], ["#", "", "Pitches thrown"], ["Use%", "", "Share of his pitches"], ["Velo", ""], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin", ""],
-                   ["Stuff+", "sp", "The pitch against its own type, in its own season's league"], ["Pitching+", "sp", "Stuff+ with location — the spring file needs the location models (a rescore) to carry it"],
-                   ...PAIRH("The model's whiff rate per swing (location-aware where the file has it)", "his actual whiffs per swing — a few dozen swings in spring"), ...PAIRH("The model's ground-ball rate on contact", "his actual GB%"), ...PAIRH("The model's popup rate on contact", "his actual popups per ball in play")];
-    const groups = [["", 1], ["Usage", 2], ["Shape", 4], ["Grades vs type", 2], ["Whiff%", 2], ["GB%", 2], ["PU%", 2]];
-    const f1n = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%"), i0 = (x) => (x == null ? "–" : String(Math.round(x)));
-    const cellPlus = (v, heat) => { const td = el("td", "plus sp", i0(v)); if (v != null && heat) { const st = plusStyle(v); if (st) { td.style.background = st.bg; td.style.color = st.fg; td.classList.add("heat"); } } return td; };
-    // whiff / ground-ball / popup cells filled by where the pitch ranks among that season's pitches of its own type (14 Oct 2026) — the spring
-    // row against last season's (else this season's), each season's row against its own; the actual rates only on 20+ swings / 15+ balls in play
-    const poolOf = (lab) => (lab.startsWith("Spring") ? prev || cur : lab.startsWith(yy(y - 1)) ? prev : cur);
-    const valueRow = (lab, L, cls) => { const tr = el("tr", cls || null); tr.append(el("td", "l f1", lab));
-      if (!L) { for (let i = 0; i < heads.length - 1; i++) tr.append(el("td", null, "–")); return tr; }
-      const ds = poolOf(lab), hx = (td, k, v) => (L.all ? td : heatTd(td, typePct(ds, false, L, k, v)));
-      const actTd = (txt, tt, k, v) => { const td = el("td", "xact", txt); if (tt) td.title = tt; return hx(td, k, v); };   // the heat on the actual rates, as on the Pitching+ tab (14 Oct 2026)
-      tr.append(el("td", null, String(L.n)), el("td", null, L.all ? "" : pct(L.use)), el("td", null, f1n(L.velo)), el("td", null, f1n(L.ivb)), el("td", null, f1n(L.hb)), el("td", null, L.spin == null ? "–" : String(L.spin)),
-                cellPlus(L.stuff, true), cellPlus(L.pitch, true),
-                actTd(pct(L.whf), L.sw != null ? `${L.sw} swings` : null, "whf", L.whf), el("td", null, pct(L.xwhf)),
-                actTd(pct(L.gb), L.bip != null ? `${L.bip} balls in play` : null, "gb", L.gb), el("td", null, pct(L.xgb)),
-                actTd(pct(L.pu), L.bip != null ? `${L.bip} balls in play` : null, "pu", L.pu), el("td", null, pct(L.xpu)));
-      return tr; };
-    // the change, coloured where a direction is a verdict: velo, the grades and the expected rates (shape, use and the actual rates are just facts)
-    const dCell = (a, b, d, scale, cls) => { const td = el("td", cls || null); if (a == null || b == null) { td.textContent = "–"; return td; } const v = a - b; td.textContent = Math.abs(v) < 0.5 * 10 ** -d ? (0).toFixed(d) : sg(v, d); if (scale) heatTd(td, Math.max(2, Math.min(98, Math.round(50 + scale * v)))); return td; };
-    const deltaRow = (A, B) => { const tr = el("tr", "sdelta"); tr.append(el("td", "l f1", "Change"));
-      if (!A || !B) { for (let i = 0; i < heads.length - 1; i++) tr.append(el("td", null, "–")); return tr; }
-      tr.append(el("td"), A.all ? el("td") : dCell(A.use, B.use, 1), dCell(A.velo, B.velo, 1, 12), dCell(A.ivb, B.ivb, 1), dCell(A.hb, B.hb, 1), dCell(A.spin, B.spin, 0),
-                dCell(A.stuff, B.stuff, 0, 2.2), dCell(A.pitch, B.pitch, 0, 2.2),
-                dCell(A.whf, B.whf, 1, 3, "xact"), dCell(A.xwhf, B.xwhf, 1), dCell(A.gb, B.gb, 1, 1.5, "xact"), dCell(A.xgb, B.xgb, 1), dCell(A.pu, B.pu, 1, 3, "xact"), dCell(A.xpu, B.xpu, 1));
-      return tr; };
-    const block = (name, S_, P_, C_, f) => {
-      const h = el("div", "rollhd sphd"), nm = el("span", "rollname", name); h.append(nm);
-      if (f) h.append(el("span", "sflag " + f, f === "new" ? "new pitch" : "dropped"));
-      const { tb, fin, wrap } = brTable(groups, heads, "spt");
-      wrap.querySelector("tr.over th").classList.add("f1");
-      tb.append(fin(valueRow(`Spring ${yy(y)}`, S_)));
-      if (pp) tb.append(fin(valueRow(`${yy(y - 1)} season`, P_)));
-      if (pp) tb.append(fin(deltaRow(S_, P_)));
-      if (pc) tb.append(fin(valueRow(`${yy(y)} season`, C_, "scur")));
-      box.append(h, wrap);
-    };
-    for (const pt of types) block(PITCH_NAME[pt] || pt, LS(bS[pt]), LP(bP[pt]), LC(bC[pt]), flag(pt));
-    block("All pitches", AS, AP, AC, null);
-    box.append(el("p", "note", `Spring pitches are graded against MLB pitch types with their own park adjustment (desert air takes ride off a fastball). What carries from camp to the season is the physical side — velocity, movement, mix, and the Stuff+ / Pitching+ built on them; the actual whiff, ground-ball and popup rates (Act, in grey) are a few dozen swings against a mix of regulars and minor leaguers. Velocity ramps through March (the first week reads a mile low) and a reliever's one-inning outings read hot.${pc ? ` The ${y} season rows are what actually followed.` : ""}${AS.pitch == null ? " Pitching+ for this spring arrives when the file is rescored with the location models." : ""}`));
+    const cOf = (ds, k) => (ds ? (ds.hist ? window.DRAFT_HIST[k].consts : ds.consts) : null);
+    const R = arsenalCompare(box, [{ lab: `Spring ${yy(y)}`, q: ps, c: sh.consts, pool: prev || cur }, { lab: `${yy(y - 1)} season`, q: pp, c: cOf(prev, prevK), pool: prev }, { lab: `${yy(y)} season`, q: pc, c: cOf(cur, curK), pool: cur, cls: "scur" }],
+                               { newer: 0, older: 1, changeAt: 1, minNew: 5, minTot: 40, tips: { pitch: "Stuff+ with location — the spring file needs the location models (a rescore) to carry it", whf: "his actual whiffs per swing — a few dozen swings in spring", pu: "his actual popups per ball in play" } });
+    const sample = `${ps.bf} BF · ${R.tot[0]} pitches · ${ps.ctx && ps.ctx.G != null ? ps.ctx.G + " G" : ""}`.replace(/ · $/, "");
+    hd.append(el("span", "rollsub", sample + (pp ? ` · vs ${y - 1}: ` + (R.parts.length ? R.parts.join(" · ") : "the same arsenal as last season") : ` · his first MLB spring here — nothing from ${y - 1} to compare`)));
+    box.append(el("p", "note", `Spring pitches are graded against MLB pitch types with their own park adjustment (desert air takes ride off a fastball). What carries from camp to the season is the physical side — velocity, movement, mix, and the Stuff+ / Pitching+ built on them; the actual whiff, ground-ball and popup rates (Act, in grey) are a few dozen swings against a mix of regulars and minor leaguers. Velocity ramps through March (the first week reads a mile low) and a reliever's one-inning outings read hot.${pc ? ` The ${y} season rows are what actually followed.` : ""}${R.all[0].pitch == null ? " Pitching+ for this spring arrives when the file is rescored with the location models." : ""}`));
     return box;
   }
   // B-Ref's table (Sean, 9 Oct 2026: the B-Ref Style Tables canvas, "I want that for everything"): the season table's .sbt dress for the
@@ -9633,6 +9638,62 @@
         if (hi && tot - hi[1] >= 30) { const c = el("span", "alchip al-velo", `+${(tot - hi[1]).toFixed(0)} over his high`); c.title = "A 30+ inning jump over his previous MLB high — the classic workload flag (minor-league innings aren't counted here)"; sm.append(" ", c); } }
       else if (!careerReadyFor(p.id)) sm.append(" · loading his career…");
       box.append(sm); }
+    return box;
+  }
+  // Year over year (Sean, 28 Oct 2026, item 11 of the review's picks: "hitters: the build-up pieces this season vs last with the wOBA effect;
+  // pitchers: arsenal YoY per pitch"): the card's season against the one before it, full seasons, MLB regular seasons only (last season's file
+  // loads on the tab). A hitter: the pieces of his xwOBA build — K% and BB% (the build's halves), HBP, xHR/FB, his fly-ball share, the drivers'
+  // xBABIP, extra bases per hit — both years, the change, and what each change is worth in wOBA points (the piece swapped alone into last
+  // season's set, at this season's scale; "Everything else" is the league's scale and the pieces' interplay, so the column adds to the xwOBA
+  // change); then the skills behind them, both years with their percentiles. A pitcher: the Spring tab's per-pitch tables, last season's row over
+  // this season's and the change, with the head's read of what moved
+  function renderYoyTab(p, ref) {
+    const box = el("div", "rollbox uerabox brbox yoybox"), hd = el("div", "rollhd"), y = +DS.season, y0 = y - 1;
+    hd.append(el("span", "rollname", `${y0} → ${y}`), el("span", "rollsub", "full seasons")); box.append(hd);
+    if (DS.multi || DS.kind || (DS.level || "MLB") !== "MLB") { box.append(el("p", "note", "Year over year compares MLB regular seasons.")); return box; }
+    const prevK = `mlb-${y0}`, built = indexReady() ? window.DRAFT_INDEX.seasons : null;
+    if (built && !built.includes(prevK)) { box.append(el("p", "note", `The site has no ${y0} season.`)); return box; }
+    const prev = histDataset(prevK);
+    if (!prev) { if (failed.has(`hist/${prevK}.js`)) { box.append(el("p", "note", `Couldn't load the ${y0} season.`)); return box; } ensureHist(prevK); box.append(el("p", "note", `Loading the ${y0} season…`)); return box; }
+    const q = prev.players.find((z) => z.type === p.type && z.id === p.id);
+    if (!q) { box.append(el("p", "note", `No ${y0} MLB ${p.type === "H" ? "plate appearances" : "pitches"} for him.`)); return box; }
+    const full = (fn) => withWindow(NOWIN, () => withSplit(NONE, fn));
+    if (p.type === "P") {
+      const R = arsenalCompare(box, [{ lab: String(y0), q, c: prev.consts, pool: prev }, { lab: String(y), q: p, c: DS.consts, pool: DS, cls: "scur" }], { newer: 1, older: 0, changeAt: 1, minNew: 20, minTot: 200, season: true });
+      hd.append(el("span", "rollsub", `${q.bf} → ${p.bf} BF · ${R.tot[0]} → ${R.tot[1]} pitches · ` + (R.parts.length ? R.parts.join(" · ") : "the same arsenal, mix and velocity")));
+      box.append(el("p", "note", "Each pitch against its own type in its own season's league; the actual whiff, ground-ball and popup rates coloured by where the pitch ranks among that season's pitches of its type. The change row is coloured where a direction is a verdict — velocity, the grades, the expected rates."));
+      return box;
+    }
+    // a hitter: the pieces
+    const vC = full(() => V(p)), tC = vC.tal, stC = full(() => pool(ref).stats.get(p.type + p.id) || rankIn(ref, p));
+    const P = withDataset(prev, () => full(() => { const v = V(q); return { v, t: v.tal, st: pool("H").stats.get("H" + q.id) || rankIn("H", q) }; }));
+    const vP = P.v, tP = P.t, stP = P.st;
+    hd.append(el("span", "rollsub", `${q.pa} → ${p.pa} PA`));
+    if (!tC || !tP) { box.append(el("p", "note", "The xwOBA build needs tracked contact in both seasons.")); return box; }
+    const own = (t) => { const o = { xk: t.xk, xbb: t.xbb, hbp: t.hbp, xhf: t.xhf, fbs: t.fbs, xbab: t.xbab, tph: t.tph }; if (t.parkIn && t.pk) { o.xk += t.pk.k; o.xbb += t.pk.bb; o.xhf += t.pk.hr; o.xbab += t.pk.bab / 1000; o.tph += t.pk.xb; } return o; };
+    const oC = own(tC), oP = own(tP), sc = tC.L.scale, wob = (c) => twRaw(c) * sc, base = wob(oP);
+    const PCS = [["K%", "xk", (x) => x.toFixed(1) + "%", "the build's K% piece: half his K%, half his xK%"], ["BB%", "xbb", (x) => x.toFixed(1) + "%", "half his BB%, half his xBB%"], ["HBP", "hbp", (x) => (100 * x).toFixed(1) + "%", "hit by pitch per plate appearance"],
+                 ["xHR/FB", "xhf", (x) => x.toFixed(1) + "%", "home runs per fly ball his contact says"], ["Fly balls", "fbs", (x) => (100 * x).toFixed(1) + "%", "fly balls and popups per ball in play"], ["xBABIP", "xbab", fmtX, "the nine-driver xBABIP"], ["XB/hit", "tph", (x) => x.toFixed(2), "extra bases per non-HR hit (the batted-ball model)"]];
+    const pts = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x)), sg1 = (x, f) => { const d = f(Math.abs(x)); return (x > 0 ? "+" : x < 0 ? "−" : "") + d; };
+    const effTd = (e) => { const td = el("td", null, pts(e)); heatTd(td, Math.max(2, Math.min(98, Math.round(50 + 2.5 * e)))); return td; };   // ±20 points fills the scale
+    const T = brTable([["", 1], ["The piece", 3], ["", 1]], [["Piece", "l f1"], [String(y0)], [String(y)], ["Δ"], ["± wOBA", "", `what the change is worth in wOBA points: the ${y} value swapped alone into his ${y0} pieces, at ${y}'s league scale`]], "yoyt");
+    let sum = 0;
+    for (const [lab, k, f, tip] of PCS) { const a = oP[k], b = oC[k]; if (a == null || b == null) continue; const e = 1000 * (wob(Object.assign({}, oP, { [k]: b })) - base); sum += e;
+      const tr = el("tr"), lt = el("td", "l f1", lab); lt.title = tip; tr.append(lt, el("td", null, f(a)), el("td", null, f(b)), el("td", null, sg1(b - a, f)), effTd(e)); T.tb.append(T.fin(tr)); }
+    const total = 1000 * (tC.txw - tP.txw), rest = total - sum;
+    { const tr = el("tr"), lt = el("td", "l f1", "Everything else"); lt.title = "the league's scale moving between the seasons, and the pieces' interplay"; tr.append(lt, el("td"), el("td"), el("td"), el("td", null, pts(rest))); T.tb.append(T.fin(tr)); }
+    { const tr = el("tr", "tot"); tr.append(el("td", "l f1", wsLab("xwOBA")), el("td", null, fmtX(tP.txw)), el("td", null, fmtX(tC.txw)), el("td", null, sg1(tC.txw - tP.txw, fmtX)), effTd(total)); T.tb.append(T.gap(), T.fin(tr)); }
+    const h1 = el("div", "rollhd worksub"); h1.append(el("span", "rollname", "The pieces of his xwOBA")); box.append(h1, T.wrap);
+    // the skills behind them, both years with their percentiles among that season's 300+ PA hitters
+    const SK = [["Whiff%", "whf", false], ["Chase%", "osw", false], ["Z-Contact%", "zcon", true], ["Zone% seen", "zsn", false], ["Avg EV", "ev", true], ["EV90", "ev90", true], ["Bat speed", "bs", true], ["Barrel%", "brl", true], ["Hard-Hit%", "hh", true],
+                ["FB EV", "evfb", true], ["FB Brl%", "brfb", true], ["LD Brl%", "brld", true], ["Pull FB%", "pullfb", true], ["FB%", "fb", true], ["LD%", "ld", true], ["GB%", "gb", false], ["Popup%", "pu", false], ["GB EV", "evgb", true], ["LD EV", "evld", true], ["GB Pull%", "gbpull", false], ["Oppo%", "oppo", true], ["Sprint", "spd", true]];
+    const T2 = brTable([["", 1], [String(y0), 2], [String(y), 2], ["", 1]], [["Skill", "l f1"], ["Value"], ["Pctl", "", `among ${y0}'s 300+ PA hitters`], ["Value"], ["Pctl", "", `among ${y}'s 300+ PA hitters`], ["Δ", "", "the move in percentile points, coloured by whether it helped him"]], "yoyt");
+    const fv = (k, x) => (x == null ? "–" : /EV|Sprint|speed/.test(k) ? x.toFixed(1) : x.toFixed(1) + "%");
+    for (const [lab, k, hib] of SK) { const a = vP.m[k], b = vC.m[k]; if (a == null && b == null) continue; const pa = stP && stP.pct ? stP.pct[k] : null, pb = stC && stC.pct ? stC.pct[k] : null;
+      const tr = el("tr"); tr.append(el("td", "l f1", lab), el("td", null, fv(lab, a)), heatTd(el("td", null, pa == null ? "–" : String(Math.round(pa))), pa), el("td", null, fv(lab, b)), heatTd(el("td", null, pb == null ? "–" : String(Math.round(pb))), pb));
+      const d = pa != null && pb != null ? pb - pa : null, td = el("td", null, d == null ? "–" : pts(d)); if (d != null) heatTd(td, Math.max(2, Math.min(98, Math.round(50 + (hib ? 1 : -1) * d)))); tr.append(td); T2.tb.append(T2.fin(tr)); }
+    const h2 = el("div", "rollhd worksub"); h2.append(el("span", "rollname", "The skills behind them")); box.append(h2, T2.wrap);
+    box.append(el("p", "note", `Full seasons; the percentiles are each year's own (its 300+ PA hitters). A piece's ± is its ${y} value put alone into his ${y0} set at ${y}'s scale — the pieces interact and the league moves, so Everything else carries the rest and the column adds to the xwOBA change.`));
     return box;
   }
   function renderGameLogs(p) {

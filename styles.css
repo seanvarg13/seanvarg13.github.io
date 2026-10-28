@@ -5597,3 +5597,6 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root .alchip.al-gone { background: #6b7280; }
 :root:root:root:root:root:root .alchip.al-velo { background: var(--accent-2, #7bafd4); color: var(--band2-ink, #fff); }
 :root:root:root:root:root:root #pitchboard td.alcell { white-space: normal; min-width: 150px; }
+/* Year over year (Sean, 28 Oct 2026, item 11 of the review's picks): the tab's section headings and tables share the Workload tab's spacing */
+:root:root:root:root:root:root :is(#xboard, #modal) .yoybox .rollhd.worksub { margin-top: 16px; }
+:root:root:root:root:root:root :is(#xboard, #modal) .yoybox .rollhd.sphd { margin-top: 14px; }
