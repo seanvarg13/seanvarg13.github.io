@@ -333,7 +333,7 @@ def main():
         # League Trends (hist/trends.js) re-sums the season just built; a failure there costs only that page. hist/home.js (20 Oct 2026): home's
         # day-file lists, computed by the site's own code on the new files — without it home loads the day rows and computes them itself
         ok = (run("build_data.py", "--end", end) and (run("build_trends.py") or True) and (run("build_similar.py") or True)
-              and (node("tools/build_home.cjs") or True) and (_run("tools/build_injuries.py") or True) and publish("MLB", end, a.dry))
+              and (node("tools/build_home.cjs") or True) and (_run("tools/build_injuries.py") or True) and (_run("tools/build_lineups.py") or True) and publish("MLB", end, a.dry))
     parts = []
     # spring training (Sean, 29 Sep 2026: track a pitcher's stuff in spring) — Stuff+ graded against MLB pitch types — and the
     # postseason (30 Sep 2026: MLB PS on the cards); a failure in either costs only its own file

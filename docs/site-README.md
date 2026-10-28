@@ -1209,3 +1209,12 @@ record — the career files are cut into 128 buckets by player id (`hist/c/`, `h
 the digit). Last season's file loads the first time you tap a bar, and the note re-opens with his line once it is in. The background warm-up of
 the game-by-game files waits until the page's own files are in and skips a slow connection. Wherever a page waits on the game-by-game data —
 the Leaderboard's count line and its empty table (now a grey skeleton of rows), a card, home — the note shows how far the download is.
+
+### Where he bats and how much he plays (28 Oct 2026)
+
+A hitter's page carries a line under the band's Summary, from every box score of the season: where he bats when he starts ("Bats 2nd (93%)"),
+his starts over his games on the active roster (a start, a substitute appearance or a day on the bench all count), his plate appearances per
+roster game, how often he starts against left- and right-handed starting pitchers — with a red **Platooned** chip when one side sits out — and
+his slot in each of his club's last 15 games (a digit is a start there, – on the roster without starting, × off the active roster). The same
+numbers are Leaderboard columns under Filters ▸ Stats ▸ Playing time: Slot, Starts%, PA/G, Starts% vs LHP and vs RHP — this season's full
+season only. The file (`hist/lineups.js`) is rebuilt with each morning's build.

@@ -5225,6 +5225,29 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     table in 19.8 s → 7.0 s (its heat and leaders 19.8 → 7.5), Skenes 18.0 → 7.1, Yordan 19.4 → 7.1; the page's own download 6.2 → ~2.4 MB
     gzipped (data.js, the index and Similar are most of what's left).
 
+* **Lineup slot and playing time (Sean, 28 Oct 2026, item 7 of the review's picks: "lineup slot & PA volume")**: **`tools/build_lineups.py`**
+  (standard library; run by `cloud_daily.py` with each MLB build, non-fatal) reads every finished regular-season game of data.js's season from
+  MLB's schedule and each game's box score — the starters by slot (`players.<id>.battingOrder` a multiple of 100 and not a substitute), the
+  substitutes, the **bench** (the position players who didn't play, so a day on the roster counts) and each batter's plate appearances, plus
+  the first pitcher listed on each side as its starter, whose hand comes from `people?personIds=` — and writes **`hist/lineups.js`**
+  (`window.DRAFT_LINEUPS = {season, through, g: {team id: games}, p: {id: {ar, gs, pa, sl: [9], vl: [starts, roster games] vs LHP, vr, last:
+  [15], tm}}}`, ~110 KB, 23 gzipped; 2026: 757 hitters, 199 with 100+ starts). Each game's box score is cached in `.cache/lineups/<season>/
+  <gamePk>.json` and the hands in `hands.json`, so a daily run fetches only the new games (the first run ~55 s with 24 threads). **In
+  `app.js`** (the block after the injured-list one — `luData` / `luReady` / `luEnsure` / `luOf` / `lineupLine`; `LINE_H` / `LINE_KEYS` beside
+  `FANT_H`; `lineFill` before `fantFill`, the last step of every hitter `V()` beside `fantFill` / `hrfbFill`, refilled once the file lands —
+  `v._lu` against `luReady()`): the file is value-free in `ensureScript`'s list and loaded on a hitter's page and when a lineup column shows
+  (`colsFor`; the pool / rank keys carry its arrival through `hxKey`). **The columns** (Filters ▸ Stats ▸ *Playing time*, hitters, this
+  season's full season only — a window, split, past season or level reads "–"): **Slot** (his mean lineup slot when he starts, lower = better),
+  **Starts%** (starts over his games on the active roster), **PA/G** (plate appearances per roster game — bench days included, so it's the
+  volume number), **Starts% vs LHP** and **vs RHP** (5+ roster games against that hand). **The card**: a line under the band's Summary on this
+  season's MLB page (`.pblu`, CSS at the end of `styles.css`) — "Bats 2nd (93%) · Starts 158 of 162 roster games (98%) · 4.3 PA/G · vs LHP 93% ·
+  vs RHP 99% · Last 15 – – 2 2 2 …" (a digit = started there, – = on the roster without starting, × = off the active roster; each item's tooltip
+  says more), with a red **Platooned** chip when one side sits out (8+ roster games against each hand, the weak side ≤ 45% and the strong ≥ 75%;
+  2026: 92 hitters with 40+ starts read platooned). Judge 2026: 68 roster games, 66 starts, 2nd 56% / 3rd 44%, the last nine off the roster.
+  Full season whatever the card's filters (the file is the season's). Glossary entries `slot stpct patg lsp rsp`, `SHORT` labels. Checked headless
+  on a phone and a desktop: the line on Yordan's, Judge's and a platooned hitter's pages, none on Skenes's; the columns fill and sort (Wood 4.61
+  PA/G, slot 1.0); the Stats panel's group; the page check.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
