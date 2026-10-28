@@ -5313,6 +5313,28 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   row as long as the layout; scratch `pr6/synth_vs.py`); headless on copies of `data.js` / `days-h.js` with synthetic sums (`pr6/patch.py`): the tab on
   Judge's full season and in a Recent window off the Leaderboard's popup, the five columns and their sort, the Stats group, both layouts; the page check.
 
+* **Bullpens (Sean, 28 Oct 2026, item 8 of the review's picks: "SV 5 / HD 2 are a quarter of a pitcher's points and the game logs already carry
+  SV/HD/BS/SVO/GF per outing. Team by team: who got the save chances and high-leverage outings in the last 30 days, each arm's nERA / Pitching+ /
+  xBB% beside the incumbent → job safe / at risk / next up. Closer turnover is the classic in-season edge")**: **Fantasy ▸ Bullpens** (`#bullpens`,
+  mode `bullpens`, drawn in the Pitching+ board's standing card — every stylesheet rule that names `[data-mode="flaws"]` names `bullpens` too, 112
+  of them, widened by script: 83 inside `:is()` lists, 29 `body[data-mode="flaws"]` compounds rewritten as `body:is(…)`; the parsed-rule count was the
+  check, 3,852 before and after). `renderBullpens` / `bullpenRows(win)` in `app.js` (after `renderFlaws`; `BP_WINS`, `bpSet` in
+  `draft2027.bullpens`): every reliever with a relief outing (`GS` 0) in the window from this season's official game logs (`fantasy.js`, `fGamesOf`;
+  the window ends on the file's `through`, last 14 / 30 / 60 days or the full season) summed into SV · HD · BS · SVO · GF · G · IP, his season line's SV /
+  HD / BS, and the site's full-season rates (`V(p).m` under `withWindow(NOWIN)` / `withSplit(NONE)`, coloured by his percentile in the RP pool —
+  `pool("RP").stats`, `rankIn` for the unlisted), grouped by `p.team`. **Roles from the window**: the closer took the saves (then the save chances and
+  games finished, then the season's saves), SU the next two by holds + saves, MID the rest; **the leash** from his share of the team's saves and his blown saves: Few chances (the team under two saves),
+  Committee (nobody has half of three or more), At risk (two blown saves, or one with under three quarters of the team's saves), Job safe otherwise —
+  on saves, not save chances, since a setup man's blown lead counts as a chance in MLB's bookkeeping and chances over-read a committee;
+  **next up** = the other arm with the most holds + saves (the manager's own order), marked "stronger" when his nERA is 0.75+ under the closer's with a
+  Pitching+ at least as good. **Two tables**: All teams — Tm · Closer · SV · SVO · BS · HD · IP · nERA · P+ · xBB% · Leash · Next up · HD · SVO · nERA · P+ ·
+  xBB% (a phone: Tm · Closer · SV · BS · nERA · Leash · Next up · nERA), ordered At risk first (committee, at risk, few chances, safe, then by team) or By
+  team; one team through the Team pill — Pitcher · Role | the window's G · IP · SV · HD · BS · SVO · GF | the season's SV · HD · BS | nERA · K-BB% · Whiff% ·
+  xBB% · P+. The IL badge rides on a name; a name opens his page as the popup (`POP_MODES`); the explanation folds under the title as on Movers. The
+  Fantasy ▾ menu lists it after Fantasy leaderboard (`NAV_GROUPS`, `readMode`, `renderNow`, `listMode`, `BACK_MODES` / `BACK_LABEL`, the title map).
+  The leash chips' CSS at the end of `styles.css` (`.bpchip`). The page check has a `bullpens` step (the overview's teams, the Yankees' pen through the
+  pill, a name's popup, back). Off-season the window is the last days of the season, as Movers' is.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

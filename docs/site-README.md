@@ -1248,3 +1248,12 @@ it, as Savant's splits do; xwOBA here is the batted-ball model's (each ball in p
 the card leads with, so All pitches can sit a few points from his xwOBA. The same twelve numbers are Leaderboard columns (Filters ▸ Stats ▸ Vs
 pitch type: wOBA / xwOBA / Whiff% against each group) — sort by xwOBA vs FB 95+ to find the hitters who can't hit velocity, and the ones who don't
 care. A season's file built before 28 Oct 2026 carries no pitch-type sums until it is rebuilt; the tab says so and the columns read "–".
+
+### Bullpens (28 Oct 2026)
+
+Fantasy ▸ **Bullpens**: every team's pen from the official game logs. The overview is one row a team — the closer (whoever took the saves in the
+window), his saves, save chances, blown saves, holds and innings, his nERA / Pitching+ / xBB% for the season, his **leash** (Job safe, At risk,
+Committee or Few chances, read from his share of the team's saves and his blown saves) and the **next man up** — the other arm with the
+most holds and saves, marked "stronger" when his rates beat the closer's — ordered with the shaky jobs first. Pick a team for its whole pen: each
+arm's role (CL / SU / MID), the window's counts, the season's saves, holds and blown saves, and nERA, K-BB%, Whiff%, xBB% and Pitching+ coloured by
+his percentile among the season's relievers. The window is the last 14 / 30 / 60 days or the full season; a name opens his page.
