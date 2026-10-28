@@ -5855,8 +5855,10 @@
     const f2 = (x) => (x == null ? "–" : x.toFixed(2)), pc1 = (x) => (x == null ? "–" : x.toFixed(1) + "%"), n1 = (x) => (x == null ? "–" : x.toFixed(1));
     const pcredTip = `how much of the move is likely real: nERA settles at about ${PM_K} batters faced, so his batters faced in the window over that plus ${PM_K}, then last season's nERA as a witness (already past the middle of the move raises it, on the far side lowers it)`;
     const pheads = PH ? [["Rk", "f1"], ["Pitcher", "l f3"], ["K-BB%"], ["Cred", "", pcredTip], ["nERA"], ["Δ"]]
-      : [["Rk", "f1"], ["Pitcher", "l f3"], ["Tm"], ["Role"], [PB], [W], ["Δ", "", `his nERA over the ${M.label} minus before it`], [PB], [W], [PB], [W], ["IP", "", prevMode ? "this season's innings" : `innings in the ${M.label}`], ["Credible", "", pcredTip]];
-    const pgroups = PH ? [["", 2], [prevMode ? `${Y} vs ${Y0}` : `${W} vs before`, 4]] : [["", 4], ["nERA", 3], ["K-BB%", 2], ["FB velo", 2], ["", 2]];
+      : [["Rk", "f1"], ["Pitcher", "l f3"], ["Tm"], ["Role"], [PB], [W], ["Δ", "", `his nERA over the ${M.label} minus before it`], [PB], [W], [PB], [W], ["IP", "", prevMode ? "this season's innings" : `innings in the ${M.label}`], ["Credible", "", pcredTip],
+         ["Arsenal", "l", "In-season arsenal alerts (hist/alerts.js): his last 30 game days against the season before them — a new pitch, one dropped, a usage swing of 10+ points, his primary fastball 1+ mph faster or slower"]];
+    const pgroups = PH ? [["", 2], [prevMode ? `${Y} vs ${Y0}` : `${W} vs before`, 4]] : [["", 4], ["nERA", 3], ["K-BB%", 2], ["FB velo", 2], ["", 3]];
+    if (!PH) alEnsure();   // the Arsenal column's file (28 Oct 2026)
     const P2 = brTable(pgroups, pheads, "pbt flawt"); pin(P2.t);
     prow.forEach((r, i) => {
       const tr = el("tr"), who = el("td", "l nm f3"), b = el("button", "linkbtn pbname", r.p.name); b.type = "button";
@@ -5867,7 +5869,7 @@
       tr.append(el("td", "rk f1", String(i + 1)), who);
       if (PH) tr.append(el("td", "c", `${n1(r.kbbWas)} → ${n1(r.kbbNow)}`), cred, now, dl);
       else tr.append(el("td", "c", r.p.team || ""), el("td", "c", r.p.primary || ""), el("td", "c", f2(r.nWas)), now, dl, el("td", "c", pc1(r.kbbWas)), el("td", "c", pc1(r.kbbNow)),
-                     el("td", "c", n1(r.fbWas)), el("td", "c", n1(r.fbNow)), el("td", "c", fmtIP(r.ip)), cred);
+                     el("td", "c", n1(r.fbWas)), el("td", "c", n1(r.fbNow)), el("td", "c", fmtIP(r.ip)), cred, (() => { const td = el("td", "l alcell"); const ch = alertChips(r.p); if (ch) td.append(ch); else td.textContent = alReady() ? "" : "…"; return td; })());
       P2.tb.append(P2.fin(tr));
     });
     if (!prow.length) say(allPos ? "No pitcher's nERA is down over the window yet." : `No ${pos === "SP" ? "starter" : "reliever"}'s nERA is down over the window yet.`);
@@ -8529,7 +8531,7 @@
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["fantasy", "Fantasy"]];   // Season Stats is the page's own table now (8 Oct 2026)   // Compare came off the strip with the Compare page (Sean, 6 Oct 2026)
   const BTABS_H = [["mix", "Mix"], ["bbq", "Batted Ball Quality"], ["xbabip", "xBABIP"], ["xhrfb", "xHR/FB"], ["talent", "xwOBA"], ["xiso", "xISO"], ["xkbb", "xK% / xBB%"]];   // xISO's build-up, in xSLG's place (Sean, 23 Oct 2026)   // Talent xwOBA's build-up (Sean, 11 Oct 2026)   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
-  const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"], ["games", "Game Logs"]];   // Game Logs back, every outing with its nERA (Sean, 18 Oct 2026)   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
+  const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"], ["games", "Game Logs"], ["work", "Workload"]];   // Workload (28 Oct 2026)   // Game Logs back, every outing with its nERA (Sean, 18 Oct 2026)   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -8549,7 +8551,7 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => { const l = (tabs.find(([x]) => x === k) || [])[1]; return k === "talent" ? wsLab(l) : l; };
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"], ["games"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["xbabip"], ["xhrfb"], ["talent"], ["xiso"], ["xkbb"]] : []),
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"], ["games"], ["work"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["xbabip"], ["xhrfb"], ["talent"], ["xiso"], ["xkbb"]] : []),
                     ["rolling", ...(p.type === "P" ? ["uera"] : ["babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
@@ -8638,6 +8640,8 @@
       body.append(renderNextTab(p, o.st, g));
     } else if (pick === "games") {
       body.append(renderGameLogs(p));
+    } else if (pick === "work") {
+      body.append(renderWorkTab(p));
     } else if (pick === "drivers") {
       body.append(renderDriversTab(p, o.st, g));
     } else if (pick === "nera") {
@@ -9559,6 +9563,78 @@
     const his = new Set([base, DS.key, ...((e && e.k) || []).filter((sv) => sv[2] === p.type).map((sv) => sv[0])]);
     return KINDS.filter(([k]) => k !== "spring").map(([k, l]) => [k ? `${base}-${k}` : base, l]).filter(([key]) => his.has(key));
   }
+  // Workload (Sean, 28 Oct 2026, item 9 of the review's picks: "pitcher workload & velocity trend — FB velo by month, pitches & IP per start, went-6+
+  // rate, IP vs last year / career high"): from his day rows (the Game Logs' source) — his fastballs' velocity by month and over the last 15 days,
+  // every start's pitches and innings with the last ten listed, a reliever's recent use — and his innings against last season's and his MLB
+  // career high (his career bucket). The arsenal alerts (hist/alerts.js) head it. The full season of the card's season, whatever its filters
+  function renderWorkTab(p) {
+    const box = el("div", "rollbox uerabox brbox workbox"), hd = el("div", "rollhd");
+    hd.append(el("span", "rollname", "Workload"), el("span", "rollsub", "the full season")); box.append(hd);
+    const cur = DS.key === CUR.key;
+    if (cur) { alEnsure(); const r = alOf(p), ln = el("p", "note alnote");
+      if (r && r.al.length) { ln.append(el("b", null, `Arsenal, last ${r.days} game days: `), alertWords(r).join(" · ")); }
+      else if (r) ln.textContent = `Arsenal, last ${r.days} game days: the same mix and fastball velocity as the season before them.`;
+      else if (alReady()) ln.textContent = "Arsenal: no pitches in the last 30 game days.";
+      if (ln.textContent) box.append(ln); }
+    const src = gameDays(p);
+    if (src === "loading") { const n = el("p", "note"); n.append(daysNote("Loading his games…")); box.append(n); return box; }
+    if (!src || !src.rows.length) { box.append(el("p", "note", "No game-by-game rows for this season.")); return box; }
+    const f = DF.P, I = { fbn: f.indexOf("fbn"), fbv: f.indexOf("fbv"), pit: f.indexOf("pit"), outs: f.indexOf("outs"), gs: f.indexOf("gs") };
+    const by = new Map();   // per game day: pitches, outs, fastballs and their velocity sum, started
+    for (const r of src.rows) { let g = by.get(r[0]); if (!g) by.set(r[0], (g = { day: r[0], pit: 0, outs: 0, fbn: 0, fbv: 0, gs: 0 }));
+      g.pit += r[I.pit] || 0; g.outs += r[I.outs] || 0; if (I.fbn >= 0 && typeof r[I.fbn] === "number") { g.fbn += r[I.fbn]; g.fbv += r[I.fbv] || 0; } if (r[I.gs]) g.gs = 1; }
+    const games = [...by.values()].sort((a, b) => a.day - b.day), iso = (d) => (src.days ? src.days[d] : null), velo = (g) => (g.fbn ? g.fbv / g.fbn : null);
+    const sFbn = games.reduce((a, g) => a + g.fbn, 0), sv = sFbn ? games.reduce((a, g) => a + g.fbv, 0) / sFbn : null;
+    const n1 = (x) => (x == null ? "–" : x.toFixed(1)), sg = (x, d = 1) => { if (x == null) return "–"; const t = Math.abs(x).toFixed(d); return (+t === 0 ? "" : x > 0 ? "+" : "−") + t; };   // no "−0.0"
+    const vHeat = (td, dv, n) => { if (dv != null && n >= 10) heatTd(td, Math.max(2, Math.min(98, Math.round(50 + 25 * dv)))); return td; };   // ±2 mph spans the scale
+    const sub = (name) => { const h = el("div", "rollhd worksub"); h.append(el("span", "rollname", name)); box.append(h); };
+    // 1. fastball velocity by month, and the last 15 days, against the season
+    { const months = new Map();
+      for (const g of games) { const d = iso(g.day); if (!d || !g.fbn) continue; const m = d.slice(0, 7), o = months.get(m) || { m, fbn: 0, fbv: 0, pit: 0 }; o.fbn += g.fbn; o.fbv += g.fbv; o.pit += g.pit; months.set(m, o); }
+      if (months.size && sv != null) {
+        sub("Fastball velocity by month");
+        const T = brTable([["", 2], ["Fastballs", 2]], [["Month", "l f1"], ["Pitches", "", "every pitch that month"], ["FB velo", "", "his fastballs' average velocity (four-seam, sinker, cutter)"], ["vs season", "", "against his season's average"]], "workvelo");
+        const rows = [...months.values()].sort((a, b) => a.m.localeCompare(b.m)).map((o) => [new Date(o.m + "-15T12:00:00Z").toLocaleDateString(undefined, { month: "long" }), o.pit, o.fbv / o.fbn, o.fbn, null]);
+        const last = games[games.length - 1], l15 = last ? games.filter((g) => g.day >= last.day - 14 && g.fbn) : [];
+        if (l15.length >= 2 && months.size > 1) { const n = l15.reduce((a, g) => a + g.fbn, 0); rows.push(["Last 15 days", l15.reduce((a, g) => a + g.pit, 0), l15.reduce((a, g) => a + g.fbv, 0) / n, n, "tot"]); }
+        for (const [lab, pit, v, nfb, cls] of rows) { const tr = el("tr", cls), dv = v - sv; tr.append(el("td", "l f1", lab), el("td", null, String(pit)), el("td", null, n1(v)), vHeat(el("td", null, sg(dv)), dv, nfb)); if (cls) T.tb.append(T.gap()); T.tb.append(T.fin(tr)); }
+        const tr = el("tr", "tot"); tr.append(el("td", "l f1", "Season"), el("td", null, String(games.reduce((a, g) => a + g.pit, 0))), el("td", null, n1(sv)), el("td", null, "")); T.tb.append(T.fin(tr));
+        box.append(T.wrap);
+      } }
+    // 2. starts: pitches and innings a start, how often he went six, the last ten
+    const starts = games.filter((g) => g.gs), relief = games.filter((g) => !g.gs);
+    if (starts.length) {
+      const six = starts.filter((g) => g.outs >= 18).length, hund = starts.filter((g) => g.pit >= 100).length;
+      const pps = starts.reduce((a, g) => a + g.pit, 0) / starts.length, ips = starts.reduce((a, g) => a + g.outs, 0) / 3 / starts.length;
+      sub("Starts");
+      const sm = el("p", "note worksum"); sm.append(el("b", null, `${starts.length} start${starts.length === 1 ? "" : "s"}: `), `${pps.toFixed(0)} pitches and ${ips.toFixed(1)} innings a start · went 6+ innings in ${six} (${Math.round(100 * six / starts.length)}%) · 100+ pitches in ${hund} (${Math.round(100 * hund / starts.length)}%)`); box.append(sm);
+      const T = brTable([["", 1], ["The start", 4]], [["Date", "l f1"], ["Rest", "", "days off since his previous appearance"], ["IP"], ["Pitches"], ["FB velo", "", "his fastballs' average velocity that day, coloured against his season"]], "workstarts");
+      const idx = new Map(games.map((g, i) => [g.day, i]));
+      for (const g of starts.slice(-10)) { const i = idx.get(g.day), pg = i > 0 ? games[i - 1] : null, rest = pg && iso(g.day) && iso(pg.day) ? Math.round((Date.parse(iso(g.day)) - Date.parse(iso(pg.day))) / 864e5) - 1 : null;
+        const v = velo(g), tp = el("td", null, String(g.pit)); if (g.pit >= 100) tp.classList.add("workhi");
+        const tr = el("tr"); tr.append(el("td", "l f1", iso(g.day) ? fmtDate(iso(g.day)) : "–"), el("td", null, rest == null ? "–" : String(rest)), el("td", null, fmtIP(g.outs / 3)), tp, vHeat(el("td", null, n1(v)), v == null || sv == null ? null : v - sv, g.fbn)); T.tb.append(T.fin(tr)); }
+      box.append(T.wrap); if (starts.length > 10) box.append(el("p", "note", "His last ten starts; the line above is every start."));
+    }
+    // 3. relief: how much and how recently
+    if (relief.length) {
+      const end = Date.parse((cur ? DATA.meta.through : iso(games[games.length - 1].day)) + "T12:00:00Z"), dayOf = (g) => (iso(g.day) ? Date.parse(iso(g.day) + "T12:00:00Z") : null);
+      const within = (n) => relief.filter((g) => { const t = dayOf(g); return t != null && end - t < n * 864e5; }).length;
+      let b2b = 0; for (let i = 1; i < relief.length; i++) { const a = dayOf(relief[i - 1]), b = dayOf(relief[i]); if (a != null && b != null && b - a <= 1.5 * 864e5) b2b++; }
+      sub("Relief");
+      const sm = el("p", "note worksum"); sm.append(el("b", null, `${relief.length} relief outing${relief.length === 1 ? "" : "s"}: `), `${within(7)} in the last 7 days, ${within(14)} in the last 14, ${within(30)} in the last 30 · ${(relief.reduce((a, g) => a + g.pit, 0) / relief.length).toFixed(0)} pitches an outing · back-to-back days ${b2b} time${b2b === 1 ? "" : "s"}`); box.append(sm);
+    }
+    // 4. innings: this season against last season's and his MLB career high (his career lines; minor-league innings aren't counted)
+    { ensureCareer(p.id); const rec = careerRecOf(p.id), rows = rec && rec.P ? rec.P : null, ipI = 2 + RAW_P.indexOf("IP"), y = +DS.season, tot = games.reduce((a, g) => a + g.outs, 0) / 3;
+      sub("Innings");
+      const sm = el("p", "note worksum"); sm.append(el("b", null, `${fmtIP(tot)} innings this season`));
+      if (rows) { const by = new Map(); for (const r of rows) { const v = ipNum(r[ipI]); if (v != null && !isNaN(v)) by.set(r[0], v); }
+        const prevIP = by.get(y - 1), hi = [...by.entries()].filter(([yy]) => yy < y).sort((a, b) => b[1] - a[1])[0];
+        sm.append(prevIP != null ? ` · ${fmtIP(prevIP)} last season (${sg(tot - prevIP, 1)})` : " · no MLB innings last season", hi ? ` · MLB career high ${fmtIP(hi[1])} (${hi[0]})` : " · his first MLB season");
+        if (hi && tot - hi[1] >= 30) { const c = el("span", "alchip al-velo", `+${(tot - hi[1]).toFixed(0)} over his high`); c.title = "A 30+ inning jump over his previous MLB high — the classic workload flag (minor-league innings aren't counted here)"; sm.append(" ", c); } }
+      else if (!careerReadyFor(p.id)) sm.append(" · loading his career…");
+      box.append(sm); }
+    return box;
+  }
   function renderGameLogs(p) {
     ensureIndex();
     if (state.glFor !== p.type + p.id) { state.glFor = p.type + p.id; state.glKind = null; }   // a new card opens on its own season's games
@@ -10377,6 +10453,22 @@
       if (pl) { const c = el("span", "pbplat", "Platooned"); c.title = `Sits against ${pl === "L" ? "left" : "right"}-handers: starts ${Math.round(pl === "L" ? L.lsp : L.rsp)}% of his roster games against them, ${Math.round(pl === "L" ? L.rsp : L.lsp)}% against the other side`; add(c); if (pl === "L" && l) l.classList.add("pbweak"); if (pl === "R" && r) r.classList.add("pbweak"); }
     }
     if (L.last.length) { const s = el("span", "pblast"); s.append(el("span", "pblastw", `Last ${L.last.length}`)); for (const x of L.last) { const b = el("b", x > 0 ? "on" : x === 0 ? "off" : "out", x > 0 ? String(x) : x === 0 ? "–" : "×"); b.title = x > 0 ? `Started, batting ${ORD(x)}` : x === 0 ? "On the roster, didn't start" : "Not on the active roster"; s.append(b); } add(s, `His slot in each of his club's last ${L.last.length} games, oldest first: a digit is a start, – on the roster without starting, × off the active roster`); }
+    return d;
+  }
+  // In-season arsenal alerts (Sean, 28 Oct 2026, item 10 of the review's picks: "new pitch 5%+ in last 30 days, usage swing 10+, velo +1 on
+  // Movers' pitchers and the card"): hist/alerts.js from tools/build_alerts.py — every pitcher's last 30 game days against the season before
+  // them: a new pitch (5%+ of his pitches in the window, under 2% before), one dropped, a usage swing of 10+ points, his primary fastball 1.0+
+  // mph faster or slower. This season's (the daily build rewrites it); loaded on a pitcher's Workload tab and on Movers' pitchers
+  const alData = () => window.DRAFT_ALERTS || null, alReady = () => !!alData();
+  const alEnsure = () => { if (!alReady() && (!window.DRAFT_BUILD || window.DRAFT_BUILD["hist/alerts.js"])) ensureScript("hist/alerts.js", alReady); };
+  function alOf(p) { const D = alData(), r = D && D.p && D.p[p.id]; return r && +D.season === +CUR.season ? Object.assign({ from: D.from, days: D.days }, r) : null; }
+  const ptLow = (pt) => (PITCH_NAME[pt] || pt).toLowerCase();
+  const alertWords = (r) => r.al.map((a) => (a[0] === "new" ? `new ${ptLow(a[1])} (${a[2].toFixed(0)}% of his pitches)` : a[0] === "gone" ? `${ptLow(a[1])} dropped (was ${a[2].toFixed(0)}%)` : a[0] === "use" ? `${ptLow(a[1])} ${a[2].toFixed(0)}% → ${a[3].toFixed(0)}%` : `${ptLow(a[1])} ${a[2].toFixed(1)} → ${a[3].toFixed(1)} mph`));
+  function alertChips(p) {   // the chips on Movers' pitchers table and the Workload tab's head; null with nothing to say
+    const r = alOf(p); if (!r || !r.al.length) return null;
+    const d = el("span", "alchips");
+    r.al.forEach((a, i) => { const c = el("span", "alchip al-" + a[0], a[0] === "new" ? `new ${ptLow(a[1])}` : a[0] === "gone" ? `${ptLow(a[1])} gone` : a[0] === "use" ? `${ptLow(a[1])} ${a[2].toFixed(0)}→${a[3].toFixed(0)}%` : `${a[1]} ${a[3] > a[2] ? "+" : "−"}${Math.abs(a[3] - a[2]).toFixed(1)}`);
+      c.title = `Last ${r.days} game days (${fmtDate(r.from)} on) against the season before them: ${alertWords(r)[i]}`; d.append(c); });
     return d;
   }
   const ilTip = (x) => `On the ${x.word}${x.since ? " since " + new Date(x.since + "T12:00:00Z").toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}${x.note ? " · " + x.note : ""}`;
