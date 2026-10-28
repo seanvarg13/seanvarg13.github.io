@@ -1190,3 +1190,12 @@ is where his wOBA got ahead of his xwOBA. The old Expected vs actual table is go
 With a date window on (say last 100 PA), the Leaderboard no longer puts "each player's last 100 PA" on a line of its own above the filter
 buttons — the count line over the table already says it — so the table starts higher. While the game-by-game data is loading, the count line
 says so. In the Splits dropdown, the batter / pitcher hand choice and Home + away · Home · Away are on separate rows.
+
+### The review's first fixes (28 Oct 2026)
+
+On a phone the player band's slash line (BA · OBP · SLG · OPS) no longer runs together — each number sits in its own cell at any phone width.
+The build-up tables (xwOBA, xISO, xBABIP, xHR/FB, a pitcher's K% and BB%) no longer hang their marked words ("xwOBA", "Park-neutral xwOBA",
+"Expected BABIP" …) off the right edge on a phone; a legend under each table carries the colours and words, and the table scrolls inside the
+screen like every other. A desktop still shows the word beside the yellow or light-blue cell. The Bio box no longer repeats his age or shows a
+nickname that is just his first name, the key under the season table is one line, and the phone's row of card tabs fades more clearly at its
+right edge when there are more tabs than fit.

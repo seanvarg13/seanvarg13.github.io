@@ -5152,6 +5152,24 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   game-by-game data…" while the day rows load (`renderPager`'s `bits`). Rankings / Draft mode keep the note. The Splits dropdown's two segments,
   All pitchers · vs LHP · vs RHP and Home + away · Home · Away, are rows of their own (`.panel .lbsplit` a column, 10px apart).
 
+* **The review's first fixes (Sean, 28 Oct 2026, after a walk of every page on a phone and a desktop: "I like 22, 20, 15, 12, 11, 10, 9, 8, 7, 6,
+  5, 3, and 2" from a list of 24)**: items 2, 3 and 6. (2) **The phone band's slash line ran together** (".316.432.6011.033" on Yordan's popup):
+  eight Summary cells share ~316px at 390px and "1.033" at 15px was wider than its 36px cell — the label column is 44px, the pill columns 1.2fr,
+  the cells' type `clamp(11px, 3.3vw, 13.5px)` with 1px of padding (the block at the end of `styles.css`); checked at 360-430px, every value
+  inside its cell with 4px+ between neighbours. (3) **The build-ups' marked numbers** (xwOBA, Park-neutral xwOBA, Expected BABIP, Expected K% …)
+  hung their word off the table's right edge, cut mid-word on a phone: `expMark` also writes each mark into a legend under the table (`.kmarks`:
+  the cell's colour as a swatch and the word, in row order; `appendWrap` puts it right after the frame once the frame is in its box —
+  `buildUp.done()`, the K% and BB% build-ups), a phone shows the legend and hides the hanging word (`::after` content none), so the table ends
+  where it ends and its frame scrolls inside the screen like any other B-Ref table; a desktop keeps the word beside the cell and hides the
+  legend. The 10 / 16 Oct phone rules that let the word hang stay in the file, overridden. (6) **Small ones**: the Bio box drops "(Age N)" after
+  the birthday (the bar says his age) and a nickname that is only his first name ("Nickname: Yordan"; accents and case ignored); the season
+  table's Bold / Bold italic / Gold key is one muted 12px line (flex-wrap — three short lines on a phone, one on a desktop); the phone card-tab
+  strip's fade is 64px wide (was 28), so a cut-off last tab reads as more to the right. Found alongside: `bio()`'s `.catch` swallowed a redraw
+  that threw inside its `.then` (the page then said "MLB's record isn't available right now"); it logs the error now. The rest of the picks —
+  the player page's cold load and loading states (5, 22), lineup slot and PA volume (7), a Bullpens page (8), workload / velocity and arsenal
+  alerts (9, 10), a year-over-year tab (11), hitters vs pitch type (12), the park what-if and winter moves (15), a service worker (20) — follow
+  in their own PRs.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

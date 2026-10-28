@@ -7944,7 +7944,7 @@
         tr.append(noteCell(lab, tip, tr), el("td"), el("td"), dCell(d), el("td", "krk", run == null ? "" : fmt(run))); tb.append(fin(tr)); },
       mark(word, cls) { expMark(tb, word, cls); },   /* cls: a second marked number in its own colour (the park-neutral one, kneut) */
       tag(c) { tb.lastElementChild.classList.add(c); },   // the last row's running number as the expected one, yellow with the words beside it
-      done() { box.append(wrap); return box; } };
+      done() { appendWrap(box, wrap); return box; } };
     return api;
   }
   // his percentile on a stat among a list, oriented so a higher percentile = a bigger push up on the stat being built (dir −1 flips it)
@@ -9022,7 +9022,16 @@
   // the running rate after the repeatable leftover is what his process says he should have (Sean, 10 Oct 2026: "after the everything else
   // repeatables ... highlight it in yellow and bold it and after it put like the words expected k% and expected bb% ... literally just to the
   // right of it don't adjust the table at all"): the cell is filled yellow and the words hang off its right edge (::after, out of the flow)
-  function expMark(tb, word, cls) { const td = tb.lastElementChild && tb.lastElementChild.querySelector("td.krk"); if (td) { td.classList.add("kexp"); if (cls) td.classList.add(cls); td.dataset.exp = word; td.title = word; } }
+  // The mark's word also goes into a legend under the table (.kmarks: a swatch in the cell's colour and the word, in row order), which a phone
+  // shows in place of the hanging word — the word was cut mid-word at the screen's edge there, and the table had to be scrolled sideways to read
+  // it (Sean, 28 Oct 2026, from the review). A desktop keeps the word beside the cell and hides the legend. The legend is appended right after the
+  // table's frame once the frame is in its box (appendWrap), since the marks come before the frame is placed
+  function expMark(tb, word, cls) { const td = tb.lastElementChild && tb.lastElementChild.querySelector("td.krk"); if (!td) return;
+    td.classList.add("kexp"); if (cls) td.classList.add(cls); td.dataset.exp = word; td.title = word;
+    const w = tb.closest(".brscroll"); if (!w) return;
+    const lg = w._kmarks || (w._kmarks = el("div", "kmarks")), s = el("span", "kmk" + (cls ? " " + cls : "")); s.append(el("i", "kmsw"), word); lg.append(s);
+    if (w.parentNode && lg.parentNode !== w.parentNode) w.after(lg); }
+  const appendWrap = (box, wrap) => { box.append(wrap); if (wrap._kmarks) box.append(wrap._kmarks); };
   function renderKArchetype(p, st, g) {
     const pv = V(p), m = pv.m, L = lgRatesP(), stuff = stuffSide();
     if (!L.cstr || !L.foul || !L.swing || L.whf == null || L.s2whf == null || m.k == null || m.whf == null) return null;
@@ -9103,7 +9112,7 @@
       runK += lk; row("", "Everything else, luck", undefined, null, dCell(lk), runK, `the share that doesn't carry to next season`); }
     tb.append(gap()); band = true;
     row("tot first", K, undefined, null, dCell(gap0), his.k, stuff ? `the models' K%; his actual K% is ${f1(act.k)} · ${bf} batters faced` : `${bf} batters faced · the whole gap: K% − the K% his whiffs alone imply`);
-    box.append(wrap);
+    appendWrap(box, wrap);
     return box;
   }
   // The walk build-up (Sean, 9 Oct 2026: "below that could you have a table that is the same but is for walk rate"): his BB% from what his
@@ -9148,7 +9157,7 @@
     run += lk; row("", "Everything else, luck", undefined, null, dCell(lk), run, "the share that doesn't carry to next season");
     tb.append(gap()); band = true;
     row("tot first", "BB%", undefined, null, dCell(m.bb - base), m.bb, `${bf} batters faced · the whole gap: BB% − the BB% his Strike% alone implies`);
-    box.append(wrap);
+    appendWrap(box, wrap);
     return box;
   }
   // Spring tab (Sean, 6 Oct 2026: "a tab about pitching+ but for spring training. As a way to get earlier indicators on arsenal
@@ -10265,7 +10274,7 @@
       for (const n of document.querySelectorAll(`.hbio[data-bio="${id}"]`)) {
         fillBio(n, n._p, BIO.get(id)); delete n.dataset.bio; }
       if (pageNow()) render();
-    }).catch(() => { BIO.set(id, false); if (pageNow()) render(); });   // false: asked and refused, so the page stops saying "Loading"
+    }).catch((e) => { console.error("bio", e); BIO.set(id, false); if (pageNow()) render(); });   // false: asked and refused, so the page stops saying "Loading"; the error logged, since a redraw that throws lands here too
     return null;
   }
 
@@ -10416,8 +10425,9 @@
     // only what the bar over it doesn't say (Sean, 20 Oct 2026): positions, bats / throws, height / weight and the team are on the bio line
     if (!b) { body.append(el("div", "pbil pbwait", b === false ? "MLB's record isn't available right now." : "Loading MLB's record…")); }
     else {
-      const born = longDate(b.born), age = b.age != null ? b.age : p.age;
-      if (born) line("Born", `${esc(born)}${b.city ? " in " + esc(b.city) : ""}${age != null ? ` (Age ${age})` : ""}`);
+      // no "(Age N)" after the birthday and no nickname that is just his first name — the bar over the box says his age (28 Oct 2026)
+      const born = longDate(b.born);
+      if (born) line("Born", `${esc(born)}${b.city ? " in " + esc(b.city) : ""}`);
       const d = b.draft;
       // MLB writes the competitive-balance rounds as C-A / C-B (Snell 2011 read "the round C-A")
       const cb = d && /^C-?([AB])$/i.exec(String(d.rd || ""));
@@ -10426,7 +10436,8 @@
       else line("Draft", "Undrafted (signed as an amateur free agent)");
       if (d && d.school) line("School", esc(d.school));
       const db = longDate(b.debut); if (db) line("Debut", esc(db));
-      if (b.nick) line("Nickname", esc(b.nick));
+      const plain = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+      if (b.nick && plain(b.nick) !== plain(String(b.full || p.name || "").split(/\s+/)[0]) && plain(b.nick) !== plain(String(p.name || "").split(/\s+/)[0])) line("Nickname", esc(b.nick));
     }
     return box;
   }

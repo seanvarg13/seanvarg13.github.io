@@ -5537,3 +5537,23 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxbar > .pill { padding-left: 10px !important; padding-right: 10px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxtitle { flex-wrap: nowrap; gap: 8px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="flaws"] .fxtitle .fxsub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+/* The review's small fixes (Sean, 28 Oct 2026: "I like 22, 20, 15, 12, 11, 10, 9, 8, 7, 6, 5, 3, and 2"). Item 2: the phone band's slash line ran
+   together (".316.432.6011.033") — eight cells share 316px there, and "1.033" at 15px is wider than its 36px cell; the label column is 44px, the
+   pill columns 1.2fr and the cells' type follows the screen (clamp), so every value sits inside its own cell at 360-430px */
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbsrow { grid-template-columns: 44px minmax(0, 1.2fr) minmax(0, 1.2fr); }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .pbsv { font-size: clamp(11px, 3.3vw, 13.5px); padding: 0 1px; }
+/* Item 3: the marked numbers' words (xwOBA, Park-neutral xwOBA, Expected BABIP …) hung off the table's right edge, cut mid-word on a phone; there
+   the words are a legend under the table (.kmarks, built by expMark: the cell's colour and the word, in row order) and the hanging word is gone,
+   so the table ends where it ends and its frame scrolls inside the screen like every other B-Ref table; a desktop keeps the word beside the cell */
+.kmarks { display: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal, .fxbuild) table.sbt.kbuild td.krk.kexp::after { content: none !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal, .fxbuild) .brscroll:has(table.kbuild td.kexp) { width: max-content !important; max-width: 100% !important; overflow-x: auto !important; overflow-y: hidden !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal, .fxbuild) .kmarks { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 7px 0 2px; font-size: 12.5px; color: var(--ink); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal, .fxbuild) .kmarks .kmk { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal, .fxbuild) .kmarks .kmsw { display: inline-block; width: 13px; height: 13px; background: #ffe14d; border: 1px solid rgba(0,0,0,.18); box-sizing: border-box; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal, .fxbuild) .kmarks .kmk.kneut .kmsw { background: #cfe3f7; }
+/* Item 6: the season table's key is one muted line (it wraps to two on a phone), not three; and a longer fade at the end of a phone's card-tab
+   strip, so the cut-off last tab reads as "more this way" */
+:root:root:root:root:root:root .sblock .sbkey { display: flex; flex-wrap: wrap; gap: 0 18px; margin-top: 8px; font-size: 12px; line-height: 1.5; }
+:root:root:root:root:root:root .sblock .sbkey > div { white-space: nowrap; }
+:root:root[data-view="mobile"] .btabs:not(.fits) { -webkit-mask: linear-gradient(90deg, #000 calc(100% - 64px), transparent); mask: linear-gradient(90deg, #000 calc(100% - 64px), transparent); }
