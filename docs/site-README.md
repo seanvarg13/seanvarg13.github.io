@@ -1199,3 +1199,13 @@ The build-up tables (xwOBA, xISO, xBABIP, xHR/FB, a pitcher's K% and BB%) no lon
 screen like every other. A desktop still shows the word beside the yellow or light-blue cell. The Bio box no longer repeats his age or shows a
 nickname that is just his first name, the key under the season table is one line, and the phone's row of card tabs fades more clearly at its
 right edge when there are more tabs than fit.
+
+### The player page opens faster, and says what it is loading (28 Oct 2026)
+
+A player's page used to download every player's career record (two files, about 2.4 MB compressed) to show one man's rows, plus last
+season's whole file for the one line the bars' tap note carries, while the game-by-game files warmed up beside them. Now it downloads his own
+record — the career files are cut into 128 buckets by player id (`hist/c/`, `hist/m/`) — and one small file per season he played
+(`hist/lg/<season>.js`: that season's heat pools, league leaders and HR/FB league, built by the site's own code so the numbers are the same to
+the digit). Last season's file loads the first time you tap a bar, and the note re-opens with his line once it is in. The background warm-up of
+the game-by-game files waits until the page's own files are in and skips a slow connection. Wherever a page waits on the game-by-game data —
+the Leaderboard's count line and its empty table (now a grey skeleton of rows), a card, home — the note shows how far the download is.

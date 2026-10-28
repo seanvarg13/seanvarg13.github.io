@@ -5557,3 +5557,16 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root .sblock .sbkey { display: flex; flex-wrap: wrap; gap: 0 18px; margin-top: 8px; font-size: 12px; line-height: 1.5; }
 :root:root:root:root:root:root .sblock .sbkey > div { white-space: nowrap; }
 :root:root[data-view="mobile"] .btabs:not(.fits) { -webkit-mask: linear-gradient(90deg, #000 calc(100% - 64px), transparent); mask: linear-gradient(90deg, #000 calc(100% - 64px), transparent); }
+/* The day files' progress and a skeleton of rows (28 Oct 2026, from the review: item 22 — "a thin progress bar in the count line and a skeleton
+   table instead of blank space"): "Loading game-by-game data… 37%" with a 4px bar under the words wherever a list, a card or home waits on the
+   day rows (the bar only once the build map says the file's size), and twelve grey rows under the Leaderboard's note while they stream in */
+:root:root:root:root:root:root .daysprog { display: inline-flex; flex-direction: column; gap: 3px; vertical-align: middle; max-width: 100%; }
+:root:root:root:root:root:root .daysprog .daysbar { display: none; width: 160px; max-width: 100%; height: 4px; background: color-mix(in srgb, var(--ink) 12%, transparent); overflow: hidden; }
+:root:root:root:root:root:root .daysprog.known .daysbar { display: block; }
+:root:root:root:root:root:root .daysprog .daysbar i { display: block; height: 100%; width: 0; background: var(--accent-2, var(--accent)); transition: width .25s linear; }
+:root:root:root:root:root:root .pcount .daysprog { gap: 2px; }
+:root:root:root:root:root:root .pcount .daysprog .daysbar { width: 120px; height: 3px; }
+:root:root:root:root:root:root #rows > li.skel { display: block; height: var(--rowh, 23px); margin: 0; padding: 0; border-bottom: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); background: linear-gradient(90deg, transparent 0 1%, color-mix(in srgb, var(--ink) 11%, transparent) 1% 22%, transparent 22% 25%, color-mix(in srgb, var(--ink) 7%, transparent) 25% 78%, transparent 78%); pointer-events: none; }
+:root:root:root:root:root:root #rows > li.skel:nth-child(odd) { opacity: .6; }
+:root:root:root:root:root:root #rows > li.skelnote { display: block; padding: 14px 12px; text-align: center; color: var(--muted); font-size: 13px; }
+:root:root:root:root:root:root #rows > li.skelnote .daysprog { align-items: center; }

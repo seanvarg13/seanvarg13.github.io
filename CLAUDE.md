@@ -5170,6 +5170,61 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   alerts (9, 10), a year-over-year tab (11), hitters vs pitch type (12), the park what-if and winter moves (15), a service worker (20) — follow
   in their own PRs.
 
+* **The player page's cold load, and the loading states (Sean, 28 Oct 2026, items 5 and 22 of the review's picks: "I like 22, 20, 15, 12, 11,
+  10, 9, 8, 7, 6, 5, 3, and 2")**: a cold player page used to download the three whole career files (`hist/career.js` 4.8 MB, `career-bb.js`
+  2.2 MB, `minors.js` 15 MB when the minors were shown — ~2.4 MB gzipped for the first two) for one player's rows, last season's whole file
+  (~6 MB gzipped) for the tap note's one line, and the two day files (~7.4 MB gzipped) warming up beside them.
+  - **Buckets** (`tools/shard_career.py`, standard library, run at the end of `build_career.py`'s `main()` and `season_bb()` — `shard()`,
+    non-fatal — or alone): `hist/c/<id % 128>.js` = `window.DRAFT_CAREER_C["<b>"] = {keys, pkeys, lg, p: {id: record}, bb: {id: {season:
+    […]}}, pp: {id: {season: […]}}}` (his career.js record and his career-bb.js rows, with its keys) and `hist/m/<id % 128>.js` =
+    `window.DRAFT_MINORS_C["<b>"] = {id: record}` (his minor-league lines), 29-85 KB raw / 20-45 KB gzipped each; every bucket is written even
+    when empty, so a page never asks for a file that isn't there, and an unchanged bucket keeps its mtime (a publish lists what moved). In
+    `app.js` (`careerBucket` / `careerFile` / `careerRecOf` / `ensureCareer` / `careerWait`, `minorsBucket` / `minorsRecOf` / `ensureMinors`,
+    `sbxSrc` / `sbxKeys` — beside `careerReady`): every reader of a player's record (`rawLines`, `careerG`, `careerLine`, `careerRows`,
+    `summaryBlock`, `seasonBlock` and its club rows, `hrfbTable`, `babipSeasons`, `isoSeasons`, `renderXhrfbTab`, `sbxOf`, `sbpOf`) asks for
+    his bucket and reads the whole file first when it happens to be in; `careerWait(p)` is the "Loading career stats…" / "Couldn't load … Try
+    again" note (the retry clears the bucket's `failed` / `tries`). `sbCombine` reads the pp keys off the lines. `vsrc` gives a bucket its
+    folder's version (`hist/c/`, `hist/m/` in the build map — one entry a folder, the hash of every bucket's hash; 256 entries would weigh
+    index.html down), so a daily career rebuild refetches them all, which it would anyway (this season's line is on every record).
+  - **The league files** (`hist/lg/<season>.js`, 2004 on — `LG_FROM`, the first season whose pools reach 20; `tools/build_lg.cjs`, headless
+    like `build_home.cjs`, run by `cloud_daily.py` after each `build_career.py`, non-fatal): `window.DRAFT_LG["<y>"] = {sb, sbp, iso, hrfb,
+    sbx, sbxpk, lead}` — the season table's heat pools (`sbPool`: wOBA / xwOBA / Sprint; `sbPoolP`: K-BB% / nERA; `sbxPool` for every heat-
+    mapped Statcast key, the three park-carrying ones — txw / xslg / xiso — both ways round the park switch in `sbxpk`; `sbxIsoPool`), the
+    HR/FB league (`hrfbLeague`) and the league leaders (`sbLeaders`: `Hn` park-neutral, `Hp` with the parks, `P`), **computed by the site's
+    own functions** through `window.__lgData` (`lgBuild` in `app.js`, after `sbLeaders`: it sets `window.__wholeCareer`, loads the two whole
+    files, nulls `window.DRAFT_LG` and runs each pool at both `XWN` settings), written at full precision (a leader's value is matched to the
+    cell's within 1e-9 and a pool is binary-searched for the cell's exact value — a 4-dp rounding lost every rate's league-lead mark), ~80 KB
+    raw / 16 KB gzipped a Statcast season, 1-6 KB before 2015, shared by every player's page and cached. Each reader returns the season's
+    file first (`lgOf(y)`) and computes from the whole files when they're in instead; `ensureLg(y)` asks for the file (or, under
+    `__wholeCareer` or once the file has failed its three tries, the whole files); `lgReady(y)` = either; `hxReady` (the Leaderboard's xHR/FB
+    column) is `lgReady(+DS.season)`; each season row of the table, HR / FB by season, BABIP / ISO by season and the xHR/FB tab asks for its
+    season's. The pre-2015 seasons' files carry only the official pools (K-BB% heat for a pitcher's 2005-14 rows, among the players still
+    active in 2015, as before). A player's cold page is now his two buckets plus a file per season he played (Judge: 12 × 16 KB) instead of
+    2.4 MB.
+  - **Last season loads on the first tap**: the percentile bars' tap note (`statPop`) carries his line a season earlier; `pctColumns` no
+    longer loads `hist/mlb-<Y−1>.js` with every full-season card — a row whose file isn't in carries `prevKey` (`prevNeed`), the first tap
+    asks for it (`ensureHist`), says "Loading 2025…" and, once it lands, the note re-opens on its row (`state.statPopKey`, read in `pctSvg`
+    where the row's click is wired).
+  - **The warm-up waits its turn** (`slowLink`, the block after `loadDays`): the two day files are fetched into the cache only once nothing
+    the page asked for is still coming (`loading` empty, no day file in flight — it re-checks every 2 s) and not at all on a slow link (data
+    saver, an `effectiveType` under 4g, a `downlink` under 1.5 Mbps; iOS reports none of them, so an iPhone warms as before), and reads each
+    body through so the cache is sure to hold the whole file whatever a browser does with a response nobody reads. Similar, awards,
+    injuries, trends, adp-, proj- and claude- files are script tags with `fetchPriority = "low"`.
+  - **Loading states**: `loadDays` streams each day file (`fetch` + `ReadableStream`, run as a blob script like a gzipped past season; a
+    browser without streams takes the plain tag) and `daysProg` / `daysPct` / `daysNote` / `daysProgDraw` draw "Loading game-by-game data…
+    37%" with a thin bar under the words — on the Leaderboard's count line, its empty note (over **twelve skeleton rows**, `li.row.skel`), a
+    card's and home's notes — updated in place every 256 KB; the share needs the files' sizes, which `restamp()` (and the Mac's `stamp()`)
+    write as `window.DRAFT_SIZES` in the build tag, so a local server shows the words alone. CSS: the block at the end of `styles.css`.
+  - **Publishing**: `restamp()` versions the two folders and each `hist/lg/<y>.js`; `outputs()` lists the run's buckets and league files
+    (mtime since the start); `publish.py` mirrors the three subfolders and versions them the same way; `sync_tools.py`'s `FILES` carries
+    `tools/shard_career.py`. `ensureScript`'s value-free list has `c/`, `m/` and `lg/` (nothing to recompute when one lands). Checked:
+    old `app.js` against new on nine players' pages (Judge, Yordan, Skenes, Verlander, Ohtani, Trout, Anthony, Horton, a minors-only
+    hitter), every tab, every season-table view, Show minors and the Leaderboard with the xHR/FB column for 2026 and 2025, on a phone and a
+    desktop — every cell's text, class, inline colour, SVG fill and title identical (scratch `pr2/eq.cjs`); the new code never asks for a
+    whole file; the page check's 38 steps. A cold page on a throttled phone (12 Mbps, 4× CPU; scratch `pr2/perf3.cjs`): Judge's season
+    table in 19.8 s → 7.0 s (its heat and leaders 19.8 → 7.5), Skenes 18.0 → 7.1, Yordan 19.4 → 7.1; the page's own download 6.2 → ~2.4 MB
+    gzipped (data.js, the index and Similar are most of what's left).
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

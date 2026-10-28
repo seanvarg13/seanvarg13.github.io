@@ -150,12 +150,24 @@ def restamp():
         f.write(html)
     wanted = [r for r in TOP if os.path.exists(r)] + sorted(f"hist/{n}" for n in os.listdir("hist") if n.endswith((".js", ".js.gz")))
     ver = {rel: sha1(rel)[:10] for rel in wanted}
+    # the career files' buckets (hist/c/, hist/m/ — 128 files each; 28 Oct 2026) take one version a folder, the hash of every bucket's hash,
+    # which app.js's vsrc reads for a bucket; an entry apiece would weigh the page down. The league files (hist/lg/<season>.js) are few and
+    # only this season's moves day to day, so each has its own
+    for sub in ("c", "m"):
+        names = sorted(n for n in os.listdir(f"hist/{sub}") if n.endswith(".js")) if os.path.isdir(f"hist/{sub}") else []
+        if names:
+            ver[f"hist/{sub}/"] = hashlib.sha1("".join(sha1(f"hist/{sub}/{n}") for n in names).encode()).hexdigest()[:10]
+    if os.path.isdir("hist/lg"):
+        for n in sorted(os.listdir("hist/lg")):
+            if n.endswith(".js"):
+                ver[f"hist/lg/{n}"] = sha1(f"hist/lg/{n}")[:10]
+    sizes = {f: os.path.getsize(f) for f in ("days-h.js", "days-p.js") if os.path.exists(f)}   # the day files' sizes, for the page's progress line
     build = hashlib.sha1("".join(f"{k}:{v}" for k, v in sorted(ver.items())).encode()).hexdigest()[:10]
     for rel, v in ver.items():
         for attr in ('src="', 'href="'):
             html = html.replace(f'{attr}{rel}"', f'{attr}{rel}?v={v}"')
     tag = ("<script>window.DRAFT_BUILD=" + json.dumps(ver, separators=(",", ":"))
-           + ';window.DRAFT_BUILD_ID="' + build + '";</script>\n')
+           + ';window.DRAFT_BUILD_ID="' + build + '";window.DRAFT_SIZES=' + json.dumps(sizes, separators=(",", ":")) + ";</script>\n")
     html = html.replace('<script src="defaults.js', tag + '<script src="defaults.js', 1)
     with open("index.html", "w") as f:
         f.write(html)
@@ -170,7 +182,8 @@ START = time.time()
 def outputs():
     # only what this run wrote (30 Sep 2026): every other file is the checkout's copy from when the run began, and putting it
     # back on top of main would undo another run that rebuilt it meanwhile (a retrain's rescore beside a minors rebuild)
-    return [p for p in OUTPUTS + sorted(glob.glob("hist/*.js")) if os.path.exists(p) and os.path.getmtime(p) >= START - 1]
+    return [p for p in OUTPUTS + sorted(glob.glob("hist/*.js")) + sorted(glob.glob("hist/c/*.js")) + sorted(glob.glob("hist/m/*.js")) + sorted(glob.glob("hist/lg/*.js"))
+            if os.path.exists(p) and os.path.getmtime(p) >= START - 1]   # the buckets and league files a build_career run wrote (28 Oct 2026)
 
 
 def publish(label, end, dry):
@@ -281,7 +294,7 @@ def main():
         for lvl, ys in milb.items():
             ok = ok and run("build_milb.py", lvl, *ys)
         # the search index too, so a newly built spring / postseason shows in the cards' MLB dropdown
-        ok = ok and run("build_history.py", "index") and run("build_career.py") and (run("build_trends.py") or True) and (run("build_similar.py") or True) and publish(f"rescored {' '.join(toks)}", end, a.dry)
+        ok = ok and run("build_history.py", "index") and run("build_career.py") and (node("tools/build_lg.cjs") or True) and (run("build_trends.py") or True) and (run("build_similar.py") or True) and publish(f"rescored {' '.join(toks)}", end, a.dry)
         sys.exit(0 if ok else 1)
     steps = set(a.steps.split(","))
     new = None
@@ -338,6 +351,7 @@ def main():
         ok = ((not fantasy or run("build_fantasy.py"))
               and (not index or run("build_history.py", "index"))
               and (not career or run("build_career.py"))
+              and (not career or node("tools/build_lg.cjs") or True)   # the season table's league files, from the career files just built (28 Oct 2026)
               and publish(", ".join(parts + ["fantasy"] * fantasy + ["index"] * index + ["career"] * career), end, a.dry))
     say(f"=== {dt.datetime.now(ZoneInfo('America/New_York')):%F %T} {'done' if ok else 'FAILED'}")
     sys.exit(0 if ok else 1)

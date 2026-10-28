@@ -45,6 +45,7 @@ FILES = {
     "tools/publish.py": os.path.join(HERE, "publish.py"),
     "tools/publish_github.py": os.path.join(HERE, "publish_github.py"),
     "tools/pack_hist.py": os.path.join(HERE, "pack_hist.py"),     # publish.py packs finished seasons' day files with it (20 Oct 2026)
+    "tools/shard_career.py": os.path.join(HERE, "shard_career.py"),   # build_career.py cuts the career files into buckets with it (28 Oct 2026)
     "tools/serve.py": os.path.join(HERE, "serve.py"),
     "tools/sync_tools.py": os.path.join(HERE, "sync_tools.py"),
     "tools/install_schedule.sh": os.path.join(HERE, "install_schedule.sh"),
