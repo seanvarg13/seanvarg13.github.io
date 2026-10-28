@@ -101,6 +101,12 @@ function minorsId() {
         await until((t) => document.querySelector(".fxbar .pill")?.textContent.trim() === t && document.querySelectorAll(".flawpage table tbody tr").length > 0, sd, 120000);
         if (sd === "All pitchers") { await pg.evaluate(() => document.querySelector(".flawpage table tbody tr .pbname").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
           await until(() => location.hash === "#movers" && !document.querySelector("#xboard .pbback")); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); } } });
+    // Bullpens (28 Oct 2026): the overview's 30 teams, one team's pen through the Team pill, a name's popup, back to every team
+    if (!QUICK) await step("bullpens", async () => { await hash("#bullpens"); await count(".bppage table tbody tr", 20, 120000);
+      for (const [tm, n] of [["NYY", 5], ["All teams", 20]]) { await pg.evaluate((t) => { document.querySelector(".bpbar .pill").click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent.startsWith(t)).click(); }, tm);
+        await until(([t, k]) => document.querySelector(".bpbar .pill")?.textContent.trim() === t && document.querySelectorAll(".bppage table tbody tr").length >= k, [tm === "All teams" ? "All teams" : tm, n], 60000);
+        if (tm === "NYY") { await pg.evaluate(() => document.querySelector(".bppage table tbody tr .pbname").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
+          await until(() => location.hash === "#bullpens" && !!document.querySelector("#xboard.xpop .xpopx")); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); } } });
     await step("fantasy", async () => { await hash("#fantasy"); await count("#fboard table tbody tr", 10, 90000); });
     if (!QUICK) {
       await step("mock draft", async () => { await hash("#mock"); await until(() => document.querySelector("#pitchboard") && document.querySelector("#pitchboard").innerText.length > 50); });

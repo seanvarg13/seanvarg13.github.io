@@ -4270,7 +4270,7 @@
   // well and scoring settings / and then get rid of the rest"): rebuilt here since index.html's list (Draft board, Eligibility, Fantasy trending)
   // doesn't round-trip. The Draft board is Rankings' Draft mode now; Eligibility, the Weekly Planner, Claude rankings and What if are off the menus
   // and routes (their renderers stay, unreachable)
-  { const mm = $("modemenu"); if (mm) { mm.innerHTML = ""; for (const [h, l] of [["#rankings", "Rankings"], ["#fantasy/leaders", "Fantasy leaderboard"], ["#mock", "Mock draft"], ["#fantasy/settings", "Scoring settings"]]) { const li = el("li"), a = el("a", null, l); a.href = h; li.append(a); mm.append(li); } } }
+  { const mm = $("modemenu"); if (mm) { mm.innerHTML = ""; for (const [h, l] of [["#rankings", "Rankings"], ["#fantasy/leaders", "Fantasy leaderboard"], ["#bullpens", "Bullpens"], ["#mock", "Mock draft"], ["#fantasy/settings", "Scoring settings"]]) { const li = el("li"), a = el("a", null, l); a.href = h; li.append(a); mm.append(li); } } }
   // Draft Mode is gone (Sean, 28 Sep 2026: the home page does its job); the Mac's index.html template may still list it
   { const dm = document.querySelector('#modemenu a[href="#draftmode"]'); if (dm) dm.closest("li").remove(); }
   // Trending lives inside the Leaderboard and the Fantasy leaderboard now (Season / Recent, 1 Oct 2026): off both menus
@@ -4912,7 +4912,7 @@
     modal.classList.remove("pcard"); document.body.classList.remove("cardpop");
     const key = state.expanded;
     // the Mock Draft's names pop the card up over the room too (Sean, 2 Oct 2026), and so does a Similar player's name from inside one
-    const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy", "pitches", "home", "mock", "claude", "flaws"].includes(state.mode);
+    const listMode = ["rankings", "draft", "trending", "leaderboard", "fantasy", "pitches", "home", "mock", "claude", "flaws", "bullpens"].includes(state.mode);
     if (key && listMode && state.cardDs && !histDataset(state.cardDs)) ensureHist(state.cardDs);   // a past season's card: its file first
     const src = state.cardDs && histDataset(state.cardDs) ? histDataset(state.cardDs).players : DATA.players;
     const p0 = key && listMode ? (src.find((q) => q.type + q.id === key) || DATA.players.find((q) => q.type + q.id === key)
@@ -5897,6 +5897,128 @@
     else { P2.wrap.classList.add("pbscroll"); page.append(P2.wrap); }
     more(`${prevMode ? `His full ${Y} season against his ${Y0} (${PM_BASE}+ IP each)` : `His ${M.label} (${M.minN}+ IP) against his season before them (${PM_BASE}+ IP)`}: nERA is his ERA with the luck taken out — every ball in play at the league's value for its type, his strikeouts, walks and HBP as they were — so a drop is his strikeouts, walks or batted-ball mix getting better, not his defence or the bounces. Δ is his nERA over the window minus before, red as it falls. K-BB% and FB velo say where the move came from. Credible = how much of it is likely real: nERA settles at about ${PM_K} batters faced (odd and even outings, 2024-26), so his batters faced in the window over that plus ${PM_K}, raised when last season's nERA already sat past the middle of the move, lowered when it sat on the far side. Biggest nERA drop orders by Δ; Most credible by Δ × that. A last-N-PA window picked on the hitters' side reads 30 days here. Tap a name for his page on that window, at his Game Logs.`);
   }
+  // Bullpens (Sean, 28 Oct 2026, item 8 of the review's picks: "SV 5 / HD 2 are a quarter of a pitcher's points and the game logs already carry
+  // SV/HD/BS/SVO/GF per outing. Team by team: who got the save chances and high-leverage outings in the last 30 days, each arm's nERA / Pitching+ /
+  // xBB% beside the incumbent → job safe / at risk / next up. Closer turnover is the classic in-season edge"): Fantasy ▸ Bullpens (#bullpens, mode
+  // bullpens, the Pitching+ board's standing card). Every team's pen from this season's official game logs (fantasy.js: a reliever's SV / HD / BS /
+  // SVO / GF per outing) over a window ending on the file's last day, the site's full-season rates beside each arm (nERA, K-BB%, Whiff%, xBB%,
+  // Pitching+, coloured by his percentile among the season's relievers), the roles read from the window — the closer is whoever took the saves,
+  // the setup men the holds — the closer's leash from his share of the team's saves and his blown saves, and the next man up: the other
+  // arm with the most holds and saves (the manager's own order), flagged when his rates beat the closer's. One table for every team (closer,
+  // leash, next man) or one team's whole pen through the Team pill. A name opens his page as the popup
+  const BP_WINS = [["14", "Last 14 days"], ["30", "Last 30 days"], ["60", "Last 60 days"], ["all", "Full season"]];
+  const bpSet = Object.assign({ win: "30", team: "ALL", sort: "risk" }, load("draft2027.bullpens", {}));
+  let bpNoteOpen = false;
+  function bullpenRows(win) {
+    const Y = String(DATA.meta.season), F = fData(Y);
+    if (!F || !F.pitchers) { fEnsure(Y); return null; }
+    const thr = F.through || DATA.meta.through, d0 = new Date(thr + "T12:00:00Z"); if (win !== "all") d0.setUTCDate(d0.getUTCDate() - (+win - 1));
+    const lo = win === "all" ? 0 : d0.getUTCFullYear() * 10000 + (d0.getUTCMonth() + 1) * 100 + d0.getUTCDate(), pk = (k) => F.pk.indexOf(k);
+    const teams = new Map();
+    withWindow(NOWIN, () => withSplit(NONE, () => {   // the full season's rates and pool whatever the Leaderboard's window
+      const pl = pool("RP");
+      for (const p of DATA.players) {
+        if (p.type !== "P" || !p.team || !TEAM_NAMES[p.team]) continue;
+        const e = F.pitchers[p.id]; if (!e || !e.g) continue;
+        const rel = (fGamesOf(F, "P", p.id) || []).filter((x) => !x.GS && x.date >= lo);   // relief outings in the window (the game dates are yyyymmdd)
+        if (!rel.length) continue;
+        const w = { g: rel.length, outs: 0, sv: 0, hd: 0, bs: 0, svo: 0, gf: 0 };
+        for (const x of rel) { w.outs += x.OUTS; w.sv += x.SV; w.hd += x.HD; w.bs += x.BS; w.svo += x.SVO; w.gf += x.GF; }
+        const sl = e.s || [], S = { sv: sl[pk("SV")] || 0, hd: sl[pk("HD")] || 0, bs: sl[pk("BS")] || 0, svo: sl[pk("SVO")] || 0 };
+        const st = pl.stats.get("P" + p.id) || rankIn("RP", p);
+        const arm = { p, w, S, m: V(p).m, pct: (st && st.pct) || {} };
+        if (!teams.has(p.team)) teams.set(p.team, []);
+        teams.get(p.team).push(arm);
+      }
+    }));
+    const out = [];
+    for (const [tm, arms] of teams) {
+      const tsv = arms.reduce((a, x) => a + x.w.sv, 0), tsvo = arms.reduce((a, x) => a + x.w.svo, 0);
+      // the closer: the window's saves, then its save chances and games finished, then the season's saves
+      arms.sort((a, b) => b.w.sv - a.w.sv || b.w.svo - a.w.svo || b.w.gf - a.w.gf || b.S.sv - a.S.sv || b.w.hd - a.w.hd);
+      const cl = arms[0]; cl.role = "CL";
+      const rest = arms.slice(1).sort((a, b) => (b.w.hd + b.w.sv) - (a.w.hd + a.w.sv) || b.S.hd - a.S.hd || (a.m.nera ?? 99) - (b.m.nera ?? 99));
+      rest.forEach((a, i) => { a.role = i < 2 && a.w.hd + a.w.sv > 0 ? "SU" : "MID"; });
+      const next = rest[0] || null, share = tsv ? cl.w.sv / tsv : null;
+      // the leash, on his share of the team's SAVES (a setup man's blown lead counts as a save chance in MLB's bookkeeping, so chances over-read a
+      // committee): few when the team has under two saves; a committee when nobody has half of three or more; at risk on two blown saves, or one
+      // with under three quarters of the team's saves; safe otherwise
+      const leash = tsv < 2 ? "few" : tsv >= 3 && share < 0.5 ? "comm" : cl.w.bs >= 2 || (cl.w.bs >= 1 && tsv >= 3 && share < 0.75) ? "risk" : "safe";
+      const better = !!(next && next.m.nera != null && cl.m.nera != null && next.m.nera <= cl.m.nera - 0.75 && (next.m.pitch == null || cl.m.pitch == null || next.m.pitch >= cl.m.pitch));
+      out.push({ tm, arms: [cl, ...rest], cl, next, share, leash, better, tsv, tsvo });
+    }
+    return { rows: out, lo, thr, win };
+  }
+  function renderBullpens() {
+    const box = pitchBoardEl(); box.innerHTML = "";
+    const page = el("div", "flawpage bppage"), bar = el("div", "pbfilters fxbar bpbar"), PH = mobileView(); box.append(page); page.append(bar);
+    const save = () => { try { localStorage.setItem("draft2027.bullpens", JSON.stringify(bpSet)); } catch {} render(); };
+    const win = BP_WINS.some(([k]) => k === String(bpSet.win)) ? String(bpSet.win) : "30", wlab = BP_WINS.find(([k]) => k === win)[1];
+    const codes = Object.keys(TEAM_NAMES).sort(), team = codes.includes(bpSet.team) ? bpSet.team : "ALL";
+    const short = (t) => (PH ? t.replace(/^Last /, "") : t);
+    bar.append(pillSelect(team === "ALL" ? "All teams" : team, [["ALL", "All teams"], ...codes.map((c) => [c, c + " · " + TEAM_NAMES[c]])], team, (v) => { bpSet.team = v; save(); }, "Team"),
+               pillSelect(short(wlab), BP_WINS, win, (v) => { bpSet.win = v; save(); }, "Window"));
+    if (team === "ALL") bar.append(pillSelect(bpSet.sort === "team" ? "By team" : "At risk first", [["risk", "At risk first"], ["team", "By team"]], bpSet.sort === "team" ? "team" : "risk", (v) => { bpSet.sort = v; save(); }, "Order"));
+    const count = el("span", "pbcount"); bar.append(count);
+    let trow = null;
+    const title = (h, sub) => { trow = el("div", "fxtitle"); trow.append(el("h2", null, h), el("span", "fxsub", sub)); page.append(trow); };
+    const say = (txt) => page.append(el("p", "note", txt));
+    const more = (txt) => { const lab = () => (bpNoteOpen ? "Less" : PH ? "About" : "More about these numbers"); const n = el("p", "note fxnote" + (bpNoteOpen ? " open" : ""), txt), b = el("button", "linkbtn fxmore", lab()); b.type = "button";
+      b.addEventListener("click", () => { bpNoteOpen = !bpNoteOpen; n.classList.toggle("open", bpNoteOpen); b.textContent = lab(); }); if (trow) { trow.append(b); trow.after(n); } else page.append(n, b); };
+    const pin = (t) => requestAnimationFrame(() => { const rk = t.querySelector("tbody td.f1"), ov = t.querySelector("tr.over"); if (rk) t.style.setProperty("--sbw1", rk.offsetWidth + "px"); if (ov) t.style.setProperty("--overh", ov.offsetHeight + "px"); });
+    const W = win === "all" ? `the ${DATA.meta.season} season` : wlab.toLowerCase(), R = bullpenRows(win);
+    if (!R) { title(team === "ALL" ? "Bullpens" : `${TEAM_NAMES[team]} bullpen`, W); say("Loading the season's game logs…"); return; }
+    const f2 = (x) => (x == null ? "–" : x.toFixed(2)), pc1 = (x) => (x == null ? "–" : x.toFixed(1) + "%"), pp = (x) => (x == null ? "–" : String(Math.round(x)));
+    const LEASH = { safe: ["Job safe", "three quarters or more of the team's saves in the window, at most one blown save"], risk: ["At risk", "two blown saves in the window, or one with under three quarters of the team's saves"],
+                    comm: ["Committee", "nobody has half the team's saves in the window"], few: ["Few chances", "the team had under two saves in the window"] };
+    const chip = (k) => { const c = el("span", "bpchip " + k, LEASH[k][0]); c.title = LEASH[k][1]; return c; };
+    const nameTd = (a, cls) => { const td = el("td", "l nm" + (cls ? " " + cls : "")), b = el("button", "linkbtn pbname", a.p.name); b.type = "button"; b.addEventListener("click", () => openPlayer(a.p, {})); td.append(b); const il = ilBadge(a.p); if (il) td.append(" ", il); return td; };
+    const heat = (txt, a, k) => heatTd(el("td", "c", txt), a.pct[k] != null ? a.pct[k] : null);
+    const rates = (a) => [heat(f2(a.m.nera), a, "nera"), heat(pp(a.m.pitch), a, "pitch"), heat(pc1(a.m.xbbf), a, "xbbf")];
+    const n0 = (x) => el("td", "c", String(x));
+    if (team === "ALL") {
+      title("Bullpens", PH ? W : `every team's closer, his leash and the next man up · ${W}`);
+      const order = { comm: 0, risk: 1, few: 2, safe: 3 };
+      const rows = R.rows.sort((a, b) => (bpSet.sort === "team" ? 0 : order[a.leash] - order[b.leash]) || a.tm.localeCompare(b.tm));
+      count.textContent = `${rows.length} teams · ${rows.filter((r) => r.leash === "risk" || r.leash === "comm").length} closers at risk or shared · ${W}`;
+      const heads = PH ? [["Tm", "f1"], ["Closer", "l"], ["SV"], ["BS"], ["nERA"], ["Leash"], ["Next up", "l"], ["nERA"]]
+        : [["Tm", "f1"], ["Closer", "l", "whoever took the saves in the window (then the save chances and games finished, then the season's saves)"], ["SV", "", "saves in the window"], ["SVO", "", "save chances in the window"], ["BS", "", "blown saves in the window"], ["HD", "", "holds in the window"], ["IP", "", "innings in the window"],
+           ["nERA", "", "luck-neutral ERA, full season"], ["P+", "", "Pitching+, full season"], ["xBB%", "", "the walk rate his strike rates imply, full season"], ["Leash", "", "his share of the team's saves and his blown saves in the window"],
+           ["Next up", "l", "the other arm with the most holds and saves in the window — the manager's own order"], ["HD", "", "holds in the window"], ["SVO", "", "save chances in the window"], ["nERA", "", "full season"], ["P+", "", "Pitching+, full season"], ["xBB%", "", "full season"]];
+      const groups = PH ? [["", 1], ["Closer", 5], ["Next up", 2]] : [["", 1], ["Closer", 10], ["Next up", 6]];
+      const { t, tb, fin, wrap } = brTable(groups, heads, "pbt flawt bpt"); pin(t);
+      for (const r of rows) {
+        const tr = el("tr"), c = r.cl, n = r.next, lc = el("td", "c"); lc.append(chip(r.leash));
+        tr.append(el("td", "rk f1", r.tm), nameTd(c));
+        if (PH) tr.append(n0(c.w.sv), n0(c.w.bs), heat(f2(c.m.nera), c, "nera"), lc, n ? nameTd(n) : el("td", "l", "–"), n ? heat(f2(n.m.nera), n, "nera") : el("td", "c", "–"));
+        else { tr.append(n0(c.w.sv), n0(c.w.svo), n0(c.w.bs), n0(c.w.hd), el("td", "c", fmtIP(c.w.outs / 3)), ...rates(c), lc);
+          if (n) { const nt = nameTd(n); if (r.better) { const sp = el("span", "bpchip better", "stronger"); sp.title = "his nERA at least 0.75 under the closer's, with a Pitching+ at least as good"; nt.append(" ", sp); } tr.append(nt, n0(n.w.hd), n0(n.w.svo), ...rates(n)); }
+          else tr.append(el("td", "l", "–"), el("td", "c", "–"), el("td", "c", "–"), el("td", "c", "–"), el("td", "c", "–"), el("td", "c", "–")); }
+        tb.append(fin(tr));
+      }
+      wrap.classList.add("pbscroll"); page.append(wrap);
+      more(`The closer is whoever took the saves in ${W} (then the save chances and games finished, then the season's saves); the next man up is the other arm with the most holds and saves there — the manager's own order — marked "stronger" when his nERA sits at least 0.75 under the closer's with a Pitching+ at least as good. The leash: Job safe = three quarters or more of the team's saves with at most one blown save; At risk = two blown saves, or one with under three quarters of the team's saves; Committee = nobody has half the saves (three or more); Few chances = the team under two saves. (Saves, not save chances: a setup man's blown lead counts as a chance in MLB's bookkeeping.) The counts are the official game logs; nERA, Pitching+ and xBB% are his full season, coloured by his percentile among the season's relievers. Pick a team for its whole pen; a name opens his page.`);
+      return;
+    }
+    const r = R.rows.find((x) => x.tm === team);
+    title(`${TEAM_NAMES[team]} bullpen`, PH ? W : `every arm with a relief outing in ${W}, the roles read from it`);
+    if (!r) { say(`No ${TEAM_NAMES[team]} reliever has an outing in ${W}.`); return; }
+    count.textContent = `${r.arms.length} arms · ${r.tsv} saves on ${r.tsvo} chances · ${W}`;
+    const heads = PH ? [["Pitcher", "l f1"], ["Role"], ["SV"], ["HD"], ["BS"], ["nERA"], ["P+"]]
+      : [["Pitcher", "l f1"], ["Role", "", "CL took the saves in the window; SU the next two by holds and saves; MID the rest"], ["G"], ["IP"], ["SV"], ["HD"], ["BS"], ["SVO", "", "save chances"], ["GF", "", "games finished"], ["SV"], ["HD"], ["BS"],
+         ["nERA", "", "luck-neutral ERA"], ["K-BB%"], ["Whiff%"], ["xBB%", "", "the walk rate his strike rates imply"], ["P+", "", "Pitching+"]];
+    const groups = PH ? [["", 2], [short(wlab), 3], ["Season", 2]] : [["", 2], [wlab, 7], ["Season", 3], ["Season rates", 5]];
+    const { t, tb, fin, wrap } = brTable(groups, heads, "pbt flawt bpt"); pin(t);
+    for (const a of r.arms) {
+      const tr = el("tr"); tr.append(nameTd(a, "f1"), el("td", "c", a.role));
+      if (PH) tr.append(n0(a.w.sv), n0(a.w.hd), n0(a.w.bs), heat(f2(a.m.nera), a, "nera"), heat(pp(a.m.pitch), a, "pitch"));
+      else tr.append(n0(a.w.g), el("td", "c", fmtIP(a.w.outs / 3)), n0(a.w.sv), n0(a.w.hd), n0(a.w.bs), n0(a.w.svo), n0(a.w.gf), n0(a.S.sv), n0(a.S.hd), n0(a.S.bs),
+                     heat(f2(a.m.nera), a, "nera"), heat(pc1(a.m.kbb), a, "kbb"), heat(pc1(a.m.whf), a, "whf"), heat(pc1(a.m.xbbf), a, "xbbf"), heat(pp(a.m.pitch), a, "pitch"));
+      tb.append(fin(tr));
+    }
+    wrap.classList.add("pbscroll"); page.append(wrap);
+    more(`Roles from ${W}: CL took the saves (then the save chances and games finished, then the season's saves), SU the next two by holds and saves, MID the rest. The window's counts are the official game logs; the season rates are the site's — nERA (his ERA with the luck taken out), K-BB%, Whiff%, xBB% (the walk rate his strike rates imply) and Pitching+ — coloured by his percentile among the season's relievers. A name opens his page.`);
+  }
   // home's day-file lists — the last game day, Trending, Movers — as data (Sean, 20 Oct 2026, item 1 of the recommendations: home without the day
   // file). The daily build runs homeLive() headless once data.js and days.js are built (tools/build_home.cjs, window.__homeData) and writes
   // hist/home.js, so a fresh home reads ~10 KB instead of downloading and parsing the 31 MB day file (12 s on a phone). The page computes the lists
@@ -6285,7 +6407,7 @@
         else a.removeAttribute("aria-current");
       }
     }
-    document.title = { pitches: "Sean's Site · Stuff+", draft: "Sean's Site · Draft mode", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", settings: "Sean's Site · Settings", fantasy: "Sean's Site · Fantasy", flaws: "Sean's Site · Movers" }[state.mode] || "Sean's Site";
+    document.title = { pitches: "Sean's Site · Stuff+", bullpens: "Sean's Site · Bullpens", draft: "Sean's Site · Draft mode", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", settings: "Sean's Site · Settings", fantasy: "Sean's Site · Fantasy", flaws: "Sean's Site · Movers" }[state.mode] || "Sean's Site";
     const m = DATA.meta;
     const thr = new Date(m.through + "T12:00:00"); $("stamp").innerHTML = `through <b>${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</b>`; $("stamp").title = `${m.season} Statcast through ${m.through} (built ${m.built})`;
     const notes = $("notes"); notes.innerHTML = "";
@@ -6454,7 +6576,7 @@
     if (!window.DRAFT_IL && window.DRAFT_BUILD && window.DRAFT_BUILD["hist/injuries.js"]) ensureScript("hist/injuries.js", () => !!window.DRAFT_IL);   // ~10 KB: the IL badges
     if (state.mode !== "draft" && $("aucsheet")) { aucPick = null; $("aucsheet").remove(); }   // the auction sheet is Draft mode's
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
-    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws", other = pitches || player || compare || elig || hub || appear || fant;
+    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws" || state.mode === "bullpens", other = pitches || player || compare || elig || hub || appear || fant;
     if (xPop && !POP_MODES.includes(state.mode)) xPop = false;   // another page: the popup goes with the list it came from
     if (xPop) state.expanded = null;   // never an old-style card under the popup, where it can't be seen (Sean's recording, 21 Oct 2026)
     $("xboard").hidden = !player && !xPop; $("xboard").classList.toggle("xpop", xPop); document.body.classList.toggle("xpopon", xPop); xPopBg().hidden = !xPop; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
@@ -6482,6 +6604,7 @@
     if (state.mode === "planner") { renderPlanner(); renderModal(); return; }
     if (state.mode === "mock") { renderMock(); renderModal(); return; }
     if (state.mode === "claude") { renderClaude(); renderModal(); return; }
+    if (state.mode === "bullpens") { renderBullpens(); renderModal(); if (xPop) renderExplore(); return; }   // Bullpens (28 Oct 2026)
     if (state.mode === "flaws") { renderFlaws(); renderModal(); if (xPop) renderExplore(); return; }
     if (pitches) { renderPitchBoard(); renderModal(); return; }
     const listRender = () => {
@@ -10632,12 +10755,12 @@
   // page (renderExplore into #xboard), shown as a fixed window over the list with a backdrop, closed by ×, the backdrop or Escape
   // Movers too (Sean, 23 Oct 2026, Sheehan's page off Movers: "Can this be the same x in the top right below the filter like on the leaderboard"):
   // a pitcher's row, or a hitter's name in the flaw popup, opens the same popup over Movers in place of his page with "‹ Back to movers"
-  const POP_MODES = ["leaderboard", "trending", "flaws"];
+  const POP_MODES = ["leaderboard", "trending", "flaws", "bullpens"];
   let xPop = false, xPopNew = false, xPopList = null;
   const pageNow = () => state.mode === "player" || xPop;   // where a page was opened from: the list page, its scroll and its rows' box; the page last drawn
   const BACK_LABEL = { leaderboard: "leaderboard", trending: "leaderboard", rankings: "rankings", draft: "draft board", pitches: "Pitching+", fantasy: "fantasy", home: "home",
-                       claude: "Claude rankings", planner: "planner", eligibility: "eligibility", callups: "Call-up Watch", compare: "compare", mock: "mock draft", trends: "League Trends", settings: "settings", flaws: "movers" };
-  const BACK_MODES = ["leaderboard", "trending", "rankings", "draft", "pitches", "fantasy", "flaws"];   // the list pages Back returns to
+                       claude: "Claude rankings", planner: "planner", eligibility: "eligibility", callups: "Call-up Watch", compare: "compare", mock: "mock draft", trends: "League Trends", settings: "settings", flaws: "movers", bullpens: "bullpens" };
+  const BACK_MODES = ["leaderboard", "trending", "rankings", "draft", "pitches", "fantasy", "flaws", "bullpens"];   // the list pages Back returns to
   function markBack() {
     if (state.mode === "player") return;                      // from one page to another: the first list is still where Back goes
     if (!BACK_MODES.includes(state.mode)) { backAt = null; return; }   // home and the search give no Back (Sean, 8 Oct 2026: "get rid of the home button")
@@ -13200,7 +13323,7 @@
     w.append(brd, again); box.append(w);
   }
   const NAV_GROUPS = [
-    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "fantasy", "mock"] },   // Eligibility, the Planner and Claude rankings left the menu (16 Oct 2026)
+    { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "fantasy", "mock", "bullpens"] },   // Eligibility, the Planner and Claude rankings left the menu (16 Oct 2026)
     { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaders", short: "Leaders", modes: ["leaderboard", "trending"] },   // Stuff+ (#pitches) is its own header tab (3 Oct 2026)
   ];   // Settings (#settings) is a plain header link, not a menu (16 Oct 2026); the ⋯ More group it replaced is gone
   const SET_TABS = [["glossary", "Stat glossary"], ["appearance", "Appearance"], ["key", "Colour key"], ["how", "How this page works"]];
@@ -13212,7 +13335,7 @@
     if (h === "settings" || h.startsWith("settings/") || h === "appearance") {   // #appearance is the old More menu's link and the Mac template's hidden one
       state.mode = "settings"; const v = h === "appearance" ? "appearance" : h.split("/")[1];
       if (SET_TABS.some(([k]) => k === v)) state.setTab = v; return; }
-    state.mode = ["home", "draft", "rankings", "trending", "leaderboard", "pitches", "mock", "flaws"].includes(h) ? h : h === "movers" ? "flaws" : h === "explore" ? "player" : "home";   // #movers is the Movers page (18 Oct 2026); #flaws its old name   // #eligibility / #planner / #claude land on home (16 Oct 2026)
+    state.mode = ["home", "draft", "rankings", "trending", "leaderboard", "pitches", "mock", "flaws", "bullpens"].includes(h) ? h : h === "movers" ? "flaws" : h === "explore" ? "player" : "home";   // #movers is the Movers page (18 Oct 2026); #flaws its old name   // #eligibility / #planner / #claude land on home (16 Oct 2026)
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {
