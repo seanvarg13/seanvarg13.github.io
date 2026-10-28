@@ -857,7 +857,7 @@
   const sideOf = (g) => (isPitcherGroup(g) ? "P" : "H");
   // the hosted copy versions every file it serves (window.DRAFT_BUILD), so a changed file is fetched at once
   // instead of being served from the phone's cache; anywhere else the map is absent and the plain name is used
-  const vsrc = (src) => { const v = window.DRAFT_BUILD && window.DRAFT_BUILD[src]; return v ? src + "?v=" + v : src; };
+  const vsrc = (src) => { const B = window.DRAFT_BUILD, v = B && (B[src] || B[src.slice(0, src.lastIndexOf("/") + 1)]); return v ? src + "?v=" + v : src; };   // a bucket (hist/c/7.js) carries its folder's version (hist/c/)
   // A home-screen app can keep serving the page it saved days ago, so the hosted copy carries a build id and a
   // build.json beside it: on load, and whenever the app comes back to the front, we ask the server which build is
   // current and reload once if it has moved on. Reloading through a fresh URL is what gets past the saved copy.
@@ -883,27 +883,55 @@
     ensureParks();   // a window's park exposure needs the table (15 Oct 2026)
     for (const side of t === "H" || t === "P" ? [t] : ["H", "P"]) if (!daysIn[side] && !daysGo[side] && !daysBad[side]) loadDays(side);
   }
-  const daysTry = { H: 0, P: 0 };
+  const daysTry = { H: 0, P: 0 }, daysProg = { H: 0, P: 0 };   // daysProg: bytes of a side's file read so far (the progress line)
   function loadDays(side) {
-    daysGo[side] = true; state.daysLoading = true;
-    const sc = document.createElement("script"); sc.src = vsrc(DAYS_FILE[side]);
+    daysGo[side] = true; state.daysLoading = true; daysProg[side] = 0;
+    const file = DAYS_FILE[side];
     // a side's rows landing only empties what was computed from them or while waiting for them (a window, a split, a combined span —
     // `provisional`); a full-season value or pool reads the season's own numbers and is the same with or without the day rows, and on a
     // phone this file arriving a few seconds after Home or a list was redrawing every pool it had (Sean, 5 Oct 2026: "it still drags")
-    sc.onload = () => { daysGo[side] = false; daysIn[side] = true; state.daysLoading = daysGo.H || daysGo.P; dropProvisional(); render(); };
+    const done = () => { daysGo[side] = false; daysIn[side] = true; state.daysLoading = daysGo.H || daysGo.P; dropProvisional(); render(); };
     // a failed download is tried twice more (1.5 s, then 3 s) and then left until the page is reloaded: it used to be asked for again on
     // every redraw, dozens of times a second for as long as the page stayed open (20 Oct 2026)
-    sc.onerror = () => { sc.remove(); if (++daysTry[side] < 3) { setTimeout(() => loadDays(side), 1500 * daysTry[side]); return; }
+    const bad = () => { if (++daysTry[side] < 3) { setTimeout(() => loadDays(side), 1500 * daysTry[side]); return; }
       daysGo[side] = false; daysBad[side] = true; state.daysLoading = daysGo.H || daysGo.P; state.daysFailed = true; render(); };
-    document.head.append(sc);
+    const run = (url, blob) => { const sc = document.createElement("script"); sc.src = url;
+      sc.onload = () => { if (blob) URL.revokeObjectURL(url); done(); }; sc.onerror = () => { if (blob) URL.revokeObjectURL(url); sc.remove(); bad(); }; document.head.append(sc); };
+    // streamed (28 Oct 2026, from the review: item 22): the bytes are read as they come, so the count line can say how far the download is
+    // (daysNote; the file's size from the build's DRAFT_SIZES), then run as a script from a blob, as a gzipped past season is. A browser without
+    // streams takes the plain script tag
+    if (!window.fetch || !window.ReadableStream || !window.Blob) return run(vsrc(file), false);
+    fetch(vsrc(file)).then(async (r) => {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      if (!r.body) return run(URL.createObjectURL(await r.blob()), true);
+      const rd = r.body.getReader(), parts = []; let got = 0, last = 0;
+      for (;;) { const { done: end, value } = await rd.read(); if (end) break; parts.push(value); got += value.byteLength; if (got - last >= 262144) { last = got; daysProg[side] = got; daysProgDraw(); } }
+      daysProg[side] = got; run(URL.createObjectURL(new Blob(parts, { type: "text/javascript" })), true);
+    }).catch(bad);
+  }
+  // how far the day files have come, as a share of their size (null without DRAFT_SIZES — a local server — or when nothing is loading)
+  const daysPct = () => { const S = window.DRAFT_SIZES || {}; let got = 0, all = 0; for (const s of ["H", "P"]) if (daysGo[s] && S[DAYS_FILE[s]]) { got += Math.min(daysProg[s], S[DAYS_FILE[s]]); all += S[DAYS_FILE[s]]; } return all ? Math.min(99, Math.floor(100 * got / all)) : null; };
+  // "Loading game-by-game data…" with the download's progress — the words, then a thin bar — kept current in place while the file streams in,
+  // wherever a list, a card or home waits on the day rows
+  function daysNote(text) { const n = el("span", "daysprog"), t = el("span", "dptxt", text || "Loading game-by-game data…"), b = el("span", "daysbar"); t.dataset.base = t.textContent; b.append(el("i")); n.append(t, b); daysProgDraw(n); return n; }
+  function daysProgDraw(one) {
+    const pc = daysPct();
+    for (const n of one ? [one] : document.querySelectorAll(".daysprog")) { const t = n.querySelector(".dptxt"), b = n.querySelector(".daysbar i"); n.classList.toggle("known", pc != null); if (b) b.style.width = (pc == null ? 0 : pc) + "%"; if (t) t.textContent = t.dataset.base + (pc == null ? "" : ` ${pc}%`); }
   }
   // Warm the game-by-game file in the background (Sean, 28 Sep 2026: faster filters on the phone). A date range or split
   // needs every player's games — each card is ranked against the whole pool in the same window — so the file can't be split
   // by player, and packing it differently saved only ~8%. What's slow is the first ~5 MB download, so a few seconds after the
   // site settles it's fetched quietly into the browser's cache (not run: parsing waits until a filter asks for it). The file
   // is versioned, so this happens once per daily update; skipped when the phone has data saver on.
-  if (!(navigator.connection && navigator.connection.saveData))
-    setTimeout(() => { if (!CUR.ready() && !state.daysLoading) (window.requestIdleCallback || ((f) => f()))(() => { try { for (const s of ["H", "P"]) if (!daysIn[s]) fetch(vsrc(DAYS_FILE[s]), { priority: "low" }).catch(() => {}); } catch (e) {} }); }, 4000);
+  // Since 28 Oct 2026 it waits its turn: not while a file the page asked for is still coming (a player's buckets, a season's league file, the
+  // index — the two day files had been downloading beside them on a cold player page), and not on a slow link (data saver, 2g / 3g, under
+  // 1.5 Mbps where the browser says), where ~7 MB in the background costs more than it saves
+  const slowLink = () => { const c = navigator.connection; return !!(c && (c.saveData || (c.effectiveType && c.effectiveType !== "4g") || (c.downlink && c.downlink < 1.5))); };
+  if (!slowLink())
+    setTimeout(function warm() { if (CUR.ready() || state.daysLoading || slowLink()) return; if (loading.size || daysGo.H || daysGo.P) { setTimeout(warm, 2000); return; }
+      // the body is read through and thrown away, so the cache is sure to get the whole file whatever a browser does with a response nobody
+      // reads (Chromium downloads it anyway; a drained one is certain everywhere)
+      (window.requestIdleCallback || ((f) => f()))(() => { try { for (const s of ["H", "P"]) if (!daysIn[s]) fetch(vsrc(DAYS_FILE[s]), { priority: "low" }).then((r) => (r.body && window.WritableStream ? r.body.pipeTo(new WritableStream()) : r.arrayBuffer())).catch(() => {}); } catch (e) {} }); }, 4000);
   const rowsOf = (p) => DS.rows(p);
   // The park table (hist/parks.js, tools/build_parks.py; Sean, 15 Oct 2026: "add a stadium impact that accounts for all stadium related impacts
   // to their woba like hr to fb impact babip impact elevation environment etc"): per venue × season × batter side, the park's residual on what
@@ -959,12 +987,13 @@
     // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
     // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
     // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
-    const arrived = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
+    const arrived = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines|c\/\d+|m\/\d+|lg\/\d+)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
     // a failed download (a phone on a weak signal, a publish mid-deploy) is tried twice more before it's given up on — career.js once failed
     // for the whole visit and the season table said it hadn't been built (Sean's phone, 9 Oct 2026)
     const fail = (sc) => { loading.delete(src); if (sc) sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
       if (n < 3) { setTimeout(() => ensureScript(src, isReady), 1500 * n); return; } failed.add(src); render(); };
     const run = (url, blob) => { const sc = document.createElement("script"); sc.src = url;
+      if (/\/(?:similar|awards|injuries|trends|adp-\d+|proj-\d+|claude-\d+)\.js/.test(src)) sc.fetchPriority = "low";   // nothing waits on these; a page's own files go first
       sc.onload = () => { if (blob) URL.revokeObjectURL(url); arrived(); };
       sc.onerror = () => { if (blob) URL.revokeObjectURL(url); fail(sc); };
       document.head.append(sc); };
@@ -1276,7 +1305,7 @@
   // it to exist anymore"): the pooled Triple-A line, the age curve, hist/aaa-tw.js and the xwOBA proj. column and table went with it.
   // xHR/FB as a Leaderboard column (8 Oct 2026): the Mix tab's model on his view's FB EV / Barrel% / EV90 against that season's league
   // (hrfbLeague: hist/career.js + career-bb.js, asked for by colsFor only while the column is showing). Regular MLB seasons 2015 on
-  const hxReady = () => !!(window.DRAFT_CAREER && window.DRAFT_CAREER_BB);
+  const hxReady = () => lgReady(+DS.season);   // the season's league file (or the whole career files) is in
   function hrfbFill(v, p) {
     if (v._hx || p.type !== "H") return v;
     const y = Number(DS.season);
@@ -1350,7 +1379,7 @@
   const moveColKey = (g, key, dir) => { const keys = colKeys(g).slice(), i = keys.indexOf(key), j = i + dir; if (i < 0 || j < 0 || j >= keys.length) return; [keys[i], keys[j]] = [keys[j], keys[i]]; setColKeys(g, keys); };
   const colsFor = (g) => {
     if (colKeys(g).some((k) => FANT_KEYS.has(k)) && FYEARS.includes(String(DS.season))) fEnsure(String(DS.season));   // points columns need the fantasy file
-    if (!isPitcherGroup(g) && colKeys(g).includes("xhrfb")) { ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady); }   // xHR/FB's league
+    if (!isPitcherGroup(g) && colKeys(g).includes("xhrfb")) ensureLg(+DS.season);   // xHR/FB's league (hist/lg/<season>.js)
     if (state.mode === "leaderboard") return lbCols(g);
     const keys = colKeys(g), all = allFor(g), dflt = metricsFor(g);
     return keys.map((k) => dflt.find((m) => m.key === k) || all.find((m) => m.key === k)).filter(Boolean);
@@ -3047,7 +3076,10 @@
     const empty = $("empty"); empty.hidden = list.length > 0; empty.innerHTML = "";
     if (needsRows() && !DS.ready(sideOf(g))) {
       empty.hidden = false; ol.innerHTML = "";
-      empty.textContent = daysBad[sideOf(g)] ? "Couldn't load the game-by-game data file." : "Loading game-by-game data…";
+      if (daysBad[sideOf(g)]) empty.textContent = "Couldn't load the game-by-game data file.";
+      else {   // the note at the top of the rows' box over a skeleton of grey rows, not blank space (28 Oct 2026)
+        empty.hidden = true; const ln = el("li", "skelnote"); ln.append(daysNote()); ol.append(ln);   // not `row`s: nothing counts or taps them
+        for (let i = 0; i < 12; i++) ol.append(el("li", "skel")); }
       return;
     }
     if (!pool(g).list.length) {
@@ -3362,12 +3394,12 @@
         if (state.mode === "leaderboard") { const sp = state.lbSplit; if (sp.hand !== "all") bits.push(`vs ${sp.hand}H${pit ? "B" : "P"}`); if (sp.venue !== "all") bits.push(sp.venue); }
         if (state.teamF) bits.push(state.teamF.kind === "team" ? TEAM_NAMES[state.teamF.v] || state.teamF.v : state.teamF.v);
         if (state.q) bits.push(`“${state.q}”`);
-        if (state.daysLoading) bits.push("loading game-by-game data…");
       }
       const who = onePage() ? ` ${pit ? "pitchers" : "hitters"} · ${od ? (mobileView() ? fmtDate(od) : gameDayName(od)) : DS.season}${state.mode === "leaderboard" ? (od ? (mobileView() ? "" : " · everyone who played") : ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}`) : ""}${bits.map((b) => " · " + b).join("")}` : "";   /* its own line since 25 Oct 2026, so a phone reads it too */
       const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}${state.mode === "draft" ? (auc.on ? " · tap a name to record his sale, tap again to undo" : " · tap to draft, tap again to undo") : ""}`; })() : null;   // the board: tiers · tiered · listed (Draft mode has no buttons)
       const ct = bc != null ? bc : pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}${who}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total}${who}` : `${total} players`;
       const pc = el("span", "pcount", ct);
+      if (onePage() && state.daysLoading) pc.append(" · ", daysNote("loading game-by-game data…"));   // the download's progress, in place (28 Oct 2026)
       // Fantasy's count shares the row with the page numbers, so it holds the width of its widest label (the last page's; the digits are
       // tabular) under the one it shows, and the arrows don't slide as "1–50" turns into "101–150" (18 Oct 2026)
       if (onChange && pg.size && pg.pages > 1) { pc.textContent = ""; const w = el("span", "pcfix"), g = el("span", "pcg", `${(pg.pages - 1) * pg.size + 1}–${total} of ${total}`); g.setAttribute("aria-hidden", "true"); w.append(el("span", null, ct), g); pc.append(w); }
@@ -3565,12 +3597,42 @@
     });
   }
 
-  const careerReady = () => !!window.DRAFT_CAREER;
+  const careerReady = () => !!window.DRAFT_CAREER;   // the whole file (hist/career.js): the league-file builder's and the fallback's
+  // His record from its bucket (Sean, 28 Oct 2026, from the review: item 5 — a player's page pulled career.js, career-bb.js, index, similar
+  // and last season's file, ~6 MB gzipped, before its table drew). hist/career.js, career-bb.js and minors.js are cut by MLB id
+  // (tools/shard_career.py, run by build_career.py): his page reads hist/c/<id % 128>.js — his season lines and his Statcast seasons
+  // (career-bb's rows, with its keys) — and hist/m/<id % 128>.js for his minor-league lines, 20-50 KB gzipped each. The league-wide
+  // numbers the season table needs (the heat pools, the league leaders, the HR/FB league) come from hist/lg/<season>.js, one small file a
+  // season written by tools/build_lg.cjs with the site's own code; the whole files are what that builder loads (window.__wholeCareer) and
+  // the fallback when a season's file can't be fetched
+  const C_BUCKETS = 128, M_BUCKETS = 128;
+  const bucketOf = (id, n) => String(Math.abs(Math.trunc(+id)) % n);
+  const careerBucket = (id) => window.DRAFT_CAREER_C && window.DRAFT_CAREER_C[bucketOf(id, C_BUCKETS)];
+  const careerFile = (id) => `hist/c/${bucketOf(id, C_BUCKETS)}.js`;
+  const careerReadyFor = (id) => careerReady() || !!careerBucket(id);
+  const careerRecOf = (id) => { const k = String(id); if (window.DRAFT_CAREER && window.DRAFT_CAREER[k]) return window.DRAFT_CAREER[k]; const b = careerBucket(id); return b && b.p && b.p[k] ? b.p[k] : null; };
+  const ensureCareer = (id) => { if (window.__wholeCareer) { ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady); return; } ensureScript(careerFile(id), () => !!careerBucket(id)); };
+  const careerWait = (p) => {   // the note while his bucket loads, or Try again once it has failed its three tries (null once it's in)
+    ensureCareer(p.id); if (careerReadyFor(p.id)) return null;
+    const cf = window.__wholeCareer ? "hist/career.js" : careerFile(p.id);
+    if (!failed.has(cf)) return el("p", "note", "Loading career stats…");
+    const n = el("p", "note", "Couldn't load his career stats. "), rt = el("button", "linkbtn", "Try again"); rt.type = "button";
+    rt.addEventListener("click", (e) => { e.stopPropagation(); failed.delete(cf); tries.delete(cf); render(); }); n.append(rt); return n; };
+  const minorsBucket = (id) => window.DRAFT_MINORS_C && window.DRAFT_MINORS_C[bucketOf(id, M_BUCKETS)];
+  const minorsFile = (id) => `hist/m/${bucketOf(id, M_BUCKETS)}.js`;
+  const minorsReadyFor = (id) => !!(window.DRAFT_MINORS || minorsBucket(id));
+  const minorsRecOf = (id) => { const k = String(id); if (window.DRAFT_MINORS && window.DRAFT_MINORS[k]) return window.DRAFT_MINORS[k]; const b = minorsBucket(id); return b && b[k] ? b[k] : null; };
+  const ensureMinors = (id) => (window.__wholeCareer ? ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS) : ensureScript(minorsFile(id), () => !!minorsBucket(id)));
+  const LG_FROM = 2004;   // the first season whose pools reach 20 (the career record holds everyone active since 2015, with his whole career)
+  const lgFile = (y) => `hist/lg/${y}.js`;
+  const lgOf = (y) => (window.DRAFT_LG && window.DRAFT_LG[String(y)]) || null;
+  const lgReady = (y) => !!lgOf(y) || (careerReady() && sbxReady());
+  const ensureLg = (y) => { if (!(y >= LG_FROM)) return; if (window.__wholeCareer || failed.has(lgFile(y))) { ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady); return; } ensureScript(lgFile(y), () => !!lgOf(y)); };
   // games played this season from the official record (the season line carries no game count of its own)
   function careerG(p) {
     if (DS.kind || DS.level !== "MLB" || needsDays()) return null;
-    ensureScript("hist/career.js", careerReady);
-    const rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null, rows = rec ? rec[p.type] : null;
+    ensureCareer(p.id);
+    const rec = careerRecOf(p.id), rows = rec ? rec[p.type] : null;
     if (!rows) return null;
     const hit = (DS.years || [DS.season]).map((y) => rows.find((x) => x[0] === y)).filter(Boolean);
     return hit.length ? hit.reduce((a, r) => a + r[p.type === "H" ? 2 : 5], 0) : null;
@@ -3593,8 +3655,8 @@
   }
   function rawLines(p) {
     // every line as {season, level, team, c: counts by key, mlb: bool}
-    const rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null;
-    if (!rec && !(window.DRAFT_MINORS && window.DRAFT_MINORS[String(p.id)])) return null;   // a minor leaguer has no MLB record
+    const rec = careerRecOf(p.id);
+    if (!rec && !minorsRecOf(p.id)) return null;   // a minor leaguer has no MLB record
     const H = p.type === "H", lines = [];
     const keysMLB = H ? RAW_H : RAW_P;
     const advOf = (a, mlb) => {                       // our numbers where the season is built, as one object
@@ -3605,7 +3667,7 @@
     // a row is [season, team, …the keys, two extra counts, our numbers, (hitters) where he played] — read by fixed index, so a field
     // appended at the end (the positions, 8 Oct 2026) moves nothing; the minors' rows have the level after the season
     for (const r of (rec && rec[p.type]) || []) lines.push(mlbLine(H, r));
-    const mrec = window.DRAFT_MINORS ? window.DRAFT_MINORS[String(p.id)] : null;
+    const mrec = minorsRecOf(p.id);
     for (const r of (mrec && mrec[p.type]) || []) {
       const c = {}; keysMLB.forEach((k, i) => { c[k] = r[3 + i]; });
       const base = 3 + keysMLB.length, extra = r.slice(base, base + 2);
@@ -3731,9 +3793,7 @@
   // career total. A player with no MLB time gets his minor-league seasons, one line per level.
   function renderSeasonTable(p) {
     const box = el("div", "rawstats simple" + (p.type === "P" ? " pit" : ""));
-    ensureScript("hist/career.js", careerReady);
-    if (!careerReady()) { if (failed.has("hist/career.js")) { const n = el("p", "note", "Couldn't load his career stats. "), rt = el("button", "linkbtn", "Try again"); rt.type = "button";
-      rt.addEventListener("click", (e) => { e.stopPropagation(); failed.delete("hist/career.js"); tries.delete("hist/career.js"); render(); }); n.append(rt); box.append(n); } else box.append(el("p", "note", "Loading career stats…")); return box; }
+    { const w = careerWait(p); if (w) { box.append(w); return box; } }
     // kept simple (Sean): PA, HR and the slash line for a hitter; IP, ERA and the four rates a pitcher owns for a pitcher
     const H = p.type === "H", cols = H ? ["PA", "HR", "AVG", "OBP", "SLG", "OPS"] : ["IP", "ERA", "K%", "BB%", "GB%", "Popup%"];
     const colsMLB = H ? cols : [...cols, "nERA"];   // nERA the last column (Sean, 4 Oct 2026: nERA where uERA was); the minors show the level's own
@@ -3860,7 +3920,7 @@
       }
       rows = rows.map((it) => it.r);                             // the career row below reads the years' own lines
       if (!minors) {
-        const rec = window.DRAFT_CAREER[String(p.id)], career = rec ? rec[p.type + "C"] : null;
+        const rec = careerRecOf(p.id), career = rec ? rec[p.type + "C"] : null;
         if (career) {
           // the rates over the career: strikeouts and walks per batter faced; GB% / Popup% weighted by each season's BF
           const sum = (f) => rows.reduce((t0, r) => t0 + (f(r) || 0), 0), bf = sum((r) => r.c.BF);
@@ -3875,12 +3935,12 @@
     };
     // his MLB seasons first, then every minor-league line under them (Sean: the minors too, not only for a prospect)
     const lines = rawLines(p) || [], mlb = lines.filter((l) => l.mlb).sort((a, b) => b.season - a.season);
-    ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS);
+    ensureMinors(p.id);
     const LV = ["AAA", "AA", "A+", "A", "A-", "Rk"];
-    const milb = window.DRAFT_MINORS ? lines.filter((l) => !l.mlb && !l.combo).sort((a, b) => b.season - a.season || LV.indexOf(lvName(a.level)) - LV.indexOf(lvName(b.level))) : [];
+    const milb = minorsReadyFor(p.id) ? lines.filter((l) => !l.mlb && !l.combo).sort((a, b) => b.season - a.season || LV.indexOf(lvName(a.level)) - LV.indexOf(lvName(b.level))) : [];
     const key = p.type + p.id, keysMLB = H ? RAW_H : RAW_P;
     // MLB: a two-club year's combined line, opening to each club's (career.js's HT / PT rows)
-    const rec = window.DRAFT_CAREER[String(p.id)], clubs = {};
+    const rec = careerRecOf(p.id), clubs = {};
     for (const r of (rec && rec[p.type + "T"]) || []) {
       const c = {}; keysMLB.forEach((k, i) => { c[k] = r[2 + i]; });
       const ex = r.slice(2 + keysMLB.length); if (H) { c.HBP = ex[0] || 0; c.SF = ex[1] || 0; } else { c.ER = ex[0]; c.BF = ex[1]; }
@@ -3907,12 +3967,12 @@
       const kids = lv.length > 1 ? lv.map((x) => ({ r: Object.assign({}, x.line, { club: false }), level: x.level, team: x.level })) : [];
       return { r, level: "", team: lv.length === 1 ? lv[0].level : "–", kids };   // a year at several levels: just the ▸ and a dash, so the column stays as narrow as a club's (Sean)
     });
-    both = mlb.length > 0 && (milb.length > 0 || !window.DRAFT_MINORS);
+    both = mlb.length > 0 && (milb.length > 0 || !minorsReadyFor(p.id));
     if (mlb.length) section(mlbItems, false);
     if (milb.length) section(milbItems, true);
     if (mlb.length || milb.length) { const scroll = el("div", "rawscroll"); scroll.append(t); box.append(scroll); }
     if (want.size) { box.append(el("p", "note", "Loading each season for uERA…")); for (const k of want) ensureHist(k); }
-    if (!window.DRAFT_MINORS) { if (!failed.has("hist/minors.js")) box.append(el("p", "note", "Loading minor-league seasons…")); else if (!mlb.length) box.append(el("p", "note", "No seasons on record.")); return box; }
+    if (!minorsReadyFor(p.id)) { if (!failed.has(minorsFile(p.id))) box.append(el("p", "note", "Loading minor-league seasons…")); else if (!mlb.length) box.append(el("p", "note", "No seasons on record.")); return box; }
     if (!mlb.length && !milb.length) box.append(el("p", "note", "No seasons on record."));
     return box;
   }
@@ -3998,8 +4058,8 @@
       box.title = viewLabel(p.type) || "";
       return box;
     }
-    ensureScript("hist/career.js", careerReady);
-    const rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null;
+    ensureCareer(p.id);
+    const rec = careerRecOf(p.id);
     const rows = rec && rec[p.type] ? rec[p.type].filter((r) => r[0] === +DS.season) : [];
     const r = rows.find((x) => x[1] === "TOT") || (rows.length === 1 ? rows[0] : null);
     if (!r) return null;
@@ -4838,7 +4898,7 @@
       const gl = groupFor(state.pos), own = p.type === "H" ? "H" : p.primary;
       const g = ds === CUR && state.mode !== "fantasy" && isPitcherGroup(gl) === (p.type === "P") ? gl : own;
       const ref = ds === CUR ? refFor(g) : g;
-      if (needsRows() && !DS.ready(p.type)) { DS.load(p.type); body.append(cardTop(renderPlate(p, { rank: "–" }, g, ref), renderSeasonChips(p0))); const c = el("div", "card"); c.append(el("p", "note pgload", "Loading game-by-game data…")); body.append(c); return; }
+      if (needsRows() && !DS.ready(p.type)) { DS.load(p.type); body.append(cardTop(renderPlate(p, { rank: "–" }, g, ref), renderSeasonChips(p0))); const c = el("div", "card"); c.append(el("p", "note pgload")); c.firstChild.append(daysNote()); body.append(c); return; }
       const st = ref === g ? (pool(g).stats.get(p.type + p.id) || rankIn(g, p)) : rankIn(ref, p);
       // the popup is his page in a panel: the same title, plate, filters, sections and tabs, ranked in the list's pool
       ensureIndex();
@@ -5911,7 +5971,7 @@
       }
       wrap.classList.add("hwrap"); box.append(wrap); return wrap;
     };
-    const loading = (b) => b.append(el("p", "hnote", state.daysFailed ? "Couldn't load the game-by-game data." : "Loading game-by-game data…"));
+    const loading = (b) => { const n = el("p", "hnote"); if (state.daysFailed) n.textContent = "Couldn't load the game-by-game data."; else n.append(daysNote()); b.append(n); };
     const NB = PH ? 4 : 5, NH = 4, NP = 4;   // four a list (Sean, 7 Oct 2026: "the top 4 for each")
     const nm = (p, tab) => ({ p, tab });
     // the lists: hist/home.js until the day rows are in (homeLists); a file that's missing, stale or off the defaults asks for the day rows instead,
@@ -7817,6 +7877,7 @@
   const hrfbFit = (bx, lg) => { const has = (ks) => bx && lg && ks.every((k) => bx[k] != null && lg[k] != null); return has(["evfb", "brfb", "brld", "pfb"]) ? XHRFB.d : has(["evfb", "brfb", "brld"]) ? XHRFB.c : has(["evfb", "brl"]) ? XHRFB.a : has(["brl", "ev90"]) ? XHRFB.b : null; };
   const HRFB_LG = new Map();
   function hrfbLeague(y) {   // that season's league: HR/FB, FB-weighted FB EV / Barrel% / EV90, and the qualifiers' sorted values for the heat map
+    { const G = lgOf(y); if (G && G.hrfb) return G.hrfb; }
     if (HRFB_LG.has(y)) return HRFB_LG.get(y);
     const C = window.DRAFT_CAREER || {}, out = { hr: 0, fb: 0, s: {}, w: {}, arr: { hrfb: [], evfb: [], brl: [], brfb: [], brld: [], ev90: [], pfb: [], x: [] } };
     const rows = [];
@@ -7830,7 +7891,7 @@
     const lg = { hrfb: out.fb ? 100 * out.hr / out.fb : null }; for (const k in out.s) lg[k] = out.s[k] / out.w[k];
     for (const [, , bx] of rows) if (bx) { if (bx.evfb != null) out.arr.evfb.push(bx.evfb); if (bx.brl != null) out.arr.brl.push(bx.brl); if (bx.brfb != null) out.arr.brfb.push(bx.brfb); if (bx.brld != null) out.arr.brld.push(bx.brld); if (bx.ev90 != null) out.arr.ev90.push(bx.ev90); if (bx.pfb != null) out.arr.pfb.push(bx.pfb); const xv = xHrfb(bx, lg); if (xv != null) out.arr.x.push(xv); }
     for (const k in out.arr) out.arr[k].sort((a, b) => a - b);
-    const res = { lg, arr: out.arr }; HRFB_LG.set(y, res); return res;
+    const res = { lg, arr: out.arr }; if (careerReady() && sbxReady()) HRFB_LG.set(y, res); return res;
   }
   function xHrfb(bx, lg) {
     if (!bx || !lg || lg.hrfb == null) return null;
@@ -7843,9 +7904,9 @@
     const box = el("div", "rollbox uerabox hrfbbox brbox");
     const hd = el("div", "rollhd"); hd.append(el("span", "rollname", "HR / FB by season"));
     box.append(hd);
-    ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady);
-    if (!careerReady() || !sbxReady()) { box.append(el("p", "note", failed.has("hist/career-bb.js") ? "hist/career-bb.js hasn't been built." : "Loading his seasons…")); return box; }
-    const rec = window.DRAFT_CAREER[String(p.id)], rows = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).filter((l) => l.c.ext && +l.c.ext[2] > 0).sort((a, b) => a.season - b.season);
+    { const w = careerWait(p); if (w) { box.append(w); return box; } }
+    const rec = careerRecOf(p.id), rows = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).filter((l) => l.c.ext && +l.c.ext[2] > 0).sort((a, b) => a.season - b.season);
+    for (const l of rows) ensureLg(l.season);   // each season's league and heat pool
     if (!rows.length) { box.append(el("p", "note", "No MLB fly balls on record.")); return box; }
     // a B-Ref table (Sean, 9 Oct 2026): over-headers, the cells heat-mapped whole, the career a band row under a gap
     // HR and fly balls with the fly-ball contact, then the ratio beside what it should have been (Sean, 9 Oct 2026: "put the fly ball contact ev and
@@ -8033,13 +8094,13 @@
   function babipSeasons(p, g) {
     const box = el("div", "rollbox uerabox hrfbbox brbox"), hd = el("div", "rollhd");
     hd.append(el("span", "rollname", "BABIP by season")); box.append(hd);
-    ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady);
-    if (!careerReady() || !sbxReady()) { box.append(el("p", "note", "Loading his seasons…")); return box; }
-    if (!window.DRAFT_CAREER_BB.keys.includes("xbabip")) { box.append(el("p", "note", "hist/career-bb.js doesn't carry BABIP yet.")); return box; }
-    const rec = window.DRAFT_CAREER[String(p.id)], rows = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).map((l) => ({ l, bx: sbxOf(p.id, l.season) })).filter((r) => r.bx && r.bx.babip != null).sort((a, b) => a.l.season - b.l.season);
+    { const w = careerWait(p); if (w) { box.append(w); return box; } }
+    if (!sbxKeys(p.id).includes("xbabip")) { box.append(el("p", "note", "hist/career-bb.js doesn't carry BABIP yet.")); return box; }
+    const rec = careerRecOf(p.id), rows = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).map((l) => ({ l, bx: sbxOf(p.id, l.season) })).filter((r) => r.bx && r.bx.babip != null).sort((a, b) => a.l.season - b.l.season);
     if (!rows.length) { box.append(el("p", "note", "No MLB seasons with Statcast BABIP on record.")); return box; }
-    const XK = window.DRAFT_CAREER_BB.keys.includes("xbabd") ? "xbabd" : "xbabip";   /* the drivers' xBABIP (build_career.py, 15 Oct 2026); the model's on an older file */
-    const PKK = window.DRAFT_CAREER_BB.keys.includes("pkbab");   /* the per-ball park effect by season (15 Oct 2026) */
+    for (const r of rows) ensureLg(r.l.season);
+    const XK = sbxKeys(p.id).includes("xbabd") ? "xbabd" : "xbabip";   /* the drivers' xBABIP (build_career.py, 15 Oct 2026); the model's on an older file */
+    const PKK = sbxKeys(p.id).includes("pkbab");   /* the per-ball park effect by season (15 Oct 2026) */
     const fmtP = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x));
     const COLS = [["babip", "BABIP", 1, fmtX], ["pk", "Park", 0, fmtP], [XK, "xBABIP", 1, fmtX], ["diff"], ["ld", "LD%", 1, (x) => x.toFixed(1) + "%"], ["pu", "PU%", -1, (x) => x.toFixed(1) + "%"], ["evgb", "GB EV", 1, (x) => x.toFixed(1)], ["evld", "LD EV", 1, (x) => x.toFixed(1)],
                   ["gbp", "GB Pull%", -1, (x) => x.toFixed(1) + "%"], ["oppo", "Oppo%", 1, (x) => x.toFixed(1) + "%"], ["spd", "Sprint", 1, (x) => x.toFixed(1)]];
@@ -8210,10 +8271,10 @@
   function isoSeasons(p, g) {
     const box = el("div", "rollbox uerabox hrfbbox brbox"), hd = el("div", "rollhd");
     hd.append(el("span", "rollname", "ISO by season")); box.append(hd);
-    ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady);
-    if (!careerReady() || !sbxReady()) { box.append(el("p", "note", "Loading his seasons…")); return box; }
-    if (!window.DRAFT_CAREER_BB.keys.includes("xiso")) { box.append(el("p", "note", "hist/career-bb.js doesn't carry xISO yet.")); return box; }
-    const rec = window.DRAFT_CAREER[String(p.id)], rows = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).map((l) => ({ l, bx: sbxOf(p.id, l.season) })).filter((r) => r.bx && r.bx.xiso != null).sort((a, b) => a.l.season - b.l.season);
+    { const w = careerWait(p); if (w) { box.append(w); return box; } }
+    if (!sbxKeys(p.id).includes("xiso")) { box.append(el("p", "note", "hist/career-bb.js doesn't carry xISO yet.")); return box; }
+    const rec = careerRecOf(p.id), rows = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).map((l) => ({ l, bx: sbxOf(p.id, l.season) })).filter((r) => r.bx && r.bx.xiso != null).sort((a, b) => a.l.season - b.l.season);
+    for (const r of rows) ensureLg(r.l.season);
     if (!rows.length) { box.append(el("p", "note", "No MLB seasons with an xISO on record.")); return box; }
     const fmtD = (d) => (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(3).replace(/^0/, "");
     const { tb, fin, gap, wrap } = brTable([["", 3], ["Power", 3]],
@@ -8246,6 +8307,7 @@
   // that season's qualified hitters' ISO, for the by-season table's heat (hist/career.js; 300+ PA, 110 in 2020)
   const ISO_POOLS = new Map();
   function sbxIsoPool(y) {
+    { const G = lgOf(y); if (G && G.iso) return G.iso; }   // the season's file (tools/build_lg.cjs)
     if (ISO_POOLS.has(y)) return ISO_POOLS.get(y);
     const C = window.DRAFT_CAREER || {}, out = [];
     for (const id in C) { const r = (C[id].H || []).find((x) => x[0] === y); if (!r || (+r[3] || 0) < (y === 2020 ? 110 : 300)) continue; const iv = isoLine(mlbLine(true, r)); if (iv != null) out.push(iv); }
@@ -8405,9 +8467,10 @@
       w.append(hrfbTable(p));
       return w;
     }
-    ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady);
-    if (careerReady() && sbxReady()) {
-      const rec = window.DRAFT_CAREER[String(p.id)], lines = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).filter((l) => l.c.ext && +l.c.ext[2] > 0).sort((a, b) => a.season - b.season);
+    ensureCareer(p.id);
+    if (careerReadyFor(p.id)) {
+      const rec = careerRecOf(p.id), lines = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).filter((l) => l.c.ext && +l.c.ext[2] > 0).sort((a, b) => a.season - b.season);
+      for (const l of lines) ensureLg(l.season);
       const l = lines.find((q) => q.season === +DS.season && DS.level === "MLB") || lines[lines.length - 1];
       if (l) {
         const y = l.season, bx = sbxOf(p.id, y), L = hrfbLeague(y), lg = L.lg, hr = +l.c.HR || 0, fb = +l.c.ext[2], hf = 100 * hr / fb, xv = xHrfb(bx, lg);
@@ -9921,18 +9984,18 @@
       const pct = own ? Math.round(got.v) : st.pct[got.k];
       const lg = own ? 50 : lgOf(got.k, m), prev = prevOf ? prevOf(m, got.k) : null;
       const wl = WS_VAL.has(got.k) || WS_VAL.has(m.key) ? wsLab(m.label) : m.label;
-      return { m, v: got.v, k: got.k, label: wl, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null, lg: lg == null ? null : fmt(lg, m), prev, prevYear: DS.season - 1,
+      return { m, v: got.v, k: got.k, label: wl, value: fmt(got.v, { ...m, unit: "" }), pct: pct ?? null, lg: lg == null ? null : fmt(lg, m), prev, prevYear: DS.season - 1, prevKey: prevNeed, who: p.type + p.id,
                gloss: GLOSS[{ xwd: "xwoba", EXPW: "xwoba" }[got.k]] || GLOSS[got.k] || "", hib: m.hib,
                tip: `${wl}: ${fmt(got.v, m)} · ${pct == null ? "n/a" : ordinal(pct) + " pctl"}${m.hib ? "" : " (lower is better)"}` };
     };
     // tap a row (minimal pass 6): the league's middle value for the pool and, on a full-season MLB card, his line a season
     // earlier for the note (the ▲ / ▼ beside values were dropped the same night — Sean didn't want them)
     const pl = pool(ref), lgOf = (k, m) => { const a = pl.sorted && pl.sorted[k]; if (!a || !a.length) return null; const v = a[Math.floor(a.length / 2)]; return m.hib ? v : -v; };
-    let prevOf = null;
+    let prevOf = null, prevNeed = null;   // prevNeed: last season's file isn't in — the tap note asks for it (statPop), the card no longer does
     const prevKey = DS.level === "MLB" && !DS.kind && !DS.multi && viewLabel(p.type) === "full season" ? `mlb-${DS.season - 1}` : null;
     if (prevKey && (!indexReady() || window.DRAFT_INDEX.seasons.includes(prevKey))) {
       const pds = histDataset(prevKey);
-      if (!pds) ensureHist(prevKey);
+      if (!pds) prevNeed = prevKey;
       else prevOf = withDataset(pds, () => withWindow(NOWIN, () => withSplit(NONE, () => {
         const pp = pds.players.find((q) => q.id === p.id && q.type === p.type); if (!pp) return null;
         const st2 = pool(ref).stats.get(pp.type + pp.id) || rankIn(ref, pp), pv2 = V(pp);
@@ -10121,6 +10184,9 @@
     if (r.gloss) d.append(el("p", null, r.gloss));
     const facts = [r.lg != null ? `League middle: ${r.lg}` : "", r.hib === false ? "Lower is better" : "",
                    r.prev ? `${r.prevYear}: ${r.prev.value}${r.prev.pct != null ? " (" + ordinal(r.prev.pct) + ")" : ""}` : ""].filter(Boolean);
+    // last season's file (~6 MB gzipped) used to load with every full-season card for this one line; now it loads on the first tap, and the
+    // note re-opens with his line once it's in (statPopKey; the redraw it brings takes the note down)
+    if (!r.prev && r.prevKey && !failed.has(`hist/${r.prevKey}.js`)) { ensureHist(r.prevKey); state.statPopKey = r.who + ":" + r.k; facts.push(`Loading ${r.prevYear}…`); }
     if (facts.length) d.append(el("p", "spfacts", facts.join(" · ")));
     const hr = host.getBoundingClientRect(), rr = row.getBoundingClientRect();
     d.style.top = Math.round(rr.bottom - hr.top + 4) + "px";
@@ -10192,6 +10258,7 @@
         M.append(mk("text", { class: "svlbl svvl", x: 85 + bar + VW, y: 10, "text-anchor": "end" }, r.value));   // svvl: the value, so a look can weight it apart from the label
         // a fold-out parent: tapping the name opens / closes its rows; the bar still opens the note
         M.addEventListener("click", (e) => { e.stopPropagation(); if (r.fold && e.target === L) { state.open[r.fold.key] = !r.fold.open; savePrefs(); render(); return; } statPop(M, r); });
+        if (state.statPopKey && state.statPopKey === r.who + ":" + r.k && !r.prevKey) { state.statPopKey = null; setTimeout(() => { if (M.isConnected) statPop(M, r); }, 0); }   // the note that was waiting on last season's file
         if (!first_) M.append(mk("path", { class: "svdash", d: "M80,-1.5L0,-1.5" }), mk("path", { class: "svdash", d: `M${85 + bar + 5},-1.5L${85 + bar + VW},-1.5` }));
         if (on) {
           const C = mk("g", { transform: `translate(${85 + x(r.pct)},10)` });
@@ -10352,11 +10419,11 @@
   const leagueOf = (t) => (AL_TEAMS.has(teamCode(t)) ? "AL" : "NL");
   // his official lines from hist/career.js: the season's (a traded player's TOT), and the career row
   function careerLine(p, season) {
-    const rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null;
+    const rec = careerRecOf(p.id);
     const rows = rec && rec[p.type] ? rec[p.type].filter((r) => r[0] === season) : [];
     return rows.find((x) => x[1] === "TOT") || (rows.length === 1 ? rows[0] : null);
   }
-  const careerRows = (p) => { const rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null; return rec && rec[p.type] ? rec[p.type] : []; };
+  const careerRows = (p) => { const rec = careerRecOf(p.id); return rec && rec[p.type] ? rec[p.type] : []; };
   // the summary line: this season and his career in groups with dividers (Sean, 8 Oct 2026: wOBA and xwOBA at the front, "BA with obp slg and ops")
   function summaryBlock(p, st, yearOnly) {
     const H = p.type === "H", box = el("div", "pbsum" + (yearOnly ? " yonly" : ""));
@@ -10370,8 +10437,8 @@
     const head = el("div", "pbsrow pbshead"); if (!yearOnly) head.append(el("span", "pbsl", "Summary"));
     keys.forEach((k, i) => { const c = el("span", "pbsh" + (narrow.has(k) ? " pbx" : ""), k === "wOBA" || k === "xwOBA" ? wsLab(k) : k); if (groups.some((g) => g[0] === k && g !== groups[0])) c.classList.add("sep"); head.append(c); });
     box.append(head);
-    const r = careerLine(p, +DS.season), rec = careerReady() ? window.DRAFT_CAREER[String(p.id)] : null, car = rec ? rec[p.type + "C"] : null;
-    if (H) ensureScript("hist/career-bb.js", sbxReady);   // the career xwOBA is talent xwOBA, season by season
+    ensureCareer(p.id);   // his bucket carries his lines and, for the career xwOBA (talent, season by season), his Statcast seasons
+    const r = careerLine(p, +DS.season), rec = careerRecOf(p.id), car = rec ? rec[p.type + "C"] : null;
     const f3 = (v) => (v == null ? "–" : fmtX(+v)), f2 = (v) => (v == null ? "–" : (+v).toFixed(2)), f1 = (v) => (v == null ? "–" : (+v).toFixed(1));
     const pctOf = (n, d) => (n != null && d ? f1(100 * n / d) : "–");
     const season = H
@@ -10385,7 +10452,7 @@
     if (car) {
       if (H) {
         let wn = 0, xn = 0, wd = 0, xd = 0, wrn = 0, xrn = 0; const W = wrcOn();   /* under wRC+ the career is PA-weighted wRC+ season by season, each against its own league */
-        for (const x of careerRows(p)) { const a = x[2 + RAW_H.length + 2], pa = +x[3] || 0;   /* our numbers sit at a fixed index (fields are appended after them) */ if (Array.isArray(a) && pa) { if (a[0] != null) { wn += a[0] * pa; wd += pa; if (W) wrn += (wrcOf(a[0], "mlb-" + x[0]) || 0) * pa; } const bx = sbxReady() ? sbxOf(p.id, +x[0]) : null, xw = bx && bx.txw != null ? bx.txw : a[1];   /* talent xwOBA where the season has it (11 Oct 2026) */ if (xw != null) { xn += xw * pa; xd += pa; if (W) xrn += (wrcOf(xw, "mlb-" + x[0]) || 0) * pa; } } }
+        for (const x of careerRows(p)) { const a = x[2 + RAW_H.length + 2], pa = +x[3] || 0;   /* our numbers sit at a fixed index (fields are appended after them) */ if (Array.isArray(a) && pa) { if (a[0] != null) { wn += a[0] * pa; wd += pa; if (W) wrn += (wrcOf(a[0], "mlb-" + x[0]) || 0) * pa; } const bx = sbxReadyFor(p.id) ? sbxOf(p.id, +x[0]) : null, xw = bx && bx.txw != null ? bx.txw : a[1];   /* talent xwOBA where the season has it (11 Oct 2026) */ if (xw != null) { xn += xw * pa; xd += pa; if (W) xrn += (wrcOf(xw, "mlb-" + x[0]) || 0) * pa; } } }
         career = { wOBA: wd ? (W ? String(Math.round(wrn / wd)) : f3(wn / wd)) : "–", xwOBA: xd ? (W ? String(Math.round(xrn / xd)) : f3(xn / xd)) : "–", _xw: xd ? xn / xd : null, PA: car[1], AB: car[2], H: car[4], HR: car[7], R: car[3], RBI: car[8], SB: car[9], BA: f3(car[12]), OBP: f3(car[13]), SLG: f3(car[14]), OPS: f3(car[15]) };
       } else {
         let k = 0, bb = 0, bf = 0;
@@ -10411,7 +10478,7 @@
     box.append(rowOf(String(DS.season) + (DS.level && DS.level !== "MLB" ? " " + DS.level : ""), season, "cur"));
     if (yearOnly) return box;   /* the one header: the selected year alone (the career is the season table's N Yrs row) */
     if (career) box.append(rowOf("Career", career));
-    else if (careerReady() && DS.level === "MLB") box.append(rowOf("Career", null));
+    else if (careerReadyFor(p.id) && DS.level === "MLB") box.append(rowOf("Career", null));
     return box;
   }
   // B-Ref's bio box in the white space between the band and the table switch (Sean, 13 Oct 2026: "in the white space here can you include a box
@@ -10665,10 +10732,13 @@
     "LD EV": "Exit velocity on line drives", "GB EV": "Exit velocity on ground balls", "Bat Speed": "Average bat speed on his competitive swings (2023 on)", "Air%": "Line drives and fly balls (no popups)",
     "Pull Air%": "Balls in the air pulled", "Mix wOBA": "The league's wOBA for each kind of ball he hit, averaged over his balls in play", "O-Swing%": "Swings at pitches out of the zone (chase)",
     "Contact%": "Contact per swing", "Whiff%": "Misses per swing" };
-  const sbxReady = () => !!window.DRAFT_CAREER_BB;
+  const sbxReady = () => !!window.DRAFT_CAREER_BB;   // the whole file; a player's own seasons come from his bucket (sbxReadyFor, sbxSrc)
+  const sbxReadyFor = (id) => sbxReady() || !!careerBucket(id);
+  const sbxSrc = (id) => window.DRAFT_CAREER_BB || careerBucket(id) || null;   // whichever holds his rows: the whole file's p / pp, a bucket's bb / pp
+  const sbxKeys = (id) => { const B = sbxSrc(id); return (B && B.keys) || []; };
   // his season's numbers from the file as {bbe, ev, …}, or null
   function sbxOf(id, y) {
-    const B = window.DRAFT_CAREER_BB, a = B && B.p[String(id)] && B.p[String(id)][String(y)];
+    const B = sbxSrc(id), rows = B && (B.bb || B.p)[String(id)], a = rows && rows[String(y)];
     if (!a) return null; const o = { bbe: a[0] }; B.keys.forEach((k, i) => { o[k] = a[i + 1]; }); o.pfb = pfbOf(o);
     o.txwn = o.txw; if (!XWN && o.txwpk != null) o.txw = o.txwpk;   /* the season table's xwOBA (txw) carries his parks unless the switch says park-neutral (18 Oct 2026) */
     o.xslgn = o.xslg; if (!XWN && o.xslgpk != null) o.xslg = o.xslgpk;   /* xSLG the same way (23 Oct 2026) */
@@ -10677,7 +10747,7 @@
   }
   // a pitcher's season numbers from the file's pp as {nera, siera, pu, strk, fstrk, b3strk}, or null
   function sbpOf(id, y) {
-    const B = window.DRAFT_CAREER_BB, a = B && B.pp && B.pp[String(id)] && B.pp[String(id)][String(y)];
+    const B = sbxSrc(id), a = B && B.pp && B.pp[String(id)] && B.pp[String(id)][String(y)];
     if (!a) return null; const o = {}; B.pkeys.forEach((k, i) => { o[k] = a[i]; }); return o;
   }
   // a sum of lines' numbers: rates weighted by BBE (or PA), Max EV the max; blank when a piece with plate appearances has none (a traded
@@ -10697,7 +10767,9 @@
   // the heat map's pool for a Statcast column: that season's qualified hitters (300+ PA, 110 in 2020), from the two files
   const SBX_POOLS = new Map();
   function sbxPool(y, key) {
-    const pkx = (key === "txw" || key === "xslg" || key === "xiso") && !XWN, id0 = y + ":" + key + (pkx ? ":pk" : ""); if (SBX_POOLS.has(id0)) return SBX_POOLS.get(id0);
+    const pkx = (key === "txw" || key === "xslg" || key === "xiso") && !XWN, id0 = y + ":" + key + (pkx ? ":pk" : "");
+    { const G = lgOf(y); if (G && G.sbx) return (pkx && G.sbxpk && G.sbxpk[key]) || G.sbx[key] || []; }   // the season's file: every key's pool, the three park-carrying ones both ways
+    if (SBX_POOLS.has(id0)) return SBX_POOLS.get(id0);
     const C = window.DRAFT_CAREER || {}, B = window.DRAFT_CAREER_BB, out = [];
     // "babipn": BABIP less what his parks added (pkbab), the park-neutral BABIP the tables show (15 Oct 2026)
     if (B) { const i = B.keys.indexOf(key === "babipn" ? "babip" : key) + 1, j = key === "babipn" ? B.keys.indexOf("pkbab") + 1 : 0, ip = pkx ? B.keys.indexOf(key === "xslg" ? "xslgpk" : key === "xiso" ? "xisopk" : "txwpk") + 1 : 0;   /* ip: the in-park xwOBA (18 Oct 2026) / xSLG / xISO (23 Oct 2026) */
@@ -10858,7 +10930,7 @@
     let bp = null;
     if (!H) { let n = 0, d = 0; for (const l of lines) { const v = (l.c.adv || {}).gb, w = Number(l.c.BF) || 0; if (v != null && w) { n += v * w; d += w; } } c.adv.gb = d ? n / d : null;
       // the pp numbers weighted by batters faced over the lines that have them
-      const ks = (window.DRAFT_CAREER_BB && window.DRAFT_CAREER_BB.pkeys) || []; bp = {};
+      const ks = [...new Set(lines.flatMap((l) => (l.bp ? Object.keys(l.bp) : [])))]; bp = {};   // the pp keys, read off the lines (a bucket carries them as the whole file does)
       for (const k of ks) { let nn = 0, dd = 0; for (const l of lines) { const v = l.bp ? l.bp[k] : null, w = Number(l.c.BF) || 0; if (v != null && w) { nn += v * w; dd += w; } } bp[k] = dd ? nn / dd : null; }
       // his pitching WAR adds up — blank if a piece he pitched in lacks it, rather than short (14 Oct 2026)
       const pt = lines.filter((l) => (Number(l.c.BF) || 0) > 0);
@@ -10890,6 +10962,7 @@
   // 110 in 2020's 60 games) from the career record; season 0 = every qualified season 2015 on, for the totals rows
   const SB_POOLS = new Map();
   function sbPool(y) {
+    { const G = lgOf(y); if (G && G.sb) return G.sb; }
     if (SB_POOLS.has(y)) return SB_POOLS.get(y);
     const out = { wOBA: [], xwOBA: [], Sprint: [] }, C = window.DRAFT_CAREER || {}, b = 2 + RAW_H.length;
     for (const id in C) for (const r of C[id].H || []) {
@@ -10900,7 +10973,7 @@
       if (w != null) out.wOBA.push(+w); if (a && a[1] != null) out.xwOBA.push(+a[1]); if (ex && ex[1] != null) out.Sprint.push(+ex[1]);
     }
     for (const k in out) out[k].sort((a, b) => a - b);
-    SB_POOLS.set(y, out); return out;
+    if (careerReady()) SB_POOLS.set(y, out); return out;   // a pool built with no file in isn't kept
   }
   // a pitcher's K-BB% heat pool (Sean, 9 Oct 2026: "after k% and bb% add in k-bb and heatmap it"): every qualified pitcher that season — an
   // inning per team game (162, 60 in 2020) — from the career record; season 0 = every qualified season 2015 on, for the totals rows
@@ -10908,6 +10981,7 @@
   // nERA too (Sean, 13 Oct 2026: "heat map on their leaderboard table on their player page their nERA"), from hist/career-bb.js's pitcher seasons,
   // stored negated (lower is better); the cache key carries whether that file is in, so a pool built before it isn't kept empty
   function sbPoolP(y) {
+    { const G = lgOf(y); if (G && G.sbp) return G.sbp; }
     const ck = y + ":" + sbxReady();
     if (SB_POOLS_P.has(ck)) return SB_POOLS_P.get(ck);
     const out = { "K-BB%": [], nERA: [] }, C = window.DRAFT_CAREER || {}, b = 2 + RAW_P.length, iK = 2 + RAW_P.indexOf("K"), iB = 2 + RAW_P.indexOf("BB"), iIP = 2 + RAW_P.indexOf("IP");
@@ -10918,7 +10992,7 @@
       const q = sbpOf(id, r[0]); if (q && q.nera != null) out.nERA.push(-q.nera);
     }
     for (const k in out) out[k].sort((a, b) => a - b);
-    SB_POOLS_P.set(ck, out); return out;
+    if (careerReady()) SB_POOLS_P.set(ck, out); return out;
   }
   const SB_HEAT_P = new Set(["K-BB%", "nERA"]), SB_LO_P = new Set(["nERA"]);
   // League leaders, Baseball-Reference's way (Sean, 8 Oct 2026: "the bold indicates the player led the league and italics indicates they led the
@@ -10935,8 +11009,10 @@
     c.adv = {}; return { season: r[0], team: r[1], c };
   };
   function sbLeaders(H, y) {
+    { const G = lgOf(y); if (G && G.lead) return (H ? (XWN ? G.lead.Hn : G.lead.Hp) : G.lead.P) || { AL: {}, NL: {}, MLB: {} }; }   // the season's file, the hitters' both ways round the parks
     const key = (H ? "H" : "P") + y + (H && sbxReady() ? "x" + (XWN ? "n" : "p") : "");   // the xwOBA leaders are talent's once career-bb.js is in, with or without the parks
     if (SB_LEADS.has(key)) return SB_LEADS.get(key);
+    if (!careerReady()) return { AL: {}, NL: {}, MLB: {} };   // nothing to lead from yet (the file still loading); not cached
     const C = window.DRAFT_CAREER || {}, t = H ? "H" : "P", games = y === 2020 ? 60 : 162, cols = H ? SB_H : SB_P;
     const qual = (l) => (H ? (+l.c.PA || 0) >= 3.1 * games : ipNum(l.c.IP) >= games);
     const num = (k, v) => (k === "IP" ? ipNum(v) : v == null || v === "" ? null : +v);
@@ -10961,6 +11037,37 @@
       else for (const [lg, ls] of lgs) take(lg, ls.length === 1 ? ls[0] : sbCombine(H, ls));
     }
     SB_LEADS.set(key, out); return out;
+  }
+  // The daily build's hook (tools/build_lg.cjs): every season's league-wide numbers from the whole career files, as hist/lg/<season>.js carries
+  // them — the season table's heat pools (sb / sbp / sbx, with the three park-carrying keys both ways round the switch / iso), the league leaders
+  // (the hitters' with and without the parks) and the HR/FB league — built by the same functions the page runs, so a player's page reads one
+  // small file a season and shows the numbers the whole files would, to the digit (28 Oct 2026, from the review: item 5)
+  window.__lgData = () => new Promise((res, rej) => {
+    window.__wholeCareer = true; const t0 = Date.now();
+    ensureScript("hist/career.js", careerReady); ensureScript("hist/career-bb.js", sbxReady);
+    (function wait() {
+      if (careerReady() && sbxReady()) { try { res(lgBuild()); } catch (e) { rej(e); } return; }
+      if (failed.has("hist/career.js") || failed.has("hist/career-bb.js") || Date.now() - t0 > 240000) return rej(new Error("the career files didn't load"));
+      setTimeout(wait, 250);
+    })();
+  });
+  function lgBuild() {
+    const was = XWN, LG = window.DRAFT_LG; window.DRAFT_LG = null;   // from the whole files, never from a season's file of an earlier build
+    const B = window.DRAFT_CAREER_BB, keys = [...new Set([...Object.values(SBX).filter((d) => d.hi || d.lo).map((d) => d.k), "babipn", "xbabip", "xbabd", "ld", "pu", "evgb", "evld", "gbp", "oppo", "spd", "fb", "txw", "xslg", "xiso"])].filter((k) => k === "babipn" || B.keys.includes(k));
+    const out = {};
+    try {
+      for (let y = LG_FROM; y <= +DATA.meta.season; y++) {
+        XWN = true;
+        const o = { sb: sbPool(y), sbp: sbPoolP(y), iso: sbxIsoPool(y), hrfb: hrfbLeague(y), sbx: {}, sbxpk: {}, lead: {} };
+        for (const k of keys) o.sbx[k] = sbxPool(y, k);
+        if (y >= SB_LEAD_FROM) { o.lead.Hn = sbLeaders(true, y); o.lead.P = sbLeaders(false, y); }
+        XWN = false;
+        for (const k of ["txw", "xslg", "xiso"]) if (B.keys.includes(k)) o.sbxpk[k] = sbxPool(y, k);
+        if (y >= SB_LEAD_FROM) o.lead.Hp = sbLeaders(true, y);
+        out[String(y)] = o;
+      }
+    } finally { XWN = was; window.DRAFT_LG = LG; }
+    return out;
   }
   // MLB's all-time career records (Baseball-Reference), gold on his career totals row when he holds one (Sean, 8 Oct 2026: "make it gold like
   // profootballreference does if it is an all time mlb record"); rates need 3,000 PA / 1,000 IP, as B-Ref's leaderboards do
@@ -10997,10 +11104,10 @@
     else box.append(viewBar(SIDE_VIEWS, stuffSide() ? "stuff" : "raw",
       (k) => { if ((stuffSide() ? "stuff" : "raw") === k) return; state.cardSide = k; savePrefs(); render(); }));
     const sx = view !== "std";   // a Statcast table: regular season only, read from hist/career-bb.js
-    if (sx) ensureScript("hist/career-bb.js", sbxReady);
+    ensureCareer(p.id);   // his bucket: the season lines and, for a Statcast table, his seasons' numbers
     const hd = el("div", "sbhead"); hd.append(el("h3", "sbtitle", H ? SB_VIEWS.find((v) => v[0] === view)[2] : "Standard pitching"));
     const mi = el("button", "linkbtn sblink", sbMinors ? "Hide minors" : "Show minors"); mi.type = "button";
-    mi.addEventListener("click", (e) => { e.stopPropagation(); sbMinors = !sbMinors; if (sbMinors) ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS); render(); });
+    mi.addEventListener("click", (e) => { e.stopPropagation(); sbMinors = !sbMinors; if (sbMinors) ensureMinors(p.id); render(); });
     const gl = el("button", "linkbtn sblink", "Glossary"); gl.type = "button"; gl.addEventListener("click", (e) => { e.stopPropagation(); state.textModal = { title: "Stat glossary", build: renderGlossary }; render(); });
     const post = sbKind === "post";
     if (!post) hd.append(mi); hd.append(gl);
@@ -11011,19 +11118,18 @@
       bt.addEventListener("click", (e) => { e.stopPropagation(); if (sbKind !== k) { sbKind = k; if (k === "post" && sbTable !== "std") { sbTable = "std"; try { localStorage.setItem("draft2027.sbtable", "std"); } catch (er) { /* private window */ } } render(); } }); tabs.append(bt);
     }
     box.append(tabs);
-    ensureScript("hist/career.js", careerReady);
-    if (!post && !careerReady()) { if (failed.has("hist/career.js")) { const n = el("p", "note", "Couldn't load his career stats. "), rt = el("button", "linkbtn", "Try again"); rt.type = "button";
-      rt.addEventListener("click", (e) => { e.stopPropagation(); failed.delete("hist/career.js"); tries.delete("hist/career.js"); render(); }); n.append(rt); box.append(n); } else box.append(el("p", "note", "Loading career stats…")); return box; }
-    if (sx && !sbxReady()) { box.append(el("p", "note", failed.has("hist/career-bb.js") ? "hist/career-bb.js hasn't been built — run build_career.py bb" : "Loading Statcast seasons…")); return box; }
-    if (!post && sbMinors) ensureScript("hist/minors.js", () => !!window.DRAFT_MINORS);
+    if (!post) { const w = careerWait(p); if (w) { box.append(w); return box; } }
+    if (sx && !sbxReadyFor(p.id)) { box.append(el("p", "note", "Loading Statcast seasons…")); return box; }
+    if (!post && sbMinors) ensureMinors(p.id);
     const postState = post ? postLines(p) : undefined;   // null while MLB's record loads, false if it failed, else his postseason lines
     const lines = post ? [] : (rawLines(p) || []), mlb = post ? (Array.isArray(postState) ? postState : []) : lines.filter((l) => l.mlb).sort((a, b) => a.season - b.season);
     const LV = ["AAA", "AA", "A+", "A", "A-", "Rk"], lvName = (l) => ({ "A(Adv)": "A+", "A(Full)": "A", "A(Short)": "A-", ROK: "Rk" }[l] || l);
-    const milb = !post && sbMinors && window.DRAFT_MINORS ? lines.filter((l) => !l.mlb && !l.combo && !l.team === false && l.team).sort((a, b) => a.season - b.season || LV.indexOf(lvName(a.level)) - LV.indexOf(lvName(b.level))) : [];
+    const milb = !post && sbMinors && minorsReadyFor(p.id) ? lines.filter((l) => !l.mlb && !l.combo && !l.team === false && l.team).sort((a, b) => a.season - b.season || LV.indexOf(lvName(a.level)) - LV.indexOf(lvName(b.level))) : [];
     // talent xwOBA rides in the Standard table after xwOBA (Sean, 11 Oct 2026), so a hitter's regular-season table reads hist/career-bb.js too
-    const bxOn = H && !post && !sx; if (bxOn) ensureScript("hist/career-bb.js", sbxReady);
-    if (sx || (bxOn && sbxReady())) for (const l of mlb) l.bx = sbxOf(p.id, l.season);
-    if (!H && !post) { ensureScript("hist/career-bb.js", sbxReady); if (sbxReady()) for (const l of mlb) l.bp = sbpOf(p.id, l.season); }   // a pitcher's nERA / SIERA / PU% / xBB%
+    const bxOn = H && !post && !sx;
+    if (sx || (bxOn && sbxReadyFor(p.id))) for (const l of mlb) l.bx = sbxOf(p.id, l.season);
+    if (!H && !post && sbxReadyFor(p.id)) for (const l of mlb) l.bp = sbpOf(p.id, l.season);   // a pitcher's nERA / SIERA / PU% / xBB%
+    if (!post) for (const l of mlb) ensureLg(l.season);   // each season's heat pools and league leaders (hist/lg/<season>.js), filled in as they land
     const cols = sx ? SBX_COLS[view] : post ? (H ? SB_H.filter((k) => !["wOBA", "xwOBA", ...SB_FG].includes(k)) : SB_P.filter((k) => !["FIP", "nERA", "SIERA", "PU%", "GB%", "Whiff%", "xBB%", "fWAR", "bWAR"].includes(k))) : (H ? SB_H : SB_P), b = bio(p.id);
     // the group rules: a column whose next column starts a group ends one (FanGraphs' heavier lines)
     const allCols = [...cols, "Pos"], brk = new Set(sx ? SBX_BRK[view] : SB_BRK[p.type] || []); if (post && H) brk.add("SB");   /* no Sprint in October: SB keeps its own group */
@@ -11146,7 +11252,7 @@
         const ld = ldOf(l);
         // a traded season whose clubs were all in one league leads that league on the TOT line; split across leagues it can only lead MLB here
         let lgTOT = null, lgName = l.team !== "TOT" ? leagueOf(l.team) : null;
-        if (ld && l.team === "TOT") { const crec = window.DRAFT_CAREER[String(p.id)], cl = ((crec && crec[p.type + "T"]) || []).filter((r) => r[0] === y), lgs = new Set(cl.map((r) => leagueOf(r[1]))); if (lgs.size === 1) { lgName = [...lgs][0]; lgTOT = sbLeaders(H, y)[lgName]; } }
+        if (ld && l.team === "TOT") { const crec = careerRecOf(p.id), cl = ((crec && crec[p.type + "T"]) || []).filter((r) => r[0] === y), lgs = new Set(cl.map((r) => leagueOf(r[1]))); if (lgs.size === 1) { lgName = [...lgs][0]; lgTOT = sbLeaders(H, y)[lgName]; } }
         const trr = row([yr, ageIn(y), l.team, "MLB"], l, (y === +DS.season && DS.level === "MLB" ? "cur" : null), { lead: ld, lgTOT, lgName, season: true, heat: post ? null : y, awards: true });
         if (l.team === "TOT") trr.title = "Two or more clubs that season";
         if (!post && y === +DS.season && DS.level === "MLB") splitRow();
@@ -11160,7 +11266,7 @@
     // the totals: his MLB years, a 162-game average, each club, each league
     if (mlb.length) {
       const n = new Set(mlb.map((l) => l.season)).size, tot = sbCombine(H, mlb);
-      if (sx || (bxOn && sbxReady())) tot.bx = sbxCombine(mlb);   /* the Standard view's totals need the park numbers too (park-neutral BABIP / HR/FB, 15 Oct 2026) */
+      if (sx || (bxOn && sbxReadyFor(p.id))) tot.bx = sbxCombine(mlb);   /* the Standard view's totals need the park numbers too (park-neutral BABIP / HR/FB, 15 Oct 2026) */
       else if (bxOn) { let a = 0, w = 0; for (const l of mlb) { const v = l.bx && l.bx.txw, pa = +l.c.PA || 0; if (v == null || !pa) continue; a += v * pa; w += pa; } tot.bx = { txw: w ? a / w : null }; }   // talent xwOBA over the seasons that have one, by PA
       if (wrcOn() && H && !post) tot.wrc = wrcTot(mlb);   /* the career wRC+ is PA-weighted season by season, each against its own league */
       row([`${n} Yr${n > 1 ? "s" : ""}`], tot, "tot first", { record: !post });   // no heat map on the totals rows (Sean, 8 Oct 2026)
@@ -11181,7 +11287,7 @@
         if (!H && tra) tra.title = `Per 162 games on the active roster: his career over ${games} team games on it` + (mlb.some((l) => l.c.ag == null) ? " (a season before 2009 counted as a full one)" : "");
       }
       // each club: a traded year's clubs from the record's own club rows
-      const rec = window.DRAFT_CAREER[String(p.id)], keysMLB = H ? RAW_H : RAW_P, byClub = new Map();
+      const rec = careerRecOf(p.id), keysMLB = H ? RAW_H : RAW_P, byClub = new Map();
       const clubLines = {};
       for (const r of (rec && rec[p.type + "T"]) || []) {
         const c = {}; keysMLB.forEach((k, i) => { c[k] = r[2 + i]; });
@@ -11207,11 +11313,11 @@
           const rest = el("td"); rest.colSpan = ncol - 3; g.append(rest); tbody.append(g);
         };
         gap();
-        for (const [t, ls] of clubs) { const yrs = new Set(ls.map((x) => x.season)).size; const cl = sbCombine(H, ls); if (sx || (bxOn && sbxReady())) cl.bx = sbxCombine(ls); row([`${t} (${yrs} Yr${yrs > 1 ? "s" : ""})`], cl, "tot sub"); }
+        for (const [t, ls] of clubs) { const yrs = new Set(ls.map((x) => x.season)).size; const cl = sbCombine(H, ls); if (sx || (bxOn && sbxReadyFor(p.id))) cl.bx = sbxCombine(ls); row([`${t} (${yrs} Yr${yrs > 1 ? "s" : ""})`], cl, "tot sub"); }
         const byLg = new Map();
         for (const [t, ls] of clubs) { const lg = leagueOf(t); (byLg.get(lg) || byLg.set(lg, []).get(lg)).push(...ls); }
         gap();
-        for (const [lg, ls] of byLg) { const yrs = new Set(ls.map((x) => x.season)).size; const cl = sbCombine(H, ls); if (sx || (bxOn && sbxReady())) cl.bx = sbxCombine(ls); row([`${lg} (${yrs} Yr${yrs > 1 ? "s" : ""})`], cl, "tot sub"); }
+        for (const [lg, ls] of byLg) { const yrs = new Set(ls.map((x) => x.season)).size; const cl = sbCombine(H, ls); if (sx || (bxOn && sbxReadyFor(p.id))) cl.bx = sbxCombine(ls); row([`${lg} (${yrs} Yr${yrs > 1 ? "s" : ""})`], cl, "tot sub"); }
       }
     }
     table.append(tbody);
@@ -11236,7 +11342,7 @@
     if (post && postState === null) box.append(el("p", "note", "Loading his postseason games…"));
     if (post && postState === false) box.append(el("p", "note", "Couldn't load his postseason stats from MLB."));
     if (post && Array.isArray(postState) && !postState.length) box.append(el("p", "note", "No postseason games."));
-    if (!post && sbMinors && !window.DRAFT_MINORS) box.append(el("p", "note", failed.has("hist/minors.js") ? "hist/minors.js hasn't been built." : "Loading minor-league seasons…"));
+    if (!post && sbMinors && !minorsReadyFor(p.id)) box.append(el("p", "note", failed.has(minorsFile(p.id)) ? "His minor-league seasons couldn't be loaded." : "Loading minor-league seasons…"));
     // the frozen Season / Age / Team columns' offsets from their drawn widths (the stylesheet's 60 / 40px guesses sat the Team column over the G
     // column once the cells tightened to B-Ref's padding)
     const fit = () => { const h1 = table.querySelector("th.f1"), h2 = table.querySelector("th.f2"); if (!h1 || !h2 || !table.isConnected) return; table.style.setProperty("--sbw1", h1.offsetWidth + "px"); table.style.setProperty("--sbw2", h2.offsetWidth + "px"); };
@@ -11274,7 +11380,7 @@
       const p = ds.players.find((q) => q.id === entry.id && q.type === type);
       if (!p) { box.append(cardTop(stub(), chips({ id: entry.id, type }))); box.append(el("p", "xempty", "No card for that season.")); return; }
       const g = p.type === "H" ? "H" : p.primary;
-      if (needsRows() && !DS.ready(p.type)) { DS.load(p.type); box.append(cardTop(renderPlate(p, { rank: "–" }, g, g), chips(p))); const c = el("div", "card"); c.append(el("p", "note pgload", "Loading game-by-game data…")); box.append(c); return; }
+      if (needsRows() && !DS.ready(p.type)) { DS.load(p.type); box.append(cardTop(renderPlate(p, { rank: "–" }, g, g), chips(p))); const c = el("div", "card"); c.append(el("p", "note pgload")); c.firstChild.append(daysNote()); box.append(c); return; }
       const st = pool(g).stats.get(p.type + p.id) || rankIn(g, p);
       // his page, not a popup over the page (Sean, 8 Oct 2026, from the Player Page Designs canvas): the band, the season table, the bars and the tabs flow down the page
       playerView(box, { p, st, g, ref: g, entry, key, pick: goTo, page: true });

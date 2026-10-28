@@ -13,7 +13,7 @@ It mirrors the site files into ../draft-site-deploy, tells Netlify the SHA-1 of 
 only the ones Netlify does not already have — a daily refresh is ~7 files, not the whole 400 MB.
 The site id is remembered in netlify_site.json next to this script; the token never leaves ~/.
 """
-import hashlib, json, os, shutil, sys, time
+import hashlib, json, os, re, shutil, sys, time
 import requests
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -44,7 +44,7 @@ def say(msg):
 
 def sync():
     """Mirror the site files (not the build scripts or caches) into the deploy folder."""
-    for sub in ("hist", "icons"):
+    for sub in ("hist", "hist/c", "hist/m", "hist/lg", "icons"):
         os.makedirs(os.path.join(DEPLOY, sub), exist_ok=True)
     try:                                                   # a finished season's day / arsenal files go up gzipped (pack_hist.py,
         import pack_hist                                   # 20 Oct 2026), so the site stays under GitHub Pages' 1 GB
@@ -60,6 +60,11 @@ def sync():
                 packed["hist/" + name + ".gz"] = os.path.join(HERE, "hist", name)
             else:
                 wanted["hist/" + name] = os.path.join(HERE, "hist", name)
+    for sub in ("c", "m", "lg"):                           # the career files' buckets and the season table's league files (28 Oct 2026)
+        d = os.path.join(HERE, "hist", sub)
+        for name in sorted(os.listdir(d)) if os.path.isdir(d) else []:
+            if name.endswith(".js"):
+                wanted[f"hist/{sub}/{name}"] = os.path.join(d, name)
     copied = 0
     for rel, src in wanted.items():
         dst = os.path.join(DEPLOY, rel)
@@ -80,8 +85,13 @@ def sync():
             copied += 1
         wanted[rel] = src
     for name in os.listdir(os.path.join(DEPLOY, "hist")):      # drop files that no longer exist upstream
-        if "hist/" + name not in wanted:
+        if "hist/" + name not in wanted and os.path.isfile(os.path.join(DEPLOY, "hist", name)):
             os.remove(os.path.join(DEPLOY, "hist", name))
+    for sub in ("c", "m", "lg"):
+        d = os.path.join(DEPLOY, "hist", sub)
+        for name in os.listdir(d) if os.path.isdir(d) else []:
+            if f"hist/{sub}/{name}" not in wanted:
+                os.remove(os.path.join(d, name))
     stamp(wanted)
     try:                                                   # the build scripts ride along under tools/ so they can be
         import sync_tools                                  # read and edited from GitHub; they are not part of the site
@@ -100,14 +110,19 @@ def stamp(wanted):
     unchanged files keep their address (and stay cached), changed ones get a new one and are fetched at once. The
     files app.js loads by itself (days-h.js, days-p.js, hist/…) are versioned through the DRAFT_BUILD map it reads.
     """
-    ver = {rel: sha1(os.path.join(DEPLOY, rel))[:10] for rel in wanted}
+    ver = {rel: sha1(os.path.join(DEPLOY, rel))[:10] for rel in wanted if not re.match(r"hist/[cm]/", rel)}
+    for sub in ("c", "m"):                                 # one version a folder for the buckets (what app.js's vsrc reads for one), as the cloud's restamp does
+        names = sorted(rel for rel in wanted if rel.startswith(f"hist/{sub}/"))
+        if names:
+            ver[f"hist/{sub}/"] = hashlib.sha1("".join(sha1(os.path.join(DEPLOY, rel)) for rel in names).encode()).hexdigest()[:10]
+    sizes = {f: os.path.getsize(os.path.join(DEPLOY, f)) for f in ("days-h.js", "days-p.js") if f in wanted}
     build = hashlib.sha1("".join(f"{k}:{v}" for k, v in sorted(ver.items())).encode()).hexdigest()[:10]
     html = open(os.path.join(DEPLOY, "index.html")).read()
     for rel, v in ver.items():                                  # src="app.js" -> src="app.js?v=1a2b3c4d5e"
         for attr in ('src="', 'href="'):
             html = html.replace(f'{attr}{rel}"', f'{attr}{rel}?v={v}"')
     tag = ("<script>window.DRAFT_BUILD=" + json.dumps(ver, separators=(",", ":"))
-           + ';window.DRAFT_BUILD_ID="' + build + '";</script>\n')
+           + ';window.DRAFT_BUILD_ID="' + build + '";window.DRAFT_SIZES=' + json.dumps(sizes, separators=(",", ":")) + ";</script>\n")
     html = html.replace('<script src="defaults.js', tag + '<script src="defaults.js', 1)
     with open(os.path.join(DEPLOY, "index.html"), "w") as f:
         f.write(html)

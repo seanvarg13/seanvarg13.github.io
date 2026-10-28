@@ -579,6 +579,7 @@ def season_bb():
     path = HERE / "hist" / "career-bb.js"
     path.write_text("window.DRAFT_CAREER_BB = " + json.dumps({"keys": SBX_KEYS, "p": out, "pkeys": SBP_KEYS, "pp": pout, "lg": lgs}, separators=(",", ":")) + ";\n")
     print(f"OK {len(out)} hitters' batted-ball / discipline seasons, {len(pout)} pitchers' -> {path.name} ({path.stat().st_size / 1e6:.1f} MB)", flush=True)
+    shard()
 
 
 # The Triple-A talent file (hist/aaa-tw.js) and the transaction log that kept rehab stints out of it went with the next-season
@@ -881,6 +882,20 @@ def main():
     path = HERE / "hist" / "career.js"
     path.write_text("window.DRAFT_CAREER = " + json.dumps(out, separators=(",", ":")) + ";\n")
     print(f"OK {len(out)} players -> {path.name} ({path.stat().st_size / 1e6:.1f} MB)")
+    shard()
+
+
+def shard():
+    """The three whole files cut into per-id buckets (hist/c/, hist/m/; tools/shard_career.py) — what a player's page reads since 28 Oct 2026.
+    Non-fatal: the whole files are written either way, and the page falls back to them."""
+    try:
+        import sys
+        if str(HERE / "tools") not in sys.path:
+            sys.path.insert(0, str(HERE / "tools"))
+        import shard_career
+        shard_career.shard(str(HERE))
+    except Exception as e:                                 # noqa: BLE001
+        print(f"!! shard_career: {type(e).__name__}: {e}", flush=True)
 
 
 if __name__ == "__main__":
