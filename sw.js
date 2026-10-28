@@ -6,7 +6,8 @@
 //   * the page itself (index.html, with or without the ?b= a build reload adds) is network first — a reload after a publish must see the new
 //     stamps — and the cached copy is the fallback, so the home-screen app opens offline on the last page it saw;
 //   * everything else (build.json, MLB's API, the fonts) goes straight through.
-// One cache, trimmed to the newest KEEP entries so old builds' files don't pile up; a copy that won't fit (iOS's quota) is just not kept.
+// One cache: one copy a file (a new build's stamp retires the old one), trimmed to the newest KEEP entries, and a copy that won't fit (iOS's
+// quota) is just not kept.
 const CACHE = "seans-site-v1", KEEP = 160;
 self.addEventListener("install", (e) => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then((c) => c.add("index.html").catch(() => {}))); });
 self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
@@ -35,5 +36,9 @@ let trimming = false;
 async function put(c, r, res) {
   try { await c.put(r, res); } catch (e) { return; }   // no room: not kept
   if (trimming) return; trimming = true;
-  try { const ks = await c.keys(); for (const k of ks.slice(0, Math.max(0, ks.length - KEEP))) await c.delete(k); } catch (e) {} finally { trimming = false; }
+  try {
+    const ks = await c.keys(), path = typeof r === "string" ? null : new URL(r.url).pathname;
+    for (const k of ks) if (path && k.url !== r.url && new URL(k.url).pathname === path) await c.delete(k);   // one copy a file: a new build's stamp retires the old one (a day file is 12-17 MB)
+    const left = await c.keys(); for (const k of left.slice(0, Math.max(0, left.length - KEEP))) await c.delete(k);   // and the newest KEEP of the rest
+  } catch (e) {} finally { trimming = false; }
 }

@@ -5364,8 +5364,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   included) is cache first, fetched on a miss and kept; **the page** (`index.html`, with or without the `?b=` a build reload adds) is network first
   with the cached copy as the offline fallback, so the home-screen app opens offline on the last page it saw and a reload after a publish gets the
   new stamps (new stamps are new URLs to the worker, which is what keeps it fresh — `build.json` itself passes straight through, as does MLB's API
-  and the fonts); the cache is trimmed to the newest `KEEP` entries so old builds' files don't pile up, and a copy that won't fit (iOS's quota; a
-  day file is 12-17 MB) is just not kept. `tools/headless.cjs` opens every test context with `serviceWorkers: "block"` (a test routes requests;
+  and the fonts); the cache keeps one copy a file (a new build's stamp retires the old one — a day file is 12-17 MB) and the newest `KEEP` entries of the rest,
+  and a copy that won't fit (iOS's quota) is just not kept. `tools/headless.cjs` opens every test context with `serviceWorkers: "block"` (a test routes requests;
   a worker would answer from its cache); `sw.js` is in `cloud_daily.py`'s and `publish.py`'s `TOP` (versioned in the build map, unused) and in
   `sync_tools.py`'s `FILES`. **Checked** (scratch `pr8/sw.cjs`, a local server with `?sw=1`, phone and desktop): the worker registers and controls
   the second load, the Leaderboard's files are in the cache (index.html, app.js, styles.css, themes.js, defaults.js, data.js, injuries, moves,
