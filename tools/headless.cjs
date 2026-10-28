@@ -29,7 +29,7 @@ async function launch() {
   try { return await chromium.launch(ch ? { channel: ch } : {}); } catch (e) { if (!ch) throw e; return chromium.launch(); }   // the channel missing: the bundled one
 }
 
-const PHONE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 };
-const DESK = { viewport: { width: 1300, height: 900 }, deviceScaleFactor: 1 };
+const PHONE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, serviceWorkers: "block" };   // no service worker in a test's browser (28 Oct 2026): the tests route requests, and a worker would answer from its cache
+const DESK = { viewport: { width: 1300, height: 900 }, deviceScaleFactor: 1, serviceWorkers: "block" };
 
 module.exports = { serve, launch, PHONE, DESK };

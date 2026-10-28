@@ -1265,3 +1265,10 @@ fly ball, BABIP, bases per hit, strikeouts and walks, given the contact) and his
 neutral park — so "Goodman at Petco" is a row, against his xwOBA now. His club's park is tagged, and the club a winter move took him to.
 Over the winter the twice-monthly check also reads MLB's transaction log: a player signed, traded or claimed to another club shows that club
 everywhere (the lists, his page, the Bullpens) with the move on his page's bio line, instead of freezing at the season's end.
+
+### Instant opens (28 Oct 2026)
+
+The hosted site installs a service worker: every versioned file — the app, the data, the past seasons' files — is served from its cache once
+seen, and the page itself is fetched fresh first with the cached copy as the fallback, so the home-screen app opens at once and opens offline
+on the last page it saw. A publish still reaches the open page the way it did: `build.json` moves, the page reloads, and the new build's files
+are new URLs to the worker. Nothing is installed on a local copy of the site unless `?sw=1` is on the address.

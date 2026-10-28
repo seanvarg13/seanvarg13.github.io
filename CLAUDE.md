@@ -125,6 +125,7 @@ last publish, the Mac keeps its copy and the repo's lands in `logs/tools-conflic
 | `fantasy.js` | **generated** — official counting stats + game logs for the fantasy pages |
 | `hist/` | **generated** — one file per past season/level, plus `index.js` (search index), `career.js`, `minors.js`; a finished season's day and arsenal files are gzipped, `hist/days-2025.js.gz` (§8, "The site under 1 GB") |
 | `build.json` | `{build, at}` — the running page polls it and reloads itself when the id moves |
+| `sw.js` | the service worker (28 Oct 2026): the versioned files from its cache, the page network first with the cached copy as the offline fallback; registered by `app.js` on the live site only (`registerSW`; `?sw=1` tries it anywhere); round-trips like `app.js` (`sync_tools.py`) |
 | `manifest.json`, `icons/` | home-screen web app |
 | `tools/` | the mirrored build scripts (see §5) |
 | `docs/site-README.md` | the long-form manual Sean wrote the site against — more UI detail than this file |
@@ -5353,6 +5354,23 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `p.team0`) so the lists' Tm, his page, the Bullpens and the what-if's tags follow, and `bioStrip` adds the move to his page's bio line
   (`.pbmove`: "Signed by Diamondbacks from FA · Oct 12", the log's line in the tooltip); a free agent keeps the club he left with the note.
   `V()`, the pools and the day rows don't read the team, so nothing else moves; `hist/home.js` carries the build's team strings.
+
+* **The service worker (Sean, 28 Oct 2026, item 20 of the review's picks: "Instant opens. A service worker caching the app, data.js and the hist
+  files — the home-screen app would open offline and instantly, and the build.json reload already handles staleness")**: **`sw.js`** at the
+  root (one cache, `seans-site-v1`; `KEEP` 160 entries), registered by `registerSW()` in `app.js` at boot (after `watchBuild`) on a `*.github.io`
+  host only — a local server has no need of it, and a worker there would hide an edit until it refetched — or anywhere with `?sw=1` on the
+  address (the test's way), `updateViaCache: "none"` so the browser checks the worker's own file past the HTTP cache. Same-origin GETs only:
+  a **versioned** file (`?v=…` — every script, stylesheet, data and hist file the build map stamps, a day file's stream and a gzipped past season
+  included) is cache first, fetched on a miss and kept; **the page** (`index.html`, with or without the `?b=` a build reload adds) is network first
+  with the cached copy as the offline fallback, so the home-screen app opens offline on the last page it saw and a reload after a publish gets the
+  new stamps (new stamps are new URLs to the worker, which is what keeps it fresh — `build.json` itself passes straight through, as does MLB's API
+  and the fonts); the cache is trimmed to the newest `KEEP` entries so old builds' files don't pile up, and a copy that won't fit (iOS's quota; a
+  day file is 12-17 MB) is just not kept. `tools/headless.cjs` opens every test context with `serviceWorkers: "block"` (a test routes requests;
+  a worker would answer from its cache); `sw.js` is in `cloud_daily.py`'s and `publish.py`'s `TOP` (versioned in the build map, unused) and in
+  `sync_tools.py`'s `FILES`. **Checked** (scratch `pr8/sw.cjs`, a local server with `?sw=1`, phone and desktop): the worker registers and controls
+  the second load, the Leaderboard's files are in the cache (index.html, app.js, styles.css, themes.js, defaults.js, data.js, injuries, moves,
+  the index), and offline the Leaderboard reloads with its rows and Judge's page with its season table; without the flag nothing registers on
+  localhost; the page check's 40 steps. The live site's registration is checked after the merge the same way, offline reload included.
 
 ## 10. The football site moved out
 

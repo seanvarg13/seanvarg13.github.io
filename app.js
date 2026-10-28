@@ -893,6 +893,15 @@
     check();
     document.addEventListener("visibilitychange", () => { if (!document.hidden) check(); });
   }
+  // the service worker (Sean, 28 Oct 2026, item 20 of the review's picks — sw.js): the versioned files from its cache, the page network first with
+  // the cached one as the offline fallback. The live site only (a local server has no need of it, and a worker there would hide an edit until
+  // it refetched); ?sw=1 on the address tries it anywhere. The build.json reload above is what keeps it fresh: a new build's page carries new
+  // stamps, and those are new URLs to the worker
+  function registerSW() {
+    if (!("serviceWorker" in navigator) || !/^https?:$/.test(location.protocol)) return;
+    if (!/\.github\.io$/.test(location.hostname) && !/[?&]sw=1(?:&|$)/.test(location.search)) return;
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).catch(() => {});
+  }
   const DAYS_FILE = { H: "days-h.js", P: "days-p.js" };
   function ensureDays(t) {   // t: "H" / "P", or none for both
     ensureParks();   // a window's park exposure needs the table (15 Oct 2026)
@@ -13630,5 +13639,5 @@
 
 
   // no credit line under the pages any more: it's at the end of the Stat glossary (minimal pass 5)
-  readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); migrateTierOrder(); render(); setTb(); watchBuild();
+  readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); migrateTierOrder(); render(); setTb(); watchBuild(); registerSW();
 })();
