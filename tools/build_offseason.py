@@ -6,6 +6,7 @@ Draft, from the systems themselves once they're out). Repo only; run by hand or 
     python3 tools/build_offseason.py proj      # FanGraphs' Steamer (+ ZiPS once it's out) -> hist/proj-2027.js
     python3 tools/build_offseason.py nfbc      # NFBC's 2027 ADP (its drafts since 1 Oct 2026) -> the "nfbc" source in hist/adp-2027.js
     python3 tools/build_offseason.py espn      # ESPN's 2027 ADP (once its 2027 game is open) -> the "espnadp" source in hist/adp-2027.js
+    python3 tools/build_offseason.py moves     # the winter's signings, trades and waiver claims since the season's end -> hist/moves.js
 
 Each step writes only when its source has 2027 data and says so otherwise, leaving the files as they are.
 
@@ -18,6 +19,12 @@ Each step writes only when its source has 2027 data and says so otherwise, leavi
   season. Needs 20+ drafts. Rank = his place in NFBC's ADP order; names matched to data.js by name, team breaking a tie.
 * espn — ESPN's fantasy API (lm-api-reads.fantasy.espn.com) has no 2027 season until its game opens (late winter); then each player's
   averageDraftPosition, once 150+ players have one.
+* moves — MLB's transaction log (statsapi.mlb.com/api/v1/transactions, sportId 1) from the day after data.js's last game: a player of this
+  season's data.js signed as a free agent (SFA), traded (TR) or claimed off waivers (CLW) to a club other than the one data.js has him on, his
+  latest such move kept; one who elected free agency or was released (DFA / REL) is marked a free agent with no club until a signing. The
+  app (hist/moves.js) puts the new club on him — the lists' Tm, his page's bio, the Bullpens, the park what-if's "his new park" — so a
+  signed or traded player's team and park follow him over the winter instead of freezing at the season's end (Sean, 28 Oct 2026, item 15
+  of the review's picks).
 """
 import datetime, json, os, re, sys, unicodedata, urllib.parse, urllib.request
 
@@ -27,6 +34,10 @@ YEAR = 2027
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
 SINCE = "2026-10-01"                                           # the 2027 draft season's first day
 TEAM_FIX = {"ARZ": "AZ", "ARI": "AZ", "CHW": "CWS", "KCR": "KC", "SDP": "SD", "SFG": "SF", "TBR": "TB", "WSN": "WSH", "WAS": "WSH", "OAK": "ATH", "LV": "ATH"}
+MLB_TEAM = {110: "BAL", 111: "BOS", 147: "NYY", 139: "TB", 141: "TOR", 145: "CWS", 114: "CLE", 116: "DET", 118: "KC", 142: "MIN", 133: "ATH", 117: "HOU", 108: "LAA",
+            136: "SEA", 140: "TEX", 144: "ATL", 146: "MIA", 121: "NYM", 143: "PHI", 120: "WSH", 112: "CHC", 113: "CIN", 158: "MIL", 134: "PIT", 138: "STL",
+            109: "AZ", 115: "COL", 119: "LAD", 135: "SD", 137: "SF"}   # MLB's team ids (the app's TEAM_ID, inverted)
+MOVE_KIND = {"SFA": "signed", "TR": "traded", "CLW": "claimed", "DFA": "free agent", "REL": "released"}
 ESPN_TEAM = {1: "BAL", 2: "BOS", 3: "LAA", 4: "CWS", 5: "CLE", 6: "DET", 7: "KC", 8: "MIL", 9: "MIN", 10: "NYY", 11: "ATH", 12: "SEA", 13: "TEX",
              14: "TOR", 15: "ATL", 16: "CHC", 17: "CIN", 18: "HOU", 19: "LAD", 20: "WSH", 21: "NYM", 22: "PHI", 23: "PIT", 24: "STL", 25: "SD",
              26: "SF", 27: "COL", 28: "MIA", 29: "AZ", 30: "TB"}
@@ -219,11 +230,43 @@ def espn(dry=False):
     return True
 
 
+# ---------------------------------------------------------------------------------------------------------------- winter moves
+def moves(dry=False):
+    d, _ = roster(); since = (datetime.date.fromisoformat(d["meta"]["through"]) + datetime.timedelta(days=1)).isoformat()
+    today = datetime.date.today().isoformat()
+    have = {}; team0 = {}
+    for p in d["players"]: have.setdefault(str(p["id"]), set()).add(p["type"]); team0[str(p["id"])] = p.get("team")
+    try:
+        t = json.loads(get(f"https://statsapi.mlb.com/api/v1/transactions?sportId=1&startDate={since}&endDate={today}")).get("transactions", [])
+    except Exception as e:
+        print(f"moves: couldn't reach MLB's transactions ({type(e).__name__})"); return False
+    out = {}
+    for x in sorted(t, key=lambda x: (x.get("date") or "", x.get("id") or 0)):
+        code = x.get("typeCode"); pid = str((x.get("person") or {}).get("id") or "")
+        if code not in MOVE_KIND or pid not in have: continue
+        to = MLB_TEAM.get((x.get("toTeam") or {}).get("id"))
+        if code in ("SFA", "TR", "CLW") and not to: continue
+        if code in ("SFA", "TR", "CLW") and to == team0.get(pid) and pid not in out: continue   # re-signed by his own club, or claimed back: not a move
+        desc = x.get("description") or ""
+        kind = MOVE_KIND[code] + (" (minors deal)" if code == "SFA" and "minor league" in desc.lower() else "")
+        out[pid] = {"tm": to if code in ("SFA", "TR", "CLW") else None, "kind": kind, "date": x.get("date"), "from": team0.get(pid), "desc": desc[:140]}
+    out = {k: v for k, v in out.items() if v["tm"] != team0.get(k)}   # a free agent who re-signed with his club is back where data.js has him
+    path = "hist/moves.js"; old = None
+    try: old = jsobj(path)
+    except Exception: pass
+    n_old = len((old or {}).get("p") or {})
+    print(f"moves: {len(out)} players of {d['meta']['season']}'s data.js moved since {since} ({sum(1 for v in out.values() if v['tm'])} to a new club, {sum(1 for v in out.values() if not v['tm'])} free agents / released)"
+          + (f"; hist/moves.js has {n_old} as of {old.get('asOf')}" if old else "; no hist/moves.js yet"))
+    if dry: return bool(out) and (not old or old.get("asOf") != today or n_old != len(out))
+    write_js(path, "DRAFT_MOVES", {"asOf": today, "since": since, "season": d["meta"]["season"], "p": out})
+    print(f"wrote {path}"); return True
+
+
 if __name__ == "__main__":
     what = sys.argv[1] if len(sys.argv) > 1 else "check"
     if what == "check":
-        proj(dry=True); nfbc(dry=True); espn(dry=True)
-    elif what in ("proj", "nfbc", "espn"):
+        proj(dry=True); nfbc(dry=True); espn(dry=True); moves(dry=True)
+    elif what in ("proj", "nfbc", "espn", "moves"):
         globals()[what]()
     else:
         sys.exit(__doc__)

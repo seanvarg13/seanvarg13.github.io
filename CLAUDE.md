@@ -555,7 +555,7 @@ Statcast's.
 | `tools/models/model3.py`, `model_bs.py` | the directional models' training scripts, in `model-workspace/` |
 | `tools/models/milb_translate.py` | fits `MILB_X` (the minors-to-MLB rate shifts) from `hist/`; repo only, run by hand |
 | `tools/build_proj27.py` | the Mock Draft's 2027 projections → `hist/proj-2027.js`; repo only, run by hand |
-| `tools/build_offseason.py` | the real 2027 projections (FanGraphs' Steamer / ZiPS) and ADP (NFBC, ESPN) once they're out → `hist/proj-2027.js` / `hist/adp-2027.js`; repo only, run by the twice-monthly off-season check (§8) |
+| `tools/build_offseason.py` | the real 2027 projections (FanGraphs' Steamer / ZiPS) and ADP (NFBC, ESPN) once they're out → `hist/proj-2027.js` / `hist/adp-2027.js`, and the winter's moves (MLB's transaction log) → `hist/moves.js`; repo only, run by the twice-monthly off-season check (§8) |
 | `tools/build_awards.py` | MVP / Cy Young / Rookie of the Year vote finishes → `hist/awards.js` from the Lahman database (SABR); repo only, run by hand each January |
 | `tools/add_baserunning.py` | fills the Base Running numbers into already-built `data.js` / `hist/mlb-YYYY.js`; repo only, run by hand |
 | `tools/whats_new.py` | the morning run's "anything new?" — MLB's schedule against each file's last game day; repo only, run by the workflow |
@@ -5334,6 +5334,25 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   Fantasy ▾ menu lists it after Fantasy leaderboard (`NAV_GROUPS`, `readMode`, `renderNow`, `listMode`, `BACK_MODES` / `BACK_LABEL`, the title map).
   The leash chips' CSS at the end of `styles.css` (`.bpchip`). The page check has a `bullpens` step (the overview's teams, the Yankees' pen through the
   pill, a name's popup, back). Off-season the window is the last days of the season, as Movers' is.
+
+* **The park what-if and the winter's moves (Sean, 28 Oct 2026, item 15 of the review's picks: "a park picker on the xwOBA tab ('Goodman at
+  Petco: .354 → .33x', from the park cells by batter side), plus a light twice-monthly transactions pull so a signed or traded player's team and
+  park update over the winter (today his team freezes at Sep 27 until the builds restart in February)")**: (1) **Park what-if** — a third table on
+  the xwOBA tab (`parkWhatIf(p, v)` after `wobaBuildUp`; an MLB regular season with park numbers, the parks table loaded on demand): every park in
+  `hist/parks.js`, best first — the park's residuals for his side of the plate (`parkFac`: HR per fly ball and BABIP in points, bases per hit, K%
+  and BB% per PA; a switch hitter 0.7 left / 0.3 right) and **There** = his xwOBA with half his plate appearances at that park and the rest at a
+  neutral one (`twRaw` on `talentCore`'s pieces with the residuals at half weight — the same arithmetic as `rawPk`, × `L.scale`), filled by its
+  place among the 30, and **vs now** against the xwOBA the site shows him at (signed, coloured by sign, ±40 full); his club's park is tagged "his
+  park" (or "new club" after a winter move, with "left" on the one he came from). A note under it says a move reads at about half the park's own
+  number. (2) **The winter's moves** — `tools/build_offseason.py moves` (and `check` reports it; the twice-monthly "Off-season data check" runs
+  what's out): MLB's transaction log from the day after `data.js`'s last game — a player of this season's `data.js` signed as a free agent (SFA,
+  "(minors deal)" on a minor-league contract), traded (TR) or claimed (CLW) to a club other than the one `data.js` has him on, his latest kept; one
+  who elected free agency or was released (DFA / REL) with no club — written as **`hist/moves.js`** (`window.DRAFT_MOVES = {asOf, since, season,
+  p: {id: {tm, kind, date, from, desc}}}`; 28 Oct 2026: 6 players, one signing). In `app.js`: loaded beside the injuries when the build map lists it
+  (value-free in `ensureScript`), **`applyMoves()`** (at the top of the render, once per file) puts the new club on `p.team` (the season's club as
+  `p.team0`) so the lists' Tm, his page, the Bullpens and the what-if's tags follow, and `bioStrip` adds the move to his page's bio line
+  (`.pbmove`: "Signed by Diamondbacks from FA · Oct 12", the log's line in the tooltip); a free agent keeps the club he left with the note.
+  `V()`, the pools and the day rows don't read the team, so nothing else moves; `hist/home.js` carries the build's team strings.
 
 ## 10. The football site moved out
 

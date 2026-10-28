@@ -5611,3 +5611,7 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root .bpchip.safe { background: var(--accent-2, #7bafd4); }
 :root:root:root:root:root:root .bpchip.risk, :root:root:root:root:root:root .bpchip.better { background: #c8102e; }
 :root:root:root:root:root:root .bpchip.comm { background: var(--ink, #0c2340); }
+
+/* The park what-if on the xwOBA tab and the winter moves (28 Oct 2026): the tag on his park's row, the move on his page's bio line */
+:root:root:root:root:root:root .pwtag { display: inline-block; margin-left: 2px; padding: 0 6px; font: 600 10.5px/1.6 var(--body); color: #fff; background: var(--ink, #0c2340); white-space: nowrap; vertical-align: middle; }
+:root:root:root:root:root:root .pbline .pbmove { color: #c8102e; font-weight: 600; }

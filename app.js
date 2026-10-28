@@ -1002,7 +1002,7 @@
     // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
     // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
     // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
-    const arrived = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines|lineups|c\/\d+|m\/\d+|lg\/\d+)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
+    const arrived = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines|lineups|moves|c\/\d+|m\/\d+|lg\/\d+)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
     // a failed download (a phone on a weak signal, a publish mid-deploy) is tried twice more before it's given up on — career.js once failed
     // for the whole visit and the season table said it hadn't been built (Sean's phone, 9 Oct 2026)
     const fail = (sc) => { loading.delete(src); if (sc) sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
@@ -6574,6 +6574,8 @@
   }
   function renderNow() {
     if (!window.DRAFT_IL && window.DRAFT_BUILD && window.DRAFT_BUILD["hist/injuries.js"]) ensureScript("hist/injuries.js", () => !!window.DRAFT_IL);   // ~10 KB: the IL badges
+    if (!window.DRAFT_MOVES && window.DRAFT_BUILD && window.DRAFT_BUILD["hist/moves.js"]) ensureScript("hist/moves.js", () => !!window.DRAFT_MOVES);   // the winter's moves (28 Oct 2026)
+    applyMoves();
     if (state.mode !== "draft" && $("aucsheet")) { aucPick = null; $("aucsheet").remove(); }   // the auction sheet is Draft mode's
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws" || state.mode === "bullpens", other = pitches || player || compare || elig || hub || appear || fant;
@@ -8594,7 +8596,42 @@
     if (!v.tal) { w.append(el("p", "note", DS.multi ? "No xwOBA build-up for a span of seasons — pick one season." : oneDay() ? "One game day: the xwOBA here is the batted-ball model's for that game, as the Game Logs read it — a game is too small to build the skills from. Widen the dates for the build-up." : "No xwOBA build-up for this view — it needs tracked batted balls (exit velocity, the directional model) and a qualified pool.")); return w; }
     w.append(xwBuildUp(p, v));
     const wb = wobaBuildUp(p, v); if (wb) w.append(wb);
+    const pw = parkWhatIf(p, v); if (pw) w.append(pw);
     return w;
+  }
+  // the park what-if (Sean, 28 Oct 2026, item 15 of the review's picks: "a park picker on the xwOBA tab ('Goodman at Petco: .354 → .33x', from the
+  // park cells by batter side)"): every park in the table, his xwOBA with half his plate appearances there and the rest at a neutral park — the
+  // park's residuals for his side (hist/parks.js f: HR per fly ball, BABIP, bases per hit, K% and BB% per PA, the season's venue, the 3-year pool)
+  // at half weight on the same pieces talentCore puts his real parks on (rawPk), best park first, the gap to his xwOBA now. A switch hitter is
+  // 0.7 of the left side, as the xBABIP drivers read him. His club's park is marked, and the club a winter move took him to
+  function parkWhatIf(p, v) {
+    const t = v.tal; if (!t || t.span || !t.pk || DS.multi || DS.level !== "MLB") return null;
+    const box = el("div", "rollbox brbox pwbox"), hd = el("div", "rollhd"); hd.append(el("span", "rollname", "Park what-if")); box.append(hd);
+    if (!parksReady()) { ensureParks(); box.append(el("p", "note", "Loading the park table…")); return box; }
+    const P = window.DRAFT_PARKS, Y = +DS.season, L = t.L, side = p.bats === "S" ? "S" : p.bats === "L" ? "L" : "R";
+    const fac = (code) => { if (side !== "S") return parkFac(code, Y, side); const a = parkFac(code, Y, "L"), b = parkFac(code, Y, "R"); return a && b ? a.map((x, i) => 0.7 * x + 0.3 * b[i]) : a || b; };
+    const at = (f) => twRaw({ xk: t.xk + f[3] / 2, xbb: t.xbb + f[4] / 2, hbp: t.hbp, xhf: t.xhf + f[0] / 2, fbs: t.fbs, xbab: t.xbab + f[1] / 2000, tph: t.tph + f[2] / 2 }) * L.scale;
+    const now = t.txw, rows = [];
+    for (const code of P.codes) { const f = fac(code); if (!f) continue; rows.push({ code, f, xw: at(f) }); }
+    if (!rows.length) return null;
+    rows.sort((a, b) => b.xw - a.xw);
+    const vals = rows.map((r) => r.xw).sort((a, b) => a - b), home = teamCode(p.team), was = p.team0 ? teamCode(p.team0) : null;
+    hd.append(el("span", "rollsub", `${fw(now)} now · half his PA at each park, the rest neutral`));
+    const { tb, fin, wrap } = brTable([["", 2], ["The park, his side", 5], [wsLab("xwOBA"), 2]],
+      [["Park", "l f1"], ["Tm"], ["HR/FB", "", "the park's effect on home runs per fly ball, in points, given the contact"], ["BABIP", "", "on non-HR hits per ball in play, in points"], ["XB/hit", "", "on bases per non-HR hit"], ["K%", "", "on strikeouts per plate appearance, points"], ["BB%", "", "on walks per plate appearance, points"],
+       ["There", "", "his xwOBA with half his plate appearances at that park and the rest at a neutral park — the same skills, the park's residuals on each piece at half weight"], ["vs now", "", "against his xwOBA as the site shows it now, in points"]]);
+    wrap.querySelector("tr.over th").classList.add("f1");
+    const sg = (x, d = 1) => (x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(d));
+    const signStyle = (d) => { const tt = Math.min(1, Math.abs(d) / 40), mix = (a, b) => a.map((x, i) => Math.round(x + (b[i] - x) * tt)); const c = mix([214, 212, 206], d > 0 ? [216, 33, 41] : [54, 97, 173]); return { bg: `rgb(${c.join(",")})`, fg: tt > (d > 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };
+    for (const r of rows) {
+      const tr = el("tr", r.code === home ? "cur" : null), nm = el("td", "l f1", parkName(r.code, Y)), tag = r.code === home ? (was ? "new club" : "his park") : r.code === was ? "left" : "";
+      if (tag) { const c = el("span", "pwtag", tag); nm.append(" ", c); }
+      const d = Math.round(1000 * (r.xw - now)), dc = el("td", "c", sg(d, 0)); if (d) { const st = signStyle(d); dc.style.background = st.bg; dc.style.color = st.fg; dc.classList.add("heat"); }
+      tr.append(nm, el("td", "c", r.code), el("td", "c", sg(r.f[0])), el("td", "c", sg(r.f[1])), el("td", "c", sg(r.f[2], 2)), el("td", "c", sg(r.f[3])), el("td", "c", sg(r.f[4])), heatTd(el("td", "c", fw(r.xw)), insertPct(vals, r.xw)), dc);
+      tb.append(fin(tr));
+    }
+    box.append(wrap, el("p", "note", `The park's residuals are what it does to a hitter from his side of the plate given the contact (hist/parks.js, the three-season pool ending this season): HR per fly ball and BABIP in points, bases per hit, K% and BB% per plate appearance. "There" puts half of them on his skills — half his games at home, the road a neutral park — so a move's effect reads at about half the park's own number${t.parkIn ? "; his xwOBA now already carries the parks he actually hit in" : "; his xwOBA now is park-neutral (the switch)"}.`));
+    return box;
   }
   // xK% / xBB% tab (hitters; Sean, 12 Oct 2026: "a tab that shows the build up of xBB% as well as xK% and also how they compare to league avg and
   // how that component contributes to the build up. Essentially the identical table that the other tabs have"): each fit laid out a step at a
@@ -10726,6 +10763,19 @@
   }
   const ilTip = (x) => `On the ${x.word}${x.since ? " since " + new Date(x.since + "T12:00:00Z").toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}${x.note ? " · " + x.note : ""}`;
   // a row's badge (IL60), the full words in its tooltip; null when he's healthy, the file is stale or the list isn't this season's
+  // the winter's moves (Sean, 28 Oct 2026, item 15 of the review's picks: "a light twice-monthly transactions pull so a signed or traded player's
+  // team and park update over the winter (today his team freezes at Sep 27 until the builds restart in February)"): hist/moves.js
+  // (tools/build_offseason.py moves, run by the twice-monthly off-season check) — a player of this season's data.js signed, traded or claimed to
+  // another club since the season's last day, or one who elected free agency / was released. Once the file is in, a moved player's p.team is his
+  // new club everywhere the site reads it (the lists' Tm, his page, the Bullpens, the park what-if's "new club" row; his season's club stays as
+  // p.team0), and his page's bio line carries the move; a free agent keeps the club he left with the note
+  let movesApplied = false;
+  function applyMoves() {
+    const M = window.DRAFT_MOVES; if (movesApplied || !M || !M.p || M.season !== DATA.meta.season) return;
+    movesApplied = true;
+    for (const p of DATA.players) { const mv = M.p[p.id]; if (!mv) continue; p.moved = mv; if (mv.tm && TEAM_NAMES[mv.tm] && mv.tm !== p.team) { p.team0 = p.team; p.team = mv.tm; } }
+  }
+  const moveWords = (mv) => `${mv.kind[0].toUpperCase()}${mv.kind.slice(1)}${mv.tm ? " by " + (TEAM_NAMES[mv.tm] || mv.tm) : ""}${mv.from && TEAM_NAMES[mv.from] ? " from " + mv.from : ""} · ${fmtDate(mv.date)}`;
   function ilBadge(p, cur = DS.key === CUR.key) { const x = cur && ilOf(p); if (!x) return null; const b = el("span", "ilb", "IL" + x.code.slice(1)); b.title = ilTip(x); return b; }
   const BIO = new Map();
   function bio(id) {
@@ -10926,6 +10976,7 @@
         t.addEventListener("click", (e) => { e.stopPropagation(); state.teamF = { kind: "team", v: tc }; state.expanded = null; savePrefs(); location.hash = "#leaderboard"; }); }
       add(t);
     }
+    if (p.moved && DS.key === CUR.key) { const mv = el("span", "pbmove", moveWords(p.moved)); mv.title = p.moved.desc || ""; add(mv); }   // the winter's move (28 Oct 2026)
     const bats = (b && b.bats) || p.bats, thr = (b && b.throws) || p.throws;
     if (H) { if (bats && thr) add(`B/T ${bats}/${thr}`); else if (bats) add(`Bats ${bats}`); } else if (thr) add(thr === "L" ? "LHP" : "RHP");
     if (b && b.ht) { const m = String(b.ht).match(/(\d+)\D+(\d+)/); add((m ? `${m[1]}-${m[2]}` : String(b.ht)) + (b.wt ? `, ${b.wt}` : "")); }
