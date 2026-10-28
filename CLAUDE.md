@@ -5287,6 +5287,32 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `minTot`, `season`), shared by both; the Spring tab's output is byte-identical to before (checked old `app.js` against new on Skenes's Spring tab).
   Checked headless on a phone and a desktop: Judge's and Skenes's tabs, a rookie's note; the page check.
 
+* **vs Pitch type (Sean, 28 Oct 2026, item 12 of the review's picks: "hitters vs pitch type — wOBA / xwOBA / Whiff% vs fastballs 95+, breaking
+  and offspeed, from the pitch data the build already reads. Finds the hitters who can't hit velocity (and the ones who don't care)")**: every
+  pitch in one of four groups — **fastballs 95+** (four-seam, sinker / two-seam, cutter at 95 mph or more), **fastballs under 95**, **breaking**
+  (slider, sweeper, slurve, curve, knuckle curve, slow curve, knuckleball), **offspeed** (changeup, splitter, forkball, screwball); a fastball with no
+  velocity, a pitchout or an unknown type is in none — and a plate appearance counts toward the pitch that ended it, as Savant's splits do.
+  **Build** (`tools/build_data.py`): `VS_FAST / VS_BREAK / VS_OFF / VS_GROUPS` (`f9 fu br of`); `pitch_flags` gives every pitch its group (`vg`) and
+  per group the pitch-level flags, `pa_rows` the plate appearance's `wnum` / `wden` / `dnum` by the group of its last pitch, `daily()` sums both into
+  **24 day fields appended to `HITTER_DAY`** (`VS_DAY`: per group `pit sw whf wnum wden dnum`; `VS_FLOAT` keeps the two decimals in `pack`), and
+  `build_hitters` → **`ctx.vpt`** = `[[pitches, swings, whiffs, wOBA numerator, wOBA denominator, dnum]]` in `VS_GROUPS` order (`vs_pitch_ctx`;
+  None on a file without the fields). The minors get it at a rescore (Gameday carries pitch types and speeds; `build_milb` runs the same
+  `pitch_flags` / `daily`). Cost: on synthetic sums in every group `days-h.js` ran 16.6 → 21.5 MB raw, 4.0 → 5.1 gzipped; real rows carry more
+  zeros, so expect less. **App**: `VS_G` (codes, column labels, row names), `VS_KEYS`, `vsPitchM(vpt, DI)` — wOBA on 10+ plate appearances, the
+  batted-ball model's xwOBA on the same re-anchored by `dirFor` (the skills build can't be split by pitch, so it's the model's per PA, as Game Logs'
+  is), Whiff% on 20+ swings — set on every hitter `V()` as **`f9woba f9xw f9whf fuwoba fuxw fuwhf brwoba brxw brwhf ofwoba ofxw ofwhf`** (the window
+  branch's `ctx.vpt` from the day sums, so a date window or split follows; null where the file carries no sums); 12 `SIDE_H` defs (the pool ranks
+  them), `LB_EXTRA_H`, `RESULT_KEYS` (wOBA / xwOBA), `SHORT` ("wOBA vs 95+", "Whiff% vs brk" …), glossary entries, Filters ▸ Stats group **Vs pitch
+  type**. **The card tab** (`BTABS_H` after Batted Ball Quality, `renderVsPitchTab`): a B-Ref table — Pitch | Seen: # · Share | Swings: Sw · Whiff% |
+  Plate appearances: PA · wOBA · xwOBA · **vs all** (that xwOBA minus his on every pitch, in points, coloured by sign, ±60 full) — the three rates
+  filled by his percentile among the pool's qualifiers on the same rate, All pitches a band row, then the qualifiers' own rows ("League · …",
+  PA-weighted by nature, muted) under a gap with the league's own gaps; a note under it. A file built before the fields says so ("arrives with the
+  next build" / "a rescore brings them") and the columns read "–" — a `steps=mlb` run dispatched after the merge carries 2026, past seasons at a
+  rescore. CSS: the "vs Pitch type" block at the end of `styles.css`. **Checked**: a synthetic Statcast frame through `pitch_flags` → `daily` →
+  `vs_pitch_ctx` (every group's sums match a direct count, a no-velocity fastball is in no group, all-unknown pitch types build with no group, every
+  row as long as the layout; scratch `pr6/synth_vs.py`); headless on copies of `data.js` / `days-h.js` with synthetic sums (`pr6/patch.py`): the tab on
+  Judge's full season and in a Recent window off the Leaderboard's popup, the five columns and their sort, the Stats group, both layouts; the page check.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

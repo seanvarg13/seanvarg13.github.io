@@ -5600,3 +5600,8 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 /* Year over year (Sean, 28 Oct 2026, item 11 of the review's picks): the tab's section headings and tables share the Workload tab's spacing */
 :root:root:root:root:root:root :is(#xboard, #modal) .yoybox .rollhd.worksub { margin-top: 16px; }
 :root:root:root:root:root:root :is(#xboard, #modal) .yoybox .rollhd.sphd { margin-top: 14px; }
+
+/* vs Pitch type (28 Oct 2026): the card tab's table — the League rows muted under the gap (six roots: the B-Ref passes' cell rules carry id weight) */
+:root:root:root:root:root:root :is(#xboard, #modal) .vsptbox tr.vslg td:not(.heat) { color: var(--ink-2); }
+:root:root:root:root:root:root :is(#xboard, #modal) .vsptbox tr.vslg td.l { font-weight: 400; }
+:root:root:root:root:root:root :is(#xboard, #modal) .vsptbox .note { margin-top: 10px; }

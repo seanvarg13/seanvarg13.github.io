@@ -233,6 +233,21 @@ OUTS = {"strikeout": 1, "strikeout_double_play": 2, "field_out": 1, "force_out":
 NON_AB = {"walk", "intent_walk", "hit_by_pitch", "sac_fly", "sac_fly_double_play", "sac_bunt", "sac_bunt_double_play",
           "catcher_interf", "truncated_pa"}
 # per-day row layouts shipped to the page (data.js -> meta.dayFields); day = index into meta.days
+# vs pitch type (Sean, 28 Oct 2026, item 12 of the review's picks: "wOBA / xwOBA / Whiff% vs fastballs 95+, breaking and offspeed ... finds the
+# hitters who can't hit velocity (and the ones who don't care)"): every pitch goes in one of four groups — fastballs (four-seam, sinker / two-seam,
+# cutter) at 95 mph or more, fastballs under 95, breaking balls (slider, sweeper, slurve, curve, knuckle curve, slow curve, knuckleball) and
+# offspeed (changeup, splitter, forkball, screwball); a fastball with no velocity, a pitchout or an unknown type is in none. A plate appearance
+# counts toward the pitch that ended it, as Savant's "vs pitch type" splits do. Per group the day rows carry his pitches, swings and whiffs and the
+# plate appearances' wOBA numerator / denominator and directional-model numerator (dnum), so a window / split re-derives Whiff%, wOBA and xwOBA;
+# ctx.vpt is the season's (vs_pitch_ctx). app.js: VS_G / vsPitchM, the vs Pitch type tab, the Leaderboard columns
+VS_FAST = {"FF", "SI", "FT", "FC", "FA"}
+VS_BREAK = {"SL", "ST", "SV", "CU", "KC", "CS", "KN"}
+VS_OFF = {"CH", "FS", "FO", "SC"}
+VS_GROUPS = ["f9", "fu", "br", "of"]                                        # fastballs 95+, fastballs under 95, breaking, offspeed
+VS_PITCH = [g + s for g in VS_GROUPS for s in ("pit", "sw", "whf")]          # pitch-level sums (pitch_flags → daily)
+VS_PA = [g + s for g in VS_GROUPS for s in ("wnum", "wden", "dnum")]         # plate-appearance sums (pa_rows → daily)
+VS_DAY = [g + s for g in VS_GROUPS for s in ("pit", "sw", "whf", "wnum", "wden", "dnum")]
+VS_FLOAT = [g + s for g in VS_GROUPS for s in ("wnum", "dnum")]             # the two that carry decimals
 # Fields leave a layout only with its file saying so (20 Oct 2026, the speed pass): data.js carries the current season's lists, every
 # hist/ file written from here on carries its own ("dayFields"), and the page reads a file without one by the lists as they were on
 # 20 Oct 2026 (LEGACY_DF in app.js, LEGACY_H in build_trends.py). Taken out then, unread since the features that used them left: evbk
@@ -250,7 +265,8 @@ HITTER_DAY = ["day", "hand", "home", "pit", "sw", "whf", "zpit", "opit", "zsw", 
               "hbp",
               "ibb",
               "pk",
-              "pkh", "pkb", "pkx"]   # the park's effect on his balls in play that day, ball by ball: home runs, non-HR hits and non-HR bases over what the same balls do at a neutral park (hist/parks.js cells; 15 Oct 2026)   # intentional walks, so a window re-derives xBB%'s IBB rate (12 Oct 2026); hbp: hit-by-pitches, so a window re-derives the talent xwOBA's HBP rate (11 Oct 2026); the mix's grounders pulled / straightaway / the other way: the Batted Ball Quality tab's grounder Oppo% (10 Oct 2026)   # expected hits (directional xBA, less HR) and non-HR balls in play by type: the xBABIP tab's split of Rest of Contact (10 Oct 2026)
+              "pkh", "pkb", "pkx",
+              *VS_DAY]   # vs pitch type, per group: pitches, swings, whiffs, wOBA numerator / denominator, dnum (28 Oct 2026)   # the park's effect on his balls in play that day, ball by ball: home runs, non-HR hits and non-HR bases over what the same balls do at a neutral park (hist/parks.js cells; 15 Oct 2026)   # intentional walks, so a window re-derives xBB%'s IBB rate (12 Oct 2026); hbp: hit-by-pitches, so a window re-derives the talent xwOBA's HBP rate (11 Oct 2026); the mix's grounders pulled / straightaway / the other way: the Batted Ball Quality tab's grounder Oppo% (10 Oct 2026)   # expected hits (directional xBA, less HR) and non-HR balls in play by type: the xBABIP tab's split of Rest of Contact (10 Oct 2026)
 # The hitter card, grouped. key, label, higher-is-better, decimals, unit. Keys not in HITTER_METRICS are card-only.
 HITTER_CARD = [
     ("Outcomes",             [("woba", "wOBA", True, 3, ""), ("xws", "xwOBA", True, 3, ""), ("xwd", "dxwOBA", True, 3, "")]),
@@ -1206,6 +1222,13 @@ def pitch_flags(d: pd.DataFrame) -> pd.DataFrame:
     rs = pd.to_numeric(d["release_speed"], errors="coerce").astype("float64")
     d["fbn"] = d["pitch_type"].isin(FASTBALLS) & rs.notna()
     d["fbv"] = rs.where(d["fbn"], 0.0).fillna(0.0)
+    # vs pitch type (28 Oct 2026): the group of every pitch (a fastball with no velocity is in none), and the pitch-level flags per group
+    pt_ = d["pitch_type"].astype(str) if "pitch_type" in d.columns else pd.Series("", index=d.index)
+    fast_ = pt_.isin(VS_FAST)
+    d["vg"] = np.select([fast_ & rs.ge(95), fast_ & rs.lt(95), pt_.isin(VS_BREAK), pt_.isin(VS_OFF)], VS_GROUPS, "")
+    for gk in VS_GROUPS:
+        on_ = d["vg"] == gk
+        d[gk + "pit"] = on_.astype(int); d[gk + "sw"] = (on_ & d["swing"]).astype(int); d[gk + "whf"] = (on_ & d["whiff"]).astype(int)
     ext = pd.to_numeric(d["release_extension"], errors="coerce").astype("float64")
     d["extn"] = ext.notna()
     d["exts"] = ext.fillna(0.0)
@@ -1504,6 +1527,10 @@ def pa_rows(d: pd.DataFrame) -> pd.DataFrame:
     p.attrs["league_xwoba"] = round(lg, 4)
     p["dnum"] = directional_xwoba(p, bip & ~untracked, num, den)
     p["dbsum"], p["dssum"] = directional_bs(p, bip & ~untracked, bip)
+    vg_ = p["vg"] if "vg" in p.columns else pd.Series("", index=p.index)   # vs pitch type (28 Oct 2026): the PA counts toward the pitch that ended it
+    for gk in VS_GROUPS:
+        on_ = vg_.eq(gk)
+        p[gk + "wnum"] = p["wnum"].where(on_, 0.0); p[gk + "wden"] = p["wden"].where(on_, 0.0); p[gk + "dnum"] = pd.Series(p["dnum"], index=p.index).where(on_, 0.0)
     # expected hits and balls in play by batted-ball type (Sean, 10 Oct 2026: "split out rest of contact"): the xBABIP tab breaks the part of
     # his xBABIP its seven straight-line drivers miss into grounders / liners / fly balls. xh = the directional xBA on that type's balls in play
     # less its home runs, bn = its non-HR balls in play, so the four add up to xBABIP's own numerator and denominator
@@ -1539,6 +1566,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
               mixsum=("mixv", "sum"), mixn=("mixn", "sum"), **{c: (c, "sum") for c in MIX_COLS},
               **{c: (c, "sum") for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn", "brfb", "brld", "brgb", "gbp", "gbc", "gbo") if c in d.columns},
               **{c: (c, "sum") for c in ("pkh", "pkb", "pkx") if c in d.columns},   # the park's effect on his balls that day, ball by ball (15 Oct 2026)
+              **{c: (c, "sum") for c in VS_PITCH if c in d.columns},   # vs pitch type: pitches, swings, whiffs per group (28 Oct 2026)
               **({"pk": ("pk", "first")} if "pk" in d.columns else {}))   # the park that day (15 Oct 2026)
     for c in ("evfbs", "evfbn", "evlds", "evldn", "evgbs", "evgbn", "brfb", "brld", "brgb", "gbp", "gbc", "gbo"):
         if c not in h.columns: h[c] = 0.0
@@ -1552,8 +1580,11 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                            xnum=("xnum", "sum"), xden=("xden", "sum"), dnum=("dnum", "sum"),
                            h=("is_hit", "sum"), tb=("tb", "sum"), xbsum=("xbsum", "sum"), xssum=("xssum", "sum"),
                            dbsum=("dbsum", "sum"), dssum=("dssum", "sum"), hr=("is_hr", "sum"), wbh=("w_bh", "sum"), hbp=("is_hbp", "sum"), ibb=("is_ibb", "sum"),
-                           **{f"{k}{t}": (f"{k}{t}", "sum") for k in ("xh", "bn") for t in ("gb", "ld", "fb", "pu")})
+                           **{f"{k}{t}": (f"{k}{t}", "sum") for k in ("xh", "bn") for t in ("gb", "ld", "fb", "pu")},
+                           **{c: (c, "sum") for c in VS_PA if c in p.columns})   # vs pitch type: the PA's wOBA and dnum by the group of its last pitch (28 Oct 2026)
     h = h.join(hp, how="left")
+    for c in VS_DAY:
+        if c not in h.columns: h[c] = 0.0
     h["evs"] = h["evs"].apply(lambda v: v if isinstance(v, list) else [])
     h = h.fillna(0)
     # pitchers
@@ -1598,7 +1629,7 @@ def daily(d: pd.DataFrame, days: dict) -> tuple:
                     row.append(v)
                 else:
                     # xbsum / xssum are sums of per-ball probabilities: a day's bucket is well under 1, so int() would erase it
-                    row.append(round(float(v), 3) if f in ("pkh", "pkb", "pkx") else round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "wk", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stwl", "stws", "stbwl", "stbws", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps", "stcs", "stck", "stcso", "stcsi", "stcwi", "stcw", "stfl", "stfs", "stfw", "mixsum", "wbh", "evfbs", "evlds", "evgbs", "xhgb", "xhld", "xhfb", "xhpu") else int(v))
+                    row.append(round(float(v), 3) if f in ("pkh", "pkb", "pkx") else round(float(v), 2) if f in ("evsum", "wnum", "xnum", "dnum", "bssum", "fbv", "exts", "ss", "wbip", "wgb", "wld", "wfb", "wpu", "wk", "xbsum", "xssum", "dbsum", "dssum", "stw", "stg", "stp", "stbw", "stbg", "stbp", "stf", "std", "stbf", "stbd", "stwl", "stws", "stbwl", "stbws", "stgl", "stpl", "stgs", "stps", "stbgl", "stbpl", "stbgs", "stbps", "stcs", "stck", "stcso", "stcsi", "stcwi", "stcw", "stfl", "stfs", "stfw", "mixsum", "wbh", "evfbs", "evlds", "evgbs", "xhgb", "xhld", "xhfb", "xhpu", *VS_FLOAT) else int(v))
             out.setdefault(int(pid), []).append(row)
         return out
     return pack(h, HITTER_DAY), pack(q, PITCHER_DAY)
@@ -1852,6 +1883,17 @@ def babip_stats(rows: list) -> dict:
     return out
 
 
+def vs_pitch_ctx(rows_d: list) -> list | None:
+    """His season against each pitch group, summed from his day rows (28 Oct 2026): [[pitches, swings, whiffs, wOBA numerator, wOBA denominator,
+    dnum]] in VS_GROUPS order — None when the rows carry no group at all (a file built before the fields)."""
+    out = []
+    for gk in VS_GROUPS:
+        ix = [HITTER_DAY.index(gk + s) for s in ("pit", "sw", "whf", "wnum", "wden", "dnum")]
+        s = [sum(x[i] for x in rows_d if len(x) > i and x[i] is not None) for i in ix]
+        out.append([int(s[0]), int(s[1]), int(s[2]), round(float(s[3]), 2), int(s[4]), round(float(s[5]), 2)])
+    return out if any(v[0] for v in out) else None
+
+
 def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: dict, xw: pd.Series, bsp: pd.Series) -> list:
     df = hit.join(sav.drop(columns=["Air_pct"], errors="ignore"), how="left")   # Air% is our no-popup version
     if "PullAir_pct" in df.columns:
@@ -1907,6 +1949,7 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
         if not any(n for n, _ in xbt): xbt = None
         gbdir = [int(sum(x[HITTER_DAY.index(t)] for x in rows_d if len(x) > HITTER_DAY.index(t))) for t in ("gbp", "gbc", "gbo")]   # grounders by direction (10 Oct 2026)
         if not any(gbdir): gbdir = None
+        vpt = vs_pitch_ctx(rows_d)                                 # vs pitch type: per group [pitches, swings, whiffs, wOBA num, wOBA den, dnum] (28 Oct 2026)
         pkf, pk3 = park_fields(rows_d, r["bats"], SEASON)           # his parks' residuals and his top parks (15 Oct 2026)
         m.update(pkf)
         mixev = []                                                 # [tracked balls, avg EV] by Mix bucket, MIX_COLS order (8 Oct 2026)
@@ -1922,7 +1965,7 @@ def build_hitters(hit: pd.DataFrame, sav: pd.DataFrame, people: dict, days_h: di
                     "BBE": int(r.BBE), "BIP": int(r.BBT),
                     "mix": [int(r.get(c, 0) or 0) for c in MIX_COLS],         # balls by Mix bucket, MIX_COLS order
                     "mixev": mixev,
-                    "xbt": xbt, "gbdir": gbdir,
+                    "xbt": xbt, "gbdir": gbdir, "vpt": vpt,
                     # home runs and hit-by-pitches: the talent xwOBA's league HR/FB and HBP rate (11 Oct 2026)
                     "HR": int(sum(x[HITTER_DAY.index("hr")] for x in rows_d)), "HBP": int(r.HBP) if "HBP" in r and pd.notna(r.HBP) else None, "IBB": ibb_n,
                     "pk3": pk3},                                                             # his top three parks by PA, [[code, PA]] (15 Oct 2026)                                               # expected hits by batted-ball type, the xBABIP tab's split                                           # and [tracked balls, avg EV] by bucket — the Mix tab's EV column
