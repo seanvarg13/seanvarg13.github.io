@@ -1257,3 +1257,11 @@ Committee or Few chances, read from his share of the team's saves and his blown 
 most holds and saves, marked "stronger" when his rates beat the closer's — ordered with the shaky jobs first. Pick a team for its whole pen: each
 arm's role (CL / SU / MID), the window's counts, the season's saves, holds and blown saves, and nERA, K-BB%, Whiff%, xBB% and Pitching+ coloured by
 his percentile among the season's relievers. The window is the last 14 / 30 / 60 days or the full season; a name opens his page.
+
+### Park what-if, and the winter's moves (28 Oct 2026)
+
+The xwOBA tab ends with a **Park what-if**: every park, best first, with what it does to a hitter from his side of the plate (home runs per
+fly ball, BABIP, bases per hit, strikeouts and walks, given the contact) and his xwOBA with half his plate appearances there and the rest at a
+neutral park — so "Goodman at Petco" is a row, against his xwOBA now. His club's park is tagged, and the club a winter move took him to.
+Over the winter the twice-monthly check also reads MLB's transaction log: a player signed, traded or claimed to another club shows that club
+everywhere (the lists, his page, the Bullpens) with the move on his page's bio line, instead of freezing at the season's end.
