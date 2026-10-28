@@ -5570,3 +5570,17 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root #rows > li.skel:nth-child(odd) { opacity: .6; }
 :root:root:root:root:root:root #rows > li.skelnote { display: block; padding: 14px 12px; text-align: center; color: var(--muted); font-size: 13px; }
 :root:root:root:root:root:root #rows > li.skelnote .daysprog { align-items: center; }
+/* Lineup slot and playing time (Sean, 28 Oct 2026, item 7 of the review's picks): the line under the band's Summary on a hitter's page — where he
+   bats, starts over roster games, PA a game, the platoon sides (a Platooned chip when one side sits out) and his slot in the club's last 15 games */
+:root:root:root:root:root:root #xboard .pagehead .pblu { display: flex; flex-wrap: wrap; align-items: center; flex: 0 0 auto; height: auto; min-height: 0; margin: 8px 0 0; padding-top: 7px; border-top: 1px solid rgba(255,255,255,.45); color: #fff; font: 500 13.5px/1.35 var(--body); }
+:root:root:root:root:root:root[data-view="mobile"] #xboard .pagehead .pblu { font-size: 12.5px; }
+:root:root:root:root:root:root #xboard .pagehead .pblu .pbit { display: inline-flex; align-items: center; white-space: nowrap; }
+:root:root:root:root:root:root #xboard .pagehead .pblu .pbdot { margin: 0 7px; opacity: .75; }
+:root:root:root:root:root:root #xboard .pagehead .pblu .pbit:first-child .pbdot { display: none; }
+:root:root:root:root:root:root #xboard .pagehead .pblu .pbweak { opacity: .8; }
+:root:root:root:root:root:root #xboard .pagehead .pblu .pbplat { display: inline-block; padding: 1px 7px; border: 1px solid rgba(255,255,255,.8); background: #c8102e; color: #fff; font-weight: 700; font-size: 11.5px; line-height: 1.5; }
+:root:root:root:root:root:root #xboard .pagehead .pblu .pblast { display: inline-flex; align-items: center; gap: 3px; }
+:root:root:root:root:root:root #xboard .pagehead .pblu .pblastw { margin-right: 4px; }
+:root:root:root:root:root:root #xboard .pagehead .pblu .pblast b { display: inline-block; min-width: 15px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root #xboard .pagehead .pblu .pblast b.off { opacity: .6; }
+:root:root:root:root:root:root #xboard .pagehead .pblu .pblast b.out { opacity: .45; }
