@@ -1227,3 +1227,12 @@ last 7 / 14 / 30 days and his back-to-back days, and his innings against last se
 It opens with the **arsenal alerts**: his last 30 game days against the season before them — a new pitch, one dropped, a pitch's usage moved 10+
 points, his primary fastball a mile an hour faster or slower. The same alerts are chips in the Movers page's pitchers table on a desktop.
 Rebuilt with each morning's build (`hist/alerts.js`).
+
+### Year over year (28 Oct 2026)
+
+Every card has a **Year over year** tab: the card's season against the one before it, full seasons. A hitter's shows the pieces of his xwOBA
+build (K%, BB%, HBP, xHR/FB, his fly-ball share, xBABIP, extra bases per hit) both years, the change, and what each change is worth in wOBA
+points — with Everything else carrying the league's scale and the pieces' interplay, so the column adds to the change in his xwOBA — and then
+the skills behind them (whiffs, chase, contact, exit velocity, barrels, the batted-ball mix, sprint speed), each year's value with its
+percentile among that year's qualified hitters and the move in percentile points. A pitcher's shows the Spring tab's per-pitch tables with
+last season over this one and the change, headed by what moved: velocity, the grades, a new or dropped pitch, a usage swing.

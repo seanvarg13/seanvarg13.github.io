@@ -5271,6 +5271,22 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     whatever its filters. Checked headless on a phone and a desktop: Skenes's, Mason Miller's, a flagged starter's and Ohtani's tabs, Skenes's 2025
     (the gzipped day file), Movers' pitchers with the chips; the page check.
 
+* **Year over year (Sean, 28 Oct 2026, item 11 of the review's picks: "year-over-year tab — hitters: the build-up pieces this season vs last with
+  the wOBA effect; pitchers: arsenal YoY per pitch")**: a **Year over year** tab on every card (`BTABS_H` / `BTABS_P`, `renderYoyTab(p, ref)` before
+  `renderGameLogs`): the card's season against the one before it, full seasons, MLB regular seasons only — last season's file (`hist/mlb-<Y−1>.js`)
+  loads on the tab. **A hitter**: *The pieces of his xwOBA* — K% and BB% (the build's halves), HBP, xHR/FB, his fly-ball share, the drivers' xBABIP,
+  extra bases per hit — both years (his parks put back when the site's xwOBA carries them, as Movers does), the change, and **± wOBA**: the piece's
+  new value swapped alone into his old set at this season's scale, in wOBA points (±20 fills the colour scale); *Everything else* carries the
+  league's scale and the pieces' interplay so the column adds to the xwOBA change, and the xwOBA band row closes it. Then *The skills behind them*
+  — Whiff%, Chase%, Z-Contact%, Zone% seen, Avg EV, EV90, bat speed, Barrel%, Hard-Hit%, FB EV, FB / LD Brl%, Pull FB%, FB / LD / GB / Popup%, GB /
+  LD EV, GB Pull%, Oppo%, Sprint — each year's value with its percentile among that year's 300+ PA hitters, and the move in percentile points
+  coloured by whether it helped him. **A pitcher**: the Spring tab's per-pitch tables with last season's row over this season's and the change
+  (20+ pitches for a new pitch, 200+ in the season for a dropped one), the head's read of what moved (FB velo, Stuff+ / Pitching+, a new or dropped
+  pitch, a usage swing). **The Spring tab's table code is `arsenalCompare(box, rows, o)`** now (rows: `{lab, q, c, pool, cls}` — a player object with
+  `ctx.arsenal`, the consts its grades are against, the dataset its actual rates are ranked in; `o`: `newer`, `older`, `changeAt`, `minNew`,
+  `minTot`, `season`), shared by both; the Spring tab's output is byte-identical to before (checked old `app.js` against new on Skenes's Spring tab).
+  Checked headless on a phone and a desktop: Judge's and Skenes's tabs, a rookie's note; the page check.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make
