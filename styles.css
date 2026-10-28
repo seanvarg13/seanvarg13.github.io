@@ -5584,3 +5584,16 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root #xboard .pagehead .pblu .pblast b { display: inline-block; min-width: 15px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
 :root:root:root:root:root:root #xboard .pagehead .pblu .pblast b.off { opacity: .6; }
 :root:root:root:root:root:root #xboard .pagehead .pblu .pblast b.out { opacity: .45; }
+/* Workload and the arsenal alerts (Sean, 28 Oct 2026, items 9 and 10 of the review's picks): the Workload tab's sections, and the alert chips on
+   Movers' pitchers table and the tab's head — a new pitch red, a dropped one grey, a usage swing navy, a velocity move light blue */
+:root:root:root:root:root:root :is(#xboard, #modal) .workbox .rollhd.worksub { margin-top: 16px; }
+:root:root:root:root:root:root :is(#xboard, #modal) .workbox .worksum { margin: 4px 0 8px; font-size: 13px; }
+:root:root:root:root:root:root :is(#xboard, #modal) .workbox .worksum b { font-weight: 700; }
+:root:root:root:root:root:root :is(#xboard, #modal) .workbox .alnote { margin: 0 0 10px; font-size: 13px; }
+:root:root:root:root:root:root :is(#xboard, #modal) .workbox td.workhi { font-weight: 700; }
+:root:root:root:root:root:root .alchips { display: inline-flex; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
+:root:root:root:root:root:root .alchip { display: inline-block; padding: 1px 6px; font-size: 11px; font-weight: 700; line-height: 1.5; color: #fff; background: var(--ink-day, var(--ink)); white-space: nowrap; }
+:root:root:root:root:root:root .alchip.al-new { background: #c8102e; }
+:root:root:root:root:root:root .alchip.al-gone { background: #6b7280; }
+:root:root:root:root:root:root .alchip.al-velo { background: var(--accent-2, #7bafd4); color: var(--band2-ink, #fff); }
+:root:root:root:root:root:root #pitchboard td.alcell { white-space: normal; min-width: 150px; }

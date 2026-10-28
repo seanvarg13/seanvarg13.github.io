@@ -5248,6 +5248,29 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   on a phone and a desktop: the line on Yordan's, Judge's and a platooned hitter's pages, none on Skenes's; the columns fill and sort (Wood 4.61
   PA/G, slot 1.0); the Stats panel's group; the page check.
 
+* **Workload, and the arsenal alerts (Sean, 28 Oct 2026, items 9 and 10 of the review's picks: "pitcher workload & velocity trend — FB velo by
+  month, pitches & IP per start, went-6+ rate, IP vs last year / career high" and "in-season arsenal alerts — new pitch 5%+ in last 30 days, usage
+  swing 10+, velo +1 on Movers' pitchers and the card")**:
+  - **`tools/build_alerts.py`** (standard library; run by `cloud_daily.py` with each MLB build after `build_lineups.py`, non-fatal; under a second)
+    reads this season's arsenal day file (`hist/ars-<season>.js`) and data.js's game days and writes **`hist/alerts.js`** (`window.DRAFT_ALERTS =
+    {season, through, days: 30, from, p: {id: {n0, n1, fb: [type, velo before, velo in the window], al: [[kind, type, …]]}}}`, ~40 KB): for every
+    pitcher his last 30 game days against the season before them — **new** (a type at 5%+ of his pitches in the window, 20+ thrown, under 2%
+    before, 100+ pitches before), **gone** (5%+ before, under 1% in the window, 100+ pitches each side), **use** (a share moved 10+ points, 20+
+    thrown, 100+ each side), **velo** (his primary fastball — four-seam / sinker / cutter, whichever he throws most — 1.0+ mph faster or slower,
+    30+ each side). 27 Sep 2026: 565 pitchers with pitches in the window, 192 flagged (189 usage swings, 58 velocity moves, 30 dropped, 13 new).
+  - **In `app.js`** (`alData` / `alReady` / `alEnsure` / `alOf` / `alertWords` / `alertChips`, after the lineup block; value-free in `ensureScript`):
+    **Movers' pitchers** table has an **Arsenal** column of chips on a desktop (red a new pitch, grey a dropped one, navy a usage swing "slider
+    22→35%", light blue a velocity move "FF +1.3"; the words in the tooltip) — `renderFlaws` asks for the file; a phone's table hasn't the room.
+    The **Workload tab** (`BTABS_P` after Game Logs, `renderWorkTab`, CSS `.workbox` / `.alchip` at the end of `styles.css`) opens with the alerts
+    in words ("Arsenal, last 30 game days: new sweeper (12% of his pitches) · slider 22% → 35%"), then from his day rows (the Game Logs' source;
+    a past season's gzipped file loads on the tab): **Fastball velocity by month** (pitches, FB velo, the gap to his season coloured — ±2 mph spans
+    the scale — and a Last 15 days row); **Starts** (pitches and innings a start, the share that went 6+ innings and 100+ pitches, then his last
+    ten starts: date, days of rest, IP, pitches, FB velo against his season); **Relief** (outings in the last 7 / 14 / 30 days to data.js's
+    `through`, pitches an outing, back-to-back days); **Innings** (this season's innings against last season's and his MLB career high from his
+    career bucket, with a chip for a 30+ inning jump over the high — minor-league innings aren't counted). The full season of the card's season
+    whatever its filters. Checked headless on a phone and a desktop: Skenes's, Mason Miller's, a flagged starter's and Ohtani's tabs, Skenes's 2025
+    (the gzipped day file), Movers' pitchers with the chips; the page check.
+
 ## 10. The football site moved out
 
 The fantasy football site Sean asked for on 13 Oct 2026 lived in `football/` here for a few hours, then got a repo of its own (Sean: "make

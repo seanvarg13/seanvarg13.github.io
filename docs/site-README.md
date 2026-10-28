@@ -1218,3 +1218,12 @@ roster game, how often he starts against left- and right-handed starting pitcher
 his slot in each of his club's last 15 games (a digit is a start there, – on the roster without starting, × off the active roster). The same
 numbers are Leaderboard columns under Filters ▸ Stats ▸ Playing time: Slot, Starts%, PA/G, Starts% vs LHP and vs RHP — this season's full
 season only. The file (`hist/lineups.js`) is rebuilt with each morning's build.
+
+### Workload, and the arsenal alerts (28 Oct 2026)
+
+A pitcher's page has a **Workload** tab: his fastballs' velocity by month (and over the last 15 days) against his season, every start's pitches
+and innings — how often he went six innings or threw 100 pitches, and his last ten starts with their days of rest — a reliever's outings over the
+last 7 / 14 / 30 days and his back-to-back days, and his innings against last season's and his MLB career high (a chip marks a 30-inning jump).
+It opens with the **arsenal alerts**: his last 30 game days against the season before them — a new pitch, one dropped, a pitch's usage moved 10+
+points, his primary fastball a mile an hour faster or slower. The same alerts are chips in the Movers page's pitchers table on a desktop.
+Rebuilt with each morning's build (`hist/alerts.js`).
