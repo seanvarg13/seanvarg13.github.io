@@ -112,12 +112,19 @@ function minorsId() {
       const shown = await pg.evaluate(() => { const b = document.querySelector(".pbar"); return b ? getComputedStyle(b).display !== "none" : null; });
       if (shown === null) throw new Error("no .pbar");
       if (name.startsWith("phone")) { if (!shown) throw new Error("the phone bar is hidden");
-        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 6 && getComputedStyle(document.querySelector(".navtog")).display === "none");
-        await pg.evaluate(() => document.querySelector(".pbar button").click()); await until(() => !document.querySelector("#pbarsheet").hidden && document.querySelectorAll("#pbarsheet a").length === 5);
+        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 7 && getComputedStyle(document.querySelector(".navtog")).display === "none" && getComputedStyle(document.querySelector("header.top")).display === "none");
+        await pg.evaluate(() => document.querySelector(".pbar button[aria-controls='pbarsheet']").click()); await until(() => !document.querySelector("#pbarsheet").hidden && document.querySelectorAll("#pbarsheet a").length === 5);
         await pg.evaluate(() => [...document.querySelectorAll("#pbarsheet a")].find((a) => a.textContent === "Bullpens").click());
         await until(() => location.hash === "#bullpens" && document.querySelector("#pbarsheet").hidden); await count(".bppage table tbody tr", 20, 120000);
-        await until(() => document.querySelector('.pbar [data-mode="draftmode"]').getAttribute("aria-current") === "page"); }
-      else if (shown) throw new Error("the phone bar shows on a desktop"); });
+        await until(() => document.querySelector('.pbar [data-mode="draftmode"]').getAttribute("aria-current") === "page");
+        // the search from the bar (29 Oct 2026): the tab opens the header over the page with the box focused, a pick closes it
+        await pg.evaluate(() => document.querySelector(".pbar .psbtn").click());
+        await until(() => document.body.classList.contains("psearchon") && getComputedStyle(document.querySelector("header.top")).display !== "none" && document.activeElement === document.getElementById("gq"));
+        await pg.type("#gq", "Judge"); await count("#glist .addhit", 1);
+        await pg.evaluate(() => [...document.querySelectorAll("#glist .addhit")].find((x) => /^Aaron Judge/.test(x.textContent)).click());
+        await until(() => location.hash === "#player/592450" && !document.body.classList.contains("psearchon") && getComputedStyle(document.querySelector("header.top")).display === "none"); }
+      else { if (shown) throw new Error("the phone bar shows on a desktop");
+        await until(() => getComputedStyle(document.querySelector("header.top")).display !== "none" && getComputedStyle(document.querySelector(".pscancel")).display === "none"); } });
     if (!QUICK) {
       await step("mock draft", async () => { await hash("#mock"); await until(() => document.querySelector("#pitchboard") && document.querySelector("#pitchboard").innerText.length > 50); });
       await step("settings", async () => { for (const t of ["glossary", "appearance", "key", "how"]) { await hash("#settings/" + t); await count(".stabs .btab", 3); } });
@@ -134,7 +141,8 @@ function minorsId() {
       await pg.evaluate(() => window.scrollTo(0, 600)); await pg.waitForTimeout(1600);   // past the open's own "to the top" moment
       if (!(await pg.evaluate(() => window.scrollY > 100))) throw new Error("the page didn't scroll down");
       await pg.evaluate(() => { const gq = document.getElementById("gq"), y = window.scrollY; gq.addEventListener("blur", () => setTimeout(() => window.scrollTo(0, y), 120), { once: true }); });
-      await pg.focus("#gq"); await pg.type("#gq", "Judge"); await count("#glist .addhit", 1);
+      if (name.startsWith("phone")) await pg.evaluate(() => document.querySelector(".pbar .psbtn").click()); else await pg.focus("#gq");   // a phone opens the box from the bar (29 Oct 2026)
+      await pg.type("#gq", "Judge"); await count("#glist .addhit", 1);
       await pg.evaluate(() => [...document.querySelectorAll("#glist .addhit")].find((x) => /^Aaron Judge/.test(x.textContent)).click());
       await until(() => { const n = document.querySelector("#xboard .pgbname"); return !!(n && /Aaron Judge/.test(n.textContent) && document.querySelector("table.sbt tbody tr")); });
       await pg.waitForTimeout(1500);

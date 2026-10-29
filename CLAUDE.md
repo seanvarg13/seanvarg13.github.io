@@ -5433,3 +5433,19 @@ line can bring them back.
   cards, body, the popup, the player page's tab section and the Filters dropdown keep clear) = the pill + its offset + 8px. The blue band with the
   white tile of the entry above is history. Checked headless on a phone in light and dark mode (the pill 16-374 × 774-836 at 390 × 844, the
   Leaders capsule, the Fantasy menu over its tab) and on a desktop (unchanged); the page check's 42 steps.
+
+* **Search from the bar; no header on a phone (Sean, 29 Oct 2026: "Also make the search bar a button on that bottom bar that when you hit it
+  brings up a search bar. That way we don't have the big search bar at the top the entire time")**: the bar's seventh tab is **Search** (`.psbtn`,
+  a magnifier; the pill is 12px in from each side and the words 10px so seven fit — "Pitching+" is 40px in a 49px tab at 390 wide). On a phone
+  `header.top` is `display: none` (it held only the search box since the bar came), so `--header-h` is 0 (`setTb` measures it) and every page
+  starts at the top of the screen — the list cards 10px down, the player page's sticky bar at 0. `pSearch(on)` (a top-level function in `app.js`
+  before the bar block) toggles **`body.psearchon`**: the header shows fixed over the page (z 85) with Cancel beside the box (`button.pscancel`,
+  built in the bar block, appended to the header, shown only in that state), `.psbg` (a sheet in the page's surface, z 79 — under the bar's 80,
+  so the bar stays) covers the page, and `#glist` is a fixed full-width list from the header's foot to the bar (`top: var(--header-h)`,
+  `bottom: var(--pbar-h)`, hairlines between hits, 16px names); opening focuses the box inside the tap (iOS brings the keyboard up only then) and
+  shows the recent players as before. A pick (`renderGlobalSearch`'s onPick), Cancel, the tab again, Escape, a tap on the sheet or a hash change
+  closes it (`pSearch(false)` clears the box and the list). The Search capsule lights while it's open (`aria-expanded`, the Fantasy button's
+  rule). A desktop keeps its header and never shows Cancel or the sheet (`:not([data-view="mobile"])` hides both). The page check's phone-bar
+  step counts seven tabs, opens the search from the tab, types Judge and picks him, and its "search from a scrolled page" step opens the box
+  from the bar on a phone. Headless at 390 × 844: the header 0-59 while searching, the list 59-766, `--header-h` 0px otherwise, the Leaderboard
+  card 10 → 756; dark mode the same; a desktop untouched.
