@@ -1297,3 +1297,14 @@ tab strip, the Filters dropdown) stops above the pill instead. The desktop heade
 Search is the bar's last tab (29 Oct 2026). A phone has no header at all until you tap it: the search box then opens over the top of the page
 with Cancel beside it and the matches as a list under it, the keyboard up, and only the Search tab is lit while it is open; a pick, Cancel, the tab
 again or a tap on the sheet closes it. So every page starts at the top of the screen on a phone. The desktop keeps its header and its search box.
+
+### One Leaders bar (29 Oct 2026)
+
+The Leaderboard, the Pitching+ board and Movers now share one bar up top. Its first button names the page you are on — **Leaderboard ▾**,
+**Pitching+ ▾** or **Movers ▾** — and opens the other two; after it come the page's own buttons: the Leaderboard's Position · Stats · Splits ·
+Dates · Table format, the board's Pitch · Throws · Role · Minimum · Colour (and Games in spring), Movers' Position · Window · Order. Each opens
+its choices right under itself, and a button with something in effect carries a red dot. The line under the bar says what is listed and what
+the table is sorted by ("1991 pitches · 2026 · 100+ pitches · SP — by Pitching+"; "32 hitters · last 30 days — by Δ xwOBA if it held"), with
+"More about these numbers" at its right where a page has an explanation. On a phone the bar is centred and, when its buttons don't all fit,
+slides sideways inside itself; the three pages' tables sit in the same framed box in the same place, so switching between them moves nothing.
+The board's pills and its phone Filters panel, and Movers' pills and heading, are gone.

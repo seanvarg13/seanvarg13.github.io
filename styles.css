@@ -3372,7 +3372,7 @@ tr.mkmine td { background: var(--accent-wash, var(--surface-2)); }
 /* Mock Draft on a phone (Sean, 2 Oct 2026: the player list "is only taking up 35% of the screen"): one frame instead of two, the
    clock bar and the list's search / sort / positions each squeezed to a line, tighter rows — the list gets ~60% of the screen */
 :root[data-view="mobile"] body:is([data-mode="mock"],[data-mode="claude"],[data-mode="flaws"],[data-mode="bullpens"]) main.wrap { padding: 0 4px 4px; }
-:root[data-view="mobile"] body:is([data-mode="mock"],[data-mode="claude"],[data-mode="flaws"],[data-mode="bullpens"]) #pitchboard { border: 0; padding: 4px 0 0; gap: 4px; }
+:root[data-view="mobile"] body:is([data-mode="mock"],[data-mode="claude"],[data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) #pitchboard { border: 0; padding: 4px 0 0; gap: 4px; }
 :root[data-view="mobile"] body:is([data-mode="mock"],[data-mode="claude"],[data-mode="flaws"],[data-mode="bullpens"]) .mktop { gap: 2px 8px; padding: 4px 8px; }
 :root[data-view="mobile"] body:is([data-mode="mock"],[data-mode="claude"],[data-mode="flaws"],[data-mode="bullpens"]) .mktop .mkclock { font-size: 20px; min-width: 2.4em; line-height: 1.1; }
 :root[data-view="mobile"] body:is([data-mode="mock"],[data-mode="claude"],[data-mode="flaws"],[data-mode="bullpens"]) .mkwhat { font-size: 12px; line-height: 1.25; flex-basis: calc(100% - 4em); }
@@ -5132,15 +5132,15 @@ header.top .wordmark { display: none; }
 
 /* Fixing the flaw, the page (Sean, 16 Oct 2026): the table centred like the Leaderboard's, its window pill, count and title over it starting at
    the table's left edge; a name opens a window of the card's bars (full season beside the window) */
-:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) #pitchboard { align-items: center; }
-:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) #pitchboard > .flawpage { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; width: fit-content; max-width: 100%; margin: 0 auto; }
-:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) .flawpage > .pbfilters { margin: 0 0 6px; }
-:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) .flawpage > .pbscroll { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: none; }
-:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) .flawpage > :is(.note, .fxtitle, .pbfilters) { width: 0; min-width: 100%; box-sizing: border-box; }   /* the table sets the page's width; the text takes it */
+:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) #pitchboard { align-items: center; }
+:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) #pitchboard > .flawpage { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; width: fit-content; max-width: 100%; margin: 0 auto; }
+:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) .flawpage > .pbfilters { margin: 0 0 6px; }
+:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) .flawpage > .pbscroll { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: none; }
+:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) .flawpage > :is(.note, .fxtitle, .pbfilters, .pgrow, .pgline) { width: 0; min-width: 100%; box-sizing: border-box; }   /* the table sets the page's width; the text takes it */
 :root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) .fxtitle { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 0 0 8px; padding-bottom: 5px; border-bottom: 2px solid var(--stripe-line, #c8102e); }
 :root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) .fxtitle h2 { margin: 0; font: 700 26px/1 var(--display) !important; color: var(--ink) !important; letter-spacing: 0.01em !important; text-transform: none !important; }
 :root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) .fxtitle span { font: 400 13px var(--body); color: var(--muted); }
-:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="flaws"],[data-mode="bullpens"]) #pitchboard > .flawpage { width: 100%; }
+:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) #pitchboard > .flawpage { width: 100%; }
 :root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="flaws"],[data-mode="bullpens"]) .fxtitle h2 { font-size: 21px !important; }
 :root:root:root:root:root:root .phmodal.fxmodal { background: rgba(12, 35, 64, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
 :root:root:root:root:root:root .phwin.fxwin { position: relative; width: 960px; max-width: 100%; max-height: calc(100dvh - 32px); display: flex; flex-direction: column; overflow: hidden; }
@@ -5414,20 +5414,6 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
    every list page. 14px of room under it. */
 :root:root:root:root[data-view="mobile"] body:is([data-mode="leaderboard"],[data-mode="trending"],[data-mode="rankings"],[data-mode="draft"],[data-mode="pitches"],[data-mode="trends"],[data-mode="callups"],[data-mode="planner"],[data-mode="mock"],[data-mode="claude"],[data-mode="flaws"],[data-mode="bullpens"]) main.wrap { padding-bottom: 14px; }   /* over body.filtbar's padding-bottom: 0 above */
 
-/* The phone's Pitching+ board (Sean, 20 Oct 2026: "do 12"): one Filters button in the Leaderboard's dress with the count beside it, the six pills
-   in a panel hung under it (the dropdowns' dress, .pop), a label left of each; Pitching+ sits after the name (app.js reorders the columns) */
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .pbfilters.pbfph { position: relative; flex-wrap: nowrap; gap: 12px; margin: 0 0 10px; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .pbfph .pbfbtn { display: inline-flex; align-items: center; height: 32px; min-height: 32px; padding: 0 14px; background: #fff; color: var(--ink-day, var(--ink)); border: 1px solid var(--rail, #c9d3e0) !important; border-radius: 0 !important; font: 600 14px/1 var(--body) !important; white-space: nowrap; cursor: pointer; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .pbfph .pbfbtn.on { background: color-mix(in srgb, var(--accent-2) 18%, #fff); }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .pbfph .pbcount { margin-left: 0; font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .pbfph .pbfpanel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 60; min-width: 0; width: min(340px, calc(100vw - 24px)); max-height: none; padding: 8px 12px 12px; display: grid; gap: 8px; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .pbfpanel .pbfrow { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: 8px; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .pbfpanel .pbflab { font: 600 13px var(--body); color: var(--muted); }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .pbfpanel .pill { width: 100%; justify-content: space-between; }
-
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .pbfpanel .pbfhd { display: flex; align-items: center; justify-content: space-between; font: 700 15px var(--body); color: var(--ink); padding-bottom: 2px; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .pbfpanel .pbfhd .pop-close { position: static; width: 28px; height: 28px; }
-
 /* The phone's Fantasy page bar is the table's last row (Sean, 20 Oct 2026: "do 13", mock 13): the Leaderboard's grey bar — ‹ 1 2 3 … N › and Per
    page — inside the table's frame after the rows, held at the frame's left edge as the table slides sideways (as wide as the visible frame); the
    control row is all that's left over the table */
@@ -5498,11 +5484,11 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 /* The Movers page, one side at a time (Sean, 23 Oct 2026: "the table is so small and I also have no way of switching between pitchers and
    hitters"): a Hitters | Pitchers switch leads the control row (on a phone it spans the row, a button a half), the one table hugs its rows and
    scrolls inside the card when they don't fit, and the explanation folds behind "More about these numbers" the way Fantasy's does */
-:root:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) .flawpage > .pbscroll { flex: 0 1 auto; }
+:root:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) .flawpage > .pbscroll { flex: 0 1 auto; }
 :root:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) .fxbar .pbcount:empty { display: none; }
-:root:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) .flawpage > .fxnote:not(.open) { display: none; }
-:root:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) .flawpage > .fxnote { flex: none; margin: 8px 0 0; max-height: 9em; overflow-y: auto; }   /* open, the table gives up the room (a scroller would shrink to a line) */
-:root:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) .flawpage > .fxmore { align-self: flex-start; margin: 8px 0 0; font-size: 12.5px; }
+:root:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) .flawpage > .fxnote:not(.open) { display: none; }
+:root:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) .flawpage > .fxnote { flex: none; margin: 8px 0 0; max-height: 9em; overflow-y: auto; }   /* open, the table gives up the room (a scroller would shrink to a line) */
+:root:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) .flawpage > .fxmore { align-self: flex-start; margin: 8px 0 0; font-size: 12.5px; }
 :root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="flaws"],[data-mode="bullpens"]) .fxbar > .fxside { flex: 1 1 100%; display: flex; }
 :root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="flaws"],[data-mode="bullpens"]) .fxbar > .fxside > .segbtn { flex: 1 1 0; justify-content: center; }
 
@@ -5525,14 +5511,14 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
    screen like on the leaderboards page"): one row of pills — position, window, order — with the count beside them on a desktop and under the title
    on a phone, the explanation's link at the title row's right and its note under the title, so the table starts where the Leaderboard's does and runs
    to the foot; a desktop's table as wide as the Leaderboard's (its columns spread), a wider table scrolling inside its frame as before */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) .fxtitle .fxmore { margin-left: auto; align-self: center; font-size: 12.5px; white-space: nowrap; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"]) .flawpage > .fxnote { margin: 0 0 8px; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body:is([data-mode="flaws"],[data-mode="bullpens"]) #pitchboard > .flawpage { min-width: min(100%, 1020px); }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body:is([data-mode="flaws"],[data-mode="bullpens"]) #pitchboard .flawpage > .pbscroll.brscroll { width: 100%; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body:is([data-mode="flaws"],[data-mode="bullpens"]) #pitchboard .flawpage > .pbscroll > table.flawt { width: 100% !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="flaws"],[data-mode="bullpens"]) .flawpage > .fxbar { gap: 8px 6px; margin: 0 0 4px; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="flaws"],[data-mode="bullpens"]) #pitchboard .flawpage > .pbscroll.brscroll { width: 100%; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="flaws"],[data-mode="bullpens"]) #pitchboard .flawpage > .pbscroll > table.flawt { min-width: 100%; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) .fxtitle .fxmore { margin-left: auto; align-self: center; font-size: 12.5px; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) .flawpage > .fxnote { margin: 0 0 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) #pitchboard > .flawpage { min-width: min(100%, 1020px); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) #pitchboard .flawpage > .pbscroll.brscroll { width: 100%; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) #pitchboard .flawpage > .pbscroll > table.flawt { width: 100% !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) .flawpage > .fxbar { gap: 8px 6px; margin: 0 0 4px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) #pitchboard .flawpage > .pbscroll.brscroll { width: 100%; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="flaws"],[data-mode="bullpens"],[data-mode="pitches"]) #pitchboard .flawpage > .pbscroll > table.flawt { min-width: 100%; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="flaws"],[data-mode="bullpens"]) .fxbar > .pbcount { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="flaws"],[data-mode="bullpens"]) .fxbar > .pill { padding-left: 10px !important; padding-right: 10px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="flaws"],[data-mode="bullpens"]) .fxtitle { flex-wrap: nowrap; gap: 8px; }
@@ -5687,3 +5673,42 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.psearchon #glist li.recenthd { border-bottom: 0; padding: 10px 16px 4px; font-size: 12px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.psearchon #glist .addhit { padding: 12px 16px !important; font-size: 16px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.psearchon #glist .addhit span { font-size: 13px !important; }
+
+/* The Leaders pages share one bar (Sean, 29 Oct 2026: "make it so on mobile the up top bar with position stats splits dates table format on the
+   leaders page is centered. and make it so there is one more button in that bar up top that has the drop down for leaderboard pitching+ and
+   movers. And make it so the pitching+ and movers tables are exactly the same format wise as the leaders page so this all works. and make it so
+   with that bar if the buttons dont all fit it has an internal scroll"): the Leaderboard's row of .sbview buttons leads with a page picker
+   (.pgpick — the page's name and a chevron, a divider after it; its list is the dropdowns' .ddmenu) and is the one bar the Pitching+ board and
+   Movers draw too (#pitchboard .pgrow), each of their picks a button marked when set; the count line under it (.pgline) is #lbtitle's dress.
+   A phone centres the bar in its row and the bar scrolls inside itself when the buttons don't fit; a desktop keeps it at the left and scrolls
+   it only when the window is narrower than the buttons. */
+:root:root:root:root:root:root:root:root .sbviews.lbviews { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] .sbviews.lbviews { scrollbar-width: none; }
+:root:root:root:root:root:root:root:root .sbviews.lbviews .sbview.pgpick { display: inline-flex; align-items: center; gap: 7px; font-weight: 600 !important; padding-right: 12px; }
+:root:root:root:root:root:root:root:root .sbviews.lbviews .sbview.pgpick .chev { flex: none; width: 10px; height: 6px; color: currentColor; margin-top: 1px; }
+:root:root:root:root:root:root:root:root .sbviews.lbviews .sbview.pgpick::after { content: ""; display: block; width: 1px; height: 18px; margin-left: 6px; background: color-mix(in srgb, var(--ink) 22%, var(--surface)); }
+:root:root:root:root:root:root:root:root .sbviews.lbviews .sbview.ddon { background: var(--btn, var(--accent-2)); color: var(--btn-ink, #fff); }
+:root:root:root:root:root:root:root:root .sbviews.lbviews .sbview.pgpick.ddon::after { background: color-mix(in srgb, var(--btn-ink, #fff) 45%, transparent); }
+/* the Leaderboard's row: centred on a phone, the bar shrinking to the screen and scrolling inside (#pagertop had scrolled as a whole) */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #pagertop { justify-content: center !important; flex-wrap: nowrap !important; overflow: visible !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #pagertop > .tbtns { flex: 0 1 auto !important; min-width: 0 !important; max-width: 100% !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #pagertop > .tbtns .sbviews.lbviews { display: flex; flex: 0 1 auto; min-width: 0; max-width: 100%; align-self: auto; }
+/* the board's and Movers' row and line, mirroring #pagertop and #lbtitle */
+:root:root:root:root:root:root:root:root #pitchboard .pgrow { display: flex; align-items: center; gap: 12px; margin: 6px 0 0; padding: 0 0 4px; }
+:root:root:root:root:root:root:root:root #pitchboard .pgrow .sbviews.lbviews { margin: 0; max-width: 100%; }
+:root:root:root:root:root:root:root:root #pitchboard .pgline { display: flex; align-items: baseline; gap: 12px; margin: 5px 0 8px; padding-bottom: 5px; border-bottom: 2px solid var(--stripe-line, #c8102e); }
+:root:root:root:root:root:root:root:root #pitchboard .pgline .pcount { font: 600 14px var(--body) !important; color: var(--ink) !important; }
+:root:root:root:root:root:root:root:root #pitchboard .pgline .pgby { font: 400 13px var(--body); color: var(--muted); }
+:root:root:root:root:root:root:root:root #pitchboard .pgline .pgby:empty, :root:root:root:root:root:root:root:root #pitchboard .pgline .pcount:empty { display: none; }
+:root:root:root:root:root:root:root:root #pitchboard .pgline .fxmore { margin-left: auto; align-self: center; font-size: 12.5px; white-space: nowrap; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pgrow { justify-content: center; margin: 0; padding: 4px 8px 4px; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pgrow .sbviews.lbviews { display: flex; flex: 0 1 auto; min-width: 0; max-width: 100%; align-self: auto; margin: 0; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pgline { margin: 2px 12px 8px; padding-bottom: 4px; flex-wrap: wrap; row-gap: 2px; width: auto; min-width: calc(100% - 24px); }
+:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pgline .pcount { font-size: 13px !important; }
+/* the board's page in Movers' frame: the table 12px in from each side on a phone, as the Leaderboard's is */
+:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="pitches"],[data-mode="flaws"]) #pitchboard .flawpage > .pbscroll.brscroll { width: auto !important; margin: 0 12px; max-width: calc(100% - 24px); }
+:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="pitches"],[data-mode="flaws"]) .flawpage > .fxnote { margin-left: 12px !important; margin-right: 12px !important; width: auto; min-width: 0; }
+/* and no white card round those two pages on a phone, as the Leaderboard has none (6 Oct 2026): the page ground, the bar centred in a row
+   10px under the top, the line and the framed table 12px in — the same pixels as the Leaderboard's */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="pitches"],[data-mode="flaws"]) main.wrap { background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 0 14px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="pitches"],[data-mode="flaws"]) main.wrap > #pitchboard { padding: 0 !important; border: 0 !important; background: transparent !important; gap: 0 !important; }

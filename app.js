@@ -4285,10 +4285,18 @@
   // Trending lives inside the Leaderboard and the Fantasy leaderboard now (Season / Recent, 1 Oct 2026): off both menus
   for (const h of ["#trending", "#fantasy/trending"]) { const a = document.querySelector(`.modemenu a[href="${h}"]`); if (a) a.closest("li").remove(); }
   const pb = Object.assign({ pt: "all", hand: "all", role: "all", min: 100, sort: "pitp", dir: -1 }, load("draft2027.pitchboard", {}));
-  // a phone's Filters panel on the board (Sean, 20 Oct 2026): open across redraws so several filters can be set, shut by a tap elsewhere or a page change
-  let pbOpen = false;
-  document.addEventListener("click", (e) => { if (pbOpen && !e.target.closest(".pbfpanel, .pbfbtn, .ddmenu")) { pbOpen = false; render(); } });
-  window.addEventListener("hashchange", () => { pbOpen = false; });
+  let pbNoteOpen = false;   // the board's explanation, folded under the count line like Movers' (29 Oct 2026); the phone's Filters panel of 20 Oct 2026 is gone with the Leaders bar
+  // the board's Games pick (season / spring training), the one button the bar carries while a spring file is still loading
+  const pbGames = (springK) => barPick({ name: "Games", key: "src", opts: [["season", `${DATA.meta.season} season`], ["spring", "Spring training"]], cur: springK ? "spring" : "season", now: springK ? "Spring training" : `${DATA.meta.season} season`,
+    pick: (v) => { pb.src = v; try { localStorage.setItem("draft2027.pitchboard", JSON.stringify(pb)); } catch {} render(); }, set: !!springK });
+  // the explanation under a Leaders page's count line, folded the way Fantasy's is: its link at the line's right, the note right under the line
+  function foldNote(C, txt, get, set) {
+    const PH = mobileView(), lab = () => (get() ? "Less" : PH ? "About" : "More about these numbers");
+    const n = el("p", "note fxnote" + (get() ? " open" : ""), txt), b = el("button", "linkbtn fxmore", lab()); b.type = "button";
+    b.addEventListener("click", () => { set(!get()); n.classList.toggle("open", get()); b.textContent = lab(); });
+    C.line.append(b); C.line.after(n);
+    return n;
+  }
   if (["stuffp", "whfp", "bbp", "xwhf", "xgb", "xpu", "aopt"].includes(pb.sort)) pb.sort = "pitp";   // Pitching+ again (6 Oct 2026); the stuff-only columns left the board   // the location columns left the board (6 Oct 2026: Stuff+ again)   // the stuff-only columns left the board (4 Oct 2026)
   // spring training (Sean, 29 Sep 2026: "track a pitchers stuff in spring training"): the board can read this spring's dataset
   // (hist/mlb-<year>-spring.js, graded by the MLB models against MLB pitch types) — next year's spring once it exists, else this one's
@@ -4299,8 +4307,8 @@
       const k = springKey(), ds = k && histDataset(k);
       if (!ds) {
         if (k) ensureHist(k);
-        const bar0 = el("div", "pbfilters"); bar0.append(pillSelect("Spring training", [["season", `${DATA.meta.season} season`], ["spring", "Spring training"]], "spring", (v) => { pb.src = v; try { localStorage.setItem("draft2027.pitchboard", JSON.stringify(pb)); } catch {} render(); }, "Games"));
-        box.append(bar0, el("p", "note", k ? "Loading spring training…" : "No spring training file yet — it's built through February and March."));
+        const C = leadersChrome("pitches", [pbGames("spring")]), page = el("div", "flawpage pbpage");
+        C.count.textContent = "Spring training"; page.append(C.row, C.line, el("p", "note", k ? "Loading spring training…" : "No spring training file yet — it's built through February and March.")); box.append(page);
         return;
       }
       return withDataset(ds, () => withWindow(NOWIN, () => pitchBoardBody(box, k)));
@@ -4331,35 +4339,27 @@
     }
     const key = pb.sort, dir = pb.dir;
     rows.sort((a, b) => (a[key] == null) - (b[key] == null) || dir * ((a[key] ?? 0) - (b[key] ?? 0)) || b.n - a.n);
-    // filters
+    // filters — the Leaders bar (29 Oct 2026; the pills, and a phone's Filters panel of 20 Oct 2026, are history): a button a pick, the page
+    // picker first, and the count line under it saying what's listed and what it's sorted by, the Leaderboard's way
     const save = () => { save_(); render(); }, save_ = () => { try { localStorage.setItem("draft2027.pitchboard", JSON.stringify(pb)); } catch {} };
-    const bar = el("div", "pbfilters"), PH = mobileView();
+    const PH = mobileView();
     const types = [...new Set(DS.players.filter((p) => p.type === "P" && p.ctx && p.ctx.arsenal).flatMap((p) => p.ctx.arsenal.map((a) => a[0])))]
       .filter((t) => T[t]).sort((a, b) => (T[b][0] || 0) - (T[a][0] || 0));
-    const pills = [
-      ["Pitch", pillSelect(pb.pt === "all" ? "All pitches" : PITCH_NAME[pb.pt] || pb.pt, [["all", "All pitches"], ...types.map((t) => [t, PITCH_NAME[t] || t])], pb.pt, (v) => { pb.pt = v; save(); }, "Pitch")],
-      ["Throws", pillSelect(pb.hand === "all" ? "Both hands" : pb.hand === "R" ? "Righties" : "Lefties", [["all", "Both hands"], ["R", "Righties"], ["L", "Lefties"]], pb.hand, (v) => { pb.hand = v; save(); }, "Throws")],
-      ["Role", pillSelect(pb.role === "all" ? "SP + RP" : pb.role, [["all", "SP + RP"], ["SP", "SP"], ["RP", "RP"]], pb.role, (v) => { pb.role = v; save(); }, "Role")],
-      ["Minimum", pillSelect(`${pb.min}+ pitches`, [25, 50, 100, 200, 400, 800].map((n) => [String(n), `${n}+ pitches`]), String(pb.min), (v) => { pb.min = Number(v); save(); }, "Minimum")],
-      ["Colour", pillSelect(pb.heat === "all" ? "Colour: all" : "Colour: sorted", [["sorted", "Colour the sorted column"], ["all", "Colour every + column"]], pb.heat === "all" ? "all" : "sorted", (v) => { pb.heat = v; save(); }, "Colour")]];
+    const ptName = pb.pt === "all" ? "All pitches" : PITCH_NAME[pb.pt] || pb.pt, handName = pb.hand === "all" ? "Both hands" : pb.hand === "R" ? "Righties" : "Lefties";
+    const picks = [
+      barPick({ name: "Pitch", key: "pt", opts: [["all", "All pitches"], ...types.map((t) => [t, PITCH_NAME[t] || t])], cur: pb.pt, now: ptName, pick: (v) => { pb.pt = v; save(); }, set: pb.pt !== "all" }),
+      barPick({ name: "Throws", key: "hand", opts: [["all", "Both hands"], ["R", "Righties"], ["L", "Lefties"]], cur: pb.hand, now: handName, pick: (v) => { pb.hand = v; save(); }, set: pb.hand !== "all" }),
+      barPick({ name: "Role", key: "role", opts: [["all", "SP + RP"], ["SP", "SP"], ["RP", "RP"]], cur: pb.role, now: pb.role === "all" ? "SP + RP" : pb.role, pick: (v) => { pb.role = v; save(); }, set: pb.role !== "all" }),
+      barPick({ name: "Minimum", key: "min", opts: [25, 50, 100, 200, 400, 800].map((n) => [String(n), `${n}+ pitches`]), cur: String(pb.min), now: `${pb.min}+ pitches`, pick: (v) => { pb.min = Number(v); save(); }, set: pb.min !== 100 }),
+      barPick({ name: "Colour", key: "heat", opts: [["sorted", "Colour the sorted column"], ["all", "Colour every + column"]], cur: pb.heat === "all" ? "all" : "sorted", now: pb.heat === "all" ? "every + column" : "the sorted column", pick: (v) => { pb.heat = v; save(); }, set: pb.heat === "all" })];
     // Games: Spring training (back at Sean's ask, 6 Oct 2026, with the card's Spring tab) — next year's spring once it's built, else this one's
-    if (springKey()) pills.push(["Games", pillSelect(springK ? "Spring training" : `${DATA.meta.season} season`, [["season", `${DATA.meta.season} season`], ["spring", "Spring training"]], springK ? "spring" : "season", (v) => { pb.src = v; save(); }, "Games")]);
-    const cnt = `${rows.length} pitch${rows.length === 1 ? "" : "es"} · ${springK ? DS.label || "spring training" : DATA.meta.season}`;
-    if (PH) {
-      // a phone (Sean, 20 Oct 2026, mock 12): one Filters button, the six pills in a panel under it — they had taken three rows over the table
-      const nOn = [pb.pt !== "all", pb.hand !== "all", pb.role !== "all", pb.min !== 100, pb.heat === "all", !!springK].filter(Boolean).length;
-      const fb = el("button", "btn btn-quiet tbtn pbfbtn" + (pbOpen ? " on" : ""), "Filters" + (nOn ? ` (${nOn})` : "")); fb.type = "button"; fb.setAttribute("aria-expanded", String(pbOpen));
-      fb.addEventListener("click", (e) => { e.stopPropagation(); pbOpen = !pbOpen; render(); });
-      bar.classList.add("pbfph"); bar.append(fb, el("span", "pbcount", cnt));
-      if (pbOpen) {
-        const pan = el("div", "pop pbfpanel"), x = el("button", "pop-close", "×"); x.type = "button"; x.setAttribute("aria-label", "Close");
-        x.addEventListener("click", (e) => { e.stopPropagation(); pbOpen = false; render(); });
-        const hd = el("div", "pbfhd"); hd.append(el("span", null, "Filters"), x); pan.append(hd);
-        for (const [lab, pl] of pills) { const r = el("div", "pbfrow"); r.append(el("span", "pbflab", lab), pl); pan.append(r); }
-        bar.append(pan);
-      }
-    } else { for (const [, pl] of pills) bar.append(pl); bar.append(el("span", "pbcount", cnt + " · graded against its own type")); }
-    box.append(bar);
+    if (springKey()) picks.push(pbGames(springK));
+    const C = leadersChrome("pitches", picks), page = el("div", "flawpage pbpage"); box.append(page); page.append(C.row, C.line);
+    { const bits = [`${rows.length} pitch${rows.length === 1 ? "" : "es"}`, springK ? DS.label || "spring training" : DATA.meta.season, `${pb.min}+ pitches`];
+      if (pb.pt !== "all") bits.push(ptName.toLowerCase() + "s"); if (pb.hand !== "all") bits.push(pb.hand + "HP"); if (pb.role !== "all") bits.push(pb.role);
+      C.count.textContent = bits.join(" · ");
+      const SORTL = { pitp: "Pitching+", whfpl: "Whiff+", bbpl: "BB+", locp: "Loc+", xwhfl: "xWhiff%", whf: "Whiff%", xgbl: "xGB%", gb: "GB%", xpul: "xPU%", pu: "PU%", xfoul: "xFoul%", foul: "Foul%", n: "pitches", use: "Use%", velo: "velo", ivb: "IVB", hb: "HB", spin: "spin" };
+      C.by.textContent = `by ${SORTL[pb.sort] || pb.sort}${PH ? "" : " · each pitch against its own type"}`; }
     // the table, in B-Ref's dress (Sean, 9 Oct 2026, the B-Ref Style Tables canvas: "I want that for everything"): Rk and Pitcher frozen,
     // Tm / Role / T columns, an over-header naming each group, each expected / actual pair as two columns (Act in grey), the sorted + column
     // filling its cells, and a League band row under a gap. Every column but the pitcher's facts sorts.
@@ -4410,9 +4410,9 @@
                 ...pair(wm("xwhfl", bySw), wm("whf", bySw)), ...pair(wm("xgbl", byBip), wm("gb", byBip)), ...pair(wm("xpul", byBip), wm("pu", byBip)), ...pair(wm("xfoul", byCon), wm("foul", byCon))]));
       tb.append(gap(), fin(tr));
     }
-    wrap.className = "fscroll pbscroll brscroll"; box.append(wrap);
+    wrap.className = "fscroll pbscroll brscroll"; page.append(wrap);
     requestAnimationFrame(() => { const rk = t.querySelector("tbody td.f1"), ov = t.querySelector("tr.over"); if (rk) t.style.setProperty("--sbw1", rk.offsetWidth + "px"); if (ov) t.style.setProperty("--overh", ov.offsetHeight + "px"); });   // Pitcher freezes right after Rk
-    box.append(el("p", "note", (rows.length > 300 ? "The top 300 shown. " : "") + "Each pitch is graded against the league's pitches of its own type on what the ball does (velocity, spin, movement, release, extension, arm angle, its gap to his fastball, how much he throws it and how deep his arsenal is) and where he throws it — 100 is average for that pitch type; Whiff+ and BB+ are the two halves, Loc+ what his spots add over the stuff alone. Under each x-rate is what actually happened. Full season; click a name for his card."));
+    foldNote(C, (rows.length > 300 ? "The top 300 shown. " : "") + "Each pitch is graded against the league's pitches of its own type on what the ball does (velocity, spin, movement, release, extension, arm angle, its gap to his fastball, how much he throws it and how deep his arsenal is) and where he throws it — 100 is average for that pitch type; Whiff+ and BB+ are the two halves, Loc+ what his spots add over the stuff alone. Under each x-rate is what actually happened. Full season; click a name for his card.", () => pbNoteOpen, (v) => { pbNoteOpen = v; });
   }
   // League Trends (Sean, 29 Sep 2026: "league wide trends by year ... to see how the landscapes change"): hist/trends.js,
   // written by build_trends.py — every season's league totals (hitting: pitches / swings / batted balls pooled, not an average
@@ -5163,7 +5163,7 @@
         b.dataset.panel = k; b.setAttribute("aria-haspopup", "true"); b.setAttribute("aria-expanded", String(state.panel === k));
         if (popActive(k)) b.classList.add("set");
       });
-      bar.classList.add("lbviews");
+      bar.classList.add("lbviews"); bar.prepend(pagePick(state.mode));   // the page itself first (29 Oct 2026): Leaderboard · Pitching+ · Movers as a list
       box.append(bar);
       return;
     }
@@ -5836,7 +5836,7 @@
   let fxNoteOpen = false;
   function renderFlaws() {
     const box = pitchBoardEl(); box.innerHTML = "";
-    const page = el("div", "flawpage"), bar = el("div", "pbfilters fxbar"), PH = mobileView(); box.append(page); page.append(bar);
+    const page = el("div", "flawpage"), PH = mobileView(); box.append(page);
     const save = () => { try { localStorage.setItem("draft2027.flaws", JSON.stringify(fxSet)); } catch {} render(); };
     const side = fxSet.side === "P" ? "P" : "H", prevMode = fxSet.win === "prev", Y = DATA.meta.season, Y0 = Y - 1;
     // the side and the position in one pill up top (Sean, 23 Oct 2026: "the ability up top to filter by pitchers or hitters/by position"), in place
@@ -5846,25 +5846,20 @@
     const pos = (side === "P" ? PIT_TABS : HIT_TABS).includes(fxSet.pos) ? fxSet.pos : side === "P" ? "ALLP" : "ALL", allPos = pos === "ALL" || pos === "ALLP";
     const inPos2 = (p) => allPos || eligiblePositions(p).includes(pos);
     const posOpts = [[null, "Hitters"], ...HIT_TABS.map((k) => [k, TAB_LABEL[k] || k]), [null, "Pitchers"], ...PIT_TABS.map((k) => [k, TAB_LABEL[k] || k])];
-    // a pitcher has no PA window (one reads 30 days), so his side lists the day windows and This season vs last; a phone's pills say it short, so
-    // the three sit on one line and the table starts where the Leaderboard's does
+    // a pitcher has no PA window (one reads 30 days), so his side lists the day windows and This season vs last
     const wcur = side === "P" && String(fxSet.win).startsWith("pa") ? "30" : String(fxSet.win), wlab = (FX_WINS.find((w) => w[0] === wcur) || FX_WINS[1])[1];
     const big = side === "H" ? "Biggest Δ xwOBA" : "Biggest Δ nERA";   // the order is shared: by the move, or by the move × its credibility
-    const short = (t) => (PH ? t.replace(/^Last /, "").replace("This season vs last", `${Y} vs ${Y0}`).replace(/^Biggest /, "").replace("Most credible", "Credible") : t);
-    bar.append(pillSelect(TAB_LABEL[pos] || pos, posOpts, pos, (v) => { fxSet.pos = v; fxSet.side = PIT_TABS.includes(v) ? "P" : "H"; save(); }, "Position"),
-               pillSelect(short(wlab), side === "P" ? FX_WINS.filter(([k]) => !k.startsWith("pa")) : FX_WINS, wcur, (v) => { fxSet.win = v; save(); }, "Window"),
-               pillSelect(short(fxSet.sort === "cred" ? "Most credible" : big), [["gain", big], ["cred", "Most credible"]], fxSet.sort, (v) => { fxSet.sort = v; save(); }, "Order"));
-    const count = el("span", "pbcount"); bar.append(count);
-    let trow = null;   // the title row: the heading, a line under it (a phone's carries the count), and the explanation's link at its right
-    const title = (h, sub) => { trow = el("div", "fxtitle"); trow.append(el("h2", null, h), el("span", "fxsub", sub)); page.append(trow); };
-    const subCount = (txt) => { const sp = trow && trow.querySelector(".fxsub"); if (sp && PH) sp.textContent = txt; };
+    // the Leaders bar (29 Oct 2026): the page picker, then Position · Window · Order as buttons (marked when set), and the count line under it saying
+    // what's listed, the window and the order — the Leaderboard's dress; the pills and the "Hitting Movers" heading are history
+    const C = leadersChrome("flaws", [
+      barPick({ name: "Position", key: "pos", opts: posOpts, cur: pos, now: TAB_LABEL[pos] || pos, pick: (v) => { fxSet.pos = v; fxSet.side = PIT_TABS.includes(v) ? "P" : "H"; save(); }, set: !allPos }),
+      barPick({ name: "Window", key: "win", opts: side === "P" ? FX_WINS.filter(([k]) => !k.startsWith("pa")) : FX_WINS, cur: wcur, now: wlab, pick: (v) => { fxSet.win = v; save(); }, set: wcur !== "30" }),
+      barPick({ name: "Order", key: "ord", opts: [["gain", big], ["cred", "Most credible"]], cur: fxSet.sort, now: fxSet.sort === "cred" ? "Most credible" : big, pick: (v) => { fxSet.sort = v; save(); }, set: fxSet.sort === "cred" })]);
+    page.append(C.row, C.line);
+    const count = C.count, WIN = prevMode ? `${Y} vs ${Y0}` : wlab.toLowerCase();   // the window, on the count line
+    const title = (h, sub) => { C.by.textContent = sub; };   // the sort after the count; the page's name is the bar's first button
     const say = (txt) => page.append(el("p", "note", txt));
-    const more = (txt) => {   // the explanation, folded the way Fantasy's is, its link in the title row and the note under it
-      const lab = () => (fxNoteOpen ? "Less" : PH ? "About" : "More about these numbers");
-      const n = el("p", "note fxnote" + (fxNoteOpen ? " open" : ""), txt), b = el("button", "linkbtn fxmore", lab()); b.type = "button";
-      b.addEventListener("click", () => { fxNoteOpen = !fxNoteOpen; n.classList.toggle("open", fxNoteOpen); b.textContent = lab(); });
-      if (trow) { trow.append(b); trow.after(n); } else page.append(n, b);
-    };
+    const more = (txt) => foldNote(C, txt, () => fxNoteOpen, (v) => { fxNoteOpen = v; });
     ensureHist(fxPrevKey());   // last season: the base in the vs-last mode, the credibility's witness otherwise (both sides)
     if (!prevMode) ensureDays(side);
     const W = prevMode ? String(Y) : wlab, f1 = (x) => (x == null ? "–" : x.toFixed(1));
@@ -5872,12 +5867,12 @@
     const pin = (t) => requestAnimationFrame(() => { const rk = t.querySelector("tbody td.f1"), ov = t.querySelector("tr.over"); if (rk) t.style.setProperty("--sbw1", rk.offsetWidth + "px"); if (ov) t.style.setProperty("--overh", ov.offsetHeight + "px"); });
     if (side === "H") {
       const by = `by Δ xwOBA ${fxSet.sort === "cred" ? "× credibility" : "if it held"}`;
-      title("Hitting Movers", PH ? by : `elite but for one piece, and that piece moved · ${by}`);   // a phone keeps the title to one line
+      title("Hitting Movers", PH ? by : `${by} · elite but for one piece, and that piece moved`);
       if (!prevMode && !daysReady("H")) { say(daysBad.H ? "Couldn't load the game-by-game data." : "Loading game-by-game data…"); return; }
       const R = flawRows(fxSet.win), { cand } = R, rows = R.rows.filter((r) => inPos2(r.p)).sort((a, b) => fxSet.sort === "cred" ? b.cgain - a.cgain : b.gain - a.gain);
       if (R.loading) { say(`Loading the ${Y0} season…`); return; }
-      count.textContent = allPos ? `${rows.length} hitters · ${cand} elite with a flaw${prevMode ? ` in ${Y0}` : ""}` : `${rows.length} at ${pos} · ${R.rows.length} hitters · ${cand} elite with a flaw${prevMode ? ` in ${Y0}` : ""}`;
-      subCount(allPos ? `${rows.length} hitters` : `${rows.length} at ${pos}`);
+      const elite = PH ? "" : ` · ${cand} elite with a flaw${prevMode ? ` in ${Y0}` : ""}`;   // a phone's line keeps to the count and the window
+      count.textContent = (allPos ? `${rows.length} hitters${elite}` : `${rows.length} at ${pos} · ${R.rows.length} hitters${elite}`) + ` · ${WIN}`;
       const refH = [], noPct = (x) => x.replace("%", "");   // a phone's Flaw column drops the % signs, as home's card does (the piece's name says it's a rate)
       withDataset(R.baseDS || DS, () => withWindow(NOWIN, () => withSplit(NONE, () => { for (const p of DS.players) if (p.type === "H" && (p.pa || 0) >= 300) { const v = V(p).m.xwd; if (v != null) refH.push(v); } }))); refH.sort((a, b) => a - b);
       const S0 = prevMode ? String(Y0) : "Season", credTip = `how much of the move is likely real: the piece's reliability at the window's PA, then last season as a witness (a prior season already past the midpoint of the move raises it, one on the far side lowers it)`;
@@ -5903,13 +5898,12 @@
     // the pitchers (29 Oct 2026): the stat that moved, what his season nERA would be if it held, by the drop (or the drop × its credibility) — the
     // hitters' table on nERA's pieces. A name opens his page on that window's Game Logs
     const pby = `by Δ nERA ${fxSet.sort === "cred" ? "× credibility" : "if it held"}`;
-    title("Pitching Movers", PH ? pby : `a stat that moved, and the nERA it's worth if it held all season · ${pby}`);
+    title("Pitching Movers", PH ? pby : `${pby} · a stat that moved, and the nERA it's worth if it held all season`);
     const M = pitchMovers(wcur);
     if (M.loading) { say(`Loading the ${Y0} season…`); return; }
     if (M.wait) { say(daysBad.P ? "Couldn't load the pitchers' game-by-game data." : "Loading the pitchers' game-by-game data…"); return; }
     const prow = M.rows.filter((r) => inPos2(r.p)).sort((a, b) => fxSet.sort === "cred" ? b.cgain - a.cgain : b.gain - a.gain);
-    count.textContent = allPos ? `${M.rows.length} of ${M.all} pitchers with a stat that moved` : `${prow.length} ${pos} · ${M.rows.length} of ${M.all} pitchers with a stat that moved`;
-    subCount(allPos ? `${prow.length} pitchers` : `${prow.length} ${pos}`);
+    count.textContent = (allPos ? `${M.rows.length} of ${M.all} pitchers${PH ? "" : " with a stat that moved"}` : `${prow.length} ${pos} · ${M.rows.length} of ${M.all} pitchers${PH ? "" : " with a stat that moved"}`) + ` · ${WIN}`;
     const refP = [];   // If it held is coloured by its place among the season's 100+ IP pitchers' nERA, as home's lists are
     withDataset(M.rows.length && prevMode ? fxPrevDS() : DS, () => withWindow(NOWIN, () => withSplit(NONE, () => { for (const p of DS.players) if (p.type === "P" && (p.ip || 0) >= 100) { const v = V(p).m.nera; if (v != null) refP.push(-v); } }))); refP.sort((a, b) => a - b);
     const f2 = (x) => (x == null ? "–" : x.toFixed(2)), noPct = (x) => x.replace("%", ""), S0 = prevMode ? String(Y0) : "Season";
@@ -11587,6 +11581,34 @@
       bar.scrollLeft += r.left - br.left - (br.width - r.width) / 2;
     });
     return bar;
+  }
+  // The Leaders pages share one bar (Sean, 29 Oct 2026: "one more button in that bar up top that has the drop down for leaderboard pitching+ and
+  // movers ... make it so the pitching+ and movers tables are exactly the same format wise as the leaders page ... if the buttons dont all fit
+  // it has an internal scroll"): the bar's first button names the page and opens the three as a list; every other button is one pick of the
+  // page's (the Leaderboard's dropdown pages, the Pitching+ board's pitch / hand / role / minimum / colour, Movers' position / window / order),
+  // marked (.set) when it has something in effect; under the bar one line carries the count and what the list is sorted by, over the red rule,
+  // as the Leaderboard's #lbtitle does. A phone centres the bar and scrolls it inside itself when the buttons don't fit.
+  const LEADERS_PAGES = [["leaderboard", "Leaderboard", "#leaderboard"], ["pitches", "Pitching+", "#pitches"], ["flaws", "Movers", "#movers"]];
+  const CHEV = '<svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  function pagePick(mode) {
+    const cur = mode === "trending" ? "leaderboard" : mode, pg = LEADERS_PAGES.find(([k]) => k === cur) || LEADERS_PAGES[0];
+    const b = el("button", "sbview pgpick"); b.type = "button"; b.append(el("span", "pgname", pg[1])); b.insertAdjacentHTML("beforeend", CHEV);
+    b.setAttribute("aria-label", `Page: ${pg[1]}`); b.setAttribute("aria-haspopup", "listbox"); b.setAttribute("aria-expanded", "false");
+    b.addEventListener("click", (e) => { e.stopPropagation(); ddOpenOn(b, LEADERS_PAGES.map(([k, l]) => [k, l]), cur, (k) => { const h = (LEADERS_PAGES.find(([x]) => x === k) || pg)[2]; if (location.hash !== h) location.hash = h; }, { keyboard: e.detail === 0 }); });
+    return b;
+  }
+  // one pick of a page as a bar button: its name on the button, the choice in the list it opens (the count line says what's in effect)
+  function barPick({ name, key, opts, cur, now, pick, set }) {
+    const b = el("button", "sbview" + (set ? " set" : ""), name); b.type = "button"; b.dataset.pick = key;
+    b.setAttribute("aria-label", `${name}: ${now || ""}`); b.setAttribute("aria-haspopup", "listbox"); b.setAttribute("aria-expanded", "false");
+    b.addEventListener("click", (e) => { e.stopPropagation(); ddOpenOn(b, opts, cur, (v) => pick(String(v)), { keyboard: e.detail === 0 }); });
+    return b;
+  }
+  // the chrome: the bar (the page picker first, then the page's buttons) in a row, and the count line under it
+  function leadersChrome(mode, buttons) {
+    const row = el("div", "pgrow"), bar = el("div", "sbviews lbviews"); bar.append(pagePick(mode), ...buttons); row.append(bar);
+    const line = el("div", "pgline"), count = el("span", "pcount"), by = el("span", "pgby"); line.append(count, by);
+    return { row, bar, line, count, by };
   }
   function seasonBlock(p, o) {
     const H = p.type === "H", box = el("section", "sblock");
