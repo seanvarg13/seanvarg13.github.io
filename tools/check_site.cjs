@@ -108,6 +108,16 @@ function minorsId() {
         if (tm === "NYY") { await pg.evaluate(() => document.querySelector(".bppage table tbody tr .pbname").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
           await until(() => location.hash === "#bullpens" && !!document.querySelector("#xboard.xpop .xpopx")); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); } } });
     await step("fantasy", async () => { await hash("#fantasy"); await count("#fboard table tbody tr", 10, 90000); });
+    await step("phone bar", async () => {   // the bottom bar on a phone (29 Oct 2026): six tabs, Fantasy's sheet, a page from it; hidden on a desktop
+      const shown = await pg.evaluate(() => { const b = document.querySelector(".pbar"); return b ? getComputedStyle(b).display !== "none" : null; });
+      if (shown === null) throw new Error("no .pbar");
+      if (name.startsWith("phone")) { if (!shown) throw new Error("the phone bar is hidden");
+        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 6 && getComputedStyle(document.querySelector(".navtog")).display === "none");
+        await pg.evaluate(() => document.querySelector(".pbar button").click()); await until(() => !document.querySelector("#pbarsheet").hidden && document.querySelectorAll("#pbarsheet a").length === 5);
+        await pg.evaluate(() => [...document.querySelectorAll("#pbarsheet a")].find((a) => a.textContent === "Bullpens").click());
+        await until(() => location.hash === "#bullpens" && document.querySelector("#pbarsheet").hidden); await count(".bppage table tbody tr", 20, 120000);
+        await until(() => document.querySelector('.pbar [data-mode="draftmode"]').getAttribute("aria-current") === "page"); }
+      else if (shown) throw new Error("the phone bar shows on a desktop"); });
     if (!QUICK) {
       await step("mock draft", async () => { await hash("#mock"); await until(() => document.querySelector("#pitchboard") && document.querySelector("#pitchboard").innerText.length > 50); });
       await step("settings", async () => { for (const t of ["glossary", "appearance", "key", "how"]) { await hash("#settings/" + t); await count(".stabs .btab", 3); } });
