@@ -13633,13 +13633,14 @@
   // there instead and just have one search button up top to search for player cards"): every page as a tab along the foot of the screen, Fantasy's
   // five pages in a sheet over it, the header left to the search. Made here like the Menu it replaces (index.html doesn't round-trip); the CSS shows
   // it on a phone only, and renderChrome lights the page the way it lights the header's words.
-  { const I = { home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h14V10"></path></svg>',
-                leaderboard: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>',
-                pitches: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle></svg>',
-                flaws: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"></path></svg>',
-                draftmode: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 14v4M8 21h8"></path></svg>',
-                settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M4 12h2M18 12h2M12 4v2M12 18v2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M6.3 17.7l1.4-1.4M16.3 7.7l1.4-1.4"></path></svg>',
-                search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>' };
+  // The icons are filled glyphs in SF Symbols' manner (the App Store's bar, 29 Oct 2026); Search is the one stroked glyph, as the magnifier is there.
+  { const I = { home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.3 2.6a1 1 0 0 1 1.4 0l8.5 8.1a1 1 0 0 1-.7 1.7H19v7.6a1 1 0 0 1-1 1h-3.5a.5.5 0 0 1-.5-.5V15a2 2 0 0 0-4 0v5.5a.5.5 0 0 1-.5.5H6a1 1 0 0 1-1-1v-7.6H3.5a1 1 0 0 1-.7-1.7z"></path></svg>',
+                leaderboard: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 13a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v7.5a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1zM9.5 4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v16.5a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1zM15.5 8.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1z"></path></svg>',
+                pitches: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 4.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11zm0 3a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"></path></svg>',
+                flaws: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 5.5a1 1 0 0 0-1-1h-5.6a1 1 0 0 0 0 2h3.2l-5.1 5.1-3.3-3.3a1 1 0 0 0-1.4 0l-6 6a1 1 0 0 0 1.4 1.4L9 10.4l3.3 3.3a1 1 0 0 0 1.4 0l5.8-5.8v3.2a1 1 0 0 0 2 0z"></path></svg>',
+                draftmode: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M6.5 2.5h11a1 1 0 0 1 1 1V5h2.5a1 1 0 0 1 1 1v1.5c0 2.4-1.7 4.4-4 4.9A6 6 0 0 1 13 16v2h2.5a1 1 0 0 1 1 1v1.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V19a1 1 0 0 1 1-1H11v-2a6 6 0 0 1-5-3.6C3.7 11.9 2 9.9 2 7.5V6a1 1 0 0 1 1-1h2.5V3.5a1 1 0 0 1 1-1zM5.5 7H4v.5c0 1.1.6 2 1.5 2.5zm13 0v3a3 3 0 0 0 1.5-2.5V7z"></path></svg>',
+                settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path></svg>',
+                search: '<svg class="pstroke" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.75"></circle><path d="M15.5 15.5 21 21"></path></svg>' };
     const bar = el("nav", "pbar"); bar.setAttribute("aria-label", "Pages");
     const sheet = el("ul", "pbarsheet"); sheet.hidden = true; sheet.id = "pbarsheet";
     for (const [h, l] of [["#rankings", "Rankings"], ["#fantasy/leaders", "Fantasy leaderboard"], ["#bullpens", "Bullpens"], ["#mock", "Mock draft"], ["#fantasy/settings", "Scoring settings"]]) { const li = el("li"), a = el("a", null, l); a.href = h; li.append(a); sheet.append(li); }
@@ -13656,7 +13657,8 @@
     window.addEventListener("hashchange", () => { setSheet(false); pSearch(false); });
     document.addEventListener("click", (e) => { if (!sheet.hidden && !sheet.contains(e.target)) setSheet(false); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !sheet.hidden) setSheet(false); });
-    document.body.append(bar, sheet); }
+    const fade = el("div", "pbarfade"); fade.setAttribute("aria-hidden", "true");   // the scroll-edge dim behind the pill (the App Store's)
+    document.body.append(fade, bar, sheet); }
 
   // keep the sticky column header just under the sticky toolbar
   const tb = document.querySelector(".toolbar:not(.xtoolbar)"), hd = document.querySelector("header.top");
