@@ -3,14 +3,14 @@
 review's picks: "lineup slot & PA volume").
 
 Per hitter: games on the active roster (a start, a substitute appearance or a day on the bench — the box score lists all three), starts,
-starts by lineup slot, plate appearances (all of them, and those in the games he started — the card's PA per start leaves a pinch-hit
-appearance out), starts and roster games against left- and right-handed starting pitchers, and his slot in each of his team's last 15
+starts by lineup slot, plate appearances (all of them, and those in the games he started), games played (a start or a substitute appearance —
+the card's PA per game is his PA over these), starts and roster games against left- and right-handed starting pitchers, and his slot in each of his team's last 15
 games (0 = on the roster but didn't start, -1 = not on the roster that day).
 
     window.DRAFT_LINEUPS = {"season": 2026, "through": "2026-09-27", "g": {"<team id>": games played},
                             "p": {"<MLB id>": {"ar": roster games, "gs": starts, "pa": PA, "sl": [starts in slots 1-9],
                                                "vl": [starts, roster games] vs LHP, "vr": [...] vs RHP, "last": [15 slots], "tm": <team id>,
-                                               "pas": PA in the games he started}}}
+                                               "pas": PA in the games he started, "gp": games played}}}
 
 Run by cloud_daily.py with each MLB build (non-fatal); each game's box score is kept in .cache/lineups/<season>/<gamePk>.json, so a daily run
 fetches only the new games (~2,400 the first time, ~90 s with 24 threads). Standard library only.
@@ -137,7 +137,7 @@ def build(season, through):
     def rec(pid):
         r = P.get(pid)
         if r is None:
-            r = P[pid] = {"ar": 0, "gs": 0, "pa": 0, "pas": 0, "sl": [0] * 9, "vl": [0, 0], "vr": [0, 0], "tm": None, "days": {}}
+            r = P[pid] = {"ar": 0, "gs": 0, "pa": 0, "pas": 0, "gp": 0, "sl": [0] * 9, "vl": [0, 0], "vr": [0, 0], "tm": None, "days": {}}
         return r
     for (date, pk, away, home), b in zip(games, boxes):
         if not b:
@@ -146,7 +146,8 @@ def build(season, through):
             TG[str(team)] = TG.get(str(team), 0) + 1
             order.setdefault(str(team), []).append((date, pk))
             s, hand = b[side], H.get(str(b[other]["sp"]), "")
-            on = set(s["st"]) | {str(x) for x in s["sub"]} | {str(x) for x in s["bench"]}
+            subs = {str(x) for x in s["sub"]}
+            on = set(s["st"]) | subs | {str(x) for x in s["bench"]}
             for pid in on:
                 r = rec(pid); r["ar"] += 1; r["pa"] += s["pa"].get(pid, 0); r["tm"] = str(team)
                 slot = s["st"].get(pid, 0)
@@ -156,13 +157,15 @@ def build(season, through):
                     k = "vl" if hand == "L" else "vr"; r[k][1] += 1
                     if slot:
                         r[k][0] += 1
+                if slot or pid in subs:
+                    r["gp"] += 1
                 r["days"][pk] = slot
     out = {}
     for pid, r in P.items():
         if not r["ar"]:
             continue
         last = [r["days"].get(pk, -1) for _, pk in order.get(r["tm"], [])[-LAST:]]
-        out[pid] = {"ar": r["ar"], "gs": r["gs"], "pa": r["pa"], "sl": r["sl"], "vl": r["vl"], "vr": r["vr"], "last": last, "tm": int(r["tm"]), "pas": r["pas"]}
+        out[pid] = {"ar": r["ar"], "gs": r["gs"], "pa": r["pa"], "sl": r["sl"], "vl": r["vl"], "vr": r["vr"], "last": last, "tm": int(r["tm"]), "pas": r["pas"], "gp": r["gp"]}
     data = {"season": season, "through": through, "g": TG, "p": out}
     path = os.path.join(ROOT, "hist", "lineups.js")
     body = "window.DRAFT_LINEUPS = " + json.dumps(data, separators=(",", ":")) + ";\n"

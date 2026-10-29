@@ -5803,3 +5803,11 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="fantasy"] #fboard > .pgrow { margin: 0 !important; padding: 4px 8px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="fantasy"] #fboard > :not(.pgrow) { margin-left: 12px !important; margin-right: 12px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="mock"] #pitchboard > .mkset { width: auto !important; margin: 0 12px !important; }
+
+/* The Bats cell's top three lineup spots, a line each — the slot over its share of his starts (Sean, 29 Oct 2026: "show their top 3 spots by %") */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pbtop { display: flex; flex-direction: column; align-items: center; gap: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pbtopr { display: flex; align-items: baseline; justify-content: center; gap: 5px; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pbtopr .pbsvv { font-size: 15px; line-height: 1.15; min-width: 2.1em; text-align: right; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pbtopr .pbsvs { display: inline; min-width: 2.4em; text-align: left; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pagehead .pblu .pbtopr { gap: 3px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pagehead .pblu .pbtopr .pbsvv { font-size: 13px; }

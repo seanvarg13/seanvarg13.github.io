@@ -25,7 +25,7 @@
         ["Fantasy", ["fpts", "fpg", "fpgs", "fpip", "fpwk", "xfpts", "xfpg", "xfpgs", "xfpip", "xfpwk"]]],   // points per unit and expected (Sean, 16 Oct 2026)   // Pitching+ back in place of Stuff+ (Sean, 6 Oct 2026: "make stuff+ back into pitching+ with the addition of the location and command thing")
   };
   const colLab = (m) => { const l0 = SHORT[m.key] || m.label, l = WS_VAL.has(m.key) || WS_DIF.has(m.key) ? wsLab(l0) : l0; return m.unit === "%" && !l.includes("%") ? l + "%" : l; };
-  const SHORT = { slot: "Slot", stpct: "Starts", patg: "PA/start", lsp: "Starts% vs L", rsp: "Starts% vs R", xwpk: "xwOBA parks", xwn: "xwOBA neutral", foul: "Foul%", fpc: "Foul/Con", nfpc: "xFoul/Con", xnera: "xnERA", xkw: "Whiff−xK%", xkws: "xWhiff−P+ xK%", ncstr: "xCalled Strk", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strk Whiff", nfoul: "xFoul%", s2whf: "2-strk Whiff", s2sw: "2-strk Sw", s2zone: "2-strk Zone", xkf: "xK%", xks: "Pitching+ xK%", xbbf: "xBB%", xkbb: "x(K-BB)%", xkbbs: "Pitching+ x(K-BB)%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", pjwhf: "Proj Whiff", mixw: "Mix wOBA", mixbab: "Mix xBABIP", nmix: "Mix xwOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", evfb: "FB EV", evld: "EV LD", evgb: "EV GB", brfb: "FB Brl", brld: "Brl LD", brgb: "Brl GB", brl: "Brl%", pull: "Pull Air", pullfb: "Pull FB%", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG", f9woba: "wOBA vs 95+", f9xw: "xwOBA vs 95+", f9whf: "Whiff% vs 95+", fuwoba: "wOBA vs <95", fuxw: "xwOBA vs <95", fuwhf: "Whiff% vs <95", brwoba: "wOBA vs brk", brxw: "xwOBA vs brk", brwhf: "Whiff% vs brk", ofwoba: "wOBA vs off", ofxw: "xwOBA vs off", ofwhf: "Whiff% vs off" };
+  const SHORT = { slot: "Slot", stpct: "Starts", patg: "PA/G", lsp: "Starts% vs L", rsp: "Starts% vs R", xwpk: "xwOBA parks", xwn: "xwOBA neutral", foul: "Foul%", fpc: "Foul/Con", nfpc: "xFoul/Con", xnera: "xnERA", xkw: "Whiff−xK%", xkws: "xWhiff−P+ xK%", ncstr: "xCalled Strk", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strk Whiff", nfoul: "xFoul%", s2whf: "2-strk Whiff", s2sw: "2-strk Sw", s2zone: "2-strk Zone", xkf: "xK%", xks: "Pitching+ xK%", xbbf: "xBB%", xkbb: "x(K-BB)%", xkbbs: "Pitching+ x(K-BB)%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", pjwhf: "Proj Whiff", mixw: "Mix wOBA", mixbab: "Mix xBABIP", nmix: "Mix xwOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Loc+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", evfb: "FB EV", evld: "EV LD", evgb: "EV GB", brfb: "FB Brl", brld: "Brl LD", brgb: "Brl GB", brl: "Brl%", pull: "Pull Air", pullfb: "Pull FB%", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG", f9woba: "wOBA vs 95+", f9xw: "xwOBA vs 95+", f9whf: "Whiff% vs 95+", fuwoba: "wOBA vs <95", fuxw: "xwOBA vs <95", fuwhf: "Whiff% vs <95", brwoba: "wOBA vs brk", brxw: "xwOBA vs brk", brwhf: "Whiff% vs brk", ofwoba: "wOBA vs off", ofxw: "xwOBA vs off", ofwhf: "Whiff% vs off" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
                tiers: "draft2027.tiers", tierNames: "draft2027.tierNames", sets: "draft2027.rankSets", extraPos: "draft2027.extraPos", stars: "draft2027.stars" };
   // Storage that cannot lose a saved list. A value that will not parse is left exactly where it is — its raw
@@ -422,11 +422,11 @@
   const FANT_KEYS = new Set([...FANT_H, ...FANT_P].map((m) => m.key));
   // Lineup slot and playing time (Sean, 28 Oct 2026, item 7 of the review's picks: "lineup slot & PA volume"): hist/lineups.js (tools/build_lineups.py,
   // every box score of the season) — his mean lineup slot when he starts, starts as a share of his games on the active roster, plate appearances per
-  // start (his PA in the games he started over those starts — a pinch-hit appearance isn't counted; Sean, 29 Oct 2026: Will Smith's 276 PA in
-  // 76 games read 3.0 per roster game, he wanted "pa/start"), and his starts against left- and right-handed starting pitchers. This season's
+  // game played (starts and substitute appearances — bench days and IL time don't count; Sean, 29 Oct 2026: Will Smith's 276 PA read 3.0 per
+  // roster game, then PA per start for an hour, then "make it per game not per start"), and his starts against left- and right-handed starting pitchers. This season's
   // full season only (lineFill)
   const LINE_H = [{ key: "slot", label: "Slot", hib: false, dec: 1, unit: "", showValue: true }, { key: "stpct", label: "Starts%", hib: true, dec: 1, unit: "%", showValue: true },
-                  { key: "patg", label: "PA/start", hib: true, dec: 2, unit: "", showValue: true }, { key: "lsp", label: "Starts% vs LHP", hib: true, dec: 1, unit: "", showValue: true },
+                  { key: "patg", label: "PA/G", hib: true, dec: 2, unit: "", showValue: true }, { key: "lsp", label: "Starts% vs LHP", hib: true, dec: 1, unit: "", showValue: true },
                   { key: "rsp", label: "Starts% vs RHP", hib: true, dec: 1, unit: "", showValue: true }];
   const LINE_KEYS = new Set(LINE_H.map((m) => m.key));
   // Arsenal optimization (Sean, 28 Sep 2026: "how much the pitcher optimizes their arsenal %s to throw pitches that on
@@ -6394,7 +6394,7 @@
     sloc: "Location+: what where he throws his pitches adds to his stuff — Pitching+ minus Stuff+, plus 100. Each location-aware chance is compared with the stuff-only chance on the same pitches (swings for whiffs, balls in play for the mix), so 100 means his spots add what an average pitcher's do and 110 that they're worth about 10% of a run's runs saved on top of his stuff. Stuff+ never sees location; this is the part that does.",
     slot: "Lineup slot: where he bats on average when he starts (1 = leadoff), from every box score of the season. Lower is better — more plate appearances a game. This season's full season only.",
     stpct: "Starts as a share of his games on the active roster (a start, a substitute appearance or a day on the bench all count as roster games), from the season's box scores. This season's full season only.",
-    patg: "Plate appearances per start — his plate appearances in the games he started, over those starts; a pinch-hit or substitute appearance isn't counted. This season's full season only.",
+    patg: "Plate appearances per game — his plate appearances over the games he played (starts and substitute appearances); a day on the bench or off the active roster isn't counted. This season's full season only.",
     lsp: "Starts as a share of his roster games against left-handed starting pitchers — the platoon side. This season's full season only.",
     rsp: "Starts as a share of his roster games against right-handed starting pitchers. This season's full season only.",
     // vs pitch type (28 Oct 2026): three entries a group
@@ -10748,32 +10748,33 @@
   const luData = () => window.DRAFT_LINEUPS || null;
   const luReady = () => !!luData();
   const luEnsure = () => { if (!luReady() && (!window.DRAFT_BUILD || window.DRAFT_BUILD["hist/lineups.js"])) ensureScript("hist/lineups.js", luReady); };
-  function luOf(p) {   // his numbers, or null: mean slot when he starts, starts as a share of roster games, PA per start, the two platoon sides
+  function luOf(p) {   // his numbers, or null: mean slot when he starts, starts as a share of roster games, PA per game played, the two platoon sides
     const D = luData(), r = D && D.p && D.p[p.id]; if (!r || !r.ar || +D.season !== +CUR.season) return null;
     const sl = r.sl || [], n = sl.reduce((a, x) => a + x, 0), slot = n ? sl.reduce((a, x, i) => a + x * (i + 1), 0) / n : null;
     const side = (a) => (a && a[1] >= 5 ? 100 * a[0] / a[1] : null);
     const lsp = side(r.vl), rsp = side(r.vr), pair = lsp != null && rsp != null && r.vl[1] >= 8 && r.vr[1] >= 8;
-    return { ar: r.ar, gs: r.gs, pa: r.pa, pas: r.pas, sl, slot, stpct: 100 * r.gs / r.ar, patg: r.gs ? (r.pas != null ? r.pas : r.pa) / r.gs : null, lsp, rsp, vl: r.vl, vr: r.vr, last: r.last || [], tm: r.tm,
+    return { ar: r.ar, gs: r.gs, pa: r.pa, pas: r.pas, sl, slot, stpct: 100 * r.gs / r.ar, gp: r.gp, patg: r.gp ? r.pa / r.gp : (r.gs ? (r.pas != null ? r.pas : r.pa) / r.gs : null), lsp, rsp, vl: r.vl, vr: r.vr, last: r.last || [], tm: r.tm,
              platoon: pair && Math.min(lsp, rsp) <= 45 && Math.max(lsp, rsp) >= 75 ? (lsp < rsp ? "L" : "R") : null, tg: D.g && r.tm != null ? D.g[r.tm] : null, through: D.through };
   }
   const ORD = (n) => n + (n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th");
   // the band's line under the Summary (this season's MLB page, full season whatever the filters): "Bats 2nd (68%) · 3rd (24%) · starts 155 of 160
-  // roster games (97%) · 4.4 PA/start · vs LHP 96% · vs RHP 98% · last 15: 2 2 2 – 2 2 …" with a Platooned chip when one side sits out
+  // roster games (97%) · 4.4 PA/G · vs LHP 96% · vs RHP 98% · last 15: 2 2 2 – 2 2 …" with a Platooned chip when one side sits out
   function lineupLine(p) {
     if (DS.key !== CUR.key || DS.level !== "MLB") return null;
     luEnsure(); const L = luOf(p); if (!L) return null;
     // a second Summary under the first (Sean, 29 Oct 2026: the line "feels very jumbled and just thrown on there, can we make it so that it is
-    // organized and easy to digest"): a labelled row in the band's dress — Bats · Starts · PA/start · vs LHP · vs RHP · Last 15 — each cell the
+    // organized and easy to digest"): a labelled row in the band's dress — Bats · Starts · PA/G · vs LHP · vs RHP · Last 15 — each cell the
     // headline number over a small line of detail, the tooltips as before; a phone gives the last-15 strip a row of its own. The run of
     // fragments with dots between them (28 Oct 2026) is history
     const d = el("div", "pbsum pblu"), PH = mobileView(), pl = L.platoon;
     const slots = L.sl.map((n, i) => [i + 1, n]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]), pc = (n) => `${Math.round(100 * n / L.gs)}%`;
     const cells = [];   // [label, value, detail, tooltip, classes]
-    if (L.gs) { const [k0, n0] = slots[0], rest = slots.slice(1).filter((x) => x[1] >= 0.15 * L.gs).slice(0, 2);
-      cells.push(["Bats", ORD(k0), pc(n0) + (rest.length && !PH ? " · " + rest.map(([k, n]) => `${ORD(k)} ${pc(n)}`).join(" · ") : ""), `Where he bats when he starts: ${slots.map(([k, n]) => `${ORD(k)} ${n}`).join(", ")} — mean slot ${L.slot.toFixed(1)}`, ""]); }
+    // his top three spots by share of his starts (Sean, 29 Oct 2026: "show their top 3 spots by %"), the slots over their shares
+    if (L.gs) { const top = slots.slice(0, 3);
+      cells.push(["Bats", top.map(([k, n]) => [ORD(k), pc(n)]), "", `Where he bats when he starts: ${slots.map(([k, n]) => `${ORD(k)} ${n}`).join(", ")} — mean slot ${L.slot.toFixed(1)}`, ""]); }
     else cells.push(["Bats", "–", "no starts", "No starts on the active roster yet", ""]);
     cells.push(["Starts", `${Math.round(L.stpct)}%`, `${L.gs} of ${L.ar}${PH ? "" : ` roster game${L.ar === 1 ? "" : "s"}`}`, `Games on the active roster (a start, a substitute appearance or the bench)${L.tg ? ` · his club has played ${L.tg}` : ""}`, "sep"]);
-    cells.push(["PA/start", L.patg != null ? L.patg.toFixed(1) : "–", PH ? "per start" : `${L.pas != null ? L.pas : L.pa} PA in ${L.gs} start${L.gs === 1 ? "" : "s"}`, "Plate appearances per start: his plate appearances in the games he started, over those starts (a pinch-hit or substitute appearance isn't counted)", ""]);
+    cells.push(["PA/G", L.patg != null ? L.patg.toFixed(1) : "–", PH ? "per game" : (L.gp != null ? `${L.pa} PA in ${L.gp} game${L.gp === 1 ? "" : "s"}` : `${L.pas != null ? L.pas : L.pa} PA in ${L.gs} start${L.gs === 1 ? "" : "s"}`), "Plate appearances per game: his plate appearances over the games he played, starts and substitute appearances (a day on the bench or off the active roster isn't counted)", ""]);
     for (const [h, v, a] of [["L", L.lsp, L.vl], ["R", L.rsp, L.vr]]) {
       if (v == null) continue;
       cells.push([`vs ${h}HP`, `${Math.round(v)}%`, pl === h ? "PLAT" : `${a[0]} of ${a[1]}${PH ? "" : " starts"}`, `Starts in ${a[0]} of his ${a[1]} roster games against ${h === "L" ? "left" : "right"}-handed starting pitchers${pl === h ? ` — sits against them: ${Math.round(v)}% against ${h === "L" ? "lefties" : "righties"}, ${Math.round(h === "L" ? L.rsp : L.lsp)}% against the other side` : ""}`, (h === "L" ? "sep" : "") + (pl === h ? " pbweak" : "")]);
@@ -10784,7 +10785,8 @@
       const sep = cls.includes("sep") ? " sep" : "";
       head.append(el("span", "pbsh" + sep, lab));
       const v = el("span", "pbsv pblcell" + sep + (cls.includes("pbweak") ? " pbweak" : "")); v.title = title;
-      v.append(el("b", "pbsvv", val));
+      if (Array.isArray(val)) { const t = el("span", "pbtop"); for (const [o, q] of val) { const r = el("span", "pbtopr"); r.append(el("b", "pbsvv", o), el("small", "pbsvs", q)); t.append(r); } v.append(t); }   /* the top three slots, a line each */
+      else v.append(el("b", "pbsvv", val));
       if (sub === "PLAT") { const c = el("span", "pbplat", "Platooned"); v.append(c); } else if (sub) v.append(el("small", "pbsvs", sub));
       row.append(v);
     }
