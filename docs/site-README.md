@@ -1283,15 +1283,16 @@ are new URLs to the worker. Nothing is installed on a local copy of the site unl
 
 ### A bottom bar on the phone (29 Oct 2026)
 
-On a phone the pages live in a bar along the foot of the screen, drawn like the MLB At Bat app's: a rounded pill set in from the screen's sides
-and floating a little above the home bar with a soft shadow, in the colour scheme's main colour (the Carolina blue of the header on the Titans
-scheme, the green on Jets, mint on Jets · Mint), with Home, Leaders, Pitching+, Movers, Fantasy and Settings as a white icon over a word each and the
-page you are on as a capsule in the scheme's deep ink (navy on Titans) with a bolder white icon and word; on a scheme whose ink is its main colour
-(Jets, UNC navy) the capsule is white instead. Fantasy opens a menu over its tab with its five pages (Rankings, Fantasy leaderboard, Bullpens, Mock
-draft, Scoring settings), in the site's own dropdown colours; a pick, a tap elsewhere or a page change closes it. The header is the search box alone now; the ☰ Menu is gone. Everything that
-used to stop above the iPhone's home bar (the list cards, the popup, the player page's tab strip, the Filters dropdown) stops above the pill
-instead. The desktop header is unchanged.
+On a phone the pages live in a bar along the foot of the screen, drawn like the iOS 26 App Store's tab bar (its MLB At Bat and solid-colour
+versions lasted the day): a glass pill set in from the screen's sides and floating a little above the home bar — translucent, so the page shows
+through it blurred and lightened, with a white rim along its top edge and a soft shadow — carrying Home, Leaders, Pitching+, Movers, Fantasy,
+Settings and Search as a filled icon over a word each, in the colour scheme's ink (navy on Titans, green on Jets). The page you are on sits in a
+whiter glass capsule with its icon and word in the scheme's accent blue, the way the App Store tints its selected tab. The foot of the screen behind
+the pill dims and blurs as the App Store's does, so content scrolling under the bar fades out beneath it. Fantasy opens a glass menu over its tab with
+its five pages (Rankings, Fantasy leaderboard, Bullpens, Mock draft, Scoring settings); a pick, a tap elsewhere or a page change closes it. Dark mode
+is the same bar in dark glass with white icons. Everything that used to stop above the iPhone's home bar (the list cards, the popup, the player page's
+tab strip, the Filters dropdown) stops above the pill instead. The desktop header is unchanged.
 
 Search is the bar's last tab (29 Oct 2026). A phone has no header at all until you tap it: the search box then opens over the top of the page
-with Cancel beside it and the matches as a list under it, the keyboard up; a pick, Cancel, the tab again or a tap on the sheet closes it. So every
-page starts at the top of the screen on a phone. The desktop keeps its header and its search box.
+with Cancel beside it and the matches as a list under it, the keyboard up, and only the Search tab is lit while it is open; a pick, Cancel, the tab
+again or a tap on the sheet closes it. So every page starts at the top of the screen on a phone. The desktop keeps its header and its search box.

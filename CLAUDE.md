@@ -5486,3 +5486,30 @@ line can bring them back.
   his season before it, K-BB% and FB velo beside it) is history. Checked: the page's rows against an independent recomputation from the day rows
   (scratch `pmov/indep.js`: the same 203 rows, Ginkel K% 26.2 → 40.4 on 12.1 IP, 3.48 → 1.84, −1.64; Wacha Popup% 9.8 → 22.0, 4.30 → 2.90),
   This season vs last (Cavalli K% 18.3 → 28.3, 2025's 3.91 → 2.87), the popup, home's card on both layouts, the full page check.
+
+* **The phone bar in the App Store's glass (Sean, 29 Oct 2026, from a screenshot of the iOS 26 App Store's tab bar — Today · Games · Apps · Arcade ·
+  Search on a translucent pill, the content showing through, Search in a lighter capsule: "Ok let's actually make it exactly like the app stores is
+  here")**: the solid band-colour pill of the same day is history; the bar is Liquid Glass, measured off his screenshot (sampled with a headless canvas,
+  PIL being broken here — 1184 × 2576, the pill x 60-1124 and y 2332-2512, so 20pt in from each side, 61pt tall, 21pt above the screen's bottom; the
+  selected capsule inset ~3.5pt; the glass over white #f2f2f4, over the blue tile a brighter blue; the surroundings dimmed to #bcbcbc at the foot of
+  the screen and clear ~30pt above the pill; the unselected glyphs near-black tinted by the content behind, the selected one the app's blue).
+  - **The pill** (`.pbar`, the block at the end of `styles.css`): `left / right: 20px`, 60px tall (`--pbar-ph`), `--pbar-off` = 62% of the home-bar
+    inset (8px at least; ~21px on an iPhone), `padding: 4px`; `background` a grey-white wash at 46% (`--pbar-glass`) over `backdrop-filter: blur(20px)
+    saturate(1.7) brightness(1.05)` (`--pbar-filter`; dark mode a dark grey at 52%, no brightening), inset rims (white .8 along the top, .34 along the
+    bottom), a half-pixel white edge and the soft shadow. Over his screenshot's tile colours (a test overlay) the glass reads a lighter, brighter blue
+    and orange as his does.
+  - **The tabs**: seven in the pill (Search stays the last, inside it, as the App Store's is), filled icons (`I` in `app.js`'s bar block — house, bars,
+    a target, a trend arrow, a trophy, a gear, SF Symbols' manner; Search the one stroked glyph) 26px over 11px / 600 words (`--body`, −.01em; every
+    word fits a 49px tab at 390 wide, "Pitching+" at 44), both in `--ink` (navy on Titans, green on Jets, near-white in dark mode). The current page
+    (or the open Fantasy / Search tab) is a whiter glass capsule (white at 58%, a 1px white ring at 72%, a faint shadow; dark mode white at 14%) with its
+    icon and word in `--accent-2-text` (Titans' #2f6fb3 — the App Store's tinted tab); while the search is open only Search is lit. The tab rules carry
+    `:not(#p1)` — the 10 Oct "every button is square" rule's `:is()` holds `#gq`, so an id's weight, and the Search button had drawn square.
+  - **The scroll-edge dim** (`.pbarfade`, appended before the bar): fixed over the bottom of the screen, `pointer-events: none`, 26% black (40% in
+    dark mode) with a 6px backdrop blur, masked to full from the bottom up to 30px above the pill's bottom and out ~34px above the pill, z-index 78 —
+    under the search's sheet (79), so the search list isn't dimmed. On the player page and home the content scrolls under the glass and fades beneath
+    it; on a standing-card page (the card ends 10px above the pill) it's a grey gradient over the ground, as the App Store's is over a white page.
+  - **The Fantasy menu** is a glass sheet too (white at 88% / dark grey at 90% over `blur(24px) saturate(1.6)`, 22px corners, 17px regular rows with
+    hairlines, the current page in 600 on a faint tint), 20px from the right edge over its tab.
+  - `--band2-type` / `--band2-sel` / `--band2-sel-ink` stay set by `themes.js`, unused. Checked headless at 390 × 844: Titans light and dark, Jets,
+    Warm (the Leaderboard, home scrolled, Judge's page scrolled so the table passes under the bar, the menu, the search), no script errors; the quick
+    and full page checks.
