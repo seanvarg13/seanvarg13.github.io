@@ -1285,12 +1285,13 @@ are new URLs to the worker. Nothing is installed on a local copy of the site unl
 
 On a phone the pages live in a bar along the foot of the screen, drawn like the iOS 26 App Store's tab bar (its MLB At Bat and solid-colour
 versions lasted the day): a glass pill set in from the screen's sides and floating a little above the home bar — translucent, so the page shows
-through it blurred and lightened, with a white rim along its top edge and a soft shadow — carrying Home, Leaders, Pitching+, Movers, Fantasy,
-Settings and Search as a filled icon over a word each, in the colour scheme's ink (navy on Titans, green on Jets). The page you are on sits in a
-whiter glass capsule with its icon and word in the scheme's accent blue, the way the App Store tints its selected tab. The foot of the screen behind
-the pill dims and blurs as the App Store's does, so content scrolling under the bar fades out beneath it. Fantasy opens a glass menu over its tab with
-its five pages (Rankings, Fantasy leaderboard, Bullpens, Mock draft, Scoring settings); a pick, a tap elsewhere or a page change closes it. Dark mode
-is the same bar in dark glass with white icons. Everything that used to stop above the iPhone's home bar (the list cards, the popup, the player page's
+through it blurred and lightened, with a white rim along its top edge and a soft shadow — carrying Home, Leaders, Fantasy, Settings and Search as a
+filled icon over a word each, in the colour scheme's ink (navy on Titans, green on Jets). The page you are on sits in a whiter glass capsule with its
+icon and word in the scheme's accent blue, the way the App Store tints its selected tab. The foot of the screen behind the pill dims and blurs as the
+App Store's does, so content scrolling under the bar fades out beneath it. Leaders and Fantasy each open a glass menu centred over their tab:
+Leaders' has the Leaderboard, Pitching+ and Movers (one tab for the three since 29 Oct 2026), Fantasy's its five pages (Rankings, Fantasy
+leaderboard, Bullpens, Mock draft, Scoring settings); a pick, a tap elsewhere, a page change or opening the other menu closes it, and the Leaders tab
+stays lit on any of its three pages. Dark mode is the same bar in dark glass with white icons. Everything that used to stop above the iPhone's home bar (the list cards, the popup, the player page's
 tab strip, the Filters dropdown) stops above the pill instead. The desktop header is unchanged.
 
 Search is the bar's last tab (29 Oct 2026). A phone has no header at all until you tap it: the search box then opens over the top of the page

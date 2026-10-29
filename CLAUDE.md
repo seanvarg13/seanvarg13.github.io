@@ -5513,3 +5513,17 @@ line can bring them back.
   - `--band2-type` / `--band2-sel` / `--band2-sel-ink` stay set by `themes.js`, unused. Checked headless at 390 × 844: Titans light and dark, Jets,
     Warm (the Leaderboard, home scrolled, Judge's page scrolled so the table passes under the bar, the menu, the search), no script errors; the quick
     and full page checks.
+
+* **Leaders is one tab with a menu (Sean, 29 Oct 2026: "Collapse the leaders, movers, and pitching+ into one called leaders on the bottom bar and make
+  it a drop down that allows you to select one of those three just like how fantasy is")**: the phone bar is **Home · Leaders · Fantasy · Settings ·
+  Search** — five tabs (~68px each at 390 wide, the words unchanged at 11px). **Leaders** is a button like Fantasy's (`data-mode="leaderboard"`,
+  `aria-controls="pbarsheet-leaders"`, the bars icon) that opens a glass sheet with **Leaderboard · Pitching+ · Movers**; the bar block in `app.js`
+  builds both sheets through one `mkSheet(id, items)` (a link may carry `data-mode` — Movers' hash is `#movers` but its mode is `flaws`, so a hash
+  match could never light it), `setSheet(k, on)` closes the other sheet when one opens, and `place(k)` centres the open sheet over its tab, kept
+  20px inside the screen (so Leaders' sits at the left edge, Fantasy's over the middle; re-placed on resize). The Search tab, a hash change, a tap
+  outside or Escape close whichever is open. **Lighting** (`renderChrome`): the Leaders tab carries `data-modes="leaderboard pitches flaws"` and a bar
+  tab lights when the page's group is any of its modes; a sheet link with `data-mode` lights when it is the page's mode or group (`#leaderboard` lights
+  for `trending` too), the Fantasy links by their hash as before. The page check's phone-bar step opens Leaders' sheet (three links, inside the
+  screen, above the pill), picks Movers (the Leaders tab and the Movers link lit), reopens it and opens Fantasy's (Leaders' closes), then Bullpens as
+  before. Headless at 390 × 844, Titans light / dark and Jets: Leaders' sheet 20-280px, Fantasy's 65-325 over its tab at 161-229, Pitching+ and the
+  Leaderboard light the Leaders tab, home lights only Home; a desktop hides the bar, both sheets and the fade.
