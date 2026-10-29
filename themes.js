@@ -125,6 +125,23 @@ window.DRAFT_THEMES = (function () {
               btn: "#3eb489", "btn-ink": "#ffffff", "btn-line": "transparent", "tab-fill": "#3eb489",
               ground: "#071512", "line-soft": "#1e463b", frame: "#1e463b", secrule: "#1e463b", "accent-ink": "#ffffff", "band-ink": "#eef7f4", svtext: "#eef7f4", svrule: "#1e463b", pctrack: "#16352d" },
     },
+    // the old Cleveland Indians (Sean, 29 Oct 2026: "a color theme that is the old cleveland indians maroon navy and cream white colors"): a cream
+    // ground and cream cards, maroon bands and buttons with cream type on them, navy type and the navy stripe under the band — the cream jersey
+    // with maroon lettering and navy piping. Dark mode is a navy night with the same maroon bands and cream type. Outlines stay (not a flat
+    // scheme); the percentile colours are Savant's
+    cleveland: {
+      name: "Cleveland", blurb: "The old Cleveland Indians — cream white ground, maroon bands and buttons with cream type, navy type and a navy stripe under the band.",
+      light: { accent: "#7a1f33", "accent-2": "#7a1f33", "accent-2-ink": "#f8f1e1", "accent-2-dim": "rgba(248, 241, 225, 0.85)", "on-fill-wash": W + "0.12)", "on-fill-wash-2": W + "0.22)", "on-fill-line": W + "0.4)", "tab-ink": "#f8f1e1",
+               "accent-2-text": "#8f2a40", pop: "#fbf6ea", rule: "#dccfb3", "stripe-line": "#0c2340", "accent-wash": "rgba(122, 31, 51, 0.12)", ink: "#0c2340", "ink-2": "#35445f", hover: "#f1e7d2",
+               page: "#f4ecdc", surface: "#fbf6ea", "surface-2": "#efe6d2", hair: "#dccfb3", rail: "#c9b995", stripe: "#f4ecdc", band: "#fbf6ea", plate: "#dccfb3", muted: "#6f6a5c",
+               btn: "#7a1f33", "btn-ink": "#f8f1e1", "btn-line": "#dccfb3", "tab-fill": "#7a1f33",
+               ground: "#f4ecdc", "line-soft": "#dccfb3", frame: "#cdbf9e", secrule: "#dccfb3", "accent-ink": "#f8f1e1", "band-ink": "#f8f1e1", svtext: "#0c2340", svrule: "#dccfb3", pctrack: "#e8dfc9" },
+      dark: { accent: "#e0a0ae", "accent-2": "#7a1f33", "accent-2-ink": "#f8f1e1", "accent-2-dim": "rgba(248, 241, 225, 0.85)", "on-fill-wash": W + "0.1)", "on-fill-wash-2": W + "0.18)", "on-fill-line": W + "0.35)", "tab-ink": "#f8f1e1",
+              "accent-2-text": "#e0a0ae", pop: "#112138", rule: "#233b5c", "stripe-line": "#efe6d4", "accent-wash": "rgba(122, 31, 51, 0.3)", ink: "#efe6d4", "ink-2": "#c8bda6", hover: "#172a46",
+              page: "#0b1628", surface: "#112138", "surface-2": "#172a46", hair: "#233b5c", rail: "#2d4a70", stripe: "#0b1628", band: "#112138", plate: "#233b5c", muted: "#98a3b3",
+              btn: "#7a1f33", "btn-ink": "#f8f1e1", "btn-line": "#233b5c", "tab-fill": "#7a1f33",
+              ground: "#0b1628", "line-soft": "#233b5c", frame: "#233b5c", secrule: "#233b5c", "accent-ink": "#f8f1e1", "band-ink": "#efe6d4", svtext: "#efe6d4", svrule: "#233b5c", pctrack: "#1b2f4c" },
+    },
     "titans-unc": {
       name: "Titans · Carolina", blurb: "Tennessee in Carolina blue — Titans navy type, the red stripe, UNC blue across the banner.",
       light: { accent: "#0c2340", "accent-2": "#7bafd4", ...onLight("#0c2340", "rgba(12, 35, 64, 0.85)"), "accent-2-text": "#4b9cd3", pop: "#ffffff", rule: "#0c2340", "stripe-line": "#c8102e", "accent-wash": "rgba(123, 175, 212, 0.24)", ink: "#0c2340", "ink-2": "#35465f", hover: "#eaf2f9", band: "#0c2340" },

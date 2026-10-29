@@ -5630,3 +5630,15 @@ line can bring them back.
   clicks the two tabs and watches the remembered page, and a full-check step, "the bar in one spot", visits the nine pages and requires the bar's
   left / top equal, the picker's width equal within a group and the three Leaders frames' four edges equal. CSS: the block at the end of
   `styles.css` (33 roots).
+
+* **Cleveland (Sean, 29 Oct 2026: "can you make a color theme that is the old cleveland indians maroon navy and cream white colors")**: a
+  scheme in Settings ▸ Appearance ▸ Colour scheme, after Jets · Mint, per device (Titans stays the site default). `cleveland` in `themes.js`,
+  built in the Titans scheme's full token shape (the warm pass's tokens included), not flat — the outlines stay: **light** a cream ground
+  `#f4ecdc` with cream cards `#fbf6ea` / `#efe6d2`, warm beige hairlines `#dccfb3` (the `rule` under the header and the band too, so the band
+  ends in a cream line over the navy stripe — a jersey's piping), **maroon `#7a1f33`** as `accent`, `accent-2` (the header, the column-name
+  bands, the player band, the phone bar), `btn` and `tab-fill` with cream type `#f8f1e1` on them, **navy `#0c2340`** as the type (`ink`,
+  `svtext`, `band-ink` candidates) and the `stripe-line`, a mid maroon `#8f2a40` for accent type and links; **dark** the Titans night (`#0b1628`
+  page, `#112138` cards, `#233b5c` hairlines) with the same maroon bands and buttons, cream type `#efe6d4` and a cream stripe. `pickInk` lands on
+  the cream `band-ink` for the Summary on the band; the phone bar's capsule is white with navy type (navy on maroon is under 2:1). The percentile
+  colours are Savant's, as everywhere. Checked headless on both layouts, light and dark: the Leaderboard, home, Judge's page, Appearance and
+  Rankings — no script errors; type on the ground 13:1 and up, cream on the maroon bands 10:1.
