@@ -6406,7 +6406,8 @@
   function renderChrome() {
     const grp = NAV_GROUPS.find((G) => G.modes.includes(state.mode));
     const navMode = grp ? grp.key : state.mode;
-    document.querySelectorAll(".modes [data-mode]").forEach((a) => { if (a.dataset.mode === navMode) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+    document.querySelectorAll(".modes [data-mode], .pbar [data-mode]").forEach((a) => { if (a.dataset.mode === navMode) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+    for (const a of document.querySelectorAll("#pbarsheet a")) { if (a.getAttribute("href") === "#" + state.mode) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); }   // the phone bar's Fantasy sheet, like the header's menu
     // the draft, fantasy and leaderboard pages live in the header's own dropdowns, so they cost no second row
     const mobNav = document.documentElement.dataset.view === "mobile";
     for (const G of NAV_GROUPS) {
@@ -13584,6 +13585,30 @@
     window.addEventListener("hashchange", () => setNav(false));
     document.addEventListener("click", (e) => { if (document.body.classList.contains("navopen") && !hdr.contains(e.target) && !e.target.closest(".modemenu")) setNav(false); });
     hdr.querySelectorAll(".modes > a").forEach((a) => a.addEventListener("click", () => setNav(false))); }
+
+  // A bottom bar on the phone (Sean, 29 Oct 2026: "replace the menu button up top with instead a bottom like bar that has all the different pages
+  // there instead and just have one search button up top to search for player cards"): every page as a tab along the foot of the screen, Fantasy's
+  // five pages in a sheet over it, the header left to the search. Made here like the Menu it replaces (index.html doesn't round-trip); the CSS shows
+  // it on a phone only, and renderChrome lights the page the way it lights the header's words.
+  { const I = { home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h14V10"></path></svg>',
+                leaderboard: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>',
+                pitches: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle></svg>',
+                flaws: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"></path></svg>',
+                draftmode: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 14v4M8 21h8"></path></svg>',
+                settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M4 12h2M18 12h2M12 4v2M12 18v2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M6.3 17.7l1.4-1.4M16.3 7.7l1.4-1.4"></path></svg>' };
+    const bar = el("nav", "pbar"); bar.setAttribute("aria-label", "Pages");
+    const sheet = el("ul", "pbarsheet"); sheet.hidden = true; sheet.id = "pbarsheet";
+    for (const [h, l] of [["#rankings", "Rankings"], ["#fantasy/leaders", "Fantasy leaderboard"], ["#bullpens", "Bullpens"], ["#mock", "Mock draft"], ["#fantasy/settings", "Scoring settings"]]) { const li = el("li"), a = el("a", null, l); a.href = h; li.append(a); sheet.append(li); }
+    let fb = null;
+    const setSheet = (on) => { sheet.hidden = !on; fb.setAttribute("aria-expanded", String(on)); };
+    for (const [h, m, l] of [["#home", "home", "Home"], ["#leaderboard", "leaderboard", "Leaders"], ["#pitches", "pitches", "Pitching+"], ["#movers", "flaws", "Movers"], [null, "draftmode", "Fantasy"], ["#settings", "settings", "Settings"]]) {
+      const n = h ? el("a") : el("button"); if (h) n.href = h; else { n.type = "button"; n.setAttribute("aria-haspopup", "true"); n.setAttribute("aria-expanded", "false"); n.setAttribute("aria-controls", "pbarsheet"); fb = n; }
+      n.dataset.mode = m; n.innerHTML = I[m] + `<span>${l}</span>`; bar.append(n); }
+    fb.addEventListener("click", (e) => { e.stopPropagation(); setSheet(sheet.hidden); });
+    window.addEventListener("hashchange", () => setSheet(false));
+    document.addEventListener("click", (e) => { if (!sheet.hidden && !sheet.contains(e.target)) setSheet(false); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !sheet.hidden) setSheet(false); });
+    document.body.append(bar, sheet); }
 
   // keep the sticky column header just under the sticky toolbar
   const tb = document.querySelector(".toolbar:not(.xtoolbar)"), hd = document.querySelector("header.top");

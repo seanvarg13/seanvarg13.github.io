@@ -1058,7 +1058,7 @@ The window is shared between the two sides, and the page remembers the side you 
 106 elite with a flaw", "133 of 260 pitchers with nERA down"). The explanation is folded under the table behind **More about these numbers**. Home's
 Movers card has **Hitters →** and **Pitchers →** links that open the page on that side and on its 30 days.
 
-On a phone the ☰ Menu lays its six pages out three across and two down (Home · Leaders · Pitching+ over Movers · Fantasy ▾ · Settings),
+On a phone the pages are a bar along the foot of the screen since 29 Oct 2026 (the section at the end); before that the ☰ Menu laid its six pages out three across and two down (Home · Leaders · Pitching+ over Movers · Fantasy ▾ · Settings),
 so it takes less of the screen.
 
 ### Pitchers on Movers by nERA (23 Oct 2026)
@@ -1272,3 +1272,11 @@ The hosted site installs a service worker: every versioned file — the app, the
 seen, and the page itself is fetched fresh first with the cached copy as the fallback, so the home-screen app opens at once and opens offline
 on the last page it saw. A publish still reaches the open page the way it did: `build.json` moves, the page reloads, and the new build's files
 are new URLs to the worker. Nothing is installed on a local copy of the site unless `?sw=1` is on the address.
+
+### A bottom bar on the phone (29 Oct 2026)
+
+On a phone the pages live in a bar along the foot of the screen: Home, Leaders, Pitching+, Movers, Fantasy and Settings, an icon over a word
+each, with the page you are on as a white tile. Fantasy opens a sheet over the bar with its five pages (Rankings, Fantasy leaderboard, Bullpens,
+Mock draft, Scoring settings); a pick, a tap elsewhere or a page change closes it. The header is the search box alone now; the ☰ Menu is gone.
+Everything that used to stop above the iPhone's home bar (the list cards, the popup, the player page's tab strip, the Filters dropdown) stops
+above this bar instead. The desktop header is unchanged.

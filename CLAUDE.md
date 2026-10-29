@@ -5405,3 +5405,18 @@ players, fantasy presets, Appearance). Never suggest remove-and-re-add again wit
 Export) or turn Sync across devices on first. The sync pull itself can no longer drop the lists: `syncNow` keeps this device's saved lists when
 the gist's copy is empty or missing (and pushes them back), and backs up the copy it replaces the way `save()` does, so Rankings lists' Restore
 line can bring them back.
+
+* **A bottom bar on the phone (Sean, 29 Oct 2026, after the redesign canvas: "replace the menu button up top with instead a bottom like bar that has
+  all the different pages there instead and just have one search button up top to search for player cards")**: on a phone the pages are a bar fixed
+  along the foot of the screen — Home · Leaders · Pitching+ · Movers · Fantasy · Settings, an icon over a word each, on the header's blue with the
+  red stripe over it, the current page a white tile — and the header is the search box alone; the ☰ Menu and its grid of buttons are gone from the
+  phone (the code stays, the CSS hides it). **Fantasy** opens a sheet over the bar with its five pages (Rankings · Fantasy leaderboard · Bullpens ·
+  Mock draft · Scoring settings), shut by a pick, a page change, a tap elsewhere or Escape. Built in `app.js` right after the Menu button (index.html
+  doesn't round-trip): `nav.pbar` + `ul#pbarsheet` appended to body, each tab carrying the header's `data-mode` (`home`, `leaderboard`, `pitches`,
+  `flaws`, `draftmode`, `settings`) so `renderChrome` lights it the way it lights the header's words (its selector is `.modes [data-mode], .pbar
+  [data-mode]` now; the sheet's links get `aria-current` like the header menu's). **`--pbar-h`** (56px + the iPhone's home-bar inset) is what
+  everything that used to stop above the inset stops above now: body's padding, the standing list cards (`main.wrap` height, 10px over the bar),
+  `.board-scroll`, the popup card's panel, the Filters dropdown's height, the auction sheet, and the player page's and popup's `.pbelow2` — the block
+  at the end of `styles.css` (31 roots, over every earlier inset rule). A desktop is untouched (`display: none` off `[data-view="mobile"]`). The
+  page check has a "phone bar" step (six tabs, the sheet, Bullpens from it, the tab lit; hidden on a desktop). Headless at 390 × 844: header 49px,
+  the list card 59 → 778 over the bar at 788, the player page's tab strip ends 16px above it.
