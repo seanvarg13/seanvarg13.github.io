@@ -5420,3 +5420,16 @@ line can bring them back.
   at the end of `styles.css` (31 roots, over every earlier inset rule). A desktop is untouched (`display: none` off `[data-view="mobile"]`). The
   page check has a "phone bar" step (six tabs, the sheet, Bullpens from it, the tab lit; hidden on a desktop). Headless at 390 × 844: header 49px,
   the list card 59 → 778 over the bar at 788, the player page's tab strip ends 16px above it.
+
+* **The phone bar in the At Bat app's dress (Sean, 29 Oct 2026, from a screenshot of the MLB At Bat app's tab bar: "Can you make the bottom bar
+  be like it is on the mlb at bat app")**: `.pbar` is a floating pill — fixed 16px in from each side, `--pbar-off` (8px + 40% of the home-bar
+  inset, ~22px on an iPhone, where At Bat's sits) above the bottom, 62px tall (`--pbar-ph`), `border-radius: 999px`, frosted
+  (`backdrop-filter: saturate(180%) blur(22px)` over a 90% light grey) with a soft shadow and no rule; each tab an icon (23px, 1.7 stroke) over a
+  10.5px word in `--body`, the current page (or the open Fantasy button) a darker capsule (`--pbar-sel`, ink at 10%) with a 2.3 stroke and a 700
+  word; the Fantasy sheet is a 270px frosted menu with 18px corners hung over its tab (hairlines between the five pages, the current one bold on
+  the capsule tint). **The colours are the bar's own tokens** (`--pbar-bg / ink / sel / sheet / hair / shadow` on `:root[data-view="mobile"]`) —
+  At Bat's bar is neutral whatever the team — with dark values under `prefers-color-scheme: dark` (`:not([data-theme="light"])`) and
+  `[data-theme="dark"]`, the way `themes.js` resolves the theme (an explicit pick sets `data-theme`, system leaves it). `--pbar-h` (what the list
+  cards, body, the popup, the player page's tab section and the Filters dropdown keep clear) = the pill + its offset + 8px. The blue band with the
+  white tile of the entry above is history. Checked headless on a phone in light and dark mode (the pill 16-374 × 774-836 at 390 × 844, the
+  Leaders capsule, the Fantasy menu over its tab) and on a desktop (unchanged); the page check's 42 steps.
