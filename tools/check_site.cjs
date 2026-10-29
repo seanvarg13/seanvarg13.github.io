@@ -108,15 +108,23 @@ function minorsId() {
         if (tm === "NYY") { await pg.evaluate(() => document.querySelector(".bppage table tbody tr .pbname").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
           await until(() => location.hash === "#bullpens" && !!document.querySelector("#xboard.xpop .xpopx")); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); } } });
     await step("fantasy", async () => { await hash("#fantasy"); await count("#fboard table tbody tr", 10, 90000); });
-    await step("phone bar", async () => {   // the bottom bar on a phone (29 Oct 2026): six tabs, Fantasy's sheet, a page from it; hidden on a desktop
+    await step("phone bar", async () => {   // the bottom bar on a phone (29 Oct 2026): five tabs, the Leaders and Fantasy sheets, a page from each; hidden on a desktop
       const shown = await pg.evaluate(() => { const b = document.querySelector(".pbar"); return b ? getComputedStyle(b).display !== "none" : null; });
       if (shown === null) throw new Error("no .pbar");
       if (name.startsWith("phone")) { if (!shown) throw new Error("the phone bar is hidden");
-        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 7 && getComputedStyle(document.querySelector(".navtog")).display === "none" && getComputedStyle(document.querySelector("header.top")).display === "none");
-        await pg.evaluate(() => document.querySelector(".pbar button[aria-controls='pbarsheet']").click()); await until(() => !document.querySelector("#pbarsheet").hidden && document.querySelectorAll("#pbarsheet a").length === 5);
+        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 5 && getComputedStyle(document.querySelector(".navtog")).display === "none" && getComputedStyle(document.querySelector("header.top")).display === "none");
+        // Leaders' sheet (29 Oct 2026): Leaderboard · Pitching+ · Movers; it sits inside the screen, a pick lights the Leaders tab, and opening Fantasy's closes it
+        await pg.evaluate(() => document.querySelector(".pbar button[aria-controls='pbarsheet-leaders']").click());
+        await until(() => { const u = document.querySelector("#pbarsheet-leaders"), r = u.getBoundingClientRect(); return !u.hidden && u.querySelectorAll("a").length === 3 && r.left >= 20 && r.right <= innerWidth - 20 && r.bottom < document.querySelector(".pbar").getBoundingClientRect().top; });
+        await pg.evaluate(() => [...document.querySelectorAll("#pbarsheet-leaders a")].find((a) => a.textContent === "Movers").click());
+        await until(() => location.hash === "#movers" && document.querySelector("#pbarsheet-leaders").hidden); await count(".flawpage table tbody tr", 1, 120000);
+        await until(() => document.querySelector('.pbar [data-mode="leaderboard"]').getAttribute("aria-current") === "page" && document.querySelector('#pbarsheet-leaders a[data-mode="flaws"]').getAttribute("aria-current") === "page");
+        await pg.evaluate(() => document.querySelector(".pbar button[aria-controls='pbarsheet-leaders']").click()); await until(() => !document.querySelector("#pbarsheet-leaders").hidden);
+        await pg.evaluate(() => document.querySelector(".pbar button[aria-controls='pbarsheet']").click());
+        await until(() => document.querySelector("#pbarsheet-leaders").hidden && !document.querySelector("#pbarsheet").hidden && document.querySelectorAll("#pbarsheet a").length === 5);
         await pg.evaluate(() => [...document.querySelectorAll("#pbarsheet a")].find((a) => a.textContent === "Bullpens").click());
         await until(() => location.hash === "#bullpens" && document.querySelector("#pbarsheet").hidden); await count(".bppage table tbody tr", 20, 120000);
-        await until(() => document.querySelector('.pbar [data-mode="draftmode"]').getAttribute("aria-current") === "page");
+        await until(() => document.querySelector('.pbar [data-mode="draftmode"]').getAttribute("aria-current") === "page" && !document.querySelector('.pbar [data-mode="leaderboard"]').hasAttribute("aria-current"));
         // the search from the bar (29 Oct 2026): the tab opens the header over the page with the box focused, a pick closes it
         await pg.evaluate(() => document.querySelector(".pbar .psbtn").click());
         await until(() => document.body.classList.contains("psearchon") && getComputedStyle(document.querySelector("header.top")).display !== "none" && document.activeElement === document.getElementById("gq"));

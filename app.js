@@ -6436,8 +6436,8 @@
   function renderChrome() {
     const grp = NAV_GROUPS.find((G) => G.modes.includes(state.mode));
     const navMode = grp ? grp.key : state.mode;
-    document.querySelectorAll(".modes [data-mode], .pbar [data-mode]").forEach((a) => { if (a.dataset.mode === navMode) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
-    for (const a of document.querySelectorAll("#pbarsheet a")) { if (a.getAttribute("href") === "#" + state.mode) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); }   // the phone bar's Fantasy sheet, like the header's menu
+    document.querySelectorAll(".modes [data-mode], .pbar [data-mode]").forEach((a) => { if ((a.dataset.modes || a.dataset.mode).split(" ").includes(navMode)) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });   // the bar's Leaders tab stands for three groups (data-modes)
+    for (const a of document.querySelectorAll(".pbarsheet a")) { const on = a.dataset.mode ? (a.dataset.mode === state.mode || a.dataset.mode === navMode) : a.getAttribute("href") === "#" + state.mode; if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); }   // the phone bar's sheets, like the header's menu
     // the draft, fantasy and leaderboard pages live in the header's own dropdowns, so they cost no second row
     const mobNav = document.documentElement.dataset.view === "mobile";
     for (const G of NAV_GROUPS) {
@@ -13630,9 +13630,11 @@
   }
 
   // A bottom bar on the phone (Sean, 29 Oct 2026: "replace the menu button up top with instead a bottom like bar that has all the different pages
-  // there instead and just have one search button up top to search for player cards"): every page as a tab along the foot of the screen, Fantasy's
-  // five pages in a sheet over it, the header left to the search. Made here like the Menu it replaces (index.html doesn't round-trip); the CSS shows
-  // it on a phone only, and renderChrome lights the page the way it lights the header's words.
+  // there instead and just have one search button up top to search for player cards"): the pages as tabs along the foot of the screen, the header
+  // left to the search. Made here like the Menu it replaces (index.html doesn't round-trip); the CSS shows it on a phone only, and renderChrome
+  // lights the page the way it lights the header's words. Two tabs open a sheet over the bar instead of a page: Fantasy's five pages, and since
+  // the same day Leaders' three (Sean: "collapse the leaders, movers, and pitching+ into one called leaders ... a drop down that allows you to select
+  // one of those three just like how fantasy is") — each sheet hung over its own tab, the other one closed when it opens.
   // The icons are filled glyphs in SF Symbols' manner (the App Store's bar, 29 Oct 2026); Search is the one stroked glyph, as the magnifier is there.
   { const I = { home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.3 2.6a1 1 0 0 1 1.4 0l8.5 8.1a1 1 0 0 1-.7 1.7H19v7.6a1 1 0 0 1-1 1h-3.5a.5.5 0 0 1-.5-.5V15a2 2 0 0 0-4 0v5.5a.5.5 0 0 1-.5.5H6a1 1 0 0 1-1-1v-7.6H3.5a1 1 0 0 1-.7-1.7z"></path></svg>',
                 leaderboard: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 13a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v7.5a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1zM9.5 4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v16.5a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1zM15.5 8.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1z"></path></svg>',
@@ -13642,23 +13644,30 @@
                 settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path></svg>',
                 search: '<svg class="pstroke" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.75"></circle><path d="M15.5 15.5 21 21"></path></svg>' };
     const bar = el("nav", "pbar"); bar.setAttribute("aria-label", "Pages");
-    const sheet = el("ul", "pbarsheet"); sheet.hidden = true; sheet.id = "pbarsheet";
-    for (const [h, l] of [["#rankings", "Rankings"], ["#fantasy/leaders", "Fantasy leaderboard"], ["#bullpens", "Bullpens"], ["#mock", "Mock draft"], ["#fantasy/settings", "Scoring settings"]]) { const li = el("li"), a = el("a", null, l); a.href = h; li.append(a); sheet.append(li); }
-    let fb = null;
-    const setSheet = (on) => { sheet.hidden = !on; fb.setAttribute("aria-expanded", String(on)); };
-    for (const [h, m, l] of [["#home", "home", "Home"], ["#leaderboard", "leaderboard", "Leaders"], ["#pitches", "pitches", "Pitching+"], ["#movers", "flaws", "Movers"], [null, "draftmode", "Fantasy"], ["#settings", "settings", "Settings"]]) {
-      const n = h ? el("a") : el("button"); if (h) n.href = h; else { n.type = "button"; n.setAttribute("aria-haspopup", "true"); n.setAttribute("aria-expanded", "false"); n.setAttribute("aria-controls", "pbarsheet"); fb = n; }
-      n.dataset.mode = m; n.innerHTML = I[m] + `<span>${l}</span>`; bar.append(n); }
-    fb.addEventListener("click", (e) => { e.stopPropagation(); setSheet(sheet.hidden); });
+    // a sheet is a list of pages; a link carrying data-mode lights by the page's mode (Movers' hash is #movers but its mode is flaws), the rest by hash
+    const mkSheet = (id, items) => { const u = el("ul", "pbarsheet"); u.hidden = true; u.id = id;
+      for (const [h, l, m] of items) { const li = el("li"), a = el("a", null, l); a.href = h; if (m) a.dataset.mode = m; li.append(a); u.append(li); } return u; };
+    const sheets = { leaderboard: mkSheet("pbarsheet-leaders", [["#leaderboard", "Leaderboard", "leaderboard"], ["#pitches", "Pitching+", "pitches"], ["#movers", "Movers", "flaws"]]),
+                     draftmode: mkSheet("pbarsheet", [["#rankings", "Rankings"], ["#fantasy/leaders", "Fantasy leaderboard"], ["#bullpens", "Bullpens"], ["#mock", "Mock draft"], ["#fantasy/settings", "Scoring settings"]]) };
+    const btns = {};
+    const place = (k) => { const u = sheets[k], r = btns[k].getBoundingClientRect(), w = u.offsetWidth, vw = document.documentElement.clientWidth;   // centred over its tab, kept 20px inside the screen
+      u.style.left = Math.round(Math.max(20, Math.min(vw - 20 - w, r.left + r.width / 2 - w / 2))) + "px"; u.style.right = "auto"; };
+    const setSheet = (k, on) => { for (const j in sheets) { const o = on && j === k; sheets[j].hidden = !o; btns[j].setAttribute("aria-expanded", String(o)); if (o) place(j); } };
+    const anyOpen = () => Object.values(sheets).some((u) => !u.hidden);
+    for (const [h, m, l, ms] of [["#home", "home", "Home"], [null, "leaderboard", "Leaders", "leaderboard pitches flaws"], [null, "draftmode", "Fantasy"], ["#settings", "settings", "Settings"]]) {
+      const n = h ? el("a") : el("button"); if (h) n.href = h; else { n.type = "button"; n.setAttribute("aria-haspopup", "true"); n.setAttribute("aria-expanded", "false"); n.setAttribute("aria-controls", sheets[m].id); btns[m] = n;
+        n.addEventListener("click", (e) => { e.stopPropagation(); setSheet(m, sheets[m].hidden); }); }
+      n.dataset.mode = m; if (ms) n.dataset.modes = ms; n.innerHTML = I[m] + `<span>${l}</span>`; bar.append(n); }
     const sb = el("button", "psbtn"); sb.type = "button"; sb.setAttribute("aria-expanded", "false"); sb.setAttribute("aria-controls", "gsearch"); sb.innerHTML = I.search + "<span>Search</span>";
-    sb.addEventListener("click", (e) => { e.stopPropagation(); setSheet(false); pSearch(!document.body.classList.contains("psearchon")); }); bar.append(sb);
+    sb.addEventListener("click", (e) => { e.stopPropagation(); setSheet(null, false); pSearch(!document.body.classList.contains("psearchon")); }); bar.append(sb);
     const cancel = el("button", "pscancel", "Cancel"); cancel.type = "button"; cancel.addEventListener("click", () => pSearch(false)); document.querySelector("header.top").append(cancel);
     const bg = el("div", "psbg"); bg.addEventListener("click", () => pSearch(false)); document.body.append(bg);
-    window.addEventListener("hashchange", () => { setSheet(false); pSearch(false); });
-    document.addEventListener("click", (e) => { if (!sheet.hidden && !sheet.contains(e.target)) setSheet(false); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !sheet.hidden) setSheet(false); });
+    window.addEventListener("hashchange", () => { setSheet(null, false); pSearch(false); });
+    document.addEventListener("click", (e) => { if (anyOpen() && !Object.values(sheets).some((u) => u.contains(e.target))) setSheet(null, false); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && anyOpen()) setSheet(null, false); });
+    window.addEventListener("resize", () => { for (const k in sheets) if (!sheets[k].hidden) place(k); });
     const fade = el("div", "pbarfade"); fade.setAttribute("aria-hidden", "true");   // the scroll-edge dim behind the pill (the App Store's)
-    document.body.append(fade, bar, sheet); }
+    document.body.append(fade, bar, sheets.leaderboard, sheets.draftmode); }
 
   // keep the sticky column header just under the sticky toolbar
   const tb = document.querySelector(".toolbar:not(.xtoolbar)"), hd = document.querySelector("header.top");

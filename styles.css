@@ -5620,17 +5620,18 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
    there instead and just have one search button up top to search for player cards"; then, from a screenshot of the MLB At Bat app: "make the bottom
    bar be like it is on the mlb at bat app"; then "make it so it is the blue color and not the white, and on other themes it is the main color"; and
    the same evening, from a screenshot of the iOS 26 App Store's tab bar: "Ok let's actually make it exactly like the app stores is here"): the pages
-   as tabs — Home · Leaders · Pitching+ · Movers · Fantasy · Settings · Search — on a floating pill in the App Store's Liquid Glass dress, measured off
+   as tabs — Home · Leaders · Fantasy · Settings · Search (Leaders holds the Leaderboard, Pitching+ and Movers since the same evening) — on a floating pill in the App Store's Liquid Glass dress, measured off
    his screenshot: 20px in from each side, 60px tall, about 21px above the screen's bottom (--pbar-off = 62% of the home-bar inset, 8px at least),
    translucent — the page shows through blurred and brightened (backdrop-filter: blur, saturate, a touch of brightness, under a light grey-white wash
    at 46%; dark mode a dark grey wash at 52% with no brightening), a white rim along the top edge and a fainter one along the bottom, a soft shadow;
    filled icons (SF Symbols' manner, 26px) over 11px semibold words, both in the scheme's ink (--ink: navy on Titans, as the App Store's dark glyphs
-   read navy over its blue tile), the current page (or the open Fantasy / Search tab) in a whiter glass capsule inset 4px with a white ring, its icon
+   read navy over its blue tile), the current page (or the open Leaders / Fantasy / Search tab) in a whiter glass capsule inset 4px with a white ring, its icon
    and word in the scheme's accent type (--accent-2-text, the App Store's tinted selected tab); while the search is open only the Search tab is lit.
    Behind the pill the App Store dims and blurs the foot of the screen (its scroll-edge effect: white reads #bcbcbc under the bar in his screenshot,
    fading to nothing ~30px above the pill), so .pbarfade — fixed over the bottom, pointer-events none, a 26% black (40% dark mode) with a 6px backdrop
-   blur, masked to fade out upward — does the same under everything that scrolls there. Fantasy's five pages open in a glass menu over its tab (iOS's
-   menu: 17px rows, hairlines). Everything that stopped above the iPhone's home bar stops above the pill (--pbar-h = the pill, its offset and a gap):
+   blur, masked to fade out upward — does the same under everything that scrolls there. Leaders' three pages and Fantasy's five each open in a glass menu
+   (iOS's menu: 17px rows, hairlines) centred over its tab — app.js sets the sheet's left edge when it opens, kept 20px inside the screen (the
+   rule's right: 20px is only the fallback), and opening one sheet closes the other. Everything that stopped above the iPhone's home bar stops above the pill (--pbar-h = the pill, its offset and a gap):
    body's padding, the standing list cards, the boards' scrollers, the popup card, the player page and popup, the Filters dropdown, the auction sheet.
    A desktop is untouched (the bar, the menu and the fade are display: none there). Built in app.js after the Menu button, lit by renderChrome. The
    tab rules carry :not(#p1) for an id's weight, since the site-wide "every button is square" rule's :is() carries #gq. The solid band-colour pill of
