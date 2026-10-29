@@ -5554,3 +5554,37 @@ line can bring them back.
   button is filled like a pressed one (`.sbview.ddon`). The page check's "pitching+ board" step picks Role → SP through the bar and travels
   Pitching+ → Leaderboard → Pitching+ through the picker; the Movers step picks the position through `[data-pick="pos"]`. Bullpens (a
   Fantasy page) keeps its pills until the Fantasy bar (next).
+
+* **The Fantasy pages share the bar; the draft room is a popup (Sean, 29 Oct 2026: "And then with the fantasy page do kind of the same thing.
+  Add one bar up top to that which allows you to switch between the different fantasy pages and options (for the mock draft, when that is
+  selected make it so it brings up a button that gives you the option to enter the draft room which is then its own pop up window type thing
+  which you can exit out of to get back to the fantasy page")**: `pagePick(cur, pages)` / `leadersChrome(mode, buttons, pages)` take a page
+  list now, and **`FANTASY_PAGES`** = Rankings (`#rankings`; Draft mode is its mode) · Fantasy leaderboard (`#fantasy/leaders`; Recent is its
+  view) · Bullpens · Mock draft · Scoring settings (`#fantasy/settings`, key `fsettings`). **Rankings / Draft mode**: `renderToolButtons`' board
+  branch draws the bar in `#pagertop`'s `.tbtns` — the picker, then the one Filters button (`data-panel="grp"`, its dropdown keeps the tabs,
+  `.on` while open, `.set` when a split, date or name filter is doing work, the position on its label as before); `#ranktools` / `#drafttools`
+  keep their rows. **The Fantasy leaderboard** (`renderFantasy`): the bar is `#fboard`'s first row — the picker, then **Position** (the hitters'
+  positions and the pitchers' roles under headings, as Movers'; a pick sets `f.grp` / `f.pos`), **Scoring** (the presets, `fstore.current`),
+  **Season** (`FYEARS`), **Window** (Full season / Recent games = `#fantasy/leaders` / `trending`) and **Filters** (`f.fopen`: the fold under the
+  bar keeps the name search, the dates or the recent window, hand, home / away and the minimum; `.set` when any is in effect) — the page pill,
+  the Season | Recent switch and the Filters ▾ button that rode in the pager's bar are gone (`box._fbar` is null; `renderFTable` appends the
+  pager only when it has something in it), and the Scoring / Season / Hitters · Pitchers / position controls left the fold for the bar. The
+  Scoring settings view draws the picker alone over `renderFSettings`. **Bullpens** is Movers' chrome: the picker, Team · Window · Order
+  (marked when set), the count line ("30 teams · 17 closers at risk or shared · last 30 days", the description in the muted span on a desktop),
+  the explanation folded (`foldNote`, `bpNoteOpen`); its pills and "Bullpens" heading are gone. **The Mock draft** (`renderMock`): the page is
+  the bar (the picker, and **Enter the draft room** while a draft exists — `.sbview.mkenter`) over the setup form (no draft) or a card
+  (`mkDrawPage`, `.mkset.mkcard`: "Mock draft in progress" / "Draft complete", the type, teams, roster spots and where it stands — round and pick,
+  or sold — "paused", then Enter the draft room / See the results and End this draft / New mock draft). **The room** (`mkDraw`) draws into
+  **`#mkroom`**, a fixed popup in the player popup's frame (desktop `inset: 24px 0`, `min(1180px, 100vw − 48px)`; a phone the whole screen above
+  the bar, `--pbar-h`) over a dark backdrop (`.mkroombg`), with a × in its corner (`.mkx`); `mkRoom` says it's up, `mkRoomEl` / `mkRoomSync` /
+  `mkEnter` / `mkLeave` beside `mkUI`. Start draft opens it (`mkStart` sets `mkRoom`); ×, the backdrop, Escape (the global keydown) or another
+  page (the hashchange handler, `renderNow` for any other mode) leave it, and **leaving pauses the draft** — `mkTick` pauses when the room is
+  closed as it did when the page was left, and `renderMock` marks a draft the room isn't open on paused, so the room reopens on its Resume
+  button ("comes back paused", as before); `mkDraw` returns unless the room is up. The 12 `#pitchboard .mk…` table rules and `#pitchboard >
+  .mkset` carry `:is(#pitchboard, #mkroom)`. **CSS**: the "Fantasy pages share the bar" block at the end of `styles.css` (the `.pgrow` / `.pgline`
+  rules widened to `:is(#pitchboard, #fboard)`, the phone's no-card rules to `bullpens` / `mock`, so Bullpens' table sits at the Leaderboard's
+  18-372 from 96; the Fantasy leaderboard's bar row at 11-63 on a phone, its table from 64). The page check: the Fantasy step picks Window →
+  Recent games and back and travels to Scoring settings and back through the picker; Bullpens picks the team through `[data-pick="team"]`; the
+  Mock draft step starts a draft (the room up, its ×), leaves, re-enters, Escapes, ends it (`pg.on("dialog")` accepts the confirm) and clears
+  the saved draft. Checked headless on both layouts: Rankings, the Fantasy leaderboard (SP through Position, the fold), Scoring settings,
+  Bullpens, the Mock draft's setup → room → page → room → setup, the picker to Rankings.

@@ -5163,11 +5163,19 @@
         b.dataset.panel = k; b.setAttribute("aria-haspopup", "true"); b.setAttribute("aria-expanded", String(state.panel === k));
         if (popActive(k)) b.classList.add("set");
       });
-      bar.classList.add("lbviews"); bar.prepend(pagePick(state.mode));   // the page itself first (29 Oct 2026): Leaderboard · Pitching+ · Movers as a list
+      bar.classList.add("lbviews"); bar.prepend(pagePick(state.mode === "trending" ? "leaderboard" : state.mode));   // the page itself first (29 Oct 2026): Leaderboard · Pitching+ · Movers as a list
       box.append(bar);
       return;
     }
     const n = ["filters", "splits", "dates"].filter(popActive).length, pos = popActive("positions") ? posBtnLabel() + " " : "";
+    // Rankings / Draft mode (29 Oct 2026): the Fantasy pages' bar — the page picker, then the one Filters button (its dropdown keeps the tabs),
+    // marked when a filter is doing work; the position shows on it as before ("SS Filters")
+    if (state.mode === "rankings" || state.mode === "draft") {
+      const bar = el("div", "sbviews lbviews"), fb = el("button", "sbview" + (grpOpen ? " on" : "") + (n > 0 ? " set" : ""), pos + "Filters");
+      fb.type = "button"; fb.dataset.panel = "grp"; fb.setAttribute("aria-expanded", String(grpOpen)); fb.setAttribute("aria-haspopup", "true");
+      fb.addEventListener("click", (e) => { e.stopPropagation(); if (grpOpen) closePanel(false); else openPanel(grpTabsNow().some(([t]) => t === state.panelTab) ? state.panelTab : "filters"); });
+      bar.append(pagePick("rankings", FANTASY_PAGES), fb); box.append(bar); return;
+    }
     add("grp", pos + "Filters" + (n ? ` · ${n}` : ""), grpOpen, n > 0 || !!pos);
   }
   // the tab row across the top of the Filters dropdown
@@ -5984,23 +5992,24 @@
   }
   function renderBullpens() {
     const box = pitchBoardEl(); box.innerHTML = "";
-    const page = el("div", "flawpage bppage"), bar = el("div", "pbfilters fxbar bpbar"), PH = mobileView(); box.append(page); page.append(bar);
+    const page = el("div", "flawpage bppage"), PH = mobileView(); box.append(page);
     const save = () => { try { localStorage.setItem("draft2027.bullpens", JSON.stringify(bpSet)); } catch {} render(); };
     const win = BP_WINS.some(([k]) => k === String(bpSet.win)) ? String(bpSet.win) : "30", wlab = BP_WINS.find(([k]) => k === win)[1];
     const codes = Object.keys(TEAM_NAMES).sort(), team = codes.includes(bpSet.team) ? bpSet.team : "ALL";
-    const short = (t) => (PH ? t.replace(/^Last /, "") : t);
-    bar.append(pillSelect(team === "ALL" ? "All teams" : team, [["ALL", "All teams"], ...codes.map((c) => [c, c + " · " + TEAM_NAMES[c]])], team, (v) => { bpSet.team = v; save(); }, "Team"),
-               pillSelect(short(wlab), BP_WINS, win, (v) => { bpSet.win = v; save(); }, "Window"));
-    if (team === "ALL") bar.append(pillSelect(bpSet.sort === "team" ? "By team" : "At risk first", [["risk", "At risk first"], ["team", "By team"]], bpSet.sort === "team" ? "team" : "risk", (v) => { bpSet.sort = v; save(); }, "Order"));
-    const count = el("span", "pbcount"); bar.append(count);
-    let trow = null;
-    const title = (h, sub) => { trow = el("div", "fxtitle"); trow.append(el("h2", null, h), el("span", "fxsub", sub)); page.append(trow); };
+    const short = (t) => (PH ? t.replace(/^Last /, "") : t);   // a phone's group head
+    // the Fantasy pages' bar (29 Oct 2026): the page picker, then Team · Window · Order as buttons marked when set, and the count line under it
+    // in the Leaderboard's dress — the pills and the "Bullpens" heading are history
+    const picks = [barPick({ name: "Team", key: "team", opts: [["ALL", "All teams"], ...codes.map((c) => [c, c + " · " + TEAM_NAMES[c]])], cur: team, now: team === "ALL" ? "All teams" : team, pick: (v) => { bpSet.team = v; save(); }, set: team !== "ALL" }),
+                   barPick({ name: "Window", key: "win", opts: BP_WINS, cur: win, now: wlab, pick: (v) => { bpSet.win = v; save(); }, set: win !== "30" })];
+    if (team === "ALL") picks.push(barPick({ name: "Order", key: "ord", opts: [["risk", "At risk first"], ["team", "By team"]], cur: bpSet.sort === "team" ? "team" : "risk", now: bpSet.sort === "team" ? "By team" : "At risk first", pick: (v) => { bpSet.sort = v; save(); }, set: bpSet.sort === "team" }));
+    const C = leadersChrome("bullpens", picks, FANTASY_PAGES); page.append(C.row, C.line);
+    const count = C.count;
+    const title = (h, sub) => { C.by.textContent = sub; };   // what the list is, after the count; the page's name is the bar's first button
     const say = (txt) => page.append(el("p", "note", txt));
-    const more = (txt) => { const lab = () => (bpNoteOpen ? "Less" : PH ? "About" : "More about these numbers"); const n = el("p", "note fxnote" + (bpNoteOpen ? " open" : ""), txt), b = el("button", "linkbtn fxmore", lab()); b.type = "button";
-      b.addEventListener("click", () => { bpNoteOpen = !bpNoteOpen; n.classList.toggle("open", bpNoteOpen); b.textContent = lab(); }); if (trow) { trow.append(b); trow.after(n); } else page.append(n, b); };
+    const more = (txt) => foldNote(C, txt, () => bpNoteOpen, (v) => { bpNoteOpen = v; });
     const pin = (t) => requestAnimationFrame(() => { const rk = t.querySelector("tbody td.f1"), ov = t.querySelector("tr.over"); if (rk) t.style.setProperty("--sbw1", rk.offsetWidth + "px"); if (ov) t.style.setProperty("--overh", ov.offsetHeight + "px"); });
     const W = win === "all" ? `the ${DATA.meta.season} season` : wlab.toLowerCase(), R = bullpenRows(win);
-    if (!R) { title(team === "ALL" ? "Bullpens" : `${TEAM_NAMES[team]} bullpen`, W); say("Loading the season's game logs…"); return; }
+    if (!R) { title(team === "ALL" ? "Bullpens" : `${TEAM_NAMES[team]} bullpen`, ""); say("Loading the season's game logs…"); return; }
     const f2 = (x) => (x == null ? "–" : x.toFixed(2)), pc1 = (x) => (x == null ? "–" : x.toFixed(1) + "%"), pp = (x) => (x == null ? "–" : String(Math.round(x)));
     const LEASH = { safe: ["Job safe", "three quarters or more of the team's saves in the window, at most one blown save"], risk: ["At risk", "two blown saves in the window, or one with under three quarters of the team's saves"],
                     comm: ["Committee", "nobody has half the team's saves in the window"], few: ["Few chances", "the team had under two saves in the window"] };
@@ -6010,7 +6019,7 @@
     const rates = (a) => [heat(f2(a.m.nera), a, "nera"), heat(pp(a.m.pitch), a, "pitch"), heat(pc1(a.m.xbbf), a, "xbbf")];
     const n0 = (x) => el("td", "c", String(x));
     if (team === "ALL") {
-      title("Bullpens", PH ? W : `every team's closer, his leash and the next man up · ${W}`);
+      title("Bullpens", PH ? "" : "every team's closer, his leash and the next man up");   // the count line carries the window
       const order = { comm: 0, risk: 1, few: 2, safe: 3 };
       const rows = R.rows.sort((a, b) => (bpSet.sort === "team" ? 0 : order[a.leash] - order[b.leash]) || a.tm.localeCompare(b.tm));
       count.textContent = `${rows.length} teams · ${rows.filter((r) => r.leash === "risk" || r.leash === "comm").length} closers at risk or shared · ${W}`;
@@ -6034,7 +6043,7 @@
       return;
     }
     const r = R.rows.find((x) => x.tm === team);
-    title(`${TEAM_NAMES[team]} bullpen`, PH ? W : `every arm with a relief outing in ${W}, the roles read from it`);
+    title(`${TEAM_NAMES[team]} bullpen`, PH ? "" : `${TEAM_NAMES[team]}: every arm with a relief outing in the window, the roles read from it`);
     if (!r) { say(`No ${TEAM_NAMES[team]} reliever has an outing in ${W}.`); return; }
     count.textContent = `${r.arms.length} arms · ${r.tsv} saves on ${r.tsvo} chances · ${W}`;
     const heads = PH ? [["Pitcher", "l f1"], ["Role"], ["SV"], ["HD"], ["BS"], ["nERA"], ["P+"]]
@@ -6611,6 +6620,7 @@
     if (!window.DRAFT_MOVES && window.DRAFT_BUILD && window.DRAFT_BUILD["hist/moves.js"]) ensureScript("hist/moves.js", () => !!window.DRAFT_MOVES);   // the winter's moves (28 Oct 2026)
     applyMoves();
     if (state.mode !== "draft" && $("aucsheet")) { aucPick = null; $("aucsheet").remove(); }   // the auction sheet is Draft mode's
+    if (state.mode !== "mock") { mkRoom = false; mkRoomSync(); }   // the draft room is the Mock draft page's (29 Oct 2026)
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws" || state.mode === "bullpens", other = pitches || player || compare || elig || hub || appear || fant;
     if (xPop && !POP_MODES.includes(state.mode)) xPop = false;   // another page: the popup goes with the list it came from
@@ -7050,59 +7060,33 @@
     const box = $("fboard"); box.innerHTML = "";
     const f = state.f, y = f.year, T = window.DRAFT_THEMES;
     fEnsure(y);
-    // the page: one pill instead of four buttons (minimal pass 5, Sean, 30 Sep 2026 — a 2×2 grid of them on a phone)
-    // Trending is the Leaderboard over recent games (1 Oct 2026): one page in the pill, a Season / Recent switch beside it
-    const PAGES = [["leaders", "Leaderboard"], ["settings", "Scoring settings"]], pv0 = f.view === "trending" ? "leaders" : f.view;   // What if is gone (Sean, 16 Oct 2026: "get rid of the rest")
-    const vp = pillSelect((PAGES.find(([v]) => v === pv0) || PAGES[0])[1], PAGES, pv0, (v) => { location.hash = `#fantasy/${v}`; }, "Page");
-    vp.classList.add("fpage");
-    if (f.view === "settings") { const top = el("div", "fbar"); top.append(vp); box.append(top); renderFSettings(box); return; }
-    // toolbar: page · preset · year · group · position · search · minimum
-    const bar = el("div", "fbar"); bar.append(vp);
-    const lean = f.view === "leaders" || f.view === "trending";
-    if (lean) {
-      const rs = el("div", "seg recentsw"); rs.setAttribute("role", "group"); rs.setAttribute("aria-label", "Season or recent");
-      for (const [v, l] of [["leaders", "Season"], ["trending", "Recent"]]) {
-        const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(f.view === v));
-        b.addEventListener("click", () => { if (f.view !== v) location.hash = `#fantasy/${v}`; }); rs.append(b);
-      }
-      bar.append(rs);
-    }   // minimal pass 8: just the page and Filters, in the blue bar
-    const lean0 = bar;
-    const pre = el("label", "field"); pre.append(el("span", null, "Scoring"));
-    const sel = el("select");
-    for (const p of fpresets()) { const o = el("option", null, p.name); o.value = p.id; if (p.id === fpreset().id) o.selected = true; sel.append(o); }
-    sel.addEventListener("change", () => { fstore.current = sel.value; fsave(); renderFantasy(); });
-    pre.append(sel); ddSelect(sel);
-    const yrPill = pillSelect(y, FYEARS.map((yy) => [yy, yy]), y, (yy) => { f.year = yy; fUi(); renderFantasy(); }, "Season");
-    const seg = el("div", "seg"); seg.setAttribute("role", "group");
-    for (const [g, l] of [["H", "Hitters"], ["P", "Pitchers"]]) {
-      const b = el("button", "segbtn", l); b.type = "button"; b.setAttribute("aria-pressed", String(g === f.grp));
-      b.addEventListener("click", () => { f.grp = g; f.pos = g === "H" ? "ALL" : "ALLP"; f.sort = null; fUi(); renderFantasy(); }); seg.append(b);
-    }
-    // the position is one pill beside Hitters / Pitchers, not a row of tabs (Sean, 29 Sep 2026, the minimal pass)
-    const tabList = f.grp === "H" ? HIT_TABS : PIT_TABS;
-    const posPill = pillSelect(TAB_LABEL[f.pos] || f.pos, tabList.map((t) => [t, TAB_LABEL[t] || t]), f.pos, (t) => { f.pos = t; fUi(); renderFantasy(); }, "Position");
-    // on the Leaderboard / Trending the scoring, season, side and position go into the Filters fold (minimal pass 8, Sean, 30
-    // Sep 2026); the What-if page keeps them on its bar
-    const setup = [pre, yrPill, seg, posPill];
-    if (!lean) lean0.append(...setup);
+    // the Fantasy pages' bar (Sean, 29 Oct 2026: "with the fantasy page do kind of the same thing. Add one bar up top to that which allows you to
+    // switch between the different fantasy pages and options"): the page picker first — Rankings · Fantasy leaderboard · Bullpens · Mock draft ·
+    // Scoring settings — then this page's picks as buttons: Position (the hitters' positions and the pitchers' roles, as Movers'), Scoring, Season,
+    // Window (the full season or recent games: the Season / Recent switch) and Filters, which still folds the dates, hand, home / away, the name
+    // search and the minimum under the bar. The page pill, the switch and the Filters ▾ button that rode in the pager's bar are history.
+    const tr = f.view === "trending";
+    const chrome = (picks) => leadersChrome(f.view === "settings" ? "fsettings" : "fantasy", picks, FANTASY_PAGES);
+    if (f.view === "settings") { box.append(chrome([]).row); renderFSettings(box); return; }
+    const posOpts = [[null, "Hitters"], ...HIT_TABS.map((k) => [k, TAB_LABEL[k] || k]), [null, "Pitchers"], ...PIT_TABS.map((k) => [k, TAB_LABEL[k] || k])];
+    const fActive = !!(f.hand !== "all" || f.venue !== "all" || f.q || (!tr && (f.win.from || f.win.to)));
+    const fb = el("button", "sbview" + (f.fopen ? " on" : "") + (fActive ? " set" : ""), "Filters"); fb.type = "button"; fb.dataset.pick = "filters"; fb.setAttribute("aria-expanded", String(!!f.fopen));
+    fb.addEventListener("click", (e) => { e.stopPropagation(); f.fopen = !f.fopen; renderFantasy(); });
+    box.append(chrome([
+      barPick({ name: "Position", key: "pos", opts: posOpts, cur: f.pos, now: TAB_LABEL[f.pos] || f.pos, pick: (v) => { f.grp = PIT_TABS.includes(v) ? "P" : "H"; f.pos = v; f.sort = null; fUi(); renderFantasy(); }, set: !(f.pos === "ALL" || f.pos === "ALLP") }),
+      barPick({ name: "Scoring", key: "scoring", opts: fpresets().map((x) => [x.id, x.name]), cur: fpreset().id, now: fpreset().name, pick: (v) => { fstore.current = v; fsave(); renderFantasy(); }, set: false }),
+      barPick({ name: "Season", key: "year", opts: FYEARS.map((yy) => [yy, yy]), cur: y, now: y, pick: (yy) => { f.year = yy; fUi(); renderFantasy(); }, set: String(y) !== FYEARS[0] }),
+      barPick({ name: "Window", key: "win", opts: [["leaders", "Full season"], ["trending", "Recent games"]], cur: tr ? "trending" : "leaders", now: tr ? "Recent games" : "Full season", pick: (v) => { if (f.view !== v) location.hash = `#fantasy/${v}`; }, set: tr }),
+      fb]).row);
     const q = el("input"); q.type = "search"; q.placeholder = "Search name or team"; q.value = f.q; q.className = "fq";
     q.addEventListener("input", () => { f.q = q.value; renderFTable(box); });
-    const tr = f.view === "trending";
-    if (!(f.view === "leaders" || tr)) bar.append(q);        // Leaderboard / Trending: the search folds behind Filters
     const mn = el("label", "field"); mn.append(el("span", null, f.grp === "H" ? "Min PA" : "Min IP"));
     const mi = el("input"); mi.type = "number"; mi.min = 0; mi.step = f.grp === "H" ? (tr ? 5 : 10) : tr ? 1 : 5; mi.value = tr ? f.tmin[f.grp] : f.grp === "H" ? f.minH : f.minP; mi.inputMode = "numeric";
     mi.addEventListener("change", () => { const v = Math.max(0, Number(mi.value) || 0); if (tr) f.tmin[f.grp] = v; else if (f.grp === "H") f.minH = v; else f.minP = v; fUi(); renderFTable(box); });
     mn.append(mi);
-    // the less-used controls (dates / window, hand, home / away, actual or expected, the minimum) fold behind one Filters
-    // button, with what's in effect summed up beside it (Sean, 28 Sep 2026: the page was "somewhat overwhelming")
-    if (f.view === "leaders" || tr) {
-      const fb = el("button", "btn fltbtn" + (f.fopen ? " on" : ""), f.fopen ? "Filters ▴" : "Filters ▾"); fb.type = "button";
-      fb.addEventListener("click", () => { f.fopen = !f.fopen; renderFantasy(); });
-      bar.append(fb);
-    } else bar.append(mn);
-    box.append(bar); box._fbar = lean ? bar : null;          // renderFTable seats it in the pager's blue bar
-    if ((f.view === "leaders" || tr) && f.fopen) { const fr = fFilterBar(box); const top = el("div", "fbar fsetup"); top.append(...setup, q); fr.prepend(top); fr.append(mn); box.append(fr); }
+    box._fbar = null;   // nothing rides in the pager's bar now
+    // the fold: the name search, the dates (or the recent window), hand, home / away and the minimum, under the bar while Filters is open
+    if (f.fopen) { const fr = fFilterBar(box); const top = el("div", "fbar fsetup"); top.append(q); fr.prepend(top); fr.append(mn); box.append(fr); }
     box.append(el("div", "ftable-wrap"));
     const note = el("p", "note fnote" + (f.noteOpen ? " open" : "")); box.append(note);
     const more = el("button", "linkbtn fnotemore", f.noteOpen ? "Less" : "More about these numbers"); more.type = "button";
@@ -7238,8 +7222,7 @@
     // a phone (Sean, 20 Oct 2026, mock 13): the top keeps the control row alone and the page numbers and Per page are the table's last row, the
     // Leaderboard's grey bar — they had taken two rows over the table and a pager under it
     if (!PH) renderPager(pagerTop, shown.length, pg, redraw);
-    wrap.append(pagerTop);
-    if (box._fbar) { box._fbar.classList.add("inbar"); pagerTop.prepend(box._fbar); }   // a redraw clears the wrap; the bar goes back in
+    if (pagerTop.childNodes.length) wrap.append(pagerTop);   // a phone's pager is the table's last row; the page's controls are the bar over the page (29 Oct 2026)
     // B-Ref's table (Sean, 11 Oct 2026: "make all of the fantasy tables be the baseball reference table design"): Rk and Player frozen,
     // Tm and Pos their own columns, the column names on the band with the sorted one lit, the sorted column (and Trend / Δ) filling its cells
     const table = el("table", "sbt brt fbt"), thead = el("thead"), tr = el("tr");
@@ -11589,12 +11572,16 @@
   // marked (.set) when it has something in effect; under the bar one line carries the count and what the list is sorted by, over the red rule,
   // as the Leaderboard's #lbtitle does. A phone centres the bar and scrolls it inside itself when the buttons don't fit.
   const LEADERS_PAGES = [["leaderboard", "Leaderboard", "#leaderboard"], ["pitches", "Pitching+", "#pitches"], ["flaws", "Movers", "#movers"]];
+  // and the Fantasy pages share one too (Sean, the same day: "with the fantasy page do kind of the same thing. Add one bar up top to that which
+  // allows you to switch between the different fantasy pages and options"): Rankings (Draft mode is its mode), the Fantasy leaderboard (Recent
+  // is its view), Bullpens, the Mock draft and Scoring settings
+  const FANTASY_PAGES = [["rankings", "Rankings", "#rankings"], ["fantasy", "Fantasy leaderboard", "#fantasy/leaders"], ["bullpens", "Bullpens", "#bullpens"], ["mock", "Mock draft", "#mock"], ["fsettings", "Scoring settings", "#fantasy/settings"]];
   const CHEV = '<svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
-  function pagePick(mode) {
-    const cur = mode === "trending" ? "leaderboard" : mode, pg = LEADERS_PAGES.find(([k]) => k === cur) || LEADERS_PAGES[0];
+  function pagePick(cur, pages = LEADERS_PAGES) {
+    const pg = pages.find(([k]) => k === cur) || pages[0];
     const b = el("button", "sbview pgpick"); b.type = "button"; b.append(el("span", "pgname", pg[1])); b.insertAdjacentHTML("beforeend", CHEV);
     b.setAttribute("aria-label", `Page: ${pg[1]}`); b.setAttribute("aria-haspopup", "listbox"); b.setAttribute("aria-expanded", "false");
-    b.addEventListener("click", (e) => { e.stopPropagation(); ddOpenOn(b, LEADERS_PAGES.map(([k, l]) => [k, l]), cur, (k) => { const h = (LEADERS_PAGES.find(([x]) => x === k) || pg)[2]; if (location.hash !== h) location.hash = h; }, { keyboard: e.detail === 0 }); });
+    b.addEventListener("click", (e) => { e.stopPropagation(); ddOpenOn(b, pages.map(([k, l]) => [k, l]), pg[0], (k) => { const h = (pages.find(([x]) => x === k) || pg)[2]; if (location.hash !== h) location.hash = h; }, { keyboard: e.detail === 0 }); });
     return b;
   }
   // one pick of a page as a bar button: its name on the button, the choice in the list it opens (the count line says what's in effect)
@@ -11605,8 +11592,8 @@
     return b;
   }
   // the chrome: the bar (the page picker first, then the page's buttons) in a row, and the count line under it
-  function leadersChrome(mode, buttons) {
-    const row = el("div", "pgrow"), bar = el("div", "sbviews lbviews"); bar.append(pagePick(mode), ...buttons); row.append(bar);
+  function leadersChrome(mode, buttons, pages = LEADERS_PAGES) {
+    const row = el("div", "pgrow"), bar = el("div", "sbviews lbviews"); bar.append(pagePick(mode, pages), ...buttons); row.append(bar);
     const line = el("div", "pgline"), count = el("span", "pcount"), by = el("span", "pgby"); line.append(count, by);
     return { row, bar, line, count, by };
   }
@@ -12807,6 +12794,16 @@
   let mk = load("draft2027.mockdraft", null);             // the draft in progress, or null
   if (mk) mk.paused = true;                               // a reload comes back paused
   const mkUI = { tab: "players", side: "team", pos: "ALL", q: "", sort: "adp", hide: true, boardTeam: null };
+  // the draft room is a popup over the Mock draft page (Sean, 29 Oct 2026: "for the mock draft, when that is selected make it so it brings up a
+  // button that gives you the option to enter the draft room which is then its own pop up window type thing which you can exit out of to get
+  // back to the fantasy page"): mkRoom says it is up. The page under it is the bar (Enter the draft room) and a card saying where the draft
+  // stands; the setup form while there is no draft. Leaving the room (its ×, the backdrop, Escape, another page) pauses the draft, as leaving
+  // the page did; the draft runs only while the room is open
+  let mkRoom = false;
+  const mkRoomEl = () => { let r = $("mkroom"); if (!r) { r = el("section", "mkroom"); r.id = "mkroom"; r.hidden = true; r.setAttribute("role", "dialog"); r.setAttribute("aria-label", "Draft room"); const bg = el("div", "mkroombg"); bg.hidden = true; bg.addEventListener("click", mkLeave); $("xboard").before(bg, r); r._bg = bg; } return r; };
+  function mkRoomSync() { const r = $("mkroom"); if (!r) return; const on = state.mode === "mock" && mkRoom && !!mk; r.hidden = !on; r._bg.hidden = !on; document.body.classList.toggle("mkroomon", on); }
+  function mkLeave() { if (!mkRoom) return; mkRoom = false; if (mk && !mk.paused && (mk.status === "live" || mk.status === "pre")) { mk.paused = true; mkSave(); } render(); }
+  function mkEnter() { if (!mk) return; mkRoom = true; mkAudio(); render(); }
   const mkSaveSet = () => { try { localStorage.setItem("draft2027.mock", JSON.stringify(mkSet)); } catch {} };
   const mkSave = () => { try { if (mk) localStorage.setItem("draft2027.mockdraft", JSON.stringify(mk)); else localStorage.removeItem("draft2027.mockdraft"); } catch {} };
   // the scoring the room's Proj column and team totals use: one of the saved Fantasy presets, picked at setup (Sean, 2 Oct 2026)
@@ -12981,7 +12978,7 @@
            teams: Array.from({ length: T }, (_, i) => ({ name: i === me ? "Your team" : `Team ${i + 1}`, me: i === me, picks: [], budget: set.budget, style: MK_STYLES[Math.floor(Math.random() * MK_STYLES.length)] })),
            auc: set.type === "auction" ? { phase: "nom", nom: 0, k: null, bid: 0, high: -1, vals: null, hist: [] } : null, started: Date.now() };
     mk.wait = mkAiDelay();
-    mkSave(); mkUI.tab = "players"; mkTick(true); render();
+    mkSave(); mkUI.tab = "players"; mkRoom = true; mkTick(true); render();   // Start draft opens the room (29 Oct 2026)
   }
   const mkAiDelay = () => (mk.set.ai === "fast" ? 400 : mk.set.ai === "slow" ? 3500 : 1600) * (0.6 + 0.8 * Math.random());
   const mkTotal = () => mk.set.teams * mkSpots();
@@ -13093,7 +13090,7 @@
     if (start) { if (!mkTimer) { mkLast = Date.now(); mkTimer = setInterval(() => mkTick(false), 250); } return; }
     const now = Date.now(), dt = now - mkLast; mkLast = now;
     const on = mk && (mk.status === "live" || mk.status === "pre");
-    if (state.mode !== "mock" || !on) { if (on && state.mode !== "mock" && !mk.paused) { mk.paused = true; mkSave(); } clearInterval(mkTimer); mkTimer = null; return; }
+    if (state.mode !== "mock" || !mkRoom || !on) { if (on && !mk.paused && (state.mode !== "mock" || !mkRoom)) { mk.paused = true; mkSave(); } clearInterval(mkTimer); mkTimer = null; return; }   // off the page or out of the room: the draft pauses
     if (mk.paused || !mkReady()) return;
     // a minute in the room before the first pick (Sean, 2 Oct 2026): look the list over, queue players; Start now skips it
     if (mk.status === "pre") { mk.pre -= dt; mkTicks(mk.pre, true); if (mk.pre <= 0) mkGo(); else mkClock(); return; }
@@ -13164,12 +13161,30 @@
   // ---- drawing ----
   function renderMock() {
     const box = pitchBoardEl(); mkEnsure();
-    if (!mkReady()) { box.replaceChildren(el("p", "note", "Loading players, projections and the 2027 rankings…")); return; }
+    if (!mk) mkRoom = false;
+    if (mk && !mkRoom && !mk.paused && (mk.status === "live" || mk.status === "pre")) { mk.paused = true; mkSave(); }   // a draft the room isn't open on is paused
+    mkRoomSync();
+    if (!mkReady()) { box.replaceChildren(mkChrome([]).row, el("p", "note", "Loading players, projections and the 2027 rankings…")); return; }
     if (!mk) { mkDrawSetup(box); return; }
-    mkDraw(); mkTick(true);
+    mkDrawPage(box);
+    if (mkRoom) { mkDraw(); mkTick(true); }
+  }
+  const mkChrome = (picks) => leadersChrome("mock", picks, FANTASY_PAGES);   // the Fantasy pages' bar, the page picker first
+  // the page while a draft exists: the bar with Enter the draft room, and a card saying where the draft stands
+  function mkDrawPage(box) {
+    const go = el("button", "sbview mkenter", "Enter the draft room"); go.type = "button"; go.addEventListener("click", (e) => { e.stopPropagation(); mkEnter(); });
+    box.replaceChildren(mkChrome([go]).row);
+    const w = el("div", "mkset mkcard"), T = mk.set.teams, done = mk.status === "done";
+    w.append(el("h2", "mkh", done ? "Draft complete" : "Mock draft in progress"));
+    const where = done ? `${mk.log.length} players drafted` : mk.status === "pre" ? "the room opens with a minute on the clock" : mk.set.type === "snake" ? `round ${Math.floor(mk.pick / T) + 1}, pick ${(mk.pick % T) + 1} · ${mk.pick} of ${mkTotal()} picks made` : `${mk.log.length} of ${mkTotal()} sold`;
+    w.append(el("p", "note", `${mk.set.type === "snake" ? "Snake" : "Auction"} · ${T} teams · ${mkSlotList(mk.set.roster).length} roster spots a team · ${where}${done ? "" : " · paused"}. The draft runs only while the room is open; leaving the room pauses it.`));
+    const row = el("div", "mkpagebtns"), enter = el("button", "btn mkgo", done ? "See the results" : "Enter the draft room"); enter.type = "button"; enter.addEventListener("click", mkEnter);
+    const end = el("button", "btn btn-quiet", done ? "New mock draft" : "End this draft"); end.type = "button";
+    end.addEventListener("click", () => { if (done || confirm("End this mock draft? It can't be resumed.")) { mk = null; mkRoom = false; mkSave(); render(); } });
+    row.append(enter, end); w.append(row); box.append(w);
   }
   function mkDrawSetup(box) {
-    box.replaceChildren();
+    box.replaceChildren(mkChrome([]).row);
     const w = el("div", "mkset");
     w.append(el("h2", "mkh", "Mock Draft"), el("p", "note", "Practice against computer teams drafting from a 2027 consensus. Settings are saved on this device."));
     const row = (label, ctrl, note) => { const r = el("div", "aset"); const l = el("div", "asetl"); l.append(el("div", "asetn", label)); if (note) l.append(el("div", "asetd", note)); r.append(l, ctrl); w.append(r); };
@@ -13210,10 +13225,11 @@
   }
   // the whole room; the list and side panes keep their scroll, the search box its text and focus
   function mkDraw() {
-    if (state.mode !== "mock" || !mk) return;
-    const box = pitchBoardEl();
+    if (state.mode !== "mock" || !mk || !mkRoom) return;   // the room, a popup since 29 Oct 2026
+    const box = mkRoomEl(); mkRoomSync();
     const keep = { list: box.querySelector(".mklist")?.scrollTop || 0, side: box.querySelector(".mkside")?.scrollTop || 0, focus: document.activeElement && document.activeElement.id === "mkq", cust: document.activeElement && document.activeElement.id === "mkcust" };
     box.replaceChildren();
+    { const x = el("button", "mkx", "×"); x.type = "button"; x.setAttribute("aria-label", "Leave the draft room"); x.title = "Back to the Mock draft page — the draft pauses"; x.addEventListener("click", mkLeave); box.append(x); }
     if (mk.status === "done") { mkDrawDone(box); return; }
     const mob = mobileView();
     box.append(mkTop());
@@ -13465,7 +13481,7 @@
   const statSorted = () => !!(customOrder() && state.rankSort && !state.editRanks);
   // a tab with a saved order of its own: column sorting is off there, the order is the order
   const customOrder = () => { const s = orderSource(); return !!(s && (s.ranks[state.pos] || []).length); };
-  window.addEventListener("hashchange", () => { readMode(); xPop = false; state.expanded = null; if (POPPED.has(state.panel)) { state.panel = null; $("pop").hidden = true; parkControls(); } render(); });   // a toolbar dropdown doesn't follow you to another page
+  window.addEventListener("hashchange", () => { readMode(); xPop = false; mkRoom = false; state.expanded = null; if (POPPED.has(state.panel)) { state.panel = null; $("pop").hidden = true; parkControls(); } render(); });   // a toolbar dropdown doesn't follow you to another page
   $("search").addEventListener("input", (e) => { state.q = e.target.value; state.expanded = null; renderRows(); });
   $("sort").addEventListener("change", (e) => { state.sort = e.target.value; state.dir = state.sort === "name" ? "asc" : "desc"; savePrefs(); render(); });
   let minTimer;
@@ -13620,6 +13636,7 @@
     if (e.key === "/" && !typing) { e.preventDefault(); $("search").focus(); }
     if (e.key === "Escape" && (state.expanded || state.textModal || state.tierPick || state.colPick || state.panel)) closeModal();
     else if (e.key === "Escape" && xPop && !document.querySelector(".phmodal") && !ddOpen) closeXPop();
+    else if (e.key === "Escape" && mkRoom && !ddOpen && !document.querySelector(".phmodal")) mkLeave();   // the draft room (29 Oct 2026)
     else if (e.key === "Escape" && aucPick && $("aucsheet")) { aucPick = null; aucSheetSync(); }   // the auction's sale sheet
   });
 
