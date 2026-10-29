@@ -5527,3 +5527,30 @@ line can bring them back.
   screen, above the pill), picks Movers (the Leaders tab and the Movers link lit), reopens it and opens Fantasy's (Leaders' closes), then Bullpens as
   before. Headless at 390 × 844, Titans light / dark and Jets: Leaders' sheet 20-280px, Fantasy's 65-325 over its tab at 161-229, Pitching+ and the
   Leaderboard light the Leaders tab, home lights only Home; a desktop hides the bar, both sheets and the fade.
+
+* **One Leaders bar (Sean, 29 Oct 2026: "could you make it so on mobile the up top bar with position stats splits dates table format on the
+  leaders page is centered. and make it so there is one more button in that bar up top that has the drop down for leaderboard pitching+ and
+  movers. And make it so the pitching+ and movers tables are exactly the same format wise as the leaders page so this all works. and make it so
+  with that bar if the buttons dont all fit it has an internal scroll")**: the Leaderboard, the Pitching+ board and Movers wear one chrome —
+  `LEADERS_PAGES` / `pagePick` / `barPick` / `leadersChrome` in `app.js` (after `viewBar`), the "Leaders pages share one bar" block at the end
+  of `styles.css`. **The bar** (`.sbviews.lbviews`) leads with a **page picker** (`.pgpick`: the page's name and a chevron, a hairline divider
+  after it; its list — Leaderboard · Pitching+ · Movers — is the dropdowns' `.ddmenu`, a pick sets the hash) and then the page's own buttons:
+  the Leaderboard's dropdown pages as before (`renderToolButtons` prepends the picker); the **Pitching+ board's** Pitch · Throws · Role ·
+  Minimum · Colour (· Games while a spring file exists) as `barPick`s (`data-pick`), each opening its list under itself and marked `.set` (the
+  red dot) when it has something in effect — the pills, and the phone's one-button Filters panel of 20 Oct 2026 (`pbOpen`, `.pbfph` /
+  `.pbfpanel`), are gone; **Movers'** Position · Window · Order the same way (the pills and the "Hitting Movers" / "Pitching Movers" heading
+  are gone). **The line under it** (`.pgline`, `#lbtitle`'s dress — the count in 600 ink, the sort in muted type, the red rule) says what's
+  listed and what's in effect: "1991 pitches · 2026 · 100+ pitches · SP" / "by Pitching+" on the board, "32 hitters · 106 elite with a flaw ·
+  last 30 days" / "by Δ xwOBA if it held" on Movers (a phone drops the elite count), with the folded explanation's link at its right
+  (`foldNote`, shared; the board's long note folds there too — `pbNoteOpen` — so a phone keeps its rows). Both pages draw inside a
+  `.flawpage` (the board's is `.pbpage`), so the Movers layout rules carry `[data-mode="pitches"]` now: on a desktop the page is
+  `fit-content`, centred, at least 1020px, the bar at the left and the frame the table's width; on a phone no white card round the page
+  (`main.wrap` transparent, `#pitchboard` unpadded), the bar centred in its row 10px under the top, the line and the framed table 12px in —
+  the Leaderboard's pixels exactly (row 10-62, line 64-88, table from 96, 18-372 at 390 wide, checked headless). **Centred and scrolling**: a
+  phone's `#pagertop` no longer scrolls as a whole; it centres `.tbtns`, which shrinks to the screen (`flex: 0 1 auto; min-width: 0`), and the
+  bar inside it (`overflow-x: auto`, no scrollbar; a scroll container's automatic minimum width is 0, which is what lets it shrink) scrolls
+  its buttons when they don't fit — the Leaderboard's six (478px) and the board's seven (503px) do at 390 wide, Movers' four (308px) fit. A
+  desktop keeps the bar at the left and scrolls it only when the window is narrower than the buttons (`scrollbar-width: thin`). An open
+  button is filled like a pressed one (`.sbview.ddon`). The page check's "pitching+ board" step picks Role → SP through the bar and travels
+  Pitching+ → Leaderboard → Pitching+ through the picker; the Movers step picks the position through `[data-pick="pos"]`. Bullpens (a
+  Fantasy page) keeps its pills until the Fantasy bar (next).

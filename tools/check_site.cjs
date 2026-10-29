@@ -90,15 +90,27 @@ function minorsId() {
       await step("rankings", async () => { await hash("#rankings"); await count("#rows li", 5); });
       await step("draft mode", async () => { await hash("#draft"); await count("#rows li", 5); });
     }
-    await step("pitching+ board", async () => { await hash("#pitches"); await count("#pitchboard table tbody tr", 20); });
+    // the Leaders bar (29 Oct 2026): the board draws the Leaderboard's bar with the page picker first; a pick (Role → SP) marks its button and
+    // narrows the rows; the picker's list moves between the three pages
+    await step("pitching+ board", async () => { await hash("#pitches"); await count("#pitchboard table tbody tr", 20);
+      await until(() => document.querySelector("#pitchboard .pgrow .sbviews.lbviews .pgpick")?.textContent.trim() === "Pitching+" && document.querySelectorAll("#pitchboard .lbviews .sbview[data-pick]").length >= 5 && /pitches · /.test(document.querySelector("#pitchboard .pgline .pcount")?.textContent || ""));
+      await pg.evaluate(() => { document.querySelector('#pitchboard .lbviews .sbview[data-pick="role"]').click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "SP").click(); });
+      await until(() => document.querySelector('#pitchboard .lbviews .sbview[data-pick="role"]')?.classList.contains("set") && /· SP/.test(document.querySelector("#pitchboard .pgline .pcount").textContent) && document.querySelectorAll("#pitchboard table tbody tr").length > 20);
+      await pg.evaluate(() => { document.querySelector('#pitchboard .lbviews .sbview[data-pick="role"]').click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "SP + RP").click(); });
+      await until(() => !document.querySelector('#pitchboard .lbviews .sbview[data-pick="role"]')?.classList.contains("set"));
+      await pg.evaluate(() => { document.querySelector("#pitchboard .lbviews .pgpick").click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "Leaderboard").click(); });
+      await until(() => location.hash === "#leaderboard" && document.querySelector("#pagertop .lbviews .pgpick")?.textContent.trim() === "Leaderboard"); await count("#rows > li.row", 20, 60000);
+      await pg.evaluate(() => { document.querySelector("#pagertop .lbviews .pgpick").click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "Pitching+").click(); });
+      await until(() => location.hash === "#pitches"); await count("#pitchboard table tbody tr", 20); });
     if (!QUICK) await step("movers", async () => { await hash("#movers"); await count(".flawpage table tbody tr", 1, 120000);
       await pg.evaluate(() => document.querySelector(".flawpage table tbody tr .pbname").click()); await count(".fxwin", 1);
       // his name in the flaw popup opens his page as the Leaderboard's popup over Movers, the flaw popup gone (23 Oct 2026)
       await pg.evaluate(() => document.querySelector(".fxwin .fxname").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
       await until(() => !document.querySelector(".fxwin") && !!document.querySelector("#xboard.xpop .xpopx")); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop"));
-      // the pitchers and a position through the Position pill (23 Oct 2026), then back, so the next run starts where this one did; a pitcher's row opens the popup too
-      for (const sd of ["All pitchers", "SS", "All hitters"]) { await pg.evaluate((t) => { document.querySelector(".fxbar .pill").click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === t).click(); }, sd);
-        await until((t) => document.querySelector(".fxbar .pill")?.textContent.trim() === t && document.querySelectorAll(".flawpage table tbody tr").length > 0, sd, 120000);
+      // the pitchers and a position through the bar's Position button (23 Oct 2026; the Leaders bar since 29 Oct), then back, so the next run starts where this one did; a pitcher's row opens the popup too
+      await until(() => document.querySelector("#pitchboard .pgrow .lbviews .pgpick")?.textContent.trim() === "Movers");
+      for (const sd of ["All pitchers", "SS", "All hitters"]) { await pg.evaluate((t) => { document.querySelector('#pitchboard .lbviews .sbview[data-pick="pos"]').click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === t).click(); }, sd);
+        await until((t) => document.querySelector('#pitchboard .lbviews .sbview[data-pick="pos"]')?.getAttribute("aria-label") === "Position: " + t && document.querySelectorAll(".flawpage table tbody tr").length > 0, sd, 120000);
         if (sd === "All pitchers") { await pg.evaluate(() => document.querySelector(".flawpage table tbody tr .pbname").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
           await until(() => location.hash === "#movers" && !document.querySelector("#xboard .pbback")); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); } } });
     // Bullpens (28 Oct 2026): the overview's 30 teams, one team's pen through the Team pill, a name's popup, back to every team
