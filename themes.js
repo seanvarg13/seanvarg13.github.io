@@ -193,6 +193,14 @@ window.DRAFT_THEMES = (function () {
     // the ink for type on the band colour (accent-2), picked by contrast: the band ink where it reads (4.5:1), else the light palette's ink, white
     // or near-black, whichever reads best (20 Oct 2026: Titans' dark mode had near-white on its light blue, Warm near-black on near-black)
     root.style.setProperty("--band2-ink", pickInk(tokens["accent-2"], [tokens["band-ink"], sc.light.ink, "#ffffff", "#141414"]));
+    // the phone's bottom bar on the band colour (29 Oct 2026): white type unless the band is too light for it (Warm's near-white dark band, then the
+    // light ink), and the current page's capsule the light ink with white type where that ink reads on the band (Titans' navy on Carolina blue, a deep
+    // green on mint), else white with the ink's type (Jets and UNC, whose band is their ink; Warm's near-black band)
+    const ratio = (a, b) => { const la = lumOf(a), lb = lumOf(b); return la == null || lb == null ? 1 : (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05); };
+    const band = tokens["accent-2"], inkDay = sc.light.ink, selInk = ratio(inkDay, band) >= 2;
+    root.style.setProperty("--band2-type", ratio("#ffffff", band) >= 1.9 ? "#ffffff" : inkDay);
+    root.style.setProperty("--band2-sel", selInk ? inkDay : "#ffffff");
+    root.style.setProperty("--band2-sel-ink", selInk ? "#ffffff" : inkDay);
     root.dataset.scheme = cur.scheme;
     root.toggleAttribute("data-flat", !!sc.flat);   // the Jets look: styles.css takes every outline off under it
     const f = F[cur.font];

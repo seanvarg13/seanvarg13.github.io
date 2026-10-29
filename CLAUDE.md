@@ -5449,3 +5449,17 @@ line can bring them back.
   step counts seven tabs, opens the search from the tab, types Judge and picks him, and its "search from a scrolled page" step opens the box
   from the bar on a phone. Headless at 390 × 844: the header 0-59 while searching, the list 59-766, `--header-h` 0px otherwise, the Leaderboard
   card 10 → 756; dark mode the same; a desktop untouched.
+
+* **The bar in the scheme's colour (Sean, 29 Oct 2026, of the frosted grey pill: "Could you make it so it is the blue color and not the white, and on
+  other themes it is the main color")**: the pill is solid `--band2` (the scheme's band: Carolina blue on Titans, the green on Jets, mint on Jets ·
+  Mint, Titans blue on Jets · Titans blue, near-black on Warm), the same colour as the header and the tables' column-name bands, with the site's white
+  type on it, and the current page (or the open Fantasy / Search tab) a capsule in the scheme's deep ink with white type, as the card's picked tab is.
+  **Three tokens picked by contrast in `themes.js`'s `apply()`**, beside `--band2-ink`: `--band2-type` (white on the band, else the light ink where
+  white can't read — Warm's near-white dark band), `--band2-sel` / `--band2-sel-ink` (the light ink with white type where that ink reads on the band
+  at 2:1 — navy on Carolina blue, a deep green on mint — else a white capsule with the ink's type: Jets and UNC navy, whose ink is their band, Warm's
+  near-black band, purple). The bar's own tokens in `styles.css` read them (`--pbar-bg / ink / sel / sel-ink`), so a scheme never needs a rule of its
+  own; the dark blocks keep only a deeper shadow, and the frosted blur is gone (nothing shows through a solid pill). The Fantasy menu is the page's
+  own dropdown colours (`--surface`, `--ink`, a 12% ink hairline, the current page on `--accent-wash`) — `--pop` was tried first and is not a readable
+  ground on UNC navy or Clemson. Checked headless on nine schemes, light and dark (scratch `pbar/shots4.cjs`: the pill's, a tab's and the capsule's
+  computed colours, the menu's), and the quick page check. Found alongside, not changed: Warm's dark mode draws the Leaderboard's column names white on
+  its near-white band.
