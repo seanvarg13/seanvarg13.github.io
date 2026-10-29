@@ -5588,3 +5588,17 @@ line can bring them back.
   Mock draft step starts a draft (the room up, its ×), leaves, re-enters, Escapes, ends it (`pg.on("dialog")` accepts the confirm) and clears
   the saved draft. Checked headless on both layouts: Rankings, the Fantasy leaderboard (SP through Position, the fold), Scoring settings,
   Bullpens, the Mock draft's setup → room → page → room → setup, the picker to Rankings.
+
+* **The playing-time block (Sean, 29 Oct 2026: "on the player page i really like the new addition to the header where it shows their avg
+  batting spot, how often they start vs lefties and righties and how many starts vs rosterable games they have. but it feels very jumbled and
+  just thrown on there, can we make it so that it is organized and easy to digest")**: `lineupLine(p)` builds a **second Summary** under the
+  first, in its dress (`.pbsum.pblu`: the `.pbsrow` grid with a label column, small labels over values) — a head row "Playing time" · **Bats** ·
+  **Starts** · **PA/G** · **vs LHP** · **vs RHP** · **Last 15** and a value row (the season in the label column) whose cells (`.pbsv.pblcell`) are the
+  headline number in the band's condensed 700 (`.pbsvv`) over a small line of detail (`.pbsvs`): "2nd" / "56% · 3rd 44%", "97%" / "66 of 68
+  roster games", "4.2" / "per roster game", "100%" / "20 of 20 starts", "96%" / "46 of 48 starts"; a platooned side shows the red **Platooned**
+  chip (`.pbplat`) in place of its detail and reads lighter (`.pbweak`); the **Last 15** strip (`.pblast`: the slot he started in, – on the roster
+  without starting, × off it) is the last cell on a desktop and **a row of its own on a phone** (`.pblastrow`, under a faint rule), where the
+  five cells share the width. The tooltips are the old line's. The run of fragments with dots between them (`.pbit` / `.pbdot`, 28 Oct 2026) is
+  history, its CSS replaced by the block at the end of `styles.css` (20 roots over the band's `.pbsrow` rules; the block is `flex: 0 0 auto`,
+  since the band is a flex column and a shrinking item had collapsed it to 7px on a phone). Judge: band 153 → 195px on a desktop, 176 → ~205 on a
+  phone, for a block that reads at a glance.

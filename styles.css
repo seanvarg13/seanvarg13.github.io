@@ -5558,18 +5558,6 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root #rows > li.skelnote .daysprog { align-items: center; }
 /* Lineup slot and playing time (Sean, 28 Oct 2026, item 7 of the review's picks): the line under the band's Summary on a hitter's page — where he
    bats, starts over roster games, PA a game, the platoon sides (a Platooned chip when one side sits out) and his slot in the club's last 15 games */
-:root:root:root:root:root:root #xboard .pagehead .pblu { display: flex; flex-wrap: wrap; align-items: center; flex: 0 0 auto; height: auto; min-height: 0; margin: 8px 0 0; padding-top: 7px; border-top: 1px solid rgba(255,255,255,.45); color: #fff; font: 500 13.5px/1.35 var(--body); }
-:root:root:root:root:root:root[data-view="mobile"] #xboard .pagehead .pblu { font-size: 12.5px; }
-:root:root:root:root:root:root #xboard .pagehead .pblu .pbit { display: inline-flex; align-items: center; white-space: nowrap; }
-:root:root:root:root:root:root #xboard .pagehead .pblu .pbdot { margin: 0 7px; opacity: .75; }
-:root:root:root:root:root:root #xboard .pagehead .pblu .pbit:first-child .pbdot { display: none; }
-:root:root:root:root:root:root #xboard .pagehead .pblu .pbweak { opacity: .8; }
-:root:root:root:root:root:root #xboard .pagehead .pblu .pbplat { display: inline-block; padding: 1px 7px; border: 1px solid rgba(255,255,255,.8); background: #c8102e; color: #fff; font-weight: 700; font-size: 11.5px; line-height: 1.5; }
-:root:root:root:root:root:root #xboard .pagehead .pblu .pblast { display: inline-flex; align-items: center; gap: 3px; }
-:root:root:root:root:root:root #xboard .pagehead .pblu .pblastw { margin-right: 4px; }
-:root:root:root:root:root:root #xboard .pagehead .pblu .pblast b { display: inline-block; min-width: 15px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
-:root:root:root:root:root:root #xboard .pagehead .pblu .pblast b.off { opacity: .6; }
-:root:root:root:root:root:root #xboard .pagehead .pblu .pblast b.out { opacity: .45; }
 /* Workload and the arsenal alerts (Sean, 28 Oct 2026, items 9 and 10 of the review's picks): the Workload tab's sections, and the alert chips on
    Movers' pitchers table and the tab's head — a new pitch red, a dropped one grey, a usage swing navy, a velocity move light blue */
 :root:root:root:root:root:root :is(#xboard, #modal) .workbox .rollhd.worksub { margin-top: 16px; }
@@ -5743,3 +5731,29 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 /* the Fantasy leaderboard's bar sits where the Leaderboard's does on a phone (its board had 8px of top padding and a 6px first-child margin) */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="fantasy"] main.wrap > #fboard { padding-top: 0 !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="fantasy"] #fboard > .pgrow:first-child { margin-top: 0 !important; }
+
+/* The player page's playing-time block (Sean, 29 Oct 2026: "i really like the new addition to the header where it shows their avg batting spot,
+   how often they start vs lefties and righties and how many starts vs rosterable games they have. but it feels very jumbled and just thrown on
+   there, can we make it so that it is organized and easy to digest"): a second Summary under the first, in its dress — a labelled row of cells,
+   Bats · Starts · PA/G · vs LHP · vs RHP · Last 15, the headline number over a small line of detail; a phone puts the last-15 strip on a row of
+   its own. The run of fragments with dots between them is history. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pbsum.pblu { margin: 8px 0 0; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.45); display: flex; flex-direction: column; flex: 0 0 auto; gap: 0; height: auto; min-height: 0; font: inherit; color: var(--band2-ink, var(--band-ink, #fff)); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pbsrow { grid-template-columns: 80px repeat(var(--n), minmax(0, 1fr)); grid-auto-flow: row; height: auto; min-height: 30px; align-items: stretch; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pbsrow.pbshead { min-height: 22px; height: 22px; align-items: center; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pbsv.pblcell { flex-direction: column; justify-content: center; gap: 1px; padding: 3px 4px; min-width: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pbsvv { font: 700 18px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pbsvs { display: block; max-width: 100%; font: 400 10.5px/1.2 var(--body); opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pbweak .pbsvv { opacity: .85; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pbplat { display: inline-block; margin-top: 1px; padding: 0 6px; border: 1px solid rgba(255,255,255,.8); background: #c8102e; color: #fff; font: 700 10px/1.6 var(--body); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pblast { display: inline-flex; align-items: center; justify-content: center; gap: 2px; flex-wrap: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pblast b { display: inline-block; min-width: 14px; text-align: center; font: 700 13px/1.4 var(--body); font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pblast b.off { opacity: .6; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pblast b.out { opacity: .45; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pagehead .pblu .pbsv.pblastc { padding: 0 4px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pagehead .pblu .pbsrow { grid-template-columns: 58px repeat(var(--n), minmax(0, 1fr)) !important; grid-auto-flow: row !important; min-height: 34px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pagehead .pblu .pbsrow.pbshead { min-height: 20px; height: 20px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pagehead .pblu .pbsvv { font-size: 14px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pagehead .pblu .pbsvs { font-size: 9.5px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pagehead .pblu .pbsrow.pblastrow { grid-template-columns: 58px minmax(0, 1fr) !important; min-height: 26px; border-top: 1px solid rgba(255,255,255,.25); margin-top: 2px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pagehead .pblu .pblastrow .pbsv { justify-content: flex-start; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pagehead .pblu .pblast b { min-width: 17px; font-size: 12.5px; }
