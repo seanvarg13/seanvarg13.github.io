@@ -5463,3 +5463,26 @@ line can bring them back.
   ground on UNC navy or Clemson. Checked headless on nine schemes, light and dark (scratch `pbar/shots4.cjs`: the pill's, a tab's and the capsule's
   computed colours, the menu's), and the quick page check. Found alongside, not changed: Warm's dark mode draws the Leaderboard's column names white on
   its near-white band.
+
+* **Pitchers on Movers the hitters' way (Sean, 29 Oct 2026: "for hitters you sort everything by the delta of their season xwoba by what their xwoba
+  would be if the stat that moved held all season can you do the same thing for pitchers with their nERA")**: `pitchMovers(winId)` is rebuilt on
+  **nERA's own pieces** — K%, BB%, GB% and Popup% (the shares of his balls in play; the air balls are what's left, his HBP as it was) — on his full
+  season (`PM.minIP` 40), each re-read over the window (10 IP in 30 days, scaled 5-25), and **If it held** = his season nERA rebuilt with only that
+  piece at the window's value: `neraCounts(c, nb, o)` is nERA's own arithmetic on its own sums (a strikeout or a walk in place of a ball in play
+  with the mix kept, a ground ball or popup in place of an air ball), `seasonNb(p)` sums them from his day rows (every row, as V() sums a window:
+  the wOBA numerator less the balls in play and the reached-on strikeouts is the walks and HBP at their value), so the base is the stored nERA to
+  the cent; a stored line (This season vs last's base, last season's file) is rebuilt from its rates by `nbOf` — a few hundredths off for a
+  reliever with many intentional walks or truncated plate appearances (bf against the corrected denominator) — and the Δ is taken within that
+  rebuild, If it held = the stored nERA less it. The row's **Stat** is the piece that lowers it most, `PM.gain` 0.15+ runs (≈ the hitters' 5
+  wOBA points), ranked by the drop; **Credible** = the piece's reliability at the window's batters faced — `PM_K` K% 143, BB% 261, GB% 106,
+  Popup% 259 BF, from the between-season covariance over every consecutive pair of 100+ BF pitcher-seasons 2020-26 (scratch `pmov/pmk.js`: K%
+  repeats at r .65, GB% .71, BB% and Popup% .50; the method gives KREL's K% within a dozen BF) — with last season's value of the piece as the
+  witness (past the midpoint of the move → halfway to certain, the far side → × 0.7), as the hitters' side. **The page**: Rk · Pitcher · Tm · Role
+  | The move: Stat · Season · window · IP · Credible | nERA: Season · If it held (coloured among the season's 100+ IP pitchers) · Δ | Arsenal; a
+  phone Rk · Pitcher · Move ("K% 26.2 → 40.4") · Cred · nERA · If held · Δ; the Order pill Biggest Δ nERA / Most credible; the count "203 of 247
+  pitchers with a stat that moved"; a name still opens his page on the window's Game Logs. **Home's** Movers card: "Pitchers · a stat that moved"
+  (Player · Move · nERA · If held · Δ), `homeLive().pmovers` = `{id, mv, nera, held, gain}`, `HOME_V` 3 and `hist/home.js` rebuilt here with
+  `tools/build_home.cjs` (October: the daily run rebuilds it only after a regular-season MLB build). The 23 Oct version (his window nERA against
+  his season before it, K-BB% and FB velo beside it) is history. Checked: the page's rows against an independent recomputation from the day rows
+  (scratch `pmov/indep.js`: the same 203 rows, Ginkel K% 26.2 → 40.4 on 12.1 IP, 3.48 → 1.84, −1.64; Wacha Popup% 9.8 → 22.0, 4.30 → 2.90),
+  This season vs last (Cavalli K% 18.3 → 28.3, 2025's 3.91 → 2.87), the popup, home's card on both layouts, the full page check.

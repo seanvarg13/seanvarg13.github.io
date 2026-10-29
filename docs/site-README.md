@@ -1064,7 +1064,15 @@ so it takes less of the screen.
 ### Pitchers on Movers by nERA (23 Oct 2026)
 
 The pitchers' side of Movers ranks pitchers by how much their **nERA** fell over the window against their season before it. Pitching+ is
-no longer on the page or on home's Movers card.
+no longer on the page or on home's Movers card. **Since 29 Oct 2026 the pitchers' side works the hitters' way**: nERA is built from four
+pieces — K%, BB%, GB% and Popup% (the shares of his balls in play; the air balls are what's left) — and each is re-read over the window
+(the last 30 days by default, 10+ innings there; the full season needs 40). **If it held** is his season nERA rebuilt with only that piece at
+the window's value — a strikeout or a walk in place of a ball in play, a ground ball or a popup in place of an air ball — and the **Stat**
+column is whichever piece lowers it most (by at least 0.15 runs); the list is ordered by that Δ, or by Δ × Credible. **Credible** is how much
+of the move is likely real: the stat's reliability at the window's batters faced (K% settles in about 140 batters faced, GB% 110, BB% and
+Popup% about 260), raised when last season's value already sat past the middle of the move and lowered when it sat on the far side. "This
+season vs last" does the same with last season's full line as the base. Home's Movers card shows the top four the same way (Move, nERA,
+If held, Δ). A name opens his page on that window's Game Logs.
 
 - **Columns**: nERA before, over the window (coloured among the season's 100+ IP pitchers) and the change, then K-BB% and fastball velocity
   before and over the window, so you can see whether the drop came from strikeouts and walks or from contact. Then his innings in the window
