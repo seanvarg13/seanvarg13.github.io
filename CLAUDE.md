@@ -5642,3 +5642,12 @@ line can bring them back.
   the cream `band-ink` for the Summary on the band; the phone bar's capsule is white with navy type (navy on maroon is under 2:1). The percentile
   colours are Savant's, as everywhere. Checked headless on both layouts, light and dark: the Leaderboard, home, Judge's page, Appearance and
   Rankings — no script errors; type on the ground 13:1 and up, cream on the maroon bands 10:1.
+
+* **PA per start on the playing-time block (Sean, 29 Oct 2026, Will Smith's page — 276 PA, the block reading 3.0: "can you investigate why will
+  smith shows only 3.0 pa/g", then "i want it to be pa/start of his")**: the 3.0 was plate appearances per game on the **active roster** (276 over
+  91 roster games: 62 starts, 11 substitute appearances, 18 days on the bench — a catcher's rest days — and the IL from June 8 to Sept 1 off the
+  roster), the column's definition since 28 Oct. The number is **PA per start** now: `tools/build_lineups.py` writes **`pas`**, his plate
+  appearances in the games he started, on every hitter's `hist/lineups.js` entry (the file rebuilt here from the cached box scores, every other
+  field byte-identical), `luOf` reads `patg` = `pas / gs` (`pa / gs` on a file without `pas`, null with no starts), and the card's cell
+  (`lineupLine`), the Leaderboard column (`LINE_H`), `SHORT` and the glossary say **PA/start**, the cell's detail "265 PA in 62 starts". A
+  pinch-hit or substitute appearance is left out (301 of the hitters with 20+ starts move 0.1+ for it). Smith reads 4.3 (4.5 on his total PA).

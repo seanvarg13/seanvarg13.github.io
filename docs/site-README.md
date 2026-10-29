@@ -1347,3 +1347,11 @@ Settings ▸ Appearance has a **Cleveland** scheme: the old Cleveland Indians' c
 buttons and tabs with cream type on them, navy type, and a navy stripe under the header and the player band, the way the cream jersey carried
 maroon lettering with navy piping. Dark mode is a navy night with the same maroon bands and cream type. The percentile colours stay Savant's red
 and blue, as in every scheme. It is picked per device; Titans stays the site's default.
+
+### PA per start on the playing-time block (29 Oct 2026)
+
+The **PA/start** cell on the player page's playing-time block, and the PA/start column under Filters ▸ Stats ▸ Playing time, is his plate
+appearances in the games he started, over those starts — a pinch-hit or late-inning substitute appearance isn't counted, and neither is a day on
+the bench. It had been plate appearances per game on the active roster, bench days included, which read 3.0 for Will Smith (276 PA over 91 roster
+games: 62 starts, 11 substitute appearances, 18 days on the bench, and the rest of the season on the injured list); he reads 4.3 now (265 PA in
+62 starts). The two earlier descriptions of PA/G above are history.
