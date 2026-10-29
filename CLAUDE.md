@@ -5602,3 +5602,31 @@ line can bring them back.
   history, its CSS replaced by the block at the end of `styles.css` (20 roots over the band's `.pbsrow` rules; the block is `flex: 0 0 auto`,
   since the band is a flex column and a shrinking item had collapsed it to 7px on a phone). Judge: band 153 → 195px on a desktop, 176 → ~205 on a
   phone, for a block that reads at a glance.
+
+* **The bar stays put; the bottom bar's dropdowns gone; the Leaders tables one size (Sean, 29 Oct 2026: "get rid of the drop down on leaders and
+  fantasy on the bottom bar and make it so the top bar on each page that has the drop down for each option does not move no matter which portion
+  of leaders or fantasy is selected. and make sure on the leaders page whether it is movers leaders or pitching+ the tables have the exact same
+  dimensions as the leaders page table does")**: (1) **the phone bar's Leaders and Fantasy tabs are plain links** — each goes to the page last
+  open in its group (the Leaderboard, Pitching+ or Movers; Rankings, the Fantasy leaderboard, Bullpens, the Mock draft or Scoring settings),
+  remembered per device (`LAST_PAGE` / `noteLastPage()` in `app.js`, `draft2027.lastpage`, the Leaderboard and Rankings until a page is visited;
+  `renderChrome` sets the two hrefs each draw) — the sheets (`mkSheet` / `setSheet`, `.pbarsheet`, the `--pbar-sheet*` tokens) are gone; the
+  bar at the top of those pages is where one is swapped for another. (2) **One column on every Leaders and Fantasy page**, the bar left-aligned
+  at its top (`justify-content: flex-start` on `#pagertop` / `.pgrow`; centred, a shorter bar had started further right), so the bar's left edge
+  and top are the same pixels on all eight — a desktop's `--lbcol` 1020px centred (x 140, y 87 at 1300 wide), a phone's 14px in and 14px down —
+  and **the page picker is as wide as the longest page name of its group**: the other names sit under the shown one in one grid cell, invisible
+  (`.pgname > .pgcur / .pgghost` in `pagePick`; a test reads `.pgcur`), so the chevron and the buttons after it don't move either. **Desktop**:
+  `body.brlb #board` is `min(100%, var(--lbcol))` (was fit-content) and `#bscroll` fills it — `body.brlb .grid`'s name track is
+  `minmax(var(--namew), 1fr)` with `min-width: 100%`, so the Leaderboard's table stretches to the column and its name column takes the room; the
+  `.flawpage` of the Pitching+ board / Movers / Bullpens is the same fixed width; the Leaderboard's `#bscroll` ends 10px over the wrap's foot
+  like theirs, so **the three Leaders frames are 140-1160 × 175-872**; the card pages (`body.boardon`, Fantasy) draw `main.wrap` at the column
+  plus 12px of padding (1046 wide, 6px under the header, so the bar's top is still 87). **Phone**: no white card round Rankings / Draft mode or
+  the Fantasy pages either (the Leaders pages lost theirs on 29 Oct), their frames 12px in like the Leaderboard's. (3) **The Leaderboard's
+  note folds** behind "More about these numbers" on the count line (`foldNote({ line: tt }, lbNoteText(), …)` in `renderColheadIn`, `.fxnote.lbfold`
+  after `#lbtitle`; the stale one is removed on every draw — it had stayed on, and shown, when Rankings took the same `#board`) instead of sitting
+  under the table in `#notes`, which had made its frame shorter than the board's and Movers'. (4) **Rankings' list row rides under the bar**:
+  `renderSetBar` puts `#setrow` (with `#ranktools` inside `#setbar`) right after `#pagertop` in `#board` on Rankings and back in the toolbar off
+  it; the toolbar over the board is hidden under `body.boardon`; the board's count moves to the title line like the Leaderboard's (`renderPager`
+  under `onePage() || boardOn()`) and the line's h2 ("Hitting Rankings") is gone — the picker names the page. The page check's phone-bar step
+  clicks the two tabs and watches the remembered page, and a full-check step, "the bar in one spot", visits the nine pages and requires the bar's
+  left / top equal, the picker's width equal within a group and the three Leaders frames' four edges equal. CSS: the block at the end of
+  `styles.css` (33 roots).
