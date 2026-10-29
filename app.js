@@ -12227,7 +12227,7 @@
       state.x = { id: e.id, type: t, ds: first[0] }; state.expanded = null; state.gq = ""; $("gq").value = ""; $("gq").blur();
       state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };   // a searched player always opens on his full season
       renderSearchList($("glist"), "", () => {});                      // close the list of hits
-      savePrefs(); location.hash = "#player/" + e.id; if (state.mode === "player") render();
+      savePrefs(); location.hash = "#player/" + e.id; if (state.mode === "player") render(); pSearch(false);
     }, !state.gq && document.activeElement === $("gq") ? recentEntries() : null);
   }
 
@@ -13443,7 +13443,7 @@
   $("gq").addEventListener("input", (e) => { state.gq = e.target.value; ensureIndex(); renderGlobalSearch(); });
   $("gq").addEventListener("keydown", (e) => {
     if (e.key === "Enter") { const first = $("glist").querySelector("button"); if (first) first.click(); }
-    if (e.key === "Escape") { state.gq = ""; e.target.value = ""; renderGlobalSearch(); }
+    if (e.key === "Escape") { state.gq = ""; e.target.value = ""; renderGlobalSearch(); pSearch(false); }
   });
   document.addEventListener("click", (e) => { if (!$("gsearch").contains(e.target) && !state.gq && !$("glist").hidden) renderSearchList($("glist"), "", () => {}); if (!$("gsearch").contains(e.target) && state.gq) { state.gq = ""; $("gq").value = ""; renderGlobalSearch(); } if (!$("ctoolbar").contains(e.target) && state.cq) { state.cq = ""; $("cq").value = ""; renderSearchList($("clist"), "", () => {}); } });
   $("ref").addEventListener("change", (e) => { state.ref = e.target.value; state.expanded = null; savePrefs(); render(); });
@@ -13586,6 +13586,19 @@
     document.addEventListener("click", (e) => { if (document.body.classList.contains("navopen") && !hdr.contains(e.target) && !e.target.closest(".modemenu")) setNav(false); });
     hdr.querySelectorAll(".modes > a").forEach((a) => a.addEventListener("click", () => setNav(false))); }
 
+  // The phone's search opens from the bar (Sean, 29 Oct 2026: "make the search bar a button on that bottom bar that when you hit it brings up a
+  // search bar. That way we don't have the big search bar at the top the entire time"): on a phone the header — the search box alone since the bar
+  // came — is hidden until the bar's Search tab opens it over the page, fixed at the top with Cancel beside the box and the hits as a list under
+  // it (body.psearchon; the CSS at the end of styles.css). A pick, Cancel, the tab again, a tap on the sheet behind or a page change closes it. A
+  // desktop keeps its header and never gets the class.
+  function pSearch(on) {
+    const b = document.body, was = b.classList.contains("psearchon"); if (on === was) return;
+    b.classList.toggle("psearchon", on); const t = document.querySelector(".pbar .psbtn"); if (t) t.setAttribute("aria-expanded", String(on));
+    setTb();   // the header's height (0 while it's hidden) feeds the sticky offsets
+    if (on) { ensureIndex(); $("gq").focus(); if (!state.gq) renderGlobalSearch(); }
+    else { state.gq = ""; $("gq").value = ""; $("gq").blur(); renderSearchList($("glist"), "", () => {}); }
+  }
+
   // A bottom bar on the phone (Sean, 29 Oct 2026: "replace the menu button up top with instead a bottom like bar that has all the different pages
   // there instead and just have one search button up top to search for player cards"): every page as a tab along the foot of the screen, Fantasy's
   // five pages in a sheet over it, the header left to the search. Made here like the Menu it replaces (index.html doesn't round-trip); the CSS shows
@@ -13595,7 +13608,8 @@
                 pitches: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle></svg>',
                 flaws: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"></path></svg>',
                 draftmode: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 14v4M8 21h8"></path></svg>',
-                settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M4 12h2M18 12h2M12 4v2M12 18v2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M6.3 17.7l1.4-1.4M16.3 7.7l1.4-1.4"></path></svg>' };
+                settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M4 12h2M18 12h2M12 4v2M12 18v2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M6.3 17.7l1.4-1.4M16.3 7.7l1.4-1.4"></path></svg>',
+                search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>' };
     const bar = el("nav", "pbar"); bar.setAttribute("aria-label", "Pages");
     const sheet = el("ul", "pbarsheet"); sheet.hidden = true; sheet.id = "pbarsheet";
     for (const [h, l] of [["#rankings", "Rankings"], ["#fantasy/leaders", "Fantasy leaderboard"], ["#bullpens", "Bullpens"], ["#mock", "Mock draft"], ["#fantasy/settings", "Scoring settings"]]) { const li = el("li"), a = el("a", null, l); a.href = h; li.append(a); sheet.append(li); }
@@ -13605,7 +13619,11 @@
       const n = h ? el("a") : el("button"); if (h) n.href = h; else { n.type = "button"; n.setAttribute("aria-haspopup", "true"); n.setAttribute("aria-expanded", "false"); n.setAttribute("aria-controls", "pbarsheet"); fb = n; }
       n.dataset.mode = m; n.innerHTML = I[m] + `<span>${l}</span>`; bar.append(n); }
     fb.addEventListener("click", (e) => { e.stopPropagation(); setSheet(sheet.hidden); });
-    window.addEventListener("hashchange", () => setSheet(false));
+    const sb = el("button", "psbtn"); sb.type = "button"; sb.setAttribute("aria-expanded", "false"); sb.setAttribute("aria-controls", "gsearch"); sb.innerHTML = I.search + "<span>Search</span>";
+    sb.addEventListener("click", (e) => { e.stopPropagation(); setSheet(false); pSearch(!document.body.classList.contains("psearchon")); }); bar.append(sb);
+    const cancel = el("button", "pscancel", "Cancel"); cancel.type = "button"; cancel.addEventListener("click", () => pSearch(false)); document.querySelector("header.top").append(cancel);
+    const bg = el("div", "psbg"); bg.addEventListener("click", () => pSearch(false)); document.body.append(bg);
+    window.addEventListener("hashchange", () => { setSheet(false); pSearch(false); });
     document.addEventListener("click", (e) => { if (!sheet.hidden && !sheet.contains(e.target)) setSheet(false); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !sheet.hidden) setSheet(false); });
     document.body.append(bar, sheet); }

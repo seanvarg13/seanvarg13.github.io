@@ -1282,3 +1282,7 @@ the pill is dark grey with light type. Fantasy opens a menu over its tab with it
 Scoring settings); a pick, a tap elsewhere or a page change closes it. The header is the search box alone now; the ☰ Menu is gone. Everything that
 used to stop above the iPhone's home bar (the list cards, the popup, the player page's tab strip, the Filters dropdown) stops above the pill
 instead. The desktop header is unchanged.
+
+Search is the bar's last tab (29 Oct 2026). A phone has no header at all until you tap it: the search box then opens over the top of the page
+with Cancel beside it and the matches as a list under it, the keyboard up; a pick, Cancel, the tab again or a tap on the sheet closes it. So every
+page starts at the top of the screen on a phone. The desktop keeps its header and its search box.
