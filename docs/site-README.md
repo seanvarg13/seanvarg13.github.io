@@ -1275,11 +1275,12 @@ are new URLs to the worker. Nothing is installed on a local copy of the site unl
 
 ### A bottom bar on the phone (29 Oct 2026)
 
-On a phone the pages live in a bar along the foot of the screen, drawn like the MLB At Bat app's: a rounded grey pill set in from the screen's
-sides and floating a little above the home bar, frosted (the page shows through it, blurred) with a soft shadow, with Home, Leaders, Pitching+,
-Movers, Fantasy and Settings as an icon over a word each and the page you are on as a darker capsule with a bolder icon and word. In dark mode
-the pill is dark grey with light type. Fantasy opens a menu over its tab with its five pages (Rankings, Fantasy leaderboard, Bullpens, Mock draft,
-Scoring settings); a pick, a tap elsewhere or a page change closes it. The header is the search box alone now; the ☰ Menu is gone. Everything that
+On a phone the pages live in a bar along the foot of the screen, drawn like the MLB At Bat app's: a rounded pill set in from the screen's sides
+and floating a little above the home bar with a soft shadow, in the colour scheme's main colour (the Carolina blue of the header on the Titans
+scheme, the green on Jets, mint on Jets · Mint), with Home, Leaders, Pitching+, Movers, Fantasy and Settings as a white icon over a word each and the
+page you are on as a capsule in the scheme's deep ink (navy on Titans) with a bolder white icon and word; on a scheme whose ink is its main colour
+(Jets, UNC navy) the capsule is white instead. Fantasy opens a menu over its tab with its five pages (Rankings, Fantasy leaderboard, Bullpens, Mock
+draft, Scoring settings), in the site's own dropdown colours; a pick, a tap elsewhere or a page change closes it. The header is the search box alone now; the ☰ Menu is gone. Everything that
 used to stop above the iPhone's home bar (the list cards, the popup, the player page's tab strip, the Filters dropdown) stops above the pill
 instead. The desktop header is unchanged.
 
