@@ -3298,7 +3298,7 @@ body[data-mode="eligibility"] main.wrap { background: none !important; border: 0
 /* ---------- Mock Draft (Sean, 2 Oct 2026): a draft room on the Stuff+ board's standing card ---------- */
 body:is([data-mode="mock"],[data-mode="claude"],[data-mode="flaws"],[data-mode="bullpens"]) #pitchboard { gap: 8px; }
 .mkset { max-width: 760px; margin: 0 auto; width: 100%; overflow: auto; }
-body:is([data-mode="mock"],[data-mode="claude"],[data-mode="flaws"],[data-mode="bullpens"]) #pitchboard > .mkset { flex: 1 1 auto; min-height: 0; }
+body:is([data-mode="mock"],[data-mode="claude"],[data-mode="flaws"],[data-mode="bullpens"]) :is(#pitchboard, #mkroom) > .mkset { flex: 1 1 auto; min-height: 0; }
 .mkh { font-family: var(--display); font-size: 26px; color: var(--ink); margin: 4px 0 2px; }
 .mkset .aset { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--hair); }
 .mkset .asetn { color: var(--ink); } .mkset .asetd { color: var(--muted); font-size: 12px; }
@@ -4767,17 +4767,17 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .fantbox .sbt.brt td small { color: var(--muted); font-size: 10px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .fantbox .sbt.brt td.neg { color: var(--stripe-line, #c8102e); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .fantbox .brscroll { margin: 6px 0 14px; max-width: 100%; overflow-x: auto; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .mklist .sbt.mktable { width: 100%; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .mklist .sbt.mktable thead th, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .mkside .sbt thead th, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .mkpane .sbt thead th { position: sticky; top: 0; z-index: 4; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .sbt.brt:is(.mkteams, .mkteam, .mkdone) { width: 100%; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .sbt.brt tr.mkmine td { background: color-mix(in srgb, var(--band2, var(--accent-2)) 18%, var(--surface)); font-weight: 600; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .sbt.brt tr.mkgone td { opacity: .45; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .sbt.brt td.mkact { white-space: nowrap; text-align: right; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#pitchboard, #mkroom) .mklist .sbt.mktable { width: 100%; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#pitchboard, #mkroom) .mklist .sbt.mktable thead th, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#pitchboard, #mkroom) .mkside .sbt thead th, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#pitchboard, #mkroom) .mkpane .sbt thead th { position: sticky; top: 0; z-index: 4; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#pitchboard, #mkroom) .sbt.brt:is(.mkteams, .mkteam, .mkdone) { width: 100%; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#pitchboard, #mkroom) .sbt.brt tr.mkmine td { background: color-mix(in srgb, var(--band2, var(--accent-2)) 18%, var(--surface)); font-weight: 600; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#pitchboard, #mkroom) .sbt.brt tr.mkgone td { opacity: .45; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#pitchboard, #mkroom) .sbt.brt td.mkact { white-space: nowrap; text-align: right; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .sbt.brt td small { color: var(--muted); font-size: 10px; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .sbt.brt .mkptag { font-family: var(--body); }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .sbt.mktable td.nm .pbname { display: inline; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .sbt.mktable td.nm .mkptag { display: inline-block; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard .sbt.mkteam td.mkslot { text-align: left; color: var(--muted); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#pitchboard, #mkroom) .sbt.brt .mkptag { font-family: var(--body); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#pitchboard, #mkroom) .sbt.mktable td.nm .pbname { display: inline; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#pitchboard, #mkroom) .sbt.mktable td.nm .mkptag { display: inline-block; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#pitchboard, #mkroom) .sbt.mkteam td.mkslot { text-align: left; color: var(--muted); }
 
 /* The Leaderboard's table in a window on a desktop (Sean, 11 Oct 2026: "i dont really like the look of this not being a separate window can you
    make it like that again", then "make it so the only window is for the leaderboard itself"): no card round the page, just the table in its own
@@ -5694,21 +5694,52 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #pagertop > .tbtns { flex: 0 1 auto !important; min-width: 0 !important; max-width: 100% !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #pagertop > .tbtns .sbviews.lbviews { display: flex; flex: 0 1 auto; min-width: 0; max-width: 100%; align-self: auto; }
 /* the board's and Movers' row and line, mirroring #pagertop and #lbtitle */
-:root:root:root:root:root:root:root:root #pitchboard .pgrow { display: flex; align-items: center; gap: 12px; margin: 6px 0 0; padding: 0 0 4px; }
-:root:root:root:root:root:root:root:root #pitchboard .pgrow .sbviews.lbviews { margin: 0; max-width: 100%; }
-:root:root:root:root:root:root:root:root #pitchboard .pgline { display: flex; align-items: baseline; gap: 12px; margin: 5px 0 8px; padding-bottom: 5px; border-bottom: 2px solid var(--stripe-line, #c8102e); }
-:root:root:root:root:root:root:root:root #pitchboard .pgline .pcount { font: 600 14px var(--body) !important; color: var(--ink) !important; }
-:root:root:root:root:root:root:root:root #pitchboard .pgline .pgby { font: 400 13px var(--body); color: var(--muted); }
-:root:root:root:root:root:root:root:root #pitchboard .pgline .pgby:empty, :root:root:root:root:root:root:root:root #pitchboard .pgline .pcount:empty { display: none; }
-:root:root:root:root:root:root:root:root #pitchboard .pgline .fxmore { margin-left: auto; align-self: center; font-size: 12.5px; white-space: nowrap; }
-:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pgrow { justify-content: center; margin: 0; padding: 4px 8px 4px; }
-:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pgrow .sbviews.lbviews { display: flex; flex: 0 1 auto; min-width: 0; max-width: 100%; align-self: auto; margin: 0; }
-:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pgline { margin: 2px 12px 8px; padding-bottom: 4px; flex-wrap: wrap; row-gap: 2px; width: auto; min-width: calc(100% - 24px); }
-:root:root:root:root:root:root:root:root[data-view="mobile"] #pitchboard .pgline .pcount { font-size: 13px !important; }
+:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgrow { display: flex; align-items: center; gap: 12px; margin: 6px 0 0; padding: 0 0 4px; }
+:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgrow .sbviews.lbviews { margin: 0; max-width: 100%; }
+:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgline { display: flex; align-items: baseline; gap: 12px; margin: 5px 0 8px; padding-bottom: 5px; border-bottom: 2px solid var(--stripe-line, #c8102e); }
+:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgline .pcount { font: 600 14px var(--body) !important; color: var(--ink) !important; }
+:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgline .pgby { font: 400 13px var(--body); color: var(--muted); }
+:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgline .pgby:empty, :root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgline .pcount:empty { display: none; }
+:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgline .fxmore { margin-left: auto; align-self: center; font-size: 12.5px; white-space: nowrap; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#pitchboard, #fboard) .pgrow { justify-content: center; margin: 0; padding: 4px 8px 4px; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#pitchboard, #fboard) .pgrow .sbviews.lbviews { display: flex; flex: 0 1 auto; min-width: 0; max-width: 100%; align-self: auto; margin: 0; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#pitchboard, #fboard) .pgline { margin: 2px 12px 8px; padding-bottom: 4px; flex-wrap: wrap; row-gap: 2px; width: auto; min-width: calc(100% - 24px); }
+:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#pitchboard, #fboard) .pgline .pcount { font-size: 13px !important; }
 /* the board's page in Movers' frame: the table 12px in from each side on a phone, as the Leaderboard's is */
-:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="pitches"],[data-mode="flaws"]) #pitchboard .flawpage > .pbscroll.brscroll { width: auto !important; margin: 0 12px; max-width: calc(100% - 24px); }
-:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="pitches"],[data-mode="flaws"]) .flawpage > .fxnote { margin-left: 12px !important; margin-right: 12px !important; width: auto; min-width: 0; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="pitches"],[data-mode="flaws"],[data-mode="bullpens"],[data-mode="mock"]) #pitchboard .flawpage > .pbscroll.brscroll { width: auto !important; margin: 0 12px; max-width: calc(100% - 24px); }
+:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="pitches"],[data-mode="flaws"],[data-mode="bullpens"],[data-mode="mock"]) .flawpage > .fxnote { margin-left: 12px !important; margin-right: 12px !important; width: auto; min-width: 0; }
 /* and no white card round those two pages on a phone, as the Leaderboard has none (6 Oct 2026): the page ground, the bar centred in a row
    10px under the top, the line and the framed table 12px in — the same pixels as the Leaderboard's */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="pitches"],[data-mode="flaws"]) main.wrap { background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 0 14px !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="pitches"],[data-mode="flaws"]) main.wrap > #pitchboard { padding: 0 !important; border: 0 !important; background: transparent !important; gap: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="pitches"],[data-mode="flaws"],[data-mode="bullpens"],[data-mode="mock"]) main.wrap { background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 0 14px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="pitches"],[data-mode="flaws"],[data-mode="bullpens"],[data-mode="mock"]) main.wrap > #pitchboard { padding: 0 !important; border: 0 !important; background: transparent !important; gap: 0 !important; }
+
+/* The Fantasy pages share the bar (Sean, 29 Oct 2026: "with the fantasy page do kind of the same thing. Add one bar up top to that which allows
+   you to switch between the different fantasy pages and options (for the mock draft, when that is selected make it so it brings up a button that
+   gives you the option to enter the draft room which is then its own pop up window type thing which you can exit out of to get back to the
+   fantasy page"): the Fantasy leaderboard's bar is its first row (#fboard .pgrow, the rules above widened to it); Rankings / Draft mode carry
+   the picker and Filters in #pagertop's .tbtns, centred and scrolling on a phone like the Leaderboard's; Bullpens is Movers' frame. The draft
+   room is a popup over the Mock draft page: the player popup's frame on a desktop, the whole screen on a phone, a dark backdrop, a × in its
+   corner; the page under it keeps the bar with Enter the draft room and a card saying where the draft stands. */
+:root:root:root:root:root:root:root:root #fboard .pgrow { margin: 0 0 4px; padding: 0 0 4px; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] #fboard .pgrow { margin: 0; padding: 4px 8px 4px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.boardon #pagertop > .tbtns { flex: 0 1 auto !important; min-width: 0 !important; max-width: 100% !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.boardon #pagertop > .tbtns .sbviews.lbviews { display: flex; flex: 0 1 auto; min-width: 0; max-width: 100%; align-self: auto; }
+:root:root:root:root:root:root:root:root .sbviews.lbviews .sbview.mkenter { font-weight: 600 !important; }
+:root:root:root:root:root:root:root:root .mkset.mkcard .mkpagebtns { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 6px; }
+:root:root:root:root:root:root:root:root .mkset.mkcard .mkpagebtns .mkgo { margin: 0; }
+:root:root:root:root:root:root:root:root #mkroom { position: fixed; z-index: 71; inset: 24px 0; margin: 0 auto; width: min(1180px, calc(100vw - 48px)); box-sizing: border-box; background: var(--surface); color: var(--ink); border: 1px solid color-mix(in srgb, var(--ink) 45%, var(--surface)); box-shadow: 0 12px 40px rgba(0, 0, 0, .28); display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 12px; overflow: hidden; overscroll-behavior: none; }
+:root:root:root:root:root:root:root:root #mkroom[hidden], :root:root:root:root:root:root:root:root .mkroombg[hidden] { display: none !important; }
+:root:root:root:root:root:root:root:root .mkroombg { position: fixed; inset: 0; z-index: 70; background: rgba(0, 0, 0, .35); }
+:root:root:root:root:root:root:root:root #mkroom > * { flex: none; }
+:root:root:root:root:root:root:root:root #mkroom > .mkmain { flex: 1 1 auto !important; min-height: 0; }
+:root:root:root:root:root:root:root:root #mkroom > .mkset { flex: 1 1 auto; min-height: 0; overflow: auto; }
+:root:root:root:root:root:root:root:root #mkroom > .mktop { padding-right: 58px; }
+:root:root:root:root:root:root:root:root #mkroom .mkx { position: absolute; top: 9px; right: 11px; z-index: 2; width: 34px; height: 34px; padding: 0; border: 1px solid color-mix(in srgb, var(--ink) 30%, var(--surface)); border-radius: 0; background: var(--surface); color: var(--ink); font: 400 24px/1 var(--body); cursor: pointer; }
+:root:root:root:root:root:root:root:root #mkroom .mkx:hover { background: color-mix(in srgb, var(--ink) 8%, var(--surface)); }
+:root:root:root:root:root:root:root:root body.mkroomon { overflow: hidden; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom { inset: 0; width: 100vw; margin: 0; border: 0; box-shadow: none; padding: 8px 8px calc(8px + var(--pbar-h, 0px)); }
+:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom .mkx { top: 6px; right: 8px; width: 30px; height: 30px; font-size: 22px; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom > .mktop { padding-right: 46px; }
+/* the Fantasy leaderboard's bar sits where the Leaderboard's does on a phone (its board had 8px of top padding and a 6px first-child margin) */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="fantasy"] main.wrap > #fboard { padding-top: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body[data-mode="fantasy"] #fboard > .pgrow:first-child { margin-top: 0 !important; }

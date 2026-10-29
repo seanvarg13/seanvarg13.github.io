@@ -1308,3 +1308,15 @@ the table is sorted by ("1991 pitches · 2026 · 100+ pitches · SP — by Pitch
 "More about these numbers" at its right where a page has an explanation. On a phone the bar is centred and, when its buttons don't all fit,
 slides sideways inside itself; the three pages' tables sit in the same framed box in the same place, so switching between them moves nothing.
 The board's pills and its phone Filters panel, and Movers' pills and heading, are gone.
+
+### The Fantasy pages share the bar; the draft room is a popup (29 Oct 2026)
+
+The Fantasy pages have the same bar up top: its first button names the page — **Rankings ▾**, **Fantasy leaderboard ▾**, **Bullpens ▾**,
+**Mock draft ▾**, **Scoring settings ▾** — and opens the other four. After it come the page's options: Rankings' Filters; the Fantasy
+leaderboard's Position (hitters' positions and pitchers' roles), Scoring, Season, Window (the full season or recent games) and Filters (the
+dates, hand, home / away, the name search and the minimum fold out under the bar); Bullpens' Team, Window and Order, with the count line under
+the bar as on Movers. On the Mock draft page the bar carries **Enter the draft room** once a draft exists: the room itself is a window over the
+page — the whole screen on a phone — with a × in its corner, and the page under it says where the draft stands (round and pick, or players sold)
+with Enter the draft room and End this draft. Starting a draft opens the room; leaving it (the ×, a tap outside it, Escape, or another page)
+pauses the draft, and the room reopens on its Resume button. The old page pill, the Season | Recent switch, the pills and the page headings
+are gone.
