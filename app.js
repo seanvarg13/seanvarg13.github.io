@@ -10749,17 +10749,37 @@
   function lineupLine(p) {
     if (DS.key !== CUR.key || DS.level !== "MLB") return null;
     luEnsure(); const L = luOf(p); if (!L) return null;
-    const d = el("div", "pblu"), add = (t, title) => { const s = typeof t === "string" ? el("span", null, t) : t; if (title) s.title = title; const w = el("span", "pbit"); w.append(el("span", "pbdot", "·"), s); d.append(w); return s; };
-    const slots = L.sl.map((n, i) => [i + 1, n]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]);
-    if (L.gs) { const top = slots.filter((x, i) => i === 0 || x[1] >= 0.15 * L.gs).slice(0, 3); add("Bats " + top.map(([k, n]) => `${ORD(k)} (${Math.round(100 * n / L.gs)}%)`).join(", "), `Where he bats when he starts: ${slots.map(([k, n]) => `${ORD(k)} ${n}`).join(", ")} — mean slot ${L.slot.toFixed(1)}`); }
-    add(`Starts ${L.gs} of ${L.ar} roster game${L.ar === 1 ? "" : "s"} (${Math.round(L.stpct)}%)`, `Games on the active roster (a start, a substitute appearance or the bench)${L.tg ? ` · his club has played ${L.tg}` : ""}`);
-    add(`${L.patg.toFixed(1)} PA/G`, "Plate appearances per game on the active roster");
-    if (L.lsp != null || L.rsp != null) {
-      const pl = L.platoon, sideT = (h, v, a) => (v == null ? null : add(`vs ${h}HP ${Math.round(v)}%`, `Starts in ${a[0]} of his ${a[1]} roster games against ${h === "L" ? "left" : "right"}-handed starting pitchers`));
-      const l = sideT("L", L.lsp, L.vl), r = sideT("R", L.rsp, L.vr);
-      if (pl) { const c = el("span", "pbplat", "Platooned"); c.title = `Sits against ${pl === "L" ? "left" : "right"}-handers: starts ${Math.round(pl === "L" ? L.lsp : L.rsp)}% of his roster games against them, ${Math.round(pl === "L" ? L.rsp : L.lsp)}% against the other side`; add(c); if (pl === "L" && l) l.classList.add("pbweak"); if (pl === "R" && r) r.classList.add("pbweak"); }
+    // a second Summary under the first (Sean, 29 Oct 2026: the line "feels very jumbled and just thrown on there, can we make it so that it is
+    // organized and easy to digest"): a labelled row in the band's dress — Bats · Starts · PA/G · vs LHP · vs RHP · Last 15 — each cell the
+    // headline number over a small line of detail, the tooltips as before; a phone gives the last-15 strip a row of its own. The run of
+    // fragments with dots between them (28 Oct 2026) is history
+    const d = el("div", "pbsum pblu"), PH = mobileView(), pl = L.platoon;
+    const slots = L.sl.map((n, i) => [i + 1, n]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]), pc = (n) => `${Math.round(100 * n / L.gs)}%`;
+    const cells = [];   // [label, value, detail, tooltip, classes]
+    if (L.gs) { const [k0, n0] = slots[0], rest = slots.slice(1).filter((x) => x[1] >= 0.15 * L.gs).slice(0, 2);
+      cells.push(["Bats", ORD(k0), pc(n0) + (rest.length && !PH ? " · " + rest.map(([k, n]) => `${ORD(k)} ${pc(n)}`).join(" · ") : ""), `Where he bats when he starts: ${slots.map(([k, n]) => `${ORD(k)} ${n}`).join(", ")} — mean slot ${L.slot.toFixed(1)}`, ""]); }
+    else cells.push(["Bats", "–", "no starts", "No starts on the active roster yet", ""]);
+    cells.push(["Starts", `${Math.round(L.stpct)}%`, `${L.gs} of ${L.ar}${PH ? "" : ` roster game${L.ar === 1 ? "" : "s"}`}`, `Games on the active roster (a start, a substitute appearance or the bench)${L.tg ? ` · his club has played ${L.tg}` : ""}`, "sep"]);
+    cells.push(["PA/G", L.patg.toFixed(1), PH ? "per game" : "per roster game", "Plate appearances per game on the active roster", ""]);
+    for (const [h, v, a] of [["L", L.lsp, L.vl], ["R", L.rsp, L.vr]]) {
+      if (v == null) continue;
+      cells.push([`vs ${h}HP`, `${Math.round(v)}%`, pl === h ? "PLAT" : `${a[0]} of ${a[1]}${PH ? "" : " starts"}`, `Starts in ${a[0]} of his ${a[1]} roster games against ${h === "L" ? "left" : "right"}-handed starting pitchers${pl === h ? ` — sits against them: ${Math.round(v)}% against ${h === "L" ? "lefties" : "righties"}, ${Math.round(h === "L" ? L.rsp : L.lsp)}% against the other side` : ""}`, (h === "L" ? "sep" : "") + (pl === h ? " pbweak" : "")]);
     }
-    if (L.last.length) { const s = el("span", "pblast"); s.append(el("span", "pblastw", `Last ${L.last.length}`)); for (const x of L.last) { const b = el("b", x > 0 ? "on" : x === 0 ? "off" : "out", x > 0 ? String(x) : x === 0 ? "–" : "×"); b.title = x > 0 ? `Started, batting ${ORD(x)}` : x === 0 ? "On the roster, didn't start" : "Not on the active roster"; s.append(b); } add(s, `His slot in each of his club's last ${L.last.length} games, oldest first: a digit is a start, – on the roster without starting, × off the active roster`); }
+    const strip = () => { const s = el("span", "pblast"); for (const x of L.last) { const b = el("b", x > 0 ? "on" : x === 0 ? "off" : "out", x > 0 ? String(x) : x === 0 ? "–" : "×"); b.title = x > 0 ? `Started, batting ${ORD(x)}` : x === 0 ? "On the roster, didn't start" : "Off the active roster"; s.append(b); } return s; };
+    const head = el("div", "pbsrow pbshead"), row = el("div", "pbsrow"); head.append(el("span", "pbsl", "Playing time")); row.append(el("span", "pbsl", String(DS.season)));
+    for (const [lab, val, sub, title, cls] of cells) {
+      const sep = cls.includes("sep") ? " sep" : "";
+      head.append(el("span", "pbsh" + sep, lab));
+      const v = el("span", "pbsv pblcell" + sep + (cls.includes("pbweak") ? " pbweak" : "")); v.title = title;
+      v.append(el("b", "pbsvv", val));
+      if (sub === "PLAT") { const c = el("span", "pbplat", "Platooned"); v.append(c); } else if (sub) v.append(el("small", "pbsvs", sub));
+      row.append(v);
+    }
+    const last = L.last.length ? `Last ${L.last.length}` : "";
+    if (last && !PH) { head.append(el("span", "pbsh sep", last)); const v = el("span", "pbsv pblcell pblastc sep"); v.title = "His last 15 team games: the slot he started in, – on the roster without starting, × off the active roster"; v.append(strip()); row.append(v); }
+    d.style.setProperty("--n", cells.length + (last && !PH ? 1 : 0));
+    d.append(head, row);
+    if (last && PH) { const r2 = el("div", "pbsrow pblastrow"); r2.append(el("span", "pbsl", last)); const v = el("span", "pbsv pblcell pblastc"); v.append(strip()); r2.append(v); d.append(r2); }
     return d;
   }
   // In-season arsenal alerts (Sean, 28 Oct 2026, item 10 of the review's picks: "new pitch 5%+ in last 30 days, usage swing 10+, velo +1 on

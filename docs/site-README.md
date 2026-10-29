@@ -1320,3 +1320,11 @@ page — the whole screen on a phone — with a × in its corner, and the page u
 with Enter the draft room and End this draft. Starting a draft opens the room; leaving it (the ×, a tap outside it, Escape, or another page)
 pauses the draft, and the room reopens on its Resume button. The old page pill, the Season | Recent switch, the pills and the page headings
 are gone.
+
+### The playing-time block on the player page (29 Oct 2026)
+
+The line under a hitter's Summary that said where he bats and how much he plays is a block in the Summary's own dress now: labels over
+numbers — **Bats** (his usual slot, with the share of his starts there and his next slots under it), **Starts** (the share of his roster games
+he started, the count under it), **PA/G** (plate appearances per roster game), **vs LHP** and **vs RHP** (how often he starts against each
+hand, the counts under them; a platooned hitter's weak side carries the red Platooned chip) and **Last 15** (his last fifteen team games: the
+slot he started in, – on the roster without starting, × off the active roster). On a phone the Last 15 strip has a row of its own.
