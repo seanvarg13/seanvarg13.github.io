@@ -1355,3 +1355,13 @@ appearances in the games he started, over those starts — a pinch-hit or late-i
 the bench. It had been plate appearances per game on the active roster, bench days included, which read 3.0 for Will Smith (276 PA over 91 roster
 games: 62 starts, 11 substitute appearances, 18 days on the bench, and the rest of the season on the injured list); he reads 4.3 now (265 PA in
 62 starts). The two earlier descriptions of PA/G above are history.
+
+## PA per game played (29 Oct 2026)
+
+The playing-time block's PA/G and the Leaderboard's PA/G column are plate appearances per game he played — starts plus substitute
+appearances — so bench days and IL time no longer drag it down (the first version counted every game on the active roster; for an hour it
+was PA per start). `hist/lineups.js` carries `gp`, games played, from the box scores. Will Smith 2026: 276 PA in 73 games, 3.8.
+
+## Top three lineup spots (29 Oct 2026)
+
+The playing-time block's Bats cell lists his three most frequent lineup spots, each with its share of his starts, one per line.

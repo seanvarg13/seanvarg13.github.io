@@ -5651,3 +5651,15 @@ line can bring them back.
   field byte-identical), `luOf` reads `patg` = `pas / gs` (`pa / gs` on a file without `pas`, null with no starts), and the card's cell
   (`lineupLine`), the Leaderboard column (`LINE_H`), `SHORT` and the glossary say **PA/start**, the cell's detail "265 PA in 62 starts". A
   pinch-hit or substitute appearance is left out (301 of the hitters with 20+ starts move 0.1+ for it). Smith reads 4.3 (4.5 on his total PA).
+
+* **PA per game played (Sean, 29 Oct 2026, an hour after the PA-per-start change: "make it per game not per start")**: the playing-time block's
+  cell and the Leaderboard column are **PA/G** again, now per **game played** — a start or a substitute appearance; bench days and days off the
+  active roster don't count. `tools/build_lineups.py` writes **`gp`** (games played) on every hitter's `hist/lineups.js` entry (rebuilt from the
+  cached box scores; for every hitter starts ≤ gp ≤ roster games), `luOf` reads `patg` = `pa / gp` (PA per start on a file without `gp`), the
+  cell's detail "276 PA in 73 games". `pas` stays built. Will Smith reads 3.8 (73 games, MLB's own games-played count). The PA-per-start entry
+  above is history.
+
+* **The Bats cell shows his top three spots (Sean, 29 Oct 2026: "have the header show more than just their most frequent batting spot like
+  maybe have it show their top 3 spots by %")**: the playing-time block's Bats cell is up to three lines, each a lineup slot over its share of
+  his starts, most first ("3rd 45% / 5th 24% / 7th 10%" for Will Smith), on both layouts (`lineupLine` passes the cell an array; `.pbtop` /
+  `.pbtopr` at the end of `styles.css`). The tooltip still lists every slot and the mean.
