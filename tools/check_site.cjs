@@ -94,13 +94,13 @@ function minorsId() {
     // the Leaders bar (29 Oct 2026): the board draws the Leaderboard's bar with the page picker first; a pick (Role → SP) marks its button and
     // narrows the rows; the picker's list moves between the three pages
     await step("pitching+ board", async () => { await hash("#pitches"); await count("#pitchboard table tbody tr", 20);
-      await until(() => document.querySelector("#pitchboard .pgrow .sbviews.lbviews .pgpick")?.textContent.trim() === "Pitching+" && document.querySelectorAll("#pitchboard .lbviews .sbview[data-pick]").length >= 5 && /pitches · /.test(document.querySelector("#pitchboard .pgline .pcount")?.textContent || ""));
+      await until(() => document.querySelector("#pitchboard .pgrow .sbviews.lbviews .pgpick .pgcur")?.textContent.trim() === "Pitching+" && document.querySelectorAll("#pitchboard .lbviews .sbview[data-pick]").length >= 5 && /pitches · /.test(document.querySelector("#pitchboard .pgline .pcount")?.textContent || ""));
       await pg.evaluate(() => { document.querySelector('#pitchboard .lbviews .sbview[data-pick="role"]').click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "SP").click(); });
       await until(() => document.querySelector('#pitchboard .lbviews .sbview[data-pick="role"]')?.classList.contains("set") && /· SP/.test(document.querySelector("#pitchboard .pgline .pcount").textContent) && document.querySelectorAll("#pitchboard table tbody tr").length > 20);
       await pg.evaluate(() => { document.querySelector('#pitchboard .lbviews .sbview[data-pick="role"]').click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "SP + RP").click(); });
       await until(() => !document.querySelector('#pitchboard .lbviews .sbview[data-pick="role"]')?.classList.contains("set"));
       await pg.evaluate(() => { document.querySelector("#pitchboard .lbviews .pgpick").click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "Leaderboard").click(); });
-      await until(() => location.hash === "#leaderboard" && document.querySelector("#pagertop .lbviews .pgpick")?.textContent.trim() === "Leaderboard"); await count("#rows > li.row", 20, 60000);
+      await until(() => location.hash === "#leaderboard" && document.querySelector("#pagertop .lbviews .pgpick .pgcur")?.textContent.trim() === "Leaderboard"); await count("#rows > li.row", 20, 60000);
       await pg.evaluate(() => { document.querySelector("#pagertop .lbviews .pgpick").click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "Pitching+").click(); });
       await until(() => location.hash === "#pitches"); await count("#pitchboard table tbody tr", 20); });
     if (!QUICK) await step("movers", async () => { await hash("#movers"); await count(".flawpage table tbody tr", 1, 120000);
@@ -109,46 +109,47 @@ function minorsId() {
       await pg.evaluate(() => document.querySelector(".fxwin .fxname").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
       await until(() => !document.querySelector(".fxwin") && !!document.querySelector("#xboard.xpop .xpopx")); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop"));
       // the pitchers and a position through the bar's Position button (23 Oct 2026; the Leaders bar since 29 Oct), then back, so the next run starts where this one did; a pitcher's row opens the popup too
-      await until(() => document.querySelector("#pitchboard .pgrow .lbviews .pgpick")?.textContent.trim() === "Movers");
+      await until(() => document.querySelector("#pitchboard .pgrow .lbviews .pgpick .pgcur")?.textContent.trim() === "Movers");
       for (const sd of ["All pitchers", "SS", "All hitters"]) { await pg.evaluate((t) => { document.querySelector('#pitchboard .lbviews .sbview[data-pick="pos"]').click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === t).click(); }, sd);
         await until((t) => document.querySelector('#pitchboard .lbviews .sbview[data-pick="pos"]')?.getAttribute("aria-label") === "Position: " + t && document.querySelectorAll(".flawpage table tbody tr").length > 0, sd, 120000);
         if (sd === "All pitchers") { await pg.evaluate(() => document.querySelector(".flawpage table tbody tr .pbname").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
           await until(() => location.hash === "#movers" && !document.querySelector("#xboard .pbback")); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); } } });
     // Bullpens (28 Oct 2026): the overview's 30 teams, one team's pen through the Team pill, a name's popup, back to every team
     if (!QUICK) await step("bullpens", async () => { await hash("#bullpens"); await count(".bppage table tbody tr", 20, 120000);
-      await until(() => document.querySelector("#pitchboard .pgrow .lbviews .pgpick")?.textContent.trim() === "Bullpens");   // the Fantasy pages' bar (29 Oct 2026)
+      await until(() => document.querySelector("#pitchboard .pgrow .lbviews .pgpick .pgcur")?.textContent.trim() === "Bullpens");   // the Fantasy pages' bar (29 Oct 2026)
       for (const [tm, n] of [["NYY", 5], ["All teams", 20]]) { await pg.evaluate((t) => { document.querySelector('#pitchboard .lbviews .sbview[data-pick="team"]').click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent.startsWith(t)).click(); }, tm);
         await until(([t, k]) => document.querySelector('#pitchboard .lbviews .sbview[data-pick="team"]')?.getAttribute("aria-label") === "Team: " + t && document.querySelectorAll(".bppage table tbody tr").length >= k, [tm === "All teams" ? "All teams" : tm, n], 60000);
         if (tm === "NYY") { await pg.evaluate(() => document.querySelector(".bppage table tbody tr .pbname").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
           await until(() => location.hash === "#bullpens" && !!document.querySelector("#xboard.xpop .xpopx")); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); } } });
     // the Fantasy pages' bar (29 Oct 2026): the picker says the page, Window → Recent games and back, the picker to Scoring settings and back
     await step("fantasy", async () => { await hash("#fantasy"); await count("#fboard table tbody tr", 10, 90000);
-      await until(() => document.querySelector("#fboard .pgrow .lbviews .pgpick")?.textContent.trim() === "Fantasy leaderboard" && document.querySelectorAll('#fboard .lbviews .sbview[data-pick]').length >= 5);
+      await until(() => document.querySelector("#fboard .pgrow .lbviews .pgpick .pgcur")?.textContent.trim() === "Fantasy leaderboard" && document.querySelectorAll('#fboard .lbviews .sbview[data-pick]').length >= 5);
       await pg.evaluate(() => { document.querySelector('#fboard .lbviews .sbview[data-pick="win"]').click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "Recent games").click(); });
       await until(() => location.hash === "#fantasy/trending" && document.querySelector('#fboard .lbviews .sbview[data-pick="win"]')?.classList.contains("set")); await count("#fboard table tbody tr", 5, 90000);
       await pg.evaluate(() => { document.querySelector('#fboard .lbviews .sbview[data-pick="win"]').click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "Full season").click(); });
       await until(() => location.hash === "#fantasy/leaders"); await count("#fboard table tbody tr", 10, 90000);
       await pg.evaluate(() => { document.querySelector("#fboard .lbviews .pgpick").click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "Scoring settings").click(); });
-      await until(() => location.hash === "#fantasy/settings" && document.querySelector("#fboard .pgrow .lbviews .pgpick")?.textContent.trim() === "Scoring settings" && !!document.querySelector("#fboard .fpresets"));
+      await until(() => location.hash === "#fantasy/settings" && document.querySelector("#fboard .pgrow .lbviews .pgpick .pgcur")?.textContent.trim() === "Scoring settings" && !!document.querySelector("#fboard .fpresets"));
       await pg.evaluate(() => { document.querySelector("#fboard .lbviews .pgpick").click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "Fantasy leaderboard").click(); });
       await until(() => location.hash === "#fantasy/leaders"); await count("#fboard table tbody tr", 10, 90000); });
-    await step("phone bar", async () => {   // the bottom bar on a phone (29 Oct 2026): five tabs, the Leaders and Fantasy sheets, a page from each; hidden on a desktop
+    await step("phone bar", async () => {   // the bottom bar on a phone (29 Oct 2026): five tabs — Leaders and Fantasy plain links to the page last open in their group, no sheets — and the search from the bar; hidden on a desktop
       const shown = await pg.evaluate(() => { const b = document.querySelector(".pbar"); return b ? getComputedStyle(b).display !== "none" : null; });
       if (shown === null) throw new Error("no .pbar");
       if (name.startsWith("phone")) { if (!shown) throw new Error("the phone bar is hidden");
-        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 5 && getComputedStyle(document.querySelector(".navtog")).display === "none" && getComputedStyle(document.querySelector("header.top")).display === "none");
-        // Leaders' sheet (29 Oct 2026): Leaderboard · Pitching+ · Movers; it sits inside the screen, a pick lights the Leaders tab, and opening Fantasy's closes it
-        await pg.evaluate(() => document.querySelector(".pbar button[aria-controls='pbarsheet-leaders']").click());
-        await until(() => { const u = document.querySelector("#pbarsheet-leaders"), r = u.getBoundingClientRect(); return !u.hidden && u.querySelectorAll("a").length === 3 && r.left >= 20 && r.right <= innerWidth - 20 && r.bottom < document.querySelector(".pbar").getBoundingClientRect().top; });
-        await pg.evaluate(() => [...document.querySelectorAll("#pbarsheet-leaders a")].find((a) => a.textContent === "Movers").click());
-        await until(() => location.hash === "#movers" && document.querySelector("#pbarsheet-leaders").hidden); await count(".flawpage table tbody tr", 1, 120000);
-        await until(() => document.querySelector('.pbar [data-mode="leaderboard"]').getAttribute("aria-current") === "page" && document.querySelector('#pbarsheet-leaders a[data-mode="flaws"]').getAttribute("aria-current") === "page");
-        await pg.evaluate(() => document.querySelector(".pbar button[aria-controls='pbarsheet-leaders']").click()); await until(() => !document.querySelector("#pbarsheet-leaders").hidden);
-        await pg.evaluate(() => document.querySelector(".pbar button[aria-controls='pbarsheet']").click());
-        await until(() => document.querySelector("#pbarsheet-leaders").hidden && !document.querySelector("#pbarsheet").hidden && document.querySelectorAll("#pbarsheet a").length === 5);
-        await pg.evaluate(() => [...document.querySelectorAll("#pbarsheet a")].find((a) => a.textContent === "Bullpens").click());
-        await until(() => location.hash === "#bullpens" && document.querySelector("#pbarsheet").hidden); await count(".bppage table tbody tr", 20, 120000);
-        await until(() => document.querySelector('.pbar [data-mode="draftmode"]').getAttribute("aria-current") === "page" && !document.querySelector('.pbar [data-mode="leaderboard"]').hasAttribute("aria-current"));
+        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 5 && document.querySelectorAll(".pbar > a[data-mode]").length === 4 && !document.querySelector(".pbarsheet") && getComputedStyle(document.querySelector(".navtog")).display === "none" && getComputedStyle(document.querySelector("header.top")).display === "none");
+        // the Leaders tab goes to the Leaders page last open (the steps above left the board or Movers) and lights; once the bar's picker has moved
+        // to the Leaderboard, the tab remembers that instead; the Fantasy tab the same for its five pages
+        const lh = await pg.evaluate(() => document.querySelector('.pbar > a[data-mode="leaderboard"]').getAttribute("href"));
+        if (!/^#(leaderboard|trending|pitches|movers)$/.test(lh)) throw new Error("the Leaders tab links to " + lh);
+        await pg.evaluate(() => document.querySelector('.pbar > a[data-mode="leaderboard"]').click());
+        await until((h) => location.hash === h && document.querySelector('.pbar > a[data-mode="leaderboard"]').getAttribute("aria-current") === "page" && !document.querySelector('.pbar > a[data-mode="draftmode"]').hasAttribute("aria-current"), lh);
+        await pg.evaluate(() => { [...document.querySelectorAll(".sbviews.lbviews .pgpick")].find((x) => x.getClientRects().length).click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "Leaderboard").click(); });
+        await until(() => location.hash === "#leaderboard" && document.querySelector('.pbar > a[data-mode="leaderboard"]').getAttribute("href") === "#leaderboard"); await count("#rows > li.row", 20, 60000);
+        await pg.evaluate(() => document.querySelector('.pbar > a[data-mode="home"]').click()); await until(() => location.hash === "#home" && document.querySelector('.pbar > a[data-mode="home"]').getAttribute("aria-current") === "page");
+        const fh = await pg.evaluate(() => document.querySelector('.pbar > a[data-mode="draftmode"]').getAttribute("href"));
+        if (!/^#(rankings|draft|fantasy(\/\w+)?|bullpens|mock)$/.test(fh)) throw new Error("the Fantasy tab links to " + fh);
+        await pg.evaluate(() => document.querySelector('.pbar > a[data-mode="draftmode"]').click());
+        await until((h) => location.hash === h && document.querySelector('.pbar > a[data-mode="draftmode"]').getAttribute("aria-current") === "page" && !document.querySelector('.pbar > a[data-mode="leaderboard"]').hasAttribute("aria-current"), fh);
         // the search from the bar (29 Oct 2026): the tab opens the header over the page with the box focused, a pick closes it
         await pg.evaluate(() => document.querySelector(".pbar .psbtn").click());
         await until(() => document.body.classList.contains("psearchon") && getComputedStyle(document.querySelector("header.top")).display !== "none" && document.activeElement === document.getElementById("gq"));
@@ -158,9 +159,24 @@ function minorsId() {
       else { if (shown) throw new Error("the phone bar shows on a desktop");
         await until(() => getComputedStyle(document.querySelector("header.top")).display !== "none" && getComputedStyle(document.querySelector(".pscancel")).display === "none"); } });
     if (!QUICK) {
+      // the bar in one spot (29 Oct 2026): on every Leaders and Fantasy page the bar's left edge and top are the same pixels, its picker as wide
+      // within a group, and the Leaderboard's, the board's and Movers' table frames share their four edges
+      await step("the bar in one spot", async () => {
+        const G = {};
+        for (const [h, ready, fr] of [["#leaderboard", () => document.querySelectorAll("#rows > li.row").length > 20, "#bscroll"], ["#pitches", () => document.querySelectorAll("#pitchboard table tbody tr").length > 20, "#pitchboard .flawpage > .pbscroll"],
+                                       ["#movers", () => document.querySelectorAll("#pitchboard .flawpage table tbody tr").length > 0, "#pitchboard .flawpage > .pbscroll"], ["#rankings", () => document.querySelectorAll("#rows li").length > 5], ["#draft", () => document.querySelectorAll("#rows li").length > 5],
+                                       ["#fantasy/leaders", () => document.querySelectorAll("#fboard table tbody tr").length > 5], ["#bullpens", () => document.querySelectorAll(".bppage table tbody tr").length > 20], ["#mock", () => !!document.querySelector("#pitchboard .mkset")], ["#fantasy/settings", () => !!document.querySelector("#fboard .fpresets")]]) {
+          await hash(h); await until(ready, undefined, 120000); await pg.waitForTimeout(300);
+          const g = await pg.evaluate((sel) => { const vis = (q) => [...document.querySelectorAll(q)].find((e) => e.getClientRects().length), R = (e) => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom].map(Math.round); };
+            const b = vis(".sbviews.lbviews"), p = b && b.querySelector(".pgpick"), f = sel ? vis(sel) : null; return { bar: b ? R(b) : null, pick: p ? R(p) : null, frame: f ? R(f) : null }; }, fr || null);
+          if (!g.bar || !g.pick) throw new Error(h + ": no bar"); if (fr && !g.frame) throw new Error(h + ": no frame"); G[h] = g; }
+        const near = (a, b, n = 1) => a.every((v, i) => Math.abs(v - b[i]) <= n), ref = G["#leaderboard"], grp = (h) => (/^#(leaderboard|pitches|movers)$/.test(h) ? "#leaderboard" : "#rankings");
+        for (const h in G) { if (!near(G[h].bar.slice(0, 2), ref.bar.slice(0, 2))) throw new Error(`the bar moves: ${h} at ${G[h].bar.slice(0, 2)} vs ${ref.bar.slice(0, 2)}`);
+          const q = G[grp(h)].pick; if (!near(G[h].pick.slice(0, 2), q.slice(0, 2)) || Math.abs(G[h].pick[2] - G[h].pick[0] - (q[2] - q[0])) > 1) throw new Error(`the picker moves: ${h} ${G[h].pick} vs ${q}`);
+          if (G[h].frame && !near(G[h].frame, ref.frame)) throw new Error(`the frame differs: ${h} ${G[h].frame} vs ${ref.frame}`); } });
       // the Mock draft (29 Oct 2026): the bar's picker says the page; Start draft opens the room as a popup; its × leaves it (the draft pauses) and
       // the page offers Enter the draft room; Enter reopens it; Escape leaves again; the draft is cleared so the next run starts clean
-      await step("mock draft", async () => { await hash("#mock"); await until(() => document.querySelector("#pitchboard .pgrow .lbviews .pgpick")?.textContent.trim() === "Mock draft" && !!document.querySelector("#pitchboard .mkset .mkgo"), 90000);
+      await step("mock draft", async () => { await hash("#mock"); await until(() => document.querySelector("#pitchboard .pgrow .lbviews .pgpick .pgcur")?.textContent.trim() === "Mock draft" && !!document.querySelector("#pitchboard .mkset .mkgo"), 90000);
         await pg.evaluate(() => document.querySelector("#pitchboard .mkset .mkgo").click());
         await until(() => { const r = document.querySelector("#mkroom"); return r && !r.hidden && !!r.querySelector(".mktop") && !!r.querySelector(".mklist") && !!r.querySelector(".mkx"); });
         await pg.evaluate(() => document.querySelector("#mkroom .mkx").click());

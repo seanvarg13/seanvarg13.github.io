@@ -1328,3 +1328,14 @@ numbers — **Bats** (his usual slot, with the share of his starts there and his
 he started, the count under it), **PA/G** (plate appearances per roster game), **vs LHP** and **vs RHP** (how often he starts against each
 hand, the counts under them; a platooned hitter's weak side carries the red Platooned chip) and **Last 15** (his last fifteen team games: the
 slot he started in, – on the roster without starting, × off the active roster). On a phone the Last 15 strip has a row of its own.
+
+### The bar in one spot; the bottom bar's dropdowns gone; the Leaders tables one size (29 Oct 2026)
+
+On a phone the bottom bar's **Leaders** and **Fantasy** tabs no longer open a menu: each takes you straight to the page you last had open in its
+group — the Leaderboard, Pitching+ or Movers; Rankings, the Fantasy leaderboard, Bullpens, the Mock draft or Scoring settings — and the bar at
+the top of that page is where you switch to another of them. The top bar itself now sits in the same spot on every page of a group: its left
+edge and its top are the same pixels on the Leaderboard, Pitching+ and Movers, and on all five Fantasy pages, and the page button at its left is
+the same width whichever page it names, so the buttons after it don't shift either. On a desktop the three Leaders pages draw their tables in
+one frame of the same size — the Leaderboard's table fills the column, its name column taking the extra room — and its explanation folds behind
+"More about these numbers" on the count line as the board's and Movers' do. On Rankings the list and editing tools sit right under the bar
+instead of above it, and on a phone the Rankings, Draft mode and Fantasy pages have no white card round them any more, like the other pages.

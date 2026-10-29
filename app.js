@@ -2985,13 +2985,18 @@
       else { if (!tt) { tt = el("div", "lbtitle"); tt.id = "lbtitle"; } if (bs && tt.nextSibling !== bs) bs.before(tt);
         const P0 = isPitcherGroup(g), sk = state.sort, sm = ms.find((m) => m.key === sk);
         const by = sk === "score" ? (boardOn() ? (P0 ? "nERA, regressed by innings" : wsLab(wobaHead() ? "wOBA" : HEAD.label)) : P0 ? "nERA" : wsLab(wobaHead() ? "wOBA" : HEAD.label)) : sm ? colLab(sm) : sk === "name" ? "name" : sk === "age" ? "age" : sk === "year" ? "season" : "";
-        const page = state.mode === "rankings" ? "Rankings" : state.mode === "draft" ? "Draft mode" : "Leaderboard", own = customOrder() && !state.rankSort;   // Rankings / Draft mode (16 Oct 2026)
+        const own = customOrder() && !state.rankSort;   // Rankings / Draft mode (16 Oct 2026)
         const pn = !P0 && XWN, xwBy = by === wsLab("xwOBA");   /* the switch is on (18 Oct 2026): "by park-neutral xwOBA", or the sort and then the note */
         const od = BR && oneDay() ? (mobileView() ? fmtDate : gameDayName)(seasonDays()[winIdx().lo]) + " · " : "";   /* one game day (23 Oct 2026): "Sun, Sep 27 · by xwOBA" ("Sep 27" on a phone) */
         // the Leaderboard / Recent drop the words "Hitting Leaderboard" and give the line to the count instead (Sean, 25 Oct 2026: "you can
-        // get rid of the hitting leaderboard text and put all the rest of the text on that row/level/area") — renderPager moves .pcount in here
-        tt.innerHTML = ""; if (!onePage()) tt.append(el("h2", null, `${P0 ? "Pitchers" : "Hitting"} ${page}`));
-        tt.append(el("span", null, od + (own ? "your order" : by ? `by ${pn && xwBy ? "park-neutral " : ""}${by}` : "") + (pn && (own || !xwBy) ? " · park-neutral xwOBA" : ""))); } }   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
+        // get rid of the hitting leaderboard text and put all the rest of the text on that row/level/area") — renderPager moves .pcount in here;
+        // Rankings / Draft mode the same since 29 Oct 2026 (the bar's picker names the page), so the bar row above holds the bar alone
+        tt.innerHTML = "";
+        tt.append(el("span", null, od + (own ? "your order" : by ? `by ${pn && xwBy ? "park-neutral " : ""}${by}` : "") + (pn && (own || !xwBy) ? " · park-neutral xwOBA" : "")));
+        // the Leaderboard's note folds behind "More about these numbers" on this line, as the board's and Movers' do (29 Oct 2026): the paragraph
+        // under the table (#notes) had made its frame shorter than theirs
+        for (const o of tt.parentElement.querySelectorAll(":scope > .fxnote.lbfold")) o.remove();   // the last draw's (it would stay on, and show, when the board takes the same #board)
+        if (onePage()) foldNote({ line: tt }, lbNoteText(), () => lbNoteOpen, (v) => { lbNoteOpen = v; }).classList.add("lbfold"); } }   /* an IP / PA first column in the rank's place lasted an hour (Sean, 6 Oct 2026: "go back to this with the rank") */
     const head = (key, label, title) => { const h = editing ? Object.assign(el("div", "h", label), { title }) : sortButton(key, label, title); if (/^[a-z]/.test(label)) h.classList.add("lc"); return h; };
     const pre = preCols(), preOn = (k) => pre.some((c) => c.key === k);
     for (const k of ["year", "age"]) h.style.setProperty("--pre" + (k === "year" ? 1 : 2), preOn(k) ? "var(--prew, 64px)" : "0px");
@@ -3442,7 +3447,7 @@
         if (state.q) bits.push(`“${state.q}”`);
       }
       const who = onePage() ? ` ${pit ? "pitchers" : "hitters"} · ${od ? (mobileView() ? fmtDate(od) : gameDayName(od)) : DS.season}${state.mode === "leaderboard" ? (od ? (mobileView() ? "" : " · everyone who played") : ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}`) : ""}${bits.map((b) => " · " + b).join("")}` : "";   /* its own line since 25 Oct 2026, so a phone reads it too */
-      const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}${state.mode === "draft" ? (auc.on ? " · tap a name to record his sale, tap again to undo" : " · tap to draft, tap again to undo") : ""}`; })() : null;   // the board: tiers · tiered · listed (Draft mode has no buttons)
+      const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}${winIdx() ? ` · ${state.win.days ? `last ${state.win.days} days` : winLabel(pit ? "P" : "H")}` : ""}${state.mode === "draft" ? (auc.on ? " · tap a name to record his sale, tap again to undo" : " · tap to draft, tap again to undo") : ""}`; })() : null;   // the board: tiers · tiered · listed (Draft mode has no buttons)
       const ct = bc != null ? bc : pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}${who}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total}${who}` : `${total} players`;
       const pc = el("span", "pcount", ct);
       if (onePage() && state.daysLoading) pc.append(" · ", daysNote("loading game-by-game data…"));   // the download's progress, in place (28 Oct 2026)
@@ -3464,12 +3469,12 @@
     // Draft mode's own controls ride in this bar (16 Oct 2026): the drafted count, Draft from, Undo, Show drafted, Exit — the toolbar row they
     // lived in is hidden on the list pages (body.filtbar, 30 Sep 2026), so the Draft board had shown none of them
     if (!onChange && state.mode === "draft" && box.id === "pagertop") { const dt = $("drafttools"); if (dt) box.append(dt); }
-    if (!onChange) { seatFilters(box, total); if (onePage()) { renderLbTabs();
+    if (!onChange) { seatFilters(box, total); if (onePage()) renderLbTabs();
       // the count moves down to the title's line, in the place "Hitting Leaderboard" had (Sean, 25 Oct 2026), so the row above is the
-      // filter buttons alone; it rides back in the bar if that line isn't drawn
-      const tt = $("lbtitle"), pc = box.querySelector(".pcount");
-      if (tt && pc) { tt.querySelectorAll(".pcount").forEach((x) => x.remove()); tt.prepend(pc); }
-      const nv = box.querySelector(".pnav"); if (nv) box.append(nv); } }   // the count and the Min box on a quiet line under the controls (6 Oct 2026); the Min box moves only when it isn't already last   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
+      // filter buttons alone; it rides back in the bar if that line isn't drawn. The board's count the same since 29 Oct 2026.
+      if (onePage() || boardOn()) { const tt = $("lbtitle"), pc = box.querySelector(".pcount");
+        if (tt && pc) { tt.querySelectorAll(".pcount").forEach((x) => x.remove()); tt.prepend(pc); }
+        const nv = box.querySelector(".pnav"); if (nv) box.append(nv); } }   // the count and the Min box on a quiet line under the controls (6 Oct 2026); the Min box moves only when it isn't already last   // the Min PA / IP box rides in the top row (Sean, 3 Oct 2026)   // the column tabs ride in this row on the Leaderboard / Recent
   }
   // ‹, the page numbers and › (no « / », minimal pass 5: the first and last pages are numbered anyway). Five slots between the arrows, every cell
   // the same width, so neither arrow ever moves (Sean, 18 Oct 2026: "Make it so the two arrows are stable and never change positions ... the arrow
@@ -4285,6 +4290,10 @@
   // Trending lives inside the Leaderboard and the Fantasy leaderboard now (Season / Recent, 1 Oct 2026): off both menus
   for (const h of ["#trending", "#fantasy/trending"]) { const a = document.querySelector(`.modemenu a[href="${h}"]`); if (a) a.closest("li").remove(); }
   const pb = Object.assign({ pt: "all", hand: "all", role: "all", min: 100, sort: "pitp", dir: -1 }, load("draft2027.pitchboard", {}));
+  let lbNoteOpen = false;   // the Leaderboard's / Recent's explanation, folded the same way since 29 Oct 2026 (the paragraph under the table had made its frame shorter than the board's and Movers')
+  const lbNoteText = () => (state.mode === "leaderboard"
+    ? `Everyone over the minimum, a page at a time (the page numbers and Per page are under the table). Each number is coloured by its percentile among the season's qualifiers (hitters with ${REF_PA}+ PA, pitchers ${REF_PA}+ batters faced); click a column name to sort, click a name for his card.`
+    : `Who's hot over the span set in Filters ▸ Dates, on one page; each number coloured by its percentile among the season's qualifiers on their numbers in the same span. Click a name for his card over that span.`);
   let pbNoteOpen = false;   // the board's explanation, folded under the count line like Movers' (29 Oct 2026); the phone's Filters panel of 20 Oct 2026 is gone with the Leaders bar
   // the board's Games pick (season / spring training), the one button the bar carries while a spring file is still loading
   const pbGames = (springK) => barPick({ name: "Games", key: "src", opts: [["season", `${DATA.meta.season} season`], ["spring", "Spring training"]], cur: springK ? "spring" : "season", now: springK ? "Spring training" : `${DATA.meta.season} season`,
@@ -5472,6 +5481,10 @@
   function renderSetBar() {
     const bar = $("setbar"); bar.hidden = state.mode !== "rankings";
     $("setrow").hidden = bar.hidden;
+    // the row rides in the board right under the bar on Rankings (Sean, 29 Oct 2026: the bar "does not move no matter which portion of ...
+    // fantasy is selected" — in the toolbar above the board it had pushed Rankings' bar a row down); back in the toolbar off the page
+    { const row = $("setrow"), pt = $("pagertop"), tb = document.querySelector(".toolbar:not(.xtoolbar)");
+      if (!bar.hidden) { if (pt && row.previousElementSibling !== pt) pt.after(row); } else if (tb && row.parentNode !== tb) tb.prepend(row); }
     const tools = $("ranktools"), toolHome = bar.hidden ? $("toolrow") : bar;     // editing belongs on the bar that stays
     if (!toolHome) return;
     if (tools.parentNode !== toolHome) toolHome.append(tools);
@@ -6440,7 +6453,7 @@
     const grp = NAV_GROUPS.find((G) => G.modes.includes(state.mode));
     const navMode = grp ? grp.key : state.mode;
     document.querySelectorAll(".modes [data-mode], .pbar [data-mode]").forEach((a) => { if ((a.dataset.modes || a.dataset.mode).split(" ").includes(navMode)) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });   // the bar's Leaders tab stands for three groups (data-modes)
-    for (const a of document.querySelectorAll(".pbarsheet a")) { const on = a.dataset.mode ? (a.dataset.mode === state.mode || a.dataset.mode === navMode) : a.getAttribute("href") === "#" + state.mode; if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); }   // the phone bar's sheets, like the header's menu
+    noteLastPage();   // the bar's Leaders / Fantasy tabs link to the page last open in their group (29 Oct 2026)
     // the draft, fantasy and leaderboard pages live in the header's own dropdowns, so they cost no second row
     const mobNav = document.documentElement.dataset.view === "mobile";
     for (const G of NAV_GROUPS) {
@@ -6460,9 +6473,7 @@
     // a phone's screen): the colour scale itself, then the key, the glossary and the page's how-to as links that open in a
     // window, then the layout switch
     // ... and since the minimal pass (Sean, 29 Sep 2026) not under the table at all: they live in the header's More menu
-    if (["leaderboard", "trending"].includes(state.mode)) notes.append(el("p", "note lbnote", state.mode === "leaderboard"
-      ? `Everyone over the minimum, a page at a time (the page numbers and Per page are under the table). Each number is coloured by its percentile among the season's qualifiers (hitters with ${REF_PA}+ PA, pitchers ${REF_PA}+ batters faced); click a column name to sort, click a name for his card.`
-      : `Who's hot over the span set in Filters ▸ Dates, on one page; each number coloured by its percentile among the season's qualifiers on their numbers in the same span. Click a name for his card over that span.`));
+    // the Leaderboard's / Recent's note folds behind a link on the count line since 29 Oct 2026 (renderColheadIn, lbNoteText) — nothing under the table
     // the More menu is gone (Sean, 16 Oct 2026: "Make the three dots thing at the end one button ... call it settings"): the colour key and
     // the how-to prose are kept here for the Settings page (renderSettings), every page's blurb whatever page is open
     const prose = [];
@@ -11599,7 +11610,12 @@
   const CHEV = '<svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
   function pagePick(cur, pages = LEADERS_PAGES) {
     const pg = pages.find(([k]) => k === cur) || pages[0];
-    const b = el("button", "sbview pgpick"); b.type = "button"; b.append(el("span", "pgname", pg[1])); b.insertAdjacentHTML("beforeend", CHEV);
+    const b = el("button", "sbview pgpick"); b.type = "button";
+    // the other pages' names sit under the shown one, invisible (one grid cell), so the button is as wide as the longest of them and the chevron
+    // and the buttons after it stay put from page to page (Sean, 29 Oct 2026: "the top bar on each page ... does not move")
+    const nm = el("span", "pgname"); nm.append(el("span", "pgcur", pg[1]));
+    for (const [k, l] of pages) if (k !== pg[0]) { const g = el("span", "pgghost", l); g.setAttribute("aria-hidden", "true"); nm.append(g); }
+    b.append(nm); b.insertAdjacentHTML("beforeend", CHEV);
     b.setAttribute("aria-label", `Page: ${pg[1]}`); b.setAttribute("aria-haspopup", "listbox"); b.setAttribute("aria-expanded", "false");
     b.addEventListener("click", (e) => { e.stopPropagation(); ddOpenOn(b, pages.map(([k, l]) => [k, l]), pg[0], (k) => { const h = (pages.find(([x]) => x === k) || pg)[2]; if (location.hash !== h) location.hash = h; }, { keyboard: e.detail === 0 }); });
     return b;
@@ -13680,6 +13696,18 @@
   // came — is hidden until the bar's Search tab opens it over the page, fixed at the top with Cancel beside the box and the hits as a list under
   // it (body.psearchon; the CSS at the end of styles.css). A pick, Cancel, the tab again, a tap on the sheet behind or a page change closes it. A
   // desktop keeps its header and never gets the class.
+  // The bar's Leaders and Fantasy tabs go to the page last open in their group (Sean, 29 Oct 2026: "get rid of the drop down on leaders and
+  // fantasy on the bottom bar"): the Leaderboard, Pitching+ or Movers; Rankings, the Fantasy leaderboard (full season or recent), Bullpens, the Mock
+  // draft or Scoring settings — remembered per device (draft2027.lastpage) each time one of them is drawn, the Leaderboard and Rankings until then.
+  const LAST_LS = "draft2027.lastpage", LAST_DEF = { leaderboard: "#leaderboard", draftmode: "#rankings" };
+  const LAST_OK = { leaderboard: /^#(leaderboard|trending|pitches|movers|flaws)$/, draftmode: /^#(rankings|draft|mock|bullpens|fantasy(\/\w+)?)$/ };
+  const LAST_PAGE = (() => { const o = { ...LAST_DEF }; try { const j = JSON.parse(localStorage.getItem(LAST_LS) || "{}"); for (const g in LAST_DEF) if (typeof j[g] === "string" && LAST_OK[g].test(j[g])) o[g] = j[g]; } catch { /* private window */ } return o; })();
+  const barGroup = (m) => (["leaderboard", "trending", "pitches", "flaws"].includes(m) ? "leaderboard" : ["rankings", "draft", "fantasy", "mock", "bullpens"].includes(m) ? "draftmode" : null);
+  function noteLastPage() {
+    const g = barGroup(state.mode), h = location.hash;
+    if (g && LAST_OK[g].test(h) && LAST_PAGE[g] !== h) { LAST_PAGE[g] = h; try { localStorage.setItem(LAST_LS, JSON.stringify(LAST_PAGE)); } catch { /* private window */ } }
+    for (const a of document.querySelectorAll(".pbar > a[data-mode]")) if (LAST_PAGE[a.dataset.mode]) a.href = LAST_PAGE[a.dataset.mode];
+  }
   function pSearch(on) {
     const b = document.body, was = b.classList.contains("psearchon"); if (on === was) return;
     b.classList.toggle("psearchon", on); const t = document.querySelector(".pbar .psbtn"); if (t) t.setAttribute("aria-expanded", String(on));
@@ -13691,42 +13719,27 @@
   // A bottom bar on the phone (Sean, 29 Oct 2026: "replace the menu button up top with instead a bottom like bar that has all the different pages
   // there instead and just have one search button up top to search for player cards"): the pages as tabs along the foot of the screen, the header
   // left to the search. Made here like the Menu it replaces (index.html doesn't round-trip); the CSS shows it on a phone only, and renderChrome
-  // lights the page the way it lights the header's words. Two tabs open a sheet over the bar instead of a page: Fantasy's five pages, and since
-  // the same day Leaders' three (Sean: "collapse the leaders, movers, and pitching+ into one called leaders ... a drop down that allows you to select
-  // one of those three just like how fantasy is") — each sheet hung over its own tab, the other one closed when it opens.
+  // lights the page the way it lights the header's words. Leaders and Fantasy are plain tabs since the same evening (Sean: "get rid of the drop
+  // down on leaders and fantasy on the bottom bar"): each goes to the page last open in its group — the Leaderboard, Pitching+ or Movers;
+  // Rankings, the Fantasy leaderboard, Bullpens, the Mock draft or Scoring settings — remembered per device (noteLastPage), and the bar at the
+  // top of those pages is where one of them is swapped for another. The sheets that hung over the tabs for a day are history.
   // The icons are filled glyphs in SF Symbols' manner (the App Store's bar, 29 Oct 2026); Search is the one stroked glyph, as the magnifier is there.
   { const I = { home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.3 2.6a1 1 0 0 1 1.4 0l8.5 8.1a1 1 0 0 1-.7 1.7H19v7.6a1 1 0 0 1-1 1h-3.5a.5.5 0 0 1-.5-.5V15a2 2 0 0 0-4 0v5.5a.5.5 0 0 1-.5.5H6a1 1 0 0 1-1-1v-7.6H3.5a1 1 0 0 1-.7-1.7z"></path></svg>',
                 leaderboard: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 13a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v7.5a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1zM9.5 4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v16.5a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1zM15.5 8.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1z"></path></svg>',
-                pitches: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 4.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11zm0 3a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"></path></svg>',
-                flaws: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 5.5a1 1 0 0 0-1-1h-5.6a1 1 0 0 0 0 2h3.2l-5.1 5.1-3.3-3.3a1 1 0 0 0-1.4 0l-6 6a1 1 0 0 0 1.4 1.4L9 10.4l3.3 3.3a1 1 0 0 0 1.4 0l5.8-5.8v3.2a1 1 0 0 0 2 0z"></path></svg>',
                 draftmode: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M6.5 2.5h11a1 1 0 0 1 1 1V5h2.5a1 1 0 0 1 1 1v1.5c0 2.4-1.7 4.4-4 4.9A6 6 0 0 1 13 16v2h2.5a1 1 0 0 1 1 1v1.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V19a1 1 0 0 1 1-1H11v-2a6 6 0 0 1-5-3.6C3.7 11.9 2 9.9 2 7.5V6a1 1 0 0 1 1-1h2.5V3.5a1 1 0 0 1 1-1zM5.5 7H4v.5c0 1.1.6 2 1.5 2.5zm13 0v3a3 3 0 0 0 1.5-2.5V7z"></path></svg>',
                 settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path></svg>',
                 search: '<svg class="pstroke" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.75"></circle><path d="M15.5 15.5 21 21"></path></svg>' };
     const bar = el("nav", "pbar"); bar.setAttribute("aria-label", "Pages");
-    // a sheet is a list of pages; a link carrying data-mode lights by the page's mode (Movers' hash is #movers but its mode is flaws), the rest by hash
-    const mkSheet = (id, items) => { const u = el("ul", "pbarsheet"); u.hidden = true; u.id = id;
-      for (const [h, l, m] of items) { const li = el("li"), a = el("a", null, l); a.href = h; if (m) a.dataset.mode = m; li.append(a); u.append(li); } return u; };
-    const sheets = { leaderboard: mkSheet("pbarsheet-leaders", [["#leaderboard", "Leaderboard", "leaderboard"], ["#pitches", "Pitching+", "pitches"], ["#movers", "Movers", "flaws"]]),
-                     draftmode: mkSheet("pbarsheet", [["#rankings", "Rankings"], ["#fantasy/leaders", "Fantasy leaderboard"], ["#bullpens", "Bullpens"], ["#mock", "Mock draft"], ["#fantasy/settings", "Scoring settings"]]) };
-    const btns = {};
-    const place = (k) => { const u = sheets[k], r = btns[k].getBoundingClientRect(), w = u.offsetWidth, vw = document.documentElement.clientWidth;   // centred over its tab, kept 20px inside the screen
-      u.style.left = Math.round(Math.max(20, Math.min(vw - 20 - w, r.left + r.width / 2 - w / 2))) + "px"; u.style.right = "auto"; };
-    const setSheet = (k, on) => { for (const j in sheets) { const o = on && j === k; sheets[j].hidden = !o; btns[j].setAttribute("aria-expanded", String(o)); if (o) place(j); } };
-    const anyOpen = () => Object.values(sheets).some((u) => !u.hidden);
-    for (const [h, m, l, ms] of [["#home", "home", "Home"], [null, "leaderboard", "Leaders", "leaderboard pitches flaws"], [null, "draftmode", "Fantasy"], ["#settings", "settings", "Settings"]]) {
-      const n = h ? el("a") : el("button"); if (h) n.href = h; else { n.type = "button"; n.setAttribute("aria-haspopup", "true"); n.setAttribute("aria-expanded", "false"); n.setAttribute("aria-controls", sheets[m].id); btns[m] = n;
-        n.addEventListener("click", (e) => { e.stopPropagation(); setSheet(m, sheets[m].hidden); }); }
-      n.dataset.mode = m; if (ms) n.dataset.modes = ms; n.innerHTML = I[m] + `<span>${l}</span>`; bar.append(n); }
+    // the Leaders tab stands for three groups (data-modes), the Fantasy tab for its five pages (the header's group key, draftmode)
+    for (const [h, m, l, ms] of [["#home", "home", "Home"], [LAST_PAGE.leaderboard, "leaderboard", "Leaders", "leaderboard pitches flaws"], [LAST_PAGE.draftmode, "draftmode", "Fantasy"], ["#settings", "settings", "Settings"]]) {
+      const n = el("a"); n.href = h; n.dataset.mode = m; if (ms) n.dataset.modes = ms; n.innerHTML = I[m] + `<span>${l}</span>`; bar.append(n); }
     const sb = el("button", "psbtn"); sb.type = "button"; sb.setAttribute("aria-expanded", "false"); sb.setAttribute("aria-controls", "gsearch"); sb.innerHTML = I.search + "<span>Search</span>";
-    sb.addEventListener("click", (e) => { e.stopPropagation(); setSheet(null, false); pSearch(!document.body.classList.contains("psearchon")); }); bar.append(sb);
+    sb.addEventListener("click", (e) => { e.stopPropagation(); pSearch(!document.body.classList.contains("psearchon")); }); bar.append(sb);
     const cancel = el("button", "pscancel", "Cancel"); cancel.type = "button"; cancel.addEventListener("click", () => pSearch(false)); document.querySelector("header.top").append(cancel);
     const bg = el("div", "psbg"); bg.addEventListener("click", () => pSearch(false)); document.body.append(bg);
-    window.addEventListener("hashchange", () => { setSheet(null, false); pSearch(false); });
-    document.addEventListener("click", (e) => { if (anyOpen() && !Object.values(sheets).some((u) => u.contains(e.target))) setSheet(null, false); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && anyOpen()) setSheet(null, false); });
-    window.addEventListener("resize", () => { for (const k in sheets) if (!sheets[k].hidden) place(k); });
+    window.addEventListener("hashchange", () => pSearch(false));
     const fade = el("div", "pbarfade"); fade.setAttribute("aria-hidden", "true");   // the scroll-edge dim behind the pill (the App Store's)
-    document.body.append(fade, bar, sheets.leaderboard, sheets.draftmode); }
+    document.body.append(fade, bar); }
 
   // keep the sticky column header just under the sticky toolbar
   const tb = document.querySelector(".toolbar:not(.xtoolbar)"), hd = document.querySelector("header.top");
