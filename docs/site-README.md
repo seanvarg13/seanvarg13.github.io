@@ -829,7 +829,8 @@ winning a clash. A pull that changes anything reloads the page once. Appearance 
 
 **Appearance** (Settings ▸ Appearance): colour scheme — Warm, Carolina blue, Carolina navy, Titans (default), Jets (Legacy Green and
 white, no stripes or outlines), the same flat Jets look in Titans blue, UNC blue and mint (**Jets · Mint**, 23 Oct 2026), Titans · Carolina
-(Titans navy and the red stripe, with Carolina blue on the banner instead of Titans blue), Purple,
+(Titans navy and the red stripe, with Carolina blue on the banner instead of Titans blue), **Cleveland** (the old Indians: a cream white
+ground, maroon bands and buttons with cream type, navy type and a navy stripe under the band; 29 Oct 2026), Purple,
 Crimson Tide, Clemson — plus font and light / dark. Schemes are defined in `themes.js` as the token roles
 described at the top of `styles.css`; add one by adding an entry there. Saved per browser. Also the background pattern
 (on / off, per device). The **Windows Classic** look (17-18 Oct 2026: Bliss behind every page, classic windows, a Start menu) was removed on 18 Oct 2026 at Sean's say; the site has the one look.
@@ -1339,3 +1340,10 @@ the same width whichever page it names, so the buttons after it don't shift eith
 one frame of the same size — the Leaderboard's table fills the column, its name column taking the extra room — and its explanation folds behind
 "More about these numbers" on the count line as the board's and Movers' do. On Rankings the list and editing tools sit right under the bar
 instead of above it, and on a phone the Rankings, Draft mode and Fantasy pages have no white card round them any more, like the other pages.
+
+### Cleveland, a colour scheme (29 Oct 2026)
+
+Settings ▸ Appearance has a **Cleveland** scheme: the old Cleveland Indians' colours — a cream white ground and cream cards, maroon bands,
+buttons and tabs with cream type on them, navy type, and a navy stripe under the header and the player band, the way the cream jersey carried
+maroon lettering with navy piping. Dark mode is a navy night with the same maroon bands and cream type. The percentile colours stay Savant's red
+and blue, as in every scheme. It is picked per device; Titans stays the site's default.
