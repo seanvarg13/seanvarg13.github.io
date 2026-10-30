@@ -1371,3 +1371,5 @@ The playing-time block's Bats cell lists his three most frequent lineup spots, e
 Every page on a phone opens under a blue bar with a red stripe under it: a magnifier at the left opens the player search, the site's icon and
 **SEAN'S SITE** in the middle take you home, and the gear at the right opens Settings. The bottom bar is now just Home · Leaders · Fantasy. A
 desktop is unchanged.
+
+The middle of that bar now shows the date the data runs through ("Thru Sep 27") in a small pill beside the site icon, instead of the site's name.

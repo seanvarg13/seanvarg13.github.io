@@ -5673,3 +5673,10 @@ line can bring them back.
   so `--header-h` is 59px again and the list cards, the player page's sticky bar and the search list sit under it. **The bottom bar is Home ·
   Leaders · Fantasy** (Search and Settings moved up). A desktop never shows `.phtop`. The page check's phone-bar step counts three tabs and
   searches from the top bar. CSS: the block at the end of `styles.css`.
+* **The top bar's date pill (Sean, 30 Oct 2026, from header design B's pill: "where the words Sean's site are it shows this instead")**: the
+  middle of the phone's top bar is the site icon and a light-grey pill (white edge, soft shadow) with a calendar glyph and **Thru Sep 27** —
+  `DATA.meta.through` — in the accent blue (`span.phthru`), still a link home. The SEAN'S SITE wordmark is gone from it.
+* **A rule under the phone's top bar on every scheme (Sean, 30 Oct 2026, Yordan's page on Carolina navy: "a line break or bar or separator between
+  the site header and yordans header")**: the bar's 3px bottom rule is `--phsep`, set by `themes.js`'s `apply()`: the scheme's red stripe where it
+  shows on the band (1.5:1+), else its hairline colour (Carolina blue under Carolina navy's navy, pale green under Jets), else red, else white.
+  The schemes whose stripe is transparent or the band's own colour had drawn the bar straight into the player's band.
