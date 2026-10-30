@@ -218,6 +218,9 @@ window.DRAFT_THEMES = (function () {
     root.style.setProperty("--band2-type", ratio("#ffffff", band) >= 1.9 ? "#ffffff" : inkDay);
     root.style.setProperty("--band2-sel", selInk ? inkDay : "#ffffff");
     root.style.setProperty("--band2-sel-ink", selInk ? "#ffffff" : inkDay);
+    // the rule under the phone's top bar (30 Oct 2026: "a line break or bar or separator between the site header and yordans header"): the red
+    // stripe where the scheme has one that shows on its band, else its hairline colour (UNC's Carolina blue under navy), else red or white
+    root.style.setProperty("--phsep", [tokens["stripe-line"], tokens.rule, "#c8102e", "#ffffff"].find((c) => ratio(c, band) >= 1.5) || "#c8102e");
     root.dataset.scheme = cur.scheme;
     root.toggleAttribute("data-flat", !!sc.flat);   // the Jets look: styles.css takes every outline off under it
     const f = F[cur.font];
