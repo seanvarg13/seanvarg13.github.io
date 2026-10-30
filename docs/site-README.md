@@ -1365,3 +1365,9 @@ was PA per start). `hist/lineups.js` carries `gp`, games played, from the box sc
 ## Top three lineup spots (29 Oct 2026)
 
 The playing-time block's Bats cell lists his three most frequent lineup spots, each with its share of his starts, one per line.
+
+## A top bar on the phone (30 Oct 2026)
+
+Every page on a phone opens under a blue bar with a red stripe under it: a magnifier at the left opens the player search, the site's icon and
+**SEAN'S SITE** in the middle take you home, and the gear at the right opens Settings. The bottom bar is now just Home · Leaders · Fantasy. A
+desktop is unchanged.

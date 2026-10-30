@@ -6454,7 +6454,7 @@
   function renderChrome() {
     const grp = NAV_GROUPS.find((G) => G.modes.includes(state.mode));
     const navMode = grp ? grp.key : state.mode;
-    document.querySelectorAll(".modes [data-mode], .pbar [data-mode]").forEach((a) => { if ((a.dataset.modes || a.dataset.mode).split(" ").includes(navMode)) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });   // the bar's Leaders tab stands for three groups (data-modes)
+    document.querySelectorAll(".modes [data-mode], .pbar [data-mode], .phtop [data-mode]").forEach((a) => { if ((a.dataset.modes || a.dataset.mode).split(" ").includes(navMode)) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });   // the bar's Leaders tab stands for three groups (data-modes)
     noteLastPage();   // the bar's Leaders / Fantasy tabs link to the page last open in their group (29 Oct 2026)
     // the draft, fantasy and leaderboard pages live in the header's own dropdowns, so they cost no second row
     const mobNav = document.documentElement.dataset.view === "mobile";
@@ -13714,7 +13714,7 @@
   }
   function pSearch(on) {
     const b = document.body, was = b.classList.contains("psearchon"); if (on === was) return;
-    b.classList.toggle("psearchon", on); const t = document.querySelector(".pbar .psbtn"); if (t) t.setAttribute("aria-expanded", String(on));
+    b.classList.toggle("psearchon", on); const t = document.querySelector(".phtop .psbtn"); if (t) t.setAttribute("aria-expanded", String(on));
     setTb();   // the header's height (0 while it's hidden) feeds the sticky offsets
     if (on) { ensureIndex(); $("gq").focus(); if (!state.gq) renderGlobalSearch(); }
     else { state.gq = ""; $("gq").value = ""; $("gq").blur(); renderSearchList($("glist"), "", () => {}); }
@@ -13735,10 +13735,17 @@
                 search: '<svg class="pstroke" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.75"></circle><path d="M15.5 15.5 21 21"></path></svg>' };
     const bar = el("nav", "pbar"); bar.setAttribute("aria-label", "Pages");
     // the Leaders tab stands for three groups (data-modes), the Fantasy tab for its five pages (the header's group key, draftmode)
-    for (const [h, m, l, ms] of [["#home", "home", "Home"], [LAST_PAGE.leaderboard, "leaderboard", "Leaders", "leaderboard pitches flaws"], [LAST_PAGE.draftmode, "draftmode", "Fantasy"], ["#settings", "settings", "Settings"]]) {
+    for (const [h, m, l, ms] of [["#home", "home", "Home"], [LAST_PAGE.leaderboard, "leaderboard", "Leaders", "leaderboard pitches flaws"], [LAST_PAGE.draftmode, "draftmode", "Fantasy"]]) {
       const n = el("a"); n.href = h; n.dataset.mode = m; if (ms) n.dataset.modes = ms; n.innerHTML = I[m] + `<span>${l}</span>`; bar.append(n); }
-    const sb = el("button", "psbtn"); sb.type = "button"; sb.setAttribute("aria-expanded", "false"); sb.setAttribute("aria-controls", "gsearch"); sb.innerHTML = I.search + "<span>Search</span>";
-    sb.addEventListener("click", (e) => { e.stopPropagation(); pSearch(!document.body.classList.contains("psearchon")); }); bar.append(sb);
+    // The phone's top bar (Sean, 30 Oct 2026, option A of the header designs in option D's colours): search at the left, the site's icon and its
+    // name in the middle (a link home), Settings at the right, on the band's blue over the red stripe. Search and Settings left the bottom bar for it.
+    const top = el("div", "phtop"), sb = el("button", "phbtn psbtn"); sb.type = "button"; sb.setAttribute("aria-label", "Search players"); sb.setAttribute("aria-expanded", "false"); sb.setAttribute("aria-controls", "gsearch");
+    sb.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.75"></circle><path d="M15.5 15.5 21 21"></path></svg>';
+    sb.addEventListener("click", (e) => { e.stopPropagation(); pSearch(!document.body.classList.contains("psearchon")); });
+    const home = el("a", "phmark"); home.href = "#home"; home.setAttribute("aria-label", "Sean's Site home"); home.innerHTML = '<img src="icons/icon-192.png" alt="" width="30" height="30"><span>Sean\'s Site</span>';
+    const gear = el("a", "phbtn phgear"); gear.href = "#settings"; gear.dataset.mode = "settings"; gear.setAttribute("aria-label", "Settings");
+    gear.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>';
+    top.append(sb, home, gear); document.querySelector("header.top").prepend(top);
     const cancel = el("button", "pscancel", "Cancel"); cancel.type = "button"; cancel.addEventListener("click", () => pSearch(false)); document.querySelector("header.top").append(cancel);
     const bg = el("div", "psbg"); bg.addEventListener("click", () => pSearch(false)); document.body.append(bg);
     window.addEventListener("hashchange", () => pSearch(false));

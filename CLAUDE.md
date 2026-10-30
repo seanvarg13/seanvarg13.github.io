@@ -5663,3 +5663,13 @@ line can bring them back.
   maybe have it show their top 3 spots by %")**: the playing-time block's Bats cell is up to three lines, each a lineup slot over its share of
   his starts, most first ("3rd 45% / 5th 24% / 7th 10%" for Will Smith), on both layouts (`lineupLine` passes the cell an array; `.pbtop` /
   `.pbtopr` at the end of `styles.css`). The tooltip still lists every slot and the mean.
+
+* **A top bar on the phone (Sean, 30 Oct 2026, from five header designs: "Could you do A with D's color scheming")**: every phone page starts with a
+  56px bar on the band's blue (`--band2`) over a 3px red stripe (`--stripe-line`) — a magnifier at the left (opens the search exactly as the bottom
+  bar's Search tab did: `pSearch`, the box and Cancel over a sheet), the site's icon (`icons/icon-192.png`, white-edged) and **SEAN'S SITE** in the
+  middle (Barlow Condensed 800 italic capitals, 27px — `themes.js` loads the italic 800 now; a link home), and Settings' gear at the right (lit on
+  Settings through `renderChrome`'s `.phtop [data-mode]`). Built in `app.js`'s bar block as `.phtop`, prepended to `header.top`; on a phone
+  `header.top` is shown again (sticky at the top, the safe-area inset as its top padding) with every other child hidden while the search is shut,
+  so `--header-h` is 59px again and the list cards, the player page's sticky bar and the search list sit under it. **The bottom bar is Home ·
+  Leaders · Fantasy** (Search and Settings moved up). A desktop never shows `.phtop`. The page check's phone-bar step counts three tabs and
+  searches from the top bar. CSS: the block at the end of `styles.css`.
