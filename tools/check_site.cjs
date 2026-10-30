@@ -132,11 +132,11 @@ function minorsId() {
       await until(() => location.hash === "#fantasy/settings" && document.querySelector("#fboard .pgrow .lbviews .pgpick .pgcur")?.textContent.trim() === "Scoring settings" && !!document.querySelector("#fboard .fpresets"));
       await pg.evaluate(() => { document.querySelector("#fboard .lbviews .pgpick").click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "Fantasy leaderboard").click(); });
       await until(() => location.hash === "#fantasy/leaders"); await count("#fboard table tbody tr", 10, 90000); });
-    await step("phone bar", async () => {   // the bottom bar on a phone (29 Oct 2026): five tabs — Leaders and Fantasy plain links to the page last open in their group, no sheets — and the search from the bar; hidden on a desktop
+    await step("phone bar", async () => {   // the bottom bar on a phone (29 Oct 2026): three tabs since 30 Oct (Search and Settings moved to the top bar) — Leaders and Fantasy plain links to the page last open in their group, no sheets — and the search from the bar; hidden on a desktop
       const shown = await pg.evaluate(() => { const b = document.querySelector(".pbar"); return b ? getComputedStyle(b).display !== "none" : null; });
       if (shown === null) throw new Error("no .pbar");
       if (name.startsWith("phone")) { if (!shown) throw new Error("the phone bar is hidden");
-        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 5 && document.querySelectorAll(".pbar > a[data-mode]").length === 4 && !document.querySelector(".pbarsheet") && getComputedStyle(document.querySelector(".navtog")).display === "none" && getComputedStyle(document.querySelector("header.top")).display === "none");
+        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 3 && document.querySelectorAll(".pbar > a[data-mode]").length === 3 && !document.querySelector(".pbarsheet") && getComputedStyle(document.querySelector(".navtog")).display === "none" && getComputedStyle(document.querySelector(".phtop")).display !== "none" && getComputedStyle(document.querySelector("#gsearch")).display === "none" && document.querySelector('.phtop a[href="#settings"]'));
         // the Leaders tab goes to the Leaders page last open (the steps above left the board or Movers) and lights; once the bar's picker has moved
         // to the Leaderboard, the tab remembers that instead; the Fantasy tab the same for its five pages
         const lh = await pg.evaluate(() => document.querySelector('.pbar > a[data-mode="leaderboard"]').getAttribute("href"));
@@ -150,14 +150,14 @@ function minorsId() {
         if (!/^#(rankings|draft|fantasy(\/\w+)?|bullpens|mock)$/.test(fh)) throw new Error("the Fantasy tab links to " + fh);
         await pg.evaluate(() => document.querySelector('.pbar > a[data-mode="draftmode"]').click());
         await until((h) => location.hash === h && document.querySelector('.pbar > a[data-mode="draftmode"]').getAttribute("aria-current") === "page" && !document.querySelector('.pbar > a[data-mode="leaderboard"]').hasAttribute("aria-current"), fh);
-        // the search from the bar (29 Oct 2026): the tab opens the header over the page with the box focused, a pick closes it
-        await pg.evaluate(() => document.querySelector(".pbar .psbtn").click());
+        // the search from the top bar (30 Oct 2026; the bottom bar's tab before): the magnifier opens the header over the page with the box focused, a pick closes it
+        await pg.evaluate(() => document.querySelector(".phtop .psbtn").click());
         await until(() => document.body.classList.contains("psearchon") && getComputedStyle(document.querySelector("header.top")).display !== "none" && document.activeElement === document.getElementById("gq"));
         await pg.type("#gq", "Judge"); await count("#glist .addhit", 1);
         await pg.evaluate(() => [...document.querySelectorAll("#glist .addhit")].find((x) => /^Aaron Judge/.test(x.textContent)).click());
-        await until(() => location.hash === "#player/592450" && !document.body.classList.contains("psearchon") && getComputedStyle(document.querySelector("header.top")).display === "none"); }
+        await until(() => location.hash === "#player/592450" && !document.body.classList.contains("psearchon") && getComputedStyle(document.querySelector(".phtop")).display !== "none" && getComputedStyle(document.querySelector("#gsearch")).display === "none"); }
       else { if (shown) throw new Error("the phone bar shows on a desktop");
-        await until(() => getComputedStyle(document.querySelector("header.top")).display !== "none" && getComputedStyle(document.querySelector(".pscancel")).display === "none"); } });
+        await until(() => getComputedStyle(document.querySelector("header.top")).display !== "none" && getComputedStyle(document.querySelector(".pscancel")).display === "none" && getComputedStyle(document.querySelector(".phtop")).display === "none"); } });
     if (!QUICK) {
       // the bar in one spot (29 Oct 2026): on every Leaders and Fantasy page the bar's left edge and top are the same pixels, its picker as wide
       // within a group, and the Leaderboard's, the board's and Movers' table frames share their four edges
@@ -199,7 +199,7 @@ function minorsId() {
       await pg.evaluate(() => window.scrollTo(0, 600)); await pg.waitForTimeout(1600);   // past the open's own "to the top" moment
       if (!(await pg.evaluate(() => window.scrollY > 100))) throw new Error("the page didn't scroll down");
       await pg.evaluate(() => { const gq = document.getElementById("gq"), y = window.scrollY; gq.addEventListener("blur", () => setTimeout(() => window.scrollTo(0, y), 120), { once: true }); });
-      if (name.startsWith("phone")) await pg.evaluate(() => document.querySelector(".pbar .psbtn").click()); else await pg.focus("#gq");   // a phone opens the box from the bar (29 Oct 2026)
+      if (name.startsWith("phone")) await pg.evaluate(() => document.querySelector(".phtop .psbtn").click()); else await pg.focus("#gq");   // a phone opens the box from the bar (29 Oct 2026)
       await pg.type("#gq", "Judge"); await count("#glist .addhit", 1);
       await pg.evaluate(() => [...document.querySelectorAll("#glist .addhit")].find((x) => /^Aaron Judge/.test(x.textContent)).click());
       await until(() => { const n = document.querySelector("#xboard .pgbname"); return !!(n && /Aaron Judge/.test(n.textContent) && document.querySelector("table.sbt tbody tr")); });
