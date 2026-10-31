@@ -13821,7 +13821,7 @@
   // Under 20 particles at 30 fps, stopped while the tab is hidden and not drawn at all under prefers-reduced-motion.
   const SEASONS = {
     halloween: { name: "Halloween", em: ["🎃", "🦇", "👻", "🦇", "🕸️"], dir: 1, sway: 1.6 },
-    fall: { name: "Fall", em: ["🍂", "🍁", "🍂"], dir: 1, sway: 1.4, spin: 1 },
+    fall: { name: "Fall", em: ["🍂", "🍁", "🍂", "leaf:#e8662a", "leaf:#c8381f", "leaf:#f2b134", "leaf:#a8441c", "leaf:#d9531e", "leaf:#f08c2a"], dir: 1, sway: 1.5, spin: 1, dense: 2.2 },   /* foliage: emoji and drawn maple leaves in the season's colours (31 Oct 2026) */
     thanksgiving: { name: "Thanksgiving", em: ["🍂", "🍁", "🦃", "🥧", "🌽"], dir: 1, sway: 1.2, spin: 1 },
     christmas: { name: "Christmas", em: ["❄️", "❄️", "🎄", "❄️", "🎁", "⭐"], dir: 1, sway: 0.8 },
     winter: { name: "Winter", em: ["❄️", "❄️", "❄️", "☃️"], dir: 1, sway: 0.8 },
@@ -13872,7 +13872,16 @@
     const sprite = (ch) => {
       if (sprites[ch]) return sprites[ch];
       const s = Math.round(40 * dpr), c = document.createElement("canvas"); c.width = c.height = s;
-      const x = c.getContext("2d"); x.font = `${Math.round(s * 0.78)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+      const x = c.getContext("2d");
+      if (ch.startsWith("leaf:")) {   // a maple leaf drawn in its colour, a darker vein down the middle
+        const P = [0,-10, 2,-5, 6,-7.5, 5,-2, 10,-3.5, 7.5,1, 9.5,3.5, 3,3, 4,8, 0,5, -4,8, -3,3, -9.5,3.5, -7.5,1, -10,-3.5, -5,-2, -6,-7.5, -2,-5];
+        x.translate(s / 2, s / 2 - s * 0.04); x.scale(s / 24, s / 24); x.beginPath();
+        for (let i = 0; i < P.length; i += 2) i ? x.lineTo(P[i], P[i + 1]) : x.moveTo(P[i], P[i + 1]);
+        x.closePath(); x.fillStyle = ch.slice(5); x.fill();
+        x.strokeStyle = "rgba(70,25,5,.45)"; x.lineWidth = 0.9; x.beginPath(); x.moveTo(0, -7); x.lineTo(0, 11); x.stroke();
+        return (sprites[ch] = c);
+      }
+      x.font = `${Math.round(s * 0.78)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
       x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(ch, s / 2, s / 2 + s * 0.04); return (sprites[ch] = c);
     };
     const spawn = (S, fresh) => {
@@ -13906,7 +13915,7 @@
       key = k; sprites = {};
       if (!k) { if (raf) cancelAnimationFrame(raf); raf = 0; if (cv) { cv.remove(); cv = ctx = null; } parts = []; return; }
       if (!cv) { cv = document.createElement("canvas"); cv.className = "seasonfx"; cv.setAttribute("aria-hidden", "true"); document.body.append(cv); ctx = cv.getContext("2d"); size(); }
-      const n = matchMedia("(max-width: 700px)").matches ? 11 : 17;
+      const n = Math.round((matchMedia("(max-width: 700px)").matches ? 11 : 17) * (SEASONS[k].dense || 1));
       parts = Array.from({ length: n }, () => spawn(SEASONS[k], true)); go();
     };
     addEventListener("resize", () => { size(); });
