@@ -1392,3 +1392,10 @@ the bands. **Jets · Bengals** is the Jets' flat look in Bengal orange and white
   falling (hearts, summer and the Fourth rise), ~30 fps; stopped while the tab is hidden, never drawn under `prefers-reduced-motion`, re-checked
   every 30 minutes so Auto turns over at midnight. Nothing on the page moves or changes colour; `<html data-season>` names the season for any
   later styling. `window.__seasonFx()` reports the state (for a test).
+
+**Fall foliage and a leaf header (Sean, 31 Oct 2026: "Can the fall theme have fall foliage falling and also have the page header be like fall
+  leaves")**: the Fall season (`SEASONS.fall`) drops 2.2× the particles (`dense`, 24 on a phone, 37 on a desktop) and, beside the 🍂 / 🍁 emoji,
+  maple leaves drawn on the canvas in six autumn colours (`leaf:<colour>` entries; `sprite()` draws the leaf path with a darker vein). While
+  `<html data-season="fall">` the site header — a desktop's band and a phone's top bar — is an orange-to-rust gradient strewn with maple leaves (an
+  inline SVG tile, 220 × 64), the buttons, search box and date pill unchanged, the phone bar's icons with a soft shadow; the block at the end of
+  `styles.css` (44 roots). Auto shows it from 22 Sep to the end of November outside Halloween and Thanksgiving weeks; picking Fall shows it any time.
