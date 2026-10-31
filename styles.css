@@ -5832,3 +5832,8 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
    this instead"): a light-grey pill with a white edge and a soft shadow, a calendar glyph and the date the data runs through in the accent blue. */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phtop .phmark span.phthru { display: inline-flex !important; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 17px; background: rgba(240, 242, 245, .96); border: .5px solid #ffffff; box-shadow: 0 4px 12px rgba(12, 35, 64, .16); color: #3f6fb0 !important; font: 700 15px/1 var(--body, "Source Sans 3", sans-serif) !important; letter-spacing: 0 !important; text-transform: none !important; overflow: visible; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phtop .phmark span.phthru svg { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Seasonal effects (Sean, 31 Oct 2026): the drifting emoji's canvas, fixed over the page, never in the way of a tap; under the site header,
+   the bottom bar and every popup, over the page's own content */
+canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 55; }
+:root:root .aset select.seasonsel { font: inherit; font-size: 15px; padding: 6px 10px; min-height: 36px; border: 1px solid var(--line, #c3d3e3); background: var(--surface); color: var(--ink); border-radius: 0; max-width: 100%; }

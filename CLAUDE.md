@@ -1729,6 +1729,18 @@ is deploy-limited.
   Leaderboard's filter row 10px / 12px. Kept as they were: the frames, the navy table headers (their words now tracked), the sorted column's
   fill, the light-blue accent, the pale ground. The dress's own colours / frame removal / `hotInk` stay out — don't bring them back unasked.
 
+* **Seasonal effects (Sean, 31 Oct 2026: "add like seasonal theme affects, like a Halloween option Xmas winter spring summer thanksgiving fall Easter
+  etc")**: Settings ▸ Appearance ▸ **Seasonal effects**, per device (`draft2027.season`): **Auto** (the default — the season New York's date says),
+  **Off**, or any one of twelve kept on: Halloween, Fall, Thanksgiving, Christmas, Winter, New Year's, Valentine's Day, St. Patrick's Day, Spring,
+  Easter, Summer, Fourth of July. Auto (`seasonFor`): Jan 1-7 New Year's, Feb 7-14 Valentine's, Mar 14-17 St. Patrick's, Easter Sunday's week
+  (`easterOf`, the Gregorian computus), Jul 1-5 the Fourth, Oct 15-31 Halloween, Thanksgiving's week (the 4th Thursday, −6 / +3), Dec 1-26
+  Christmas, then spring / summer / fall by the equinoxes and solstices (Mar 20, Jun 21, Sep 22) and winter. **The effect** (`seasonFx` in `app.js`,
+  before the boot line): a canvas (`canvas.seasonfx`, fixed over the page at z-index 55 — under the header, the bottom bar and every popup —
+  `pointer-events: none`) of 11 drifting emoji on a phone, 17 on a desktop, each drawn once to an offscreen sprite, 50-80% opacity, swaying and
+  falling (hearts, summer and the Fourth rise), ~30 fps; stopped while the tab is hidden, never drawn under `prefers-reduced-motion`, re-checked
+  every 30 minutes so Auto turns over at midnight. Nothing on the page moves or changes colour; `<html data-season>` names the season for any
+  later styling. `window.__seasonFx()` reports the state (for a test).
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:

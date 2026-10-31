@@ -7440,6 +7440,14 @@
     }
     row("Colour scheme", "The site's colours. The percentile colours (blue cold, red hot) are the same in every scheme.", sg);
     row("Light or dark", null, segOf("Light or dark", [["system", "Match device"], ["light", "Light"], ["dark", "Dark"]], cur.theme, (v) => { T.set({ theme: v }); renderSettings(); }));
+    {   // seasonal effects (31 Oct 2026): Auto by the date, Off, or a season picked
+      const sel = el("select", "seasonsel"); sel.setAttribute("aria-label", "Seasonal effects");
+      const now = seasonFor(new Date());
+      for (const [v, l] of [["auto", `Auto (now: ${SEASONS[now].name})`], ["off", "Off"], ...SEASON_ORDER.map((k) => [k, SEASONS[k].name])]) { const o = el("option", null, l); o.value = v; sel.append(o); }
+      sel.value = SEASON_PREF.get();
+      sel.addEventListener("change", () => { SEASON_PREF.set(sel.value); seasonFx.sync(); });
+      row("Seasonal effects", "A few drifting pumpkins, leaves, snowflakes, hearts … over the pages. Auto follows the calendar (Halloween, fall, Thanksgiving, Christmas, winter, New Year's, Valentine's, St. Patrick's, spring, Easter, summer, the Fourth); pick one to keep it, or Off. Nothing on the page moves or changes colour, and a device set to reduce motion never draws them.", sel);
+    }
     row("Layout", "Auto gives a phone the compact layout; Desktop on a phone shows the full layout zoomed out.",
       segOf("Layout", [["auto", "Auto"], ["mobile", "Mobile"], ["desktop", "Desktop"]], T.viewPref(), (v) => { T.setView(v); renderSettings(); }));
     // the tables' type (Sean, 14 Oct 2026: "a button switch in the appearance tab ... between the current b ref styles and that oct 9th style"):
@@ -13807,6 +13815,107 @@
   })();
 
 
+  // Seasonal effects (Sean, 31 Oct 2026: "add like seasonal theme affects, like a Halloween option Xmas winter spring summer thanksgiving fall
+  // Easter etc"): a few drifting emoji over the page — a canvas fixed over everything, pointer-events none, so nothing can be tapped through it
+  // and no layout moves. Per device (draft2027.season): Auto picks the season by New York's date, Off draws nothing, or any one season by name.
+  // Under 20 particles at 30 fps, stopped while the tab is hidden and not drawn at all under prefers-reduced-motion.
+  const SEASONS = {
+    halloween: { name: "Halloween", em: ["🎃", "🦇", "👻", "🦇", "🕸️"], dir: 1, sway: 1.6 },
+    fall: { name: "Fall", em: ["🍂", "🍁", "🍂"], dir: 1, sway: 1.4, spin: 1 },
+    thanksgiving: { name: "Thanksgiving", em: ["🍂", "🍁", "🦃", "🥧", "🌽"], dir: 1, sway: 1.2, spin: 1 },
+    christmas: { name: "Christmas", em: ["❄️", "❄️", "🎄", "❄️", "🎁", "⭐"], dir: 1, sway: 0.8 },
+    winter: { name: "Winter", em: ["❄️", "❄️", "❄️", "☃️"], dir: 1, sway: 0.8 },
+    newyear: { name: "New Year's", em: ["🎉", "🎊", "✨", "🥂"], dir: 1, sway: 1, spin: 1 },
+    valentine: { name: "Valentine's Day", em: ["❤️", "💕", "💘", "❤️"], dir: -1, sway: 1 },
+    stpat: { name: "St. Patrick's Day", em: ["☘️", "🍀", "☘️", "🌈"], dir: 1, sway: 1.2, spin: 1 },
+    spring: { name: "Spring", em: ["🌸", "🌷", "🌸", "🦋"], dir: 1, sway: 1.3, spin: 1 },
+    easter: { name: "Easter", em: ["🥚", "🐣", "🐰", "🌷", "🥚"], dir: 1, sway: 1 },
+    summer: { name: "Summer", em: ["☀️", "🌻", "🍉", "🌴", "⚾"], dir: -1, sway: 0.9 },
+    july4: { name: "Fourth of July", em: ["🎆", "⭐", "🇺🇸", "✨", "🎇"], dir: -1, sway: 0.8 },
+  };
+  const SEASON_ORDER = ["halloween", "fall", "thanksgiving", "christmas", "winter", "newyear", "valentine", "stpat", "spring", "easter", "summer", "july4"];
+  const SEASON_PREF = {
+    get() { try { const v = localStorage.getItem("draft2027.season"); return v === "off" || SEASONS[v] ? v : "auto"; } catch (e) { return "auto"; } },
+    set(v) { try { if (v === "auto") localStorage.removeItem("draft2027.season"); else localStorage.setItem("draft2027.season", v); } catch (e) {} },
+  };
+  // Easter Sunday (the anonymous Gregorian algorithm), as a month (1-12) and day
+  const easterOf = (y) => {
+    const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1; return [mo, da];
+  };
+  // the season New York's calendar says it is: holidays first (their week or so), then the four seasons by the solstices and equinoxes
+  function seasonFor(date) {
+    let y, mo, d;
+    try { const p = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric", month: "numeric", day: "numeric" }).formatToParts(date); const g = (t) => +p.find((x) => x.type === t).value; y = g("year"); mo = g("month"); d = g("day"); }
+    catch (e) { y = date.getFullYear(); mo = date.getMonth() + 1; d = date.getDate(); }
+    const doy = (m, dd) => Date.UTC(y, m - 1, dd) / 864e5, t = doy(mo, d);
+    const [em, ed] = easterOf(y), easter = doy(em, ed);
+    const nov1 = new Date(Date.UTC(y, 10, 1)).getUTCDay(), tg = doy(11, 1 + ((4 - nov1 + 7) % 7) + 21);   // the 4th Thursday of November
+    if (mo === 1 && d <= 7) return "newyear";
+    if (mo === 2 && d >= 7 && d <= 14) return "valentine";
+    if (mo === 3 && d >= 14 && d <= 17) return "stpat";
+    if (t >= easter - 6 && t <= easter + 1) return "easter";
+    if (mo === 7 && d <= 5) return "july4";
+    if (mo === 10 && d >= 15) return "halloween";
+    if (t >= tg - 6 && t <= tg + 3) return "thanksgiving";
+    if (mo === 12 && d <= 26) return "christmas";
+    if (t >= doy(3, 20) && t < doy(6, 21)) return "spring";
+    if (t >= doy(6, 21) && t < doy(9, 22)) return "summer";
+    if (t >= doy(9, 22) && t < doy(12, 1)) return "fall";
+    return "winter";
+  }
+  const seasonNow = () => { const v = SEASON_PREF.get(); return v === "off" ? null : v === "auto" ? seasonFor(new Date()) : v; };
+  const seasonFx = (() => {
+    let cv = null, ctx = null, key = null, parts = [], sprites = {}, raf = 0, last = 0, W = 0, H = 0, dpr = 1;
+    const reduced = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
+    const sprite = (ch) => {
+      if (sprites[ch]) return sprites[ch];
+      const s = Math.round(40 * dpr), c = document.createElement("canvas"); c.width = c.height = s;
+      const x = c.getContext("2d"); x.font = `${Math.round(s * 0.78)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+      x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(ch, s / 2, s / 2 + s * 0.04); return (sprites[ch] = c);
+    };
+    const spawn = (S, fresh) => {
+      const sz = 14 + Math.random() * 12;
+      return { ch: S.em[(Math.random() * S.em.length) | 0], sz, x: Math.random() * W, y: fresh ? Math.random() * H : S.dir > 0 ? -sz - Math.random() * 60 : H + sz + Math.random() * 60,
+        v: (18 + Math.random() * 26) * (sz / 20), ph: Math.random() * 6.28, sw: (6 + Math.random() * 14) * S.sway, f: 0.6 + Math.random() * 0.9,
+        r: (Math.random() - 0.5) * 0.6, vr: S.spin ? (Math.random() - 0.5) * 1.6 : (Math.random() - 0.5) * 0.3, a: 0.5 + Math.random() * 0.3 };
+    };
+    const size = () => {
+      if (!cv) return; dpr = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    const frame = (ts) => {
+      raf = 0; if (!cv || !key || document.hidden) return;
+      if (ts - last < 32) { raf = requestAnimationFrame(frame); return; }
+      const dt = Math.min(0.1, last ? (ts - last) / 1000 : 0.033); last = ts;
+      const S = SEASONS[key]; ctx.clearRect(0, 0, W, H);
+      for (let i = 0; i < parts.length; i++) {
+        let p = parts[i]; p.y += p.v * dt * S.dir; p.ph += p.f * dt; p.r += p.vr * dt;
+        const x = p.x + Math.sin(p.ph) * p.sw;
+        if ((S.dir > 0 && p.y > H + 40) || (S.dir < 0 && p.y < -40) || x < -60 || x > W + 60) { p = parts[i] = spawn(S, false); continue; }
+        ctx.save(); ctx.globalAlpha = p.a; ctx.translate(x, p.y); ctx.rotate(p.r); ctx.drawImage(sprite(p.ch), -p.sz / 2, -p.sz / 2, p.sz, p.sz); ctx.restore();
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    const go = () => { if (!raf && cv && key && !document.hidden) { last = 0; raf = requestAnimationFrame(frame); } };
+    const sync = () => {
+      const k = reduced() ? null : seasonNow();
+      document.documentElement.dataset.season = seasonNow() || "";
+      if (k === key && (cv || !k)) return;
+      key = k; sprites = {};
+      if (!k) { if (raf) cancelAnimationFrame(raf); raf = 0; if (cv) { cv.remove(); cv = ctx = null; } parts = []; return; }
+      if (!cv) { cv = document.createElement("canvas"); cv.className = "seasonfx"; cv.setAttribute("aria-hidden", "true"); document.body.append(cv); ctx = cv.getContext("2d"); size(); }
+      const n = matchMedia("(max-width: 700px)").matches ? 11 : 17;
+      parts = Array.from({ length: n }, () => spawn(SEASONS[k], true)); go();
+    };
+    addEventListener("resize", () => { size(); });
+    document.addEventListener("visibilitychange", go);
+    try { matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", sync); } catch (e) {}
+    window.__seasonFx = () => ({ key, pref: SEASON_PREF.get(), auto: seasonFor(new Date()), parts: parts.length, canvas: !!cv });
+    return { sync };
+  })();
+
   // no credit line under the pages any more: it's at the end of the Stat glossary (minimal pass 5)
-  readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); migrateTierOrder(); render(); setTb(); watchBuild(); registerSW();
+  readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); migrateTierOrder(); render(); setTb(); watchBuild(); registerSW(); seasonFx.sync(); setInterval(seasonFx.sync, 30 * 60e3);
 })();
