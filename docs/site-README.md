@@ -1373,3 +1373,8 @@ Every page on a phone opens under a blue bar with a red stripe under it: a magni
 desktop is unchanged.
 
 The middle of that bar now shows the date the data runs through ("Thru Sep 27") in a small pill beside the site icon, instead of the site's name.
+
+## Bengals colour schemes (31 Oct 2026)
+
+Settings ▸ Appearance ▸ Colour scheme has two Cincinnati Bengals schemes. **Bengals** has orange bands and buttons, black type and a black stripe under
+the bands. **Jets · Bengals** is the Jets' flat look in Bengal orange and white with black type, with no stripes and no outlines.
