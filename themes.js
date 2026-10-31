@@ -142,6 +142,37 @@ window.DRAFT_THEMES = (function () {
               btn: "#7a1f33", "btn-ink": "#f8f1e1", "btn-line": "#233b5c", "tab-fill": "#7a1f33",
               ground: "#0b1628", "line-soft": "#233b5c", frame: "#233b5c", secrule: "#233b5c", "accent-ink": "#f8f1e1", "band-ink": "#efe6d4", svtext: "#efe6d4", svrule: "#233b5c", pctrack: "#1b2f4c" },
     },
+    // the Cincinnati Bengals (Sean, 31 Oct 2026: "Make a Cincinnati bengals theme"): a white ground, Bengal orange bands and buttons with white
+    // type on them (3.2:1, as Carolina's bands read), black type and the black stripe under the band. Dark mode is a black night with the same
+    // orange bands. Outlines stay (not a flat scheme); the percentile colours are Savant's
+    bengals: {
+      name: "Bengals", blurb: "The Cincinnati Bengals — a white ground, Bengal orange bands and buttons with white type, black type and a black stripe under the band.",
+      light: { accent: "#fb4f14", "accent-2": "#fb4f14", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.85)", "on-fill-wash": W + "0.14)", "on-fill-wash-2": W + "0.24)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
+               "accent-2-text": "#c2380a", pop: "#ffffff", rule: "#ebe2dc", "stripe-line": "#111111", "accent-wash": "rgba(251, 79, 20, 0.1)", ink: "#111111", "ink-2": "#3d3a38", hover: "#fdf1ec",
+               page: "#ffffff", surface: "#ffffff", "surface-2": "#f7f3f1", hair: "#ebe2dc", rail: "#dccdc4", stripe: "#ffffff", band: "#ffffff", plate: "#ebe2dc", muted: "#6e6762",
+               btn: "#fb4f14", "btn-ink": "#ffffff", "btn-line": "#ebe2dc", "tab-fill": "#fb4f14",
+               ground: "#ffffff", "line-soft": "#ebe2dc", frame: "#d9cbc2", secrule: "#ebe2dc", "accent-ink": "#ffffff", "band-ink": "#ffffff", svtext: "#111111", svrule: "#ebe2dc", pctrack: "#f1ebe7" },
+      dark: { accent: "#ff8a5c", "accent-2": "#fb4f14", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.85)", "on-fill-wash": W + "0.12)", "on-fill-wash-2": W + "0.22)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
+              "accent-2-text": "#ff8a5c", pop: "#1a1a1a", rule: "#333130", "stripe-line": "#fb4f14", "accent-wash": "rgba(251, 79, 20, 0.22)", ink: "#f4f1ef", "ink-2": "#cfc8c3", hover: "#242220",
+              page: "#0d0d0d", surface: "#1a1a1a", "surface-2": "#222120", hair: "#333130", rail: "#45413e", stripe: "#0d0d0d", band: "#1a1a1a", plate: "#333130", muted: "#9e9894",
+              btn: "#fb4f14", "btn-ink": "#ffffff", "btn-line": "#333130", "tab-fill": "#fb4f14",
+              ground: "#0d0d0d", "line-soft": "#333130", frame: "#333130", secrule: "#333130", "accent-ink": "#ffffff", "band-ink": "#f4f1ef", svtext: "#f4f1ef", svrule: "#333130", pctrack: "#2a2827" },
+    },
+    // the Bengals in the Jets' flat look (Sean, the same ask: "a bengals theme in the jets style"): Bengal orange and white, no stripes and no
+    // outlines; the type and --flat-ink are the Bengals' black (orange is too pale to read as type on white, 3.2:1), the links a deep orange
+    "jets-bengals": {
+      name: "Jets · Bengals", flat: true, blurb: "The Jets look in Bengal orange: orange and white with black type — orange bands with white type, no stripes and no outlines.",
+      light: { "flat-ink": "#111111", accent: "#111111", "accent-2": "#fb4f14", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.85)", "on-fill-wash": W + "0.14)", "on-fill-wash-2": W + "0.24)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
+               "accent-2-text": "#c2380a", pop: "#ffffff", rule: "#f2e2da", "stripe-line": "#fb4f14", "accent-wash": "rgba(251, 79, 20, 0.1)", ink: "#111111", "ink-2": "#3d3a38", hover: "#fdf1ec",
+               page: "#ffffff", surface: "#ffffff", "surface-2": "#fbf3ef", hair: "#f2e2da", rail: "#e8cfc3", stripe: "#ffffff", band: "#ffffff", plate: "#f2e2da", muted: "#6e6762",
+               btn: "#fb4f14", "btn-ink": "#ffffff", "btn-line": "transparent", "tab-fill": "#fb4f14",
+               ground: "#ffffff", "line-soft": "#f2e2da", frame: "#f2e2da", secrule: "#f2e2da", "accent-ink": "#ffffff", "band-ink": "#111111", svtext: "#111111", svrule: "#f2e2da", pctrack: "#f8ece6" },
+      dark: { accent: "#ff8a5c", "accent-2": "#fb4f14", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.85)", "on-fill-wash": W + "0.12)", "on-fill-wash-2": W + "0.22)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
+              "accent-2-text": "#ff8a5c", pop: "#1a1a1a", rule: "#333130", "stripe-line": "#fb4f14", "accent-wash": "rgba(251, 79, 20, 0.22)", ink: "#f4f1ef", "ink-2": "#cfc8c3", hover: "#242220",
+              page: "#0d0d0d", surface: "#1a1a1a", "surface-2": "#222120", hair: "#333130", rail: "#45413e", stripe: "#0d0d0d", band: "#1a1a1a", plate: "#333130", muted: "#9e9894",
+              btn: "#fb4f14", "btn-ink": "#ffffff", "btn-line": "transparent", "tab-fill": "#fb4f14",
+              ground: "#0d0d0d", "line-soft": "#333130", frame: "#333130", secrule: "#333130", "accent-ink": "#ffffff", "band-ink": "#f4f1ef", svtext: "#f4f1ef", svrule: "#333130", pctrack: "#2a2827" },
+    },
     "titans-unc": {
       name: "Titans · Carolina", blurb: "Tennessee in Carolina blue — Titans navy type, the red stripe, UNC blue across the banner.",
       light: { accent: "#0c2340", "accent-2": "#7bafd4", ...onLight("#0c2340", "rgba(12, 35, 64, 0.85)"), "accent-2-text": "#4b9cd3", pop: "#ffffff", rule: "#0c2340", "stripe-line": "#c8102e", "accent-wash": "rgba(123, 175, 212, 0.24)", ink: "#0c2340", "ink-2": "#35465f", hover: "#eaf2f9", band: "#0c2340" },

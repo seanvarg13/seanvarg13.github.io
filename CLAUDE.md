@@ -5680,3 +5680,10 @@ line can bring them back.
   the site header and yordans header")**: the bar's 3px bottom rule is `--phsep`, set by `themes.js`'s `apply()`: the scheme's red stripe where it
   shows on the band (1.5:1+), else its hairline colour (Carolina blue under Carolina navy's navy, pale green under Jets), else red, else white.
   The schemes whose stripe is transparent or the band's own colour had drawn the bar straight into the player's band.
+* **Bengals and Jets · Bengals (Sean, 31 Oct 2026: "Make a Cincinnati bengals theme and a bengals theme in the jets style")**: two schemes in Settings ▸
+  Appearance ▸ Colour scheme, after Cleveland, per device (Titans stays the site default). **`bengals`** (`themes.js`, Cleveland's full token shape,
+  outlines kept): a white ground, Bengal orange `#fb4f14` bands, buttons and tab fills with white type (3.2:1, as Carolina's read), black `#111111` type
+  and the **black stripe** under the band; links a deep orange `#c2380a`; dark mode a black night (`#0d0d0d` page, `#1a1a1a` cards) with the same orange
+  bands and an orange stripe. **`jets-bengals`** (`flat: true`, like Jets · Mint): orange and white, no stripes and no outlines, the type and `--flat-ink`
+  the Bengals' black; dark mode the same black night. Checked headless on both layouts, light and dark (the Leaderboard and Yordan's page): no script
+  errors, the scheme and `data-flat` applied.
