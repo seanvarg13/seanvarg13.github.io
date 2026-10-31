@@ -13824,7 +13824,7 @@
     fall: { name: "Fall", em: ["🍂", "🍁", "🍂", "leaf:#e8662a", "leaf:#c8381f", "leaf:#f2b134", "leaf:#a8441c", "leaf:#d9531e", "leaf:#f08c2a"], dir: 1, sway: 1.5, spin: 1, dense: 2.2 },   /* foliage: emoji and drawn maple leaves in the season's colours (31 Oct 2026) */
     thanksgiving: { name: "Thanksgiving", em: ["🍂", "🍁", "🦃", "🥧", "🌽"], dir: 1, sway: 1.2, spin: 1 },
     christmas: { name: "Christmas", em: ["❄️", "❄️", "🎄", "❄️", "🎁", "⭐"], dir: 1, sway: 0.8 },
-    winter: { name: "Winter", em: ["❄️", "❄️", "❄️", "☃️"], dir: 1, sway: 0.8 },
+    winter: { name: "Winter", em: ["snow", "snow", "snow", "snow", "snow", "snow", "snow", "snow", "❄️"], dir: 1, sway: 0.7, dense: 3.5, sz: [6, 12], slow: 0.75 },   /* snowfall: soft flakes, a ❄️ now and then (31 Oct 2026) */
     newyear: { name: "New Year's", em: ["🎉", "🎊", "✨", "🥂"], dir: 1, sway: 1, spin: 1 },
     valentine: { name: "Valentine's Day", em: ["❤️", "💕", "💘", "❤️"], dir: -1, sway: 1 },
     stpat: { name: "St. Patrick's Day", em: ["☘️", "🍀", "☘️", "🌈"], dir: 1, sway: 1.2, spin: 1 },
@@ -13873,6 +13873,13 @@
       if (sprites[ch]) return sprites[ch];
       const s = Math.round(40 * dpr), c = document.createElement("canvas"); c.width = c.height = s;
       const x = c.getContext("2d");
+      if (ch === "snow") {   // a soft flake: pale icy blue with a white glint, so it shows on a white page
+        const g = x.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+        g.addColorStop(0, "rgba(214,229,246,1)"); g.addColorStop(0.55, "rgba(196,215,238,.95)"); g.addColorStop(0.8, "rgba(196,215,238,.5)"); g.addColorStop(1, "rgba(196,215,238,0)");
+        x.fillStyle = g; x.beginPath(); x.arc(s / 2, s / 2, s / 2, 0, 6.29); x.fill();
+        x.fillStyle = "rgba(255,255,255,.95)"; x.beginPath(); x.arc(s * 0.42, s * 0.4, s * 0.16, 0, 6.29); x.fill();   // the glint
+        return (sprites[ch] = c);
+      }
       if (ch.startsWith("leaf:")) {   // a maple leaf drawn in its colour, a darker vein down the middle
         const P = [0,-10, 2,-5, 6,-7.5, 5,-2, 10,-3.5, 7.5,1, 9.5,3.5, 3,3, 4,8, 0,5, -4,8, -3,3, -9.5,3.5, -7.5,1, -10,-3.5, -5,-2, -6,-7.5, -2,-5];
         x.translate(s / 2, s / 2 - s * 0.04); x.scale(s / 24, s / 24); x.beginPath();
@@ -13885,10 +13892,10 @@
       x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(ch, s / 2, s / 2 + s * 0.04); return (sprites[ch] = c);
     };
     const spawn = (S, fresh) => {
-      const sz = 14 + Math.random() * 12;
-      return { ch: S.em[(Math.random() * S.em.length) | 0], sz, x: Math.random() * W, y: fresh ? Math.random() * H : S.dir > 0 ? -sz - Math.random() * 60 : H + sz + Math.random() * 60,
-        v: (18 + Math.random() * 26) * (sz / 20), ph: Math.random() * 6.28, sw: (6 + Math.random() * 14) * S.sway, f: 0.6 + Math.random() * 0.9,
-        r: (Math.random() - 0.5) * 0.6, vr: S.spin ? (Math.random() - 0.5) * 1.6 : (Math.random() - 0.5) * 0.3, a: 0.5 + Math.random() * 0.3 };
+      const ch = S.em[(Math.random() * S.em.length) | 0], small = ch === "snow" && S.sz, sz = small ? S.sz[0] + Math.random() * (S.sz[1] - S.sz[0]) : 14 + Math.random() * 12;
+      return { ch, sz, x: Math.random() * W, y: fresh ? Math.random() * H : S.dir > 0 ? -sz - Math.random() * 60 : H + sz + Math.random() * 60,
+        v: (18 + Math.random() * 26) * (small ? (0.6 + sz / 12) * (S.slow || 1) : sz / 20), ph: Math.random() * 6.28, sw: (6 + Math.random() * 14) * S.sway, f: 0.6 + Math.random() * 0.9,
+        r: (Math.random() - 0.5) * 0.6, vr: S.spin ? (Math.random() - 0.5) * 1.6 : (Math.random() - 0.5) * 0.3, a: small ? 0.85 + Math.random() * 0.15 : 0.5 + Math.random() * 0.3 };
     };
     const size = () => {
       if (!cv) return; dpr = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight;
