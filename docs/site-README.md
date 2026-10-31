@@ -1399,3 +1399,7 @@ the bands. **Jets · Bengals** is the Jets' flat look in Bengal orange and white
   `<html data-season="fall">` the site header — a desktop's band and a phone's top bar — is an orange-to-rust gradient strewn with maple leaves (an
   inline SVG tile, 220 × 64), the buttons, search box and date pill unchanged, the phone bar's icons with a soft shadow; the block at the end of
   `styles.css` (44 roots). Auto shows it from 22 Sep to the end of November outside Halloween and Thanksgiving weeks; picking Fall shows it any time.
+
+**Winter snowfall (Sean, 31 Oct 2026: "And then winter have snow falling")**: the Winter season (`SEASONS.winter`) is snow — 3.5× the particles
+  (39 on a phone, 60 on a desktop), almost all soft flakes (`snow` entries: a 6-12px pale icy-blue disc with a white glint, drawn in `sprite()` so it
+  shows on a white page), a ❄️ now and then, falling slower and swaying less than the leaves (`sz`, `slow`). Christmas keeps its own mix.
