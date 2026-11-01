@@ -1526,3 +1526,8 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
 * **A thick line over the column names (Sean, 1 Nov 2026, home's "Hitters · 300+ PA" table: "make it so the top of the player tm pa wOBA etc row is a
   thick border")**: wherever a table has a row over its column names (the title band or the over-header — home, the Pitching+ board, Bullpens, the
   card tabs' tables, the Leaderboard's Result / Process band), that row's foot is the thick `--xlw` line. Block at the end of `styles.css`.
+
+* **The Leaderboard's column names without their grey foot; a thick line over the page bar (Sean, 1 Nov 2026: "get rid of that weird white space on the
+  table header", "make the top border on the page selector row be thick too")**: each `#colhead .h` had kept a 1px light-grey bottom edge that drew a
+  pale line over `#colhead`'s thick foot — gone; the page-number bar inside the table (`#pagerbot.phbot`, Fantasy's `.fphbot`) has the thick `--xlw`
+  line on top. Block at the end of `styles.css`.

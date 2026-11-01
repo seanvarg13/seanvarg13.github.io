@@ -5998,3 +5998,10 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
    column names' own foot is; the Leaderboard's Result / Process band the same. */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5):not(#z6):not(#z7) table.sbt thead tr:not(:last-child) > th { border-bottom: var(--xlw) solid var(--xl) !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5):not(#z6):not(#z7) body.brlb #colband > * { border-bottom: var(--xlw) solid var(--xl) !important; }
+
+/* The Leaderboard's column names without their grey foot; a thick line over the page bar (Sean, 1 Nov 2026: "get rid of that weird white space on
+   the table header", "make the top border on the page selector row be thick too"): each column name kept a 1px light-grey bottom edge that drew
+   a pale line over #colhead's thick foot; it's gone. The page bar inside the table (#pagerbot.phbot, Fantasy's .fphbot) has the thick
+   --xlw line on top. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5):not(#z6):not(#z7) body.brlb #colhead .h { border-bottom: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5):not(#z6):not(#z7) :is(#pagerbot.phbot, .fphbot) { border-top: var(--xlw) solid var(--xl) !important; }
