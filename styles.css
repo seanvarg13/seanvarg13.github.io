@@ -5992,3 +5992,9 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
    selected"): --xlw is 3px again; the Regular Season / Playoffs strip that caps the season table wears the frame's thick edge on its top and
    sides (it had kept a 1px edge), in every scheme. */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5):not(#z6):not(#z7) .sblock .sbtabs { border: var(--xlw) solid var(--xl) !important; border-bottom: 0 !important; }
+
+/* A thick line over the column names (Sean, 1 Nov 2026, home's "Hitters · 300+ PA" table: "make it so the top of the player tm pa wOBA etc row is a
+   thick border"): where a table has a row above its column names (the over-header / title band), that row's foot is the thick line, as the
+   column names' own foot is; the Leaderboard's Result / Process band the same. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5):not(#z6):not(#z7) table.sbt thead tr:not(:last-child) > th { border-bottom: var(--xlw) solid var(--xl) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5):not(#z6):not(#z7) body.brlb #colband > * { border-bottom: var(--xlw) solid var(--xl) !important; }
