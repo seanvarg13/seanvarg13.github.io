@@ -197,6 +197,48 @@ window.DRAFT_THEMES = (function () {
     },
   };
 
+  // The customizer (Sean, 1 Nov 2026: "instead of like pre set color schemes we have here can we instead have like a customizer ... a two color
+  // scheme or like a three color one ... choose your own colors or choose professional sports teams colors"): a scheme built from up to four
+  // colours, each with a job — main (the bands, buttons and tab fills), text (the type and lines), stripe (the rule under the bands) and
+  // highlight (links and accent type). Two colours: the stripe is the text colour and the highlight a deep shade of the main; three: a stripe of
+  // its own. Saved per device as draft2027.custom = {colors: {main, text, stripe, accent}, n, flat, name}; S.custom is built from it here, before the
+  // page paints, and rebuilt by setCustom. Colours that wouldn't read are moved until they do (text darkened to 4.5:1 on white, and so on).
+  const hx = (h) => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ""); return m ? [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16)) : null; };
+  const toHex = (c) => "#" + c.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
+  const mix = (a, b, t) => { const x = hx(a), y = hx(b); return x && y ? toHex(x.map((v, i) => v + (y[i] - v) * t)) : a; };   // t of the way from a to b
+  const lum = (h) => { const c = hx(h); if (!c) return 0; const v = c.map((x) => x / 255).map((x) => (x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4))); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+  const ratioOf = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const rgba = (h, a) => { const c = hx(h) || [0, 0, 0]; return `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${a})`; };
+  const toward = (c, to, bg, r) => { let t = 0, o = c; while (ratioOf(o, bg) < r && t < 1) { t += 0.05; o = mix(c, to, t); } return o; };   // move c toward `to` until it reads r:1 on bg
+  function buildCustom(cfg) {
+    const C = (cfg && cfg.colors) || {}, n = (cfg && cfg.n) || 2, flat = !!(cfg && cfg.flat);
+    const M = hx(C.main) ? C.main : "#7bafd4", T0 = hx(C.text) ? C.text : "#0c2340";
+    const S0 = n >= 3 && hx(C.stripe) ? C.stripe : T0, A0 = n >= 4 && hx(C.accent) ? C.accent : M;
+    const T = toward(T0, "#000000", "#ffffff", 7);                              // the type: dark enough to read as body text
+    const onM = ratioOf(M, "#ffffff") >= 2 ? "#ffffff" : (ratioOf(M, T) >= 4.5 ? T : "#141414");   // type on the main colour
+    const onDim = onM === "#ffffff" ? W + "0.85)" : rgba(onM, 0.72);
+    const link = toward(A0, "#000000", "#ffffff", 4.5);                         // links / accent type on white
+    const hair = mix(T, "#ffffff", 0.86), rail = mix(T, "#ffffff", 0.76), soft = mix(M, "#ffffff", 0.93);
+    const stripe = flat ? M : S0;
+    const light = { accent: link, "accent-2": M, "accent-2-ink": onM, "accent-2-dim": onDim, "on-fill-wash": onM === "#ffffff" ? W + "0.14)" : rgba(onM, 0.08),
+      "on-fill-wash-2": onM === "#ffffff" ? W + "0.24)" : rgba(onM, 0.14), "on-fill-line": onM === "#ffffff" ? W + "0.4)" : rgba(onM, 0.3), "tab-ink": onM,
+      "accent-2-text": link, pop: "#ffffff", rule: flat ? hair : hair, "stripe-line": stripe, "accent-wash": rgba(M, 0.12), ink: T, "ink-2": mix(T, "#ffffff", 0.22), hover: soft,
+      page: "#ffffff", surface: "#ffffff", "surface-2": mix(M, "#ffffff", 0.94), hair, rail, stripe: "#ffffff", band: "#ffffff", plate: hair, muted: toward(mix(T, "#ffffff", 0.5), T, "#ffffff", 4),
+      btn: M, "btn-ink": onM, "btn-line": flat ? "transparent" : rail, "tab-fill": M,
+      ground: "#ffffff", "line-soft": hair, frame: flat ? hair : rail, secrule: hair, "accent-ink": onM, "band-ink": onM, svtext: T, svrule: hair, pctrack: mix(M, "#ffffff", 0.88) };
+    if (flat) light["flat-ink"] = T;
+    const page = mix(T, "#0b0c0f", 0.82), surf = mix(page, "#ffffff", 0.05), surf2 = mix(page, "#ffffff", 0.09), dh = mix(page, "#ffffff", 0.16);
+    const lite = toward(A0, "#ffffff", page, 4.5);
+    const dark = { accent: lite, "accent-2": M, "accent-2-ink": onM, "accent-2-dim": onDim, "on-fill-wash": W + "0.12)", "on-fill-wash-2": W + "0.22)", "on-fill-line": W + "0.35)", "tab-ink": onM,
+      "accent-2-text": lite, pop: surf, rule: dh, "stripe-line": flat ? M : toward(S0, "#ffffff", page, 1.6), "accent-wash": rgba(M, 0.24), ink: "#eef0f3", "ink-2": "#c5c9d0", hover: surf2,
+      page, surface: surf, "surface-2": surf2, hair: dh, rail: mix(page, "#ffffff", 0.24), stripe: page, band: surf, plate: dh, muted: "#8e939c",
+      btn: M, "btn-ink": onM, "btn-line": flat ? "transparent" : dh, "tab-fill": M,
+      ground: page, "line-soft": dh, frame: dh, secrule: dh, "accent-ink": onM, "band-ink": "#eef0f3", svtext: "#eef0f3", svrule: dh, pctrack: mix(page, "#ffffff", 0.12) };
+    return { name: (cfg && cfg.name) || "Custom", flat, custom: true, blurb: "Your own colours, from the customizer below.", light, dark };
+  }
+  const readCustom = () => { try { const v = localStorage.getItem("draft2027.custom"); return v ? JSON.parse(v) : null; } catch { return null; } };
+  if (readCustom()) S.custom = buildCustom(readCustom());
+
   // the site's type (Sean, 30 Sep 2026, from the Percentile Bar Studio page: "adjust the entire font of the site to be this
   // font"): Barlow Condensed for headings, names and big numbers, Source Sans 3 for everything else. This file loads them
   // (in <head>, before the page paints) rather than index.html, whose template lives on the Mac and isn't synced.
@@ -314,5 +356,8 @@ window.DRAFT_THEMES = (function () {
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", apply);
   new MutationObserver(apply).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
   window.addEventListener("resize", () => { if (viewPref() === "auto") applyView(); });
-  return { schemes: S, fonts: F, defaults: DEFAULTS, current, isDark, apply, set, preloadFonts, viewPref, applyView, setView, view: () => root.dataset.view, hasOwn, useDefaults };
+  // the customizer's own calls: the saved colours, and saving a new set (it becomes this device's scheme at once)
+  const customCfg = () => readCustom();
+  const setCustom = (cfg) => { S.custom = buildCustom(cfg); put("draft2027.custom", cfg); set({ scheme: "custom" }); };
+  return { schemes: S, fonts: F, defaults: DEFAULTS, current, isDark, apply, set, customCfg, setCustom, buildCustom, contrast: ratioOf, preloadFonts, viewPref, applyView, setView, view: () => root.dataset.view, hasOwn, useDefaults };
 })();
