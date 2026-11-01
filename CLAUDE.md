@@ -5848,3 +5848,10 @@ line can bring them back.
 * **The sorted column keeps its row lines (Sean, 1 Nov 2026: "the row that is colored red make it so each cell still has the regular borders even with
   the heat map")**: the Leaderboard's sorted cells (`.hot` / `.sorted`) filled over their row's 1px bottom line, so the red column read as one block;
   each draws the line itself now (an inset `--xl` shadow). Block at the end of `styles.css`.
+
+* **The table frame as a ring outside the box (Sean, 1 Nov 2026, the Leaderboard slid sideways on his iPhone: "get rid of this glitch here where there is
+  no border")**: iOS WebKit pins a scroller's sticky children (the column names, Rk / Player, the page bar) at its border edge once they stick, so they
+  painted over the 3px frame border and the frame vanished while the table was slid sideways. Every table scroller's frame is now a 3px `box-shadow`
+  ring outside the box (`border-width: 0`, the ring then the soft shadow), which nothing inside the scroller can cover; the season table's Regular Season /
+  Playoffs strip is a ring too (`z-index: 3`, `margin-bottom: calc(var(--xlw) - 8px)` so its ring is the thick line over the table). Block at the end
+  of `styles.css`. Don't put the frame back on `border` for a scroller with sticky children.
