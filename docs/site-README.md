@@ -1493,3 +1493,11 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   - **What they replace**: the light gridlines and the red / white 2px rules of 9-12 Oct.
   - **The totals' label** spills over its empty Season / Age cells with no line through it.
   - **CSS**: one block at the end of `styles.css` (40 roots + six `:not(#xN)` ids, over every earlier pass); delete it to go back.
+
+* **The player band's lines navy, no white corner, the same foot when it sticks (Sean, 1 Nov 2026, Ben Rice's page: "make it so the like white lines
+  in the header are the same navy that the other borders are", "there's like a weird white space in the top left get rid of that", "when I scroll
+  down on the page, the bottom of the header is the same thickness as it currently is right here")**: the Summary's top rule and its dividers are
+  the band's rule colour (`--phsep`, the stripe where it shows on the band; the flat schemes keep theirs); the outlines pass had given the player
+  page's `main.wrap` a 1px black edge with 6px corners, which inset the bar and band by a pixel and left a white notch at the top left — off on the
+  player page, so both meet the header and the screen's edges; the stuck bar's rule is 5px, the band's 3px border + 2px shadow. The block at the
+  end of `styles.css`.
