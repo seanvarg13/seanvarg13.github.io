@@ -1474,3 +1474,10 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
       160). A tap puts the colour in the picked role, as a team swatch does.
   - **The Ready-made schemes row is gone** from Appearance. Titans and the rest stay in `themes.js` as the site default and for any device
     already on one, and Follow the site default goes back to it.
+* **The playing-time block is its own box under the Bio box (Sean, 1 Nov 2026: "make the plate appearances thing its own separate box below the bio
+  box, make it the same style as the bio box")**: `lineupLine(p)` returns a `section.pbinfo.pbplay` — the Bio box's frame and band head ("Playing
+  time · 2026") over a red rule — and `playerView` puts it right after `bioBox` on a hitter's page and in the popup; the band no longer carries it
+  (the 29 Oct second Summary is history). Inside: a row of cells (`.plgrid` / `.plcell`: label, the headline number, a line of detail, hairlines
+  between) — Bats (his top three slots), Starts, PA/G, vs LHP, vs RHP (the Platooned chip as before) — five across on a desktop, three to a row on a
+  phone, and the Last 15 strip on a line of its own (`.pllast`). Ink on white, so it reads the same in every scheme. CSS: the block at the end of
+  `styles.css`.
