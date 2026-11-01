@@ -1509,3 +1509,10 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   wears Excel's thick box border (`--xlw` 3px in `--xl`) in every scheme, the last row's own bottom line dropped; the player page's Filters button
   (`.segbtn.phfilt`) has no edge, its lift kept. The header's top rule was 4px at rest and 3px stuck only because of `main.wrap`'s 1px outline, which
   the entry above took off — checked pixel by pixel, 3px both ways on phone and desktop. The block at the end of `styles.css`.
+
+* **Every table line one size; the tabs outlined; Filters keeps its edge (Sean, 1 Nov 2026: "with the filters button scratch that, I like the
+  outlines and flat options you have right now", "make it so the bottom tabs get an outline when outline is selected", the tables' outside border
+  "even when flat is selected", then "the thick outside borders look bad, let's get rid of all thick outside borders and even with the thicker
+  line breaks I have before let's just make those all be normal sized borders")**: `--xlw` is 1px, so the group breaks, frozen edges, the header's
+  foot, the totals' rule and every table's frame are the cells' own 1px line (the frame in every scheme, flat ones included); the Filters button's
+  no-outline rule is gone; on an outlined scheme the card's tabs (`.btabs .btab`) take `--frame` as their edge. The 3px entries above are history.
