@@ -5896,3 +5896,15 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
 #pboard .czub:hover { background: var(--hover); }
 :root[data-view="mobile"] #pboard .czroles, :root[data-view="mobile"] #pboard .czlist { grid-template-columns: minmax(0, 1fr); }
 :root[data-view="mobile"] #pboard .czlist { max-height: 380px; }
+/* The colour search (Sean, 1 Nov 2026: "allow me to search cream white and it comes up with every teams color who has cream white"): a grid of
+   team colours, each a swatch, its name, the team and its years, the hex; a tap puts it in the picked role */
+#pboard .czhits { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; min-width: 0; }
+#pboard .czhit { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border: 1px solid var(--hair); background: var(--surface); color: var(--ink); text-align: left; cursor: pointer; min-width: 0; font: inherit; }
+#pboard .czhit:hover { border-color: var(--ink); }
+#pboard .czhsw { flex: 0 0 34px; height: 34px; border: 1px solid rgba(0, 0, 0, 0.25); }
+#pboard .czhtx { display: grid; min-width: 0; line-height: 1.25; }
+#pboard .czhtx b { font-weight: 600; font-size: 13px; }
+#pboard .czhtx span { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#pboard .czhtx code { font-size: 11px; color: var(--muted); }
+:root[data-view="mobile"] #pboard .czhits { grid-template-columns: minmax(0, 1fr); }
+#pboard .czlist.czcol { grid-template-columns: minmax(0, 1fr); align-content: start; }
