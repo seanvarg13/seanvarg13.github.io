@@ -1501,3 +1501,11 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   page's `main.wrap` a 1px black edge with 6px corners, which inset the bar and band by a pixel and left a white notch at the top left — off on the
   player page, so both meet the header and the screen's edges; the stuck bar's rule is 5px, the band's 3px border + 2px shadow. The block at the
   end of `styles.css`.
+  end of `styles.css`.
+
+* **Thick outer borders on every table; no outline on Filters (Sean, 1 Nov 2026: "Let's also have every table have a thick outer border too", "make
+  it so there is no outline on the filters button", "same with the top of the header too I don't want that to change size when I scroll down")**:
+  every box a table sits in (`.sbscroll`, `.brscroll`, `#bscroll`, `.board-scroll`, `.fscroll`, `.pbscroll`, `.stuffscroll`, `.rawscroll`, `.gframe`)
+  wears Excel's thick box border (`--xlw` 3px in `--xl`) in every scheme, the last row's own bottom line dropped; the player page's Filters button
+  (`.segbtn.phfilt`) has no edge, its lift kept. The header's top rule was 4px at rest and 3px stuck only because of `main.wrap`'s 1px outline, which
+  the entry above took off — checked pixel by pixel, 3px both ways on phone and desktop. The block at the end of `styles.css`.
