@@ -1421,3 +1421,12 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
 **Winter snowfall (Sean, 31 Oct 2026: "And then winter have snow falling")**: the Winter season (`SEASONS.winter`) is snow — 3.5× the particles
   (39 on a phone, 60 on a desktop), almost all soft flakes (`snow` entries: a 6-12px pale icy-blue disc with a white glint, drawn in `sprite()` so it
   shows on a white page), a ❄️ now and then, falling slower and swaying less than the leaves (`sz`, `slow`). Christmas keeps its own mix.
+
+* **Black outlines on every outlined scheme; the draft prep section (Sean, 1 Nov 2026: "I want the black outline to be a thing for all the non jets
+  themed themes and also make the draft prep thing have hard edges and the shadows and give it the same like header thingy like 2026 leaders below it
+  has")**: the "Bengals outlines" block at the end of `styles.css` keys on `:not([data-flat])` now (was `[data-scheme="bengals"]`), and `themes.js`'s
+  `apply()` sets `--frame`, `--rail`, `--btn-line` and `--line-soft` to `#111111` for any non-flat scheme in light mode (the scheme's own values in
+  dark mode and on the flat Jets schemes). So every frame, button, tab, pill, dropdown and box edge is black on Titans, Cleveland, Warm and the rest.
+  The tables' inner gridlines, the header rules and dark mode are unchanged. **Home's off-season card** is a section in the leaders' dress
+  (`.hprepsec`): "2027 draft prep" over the red rule with a grey "off-season", then Rankings and Draft mode as square boxes with the tables' frame and
+  shadow (two across on a phone; the Jets look drops the edge and keeps the shadow). It sits above Last game day, full width.
