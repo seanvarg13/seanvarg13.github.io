@@ -10952,36 +10952,41 @@
     // organized and easy to digest"): a labelled row in the band's dress — Bats · Starts · PA/G · vs LHP · vs RHP · Last 15 — each cell the
     // headline number over a small line of detail, the tooltips as before; a phone gives the last-15 strip a row of its own. The run of
     // fragments with dots between them (28 Oct 2026) is history
-    const d = el("div", "pbsum pblu"), PH = mobileView(), pl = L.platoon;
+    // its own box under the Bio box, in the Bio box's dress (Sean, 1 Nov 2026: "make the plate appearances thing its own separate box below the
+    // bio box, make it the same style as the bio box"): the band's head over a red rule, then a row of cells — the label, the headline number and
+    // a line of detail — and the last-15 strip on a line of its own. Its second Summary in the band (29 Oct 2026) is history
+    const pl = L.platoon;
     const slots = L.sl.map((n, i) => [i + 1, n]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]), pc = (n) => `${Math.round(100 * n / L.gs)}%`;
     const cells = [];   // [label, value, detail, tooltip, classes]
     // his top three spots by share of his starts (Sean, 29 Oct 2026: "show their top 3 spots by %"), the slots over their shares
     if (L.gs) { const top = slots.slice(0, 3);
       cells.push(["Bats", top.map(([k, n]) => [ORD(k), pc(n)]), "", `Where he bats when he starts: ${slots.map(([k, n]) => `${ORD(k)} ${n}`).join(", ")} — mean slot ${L.slot.toFixed(1)}`, ""]); }
     else cells.push(["Bats", "–", "no starts", "No starts on the active roster yet", ""]);
-    cells.push(["Starts", `${Math.round(L.stpct)}%`, `${L.gs} of ${L.ar}${PH ? "" : ` roster game${L.ar === 1 ? "" : "s"}`}`, `Games on the active roster (a start, a substitute appearance or the bench)${L.tg ? ` · his club has played ${L.tg}` : ""}`, "sep"]);
-    cells.push(["PA/G", L.patg != null ? L.patg.toFixed(1) : "–", PH ? "per game" : (L.gp != null ? `${L.pa} PA in ${L.gp} game${L.gp === 1 ? "" : "s"}` : `${L.pas != null ? L.pas : L.pa} PA in ${L.gs} start${L.gs === 1 ? "" : "s"}`), "Plate appearances per game: his plate appearances over the games he played, starts and substitute appearances (a day on the bench or off the active roster isn't counted)", ""]);
+    cells.push(["Starts", `${Math.round(L.stpct)}%`, `${L.gs} of ${L.ar} roster game${L.ar === 1 ? "" : "s"}`, `Games on the active roster (a start, a substitute appearance or the bench)${L.tg ? ` · his club has played ${L.tg}` : ""}`, ""]);
+    cells.push(["PA/G", L.patg != null ? L.patg.toFixed(1) : "–", L.gp != null ? `${L.pa} PA in ${L.gp} game${L.gp === 1 ? "" : "s"}` : `${L.pas != null ? L.pas : L.pa} PA in ${L.gs} start${L.gs === 1 ? "" : "s"}`, "Plate appearances per game: his plate appearances over the games he played, starts and substitute appearances (a day on the bench or off the active roster isn't counted)", ""]);
     for (const [h, v, a] of [["L", L.lsp, L.vl], ["R", L.rsp, L.vr]]) {
       if (v == null) continue;
-      cells.push([`vs ${h}HP`, `${Math.round(v)}%`, pl === h ? "PLAT" : `${a[0]} of ${a[1]}${PH ? "" : " starts"}`, `Starts in ${a[0]} of his ${a[1]} roster games against ${h === "L" ? "left" : "right"}-handed starting pitchers${pl === h ? ` — sits against them: ${Math.round(v)}% against ${h === "L" ? "lefties" : "righties"}, ${Math.round(h === "L" ? L.rsp : L.lsp)}% against the other side` : ""}`, (h === "L" ? "sep" : "") + (pl === h ? " pbweak" : "")]);
+      cells.push([`vs ${h}HP`, `${Math.round(v)}%`, pl === h ? "PLAT" : `${a[0]} of ${a[1]} starts`, `Starts in ${a[0]} of his ${a[1]} roster games against ${h === "L" ? "left" : "right"}-handed starting pitchers${pl === h ? ` — sits against them: ${Math.round(v)}% against ${h === "L" ? "lefties" : "righties"}, ${Math.round(h === "L" ? L.rsp : L.lsp)}% against the other side` : ""}`, pl === h ? "pbweak" : ""]);
     }
-    const strip = () => { const s = el("span", "pblast"); for (const x of L.last) { const b = el("b", x > 0 ? "on" : x === 0 ? "off" : "out", x > 0 ? String(x) : x === 0 ? "–" : "×"); b.title = x > 0 ? `Started, batting ${ORD(x)}` : x === 0 ? "On the roster, didn't start" : "Off the active roster"; s.append(b); } return s; };
-    const head = el("div", "pbsrow pbshead"), row = el("div", "pbsrow"); head.append(el("span", "pbsl", "Playing time")); row.append(el("span", "pbsl", String(DS.season)));
+    const box = el("section", "pbinfo pbplay");
+    box.append(el("div", "pbinfohd", `Playing time · ${DS.season}`));
+    const body = el("div", "pbplbd"), grid = el("div", "plgrid"); body.append(grid); box.append(body);
+    grid.style.setProperty("--n", cells.length);
     for (const [lab, val, sub, title, cls] of cells) {
-      const sep = cls.includes("sep") ? " sep" : "";
-      head.append(el("span", "pbsh" + sep, lab));
-      const v = el("span", "pbsv pblcell" + sep + (cls.includes("pbweak") ? " pbweak" : "")); v.title = title;
-      if (Array.isArray(val)) { const t = el("span", "pbtop"); for (const [o, q] of val) { const r = el("span", "pbtopr"); r.append(el("b", "pbsvv", o), el("small", "pbsvs", q)); t.append(r); } v.append(t); }   /* the top three slots, a line each */
-      else v.append(el("b", "pbsvv", val));
-      if (sub === "PLAT") { const c = el("span", "pbplat", "Platooned"); v.append(c); } else if (sub) v.append(el("small", "pbsvs", sub));
-      row.append(v);
+      const c = el("div", "plcell" + (cls ? " " + cls : "")); c.title = title;
+      c.append(el("span", "pllab", lab));
+      if (Array.isArray(val)) { const t = el("span", "pltop"); for (const [o, q] of val) { const r = el("span", "pltopr"); r.append(el("b", "plval", o), el("small", "plsub", q)); t.append(r); } c.append(t); }
+      else c.append(el("b", "plval", val));
+      if (sub === "PLAT") c.append(el("span", "pbplat", "Platooned")); else if (sub) c.append(el("small", "plsub", sub));
+      grid.append(c);
     }
-    const last = L.last.length ? `Last ${L.last.length}` : "";
-    if (last && !PH) { head.append(el("span", "pbsh sep", last)); const v = el("span", "pbsv pblcell pblastc sep"); v.title = "His last 15 team games: the slot he started in, – on the roster without starting, × off the active roster"; v.append(strip()); row.append(v); }
-    d.style.setProperty("--n", cells.length + (last && !PH ? 1 : 0));
-    d.append(head, row);
-    if (last && PH) { const r2 = el("div", "pbsrow pblastrow"); r2.append(el("span", "pbsl", last)); const v = el("span", "pbsv pblcell pblastc"); v.append(strip()); r2.append(v); d.append(r2); }
-    return d;
+    if (L.last.length) {
+      const r = el("div", "pllast"); r.title = `His last ${L.last.length} team games: the slot he started in, – on the roster without starting, × off the active roster`;
+      r.append(el("span", "pllab", `Last ${L.last.length}`));
+      const s = el("span", "pblast"); for (const x of L.last) { const b = el("b", x > 0 ? "on" : x === 0 ? "off" : "out", x > 0 ? String(x) : x === 0 ? "–" : "×"); b.title = x > 0 ? `Started, batting ${ORD(x)}` : x === 0 ? "On the roster, didn't start" : "Off the active roster"; s.append(b); }
+      r.append(s); body.append(r);
+    }
+    return box;
   }
   // In-season arsenal alerts (Sean, 28 Oct 2026, item 10 of the review's picks: "new pitch 5%+ in last 30 days, usage swing 10+, velo +1 on
   // Movers' pitchers and the card"): hist/alerts.js from tools/build_alerts.py — every pitcher's last 30 game days against the season before
@@ -11287,7 +11292,6 @@
     const row1 = el("div", "pbrow1"); row1.append(bioStrip(p, b)); if (backAt || hasChips) row1.append(ctl);   /* Back and the chips at the bio line's right */
     txt.append(row1);   /* the bio rides in the sticky bar under his name (Sean, 9 Oct 2026: "make the bio stuff scroll with it too") */
     if (st && st.pct) plate.append(summaryBlock(p, st));
-    if (p.type === "H") { const lu = lineupLine(p); if (lu) plate.append(lu); }   // where he bats and how much he plays (28 Oct 2026)
     if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay, inWin); if (!state.cardTools && sum.childNodes.length) plate.append(sum); }
     top.append(plate);
     return top;
@@ -12123,7 +12127,7 @@
     noteRecent(p);
     if (o.page) {
       const hd = pageHead(p, st, g, o);
-      box.append(...(hd._bar ? [hd._bar] : []), hd, bioBox(p, bio(p.id)), seasonBlock(p, o)); requestAnimationFrame(() => { bleedBar(); stickSync(); });   // the filters bar over the band; the filters area came off the same day (pageFilters stays, unused)
+      box.append(...(hd._bar ? [hd._bar] : []), hd, bioBox(p, bio(p.id)), ...(p.type === "H" ? [lineupLine(p)].filter(Boolean) : []), seasonBlock(p, o)); requestAnimationFrame(() => { bleedBar(); stickSync(); });   // the filters bar over the band; the filters area came off the same day (pageFilters stays, unused)
       const pg = el("div", "ppage pageflow"), B = el("div", "pcol pcolB wide");
       renderPctPanel(p, st, g, ref, B, { entry: o.entry, cur: o.key, goTo: o.pick });
       pg.append(B);
