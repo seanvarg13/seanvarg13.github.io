@@ -17,6 +17,17 @@ window.DRAFT_TABLES = (function () {
   apply();
   return { get, set, own, clear };
 })();
+/* Table borders (Sean, 1 Nov 2026: "in appearance add an option to swap between the thick border table you just added vs the one with no thick
+   borders at all"): per device, draft2027.borders = "thick" (the default: the 3px frame, group breaks, header foot and totals rule) or "thin"
+   (every table line 1px) — class thinlines on <html>, which sets --xlw to 1px in styles.css. */
+window.DRAFT_BORDERS = (function () {
+  const KEY = "draft2027.borders";
+  const get = () => { try { return localStorage.getItem(KEY) || "thick"; } catch (e) { return "thick"; } };
+  const set = (v) => { try { localStorage.setItem(KEY, v); } catch (e) { /* this visit only */ } document.documentElement.classList.toggle("thinlines", v === "thin"); };
+  const clear = () => { try { localStorage.removeItem(KEY); } catch (e) { /* */ } document.documentElement.classList.remove("thinlines"); };
+  document.documentElement.classList.toggle("thinlines", get() === "thin");
+  return { get, set, clear };
+})();
 window.DRAFT_THEMES = (function () {
   const W = "rgba(255, 255, 255, ";
   // type on a dark fill / on a light fill
@@ -213,7 +224,10 @@ window.DRAFT_THEMES = (function () {
   function buildCustom(cfg) {
     const C = (cfg && cfg.colors) || {}, n = (cfg && cfg.n) || 2, flat = !!(cfg && cfg.flat);
     const M = hx(C.main) ? C.main : "#7bafd4", T0 = hx(C.text) ? C.text : "#0c2340";
-    const S0 = n >= 3 && hx(C.stripe) ? C.stripe : T0, A0 = n >= 4 && hx(C.accent) ? C.accent : M;
+    // every colour is the user's own since 1 Nov 2026 ("don't even give the option for selecting 2 3 or 4 color things just give the user the ability to
+    // select the color for every necessary piece"): a saved n only fills a role an older save never had
+    const S0 = hx(C.stripe) && !(n < 3 && !C.lines) ? C.stripe : T0, A0 = hx(C.accent) && !(n < 4 && !C.lines) ? C.accent : M;
+    const LN = hx(C.lines) ? C.lines : "#111111", PG = hx(C.page) ? C.page : "#ffffff";
     const T = toward(T0, "#000000", "#ffffff", 7);                              // the type: dark enough to read as body text
     const onM = ratioOf(M, "#ffffff") >= 2 ? "#ffffff" : (ratioOf(M, T) >= 4.5 ? T : "#141414");   // type on the main colour
     const onDim = onM === "#ffffff" ? W + "0.85)" : rgba(onM, 0.72);
@@ -225,7 +239,8 @@ window.DRAFT_THEMES = (function () {
       "accent-2-text": link, pop: "#ffffff", rule: flat ? hair : hair, "stripe-line": stripe, "accent-wash": rgba(M, 0.12), ink: T, "ink-2": mix(T, "#ffffff", 0.22), hover: soft,
       page: "#ffffff", surface: "#ffffff", "surface-2": mix(M, "#ffffff", 0.94), hair, rail, stripe: "#ffffff", band: "#ffffff", plate: hair, muted: toward(mix(T, "#ffffff", 0.5), T, "#ffffff", 4),
       btn: M, "btn-ink": onM, "btn-line": flat ? "transparent" : rail, "tab-fill": M,
-      ground: "#ffffff", "line-soft": hair, frame: flat ? hair : rail, secrule: hair, "accent-ink": onM, "band-ink": onM, svtext: T, svrule: hair, pctrack: mix(M, "#ffffff", 0.88) };
+      ground: PG, "line-soft": hair, frame: flat ? hair : rail, secrule: hair, "accent-ink": onM, "band-ink": onM, svtext: T, svrule: hair, pctrack: mix(M, "#ffffff", 0.88),
+      outline: LN, xl: LN };
     if (flat) light["flat-ink"] = T;
     const page = mix(T, "#0b0c0f", 0.82), surf = mix(page, "#ffffff", 0.05), surf2 = mix(page, "#ffffff", 0.09), dh = mix(page, "#ffffff", 0.16);
     const lite = toward(A0, "#ffffff", page, 4.5);
@@ -298,9 +313,12 @@ window.DRAFT_THEMES = (function () {
     root.style.setProperty("--phsep", [tokens["stripe-line"], tokens.rule, "#c8102e", "#ffffff"].find((c) => ratio(c, band) >= 1.5) || "#c8102e");
     // black outlines on every scheme with outlines (Sean, 1 Nov 2026: "I want the black outline to be a thing for all the non jets themed themes"):
     // in light mode the frame, rail, button-line and soft-line tokens are black whatever the scheme says; dark mode and the flat (Jets) look keep theirs
-    const black = !sc.flat && !isDark();
+    // (the customizer's Lines colour in place of black, and as the tables' lines, --xl, since 1 Nov 2026)
+    const black = !sc.flat && !isDark(), ol = sc.light.outline || "#111111";
+    root.style.setProperty("--outline", ol);
+    if (sc.light.xl && !isDark()) root.style.setProperty("--xl", sc.light.xl); else root.style.removeProperty("--xl");
     for (const k of ["frame", "rail", "btn-line", "line-soft"]) {
-      if (black) root.style.setProperty("--" + k, "#111111");
+      if (black) root.style.setProperty("--" + k, ol);
       else if (k in tokens) root.style.setProperty("--" + k, tokens[k]); else root.style.removeProperty("--" + k);
     }
     root.dataset.scheme = cur.scheme;
@@ -333,7 +351,7 @@ window.DRAFT_THEMES = (function () {
   // widens the viewport so the full layout shows zoomed out, like Safari's "Request Desktop Website".
   const viewPref = () => (["mobile", "desktop"].includes(get(LS.view)) ? get(LS.view) : (["mobile", "desktop"].includes(DEFAULTS.view) ? DEFAULTS.view : "auto"));
   const hasOwn = () => [LS.scheme, LS.font, LS.theme, LS.view].some((k) => get(k) != null) || !!window.DRAFT_TABLES.own();
-  const useDefaults = () => { for (const k of [LS.scheme, LS.font, LS.theme, LS.view]) { try { localStorage.removeItem(k); } catch { /* */ } } delete root.dataset.theme; apply(); applyView(); window.DRAFT_TABLES.clear(); };
+  const useDefaults = () => { for (const k of [LS.scheme, LS.font, LS.theme, LS.view]) { try { localStorage.removeItem(k); } catch { /* */ } } delete root.dataset.theme; apply(); applyView(); window.DRAFT_TABLES.clear(); if (window.DRAFT_BORDERS) window.DRAFT_BORDERS.clear(); };
   const smallScreen = () => matchMedia("(max-width: 700px)").matches || (navigator.maxTouchPoints > 1 && Math.min(screen.width, screen.height) <= 700);
   function applyView() {
     const pref = viewPref(), small = smallScreen();
