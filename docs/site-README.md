@@ -1366,6 +1366,13 @@ was PA per start). `hist/lineups.js` carries `gp`, games played, from the box sc
 
 The playing-time block's Bats cell lists his three most frequent lineup spots, each with its share of his starts, one per line.
 
+## The playing-time block for past seasons (1 Nov 2026)
+
+A hitter's player page shows the playing-time block (Bats, Starts, PA/G, vs LHP, vs RHP and Last 15) for every regular MLB season from 2015
+on, not just this one. Pick a past year in the percentiles title and the block shows that season's lineup. Last 15 is that year's last 15
+games. Each finished season has its own small file, `hist/lineups-<year>.js`, built once from that season's box scores
+(`tools/build_lineups.py 2015 … 2025`). The Leaderboard's Playing time columns are still this season only.
+
 ## A top bar on the phone (30 Oct 2026)
 
 Every page on a phone opens under a blue bar with a red stripe under it: a magnifier at the left opens the player search, the site's icon and

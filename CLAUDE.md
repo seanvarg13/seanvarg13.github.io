@@ -5720,3 +5720,9 @@ line can bring them back.
   Cockcroft's way-too-early 2027 top 300 for ESPN points leagues (30 Oct 2026), at weight 2, listed first. Parsed from the article and matched
   by name and type to `data.js` (all 300; Ohtani on his hitter key; scratch `espn300/`). The setup note says it counts double. The Mock
   draft's top ten: Ohtani, Crow-Armstrong, Skubal, Caminero, Schlittler, Witt, Judge, Soto, Misiorowski, Yordan.
+* **The playing-time block for past seasons (Sean, 1 Nov 2026: "I'd like to see the batting lineup stuff on the header for prior years as well")**:
+  `tools/build_lineups.py <years…>` builds a finished season into **`hist/lineups-<year>.js`** (`window.DRAFT_LINEUPS_Y["<year>"]`, the same
+  shape as `hist/lineups.js`; the through date the season's last game; run once by hand for 2015-2025, its box scores cached in
+  `.cache/lineups/<year>/`). In `app.js`, `luFile` / `luData` / `luReady` / `luEnsure` / `luOf` take an optional season (this season's file
+  when it's left out), and `lineupLine` draws the block on any regular MLB season the page shows (not a postseason, spring or span), reading
+  that year's file. `ensureScript` treats `lineups-<year>.js` as value-free. The Leaderboard's lineup columns stay this season's.
