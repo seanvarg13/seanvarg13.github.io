@@ -5726,3 +5726,13 @@ line can bring them back.
   `.cache/lineups/<year>/`). In `app.js`, `luFile` / `luData` / `luReady` / `luEnsure` / `luOf` take an optional season (this season's file
   when it's left out), and `lineupLine` draws the block on any regular MLB season the page shows (not a postseason, spring or span), reading
   that year's file. `ensureScript` treats `lineups-<year>.js` as value-free. The Leaderboard's lineup columns stay this season's.
+
+* **Steamer 2027 in the Rankings and the Mock draft (Sean, 1 Nov 2026: "Could you also now incorporate steamer 2027 projections into the rankings
+  too")**: FanGraphs published Steamer and ZiPS 2027 by 1 Nov. `tools/build_offseason.py proj` (Steamer alone by default now; `proj steamer zips`
+  averages both) rebuilt `hist/proj-2027.js` from Steamer alone — every category Steamer projects with its
+  playing time, Marcel for the rest (fielding, ESPN's bonus categories) and for players Steamer skips; 662 hitters, 868 pitchers, `systems:
+  ["steamer"]`. The Mock draft's Proj column reads it as before. **Rankings / Draft mode** open in his projected 2027 fantasy points under the
+  current scoring preset (`projOn` / `projSys` / `projPts` beside `boardProj` in `app.js`: his line through `fDerive` + `fPts`, cached per preset
+  and `fantGen`); the board asks for the file itself; a player Steamer and Marcel don't project sits below the projected ones in the old order
+  (xwOBA / regressed nERA); the title and Sort by say "by Steamer 2027 points". A stat picked, or his own order, still wins. Hitters' top: Soto,
+  Caminero, Ohtani, Yordan, McGonigle, Wood, Witt. The twice-monthly off-season check's `proj` keeps it Steamer's.

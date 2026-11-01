@@ -82,6 +82,8 @@ from the opener) so the mobile nav's own sideways scroll can't clip it.
 
 Views on one data set:
 
+- **Rankings ordered by Steamer** (1 Nov 2026): Rankings and Draft mode open in each player's Steamer 2027 projected fantasy points
+  under the scoring preset in use (`hist/proj-2027.js`, `tools/build_offseason.py proj`); anyone Steamer doesn't project sits under them.
 - **Rankings** — `index.html#rankings`: a tier board, not a stat table (16 Oct 2026): one column per
   tier across the page, each row just the rank, the name and his position eligibility, Not tiered under
   the columns (the first 48, then Show all). Edit rankings: drag a name into a tier or between tiers, tick
