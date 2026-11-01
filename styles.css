@@ -5862,3 +5862,7 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-flat] .hub.home .hprepsec .hpreplink { border-color: transparent; }   /* the Jets look: the shadow, no edge */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hprepsec .hprep { grid-template-columns: 1fr 1fr; gap: 10px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hprepsec .hpreplink { padding: 10px 11px; }
+
+/* The top bar's logo in the scheme's colour (Sean, 1 Nov 2026: "make it so the logo up top the light blue changes based on the color theme"):
+   icons/logo-fg.png is the icon with its Carolina-blue ground keyed out, drawn on the scheme's band colour. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phtop .phmark img { background: var(--band2, var(--accent-2)); }

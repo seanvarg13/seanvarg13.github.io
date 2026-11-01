@@ -5746,3 +5746,7 @@ line can bring them back.
   The tables' inner gridlines, the header rules and dark mode are unchanged. **Home's off-season card** is a section in the leaders' dress
   (`.hprepsec`): "2027 draft prep" over the red rule with a grey "off-season", then Rankings and Draft mode as square boxes with the tables' frame and
   shadow (two across on a phone; the Jets look drops the edge and keeps the shadow). It sits above Last game day, full width.
+* **The top bar's logo in the scheme's colour (Sean, 1 Nov 2026: "Make it so the logo up top the light blue changes based on the color theme")**:
+  the phone top bar's icon is **`icons/logo-fg.png`** (128px), `icon-512.png` with its Carolina-blue ground keyed out in a headless canvas (alpha by
+  distance from the blue, the colour un-mixed from it, so the shadows stay dark and soft), drawn on the scheme's band colour (`--band2`) inside its
+  white edge: Carolina blue on Titans, orange on Bengals, maroon on Cleveland, mint on Jets · Mint. The home-screen icons are unchanged.
