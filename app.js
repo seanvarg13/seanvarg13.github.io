@@ -6153,13 +6153,14 @@
     };
     // the off-season (Sean, 1 Oct 2026): from November to mid-March home leads with next year's draft prep
     if (offSeason()) {
-      const dc = card(`${m.season + 1} draft prep`, null, null);
-      dc.classList.add("hprepcard");
+      // in the leaders' dress (Sean, 1 Nov 2026: "make the draft prep thing have hard edges and the shadows and give it the same like header thingy
+      // like 2026 leaders below it has"): a red-ruled section header, the two links square boxes with the tables' shadow
+      const ds = el("section", "hsec hprepsec"), dh = el("div", "hsech"); dh.append(el("h2", null, `${m.season + 1} draft prep`), el("span", null, "off-season"));
       const row = el("div", "hprep");
       for (const [h, l, sub] of [["#rankings", "Rankings", "your order for next year"], ["#draft", "Draft mode", "tick players off as they go"]]) {
         const a = el("a", "hpreplink"); a.href = h; a.append(el("b", null, l), el("span", null, sub)); row.append(a);
       }
-      dc.append(row);
+      ds.append(dh, row); box.insertBefore(ds, grid);
     }
     // B-Ref tables (Sean, 9 Oct 2026, from the Home boards on the B-Ref Style Tables canvas: "implement all of those home page ones"): the last game
     // day leads as two boxed tables (hitters, starts) under a red-ruled title, then leaders, Trending and Movers side by side (stacked on a phone),

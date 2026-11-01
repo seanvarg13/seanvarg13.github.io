@@ -254,6 +254,13 @@ window.DRAFT_THEMES = (function () {
     // the rule under the phone's top bar (30 Oct 2026: "a line break or bar or separator between the site header and yordans header"): the red
     // stripe where the scheme has one that shows on its band, else its hairline colour (UNC's Carolina blue under navy), else red or white
     root.style.setProperty("--phsep", [tokens["stripe-line"], tokens.rule, "#c8102e", "#ffffff"].find((c) => ratio(c, band) >= 1.5) || "#c8102e");
+    // black outlines on every scheme with outlines (Sean, 1 Nov 2026: "I want the black outline to be a thing for all the non jets themed themes"):
+    // in light mode the frame, rail, button-line and soft-line tokens are black whatever the scheme says; dark mode and the flat (Jets) look keep theirs
+    const black = !sc.flat && !isDark();
+    for (const k of ["frame", "rail", "btn-line", "line-soft"]) {
+      if (black) root.style.setProperty("--" + k, "#111111");
+      else if (k in tokens) root.style.setProperty("--" + k, tokens[k]); else root.style.removeProperty("--" + k);
+    }
     root.dataset.scheme = cur.scheme;
     root.toggleAttribute("data-flat", !!sc.flat);   // the Jets look: styles.css takes every outline off under it
     const f = F[cur.font];
