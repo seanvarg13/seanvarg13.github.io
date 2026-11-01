@@ -5710,3 +5710,13 @@ line can bring them back.
   bands and an orange stripe. **`jets-bengals`** (`flat: true`, like Jets · Mint): orange and white, no stripes and no outlines, the type and `--flat-ink`
   the Bengals' black; dark mode the same black night. Checked headless on both layouts, light and dark (the Leaderboard and Yordan's page): no script
   errors, the scheme and `data-flat` applied.
+* **Bengals outlines black; ESPN's points top 300 in the Mock draft (Sean, 1 Nov 2026: "for the bengals orange theme can you make it so all the
+  outlines are black I think they are like a grey right now", "I think espn recently did a top 300 players board can you incorporate that into
+  the mock draft order board")**: (1) the `bengals` scheme's light `rule`, `rail`, `btn-line`, `line-soft`, `frame` and `secrule` are `#111111`,
+  and a "Bengals outlines" block at the end of `styles.css` (light mode only, 40 roots + four `:not(#bN)` ids to outrank the id-anchored
+  pager rules) sets the frames drawn in a 45% ink mix and the beige edges black: the table scrollers, the Leaders bar, buttons, pills, tabs,
+  dropdowns, the Bio box, the page card, inputs. A table's inner gridlines and the row separators (`--hair`) stay light, and dark mode is
+  unchanged. Checked by a computed-border sweep of seven pages on both layouts. (2) `hist/adp-2027.js` gains the source **`espn300`**:
+  Cockcroft's way-too-early 2027 top 300 for ESPN points leagues (30 Oct 2026), at weight 2, listed first. Parsed from the article and matched
+  by name and type to `data.js` (all 300; Ohtani on his hitter key; scratch `espn300/`). The setup note says it counts double. The Mock
+  draft's top ten: Ohtani, Crow-Armstrong, Skubal, Caminero, Schlittler, Witt, Judge, Soto, Misiorowski, Yordan.

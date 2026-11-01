@@ -1379,6 +1379,15 @@ The middle of that bar now shows the date the data runs through ("Thru Sep 27") 
 Settings ▸ Appearance ▸ Colour scheme has two Cincinnati Bengals schemes. **Bengals** has orange bands and buttons, black type and a black stripe under
 the bands. **Jets · Bengals** is the Jets' flat look in Bengal orange and white with black type, with no stripes and no outlines.
 
+Since 1 Nov 2026 the **Bengals** scheme's outlines are black in light mode: every table frame, button, tab, pill, dropdown and box edge. A
+table's inner gridlines stay light grey, and dark mode keeps its outlines.
+
+## ESPN's points-league top 300 in the Mock draft (1 Nov 2026)
+
+The Mock draft's ADP (`hist/adp-2027.js`) now includes Tristan H. Cockcroft's way-too-early 2027 top 300 for ESPN points leagues (30 Oct
+2026). It counts double: it's the newest list and the only one built for points leagues. All 300 players were matched. The order is still
+the weighted median of every list; the setup screen's "Where the 2027 ADP comes from" names it first.
+
 ## Seasonal effects
 
 **Seasonal effects (Sean, 31 Oct 2026: "add like seasonal theme affects, like a Halloween option Xmas winter spring summer thanksgiving fall Easter
