@@ -10853,7 +10853,7 @@
     movesApplied = true;
     for (const p of DATA.players) { const mv = M.p[p.id]; if (!mv) continue; p.moved = mv; if (mv.tm && TEAM_NAMES[mv.tm] && mv.tm !== p.team) { p.team0 = p.team; p.team = mv.tm; } }
   }
-  const moveWords = (mv) => `${mv.kind[0].toUpperCase()}${mv.kind.slice(1)}${mv.tm ? " by " + (TEAM_NAMES[mv.tm] || mv.tm) : ""}${mv.from && TEAM_NAMES[mv.from] ? " from " + mv.from : ""} · ${fmtDate(mv.date)}`;
+  const moveWords = (mv) => `${mv.kind[0].toUpperCase()}${mv.kind.slice(1)}${mv.tm ? (/^trade/.test(mv.kind) ? " to " : " by ") + (TEAM_NAMES[mv.tm] || mv.tm) : ""}${mv.from && TEAM_NAMES[mv.from] ? " from " + mv.from : ""} · ${fmtDate(mv.date)}`;
   function ilBadge(p, cur = DS.key === CUR.key) { const x = cur && ilOf(p); if (!x) return null; const b = el("span", "ilb", "IL" + x.code.slice(1)); b.title = ilTip(x); return b; }
   const BIO = new Map();
   function bio(id) {

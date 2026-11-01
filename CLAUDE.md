@@ -5377,6 +5377,8 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `p.team0`) so the lists' Tm, his page, the Bullpens and the what-if's tags follow, and `bioStrip` adds the move to his page's bio line
   (`.pbmove`: "Signed by Diamondbacks from FA · Oct 12", the log's line in the tooltip); a free agent keeps the club he left with the note.
   `V()`, the pools and the day rows don't read the team, so nothing else moves; `hist/home.js` carries the build's team strings.
+  **1 Nov 2026**: the off-season check's `moves` rewrote the file — 163 players since 28 Sep (7 to a new club: two minors signings, three
+  waiver claims, two trades; 156 free agents / releases). A trade now reads "Traded to Tigers from BOS" (`moveWords`; "by" for signings and claims).
 
 * **The service worker (Sean, 28 Oct 2026, item 20 of the review's picks: "Instant opens. A service worker caching the app, data.js and the hist
   files — the home-screen app would open offline and instantly, and the build.json reload already handles staleness")**: **`sw.js`** at the
