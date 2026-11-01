@@ -1445,6 +1445,19 @@
     const v = w ? s / w : K().lgERA; nregCache.set(k, v); return v; };
   const boardProj = (p) => { if (p.type === "H") { const v = V(p).m[wobaHead() ? "woba" : HEAD.key]; return v == null ? null : v; }
     const n = V(p).m.nera, ip = sample(p) || 0; return n == null ? null : (ip * n + NREG.k * neraLeague()) / (ip + NREG.k); };
+  // Steamer 2027 (Sean, 1 Nov 2026: "incorporate steamer 2027 projections into the rankings too"): once hist/proj-2027.js carries a
+  // FanGraphs system (J.systems), Rankings / Draft mode open in his projected 2027 fantasy points under the current scoring preset —
+  // the same line the Mock draft's Proj column scores. A player Steamer doesn't project sits under the projected ones, in the old order
+  const projOn = () => { const J = window.DRAFT_PROJ27; return !!(J && J.systems && J.systems.length) && DS === CUR; };
+  const projSys = () => { const J = window.DRAFT_PROJ27; return J && J.systems ? J.systems.map((x) => (x === "zips" ? "ZiPS" : x[0].toUpperCase() + x.slice(1))).join(" + ") : ""; };
+  const projPtsCache = new Map();
+  const projPts = (p) => {
+    const J = window.DRAFT_PROJ27; if (!projOn()) return null;
+    const grp = p.type === "H" ? "H" : "P", w = fpreset().w[grp], k = fantGen + ":" + fpreset().id + ":" + p.type + p.id;
+    if (projPtsCache.has(k)) return projPtsCache.get(k);
+    const a = J[grp === "H" ? "hitters" : "pitchers"][p.id]; let v = null;
+    if (a) { const o = {}; (grp === "H" ? J.hk : J.pk).forEach((kk, i) => { o[kk] = a[i] || 0; }); fDerive(o, grp); v = fPts(w, o); }
+    projPtsCache.set(k, v); return v; };
   const addedPos = (p) => (DS.hist ? [] : state.extraPos[p.id] || []);
   const hasExtra = (p, g) => addedPos(p).includes(g);
   function addPos(p, pos) {
@@ -2329,7 +2342,8 @@
     if (state.teamF && !opts.all) { out = out.filter(teamOK); tail = tail.filter(teamOK); }
     if (hideDrafted) { out = out.filter((p) => !drafted.has(p.id)); tail = tail.filter((p) => !drafted.has(p.id)); }
     const key = state.sort, dir = state.dir === "asc" ? 1 : -1;
-    const proj = key === "score" && boardOn();   // Rankings / Draft mode: the board's own order (boardProj)
+    const proj = key === "score" && boardOn();   // Rankings / Draft mode: the board's own order (Steamer's points, else boardProj)
+    if (boardOn() && !window.DRAFT_PROJ27 && (!window.DRAFT_BUILD || window.DRAFT_BUILD["hist/proj-2027.js"])) ensureScript("hist/proj-2027.js", () => !!window.DRAFT_PROJ27);
     const stats = new Map(out.concat(tail).map((p) => [p.type + p.id, ref === g ? pool(g).stats.get(p.type + p.id) : rankIn(ref, p)]));   // pool() places every listed player
     const st = (p) => stats.get(p.type + p.id);
     const val = (p) => {
@@ -2337,7 +2351,7 @@
         const hk = key === "score" && p.type === "H" ? (wobaHead() ? "woba" : HEAD.key) : WS_VAL.has(key) ? key : null;
         if (hk) return wrcRow(p, hk, key === "score" ? st(p).score : V(p).m[key]);
         if (WS_DIF.has(key)) { const v0 = V(p).m[key]; return v0 == null ? null : wrcPts(v0, p.src ? p.src.key : undefined); } }
-      if (proj) { const v = boardProj(p); return v == null ? null : p.type === "P" ? -v : v; }
+      if (proj) { const pp = projPts(p); if (pp != null) return 1e6 + pp; const v = boardProj(p); return v == null ? null : p.type === "P" ? -v : v; }
       if (key === "score") { if (p.type === "P") { const n = V(p).m.nera; return n == null ? null : -n; } return st(p).score; }   // a pitcher's headline sorts by his nERA itself, lowest first on "desc" (6 Oct 2026) — the percentile tied the under-minimum players
       if (key === "rating") return st(p).score;
       if (key === "blend") return st(p).blend;
@@ -2603,7 +2617,7 @@
   function renderSortSelect() {
     const g = groupFor(state.pos);
     const sel = $("sort"); sel.innerHTML = "";
-    const opts = [["score", boardOn() ? (isPitcherGroup(g) ? "nERA, regressed by innings" : wsLab(wobaHead() ? "wOBA" : HEAD.label)) : isPitcherGroup(g) ? "nERA" : HEAD.label], ...(isPitcherGroup(g) ? [] : [["blend", "Skills blend pctl"]]),   /* the boards open in the projection's order (20 Oct 2026) */
+    const opts = [["score", boardOn() ? (projOn() ? projSys() + " 2027 points" : isPitcherGroup(g) ? "nERA, regressed by innings" : wsLab(wobaHead() ? "wOBA" : HEAD.label)) : isPitcherGroup(g) ? "nERA" : HEAD.label], ...(isPitcherGroup(g) ? [] : [["blend", "Skills blend pctl"]]),   /* the boards open in the projection's order (20 Oct 2026) */
                   ...(isPitcherGroup(g) ? ALL_P.filter((m) => !RETIRED_P.has(m.key)) : ALL_H.filter((m) => m.key !== HEAD.key && m.key !== HEAD_DUP)).map((m) => [m.key, m.label + " pctl"]),
                   ["sample", isPitcherGroup(g) ? "Innings pitched" : "Plate appearances"], ...(preCols().some((c) => c.key === "year") ? [["year", "Year"]] : []), ["age", "Age"], ["name", "Name"]];
     for (const [v, l] of opts) { const o = el("option", null, l); o.value = v; sel.append(o); }
@@ -2986,7 +3000,7 @@
       if (!BR && !boardOn()) { if (tt) tt.remove(); }
       else { if (!tt) { tt = el("div", "lbtitle"); tt.id = "lbtitle"; } if (bs && tt.nextSibling !== bs) bs.before(tt);
         const P0 = isPitcherGroup(g), sk = state.sort, sm = ms.find((m) => m.key === sk);
-        const by = sk === "score" ? (boardOn() ? (P0 ? "nERA, regressed by innings" : wsLab(wobaHead() ? "wOBA" : HEAD.label)) : P0 ? "nERA" : wsLab(wobaHead() ? "wOBA" : HEAD.label)) : sm ? colLab(sm) : sk === "name" ? "name" : sk === "age" ? "age" : sk === "year" ? "season" : "";
+        const by = sk === "score" ? (boardOn() ? (projOn() ? projSys() + " 2027 points" : P0 ? "nERA, regressed by innings" : wsLab(wobaHead() ? "wOBA" : HEAD.label)) : P0 ? "nERA" : wsLab(wobaHead() ? "wOBA" : HEAD.label)) : sm ? colLab(sm) : sk === "name" ? "name" : sk === "age" ? "age" : sk === "year" ? "season" : "";
         const own = customOrder() && !state.rankSort;   // Rankings / Draft mode (16 Oct 2026)
         const pn = !P0 && XWN, xwBy = by === wsLab("xwOBA");   /* the switch is on (18 Oct 2026): "by park-neutral xwOBA", or the sort and then the note */
         const od = BR && oneDay() ? (mobileView() ? fmtDate : gameDayName)(seasonDays()[winIdx().lo]) + " · " : "";   /* one game day (23 Oct 2026): "Sun, Sep 27 · by xwOBA" ("Sep 27" on a phone) */

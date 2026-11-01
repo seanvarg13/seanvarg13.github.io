@@ -95,9 +95,9 @@ def fg_rows(system, stats):
     return {str(r["xMLBAMID"]): r for r in rows if r.get("xMLBAMID")}
 
 
-def proj(dry=False):
+def proj(dry=False, want=("steamer",)):              # Steamer alone (Sean, 1 Nov 2026); `proj steamer zips` averages both
     out = {}
-    for s in ("steamer", "zips"):
+    for s in want:
         y, err = fg_season(s)
         print(f"FanGraphs {s}: {err or (f'{y} projections' if y else 'no season in the page title')}")
         if y == YEAR: out[s] = {"H": fg_rows(s, "bat"), "P": fg_rows(s, "pit")}
@@ -266,6 +266,8 @@ if __name__ == "__main__":
     what = sys.argv[1] if len(sys.argv) > 1 else "check"
     if what == "check":
         proj(dry=True); nfbc(dry=True); espn(dry=True); moves(dry=True)
+    elif what == "proj" and len(sys.argv) > 2:          # proj steamer — only the systems named (Sean, 1 Nov 2026: Steamer alone)
+        proj(want=tuple(sys.argv[2:]))
     elif what in ("proj", "nfbc", "espn", "moves"):
         globals()[what]()
     else:
