@@ -1522,3 +1522,7 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   `--xlw` is 3px again (the 1px entry above is history), every table's frame is that thick line in every scheme, flat ones included, and the
   Regular Season / Playoffs strip that caps the season table has the same 3px edge on its top and sides (it had kept a 1px one). Block at the end
   of `styles.css`.
+
+* **A thick line over the column names (Sean, 1 Nov 2026, home's "Hitters · 300+ PA" table: "make it so the top of the player tm pa wOBA etc row is a
+  thick border")**: wherever a table has a row over its column names (the title band or the over-header — home, the Pitching+ board, Bullpens, the
+  card tabs' tables, the Leaderboard's Result / Process band), that row's foot is the thick `--xlw` line. Block at the end of `styles.css`.
