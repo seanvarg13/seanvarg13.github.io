@@ -14,6 +14,9 @@ games (0 = on the roster but didn't start, -1 = not on the roster that day).
 
 Run by cloud_daily.py with each MLB build (non-fatal); each game's box score is kept in .cache/lineups/<season>/<gamePk>.json, so a daily run
 fetches only the new games (~2,400 the first time, ~90 s with 24 threads). Standard library only.
+
+Past seasons (1 Nov 2026): `build_lineups.py 2015 … 2025` writes hist/lineups-<year>.js, which sets window.DRAFT_LINEUPS_Y["<year>"] to the same
+shape; the player page reads the file for the season it shows. Run by hand once (a finished season's box scores don't change).
 """
 import json
 import os
@@ -124,7 +127,7 @@ def hands(pids, folder):
     return out
 
 
-def build(season, through):
+def build(season, through, past=False):
     folder = os.path.join(CACHE, str(season))
     games = schedule(season)
     with ThreadPoolExecutor(max_workers=24) as ex:
@@ -167,19 +170,32 @@ def build(season, through):
         last = [r["days"].get(pk, -1) for _, pk in order.get(r["tm"], [])[-LAST:]]
         out[pid] = {"ar": r["ar"], "gs": r["gs"], "pa": r["pa"], "sl": r["sl"], "vl": r["vl"], "vr": r["vr"], "last": last, "tm": int(r["tm"]), "pas": r["pas"], "gp": r["gp"]}
     data = {"season": season, "through": through, "g": TG, "p": out}
-    path = os.path.join(ROOT, "hist", "lineups.js")
-    body = "window.DRAFT_LINEUPS = " + json.dumps(data, separators=(",", ":")) + ";\n"
+    if past:   # a finished season (1 Nov 2026: "the batting lineup stuff on the header for prior years as well"): its own file, keyed by year
+        path = os.path.join(ROOT, "hist", f"lineups-{season}.js")
+        body = "(window.DRAFT_LINEUPS_Y = window.DRAFT_LINEUPS_Y || {})[\"%d\"] = " % season + json.dumps(data, separators=(",", ":")) + ";\n"
+    else:
+        path = os.path.join(ROOT, "hist", "lineups.js")
+        body = "window.DRAFT_LINEUPS = " + json.dumps(data, separators=(",", ":")) + ";\n"
     old = open(path, encoding="utf-8").read() if os.path.exists(path) else None
     if old != body:
         with open(path, "w", encoding="utf-8") as f:
             f.write(body)
     starters = sum(1 for r in out.values() if r["gs"] >= 100)
-    print(f"OK {len(out)} hitters ({starters} with 100+ starts), {len(games)} games, {missing} box scores missing -> hist/lineups.js ({len(body) / 1e3:.0f} KB)", flush=True)
+    print(f"OK {len(out)} hitters ({starters} with 100+ starts), {len(games)} games, {missing} box scores missing -> {os.path.relpath(path, ROOT)} ({len(body) / 1e3:.0f} KB)", flush=True)
 
 
 def main():
     season, through = season_of()
-    build(season, through)
+    years = [int(a) for a in sys.argv[1:] if a.isdigit()]
+    if not years:
+        build(season, through)
+        return
+    for y in years:   # past seasons, by hand: build_lineups.py 2015 2016 …  (a finished season never changes, so once is enough)
+        if y >= season:
+            build(season, through)
+            continue
+        games = schedule(y)
+        build(y, games[-1][0] if games else f"{y}-10-01", past=True)
 
 
 if __name__ == "__main__":

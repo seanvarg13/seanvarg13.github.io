@@ -1013,7 +1013,7 @@
     // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
     // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
     // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
-    const arrived = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines|lineups|moves|c\/\d+|m\/\d+|lg\/\d+)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
+    const arrived = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines|lineups(?:-\d+)?|moves|c\/\d+|m\/\d+|lg\/\d+)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
     // a failed download (a phone on a weak signal, a publish mid-deploy) is tried twice more before it's given up on — career.js once failed
     // for the whole visit and the season table said it hadn't been built (Sean's phone, 9 Oct 2026)
     const fail = (sc) => { loading.delete(src); if (sc) sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
@@ -10753,11 +10753,15 @@
   // the season: per hitter the games he was on the active roster (a start, a substitute appearance or the bench), his starts by slot, his plate
   // appearances, his starts and roster games against left- and right-handed starting pitchers, and his slot in each of his team's last 15 games.
   // The file is this season's (the daily build rewrites it), loaded on a hitter's page and when a lineup column shows
-  const luData = () => window.DRAFT_LINEUPS || null;
-  const luReady = () => !!luData();
-  const luEnsure = () => { if (!luReady() && (!window.DRAFT_BUILD || window.DRAFT_BUILD["hist/lineups.js"])) ensureScript("hist/lineups.js", luReady); };
-  function luOf(p) {   // his numbers, or null: mean slot when he starts, starts as a share of roster games, PA per game played, the two platoon sides
-    const D = luData(), r = D && D.p && D.p[p.id]; if (!r || !r.ar || +D.season !== +CUR.season) return null;
+  // Past seasons too (Sean, 1 Nov 2026: "I'd like to see the batting lineup stuff on the header for prior years as well"): a finished season is its
+  // own file, hist/lineups-<year>.js (build_lineups.py <years>, by hand), setting window.DRAFT_LINEUPS_Y["<year>"] in the same shape. The y argument
+  // is the season wanted (this season's file when it's left out); the Leaderboard's lineup columns stay this season's
+  const luFile = (y) => (y == null || +y === +CUR.season ? "hist/lineups.js" : `hist/lineups-${y}.js`);
+  const luData = (y) => (y == null || +y === +CUR.season ? window.DRAFT_LINEUPS || null : (window.DRAFT_LINEUPS_Y || {})[y] || null);
+  const luReady = (y) => !!luData(y);
+  const luEnsure = (y) => { const f = luFile(y); if (!luReady(y) && (!window.DRAFT_BUILD || window.DRAFT_BUILD[f])) ensureScript(f, () => luReady(y)); };
+  function luOf(p, y) {   // his numbers, or null: mean slot when he starts, starts as a share of roster games, PA per game played, the two platoon sides
+    const want = y == null ? CUR.season : y, D = luData(y), r = D && D.p && D.p[p.id]; if (!r || !r.ar || +D.season !== +want) return null;
     const sl = r.sl || [], n = sl.reduce((a, x) => a + x, 0), slot = n ? sl.reduce((a, x, i) => a + x * (i + 1), 0) / n : null;
     const side = (a) => (a && a[1] >= 5 ? 100 * a[0] / a[1] : null);
     const lsp = side(r.vl), rsp = side(r.vr), pair = lsp != null && rsp != null && r.vl[1] >= 8 && r.vr[1] >= 8;
@@ -10768,8 +10772,8 @@
   // the band's line under the Summary (this season's MLB page, full season whatever the filters): "Bats 2nd (68%) · 3rd (24%) · starts 155 of 160
   // roster games (97%) · 4.4 PA/G · vs LHP 96% · vs RHP 98% · last 15: 2 2 2 – 2 2 …" with a Platooned chip when one side sits out
   function lineupLine(p) {
-    if (DS.key !== CUR.key || DS.level !== "MLB") return null;
-    luEnsure(); const L = luOf(p); if (!L) return null;
+    if (DS.level !== "MLB" || DS.kind || DS.multi) return null;   /* any regular MLB season, this one or a past one (1 Nov 2026) */
+    const y = +DS.season; luEnsure(y); const L = luOf(p, y); if (!L) return null;
     // a second Summary under the first (Sean, 29 Oct 2026: the line "feels very jumbled and just thrown on there, can we make it so that it is
     // organized and easy to digest"): a labelled row in the band's dress — Bats · Starts · PA/G · vs LHP · vs RHP · Last 15 — each cell the
     // headline number over a small line of detail, the tooltips as before; a phone gives the last-15 strip a row of its own. The run of
