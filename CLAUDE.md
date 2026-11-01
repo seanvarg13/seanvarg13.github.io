@@ -5844,3 +5844,7 @@ line can bring them back.
   table header", "make the top border on the page selector row be thick too")**: each `#colhead .h` had kept a 1px light-grey bottom edge that drew a
   pale line over `#colhead`'s thick foot — gone; the page-number bar inside the table (`#pagerbot.phbot`, Fantasy's `.fphbot`) has the thick `--xlw`
   line on top. Block at the end of `styles.css`.
+
+* **The sorted column keeps its row lines (Sean, 1 Nov 2026: "the row that is colored red make it so each cell still has the regular borders even with
+  the heat map")**: the Leaderboard's sorted cells (`.hot` / `.sorted`) filled over their row's 1px bottom line, so the red column read as one block;
+  each draws the line itself now (an inset `--xl` shadow). Block at the end of `styles.css`.

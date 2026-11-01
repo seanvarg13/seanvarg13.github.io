@@ -6005,3 +6005,8 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
    --xlw line on top. */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5):not(#z6):not(#z7) body.brlb #colhead .h { border-bottom: 0 !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5):not(#z6):not(#z7) :is(#pagerbot.phbot, .fphbot) { border-top: var(--xlw) solid var(--xl) !important; }
+
+/* The sorted column keeps its row lines (Sean, 1 Nov 2026: "the row that is colored red make it so each cell still has the regular borders even
+   with the heat map"): the Leaderboard's sorted cells (.hot / .sorted) fill over their row's bottom line; each draws that 1px --xl line itself
+   as an inset shadow, so the red column reads cell by cell like the rest. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5):not(#z6):not(#z7) body.brlb #rows .row-main > :is(.hot, .sorted) { box-shadow: inset 0 -1px 0 var(--xl) !important; }
