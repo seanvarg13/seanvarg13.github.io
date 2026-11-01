@@ -1013,7 +1013,7 @@
     // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
     // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
     // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
-    const arrived = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines|lineups(?:-\d+)?|moves|c\/\d+|m\/\d+|lg\/\d+)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
+    const arrived = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines|lineups(?:-\d+)?|moves|teamcolors|c\/\d+|m\/\d+|lg\/\d+)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
     // a failed download (a phone on a weak signal, a publish mid-deploy) is tried twice more before it's given up on — career.js once failed
     // for the whole visit and the season table said it hadn't been built (Sean's phone, 9 Oct 2026)
     const fail = (sc) => { loading.delete(src); if (sc) sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
@@ -7421,6 +7421,97 @@
   // no background pattern any more (Sean, 30 Sep 2026: "get rid of the background swirls"): the pages sit on a plain pale
   // ground of the scheme's colour (styles.css, :root.nopattern)
   document.documentElement.classList.add("nopattern");
+  // The colour customizer (Sean, 1 Nov 2026: "instead of like pre set color schemes ... a customizer ... a two color scheme or like a three color one,
+  // and then you can choose your own colors or choose professional sports teams colors ... look and filter by year in case teams have changed colors
+  // ... simply use a specific teams scheme and use all colors, 3 colors, 2 of their colors"): up to four colours, each with a job (CZ_ROLES), picked
+  // freely, tapped from a team's palette (hist/teamcolors.js, every MLB / NFL / NBA / NHL club and its older looks) or taken whole from a team.
+  // DRAFT_THEMES.setCustom builds the scheme and makes it this device's at once.
+  const CZ_ROLES = [["main", "Main", "bands, buttons, tabs"], ["text", "Text", "type and lines"], ["stripe", "Stripe", "the rule under the bands"], ["accent", "Highlight", "links and accent type"]];
+  const cz = { act: "main", lg: "ALL", yr: "today", q: "" };
+  const czLum = (h) => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ""); if (!m) return 1; const v = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4))); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+  // a team's look as a scheme: whites out (a white band reads as no band), the darkest colour the text, the club's first remaining colour the
+  // main, the rest the stripe and the highlight in the club's order; k = how many of the colours to use (2, 3, or 4 for all)
+  function czTeam(cols, k) {
+    let used = cols.map((c) => c[1]).filter((h, i, a) => czLum(h) < 0.8 && a.indexOf(h) === i).slice(0, k);
+    if (!used.length) used = [cols[0][1]];
+    const text = used.reduce((a, b) => (czLum(b) < czLum(a) ? b : a));
+    const rest = used.filter((h) => h !== text), main = rest.length ? rest[0] : text, more = rest.slice(1);
+    const colors = { main, text, stripe: more[0] || text, accent: more[1] || main };
+    return { colors, n: Math.max(2, Math.min(4, used.length)) };
+  }
+  function customizer(row, segOf, T, cur) {
+    if (!T.setCustom) return;
+    const L = T.schemes[cur.scheme] ? T.schemes[cur.scheme].light : {};
+    const cfg = T.customCfg() || { n: 3, flat: false, colors: { main: L["accent-2"] || "#7bafd4", text: L.ink || "#0c2340", stripe: /^#/.test(L["stripe-line"] || "") ? L["stripe-line"] : (L.ink || "#0c2340"), accent: L["accent-2-text"] || L["accent-2"] || "#7bafd4" } };
+    const save = (c, name) => { T.setCustom(Object.assign({}, c, { name: name || c.name || "Custom" })); renderSettings(); };
+    const on = cur.scheme === "custom";
+    const wrap = el("div", "czbox");
+    if (!on) { const nb = el("p", "cznote", "You're on a ready-made scheme. Pick colours here, or Use this below, to switch to your own."); wrap.append(nb); }
+    const ctl = el("div", "czrow");
+    ctl.append(el("span", "czlab", "Colours"), segOf("How many colours", [[2, "2"], [3, "3"], [4, "4"]], cfg.n || 2, (v) => save(Object.assign({}, cfg, { n: v }))),
+      el("span", "czlab", "Look"), segOf("Look", [[false, "Outlines"], [true, "Flat"]], !!cfg.flat, (v) => save(Object.assign({}, cfg, { flat: v }))));
+    wrap.append(ctl);
+    const roles = el("div", "czroles");
+    for (const [k, lab, note] of CZ_ROLES.slice(0, cfg.n || 2)) {
+      const r = el("div", "czrole" + (cz.act === k ? " on" : "")), sw = el("button", "czsw"); sw.type = "button"; sw.style.background = cfg.colors[k];
+      sw.setAttribute("aria-label", lab + " colour"); sw.title = "Tap a team colour below to put it here";
+      sw.addEventListener("click", () => { cz.act = k; renderSettings(); });
+      const pick = el("input", "czpick"); pick.type = "color"; pick.value = cfg.colors[k]; pick.setAttribute("aria-label", "Choose the " + lab.toLowerCase() + " colour");
+      pick.addEventListener("change", () => save({ ...cfg, colors: { ...cfg.colors, [k]: pick.value } }));
+      const hex = el("input", "czhex"); hex.value = cfg.colors[k]; hex.maxLength = 7; hex.setAttribute("aria-label", lab + " hex");
+      hex.addEventListener("change", () => { const v = hex.value.trim().replace(/^([0-9a-f]{6})$/i, "#$1"); if (/^#[0-9a-f]{6}$/i.test(v)) save({ ...cfg, colors: { ...cfg.colors, [k]: v.toLowerCase() } }); else hex.value = cfg.colors[k]; });
+      const tx = el("div", "cztx"); tx.append(el("b", null, lab), el("span", null, note));
+      r.append(sw, tx, pick, hex); roles.append(r);
+    }
+    wrap.append(roles);
+    if (on && cfg.name && cfg.name !== "Custom") wrap.append(el("p", "cznote", "Now: " + cfg.name + (cfg.n ? ` · ${cfg.n} colours` : "")));
+    // the teams: league, year (today's colours, every look, or the colours a club wore in a given year) and a search
+    const tb = el("div", "czteams"), bar = el("div", "czrow"), list = el("div", "czlist");
+    const ysel = el("select", "czyear"); ysel.setAttribute("aria-label", "Year");
+    for (const [v, l] of [["today", "Today's colours"], ["all", "Every look"]]) { const o = el("option", null, l); o.value = v; ysel.append(o); }
+    for (let y = new Date().getFullYear(); y >= 1960; y--) { const o = el("option", null, String(y)); o.value = String(y); ysel.append(o); }
+    ysel.value = cz.yr; ysel.addEventListener("change", () => { cz.yr = ysel.value; draw(); });
+    const q = el("input", "czq"); q.type = "search"; q.placeholder = "Find a team"; q.value = cz.q; q.addEventListener("input", () => { cz.q = q.value; draw(); });
+    const lgs = segOf("League", [["ALL", "All"], ["MLB", "MLB"], ["NFL", "NFL"], ["NBA", "NBA"], ["NHL", "NHL"]], cz.lg, (v) => { cz.lg = v; renderSettings(); });
+    bar.append(lgs, ysel, q); tb.append(bar, list);
+    function draw() {
+      list.innerHTML = "";
+      const D = window.DRAFT_TEAMCOLORS;
+      if (!D) { list.append(el("p", "cznote", "Loading team colours…")); return; }
+      const y = +cz.yr, qq = cz.q.trim().toLowerCase();
+      const rows = D.filter((t) => (cz.lg === "ALL" || t[0] === cz.lg) && (!qq || t[1].toLowerCase().includes(qq))
+        && (cz.yr === "all" || (cz.yr === "today" ? t[3] === 0 : t[2] <= y && (t[3] === 0 || t[3] >= y))))
+        .sort((a, b) => a[1].localeCompare(b[1]) || b[2] - a[2]);
+      if (!rows.length) { list.append(el("p", "cznote", "No team matches.")); return; }
+      for (const [lg, team, fr, to, cols] of rows) {
+        const it = el("div", "czteam"), hd = el("div", "czth");
+        hd.append(el("b", null, team), el("span", null, `${lg} · ${fr}–${to || "today"}`));
+        const sws = el("div", "czsws");
+        for (const [nm, h] of cols) {
+          const b = el("button", "czc"); b.type = "button"; b.style.background = h; b.title = `${nm} ${h} — put it in ${CZ_ROLES.find((r) => r[0] === cz.act)[1]}`;
+          b.setAttribute("aria-label", `${team} ${nm}`);
+          b.addEventListener("click", () => {
+            const n = cfg.n || 2, keys = CZ_ROLES.slice(0, n).map((r) => r[0]), i = keys.indexOf(cz.act);
+            cz.act = keys[(i + 1) % n]; save({ ...cfg, colors: { ...cfg.colors, [keys[i < 0 ? 0 : i]]: h } }, "Custom");
+          });
+          sws.append(b);
+        }
+        const use = el("div", "czuse"); use.append(el("span", null, "Use"));
+        const nn = cols.filter((c) => czLum(c[1]) < 0.8).length;
+        for (const [k, l] of [[2, "2"], [3, "3"], [4, "All"]]) {
+          if (k === 3 && nn < 3) continue; if (k === 4 && nn < 3) continue;
+          const b = el("button", "czub", l); b.type = "button"; b.title = `${team}: ${k === 4 ? "all its colours" : k + " of its colours"}`;
+          b.addEventListener("click", () => { const t = czTeam(cols, k); save({ n: t.n, flat: !!cfg.flat, colors: t.colors }, `${team}${to ? ` (${fr}–${to})` : ""}`); });
+          use.append(b);
+        }
+        it.append(hd, sws, use); list.append(it);
+      }
+    }
+    if (!window.DRAFT_TEAMCOLORS) ensureScript("hist/teamcolors.js", () => !!window.DRAFT_TEAMCOLORS);
+    draw();
+    wrap.append(tb);
+    row("Your colours", "Two, three or four colours, each with a job. Tap a box to pick which colour a team swatch fills (the next one is picked after each tap), use the colour picker, type a hex, or take a team's look whole with Use 2 / 3 / All. Text that wouldn't read is darkened until it does.", wrap);
+  }
   function renderAppearance(box) {
     const T = window.DRAFT_THEMES; box.innerHTML = "";
     if (!T) { box.append(el("p", "xempty", "themes.js didn't load.")); return; }
@@ -7453,7 +7544,8 @@
       b.addEventListener("click", () => { T.set({ scheme: id }); renderSettings(); });
       sg.append(b);
     }
-    row("Colour scheme", "The site's colours. The percentile colours (blue cold, red hot) are the same in every scheme.", sg);
+    customizer(row, segOf, T, cur);
+    row("Ready-made schemes", "The site's own schemes. The percentile colours (blue cold, red hot) are the same in every scheme, yours included.", sg);
     row("Light or dark", null, segOf("Light or dark", [["system", "Match device"], ["light", "Light"], ["dark", "Dark"]], cur.theme, (v) => { T.set({ theme: v }); renderSettings(); }));
     {   // seasonal effects (31 Oct 2026): Auto by the date, Off, or a season picked
       const sel = el("select", "seasonsel"); sel.setAttribute("aria-label", "Seasonal effects");

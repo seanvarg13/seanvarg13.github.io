@@ -5750,3 +5750,23 @@ line can bring them back.
   the phone top bar's icon is **`icons/logo-fg.png`** (128px), `icon-512.png` with its Carolina-blue ground keyed out in a headless canvas (alpha by
   distance from the blue, the colour un-mixed from it, so the shadows stay dark and soft), drawn on the scheme's band colour (`--band2`) inside its
   white edge: Carolina blue on Titans, orange on Bengals, maroon on Cleveland, mint on Jets · Mint. The home-screen icons are unchanged.
+* **The colour customizer (Sean, 1 Nov 2026: "instead of like pre set color schemes we have here can we instead have like a customizer ... a two color
+  scheme or like a three color one, and then you can choose your own colors or choose professional sports teams colors ... look and filter by year in
+  case teams have changed colors ... simply use a specific teams scheme and use all colors, 3 colors, 2 of their colors")**: Settings ▸ Appearance opens
+  on **Your colours** (`customizer()` before `renderAppearance` in `app.js`; the old swatches follow as **Ready-made schemes**). Per device, as every
+  scheme is.
+  - **The scheme** (`buildCustom(cfg)` in `themes.js`): up to four colours, each with a job — **Main** (bands, buttons, tab fills), **Text** (type and
+    lines), **Stripe** (the rule under the bands), **Highlight** (links and accent type). With two colours the stripe is the text colour and the
+    highlight a shade of the main. Readability is enforced, not asked for: the text is darkened until it reads 7:1 on white, links 4.5:1, the type on
+    the main colour is white or the text colour by contrast. Dark mode is generated (a near-black page tinted by the text colour). **Outlines / Flat**
+    picks the outlined look (black edges, as every non-Jets scheme) or the Jets' flat one (`data-flat`). Saved as `draft2027.custom` = `{n, flat,
+    colors: {main, text, stripe, accent}, name}`; `themes.js` builds `S.custom` from it before the page paints; `DRAFT_THEMES.setCustom(cfg)` saves it
+    and switches the device to it.
+  - **The teams** (`hist/teamcolors.js`, `window.DRAFT_TEAMCOLORS`, ~18 KB, value-free, loaded when Appearance opens): every MLB, NFL, NBA and NHL
+    club's colours, main colour first, hand-compiled from the clubs' palettes, plus their older looks with the years they were worn (the Astros'
+    rainbow and brick, the brown Padres, the Expos, the creamsicle Bucs, the Oilers, the purple Raptors, the Whalers, Nordiques … 180 looks). A
+    League switch (All / MLB / NFL / NBA / NHL), a Year menu (today's colours, every look, or the colours worn in a given year 1960-now) and a search.
+  - **Using them**: tap a role's box to make it the target, then tap any team swatch to put that colour there (the target moves on to the next role);
+    or a role's colour picker / hex box; or **Use 2 / 3 / All** on a team to take its look whole (`czTeam`: whites dropped, the darkest colour the
+    text, the club's first remaining colour the main, the next the stripe and the highlight — "All" is up to four). Bengals → orange bands on
+    black type.
