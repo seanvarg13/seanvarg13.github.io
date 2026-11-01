@@ -7426,7 +7426,10 @@
   // ... simply use a specific teams scheme and use all colors, 3 colors, 2 of their colors"): up to four colours, each with a job (CZ_ROLES), picked
   // freely, tapped from a team's palette (hist/teamcolors.js, every MLB / NFL / NBA / NHL club and its older looks, and 83 college programmes since 1 Nov 2026) or taken whole from a team.
   // DRAFT_THEMES.setCustom builds the scheme and makes it this device's at once.
-  const CZ_ROLES = [["main", "Main", "bands, buttons, tabs"], ["text", "Text", "type and lines"], ["stripe", "Stripe", "the rule under the bands"], ["accent", "Highlight", "links and accent type"]];
+  // every piece its own colour, always (Sean, 1 Nov 2026: "don't even give the option for selecting 2 3 or 4 color things just give the user the ability
+  // to select the color for every necessary piece")
+  const CZ_ROLES = [["main", "Main", "bands, headers, buttons, tabs"], ["text", "Text", "the type"], ["stripe", "Stripe", "the rule under the bands"], ["accent", "Highlight", "links and accent type"],
+    ["lines", "Lines", "outlines and table lines"], ["page", "Background", "the page behind the cards"]];
   const cz = { act: "main", lg: "ALL", yr: "today", q: "", mode: "teams", cq: "" };
   // the colour search (Sean, 1 Nov 2026: "allow me to search cream white and it comes up with every teams color who has cream white"): every team
   // colour matched by its name and by the families its hex falls in (czFam: hue / saturation / lightness — a cream is also a white, a navy also a
@@ -7501,23 +7504,26 @@
     if (!used.length) used = [cols[0][1]];
     const text = used.reduce((a, b) => (czLum(b) < czLum(a) ? b : a));
     const rest = used.filter((h) => h !== text), main = rest.length ? rest[0] : text, more = rest.slice(1);
-    const colors = { main, text, stripe: more[0] || text, accent: more[1] || main };
-    return { colors, n: Math.max(2, Math.min(4, used.length)) };
+    const colors = { main, text, stripe: more[0] || text, accent: more[1] || main, lines: "#111111", page: "#ffffff" };
+    return { colors, n: 4 };
   }
   function customizer(row, segOf, T, cur) {
     if (!T.setCustom) return;
     const L = T.schemes[cur.scheme] ? T.schemes[cur.scheme].light : {};
-    const cfg = T.customCfg() || { n: 3, flat: false, colors: { main: L["accent-2"] || "#7bafd4", text: L.ink || "#0c2340", stripe: /^#/.test(L["stripe-line"] || "") ? L["stripe-line"] : (L.ink || "#0c2340"), accent: L["accent-2-text"] || L["accent-2"] || "#7bafd4" } };
+    const cfg0 = T.customCfg() || { n: 4, flat: false, colors: { main: L["accent-2"] || "#7bafd4", text: L.ink || "#0c2340", stripe: /^#/.test(L["stripe-line"] || "") ? L["stripe-line"] : (L.ink || "#0c2340"), accent: L["accent-2-text"] || L["accent-2"] || "#7bafd4" } };
+    // an older save of two or three colours: the roles it didn't set take what they showed (the stripe the text, the highlight the main)
+    const c0 = cfg0.colors || {}, o = !c0.lines;
+    const cfg = { ...cfg0, n: 4, colors: { main: c0.main, text: c0.text, stripe: o && (cfg0.n || 2) < 3 ? c0.text : c0.stripe || c0.text, accent: o && (cfg0.n || 2) < 4 ? c0.main : c0.accent || c0.main,
+      lines: c0.lines || "#111111", page: c0.page || "#ffffff" } };
     const save = (c, name) => { T.setCustom(Object.assign({}, c, { name: name || c.name || "Custom" })); renderSettings(); };
     const on = cur.scheme === "custom";
     const wrap = el("div", "czbox");
     if (!on) { const nb = el("p", "cznote", "You're on one of the site's built-in schemes. Pick a colour here or take a team's look to switch to your own; Follow the site default (at the foot) comes back to them."); wrap.append(nb); }
     const ctl = el("div", "czrow");
-    ctl.append(el("span", "czlab", "Colours"), segOf("How many colours", [[2, "2"], [3, "3"], [4, "4"]], cfg.n || 2, (v) => save(Object.assign({}, cfg, { n: v }))),
-      el("span", "czlab", "Look"), segOf("Look", [[false, "Outlines"], [true, "Flat"]], !!cfg.flat, (v) => save(Object.assign({}, cfg, { flat: v }))));
+    ctl.append(el("span", "czlab", "Look"), segOf("Look", [[false, "Outlines"], [true, "Flat"]], !!cfg.flat, (v) => save(Object.assign({}, cfg, { flat: v }))));
     wrap.append(ctl);
     const roles = el("div", "czroles");
-    for (const [k, lab, note] of CZ_ROLES.slice(0, cfg.n || 2)) {
+    for (const [k, lab, note] of CZ_ROLES) {
       const r = el("div", "czrole" + (cz.act === k ? " on" : "")), sw = el("button", "czsw"); sw.type = "button"; sw.style.background = cfg.colors[k];
       sw.setAttribute("aria-label", lab + " colour"); sw.title = "Tap a team colour below to put it here";
       sw.addEventListener("click", () => { cz.act = k; renderSettings(); });
@@ -7529,7 +7535,7 @@
       r.append(sw, tx, pick, hex); roles.append(r);
     }
     wrap.append(roles);
-    if (on && cfg.name && cfg.name !== "Custom") wrap.append(el("p", "cznote", "Now: " + cfg.name + (cfg.n ? ` · ${cfg.n} colours` : "")));
+    if (on && cfg.name && cfg.name !== "Custom") wrap.append(el("p", "cznote", "Now: " + cfg.name + ""));
     // the teams: league, year (today's colours, every look, or the colours a club wore in a given year) and a search
     const tb = el("div", "czteams"), bar = el("div", "czrow"), list = el("div", "czlist");
     const ysel = el("select", "czyear"); ysel.setAttribute("aria-label", "Year");
@@ -7543,7 +7549,7 @@
     const mode = segOf("Search by", [["teams", "Teams"], ["colours", "Colours"]], cz.mode, (v) => { cz.mode = v; renderSettings(); });
     const lgs = segOf("League", [["ALL", "All"], ["MLB", "MLB"], ["NFL", "NFL"], ["NBA", "NBA"], ["NHL", "NHL"], ["NCAA", "College"]], cz.lg, (v) => { cz.lg = v; renderSettings(); });
     bar.append(mode, lgs, ysel, q); tb.append(bar, list);
-    const fill = (h) => { const n = cfg.n || 2, keys = CZ_ROLES.slice(0, n).map((r) => r[0]), i = keys.indexOf(cz.act);
+    const fill = (h) => { const keys = CZ_ROLES.map((r) => r[0]), n = keys.length, i = keys.indexOf(cz.act);
       cz.act = keys[(i + 1) % n]; save({ ...cfg, colors: { ...cfg.colors, [keys[i < 0 ? 0 : i]]: h } }, "Custom"); };
     const actName = () => CZ_ROLES.find((r) => r[0] === cz.act)[1];
     function draw() {
@@ -7580,21 +7586,17 @@
           b.addEventListener("click", () => fill(h));
           sws.append(b);
         }
-        const use = el("div", "czuse"); use.append(el("span", null, "Use"));
-        const nn = cols.filter((c) => czLum(c[1]) < 0.8).length;
-        for (const [k, l] of [[2, "2"], [3, "3"], [4, "All"]]) {
-          if (k === 3 && nn < 3) continue; if (k === 4 && nn < 3) continue;
-          const b = el("button", "czub", l); b.type = "button"; b.title = `${team}: ${k === 4 ? "all its colours" : k + " of its colours"}`;
-          b.addEventListener("click", () => { const t = czTeam(cols, k); save({ n: t.n, flat: !!cfg.flat, colors: t.colors }, `${team}${to ? ` (${fr}–${to})` : ""}`); });
-          use.append(b);
-        }
+        const use = el("div", "czuse");
+        const b = el("button", "czub", "Use"); b.type = "button"; b.title = `${team}: take its colours (you can change any piece after)`;
+        b.addEventListener("click", () => { const t = czTeam(cols, 4); save({ n: 4, flat: !!cfg.flat, colors: { ...t.colors, lines: cfg.colors.lines, page: cfg.colors.page } }, `${team}${to ? ` (${fr}–${to})` : ""}`); });
+        use.append(b);
         it.append(hd, sws, use); list.append(it);
       }
     }
     if (!window.DRAFT_TEAMCOLORS) ensureScript("hist/teamcolors.js", () => !!window.DRAFT_TEAMCOLORS);
     draw();
     wrap.append(tb);
-    row("Your colours", "Two, three or four colours, each with a job. Tap a box to pick which colour a team swatch fills (the next one is picked after each tap), use the colour picker, type a hex, or take a team's look whole with Use 2 / 3 / All. Colours (beside Teams) searches every pro and college team's colours by name or family — cream white, navy, a hex. The percentile colours stay blue cold, red hot. Text that wouldn't read is darkened until it does.", wrap);
+    row("Your colours", "A colour for every piece: the bands and buttons, the type, the stripe, links, the outlines and table lines, and the page behind the cards. Tap a box to pick which piece a team swatch fills (the next one is picked after each tap), use the colour picker, type a hex, or take a team's look with Use. Colours (beside Teams) searches every pro and college team's colours by name or family — cream white, navy, a hex. The percentile colours stay blue cold, red hot. Text that wouldn't read is darkened until it does.", wrap);
   }
   function renderAppearance(box) {
     const T = window.DRAFT_THEMES; box.innerHTML = "";
@@ -7629,6 +7631,8 @@
     // wOBA or wRC+ (Sean, 16 Oct 2026): the display scale for every wOBA-scale number — the stored numbers, pools and percentiles are the same either way
     row("wOBA scale", "wOBA as it is, or the same numbers as wRC+ / xwRC+: 100 is the league's average that season, 120 is 20% better — each season against its own league, so seasons compare. Nothing is re-ranked; only what prints changes.",
       segOf("wOBA scale", [["woba", "wOBA"], ["wrc", "wRC+"]], WRC_PREF.get(), (v) => { WRC_PREF.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderSettings(); }));
+    if (window.DRAFT_BORDERS) row("Table borders", "Thick: a 3px frame round every table and 3px lines at the group breaks, under the column names and over the totals. Thin: every table line 1px.",
+      segOf("Table borders", [["thick", "Thick"], ["thin", "Thin"]], window.DRAFT_BORDERS.get(), (v) => { window.DRAFT_BORDERS.set(v); renderSettings(); }));
     if (window.DRAFT_TABLES) row("Tables", "Baseball-Reference: 12px type, compact 23px rows. Classic: the larger type with column names the size of the numbers, roomier rows.",
       segOf("Tables", [["bref", "Baseball-Reference"], ["classic", "Classic"]], window.DRAFT_TABLES.get(), (v) => {
         window.DRAFT_TABLES.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderSettings(); }));

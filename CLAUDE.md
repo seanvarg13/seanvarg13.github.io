@@ -5855,3 +5855,12 @@ line can bring them back.
   ring outside the box (`border-width: 0`, the ring then the soft shadow), which nothing inside the scroller can cover; the season table's Regular Season /
   Playoffs strip is a ring too (`z-index: 3`, `margin-bottom: calc(var(--xlw) - 8px)` so its ring is the thick line over the table). Block at the end
   of `styles.css`. Don't put the frame back on `border` for a scroller with sticky children.
+
+* **Every colour the user's own; a Table borders switch (Sean, 1 Nov 2026: "don't even give the option for selecting 2 3 or 4 color things just give the
+  user the ability to select the color for every necessary piece", "in appearance add an option to swap between the thick border table you just added vs
+  the one with no thick borders at all")**: the customizer's 2 / 3 / 4 count is gone and every role always shows — **Main** (bands, headers, buttons,
+  tabs), **Text**, **Stripe**, **Highlight**, and two new ones: **Lines** (the outlines and every table line: `buildCustom` sets `outline` / `xl`, `apply()`
+  writes `--outline` — the black-outline rules in `styles.css` read `var(--outline, #111111)` — and `--xl` in light mode) and **Background** (the page's
+  ground). An older two- or three-colour save fills the new roles with what they showed. A team's look is one **Use** button (its colours into Main /
+  Text / Stripe / Highlight; Lines and Background kept). **Appearance ▸ Table borders**: Thick (the default) / Thin, per device — `window.DRAFT_BORDERS`
+  in `themes.js` (`draft2027.borders`, class `thinlines` on `<html>`, which sets `--xlw` to 1px); Follow the site default clears it.
