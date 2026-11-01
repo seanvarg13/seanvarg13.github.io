@@ -5944,7 +5944,7 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
    table are the thicker border on excel"): a thin dark line round every cell — the column names and the totals rows too — and every group break
    (.ge), the frozen columns' edges (.f1 / .f3 / .sbl, the Leaderboard's rank / name / headline) and the rule over the totals the thick one. --xl is
    the line, near-black in light mode, the ink at 55% in dark mode. Replaces the light gridlines and the red / white 2px rules of 9-12 Oct */
-:root { --xl: #1c1c1c; --xlw: 3px; }
+:root { --xl: #1c1c1c; --xlw: 1px; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --xl: color-mix(in srgb, var(--ink) 55%, transparent); } }
 :root[data-theme="dark"] { --xl: color-mix(in srgb, var(--ink) 55%, transparent); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#x1):not(#x2):not(#x3):not(#x4):not(#x5):not(#x6) table.sbt :is(td, th) { border-top: 0 !important; border-left: 0 !important; border-right: 1px solid var(--xl) !important; border-bottom: 1px solid var(--xl) !important; }
@@ -5979,4 +5979,10 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
    page's Filters button (the sticky bar, the popup, the old card) has no edge; its soft lift stays. */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5):not(#z6):not(#z7) :is(.sbscroll, .brscroll, #bscroll, .board-scroll, .fscroll, .pbscroll, .stuffscroll, .rawscroll, .gframe) { border: var(--xlw) solid var(--xl) !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5):not(#z6):not(#z7) :is(.sbscroll, .brscroll, .fscroll, .pbscroll, .stuffscroll, .rawscroll, .gframe) > table.sbt > tbody:last-child > tr:last-child > td { border-bottom: 0 !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5):not(#z6):not(#z7) .segbtn.phfilt { border: 0 !important; }
+
+/* Outlines on the card's tabs; every table line one size (Sean, 1 Nov 2026: "make it so the bottom tabs get an outline when outline is selected bc
+   they currently don't", "let's get rid of all thick outside borders and even with the thicker line breaks I have before let's just make those all
+   be normal sized borders", the tables' outside border "even when flat is selected"; the Filters button keeps its outline — "scratch that"):
+   --xlw is 1px, so the group breaks, frozen edges, the header's foot and the totals' rule are the cells' own line, and every table's frame
+   is that line in every scheme, flat ones included; on an outlined scheme the card's tabs take the frame colour as their edge. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5):not(#z6):not(#z7):not([data-flat]) :is(#xboard, #modal) .btabs .btab { border-color: var(--frame, #111111) !important; }
