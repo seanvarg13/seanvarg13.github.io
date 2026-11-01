@@ -5829,3 +5829,9 @@ line can bring them back.
   line breaks I have before let's just make those all be normal sized borders")**: `--xlw` is 1px, so the group breaks, frozen edges, the header's
   foot, the totals' rule and every table's frame are the cells' own 1px line (the frame in every scheme, flat ones included); the Filters button's
   no-outline rule is gone; on an outlined scheme the card's tabs (`.btabs .btab`) take `--frame` as their edge. The 3px entries above are history.
+
+* **The thick frame back, and on the season table's top (Sean, 1 Nov 2026: "keep the thick outside borders and the thicker line breaks, just make
+  it so the top of the table is also a thick outside border cause it currently isnt", "make every table have that even when flat is selected")**:
+  `--xlw` is 3px again (the 1px entry above is history), every table's frame is that thick line in every scheme, flat ones included, and the
+  Regular Season / Playoffs strip that caps the season table has the same 3px edge on its top and sides (it had kept a 1px one). Block at the end
+  of `styles.css`.
