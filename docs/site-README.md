@@ -1481,3 +1481,15 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   between) — Bats (his top three slots), Starts, PA/G, vs LHP, vs RHP (the Platooned chip as before) — five across on a desktop, three to a row on a
   phone, and the Last 15 strip on a line of its own (`.pllast`). Ink on white, so it reads the same in every scheme. CSS: the block at the end of
   `styles.css`.
+* **Excel's borders on every table (Sean, 1 Nov 2026: "make it so these tables have like regular borders like on excel and then the line breaks on
+  the table are the thicker border on excel")**: every B-Ref-dressed table (`table.sbt`: his season table, the card tabs', the Pitching+ board,
+  home, Fantasy, Bullpens, Movers) and the Leaderboard / Recent grid draw a thin dark line round every cell, the column names and totals rows
+  included. These are `--xl`: `#1c1c1c` in light mode, the ink at 55% in dark mode.
+  - **Thick rules (3px, `--xlw`, the same colour)**:
+    - every group break (`.ge`)
+    - the frozen columns' edges (`.f3`, `.sbl`, the Leaderboard's headline `.score`)
+    - the foot of the column names
+    - the rule over the totals
+  - **What they replace**: the light gridlines and the red / white 2px rules of 9-12 Oct.
+  - **The totals' label** spills over its empty Season / Age cells with no line through it.
+  - **CSS**: one block at the end of `styles.css` (40 roots + six `:not(#xN)` ids, over every earlier pass); delete it to go back.
