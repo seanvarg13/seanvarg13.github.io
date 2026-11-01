@@ -145,13 +145,15 @@ window.DRAFT_THEMES = (function () {
     // the Cincinnati Bengals (Sean, 31 Oct 2026: "Make a Cincinnati bengals theme"): a white ground, Bengal orange bands and buttons with white
     // type on them (3.2:1, as Carolina's bands read), black type and the black stripe under the band. Dark mode is a black night with the same
     // orange bands. Outlines stay (not a flat scheme); the percentile colours are Savant's
+    // the outlines black, not grey (Sean, 1 Nov 2026: "for the bengals orange theme can you make it so all the outlines are black"): the frame,
+    // rail, button-line and rule tokens here, and the frames drawn in a mix of the ink in styles.css' "Bengals outlines" block
     bengals: {
-      name: "Bengals", blurb: "The Cincinnati Bengals — a white ground, Bengal orange bands and buttons with white type, black type and a black stripe under the band.",
+      name: "Bengals", blurb: "The Cincinnati Bengals — a white ground, Bengal orange bands and buttons with white type, black type, a black stripe under the band and black outlines.",
       light: { accent: "#fb4f14", "accent-2": "#fb4f14", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.85)", "on-fill-wash": W + "0.14)", "on-fill-wash-2": W + "0.24)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
-               "accent-2-text": "#c2380a", pop: "#ffffff", rule: "#ebe2dc", "stripe-line": "#111111", "accent-wash": "rgba(251, 79, 20, 0.1)", ink: "#111111", "ink-2": "#3d3a38", hover: "#fdf1ec",
-               page: "#ffffff", surface: "#ffffff", "surface-2": "#f7f3f1", hair: "#ebe2dc", rail: "#dccdc4", stripe: "#ffffff", band: "#ffffff", plate: "#ebe2dc", muted: "#6e6762",
-               btn: "#fb4f14", "btn-ink": "#ffffff", "btn-line": "#ebe2dc", "tab-fill": "#fb4f14",
-               ground: "#ffffff", "line-soft": "#ebe2dc", frame: "#d9cbc2", secrule: "#ebe2dc", "accent-ink": "#ffffff", "band-ink": "#ffffff", svtext: "#111111", svrule: "#ebe2dc", pctrack: "#f1ebe7" },
+               "accent-2-text": "#c2380a", pop: "#ffffff", rule: "#111111", "stripe-line": "#111111", "accent-wash": "rgba(251, 79, 20, 0.1)", ink: "#111111", "ink-2": "#3d3a38", hover: "#fdf1ec",
+               page: "#ffffff", surface: "#ffffff", "surface-2": "#f7f3f1", hair: "#ebe2dc", rail: "#111111", stripe: "#ffffff", band: "#ffffff", plate: "#ebe2dc", muted: "#6e6762",
+               btn: "#fb4f14", "btn-ink": "#ffffff", "btn-line": "#111111", "tab-fill": "#fb4f14",
+               ground: "#ffffff", "line-soft": "#111111", frame: "#111111", secrule: "#111111", "accent-ink": "#ffffff", "band-ink": "#ffffff", svtext: "#111111", svrule: "#ebe2dc", pctrack: "#f1ebe7" },
       dark: { accent: "#ff8a5c", "accent-2": "#fb4f14", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.85)", "on-fill-wash": W + "0.12)", "on-fill-wash-2": W + "0.22)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
               "accent-2-text": "#ff8a5c", pop: "#1a1a1a", rule: "#333130", "stripe-line": "#fb4f14", "accent-wash": "rgba(251, 79, 20, 0.22)", ink: "#f4f1ef", "ink-2": "#cfc8c3", hover: "#242220",
               page: "#0d0d0d", surface: "#1a1a1a", "surface-2": "#222120", hair: "#333130", rail: "#45413e", stripe: "#0d0d0d", band: "#1a1a1a", plate: "#333130", muted: "#9e9894",

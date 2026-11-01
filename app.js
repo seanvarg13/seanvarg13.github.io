@@ -12892,7 +12892,7 @@
     const vor = mkVOR(pool, S.teams, S.roster, "mine");
     const byV = [...pool].sort((a, b) => vor.get(b.k) - vor.get(a.k) || b.mine - a.mine), prank = new Map(byV.map((x, i) => [x.k, i + 1]));
     // the ADP is the 2027 lists' median again (Sean, 13 Oct 2026: "new rankings public for 2027 that you can incorporate into a mock draft
-    // board" — hist/adp-2027.js: Baseball America's top 350 and NBC's top 450 overall, ESPN's 50, Yahoo's 25, CBS's and RotoWire's
+    // board" — hist/adp-2027.js: ESPN's points-league top 300 at double weight (1 Nov 2026), Baseball America's top 350 and NBC's top 450 overall, ESPN's 50, Yahoo's 25, CBS's and RotoWire's
     // position lists); the projection only places the players no list names, and never ahead of where the lists run out at his rank
     const AD = window.DRAFT_ADP27 || {}, A = AD.ranks || {}, SW = {}; for (const x of AD.sources || []) SW[x.key] = x.weight || 1;
     const posOrder = {};                                   // the projection's own order at each position, for the position lists
@@ -13262,7 +13262,7 @@
       row("Scoring", s, "Your saved scoring settings (Fantasy ▸ Scoring settings): the Proj column, the draft order every team follows and the final standings all use it."); }
     const go = el("button", "btn mkgo", "Start draft"); go.type = "button"; go.disabled = !mkSlotList(mkSet.roster).length; go.addEventListener("click", mkStart); w.append(go);
     { const AD = window.DRAFT_ADP27; if (AD) { const s = el("details", "mksrc"); s.append(el("summary", null, "Where the 2027 ADP comes from"));
-      s.append(el("p", "note", "The draft order is the median of the 2027 rankings published so far (a July list at half weight). They are category-league rankings, so a closer or a base stealer can sit differently from a points league's view — Proj is this site's own projection under your scoring. A player no list names is placed by the projection, behind the listed players at his rank."));
+      s.append(el("p", "note", "The draft order is the median of the 2027 rankings published so far, weighted: ESPN's points-league top 300 (30 Oct) counts double, a July list half. The rest are category-league rankings, so a closer or a base stealer can sit differently from a points league's view — Proj is this site's own projection under your scoring. A player no list names is placed by the projection, behind the listed players at his rank."));
       const ul = el("ul"); for (const x of AD.sources) { const li = el("li"); const a = el("a", null, x.name); a.href = x.url; a.target = "_blank"; a.rel = "noopener"; li.append(a, ` · ${fmtDate(x.date)}`); ul.append(li); } s.append(ul); w.append(s); }
       const J = window.DRAFT_PROJ27, s = el("details", "mksrc"); s.append(el("summary", null, "Where the Proj column comes from"));
       const sys = J && J.systems && J.systems.length ? J.systems.map((x) => (x === "zips" ? "ZiPS" : x[0].toUpperCase() + x.slice(1))).join(" and ") : "";   // tools/build_offseason.py (20 Oct 2026)
