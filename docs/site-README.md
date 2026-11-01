@@ -1456,3 +1456,21 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
     or a role's colour picker / hex box; or **Use 2 / 3 / All** on a team to take its look whole (`czTeam`: whites dropped, the darkest colour the
     text, the club's first remaining colour the main, the next the stripe and the highlight — "All" is up to four). Bengals → orange bands on
     black type.
+* **College teams, a colour search, no ready-made schemes (Sean, 1 Nov 2026: "allow college teams too, and also allow like a specific color search
+  from a team as well like allow me to searcgh cream white and it comes up with every teams color who has cream white / keep the current team option
+  too but also allow a specific color search as well, and get rid of the ready made schemes")**:
+  - **College**: `hist/teamcolors.js` carries 83 college programmes (league `NCAA`, today's colours: the power conferences, Notre Dame, Gonzaga,
+    BYU and the like; 263 looks in all). The League switch has **College**.
+  - **Search by Teams | Colours**: Teams is the browser as it was. Colours searches every team colour (`czFind` in `app.js`), within the league and
+    year filters:
+    - **By name and family.** Each colour's hex is sorted into families by hue, saturation and lightness (`czFam`: black, white, cream, grey, tan,
+      brown, red, maroon, orange, gold, green, teal, blue, navy, light, purple, pink). A cream is a white too, a navy a blue, a maroon a red, and
+      an off-white a white.
+    - **Synonyms** stand for families (`CZ_SYN`: crimson / scarlet / garnet → red, ivory / bone → cream, maize → gold, pewter / slate → grey,
+      aqua → teal, carolina / powder / sky → light …). Every word has to match, the name scoring above the family.
+    - **Results**: "cream white" is Indiana, the Bucks' Cream City Cream, Nebraska, Oklahoma, the Giants, the Diamondbacks' sand and the Wild's
+      wheat (the 1973-85 Indians under Every look). A hex finds the nearest colours instead.
+    - **The tiles** show a swatch, the colour's name, team · league · years and the hex (two across on a desktop's grid, one on a phone, up to
+      160). A tap puts the colour in the picked role, as a team swatch does.
+  - **The Ready-made schemes row is gone** from Appearance. Titans and the rest stay in `themes.js` as the site default and for any device
+    already on one, and Follow the site default goes back to it.

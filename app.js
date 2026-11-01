@@ -7424,10 +7424,75 @@
   // The colour customizer (Sean, 1 Nov 2026: "instead of like pre set color schemes ... a customizer ... a two color scheme or like a three color one,
   // and then you can choose your own colors or choose professional sports teams colors ... look and filter by year in case teams have changed colors
   // ... simply use a specific teams scheme and use all colors, 3 colors, 2 of their colors"): up to four colours, each with a job (CZ_ROLES), picked
-  // freely, tapped from a team's palette (hist/teamcolors.js, every MLB / NFL / NBA / NHL club and its older looks) or taken whole from a team.
+  // freely, tapped from a team's palette (hist/teamcolors.js, every MLB / NFL / NBA / NHL club and its older looks, and 83 college programmes since 1 Nov 2026) or taken whole from a team.
   // DRAFT_THEMES.setCustom builds the scheme and makes it this device's at once.
   const CZ_ROLES = [["main", "Main", "bands, buttons, tabs"], ["text", "Text", "type and lines"], ["stripe", "Stripe", "the rule under the bands"], ["accent", "Highlight", "links and accent type"]];
-  const cz = { act: "main", lg: "ALL", yr: "today", q: "" };
+  const cz = { act: "main", lg: "ALL", yr: "today", q: "", mode: "teams", cq: "" };
+  // the colour search (Sean, 1 Nov 2026: "allow me to search cream white and it comes up with every teams color who has cream white"): every team
+  // colour matched by its name and by the families its hex falls in (czFam: hue / saturation / lightness — a cream is also a white, a navy also a
+  // blue), a word standing for a family through CZ_SYN (crimson → red, ivory → cream …); every word of the query has to match. A hex finds the
+  // nearest colours instead.
+  const CZ_SYN = { crimson: "red", scarlet: "red", cardinal: "red", garnet: "red", ruby: "red", cherry: "red", burgundy: "maroon", wine: "maroon",
+    oxblood: "maroon", maize: "gold", yellow: "gold", golden: "gold", gray: "grey", pewter: "grey", charcoal: "grey", slate: "grey", steel: "grey",
+    graphite: "grey", silver: "grey", ivory: "cream", bone: "cream", eggshell: "cream", vanilla: "cream", offwhite: "cream", aqua: "teal",
+    turquoise: "teal", cyan: "teal", jade: "teal", violet: "purple", lavender: "purple", plum: "purple", eggplant: "purple", khaki: "tan",
+    beige: "tan", sand: "tan", wheat: "tan", copper: "orange", bronze: "brown", rust: "orange", kelly: "green", forest: "green", hunter: "green",
+    lime: "green", emerald: "green", midnight: "navy", royal: "blue", sky: "light", powder: "light", baby: "light", carolina: "light",
+    columbia: "light", magenta: "pink", rose: "pink" };
+  function czFam(h) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(h || ""); if (!m) return [];
+    const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    const sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    let hue = 0; if (d) hue = mx === r ? 60 * (((g - b) / d) % 6) : mx === g ? 60 * ((b - r) / d + 2) : 60 * ((r - g) / d + 4); if (hue < 0) hue += 360;
+    const f = [];
+    if (l < 0.13 || (l < 0.2 && sat < 0.3)) f.push("black");
+    else if (l > 0.93 && sat < 0.5) f.push("white");
+    if (l >= 0.75 && l <= 0.97 && sat >= 0.15 && hue >= 25 && hue <= 70) f.push("cream", "white");
+    if (sat < 0.14 && l >= 0.13 && l <= 0.93) f.push("grey");
+    if (l > 0.85 && sat < 0.5 && !f.includes("white")) f.push("white");   /* an off-white is a white too */
+    if (f.length) return f;
+    if (hue >= 22 && hue <= 50 && l >= 0.45 && l < 0.8 && sat < 0.62) f.push("tan");
+    if (hue >= 8 && hue <= 45 && l < 0.4) f.push("brown");
+    if (hue < 12 || hue >= 345) f.push(l < 0.33 ? "maroon" : "red");
+    else if (hue < 40) f.push("orange");
+    else if (hue < 66) f.push("gold");
+    else if (hue < 165) f.push("green");
+    else if (hue < 195) f.push("teal");
+    else if (hue < 255) { f.push("blue"); if (l < 0.3) f.push("navy"); if (l > 0.55) f.push("light"); }
+    else if (hue < 300) f.push("purple");
+    else f.push(l > 0.55 ? "pink" : "maroon");
+    if (f.includes("maroon")) f.push("red");
+    return f;
+  }
+  const czDist = (a, b) => { const p = (h) => [0, 2, 4].map((i) => parseInt(h.replace("#", "").slice(i, i + 2), 16)); const x = p(a), y = p(b), rm = (x[0] + y[0]) / 2;
+    return Math.sqrt((2 + rm / 256) * (x[0] - y[0]) ** 2 + 4 * (x[1] - y[1]) ** 2 + (2 + (255 - rm) / 256) * (x[2] - y[2]) ** 2); };
+  function czFind(D, query, keep) {
+    let q = query.trim().toLowerCase().replace(/off[\s-]+white/g, "offwhite").replace(/\b(?:and|or|color|colour|colors|colours)\b/g, " ");
+    const hx = /^#?([0-9a-f]{6})$/i.exec(q.replace(/\s+/g, ""));
+    const out = [], seen = new Map();
+    for (const t of D) {
+      if (!keep(t)) continue;
+      for (const [nm, h] of t[4]) {
+        const k = t[1] + "|" + h.toLowerCase(); let sc;
+        if (hx) { const dd = czDist("#" + hx[1], h); if (dd > 120) continue; sc = -dd; }
+        else {
+          const words = q.split(/[^a-z]+/).filter(Boolean); if (!words.length) continue;
+          const name = nm.toLowerCase(), fam = czFam(h); sc = 0;
+          for (const w of words) {
+            if (name.split(/\s+/).includes(w)) sc += 3; else if (name.includes(w)) sc += 2;
+            else if (fam.includes(w) || fam.includes(CZ_SYN[w]) || (w.endsWith("s") && fam.includes(w.slice(0, -1)))) sc += 1;
+            else { sc = -1; break; }
+          }
+          if (sc < 0) continue;
+          if (name === words.join(" ")) sc += 4;
+        }
+        const was = seen.get(k);
+        if (was) { if ((t[3] === 0 && was.t[3] !== 0) || (was.t[3] !== 0 && t[3] > was.t[3])) Object.assign(was, { t, nm }); continue; }
+        const it = { t, nm, h, sc }; seen.set(k, it); out.push(it);
+      }
+    }
+    return out.sort((a, b) => b.sc - a.sc || a.t[1].localeCompare(b.t[1])).slice(0, 160);
+  }
   const czLum = (h) => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ""); if (!m) return 1; const v = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4))); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
   // a team's look as a scheme: whites out (a white band reads as no band), the darkest colour the text, the club's first remaining colour the
   // main, the rest the stripe and the highlight in the club's order; k = how many of the colours to use (2, 3, or 4 for all)
@@ -7446,7 +7511,7 @@
     const save = (c, name) => { T.setCustom(Object.assign({}, c, { name: name || c.name || "Custom" })); renderSettings(); };
     const on = cur.scheme === "custom";
     const wrap = el("div", "czbox");
-    if (!on) { const nb = el("p", "cznote", "You're on a ready-made scheme. Pick colours here, or Use this below, to switch to your own."); wrap.append(nb); }
+    if (!on) { const nb = el("p", "cznote", "You're on one of the site's built-in schemes. Pick a colour here or take a team's look to switch to your own; Follow the site default (at the foot) comes back to them."); wrap.append(nb); }
     const ctl = el("div", "czrow");
     ctl.append(el("span", "czlab", "Colours"), segOf("How many colours", [[2, "2"], [3, "3"], [4, "4"]], cfg.n || 2, (v) => save(Object.assign({}, cfg, { n: v }))),
       el("span", "czlab", "Look"), segOf("Look", [[false, "Outlines"], [true, "Flat"]], !!cfg.flat, (v) => save(Object.assign({}, cfg, { flat: v }))));
@@ -7471,29 +7536,48 @@
     for (const [v, l] of [["today", "Today's colours"], ["all", "Every look"]]) { const o = el("option", null, l); o.value = v; ysel.append(o); }
     for (let y = new Date().getFullYear(); y >= 1960; y--) { const o = el("option", null, String(y)); o.value = String(y); ysel.append(o); }
     ysel.value = cz.yr; ysel.addEventListener("change", () => { cz.yr = ysel.value; draw(); });
-    const q = el("input", "czq"); q.type = "search"; q.placeholder = "Find a team"; q.value = cz.q; q.addEventListener("input", () => { cz.q = q.value; draw(); });
-    const lgs = segOf("League", [["ALL", "All"], ["MLB", "MLB"], ["NFL", "NFL"], ["NBA", "NBA"], ["NHL", "NHL"]], cz.lg, (v) => { cz.lg = v; renderSettings(); });
-    bar.append(lgs, ysel, q); tb.append(bar, list);
+    const cm = cz.mode === "colours";
+    const q = el("input", "czq"); q.type = "search"; q.placeholder = cm ? "Find a colour: cream white, navy, #c8102e" : "Find a team"; q.value = cm ? cz.cq : cz.q;
+    q.setAttribute("aria-label", cm ? "Find a colour" : "Find a team");
+    q.addEventListener("input", () => { if (cm) cz.cq = q.value; else cz.q = q.value; draw(); });
+    const mode = segOf("Search by", [["teams", "Teams"], ["colours", "Colours"]], cz.mode, (v) => { cz.mode = v; renderSettings(); });
+    const lgs = segOf("League", [["ALL", "All"], ["MLB", "MLB"], ["NFL", "NFL"], ["NBA", "NBA"], ["NHL", "NHL"], ["NCAA", "College"]], cz.lg, (v) => { cz.lg = v; renderSettings(); });
+    bar.append(mode, lgs, ysel, q); tb.append(bar, list);
+    const fill = (h) => { const n = cfg.n || 2, keys = CZ_ROLES.slice(0, n).map((r) => r[0]), i = keys.indexOf(cz.act);
+      cz.act = keys[(i + 1) % n]; save({ ...cfg, colors: { ...cfg.colors, [keys[i < 0 ? 0 : i]]: h } }, "Custom"); };
+    const actName = () => CZ_ROLES.find((r) => r[0] === cz.act)[1];
     function draw() {
       list.innerHTML = "";
       const D = window.DRAFT_TEAMCOLORS;
       if (!D) { list.append(el("p", "cznote", "Loading team colours…")); return; }
       const y = +cz.yr, qq = cz.q.trim().toLowerCase();
-      const rows = D.filter((t) => (cz.lg === "ALL" || t[0] === cz.lg) && (!qq || t[1].toLowerCase().includes(qq))
-        && (cz.yr === "all" || (cz.yr === "today" ? t[3] === 0 : t[2] <= y && (t[3] === 0 || t[3] >= y))))
+      const keep = (t) => (cz.lg === "ALL" || t[0] === cz.lg) && (cz.yr === "all" || (cz.yr === "today" ? t[3] === 0 : t[2] <= y && (t[3] === 0 || t[3] >= y)));
+      list.classList.toggle("czcol", cm);
+      if (cm) {
+        if (!cz.cq.trim()) { list.append(el("p", "cznote", "Type a colour — cream white, navy, kelly green, burnt orange, a hex like #c8102e — to see every team colour like it.")); return; }
+        const hits = czFind(D, cz.cq, keep);
+        if (!hits.length) { list.append(el("p", "cznote", "No team colour matches.")); return; }
+        list.append(el("p", "cznote", `${hits.length}${hits.length === 160 ? "+" : ""} team colour${hits.length === 1 ? "" : "s"} · tap one to put it in ${actName()}`));
+        const grid = el("div", "czhits");
+        for (const { t, nm, h } of hits) {
+          const b = el("button", "czhit"); b.type = "button"; b.title = `${t[1]} ${nm} ${h} — put it in ${actName()}`;
+          const sw = el("i", "czhsw"); sw.style.background = h;
+          const tx = el("span", "czhtx"); tx.append(el("b", null, nm), el("span", null, `${t[1]} · ${t[0] === "NCAA" ? "College" : t[0]} · ${t[2]}–${t[3] || "today"}`), el("code", null, h));
+          b.append(sw, tx); b.addEventListener("click", () => fill(h)); grid.append(b);
+        }
+        list.append(grid); return;
+      }
+      const rows = D.filter((t) => keep(t) && (!qq || t[1].toLowerCase().includes(qq)))
         .sort((a, b) => a[1].localeCompare(b[1]) || b[2] - a[2]);
       if (!rows.length) { list.append(el("p", "cznote", "No team matches.")); return; }
       for (const [lg, team, fr, to, cols] of rows) {
         const it = el("div", "czteam"), hd = el("div", "czth");
-        hd.append(el("b", null, team), el("span", null, `${lg} · ${fr}–${to || "today"}`));
+        hd.append(el("b", null, team), el("span", null, `${lg === "NCAA" ? "College" : lg} · ${fr}–${to || "today"}`));
         const sws = el("div", "czsws");
         for (const [nm, h] of cols) {
           const b = el("button", "czc"); b.type = "button"; b.style.background = h; b.title = `${nm} ${h} — put it in ${CZ_ROLES.find((r) => r[0] === cz.act)[1]}`;
           b.setAttribute("aria-label", `${team} ${nm}`);
-          b.addEventListener("click", () => {
-            const n = cfg.n || 2, keys = CZ_ROLES.slice(0, n).map((r) => r[0]), i = keys.indexOf(cz.act);
-            cz.act = keys[(i + 1) % n]; save({ ...cfg, colors: { ...cfg.colors, [keys[i < 0 ? 0 : i]]: h } }, "Custom");
-          });
+          b.addEventListener("click", () => fill(h));
           sws.append(b);
         }
         const use = el("div", "czuse"); use.append(el("span", null, "Use"));
@@ -7510,7 +7594,7 @@
     if (!window.DRAFT_TEAMCOLORS) ensureScript("hist/teamcolors.js", () => !!window.DRAFT_TEAMCOLORS);
     draw();
     wrap.append(tb);
-    row("Your colours", "Two, three or four colours, each with a job. Tap a box to pick which colour a team swatch fills (the next one is picked after each tap), use the colour picker, type a hex, or take a team's look whole with Use 2 / 3 / All. Text that wouldn't read is darkened until it does.", wrap);
+    row("Your colours", "Two, three or four colours, each with a job. Tap a box to pick which colour a team swatch fills (the next one is picked after each tap), use the colour picker, type a hex, or take a team's look whole with Use 2 / 3 / All. Colours (beside Teams) searches every pro and college team's colours by name or family — cream white, navy, a hex. The percentile colours stay blue cold, red hot. Text that wouldn't read is darkened until it does.", wrap);
   }
   function renderAppearance(box) {
     const T = window.DRAFT_THEMES; box.innerHTML = "";
@@ -7528,24 +7612,7 @@
       for (const [v, l] of opts) { const b = el("button", "segbtn", l); b.type = "button"; b.setAttribute("aria-pressed", String(v === on)); b.addEventListener("click", () => pick(v)); seg.append(b); }
       return seg;
     };
-    // colour schemes: a swatch each (the banner with the site's name, then its colours), the blurb on hover; the name in the scheme's ink on its
-    // band unless the two are the same colour (Warm's were), then white or near-black, whichever reads
-    const lumOf = (hex) => { const m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return null; const v = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4))); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
-    const contrastOf = (a, b) => { const x = lumOf(a), y = lumOf(b); return x == null || y == null ? 21 : (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
-    const inkOn = (bg, ink) => (contrastOf(bg, ink) >= 1.5 ? ink : contrastOf(bg, "#ffffff") >= contrastOf(bg, "#141414") ? "#ffffff" : "#141414");
-    const sg = el("div", "schemes");
-    for (const [id, sc] of Object.entries(T.schemes)) {
-      const L = sc.light, b = el("button", "scheme"); b.type = "button"; b.title = sc.blurb || ""; b.setAttribute("aria-pressed", String(id === cur.scheme));
-      const bar = el("div", "spv-bar"); bar.style.background = L["accent-2"]; bar.style.borderBottom = `3px solid ${L.rule}`;
-      const word = el("span", "spv-word", "Sean's Site"); word.style.color = inkOn(L["accent-2"], L["accent-2-ink"]); bar.append(word);   /* Warm's ink was its own band's colour (20 Oct 2026) */
-      const dots = el("div", "spv-dots");
-      for (const c of [L.rule, L["accent-2"], L.btn || L["accent-2"], L.pop || L["accent-2-text"]]) { const i = el("i"); i.style.background = c; dots.append(i); }
-      b.append(bar, dots, el("span", "sname", sc.name));
-      b.addEventListener("click", () => { T.set({ scheme: id }); renderSettings(); });
-      sg.append(b);
-    }
-    customizer(row, segOf, T, cur);
-    row("Ready-made schemes", "The site's own schemes. The percentile colours (blue cold, red hot) are the same in every scheme, yours included.", sg);
+    customizer(row, segOf, T, cur);   /* the ready-made schemes' swatches are gone (Sean, 1 Nov 2026: "get rid of the ready made schemes") */
     row("Light or dark", null, segOf("Light or dark", [["system", "Match device"], ["light", "Light"], ["dark", "Dark"]], cur.theme, (v) => { T.set({ theme: v }); renderSettings(); }));
     {   // seasonal effects (31 Oct 2026): Auto by the date, Off, or a season picked
       const sel = el("select", "seasonsel"); sel.setAttribute("aria-label", "Seasonal effects");
