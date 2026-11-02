@@ -1715,3 +1715,10 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
 * **The bar's rules match the Summary's (Sean, 2 Nov 2026: "make the line identical to the one below the filter boxes row")**: the line over the
   control row (`.pgbrk`) and the one under the filter chips (`.pgchipsep`) are 1px in `--phsep`, as the Summary's top rule is, and the chips' line is
   inset to the bar's padding (`bleedBar` sets its left / right) like the other two, not across the full width.
+
+* **More colours in the fall leaves (Sean, 2 Nov 2026, after five rounds of fall header mock-ups: "Ok what we currently have is actually fine I just
+  want some more colors to the leaves")**: the fall header's leaf tile (the `[data-season="fall"] header.top` rule in `styles.css`, and `HDR`'s
+  `fall` art in `app.js`, which the bottom bar and the Appearance tile wear) is twelve maple leaves instead of eight, in yellow, gold, scarlet,
+  crimson, burgundy, plum, pink, olive, lime and brown, at 88% (was 55%, oranges and rusts on the orange gradient), each with a fine dark edge and vein
+  (`fleaf`) so a red or gold leaf reads on the orange. The falling leaves (`SEASONS.fall`) draw from the same colours too. The gradient behind is
+  unchanged. The mock-ups (cartoon canopies, hillsides, a photo of a lake) are the "Fall Foliage Headers" canvas, not built.
