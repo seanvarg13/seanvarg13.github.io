@@ -1600,3 +1600,7 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   **Filter bars**: `light.fbar` / `fbar-ink` (the text colour where it reads 4.5:1, else white) → `--fbar` / `--fbar-ink` and `data-fbar`; every `.sbviews`
   bar (the Leaders / Fantasy bar, the season table's switch) takes it as its ground and its unpicked buttons' type. An older save starts at `#f3f6fa`,
   the bar's colour before. Light mode only.
+
+* **The customizer's Background shows (Sean, 2 Nov 2026, his cream `#fdf9d8` not showing: "the background button isn't working")**: it set `--ground`,
+  the page behind the cards, but home's and a player page's page card (`main.wrap`) is the surface and covered it; on your own colours
+  (`[data-scheme="custom"]`) the page card takes the Background too. Tables, the Bio / Playing time boxes and the other cards stay white.
