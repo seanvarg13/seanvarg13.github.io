@@ -5951,3 +5951,7 @@ line can bring them back.
 
 * **The team / colour list framed (Sean, 2 Nov 2026: "make the window area where you search for a color be bordered ... from the area where you scroll to
   select a team or color")**: the customizer's scrolling list (`.czlist`) wears a 2px frame in the Outlines colour with the tables' shadow and 8px inside.
+
+* **The build-ups' marks show under a Tables colour (Sean, 2 Nov 2026, Ben Rice's xwOBA tab: "Can you fix these tables")**: the customizer's Tables rule
+  painted every plain cell its colour and covered the yellow xwOBA / blue park-neutral marks (`td.kexp` / `.kneut`), the sorted cells and the In Split row's
+  tint; it skips them now (`:not(.kexp):not(.kneut):not(.hot):not(.lit)`, `tr:not(.insplit)`).
