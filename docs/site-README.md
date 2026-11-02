@@ -1609,3 +1609,10 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   `tbl-ink` → `--tbl` / `--tbl-ink` and `data-tbl`; every table's cells (the B-Ref tables and the Leaderboard / Rankings rows with their frozen Rk /
   Player cells) take it as their ground and `--tbl-ink` (the text colour, or white on a dark one) as their type. Heat cells, totals rows and column
   names keep theirs. An older save starts at white. Light mode only.
+
+* **Subtitles and References colours, and bold references (Sean, 2 Nov 2026: "add a subtitles and references color option too ... all the grey text ...
+  the references would apply to the like text that is all hitters all pitchers that takes you to the table (and for those ones add a bold option too if
+  I want it)")**: two more customizer roles. **Subtitles** sets the scheme's `--muted` (every grey note and label, plus home's draft-prep blurbs),
+  darkened to 3:1 on white. **References** (`--ref`, `data-ref`) colours the links that take you somewhere — home's "All hitters →" / "Leaderboard →"
+  (`.hmore`), About / More about these numbers (`.fxmore`), Glossary / Show minors and the other `.linkbtn`s — and a **References: Regular / Bold**
+  switch beside Look (`cfg.refBold` → `data-refbold`) makes them bold. An older save starts Subtitles at the site's grey and References at the text colour.
