@@ -11371,7 +11371,7 @@
     // the filter chips (last 100 PA ×, vs LHP ×) ride on that top strip too, left of the × — or alone at its right on the full page — so they never
     // push the headshot, name or bio around (Sean, 13 Oct 2026: "make it go on the same row as the X. And even in cases where there is no X have
     // it do the same thing"); bleedBar places them
-    const hasChips = false; if (o.entry && !isMulti(o.key)) { const chips = viewChips(p); if (chips.childNodes.length) { chips.classList.add("pgchips"); bar.classList.add("xbar"); bar.append(chips); } }   /* on a strip across the bar's top, above his name, as before the control row (Sean, 2 Nov 2026: "if I add filters those go above the header like they did in the past") */
+    const hasChips = false; if (o.entry && !isMulti(o.key)) { const chips = viewChips(p); if (chips.childNodes.length) { chips.classList.add("pgchips"); bar.classList.add("xbar"); bar.append(chips, el("div", "pgchipsep")); } }   /* on a strip across the bar's top, above his name, as before the control row (Sean, 2 Nov 2026: "if I add filters those go above the header like they did in the past") */
     // one header, no photo (Sean, 9 Oct 2026: "get rid of the headshot and then can we condense all of the information into one header with the stats
     // of the selected year and the filters buttons"): the bar above (his name, the year, level, Filters, Raw) runs straight into the band, which is
     // a row for Back and the filter chips only when there is one, one bio line, and the selected year's line — no second name, no career row
