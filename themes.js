@@ -241,6 +241,9 @@ window.DRAFT_THEMES = (function () {
       btn: M, "btn-ink": onM, "btn-line": flat ? "transparent" : rail, "tab-fill": M,
       ground: PG, "line-soft": hair, frame: flat ? hair : rail, secrule: hair, "accent-ink": onM, "band-ink": onM, svtext: T, svrule: hair, pctrack: mix(M, "#ffffff", 0.88),
       outline: LN, xl: hx(C.grid) ? C.grid : LN, xlt: hx(C.frame) ? C.frame : (hx(C.grid) ? C.grid : LN) };   // table lines and the thick frame (2 Nov 2026)
+    if (hx(C.sub)) light.muted = toward(C.sub, "#000000", "#ffffff", 3);   // the subtitles / grey text (2 Nov 2026)
+    if (hx(C.ref)) light.ref = toward(C.ref, "#000000", "#ffffff", 3);       // the references: "All hitters →", About, Glossary …
+    light.refbold = !!(cfg && cfg.refBold);
     if (hx(C.table)) { light.tbl = C.table; light["tbl-ink"] = ratioOf(C.table, T) >= 4.5 ? T : "#ffffff"; }   // the tables' cells (2 Nov 2026)
     if (hx(C.fbar)) { light.fbar = C.fbar; light["fbar-ink"] = ratioOf(C.fbar, T) >= 4.5 ? T : "#ffffff"; }   // the filter bars (2 Nov 2026)
     if (hx(C.sorted)) { light.sorthd = C.sorted; light["sorthd-ink"] = ratioOf(C.sorted, "#ffffff") >= 3 ? "#ffffff" : T; }   // the sorted column's name (2 Nov 2026)
@@ -326,6 +329,10 @@ window.DRAFT_THEMES = (function () {
     // color that column header gets to be"): --sorthd / --sorthd-ink and data-sorthd, in both modes (the bands are the same colour in both)
     // the customizer's Filter bar colour (Sean, 2 Nov 2026: "I also want a color setting for the like filters bars too"): --fbar / --fbar-ink, data-fbar
     // the customizer's Table colour (Sean, 2 Nov 2026: "allow a table color option as well"): --tbl / --tbl-ink, data-tbl
+    // the customizer's References colour and bold switch (Sean, 2 Nov 2026: "the references would apply to the like text that is all hitters all
+    // pitchers that takes you to the table (and for those ones add a bold option too)"): --ref, data-ref, data-refbold
+    if (sc.light.ref && !isDark()) { root.style.setProperty("--ref", sc.light.ref); root.dataset.ref = "1"; } else { root.style.removeProperty("--ref"); delete root.dataset.ref; }
+    if (sc.light.refbold) root.dataset.refbold = "1"; else delete root.dataset.refbold;
     if (sc.light.tbl && !isDark()) { root.style.setProperty("--tbl", sc.light.tbl); root.style.setProperty("--tbl-ink", sc.light["tbl-ink"]); root.dataset.tbl = "1"; }
     else { root.style.removeProperty("--tbl"); root.style.removeProperty("--tbl-ink"); delete root.dataset.tbl; }
     if (sc.light.fbar && !isDark()) { root.style.setProperty("--fbar", sc.light.fbar); root.style.setProperty("--fbar-ink", sc.light["fbar-ink"]); root.dataset.fbar = "1"; }
