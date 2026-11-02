@@ -14218,6 +14218,9 @@
       if (Array.isArray(bg)) { first = (/#[0-9a-f]{6}/i.exec(bg[1]) || [])[0]; bg = bg[0] + ", " + bg[1]; }
       if (bg && v !== "plain") { root.style.setProperty("--hdrbg", bg); root.dataset.hdr = v; } else { root.style.removeProperty("--hdrbg"); delete root.dataset.hdr; }
       if (v === "plain") root.dataset.hdrplain = "1"; else delete root.dataset.hdrplain;
+      // the phone's bottom bar wears the header's art too (Sean, 2 Nov 2026: "add the fall leaves theme to the bottom page selection bar")
+      const barbg = v === "plain" ? null : bg ? bg : (v === "season" && root.dataset.season === "fall") ? art.fall[0] + ", " + art.fall[1] : null;
+      if (barbg) { root.style.setProperty("--pbarart", barbg); root.dataset.pbarart = "1"; } else { root.style.removeProperty("--pbarart"); delete root.dataset.pbarart; }
       // the header's own colour behind the art, the iPhone's status bar and the page's top bounce (Sean, 2 Nov 2026: "make the blue above the
       // header be the same theme as the header"): the art's first colour, the fall leaves' rust, else the band
       if (!first && v === "season" && root.dataset.season === "fall") first = "#9c3412";
