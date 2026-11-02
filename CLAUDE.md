@@ -6069,3 +6069,11 @@ line can bring them back.
   (tables, the Bio and Playing time boxes, bars); sticky and fixed elements count as words where they sit. It first sets heaps at box corners — just
   outside a corner (up to 22% on the box) or straddling the box's edge at a corner (up to 70%), a sideways-scrolling table only on its left corners —
   up to 60% of the page's heaps, then fills the open white space (nothing under it). Heaps are 84 × 47 on a phone (was 72 × 40), 104 × 58 on a desktop.
+
+* **The header's foot rule hands over smoothly (Sean, 2 Nov 2026, the same recording: "when I scroll down the bottom line of the header doesn't do a
+  smooth transition")**: two faults. (1) The band kept its own 3px border and 2px shadow — a later pass's band border outranked the stylesheet rule
+  that takes them off while `.pgrule` stands in — so the band carried two rules, and its own one scrolled away under the bar while `.pgrule` pinned.
+  `pgRule()` now takes the band's border and shadow off inline (`!important`; put back if the rule is ever rebuilt). (2) `.pgrule`'s sticky `top` (the
+  bar's height) was set once, and on an iPhone the bar grew after (a face loading, chips), so the rule pinned hidden under the bar and the line vanished
+  as the band left. A `ResizeObserver` on the bar (`ruleWatch`) re-places it, and `stickSync` keeps its `top` right on every scroll. Checked headless in
+  the phone popup and the desktop page: the rule rides under the band and pins under the bar at the same pixel, and follows the bar when it grows.
