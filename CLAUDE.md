@@ -5955,3 +5955,11 @@ line can bring them back.
 * **The build-ups' marks show under a Tables colour (Sean, 2 Nov 2026, Ben Rice's xwOBA tab: "Can you fix these tables")**: the customizer's Tables rule
   painted every plain cell its colour and covered the yellow xwOBA / blue park-neutral marks (`td.kexp` / `.kneut`), the sorted cells and the In Split row's
   tint; it skips them now (`:not(.kexp):not(.kneut):not(.hot):not(.lit)`, `tr:not(.insplit)`).
+
+* **The card tabs' tables framed on the left; the bottom bar in the header's art (Sean, 2 Nov 2026, Ben Rice's xwOBA tab: "when I said fix those
+  tables I meant fix the fact that they have no outside left border", and "add the fall leaves theme to the bottom page selection bar")**: the box a
+  card tab's tables sit in (`.rollbox`, the Pitching+ tab's `.kconv`) scrolls sideways, and it clipped the 3px frame ring at its left edge (and its
+  right on a narrow table) — every card tab on both layouts; those boxes keep the ring's width as padding now, and a desktop's Fantasy table sits
+  3px in from `#fboard`'s clip (its bar doesn't move). The 2 Nov "marks" entry above was a misread of this request; its fix stays. On a phone,
+  while the header wears art — fall's leaves (Seasonal in the fall), any season's art or a header style but Plain — the bottom bar wears it too:
+  `HDR.sync` sets `--pbarart` and `data-pbarart` on `<html>`, the bar's icons and words white with a soft shadow, the header's rule along its top.
