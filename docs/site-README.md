@@ -1593,3 +1593,10 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
 * **Settings as the whole page (Sean, 2 Nov 2026: "we don't need the settings page to have like the border that cuts off the color key button thing it can
   just be the whole page no need for the border window thing")**: on Settings (and `#appearance`) neither `main.wrap` nor the `#pboard` card draws a frame,
   corner or ground; the four tabs wrap instead of sliding off the edge — two by two on a phone, one row on a desktop. Block at the end of `styles.css`.
+
+* **Rk / Player ruled like every cell; a Filter bars colour (Sean, 2 Nov 2026: "on leadeboarss the name and rank columns should have the same border
+  everything else has", "I also want a color setting for the like filters bars too")**: the Leaderboard's frozen Rk / Player cells drew their row line as a
+  grey inset shadow (they're opaque, so the row's own line can't show through) — it's the tables' line colour (`--xl`) now. A tenth customizer role,
+  **Filter bars**: `light.fbar` / `fbar-ink` (the text colour where it reads 4.5:1, else white) → `--fbar` / `--fbar-ink` and `data-fbar`; every `.sbviews`
+  bar (the Leaders / Fantasy bar, the season table's switch) takes it as its ground and its unpicked buttons' type. An older save starts at `#f3f6fa`,
+  the bar's colour before. Light mode only.
