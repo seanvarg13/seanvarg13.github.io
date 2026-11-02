@@ -1622,3 +1622,6 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   logo on the header")**: each of the two roles has a **Default** button that sets it back to not chosen (`null`: the scheme's own grey, the links' own
   colours; References' also turns bold off), the hex box then empty with "Default" in it; `CZ_DEF` holds what the box shows meanwhile. The phone's top
   bar is the logo at the left, the "Thru" pill in the middle, search at the right.
+
+* **The team / colour list framed (Sean, 2 Nov 2026: "make the window area where you search for a color be bordered ... from the area where you scroll to
+  select a team or color")**: the customizer's scrolling list (`.czlist`) wears a 2px frame in the Outlines colour with the tables' shadow and 8px inside.

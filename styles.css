@@ -6125,3 +6125,7 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phtop .phthrua { justify-self: center !important; }
 .czrole .czdef { flex: none; margin-left: 8px; padding: 6px 10px; font: 600 13px/1 var(--body); background: var(--surface, #fff); color: var(--ink); border: 1px solid var(--line-soft, #ccc); border-radius: 0; cursor: pointer; }
 .czrole .czdef.on, .czrole .czdef:disabled { opacity: .55; cursor: default; }
+
+/* The team / colour list framed (Sean, 2 Nov 2026: "make the window area where you search for a color be bordered ... from the area where you scroll
+   to select a team or color"): the scrolling list wears the tables' frame — the Outlines colour, 2px — with room inside. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .czlist { border: 2px solid var(--outline, #111111) !important; padding: 8px !important; background: var(--surface, #ffffff); box-shadow: 0 4px 16px rgba(0, 0, 0, .12), 0 1px 3px rgba(0, 0, 0, .08); }
