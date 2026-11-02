@@ -11408,7 +11408,7 @@
     const pl = xPop && pad ? pad : L + pad, pr = xPop && pad ? pad : Rt + pad;
     bar.style.marginLeft = -L + "px"; bar.style.marginRight = -Rt + "px"; bar.style.paddingLeft = pl + "px"; bar.style.paddingRight = pr + "px";
     const xbtn = bar.querySelector(":scope > .xpopx:not(.pgx)"); if (xbtn) xbtn.style.right = pr + "px";
-    const chp = bar.querySelector(":scope > .pgchips"); if (chp) { chp.style.right = pr + (xbtn ? xbtn.offsetWidth + 10 : 0) + "px"; chp.style.left = pl + "px"; }
+    const chp = bar.querySelector(":scope > .pgchips"); if (chp) { chp.style.right = pr + (xbtn ? xbtn.offsetWidth + 10 : 0) + "px"; chp.style.left = pl + "px"; } const csep = bar.querySelector(":scope > .pgchipsep"); if (csep) { csep.style.left = pl + "px"; csep.style.right = pr + "px"; }
     // the IL badge keeps to his name's last word (the row doesn't break before it, so a phone wraps "Carson / Whisenhunt 60-day IL"); only when even
     // the last word and the badge don't fit the column may the badge take a line of its own
     const nr = bar.querySelector(".pgbnrow"); if (nr && nr.querySelector(".pgbil")) { nr.classList.remove("ilwrap"); if (nr.scrollWidth > nr.clientWidth + 1) nr.classList.add("ilwrap"); }

@@ -6024,3 +6024,7 @@ line can bring them back.
   (`--phsep`) runs under his name and bio, over the Year · Level · Filters row (`.pgbrk`, the row break, drawn as the line), and, when a filter is on,
   another under the chips strip across the bar's full width (`.pgchipsep`, appended after `.pgchips` in `pageHead`; the `xbar` top padding is 60px /
   56px on a phone to clear it). Block at the end of `styles.css`.
+
+* **The bar's rules match the Summary's (Sean, 2 Nov 2026: "make the line identical to the one below the filter boxes row")**: the line over the
+  control row (`.pgbrk`) and the one under the filter chips (`.pgchipsep`) are 1px in `--phsep`, as the Summary's top rule is, and the chips' line is
+  inset to the bar's padding (`bleedBar` sets its left / right) like the other two, not across the full width.
