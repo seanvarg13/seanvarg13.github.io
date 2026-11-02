@@ -1684,3 +1684,10 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   **Picked button**, after Filter bars: `buildCustom` → `light.fbsel` / `fbsel-ink` (white where it reads 3:1, else the text colour); `apply()` →
   `--fbsel` / `--fbsel-ink` and `data-fbsel`; the picked or open button in every `.sbviews` bar (Standard in the season table's switch, Raw / Stuff,
   the Leaders and Fantasy bars) takes it. An older save starts it at the Main colour, the look it had.
+
+* **Batted ball quality by season (Sean, 2 Nov 2026: "On the batted ball quality tab I'd like below everything there right now a table comparing his
+  batted ball quality by year")**: under the Batted Ball Quality tab's charts, `bbqSeasons(p, g)` — every MLB season from `hist/career-bb.js`:
+  Season · Team · BBE | Fly balls: EV · Brl% | Line drives: EV · Brl% | Ground balls: EV · Pull% | Overall: Avg EV · EV90 · Hard-Hit% · Barrel%, each
+  cell filled by its percentile among that season's qualified hitters on seasons of 100+ PA (`sbxPool`; FB / LD Brl% from `hrfbLeague`'s pools; GB
+  Pull% turned over, lower is better), the career a band row weighted by batted balls, and an In Split row under the card's season when a window or
+  split is on (the view's numbers, ranked among the window's qualifiers). Whatever season the card is on.

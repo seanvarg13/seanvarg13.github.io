@@ -8067,6 +8067,54 @@
     const cols = el("div", "pctcols");
     sets.forEach((gs, i) => cols.append(pctChart(gs, i, false)));
     box.append(cols);
+    box.append(bbqSeasons(p, g));
+    return box;
+  }
+  // batted ball quality by season under the tab's charts (Sean, 2 Nov 2026: "On the batted ball quality tab I'd like below everything there right
+  // now a table comparing his batted ball quality by year"): every MLB season from hist/career-bb.js — the tab's own groups (fly balls, line drives,
+  // ground balls) then his contact overall — each cell filled by its percentile among that season's qualified hitters (GB Pull% turned over, lower is
+  // better), the career a band row weighted by batted balls, and the card's window or split as an In Split row under its season
+  function bbqSeasons(p, g) {
+    const box = el("div", "rollbox uerabox hrfbbox brbox"), hd = el("div", "rollhd");
+    hd.append(el("span", "rollname", "Batted ball quality by season")); box.append(hd);
+    { const w = careerWait(p); if (w) { box.append(w); return box; } }
+    const rec = careerRecOf(p.id), rows = ((rec && rec.H) || []).map((r) => mlbLine(true, r)).map((l) => ({ l, bx: sbxOf(p.id, l.season) })).filter((r) => r.bx && r.bx.bbe).sort((a, b) => a.l.season - b.l.season);
+    for (const r of rows) ensureLg(r.l.season);
+    if (!rows.length) { box.append(el("p", "note", "No MLB seasons with tracked batted balls on record.")); return box; }
+    const C = [["evfb", "EV", "Exit velocity on fly balls", 1], ["brfb", "Brl%", "Barrels per fly ball", 1, 1],
+               ["evld", "EV", "Exit velocity on line drives", 1], ["brld", "Brl%", "Barrels per line drive", 1, 1],
+               ["evgb", "EV", "Exit velocity on ground balls", 1], ["gbp", "Pull%", "The share of his ground balls pulled — the likeliest grounder to be an out; lower is better", 0, 1],
+               ["ev", "Avg EV", "Average exit velocity (bunts out)", 1], ["ev90", "EV90", "90th-percentile exit velocity", 1], ["hh", "Hard-Hit%", "Batted balls at 95+ mph", 1, 1], ["brl", "Barrel%", "Barrels per batted ball", 1, 1]];
+    const { tb, fin, gap, wrap } = brTable([["", 3], ["Fly balls", 2], ["Line drives", 2], ["Ground balls", 2], ["Overall", 4]],
+      [["Season", "l"], ["Team", "l"], ["BBE", "", "Batted balls tracked by Statcast"], ...C.map(([, lab, tip]) => [lab, "", tip])], "hrfbt bbqt");
+    const f1 = (k, v) => (v == null ? "–" : v.toFixed(1) + (C.find((c) => c[0] === k)[4] ? "%" : ""));
+    const poolOf = (y, k) => (k === "brfb" || k === "brld" ? (hrfbLeague(y).arr || {})[k] : sbxPool(y, k)) || [];
+    const heat = (td, arr, v, hib, where) => { if (v == null || !arr || arr.length < 20) return; let pc = insertPct(arr, v); if (!hib) pc = 100 - pc; const sty = pctStyle(pc); td.style.background = sty.bg; td.style.color = sty.fg; td.classList.add("hheat", "heat"); td.title = ordinal(Math.round(pc)) + " percentile " + where; };
+    const row = (cls, lab, team, bbe, o, heatOf, where) => {
+      const tr = el("tr", cls);
+      if (cls === "insplit") { const lead = el("span", "sbsplit"); lead.append(el("i", null, "In Split"), el("small", null, lab)); const ltd = el("td", "l nm"); ltd.append(lead); tr.append(ltd); } else tr.append(el("td", "l nm", lab));
+      tr.append(el("td", "l", team || ""), el("td", null, bbe == null ? "–" : String(Math.round(bbe))));
+      for (const [k, , , hib] of C) { const td = el("td", null, f1(k, o[k])); if (heatOf) heat(td, heatOf(k), o[k], hib, where); tr.append(td); }
+      return fin(tr);
+    };
+    const filt = !!(winIdx() || splitActive()), lev = DS.level && DS.level !== "MLB" ? (DS.levelName || DS.level) + " · " : "";
+    const splitTr = () => {
+      const pv = V(p), ref = g ? pool(g).ref : [], gbOf = (q) => { const a = q.ctx && q.ctx.gbdir; if (!a) return null; const n = a.reduce((x, y) => x + y, 0); return n >= 10 ? 100 * a[0] / n : null; };
+      const val = (q, k) => (k === "gbp" ? gbOf(q) : q.m[k] ?? null), o = {}; for (const [k] of C) o[k] = val(pv, k);
+      const arrs = {}; for (const [k] of C) arrs[k] = ref.map((q) => val(V(q), k)).filter((z) => z != null).sort((a, b) => a - b);
+      return row("insplit", lev + viewLabel("H"), "", pv.ctx && pv.ctx.BBE != null ? pv.ctx.BBE : null, o, (k) => arrs[k], "among the qualified hitters in this window");
+    };
+    const S = {}, W = {}; let sb = 0, splitIn = false;
+    for (const { l, bx } of rows) {
+      const y = l.season, cur = y === +DS.season && DS.level === "MLB";
+      tb.append(row(cur ? "cur" : null, String(y), l.team, bx.bbe, bx, +l.c.PA >= 100 ? (k) => poolOf(y, k) : null, "among that season's qualified hitters"));
+      sb += bx.bbe; for (const [k] of C) if (bx[k] != null) { S[k] = (S[k] || 0) + bx[k] * bx.bbe; W[k] = (W[k] || 0) + bx.bbe; }
+      if (filt && cur) { tb.append(splitTr()); splitIn = true; }
+    }
+    if (filt && !splitIn) tb.append(splitTr());
+    const tot = {}; for (const [k] of C) tot[k] = W[k] ? S[k] / W[k] : null;
+    const tr = row("tot first", "", `${rows.length} Yr${rows.length === 1 ? "" : "s"}`, sb, tot, null, ""); tr.title = "Weighted by batted balls over the seasons that carry each number";
+    tb.append(gap(), tr); box.append(wrap);
     return box;
   }
   // vs Pitch type (Sean, 28 Oct 2026, item 12 of the review's picks: "wOBA / xwOBA / Whiff% vs fastballs 95+, breaking and offspeed ... finds the hitters
