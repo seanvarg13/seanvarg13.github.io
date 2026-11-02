@@ -11350,17 +11350,28 @@
     // name instead of where it is" — it had been the bio line's last item), flowing with the name's last word when a phone wraps it (bleedBar)
     const nrow = el("div", "pgbnrow"); nrow.append(nm);
     { const x = ilOf(p); if (x) { const t = el("span", "pgbil", x.word); t.title = ilTip(x); nrow.append(t); } }
-    const txt = el("div", "pgbtxt"); txt.append(nrow); bar.append(mug, txt, fx); top._bar = bar;
+    const txt = el("div", "pgbtxt"); txt.append(nrow); bar.append(mug, txt); top._bar = bar;
+    // one joined row under his name for the year, the level, a pitcher's Raw / Stuff and Filters, equal cells across the bar (Sean, 2 Nov 2026,
+    // design C of the Player Header Control Row canvas: "Implement C"); the popup's × takes Filters' old spot at the bar's right
+    const crow = el("div", "pgctl"), cellOf = (n) => { const c = el("div", "pgcell"); c.append(n); crow.append(c); };
+    const lvName = `${DS.level || "MLB"}${KIND_TAG[DS.kind || ""] || ""}`;
+    if (pk) { const [yb, lb] = pk.mk(); cellOf(yb); cellOf(pk.lvWorth ? lb : el("span", "pgstat", lvName)); }
+    else { cellOf(el("span", "pgstat", String(DS.season))); cellOf(el("span", "pgstat", lvName)); }
+    if (p.type === "P") { const side = stuffSide() ? "stuff" : "raw", sb = el("button", "pgside", side === "stuff" ? "Stuff" : "Raw"); sb.type = "button"; sb.setAttribute("aria-label", "Raw or stuff");
+      cellOf(ddList(sb, [["raw", "Raw"], ["stuff", "Stuff"]], side, (k) => { state.cardSide = k; savePrefs(); render(); }, "side")); }
+    if (o.entry && !isMulti(o.key)) { const fb = filtersTog(p, true).querySelector(".phfilt"); fb.textContent = "Filters"; cellOf(fb); }
+    for (const b of crow.querySelectorAll("button:not(:disabled)")) b.append(el("span", "pgchev", "▾"));
     // the popup's × on a strip of its own across the bar's top, so the headshot, name, bio and Filters / Raw sit exactly as they do without it, just
     // lower (Sean, 13 Oct 2026: "the player head shot name and bio are in the same position in comparison to the filters and raw vs stuff button when
     // there is the x and when there isn't so essentially just shift all of it down to make room for the x") — the bar gets class xbar and the × is
     // placed at its top right (bleedBar lines it up with the bar's right padding)
     if (xPop) { const x = el("button", "xpopx", "×"); x.type = "button"; x.setAttribute("aria-label", "Close"); x.addEventListener("click", (e) => { e.stopPropagation(); closeXPop(); });
-      bar.classList.add("xbar"); bar.append(x); }
+      x.classList.add("pgx"); bar.append(x); }   /* where Filters was (2 Nov 2026), not on a strip of its own */
+    bar.append(el("div", "pgbrk"), crow);   /* the row always on a line of its own */
     // the filter chips (last 100 PA ×, vs LHP ×) ride on that top strip too, left of the × — or alone at its right on the full page — so they never
     // push the headshot, name or bio around (Sean, 13 Oct 2026: "make it go on the same row as the X. And even in cases where there is no X have
     // it do the same thing"); bleedBar places them
-    const hasChips = false; if (o.entry && !isMulti(o.key)) { const chips = viewChips(p); if (chips.childNodes.length) { chips.classList.add("pgchips"); bar.classList.add("xbar"); bar.append(chips); } }
+    let hasChips = false; if (o.entry && !isMulti(o.key)) { const chips = viewChips(p); if (chips.childNodes.length) { hasChips = true; ctl.append(chips); } }   /* the chips at the bio line's right, beside Back */
     // one header, no photo (Sean, 9 Oct 2026: "get rid of the headshot and then can we condense all of the information into one header with the stats
     // of the selected year and the filters buttons"): the bar above (his name, the year, level, Filters, Raw) runs straight into the band, which is
     // a row for Back and the filter chips only when there is one, one bio line, and the selected year's line — no second name, no career row
@@ -11924,8 +11935,7 @@
     // same dress, and is off the band above (Sean, 25 Oct 2026)
     if (H) box.append(viewBar(SB_VIEWS.map(([k, lab]) => [k, lab]), view,
       (k) => { if (sbTable === k) return; sbTable = k; try { localStorage.setItem("draft2027.sbtable", k); } catch (er) { /* private window */ } if (k !== "std") sbKind = "reg"; render(); }));
-    else box.append(viewBar(SIDE_VIEWS, stuffSide() ? "stuff" : "raw",
-      (k) => { if ((stuffSide() ? "stuff" : "raw") === k) return; state.cardSide = k; savePrefs(); render(); }));
+    /* a pitcher's Raw / Stuff moved up into the header's row (2 Nov 2026) */
     const sx = view !== "std";   // a Statcast table: regular season only, read from hist/career-bb.js
     ensureCareer(p.id);   // his bucket: the season lines and, for a Statcast table, his seasons' numbers
     const hd = el("div", "sbhead"); hd.append(el("h3", "sbtitle", H ? SB_VIEWS.find((v) => v[0] === view)[2] : "Standard pitching"));
@@ -12223,9 +12233,8 @@
       pg.append(B);
       // a centred title over the bars (Sean, 9 Oct 2026: "above the percentile bar stuff could you include a 2026 MLB Percentiles header")
       // and it is where the season and level are picked (9 Oct 2026): "2026 ▾ MLB ▾ Percentiles", the level a plain word when he has only the one
-      const pt = el("h3", "pcthd"), lvName = `${DS.level || "MLB"}${KIND_TAG[DS.kind || ""] || ""}`, pk = hd._picks;
-      if (pk) { const [yr, lv] = pk.mk(); pt.append(yr, " ", pk.lvWorth ? lv : el("span", "pclv", lvName), " Percentiles"); }
-      else pt.append(`${DS.season} ${lvName} Percentiles`);
+      const pt = el("h3", "pcthd"), lvName = `${DS.level || "MLB"}${KIND_TAG[DS.kind || ""] || ""}`;
+      pt.append(`${DS.season} ${lvName} Percentiles`);   /* the year and level are picked in the header's row now (2 Nov 2026) */
       box.append(pt, pg, renderBelow(p, { st, g, ref }));
       // no bar pinned on scroll any more (Sean, 9 Oct 2026: "just get rid of the scrolling headers and not have that at all"); condensedBar /
       // condSync stay below, unused — condSync finds no bar and returns
