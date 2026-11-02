@@ -241,6 +241,7 @@ window.DRAFT_THEMES = (function () {
       btn: M, "btn-ink": onM, "btn-line": flat ? "transparent" : rail, "tab-fill": M,
       ground: PG, "line-soft": hair, frame: flat ? hair : rail, secrule: hair, "accent-ink": onM, "band-ink": onM, svtext: T, svrule: hair, pctrack: mix(M, "#ffffff", 0.88),
       outline: LN, xl: LN };
+    if (hx(C.sorted)) { light.sorthd = C.sorted; light["sorthd-ink"] = ratioOf(C.sorted, "#ffffff") >= 3 ? "#ffffff" : T; }   // the sorted column's name (2 Nov 2026)
     if (hx(C.heading)) light.heading = toward(C.heading, "#000000", "#ffffff", 3);   // the bold headings (2 Nov 2026), readable on white
     if (flat) light["flat-ink"] = T;
     const page = mix(T, "#0b0c0f", 0.82), surf = mix(page, "#ffffff", 0.05), surf2 = mix(page, "#ffffff", 0.09), dh = mix(page, "#ffffff", 0.16);
@@ -319,6 +320,10 @@ window.DRAFT_THEMES = (function () {
     root.style.setProperty("--outline", ol);
     // the customizer's Headings colour (Sean, 2 Nov 2026: "make it so I can make all of like the bold header text a different color than the regular
     // text"): --heading, and data-heading on <html> so styles.css paints the page's titles with it (light mode; dark mode keeps its light type)
+    // the customizer's Sorted header colour (Sean, 2 Nov 2026: "the column that is sorted allow me to choose in the appearance color selector what
+    // color that column header gets to be"): --sorthd / --sorthd-ink and data-sorthd, in both modes (the bands are the same colour in both)
+    if (sc.light.sorthd) { root.style.setProperty("--sorthd", sc.light.sorthd); root.style.setProperty("--sorthd-ink", sc.light["sorthd-ink"]); root.dataset.sorthd = "1"; }
+    else { root.style.removeProperty("--sorthd"); root.style.removeProperty("--sorthd-ink"); delete root.dataset.sorthd; }
     const hd = !isDark() && sc.light.heading;
     if (hd) { root.style.setProperty("--heading", hd); root.dataset.heading = "1"; } else { root.style.removeProperty("--heading"); delete root.dataset.heading; }
     if (sc.light.xl && !isDark()) root.style.setProperty("--xl", sc.light.xl); else root.style.removeProperty("--xl");

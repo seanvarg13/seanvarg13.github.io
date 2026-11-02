@@ -1572,3 +1572,9 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   - **Bottom bar**: no floating glass pill — one flat bar along the screen's foot like ESPN's, the page's surface with a hairline over it, running
     down under the home bar, each tab an icon over its word, the current page in the ink and bold, the others grey; `--pbar-h` is the bar plus the
     inset. The 29 Oct "App Store glass" entries are history.
+
+* **The sorted column's name in a colour of your own (Sean, 2 Nov 2026: "in the tables here the column that is sorted allow me to choose in the appearance
+  color selector what color that column header gets to be")**: an eighth customizer role, **Sorted header**. `buildCustom` → `light.sorthd` and
+  `sorthd-ink` (white where it reads 3:1, else the text colour); `apply()` → `--sorthd` / `--sorthd-ink` and `data-sorthd` on `<html>`; `styles.css` fills
+  every lit column name with it — home's and the card tabs' `th.lit`, the Leaderboard's `#colhead .h[aria-sort]`, the Pitching+ board's sorted `th`.
+  An older save starts the box at the band lightened 22% (`czMix`), the look it had.
