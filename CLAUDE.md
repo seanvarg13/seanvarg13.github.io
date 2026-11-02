@@ -6077,3 +6077,14 @@ line can bring them back.
   bar's height) was set once, and on an iPhone the bar grew after (a face loading, chips), so the rule pinned hidden under the bar and the line vanished
   as the band left. A `ResizeObserver` on the bar (`ruleWatch`) re-places it, and `stickSync` keeps its `top` right on every scroll. Checked headless in
   the phone popup and the desktop page: the rule rides under the band and pins under the bar at the same pixel, and follows the bar when it grows.
+
+* **More leaf piles, every page; no white under the header (Sean, 2 Nov 2026, Kikuchi's page: "add more leaf piles and put them on all site pages
+  not just the player page", "the bottom bar on the header has a white gap above it")**: (1) The layer had been sized to the page it was drawn on and
+  kept the next page that tall, so after the first page every heap went below the screen — the layer is collapsed before each measurement now
+  (`pilesNow`), which is what put heaps back on every page. (2) More heaps: up to one per 60,000 px² on a phone / 90,000 on a desktop, closer together
+  (120 / 190 px), in up to four sizes (100%, 74%, 55%, and 42% on a phone) where a full one won't fit; straddling a corner may lie 85% on the box; a heap
+  may peek in from the screen's edge (the layer clips at the page's width, so nothing scrolls sideways). (3) A table or anything that scrolls is never
+  taken for the page's own card, however big — on a phone a table is the page's width, and heaps had landed in its empty cells. (4) `pgRule()` pulls the
+  rule up by the pixel between the band and the card's foot (`marginTop`), so it meets the band with no white line. A phone's Leaderboard, Pitching+
+  board, Movers and Bullpens are wall-to-wall table with no blank space, so they show none there; every other page on a phone and every page on a
+  desktop does.

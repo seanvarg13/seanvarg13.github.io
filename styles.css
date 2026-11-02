@@ -6200,5 +6200,5 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #xboard .pgbar3 > .pgchipsep { top: 47px; }
 
 /* Leaf piles (Sean, 2 Nov 2026: "put it in like blank spaces"): placed by placePiles in app.js into the page's empty space only; this is their layer. */
-.leafpiles { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 30; pointer-events: none; }
+.leafpiles { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 30; pointer-events: none; overflow: hidden; }
 .leafpiles > i { position: absolute; width: 104px; height: 58px; background: no-repeat center / contain; pointer-events: none; }
