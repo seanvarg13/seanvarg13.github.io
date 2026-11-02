@@ -6114,3 +6114,6 @@ line can bring them back.
   second most frequent spot and third most / And put roster games before GS and makes GS say starts")**: the group row's blank cell over Season is
   frozen (`f1`, as the Pitching+ tab's), so the top row slides under it like the column names; the spot columns are **Most · 2nd most · 3rd most**
   (each cell still names the slot and its share, "3rd · 45%"); Playing time is Roster G · **Starts** · Start% · G · PA · PA/G.
+
+* **The Playing time box back (Sean, 2 Nov 2026: "Actually go back to the prior table format that was better visually")**: `lineupLine` and its CSS
+  are the 1 Nov Bio-box version again (`.pbplay`: the band head, the five cells, the Last 15 strip). The B-Ref table of PRs #803 / #804 is history.

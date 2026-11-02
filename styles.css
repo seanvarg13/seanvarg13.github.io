@@ -6202,16 +6202,3 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
 /* Leaf piles (Sean, 2 Nov 2026: "put it in like blank spaces"): placed by placePiles in app.js into the page's empty space only; this is their layer. */
 .leafpiles { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 30; pointer-events: none; overflow: hidden; }
 .leafpiles > i { position: absolute; width: 104px; height: 58px; background: no-repeat center / contain; pointer-events: none; }
-/* The playing-time table (Sean, 2 Nov 2026: "Can the playing time table be more like the style of the rest of the tables"): the season table's
-   heading over one B-Ref table (.sbt.brt.plt) — its frame, band, rules and type come from the tables' own rules; only the spacing and the
-   last-15 strip and Platoon chip inside a cell are its own */
-:root:root:root:root:root:root:root:root #xboard .pltblock { margin: 28px 0 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-:root:root:root:root:root:root:root:root #xboard .pltblock .sbscroll { max-width: 100%; }
-:root:root:root:root:root:root:root:root #xboard table.plt td { white-space: nowrap; }
-:root:root:root:root:root:root:root:root #xboard table.plt td.plweak { opacity: .65; }
-:root:root:root:root:root:root:root:root #xboard table.plt .pbplat { display: inline-block; margin-left: 5px; padding: 0 5px; background: #c8102e; color: #fff; font: 700 10px/1.5 var(--body); vertical-align: 1px; }
-:root:root:root:root:root:root:root:root #xboard table.plt .pblast { display: inline-flex; gap: 2px; }
-:root:root:root:root:root:root:root:root #xboard table.plt .pblast b { display: inline-block; min-width: 13px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
-:root:root:root:root:root:root:root:root #xboard table.plt .pblast b.off { opacity: .5; }
-:root:root:root:root:root:root:root:root #xboard table.plt .pblast b.out { opacity: .35; }
-:root[data-view="mobile"]:root:root:root:root:root:root:root #xboard .pltblock { margin-top: 20px; padding: 0 12px; }
