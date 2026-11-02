@@ -11044,27 +11044,24 @@
       if (v == null) continue;
       cells.push([`vs ${h}HP`, `${Math.round(v)}%`, pl === h ? "PLAT" : `${a[0]} of ${a[1]} starts`, `Starts in ${a[0]} of his ${a[1]} roster games against ${h === "L" ? "left" : "right"}-handed starting pitchers${pl === h ? ` — sits against them: ${Math.round(v)}% against ${h === "L" ? "lefties" : "righties"}, ${Math.round(h === "L" ? L.rsp : L.lsp)}% against the other side` : ""}`, pl === h ? "pbweak" : ""]);
     }
-    // a table in the site's dress (Sean, 2 Nov 2026: "Can the playing time table be more like the style of the rest of the tables"): the season
-    // table's heading, then one B-Ref table — Season (frozen) | Lineup: his top three spots | Playing time: GS · Roster G · Start% · G · PA · PA/G |
-    // Platoon: vs LHP · vs RHP | Last 15. The Bio-box cells of 1 Nov are history; the tooltips are theirs
-    const box = el("section", "pltblock");
-    const hd = el("div", "sbhead"); hd.append(el("h3", "sbtitle", "Playing time")); box.append(hd);
-    const sides = cells.filter((c) => /^vs /.test(c[0]));
-    const heads = [["Season", "l f1"], ["Most", "", "His most frequent lineup spot and its share of his starts"], ["2nd most", "", "His second most frequent spot"], ["3rd most", "", "His third most frequent spot"],
-                   ["Roster G", "", cells[1][3]], ["Starts", "", "Games started"], ["Start%", "", "Starts over his games on the active roster"], ["G", "", "Games played: starts and substitute appearances"],
-                   ["PA", ""], ["PA/G", "", cells[2][3]], ...sides.map((c) => [c[0], "", "Starts against that hand over his roster games against it"]), ...(L.last.length ? [[`Last ${L.last.length}`, "", `His last ${L.last.length} team games: the slot he started in, – on the roster without starting, × off the active roster`]] : [])];
-    const groups = [["", 1], ["Lineup spot", 3], ["Playing time", 6], ...(sides.length ? [["Platoon", sides.length]] : []), ...(L.last.length ? [["Recent", 1]] : [])];
-    const { tb, fin, wrap } = brTable(groups, heads, "plt");
-    wrap.querySelector("tr.over th").classList.add("f1"); /* the group row's blank over Season freezes with it, so the top row slides like the names */
-    const tr = el("tr"), td = (txt, cls, tip) => { const c = el("td", cls || null, txt); if (tip) c.title = tip; tr.append(c); return c; };
-    td(String(DS.season), "l f1");
-    for (let i = 0; i < 3; i++) { const x = slots[i]; td(x ? `${ORD(x[0])} · ${pc(x[1])}` : "–", null, x ? `${x[1]} starts batting ${ORD(x[0])}${i === 0 ? ` — mean slot ${L.slot.toFixed(1)}` : ""}` : null); }
-    td(String(L.ar)); td(String(L.gs)); td(`${Math.round(L.stpct)}%`); td(L.gp != null ? String(L.gp) : "–"); td(String(L.pa)); td(L.patg != null ? L.patg.toFixed(1) : "–");
-    for (const c of sides) { const x = td(c[1], c[4] ? "plweak" : null, c[3]); if (c[2] === "PLAT") x.append(el("span", "pbplat", "Plat")); }
-    if (L.last.length) { const c = td("", "pllastc"), s = el("span", "pblast");
-      for (const x of L.last) { const b = el("b", x > 0 ? "on" : x === 0 ? "off" : "out", x > 0 ? String(x) : x === 0 ? "–" : "×"); b.title = x > 0 ? `Started, batting ${ORD(x)}` : x === 0 ? "On the roster, didn't start" : "Off the active roster"; s.append(b); }
-      c.append(s); }
-    tb.append(fin(tr)); box.append(wrap);
+    const box = el("section", "pbinfo pbplay");
+    box.append(el("div", "pbinfohd", `Playing time · ${DS.season}`));
+    const body = el("div", "pbplbd"), grid = el("div", "plgrid"); body.append(grid); box.append(body);
+    grid.style.setProperty("--n", cells.length);
+    for (const [lab, val, sub, title, cls] of cells) {
+      const c = el("div", "plcell" + (cls ? " " + cls : "")); c.title = title;
+      c.append(el("span", "pllab", lab));
+      if (Array.isArray(val)) { const t = el("span", "pltop"); for (const [o, q] of val) { const r = el("span", "pltopr"); r.append(el("b", "plval", o), el("small", "plsub", q)); t.append(r); } c.append(t); }
+      else c.append(el("b", "plval", val));
+      if (sub === "PLAT") c.append(el("span", "pbplat", "Platooned")); else if (sub) c.append(el("small", "plsub", sub));
+      grid.append(c);
+    }
+    if (L.last.length) {
+      const r = el("div", "pllast"); r.title = `His last ${L.last.length} team games: the slot he started in, – on the roster without starting, × off the active roster`;
+      r.append(el("span", "pllab", `Last ${L.last.length}`));
+      const s = el("span", "pblast"); for (const x of L.last) { const b = el("b", x > 0 ? "on" : x === 0 ? "off" : "out", x > 0 ? String(x) : x === 0 ? "–" : "×"); b.title = x > 0 ? `Started, batting ${ORD(x)}` : x === 0 ? "On the roster, didn't start" : "Off the active roster"; s.append(b); }
+      r.append(s); body.append(r);
+    }
     return box;
   }
   // In-season arsenal alerts (Sean, 28 Oct 2026, item 10 of the review's picks: "new pitch 5%+ in last 30 days, usage swing 10+, velo +1 on
