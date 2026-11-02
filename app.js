@@ -7429,7 +7429,7 @@
   // every piece its own colour, always (Sean, 1 Nov 2026: "don't even give the option for selecting 2 3 or 4 color things just give the user the ability
   // to select the color for every necessary piece")
   const CZ_ROLES = [["main", "Main", "bands, headers, buttons, tabs"], ["text", "Text", "the type"], ["stripe", "Stripe", "the rule under the bands"], ["accent", "Highlight", "links and accent type"],
-    ["lines", "Lines", "outlines and table lines"], ["page", "Background", "the page behind the cards"], ["heading", "Headings", "the big bold titles"]];
+    ["lines", "Lines", "outlines and table lines"], ["page", "Background", "the page behind the cards"], ["heading", "Headings", "the big bold titles"], ["sorted", "Sorted header", "the sorted column's name in a table"]];
   const cz = { act: "main", lg: "ALL", yr: "today", q: "", mode: "teams", cq: "" };
   // the colour search (Sean, 1 Nov 2026: "allow me to search cream white and it comes up with every teams color who has cream white"): every team
   // colour matched by its name and by the families its hex falls in (czFam: hue / saturation / lightness — a cream is also a white, a navy also a
@@ -7499,6 +7499,9 @@
   const czLum = (h) => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ""); if (!m) return 1; const v = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4))); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
   // a team's look as a scheme: whites out (a white band reads as no band), the darkest colour the text, the club's first remaining colour the
   // main, the rest the stripe and the highlight in the club's order; k = how many of the colours to use (2, 3, or 4 for all)
+  // a toward b by t (the Sorted header starts at the look it had: the band lightened 22%)
+  const czMix = (x, y, t) => { const p = (h) => [1, 3, 5].map((i) => parseInt((h || "#7bafd4").slice(i, i + 2), 16)); const A = p(x), B = p(y);
+    return "#" + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, "0")).join(""); };
   function czTeam(cols, k) {
     let used = cols.map((c) => c[1]).filter((h, i, a) => czLum(h) < 0.8 && a.indexOf(h) === i).slice(0, k);
     if (!used.length) used = [cols[0][1]];
@@ -7514,7 +7517,7 @@
     // an older save of two or three colours: the roles it didn't set take what they showed (the stripe the text, the highlight the main)
     const c0 = cfg0.colors || {}, o = !c0.lines;
     const cfg = { ...cfg0, n: 4, colors: { main: c0.main, text: c0.text, stripe: o && (cfg0.n || 2) < 3 ? c0.text : c0.stripe || c0.text, accent: o && (cfg0.n || 2) < 4 ? c0.main : c0.accent || c0.main,
-      lines: c0.lines || "#111111", page: c0.page || "#ffffff", heading: c0.heading || c0.text } };
+      lines: c0.lines || "#111111", page: c0.page || "#ffffff", heading: c0.heading || c0.text, sorted: c0.sorted || czMix(c0.main, "#ffffff", 0.22) } };
     const save = (c, name) => { T.setCustom(Object.assign({}, c, { name: name || c.name || "Custom" })); renderSettings(); };
     const on = cur.scheme === "custom";
     const wrap = el("div", "czbox");
@@ -7588,7 +7591,7 @@
         }
         const use = el("div", "czuse");
         const b = el("button", "czub", "Use"); b.type = "button"; b.title = `${team}: take its colours (you can change any piece after)`;
-        b.addEventListener("click", () => { const t = czTeam(cols, 4); save({ n: 4, flat: !!cfg.flat, colors: { ...t.colors, lines: cfg.colors.lines, page: cfg.colors.page, heading: t.colors.text } }, `${team}${to ? ` (${fr}–${to})` : ""}`); });
+        b.addEventListener("click", () => { const t = czTeam(cols, 4); save({ n: 4, flat: !!cfg.flat, colors: { ...t.colors, lines: cfg.colors.lines, page: cfg.colors.page, heading: t.colors.text, sorted: cfg.colors.sorted } }, `${team}${to ? ` (${fr}–${to})` : ""}`); });
         use.append(b);
         it.append(hd, sws, use); list.append(it);
       }
@@ -7596,7 +7599,7 @@
     if (!window.DRAFT_TEAMCOLORS) ensureScript("hist/teamcolors.js", () => !!window.DRAFT_TEAMCOLORS);
     draw();
     wrap.append(tb);
-    row("Your colours", "A colour for every piece: the bands and buttons, the type, the stripe, links, the outlines and table lines, the page behind the cards, and the big bold titles. Tap a box to pick which piece a team swatch fills (the next one is picked after each tap), use the colour picker, type a hex, or take a team's look with Use. Colours (beside Teams) searches every pro and college team's colours by name or family — cream white, navy, a hex. The percentile colours stay blue cold, red hot. Text that wouldn't read is darkened until it does.", wrap);
+    row("Your colours", "A colour for every piece: the bands and buttons, the type, the stripe, links, the outlines and table lines, the page behind the cards, the big bold titles, and the sorted column's name in the tables. Tap a box to pick which piece a team swatch fills (the next one is picked after each tap), use the colour picker, type a hex, or take a team's look with Use. Colours (beside Teams) searches every pro and college team's colours by name or family — cream white, navy, a hex. The percentile colours stay blue cold, red hot. Text that wouldn't read is darkened until it does.", wrap);
   }
   function renderAppearance(box) {
     const T = window.DRAFT_THEMES; box.innerHTML = "";

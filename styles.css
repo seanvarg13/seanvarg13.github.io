@@ -6058,3 +6058,10 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
 .hdrpick .hdropt { display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 6px; background: var(--surface, #fff); border: 1px solid var(--line-soft, #ccc); border-radius: 0; cursor: pointer; font: 600 13px/1.2 var(--body); color: var(--ink); text-align: left; }
 .hdrpick .hdropt.on { outline: 3px solid var(--accent-2); outline-offset: -3px; }
 .hdrpick .hdrsw { display: block; height: 34px; background: var(--band2); border-bottom: 3px solid var(--stripe-line, #c8102e); }
+
+/* The sorted column's name in the customizer's colour (Sean, 2 Nov 2026: "in the tables here the column that is sorted allow me to choose in the
+   appearance color selector what color that column header gets to be"): with a Sorted header colour set (data-sorthd), the lit column name on every
+   table — home's and the card tabs' (th.lit), the Leaderboard's (#colhead .h[aria-sort]), the Pitching+ board's — is that colour, its type white
+   or the text colour by contrast (--sorthd-ink). */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-sorthd]:not(#sh1):not(#sh2):not(#sh3):not(#sh4):not(#sh5):not(#sh6):not(#sh7) :is(th.lit, #colhead .h[aria-sort], #colhead .h.sorted, thead th:has(.sortbtn.on)) { background: var(--sorthd) !important; color: var(--sorthd-ink) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-sorthd]:not(#sh1):not(#sh2):not(#sh3):not(#sh4):not(#sh5):not(#sh6):not(#sh7) :is(th.lit, #colhead .h[aria-sort], #colhead .h.sorted, thead th:has(.sortbtn.on)) * { color: var(--sorthd-ink) !important; }
