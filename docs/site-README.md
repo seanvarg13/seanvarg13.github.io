@@ -1604,3 +1604,8 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
 * **The customizer's Background shows (Sean, 2 Nov 2026, his cream `#fdf9d8` not showing: "the background button isn't working")**: it set `--ground`,
   the page behind the cards, but home's and a player page's page card (`main.wrap`) is the surface and covered it; on your own colours
   (`[data-scheme="custom"]`) the page card takes the Background too. Tables, the Bio / Playing time boxes and the other cards stay white.
+
+* **A Tables colour (Sean, 2 Nov 2026: "allow a table color option as well for color stuff")**: an eleventh customizer role, **Tables**: `light.tbl` /
+  `tbl-ink` → `--tbl` / `--tbl-ink` and `data-tbl`; every table's cells (the B-Ref tables and the Leaderboard / Rankings rows with their frozen Rk /
+  Player cells) take it as their ground and `--tbl-ink` (the text colour, or white on a dark one) as their type. Heat cells, totals rows and column
+  names keep theirs. An older save starts at white. Light mode only.

@@ -241,6 +241,7 @@ window.DRAFT_THEMES = (function () {
       btn: M, "btn-ink": onM, "btn-line": flat ? "transparent" : rail, "tab-fill": M,
       ground: PG, "line-soft": hair, frame: flat ? hair : rail, secrule: hair, "accent-ink": onM, "band-ink": onM, svtext: T, svrule: hair, pctrack: mix(M, "#ffffff", 0.88),
       outline: LN, xl: hx(C.grid) ? C.grid : LN, xlt: hx(C.frame) ? C.frame : (hx(C.grid) ? C.grid : LN) };   // table lines and the thick frame (2 Nov 2026)
+    if (hx(C.table)) { light.tbl = C.table; light["tbl-ink"] = ratioOf(C.table, T) >= 4.5 ? T : "#ffffff"; }   // the tables' cells (2 Nov 2026)
     if (hx(C.fbar)) { light.fbar = C.fbar; light["fbar-ink"] = ratioOf(C.fbar, T) >= 4.5 ? T : "#ffffff"; }   // the filter bars (2 Nov 2026)
     if (hx(C.sorted)) { light.sorthd = C.sorted; light["sorthd-ink"] = ratioOf(C.sorted, "#ffffff") >= 3 ? "#ffffff" : T; }   // the sorted column's name (2 Nov 2026)
     if (hx(C.heading)) light.heading = toward(C.heading, "#000000", "#ffffff", 3);   // the bold headings (2 Nov 2026), readable on white
@@ -324,6 +325,9 @@ window.DRAFT_THEMES = (function () {
     // the customizer's Sorted header colour (Sean, 2 Nov 2026: "the column that is sorted allow me to choose in the appearance color selector what
     // color that column header gets to be"): --sorthd / --sorthd-ink and data-sorthd, in both modes (the bands are the same colour in both)
     // the customizer's Filter bar colour (Sean, 2 Nov 2026: "I also want a color setting for the like filters bars too"): --fbar / --fbar-ink, data-fbar
+    // the customizer's Table colour (Sean, 2 Nov 2026: "allow a table color option as well"): --tbl / --tbl-ink, data-tbl
+    if (sc.light.tbl && !isDark()) { root.style.setProperty("--tbl", sc.light.tbl); root.style.setProperty("--tbl-ink", sc.light["tbl-ink"]); root.dataset.tbl = "1"; }
+    else { root.style.removeProperty("--tbl"); root.style.removeProperty("--tbl-ink"); delete root.dataset.tbl; }
     if (sc.light.fbar && !isDark()) { root.style.setProperty("--fbar", sc.light.fbar); root.style.setProperty("--fbar-ink", sc.light["fbar-ink"]); root.dataset.fbar = "1"; }
     else { root.style.removeProperty("--fbar"); root.style.removeProperty("--fbar-ink"); delete root.dataset.fbar; }
     if (sc.light.sorthd) { root.style.setProperty("--sorthd", sc.light.sorthd); root.style.setProperty("--sorthd-ink", sc.light["sorthd-ink"]); root.dataset.sorthd = "1"; }
