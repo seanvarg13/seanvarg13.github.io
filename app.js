@@ -11353,6 +11353,20 @@
     // the IL badge keeps to his name's last word (the row doesn't break before it, so a phone wraps "Carson / Whisenhunt 60-day IL"); only when even
     // the last word and the badge don't fit the column may the badge take a line of its own
     const nr = bar.querySelector(".pgbnrow"); if (nr && nr.querySelector(".pgbil")) { nr.classList.remove("ilwrap"); if (nr.scrollWidth > nr.clientWidth + 1) nr.classList.add("ilwrap"); }
+    pgRule();
+  }
+  // the band's foot rule is its own sticky element right after the band (Sean, 2 Nov 2026: the rule "very quickly goes away and comes back" as it
+  // handed over to the bar): it rides under the Summary, then pins under the bar where the scroller puts it — the browser moves it, no script runs
+  // in the scroll, so an iPhone's late scroll events can't leave a frame without it. The band's own 3px border + 2px shadow come off (styles.css).
+  function pgRule() {
+    const xb = $("xboard"), bar = xb && xb.querySelector(":scope > .pgbar"), ct = xb && xb.querySelector(":scope > .cardtop"), mp = ct && ct.querySelector(".pagehead .mplate");
+    let r = xb && xb.querySelector(":scope > .pgrule");
+    if (!bar || !ct || !mp) { if (r) r.remove(); return; }
+    if (!r || r.previousElementSibling !== ct) { if (r) r.remove(); const col = getComputedStyle(mp).borderBottomColor; r = document.createElement("div"); r.className = "pgrule"; r.style.background = col; ct.after(r); }
+    r.style.top = (parseFloat(getComputedStyle(bar).top) || 0) + bar.offsetHeight + "px";
+    r.style.marginLeft = r.style.marginRight = "0px";
+    const a = r.getBoundingClientRect(), h = mp.getBoundingClientRect();
+    r.style.marginLeft = (h.left - a.left) + "px"; r.style.marginRight = (a.right - h.right) + "px";
   }
   window.addEventListener("resize", () => requestAnimationFrame(bleedBar));
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", () => requestAnimationFrame(bleedBar));   // the name's width once its face has loaded
@@ -11365,7 +11379,7 @@
   // the header, and white past the foot once the area under the bars went white (Sean, 23 Oct 2026) — the lower half of a player page sets pgfoot
   function footSync() {
     const r = document.documentElement, max = r.scrollHeight - innerHeight;
-    r.classList.toggle("pgfoot", state.mode === "player" && max > 0 && window.scrollY > max / 2);
+    r.classList.toggle("pgfoot", max > 0 && window.scrollY > max / 2);   // every page since 2 Nov 2026: the top bounce is the header's colour
   }
   window.addEventListener("scroll", () => requestAnimationFrame(() => { stickSync(); footSync(); }), { passive: true, capture: true });   // capture: the popup's own scroll too
   // An iPhone's keyboard can leave the window the wrong size behind it, in a home-screen web app most of all: once the box has blurred and the
@@ -14204,7 +14218,12 @@
       if (Array.isArray(bg)) { first = (/#[0-9a-f]{6}/i.exec(bg[1]) || [])[0]; bg = bg[0] + ", " + bg[1]; }
       if (bg && v !== "plain") { root.style.setProperty("--hdrbg", bg); root.dataset.hdr = v; } else { root.style.removeProperty("--hdrbg"); delete root.dataset.hdr; }
       if (v === "plain") root.dataset.hdrplain = "1"; else delete root.dataset.hdrplain;
-      const meta = document.querySelector('meta[name="theme-color"]'); if (meta && first) meta.content = first;
+      // the header's own colour behind the art, the iPhone's status bar and the page's top bounce (Sean, 2 Nov 2026: "make the blue above the
+      // header be the same theme as the header"): the art's first colour, the fall leaves' rust, else the band
+      if (!first && v === "season" && root.dataset.season === "fall") first = "#9c3412";
+      if (first) root.style.setProperty("--hdrc", first); else root.style.removeProperty("--hdrc");
+      const meta = document.querySelector('meta[name="theme-color"]'), band2 = getComputedStyle(root).getPropertyValue("--band2").trim();
+      if (meta && (first || band2)) meta.content = first || band2;
     }
     // a look's background on its own (the Appearance tiles): Seasonal / fall show the season's art, Plain the band
     const preview = (v) => { const k = v === "season" ? seasonNow() : v.startsWith("s:") ? v.slice(2) : null;

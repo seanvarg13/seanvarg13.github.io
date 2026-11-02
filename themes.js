@@ -362,7 +362,7 @@ window.DRAFT_THEMES = (function () {
     // the home-screen app draws under a translucent status bar, so the header's colour fills it (2 Nov 2026; index.html says the same)
     const sb = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]'); if (sb) sb.content = "black-translucent";
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = tokens["accent-2"];
+    if (meta) meta.content = root.style.getPropertyValue("--hdrc").trim() || tokens["accent-2"];   // a header theme's own colour when one is on (app.js HDR)
   }
 
   // preview every font at once (the Appearance page only)
