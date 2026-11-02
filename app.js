@@ -13992,8 +13992,16 @@
 
   // keep the sticky column header just under the sticky toolbar
   const tb = document.querySelector(".toolbar:not(.xtoolbar)"), hd = document.querySelector("header.top");
-  const setTb = () => { document.documentElement.style.setProperty("--toolbar-h", tb.hidden ? "0px" : tb.offsetHeight + "px"); document.documentElement.style.setProperty("--header-h", hd.offsetHeight + "px"); };
-  if (window.ResizeObserver) { const ro = new ResizeObserver(setTb); ro.observe(tb); ro.observe(hd); } else window.addEventListener("resize", setTb);
+  const setTb = () => { const de = document.documentElement; de.style.setProperty("--toolbar-h", tb.hidden ? "0px" : tb.offsetHeight + "px"); de.style.setProperty("--header-h", hd.offsetHeight + "px");
+    /* the phone's real screen height and bottom bar, measured: in the iPhone's home-screen app 100dvh and the CSS guess of the bar's
+       height can disagree with what's drawn, and the standing list card then ran under the bar (Sean, 2 Nov 2026) */
+    const bar = document.querySelector("nav.pbar"), bh = bar && bar.offsetHeight;
+    if (bh) { de.style.setProperty("--pbar-h", bh + "px"); de.style.setProperty("--appvh", Math.round((window.visualViewport && visualViewport.scale <= 1.01 ? Math.max(innerHeight, visualViewport.height) : innerHeight)) + "px"); }
+    else { de.style.removeProperty("--pbar-h"); de.style.removeProperty("--appvh"); } };
+  if (window.ResizeObserver) { const ro = new ResizeObserver(setTb); ro.observe(tb); ro.observe(hd); const pb = document.querySelector("nav.pbar"); if (pb) ro.observe(pb); } else window.addEventListener("resize", setTb);
+  window.addEventListener("resize", setTb); window.addEventListener("orientationchange", () => setTimeout(setTb, 300));
+  if (window.visualViewport) visualViewport.addEventListener("resize", setTb);
+  [300, 1000, 2500].forEach(t => setTimeout(setTb, t));
 
   // re-read colors when the theme flips (OS setting or the host's toggle)
   const repaint = () => { readTokens(); colorCache.clear(); render(); };
