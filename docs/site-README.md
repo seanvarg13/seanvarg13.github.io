@@ -1589,3 +1589,7 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
     hitter's and a pitcher's page.
   - **Top bar** (phone): the "Thru Sep 27" pill at the left (a link home, `.phthrua`), the logo alone in the middle at 40px, search at the right.
     **Bottom bar**: Home · Leaders · Fantasy · **Settings** (the gear left the top bar). The page check counts four tabs.
+
+* **Settings as the whole page (Sean, 2 Nov 2026: "we don't need the settings page to have like the border that cuts off the color key button thing it can
+  just be the whole page no need for the border window thing")**: on Settings (and `#appearance`) neither `main.wrap` nor the `#pboard` card draws a frame,
+  corner or ground; the four tabs wrap instead of sliding off the edge — two by two on a phone, one row on a desktop. Block at the end of `styles.css`.
