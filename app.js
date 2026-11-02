@@ -11441,6 +11441,112 @@
     r.classList.toggle("pgfoot", max > 0 && window.scrollY > max / 2);   // every page since 2 Nov 2026: the top bounce is the header's colour
   }
   window.addEventListener("scroll", () => requestAnimationFrame(() => { stickSync(); footSync(); }), { passive: true, capture: true });   // capture: the popup's own scroll too
+  // Leaf piles (Sean, 2 Nov 2026: "Don't put the chunks in areas where there is text, put it in like blank spaces"): in the fall look, heaps of
+  // colourful leaves are set into the page's empty space only. After a draw settles, the page (and an open popup or draft room) is measured: every
+  // piece of text, every picture / chart / control and every framed or filled box is marked on an 8px grid, and a heap goes only where a box round it
+  // is clear — spaced apart, in an order seeded by the page so they don't jump between draws. They sit in a layer over the page that takes no taps.
+  const LEAFC = ["#ffd23f", "#b5122b", "#7a9a2e", "#f5b301", "#6d2a5c", "#e3262b", "#7a1430", "#b7c63a", "#e2557a", "#ffe066", "#8a4b1f", "#c21d3a", "#e8662a", "#f08c2a"];
+  const PILE_W = 104, PILE_H = 58;
+  const pileArt = (() => {
+    const out = [];
+    const maple = (c) => `<polygon points='0,-10 2,-5 6,-7.5 5,-2 10,-3.5 7.5,1 9.5,3.5 3,3 4,8 0,5 -4,8 -3,3 -9.5,3.5 -7.5,1 -10,-3.5 -5,-2 -6,-7.5 -2,-5' fill='${c}' stroke='rgba(60,20,5,.45)' stroke-width='.6'/><path d='M0 5v6M0 5V-7' stroke='rgba(60,20,5,.5)' stroke-width='1'/>`;
+    const oval = (c) => `<path d='M0 -10C6 -6 6 4 0 10C-6 4 -6 -6 0 -10Z' fill='${c}' stroke='rgba(60,20,5,.45)' stroke-width='.6'/><path d='M0 -9V12M0 -2l3-3M0 2l-3-3M0 5l3-3' stroke='rgba(60,20,5,.45)' stroke-width='.8' fill='none'/>`;
+    for (let v = 0; v < 8; v++) {
+      let s = 1234 + v * 977; const r = () => ((s = (s * 1103515245 + 12345) % 2147483648) / 2147483648);
+      const n = 13 + Math.floor(r() * 5), ls = [];
+      for (let k = 0; k < n; k++) { const t = r() * 6.283, d = Math.sqrt(r()); ls.push([52 + Math.cos(t) * d * 38, 30 + Math.sin(t) * d * 15, Math.round(r() * 360), 0.9 + r() * 0.6, r() < 0.6 ? maple : oval, LEAFC[Math.floor(r() * LEAFC.length)]]); }
+      ls.sort((p, q) => Math.hypot(q[0] - 52, q[1] - 30) - Math.hypot(p[0] - 52, p[1] - 30));   // the middle on top, a heap
+      const body = `<ellipse cx='54' cy='44' rx='44' ry='8' fill='rgba(60,25,5,.12)'/>` + ls.map(([x, y, rot, sc, f, c]) => `<g transform='translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot}) scale(${sc.toFixed(2)})'>${f(c)}</g>`).join("");
+      out.push(`url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${PILE_W}' height='${PILE_H}' viewBox='0 0 ${PILE_W} ${PILE_H}'>${body}</svg>`)}")`);
+    }
+    return out;
+  })();
+  const PILE_SKIP = "header.top, .pbar, .pbarfade, canvas.seasonfx, .leafpiles, #modal[hidden], script, style, .phmodal";
+  const pileRGBA = (c) => { const m = c.match(/[\d.]+/g); return m ? { a: m.length > 3 ? +m[3] : 1, v: m.slice(0, 3).join(",") } : { a: 0, v: "" }; };
+  function placePiles(host, layer, seedKey) {
+    layer.textContent = "";
+    const o = layer.getBoundingClientRect(), hr = host === document.body ? null : host.getBoundingClientRect();
+    const W = host === document.body ? document.documentElement.clientWidth : host.clientWidth;
+    const H = host === document.body ? document.documentElement.scrollHeight : host.scrollHeight;
+    const C = 8, gw = Math.ceil(W / C) + 1, gh = Math.ceil(H / C) + 1;
+    if (gw * gh > 3e6) return;
+    const g = new Uint8Array(gw * gh);
+    const mark = (r) => {
+      const x0 = Math.max(0, Math.floor((r.left - o.left) / C)), x1 = Math.min(gw - 1, Math.ceil((r.right - o.left) / C));
+      const y0 = Math.max(0, Math.floor((r.top - o.top) / C)), y1 = Math.min(gh - 1, Math.ceil((r.bottom - o.top) / C));
+      for (let y = y0; y <= y1; y++) g.fill(1, y * gw + x0, y * gw + x1 + 1);
+    };
+    // the grounds a heap may lie on: the page's own white and the host's
+    const ground = new Set([document.body, host, document.querySelector("main.wrap")].filter(Boolean).map((e) => pileRGBA(getComputedStyle(e).backgroundColor).v));
+    const REPL = /^(IMG|SVG|CANVAS|INPUT|SELECT|TEXTAREA|BUTTON|VIDEO|IFRAME|PROGRESS)$/i;
+    const walk = (e) => {
+      for (const k of e.children) {
+        if (k.matches(PILE_SKIP)) continue;
+        if (host === document.body && k.matches("#xboard.xpop, #mkroom")) continue;
+        const cs = getComputedStyle(k);
+        if (cs.display === "none" || cs.visibility === "hidden") continue;
+        if (host === document.body && cs.position === "fixed") continue;   // floats over the page, moves with the screen
+        const rs = k.getClientRects(); if (!rs.length) { walk(k); continue; }
+        const bg = pileRGBA(cs.backgroundColor), boxed = REPL.test(k.tagName) || cs.boxShadow !== "none" || cs.backgroundImage !== "none"
+          || ["Top", "Right", "Bottom", "Left"].some((s) => parseFloat(cs["border" + s + "Width"]) > 0 && pileRGBA(cs["border" + s + "Color"]).a > 0)
+          || (bg.a > 0.05 && !ground.has(bg.v));
+        // a card the page is laid out on (the white page card, a settings or board page) is ground, not a box: go inside it
+        const big = boxed && !REPL.test(k.tagName) && rs.length === 1 && rs[0].width > W * 0.6 && rs[0].height > Math.min(innerHeight * 0.6, 500);
+        if (big) { if (bg.a > 0.05) ground.add(bg.v); walk(k); continue; }
+        if (boxed) { for (const r of rs) mark(r); continue; }
+        for (const t of k.childNodes) if (t.nodeType === 3 && t.textContent.trim()) { const rg = document.createRange(); rg.selectNodeContents(t); for (const r of rg.getClientRects()) mark(r); }
+        walk(k);
+      }
+    };
+    walk(host);
+    // nothing above the page's first content or under the bars at the foot
+    const top = host === document.body ? Math.max(0, ((document.querySelector("header.top") || { getBoundingClientRect: () => ({ bottom: 0 }) }).getBoundingClientRect().bottom - o.top) + 6) : 0;
+    const bar = document.querySelector(".pbar"), foot = host === document.body && bar && bar.offsetHeight ? bar.offsetHeight + 10 : 0;
+    // prefix sums: is a box clear?
+    const P = new Int32Array((gw + 1) * (gh + 1));
+    for (let y = 0; y < gh; y++) { let row = 0; for (let x = 0; x < gw; x++) { row += g[y * gw + x]; P[(y + 1) * (gw + 1) + x + 1] = P[y * (gw + 1) + x + 1] + row; } }
+    const busy = (x0, y0, x1, y1) => P[y1 * (gw + 1) + x1] - P[y0 * (gw + 1) + x1] - P[y1 * (gw + 1) + x0] + P[y0 * (gw + 1) + x0];
+    const small = innerWidth < 700, pw = small ? 72 : PILE_W, ph = small ? 40 : PILE_H;   // a phone's gaps are narrower: smaller heaps
+    const PAD = small ? 6 : 10, bw = Math.ceil((pw + 2 * PAD) / C), bh = Math.ceil((ph + 2 * PAD) / C);
+    let s = 0; for (const ch of seedKey) s = (s * 31 + ch.charCodeAt(0)) % 2147483648;
+    const rnd = () => ((s = (s * 1103515245 + 12345) % 2147483648) / 2147483648);
+    const cands = [];
+    for (let y = Math.ceil(top / C); y + bh < gh - foot / C; y += 2) for (let x = 1; x + bw < gw - 1; x += 2) if (!busy(x, y, x + bw, y + bh)) cands.push([x, y, rnd()]);
+    cands.sort((p, q) => p[2] - q[2]);
+    const gap = small ? 150 : 260, put = [], max = Math.max(3, Math.round(W * H / 220000));
+    for (const [x, y] of cands) {
+      const cx = x * C + PAD + pw / 2, cy = y * C + PAD + ph / 2;
+      if (put.some(([px, py]) => Math.hypot(px - cx, py - cy) < gap)) continue;
+      put.push([cx, cy]);
+      const d = document.createElement("i");
+      d.style.cssText = `left:${cx - pw / 2}px;top:${cy - ph / 2}px;width:${pw}px;height:${ph}px;background-image:${pileArt[Math.floor(rnd() * pileArt.length)]}`;
+      layer.append(d);
+      if (put.length >= max) break;
+    }
+    void hr;
+  }
+  let pileT = 0, pileBusy = false;
+  function pilesNow() {
+    pileT = 0;
+    const fall = document.documentElement.dataset.season === "fall";
+    const hosts = [document.body, document.querySelector("#xboard.xpop"), document.querySelector("#mkroom:not([hidden])")].filter(Boolean);
+    document.querySelectorAll(".leafpiles").forEach((l) => { if (!fall || !hosts.includes(l.parentElement)) l.remove(); });
+    if (!fall) return;
+    pileBusy = true;
+    try {
+      for (const h of hosts) {
+        let l = [...h.children].find((c) => c.classList.contains("leafpiles"));
+        if (!l) { l = document.createElement("div"); l.className = "leafpiles"; l.setAttribute("aria-hidden", "true"); h.append(l); }
+        placePiles(h, l, (location.hash || "#home") + (h === document.body ? "" : h.id) + (innerWidth < 700 ? "m" : "d"));
+      }
+    } catch (e) { console.warn("leaf piles", e); }
+    setTimeout(() => { pileBusy = false; }, 0);
+  }
+  const pilesSoon = () => { if (pileBusy) return; clearTimeout(pileT); pileT = setTimeout(() => (window.requestIdleCallback || setTimeout)(pilesNow), 450); };
+  new MutationObserver((ms) => { if (ms.every((m) => m.target.closest && m.target.closest(".leafpiles"))) return; pilesSoon(); }).observe(document.body, { childList: true, subtree: true });
+  new MutationObserver(pilesSoon).observe(document.documentElement, { attributes: true, attributeFilter: ["data-season", "data-view"] });
+  window.addEventListener("resize", pilesSoon);
+  window.__piles = pilesNow;
   // An iPhone's keyboard can leave the window the wrong size behind it, in a home-screen web app most of all: once the box has blurred and the
   // keyboard gone, the page can't be scrolled to its foot by about the keyboard's height — on every page, until the app is quit (Sean, 23 Oct
   // 2026, a recording: Early's and Skenes's pages stopped at the season table, the bars' foot and the tabs out of reach). WebKit measures the

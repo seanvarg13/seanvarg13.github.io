@@ -6050,3 +6050,14 @@ line can bring them back.
   gained Settings' text (`#pboard` p / headings / list items / the Appearance rows / the colour key and How-this-page-works prose, `.prose > *`) and the
   Mock draft's setup card (`.mkset`). Checked by a headless sweep of fifteen pages on both layouts (scratch `bare.cjs`): no visible text or chart sits
   over a heap without its own ground.
+
+* **Leaf piles only in blank space (Sean, 2 Nov 2026: "Don't put the chunks in areas where there is text, put it in like blank spaces")**: the
+  repeating tile and the white-behind-text guards of the two entries above are gone. `placePiles` in `app.js` (after `footSync`) measures the page —
+  and an open player popup (`#xboard.xpop`) or draft room (`#mkroom`) on its own — once a draw settles: every text line (`Range.getClientRects`), every
+  picture, chart, control, and every framed, shadowed or filled box is marked on an 8px grid (a card the page is laid out on — wider than 60% of the
+  page and tall — counts as ground and is gone into, not marked); a heap (`pileArt`, eight seeded heaps of 13-17 maple and oval leaves in fourteen
+  colours, 104 × 58 on a desktop, 72 × 40 on a phone) goes only where a box round it with 10px (6px) of margin is clear, at least 260px (150px) from the
+  next, in an order seeded by the page's hash so they hold still between draws, one heap per ~220,000 px² at most. The layer (`.leafpiles`, z 2,
+  no taps) is redrawn on any change to the page (a MutationObserver, debounced 450ms, ignoring its own layer), on resize and when the season changes;
+  only while `<html data-season="fall">`. A phone shows few — its pages are full edge to edge — a desktop's gutters and the player page's white
+  space show most. `window.__piles()` draws them now (for a test).
