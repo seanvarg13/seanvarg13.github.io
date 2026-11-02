@@ -1788,3 +1788,16 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   Roster G · Start% · G · PA · PA/G | **Platoon**: vs LHP · vs RHP (a red "Plat" chip on the side he sits against) | **Recent**: Last 15 (the slot strip) —
   in the tables' own frame, band, rules and type, tooltips as before. A phone slides it sideways under the frozen Season, 12px in like the season table.
   The Bio-box cells of 1 Nov (`.pbplay`, `.plgrid`) are history. CSS: the block at the end of `styles.css`.
+
+* **The playing-time box is a table (Sean, 2 Nov 2026: "Can the playing time table be more like the style of the rest of the tables")**:
+  `lineupLine(p)` returns a `section.pltblock`: the season table's heading ("Playing time", `.sbhead` / `.sbtitle`) over one `brTable` (`table.sbt.brt.plt`)
+  — Season (frozen) | **Lineup spot**: 1st · 2nd · 3rd (his three most used spots and their share of his starts, "3rd · 45%") | **Playing time**: GS ·
+  Roster G · Start% · G · PA · PA/G | **Platoon**: vs LHP · vs RHP (a red "Plat" chip on the side he sits against) | **Recent**: Last 15 (the slot strip) —
+  in the tables' own frame, band, rules and type, tooltips as before. A phone slides it sideways under the frozen Season, 12px in like the season table.
+  The Bio-box cells of 1 Nov (`.pbplay`, `.plgrid`) are history. CSS: the block at the end of `styles.css`.
+
+* **The Playing time table's top row frozen; Most / 2nd most / 3rd most; Roster G before Starts (Sean, 2 Nov 2026, Langeliers's popup: "Make it so
+  the top row behaves like the second row when I scroll and also don't make it say 1st, 2nd, 3rd. Do something else that indicates most frequent spot
+  second most frequent spot and third most / And put roster games before GS and makes GS say starts")**: the group row's blank cell over Season is
+  frozen (`f1`, as the Pitching+ tab's), so the top row slides under it like the column names; the spot columns are **Most · 2nd most · 3rd most**
+  (each cell still names the slot and its share, "3rd · 45%"); Playing time is Roster G · **Starts** · Start% · G · PA · PA/G.
