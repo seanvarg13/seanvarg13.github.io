@@ -1700,3 +1700,8 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   at the bar's right where Filters was, not on a strip of its own (the `xbar` strip is gone), and the **filter chips** ride at the bio line's right
   beside Back. The percentiles title is plain "2026 MLB Percentiles" again, and a pitcher's season table no longer has the Raw / Stuff bar over
   it. CSS: the block at the end of `styles.css`.
+
+* **Filter chips above the header again (Sean, 2 Nov 2026: "now make it so if I add filters those go above the header like they did in the past")**:
+  with a date window or split on, the chips ("Sep 27 ×", "last 100 PA ×") sit on a strip across the sticky bar's top, right-aligned, above his
+  headshot and name (the bar gets `xbar` again: 46px / 42px of top padding, the strip placed by `bleedBar`), instead of at the bio line's right.
+  The popup's × stays beside his name in the control row's design (`.pgx`, not moved to the strip); with no filter there is no strip.
