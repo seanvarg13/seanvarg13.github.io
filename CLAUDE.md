@@ -5864,3 +5864,24 @@ line can bring them back.
   ground). An older two- or three-colour save fills the new roles with what they showed. A team's look is one **Use** button (its colours into Main /
   Text / Stripe / Highlight; Lines and Background kept). **Appearance ▸ Table borders**: Thick (the default) / Thin, per device — `window.DRAFT_BORDERS`
   in `themes.js` (`draft2027.borders`, class `thinlines` on `<html>`, which sets `--xlw` to 1px); Follow the site default clears it.
+
+* **The status bar in the header's colour; a Headings colour; header themes; ESPN's bottom bar (Sean, 2 Nov 2026: "make it so the white space above the
+  header is also the same color and theme as the header is", "make it so I can make all of like the bold header text a different color than the regular
+  text", "make more header themes for the different themes and season themes etc", "make the bottom page selector row like the espn apps is")**:
+  - **Status bar**: `index.html`'s `apple-mobile-web-app-status-bar-style` is `black-translucent` (and `themes.js` sets it too), so the home-screen app
+    draws under the iPhone's status bar and the sticky header — already padded by the top inset — fills it with its colour or art; the full-screen
+    popups (`#xboard.xpop`, `#mkroom`) start under the status bar. iOS reads the setting when the app launches: close and reopen it.
+  - **Headings**: a seventh customizer role, **Headings** (the big bold titles), `buildCustom` → `light.heading` (darkened to 3:1 on white), `apply()`
+    → `--heading` and `data-heading` on `<html>`; `styles.css` paints `h1–h3`, home's draft-prep links, `.rollname`, `.ahead`, `.secname`, the
+    percentiles title and the bars' section names (`.svsecname` fill) with it, never type on a band (the player bar, header, Bio / Playing time
+    heads, table title bands). Light mode only. An older save starts it at the Text colour; a team's Use sets it to the team's text colour.
+  - **Header themes**: Appearance ▸ **Header**, per device (`draft2027.hdr`, `HDR` in `app.js` before the boot line), a tile per look with the look
+    as its preview: **Seasonal** (the default — the art of the season the effects show; fall keeps its leaf rule in `styles.css`; the plain band
+    with effects off), scheme styles drawn in the band colour — **Plain**, **Pinstripes**, **Seams** (baseball stitches), **Argyle**,
+    **Diamonds** (an infield), **Sunset** (a gradient of the band) — and every season's art all year (Halloween pumpkins and bats, Fall leaves,
+    Thanksgiving, Christmas trees and snowflakes, Winter snowflakes, New Year's confetti, Valentine's hearts, St. Patrick's shamrocks, Spring
+    blossoms, Easter eggs, Summer suns and baseballs, Fourth of July stars and stripes). The art is an SVG tile over a gradient in `--hdrbg`,
+    `data-hdr` on `<html>`; on art the phone's icons are white with a shadow; the `theme-color` meta takes the art's first colour.
+  - **Bottom bar**: no floating glass pill — one flat bar along the screen's foot like ESPN's, the page's surface with a hairline over it, running
+    down under the home bar, each tab an icon over its word, the current page in the ink and bold, the others grey; `--pbar-h` is the bar plus the
+    inset. The 29 Oct "App Store glass" entries are history.

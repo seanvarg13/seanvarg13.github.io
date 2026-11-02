@@ -7429,7 +7429,7 @@
   // every piece its own colour, always (Sean, 1 Nov 2026: "don't even give the option for selecting 2 3 or 4 color things just give the user the ability
   // to select the color for every necessary piece")
   const CZ_ROLES = [["main", "Main", "bands, headers, buttons, tabs"], ["text", "Text", "the type"], ["stripe", "Stripe", "the rule under the bands"], ["accent", "Highlight", "links and accent type"],
-    ["lines", "Lines", "outlines and table lines"], ["page", "Background", "the page behind the cards"]];
+    ["lines", "Lines", "outlines and table lines"], ["page", "Background", "the page behind the cards"], ["heading", "Headings", "the big bold titles"]];
   const cz = { act: "main", lg: "ALL", yr: "today", q: "", mode: "teams", cq: "" };
   // the colour search (Sean, 1 Nov 2026: "allow me to search cream white and it comes up with every teams color who has cream white"): every team
   // colour matched by its name and by the families its hex falls in (czFam: hue / saturation / lightness — a cream is also a white, a navy also a
@@ -7514,7 +7514,7 @@
     // an older save of two or three colours: the roles it didn't set take what they showed (the stripe the text, the highlight the main)
     const c0 = cfg0.colors || {}, o = !c0.lines;
     const cfg = { ...cfg0, n: 4, colors: { main: c0.main, text: c0.text, stripe: o && (cfg0.n || 2) < 3 ? c0.text : c0.stripe || c0.text, accent: o && (cfg0.n || 2) < 4 ? c0.main : c0.accent || c0.main,
-      lines: c0.lines || "#111111", page: c0.page || "#ffffff" } };
+      lines: c0.lines || "#111111", page: c0.page || "#ffffff", heading: c0.heading || c0.text } };
     const save = (c, name) => { T.setCustom(Object.assign({}, c, { name: name || c.name || "Custom" })); renderSettings(); };
     const on = cur.scheme === "custom";
     const wrap = el("div", "czbox");
@@ -7588,7 +7588,7 @@
         }
         const use = el("div", "czuse");
         const b = el("button", "czub", "Use"); b.type = "button"; b.title = `${team}: take its colours (you can change any piece after)`;
-        b.addEventListener("click", () => { const t = czTeam(cols, 4); save({ n: 4, flat: !!cfg.flat, colors: { ...t.colors, lines: cfg.colors.lines, page: cfg.colors.page } }, `${team}${to ? ` (${fr}–${to})` : ""}`); });
+        b.addEventListener("click", () => { const t = czTeam(cols, 4); save({ n: 4, flat: !!cfg.flat, colors: { ...t.colors, lines: cfg.colors.lines, page: cfg.colors.page, heading: t.colors.text } }, `${team}${to ? ` (${fr}–${to})` : ""}`); });
         use.append(b);
         it.append(hd, sws, use); list.append(it);
       }
@@ -7596,7 +7596,7 @@
     if (!window.DRAFT_TEAMCOLORS) ensureScript("hist/teamcolors.js", () => !!window.DRAFT_TEAMCOLORS);
     draw();
     wrap.append(tb);
-    row("Your colours", "A colour for every piece: the bands and buttons, the type, the stripe, links, the outlines and table lines, and the page behind the cards. Tap a box to pick which piece a team swatch fills (the next one is picked after each tap), use the colour picker, type a hex, or take a team's look with Use. Colours (beside Teams) searches every pro and college team's colours by name or family — cream white, navy, a hex. The percentile colours stay blue cold, red hot. Text that wouldn't read is darkened until it does.", wrap);
+    row("Your colours", "A colour for every piece: the bands and buttons, the type, the stripe, links, the outlines and table lines, the page behind the cards, and the big bold titles. Tap a box to pick which piece a team swatch fills (the next one is picked after each tap), use the colour picker, type a hex, or take a team's look with Use. Colours (beside Teams) searches every pro and college team's colours by name or family — cream white, navy, a hex. The percentile colours stay blue cold, red hot. Text that wouldn't read is darkened until it does.", wrap);
   }
   function renderAppearance(box) {
     const T = window.DRAFT_THEMES; box.innerHTML = "";
@@ -7621,8 +7621,19 @@
       const now = seasonFor(new Date());
       for (const [v, l] of [["auto", `Auto (now: ${SEASONS[now].name})`], ["off", "Off"], ...SEASON_ORDER.map((k) => [k, SEASONS[k].name])]) { const o = el("option", null, l); o.value = v; sel.append(o); }
       sel.value = SEASON_PREF.get();
-      sel.addEventListener("change", () => { SEASON_PREF.set(sel.value); seasonFx.sync(); });
+      sel.addEventListener("change", () => { SEASON_PREF.set(sel.value); seasonFx.sync(); HDR.sync(); });
       row("Seasonal effects", "A few drifting pumpkins, leaves, snowflakes, hearts … over the pages. Auto follows the calendar (Halloween, fall, Thanksgiving, Christmas, winter, New Year's, Valentine's, St. Patrick's, spring, Easter, summer, the Fourth); pick one to keep it, or Off. Nothing on the page moves or changes colour, and a device set to reduce motion never draws them.", sel);
+    }
+    {   // header themes (2 Nov 2026): a tile per look, the header itself as the preview
+      const grid = el("div", "hdrpick"), cur2 = HDR.get();
+      for (const [v, l] of HDR.LIST) {
+        const b = el("button", "hdropt" + (v === cur2 ? " on" : "")); b.type = "button"; b.setAttribute("aria-pressed", v === cur2 ? "true" : "false");
+        const sw = el("i", "hdrsw"); sw.dataset.v = v; b.append(sw, el("span", null, l));
+        b.addEventListener("click", () => { HDR.set(v); renderSettings(); }); grid.append(b);
+      }
+      row("Header", "The site header's look. Seasonal wears the season the effects show (fall's leaves now; the plain band when effects are off); the scheme styles are drawn in your own band colour; or keep any season's art all year.", grid);
+      // the previews: each tile carries its look as a background (Seasonal shows what it is now)
+      requestAnimationFrame(() => { for (const sw of grid.querySelectorAll(".hdrsw")) sw.style.background = HDR.preview(sw.dataset.v); });
     }
     row("Layout", "Auto gives a phone the compact layout; Desktop on a phone shows the full layout zoomed out.",
       segOf("Layout", [["auto", "Auto"], ["mobile", "Mobile"], ["desktop", "Desktop"]], T.viewPref(), (v) => { T.setView(v); renderSettings(); }));
@@ -14118,6 +14129,72 @@
     return { sync };
   })();
 
+  // Header themes (Sean, 2 Nov 2026: "make more header themes for the different themes and season themes etc"): the site header (a phone's top bar,
+  // a desktop's band) can wear art. Per device (draft2027.hdr): Seasonal (the default — the art of the season the effects show, fall's leaves via
+  // styles.css, the plain band when effects are off), a scheme style drawn in the scheme's own band colour (Plain, Pinstripes, Seams, Argyle,
+  // Diamonds, Sunset), or any season's art kept all year. The art is an SVG tile over a gradient, set as --hdrbg with data-hdr on <html>.
+  const HDR = (() => {
+    const svg = (w, h, body) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'>${body}</svg>`)}") repeat center / ${w}px ${h}px`;
+    const at = (x, y, r, s, body, o) => `<g transform='translate(${x} ${y}) rotate(${r || 0}) scale(${s || 1})' opacity='${o == null ? 0.55 : o}'>${body}</g>`;
+    const leaf = (c) => `<polygon points='0,-10 2,-5 6,-7.5 5,-2 10,-3.5 7.5,1 9.5,3.5 3,3 4,8 0,5 -4,8 -3,3 -9.5,3.5 -7.5,1 -10,-3.5 -5,-2 -6,-7.5 -2,-5' fill='${c}'/>`;
+    const flake = (c) => `<g stroke='${c}' stroke-width='1.6' stroke-linecap='round'><path d='M0 -9V9M-7.8 -4.5L7.8 4.5M-7.8 4.5L7.8 -4.5'/><path d='M-2.5 -7L0 -4.5L2.5 -7M-2.5 7L0 4.5L2.5 7'/></g>`;
+    const star = (c) => `<polygon points='0,-9 2.6,-2.8 9,-2.8 3.8,1.2 5.6,7.6 0,3.8 -5.6,7.6 -3.8,1.2 -9,-2.8 -2.6,-2.8' fill='${c}'/>`;
+    const heart = (c) => `<path d='M0 8C-9 1-9-6-4.5-7.5C-2-8.3 0-6 0-4.5C0-6 2-8.3 4.5-7.5C9-6 9 1 0 8Z' fill='${c}'/>`;
+    const pumpkin = `<ellipse rx='9' ry='7' fill='#f07a1a'/><ellipse rx='3.5' ry='7' fill='#d9620e'/><rect x='-1' y='-10' width='2' height='4' fill='#3d5a1e'/>`;
+    const bat = `<path d='M0 0C-2-3-5-3-9-1C-7 0-7 2-8 3C-6 2-4 2-3 4C-2 2-1 2 0 3C1 2 2 2 3 4C4 2 6 2 8 3C7 2 7 0 9-1C5-3 2-3 0 0Z' fill='#120818'/>`;
+    const shamrock = (c) => `<g fill='${c}'><circle cx='0' cy='-5' r='4'/><circle cx='-4.5' cy='1' r='4'/><circle cx='4.5' cy='1' r='4'/><path d='M0 2Q1 7 3 10' stroke='${c}' stroke-width='1.5' fill='none'/></g>`;
+    const blossom = (c) => `<g fill='${c}'>${[0, 72, 144, 216, 288].map((d) => `<ellipse cx='0' cy='-5' rx='3.4' ry='5' transform='rotate(${d})'/>`).join("")}<circle r='2.4' fill='#ffe27a'/></g>`;
+    const egg = (c, s) => `<ellipse rx='6' ry='8' fill='${c}'/><path d='M-6 0Q-3 -3 0 0T6 0' stroke='${s}' stroke-width='1.6' fill='none'/>`;
+    const sun = `<g stroke='#ffe08a' stroke-width='1.8' stroke-linecap='round'>${[0, 45, 90, 135, 180, 225, 270, 315].map((d) => `<path d='M0 -12V-15' transform='rotate(${d})'/>`).join("")}</g><circle r='8' fill='#ffd54a'/>`;
+    const ball = `<circle r='7' fill='#fff'/><path d='M-4 -5.5Q-1 0 -4 5.5M4 -5.5Q1 0 4 5.5' stroke='#d0312d' stroke-width='1' fill='none'/>`;
+    const tree = `<polygon points='0,-10 7,4 -7,4' fill='#1f7a3a'/><rect x='-1.2' y='4' width='2.4' height='3' fill='#6b3a1a'/>`;
+    const acorn = `<ellipse cy='2' rx='4' ry='5' fill='#a86b2c'/><path d='M-5 -1Q0 -6 5 -1Z' fill='#5c3a1a'/>`;
+    const conf = (c, r) => `<rect x='-3' y='-1.2' width='6' height='2.4' fill='${c}' transform='rotate(${r})'/>`;
+    const scatter = (w, h, items) => items.map(([x, y, r, s, b, o]) => at(x, y, r, s, b, o) + (y < 14 ? at(x, y + h, r, s, b, o) : "") + (y > h - 14 ? at(x, y - h, r, s, b, o) : "") + (x < 14 ? at(x + w, y, r, s, b, o) : "") + (x > w - 14 ? at(x - w, y, r, s, b, o) : "")).join("");
+    const art = {
+      halloween: [svg(220, 64, scatter(220, 64, [[24, 38, -8, 1, pumpkin, 0.85], [92, 16, 0, 1.1, bat, 0.8], [150, 44, 10, 0.9, pumpkin, 0.8], [196, 18, 0, 0.9, bat, 0.8], [60, 54, 0, 0.7, bat, 0.6], [124, 30, 0, 0.5, star("#fbe6a2"), 0.7]])), "linear-gradient(100deg, #1b0b26 0%, #3c1550 50%, #7a2d0e 100%)"],
+      fall: [svg(220, 64, scatter(220, 64, [[14, 14, -41, 1.06, leaf("#f4a12a")], [52, 44, -54, 1.12, leaf("#e8662a")], [86, 12, 8, 0.86, leaf("#c8381f")], [120, 40, 14, 0.88, leaf("#f2c23b")], [156, 18, 4, 0.85, leaf("#a8441c")], [194, 46, -49, 0.97, leaf("#d9531e")], [34, 56, -52, 1.15, leaf("#8f2d16")], [140, 62, 13, 1.56, leaf("#a8441c")]])), "linear-gradient(100deg, #9c3412 0%, #c4501a 35%, #d97a1f 65%, #a83a14 100%)"],
+      thanksgiving: [svg(220, 64, scatter(220, 64, [[20, 20, -30, 1, leaf("#e0952e")], [70, 46, 20, 1.1, leaf("#b5541c")], [120, 18, 50, 0.9, acorn, 0.7], [166, 44, -15, 1, leaf("#f2c23b")], [200, 14, 30, 0.8, acorn, 0.6], [100, 54, 0, 0.9, leaf("#8f2d16")]])), "linear-gradient(100deg, #5a2e12 0%, #8f4a1c 50%, #b8672a 100%)"],
+      christmas: [svg(220, 64, scatter(220, 64, [[22, 22, 0, 1, flake("#ffffff"), 0.7], [70, 44, 0, 1, tree, 0.9], [118, 16, 0, 0.8, star("#f7d36b"), 0.85], [160, 46, 0, 1.1, flake("#ffffff"), 0.6], [200, 20, 0, 0.9, tree, 0.85], [96, 52, 0, 0.6, flake("#ffffff"), 0.5]])), "linear-gradient(100deg, #6e0d18 0%, #a5162a 55%, #7d1020 100%)"],
+      winter: [svg(220, 64, scatter(220, 64, [[22, 20, 0, 1.1, flake("#ffffff"), 0.75], [76, 46, 20, 0.8, flake("#ffffff"), 0.6], [128, 18, 10, 1.2, flake("#ffffff"), 0.7], [176, 42, 0, 0.9, flake("#ffffff"), 0.65], [208, 12, 30, 0.6, flake("#ffffff"), 0.5], [50, 56, 0, 0.5, flake("#ffffff"), 0.45]])), "linear-gradient(100deg, #1f4d7a 0%, #3e78ad 50%, #7fb3d9 100%)"],
+      newyear: [svg(220, 64, scatter(220, 64, [[24, 22, 0, 0.9, star("#f5cf5a"), 0.9], [70, 44, 30, 1, conf("#f06292", 30), 0.9], [104, 16, 0, 1, conf("#4fc3f7", -20), 0.9], [140, 40, 0, 0.7, star("#ffffff"), 0.8], [182, 18, 0, 1, conf("#f5cf5a", 60), 0.9], [206, 50, 0, 0.8, star("#f5cf5a"), 0.8], [46, 54, 0, 1, conf("#ffffff", -45), 0.7]])), "linear-gradient(100deg, #0a1430 0%, #1b2a55 55%, #2c1f4f 100%)"],
+      valentine: [svg(220, 64, scatter(220, 64, [[22, 22, -12, 1, heart("#ffffff"), 0.7], [74, 46, 10, 1.2, heart("#ffd1e0"), 0.7], [126, 18, 0, 0.8, heart("#ffffff"), 0.6], [176, 42, -20, 1, heart("#ff8fb3"), 0.75], [208, 14, 15, 0.7, heart("#ffffff"), 0.55]])), "linear-gradient(100deg, #a0124a 0%, #d81b60 55%, #f06292 100%)"],
+      stpat: [svg(220, 64, scatter(220, 64, [[22, 22, -15, 1, shamrock("#b9f6ca"), 0.7], [76, 44, 20, 1.1, shamrock("#ffffff"), 0.5], [128, 18, 0, 0.9, shamrock("#69f0ae"), 0.7], [176, 44, -25, 1, shamrock("#b9f6ca"), 0.6], [206, 14, 10, 0.7, shamrock("#ffffff"), 0.5]])), "linear-gradient(100deg, #0b5a30 0%, #138a47 55%, #2fae5f 100%)"],
+      spring: [svg(220, 64, scatter(220, 64, [[22, 22, 0, 1, blossom("#ffd6e4"), 0.85], [74, 44, 20, 1.1, blossom("#ffffff"), 0.75], [126, 18, 40, 0.8, blossom("#ffb3cd"), 0.85], [176, 44, 10, 1, blossom("#ffffff"), 0.75], [206, 12, 0, 0.7, blossom("#ffd6e4"), 0.7]])), "linear-gradient(100deg, #3f8f4a 0%, #6fb36a 50%, #e98fb0 100%)"],
+      easter: [svg(220, 64, scatter(220, 64, [[24, 24, -15, 1, egg("#fff59d", "#f48fb1"), 0.95], [76, 44, 10, 1, egg("#b3e5fc", "#9575cd"), 0.95], [126, 20, 20, 0.9, egg("#f8bbd0", "#81c784"), 0.95], [176, 44, -10, 1, egg("#c5e1a5", "#ffb74d"), 0.95], [208, 14, 0, 0.7, egg("#e1bee7", "#4fc3f7"), 0.9]])), "linear-gradient(100deg, #7e57c2 0%, #9f84d6 50%, #e7a3c4 100%)"],
+      summer: [svg(220, 64, scatter(220, 64, [[26, 26, 0, 1, sun, 0.9], [84, 46, 20, 1, ball, 0.9], [134, 20, -20, 0.8, ball, 0.85], [182, 40, 0, 0.8, sun, 0.8], [208, 12, 40, 0.7, ball, 0.8]])), "linear-gradient(100deg, #0d6fb8 0%, #2a9ad8 55%, #f2a93b 100%)"],
+      july4: [svg(220, 64, scatter(220, 64, [[22, 20, 0, 0.9, star("#ffffff"), 0.85], [62, 44, 0, 0.7, star("#ffffff"), 0.75], [104, 18, 0, 1, star("#ffffff"), 0.85], [146, 46, 0, 0.8, star("#ffffff"), 0.7], [186, 22, 0, 0.9, star("#ffffff"), 0.85], [210, 50, 0, 0.6, star("#ffffff"), 0.6]])), "repeating-linear-gradient(180deg, transparent 0 46px, rgba(200, 16, 46, .55) 46px 51px, rgba(255, 255, 255, .45) 51px 56px), linear-gradient(100deg, #0b2a5c 0%, #183f80 100%)"],
+    };
+    const W = "rgba(255, 255, 255, ", band = "var(--band2, var(--accent-2))";
+    const styles = {
+      plain: band,
+      pinstripes: `repeating-linear-gradient(90deg, transparent 0 15px, ${W}.22) 15px 16px), ${band}`,
+      seams: `${svg(64, 64, `<g fill='none' stroke='${W}.32)' stroke-width='1.4' stroke-linecap='round'><path d='M10 0Q24 32 10 64M54 0Q40 32 54 64'/>${[6, 14, 22, 30, 38, 46, 54, 62].map((y) => `<path d='M${12 + Math.sin(y / 10) * 3} ${y}l5 -2M${12 + Math.sin(y / 10) * 3} ${y}l5 2M${52 - Math.sin(y / 10) * 3} ${y}l-5 -2M${52 - Math.sin(y / 10) * 3} ${y}l-5 2'/>`).join("")}</g>`)}, ${band}`,
+      argyle: `${svg(48, 48, `<path d='M24 0L48 24L24 48L0 24Z' fill='${W}.10)'/><path d='M0 0L48 48M48 0L0 48' stroke='${W}.22)' stroke-width='1' stroke-dasharray='3 3'/>`)}, ${band}`,
+      diamonds: `${svg(90, 64, `<g fill='none' stroke='${W}.26)' stroke-width='1.3'><path d='M45 6L66 32L45 58L24 32Z'/><circle cx='45' cy='32' r='3' fill='${W}.22)' stroke='none'/></g><g fill='${W}.3)'><rect x='42' y='3' width='6' height='6' transform='rotate(45 45 6)'/><rect x='63' y='29' width='6' height='6' transform='rotate(45 66 32)'/><rect x='21' y='29' width='6' height='6' transform='rotate(45 24 32)'/></g>`)}, ${band}`,
+      sunset: `linear-gradient(100deg, color-mix(in srgb, ${band} 72%, #000) 0%, ${band} 55%, color-mix(in srgb, ${band} 78%, #fff) 100%)`,
+    };
+    const LIST = [["season", "Seasonal"], ["plain", "Plain"], ["pinstripes", "Pinstripes"], ["seams", "Seams"], ["argyle", "Argyle"], ["diamonds", "Diamonds"], ["sunset", "Sunset"],
+      ...SEASON_ORDER.map((k) => ["s:" + k, SEASONS[k].name])];
+    const get = () => { try { const v = localStorage.getItem("draft2027.hdr"); return LIST.some((x) => x[0] === v) ? v : "season"; } catch (e) { return "season"; } };
+    const set = (v) => { try { if (v === "season") localStorage.removeItem("draft2027.hdr"); else localStorage.setItem("draft2027.hdr", v); } catch (e) {} sync(); };
+    function sync() {
+      const v = get(), root = document.documentElement;
+      let bg = null, first = null;
+      if (v === "season") { const s = seasonNow(); if (s && s !== "fall" && art[s]) bg = art[s]; }   // fall keeps its leaf header (styles.css); no season = the band
+      else if (v.startsWith("s:")) { const k = v.slice(2); if (art[k]) bg = art[k]; }
+      else bg = styles[v];
+      if (Array.isArray(bg)) { first = (/#[0-9a-f]{6}/i.exec(bg[1]) || [])[0]; bg = bg[0] + ", " + bg[1]; }
+      if (bg && v !== "plain") { root.style.setProperty("--hdrbg", bg); root.dataset.hdr = v; } else { root.style.removeProperty("--hdrbg"); delete root.dataset.hdr; }
+      if (v === "plain") root.dataset.hdrplain = "1"; else delete root.dataset.hdrplain;
+      const meta = document.querySelector('meta[name="theme-color"]'); if (meta && first) meta.content = first;
+    }
+    // a look's background on its own (the Appearance tiles): Seasonal / fall show the season's art, Plain the band
+    const preview = (v) => { const k = v === "season" ? seasonNow() : v.startsWith("s:") ? v.slice(2) : null;
+      if (k) return art[k] ? art[k][0] + ", " + art[k][1] : band;
+      return v === "season" ? band : styles[v] || band; };
+    return { LIST, get, set, sync, preview };
+  })();
   // no credit line under the pages any more: it's at the end of the Stat glossary (minimal pass 5)
-  readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); migrateTierOrder(); render(); setTb(); watchBuild(); registerSW(); seasonFx.sync(); setInterval(seasonFx.sync, 30 * 60e3);
+  readTokens(); readMode(); ensureSortValid(); migrateTiersToMembers(); migrateTierOrder(); render(); setTb(); watchBuild(); registerSW(); seasonFx.sync(); HDR.sync(); setInterval(() => { seasonFx.sync(); HDR.sync(); }, 30 * 60e3);
 })();

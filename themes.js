@@ -241,6 +241,7 @@ window.DRAFT_THEMES = (function () {
       btn: M, "btn-ink": onM, "btn-line": flat ? "transparent" : rail, "tab-fill": M,
       ground: PG, "line-soft": hair, frame: flat ? hair : rail, secrule: hair, "accent-ink": onM, "band-ink": onM, svtext: T, svrule: hair, pctrack: mix(M, "#ffffff", 0.88),
       outline: LN, xl: LN };
+    if (hx(C.heading)) light.heading = toward(C.heading, "#000000", "#ffffff", 3);   // the bold headings (2 Nov 2026), readable on white
     if (flat) light["flat-ink"] = T;
     const page = mix(T, "#0b0c0f", 0.82), surf = mix(page, "#ffffff", 0.05), surf2 = mix(page, "#ffffff", 0.09), dh = mix(page, "#ffffff", 0.16);
     const lite = toward(A0, "#ffffff", page, 4.5);
@@ -316,6 +317,10 @@ window.DRAFT_THEMES = (function () {
     // (the customizer's Lines colour in place of black, and as the tables' lines, --xl, since 1 Nov 2026)
     const black = !sc.flat && !isDark(), ol = sc.light.outline || "#111111";
     root.style.setProperty("--outline", ol);
+    // the customizer's Headings colour (Sean, 2 Nov 2026: "make it so I can make all of like the bold header text a different color than the regular
+    // text"): --heading, and data-heading on <html> so styles.css paints the page's titles with it (light mode; dark mode keeps its light type)
+    const hd = !isDark() && sc.light.heading;
+    if (hd) { root.style.setProperty("--heading", hd); root.dataset.heading = "1"; } else { root.style.removeProperty("--heading"); delete root.dataset.heading; }
     if (sc.light.xl && !isDark()) root.style.setProperty("--xl", sc.light.xl); else root.style.removeProperty("--xl");
     for (const k of ["frame", "rail", "btn-line", "line-soft"]) {
       if (black) root.style.setProperty("--" + k, ol);
@@ -333,6 +338,8 @@ window.DRAFT_THEMES = (function () {
       if (!link) { link = document.createElement("link"); link.id = "fontlink"; link.rel = "stylesheet"; document.head.appendChild(link); }
       if (link.getAttribute("href") !== href) link.setAttribute("href", href);
     } else if (link) link.remove();
+    // the home-screen app draws under a translucent status bar, so the header's colour fills it (2 Nov 2026; index.html says the same)
+    const sb = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]'); if (sb) sb.content = "black-translucent";
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = tokens["accent-2"];
   }
