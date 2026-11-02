@@ -6061,3 +6061,11 @@ line can bring them back.
   no taps) is redrawn on any change to the page (a MutationObserver, debounced 450ms, ignoring its own layer), on resize and when the season changes;
   only while `<html data-season="fall">`. A phone shows few — its pages are full edge to edge — a desktop's gutters and the player page's white
   space show most. `window.__piles()` draws them now (for a test).
+
+* **Leaf piles over the page, leaning on table corners (Sean, 2 Nov 2026, a phone recording of Gallo's popup with the heaps half hidden behind the
+  tables: "the leaves are like behind the pages so they don't show ... I'd like to see leaves in like random chunks of the white space maybe on the
+  corner of a table")**: the layer (`.leafpiles`) is z 30 — over the page and its tables, under the sticky bars, popups and the bottom bar — so a heap
+  is never hidden. `placePiles` keeps two 4px maps: words, links and controls (a heap never covers them, 3px of margin) and framed / filled boxes
+  (tables, the Bio and Playing time boxes, bars); sticky and fixed elements count as words where they sit. It first sets heaps at box corners — just
+  outside a corner (up to 22% on the box) or straddling the box's edge at a corner (up to 70%), a sideways-scrolling table only on its left corners —
+  up to 60% of the page's heaps, then fills the open white space (nothing under it). Heaps are 84 × 47 on a phone (was 72 × 40), 104 × 58 on a desktop.
