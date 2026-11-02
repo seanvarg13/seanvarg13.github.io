@@ -11421,8 +11421,9 @@
     const xb = $("xboard"), bar = xb && xb.querySelector(":scope > .pgbar"), ct = xb && xb.querySelector(":scope > .cardtop"), mp = ct && ct.querySelector(".pagehead .mplate");
     let r = xb && xb.querySelector(":scope > .pgrule");
     if (!bar || !ct || !mp) { if (r) r.remove(); return; }
-    if (!r || r.previousElementSibling !== ct) { if (r) r.remove(); const col = getComputedStyle(mp).borderBottomColor; r = document.createElement("div"); r.className = "pgrule"; r.style.background = col; ct.after(r); }
+    if (!r || r.previousElementSibling !== ct) { if (r) r.remove(); mp.style.removeProperty("border-bottom-width"); mp.style.removeProperty("box-shadow"); const col = getComputedStyle(mp).borderBottomColor; r = document.createElement("div"); r.className = "pgrule"; r.style.background = col; ct.after(r); }
     r.style.top = (parseFloat(getComputedStyle(bar).top) || 0) + bar.offsetHeight + "px";
+    mp.style.setProperty("border-bottom-width", "0px", "important"); mp.style.setProperty("box-shadow", "none", "important");   // the rule stands in for the band's own (a later pass's border outranked every stylesheet override)
     r.style.marginLeft = r.style.marginRight = "0px";
     const a = r.getBoundingClientRect(), h = mp.getBoundingClientRect();
     r.style.marginLeft = (h.left - a.left) + "px"; r.style.marginRight = (a.right - h.right) + "px";
@@ -11430,8 +11431,14 @@
   window.addEventListener("resize", () => requestAnimationFrame(bleedBar));
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", () => requestAnimationFrame(bleedBar));   // the name's width once its face has loaded
   // the bar and the band read as one header: the bar's red rule shows only once the band has scrolled up under it (class stuck)
+  // the rule's sticky top is the bar's height: keep it right whenever the bar changes size (a face loading, chips, a wrapped name) — on an iPhone
+  // the bar grew after the rule was placed and the rule pinned hidden under it, so the line vanished as the band scrolled off (Sean, 2 Nov 2026)
+  let ruleRO = null, ruleBar = null;
+  const ruleWatch = () => { const bar = document.querySelector("#xboard > .pgbar"); if (!bar || bar === ruleBar || !window.ResizeObserver) return; ruleBar = bar; if (ruleRO) ruleRO.disconnect(); ruleRO = new ResizeObserver(() => requestAnimationFrame(pgRule)); ruleRO.observe(bar); };
   function stickSync() {
+    ruleWatch();
     const bar = document.querySelector("#xboard .pgbar"), band = document.querySelector("#xboard .pagehead"); if (!bar || !band) return;
+    const rl = document.querySelector("#xboard > .pgrule"); if (rl) { const t = (parseFloat(getComputedStyle(bar).top) || 0) + bar.offsetHeight + "px"; if (rl.style.top !== t) rl.style.top = t; }
     bar.classList.toggle("stuck", band.getBoundingClientRect().bottom <= bar.getBoundingClientRect().bottom + 2);
   }
   // what a phone shows past the page's ends as it bounces (the html canvas) follows the end you're at: the band's colour at the top, where it meets
