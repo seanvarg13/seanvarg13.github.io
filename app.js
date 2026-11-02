@@ -11456,6 +11456,8 @@
   // piece of text, every picture / chart / control and every framed or filled box is marked on an 8px grid, and a heap goes only where a box round it
   // is clear — spaced apart, in an order seeded by the page so they don't jump between draws. They sit in a layer over the page that takes no taps.
   const LEAFC = ["#ffd23f", "#b5122b", "#7a9a2e", "#f5b301", "#6d2a5c", "#e3262b", "#7a1430", "#b7c63a", "#e2557a", "#ffe066", "#8a4b1f", "#c21d3a", "#e8662a", "#f08c2a"];
+  // a pile's own mix, the warm colours of a raked heap (yellows, golds, oranges, reds) with a little green and crimson
+  const PILEC = ["#ffd23f", "#f5b301", "#ffe066", "#f08c2a", "#e8662a", "#e3262b", "#c21d3a", "#7a9a2e", "#b7c63a", "#f5b301", "#e8662a", "#ffd23f"];
   const PILE_W = 104, PILE_H = 58;
   const pileArt = (() => {
     const out = [];
@@ -11463,10 +11465,18 @@
     const oval = (c) => `<path d='M0 -10C6 -6 6 4 0 10C-6 4 -6 -6 0 -10Z' fill='${c}' stroke='rgba(60,20,5,.45)' stroke-width='.6'/><path d='M0 -9V12M0 -2l3-3M0 2l-3-3M0 5l3-3' stroke='rgba(60,20,5,.45)' stroke-width='.8' fill='none'/>`;
     for (let v = 0; v < 8; v++) {
       let s = 1234 + v * 977; const r = () => ((s = (s * 1103515245 + 12345) % 2147483648) / 2147483648);
-      const n = 13 + Math.floor(r() * 5), ls = [];
-      for (let k = 0; k < n; k++) { const t = r() * 6.283, d = Math.sqrt(r()); ls.push([52 + Math.cos(t) * d * 38, 30 + Math.sin(t) * d * 15, Math.round(r() * 360), 0.9 + r() * 0.6, r() < 0.6 ? maple : oval, LEAFC[Math.floor(r() * LEAFC.length)]]); }
-      ls.sort((p, q) => Math.hypot(q[0] - 52, q[1] - 30) - Math.hypot(p[0] - 52, p[1] - 30));   // the middle on top, a heap
-      const body = `<ellipse cx='54' cy='44' rx='44' ry='8' fill='rgba(60,25,5,.12)'/>` + ls.map(([x, y, rot, sc, f, c]) => `<g transform='translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot}) scale(${sc.toFixed(2)})'>${f(c)}</g>`).join("");
+      // a mound like a raked pile: a broad flat base rising to a rounded peak, leaves packed in it, the back ones drawn first; two or three loose on top
+      const n = 58 + Math.floor(r() * 10), ls = [];
+      for (let k = 0; k < n; k++) {
+        const u = r() * 2 - 1, h = 42 * Math.pow(1 - Math.abs(u), 1.15) + 4 * (1 - u * u), y = 55 - r() * h;
+        ls.push([52 + u * 47, y, Math.round(r() * 360), 0.42 + r() * 0.36, r() < 0.6 ? maple : oval, PILEC[Math.floor(r() * PILEC.length)]]);
+      }
+      ls.sort((p, q) => p[1] - q[1]);   // top and back first, the front of the heap over them
+      const loose = 2 + Math.floor(r() * 2);
+      for (let k = 0; k < loose; k++) ls.push([8 + r() * 88, 4 + r() * 8, Math.round(r() * 360), 0.4 + r() * 0.15, r() < 0.6 ? maple : oval, PILEC[Math.floor(r() * PILEC.length)]]);
+      const pk = 48 + r() * 8, top = 16 + r() * 6;
+      const mound = `<g transform='translate(52 57) scale(.86) translate(-52 -57)'><path d='M3 56C14 50 22 40 32 32C40 25 ${(pk - 6).toFixed(1)} ${top.toFixed(1)} ${pk.toFixed(1)} ${top.toFixed(1)}C${(pk + 6).toFixed(1)} ${top.toFixed(1)} 66 25 74 32C84 40 92 50 101 56Z' fill='#e8662a'/><path d='M14 56C24 48 34 38 ${pk.toFixed(1)} ${(top + 10).toFixed(1)}C70 38 80 48 90 56Z' fill='#f5b301' opacity='.55'/></g>`;
+      const body = mound + ls.map(([x, y, rot, sc, f, c]) => `<g transform='translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot}) scale(${sc.toFixed(2)})'>${f(c)}</g>`).join("");
       out.push(`url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${PILE_W}' height='${PILE_H}' viewBox='0 0 ${PILE_W} ${PILE_H}'>${body}</svg>`)}")`);
     }
     return out;
