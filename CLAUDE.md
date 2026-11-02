@@ -5929,3 +5929,9 @@ line can bring them back.
   darkened to 3:1 on white. **References** (`--ref`, `data-ref`) colours the links that take you somewhere — home's "All hitters →" / "Leaderboard →"
   (`.hmore`), About / More about these numbers (`.fxmore`), Glossary / Show minors and the other `.linkbtn`s — and a **References: Regular / Bold**
   switch beside Look (`cfg.refBold` → `data-refbold`) makes them bold. An older save starts Subtitles at the site's grey and References at the text colour.
+
+* **Default for Subtitles and References; the logo and the date swapped (Sean, 2 Nov 2026: "for the sub title text and reference text allow me to go back
+  to the default too which would be what it currently is or what it is pre adding any change ability", "swap the position of the thru sept 27 and the app
+  logo on the header")**: each of the two roles has a **Default** button that sets it back to not chosen (`null`: the scheme's own grey, the links' own
+  colours; References' also turns bold off), the hex box then empty with "Default" in it; `CZ_DEF` holds what the box shows meanwhile. The phone's top
+  bar is the logo at the left, the "Thru" pill in the middle, search at the right.

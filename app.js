@@ -7517,7 +7517,10 @@
     // an older save of two or three colours: the roles it didn't set take what they showed (the stripe the text, the highlight the main)
     const c0 = cfg0.colors || {}, o = !c0.lines;
     const cfg = { ...cfg0, n: 4, colors: { main: c0.main, text: c0.text, stripe: o && (cfg0.n || 2) < 3 ? c0.text : c0.stripe || c0.text, accent: o && (cfg0.n || 2) < 4 ? c0.main : c0.accent || c0.main,
-      lines: c0.lines || "#111111", frame: c0.frame || c0.lines || "#1c1c1c", grid: c0.grid || c0.lines || "#1c1c1c", page: c0.page || "#ffffff", heading: c0.heading || c0.text, sorted: c0.sorted || czMix(c0.main, "#ffffff", 0.22), fbar: c0.fbar || "#f3f6fa", table: c0.table || "#ffffff", sub: c0.sub || "#6f7c90", ref: c0.ref || c0.text } };
+      lines: c0.lines || "#111111", frame: c0.frame || c0.lines || "#1c1c1c", grid: c0.grid || c0.lines || "#1c1c1c", page: c0.page || "#ffffff", heading: c0.heading || c0.text, sorted: c0.sorted || czMix(c0.main, "#ffffff", 0.22), fbar: c0.fbar || "#f3f6fa", table: c0.table || "#ffffff", sub: c0.sub || null, ref: c0.ref || null } };
+    // Subtitles and References can go back to the site's own (Sean, 2 Nov 2026: "allow me to go back to the default too ... what it is pre adding any
+    // change ability"): null = not set, the scheme's grey and the links' own colours; the box shows them and says Default
+    const CZ_DEF = { sub: "#6f7c90", ref: cfg.colors.accent || "#2f6fb3" };
     const save = (c, name) => { T.setCustom(Object.assign({}, c, { name: name || c.name || "Custom" })); renderSettings(); };
     const on = cur.scheme === "custom";
     const wrap = el("div", "czbox");
@@ -7528,15 +7531,21 @@
     wrap.append(ctl);
     const roles = el("div", "czroles");
     for (const [k, lab, note] of CZ_ROLES) {
-      const r = el("div", "czrole" + (cz.act === k ? " on" : "")), sw = el("button", "czsw"); sw.type = "button"; sw.style.background = cfg.colors[k];
+      const isDef = k in CZ_DEF && !cfg.colors[k], shown = cfg.colors[k] || CZ_DEF[k] || "#000000";
+      const r = el("div", "czrole" + (cz.act === k ? " on" : "")), sw = el("button", "czsw"); sw.type = "button"; sw.style.background = shown;
       sw.setAttribute("aria-label", lab + " colour"); sw.title = "Tap a team colour below to put it here";
       sw.addEventListener("click", () => { cz.act = k; renderSettings(); });
-      const pick = el("input", "czpick"); pick.type = "color"; pick.value = cfg.colors[k]; pick.setAttribute("aria-label", "Choose the " + lab.toLowerCase() + " colour");
+      const pick = el("input", "czpick"); pick.type = "color"; pick.value = shown; pick.setAttribute("aria-label", "Choose the " + lab.toLowerCase() + " colour");
       pick.addEventListener("change", () => save({ ...cfg, colors: { ...cfg.colors, [k]: pick.value } }));
-      const hex = el("input", "czhex"); hex.value = cfg.colors[k]; hex.maxLength = 7; hex.setAttribute("aria-label", lab + " hex");
-      hex.addEventListener("change", () => { const v = hex.value.trim().replace(/^([0-9a-f]{6})$/i, "#$1"); if (/^#[0-9a-f]{6}$/i.test(v)) save({ ...cfg, colors: { ...cfg.colors, [k]: v.toLowerCase() } }); else hex.value = cfg.colors[k]; });
+      const hex = el("input", "czhex"); hex.value = isDef ? "" : shown; if (isDef) hex.placeholder = "Default"; hex.maxLength = 7; hex.setAttribute("aria-label", lab + " hex");
+      hex.addEventListener("change", () => { const v = hex.value.trim().replace(/^([0-9a-f]{6})$/i, "#$1"); if (/^#[0-9a-f]{6}$/i.test(v)) save({ ...cfg, colors: { ...cfg.colors, [k]: v.toLowerCase() } }); else hex.value = isDef ? "" : shown; });
       const tx = el("div", "cztx"); tx.append(el("b", null, lab), el("span", null, note));
-      r.append(sw, tx, pick, hex); roles.append(r);
+      r.append(sw, tx, pick, hex);
+      if (k in CZ_DEF) {   // back to the site's own colour
+        const d = el("button", "czdef" + (isDef ? " on" : ""), "Default"); d.type = "button"; d.disabled = isDef && !(k === "ref" && cfg.refBold); d.title = isDef ? "Using the site's own colour" : "Go back to the site's own colour";
+        d.addEventListener("click", () => save({ ...cfg, ...(k === "ref" ? { refBold: false } : {}), colors: { ...cfg.colors, [k]: null } })); r.append(d);
+      }
+      roles.append(r);
     }
     wrap.append(roles);
     if (on && cfg.name && cfg.name !== "Custom") wrap.append(el("p", "cznote", "Now: " + cfg.name + ""));
@@ -7592,7 +7601,7 @@
         }
         const use = el("div", "czuse");
         const b = el("button", "czub", "Use"); b.type = "button"; b.title = `${team}: take its colours (you can change any piece after)`;
-        b.addEventListener("click", () => { const t = czTeam(cols, 4); save({ n: 4, flat: !!cfg.flat, colors: { ...t.colors, lines: cfg.colors.lines, frame: cfg.colors.frame, grid: cfg.colors.grid, page: cfg.colors.page, heading: t.colors.text, sorted: cfg.colors.sorted, fbar: cfg.colors.fbar, table: cfg.colors.table, sub: cfg.colors.sub, ref: cfg.colors.ref }, refBold: !!cfg.refBold }, `${team}${to ? ` (${fr}–${to})` : ""}`); });
+        b.addEventListener("click", () => { const t = czTeam(cols, 4); save({ n: 4, flat: !!cfg.flat, colors: { ...t.colors, lines: cfg.colors.lines, frame: cfg.colors.frame, grid: cfg.colors.grid, page: cfg.colors.page, heading: t.colors.text, sorted: cfg.colors.sorted, fbar: cfg.colors.fbar, table: cfg.colors.table, sub: cfg.colors.sub || null, ref: cfg.colors.ref || null }, refBold: !!cfg.refBold }, `${team}${to ? ` (${fr}–${to})` : ""}`); });
         use.append(b);
         it.append(hd, sws, use); list.append(it);
       }
@@ -13960,7 +13969,7 @@
     // button used to be and put the search button where the settings button used to be"; Settings moved to the bottom bar): the date pill at the
     // left (a link home too), the logo alone in the middle, search at the right
     const pill = home.querySelector(".phthru"), thruA = el("a", "phthrua"); thruA.href = "#home"; thruA.setAttribute("aria-label", "Games through " + (DATA.meta.through || "")); if (pill) thruA.append(pill);
-    void gear; top.append(thruA, home, sb); document.querySelector("header.top").prepend(top);
+    void gear; top.append(home, thruA, sb);   /* the logo at the left, the date in the middle (Sean, 2 Nov 2026: "swap the position of the thru sept 27 and the app logo") */ document.querySelector("header.top").prepend(top);
     const cancel = el("button", "pscancel", "Cancel"); cancel.type = "button"; cancel.addEventListener("click", () => pSearch(false)); document.querySelector("header.top").append(cancel);
     const bg = el("div", "psbg"); bg.addEventListener("click", () => pSearch(false)); document.body.append(bg);
     window.addEventListener("hashchange", () => pSearch(false));
