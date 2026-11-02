@@ -245,6 +245,7 @@ window.DRAFT_THEMES = (function () {
     if (hx(C.ref)) light.ref = toward(C.ref, "#000000", "#ffffff", 3);       // the references: "All hitters →", About, Glossary …
     light.refbold = !!(cfg && cfg.refBold);
     if (hx(C.table)) { light.tbl = C.table; light["tbl-ink"] = ratioOf(C.table, T) >= 4.5 ? T : "#ffffff"; }   // the tables' cells (2 Nov 2026)
+    if (hx(C.picked)) { light.fbsel = C.picked; light["fbsel-ink"] = ratioOf(C.picked, "#ffffff") >= 3 ? "#ffffff" : T; }   // the picked button in a filter bar (2 Nov 2026)
     if (hx(C.fbar)) { light.fbar = C.fbar; light["fbar-ink"] = ratioOf(C.fbar, T) >= 4.5 ? T : "#ffffff"; }   // the filter bars (2 Nov 2026)
     if (hx(C.sorted)) { light.sorthd = C.sorted; light["sorthd-ink"] = ratioOf(C.sorted, "#ffffff") >= 3 ? "#ffffff" : T; }   // the sorted column's name (2 Nov 2026)
     if (hx(C.heading)) light.heading = toward(C.heading, "#000000", "#ffffff", 3);   // the bold headings (2 Nov 2026), readable on white
@@ -337,6 +338,9 @@ window.DRAFT_THEMES = (function () {
     else { root.style.removeProperty("--tbl"); root.style.removeProperty("--tbl-ink"); delete root.dataset.tbl; }
     if (sc.light.fbar && !isDark()) { root.style.setProperty("--fbar", sc.light.fbar); root.style.setProperty("--fbar-ink", sc.light["fbar-ink"]); root.dataset.fbar = "1"; }
     else { root.style.removeProperty("--fbar"); root.style.removeProperty("--fbar-ink"); delete root.dataset.fbar; }
+    // the customizer's Picked button colour (Sean, 2 Nov 2026: "a color option for what standard is highlighted as"): --fbsel / --fbsel-ink, data-fbsel
+    if (sc.light.fbsel) { root.style.setProperty("--fbsel", sc.light.fbsel); root.style.setProperty("--fbsel-ink", sc.light["fbsel-ink"]); root.dataset.fbsel = "1"; }
+    else { root.style.removeProperty("--fbsel"); root.style.removeProperty("--fbsel-ink"); delete root.dataset.fbsel; }
     if (sc.light.sorthd) { root.style.setProperty("--sorthd", sc.light.sorthd); root.style.setProperty("--sorthd-ink", sc.light["sorthd-ink"]); root.dataset.sorthd = "1"; }
     else { root.style.removeProperty("--sorthd"); root.style.removeProperty("--sorthd-ink"); delete root.dataset.sorthd; }
     const hd = !isDark() && sc.light.heading;
