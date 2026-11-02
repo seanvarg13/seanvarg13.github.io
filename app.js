@@ -7429,7 +7429,7 @@
   // every piece its own colour, always (Sean, 1 Nov 2026: "don't even give the option for selecting 2 3 or 4 color things just give the user the ability
   // to select the color for every necessary piece")
   const CZ_ROLES = [["main", "Main", "bands, headers, buttons, tabs"], ["text", "Text", "the type"], ["stripe", "Stripe", "the rule under the bands"], ["accent", "Highlight", "links and accent type"],
-    ["lines", "Outlines", "the edges of buttons, boxes and menus"], ["frame", "Table frame", "the thick border round tables and their thick lines"], ["grid", "Table lines", "the thin lines between cells"], ["page", "Background", "the page behind the cards"], ["heading", "Headings", "the big bold titles"], ["sorted", "Sorted header", "the sorted column's name in a table"], ["fbar", "Filter bars", "the bars of filter buttons over the tables"], ["table", "Tables", "the cells of every table"], ["sub", "Subtitles", "the grey notes and labels"], ["ref", "References", "links like All hitters →, About, Glossary"]];
+    ["lines", "Outlines", "the edges of buttons, boxes and menus"], ["frame", "Table frame", "the thick border round tables and their thick lines"], ["grid", "Table lines", "the thin lines between cells"], ["page", "Background", "the page behind the cards"], ["heading", "Headings", "the big bold titles"], ["sorted", "Sorted header", "the sorted column's name in a table"], ["fbar", "Filter bars", "the bars of filter buttons over the tables"], ["picked", "Picked button", "the highlighted button in those bars, like Standard"], ["table", "Tables", "the cells of every table"], ["sub", "Subtitles", "the grey notes and labels"], ["ref", "References", "links like All hitters →, About, Glossary"]];
   const cz = { act: "main", lg: "ALL", yr: "today", q: "", mode: "teams", cq: "" };
   // the colour search (Sean, 1 Nov 2026: "allow me to search cream white and it comes up with every teams color who has cream white"): every team
   // colour matched by its name and by the families its hex falls in (czFam: hue / saturation / lightness — a cream is also a white, a navy also a
@@ -7517,7 +7517,7 @@
     // an older save of two or three colours: the roles it didn't set take what they showed (the stripe the text, the highlight the main)
     const c0 = cfg0.colors || {}, o = !c0.lines;
     const cfg = { ...cfg0, n: 4, colors: { main: c0.main, text: c0.text, stripe: o && (cfg0.n || 2) < 3 ? c0.text : c0.stripe || c0.text, accent: o && (cfg0.n || 2) < 4 ? c0.main : c0.accent || c0.main,
-      lines: c0.lines || "#111111", frame: c0.frame || c0.lines || "#1c1c1c", grid: c0.grid || c0.lines || "#1c1c1c", page: c0.page || "#ffffff", heading: c0.heading || c0.text, sorted: c0.sorted || czMix(c0.main, "#ffffff", 0.22), fbar: c0.fbar || "#f3f6fa", table: c0.table || "#ffffff", sub: c0.sub || null, ref: c0.ref || null } };
+      lines: c0.lines || "#111111", frame: c0.frame || c0.lines || "#1c1c1c", grid: c0.grid || c0.lines || "#1c1c1c", page: c0.page || "#ffffff", heading: c0.heading || c0.text, sorted: c0.sorted || czMix(c0.main, "#ffffff", 0.22), fbar: c0.fbar || "#f3f6fa", picked: c0.picked || c0.main, table: c0.table || "#ffffff", sub: c0.sub || null, ref: c0.ref || null } };
     // Subtitles and References can go back to the site's own (Sean, 2 Nov 2026: "allow me to go back to the default too ... what it is pre adding any
     // change ability"): null = not set, the scheme's grey and the links' own colours; the box shows them and says Default
     const CZ_DEF = { sub: "#6f7c90", ref: cfg.colors.accent || "#2f6fb3" };
@@ -7601,7 +7601,7 @@
         }
         const use = el("div", "czuse");
         const b = el("button", "czub", "Use"); b.type = "button"; b.title = `${team}: take its colours (you can change any piece after)`;
-        b.addEventListener("click", () => { const t = czTeam(cols, 4); save({ n: 4, flat: !!cfg.flat, colors: { ...t.colors, lines: cfg.colors.lines, frame: cfg.colors.frame, grid: cfg.colors.grid, page: cfg.colors.page, heading: t.colors.text, sorted: cfg.colors.sorted, fbar: cfg.colors.fbar, table: cfg.colors.table, sub: cfg.colors.sub || null, ref: cfg.colors.ref || null }, refBold: !!cfg.refBold }, `${team}${to ? ` (${fr}–${to})` : ""}`); });
+        b.addEventListener("click", () => { const t = czTeam(cols, 4); save({ n: 4, flat: !!cfg.flat, colors: { ...t.colors, lines: cfg.colors.lines, frame: cfg.colors.frame, grid: cfg.colors.grid, page: cfg.colors.page, heading: t.colors.text, sorted: cfg.colors.sorted, fbar: cfg.colors.fbar, picked: cfg.colors.picked, table: cfg.colors.table, sub: cfg.colors.sub || null, ref: cfg.colors.ref || null }, refBold: !!cfg.refBold }, `${team}${to ? ` (${fr}–${to})` : ""}`); });
         use.append(b);
         it.append(hd, sws, use); list.append(it);
       }

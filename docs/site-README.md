@@ -1679,3 +1679,8 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   bottom bar's height disagreed with what iOS drew, so the standing list card ran under the bar. `setTb()` in `app.js` now sets `--pbar-h` from
   the bar's measured height and `--appvh` from `innerHeight` (on resize, orientation, the visual viewport and three late re-checks, the bar
   observed too); the phone's list-card height and `.board-scroll`'s cap read `var(--appvh, 100dvh)`. A desktop removes both.
+
+* **A Picked button colour (Sean, 2 Nov 2026: "Also I'd like a color option for what standard is highlighted as as well")**: a customizer role,
+  **Picked button**, after Filter bars: `buildCustom` → `light.fbsel` / `fbsel-ink` (white where it reads 3:1, else the text colour); `apply()` →
+  `--fbsel` / `--fbsel-ink` and `data-fbsel`; the picked or open button in every `.sbviews` bar (Standard in the season table's switch, Raw / Stuff,
+  the Leaders and Fantasy bars) takes it. An older save starts it at the Main colour, the look it had.
