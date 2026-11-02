@@ -11425,6 +11425,9 @@
     r.style.top = (parseFloat(getComputedStyle(bar).top) || 0) + bar.offsetHeight + "px";
     mp.style.setProperty("border-bottom-width", "0px", "important"); mp.style.setProperty("box-shadow", "none", "important");   // the rule stands in for the band's own (a later pass's border outranked every stylesheet override)
     r.style.marginLeft = r.style.marginRight = "0px";
+    // the rule meets the band with no white between (Sean, 2 Nov 2026: "the bottom bar on the header has a white gap above it" — the band's own
+    // border used to fill the pixel the card's foot leaves under it)
+    const gapPx = ct.getBoundingClientRect().bottom - mp.getBoundingClientRect().bottom; r.style.marginTop = gapPx > 0 ? -gapPx + "px" : "";
     const a = r.getBoundingClientRect(), h = mp.getBoundingClientRect();
     r.style.marginLeft = (h.left - a.left) + "px"; r.style.marginRight = (a.right - h.right) + "px";
   }
@@ -11498,7 +11501,8 @@
         const bg = pileRGBA(cs.backgroundColor), framed = cs.boxShadow !== "none"
           || ["Top", "Right", "Bottom", "Left"].some((s) => parseFloat(cs["border" + s + "Width"]) > 0 && pileRGBA(cs["border" + s + "Color"]).a > 0);
         const boxed = framed || cs.backgroundImage !== "none" || (bg.a > 0.05 && !ground.has(bg.v));
-        const big = boxed && rs.length === 1 && rs[0].width > W * 0.6 && rs[0].height > Math.min(innerHeight * 0.6, 500);
+        // the card a page is laid out on is ground; a table or anything that scrolls never is, however big (a phone's tables are the page's width)
+        const big = boxed && rs.length === 1 && rs[0].width > W * 0.6 && rs[0].height > Math.min(innerHeight * 0.6, 500) && !/auto|scroll|hidden/.test(cs.overflowX + cs.overflowY) && k.tagName !== "TABLE" && !k.querySelector(":scope > table, :scope > #rows");
         if (big && !inBox) { if (bg.a > 0.05) ground.add(bg.v); walk(k, false); continue; }   // the card the page is laid out on is ground
         if (boxed && !inBox && rs.length === 1 && rs[0].width > 60 && rs[0].height > 30) {
           mark(bg8, rs[0], 0);
@@ -11516,42 +11520,50 @@
     const sums = (g) => { const P = new Int32Array((gw + 1) * (gh + 1)); for (let y = 0; y < gh; y++) { let row = 0; for (let x = 0; x < gw; x++) { row += g[y * gw + x]; P[(y + 1) * (gw + 1) + x + 1] = P[y * (gw + 1) + x + 1] + row; } } return P; };
     const PT = sums(tg), PB = sums(bg8);
     const cnt = (P, x0, y0, x1, y1) => { x0 = Math.max(0, x0); y0 = Math.max(0, y0); x1 = Math.min(gw, x1); y1 = Math.min(gh, y1); if (x1 <= x0 || y1 <= y0) return 1e9; return P[y1 * (gw + 1) + x1] - P[y0 * (gw + 1) + x1] - P[y1 * (gw + 1) + x0] + P[y0 * (gw + 1) + x0]; };
-    const small = innerWidth < 700, pw = small ? 84 : PILE_W, ph = small ? 47 : PILE_H;
+    const small = innerWidth < 700, PW = small ? 84 : PILE_W, PH = small ? 47 : PILE_H;
+    let pw = PW, ph = PH;
     let s = 0; for (const ch of seedKey) s = (s * 31 + ch.charCodeAt(0)) % 2147483648;
     const rnd = () => ((s = (s * 1103515245 + 12345) % 2147483648) / 2147483648);
     const lo = top, hi = H - foot;
     // can a heap sit with its top-left at (x, y)? no words or controls under it; on a box only as far as a corner lets it lean
     const fits = (x, y, lean) => {
-      if (x < 2 || x + pw > W - 2 || y < lo || y + ph > hi) return false;
+      if (x < -pw * 0.45 || x + pw > W + pw * 0.45 || y < lo || y + ph > hi) return false;   // a heap may peek in from the screen's edge (the layer clips it)
       const gx0 = Math.floor(x / C), gy0 = Math.floor(y / C), gx1 = Math.ceil((x + pw) / C), gy1 = Math.ceil((y + ph) / C);
       if (cnt(PT, gx0, gy0, gx1, gy1) > 0) return false;
       const onBox = cnt(PB, gx0, gy0, gx1, gy1), all = (gx1 - gx0) * (gy1 - gy0);
       return lean ? onBox <= all * lean : onBox === 0;
     };
-    const put = [], gap = small ? 170 : 240, max = Math.max(3, Math.round(W * H / (small ? 150000 : 200000)));
+    // more heaps, closer together (Sean, 2 Nov 2026: "add more leaf piles and put them on all site pages"); where a full heap won't fit a smaller one may
+    const put = [], max = Math.max(4, Math.round(W * H / (small ? 60000 : 90000)));
+    let gap = small ? 120 : 190;
     const take = (x, y) => {
       const cx = x + pw / 2, cy = y + ph / 2;
-      if (put.some(([px, py]) => Math.hypot(px - cx, py - cy) < gap)) return false;
-      put.push([cx, cy]);
+      if (put.some(([px, py, pr]) => Math.hypot(px - cx, py - cy) < Math.max(gap, pr + pw / 2 + 16))) return false;
+      put.push([cx, cy, pw / 2]);
       const d = document.createElement("i");
       d.style.cssText = `left:${x}px;top:${y}px;width:${pw}px;height:${ph}px;background-image:${pileArt[Math.floor(rnd() * pileArt.length)]}`;
       layer.append(d); return true;
     };
-    // first: heaps leaning on the corners of tables and boxes (a sideways-scrolling table only on its left corners, which don't move)
-    const lx = small ? 20 : 26, ly = small ? 12 : 16, corners = [];
-    for (const [r, scroll] of boxes) {
-      const L = r.left - o.left, T = r.top - o.top, R = r.right - o.left, B = r.bottom - o.top;
-      corners.push([L - pw + lx, T - ph + ly, 0.22], [L - pw + lx, B - ly, 0.22], [L - 8, T - ph / 2, 0.7], [L - 8, B - ph / 2, 0.7]);   // outside the corner, or straddling the edge at it
-      if (!scroll) corners.push([R - lx, T - ph + ly, 0.22], [R - lx, B - ly, 0.22], [R - pw + 8, T - ph / 2, 0.7], [R - pw + 8, B - ph / 2, 0.7]);
+    let nc = 0, ncand = 0;
+    for (const sc of small ? [1, 0.74, 0.55, 0.42] : [1, 0.74, 0.55]) {
+      if (put.length >= max) break;
+      pw = Math.round(PW * sc); ph = Math.round(PH * sc); gap = (small ? 120 : 190) * (0.6 + 0.4 * sc);
+      // first: heaps leaning on the corners of tables and boxes (a sideways-scrolling table only on its left corners, which don't move)
+      const lx = Math.round((small ? 20 : 26) * sc), ly = Math.round((small ? 12 : 16) * sc), corners = [];
+      for (const [r, scroll] of boxes) {
+        const L = r.left - o.left, T = r.top - o.top, R = r.right - o.left, B = r.bottom - o.top;
+        corners.push([L - pw + lx, T - ph + ly, 0.22], [L - pw + lx, B - ly, 0.22], [L - 8, T - ph / 2, 0.85], [L - 8, B - ph / 2, 0.85]);   // outside the corner, or straddling the edge at it
+        if (!scroll) corners.push([R - lx, T - ph + ly, 0.22], [R - lx, B - ly, 0.22], [R - pw + 8, T - ph / 2, 0.85], [R - pw + 8, B - ph / 2, 0.85]);
+      }
+      corners.forEach((c) => c.push(rnd())); corners.sort((p, q) => p[3] - q[3]); nc += corners.length;
+      const half = Math.ceil(max * 0.6);
+      for (const [x, y, ln] of corners) { if (put.length >= half) break; for (const [dx, dy] of [[0, 0], [8, 0], [-8, 0], [0, 6], [0, -6], [16, 0], [-16, 0], [24, 0], [-24, 0]]) if (fits(Math.round(x + dx), Math.round(y + dy), ln) && take(Math.round(x + dx), Math.round(y + dy))) break; }
+      // then: heaps in the open white space
+      const cands = [];
+      for (let y = lo; y + ph < hi; y += 8) for (let x = 4; x + pw < W - 2; x += 8) if (fits(x, y, false)) cands.push([x, y, rnd()]);
+      cands.sort((p, q) => p[2] - q[2]); ncand += cands.length;
+      for (const [x, y] of cands) { if (put.length >= max) break; take(x, y); }
     }
-    corners.forEach((c) => c.push(rnd())); corners.sort((p, q) => p[3] - q[3]);
-    const half = Math.ceil(max * 0.6);
-    for (const [x, y, ln] of corners) { if (put.length >= half) break; for (const [dx, dy] of [[0, 0], [8, 0], [-8, 0], [0, 6], [0, -6], [16, 0], [-16, 0]]) if (fits(Math.round(x + dx), Math.round(y + dy), ln) && take(Math.round(x + dx), Math.round(y + dy))) break; }
-    // then: heaps in the open white space
-    const cands = [];
-    for (let y = lo; y + ph < hi; y += 12) for (let x = 4; x + pw < W - 2; x += 12) if (fits(x, y, false)) cands.push([x, y, rnd()]);
-    cands.sort((p, q) => p[2] - q[2]);
-    for (const [x, y] of cands) { if (put.length >= max) break; take(x, y); }
   }
   let pileT = 0, pileBusy = false;
   function pilesNow() {
@@ -11565,6 +11577,8 @@
       for (const h of hosts) {
         let l = [...h.children].find((c) => c.classList.contains("leafpiles"));
         if (!l) { l = document.createElement("div"); l.className = "leafpiles"; l.setAttribute("aria-hidden", "true"); h.append(l); }
+        l.style.height = "0px"; l.textContent = "";   // measure the page without the last page's layer holding it tall
+        l.style.width = (h === document.body ? document.documentElement.clientWidth : h.clientWidth) + "px"; l.style.height = (h === document.body ? document.documentElement.scrollHeight : h.scrollHeight) + "px";
         placePiles(h, l, (location.hash || "#home") + (h === document.body ? "" : h.id) + (innerWidth < 700 ? "m" : "d"));
       }
     } catch (e) { console.warn("leaf piles", e); }
