@@ -7429,7 +7429,7 @@
   // every piece its own colour, always (Sean, 1 Nov 2026: "don't even give the option for selecting 2 3 or 4 color things just give the user the ability
   // to select the color for every necessary piece")
   const CZ_ROLES = [["main", "Main", "bands, headers, buttons, tabs"], ["text", "Text", "the type"], ["stripe", "Stripe", "the rule under the bands"], ["accent", "Highlight", "links and accent type"],
-    ["lines", "Lines", "outlines and table lines"], ["page", "Background", "the page behind the cards"], ["heading", "Headings", "the big bold titles"], ["sorted", "Sorted header", "the sorted column's name in a table"]];
+    ["lines", "Outlines", "the edges of buttons, boxes and menus"], ["frame", "Table frame", "the thick border round tables and their thick lines"], ["grid", "Table lines", "the thin lines between cells"], ["page", "Background", "the page behind the cards"], ["heading", "Headings", "the big bold titles"], ["sorted", "Sorted header", "the sorted column's name in a table"]];
   const cz = { act: "main", lg: "ALL", yr: "today", q: "", mode: "teams", cq: "" };
   // the colour search (Sean, 1 Nov 2026: "allow me to search cream white and it comes up with every teams color who has cream white"): every team
   // colour matched by its name and by the families its hex falls in (czFam: hue / saturation / lightness — a cream is also a white, a navy also a
@@ -7517,7 +7517,7 @@
     // an older save of two or three colours: the roles it didn't set take what they showed (the stripe the text, the highlight the main)
     const c0 = cfg0.colors || {}, o = !c0.lines;
     const cfg = { ...cfg0, n: 4, colors: { main: c0.main, text: c0.text, stripe: o && (cfg0.n || 2) < 3 ? c0.text : c0.stripe || c0.text, accent: o && (cfg0.n || 2) < 4 ? c0.main : c0.accent || c0.main,
-      lines: c0.lines || "#111111", page: c0.page || "#ffffff", heading: c0.heading || c0.text, sorted: c0.sorted || czMix(c0.main, "#ffffff", 0.22) } };
+      lines: c0.lines || "#111111", frame: c0.frame || c0.lines || "#1c1c1c", grid: c0.grid || c0.lines || "#1c1c1c", page: c0.page || "#ffffff", heading: c0.heading || c0.text, sorted: c0.sorted || czMix(c0.main, "#ffffff", 0.22) } };
     const save = (c, name) => { T.setCustom(Object.assign({}, c, { name: name || c.name || "Custom" })); renderSettings(); };
     const on = cur.scheme === "custom";
     const wrap = el("div", "czbox");
@@ -7591,7 +7591,7 @@
         }
         const use = el("div", "czuse");
         const b = el("button", "czub", "Use"); b.type = "button"; b.title = `${team}: take its colours (you can change any piece after)`;
-        b.addEventListener("click", () => { const t = czTeam(cols, 4); save({ n: 4, flat: !!cfg.flat, colors: { ...t.colors, lines: cfg.colors.lines, page: cfg.colors.page, heading: t.colors.text, sorted: cfg.colors.sorted } }, `${team}${to ? ` (${fr}–${to})` : ""}`); });
+        b.addEventListener("click", () => { const t = czTeam(cols, 4); save({ n: 4, flat: !!cfg.flat, colors: { ...t.colors, lines: cfg.colors.lines, frame: cfg.colors.frame, grid: cfg.colors.grid, page: cfg.colors.page, heading: t.colors.text, sorted: cfg.colors.sorted } }, `${team}${to ? ` (${fr}–${to})` : ""}`); });
         use.append(b);
         it.append(hd, sws, use); list.append(it);
       }
@@ -7599,7 +7599,7 @@
     if (!window.DRAFT_TEAMCOLORS) ensureScript("hist/teamcolors.js", () => !!window.DRAFT_TEAMCOLORS);
     draw();
     wrap.append(tb);
-    row("Your colours", "A colour for every piece: the bands and buttons, the type, the stripe, links, the outlines and table lines, the page behind the cards, the big bold titles, and the sorted column's name in the tables. Tap a box to pick which piece a team swatch fills (the next one is picked after each tap), use the colour picker, type a hex, or take a team's look with Use. Colours (beside Teams) searches every pro and college team's colours by name or family — cream white, navy, a hex. The percentile colours stay blue cold, red hot. Text that wouldn't read is darkened until it does.", wrap);
+    row("Your colours", "A colour for every piece: the bands and buttons, the type, the stripe, links, the outlines of buttons and boxes, the tables' thick frame and their thin lines, the page behind the cards, the big bold titles, and the sorted column's name in the tables. Tap a box to pick which piece a team swatch fills (the next one is picked after each tap), use the colour picker, type a hex, or take a team's look with Use. Colours (beside Teams) searches every pro and college team's colours by name or family — cream white, navy, a hex. The percentile colours stay blue cold, red hot. Text that wouldn't read is darkened until it does.", wrap);
   }
   function renderAppearance(box) {
     const T = window.DRAFT_THEMES; box.innerHTML = "";
@@ -13943,7 +13943,7 @@
                 search: '<svg class="pstroke" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.75"></circle><path d="M15.5 15.5 21 21"></path></svg>' };
     const bar = el("nav", "pbar"); bar.setAttribute("aria-label", "Pages");
     // the Leaders tab stands for three groups (data-modes), the Fantasy tab for its five pages (the header's group key, draftmode)
-    for (const [h, m, l, ms] of [["#home", "home", "Home"], [LAST_PAGE.leaderboard, "leaderboard", "Leaders", "leaderboard pitches flaws"], [LAST_PAGE.draftmode, "draftmode", "Fantasy"]]) {
+    for (const [h, m, l, ms] of [["#home", "home", "Home"], [LAST_PAGE.leaderboard, "leaderboard", "Leaders", "leaderboard pitches flaws"], [LAST_PAGE.draftmode, "draftmode", "Fantasy"], ["#settings", "settings", "Settings"]]) {   /* Settings at the bar's right (Sean, 2 Nov 2026) */
       const n = el("a"); n.href = h; n.dataset.mode = m; if (ms) n.dataset.modes = ms; n.innerHTML = I[m] + `<span>${l}</span>`; bar.append(n); }
     // The phone's top bar (Sean, 30 Oct 2026, option A of the header designs in option D's colours): search at the left, the site's icon and its
     // name in the middle (a link home), Settings at the right, on the band's blue over the red stripe. Search and Settings left the bottom bar for it.
@@ -13955,7 +13955,11 @@
     home.innerHTML = '<img src="icons/logo-fg.png" alt="" width="30" height="30"><span class="phthru"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>' + thru + '</span>';
     const gear = el("a", "phbtn phgear"); gear.href = "#settings"; gear.dataset.mode = "settings"; gear.setAttribute("aria-label", "Settings");
     gear.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>';
-    top.append(sb, home, gear); document.querySelector("header.top").prepend(top);
+    // the top bar rearranged (Sean, 2 Nov 2026: "make the logo be in the middle and it can be a bit bigger and then put the thru date where the search
+    // button used to be and put the search button where the settings button used to be"; Settings moved to the bottom bar): the date pill at the
+    // left (a link home too), the logo alone in the middle, search at the right
+    const pill = home.querySelector(".phthru"), thruA = el("a", "phthrua"); thruA.href = "#home"; thruA.setAttribute("aria-label", "Games through " + (DATA.meta.through || "")); if (pill) thruA.append(pill);
+    void gear; top.append(thruA, home, sb); document.querySelector("header.top").prepend(top);
     const cancel = el("button", "pscancel", "Cancel"); cancel.type = "button"; cancel.addEventListener("click", () => pSearch(false)); document.querySelector("header.top").append(cancel);
     const bg = el("div", "psbg"); bg.addEventListener("click", () => pSearch(false)); document.body.append(bg);
     window.addEventListener("hashchange", () => pSearch(false));
