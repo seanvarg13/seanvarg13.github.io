@@ -136,7 +136,7 @@ function minorsId() {
       const shown = await pg.evaluate(() => { const b = document.querySelector(".pbar"); return b ? getComputedStyle(b).display !== "none" : null; });
       if (shown === null) throw new Error("no .pbar");
       if (name.startsWith("phone")) { if (!shown) throw new Error("the phone bar is hidden");
-        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 3 && document.querySelectorAll(".pbar > a[data-mode]").length === 3 && !document.querySelector(".pbarsheet") && getComputedStyle(document.querySelector(".navtog")).display === "none" && getComputedStyle(document.querySelector(".phtop")).display !== "none" && getComputedStyle(document.querySelector("#gsearch")).display === "none" && document.querySelector('.phtop a[href="#settings"]'));
+        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 4 && document.querySelectorAll(".pbar > a[data-mode]").length === 4 && !document.querySelector(".pbarsheet") && getComputedStyle(document.querySelector(".navtog")).display === "none" && getComputedStyle(document.querySelector(".phtop")).display !== "none" && getComputedStyle(document.querySelector("#gsearch")).display === "none" && document.querySelector('.pbar > a[href="#settings"]') && document.querySelector('.phtop .psbtn'));
         // the Leaders tab goes to the Leaders page last open (the steps above left the board or Movers) and lights; once the bar's picker has moved
         // to the Leaderboard, the tab remembers that instead; the Fantasy tab the same for its five pages
         const lh = await pg.evaluate(() => document.querySelector('.pbar > a[data-mode="leaderboard"]').getAttribute("href"));

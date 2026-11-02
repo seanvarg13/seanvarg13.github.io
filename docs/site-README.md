@@ -1578,3 +1578,14 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   `sorthd-ink` (white where it reads 3:1, else the text colour); `apply()` → `--sorthd` / `--sorthd-ink` and `data-sorthd` on `<html>`; `styles.css` fills
   every lit column name with it — home's and the card tabs' `th.lit`, the Leaderboard's `#colhead .h[aria-sort]`, the Pitching+ board's sorted `th`.
   An older save starts the box at the band lightened 22% (`czMix`), the look it had.
+
+* **Border colours of your own; Settings on the bottom bar; the top bar rearranged (Sean, 2 Nov 2026: "For all tables when that happens", "allow me to
+  choose the border colors", "put the settings button on the bottom right of the bottom bar", "make the logo be in the middle and it can be a bit bigger
+  and then put the thru date where the search button used to be and put the search button where the settings button used to be")**:
+  - **Borders**: the customizer's Lines is three roles — **Outlines** (buttons, boxes, menus: `--outline`), **Table frame** (the thick frame ring and
+    the thick group / header / totals lines: `--xlt`, which every `var(--xlw) solid …` rule and the frame ring now read before `--xl`) and **Table
+    lines** (the thin cell lines: `--xl`). An older save starts both table roles at its Lines colour.
+  - **Sorted header** reaches every table: checked on home, the Leaderboard, the Pitching+ board, Movers, Bullpens, Fantasy and every card tab of a
+    hitter's and a pitcher's page.
+  - **Top bar** (phone): the "Thru Sep 27" pill at the left (a link home, `.phthrua`), the logo alone in the middle at 40px, search at the right.
+    **Bottom bar**: Home · Leaders · Fantasy · **Settings** (the gear left the top bar). The page check counts four tabs.

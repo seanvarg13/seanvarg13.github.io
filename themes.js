@@ -240,7 +240,7 @@ window.DRAFT_THEMES = (function () {
       page: "#ffffff", surface: "#ffffff", "surface-2": mix(M, "#ffffff", 0.94), hair, rail, stripe: "#ffffff", band: "#ffffff", plate: hair, muted: toward(mix(T, "#ffffff", 0.5), T, "#ffffff", 4),
       btn: M, "btn-ink": onM, "btn-line": flat ? "transparent" : rail, "tab-fill": M,
       ground: PG, "line-soft": hair, frame: flat ? hair : rail, secrule: hair, "accent-ink": onM, "band-ink": onM, svtext: T, svrule: hair, pctrack: mix(M, "#ffffff", 0.88),
-      outline: LN, xl: LN };
+      outline: LN, xl: hx(C.grid) ? C.grid : LN, xlt: hx(C.frame) ? C.frame : (hx(C.grid) ? C.grid : LN) };   // table lines and the thick frame (2 Nov 2026)
     if (hx(C.sorted)) { light.sorthd = C.sorted; light["sorthd-ink"] = ratioOf(C.sorted, "#ffffff") >= 3 ? "#ffffff" : T; }   // the sorted column's name (2 Nov 2026)
     if (hx(C.heading)) light.heading = toward(C.heading, "#000000", "#ffffff", 3);   // the bold headings (2 Nov 2026), readable on white
     if (flat) light["flat-ink"] = T;
@@ -327,6 +327,7 @@ window.DRAFT_THEMES = (function () {
     const hd = !isDark() && sc.light.heading;
     if (hd) { root.style.setProperty("--heading", hd); root.dataset.heading = "1"; } else { root.style.removeProperty("--heading"); delete root.dataset.heading; }
     if (sc.light.xl && !isDark()) root.style.setProperty("--xl", sc.light.xl); else root.style.removeProperty("--xl");
+    if (sc.light.xlt && !isDark()) root.style.setProperty("--xlt", sc.light.xlt); else root.style.removeProperty("--xlt");
     for (const k of ["frame", "rail", "btn-line", "line-soft"]) {
       if (black) root.style.setProperty("--" + k, ol);
       else if (k in tokens) root.style.setProperty("--" + k, tokens[k]); else root.style.removeProperty("--" + k);
