@@ -11465,65 +11465,86 @@
   const pileRGBA = (c) => { const m = c.match(/[\d.]+/g); return m ? { a: m.length > 3 ? +m[3] : 1, v: m.slice(0, 3).join(",") } : { a: 0, v: "" }; };
   function placePiles(host, layer, seedKey) {
     layer.textContent = "";
-    const o = layer.getBoundingClientRect(), hr = host === document.body ? null : host.getBoundingClientRect();
+    const o = layer.getBoundingClientRect();
     const W = host === document.body ? document.documentElement.clientWidth : host.clientWidth;
     const H = host === document.body ? document.documentElement.scrollHeight : host.scrollHeight;
-    const C = 8, gw = Math.ceil(W / C) + 1, gh = Math.ceil(H / C) + 1;
-    if (gw * gh > 3e6) return;
-    const g = new Uint8Array(gw * gh);
-    const mark = (r) => {
-      const x0 = Math.max(0, Math.floor((r.left - o.left) / C)), x1 = Math.min(gw - 1, Math.ceil((r.right - o.left) / C));
-      const y0 = Math.max(0, Math.floor((r.top - o.top) / C)), y1 = Math.min(gh - 1, Math.ceil((r.bottom - o.top) / C));
+    const C = 4, gw = Math.ceil(W / C) + 1, gh = Math.ceil(H / C) + 1;
+    if (gw * gh > 6e6) return;
+    // two maps: words and controls (a heap never covers them) and framed boxes (a heap may lean on a box's corner, not sit in it)
+    const tg = new Uint8Array(gw * gh), bg8 = new Uint8Array(gw * gh), boxes = [];
+    const mark = (g, r, pad) => {
+      const x0 = Math.max(0, Math.floor((r.left - o.left - pad) / C)), x1 = Math.min(gw - 1, Math.ceil((r.right - o.left + pad) / C));
+      const y0 = Math.max(0, Math.floor((r.top - o.top - pad) / C)), y1 = Math.min(gh - 1, Math.ceil((r.bottom - o.top + pad) / C));
       for (let y = y0; y <= y1; y++) g.fill(1, y * gw + x0, y * gw + x1 + 1);
     };
-    // the grounds a heap may lie on: the page's own white and the host's
     const ground = new Set([document.body, host, document.querySelector("main.wrap")].filter(Boolean).map((e) => pileRGBA(getComputedStyle(e).backgroundColor).v));
     const REPL = /^(IMG|SVG|CANVAS|INPUT|SELECT|TEXTAREA|BUTTON|VIDEO|IFRAME|PROGRESS)$/i;
-    const walk = (e) => {
+    const walk = (e, inBox) => {
       for (const k of e.children) {
         if (k.matches(PILE_SKIP)) continue;
         if (host === document.body && k.matches("#xboard.xpop, #mkroom")) continue;
         const cs = getComputedStyle(k);
         if (cs.display === "none" || cs.visibility === "hidden") continue;
-        if (host === document.body && cs.position === "fixed") continue;   // floats over the page, moves with the screen
-        const rs = k.getClientRects(); if (!rs.length) { walk(k); continue; }
-        const bg = pileRGBA(cs.backgroundColor), boxed = REPL.test(k.tagName) || cs.boxShadow !== "none" || cs.backgroundImage !== "none"
-          || ["Top", "Right", "Bottom", "Left"].some((s) => parseFloat(cs["border" + s + "Width"]) > 0 && pileRGBA(cs["border" + s + "Color"]).a > 0)
-          || (bg.a > 0.05 && !ground.has(bg.v));
-        // a card the page is laid out on (the white page card, a settings or board page) is ground, not a box: go inside it
-        const big = boxed && !REPL.test(k.tagName) && rs.length === 1 && rs[0].width > W * 0.6 && rs[0].height > Math.min(innerHeight * 0.6, 500);
-        if (big) { if (bg.a > 0.05) ground.add(bg.v); walk(k); continue; }
-        if (boxed) { for (const r of rs) mark(r); continue; }
-        for (const t of k.childNodes) if (t.nodeType === 3 && t.textContent.trim()) { const rg = document.createRange(); rg.selectNodeContents(t); for (const r of rg.getClientRects()) mark(r); }
-        walk(k);
+        if (cs.position === "fixed" || cs.position === "sticky") { for (const r of k.getClientRects()) mark(tg, r, 6); continue; }   // bars that follow the screen: keep clear of where they sit
+        const rs = k.getClientRects(); if (!rs.length) { walk(k, inBox); continue; }
+        if (REPL.test(k.tagName) || k.matches("a, .linkbtn, [role=button]")) { for (const r of rs) mark(tg, r, 3); continue; }
+        const bg = pileRGBA(cs.backgroundColor), framed = cs.boxShadow !== "none"
+          || ["Top", "Right", "Bottom", "Left"].some((s) => parseFloat(cs["border" + s + "Width"]) > 0 && pileRGBA(cs["border" + s + "Color"]).a > 0);
+        const boxed = framed || cs.backgroundImage !== "none" || (bg.a > 0.05 && !ground.has(bg.v));
+        const big = boxed && rs.length === 1 && rs[0].width > W * 0.6 && rs[0].height > Math.min(innerHeight * 0.6, 500);
+        if (big && !inBox) { if (bg.a > 0.05) ground.add(bg.v); walk(k, false); continue; }   // the card the page is laid out on is ground
+        if (boxed && !inBox && rs.length === 1 && rs[0].width > 60 && rs[0].height > 30) {
+          mark(bg8, rs[0], 0);
+          const scroll = /auto|scroll/.test(cs.overflowX) && k.scrollWidth > k.clientWidth + 2;
+          boxes.push([rs[0], scroll]);
+          walk(k, true); continue;
+        }
+        for (const t of k.childNodes) if (t.nodeType === 3 && t.textContent.trim()) { const rg = document.createRange(); rg.selectNodeContents(t); for (const r of rg.getClientRects()) mark(tg, r, 3); }
+        walk(k, inBox);
       }
     };
-    walk(host);
-    // nothing above the page's first content or under the bars at the foot
+    walk(host, false);
     const top = host === document.body ? Math.max(0, ((document.querySelector("header.top") || { getBoundingClientRect: () => ({ bottom: 0 }) }).getBoundingClientRect().bottom - o.top) + 6) : 0;
     const bar = document.querySelector(".pbar"), foot = host === document.body && bar && bar.offsetHeight ? bar.offsetHeight + 10 : 0;
-    // prefix sums: is a box clear?
-    const P = new Int32Array((gw + 1) * (gh + 1));
-    for (let y = 0; y < gh; y++) { let row = 0; for (let x = 0; x < gw; x++) { row += g[y * gw + x]; P[(y + 1) * (gw + 1) + x + 1] = P[y * (gw + 1) + x + 1] + row; } }
-    const busy = (x0, y0, x1, y1) => P[y1 * (gw + 1) + x1] - P[y0 * (gw + 1) + x1] - P[y1 * (gw + 1) + x0] + P[y0 * (gw + 1) + x0];
-    const small = innerWidth < 700, pw = small ? 72 : PILE_W, ph = small ? 40 : PILE_H;   // a phone's gaps are narrower: smaller heaps
-    const PAD = small ? 6 : 10, bw = Math.ceil((pw + 2 * PAD) / C), bh = Math.ceil((ph + 2 * PAD) / C);
+    const sums = (g) => { const P = new Int32Array((gw + 1) * (gh + 1)); for (let y = 0; y < gh; y++) { let row = 0; for (let x = 0; x < gw; x++) { row += g[y * gw + x]; P[(y + 1) * (gw + 1) + x + 1] = P[y * (gw + 1) + x + 1] + row; } } return P; };
+    const PT = sums(tg), PB = sums(bg8);
+    const cnt = (P, x0, y0, x1, y1) => { x0 = Math.max(0, x0); y0 = Math.max(0, y0); x1 = Math.min(gw, x1); y1 = Math.min(gh, y1); if (x1 <= x0 || y1 <= y0) return 1e9; return P[y1 * (gw + 1) + x1] - P[y0 * (gw + 1) + x1] - P[y1 * (gw + 1) + x0] + P[y0 * (gw + 1) + x0]; };
+    const small = innerWidth < 700, pw = small ? 84 : PILE_W, ph = small ? 47 : PILE_H;
     let s = 0; for (const ch of seedKey) s = (s * 31 + ch.charCodeAt(0)) % 2147483648;
     const rnd = () => ((s = (s * 1103515245 + 12345) % 2147483648) / 2147483648);
-    const cands = [];
-    for (let y = Math.ceil(top / C); y + bh < gh - foot / C; y += 2) for (let x = 1; x + bw < gw - 1; x += 2) if (!busy(x, y, x + bw, y + bh)) cands.push([x, y, rnd()]);
-    cands.sort((p, q) => p[2] - q[2]);
-    const gap = small ? 150 : 260, put = [], max = Math.max(3, Math.round(W * H / 220000));
-    for (const [x, y] of cands) {
-      const cx = x * C + PAD + pw / 2, cy = y * C + PAD + ph / 2;
-      if (put.some(([px, py]) => Math.hypot(px - cx, py - cy) < gap)) continue;
+    const lo = top, hi = H - foot;
+    // can a heap sit with its top-left at (x, y)? no words or controls under it; on a box only as far as a corner lets it lean
+    const fits = (x, y, lean) => {
+      if (x < 2 || x + pw > W - 2 || y < lo || y + ph > hi) return false;
+      const gx0 = Math.floor(x / C), gy0 = Math.floor(y / C), gx1 = Math.ceil((x + pw) / C), gy1 = Math.ceil((y + ph) / C);
+      if (cnt(PT, gx0, gy0, gx1, gy1) > 0) return false;
+      const onBox = cnt(PB, gx0, gy0, gx1, gy1), all = (gx1 - gx0) * (gy1 - gy0);
+      return lean ? onBox <= all * lean : onBox === 0;
+    };
+    const put = [], gap = small ? 170 : 240, max = Math.max(3, Math.round(W * H / (small ? 150000 : 200000)));
+    const take = (x, y) => {
+      const cx = x + pw / 2, cy = y + ph / 2;
+      if (put.some(([px, py]) => Math.hypot(px - cx, py - cy) < gap)) return false;
       put.push([cx, cy]);
       const d = document.createElement("i");
-      d.style.cssText = `left:${cx - pw / 2}px;top:${cy - ph / 2}px;width:${pw}px;height:${ph}px;background-image:${pileArt[Math.floor(rnd() * pileArt.length)]}`;
-      layer.append(d);
-      if (put.length >= max) break;
+      d.style.cssText = `left:${x}px;top:${y}px;width:${pw}px;height:${ph}px;background-image:${pileArt[Math.floor(rnd() * pileArt.length)]}`;
+      layer.append(d); return true;
+    };
+    // first: heaps leaning on the corners of tables and boxes (a sideways-scrolling table only on its left corners, which don't move)
+    const lx = small ? 20 : 26, ly = small ? 12 : 16, corners = [];
+    for (const [r, scroll] of boxes) {
+      const L = r.left - o.left, T = r.top - o.top, R = r.right - o.left, B = r.bottom - o.top;
+      corners.push([L - pw + lx, T - ph + ly, 0.22], [L - pw + lx, B - ly, 0.22], [L - 8, T - ph / 2, 0.7], [L - 8, B - ph / 2, 0.7]);   // outside the corner, or straddling the edge at it
+      if (!scroll) corners.push([R - lx, T - ph + ly, 0.22], [R - lx, B - ly, 0.22], [R - pw + 8, T - ph / 2, 0.7], [R - pw + 8, B - ph / 2, 0.7]);
     }
-    void hr;
+    corners.forEach((c) => c.push(rnd())); corners.sort((p, q) => p[3] - q[3]);
+    const half = Math.ceil(max * 0.6);
+    for (const [x, y, ln] of corners) { if (put.length >= half) break; for (const [dx, dy] of [[0, 0], [8, 0], [-8, 0], [0, 6], [0, -6], [16, 0], [-16, 0]]) if (fits(Math.round(x + dx), Math.round(y + dy), ln) && take(Math.round(x + dx), Math.round(y + dy))) break; }
+    // then: heaps in the open white space
+    const cands = [];
+    for (let y = lo; y + ph < hi; y += 12) for (let x = 4; x + pw < W - 2; x += 12) if (fits(x, y, false)) cands.push([x, y, rnd()]);
+    cands.sort((p, q) => p[2] - q[2]);
+    for (const [x, y] of cands) { if (put.length >= max) break; take(x, y); }
   }
   let pileT = 0, pileBusy = false;
   function pilesNow() {
