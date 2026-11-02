@@ -5963,3 +5963,8 @@ line can bring them back.
   3px in from `#fboard`'s clip (its bar doesn't move). The 2 Nov "marks" entry above was a misread of this request; its fix stays. On a phone,
   while the header wears art — fall's leaves (Seasonal in the fall), any season's art or a header style but Plain — the bottom bar wears it too:
   `HDR.sync` sets `--pbarart` and `data-pbarart` on `<html>`, the bar's icons and words white with a soft shadow, the header's rule along its top.
+
+* **Thin tables keep their thick breaks (Sean, 2 Nov 2026: "is there a way to keep the line breaks of sorts (like we have with the thick ones in the
+  thick table borders) when the tables only have thin borders")**: under Appearance ▸ Table borders ▸ Thin the group breaks and the frozen columns'
+  edge (`.ge`, `.f3`, `.sbl`, the Leaderboard's headline `.score`) stay 3px — they read `--xlg` (3px under `.thinlines`, else `--xlw`) — while the
+  frame, the header's foot, the totals' rule and every cell line are 1px.
