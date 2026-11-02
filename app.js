@@ -11050,15 +11050,16 @@
     const box = el("section", "pltblock");
     const hd = el("div", "sbhead"); hd.append(el("h3", "sbtitle", "Playing time")); box.append(hd);
     const sides = cells.filter((c) => /^vs /.test(c[0]));
-    const heads = [["Season", "l f1"], ["1st", "", "His most used lineup spot and its share of his starts"], ["2nd", "", "His second most used spot"], ["3rd", "", "His third most used spot"],
-                   ["GS", "", "Games started"], ["Roster G", "", cells[1][3]], ["Start%", "", "Starts over his games on the active roster"], ["G", "", "Games played: starts and substitute appearances"],
+    const heads = [["Season", "l f1"], ["Most", "", "His most frequent lineup spot and its share of his starts"], ["2nd most", "", "His second most frequent spot"], ["3rd most", "", "His third most frequent spot"],
+                   ["Roster G", "", cells[1][3]], ["Starts", "", "Games started"], ["Start%", "", "Starts over his games on the active roster"], ["G", "", "Games played: starts and substitute appearances"],
                    ["PA", ""], ["PA/G", "", cells[2][3]], ...sides.map((c) => [c[0], "", "Starts against that hand over his roster games against it"]), ...(L.last.length ? [[`Last ${L.last.length}`, "", `His last ${L.last.length} team games: the slot he started in, – on the roster without starting, × off the active roster`]] : [])];
     const groups = [["", 1], ["Lineup spot", 3], ["Playing time", 6], ...(sides.length ? [["Platoon", sides.length]] : []), ...(L.last.length ? [["Recent", 1]] : [])];
     const { tb, fin, wrap } = brTable(groups, heads, "plt");
+    wrap.querySelector("tr.over th").classList.add("f1"); /* the group row's blank over Season freezes with it, so the top row slides like the names */
     const tr = el("tr"), td = (txt, cls, tip) => { const c = el("td", cls || null, txt); if (tip) c.title = tip; tr.append(c); return c; };
     td(String(DS.season), "l f1");
     for (let i = 0; i < 3; i++) { const x = slots[i]; td(x ? `${ORD(x[0])} · ${pc(x[1])}` : "–", null, x ? `${x[1]} starts batting ${ORD(x[0])}${i === 0 ? ` — mean slot ${L.slot.toFixed(1)}` : ""}` : null); }
-    td(String(L.gs)); td(String(L.ar)); td(`${Math.round(L.stpct)}%`); td(L.gp != null ? String(L.gp) : "–"); td(String(L.pa)); td(L.patg != null ? L.patg.toFixed(1) : "–");
+    td(String(L.ar)); td(String(L.gs)); td(`${Math.round(L.stpct)}%`); td(L.gp != null ? String(L.gp) : "–"); td(String(L.pa)); td(L.patg != null ? L.patg.toFixed(1) : "–");
     for (const c of sides) { const x = td(c[1], c[4] ? "plweak" : null, c[3]); if (c[2] === "PLAT") x.append(el("span", "pbplat", "Plat")); }
     if (L.last.length) { const c = td("", "pllastc"), s = el("span", "pblast");
       for (const x of L.last) { const b = el("b", x > 0 ? "on" : x === 0 ? "off" : "out", x > 0 ? String(x) : x === 0 ? "–" : "×"); b.title = x > 0 ? `Started, batting ${ORD(x)}` : x === 0 ? "On the roster, didn't start" : "Off the active roster"; s.append(b); }
