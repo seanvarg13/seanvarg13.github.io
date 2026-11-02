@@ -6004,3 +6004,12 @@ line can bring them back.
   cell filled by its percentile among that season's qualified hitters on seasons of 100+ PA (`sbxPool`; FB / LD Brl% from `hrfbLeague`'s pools; GB
   Pull% turned over, lower is better), the career a band row weighted by batted balls, and an In Split row under the card's season when a window or
   split is on (the view's numbers, ranked among the window's qualifiers). Whatever season the card is on.
+
+* **The header's control row (Sean, 2 Nov 2026, from the Player Header Control Row canvas — six phone mockups — "Implement C")**: on his page
+  and in the popup the sticky bar has a row of its own under his name and bio, one joined control of equal cells: **Year ▾ · Level · (a
+  pitcher's Raw ▾) · Filters ▾** (`.pgctl` / `.pgcell` in `pageHead`, after a `.pgbrk` line break; the year and level are `pageTitle`'s
+  `_picks.mk()`, the level a plain cell when he has only the one; Raw / Stuff a `ddList`; Filters `filtersTog`'s button, so the window still hangs
+  under `.pgbar .phfilt`). The row is full width on a phone and 560px at most on a desktop, lined up with the name. The **popup's ×** (`.pgx`) sits
+  at the bar's right where Filters was, not on a strip of its own (the `xbar` strip is gone), and the **filter chips** ride at the bio line's right
+  beside Back. The percentiles title is plain "2026 MLB Percentiles" again, and a pitcher's season table no longer has the Raw / Stuff bar over
+  it. CSS: the block at the end of `styles.css`.
