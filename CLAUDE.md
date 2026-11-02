@@ -6088,3 +6088,9 @@ line can bring them back.
   rule up by the pixel between the band and the card's foot (`marginTop`), so it meets the band with no white line. A phone's Leaderboard, Pitching+
   board, Movers and Bullpens are wall-to-wall table with no blank space, so they show none there; every other page on a phone and every page on a
   desktop does.
+
+* **Leaf piles as mounds, no shadow (Sean, 2 Nov 2026, with five pictures of raked leaf piles: "The leaf piles don't have to have the shadow below them
+  like this is an example")**: `pileArt` in `app.js` draws each of its eight heaps as a raked pile — an orange mound (with a gold patch inside it) shrunk
+  a little so the leaves cover its edge, 58-67 small maple and oval leaves packed over it in a broad base rising to a peak (drawn back / top first, the
+  front over them), and two or three loose leaves above — in a pile's own warm mix (`PILEC`: yellows, golds, oranges, reds, a little green and crimson)
+  instead of the header's fourteen colours. The ground shadow under each heap is gone. Placement is unchanged.
