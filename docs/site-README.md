@@ -1705,3 +1705,9 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   with a date window or split on, the chips ("Sep 27 ×", "last 100 PA ×") sit on a strip across the sticky bar's top, right-aligned, above his
   headshot and name (the bar gets `xbar` again: 46px / 42px of top padding, the strip placed by `bleedBar`), instead of at the bio line's right.
   The popup's × stays beside his name in the control row's design (`.pgx`, not moved to the strip); with no filter there is no strip.
+
+* **Rules in the sticky bar (Sean, 2 Nov 2026, Soto's page with "last 100 PA ×": "add a line in between the filter boxes row and the header, and then
+  also put one between the actual filter descriptions up top and the header itself when filters are present")**: a 2px line in the band's rule colour
+  (`--phsep`) runs under his name and bio, over the Year · Level · Filters row (`.pgbrk`, the row break, drawn as the line), and, when a filter is on,
+  another under the chips strip across the bar's full width (`.pgchipsep`, appended after `.pgchips` in `pageHead`; the `xbar` top padding is 60px /
+  56px on a phone to clear it). Block at the end of `styles.css`.
