@@ -1752,6 +1752,19 @@ is deploy-limited.
   (39 on a phone, 60 on a desktop), almost all soft flakes (`snow` entries: a 6-12px pale icy-blue disc with a white glint, drawn in `sprite()` so it
   shows on a white page), a ❄️ now and then, falling slower and swaying less than the leaves (`sz`, `slow`). Christmas keeps its own mix.
 
+* **Five fixes (Sean, 2 Nov 2026: "There is still that one column on the leaderboard that has no border between them", "make the blue above the
+  header be the same theme as the header", "no window border for the bottom tabs when one is selected", "I don't need that random line bar above
+  the bottom tabs", the header's foot rule "very quickly goes away and comes back" as it scrolls)**: (1) a sorted stat column sits inside the row's
+  `.pcts` wrapper, which the 1 Nov row-line rule (direct children only) skipped — every filled cell there draws the line now. (2) The header's
+  background colour is `--hdrc` (`HDR.sync`: the header art's first colour, the fall leaves' rust `#9c3412`, else the band) behind any art; a phone's
+  `html` is that colour (the top bounce and the iPhone's status bar), the page's ground past the middle (`footSync`'s `pgfoot`, every page now); the
+  `theme-color` meta follows it (`themes.js` reads `--hdrc` too). (3) The open card tab's box (`.btabbody`) has no frame, corner, shadow or ground.
+  (4) No stripe over `.pbelow2`. (5) **The band's foot rule is `.pgrule`** (`pgRule()` in `app.js`, called from `bleedBar`): a 5px sticky element
+  right after `.cardtop`, its `top` the bar's sticky top + height, its margins matched to the band — it rides under the Summary and pins under the bar,
+  moved by the browser with no script in the scroll, so the iPhone's late scroll events can't leave a frame without it; while it's there the band's
+  3px border / 2px shadow and the stuck bar's shadow are off (the block at the end of `styles.css`). `stickSync` still toggles `stuck`, unused for
+  the rule. Checked headless on both layouts, page and popup: rule-to-bar distance falls 99 → 0 and stays 0.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
