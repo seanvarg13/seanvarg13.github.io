@@ -11064,7 +11064,10 @@
     if (slots.length) {
       const r = el("div", "pllast plspotrow"); r.title = `Where he bats when he starts: ${slots.map(([k, n]) => `${ORD(k)} ${pc(n)} (${n} start${n === 1 ? "" : "s"})`).join(", ")}`;
       r.append(el("span", "pllab", "Spots"));
-      const s = el("span", "plspotl"); for (const [k, n] of slots) { const b = el("span", "plsp"); b.title = `${n} start${n === 1 ? "" : "s"} batting ${ORD(k)}`; b.append(el("b", null, ORD(k)), el("small", null, pc(n))); s.append(b); }
+      // five at most, so the row never wraps: past five, the top four and an "Other" with the rest's share combined (Sean, 3 Nov 2026: "Make
+      // it only show the top 5 so that it doesn't go onto a second row or instead if it has more make the final one be Other")
+      const shown = slots.length > 5 ? slots.slice(0, 4).concat([["Other", slots.slice(4).reduce((t, x) => t + x[1], 0), slots.slice(4)]]) : slots;
+      const s = el("span", "plspotl"); for (const [k, n, rest] of shown) { const b = el("span", "plsp"); b.title = rest ? `${n} starts batting ${rest.map(([q, m]) => `${ORD(q)} (${m})`).join(", ")}` : `${n} start${n === 1 ? "" : "s"} batting ${ORD(k)}`; b.append(el("b", null, rest ? "Other" : ORD(k)), el("small", null, pc(n))); s.append(b); }
       r.append(s); body.append(r);
     }
     if (L.last.length) {
