@@ -6213,3 +6213,25 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pbplay .pbplat { padding: 0 4px; font-size: 10px; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pllast { justify-content: center; }
 :root:root:root:root:root:root:root:root:root #xboard .pllast { justify-content: center; }
+
+/* The Playing time box as titled rows (Sean, 2 Nov 2026): a blue title row over Starts · PA/G · vs LHP · vs RHP, then titled Lineup spots and Last 15 rows */
+:root:root:root:root:root:root:root:root:root #xboard .pbplay table.pltab { width: 100%; border-collapse: collapse; table-layout: fixed; }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay table.pltab th { background: var(--ink-day, var(--ink)); color: #fff; font: 700 12.5px/1.2 var(--body); text-align: center; padding: 5px 4px; border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay table.pltab td { text-align: center; vertical-align: top; padding: 6px 4px 8px; border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); background: var(--surface); }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay table.pltab tr > :first-child { border-left: 0; }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay table.pltab tr > :last-child { border-right: 0; }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay table.pltab tr:last-child td { border-bottom: 0; }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay table.pltab td > .plval { display: block; }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay table.pltab td > .plsub { display: block; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay table.pltab td.pbweak > .plval { opacity: .6; }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay table.pltab td.plwide { padding: 7px 8px; vertical-align: middle; }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay .plspots { display: inline-flex; gap: 22px; justify-content: center; }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay .plspot { display: inline-flex; align-items: baseline; gap: 5px; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay td.plwide .pblast { display: inline-flex; gap: 3px; justify-content: center; }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay td.plwide .pblast b { display: inline-block; min-width: 17px; text-align: center; font: 700 14px/1.4 var(--body); color: var(--ink); font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay td.plwide .pblast b.off { opacity: .5; }
+:root:root:root:root:root:root:root:root:root #xboard .pbplay td.plwide .pblast b.out { opacity: .35; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pbplay table.pltab th { font-size: 11.5px; padding: 4px 2px; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pbplay .plspots { gap: 16px; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pbplay td.plwide .pblast { gap: 1px; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pbplay td.plwide .pblast b { min-width: 15px; font-size: 13px; }

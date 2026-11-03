@@ -1811,3 +1811,9 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   ("3rd" / "45%"), Starts "62/91", PA/G "73 G", vs LHP / vs RHP "21/26" — with the long words and his other lineup spots in each cell's tooltip;
   the red **Platooned** flag stays under a side he sits against; the Last 15 strip is a full-width row under the five, centred. Phone ~146px tall
   (was ~240). The block at the end of `styles.css`.
+
+* **The Playing time box in titled rows (Sean, 3 Nov 2026: "Make the bats its own row and get rid of it in that first row / And then make the titles of
+  each have its own row of titles like in the design of C you had")**: `lineupLine` draws the box as one small table (`table.pltab`) under its band head:
+  a navy title row (the scheme's deep ink, white type, under the light-blue band head; Starts · PA/G · vs LHP · vs RHP) over their values (the number over its short line, the red Platooned flag under a side he sits
+  against), then a "Lineup spots" title row over his three most used spots in one row ("6th 28% · 8th 28% · 9th 21%"), then a "Last N" title row over
+  the strip. Same on a phone and a desktop; tooltips as before. The `.plgrid` cells of the entry above are unused. Block at the end of `styles.css`.
