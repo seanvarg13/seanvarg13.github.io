@@ -11047,33 +11047,24 @@
     // compact (Sean, 2 Nov 2026, from the Playing Time Options page: "do A but put the last 15 games in a merged row at the bottom ... and
     // then also still include the platoon flag"): one row of five on every layout, each cell the number over a short line (62/91, 73 G,
     // 21/26), the long words and the other lineup spots in the tooltips, the last-15 strip a full-width row under them
-    // titled rows (Sean, 2 Nov 2026: "Make the bats its own row and get rid of it in that first row / And then make the titles of each have its
-    // own row of titles like in the design of C you had"): the box is a small table — a blue row of titles over Starts · PA/G · vs LHP · vs RHP,
-    // then a titled Lineup spots row (his top three, side by side) and a titled Last 15 row, each spanning the box
     const box = el("section", "pbinfo pbplay");
     box.append(el("div", "pbinfohd", `Playing time · ${DS.season}`));
-    const rest = cells.slice(1), bats = cells[0], n = rest.length;
-    const t = el("table", "pltab"), th = (txt, span) => { const c = el("th", null, txt); if (span) c.colSpan = span; return c; };
-    const hr = el("tr", "plth"); for (const [lab, , , title] of rest) { const c = th(lab); c.title = title; hr.append(c); } t.append(hr);
-    const vr = el("tr");
-    for (const [, val, sub, title, cls] of rest) {
-      const c = el("td", cls || null); c.title = title; c.append(el("b", "plval", val));
+    const body = el("div", "pbplbd"), grid = el("div", "plgrid"); body.append(grid); box.append(body);
+    grid.style.setProperty("--n", cells.length);
+    for (const [lab, val, sub, title, cls] of cells) {
+      const c = el("div", "plcell" + (cls ? " " + cls : "")); c.title = title;
+      c.append(el("span", "pllab", lab));
+      if (Array.isArray(val)) { const t = el("span", "pltop"); for (const [o, q] of val) { const r = el("span", "pltopr"); r.append(el("b", "plval", o), el("small", "plsub", q)); t.append(r); } c.append(t); }
+      else c.append(el("b", "plval", val));
       if (sub === "PLAT") c.append(el("span", "pbplat", "Platooned")); else if (sub) c.append(el("small", "plsub", sub));
-      vr.append(c);
+      grid.append(c);
     }
-    t.append(vr);
-    const br = el("tr", "plth"); br.append(th("Lineup spots", n)); t.append(br);
-    const bc = el("td", "plwide"); bc.colSpan = n; bc.title = bats[3];
-    if (L.gs) { const sp = el("span", "plspots"); for (const [k, q] of slots.slice(0, 3)) { const x = el("span", "plspot"); x.append(el("b", "plval", ORD(k)), el("small", "plsub", pc(q))); sp.append(x); } bc.append(sp); }
-    else bc.append(el("small", "plsub", "No starts on the active roster yet"));
-    const bvr = el("tr"); bvr.append(bc); t.append(bvr);
     if (L.last.length) {
-      const lr = el("tr", "plth"); lr.append(th(`Last ${L.last.length}`, n)); t.append(lr);
-      const c = el("td", "plwide"); c.colSpan = n; c.title = `His last ${L.last.length} team games: the slot he started in, – on the roster without starting, × off the active roster`;
-      const s2 = el("span", "pblast"); for (const x of L.last) { const b2 = el("b", x > 0 ? "on" : x === 0 ? "off" : "out", x > 0 ? String(x) : x === 0 ? "–" : "×"); b2.title = x > 0 ? `Started, batting ${ORD(x)}` : x === 0 ? "On the roster, didn't start" : "Off the active roster"; s2.append(b2); }
-      c.append(s2); const r = el("tr"); r.append(c); t.append(r);
+      const r = el("div", "pllast"); r.title = `His last ${L.last.length} team games: the slot he started in, – on the roster without starting, × off the active roster`;
+      r.append(el("span", "pllab", `Last ${L.last.length}`));
+      const s = el("span", "pblast"); for (const x of L.last) { const b = el("b", x > 0 ? "on" : x === 0 ? "off" : "out", x > 0 ? String(x) : x === 0 ? "–" : "×"); b.title = x > 0 ? `Started, batting ${ORD(x)}` : x === 0 ? "On the roster, didn't start" : "Off the active roster"; s.append(b); }
+      r.append(s); body.append(r);
     }
-    box.append(t);
     return box;
   }
   // In-season arsenal alerts (Sean, 28 Oct 2026, item 10 of the review's picks: "new pitch 5%+ in last 30 days, usage swing 10+, velo +1 on
