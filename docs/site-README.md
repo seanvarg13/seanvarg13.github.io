@@ -1815,3 +1815,8 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
 * **The compact box stays (Sean, 3 Nov 2026, from Yordan's page: "Never mind just keep this")**: a version with navy title rows over each part (Starts ·
   PA/G · vs LHP · vs RHP, then Lineup spots, then Last 15) was live for a few minutes (PR #807) and taken back; the Playing time box is the compact one
   of the entry above.
+
+* **Every lineup spot above the Last 15 (Sean, 3 Nov 2026, Ben Rice's page: "add a row above the last 15 that shows all the batting spots and do it in
+  the same style that the last 15 row is")**: the Playing time box has a **Spots** row between the five cells and Last 15 (`.pllast.plspotrow` in
+  `lineupLine`): every slot he started in, most first, each the slot in the strip's bold digits with its share of his starts muted beside it ("2nd 57%
+  · 1st 22% · 4th 11% …"), wrapping on a phone when there are many; the starts per slot in the tooltips. Block at the end of `styles.css`.
