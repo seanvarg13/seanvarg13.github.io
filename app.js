@@ -11036,14 +11036,17 @@
     const cells = [];   // [label, value, detail, tooltip, classes]
     // his top three spots by share of his starts (Sean, 29 Oct 2026: "show their top 3 spots by %"), the slots over their shares
     if (L.gs) { const top = slots.slice(0, 3);
-      cells.push(["Bats", top.map(([k, n]) => [ORD(k), pc(n)]), "", `Where he bats when he starts: ${slots.map(([k, n]) => `${ORD(k)} ${n}`).join(", ")} — mean slot ${L.slot.toFixed(1)}`, ""]); }
+      cells.push(["Bats", ORD(top[0][0]), pc(top[0][1]), `Where he bats when he starts: ${slots.map(([k, n]) => `${ORD(k)} ${pc(n)} (${n})`).join(", ")} — mean slot ${L.slot.toFixed(1)}`, ""]); }
     else cells.push(["Bats", "–", "no starts", "No starts on the active roster yet", ""]);
-    cells.push(["Starts", `${Math.round(L.stpct)}%`, `${L.gs} of ${L.ar} roster game${L.ar === 1 ? "" : "s"}`, `Games on the active roster (a start, a substitute appearance or the bench)${L.tg ? ` · his club has played ${L.tg}` : ""}`, ""]);
-    cells.push(["PA/G", L.patg != null ? L.patg.toFixed(1) : "–", L.gp != null ? `${L.pa} PA in ${L.gp} game${L.gp === 1 ? "" : "s"}` : `${L.pas != null ? L.pas : L.pa} PA in ${L.gs} start${L.gs === 1 ? "" : "s"}`, "Plate appearances per game: his plate appearances over the games he played, starts and substitute appearances (a day on the bench or off the active roster isn't counted)", ""]);
+    cells.push(["Starts", `${Math.round(L.stpct)}%`, `${L.gs}/${L.ar}`, `${L.gs} starts in ${L.ar} game${L.ar === 1 ? "" : "s"} on the active roster (a start, a substitute appearance or the bench)${L.tg ? ` · his club has played ${L.tg}` : ""}`, ""]);
+    cells.push(["PA/G", L.patg != null ? L.patg.toFixed(1) : "–", L.gp != null ? `${L.gp} G` : `${L.gs} GS`, `${L.gp != null ? `${L.pa} PA in ${L.gp} games` : `${L.pas != null ? L.pas : L.pa} PA in ${L.gs} starts`} — plate appearances per game: his plate appearances over the games he played, starts and substitute appearances (a day on the bench or off the active roster isn't counted)`, ""]);
     for (const [h, v, a] of [["L", L.lsp, L.vl], ["R", L.rsp, L.vr]]) {
       if (v == null) continue;
-      cells.push([`vs ${h}HP`, `${Math.round(v)}%`, pl === h ? "PLAT" : `${a[0]} of ${a[1]} starts`, `Starts in ${a[0]} of his ${a[1]} roster games against ${h === "L" ? "left" : "right"}-handed starting pitchers${pl === h ? ` — sits against them: ${Math.round(v)}% against ${h === "L" ? "lefties" : "righties"}, ${Math.round(h === "L" ? L.rsp : L.lsp)}% against the other side` : ""}`, pl === h ? "pbweak" : ""]);
+      cells.push([`vs ${h}HP`, `${Math.round(v)}%`, pl === h ? "PLAT" : `${a[0]}/${a[1]}`, `Starts in ${a[0]} of his ${a[1]} roster games against ${h === "L" ? "left" : "right"}-handed starting pitchers${pl === h ? ` — sits against them: ${Math.round(v)}% against ${h === "L" ? "lefties" : "righties"}, ${Math.round(h === "L" ? L.rsp : L.lsp)}% against the other side` : ""}`, pl === h ? "pbweak" : ""]);
     }
+    // compact (Sean, 2 Nov 2026, from the Playing Time Options page: "do A but put the last 15 games in a merged row at the bottom ... and
+    // then also still include the platoon flag"): one row of five on every layout, each cell the number over a short line (62/91, 73 G,
+    // 21/26), the long words and the other lineup spots in the tooltips, the last-15 strip a full-width row under them
     const box = el("section", "pbinfo pbplay");
     box.append(el("div", "pbinfohd", `Playing time · ${DS.season}`));
     const body = el("div", "pbplbd"), grid = el("div", "plgrid"); body.append(grid); box.append(body);

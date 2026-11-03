@@ -1804,3 +1804,10 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
 
 * **The Playing time box back (Sean, 2 Nov 2026: "Actually go back to the prior table format that was better visually")**: `lineupLine` and its CSS
   are the 1 Nov Bio-box version again (`.pbplay`: the band head, the five cells, the Last 15 strip). The B-Ref table of PRs #803 / #804 is history.
+
+* **The Playing time box compact, option A with the Last 15 row (Sean, 2 Nov 2026, from the Playing Time Options page: "Could you do A but put the
+  last 15 games in a merged row at the bottom (so I guess option C) and then also still include the platoon flag it currently has")**: the box's
+  five cells sit in one row on a phone too (`.plgrid` five across), each the number over a short line — Bats his most used spot over its share
+  ("3rd" / "45%"), Starts "62/91", PA/G "73 G", vs LHP / vs RHP "21/26" — with the long words and his other lineup spots in each cell's tooltip;
+  the red **Platooned** flag stays under a side he sits against; the Last 15 strip is a full-width row under the five, centred. Phone ~146px tall
+  (was ~240). The block at the end of `styles.css`.
