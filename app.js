@@ -11059,6 +11059,14 @@
       if (sub === "PLAT") c.append(el("span", "pbplat", "Platooned")); else if (sub) c.append(el("small", "plsub", sub));
       grid.append(c);
     }
+    // every lineup spot he started in, most first, in the Last 15 row's dress (Sean, 3 Nov 2026: "add a row above the last 15 that shows all
+    // the batting spots and do it in the same style that the last 15 row is")
+    if (slots.length) {
+      const r = el("div", "pllast plspotrow"); r.title = `Where he bats when he starts: ${slots.map(([k, n]) => `${ORD(k)} ${pc(n)} (${n} start${n === 1 ? "" : "s"})`).join(", ")}`;
+      r.append(el("span", "pllab", "Spots"));
+      const s = el("span", "plspotl"); for (const [k, n] of slots) { const b = el("span", "plsp"); b.title = `${n} start${n === 1 ? "" : "s"} batting ${ORD(k)}`; b.append(el("b", null, ORD(k)), el("small", null, pc(n))); s.append(b); }
+      r.append(s); body.append(r);
+    }
     if (L.last.length) {
       const r = el("div", "pllast"); r.title = `His last ${L.last.length} team games: the slot he started in, – on the roster without starting, × off the active roster`;
       r.append(el("span", "pllab", `Last ${L.last.length}`));

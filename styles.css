@@ -6213,3 +6213,11 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pbplay .pbplat { padding: 0 4px; font-size: 10px; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pllast { justify-content: center; }
 :root:root:root:root:root:root:root:root:root #xboard .pllast { justify-content: center; }
+/* Every lineup spot above the Last 15, in its dress (Sean, 3 Nov 2026): the slot bold over-the-line like the strip's digits, its share muted beside it */
+:root:root:root:root:root:root:root:root:root #xboard .pllast .plspotl { display: inline-flex; flex-wrap: wrap; justify-content: center; column-gap: 12px; row-gap: 2px; }
+:root:root:root:root:root:root:root:root:root #xboard .pllast .plsp { display: inline-flex; align-items: baseline; gap: 3px; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root #xboard .pllast .plsp b { font: 700 14px/1.4 var(--body); color: var(--ink); font-variant-numeric: tabular-nums; }
+:root:root:root:root:root:root:root:root:root #xboard .pllast .plsp small { font: 400 12px/1.4 var(--body); color: var(--muted, var(--ink-2)); font-variant-numeric: tabular-nums; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pllast .plspotl { column-gap: 9px; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pllast .plsp b { font-size: 13px; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pllast .plsp small { font-size: 11.5px; }
