@@ -6135,3 +6135,6 @@ line can bring them back.
   · 1st 22% · 4th 11% …"), wrapping on a phone when there are many; the starts per slot in the tooltips. Block at the end of `styles.css`.
   A thin • sits between each spot and its share and the next (Sean, the same hour: "Put like a • in between each spot and it's percentage though just for
   spacing"); the five cells, Bats 2nd included, stay as they were ("keep the one that says bats 2nd ... just make it an addition").
+  Five at most (Sean, the same hour: "Make it only show the top 5 so that it doesn't go onto a second row or instead if it has more make the final one be
+  Other with the percentage of the other ones combined"): past five, the top four and **Other** with the rest's share combined (its tooltip lists them) —
+  Miguel Rojas 2026: 6th 28% • 8th 28% • 9th 21% • 7th 11% • Other 12%, one line on a phone.
