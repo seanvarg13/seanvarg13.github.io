@@ -1820,3 +1820,5 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   the same style that the last 15 row is")**: the Playing time box has a **Spots** row between the five cells and Last 15 (`.pllast.plspotrow` in
   `lineupLine`): every slot he started in, most first, each the slot in the strip's bold digits with its share of his starts muted beside it ("2nd 57%
   · 1st 22% · 4th 11% …"), wrapping on a phone when there are many; the starts per slot in the tooltips. Block at the end of `styles.css`.
+  A thin • sits between each spot and its share and the next (Sean, the same hour: "Put like a • in between each spot and it's percentage though just for
+  spacing"); the five cells, Bats 2nd included, stay as they were ("keep the one that says bats 2nd ... just make it an addition").
