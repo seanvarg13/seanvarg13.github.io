@@ -6221,3 +6221,7 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pllast .plspotl { column-gap: 9px; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pllast .plsp b { font-size: 13px; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pllast .plsp small { font-size: 11.5px; }
+/* a dot between the spots (Sean, 3 Nov 2026: "Put like a • in between each spot and it's percentage though just for spacing") */
+:root:root:root:root:root:root:root:root:root #xboard .pllast .plsp + .plsp::before { content: "•"; margin-right: 9px; color: var(--muted, var(--ink-2)); font: 400 12px/1.4 var(--body); opacity: .7; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pllast .plsp + .plsp::before { margin-right: 6px; }
+:root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pllast .plspotl { column-gap: 6px; }
