@@ -363,8 +363,9 @@ window.DRAFT_THEMES = (function () {
       if (!link) { link = document.createElement("link"); link.id = "fontlink"; link.rel = "stylesheet"; document.head.appendChild(link); }
       if (link.getAttribute("href") !== href) link.setAttribute("href", href);
     } else if (link) link.remove();
-    // the home-screen app draws under a translucent status bar, so the header's colour fills it (2 Nov 2026; index.html says the same)
-    const sb = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]'); if (sb) sb.content = "black-translucent";
+    // the status bar is iOS's own, filled from theme-color (9 Nov 2026): under a translucent one iOS 27.2 blurs the page it draws over, header
+    // colour and all, so the home-screen app no longer draws under it (index.html says the same; was black-translucent from 2 Nov 2026)
+    const sb = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]'); if (sb) sb.content = "default";
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = root.style.getPropertyValue("--hdrc").trim() || tokens["accent-2"];   // a header theme's own colour when one is on (app.js HDR)
   }
