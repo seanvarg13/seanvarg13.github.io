@@ -6235,3 +6235,9 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
   background: linear-gradient(to bottom, var(--hdrc, var(--band2)) calc(100% - 8px), transparent);
 }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] header.top > .phtop { position: relative; z-index: 1; }
+
+/* The phone's search box clears the status bar (Sean, 9 Nov 2026, the search open under the iPhone's status bar: "The search bar is not usable
+   here it is too high"): the search header was fixed at the screen's top with 8px over it, no room for the status bar when the home-screen app
+   draws under one, so the box sat beneath the clock and the blur. It takes the top inset as padding (0 where iOS draws its own bar), and the
+   list under it follows through --header-h, which setTb measures off the header. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.psearchon header.top { padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px !important; background: var(--hdrc, var(--band2)) !important; }

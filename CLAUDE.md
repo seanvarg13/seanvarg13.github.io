@@ -6153,3 +6153,9 @@ line can bring them back.
   Five at most (Sean, the same hour: "Make it only show the top 5 so that it doesn't go onto a second row or instead if it has more make the final one be
   Other with the percentage of the other ones combined"): past five, the top four and **Other** with the rest's share combined (its tooltip lists them) —
   Miguel Rojas 2026: 6th 28% • 8th 28% • 9th 21% • 7th 11% • Other 12%, one line on a phone.
+
+* **The phone's search box clears the status bar (Sean, 9 Nov 2026, the search open with its box under the iPhone's clock: "The search bar is not
+  usable here it is too high")**: the search header (`body.psearchon header.top`, fixed at the screen's top) had 8px over the box and no room for the
+  status bar, so wherever the home-screen app still draws under one (until it is relaunched after the entry above, or on an older iOS) the box sat
+  beneath the clock and the blur. It takes `env(safe-area-inset-top)` + 8px as its top padding and the header's colour (`--hdrc`) behind it; the
+  results list follows through `--header-h`, which `setTb` measures off the header. The block at the end of `styles.css`.

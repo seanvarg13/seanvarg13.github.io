@@ -1839,3 +1839,9 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   `--hdrc`), and the page starts under it, so nothing of the site sits under the blur. `env(safe-area-inset-top)` reads 0 there, so the header's top
   padding and the popups' top inset fall away by themselves; the `::before` strip of the entry above is harmless at that size. The 2 Nov "status bar
   in the header's colour" entry is history. iOS reads the setting at launch: swipe the app closed and reopen it.
+
+* **The phone's search box clears the status bar (Sean, 9 Nov 2026, the search open with its box under the iPhone's clock: "The search bar is not
+  usable here it is too high")**: the search header (`body.psearchon header.top`, fixed at the screen's top) had 8px over the box and no room for the
+  status bar, so wherever the home-screen app still draws under one (until it is relaunched after the entry above, or on an older iOS) the box sat
+  beneath the clock and the blur. It takes `env(safe-area-inset-top)` + 8px as its top padding and the header's colour (`--hdrc`) behind it; the
+  results list follows through `--header-h`, which `setTb` measures off the header. The block at the end of `styles.css`.
