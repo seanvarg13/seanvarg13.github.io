@@ -6225,3 +6225,13 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
 :root:root:root:root:root:root:root:root:root #xboard .pllast .plsp + .plsp::before { content: "•"; margin-right: 9px; color: var(--muted, var(--ink-2)); font: 400 12px/1.4 var(--body); opacity: .7; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pllast .plsp + .plsp::before { margin-right: 6px; }
 :root[data-view="mobile"]:root:root:root:root:root:root:root:root #xboard .pllast .plspotl { column-gap: 6px; }
+
+/* The strip under the iPhone's status bar in one colour (Sean, 9 Nov 2026, after iOS 27.2: "with the new iOS 27.2 update it's now like this fuzzy
+   thing"): iOS now blurs whatever a home-screen web app draws under its status bar, and the header's art (the fall leaves, any header theme) ran up
+   into that strip, so it came out as a smear. The strip is the header's own colour (--hdrc, the art's first colour; else the band), fading into the
+   art just below it, so there is nothing there for the blur to smear; the art starts where the header's buttons do. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] header.top::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: calc(env(safe-area-inset-top, 0px) + 8px); z-index: 0; pointer-events: none;
+  background: linear-gradient(to bottom, var(--hdrc, var(--band2)) calc(100% - 8px), transparent);
+}
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] header.top > .phtop { position: relative; z-index: 1; }
