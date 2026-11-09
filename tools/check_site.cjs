@@ -188,9 +188,9 @@ function minorsId() {
       await step("settings", async () => { for (const t of ["glossary", "appearance", "key", "how"]) { await hash("#settings/" + t); await count(".stabs .btab", 3); } });
     }
     await step("hitter page", async () => { await hash("#player/592450"); await count("table.sbt tbody tr", 5, 60000);
-      await clickAll(".btabs .btab");
+      await clickAll("#xboard .btabs .btab");
       if (!QUICK) { await count(".sbviews .sbview", 5); await clickAll(".sbviews .sbview"); } });   // the five tables, a row of buttons on both layouts again (25 Oct 2026)
-    await step("pitcher page", async () => { await hash("#player/694973"); await count("table.sbt tbody tr", 2, 60000); await clickAll(".btabs .btab");
+    await step("pitcher page", async () => { await hash("#player/694973"); await count("table.sbt tbody tr", 2, 60000); await clickAll("#xboard .btabs .btab");
       // Raw / Stuff in the header's control row (2 Nov 2026): Stuff, then back to Raw
       await count("#xboard .pgctl .pgcell", 4);
       for (const k of ["Stuff", "Raw"]) { await pg.evaluate(() => document.querySelector("#xboard .pgctl .pgside").click()); await pg.waitForTimeout(300);
@@ -220,7 +220,7 @@ function minorsId() {
       if (before[0] < 100 || (before[1] >= 0 && before[1] < 50)) throw new Error(`the page didn't scroll first (${before})`);
       if (Math.abs(after[0] - before[0]) > 2 || Math.abs(after[1] - before[1]) > 2 || !after[2]) throw new Error(`the heal moved the page: ${before} → ${after}`);
     });
-    if (mid) await step("a minors card", async () => { await hash("#player/" + mid); await count("table.sbt tbody tr", 1, 90000); await clickAll(".btabs .btab"); });
+    if (mid) await step("a minors card", async () => { await hash("#player/" + mid); await count("table.sbt tbody tr", 1, 90000); await clickAll("#xboard .btabs .btab"); });
     await ctx.close();
   }
   await browser.close(); srv.close();
