@@ -1831,3 +1831,11 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   theme) ran up into that strip and came out as a smear. On a phone `header.top::before` paints the strip (the safe-area inset + 8px) in the header's
   own colour (`--hdrc`, the art's first colour, else `--band2`), fading into the art just below; `.phtop` sits over it (`z-index: 1`). The art starts
   where the logo, date pill and search do. The block at the end of `styles.css`.
+
+* **The status bar is iOS's own again (Sean, 9 Nov 2026, the leaf header still smeared under the status bar after the fix above: "It is still fuzzy or
+  blurred")**: iOS 27.2 blurs and lightens the top of a home-screen web app that draws under a translucent status bar — whatever is painted there, a
+  solid colour included — so painting the strip wasn't enough. `apple-mobile-web-app-status-bar-style` is `default` again (`index.html`, and
+  `themes.js`'s `apply()`, which had re-set it to `black-translucent`): iOS draws its own status bar, filled from `theme-color` (the header's colour,
+  `--hdrc`), and the page starts under it, so nothing of the site sits under the blur. `env(safe-area-inset-top)` reads 0 there, so the header's top
+  padding and the popups' top inset fall away by themselves; the `::before` strip of the entry above is harmless at that size. The 2 Nov "status bar
+  in the header's colour" entry is history. iOS reads the setting at launch: swipe the app closed and reopen it.
