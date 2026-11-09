@@ -1765,6 +1765,13 @@ is deploy-limited.
   3px border / 2px shadow and the stuck bar's shadow are off (the block at the end of `styles.css`). `stickSync` still toggles `stuck`, unused for
   the rule. Checked headless on both layouts, page and popup: rule-to-bar distance falls 99 → 0 and stays 0.
 
+* **The strip under the iPhone's status bar is one colour (Sean, 9 Nov 2026, after iOS 27.2: "with the new iOS 27.2 update it's now like this
+  fuzzy thing")**: iOS 27.2 blurs whatever a home-screen web app draws under its status bar, and the phone header's art (the fall leaves, any header
+  theme) ran up into that strip and came out as a smear. On a phone `header.top::before` paints the strip (the safe-area inset + 8px) in the header's
+  own colour (`--hdrc`, the art's first colour, else `--band2`), fading into the art just below; `.phtop` sits over it (`z-index: 1`). The art starts
+  where the logo, date pill and search do. The block at the end of `styles.css`.
+
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:

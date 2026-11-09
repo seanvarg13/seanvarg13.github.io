@@ -1825,3 +1825,9 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   Five at most (Sean, the same hour: "Make it only show the top 5 so that it doesn't go onto a second row or instead if it has more make the final one be
   Other with the percentage of the other ones combined"): past five, the top four and **Other** with the rest's share combined (its tooltip lists them) —
   Miguel Rojas 2026: 6th 28% • 8th 28% • 9th 21% • 7th 11% • Other 12%, one line on a phone.
+
+* **The strip under the iPhone's status bar is one colour (Sean, 9 Nov 2026, after iOS 27.2: "with the new iOS 27.2 update it's now like this
+  fuzzy thing")**: iOS 27.2 blurs whatever a home-screen web app draws under its status bar, and the phone header's art (the fall leaves, any header
+  theme) ran up into that strip and came out as a smear. On a phone `header.top::before` paints the strip (the safe-area inset + 8px) in the header's
+  own colour (`--hdrc`, the art's first colour, else `--band2`), fading into the art just below; `.phtop` sits over it (`z-index: 1`). The art starts
+  where the logo, date pill and search do. The block at the end of `styles.css`.
