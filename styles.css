@@ -6241,3 +6241,56 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
    draws under one, so the box sat beneath the clock and the blur. It takes the top inset as padding (0 where iOS draws its own bar), and the
    list under it follows through --header-h, which setTb measures off the header. */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.psearchon header.top { padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px !important; background: var(--hdrc, var(--band2)) !important; }
+
+/* The League tab (Sean, 11 Nov 2026: "Can you add in an ability to connect to fantasy leagues ... I want to be able to have it as a separate tab"):
+   drawn in home's section (#hub, class league beside home) in home's dress — red-ruled section titles, B-Ref tables — under the Fantasy pages'
+   bar (the league as its first button, the four views, the view's own picks) and a count line in #lbtitle's dress. The connect form, the team
+   picker, his rows tinted, the bench muted, a live draft's newest pick flashed. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgrow { display: flex; align-items: center; gap: 12px; margin: 0; padding: 0 0 4px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgrow .sbviews.lbviews { margin: 0; max-width: 100%; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgline { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; margin: 6px 0 18px; padding-bottom: 5px; border-bottom: 2px solid var(--stripe-line, #c8102e); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgline .pcount { font: 600 14px var(--body); color: var(--ink); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgline .pgby { font: 400 13px var(--body); color: var(--muted); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgline .lgact { margin-left: auto; font-size: 13px; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league > .hsec { margin: 0 0 30px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .hsech .hmore { font-size: 13px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgp { margin: 0 0 10px; font-size: 14px; line-height: 1.5; color: var(--ink); max-width: 72ch; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgform { display: flex; gap: 8px; flex-wrap: wrap; max-width: 640px; margin: 2px 0 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgform input { flex: 1 1 260px; min-width: 0; height: 40px; box-sizing: border-box; padding: 0 12px; font: 400 16px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--outline, #111); border-radius: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgform .btn { height: 40px; padding: 0 18px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgmsg { margin: 6px 0 10px; font-size: 14px; line-height: 1.5; color: var(--ink); max-width: 72ch; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgmsg.err { color: var(--stripe-line, #c8102e); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .hsecb > .note { margin: 4px 0 0; max-width: 72ch; font-size: 13px; line-height: 1.5; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league > .note { margin: 0 0 16px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgteams { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; max-width: 920px; margin: 0 0 10px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgteam { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 10px 12px; text-align: left; background: var(--surface); color: var(--ink); border: 1px solid var(--outline, #111); border-radius: 0; cursor: pointer; font: inherit; min-width: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgteam b { font: 700 15px var(--body); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgteam span { font-size: 12.5px; color: var(--muted); }
+@media (hover: hover) { :root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgteam:hover { background: var(--accent-wash, var(--surface-2)); } }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgbtns { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgset { margin: 0 0 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgset label { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; color: var(--ink); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgset select { height: 34px; max-width: 100%; font: 400 15px var(--body); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgwrap { width: fit-content; max-width: 100%; margin: 0 0 14px; overflow-x: auto; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .sbt.brt.lgt td { white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .sbt.brt.lgt tr.lgme td:not(.heat) { background: color-mix(in srgb, var(--accent-2, #7bafd4) 16%, var(--surface)) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .sbt.brt.lgt tr.lgbench td:not(.heat) { color: var(--muted); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .sbt.brt.lgt tr.lgbench td .pbname { color: var(--muted); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .sbt.brt.lgt tr.lgnew td:not(.heat) { animation: lgflash 2.4s ease-out 1; }
+@keyframes lgflash { from { background: color-mix(in srgb, #f4c430 55%, var(--surface)); } to { background: var(--surface); } }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .sbt.brt.lgt td.lgwin { font-weight: 700; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .sbt.brt.lgt td.lgtier { color: var(--muted); font-size: 12px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .sbt.brt.lgt td .lgnm { font-weight: 600; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgtag { display: inline-block; padding: 0 4px; font-size: 10.5px; line-height: 16px; font-weight: 700; color: var(--ink); border: 1px solid var(--outline, #111); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lglive { margin: 0 0 8px; font-size: 13px; font-weight: 700; color: var(--stripe-line, #c8102e); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgmore { margin: 2px 0 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .note.lgwarn { color: var(--stripe-line, #c8102e); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .note.lgwait { margin: 8px 0 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root .drafttools .lgchip { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #hub.league { padding: 8px 12px 20px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #hub.league .lgrow { justify-content: center; padding: 2px 0 4px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #hub.league .lgrow .sbviews.lbviews { display: flex; flex: 0 1 auto; min-width: 0; max-width: 100%; align-self: auto; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #hub.league .lgline { margin: 4px 0 14px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #hub.league .lgteams { grid-template-columns: minmax(0, 1fr); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #hub.league .lgpick .pgcur { display: block; max-width: 16em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #hub.league .lgpick .pgcur { max-width: 9em; }

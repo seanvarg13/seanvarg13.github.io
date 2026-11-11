@@ -64,7 +64,7 @@
   // against what was last synced: a key changed on one side takes that side; changed on both, the fantasy presets and
   // the keyed lists (stars, ranks …) are merged, anything else keeps this device's. A pull that changes anything here
   // reloads the page once, so every screen reads the new copy.
-  const SYNC_KEYS = [LS.drafted, LS.extra, LS.roles, LS.ranks, LS.tiers, LS.tierNames, LS.sets, LS.extraPos, LS.stars, "draft2027.fantasy", "draft2027.auction"];
+  const SYNC_KEYS = [LS.drafted, LS.extra, LS.roles, LS.ranks, LS.tiers, LS.tierNames, LS.sets, LS.extraPos, LS.stars, "draft2027.fantasy", "draft2027.auction", "draft2027.league"];   // the League tab's connections (11 Nov 2026)
   const SYNC_LS = "draft2027.sync", GIST_FILE = "sean-site-sync.json", GIST_DESC = "Sean's Site: saved settings (synced by the site)";
   const sync = Object.assign({ token: "", gist: "", base: null, at: "", err: "" }, load(SYNC_LS, {}));
   const syncSave = () => { try { localStorage.setItem(SYNC_LS, JSON.stringify(sync)); } catch {} };
@@ -1013,7 +1013,7 @@
     // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
     // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
     // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
-    const arrived = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines|lineups(?:-\d+)?|moves|teamcolors|c\/\d+|m\/\d+|lg\/\d+)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
+    const arrived = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines|lineups(?:-\d+)?|moves|teamcolors|ids|c\/\d+|m\/\d+|lg\/\d+)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
     // a failed download (a phone on a weak signal, a publish mid-deploy) is tried twice more before it's given up on — career.js once failed
     // for the whole visit and the season table said it hadn't been built (Sean's phone, 9 Oct 2026)
     const fail = (sc) => { loading.delete(src); if (sc) sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
@@ -5615,6 +5615,7 @@
     { const on = false, ns0 = 0; const b = $("draftstars"); b.hidden = true; b.textContent = state.starOnly ? `★ Starred only (${ns0})` : `☆ Starred (${ns0})`; b.classList.toggle("on", state.starOnly); }
     const on = state.mode === "draft";
     $("drafttools").hidden = !on;
+    lgDraftChip();   // linked to a league's draft (the League tab, 11 Nov 2026)
     if (!on) return;
     { let b = $("draftexit"); if (!b) { b = el("button", "btn btn-quiet draftexit", "Exit draft mode"); b.id = "draftexit"; b.type = "button"; b.title = "Back to the rankings"; b.addEventListener("click", () => { location.hash = "#rankings"; }); $("drafttools").append(b); } }   // 16 Oct 2026
     { let sg = $("draftkind"); if (!sg) { sg = el("div", "seg draftkind"); sg.id = "draftkind"; sg.setAttribute("role", "group"); sg.setAttribute("aria-label", "Snake or auction"); $("drafttools").prepend(sg); }   // 20 Oct 2026
@@ -6480,7 +6481,7 @@
         else a.removeAttribute("aria-current");
       }
     }
-    document.title = { pitches: "Sean's Site · Stuff+", bullpens: "Sean's Site · Bullpens", draft: "Sean's Site · Draft mode", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", settings: "Sean's Site · Settings", fantasy: "Sean's Site · Fantasy", flaws: "Sean's Site · Movers" }[state.mode] || "Sean's Site";
+    document.title = { pitches: "Sean's Site · Stuff+", bullpens: "Sean's Site · Bullpens", draft: "Sean's Site · Draft mode", player: "Sean's Site · Player", rankings: "Sean's Site · Rankings", compare: "Sean's Site · Compare", eligibility: "Sean's Site · Eligibility", trending: "Sean's Site · Trending", leaderboard: "Sean's Site · Leaderboard", draftmode: "Sean's Site · Draft Mode", home: "Sean's Site", league: "Sean's Site · League", settings: "Sean's Site · Settings", fantasy: "Sean's Site · Fantasy", flaws: "Sean's Site · Movers" }[state.mode] || "Sean's Site";
     const m = DATA.meta;
     const thr = new Date(m.through + "T12:00:00"); $("stamp").innerHTML = `through <b>${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</b>`; $("stamp").title = `${m.season} Statcast through ${m.through} (built ${m.built})`;
     const notes = $("notes"); notes.innerHTML = "";
@@ -6650,7 +6651,7 @@
     if (state.mode !== "draft" && $("aucsheet")) { aucPick = null; $("aucsheet").remove(); }   // the auction sheet is Draft mode's
     if (state.mode !== "mock") { mkRoom = false; mkRoomSync(); }   // the draft room is the Mock draft page's (29 Oct 2026)
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
-    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", hub = home, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws" || state.mode === "bullpens", other = pitches || player || compare || elig || hub || appear || fant;
+    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", league = state.mode === "league", hub = home || league, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws" || state.mode === "bullpens", other = pitches || player || compare || elig || hub || appear || fant;
     if (xPop && !POP_MODES.includes(state.mode)) xPop = false;   // another page: the popup goes with the list it came from
     if (xPop) state.expanded = null;   // never an old-style card under the popup, where it can't be seen (Sean's recording, 21 Oct 2026)
     $("xboard").hidden = !player && !xPop; $("xboard").classList.toggle("xpop", xPop); document.body.classList.toggle("xpopon", xPop); xPopBg().hidden = !xPop; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
@@ -6663,7 +6664,9 @@
     document.querySelector(".toolbar:not(.xtoolbar)").hidden = other; $("board").hidden = other; $("drafttools").hidden = true; $("ranktools").hidden = true; $("setbar").hidden = true; $("lbtools").hidden = true;
     renderChrome();
     if (state.textModal) { renderTextModal(); } else if (other) { $("modal").hidden = true; lockPage(false); parkControls(); $("modal-body").innerHTML = ""; }
-    if (hub) { $("hub").classList.toggle("home", home); renderHome(); renderModal(); return; }
+    lgPollSync();   // a live draft's poll runs only on the League page or a linked Draft mode
+    if (league) { $("hub").classList.add("home", "league"); renderLeague(); renderModal(); if (xPop) renderExplore(); return; }   // the League tab (11 Nov 2026)
+    if (hub) { $("hub").classList.remove("league"); $("hub").classList.toggle("home", home); renderHome(); renderModal(); return; }
     if (appear) { renderSettings(); return; }
     if (fant) { renderFantasy(); renderModal(); return; }
     if (player) {                                        // his page is a card of its own (showPageCard); a settings panel takes its place, over the pattern
@@ -11138,7 +11141,7 @@
   // page (renderExplore into #xboard), shown as a fixed window over the list with a backdrop, closed by ×, the backdrop or Escape
   // Movers too (Sean, 23 Oct 2026, Sheehan's page off Movers: "Can this be the same x in the top right below the filter like on the leaderboard"):
   // a pitcher's row, or a hitter's name in the flaw popup, opens the same popup over Movers in place of his page with "‹ Back to movers"
-  const POP_MODES = ["leaderboard", "trending", "flaws", "bullpens"];
+  const POP_MODES = ["leaderboard", "trending", "flaws", "bullpens", "league"];
   let xPop = false, xPopNew = false, xPopList = null;
   const pageNow = () => state.mode === "player" || xPop;   // where a page was opened from: the list page, its scroll and its rows' box; the page last drawn
   const BACK_LABEL = { leaderboard: "leaderboard", trending: "leaderboard", rankings: "rankings", draft: "draft board", pitches: "Pitching+", fantasy: "fantasy", home: "home",
@@ -13272,6 +13275,7 @@
   // the ⋯ More menu of 29 Sep 2026 is gone; one header button opens the Settings page (renderSettings) with the glossary, Appearance, the colour
   // key and the how-to as its tabs. Made here because index.html doesn't round-trip.
   { const nav = document.querySelector(".modes");
+    if (nav && !nav.querySelector('a[data-mode="league"]')) { const l = el("a", null, "League"); l.href = "#league"; l.dataset.mode = "league"; l.title = "Your fantasy league: your team, the standings, the free agents and the draft"; nav.append(l); }   // the League tab (11 Nov 2026)
     if (nav && !nav.querySelector('a[data-mode="settings"]')) { const a = el("a", null, "Settings"); a.href = "#settings"; a.dataset.mode = "settings"; a.title = "Stat glossary, appearance, the colour key and how the pages work"; nav.append(a); } }
   /* ---------- Mock Draft (Sean, 2 Oct 2026: "practice mock drafts ... snake and auction ... function very very similar to espns") ----------
      A draft room against computer teams. The order everyone drafts from is a 2027 consensus: the site's own points projection
@@ -13952,6 +13956,572 @@
     const brd = el("details", "mksrc"); brd.append(el("summary", null, "The board")); brd.append(mkSidePane("board"));
     w.append(brd, again); box.append(w);
   }
+  /* ---------- League (Sean, 11 Nov 2026: "Can you add in an ability to connect to fantasy leagues on like whatever site and do it similar to this
+     site https://kaizenschanz.github.io/papa-board/ I want to be able to have it as a separate tab", then "Add it to the baseball site for now") ----------
+     A tab of its own (#league: the header and the phone's bottom bar). Connect a league by its link or ID and the page reads it from the platform in
+     the browser — nothing is built for it. ESPN first: its league API (lm-api-reads.fantasy.espn.com) answers a page on any site for a league that is
+     viewable to the public; a private one answers 401, and the page asks once more with the browser's own ESPN sign-in (credentials: include — a
+     computer signed in to ESPN that allows the cookie gets in, an iPhone doesn't), then says how the League Manager opens it up. Yahoo needs a sign-in
+     a static site can't hold; Fantrax's and Sleeper's APIs are open too and can follow. The league's players come as ESPN ids: hist/ids.js
+     (tools/build_ids.py, Smart Fantasy Baseball's player-ID map) turns them into MLB ids, and a name-and-club match covers the rest.
+     Four views: My team (his roster with the site's numbers and the 2027 projection under the league's scoring, the best pickups on the wire), League
+     (standings with all-play luck, category standings, this period's matchups, 2027 on paper), Free agents (the site's players no team has, best
+     first) and Draft (the league's board; Send to Draft mode copies the room — teams, budget, picks — into Draft mode, and a live draft keeps it in
+     step every 5 s, as the reference board polls its draft). The connections are draft2027.league (in SYNC_KEYS, so they follow him); what he's
+     looking at is draft2027.leagueui, per device. */
+  const LG_LS = "draft2027.league", LGU_LS = "draft2027.leagueui";
+  const lgStore = Object.assign({ list: [], cur: 0 }, load(LG_LS, {}));
+  if (!Array.isArray(lgStore.list)) lgStore.list = [];
+  const lgUI = Object.assign({ view: "team", faPos: "H", faSort: "proj", dTeam: "all", feed: false, faN: 50 }, load(LGU_LS, {}));
+  const lgSave = () => save(LG_LS, lgStore), lgUISave = () => save(LGU_LS, lgUI);
+  const LG_TABS = [["team", "My team"], ["league", "League"], ["fa", "Free agents"], ["draft", "Draft"]];
+  const lgConn = () => lgStore.list[lgStore.cur] || lgStore.list[0] || null;
+  // ESPN's numbers for its lineup slots, positions and clubs (the espn-api project's maps, checked against live leagues)
+  const ESPN_SLOT = { 0: "C", 1: "1B", 2: "2B", 3: "3B", 4: "SS", 5: "OF", 6: "2B/SS", 7: "1B/3B", 8: "LF", 9: "CF", 10: "RF", 11: "DH", 12: "UTIL", 13: "P", 14: "SP", 15: "RP", 16: "BE", 17: "IL", 19: "IF" };
+  const ESPN_POS = { 1: "SP", 2: "C", 3: "1B", 4: "2B", 5: "3B", 6: "SS", 7: "OF", 8: "OF", 9: "OF", 10: "DH", 11: "RP" };
+  const ESPN_TEAM = [null, "BAL", "BOS", "LAA", "CWS", "CLE", "DET", "KC", "MIL", "MIN", "NYY", "ATH", "SEA", "TEX", "TOR", "ATL", "CHC", "CIN", "HOU", "LAD", "WSH", "NYM", "PHI", "PIT", "STL", "SD", "SF", "COL", "MIA", "AZ", "TB"];
+  const ESPN_INJ = { SEVEN_DAY_DL: "IL7", TEN_DAY_DL: "IL10", FIFTEEN_DAY_DL: "IL15", SIXTY_DAY_DL: "IL60", DAY_TO_DAY: "DTD", OUT: "OUT", SUSPENSION: "SUSP", BEREAVEMENT: "BRV", PATERNITY: "PAT", INJURY_RESERVE: "IL" };
+  // ESPN's stat ids → the site's scoring categories (FCATS), for a points league's scoring; and every id's short name, for a categories league
+  const ESPN_STAT = { H: { 0: "AB", 1: "H", 3: "2B", 4: "3B", 5: "HR", 6: "XBH", 7: "1B", 8: "TB", 10: "BB", 11: "IBB", 12: "HBP", 13: "SF", 14: "SH", 16: "PA", 20: "R", 21: "RBI", 23: "SB", 24: "CS", 25: "SBN", 26: "GIDP", 27: "K", 31: "CYC", 68: "PO", 69: "A", 70: "OFA", 72: "E", 73: "DPT", 81: "G" },
+                      P: { 32: "G", 33: "GS", 34: "OUT", 35: "BF", 36: "NP", 37: "H", 39: "BB", 40: "IBB", 42: "HBP", 44: "R", 45: "ER", 46: "HR", 48: "K", 50: "WP", 51: "BK", 52: "PK", 53: "W", 54: "L", 56: "SVO", 57: "SV", 58: "BS", 60: "HD", 62: "CG", 63: "QS", 65: "NH", 66: "PG", 83: "SVHD" } };
+  const ESPN_STAT_NAME = { 0: "AB", 1: "H", 2: "AVG", 3: "2B", 4: "3B", 5: "HR", 6: "XBH", 7: "1B", 8: "TB", 9: "SLG", 10: "BB", 11: "IBB", 12: "HBP", 13: "SF", 14: "SH", 16: "PA", 17: "OBP", 18: "OPS", 20: "R", 21: "RBI", 23: "SB", 24: "CS", 25: "NSB", 26: "GIDP", 27: "K", 31: "CYC",
+                           32: "G", 33: "GS", 34: "IP", 35: "BF", 36: "Pitches", 37: "H", 38: "OBA", 39: "BB", 40: "IBB", 41: "WHIP", 42: "HBP", 44: "R", 45: "ER", 46: "HR", 47: "ERA", 48: "K", 49: "K/9", 50: "WP", 51: "BK", 52: "PK", 53: "W", 54: "L", 55: "W%", 56: "SVO", 57: "SV",
+                           58: "BS", 59: "SV%", 60: "HD", 62: "CG", 63: "QS", 65: "NH", 66: "PG", 67: "TC", 68: "PO", 69: "A", 70: "OFA", 71: "FPCT", 72: "E", 73: "DP", 81: "G", 82: "K/BB", 83: "SV+HD" };
+  const ESPN_RATE3 = new Set([2, 9, 17, 18, 38, 55, 59, 71]), ESPN_RATE2 = new Set([41, 47, 49, 82]);
+  const ESPN_API = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/";
+  const LG_Q = ["mSettings", "mTeam", "mRoster", "mMatchupScore", "mStandings", "mDraftDetail", "mStatus"].map((v) => "view=" + v).join("&");
+  // one request; a 401 is asked once more with the browser's ESPN cookies (a page on another site may send them where the browser allows it)
+  async function espnGet(id, y, q, cred) {
+    let r;
+    try { r = await fetch(`${ESPN_API}${y}/segments/0/leagues/${encodeURIComponent(id)}?${q}`, { cache: "no-cache", credentials: cred ? "include" : "omit" }); }
+    catch (e) { return { ok: false, status: cred ? 401 : 0 }; }   // a refused credentialed retry is still "private"
+    if (r.status === 401 && !cred) return espnGet(id, y, q, true);
+    if (!r.ok) return { ok: false, status: r.status };
+    try { return { ok: true, status: 200, json: await r.json() }; } catch (e) { return { ok: false, status: 0 }; }
+  }
+  // the league's newest season: next year's once ESPN renews it (late winter), else this one's
+  async function espnLeague(id) {
+    const tried = [];
+    for (const y of [DATA.meta.season + 1, DATA.meta.season]) {
+      const r = await espnGet(id, y, LG_Q); tried.push(y);
+      if (r.ok) return r.json;
+      if (r.status !== 404) throw { status: r.status, tried };
+    }
+    throw { status: 404, tried };
+  }
+  const lgErrText = (e, id) => (e.status === 401 ? `ESPN league ${id} is private, so ESPN won't show it to this site. Its League Manager can open it up: LM Tools ▸ Basic Settings ▸ Make League Viewable to Public ▸ Yes. (A computer signed in to ESPN may get in anyway; an iPhone won't.)`
+    : e.status === 404 ? `ESPN has no baseball league ${id} for ${(e.tried || []).join(" or ")}. Check the ID in your league's address: fantasy.espn.com/baseball/league?leagueId=…`
+    : e.status ? `ESPN answered ${e.status} for league ${id}. Try again in a minute.` : "Couldn't reach ESPN. Check the connection and try again.");
+  // the league as the page uses it, whatever the platform
+  function espnNorm(d) {
+    const s = d.settings || {}, sc = s.scoringSettings || {}, dr = s.draftSettings || {}, rs = s.rosterSettings || {}, sch = s.scheduleSettings || {}, st = d.status || {}, dd = d.draftDetail || {};
+    const type = sc.scoringType || "", points = /POINTS/.test(type);
+    const slots = {}; for (const [k, n] of Object.entries(rs.lineupSlotCounts || {})) { const lab = ESPN_SLOT[k]; if (n > 0 && lab) slots[lab] = (slots[lab] || 0) + n; }
+    const who = new Map();
+    const teams = (d.teams || []).map((t) => {
+      const o = (t.record || {}).overall || {};
+      const roster = ((t.roster || {}).entries || []).map((e) => {
+        const pl = (e.playerPoolEntry || {}).player || {}, inj = pl.injuryStatus && pl.injuryStatus !== "ACTIVE" ? pl.injuryStatus : null;
+        const r = { eid: e.playerId, name: pl.fullName || "", slot: ESPN_SLOT[e.lineupSlotId] || "BE", tm: ESPN_TEAM[pl.proTeamId] || "FA", pos: ESPN_POS[pl.defaultPositionId] || "",
+                    elig: [...new Set((pl.eligibleSlots || []).map((x) => ({ 8: "OF", 9: "OF", 10: "OF" }[x] || ESPN_SLOT[x])).filter((x) => ["C", "1B", "2B", "3B", "SS", "OF", "DH", "SP", "RP"].includes(x)))],
+                    inj: ESPN_INJ[inj] || (inj ? "IL" : null), injFull: inj, acq: e.acquisitionType || "", team: t.id };
+        who.set(r.eid, r); return r;
+      });
+      return { id: t.id, name: (t.name || [t.location, t.nickname].filter(Boolean).join(" ") || `Team ${t.id}`).trim(), abbrev: t.abbrev || "",
+               w: o.wins || 0, l: o.losses || 0, t: o.ties || 0, pf: o.pointsFor || 0, pa: o.pointsAgainst || 0, gb: o.gamesBack || 0,
+               seed: t.playoffSeed || 0, fin: t.rankCalculatedFinal || t.rankFinal || 0, vals: t.valuesByStat || {}, roster };
+    });
+    const side = (x) => (x ? { id: x.teamId, pts: x.totalPoints || 0, cw: (x.cumulativeScore || {}).wins || 0, cl: (x.cumulativeScore || {}).losses || 0, ct: (x.cumulativeScore || {}).ties || 0 } : null);
+    const games = (d.schedule || []).map((m) => ({ per: m.matchupPeriodId, tier: m.playoffTierType || "NONE", win: m.winner || "UNDECIDED", h: side(m.home), a: side(m.away) }));
+    const picks = (dd.picks || []).filter((p) => p.playerId > 0).map((p) => ({ n: p.overallPickNumber, rd: p.roundId, rp: p.roundPickNumber, team: p.teamId, eid: p.playerId, price: p.bidAmount || 0, keeper: !!p.keeper }));
+    return { pf: "espn", id: String(d.id), season: d.seasonId, name: s.name || `League ${d.id}`, size: s.size || teams.length, type, points,
+             items: (sc.scoringItems || []).map((x) => ({ id: x.statId, pts: x.points || 0, rev: !!x.isReverseItem })),
+             slots, teams, games, who, per: st.currentMatchupPeriod || 0, regPer: sch.matchupPeriodCount || 0, playoffTeams: sch.playoffTeamCount || 0,
+             over: (st.latestScoringPeriod || 0) > (st.finalScoringPeriod || 1e9),
+             draft: { type: dr.type || "", budget: dr.auctionBudget || 0, date: dr.date || 0, done: !!dd.drafted, live: !!dd.inProgress, picks } };
+  }
+  const lgTypeWord = (L) => ({ H2H_POINTS: "H2H points", H2H_CATEGORY: "H2H categories", H2H_MOST_CATEGORIES: "H2H most categories", ROTO: "Rotisserie", TOTAL_POINTS: "Season points" }[L.type] || L.type.toLowerCase().replace(/_/g, " "));
+  // the league in view: {key, L, at, err, busy}; a refresh keeps the last copy on screen
+  let lgData = null, lgTimer = null;
+  const lgKeyOf = (c) => (c ? `${c.pf}:${c.id}` : "");
+  function lgFetch(c, force) {
+    if (!c) return null;
+    const k = lgKeyOf(c), old = lgData && lgData.key === k ? lgData : null;
+    if (old && (old.busy || (!force && old.L && Date.now() - old.at < 120000) || (!force && old.err && !old.L))) return old;
+    const d = lgData = { key: k, L: old ? old.L : null, at: old ? old.at : 0, err: null, busy: true };
+    espnLeague(c.id).then((raw) => { d.L = espnNorm(raw); d.at = Date.now(); d.busy = false; if (c.name !== d.L.name) { c.name = d.L.name; lgSave(); } if (lgUI.feed && !d.L.draft.done) lgFeedDraft(d.L); },
+      (e) => { d.err = e && e.status != null ? e : { status: 0 }; d.busy = false; })
+      .then(() => { if (lgData === d && (state.mode === "league" || state.mode === "draft")) render(); });
+    return d;
+  }
+  // ESPN players → the site's: the crosswalk first (hist/ids.js), then his name with his club to settle a tie, then his side of the ball
+  const lgIdsEnsure = () => ensureScript("hist/ids.js", () => !!window.DRAFT_IDS);
+  const lgNorm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\b(jr|sr|ii|iii|iv)\b\.?/g, "").replace(/[^a-z]/g, "");
+  let lgIx = null;
+  function lgIndex() {
+    if (lgIx && lgIx.n === DATA.players.length) return lgIx;
+    const byId = new Map(), byName = new Map();
+    for (const p of DATA.players) { if (!byId.has(p.id)) byId.set(p.id, []); byId.get(p.id).push(p); const k = lgNorm(p.name); if (!byName.has(k)) byName.set(k, []); byName.get(k).push(p); }
+    return (lgIx = { n: DATA.players.length, byId, byName });
+  }
+  const lgMemo = new Map();
+  function lgMatch(r) {   // r: {eid, name, tm, pos}
+    const ids = window.DRAFT_IDS && window.DRAFT_IDS.espn, key = r.eid + (ids ? "" : ":n");
+    if (lgMemo.has(key)) return lgMemo.get(key);
+    const I = lgIndex(); let mlb = ids ? ids[r.eid] || null : null, c = mlb ? I.byId.get(mlb) || [] : [];
+    if (!mlb && r.name) {
+      let n = I.byName.get(lgNorm(r.name)) || [];
+      if (new Set(n.map((p) => p.id)).size > 1 && r.tm) { const t = n.filter((p) => p.team === r.tm); if (t.length) n = t; }
+      if (new Set(n.map((p) => p.id)).size > 1) { const want = r.pos === "SP" || r.pos === "RP" ? "P" : "H", t = n.filter((p) => p.type === want); if (t.length) n = t; }
+      if (new Set(n.map((p) => p.id)).size === 1) { c = n; mlb = n[0].id; }
+    }
+    const out = { mlb, h: c.find((p) => p.type === "H") || null, p: c.find((p) => p.type === "P") || null, pit: r.pos === "SP" || r.pos === "RP" };
+    lgMemo.set(key, out); return out;
+  }
+  // a roster entry or a pick's player: what ESPN says, else the site's name for him
+  const lgWho = (L, eid) => L.who.get(eid) || { eid, name: "", tm: "", pos: "" };
+  function lgName(L, eid) {
+    const r = lgWho(L, eid); if (r.name) return r.name;
+    const m = lgMatch(r), q = m.h || m.p; if (q) return q.name;
+    const ix = m.mlb && indexReady() ? window.DRAFT_INDEX.players.find((e) => e.id === m.mlb) : null;
+    return ix ? ix.n || ix.name || `ESPN #${eid}` : `ESPN #${eid}`;
+  }
+  // his page, as the popup over the League page (POP_MODES); a player with no line this season opens on his latest season from the search index
+  function lgOpen(m, pit) {
+    const p = pit ? m.p || m.h : m.h || m.p;
+    if (p) { openPlayer(p, {}); return; }
+    if (!m.mlb || !indexReady()) return;
+    const e = window.DRAFT_INDEX.players.find((x) => x.id === m.mlb); if (!e) return;
+    const t = primaryType(e), first = e.s.find((sv) => sv[2] === t); if (first) openPlayer({ id: m.mlb, type: t }, { ds: first[0] });
+  }
+  // the site's full-season numbers (whatever window or split the lists are on) and their place among the season's qualifiers, as home colours them
+  const lgM = (p) => withWindow(NOWIN, () => withSplit(NONE, () => V(p).m));
+  let lgRef = null;
+  function lgRefs() {
+    const k = DS.key + ":" + (XWN ? 1 : 0); if (lgRef && lgRef.k === k) return lgRef;
+    const r = { k, xwd: [], woba: [], nera: [], kbb: [], pitch: [] };
+    for (const p of DATA.players) { const m = lgM(p);
+      if (p.type === "H" && (p.pa || 0) >= 300) { if (m.xwd != null) r.xwd.push(m.xwd); if (m.woba != null) r.woba.push(m.woba); }
+      if (p.type === "P" && (p.ip || 0) >= 100) { if (m.nera != null) r.nera.push(-m.nera); if (m.kbb != null) r.kbb.push(m.kbb); if (m.pitch != null) r.pitch.push(m.pitch); } }
+    for (const a of ["xwd", "woba", "nera", "kbb", "pitch"]) r[a].sort((x, y) => x - y);
+    return (lgRef = r);
+  }
+  const lgPc = (k, v) => { const r = lgRefs()[k]; return v == null || !r.length ? null : insertPct(r, k === "nera" ? -v : v); };
+  // the 2027 projection (hist/proj-2027.js: Steamer where it has him, the site's Marcel otherwise) scored under the league's own points, or ESPN's
+  // standard points for a categories league — the same line the Mock draft and Rankings score
+  function lgWeights(L) {
+    if (!L.points) return { w: ESPN_PRESET.w, std: true, miss: [] };
+    const w = { H: {}, P: {} }, miss = [];
+    for (const it of L.items) { const h = ESPN_STAT.H[it.id], q = ESPN_STAT.P[it.id];
+      if (h) w.H[h] = (w.H[h] || 0) + it.pts; else if (q) w.P[q] = (w.P[q] || 0) + it.pts; else if (it.pts) miss.push(ESPN_STAT_NAME[it.id] || "stat " + it.id); }
+    return { w, std: false, miss };
+  }
+  const lgProjCache = new Map();
+  function lgProj(L, p) {
+    const J = window.DRAFT_PROJ27; if (!J || !p) return null;
+    const grp = p.type === "H" ? "H" : "P", k = L.pf + L.id + ":" + p.type + p.id;
+    if (lgProjCache.has(k)) return lgProjCache.get(k);
+    const a = J[grp === "H" ? "hitters" : "pitchers"][p.id]; let v = null;
+    if (a) { const o = {}; (grp === "H" ? J.hk : J.pk).forEach((kk, i) => { o[kk] = a[i] || 0; }); fDerive(o, grp); v = fPts(lgWeights(L).w[grp], o); }
+    lgProjCache.set(k, v); return v;
+  }
+  const lgProjEnsure = () => { if (!window.DRAFT_PROJ27 && (!window.DRAFT_BUILD || window.DRAFT_BUILD["hist/proj-2027.js"])) ensureScript("hist/proj-2027.js", () => !!window.DRAFT_PROJ27); };
+  // a roster player as the lineup filler wants him (mkAssign / mkFits): his side, the positions he can play, his projection — Ohtani once, both halves summed
+  function lgItem(L, r) {
+    const m = lgMatch(r), two = m.h && m.p, pit = !two && (r.pos === "SP" || r.pos === "RP" || (!m.h && m.p));
+    const ph = m.h ? lgProj(L, m.h) : null, pp = m.p ? lgProj(L, m.p) : null;
+    const espn = (two ? (ph || 0) + (pp || 0) : pit ? pp : ph) || 0;
+    const elig = r.elig && r.elig.length ? r.elig.filter((x) => (pit ? ["SP", "RP"] : ["C", "1B", "2B", "3B", "SS", "OF", "DH"]).includes(x)) : [];
+    return { type: pit ? "P" : "H", elig: elig.length ? elig : pit ? ["SP"] : ["DH"], espn, r, m };
+  }
+  const lgFaItem = (L, p) => ({ type: p.type, elig: eligiblePositions(p), espn: lgProj(L, p) || 0, p });
+  function lgRoster(L) {   // ESPN's lineup slots in the Mock draft's terms (an IF slot counts as UTIL, LF / CF / RF as OF; IL slots hold no one)
+    const r = { C: 0, "1B": 0, "2B": 0, "3B": 0, SS: 0, MI: 0, CI: 0, OF: 0, UTIL: 0, SP: 0, RP: 0, P: 0, BN: 0 };
+    for (const [s, n] of Object.entries(L.slots)) { const k = { "2B/SS": "MI", "1B/3B": "CI", LF: "OF", CF: "OF", RF: "OF", DH: "UTIL", IF: "UTIL", BE: "BN" }[s] || s; if (k in r) r[k] += n; }
+    return r;
+  }
+  const lgMine = (L, c) => L.teams.find((t) => c && t.id === c.team) || null;
+  // the free agents: the site's players no team in the league has
+  function lgTaken(L) { const s = new Set(); for (const t of L.teams) for (const r of t.roster) { const m = lgMatch(r); if (m.mlb) s.add(m.mlb); } return s; }
+  // a live draft: the board polls ESPN's draft every 5 s while the League page (or Draft mode, when it's linked) is open and the tab is in view
+  function lgPollSync() {
+    const c = lgConn(), d = lgData;
+    if (c && lgUI.feed && state.mode === "draft" && (!d || d.key !== lgKeyOf(c))) lgFetch(c);
+    const want = !!(c && d && d.key === lgKeyOf(c) && d.L && d.L.draft.live && !document.hidden && (state.mode === "league" || (state.mode === "draft" && lgUI.feed)));
+    if (want && !lgTimer) lgTimer = setInterval(lgPollDraft, 5000);
+    if (!want && lgTimer) { clearInterval(lgTimer); lgTimer = null; }
+  }
+  document.addEventListener("visibilitychange", () => { lgPollSync(); if (!document.hidden && lgTimer) lgPollDraft(); });
+  async function lgPollDraft() {
+    const c = lgConn(), d = lgData; if (!c || !d || !d.L || d.pbusy) return;
+    d.pbusy = true; const r = await espnGet(c.id, d.L.season, "view=mDraftDetail&view=mStatus"); d.pbusy = false;
+    if (!r.ok) { d.perr = r.status || 0; return; }
+    const dd = r.json.draftDetail || {}, before = d.L.draft.picks.length, was = d.L.draft.live;
+    d.L.draft.picks = (dd.picks || []).filter((p) => p.playerId > 0).map((p) => ({ n: p.overallPickNumber, rd: p.roundId, rp: p.roundPickNumber, team: p.teamId, eid: p.playerId, price: p.bidAmount || 0, keeper: !!p.keeper }));
+    d.L.draft.live = !!dd.inProgress; d.L.draft.done = !!dd.drafted; d.perr = 0; d.at = Date.now();
+    if (lgUI.feed) lgFeedDraft(d.L);
+    if (d.L.draft.picks.length !== before || d.L.draft.live !== was) { if (!d.L.draft.live) lgFetch(c, true); render(); }
+    else if (state.mode === "league" && lgUI.view === "draft") { const s = document.querySelector("#hub .lglive"); if (s) s.textContent = lgLiveWords(d); }
+  }
+  const lgLiveWords = (d) => `Live · updated ${Math.max(0, Math.round((Date.now() - d.at) / 1000))} s ago`;
+  // Draft mode in step with the league's draft: its picks in the drafted list (tagged lg, so his own marks stay his), the auction room's teams,
+  // budget and his seat from the league
+  const lgTeamIdx = (L) => new Map(L.teams.map((t, i) => [t.id, i]));
+  function lgFeedDraft(L) {
+    const idx = lgTeamIdx(L), mine = state.drafted.filter((x) => !x.lg), seen = new Set(mine.map((x) => x.id)), add = [];
+    for (const pk of L.draft.picks.slice().sort((a, b) => a.n - b.n)) {
+      const m = lgMatch(lgWho(L, pk.eid)); if (!m.mlb || seen.has(m.mlb)) continue; seen.add(m.mlb);
+      const o = { id: m.mlb, name: lgName(L, pk.eid), t: pk.n, lg: 1, team: idx.get(pk.team) }; if (L.draft.type === "AUCTION") o.price = pk.price;
+      add.push(o);
+    }
+    const next = add.concat(mine), same = next.length === state.drafted.length && next.every((x, i) => x.id === state.drafted[i].id && x.team === state.drafted[i].team && x.price === state.drafted[i].price);
+    if (!same) { state.drafted = next; save(LS.drafted, state.drafted); }
+  }
+  function lgToDraftMode(L, c) {
+    if (L.draft.type === "AUCTION") { auc.on = true; auc.teams = Math.max(4, Math.min(20, L.teams.length)); auc.budget = L.draft.budget || auc.budget; auc.names = L.teams.map((t) => t.name); const i = L.teams.findIndex((t) => c && t.id === c.team); auc.me = i >= 0 ? i : 0; aucSave(); }
+    else { auc.on = false; aucSave(); }
+    lgUI.feed = true; lgUISave(); lgFeedDraft(L); location.hash = "#draft";
+  }
+  // Draft mode's line about it: in step with which league, and a way out
+  function lgDraftChip() {
+    let ch = $("draftlg"); const c = lgConn(), on = state.mode === "draft" && lgUI.feed && c;
+    if (!on) { if (ch) ch.remove(); return; }
+    if (!ch) { ch = el("span", "chip lgchip"); ch.id = "draftlg"; $("draftcount").after(ch); }
+    const d = lgData && lgData.key === lgKeyOf(c) ? lgData : null, live = d && d.L && d.L.draft.live;
+    ch.innerHTML = ""; ch.append(el("span", null, `${live ? "Live from" : "Linked to"} ${c.name || "your league"}`));
+    const x = el("button", "linkbtn", "Unlink"); x.type = "button"; x.title = "Stop filling Draft mode from the league's draft (the picks already in stay)";
+    x.addEventListener("click", () => { lgUI.feed = false; lgUISave(); render(); }); ch.append(" ", x);
+  }
+  // his points-league scoring as one of the site's presets (Fantasy ▸ Scoring settings), so every points column reads his league's rules
+  function lgImportScoring(L) {
+    const { w, miss } = lgWeights(L), id = `lg-${L.pf}-${L.id}`;
+    const pre = { id, name: L.name, teams: L.size, w };
+    const i = fstore.presets.findIndex((p) => p.id === id); if (i >= 0) fstore.presets[i] = pre; else fstore.presets.push(pre);
+    fstore.current = id; fsave(); lgProjCache.clear();
+    return miss;
+  }
+  /* the page */
+  let lgAdding = false, lgForm = { v: "", busy: false, msg: "", err: false, found: null };
+  const lgFormReset = () => { lgForm = { v: "", busy: false, msg: "", err: false, found: null }; };
+  const lgAgo = (t) => { const s = Math.max(0, Math.round((Date.now() - t) / 1000)); return s < 60 ? `${s} s ago` : s < 3600 ? `${Math.round(s / 60)} min ago` : `${Math.round(s / 3600)} h ago`; };
+  const lgDate = (ms) => (ms ? new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "");
+  const LG_SLOT_ORDER = ["C", "1B", "2B", "3B", "SS", "2B/SS", "1B/3B", "IF", "OF", "LF", "CF", "RF", "DH", "UTIL", "SP", "RP", "P", "BE", "IL"];
+  // a section in home's dress: the title, a grey note and links over the red rule, then its body
+  function lgSection(box, title, sub, links) {
+    const s = el("section", "hsec"), hd = el("div", "hsech"); hd.append(el("h2", null, title)); if (sub) hd.append(el("span", null, sub));
+    for (const [lab, fn, tip] of links || []) { const b = el("button", "linkbtn hmore", lab); b.type = "button"; if (tip) b.title = tip; b.addEventListener("click", fn); hd.append(b); }
+    s.append(hd); const body = el("div", "hsecb"); s.append(body); box.append(s); return body;
+  }
+  // one table in the B-Ref dress; a cell is a string, {v, pc (percentile → heat), cls, tip}, or {pl: [match, pit], v: name, inj}
+  function lgTable(body, heads, rows, o = {}) {
+    const { t, tb, fin, wrap } = brTable(o.groups || null, heads, "lgt" + (o.cls ? " " + o.cls : ""));
+    for (const r of rows) {
+      const tr = el("tr", r.cls || null);
+      r.cells.forEach((v, i) => {
+        const [, hc] = heads[i], td = el("td", [hc && hc.includes("l") ? "l" : "c", hc && hc.includes("f1") ? "f1" : "", hc && hc.includes("f3") ? "f3 nm" : ""].filter(Boolean).join(" "));
+        if (v && v.pl) {
+          const [m, pit] = v.pl, can = m && (m.h || m.p || (m.mlb && indexReady() && window.DRAFT_INDEX.players.some((e) => e.id === m.mlb)));
+          if (can) { const b = el("button", "pbname", v.v); b.type = "button"; b.title = v.v; b.addEventListener("click", () => lgOpen(m, pit)); td.append(b); } else td.append(el("span", "lgnm", v.v));
+          if (v.inj) { const ib = el("span", "ilb", v.inj); if (v.injTip) ib.title = v.injTip; td.append(" ", ib); }
+          if (v.tag) td.append(" ", el("span", "lgtag", v.tag));
+        } else if (v && typeof v === "object") { td.textContent = v.v == null ? "–" : String(v.v); if (v.pc != null) heatTd(td, v.pc); if (v.st) { td.style.background = v.st.bg; td.style.color = v.st.fg; td.classList.add("heat"); } if (v.cls) td.classList.add(...v.cls.split(" ")); if (v.tip) td.title = v.tip; }
+        else td.textContent = v == null || v === "" ? "–" : String(v);
+        tr.append(td);
+      });
+      tb.append(fin(tr));
+    }
+    wrap.classList.add("hwrap", "lgwrap"); body.append(wrap);
+    requestAnimationFrame(() => { const f = t.querySelector("tbody td.f1"); if (f) t.style.setProperty("--sbw1", f.offsetWidth + "px"); });
+    return t;
+  }
+  const lgSign = (v, full) => { const t = Math.min(1, Math.abs(v) / full), mix = (a, b) => a.map((x, i) => Math.round(x + (b[i] - x) * t)); const c = mix([214, 212, 206], v > 0 ? [216, 33, 41] : [54, 97, 173]); return { bg: `rgb(${c.join(",")})`, fg: t > (v > 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };
+  const lgF3 = (x) => (x == null ? "–" : fmtX(x)), lgF2 = (x) => (x == null ? "–" : x.toFixed(2)), lgF1 = (x) => (x == null ? "–" : x.toFixed(1)), lgF0 = (x) => (x == null ? "–" : String(Math.round(x)));
+  const lgProjHead = (L) => { const sys = projSys() || "Marcel"; return ["2027", "", `${sys} 2027, scored under ${L.points ? "the league's points" : "ESPN's standard points (a categories league)"}`]; };
+
+  function renderLeague() {
+    const box = $("hub"); box.innerHTML = ""; box.classList.add("home", "league");
+    lgIdsEnsure(); lgProjEnsure(); ensureIndex();
+    const PH = mobileView(), c = lgConn();
+    if (!c || lgAdding) { lgConnectPage(box); lgPollSync(); return; }
+    const d = lgFetch(c), view = LG_TABS.some(([k]) => k === lgUI.view) ? lgUI.view : "team";
+    // the bar, in the Fantasy pages' dress: the league (a pick, with Add a league), then the four views, then the view's own picks
+    const row = el("div", "lgrow"), bar = el("div", "sbviews lbviews"); row.append(bar);
+    const pick = el("button", "sbview pgpick lgpick"); pick.type = "button";
+    const nm = el("span", "pgname"); nm.append(el("span", "pgcur", c.name || `League ${c.id}`)); pick.append(nm); pick.insertAdjacentHTML("beforeend", CHEV);
+    pick.setAttribute("aria-label", `League: ${c.name || c.id}`); pick.setAttribute("aria-haspopup", "listbox"); pick.setAttribute("aria-expanded", "false");
+    pick.addEventListener("click", (e) => { e.stopPropagation();
+      const opts = lgStore.list.map((x, i) => [String(i), `${x.name || "League " + x.id} · ESPN`]); opts.push(["add", "Add a league…"]);
+      ddOpenOn(pick, opts, String(lgStore.cur), (v) => { if (v === "add") { lgAdding = true; lgFormReset(); render(); return; } lgStore.cur = +v; lgSave(); render(); }, { keyboard: e.detail === 0 }); });
+    bar.append(pick);
+    for (const [k, lab] of LG_TABS) { const b = el("button", "sbview" + (view === k ? " on" : ""), lab); b.type = "button"; b.setAttribute("aria-pressed", String(view === k));
+      b.addEventListener("click", (e) => { e.stopPropagation(); if (location.hash !== "#league/" + k) location.hash = "#league/" + k; }); bar.append(b); }
+    const line = el("div", "lgline"), count = el("span", "pcount"), by = el("span", "pgby"), act = el("span", "lgact"); line.append(count, by, act);
+    box.append(row, line);
+    requestAnimationFrame(() => { const on = bar.querySelector(".sbview.on"); if (!on || !bar.isConnected || bar.scrollWidth <= bar.clientWidth + 1) return;   // a phone's bar scrolls: bring the view in sight
+      const r = on.getBoundingClientRect(), br = bar.getBoundingClientRect(); bar.scrollLeft += r.left - br.left - (br.width - r.width) / 2; });
+    const L = d && d.L;
+    count.textContent = (L && L.name) || c.name || `ESPN league ${c.id}`;
+    if (!L) {
+      if (d && d.err) lgErrBox(box, d.err, c); else box.append(el("p", "note lgwait", "Reading the league from ESPN…"));
+      lgPollSync(); return;
+    }
+    by.textContent = `${L.season} · ${L.teams.length} teams · ${lgTypeWord(L)}${L.draft.type === "AUCTION" ? ` · $${L.draft.budget} auction` : ""}`;
+    const rf = el("button", "linkbtn", d.busy ? "Refreshing…" : "Refresh"); rf.type = "button"; rf.title = `Read the league again from ESPN (last read ${lgAgo(d.at)})`;
+    rf.addEventListener("click", () => { lgFetch(c, true); render(); }); act.append(rf);
+    if (d.err) box.append(el("p", "note lgwarn", "Couldn't refresh — " + lgErrText(d.err, c.id)));
+    if (view === "team") lgTeamView(box, L, c, PH);
+    else if (view === "league") lgLeagueView(box, L, c, PH);
+    else if (view === "fa") lgFaView(box, L, c, PH, bar);
+    else lgDraftView(box, L, c, PH, bar, d);
+    lgPollSync();
+  }
+  function lgErrBox(box, err, c) {
+    const b = lgSection(box, "Couldn't read the league", null);
+    b.append(el("p", "lgp", lgErrText(err, c.id)));
+    const row = el("div", "lgbtns"), again = el("button", "btn", "Try again"), rm = el("button", "btn btn-quiet", "Remove this league");
+    again.type = rm.type = "button"; again.addEventListener("click", () => { lgFetch(c, true); render(); }); rm.addEventListener("click", () => lgRemove(c));
+    row.append(again, rm); b.append(row);
+  }
+  function lgRemove(c) {
+    ask("Remove this league?", `${c.name || "ESPN league " + c.id} comes off the League tab on every device that syncs. Nothing changes on ESPN.`, () => {
+      lgStore.list = lgStore.list.filter((x) => x !== c); lgStore.cur = 0; lgSave(); lgData = null; if (!lgStore.list.length) lgUI.feed = false; lgUISave(); render(); });
+  }
+  // connecting: the link or ID, then which team is his
+  function lgConnectPage(box) {
+    const found = lgForm.found && lgForm.found.L;
+    const links = lgStore.list.length ? [["Cancel", () => { lgAdding = false; lgFormReset(); render(); }]] : [];
+    const body = lgSection(box, found ? "Which team is yours?" : "Connect a league", found ? found.name : "ESPN", links);
+    if (found) { lgTeamPick(body, found, (tid) => lgAdd(found, tid)); return; }
+    body.append(el("p", "lgp", "Paste your league's link or its ID. ESPN shows the ID in the address of any page of the league: fantasy.espn.com/baseball/league?leagueId=12345678."));
+    const f = el("form", "lgform"), inp = el("input"); inp.type = "text"; inp.inputMode = "url"; inp.placeholder = "League link or ID"; inp.value = lgForm.v;
+    inp.autocomplete = "off"; inp.spellcheck = false; inp.setAttribute("autocapitalize", "off"); inp.setAttribute("aria-label", "ESPN league link or ID");
+    const go = el("button", "btn", lgForm.busy ? "Connecting…" : "Connect"); go.type = "submit"; go.disabled = lgForm.busy;
+    f.append(inp, go); body.append(f);
+    f.addEventListener("submit", (e) => { e.preventDefault(); lgConnect(inp.value); });
+    inp.addEventListener("input", () => { lgForm.v = inp.value; });
+    if (lgForm.msg) body.append(el("p", "lgmsg" + (lgForm.err ? " err" : ""), lgForm.msg));
+    body.append(el("p", "note", "ESPN leagues for now. A league has to be viewable to the public for ESPN to show it to another site: if yours is private, its League Manager can switch that on under LM Tools ▸ Basic Settings ▸ Make League Viewable to Public. Your browser reads the league straight from ESPN; the link is kept on this device and in your synced settings."));
+  }
+  async function lgConnect(raw) {
+    const s = String(raw || "").trim(), m = s.match(/leagueId=(\d+)/i) || s.match(/^#?(\d{3,12})$/);
+    if (!m) { lgForm.msg = "That doesn't look like an ESPN league link or ID — the ID is the number after leagueId= in the league's address."; lgForm.err = true; render(); return; }
+    const id = m[1]; lgForm.v = s; lgForm.busy = true; lgForm.msg = ""; lgForm.err = false; render();
+    try { lgForm.found = { L: espnNorm(await espnLeague(id)) }; }
+    catch (e) { lgForm.err = true; lgForm.msg = lgErrText(e && e.status != null ? e : { status: 0 }, id); }
+    lgForm.busy = false; render();
+  }
+  function lgTeamPick(body, L, onPick) {
+    const g = el("div", "lgteams");
+    for (const t of L.teams.slice().sort((a, b) => a.name.localeCompare(b.name))) {
+      const b = el("button", "lgteam"); b.type = "button"; b.append(el("b", null, t.name), el("span", null, `${t.abbrev ? t.abbrev + " · " : ""}${t.w}–${t.l}${t.t ? "–" + t.t : ""}`));
+      b.addEventListener("click", () => onPick(t.id)); g.append(b);
+    }
+    body.append(g);
+    const none = el("button", "linkbtn", "I'm not in this league — just follow it"); none.type = "button"; none.addEventListener("click", () => onPick(null)); body.append(none);
+  }
+  function lgAdd(L, tid) {
+    let c = lgStore.list.find((x) => x.pf === L.pf && String(x.id) === String(L.id));
+    if (!c) { c = { pf: L.pf, id: String(L.id), team: tid, name: L.name }; lgStore.list.push(c); } else { c.team = tid; c.name = L.name; }
+    lgStore.cur = lgStore.list.indexOf(c); lgSave();
+    lgData = { key: lgKeyOf(c), L, at: Date.now(), err: null, busy: false };
+    lgAdding = false; lgFormReset(); lgUI.view = tid == null ? "league" : "team"; lgUISave();
+    if (location.hash !== "#league/" + lgUI.view) location.hash = "#league/" + lgUI.view; else render();
+  }
+  // My team: his roster with the site's numbers, the best pickups on the wire, and the connection
+  function lgTeamView(box, L, c, PH) {
+    const T = lgMine(L, c);
+    if (!T) { const b = lgSection(box, "Which team is yours?", L.name); lgTeamPick(b, L, (tid) => { c.team = tid; lgSave(); render(); }); lgConnBox(box, L, c); return; }
+    const byStand = L.teams.slice().sort((a, b) => (a.seed || 99) - (b.seed || 99)), place = byStand.indexOf(T) + 1;
+    const rec = `${T.w}–${T.l}${T.t ? "–" + T.t : ""}` + (L.points ? ` · ${lgF1(T.pf)} PF` : "") + (L.type !== "ROTO" ? ` · ${place}${ordSuf(place)} of ${L.teams.length}` : "") + (L.over && T.fin ? ` · finished ${T.fin}${ordSuf(T.fin)}` : "");
+    const proj = lgProjHead(L), order = (r) => { const i = LG_SLOT_ORDER.indexOf(r.slot); return i < 0 ? 99 : i; };
+    const rows = T.roster.slice().sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name));
+    if (!rows.length) { const b = lgSection(box, T.name, rec); b.append(el("p", "lgp", L.draft.done ? "No one on the roster." : `Rosters fill in at the draft${L.draft.date ? " — " + lgDate(L.draft.date) : ""}.`)); lgConnBox(box, L, c); return; }
+    const hit = [], pit = [];
+    for (const r of rows) { const m = lgMatch(r), two = m.h && m.p, isP = r.pos === "SP" || r.pos === "RP"; if (!isP || two) hit.push([r, m]); if (isP || two) pit.push([r, m]); }
+    const nameCell = (r, m, isP) => ({ pl: [m, isP], v: r.name || (m.h || m.p || {}).name || `ESPN #${r.eid}`, inj: r.inj, injTip: r.injFull ? r.injFull.replace(/_/g, " ").toLowerCase() : "" });
+    const b1 = lgSection(box, T.name, rec);
+    if (hit.length) {
+      const heads = [["Slot", "f1"], ["Hitter", "l f3"], ["Tm"], ["Pos"], ["PA"], ["xwOBA", "", "the site's xwOBA (built from his skills), 2026"], ["wOBA"], ["HR"], ["SB"], proj];
+      lgTable(b1, heads, hit.map(([r, m]) => { const p = m.h, x = p ? lgM(p) : {};
+        return { cls: r.slot === "BE" || r.slot === "IL" ? "lgbench" : null, cells: [r.slot, nameCell(r, m, false), r.tm, r.elig.filter((e) => !["SP", "RP"].includes(e)).join(", ") || r.pos,
+          p ? lgF0(p.pa) : "–", { v: lgF3(x.xwd), pc: lgPc("xwd", x.xwd) }, { v: lgF3(x.woba), pc: lgPc("woba", x.woba) }, p ? lgF0(p.ctx && p.ctx.HR) : "–", p ? lgF0(x.sb) : "–", { v: lgF0(lgProj(L, p)), cls: "kd" }] }; }));
+    }
+    if (pit.length) {
+      const heads = [["Slot", "f1"], ["Pitcher", "l f3"], ["Tm"], ["Pos"], ["IP"], ["nERA", "", "luck-neutral ERA, 2026"], ["K-BB%"], ["P+", "", "Pitching+, 2026"], proj];
+      lgTable(b1, heads, pit.map(([r, m]) => { const p = m.p, x = p ? lgM(p) : {};
+        return { cls: r.slot === "BE" || r.slot === "IL" ? "lgbench" : null, cells: [r.slot, nameCell(r, m, true), r.tm, r.elig.filter((e) => ["SP", "RP"].includes(e)).join(", ") || r.pos,
+          p ? fmtIP(p.ip || 0) : "–", { v: lgF2(x.nera), pc: lgPc("nera", x.nera) }, { v: x.kbb == null ? "–" : x.kbb.toFixed(1) + "%", pc: lgPc("kbb", x.kbb) }, { v: lgF0(x.pitch), pc: lgPc("pitch", x.pitch) }, { v: lgF0(lgProj(L, p)), cls: "kd" }] }; }));
+    }
+    lgPickups(box, L, T, PH);
+    lgConnBox(box, L, c);
+  }
+  const ordSuf = (n) => { const v = n % 100; return v >= 11 && v <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"; };
+  // the free agents who'd beat one of his starters next year: each against his weakest starter at a slot they can fill (once each)
+  function lgPickups(box, L, T, PH) {
+    if (!window.DRAFT_PROJ27) { lgSection(box, "Best pickups", "loading the 2027 projections…"); return; }
+    const roster = lgRoster(L), mine = T.roster.filter((r) => r.slot !== "IL").map((r) => lgItem(L, r)), a = mkAssign(mine, roster);
+    const starters = a.slots.map((s, j) => ({ s, x: a.own[j] >= 0 ? mine[a.own[j]] : null })).filter((z) => z.s !== "BN");
+    const taken = lgTaken(L), fa = DATA.players.filter((p) => !taken.has(p.id)).map((p) => lgFaItem(L, p)).filter((x) => x.espn > 0).sort((x, y) => y.espn - x.espn).slice(0, 200);
+    const cand = [];
+    for (const x of fa) { let best = null; for (const z of starters) { if (!mkFits(x, z.s)) continue; const v = z.x ? z.x.espn : 0; if (!best || v < best.v) best = { z, v }; } if (best && x.espn > best.v) cand.push({ x, z: best.z, gain: x.espn - best.v }); }
+    cand.sort((p, q) => q.gain - p.gain);
+    const used = new Set(), out = [];
+    for (const k of cand) { if (used.has(k.z)) continue; used.add(k.z); out.push(k); if (out.length >= (PH ? 5 : 8)) break; }
+    const b = lgSection(box, "Best pickups", `free agents who'd outscore a starter of yours in 2027 (${L.points ? "the league's points" : "ESPN standard points"})`);
+    if (!out.length) { b.append(el("p", "lgp", "No one on the wire projects ahead of your starters.")); return; }
+    lgTable(b, [["Add", "l f1"], ["Pos"], ["2027"], ["Slot", "", "the lineup slot he'd take"], ["For", "l", "the starter there now"], ["2027"], ["Gain", "", "projected 2027 points over the starter he'd replace"]],
+      out.map((k) => ({ cells: [{ pl: [{ mlb: k.x.p.id, h: k.x.p.type === "H" ? k.x.p : null, p: k.x.p.type === "P" ? k.x.p : null }, k.x.p.type === "P"], v: k.x.p.name },
+        (k.x.p.type === "P" ? pitcherRoles(k.x.p) : eligiblePositions(k.x.p)).join(", "), { v: lgF0(k.x.espn), cls: "kd" }, k.z.s,
+        k.z.x ? { pl: [k.z.x.m, k.z.x.type === "P"], v: k.z.x.r.name } : { v: "(empty)", cls: "l" }, k.z.x ? lgF0(k.z.x.espn) : "–", { v: "+" + lgF0(k.gain), st: lgSign(k.gain, 120) }] })), { cls: "lgpick" });
+  }
+  // the connection: his team, the scoring, Draft mode, removing it
+  function lgConnBox(box, L, c) {
+    const b = lgSection(box, "This league", `ESPN league ${L.id}`);
+    const row = el("div", "lgset"), lab = el("label", "aucf"), sel = el("select");
+    for (const [v, n] of [["", "No team (just following)"], ...L.teams.map((t) => [String(t.id), t.name])]) { const o = el("option", null, n); o.value = v; sel.append(o); }
+    sel.value = c.team == null ? "" : String(c.team); sel.addEventListener("change", () => { c.team = sel.value === "" ? null : +sel.value; lgSave(); render(); });
+    lab.append(el("span", null, "Your team"), sel); row.append(lab); b.append(row);
+    const btns = el("div", "lgbtns");
+    if (L.points) { const sc = el("button", "btn", "Use this league's scoring"); sc.type = "button"; sc.title = "Adds the league's points as a scoring preset (Fantasy ▸ Scoring settings) and picks it, so every fantasy points column on the site reads them";
+      sc.addEventListener("click", () => { const miss = lgImportScoring(L); lgNote = `The site now scores fantasy points with ${L.name}'s rules (Fantasy ▸ Scoring settings).${miss.length ? " Not carried over (the site has no line for them): " + miss.join(", ") + "." : ""}`; render(); }); btns.append(sc); }
+    const rm = el("button", "btn btn-quiet", "Remove this league"); rm.type = "button"; rm.addEventListener("click", () => lgRemove(c)); btns.append(rm);
+    b.append(btns);
+    if (lgNote) { b.append(el("p", "lgmsg", lgNote)); lgNote = ""; }
+    const w = lgWeights(L); if (L.points && w.miss.length) b.append(el("p", "note", "Scoring the site can't project: " + w.miss.join(", ") + "."));
+  }
+  let lgNote = "";
+  // League: standings (with all-play luck in a points league), category standings, this period's games, next season on paper
+  function lgAllPlay(L) {
+    const out = new Map(L.teams.map((t) => [t.id, { g: 0, aw: 0, al: 0, at: 0 }])), per = new Map();
+    for (const g of L.games) { if (g.tier !== "NONE" || g.win === "UNDECIDED" || !g.h || !g.a) continue; if (!per.has(g.per)) per.set(g.per, []); per.get(g.per).push(g.h, g.a); }
+    for (const sides of per.values()) for (const x of sides) { const o = out.get(x.id); if (!o) continue; o.g++; for (const y of sides) { if (y === x) continue; if (x.pts > y.pts) o.aw++; else if (x.pts < y.pts) o.al++; else o.at++; } }
+    return out;
+  }
+  function lgLeagueView(box, L, c, PH) {
+    const mineId = c.team;
+    const me = (t) => (t.id === mineId ? "lgme" : null), tName = (t) => ({ v: PH && t.abbrev ? t.abbrev : t.name, cls: "l nmt", tip: t.name });
+    if (L.type !== "ROTO") {
+      const AP = L.points ? lgAllPlay(L) : null, teams = L.teams.slice().sort((a, b) => (a.seed || 99) - (b.seed || 99) || b.w - a.w || b.pf - a.pf);
+      const heads = [["Rk", "f1"], ["Team", "l f3"], ["W"], ["L"], ["T"], ["Pct"], ["GB"]];
+      if (L.points) heads.push(["PF"], ["PA"], ["All-play", "", "his record if every week he'd played every team"], ["Luck", "", "wins above what his weekly scores earned against the whole league"]);
+      if (L.over) heads.push(["Final", "", "where the playoffs left him"]);
+      const b = lgSection(box, "Standings", L.points ? "points league" : "category wins, losses and ties");
+      lgTable(b, heads, teams.map((t, i) => {
+        const g = t.w + t.l + t.t, cells = [String(t.seed || i + 1), tName(t), String(t.w), String(t.l), String(t.t), g ? ((t.w + t.t / 2) / g).toFixed(3).replace(/^0/, "") : "–", t.gb ? lgF1(t.gb).replace(/\.0$/, "") : "–"];
+        if (L.points) { const a = AP.get(t.id) || {}, n = a.aw + a.al + a.at, exp = n ? a.g * (a.aw + a.at / 2) / n : null, luck = exp == null ? null : t.w + t.t / 2 - exp;
+          cells.push(lgF1(t.pf), lgF1(t.pa), n ? `${a.aw}–${a.al}${a.at ? "–" + a.at : ""}` : "–", luck == null ? "–" : { v: (luck > 0 ? "+" : "") + luck.toFixed(1), st: lgSign(luck, 3) }); }
+        if (L.over) cells.push(t.fin ? t.fin + ordSuf(t.fin) : "–");
+        return { cls: me(t), cells };
+      }));
+    }
+    if (!L.points && L.items.length) {
+      // category standings: each team's season total in every category, coloured by its rank among the teams; roto points = teams beaten
+      const n = L.teams.length, items = L.items, rank = new Map();
+      for (const it of items) { const vs = L.teams.map((t) => ({ id: t.id, v: t.vals[it.id] })).filter((x) => x.v != null);
+        const sorted = vs.slice().sort((x, y) => (it.rev ? x.v - y.v : y.v - x.v));
+        for (const x of vs) { const better = sorted.filter((y) => (it.rev ? y.v < x.v : y.v > x.v)).length, tie = sorted.filter((y) => y.v === x.v).length; rank.set(it.id + ":" + x.id, better + (tie + 1) / 2); } }
+      const roto = (t) => items.reduce((s, it) => { const r = rank.get(it.id + ":" + t.id); return s + (r == null ? 0 : n - r + 1); }, 0);
+      const fmt = (id, v) => (v == null ? "–" : id === 34 ? fmtIP(v / 3) : ESPN_RATE3.has(id) ? v.toFixed(3).replace(/^0/, "") : ESPN_RATE2.has(id) ? v.toFixed(2) : String(Math.round(v)));
+      const teams = L.teams.slice().sort((a, b) => roto(b) - roto(a));
+      const heads = [["Rk", "f1"], ["Team", "l f3"], ...items.map((it) => [ESPN_STAT_NAME[it.id] || "#" + it.id, "", it.rev ? "lower is better" : ""]), ["Pts", "", "roto points: one for every team he beats in each category"]];
+      const b = lgSection(box, "Category standings", "season totals, each coloured by its rank in the league");
+      lgTable(b, heads, teams.map((t, i) => ({ cls: me(t), cells: [String(i + 1), tName(t), ...items.map((it) => { const r = rank.get(it.id + ":" + t.id); return { v: fmt(it.id, t.vals[it.id]), pc: r == null || n < 2 ? null : (n - r) / (n - 1) * 100 }; }), { v: (Math.round(roto(t) * 2) / 2).toString(), cls: "kd" }] })));
+    }
+    if (L.games.length) {
+      const maxPer = Math.max(...L.games.map((g) => g.per)), per = L.per && L.per <= maxPer ? L.per : maxPer, gs = L.games.filter((g) => g.per === per && g.h && g.a);
+      const TN = new Map(L.teams.map((t) => [t.id, t])), tier = gs.some((g) => g.tier !== "NONE");
+      if (gs.length) {
+        const b = lgSection(box, L.over ? "Final week" : `Matchup ${per}`, tier ? "playoffs" : L.over ? "" : "this week so far");
+        const sc = (s) => (L.points ? lgF1(s.pts) : `${s.cw}–${s.cl}${s.ct ? "–" + s.ct : ""}`);
+        lgTable(b, [["Home", "l"], [L.points ? "Pts" : "Cats"], [L.points ? "Pts" : "Cats"], ["Away", "l"], ...(tier ? [["Bracket"]] : [])], gs.map((g) => { const h = TN.get(g.h.id), a = TN.get(g.a.id);
+          return { cls: h && h.id === mineId || a && a.id === mineId ? "lgme" : null, cells: [{ v: h ? (PH && h.abbrev ? h.abbrev : h.name) : "–", cls: "l" + (g.win === "HOME" ? " lgwin" : "") }, { v: sc(g.h), cls: g.win === "HOME" ? "lgwin" : "" },
+            { v: sc(g.a), cls: g.win === "AWAY" ? "lgwin" : "" }, { v: a ? (PH && a.abbrev ? a.abbrev : a.name) : "–", cls: "l" + (g.win === "AWAY" ? " lgwin" : "") },
+            ...(tier ? [{ v: { WINNERS_BRACKET: "Playoffs", WINNERS_CONSOLATION_LADDER: "Consolation", LOSERS_CONSOLATION_LADDER: "Consolation" }[g.tier] || "Regular", cls: "lgtier" }] : [])] }; }), { cls: "lggames" });
+      }
+    }
+    // next season on paper: each roster's best lineup by 2027 projection under the league's scoring (Ohtani's two halves as one player)
+    if (window.DRAFT_PROJ27 && L.teams.some((t) => t.roster.length)) {
+      const roster = lgRoster(L), rows = L.teams.map((t) => { const xs = t.roster.filter((r) => r.slot !== "IL").map((r) => lgItem(L, r)), a = mkAssign(xs, roster);
+        let st = 0, bn = 0; a.own.forEach((o, j) => { if (o < 0) return; if (a.slots[j] === "BN") bn += xs[o].espn; else st += xs[o].espn; });
+        const best = xs.slice().sort((p, q) => q.espn - p.espn)[0]; return { t, st, bn, best }; }).sort((p, q) => q.st - p.st);
+      const b = lgSection(box, `${DATA.meta.season + 1} on paper`, `each roster's best lineup by ${projSys() || "the"} projection, ${L.points ? "the league's points" : "ESPN standard points"}`);
+      lgTable(b, [["Rk", "f1"], ["Team", "l f3"], ["Starters"], ["Bench"], ["Best player", "l"], ["2027"]], rows.map((r, i) => ({ cls: me(r.t), cells: [String(i + 1), tName(r.t), { v: lgF0(r.st), cls: "kd" }, lgF0(r.bn),
+        r.best ? { pl: [r.best.m, r.best.type === "P"], v: r.best.r.name || (r.best.m.h || r.best.m.p || {}).name || "–" } : "–", r.best ? lgF0(r.best.espn) : "–"] })));
+    }
+  }
+  // Free agents: the site's players no team in the league has, by the 2027 projection under the league's scoring or by this season's numbers
+  const LG_FA_POS = [[null, "Hitters"], ["H", "All hitters"], ["C", "C"], ["1B", "1B"], ["2B", "2B"], ["3B", "3B"], ["SS", "SS"], ["OF", "OF"], ["DH", "DH"], [null, "Pitchers"], ["P", "All pitchers"], ["SP", "SP"], ["RP", "RP"]];
+  function lgFaView(box, L, c, PH, bar) {
+    const pos = LG_FA_POS.some(([k]) => k === lgUI.faPos) ? lgUI.faPos : "H", isP = ["P", "SP", "RP"].includes(pos), sortP = lgUI.faSort === "proj" && !!window.DRAFT_PROJ27;
+    const save = () => { lgUI.faN = 50; lgUISave(); render(); };
+    bar.append(barPick({ name: "Position", key: "pos", opts: LG_FA_POS, cur: pos, now: pos === "H" ? "All hitters" : pos === "P" ? "All pitchers" : pos, pick: (v) => { lgUI.faPos = v; save(); }, set: !["H", "P"].includes(pos) }),
+      barPick({ name: "Order", key: "ord", opts: [["proj", "2027 projection"], ["now", isP ? "2026 nERA" : "2026 xwOBA"]], cur: sortP ? "proj" : "now", now: sortP ? "2027 projection" : "2026", pick: (v) => { lgUI.faSort = v; save(); }, set: lgUI.faSort === "now" }));
+    const taken = lgTaken(L), want = (p) => (isP ? p.type === "P" && (pos === "P" || pitcherRoles(p).includes(pos)) : p.type === "H" && (pos === "H" || eligiblePositions(p).includes(pos)));
+    const pool = DATA.players.filter((p) => !taken.has(p.id) && want(p)).map((p) => ({ p, m: lgM(p), j: lgProj(L, p) }));
+    // this season's order needs a sample (100 PA / 20 IP) or a 4-PA .600 leads it; the projection's doesn't
+    const nOk = (x) => ((x.p.ip || 0) >= 20 && x.m.nera != null ? x.m.nera : 99), hOk = (x) => ((x.p.pa || 0) >= 100 && x.m.xwd != null ? x.m.xwd : 0);
+    const by = sortP ? (a, b) => (b.j == null ? -1e9 : b.j) - (a.j == null ? -1e9 : a.j) : isP ? (a, b) => nOk(a) - nOk(b) : (a, b) => hOk(b) - hOk(a);
+    pool.sort(by);
+    const n = Math.min(pool.length, lgUI.faN || 50), proj = lgProjHead(L);
+    const b = lgSection(box, "Free agents", `${pool.length} ${isP ? "pitchers" : "hitters"}${["H", "P"].includes(pos) ? "" : " at " + pos} no team in the league has · by ${sortP ? "2027 projection" : isP ? "2026 nERA (20+ IP)" : "2026 xwOBA (100+ PA)"}`);
+    if (!pool.length) { b.append(el("p", "lgp", "No one.")); return; }
+    const heads = isP ? [["Rk", "f1"], ["Pitcher", "l f3"], ["Tm"], ["Pos"], ["IP"], ["nERA", "", "luck-neutral ERA, 2026"], ["K-BB%"], ["P+", "", "Pitching+, 2026"], proj]
+      : [["Rk", "f1"], ["Hitter", "l f3"], ["Tm"], ["Pos"], ["PA"], ["xwOBA", "", "the site's xwOBA (built from his skills), 2026"], ["wOBA"], ["HR"], ["SB"], proj];
+    lgTable(b, heads, pool.slice(0, n).map(({ p, m, j }, i) => {
+      const nm = { pl: [{ mlb: p.id, h: p.type === "H" ? p : null, p: p.type === "P" ? p : null }, isP], v: p.name }, il = ilOf(p);
+      if (il) { nm.inj = "IL" + il.code.slice(1); nm.injTip = ilTip(il); }
+      return { cells: isP ? [String(i + 1), nm, p.team, pitcherRoles(p).join(", "), fmtIP(p.ip || 0), { v: lgF2(m.nera), pc: lgPc("nera", m.nera) }, { v: m.kbb == null ? "–" : m.kbb.toFixed(1) + "%", pc: lgPc("kbb", m.kbb) }, { v: lgF0(m.pitch), pc: lgPc("pitch", m.pitch) }, { v: lgF0(j), cls: "kd" }]
+        : [String(i + 1), nm, p.team, eligiblePositions(p).join(", "), lgF0(p.pa), { v: lgF3(m.xwd), pc: lgPc("xwd", m.xwd) }, { v: lgF3(m.woba), pc: lgPc("woba", m.woba) }, lgF0(p.ctx && p.ctx.HR), lgF0(m.sb), { v: lgF0(j), cls: "kd" }] };
+    }));
+    if (pool.length > n) { const more = el("button", "btn btn-quiet lgmore", `Show ${Math.min(50, pool.length - n)} more`); more.type = "button"; more.addEventListener("click", () => { lgUI.faN = n + 50; lgUISave(); render(); }); b.append(more); }
+  }
+  // Draft: the league's board — every pick with the site's numbers and, in this season's points league, what each pick scored against where he went
+  function lgDraftView(box, L, c, PH, bar, d) {
+    const D = L.draft, auct = D.type === "AUCTION", TN = new Map(L.teams.map((t) => [t.id, t]));
+    const tsel = lgUI.dTeam === "all" || !TN.has(+lgUI.dTeam) ? "all" : String(+lgUI.dTeam);
+    bar.append(barPick({ name: "Team", key: "team", opts: [["all", "All teams"], ...L.teams.map((t) => [String(t.id), t.name])], cur: tsel, now: tsel === "all" ? "All teams" : TN.get(+tsel).name,
+      pick: (v) => { lgUI.dTeam = v; lgUISave(); render(); }, set: tsel !== "all" }));
+    const rounds = D.picks.length ? Math.max(...D.picks.map((p) => p.rd)) : 0, kind = auct ? `Auction · $${D.budget}` : D.type === "OFFLINE" ? "Offline draft" : "Snake";
+    const when = D.live ? "live" : D.done ? `done${D.date ? " " + lgDate(D.date) : ""}` : D.date ? `starts ${new Date(D.date).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "not scheduled";
+    const b = lgSection(box, "Draft", `${kind}${rounds ? ` · ${rounds} rounds` : ""} · ${D.picks.length} picks · ${when}`);
+    if (D.live) b.append(el("p", "lglive", lgLiveWords(d)));
+    if (!D.done) {
+      // Draft mode in step with this draft (the reference board's live picks, in the site's own room)
+      const row = el("div", "lgbtns"), go = el("button", "btn", lgUI.feed ? "Open Draft mode" : "Send to Draft mode"); go.type = "button";
+      go.title = "Draft mode takes the league's teams" + (auct ? ", budget" : "") + " and every pick so far, and keeps filling in picks while the draft runs";
+      go.addEventListener("click", () => lgToDraftMode(L, c)); row.append(go);
+      if (lgUI.feed) { const x = el("button", "btn btn-quiet", "Unlink Draft mode"); x.type = "button"; x.addEventListener("click", () => { lgUI.feed = false; lgUISave(); render(); }); row.append(x); }
+      b.append(row, el("p", "note", lgUI.feed ? `Draft mode is linked: the league's picks fill in by themselves${D.live ? " every few seconds while the draft runs" : " once the draft starts"} (your own marks stay).`
+        : `Send the room to Draft mode — the league's teams${auct ? ", budget" : ""} and picks — and it stays in step while the draft runs.`));
+    }
+    if (!D.picks.length) { b.append(el("p", "lgp", D.done ? "ESPN lists no picks for this draft." : "No picks yet.")); return; }
+    // what each pick scored this season, ranked against the rest of the draft: Value = where he went minus where he finished (+ = beat his slot)
+    const y = String(L.season), wantPts = L.points && y === String(DATA.meta.season);
+    if (wantPts && !fData(y)) fEnsure(y);
+    const F = wantPts ? fData(y) : null, W = lgWeights(L).w;
+    const rows = D.picks.map((pk) => { const r = lgWho(L, pk.eid), m = lgMatch(r), isP = r.pos ? r.pos === "SP" || r.pos === "RP" : !!(m.p && !m.h);
+      let pts = null; if (F && m.mlb) { const oh = fHit(F, m.mlb), op = fPit(F, m.mlb); if (oh || op) pts = (oh ? fPts(W.H, oh) : 0) + (op ? fPts(W.P, op) : 0); }
+      return { pk, r, m, isP, pts }; });
+    if (F) {
+      rows.filter((x) => x.pts != null).sort((p, q) => q.pts - p.pts).forEach((x, i) => { x.prk = i + 1; });
+      rows.slice().sort((p, q) => (auct ? q.pk.price - p.pk.price || p.pk.n - q.pk.n : p.pk.n - q.pk.n)).forEach((x, i) => { x.crk = i + 1; });
+    }
+    const list = rows.filter((x) => tsel === "all" || String(x.pk.team) === tsel).sort((p, q) => (D.live ? q.pk.n - p.pk.n : p.pk.n - q.pk.n));
+    const newest = D.live ? Math.max(...D.picks.map((p) => p.n)) : -1;
+    const heads = [["Pick", "f1"], ["Player", "l f3"], ["Rd"], ["Team", "l"], ["Pos"]];
+    if (auct) heads.push(["$", "", "winning bid"]);
+    heads.push(["2026", "", "the site's xwOBA (hitters) or nERA (pitchers), 2026"]);
+    if (F) heads.push(["Pts", "", `${y} fantasy points under the league's scoring`], ["Rank", "", "his points' rank in this draft"], ["Value", "", `${auct ? "price rank" : "pick"} minus points rank: + = he beat where he went`]);
+    lgTable(b, heads, list.map((x) => {
+      const t = TN.get(x.pk.team), p = x.isP ? x.m.p : x.m.h, mm = p ? lgM(p) : {};
+      const pos = x.r.pos || (p ? (x.isP ? pitcherRoles(p).join(", ") : eligiblePositions(p).join(", ")) : "");
+      const cells = [String(x.pk.n), { pl: [x.m, x.isP], v: lgName(L, x.pk.eid), tag: x.pk.keeper ? "K" : "" }, String(x.pk.rd), { v: t ? (PH && t.abbrev ? t.abbrev : t.name) : "–", cls: "l", tip: t ? t.name : "" }, pos || "–"];
+      if (auct) cells.push("$" + x.pk.price);
+      cells.push(p ? (x.isP ? { v: lgF2(mm.nera), pc: lgPc("nera", mm.nera) } : { v: lgF3(mm.xwd), pc: lgPc("xwd", mm.xwd) }) : "–");
+      if (F) { const v = x.prk && x.crk ? x.crk - x.prk : null; cells.push(lgF0(x.pts), x.prk ? String(x.prk) : "–", v == null ? "–" : { v: (v > 0 ? "+" : "") + v, st: lgSign(v, 80) }); }
+      return { cls: [x.pk.team === c.team ? "lgme" : "", x.pk.n === newest ? "lgnew" : ""].filter(Boolean).join(" ") || null, cells };
+    }), { cls: "lgdraft" });
+  }
   const NAV_GROUPS = [
     { key: "draftmode", sel: "modesel", txt: "modeseltxt", menu: "modemenu", label: "Fantasy", short: "Fantasy", modes: ["rankings", "draft", "fantasy", "mock", "bullpens"] },   // Eligibility, the Planner and Claude rankings left the menu (16 Oct 2026)
     { key: "leaderboard", sel: "lbsel", txt: "lbseltxt", menu: "lbmenu", label: "Leaders", short: "Leaders", modes: ["leaderboard", "trending"] },   // Stuff+ (#pitches) is its own header tab (3 Oct 2026)
@@ -13962,6 +14532,7 @@
     const pm = h.match(/^player\/(\d+)$/);
     if (pm) { state.mode = "player"; const id = Number(pm[1]); if (state.x.id !== id) { state.x = { id, type: null, ds: null }; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; } return; }
     if (h.startsWith("fantasy")) { state.mode = "fantasy"; const v = h.split("/")[1]; state.f.view = ["leaders", "trending", "settings"].includes(v) ? v : "leaders"; return; }   // What if is off the page (16 Oct 2026)
+    if (h === "league" || h.startsWith("league/")) { state.mode = "league"; const v = h.split("/")[1]; if (v && LG_TABS.some(([k]) => k === v) && lgUI.view !== v) { lgUI.view = v; lgUISave(); } return; }   // the League tab (11 Nov 2026)
     if (h === "settings" || h.startsWith("settings/") || h === "appearance") {   // #appearance is the old More menu's link and the Mac template's hidden one
       state.mode = "settings"; const v = h === "appearance" ? "appearance" : h.split("/")[1];
       if (SET_TABS.some(([k]) => k === v)) state.setTab = v; return; }
@@ -14193,10 +14764,11 @@
                 leaderboard: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 13a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v7.5a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1zM9.5 4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v16.5a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1zM15.5 8.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1z"></path></svg>',
                 draftmode: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M6.5 2.5h11a1 1 0 0 1 1 1V5h2.5a1 1 0 0 1 1 1v1.5c0 2.4-1.7 4.4-4 4.9A6 6 0 0 1 13 16v2h2.5a1 1 0 0 1 1 1v1.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V19a1 1 0 0 1 1-1H11v-2a6 6 0 0 1-5-3.6C3.7 11.9 2 9.9 2 7.5V6a1 1 0 0 1 1-1h2.5V3.5a1 1 0 0 1 1-1zM5.5 7H4v.5c0 1.1.6 2 1.5 2.5zm13 0v3a3 3 0 0 0 1.5-2.5V7z"></path></svg>',
                 settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path></svg>',
+                league: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7.5" r="3.6"></circle><path d="M2.5 19.6C2.5 15.9 5.4 13 9 13s6.5 2.9 6.5 6.6a.9.9 0 0 1-.9.9H3.4a.9.9 0 0 1-.9-.9z"></path><circle cx="16.8" cy="8.3" r="2.9"></circle><path d="M16.2 13.1c3.2.1 5.8 2.8 5.8 6a.9.9 0 0 1-.9.9h-3.9c.2-.4.3-.8.3-1.3 0-2.2-.5-4-1.3-5.6z"></path></svg>',
                 search: '<svg class="pstroke" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.75"></circle><path d="M15.5 15.5 21 21"></path></svg>' };
     const bar = el("nav", "pbar"); bar.setAttribute("aria-label", "Pages");
     // the Leaders tab stands for three groups (data-modes), the Fantasy tab for its five pages (the header's group key, draftmode)
-    for (const [h, m, l, ms] of [["#home", "home", "Home"], [LAST_PAGE.leaderboard, "leaderboard", "Leaders", "leaderboard pitches flaws"], [LAST_PAGE.draftmode, "draftmode", "Fantasy"], ["#settings", "settings", "Settings"]]) {   /* Settings at the bar's right (Sean, 2 Nov 2026) */
+    for (const [h, m, l, ms] of [["#home", "home", "Home"], [LAST_PAGE.leaderboard, "leaderboard", "Leaders", "leaderboard pitches flaws"], [LAST_PAGE.draftmode, "draftmode", "Fantasy"], ["#league", "league", "League"], ["#settings", "settings", "Settings"]]) {   /* Settings at the bar's right (Sean, 2 Nov 2026) */
       const n = el("a"); n.href = h; n.dataset.mode = m; if (ms) n.dataset.modes = ms; n.innerHTML = I[m] + `<span>${l}</span>`; bar.append(n); }
     // The phone's top bar (Sean, 30 Oct 2026, option A of the header designs in option D's colours): search at the left, the site's icon and its
     // name in the middle (a link home), Settings at the right, on the band's blue over the red stripe. Search and Settings left the bottom bar for it.
