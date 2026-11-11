@@ -122,6 +122,25 @@ function minorsId() {
         if (tm === "NYY") { await pg.evaluate(() => document.querySelector(".bppage table tbody tr .pbname").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
           await until(() => location.hash === "#bullpens" && !!document.querySelector("#xboard.xpop .xpopx")); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); } } });
     // the Fantasy pages' bar (29 Oct 2026): the picker says the page, Window → Recent games and back, the picker to Scoring settings and back
+    // the League tab (11 Nov 2026): the connect form, then — with ESPN's API answered by the made-up league in tools/league_fixture.cjs, so no one's
+    // real league and no network — a connection, his team, the four views with their tables, a name's popup, and removing the league again
+    await step("league", async () => {
+      const FIX = JSON.stringify(require("./league_fixture.cjs").league({ points: true, auction: true }));
+      await pg.route(/lm-api-reads\.fantasy\.espn\.com/, (r) => r.fulfill({ status: /seasons\/\d{4}\//.test(r.request().url()) && !r.request().url().includes(`/seasons/${FIX.match(/"seasonId":(\d+)/)[1]}/`) ? 404 : 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: FIX }));
+      await pg.evaluate(() => { localStorage.removeItem("draft2027.league"); localStorage.removeItem("draft2027.leagueui"); });
+      await hash("#league"); await count("#hub .lgform input", 1);
+      if (!QUICK) {
+        await pg.fill("#hub .lgform input", "https://fantasy.espn.com/baseball/league?leagueId=424242"); await pg.evaluate(() => document.querySelector("#hub .lgform button").click());
+        await count("#hub .lgteams .lgteam", 8, 30000); await pg.evaluate(() => document.querySelectorAll("#hub .lgteams .lgteam")[2].click());
+        await until(() => location.hash === "#league/team" && document.querySelectorAll("#hub table.lgt tbody tr").length >= 15, null, 60000);
+        for (const v of ["league", "fa", "draft"]) { await hash("#league/" + v); await until(() => document.querySelectorAll("#hub table.lgt tbody tr").length >= 8, null, 60000); }
+        await pg.evaluate(() => document.querySelector("#hub table.lgt .pbname").click());
+        await until(() => !!document.querySelector("#xboard.xpop .xpopx") && !!document.querySelector("#xboard.xpop table.sbt tbody tr"), null, 90000);
+        await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop") && location.hash === "#league/draft");
+      }
+      await pg.evaluate(() => { localStorage.removeItem("draft2027.league"); localStorage.removeItem("draft2027.leagueui"); });
+      await pg.unroute(/lm-api-reads\.fantasy\.espn\.com/);
+    });
     await step("fantasy", async () => { await hash("#fantasy"); await count("#fboard table tbody tr", 10, 90000);
       await until(() => document.querySelector("#fboard .pgrow .lbviews .pgpick .pgcur")?.textContent.trim() === "Fantasy leaderboard" && document.querySelectorAll('#fboard .lbviews .sbview[data-pick]').length >= 5);
       await pg.evaluate(() => { document.querySelector('#fboard .lbviews .sbview[data-pick="win"]').click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "Recent games").click(); });
@@ -132,11 +151,11 @@ function minorsId() {
       await until(() => location.hash === "#fantasy/settings" && document.querySelector("#fboard .pgrow .lbviews .pgpick .pgcur")?.textContent.trim() === "Scoring settings" && !!document.querySelector("#fboard .fpresets"));
       await pg.evaluate(() => { document.querySelector("#fboard .lbviews .pgpick").click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "Fantasy leaderboard").click(); });
       await until(() => location.hash === "#fantasy/leaders"); await count("#fboard table tbody tr", 10, 90000); });
-    await step("phone bar", async () => {   // the bottom bar on a phone (29 Oct 2026): three tabs since 30 Oct (Search and Settings moved to the top bar) — Leaders and Fantasy plain links to the page last open in their group, no sheets — and the search from the bar; hidden on a desktop
+    await step("phone bar", async () => {   // the bottom bar on a phone (29 Oct 2026): Home · Leaders · Fantasy · League · Settings since 11 Nov 2026; three tabs on 30 Oct (Search and Settings moved to the top bar) — Leaders and Fantasy plain links to the page last open in their group, no sheets — and the search from the bar; hidden on a desktop
       const shown = await pg.evaluate(() => { const b = document.querySelector(".pbar"); return b ? getComputedStyle(b).display !== "none" : null; });
       if (shown === null) throw new Error("no .pbar");
       if (name.startsWith("phone")) { if (!shown) throw new Error("the phone bar is hidden");
-        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 4 && document.querySelectorAll(".pbar > a[data-mode]").length === 4 && !document.querySelector(".pbarsheet") && getComputedStyle(document.querySelector(".navtog")).display === "none" && getComputedStyle(document.querySelector(".phtop")).display !== "none" && getComputedStyle(document.querySelector("#gsearch")).display === "none" && document.querySelector('.pbar > a[href="#settings"]') && document.querySelector('.phtop .psbtn'));
+        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 5 && document.querySelectorAll(".pbar > a[data-mode]").length === 5 && document.querySelector('.pbar > a[href="#league"]') && !document.querySelector(".pbarsheet") && getComputedStyle(document.querySelector(".navtog")).display === "none" && getComputedStyle(document.querySelector(".phtop")).display !== "none" && getComputedStyle(document.querySelector("#gsearch")).display === "none" && document.querySelector('.pbar > a[href="#settings"]') && document.querySelector('.phtop .psbtn'));
         // the Leaders tab goes to the Leaders page last open (the steps above left the board or Movers) and lights; once the bar's picker has moved
         // to the Leaderboard, the tab remembers that instead; the Fantasy tab the same for its five pages
         const lh = await pg.evaluate(() => document.querySelector('.pbar > a[data-mode="leaderboard"]').getAttribute("href"));

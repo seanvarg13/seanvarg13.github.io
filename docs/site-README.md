@@ -1845,3 +1845,55 @@ the weighted median of every list; the setup screen's "Where the 2027 ADP comes 
   status bar, so wherever the home-screen app still draws under one (until it is relaunched after the entry above, or on an older iOS) the box sat
   beneath the clock and the blur. It takes `env(safe-area-inset-top)` + 8px as its top padding and the header's colour (`--hdrc`) behind it; the
   results list follows through `--header-h`, which `setTb` measures off the header. The block at the end of `styles.css`.
+
+* **The League tab (Sean, 11 Nov 2026: "Can you add in an ability to connect to fantasy leagues on like whatever site and do it similar to this site
+  https://kaizenschanz.github.io/papa-board/ I want to be able to have it as a separate tab", then "Add it to the baseball site for now")**: a tab of
+  its own — **League** in the desktop header before Settings, and a fifth tab on the phone's bottom bar (Home · Leaders · Fantasy · League · Settings,
+  a two-people icon) — `#league` / `#league/<view>`, mode `league`, drawn in home's section (`#hub`, classes `home league`, so home's section and
+  B-Ref table dress apply), `renderLeague` and the `lg*` block before `NAV_GROUPS` in `app.js`; CSS "The League tab" at the end of `styles.css`.
+  The reference board is a Sleeper basketball board (connect, poll the league, a live draft board); this is the same idea for his baseball leagues.
+  - **Where the data comes from**: the browser reads the league straight from ESPN — `lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/<y>/
+    segments/0/leagues/<id>` with `view=mSettings, mTeam, mRoster, mMatchupScore, mStandings, mDraftDetail, mStatus` (one request, ~350 KB gzipped for
+    a 12-team league), which answers a page on any site (CORS echoes the origin) for a league **viewable to the public**. A private league answers
+    401: the page asks once more with `credentials: "include"` (a computer signed in to ESPN whose browser sends the cookie gets in; an iPhone never
+    does) and otherwise says how the League Manager opens it up (LM Tools ▸ Basic Settings ▸ Make League Viewable to Public). It tries next season
+    first (ESPN renews a league in late winter), then this one. Nothing is built for it; the league is re-read when the page opens and is over two
+    minutes old, or on Refresh. **Other platforms** (checked 11 Nov 2026): Yahoo needs OAuth and sends no CORS headers — a static site can't; Fantrax's
+    `fxea` API and Sleeper's API are open to browsers (CORS `*`) and Sleeper has MLB, but no public baseball league of either could be found to test
+    against, so neither is wired — the page is written per platform behind `espnNorm` (a normalized `L`: teams with rosters, games, the draft,
+    scoring items, slots), so one is an adapter away once Sean has a league ID to test with.
+  - **Matching players**: ESPN's player ids → MLB ids through **`hist/ids.js`** (`window.DRAFT_IDS = {asOf, espn: {espnId: mlbId}, ftx: {…}}`, ~112 KB /
+    48 KB gzipped; 3,849 ESPN ids) from **`tools/build_ids.py`** (Smart Fantasy Baseball's public Player ID map, a Google-sheet CSV; an id two rows give
+    to different players is left out), run by `cloud_daily.py` with the MLB build (non-fatal, refetched when a week old) and by hand (`--force`);
+    value-free in `ensureScript`. A player the map lacks is found by name (accents and Jr./II folded) with his club, then his side of the ball, to
+    settle a tie (`lgMatch`). One with no line this season opens on his latest season from the search index. Ohtani is one ESPN player: his hitter and
+    pitcher records both, in both roster tables, and one item with both projections summed in the lineup filler (as the Mock draft does).
+  - **The views** (the bar: the league as its first button — a list of his leagues and "Add a league…" — then My team · League · Free agents · Draft,
+    then the view's own picks; under it the count line with Refresh). Names open his page as the popup (`POP_MODES` has `league`).
+    - **My team**: his roster by lineup slot in two B-Ref tables — hitters (Slot · Hitter · Tm · Pos (ESPN's eligibility) · PA · xwOBA · wOBA · HR ·
+      SB · 2027) and pitchers (· IP · nERA · K-BB% · P+ · 2027) — the rates filled by their place among the season's 300+ PA / 100+ IP qualifiers as home
+      does, ESPN's injury status as the red badge (IL10, IL60, DTD …), bench and IL muted; **Best pickups**: free agents who'd outscore one of his
+      starters in 2027, each against his weakest starter at a slot he can fill (the league's slots through `lgRoster` and the Mock draft's
+      `mkAssign` / `mkFits`); **This league**: his team (a select, or none — just following), **Use this league's scoring** (a points league: its
+      items mapped to the site's categories, `ESPN_STAT`, saved as preset `lg-espn-<id>` and picked, so every points column on the site reads his
+      league's rules; anything the site has no line for is named), Remove.
+    - **League**: Standings (seed order; a points league adds PF · PA · **All-play** — his record had he played every team every regular-season week —
+      and **Luck**, wins above that, coloured by sign), **Category standings** in a categories league (each team's season total in every category from
+      `valuesByStat`, coloured by its rank, reverse categories turned over, roto points), the current (or final) matchup period's games, and
+      **<next year> on paper** (each roster's best lineup by the 2027 projection under the league's scoring).
+    - **Free agents**: the site's players no team in the league has, by the 2027 projection under the league's points (ESPN standard points for a
+      categories league) or by this season's xwOBA (100+ PA) / nERA (20+ IP); Position and Order picks, 50 rows and Show more.
+    - **Draft**: every pick (Pick · Player · Rd · Team · Pos · $ in an auction · the site's 2026 xwOBA / nERA), and in this season's points league what
+      each scored (Pts · Rank · **Value** = pick (or price rank) − points rank, + = he beat where he went). Before the draft (renewed league) and during
+      it, **Send to Draft mode** copies the room into Draft mode — an auction's teams, budget, team names and his seat (`auc`), and every pick so far
+      into the drafted list (`lg: 1`, with team and price; his own marks stay) — and links it (`draft2027.leagueui` `feed`): while the draft runs the
+      page polls `mDraftDetail` every 5 s (only on the League page or a linked Draft mode, and only while the tab is in view — `lgPollSync`), and Draft
+      mode fills in each pick by itself, newest pick flashed on the League page, "Live · updated N s ago". Draft mode shows "Live from <league> ·
+      Unlink" by its count (`lgDraftChip`).
+  - **Storage**: the connections are **`draft2027.league`** (`{list: [{pf, id, team, name}], cur}`), in `SYNC_KEYS` so they follow him; what he's
+    looking at — the view, the free agents' position and order, the draft's team, the Draft-mode link — is `draft2027.leagueui`, per device (a view
+    change in the synced key would reload his other devices).
+  - **Testing**: `tools/league_fixture.cjs` makes a made-up ESPN league from `data.js` (eight teams named Team 1-8, rosters dealt by playing time, a
+    schedule, a snake or auction draft, live or done, points or categories; every seventh player without his ESPN id so the name match runs) — no
+    one's real league. The page check's **league** step answers ESPN's API with it (`pg.route`): the connect form, a connection, his team, the four
+    views, a name's popup; the quick check only opens the connect form. The phone bar step counts five tabs.
