@@ -6156,6 +6156,7 @@ line can bring them back.
   Other with the percentage of the other ones combined"): past five, the top four and **Other** with the rest's share combined (its tooltip lists them) —
   Miguel Rojas 2026: 6th 28% • 8th 28% • 9th 21% • 7th 11% • Other 12%, one line on a phone.
 
+* **A darker strip under the status bar (Sean, 12 Nov 2026, a screenshot of the fall header with a pink smear under the clock, beside the football site's clean navy: "Still blurred")**: the iOS 27.2 blur lays a light wash over whatever a home-screen app draws under its status bar, and a mid-tone like the fall rust comes out pink while a dark navy comes through clean. The strip's colour is the header's (`--hdrc`) mixed 38% with black (`color-mix`), still fading into the art 8px below. Whether the app is drawing under the bar at all depends on what iOS cached at launch; swipe it closed and reopen.
 * **The phone's search box clears the status bar (Sean, 9 Nov 2026, the search open with its box under the iPhone's clock: "The search bar is not
   usable here it is too high")**: the search header (`body.psearchon header.top`, fixed at the screen's top) had 8px over the box and no room for the
   status bar, so wherever the home-screen app still draws under one (until it is relaunched after the entry above, or on an older iOS) the box sat
