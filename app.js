@@ -7534,7 +7534,11 @@
     ctl.append(el("span", "czlab", "References"), segOf("References", [[false, "Regular"], [true, "Bold"]], !!cfg.refBold, (v) => save(Object.assign({}, cfg, { refBold: v }))));
     wrap.append(ctl);
     const roles = el("div", "czroles");
+    /* grouped under short headings (Sean's recommendation, 12 Nov 2026): the thirteen roles were one undivided grid */
+    const CZ_GROUP = { main: "Bands and buttons", stripe: "Bands and buttons", sorted: "Bands and buttons", fbar: "Bands and buttons", picked: "Bands and buttons", text: "Text", heading: "Text", sub: "Text", accent: "Text", ref: "Text", lines: "Tables and borders", frame: "Tables and borders", grid: "Tables and borders", table: "Tables and borders", page: "Page" };
+    let czLast = "";
     for (const [k, lab, note] of CZ_ROLES) {
+      if ((CZ_GROUP[k] || "") !== czLast) { czLast = CZ_GROUP[k] || ""; roles.append(el("h4", "czgroup", czLast)); }
       const isDef = k in CZ_DEF && !cfg.colors[k], shown = cfg.colors[k] || CZ_DEF[k] || "#000000";
       const r = el("div", "czrole" + (cz.act === k ? " on" : "")), sw = el("button", "czsw"); sw.type = "button"; sw.style.background = shown;
       sw.setAttribute("aria-label", lab + " colour"); sw.title = "Tap a team colour below to put it here";
@@ -8300,8 +8304,11 @@
     // parks' effect on them (m.pkk / pkbb, points — the build's exposure-weighted park residuals, or the window's). The other pieces are read off
     // his contact and don't carry the park; what the park did to his actual HR/FB, BABIP and extra bases is the xwOBA tab's Stadium row
     const pkk = m.pkk || 0, pkbb = m.pkbb || 0, hasPk = PK_KEYS.some((k) => m[k] != null);
-    const xk = m.k == null ? xkFit : TW.act * (m.k - pkk) + (1 - TW.act) * xkFit, xbb = m.bb == null ? xbbFit : TW.act * (m.bb - pkbb) + (1 - TW.act) * xbbFit;
-    const hbp = (I.hbp || 0) / I.pa;
+    /* in a window or split the actual halves, his HBP rate and the BABIP drivers are pulled toward the league by plate appearances (Sean's recommendation, 12 Nov 2026):
+       full weight from 300 PA, linear below it — a 40-PA window used to give a 45% line-drive rate its whole 75-point BABIP push. Full seasons are untouched. */
+    const sh = I.win ? Math.min(1, I.pa / 300) : 1, act = TW.act * sh;
+    const xk = m.k == null ? xkFit : act * (m.k - pkk) + (1 - act) * xkFit, xbb = m.bb == null ? xbbFit : act * (m.bb - pkbb) + (1 - act) * xbbFit;
+    const hbp = I.win && L.hbp != null ? L.hbp + ((I.hbp || 0) / I.pa - L.hbp) * sh : (I.hbp || 0) / I.pa;
     const bx = { evfb: m.evfb, brfb: m.brfb, brld: m.brld, pfb: I.pfb, brl: m.brl, ev90: m.ev90 };
     // the barrel fit, the xHR/FB tab's own (Sean, 16 Oct 2026, Anthony's 23.7 against the tab's 26.9: "switch it so both include barrel %");
     // TW_HF (exit velocity alone) stays for the record — TW_USE_EV turns it back on
@@ -8339,6 +8346,7 @@
     if (!L || L.xbabip == null) return null;
     let xbab = L.xbabip, n = 0; const dv = {};
     for (const k in XBAB) { const his = k === "ldp" || k === "gbp" ? I[k] : I.m[k], lg = L[k], g = k === "spd" || k === "gbp" ? I.gbs : 100; if (his == null || lg == null || g == null) continue; dv[k] = xbabW(k, I.bats) * (his - lg) * g / 100 / 1000; xbab += dv[k]; n++; }
+    if (n && I.win) { const f = Math.min(1, (I.pa || 0) / 300); for (const k in dv) dv[k] *= f; xbab = L.xbabip + (xbab - L.xbabip) * f; }   /* small windows regress to the league (12 Nov 2026) */
     return n ? { xbab, dv, n } : null;
   }
   // the drivers on the card's view, for V(): the view's rates against the dataset's full-season league, as talentOf does; a combined span of
@@ -8346,7 +8354,7 @@
   function driversOf(p, v) {
     if (DS.multi) return DS.each && p.src && p.real ? withDataset(p.src, () => driversOf(p.real, v)) : null;
     const L = talentLeague(), m = v.m.spd == null && p.m && p.m.spd != null ? Object.assign({}, v.m, { spd: p.m.spd }) : v.m;
-    const d = xbabDrivers(twInputs(m, v.ctx, v.pa, v.ab, 0, p.bats), L); if (d) d.L = L; return d;
+    const TI = twInputs(m, v.ctx, v.pa, v.ab, 0, p.bats); TI.win = !!(winIdx() || splitActive()); const d = xbabDrivers(TI, L); if (d) d.L = L; return d;
   }
   // his parks' residuals in words, and where he hit (the season's top parks by PA, ctx.pk3 from the build; a window names its label) — the xwOBA tab
   const parkPieces = (pk) => { const sg = (z, d) => (z > 0 ? "+" : z < 0 ? "−" : "") + Math.abs(z).toFixed(d); return `HR/FB ${sg(pk.hr, 1)} points, BABIP ${sg(pk.bab, 0)} points, bases per hit ${sg(pk.xb, 2)}, K% ${sg(pk.k, 1)}, BB% ${sg(pk.bb, 1)}`; };
@@ -8381,7 +8389,8 @@
     }
     const L = talentLeague(), m = v.m.spd == null && p.m && p.m.spd != null ? Object.assign({}, v.m, { spd: p.m.spd }) : v.m;
     const hbp = v.ctx && v.ctx.HBP != null ? v.ctx.HBP : p.ctx && p.ctx.HBP != null && p.pa ? p.ctx.HBP / p.pa * (v.pa || 0) : 0;
-    const t = talentCore(twInputs(m, v.ctx, v.pa, v.ab, hbp, p.bats), L); if (!t) return null;
+    const TI = twInputs(m, v.ctx, v.pa, v.ab, hbp, p.bats); TI.win = !!(winIdx() || splitActive());   /* a window or split: shrink small samples (12 Nov 2026) */
+    const t = talentCore(TI, L); if (!t) return null;
     t.L = L; t.txwN = t.raw * L.scale; t.xwpk = t.rawPk == null ? null : t.rawPk * L.scale;
     // the site's xwOBA carries his parks unless the switch says park-neutral (18 Oct 2026); a season without park numbers (the minors) has the one
     t.parkIn = !XWN && t.xwpk != null; t.txw = t.parkIn ? t.xwpk : t.txwN;
@@ -11598,7 +11607,7 @@
       return lean ? onBox <= all * lean : onBox === 0;
     };
     // more heaps, closer together (Sean, 2 Nov 2026: "add more leaf piles and put them on all site pages"); where a full heap won't fit a smaller one may
-    const put = [], max = Math.max(4, Math.round(W * H / (small ? 60000 : 90000)));
+    const put = [], max = Math.max(3, Math.min(small ? 5 : 8, Math.round(W * H / (small ? 60000 : 90000))))   /* capped (12 Nov 2026): 20-30 heaps a page read as clutter */;
     let gap = small ? 120 : 190;
     const take = (x, y) => {
       const cx = x + pw / 2, cy = y + ph / 2;
@@ -11635,7 +11644,7 @@
     const fall = !!DRIFT_OF[document.documentElement.dataset.season];
     const hosts = [document.body, document.querySelector("#xboard.xpop"), document.querySelector("#mkroom:not([hidden])")].filter(Boolean);
     document.querySelectorAll(".leafpiles").forEach((l) => { if (!fall || !hosts.includes(l.parentElement)) l.remove(); });
-    if (!fall) return;
+    if (!fall || document.body.dataset.mode === "settings") { document.querySelectorAll(".leafpiles").forEach((l) => l.remove()); return; }   /* no heaps on the reading pages */
     pileBusy = true;
     try {
       for (const h of hosts) {
