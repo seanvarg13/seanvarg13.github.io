@@ -6214,3 +6214,4 @@ line can bring them back.
     schedule, a snake or auction draft, live or done, points or categories; every seventh player without his ESPN id so the name match runs) — no
     one's real league. The page check's **league** step answers ESPN's API with it (`pg.route`): the connect form, a connection, his team, the four
     views, a name's popup; the quick check only opens the connect form. The phone bar step counts five tabs.
+  **Then nearly black** (the same hour, a second screenshot: 38% came out taupe): 14% of the header's colour, the rest black.
