@@ -11476,30 +11476,55 @@
   // a pile's own mix, the warm colours of a raked heap (yellows, golds, oranges, reds) with a little green and crimson
   const PILEC = ["#ffd23f", "#f5b301", "#ffe066", "#f08c2a", "#e8662a", "#e3262b", "#c21d3a", "#7a9a2e", "#b7c63a", "#f5b301", "#e8662a", "#ffd23f"];
   const PILE_W = 104, PILE_H = 58;
-  const pileArt = (() => {
-    const out = [];
-    const maple = (c) => `<polygon points='0,-10 2,-5 6,-7.5 5,-2 10,-3.5 7.5,1 9.5,3.5 3,3 4,8 0,5 -4,8 -3,3 -9.5,3.5 -7.5,1 -10,-3.5 -5,-2 -6,-7.5 -2,-5' fill='${c}' stroke='rgba(60,20,5,.45)' stroke-width='.6'/><path d='M0 5v6M0 5V-7' stroke='rgba(60,20,5,.5)' stroke-width='1'/>`;
-    const oval = (c) => `<path d='M0 -10C6 -6 6 4 0 10C-6 4 -6 -6 0 -10Z' fill='${c}' stroke='rgba(60,20,5,.45)' stroke-width='.6'/><path d='M0 -9V12M0 -2l3-3M0 2l-3-3M0 5l3-3' stroke='rgba(60,20,5,.45)' stroke-width='.8' fill='none'/>`;
+  // Natural drifts (Sean, 12 Nov 2026: the raked mounds "look artificial"): a drift is pieces thrown loosely — a Gaussian cloud, wide and low, thick in the
+  // middle and thinning out, every piece its own size, turn and shade, some overlapping and some strays — with no base or mound under them. Every season has
+  // its own pieces: leaves for the fall, Halloween and Thanksgiving, snow for the winter and Christmas, petals, clover, hearts, confetti, stars.
+  const DRIFT = {
+    leaf: { n: [20, 28], sx: 21, sy: 7, sc: [0.34, 0.74], c: PILEC.concat(["#8a4b1f", "#a8441c", "#6d2a5c"]), f: ["maple", "maple", "oval"], stray: 5 },
+    snow: { n: [26, 34], sx: 20, sy: 6, sc: [0.5, 1.2], c: ["#ffffff", "#f4f9ff", "#e8f1fb", "#dce9f6"], f: ["puff"], stray: 6, soft: 1 },
+    petal: { n: [30, 40], sx: 19, sy: 7, sc: [0.35, 0.7], c: ["#f7b6cf", "#fbd3e1", "#ffffff", "#f48fb1", "#fde2ea", "#c9a0dc"], f: ["petal"], stray: 6 },
+    clover: { n: [22, 30], sx: 19, sy: 7, sc: [0.4, 0.8], c: ["#2e9e5b", "#58b368", "#1f7a4d", "#7bc67e"], f: ["clover", "petal"], stray: 4 },
+    heart: { n: [18, 26], sx: 18, sy: 7, sc: [0.35, 0.75], c: ["#e8456b", "#f48fb1", "#c2185b", "#ff7a9a", "#fbd3e1"], f: ["heart", "petal"], stray: 4 },
+    confetti: { n: [36, 48], sx: 20, sy: 8, sc: [0.3, 0.7], c: ["#e8456b", "#ffd23f", "#3aa6ff", "#3ecf8e", "#a56cff", "#ff8a3d"], f: ["rect", "rect", "star"], stray: 7 },
+    flag: { n: [28, 38], sx: 20, sy: 8, sc: [0.3, 0.7], c: ["#d22a3a", "#ffffff", "#2a4ba8", "#d22a3a", "#2a4ba8"], f: ["rect", "star"], stray: 6 },
+    sun: { n: [18, 26], sx: 18, sy: 6, sc: [0.45, 0.85], c: ["#ffd23f", "#f5b301", "#ffe066", "#f08c2a"], f: ["petal", "star"], stray: 4 },
+  };
+  const DRIFT_OF = { fall: "leaf", thanksgiving: "leaf", halloween: "leaf", winter: "snow", christmas: "snow", spring: "petal", easter: "petal", stpat: "clover", valentine: "heart", newyear: "confetti", july4: "flag", summer: "sun" };
+  const driftArt = {};
+  function driftSet(kind) {
+    if (driftArt[kind]) return driftArt[kind];
+    const D = DRIFT[kind], out = [];
+    const edge = "rgba(40,30,20,.35)";
+    const sh = {
+      maple: (c) => `<polygon points='0,-10 2,-5 6,-7.5 5,-2 10,-3.5 7.5,1 9.5,3.5 3,3 4,8 0,5 -4,8 -3,3 -9.5,3.5 -7.5,1 -10,-3.5 -5,-2 -6,-7.5 -2,-5' fill='${c}' stroke='${edge}' stroke-width='.6'/><path d='M0 5v6M0 5V-7' stroke='rgba(60,20,5,.45)' stroke-width='1'/>`,
+      oval: (c) => `<path d='M0 -10C6 -6 6 4 0 10C-6 4 -6 -6 0 -10Z' fill='${c}' stroke='${edge}' stroke-width='.6'/><path d='M0 -9V12M0 -2l3-3M0 2l-3-3M0 5l3-3' stroke='rgba(60,20,5,.4)' stroke-width='.8' fill='none'/>`,
+      petal: (c) => `<path d='M0 -8C7 -5 7 4 0 8C-7 4 -7 -5 0 -8Z' fill='${c}' stroke='rgba(120,60,80,.3)' stroke-width='.5'/>`,
+      puff: (c) => `<circle r='5' fill='${c}' stroke='rgba(150,180,210,.55)' stroke-width='.6'/><circle cx='-3' cy='1' r='3.2' fill='${c}'/><circle cx='3' cy='1.5' r='3.4' fill='${c}'/>`,
+      clover: (c) => `<g fill='${c}' stroke='rgba(10,60,30,.35)' stroke-width='.5'><circle cx='-3.2' cy='-2.6' r='3.4'/><circle cx='3.2' cy='-2.6' r='3.4'/><circle cx='-3.2' cy='2.6' r='3.4'/><circle cx='3.2' cy='2.6' r='3.4'/></g><path d='M0 0L3 9' stroke='rgba(10,60,30,.5)' stroke-width='1'/>`,
+      heart: (c) => `<path d='M0 8C-9 1 -7 -6 -3 -6C-1 -6 0 -4 0 -3C0 -4 1 -6 3 -6C7 -6 9 1 0 8Z' fill='${c}' stroke='rgba(110,20,50,.35)' stroke-width='.5'/>`,
+      rect: (c) => `<rect x='-5' y='-2' width='10' height='4' rx='.6' fill='${c}' stroke='rgba(0,0,0,.2)' stroke-width='.4'/>`,
+      star: (c) => `<polygon points='0,-7 2,-2.2 7,-2 3,1.5 4.4,6.5 0,3.6 -4.4,6.5 -3,1.5 -7,-2 -2,-2.2' fill='${c}' stroke='rgba(0,0,0,.25)' stroke-width='.4'/>`,
+    };
     for (let v = 0; v < 8; v++) {
-      let s = 1234 + v * 977; const r = () => ((s = (s * 1103515245 + 12345) % 2147483648) / 2147483648);
-      // a mound like a raked pile: a broad flat base rising to a rounded peak, leaves packed in it, the back ones drawn first; two or three loose on top
-      const n = 58 + Math.floor(r() * 10), ls = [];
+      let s = 4321 + v * 1237; const r = () => ((s = (s * 1103515245 + 12345) % 2147483648) / 2147483648);
+      const g = () => (r() + r() + r() + r() - 2) * 1.2;   // a rough bell, so the cloud is thick at the heart and thin at the edges
+      const n = D.n[0] + Math.floor(r() * (D.n[1] - D.n[0])), ls = [];
+      const lean = (r() - 0.5) * 14, hx = 52 + (r() - 0.5) * 10;   // each drift leans and sits a little off centre
       for (let k = 0; k < n; k++) {
-        const u = r() * 2 - 1, h = 42 * Math.pow(1 - Math.abs(u), 1.15) + 4 * (1 - u * u), y = 55 - r() * h;
-        ls.push([52 + u * 47, y, Math.round(r() * 360), 0.42 + r() * 0.36, r() < 0.6 ? maple : oval, PILEC[Math.floor(r() * PILEC.length)]]);
+        const x = hx + g() * D.sx, y = 36 + g() * D.sy + (x - hx) * lean / 60;
+        ls.push([x, y, Math.round(r() * 360), D.sc[0] + r() * (D.sc[1] - D.sc[0]), D.f[Math.floor(r() * D.f.length)], D.c[Math.floor(r() * D.c.length)], 0.78 + r() * 0.22]);
       }
-      ls.sort((p, q) => p[1] - q[1]);   // top and back first, the front of the heap over them
-      const loose = 2 + Math.floor(r() * 2);
-      for (let k = 0; k < loose; k++) ls.push([8 + r() * 88, 4 + r() * 8, Math.round(r() * 360), 0.4 + r() * 0.15, r() < 0.6 ? maple : oval, PILEC[Math.floor(r() * PILEC.length)]]);
-      const pk = 48 + r() * 8, top = 16 + r() * 6;
-      const mound = `<g transform='translate(52 57) scale(.86) translate(-52 -57)'><path d='M3 56C14 50 22 40 32 32C40 25 ${(pk - 6).toFixed(1)} ${top.toFixed(1)} ${pk.toFixed(1)} ${top.toFixed(1)}C${(pk + 6).toFixed(1)} ${top.toFixed(1)} 66 25 74 32C84 40 92 50 101 56Z' fill='#e8662a'/><path d='M14 56C24 48 34 38 ${pk.toFixed(1)} ${(top + 10).toFixed(1)}C70 38 80 48 90 56Z' fill='#f5b301' opacity='.55'/></g>`;
-      const body = mound + ls.map(([x, y, rot, sc, f, c]) => `<g transform='translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot}) scale(${sc.toFixed(2)})'>${f(c)}</g>`).join("");
+      for (let k = 0; k < D.stray; k++) ls.push([6 + r() * 92, 6 + r() * 46, Math.round(r() * 360), D.sc[0] + r() * 0.15, D.f[Math.floor(r() * D.f.length)], D.c[Math.floor(r() * D.c.length)], 0.8]);
+      ls.sort((p, q) => p[1] - q[1]);
+      const soft = D.soft ? `<ellipse cx='${hx.toFixed(1)}' cy='41' rx='34' ry='9' fill='#dfeaf6' opacity='.55'/><ellipse cx='${(hx + 3).toFixed(1)}' cy='38' rx='24' ry='6' fill='#ffffff' opacity='.8'/>` : "";
+      const body = soft + ls.map(([x, y, rot, sc, f, c, o]) => `<g transform='translate(${Math.max(4, Math.min(100, x)).toFixed(1)} ${Math.max(5, Math.min(53, y)).toFixed(1)}) rotate(${rot}) scale(${(sc * 1.5).toFixed(2)})' opacity='${o.toFixed(2)}'>${sh[f](c)}</g>`).join("");
       out.push(`url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${PILE_W}' height='${PILE_H}' viewBox='0 0 ${PILE_W} ${PILE_H}'>${body}</svg>`)}")`);
     }
-    return out;
-  })();
+    return (driftArt[kind] = out);
+  }
   const PILE_SKIP = "header.top, .pbar, .pbarfade, canvas.seasonfx, .leafpiles, #modal[hidden], script, style, .phmodal";
   const pileRGBA = (c) => { const m = c.match(/[\d.]+/g); return m ? { a: m.length > 3 ? +m[3] : 1, v: m.slice(0, 3).join(",") } : { a: 0, v: "" }; };
+  let pArt;
   function placePiles(host, layer, seedKey) {
     layer.textContent = "";
     const o = layer.getBoundingClientRect();
@@ -11568,7 +11593,7 @@
       if (put.some(([px, py, pr]) => Math.hypot(px - cx, py - cy) < Math.max(gap, pr + pw / 2 + 16))) return false;
       put.push([cx, cy, pw / 2]);
       const d = document.createElement("i");
-      d.style.cssText = `left:${x}px;top:${y}px;width:${pw}px;height:${ph}px;background-image:${pileArt[Math.floor(rnd() * pileArt.length)]}`;
+      d.style.cssText = `left:${x}px;top:${y}px;width:${pw}px;height:${ph}px;background-image:${(pArt = driftSet(DRIFT_OF[document.documentElement.dataset.season] || "leaf"))[Math.floor(rnd() * pArt.length)]}`;
       layer.append(d); return true;
     };
     let nc = 0, ncand = 0;
@@ -11595,7 +11620,7 @@
   let pileT = 0, pileBusy = false;
   function pilesNow() {
     pileT = 0;
-    const fall = document.documentElement.dataset.season === "fall";
+    const fall = !!DRIFT_OF[document.documentElement.dataset.season];
     const hosts = [document.body, document.querySelector("#xboard.xpop"), document.querySelector("#mkroom:not([hidden])")].filter(Boolean);
     document.querySelectorAll(".leafpiles").forEach((l) => { if (!fall || !hosts.includes(l.parentElement)) l.remove(); });
     if (!fall) return;

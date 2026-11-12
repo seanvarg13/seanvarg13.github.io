@@ -6301,3 +6301,5 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
 :root[data-view="mobile"] body.brlb #bscroll { -webkit-overflow-scrolling: touch; transform: translateZ(0); }
 /* the last stat inside the row's .pcts wrapper is not the row's last cell (PA, Tm, Pos follow it by `order`), so it keeps its line (12 Nov 2026) */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#x1):not(#x2):not(#x3):not(#x4):not(#x5):not(#x6):not(#x7) body.brlb #rows .row-main .pcts > *:last-child { border-right: 1px solid var(--xl) !important; }
+/* falling pieces drift over a player's popup too (12 Nov 2026): it sat at 71, over the 55 canvas; the bottom bar (80) and the search stay over it */
+:root:root body.xpopon canvas.seasonfx, :root:root body.modal-open canvas.seasonfx { z-index: 72; }
