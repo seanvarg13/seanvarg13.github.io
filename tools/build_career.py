@@ -404,8 +404,11 @@ def talent_league(players, ref_pa):
         L["k"][k] = wavg(k20, lambda q: (q.get("m") or {}).get(k), lambda q: q["pa"])
     ref = [q for q in H if (q.get("pa") or 0) >= ref_pa]
     I = [_tw_inputs(q) for q in ref]
-    for k in ("bb", "osw", "zsw", "ocon", "zcon", "zsn", "ev90", "ibbr", "fcon", "woba", "xbabip", "ld", "pu", "evgb", "evld", "spd", "oppo", "fb", "gb", "pullp"):
+    for k in ("bb", "osw", "zsw", "ocon", "zcon", "zsn", "ev90", "ibbr", "fcon", "woba", "xbabip", "babip", "ld", "pu", "evgb", "evld", "spd", "oppo", "fb", "gb", "pullp"):
         L[k] = wavg(I, lambda i: i["m"].get(k), lambda i: i["pa"])
+    # the drivers' xBABIP starts from the league's actual BABIP (12 Nov 2026), as app.js's talentLeague does
+    L["xbabipM"] = L["xbabip"]
+    if L.get("babip") is not None: L["xbabip"] = L["babip"]
     # xSLG's (TW_XSLG): the league's real bases per hit that isn't a home run (park-neutral) and its sacrifice share of PA
     tb = h1 = 0.0
     for i in I:
