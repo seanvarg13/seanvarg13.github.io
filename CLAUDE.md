@@ -1782,6 +1782,8 @@ is deploy-limited.
   in the header's colour" entry is history. iOS reads the setting at launch: swipe the app closed and reopen it.
 
 
+* **Calmer effects, grouped colours, small-window shrinkage (Sean, 12 Nov 2026: "implement all of the changes" from the review of both sites)**: seasonal heaps are capped at 3-8 a page and absent on Settings, whose falling canvas is off too (the canvas is 70% opaque elsewhere); a desktop player page puts the Bio and Playing time boxes side by side; the customizer's roles sit under "Bands and buttons / Text / Tables and borders / Page" headings (`CZ_GROUP`); Settings headings take the heading colour. **In a date window or split** (`I.win` on the talent inputs) the actual K% / BB% halves, the HBP rate and the xBABIP drivers are pulled toward the league by `PA / 300` below 300 PA (full seasons untouched, so the season table still agrees). The header pill reads "Final thru Sep 27" in the off-season and Settings shows the last build time (red in season when over 36 h old). Not done: re-centring past seasons' xBA / the model's xSLG (needs a data rebuild), the league-aware filters, the 2027 projection model, trade / keeper values, the daily-actions home page, the watchlist.
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
