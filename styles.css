@@ -6305,3 +6305,15 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
 :root:root body.xpopon canvas.seasonfx, :root:root body.modal-open canvas.seasonfx { z-index: 72; }
 .sstamp.sbuild { margin-top: 4px; max-width: 46em; }
 .sstamp.sbuild.stale { color: #c8102e; font-weight: 600; }
+/* seasonal pieces stay off the text-heavy Settings pages and soften over tables (12 Nov 2026) */
+body[data-mode="settings"] canvas.seasonfx { display: none; }
+canvas.seasonfx { opacity: .7; }
+/* the desktop player page: Bio and Playing time side by side instead of a narrow left column */
+@media (min-width: 1000px) {
+  :root:root:root:root:root:root:root:root:root:root:root:root body[data-mode="player"] #xboard .pbinfo, :root:root:root:root:root:root:root:root:root:root:root:root body[data-mode="player"] #xboard .pbplay { display: inline-block; vertical-align: top; width: calc(50% - 12px); max-width: none; box-sizing: border-box; }
+  :root:root:root:root:root:root:root:root:root:root:root:root body[data-mode="player"] #xboard .pbinfo { margin-right: 20px; }
+}
+.czroles > h4.czgroup { grid-column: 1 / -1; margin: 14px 0 2px; font-size: 13px; font-weight: 700; letter-spacing: 0; color: var(--ink); border-bottom: 1px solid var(--line-soft, #ddd); padding-bottom: 4px; }
+/* section headings share one colour on the settings pages and the dark-mode muted table text reads (12 Nov 2026) */
+#pboard h2, #pboard h3 { color: var(--heading, var(--ink)); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sbt td.muted, :root:not([data-theme="light"]) #rows .teaml, :root:not([data-theme="light"]) #rows .sub { color: #b8c4d6 !important; } }
