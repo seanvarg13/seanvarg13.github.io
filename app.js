@@ -878,6 +878,7 @@
   // A home-screen app can keep serving the page it saved days ago, so the hosted copy carries a build id and a
   // build.json beside it: on load, and whenever the app comes back to the front, we ask the server which build is
   // current and reload once if it has moved on. Reloading through a fresh URL is what gets past the saved copy.
+  let buildP; const buildInfo = () => buildP || (buildP = (window.fetch && location.protocol !== "file:" ? fetch("build.json?t=" + Date.now(), { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null) : Promise.resolve(null)));
   function watchBuild() {
     const id = window.DRAFT_BUILD_ID;
     if (!id || !window.fetch || location.protocol === "file:") return;
@@ -7723,8 +7724,16 @@
       lead("How this page works", "What each page shows and where the numbers come from.");
       const b = el("div", "prose"); if (chromeBits) b.append(...chromeBits.prose); body.append(b);
     }
-    { const m = DATA.meta, thr = new Date(m.through + "T12:00:00"), x = el("p", "sstamp", `Games through ${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`);
-      x.title = `${m.season} Statcast through ${m.through} (built ${m.built})`; box.append(x); }
+    { const off = offSeason(), m = DATA.meta, thr = new Date(m.through + "T12:00:00"), x = el("p", "sstamp", `Games through ${thr.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`);
+      x.title = `${m.season} Statcast through ${m.through} (built ${m.built})`; box.append(x);
+      /* the build's own time and whether it is expected to be still (Sean's recommendation 1 + 9, 12 Nov 2026): a quiet line, red when a live-season build has gone stale */
+      const y = el("p", "sstamp sbuild", off ? "Season over: no new games, so the site holds at its last game day until the builds restart (mid-February)." : "Checking the last build…"); box.append(y);
+      buildInfo().then((j) => {
+        if (!j || !j.at) { if (!off) y.textContent = "Couldn't read the last build time."; return; }
+        const t = new Date(j.at.replace(" ", "T") + ":00-05:00"), ago = (Date.now() - t) / 36e5, when = j.at + " ET";
+        y.textContent = (off ? y.textContent + " " : "") + `Last build ${when}` + (ago < 48 ? ` (${ago < 1 ? "just now" : Math.round(ago) + " h ago"}).` : ` (${Math.round(ago / 24)} days ago).`);
+        if (!off && ago > 36) { y.classList.add("stale"); y.textContent += " That is longer than a day: the morning update may have stalled."; }
+      }); }
 
     if (state.goSync && tab === "appearance") { state.goSync = false; requestAnimationFrame(() => { const sb = $("syncbox"); if (sb) sb.scrollIntoView({ block: "center" }); }); }   // from the Rankings nudge
   }
@@ -8257,6 +8266,9 @@
     const wavg = (rows, f, wt) => { let s = 0, w = 0; for (const r of rows) { const v = f(r), x = wt(r); if (v == null || !isFinite(v) || !x) continue; s += v * x; w += x; } return w ? s / w : null; };
     const L = {};
     for (const k of ["k", "babip", "bb", "osw", "zsw", "ocon", "zcon", "zsn", "ev90", "ibbr", "fcon", "woba", "xbabip", "ld", "pu", "evgb", "evld", "spd", "oppo", "fb", "gb", "pullp", "slg"]) L[k] = wavg(I, (i) => i.m[k], (i) => i.pa);
+    /* the drivers' xBABIP starts from the league's ACTUAL BABIP (Sean's recommendation 2, 12 Nov 2026): the model's league mean sat 8-18 points off it in past seasons
+       (2015 +18, 2025 -7), which put a league-wide offset into every Luck row; the model's own mean stays as L.xbabipM */
+    L.xbabipM = L.xbabip; if (L.babip != null) L.xbabip = L.babip;
     // xSLG's (XSLG): the league's real bases per hit that isn't a home run, park-neutral, and its at-bats' sacrifice share
     { let tb = 0, h1 = 0; for (const i of I) { const m0 = i.m; if (m0.slg == null || m0.ba == null || i.hr == null || !i.ab) continue; const h = m0.ba * i.ab - i.hr; if (h <= 0) continue; tb += m0.slg * i.ab - 4 * i.hr - (m0.pkxb || 0) * h; h1 += h; } L.tphA = h1 ? tb / h1 : null; }
     L.o = wavg(I, (i) => (i.m.bb == null ? null : Math.max(0, (i.pa - i.ab) / i.pa - i.m.bb / 100 - (i.hbp || 0) / i.pa)), (i) => i.pa);
@@ -14801,7 +14813,7 @@
     sb.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.75"></circle><path d="M15.5 15.5 21 21"></path></svg>';
     sb.addEventListener("click", (e) => { e.stopPropagation(); pSearch(!document.body.classList.contains("psearchon")); });
     const home = el("a", "phmark"); home.href = "#home"; home.setAttribute("aria-label", "Sean's Site home"); // the date the data runs through in a pill (Sean, 30 Oct 2026: "where the words Sean's site are it shows this instead")
-    const thruD = new Date((DATA.meta.through || "") + "T12:00:00"), thru = isNaN(thruD) ? "" : "Thru " + thruD.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const thruD = new Date((DATA.meta.through || "") + "T12:00:00"), thru = isNaN(thruD) ? "" : (offSeason() && Date.now() - thruD > 30 * 864e5 ? "Final thru " : "Thru ") + thruD.toLocaleDateString("en-US", { month: "short", day: "numeric" });
     home.innerHTML = '<img src="icons/logo-fg.png" alt="" width="30" height="30"><span class="phthru"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>' + thru + '</span>';
     const gear = el("a", "phbtn phgear"); gear.href = "#settings"; gear.dataset.mode = "settings"; gear.setAttribute("aria-label", "Settings");
     gear.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>';

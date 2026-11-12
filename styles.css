@@ -6303,3 +6303,5 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#x1):not(#x2):not(#x3):not(#x4):not(#x5):not(#x6):not(#x7) body.brlb #rows .row-main .pcts > *:last-child { border-right: 1px solid var(--xl) !important; }
 /* falling pieces drift over a player's popup too (12 Nov 2026): it sat at 71, over the 55 canvas; the bottom bar (80) and the search stay over it */
 :root:root body.xpopon canvas.seasonfx, :root:root body.modal-open canvas.seasonfx { z-index: 72; }
+.sstamp.sbuild { margin-top: 4px; max-width: 46em; }
+.sstamp.sbuild.stale { color: #c8102e; font-weight: 600; }
