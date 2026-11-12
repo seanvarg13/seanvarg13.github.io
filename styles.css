@@ -6233,8 +6233,8 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] header.top::before {
   content: ""; position: absolute; left: 0; right: 0; top: 0; height: calc(env(safe-area-inset-top, 0px) + 8px); z-index: 0; pointer-events: none;
   /* darkened (Sean, 12 Nov 2026, "still blurred"): iOS 27.2 lays a light blur over whatever is under its status bar and washes a mid-tone out to
-     pink; the football site's dark navy comes through it clean, so the strip is the header's colour pulled well toward black */
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--hdrc, var(--band2)) 38%, #000) calc(100% - 8px), transparent);
+     pink; the football site's dark navy comes through it clean, so the strip is the header's colour pulled almost to black (38% was still washed to taupe, 14% now) */
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--hdrc, var(--band2)) 14%, #000) calc(100% - 8px), transparent);
 }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] header.top > .phtop { position: relative; z-index: 1; }
 
