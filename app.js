@@ -64,7 +64,7 @@
   // against what was last synced: a key changed on one side takes that side; changed on both, the fantasy presets and
   // the keyed lists (stars, ranks …) are merged, anything else keeps this device's. A pull that changes anything here
   // reloads the page once, so every screen reads the new copy.
-  const SYNC_KEYS = [LS.drafted, LS.extra, LS.roles, LS.ranks, LS.tiers, LS.tierNames, LS.sets, LS.extraPos, LS.stars, "draft2027.fantasy", "draft2027.auction", "draft2027.league"];   // the League tab's connections (11 Nov 2026)
+  const SYNC_KEYS = [LS.drafted, LS.extra, LS.roles, LS.ranks, LS.tiers, LS.tierNames, LS.sets, LS.extraPos, LS.stars, "draft2027.fantasy", "draft2027.watch", "draft2027.auction", "draft2027.league"];   // the League tab's connections (11 Nov 2026)
   const SYNC_LS = "draft2027.sync", GIST_FILE = "sean-site-sync.json", GIST_DESC = "Sean's Site: saved settings (synced by the site)";
   const sync = Object.assign({ token: "", gist: "", base: null, at: "", err: "" }, load(SYNC_LS, {}));
   const syncSave = () => { try { localStorage.setItem(SYNC_LS, JSON.stringify(sync)); } catch {} };
@@ -2341,6 +2341,7 @@
     const match = (p) => p.name.toLowerCase().includes(q) || p.team.toLowerCase() === q;
     if (q) { out = out.filter(match); tail = tail.filter(match); }
     if (state.teamF && !opts.all) { out = out.filter(teamOK); tail = tail.filter(teamOK); }
+    if (lgFilt.v !== "all" && lgOwn && !opts.all) { const o = lgOwnSets(), f = lgFilt.v === "avail" ? (p) => !o.t.has(String(p.id)) && !o.m.has(String(p.id)) : (p) => o.m.has(String(p.id)); out = out.filter(f); tail = tail.filter(f); }   /* My league: Available / My team */
     if (hideDrafted) { out = out.filter((p) => !drafted.has(p.id)); tail = tail.filter((p) => !drafted.has(p.id)); }
     const key = state.sort, dir = state.dir === "asc" ? 1 : -1;
     const proj = key === "score" && boardOn();   // Rankings / Draft mode: the board's own order (Steamer's points, else boardProj)
@@ -3219,7 +3220,8 @@
       const nameEl = el("div", "name", p.name);
       // the ★ after a starred name on Rankings / the Draft board is gone with the star feature (Sean, 7 Oct 2026)
       who.append(nameEl);
-      { const ib = ilBadge(p); if (ib) { nameEl.textContent = ""; nameEl.classList.add("hasil"); nameEl.append(el("span", "nmtx", p.name), ib); } }   // the IL badge holds its place; the name ellipsises before it
+      { const ib = ilBadge(p); if (ib) { nameEl.textContent = ""; nameEl.classList.add("hasil"); nameEl.append(el("span", "nmtx", p.name), ib); } }
+      { const ow = ownOf(p); if (ow) { if (!nameEl.classList.contains("hasil")) { nameEl.textContent = ""; nameEl.classList.add("hasil"); nameEl.append(el("span", "nmtx", p.name)); } const lb = el("span", "lgb " + ow, ow === "mine" ? "MINE" : "owned"); lb.title = ow === "mine" ? "On your team in " + lgOwn.name : "Taken in " + lgOwn.name; nameEl.append(lb); } }   // the IL badge holds its place; the name ellipsises before it
       // just his positions and playing time under the name (Sean, 29 Sep 2026); team and hand are in the name's tooltip
       nameEl.title = nameEl.title || `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`;
       const meta = el("div", "meta");
@@ -6209,6 +6211,19 @@
       wrap.classList.add("hwrap"); box.append(wrap); return wrap;
     };
     const loading = (b) => { const n = el("p", "hnote"); if (state.daysFailed) n.textContent = "Couldn't load the game-by-game data."; else n.append(daysNote()); b.append(n); };
+    /* Your players (Sean's recommendation, 12 Nov 2026): the players he watches and the ones on his connected league team, with their injury status and
+       where their numbers stand — the page's daily-actions seed; empty until he watches someone or connects a league */
+    { const mineIds = lgOwn ? new Set(lgOwn.mine) : new Set(), rows = [];
+      for (const p of DATA.players) { const wk = p.type + p.id, mine = mineIds.has(String(p.id)); if (!watchSet[wk] && !mine) continue;
+        const v = inWin(NOWIN, () => V(p)), il = ilOf(p), isH = p.type === "H", val = isH ? v.m.xwd : puOf(p);
+        rows.push({ p, mine, il, isH, val, pc: pcOf(isH ? refH : refP, val, !isH) }); }
+      rows.sort((a, b) => (b.mine - a.mine) || ((b.il ? 1 : 0) - (a.il ? 1 : 0)) || ((b.pc || 0) - (a.pc || 0)));
+      if (rows.length) {
+        const wb = section(box.firstChild ? document.createElement("div") : box, "Your players", `${rows.length} watched${lgOwn ? " · " + (lgOwn.name || "your league") : ""}`);
+        const host = wb.closest("section"); box.insertBefore(host, grid);
+        table(wb, { label: "Watch list and my team", cols: [["Player", null, "nm"], ["Tm", 44, "c"], ["Who", 54, "c"], ["Status", 78, "c"], ["xwOBA / nERA", 92, "heat"]], ends: [3],
+          rows: rows.slice(0, PH ? 12 : 20).map((r) => [{ p: r.p }, r.p.team, r.mine ? "mine" : "watch", r.il ? "IL" + r.il.code.slice(1) : "active", { v: r.val == null ? "–" : r.isH ? fmtX(r.val) : r.val.toFixed(2), pc: r.pc }]) });
+      } }
     const NB = PH ? 4 : 5, NH = 4, NP = 4;   // four a list (Sean, 7 Oct 2026: "the top 4 for each")
     const nm = (p, tab) => ({ p, tab });
     // the lists: hist/home.js until the day rows are in (homeLists); a file that's missing, stale or off the defaults asks for the day rows instead,
@@ -11398,6 +11413,8 @@
     if (p.type === "P") { const side = stuffSide() ? "stuff" : "raw", sb = el("button", "pgside", side === "stuff" ? "Stuff" : "Raw"); sb.type = "button"; sb.setAttribute("aria-label", "Raw or stuff");
       cellOf(ddList(sb, [["raw", "Raw"], ["stuff", "Stuff"]], side, (k) => { state.cardSide = k; savePrefs(); render(); }, "side")); }
     if (o.entry && !isMulti(o.key)) { const fb = filtersTog(p, true).querySelector(".phfilt"); fb.textContent = "Filters"; cellOf(fb); }
+    { const wk = p.type + p.id, wb = el("button", "pgwatch", watchSet[wk] ? "★ Watching" : "☆ Watch"); wb.type = "button"; wb.title = "Track him on Home with his injury status and numbers";
+      wb.addEventListener("click", () => { if (watchSet[wk]) delete watchSet[wk]; else watchSet[wk] = 1; save(WATCH_LS, watchSet); wb.textContent = watchSet[wk] ? "★ Watching" : "☆ Watch"; }); cellOf(wb); }
     for (const b of crow.querySelectorAll("button:not(:disabled)")) b.append(el("span", "pgchev", "▾"));
     // the popup's × on a strip of its own across the bar's top, so the headshot, name, bio and Filters / Raw sit exactly as they do without it, just
     // lower (Sean, 13 Oct 2026: "the player head shot name and bio are in the same position in comparison to the filters and raw vs stuff button when
@@ -13098,6 +13115,12 @@
     const w = el("div", "textmodal panel");
     const h2 = el("h2", null, "Position"); h2.id = "modal-title"; w.append(h2);
     const sel = new Set(posSel());
+    if (lgOwn) {   /* the connected league's filter: all players, only the available, or only mine */
+      const lw = el("div", "psec lgfilt"); lw.append(el("h4", null, "My league · " + (lgOwn.name || "connected")));
+      const sg = el("div", "seg");
+      for (const [v, lab] of [["all", "Everyone"], ["avail", "Available"], ["mine", "My team"]]) { const b = el("button", "segbtn" + (lgFilt.v === v ? " on" : ""), lab); b.type = "button"; b.addEventListener("click", () => { lgFilt.v = v; save(LGF_LS, v); render(); }); sg.append(b); }
+      lw.append(sg, el("p", "note", "From the league as it was last read (open the League tab to refresh). Taken players are marked \"owned\" on the list.")); w.append(lw);
+    }
     const drafted = draftedIds(), hide = state.mode === "draft" && !state.showDrafted;
     const withTail = manualOrder(), trending = state.mode === "trending";
     const count = (pos) => {
@@ -14016,11 +14039,26 @@
      step every 5 s, as the reference board polls its draft). The connections are draft2027.league (in SYNC_KEYS, so they follow him); what he's
      looking at is draft2027.leagueui, per device. */
   const LG_LS = "draft2027.league", LGU_LS = "draft2027.leagueui";
+  /* League-aware lists (Sean's recommendation, 12 Nov 2026): whenever a connected league is read, who owns whom is kept (per device) so every list can mark
+     his players, grey out the taken and filter to the available. The cache is MLB ids; a player ESPN lists that the crosswalk can't place isn't in it. */
+  const WATCH_LS = "draft2027.watch"; const watchSet = load(WATCH_LS, {});
+  const LGO_LS = "draft2027.lgown", LGF_LS = "draft2027.lgf";
+  let lgOwn = load(LGO_LS, null); const lgFilt = { v: load(LGF_LS, "all") };
+  function lgCacheOwn(L, c) {
+    try {
+      const mine = lgMine(L, c), mset = new Set(); if (mine) for (const r of mine.roster) { const m = lgMatch(r); if (m.mlb) mset.add(String(m.mlb)); }
+      const taken = [...lgTaken(L)].map(String);
+      lgOwn = { taken, mine: [...mset], name: L.name || (c && c.name) || "", at: Date.now() }; save(LGO_LS, lgOwn);
+    } catch (e) { console.warn("league cache", e); }
+  }
+  function lgCacheSoon(L, c) { lgIdsEnsure(); let n = 0; const go = () => { if (window.DRAFT_IDS || ++n > 40) lgCacheOwn(L, c); else setTimeout(go, 250); }; go(); }   /* once the id crosswalk is in */
+  const ownOf = (p) => { if (!lgOwn || !p || !p.id) return null; const k = String(p.id); return lgOwn.mine.includes(k) ? "mine" : lgOwn.taken.includes(k) ? "taken" : null; };
+  const lgOwnSets = () => { if (!lgOwn) return null; if (!lgOwn._s) Object.defineProperty(lgOwn, "_s", { value: { m: new Set(lgOwn.mine), t: new Set(lgOwn.taken) }, enumerable: false }); return lgOwn._s; };
   const lgStore = Object.assign({ list: [], cur: 0 }, load(LG_LS, {}));
   if (!Array.isArray(lgStore.list)) lgStore.list = [];
   const lgUI = Object.assign({ view: "team", faPos: "H", faSort: "proj", dTeam: "all", feed: false, faN: 50 }, load(LGU_LS, {}));
   const lgSave = () => save(LG_LS, lgStore), lgUISave = () => save(LGU_LS, lgUI);
-  const LG_TABS = [["team", "My team"], ["league", "League"], ["fa", "Free agents"], ["draft", "Draft"]];
+  const LG_TABS = [["team", "My team"], ["league", "League"], ["fa", "Free agents"], ["trade", "Trade"], ["draft", "Draft"]];
   const lgConn = () => lgStore.list[lgStore.cur] || lgStore.list[0] || null;
   // ESPN's numbers for its lineup slots, positions and clubs (the espn-api project's maps, checked against live leagues)
   const ESPN_SLOT = { 0: "C", 1: "1B", 2: "2B", 3: "3B", 4: "SS", 5: "OF", 6: "2B/SS", 7: "1B/3B", 8: "LF", 9: "CF", 10: "RF", 11: "DH", 12: "UTIL", 13: "P", 14: "SP", 15: "RP", 16: "BE", 17: "IL", 19: "IF" };
@@ -14095,7 +14133,7 @@
     const k = lgKeyOf(c), old = lgData && lgData.key === k ? lgData : null;
     if (old && (old.busy || (!force && old.L && Date.now() - old.at < 120000) || (!force && old.err && !old.L))) return old;
     const d = lgData = { key: k, L: old ? old.L : null, at: old ? old.at : 0, err: null, busy: true };
-    espnLeague(c.id).then((raw) => { d.L = espnNorm(raw); d.at = Date.now(); d.busy = false; if (c.name !== d.L.name) { c.name = d.L.name; lgSave(); } if (lgUI.feed && !d.L.draft.done) lgFeedDraft(d.L); },
+    espnLeague(c.id).then((raw) => { d.L = espnNorm(raw); d.at = Date.now(); d.busy = false; lgCacheSoon(d.L, c); if (c.name !== d.L.name) { c.name = d.L.name; lgSave(); } if (lgUI.feed && !d.L.draft.done) lgFeedDraft(d.L); },
       (e) => { d.err = e && e.status != null ? e : { status: 0 }; d.busy = false; })
       .then(() => { if (lgData === d && (state.mode === "league" || state.mode === "draft")) render(); });
     return d;
@@ -14318,6 +14356,7 @@
     if (view === "team") lgTeamView(box, L, c, PH);
     else if (view === "league") lgLeagueView(box, L, c, PH);
     else if (view === "fa") lgFaView(box, L, c, PH, bar);
+    else if (view === "trade") lgTradeView(box, L, c, PH);
     else lgDraftView(box, L, c, PH, bar, d);
     lgPollSync();
   }
@@ -14369,7 +14408,7 @@
     let c = lgStore.list.find((x) => x.pf === L.pf && String(x.id) === String(L.id));
     if (!c) { c = { pf: L.pf, id: String(L.id), team: tid, name: L.name }; lgStore.list.push(c); } else { c.team = tid; c.name = L.name; }
     lgStore.cur = lgStore.list.indexOf(c); lgSave();
-    lgData = { key: lgKeyOf(c), L, at: Date.now(), err: null, busy: false };
+    lgData = { key: lgKeyOf(c), L, at: Date.now(), err: null, busy: false }; lgCacheSoon(L, c);
     lgAdding = false; lgFormReset(); lgUI.view = tid == null ? "league" : "team"; lgUISave();
     if (location.hash !== "#league/" + lgUI.view) location.hash = "#league/" + lgUI.view; else render();
   }
@@ -14497,6 +14536,35 @@
   }
   // Free agents: the site's players no team in the league has, by the 2027 projection under the league's scoring or by this season's numbers
   const LG_FA_POS = [[null, "Hitters"], ["H", "All hitters"], ["C", "C"], ["1B", "1B"], ["2B", "2B"], ["3B", "3B"], ["SS", "SS"], ["OF", "OF"], ["DH", "DH"], [null, "Pitchers"], ["P", "All pitchers"], ["SP", "SP"], ["RP", "RP"]];
+  /* The trade analyzer (Sean's recommendation, 12 Nov 2026): what you give against what you get, in 2027 projected points under the league's scoring
+     (lgProj: Steamer, else the site's line) with each side's ages. Points only: roster fit and positions are yours to judge. */
+  function lgTradeView(box, L, c, PH) {
+    const b = lgSection(box, "Trade analyzer", "2027 projected points under this league's scoring");
+    const byName = new Map(); for (const p of DATA.players) { const k = p.name.toLowerCase(); if (!byName.has(k)) byName.set(k, []); byName.get(k).push(p); }
+    lgUI.tGive = lgUI.tGive || []; lgUI.tGet = lgUI.tGet || [];
+    const dl = el("datalist"); dl.id = "lgtradenames"; for (const p of DATA.players) if ((p.pa || 0) >= 100 || (p.ip || 0) >= 30) { const o = el("option"); o.value = p.name; dl.append(o); } b.append(dl);
+    const side = (title, key) => {
+      const w = el("div", "lgtside"); w.append(el("h4", null, title));
+      const i = el("input", "weekin"); i.setAttribute("list", "lgtradenames"); i.placeholder = "Add a player"; i.autocomplete = "off";
+      i.addEventListener("change", () => { const m = byName.get(i.value.trim().toLowerCase()); if (!m) return; const p = m.slice().sort((x, z) => (z.pa || z.ip || 0) - (x.pa || x.ip || 0))[0]; const k = p.type + p.id; if (!lgUI[key].includes(k)) lgUI[key].push(k); lgUISave(); render(); });
+      w.append(i); b.append(w); return w;
+    };
+    const A = side("You give", "tGive"), B = side("You get", "tGet"), tot = { tGive: 0, tGet: 0 }, ages = { tGive: [], tGet: [] };
+    const PL = new Map(DATA.players.map((p) => [p.type + p.id, p]));
+    for (const [w, key] of [[A, "tGive"], [B, "tGet"]]) {
+      const t = el("table", "br weekt"); const h = el("tr"); for (const x of ["Player", "Age", "2027 pts", ""]) h.append(el("th", null, x)); t.append(h);
+      for (const k of lgUI[key]) { const p = PL.get(k); if (!p) continue; const j = lgProj(L, p), tr = el("tr"), nmT = el("td", "l", p.name), rm = el("button", "linkbtn", "remove"); rm.type = "button";
+        rm.addEventListener("click", () => { lgUI[key] = lgUI[key].filter((q) => q !== k); lgUISave(); render(); }); const rt = el("td"); rt.append(rm);
+        tot[key] += j || 0; if (p.age) ages[key].push(p.age); tr.append(nmT, el("td", null, p.age ? String(p.age) : "–"), el("td", null, j == null ? "–" : j.toFixed(0)), rt); t.append(tr); }
+      if (lgUI[key].length) w.append(t);
+    }
+    const avg = (a) => (a.length ? a.reduce((x, z) => x + z, 0) / a.length : null), d = tot.tGet - tot.tGive;
+    if (lgUI.tGive.length && lgUI.tGet.length) {
+      const ag = avg(ages.tGive), ab = avg(ages.tGet);
+      b.append(el("p", "weekverdict", `${d >= 0 ? "You gain" : "You lose"} ${Math.abs(d).toFixed(0)} projected points (${tot.tGive.toFixed(0)} out, ${tot.tGet.toFixed(0)} in)${ag != null && ab != null ? ` · average age ${ag.toFixed(1)} out, ${ab.toFixed(1)} in${ab - ag >= 2 ? " — you get older" : ag - ab >= 2 ? " — you get younger" : ""}` : ""}.`));
+    } else b.append(el("p", "note", "Add players to both sides."));
+    const clr = el("button", "linkbtn", "Clear"); clr.type = "button"; clr.addEventListener("click", () => { lgUI.tGive = []; lgUI.tGet = []; lgUISave(); render(); }); b.append(clr);
+  }
   function lgFaView(box, L, c, PH, bar) {
     const pos = LG_FA_POS.some(([k]) => k === lgUI.faPos) ? lgUI.faPos : "H", isP = ["P", "SP", "RP"].includes(pos), sortP = lgUI.faSort === "proj" && !!window.DRAFT_PROJ27;
     const save = () => { lgUI.faN = 50; lgUISave(); render(); };
