@@ -368,6 +368,11 @@ TW_W = {"bb": 0.69, "hbp": 0.72, "s": 0.88, "d": 1.25, "hr": 2.03}
 TW_ACT = 0.5   # share of his actual K% / BB% in the talent pieces (app.js TW.act)
 TW_USE_EV = False   # since 16 Oct 2026 the barrel fit (TW_XHRFB, the xHR/FB tab's) is the HR piece, as in app.js; True puts exit velocity alone back
 TW_HF = (0.096, {"evfb": 1.364, "ev90": 0.822, "pfb": 0.097})   # the HR piece on exit velocity alone (app.js TW_HF), fitted on park-neutral home runs since 15 Oct 2026; XHRFB the fallback
+# the xwOBA review's fixes (Sean, 12 Nov 2026: "ok do them all"; app.js TW_GB / twRaw / talentLeague — keep the two in step): intentional walks out
+# of the walks and the plate appearances as wOBA has them; the extra-bases piece ("Extra power") re-centred on the season's real bases per non-HR
+# hit (L["tphU"], the model's own PA-weighted mean, two passes); and +0.45 wOBA points a point of GB% against the season's 300+ PA hitters, added
+# after the scale (the most ground-ball-heavy hitters beat the pieces every season, and the next season too)
+TW_GB = 0.45
 # xSLG from skills (Sean, 23 Oct 2026; app.js XSLG — keep the two in step): the talent pieces as total bases per at-bat, the extra bases half the
 # model's (tph re-centred on the league's real bases per non-HR hit) and half the skills fit below; tiers without sprint speed or LD EV follow
 TW_XSLG = (0.5, [{"gb": -0.00303, "spd": 0.01555, "evld": 0.00569, "pullp": 0.00199}, {"gb": -0.00261, "evld": 0.00484, "pullp": 0.0018},
@@ -427,11 +432,16 @@ def talent_league(players, ref_pa):
     for k in ("evfb", "brfb", "brld", "pfb", "brl", "ev90"):
         L["hr"][k] = wavg(F, lambda i: i[k] if k == "pfb" else i["m"].get(k), lambda i: i["fbn"])
     L["twh"] = {k: wavg(F, lambda i: i[k] if k == "pfb" else i["m"].get(k), lambda i: i["pa"]) for k in TW_HF[1]}
-    L["scale"] = 1.0
+    L["scale"] = 1.0; L["tphU"] = None
+    s0 = n0 = 0.0
+    for i in I:
+        c = {}
+        if talent_of(i, L, out=c) is not None and c.get("tphU") is not None and c["tphU"] == c["tphU"]: s0 += c["tphU"] * i["pa"]; n0 += i["pa"]
+    L["tphU"] = s0 / n0 if n0 else None
     a = b = 0.0
     for i in I:
-        t = talent_of(i, L)
-        if t is not None and i["m"].get("woba") is not None: a += t * i["pa"]; b += i["m"]["woba"] * i["pa"]
+        c = {}
+        if talent_of(i, L, out=c) is not None and i["m"].get("woba") is not None: a += c["raw"] * i["pa"]; b += i["m"]["woba"] * i["pa"]
     L["scale"] = b / a if a else None
     # the model's extra bases, PA-weighted (app.js L.tph), then xSLG's scale: its qualifiers' at-bat-weighted xSLG on their real SLG
     tw = tn = 0.0
@@ -495,21 +505,29 @@ def talent_of(i, L, park=False, out=None):
     xbab = xbab_drivers(i, L)
     if xbab is None: return None
     bip = max(0.0, 1 - xk / 100 - xbb / 100 - hbp); xhr = hrb * bip * i["pa"]
-    tph = min(1.7, max(1.0, (m["dxslg"] * i["ab"] - 4 * xhr) / max(1.0, m["dxba"] * i["ab"] - xhr)))
-    vh = TW_W["s"] + (tph - 1) * (TW_W["d"] - TW_W["s"])
-    raw = TW_W["bb"] * xbb / 100 + TW_W["hbp"] * hbp + bip * (hrb * TW_W["hr"] + (1 - hrb) * xbab * vh)
-    if out is not None: out.update(xk=xk, xbb=xbb, hbp=hbp, xhf=xhf, xbab=xbab, tph=tph)
+    tphU = (m["dxslg"] * i["ab"] - 4 * xhr) / max(1.0, m["dxba"] * i["ab"] - xhr)
+    tph = min(1.8, max(1.0, L["tphA"] + (tphU - L["tphU"]))) if L.get("tphU") is not None and L.get("tphA") is not None else min(1.7, max(1.0, tphU))
+    ibb = m["ibbr"] if m.get("ibbr") is not None and L.get("ibbr") is not None else None
+    gba = TW_GB * (m["gb"] - L["gb"]) / 1000 if m.get("gb") is not None and L.get("gb") is not None else 0.0
+    raw = tw_raw(xk, xbb, ibb, hbp, xhf, i["fbs"], xbab, tph)
+    if out is not None: out.update(xk=xk, xbb=xbb, ibb=ibb, hbp=hbp, xhf=xhf, xbab=xbab, tph=tph, tphU=tphU, raw=raw, gba=gba)
     if park:
         # the same skills in the parks he hit in (Sean, 18 Oct 2026: "for Hunter Goodman and other say Rockies players I want to see their park
         # factor included in their xwOBA since it does impact their production and will next year too"): K%, BB%, xHR/FB, xBABIP and bases per
         # hit each moved by his parks' residual on it (m.pkk / pkbb / pkhr / pkbab / pkxb), the pieces put back together the same way
         if all(m.get(k) is None for k in ("pkhr", "pkbab", "pkxb", "pkk", "pkbb")): return None
         g = lambda k: m.get(k) or 0
-        xk, xbb, xhf, xbab, tph = xk + g("pkk"), xbb + g("pkbb"), xhf + g("pkhr"), xbab + g("pkbab") / 1000, tph + g("pkxb")
-        bip = max(0.0, 1 - xk / 100 - xbb / 100 - hbp); hrb = xhf / 100 * i["fbs"]
-        vh = TW_W["s"] + (tph - 1) * (TW_W["d"] - TW_W["s"])
-        raw = TW_W["bb"] * xbb / 100 + TW_W["hbp"] * hbp + bip * (hrb * TW_W["hr"] + (1 - hrb) * xbab * vh)
-    return raw * L["scale"]
+        raw = tw_raw(xk + g("pkk"), xbb + g("pkbb"), ibb, hbp, xhf + g("pkhr"), i["fbs"], xbab + g("pkbab") / 1000, tph + g("pkxb"))
+    return raw * L["scale"] + gba
+
+
+def tw_raw(xk, xbb, ibb, hbp, xhf, fbs, xbab, tph):
+    """the talent pieces put together (app.js twRaw): walks at TW_W['bb'] less his intentional ones (ibb, per 100 PA, or None), HBP, and the balls in
+    play — fly balls × xHR/FB for the home runs, the rest at xBABIP and the extra bases — read on the plate appearances that weren't an intentional walk"""
+    i = ibb / 100 if ibb and ibb > 0 else 0.0
+    bip = max(0.0, 1 - xk / 100 - xbb / 100 - hbp); hrb = xhf / 100 * fbs
+    vh = TW_W["s"] + (tph - 1) * (TW_W["d"] - TW_W["s"])
+    return (TW_W["bb"] * max(0.0, xbb / 100 - i) + TW_W["hbp"] * hbp + bip * (hrb * TW_W["hr"] + (1 - hrb) * xbab * vh)) / (1 - i)
 
 
 def xslg_of(i, L, park=False, scaled=True):

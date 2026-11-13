@@ -64,7 +64,7 @@
   // against what was last synced: a key changed on one side takes that side; changed on both, the fantasy presets and
   // the keyed lists (stars, ranks …) are merged, anything else keeps this device's. A pull that changes anything here
   // reloads the page once, so every screen reads the new copy.
-  const SYNC_KEYS = [LS.drafted, LS.extra, LS.roles, LS.ranks, LS.tiers, LS.tierNames, LS.sets, LS.extraPos, LS.stars, "draft2027.fantasy", "draft2027.auction", "draft2027.league"];   // the League tab's connections (11 Nov 2026)
+  const SYNC_KEYS = [LS.drafted, LS.extra, LS.roles, LS.ranks, LS.tiers, LS.tierNames, LS.sets, LS.extraPos, LS.stars, "draft2027.fantasy", "draft2027.watch", "draft2027.auction", "draft2027.league"];   // the League tab's connections (11 Nov 2026)
   const SYNC_LS = "draft2027.sync", GIST_FILE = "sean-site-sync.json", GIST_DESC = "Sean's Site: saved settings (synced by the site)";
   const sync = Object.assign({ token: "", gist: "", base: null, at: "", err: "" }, load(SYNC_LS, {}));
   const syncSave = () => { try { localStorage.setItem(SYNC_LS, JSON.stringify(sync)); } catch {} };
@@ -1147,11 +1147,12 @@
     if (g === "H") { let s = 0, n = 0; for (const q of pool) { const x = seasonXwDir(q); if (typeof x === "number" && isFinite(x)) { s += x; n++; } } if (n >= 20) out.xwd = out.xwoba = s / n; }   // the headline isn't in the list
     priorCache.set(key, out); return out;
   }
-  const SHRINK_K = 120;
+  const SHRINK_K = 120, WREG = new Set(["xwd", "xwoba", "txw", "xwn", "xwpk", "xwdiff", "dxslg", "xiso", "xbabip", "bluck"]);
   function shrinkM(p, v) {
     const g = p.type === "P" ? (p.primary || "P") : "H", mu = priorMeans(g);
     const n = p.type === "P" ? (v.bf != null ? v.bf : (v.sample || 0) * 4.3) : v.sample || 0, w = n / (n + SHRINK_K), m = Object.assign({}, v.m);
-    for (const k in mu) if (typeof m[k] === "number" && isFinite(m[k])) m[k] = w * m[k] + (1 - w) * mu[k];
+    const done = v.tal && v.tal.wd != null ? WREG : null;   /* a date window's skills numbers are regressed already (TW_WIN, 12 Nov 2026) */
+    for (const k in mu) if (!(done && done.has(k)) && typeof m[k] === "number" && isFinite(m[k])) m[k] = w * m[k] + (1 - w) * mu[k];
     return m;
   }
   const provisional = { val: new Set(), pool: new Set(), rank: new Set() };   // cache keys that depend on the day rows (see ensureDays)
@@ -1307,6 +1308,18 @@
     // talent xwOBA and its next-season projection on the view (Sean, 11 Oct 2026) — talentOf below
     if (p.type === "H" && v.m && v.m.txw === undefined) {
       const od = oneDay(), t = od ? null : talentOf(p, v);   // one game day: the batted-ball model's xwOBA and xBABIP (oneDay)
+      // a date window's skills numbers regressed toward the league by PA / (PA + k) (TW_WIN; the review's item 1, 12 Nov 2026): the final
+      // numbers only — xwOBA, xSLG, xISO here, xBABIP below — so the pieces (t.xk … t.tph, what Movers and the build-up read) stay the window's
+      // own. Not in a split without dates (pulling a platoon split toward the league would be wrong), a span, or a window holding his whole season.
+      // Each footing is regressed whole, his parks' part with the rest: a window's park mix doesn't carry into the next two months (keeping it
+      // whole read r .273 against the next 60 days, below the unregressed .287; regressing it too, .294). The window's own numbers stay on t
+      // (txw0, txwN0, xwpk0 …, t.ww the weights) and on m (xwdW, dxslgW) for the build-up's Sample size row and the fantasy pages' expected points
+      const wr = t && !t.span && !DS.multi && winIdx() && v.pa && !(p.pa && v.pa >= p.pa) ? v.pa : 0;
+      if (wr) { const L = t.L, w = (k) => wr / (wr + TW_WIN[k]), reg = (x, c, k) => (x == null || c == null ? x : c + (x - c) * w(k));
+        t.wpa = wr; t.ww = { xw: w("xw"), xslg: w("xslg"), xiso: w("xiso"), xbab: w("xbab") };
+        if (L.woba != null) { t.txw0 = t.txw; t.txwN0 = t.txwN; t.xwpk0 = t.xwpk; t.txwN = reg(t.txwN, L.woba, "xw"); t.xwpk = reg(t.xwpk, L.woba, "xw"); t.txw = t.parkIn ? t.xwpk : t.txwN; t.wd = t.txw0 - t.txw; }
+        if (t.xslg != null && L.slgA != null) { t.xslg0 = t.xslg; t.xslgN = reg(t.xslgN, L.slgA, "xslg"); t.xslgPk = reg(t.xslgPk, L.slgA, "xslg"); t.xslg = t.parkIn && t.xslgPk != null ? t.xslgPk : t.xslgN; }
+        if (t.xiso != null && L.iso != null) { t.xiso0 = t.xiso; t.xiso = reg(t.xiso, L.iso, "xiso"); } }
       const tx = t ? Math.round(1000 * t.txw) / 1000 : null;
       // talent xwOBA IS the xwOBA (Sean, 11 Oct 2026: "make talent xwoba the new xwoba" — first-half talent xwOBA called second-half wOBA at r .424
       // against the directional model's .367 over 2015-26). The model's own number stays as dxw (xwOBAcon, the Talent tab's contact line); where
@@ -1314,7 +1327,8 @@
       const sw = tx == null ? {} : { xwd: tx, xwoba: tx, xwdiff: v.m.woba != null ? Math.round(1000 * (tx - v.m.woba)) / 1000 : null };
       // xSLG from skills IS the xSLG (Sean, 23 Oct 2026 — XSLG); the batted-ball model's stays as dxslgm (talentCore's extra bases read it)
       const xsl = t && t.xslg != null ? Math.round(1000 * t.xslg) / 1000 : null;
-      v.m = Object.assign({}, v.m, { xiso: t && t.xiso != null ? Math.round(1000 * t.xiso) / 1000 : null, txw: tx, xwpk: t && t.xwpk != null ? Math.round(1000 * t.xwpk) / 1000 : null, xwn: t && t.txwN != null ? Math.round(1000 * t.txwN) / 1000 : null, dxw: v.m.xwd ?? null, dxslgm: v.m.dxslg ?? null }, sw, xsl == null ? {} : { dxslg: xsl }); v.tal = t;   /* xwpk: the same skills in his parks (15 Oct 2026); xwn: park-neutral, and txw / xwd are whichever the switch says (18 Oct 2026) */
+      v.m = Object.assign({}, v.m, { xiso: t && t.xiso != null ? Math.round(1000 * t.xiso) / 1000 : null, txw: tx, xwpk: t && t.xwpk != null ? Math.round(1000 * t.xwpk) / 1000 : null, xwn: t && t.txwN != null ? Math.round(1000 * t.txwN) / 1000 : null, dxw: v.m.xwd ?? null, dxslgm: v.m.dxslg ?? null }, sw, xsl == null ? {} : { dxslg: xsl }); v.tal = t;
+      if (t && t.wd != null) v.m = Object.assign({}, v.m, { xwdW: Math.round(1000 * t.txw0) / 1000, dxslgW: t.xslg0 != null ? Math.round(1000 * t.xslg0) / 1000 : null });   /* the window's own, unregressed */   /* xwpk: the same skills in his parks (15 Oct 2026); xwn: park-neutral, and txw / xwd are whichever the switch says (18 Oct 2026) */
       // the drivers' xBABIP IS the xBABIP (Sean, 15 Oct 2026 — xbabDrivers): the batted-ball model's number stays as xbabipm (the build-up's
       // league is the PA-weighted mean of it; a game log's luck still reads it, a game being too small for the drivers); where the drivers can't
       // be built (a combined span, an untracked level) the model's stands. BABIP luck is re-priced on the new gap at the same wOBA value per hit
@@ -1324,7 +1338,10 @@
       if (v.m.babip != null && v.m.pkbab != null) v.m = Object.assign({}, v.m, { babipr: v.m.babip, babip: Math.round(1000 * (v.m.babip - v.m.pkbab / 1000)) / 1000 });
       const d = t && t.xbab != null ? { xbab: t.xbab, dv: t.dv, L: t.L } : od ? null : driversOf(p, v);
       if (d && d.xbab != null) {
-        const xd = Math.round(1000 * d.xbab) / 1000, xm = v.m.xbabip, sw2 = { xbabipm: xm ?? null, xbabip: xd };
+        // xBABIP regressed in a date window like the rest (TW_WIN.xbab, toward the league's BABIP); the drivers (d.dv) and t.xbab stay the window's
+        const wb = wr && d.L && d.L.xbabip != null ? (d.xbab - d.L.xbabip) * (1 - wr / (wr + TW_WIN.xbab)) : null;
+        if (wb != null) d.wdb = wb;
+        const xd = Math.round(1000 * (d.xbab - (wb || 0))) / 1000, xm = v.m.xbabip, sw2 = { xbabipm: xm ?? null, xbabip: xd };
         if (v.m.bluck != null && v.m.babip != null && xm != null) {
           const gm = (v.m.babipr ?? v.m.babip) - xm, gd = v.m.babip - xd;   /* the luck is on the park-neutral BABIP; bluck was priced on the raw gap to the model */
           if (Math.abs(gm) >= 5e-4) sw2.bluck = Math.round(10 * v.m.bluck * gd / gm) / 10;
@@ -2341,6 +2358,7 @@
     const match = (p) => p.name.toLowerCase().includes(q) || p.team.toLowerCase() === q;
     if (q) { out = out.filter(match); tail = tail.filter(match); }
     if (state.teamF && !opts.all) { out = out.filter(teamOK); tail = tail.filter(teamOK); }
+    if (lgFilt.v !== "all" && lgOwn && !opts.all) { const o = lgOwnSets(), f = lgFilt.v === "avail" ? (p) => !o.t.has(String(p.id)) && !o.m.has(String(p.id)) : (p) => o.m.has(String(p.id)); out = out.filter(f); tail = tail.filter(f); }   /* My league: Available / My team */
     if (hideDrafted) { out = out.filter((p) => !drafted.has(p.id)); tail = tail.filter((p) => !drafted.has(p.id)); }
     const key = state.sort, dir = state.dir === "asc" ? 1 : -1;
     const proj = key === "score" && boardOn();   // Rankings / Draft mode: the board's own order (Steamer's points, else boardProj)
@@ -3219,7 +3237,8 @@
       const nameEl = el("div", "name", p.name);
       // the ★ after a starred name on Rankings / the Draft board is gone with the star feature (Sean, 7 Oct 2026)
       who.append(nameEl);
-      { const ib = ilBadge(p); if (ib) { nameEl.textContent = ""; nameEl.classList.add("hasil"); nameEl.append(el("span", "nmtx", p.name), ib); } }   // the IL badge holds its place; the name ellipsises before it
+      { const ib = ilBadge(p); if (ib) { nameEl.textContent = ""; nameEl.classList.add("hasil"); nameEl.append(el("span", "nmtx", p.name), ib); } }
+      { const ow = ownOf(p); if (ow) { if (!nameEl.classList.contains("hasil")) { nameEl.textContent = ""; nameEl.classList.add("hasil"); nameEl.append(el("span", "nmtx", p.name)); } const lb = el("span", "lgb " + ow, ow === "mine" ? "MINE" : "owned"); lb.title = ow === "mine" ? "On your team in " + lgOwn.name : "Taken in " + lgOwn.name; nameEl.append(lb); } }   // the IL badge holds its place; the name ellipsises before it
       // just his positions and playing time under the name (Sean, 29 Sep 2026); team and hand are in the name's tooltip
       nameEl.title = nameEl.title || `${p.team}${p.type === "P" ? (p.throws ? ` · ${p.throws}HP` : "") : p.bats ? ` · bats ${p.bats}` : ""}`;
       const meta = el("div", "meta");
@@ -5664,7 +5683,7 @@
   // pieces are the fits (xK%, xBB% — the fifth entry, the key on V(p).tal), not the half-and-half the build blends; a move in the fit is carried
   // into his build's piece point for point
   const FX_PCS = [["xK%", "xk", (x) => x.toFixed(1) + "%", "xK%", "xkFit"], ["xBB%", "xbb", (x) => x.toFixed(1) + "%", "xBB%", "xbbFit"], ["xHR/FB", "xhf", (x) => x.toFixed(1) + "%", "xHR/FB"],
-                  ["Fly ball%", "fbs", (x) => Math.round(100 * x) + "%", "Fly ball%"], ["xBABIP", "xbab", fmtX, "xBABIP"], ["XB/hit", "tph", (x) => x.toFixed(2), "XB/hit"]];
+                  ["Fly ball%", "fbs", (x) => Math.round(100 * x) + "%", "Fly ball%"], ["xBABIP", "xbab", fmtX, "xBABIP"], ["Extra power", "tph", (x) => x.toFixed(2), "Extra power"]];
   // the page's windows (Sean, 16 Oct 2026: "the past months or x days ... different players across different timelines"): last N days from the
   // last game day, or his last N PA; the window's minimum scales with it (75 PA for 30 days, ¾ of N for a last-N window)
   const FX_WINS = [["14", "Last 14 days"], ["30", "Last 30 days"], ["45", "Last 45 days"], ["60", "Last 60 days"], ["90", "Last 90 days"], ["pa100", "Last 100 PA"], ["pa150", "Last 150 PA"], ["prev", "This season vs last"]];
@@ -5673,11 +5692,13 @@
   // that moved or improved held for the whole year"): a device that kept the old default, Most credible, starts on it once; picking Most credible again stays
   if (!fxSet.mv1) { fxSet.sort = "gain"; fxSet.mv1 = 1; try { localStorage.setItem("draft2027.flaws", JSON.stringify(fxSet)); } catch {} }
   // credibility (Sean, 16 Oct 2026: "see which ones are most credible first"): how much of the window's move is likely real — the piece's
-  // reliability at the window's PA, n / (n + k), k from how fast each settles (K% ~60 PA, BB% ~120, a fly-ball share ~110, the drivers'
-  // xBABIP ~220, xHR/FB ~250 — it rides on ~30 fly balls a hundred PA — extra bases per hit ~300); then last season as a witness: a prior
-  // season already past the midpoint of the move raises it halfway to certain, one on the far side of this season's value lowers it. The
-  // "credible gain" is the gain × that, the page's default order
-  const FX_K = { xk: 60, xbb: 120, xhf: 250, fbs: 110, xbab: 220, tph: 300 };
+  // reliability at the window's PA, n / (n + k); then last season as a witness: a prior season already past the midpoint of the move raises it
+  // halfway to certain, one on the far side of this season's value lowers it. The "credible gain" is the gain × that. k measured on the pieces
+  // themselves (12 Nov 2026, the review's item 2; scratch xw/fxk.js): every hitter with 150+ PA in both halves of a season 2022-26 (1,091), first
+  // half against second, season-centred, k = n (1 − r) / r — xK% 55 PA, xBB% 90, xHR/FB 125, the fly-ball share 125, the drivers' xBABIP 370,
+  // Extra power 830 (it repeats half to half at r .24: a 100-PA window's Extra power move is a tenth real). The guesses before were 60 / 120 /
+  // 250 / 110 / 220 / 300
+  const FX_K = { xk: 55, xbb: 90, xhf: 125, fbs: 125, xbab: 370, tph: 830 };
   const fxPrevKey = () => `mlb-${DATA.meta.season - 1}`, fxPrevDS = () => histDataset(fxPrevKey());
   const fxWin = (id) => { const days = DATA.meta.days || [], last = days[days.length - 1];
     if (String(id).startsWith("pa")) { const n = +String(id).slice(2); return { w: { from: "", to: "", last: String(n) }, pa: Math.round(0.75 * n), label: `last ${n} PA` }; }
@@ -5692,18 +5713,19 @@
     if (prevMode && !prevDS) { const out = { rows: [], cand: 0, loading: true, label: "this season", minPA: FX.minPA }; return out; }
     const FW = prevMode ? { w: NOWIN, pa: FX.minPA, label: `${DATA.meta.season} vs ${DATA.meta.season - 1}` } : fxWin(winId), win30 = FW.w, minPA = FW.pa;
     const baseDS = prevMode ? prevDS : DS, curById = new Map(DATA.players.filter((q) => q.type === "H").map((q) => [q.id, q]));
-    const season = new Map(); let L = null, lgK = 0;
+    const season = new Map(); let L = null;
     withDataset(baseDS, () => inWin(NOWIN, () => {
       for (const p of DS.players) { if (p.type !== "H" || (p.pa || 0) < FX.minPA) continue; if (prevMode && !curById.has(p.id)) continue; const t = V(p).tal; if (!t || !t.L) continue; season.set(p, t); L = L || t.L; }
-      lgK = (lgRatesH().k || 0) - 0.08 * (1 - TW.act);
     }));
     // last season's pieces as the witness for the credibility (a window mode only; the prev mode's witness would be two seasons back)
     const prior = new Map();
     if (!prevMode && prevDS) withDataset(prevDS, () => inWin(NOWIN, () => { for (const [p] of season) { const q = DS.players.find((z) => z.type === "H" && z.id === p.id); if (!q || (q.pa || 0) < 100) continue; const t = V(q).tal; if (t) prior.set(p, t); } }));
     const rows = [], cand = new Map();
     if (L) {
-      const wob = (c) => twRaw(c) * L.scale, lg = { xk: lgK, xbb: L.bb, hbp: L.hbp, xhf: L.hr.hrfb, fbs: L.fbs, xbab: L.xbabip, tph: L.tph }, base = wob(lg);
-      const lgv = { xkFit: (lgRatesH().k || 0) - 0.08, xbbFit: L.bb };   // the league's own fits (XKH's −0.08 constant; xBB% is centred on the league)
+      // the build-up's own baseline and arithmetic (12 Nov 2026): the league's pieces (twLeague), the value with intentional walks out and the
+      // ground-ball term (twVal); a fit's gap from the league's own mean fit (L.xkFitM, L.xbbFitM) is carried into the piece
+      const wob = (c) => twVal(c, L), lg = twLeague(L), base = wob(lg);
+      const lgv = { xkFit: L.xkFitM != null ? L.xkFitM : (lgRatesH().k || 0) - 0.08, xbbFit: L.xbbFitM != null ? L.xbbFitM : L.bb };
       const pieces = (t) => FX_PCS.map(([lab, k, f, word, vk]) => { const v = vk ? t[vk] : t[k], his = vk ? lg[k] + (v - lgv[vk]) : v; return { lab, k, vk: vk || k, f, word, v, eff: 1000 * (wob(Object.assign({}, lg, { [k]: his })) - base) }; });
       for (const [p, t] of season) {
         // "one or two things holding them back": his two worst pieces at the flaw line both count (Mitchell: K% and fly balls)
@@ -5711,7 +5733,7 @@
         if (ps[0].eff + ps[1].eff < FX.elite || !flaws.length) continue;
         // his season's pieces in his parks when the site's xwOBA is (18 Oct 2026), so Season and If it held read like his card; which piece is elite
         // or the flaw stays the park-neutral skill
-        const own = { xk: t.xk, xbb: t.xbb, hbp: t.hbp, xhf: t.xhf, fbs: t.fbs, xbab: t.xbab, tph: t.tph };
+        const own = { xk: t.xk, xbb: t.xbb, ibb: t.ibb, hbp: t.hbp, xhf: t.xhf, fbs: t.fbs, xbab: t.xbab, tph: t.tph, gba: t.gba || 0 };
         if (t.parkIn && t.pk) { own.xk += t.pk.k; own.xbb += t.pk.bb; own.xhf += t.pk.hr; own.xbab += t.pk.bab / 1000; own.tph += t.pk.xb; }
         cand.set(p, { t, ps, flaws, own });
       }
@@ -5812,7 +5834,7 @@
     xhf: [["@xhf", "xHR/FB", true], ["evfb", "FB EV", true], ["brfb", "FB Brl%", true], ["brld", "LD Brl%", true], ["@pfb", "Pull FB%", true]],
     fbs: [["@fbs100", "Fly ball%", true], ["fb", "FB%", true], ["pu", "Popup%", false], ["ld", "LD%", true], ["gb", "GB%", false]],
     xbab: [["xbabip", "xBABIP", true], ["ld", "LD%", true], ["pu", "Popup%", false], ["evgb", "GB EV", true], ["@gbp", "GB Pull%", false], ["evld", "LD EV", true], ["@ldp", "LD Pull%", true], ["spd", "Sprint", true], ["oppo", "Oppo%", true], ["fb", "FB%", false]],
-    tph: [["@tph", "XB / hit", true], ["dxslgm", "Model xSLG", true], ["dxba", "xBA", true], ["brl", "Barrel%", true], ["ev90", "90th% EV", true]],
+    tph: [["@tph", "Extra power", true], ["dxslgm", "Model xSLG", true], ["dxba", "xBA", true], ["brl", "Barrel%", true], ["ev90", "90th% EV", true]],
   };
   const FX_FMT = { xwd: 3, k: 1, xk: 1, whf: 1, zsw: 1, osw: 1, strk: 1, bb: 1, "@xbbFit": 1, ocon: 1, zcon: 1, zsn: 1, ev90: 1, ibbr: 1, fcon: 1, "@xhf": 1, evfb: 1, brfb: 1, brld: 1, "@pfb": 1, "@fbs100": 0, fb: 1, pu: 1, ld: 1, gb: 1, xbabip: 3, evgb: 1, "@gbp": 1, evld: 1, "@ldp": 1, spd: 1, oppo: 1, "@tph": 2, dxslg: 3, dxslgm: 3, dxba: 3, brl: 1 };
   const fxVal = (v, k, p) => { if (!v) return null; if (k === "spd") return v.m.spd ?? (p && p.m ? p.m.spd : null); if (k[0] !== "@") return v.m[k]; const t = v.tal; if (!t) return null;   /* sprint is the season's in a window */
@@ -6209,6 +6231,19 @@
       wrap.classList.add("hwrap"); box.append(wrap); return wrap;
     };
     const loading = (b) => { const n = el("p", "hnote"); if (state.daysFailed) n.textContent = "Couldn't load the game-by-game data."; else n.append(daysNote()); b.append(n); };
+    /* Your players (Sean's recommendation, 12 Nov 2026): the players he watches and the ones on his connected league team, with their injury status and
+       where their numbers stand — the page's daily-actions seed; empty until he watches someone or connects a league */
+    { const mineIds = lgOwn ? new Set(lgOwn.mine) : new Set(), rows = [];
+      for (const p of DATA.players) { const wk = p.type + p.id, mine = mineIds.has(String(p.id)); if (!watchSet[wk] && !mine) continue;
+        const v = inWin(NOWIN, () => V(p)), il = ilOf(p), isH = p.type === "H", val = isH ? v.m.xwd : puOf(p);
+        rows.push({ p, mine, il, isH, val, pc: pcOf(isH ? refH : refP, val, !isH) }); }
+      rows.sort((a, b) => (b.mine - a.mine) || ((b.il ? 1 : 0) - (a.il ? 1 : 0)) || ((b.pc || 0) - (a.pc || 0)));
+      if (rows.length) {
+        const wb = section(box.firstChild ? document.createElement("div") : box, "Your players", `${rows.length} watched${lgOwn ? " · " + (lgOwn.name || "your league") : ""}`);
+        const host = wb.closest("section"); box.insertBefore(host, grid);
+        table(wb, { label: "Watch list and my team", cols: [["Player", null, "nm"], ["Tm", 44, "c"], ["Who", 54, "c"], ["Status", 78, "c"], ["xwOBA / nERA", 92, "heat"]], ends: [3],
+          rows: rows.slice(0, PH ? 12 : 20).map((r) => [{ p: r.p }, r.p.team, r.mine ? "mine" : "watch", r.il ? "IL" + r.il.code.slice(1) : "active", { v: r.val == null ? "–" : r.isH ? fmtX(r.val) : r.val.toFixed(2), pc: r.pc }]) });
+      } }
     const NB = PH ? 4 : 5, NH = 4, NP = 4;   // four a list (Sean, 7 Oct 2026: "the top 4 for each")
     const nm = (p, tab) => ({ p, tab });
     // the lists: hist/home.js until the day rows are in (homeLists); a file that's missing, stale or off the defaults asks for the day rows instead,
@@ -6263,7 +6298,7 @@
     // trending (Sean, 3 Oct 2026): hitters over their last 100 PA by xwOBA, pitchers over their last 50 IP by nERA — from the day rows; the PA / IP
     // in the window is a column like the leaders' (Sean, 9 Oct 2026: "just add the actual PA ... and add IP too")
     { const W100 = { from: "", to: "", last: "100" }, W50 = { from: "", to: "", last: "50" };
-      const b = section(grid, "Trending", "last 100 PA · last 50 IP", "Leaderboard →", goLB("ALL", "score", "desc", W100));
+      const b = section(grid, "Trending", "last 100 PA, regressed · last 50 IP", "Leaderboard →", goLB("ALL", "score", "desc", W100));   /* a window's xwOBA is regressed for its size (TW_WIN, 12 Nov 2026) */
       if (!HL) loading(b);
       else {
         const hit = HL.trend.hit.map((r) => who("H", r)).filter((r) => r.p).slice(0, NH), pit = HL.trend.pit.map((r) => who("P", r)).filter((r) => r.p).slice(0, NP);
@@ -6305,10 +6340,10 @@
     ba: "Batting average — hits per at-bat.",
     slg: "Slugging — total bases per at-bat.",
     iso: "Isolated power — slugging minus batting average: the extra bases per at-bat beyond a single (a double 1, a triple 2, a home run 3).",
-    xiso: "Expected isolated power: xSLG less an xBA built from the same skills pieces — his K% and BB% (half his actual rate, half the expected one), fly balls × xHR/FB for the home runs, the drivers' xBABIP for the other hits and the extra-bases piece — so the extra bases per at-bat his skills say, with his parks unless Leaderboard ▸ Filters ▸ Stats says park-neutral. First-half xISO calls second-half ISO at r .59 (his ISO .53, xHR/FB .52) and next season's at .67 (.63), and it settles in about half the plate appearances ISO needs. Its xBA isn't the site's xBA (the batted-ball model's), so it can sit a few points off xSLG − xBA.",
-    xwoba: "Expected wOBA: his wOBA rebuilt from expected rates only, never his actual hits — xK% (his whiffs, swing decisions and the strikes he sees) and xBB% (his chase rate, zone swings, contact, how often pitchers come into the zone on him, how many of his batted balls go foul and his intentional walks), each half his actual rate; his HBP rate; xHR/FB from his exit velocity (FB EV, EV90, how much he pulls his fly balls) on his fly balls and popups; the nine-driver xBABIP (line drives, popups, grounder and liner EV, grounder and liner pull, speed, oppo, fly balls — no Noise, no Luck) on the rest; and the batted-ball model's extra bases per hit (exit velocity, launch angle, pull and spray angle, sprint speed). Scaled so the season's 300+ PA hitters average their real wOBA. With his parks: the skills are measured park-neutral (the K% and BB% halves less his parks' effect on them, the contact pieces read off his contact and not where it landed, the HR fits fitted on park-neutral home runs — every ball 2015-26 at the park it was hit in against a neutral park, hist/parks.js), and then his parks are put back on every piece (the build-up's Park factor row), since where he plays shapes what he produces and will again if he stays. Leaderboard ▸ Filters ▸ Stats switches the whole site to the park-neutral number (also its own column, Park-neutral xwOBA). First-half xwOBA calls second-half wOBA at r .42 (the batted-ball model alone .37, wOBA .31) and next season's at .55. A span of seasons or an untracked level shows the batted-ball model's number. The xwOBA tab shows the build-up.",
+    xiso: "Expected isolated power: xSLG less an xBA built from the same skills pieces — his K% and BB% (half his actual rate, half the expected one), fly balls × xHR/FB for the home runs, the drivers' xBABIP for the other hits and the extra-bases piece — so the extra bases per at-bat his skills say, with his parks unless Leaderboard ▸ Filters ▸ Stats says park-neutral. First-half xISO calls second-half ISO at r .59 (his ISO .53, xHR/FB .52) and next season's at .67 (.63), and it settles in about half the plate appearances ISO needs. Its xBA isn't the site's xBA (the batted-ball model's), so it can sit a few points off xSLG − xBA. In a date window it's pulled toward the league's ISO by 125 / (PA + 125).",
+    xwoba: "Expected wOBA: his wOBA rebuilt from expected rates only, never his actual hits — xK% (his whiffs, swing decisions and the strikes he sees) and xBB% (his chase rate, zone swings, contact, how often pitchers come into the zone on him, how many of his batted balls go foul and his intentional walks), each half his actual rate; his HBP rate; xHR/FB from his fly-ball contact (FB EV, barrels on fly balls and on line drives, pulled fly balls) on his fly balls and popups; the nine-driver xBABIP (line drives, popups, grounder and liner EV, grounder and liner pull, speed, oppo, fly balls — no Noise, no Luck) on the rest; Extra power, the batted-ball model's bases per hit that isn't a home run once xHR/FB's home runs are out of it, centred on the season's real number; and a small ground-ball term (+0.45 points a point of GB% against the league's: the most ground-ball-heavy hitters beat the pieces every season, and the next season too). Intentional walks are out of the walks and the plate appearances, as wOBA has them. Scaled so the season's 300+ PA hitters average their real wOBA. With his parks: the skills are measured park-neutral (the K% and BB% halves less his parks' effect on them, the contact pieces read off his contact and not where it landed, the HR fits fitted on park-neutral home runs — every ball 2015-26 at the park it was hit in against a neutral park, hist/parks.js), and then his parks are put back on every piece (the build-up's Park factor row), since where he plays shapes what he produces and will again if he stays. Leaderboard ▸ Filters ▸ Stats switches the whole site to the park-neutral number (also its own column, Park-neutral xwOBA). First-half xwOBA calls second-half wOBA at r .42 (the batted-ball model alone .37, wOBA .31) and next season's at .56. In a date window it's pulled toward the league's wOBA by 200 / (PA + 200) — two-thirds of the way for a 100-PA window — which is how much of a window's xwOBA has carried into the next two months; a full season isn't. A span of seasons or an untracked level shows the batted-ball model's number. The xwOBA tab shows the build-up.",
     dxba: "Expected batting average — the same directional model, scored as hits per at-bat.",
-    dxslg: "Expected slugging, built from his skills the way xwOBA is (since 23 Oct 2026): total bases per at-bat from his K% and BB% (half his actual rate, half the expected one), his fly balls × xHR/FB for the home runs, the drivers' xBABIP for the other hits, and extra bases per hit that isn't a home run, half from a skills fit (GB%, sprint speed, LD EV, Pull%) and half from the batted-ball model — with his parks unless Leaderboard ▸ Filters ▸ Stats says park-neutral. First-half xSLG calls second-half SLG at r .45 (the batted-ball model alone .42, his SLG .37) and next season's at .53 (.50 / .47). The xSLG tab shows the build-up. On one game day, a span of seasons or an untracked level it's the batted-ball model's number.",
+    dxslg: "Expected slugging, built from his skills the way xwOBA is (since 23 Oct 2026): total bases per at-bat from his K% and BB% (half his actual rate, half the expected one), his fly balls × xHR/FB for the home runs, the drivers' xBABIP for the other hits, and extra bases per hit that isn't a home run, half from a skills fit (GB%, sprint speed, LD EV, Pull%) and half from the batted-ball model — with his parks unless Leaderboard ▸ Filters ▸ Stats says park-neutral. First-half xSLG calls second-half SLG at r .45 (the batted-ball model alone .42, his SLG .37) and next season's at .53 (.50 / .47). In a date window it's pulled toward the league's slugging by 200 / (PA + 200). On one game day, a span of seasons or an untracked level it's the batted-ball model's number.",
     ev: "Average exit velocity off the bat, bunts excluded.",
     brfb: "Brl% on FB: barrels per tracked fly ball (bunts out) — the share of his fly balls hit at a barrel's speed and angle. Where the home runs come from.",
     brld: "Brl% on LD: barrels per tracked line drive — the hardest liners in the barrel window, mostly extra-base hits.",
@@ -6442,9 +6477,9 @@
     xwpk: "xwOBA in his parks: his xwOBA with the parks he hit in put back — home runs per fly ball, hits on non-HR balls in play and bases per hit by what his parks did to his own balls, ball by ball (each at the park it was hit in against a neutral park), strikeouts and walks by the parks' residual per PA where he hit. It's the site's xwOBA unless the park-neutral switch is on (Leaderboard ▸ Filters ▸ Stats); this column is always the in-his-parks number (a Rockie a few points higher, a Giant a few lower).",
     xwn: "Park-neutral xwOBA: his xwOBA at a neutral park — the build-up's number before the Park factor row: the skills alone, every park's effect taken out. The site's xwOBA when the park-neutral switch is on (Leaderboard ▸ Filters ▸ Stats); this column is always the park-neutral number.",
     xk: "Expected K%: the strikeout rate his Whiff%, Z-Swing%, O-Swing% and the share of strikes he sees have historically come with (fitted over every 100+ PA hitter-season since 2015). It lands within about 1.7 points of a regular's real K%; a K% well above it says he's striking out more than his swings and misses explain (two-strike trouble, taking strike three), well below it that he's beating them. His own K% is still the steadier guide to next year's — the two averaged are best.",
-    xwdiff: "xwOBA − wOBA: what his contact, walks and strikeouts deserved (the site's xwOBA) minus what he actually got. Above zero he's been unlucky — his results should rise toward his xwOBA; below zero he's been lucky. +.030 is a lot. Every point is a thousandth of wOBA.",
+    xwdiff: "xwOBA − wOBA: what his contact, walks and strikeouts deserved (the site's xwOBA) minus what he actually got. Above zero he's been unlucky — his results should rise toward his xwOBA; below zero he's been lucky. +.030 is a lot. Every point is a thousandth of wOBA. Both leave intentional walks out. In a date window the xwOBA is regressed toward the league by its plate appearances, so the gap is what to expect from here against what he's done.",
     babip: "BABIP: batting average on balls in play — hits that aren't home runs, over balls in play that aren't home runs (sac flies count) — park-neutral since 15 Oct 2026: every ball in play scored at a neutral park (what his parks added, ball by ball, is the by-season table's Park column; a Rockie's reads lower than his raw one, a Mariner's higher). It swings a lot by chance: a hitter's BABIP from one season to the next holds only loosely.",
-    xbabip: "xBABIP: the BABIP his batted-ball profile should produce — the season's expected BABIP moved by nine things he controls, each against the league's qualified hitters: line-drive rate, popup rate, exit velocity on grounders and on liners, how often he pulls his grounders (weighted by his batting side) and his liners, sprint speed on his grounders, Oppo% and fly-ball rate (the xBABIP tab's build-up). Park-neutral, like the BABIP it's compared with: it reads his contact, not where it landed; what his parks added to his actual BABIP, ball by ball, is the by-season table's Park column. The exact angle and spot of each ball is left out on purpose: the hitting model's read of those sat 14 points off this in a typical season and that part repeated at r .18 year to year, the same as luck, while this number repeats at .56 and forecasts next season's BABIP as well.",
+    xbabip: "xBABIP: the BABIP his batted-ball profile should produce — the season's expected BABIP moved by nine things he controls, each against the league's qualified hitters: line-drive rate, popup rate, exit velocity on grounders and on liners, how often he pulls his grounders (weighted by his batting side) and his liners, sprint speed on his grounders, Oppo% and fly-ball rate (the xBABIP tab's build-up). Park-neutral, like the BABIP it's compared with: it reads his contact, not where it landed; what his parks added to his actual BABIP, ball by ball, is the by-season table's Park column. The exact angle and spot of each ball is left out on purpose: the hitting model's read of those sat 14 points off this in a typical season and that part repeated at r .18 year to year, the same as luck, while this number repeats at .56 and forecasts next season's BABIP as well. In a date window it's pulled toward the league's BABIP by 250 / (PA + 250); the drivers themselves are the window's own.",
     bluck: "BABIP luck: his park-neutral hits in play above (or below) what his xBABIP (the nine drivers) deserved (each ball at the park it was hit in against a neutral park, so the park's hits aren't luck), turned into wOBA points at the value of his own average hit in play. +20 means his wOBA sits about .020 above what his balls in play earned — the part most likely to fall away. Shown as a warning: more luck is coloured as more risk.",
     brel: "BIP reliance: the share of his wOBA that comes from hits on balls in play (singles, doubles and triples) rather than walks, hit-by-pitches and home runs. The higher it is, the more a normal BABIP swing moves his production — a slap hitter lives on it, a three-true-outcomes slugger barely notices. The league runs from about 30% to 90%, middle 58%.",
     swhf: "Whiff+: the whiff half of Stuff+ — how often swings at his pitches should miss, on their traits alone, turned into runs through uK% (100 = average).",
@@ -6948,11 +6983,11 @@
   // wOBA (run production follows the quality of the whole line, and the model can't place runners); walks, strikeouts
   // and steals as they happened
   function fXLine(o, pv) {
-    const m = pv.m; if (m.dxba == null || m.dxslg == null || !o.AB) return null;
-    const n = fXHits(o, m.dxba, m.dxslg);
-    const rr = m.xwd != null && m.woba ? Math.min(2, Math.max(0.5, m.xwd / m.woba)) : 1;
+    const m = pv.m, xs = m.dxslgW ?? m.dxslg, xw = m.xwdW ?? m.xwd; if (m.dxba == null || xs == null || !o.AB) return null;   /* a date window's own numbers, not the regressed ones (12 Nov 2026) */
+    const n = fXHits(o, m.dxba, xs);
+    const rr = xw != null && m.woba ? Math.min(2, Math.max(0.5, xw / m.woba)) : 1;
     n.R = o.R * rr; n.RBI = o.RBI * rr; n.GWRBI = (o.GWRBI || 0) * rr;
-    n.why = { xba: m.dxba, xslg: m.dxslg, xw: m.xwd, woba: m.woba, rr };
+    n.why = { xba: m.dxba, xslg: xs, xw, woba: m.woba, rr };
     return n;
   }
   // a pitcher's expected line spread back over his games (so per start still works): each category scaled by the
@@ -8240,6 +8275,23 @@
   // 3.21 → 3.06, next season's HR/FB r .640 → .647); TW_HF c .104 → .096, evfb 1.365 → 1.364, ev90 .828 → .822, pfb .096 → .097 (.834 → .843,
   // next season .674 → .682). The park had been noise in the target; the weights barely move, the fits read a little cleaner
   const TW_HF = { c: 0.096, w: { evfb: 1.364, ev90: 0.822, pfb: 0.097 } }, TW_USE_EV = false;   // false since 16 Oct 2026: the barrel fit (XHRFB) is the HR piece
+  // The xwOBA build-up review (Sean, 12 Nov 2026: "ok do them all", the five fixes of the review):
+  // TW_WIN — a date window's skills numbers regressed toward the league by PA / (PA + k), the final number only; the pieces stay the window's own,
+  // so Movers compares a window's pieces with the season's like for like (the 12 Nov piece shrink had pulled the window's xBABIP toward the league
+  // and not the season's, which put six hitters on Movers for nothing). k is where each number's next two months come out on the right scale:
+  // 30-game-day windows → the next 60 game days and first half → second half, 2022-26, on the site's own numbers (scratch xw/w4.js): xwOBA 200
+  // (slope of the next 60 days' wOBA on it 1.04 against 0.34 unregressed, r .287 → .294; halves 0.96, .392 → .399), xSLG 200 (1.09 / 1.02), xISO
+  // 125 (1.02 / 0.96), xBABIP 250 (1.04 / 0.88). A window covering his whole season isn't regressed (same PA, same answer)
+  const TW_WIN = { xw: 200, xslg: 200, xiso: 125, xbab: 250 };
+  // TW_GB — ground balls (the review's item 5): what the pieces leave out. Over every 300+ PA hitter-season 2015-26 the most ground-ball-heavy
+  // fifth beat its xwOBA by 4 points and the most fly-ball-heavy fifth fell 5 short, in every season (the fixed linear weights price a grounder's
+  // hits and a fly ball's outs a little off); +0.45 wOBA points a point of GB% against the season's 300+ PA hitters, added after the scale. Fitted
+  // on the miss (wOBA − xwOBA), PA-weighted, held out by season (scratch xw/gbfit.js): 0.35-0.59 in every season, 0.43 before the 2023 rules and
+  // 0.46 since; the fifths' misses −5.0 / −1.4 / −0.8 / +1.2 / +4.1 → −0.9 / +0.3 / −0.8 / −0.4 / −0.4; same-season r with wOBA .831 → .836, next
+  // season's wOBA .559 → .563 (the next season loads on GB% at 0.40 beyond xwOBA, so it's skill, not noise). Sprint speed was tested beside it and
+  // left out: its lean was +1.3 to +2.1 a ft/s through 2019 and −1.0 to +0.1 since 2023 — the xBABIP's speed-on-grounders driver, fitted on
+  // 2024-26 grounders, already carries it
+  const TW_GB = { gb: 0.45 };
   // xSLG from skills (Sean, 23 Oct 2026: "for xSLG in the directional model can we do the same thing or idea as xbabip and xwoba where we make it
   // skills based and take out any noise and then also add in a tab build up for it"): slugging rebuilt from the xwOBA build's own pieces — his K%,
   // BB% and HBP (which move slugging only through the at-bats they leave), fly balls × xHR/FB for the home runs, the drivers' xBABIP for the other
@@ -8283,9 +8335,16 @@
     for (const k of ["evfb", "brfb", "brld", "pfb", "brl", "ev90"]) L.hr[k] = wavg(F, (i) => (k === "pfb" ? i.pfb : i.m[k]), (i) => i.fbn);
     L.hbp = wavg(I, (i) => (i.hbp || 0) / i.pa, (i) => i.pa); L.fbs = wavg(I, (i) => i.fbs, (i) => i.pa);
     L.twh = {}; for (const k in TW_HF.w) L.twh[k] = wavg(F, (i) => (k === "pfb" ? i.pfb : i.m[k]), (i) => i.pa);
-    L.scale = 1; let a = 0, b = 0, tw = 0, tn = 0;
-    for (const i of I) { const t = talentCore(i, L); if (t && i.m.woba != null) { a += t.raw * i.pa; b += i.m.woba * i.pa; tw += t.tph * i.pa; tn += i.pa; } }
-    L.scale = a ? b / a : null; L.tph = tn ? tw / tn : null; L.n = ref.length;
+    L.slgA = wavg(I, (i) => i.m.slg, (i) => i.ab);   /* AB-weighted, what a window's xSLG is regressed toward (TW_WIN) */
+    // the extra-bases piece re-centred on the season's real bases per non-HR hit (the review's item 3, 12 Nov 2026): the batted-ball model's own
+    // level drifts by season (its xSLG ran 16% under the league's real SLG in 2015, 4% in 2019, on it since 2021), so the piece sat at 1.09 bases
+    // against a real 1.27 in 2015, a quarter of that season's regulars on the 1.00 floor, and the scale (1.077) inflated every piece to make up
+    // for it. L.tphU is the model's own PA-weighted mean, unclamped; the piece is the league's real number + his gap to it
+    L.scale = 1; L.tphU = null;
+    { let s0 = 0, n0 = 0; for (const i of I) { const t = talentCore(i, L); if (t && isFinite(t.tphU)) { s0 += t.tphU * i.pa; n0 += i.pa; } } L.tphU = n0 ? s0 / n0 : null; }
+    let a = 0, b = 0, tw = 0, tn = 0, kf = 0, bf = 0;
+    for (const i of I) { const t = talentCore(i, L); if (t && i.m.woba != null) { a += t.raw * i.pa; b += i.m.woba * i.pa; tw += t.tph * i.pa; tn += i.pa; kf += t.xkFit * i.pa; bf += t.xbbFit * i.pa; } }
+    L.scale = a ? b / a : null; L.tph = tn ? tw / tn : null; L.xkFitM = tn ? kf / tn : null; L.xbbFitM = tn ? bf / tn : null; L.n = ref.length;   /* the fits' own league means: Movers carries a fit's gap from them into the piece */
     // xSLG's scale: its 300+ PA hitters' at-bat-weighted xSLG on their real SLG (talentCore builds its pieces once L.tph is in)
     // and xISO's xBA the same way, on their real BA (L.sba)
     L.sslg = L.sba = null;
@@ -8304,11 +8363,11 @@
     // parks' effect on them (m.pkk / pkbb, points — the build's exposure-weighted park residuals, or the window's). The other pieces are read off
     // his contact and don't carry the park; what the park did to his actual HR/FB, BABIP and extra bases is the xwOBA tab's Stadium row
     const pkk = m.pkk || 0, pkbb = m.pkbb || 0, hasPk = PK_KEYS.some((k) => m[k] != null);
-    /* in a window or split the actual halves, his HBP rate and the BABIP drivers are pulled toward the league by plate appearances (Sean's recommendation, 12 Nov 2026):
-       full weight from 300 PA, linear below it — a 40-PA window used to give a 45% line-drive rate its whole 75-point BABIP push. Full seasons are untouched. */
-    const sh = I.win ? Math.min(1, I.pa / 300) : 1, act = TW.act * sh;
+    /* the 12 Nov window shrink of the actual halves, the HBP rate and the xBABIP drivers is gone (12 Nov 2026): a date window's final number is
+       regressed instead (TW_WIN, in V()), and the pieces stay the window's own */
+    const act = TW.act;
     const xk = m.k == null ? xkFit : act * (m.k - pkk) + (1 - act) * xkFit, xbb = m.bb == null ? xbbFit : act * (m.bb - pkbb) + (1 - act) * xbbFit;
-    const hbp = I.win && L.hbp != null ? L.hbp + ((I.hbp || 0) / I.pa - L.hbp) * sh : (I.hbp || 0) / I.pa;
+    const hbp = (I.hbp || 0) / I.pa, ibb = m.ibbr != null && L.ibbr != null ? m.ibbr : null;
     const bx = { evfb: m.evfb, brfb: m.brfb, brld: m.brld, pfb: I.pfb, brl: m.brl, ev90: m.ev90 };
     // the barrel fit, the xHR/FB tab's own (Sean, 16 Oct 2026, Anthony's 23.7 against the tab's 26.9: "switch it so both include barrel %");
     // TW_HF (exit velocity alone) stays for the record — TW_USE_EV turns it back on
@@ -8317,12 +8376,16 @@
     const hrb = xhf / 100 * I.fbs;
     const D = xbabDrivers(I, L); if (!D) return null; const { xbab, dv } = D;
     const bip = Math.max(0, 1 - xk / 100 - xbb / 100 - hbp), xhr = hrb * bip * I.pa;
-    const tph = Math.min(1.7, Math.max(1, (dxs * I.ab - 4 * xhr) / Math.max(1, m.dxba * I.ab - xhr)));
+    // Extra power (the review's items 2-3): the model's bases per hit that isn't a home run once the home runs xHR/FB credits are taken out of its
+    // xSLG — so where the model sees more home-run power than xHR/FB does, the difference lands here (Judge 2026: 1.57 against his real 1.26).
+    // Re-centred on the season's real bases per non-HR hit (L.tphU above); before that pass it is the raw model number
+    const tphU = (dxs * I.ab - 4 * xhr) / Math.max(1, m.dxba * I.ab - xhr);
+    const tph = L.tphU != null && L.tphA != null ? Math.min(1.8, Math.max(1, L.tphA + (tphU - L.tphU))) : Math.min(1.7, Math.max(1, tphU));
     const vh = TW.s + (tph - 1) * (TW.d - TW.s);
-    const raw = TW.bb * xbb / 100 + TW.hbp * hbp + bip * (hrb * TW.hr + (1 - hrb) * xbab * vh);
+    const raw = twRaw({ xk, xbb, ibb, hbp, xhf, fbs: I.fbs, xbab, tph }), gba = gbAdj(m, L);
     // the same skills in the parks he hit in: every piece moved by his parks' residual on it (xwOBA in his parks, m.xwpk)
     const pk = hasPk ? { hr: m.pkhr || 0, bab: m.pkbab || 0, xb: m.pkxb || 0, k: pkk, bb: pkbb } : null;
-    const rawPk = pk ? twRaw({ xk: xk + pk.k, xbb: xbb + pk.bb, hbp, xhf: xhf + pk.hr, fbs: I.fbs, xbab: xbab + pk.bab / 1000, tph: tph + pk.xb }) : null;
+    const rawPk = pk ? twRaw({ xk: xk + pk.k, xbb: xbb + pk.bb, ibb, hbp, xhf: xhf + pk.hr, fbs: I.fbs, xbab: xbab + pk.bab / 1000, tph: tph + pk.xb }) : null;
     // xSLG's pieces (XSLG, 23 Oct 2026): the same K%, BB%, HBP, fly balls, xHR/FB and xBABIP; extra bases half the skills fit (sk), half the model's
     // tph re-centred on the league's real bases per hit (tm); o = the share of his PA that are sacrifices (not at-bats, not walks or HBP), his own
     let xs = null;
@@ -8335,7 +8398,7 @@
         xs = { sk, tm, tx, o, c0, raw: slgRaw(c0), rawPk: cPk ? slgRaw(cPk) : null, bra: baRaw(c0), braPk: cPk ? baRaw(cPk) : null };
       }
     }
-    return { xk, xbb, xkFit, xbbFit, hbp, xhf, dh, fit: f, fbs: I.fbs, hrb, xbab, dv, tph, vh, bip, raw, bx, I, pk, rawPk, xs };
+    return { xk, xbb, ibb, xkFit, xbbFit, hbp, xhf, dh, fit: f, fbs: I.fbs, hrb, xbab, dv, tph, tphU, vh, bip, raw, gba, bx, I, pk, rawPk, xs };
   }
   // the nine drivers' xBABIP: the league's expected BABIP (its 300+ PA hitters' batted-ball-model xBABIP, PA-weighted — the model's number is
   // only the starting point) moved by each driver against the league. Since 15 Oct 2026 this IS the site's xBABIP (Sean: "keep the drivers only
@@ -8346,7 +8409,6 @@
     if (!L || L.xbabip == null) return null;
     let xbab = L.xbabip, n = 0; const dv = {};
     for (const k in XBAB) { const his = k === "ldp" || k === "gbp" ? I[k] : I.m[k], lg = L[k], g = k === "spd" || k === "gbp" ? I.gbs : 100; if (his == null || lg == null || g == null) continue; dv[k] = xbabW(k, I.bats) * (his - lg) * g / 100 / 1000; xbab += dv[k]; n++; }
-    if (n && I.win) { const f = Math.min(1, (I.pa || 0) / 300); for (const k in dv) dv[k] *= f; xbab = L.xbabip + (xbab - L.xbabip) * f; }   /* small windows regress to the league (12 Nov 2026) */
     return n ? { xbab, dv, n } : null;
   }
   // the drivers on the card's view, for V(): the view's rates against the dataset's full-season league, as talentOf does; a combined span of
@@ -8354,15 +8416,36 @@
   function driversOf(p, v) {
     if (DS.multi) return DS.each && p.src && p.real ? withDataset(p.src, () => driversOf(p.real, v)) : null;
     const L = talentLeague(), m = v.m.spd == null && p.m && p.m.spd != null ? Object.assign({}, v.m, { spd: p.m.spd }) : v.m;
-    const TI = twInputs(m, v.ctx, v.pa, v.ab, 0, p.bats); TI.win = !!(winIdx() || splitActive()); const d = xbabDrivers(TI, L); if (d) d.L = L; return d;
+    const TI = twInputs(m, v.ctx, v.pa, v.ab, 0, p.bats), d = xbabDrivers(TI, L); if (d) d.L = L; return d;
   }
   // his parks' residuals in words, and where he hit (the season's top parks by PA, ctx.pk3 from the build; a window names its label) — the xwOBA tab
   const parkPieces = (pk) => { const sg = (z, d) => (z > 0 ? "+" : z < 0 ? "−" : "") + Math.abs(z).toFixed(d); return `HR/FB ${sg(pk.hr, 1)} points, BABIP ${sg(pk.bab, 0)} points, bases per hit ${sg(pk.xb, 2)}, K% ${sg(pk.k, 1)}, BB% ${sg(pk.bb, 1)}`; };
   const parkWhere = (p, v) => { const top = p.ctx && p.ctx.pk3, pa = p.pa || 0; if (!top || !pa) return "no park record"; return top.map(([c, n]) => `${parkName(c, +DS.season)} ${Math.round(100 * n / pa)}%`).join(", ") + (needsRows() ? " (the season; the row itself is on this window)" : ""); };
   const parkTop = (p, v) => { const top = p.ctx && p.ctx.pk3, pa = p.pa || 0; return top && pa ? `${top[0][0]} ${Math.round(100 * top[0][1] / pa)}%` : "his parks"; };
   // the same arithmetic on a set of pieces, for the Talent tab's build-up (each step swaps one league piece for his)
-  const twRaw = (c) => { const bip = Math.max(0, 1 - c.xk / 100 - c.xbb / 100 - c.hbp), hrb = c.xhf / 100 * c.fbs, vh = TW.s + (c.tph - 1) * (TW.d - TW.s);
-    return TW.bb * c.xbb / 100 + TW.hbp * c.hbp + bip * (hrb * TW.hr + (1 - hrb) * c.xbab * vh); };
+  // intentional walks out (the review's item 5, 12 Nov 2026): wOBA leaves them out of both the walks and the plate appearances, so the pieces are
+  // read on the plate appearances that weren't one — c.ibb his IBB per 100 PA (null on a level without the field). Before, xwOBA counted them as
+  // walks and wOBA didn't, so a feared hitter's xwOBA − wOBA read as bad luck (Yordan 2026: .435 against .429; .423 on wOBA's footing)
+  const twRaw = (c) => { const i = c.ibb > 0 ? c.ibb / 100 : 0, bip = Math.max(0, 1 - c.xk / 100 - c.xbb / 100 - c.hbp), hrb = c.xhf / 100 * c.fbs, vh = TW.s + (c.tph - 1) * (TW.d - TW.s);
+    return (TW.bb * Math.max(0, c.xbb / 100 - i) + TW.hbp * c.hbp + bip * (hrb * TW.hr + (1 - hrb) * c.xbab * vh)) / (1 - i); };
+  // the scaled value of a set of pieces — the scale, then the ground-ball term (c.gba, already in wOBA)
+  const twVal = (c, L) => twRaw(c) * L.scale + (c.gba || 0);
+  // the league's own pieces, the one baseline every build-up starts from (the review's item 4): its 300+ PA hitters' actual K%, BB%, IBB rate,
+  // HBP rate, fly-ball share, HR/FB, bases per non-HR hit and BABIP — the expected pieces are centred on the same numbers, so the xwOBA and the
+  // wOBA build-ups both open on one League row (they had opened 3 points apart: the xwOBA one's K% was the 20+ PA league's, 22.1 against 21.1)
+  const twLeague = (L) => ({ xk: L.k, xbb: L.bb, ibb: L.ibbr, hbp: L.hbp, fbs: L.fbs, xhf: L.hr.hrfb, tph: L.tphA, xbab: L.xbabip, gba: 0 });
+  // the ground-ball term on a hitter's GB% (TW_GB), in wOBA; a missing rate counts as the league's
+  const gbAdj = (m, L) => (TW_GB && L && m.gb != null && L.gb != null ? TW_GB.gb * (m.gb - L.gb) / 1000 : 0);
+  // order-free shares (the review's item 4): each piece's ± is its Shapley value — the change it makes averaged over every order of swapping the
+  // pieces in from the league's — so a piece no longer gets more or less credit for where it sits in the table (Chandler Simpson 2026: xHR/FB
+  // −73 and Fly balls 0 in the old fixed order, −49 and −15 order-free). keys: the pieces; base / his: the league's and his; val: their value
+  function shapley(keys, base, his, val) {
+    const n = keys.length, N = 1 << n, v = new Array(N), fact = [1]; for (let i = 1; i <= n; i++) fact[i] = fact[i - 1] * i;
+    for (let s0 = 0; s0 < N; s0++) { const c = Object.assign({}, base); for (let j = 0; j < n; j++) if (s0 & (1 << j)) c[keys[j]] = his[keys[j]]; v[s0] = val(c); }
+    const out = {}, bits = (x) => { let k = 0; while (x) { k += x & 1; x >>= 1; } return k; };
+    keys.forEach((k, j) => { const b = 1 << j; let phi = 0; for (let s0 = 0; s0 < N; s0++) { if (s0 & b) continue; const z = bits(s0); phi += fact[z] * fact[n - z - 1] / fact[n] * (v[s0 | b] - v[s0]); } out[k] = phi; });
+    out.__from = v[0]; out.__to = v[N - 1]; return out;
+  }
   // xSLG on a set of pieces (XSLG): total bases over at-bats, per plate appearance — four a home run, tph a hit that isn't one, the at-bats what
   // walks, HBP and sacrifices (o) leave
   const slgRaw = (c) => { const bip = Math.max(0, 1 - c.xk / 100 - c.xbb / 100 - c.hbp), hrb = c.xhf / 100 * c.fbs, ab = 1 - c.xbb / 100 - c.hbp - (c.o || 0);
@@ -8389,9 +8472,9 @@
     }
     const L = talentLeague(), m = v.m.spd == null && p.m && p.m.spd != null ? Object.assign({}, v.m, { spd: p.m.spd }) : v.m;
     const hbp = v.ctx && v.ctx.HBP != null ? v.ctx.HBP : p.ctx && p.ctx.HBP != null && p.pa ? p.ctx.HBP / p.pa * (v.pa || 0) : 0;
-    const TI = twInputs(m, v.ctx, v.pa, v.ab, hbp, p.bats); TI.win = !!(winIdx() || splitActive());   /* a window or split: shrink small samples (12 Nov 2026) */
+    const TI = twInputs(m, v.ctx, v.pa, v.ab, hbp, p.bats);
     const t = talentCore(TI, L); if (!t) return null;
-    t.L = L; t.txwN = t.raw * L.scale; t.xwpk = t.rawPk == null ? null : t.rawPk * L.scale;
+    t.L = L; t.txwN = t.raw * L.scale + t.gba; t.xwpk = t.rawPk == null ? null : t.rawPk * L.scale + t.gba;
     // the site's xwOBA carries his parks unless the switch says park-neutral (18 Oct 2026); a season without park numbers (the minors) has the one
     t.parkIn = !XWN && t.xwpk != null; t.txw = t.parkIn ? t.xwpk : t.txwN;
     if (t.xs && L.sslg != null && t.xs.raw != null) { t.xslgN = t.xs.raw * L.sslg; t.xslgPk = t.xs.rawPk == null ? null : t.xs.rawPk * L.sslg; t.xslg = t.parkIn && t.xslgPk != null ? t.xslgPk : t.xslgN; }   /* xSLG follows the same park switch (23 Oct 2026) */
@@ -8603,6 +8686,10 @@
         if (d0 != null) run += d0;
         b.row(lab, his, lg, f, pctAmong(ref.map((q) => val(q, k)).filter((z) => z != null), his, Math.sign(XBAB[k])), d0 == null ? null : step(run), d0 == null ? null : run, XBAB_TIP[k]);
       }
+      // a date window's xBABIP regressed toward the league's by its plate appearances (TW_WIN.xbab, the review's item 1, 12 Nov 2026): the
+      // drivers above are the window's own
+      if (D.wdb != null) { run -= D.wdb; const k0 = TW_WIN.xbab, n0 = pv.pa, sh = Math.round(100 * k0 / (n0 + k0));
+        b.row("Sample size", n0, null, (x) => `${x} PA`, null, step(run), run, `a window of ${n0} PA is pulled ${sh}% of the way to the league's BABIP (${fmtX(lgX)}) — ${k0} / (${n0} + ${k0}) — how much of a window's xBABIP carried into the next two months (30-game-day windows against the next 60 game days, 2022-26). The drivers above are the window's own`); }
       // the nine drivers are the expected BABIP (Sean, 15 Oct 2026: "keep the drivers only one"): the running BABIP after FB% is marked, and one
       // Luck row carries it to his BABIP — the batted-ball model's own read of each ball is inside that row, by his choice
       b.mark("Expected BABIP");
@@ -8721,31 +8808,43 @@
   // (marked) → In his parks, on the view's V(p).tal; null without a talent build
   function xwBuildUp(p, v, title) {
     const t = v.tal, m = v.m; if (!t) return null;
-    const L = t.L, sc = L.scale, wob = (c) => twRaw(c) * sc;
+    const L = t.L, val = (c) => twVal(c, L);
     const f3 = (x) => fmtX(x), pct1 = (x) => x.toFixed(1) + "%", pts = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x) * 1000), sg1 = (z) => (z > 0 ? "+" : z < 0 ? "−" : "") + Math.abs(z).toFixed(1);
-    const lgK = (lgRatesH().k || 0) - 0.08 * (1 - TW.act);   // the league's blend: its K% and its xK% (XKH's −0.08)
-    const cur = { xk: lgK, xbb: L.bb, hbp: L.hbp, xhf: L.hr.hrfb, fbs: L.fbs, xbab: L.xbabip, tph: L.tph };
+    // one baseline and order-free shares (the review's item 4, 12 Nov 2026): the League row is the league's own pieces (twLeague — the wOBA
+    // build-up below opens on the same row), and each piece's ± is its Shapley value: the change it makes averaged over every order of swapping
+    // the pieces in, so no piece gets more or less for where it sits in the table. A piece the view doesn't carry (the IBB rate on a level
+    // without it) stays the league's on both sides
+    const lg = twLeague(L), ib = t.ibb != null && L.ibbr != null; if (!ib) lg.ibb = null;
+    const his = { xk: t.xk, xbb: t.xbb, ibb: ib ? t.ibb : null, hbp: t.hbp, fbs: t.fbs, xhf: t.xhf, tph: t.tph, xbab: t.xbab, gba: 0 };
+    const keys = ["xk", "xbb", ...(ib ? ["ibb"] : []), "hbp", "fbs", "xhf", "tph", "xbab"], S = shapley(keys, lg, his, val);
     const vl = viewLabel("H");
     const W = wrcOn(), fwv = (x) => fw(x), ptsW = W ? (x) => wsD(x) : pts;   /* under the wRC+ switch the running column and the ± print on that scale (16 Oct 2026) */
     const b = buildUp(wsLab(title || `xwOBA build-up · ${DS.season}${DS.level && DS.level !== "MLB" ? " " + (DS.levelName || DS.level) : ""}`), `${vl && vl !== "full season" ? vl + " · " : ""}${v.pa} PA · ± in ${W ? "wRC+" : "wOBA"} points, against the season's 300+ PA hitters`, W ? "wRC+" : "wOBA", fwv, ptsW, 0.020);
-    const R3 = (x) => Math.round(x * 1000) / 1000; let prev = R3(wob(cur));
+    const R3 = (x) => Math.round(x * 1000) / 1000; let run = S.__from, prev = R3(run);
     const step = (to) => { const c = R3(to), d = c - prev; prev = c; return d; };
-    b.row("League", null, wob(cur), fwv, null, "→", wob(cur), "the season's 300+ PA hitters' pieces, put together the same way — where the build-up starts (scaled to their real wOBA)");
-    const pc = (k, his, dir) => { const vals = []; for (const q of pool("H").ref) { const x = V(q).tal; if (x && x[k] != null) vals.push(x[k]); } return pctAmong(vals, his, dir); };
+    b.row("League", null, run, fwv, null, "→", run, `the season's 300+ PA hitters' own pieces — their K%, BB%, intentional walks, HBP, fly balls, HR/FB, bases per hit and BABIP — put together the same way, scaled to their real wOBA (${L.woba != null ? f3(L.woba) : "–"}): where the build-up starts, the same row the wOBA build-up opens on`);
+    const pc = (k, h, dir) => { const vals = []; for (const q of pool("H").ref) { const x = V(q).tal; if (x && x[k] != null) vals.push(x[k]); } return pctAmong(vals, h, dir); };
+    const order = "Each piece's ± is its share of the trip from the league, averaged over every order the pieces could be swapped in, so the column doesn't depend on the order of the rows";
     const steps = [
-      ["K%", "xk", t.xk, lgK, pct1, -1, `half his actual K% (${m.k != null ? pct1(m.k) : "–"}${t.pk && t.pk.k ? `, less his parks' ${sg1(t.pk.k)} on it` : ""}), half his xK% (${pct1(t.xkFit)}: the strikeout rate his whiffs, swing decisions and the strikes he sees come with) — a season's K% is mostly skill, and the half-and-half forecast next season's K% better than either alone`],
-      ["BB%", "xbb", t.xbb, L.bb, pct1, 1, `half his actual BB% (${m.bb != null ? pct1(m.bb) : "–"}${t.pk && t.pk.bb ? `, less his parks' ${sg1(t.pk.bb)} on it` : ""}), half his xBB% (${pct1(t.xbbFit)}: the walk rate his chase rate, zone swings, contact, the share of pitches he sees in the zone, his fouls per contact and his intentional walks come with) — the half-and-half forecast next season's BB% better than either alone`],
-      ["HBP", "hbp", t.hbp, L.hbp, (x) => pct1(100 * x), 1, "his own hit-by-pitch rate per plate appearance — there's no process to model, so it stands as it is"],
-      ["xHR/FB", "xhf", t.xhf, L.hr.hrfb, pct1, 1, `home runs per fly ball + popup his contact deserves — the xHR/FB tab's fit: FB EV, Barrel% on fly balls and on line drives, pulled fly balls — against the season's own HR / (fly balls + popups), so it can sit a few tenths off the tab's, which is over fly balls alone`],
-      ["Fly balls", "fbs", t.fbs, L.fbs, (x) => pct1(100 * x), 1, "fly balls + popups per ball in play: how often xHR/FB gets its chance"],
-      ["xBABIP", "xbab", t.xbab, L.xbabip, f3, 1, `the xBABIP tab's nine drivers (line drives, popups, grounder and liner EV, grounder and liner pull, speed on grounders, oppo, fly balls) with no Noise or Luck row (his actual BABIP: ${m.babip != null ? f3(m.babip) : "–"})`],
-      ["Extra bases", "tph", t.tph, L.tph, (x) => x.toFixed(2), 1, "total bases per hit that isn't a home run, from the directional model's xSLG and xBA — how many of his hits it expects to go for extra bases"]];
-    for (const [lab, k, his, lg, f, dir, tip] of steps) { cur[k] = his; const run = wob(cur); b.row(lab, his, lg, f, pc(k, his, dir), step(run), run, tip); }
+      ["K%", "xk", lg.xk, pct1, -1, `half his actual K% (${m.k != null ? pct1(m.k) : "–"}${t.pk && t.pk.k ? `, less his parks' ${sg1(t.pk.k)} on it` : ""}), half his xK% (${pct1(t.xkFit)}: the strikeout rate his whiffs, swing decisions and the strikes he sees come with) — a season's K% is mostly skill, and the half-and-half forecast next season's K% better than either alone`],
+      ["BB%", "xbb", lg.xbb, pct1, 1, `half his actual BB% (${m.bb != null ? pct1(m.bb) : "–"}${t.pk && t.pk.bb ? `, less his parks' ${sg1(t.pk.bb)} on it` : ""}), half his xBB% (${pct1(t.xbbFit)}: the walk rate his chase rate, zone swings, contact, the share of pitches he sees in the zone, his fouls per contact and his intentional walks come with) — the half-and-half forecast next season's BB% better than either alone. Intentional walks included: the IBB row takes his back off`],
+      ["IBB", "ibb", lg.ibb, pct1, -1, "intentional walks per 100 plate appearances, his and the league's. wOBA leaves them out of both the walks and the plate appearances, and since 12 Nov 2026 so does xwOBA: the BB% row counted every walk, this row takes his intentional ones back off with the plate appearances they took. Before, xwOBA counted them as walks and wOBA didn't, so a feared hitter's xwOBA sat over his wOBA for bookkeeping alone (Yordan 2026: .435 against .429)"],
+      ["HBP", "hbp", lg.hbp, (x) => pct1(100 * x), 1, "his own hit-by-pitch rate per plate appearance — there's no process to model, so it stands as it is"],
+      ["Fly balls", "fbs", lg.fbs, (x) => pct1(100 * x), 1, "fly balls + popups per ball in play: how often xHR/FB gets its chance"],
+      ["xHR/FB", "xhf", lg.xhf, pct1, 1, `home runs per fly ball + popup his contact deserves — the xHR/FB tab's fit: FB EV, Barrel% on fly balls and on line drives, pulled fly balls — against the season's own HR / (fly balls + popups), so it can sit a few tenths off the tab's, which is over fly balls alone`],
+      ["Extra power", "tph", lg.tph, (x) => x.toFixed(2), 1, `bases per hit that isn't a home run, from the batted-ball model's xSLG and xBA once the home runs xHR/FB credits are taken out — so it is mostly the model seeing more (or less) home-run power than xHR/FB does: it tracks his actual bases per non-HR hit at only r .18, and the gap between the two HR reads at −.52. Re-centred on the season's real bases per non-HR hit (12 Nov 2026), which the model's own level drifted off (1.09 against a real 1.27 in 2015); it was called Extra bases until then${m.slg != null && m.ba != null && t.I && t.I.hr != null && v.ab && m.ba * v.ab - t.I.hr > 0 ? ` (his actual: ${((m.slg * v.ab - 4 * t.I.hr) / (m.ba * v.ab - t.I.hr)).toFixed(2)})` : ""}`],
+      ["xBABIP", "xbab", lg.xbab, f3, 1, `the xBABIP tab's nine drivers (line drives, popups, grounder and liner EV, grounder and liner pull, speed on grounders, oppo, fly balls) with no Noise or Luck row (his actual BABIP: ${m.babip != null ? f3(m.babip) : "–"})`]];
+    for (const [lab, k, lgv, f, dir, tip] of steps) { if (!keys.includes(k)) continue; run += S[k]; b.row(lab, his[k], lgv, f, pc(k, his[k], dir), step(run), run, tip + ". " + order); }
+    // ground balls (the review's item 5): what the pieces leave out, a straight line on his GB% against the league's (TW_GB)
+    if (t.gba) { run += t.gba; b.row("Ground balls", m.gb, L.gb, pct1, null, step(run), run, `his ground-ball rate against the league's: ${TW_GB.gb.toFixed(2)} wOBA points a point of GB%, what the pieces leave out. Over every 300+ PA season 2015-26 the most ground-ball-heavy fifth of hitters beat the pieces by 4 points and the most fly-ball-heavy fifth fell 5 short, in every season — the build's fixed linear weights price a grounder's hits and a fly ball's outs a little off — and next season's wOBA carries the same lean, so it's skill, not luck`); }
+    // a date window's xwOBA regressed toward the league by its plate appearances (the review's item 1): the pieces above are the window's own
+    if (t.wd != null) { run = t.txwN; const k0 = TW_WIN.xw, sh = Math.round(100 * k0 / (t.wpa + k0));
+      b.row("Sample size", t.wpa, null, (x) => `${x} PA`, null, step(run), run, `a window of ${t.wpa} PA is pulled ${sh}% of the way to the league's wOBA (${L.woba != null ? f3(L.woba) : "–"}) — ${k0} / (${t.wpa} + ${k0}) — which is how much of a window's xwOBA carried into the next two months: every 30-game-day window 2022-26 against the next 60 game days, and first halves against second halves. The pieces above are the window's own, and so is the park row below, pulled the same share (a window's park mix doesn't carry forward either); a full season isn't regressed`); }
     // the park is the build-up's last piece (Sean, 18 Oct 2026: "on the build up make it the last piece and next to the piece before the park
     // factor goes in make it say park-neutral xwoba, and then make xwOBA be the piece after the park factor goes in"): the running number after
-    // Extra bases is his park-neutral xwOBA (light blue), the Park factor row puts his parks' residual back on every piece, and the number it lands
+    // the pieces is his park-neutral xwOBA (light blue), the Park factor row puts his parks' residual back on every piece, and the number it lands
     // on is the site's xwOBA (gold). Under the park-neutral switch the gold stays on the park-neutral number and the park row's reads "with his
-    // parks". A season without park numbers (the minors) ends at Extra bases, gold
+    // parks". A season without park numbers (the minors) ends on the pieces, gold
     if (m.xwpk != null && t.pk) { const nz = XWN; ensureParks();
       b.mark(wsLab(nz ? "xwOBA" : "Park-neutral xwOBA"), nz ? null : "kneut");
       b.row("Park factor", parkTop(p, v), null, (x) => x, null, step(m.xwpk), m.xwpk, `his parks put back on every piece: ${parkPieces(t.pk)} — ${parkWhere(p, v)}. Home runs, hits and bases ball by ball (each of his balls at the park it was hit in against the same ball at a neutral park), strikeouts and walks by the parks' residual per PA where he hit${nz ? " — the park-neutral switch is on (Leaderboard ▸ Filters ▸ Stats), so the site's xwOBA is the one above" : ""}`);
@@ -8765,24 +8864,35 @@
     if (!t || !X || L.sslg == null || L.sba == null || t.xslgN == null || X.bra == null) return null;
     const iso = (c) => { const s0 = slgRaw(c), b0 = baRaw(c); return s0 == null || b0 == null ? null : s0 * L.sslg - b0 * L.sba; };
     const f3 = (x) => fmtX(x), pct1 = (x) => x.toFixed(1) + "%", pts = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x) * 1000), sg1 = (z) => (z > 0 ? "+" : z < 0 ? "−" : "") + Math.abs(z).toFixed(1);
-    const lgK = (lgRatesH().k || 0) - 0.08 * (1 - TW.act);   // the league's blend, as the xwOBA build-up starts
-    const lg0 = () => ({ xk: lgK, xbb: L.bb, hbp: L.hbp, o: L.o || 0, xhf: L.hr.hrfb, fbs: L.fbs, xbab: L.xbabip, tph: L.tphA }), cur = lg0();
+    // the league's own pieces, as the xwOBA build-up opens (twLeague: its K% is the 300+ PA hitters' own since 12 Nov 2026), and order-free
+    // shares (Shapley): each piece's ± is the change it makes averaged over every order of swapping the pieces in. The extra-bases piece is two
+    // players, its skills half and its model half (tx = XSLG.a · model + (1 − XSLG.a) · skills); HBP and sacrifices move together
+    const A = XSLG.a, ex = (c) => Math.min(1.8, Math.max(1, A * c.tm + (1 - A) * c.sk));
+    const pieces = (c) => ({ xk: c.xk, xbb: c.xbb, hbp: c.ho ? t.hbp : L.hbp, o: c.ho ? X.o : L.o || 0, xhf: c.xhf, fbs: c.fbs, xbab: c.xbab, tph: ex(c) });
+    const lg = { xk: L.k, xbb: L.bb, ho: 0, fbs: L.fbs, xhf: L.hr.hrfb, xbab: L.xbabip, sk: L.tphA, tm: L.tphA };
+    const his = { xk: t.xk, xbb: t.xbb, ho: 1, fbs: t.fbs, xhf: t.xhf, xbab: t.xbab, sk: X.sk, tm: X.tm };
+    const S = shapley(Object.keys(lg), lg, his, (c) => iso(pieces(c)));
     const vl = viewLabel("H"), lv = DS.level && DS.level !== "MLB" ? " " + (DS.levelName || DS.level) : "";
     const b = buildUp(`xISO build-up · ${DS.season}${lv}`, `${vl && vl !== "full season" ? vl + " · " : ""}${v.ab} AB · ± in ISO points, against the season's 300+ PA hitters`, "ISO", f3, pts, 0.040);
-    const R3 = (x) => Math.round(x * 1000) / 1000; let prev = R3(iso(cur));
+    const R3 = (x) => Math.round(x * 1000) / 1000; let run = S.__from, prev = R3(run);
     const step = (to) => { const c = R3(to), d = c - prev; prev = c; return d; };
-    b.row("League", null, iso(cur), f3, null, "→", iso(cur), `the season's 300+ PA hitters' pieces put together the same way — where the build-up starts (scaled to their real slugging and average${L.iso != null ? `; their ISO: ${f3(L.iso)}` : ""})`);
-    const ref = pool("H").ref, pc = (get, his, dir) => { const vals = []; for (const q of ref) { const x = V(q).tal, z = x && get(x); if (z != null) vals.push(z); } return pctAmong(vals, his, dir); };
-    const S = (lab, k, his, lg, f, dir, tip, set, get) => { set(); const run = iso(cur); b.row(lab, his, lg, f, pc(get || ((x) => x[k]), his, dir), step(run), run, tip); };
-    S("K%", "xk", t.xk, lgK, pct1, -1, `half his actual K% (${m.k != null ? pct1(m.k) : "–"}${t.pk && t.pk.k ? `, less his parks' ${sg1(t.pk.k)} on it` : ""}), half his xK% (${pct1(t.xkFit)}) — the xwOBA build's own. A strikeout is an at-bat with no chance at an extra base, so it costs ISO directly`, () => { cur.xk = t.xk; });
-    S("BB%", "xbb", t.xbb, L.bb, pct1, -1, `half his actual BB% (${m.bb != null ? pct1(m.bb) : "–"}), half his xBB% (${pct1(t.xbbFit)}) — the xwOBA build's. A walk isn't an at-bat, so it moves ISO only a little and only one way: the fewer at-bats end in a ball in play, the bigger the share of them his strikeouts take`, () => { cur.xbb = t.xbb; });
-    S("HBP, sacrifices", "ho", t.hbp + X.o, L.hbp + (L.o || 0), (x) => pct1(100 * x), -1, `his hit-by-pitches and the sacrifice flies and bunts (${pct1(100 * X.o)}), per plate appearance — like a walk, none of them is an at-bat`, () => { cur.hbp = t.hbp; cur.o = X.o; }, (x) => (x.xs ? x.hbp + x.xs.o : null));
-    S("Fly balls", "fbs", t.fbs, L.fbs, (x) => pct1(100 * x), 1, "fly balls + popups per ball in play: how often xHR/FB gets its chance", () => { cur.fbs = t.fbs; });
-    S("xHR/FB", "xhf", t.xhf, L.hr.hrfb, pct1, 1, "home runs per fly ball + popup his contact deserves — the xHR/FB tab's fit (FB EV, Barrel% on fly balls and on line drives, pulled fly balls), the xwOBA build's. A home run is three extra bases, ISO's biggest piece", () => { cur.xhf = t.xhf; });
-    S("xBABIP", "xbab", t.xbab, L.xbabip, f3, 1, `the xBABIP tab's nine drivers — hits on the balls in play that aren't home runs (his actual BABIP: ${m.babip != null ? f3(m.babip) : "–"}). A single adds nothing to ISO, so these count only through the doubles and triples among them`, () => { cur.xbab = t.xbab; });
-    S("Extra bases · skills", "sk", X.sk, L.tphA, (x) => x.toFixed(2), 1, `half of the extra-bases piece — bases per hit that isn't a home run: the ones his GB% (${m.gb != null ? pct1(m.gb) : "–"}), sprint speed (${m.spd != null ? m.spd.toFixed(1) : p.m && p.m.spd != null ? p.m.spd.toFixed(1) : "–"} ft/s), LD EV (${m.evld != null ? m.evld.toFixed(1) : "–"}) and Pull% (${m.pullp != null ? pct1(m.pullp) : "–"}) come with — a fit over every 300+ PA season 2015-26 (it calls next season's bases per hit better than his own rate does)`, () => { cur.tph = XSLG.a * L.tphA + (1 - XSLG.a) * X.sk; }, (x) => x.xs && x.xs.sk);
-    S("Extra bases · model", "tm", X.tm, L.tphA, (x) => x.toFixed(2), 1, "the other half: the batted-ball model's extra bases — its xSLG and xBA with the home runs above taken out, against the league's — what the speed and angle of each of his balls say", () => { cur.tph = X.tx; }, (x) => x.xs && x.xs.tm);
-    const nz = XWN, xp = t.xslgPk != null && X.braPk != null ? t.xslgPk - X.braPk * L.sba : null;
+    b.row("League", null, run, f3, null, "→", run, `the season's 300+ PA hitters' pieces put together the same way — where the build-up starts (scaled to their real slugging and average${L.iso != null ? `; their ISO: ${f3(L.iso)}` : ""})`);
+    const ref = pool("H").ref, pc = (get, h, dir) => { const vals = []; for (const q of ref) { const x = V(q).tal, z = x && get(x); if (z != null) vals.push(z); } return pctAmong(vals, h, dir); };
+    const order = "Each piece's ± is its share of the trip from the league, averaged over every order the pieces could be swapped in";
+    const R = (lab, k, h, lgv, f, dir, tip, get) => { run += S[k]; b.row(lab, h, lgv, f, pc(get || ((x) => x[k]), h, dir), step(run), run, tip + ". " + order); };
+    R("K%", "xk", t.xk, L.k, pct1, -1, `half his actual K% (${m.k != null ? pct1(m.k) : "–"}${t.pk && t.pk.k ? `, less his parks' ${sg1(t.pk.k)} on it` : ""}), half his xK% (${pct1(t.xkFit)}) — the xwOBA build's own. A strikeout is an at-bat with no chance at an extra base, so it costs ISO directly`);
+    R("BB%", "xbb", t.xbb, L.bb, pct1, -1, `half his actual BB% (${m.bb != null ? pct1(m.bb) : "–"}), half his xBB% (${pct1(t.xbbFit)}) — the xwOBA build's. A walk isn't an at-bat, so it moves ISO only a little and only one way: the fewer at-bats end in a ball in play, the bigger the share of them his strikeouts take`);
+    R("HBP, sacrifices", "ho", t.hbp + X.o, L.hbp + (L.o || 0), (x) => pct1(100 * x), -1, `his hit-by-pitches and the sacrifice flies and bunts (${pct1(100 * X.o)}), per plate appearance — like a walk, none of them is an at-bat`, (x) => (x.xs ? x.hbp + x.xs.o : null));
+    R("Fly balls", "fbs", t.fbs, L.fbs, (x) => pct1(100 * x), 1, "fly balls + popups per ball in play: how often xHR/FB gets its chance");
+    R("xHR/FB", "xhf", t.xhf, L.hr.hrfb, pct1, 1, "home runs per fly ball + popup his contact deserves — the xHR/FB tab's fit (FB EV, Barrel% on fly balls and on line drives, pulled fly balls), the xwOBA build's. A home run is three extra bases, ISO's biggest piece");
+    R("xBABIP", "xbab", t.xbab, L.xbabip, f3, 1, `the xBABIP tab's nine drivers — hits on the balls in play that aren't home runs (his actual BABIP: ${m.babip != null ? f3(m.babip) : "–"}). A single adds nothing to ISO, so these count only through the doubles and triples among them`);
+    R("Extra bases · skills", "sk", X.sk, L.tphA, (x) => x.toFixed(2), 1, `half of the extra-bases piece — bases per hit that isn't a home run: the ones his GB% (${m.gb != null ? pct1(m.gb) : "–"}), sprint speed (${m.spd != null ? m.spd.toFixed(1) : p.m && p.m.spd != null ? p.m.spd.toFixed(1) : "–"} ft/s), LD EV (${m.evld != null ? m.evld.toFixed(1) : "–"}) and Pull% (${m.pullp != null ? pct1(m.pullp) : "–"}) come with — a fit over every 300+ PA season 2015-26 (it calls next season's bases per hit better than his own rate does)`, (x) => x.xs && x.xs.sk);
+    R("Extra power · model", "tm", X.tm, L.tphA, (x) => x.toFixed(2), 1, "the other half: the xwOBA build's Extra power — the batted-ball model's bases per non-HR hit once xHR/FB's home runs are out of its xSLG, re-centred on the league's real number; mostly the model seeing more (or less) home-run power than xHR/FB does", (x) => x.xs && x.xs.tm);
+    // a date window's xISO regressed toward the league's ISO by its at-bats' plate appearances (TW_WIN.xiso, the review's item 1)
+    const wI = t.xiso0 != null && t.ww && L.iso != null ? t.ww.xiso : null, regI = (x) => (wI == null || x == null ? x : L.iso + (x - L.iso) * wI);
+    if (wI != null) { run = regI(run); const k0 = TW_WIN.xiso, sh = Math.round(100 * k0 / (t.wpa + k0));
+      b.row("Sample size", t.wpa, null, (x) => `${x} PA`, null, step(run), run, `a window of ${t.wpa} PA is pulled ${sh}% of the way to the league's ISO (${L.iso != null ? f3(L.iso) : "–"}) — ${k0} / (${t.wpa} + ${k0}) — how much of a window's xISO carried into the next two months (30-game-day windows against the next 60 game days, 2022-26). The pieces above are the window's own; the park row below is pulled the same share`); }
+    const nz = XWN, xp = X.rawPk != null && X.braPk != null ? regI(X.rawPk * L.sslg - X.braPk * L.sba) : null;
     if (xp != null && t.pk) {
       b.mark(nz ? "xISO" : "Park-neutral xISO", nz ? null : "kneut");
       b.row("Park factor", parkTop(p, v), null, (x) => x, null, step(xp), xp, `his parks put back on every piece: ${parkPieces(t.pk)} — ${parkWhere(p, v)}${nz ? " — the park-neutral switch is on (Leaderboard ▸ Filters ▸ Stats), so the site's xISO is the one above" : ""}`);
@@ -8790,7 +8900,7 @@
     } else b.mark("xISO");
     if (m.iso != null) {
       b.row("Luck", null, null, f3, null, step(m.iso), m.iso, "Extra bases above or below what his skills deserved in the parks he played in — the exact angle and spot of each ball, which fly balls cleared the wall and which liners found a gap, and plain luck.");
-      b.band("ISO", R3(m.iso) - R3(iso(lg0())), m.iso, `the whole trip, every step above added up: his ISO (slugging less average) as it happened`);
+      b.band("ISO", R3(m.iso) - R3(S.__from), m.iso, `the whole trip, every step above added up: his ISO (slugging less average) as it happened`);
       b.tag("kfinal");
     }
     return b.done();
@@ -8858,42 +8968,45 @@
   // between the rounded running numbers, so the column adds up
   function wobaBuildUp(p, v) {
     const t = v.tal, m = v.m; if (!t || m.woba == null) return null;
-    const L = t.L, sc = L.scale, pk = t.pk && PK_KEYS.some((k) => m[k] != null) ? t.pk : null;
-    const wob = (c) => twRaw(Object.assign({}, c, { xbb: c.xbb - (c.ibb || 0) })) * sc;
+    const L = t.L, pk = t.pk && PK_KEYS.some((k) => m[k] != null) ? t.pk : null, val = (c) => twVal(c, L);
     const f3 = (x) => fmtX(x), pct1 = (x) => x.toFixed(1) + "%", sg1 = (z) => (z > 0 ? "+" : z < 0 ? "−" : "") + Math.abs(z).toFixed(1), pts = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x) * 1000);
     const pkOf = (q, k) => (q.tal && q.tal.pk ? q.tal.pk[k] || 0 : 0);
     // his actual pieces at a neutral park (m.babip already is); the same for each qualifier, for the His colour
     const hfOf = (q) => (q.ctx && q.ctx.HR != null && q.tal && q.tal.I && q.tal.I.fbn ? 100 * q.ctx.HR / q.tal.I.fbn - pkOf(q, "hr") : null);
     const tphOf = (q) => { const h0 = q.ctx && q.ctx.HR != null ? q.ctx.HR : null, a0 = q.ab || 0; return h0 != null && q.m.ba != null && q.m.slg != null && a0 && q.m.ba * a0 - h0 > 0 ? (q.m.slg * a0 - 4 * h0) / (q.m.ba * a0 - h0) - pkOf(q, "xb") : null; };
-    const GET = { xk: (q) => (q.m.k == null ? null : q.m.k - pkOf(q, "k")), xbb: (q) => (q.m.bb == null ? null : q.m.bb - pkOf(q, "bb")), hbp: (q) => (q.tal ? q.tal.hbp : null),
+    const GET = { xk: (q) => (q.m.k == null ? null : q.m.k - pkOf(q, "k")), xbb: (q) => (q.m.bb == null ? null : q.m.bb - pkOf(q, "bb")), ibb: (q) => q.m.ibbr ?? null, hbp: (q) => (q.tal ? q.tal.hbp : null),
       xhf: hfOf, fbs: (q) => (q.tal ? q.tal.fbs : null), xbab: (q) => q.m.babip ?? null, tph: tphOf };
-    const ref = pool("H").ref, pc = (k, his, dir) => { const vals = []; for (const q of ref) { const x0 = GET[k](V(q)); if (x0 != null && isFinite(x0)) vals.push(x0); } return pctAmong(vals, his, dir); };
-    const lg0 = { xk: L.k, xbb: L.bb, hbp: L.hbp, xhf: L.hr && L.hr.hrfb, fbs: L.fbs, xbab: L.babip, tph: L.tphA, ibb: 0 };
-    if (Object.values(lg0).some((x) => x == null)) return null;
-    const cur = Object.assign({}, lg0), me = Object.assign({}, v, { tal: t });
+    const ref = pool("H").ref, pc = (k, h, dir) => { const vals = []; for (const q of ref) { const x0 = GET[k](V(q)); if (x0 != null && isFinite(x0)) vals.push(x0); } return pctAmong(vals, h, dir); };
+    // the same League row the xwOBA build-up opens on (twLeague, the review's item 4), and order-free shares: every piece's ± is its Shapley value
+    const lg = twLeague(L), ib = m.ibbr != null && L.ibbr != null; if (!ib) lg.ibb = null;
+    if (["xk", "xbb", "hbp", "fbs", "xhf", "tph", "xbab"].some((k) => lg[k] == null)) return null;
+    const me = Object.assign({}, v, { tal: t }), his = { gba: 0 }, keys = [];
+    for (const k of ["xk", "xbb", "ibb", "hbp", "fbs", "xhf", "tph", "xbab"]) { const x0 = k === "ibb" && !ib ? null : GET[k](me); if (x0 != null && isFinite(x0)) { his[k] = x0; keys.push(k); } else his[k] = lg[k]; }
+    const S = shapley(keys, lg, his, val);
     const vl = viewLabel("H");
     const W = wrcOn(), fwv = (x) => fw(x), ptsW = W ? (x) => wsD(x) : pts;
     const b = buildUp(wsLab(`wOBA build-up · ${DS.season}${DS.level && DS.level !== "MLB" ? " " + (DS.levelName || DS.level) : ""}`), `${vl && vl !== "full season" ? vl + " · " : ""}${v.pa} PA · ± in ${W ? "wRC+" : "wOBA"} points, against the season's 300+ PA hitters`, W ? "wRC+" : "wOBA", fwv, ptsW, 0.020);
-    const R3 = (x) => Math.round(x * 1000) / 1000; let prev = R3(wob(cur));
+    const R3 = (x) => Math.round(x * 1000) / 1000; let run = S.__from, prev = R3(run);
     const step = (to) => { const c = R3(to), d = c - prev; prev = c; return d; };
-    b.row("League", null, wob(cur), fwv, null, "→", wob(cur), `the season's 300+ PA hitters' own pieces, put together the same way — where the build-up starts (their wOBA: ${L.woba != null ? f3(L.woba) : "–"})`);
+    b.row("League", null, run, fwv, null, "→", run, `the season's 300+ PA hitters' own pieces put together the same way — the xwOBA build-up's League row; their wOBA: ${L.woba != null ? f3(L.woba) : "–"}`);
     const nzp = (k, raw, f) => (pk && pk[k] ? `, at a neutral park (his ${f(raw)} less his parks' ${sg1(pk[k])} on it)` : "");
+    const order = "Each piece's ± is its share of the trip from the league, averaged over every order the pieces could be swapped in";
     const steps = [
-      ["K%", "xk", GET.xk(me), L.k, pct1, -1, `his strikeout rate${m.k != null ? nzp("k", m.k, pct1) : ""}`],
-      ["BB%", "xbb", GET.xbb(me), L.bb, pct1, 1, `his walk rate, intentional walks included${m.bb != null ? nzp("bb", m.bb, pct1) : ""} — the IBB row takes those back off, since wOBA leaves them out`],
-      ["HBP", "hbp", t.hbp, L.hbp, (x) => pct1(100 * x), 1, "his hit-by-pitch rate per plate appearance"],
-      ["HR/FB", "xhf", hfOf(me), L.hr.hrfb, pct1, 1, `his home runs per fly ball + popup at a neutral park — each fly ball against the same ball at a neutral park${pk && pk.hr ? ` (his parks added ${sg1(pk.hr)})` : ""}`],
-      ["Fly balls", "fbs", t.fbs, L.fbs, (x) => pct1(100 * x), 1, "fly balls + popups per ball in play: how often a home run gets its chance"],
-      ["BABIP", "xbab", m.babip ?? null, L.babip, f3, 1, `his hits on balls in play that aren't home runs, at a neutral park${m.babipr != null ? ` (his raw BABIP ${f3(m.babipr)})` : ""}`],
-      ["Extra bases", "tph", tphOf(me), L.tphA, (x) => x.toFixed(2), 1, `total bases per hit that isn't a home run, at a neutral park${pk && pk.xb ? ` (his parks added ${sg1(pk.xb)})` : ""}`]];
-    for (const [lab, k, his, lg, f, dir, tip] of steps) {
-      if (his == null || !isFinite(his)) { b.row(lab, null, lg, f, null, null, null, tip + " — not on record for this view, so the league's stands"); continue; }
-      cur[k] = his; const run = wob(cur); b.row(lab, his, lg, f, pc(k, his, dir), step(run), run, tip);
+      ["K%", "xk", pct1, -1, `his strikeout rate${m.k != null ? nzp("k", m.k, pct1) : ""}`],
+      ["BB%", "xbb", pct1, 1, `his walk rate, intentional walks included${m.bb != null ? nzp("bb", m.bb, pct1) : ""} — the IBB row takes those back off`],
+      ["IBB", "ibb", pct1, -1, "intentional walks per 100 plate appearances, his and the league's: wOBA leaves them out of both the walks and the plate appearances, so the BB% row's credit for them comes back off here"],
+      ["HBP", "hbp", (x) => pct1(100 * x), 1, "his hit-by-pitch rate per plate appearance"],
+      ["Fly balls", "fbs", (x) => pct1(100 * x), 1, "fly balls + popups per ball in play: how often a home run gets its chance"],
+      ["HR/FB", "xhf", pct1, 1, `his home runs per fly ball + popup at a neutral park — each fly ball against the same ball at a neutral park${pk && pk.hr ? ` (his parks added ${sg1(pk.hr)})` : ""}`],
+      ["Extra bases", "tph", (x) => x.toFixed(2), 1, `total bases per hit that isn't a home run, at a neutral park${pk && pk.xb ? ` (his parks added ${sg1(pk.xb)})` : ""}`],
+      ["BABIP", "xbab", f3, 1, `his hits on balls in play that aren't home runs, at a neutral park${m.babipr != null ? ` (his raw BABIP ${f3(m.babipr)})` : ""}`]];
+    for (const [lab, k, f, dir, tip] of steps) {
+      if (k === "ibb" && !ib) continue;
+      if (!keys.includes(k)) { b.row(lab, null, lg[k], f, null, null, null, tip + " — not on record for this view, so the league's stands"); continue; }
+      run += S[k]; b.row(lab, his[k], lg[k], f, pc(k, his[k], dir), step(run), run, tip + ". " + order);
     }
-    if (m.ibbr != null && L.ibbr != null) { cur.ibb = m.ibbr - L.ibbr; const run = wob(cur);
-      b.row("IBB", m.ibbr, L.ibbr, pct1, null, step(run), run, "intentional walks per plate appearance, his beside the league's. wOBA leaves them out, while the BB% row priced every walk — so his rate over the league's comes back off here (the scale already takes out the league's share)"); }
     // what the pieces don't carry, so the build-up lands on his wOBA exactly: the build's fixed linear weights, triples, sacrifice flies, the scale
-    const pkEff = pk ? wob(Object.assign({}, cur, { xk: cur.xk + pk.k, xbb: cur.xbb + pk.bb, xhf: cur.xhf + pk.hr, xbab: cur.xbab + pk.bab / 1000, tph: cur.tph + pk.xb })) - wob(cur) : 0;
+    const at = Object.assign({}, his), pkEff = pk ? val(Object.assign({}, at, { xk: at.xk + pk.k, xbb: at.xbb + pk.bb, xhf: at.xhf + pk.hr, xbab: at.xbab + pk.bab / 1000, tph: at.tph + pk.xb })) - val(at) : 0;
     const wN = R3(m.woba - pkEff);
     b.row("Everything else", null, null, fwv, null, step(wN), wN, "what's left between his pieces put back together and his real wOBA: the build's fixed linear weights, triples, sacrifice flies and the season's scale — small, and not about his skill");
     if (pk) {
@@ -8922,7 +9035,8 @@
     if (!parksReady()) { ensureParks(); box.append(el("p", "note", "Loading the park table…")); return box; }
     const P = window.DRAFT_PARKS, Y = +DS.season, L = t.L, side = p.bats === "S" ? "S" : p.bats === "L" ? "L" : "R";
     const fac = (code) => { if (side !== "S") return parkFac(code, Y, side); const a = parkFac(code, Y, "L"), b = parkFac(code, Y, "R"); return a && b ? a.map((x, i) => 0.7 * x + 0.3 * b[i]) : a || b; };
-    const at = (f) => twRaw({ xk: t.xk + f[3] / 2, xbb: t.xbb + f[4] / 2, hbp: t.hbp, xhf: t.xhf + f[0] / 2, fbs: t.fbs, xbab: t.xbab + f[1] / 2000, tph: t.tph + f[2] / 2 }) * L.scale;
+    // the build's own value (intentional walks out, the ground-ball term), and a date window's regression (t.wd) the same as "now" has
+    const at = (f) => { const x = twVal({ xk: t.xk + f[3] / 2, xbb: t.xbb + f[4] / 2, ibb: t.ibb, hbp: t.hbp, xhf: t.xhf + f[0] / 2, fbs: t.fbs, xbab: t.xbab + f[1] / 2000, tph: t.tph + f[2] / 2, gba: t.gba || 0 }, L); return t.ww && t.wd != null && L.woba != null ? L.woba + (x - L.woba) * t.ww.xw : x; };
     const now = t.txw, rows = [];
     for (const code of P.codes) { const f = fac(code); if (!f) continue; rows.push({ code, f, xw: at(f) }); }
     if (!rows.length) return null;
@@ -10211,18 +10325,24 @@
     const vP = P.v, tP = P.t, stP = P.st;
     hd.append(el("span", "rollsub", `${q.pa} → ${p.pa} PA`));
     if (!tC || !tP) { box.append(el("p", "note", "The xwOBA build needs tracked contact in both seasons.")); return box; }
-    const own = (t) => { const o = { xk: t.xk, xbb: t.xbb, hbp: t.hbp, xhf: t.xhf, fbs: t.fbs, xbab: t.xbab, tph: t.tph }; if (t.parkIn && t.pk) { o.xk += t.pk.k; o.xbb += t.pk.bb; o.xhf += t.pk.hr; o.xbab += t.pk.bab / 1000; o.tph += t.pk.xb; } return o; };
-    const oC = own(tC), oP = own(tP), sc = tC.L.scale, wob = (c) => twRaw(c) * sc, base = wob(oP);
-    const PCS = [["K%", "xk", (x) => x.toFixed(1) + "%", "the build's K% piece: half his K%, half his xK%"], ["BB%", "xbb", (x) => x.toFixed(1) + "%", "half his BB%, half his xBB%"], ["HBP", "hbp", (x) => (100 * x).toFixed(1) + "%", "hit by pitch per plate appearance"],
-                 ["xHR/FB", "xhf", (x) => x.toFixed(1) + "%", "home runs per fly ball his contact says"], ["Fly balls", "fbs", (x) => (100 * x).toFixed(1) + "%", "fly balls and popups per ball in play"], ["xBABIP", "xbab", fmtX, "the nine-driver xBABIP"], ["XB/hit", "tph", (x) => x.toFixed(2), "extra bases per non-HR hit (the batted-ball model)"]];
-    const pts = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.round(Math.abs(x)), sg1 = (x, f) => { const d = f(Math.abs(x)); return (x > 0 ? "+" : x < 0 ? "−" : "") + d; };
+    // the build's own value (twVal: intentional walks out, the ground-ball term) and order-free shares (the review's item 4, 12 Nov 2026):
+    // each piece's ± is its Shapley value going from his last season's pieces to this season's at this season's scale, so the pieces add to that
+    // change exactly and Everything else is the league's scale moving between the seasons
+    const own = (t) => { const o = { xk: t.xk, xbb: t.xbb, ibb: t.ibb, hbp: t.hbp, xhf: t.xhf, fbs: t.fbs, xbab: t.xbab, tph: t.tph, gba: t.gba || 0 }; if (t.parkIn && t.pk) { o.xk += t.pk.k; o.xbb += t.pk.bb; o.xhf += t.pk.hr; o.xbab += t.pk.bab / 1000; o.tph += t.pk.xb; } return o; };
+    const oC = own(tC), oP = own(tP), wob = (c) => twVal(c, tC.L);
+    if (oC.ibb == null || oP.ibb == null) oC.ibb = oP.ibb = null;
+    const PCS = [["K%", "xk", (x) => x.toFixed(1) + "%", "the build's K% piece: half his K%, half his xK%"], ["BB%", "xbb", (x) => x.toFixed(1) + "%", "half his BB%, half his xBB%"], ["IBB", "ibb", (x) => x.toFixed(1) + "%", "intentional walks per 100 PA — out of wOBA's walks and plate appearances, so out of xwOBA's"], ["HBP", "hbp", (x) => (100 * x).toFixed(1) + "%", "hit by pitch per plate appearance"],
+                 ["Fly balls", "fbs", (x) => (100 * x).toFixed(1) + "%", "fly balls and popups per ball in play"], ["xHR/FB", "xhf", (x) => x.toFixed(1) + "%", "home runs per fly ball his contact says"], ["Extra power", "tph", (x) => x.toFixed(2), "the batted-ball model's bases per non-HR hit once xHR/FB's home runs are out — mostly the model's read of his power beyond xHR/FB"], ["xBABIP", "xbab", fmtX, "the nine-driver xBABIP"],
+                 ["Ground balls", "gba", (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(Math.round(1000 * x)), "what his ground-ball rate adds beyond the pieces, in wOBA points"]];
+    const keys = PCS.map((r) => r[1]).filter((k) => oP[k] != null && oC[k] != null && !(k === "gba" && !oP.gba && !oC.gba)), S = shapley(keys, oP, oC, wob);
+    const pts = (x) => { const r = Math.round(x); return (r > 0 ? "+" : r < 0 ? "−" : "") + Math.abs(r); }, sg1 = (x, f) => { const d = f(Math.abs(x)).replace(/^\+/, ""); return (x > 0 ? "+" : x < 0 ? "−" : "") + d; };   /* f may sign its own (the ground-ball row) */
     const effTd = (e) => { const td = el("td", null, pts(e)); heatTd(td, Math.max(2, Math.min(98, Math.round(50 + 2.5 * e)))); return td; };   // ±20 points fills the scale
-    const T = brTable([["", 1], ["The piece", 3], ["", 1]], [["Piece", "l f1"], [String(y0)], [String(y)], ["Δ"], ["± wOBA", "", `what the change is worth in wOBA points: the ${y} value swapped alone into his ${y0} pieces, at ${y}'s league scale`]], "yoyt");
+    const T = brTable([["", 1], ["The piece", 3], ["", 1]], [["Piece", "l f1"], [String(y0)], [String(y)], ["Δ"], ["± wOBA", "", `what the change is worth in wOBA points: each piece's share of the move from his ${y0} pieces to his ${y} ones, at ${y}'s league scale, averaged over every order the pieces could change in`]], "yoyt");
     let sum = 0;
-    for (const [lab, k, f, tip] of PCS) { const a = oP[k], b = oC[k]; if (a == null || b == null) continue; const e = 1000 * (wob(Object.assign({}, oP, { [k]: b })) - base); sum += e;
+    for (const [lab, k, f, tip] of PCS) { if (!keys.includes(k)) continue; const a = oP[k], b = oC[k], e = 1000 * S[k]; sum += e;
       const tr = el("tr"), lt = el("td", "l f1", lab); lt.title = tip; tr.append(lt, el("td", null, f(a)), el("td", null, f(b)), el("td", null, sg1(b - a, f)), effTd(e)); T.tb.append(T.fin(tr)); }
     const total = 1000 * (tC.txw - tP.txw), rest = total - sum;
-    { const tr = el("tr"), lt = el("td", "l f1", "Everything else"); lt.title = "the league's scale moving between the seasons, and the pieces' interplay"; tr.append(lt, el("td"), el("td"), el("td"), el("td", null, pts(rest))); T.tb.append(T.fin(tr)); }
+    { const tr = el("tr"), lt = el("td", "l f1", "Everything else"); lt.title = "the league's scale moving between the seasons"; tr.append(lt, el("td"), el("td"), el("td"), el("td", null, pts(rest))); T.tb.append(T.fin(tr)); }
     { const tr = el("tr", "tot"); tr.append(el("td", "l f1", wsLab("xwOBA")), el("td", null, fmtX(tP.txw)), el("td", null, fmtX(tC.txw)), el("td", null, sg1(tC.txw - tP.txw, fmtX)), effTd(total)); T.tb.append(T.gap(), T.fin(tr)); }
     const h1 = el("div", "rollhd worksub"); h1.append(el("span", "rollname", "The pieces of his xwOBA")); box.append(h1, T.wrap);
     // the skills behind them, both years with their percentiles among that season's 300+ PA hitters
@@ -10234,7 +10354,7 @@
       const tr = el("tr"); tr.append(el("td", "l f1", lab), el("td", null, fv(lab, a)), heatTd(el("td", null, pa == null ? "–" : String(Math.round(pa))), pa), el("td", null, fv(lab, b)), heatTd(el("td", null, pb == null ? "–" : String(Math.round(pb))), pb));
       const d = pa != null && pb != null ? pb - pa : null, td = el("td", null, d == null ? "–" : pts(d)); if (d != null) heatTd(td, Math.max(2, Math.min(98, Math.round(50 + (hib ? 1 : -1) * d)))); tr.append(td); T2.tb.append(T2.fin(tr)); }
     const h2 = el("div", "rollhd worksub"); h2.append(el("span", "rollname", "The skills behind them")); box.append(h2, T2.wrap);
-    box.append(el("p", "note", `Full seasons; the percentiles are each year's own (its 300+ PA hitters). A piece's ± is its ${y} value put alone into his ${y0} set at ${y}'s scale — the pieces interact and the league moves, so Everything else carries the rest and the column adds to the xwOBA change.`));
+    box.append(el("p", "note", `Full seasons; the percentiles are each year's own (its 300+ PA hitters). A piece's ± is its share of the move from his ${y0} pieces to his ${y} ones at ${y}'s scale, averaged over every order the pieces could change in; Everything else is the league's scale moving between the seasons, so the column adds to the xwOBA change.`));
     return box;
   }
   function renderGameLogs(p) {
@@ -11398,6 +11518,8 @@
     if (p.type === "P") { const side = stuffSide() ? "stuff" : "raw", sb = el("button", "pgside", side === "stuff" ? "Stuff" : "Raw"); sb.type = "button"; sb.setAttribute("aria-label", "Raw or stuff");
       cellOf(ddList(sb, [["raw", "Raw"], ["stuff", "Stuff"]], side, (k) => { state.cardSide = k; savePrefs(); render(); }, "side")); }
     if (o.entry && !isMulti(o.key)) { const fb = filtersTog(p, true).querySelector(".phfilt"); fb.textContent = "Filters"; cellOf(fb); }
+    { const wk = p.type + p.id, wb = el("button", "pgwatch", watchSet[wk] ? "★ Watching" : "☆ Watch"); wb.type = "button"; wb.title = "Track him on Home with his injury status and numbers";
+      wb.addEventListener("click", () => { if (watchSet[wk]) delete watchSet[wk]; else watchSet[wk] = 1; save(WATCH_LS, watchSet); wb.textContent = watchSet[wk] ? "★ Watching" : "☆ Watch"; }); cellOf(wb); }
     for (const b of crow.querySelectorAll("button:not(:disabled)")) b.append(el("span", "pgchev", "▾"));
     // the popup's × on a strip of its own across the bar's top, so the headshot, name, bio and Filters / Raw sit exactly as they do without it, just
     // lower (Sean, 13 Oct 2026: "the player head shot name and bio are in the same position in comparison to the filters and raw vs stuff button when
@@ -13098,6 +13220,12 @@
     const w = el("div", "textmodal panel");
     const h2 = el("h2", null, "Position"); h2.id = "modal-title"; w.append(h2);
     const sel = new Set(posSel());
+    if (lgOwn) {   /* the connected league's filter: all players, only the available, or only mine */
+      const lw = el("div", "psec lgfilt"); lw.append(el("h4", null, "My league · " + (lgOwn.name || "connected")));
+      const sg = el("div", "seg");
+      for (const [v, lab] of [["all", "Everyone"], ["avail", "Available"], ["mine", "My team"]]) { const b = el("button", "segbtn" + (lgFilt.v === v ? " on" : ""), lab); b.type = "button"; b.addEventListener("click", () => { lgFilt.v = v; save(LGF_LS, v); render(); }); sg.append(b); }
+      lw.append(sg, el("p", "note", "From the league as it was last read (open the League tab to refresh). Taken players are marked \"owned\" on the list.")); w.append(lw);
+    }
     const drafted = draftedIds(), hide = state.mode === "draft" && !state.showDrafted;
     const withTail = manualOrder(), trending = state.mode === "trending";
     const count = (pos) => {
@@ -14016,11 +14144,26 @@
      step every 5 s, as the reference board polls its draft). The connections are draft2027.league (in SYNC_KEYS, so they follow him); what he's
      looking at is draft2027.leagueui, per device. */
   const LG_LS = "draft2027.league", LGU_LS = "draft2027.leagueui";
+  /* League-aware lists (Sean's recommendation, 12 Nov 2026): whenever a connected league is read, who owns whom is kept (per device) so every list can mark
+     his players, grey out the taken and filter to the available. The cache is MLB ids; a player ESPN lists that the crosswalk can't place isn't in it. */
+  const WATCH_LS = "draft2027.watch"; const watchSet = load(WATCH_LS, {});
+  const LGO_LS = "draft2027.lgown", LGF_LS = "draft2027.lgf";
+  let lgOwn = load(LGO_LS, null); const lgFilt = { v: load(LGF_LS, "all") };
+  function lgCacheOwn(L, c) {
+    try {
+      const mine = lgMine(L, c), mset = new Set(); if (mine) for (const r of mine.roster) { const m = lgMatch(r); if (m.mlb) mset.add(String(m.mlb)); }
+      const taken = [...lgTaken(L)].map(String);
+      lgOwn = { taken, mine: [...mset], name: L.name || (c && c.name) || "", at: Date.now() }; save(LGO_LS, lgOwn);
+    } catch (e) { console.warn("league cache", e); }
+  }
+  function lgCacheSoon(L, c) { lgIdsEnsure(); let n = 0; const go = () => { if (window.DRAFT_IDS || ++n > 40) lgCacheOwn(L, c); else setTimeout(go, 250); }; go(); }   /* once the id crosswalk is in */
+  const ownOf = (p) => { if (!lgOwn || !p || !p.id) return null; const k = String(p.id); return lgOwn.mine.includes(k) ? "mine" : lgOwn.taken.includes(k) ? "taken" : null; };
+  const lgOwnSets = () => { if (!lgOwn) return null; if (!lgOwn._s) Object.defineProperty(lgOwn, "_s", { value: { m: new Set(lgOwn.mine), t: new Set(lgOwn.taken) }, enumerable: false }); return lgOwn._s; };
   const lgStore = Object.assign({ list: [], cur: 0 }, load(LG_LS, {}));
   if (!Array.isArray(lgStore.list)) lgStore.list = [];
   const lgUI = Object.assign({ view: "team", faPos: "H", faSort: "proj", dTeam: "all", feed: false, faN: 50 }, load(LGU_LS, {}));
   const lgSave = () => save(LG_LS, lgStore), lgUISave = () => save(LGU_LS, lgUI);
-  const LG_TABS = [["team", "My team"], ["league", "League"], ["fa", "Free agents"], ["draft", "Draft"]];
+  const LG_TABS = [["team", "My team"], ["league", "League"], ["fa", "Free agents"], ["trade", "Trade"], ["draft", "Draft"]];
   const lgConn = () => lgStore.list[lgStore.cur] || lgStore.list[0] || null;
   // ESPN's numbers for its lineup slots, positions and clubs (the espn-api project's maps, checked against live leagues)
   const ESPN_SLOT = { 0: "C", 1: "1B", 2: "2B", 3: "3B", 4: "SS", 5: "OF", 6: "2B/SS", 7: "1B/3B", 8: "LF", 9: "CF", 10: "RF", 11: "DH", 12: "UTIL", 13: "P", 14: "SP", 15: "RP", 16: "BE", 17: "IL", 19: "IF" };
@@ -14095,7 +14238,7 @@
     const k = lgKeyOf(c), old = lgData && lgData.key === k ? lgData : null;
     if (old && (old.busy || (!force && old.L && Date.now() - old.at < 120000) || (!force && old.err && !old.L))) return old;
     const d = lgData = { key: k, L: old ? old.L : null, at: old ? old.at : 0, err: null, busy: true };
-    espnLeague(c.id).then((raw) => { d.L = espnNorm(raw); d.at = Date.now(); d.busy = false; if (c.name !== d.L.name) { c.name = d.L.name; lgSave(); } if (lgUI.feed && !d.L.draft.done) lgFeedDraft(d.L); },
+    espnLeague(c.id).then((raw) => { d.L = espnNorm(raw); d.at = Date.now(); d.busy = false; lgCacheSoon(d.L, c); if (c.name !== d.L.name) { c.name = d.L.name; lgSave(); } if (lgUI.feed && !d.L.draft.done) lgFeedDraft(d.L); },
       (e) => { d.err = e && e.status != null ? e : { status: 0 }; d.busy = false; })
       .then(() => { if (lgData === d && (state.mode === "league" || state.mode === "draft")) render(); });
     return d;
@@ -14318,6 +14461,7 @@
     if (view === "team") lgTeamView(box, L, c, PH);
     else if (view === "league") lgLeagueView(box, L, c, PH);
     else if (view === "fa") lgFaView(box, L, c, PH, bar);
+    else if (view === "trade") lgTradeView(box, L, c, PH);
     else lgDraftView(box, L, c, PH, bar, d);
     lgPollSync();
   }
@@ -14369,7 +14513,7 @@
     let c = lgStore.list.find((x) => x.pf === L.pf && String(x.id) === String(L.id));
     if (!c) { c = { pf: L.pf, id: String(L.id), team: tid, name: L.name }; lgStore.list.push(c); } else { c.team = tid; c.name = L.name; }
     lgStore.cur = lgStore.list.indexOf(c); lgSave();
-    lgData = { key: lgKeyOf(c), L, at: Date.now(), err: null, busy: false };
+    lgData = { key: lgKeyOf(c), L, at: Date.now(), err: null, busy: false }; lgCacheSoon(L, c);
     lgAdding = false; lgFormReset(); lgUI.view = tid == null ? "league" : "team"; lgUISave();
     if (location.hash !== "#league/" + lgUI.view) location.hash = "#league/" + lgUI.view; else render();
   }
@@ -14497,6 +14641,35 @@
   }
   // Free agents: the site's players no team in the league has, by the 2027 projection under the league's scoring or by this season's numbers
   const LG_FA_POS = [[null, "Hitters"], ["H", "All hitters"], ["C", "C"], ["1B", "1B"], ["2B", "2B"], ["3B", "3B"], ["SS", "SS"], ["OF", "OF"], ["DH", "DH"], [null, "Pitchers"], ["P", "All pitchers"], ["SP", "SP"], ["RP", "RP"]];
+  /* The trade analyzer (Sean's recommendation, 12 Nov 2026): what you give against what you get, in 2027 projected points under the league's scoring
+     (lgProj: Steamer, else the site's line) with each side's ages. Points only: roster fit and positions are yours to judge. */
+  function lgTradeView(box, L, c, PH) {
+    const b = lgSection(box, "Trade analyzer", "2027 projected points under this league's scoring");
+    const byName = new Map(); for (const p of DATA.players) { const k = p.name.toLowerCase(); if (!byName.has(k)) byName.set(k, []); byName.get(k).push(p); }
+    lgUI.tGive = lgUI.tGive || []; lgUI.tGet = lgUI.tGet || [];
+    const dl = el("datalist"); dl.id = "lgtradenames"; for (const p of DATA.players) if ((p.pa || 0) >= 100 || (p.ip || 0) >= 30) { const o = el("option"); o.value = p.name; dl.append(o); } b.append(dl);
+    const side = (title, key) => {
+      const w = el("div", "lgtside"); w.append(el("h4", null, title));
+      const i = el("input", "weekin"); i.setAttribute("list", "lgtradenames"); i.placeholder = "Add a player"; i.autocomplete = "off";
+      i.addEventListener("change", () => { const m = byName.get(i.value.trim().toLowerCase()); if (!m) return; const p = m.slice().sort((x, z) => (z.pa || z.ip || 0) - (x.pa || x.ip || 0))[0]; const k = p.type + p.id; if (!lgUI[key].includes(k)) lgUI[key].push(k); lgUISave(); render(); });
+      w.append(i); b.append(w); return w;
+    };
+    const A = side("You give", "tGive"), B = side("You get", "tGet"), tot = { tGive: 0, tGet: 0 }, ages = { tGive: [], tGet: [] };
+    const PL = new Map(DATA.players.map((p) => [p.type + p.id, p]));
+    for (const [w, key] of [[A, "tGive"], [B, "tGet"]]) {
+      const t = el("table", "br weekt"); const h = el("tr"); for (const x of ["Player", "Age", "2027 pts", ""]) h.append(el("th", null, x)); t.append(h);
+      for (const k of lgUI[key]) { const p = PL.get(k); if (!p) continue; const j = lgProj(L, p), tr = el("tr"), nmT = el("td", "l", p.name), rm = el("button", "linkbtn", "remove"); rm.type = "button";
+        rm.addEventListener("click", () => { lgUI[key] = lgUI[key].filter((q) => q !== k); lgUISave(); render(); }); const rt = el("td"); rt.append(rm);
+        tot[key] += j || 0; if (p.age) ages[key].push(p.age); tr.append(nmT, el("td", null, p.age ? String(p.age) : "–"), el("td", null, j == null ? "–" : j.toFixed(0)), rt); t.append(tr); }
+      if (lgUI[key].length) w.append(t);
+    }
+    const avg = (a) => (a.length ? a.reduce((x, z) => x + z, 0) / a.length : null), d = tot.tGet - tot.tGive;
+    if (lgUI.tGive.length && lgUI.tGet.length) {
+      const ag = avg(ages.tGive), ab = avg(ages.tGet);
+      b.append(el("p", "weekverdict", `${d >= 0 ? "You gain" : "You lose"} ${Math.abs(d).toFixed(0)} projected points (${tot.tGive.toFixed(0)} out, ${tot.tGet.toFixed(0)} in)${ag != null && ab != null ? ` · average age ${ag.toFixed(1)} out, ${ab.toFixed(1)} in${ab - ag >= 2 ? " — you get older" : ag - ab >= 2 ? " — you get younger" : ""}` : ""}.`));
+    } else b.append(el("p", "note", "Add players to both sides."));
+    const clr = el("button", "linkbtn", "Clear"); clr.type = "button"; clr.addEventListener("click", () => { lgUI.tGive = []; lgUI.tGet = []; lgUISave(); render(); }); b.append(clr);
+  }
   function lgFaView(box, L, c, PH, bar) {
     const pos = LG_FA_POS.some(([k]) => k === lgUI.faPos) ? lgUI.faPos : "H", isP = ["P", "SP", "RP"].includes(pos), sortP = lgUI.faSort === "proj" && !!window.DRAFT_PROJ27;
     const save = () => { lgUI.faN = 50; lgUISave(); render(); };

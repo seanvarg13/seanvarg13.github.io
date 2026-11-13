@@ -1782,6 +1782,10 @@ is deploy-limited.
   in the header's colour" entry is history. iOS reads the setting at launch: swipe the app closed and reopen it.
 
 
+* **Calmer effects, grouped colours, small-window shrinkage (Sean, 12 Nov 2026: "implement all of the changes" from the review of both sites)**: seasonal heaps are capped at 3-8 a page and absent on Settings, whose falling canvas is off too (the canvas is 70% opaque elsewhere); a desktop player page puts the Bio and Playing time boxes side by side; the customizer's roles sit under "Bands and buttons / Text / Tables and borders / Page" headings (`CZ_GROUP`); Settings headings take the heading colour. **In a date window or split** (`I.win` on the talent inputs) the actual K% / BB% halves, the HBP rate and the xBABIP drivers are pulled toward the league by `PA / 300` below 300 PA (full seasons untouched, so the season table still agrees). The header pill reads "Final thru Sep 27" in the off-season and Settings shows the last build time (red in season when over 36 h old). Not done: re-centring past seasons' xBA / the model's xSLG (needs a data rebuild), the league-aware filters, the 2027 projection model, trade / keeper values, the daily-actions home page, the watchlist.
+
+* **League-aware lists, a watchlist, "Your players" on home, a trade analyzer (Sean, 12 Nov 2026: "finish the rest of the items")**: whenever a connected league is read, `lgCacheOwn` keeps who owns whom (`draft2027.lgown`: MLB ids taken / mine, per device); the Leaderboard marks his players **MINE** and taken ones **owned** after the name (`ownOf`, `.lgb`), and Filters ▸ Position has **My league: Everyone / Available / My team** (`lgFilt`, `draft2027.lgf`). **Watch** (`draft2027.watch`, in `SYNC_KEYS`) is a ☆ / ★ button in the player page's control row; home's **Your players** table lists the watched and league-team players with IL status and their xwOBA / nERA heat. The League tab gains a **Trade** view (`lgTradeView`): two sides, 2027 projected points under the league's scoring (`lgProj`), ages, and the net. Not done: re-centring past xBA (needs a rebuild), the tested 2027 projection model, the simple stat set, the shared desktop layout, CSS consolidation and lazy sections (each a risky refactor with no safe payoff today).
+
 ## 9. Things only Sean can do
 
 Nothing in this repo runs. Ask him to run these on the Mac, and to publish afterwards:
@@ -6217,3 +6221,56 @@ line can bring them back.
   **Then nearly black** (the same hour, a second screenshot: 38% came out taupe): 14% of the header's colour, the rest black.
 * **The home-screen app got iOS's own status bar; the strip is a fade (Sean, 12 Nov 2026)**: the baseball icon had kept the old `black-translucent` setting from when it was added (Safari showed a clean top, the icon a blurred one, and no CSS change moved it), so he removed and re-added it; iOS now draws its own solid bar filled with `theme-color` (the header's `--hdrc`, else the band) and the page starts under it — the same as the football site. A site can't put art in that bar. His ask ("maybe let's try the fade ... save this if it looks bad, and make sure all the other seasonal themes are like this too"): `header.top::before` is the header's colour at the top easing out into the art over 22px — every season's art and every header style, since `--hdrc` is each one's first colour. The 14%-black strip it replaced is PR #818 in git; restore that gradient to go back.
   **The fade was taken back the same hour** (Sean: "Ok don't do the fade"): `header.top::before` is PR #818's strip again. Don't bring the fade back unasked.
+
+* **The xwOBA build-up review's five fixes (Sean, 12 Nov 2026, after a review of the build-up: "ok do them all")**:
+  1. **No piece shrink; a date window's final number regressed.** The 12 Nov piece-level shrink (a window's actual K% / BB% halves, HBP and
+     xBABIP drivers pulled toward the league below 300 PA) is gone. It pulled a window's xBABIP toward the league and not toward his season,
+     which put six hitters on Movers for nothing.
+     - **What replaces it:** in a date window, the final numbers are regressed toward the league by PA / (PA + k) (`TW_WIN` in `app.js`):
+       xwOBA 200, xSLG 200, xISO 125, xBABIP 250. It doesn't apply to a split without dates, a span of seasons, or a window holding his
+       whole season.
+     - **Both footings are regressed whole**, his parks' part with the rest. A window's park mix doesn't carry forward: keeping it unregressed
+       read r .273 against the next 60 days, below the unregressed number's .287; regressing it too read .294.
+     - **Calibration** (scratch `xw/w4.js`, 30-game-day windows → the next 60 game days, and first half → second half, 2022-26): slopes 0.88-1.09,
+       against 0.29-0.65 unregressed. For xwOBA, r .287 → .294 (30 days) and .392 → .399 (halves).
+     - **What stays the window's own:** the pieces (Movers and the build-ups read them). `V()` keeps the window's own totals on `t` (`txw0`,
+       `txwN0`, `xwpk0`, `xslg0`, `xiso0`, the weights `t.ww`) and on `m` (`xwdW`, `dxslgW`), which the fantasy pages' expected points read.
+     - **Regress small samples:** `shrinkM` skips the already-regressed keys (`WREG`).
+     - **The build-ups:** in a window, the xwOBA, xISO and xBABIP build-ups each get a **Sample size** row.
+     - **Home's Trending:** the top hitter reads .372 where he read .464; the card's subtitle says "regressed".
+  2. **Extra power.** The xwOBA build's extra-bases piece is renamed everywhere: the build-up row, Movers' piece and its popup, Year over year,
+     and xISO's "Extra power · model".
+     - **What it is:** the batted-ball model's bases per non-HR hit once xHR/FB's home runs are out of its xSLG — mostly the model seeing more
+       or less home-run power than xHR/FB does. It tracks his actual bases per non-HR hit at only r .18.
+     - **Movers' credibility constants** are now measured on the pieces themselves (`FX_K`: xK% 55, xBB% 90, xHR/FB 125, fly balls 125,
+       xBABIP 370, Extra power 830). Every hitter with 150+ PA in both halves of a season 2022-26, first half against second, k = n(1 − r)/r
+       (scratch `xw/fxk.js`). Extra power repeats half to half at r .24.
+  3. **Re-centred.** The piece is the season's real bases per non-HR hit, plus his gap to the model's own PA-weighted mean (`L.tphU`, a first
+     pass in `talentLeague`).
+     - The model's level had drifted: 1.08 against a real 1.27 in 2015. A quarter of 2015's regulars sat on the floor, and the scale (1.077)
+       inflated every piece to make up for it; it's 1.037 now.
+     - With all five changes, 2015 xwOBAs move up to ±20 points: Chris Carter .351 → .331, Dee Strange-Gordon .310 → .326.
+  4. **One League row, order-free shares.** `twLeague(L)` opens both the xwOBA and the wOBA build-ups: the 300+ PA hitters' own K%, BB%, IBB
+     rate, HBP, fly balls, HR/FB, bases per hit and BABIP. The two tables had opened about 3 points apart.
+     - **Every ± is a Shapley value** (`shapley()`: the change a piece makes, averaged over every order of swapping the pieces in). This holds
+       in both build-ups, in the xISO build-up (extra bases as two players, its skills half and its model half) and in Year over year (whose
+       Everything else is now only the league's scale moving between the seasons).
+     - Chandler Simpson 2026: xHR/FB −73 and Fly balls 0 in the old fixed order, −49 and −15 now.
+  5. **Intentional walks out; a ground-ball term.**
+     - **Intentional walks:** `twRaw` reads the pieces on the plate appearances that weren't an intentional walk, with his walks less his IBB
+       (`c.ibb`, per 100 PA), as wOBA does. Both build-ups have an **IBB** row. Yordan 2026: .435 → .418 (IBB −15, ground balls −5) against
+       his .429 wOBA.
+     - **Ground balls:** `TW_GB` is 0.45 wOBA points per point of GB% against the league, added after the scale (`gbAdj`). The most
+       ground-ball-heavy fifth of hitters had beaten the pieces by 4 points and the most fly-ball-heavy fifth fell 5 short, in every season.
+       Held out by season, the fifths' misses go from −5.0 / −1.4 / −0.8 / +1.2 / +4.1 to −0.9 / +0.3 / −0.8 / −0.4 / −0.4 (scratch
+       `xw/gbfit.js`). Next season's wOBA leans the same way (0.40 beyond xwOBA), so it's skill.
+     - **Sprint speed** was tested beside it and left out. Its lean was +1.3 to +2.1 per ft/s through 2019 and −1.0 to +0.1 since 2023; the
+       xBABIP's speed-on-grounders driver already carries it.
+  - **Accuracy** (every 300+ PA hitter-season 2015-26, scratch `xw/cmp.js`): same-season r with wOBA .830 → .836, mean miss 15.7 → 15.4
+    points. Next season's wOBA (1,819 pairs) r .562 → .563, slope .65 → .70.
+  - **Movers, the park what-if and Year over year** use the same arithmetic (`twVal`, `twLeague`). The park what-if's "There" is regressed in
+    a window like "now".
+  - **Data:** `tools/build_career.py` mirrors it all (`tw_raw`, `TW_GB`, the two-pass `tphU`) and agrees with the page to 1e-6 on every season
+    2015-26. Regenerated: `hist/career-bb.js` (only `txw txwpk xslg xslgpk xiso xisopk` move), the `hist/c/` buckets, `hist/lg/2015-2026`
+    (`build_lg.cjs`) and `hist/home.js`.
+  - **Glossary:** `xwoba`, `xwdiff`, `xbabip`, `xiso` and `dxslg` updated. The dxslg entry's stale "The xSLG tab shows the build-up" is gone.
