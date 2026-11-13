@@ -6274,3 +6274,38 @@ line can bring them back.
     2015-26. Regenerated: `hist/career-bb.js` (only `txw txwpk xslg xslgpk xiso xisopk` move), the `hist/c/` buckets, `hist/lg/2015-2026`
     (`build_lg.cjs`) and `hist/home.js`.
   - **Glossary:** `xwoba`, `xwdiff`, `xbabip`, `xiso` and `dxslg` updated. The dxslg entry's stale "The xSLG tab shows the build-up" is gone.
+
+* **The pitching-model review's eight fixes (Sean, 13 Nov 2026: "lets do all 8 pieces")**, from a review of Stuff+ / Pitching+ and their expected rates
+  (scratch `pm/`: every pitcher-season 2020-26, the 2015-19 seasons the models never trained on, and the 5 / 7 Oct copies of the files from before and
+  after the 2026 retrain):
+  1. **The reference bar follows the season.** `build_data.py` writes `meta.refMinPA` = 300 × games played / 2,430 (50 at the least, 300 once a full
+     slate is in), the way `build_history` already does for past seasons; the app's `REF_PA` is 300 and `effMin` scales the Min box by `refPA / 300` for
+     the current season early on. Before this the 300-PA / 300-BF "league" (percentiles, xwOBA's league row) was empty until June. A 60-PA season-to-date
+     line in April is still not regressed the way a 60-PA window in September is (small, left).
+  2. **Command+ replaces Location+; Pitching+ = Stuff+ + Command+ − 100.** `V()` (after the xBB% line): Command+ = 100 + 100·kBB·(league xBB% − his xBB%)
+     / lgERA, xBB% from `XBBF` (Strike%, 1st-pitch, 3-ball), pulled to 100 by BF / (BF + 150) (`CMD_K`); `m.sloc` is Command+, `m.pitch` the sum, `m.pwhf`
+     the Whiff+ stuff half, `m.pbb` Batted-ball+ + Command+ − 100. The old values stay as `m.pitch0` / `m.sloc0` and `rateFit` reads those, since the
+     K% / BB% fits were trained on them. A file without the count-state rates (`cmdp` false) keeps the location grades. Per pitch (`xAdj(r, off)`,
+     `cmdOff(p)`): Pitching+ = the pitch's Stuff+ + his Command+ − 100, so the All pitches row equals the headline; the column is Cmd+. Why: Location+
+     (a location model that only saw swings and contact) had no relation to walks (r −.01) or Strike%, predicted nothing next season (next nERA +.08, BB%
+     +.03) and made Pitching+ forecast worse than Stuff+ (next nERA −.62 vs −.65, K-BB% .55 vs .59, 2025 → 2026). New: Command+ → next BB% −.51 (repeats
+     .53), Pitching+ → next nERA −.63 vs Stuff+ −.62 and K-BB% .63 vs .59 (2020-26 pairs). The build still stores the location-model grades (`pitching_grade`),
+     which `hist/similar.js` and `lgRatesP` read; the card / lists / board read the new numbers.
+  3. **Small samples**: the Spring and Year-over-year arsenal tables show Stuff+ alone (the Pitching+ column is gone — a camp's pitches can't grade
+     command), Command+ is pulled to 100 by BF, Movers' pitchers are nERA-based already. (Stuff+ on 20-60 BF predicts next K% at .51 vs K%'s .30.)
+  4. **Even / odd folds.** `tools/models/train_stuff.py` trains two sets, one on the even seasons and one on the odd, and writes `{"folds": {even, odd},
+     "trained"}`; `load_stuff_models(season)` scores a season with the set that never saw its parity (a 2027 season uses the even set), so no season's
+     expected rates are in-sample and a November retrain no longer moves them (retraining with 2026 in had moved each pitcher's expected whiff rate
+     20-30% of the way to his actual one: S0 → S2, r with Whiff% .73 → .85 stuff-only). `add_stuff(..., season=)`: `build_history` / `build_milb` /
+     `build_data` pass it; the old single-set file still loads. Checked on synthetic frames (scratch `synth_fold.py`); the real retrain is Actions →
+     Train Stuff+ models (dispatched 13 Nov 2026 after this merge, it rescores everything). On 2015-19, seasons never trained on, Stuff+ → next nERA is −.51
+     (nERA itself .55) against −.60 on trained seasons — expect live seasons to look like that.
+  5. **`season` and `relsd` are no longer model inputs** (`STUFF_UNUSED`; still computed by `stuff_features`).
+  6. **The level shift is per pitch type** (`xLevel().pt`, 2,000+ swings / balls in play per type): a new season drifts by type (2026 before its retrain:
+     curveballs −2.3 whiff points, sliders −1.8, kick-changes −3.1, four-seamers +1.1). `xAdj` and the season-arsenal branches of `stuffRatesRaw` /
+     `pitchRatesRaw` use it (`lv: true`); windows keep the league shift. The models' tree cap is 600 rounds (was 400; the whiff, swing and swing-foul
+     models had stopped at the cap still improving).
+  7. **Whiff vs expected reads "about half comes back"** (`wgap` glossary): on seasons the models never saw, the gap repeats at r .5; 2-4 over fell 1.6
+     (74% fell), 4+ over 2.8 (92%).
+  8. **xnERA is built on the stuff-only expected rates** (`XN_STUFF`): next nERA R .600 vs .590 for the location-based, repeats .71 vs .68 (2020-26 pairs);
+     `nERA + Stuff+` still reaches .66.
