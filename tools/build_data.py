@@ -664,6 +664,10 @@ def stuff_features(d: pd.DataFrame, park: bool = True) -> pd.DataFrame:
     return f
 
 
+# the models' unused inputs (Sean's review of the pitching models, 13 Nov 2026): the season number and the release-point spread raised how much of a
+# pitcher's own results the expected rates absorbed on a retrain (19% -> 29% of his whiff gap, scratch pm/leak.js) and added nothing forward (the app's
+# league shift already puts a new season on its level), so they are computed but no longer fed to a model
+STUFF_UNUSED = ["season", "relsd"]
 STUFF_WHIFF_ONLY = ["use", "depth"]                # inputs the batted-ball model leaves out (they didn't help it)
 
 
@@ -715,7 +719,7 @@ STUFF_OUT = ["st_n", "st_w", "st_g", "st_p", "st_bw", "st_bg", "st_bp",   # st_b
              "st_nf", "st_fl", "st_fs", "st_fw"]   # fouls with location (and st_fw: with the batter's swing too, 4 Oct 2026) (4 Oct 2026): on the pitches contacted, the foul chance where the pitch crossed, and the stuff-only one on the same contact
 
 
-def add_stuff(d: pd.DataFrame, prior=None, ref: pd.DataFrame | None = None) -> pd.DataFrame:
+def add_stuff(d: pd.DataFrame, prior=None, ref: pd.DataFrame | None = None, season: int | None = None) -> pd.DataFrame:
     """Score every pitch on its traits alone: the chance a swing misses (st_w), the chance contact is a grounder / popup
     (st_g / st_p), st_n = 1 if graded. Sets STUFF for the pitcher rows and league constants. A failure costs the grades,
     never the build.
@@ -730,7 +734,10 @@ def add_stuff(d: pd.DataFrame, prior=None, ref: pd.DataFrame | None = None) -> p
     if not all(c in d.columns for c in ["pfx_x", "pfx_z", "release_spin_rate"]):
         log("  stuff: no pitch-tracking columns in this data"); return d
     try:
-        M = load_stuff_models()
+        if season is None:
+            try: season = int(str(d["game_date"].iloc[0])[:4])
+            except Exception: season = None                  # noqa: BLE001
+        M = load_stuff_models(season)
         if M is None:
             prior = prior() if callable(prior) else prior
             if ref is not None:
@@ -746,13 +753,22 @@ def add_stuff(d: pd.DataFrame, prior=None, ref: pd.DataFrame | None = None) -> p
     return d
 
 
-def load_stuff_models():
-    """The fixed models, if the file is there (the daily workflow downloads it from the models release)."""
+def load_stuff_models(season: int | None = None):
+    """The fixed models, if the file is there (the daily workflow downloads it from the models release).
+    Two folds since 13 Nov 2026 (Sean's review of the pitching models): one set trained on the even seasons, one on the odd ones, and a
+    season is scored by the set that never saw its parity — so every season's expected rates are out of sample, 2027's included. The
+    file's old shape (one set, trained through a year) still loads as it was."""
     if not STUFF_MODELS.exists():
         return None
     try:
         M = joblib.load(STUFF_MODELS)
         t = M.get("trained", {})
+        if "folds" in M:
+            if season is None:
+                log("  stuff: a fold file needs the season to pick its fold — training instead"); return None
+            f = M["folds"]["odd" if season % 2 == 0 else "even"]      # the fold trained on the OTHER parity
+            log(f"  stuff: {season} scored by the models trained on the {'odd' if season % 2 == 0 else 'even'} seasons ({t.get('at', '?')}, {t.get('seasons', '?')})")
+            return f
         log(f"  stuff: fixed models trained {t.get('at', '?')} on {t.get('seasons', '?')}")
         return M
     except Exception as e:                                  # noqa: BLE001
@@ -774,14 +790,14 @@ def train_stuff_models(train: pd.DataFrame) -> dict | None:
     bip = ok & train["type"].eq("X").to_numpy() & bb.notna().to_numpy() & ~train["events"].fillna("").str.contains("bunt").to_numpy()
     if sw.sum() < 5000 or bip.sum() < 2000:
         log(f"  stuff: too few tracked pitches ({sw.sum()} swings)"); return None
-    kw = dict(max_iter=400, learning_rate=0.06, max_leaf_nodes=63, min_samples_leaf=200, l2_regularization=1.0,
+    kw = dict(max_iter=600, learning_rate=0.06, max_leaf_nodes=63, min_samples_leaf=200, l2_regularization=1.0,
               categorical_features=[0], early_stopping=True, validation_fraction=0.1, random_state=0)
     # a trait no pitch in the training seasons has (spin axis and arm angle before 2020) is left out: an all-empty
     # column makes the fit fail outright (numpy's "window shape" error), which cost 2015-2019 every grade
     seen = lambda c, m: bool(np.isfinite(ftr[c].to_numpy(dtype=float)[m]).any())
-    wcols = [c for i, c in enumerate(ftr.columns) if i == 0 or seen(c, sw)]     # column 0 is the categorical one
+    wcols = [c for i, c in enumerate(ftr.columns) if i == 0 or (seen(c, sw) and c not in STUFF_UNUSED)]     # column 0 is the categorical one
     bcols = [c for c in wcols if c not in STUFF_WHIFF_ONLY and seen(c, bip)]
-    if len(wcols) < len(ftr.columns): log(f"  stuff: no data for {', '.join(c for c in ftr.columns if c not in wcols)} — graded without")
+    if len(wcols) < len(ftr.columns): log(f"  stuff: graded without {', '.join(c for c in ftr.columns if c not in wcols)}")
     ftr = ftr[wcols]; Xtr = ftr.to_numpy()
     wm = HistGradientBoostingClassifier(**kw).fit(Xtr[sw], np.isin(desc[sw], list(WHIFF)))
     bm = HistGradientBoostingClassifier(**kw).fit(ftr[bcols].to_numpy()[bip], bb.to_numpy()[bip].astype(int))
@@ -2112,7 +2128,7 @@ def main():
     d = pd.read_parquet(args.statcast_parquet) if args.statcast_parquet else load_statcast(args.end)
     d = pitch_flags(d)
     if GAME_TYPES == {"R"}:
-        d = add_stuff(d, lambda: (log(f"  stuff: loading the {STUFF_YEARS} seasons before to train on"), load_prior_seasons(SEASON))[1])
+        d = add_stuff(d, lambda: (log(f"  stuff: loading the {STUFF_YEARS} seasons before to train on"), load_prior_seasons(SEASON))[1], season=SEASON)
     hit = hitter_metrics(d)
     pit = pitcher_metrics(d)
     log(f"  {len(hit)} batters, {len(pit)} pitchers  ({time.time()-t0:.0f}s)")
@@ -2140,6 +2156,10 @@ def main():
     consts = league_constants(pit[pit.BF >= CONST_MIN_BF], people)
     log(f"  league ERA {consts['lgERA']}, FIP constant {consts['fipC']}, SIERA shift {consts['sieraShift']}")
     pitchers = build_pitchers(pit, people, days_p, consts)
+    # the reference bar follows the season (Sean's review, 13 Nov 2026): nobody has 300 PA in April, so the league the percentiles and the
+    # xwOBA build-up measure against would be empty. The same pro-rating the past seasons use (build_history): 300 at 2,430 games, 50 at the least
+    n_games = int(d.game_pk.nunique()) if "game_pk" in d.columns else 2430
+    ref_min_pa = REF_MIN_PA if n_games >= 2430 else max(50, int(round(REF_MIN_PA * n_games / 2430 / 10) * 10))
     meta = {
         "season": SEASON, "through": str(d.game_date.max())[:10],
         "built": dt.datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -2150,7 +2170,7 @@ def main():
                              {"key": "uera", "label": "uERA", "hib": False, "dec": 2, "unit": "", "showValue": True},          # uERA and u(K-BB%) are derived in the app
                              {"key": "ukb", "label": "u(K-BB%)", "hib": True, "dec": 1, "unit": "%", "showValue": True}],
         "defaultMin": DEFAULT_MIN,
-        "refMinPA": REF_MIN_PA,
+        "refMinPA": ref_min_pa,
         "days": days_list,
         "dayFields": {"H": HITTER_DAY, "P": PITCHER_DAY},
         "pullLine": PULL_LINE,

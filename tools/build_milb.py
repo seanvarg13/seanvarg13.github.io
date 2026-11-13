@@ -377,7 +377,7 @@ def add_milb_stuff(d: pd.DataFrame, year: int, start: str, end: str, level: str)
         mlb = [x for x in mlb if len(x)]
         if not mlb:
             bd.log("  stuff: no MLB seasons to train on"); return d
-        return bd.add_stuff(d, pd.concat(mlb, ignore_index=True), ref=mlb[0])
+        return bd.add_stuff(d, pd.concat(mlb, ignore_index=True), ref=mlb[0], season=year)
     except Exception as e:                                 # noqa: BLE001
         bd.log(f"  !! minors stuff skipped: {type(e).__name__}: {e}")
         return d
