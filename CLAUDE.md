@@ -6309,3 +6309,27 @@ line can bring them back.
      (74% fell), 4+ over 2.8 (92%).
   8. **xnERA is built on the stuff-only expected rates** (`XN_STUFF`): next nERA R .600 vs .590 for the location-based, repeats .71 vs .68 (2020-26 pairs);
      `nERA + Stuff+` still reaches .66.
+
+* **Barrels out of the xHR/FB fit; exit velocity alone (Sean, 14 Nov 2026: "remove barrel rate from the xwoba build up and also remove it from the
+  xBABIP and xHR to fb ratio as well", after tests of what forecasts)**: xHR/FB is the season's league HR/FB moved by **FB EV 1.364, EV90 0.822 and
+  Pull FB% 0.097** — `XHRFB.e` in `app.js`, the first tier `hrfbFit` tries (the 16 Oct barrel tiers stay as fallbacks for a file without FB EV /
+  EV90 / the pull share) — everywhere it's built: talent xwOBA (`TW_USE_EV` is true again; `tools/build_career.py`'s `TW_USE_EV` too), xSLG / xISO
+  (they take the same home-run piece), the xHR/FB tab and its build-up (steps FB EV · EV90 · Pull FB%), the by-season table (its **FB Brl%** column
+  is **EV90**, the In Split row and the career row too), Movers' xHR/FB inputs, Year over year's skills, the Leaderboard's xHR/FB column and the
+  glossary. **xBABIP had no barrel input** (its nine drivers are LD%, Popup%, GB EV, GB pull, LD EV, LD pull, Oppo%, FB%, sprint), so there was nothing
+  to remove; Barrel% by type stays on the Batted Ball Quality tab, the Leaderboard and the card as a description of contact, not an input.
+  - **Why** (scratch `xw2/ev.js`, `ev3.js`, `br.js`; every hitter-season 2015-26, park-neutral, each season centred): first half → second half wOBA
+    (2,411 hitters with 150+ PA a half) r .416 → **.434**, better in 10 of 11 seasons; next season (1,819 pairs, 300+ PA both) .558 → **.564**, 6 of 9;
+    the same season .827 → .792 (barrels describe a season, speed forecasts it). A 75 / 25 blend of the two xHR/FBs gets most of the gain (.432 /
+    .565 / .805) and wasn't taken.
+  - **What a barrel adds beyond speed** (`br.js`, 300+ PA): 79-86% of FB Brl% is FB EV + EV90 already; Barrel% itself repeats year to year at r
+    .71 (FB EV .77), but the part speed doesn't explain — the launch angle landing in the window — repeats at **.12** and its correlation with next
+    season's wOBA is **−.008**. A real trait, a noisy extra.
+  - **Also run and not shipped**: shrinking each piece toward the league by its own reliability (the Movers constants `FX_K`) costs .010 in both
+    forecasts at any strength and .05-.08 of the same season; the ball-by-ball model (`dxwOBA`) is .885 for the same season and .367 / .522 for the
+    second half / next season, against the build's .416 / .558, and blends only add when the exit-velocity fit is in; an all-expected build (no
+    actual K% / BB% halves, league HBP) with exit-velocity xHR/FB reads .424 / .552 / .752. Those three are in the 14 Nov chat, not the site.
+  - **Data**: `hist/career-bb.js` (only `txw txwpk xslg xslgpk xiso xisopk` move: mean −.0003 / −.0010 / −.0007, a few hundredths at the tails on
+    small samples), the `hist/c/` buckets, `hist/lg/*` and `hist/home.js` regenerated; app and file agree within .0005 over 2,189 hitter-seasons
+    (scratch `xw2/agree.cjs`). The xwOBA build-up's xHR/FB and the tab's can sit a few tenths apart (the build centres on the 300+ PA hitters
+    PA-weighted with a +0.096 constant; the tab on the FB-weighted league).

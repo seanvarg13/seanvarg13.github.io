@@ -5861,7 +5861,7 @@
   const FX_IN = {
     xk: [["xk", "xK%", false], ["k", "K%", false], ["whf", "Whiff%", false], ["zsw", "Z-Swing%", true], ["osw", "Chase%", false], ["strk", "Strike% seen", false]],
     xbb: [["@xbbFit", "xBB%", true], ["bb", "BB%", true], ["osw", "Chase%", false], ["zsw", "Z-Swing%", false], ["ocon", "O-Contact%", true], ["zcon", "Z-Contact%", false], ["zsn", "Zone% seen", false], ["ev90", "90th% EV", true], ["ibbr", "IBB / 100 PA", true], ["fcon", "Fouls / contact", true]],
-    xhf: [["@xhf", "xHR/FB", true], ["evfb", "FB EV", true], ["brfb", "FB Brl%", true], ["brld", "LD Brl%", true], ["@pfb", "Pull FB%", true]],
+    xhf: [["@xhf", "xHR/FB", true], ["evfb", "FB EV", true], ["ev90", "EV90", true], ["@pfb", "Pull FB%", true]],
     fbs: [["@fbs100", "Fly ball%", true], ["fb", "FB%", true], ["pu", "Popup%", false], ["ld", "LD%", true], ["gb", "GB%", false]],
     xbab: [["xbabip", "xBABIP", true], ["ld", "LD%", true], ["pu", "Popup%", false], ["evgb", "GB EV", true], ["@gbp", "GB Pull%", false], ["evld", "LD EV", true], ["@ldp", "LD Pull%", true], ["spd", "Sprint", true], ["oppo", "Oppo%", true], ["fb", "FB%", false]],
     tph: [["@tph", "Extra power", true], ["dxslgm", "Model xSLG", true], ["dxba", "xBA", true], ["brl", "Barrel%", true], ["ev90", "90th% EV", true]],
@@ -6371,14 +6371,14 @@
     slg: "Slugging — total bases per at-bat.",
     iso: "Isolated power — slugging minus batting average: the extra bases per at-bat beyond a single (a double 1, a triple 2, a home run 3).",
     xiso: "Expected isolated power: xSLG less an xBA built from the same skills pieces — his K% and BB% (half his actual rate, half the expected one), fly balls × xHR/FB for the home runs, the drivers' xBABIP for the other hits and the extra-bases piece — so the extra bases per at-bat his skills say, with his parks unless Leaderboard ▸ Filters ▸ Stats says park-neutral. First-half xISO calls second-half ISO at r .59 (his ISO .53, xHR/FB .52) and next season's at .67 (.63), and it settles in about half the plate appearances ISO needs. Its xBA isn't the site's xBA (the batted-ball model's), so it can sit a few points off xSLG − xBA. In a date window it's pulled toward the league's ISO by 125 / (PA + 125).",
-    xwoba: "Expected wOBA: his wOBA rebuilt from expected rates only, never his actual hits — xK% (his whiffs, swing decisions and the strikes he sees) and xBB% (his chase rate, zone swings, contact, how often pitchers come into the zone on him, how many of his batted balls go foul and his intentional walks), each half his actual rate; his HBP rate; xHR/FB from his fly-ball contact (FB EV, barrels on fly balls and on line drives, pulled fly balls) on his fly balls and popups; the nine-driver xBABIP (line drives, popups, grounder and liner EV, grounder and liner pull, speed, oppo, fly balls — no Noise, no Luck) on the rest; Extra power, the batted-ball model's bases per hit that isn't a home run once xHR/FB's home runs are out of it, centred on the season's real number; and a small ground-ball term (+0.45 points a point of GB% against the league's: the most ground-ball-heavy hitters beat the pieces every season, and the next season too). Intentional walks are out of the walks and the plate appearances, as wOBA has them. Scaled so the season's 300+ PA hitters average their real wOBA. With his parks: the skills are measured park-neutral (the K% and BB% halves less his parks' effect on them, the contact pieces read off his contact and not where it landed, the HR fits fitted on park-neutral home runs — every ball 2015-26 at the park it was hit in against a neutral park, hist/parks.js), and then his parks are put back on every piece (the build-up's Park factor row), since where he plays shapes what he produces and will again if he stays. Leaderboard ▸ Filters ▸ Stats switches the whole site to the park-neutral number (also its own column, Park-neutral xwOBA). First-half xwOBA calls second-half wOBA at r .42 (the batted-ball model alone .37, wOBA .31) and next season's at .56. In a date window it's pulled toward the league's wOBA by 200 / (PA + 200) — two-thirds of the way for a 100-PA window — which is how much of a window's xwOBA has carried into the next two months; a full season isn't. A span of seasons or an untracked level shows the batted-ball model's number. The xwOBA tab shows the build-up.",
+    xwoba: "Expected wOBA: his wOBA rebuilt from expected rates only, never his actual hits — xK% (his whiffs, swing decisions and the strikes he sees) and xBB% (his chase rate, zone swings, contact, how often pitchers come into the zone on him, how many of his batted balls go foul and his intentional walks), each half his actual rate; his HBP rate; xHR/FB from his fly-ball contact (FB EV, EV90 and the share of his fly balls pulled — no barrels, whose launch-angle window adds nothing that carries to next year) on his fly balls and popups; the nine-driver xBABIP (line drives, popups, grounder and liner EV, grounder and liner pull, speed, oppo, fly balls — no Noise, no Luck) on the rest; Extra power, the batted-ball model's bases per hit that isn't a home run once xHR/FB's home runs are out of it, centred on the season's real number; and a small ground-ball term (+0.45 points a point of GB% against the league's: the most ground-ball-heavy hitters beat the pieces every season, and the next season too). Intentional walks are out of the walks and the plate appearances, as wOBA has them. Scaled so the season's 300+ PA hitters average their real wOBA. With his parks: the skills are measured park-neutral (the K% and BB% halves less his parks' effect on them, the contact pieces read off his contact and not where it landed, the HR fits fitted on park-neutral home runs — every ball 2015-26 at the park it was hit in against a neutral park, hist/parks.js), and then his parks are put back on every piece (the build-up's Park factor row), since where he plays shapes what he produces and will again if he stays. Leaderboard ▸ Filters ▸ Stats switches the whole site to the park-neutral number (also its own column, Park-neutral xwOBA). First-half xwOBA calls second-half wOBA at r .42 (the batted-ball model alone .37, wOBA .31) and next season's at .56. In a date window it's pulled toward the league's wOBA by 200 / (PA + 200) — two-thirds of the way for a 100-PA window — which is how much of a window's xwOBA has carried into the next two months; a full season isn't. A span of seasons or an untracked level shows the batted-ball model's number. The xwOBA tab shows the build-up.",
     dxba: "Expected batting average — the same directional model, scored as hits per at-bat.",
     dxslg: "Expected slugging, built from his skills the way xwOBA is (since 23 Oct 2026): total bases per at-bat from his K% and BB% (half his actual rate, half the expected one), his fly balls × xHR/FB for the home runs, the drivers' xBABIP for the other hits, and extra bases per hit that isn't a home run, half from a skills fit (GB%, sprint speed, LD EV, Pull%) and half from the batted-ball model — with his parks unless Leaderboard ▸ Filters ▸ Stats says park-neutral. First-half xSLG calls second-half SLG at r .45 (the batted-ball model alone .42, his SLG .37) and next season's at .53 (.50 / .47). In a date window it's pulled toward the league's slugging by 200 / (PA + 200). On one game day, a span of seasons or an untracked level it's the batted-ball model's number.",
     ev: "Average exit velocity off the bat, bunts excluded.",
     brfb: "Brl% on FB: barrels per tracked fly ball (bunts out) — the share of his fly balls hit at a barrel's speed and angle. Where the home runs come from.",
     brld: "Brl% on LD: barrels per tracked line drive — the hardest liners in the barrel window, mostly extra-base hits.",
     fbq: "FB Power: his EV on fly balls and Barrel% on fly balls, each as a percentile among the 300+ PA hitters, averaged — one 0-100 number for how hard he hits the ball in the air (it is its own colour). Seasons built before 8 Oct 2026 have no Barrel% on FB, so no FB Power.",
-    xhrfb: "xHR/FB: the home runs per fly ball his contact deserves at a neutral park — that season's league HR/FB moved by his EV on fly balls, Barrel% on fly balls, Barrel% on line drives (a liner over the fence counts as a fly ball here) and the share of his fly balls pulled, fitted on park-neutral home runs (every fly ball 2015-26 at the park it was hit in against a neutral park). The same number as the xHR/FB tab's, where his HR/FB is park-neutral too (what his parks added is the by-season table's Park column). Savant's fly balls, his line-drive homers counted in.",
+    xhrfb: "xHR/FB: the home runs per fly ball his contact deserves at a neutral park — that season's league HR/FB moved by his EV on fly balls, his EV90 and the share of his fly balls pulled — exit velocity alone, no barrels (the launch-angle window inside a barrel repeats at r .12 and forecasts next season at zero beyond the speed) — fitted on park-neutral home runs (every fly ball 2015-26 at the park it was hit in against a neutral park). The same number as the xHR/FB tab's, where his HR/FB is park-neutral too (what his parks added is the by-season table's Park column). Savant's fly balls, his line-drive homers counted in.",
     brgb: "Brl% on GB: barrels per tracked ground ball. Near zero for everyone — a barrel needs 8° or more of launch, so only a stung ball at the grounder / liner edge counts.",
     evfb: "EV on FB: average exit velocity on fly balls — the ones he hit, or for a pitcher the ones he allowed (the stringer's type, bunts and popups excluded). Hard fly balls are where the home runs are, for the hitter who hits them and against the pitcher who allows them; a soft fly-ball average with a high FB% is a hitter's warning sign.",
     evld: "EV on LD: average exit velocity on line drives, hit or allowed. A high line-drive rate is mostly noise year to year; the exit velocity on them is the part that repeats.",
@@ -8257,7 +8257,7 @@
   // points the miss on his HR/FB change drops 3.73 → 3.30 points. Next season's HR/FB r .640 against .652: it describes the season, it doesn't
   // forecast better. +0.094 HR/FB a point of pulled share (within a hitter's own change it's ~.15); a pull × FB EV term (pull matters more on
   // softer fly balls) added nothing on the changes and runs negative for slap hitters, so it's out. c stays for a file without the rates
-  const XHRFB = { d: { evfb: 0.345, brfb: 0.394, brld: 0.219, pfb: 0.094 }, c: { evfb: 0.373, brfb: 0.391, brld: 0.217 }, a: { evfb: 0.779, brl: 0.738 }, b: { brl: 1.037, ev90: 0.499 } };
+  const XHRFB = { e: { evfb: 1.364, ev90: 0.822, pfb: 0.097 }, d: { evfb: 0.345, brfb: 0.394, brld: 0.219, pfb: 0.094 }, c: { evfb: 0.373, brfb: 0.391, brld: 0.217 }, a: { evfb: 0.779, brl: 0.738 }, b: { brl: 1.037, ev90: 0.499 } };
   const pfbOf = (o) => (o && o.pullfb != null && o.fb ? Math.round(1000 * o.pullfb / o.fb) / 10 : null);   // share of his fly balls pulled (pullfb is a share of every ball in play)
   // Talent xwOBA (Sean, 11 Oct 2026: "an xwoba based purely on their talent and completely removes noise ... their batted ball mix, k rate, bb rate,
   // xbabip minus luck and noise, and xHR/fb rate"): wOBA rebuilt from expected rates only, never his actual hits, walks or strikeouts —
@@ -8304,7 +8304,14 @@
   // it, hist/parks.js's cells): XHRFB.d evfb .332 → .345, brfb .401 → .394, brld .218 → .219, pfb .094 (held out by season r .883 → .892, rmse
   // 3.21 → 3.06, next season's HR/FB r .640 → .647); TW_HF c .104 → .096, evfb 1.365 → 1.364, ev90 .828 → .822, pfb .096 → .097 (.834 → .843,
   // next season .674 → .682). The park had been noise in the target; the weights barely move, the fits read a little cleaner
-  const TW_HF = { c: 0.096, w: { evfb: 1.364, ev90: 0.822, pfb: 0.097 } }, TW_USE_EV = false;   // false since 16 Oct 2026: the barrel fit (XHRFB) is the HR piece
+  // 14 Nov 2026 (Sean, after the forecast tests: "remove barrel rate from the xwoba build up ... and the xHR to fb ratio as well"): the HR piece is
+  // exit velocity alone again — and the xHR/FB tab, its by-season table, Movers' and Year over year's inputs and the Leaderboard column read the
+  // same fit (XHRFB.e). Every 300+ PA hitter-season 2015-26 (scratch xw2/ev.js, br.js): first half → second half wOBA r .416 → .434 (better in 10 of
+  // 11 seasons), next season .558 → .564 (6 of 9), the same season .827 → .792 (barrels describe a season, speed forecasts it). 79-86% of FB Brl% is
+  // FB EV + EV90 already; what's left (the launch angle landing in the window) repeats year to year at r .12 and its correlation with next
+  // season's wOBA is −.008. The by-season table's FB Brl% column is EV90 now; Barrel% by type stays on the Batted Ball Quality tab, the Leaderboard
+  // and the card as what it is — a description of contact, not an input
+  const TW_HF = { c: 0.096, w: { evfb: 1.364, ev90: 0.822, pfb: 0.097 } }, TW_USE_EV = true;   // true again since 14 Nov 2026: exit velocity alone is the HR piece and the xHR/FB tab's fit (barrels left it — see the 14 Nov note above)
   // The xwOBA build-up review (Sean, 12 Nov 2026: "ok do them all", the five fixes of the review):
   // TW_WIN — a date window's skills numbers regressed toward the league by PA / (PA + k), the final number only; the pieces stay the window's own,
   // so Movers compares a window's pieces with the season's like for like (the 12 Nov piece shrink had pulled the window's xBABIP toward the league
@@ -8399,8 +8406,8 @@
     const xk = m.k == null ? xkFit : act * (m.k - pkk) + (1 - act) * xkFit, xbb = m.bb == null ? xbbFit : act * (m.bb - pkbb) + (1 - act) * xbbFit;
     const hbp = (I.hbp || 0) / I.pa, ibb = m.ibbr != null && L.ibbr != null ? m.ibbr : null;
     const bx = { evfb: m.evfb, brfb: m.brfb, brld: m.brld, pfb: I.pfb, brl: m.brl, ev90: m.ev90 };
-    // the barrel fit, the xHR/FB tab's own (Sean, 16 Oct 2026, Anthony's 23.7 against the tab's 26.9: "switch it so both include barrel %");
-    // TW_HF (exit velocity alone) stays for the record — TW_USE_EV turns it back on
+    // exit velocity alone, as the xHR/FB tab's (Sean, 14 Nov 2026: "remove barrel rate from the xwoba build up ... and the xHR to fb ratio as well"):
+    // the 16 Oct barrel fit (XHRFB.d) is the fallback for a file without FB EV / EV90 / pull share
     const ev = TW_USE_EV && Object.keys(TW_HF.w).every((k) => bx[k] != null && L.twh && L.twh[k] != null), f = ev ? TW_HF.w : hrfbFit(bx, L.hr); if (!f) return null;
     let xhf = L.hr.hrfb + (ev ? TW_HF.c : 0); const dh = {}; for (const k in f) { dh[k] = f[k] * (bx[k] - (ev ? L.twh : L.hr)[k]); xhf += dh[k]; } xhf = Math.max(0, xhf);
     const hrb = xhf / 100 * I.fbs;
@@ -8516,7 +8523,7 @@
     if (t.xslg != null && t.xs.bra != null && L.sba != null) { const pkB = t.parkIn && t.xslgPk != null && t.xs.braPk != null; t.xba = (pkB ? t.xs.braPk : t.xs.bra) * L.sba; t.xiso = (pkB ? t.xslgPk : t.xslgN) - t.xba; }
     return t;
   }
-  const hrfbFit = (bx, lg) => { const has = (ks) => bx && lg && ks.every((k) => bx[k] != null && lg[k] != null); return has(["evfb", "brfb", "brld", "pfb"]) ? XHRFB.d : has(["evfb", "brfb", "brld"]) ? XHRFB.c : has(["evfb", "brl"]) ? XHRFB.a : has(["brl", "ev90"]) ? XHRFB.b : null; };
+  const hrfbFit = (bx, lg) => { const has = (ks) => bx && lg && ks.every((k) => bx[k] != null && lg[k] != null); return has(["evfb", "ev90", "pfb"]) ? XHRFB.e : has(["evfb", "brfb", "brld", "pfb"]) ? XHRFB.d : has(["evfb", "brfb", "brld"]) ? XHRFB.c : has(["evfb", "brl"]) ? XHRFB.a : has(["brl", "ev90"]) ? XHRFB.b : null; };
   const HRFB_LG = new Map();
   function hrfbLeague(y) {   // that season's league: HR/FB, FB-weighted FB EV / Barrel% / EV90, and the qualifiers' sorted values for the heat map
     { const G = lgOf(y); if (G && G.hrfb) return G.hrfb; }
@@ -8559,7 +8566,7 @@
     // and a Park column (15 Oct 2026): what his parks did to his HR/FB, ball by ball, so Diff is the luck beyond the park
     const { tb, fin, gap, wrap } = brTable([["", 2], ["Raw", 2], ["Fly-ball contact", 2], ["HR / FB", 4]],
       [["Season", "l"], ["Team", "l"], ["HR", ""], ["FB", "", "Fly balls + popups (Statcast's calls), his line-drive homers counted in"],
-       ["FB EV", "", "Exit velocity on fly balls (2023 on)"], ["FB Brl%", "", "Barrels per fly ball"], ["HR/FB", "", "His home runs over his fly balls at a neutral park (what his parks added is the Park column: his HR/FB in his parks is HR/FB + Park)"], ["Park", "", "What his parks added to his HR/FB, ball by ball: each fly ball's chance of leaving the park it was hit in against the same ball at a neutral park — + = the parks gave him home runs"], ["xHR/FB", "", "What his contact says: that season's league HR/FB moved by his FB EV, Barrel% on fly balls, Barrel% on line drives and pulled fly balls against the league's (fitted on park-neutral home runs)"], ["Diff", "", "HR/FB − xHR/FB, both at a neutral park: + = more homers than his contact says"]], "hrfbt");
+       ["FB EV", "", "Exit velocity on fly balls (2023 on)"], ["EV90", "", "90th-percentile exit velocity, all his batted balls (2023 on for fly balls' own speed; EV90 is on every season)"], ["HR/FB", "", "His home runs over his fly balls at a neutral park (what his parks added is the Park column: his HR/FB in his parks is HR/FB + Park)"], ["Park", "", "What his parks added to his HR/FB, ball by ball: each fly ball's chance of leaving the park it was hit in against the same ball at a neutral park — + = the parks gave him home runs"], ["xHR/FB", "", "What his contact says: that season's league HR/FB moved by his FB EV, Barrel% on fly balls, Barrel% on line drives and pulled fly balls against the league's (fitted on park-neutral home runs)"], ["Diff", "", "HR/FB − xHR/FB, both at a neutral park: + = more homers than his contact says"]], "hrfbt");
     const heat = (td, arr, v, lo) => { if (v == null || !arr || arr.length < 20) return; const pc = insertPct(lo ? arr.map((z) => -z).reverse() : arr, lo ? -v : v), sty = pctStyle(pc); td.style.background = sty.bg; td.style.color = sty.fg; td.classList.add("hheat", "heat"); td.title = ordinal(Math.round(pc)) + " percentile among that season's qualified hitters"; };
     const sgn = (v) => (v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1));
     // the card's date filter or split as a row under its season (Sean, 15 Oct 2026: "allow the second table to add an additional row for the
@@ -8576,7 +8583,7 @@
       const hf = 100 * x.hr / x.fb, xv = lgv.hrfb == null ? null : xHrfb(x, lgv);
       cell(String(x.hr)); cell(String(x.fb)).title = "Fly balls + popups in this view (Statcast's calls; a window can't count his line-drive homers in)";
       heatV(cell(x.evfb != null ? x.evfb.toFixed(1) : "–"), LV.arr.evfb, x.evfb);
-      heatV(cell(x.brfb != null ? x.brfb.toFixed(1) + "%" : "–"), LV.arr.brfb, x.brfb);
+      heatV(cell(x.ev90 != null ? x.ev90.toFixed(1) : "–"), LV.arr.ev90, x.ev90);
       const pkv = V(p).m.pkhr ?? null, hfN = hf - (pkv || 0);   /* park-neutral in the window (the rows' park sums) */
       heatV(cell(hfN.toFixed(1) + "%"), LV.arr.hrfb, hfN);
       const pc = cell(pkv == null ? "–" : sgn(pkv)); if (pkv != null) pc.classList.add(pkv >= 0 ? "pos" : "neg");
@@ -8592,7 +8599,7 @@
       const heatIf = +l.c.PA >= 100 ? heat : () => {};   // a cup of coffee isn't coloured against the qualifiers (Cruz 2021: 1 FB, 1 HR)
       cell(String(y), "l nm"); cell(l.team || "", "l"); cell(String(hr)); cell(String(fb));
       heatIf(cell(bx && bx.evfb != null ? bx.evfb.toFixed(1) : "–"), L.arr.evfb, bx && bx.evfb);
-      heatIf(cell(bx && bx.brfb != null ? bx.brfb.toFixed(1) + "%" : "–"), L.arr.brfb, bx && bx.brfb);   // fly balls only (Sean, 8 Oct 2026)
+      heatIf(cell(bx && bx.ev90 != null ? bx.ev90.toFixed(1) : "–"), L.arr.ev90, bx && bx.ev90);
       const pkv = bx && bx.pkhr != null ? bx.pkhr : cur && p.m && p.m.pkhr != null ? p.m.pkhr : null, hfN = hf - (pkv || 0);   /* park-neutral HR/FB (15 Oct 2026) */
       heatIf(cell(hfN.toFixed(1) + "%"), L.arr.hrfb, hfN);
       const pc = cell(pkv == null ? "–" : sgn(pkv)); if (pkv != null) pc.classList.add(pkv >= 0 ? "pos" : "neg");
@@ -8603,7 +8610,7 @@
       if (filt && cur) { tb.append(splitTr()); splitIn = true; }
       H += hr; F += fb;
       if (bx && bx.evfb != null) { eS += bx.evfb * fb; eW += fb; }
-      if (bx && bx.brfb != null) { bS += bx.brfb * fb; bW += fb; }
+      if (bx && bx.ev90 != null) { bS += bx.ev90 * fb; bW += fb; }
       if (xv != null) { xS += xv * fb; xW += fb; hrX += hr; fbX += fb; }
     }
     if (filt && !splitIn) tb.append(splitTr());   // a minors season, or one he has no MLB line for: the view's row closes the seasons
@@ -8613,7 +8620,7 @@
     const xc = xW ? xS / xW : null;
     cell(""); cell(`${rows.length} Yr${rows.length === 1 ? "" : "s"}`, "l");
     const pkc = pW ? pS / pW : null;
-    cell(String(H)); cell(String(F)); cell(eW ? (eS / eW).toFixed(1) : "–"); cell(bW ? (bS / bW).toFixed(1) + "%" : "–"); cell((100 * H / F - (pkc || 0)).toFixed(1) + "%"); cell(pkc == null ? "–" : sgn(pkc)); cell(xc == null ? "–" : xc.toFixed(1) + "%");
+    cell(String(H)); cell(String(F)); cell(eW ? (eS / eW).toFixed(1) : "–"); cell(bW ? (bS / bW).toFixed(1) : "–"); cell((100 * H / F - (pkc || 0)).toFixed(1) + "%"); cell(pkc == null ? "–" : sgn(pkc)); cell(xc == null ? "–" : xc.toFixed(1) + "%");
     cell(xc == null ? "–" : sgn(100 * hrX / fbX - (pkc || 0) - xc));
     tb.append(gap(), fin(tr)); box.append(wrap);
     return box;
@@ -10376,7 +10383,7 @@
     const h1 = el("div", "rollhd worksub"); h1.append(el("span", "rollname", "The pieces of his xwOBA")); box.append(h1, T.wrap);
     // the skills behind them, both years with their percentiles among that season's 300+ PA hitters
     const SK = [["Whiff%", "whf", false], ["Chase%", "osw", false], ["Z-Contact%", "zcon", true], ["Zone% seen", "zsn", false], ["Avg EV", "ev", true], ["EV90", "ev90", true], ["Bat speed", "bs", true], ["Barrel%", "brl", true], ["Hard-Hit%", "hh", true],
-                ["FB EV", "evfb", true], ["FB Brl%", "brfb", true], ["LD Brl%", "brld", true], ["Pull FB%", "pullfb", true], ["FB%", "fb", true], ["LD%", "ld", true], ["GB%", "gb", false], ["Popup%", "pu", false], ["GB EV", "evgb", true], ["LD EV", "evld", true], ["GB Pull%", "gbpull", false], ["Oppo%", "oppo", true], ["Sprint", "spd", true]];
+                ["FB EV", "evfb", true], ["EV90", "ev90", true], ["Pull FB%", "pullfb", true], ["FB%", "fb", true], ["LD%", "ld", true], ["GB%", "gb", false], ["Popup%", "pu", false], ["GB EV", "evgb", true], ["LD EV", "evld", true], ["GB Pull%", "gbpull", false], ["Oppo%", "oppo", true], ["Sprint", "spd", true]];
     const T2 = brTable([["", 1], [String(y0), 2], [String(y), 2], ["", 1]], [["Skill", "l f1"], ["Value"], ["Pctl", "", `among ${y0}'s 300+ PA hitters`], ["Value"], ["Pctl", "", `among ${y}'s 300+ PA hitters`], ["Δ", "", "the move in percentile points, coloured by whether it helped him"]], "yoyt");
     const fv = (k, x) => (x == null ? "–" : /EV|Sprint|speed/.test(k) ? x.toFixed(1) : x.toFixed(1) + "%");
     for (const [lab, k, hib] of SK) { const a = vP.m[k], b = vC.m[k]; if (a == null && b == null) continue; const pa = stP && stP.pct ? stP.pct[k] : null, pb = stC && stC.pct ? stC.pct[k] : null;
