@@ -6388,3 +6388,9 @@ canvas.seasonfx { opacity: .7; }
 :not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .pgpick { border-right-color: rgba(255, 255, 255, .55) !important; }
 :not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .sbview.set::after { background: #ffffff !important; }
 :not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):not(#s9):root:not([data-fbar]) .sbviews { border: 2px solid var(--phsep, var(--stripe-line, #c8102e)) !important; }   /* a red outline round the bar (14 Nov 2026) */
+
+/* The phone's top strip red over a blue foot (Sean, 14 Nov 2026: "make the top area red with a blue bottom bar instead of white with a red bottom"): the scheme's red over the status area, a 6px band-blue rule at its foot and the soft shadow below. */
+:root:root:root:root[data-view="mobile"] { --hdrc: var(--phsep, #c8102e) !important; }
+:root:root:root:root[data-view="mobile"] body:not(.psearchon):not(#u1):not(#u2):not(#u3):not(#u4):not(#u5):not(#u6):not(#u7):not(#u8) header.top { background: var(--phsep, #c8102e) !important; background-image: none !important; border-bottom: 6px solid var(--band2) !important; }
+:root:root:root:root[data-view="mobile"] body.psearchon:not(#u1):not(#u2):not(#u3):not(#u4):not(#u5):not(#u6):not(#u7):not(#u8) header.top { background: var(--phsep, #c8102e) !important; background-image: none !important; border-bottom: 6px solid var(--band2) !important; }
+:root:root:root:root[data-view="mobile"] body.psearchon:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5) .pscancel { color: #ffffff !important; }
