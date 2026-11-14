@@ -6322,3 +6322,15 @@ canvas.seasonfx { opacity: .7; }
 .lgb.taken { color: var(--muted, #778); }
 .pgcell .pgwatch { font: inherit; background: none; border: 0; cursor: pointer; color: inherit; padding: 0 8px; white-space: nowrap; }
 .lgtside { margin: 8px 0 14px; } .lgtside h4 { margin: 0 0 6px; }
+
+/* No top bar on a phone (Sean, 14 Nov 2026: "do away with that top header ... put the logo at the bottom ... make the up top thing that's currently
+   brown be the color of the regular site theme ... light blue with a red border"): the header is the strip under the status bar alone, in the
+   scheme's band colour over its red rule, whatever season art or header theme is on; the top bar (.phtop) is gone, the page bounce and the search
+   header take the band too (--hdrc is the band here). The bottom bar's Home tab wears the logo; Search is its fourth tab. */
+:root:root:root:root[data-view="mobile"] { --hdrc: var(--band2) !important; }
+:root:root:root:root[data-view="mobile"] .phtop { display: none !important; }
+:root:root:root:root[data-view="mobile"] body:not(.psearchon):not(#z1):not(#z2) header.top { background: var(--band2) !important; background-image: none !important; background-color: var(--band2) !important; }
+:root:root:root:root[data-view="mobile"] body:not(.psearchon):not(#z1):not(#z2) header.top::before { display: none !important; }
+:root:root:root:root[data-view="mobile"] body.psearchon:not(#z1):not(#z2) header.top { background: var(--band2) !important; background-image: none !important; }
+:root:root:root:root[data-view="mobile"] .pbar img.plogo { width: 30px; height: 30px; flex: none; border-radius: 8px; border: 2px solid #ffffff; box-sizing: border-box; object-fit: cover; background: var(--band2, var(--accent-2)); box-shadow: 0 0 0 1px rgba(0, 0, 0, .18); }
+:root:root:root:root[data-view="mobile"] .pbar:not(#p1):not(#p2) > a[data-mode="home"] img.plogo { width: 30px !important; height: 30px !important; }

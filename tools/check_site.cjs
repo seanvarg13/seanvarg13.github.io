@@ -155,7 +155,7 @@ function minorsId() {
       const shown = await pg.evaluate(() => { const b = document.querySelector(".pbar"); return b ? getComputedStyle(b).display !== "none" : null; });
       if (shown === null) throw new Error("no .pbar");
       if (name.startsWith("phone")) { if (!shown) throw new Error("the phone bar is hidden");
-        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 5 && document.querySelectorAll(".pbar > a[data-mode]").length === 5 && document.querySelector('.pbar > a[href="#league"]') && !document.querySelector(".pbarsheet") && getComputedStyle(document.querySelector(".navtog")).display === "none" && getComputedStyle(document.querySelector(".phtop")).display !== "none" && getComputedStyle(document.querySelector("#gsearch")).display === "none" && document.querySelector('.pbar > a[href="#settings"]') && document.querySelector('.phtop .psbtn'));
+        await until(() => document.querySelectorAll(".pbar > a, .pbar > button").length === 5 && document.querySelectorAll(".pbar > a[data-mode]").length === 4 && !document.querySelector('.pbar > a[href="#league"]') && !document.querySelector(".pbarsheet") && getComputedStyle(document.querySelector(".navtog")).display === "none" && !document.querySelector(".phtop") && getComputedStyle(document.querySelector("#gsearch")).display === "none" && document.querySelector('.pbar > a[href="#settings"]') && document.querySelector('.pbar > .psbtn') && document.querySelector('.pbar > a[data-mode="home"] img.plogo') && document.querySelector("header.top").offsetHeight <= 60);   // 14 Nov 2026: no top bar, League inside Fantasy, Search the fourth tab
         // the Leaders tab goes to the Leaders page last open (the steps above left the board or Movers) and lights; once the bar's picker has moved
         // to the Leaderboard, the tab remembers that instead; the Fantasy tab the same for its five pages
         const lh = await pg.evaluate(() => document.querySelector('.pbar > a[data-mode="leaderboard"]').getAttribute("href"));
@@ -170,13 +170,13 @@ function minorsId() {
         await pg.evaluate(() => document.querySelector('.pbar > a[data-mode="draftmode"]').click());
         await until((h) => location.hash === h && document.querySelector('.pbar > a[data-mode="draftmode"]').getAttribute("aria-current") === "page" && !document.querySelector('.pbar > a[data-mode="leaderboard"]').hasAttribute("aria-current"), fh);
         // the search from the top bar (30 Oct 2026; the bottom bar's tab before): the magnifier opens the header over the page with the box focused, a pick closes it
-        await pg.evaluate(() => document.querySelector(".phtop .psbtn").click());
+        await pg.evaluate(() => document.querySelector(".pbar .psbtn").click());
         await until(() => document.body.classList.contains("psearchon") && getComputedStyle(document.querySelector("header.top")).display !== "none" && document.activeElement === document.getElementById("gq"));
         await pg.type("#gq", "Judge"); await count("#glist .addhit", 1);
         await pg.evaluate(() => [...document.querySelectorAll("#glist .addhit")].find((x) => /^Aaron Judge/.test(x.textContent)).click());
-        await until(() => location.hash === "#player/592450" && !document.body.classList.contains("psearchon") && getComputedStyle(document.querySelector(".phtop")).display !== "none" && getComputedStyle(document.querySelector("#gsearch")).display === "none"); }
+        await until(() => location.hash === "#player/592450" && !document.body.classList.contains("psearchon") && getComputedStyle(document.querySelector("#gsearch")).display === "none"); }
       else { if (shown) throw new Error("the phone bar shows on a desktop");
-        await until(() => getComputedStyle(document.querySelector("header.top")).display !== "none" && getComputedStyle(document.querySelector(".pscancel")).display === "none" && getComputedStyle(document.querySelector(".phtop")).display === "none"); } });
+        await until(() => getComputedStyle(document.querySelector("header.top")).display !== "none" && getComputedStyle(document.querySelector(".pscancel")).display === "none"); } });
     if (!QUICK) {
       // the bar in one spot (29 Oct 2026): on every Leaders and Fantasy page the bar's left edge and top are the same pixels, its picker as wide
       // within a group, and the Leaderboard's, the board's and Movers' table frames share their four edges
@@ -189,10 +189,10 @@ function minorsId() {
           const g = await pg.evaluate((sel) => { const vis = (q) => [...document.querySelectorAll(q)].find((e) => e.getClientRects().length), R = (e) => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom].map(Math.round); };
             const b = vis(".sbviews.lbviews"), p = b && b.querySelector(".pgpick"), f = sel ? vis(sel) : null; return { bar: b ? R(b) : null, pick: p ? R(p) : null, frame: f ? R(f) : null }; }, fr || null);
           if (!g.bar || !g.pick) throw new Error(h + ": no bar"); if (fr && !g.frame) throw new Error(h + ": no frame"); G[h] = g; }
-        const near = (a, b, n = 1) => a.every((v, i) => Math.abs(v - b[i]) <= n), ref = G["#leaderboard"], grp = (h) => (/^#(leaderboard|pitches|movers)$/.test(h) ? "#leaderboard" : "#rankings");
+        const near = (a, b, n = 1, foot = n) => a.every((v, i) => Math.abs(v - b[i]) <= (i === 3 ? foot : n))   /* the foot may differ: the Leaderboard's 25-row page hugs its rows on a tall screen (14 Nov 2026) */, ref = G["#leaderboard"], grp = (h) => (/^#(leaderboard|pitches|movers)$/.test(h) ? "#leaderboard" : "#rankings");
         for (const h in G) { if (!near(G[h].bar.slice(0, 2), ref.bar.slice(0, 2))) throw new Error(`the bar moves: ${h} at ${G[h].bar.slice(0, 2)} vs ${ref.bar.slice(0, 2)}`);
           const q = G[grp(h)].pick; if (!near(G[h].pick.slice(0, 2), q.slice(0, 2)) || Math.abs(G[h].pick[2] - G[h].pick[0] - (q[2] - q[0])) > 1) throw new Error(`the picker moves: ${h} ${G[h].pick} vs ${q}`);
-          if (G[h].frame && !near(G[h].frame, ref.frame)) throw new Error(`the frame differs: ${h} ${G[h].frame} vs ${ref.frame}`); } });
+          if (G[h].frame && !near(G[h].frame, ref.frame, 1, 12)) throw new Error(`the frame differs: ${h} ${G[h].frame} vs ${ref.frame}`); } });
       // the Mock draft (29 Oct 2026): the bar's picker says the page; Start draft opens the room as a popup; its × leaves it (the draft pauses) and
       // the page offers Enter the draft room; Enter reopens it; Escape leaves again; the draft is cleared so the next run starts clean
       await step("mock draft", async () => { await hash("#mock"); await until(() => document.querySelector("#pitchboard .pgrow .lbviews .pgpick .pgcur")?.textContent.trim() === "Mock draft" && !!document.querySelector("#pitchboard .mkset .mkgo"), 90000);
@@ -221,7 +221,7 @@ function minorsId() {
       await pg.evaluate(() => window.scrollTo(0, 600)); await pg.waitForTimeout(1600);   // past the open's own "to the top" moment
       if (!(await pg.evaluate(() => window.scrollY > 100))) throw new Error("the page didn't scroll down");
       await pg.evaluate(() => { const gq = document.getElementById("gq"), y = window.scrollY; gq.addEventListener("blur", () => setTimeout(() => window.scrollTo(0, y), 120), { once: true }); });
-      if (name.startsWith("phone")) await pg.evaluate(() => document.querySelector(".phtop .psbtn").click()); else await pg.focus("#gq");   // a phone opens the box from the bar (29 Oct 2026)
+      if (name.startsWith("phone")) await pg.evaluate(() => document.querySelector(".pbar .psbtn").click()); else await pg.focus("#gq");   // a phone opens the box from the bar (29 Oct 2026)
       await pg.type("#gq", "Judge"); await count("#glist .addhit", 1);
       await pg.evaluate(() => [...document.querySelectorAll("#glist .addhit")].find((x) => /^Aaron Judge/.test(x.textContent)).click());
       await until(() => { const n = document.querySelector("#xboard .pgbname"); return !!(n && /Aaron Judge/.test(n.textContent) && document.querySelector("table.sbt tbody tr")); });
