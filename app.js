@@ -12287,7 +12287,7 @@
   // and the Fantasy pages share one too (Sean, the same day: "with the fantasy page do kind of the same thing. Add one bar up top to that which
   // allows you to switch between the different fantasy pages and options"): Rankings (Draft mode is its mode), the Fantasy leaderboard (Recent
   // is its view), Bullpens, the Mock draft and Scoring settings
-  const FANTASY_PAGES = [["rankings", "Rankings", "#rankings"], ["fantasy", "Fantasy leaderboard", "#fantasy/leaders"], ["bullpens", "Bullpens", "#bullpens"], ["mock", "Mock draft", "#mock"], ["fsettings", "Scoring settings", "#fantasy/settings"]];
+  const FANTASY_PAGES = [["rankings", "Rankings", "#rankings"], ["fantasy", "Fantasy leaderboard", "#fantasy/leaders"], ["bullpens", "Bullpens", "#bullpens"], ["mock", "Mock draft", "#mock"], ["league", "League", "#league"], ["fsettings", "Scoring settings", "#fantasy/settings"]];   /* League is a Fantasy page (Sean, 14 Nov 2026) */
   const CHEV = '<svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
   function pagePick(cur, pages = LEADERS_PAGES) {
     const pg = pages.find(([k]) => k === cur) || pages[0];
@@ -14484,7 +14484,7 @@
     pick.addEventListener("click", (e) => { e.stopPropagation();
       const opts = lgStore.list.map((x, i) => [String(i), `${x.name || "League " + x.id} · ESPN`]); opts.push(["add", "Add a league…"]);
       ddOpenOn(pick, opts, String(lgStore.cur), (v) => { if (v === "add") { lgAdding = true; lgFormReset(); render(); return; } lgStore.cur = +v; lgSave(); render(); }, { keyboard: e.detail === 0 }); });
-    bar.append(pick);
+    bar.append(pagePick("league", FANTASY_PAGES), pick);
     for (const [k, lab] of LG_TABS) { const b = el("button", "sbview" + (view === k ? " on" : ""), lab); b.type = "button"; b.setAttribute("aria-pressed", String(view === k));
       b.addEventListener("click", (e) => { e.stopPropagation(); if (location.hash !== "#league/" + k) location.hash = "#league/" + k; }); bar.append(b); }
     const line = el("div", "lgline"), count = el("span", "pcount"), by = el("span", "pgby"), act = el("span", "lgact"); line.append(count, by, act);
@@ -14523,6 +14523,7 @@
   function lgConnectPage(box) {
     const found = lgForm.found && lgForm.found.L;
     const links = lgStore.list.length ? [["Cancel", () => { lgAdding = false; lgFormReset(); render(); }]] : [];
+    { const row = el("div", "lgrow"), bar = el("div", "sbviews lbviews"); bar.append(pagePick("league", FANTASY_PAGES)); row.append(bar); box.append(row); }   /* the Fantasy pages' picker, so a phone can leave (14 Nov 2026) */
     const body = lgSection(box, found ? "Which team is yours?" : "Connect a league", found ? found.name : "ESPN", links);
     if (found) { lgTeamPick(body, found, (tid) => lgAdd(found, tid)); return; }
     body.append(el("p", "lgp", "Paste your league's link or its ID. ESPN shows the ID in the address of any page of the league: fantasy.espn.com/baseball/league?leagueId=12345678."));
@@ -14998,9 +14999,9 @@
   // fantasy on the bottom bar"): the Leaderboard, Pitching+ or Movers; Rankings, the Fantasy leaderboard (full season or recent), Bullpens, the Mock
   // draft or Scoring settings — remembered per device (draft2027.lastpage) each time one of them is drawn, the Leaderboard and Rankings until then.
   const LAST_LS = "draft2027.lastpage", LAST_DEF = { leaderboard: "#leaderboard", draftmode: "#rankings" };
-  const LAST_OK = { leaderboard: /^#(leaderboard|trending|pitches|movers|flaws)$/, draftmode: /^#(rankings|draft|mock|bullpens|fantasy(\/\w+)?)$/ };
+  const LAST_OK = { leaderboard: /^#(leaderboard|trending|pitches|movers|flaws)$/, draftmode: /^#(rankings|draft|mock|bullpens|league(\/\w+)?|fantasy(\/\w+)?)$/ };
   const LAST_PAGE = (() => { const o = { ...LAST_DEF }; try { const j = JSON.parse(localStorage.getItem(LAST_LS) || "{}"); for (const g in LAST_DEF) if (typeof j[g] === "string" && LAST_OK[g].test(j[g])) o[g] = j[g]; } catch { /* private window */ } return o; })();
-  const barGroup = (m) => (["leaderboard", "trending", "pitches", "flaws"].includes(m) ? "leaderboard" : ["rankings", "draft", "fantasy", "mock", "bullpens"].includes(m) ? "draftmode" : null);
+  const barGroup = (m) => (["leaderboard", "trending", "pitches", "flaws"].includes(m) ? "leaderboard" : ["rankings", "draft", "fantasy", "mock", "bullpens", "league"].includes(m) ? "draftmode" : null);
   function noteLastPage() {
     const g = barGroup(state.mode), h = location.hash;
     if (g && LAST_OK[g].test(h) && LAST_PAGE[g] !== h) { LAST_PAGE[g] = h; try { localStorage.setItem(LAST_LS, JSON.stringify(LAST_PAGE)); } catch { /* private window */ } }
@@ -15008,7 +15009,7 @@
   }
   function pSearch(on) {
     const b = document.body, was = b.classList.contains("psearchon"); if (on === was) return;
-    b.classList.toggle("psearchon", on); const t = document.querySelector(".phtop .psbtn"); if (t) t.setAttribute("aria-expanded", String(on));
+    b.classList.toggle("psearchon", on); const t = document.querySelector(".pbar .psbtn"); if (t) t.setAttribute("aria-expanded", String(on));
     setTb();   // the header's height (0 while it's hidden) feeds the sticky offsets
     if (on) { ensureIndex(); $("gq").focus(); if (!state.gq) renderGlobalSearch(); }
     else { state.gq = ""; $("gq").value = ""; $("gq").blur(); renderSearchList($("glist"), "", () => {}); }
@@ -15030,23 +15031,14 @@
                 search: '<svg class="pstroke" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.75"></circle><path d="M15.5 15.5 21 21"></path></svg>' };
     const bar = el("nav", "pbar"); bar.setAttribute("aria-label", "Pages");
     // the Leaders tab stands for three groups (data-modes), the Fantasy tab for its five pages (the header's group key, draftmode)
-    for (const [h, m, l, ms] of [["#home", "home", "Home"], [LAST_PAGE.leaderboard, "leaderboard", "Leaders", "leaderboard pitches flaws"], [LAST_PAGE.draftmode, "draftmode", "Fantasy"], ["#league", "league", "League"], ["#settings", "settings", "Settings"]]) {   /* Settings at the bar's right (Sean, 2 Nov 2026) */
-      const n = el("a"); n.href = h; n.dataset.mode = m; if (ms) n.dataset.modes = ms; n.innerHTML = I[m] + `<span>${l}</span>`; bar.append(n); }
+    for (const [h, m, l, ms] of [["#home", "home", "Home"], [LAST_PAGE.leaderboard, "leaderboard", "Leaders", "leaderboard pitches flaws"], [LAST_PAGE.draftmode, "draftmode", "Fantasy", "draftmode league"], ["#settings", "settings", "Settings"]]) {   /* Settings at the bar's right (Sean, 2 Nov 2026); League is a Fantasy page and Search is the fourth tab (14 Nov 2026) */
+      const n = el("a"); n.href = h; n.dataset.mode = m; if (ms) n.dataset.modes = ms; n.innerHTML = (m === "home" ? '<img class="plogo" src="icons/logo-fg.png" alt="" width="30" height="30">' : I[m]) + `<span>${l}</span>`; bar.append(n); }   /* the Home tab wears the site's logo (Sean, 14 Nov 2026) */
+    { const s = el("button"); s.type = "button"; s.className = "psbtn"; s.setAttribute("aria-label", "Search players"); s.setAttribute("aria-expanded", "false"); s.setAttribute("aria-controls", "gsearch"); s.innerHTML = I.search + "<span>Search</span>";
+      s.addEventListener("click", (e) => { e.stopPropagation(); pSearch(!document.body.classList.contains("psearchon")); }); bar.insertBefore(s, bar.querySelector('a[data-mode="settings"]')); }
     // The phone's top bar (Sean, 30 Oct 2026, option A of the header designs in option D's colours): search at the left, the site's icon and its
     // name in the middle (a link home), Settings at the right, on the band's blue over the red stripe. Search and Settings left the bottom bar for it.
-    const top = el("div", "phtop"), sb = el("button", "phbtn psbtn"); sb.type = "button"; sb.setAttribute("aria-label", "Search players"); sb.setAttribute("aria-expanded", "false"); sb.setAttribute("aria-controls", "gsearch");
-    sb.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.75"></circle><path d="M15.5 15.5 21 21"></path></svg>';
-    sb.addEventListener("click", (e) => { e.stopPropagation(); pSearch(!document.body.classList.contains("psearchon")); });
-    const home = el("a", "phmark"); home.href = "#home"; home.setAttribute("aria-label", "Sean's Site home"); // the date the data runs through in a pill (Sean, 30 Oct 2026: "where the words Sean's site are it shows this instead")
-    const thruD = new Date((DATA.meta.through || "") + "T12:00:00"), thru = isNaN(thruD) ? "" : (offSeason() && Date.now() - thruD > 30 * 864e5 ? "Final thru " : "Thru ") + thruD.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    home.innerHTML = '<img src="icons/logo-fg.png" alt="" width="30" height="30"><span class="phthru"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>' + thru + '</span>';
-    const gear = el("a", "phbtn phgear"); gear.href = "#settings"; gear.dataset.mode = "settings"; gear.setAttribute("aria-label", "Settings");
-    gear.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>';
-    // the top bar rearranged (Sean, 2 Nov 2026: "make the logo be in the middle and it can be a bit bigger and then put the thru date where the search
-    // button used to be and put the search button where the settings button used to be"; Settings moved to the bottom bar): the date pill at the
-    // left (a link home too), the logo alone in the middle, search at the right
-    const pill = home.querySelector(".phthru"), thruA = el("a", "phthrua"); thruA.href = "#home"; thruA.setAttribute("aria-label", "Games through " + (DATA.meta.through || "")); if (pill) thruA.append(pill);
-    void gear; top.append(home, thruA, sb);   /* the logo at the left, the date in the middle (Sean, 2 Nov 2026: "swap the position of the thru sept 27 and the app logo") */ document.querySelector("header.top").prepend(top);
+    // no top bar on a phone (Sean, 14 Nov 2026: "do away with that top header ... move the search bar to the bottom"): the header is only the strip under the
+    // status bar in the scheme's band colour over its red rule (styles.css); Search is the bar's fourth tab and the date is on home's first line
     const cancel = el("button", "pscancel", "Cancel"); cancel.type = "button"; cancel.addEventListener("click", () => pSearch(false)); document.querySelector("header.top").append(cancel);
     const bg = el("div", "psbg"); bg.addEventListener("click", () => pSearch(false)); document.body.append(bg);
     window.addEventListener("hashchange", () => pSearch(false));
@@ -15296,6 +15288,7 @@
       // the header's own colour behind the art, the iPhone's status bar and the page's top bounce (Sean, 2 Nov 2026: "make the blue above the
       // header be the same theme as the header"): the art's first colour, the fall leaves' rust, else the band
       if (!first && v === "season" && root.dataset.season === "fall") first = "#9c3412";
+      if (root.dataset.view === "mobile") first = null;   /* a phone's strip under the status bar is the scheme's own band, whatever the header theme (Sean, 14 Nov 2026) */
       if (first) root.style.setProperty("--hdrc", first); else root.style.removeProperty("--hdrc");
       const meta = document.querySelector('meta[name="theme-color"]'), band2 = getComputedStyle(root).getPropertyValue("--band2").trim();
       if (meta && (first || band2)) meta.content = first || band2;
