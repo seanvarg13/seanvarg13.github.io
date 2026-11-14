@@ -62,7 +62,7 @@ window.DRAFT_THEMES = (function () {
     },
     titans: {
       name: "Titans", blurb: "Tennessee Titans, the white jersey: white first, the uniform's light blue second (buttons, bands, anything active), the red third (the stripe under the bands), navy type.",
-      light: { outline: "#0c2340", xlt: "#c8102e", accent: "#5aa9db", "accent-2": "#5aa9db", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.9)", "on-fill-wash": W + "0.14)", "on-fill-wash-2": W + "0.24)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
+      light: { outline: "#0c2340", xlt: "#c8102e", xl: "#c8102e", accent: "#5aa9db", "accent-2": "#5aa9db", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.9)", "on-fill-wash": W + "0.14)", "on-fill-wash-2": W + "0.24)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
                "accent-2-text": "#2f6fb3", pop: "#ffffff", rule: "#dde4ed", "stripe-line": "#c8102e", "accent-wash": "rgba(90, 169, 219, 0.12)", ink: "#0c2340", "ink-2": "#3d4e68", hover: "#eef4fb",
                page: "#ffffff", surface: "#ffffff", "surface-2": "#f3f6fa", hair: "#dde4ed", rail: "#c9d3e0", stripe: "#ffffff", band: "#ffffff", plate: "#dde4ed", muted: "#6f7c90",
                btn: "#5aa9db", "btn-ink": "#ffffff", "btn-line": "#dde4ed", "tab-fill": "#5aa9db",
