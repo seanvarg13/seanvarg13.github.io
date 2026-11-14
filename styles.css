@@ -6347,3 +6347,6 @@ canvas.seasonfx { opacity: .7; }
 :root:root:root:root[data-view="mobile"] body.psearchon:not(#z1):not(#z2):not(#z3) header.top { padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 11px !important; }
 :root:root:root:root[data-view="mobile"] body.psearchon:not(#z1):not(#z2):not(#z3):not(#z4) .pscancel { color: var(--ink, #0c2340) !important; }
 :root:root:root:root[data-season="fall"]:not([data-hdr]):not([data-view="mobile"]) header.top { background: var(--band2) !important; background-image: none !important; }
+
+/* the bottom bar's logo tile: a white outline inside a red one, both outside the drawing (Sean, 14 Nov 2026) */
+:root:root:root:root[data-view="mobile"] .pbar img.plogo { border: 2px solid #ffffff !important; box-shadow: 0 0 0 2px #c8102e !important; }
