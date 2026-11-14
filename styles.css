@@ -6379,3 +6379,11 @@ canvas.seasonfx { opacity: .7; }
 :not(#k1):not(#k2) body.brlb #board #pagerbot .pbtn[aria-current="page"], :not(#k1):not(#k2) #fboard .fphbot .pbtn[aria-current="page"] { background: var(--ink-day, var(--ink, #0c2340)) !important; color: #ffffff !important; }
 :not(#k1):not(#k2) body.brlb #board #pagerbot :is(.phsize > span, .pgap, .pcount), :not(#k1):not(#k2) #fboard .fphbot :is(.pgap, .pcount, label span) { color: var(--band2-type, #ffffff) !important; }
 :not(#k1):not(#k2) #fboard .fphbot :is(select, .dd, .dd *, .phsize select, option), :not(#k1):not(#k2) body.brlb #board #pagerbot :is(select, .dd, .dd *, option) { color: var(--ink-day, var(--ink, #0c2340)) !important; }
+
+/* The Leaders / Fantasy / season-table selector bar in the scheme's colours (Sean, 14 Nov 2026: "make the top selector where it has like leaderboard position stats splits etc be in titans theme too"): the band's blue with white labels, the picked or open button a white tab with ink type, the page picker's chevron and divider white. A colour set under Appearance (data-fbar) keeps its own bar. */
+:not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews { background: var(--band2) !important; }
+:not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .sbview { color: var(--band2-type, #ffffff) !important; background: transparent !important; }
+:not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .sbview:is(.on, .ddon, [aria-pressed="true"], [aria-expanded="true"]) { background: #ffffff !important; color: var(--ink-day, var(--ink, #0c2340)) !important; }
+:not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .sbview svg { color: inherit !important; stroke: currentColor !important; }
+:not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .pgpick { border-right-color: rgba(255, 255, 255, .55) !important; }
+:not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .sbview.set::after { background: #ffffff !important; }
