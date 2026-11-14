@@ -6334,3 +6334,16 @@ canvas.seasonfx { opacity: .7; }
 :root:root:root:root[data-view="mobile"] body.psearchon:not(#z1):not(#z2) header.top { background: var(--band2) !important; background-image: none !important; }
 :root:root:root:root[data-view="mobile"] .pbar img.plogo { width: 30px; height: 30px; flex: none; border-radius: 8px; border: 2px solid #ffffff; box-sizing: border-box; object-fit: cover; background: var(--band2, var(--accent-2)); box-shadow: 0 0 0 1px rgba(0, 0, 0, .18); }
 :root:root:root:root[data-view="mobile"] .pbar:not(#p1):not(#p2) > a[data-mode="home"] img.plogo { width: 30px !important; height: 30px !important; }
+
+/* A solid white strip under the status bar, blue and red under it; fall is the leaves only (Sean, 14 Nov 2026: "the top is currently a see through color and I'd
+   like it to be a solid white that doesn't get blurred with a bottom border that is both the titans blue and red / make the bottom bar no longer the fall
+   theme ... make the fall theme the falling leaves and the leaves on the page"): iOS 27.2 blurs and lightens what sits under its status bar, so the
+   strip is the page's own surface colour (the same under the blur), over a 3px band-colour line and the 3px red rule. The fall season no longer paints a
+   leaf header or bottom bar — Appearance ▸ Header ▸ Fall still does, as any season's art is picked there. */
+:root:root:root:root[data-view="mobile"] { --hdrc: var(--surface, #ffffff) !important; }
+:root:root:root:root[data-view="mobile"] body:not(.psearchon):not(#z1):not(#z2):not(#z3) header.top,
+:root:root:root:root[data-view="mobile"] body.psearchon:not(#z1):not(#z2):not(#z3) header.top { background: linear-gradient(to bottom, var(--surface, #ffffff) calc(100% - 3px), var(--band2) calc(100% - 3px)) !important; background-image: linear-gradient(to bottom, var(--surface, #ffffff) calc(100% - 3px), var(--band2) calc(100% - 3px)) !important; border-bottom: 3px solid var(--phsep, var(--stripe-line, #c8102e)) !important; }
+:root:root:root:root[data-view="mobile"] body:not(.psearchon):not(#z1):not(#z2):not(#z3) header.top { padding: env(safe-area-inset-top, 0px) 0 3px !important; }
+:root:root:root:root[data-view="mobile"] body.psearchon:not(#z1):not(#z2):not(#z3) header.top { padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 11px !important; }
+:root:root:root:root[data-view="mobile"] body.psearchon:not(#z1):not(#z2):not(#z3):not(#z4) .pscancel { color: var(--ink, #0c2340) !important; }
+:root:root:root:root[data-season="fall"]:not([data-hdr]):not([data-view="mobile"]) header.top { background: var(--band2) !important; background-image: none !important; }
