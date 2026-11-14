@@ -15283,11 +15283,10 @@
       if (bg && v !== "plain") { root.style.setProperty("--hdrbg", bg); root.dataset.hdr = v; } else { root.style.removeProperty("--hdrbg"); delete root.dataset.hdr; }
       if (v === "plain") root.dataset.hdrplain = "1"; else delete root.dataset.hdrplain;
       // the phone's bottom bar wears the header's art too (Sean, 2 Nov 2026: "add the fall leaves theme to the bottom page selection bar")
-      const barbg = v === "plain" ? null : bg ? bg : (v === "season" && root.dataset.season === "fall") ? art.fall[0] + ", " + art.fall[1] : null;
+      const barbg = v === "plain" ? null : bg ? bg : null;   /* fall is the falling leaves and the leaf piles only (Sean, 14 Nov 2026): no leaf art on the bar or the header unless Header ▸ Fall is picked */
       if (barbg) { root.style.setProperty("--pbarart", barbg); root.dataset.pbarart = "1"; } else { root.style.removeProperty("--pbarart"); delete root.dataset.pbarart; }
       // the header's own colour behind the art, the iPhone's status bar and the page's top bounce (Sean, 2 Nov 2026: "make the blue above the
       // header be the same theme as the header"): the art's first colour, the fall leaves' rust, else the band
-      if (!first && v === "season" && root.dataset.season === "fall") first = "#9c3412";
       if (root.dataset.view === "mobile") first = null;   /* a phone's strip under the status bar is the scheme's own band, whatever the header theme (Sean, 14 Nov 2026) */
       if (first) root.style.setProperty("--hdrc", first); else root.style.removeProperty("--hdrc");
       const meta = document.querySelector('meta[name="theme-color"]'), band2 = getComputedStyle(root).getPropertyValue("--band2").trim();
