@@ -8328,7 +8328,12 @@
   // season's wOBA .559 → .563 (the next season loads on GB% at 0.40 beyond xwOBA, so it's skill, not noise). Sprint speed was tested beside it and
   // left out: its lean was +1.3 to +2.1 a ft/s through 2019 and −1.0 to +0.1 since 2023 — the xBABIP's speed-on-grounders driver, fitted on
   // 2024-26 grounders, already carries it
-  const TW_GB = { gb: 0.45 };
+  const TW_GB = { gb: 0.45, ev90: 1.4, ld: -1.1 };
+  // EV90 and LD% beside it (Sean, 14 Nov 2026: "test on all possible historical data to find the most accurate and most predictive model"): on every
+  // 2015-26 hitter-season, held out by season, the two skill stats that add to the pieces are the 90th-percentile exit velocity (+1.4 wOBA points a
+  // mph — hard contact pays on balls the xHR/FB and xBABIP pieces price only part of) and line-drive rate (-1.1 a point — a liner rate that is
+  // mostly the stringer's call and repeats at r .33, which the xBABIP's LD driver credits at full weight). Next season's wOBA r .568 -> .575, first
+  // half -> second half .431 -> .459, better in both the 2015-19 and the 2021-26 halves; nothing else tested (150 stats, nested selection) held up
   // xSLG from skills (Sean, 23 Oct 2026: "for xSLG in the directional model can we do the same thing or idea as xbabip and xwoba where we make it
   // skills based and take out any noise and then also add in a tab build up for it"): slugging rebuilt from the xwOBA build's own pieces — his K%,
   // BB% and HBP (which move slugging only through the at-bats they leave), fly balls × xHR/FB for the home runs, the drivers' xBABIP for the other
@@ -8472,7 +8477,8 @@
   // wOBA build-ups both open on one League row (they had opened 3 points apart: the xwOBA one's K% was the 20+ PA league's, 22.1 against 21.1)
   const twLeague = (L) => ({ xk: L.k, xbb: L.bb, ibb: L.ibbr, hbp: L.hbp, fbs: L.fbs, xhf: L.hr.hrfb, tph: L.tphA, xbab: L.xbabip, gba: 0 });
   // the ground-ball term on a hitter's GB% (TW_GB), in wOBA; a missing rate counts as the league's
-  const gbAdj = (m, L) => (TW_GB && L && m.gb != null && L.gb != null ? TW_GB.gb * (m.gb - L.gb) / 1000 : 0);
+  const gbAdj = (m, L) => (TW_GB && L ? gbParts(m, L).reduce((s, q) => s + q[1], 0) : 0);
+  const gbParts = (m, L) => [["gb", m.gb, L.gb], ["ev90", m.ev90, L.ev90], ["ld", m.ld, L.ld]].filter((q) => q[1] != null && q[2] != null).map((q) => [q[0], TW_GB[q[0]] * (q[1] - q[2]) / 1000, q[1], q[2]]);
   // order-free shares (the review's item 4): each piece's ± is its Shapley value — the change it makes averaged over every order of swapping the
   // pieces in from the league's — so a piece no longer gets more or less credit for where it sits in the table (Chandler Simpson 2026: xHR/FB
   // −73 and Fly balls 0 in the old fixed order, −49 and −15 order-free). keys: the pieces; base / his: the league's and his; val: their value
@@ -8873,7 +8879,8 @@
       ["xBABIP", "xbab", lg.xbab, f3, 1, `the xBABIP tab's nine drivers (line drives, popups, grounder and liner EV, grounder and liner pull, speed on grounders, oppo, fly balls) with no Noise or Luck row (his actual BABIP: ${m.babip != null ? f3(m.babip) : "–"})`]];
     for (const [lab, k, lgv, f, dir, tip] of steps) { if (!keys.includes(k)) continue; run += S[k]; b.row(lab, his[k], lgv, f, pc(k, his[k], dir), step(run), run, tip + ". " + order); }
     // ground balls (the review's item 5): what the pieces leave out, a straight line on his GB% against the league's (TW_GB)
-    if (t.gba) { run += t.gba; b.row("Ground balls", m.gb, L.gb, pct1, null, step(run), run, `his ground-ball rate against the league's: ${TW_GB.gb.toFixed(2)} wOBA points a point of GB%, what the pieces leave out. Over every 300+ PA season 2015-26 the most ground-ball-heavy fifth of hitters beat the pieces by 4 points and the most fly-ball-heavy fifth fell 5 short, in every season — the build's fixed linear weights price a grounder's hits and a fly ball's outs a little off — and next season's wOBA carries the same lean, so it's skill, not luck`); }
+    if (t.gba) { const GBN = { gb: ["Ground balls", pct1, `his ground-ball rate against the league's: ${TW_GB.gb.toFixed(2)} wOBA points a point of GB%, what the pieces leave out. Over every 300+ PA season 2015-26 the most ground-ball-heavy fifth of hitters beat the pieces by 4 points and the most fly-ball-heavy fifth fell 5 short, in every season, and next season's wOBA carries the same lean, so it's skill, not luck`], ev90: ["EV90", (x) => x.toFixed(1), `his 90th-percentile exit velocity against the league's: +${TW_GB.ev90.toFixed(1)} wOBA points a mph. Hard contact pays beyond what the home-run and BABIP pieces price. Held out by season over 2015-26 it adds to next season's wOBA and to the second half's, in both the 2015-19 and 2021-26 seasons`], ld: ["Line drives", pct1, `his line-drive rate against the league's: ${TW_GB.ld.toFixed(1)} wOBA points a point. Liner rate is partly the stringer's call and repeats at only r .33, but the xBABIP's line-drive driver credits it at full weight, so this takes some of it back; held out by season it improves next season's wOBA and the second half's`] };
+      for (const [k, w, hv, lv] of gbParts(m, L)) { run += w; b.row(GBN[k][0], hv, lv, GBN[k][1], null, step(run), run, GBN[k][2]); } }
     // a date window's xwOBA regressed toward the league by its plate appearances (the review's item 1): the pieces above are the window's own
     if (t.wd != null) { run = t.txwN; const k0 = TW_WIN.xw, sh = Math.round(100 * k0 / (t.wpa + k0));
       b.row("Sample size", t.wpa, null, (x) => `${x} PA`, null, step(run), run, `a window of ${t.wpa} PA is pulled ${sh}% of the way to the league's wOBA (${L.woba != null ? f3(L.woba) : "–"}) — ${k0} / (${t.wpa} + ${k0}) — which is how much of a window's xwOBA carried into the next two months: every 30-game-day window 2022-26 against the next 60 game days, and first halves against second halves. The pieces above are the window's own, and so is the park row below, pulled the same share (a window's park mix doesn't carry forward either); a full season isn't regressed`); }
@@ -10369,7 +10376,7 @@
     if (oC.ibb == null || oP.ibb == null) oC.ibb = oP.ibb = null;
     const PCS = [["K%", "xk", (x) => x.toFixed(1) + "%", "the build's K% piece: half his K%, half his xK%"], ["BB%", "xbb", (x) => x.toFixed(1) + "%", "half his BB%, half his xBB%"], ["IBB", "ibb", (x) => x.toFixed(1) + "%", "intentional walks per 100 PA — out of wOBA's walks and plate appearances, so out of xwOBA's"], ["HBP", "hbp", (x) => (100 * x).toFixed(1) + "%", "hit by pitch per plate appearance"],
                  ["Fly balls", "fbs", (x) => (100 * x).toFixed(1) + "%", "fly balls and popups per ball in play"], ["xHR/FB", "xhf", (x) => x.toFixed(1) + "%", "home runs per fly ball his contact says"], ["Extra power", "tph", (x) => x.toFixed(2), "the batted-ball model's bases per non-HR hit once xHR/FB's home runs are out — mostly the model's read of his power beyond xHR/FB"], ["xBABIP", "xbab", fmtX, "the nine-driver xBABIP"],
-                 ["Ground balls", "gba", (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(Math.round(1000 * x)), "what his ground-ball rate adds beyond the pieces, in wOBA points"]];
+                 ["Contact adjustments", "gba", (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(Math.round(1000 * x)), "what his ground-ball rate, EV90 and line-drive rate add beyond the pieces, in wOBA points"]];
     const keys = PCS.map((r) => r[1]).filter((k) => oP[k] != null && oC[k] != null && !(k === "gba" && !oP.gba && !oC.gba)), S = shapley(keys, oP, oC, wob);
     const pts = (x) => { const r = Math.round(x); return (r > 0 ? "+" : r < 0 ? "−" : "") + Math.abs(r); }, sg1 = (x, f) => { const d = f(Math.abs(x)).replace(/^\+/, ""); return (x > 0 ? "+" : x < 0 ? "−" : "") + d; };   /* f may sign its own (the ground-ball row) */
     const effTd = (e) => { const td = el("td", null, pts(e)); heatTd(td, Math.max(2, Math.min(98, Math.round(50 + 2.5 * e)))); return td; };   // ±20 points fills the scale
