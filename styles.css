@@ -6365,3 +6365,6 @@ canvas.seasonfx { opacity: .7; }
 :not(#k1):not(#k2) body.brlb #board #pagerbot .pbtn, :not(#k1):not(#k2) #fboard .fphbot .pbtn { background: #ffffff !important; color: var(--ink-day, var(--ink, #0c2340)) !important; border: 0 !important; }
 :not(#k1):not(#k2) body.brlb #board #pagerbot .pbtn[aria-current="page"], :not(#k1):not(#k2) #fboard .fphbot .pbtn[aria-current="page"] { background: var(--ink-day, var(--ink, #0c2340)) !important; color: #ffffff !important; }
 :not(#k1):not(#k2) body.brlb #board #pagerbot :is(.phsize > span, .pgap, .pcount), :not(#k1):not(#k2) #fboard .fphbot :is(.pgap, .pcount, label span) { color: var(--band2-type, #ffffff) !important; }
+
+/* the Home tab's logo with thicker rings (Sean, 14 Nov 2026): the drawing alone, a white ring inside a red one drawn by CSS so they stay a visible width at this size */
+:root:root:root:root[data-view="mobile"] .pbar:not(#p1):not(#p2):not(#p3):not(#p4) img.plogo { width: 24px !important; height: 24px !important; margin: 3px 0 !important; border: 2.5px solid #ffffff !important; box-shadow: 0 0 0 2.5px #c8102e !important; box-sizing: content-box !important; border-radius: 22% !important; }
