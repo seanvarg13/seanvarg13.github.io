@@ -366,7 +366,7 @@ TW_XHRFB = [{"evfb": 0.345, "brfb": 0.394, "brld": 0.219, "pfb": 0.094}, {"evfb"
             {"evfb": 0.779, "brl": 0.738}, {"brl": 1.037, "ev90": 0.499}]
 TW_W = {"bb": 0.69, "hbp": 0.72, "s": 0.88, "d": 1.25, "hr": 2.03}
 TW_ACT = 0.5   # share of his actual K% / BB% in the talent pieces (app.js TW.act)
-TW_USE_EV = False   # since 16 Oct 2026 the barrel fit (TW_XHRFB, the xHR/FB tab's) is the HR piece, as in app.js; True puts exit velocity alone back
+TW_USE_EV = True   # since 14 Nov 2026 exit velocity alone is the HR piece again, as in app.js (barrels left the build); False puts the 16 Oct barrel fit (TW_XHRFB) back
 TW_HF = (0.096, {"evfb": 1.364, "ev90": 0.822, "pfb": 0.097})   # the HR piece on exit velocity alone (app.js TW_HF), fitted on park-neutral home runs since 15 Oct 2026; XHRFB the fallback
 # the xwOBA review's fixes (Sean, 12 Nov 2026: "ok do them all"; app.js TW_GB / twRaw / talentLeague — keep the two in step): intentional walks out
 # of the walks and the plate appearances as wOBA has them; the extra-bases piece ("Extra power") re-centred on the season's real bases per non-HR
