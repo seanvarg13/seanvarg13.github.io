@@ -15032,7 +15032,7 @@
     const bar = el("nav", "pbar"); bar.setAttribute("aria-label", "Pages");
     // the Leaders tab stands for three groups (data-modes), the Fantasy tab for its five pages (the header's group key, draftmode)
     for (const [h, m, l, ms] of [["#home", "home", "Home"], [LAST_PAGE.leaderboard, "leaderboard", "Leaders", "leaderboard pitches flaws"], [LAST_PAGE.draftmode, "draftmode", "Fantasy", "draftmode league"], ["#settings", "settings", "Settings"]]) {   /* Settings at the bar's right (Sean, 2 Nov 2026); League is a Fantasy page and Search is the fourth tab (14 Nov 2026) */
-      const n = el("a"); n.href = h; n.dataset.mode = m; if (ms) n.dataset.modes = ms; n.innerHTML = (m === "home" ? '<img class="plogo" src="icons/logo-tile.png" alt="" width="24" height="24">' : I[m]) + `<span>${l}</span>`; bar.append(n); }   /* the Home tab wears the site's logo (Sean, 14 Nov 2026) */
+      const n = el("a"); n.href = h; n.dataset.mode = m; if (ms) n.dataset.modes = ms; n.innerHTML = I[m] + `<span>${l}</span>`; bar.append(n); }   /* the Home tab wears the site's logo (Sean, 14 Nov 2026) */
     { const s = el("button"); s.type = "button"; s.className = "psbtn"; s.setAttribute("aria-label", "Search players"); s.setAttribute("aria-expanded", "false"); s.setAttribute("aria-controls", "gsearch"); s.innerHTML = I.search + "<span>Search</span>";
       s.addEventListener("click", (e) => { e.stopPropagation(); pSearch(!document.body.classList.contains("psearchon")); }); bar.insertBefore(s, bar.querySelector('a[data-mode="settings"]')); }
     // The phone's top bar (Sean, 30 Oct 2026, option A of the header designs in option D's colours): search at the left, the site's icon and its
