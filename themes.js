@@ -3,7 +3,7 @@
    The Appearance page (app.js) reads DRAFT_THEMES.schemes / .fonts and calls DRAFT_THEMES.set(). */
 /* Table style — the site default: false = the Baseball-Reference tables (12px, 23px rows); true = the Source Sans tables of 13-14 Oct (column
    names the size of their cells, ~28-30px rows). Each device can pick its own in Appearance ▸ Tables (draft2027.tables; Sean, 14 Oct 2026). */
-const TABLE_SANS = false;
+const TABLE_SANS = true;
 /* Windows Classic (17-18 Oct 2026) is gone (Sean, 18 Oct 2026: "We can eliminate the windows look I don't need it"): a device that had
    picked it drops the saved pick, so nothing is left of it. */
 try { localStorage.removeItem("draft2027.skin"); } catch (e) { /* nothing saved */ }
@@ -62,7 +62,7 @@ window.DRAFT_THEMES = (function () {
     },
     titans: {
       name: "Titans", blurb: "Tennessee Titans, the white jersey: white first, the uniform's light blue second (buttons, bands, anything active), the red third (the stripe under the bands), navy type.",
-      light: { outline: "#0c2340", xlt: "#c8102e", xl: "#c8102e", accent: "#5aa9db", "accent-2": "#5aa9db", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.9)", "on-fill-wash": W + "0.14)", "on-fill-wash-2": W + "0.24)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
+      light: { outline: "#0c2340", accent: "#5aa9db", "accent-2": "#5aa9db", "accent-2-ink": "#ffffff", "accent-2-dim": W + "0.9)", "on-fill-wash": W + "0.14)", "on-fill-wash-2": W + "0.24)", "on-fill-line": W + "0.4)", "tab-ink": "#ffffff",
                "accent-2-text": "#2f6fb3", pop: "#ffffff", rule: "#dde4ed", "stripe-line": "#c8102e", "accent-wash": "rgba(90, 169, 219, 0.12)", ink: "#0c2340", "ink-2": "#3d4e68", hover: "#eef4fb",
                page: "#ffffff", surface: "#ffffff", "surface-2": "#f3f6fa", hair: "#dde4ed", rail: "#c9d3e0", stripe: "#ffffff", band: "#ffffff", plate: "#dde4ed", muted: "#6f7c90",
                btn: "#5aa9db", "btn-ink": "#ffffff", "btn-line": "#dde4ed", "tab-fill": "#5aa9db",
