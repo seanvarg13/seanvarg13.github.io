@@ -6350,3 +6350,18 @@ canvas.seasonfx { opacity: .7; }
 
 /* the bottom bar's logo tile: a white outline inside a red one, both outside the drawing (Sean, 14 Nov 2026) */
 :root:root:root:root[data-view="mobile"] .pbar img.plogo { border: 2px solid #ffffff !important; box-shadow: 0 0 0 2px #c8102e !important; }
+
+/* The Titans look through the rest of the site (Sean, 14 Nov 2026: "make the entire site have the titans theme like every aspect ... make the table outline be red and
+   make the bottom area page selector be the blue and make the bottom bar be titans themed completely as well"; the logo on the bar is the app icon):
+   tables' frame and thick lines red (the scheme's `xlt`, themes.js), the page-number bar under a table the band's blue with white buttons and the current
+   page navy, and the phone's bottom bar the band's blue over the red rule — white icons and words, the current page a white capsule — in every scheme
+   (the band is each scheme's own colour). The Home tab is the app icon itself, its own red and white rings round it. */
+:root:root:root:root[data-view="mobile"] .pbar:not(#p1):not(#p2):not(#p3):not(#p4) { background: var(--band2) !important; background-image: none !important; box-shadow: none !important; border: 0 !important; border-top: 3px solid var(--phsep, var(--stripe-line, #c8102e)) !important; }
+:root:root:root:root[data-view="mobile"] .pbar:not(#p1):not(#p2):not(#p3):not(#p4) > :is(a, button) { color: var(--band2-type, #ffffff) !important; text-shadow: none !important; opacity: .92; }
+:root:root:root:root[data-view="mobile"] .pbar:not(#p1):not(#p2):not(#p3):not(#p4) > :is([aria-current="page"], button[aria-expanded="true"]) { background: #ffffff !important; color: var(--ink-day, var(--ink, #0c2340)) !important; border-radius: 12px !important; opacity: 1; font-weight: 700 !important; margin: 0 3px; }
+:root:root:root:root[data-view="mobile"] .pbar:not(#p1):not(#p2):not(#p3):not(#p4) svg { filter: none !important; }
+:root:root:root:root[data-view="mobile"] .pbar:not(#p1):not(#p2):not(#p3):not(#p4) img.plogo { width: 32px !important; height: 32px !important; border: 0 !important; box-shadow: none !important; border-radius: 22% !important; background: none !important; }
+:not(#k1):not(#k2) body.brlb #board #pagerbot.phbot, :not(#k1):not(#k2) #fboard .fphbot { background: var(--band2) !important; border-color: var(--xlt, var(--xl)) !important; color: var(--band2-type, #ffffff) !important; }
+:not(#k1):not(#k2) body.brlb #board #pagerbot .pbtn, :not(#k1):not(#k2) #fboard .fphbot .pbtn { background: #ffffff !important; color: var(--ink-day, var(--ink, #0c2340)) !important; border: 0 !important; }
+:not(#k1):not(#k2) body.brlb #board #pagerbot .pbtn[aria-current="page"], :not(#k1):not(#k2) #fboard .fphbot .pbtn[aria-current="page"] { background: var(--ink-day, var(--ink, #0c2340)) !important; color: #ffffff !important; }
+:not(#k1):not(#k2) body.brlb #board #pagerbot :is(.phsize > span, .pgap, .pcount), :not(#k1):not(#k2) #fboard .fphbot :is(.pgap, .pcount, label span) { color: var(--band2-type, #ffffff) !important; }
