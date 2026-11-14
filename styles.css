@@ -22,7 +22,7 @@
   --plate: #8ea4bd;
   --accent: #13294b;
   --accent-ink: #ffffff;
-  --accent-2: #7bafd4;
+  --accent-2: #5aa9db;
   --accent-2-ink: #13294b;
   --accent-2-dim: rgba(19, 41, 75, 0.85);
   --accent-2-text: #4b9cd3;
@@ -37,7 +37,7 @@
   --pop: #ffffff;
   --rule: #13294b;
   --stripe-line: transparent;
-  --accent-wash: rgba(123, 175, 212, 0.24);
+  --accent-wash: rgba(90, 169, 219, 0.24);
   --pctrack: #d9e8e3;  /* the unfilled part of a percentile bar */
   --pctrule: #bed8d1;  /* the dashed rule between bars */
   --svline: #c7dcdc;   /* Savant: the thin line the rest of a percentile bar runs along */
@@ -71,12 +71,12 @@
     --plate: #5b7191;
     --accent: #9cc6e8;
     --accent-ink: #0b1424;
-    --accent-2: #7bafd4;
+    --accent-2: #5aa9db;
     --accent-2-ink: #0f213d;
     --accent-2-dim: rgba(15, 33, 61, 0.85);
     --accent-2-text: #9cc6e8;
     --on-fill-line: rgba(15, 33, 61, 0.35);
-    --accent-wash: rgba(123, 175, 212, 0.22);
+    --accent-wash: rgba(90, 169, 219, 0.22);
     --pctrack: #2c3b39;
     --pctrule: #3a4f4b;
     --svline: #34504d;
@@ -108,12 +108,12 @@
   --plate: #5b7191;
   --accent: #9cc6e8;
   --accent-ink: #0b1424;
-  --accent-2: #7bafd4;
+  --accent-2: #5aa9db;
   --accent-2-ink: #0f213d;
   --accent-2-dim: rgba(15, 33, 61, 0.85);
   --accent-2-text: #9cc6e8;
   --on-fill-line: rgba(15, 33, 61, 0.35);
-  --accent-wash: rgba(123, 175, 212, 0.22);
+  --accent-wash: rgba(90, 169, 219, 0.22);
   --pctrack: #2c3b39;
   --pctrule: #3a4f4b;
   --svline: #34504d;
