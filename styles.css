@@ -6387,3 +6387,4 @@ canvas.seasonfx { opacity: .7; }
 :not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .sbview svg { color: inherit !important; stroke: currentColor !important; }
 :not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .pgpick { border-right-color: rgba(255, 255, 255, .55) !important; }
 :not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .sbview.set::after { background: #ffffff !important; }
+:not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):not(#s9):root:not([data-fbar]) .sbviews { border: 2px solid var(--phsep, var(--stripe-line, #c8102e)) !important; }   /* a red outline round the bar (14 Nov 2026) */
