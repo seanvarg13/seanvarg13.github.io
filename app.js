@@ -15290,7 +15290,7 @@
       if (root.dataset.view === "mobile") first = null;   /* a phone's strip under the status bar is the scheme's own band, whatever the header theme (Sean, 14 Nov 2026) */
       if (first) root.style.setProperty("--hdrc", first); else root.style.removeProperty("--hdrc");
       const meta = document.querySelector('meta[name="theme-color"]'), band2 = getComputedStyle(root).getPropertyValue("--band2").trim();
-      if (meta && (first || band2)) meta.content = first || band2;
+      if (meta && (first || band2)) meta.content = root.dataset.view === "mobile" ? (getComputedStyle(root).getPropertyValue("--surface").trim() || "#ffffff") : (first || band2);
     }
     // a look's background on its own (the Appearance tiles): Seasonal / fall show the season's art, Plain the band
     const preview = (v) => { const k = v === "season" ? seasonNow() : v.startsWith("s:") ? v.slice(2) : null;

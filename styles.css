@@ -6368,3 +6368,16 @@ canvas.seasonfx { opacity: .7; }
 
 /* the Home tab's logo with thicker rings (Sean, 14 Nov 2026): the drawing alone, a white ring inside a red one drawn by CSS so they stay a visible width at this size */
 :root:root:root:root[data-view="mobile"] .pbar:not(#p1):not(#p2):not(#p3):not(#p4) img.plogo { width: 24px !important; height: 24px !important; margin: 3px 0 !important; border: 2.5px solid #ffffff !important; box-shadow: 0 0 0 2.5px #c8102e !important; box-sizing: content-box !important; border-radius: 22% !important; }
+
+/* The phone's strip taller, white at the top (Sean, 14 Nov 2026, the status area showing red): the home-screen app's status bar is iOS's own, and iOS tints it
+   from the top edge of the page — which was the 3px blue and 3px red lines alone, so it came out a muddy red. The strip is 16px of white over the lines now
+   (plus the inset where the app draws under the bar), so what iOS samples is white. */
+:root:root:root:root[data-view="mobile"] body:not(.psearchon):not(#z1):not(#z2):not(#z3):not(#z4) header.top { padding: calc(env(safe-area-inset-top, 0px) + 16px) 0 3px !important; }
+
+/* Titans polish (Sean, 14 Nov 2026: "update and adjust anything that make it look exactly perfect and like the titans theme"): the Rankings board's red frame is square like the
+   tables' (the warm pass had rounded it) with no navy box inside it, and the Per page box in a blue page bar keeps its ink type. */
+:not(#k1):not(#k2):not(#k3) body.boardon .board-scroll { border-radius: 0 !important; }
+:not(#k1):not(#k2):not(#k3) body.boardon #rows.boardlist li.tier, :not(#k1):not(#k2):not(#k3) body.boardon #rows li.tier > * { border-color: color-mix(in srgb, var(--ink) 16%, #ffffff) !important; }
+:not(#k1):not(#k2) #fboard .fphbot :is(select, .dd, .dd *, .phsize select, option), :not(#k1):not(#k2) body.brlb #board #pagerbot :is(select, .dd, .dd *, option) { color: var(--ink-day, var(--ink, #0c2340)) !important; }
+:not(#k1):not(#k2):not(#k3):not(#k4):not(#k5):not(#k6) body.boardon #rows li.tier.pool { border-width: 0 !important; box-shadow: none !important; }
+:not(#k1):not(#k2):not(#k3):not(#k4) #xboard .pbinfo, :not(#k1):not(#k2):not(#k3):not(#k4) .pbinfo { border-color: var(--xlt, var(--xl, #c8102e)) !important; }   /* the Bio and Playing time boxes are framed like the tables */

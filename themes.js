@@ -367,7 +367,7 @@ window.DRAFT_THEMES = (function () {
     // colour and all, so the home-screen app no longer draws under it (index.html says the same; was black-translucent from 2 Nov 2026)
     const sb = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]'); if (sb) sb.content = "default";
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = root.style.getPropertyValue("--hdrc").trim() || tokens["accent-2"];   // a header theme's own colour when one is on (app.js HDR)
+    if (meta) meta.content = root.dataset.view === "mobile" ? (tokens.surface || "#ffffff") : (root.style.getPropertyValue("--hdrc").trim() || tokens["accent-2"]);   /* a phone's status area is white (the page surface), 14 Nov 2026 */   // a header theme's own colour when one is on (app.js HDR)
   }
 
   // preview every font at once (the Appearance page only)
