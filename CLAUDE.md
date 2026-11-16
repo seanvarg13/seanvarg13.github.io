@@ -4782,6 +4782,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
     sorted by name — the browser lists custom properties in an order that follows which ones the sheet declares) before and after in 92
     states (scratch `cssprune/cs2.js`): 28 pages, card tabs, menus and dialogs on a phone and a desktop, 18 of them in dark mode too. app.js 1.31 MB → 1.23 (411 → 391 KB gzipped),
     styles.css 699 → 642 KB (124 → 116).
+  - **16 Nov 2026**: NFBC's ADP is in (30 drafts since 1 Oct; 818 players matched, an `nfbc` source at weight 2 in `hist/adp-2027.js`); ESPN still has no 2027 game.
   - **The off-season refresh**: `tools/build_offseason.py` — `check`, `proj` (FanGraphs' Steamer, and ZiPS once out: every category they project,
     averaged per PA / per out, Steamer's playing time; build_proj27.py's Marcel fills the rest and the players they don't project → `hist/proj-2027.js`
     with `systems`), `nfbc` (NFBC's ADP from its drafts since 1 Oct 2026, 20+ needed → an `nfbc` source, weight 2, in `hist/adp-2027.js`),
@@ -5413,6 +5414,7 @@ changed and the repo's copy is sitting in `logs/tools-conflicts/`.
   `V()`, the pools and the day rows don't read the team, so nothing else moves; `hist/home.js` carries the build's team strings.
   **1 Nov 2026**: the off-season check's `moves` rewrote the file — 163 players since 28 Sep (7 to a new club: two minors signings, three
   waiver claims, two trades; 156 free agents / releases). A trade now reads "Traded to Tigers from BOS" (`moveWords`; "by" for signings and claims).
+  **16 Nov 2026**: 193 players (10 to a new club, 183 free agents / releases).
 
 * **The service worker (Sean, 28 Oct 2026, item 20 of the review's picks: "Instant opens. A service worker caching the app, data.js and the hist
   files — the home-screen app would open offline and instantly, and the build.json reload already handles staleness")**: **`sw.js`** at the
@@ -6380,3 +6382,4 @@ line can bring them back.
 * **The selector bar in the scheme's blue (Sean, 14 Nov 2026: "make the top selector where it has like leaderboard position stats splits etc be in titans theme too")**: every `.sbviews` bar (the Leaders and Fantasy pages' picker + Position / Stats / Splits / Dates / Table format, Movers' and Bullpens' buttons, the player page's table switch) is the band's blue with white labels; the picked or open button is a white tab with ink type; the page picker's divider and chevron are white. The scheme's own colour, so Jets / Cleveland / … follow theirs; a colour set under Appearance (`data-fbar`, the Filter bars role) keeps its own. The block at the end of `styles.css`.
   **Red outline (Sean, 14 Nov 2026: "can you give it a red outline")**: the bar has a 2px red (`--phsep`) outline.
 * **The top strip red over a blue foot (Sean, 14 Nov 2026: "make the top area red with a blue bottom bar instead of white with a red bottom")**: a phone's `header.top` is the scheme's red (`--phsep`) — 16px over the status area, which iOS tints from the top edge of the page, so the status bar reads red — with a 6px band-blue rule at its foot and the soft shadow below; the open search's header is the same with a white Cancel. `theme-color` (`index.html`, `themes.js`, `HDR.sync`) and `--hdrc` are the red on a phone. This reverses the 14 Nov white strip (its notes above stay as the reason it was white).
+* **The phone's top bar back; no highlight on the bottom bar (Sean, 16 Nov 2026: "right now the bottom bar shows a white highlight over what page is selected, get rid of that and then also bring back the upper bar thing that has the app logo when it was last updated thru and the search bar up top")**: `.phtop` is built again (app.js's bar block): the logo at the left (home), the "Thru" / "Final thru" pill in the middle, search at the right, on the band's blue inside the red strip; Search left the bottom bar (Home · Leaders · Fantasy · Settings). The bottom bar's current tab is white bold with no capsule, the others at 70%. The 14 Nov "no top bar" note is history for the top bar.

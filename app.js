@@ -15009,7 +15009,7 @@
   }
   function pSearch(on) {
     const b = document.body, was = b.classList.contains("psearchon"); if (on === was) return;
-    b.classList.toggle("psearchon", on); const t = document.querySelector(".pbar .psbtn"); if (t) t.setAttribute("aria-expanded", String(on));
+    b.classList.toggle("psearchon", on); const t = document.querySelector(".phtop .psbtn"); if (t) t.setAttribute("aria-expanded", String(on));
     setTb();   // the header's height (0 while it's hidden) feeds the sticky offsets
     if (on) { ensureIndex(); $("gq").focus(); if (!state.gq) renderGlobalSearch(); }
     else { state.gq = ""; $("gq").value = ""; $("gq").blur(); renderSearchList($("glist"), "", () => {}); }
@@ -15033,8 +15033,16 @@
     // the Leaders tab stands for three groups (data-modes), the Fantasy tab for its five pages (the header's group key, draftmode)
     for (const [h, m, l, ms] of [["#home", "home", "Home"], [LAST_PAGE.leaderboard, "leaderboard", "Leaders", "leaderboard pitches flaws"], [LAST_PAGE.draftmode, "draftmode", "Fantasy", "draftmode league"], ["#settings", "settings", "Settings"]]) {   /* Settings at the bar's right (Sean, 2 Nov 2026); League is a Fantasy page and Search is the fourth tab (14 Nov 2026) */
       const n = el("a"); n.href = h; n.dataset.mode = m; if (ms) n.dataset.modes = ms; n.innerHTML = I[m] + `<span>${l}</span>`; bar.append(n); }   /* the Home tab wears the site's logo (Sean, 14 Nov 2026) */
-    { const s = el("button"); s.type = "button"; s.className = "psbtn"; s.setAttribute("aria-label", "Search players"); s.setAttribute("aria-expanded", "false"); s.setAttribute("aria-controls", "gsearch"); s.innerHTML = I.search + "<span>Search</span>";
-      s.addEventListener("click", (e) => { e.stopPropagation(); pSearch(!document.body.classList.contains("psearchon")); }); bar.insertBefore(s, bar.querySelector('a[data-mode="settings"]')); }
+    // the top bar back (Sean, 16 Nov 2026: "bring back the upper bar thing that has the app logo when it was last updated thru and the search bar
+    // up top"): the logo at the left (a link home), the "Thru" pill in the middle, search at the right; Search left the bottom bar for it
+    { const top = el("div", "phtop"), home = el("a", "phmark"); home.href = "#home"; home.setAttribute("aria-label", "Home");
+      home.innerHTML = '<img src="icons/logo-fg.png" alt="" width="40" height="40">';
+      const thruD = new Date((DATA.meta.through || "") + "T12:00:00"), thru = isNaN(thruD) ? "" : (offSeason() && Date.now() - thruD > 30 * 864e5 ? "Final thru " : "Thru ") + thruD.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const ta = el("a", "phthrua"); ta.href = "#home"; ta.innerHTML = '<span class="phthru"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>' + thru + '</span>';
+      const sb = el("button", "phbtn psbtn"); sb.type = "button"; sb.setAttribute("aria-label", "Search players"); sb.setAttribute("aria-expanded", "false"); sb.setAttribute("aria-controls", "gsearch");
+      sb.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.75"></circle><path d="M15.5 15.5 21 21"></path></svg>';
+      sb.addEventListener("click", (e) => { e.stopPropagation(); pSearch(!document.body.classList.contains("psearchon")); });
+      top.append(home, ta, sb); document.querySelector("header.top").prepend(top); }
     // The phone's top bar (Sean, 30 Oct 2026, option A of the header designs in option D's colours): search at the left, the site's icon and its
     // name in the middle (a link home), Settings at the right, on the band's blue over the red stripe. Search and Settings left the bottom bar for it.
     // no top bar on a phone (Sean, 14 Nov 2026: "do away with that top header ... move the search bar to the bottom"): the header is only the strip under the
