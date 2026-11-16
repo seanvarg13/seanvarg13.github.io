@@ -1340,7 +1340,7 @@
       // Each footing is regressed whole, his parks' part with the rest: a window's park mix doesn't carry into the next two months (keeping it
       // whole read r .273 against the next 60 days, below the unregressed .287; regressing it too, .294). The window's own numbers stay on t
       // (txw0, txwN0, xwpk0 …, t.ww the weights) and on m (xwdW, dxslgW) for the build-up's Sample size row and the fantasy pages' expected points
-      const wr = t && !t.span && !DS.multi && winIdx() && v.pa && !(p.pa && v.pa >= p.pa) ? v.pa : 0;
+      const wr = TW_WIN_ON && t && !t.span && !DS.multi && winIdx() && v.pa && !(p.pa && v.pa >= p.pa) ? v.pa : 0;
       if (wr) { const L = t.L, w = (k) => wr / (wr + TW_WIN[k]), reg = (x, c, k) => (x == null || c == null ? x : c + (x - c) * w(k));
         t.wpa = wr; t.ww = { xw: w("xw"), xslg: w("xslg"), xiso: w("xiso"), xbab: w("xbab") };
         if (L.woba != null) { t.txw0 = t.txw; t.txwN0 = t.txwN; t.xwpk0 = t.xwpk; t.txwN = reg(t.txwN, L.woba, "xw"); t.xwpk = reg(t.xwpk, L.woba, "xw"); t.txw = t.parkIn ? t.xwpk : t.txwN; t.wd = t.txw0 - t.txw; }
@@ -6149,7 +6149,7 @@
   // hist/home.js, so a fresh home reads ~10 KB instead of downloading and parsing the 31 MB day file (12 s on a phone). The page computes the lists
   // itself whenever the day rows are in anyway (a window or split elsewhere loaded them), and when the file can't be used: older than data.js, or
   // the park-neutral switch or Regress small samples on (the file holds the defaults)
-  const HOME_V = 3;   // 3: the pitchers' movers as the stat that moved and the nERA if it held (29 Oct 2026); 2: by nERA (23 Oct); a file of an older shape is left for the day rows
+  const HOME_V = 4;   // 3: the pitchers' movers as the stat that moved and the nERA if it held (29 Oct 2026); 2: by nERA (23 Oct); a file of an older shape is left for the day rows
   let homeMemo = null;
   function homeLive() {
     const key = DATA.meta.built + ":" + XWN + ":" + !!state.tbl.shrink + ":" + DS.key; if (homeMemo && homeMemo.key === key) return homeMemo.val;
@@ -6328,7 +6328,7 @@
     // trending (Sean, 3 Oct 2026): hitters over their last 100 PA by xwOBA, pitchers over their last 50 IP by nERA — from the day rows; the PA / IP
     // in the window is a column like the leaders' (Sean, 9 Oct 2026: "just add the actual PA ... and add IP too")
     { const W100 = { from: "", to: "", last: "100" }, W50 = { from: "", to: "", last: "50" };
-      const b = section(grid, "Trending", "last 100 PA, regressed · last 50 IP", "Leaderboard →", goLB("ALL", "score", "desc", W100));   /* a window's xwOBA is regressed for its size (TW_WIN, 12 Nov 2026) */
+      const b = section(grid, "Trending", "last 100 PA · last 50 IP", "Leaderboard →", goLB("ALL", "score", "desc", W100));   /* a window's xwOBA is regressed for its size (TW_WIN, 12 Nov 2026) */
       if (!HL) loading(b);
       else {
         const hit = HL.trend.hit.map((r) => who("H", r)).filter((r) => r.p).slice(0, NH), pit = HL.trend.pit.map((r) => who("P", r)).filter((r) => r.p).slice(0, NP);
@@ -8320,6 +8320,7 @@
   // (slope of the next 60 days' wOBA on it 1.04 against 0.34 unregressed, r .287 → .294; halves 0.96, .392 → .399), xSLG 200 (1.09 / 1.02), xISO
   // 125 (1.02 / 0.96), xBABIP 250 (1.04 / 0.88). A window covering his whole season isn't regressed (same PA, same answer)
   const TW_WIN = { xw: 200, xslg: 200, xiso: 125, xbab: 250 };
+  const TW_WIN_ON = false;   /* Sean, 16 Nov 2026: no regression of small samples; a window reads its own numbers */
   // TW_GB — ground balls (the review's item 5): what the pieces leave out. Over every 300+ PA hitter-season 2015-26 the most ground-ball-heavy
   // fifth beat its xwOBA by 4 points and the most fly-ball-heavy fifth fell 5 short, in every season (the fixed linear weights price a grounder's
   // hits and a fly ball's outs a little off); +0.45 wOBA points a point of GB% against the season's 300+ PA hitters, added after the scale. Fitted
