@@ -6391,8 +6391,8 @@ canvas.seasonfx { opacity: .7; }
 
 /* The phone's top strip red over a blue foot (Sean, 14 Nov 2026: "make the top area red with a blue bottom bar instead of white with a red bottom"): the scheme's red over the status area, a 6px band-blue rule at its foot and the soft shadow below. */
 :root:root:root:root[data-view="mobile"] { --hdrc: var(--phsep, #c8102e) !important; }
-:root:root:root:root[data-view="mobile"] body:not(.psearchon):not(#u1):not(#u2):not(#u3):not(#u4):not(#u5):not(#u6):not(#u7):not(#u8) header.top { background: var(--phsep, #c8102e) !important; background-image: none !important; border-bottom: 6px solid var(--band2) !important; }
-:root:root:root:root[data-view="mobile"] body.psearchon:not(#u1):not(#u2):not(#u3):not(#u4):not(#u5):not(#u6):not(#u7):not(#u8) header.top { background: var(--phsep, #c8102e) !important; background-image: none !important; border-bottom: 6px solid var(--band2) !important; }
+:root:root:root:root[data-view="mobile"] body:not(.psearchon):not(#u1):not(#u2):not(#u3):not(#u4):not(#u5):not(#u6):not(#u7):not(#u8) header.top { background: var(--phsep, #c8102e) !important; background-image: none !important; border-bottom: 0 !important; }
+:root:root:root:root[data-view="mobile"] body.psearchon:not(#u1):not(#u2):not(#u3):not(#u4):not(#u5):not(#u6):not(#u7):not(#u8) header.top { background: var(--phsep, #c8102e) !important; background-image: none !important; border-bottom: 0 !important; }
 :root:root:root:root[data-view="mobile"] body.psearchon:not(#z1):not(#z2):not(#z3):not(#z4):not(#z5) .pscancel { color: #ffffff !important; }
 
 /* The top bar back; no highlight on the bottom bar's current tab (Sean, 16 Nov 2026: "right now the bottom bar shows a white highlight over what page
