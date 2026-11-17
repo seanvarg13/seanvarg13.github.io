@@ -10968,6 +10968,7 @@
   // (tools/build_similar.py) holds every qualified MLB player-season 2015-now, each ranked within its own season, so a full-season
   // MLB card is matched against all of them — the same two halves, the same mix and hand terms — and a name opens that season.
   // A date window, a split, a minors or a spring / October card, or a season below the qualifying line keeps the same-season match
+  const SIM_HG = [["Profile", ["air", "gb", "pu", "pull"], 50], ["Quality", ["xwoba_dir", "ev", "brl", "hh", "ev90", "bs"], 30], ["Swing & miss", ["whf", "k", "zcon"], 10], ["Discipline", ["osw", "zsw", "bb"], 10]];
   const simReady = () => !!window.DRAFT_SIMILAR;
   function similarAcross(p, N = 5) {
     if (DS.level !== "MLB" || DS.kind || DS.multi || needsDays() || (SPLIT && (SPLIT.hand !== "all" || SPLIT.venue !== "all" || roleOf(SPLIT) !== "all"))) return null;
@@ -10979,6 +10980,18 @@
     const mv = mine[vi], mix0 = P ? mine[6] : null;
     const gap = (a, b, i0, i1) => { let d = 0, n = 0; for (let i = i0; i < i1; i++) { if (a[i] < 0 || b[i] < 0) continue; d += Math.abs(a[i] - b[i]); n++; } return n >= 3 ? [d, n] : null; };
     const out = [];
+    if (!P) {   // hitters: weighted by area (Sean, 17 Nov 2026) — batted-ball profile 50%, quality 30% (xwOBA half of it), swing and miss 10%, discipline 10%
+      const K = S.keys.H, W = K.map((k) => { const g = SIM_HG.find((x) => x[1].includes(k)); return k === "xwoba_dir" ? 15 : g[0] === "Quality" ? 3 : g[2] / g[1].length; });
+      for (const r of rows) {
+        if (r[0] === p.id || !r[5]) continue;
+        const v = r[vi]; let d = 0, w = 0;
+        K.forEach((k, i) => { if (mv[i] < 0 || v[i] < 0) return; d += W[i] * Math.abs(mv[i] - v[i]); w += W[i]; });
+        if (w < 50) continue;
+        const grp = SIM_HG.map(([, ks]) => { let a = 0, n = 0; for (const k of ks) { const i = K.indexOf(k); if (mv[i] < 0 || v[i] < 0) continue; a += Math.abs(mv[i] - v[i]); n++; } return n ? a / n : null; });
+        out.push([d / w + (mine[4] && r[4] && mine[4] !== r[4] ? 4 : 0), r, grp]);
+      }
+      out.sort((a, b) => a[0] - b[0]); return out.slice(0, N);
+    }
     for (const r of rows) {
       if (r[0] === p.id || !r[5]) continue;                                  // matches are qualified seasons only
       const v = r[vi], sy = gap(mv, v, 0, ns), sk = gap(mv, v, ns, mv.length); if (!sy || !sk) continue;
@@ -10991,7 +11004,7 @@
     }
     out.sort((a, b) => a[0] - b[0]);
     const seen = new Set(), top = [];
-    for (const o of out) { if (seen.has(o[1][0])) continue; seen.add(o[1][0]); top.push(o); if (top.length === N) break; }   // each player once, his closest season
+    for (const o of out) { top.push(o); if (top.length === N) break; }   /* every season shown, a player as often as he matches (Sean, 17 Nov 2026) */   // each player once, his closest season
     return top;
   }
   // the Similar tab (Sean, 17 Nov 2026: "ranks the similar players in order of what player-year is the most similar and then it shows the
@@ -11008,8 +11021,9 @@
     if (!A || !A.length) { box.append(el("p", "note", "Similar players are matched on a full MLB regular season of a qualified player. Clear the filters, or pick an MLB season, to see them.")); return box; }
     const S = window.DRAFT_SIMILAR, t = p.type === "P" ? "P" : "H", keys = S.keys[t], ns = S.nstyle[t], vi = t === "P" ? 7 : 6;
     const mine = S[t].find((r) => r[0] === p.id && r[1] === DS.season), mv = mine[vi];
-    const heads = [["Rk", ""], ["Player", "l"], ["Tm", ""], ["Match", ""], ["Style", ""], ["Skill", ""], ...keys.map((k) => [SIM_LAB[k] || k, ""])];
-    const B = brTable([["", 3], ["Overall", 3], ["Style", ns], ["Skill", keys.length - ns]], heads, "simt");
+    const HW = t === "H", ord = HW ? SIM_HG.flatMap((g) => g[1]) : keys, ov = HW ? SIM_HG.map((g) => g[0]) : ["Style", "Skill"];
+    const heads = [["Rk", ""], ["Player", "l"], ["Tm", ""], ["Match", ""], ...ov.map((g) => [g, ""]), ...ord.map((k) => [SIM_LAB[k] || k, ""])];
+    const B = brTable([["", 3], ["Overall", 1 + ov.length], ...(HW ? SIM_HG.map((g) => [g[0], g[1].length]) : [["Style", ns], ["Skill", keys.length - ns]])], heads, "simt");
     const sc = (v) => Math.max(0, Math.round(100 - v));
     A.forEach(([all, r, style, skill], i) => {
       const [id, yr, name, team] = r, tr = el("tr"), nm = el("td", "l"), b = el("button", "linkbtn", `${name} '${String(yr).slice(2)}`);
@@ -11017,14 +11031,14 @@
         const ds = yr === DATA.meta.season ? CUR.key : `mlb-${yr}`; if (xPop) { simPop(id, p.type, ds); return; }
         state.x = { id, type: p.type, ds }; state.expanded = null; savePrefs(); location.hash = "#player/" + id; if (state.mode === "player") render(); });
       nm.append(b); tr.append(el("td", null, String(i + 1)), nm, el("td", null, team));
-      for (const v of [all, style, skill]) { const m = sc(v); tr.append(heatTd(el("td", null, String(m)), m)); }
+      for (const v of [all, ...(HW ? style : [style, skill])]) { if (v == null) { tr.append(el("td", null, "–")); continue; } const m = sc(v); tr.append(heatTd(el("td", null, String(m)), m)); }
       const v = r[vi];
-      keys.forEach((k, j) => { const a = mv[j], c = v[j], td = el("td");
+      ord.forEach((k) => { const j = keys.indexOf(k), a = mv[j], c = v[j], td = el("td");
         if (a < 0 || c < 0) td.textContent = "–"; else { const m = 100 - Math.abs(a - c); td.textContent = String(m); td.title = `${SIM_LAB[k] || k}: his ${a}th percentile, ${name} ${c}th`; heatTd(td, m); }
         tr.append(td); });
       B.tb.append(B.fin(tr));
     });
-    box.append(B.wrap, el("p", "note", "Match = 100 − the gap between the two percentiles (each ranked within its own season); Style and Skill average their stats, with the batting or throwing hand (and a pitcher's role and pitch mix) on Style. Each player once, at his closest season. Tap a stat for both percentiles."));
+    box.append(B.wrap, el("p", "note", `${HW ? "Hitters: Match weighs batted-ball profile 50%, quality 30% (xwOBA half of that), swing and miss 10% and discipline 10%, less 4 for the other batting side. Each stat is 100 − the gap between the two percentiles (each ranked within its own season)." : "Match = 100 − the gap between the two percentiles (each ranked within its own season); Style and Skill average their stats, with the throwing hand, role and pitch mix on Style."} A player can appear for several seasons. Tap a stat for both percentiles.`));
     return box;
   }
   function similarRow(p, st, ref) {
@@ -11035,7 +11049,7 @@
       const row = el("div", "simrow"); row.append(el("span", "simlbl", "Similar"));
       for (const [, r, style, skill] of across) {
         const [id, yr, name, team] = r, b = el("button", "simname", `${name} '${String(yr).slice(2)}`); b.type = "button";
-        b.title = `${name} · ${yr} ${team} — style match ${Math.round(100 - style)}, skill match ${Math.round(100 - skill)}`;
+        b.title = Array.isArray(style) ? `${name} · ${yr} ${team} — ` + SIM_HG.map(([g], i) => `${g} ${style[i] == null ? "–" : Math.round(100 - style[i])}`).join(", ") : `${name} · ${yr} ${team} — style match ${Math.round(100 - style)}, skill match ${Math.round(100 - skill)}`;
         b.addEventListener("click", (e) => {
           e.stopPropagation();
           state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };
