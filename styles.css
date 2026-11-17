@@ -6425,3 +6425,7 @@ canvas.seasonfx { opacity: .7; }
 :root:root:root:root { --xlw: 1px !important; --xlg: 1px !important; }
 /* the Leaderboard's player names in regular weight (Sean, 17 Nov 2026) */
 :root:root:root:root:root:root body.brlb:not(#n1):not(#n2) #rows .name, :root:root:root:root:root:root body.brlb:not(#n1):not(#n2) #rows .name * { font-weight: 400 !important; }
+/* a table's title row light blue and centred, its column names navy (Sean, 17 Nov 2026) */
+:root:root:root:root:root:root body:not(#t1):not(#t2):not(#t3) table.sbt thead tr.over > th { background: var(--band2) !important; color: #fff !important; text-align: center !important; }
+:root:root:root:root:root:root body:not(#t1):not(#t2):not(#t3) table.sbt thead tr:not(.over) > th:not(.lit) { background: var(--ink-day, #13294b) !important; color: #fff !important; }
+:root:root:root:root:root:root body:not(#t1):not(#t2):not(#t3) table.sbt thead tr:not(.over) > th:not(.lit) * { color: #fff !important; }
