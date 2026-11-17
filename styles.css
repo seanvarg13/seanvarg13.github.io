@@ -6423,3 +6423,5 @@ canvas.seasonfx { opacity: .7; }
 :root:root:root :is(#xboard,#modal) table.kbuild tr.kkid2 td.nm { padding-left: 32px; }
 /* no thick table borders anywhere (Sean, 17 Nov 2026) */
 :root:root:root:root { --xlw: 1px !important; --xlg: 1px !important; }
+/* the Leaderboard's player names in regular weight (Sean, 17 Nov 2026) */
+:root:root:root:root:root:root body.brlb:not(#n1):not(#n2) #rows .name, :root:root:root:root:root:root body.brlb:not(#n1):not(#n2) #rows .name * { font-weight: 400 !important; }
