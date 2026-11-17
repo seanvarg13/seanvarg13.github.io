@@ -372,7 +372,7 @@ TW_HF = (0.096, {"evfb": 1.364, "ev90": 0.822, "pfb": 0.097})   # the HR piece o
 # of the walks and the plate appearances as wOBA has them; the extra-bases piece ("Extra power") re-centred on the season's real bases per non-HR
 # hit (L["tphU"], the model's own PA-weighted mean, two passes); and +0.45 wOBA points a point of GB% against the season's 300+ PA hitters, added
 # after the scale (the most ground-ball-heavy hitters beat the pieces every season, and the next season too)
-TW_GB = {"gb": 0.45, "ev90": 1.4, "ld": -1.1}   # app.js TW_GB: EV90 and LD% beside GB% (14 Nov 2026)
+TW_GB = {"gb": 0.45}   # app.js TW_GB: the 14 Nov EV90 and LD% corrections removed (17 Nov 2026)
 # xSLG from skills (Sean, 23 Oct 2026; app.js XSLG — keep the two in step): the talent pieces as total bases per at-bat, the extra bases half the
 # model's (tph re-centred on the league's real bases per non-HR hit) and half the skills fit below; tiers without sprint speed or LD EV follow
 TW_XSLG = (0.5, [{"gb": -0.00303, "spd": 0.01555, "evld": 0.00569, "pullp": 0.00199}, {"gb": -0.00261, "evld": 0.00484, "pullp": 0.0018},
