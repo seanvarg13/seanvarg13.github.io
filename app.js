@@ -2223,8 +2223,14 @@
   const lum = ([r, g, b]) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
   const contrast = (a, b) => { const la = lum(a) + 0.05, lb = lum(b) + 0.05; return la > lb ? la / lb : lb / la; };
   const colorCache = new Map();
+  // the new look: heat as coloured numbers (ink at the middle, red or blue at the ends) instead of a filled cell
+  const newLook = () => !document.documentElement.classList.contains("oldlook");
   function pctStyle(p) {
     if (p == null) return null;
+    if (newLook()) { const k = "n" + p; if (colorCache.has(k)) return colorCache.get(k);
+      const t = Math.min(1, Math.abs(p - 50) / 50), a = [70, 76, 86], z = p >= 50 ? [200, 30, 38] : [42, 88, 168];
+      const c = "rgb(" + a.map((x, i) => Math.round(x + (z[i] - x) * t)).join(",") + ")", r = { bg: "transparent", fg: c, txt: true };
+      colorCache.set(k, r); return r; }
     if (colorCache.has(p)) return colorCache.get(p);
     // the percentile bars' own scale, so a heat-mapped cell and a bar at the same percentile are the same colour (Sean,
     // 30 Sep 2026: "the heat maps have the same color levels ... as the percentile bars")
@@ -2281,7 +2287,7 @@
     if (pct != null) { const b = el("div", "bub" + (pct >= 100 ? " c3" : ""), pct); b.style.left = svAt(pct); b.style.background = s.bub; t.append(b); }
     return t;
   }
-  function paint(node, pct) { const s = pctStyle(pct); if (s) { node.style.background = s.bg; node.style.color = s.fg; node.style.setProperty("--heat", s.bg); node.style.setProperty("--heatfg", s.fg); } }   // --heat: a phone shows the sorted column as coloured digits on a clear ground (the warm pass, 6 Oct 2026)
+  function paint(node, pct) { const s = pctStyle(pct); if (s) { node.style.background = s.bg; node.style.color = s.fg; node.style.setProperty("--heat", s.txt ? s.fg : s.bg); node.style.setProperty("--heatfg", s.fg); } }   // --heat: a phone shows the sorted column as coloured digits on a clear ground (the warm pass, 6 Oct 2026)
   // a percentile coloured as the player card's bars colour it: Savant's scale for the charts, the heat scale under
   // Classic meters (Sean: the Season Stats uERA chip matches the sliders), with dark or white text, whichever reads
   function paintBar(node, pct) {
@@ -7730,6 +7736,8 @@
     // wOBA or wRC+ (Sean, 16 Oct 2026): the display scale for every wOBA-scale number — the stored numbers, pools and percentiles are the same either way
     row("wOBA scale", "wOBA as it is, or the same numbers as wRC+ / xwRC+: 100 is the league's average that season, 120 is 20% better — each season against its own league, so seasons compare. Nothing is re-ranked; only what prints changes.",
       segOf("wOBA scale", [["woba", "wOBA"], ["wrc", "wRC+"]], WRC_PREF.get(), (v) => { WRC_PREF.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderSettings(); }));
+    if (window.DRAFT_LOOK) row("Look", "New: Manrope type, heat shown as coloured numbers instead of filled cells, and taller table rows. Classic: the site as it was before 17 Nov 2026.",
+      segOf("Look", [["new", "New"], ["classic", "Classic"]], window.DRAFT_LOOK.get(), (v) => { window.DRAFT_LOOK.set(v); colorCache.clear(); render(); }));
     if (window.DRAFT_BORDERS) row("Table borders", "Thick: a 3px frame round every table and 3px lines at the group breaks, under the column names and over the totals. Thin: every table line 1px.",
       segOf("Table borders", [["thick", "Thick"], ["thin", "Thin"]], window.DRAFT_BORDERS.get(), (v) => { window.DRAFT_BORDERS.set(v); renderSettings(); }));
     if (window.DRAFT_TABLES) row("Tables", "Baseball-Reference: 12px type, compact 23px rows. Classic: the larger type with column names the size of the numbers, roomier rows.",
