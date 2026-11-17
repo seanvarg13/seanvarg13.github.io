@@ -6408,3 +6408,5 @@ line can bring them back.
   1px lines); Sean asked them to stay without the white gap columns. Unreachable stylesheet rules (a selector needing a class or id that `app.js`,
   `themes.js`, `index.html` and `defaults.js` never write) were removed, checked by every element's computed style on 18 pages × phone light /
   phone dark / desktop.
+
+* **Batted-Ball Distribution is GB% · Popup% · Pull% · Mix wOBA (Sean, 17 Nov 2026: "get rid of mix xbabip, show just gb% and pop up % and pull % instead of pull fb%")**: `PCT_COLS_H`'s last section; FB%, LD%, Pull FB% stay Leaderboard columns, Mix xBABIP left `LB_EXTRA_H` (still computed). Year to year, 300+ PA both seasons 2015-26 (1,819 pairs): GB% r .76, FB% .76, Air% (LD+FB) .72, Pull FB% .71, PU% .68, Pull% .68, LD share of air .65, LD% .41.
