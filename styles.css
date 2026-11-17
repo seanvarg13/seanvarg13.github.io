@@ -6432,8 +6432,6 @@ canvas.seasonfx { opacity: .7; }
 /* the new look (17 Nov 2026; Appearance ▸ Look ▸ Classic puts the old one back): Manrope, heat as bold coloured numbers, taller rows */
 :root:not(.oldlook) { --display: Manrope, system-ui, sans-serif; --body: Manrope, system-ui, sans-serif; }
 :root:root:root:root:root:root:not(.oldlook) body:not(#k1):not(#k2):not(#k3) :is(h1, h2, h3, h4, th, td, button, input, select, a, span, div, p, li, label, b, strong, small, .name, .h) { font-family: Manrope, system-ui, sans-serif !important; letter-spacing: 0 !important; }
-:root:root:root:root:root:root:not(.oldlook) body:not(#k1):not(#k2):not(#k3) :is(td.heat, td.sbheat, .hot, .sorted, td[style*="transparent"]) { font-weight: 700 !important; }
 :root:root:root:root:root:root:not(.oldlook) body:not(#k1):not(#k2):not(#k3) table td { padding-top: 8px !important; padding-bottom: 8px !important; }
-:root:root:root:root:root:root:not(.oldlook) body:not(#k1):not(#k2):not(#k3) #rows .row-main { min-height: 34px !important; }
-:root:root:root:root:root:root:not(.oldlook) body:not(#k1):not(#k2):not(#k3):not(#k4) :is(.hot, .sorted, .score.hero, .pct.hot, .score.hot) { background: transparent !important; color: var(--heat) !important; box-shadow: none !important; }
-:root:root:root:root:root:root:not(.oldlook) body:not(#k1):not(#k2):not(#k3):not(#k4) :is(.hot, .sorted) * { color: var(--heat) !important; }
+/* Leaderboard rows: the same air above and below every cell, the rank, name and sorted column included (Sean, 17 Nov 2026) */
+:root:root:root:root:root:root:not(.oldlook) body:not(#k1):not(#k2):not(#k3):not(#k4) #rows .row-main :is(.rk, .who, .score, .pct, .brtm, .brpt, .brpos) { padding-top: 7px !important; padding-bottom: 7px !important; }
