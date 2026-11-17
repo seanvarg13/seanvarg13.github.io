@@ -273,8 +273,8 @@ window.DRAFT_THEMES = (function () {
   };
 
   const LS = { scheme: "draft2027.scheme", font: "draft2027.font", theme: "draft2027.theme", view: "draft2027.view" };
-  const DEFAULTS = Object.assign({ scheme: "titans", font: "studio", theme: "system", view: "auto" }, window.DRAFT_DEFAULTS || {});
-  if (!S[DEFAULTS.scheme]) DEFAULTS.scheme = "titans";
+  const DEFAULTS = Object.assign({ scheme: "unc", font: "studio", theme: "system", view: "auto" }, window.DRAFT_DEFAULTS || {});
+  if (!S[DEFAULTS.scheme]) DEFAULTS.scheme = "unc";
   if (!F[DEFAULTS.font]) DEFAULTS.font = "studio";
   const get = (k) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } };
   const put = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } };
@@ -283,6 +283,8 @@ window.DRAFT_THEMES = (function () {
   try { if (!localStorage.getItem("draft2027.warm1")) { localStorage.setItem("draft2027.warm1", "1"); localStorage.removeItem(LS.scheme); } } catch { /* private mode */ }
   // the Titans palette (Sean, 6 Oct 2026: "make the websites main color palette or theme the Tennessee titans color scheme"): every device moves to it once
   try { if (!localStorage.getItem("draft2027.titans1")) { localStorage.setItem("draft2027.titans1", "1"); localStorage.removeItem(LS.scheme); } } catch { /* private mode */ }
+  /* UNC is the default (Sean, 17 Nov 2026): every device moves to it once, as Titans did */
+  try { if (!localStorage.getItem("draft2027.unc1")) { localStorage.setItem("draft2027.unc1", "1"); localStorage.removeItem(LS.scheme); } } catch { /* private mode */ }
   const current = () => ({
     scheme: S[get(LS.scheme)] ? get(LS.scheme) : DEFAULTS.scheme,
     font: F[get(LS.font)] ? get(LS.font) : DEFAULTS.font,
