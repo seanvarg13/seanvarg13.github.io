@@ -12375,7 +12375,8 @@
         for (const c of [...tr.cells]) if (c.classList.contains("ge") && !c.classList.contains("f3")) { const g = document.createElement(c.tagName); g.className = "gapc"; c.after(g); k++; }
         tr.dataset.gp = String(k); n = Math.max(n, k); }
       for (const tr of t.rows) if (tr.dataset.gp === "0" && tr.cells.length === 1 && !tr.dataset.gs) { tr.cells[0].colSpan += n; tr.dataset.gs = "1"; } };
-    new MutationObserver(fix).observe(t, { childList: true, subtree: true }); requestAnimationFrame(fix); }
+    const toth = () => { const r = [...t.querySelectorAll("tr.tot")].pop(); if (r) t.style.setProperty("--toth", r.getBoundingClientRect().height + "px"); };
+    new MutationObserver(() => { fix(); toth(); }).observe(t, { childList: true, subtree: true }); requestAnimationFrame(() => { fix(); toth(); }); }
   function seasonBlock(p, o) {
     const H = p.type === "H", box = el("section", "sblock");
     const view = H ? sbTable : "std";
