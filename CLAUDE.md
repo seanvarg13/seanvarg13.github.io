@@ -6414,3 +6414,4 @@ line can bring them back.
 * **Batted-Ball Distribution reordered (Sean, 17 Nov 2026)**: GB% · Popup% · FB% · LD% · Pull% · Mix wOBA.
 * **Air% and Pull Air% back (Sean, 17 Nov 2026)**: Batted-Ball Distribution is GB% · Popup% · Air% (LD + FB) · Pull Air% · Mix wOBA.
 * **Pull Air% is ours (Sean, 17 Nov 2026)**: `pullair` = pulled line drives + pulled fly balls over every ball in his Mix buckets (bunts out), set in `V()` from `ctx.mix` (a window follows), ranked through a `SIDE_H` def; Savant's Pull Air% (`pull`) stays a Leaderboard column.
+* **Batted-Ball Quality is Bat Speed · Barrel% · EV on FB · EV on LD · EV on GB (Sean, 17 Nov 2026)**; Avg EV, Hard-Hit%, EV90 and Max EV stay Leaderboard columns.
