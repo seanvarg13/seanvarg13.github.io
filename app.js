@@ -9275,8 +9275,8 @@
   }
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["fantasy", "Fantasy"]];   // Season Stats is the page's own table now (8 Oct 2026)   // Compare came off the strip with the Compare page (Sean, 6 Oct 2026)
-  const BTABS_H = [["talent", "xwOBA"], ["bbq", "Batted balls"], ["vspt", "vs Pitch type"], ["yoy", "Year over year"]];   /* the minimal pass (Sean, 17 Nov 2026): xBABIP, xHR/FB, xK% / xBB% and xISO fold into the xwOBA tab, Mix into Batted balls */   // Year over year (28 Oct 2026)   // xISO's build-up, in xSLG's place (Sean, 23 Oct 2026)   // Talent xwOBA's build-up (Sean, 11 Oct 2026)   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
-  const BTABS_P = [["pitching", "Pitching+"], ["games", "Game Logs"], ["yoy", "Year over year"]];   /* nERA folds into Pitching+, Workload into Game Logs (17 Nov 2026) */   // Workload (28 Oct 2026)   // Game Logs back, every outing with its nERA (Sean, 18 Oct 2026)   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
+  const BTABS_H = [["talent", "xwOBA"], ["bbq", "Batted balls"], ["vspt", "vs Pitch type"], ["yoy", "Year over year"], ["similar", "Similar"]];   /* the minimal pass (Sean, 17 Nov 2026): xBABIP, xHR/FB, xK% / xBB% and xISO fold into the xwOBA tab, Mix into Batted balls */   // Year over year (28 Oct 2026)   // xISO's build-up, in xSLG's place (Sean, 23 Oct 2026)   // Talent xwOBA's build-up (Sean, 11 Oct 2026)   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
+  const BTABS_P = [["pitching", "Pitching+"], ["games", "Game Logs"], ["yoy", "Year over year"], ["similar", "Similar"]];   /* nERA folds into Pitching+, Workload into Game Logs (17 Nov 2026) */   // Workload (28 Oct 2026)   // Game Logs back, every outing with its nERA (Sean, 18 Oct 2026)   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -9299,7 +9299,7 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => { const l = (tabs.find(([x]) => x === k) || [])[1]; return k === "talent" ? wsLab(l) : l; };
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"], ["games"], ["work"], ["yoy"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["vspt"], ["xbabip"], ["xhrfb"], ["talent"], ["xiso"], ["xkbb"], ["yoy"]] : []),
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"], ["games"], ["work"], ["yoy"], ["similar"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["vspt"], ["xbabip"], ["xhrfb"], ["talent"], ["xiso"], ["xkbb"], ["yoy"], ["similar"]] : []),
                     ["rolling", ...(p.type === "P" ? ["uera"] : ["babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
@@ -9399,6 +9399,8 @@
       body.append(renderWorkTab(p));
     } else if (pick === "yoy") {
       body.append(renderYoyTab(p, ref));
+    } else if (pick === "similar") {
+      body.append(renderSimilarTab(p));
     } else if (pick === "drivers") {
       body.append(renderDriversTab(p, o.st, g));
     } else if (pick === "nera") {
@@ -10967,7 +10969,7 @@
   // MLB card is matched against all of them — the same two halves, the same mix and hand terms — and a name opens that season.
   // A date window, a split, a minors or a spring / October card, or a season below the qualifying line keeps the same-season match
   const simReady = () => !!window.DRAFT_SIMILAR;
-  function similarAcross(p) {
+  function similarAcross(p, N = 5) {
     if (DS.level !== "MLB" || DS.kind || DS.multi || needsDays() || (SPLIT && (SPLIT.hand !== "all" || SPLIT.venue !== "all" || roleOf(SPLIT) !== "all"))) return null;
     ensureScript("hist/similar.js", simReady);
     if (!simReady()) return failed.has("hist/similar.js") ? null : "wait";
@@ -10989,8 +10991,41 @@
     }
     out.sort((a, b) => a[0] - b[0]);
     const seen = new Set(), top = [];
-    for (const o of out) { if (seen.has(o[1][0])) continue; seen.add(o[1][0]); top.push(o); if (top.length === 5) break; }   // each player once, his closest season
+    for (const o of out) { if (seen.has(o[1][0])) continue; seen.add(o[1][0]); top.push(o); if (top.length === N) break; }   // each player once, his closest season
     return top;
+  }
+  // the Similar tab (Sean, 17 Nov 2026: "ranks the similar players in order of what player-year is the most similar and then it shows the
+  // different areas and how similar they are in those areas"): similarAcross's top 15, each with his match overall, in style, in skill,
+  // and on every stat (100 − the percentile gap), heat-filled; a name opens that season
+  const SIM_LAB = { air: "Air%", gb: "GB%", pu: "PU%", pull: "Pull Air%", osw: "Chase%", zsw: "Z-Swing%", whf: "Whiff%", k: "K%", bb: "BB%", xwoba_dir: "xwOBA",
+    ev: "Avg EV", brl: "Brl%", hh: "HH%", ev90: "EV90", bs: "Bat spd", zcon: "Z-Con%", zone: "Zone%", swing: "Swing%", fbv: "FB velo", ext: "Ext",
+    stuff: "Stuff+", strk: "Strike%", kbb: "K-BB%", nera: "nERA" };
+  function renderSimilarTab(p) {
+    const box = el("div", "rollbox brbox simtab");
+    box.append(el("div", "rollhd", el("span", "rollname", "Most similar player-seasons")));
+    const A = similarAcross(p, 15);
+    if (A === "wait") { box.append(el("p", "note", "Loading every season 2015-now…")); ensureScript("hist/similar.js", () => { if (simReady()) render(); }); return box; }
+    if (!A || !A.length) { box.append(el("p", "note", "Similar players are matched on a full MLB regular season of a qualified player. Clear the filters, or pick an MLB season, to see them.")); return box; }
+    const S = window.DRAFT_SIMILAR, t = p.type === "P" ? "P" : "H", keys = S.keys[t], ns = S.nstyle[t], vi = t === "P" ? 7 : 6;
+    const mine = S[t].find((r) => r[0] === p.id && r[1] === DS.season), mv = mine[vi];
+    const heads = [["Rk", ""], ["Player", "l"], ["Tm", ""], ["Match", ""], ["Style", ""], ["Skill", ""], ...keys.map((k) => [SIM_LAB[k] || k, ""])];
+    const B = brTable([["", 3], ["Overall", 3], ["Style", ns], ["Skill", keys.length - ns]], heads, "simt");
+    const sc = (v) => Math.max(0, Math.round(100 - v));
+    A.forEach(([all, r, style, skill], i) => {
+      const [id, yr, name, team] = r, tr = el("tr"), nm = el("td", "l"), b = el("button", "linkbtn", `${name} '${String(yr).slice(2)}`);
+      b.type = "button"; b.addEventListener("click", (e) => { e.stopPropagation(); state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" };
+        const ds = yr === DATA.meta.season ? CUR.key : `mlb-${yr}`; if (xPop) { simPop(id, p.type, ds); return; }
+        state.x = { id, type: p.type, ds }; state.expanded = null; savePrefs(); location.hash = "#player/" + id; if (state.mode === "player") render(); });
+      nm.append(b); tr.append(el("td", null, String(i + 1)), nm, el("td", null, team));
+      for (const v of [all, style, skill]) { const m = sc(v); tr.append(heatTd(el("td", null, String(m)), m)); }
+      const v = r[vi];
+      keys.forEach((k, j) => { const a = mv[j], c = v[j], td = el("td");
+        if (a < 0 || c < 0) td.textContent = "–"; else { const m = 100 - Math.abs(a - c); td.textContent = String(m); td.title = `${SIM_LAB[k] || k}: his ${a}th percentile, ${name} ${c}th`; heatTd(td, m); }
+        tr.append(td); });
+      B.tb.append(B.fin(tr));
+    });
+    box.append(B.wrap, el("p", "note", "Match = 100 − the gap between the two percentiles (each ranked within its own season); Style and Skill average their stats, with the batting or throwing hand (and a pitcher's role and pitch mix) on Style. Each player once, at his closest season. Tap a stat for both percentiles."));
+    return box;
   }
   function similarRow(p, st, ref) {
     if (!st || !st.pct) return null;
