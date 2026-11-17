@@ -6413,3 +6413,4 @@ line can bring them back.
 * **xK% off the hitter card (Sean, 17 Nov 2026: "get rid of xk% showing too")**: Contact is Z-Contact% · O-Contact% · Whiff% · K%; xK% stays a Leaderboard column and an input to xwOBA.
 * **Batted-Ball Distribution reordered (Sean, 17 Nov 2026)**: GB% · Popup% · FB% · LD% · Pull% · Mix wOBA.
 * **Air% and Pull Air% back (Sean, 17 Nov 2026)**: Batted-Ball Distribution is GB% · Popup% · Air% (LD + FB) · Pull Air% · Mix wOBA.
+* **Pull Air% is ours (Sean, 17 Nov 2026)**: `pullair` = pulled line drives + pulled fly balls over every ball in his Mix buckets (bunts out), set in `V()` from `ctx.mix` (a window follows), ranked through a `SIDE_H` def; Savant's Pull Air% (`pull`) stays a Leaderboard column.

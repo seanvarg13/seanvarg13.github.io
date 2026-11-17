@@ -373,7 +373,7 @@
   // the rates below (wOBA / xwOBA on 10+ PA, Whiff% on 20+ swings), the vs Pitch type tab draws them, and the pool ranks them like any SIDE_H stat
   const VS_G = [["f9", "FB 95+", "Fastballs 95+"], ["fu", "FB <95", "Fastballs under 95"], ["br", "breaking", "Breaking balls"], ["of", "offspeed", "Offspeed"]];
   const VS_KEYS = VS_G.flatMap(([g]) => [g + "woba", g + "xw", g + "whf"]);
-  const SIDE_H = [{ key: "pullp", label: "Pull%", hib: true, dec: 1, unit: "%" }, { key: "cent", label: "Cent%", hib: true, dec: 1, unit: "%" },
+  const SIDE_H = [{ key: "pullp", label: "Pull%", hib: true, dec: 1, unit: "%" }, { key: "pullair", label: "Pull Air%", hib: true, dec: 1, unit: "%" }, { key: "cent", label: "Cent%", hib: true, dec: 1, unit: "%" },
                   { key: "oppo", label: "Oppo%", hib: true, dec: 1, unit: "%" }, { key: "npull", label: "Non-pull%", hib: true, dec: 1, unit: "%" },
                   { key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "strk", label: "Strike%", hib: false, dec: 1, unit: "%" },
                   { key: "mixw", label: "Mix wOBA", hib: true, dec: 3, unit: "" }, { key: "mixbab", label: "Mix xBABIP", hib: true, dec: 3, unit: "" },
@@ -1329,7 +1329,7 @@
       const ibb = v.ctx && v.ctx.IBB != null ? v.ctx.IBB : p.ctx && p.ctx.IBB != null && p.pa ? p.ctx.IBB / p.pa * (pa || 0) : null;
       v.m = Object.assign({}, m, { xk: xk == null ? null : Math.round(10 * xk) / 10, xwcon: con == null ? null : Math.round(1000 * con) / 1000,
                                   ibbr: ibb != null && pa ? Math.round(10000 * ibb / pa) / 100 : null,
-                                  pullfb: fbs ? Math.round(1000 * mx[5] / fbs) / 10 : null, mixbab: mixBab(mx),
+                                  pullfb: fbs ? Math.round(1000 * mx[5] / fbs) / 10 : null, pullair: fbs ? Math.round(1000 * (mx[2] + mx[5]) / fbs) / 10 : null, mixbab: mixBab(mx),
                                   iso: m.slg != null && m.ba != null ? Math.round(1000 * (m.slg - m.ba)) / 1000 : null });   /* ISO, the Batted Ball Quality tab's (23 Oct 2026) */
     }
     if (p.type === "H" && v.m && v.m.f9woba === undefined) v.m = Object.assign({}, v.m, vsPitchM((v.ctx && v.ctx.vpt) || null, dirFor(p)));   /* vs pitch type: wOBA / xwOBA / Whiff% against each group on the view (28 Oct 2026) */
@@ -10788,7 +10788,7 @@
   const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],   // talent xwOBA above xwOBA (Sean, 11 Oct 2026)    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
                        ["Batted-Ball Quality", ["ev", "brl", "bs", "hh", "ev90", "maxev"]]],   // Avg EV again (Sean, 8 Oct 2026: "swap fb EV with regular avg EV"); EV on FB / LD / GB on the Mix tab and as columns
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],   // back on the right, at the top (Sean, 1 Oct 2026)
-                       ["Batted-Ball Distribution", ["gb", "pu", "air", "pull", "mixw"]]]];   // Mix xBABIP under Mix wOBA (Sean, 16 Oct 2026)   // Air% back (Sean, 8 Oct 2026)   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
+                       ["Batted-Ball Distribution", ["gb", "pu", "air", "pullair", "mixw"]]]];   // Mix xBABIP under Mix wOBA (Sean, 16 Oct 2026)   // Air% back (Sean, 8 Oct 2026)   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
   // Skills first (Sean, 4 Oct 2026: "make the first section called Skills and then add in gb% and popup% and mix woba"): the four rates the
   // Rating weighs plus Mix wOBA; Stuff is the one Pitching+ grade and its parts (Stuff+ no longer shown apart from it)
