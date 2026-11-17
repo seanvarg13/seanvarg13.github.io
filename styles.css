@@ -6405,3 +6405,14 @@ canvas.seasonfx { opacity: .7; }
 
 /* The top bar the status area's red (Sean, 16 Nov 2026: "make the upper bar the same color as the one that houses the iphone battery and time ... make it all one color") */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .phtop { background: var(--phsep, #c8102e) !important; }
+
+/* The minimal pass (Sean, 17 Nov 2026): the small tables — the card tabs' tables, home's, the old card tables — wear a plain 1px line and no drop
+   shadow; the thick ring and the shadow stay on the big ones (the Leaderboard, his season table, the boards). */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#w1):not(#w2):not(#w3):not(#w4):not(#w5):not(#w6):not(#w7):not(#w8):not(#w9) :is(#xboard, #modal, #hub) :is(.brscroll, .stuffscroll, .rawscroll, .gframe) { box-shadow: 0 0 0 1px var(--xl) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not(#w1):not(#w2):not(#w3):not(#w4):not(#w5):not(#w6):not(#w7):not(#w8):not(#w9) :is(#xboard, #modal, #hub) .brscroll .sbt :is(td, th).ge { border-right-width: 1px !important; }
+/* folded sections inside a tab (xBABIP, xHR/FB, xK% / xBB%, xISO under xwOBA; nERA under Pitching+; Workload under Game Logs) */
+.tabfold { margin: 14px 0 0; border-top: 1px solid var(--line-soft, #dde4ed); padding-top: 10px; }
+.tabfold > summary { cursor: pointer; font: 700 15px var(--display, inherit); color: var(--ink); list-style: none; padding: 4px 0; }
+.tabfold > summary::-webkit-details-marker { display: none; }
+.tabfold > summary::before { content: "▸ "; color: var(--muted); }
+.tabfold[open] > summary::before { content: "▾ "; }

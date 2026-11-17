@@ -12,7 +12,7 @@
   const LB_SLIM = { H: ["woba", "ev", "brl", "hh", "osw", "whf", "k", "bb"], P: ["k", "bb", "whf", "strk", "gb", "era", "uera", "suera"] };
   // the Leaderboard's column-set tabs (Sean, 3 Oct 2026, from the redesign prototype); renderLbTabs draws them
   const LB_SETS = {
-    H: [["Standard", ["woba", "ba", "slg", "dxba", "dxslg", "k", "bb"]],   // the next-season projection is gone (Sean, 25 Oct 2026)
+    H: [["Standard", ["xwn", "woba", "ba", "slg", "k", "bb"]],   /* the minimal pass (17 Nov 2026): park-neutral xwOBA beside the headline, wOBA and a few rates */   // the next-season projection is gone (Sean, 25 Oct 2026)
         ["Advanced", ["woba", "xwdiff", "xwcon", "xk", "mixw", "babip", "xbabip", "bluck", "brel"]],
         ["Batted ball", ["ev", "evfb", "brfb", "fbq", "xhrfb", "ev90", "maxev", "brl", "hh", "bs", "air", "pull", "gb", "pu"]],   // fly-ball power after Avg EV (8 Oct 2026)
         ["Plate discipline", ["k", "xk", "bb", "whf", "osw", "zsw", "zcon", "ocon"]],
@@ -743,6 +743,8 @@
     front(state.lb.P); for (const c of Object.values(state.cols || {})) if (c) front(c.P); state.lb.ratingFront = true; }
   if (!state.lb.twAdd) { const L = state.lb.H, olds = [["woba", "ba", "slg", "dxba", "dxslg", "k", "bb"], ["woba", "xwdiff", "xwcon", "xk", "mixw", "babip", "xbabip", "bluck", "brel"]];   // a saved Standard / Advanced list takes the talent columns (11 Oct 2026)
     olds.forEach((o, j) => { if (Array.isArray(L) && L.length === o.length && L.every((k, i) => k === o[i])) state.lb.H = LB_SETS.H[j][1].slice(); }); state.lb.twAdd = true; }
+  if (!state.lb.min17) { const old = ["woba", "ba", "slg", "dxba", "dxslg", "k", "bb"], L = state.lb.H;   // a saved Standard (or the old slim list) moves to the new Standard once (17 Nov 2026)
+    if (!Array.isArray(L) || (L.length === old.length && L.every((k, i) => k === old[i])) || (L.length === LB_SLIM.H.length && L.every((k, i) => k === LB_SLIM.H[i]))) state.lb.H = ["xwn", "woba", "ba", "slg", "k", "bb"]; state.lb.min17 = true; }
   if (!state.lb.fbAdd) { const old = ["ev", "ev90", "maxev", "brl", "hh", "bs", "air", "pull", "gb", "pu"], L = state.lb.H;   // a saved Batted ball list takes the fly-ball columns (8 Oct 2026)
     if (Array.isArray(L) && L.length === old.length && L.every((k, i) => k === old[i])) state.lb.H = LB_SETS.H[2][1].slice(); state.lb.fbAdd = true; }
   if (!state.lb.xneraFront) { const front = (L) => { if (!Array.isArray(L)) return; const i = L.indexOf("xnera"); if (i >= 0) L.splice(i, 1); L.unshift("xnera"); };   // xnERA beside the nERA headline (Sean, 6 Oct 2026)
@@ -8878,10 +8880,18 @@
       ["xHR/FB", "xhf", lg.xhf, pct1, 1, `home runs per fly ball + popup his contact deserves — the xHR/FB tab's fit: FB EV, Barrel% on fly balls and on line drives, pulled fly balls — against the season's own HR / (fly balls + popups), so it can sit a few tenths off the tab's, which is over fly balls alone`],
       ["Extra power", "tph", lg.tph, (x) => x.toFixed(2), 1, `bases per hit that isn't a home run, from the batted-ball model's xSLG and xBA once the home runs xHR/FB credits are taken out — so it is mostly the model seeing more (or less) home-run power than xHR/FB does: it tracks his actual bases per non-HR hit at only r .18, and the gap between the two HR reads at −.52. Re-centred on the season's real bases per non-HR hit (12 Nov 2026), which the model's own level drifted off (1.09 against a real 1.27 in 2015); it was called Extra bases until then${m.slg != null && m.ba != null && t.I && t.I.hr != null && v.ab && m.ba * v.ab - t.I.hr > 0 ? ` (his actual: ${((m.slg * v.ab - 4 * t.I.hr) / (m.ba * v.ab - t.I.hr)).toFixed(2)})` : ""}`],
       ["xBABIP", "xbab", lg.xbab, f3, 1, `the xBABIP tab's nine drivers (line drives, popups, grounder and liner EV, grounder and liner pull, speed on grounders, oppo, fly balls) with no Noise or Luck row (his actual BABIP: ${m.babip != null ? f3(m.babip) : "–"})`]];
-    for (const [lab, k, lgv, f, dir, tip] of steps) { if (!keys.includes(k)) continue; run += S[k]; b.row(lab, his[k], lgv, f, pc(k, his[k], dir), step(run), run, tip + ". " + order); }
-    // ground balls (the review's item 5): what the pieces leave out, a straight line on his GB% against the league's (TW_GB)
-    if (t.gba) { const GBN = { gb: ["Ground balls", pct1, `his ground-ball rate against the league's: ${TW_GB.gb.toFixed(2)} wOBA points a point of GB%, what the pieces leave out. Over every 300+ PA season 2015-26 the most ground-ball-heavy fifth of hitters beat the pieces by 4 points and the most fly-ball-heavy fifth fell 5 short, in every season, and next season's wOBA carries the same lean, so it's skill, not luck`], ev90: ["EV90", (x) => x.toFixed(1), `his 90th-percentile exit velocity against the league's: +${(TW_GB.ev90 || 0).toFixed(1)} wOBA points a mph. Hard contact pays beyond what the home-run and BABIP pieces price. Held out by season over 2015-26 it adds to next season's wOBA and to the second half's, in both the 2015-19 and 2021-26 seasons`], ld: ["Line drives", pct1, `his line-drive rate against the league's: ${(TW_GB.ld || 0).toFixed(1)} wOBA points a point. Liner rate is partly the stringer's call and repeats at only r .33, but the xBABIP's line-drive driver credits it at full weight, so this takes some of it back; held out by season it improves next season's wOBA and the second half's`] };
-      for (const [k, w, hv, lv] of gbParts(m, L)) { run += w; b.row(GBN[k][0], hv, lv, GBN[k][1], null, step(run), run, GBN[k][2]); } }
+    /* seven plain rows (the minimal pass, Sean, 17 Nov 2026): walks with intentional walks, fly balls with HR/FB as Home runs, the ground-ball
+       lean inside Hits on balls in play — the ± of each row is the sum of its pieces' shares, so the column still adds up */
+    const T = Object.fromEntries(steps.map((z) => [z[1], z]));
+    const G7 = [["Strikeouts", ["xk"], "xk"], ["Walks", ["xbb", "ibb"], "xbb"], ["Hit by pitch", ["hbp"], "hbp"], ["Home runs", ["fbs", "xhf"], "xhf"],
+      ["Hits on balls in play", ["xbab"], "xbab"], ["Extra bases", ["tph"], "tph"]];
+    for (const [lab, ks, show] of G7) {
+      const kk = ks.filter((k) => keys.includes(k)); if (!kk.length) continue;
+      let d = kk.reduce((a0, k) => a0 + S[k], 0); const gb = show === "xbab" && t.gba ? t.gba : 0; d += gb;
+      const [, , lgv, f, dir, tip] = T[show]; run += d;
+      const tips = kk.map((k) => T[k][0] + ": " + T[k][5]).join(" · ") + (gb ? ` · plus his ground-ball rate against the league's (${TW_GB.gb.toFixed(2)} wOBA points a point of GB%)` : "");
+      b.row(lab, his[show], lgv, f, pc(show, his[show], dir), step(run), run, tips + ". " + order);
+    }
     // a date window's xwOBA regressed toward the league by its plate appearances (the review's item 1): the pieces above are the window's own
     if (t.wd != null) { run = t.txwN; const k0 = TW_WIN.xw, sh = Math.round(100 * k0 / (t.wpa + k0));
       b.row("Sample size", t.wpa, null, (x) => `${x} PA`, null, step(run), run, `a window of ${t.wpa} PA is pulled ${sh}% of the way to the league's wOBA (${L.woba != null ? f3(L.woba) : "–"}) — ${k0} / (${t.wpa} + ${k0}) — which is how much of a window's xwOBA carried into the next two months: every 30-game-day window 2022-26 against the next 60 game days, and first halves against second halves. The pieces above are the window's own, and so is the park row below, pulled the same share (a window's park mix doesn't carry forward either); a full season isn't regressed`); }
@@ -9228,8 +9238,8 @@
   }
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["fantasy", "Fantasy"]];   // Season Stats is the page's own table now (8 Oct 2026)   // Compare came off the strip with the Compare page (Sean, 6 Oct 2026)
-  const BTABS_H = [["mix", "Mix"], ["bbq", "Batted Ball Quality"], ["vspt", "vs Pitch type"], ["xbabip", "xBABIP"], ["xhrfb", "xHR/FB"], ["talent", "xwOBA"], ["xiso", "xISO"], ["xkbb", "xK% / xBB%"], ["yoy", "Year over year"]];   // Year over year (28 Oct 2026)   // xISO's build-up, in xSLG's place (Sean, 23 Oct 2026)   // Talent xwOBA's build-up (Sean, 11 Oct 2026)   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
-  const BTABS_P = [["pitching", "Pitching+"], ["nera", "nERA"], ["games", "Game Logs"], ["work", "Workload"], ["yoy", "Year over year"]];   // Workload (28 Oct 2026)   // Game Logs back, every outing with its nERA (Sean, 18 Oct 2026)   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
+  const BTABS_H = [["talent", "xwOBA"], ["bbq", "Batted balls"], ["vspt", "vs Pitch type"], ["yoy", "Year over year"]];   /* the minimal pass (Sean, 17 Nov 2026): xBABIP, xHR/FB, xK% / xBB% and xISO fold into the xwOBA tab, Mix into Batted balls */   // Year over year (28 Oct 2026)   // xISO's build-up, in xSLG's place (Sean, 23 Oct 2026)   // Talent xwOBA's build-up (Sean, 11 Oct 2026)   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
+  const BTABS_P = [["pitching", "Pitching+"], ["games", "Game Logs"], ["yoy", "Year over year"]];   /* nERA folds into Pitching+, Workload into Game Logs (17 Nov 2026) */   // Workload (28 Oct 2026)   // Game Logs back, every outing with its nERA (Sean, 18 Oct 2026)   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -9237,11 +9247,14 @@
   function renderBelow(p, o = {}) {
     const sec = el("section", "pbelow2");
     const tabs = p.type === "P" ? [...BTABS, ...BTABS_P] : [...BTABS, ...BTABS_H];
-    if (p.type === "P" && springFor()) tabs.splice(tabs.findIndex(([k]) => k === "nera"), 0, ["spring", "Spring"]);   // only while a spring this card can speak to is built (6 Oct 2026)
+    if (p.type === "P" && springFor()) tabs.splice(tabs.findIndex(([k]) => k === "games"), 0, ["spring", "Spring"]);   // only while a spring this card can speak to is built (6 Oct 2026)
     // a card opens on Season Stats (minimal pass 5, Sean, 30 Sep 2026): Compare, the least used, went to the end of the row,
     // and a Compare left open from before is put back to Stats once per visit
     if (!pbtabReset) { pbtabReset = true; if (state.pbtab === "compare") state.pbtab = "stats"; }
     if (state.pbtab === "xslg") state.pbtab = "xiso";   // the xSLG tab is the xISO tab (23 Oct 2026)
+    { const FOLD = { xbabip: "talent", xhrfb: "talent", xkbb: "talent", xiso: "talent", mix: "bbq", nera: "pitching", work: "games" }; if (FOLD[state.pbtab]) state.pbtab = FOLD[state.pbtab]; }
+    /* a folded section: drawn the first time it is opened */
+    const fold = (title, make) => { const d = el("details", "tabfold"), sm = el("summary", null, title); d.append(sm); let done = false; d.addEventListener("toggle", () => { if (d.open && !done) { done = true; let n = null; try { n = make(); } catch (e) { console.error(e); } d.append(n || el("p", "note", "Nothing to show here.")); } }); return d; };
     const pick = state.pbtab === "none" ? null : tabs.some(([k]) => k === state.pbtab) ? state.pbtab : null;   // nothing open until a tab is tapped (8 Oct 2026)
     const g = o.g || (p.type === "H" ? "H" : p.primary), ref = o.ref || g;
     // Since the minimal pass (Sean, 29 Sep 2026) the strip is plain words, and the tabs that are two views of one thing
@@ -9309,7 +9322,7 @@
     } else if (pick === "mix") {
       body.append(renderMixTab(p, ref));
     } else if (pick === "bbq") {
-      body.append(renderBbqTab(p, ref));
+      body.append(renderMixTab(p, ref), renderBbqTab(p, ref));
     } else if (pick === "vspt") {
       body.append(renderVsPitchTab(p, ref));
     } else if (pick === "xbabip") {
@@ -9317,7 +9330,8 @@
     } else if (pick === "xhrfb") {
       body.append(renderXhrfbTab(p));
     } else if (pick === "talent") {
-      body.append(renderTalentTab(p));
+      body.append(renderTalentTab(p), fold("Home runs · xHR/FB", () => renderXhrfbTab(p)), fold("Hits on balls in play · xBABIP", () => renderXbabipTab(p, ref)),
+        fold("Strikeouts and walks · xK% / xBB%", () => renderXkBbTab(p, ref)), fold("Power · xISO", () => renderXisoTab(p, ref)));
     } else if (pick === "xiso") {
       body.append(renderXisoTab(p, ref));
     } else if (pick === "xkbb") {
@@ -9329,7 +9343,7 @@
     } else if (pick === "stuff") {
       body.append(renderStuffTab(p, o.st, g));
     } else if (pick === "pitching") {
-      body.append(renderStuffTab(p, o.st, g, "pitching"));
+      body.append(renderStuffTab(p, o.st, g, "pitching"), fold("Luck-neutral ERA · nERA", () => renderLuckBox(p) || el("p", "note", "Luck-neutral ERA needs batted-ball data for this season.")));
     } else if (pick === "spring") {
       body.append(renderSpringTab(p));
     } else if (pick === "xk") {
@@ -9340,6 +9354,7 @@
       body.append(renderNextTab(p, o.st, g));
     } else if (pick === "games") {
       body.append(renderGameLogs(p));
+      if (p.type === "P") body.append(fold("Workload", () => renderWorkTab(p)));
     } else if (pick === "work") {
       body.append(renderWorkTab(p));
     } else if (pick === "yoy") {
