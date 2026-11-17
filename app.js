@@ -12367,6 +12367,15 @@
     const line = el("div", "pgline"), count = el("span", "pcount"), by = el("span", "pgby"); line.append(count, by);
     return { row, bar, line, count, by };
   }
+  // white gaps between the season table's column groups (Sean, 17 Nov 2026): a real empty column after each group's last cell, so no row line,
+  // fill or heat crosses it; only the table's outer border runs past. Rows are gapped as they're added (heat and totals come later)
+  function gapWatch(t) {
+    const fix = () => { let n = 0;
+      for (const tr of t.rows) { if (tr.dataset.gp) { n = Math.max(n, +tr.dataset.gp); continue; } let k = 0;
+        for (const c of [...tr.cells]) if (c.classList.contains("ge") && !c.classList.contains("f3")) { const g = document.createElement(c.tagName); g.className = "gapc"; c.after(g); k++; }
+        tr.dataset.gp = String(k); n = Math.max(n, k); }
+      for (const tr of t.rows) if (tr.dataset.gp === "0" && tr.cells.length === 1 && !tr.dataset.gs) { tr.cells[0].colSpan += n; tr.dataset.gs = "1"; } };
+    new MutationObserver(fix).observe(t, { childList: true, subtree: true }); requestAnimationFrame(fix); }
   function seasonBlock(p, o) {
     const H = p.type === "H", box = el("section", "sblock");
     const view = H ? sbTable : "std";
@@ -12414,6 +12423,7 @@
     const ldOf = (l) => { if (post || !l || l.season < SB_LEAD_FROM) return null; const L = sbLeaders(H, l.season); return { lg: l.team === "TOT" ? null : L[leagueOf(l.team)], mlb: L.MLB }; };
     const rec = H ? SB_RECORD.H : SB_RECORD.P, recQual = (l) => (H ? (+l.c.PA || 0) >= 3000 : ipNum(l.c.IP) >= 1000);
     const table = el("table", "sbt"), thead = el("thead"), tr = el("tr");
+    gapWatch(table);
     const lev = milb.length > 0;
     // with the minors in, the level is the second frozen column and the club scrolls (Sean, 9 Oct 2026, from B-Ref's Register Batting on his phone:
     // "when the table includes minor leagues could you make it do this when I scroll" — Year and Lg frozen, Aff sliding under them)
