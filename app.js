@@ -384,7 +384,7 @@
                   // xwOBA − wOBA (Sean, 27 Sep 2026): above zero his contact deserved more than he got — the unlucky ones
                   { key: "xwdiff", label: "xwOBA − wOBA", hib: true, dec: 3, unit: "", sign: true },
                   // what his whiffs, swing decisions and the strikes he sees say his K% should be (Sean, 28 Sep 2026)
-                  { key: "xk", label: "xK%", hib: false, dec: 1, unit: "%" },
+                  { key: "xk", label: "xK%", hib: false, dec: 1, unit: "%" }, { key: "xbbh", label: "xBB%", hib: true, dec: 1, unit: "%" },
                   // his xwOBA on contact (Sean, 28 Sep 2026; pxwOBA beside it was removed 30 Sep 2026: "that stat is not needed")
                   { key: "xwcon", label: "xwOBAcon", hib: true, dec: 3, unit: "" },
                   // Base Running (Sean, 30 Sep 2026): Savant's sprint speed and the official steals, full season only
@@ -1355,7 +1355,7 @@
       const sw = tx == null ? {} : { xwd: tx, xwoba: tx, xwdiff: v.m.woba != null ? Math.round(1000 * (tx - v.m.woba)) / 1000 : null };
       // xSLG from skills IS the xSLG (Sean, 23 Oct 2026 — XSLG); the batted-ball model's stays as dxslgm (talentCore's extra bases read it)
       const xsl = t && t.xslg != null ? Math.round(1000 * t.xslg) / 1000 : null;
-      v.m = Object.assign({}, v.m, { xiso: t && t.xiso != null ? Math.round(1000 * t.xiso) / 1000 : null, txw: tx, xwpk: t && t.xwpk != null ? Math.round(1000 * t.xwpk) / 1000 : null, xwn: t && t.txwN != null ? Math.round(1000 * t.txwN) / 1000 : null, dxw: v.m.xwd ?? null, dxslgm: v.m.dxslg ?? null }, sw, xsl == null ? {} : { dxslg: xsl }); v.tal = t;
+      v.m = Object.assign({}, v.m, { xbbh: t && t.xbbFit != null ? Math.round(10 * t.xbbFit) / 10 : null, xiso: t && t.xiso != null ? Math.round(1000 * t.xiso) / 1000 : null, txw: tx, xwpk: t && t.xwpk != null ? Math.round(1000 * t.xwpk) / 1000 : null, xwn: t && t.txwN != null ? Math.round(1000 * t.txwN) / 1000 : null, dxw: v.m.xwd ?? null, dxslgm: v.m.dxslg ?? null }, sw, xsl == null ? {} : { dxslg: xsl }); v.tal = t;
       if (t && t.wd != null) v.m = Object.assign({}, v.m, { xwdW: Math.round(1000 * t.txw0) / 1000, dxslgW: t.xslg0 != null ? Math.round(1000 * t.xslg0) / 1000 : null });   /* the window's own, unregressed */   /* xwpk: the same skills in his parks (15 Oct 2026); xwn: park-neutral, and txw / xwd are whichever the switch says (18 Oct 2026) */
       // the drivers' xBABIP IS the xBABIP (Sean, 15 Oct 2026 — xbabDrivers): the batted-ball model's number stays as xbabipm (the build-up's
       // league is the PA-weighted mean of it; a game log's luck still reads it, a game being too small for the drivers); where the drivers can't
@@ -10789,7 +10789,7 @@
   // EXPW / EXPB / EXPS are the directional model's xwOBA, xBA and xSLG, as everywhere.
   const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],   // talent xwOBA above xwOBA (Sean, 11 Oct 2026)    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
                        ["Batted-Ball Quality", ["bs", "brl", "evfb", "evld", "evgb"]]],   // Avg EV again (Sean, 8 Oct 2026: "swap fb EV with regular avg EV"); EV on FB / LD / GB on the Mix tab and as columns
-                      [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],   // back on the right, at the top (Sean, 1 Oct 2026)
+                      [["Swing Decisions", ["zsw", "osw", "bb", "xbbh"]], ["Contact", ["zcon", "ocon", "whf", "k", "xk"]],   // back on the right, at the top (Sean, 1 Oct 2026)
                        ["Batted-Ball Distribution", ["gb", "pu", "ld", "fb", "pullfb", "mixw"]], ["Expected ISO", ["mixw", "evld", "evfb", "xiso"]], ["Expected BABIP", ["ld", "pu", "evld", "evgb", "xbabip"]]]];   // Mix xBABIP under Mix wOBA (Sean, 16 Oct 2026)   // Air% back (Sean, 8 Oct 2026)   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
   // Skills first (Sean, 4 Oct 2026: "make the first section called Skills and then add in gb% and popup% and mix woba"): the four rates the
