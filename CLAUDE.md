@@ -6411,3 +6411,4 @@ line can bring them back.
 
 * **Batted-Ball Distribution is GB% · Popup% · Pull% · Mix wOBA (Sean, 17 Nov 2026: "get rid of mix xbabip, show just gb% and pop up % and pull % instead of pull fb%")**: `PCT_COLS_H`'s last section; FB%, LD%, Pull FB% stay Leaderboard columns, Mix xBABIP left `LB_EXTRA_H` (still computed). Year to year, 300+ PA both seasons 2015-26 (1,819 pairs): GB% r .76, FB% .76, Air% (LD+FB) .72, Pull FB% .71, PU% .68, Pull% .68, LD share of air .65, LD% .41.
 * **xK% off the hitter card (Sean, 17 Nov 2026: "get rid of xk% showing too")**: Contact is Z-Contact% · O-Contact% · Whiff% · K%; xK% stays a Leaderboard column and an input to xwOBA.
+* **Batted-Ball Distribution reordered (Sean, 17 Nov 2026)**: GB% · Popup% · FB% · LD% · Pull% · Mix wOBA.
