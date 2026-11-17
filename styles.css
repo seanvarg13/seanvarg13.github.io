@@ -6251,8 +6251,8 @@ canvas.seasonfx { opacity: .7; }
 :root:root:root:root:root:root body:not(#t1):not(#t2):not(#t3) table.sbt thead tr:not(.over) > th:not(.lit) { background: var(--ink-day, #13294b) !important; color: #fff !important; }
 :root:root:root:root:root:root body:not(#t1):not(#t2):not(#t3) table.sbt thead tr:not(.over) > th:not(.lit) * { color: #fff !important; }
 /* the new look (17 Nov 2026; Appearance ▸ Look ▸ Classic puts the old one back): Manrope, heat as bold coloured numbers, taller rows */
-:root:not(.oldlook) { --display: Manrope, system-ui, sans-serif; --body: Manrope, system-ui, sans-serif; }
-:root:root:root:root:root:root:not(.oldlook) body:not(#k1):not(#k2):not(#k3) :is(h1, h2, h3, h4, th, td, button, input, select, a, span, div, p, li, label, b, strong, small, .name, .h) { font-family: Manrope, system-ui, sans-serif !important; letter-spacing: 0 !important; }
+:root:not(.oldlook) { --display: Archivo, system-ui, sans-serif; --body: Archivo, system-ui, sans-serif; }
+:root:root:root:root:root:root:not(.oldlook) body:not(#k1):not(#k2):not(#k3) :is(h1, h2, h3, h4, th, td, button, input, select, a, span, div, p, li, label, b, strong, small, .name, .h) { font-family: Archivo, system-ui, sans-serif !important; letter-spacing: 0 !important; }
 :root:root:root:root:root:root:not(.oldlook) body:not(#k1):not(#k2):not(#k3) table td { padding-top: 8px !important; padding-bottom: 8px !important; }
 /* Leaderboard rows taller, every cell the full row (Sean, 17 Nov 2026) */
 :root:root:root:root:root:root:root:root:root:root:root:root:not(.oldlook) body:not(#k1):not(#k2):not(#k3):not(#k4):not(#k5):not(#k6) #rows .row-main, :root:root:root:root:root:root:root:root:root:root:root:root:not(.oldlook) body:not(#k1):not(#k2):not(#k3):not(#k4):not(#k5):not(#k6) #rows .row-main > *, :root:root:root:root:root:root:root:root:root:root:root:root:not(.oldlook) body:not(#k1):not(#k2):not(#k3):not(#k4):not(#k5):not(#k6) #rows .row-main .pcts > * { height: 34px !important; min-height: 34px !important; }
