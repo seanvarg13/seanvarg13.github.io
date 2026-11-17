@@ -6421,3 +6421,4 @@ line can bring them back.
 * **Expected ISO and Expected BABIP sections (Sean, 17 Nov 2026)**: in place of Batted-Ball Distribution and Batted-Ball Value — Expected ISO = FB% · Pull FB% · GB% · Popup% · EV on FB · xISO; Expected BABIP = LD% · Popup% · EV on LD · EV on GB · xBABIP.
 * **Expected ISO is GB% · Air% · Pull FB% · EV on FB · xISO (Sean, 17 Nov 2026)**.
 * **Batted-Ball Distribution back over Expected ISO (Sean, 17 Nov 2026)**: Distribution = GB% · Popup% · LD% · FB% · Pull FB% · Mix wOBA; Expected ISO = EV on LD · EV on FB · xISO.
+* **Mix wOBA heads Expected ISO (Sean, 17 Nov 2026)**: Expected ISO = Mix wOBA · EV on LD · EV on FB · xISO (Mix wOBA stays in Batted-Ball Distribution too).
