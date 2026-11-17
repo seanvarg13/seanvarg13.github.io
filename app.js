@@ -8665,15 +8665,21 @@
       tag(c) { tb.lastElementChild.classList.add(c); },
       // the last row's components as rows of their own under it, opened and shut by tapping its name (Sean, 17 Nov 2026: "make it so the xwoba
       // build up drop downs are the actual components themselves in a row and show the impact of that component")
-      kids(list) { const tr = tb.lastElementChild, td = tr.firstElementChild, lab = tr.dataset.lab || td.textContent;
-        td.textContent = ""; const bt = el("button", "knotebtn kfold", "▸ " + lab); bt.type = "button"; bt.setAttribute("aria-expanded", "false"); td.append(bt);
-        const rows = list.map((z) => { const r = el("tr", "kkid"); if (z.tip) r.title = z.tip; r.hidden = true;
-          const h = el("td", null, z.his == null ? "–" : z.f(z.his));
-          r.append(el("td", "l nm", z.lab), heatTd(h, z.his == null ? null : z.pc), el("td", "xact", z.lg == null ? "" : z.f(z.lg)), dCell(z.d), el("td", "krk"));
-          return fin(r); });
-        let at = tr; for (const r of rows) { at.after(r); at = r; }
-        bt.addEventListener("click", (e) => { e.stopPropagation(); const on = bt.getAttribute("aria-expanded") !== "true";
-          bt.setAttribute("aria-expanded", String(on)); bt.textContent = (on ? "▾ " : "▸ ") + lab; for (const r of rows) r.hidden = !on; }); },   // the last row's running number as the expected one, yellow with the words beside it
+      kids(list) { const tr = tb.lastElementChild, td = tr.firstElementChild;
+        const mk = (row, items, depth) => { const c0 = row.firstElementChild, lab = c0.textContent.replace(/^[▸▾] /, ""); c0.textContent = "";
+          const bt = el("button", "knotebtn kfold", "▸ " + lab); bt.type = "button"; bt.setAttribute("aria-expanded", "false"); c0.append(bt);
+          const kids = []; let at = row;
+          for (const z of items) { const r = el("tr", "kkid" + (depth > 1 ? " kkid2" : "")); if (z.tip) r.title = z.tip; r.hidden = true;
+            const h = el("td", null, z.his == null ? "–" : z.f(z.his));
+            r.append(el("td", "l nm", z.lab), heatTd(h, z.his == null ? null : z.pc), el("td", "xact", z.lg == null ? "" : z.f(z.lg)), dCell(z.d), el("td", "krk"));
+            fin(r); at.after(r); at = r; const k = { r, sub: null };
+            if (z.sub) { k.sub = mk(r, z.sub, depth + 1); at = k.sub.last; }
+            kids.push(k); }
+          const show = (on) => { bt.setAttribute("aria-expanded", String(on)); bt.textContent = (on ? "▾ " : "▸ ") + lab;
+            for (const k of kids) { k.r.hidden = !on; if (k.sub && !on) k.sub.show(false); } };
+          bt.addEventListener("click", (e) => { e.stopPropagation(); show(bt.getAttribute("aria-expanded") !== "true"); });
+          return { show, last: at }; };
+        mk(tr, list, 1); },   // the last row's running number as the expected one, yellow with the words beside it
       done() { appendWrap(box, wrap); return box; } };
     return api;
   }
@@ -8908,11 +8914,12 @@
           const act = k === "xk" ? (m.k != null ? m.k - (t.pk && t.pk.k || 0) : null) : (m.bb != null ? m.bb - (t.pk && t.pk.bb || 0) : null), fit = t[k === "xk" ? "xkFit" : "xbbFit"];
           const ga = act == null ? 0 : act - lv, gf = fit - lv, tot = ga + gf, sa = act == null ? 0 : tot ? S[k] * ga / tot : S[k] / 2;
           const nmA = k === "xk" ? "K% (half)" : "BB% (half)", nmF = k === "xk" ? "xK% (half)" : "xBB% (half)";
-          K.push({ lab: nmA, his: act, lg: lv, f: ff, pc: pc(k, act, dd), d: sa, tip: "his actual rate, half the weight" }, { lab: nmF, his: fit, lg: lv, f: ff, pc: pc(k, fit, dd), d: S[k] - sa, tip: "the rate his swing decisions and contact come with, half the weight" });
+          K.push({ lab: k === "xk" ? "Weighted K%" : "Weighted BB%", his: his[k], lg: lv, f: ff, pc: pc(k, his[k], dd), d: S[k], tip: "half his actual rate, half the expected one",
+            sub: [{ lab: k === "xk" ? "K%" : "BB%", his: act, lg: lv, f: ff, pc: pc(k, act, dd), d: sa, tip: "his actual rate, half the weight" }, { lab: k === "xk" ? "xK%" : "xBB%", his: fit, lg: lv, f: ff, pc: pc(k, fit, dd), d: S[k] - sa, tip: "the rate his swing decisions and contact come with, half the weight" }] });
         } else K.push({ lab: nm, his: his[k], lg: lv, f: ff, pc: pc(k, his[k], dd), d: S[k], tip: tp });
       }
       if (gb) K.push({ lab: "GB%", his: m.gb, lg: L.gb, f: pct1, pc: null, d: gb, tip: `his ground-ball rate against the league's, ${TW_GB.gb.toFixed(2)} wOBA points a point` });
-      if (K.length > 1) b.kids(K);
+      if (K.length > 1 || K.some((z) => z.sub)) b.kids(K);
     }
     // a date window's xwOBA regressed toward the league by its plate appearances (the review's item 1): the pieces above are the window's own
     if (t.wd != null) { run = t.txwN; const k0 = TW_WIN.xw, sh = Math.round(100 * k0 / (t.wpa + k0));

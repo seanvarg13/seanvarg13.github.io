@@ -6420,3 +6420,6 @@ canvas.seasonfx { opacity: .7; }
 :root:root:root :is(#xboard,#modal) table.kbuild tr.kkid td { font-size: 0.92em; }
 :root:root:root :is(#xboard,#modal) table.kbuild tr.kkid td.nm { padding-left: 18px; color: var(--muted); }
 :root:root:root :is(#xboard,#modal) table.kbuild .kfold { text-decoration: none; }
+:root:root:root :is(#xboard,#modal) table.kbuild tr.kkid2 td.nm { padding-left: 32px; }
+/* no thick table borders anywhere (Sean, 17 Nov 2026) */
+:root:root:root:root { --xlw: 1px !important; --xlg: 1px !important; }
