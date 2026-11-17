@@ -7710,7 +7710,7 @@
     };
     customizer(row, segOf, T, cur);   /* the ready-made schemes' swatches are gone (Sean, 1 Nov 2026: "get rid of the ready made schemes") */
     row("Light or dark", null, segOf("Light or dark", [["system", "Match device"], ["light", "Light"], ["dark", "Dark"]], cur.theme, (v) => { T.set({ theme: v }); renderSettings(); }));
-    {   // seasonal effects (31 Oct 2026): Auto by the date, Off, or a season picked
+    if (false) {   // seasonal effects, off for good (17 Nov 2026) (31 Oct 2026): Auto by the date, Off, or a season picked
       const sel = el("select", "seasonsel"); sel.setAttribute("aria-label", "Seasonal effects");
       const now = seasonFor(new Date());
       for (const [v, l] of [["auto", `Auto (now: ${SEASONS[now].name})`], ["off", "Off"], ...SEASON_ORDER.map((k) => [k, SEASONS[k].name])]) { const o = el("option", null, l); o.value = v; sel.append(o); }
@@ -15187,7 +15187,7 @@
   };
   const SEASON_ORDER = ["halloween", "fall", "thanksgiving", "christmas", "winter", "newyear", "valentine", "stpat", "spring", "easter", "summer", "july4"];
   const SEASON_PREF = {
-    get() { try { const v = localStorage.getItem("draft2027.season"); return v === "off" || SEASONS[v] ? v : "auto"; } catch (e) { return "auto"; } },
+    get() { return "off"; },   /* seasonal effects off for good (Sean, 17 Nov 2026) */
     set(v) { try { if (v === "auto") localStorage.removeItem("draft2027.season"); else localStorage.setItem("draft2027.season", v); } catch (e) {} },
   };
   // Easter Sunday (the anonymous Gregorian algorithm), as a month (1-12) and day
@@ -15330,9 +15330,9 @@
       diamonds: `${svg(90, 64, `<g fill='none' stroke='${W}.26)' stroke-width='1.3'><path d='M45 6L66 32L45 58L24 32Z'/><circle cx='45' cy='32' r='3' fill='${W}.22)' stroke='none'/></g><g fill='${W}.3)'><rect x='42' y='3' width='6' height='6' transform='rotate(45 45 6)'/><rect x='63' y='29' width='6' height='6' transform='rotate(45 66 32)'/><rect x='21' y='29' width='6' height='6' transform='rotate(45 24 32)'/></g>`)}, ${band}`,
       sunset: `linear-gradient(100deg, color-mix(in srgb, ${band} 72%, #000) 0%, ${band} 55%, color-mix(in srgb, ${band} 78%, #fff) 100%)`,
     };
-    const LIST = [["season", "Seasonal"], ["plain", "Plain"], ["pinstripes", "Pinstripes"], ["seams", "Seams"], ["argyle", "Argyle"], ["diamonds", "Diamonds"], ["sunset", "Sunset"],
-      ...SEASON_ORDER.map((k) => ["s:" + k, SEASONS[k].name])];
-    const get = () => { try { const v = localStorage.getItem("draft2027.hdr"); return LIST.some((x) => x[0] === v) ? v : "season"; } catch (e) { return "season"; } };
+    /* no seasonal or holiday headers (Sean, 17 Nov 2026: "get rid of ... any holiday or seasonal themes") */
+    const LIST = [["plain", "Plain"], ["pinstripes", "Pinstripes"], ["seams", "Seams"], ["argyle", "Argyle"], ["diamonds", "Diamonds"], ["sunset", "Sunset"]];
+    const get = () => { try { const v = localStorage.getItem("draft2027.hdr"); return LIST.some((x) => x[0] === v) ? v : "plain"; } catch (e) { return "plain"; } };
     const set = (v) => { try { if (v === "season") localStorage.removeItem("draft2027.hdr"); else localStorage.setItem("draft2027.hdr", v); } catch (e) {} sync(); };
     function sync() {
       const v = get(), root = document.documentElement;
