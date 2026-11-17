@@ -28,6 +28,16 @@ window.DRAFT_BORDERS = (function () {
   document.documentElement.classList.toggle("thinlines", get() === "thin");
   return { get, set, clear };
 })();
+// the site's look (Sean, 17 Nov 2026: "lets do g, b, and 5 but save the current design so i can go back"): "new" = Manrope, heat as
+// coloured numbers, taller rows; "classic" = the design before it (class oldlook on <html>)
+window.DRAFT_LOOK = (function () {
+  const KEY = "draft2027.look", root = document.documentElement;
+  const get = () => { try { return localStorage.getItem(KEY) === "classic" ? "classic" : "new"; } catch (e) { return "new"; } };
+  const sync = () => { const old = get() === "classic"; root.classList.toggle("oldlook", old);
+    if (!old && !document.getElementById("manrope")) { const l = document.createElement("link"); l.id = "manrope"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap"; document.head.append(l); } };
+  const set = (v) => { try { if (v === "classic") localStorage.setItem(KEY, v); else localStorage.removeItem(KEY); } catch (e) { /* */ } sync(); };
+  sync(); return { get, set };
+})();
 window.DRAFT_THEMES = (function () {
   const W = "rgba(255, 255, 255, ";
   // type on a dark fill / on a light fill
