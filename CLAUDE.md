@@ -6417,3 +6417,4 @@ line can bring them back.
 * **Batted-Ball Quality is Bat Speed · Barrel% · EV on FB · EV on LD · EV on GB (Sean, 17 Nov 2026)**; Avg EV, Hard-Hit%, EV90 and Max EV stay Leaderboard columns.
 * **Mix xBABIP back (Sean, 17 Nov 2026)**: under Mix wOBA in Batted-Ball Distribution, and a Leaderboard column again.
 * **Batted-Ball Value (Sean, 17 Nov 2026)**: a hitter-card section under Batted-Ball Distribution — Mix wOBA · Mix xBABIP · xISO (an `xiso` `SIDE_H` def so the pool ranks it); Distribution is GB% · Popup% · Air% · Pull Air%.
+* **FB% and LD% in Air%'s place (Sean, 17 Nov 2026)**: Batted-Ball Distribution is GB% · Popup% · FB% · LD% · Pull Air%; Air% stays a Leaderboard column.
