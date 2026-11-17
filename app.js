@@ -9337,6 +9337,9 @@
     if (tabPad && tabPad.who === p.type + p.id + ":" + pick) sec.style.minHeight = tabPad.h + "px";
     if (!pick) return sec;
     const body = el("div", "btabbody");
+    /* the card tabs' tables get the season table's white gaps (Sean, 17 Nov 2026) */
+    const gw = () => { for (const t of body.querySelectorAll("table.sbt:not([data-gw])")) { t.dataset.gw = "1"; gapWatch(t); } };
+    new MutationObserver(gw).observe(body, { childList: true, subtree: true });
     if (pick === "compare") {
       const row = el("div", "pacts");
       const on = el("button", "btn btn-quiet tbtn" + (state.cmp2.on ? " on" : ""), state.cmp2.on ? "Close comparison" : "Compare two sides");
