@@ -6418,3 +6418,4 @@ line can bring them back.
 * **Mix xBABIP back (Sean, 17 Nov 2026)**: under Mix wOBA in Batted-Ball Distribution, and a Leaderboard column again.
 * **Batted-Ball Value (Sean, 17 Nov 2026)**: a hitter-card section under Batted-Ball Distribution — Mix wOBA · Mix xBABIP · xISO (an `xiso` `SIDE_H` def so the pool ranks it); Distribution is GB% · Popup% · Air% · Pull Air%.
 * **FB% and LD% in Air%'s place (Sean, 17 Nov 2026)**: Batted-Ball Distribution is GB% · Popup% · FB% · LD% · Pull Air%; Air% stays a Leaderboard column.
+* **Expected ISO and Expected BABIP sections (Sean, 17 Nov 2026)**: in place of Batted-Ball Distribution and Batted-Ball Value — Expected ISO = FB% · Pull FB% · GB% · Popup% · EV on FB · xISO; Expected BABIP = LD% · Popup% · EV on LD · EV on GB · xBABIP.
