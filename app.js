@@ -2227,7 +2227,7 @@
   const newLook = () => !document.documentElement.classList.contains("oldlook");
   function pctStyle(p) {
     if (p == null) return null;
-    if (newLook()) { const k = "n" + p; if (colorCache.has(k)) return colorCache.get(k);
+    if (false && newLook()) { const k = "n" + p; if (colorCache.has(k)) return colorCache.get(k);
       const t = Math.min(1, Math.abs(p - 50) / 50), a = [70, 76, 86], z = p >= 50 ? [200, 30, 38] : [42, 88, 168];
       const c = "rgb(" + a.map((x, i) => Math.round(x + (z[i] - x) * t)).join(",") + ")", r = { bg: "transparent", fg: c, txt: true };
       colorCache.set(k, r); return r; }
