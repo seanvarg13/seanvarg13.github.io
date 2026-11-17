@@ -11617,8 +11617,9 @@
     if (p.type === "P") { const side = stuffSide() ? "stuff" : "raw", sb = el("button", "pgside", side === "stuff" ? "Stuff" : "Raw"); sb.type = "button"; sb.setAttribute("aria-label", "Raw or stuff");
       cellOf(ddList(sb, [["raw", "Raw"], ["stuff", "Stuff"]], side, (k) => { state.cardSide = k; savePrefs(); render(); }, "side")); }
     if (o.entry && !isMulti(o.key)) { const fb = filtersTog(p, true).querySelector(".phfilt"); fb.textContent = "Filters"; cellOf(fb); }
-    { const wk = p.type + p.id, wb = el("button", "pgwatch", watchSet[wk] ? "★ Watching" : "☆ Watch"); wb.type = "button"; wb.title = "Track him on Home with his injury status and numbers";
-      wb.addEventListener("click", () => { if (watchSet[wk]) delete watchSet[wk]; else watchSet[wk] = 1; save(WATCH_LS, watchSet); wb.textContent = watchSet[wk] ? "★ Watching" : "☆ Watch"; }); cellOf(wb); }
+    { const wk = p.type + p.id, wb = el("button", "segbtn small pgwatch", watchSet[wk] ? "★ Watching" : "☆ Watch"); wb.type = "button"; wb.title = "Track him on Home with his injury status and numbers";
+      wb.addEventListener("click", (e) => { e.stopPropagation(); if (watchSet[wk]) delete watchSet[wk]; else watchSet[wk] = 1; save(WATCH_LS, watchSet); wb.textContent = watchSet[wk] ? "★ Watching" : "☆ Watch"; });
+      inWin.push(["Watch list", wb]); }   // in the Filters window, not the control row (Sean, 17 Nov 2026)
     for (const b of crow.querySelectorAll("button:not(:disabled)")) b.append(el("span", "pgchev", "▾"));
     // the popup's × on a strip of its own across the bar's top, so the headshot, name, bio and Filters / Raw sit exactly as they do without it, just
     // lower (Sean, 13 Oct 2026: "the player head shot name and bio are in the same position in comparison to the filters and raw vs stuff button when

@@ -6403,3 +6403,8 @@ line can bring them back.
   - **Player header:** one line at its foot — under the band at rest, under the sticky bar (`.pgbar.stuck`) once the band has scrolled away; `.pgrule` is hidden.
   - **xwOBA build-up rows open their components** (`buildUp.kids`): Strikeouts ▸ Weighted K% ▸ K% / xK%, Walks ▸ Weighted BB% ▸ BB% / xBB% + IBB, Home runs ▸ Fly balls / xHR/FB, Hits on balls in play ▸ xBABIP / GB%.
   - **No seasonal effects or holiday headers** (`seasonFx`'s `get()` returns off; `HDR`'s list is the plain styles only; the Appearance row is gone).
+* **Watch moved into Filters (Sean, 17 Nov 2026)**: the player page's ☆ Watch / ★ Watching button is the first row of his Filters window ("Watch
+  list"), not a cell of the Year · Level · Filters row. Home's tables already wear the season table's sizes (34px rows, 12px Manrope, navy header,
+  1px lines); Sean asked them to stay without the white gap columns. Unreachable stylesheet rules (a selector needing a class or id that `app.js`,
+  `themes.js`, `index.html` and `defaults.js` never write) were removed, checked by every element's computed style on 18 pages × phone light /
+  phone dark / desktop.
