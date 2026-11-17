@@ -7736,7 +7736,7 @@
     // wOBA or wRC+ (Sean, 16 Oct 2026): the display scale for every wOBA-scale number — the stored numbers, pools and percentiles are the same either way
     row("wOBA scale", "wOBA as it is, or the same numbers as wRC+ / xwRC+: 100 is the league's average that season, 120 is 20% better — each season against its own league, so seasons compare. Nothing is re-ranked; only what prints changes.",
       segOf("wOBA scale", [["woba", "wOBA"], ["wrc", "wRC+"]], WRC_PREF.get(), (v) => { WRC_PREF.set(v); for (const k in headFont) delete headFont[k]; statColsMemo.clear(); renderSettings(); }));
-    if (window.DRAFT_LOOK) row("Look", "New: Archivo type, heat shown as coloured numbers instead of filled cells, and taller table rows. Classic: the site as it was before 17 Nov 2026.",
+    if (window.DRAFT_LOOK) row("Look", "New: Manrope type, heat shown as coloured numbers instead of filled cells, and taller table rows. Classic: the site as it was before 17 Nov 2026.",
       segOf("Look", [["new", "New"], ["classic", "Classic"]], window.DRAFT_LOOK.get(), (v) => { window.DRAFT_LOOK.set(v); colorCache.clear(); render(); }));
     if (window.DRAFT_BORDERS) row("Table borders", "Thick: a 3px frame round every table and 3px lines at the group breaks, under the column names and over the totals. Thin: every table line 1px.",
       segOf("Table borders", [["thick", "Thick"], ["thin", "Thin"]], window.DRAFT_BORDERS.get(), (v) => { window.DRAFT_BORDERS.set(v); renderSettings(); }));
