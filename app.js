@@ -376,7 +376,7 @@
   const SIDE_H = [{ key: "pullp", label: "Pull%", hib: true, dec: 1, unit: "%" }, { key: "pullair", label: "Pull Air%", hib: true, dec: 1, unit: "%" }, { key: "cent", label: "Cent%", hib: true, dec: 1, unit: "%" },
                   { key: "oppo", label: "Oppo%", hib: true, dec: 1, unit: "%" }, { key: "npull", label: "Non-pull%", hib: true, dec: 1, unit: "%" },
                   { key: "swing", label: "Swing%", hib: true, dec: 1, unit: "%" }, { key: "strk", label: "Strike%", hib: false, dec: 1, unit: "%" },
-                  { key: "mixw", label: "Mix wOBA", hib: true, dec: 3, unit: "" }, { key: "mixbab", label: "Mix xBABIP", hib: true, dec: 3, unit: "" },
+                  { key: "mixw", label: "Mix wOBA", hib: true, dec: 3, unit: "" }, { key: "mixbab", label: "Mix xBABIP", hib: true, dec: 3, unit: "" }, { key: "xiso", label: "xISO", hib: true, dec: 3, unit: "" },
                   // BABIP, what his contact says it should be, the wOBA points the gap is worth, and how much of his wOBA rides
                   // on hits in play (Sean, 27 Sep 2026). Luck and reliance are flagged the other way round: more is more risk
                   { key: "babip", label: "BABIP", hib: true, dec: 3, unit: "" }, { key: "xbabip", label: "xBABIP", hib: true, dec: 3, unit: "" },
@@ -10788,7 +10788,7 @@
   const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],   // talent xwOBA above xwOBA (Sean, 11 Oct 2026)    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
                        ["Batted-Ball Quality", ["bs", "brl", "evfb", "evld", "evgb"]]],   // Avg EV again (Sean, 8 Oct 2026: "swap fb EV with regular avg EV"); EV on FB / LD / GB on the Mix tab and as columns
                       [["Swing Decisions", ["zsw", "osw", "bb"]], ["Contact", ["zcon", "ocon", "whf", "k"]],   // back on the right, at the top (Sean, 1 Oct 2026)
-                       ["Batted-Ball Distribution", ["gb", "pu", "air", "pullair", "mixw", "mixbab"]]]];   // Mix xBABIP under Mix wOBA (Sean, 16 Oct 2026)   // Air% back (Sean, 8 Oct 2026)   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
+                       ["Batted-Ball Distribution", ["gb", "pu", "air", "pullair"]], ["Batted-Ball Value", ["mixw", "mixbab", "xiso"]]]];   // Mix xBABIP under Mix wOBA (Sean, 16 Oct 2026)   // Air% back (Sean, 8 Oct 2026)   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
   // a pitcher's two columns: what he owns before contact on the left, what comes of it on the right
   // Skills first (Sean, 4 Oct 2026: "make the first section called Skills and then add in gb% and popup% and mix woba"): the four rates the
   // Rating weighs plus Mix wOBA; Stuff is the one Pitching+ grade and its parts (Stuff+ no longer shown apart from it)

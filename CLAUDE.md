@@ -6416,3 +6416,4 @@ line can bring them back.
 * **Pull Air% is ours (Sean, 17 Nov 2026)**: `pullair` = pulled line drives + pulled fly balls over every ball in his Mix buckets (bunts out), set in `V()` from `ctx.mix` (a window follows), ranked through a `SIDE_H` def; Savant's Pull Air% (`pull`) stays a Leaderboard column.
 * **Batted-Ball Quality is Bat Speed · Barrel% · EV on FB · EV on LD · EV on GB (Sean, 17 Nov 2026)**; Avg EV, Hard-Hit%, EV90 and Max EV stay Leaderboard columns.
 * **Mix xBABIP back (Sean, 17 Nov 2026)**: under Mix wOBA in Batted-Ball Distribution, and a Leaderboard column again.
+* **Batted-Ball Value (Sean, 17 Nov 2026)**: a hitter-card section under Batted-Ball Distribution — Mix wOBA · Mix xBABIP · xISO (an `xiso` `SIDE_H` def so the pool ranks it); Distribution is GB% · Popup% · Air% · Pull Air%.
