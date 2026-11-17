@@ -34,7 +34,7 @@ window.DRAFT_LOOK = (function () {
   const KEY = "draft2027.look", root = document.documentElement;
   const get = () => { try { return localStorage.getItem(KEY) === "classic" ? "classic" : "new"; } catch (e) { return "new"; } };
   const sync = () => { const old = get() === "classic"; root.classList.toggle("oldlook", old);
-    if (!old && !document.getElementById("manrope")) { const l = document.createElement("link"); l.id = "manrope"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap"; document.head.append(l); } };
+    if (!old && !document.getElementById("manrope")) { const l = document.createElement("link"); l.id = "manrope"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap"; document.head.append(l); } };
   const set = (v) => { try { if (v === "classic") localStorage.setItem(KEY, v); else localStorage.removeItem(KEY); } catch (e) { /* */ } sync(); };
   sync(); return { get, set };
 })();
