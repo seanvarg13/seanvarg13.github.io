@@ -84,7 +84,8 @@ def project_hitters(S, AGE):
         den = sum(WH[y] * sum(o["PA"] for o in L[y].values()) for y in L)
         lg[k] = num / den if den else 0
     out = {}
-    for pid in L[YEARS[0]]:
+    # everyone with a line in any of the three seasons (18 Nov 2026 audit: a player who missed 2026 had no projection at all)
+    for pid in sorted(set().union(*[set(v) for v in L.values()])):
         seasons = [(y, L[y][pid]) for y in L if pid in L[y] and L[y][pid]["PA"] > 0]
         if not seasons: continue
         age = AGE.get(("H", pid)); age27 = age + 1 if age is not None else None
@@ -113,7 +114,7 @@ def project_hitters(S, AGE):
             if k in GOOD_H: rate[k] *= 1 + a
             elif k in BAD_H: rate[k] *= 1 - a
         # playing time
-        pa = {y: o["PA"] for y, o in seasons}; g26 = L[YEARS[0]][pid]["G"]
+        pa = {y: o["PA"] for y, o in seasons}; g26 = L[YEARS[0]].get(pid, {}).get("G", 0)
         t = 0.5 * pa.get(2026, 0) + 0.1 * pa.get(2025, 0) + 200
         full = sorted([v for v in pa.values() if v >= 450], reverse=True)
         if len(full) >= 2: t = max(t, 0.85 * (full[0] + full[1]) / 2)
@@ -140,10 +141,10 @@ def project_pitchers(S, AGE):
             den = sum(WP[y] * sum(o["OUTS"] for o in L[y].values() if role_of(o) == role) for y in L)
             lg[role][k] = num / den if den else 0
     out = {}
-    for pid in L[YEARS[0]]:
+    for pid in sorted(set().union(*[set(v) for v in L.values()])):
         seasons = [(y, L[y][pid]) for y in L if pid in L[y] and L[y][pid]["OUTS"] > 0]
         if not seasons: continue
-        last = L[YEARS[0]][pid]; role = role_of(last)
+        last = max(seasons, key=lambda s: s[0])[1]; role = role_of(last)   # his latest season's role (2026 or before)
         age = AGE.get(("P", pid)); age27 = age + 1 if age is not None else None
         den = sum(WP[y] * o["OUTS"] for y, o in seasons) + 600
         rate = {k: (sum(WP[y] * o[k] for y, o in seasons) + 600 * lg[role][k]) / den for k in pk}

@@ -6430,3 +6430,10 @@ line can bring them back.
 * **Best seasons on home (Sean, 18 Nov 2026: "a table that shows top seasons by xwoba all time")**: a home section under the leaders — the top 15 (10 on a phone) MLB hitter-seasons 2015 on by the site's xwOBA, 300+ PA (110 in 2020), with his parks or park-neutral as the switch says; a name opens that season's page. Data: `hist/topxw.js` (`window.DRAFT_TOPXW = {pk, n}`, top 25 each, ~4 KB) from `tools/build_topxw.cjs` (hist/career-bb.js + the search index), run by `cloud_daily.py` after each career build; value-free in `ensureScript`.
 * **Home Movers Δ readable (Sean, 18 Nov 2026)**: the home tables' Δ cells (`td.up`) were coloured `--stripe-line`, which is transparent on UNC and other schemes; they are a fixed red now.
 * **Best seasons last on home, all red, a Leaderboard link (Sean, 18 Nov 2026)**: the section sits after Movers; every xwOBA cell is the top of the heat scale (they're all elite); "Leaderboard →" opens the Leaderboard on 2015 to this season, each season its own row, hitters, sorted by xwOBA, Min 300 PA.
+
+* **Two quick fixes from the full review (Sean, 18 Nov 2026: "start with the quick fixes first")**: (1) `tools/build_proj27.py` projects everyone
+  with a line in any of 2024-26 (it had looped over 2026's players only, so a player who missed 2026 had no Marcel 2027 line and fell out of the
+  Mock draft and Rankings projections); a pitcher's role is his latest season's; `hist/proj-2027.js` rebuilt with `build_offseason.py proj`
+  (Steamer + Marcel: 852 hitters, 1194 pitchers, was 662 / 868). (2) `cloud_daily.py`'s page check stops the publish on any non-zero exit (a
+  crashed check had published unchecked); only a missing Node still publishes unchecked. The review itself: `ARCHITECTURE_REVIEW.md`, `AUDIT.md`,
+  `docs/review/*.md` at the repo root.

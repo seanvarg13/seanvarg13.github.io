@@ -116,7 +116,7 @@ def page_check():
         return None
     say("$ node tools/check_site.cjs --quick")
     code = subprocess.run(["node", "tools/check_site.cjs", "--quick"]).returncode
-    return True if code == 0 else False if code == 1 else None
+    return code == 0   # a crash (any code but 0) stops the publish too (18 Nov 2026 audit); only a missing Node publishes unchecked
 
 
 def git(*args, check=True, capture=False):
