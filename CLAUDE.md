@@ -6437,3 +6437,9 @@ line can bring them back.
   (Steamer + Marcel: 852 hitters, 1194 pitchers, was 662 / 868). (2) `cloud_daily.py`'s page check stops the publish on any non-zero exit (a
   crashed check had published unchecked); only a missing Node still publishes unchecked. The review itself: `ARCHITECTURE_REVIEW.md`, `AUDIT.md`,
   `docs/review/*.md` at the repo root.
+
+* **The full review's harness and new models (Sean, 18 Nov 2026: "start with the quick fixes first then do everything else")**: `FINAL_REPORT.md`
+  at the repo root; code in `tools/eval/` (Statcast pull, season prep, player tables, `harness.py` — next-season validity weighted by sample,
+  split-half reliability, 2025→2026 locked holdout — the new hitting talent model, pitch-level Stuff+ / xWhiff / Location+ / Pitching+, and
+  `test_leakage.py`); every run logged in `docs/review/results.jsonl`. Holdout: new hitting talent xwOBA r .479 against the site's .443, Marcel
+  .425, Savant xwOBA .428; new Pitching+ beats SIERA / K-BB% / FIP / nERA on next-season RA9 and K-BB%. Not wired into the site yet.
