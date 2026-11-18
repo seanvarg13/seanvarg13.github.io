@@ -1023,7 +1023,7 @@
     // only a file that carries values (day rows, a season or level, an arsenal file, fantasy lines) empties the value and pool caches —
     // the search index, career tables, Similar, trends and the draft lists don't, and each arrival used to throw the pool away and
     // recompute it (~1.2 s on a desktop, 3-4 s on a phone), which read as a list that drew, froze and drew again (Sean, 5 Oct 2026)
-    const arrived = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|awards|similar|minors|trends|home|injuries|adp-\d+|proj-\d+|fantasy-lines|lineups(?:-\d+)?|moves|teamcolors|ids|c\/\d+|m\/\d+|lg\/\d+)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
+    const arrived = () => { loading.delete(src); if (/\/parks\.js/.test(src)) dropProvisional(); else if (!/\/(?:index|career|career-bb|awards|similar|minors|trends|home|topxw|injuries|adp-\d+|proj-\d+|fantasy-lines|lineups(?:-\d+)?|moves|teamcolors|ids|c\/\d+|m\/\d+|lg\/\d+)\.js/.test(src)) { valCache.clear(); poolCache.clear(); rankCache.clear(); } render(); if (state.gq) renderGlobalSearch(); };   /* the park table only changes what a window computed (its exposure) */
     // a failed download (a phone on a weak signal, a publish mid-deploy) is tried twice more before it's given up on — career.js once failed
     // for the whole visit and the season table said it hadn't been built (Sean's phone, 9 Oct 2026)
     const fail = (sc) => { loading.delete(src); if (sc) sc.remove(); const n = (tries.get(src) || 0) + 1; tries.set(src, n);
@@ -6259,7 +6259,7 @@
         const tr = el("tr");
         r.forEach((v, i) => {
           const [, , k] = cols[i], td = el("td", [k === "nm" ? "l nm" : k === "rk" ? "rk" : k === "c" ? "c" : k === "up" ? "up" : "", E.has(i) ? "ge" : ""].filter(Boolean).join(" ") || null);
-          if (v && v.p) { const b = el("button", "pbname", v.p.name); b.type = "button"; b.title = v.p.name; b.addEventListener("click", () => openCard(v.p, v.tab)); td.append(b); }
+          if (v && v.p) { const b = el("button", "pbname", v.p.name); b.type = "button"; b.title = v.p.name; b.addEventListener("click", () => v.ds ? openPlayer(v.p, { ds: v.ds }) : openCard(v.p, v.tab)); td.append(b); }
           else if (v && typeof v === "object") { td.textContent = v.v; heatTd(td, v.pc); }
           else td.textContent = v == null ? "–" : String(v);
           tr.append(td);
@@ -6332,6 +6332,16 @@
         table(b, { label: "Pitchers · 100+ IP", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["IP", 46], ["ERA", 46], ["nERA", 54, "heat"]], ends: [2, 4],
           rows: pit.map(([p, v], i) => [i + 1, nm(p, "nera"), p.team || "", fmtIP(p.ip || 0), f2(v.era), { v: f2(v.nera), pc: pcOf(refP, v.nera, true) }]) });
       });
+    }
+    // all-time top xwOBA seasons (Sean, 18 Nov 2026: "a table that shows top seasons by xwoba all time"): hist/topxw.js (tools/build_topxw.cjs),
+    // every MLB season 2015 on with 300+ PA (110 in 2020), the park switch picking the footing; a name opens that season
+    { const b = section(grid, "Best seasons", "xwOBA · 2015 on · 300+ PA");
+      if (!window.DRAFT_TOPXW) { if (!window.DRAFT_BUILD || window.DRAFT_BUILD["hist/topxw.js"]) ensureScript("hist/topxw.js", () => !!window.DRAFT_TOPXW); b.append(el("p", "hnote", "Loading…")); }
+      else {
+        const L = (XWN ? window.DRAFT_TOPXW.n : window.DRAFT_TOPXW.pk).slice(0, PH ? 10 : 15), cur = +DATA.meta.season;
+        table(b, { label: "All-time", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Yr", 40, "c"], ["Tm", TM, "c"], ["PA", 42], [wsLab("xwOBA"), 54, "heat"]], ends: [3],
+          rows: L.map(([id, name, y, tm, pa, xw], i) => [i + 1, { p: { id, type: "H", name }, ds: y === cur ? CUR.key : "mlb-" + y }, y, tm, pa, { v: wrcOn() ? Math.round(wsV(xw, "xwd")) : fmtX(xw), pc: 100 - 100 * i / Math.max(1, L.length) }]) });
+      }
     }
     // trending (Sean, 3 Oct 2026): hitters over their last 100 PA by xwOBA, pitchers over their last 50 IP by nERA — from the day rows; the PA / IP
     // in the window is a column like the leaders' (Sean, 9 Oct 2026: "just add the actual PA ... and add IP too")

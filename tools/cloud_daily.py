@@ -294,7 +294,7 @@ def main():
         for lvl, ys in milb.items():
             ok = ok and run("build_milb.py", lvl, *ys)
         # the search index too, so a newly built spring / postseason shows in the cards' MLB dropdown
-        ok = ok and run("build_history.py", "index") and run("build_career.py") and (node("tools/build_lg.cjs") or True) and (run("build_trends.py") or True) and (run("build_similar.py") or True) and publish(f"rescored {' '.join(toks)}", end, a.dry)
+        ok = ok and run("build_history.py", "index") and run("build_career.py") and (node("tools/build_lg.cjs") or True) and (node("tools/build_topxw.cjs") or True) and (run("build_trends.py") or True) and (run("build_similar.py") or True) and publish(f"rescored {' '.join(toks)}", end, a.dry)
         sys.exit(0 if ok else 1)
     steps = set(a.steps.split(","))
     new = None
@@ -352,7 +352,7 @@ def main():
         ok = ((not fantasy or run("build_fantasy.py"))
               and (not index or run("build_history.py", "index"))
               and (not career or run("build_career.py"))
-              and (not career or node("tools/build_lg.cjs") or True)   # the season table's league files, from the career files just built (28 Oct 2026)
+              and (not career or node("tools/build_lg.cjs") or True) and (not career or node("tools/build_topxw.cjs") or True)   # the season table's league files, from the career files just built (28 Oct 2026)
               and publish(", ".join(parts + ["fantasy"] * fantasy + ["index"] * index + ["career"] * career), end, a.dry))
     say(f"=== {dt.datetime.now(ZoneInfo('America/New_York')):%F %T} {'done' if ok else 'FAILED'}")
     sys.exit(0 if ok else 1)
