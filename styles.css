@@ -4348,7 +4348,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb td { height: 28px; padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb th { padding: 0 4px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb td.l .pbname { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb td.up { color: var(--stripe-line, #c8102e); font-weight: 700; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb td.up { color: #c8102e; font-weight: 700; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb.hlab tr.over th { text-align: left; padding-left: 8px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root #hub .sbt.brt.htb th.l { text-align: center; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hsech h2 { font-size: 22px !important; }
