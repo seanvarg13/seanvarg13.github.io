@@ -6335,14 +6335,6 @@
     }
     // all-time top xwOBA seasons (Sean, 18 Nov 2026: "a table that shows top seasons by xwoba all time"): hist/topxw.js (tools/build_topxw.cjs),
     // every MLB season 2015 on with 300+ PA (110 in 2020), the park switch picking the footing; a name opens that season
-    { const b = section(grid, "Best seasons", "xwOBA · 2015 on · 300+ PA");
-      if (!window.DRAFT_TOPXW) { if (!window.DRAFT_BUILD || window.DRAFT_BUILD["hist/topxw.js"]) ensureScript("hist/topxw.js", () => !!window.DRAFT_TOPXW); b.append(el("p", "hnote", "Loading…")); }
-      else {
-        const L = (XWN ? window.DRAFT_TOPXW.n : window.DRAFT_TOPXW.pk).slice(0, PH ? 10 : 15), cur = +DATA.meta.season;
-        table(b, { label: "All-time", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Yr", 40, "c"], ["Tm", TM, "c"], ["PA", 42], [wsLab("xwOBA"), 54, "heat"]], ends: [3],
-          rows: L.map(([id, name, y, tm, pa, xw], i) => [i + 1, { p: { id, type: "H", name }, ds: y === cur ? CUR.key : "mlb-" + y }, y, tm, pa, { v: wrcOn() ? Math.round(wsV(xw, "xwd")) : fmtX(xw), pc: 100 - 100 * i / Math.max(1, L.length) }]) });
-      }
-    }
     // trending (Sean, 3 Oct 2026): hitters over their last 100 PA by xwOBA, pitchers over their last 50 IP by nERA — from the day rows; the PA / IP
     // in the window is a column like the leaders' (Sean, 9 Oct 2026: "just add the actual PA ... and add IP too")
     { const W100 = { from: "", to: "", last: "100" }, W50 = { from: "", to: "", last: "50" };
@@ -6377,6 +6369,14 @@
         const f2 = (x) => (x == null ? "–" : x.toFixed(2));
         if (pshow.length) table(b, { label: "Pitchers · a stat that moved", cols: [["Player", null, "nm"], ["Move", 104, "c"], ["nERA", 46], ["If held", 46, "heat"], ["Δ", 42, "up"]], ends: [1, 2],
           rows: pshow.map((r) => [nm(r.p, "games"), r.mv, f2(r.nera), { v: f2(r.held), pc: pcOf(refP, r.held, true) }, "−" + r.gain.toFixed(2)]) });
+      }
+    }
+    { const b = section(grid, "Best seasons", "xwOBA · 2015 on · 300+ PA", "Leaderboard →", (ev) => { ev.preventDefault(); const y = +DATA.meta.season; state.pos = "ALL"; state.posAlso = []; state.sort = "score"; state.dir = "desc"; state.win = { from: "", to: "", last: "" }; state.lbDs = "mlb-2015"; state.lbTo = y; state.lbEach = true; state.min[groupFor("ALL")] = 300; state.page = 1; savePrefs(); location.hash = "#leaderboard"; });
+      if (!window.DRAFT_TOPXW) { if (!window.DRAFT_BUILD || window.DRAFT_BUILD["hist/topxw.js"]) ensureScript("hist/topxw.js", () => !!window.DRAFT_TOPXW); b.append(el("p", "hnote", "Loading…")); }
+      else {
+        const L = (XWN ? window.DRAFT_TOPXW.n : window.DRAFT_TOPXW.pk).slice(0, PH ? 10 : 15), cur = +DATA.meta.season;
+        table(b, { label: "All-time", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Yr", 40, "c"], ["Tm", TM, "c"], ["PA", 42], [wsLab("xwOBA"), 54, "heat"]], ends: [3],
+          rows: L.map(([id, name, y, tm, pa, xw], i) => [i + 1, { p: { id, type: "H", name }, ds: y === cur ? CUR.key : "mlb-" + y }, y, tm, pa, { v: wrcOn() ? Math.round(wsV(xw, "xwd")) : fmtX(xw), pc: 100 }]) });
       }
     }
     // no "Every page" tiles (Sean, 29 Sep 2026, the minimal pass): the header's menus already list them
