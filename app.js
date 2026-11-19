@@ -25,7 +25,7 @@
         ["Fantasy", ["fpts", "fpg", "fpgs", "fpip", "fpwk", "xfpts", "xfpg", "xfpgs", "xfpip", "xfpwk"]]],   // points per unit and expected (Sean, 16 Oct 2026)   // Pitching+ back in place of Stuff+ (Sean, 6 Oct 2026: "make stuff+ back into pitching+ with the addition of the location and command thing")
   };
   const colLab = (m) => { const l0 = SHORT[m.key] || m.label, l = WS_VAL.has(m.key) || WS_DIF.has(m.key) ? wsLab(l0) : l0; return m.unit === "%" && !l.includes("%") ? l + "%" : l; };
-  const SHORT = { ttw: "True talent", ppn: "Pitching+ (new)", tra9: "Proj. RA9", slot: "Slot", stpct: "Starts", patg: "PA/G", lsp: "Starts% vs L", rsp: "Starts% vs R", xwpk: "xwOBA parks", xwn: "xwOBA neutral", foul: "Foul%", fpc: "Foul/Con", nfpc: "xFoul/Con", xnera: "xnERA", xkw: "Whiff−xK%", xkws: "xWhiff−P+ xK%", ncstr: "xCalled Strk", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strk Whiff", nfoul: "xFoul%", s2whf: "2-strk Whiff", s2sw: "2-strk Sw", s2zone: "2-strk Zone", xkf: "xK%", xks: "Pitching+ xK%", xbbf: "xBB%", xkbb: "x(K-BB)%", xkbbs: "Pitching+ x(K-BB)%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", pjwhf: "Proj Whiff", mixw: "Mix wOBA", mixbab: "Mix xBABIP", nmix: "Mix xwOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Cmd+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", evfb: "FB EV", evld: "EV LD", evgb: "EV GB", brfb: "FB Brl", brld: "Brl LD", brgb: "Brl GB", brl: "Brl%", pull: "Pull Air", pullfb: "Pull FB%", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG", f9woba: "wOBA vs 95+", f9xw: "xwOBA vs 95+", f9whf: "Whiff% vs 95+", fuwoba: "wOBA vs <95", fuxw: "xwOBA vs <95", fuwhf: "Whiff% vs <95", brwoba: "wOBA vs brk", brxw: "xwOBA vs brk", brwhf: "Whiff% vs brk", ofwoba: "wOBA vs off", ofxw: "xwOBA vs off", ofwhf: "Whiff% vs off" };
+  const SHORT = { ppn: "Pitching+ (new)", tra9: "Proj. RA9", slot: "Slot", stpct: "Starts", patg: "PA/G", lsp: "Starts% vs L", rsp: "Starts% vs R", xwpk: "xwOBA parks", xwn: "xwOBA neutral", foul: "Foul%", fpc: "Foul/Con", nfpc: "xFoul/Con", xnera: "xnERA", xkw: "Whiff−xK%", xkws: "xWhiff−P+ xK%", ncstr: "xCalled Strk", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strk Whiff", nfoul: "xFoul%", s2whf: "2-strk Whiff", s2sw: "2-strk Sw", s2zone: "2-strk Zone", xkf: "xK%", xks: "Pitching+ xK%", xbbf: "xBB%", xkbb: "x(K-BB)%", xkbbs: "Pitching+ x(K-BB)%", fstrk: "1st Strk", b3strk: "3-ball Strk", suera: "Stuff uERA", puera: "Pitching uERA", wgap: "Whiff vs exp.", pjwhf: "Proj Whiff", mixw: "Mix wOBA", mixbab: "Mix xBABIP", nmix: "Mix xwOBA", xrat: "xRating", pera: "pERA", nk: "pK%", nbb: "pBB%", nwhf: "xWhiff%", ngb: "xGB%", npu: "xPU%", aopt: "Arsenal Opt.", sloc: "Cmd+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "BB+", xk: "xK%", xwcon: "xwOBAcon", xwdiff: "xwOBA−wOBA", bluck: "BABIP luck", brel: "BIP rel.", pu: "Popup%", ev: "EV", evfb: "FB EV", evld: "EV LD", evgb: "EV GB", brfb: "FB Brl", brld: "Brl LD", brgb: "Brl GB", brl: "Brl%", pull: "Pull Air", pullfb: "Pull FB%", air: "Air%", osw: "O-Sw", zsw: "Z-Sw", zcon: "Z-Con", ocon: "O-Con", whf: "Whiff", swstr: "SwStr", strk: "Strike", gb: "GB%", nera: "nERA", uera: "uERA", ukb: "u(K-BB%)", wsgp: "WSGP", xwd: "xwOBA", pullp: "Pull%", npull: "Non-pull", cent: "Cent%", oppo: "Oppo%", zmo: "(Z−O) Sw", ba: "BA", slg: "SLG", xba: "xBA", xslg: "xSLG", f9woba: "wOBA vs 95+", f9xw: "xwOBA vs 95+", f9whf: "Whiff% vs 95+", fuwoba: "wOBA vs <95", fuxw: "xwOBA vs <95", fuwhf: "Whiff% vs <95", brwoba: "wOBA vs brk", brxw: "xwOBA vs brk", brwhf: "Whiff% vs brk", ofwoba: "wOBA vs off", ofxw: "xwOBA vs off", ofwhf: "Whiff% vs off" };
   const LS = { drafted: "draft2027.drafted", prefs: "draft2027.prefs", extra: "draft2027.extraRoles", roles: "draft2027.roles", ranks: "draft2027.ranks",
                tiers: "draft2027.tiers", tierNames: "draft2027.tierNames", sets: "draft2027.rankSets", extraPos: "draft2027.extraPos", stars: "draft2027.stars" };
   // Storage that cannot lose a saved list. A value that will not parse is left exactly where it is — its raw
@@ -384,7 +384,7 @@
                   // xwOBA − wOBA (Sean, 27 Sep 2026): above zero his contact deserved more than he got — the unlucky ones
                   { key: "xwdiff", label: "xwOBA − wOBA", hib: true, dec: 3, unit: "", sign: true },
                   // what his whiffs, swing decisions and the strikes he sees say his K% should be (Sean, 28 Sep 2026)
-                  { key: "xk", label: "xK%", hib: false, dec: 1, unit: "%" }, { key: "xbbh", label: "xBB%", hib: true, dec: 1, unit: "%" }, { key: "ttw", label: "True talent", hib: true, dec: 3, unit: "" },
+                  { key: "xk", label: "xK%", hib: false, dec: 1, unit: "%" }, { key: "xbbh", label: "xBB%", hib: true, dec: 1, unit: "%" },
                   // his xwOBA on contact (Sean, 28 Sep 2026; pxwOBA beside it was removed 30 Sep 2026: "that stat is not needed")
                   { key: "xwcon", label: "xwOBAcon", hib: true, dec: 3, unit: "" },
                   // Base Running (Sean, 30 Sep 2026): Savant's sprint speed and the official steals, full season only
@@ -402,7 +402,7 @@
                   { key: "xwn", label: "Park-neutral xwOBA", hib: true, dec: 3, unit: "" },
                   ...VS_G.flatMap(([g, lab]) => [{ key: g + "woba", label: "wOBA vs " + lab, hib: true, dec: 3, unit: "" }, { key: g + "xw", label: "xwOBA vs " + lab, hib: true, dec: 3, unit: "" }, { key: g + "whf", label: "Whiff% vs " + lab, hib: false, dec: 1, unit: "%" }])];   // vs pitch type (28 Oct 2026)
   // hitter stats that aren't on the card but can be Leaderboard / Trending columns
-  const LB_EXTRA_H = ["ttw", "xwpk", "xwn", "evfb", "brfb", "fbq", "xhrfb", "xwdiff", "xwcon", "xk", "mixbab", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp", "fpts", "fpg", "fppa", "fpab", "fpwk", "xfpts", "xfpg", "xfppa", "xfpab", "xfpwk", "slot", "stpct", "patg", "lsp", "rsp", ...VS_KEYS];
+  const LB_EXTRA_H = ["xwpk", "xwn", "evfb", "brfb", "fbq", "xhrfb", "xwdiff", "xwcon", "xk", "mixbab", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp", "fpts", "fpg", "fppa", "fpab", "fpwk", "xfpts", "xfpg", "xfppa", "xfpab", "xfpwk", "slot", "stpct", "patg", "lsp", "rsp", ...VS_KEYS];
   const LB_EXTRA_P = ["ppn", "tra9", "rating", "xnera", "pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "nmix", "nfpc", "fpc", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "wgap", "pjwhf", "fpts", "fpg", "fpgs", "fpip", "fpwk", "xfpts", "xfpg", "xfpgs", "xfpip", "xfpwk"];   // Whiff vs exp. and the projected Whiff% (7 Oct 2026)   // Pitching+ family, xRating and the expected (Pitching+) columns off the lists (Sean, 6 Oct 2026: "get rid of pitching+ entirely and just go back to stuff+")   // pERA / pK% / pBB% / Pitching uERA off the lists (Sean, 4 Oct 2026: "I simply just want expected whiffs GBs and pus")   // Stuff uERA / Arsenal Opt. off the lists with Stuff+ (4 Oct 2026)
   const NEXT_KEYS = new Set(["xrat", "nwhf", "ngb", "npu", "nmix", "wgap", "pjwhf", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "nswstr", "ncsw", "ns2whf", "nfoul", "nfpc", "xnera"]);   // xFoul% of contact and xnERA (6 Oct 2026)   // xK% / Pitching+ xK% (4 Oct 2026)
   const XRW = { ksklx: 60, ctrl: 20, nmix: 20 };   // xRating = the Rating's shape with the stuff models driving whiffs and fouls (Sean, 5 Oct 2026): xStrikeout (xWhiff% / x2-strike Whiff% / xFoul% percentiles averaged) 60, Control 20, Mix xwOBA 20. Was Pitching+ x(K-BB)% 80 / Mix xwOBA 20;   // the Rating's shape (x(K-BB)% 80 / Mix wOBA 20, 4 Oct 2026) with the stuff-side pair: Pitching+ x(K-BB)% and Mix xwOBA. Was xks 55 / xbbf 35 / nmix 10;   // the xRating (Sean, 4 Oct 2026: "xrating xK% ... using their stuff expected whiff rates and stuff expected foul rates ... xBB% as standard ... mix xwoba based on their stuff"), 55 / 35 / 10   // xRating and the expected Mix wOBA too (4 Oct 2026)
@@ -1391,15 +1391,15 @@
   // (hrfbLeague: hist/career.js + career-bb.js, asked for by colsFor only while the column is showing). Regular MLB seasons 2015 on
   const hxReady = () => lgReady(+DS.season);   // the season's league file (or the whole career files) is in
   // The review's models (18-19 Nov 2026, FINAL_REPORT.md): hist/talent.js from tools/eval/score_site.py, full regular MLB seasons.
-  // ttw = projected next-season wOBA (the true-talent number; holdout r .479 vs the site xwOBA's .443); ppn = new Pitching+
+  // (True talent, the hitters' number, removed 19 Nov 2026 at Sean's say.) ppn = new Pitching+
   // (100 = league RA9, a point = 1% of runs), tra9 = projected RA9.
   function talFill(v, p) {
-    if (v._tl) return v;
+    if (v._tl || p.type !== "P") return v;
     if ((DS.level && DS.level !== "MLB") || DS.kind || DS.multi || winIdx() || splitActive()) { v._tl = true; return v; }
     const T = window.DRAFT_TALENT;
     if (!T) { ensureScript("hist/talent.js", () => !!window.DRAFT_TALENT); return v; }
-    const r = (p.type === "H" ? T.h : T.p)[p.id], x = r && r[DS.season];
-    v.m = Object.assign({}, v.m, p.type === "H" ? { ttw: x ?? null } : { ppn: x ? x[0] : null, tra9: x ? x[1] : null }); v._tl = true;
+    const r = T.p[p.id], x = r && r[DS.season];
+    v.m = Object.assign({}, v.m, { ppn: x ? x[0] : null, tra9: x ? x[1] : null }); v._tl = true;
     return v;
   }
   function hrfbFill(v, p) {
@@ -6478,7 +6478,6 @@
     aopt: "Arsenal optimization: how far his pitch usage leans toward his own swing-and-miss pitches. Each pitch's expected whiff rate (the Stuff model's xWhiff) averaged by how often he actually throws it, minus the same pitches averaged at the league's typical usage of those pitch types. In whiff-per-swing points: +3 means his mix gets three more whiffs per 100 swings than the same pitches thrown in a typical mix would. Each point has come with about a point of real Whiff%. Whiffs only — a sinkerballer who leans on his sinker for ground balls reads negative on purpose.",
     pitch: "Pitching+: Stuff+ plus Command+ minus 100 — what his pitches do (velocity, spin, movement, release, extension, arm angle, each pitch against his fastball, graded against the league's pitches of the same type) and how well he finds the strike zone and avoids walks, in runs (100 = average, each point 1% of runs). Whiff+ is its whiff half and Batted-ball+ the rest, carrying the command. Before 13 Nov 2026 the second part was Location+, where the pitches crossed the plate on swings and contact; it forecast next season worse than Stuff+ alone, and Command+ doesn't.",
     wgap: "Whiff vs expected: his Whiff% minus the Pitching+ model's expected whiff rate on his swings, with the expected rate stretched to the league's real spread first (the models compress to ~80% of it, so the top whiff pitchers always read over without that). + = more whiffs than the pitches deserve. About half of a gap tends to come back the next season and about half is his: measured on seasons the models had not seen (2015-19) the gap repeats at r .5, and a pitcher 2-4 points over fell back 1.6 points on average (74% fell), 4+ over 2.8 (92%).",
-    ttw: "True talent: his projected wOBA for next season from the review's model (18 Nov 2026) — K% and BB% each shrunk by how fast they settle, exit-velocity skills, discipline, batted-ball type and direction, sprint speed, his last two seasons and age. Fit only on seasons before the one it scores. On the untouched 2025 → 2026 test it predicted 2026 wOBA at r .479, against .443 for the site's xwOBA, .428 for Savant's and .425 for Marcel.",
     ppn: "Pitching+ (new): the review's model (18 Nov 2026) of next season's runs allowed — shrunk Stuff+, expected whiff rate and Location+ from pitch-level models that never saw the pitcher, plus his K%, BB%, GB%, Whiff%, CSW%, last season's SIERA and age. 100 = the league's RA9, each point 1% of runs. On the 2025 → 2026 test it beat SIERA, K-BB% and FIP at next season's RA9 and K-BB%.",
     tra9: "Projected RA9: the runs per nine Pitching+ (new) expects next season.",
     pjwhf: "Projected Whiff%: next season's whiff rate — the average of his actual Whiff% and the model's expected rate on the league's spread. On 2021-26 pairs the average forecasts next season at r .76-.81 against .74-.76 for either alone.",
@@ -6765,24 +6764,24 @@
     if (state.textModal) { renderTextModal(); } else if (other) { $("modal").hidden = true; lockPage(false); parkControls(); $("modal-body").innerHTML = ""; }
     lgPollSync();   // a live draft's poll runs only on the League page or a linked Draft mode
     if (league) { $("hub").classList.add("home", "league"); renderLeague(); renderModal(); if (xPop) renderExplore(); return; }   // the League tab (11 Nov 2026)
-    if (hub) { $("hub").classList.remove("league"); $("hub").classList.toggle("home", home); renderHome(); renderModal(); return; }
-    if (appear) { renderSettings(); return; }
-    if (fant) { renderFantasy(); renderModal(); return; }
+    if (hub) { $("hub").classList.remove("league"); $("hub").classList.toggle("home", home); renderHome(); renderModal(); if (xPop) renderExplore(); return; }
+    if (appear) { renderSettings(); if (xPop) renderExplore(); return; }
+    if (fant) { renderFantasy(); renderModal(); if (xPop) renderExplore(); return; }
     if (player) {                                        // his page is a card of its own (showPageCard); a settings panel takes its place, over the pattern
       renderExplore();
       if (state.panel === "cmp2" && state.cmp2.on && cardNow) { $("modal").classList.remove("pcard", "pagecard"); renderCmpPanel(); }
       return;
     }
     if (compare) { renderCompare(); renderModal(); return; }
-    if (elig) { renderEligibility(); return; }
+    if (elig) { renderEligibility(); if (xPop) renderExplore(); return; }
     if (state.mode === "trends") { renderTrends(); return; }
     if (state.mode === "callups") { renderCallups(); renderModal(); return; }
-    if (state.mode === "planner") { renderPlanner(); renderModal(); return; }
+    if (state.mode === "planner") { renderPlanner(); renderModal(); if (xPop) renderExplore(); return; }
     if (state.mode === "mock") { renderMock(); renderModal(); return; }
-    if (state.mode === "claude") { renderClaude(); renderModal(); return; }
+    if (state.mode === "claude") { renderClaude(); renderModal(); if (xPop) renderExplore(); return; }
     if (state.mode === "bullpens") { renderBullpens(); renderModal(); if (xPop) renderExplore(); return; }   // Bullpens (28 Oct 2026)
     if (state.mode === "flaws") { renderFlaws(); renderModal(); if (xPop) renderExplore(); return; }
-    if (pitches) { renderPitchBoard(); renderModal(); return; }
+    if (pitches) { renderPitchBoard(); renderModal(); if (xPop) renderExplore(); return; }
     const listRender = () => {
       ensureView(sideOf(groupFor(state.pos)));
       if (state.mode === "trending" && !TREND_TABS.includes(state.pos)) state.pos = "ALL";
@@ -10812,7 +10811,7 @@
   // A hitter's percentile box is two columns of headed sections, the card's own groups plus the expected three —
   // wide enough (it takes the right-hand box's place too) that every bar keeps the length it has in one column.
   // EXPW / EXPB / EXPS are the directional model's xwOBA, xBA and xSLG, as everywhere.
-  const PCT_COLS_H = [[["Results", ["woba", "EXPW", "ttw", "EXPB", "EXPS"]],   // talent xwOBA above xwOBA (Sean, 11 Oct 2026)    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
+  const PCT_COLS_H = [[["Results", ["woba", "EXPW", "EXPB", "EXPS"]],   // talent xwOBA above xwOBA (Sean, 11 Oct 2026)    // BABIP luck / reliance have their own bottom tab (renderBabipTab)
                        ["Batted-Ball Quality", ["bs", "brl", "evfb", "evld", "evgb"]]],   // Avg EV again (Sean, 8 Oct 2026: "swap fb EV with regular avg EV"); EV on FB / LD / GB on the Mix tab and as columns
                       [["Swing Decisions", ["zsw", "osw", "bb", "xbbh"]], ["Contact", ["zcon", "ocon", "whf", "k", "xk"]],   // back on the right, at the top (Sean, 1 Oct 2026)
                        ["Batted-Ball Distribution", ["gb", "pu", "ld", "fb", "pullfb", "mixw"]], ["Expected ISO", ["mixw", "evld", "evfb", "xiso"]], ["Expected BABIP", ["ld", "pu", "evld", "evgb", "xbabip"]]]];   // Mix xBABIP under Mix wOBA (Sean, 16 Oct 2026)   // Air% back (Sean, 8 Oct 2026)   // Base Running came off the card (Sean, 1 Oct 2026); its stats stay Leaderboard columns
@@ -11455,7 +11454,7 @@
   // page (renderExplore into #xboard), shown as a fixed window over the list with a backdrop, closed by ×, the backdrop or Escape
   // Movers too (Sean, 23 Oct 2026, Sheehan's page off Movers: "Can this be the same x in the top right below the filter like on the leaderboard"):
   // a pitcher's row, or a hitter's name in the flaw popup, opens the same popup over Movers in place of his page with "‹ Back to movers"
-  const POP_MODES = ["leaderboard", "trending", "flaws", "bullpens", "league"];
+  const POP_MODES = ["leaderboard", "trending", "flaws", "bullpens", "league", "home", "rankings", "draft", "pitches", "fantasy", "claude", "planner", "eligibility", "settings"];   // every page but the search (Sean, 19 Nov 2026)
   let xPop = false, xPopNew = false, xPopList = null;
   const pageNow = () => state.mode === "player" || xPop;   // where a page was opened from: the list page, its scroll and its rows' box; the page last drawn
   const BACK_LABEL = { leaderboard: "leaderboard", trending: "leaderboard", rankings: "rankings", draft: "draft board", pitches: "Pitching+", fantasy: "fantasy", home: "home",

@@ -8,12 +8,7 @@ def fit_all(df, cols, tcol, wcol, lam):
     b = np.linalg.solve(W @ Z + lam * np.diag([0] + [1] * len(cols)), W @ dev[tcol].values.astype(float))
     return pd.Series(np.c_[np.ones(len(X)), (X.values - mu) / sd] @ b, index=df.index)
 out = {"v": 1, "h": {}, "p": {}}
-h = pd.read_parquet("/home/user/statcast/hit_model.parquet")
-SK = ["ev90_c", "brl_c", "hh_c", "pullair_c", "gb_c", "pu_c", "whf_c", "zsw_c", "osw_c", "zcon_c", "spd_c"]
-h["v"] = fit_all(h, ["s_rkc", "s_rbbc"] + SK + ["w1", "w2", "age_", "age2_", "agey_"], "tgt", "tpa", 30.0)
-q = h[h.PA >= np.where(h.season == 2020, 110, 300)]; lg = (q.woba * q.PA).groupby(q.season).sum() / q.PA.groupby(q.season).sum()
-for r in h[h.PA >= 1].itertuples():
-    out["h"].setdefault(str(int(r.id)), {})[str(int(r.season))] = round(float(lg[r.season] + r.v), 4)
+# hitters' True talent removed from the site (19 Nov 2026); the model stays in hitfit.py
 f = pd.read_parquet("/home/user/statcast/pitch_model.parquet")
 f["v"] = fit_all(f, ["stuffs", "xwhiffs", "locs", "ks", "bbs", "gbs", "whfs", "csws", "siera_l1", "age_"], "tgtc", "tpa", 10.0)
 q = f[(f.ip >= 50) & np.isfinite(f.ra9)]; lr = (q.ra9 * q.ip).groupby(q.season).sum() / q.ip.groupby(q.season).sum()
