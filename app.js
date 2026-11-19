@@ -6271,7 +6271,7 @@
         const tr = el("tr");
         r.forEach((v, i) => {
           const [, , k] = cols[i], td = el("td", [k === "nm" ? "l nm" : k === "rk" ? "rk" : k === "c" ? "c" : k === "up" ? "up" : "", E.has(i) ? "ge" : ""].filter(Boolean).join(" ") || null);
-          if (v && v.p) { const b = el("button", "pbname", v.p.name); b.type = "button"; b.title = v.p.name; b.addEventListener("click", () => v.ds ? openPlayer(v.p, { ds: v.ds }) : openCard(v.p, v.tab)); td.append(b); }
+          if (v && v.p) { const b = el("button", "pbname", v.p.name); b.type = "button"; b.title = v.p.name; b.addEventListener("click", () => v.ds ? openPlayer(v.p, { ds: v.ds }) : v.win ? openPlayer(v.p, { tab: v.tab, win: v.win }) : openCard(v.p, v.tab)); td.append(b); }
           else if (v && typeof v === "object") { td.textContent = v.v; heatTd(td, v.pc); }
           else td.textContent = v == null ? "–" : String(v);
           tr.append(td);
@@ -6295,7 +6295,7 @@
           rows: rows.slice(0, PH ? 12 : 20).map((r) => [{ p: r.p }, r.p.team, r.mine ? "mine" : "watch", r.il ? "IL" + r.il.code.slice(1) : "active", { v: r.val == null ? "–" : r.isH ? fmtX(r.val) : r.val.toFixed(2), pc: r.pc }]) });
       } }
     const NB = PH ? 4 : 5, NH = 4, NP = 4;   // four a list (Sean, 7 Oct 2026: "the top 4 for each")
-    const nm = (p, tab) => ({ p, tab });
+    const nm = (p, tab, win) => ({ p, tab, win });
     // the lists: hist/home.js until the day rows are in (homeLists); a file that's missing, stale or off the defaults asks for the day rows instead,
     // once Home has painted and the phone is idle (5 Oct 2026)
     const HL = homeLists(), PL = new Map(DATA.players.map((p) => [p.type + p.id, p])), who = (t, r) => Object.assign({}, r, { p: PL.get(t + r.id) });
@@ -6355,9 +6355,9 @@
       else {
         const hit = HL.trend.hit.map((r) => who("H", r)).filter((r) => r.p).slice(0, NH), pit = HL.trend.pit.map((r) => who("P", r)).filter((r) => r.p).slice(0, NP);
         table(b, { label: "Hitters · last 100 PA", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["PA", 42], [wsLab("xwOBA"), 58, "heat"]], ends: [2, 3],
-          rows: hit.map((r, i) => [i + 1, nm(r.p), r.p.team || "", Math.round(r.n), { v: fw(r.xwd), pc: pcOf(refH, r.xwd) }]) });
+          rows: hit.map((r, i) => [i + 1, nm(r.p, undefined, W100), r.p.team || "", Math.round(r.n), { v: fw(r.xwd), pc: pcOf(refH, r.xwd) }]) });   /* a Trending name opens his card on that window (Sean, 19 Nov 2026) */
         table(b, { label: "Pitchers · last 50 IP", cols: [["Rk", RK, "rk"], ["Player", null, "nm"], ["Tm", TM, "c"], ["IP", 46], ["nERA", 58, "heat"]], ends: [2, 3],
-          rows: pit.map((r, i) => [i + 1, nm(r.p, "nera"), r.p.team || "", fmtIP(r.n), { v: f2(r.nera), pc: pcOf(refP, r.nera, true) }]) });
+          rows: pit.map((r, i) => [i + 1, nm(r.p, "nera", W50), r.p.team || "", fmtIP(r.n), { v: f2(r.nera), pc: pcOf(refP, r.nera, true) }]) });
       }
     }
     // Movers (Sean, 18 Oct 2026: "combine movers and fixing the flaw ... make it called movers and sort it by the delta of xwoba on the season if the
