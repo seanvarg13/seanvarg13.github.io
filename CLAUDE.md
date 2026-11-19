@@ -6443,3 +6443,11 @@ line can bring them back.
   split-half reliability, 2025→2026 locked holdout — the new hitting talent model, pitch-level Stuff+ / xWhiff / Location+ / Pitching+, and
   `test_leakage.py`); every run logged in `docs/review/results.jsonl`. Holdout: new hitting talent xwOBA r .479 against the site's .443, Marcel
   .425, Savant xwOBA .428; new Pitching+ beats SIERA / K-BB% / FIP / nERA on next-season RA9 and K-BB%. Not wired into the site yet.
+
+* **The review's models on the site (Sean, 19 Nov 2026: "yeah do that next")**: `tools/eval/score_site.py` fits the review's hitting talent
+  model and full Pitching+ on every development pair and writes **`hist/talent.js`** (`window.DRAFT_TALENT = {h: {id: {year: wOBA}}, p: {id:
+  {year: [Pitching+, RA9]}}}`, ~390 KB; run by hand after rebuilding `/home/user/statcast`'s tables — not in the daily build yet). `talFill` in
+  `app.js` (beside `hrfbFill`, the last step of every `V()`) sets **`ttw`** (True talent: projected next-season wOBA), **`ppn`** (Pitching+ (new):
+  100 = league RA9, a point 1% of runs) and **`tra9`** (projected RA9) on full regular MLB seasons only (a window, split, span or level reads "–").
+  Leaderboard columns (`LB_EXTRA_H / _P`, `SIDE_H / _P`, glossary), a bar under xwOBA in the hitter card's Results and first in a pitcher's
+  Skills. The site's own xwOBA / Pitching+ / nERA are unchanged beside them. Judge 2026 .409; Skenes 2026 154 (RA9 1.98).
