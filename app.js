@@ -8929,30 +8929,14 @@
       ["xHR/FB", "xhf", lg.xhf, pct1, 1, `home runs per fly ball + popup his contact deserves — the xHR/FB tab's fit: FB EV, Barrel% on fly balls and on line drives, pulled fly balls — against the season's own HR / (fly balls + popups), so it can sit a few tenths off the tab's, which is over fly balls alone`],
       ["Extra power", "tph", lg.tph, (x) => x.toFixed(2), 1, `bases per hit that isn't a home run, from the batted-ball model's xSLG and xBA once the home runs xHR/FB credits are taken out — so it is mostly the model seeing more (or less) home-run power than xHR/FB does: it tracks his actual bases per non-HR hit at only r .18, and the gap between the two HR reads at −.52. Re-centred on the season's real bases per non-HR hit (12 Nov 2026), which the model's own level drifted off (1.09 against a real 1.27 in 2015); it was called Extra bases until then${m.slg != null && m.ba != null && t.I && t.I.hr != null && v.ab && m.ba * v.ab - t.I.hr > 0 ? ` (his actual: ${((m.slg * v.ab - 4 * t.I.hr) / (m.ba * v.ab - t.I.hr)).toFixed(2)})` : ""}`],
       ["xBABIP", "xbab", lg.xbab, f3, 1, `the xBABIP tab's nine drivers (line drives, popups, grounder and liner EV, grounder and liner pull, speed on grounders, oppo, fly balls) with no Noise or Luck row (his actual BABIP: ${m.babip != null ? f3(m.babip) : "–"})`]];
-    /* seven plain rows (the minimal pass, Sean, 17 Nov 2026): walks with intentional walks, fly balls with HR/FB as Home runs, the ground-ball
-       lean inside Hits on balls in play — the ± of each row is the sum of its pieces' shares, so the column still adds up */
-    const T = Object.fromEntries(steps.map((z) => [z[1], z]));
-    const G7 = [["Strikeouts", ["xk"], "xk"], ["Walks", ["xbb", "ibb"], "xbb"], ["Hit by pitch", ["hbp"], "hbp"], ["Home runs", ["fbs", "xhf"], "xhf"],
-      ["Hits on balls in play", ["xbab"], "xbab"], ["Extra bases", ["tph"], "tph"]];
-    for (const [lab, ks, show] of G7) {
-      const kk = ks.filter((k) => keys.includes(k)); if (!kk.length) continue;
-      let d = kk.reduce((a0, k) => a0 + S[k], 0); const gb = show === "xbab" && t.gba ? t.gba : 0; d += gb;
-      const [, , lgv, f, dir, tip] = T[show]; run += d;
-      const tips = kk.map((k) => T[k][0] + ": " + T[k][5]).join(" · ") + (gb ? ` · plus his ground-ball rate against the league's (${TW_GB.gb.toFixed(2)} wOBA points a point of GB%)` : "");
-      b.row(lab, his[show], lgv, f, pc(show, his[show], dir), step(run), run, null);
-      const K = [];
-      for (const k of kk) { const [nm, , lv, ff, dd, tp] = T[k];
-        if ((k === "xk" || k === "xbb") && t[k === "xk" ? "xkFit" : "xbbFit"] != null) {
-          const act = k === "xk" ? (m.k != null ? m.k - (t.pk && t.pk.k || 0) : null) : (m.bb != null ? m.bb - (t.pk && t.pk.bb || 0) : null), fit = t[k === "xk" ? "xkFit" : "xbbFit"];
-          const ga = act == null ? 0 : act - lv, gf = fit - lv, tot = ga + gf, sa = act == null ? 0 : tot ? S[k] * ga / tot : S[k] / 2;
-          const nmA = k === "xk" ? "K% (half)" : "BB% (half)", nmF = k === "xk" ? "xK% (half)" : "xBB% (half)";
-          K.push({ lab: k === "xk" ? "Weighted K%" : "Weighted BB%", his: his[k], lg: lv, f: ff, pc: pc(k, his[k], dd), d: S[k], tip: "half his actual rate, half the expected one",
-            sub: [{ lab: k === "xk" ? "K%" : "BB%", his: act, lg: lv, f: ff, pc: pc(k, act, dd), d: sa, tip: "his actual rate, half the weight" }, { lab: k === "xk" ? "xK%" : "xBB%", his: fit, lg: lv, f: ff, pc: pc(k, fit, dd), d: S[k] - sa, tip: "the rate his swing decisions and contact come with, half the weight" }] });
-        } else K.push({ lab: nm, his: his[k], lg: lv, f: ff, pc: pc(k, his[k], dd), d: S[k], tip: tp });
-      }
-      if (gb) K.push({ lab: "GB%", his: m.gb, lg: L.gb, f: pct1, pc: null, d: gb, tip: `his ground-ball rate against the league's, ${TW_GB.gb.toFixed(2)} wOBA points a point` });
-      if (K.length > 1 || K.some((z) => z.sub)) b.kids(K);
+    /* one row per stat again (Sean, 19 Nov 2026: "go back to just showing the stats that build up to it instead of words"): the 17 Nov word rows
+       (Strikeouts, Walks, Home runs …) and their fold-outs are gone; each row is the stat itself, his against the league's, its Shapley share;
+       the ground-ball lean is its own GB% row after xBABIP (the math is unchanged — Sean kept it, 19 Nov 2026) */
+    for (const k of ["xk", "xbb", "ibb", "hbp", "fbs", "xhf", "tph", "xbab"]) {
+      if (!keys.includes(k)) continue; const [nm, , lgv, f, dir, tip] = steps.find((z) => z[1] === k);
+      run += S[k]; b.row(nm, his[k], lgv, f, pc(k, his[k], dir), step(run), run, tip);
     }
+    if (t.gba) { run += t.gba; b.row("GB%", m.gb, L.gb, pct1, null, step(run), run, `his ground-ball rate against the league's, ${TW_GB.gb.toFixed(2)} wOBA points a point: the most ground-ball-heavy hitters beat the pieces every season`); }
     // a date window's xwOBA regressed toward the league by its plate appearances (the review's item 1): the pieces above are the window's own
     if (t.wd != null) { run = t.txwN; const k0 = TW_WIN.xw, sh = Math.round(100 * k0 / (t.wpa + k0));
       b.row("Sample size", t.wpa, null, (x) => `${x} PA`, null, step(run), run, `a window of ${t.wpa} PA is pulled ${sh}% of the way to the league's wOBA (${L.woba != null ? f3(L.woba) : "–"}) — ${k0} / (${t.wpa} + ${k0}) — which is how much of a window's xwOBA carried into the next two months: every 30-game-day window 2022-26 against the next 60 game days, and first halves against second halves. The pieces above are the window's own, and so is the park row below, pulled the same share (a window's park mix doesn't carry forward either); a full season isn't regressed`); }
