@@ -1,0 +1,32 @@
+# Off-season roster moves (Sean, 23 Nov 2026: "updates should include recent FA signings"): the daily build stands down
+# 15 Nov - 14 Feb, so this refreshes hist/moves.js (MLB's transaction log: signings, trades, claims) every morning.
+name: Winter moves
+
+on:
+  schedule:
+    - cron: "20 11 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
+
+jobs:
+  moves:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Refresh moves
+        run: |
+          python3 tools/build_offseason.py moves
+          git diff --quiet hist/moves.js && { echo "no new moves"; exit 0; }
+          python3 -c "import sys;sys.path.insert(0,'tools');import cloud_daily as c;c.restamp()"
+          git config user.name "github-actions"; git config user.email "actions@users.noreply.github.com"
+          git add -A; git commit -qm "Winter moves: refresh hist/moves.js"
+          git push
