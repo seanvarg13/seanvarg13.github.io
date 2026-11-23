@@ -6465,3 +6465,5 @@ line can bring them back.
 * **The chips sit at the right, with a line over them (Sean, 19 Nov 2026: "make it still appear on the right most side and then as we add more they go progressively towards the middle and left, and also add in another line above the filter row")**: `.pgchiprow` is `justify-content: flex-end` with a 1px `--phsep` line over it (the same as the one under it).
 
 * **The chips under the control row (Sean, 23 Nov 2026: "put that filter thing at the bottom below the mlb level row")**: `.pgchiprow` is `order: 30`, after the Year · Level · Filters row, still right-aligned with its line over it.
+
+* **Winter moves refresh every morning (Sean, 23 Nov 2026: "updates should include recent FA signings")**: `.github/workflows/moves.yml` runs `tools/build_offseason.py moves` at 11:20 UTC daily (the daily build stands down 15 Nov - 14 Feb), restamps and commits `hist/moves.js` when it changed. Refreshed by hand 23 Nov: 266 players moved, 51 to a new club.
