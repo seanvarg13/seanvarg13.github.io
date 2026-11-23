@@ -6343,3 +6343,6 @@ canvas.seasonfx { opacity: .7; }
 
 /* chips row: right-aligned (new ones fill leftward) with a line over it like the one under it (Sean, 19 Nov 2026) */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 > .pgchiprow { justify-content: flex-end; border-top: 1px solid var(--phsep, #0c2340); padding-top: 8px; margin-top: 8px !important; }
+
+/* chips row under the Year · Level · Filters row (Sean, 23 Nov 2026) */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #xboard .pgbar3 > .pgchiprow { order: 30 !important; margin-top: 8px !important; margin-bottom: 4px !important; }
