@@ -6467,3 +6467,5 @@ line can bring them back.
 * **The chips under the control row (Sean, 23 Nov 2026: "put that filter thing at the bottom below the mlb level row")**: `.pgchiprow` is `order: 30`, after the Year · Level · Filters row, still right-aligned with its line over it.
 
 * **Winter moves refresh every morning (Sean, 23 Nov 2026: "updates should include recent FA signings")**: `.github/workflows/moves.yml` runs `tools/build_offseason.py moves` at 11:20 UTC daily (the daily build stands down 15 Nov - 14 Feb), restamps and commits `hist/moves.js` when it changed. Refreshed by hand 23 Nov: 266 players moved, 51 to a new club.
+
+* **The phone's draft room calmer (Sean, 24 Nov 2026: "all fits on the screen and isnt awkward ... very busy")**: block at the end of `styles.css` (`#mkroom`, mobile): the top bar's buttons one compact line (Pause / End no longer clipped), the five tabs one 30px row, the auction panel's bid row on one line with Skip, search + sort on one line (Hide drafted hidden), and the player table drops its Tm / Pos columns (the pill by the name says the position) so Proj, $ and Draft / ☆ sit on screen; 38px rows.
