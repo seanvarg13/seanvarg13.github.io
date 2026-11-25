@@ -6499,3 +6499,8 @@ line can bring them back.
 
 * **Process in place of Skills; Z-O heat-mapped (Sean, 25 Nov 2026)**: the pitcher card's first section is **Process** — nERA · xnERA · SIERA · Z-Con − O-Swing (both sides). The season table's column is labelled **Z-O** and is heat-mapped among that season's qualified pitchers, lower = better (`sbPoolP`'s `Z-O` pool, `SB_HEAT_P` / `SB_LO_P`; `hist/lg/*` rebuilt). The nERA re-weighting is not done yet.
 * **Z-O in the Leaderboard's stat picker (Sean, 25 Nov 2026)**: Filters ▸ Stats lists Z-Con% − O-Swing% for pitchers (after SIERA), and its column reads **Z-O**.
+
+* **xK% without 2-strike Whiff%; it folds out under Whiff% (Sean, 25 Nov 2026)**: `XKM`'s four tiers that used `s2whf` are refit without it
+  (same recipe, scratch `px/xkre.py`): xK% vs this season's K% r .991 → .974, next season's K% .724 → .728, xnERA → next nERA .598 → .601. 2-strike
+  Whiff% repeats at r .655 (Whiff% .750, which predicts it as well, .659); its gap over Whiff% repeats at .365. On the pitcher card it is a fold-out
+  under Whiff% in Swing & Miss (x2-strike Whiff% under xWhiff% on the Stuff side).
