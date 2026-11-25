@@ -6494,3 +6494,5 @@ line can bring them back.
 * **The phone header's spacer off (Sean, 25 Nov 2026, from his iPhone: "shrink the header a bit ... a bit of space between the final thru bar and the iPhone black camera bar")**: the phone's `header.top` top padding is the safe-area inset alone. The 16px spacer of 14 Nov is gone (the rule at the end of `styles.css`), so the logo / Thru pill / search bar sits right under the status bar and the header is 16px shorter. Nothing else in it changed.
 
 * **The bar's "in effect" marker is a dot again (Sean, 25 Nov 2026, the Leaderboard's Position button: "Fix the white thing next to position")**: on the scheme-coloured selector bar the `.set` marker drew as a white block; it's a white " •" after the label now.
+
+* **Z-Con − O-Swing for pitchers (Sean, 25 Nov 2026)**: Z-Contact% minus O-Swing% (`zco`, set on every pitcher `V()` beside `xbbf`; lower is better for a pitcher). A column in the pitchers' season table right after SIERA ("Z-Con−O-Sw", from `hist/career-bb.js`, whose `pkeys` now end `zcon osw`, BF-weighted in the totals), and a Leaderboard column (`SIDE_P`, `LB_EXTRA_P`, the Advanced set after SIERA, glossary).

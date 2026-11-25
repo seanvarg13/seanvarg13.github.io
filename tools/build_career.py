@@ -569,7 +569,7 @@ def _xs_parts(i, L, park=False):
 
 # a pitcher's season numbers for his season table (Sean, 9 Oct 2026: "ERA, FIP, nERA, and SIERA ... k%, bb%, popup%, gb% ... whiff% and xBB%"):
 # nERA, SIERA, Popup% and the three strike rates xBB% is built from (the app runs XBBF on them), under "pkeys" / "pp" in the same file
-SBP_KEYS = ["nera", "siera", "pu", "strk", "fstrk", "b3strk"]
+SBP_KEYS = ["nera", "siera", "pu", "strk", "fstrk", "b3strk", "zcon", "osw"]
 
 
 def season_bb():
