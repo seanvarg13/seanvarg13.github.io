@@ -1860,6 +1860,13 @@
   // on. Every MLB pitcher-season 2016-25 with 50+ IP both years (1,873; scratch px/gap.py): next season's nERA r .513 → .573 (nERA itself .539),
   // next ERA .321 → .385 (nERA .370). Tracked minor-league seasons (Triple-A, the FSL) were tried and added nothing, so they're left out
   const XNG = { w: 0.8, k: 200, yrs: 2 };
+  const xnWin = () => !!(winIdx() || splitActive());
+  function xnSeason(p) {   // { sh, adj }: the season pool's shift and his season's credit, whatever the view
+    return withWindow(NOWIN, () => withSplit(NONE, () => { const sh = xnShift(p), e = xnCore(p, sh); return { sh, adj: e == null ? 0 : xnAdj(p, e) }; }));
+  }
+  function xnFinal(p, raw, shWin) { if (raw == null) return null;
+    if (!xnWin()) { const b = raw + shWin; return b + xnAdj(p, b); }
+    const S = xnSeason(p), e = xnCore(p, S.sh); return e == null ? null : e + S.adj; }
   function xnAdj(p, xn) {
     if (DS.level !== "MLB" || DS.kind || DS.multi) return 0;
     const v = V(p), n = v.m.nera, bf = v.bf ?? p.bf; let s = 0, w = 0;
@@ -2040,7 +2047,7 @@
                    nmix: (i) => (pjs[i] ? -mixOfShares(pjs[i].xg, pjs[i].xp, sorted) : null),   // the Mix wOBA his expected GB% / PU% imply
                    nfpc: (i) => foulChance(list[i]),   // the foul models' share of contact going foul (6 Oct 2026) — the Stuff side of Foul% of contact
                    // xnERA: nERA on Pitching+ xK%, xBB% and Mix xwOBA (6 Oct 2026); negated like nmix so higher = better in the percentiles
-                   xnera: (i) => { if (xnRaw[i] == null) return null; const b = xnRaw[i] + sorted.xneraShift; return -(Math.round(100 * (b + xnAdj(list[i], b))) / 100); } };
+                   xnera: (i) => { const v = xnFinal(list[i], xnRaw[i], sorted.xneraShift); return v == null ? null : -(Math.round(100 * v) / 100); } };
       for (const k of Object.keys(PK)) {                                // lower-is-better ones negated in the sorted lists, like uERA
         const vs = list.map((_, i) => PK[k](i)), pc = percentiles(vs), neg = k === "pera" || k === "nbb" || k === "wgap" || k === "nmix" || k === "xnera";
         list.forEach((p, i) => { const s = stats.get(p.type + p.id); s[k] = vs[i] == null ? null : neg ? -vs[i] : vs[i]; s.pct[k] = pc[i]; });
@@ -2144,7 +2151,7 @@
     nx.xkw = xk0 == null || V(p).m.whf == null ? null : Math.round(10 * (V(p).m.whf - xk0)) / 10;
     nx.xkws = nx.xks == null || nx.nwhf == null ? null : Math.round(10 * (nx.nwhf - nx.xks)) / 10;
     { const x = pj ? xkParts(V(p).m, pj.xw, foulChance(p)) : null; Object.assign(nx, { nswstr: x ? x.swstr : null, ncsw: x ? x.csw : null, ns2whf: x ? x.s2whf : null, nfoul: x ? x.foul : null }); }
-    nx.nfpc = foulChance(p); { const q = XN_STUFF ? sr : pj, e = q ? expectedNERA(V(p), xKStuff(V(p).m, q.xw, sr ? sr.xw : null, foulChance(p)), V(p).m.xbbf, mixOfShares(q.xg, q.xp, pl.sorted)) : null; if (e == null) nx.xnera = null; else { const b0 = e + (pl.sorted.xneraShift || 0); nx.xnera = Math.round(100 * (b0 + xnAdj(p, b0))) / 100; } }
+    nx.nfpc = foulChance(p); { const q = XN_STUFF ? sr : pj, e = q ? expectedNERA(V(p), xKStuff(V(p).m, q.xw, sr ? sr.xw : null, foulChance(p)), V(p).m.xbbf, mixOfShares(q.xg, q.xp, pl.sorted)) : null; { const v = xnFinal(p, e, pl.sorted.xneraShift || 0); nx.xnera = v == null ? null : Math.round(100 * v) / 100; } }
     for (const k of Object.keys(nx)) pct[k] = nx[k] == null || !pl.sorted[k] ? null : insertPct(pl.sorted[k], k === "pera" || k === "nbb" || k === "wgap" || k === "nmix" || k === "xnera" ? -nx[k] : nx[k]);
     nx.ksklx = pct.nwhf != null && pct.ns2whf != null && pct.nfoul != null ? Math.round((pct.nwhf + pct.ns2whf + pct.nfoul) / 3) : null; pct.ksklx = nx.ksklx;
     { const W = XRW, tot = Object.values(W).reduce((a, b) => a + b, 0) || 1, ks = Object.keys(W);   // xRating: xStrikeout 60 / Control 20 / Mix xwOBA 20
@@ -10202,8 +10209,15 @@
   function xnShift(p) { return pool(p.primary === "SP" ? "SP" : "RP").sorted.xneraShift || 0; }
   function xnCore(p, sh) {
     const pv = V(p), m = pv.m, sr = stuffRates(p); if (!sr) return null;
-    const pl = pool(p.primary === "SP" ? "SP" : "RP"), xk = xKStuff(m, sr.xw, sr.xw, foulChance(p)), mx = mixOfShares(sr.xg, sr.xp, pl.sorted);
-    const e = expectedNERA(pv, xk, m.xbbf, mx); return e == null ? null : e + sh;
+    const pl = withWindow(NOWIN, () => withSplit(NONE, () => pool(p.primary === "SP" ? "SP" : "RP"))), xk = xKStuff(m, sr.xw, sr.xw, foulChance(p)), mx = mixOfShares(sr.xg, sr.xp, pl.sorted);   /* the season pool's line-drive share, whatever the view */
+    // in a date window, xBB% pulled toward his season's by batters faced (50): a start's 3-ball strike rate rests on a handful of pitches — Sheehan's
+    // 7 Sep 2026 had three, all balls, and read xBB% 22.4 (25 Nov 2026)
+    let xb = m.xbbf;
+    let xk2 = xk;
+    if (xnWin()) { const S0 = withWindow(NOWIN, () => withSplit(NONE, () => { const v0 = V(p), r0 = stuffRates(p); return { b: v0.m.xbbf, k: r0 ? xKStuff(v0.m, r0.xw, r0.xw, foulChance(p)) : null }; })), bf = pv.bf || 0;
+      if (xb != null && S0.b != null) xb = (bf * xb + 50 * S0.b) / (bf + 50);
+      if (xk2 != null && S0.k != null) xk2 = (bf * xk2 + 50 * S0.k) / (bf + 50); }   // xK% the same way: the K% fit reads two-strike and count rates a start barely samples
+    const e = expectedNERA(pv, xk2, xb, mx); return e == null ? null : e + sh;
   }
   // the nERA build-up (Sean, 25 Nov 2026: "add in the nERA build up tab next to xnERA tab"): the same arithmetic as xnERA's with his actual
   // rates — the league, his K%, his BB%, his batted-ball mix (his ground balls and popups, air balls at the league's line-drive share), then
@@ -10232,10 +10246,10 @@
     const pv = V(p), m = pv.m, L = lgRatesP(), pl = pool(g), sr = stuffRates(p);
     if (!sr || L.k == null || L.bb == null || L.gb == null || L.pu == null) return null;
     const xk = xKStuff(m, sr.xw, sr.xw, foulChance(p)), xb = m.xbbf, mx = mixOfShares(sr.xg, sr.xp, pl.sorted), lmx = mixOfShares(L.gb / 100, L.pu / 100, pl.sorted);
-    const sh = pl.sorted.xneraShift || 0, E = (k, b, x) => { const v = expectedNERA(pv, k, b, x); return v == null ? null : v + sh; };
+    const S = xnWin() ? xnSeason(p) : null, sh = S ? S.sh : pl.sorted.xneraShift || 0, E = (k, b, x) => { const v = expectedNERA(pv, k, b, x); return v == null ? null : v + sh; };
     const e0 = E(L.k, L.bb, lmx), e1 = E(xk, L.bb, lmx), e2 = E(xk, xb, lmx), e3 = E(xk, xb, mx);
     if ([e0, e1, e2, e3].some((v) => v == null)) return null;
-    const adj = xnAdj(p, e3), r2 = (x) => Math.round(100 * x) / 100, sg = (d) => (d > 0 ? "+" : d < 0 ? "\u2212" : "") + Math.abs(d).toFixed(2);
+    const adj = S ? S.adj : xnAdj(p, e3), r2 = (x) => Math.round(100 * x) / 100, sg = (d) => (d > 0 ? "+" : d < 0 ? "\u2212" : "") + Math.abs(d).toFixed(2);
     const b = buildUp("xnERA build-up", "the league's nERA moved by what his pitches say, one piece at a time", "ERA", (x) => x.toFixed(2), sg, 0.5, true);
     const pc = (k) => (st && st.pct ? st.pct[k] : null);
     let run = r2(e0);
@@ -10621,12 +10635,14 @@
     if (!src || src === "loading") return null;
     const D = ds.key === CUR.key ? window.DRAFT_DAYS : window.DRAFT_HIST_DAYS && window.DRAFT_HIST_DAYS[ds.key], c = withDataset(ds, () => K());
     if (!D) return null;
-    const sp = [], rp = [];
+    const sp = [], rp = [], X = { kbb: [[], []], gb: [[], []], pu: [[], []] };
     for (const k in D) { if (k[0] !== "P" || k.includes(":")) continue;
-      for (const g of sumOutings(D[k], dfOf(ds).P).values()) { const v = dayNERA(g, c); if (v != null) (g.gs ? sp : rp).push(-v); } }
-    sp.sort((a, b) => a - b); rp.sort((a, b) => a - b);
-    const out = { sp, rp }; outPool.set(ds.key, out); return out;
+      for (const g of sumOutings(D[k], dfOf(ds).P).values()) { const v = dayNERA(g, c); if (v != null) (g.gs ? sp : rp).push(-v);
+        const j = g.gs ? 0 : 1; if (g.bf) X.kbb[j].push(100 * (g.k - g.bb) / g.bf); if (g.bip) { X.gb[j].push(100 * g.gb / g.bip); X.pu[j].push(100 * g.pu / g.bip); } } }
+    sp.sort((a, b) => a - b); rp.sort((a, b) => a - b); for (const k in X) X[k].forEach((a) => a.sort((x, y) => x - y));
+    const out = { sp, rp, X }; outPool.set(ds.key, out); return out;
   }
+  const outPctX = (pool, sp, k, v) => { const a = pool && pool.X && pool.X[k][sp ? 0 : 1]; return a && a.length >= 50 && v != null ? insertPct(a, v) : null; };
   const outPct = (pool, sp, v) => { const a = pool && (sp ? pool.sp : pool.rp); return a && a.length >= 50 && v != null ? insertPct(a, -v) : null; };
   // who he faced each game: MLB's per-game log for the season (regular season or October), date → [[opponent, at home]] — null while it loads,
   // false when it couldn't be reached
@@ -10671,10 +10687,10 @@
       ["nERA", "", "Luck-neutral ERA that outing: every ball in play at the league's value for its type, his strikeouts and walks as they were — coloured by its place among the season's starts (a relief outing among relief outings)"],
       ["xnERA", "", "What his pitches said that outing: the stuff models' whiffs, fouls and batted-ball mix and his strike rates, through nERA's arithmetic, plus his season's credit for beating his stuff"],
       ["IP"], ["K"], ["BB"], ["K-BB%"], ["GB%", "", "Ground balls per ball in play"], ["PU%", "", "Popups per ball in play"]], "glbt");
-    for (const i of [1, 3, 7]) ends.add(i);
+    for (const i of [1, 3, 6]) ends.add(i);   // K-BB% sits with GB% and PU% (Sean, 25 Nov 2026: "put the k-bb% in the same section as gb% and pu%")
     // xnERA by outing (Sean, 25 Nov 2026: "also add xnERA to the game logs tab"): each outing's own pieces through xnCore under a one-day
     // window, on the season pool's calibration shift and the season's beats-his-stuff credit
-    const sea = withWindow(NOWIN, () => withSplit(NONE, () => { const sh = xnShift(p), e = xnCore(p, sh); return { sh, adj: e == null ? 0 : xnAdj(p, e) }; }));
+    const sea = xnSeason(p);
     const xnDay = (iso) => (iso ? withWindow({ from: iso, to: iso, last: "" }, () => withSplit(NONE, () => { const e = xnCore(p, sea.sh); return e == null ? null : e + sea.adj; })) : null);   // no Pit column (Sean, 18 Oct 2026: "Actually get rid of pitches in that"), so the rule after nERA leads into IP
     [...t.tHead.rows[0].children].forEach((h, i) => { if (ends.has(i)) h.classList.add("ge"); });
     for (const g of games) {
@@ -10686,7 +10702,9 @@
       const tr = el("tr");
       const xv = xnDay(iso), xc = el("td", null, mi(xv, 2)), xp = outPct(pool, g.gs, xv); if (xp != null) heatTd(xc, xp);
       tr.append(dc, el("td", "l", os ? os.map(([o, h]) => (h ? o : "@ " + o)).join(", ") : opp === null ? "…" : "–"), nc, xc, el("td", null, fmtIP(g.outs / 3)),
-                el("td", null, String(g.k)), el("td", null, String(g.bb)), el("td", null, kbb(g)), el("td", null, pc(g.gb, g.bip)), el("td", null, pc(g.pu, g.bip)));
+                el("td", null, String(g.k)), el("td", null, String(g.bb)),
+                ...[["kbb", g.bf ? 100 * (g.k - g.bb) / g.bf : null, kbb(g)], ["gb", g.bip ? 100 * g.gb / g.bip : null, pc(g.gb, g.bip)], ["pu", g.bip ? 100 * g.pu / g.bip : null, pc(g.pu, g.bip)]].map(([k, v, txt]) => {
+                  const td = el("td", null, txt), q = outPctX(pool, g.gs, k, v); if (q != null) heatTd(td, q); return td; }));   // heat-mapped among the season's starts / relief outings (25 Nov 2026)
       tb.append(fin(tr));
     }
     const T = { w: games.every((g) => g.w) }; for (const k of OUT_F) T[k] = games.reduce((a, g) => a + g[k], 0);
