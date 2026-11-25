@@ -6504,3 +6504,5 @@ line can bring them back.
   (same recipe, scratch `px/xkre.py`): xK% vs this season's K% r .991 → .974, next season's K% .724 → .728, xnERA → next nERA .598 → .601. 2-strike
   Whiff% repeats at r .655 (Whiff% .750, which predicts it as well, .659); its gap over Whiff% repeats at .365. On the pitcher card it is a fold-out
   under Whiff% in Swing & Miss (x2-strike Whiff% under xWhiff% on the Stuff side).
+
+* **2-strike Whiff% back in xK% and on the card; Pitching+ xK% predicts it from xWhiff% (Sean, 25 Nov 2026)**: `XKM` is the pre-#937 fit again (2-strike Whiff% in its tiers); on the card it is a plain row after Whiff% in Swing & Miss (x2-strike Whiff% after xWhiff% on the Stuff side). Inside Pitching+ xK% (→ xnERA) the expected 2-strike Whiff% is `s2x`: the league's 2-strike Whiff% + 0.959 × (xWhiff% − the league's Whiff%) (every 100+ BF pitcher-season 2020-26, BF-weighted, season-centred), in place of his own 2-strike rate scaled by xWhiff / Whiff. Forward test (1,141 pairs, 50+ IP both years): xnERA → next nERA r .598 → .602; Pitching+ xK% → next K% .673 → .672.

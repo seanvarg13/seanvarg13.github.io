@@ -1756,11 +1756,14 @@
   // 2-strike Whiff% was taken out for a morning (5 Oct 2026, Cade Cavalli: a whiff with two strikes is the strikeout itself, so a season's run
   // of them read as skill; the refit without it read same-season rmse 1.04 against 0.63, next season 3.49 against 3.57) and put back the same
   // day (Sean: "do the formula that uses two strike whiff for xk%") — xK% is the same-season read, and the breakout read is Whiff% − xK% now
-  const XKM = [{ c: 0.0153, w: { whf: 0.2475, csw: 1.3159, swstr: 0.8884, strk: -0.2644, swing: -0.5943, zcon: 0.1352, zone: 0.0217, osw: -0.0635, fstrk: -0.0529, b3strk: 0.0925, s2sw: -0.129, s2zone: -0.0255, gb: 0.0007, pu: 0.0092, fbv: 0.0215, ext: 0.2422, pitch: 0.1852, sloc: -0.1677, stuff: -0.1363, xw: -0.0909, xws: -0.0694, foul: 1.6286 } },
-               { c: 0.0159, w: { whf: 0.1774, csw: 1.2582, swstr: 0.9592, strk: -0.1908, swing: -0.696, zcon: 0.1007, zone: 0.0237, osw: -0.0184, fstrk: -0.0594, b3strk: 0.0885, s2sw: -0.1484, s2zone: -0.0035, fbv: 0.0746, ext: 0.3117, foul: 1.6211 } },
-               { c: 0.0497, w: { whf: 0.29, csw: 0.7344, swstr: 0.334, strk: 0.257, swing: -0.1087, zcon: -0.0704, zone: 0.0173, osw: -0.0147, fstrk: -0.0843, b3strk: 0.0999, s2sw: -0.1936, s2zone: 0.0681, gb: -0.0686, pu: 0.06, fbv: 0.1578, ext: 0.3178, pitch: 0.2666, sloc: -0.1853, stuff: -0.1697, xw: -0.1012, xws: 0.021 } },
-               { c: 0.0344, w: { whf: 0.2597, csw: 0.6591, swstr: 0.4945, strk: 0.3133, swing: -0.1659, zcon: -0.1805, zone: -0.0257, osw: 0.0125, fstrk: -0.086, b3strk: 0.0916, s2sw: -0.2138, s2zone: 0.1, fbv: 0.2602, ext: 0.4881 } },
-               { c: 0.0664, w: { whf: 0.8912, strk: 0.8312, swing: -0.513, zcon: -0.1645, zone: 0.0676, osw: -0.068 } }];   // refit without 2-strike Whiff% (Sean, 25 Nov 2026): next K% r .724 → .728, xnERA → next nERA .598 → .601
+  /* Pitching+ xK%'s 2-strike whiff rate from his expected whiff rate (Sean, 25 Nov 2026): the league's 2-strike Whiff% moved 0.959 a point of
+     xWhiff% over the league's Whiff% (every 100+ BF pitcher-season 2020-26, BF-weighted, season-centred). */
+  const s2x = (m, xw) => { const L = lgRatesP(); return L && L.s2whf != null && L.whf != null && xw != null ? L.s2whf + 0.959 * (xw - L.whf) : m.s2whf == null ? null : m.whf ? m.s2whf * xw / m.whf : m.s2whf; };
+  const XKM = [{ c: -0.0003, w: { whf: -0.3716, csw: 1.4372, swstr: 0.8246, s2whf: 0.4217, strk: -0.4154, swing: -0.3891, zcon: -0.022, zone: -0.1541, osw: -0.0022, fstrk: -0.0467, b3strk: 0.088, s2sw: -0.1953, s2zone: 0.1456, gb: -0.0097, pu: -0.0134, fbv: 0.0058, ext: 0.1381, pitch: 0.09, sloc: -0.0774, stuff: -0.0768, xw: 0.0233, xws: -0.0147, foul: 1.5573 } },
+               { c: -0.0004, w: { whf: -0.3706, csw: 1.4401, swstr: 0.8716, s2whf: 0.4219, strk: -0.42, swing: -0.4136, zcon: -0.0228, zone: -0.1641, osw: 0.0068, fstrk: -0.0448, b3strk: 0.0877, s2sw: -0.1949, s2zone: 0.1469, fbv: 0.026, ext: 0.1532, foul: 1.586 } },
+               { c: -0.0001, w: { whf: -0.4163, csw: 0.851, swstr: 0.2875, s2whf: 0.4674, strk: 0.1094, swing: 0.0686, zcon: -0.2387, zone: -0.1759, osw: 0.0434, fstrk: -0.0756, b3strk: 0.0935, s2sw: -0.2651, s2zone: 0.2525, gb: -0.0794, pu: 0.0268, fbv: 0.1158, ext: 0.2225, pitch: -0.2046, sloc: 0.2566, stuff: 0.2685, xw: 0.1545, xws: -0.0265 } },
+               { c: -0.0008, w: { whf: -0.3181, csw: 0.8479, swstr: 0.4156, s2whf: 0.4491, strk: 0.0773, swing: 0.1082, zcon: -0.3054, zone: -0.2249, osw: 0.0379, fstrk: -0.0697, b3strk: 0.0907, s2sw: -0.2618, s2zone: 0.2574, fbv: 0.2044, ext: 0.315 } },
+               { c: 0, w: { whf: 0.8913, strk: 0.8331, swing: -0.5133, zcon: -0.1645, zone: 0.0667, osw: -0.0687 } }];   // refit without 2-strike Whiff% (Sean, 25 Nov 2026): next K% r .724 → .728, xnERA → next nERA .598 → .601
   // the league's expected whiff rates (location-aware over swings, stuff-only over pitches) for the centring — every 20+ BF pitcher, by BF, per view
   const lgXwCache = new Map();
   function lgXw() {
@@ -1803,7 +1806,7 @@
   const xkParts = (m, xw, xf) => {
     if (xw == null || m.swing == null) return null;
     const sws = m.swing * xw / 100, cs = m.ncstr != null ? m.ncstr : m.cstr;   // the expected called-strike rate where the file has it (4 Oct 2026), else his own
-    return { whf: xw, cstr: cs, swstr: sws, csw: cs == null ? null : cs + sws, s2whf: m.s2whf == null ? null : m.whf ? m.s2whf * xw / m.whf : m.s2whf, foul: xf == null ? m.foul : m.swing * (1 - xw / 100) * xf / 100 };
+    return { whf: xw, cstr: cs, swstr: sws, csw: cs == null ? null : cs + sws, s2whf: s2x(m, xw), foul: xf == null ? m.foul : m.swing * (1 - xw / 100) * xf / 100 };
   };
   const xKStuff = (m, xw, xws, xf) => {
     const x = xkParts(m, xw, xf); if (!x || x.cstr == null) return null;
@@ -10981,12 +10984,12 @@
   // Control, Swing & Miss = K% · Whiff% (fold-out: 2-strike Whiff%, Foul%, Called Strike%); the Stuff side the Pitching+ expected ones
   // Walk Avoidance under Swing & Miss, ahead of Batted Ball (Sean, 5 Oct 2026); left 7 rows, right 6
   // Skills = K-BB% · Mix wOBA, K% back atop Swing & Miss and BB% atop Command (Walk Avoidance renamed) with a line break ("|") after each, no Results (Sean, 6 Oct 2026)
-  const PCT_COLS_P = [[["Process", ["nera", "xnera", "siera", "zco"]], ["Swing & Miss", ["k", { k: "whf", sub: ["s2whf"] }, "cstr", "fpc"]]],
+  const PCT_COLS_P = [[["Process", ["nera", "xnera", "siera", "zco"]], ["Swing & Miss", ["k", "whf", "s2whf", "cstr", "fpc"]]],
                       [["Command", ["bb", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["gb", "pu", "mixw"]]]];   // the EV-allowed-by-type rows lasted an evening (Sean, 8 Oct 2026); they stay columns   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
   // the Stuff side (Sean, 6 Oct 2026: "for the swing and miss stuff you use all the expected whiff expected two strike whiff expected called
   // strikes and expected fouls from the pitching+ model, and also use expected batted ball stuff from it too ... an xK% too"): every bar off
   // the Pitching+ models — xK% (Pitching+ xK%), xWhiff%, x2-strike Whiff%, xCalled Strike%, xFoul% of contact, xBB%, xGB% / xPU% / Mix xwOBA
-  const PCT_COLS_PS = [[["Process", ["nera", "xnera", "siera", "zco"]], ["Swing & Miss", ["xks", { k: "nwhf", sub: ["ns2whf"] }, "ncstr", "nfpc"]]],
+  const PCT_COLS_PS = [[["Process", ["nera", "xnera", "siera", "zco"]], ["Swing & Miss", ["xks", "nwhf", "ns2whf", "ncstr", "nfpc"]]],
                        [["Command", ["xbbf", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["ngb", "npu", "nmix"]]]];
   const STUFF_LABELS = { nfpc: "xFoul% of contact", xnera: "xnERA", xbbf: "xBB%", xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => state.cardSide === "stuff";   // the Raw / Stuff switch is back (Sean, 6 Oct 2026: "add back the raw vs stuff button")
