@@ -10423,7 +10423,7 @@
     if (DS.multi || !indexReady()) return [];
     const base = keyBase(DS.key), e = window.DRAFT_INDEX.players.find((x) => x.id === p.id);     // e.k: the ones built for him
     const his = new Set([base, DS.key, ...((e && e.k) || []).filter((sv) => sv[2] === p.type).map((sv) => sv[0])]);
-    return KINDS.filter(([k]) => k !== "spring").map(([k, l]) => [k ? `${base}-${k}` : base, l]).filter(([key]) => his.has(key));
+    return KINDS.map(   /* spring back on the switch (Sean, 25 Nov 2026: "also add spring into game logs too") */([k, l]) => [k ? `${base}-${k}` : base, l]).filter(([key]) => his.has(key));
   }
   // Workload (Sean, 28 Oct 2026, item 9 of the review's picks: "pitcher workload & velocity trend — FB velo by month, pitches & IP per start, went-6+
   // rate, IP vs last year / career high"): from his day rows (the Game Logs' source) — his fastballs' velocity by month and over the last 15 days,
@@ -10604,11 +10604,12 @@
   // walks and HBP as they were, on the ERA scale. The line is straight in wOBA allowed, so a dominant outing can read below zero, as a few batters'
   // season nERA can (a fifth of 2026's relief outings, 2% of its starts)
   function dayNERA(g, c) {
-    if (!g || !g.w || !g.wden || !c || !c.bbw) return null;
+    if (!g || !g.w || !c || !c.bbw) return null;
+    const den = g.wden || g.bf; if (!den) return null;   // spring training: Savant leaves woba_denom blank, so batters faced stand in (25 Nov 2026)
     const ut = Math.max(0, g.bip - g.gb - g.ld - g.fbt - g.pu);
     const av = airValue(c), xair = av != null ? (g.ld + g.fbt) * av : g.ld * c.bbw.ld + g.fbt * c.bbw.fb;
     const x = g.wnum - (g.wk || 0) - g.wbip + g.gb * c.bbw.gb + xair + g.pu * c.bbw.pu + ut * c.bbw.ut;   /* a strikeout the batter reached on is a strikeout (23 Oct 2026) */
-    return c.lgERA + (x / g.wden - c.lgwOBA) / c.wobaScale * c.pa9;
+    return c.lgERA + (x / den - c.lgwOBA) / c.wobaScale * c.pa9;
   }
   // every outing of the season by kind, for the colours (2026: the middle start 4.20, a quarter of them under 2.97; the middle relief outing 3.83, with
   // a fifth under zero) — negated, so higher is better for insertPct. A postseason log ranks among its year's regular season, as its card does
@@ -10662,7 +10663,7 @@
     }
     const games = [...all.values()].filter((g) => g.day >= lo && g.day <= w.hi && okG(g)).sort((a, b) => a.day - b.day);
     if (!games.length) { box.append(el("p", "note", "No outings in this view.")); return box; }
-    const c = K(), pool = outingPool(), both = bothRoles(p), opp = oppLog(p, keyYear(DS.key), post ? "P" : "R");
+    const c = K(), pool = outingPool(), both = bothRoles(p), opp = oppLog(p, keyYear(DS.key), post ? "P" : keyKind(DS.key) === "spring" ? "S" : "R");
     const mi = (x, d) => (x == null ? "–" : (x < 0 ? "−" : "") + Math.abs(x).toFixed(d));
     const pc = (n, d) => (d ? (100 * n / d).toFixed(1) + "%" : "–"), kbb = (g) => (g.bf ? mi(100 * (g.k - g.bb) / g.bf, 1) + "%" : "–");
     // nERA leads the numbers, then Pit, then the rest as they were (Sean, 18 Oct 2026: "put nERA first, then pitches then everything as is")
