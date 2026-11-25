@@ -6492,3 +6492,5 @@ line can bring them back.
 * **Game Logs' season-type switch is Year over year's bar (Sean, 25 Nov 2026: "make the regular season postseason spring filter box the same as on the year over year tab ... make it copy the year over year tabs")**: `renderGameLogs` draws its Regular season · Spring · Postseason choice with `viewBar` (the `.sbviews` bar), in place of the old `.seg.glkind` buttons, with "Spring" as the label as on Year over year.
 
 * **The phone header's spacer off (Sean, 25 Nov 2026, from his iPhone: "shrink the header a bit ... a bit of space between the final thru bar and the iPhone black camera bar")**: the phone's `header.top` top padding is the safe-area inset alone. The 16px spacer of 14 Nov is gone (the rule at the end of `styles.css`), so the logo / Thru pill / search bar sits right under the status bar and the header is 16px shorter. Nothing else in it changed.
+
+* **The bar's "in effect" marker is a dot again (Sean, 25 Nov 2026, the Leaderboard's Position button: "Fix the white thing next to position")**: on the scheme-coloured selector bar the `.set` marker drew as a white block; it's a white " •" after the label now.

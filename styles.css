@@ -6207,7 +6207,7 @@ canvas.seasonfx { opacity: .7; }
 :not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .sbview:is(.on, .ddon, [aria-pressed="true"], [aria-expanded="true"]) { background: #ffffff !important; color: var(--ink-day, var(--ink, #0c2340)) !important; }
 :not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .sbview svg { color: inherit !important; stroke: currentColor !important; }
 :not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .pgpick { border-right-color: rgba(255, 255, 255, .55) !important; }
-:not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .sbview.set::after { background: #ffffff !important; }
+:not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):root:not([data-fbar]) .sbviews .sbview.set::after { content: " •" !important; background: none !important; color: #ffffff !important; width: auto !important; height: auto !important; }   /* the "in effect" dot, white on the band (25 Nov 2026: it had drawn a white block) */
 :not(#s1):not(#s2):not(#s3):not(#s4):not(#s5):not(#s6):not(#s7):not(#s8):not(#s9):root:not([data-fbar]) .sbviews { border: 2px solid var(--phsep, var(--stripe-line, #c8102e)) !important; }   /* a red outline round the bar (14 Nov 2026) */
 
 /* The phone's top strip red over a blue foot (Sean, 14 Nov 2026: "make the top area red with a blue bottom bar instead of white with a red bottom"): the scheme's red over the status area, a 6px band-blue rule at its foot and the soft shadow below. */
