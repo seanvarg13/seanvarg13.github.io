@@ -3873,7 +3873,7 @@
     ["Plate Discipline", [["Swing%", "swing", 1, "%"], ["Z-Swing%", "zsw", 1, "%"], ["O-Swing%", "osw", 1, "%"], ["Contact%", "con", 1, "%"], ["Z-Contact%", "zcon", 1, "%"],
                           ["O-Contact%", "ocon", 1, "%"], ["Whiff%", "whf", 1, "%"], ["Strike%", "strk", 1, "%"], ["K%", "k", 1, "%"], ["xK%", "xk", 1, "%"]]]];
   const VS_P = [
-    ["Advanced", [["K%", "k", 1, "%"], ["BB%", "bb", 1, "%"], ["K-BB%", "kbb", 1, "%"], ["ERA", "era", 2], ["FIP", "fip", 2], ["SIERA", "siera", 2], ["Z-Con−O-Sw", "zco", 1], ["nERA", "nera", 2],
+    ["Advanced", [["K%", "k", 1, "%"], ["BB%", "bb", 1, "%"], ["K-BB%", "kbb", 1, "%"], ["ERA", "era", 2], ["FIP", "fip", 2], ["SIERA", "siera", 2], ["Z-O", "zco", 1], ["nERA", "nera", 2],
                   ["Pitching+", "pitch", 0], ["Whiff+", "pwhf", 0], ["BB+", "pbb", 0], ["Command+", "sloc", 0]]],
     ["Batted Ball", [["GB%", "gb", 1, "%"], ["PU%", "pu", 1, "%"], ["EV", "ev", 1], ["HardHit%", "hh", 1, "%"], ["Barrel%", "brl", 1, "%"], ["FBv", "fbv", 1], ["Ext", "ext", 1]]],
     ["Plate Discipline", [["Swing%", "swing", 1, "%"], ["O-Swing%", "osw", 1, "%"], ["Z-Contact%", "zcon", 1, "%"], ["Zone%", "zone", 1, "%"], ["Whiff%", "whf", 1, "%"],
@@ -10980,12 +10980,12 @@
   // Control, Swing & Miss = K% · Whiff% (fold-out: 2-strike Whiff%, Foul%, Called Strike%); the Stuff side the Pitching+ expected ones
   // Walk Avoidance under Swing & Miss, ahead of Batted Ball (Sean, 5 Oct 2026); left 7 rows, right 6
   // Skills = K-BB% · Mix wOBA, K% back atop Swing & Miss and BB% atop Command (Walk Avoidance renamed) with a line break ("|") after each, no Results (Sean, 6 Oct 2026)
-  const PCT_COLS_P = [[["Skills", ["whf", "xbbf"]], ["Swing & Miss", ["k", "whf", "s2whf", "cstr", "fpc"]]],
+  const PCT_COLS_P = [[["Process", ["nera", "xnera", "siera", "zco"]], ["Swing & Miss", ["k", "whf", "s2whf", "cstr", "fpc"]]],
                       [["Command", ["bb", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["gb", "pu", "mixw"]]]];   // the EV-allowed-by-type rows lasted an evening (Sean, 8 Oct 2026); they stay columns   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
   // the Stuff side (Sean, 6 Oct 2026: "for the swing and miss stuff you use all the expected whiff expected two strike whiff expected called
   // strikes and expected fouls from the pitching+ model, and also use expected batted ball stuff from it too ... an xK% too"): every bar off
   // the Pitching+ models — xK% (Pitching+ xK%), xWhiff%, x2-strike Whiff%, xCalled Strike%, xFoul% of contact, xBB%, xGB% / xPU% / Mix xwOBA
-  const PCT_COLS_PS = [[["Skills", ["nwhf", "xbbf"]], ["Swing & Miss", ["xks", "nwhf", "ns2whf", "ncstr", "nfpc"]]],
+  const PCT_COLS_PS = [[["Process", ["nera", "xnera", "siera", "zco"]], ["Swing & Miss", ["xks", "nwhf", "ns2whf", "ncstr", "nfpc"]]],
                        [["Command", ["xbbf", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["ngb", "npu", "nmix"]]]];
   const STUFF_LABELS = { nfpc: "xFoul% of contact", xnera: "xnERA", xbbf: "xBB%", xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => state.cardSide === "stuff";   // the Raw / Stuff switch is back (Sean, 6 Oct 2026: "add back the raw vs stuff button")
@@ -12304,7 +12304,7 @@
     "xBB%": "The walk rate his Strike%, first-pitch and three-ball strike rates imply", "K-BB%": "Strikeouts less walks, per batter faced" };
   // a pitcher's table (Sean, 9 Oct 2026: "ERA, FIP, nERA, and SIERA then a line break / Then G, GS, IP, line break / Then k%, bb%, popup%, gb% then a
   // line break / Then whiff% and xBB% and then a line break and the position one at the end"); nERA / SIERA / PU% / xBB% come from career-bb.js's pp
-  const SB_P = ["ERA", "nERA", "SIERA", "Z-Con−O-Sw", "G", "GS", "IP", "K%", "BB%", "K-BB%", "PU%", "GB%", "Whiff%", "xBB%", "fWAR", "bWAR"];   // + his pitching WAR before Pos (Sean, 14 Oct 2026)   // K-BB% after BB%, heat-mapped; FIP gone, nERA and SIERA kept (Sean, 9 Oct 2026)
+  const SB_P = ["ERA", "nERA", "SIERA", "Z-O", "G", "GS", "IP", "K%", "BB%", "K-BB%", "PU%", "GB%", "Whiff%", "xBB%", "fWAR", "bWAR"];   // + his pitching WAR before Pos (Sean, 14 Oct 2026)   // K-BB% after BB%, heat-mapped; FIP gone, nERA and SIERA kept (Sean, 9 Oct 2026)
   const SB_BEST_HI = { H: new Set(["G", "PA", "HR", "R", "RBI", "SB", "BB%", "ISO", "HR/FB", "BABIP", "AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA", "wRC+", "Sprint", "fWAR", "bWAR"]), P: new Set(["W", "G", "GS", "IP", "K", "K%", "K-BB%", "Whiff%", "Strike%", "GB%", "fWAR", "bWAR"]) };
   const SB_BEST_LO = { H: new Set(["K%"]), P: new Set(["ERA", "FIP", "WHIP", "BB%"]) };
   // a line's value for a column: the record's counts, the rates recomputed for a sum, our numbers from its adv
@@ -12339,7 +12339,7 @@
     }
     if (k === "FIP") return a.fip; if (k === "Whiff%") return a.whf; if (k === "Strike%") return a.strk; if (k === "GB%") return a.gb;
     const bp = l.bp || {};
-    if (k === "nERA") return bp.nera ?? null; if (k === "SIERA") return bp.siera ?? null; if (k === "Z-Con−O-Sw") return bp.zcon != null && bp.osw != null ? bp.zcon - bp.osw : null; if (k === "PU%") return bp.pu ?? null;
+    if (k === "nERA") return bp.nera ?? null; if (k === "SIERA") return bp.siera ?? null; if (k === "Z-O") return bp.zcon != null && bp.osw != null ? bp.zcon - bp.osw : null; if (k === "PU%") return bp.pu ?? null;
     if (k === "xBB%") return bp.strk == null || bp.fstrk == null || bp.b3strk == null ? null : XBBF.c + XBBF.strk * bp.strk + XBBF.fstrk * bp.fstrk + XBBF.b3strk * bp.b3strk;
     const r = l.rc || c;   // rates from the unscaled line — the 162-game average scales K and BB but not BF (it had read Skenes's K% as 10.0%)
     if (k === "K%") return r.BF ? 100 * r.K / r.BF : null; if (k === "BB%") return r.BF ? 100 * r.BB / r.BF : null; if (k === "K-BB%") return r.BF ? 100 * (r.K - r.BB) / r.BF : null;
@@ -12349,7 +12349,7 @@
   const sbRuns = (v) => { const r = Math.round(10 * v) / 10; return (r < 0 ? "−" : "") + Math.abs(r).toFixed(1); };   // WAR in tenths
   // rates carry their % sign in this table (Sean, 8 Oct 2026: "for walk and k percentages can you add in the % in the tables")
   const sbFmt = (k, v) => (v == null || v === "" || (typeof v === "number" && isNaN(v)) ? "–" : k === "Mix wOBA" ? fmtX(+v) : k === "BBE" ? String(Math.round(+v))
-    : ["Avg EV", "EV90", "Max EV", "FB EV", "LD EV", "GB EV", "Bat Speed", "Z-Con−O-Sw"].includes(k) ? (+v).toFixed(1) : ["AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA", "ISO", "BABIP"].includes(k) ? fmtX(+v)
+    : ["Avg EV", "EV90", "Max EV", "FB EV", "LD EV", "GB EV", "Bat Speed", "Z-O"].includes(k) ? (+v).toFixed(1) : ["AVG", "OBP", "SLG", "OPS", "wOBA", "xwOBA", "ISO", "BABIP"].includes(k) ? fmtX(+v)
     : ["ERA", "FIP", "WHIP", "nERA", "SIERA"].includes(k) ? (+v).toFixed(2) : k === "wRC+" ? String(Math.round(+v)) : ["fWAR", "bWAR", "BsR"].includes(k) ? sbRuns(+v) : k === "Sprint" ? (+v).toFixed(1)
     : /%$|\/FB$/.test(k) ? (+v).toFixed(1) + "%" : k === "IP" ? String(v) : String(v));
   // a sum of lines: counts added, the rates recomputed, our numbers weighted by PA / BF (GB% too, which combineLines leaves out)
@@ -12412,17 +12412,18 @@
     { const G = lgOf(y); if (G && G.sbp) return G.sbp; }
     const ck = y + ":" + sbxReady();
     if (SB_POOLS_P.has(ck)) return SB_POOLS_P.get(ck);
-    const out = { "K-BB%": [], nERA: [] }, C = window.DRAFT_CAREER || {}, b = 2 + RAW_P.length, iK = 2 + RAW_P.indexOf("K"), iB = 2 + RAW_P.indexOf("BB"), iIP = 2 + RAW_P.indexOf("IP");
+    const out = { "K-BB%": [], nERA: [], "Z-O": [] }, C = window.DRAFT_CAREER || {}, b = 2 + RAW_P.length, iK = 2 + RAW_P.indexOf("K"), iB = 2 + RAW_P.indexOf("BB"), iIP = 2 + RAW_P.indexOf("IP");
     for (const id in C) for (const r of C[id].P || []) {
       if (y ? r[0] !== y : r[0] < 2015) continue;
       if (ipNum(r[iIP]) < (r[0] === 2020 ? 60 : 162)) continue;
       const bf = +r[b + 1] || 0; if (bf) out["K-BB%"].push(100 * ((+r[iK] || 0) - (+r[iB] || 0)) / bf);
       const q = sbpOf(id, r[0]); if (q && q.nera != null) out.nERA.push(-q.nera);
+      if (q && q.zcon != null && q.osw != null) out["Z-O"].push(-(q.zcon - q.osw));
     }
     for (const k in out) out[k].sort((a, b) => a - b);
     if (careerReady()) SB_POOLS_P.set(ck, out); return out;
   }
-  const SB_HEAT_P = new Set(["K-BB%", "nERA"]), SB_LO_P = new Set(["nERA"]);
+  const SB_HEAT_P = new Set(["K-BB%", "nERA", "Z-O"]), SB_LO_P = new Set(["nERA", "Z-O"]);
   // League leaders, Baseball-Reference's way (Sean, 8 Oct 2026: "the bold indicates the player led the league and italics indicates they led the
   // MLB"): for a season, every column's best value in the AL, the NL and MLB from every player's line in hist/career.js — the file holds every
   // MLB player since 2015 with his whole career, so a season before 2015 is missing whoever had retired and isn't marked. Counts lead by the

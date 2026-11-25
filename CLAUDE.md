@@ -6496,3 +6496,5 @@ line can bring them back.
 * **The bar's "in effect" marker is a dot again (Sean, 25 Nov 2026, the Leaderboard's Position button: "Fix the white thing next to position")**: on the scheme-coloured selector bar the `.set` marker drew as a white block; it's a white " •" after the label now.
 
 * **Z-Con − O-Swing for pitchers (Sean, 25 Nov 2026)**: Z-Contact% minus O-Swing% (`zco`, set on every pitcher `V()` beside `xbbf`; lower is better for a pitcher). A column in the pitchers' season table right after SIERA ("Z-Con−O-Sw", from `hist/career-bb.js`, whose `pkeys` now end `zcon osw`, BF-weighted in the totals), and a Leaderboard column (`SIDE_P`, `LB_EXTRA_P`, the Advanced set after SIERA, glossary).
+
+* **Process in place of Skills; Z-O heat-mapped (Sean, 25 Nov 2026)**: the pitcher card's first section is **Process** — nERA · xnERA · SIERA · Z-Con − O-Swing (both sides). The season table's column is labelled **Z-O** and is heat-mapped among that season's qualified pitchers, lower = better (`sbPoolP`'s `Z-O` pool, `SB_HEAT_P` / `SB_LO_P`; `hist/lg/*` rebuilt). The nERA re-weighting is not done yet.
