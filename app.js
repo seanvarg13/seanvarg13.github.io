@@ -10635,12 +10635,14 @@
     if (!src || src === "loading") return null;
     const D = ds.key === CUR.key ? window.DRAFT_DAYS : window.DRAFT_HIST_DAYS && window.DRAFT_HIST_DAYS[ds.key], c = withDataset(ds, () => K());
     if (!D) return null;
-    const sp = [], rp = [];
+    const sp = [], rp = [], X = { kbb: [[], []], gb: [[], []], pu: [[], []] };
     for (const k in D) { if (k[0] !== "P" || k.includes(":")) continue;
-      for (const g of sumOutings(D[k], dfOf(ds).P).values()) { const v = dayNERA(g, c); if (v != null) (g.gs ? sp : rp).push(-v); } }
-    sp.sort((a, b) => a - b); rp.sort((a, b) => a - b);
-    const out = { sp, rp }; outPool.set(ds.key, out); return out;
+      for (const g of sumOutings(D[k], dfOf(ds).P).values()) { const v = dayNERA(g, c); if (v != null) (g.gs ? sp : rp).push(-v);
+        const j = g.gs ? 0 : 1; if (g.bf) X.kbb[j].push(100 * (g.k - g.bb) / g.bf); if (g.bip) { X.gb[j].push(100 * g.gb / g.bip); X.pu[j].push(100 * g.pu / g.bip); } } }
+    sp.sort((a, b) => a - b); rp.sort((a, b) => a - b); for (const k in X) X[k].forEach((a) => a.sort((x, y) => x - y));
+    const out = { sp, rp, X }; outPool.set(ds.key, out); return out;
   }
+  const outPctX = (pool, sp, k, v) => { const a = pool && pool.X && pool.X[k][sp ? 0 : 1]; return a && a.length >= 50 && v != null ? insertPct(a, v) : null; };
   const outPct = (pool, sp, v) => { const a = pool && (sp ? pool.sp : pool.rp); return a && a.length >= 50 && v != null ? insertPct(a, -v) : null; };
   // who he faced each game: MLB's per-game log for the season (regular season or October), date → [[opponent, at home]] — null while it loads,
   // false when it couldn't be reached
@@ -10685,7 +10687,7 @@
       ["nERA", "", "Luck-neutral ERA that outing: every ball in play at the league's value for its type, his strikeouts and walks as they were — coloured by its place among the season's starts (a relief outing among relief outings)"],
       ["xnERA", "", "What his pitches said that outing: the stuff models' whiffs, fouls and batted-ball mix and his strike rates, through nERA's arithmetic, plus his season's credit for beating his stuff"],
       ["IP"], ["K"], ["BB"], ["K-BB%"], ["GB%", "", "Ground balls per ball in play"], ["PU%", "", "Popups per ball in play"]], "glbt");
-    for (const i of [1, 3, 7]) ends.add(i);
+    for (const i of [1, 3, 6]) ends.add(i);   // K-BB% sits with GB% and PU% (Sean, 25 Nov 2026: "put the k-bb% in the same section as gb% and pu%")
     // xnERA by outing (Sean, 25 Nov 2026: "also add xnERA to the game logs tab"): each outing's own pieces through xnCore under a one-day
     // window, on the season pool's calibration shift and the season's beats-his-stuff credit
     const sea = xnSeason(p);
@@ -10700,7 +10702,9 @@
       const tr = el("tr");
       const xv = xnDay(iso), xc = el("td", null, mi(xv, 2)), xp = outPct(pool, g.gs, xv); if (xp != null) heatTd(xc, xp);
       tr.append(dc, el("td", "l", os ? os.map(([o, h]) => (h ? o : "@ " + o)).join(", ") : opp === null ? "…" : "–"), nc, xc, el("td", null, fmtIP(g.outs / 3)),
-                el("td", null, String(g.k)), el("td", null, String(g.bb)), el("td", null, kbb(g)), el("td", null, pc(g.gb, g.bip)), el("td", null, pc(g.pu, g.bip)));
+                el("td", null, String(g.k)), el("td", null, String(g.bb)),
+                ...[["kbb", g.bf ? 100 * (g.k - g.bb) / g.bf : null, kbb(g)], ["gb", g.bip ? 100 * g.gb / g.bip : null, pc(g.gb, g.bip)], ["pu", g.bip ? 100 * g.pu / g.bip : null, pc(g.pu, g.bip)]].map(([k, v, txt]) => {
+                  const td = el("td", null, txt), q = outPctX(pool, g.gs, k, v); if (q != null) heatTd(td, q); return td; }));   // heat-mapped among the season's starts / relief outings (25 Nov 2026)
       tb.append(fin(tr));
     }
     const T = { w: games.every((g) => g.w) }; for (const k of OUT_F) T[k] = games.reduce((a, g) => a + g[k], 0);
