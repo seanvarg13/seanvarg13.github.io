@@ -1855,6 +1855,19 @@
   // xnERA (Sean, 6 Oct 2026: "use that to come up with a k-bb% and a mix xwoba that lets you create a stuff nERA and just call that xnERA"):
   // nERA's own bookkeeping with the Pitching+ side's rates in place of his — Pitching+ xK% for K%, xBB% for BB%, Mix xwOBA (the league's wOBA per
   // ball in play for the mix the model expects) for his balls in play; HBP as it was; put on the ERA scale the way nERA / uERA are
+  // xnERA credits a pitcher who keeps beating his stuff (Sean, 25 Nov 2026: "for xnERA ... factor in past overperformance of expectations"): his
+  // nERA − xnERA this season and his last two MLB seasons (hist/xngap.js), weighted by batters faced, pulled toward zero by 200 BF, × 0.8, added
+  // on. Every MLB pitcher-season 2016-25 with 50+ IP both years (1,873; scratch px/gap.py): next season's nERA r .513 → .573 (nERA itself .539),
+  // next ERA .321 → .385 (nERA .370). Tracked minor-league seasons (Triple-A, the FSL) were tried and added nothing, so they're left out
+  const XNG = { w: 0.8, k: 200, yrs: 2 };
+  function xnAdj(p, xn) {
+    if (DS.level !== "MLB" || DS.kind || DS.multi) return 0;
+    const v = V(p), n = v.m.nera, bf = v.bf ?? p.bf; let s = 0, w = 0;
+    if (n != null && xn != null && bf) { s += (n - xn) * bf; w += bf; }
+    const g = window.DRAFT_XNGAP && window.DRAFT_XNGAP[p.id], y = +DS.season;
+    if (g) for (let yy = y - XNG.yrs; yy < y; yy++) { const e = g[yy]; if (e) { s += e[0] * e[1]; w += e[1]; } }
+    return XNG.w * s / (w + XNG.k);
+  }
   function expectedNERA(pv, xk, xbb, mixw) {
     const c = K(), ctx = pv.ctx || {};
     if (!c.bbw || c.wbb == null || !ctx.PAw || xk == null || xbb == null || mixw == null) return null;
@@ -2027,7 +2040,7 @@
                    nmix: (i) => (pjs[i] ? -mixOfShares(pjs[i].xg, pjs[i].xp, sorted) : null),   // the Mix wOBA his expected GB% / PU% imply
                    nfpc: (i) => foulChance(list[i]),   // the foul models' share of contact going foul (6 Oct 2026) — the Stuff side of Foul% of contact
                    // xnERA: nERA on Pitching+ xK%, xBB% and Mix xwOBA (6 Oct 2026); negated like nmix so higher = better in the percentiles
-                   xnera: (i) => (xnRaw[i] == null ? null : -(Math.round(100 * (xnRaw[i] + sorted.xneraShift)) / 100)) };
+                   xnera: (i) => { if (xnRaw[i] == null) return null; const b = xnRaw[i] + sorted.xneraShift; return -(Math.round(100 * (b + xnAdj(list[i], b))) / 100); } };
       for (const k of Object.keys(PK)) {                                // lower-is-better ones negated in the sorted lists, like uERA
         const vs = list.map((_, i) => PK[k](i)), pc = percentiles(vs), neg = k === "pera" || k === "nbb" || k === "wgap" || k === "nmix" || k === "xnera";
         list.forEach((p, i) => { const s = stats.get(p.type + p.id); s[k] = vs[i] == null ? null : neg ? -vs[i] : vs[i]; s.pct[k] = pc[i]; });
@@ -2131,7 +2144,7 @@
     nx.xkw = xk0 == null || V(p).m.whf == null ? null : Math.round(10 * (V(p).m.whf - xk0)) / 10;
     nx.xkws = nx.xks == null || nx.nwhf == null ? null : Math.round(10 * (nx.nwhf - nx.xks)) / 10;
     { const x = pj ? xkParts(V(p).m, pj.xw, foulChance(p)) : null; Object.assign(nx, { nswstr: x ? x.swstr : null, ncsw: x ? x.csw : null, ns2whf: x ? x.s2whf : null, nfoul: x ? x.foul : null }); }
-    nx.nfpc = foulChance(p); { const q = XN_STUFF ? sr : pj, e = q ? expectedNERA(V(p), xKStuff(V(p).m, q.xw, sr ? sr.xw : null, foulChance(p)), V(p).m.xbbf, mixOfShares(q.xg, q.xp, pl.sorted)) : null; nx.xnera = e == null ? null : Math.round(100 * (e + (pl.sorted.xneraShift || 0))) / 100; }
+    nx.nfpc = foulChance(p); { const q = XN_STUFF ? sr : pj, e = q ? expectedNERA(V(p), xKStuff(V(p).m, q.xw, sr ? sr.xw : null, foulChance(p)), V(p).m.xbbf, mixOfShares(q.xg, q.xp, pl.sorted)) : null; if (e == null) nx.xnera = null; else { const b0 = e + (pl.sorted.xneraShift || 0); nx.xnera = Math.round(100 * (b0 + xnAdj(p, b0))) / 100; } }
     for (const k of Object.keys(nx)) pct[k] = nx[k] == null || !pl.sorted[k] ? null : insertPct(pl.sorted[k], k === "pera" || k === "nbb" || k === "wgap" || k === "nmix" || k === "xnera" ? -nx[k] : nx[k]);
     nx.ksklx = pct.nwhf != null && pct.ns2whf != null && pct.nfoul != null ? Math.round((pct.nwhf + pct.ns2whf + pct.nfoul) / 3) : null; pct.ksklx = nx.ksklx;
     { const W = XRW, tot = Object.values(W).reduce((a, b) => a + b, 0) || 1, ks = Object.keys(W);   // xRating: xStrikeout 60 / Control 20 / Mix xwOBA 20
@@ -6425,7 +6438,7 @@
     xkbb: "x(K-BB)%: xK% minus xBB% — the strikeout-minus-walk rate his rates say he should have (both fits on this season's process; higher is better).",
     xks: "Pitching+ xK%: xK% with the strikes expected instead of actual — the Pitching+ model's expected whiff rate, the swinging strikes and two-strike whiffs it implies, the command models' expected called strikes from his spots and counts, and the foul model's chance on the contact that's left. Forecasts next season's K% a little better than his own K% does, and K% above it tends to come down (below it, up). The xRating's K input.",
     cstr: "Called Strike%: called strikes per pitch — the strikes he gets without a swing. With SwStr% and Foul% it is one of the three strikes that keep a plate appearance alive, which is how xK% reads them.",
-    xnera: "xnERA: nERA on what his pitches say — Pitching+ xK% for his K%, xBB% for his BB%, the Mix xwOBA the model's expected ground-ball / popup mix implies for every ball in play (HBP as it was), on the ERA scale like nERA, centred so the pool's pitchers average the same xnERA as nERA (the fixed models read a new season a little hot). Lower is better. nERA takes his strikeouts, walks and batted-ball mix as they were; xnERA replaces all three with the stuff-and-location expectation, so nERA − xnERA is how much his results beat his pitches.",
+    xnera: "xnERA (since 25 Nov 2026 it also credits a pitcher who keeps beating his stuff: 0.8 × his nERA − xnERA over this season and his last two, weighted by batters faced and pulled toward zero by 200; next season's nERA r .51 → .57, beating nERA's .54): nERA on what his pitches say — Pitching+ xK% for his K%, xBB% for his BB%, the Mix xwOBA the model's expected ground-ball / popup mix implies for every ball in play (HBP as it was), on the ERA scale like nERA, centred so the pool's pitchers average the same xnERA as nERA (the fixed models read a new season a little hot). Lower is better. nERA takes his strikeouts, walks and batted-ball mix as they were; xnERA replaces all three with the stuff-and-location expectation, so nERA − xnERA is how much his results beat his pitches.",
     nfpc: "xFoul% of contact: the foul models' share of his contact that goes foul — the pitch's traits, where it crossed and the batter's swing on it (where tracked) — the Stuff side of Foul% of contact. League ~51%.",
     fpc: "Foul% of contact: of the swings that touched the ball, the share that went foul rather than in play — Foul% ÷ (Swing% × (1 − Whiff%)). League ~51%; ride four-seamers run 55-60, sinkers and changeups 45-48. It is what turns whiffs into strikeouts: a foul keeps the plate appearance alive (free with two strikes), a ball in play ends it — with Called Strike% it explains about two thirds of why a K% runs over or under what the Whiff% alone implies, and about half of that gap carries to the next season.",
     foul: "Foul%: the share of his pitches fouled off — the strikes that were neither called, swung through nor put in play. It is what turns whiffs and strikes into strikeouts: contact that goes foul keeps the plate appearance alive, a ball in play ends it. With it, K% is explained to within half a point; without it, pitchers like Skenes read as over-performers and Webb / Phillips as under-performers. Repeats year to year like Strike%.",
@@ -6743,6 +6756,7 @@
     };
   }
   function renderNow() {
+    if (!window.DRAFT_XNGAP && window.DRAFT_BUILD && window.DRAFT_BUILD["hist/xngap.js"]) ensureScript("hist/xngap.js", () => !!window.DRAFT_XNGAP);
     if (!window.DRAFT_IL && window.DRAFT_BUILD && window.DRAFT_BUILD["hist/injuries.js"]) ensureScript("hist/injuries.js", () => !!window.DRAFT_IL);   // ~10 KB: the IL badges
     if (!window.DRAFT_MOVES && window.DRAFT_BUILD && window.DRAFT_BUILD["hist/moves.js"]) ensureScript("hist/moves.js", () => !!window.DRAFT_MOVES);   // the winter's moves (28 Oct 2026)
     applyMoves();
