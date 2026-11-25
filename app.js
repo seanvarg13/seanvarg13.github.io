@@ -4363,13 +4363,13 @@
     // the colour key, the glossary, the layout switch) stays as a quiet ⋯ at the end, since it never was a page
     { const lb0 = $("lbsel"); if (lb0 && !lb0.dataset.plain) { lb0.dataset.plain = "1"; lb0.hidden = true; const a = el("a", null, "Leaders"); a.href = "#leaderboard"; a.dataset.mode = "leaderboard"; a.title = "Every player, every stat"; lb0.before(a); } }   // one entry left in its menu (6 Oct 2026), so a plain link; the hidden element keeps the menu code happy
     { const nav = document.querySelector(".modes"), lb = document.querySelector('.modes a[data-mode="leaderboard"]') || $("lbsel"), fan = $("modesel");
-      if (nav && lb && !nav.querySelector('a[data-mode="pitches"]')) {
+      if (false && nav && lb && !nav.querySelector('a[data-mode="pitches"]')) {   // the Pitching+ board is off the site (Sean, 25 Nov 2026)
         const a = el("a", null, "Pitching+"); a.href = "#pitches"; a.dataset.mode = "pitches"; a.title = "Every pitcher's pitches graded";
         lb.after(a); if (fan) a.after(fan);
       } }
     // Fixing the flaw is a page of its own in the header (Sean, 16 Oct 2026: "its own button page on the menu"), called Movers since it took the
     // home card of that name in (Sean, 18 Oct 2026: "get rid of movers and call fixing the flaw 'movers'"); the mode keeps its old key, flaws
-    { const nav = document.querySelector(".modes"), pt = nav && nav.querySelector('a[data-mode="pitches"]');
+    { const nav = document.querySelector(".modes"), pt = nav && (nav.querySelector('a[data-mode="pitches"]') || nav.querySelector('a[data-mode="leaderboard"]'));
       if (pt && !nav.querySelector('a[data-mode="flaws"]')) { const a = el("a", null, "Movers"); a.href = "#movers"; a.dataset.mode = "flaws"; a.title = "Elite hitters whose weak piece has moved lately, and pitchers whose Pitching+ is up"; pt.after(a); } }
     // League Trends, Call-up Watch and Compare left the menus (Sean, 6 Oct 2026: "eliminate the league trends, call up watch and compare");
     // their renderers stay below, and #trends / #callups / #compare land on home
@@ -9298,7 +9298,7 @@
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["fantasy", "Fantasy"]];   // Season Stats is the page's own table now (8 Oct 2026)   // Compare came off the strip with the Compare page (Sean, 6 Oct 2026)
   const BTABS_H = [["talent", "xwOBA"], ["bbq", "Batted balls"], ["vspt", "vs Pitch type"], ["yoy", "Year over year"], ["similar", "Similar"]];   /* the minimal pass (Sean, 17 Nov 2026): xBABIP, xHR/FB, xK% / xBB% and xISO fold into the xwOBA tab, Mix into Batted balls */   // Year over year (28 Oct 2026)   // xISO's build-up, in xSLG's place (Sean, 23 Oct 2026)   // Talent xwOBA's build-up (Sean, 11 Oct 2026)   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
-  const BTABS_P = [["pitching", "xnERA"], ["pxkbb", "xK% / xBB%"], ["games", "Game Logs"], ["yoy", "Year over year"], ["similar", "Similar"]];   /* nERA folds into Pitching+, Workload into Game Logs (17 Nov 2026) */   // Workload (28 Oct 2026)   // Game Logs back, every outing with its nERA (Sean, 18 Oct 2026)   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
+  const BTABS_P = [["pitching", "xnERA"], ["nerab", "nERA"], ["pxkbb", "xK% / xBB%"], ["games", "Game Logs"], ["yoy", "Year over year"], ["similar", "Similar"]];   /* nERA folds into Pitching+, Workload into Game Logs (17 Nov 2026) */   // Workload (28 Oct 2026)   // Game Logs back, every outing with its nERA (Sean, 18 Oct 2026)   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -9306,7 +9306,7 @@
   function renderBelow(p, o = {}) {
     const sec = el("section", "pbelow2");
     const tabs = p.type === "P" ? [...BTABS, ...BTABS_P] : [...BTABS, ...BTABS_H];
-    if (p.type === "P" && springFor()) tabs.splice(tabs.findIndex(([k]) => k === "games"), 0, ["spring", "Spring"]);   // only while a spring this card can speak to is built (6 Oct 2026)
+    if (state.pbtab === "spring") { state.pbtab = "yoy"; state.yoyKind = "spring"; }   // Spring is a switch on Year over year (25 Nov 2026)   // only while a spring this card can speak to is built (6 Oct 2026)
     // a card opens on Season Stats (minimal pass 5, Sean, 30 Sep 2026): Compare, the least used, went to the end of the row,
     // and a Compare left open from before is put back to Stats once per visit
     if (!pbtabReset) { pbtabReset = true; if (state.pbtab === "compare") state.pbtab = "stats"; }
@@ -9321,7 +9321,7 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => { const l = (tabs.find(([x]) => x === k) || [])[1]; return k === "talent" ? wsLab(l) : l; };
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["pxkbb"], ["spring"], ["nera"], ["games"], ["work"], ["yoy"], ["similar"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["vspt"], ["xbabip"], ["xhrfb"], ["talent"], ["xiso"], ["xkbb"], ["yoy"], ["similar"]] : []),
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["nerab"], ["pxkbb"], ["spring"], ["nera"], ["games"], ["work"], ["yoy"], ["similar"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["vspt"], ["xbabip"], ["xhrfb"], ["talent"], ["xiso"], ["xkbb"], ["yoy"], ["similar"]] : []),
                     ["rolling", ...(p.type === "P" ? ["uera"] : ["babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
@@ -9409,7 +9409,12 @@
       if (ka) bx.append(ka); if (bw) bx.append(bw); if (!ka && !bw) bx.append(el("p", "note", "No strike-rate data for this season."));
       body.append(bx);
     } else if (pick === "pitching") {
-      body.append(renderStuffTab(p, o.st, g, "pitching"), fold("Luck-neutral ERA · nERA", () => renderLuckBox(p) || el("p", "note", "Luck-neutral ERA needs batted-ball data for this season.")));
+      body.append(renderStuffTab(p, o.st, g, "pitching"));
+    } else if (pick === "nerab") {
+      const bx = el("div", "rollbox uerabox stuffbox brbox"), nb = renderNeraBuild(p, o.st, g);
+      bx.append(nb || el("p", "note", "nERA needs batted-ball data for this season."));
+      const lb = renderLuckBox(p); if (lb) bx.append(lb);
+      body.append(bx);
     } else if (pick === "spring") {
       body.append(renderSpringTab(p));
     } else if (pick === "xk") {
@@ -9424,7 +9429,11 @@
     } else if (pick === "work") {
       body.append(renderWorkTab(p));
     } else if (pick === "yoy") {
-      body.append(renderYoyTab(p, ref));
+      // Regular season / Spring at the top when a spring this card can speak to is built (Sean, 25 Nov 2026: "combine the year over year tab
+      // with spring, simply just add a spring and regular season filter option at the top of the tab")
+      const sp = p.type === "P" && springFor(), kd = sp && state.yoyKind === "spring" ? "spring" : "reg";
+      if (sp) body.append(viewBar([["reg", "Regular season"], ["spring", "Spring"]], kd, (k) => { state.yoyKind = k; render(); }));
+      body.append(kd === "spring" ? renderSpringTab(p) : renderYoyTab(p, ref));
     } else if (pick === "similar") {
       body.append(renderSimilarTab(p));
     } else if (pick === "drivers") {
@@ -9961,7 +9970,7 @@
     // signed cells by sign, not by the percentile scale (Sean, 6 Oct 2026, Schlittler's +0.4 reading "light blue"): the scale's middle is a
     // pale teal, so a small plus looked like a minus. Neutral grey at 0, red deepening with a plus, blue with a minus, full at ±2.5 K% points.
     const signStyle = (v) => { const t = Math.min(1, Math.abs(v) / 2.5), mix = (a, b) => a.map((x, i) => Math.round(x + (b[i] - x) * t)); const grey = [214, 212, 206], red = [216, 33, 41], blue = [54, 97, 173]; const c = mix(grey, v > 0 ? red : blue); return { bg: `rgb(${c.join(",")})`, fg: t > (v > 0 ? 0.25 : 0.45) ? "#fff" : "var(--ink)" }; };   // white sooner on the red side — ink on a mid red was hard to read (Sean, 6 Oct 2026)
-    const { tb, fin, gap, wrap, ends } = brTable(null, [["Step", "l"], ["His", ""], ["Lg", ""], ["± " + K, "", "K% points this moves him from the K% his whiffs alone imply"], [K, ""]], "kbuild");
+    const { tb, fin, gap, wrap, ends } = brTable(null, [["Step", "l"], ["His", ""], ["Lg", ""], ["± K%", "", "K% points this moves him from the K% his whiffs alone imply"], ["K%", ""]], "kbuild");
     ends.add(0); ends.add(2);
     const t0 = wrap.querySelector("thead tr"); t0.children[0].classList.add("ge"); t0.children[2].classList.add("ge");
     let band = false;
@@ -9980,13 +9989,17 @@
     // row that says the four together and then make everything else white ... split into like actual predictable stuff and also pure luck").
     // The split is the leftover's own reliability (KREL.rest): w = BF / (BF + 497) of it repeats, the rest is luck. The Stuff side's leftover is
     // the models', not a season's sampling, so it stays one row there
-    if (stuff) { runK += rest; row("", "Everything else", undefined, null, dCell(rest), runK, "what the four don't explain of the models' K%"); }
+    // the Stuff side in the Raw side's rows (Sean, 25 Nov 2026: "make the stuff tables look exactly like the raw"): what the four don't explain of
+    // the models' K% is the repeatable row, landing on xK% (marked), then the luck row carries it to his actual K% — the same rows, the same end
+    if (stuff) { runK += rest; row("", "Everything else, repeatable", undefined, null, dCell(rest), runK, "what the four don't explain of the K% his stuff earns");
+      expMark(tb, "Expected K%");
+      const lk = act.k - his.k; runK += lk; row("", "Everything else, luck", undefined, null, dCell(lk), runK, "his actual K% beyond what his stuff earns"); }
     else { const w = wOf("rest"), rep = w * rest, lk = rest - rep;
       runK += rep; row("", "Everything else, repeatable", undefined, null, dCell(rep), runK, `the share of what the four don't explain that carries to next season: ${Math.round(100 * w)}% of it at ${bf} batters faced`);
       expMark(tb, "Expected K%");
       runK += lk; row("", "Everything else, luck", undefined, null, dCell(lk), runK, `the share that doesn't carry to next season`); }
     tb.append(gap()); band = true;
-    row("tot first", K, undefined, null, dCell(gap0), his.k, stuff ? `the models' K%; his actual K% is ${f1(act.k)} · ${bf} batters faced` : `${bf} batters faced · the whole gap: K% − the K% his whiffs alone imply`);
+    row("tot first", "K%", undefined, null, dCell(stuff ? act.k - base : gap0), act.k, stuff ? `${bf} batters faced · his K% against the K% his expected whiffs alone imply` : `${bf} batters faced · the whole gap: K% − the K% his whiffs alone imply`);
     appendWrap(box, wrap);
     return box;
   }
@@ -10184,6 +10197,37 @@
   // expectedNERA's own arithmetic, one input swapped from the league's to his at a time — the league (with the season's calibration shift), his
   // xK% (the stuff models' whiffs and fouls through the K% fit), his xBB% (his strike rates), his expected batted-ball mix (Mix xwOBA from the
   // stuff models' ground-ball and popup chances), then the credit for beating his stuff (xnAdj) — landing on xnERA, then the luck to his nERA
+  // xnERA's pieces in the current view, before the beats-his-stuff credit: the stuff models' whiffs and fouls through the K% fit, his xBB%, the
+  // expected batted-ball mix, through expectedNERA, plus the season pool's calibration shift (sh)
+  function xnShift(p) { return pool(p.primary === "SP" ? "SP" : "RP").sorted.xneraShift || 0; }
+  function xnCore(p, sh) {
+    const pv = V(p), m = pv.m, sr = stuffRates(p); if (!sr) return null;
+    const pl = pool(p.primary === "SP" ? "SP" : "RP"), xk = xKStuff(m, sr.xw, sr.xw, foulChance(p)), mx = mixOfShares(sr.xg, sr.xp, pl.sorted);
+    const e = expectedNERA(pv, xk, m.xbbf, mx); return e == null ? null : e + sh;
+  }
+  // the nERA build-up (Sean, 25 Nov 2026: "add in the nERA build up tab next to xnERA tab"): the same arithmetic as xnERA's with his actual
+  // rates — the league, his K%, his BB%, his batted-ball mix (his ground balls and popups, air balls at the league's line-drive share), then
+  // everything nERA counts beyond those (HBP, liners against fly balls, untyped balls), landing on nERA, then the luck to his ERA
+  function renderNeraBuild(p, st, g) {
+    const pv = V(p), m = pv.m, L = lgRatesP(), pl = pool(g);
+    if (m.nera == null || m.k == null || m.bb == null || m.gb == null || m.pu == null || L.k == null || L.bb == null || L.gb == null || L.pu == null) return null;
+    const lmx = mixOfShares(L.gb / 100, L.pu / 100, pl.sorted), mx = mixOfShares(m.gb / 100, m.pu / 100, pl.sorted);
+    const E = (k, b, x) => expectedNERA(pv, k, b, x), e0 = E(L.k, L.bb, lmx), e1 = E(m.k, L.bb, lmx), e2 = E(m.k, m.bb, lmx), e3 = E(m.k, m.bb, mx);
+    if ([e0, e1, e2, e3].some((v) => v == null)) return null;
+    const r2 = (x) => Math.round(100 * x) / 100, sg = (d) => (d > 0 ? "+" : d < 0 ? "\u2212" : "") + Math.abs(d).toFixed(2), pc = (k) => (st && st.pct ? st.pct[k] : null);
+    const b = buildUp("nERA build-up", "the league's nERA moved by what he actually did, one piece at a time", "ERA", (x) => x.toFixed(2), sg, 0.5, true);
+    let run = r2(e0);
+    b.row("League", null, null, (x) => x, null, "\u2192", run, "the league's nERA: where an average pitcher starts");
+    const step = (lab, his, lg, f, k, nx, tip) => { const v = r2(nx); b.row(lab, his, lg, f, pc(k), r2(v - run), v, tip); run = v; };
+    step("K%", m.k, L.k, (x) => x.toFixed(1), "k", e1, "his strikeouts per batter faced");
+    step("BB%", m.bb, L.bb, (x) => x.toFixed(1), "bb", e2, "his walks per batter faced");
+    step("Batted balls", mx, lmx, (x) => x.toFixed(3), "mixw", e3, "his ground balls and popups at the league's value for each, the rest of his balls in play as air balls (lower is better)");
+    if (Math.abs(r2(m.nera) - run) >= 0.005) step("Everything else", null, null, (x) => x, null, m.nera, "hit batters, the reached-on strikeouts, and balls in play with no type: what nERA counts beyond the three above");
+    b.mark("nERA");
+    const era = m.era != null ? m.era : !winIdx() && !splitActive() && p.m ? p.m.era : null;
+    if (era != null) b.band("Luck", r2(era - run), era, "balls in play finding holes or gloves, sequencing and the official scorer: his ERA beyond his luck-neutral nERA");
+    return b.done();
+  }
   function renderXnBuild(p, st, g) {
     const pv = V(p), m = pv.m, L = lgRatesP(), pl = pool(g), sr = stuffRates(p);
     if (!sr || L.k == null || L.bb == null || L.gb == null || L.pu == null) return null;
@@ -10216,6 +10260,12 @@
     else hd.append(el("span", "rollname", m.stuff == null ? "Stuff+ –" : `Stuff+ ${Math.round(m.stuff)}`),
                    el("span", "rollsub", m.stuff == null ? "no pitch-tracking grades for this season yet" : `Whiff+ ${Math.round(m.swhf)} · Batted-ball+ ${Math.round(m.sbb)}` + vl));
     box.append(hd);
+    if (P) {   // xnERA and nERA as percentile bars at the top (Sean, 25 Nov 2026)
+      const bar = (k, label, v) => { const pc = st && st.pct ? st.pct[k] : null; return v == null ? null : { k, label, v, value: v.toFixed(2), pct: pc == null ? null : Math.round(pc), lg: null, hib: false,
+        m: { key: k, label, hib: false }, gloss: GLOSS[k] || "", tip: `${label}: ${v.toFixed(2)} · ${pc == null ? "n/a" : ordinal(Math.round(pc)) + " pctl"}` }; };
+      const rws = [bar("xnera", "xnERA", st ? st.xnera : null), bar("nera", "nERA", m.nera)].filter(Boolean);
+      if (rws.length) { const c = el("div", "pcttab"); c.append(pctChart([{ title: "", rows: rws }], 0, false)); box.append(c); }
+    }
     if (!rows.length) {   // no pitch tracking (Double-A and below): no arsenal table, but the strikeout profile and the whiffs-to-strikeouts
       // summary read the calls, swings and fouls Gameday does carry (Sean, 6 Oct 2026: "add these functionalities to the minor league pitchers too")
       box.append(el("p", "note", DS.level && DS.level !== "MLB" ? "No pitch tracking at this level, so there's no arsenal to grade — the strikeout profile below reads the calls, swings and fouls the feed does carry." : "The arsenal table comes with the next build of this season's data."));
@@ -10239,15 +10289,13 @@
     // B-Ref's dress (Sean, 9 Oct 2026, from the B-Ref Style Tables canvas: "I want that for everything"): an over-header naming each group, the
     // expected / actual pairs as two columns (Exp, Act in grey), the grades filling their cells, All pitches a band row under a gap
     const heads = [["Type", "l f1"], ["#", "", "Pitches thrown"], ["Use%", ""], ["Velo", ""], ["IVB", "", "Induced vertical break, inches"], ["HB", "", "Horizontal break, inches (arm side +)"], ["Spin", ""],
-                   ...(P ? [["Pitching+", "sp", "Stuff+ with location: the same pitch graded in the spot it was thrown"], ["Whiff+", "", "Pitching+'s whiff half"], ["BB+", "", "Pitching+'s batted-ball half"],
-                           ["Cmd+", "", "Command+: the walk side in runs — his Strike%, 1st-pitch and 3-ball strike rates against the league's (100 = average)"],
-                           ...PAIRH("The whiff rate per swing the location-aware model expects", "his actual whiffs per swing"), ...PAIRH("The location-aware model's ground-ball rate on contact", "his actual GB%"), ...PAIRH("The location-aware model's popup rate on contact", "his actual popups per ball in play"),
+                   ...(P ? [...PAIRH("The whiff rate per swing the location-aware model expects", "his actual whiffs per swing"), ...PAIRH("The location-aware model's ground-ball rate on contact", "his actual GB%"), ...PAIRH("The location-aware model's popup rate on contact", "his actual popups per ball in play"),
                            ...PAIRH("The foul model's share of contact that goes foul — the pitch's traits, where it crossed and the batter's swing on it", "his actual fouls per contact"),
                            ...PAIRH("The command models' called-strike chance per pitch — P(taken) × P(called | taken) from the pitch's traits, its spot and the count, centred on the league's actual called-strike rate (Sean, 6 Oct 2026)", "his actual called strikes per pitch")]
                         : [["Stuff+", "sp"], ["Whiff+", ""], ["BB+", "", "Batted-ball+"], ...PAIRH("The model's whiff rate per swing", "his actual Whiff%"),
                            ...PAIRH("The model's ground-ball rate on contact", "his actual GB%"), ...PAIRH("The model's popup rate on contact", "his actual popups per ball in play"),
                            ...PAIRH("The foul model's share of contact that goes foul — the pitch's traits, where it crossed and the batter's swing on it (a foul keeps the strikeout alive; a ball in play ends the PA)", "his actual fouls per contact")])];
-    const groups = [["Pitch", 1], ["Usage", 2], ["Shape", 4], ["Grades vs type", P ? 4 : 3], ["Whiff%", 2], ["GB%", 2], ["PU%", 2], ["Foul%", 2], ...(P ? [["Called%", 2]] : [])];
+    const groups = [["Pitch", 1], ["Usage", 2], ["Shape", 4], ...(P ? [] : [["Grades vs type", 3]]), ["Whiff%", 2], ["GB%", 2], ["PU%", 2], ["Foul%", 2], ...(P ? [["Called%", 2]] : [])];
     const { t: tbl, tb, fin, gap, wrap } = brTable(groups, heads);
     tbl.querySelector("tr.over th").classList.add("f1");   // "Pitch" over the frozen pitch column freezes with it (Sean, 9 Oct 2026)
     const f1n = (x) => (x == null ? "–" : x.toFixed(1)), pct = (x) => (x == null ? "–" : x.toFixed(1) + "%");
@@ -10272,7 +10320,7 @@
       const A = vsType ? typeAvg(r.pt) : null, tr = el("tr");
       tr.append(el("td", "l nm f1", PITCH_NAME[r.pt] || r.pt), el("td", null, String(r.n)), el("td", null, pct(100 * r.n / tot)), el("td", null, f1n(r.velo)), el("td", null, f1n(r.ivb)), el("td", null, f1n(r.hb)),
                 el("td", null, r.spin == null ? "–" : String(r.spin)),
-                ...(P ? [cellPlus(rel(r.pitp, A && A.t), "sp"), cellPlus(rel(r.whfpl, A && A.w)), cellPlus(rel(r.bbpl, A && A.b)), cellPlus(r.locp),
+                ...(P ? [
                          ...pair(r.xwhfl, r.whf, null, ap(r, "whf")), ...pair(r.xgbl, r.gb, null, ap(r, "gb")), ...pair(r.xpul, r.pu, null, ap(r, "pu")), ...pair(xFoulOf(r), r.foul, null, ap(r, "foul")), ...pair(r.xcstr == null ? null : r.xcstr + cshift, r.cstr, null, ap(r, "cstr"))]
                       : [cellPlus(rel(r.stuffp, A && A.t), "sp"), cellPlus(rel(r.whfp, A && A.w)), cellPlus(rel(r.bbp, A && A.b)),
                          ...pair(r.xwhf, r.whf, null, ap(r, "whf")), ...pair(r.xgb, r.gb, null, ap(r, "gb")), ...pair(r.xpu, r.pu, null, ap(r, "pu")), ...pair(xFoulOf(r), r.foul, null, ap(r, "foul"))]));
@@ -10289,7 +10337,7 @@
     const tv = vsType && relSum.n ? { t: relSum.t / relSum.n, w: relSum.w / relSum.n, b: relSum.b / relSum.n }
                                   : { t: mv.swhf == null ? mv.stuff : mv.swhf + mv.sbb - 100, w: mv.swhf, b: mv.sbb };
     trt.append(el("td", "l f1", "All pitches"), el("td", null, String(tot)), el("td"), el("td"), el("td"), el("td"), el("td"),
-               ...(P ? [cellPlus(mv.pitch, "sp"), cellPlus(mv.pwhf), cellPlus(mv.pbb), cellPlus(mv.sloc),
+               ...(P ? [
                         ...pair(R0.some((r) => r.xwhfl != null) ? wxs("xwhfl", "sw") : null, act("whf", "sw")), ...pair(R0.some((r) => r.xgbl != null) ? wxs("xgbl", "bip") : null, act("gb", "bip")), ...pair(R0.some((r) => r.xpul != null) ? wxs("xpul", "bip") : null, act("pu", "bip")),
                         ...(() => { let n = 0, tx = 0, na = 0, ta = 0; for (const r of R0) { const c = con(r), x = xFoulOf(r); if (x != null && c) { n += c; tx += x * c; } if (r.foul != null && c) { na += c; ta += r.foul * c; } }
                           const fa = na ? ta / na : m.foul != null && m.swing && m.whf != null && m.swing * (1 - m.whf / 100) > 0 ? m.foul / (m.swing * (1 - m.whf / 100)) * 100 : null;
@@ -10620,8 +10668,13 @@
     // nERA leads the numbers, then Pit, then the rest as they were (Sean, 18 Oct 2026: "put nERA first, then pitches then everything as is")
     const { t, tb, fin, gap, wrap, ends } = brTable(null, [["Date", "l f1"], ["Opp", "l", "The other side (@ = on the road), from MLB's game log"],
       ["nERA", "", "Luck-neutral ERA that outing: every ball in play at the league's value for its type, his strikeouts and walks as they were — coloured by its place among the season's starts (a relief outing among relief outings)"],
+      ["xnERA", "", "What his pitches said that outing: the stuff models' whiffs, fouls and batted-ball mix and his strike rates, through nERA's arithmetic, plus his season's credit for beating his stuff"],
       ["IP"], ["K"], ["BB"], ["K-BB%"], ["GB%", "", "Ground balls per ball in play"], ["PU%", "", "Popups per ball in play"]], "glbt");
-    for (const i of [1, 2, 6]) ends.add(i);   // no Pit column (Sean, 18 Oct 2026: "Actually get rid of pitches in that"), so the rule after nERA leads into IP
+    for (const i of [1, 3, 7]) ends.add(i);
+    // xnERA by outing (Sean, 25 Nov 2026: "also add xnERA to the game logs tab"): each outing's own pieces through xnCore under a one-day
+    // window, on the season pool's calibration shift and the season's beats-his-stuff credit
+    const sea = withWindow(NOWIN, () => withSplit(NONE, () => { const sh = xnShift(p), e = xnCore(p, sh); return { sh, adj: e == null ? 0 : xnAdj(p, e) }; }));
+    const xnDay = (iso) => (iso ? withWindow({ from: iso, to: iso, last: "" }, () => withSplit(NONE, () => { const e = xnCore(p, sea.sh); return e == null ? null : e + sea.adj; })) : null);   // no Pit column (Sean, 18 Oct 2026: "Actually get rid of pitches in that"), so the rule after nERA leads into IP
     [...t.tHead.rows[0].children].forEach((h, i) => { if (ends.has(i)) h.classList.add("ge"); });
     for (const g of games) {
       const iso = src.days && src.days[g.day], dc = el("td", "l f1", iso ? fmtDate(iso) : "–");
@@ -10630,13 +10683,14 @@
       const v = dayNERA(g, c), nc = el("td", null, mi(v, 2)), pp = outPct(pool, g.gs, v);
       if (pp != null) { heatTd(nc, pp); nc.title = `${ordinal(Math.round(pp))} percentile among the season's ${g.gs ? "starts" : "relief outings"}`; }
       const tr = el("tr");
-      tr.append(dc, el("td", "l", os ? os.map(([o, h]) => (h ? o : "@ " + o)).join(", ") : opp === null ? "…" : "–"), nc, el("td", null, fmtIP(g.outs / 3)),
+      const xv = xnDay(iso), xc = el("td", null, mi(xv, 2)), xp = outPct(pool, g.gs, xv); if (xp != null) heatTd(xc, xp);
+      tr.append(dc, el("td", "l", os ? os.map(([o, h]) => (h ? o : "@ " + o)).join(", ") : opp === null ? "…" : "–"), nc, xc, el("td", null, fmtIP(g.outs / 3)),
                 el("td", null, String(g.k)), el("td", null, String(g.bb)), el("td", null, kbb(g)), el("td", null, pc(g.gb, g.bip)), el("td", null, pc(g.pu, g.bip)));
       tb.append(fin(tr));
     }
     const T = { w: games.every((g) => g.w) }; for (const k of OUT_F) T[k] = games.reduce((a, g) => a + g[k], 0);
     const trt = el("tr", "tot first");
-    trt.append(el("td", "l f1", `${games.length} ${games.length === 1 ? "game" : "games"}`), el("td"), el("td", null, mi(dayNERA(T, c), 2)), el("td", null, fmtIP(T.outs / 3)),
+    trt.append(el("td", "l f1", `${games.length} ${games.length === 1 ? "game" : "games"}`), el("td"), el("td", null, mi(dayNERA(T, c), 2)), el("td", null, !filt && games.length === all.size ? mi(withWindow(NOWIN, () => withSplit(NONE, () => { const e = xnCore(p, sea.sh); return e == null ? null : e + sea.adj; })), 2) : ""), el("td", null, fmtIP(T.outs / 3)),
                el("td", null, String(T.k)), el("td", null, String(T.bb)), el("td", null, kbb(T)), el("td", null, pc(T.gb, T.bip)), el("td", null, pc(T.pu, T.bip)));
     tb.append(gap(), fin(trt));
     box.append(wrap);
@@ -12442,7 +12496,7 @@
   // page's (the Leaderboard's dropdown pages, the Pitching+ board's pitch / hand / role / minimum / colour, Movers' position / window / order),
   // marked (.set) when it has something in effect; under the bar one line carries the count and what the list is sorted by, over the red rule,
   // as the Leaderboard's #lbtitle does. A phone centres the bar and scrolls it inside itself when the buttons don't fit.
-  const LEADERS_PAGES = [["leaderboard", "Leaderboard", "#leaderboard"], ["pitches", "Pitching+", "#pitches"], ["flaws", "Movers", "#movers"]];
+  const LEADERS_PAGES = [["leaderboard", "Leaderboard", "#leaderboard"], ["flaws", "Movers", "#movers"]];
   // and the Fantasy pages share one too (Sean, the same day: "with the fantasy page do kind of the same thing. Add one bar up top to that which
   // allows you to switch between the different fantasy pages and options"): Rankings (Draft mode is its mode), the Fantasy leaderboard (Recent
   // is its view), Bullpens, the Mock draft and Scoring settings
@@ -14969,7 +15023,7 @@
     if (h === "settings" || h.startsWith("settings/") || h === "appearance") {   // #appearance is the old More menu's link and the Mac template's hidden one
       state.mode = "settings"; const v = h === "appearance" ? "appearance" : h.split("/")[1];
       if (SET_TABS.some(([k]) => k === v)) state.setTab = v; return; }
-    state.mode = ["home", "draft", "rankings", "trending", "leaderboard", "pitches", "mock", "flaws", "bullpens"].includes(h) ? h : h === "movers" ? "flaws" : h === "explore" ? "player" : "home";   // #movers is the Movers page (18 Oct 2026); #flaws its old name   // #eligibility / #planner / #claude land on home (16 Oct 2026)
+    state.mode = ["home", "draft", "rankings", "trending", "leaderboard", "mock", "flaws", "bullpens"].includes(h) ? h : h === "pitches" ? "leaderboard" : h === "movers" ? "flaws" : h === "explore" ? "player" : "home";   // #movers is the Movers page (18 Oct 2026); #flaws its old name   // #eligibility / #planner / #claude land on home (16 Oct 2026)
   }
   // the ranking source in effect: the working rankings (Rankings page, or Draft with "My rankings"), a saved set, or none
   function orderSource() {

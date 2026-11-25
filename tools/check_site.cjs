@@ -93,16 +93,6 @@ function minorsId() {
     }
     // the Leaders bar (29 Oct 2026): the board draws the Leaderboard's bar with the page picker first; a pick (Role → SP) marks its button and
     // narrows the rows; the picker's list moves between the three pages
-    await step("pitching+ board", async () => { await hash("#pitches"); await count("#pitchboard table tbody tr", 20);
-      await until(() => document.querySelector("#pitchboard .pgrow .sbviews.lbviews .pgpick .pgcur")?.textContent.trim() === "Pitching+" && document.querySelectorAll("#pitchboard .lbviews .sbview[data-pick]").length >= 5 && /pitches · /.test(document.querySelector("#pitchboard .pgline .pcount")?.textContent || ""));
-      await pg.evaluate(() => { document.querySelector('#pitchboard .lbviews .sbview[data-pick="role"]').click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "SP").click(); });
-      await until(() => document.querySelector('#pitchboard .lbviews .sbview[data-pick="role"]')?.classList.contains("set") && /· SP/.test(document.querySelector("#pitchboard .pgline .pcount").textContent) && document.querySelectorAll("#pitchboard table tbody tr").length > 20);
-      await pg.evaluate(() => { document.querySelector('#pitchboard .lbviews .sbview[data-pick="role"]').click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "SP + RP").click(); });
-      await until(() => !document.querySelector('#pitchboard .lbviews .sbview[data-pick="role"]')?.classList.contains("set"));
-      await pg.evaluate(() => { document.querySelector("#pitchboard .lbviews .pgpick").click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "Leaderboard").click(); });
-      await until(() => location.hash === "#leaderboard" && document.querySelector("#pagertop .lbviews .pgpick .pgcur")?.textContent.trim() === "Leaderboard"); await count("#rows > li.row", 20, 60000);
-      await pg.evaluate(() => { document.querySelector("#pagertop .lbviews .pgpick").click(); [...document.querySelectorAll(".ddmenu .ddi")].find((x) => x.textContent === "Pitching+").click(); });
-      await until(() => location.hash === "#pitches"); await count("#pitchboard table tbody tr", 20); });
     if (!QUICK) await step("movers", async () => { await hash("#movers"); await count(".flawpage table tbody tr", 1, 120000);
       await pg.evaluate(() => document.querySelector(".flawpage table tbody tr .pbname").click()); await count(".fxwin", 1);
       // his name in the flaw popup opens his page as the Leaderboard's popup over Movers, the flaw popup gone (23 Oct 2026)
@@ -182,8 +172,7 @@ function minorsId() {
       // within a group, and the Leaderboard's, the board's and Movers' table frames share their four edges
       await step("the bar in one spot", async () => {
         const G = {};
-        for (const [h, ready, fr] of [["#leaderboard", () => document.querySelectorAll("#rows > li.row").length > 20, "#bscroll"], ["#pitches", () => document.querySelectorAll("#pitchboard table tbody tr").length > 20, "#pitchboard .flawpage > .pbscroll"],
-                                       ["#movers", () => document.querySelectorAll("#pitchboard .flawpage table tbody tr").length > 0, "#pitchboard .flawpage > .pbscroll"], ["#rankings", () => document.querySelectorAll("#rows li").length > 5], ["#draft", () => document.querySelectorAll("#rows li").length > 5],
+        for (const [h, ready, fr] of [["#leaderboard", () => document.querySelectorAll("#rows > li.row").length > 20, "#bscroll"],                                        ["#movers", () => document.querySelectorAll("#pitchboard .flawpage table tbody tr").length > 0, "#pitchboard .flawpage > .pbscroll"], ["#rankings", () => document.querySelectorAll("#rows li").length > 5], ["#draft", () => document.querySelectorAll("#rows li").length > 5],
                                        ["#fantasy/leaders", () => document.querySelectorAll("#fboard table tbody tr").length > 5], ["#bullpens", () => document.querySelectorAll(".bppage table tbody tr").length > 20], ["#mock", () => !!document.querySelector("#pitchboard .mkset")], ["#fantasy/settings", () => !!document.querySelector("#fboard .fpresets")]]) {
           await hash(h); await until(ready, undefined, 120000); await pg.waitForTimeout(300);
           const g = await pg.evaluate((sel) => { const vis = (q) => [...document.querySelectorAll(q)].find((e) => e.getClientRects().length), R = (e) => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom].map(Math.round); };
