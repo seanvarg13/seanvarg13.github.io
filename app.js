@@ -10161,6 +10161,7 @@
       typeXCache.set(key, C); }
     const arr = C[r.pt] && C[r.pt][k]; return arr && arr.length >= 10 ? insertPct(arr, v) : null;
   }
+  const GLOSS_NEW = "Pitching+ (new): fitted on next season's runs allowed from shrunk Stuff+, expected whiffs and Command+ plus his K%, BB%, GB%, Whiff%, CSW%, last season's SIERA and age. Held-out 2025 to 2026: r .29 with next RA9 against nERA .26 and SIERA .27; .54 with next K-BB% against .41 and .50. It includes his own results, so it is a forecast, not pure stuff.";
   function renderStuffTab(p, st, g, mode = "stuff") {
     const box = el("div", "rollbox uerabox stuffbox brbox"), P = mode === "pitching";
     const rows = (p.ctx && p.ctx.arsenal) || [];
@@ -10171,6 +10172,14 @@
     else hd.append(el("span", "rollname", m.stuff == null ? "Stuff+ –" : `Stuff+ ${Math.round(m.stuff)}`),
                    el("span", "rollsub", m.stuff == null ? "no pitch-tracking grades for this season yet" : `Whiff+ ${Math.round(m.swhf)} · Batted-ball+ ${Math.round(m.sbb)}` + vl));
     box.append(hd);
+    if (P) {   // the review's model on this tab (Sean, 25 Nov 2026: "make it so it is fully updated in the pitching plus tab")
+      const nw = el("div", "rollhd"), pp = st && st.pct ? st.pct.ppn : null, pn = st && st.pct ? st.pct.nera : null;
+      if (m.ppn == null) nw.append(el("span", "rollname", "Pitching+ (new) –"), el("span", "rollsub", winIdx() || splitActive() ? "full seasons only: clear the dates and splits" : (DS.level && DS.level !== "MLB") || DS.kind || DS.multi ? "regular MLB seasons only" : "no grade for this season"));
+      else nw.append(el("span", "rollname", `Pitching+ (new) ${Math.round(m.ppn)}${pp == null ? "" : " · " + ordinal(pp)}`),
+                     el("span", "rollsub", `projects ${m.tra9 == null ? "–" : m.tra9.toFixed(2)} RA9 next season${m.nera == null ? "" : " · nERA " + m.nera.toFixed(2) + (pn == null ? "" : " (" + ordinal(pn) + ")")} · 100 = league runs allowed, a point is 1%`));
+      nw.title = GLOSS_NEW;
+      box.append(nw);
+    }
     if (!rows.length) {   // no pitch tracking (Double-A and below): no arsenal table, but the strikeout profile and the whiffs-to-strikeouts
       // summary read the calls, swings and fouls Gameday does carry (Sean, 6 Oct 2026: "add these functionalities to the minor league pitchers too")
       box.append(el("p", "note", DS.level && DS.level !== "MLB" ? "No pitch tracking at this level, so there's no arsenal to grade — the strikeout profile below reads the calls, swings and fouls the feed does carry." : "The arsenal table comes with the next build of this season's data."));
