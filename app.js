@@ -10256,7 +10256,26 @@
     b.row("League", null, null, (x) => x, null, "\u2192", run, "the league's nERA: where an average pitcher starts");
     const step = (lab, his, lg, f, k, nx, tip) => { const v = r2(nx); b.row(lab, his, lg, f, pc(k), r2(v - run), v, tip); run = v; };
     step("xK%", xk, L.k, (x) => x.toFixed(1), "xks", e1, "the strikeout rate his stuff earns: the stuff models' whiff and foul chances on his pitches, through the K% fit");
+    { const perK = Math.abs(xk - L.k) > 1e-6 ? (e1 - e0) / (xk - L.k) : 0, f1 = (x) => x.toFixed(1), sg1 = (x) => (x > 0 ? "+" : x < 0 ? "\u2212" : "") + Math.abs(x).toFixed(1);
+      const lfpc = L.foul != null && L.swing && L.whf != null ? 100 * L.foul / (L.swing * (1 - L.whf / 100)) : null;
+      const H = { whf: st ? st.nwhf : null, fpc: st ? st.nfpc : null, cstr: m.ncstr, s2d: st && st.ns2whf != null && st.nwhf != null ? st.ns2whf - st.nwhf : null, bb: xb },
+            G = { whf: L.whf, fpc: lfpc, cstr: L.cstr, s2d: L.s2whf != null && L.whf != null ? L.s2whf - L.whf : null, bb: L.bb };
+      const Wt = { fpc: KCONV.fpc, cstr: KCONV.cstr, s2d: KCONV.d2, bb: KCONV.bb };
+      if (H.whf != null && G.whf != null && perK) {
+        const kp = [{ k: "whf", lab: "xWhiff%", pts: kImplied(H.whf) - L.k, tip: "the K% his expected whiff rate alone implies (−0.8 + 0.926 × xWhiff%), against the league's K%" }];
+        for (const [k, lab, tip] of [["fpc", "xFouls / contact", "fouls keep a strikeout alive: +0.57 K% a point"], ["cstr", "xCalled Strike%", "called strikes: +0.78 K% a point"], ["s2d", "x2-strike finishing", "his expected two-strike whiff rate over his overall: +0.36 K% a point"], ["bb", "xBB%", "walks end plate appearances that could have been strikeouts: −0.35 K% a point"]])
+          if (H[k] != null && G[k] != null) kp.push({ k, lab, pts: Wt[k] * (H[k] - G[k]), tip, sgn: k === "s2d" });
+        kp.push({ lab: "Everything else", pts: xk - L.k - kp.reduce((a, z) => a + z.pts, 0), tip: "what the five don't explain of the K% fit's answer" });
+        b.kids(kp.map((z) => ({ lab: z.lab, his: z.k ? H[z.k] : null, lg: z.k ? G[z.k] : null, f: z.sgn ? sg1 : f1, pc: z.k ? pc({ whf: "nwhf", fpc: "nfpc", cstr: "ncstr", bb: "xbbf" }[z.k]) : null,
+          d: Math.round(100 * z.pts * perK) / 100, tip: `${z.tip} · ${sg1(z.pts)} K%` }))); } }
     step("xBB%", xb, L.bb, (x) => x.toFixed(1), "xbbf", e2, "the walk rate his Strike%, 1st-pitch and 3-ball strike rates say he should have");
+    { const perB = Math.abs(xb - L.bb) > 1e-6 ? (e2 - e1) / (xb - L.bb) : 0, f1 = (x) => x.toFixed(1), sg1 = (x) => (x > 0 ? "+" : x < 0 ? "\u2212" : "") + Math.abs(x).toFixed(1);
+      if (perB) {
+        const bp = [];
+        for (const [k, lab, tip] of [["strk", "Strike%", "strikes per pitch: −0.55 BB% a point"], ["fstrk", "1st-pitch Strike%", "first-pitch strikes: −0.03 BB% a point"], ["b3strk", "3-ball Strike%", "strikes with three balls: −0.23 BB% a point"]])
+          if (m[k] != null && L[k] != null) bp.push({ k, lab, pts: XBBF[k] * (m[k] - L[k]), tip });
+        bp.push({ lab: "Everything else", pts: xb - L.bb - bp.reduce((a, z) => a + z.pts, 0), tip: "the formula's own league level against the league's BB%" });
+        b.kids(bp.map((z) => ({ lab: z.lab, his: z.k ? m[z.k] : null, lg: z.k ? L[z.k] : null, f: f1, pc: z.k ? pc(z.k) : null, d: Math.round(100 * z.pts * perB) / 100, tip: `${z.tip} · ${sg1(z.pts)} BB%` }))); } }
     step("Batted balls", mx, lmx, (x) => x.toFixed(3), "nmix", e3, "Mix xwOBA: what the ground balls and popups his stuff should get are worth on balls in play (lower is better)");
     if (Math.abs(adj) >= 0.005) step("Beats his stuff", null, null, (x) => x, null, e3 + adj, "0.8 × his nERA minus xnERA over this season and his last two, weighted by batters faced and pulled toward zero by 200: pitchers who keep beating their stuff tend to keep doing it");
     b.mark("xnERA");
