@@ -403,7 +403,7 @@
                   ...VS_G.flatMap(([g, lab]) => [{ key: g + "woba", label: "wOBA vs " + lab, hib: true, dec: 3, unit: "" }, { key: g + "xw", label: "xwOBA vs " + lab, hib: true, dec: 3, unit: "" }, { key: g + "whf", label: "Whiff% vs " + lab, hib: false, dec: 1, unit: "%" }])];   // vs pitch type (28 Oct 2026)
   // hitter stats that aren't on the card but can be Leaderboard / Trending columns
   const LB_EXTRA_H = ["xwpk", "xwn", "evfb", "brfb", "fbq", "xhrfb", "xwdiff", "xwcon", "xk", "mixbab", "babip", "xbabip", "bluck", "brel", "spd", "sb", "sba", "sbp", "fpts", "fpg", "fppa", "fpab", "fpwk", "xfpts", "xfpg", "xfppa", "xfpab", "xfpwk", "slot", "stpct", "patg", "lsp", "rsp", ...VS_KEYS];
-  const LB_EXTRA_P = ["ppn", "tra9", "rating", "xnera", "pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "nmix", "nfpc", "fpc", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "wgap", "pjwhf", "fpts", "fpg", "fpgs", "fpip", "fpwk", "xfpts", "xfpg", "xfpgs", "xfpip", "xfpwk"];   // Whiff vs exp. and the projected Whiff% (7 Oct 2026)   // Pitching+ family, xRating and the expected (Pitching+) columns off the lists (Sean, 6 Oct 2026: "get rid of pitching+ entirely and just go back to stuff+")   // pERA / pK% / pBB% / Pitching uERA off the lists (Sean, 4 Oct 2026: "I simply just want expected whiffs GBs and pus")   // Stuff uERA / Arsenal Opt. off the lists with Stuff+ (4 Oct 2026)
+  const LB_EXTRA_P = ["rating", "xnera", "pitch", "pwhf", "pbb", "sloc", "nwhf", "ngb", "npu", "nmix", "nfpc", "fpc", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "wgap", "pjwhf", "fpts", "fpg", "fpgs", "fpip", "fpwk", "xfpts", "xfpg", "xfpgs", "xfpip", "xfpwk"];   // Whiff vs exp. and the projected Whiff% (7 Oct 2026)   // Pitching+ family, xRating and the expected (Pitching+) columns off the lists (Sean, 6 Oct 2026: "get rid of pitching+ entirely and just go back to stuff+")   // pERA / pK% / pBB% / Pitching uERA off the lists (Sean, 4 Oct 2026: "I simply just want expected whiffs GBs and pus")   // Stuff uERA / Arsenal Opt. off the lists with Stuff+ (4 Oct 2026)
   const NEXT_KEYS = new Set(["xrat", "nwhf", "ngb", "npu", "nmix", "wgap", "pjwhf", "xkf", "xks", "xkbb", "xkbbs", "xkw", "xkws", "nswstr", "ncsw", "ns2whf", "nfoul", "nfpc", "xnera"]);   // xFoul% of contact and xnERA (6 Oct 2026)   // xK% / Pitching+ xK% (4 Oct 2026)
   const XRW = { ksklx: 60, ctrl: 20, nmix: 20 };   // xRating = the Rating's shape with the stuff models driving whiffs and fouls (Sean, 5 Oct 2026): xStrikeout (xWhiff% / x2-strike Whiff% / xFoul% percentiles averaged) 60, Control 20, Mix xwOBA 20. Was Pitching+ x(K-BB)% 80 / Mix xwOBA 20;   // the Rating's shape (x(K-BB)% 80 / Mix wOBA 20, 4 Oct 2026) with the stuff-side pair: Pitching+ x(K-BB)% and Mix xwOBA. Was xks 55 / xbbf 35 / nmix 10;   // the xRating (Sean, 4 Oct 2026: "xrating xK% ... using their stuff expected whiff rates and stuff expected foul rates ... xBB% as standard ... mix xwoba based on their stuff"), 55 / 35 / 10   // xRating and the expected Mix wOBA too (4 Oct 2026)
   // still computed and on the pool's stats, but off every list, panel and sort (Sean, 4 Oct 2026: one Pitching+; "get rid of pERA and pitching+ uERA")
@@ -9298,7 +9298,7 @@
   // Spreadsheet Stats, Rolling and (hitters) BABIP came off the strip (Sean, 30 Sep 2026); their renderers stay for now
   const BTABS = [["fantasy", "Fantasy"]];   // Season Stats is the page's own table now (8 Oct 2026)   // Compare came off the strip with the Compare page (Sean, 6 Oct 2026)
   const BTABS_H = [["talent", "xwOBA"], ["bbq", "Batted balls"], ["vspt", "vs Pitch type"], ["yoy", "Year over year"], ["similar", "Similar"]];   /* the minimal pass (Sean, 17 Nov 2026): xBABIP, xHR/FB, xK% / xBB% and xISO fold into the xwOBA tab, Mix into Batted balls */   // Year over year (28 Oct 2026)   // xISO's build-up, in xSLG's place (Sean, 23 Oct 2026)   // Talent xwOBA's build-up (Sean, 11 Oct 2026)   // Batted Ball Quality tab (Sean, 10 Oct 2026)   // xBABIP and xHR/FB tabs (Sean, 9 Oct 2026)   // Game Logs off the strip (Sean, 4 Oct 2026)                  // a hitter's batted-ball mix
-  const BTABS_P = [["pitching", "Pitching+"], ["games", "Game Logs"], ["yoy", "Year over year"], ["similar", "Similar"]];   /* nERA folds into Pitching+, Workload into Game Logs (17 Nov 2026) */   // Workload (28 Oct 2026)   // Game Logs back, every outing with its nERA (Sean, 18 Oct 2026)   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
+  const BTABS_P = [["pitching", "xnERA"], ["pxkbb", "xK% / xBB%"], ["games", "Game Logs"], ["yoy", "Year over year"], ["similar", "Similar"]];   /* nERA folds into Pitching+, Workload into Game Logs (17 Nov 2026) */   // Workload (28 Oct 2026)   // Game Logs back, every outing with its nERA (Sean, 18 Oct 2026)   // the K% / BB% tab came off (Sean, 6 Oct 2026); renderDriversTab stays below   // Pitching+ back (Sean, 6 Oct 2026)   // Stuff+ back, Pitching+ gone (Sean, 6 Oct 2026)   // K% / BB% drivers tab (Sean, 5 Oct 2026)   // the xK% / xBB% tabs came off (Sean, 5 Oct 2026); their renderers stay below   // xK% tab back (Sean, 5 Oct 2026, after an hour as Whiff%)   // xK% / xBB% bars (Sean, 4 Oct 2026)   // nERA where uERA was (Sean, 4 Oct 2026)   // pERA and Game Logs off the strip (Sean, 4 Oct 2026); their renderers stay   // the Stuff tab folded into Pitching+ (Sean, 4 Oct 2026)   // pERA (next season) after Pitching+ (Sean, 3 Oct 2026)   // Pitching+ its own tab (Sean, 3 Oct 2026)   // his arsenal graded, then uERA on the strip where More was (nERA off it — Sean, 30 Sep 2026)
   // The tabs under the percentiles. A tab opens under the strip; clicking the open one closes it and leaves just the
   // strip. o: the pool the page is ranked in ({ st, g, ref })
   let tabPad = null;                                   // room kept under the strip so a shorter tab doesn't pull the page up
@@ -9321,7 +9321,7 @@
     // in it, and its members sit as a small row under the strip.
     const labOf = (k) => { const l = (tabs.find(([x]) => x === k) || [])[1]; return k === "talent" ? wsLab(l) : l; };
     const has = (k) => tabs.some(([x]) => x === k);
-    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["spring"], ["nera"], ["games"], ["work"], ["yoy"], ["similar"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["vspt"], ["xbabip"], ["xhrfb"], ["talent"], ["xiso"], ["xkbb"], ["yoy"], ["similar"]] : []),
+    const groups = [["stats", "sheet"], ...(p.type === "P" ? [["pitching"], ["pxkbb"], ["spring"], ["nera"], ["games"], ["work"], ["yoy"], ["similar"]] : []), ["fantasy"], ...(p.type === "H" ? [["mix"], ["bbq"], ["vspt"], ["xbabip"], ["xhrfb"], ["talent"], ["xiso"], ["xkbb"], ["yoy"], ["similar"]] : []),
                     ["rolling", ...(p.type === "P" ? ["uera"] : ["babip"])], ["compare"]].map((G) => G.filter(has)).filter((G) => G.length);
     const GLAB = { stats: "Stats", rolling: "More", nera: "More" };
     const tabLab = (el0, lab) => { if (/^[nu]ERA$/.test(lab)) el0.append(el("span", "lc", lab[0]), lab.slice(1)); else el0.append(mobileView() && lab === "Season Stats" ? "Stats" : lab); };   // "Stats" on a phone, so the row fits   // nERA / uERA keep their small letter
@@ -9404,6 +9404,10 @@
       body.append(renderFantasyTab(p));
     } else if (pick === "stuff") {
       body.append(renderStuffTab(p, o.st, g));
+    } else if (pick === "pxkbb") {
+      const bx = el("div", "rollbox uerabox stuffbox brbox"), ka = renderKArchetype(p, o.st, g), bw = renderBBBuild(p, o.st, g);
+      if (ka) bx.append(ka); if (bw) bx.append(bw); if (!ka && !bw) bx.append(el("p", "note", "No strike-rate data for this season."));
+      body.append(bx);
     } else if (pick === "pitching") {
       body.append(renderStuffTab(p, o.st, g, "pitching"), fold("Luck-neutral ERA · nERA", () => renderLuckBox(p) || el("p", "note", "Luck-neutral ERA needs batted-ball data for this season.")));
     } else if (pick === "spring") {
@@ -10176,28 +10180,46 @@
     const arr = C[r.pt] && C[r.pt][k]; return arr && arr.length >= 10 ? insertPct(arr, v) : null;
   }
   const GLOSS_NEW = "Pitching+ (new): fitted on next season's runs allowed from shrunk Stuff+, expected whiffs and Command+ plus his K%, BB%, GB%, Whiff%, CSW%, last season's SIERA and age. Held-out 2025 to 2026: r .29 with next RA9 against nERA .26 and SIERA .27; .54 with next K-BB% against .41 and .50. It includes his own results, so it is a forecast, not pure stuff.";
+  // the xnERA build-up (Sean, 25 Nov 2026: "have the pitching+ tab ... be xnERA and ... below the table ... it shows the build up of xnERA"):
+  // expectedNERA's own arithmetic, one input swapped from the league's to his at a time — the league (with the season's calibration shift), his
+  // xK% (the stuff models' whiffs and fouls through the K% fit), his xBB% (his strike rates), his expected batted-ball mix (Mix xwOBA from the
+  // stuff models' ground-ball and popup chances), then the credit for beating his stuff (xnAdj) — landing on xnERA, then the luck to his nERA
+  function renderXnBuild(p, st, g) {
+    const pv = V(p), m = pv.m, L = lgRatesP(), pl = pool(g), sr = stuffRates(p);
+    if (!sr || L.k == null || L.bb == null || L.gb == null || L.pu == null) return null;
+    const xk = xKStuff(m, sr.xw, sr.xw, foulChance(p)), xb = m.xbbf, mx = mixOfShares(sr.xg, sr.xp, pl.sorted), lmx = mixOfShares(L.gb / 100, L.pu / 100, pl.sorted);
+    const sh = pl.sorted.xneraShift || 0, E = (k, b, x) => { const v = expectedNERA(pv, k, b, x); return v == null ? null : v + sh; };
+    const e0 = E(L.k, L.bb, lmx), e1 = E(xk, L.bb, lmx), e2 = E(xk, xb, lmx), e3 = E(xk, xb, mx);
+    if ([e0, e1, e2, e3].some((v) => v == null)) return null;
+    const adj = xnAdj(p, e3), r2 = (x) => Math.round(100 * x) / 100, sg = (d) => (d > 0 ? "+" : d < 0 ? "\u2212" : "") + Math.abs(d).toFixed(2);
+    const b = buildUp("xnERA build-up", "the league's nERA moved by what his pitches say, one piece at a time", "ERA", (x) => x.toFixed(2), sg, 0.5, true);
+    const pc = (k) => (st && st.pct ? st.pct[k] : null);
+    let run = r2(e0);
+    b.row("League", null, null, (x) => x, null, "\u2192", run, "the league's nERA: where an average pitcher starts");
+    const step = (lab, his, lg, f, k, nx, tip) => { const v = r2(nx); b.row(lab, his, lg, f, pc(k), r2(v - run), v, tip); run = v; };
+    step("xK%", xk, L.k, (x) => x.toFixed(1), "xks", e1, "the strikeout rate his stuff earns: the stuff models' whiff and foul chances on his pitches, through the K% fit");
+    step("xBB%", xb, L.bb, (x) => x.toFixed(1), "xbbf", e2, "the walk rate his Strike%, 1st-pitch and 3-ball strike rates say he should have");
+    step("Batted balls", mx, lmx, (x) => x.toFixed(3), "nmix", e3, "Mix xwOBA: what the ground balls and popups his stuff should get are worth on balls in play (lower is better)");
+    if (Math.abs(adj) >= 0.005) step("Beats his stuff", null, null, (x) => x, null, e3 + adj, "0.8 × his nERA minus xnERA over this season and his last two, weighted by batters faced and pulled toward zero by 200: pitchers who keep beating their stuff tend to keep doing it");
+    b.mark("xnERA");
+    if (m.nera != null) b.band("Luck and the rest", r2(m.nera - run), m.nera, "what happened beyond what his pitches say: sequencing, deception the models miss, a small sample. nERA is his luck-neutral results");
+    return b.done();
+  }
   function renderStuffTab(p, st, g, mode = "stuff") {
     const box = el("div", "rollbox uerabox stuffbox brbox"), P = mode === "pitching";
     const rows = (p.ctx && p.ctx.arsenal) || [];
     const pv = V(p), m = pv.m;
     const hd = el("div", "rollhd"), vl = viewLabel(p.type) && viewLabel(p.type) !== "full season" ? ` · ${viewLabel(p.type)}` : "";
-    if (P) hd.append(el("span", "rollname", m.pitch == null ? "Pitching+ –" : `Pitching+ ${Math.round(m.pitch)}`),
-                     el("span", "rollsub", m.pitch == null ? "no pitch grades for this season yet" : `Whiff+ ${Math.round(m.pwhf)} · Batted-ball+ ${Math.round(m.pbb)} · Command+ ${Math.round(m.sloc)}${m.stuff == null ? "" : " · stuff alone " + Math.round(m.stuff)}` + vl));
+    const xnv = st ? st.xnera : null;
+    if (P) hd.append(el("span", "rollname", xnv == null ? "xnERA –" : `xnERA ${xnv.toFixed(2)}`),
+                     el("span", "rollsub", (m.nera == null ? "" : `nERA ${m.nera.toFixed(2)} · `) + "what his pitches say he should allow: the expected rates per pitch, then the build-up" + vl));
     else hd.append(el("span", "rollname", m.stuff == null ? "Stuff+ –" : `Stuff+ ${Math.round(m.stuff)}`),
                    el("span", "rollsub", m.stuff == null ? "no pitch-tracking grades for this season yet" : `Whiff+ ${Math.round(m.swhf)} · Batted-ball+ ${Math.round(m.sbb)}` + vl));
     box.append(hd);
-    if (P) {   // the review's model on this tab (Sean, 25 Nov 2026: "make it so it is fully updated in the pitching plus tab")
-      const nw = el("div", "rollhd"), pp = st && st.pct ? st.pct.ppn : null, pn = st && st.pct ? st.pct.nera : null;
-      if (m.ppn == null) nw.append(el("span", "rollname", "Pitching+ (new) –"), el("span", "rollsub", winIdx() || splitActive() ? "full seasons only: clear the dates and splits" : (DS.level && DS.level !== "MLB") || DS.kind || DS.multi ? "regular MLB seasons only" : "no grade for this season"));
-      else nw.append(el("span", "rollname", `Pitching+ (new) ${Math.round(m.ppn)}${pp == null ? "" : " · " + ordinal(pp)}`),
-                     el("span", "rollsub", `projects ${m.tra9 == null ? "–" : m.tra9.toFixed(2)} RA9 next season${m.nera == null ? "" : " · nERA " + m.nera.toFixed(2) + (pn == null ? "" : " (" + ordinal(pn) + ")")} · 100 = league runs allowed, a point is 1%`));
-      nw.title = GLOSS_NEW;
-      box.append(nw);
-    }
     if (!rows.length) {   // no pitch tracking (Double-A and below): no arsenal table, but the strikeout profile and the whiffs-to-strikeouts
       // summary read the calls, swings and fouls Gameday does carry (Sean, 6 Oct 2026: "add these functionalities to the minor league pitchers too")
       box.append(el("p", "note", DS.level && DS.level !== "MLB" ? "No pitch tracking at this level, so there's no arsenal to grade — the strikeout profile below reads the calls, swings and fouls the feed does carry." : "The arsenal table comes with the next build of this season's data."));
-      if (P) { const ka = renderKArchetype(p, st, g); if (ka) box.append(ka); const bw = renderBBBuild(p, st, g); if (bw) box.append(bw); }   // the Whiffs to strikeouts tables came off (6 Oct 2026); renderKConv stays
+      if (P) { const xb = renderXnBuild(p, st, g); if (xb) box.append(xb); }   // the Whiffs to strikeouts tables came off (6 Oct 2026); renderKConv stays
       return box; }
     const av = arsenalView(p), filtered = Array.isArray(av);
     if (av === "loading") box.append(el("p", "note", "Loading his pitches game by game…"));
@@ -10290,7 +10312,7 @@
       if (roleNorm(SPLIT)) { const d = el("div", "aopt spnorm");
         d.append(el("b", null, "All innings as a starter"), el("span", null, ": every pitch he threw, with the days he relieved read as a starter — their expected whiff, ground-ball and popup rates moved by the reliever-to-starter effect from history (about −0.9 whiff points, −0.8 ground-ball points and +0.1 popup points for a typical reliever, more the better his relief numbers). So xWhiff / xGB / xPU here and in the Pitching+ table, Mix xwOBA, xRating and the whiff check are what the whole season says about him in the rotation; his actual rates, Pitching+ and the start days are as they were."));
         box.append(d); }
-      const ka = renderKArchetype(p, st, g); if (ka) box.append(ka); const bw = renderBBBuild(p, st, g); if (bw) box.append(bw);   // strikeout profile, then the walk build-up (9 Oct 2026);: archetype, skill / noise (6 Oct 2026)
+      const xb = renderXnBuild(p, st, g); if (xb) box.append(xb);   // the xnERA build-up (25 Nov 2026; the K% / BB% build-ups moved to their own tab); was the strikeout profile, then the walk build-up (9 Oct 2026);: archetype, skill / noise (6 Oct 2026)
       }   // the whiff check and the notes under the tab are off (Sean, 6 Oct 2026: "i dont think we need any of that wording below")
     // how well his usage leans on his whiff pitches (arsenalOpt), with where that ranks among the season's pitchers
     const EXTRAS = false;   // Arsenal Opt. and Stuff uERA under the table are off (Sean, 6 Oct 2026: "just have a stuff+ tab that shows expected whiff rates and gb% and pop up%")
@@ -10872,12 +10894,12 @@
   // Control, Swing & Miss = K% · Whiff% (fold-out: 2-strike Whiff%, Foul%, Called Strike%); the Stuff side the Pitching+ expected ones
   // Walk Avoidance under Swing & Miss, ahead of Batted Ball (Sean, 5 Oct 2026); left 7 rows, right 6
   // Skills = K-BB% · Mix wOBA, K% back atop Swing & Miss and BB% atop Command (Walk Avoidance renamed) with a line break ("|") after each, no Results (Sean, 6 Oct 2026)
-  const PCT_COLS_P = [[["Skills", ["ppn", "whf", "xbbf"]], ["Swing & Miss", ["k", "whf", "s2whf", "cstr", "fpc"]]],
+  const PCT_COLS_P = [[["Skills", ["whf", "xbbf"]], ["Swing & Miss", ["k", "whf", "s2whf", "cstr", "fpc"]]],
                       [["Command", ["bb", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["gb", "pu", "mixw"]]]];   // the EV-allowed-by-type rows lasted an evening (Sean, 8 Oct 2026); they stay columns   // the Rating's inputs are Skills (Strikeout, Control) and Mix wOBA (5 Oct 2026)
   // the Stuff side (Sean, 6 Oct 2026: "for the swing and miss stuff you use all the expected whiff expected two strike whiff expected called
   // strikes and expected fouls from the pitching+ model, and also use expected batted ball stuff from it too ... an xK% too"): every bar off
   // the Pitching+ models — xK% (Pitching+ xK%), xWhiff%, x2-strike Whiff%, xCalled Strike%, xFoul% of contact, xBB%, xGB% / xPU% / Mix xwOBA
-  const PCT_COLS_PS = [[["Skills", ["ppn", "nwhf", "xbbf"]], ["Swing & Miss", ["xks", "nwhf", "ns2whf", "ncstr", "nfpc"]]],
+  const PCT_COLS_PS = [[["Skills", ["nwhf", "xbbf"]], ["Swing & Miss", ["xks", "nwhf", "ns2whf", "ncstr", "nfpc"]]],
                        [["Command", ["xbbf", "strk", "fstrk", "b3strk"]], ["Batted Ball", ["ngb", "npu", "nmix"]]]];
   const STUFF_LABELS = { nfpc: "xFoul% of contact", xnera: "xnERA", xbbf: "xBB%", xks: "xK%", xkbbs: "x(K-BB)%", ngb: "xGB%", npu: "xPU%", nmix: "Mix xwOBA", xrat: "xRating", nwhf: "xWhiff%", nfoul: "xFoul%", xkws: "xWhiff% − xK%", ns2whf: "x2-strike Whiff%", ncstr: "xCalled Strike%" };
   const stuffSide = () => state.cardSide === "stuff";   // the Raw / Stuff switch is back (Sean, 6 Oct 2026: "add back the raw vs stuff button")
