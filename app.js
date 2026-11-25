@@ -10598,15 +10598,8 @@
     const kinds = gameKinds(p), want = state.glKind == null ? DS.key : state.glKind ? `${keyBase(DS.key)}-${state.glKind}` : keyBase(DS.key);
     const key = kinds.some(([k]) => k === want) ? want : DS.key;
     const wrap = el("div", "glwrap");
-    if (kinds.length > 1) {
-      const seg = el("div", "seg glkind"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Games");
-      for (const [k, l] of kinds) {
-        const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(k === key));
-        b.addEventListener("click", () => { if (k === key) return; state.glKind = keyKind(k); state.gameDay = null; state.hGameDay = null; render(); });
-        seg.append(b);
-      }
-      wrap.append(seg);
-    }
+    if (kinds.length > 1)   // the Year over year tab's bar (Sean, 25 Nov 2026: "make the regular season postseason spring filter box the same as on the year over year tab")
+      wrap.append(viewBar(kinds.map(([k, l]) => [k, l === "Spring training" ? "Spring" : l]), key, (k) => { if (k === key) return; state.glKind = keyKind(k); state.gameDay = null; state.hGameDay = null; render(); }));
     const draw = (q) => (q.type === "P" ? renderGamesTab(q) : renderHitGamesTab(q));
     if (key === DS.key) { wrap.append(draw(p)); return wrap; }
     const ds = key === CUR.key ? CUR : histDataset(key);
