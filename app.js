@@ -5350,6 +5350,7 @@
     if (!modal.hidden) { modal.hidden = true; lockPage(false); }
     return popBody();
   }
+  const PICK_GONE = new Set(["txw", "txwp", "ttw", "pxw", "xstrk", "xosw", "cmd", "xbb", "pubb", "ppn", "tra9", "pitch", "pwhf", "pbb", "sloc"]);   // removed stats the picker no longer offers
   function renderColPick() {
     parkControls();                                   // the shared controls must be out of the modal before it is cleared
     const body = panelOpen();
@@ -5372,7 +5373,6 @@
         // the Pitching+ family as a group of its own, whatever the card's data carries (Sean, 3 Oct 2026: "i dont see any of the pitching+ stats")
         const fam = ["pitch", "pwhf", "pbb", "sloc"].map((k) => lbOrder(g).find((m) => m.key === k) || side(k)).filter(Boolean);   // Stuff+ again (6 Oct 2026)
         for (const grp of groups) grp.metrics = grp.metrics.filter((m) => !fam.some((x) => x.key === m.key));
-        groups.push({ group: "Pitching+", metrics: fam });
         const nx = [...NEXT_KEYS].map((k) => side(k)).filter(Boolean);   // next season's, their own group (pERA; Sean, 3 Oct 2026)
         for (const grp of groups) grp.metrics = grp.metrics.filter((m) => !NEXT_KEYS.has(m.key));
         groups.push({ group: "Expected (Pitching+)", metrics: nx });
@@ -5407,7 +5407,7 @@
     for (const grp of groups) {
       const sec = el("div", "colgroup"); sec.append(el("h4", null, grp.group));
       for (const m of grp.metrics) {
-        if (seen.has(m.key)) continue; seen.add(m.key);
+        if (seen.has(m.key) || PICK_GONE.has(m.key) || (pit && RETIRED_P.has(m.key))) continue; seen.add(m.key);   // only live stats (Sean, 26 Nov 2026)
         const l = el("label", "toggle"); const c = el("input"); c.type = "checkbox"; c.checked = colKeys(g).includes(m.key);
         c.addEventListener("change", () => { const cur = colKeys(g).filter((k) => k !== m.key); if (c.checked) cur.push(m.key); setColKeys(g, cur); ensureSortValid(); drawOrder(); renderColhead(); renderRows(); renderToolSummary(); });
         l.append(c, " ", m.label); sec.append(l);

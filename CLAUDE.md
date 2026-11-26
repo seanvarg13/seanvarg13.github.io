@@ -6506,3 +6506,5 @@ line can bring them back.
   under Whiff% in Swing & Miss (x2-strike Whiff% under xWhiff% on the Stuff side).
 
 * **2-strike Whiff% back in xK% and on the card; Pitching+ xK% predicts it from xWhiff% (Sean, 25 Nov 2026)**: `XKM` is the pre-#937 fit again (2-strike Whiff% in its tiers); on the card it is a plain row after Whiff% in Swing & Miss (x2-strike Whiff% after xWhiff% on the Stuff side). Inside Pitching+ xK% (→ xnERA) the expected 2-strike Whiff% is `s2x`: the league's 2-strike Whiff% + 0.959 × (xWhiff% − the league's Whiff%) (every 100+ BF pitcher-season 2020-26, BF-weighted, season-centred), in place of his own 2-strike rate scaled by xWhiff / Whiff. Forward test (1,141 pairs, 50+ IP both years): xnERA → next nERA r .598 → .602; Pitching+ xK% → next K% .673 → .672.
+
+* **The Leaderboard's stat picker lists only live stats (Sean, 26 Nov 2026)**: Filters ▸ Stats skips `RETIRED_P` and `PICK_GONE` (txw, txwp, ttw, pxw, the command keys, ppn, tra9, and the Pitching+ grades pitch / pwhf / pbb / sloc, whose group is gone).
