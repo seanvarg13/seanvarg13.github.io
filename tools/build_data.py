@@ -320,7 +320,7 @@ PITCHER_CARD = [
     # what the ERA should be and what he's giving up: the expected / underlying marks beside contact quality
     ("Expected & contact",   [("uk", "uK%", True, 1, "%"), ("ubb", "uBB%", False, 1, "%"),   # the fitted process rates
                               ("ukb", "u(K-BB%)", True, 1, "%"),   # u(K-BB%) is derived in the app (expected K% − expected BB%)
-                              ("nera", "Luck-neutral ERA", False, 2, ""),
+                              ("nera", "nERA", False, 2, ""),
                               ("siera", "SIERA", False, 2, ""), ("fip", "FIP", False, 2, ""),
                               ("ev", "Avg EV", False, 1, "mph"), ("hh", "Hard-Hit%", False, 1, "%"), ("brl", "Barrel%", False, 1, "%")]),
 ]
@@ -2166,7 +2166,7 @@ def main():
         "hitterMetrics": [{"key": k, "label": l, "hib": h, "unit": u} for k, l, _, h, _, u in HITTER_METRICS],
         # pitcher list columns show the value itself, coloured by percentile (the Score column stays a percentile)
         "pitcherMetrics": [{"key": k, "label": l, "hib": h, "unit": u, "showValue": True} for k, l, _, h, _, u in PITCHER_METRICS]
-                          + [{"key": "nera", "label": "Luck-neutral ERA", "hib": False, "dec": 2, "unit": "", "showValue": True},
+                          + [{"key": "nera", "label": "nERA", "hib": False, "dec": 2, "unit": "", "showValue": True},
                              {"key": "uera", "label": "uERA", "hib": False, "dec": 2, "unit": "", "showValue": True},          # uERA and u(K-BB%) are derived in the app
                              {"key": "ukb", "label": "u(K-BB%)", "hib": True, "dec": 1, "unit": "%", "showValue": True}],
         "defaultMin": DEFAULT_MIN,
