@@ -2012,6 +2012,11 @@ def league_constants(pit: pd.DataFrame, people: dict) -> dict:
                     "pa9": round(float(9 * pit.BF.sum() / (pit.outs.sum() / 3)), 2),
                     "wbb": round(float(pit.wUBB.sum() / max(1, pit.nUBB.sum())), 3),      # wOBA value of a walk / a hit by pitch
                     "whbp": round(float(pit.wHBP.sum() / max(1, pit.HBP.sum())), 3)})
+    if "bbw" in out:                                              # nERA's league shares (27 Nov 2026): every pitcher with 20+ BF
+        q = pit[pit.BF >= 20]
+        out["nsh"] = nera_league(q, out) if len(q) else None
+        if out["nsh"] is None:
+            out.pop("nsh")
     if MIX:
         out["mix"] = MIX
     if "bbw" in out:
@@ -2019,6 +2024,79 @@ def league_constants(pit: pd.DataFrame, people: dict) -> dict:
         if sc:
             out["stuff"] = sc
     return out
+
+
+# nERA (Sean, 27 Nov 2026: "ok lets do both fixes"): his plate appearances as shares of the wOBA denominator — walks (their wOBA value less the hit
+# batters', so intentional walks stay out), hit batters, ground balls, popups, air balls, untyped balls, the strikeouts what's left — then (1) the noisy
+# shares pulled toward the season's league by his sample (NERA_PULL: walks 417 plate appearances of league average, hit batters 1,098, popups 470 — each
+# share's own reliability) and (2) his contact priced by his profile (NERA_AIR / NERA_GB: per point of strikeout share, ground-ball share of his balls in
+# play and walk share). Every pitcher-season 2015-26 with 50+ IP in back-to-back seasons, held out by season: next season's ERA r .384 → .406 (SIERA .392).
+# The app (nShares / neraOf in app.js) does the same arithmetic on a window's day rows; keep the two in step
+NERA_PULL = {"sP": 470, "sB": 417, "sH": 1098}
+NERA_AIR = (-0.00155, 0.00155, 0.00097)
+NERA_GB = (-0.00015, -0.00091, 0.00061)
+NERA_SHK = ("sK", "sB", "sH", "sG", "sP", "sA", "sU")
+
+
+def nera_shares(wnum, wk, wbip, wden, bf, hbp, gb, pu, air, bip, wbb, whbp) -> dict | None:
+    den = wden if wden and wden >= 0.5 * (bf or 0) else bf          # spring training: Savant leaves woba_denom blank, so batters faced stand in
+    if not den or wbb is None or whbp is None:
+        return None
+    vw = max(0.0, wnum - (wk or 0.0) - wbip)
+    hb = min(hbp or 0.0, vw / whbp)
+    bb = max(0.0, (vw - hb * whbp) / wbb)
+    ut = max(0.0, bip - gb - pu - air)
+    s = {"sB": bb / den, "sH": hb / den, "sG": gb / den, "sP": pu / den, "sA": air / den, "sU": ut / den}
+    s["sK"] = max(0.0, 1 - sum(s.values()))
+    s["n"] = den
+    return s
+
+
+def nera_price(s, consts, aa=0.0, ag=0.0) -> float:
+    bbw = consts["bbw"]
+    air = bbw["air"] if bbw.get("air") is not None else bbw.get("la", 0.5) * bbw["ld"] + (1 - bbw.get("la", 0.5)) * bbw["fb"]
+    xw = (s["sB"] * consts["wbb"] + s["sH"] * consts["whbp"] + s["sG"] * (bbw["gb"] + ag) + s["sP"] * bbw["pu"]
+          + s["sA"] * (air + aa) + s.get("sU", 0.0) * bbw["ut"])
+    return consts["lgERA"] + (xw - consts["lgwOBA"]) / consts["wobaScale"] * consts["pa9"]
+
+
+def nera_value(s, consts) -> float | None:
+    if s is None or "bbw" not in consts:
+        return None
+    L = consts.get("nsh")
+    if not L:                                                      # no league shares: the raw shares, the old nERA to the cent
+        return nera_price(s, consts)
+    t = {k: s.get(k, 0.0) for k in NERA_SHK}
+    for k, kk in NERA_PULL.items():
+        t[k] = (t[k] * s["n"] + kk * L[k]) / (s["n"] + kk)
+    tot = sum(t.values())
+    t = {k: v / tot for k, v in t.items()}
+    bip, lb = t["sG"] + t["sP"] + t["sA"], L["sG"] + L["sP"] + L["sA"]
+    lg = L["sG"] / lb if lb else 0.0
+    d = ((t["sK"] - L["sK"]) * 100, ((t["sG"] / bip if bip else lg) - lg) * 100, (t["sB"] - L["sB"]) * 100)
+    aa = sum(w * x for w, x in zip(NERA_AIR, d))
+    ag = sum(w * x for w, x in zip(NERA_GB, d))
+    return nera_price(t, consts, aa, ag)
+
+
+def _nera_pieces(r):
+    g = lambda k: float(getattr(r, k, 0.0) or 0.0)
+    return dict(wnum=g("wnum"), wk=g("wK"), wbip=g("wBIP"), wden=g("wden"), bf=g("BF"), hbp=g("HBP"), gb=g("nGB"), pu=g("nPU"),
+                air=g("nLD") + g("nFB"), bip=g("nBIP"))
+
+
+def nera_league(q: pd.DataFrame, consts: dict) -> dict | None:
+    """nERA's league shares: the pieces of every pitcher with 20+ BF summed (= the PAw-weighted mean of their shares)."""
+    if not {"wnum", "wden", "wBIP", "nBIP"} <= set(q.columns):
+        return None
+    tot = dict(wnum=0.0, wk=0.0, wbip=0.0, wden=0.0, bf=0.0, hbp=0.0, gb=0.0, pu=0.0, air=0.0, bip=0.0)
+    for r in q.itertuples():
+        x = _nera_pieces(r)
+        x["wden"] = x["wden"] if x["wden"] and x["wden"] >= 0.5 * x["bf"] else x["bf"]
+        for k in tot:
+            tot[k] += x[k]
+    s = nera_shares(wbb=consts.get("wbb"), whbp=consts.get("whbp"), **tot)
+    return None if s is None else {k: round(s[k], 5) for k in NERA_SHK}
 
 
 def neutral_era(r, consts) -> float | None:
@@ -2029,19 +2107,13 @@ def neutral_era(r, consts) -> float | None:
     two types apart as before); strikeouts / walks / HBP stay as they were, and the result is put on the ERA scale around
     the league ERA using the wOBA scale and league PA per nine — so BABIP, HR/FB and the liner / fly split wash out
     while a ground-ball or popup profile keeps its value. A strikeout is a strikeout: the .7 Statcast puts on one the
-    batter reached on (a wild pitch, a passed ball) comes off (wK; Sean, 23 Oct 2026, Early's May 15 start)."""
-    if "bbw" not in consts or not r.wden:
+    batter reached on (a wild pitch, a passed ball) comes off (wK; Sean, 23 Oct 2026, Early's May 15 start).
+    Since 27 Nov 2026 on nERA's shares with the two fixes (nera_value): the noisy shares pulled toward the league, his
+    contact priced by his profile."""
+    if "bbw" not in consts or not (getattr(r, "wden", 0) or getattr(r, "BF", 0)):
         return None
-    bbw = consts["bbw"]
-    wk = float(getattr(r, "wK", 0.0) or 0.0)
-    if bbw.get("air") is not None:
-        xnum = r.wnum - wk - r.wBIP + r.nGB * bbw["gb"] + r.nPU * bbw["pu"] + (r.nLD + r.nFB) * bbw["air"]
-    else:
-        xnum = r.wnum - wk - r.wBIP + sum(r[f"n{t.upper()}"] * bbw[t] for t in BB_TYPES)
-    untyped = r.nBIP - sum(r[f"n{t.upper()}"] for t in BB_TYPES)
-    xnum += untyped * consts["bbw"]["ut"]
-    xw = xnum / r.wden
-    return round(consts["lgERA"] + (xw - consts["lgwOBA"]) / consts["wobaScale"] * consts["pa9"], 2)
+    v = nera_value(nera_shares(wbb=consts.get("wbb"), whbp=consts.get("whbp"), **_nera_pieces(r)), consts)
+    return None if v is None else round(v, 2)
 
 
 def build_pitchers(pit: pd.DataFrame, people: dict, days_p: dict, consts: dict) -> list:

@@ -1226,11 +1226,8 @@
         const wi = f.indexOf("wbip"), c = K();
         const hasBB = !!(c.bbw && wi >= 0 && rowsOf(p).some((row) => row[wi] !== undefined));   // files built before the field lack it
         let nera = null, bbl = null;
-        if (hasBB && t.wden) {
-          const untyped = Math.max(0, t.bip - t.gb - t.ld - t.fbt - t.pu);
-          const av = airValue(c), xair = av != null ? (t.ld + t.fbt) * av : t.ld * c.bbw.ld + t.fbt * c.bbw.fb;   // liners and flies alike (23 Oct 2026)
-          const xnum = t.wnum - (t.wk || 0) - t.wbip + t.gb * c.bbw.gb + xair + t.pu * c.bbw.pu + untyped * c.bbw.ut;   /* a strikeout the batter reached on is a strikeout (23 Oct 2026) */
-          nera = r2(c.lgERA + (xnum / t.wden - c.lgwOBA) / c.wobaScale * c.pa9);
+        if (hasBB && (t.wden || t.bf)) {
+          nera = r2(neraOf(nShares(t, c), c));   /* the 27 Nov 2026 nERA: the noisy shares pulled toward the league, contact priced by his profile */
           bbl = { gb: [t.gb, t.gb ? Math.round(1000 * t.wgb / t.gb) / 1000 : null], ld: [t.ld, t.ld ? Math.round(1000 * t.wld / t.ld) / 1000 : null],
                   fb: [t.fbt, t.fbt ? Math.round(1000 * t.wfb / t.fbt) / 1000 : null], pu: [t.pu, t.pu ? Math.round(1000 * t.wpu / t.pu) / 1000 : null] };
         }
@@ -1840,6 +1837,39 @@
   // over its line drives and fly balls together (consts.bbw.air, built since 23 Oct 2026; the Stuff+ constants' vair is the same number on an
   // older file); null on a file with neither, where nERA prices the two types apart as it used to
   function airValue(c) { return c && c.bbw && c.bbw.air != null ? c.bbw.air : c && c.stuff && c.stuff.vair != null ? c.stuff.vair : null; }
+  // nERA (Sean, 27 Nov 2026: "ok lets do both fixes"): his plate appearances as shares of the wOBA denominator — strikeouts, walks (their wOBA value
+  // less the hit batters', so intentional walks stay out), hit batters, ground balls, popups, air balls (liners and flies together), untyped balls
+  // — then two fixes on the old arithmetic. (1) The noisy pieces pulled toward the league by his sample: walks by 417 plate appearances of league
+  // average, popups 470, hit batters 1,098 (NSH.k: each share's own reliability, the between-season covariance over every consecutive pair of
+  // pitcher-seasons 2015-26 — a strikeout or ground-ball rate settles too fast to need it). (2) His contact priced by his profile: a strikeout
+  // pitcher's air balls are hit softer (−.00155 wOBA a K% point), a ground-ball pitcher's air balls harder (+.00155 a point of GB share) and his
+  // grounders softer (−.00091), a wild one's both harder (+.00097 / +.00061 a BB% point); every share against the season's league (consts.nsh).
+  // 2,105 back-to-back pitcher-seasons with 50+ IP in both, 2015-26, held out by season (scratch nera2/c4.py): next season's ERA r .384 → .406
+  // (SIERA .392), next season's old-style nERA .547 → .581, next wOBA .423 → .449, year to year .55 → .63; better than SIERA in 96% of bootstrap resamples. A file
+  // without consts.nsh prices the raw shares, which is the old nERA to the cent. A single outing (Game Logs) keeps the raw shares too
+  const NSH = { k: { sP: 470, sB: 417, sH: 1098 }, air: [-0.00155, 0.00155, 0.00097], gb: [-0.00015, -0.00091, 0.00061] };
+  const XSH = { sP: 50, sB: 460, sH: 1098 };   // xnERA's pulls: the expected shares' own reliability (an expected popup share settles in ~50 PA)
+  const SHK = ["sK", "sB", "sH", "sG", "sP", "sA", "sU"];
+  function nShares(t, c) {   // t: summed day rows (wnum, wk, wbip, wden, bf, bip, gb, ld, fbt, pu, hbp)
+    const den = t.wden && t.wden >= 0.5 * (t.bf || 0) ? t.wden : t.bf;   // spring training: Savant leaves woba_denom blank, so batters faced stand in
+    if (!den || !c || c.wbb == null || c.whbp == null) return null;
+    const vw = Math.max(0, t.wnum - (t.wk || 0) - t.wbip), hb = Math.min(t.hbp || 0, vw / c.whbp), bb = Math.max(0, (vw - hb * c.whbp) / c.wbb);
+    const ut = Math.max(0, t.bip - t.gb - t.ld - t.fbt - t.pu);
+    const s = { sB: bb / den, sH: hb / den, sG: t.gb / den, sP: t.pu / den, sA: (t.ld + t.fbt) / den, sU: ut / den };
+    s.sK = Math.max(0, 1 - s.sB - s.sH - s.sG - s.sP - s.sA - s.sU); s.n = den; return s;
+  }
+  function nShrink(s, L, KK) { const o = { n: s.n }; for (const k of SHK) o[k] = s[k] || 0;
+    for (const k in KK) if (L[k] != null) o[k] = (o[k] * s.n + KK[k] * L[k]) / (s.n + KK[k]);
+    const tot = SHK.reduce((a, k) => a + o[k], 0); if (tot > 0) for (const k of SHK) o[k] /= tot; return o; }
+  function nProfile(s, L) { const bip = s.sG + s.sP + s.sA, lb = L.sG + L.sP + L.sA, lg = lb ? L.sG / lb : 0;
+    const d = [(s.sK - L.sK) * 100, ((bip ? s.sG / bip : lg) - lg) * 100, (s.sB - L.sB) * 100];
+    return [NSH.air.reduce((a, w, i) => a + w * d[i], 0), NSH.gb.reduce((a, w, i) => a + w * d[i], 0)]; }
+  function nPrice(s, c, aa = 0, ag = 0) { const b = c.bbw, av = airValue(c), la = b.la != null ? b.la : 0.5, air = av != null ? av : la * b.ld + (1 - la) * b.fb;
+    const xw = s.sB * c.wbb + s.sH * c.whbp + s.sG * (b.gb + ag) + s.sP * b.pu + s.sA * (air + aa) + (s.sU || 0) * b.ut;
+    return c.lgERA + (xw - c.lgwOBA) / c.wobaScale * c.pa9; }
+  // o.pull / o.prof false leave a fix off (the build-up's steps)
+  function neraOf(s, c, o = {}) { if (!s || !c || !c.bbw) return null; const L = c.nsh; if (!L) return nPrice(s, c);
+    const t = o.pull === false ? s : nShrink(s, L, NSH.k); if (o.prof === false) return nPrice(t, c); const [aa, ag] = nProfile(t, L); return nPrice(t, c, aa, ag); }
   function underlyingERA(pv, ik, sorted) {
     const c = K(), ctx = pv.ctx || {}, bbl = ctx.bbl;
     if (!c.bbw || c.wbb == null || !bbl || !ctx.PAw || !ik) return null;
@@ -1878,13 +1908,20 @@
     if (g) for (let yy = y - XNG.yrs; yy < y; yy++) { const e = g[yy]; if (e) { s += e[0] * e[1]; w += e[1]; } }
     return XNG.w * s / (w + XNG.k);
   }
-  function expectedNERA(pv, xk, xbb, mixw) {
+  // xnERA on nERA's shares (Sean, 27 Nov 2026: "make xnERA be the same way now too, just obviously based on stuff expected instead of raw results"):
+  // xK% and xBB% of his plate appearances, his hit batters, and the stuff models' ground-ball / popup chances on the balls in play left (the rest in
+  // the air), the walks, hit batters and popups pulled toward the league by the expected shares' own reliability (XSH), every ball at the league's
+  // value for its type. Held out by season (scratch xn2/a4-a7.py, 2,105 back-to-back 50+ IP pitcher-seasons, with the credit and centring on the new
+  // nERA): next season's ERA r .416 → .428, next nERA .633 → .663, next wOBA .459 → .471, year to year .74 → .81 (today's xnERA .400 / .587 / .442).
+  // nERA's second fix, contact priced by his profile, made xnERA worse on the expected rates (−.004 next ERA, −.005 next nERA, worse in every
+  // bootstrap resample) and is left out. o.pull false leaves the pull off (the build-up's steps)
+  function expectedNERA(pv, xk, xbb, xg, xp, o = {}) {
     const c = K(), ctx = pv.ctx || {};
-    if (!c.bbw || c.wbb == null || !ctx.PAw || xk == null || xbb == null || mixw == null) return null;
-    const pa = ctx.PAw, hbp = ctx.HBP || 0, kp = xk / 100, bbp = xbb / 100;
-    const bip = Math.max(0, pa - kp * pa - bbp * pa - hbp);
-    const xw = (bbp * pa * c.wbb + hbp * c.whbp + bip * mixw) / pa;
-    return Math.round(100 * (c.lgERA + (xw - c.lgwOBA) / c.wobaScale * c.pa9)) / 100;
+    if (!c.bbw || c.wbb == null || c.whbp == null || !ctx.PAw || xk == null || xbb == null || xg == null || xp == null) return null;
+    const n = ctx.PAw, sK = xk / 100, sB = xbb / 100, sH = (ctx.HBP || 0) / n, rest = Math.max(0, 1 - sK - sB - sH);
+    let s = { n, sK, sB, sH, sG: rest * xg, sP: rest * xp, sA: rest * Math.max(0, 1 - xg - xp), sU: 0 };
+    if (c.nsh && o.pull !== false) s = nShrink(s, c.nsh, XSH);
+    return Math.round(100 * nPrice(s, c)) / 100;
   }
   const poolCache = new Map();
   // returns { list: players in pool, stats: Map key -> {pct: {metric: pctl}, score, rank} }
@@ -2023,7 +2060,7 @@
       // xnERA (6 Oct 2026): nERA on Pitching+ xK%, xBB% and Mix xwOBA — then centred so the pool's BF-weighted xnERA averages its nERA. The fixed
       // models read a season they never saw a point or two hot (2026: Pitching+ xK% ~2 over K%, so the raw xnERA sat 0.5 under nERA for everyone);
       // the shift keeps the spread and the order the models give and puts the number on nERA's scale. sorted.xneraShift for statsFor
-      const xnRaw = list.map((p, i) => { const q = XN_STUFF ? srs[i] : pjs[i], k = q ? xKStuff(V(p).m, q.xw, srs[i] ? srs[i].xw : null, foulChance(p)) : null, b = V(p).m.xbbf, mx = q ? mixOfShares(q.xg, q.xp, sorted) : null; return expectedNERA(V(p), k, b, mx); });
+      const xnRaw = list.map((p, i) => { const q = XN_STUFF ? srs[i] : pjs[i], k = q ? xKStuff(V(p).m, q.xw, srs[i] ? srs[i].xw : null, foulChance(p)) : null, b = V(p).m.xbbf; return q ? expectedNERA(V(p), k, b, q.xg, q.xp) : null; });
       { let sn = 0, sx = 0, w = 0; list.forEach((p, i) => { const n = V(p).m.nera; if (xnRaw[i] == null || n == null) return; sn += n * p.bf; sx += xnRaw[i] * p.bf; w += p.bf; }); sorted.xneraShift = w ? Math.round(100 * (sn - sx) / w) / 100 : 0; }
       // the expected whiff rate stretched to the real spread (7 Oct 2026): the models compress — expected sd ~0.80 of actual every season — so a
       // high-whiff pitcher always read "over his expected" by construction; calP (centre + spread ratio, the K estimate's calibration) puts the
@@ -2154,7 +2191,7 @@
     nx.xkw = xk0 == null || V(p).m.whf == null ? null : Math.round(10 * (V(p).m.whf - xk0)) / 10;
     nx.xkws = nx.xks == null || nx.nwhf == null ? null : Math.round(10 * (nx.nwhf - nx.xks)) / 10;
     { const x = pj ? xkParts(V(p).m, pj.xw, foulChance(p)) : null; Object.assign(nx, { nswstr: x ? x.swstr : null, ncsw: x ? x.csw : null, ns2whf: x ? x.s2whf : null, nfoul: x ? x.foul : null }); }
-    nx.nfpc = foulChance(p); { const q = XN_STUFF ? sr : pj, e = q ? expectedNERA(V(p), xKStuff(V(p).m, q.xw, sr ? sr.xw : null, foulChance(p)), V(p).m.xbbf, mixOfShares(q.xg, q.xp, pl.sorted)) : null; { const v = xnFinal(p, e, pl.sorted.xneraShift || 0); nx.xnera = v == null ? null : Math.round(100 * v) / 100; } }
+    nx.nfpc = foulChance(p); { const q = XN_STUFF ? sr : pj, e = q ? expectedNERA(V(p), xKStuff(V(p).m, q.xw, sr ? sr.xw : null, foulChance(p)), V(p).m.xbbf, q.xg, q.xp) : null; { const v = xnFinal(p, e, pl.sorted.xneraShift || 0); nx.xnera = v == null ? null : Math.round(100 * v) / 100; } }
     for (const k of Object.keys(nx)) pct[k] = nx[k] == null || !pl.sorted[k] ? null : insertPct(pl.sorted[k], k === "pera" || k === "nbb" || k === "wgap" || k === "nmix" || k === "xnera" ? -nx[k] : nx[k]);
     nx.ksklx = pct.nwhf != null && pct.ns2whf != null && pct.nfoul != null ? Math.round((pct.nwhf + pct.ns2whf + pct.nfoul) / 3) : null; pct.ksklx = nx.ksklx;
     { const W = XRW, tot = Object.values(W).reduce((a, b) => a + b, 0) || 1, ks = Object.keys(W);   // xRating: xStrikeout 60 / Control 20 / Mix xwOBA 20
@@ -5844,26 +5881,27 @@
   const pmF = (x) => (x == null ? "–" : x.toFixed(1) + "%");
   // nERA's sums in counts, from his day rows (every row, the way V() sums a window: the wOBA numerator less the balls in play and the reached-on
   // strikeouts is the walks and HBP at their value) — null without the rows or the fields
-  const seasonNb = (p) => { const f = DF.P, I = {}; for (const k of ["wnum", "wk", "wbip", "bf", "k", "bb", "bip", "gb", "ld", "fbt", "pu", "wden"]) I[k] = f.indexOf(k); if (I.wbip < 0 || I.wden < 0) return null;
+  const seasonNb = (p) => { const f = DF.P, I = {}; for (const k of ["wnum", "wk", "wbip", "bf", "k", "bb", "bip", "gb", "ld", "fbt", "pu", "wden", "hbp"]) I[k] = f.indexOf(k); if (I.wbip < 0 || I.wden < 0) return null;
     const t = {}; for (const k in I) t[k] = 0; let any = false;
     for (const row of rowsOf(p)) { any = true; for (const k in I) if (I[k] >= 0 && row[I[k]] != null) t[k] += row[I[k]]; }
-    if (!any || !t.wden) return null; return { wden: t.wden, walks: t.wnum - t.wk - t.wbip, bf: t.bf, k: t.k, bb: t.bb, bip: t.bip, gb: t.gb, pu: t.pu, air: t.ld + t.fbt, ut: Math.max(0, t.bip - t.gb - t.ld - t.fbt - t.pu) }; };
+    if (!any || !t.wden) return null; return { wden: t.wden, walks: t.wnum - t.wk - t.wbip, hbp: t.hbp, bf: t.bf, k: t.k, bb: t.bb, bip: t.bip, gb: t.gb, pu: t.pu, air: t.ld + t.fbt, ut: Math.max(0, t.bip - t.gb - t.ld - t.fbt - t.pu) }; };
   // or rebuilt from a stored line's rates (bf − the corrected denominator = the plate appearances the wOBA bookkeeping drops; walks and HBP at
   // their value; the balls in play by type from ctx.bbl, the untyped the remainder)
   const nbOf = (v, p) => { if (!v || !v.m || v.m.nera == null) return null; if (p && daysReady("P")) { const nb = seasonNb(p); if (nb) return nb; } const c = K(), ctx = v.ctx || {}, bbl = ctx.bbl; if (!bbl || !ctx.PAw || v.m.k == null || v.m.bb == null || c.wbb == null) return null;
     const bf = v.bf || ctx.PAw, k = v.m.k / 100 * bf, bb = v.m.bb / 100 * bf, hbp = ctx.HBP || 0, n = (t) => (bbl[t] || [0])[0], typed = n("gb") + n("ld") + n("fb") + n("pu"), bip = Math.max(typed, ctx.PAw - k - bb - hbp);
-    return typed ? { wden: ctx.PAw, walks: bb * c.wbb + hbp * c.whbp, bf, k, bb, bip, gb: n("gb"), pu: n("pu"), air: n("ld") + n("fb"), ut: bip - typed } : null; };
+    return typed ? { wden: ctx.PAw, walks: bb * c.wbb + hbp * c.whbp, hbp, bf, k, bb, bip, gb: n("gb"), pu: n("pu"), air: n("ld") + n("fb"), ut: bip - typed } : null; };
   // nERA on those counts with one piece at another rate (o, in %): a strikeout or walk replaces a ball in play (the mix kept), a ground ball or popup
-  // an air ball — the same pricing as V()'s nERA, so with no change it returns the stored number
-  const neraCounts = (c, nb, o = {}) => { if (!nb || !nb.wden || !c.bbw || c.wbb == null) return null; const av = airValue(c); if (av == null) return null;
+  // an air ball — V()'s nERA on the result (nShares' shares, the 27 Nov 2026 pull and profile), so with no change it returns the stored number
+  const neraCounts = (c, nb, o = {}) => { if (!nb || !nb.wden || !c.bbw || c.wbb == null || c.whbp == null) return null;
     let { walks, k, bb, bip, gb, pu, air, ut } = nb; const bf = nb.bf || nb.wden;
     const rebip = (b2) => { const sc = bip ? b2 / bip : 0; gb *= sc; pu *= sc; air *= sc; ut *= sc; bip = b2; };
     if (o.k != null) { const d = o.k / 100 * bf - k; k += d; rebip(Math.max(0, bip - d)); }
     if (o.bb != null) { const d = o.bb / 100 * bf - bb; bb += d; walks += d * c.wbb; rebip(Math.max(0, bip - d)); }
     if (o.gb != null) { const g2 = o.gb / 100 * bip; air = Math.max(0, air - (g2 - gb)); gb = g2; }
     if (o.pu != null) { const p2 = o.pu / 100 * bip; air = Math.max(0, air - (p2 - pu)); pu = p2; }
-    const x = walks + gb * c.bbw.gb + pu * c.bbw.pu + air * av + ut * c.bbw.ut;
-    return c.lgERA + (x / nb.wden - c.lgwOBA) / c.wobaScale * c.pa9; };
+    const n = nb.wden, hb = Math.min(nb.hbp || 0, Math.max(0, walks) / c.whbp), bv = Math.max(0, (walks - hb * c.whbp) / c.wbb);
+    const s = { n, sB: bv / n, sH: hb / n, sG: gb / n, sP: pu / n, sA: air / n, sU: ut / n }; s.sK = Math.max(0, 1 - s.sB - s.sH - s.sG - s.sP - s.sA - s.sU);
+    return neraOf(s, c); };
   function pitchMovers(winId = "30") {
     const prevMode = winId === "prev", prevDS = fxPrevDS();
     const key = DS.key + ":" + daysReady("P") + ":" + winId + ":" + !!prevDS; if (pmCache.has(key)) return pmCache.get(key);
@@ -6449,7 +6487,7 @@
     xkbb: "x(K-BB)%: xK% minus xBB% — the strikeout-minus-walk rate his rates say he should have (both fits on this season's process; higher is better).",
     xks: "Pitching+ xK%: xK% with the strikes expected instead of actual — the Pitching+ model's expected whiff rate, the swinging strikes and two-strike whiffs it implies, the command models' expected called strikes from his spots and counts, and the foul model's chance on the contact that's left. Forecasts next season's K% a little better than his own K% does, and K% above it tends to come down (below it, up). The xRating's K input.",
     cstr: "Called Strike%: called strikes per pitch — the strikes he gets without a swing. With SwStr% and Foul% it is one of the three strikes that keep a plate appearance alive, which is how xK% reads them.",
-    xnera: "xnERA (since 25 Nov 2026 it also credits a pitcher who keeps beating his stuff: 0.8 × his nERA − xnERA over this season and his last two, weighted by batters faced and pulled toward zero by 200; next season's nERA r .51 → .57, beating nERA's .54): nERA on what his pitches say — Pitching+ xK% for his K%, xBB% for his BB%, the Mix xwOBA the model's expected ground-ball / popup mix implies for every ball in play (HBP as it was), on the ERA scale like nERA, centred so the pool's pitchers average the same xnERA as nERA (the fixed models read a new season a little hot). Lower is better. nERA takes his strikeouts, walks and batted-ball mix as they were; xnERA replaces all three with the stuff-and-location expectation, so nERA − xnERA is how much his results beat his pitches.",
+    xnera: "xnERA: nERA on what his pitches say — the stuff models' strikeout rate (Pitching+ xK%) for his K%, xBB% (his strike rates) for his BB%, the ground balls and popups the stuff models expect on his balls in play, his hit batters as they were — with the walks, hit batters and popups pulled toward the league by how long each takes to settle (460, 1,098 and 50 plate appearances: an expected popup rate settles fast), every ball at the league's value for its type, then centred so the pool's pitchers average the same xnERA as nERA. It also credits a pitcher who keeps beating his stuff: 0.8 × his nERA − xnERA over this season and his last two, weighted by batters faced and pulled toward zero by 200. Next season's ERA r .43 and next nERA .66, against nERA's .41 / .63, SIERA's .39 / .58 and the old xnERA's .40 / .59, every pitcher-season 2015-26 with 50+ IP in both. Lower is better; nERA − xnERA is how much his results beat his pitches.",
     nfpc: "xFoul% of contact: the foul models' share of his contact that goes foul — the pitch's traits, where it crossed and the batter's swing on it (where tracked) — the Stuff side of Foul% of contact. League ~51%.",
     fpc: "Foul% of contact: of the swings that touched the ball, the share that went foul rather than in play — Foul% ÷ (Swing% × (1 − Whiff%)). League ~51%; ride four-seamers run 55-60, sinkers and changeups 45-48. It is what turns whiffs into strikeouts: a foul keeps the plate appearance alive (free with two strikes), a ball in play ends it — with Called Strike% it explains about two thirds of why a K% runs over or under what the Whiff% alone implies, and about half of that gap carries to the next season.",
     foul: "Foul%: the share of his pitches fouled off — the strikes that were neither called, swung through nor put in play. It is what turns whiffs and strikes into strikeouts: contact that goes foul keeps the plate appearance alive, a ball in play ends it. With it, K% is explained to within half a point; without it, pitchers like Skenes read as over-performers and Webb / Phillips as under-performers. Repeats year to year like Strike%.",
@@ -6489,7 +6527,7 @@
     era: "Earned runs per nine innings, from official game logs.",
     fip: "Fielding-independent pitching: strikeouts, walks, hit batters and home runs only, scaled to look like an ERA.",
     siera: "Skill-interactive ERA: FIP's inputs plus how he uses the ground, shifted so the league averages its real ERA.",
-    nera: "Luck-neutral ERA: his strikeouts (a strikeout the batter reached on, a wild pitch or passed ball, is still a strikeout), walks and hit batters as they were, and every ball in play re-scored at what the league gets on that kind of ball — a ground ball's value, a popup's, and one value for every ball in the air (line drives and fly balls alike: whether an air ball reads as a liner or a fly is noise, so only how many he allows counts). BABIP, HR/FB and the liner / fly split wash out; a ground-ball or popup profile keeps its value.",
+    nera: "Luck-neutral ERA: his strikeouts (a strikeout the batter reached on, a wild pitch or passed ball, is still a strikeout), walks and hit batters, and every ball in play re-scored at what the league gets on that kind of ball — a ground ball's value, a popup's, and one value for every ball in the air (whether an air ball reads as a liner or a fly is noise). Since 27 Nov 2026 two fixes: his walks, hit batters and popups are pulled toward the league by his sample (417, 1,098 and 470 plate appearances of league average — those rates take a long time to settle), and his contact is priced by his profile (a strikeout pitcher's air balls are hit softer, a ground-ball pitcher's air balls harder and his grounders softer, a wild one's both harder). Next season's ERA r .38 → .41 (SIERA .39), year to year .55 → .63, every pitcher-season 2015-26 with 50+ IP in both. A single outing on Game Logs keeps the raw numbers.",
     uera: "Underlying ERA: what his whiff, strike and batted-ball rates say his ERA should be. Strikeouts come in at the rate his Whiff%, Strike%, Swing%, Z-Contact%, Chase% and Zone% have historically come with, walks at the rate his Strike%, Zone%, Chase%, Swing%, Z-Contact% and Whiff% have historically come with, his ground-ball and popup shares stand, and the air balls that are left are split into line drives and fly balls at the league's rate — then every ball in play is worth the league's average for its type.",
     ukb: "Underlying K-BB%: uK% minus uBB% — what his swing-and-miss and strike-throwing say the gap should be, with the results taken out of it.",
     uk: "uK%: the strikeout rate his process implies — what pitchers with his Whiff%, Strike%, Swing%, Z-Contact%, Chase% and Zone% (each against the league's) have historically struck out. Whiff% and Strike% carry it, about +0.9 K% a point each; more swings mean fewer strikeouts (−0.5 a point).",
@@ -10213,9 +10251,9 @@
   // xnERA's pieces in the current view, before the beats-his-stuff credit: the stuff models' whiffs and fouls through the K% fit, his xBB%, the
   // expected batted-ball mix, through expectedNERA, plus the season pool's calibration shift (sh)
   function xnShift(p) { return pool(p.primary === "SP" ? "SP" : "RP").sorted.xneraShift || 0; }
-  function xnCore(p, sh) {
+  function xnCore(p, sh, o = {}) {   // o.pull false: a single outing (Game Logs) keeps its raw shares, as its nERA does
     const pv = V(p), m = pv.m, sr = stuffRates(p); if (!sr) return null;
-    const pl = withWindow(NOWIN, () => withSplit(NONE, () => pool(p.primary === "SP" ? "SP" : "RP"))), xk = xKStuff(m, sr.xw, sr.xw, foulChance(p)), mx = mixOfShares(sr.xg, sr.xp, pl.sorted);   /* the season pool's line-drive share, whatever the view */
+    const xk = xKStuff(m, sr.xw, sr.xw, foulChance(p));
     // in a date window, xBB% pulled toward his season's by batters faced (50): a start's 3-ball strike rate rests on a handful of pitches — Sheehan's
     // 7 Sep 2026 had three, all balls, and read xBB% 22.4 (25 Nov 2026)
     let xb = m.xbbf;
@@ -10223,16 +10261,23 @@
     if (xnWin()) { const S0 = withWindow(NOWIN, () => withSplit(NONE, () => { const v0 = V(p), r0 = stuffRates(p); return { b: v0.m.xbbf, k: r0 ? xKStuff(v0.m, r0.xw, r0.xw, foulChance(p)) : null }; })), bf = pv.bf || 0;
       if (xb != null && S0.b != null) xb = (bf * xb + 50 * S0.b) / (bf + 50);
       if (xk2 != null && S0.k != null) xk2 = (bf * xk2 + 50 * S0.k) / (bf + 50); }   // xK% the same way: the K% fit reads two-strike and count rates a start barely samples
-    const e = expectedNERA(pv, xk2, xb, mx); return e == null ? null : e + sh;
+    const e = expectedNERA(pv, xk2, xb, sr.xg, sr.xp, o); return e == null ? null : e + sh;
   }
-  // the nERA build-up (Sean, 25 Nov 2026: "add in the nERA build up tab next to xnERA tab"): the same arithmetic as xnERA's with his actual
-  // rates — the league, his K%, his BB%, his batted-ball mix (his ground balls and popups, air balls at the league's line-drive share), then
-  // everything nERA counts beyond those (HBP, liners against fly balls, untyped balls), landing on nERA, then the luck to his ERA
+  // the nERA build-up (Sean, 25 Nov 2026: "add in the nERA build up tab next to xnERA tab"): nERA's own share arithmetic, one input swapped
+  // from the league's to his at a time — the league, his K%, his BB%, his batted-ball mix (his ground balls and popups, the rest in the air) —
+  // then the two fixes of 27 Nov 2026 as steps of their own (the noisy shares pulled toward the league by his sample; his contact priced by his
+  // profile), everything nERA counts beyond those, landing on nERA, then the luck to his ERA
+  // a pitcher's line as nERA's shares (k and bb in % of batters faced, g and pu in % of his balls in play; his hit batters as they were)
+  const lineShares = (pv, k, bb, g, pu) => { const ctx = pv.ctx || {}, n = ctx.PAw; if (!n || [k, bb, g, pu].some((x) => x == null)) return null;
+    const sK = k / 100, sB = bb / 100, sH = (ctx.HBP || 0) / n, rest = Math.max(0, 1 - sK - sB - sH);
+    return { n, sK, sB, sH, sG: rest * g / 100, sP: rest * pu / 100, sA: rest * Math.max(0, 1 - (g + pu) / 100), sU: 0 }; };
+  const PULL_TIP = (KK, x) => `his walks, hit batters and ${x ? "expected " : ""}popups pulled toward the league's by how many batters he faced: ${KK.sB.toLocaleString()}, ${KK.sH.toLocaleString()} and ${KK.sP.toLocaleString()} plate appearances of league average added to each — the share of each that is sample noise`;
   function renderNeraBuild(p, st, g) {
-    const pv = V(p), m = pv.m, L = lgRatesP(), pl = pool(g);
+    const pv = V(p), m = pv.m, L = lgRatesP(), pl = pool(g), c = K();
     if (m.nera == null || m.k == null || m.bb == null || m.gb == null || m.pu == null || L.k == null || L.bb == null || L.gb == null || L.pu == null) return null;
     const lmx = mixOfShares(L.gb / 100, L.pu / 100, pl.sorted), mx = mixOfShares(m.gb / 100, m.pu / 100, pl.sorted);
-    const E = (k, b, x) => expectedNERA(pv, k, b, x), e0 = E(L.k, L.bb, lmx), e1 = E(m.k, L.bb, lmx), e2 = E(m.k, m.bb, lmx), e3 = E(m.k, m.bb, mx);
+    const S = (k, b, gb, pu) => lineShares(pv, k, b, gb, pu), sh = S(m.k, m.bb, m.gb, m.pu), raw = (x) => (x ? nPrice(x, c) : null);
+    const e0 = raw(S(L.k, L.bb, L.gb, L.pu)), e1 = raw(S(m.k, L.bb, L.gb, L.pu)), e2 = raw(S(m.k, m.bb, L.gb, L.pu)), e3 = raw(sh);
     if ([e0, e1, e2, e3].some((v) => v == null)) return null;
     const r2 = (x) => Math.round(100 * x) / 100, sg = (d) => (d > 0 ? "+" : d < 0 ? "\u2212" : "") + Math.abs(d).toFixed(2), pc = (k) => (st && st.pct ? st.pct[k] : null);
     const b = buildUp("nERA build-up", "the league's nERA moved by what he actually did, one piece at a time", "ERA", (x) => x.toFixed(2), sg, 0.5, true);
@@ -10242,20 +10287,24 @@
     step("K%", m.k, L.k, (x) => x.toFixed(1), "k", e1, "his strikeouts per batter faced");
     step("BB%", m.bb, L.bb, (x) => x.toFixed(1), "bb", e2, "his walks per batter faced");
     step("Batted balls", mx, lmx, (x) => x.toFixed(3), "mixw", e3, "his ground balls and popups at the league's value for each, the rest of his balls in play as air balls (lower is better)");
-    if (Math.abs(r2(m.nera) - run) >= 0.005) step("Everything else", null, null, (x) => x, null, m.nera, "hit batters, the reached-on strikeouts, and balls in play with no type: what nERA counts beyond the three above");
+    if (c.nsh) {
+      step("Sample-size pull", null, null, (x) => x, null, neraOf(sh, c, { prof: false }), PULL_TIP(NSH.k));
+      step("Contact by profile", null, null, (x) => x, null, neraOf(sh, c), "his air balls and grounders priced by his profile: a strikeout pitcher's air balls are hit softer, a ground-ball pitcher's air balls harder and his grounders softer, a wild one's both harder");
+    }
+    if (Math.abs(r2(m.nera) - run) >= 0.005) step("Everything else", null, null, (x) => x, null, m.nera, "the reached-on strikeouts, intentional walks, and balls in play with no type: what nERA counts beyond the steps above");
     b.mark("nERA");
     const era = m.era != null ? m.era : !winIdx() && !splitActive() && p.m ? p.m.era : null;
     if (era != null) b.band("Luck", r2(era - run), era, "balls in play finding holes or gloves, sequencing and the official scorer: his ERA beyond his luck-neutral nERA");
     return b.done();
   }
   function renderXnBuild(p, st, g) {
-    const pv = V(p), m = pv.m, L = lgRatesP(), pl = pool(g), sr = stuffRates(p);
+    const pv = V(p), m = pv.m, L = lgRatesP(), pl = pool(g), sr = stuffRates(p), c = K();
     if (!sr || L.k == null || L.bb == null || L.gb == null || L.pu == null) return null;
     const xk = xKStuff(m, sr.xw, sr.xw, foulChance(p)), xb = m.xbbf, mx = mixOfShares(sr.xg, sr.xp, pl.sorted), lmx = mixOfShares(L.gb / 100, L.pu / 100, pl.sorted);
-    const S = xnWin() ? xnSeason(p) : null, sh = S ? S.sh : pl.sorted.xneraShift || 0, E = (k, b, x) => { const v = expectedNERA(pv, k, b, x); return v == null ? null : v + sh; };
-    const e0 = E(L.k, L.bb, lmx), e1 = E(xk, L.bb, lmx), e2 = E(xk, xb, lmx), e3 = E(xk, xb, mx);
-    if ([e0, e1, e2, e3].some((v) => v == null)) return null;
-    const adj = S ? S.adj : xnAdj(p, e3), r2 = (x) => Math.round(100 * x) / 100, sg = (d) => (d > 0 ? "+" : d < 0 ? "\u2212" : "") + Math.abs(d).toFixed(2);
+    const S = xnWin() ? xnSeason(p) : null, sh = S ? S.sh : pl.sorted.xneraShift || 0, E = (k, b, gb, pu, o = { pull: false }) => { const v = expectedNERA(pv, k, b, gb, pu, o); return v == null ? null : v + sh; };
+    const e0 = E(L.k, L.bb, L.gb / 100, L.pu / 100), e1 = E(xk, L.bb, L.gb / 100, L.pu / 100), e2 = E(xk, xb, L.gb / 100, L.pu / 100), e3 = E(xk, xb, sr.xg, sr.xp), e4 = c.nsh ? E(xk, xb, sr.xg, sr.xp, {}) : e3;
+    if ([e0, e1, e2, e3, e4].some((v) => v == null)) return null;
+    const adj = S ? S.adj : xnAdj(p, e4), r2 = (x) => Math.round(100 * x) / 100, sg = (d) => (d > 0 ? "+" : d < 0 ? "\u2212" : "") + Math.abs(d).toFixed(2);
     const b = buildUp("xnERA build-up", "the league's nERA moved by what his pitches say, one piece at a time", "ERA", (x) => x.toFixed(2), sg, 0.5, true);
     const pc = (k) => (st && st.pct ? st.pct[k] : null);
     let run = r2(e0);
@@ -10283,7 +10332,8 @@
         bp.push({ lab: "Everything else", pts: xb - L.bb - bp.reduce((a, z) => a + z.pts, 0), tip: "the formula's own league level against the league's BB%" });
         b.kids(bp.map((z) => ({ lab: z.lab, his: z.k ? m[z.k] : null, lg: z.k ? L[z.k] : null, f: f1, pc: z.k ? pc(z.k) : null, d: Math.round(100 * z.pts * perB) / 100, tip: `${z.tip} · ${sg1(z.pts)} BB%` }))); } }
     step("Batted balls", mx, lmx, (x) => x.toFixed(3), "nmix", e3, "Mix xwOBA: what the ground balls and popups his stuff should get are worth on balls in play (lower is better)");
-    if (Math.abs(adj) >= 0.005) step("Beats his stuff", null, null, (x) => x, null, e3 + adj, "0.8 × his nERA minus xnERA over this season and his last two, weighted by batters faced and pulled toward zero by 200: pitchers who keep beating their stuff tend to keep doing it");
+    if (c.nsh && Math.abs(r2(e4) - run) >= 0.005) step("Sample-size pull", null, null, (x) => x, null, e4, PULL_TIP(XSH, true));
+    if (Math.abs(adj) >= 0.005) step("Beats his stuff", null, null, (x) => x, null, e4 + adj, "0.8 × his nERA minus xnERA over this season and his last two, weighted by batters faced and pulled toward zero by 200: pitchers who keep beating their stuff tend to keep doing it");
     b.mark("xnERA");
     if (m.nera != null) b.band("Luck and the rest", r2(m.nera - run), m.nera, "what happened beyond what his pitches say: sequencing, deception the models miss, a small sample. nERA is his luck-neutral results");
     return b.done();
@@ -10702,14 +10752,14 @@
     const pc = (n, d) => (d ? (100 * n / d).toFixed(1) + "%" : "–"), kbb = (g) => (g.bf ? mi(100 * (g.k - g.bb) / g.bf, 1) + "%" : "–");
     // nERA leads the numbers, then Pit, then the rest as they were (Sean, 18 Oct 2026: "put nERA first, then pitches then everything as is")
     const { t, tb, fin, gap, wrap, ends } = brTable(null, [["Date", "l f1"], ["Opp", "l", "The other side (@ = on the road), from MLB's game log"],
-      ["nERA", "", "Luck-neutral ERA that outing: every ball in play at the league's value for its type, his strikeouts and walks as they were — coloured by its place among the season's starts (a relief outing among relief outings)"],
+      ["nERA", "", "Luck-neutral ERA that outing: every ball in play at the league's value for its type, his strikeouts and walks as they were (one outing isn't pulled toward the league: the totals row is) — coloured by its place among the season's starts (a relief outing among relief outings)"],
       ["xnERA", "", "What his pitches said that outing: the stuff models' whiffs, fouls and batted-ball mix and his strike rates, through nERA's arithmetic, plus his season's credit for beating his stuff"],
       ["IP"], ["K"], ["BB"], ["K-BB%"], ["GB%", "", "Ground balls per ball in play"], ["PU%", "", "Popups per ball in play"]], "glbt");
     for (const i of [1, 3, 6]) ends.add(i);   // K-BB% sits with GB% and PU% (Sean, 25 Nov 2026: "put the k-bb% in the same section as gb% and pu%")
     // xnERA by outing (Sean, 25 Nov 2026: "also add xnERA to the game logs tab"): each outing's own pieces through xnCore under a one-day
     // window, on the season pool's calibration shift and the season's beats-his-stuff credit
     const sea = xnSeason(p);
-    const xnDay = (iso) => (iso ? withWindow({ from: iso, to: iso, last: "" }, () => withSplit(NONE, () => { const e = xnCore(p, sea.sh); return e == null ? null : e + sea.adj; })) : null);   // no Pit column (Sean, 18 Oct 2026: "Actually get rid of pitches in that"), so the rule after nERA leads into IP
+    const xnDay = (iso) => (iso ? withWindow({ from: iso, to: iso, last: "" }, () => withSplit(NONE, () => { const e = xnCore(p, sea.sh, { pull: false }); return e == null ? null : e + sea.adj; })) : null);   // no Pit column (Sean, 18 Oct 2026: "Actually get rid of pitches in that"), so the rule after nERA leads into IP
     [...t.tHead.rows[0].children].forEach((h, i) => { if (ends.has(i)) h.classList.add("ge"); });
     for (const g of games) {
       const iso = src.days && src.days[g.day], dc = el("td", "l f1", iso ? fmtDate(iso) : "–");
@@ -10727,7 +10777,7 @@
     }
     const T = { w: games.every((g) => g.w) }; for (const k of OUT_F) T[k] = games.reduce((a, g) => a + g[k], 0);
     const trt = el("tr", "tot first");
-    trt.append(el("td", "l f1", `${games.length} ${games.length === 1 ? "game" : "games"}`), el("td"), el("td", null, mi(dayNERA(T, c), 2)), el("td", null, !filt && games.length === all.size ? mi(withWindow(NOWIN, () => withSplit(NONE, () => { const e = xnCore(p, sea.sh); return e == null ? null : e + sea.adj; })), 2) : ""), el("td", null, fmtIP(T.outs / 3)),
+    trt.append(el("td", "l f1", `${games.length} ${games.length === 1 ? "game" : "games"}`), el("td"), el("td", null, mi(neraOf(nShares(T, c), c), 2)), el("td", null, !filt && games.length === all.size ? mi(withWindow(NOWIN, () => withSplit(NONE, () => { const e = xnCore(p, sea.sh); return e == null ? null : e + sea.adj; })), 2) : ""), el("td", null, fmtIP(T.outs / 3)),
                el("td", null, String(T.k)), el("td", null, String(T.bb)), el("td", null, kbb(T)), el("td", null, pc(T.gb, T.bip)), el("td", null, pc(T.pu, T.bip)));
     tb.append(gap(), fin(trt));
     box.append(wrap);
@@ -10828,7 +10878,7 @@
     const box = el("div", "rollbox uerabox luckbox brbox");
     const hd = el("div", "rollhd");
     const era = pv.m.era, nera = pv.m.nera;
-    hd.append(el("span", "rollname", nera == null ? "Batted-ball luck" : `Luck-neutral ERA ${nera.toFixed(2)}`));
+    hd.append(el("span", "rollname", nera == null ? "Batted-ball luck" : `nERA ${nera.toFixed(2)}`));
     if (era != null && nera != null) {
       const diff = Math.round(100 * (era - nera)) / 100, sub = el("span", "rollsub");
       sub.append(`ERA ${era.toFixed(2)} `, el("span", "chip2 " + (diff < -0.15 ? "lucky" : diff > 0.15 ? "unlucky" : "even"),
@@ -12305,7 +12355,7 @@
     bWAR: "Baseball-Reference's wins above replacement — batting, fielding and, for a two-way player, pitching", Sprint: "Statcast sprint speed, feet per second (2015 on)",
     CS: "Caught stealing: his steal attempts in the season's Statcast file less his official steals (2015 on)", "SB%": "Stolen bases per attempt",
     BsR: "FanGraphs' baserunning runs above average: steals, caught stealing and taking extra bases",
-    nERA: "Luck-neutral ERA: every ball in play at the league's value for its type", SIERA: "Skill-interactive ERA", "PU%": "Popups per batted ball",
+    nERA: "Luck-neutral ERA: every ball in play at the league's value for its type, his walks, hit batters and popups pulled toward the league by his sample, his contact priced by his profile", SIERA: "Skill-interactive ERA", "PU%": "Popups per batted ball",
     "xBB%": "The walk rate his Strike%, first-pitch and three-ball strike rates imply", "K-BB%": "Strikeouts less walks, per batter faced" };
   // a pitcher's table (Sean, 9 Oct 2026: "ERA, FIP, nERA, and SIERA then a line break / Then G, GS, IP, line break / Then k%, bb%, popup%, gb% then a
   // line break / Then whiff% and xBB% and then a line break and the position one at the end"); nERA / SIERA / PU% / xBB% come from career-bb.js's pp
