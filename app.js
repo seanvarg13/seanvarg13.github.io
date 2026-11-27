@@ -14283,7 +14283,7 @@
           if (live && mk.clock > v * 1000) mk.clock = v * 1000; mkSave(); mkClock(); });
         l.append(el("span", null, label), i); tp.append(l); };
       if (mk.set.type === "snake") f("Seconds per pick", "pickSecs", 10, 600);
-      else { f("Seconds to nominate", "nomSecs", 10, 300); f("Seconds per bid", "bidSecs", 3, 60); }
+      else { f("Seconds per nomination", "nomSecs", 10, 300); f("Seconds per bid", "bidSecs", 3, 60); }
       const ai = el("label", "mkrcell"); const sel = el("select", "mksel"); for (const [v, l] of [["fast", "Fast"], ["normal", "Normal"], ["slow", "Slow"]]) { const o = el("option", null, l); o.value = v; o.selected = mk.set.ai === v; sel.append(o); }
       sel.addEventListener("change", () => { mk.set.ai = sel.value; mkSet.ai = sel.value; mkSaveSet(); mkSave(); }); ai.append(el("span", null, "Computer teams"), sel); tp.append(ai);
       const sc = el("label", "mkrcell"); const ss = el("select", "mksel"); for (const p of fpresets()) { const o = el("option", null, p.name); o.value = p.id; o.selected = p.id === mkScoring().id; ss.append(o); }
