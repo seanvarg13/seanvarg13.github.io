@@ -6446,3 +6446,29 @@ canvas.seasonfx { opacity: .7; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom:not(#k1) .mktable th:last-child { width: 88px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mktable td.nm { line-height: 18px !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mktable td.nm .mkptag { vertical-align: middle !important; }
+
+/* The draft room, round two (Sean, 27 Nov 2026). The star column is the star alone ("it does not need to be as wide as it is"): a phone's is 30px,
+   wider only while it's his pick and a Draft or Nominate button sits beside the star; a desktop's shrinks to what's in it. */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom:not(#k1) .mktable th:last-child { width: 30px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom:not(#k1) .mktable.myturn th:last-child { width: 74px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom:not(#k1) .mktable.myturn.auc th:last-child { width: 96px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:not([data-view="mobile"]) #mkroom:not(#k1) .mktable :is(th:last-child, td.mkact) { width: 1px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mktable td.mkact > .mkstar:first-child { margin-left: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mktable:not(.myturn) td.mkact { text-align: center !important; }
+/* My team, Teams and the results' standings are whole tables: a line all the way round (they had the cells' right and bottom lines only, so no left
+   or top edge) */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body:not(#k1):not(#k2):not(#k3):not(#k4):not(#k5):not(#k6):not(#k7) #mkroom:not(#k8) .sbt:is(.mkteam, .mkteams, .mkdone) tr > :first-child { border-left: 1px solid var(--xlt, var(--xl, #1c1c1c)) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body:not(#k1):not(#k2):not(#k3):not(#k4):not(#k5):not(#k6):not(#k7) #mkroom:not(#k8) .sbt:is(.mkteam, .mkteams, .mkdone) tr > :last-child { border-right: 1px solid var(--xlt, var(--xl, #1c1c1c)) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body:not(#k1):not(#k2):not(#k3):not(#k4):not(#k5):not(#k6):not(#k7) #mkroom:not(#k8) .sbt:is(.mkteam, .mkteams, .mkdone) thead th { border-top: 1px solid var(--xlt, var(--xl, #1c1c1c)) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body:not(#k1):not(#k2):not(#k3):not(#k4):not(#k5):not(#k6):not(#k7) #mkroom:not(#k8) .sbt:is(.mkteam, .mkteams, .mkdone) tbody tr:last-child > td { border-bottom: 1px solid var(--xlt, var(--xl, #1c1c1c)) !important; }
+/* an auction's top box: the clock, his money and the buttons, centred ("just have the clock and then the $200 left, max $176 and settings button") */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) > .mktop.mkc { justify-content: center !important; padding-left: 58px !important; gap: 6px 18px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) > .mktop.mkc .mkrow1 { flex: 0 0 auto !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) > .mktop.mkc .mkbtns { flex: 0 1 auto !important; justify-content: center !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) > .mktop.mkc .mkclock { min-width: 2.6em !important; text-align: center; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom:not(#k1) > .mktop.mkc { padding: 6px 44px !important; gap: 4px 12px !important; }
+/* his page over the room: the Leaderboard's popup, above the room (z 71) */
+:root:root:root:root:root:root:root:root:root:root:root:root body.mkroomon .xpopbg { z-index: 73 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root body.mkroomon #xboard.xpop { z-index: 74 !important; }
+/* the Picks tab's Rewind, at each pick's right */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mklog li .mkrw { float: right; margin-left: 10px; font-size: 12.5px; }
