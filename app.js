@@ -6842,7 +6842,7 @@
     if (state.mode === "trends") { renderTrends(); return; }
     if (state.mode === "callups") { renderCallups(); renderModal(); return; }
     if (state.mode === "planner") { renderPlanner(); renderModal(); if (xPop) renderExplore(); return; }
-    if (state.mode === "mock") { renderMock(); renderModal(); return; }
+    if (state.mode === "mock") { renderMock(); renderModal(); if (xPop) renderExplore(); return; }   // his page over the draft room (27 Nov 2026)
     if (state.mode === "claude") { renderClaude(); renderModal(); if (xPop) renderExplore(); return; }
     if (state.mode === "bullpens") { renderBullpens(); renderModal(); if (xPop) renderExplore(); return; }   // Bullpens (28 Oct 2026)
     if (state.mode === "flaws") { renderFlaws(); renderModal(); if (xPop) renderExplore(); return; }
@@ -11049,7 +11049,7 @@
                           whf: "Whiff%", k: "K%", air: "Air%", pu: "Popup%", gb: "GB%", pull: "Pull Air%",
                           babip: "BABIP", xbabip: "xBABIP", bluck: "BABIP luck", brel: "BIP reliance", xwdiff: "xwOBA − wOBA", xk: "xK%", xwpk: "xwOBA, his parks", xwn: "Park-neutral xwOBA", aopt: "Arsenal Opt.", sloc: "Command+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+ (command)", xwcon: "xwOBAcon", fpts: "Pts", fpg: "Pts/G", fppa: "Pts/PA", fpab: "Pts/AB", fpwk: "Pts/Wk", fpip: "Pts/IP", fpgs: "Pts/GS", xfpts: "xPts", xfpg: "xPts/G", xfppa: "xPts/PA", xfpab: "xPts/AB", xfpwk: "xPts/Wk", xfpip: "xPts/IP", xfpgs: "xPts/GS",
                           spd: "Sprint Speed", sb: "SB", sba: "SB Att.", sbp: "SB%" };
-  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zone: "Zone%", osw: "Chase%", fstrk: "1st-pitch Strike%", b3strk: "3-ball Strike%", xbbf: "xBB%", xkf: "xK%", xks: "Pitching+ xK%", xkbb: "x(K-BB)%", xkbbs: "x(K-BB)%", xkw: "Whiff% − xK%", xkws: "xWhiff% − xK%", rating: "Rating", ctrl: "Control", foul: "Foul%", fpc: "Foul% of contact", nfpc: "xFoul% of contact", xnera: "xnERA", csw: "CSW%", s2whf: "2-strike Whiff%", s2sw: "2-strike Swing%", s2zone: "2-strike Zone%", nwhf: "xWhiff%", ncstr: "xCalled Strike%", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strike Whiff%", nfoul: "xFoul%", ubb: "uBB%", zcon: "Z-Contact%", swing: "Swing%", cstr: "Called Strike%", swstr: "SwStr%", nmix: "Mix xwOBA", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+", sloc: "Location+" });   // a pitcher's O-Swing% is his chase rate
+  const OUTCOME_LABEL_P = Object.assign({}, OUTCOME_LABEL, { zco: "Z-O", zone: "Zone%", osw: "Chase%", fstrk: "1st-pitch Strike%", b3strk: "3-ball Strike%", xbbf: "xBB%", xkf: "xK%", xks: "Pitching+ xK%", xkbb: "x(K-BB)%", xkbbs: "x(K-BB)%", xkw: "Whiff% − xK%", xkws: "xWhiff% − xK%", rating: "Rating", ctrl: "Control", foul: "Foul%", fpc: "Foul% of contact", nfpc: "xFoul% of contact", xnera: "xnERA", csw: "CSW%", s2whf: "2-strike Whiff%", s2sw: "2-strike Swing%", s2zone: "2-strike Zone%", nwhf: "xWhiff%", ncstr: "xCalled Strike%", nswstr: "xSwStr%", ncsw: "xCSW%", ns2whf: "x2-strike Whiff%", nfoul: "xFoul%", ubb: "uBB%", zcon: "Z-Contact%", swing: "Swing%", cstr: "Called Strike%", swstr: "SwStr%", nmix: "Mix xwOBA", stuff: "Stuff+", swhf: "Whiff+", sbb: "Batted-ball+", pitch: "Pitching+", pwhf: "Whiff+", pbb: "Batted-ball+", sloc: "Location+" });   // a pitcher's O-Swing% is his chase rate
   // the percentile bars behind the xK% and xBB% tabs (Sean, 4 Oct 2026: "a tab that shows the same expected strikeout percentile bars that we
   // had before ... and then also have that tab show the like pitching+ expected k stuff too and make that percentile bars as well", "a tab for
   // expected bb% as well that has all those same percentile bars"): the K% fit's inputs — his strike rates, then the same rates as the stuff
@@ -11624,7 +11624,7 @@
   // page (renderExplore into #xboard), shown as a fixed window over the list with a backdrop, closed by ×, the backdrop or Escape
   // Movers too (Sean, 23 Oct 2026, Sheehan's page off Movers: "Can this be the same x in the top right below the filter like on the leaderboard"):
   // a pitcher's row, or a hitter's name in the flaw popup, opens the same popup over Movers in place of his page with "‹ Back to movers"
-  const POP_MODES = ["leaderboard", "trending", "flaws", "bullpens", "league", "home", "rankings", "draft", "pitches", "fantasy", "claude", "planner", "eligibility", "settings"];   // every page but the search (Sean, 19 Nov 2026)
+  const POP_MODES = ["leaderboard", "trending", "flaws", "bullpens", "league", "home", "rankings", "draft", "pitches", "fantasy", "claude", "planner", "eligibility", "settings", "mock"];   // every page but the search (Sean, 19 Nov 2026); the Mock draft room too (27 Nov 2026)
   let xPop = false, xPopNew = false, xPopList = null;
   const pageNow = () => state.mode === "player" || xPop;   // where a page was opened from: the list page, its scroll and its rows' box; the page last drawn
   const BACK_LABEL = { leaderboard: "leaderboard", trending: "leaderboard", rankings: "rankings", draft: "draft board", pitches: "Pitching+", fantasy: "fantasy", home: "home",
@@ -13840,8 +13840,8 @@
   let mkRoom = false;
   const mkRoomEl = () => { let r = $("mkroom"); if (!r) { r = el("section", "mkroom"); r.id = "mkroom"; r.hidden = true; r.setAttribute("role", "dialog"); r.setAttribute("aria-label", "Draft room"); const bg = el("div", "mkroombg"); bg.hidden = true; bg.addEventListener("click", mkAskLeave); $("xboard").before(bg, r); r._bg = bg; } return r; };
   function mkRoomSync() { const r = $("mkroom"); if (!r) return; const on = state.mode === "mock" && mkRoom && !!mk; r.hidden = !on; r._bg.hidden = !on; document.body.classList.toggle("mkroomon", on); }
-  function mkLeave() { if (!mkRoom) return; mkRoom = false; mkUI.leave = mkUI.leaveHold = false; if (mk && !mk.paused && (mk.status === "live" || mk.status === "pre")) { mk.paused = true; mkSave(); } render(); }
-  function mkEnter() { if (!mk) return; mkRoom = true; mkUI.leave = mkUI.leaveHold = false; mkAudio(); render(); }
+  function mkLeave() { if (!mkRoom) return; mkRoom = false; mkUI.leave = mkUI.leaveHold = mkUI.rwHold = false; mkUI.rewind = null; if (mk && !mk.paused && (mk.status === "live" || mk.status === "pre")) { mk.paused = true; mkSave(); } render(); }
+  function mkEnter() { if (!mk) return; mkRoom = true; mkUI.leave = mkUI.leaveHold = mkUI.rwHold = false; mkUI.rewind = null; mkAudio(); render(); }
   // the room's × (Sean, 27 Nov 2026: "when I X out of it gives me the option to [end] the draft or pause, and when I pause, when I go back to the mock
   // draft area it gives me the option to return to that paused draft"): a window with Pause draft and End draft; the clock holds while it's up and
   // Keep drafting (or its ×, the backdrop, Escape) lets it run again. A finished draft just closes
@@ -13855,7 +13855,7 @@
   }
   function mkStay() { mkUI.leave = false; mkResumeHold("leaveHold"); mkDraw(); }
   function mkCloseSettings() { mkUI.timer = false; mkResumeHold("setHold"); mkDraw(); }
-  function mkEscape() { if (mkUI.leave) mkStay(); else if (mkUI.timer) mkCloseSettings(); else mkAskLeave(); }
+  function mkEscape() { if (mkUI.rewind) mkRewindCancel(); else if (mkUI.leave) mkStay(); else if (mkUI.timer) mkCloseSettings(); else mkAskLeave(); }
   function mkLeaveWin() {
     const bg = el("div", "mksetbg"); bg.addEventListener("click", mkStay);
     const w = el("div", "mktimer mksetwin mkleave"); w.setAttribute("role", "dialog"); w.setAttribute("aria-label", "Leave the draft room");
@@ -14154,6 +14154,45 @@
     mkSave(); mkDraw();
   }
   function mkFinish() { mk.status = "done"; mk.paused = false; }
+  // rewind (Sean, 27 Nov 2026: "add an ability like espn has to rewind the draft from a certain pick slot or bidding slot"): pick n and every pick
+  // after it come off the teams' rosters (an auction's money goes back) and it's pick n again — that team on the clock, or in an auction the team
+  // whose nomination it was, the order replayed from the start the way mkSold hands it on. The draft waits paused; Resume starts the clock
+  function mkNomAfter(m) { const T = mk.teams.length, cnt = new Array(T).fill(0), spots = mkSpots(); let nom = 0;
+    for (const l of mk.log.slice(0, m)) { cnt[l.t]++; for (let i = 0; i < T; i++) { nom = (nom + 1) % T; if (cnt[nom] < spots) break; } }
+    return nom; }
+  function mkSnakeTeam(n) { const T = mk.set.teams, r = Math.floor((n - 1) / T), i = (n - 1) % T; return r % 2 === 0 ? i : T - 1 - i; }
+  function mkRewind(n) {
+    if (!mk || n < 1 || n > mk.log.length) return;
+    for (const l of mk.log.slice(n - 1)) { const t = mk.teams[l.t], i = t.picks.map((q) => q.k).lastIndexOf(l.k); if (i >= 0) t.picks.splice(i, 1); if (l.cost) t.budget += l.cost; }
+    mk.log = mk.log.slice(0, n - 1); mk.pick = mk.log.length; mk.status = "live"; mk.pre = 0;
+    if (mk.set.type === "snake") mk.clock = mk.set.pickSecs * 1000;
+    else { const last = mk.log[mk.log.length - 1];
+      Object.assign(mk.auc, { phase: "nom", nom: mkNomAfter(mk.log.length), k: null, bid: 0, high: -1, vals: null, hist: [], last: last ? { k: last.k, t: last.t, bid: last.cost } : null });
+      mk.clock = mk.set.nomSecs * 1000; }
+    mk.wait = mkAiDelay(); mk.paused = true; mkTickAt = 0; mkUI.rewind = null; mkUI.rwHold = false;
+    mkSave(); mkRoom = true; render();
+  }
+  function mkAskRewind(n) { if (!mk) return; if (!mk.paused && (mk.status === "live" || mk.status === "pre")) { mk.paused = true; mkUI.rwHold = true; mkSave(); } mkUI.rewind = n; mkDraw(); }
+  function mkRewindCancel() { mkUI.rewind = null; mkResumeHold("rwHold"); mkDraw(); }
+  function mkRewindWin(n) {
+    const l = mk.log[n - 1]; if (!l) return [];
+    const x = mkP(l.k), T = mk.set.teams, snake = mk.set.type === "snake", after = mk.log.length - n;
+    const bg = el("div", "mksetbg"); bg.addEventListener("click", mkRewindCancel);
+    const w = el("div", "mktimer mksetwin mkleave mkrewind"); w.setAttribute("role", "dialog"); w.setAttribute("aria-label", "Rewind the draft");
+    const hd = el("div", "mksethd"), xb = el("button", "pop-close", "×"); xb.type = "button"; xb.setAttribute("aria-label", "Cancel"); xb.addEventListener("click", mkRewindCancel);
+    const what = snake ? `pick ${n} (round ${Math.floor((n - 1) / T) + 1}, pick ${((n - 1) % T) + 1})` : `sale ${n}`;
+    hd.append(el("b", null, `Rewind to ${what}?`), xb);
+    const ti = snake ? mkSnakeTeam(n) : mkNomAfter(n - 1), who = mk.teams[ti].me ? (snake ? "you're on the clock" : "it's your nomination") : snake ? `${mk.teams[ti].name} is on the clock` : `${mk.teams[ti].name} nominates`;
+    const by = `${mk.teams[l.t].me ? "you" : mk.teams[l.t].name}${l.cost ? " for $" + l.cost : ""}`;
+    const unit = snake ? (after === 1 ? "pick" : "picks") : (after === 1 ? "sale" : "sales");
+    const money = l.cost || mk.log.slice(n).some((q) => q.cost) ? ", the money back to the teams that spent it" : "";
+    const txt = `${x ? x.name : "That pick"} (${by})${after ? ` and the ${after} ${unit} after it` : ""} come off the board${money}. Then it's ${what} again: ${who}. The draft waits paused until you Resume.`;
+    const acts = el("div", "mksetacts");
+    const ok = el("button", "btn mkpause", "Rewind"); ok.type = "button"; ok.addEventListener("click", () => mkRewind(n));
+    const no = el("button", "btn btn-quiet", "Cancel"); no.type = "button"; no.addEventListener("click", mkRewindCancel);
+    acts.append(ok, no); w.append(hd, el("p", "note", txt), acts);
+    return [bg, w];
+  }
   // the computer teams still willing to raise on the player up for bid, and one of them's next bid
   const mkBidders = () => { const A = mk.auc; return mk.teams.map((t, i) => i).filter((i) => !mk.teams[i].me && i !== A.high && A.vals[i] > A.bid && mkMaxBid(mk.teams[i]) > A.bid && mkCanAdd(mk.teams[i], mkP(A.k), mk.set.roster)); };
   function mkAiRaise(cand) {
@@ -14319,7 +14358,7 @@
     const keep = { list: box.querySelector(".mklist")?.scrollTop || 0, side: box.querySelector(".mkside")?.scrollTop || 0, inner: inner0 ? [inner0.scrollTop, inner0.scrollLeft] : null, tab: box._tab, focus: document.activeElement && document.activeElement.id === "mkq", cust: document.activeElement && document.activeElement.id === "mkcust" };
     box.replaceChildren();
     { const x = el("button", "mkx", "×"); x.type = "button"; x.setAttribute("aria-label", "Leave the draft room"); x.title = "Leave the room: pause the draft or end it"; x.addEventListener("click", mkAskLeave); box.append(x); }
-    if (mk.status === "done") { mkDrawDone(box); return; }
+    if (mk.status === "done") { mkDrawDone(box); if (mkUI.rewind) box.append(...mkRewindWin(mkUI.rewind)); return; }
     const mob = mobileView(), tabNow = mob ? mkUI.tab : mkUI.side;
     box.append(mkTop());
     if (mk.auc && mk.status === "live") box.append(mkAuctionPanel());
@@ -14337,6 +14376,7 @@
       main.append(mkListPane(), side); box.append(main);
     }
     if (mkUI.leave) box.append(...mkLeaveWin());
+    if (mkUI.rewind) box.append(...mkRewindWin(mkUI.rewind));
     const l = box.querySelector(".mklist"); if (l) l.scrollTop = keep.list;
     const s = box.querySelector(".mkside"); if (s) s.scrollTop = keep.side;
     if (keep.inner && keep.tab === tabNow) { const n = box.querySelector(".mkside .mkscroll, .mkside .mkboardw"); if (n) { n.scrollTop = keep.inner[0]; n.scrollLeft = keep.inner[1]; } }
@@ -14367,7 +14407,7 @@
     btns.append(gear);
     if (mk.status === "pre") { const go = el("button", "btn", "Start now"); go.type = "button"; go.addEventListener("click", () => { mkAudio(); mkGo(); }); btns.prepend(go); }
     // a paused draft says so with a Resume beside Settings (27 Nov 2026): a draft paused from the × comes back to the room this way
-    if (mk.paused && !mkUI.setHold && !mkUI.leaveHold && !mkCardHold) { const rs = el("button", "btn mkresume", "Resume"); rs.type = "button"; rs.addEventListener("click", () => { mkAudio(); mk.paused = false; mkLast = Date.now(); mkSave(); mkTick(true); mkDraw(); }); btns.prepend(rs); }
+    if (mk.paused && !mkUI.setHold && !mkUI.leaveHold && !mkUI.rwHold && !mkCardHold) { const rs = el("button", "btn mkresume", "Resume"); rs.type = "button"; rs.addEventListener("click", () => { mkAudio(); mk.paused = false; mkLast = Date.now(); mkSave(); mkTick(true); mkDraw(); }); btns.prepend(rs); }
     if (mkUI.timer) {
       const close = mkCloseSettings;
       const bg = el("div", "mksetbg"); bg.addEventListener("click", close);
@@ -14394,7 +14434,11 @@
       top.append(bg, tp);
     }
     if (mk.set.type === "auction") { const me = mk.teams[mk.me]; btns.prepend(el("span", "mkbudget", `$${me.budget} left · max $${mkMaxBid(me)}`)); }
-    const row = el("div", "mkrow1"); row.append(clock, info); top.append(row, btns);   /* the clock and what's happening on one line (27 Nov 2026) */
+    // an auction's top box is the clock, his money and the buttons, centred (Sean, 27 Nov 2026: "i dont need to see 'bidding 1 of 350 sold' in the
+    // top box ... just have the clock and then the $200 left, max $176 and settings button"): the auction panel under it says who's up or nominating.
+    // A snake draft keeps its line, the one place that says whose pick it is
+    const auc = mk.set.type === "auction";
+    const row = el("div", "mkrow1"); row.append(clock); if (!auc) row.append(info); top.append(row, btns); if (auc) top.classList.add("mkc");   /* the clock and what's happening on one line (27 Nov 2026) */
     return top;
   }
   function mkAuctionPanel() {
@@ -14436,10 +14480,18 @@
   // a name in the room opens his card over the room and holds the clock while it's up (Sean, 27 Nov 2026: "when i click a player in the room ...
   // their player card comes up ... and it pauses the draft timer too"); closing the card resumes a draft it paused
   let mkCardHold = false;
-  function mkCardSync() { if (mkCardHold && !state.expanded) { mkCardHold = false; if (mk && mk.paused) { mk.paused = false; mkLast = Date.now(); mkSave(); mkTick(true); } } }
+  function mkCardSync() { if (mkCardHold && !state.expanded && !xPop) { mkCardHold = false; if (mk && mk.paused) { mk.paused = false; mkLast = Date.now(); mkSave(); mkTick(true); } } }
   // the room's Proj column per unit (Sean, 27 Nov 2026: "projected per start for pitchers, per game for hitters, and per appearance for relievers")
   function mkPer(x) { const g = x.gp || 0; if (!(g > 0)) return String(Math.round(x.mine)); return (x.mine / g).toFixed(1) + (x.type === "H" ? "/G" : x.role === "SP" ? "/GS" : "/App"); }
-  function mkOpenCard(x) { if (mk && !mk.paused && (mk.status === "live" || mk.status === "pre")) { mk.paused = true; mkCardHold = true; mkSave(); } state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.expanded = x.type + x.id; render(); }
+  // his whole current page, not the old card (Sean, 27 Nov 2026: "when i click a player page or card on the draft room screen it gives me the old
+  // player card/page format header. I want the current one"): the Leaderboard's popup (openPlayer, POP_MODES has mock) over the room, × back to it;
+  // a player with no line this season opens on his latest season from the search index, as the League tab's names do
+  function mkOpenCard(x) {
+    if (mk && !mk.paused && (mk.status === "live" || mk.status === "pre")) { mk.paused = true; mkCardHold = true; mkSave(); }
+    let ds = CUR.key;
+    if (!DATA.players.some((q) => q.id === x.id && q.type === x.type) && indexReady()) { const e = window.DRAFT_INDEX.players.find((q) => q.id === x.id), f = e && e.s.find((sv) => sv[2] === x.type); if (f) ds = f[0]; }
+    openPlayer({ id: x.id, type: x.type }, { ds });
+  }
   function mkListPane() {
     const pane = el("div", "mklistw"), bar = el("div", "mkbar");
     const q = el("input", "mksearch"); q.id = "mkq"; q.type = "search"; q.placeholder = "Find a player"; q.value = mkUI.q; q.addEventListener("input", () => { mkUI.q = q.value; mkDrawList(); });
@@ -14459,7 +14511,7 @@
     let rows = mkPool().filter((x) => (!mkUI.hide || !taken.has(x.k)) && (mkUI.pos === "ALL" || (mkUI.pos === "DH" ? x.type === "H" : x.elig.includes(mkUI.pos))) && (!nq || norm(x.name).includes(nq)));
     if (mkUI.sort === "proj") rows.sort((a, b) => b.mine - a.mine); else if (mkUI.sort === "val") rows.sort((a, b) => mkVal(b.k) - mkVal(a.k) || a.adp - b.adp);
     rows = rows.slice(0, 250);
-    const t = el("table", "sbt brt mktable"), th = el("thead"), hr = el("tr");   // B-Ref's table (Sean, 11 Oct 2026)
+    const t = el("table", "sbt brt mktable" + (myTurn ? " myturn" : "") + (auc ? " auc" : "")), th = el("thead"), hr = el("tr");   // B-Ref's table (Sean, 11 Oct 2026); myturn widens the last column for the Draft / Nominate button, else it's just the star
     for (const [h, c] of [["ADP", null], ["Player", "l"], ["Tm", null], ["Pos", null], ["Proj", null], ...(auc ? [["$", null]] : []), ["", null]]) { const h0 = el("th", c, h); if (h === "Proj") h0.title = "Projected 2027 points under your scoring: per game for hitters, per start for starters, per appearance for relievers"; hr.append(h0); }
     th.append(hr); t.append(th); const tb = el("tbody");
     for (const x of rows) {
@@ -14511,13 +14563,14 @@
       { const hd = el("tr"); for (const h of ["Slot", "Player", "Tm", "Pos", "Proj", ...(mk.set.type === "auction" ? ["$"] : [])]) hd.append(el("th", h === "Player" || h === "Slot" ? "l" : null, h)); const th = el("thead"); th.append(hd); tb.append(th); }
       a.slots.forEach((s, i) => { const o = a.own[i], x = o >= 0 ? ps[o] : null, tr = el("tr"); tr.append(el("td", "mkslot", MK_SLOTS.find(([k]) => k === s)[1]));
         const c = el("td", "l nm"); if (x) { const b = el("button", "linkbtn pbname", x.name); b.type = "button"; b.addEventListener("click", () => mkOpenCard(x)); c.append(b); } else c.append(el("span", "mkslotempty", "—"));   /* the site's table layout: Tm and Pos their own columns (27 Nov 2026) */
-        tr.append(c, el("td", "c", x ? x.team || "" : ""), el("td", "c", x ? mkPosTag(x) : ""), el("td", null, x ? String(Math.round(x.mine)) : "")); if (mk.set.type === "auction") tr.append(el("td", null, x ? `$${t.picks[o].cost}` : ""));
+        const pc = el("td", "kd"); if (x) { const pj = mkPer(x), pu = pj.indexOf("/"); if (pu > 0) pc.append(pj.slice(0, pu), el("small", "mkunit", pj.slice(pu))); else pc.append(pj); }   // per game / start / appearance, as the player list (Sean, 27 Nov 2026)
+        tr.append(c, el("td", "c", x ? x.team || "" : ""), el("td", "c", x ? mkPosTag(x) : ""), pc); if (mk.set.type === "auction") tr.append(el("td", null, x ? `$${t.picks[o].cost}` : ""));
         body.append(tr); });
       tb.append(body);
       // the team picker and his starters' points over the table as its fixed head; the rows scroll in their own box under the column names
       const startPts = a.own.reduce((s, o, i) => s + (o >= 0 && a.slots[i] !== "BN" ? ps[o].mine : 0), 0);
       const head = el("div", "mkpanehd"), sc = el("div", "mkscroll");
-      head.append(sel, el("span", "mkpanesum", `Starters' proj. ${Math.round(startPts)}${mk.set.type === "auction" ? ` · $${t.budget} left` : ""}`));
+      head.append(sel, el("span", "mkpanesum", `Starters' season proj. ${Math.round(startPts)}${mk.set.type === "auction" ? ` · $${t.budget} left` : ""}`));
       sc.append(tb); w.append(head, sc);
     } else if (which === "board") {
       const T = mk.set.teams, rounds = mkSpots(), g = el("div", "mkboard"); g.style.setProperty("--n", T);
@@ -14535,7 +14588,9 @@
       const sc = el("div", "mkboardw"); sc.append(g); w.append(sc);
     } else if (which === "log") {
       if (!mk.log.length) w.append(el("p", "note", "No picks yet."));
-      const ul = el("ol", "mklog"); for (const l of mk.log.slice().reverse()) { const x = mkP(l.k), li = el("li"); li.value = l.n; li.append(el("b", null, x.name), ` ${x.elig[0]} · ${mk.teams[l.t].me ? "You" : mk.teams[l.t].name}${l.cost ? " · $" + l.cost : ""}`); if (mk.teams[l.t].me) li.className = "me"; ul.append(li); }
+      const ul = el("ol", "mklog"); for (const l of mk.log.slice().reverse()) { const x = mkP(l.k), li = el("li"); li.value = l.n; li.append(el("b", null, x.name), ` ${x.elig[0]} · ${mk.teams[l.t].me ? "You" : mk.teams[l.t].name}${l.cost ? " · $" + l.cost : ""}`); if (mk.teams[l.t].me) li.className = "me";
+        const rw = el("button", "linkbtn mkrw", "Rewind"); rw.type = "button"; rw.title = `Rewind to ${mk.set.type === "snake" ? "pick" : "sale"} ${l.n}: it and every one after come off the board`; rw.addEventListener("click", () => mkAskRewind(l.n)); li.append(rw);   /* rewind (27 Nov 2026) */
+        ul.append(li); }
       w.append(ul);
     } else if (which === "queue") {
       const taken = mkTaken(), q = mk.queue.filter((k) => !taken.has(k));
@@ -14559,7 +14614,8 @@
     mkUI.boardTeam = mk.me; w.append(el("h4", "pwh", "Your team")); w.append(mkSidePane("team"));
     const again = el("button", "btn mkgo", "New mock draft"); again.type = "button"; again.addEventListener("click", () => { mk = null; mkSave(); render(); });
     const brd = el("details", "mksrc"); brd.append(el("summary", null, "The board")); brd.append(mkSidePane("board"));
-    w.append(brd, again); box.append(w);
+    const pk = el("details", "mksrc"); pk.append(el("summary", null, "Every pick · rewind from any of them")); pk.append(mkSidePane("log"));
+    w.append(brd, pk, again); box.append(w);
   }
   /* ---------- League (Sean, 11 Nov 2026: "Can you add in an ability to connect to fantasy leagues on like whatever site and do it similar to this
      site https://kaizenschanz.github.io/papa-board/ I want to be able to have it as a separate tab", then "Add it to the baseball site for now") ----------
