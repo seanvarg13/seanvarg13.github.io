@@ -13838,10 +13838,56 @@
   // stands; the setup form while there is no draft. Leaving the room (its ×, the backdrop, Escape, another page) pauses the draft, as leaving
   // the page did; the draft runs only while the room is open
   let mkRoom = false;
-  const mkRoomEl = () => { let r = $("mkroom"); if (!r) { r = el("section", "mkroom"); r.id = "mkroom"; r.hidden = true; r.setAttribute("role", "dialog"); r.setAttribute("aria-label", "Draft room"); const bg = el("div", "mkroombg"); bg.hidden = true; bg.addEventListener("click", mkLeave); $("xboard").before(bg, r); r._bg = bg; } return r; };
+  const mkRoomEl = () => { let r = $("mkroom"); if (!r) { r = el("section", "mkroom"); r.id = "mkroom"; r.hidden = true; r.setAttribute("role", "dialog"); r.setAttribute("aria-label", "Draft room"); const bg = el("div", "mkroombg"); bg.hidden = true; bg.addEventListener("click", mkAskLeave); $("xboard").before(bg, r); r._bg = bg; } return r; };
   function mkRoomSync() { const r = $("mkroom"); if (!r) return; const on = state.mode === "mock" && mkRoom && !!mk; r.hidden = !on; r._bg.hidden = !on; document.body.classList.toggle("mkroomon", on); }
-  function mkLeave() { if (!mkRoom) return; mkRoom = false; if (mk && !mk.paused && (mk.status === "live" || mk.status === "pre")) { mk.paused = true; mkSave(); } render(); }
-  function mkEnter() { if (!mk) return; mkRoom = true; mkAudio(); render(); }
+  function mkLeave() { if (!mkRoom) return; mkRoom = false; mkUI.leave = mkUI.leaveHold = false; if (mk && !mk.paused && (mk.status === "live" || mk.status === "pre")) { mk.paused = true; mkSave(); } render(); }
+  function mkEnter() { if (!mk) return; mkRoom = true; mkUI.leave = mkUI.leaveHold = false; mkAudio(); render(); }
+  // the room's × (Sean, 27 Nov 2026: "when I X out of it gives me the option to [end] the draft or pause, and when I pause, when I go back to the mock
+  // draft area it gives me the option to return to that paused draft"): a window with Pause draft and End draft; the clock holds while it's up and
+  // Keep drafting (or its ×, the backdrop, Escape) lets it run again. A finished draft just closes
+  function mkResumeHold(flag) { if (!mkUI[flag]) return; mkUI[flag] = false; if (mk && mk.paused) { mk.paused = false; mkLast = Date.now(); mkSave(); mkTick(true); } }
+  function mkAskLeave() {
+    if (!mkRoom) return;
+    if (!mk || mk.status === "done") { mkLeave(); return; }
+    if (mkUI.timer) { mkUI.timer = false; if (mkUI.setHold) { mkUI.setHold = false; mkUI.leaveHold = true; } }   // the Settings window's hold becomes this one's
+    if (!mk.paused && (mk.status === "live" || mk.status === "pre")) { mk.paused = true; mkUI.leaveHold = true; mkSave(); }
+    mkUI.leave = true; mkDraw();
+  }
+  function mkStay() { mkUI.leave = false; mkResumeHold("leaveHold"); mkDraw(); }
+  function mkCloseSettings() { mkUI.timer = false; mkResumeHold("setHold"); mkDraw(); }
+  function mkEscape() { if (mkUI.leave) mkStay(); else if (mkUI.timer) mkCloseSettings(); else mkAskLeave(); }
+  function mkLeaveWin() {
+    const bg = el("div", "mksetbg"); bg.addEventListener("click", mkStay);
+    const w = el("div", "mktimer mksetwin mkleave"); w.setAttribute("role", "dialog"); w.setAttribute("aria-label", "Leave the draft room");
+    const hd = el("div", "mksethd"), x = el("button", "pop-close", "×"); x.type = "button"; x.setAttribute("aria-label", "Keep drafting"); x.addEventListener("click", mkStay);
+    hd.append(el("b", null, "Leave the draft room?"), x);
+    const acts = el("div", "mksetacts");
+    const pz = el("button", "btn mkpause", "Pause draft"); pz.type = "button"; pz.addEventListener("click", () => { mkUI.leaveHold = false; mkLeave(); });
+    const end = el("button", "btn btn-quiet", "End draft"); end.type = "button"; end.addEventListener("click", () => { mkUI.leave = mkUI.leaveHold = false; mk = null; mkRoom = false; mkSave(); render(); });
+    acts.append(pz, end);
+    const stay = el("button", "linkbtn mkstay", "Keep drafting"); stay.type = "button"; stay.addEventListener("click", mkStay);
+    w.append(hd, el("p", "note", "Pause keeps the draft right where it is: the Mock draft page has a Return to draft button. Ending it can't be undone."), acts, stay);
+    return [bg, w];
+  }
+  // the room's tabs along the foot of a phone's screen, where the site's bar is (it hides while the room is up): the room is one window
+  const MK_ICON = {
+    players: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="4.5" cy="6" r="1.9"></circle><circle cx="4.5" cy="12" r="1.9"></circle><circle cx="4.5" cy="18" r="1.9"></circle><rect x="8.5" y="4.6" width="13" height="2.8" rx="1.4"></rect><rect x="8.5" y="10.6" width="13" height="2.8" rx="1.4"></rect><rect x="8.5" y="16.6" width="13" height="2.8" rx="1.4"></rect></svg>',
+    team: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.6" r="4.4"></circle><path d="M3.6 20.2c0-4.3 3.8-7.4 8.4-7.4s8.4 3.1 8.4 7.4a.9.9 0 0 1-.9.9H4.5a.9.9 0 0 1-.9-.9z"></path></svg>',
+    teams: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7.5" r="3.6"></circle><path d="M2.5 19.6C2.5 15.9 5.4 13 9 13s6.5 2.9 6.5 6.6a.9.9 0 0 1-.9.9H3.4a.9.9 0 0 1-.9-.9z"></path><circle cx="16.8" cy="8.3" r="2.9"></circle><path d="M16.2 13.1c3.2.1 5.8 2.8 5.8 6a.9.9 0 0 1-.9.9h-3.9c.2-.4.3-.8.3-1.3 0-2.2-.5-4-1.3-5.6z"></path></svg>',
+    board: '<svg viewBox="0 0 24 24" aria-hidden="true">' + [3, 9.5, 16].map((y) => [3, 9.5, 16].map((x) => `<rect x="${x}" y="${y}" width="5" height="5" rx="1.2"></rect>`).join("")).join("") + "</svg>",
+    log: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2.5a9.5 9.5 0 1 1 0 19 9.5 9.5 0 0 1 0-19zM11 6.5v6.1l4.4 2.6.95-1.6-3.35-2V6.5z"></path></svg>',
+  };
+  function mkNav() {
+    const n = el("nav", "mknav"); n.setAttribute("aria-label", "Draft room");
+    for (const [k, l] of [["players", "Players"], ["team", "My team"], ["teams", "Teams"], ["board", "Board"], ["log", "Picks"]]) {
+      const b = el("button", "mknavb"); b.type = "button"; b.innerHTML = MK_ICON[k] + `<span>${l}</span>`; if (mkUI.tab === k) b.setAttribute("aria-current", "page");
+      b.addEventListener("click", () => { mkUI.tab = k; mkDraw(); }); n.append(b); }
+    return n;
+  }
+  // the panes whose header holds still with only the rows scrolling (Sean, 27 Nov 2026: "make this table like not scroll past the my team thing above
+  // keep that and the header stable as one table ... I don't see the roster above the header as I scroll down"): the pane's own scroll box sits under
+  // its fixed head with no padding over the rows, so the sticky column names sit flush at its top and nothing passes above them
+  const MK_FIX = new Set(["team", "teams", "board"]);
   const mkSaveSet = () => { try { localStorage.setItem("draft2027.mock", JSON.stringify(mkSet)); } catch {} };
   const mkSave = () => { try { if (mk) localStorage.setItem("draft2027.mockdraft", JSON.stringify(mk)); else localStorage.removeItem("draft2027.mockdraft"); } catch {} };
   // the scoring the room's Proj column and team totals use: one of the saved Fantasy presets, picked at setup (Sean, 2 Oct 2026)
@@ -14212,13 +14258,15 @@
   const mkChrome = (picks) => leadersChrome("mock", picks, FANTASY_PAGES);   // the Fantasy pages' bar, the page picker first
   // the page while a draft exists: the bar with Enter the draft room, and a card saying where the draft stands
   function mkDrawPage(box) {
-    const go = el("button", "sbview mkenter", "Enter the draft room"); go.type = "button"; go.addEventListener("click", (e) => { e.stopPropagation(); mkEnter(); });
+    const done = mk.status === "done";
+    // a paused draft is waiting here (Sean, 27 Nov 2026: "when I pause, when I go back to the mock draft area it gives me the option to return to that paused draft")
+    const go = el("button", "sbview mkenter", done ? "See the results" : "Return to draft"); go.type = "button"; go.addEventListener("click", (e) => { e.stopPropagation(); mkEnter(); });
     box.replaceChildren(mkChrome([go]).row);
-    const w = el("div", "mkset mkcard"), T = mk.set.teams, done = mk.status === "done";
-    w.append(el("h2", "mkh", done ? "Draft complete" : "Mock draft in progress"));
+    const w = el("div", "mkset mkcard"), T = mk.set.teams;
+    w.append(el("h2", "mkh", done ? "Draft complete" : "Your mock draft is paused"));
     const where = done ? `${mk.log.length} players drafted` : mk.status === "pre" ? "the room opens with a minute on the clock" : mk.set.type === "snake" ? `round ${Math.floor(mk.pick / T) + 1}, pick ${(mk.pick % T) + 1} · ${mk.pick} of ${mkTotal()} picks made` : `${mk.log.length} of ${mkTotal()} sold`;
-    w.append(el("p", "note", `${mk.set.type === "snake" ? "Snake" : "Auction"} · ${T} teams · ${mkSlotList(mk.set.roster).length} roster spots a team · ${where}${done ? "" : " · paused"}. The draft runs only while the room is open; leaving the room pauses it.`));
-    const row = el("div", "mkpagebtns"), enter = el("button", "btn mkgo", done ? "See the results" : "Enter the draft room"); enter.type = "button"; enter.addEventListener("click", mkEnter);
+    w.append(el("p", "note", `${mk.set.type === "snake" ? "Snake" : "Auction"} · ${T} teams · ${mkSlotList(mk.set.roster).length} roster spots a team · ${where}.${done ? "" : " It picks up right where you left it: Resume in the room starts the clock."}`));
+    const row = el("div", "mkpagebtns"), enter = el("button", "btn mkgo", done ? "See the results" : "Return to draft"); enter.type = "button"; enter.addEventListener("click", mkEnter);
     const end = el("button", "btn btn-quiet", done ? "New mock draft" : "End this draft"); end.type = "button";
     end.addEventListener("click", () => { if (done || confirm("End this mock draft? It can't be resumed.")) { mk = null; mkRoom = false; mkSave(); render(); } });
     row.append(enter, end); w.append(row); box.append(w);
@@ -14267,29 +14315,32 @@
   function mkDraw() {
     if (state.mode !== "mock" || !mk || !mkRoom) return;   // the room, a popup since 29 Oct 2026
     const box = mkRoomEl(); mkRoomSync();
-    const keep = { list: box.querySelector(".mklist")?.scrollTop || 0, side: box.querySelector(".mkside")?.scrollTop || 0, focus: document.activeElement && document.activeElement.id === "mkq", cust: document.activeElement && document.activeElement.id === "mkcust" };
+    const inner0 = box.querySelector(".mkside .mkscroll, .mkside .mkboardw");
+    const keep = { list: box.querySelector(".mklist")?.scrollTop || 0, side: box.querySelector(".mkside")?.scrollTop || 0, inner: inner0 ? [inner0.scrollTop, inner0.scrollLeft] : null, tab: box._tab, focus: document.activeElement && document.activeElement.id === "mkq", cust: document.activeElement && document.activeElement.id === "mkcust" };
     box.replaceChildren();
-    { const x = el("button", "mkx", "×"); x.type = "button"; x.setAttribute("aria-label", "Leave the draft room"); x.title = "Back to the Mock draft page — the draft pauses"; x.addEventListener("click", mkLeave); box.append(x); }
+    { const x = el("button", "mkx", "×"); x.type = "button"; x.setAttribute("aria-label", "Leave the draft room"); x.title = "Leave the room: pause the draft or end it"; x.addEventListener("click", mkAskLeave); box.append(x); }
     if (mk.status === "done") { mkDrawDone(box); return; }
-    const mob = mobileView();
+    const mob = mobileView(), tabNow = mob ? mkUI.tab : mkUI.side;
     box.append(mkTop());
     if (mk.auc && mk.status === "live") box.append(mkAuctionPanel());
     if (!box._mkwake) { box._mkwake = true; box.addEventListener("pointerdown", () => { if (state.mode === "mock" && mkSet.sound !== false) mkAudio(); }); }
     if (mob) {
-      const tabs = el("div", "seg mktabs");
-      for (const [k, l] of [["players", "Players"], ["team", "My team"], ["teams", "Teams"], ["board", "Board"], ["log", "Picks"]]) { const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(mkUI.tab === k)); b.addEventListener("click", () => { mkUI.tab = k; mkDraw(); }); tabs.append(b); }
-      box.append(tabs);
+      // the tabs are the room's bottom bar on a phone (Sean, 27 Nov 2026: "once I enter the draft room the bottom bars go away and instead place the
+      // players my team board picks bar there")
       const main = el("div", "mkmain one");
-      if (mkUI.tab === "players") main.append(mkListPane()); else { const s = el("div", "mkside"); s.append(mkSidePane(mkUI.tab)); main.append(s); }
-      box.append(main);
+      if (mkUI.tab === "players") main.append(mkListPane()); else { const s = el("div", "mkside" + (MK_FIX.has(mkUI.tab) ? " mkfix" : "")); s.append(mkSidePane(mkUI.tab)); main.append(s); }
+      box.append(main, mkNav());
     } else {
-      const main = el("div", "mkmain"), side = el("div", "mkside");
+      const main = el("div", "mkmain"), side = el("div", "mkside" + (MK_FIX.has(mkUI.side) ? " mkfix" : ""));
       const st = el("div", "seg mktabs"); for (const [k, l] of [["team", "My team"], ["teams", "Teams"], ["board", "Board"], ["log", "Picks"], ["queue", "Queue"]]) { const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(mkUI.side === k)); b.addEventListener("click", () => { mkUI.side = k; mkDraw(); }); st.append(b); }
       side.append(st, mkSidePane(mkUI.side));
       main.append(mkListPane(), side); box.append(main);
     }
+    if (mkUI.leave) box.append(...mkLeaveWin());
     const l = box.querySelector(".mklist"); if (l) l.scrollTop = keep.list;
     const s = box.querySelector(".mkside"); if (s) s.scrollTop = keep.side;
+    if (keep.inner && keep.tab === tabNow) { const n = box.querySelector(".mkside .mkscroll, .mkside .mkboardw"); if (n) { n.scrollTop = keep.inner[0]; n.scrollLeft = keep.inner[1]; } }
+    box._tab = tabNow;
     if (keep.focus) { const q = $("mkq"); if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
     if (keep.cust) { const c = $("mkcust"); if (c) c.focus({ preventScroll: true }); }
     mkClock();
@@ -14301,7 +14352,8 @@
     let what;
     if (mk.status === "pre") what = `Draft starts in a minute · you ${mk.set.type === "snake" ? "pick " + (mk.me + 1) + (mk.me === 0 ? "st" : mk.me === 1 ? "nd" : mk.me === 2 ? "rd" : "th") : "nominate " + (mk.me + 1) + (mk.me === 0 ? "st" : mk.me === 1 ? "nd" : mk.me === 2 ? "rd" : "th")} of ${T} · ☆ to queue`;
     else if (mk.set.type === "snake") { const ti = mkOnClock(), r = Math.floor(mk.pick / T) + 1, n = (mk.pick % T) + 1; what = `Round ${r} · Pick ${n} (${mk.pick + 1} of ${mkTotal()}) · ${mk.teams[ti].me ? "You're on the clock" : mk.teams[ti].name + " is picking"}`; }
-    else { const A = mk.auc; what = A.phase === "nom" ? (mk.teams[A.nom].me ? "Your nomination" : `${mk.teams[A.nom].name} is nominating`) : `Bidding on ${mkP(A.k).name}`; what += ` · ${mk.log.length} of ${mkTotal()} sold`; }
+    // the lot's name only in the auction panel under this row (Sean, 27 Nov 2026: "I see shohei ohtanis name twice I only think we need to see it once")
+    else { const A = mk.auc; what = A.phase === "nom" ? (mk.teams[A.nom].me ? "Your nomination" : `${mk.teams[A.nom].name} is nominating`) : "Bidding"; what += ` · ${mk.log.length} of ${mkTotal()} sold`; }
     const mine = mk.status === "live" && (mk.set.type === "snake" ? mk.teams[mkOnClock()].me : (mk.auc.phase === "nom" && mk.teams[mk.auc.nom].me));
     top.classList.toggle("mine", !!mine);
     const clock = el("div", "mkclock"); clock.id = "mkclock";
@@ -14314,8 +14366,10 @@
     gear.addEventListener("click", () => { if (mk && !mk.paused && (mk.status === "live" || mk.status === "pre")) { mk.paused = true; mkUI.setHold = true; mkSave(); } mkUI.timer = true; mkDraw(); });
     btns.append(gear);
     if (mk.status === "pre") { const go = el("button", "btn", "Start now"); go.type = "button"; go.addEventListener("click", () => { mkAudio(); mkGo(); }); btns.prepend(go); }
+    // a paused draft says so with a Resume beside Settings (27 Nov 2026): a draft paused from the × comes back to the room this way
+    if (mk.paused && !mkUI.setHold && !mkUI.leaveHold && !mkCardHold) { const rs = el("button", "btn mkresume", "Resume"); rs.type = "button"; rs.addEventListener("click", () => { mkAudio(); mk.paused = false; mkLast = Date.now(); mkSave(); mkTick(true); mkDraw(); }); btns.prepend(rs); }
     if (mkUI.timer) {
-      const close = () => { mkUI.timer = false; if (mkUI.setHold) { mkUI.setHold = false; if (mk && mk.paused) { mk.paused = false; mkLast = Date.now(); mkSave(); mkTick(true); } } mkDraw(); };
+      const close = mkCloseSettings;
       const bg = el("div", "mksetbg"); bg.addEventListener("click", close);
       const tp = el("div", "mktimer mksetwin"); tp.setAttribute("role", "dialog");
       const hd = el("div", "mksethd"); const x = el("button", "pop-close", "×"); x.type = "button"; x.setAttribute("aria-label", "Close"); x.addEventListener("click", close); hd.append(el("b", null, "Draft settings"), x); tp.append(hd);
@@ -14413,7 +14467,8 @@
       const who = el("td", "l nm"); const nb = el("button", "linkbtn pbname", x.name); nb.type = "button"; nb.addEventListener("click", () => mkOpenCard(x));
       const tag = el("span", "mkptag", x.elig[0] === "DH" ? "DH" : x.elig[0]); tag.style.background = POSCLR[x.elig[0]] || "#5d6d7e";
       who.append(tag, nb);
-      tr.append(el("td", "rk", String(x.adp)), who, el("td", "c", x.team || ""), el("td", "c", mkPosTag(x)), el("td", "kd", mkPer(x)));
+      const pj = mkPer(x), pu = pj.indexOf("/"), pcell = el("td", "kd"); if (pu > 0) pcell.append(pj.slice(0, pu), el("small", "mkunit", pj.slice(pu))); else pcell.append(pj);   // the unit small, so "15.7/GS" fits a phone's column
+      tr.append(el("td", "rk", String(x.adp)), who, el("td", "c", x.team || ""), el("td", "c", mkPosTag(x)), pcell);
       if (auc) tr.append(el("td", null, mkVal(x.k) ? `$${mkVal(x.k)}` : "–"));
       const act = el("td", "mkact");
       if (gone) { const l = mk.log.find((l) => l.k === x.k); act.append(el("small", null, `${mk.teams[l.t].me ? "You" : mk.teams[l.t].name}${l.cost ? " $" + l.cost : ""}`)); }
@@ -14445,13 +14500,12 @@
         tr.append(el("td", "n", String(mkOpen(t))), el("td", "n", String(Math.round(t.picks.reduce((a, q) => a + (mkP(q.k)?.mine || 0), 0)))));
         body.append(tr);
       });
-      const th = el("thead"); th.append(hd); tb.append(th, body); w.append(tb);
+      const th = el("thead"); th.append(hd); tb.append(th, body); const sc = el("div", "mkscroll"); sc.append(tb); w.append(sc);
       return w;
     }
     if (which === "team" || which === "players") {
       const teamI = mkUI.boardTeam ?? mk.me, t = mk.teams[teamI];
       const sel = el("select", "mksel"); mk.teams.forEach((x, i) => { const o = el("option", null, x.name); o.value = i; o.selected = i === teamI; sel.append(o); }); sel.addEventListener("change", () => { mkUI.boardTeam = +sel.value; mkDraw(); });
-      w.append(sel);
       const ps = t.picks.map((q) => mkP(q.k)), a = mkAssign(ps, mk.set.roster);
       const tb = el("table", "sbt brt mkteam"); const body = el("tbody");
       { const hd = el("tr"); for (const h of ["Slot", "Player", "Tm", "Pos", "Proj", ...(mk.set.type === "auction" ? ["$"] : [])]) hd.append(el("th", h === "Player" || h === "Slot" ? "l" : null, h)); const th = el("thead"); th.append(hd); tb.append(th); }
@@ -14459,9 +14513,12 @@
         const c = el("td", "l nm"); if (x) { const b = el("button", "linkbtn pbname", x.name); b.type = "button"; b.addEventListener("click", () => mkOpenCard(x)); c.append(b); } else c.append(el("span", "mkslotempty", "—"));   /* the site's table layout: Tm and Pos their own columns (27 Nov 2026) */
         tr.append(c, el("td", "c", x ? x.team || "" : ""), el("td", "c", x ? mkPosTag(x) : ""), el("td", null, x ? String(Math.round(x.mine)) : "")); if (mk.set.type === "auction") tr.append(el("td", null, x ? `$${t.picks[o].cost}` : ""));
         body.append(tr); });
-      tb.append(body); w.append(tb);
+      tb.append(body);
+      // the team picker and his starters' points over the table as its fixed head; the rows scroll in their own box under the column names
       const startPts = a.own.reduce((s, o, i) => s + (o >= 0 && a.slots[i] !== "BN" ? ps[o].mine : 0), 0);
-      w.append(el("p", "note", `Starters' projected points: ${Math.round(startPts)}${mk.set.type === "auction" ? ` · $${t.budget} left` : ""}`));
+      const head = el("div", "mkpanehd"), sc = el("div", "mkscroll");
+      head.append(sel, el("span", "mkpanesum", `Starters' proj. ${Math.round(startPts)}${mk.set.type === "auction" ? ` · $${t.budget} left` : ""}`));
+      sc.append(tb); w.append(head, sc);
     } else if (which === "board") {
       const T = mk.set.teams, rounds = mkSpots(), g = el("div", "mkboard"); g.style.setProperty("--n", T);
       mk.teams.forEach((t) => g.append(el("div", "mkbh" + (t.me ? " me" : ""), t.name)));
@@ -15302,7 +15359,7 @@
     if (e.key === "/" && !typing) { e.preventDefault(); $("search").focus(); }
     if (e.key === "Escape" && (state.expanded || state.textModal || state.tierPick || state.colPick || state.panel)) closeModal();
     else if (e.key === "Escape" && xPop && !document.querySelector(".phmodal") && !ddOpen) closeXPop();
-    else if (e.key === "Escape" && mkRoom && !ddOpen && !document.querySelector(".phmodal")) mkLeave();   // the draft room (29 Oct 2026)
+    else if (e.key === "Escape" && mkRoom && !ddOpen && !document.querySelector(".phmodal")) mkEscape();   // the draft room (29 Oct 2026): its Settings or leave window first, else the leave window
     else if (e.key === "Escape" && aucPick && $("aucsheet")) { aucPick = null; aucSheetSync(); }   // the auction's sale sheet
   });
 
