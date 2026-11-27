@@ -6411,3 +6411,38 @@ canvas.seasonfx { opacity: .7; }
 #mkroom .mksetwin .mksetacts .btn { flex: 1 1 0; }
 #mkroom .mktop .mkrow1 .mkclock { flex: 0 0 auto; white-space: nowrap; }
 #mkroom .mksetwin .mkrcell .mknum { width: 90px; flex: 0 0 auto; }
+
+/* The draft room as one window (Sean, 27 Nov 2026): on a phone the site's bottom bar hides while the room is up and the room's own tabs
+   (Players · My team · Teams · Board · Picks) are the bar along the foot, in the site bar's dress — the band's colour over the red rule, an icon
+   over a word, the open tab white and bold. The My team, Teams and Board panes keep their head still: the pane is a column, its head (the team
+   picker and starters' points) fixed, and the rows scroll in a box of their own with no padding over them, so the sticky column names sit flush
+   at its top and no row shows above them (a scroll box's top padding had left a strip where the rows slid past over the names). */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.mkroomon :is(.pbar, .pbarfade):not(#k1):not(#k2):not(#k3):not(#k4):not(#k5):not(#k6) { visibility: hidden !important; pointer-events: none !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom:not(#k1) { padding-bottom: 0 !important; }
+#mkroom > .mknav { display: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom:not(#k1) > .mknav { flex: none !important; display: flex; align-items: stretch; margin: 0 -8px; padding: 4px 0 env(safe-area-inset-bottom, 0px); background: var(--band2, var(--accent-2)); border-top: 3px solid var(--phsep, var(--stripe-line, #c8102e)); }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom:not(#k1):not(#k2) > .mknav > .mknavb { flex: 1 1 0; min-width: 0; height: 48px !important; min-height: 0 !important; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; margin: 0; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; color: var(--band2-type, #ffffff) !important; opacity: .7; font: 500 11.5px/1.1 var(--body, sans-serif) !important; letter-spacing: 0 !important; text-transform: none !important; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom:not(#k1):not(#k2) > .mknav > .mknavb[aria-current="page"] { opacity: 1; color: #ffffff !important; font-weight: 800 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom:not(#k1):not(#k2) > .mknav > .mknavb span { white-space: nowrap; max-width: 100%; overflow: hidden; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom:not(#k1):not(#k2) > .mknav svg { width: 26px; height: 26px; fill: currentColor; stroke: none; }
+/* the panes with a still head: the side box no longer scrolls itself, its pane is a column, the rows' box takes the rest */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mkside.mkfix { overflow: hidden !important; display: flex; flex-direction: column; padding: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mkside.mkfix > .mktabs { flex: none; margin: 8px 8px 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mkside.mkfix > .mkpane { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding-top: 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mkside.mkfix > .mkpane > :is(.mkscroll, .mkboardw) { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: none; padding: 0 8px 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mkpane > .mkpanehd { flex: none; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; padding: 0 8px 8px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mkpane > .mkpanehd .mkpanesum { font-size: 12.5px; color: var(--muted); }
+/* the column names over the rows they head (z above the rows' cells), on their own band colour so nothing shows through */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mkside.mkfix .mkscroll .sbt thead th { position: sticky; top: 0; z-index: 4; }
+/* the leave window: its note, its two buttons, Keep drafting under them */
+#mkroom .mksetwin.mkleave .note { margin: 0; font-size: 13.5px; line-height: 1.4; color: var(--ink-2); }
+#mkroom .mksetwin.mkleave .mkstay { align-self: center; margin-top: 2px; font-size: 14px; }
+#mkroom .mktop .mkresume { font-weight: 700; }
+/* the room's player list (27 Nov 2026): a long name shrinks to fit with its own "…" (the cell's ellipsis had hidden the whole name button —
+   Pete Crow-Armstrong read as a blank row on a phone), and the projection's unit rides small beside the number */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mktable td.nm .pbname { display: inline-block !important; max-width: calc(100% - 34px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mktable td.kd small.mkunit { display: inline !important; font-size: 10px !important; font-weight: 500; color: var(--muted); margin-left: 1px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom:not(#k1) .mktable th:nth-child(5) { width: 50px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom:not(#k1) .mktable th:last-child { width: 88px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mktable td.nm { line-height: 18px !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mktable td.nm .mkptag { vertical-align: middle !important; }

@@ -193,11 +193,23 @@ function minorsId() {
         await pg.keyboard.press("Escape"); await until(() => document.querySelector("#modal").hidden && !document.querySelector("#mkroom").hidden && !/Paused/.test(document.querySelector("#mkclock").textContent));
         await pg.evaluate(() => document.querySelector("#mkroom .mkgear").click()); await until(() => !!document.querySelector("#mkroom .mksetwin") && /Paused/.test(document.querySelector("#mkclock").textContent));
         await pg.evaluate(() => document.querySelector("#mkroom .mksetwin .pop-close").click()); await until(() => !document.querySelector("#mkroom .mksetwin") && !/Paused/.test(document.querySelector("#mkclock").textContent));
-        await pg.evaluate(() => document.querySelector("#mkroom .mkx").click());
-        await until(() => document.querySelector("#mkroom").hidden && !!document.querySelector("#pitchboard .sbview.mkenter") && !!document.querySelector("#pitchboard .mkcard") && /paused/.test(document.querySelector("#pitchboard .mkcard").textContent));
-        await pg.evaluate(() => document.querySelector("#pitchboard .sbview.mkenter").click()); await until(() => !document.querySelector("#mkroom").hidden && !!document.querySelector("#mkroom .mklist"));
-        await pg.keyboard.press("Escape"); await until(() => document.querySelector("#mkroom").hidden);
-        await pg.evaluate(() => { document.querySelector("#pitchboard .mkcard .btn-quiet").click(); }); await until(() => !!document.querySelector("#pitchboard .mkset .mkgo") && !document.querySelector("#pitchboard .mkcard"), 20000).catch(() => {});
+        // a phone's room is one window (27 Nov 2026): the site's bottom bar hides, the room's tabs are the bar at its foot; My team's head holds still
+        if (name.startsWith("phone")) { await until(() => getComputedStyle(document.querySelector("nav.pbar")).visibility === "hidden" && document.querySelectorAll("#mkroom .mknav .mknavb").length === 5);
+          await pg.evaluate(() => [...document.querySelectorAll("#mkroom .mknav .mknavb")].find((x) => /My team/.test(x.textContent)).click());
+          await until(() => { const sc = document.querySelector("#mkroom .mkside.mkfix .mkscroll"), th = sc && sc.querySelector("thead th"); return !!th && !!document.querySelector("#mkroom .mkpanehd select") && Math.abs(th.getBoundingClientRect().top - sc.getBoundingClientRect().top) < 1; });
+          await pg.evaluate(() => [...document.querySelectorAll("#mkroom .mknav .mknavb")].find((x) => /Players/.test(x.textContent)).click()); await until(() => !!document.querySelector("#mkroom .mklist")); }
+        // the × asks (27 Nov 2026): Keep drafting lets the clock run again, Pause draft leaves with the draft paused, the page offers Return to draft,
+        // the room comes back paused with a Resume, Escape opens the window again and End draft ends it
+        await pg.evaluate(() => document.querySelector("#mkroom .mkx").click()); await until(() => !!document.querySelector("#mkroom .mkleave") && /Paused/.test(document.querySelector("#mkclock").textContent));
+        await pg.evaluate(() => document.querySelector("#mkroom .mkleave .mkstay").click()); await until(() => !document.querySelector("#mkroom .mkleave") && !/Paused/.test(document.querySelector("#mkclock").textContent));
+        await pg.evaluate(() => document.querySelector("#mkroom .mkx").click()); await until(() => !!document.querySelector("#mkroom .mkleave .mkpause"));
+        await pg.evaluate(() => document.querySelector("#mkroom .mkleave .mkpause").click());
+        await until(() => document.querySelector("#mkroom").hidden && /Return to draft/.test(document.querySelector("#pitchboard .sbview.mkenter")?.textContent || "") && /paused/.test(document.querySelector("#pitchboard .mkcard")?.textContent || ""));
+        if (name.startsWith("phone") && await pg.evaluate(() => getComputedStyle(document.querySelector("nav.pbar")).visibility === "hidden")) throw new Error("the site's bottom bar stayed hidden after leaving the room");
+        await pg.evaluate(() => document.querySelector("#pitchboard .sbview.mkenter").click()); await until(() => !document.querySelector("#mkroom").hidden && !!document.querySelector("#mkroom .mkresume") && /Paused/.test(document.querySelector("#mkclock").textContent));
+        await pg.evaluate(() => document.querySelector("#mkroom .mkresume").click()); await until(() => !document.querySelector("#mkroom .mkresume") && !/Paused/.test(document.querySelector("#mkclock").textContent));
+        await pg.keyboard.press("Escape"); await until(() => !!document.querySelector("#mkroom .mkleave .btn-quiet"));
+        await pg.evaluate(() => document.querySelector("#mkroom .mkleave .btn-quiet").click()); await until(() => document.querySelector("#mkroom").hidden && !!document.querySelector("#pitchboard .mkset .mkgo") && !document.querySelector("#pitchboard .mkcard"), 20000);
         await pg.evaluate(() => localStorage.removeItem("draft2027.mockdraft")); });
       await step("settings", async () => { for (const t of ["glossary", "appearance", "key", "how"]) { await hash("#settings/" + t); await count(".stabs .btab", 3); } });
     }
