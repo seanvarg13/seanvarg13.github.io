@@ -14433,7 +14433,8 @@
       acts.append(pz, quit); tp.append(acts);
       top.append(bg, tp);
     }
-    if (mk.set.type === "auction") { const me = mk.teams[mk.me]; btns.prepend(el("span", "mkbudget", `$${me.budget} left · max $${mkMaxBid(me)}`)); }
+    // the two numbers bigger and bold (Sean, 27 Nov 2026: "make the left and max bid #s bigger and bold them")
+    if (mk.set.type === "auction") { const me = mk.teams[mk.me], bud = el("span", "mkbudget"); bud.append(el("b", null, `$${me.budget}`), " left · max ", el("b", null, `$${mkMaxBid(me)}`)); btns.prepend(bud); }
     // an auction's top box is the clock, his money and the buttons, centred (Sean, 27 Nov 2026: "i dont need to see 'bidding 1 of 350 sold' in the
     // top box ... just have the clock and then the $200 left, max $176 and settings button"): the auction panel under it says who's up or nominating.
     // A snake draft keeps its line, the one place that says whose pick it is

@@ -6472,3 +6472,14 @@ canvas.seasonfx { opacity: .7; }
 :root:root:root:root:root:root:root:root:root:root:root:root body.mkroomon #xboard.xpop { z-index: 74 !important; }
 /* the Picks tab's Rewind, at each pick's right */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mklog li .mkrw { float: right; margin-left: 10px; font-size: 12.5px; }
+/* the auction top box's money in bold (Sean, 27 Nov 2026: "make the left and max bid #s bigger and bold them"): the two numbers in the clock's ink,
+   the words between them as they were */
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root #mkroom:not(#k1) .mktop .mkbudget b { font-size: 19px !important; font-weight: 700 !important; color: var(--ink) !important; font-variant-numeric: tabular-nums; line-height: 1; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom:not(#k1) .mktop .mkbudget b { font-size: 16px !important; }
+/* the room's player page is a window over the room (Sean, 27 Nov 2026: "make it so when i go to a player page/card it gives a pop up window like the
+   prior one did, but still make it be the current style just make it a pop up window instead"): the popup is inset from the room on every side, framed
+   and shadowed, the room dimmed behind it — on a phone between the room's clock and its tab bar (the old card's place), on a desktop smaller than the
+   room. Only in the room: every other page's popup is as it was */
+:root:root:root:root:root:root:root:root:root:root:root:root body.mkroomon:not(#k1) #xboard.xpop { inset: 64px 0 !important; width: min(980px, calc(100vw - 128px)) !important; margin: 0 auto !important; border: 1px solid color-mix(in srgb, var(--ink) 45%, transparent) !important; box-shadow: 0 18px 50px rgba(0, 0, 0, .35) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.mkroomon:not(#k1) #xboard.xpop { top: calc(env(safe-area-inset-top, 0px) + 64px) !important; bottom: calc(env(safe-area-inset-bottom, 0px) + 62px) !important; left: 8px !important; right: 8px !important; width: auto !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.mkroomon:not(#k1) #xboard.xpop .pbelow2 { padding-bottom: 28px !important; }
