@@ -6782,7 +6782,7 @@
     if (!window.DRAFT_MOVES && window.DRAFT_BUILD && window.DRAFT_BUILD["hist/moves.js"]) ensureScript("hist/moves.js", () => !!window.DRAFT_MOVES);   // the winter's moves (28 Oct 2026)
     applyMoves();
     if (state.mode !== "draft" && $("aucsheet")) { aucPick = null; $("aucsheet").remove(); }   // the auction sheet is Draft mode's
-    if (state.mode !== "mock") { mkRoom = false; mkRoomSync(); }   // the draft room is the Mock draft page's (29 Oct 2026)
+    if (state.mode !== "mock") { mkRoom = false; mkRoomSync(); } else mkCardSync();   // the draft room is the Mock draft page's (29 Oct 2026)
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", league = state.mode === "league", hub = home || league, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws" || state.mode === "bullpens", other = pitches || player || compare || elig || hub || appear || fant;
     if (xPop && !POP_MODES.includes(state.mode)) xPop = false;   // another page: the popup goes with the list it came from
@@ -13827,7 +13827,7 @@
       if (espn <= 20 && mine <= 20) continue;
       pool.push({ k: p.type + p.id, p, id: p.id, type: p.type, name: p.name, team: p.team, age: (p.age ?? 28) + 1, line: o,
         elig: p.type === "H" ? eligiblePositions(p) : (role === "SP" ? ["SP", ...pitcherRoles(p).filter((x) => x === "RP")] : ["RP", ...pitcherRoles(p).filter((x) => x === "SP")]),
-        role, time: Math.round(p.type === "H" ? o.PA : o.IP), espn, mine });
+        role, time: Math.round(p.type === "H" ? o.PA : o.IP), espn, mine, gp: role === "SP" ? o.GS : o.G });   /* Proj per game / start / appearance (27 Nov 2026) */
     }
     // a two-way player is one player (Sean, 2 Oct 2026: "ohtani should be valued as a pitcher and hitter"): his pitching points ride
     // on his hitting entry, he fills a hitter's slot, and the separate pitcher entry goes — so he's the one way-out-front price
@@ -14052,8 +14052,10 @@
     const early = mk.log.length < mk.set.teams * 1.5, poor = t.budget <= mkOpen(t) + 2;
     let pick;
     if (poor) pick = avail.filter((x) => mkFillsStarter(t, x, mk.set.roster))[Math.floor(Math.random() * 6)] || avail[0];
-    else if (early || Math.random() < 0.6) pick = avail[Math.floor(Math.random() * Math.min(avail.length, early ? 8 : 15))];
-    else { const lo = avail.slice(Math.min(avail.length - 1, 20), 120); pick = lo[Math.floor(Math.random() * lo.length)] || avail[0]; }
+    // mostly the board's order with a little volatility (Sean, 27 Nov 2026: "mostly follows the board order with some volatility, but nothing
+    // extreme"): the top available player most often, a few spots down now and then — |gauss| × 2.5, so ~70% of nominations are in the top 3
+    // and almost none past the top 10; the deep $1 fliers are gone
+    else { const g = Math.sqrt(-2 * Math.log(Math.random() || 1e-9)) * Math.cos(2 * Math.PI * Math.random()); pick = avail[Math.min(avail.length - 1, Math.floor(Math.abs(g) * 2.5))]; }
     const open = !poor && Math.random() < 0.15 ? Math.max(1, Math.min(mkMaxBid(t), Math.round(0.4 * mkMarket(pick)))) : 1;
     mkNominate(ti, pick.k, open);
   }
@@ -14262,34 +14264,41 @@
     top.classList.toggle("mine", !!mine);
     const clock = el("div", "mkclock"); clock.id = "mkclock";
     const info = el("div", "mkwhat", what);
+    // one Settings button (Sean, 27 Nov 2026: "instead of having a sound effects button, timer, pause and end button, have just one settings
+    // button that brings up a pop up window with all of those adjustment things ... auto pause the draft too"): the window holds sound, the
+    // clocks, the computer teams' speed, scoring, Pause / Resume and End; opening it pauses a running draft and closing it resumes that
     const btns = el("div", "mkbtns");
-    const pz = el("button", "btn mkpause", mk.paused ? "Resume" : "Pause"); pz.type = "button"; pz.addEventListener("click", () => { mk.paused = !mk.paused; mkLast = Date.now(); mkSave(); mkTick(true); mkDraw(); });
-    const quit = el("button", "btn btn-quiet", "End"); quit.type = "button"; quit.addEventListener("click", () => { if (confirm("End this mock draft? It can't be resumed.")) { mk = null; mkSave(); render(); } });
-    // the clocks can change mid-draft too (Sean, 2 Oct 2026: "change the auction timer/count down"): the new length applies from
-    // the next reset, and a running clock longer than it is cut down to it
-    const tm = el("button", "btn btn-quiet", "Timer"); tm.type = "button"; tm.setAttribute("aria-expanded", String(!!mkUI.timer));
-    tm.addEventListener("click", () => { mkUI.timer = !mkUI.timer; mkDraw(); });
-    const snd = el("button", "btn btn-quiet mksnd", mkSet.sound === false ? "🔇" : "🔊"); snd.type = "button"; snd.title = mkSet.sound === false ? "Sound off — tap to turn on" : "Sound on — tap to turn off";
-    snd.addEventListener("click", () => { mkSet.sound = mkSet.sound === false; mkSaveSet(); if (mkSet.sound) { mkAudio(); mkSnd("tick"); } mkDraw(); });
-    btns.append(snd, tm, pz, quit);
+    const gear = el("button", "btn mkgear", "Settings"); gear.type = "button";
+    gear.addEventListener("click", () => { if (mk && !mk.paused && (mk.status === "live" || mk.status === "pre")) { mk.paused = true; mkUI.setHold = true; mkSave(); } mkUI.timer = true; mkDraw(); });
+    btns.append(gear);
     if (mk.status === "pre") { const go = el("button", "btn", "Start now"); go.type = "button"; go.addEventListener("click", () => { mkAudio(); mkGo(); }); btns.prepend(go); }
     if (mkUI.timer) {
-      const tp = el("div", "mktimer");
+      const close = () => { mkUI.timer = false; if (mkUI.setHold) { mkUI.setHold = false; if (mk && mk.paused) { mk.paused = false; mkLast = Date.now(); mkSave(); mkTick(true); } } mkDraw(); };
+      const bg = el("div", "mksetbg"); bg.addEventListener("click", close);
+      const tp = el("div", "mktimer mksetwin"); tp.setAttribute("role", "dialog");
+      const hd = el("div", "mksethd"); const x = el("button", "pop-close", "×"); x.type = "button"; x.setAttribute("aria-label", "Close"); x.addEventListener("click", close); hd.append(el("b", null, "Draft settings"), x); tp.append(hd);
       const f = (label, key, min, max) => { const l = el("label", "mkrcell"); const i = el("input", "mknum"); i.type = "number"; i.min = min; i.max = max; i.value = mk.set[key];
         i.addEventListener("change", () => { const v = Math.max(min, Math.min(max, Math.round(+i.value || min))); i.value = v; mk.set[key] = v; mkSet[key] = v; mkSaveSet();
           const live = mk.set.type === "snake" ? key === "pickSecs" : (mk.auc.phase === "nom" ? key === "nomSecs" : key === "bidSecs");
           if (live && mk.clock > v * 1000) mk.clock = v * 1000; mkSave(); mkClock(); });
         l.append(el("span", null, label), i); tp.append(l); };
       if (mk.set.type === "snake") f("Seconds per pick", "pickSecs", 10, 600);
-      else { f("Seconds to nominate", "nomSecs", 10, 300); f("Seconds per bid", "bidSecs", 3, 60); }
+      else { f("Seconds per nomination", "nomSecs", 10, 300); f("Seconds per bid", "bidSecs", 3, 60); }
       const ai = el("label", "mkrcell"); const sel = el("select", "mksel"); for (const [v, l] of [["fast", "Fast"], ["normal", "Normal"], ["slow", "Slow"]]) { const o = el("option", null, l); o.value = v; o.selected = mk.set.ai === v; sel.append(o); }
       sel.addEventListener("change", () => { mk.set.ai = sel.value; mkSet.ai = sel.value; mkSaveSet(); mkSave(); }); ai.append(el("span", null, "Computer teams"), sel); tp.append(ai);
       const sc = el("label", "mkrcell"); const ss = el("select", "mksel"); for (const p of fpresets()) { const o = el("option", null, p.name); o.value = p.id; o.selected = p.id === mkScoring().id; ss.append(o); }
       ss.addEventListener("change", () => { mk.set.scoring = ss.value; mkSet.scoring = ss.value; mkSaveSet(); mkSave(); mkDraw(); }); sc.append(el("span", null, "Scoring"), ss); tp.append(sc);
-      top.append(tp);
+      const sl = el("label", "mkrcell"); const sb = el("button", "btn btn-quiet mksnd", mkSet.sound === false ? "Off" : "On"); sb.type = "button";
+      sb.addEventListener("click", () => { mkSet.sound = mkSet.sound === false; mkSaveSet(); if (mkSet.sound) { mkAudio(); mkSnd("tick"); } mkDraw(); }); sl.append(el("span", null, "Sound effects"), sb); tp.append(sl);
+      const acts = el("div", "mksetacts");
+      const pz = el("button", "btn mkpause", mk.paused ? "Resume" : "Pause"); pz.type = "button";
+      pz.addEventListener("click", () => { mkUI.setHold = false; mk.paused = !mk.paused; mkLast = Date.now(); mkSave(); mkTick(true); mkDraw(); });
+      const quit = el("button", "btn btn-quiet", "End draft"); quit.type = "button"; quit.addEventListener("click", () => { if (confirm("End this mock draft? It can't be resumed.")) { mkUI.timer = false; mkUI.setHold = false; mk = null; mkSave(); render(); } });
+      acts.append(pz, quit); tp.append(acts);
+      top.append(bg, tp);
     }
     if (mk.set.type === "auction") { const me = mk.teams[mk.me]; btns.prepend(el("span", "mkbudget", `$${me.budget} left · max $${mkMaxBid(me)}`)); }
-    top.append(clock, info, btns);
+    const row = el("div", "mkrow1"); row.append(clock, info); top.append(row, btns);   /* the clock and what's happening on one line (27 Nov 2026) */
     return top;
   }
   function mkAuctionPanel() {
@@ -14308,7 +14317,7 @@
     const amt = el("span", "mkbamt"), who = el("span", "mkbwho"), bid = el("div", "mkbid"); bid.append(amt, who);
     const ctl = el("div", "mkbctl");
     const can = (v) => A.high !== mk.me && v <= mkMaxBid(me) && mkCanAdd(me, x, mk.set.roster);
-    const steps = [1, 5].map((d) => { const b = el("button", "btn mkstep"); b.type = "button"; b.addEventListener("click", () => mkBid(mk.me, A.bid + d)); ctl.append(b); return [d, b]; });
+    const steps = [1].map((d) => { const b = el("button", "btn mkstep"); b.type = "button"; b.addEventListener("click", () => mkBid(mk.me, A.bid + d)); ctl.append(b); return [d, b]; });
     const i = el("input", "mknum"); i.type = "number"; i.placeholder = "$"; i.id = "mkcust";
     if (mkUI.custK === A.k) i.value = mkUI.cust || "";
     i.addEventListener("input", () => { mkUI.cust = i.value; mkUI.custK = A.k; });
@@ -14328,7 +14337,13 @@
     w.append(head, bid, ctl, hist);
     return w;
   }
-  function mkOpenCard(x) { state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.expanded = x.type + x.id; render(); }
+  // a name in the room opens his card over the room and holds the clock while it's up (Sean, 27 Nov 2026: "when i click a player in the room ...
+  // their player card comes up ... and it pauses the draft timer too"); closing the card resumes a draft it paused
+  let mkCardHold = false;
+  function mkCardSync() { if (mkCardHold && !state.expanded) { mkCardHold = false; if (mk && mk.paused) { mk.paused = false; mkLast = Date.now(); mkSave(); mkTick(true); } } }
+  // the room's Proj column per unit (Sean, 27 Nov 2026: "projected per start for pitchers, per game for hitters, and per appearance for relievers")
+  function mkPer(x) { const g = x.gp || 0; if (!(g > 0)) return String(Math.round(x.mine)); return (x.mine / g).toFixed(1) + (x.type === "H" ? "/G" : x.role === "SP" ? "/GS" : "/App"); }
+  function mkOpenCard(x) { if (mk && !mk.paused && (mk.status === "live" || mk.status === "pre")) { mk.paused = true; mkCardHold = true; mkSave(); } state.cardDs = null; state.cardWin = { from: "", to: "", last: "" }; state.split = { hand: "all", venue: "all" }; state.expanded = x.type + x.id; render(); }
   function mkListPane() {
     const pane = el("div", "mklistw"), bar = el("div", "mkbar");
     const q = el("input", "mksearch"); q.id = "mkq"; q.type = "search"; q.placeholder = "Find a player"; q.value = mkUI.q; q.addEventListener("input", () => { mkUI.q = q.value; mkDrawList(); });
@@ -14349,14 +14364,14 @@
     if (mkUI.sort === "proj") rows.sort((a, b) => b.mine - a.mine); else if (mkUI.sort === "val") rows.sort((a, b) => mkVal(b.k) - mkVal(a.k) || a.adp - b.adp);
     rows = rows.slice(0, 250);
     const t = el("table", "sbt brt mktable"), th = el("thead"), hr = el("tr");   // B-Ref's table (Sean, 11 Oct 2026)
-    for (const [h, c] of [["ADP", null], ["Player", "l"], ["Tm", null], ["Pos", null], ["Proj", null], ...(auc ? [["$", null]] : []), ["", null]]) hr.append(el("th", c, h));
+    for (const [h, c] of [["ADP", null], ["Player", "l"], ["Tm", null], ["Pos", null], ["Proj", null], ...(auc ? [["$", null]] : []), ["", null]]) { const h0 = el("th", c, h); if (h === "Proj") h0.title = "Projected 2027 points under your scoring: per game for hitters, per start for starters, per appearance for relievers"; hr.append(h0); }
     th.append(hr); t.append(th); const tb = el("tbody");
     for (const x of rows) {
       const tr = el("tr"); const gone = taken.has(x.k); if (gone) tr.className = "mkgone";
       const who = el("td", "l nm"); const nb = el("button", "linkbtn pbname", x.name); nb.type = "button"; nb.addEventListener("click", () => mkOpenCard(x));
       const tag = el("span", "mkptag", x.elig[0] === "DH" ? "DH" : x.elig[0]); tag.style.background = POSCLR[x.elig[0]] || "#5d6d7e";
       who.append(tag, nb);
-      tr.append(el("td", "rk", String(x.adp)), who, el("td", "c", x.team || ""), el("td", "c", mkPosTag(x)), el("td", "kd", String(Math.round(x.mine))));
+      tr.append(el("td", "rk", String(x.adp)), who, el("td", "c", x.team || ""), el("td", "c", mkPosTag(x)), el("td", "kd", mkPer(x)));
       if (auc) tr.append(el("td", null, mkVal(x.k) ? `$${mkVal(x.k)}` : "–"));
       const act = el("td", "mkact");
       if (gone) { const l = mk.log.find((l) => l.k === x.k); act.append(el("small", null, `${mk.teams[l.t].me ? "You" : mk.teams[l.t].name}${l.cost ? " $" + l.cost : ""}`)); }
@@ -14397,10 +14412,10 @@
       w.append(sel);
       const ps = t.picks.map((q) => mkP(q.k)), a = mkAssign(ps, mk.set.roster);
       const tb = el("table", "sbt brt mkteam"); const body = el("tbody");
-      { const hd = el("tr"); for (const h of ["Slot", "Player", "Proj", ...(mk.set.type === "auction" ? ["$"] : [])]) hd.append(el("th", h === "Player" ? "l" : null, h)); const th = el("thead"); th.append(hd); tb.append(th); }
+      { const hd = el("tr"); for (const h of ["Slot", "Player", "Tm", "Pos", "Proj", ...(mk.set.type === "auction" ? ["$"] : [])]) hd.append(el("th", h === "Player" || h === "Slot" ? "l" : null, h)); const th = el("thead"); th.append(hd); tb.append(th); }
       a.slots.forEach((s, i) => { const o = a.own[i], x = o >= 0 ? ps[o] : null, tr = el("tr"); tr.append(el("td", "mkslot", MK_SLOTS.find(([k]) => k === s)[1]));
-        const c = el("td", "l nm"); if (x) { const b = el("button", "linkbtn pbname", x.name); b.type = "button"; b.addEventListener("click", () => mkOpenCard(x)); c.append(b, el("small", null, ` ${x.team} · ${mkPosTag(x)}`)); } else c.append(el("small", null, "—"));
-        tr.append(c, el("td", null, x ? String(Math.round(x.mine)) : "")); if (mk.set.type === "auction") tr.append(el("td", null, x ? `$${t.picks[o].cost}` : ""));
+        const c = el("td", "l nm"); if (x) { const b = el("button", "linkbtn pbname", x.name); b.type = "button"; b.addEventListener("click", () => mkOpenCard(x)); c.append(b); } else c.append(el("span", "mkslotempty", "—"));   /* the site's table layout: Tm and Pos their own columns (27 Nov 2026) */
+        tr.append(c, el("td", "c", x ? x.team || "" : ""), el("td", "c", x ? mkPosTag(x) : ""), el("td", null, x ? String(Math.round(x.mine)) : "")); if (mk.set.type === "auction") tr.append(el("td", null, x ? `$${t.picks[o].cost}` : ""));
         body.append(tr); });
       tb.append(body); w.append(tb);
       const startPts = a.own.reduce((s, o, i) => s + (o >= 0 && a.slots[i] !== "BN" ? ps[o].mine : 0), 0);

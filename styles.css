@@ -4218,24 +4218,24 @@ header.top .wordmark { display: none; }
    .sbt dress on the card's Pitching+ and Mix tabs and the Pitching+ board — brTable() in app.js. An over-header row naming each group
    (the band a shade deeper), centred column names, a 2px rule where a group ends (.ge), Exp beside Act (Act in grey), heat maps that fill
    the cell, the sorted column name lit with the red rule, totals as band rows under a gap ---- */
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt { width: auto; border-radius: 0 !important; overflow: visible !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt th { text-align: center; background: var(--band2, var(--accent-2)) !important; color: #fff !important; font: 600 12.5px var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; height: 30px; padding: 0 5px; border-right: 1px solid rgba(255,255,255,.35) !important; border-bottom: 0 !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt th.ge { border-right: 2px solid var(--ink) !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt tr.over th { background: color-mix(in srgb, var(--ink) 9%, var(--band2, var(--accent-2))) !important; font-size: 11.5px !important; height: 24px; font-size: 11.5px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,.5); }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td.xact { color: var(--muted); }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt tr.tot td.xact { color: #fff; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td { border-radius: 0 !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td.nm { font-weight: 600; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td.c { text-align: center; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td.rk { text-align: center; color: var(--muted); }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td.heat { font-weight: 700 !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt th.lit { background: color-mix(in srgb, #fff 22%, var(--band2, var(--accent-2))) !important; box-shadow: inset 0 -3px 0 var(--stripe-line, #c8102e); font-weight: 700; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt th .sortbtn { background: none; border: 0; padding: 0; margin: 0; font: inherit; font-weight: inherit; color: #fff !important; cursor: pointer; text-decoration: none; letter-spacing: 0; text-transform: none; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td .pbname { font: inherit; font-weight: 600; color: var(--ink); text-decoration: none; padding: 0; border: 0; background: none; cursor: pointer; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td .pbname:hover { text-decoration: underline; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td.kd { font-weight: 700; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt td.krk { font-weight: 600; }
-:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt tr.tot td.f1, :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt tr.tot td.f3 { background: var(--band2, var(--accent-2)); }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt { width: auto; border-radius: 0 !important; overflow: visible !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt th { text-align: center; background: var(--band2, var(--accent-2)) !important; color: #fff !important; font: 600 12.5px var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; height: 30px; padding: 0 5px; border-right: 1px solid rgba(255,255,255,.35) !important; border-bottom: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt th.ge { border-right: 2px solid var(--ink) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt tr.over th { background: color-mix(in srgb, var(--ink) 9%, var(--band2, var(--accent-2))) !important; font-size: 11.5px !important; height: 24px; font-size: 11.5px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,.5); }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt td.xact { color: var(--muted); }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt tr.tot td.xact { color: #fff; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt td { border-radius: 0 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt td.nm { font-weight: 600; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt td.c { text-align: center; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt td.rk { text-align: center; color: var(--muted); }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt td.heat { font-weight: 700 !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt th.lit { background: color-mix(in srgb, #fff 22%, var(--band2, var(--accent-2))) !important; box-shadow: inset 0 -3px 0 var(--stripe-line, #c8102e); font-weight: 700; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt th .sortbtn { background: none; border: 0; padding: 0; margin: 0; font: inherit; font-weight: inherit; color: #fff !important; cursor: pointer; text-decoration: none; letter-spacing: 0; text-transform: none; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt td .pbname { font: inherit; font-weight: 600; color: var(--ink); text-decoration: none; padding: 0; border: 0; background: none; cursor: pointer; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt td .pbname:hover { text-decoration: underline; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt td.kd { font-weight: 700; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt td.krk { font-weight: 600; }
+:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt tr.tot td.f1, :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt tr.tot td.f3 { background: var(--band2, var(--accent-2)); }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .brbox > .rollhd { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding-left: 0; }
 :root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) .brbox > .rollhd .rollname { font: 700 24px var(--display) !important; color: var(--ink) !important; letter-spacing: 0.01em !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#xboard, #modal) .brbox > .rollhd .rollname { font-size: 21px !important; }
@@ -4373,7 +4373,7 @@ header.top .wordmark { display: none; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main > :is(.rank, .who) { box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--ink) 16%, var(--surface)) !important; }
 
 /* No rule under the lit column name (Sean, 9 Oct 2026, from home: "the top row of the heatmapped column has that weird line there, can you get rid of that it happens on every table") — the lit wash and bold stay. */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root #colhead .h:is([aria-sort], .sorted), :root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colhead .h[aria-sort], :root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard thead th:has(.sortbtn.on), :root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt th.lit { box-shadow: none !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root #colhead .h:is([aria-sort], .sorted), :root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colhead .h[aria-sort], :root:root:root:root:root:root:root:root:root:root:root:root:root:root #pitchboard thead th:has(.sortbtn.on), :root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt th.lit { box-shadow: none !important; }
 
 /* ---- once scrolled, only his name, the year and Filters stay at the top (Sean, 9 Oct 2026: "what gets pinned is the name year and filters ... and
    nothing else"): a white bar that slides in as the band's name leaves the top, the year and Filters as square outlined buttons. Design A's head
@@ -4422,9 +4422,9 @@ header.top .wordmark { display: none; }
 /* the B-Ref tables' foot without the blue strip, their rules red (Sean, 9 Oct 2026, the xHR/FB tab: "get rid of that weird blue thing separating the
    table and their totals rows", "make the line breaks red"): the gap row is hidden and the first totals row carries a 2px red rule instead; every
    group rule and the frozen column's edge are the stripe red, as on the season table */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt tr.gap { display: none !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt tr.gap + tr.tot td { border-top: 2px solid var(--stripe-line, #c8102e) !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt :is(td, th):is(.ge, .f3) { border-right-color: var(--stripe-line, #c8102e) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt tr.gap { display: none !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt tr.gap + tr.tot td { border-top: 2px solid var(--stripe-line, #c8102e) !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt :is(td, th):is(.ge, .f3) { border-right-color: var(--stripe-line, #c8102e) !important; }
 
 /* his page's own filters area in the space over the season table (Sean, 9 Oct 2026: "fill that blank space with a filters area that has every
    filter included in the filters button as well as the year and levels ones too"): a framed box in the season table's dress — a blue head with
@@ -4742,7 +4742,7 @@ header.top .wordmark { display: none; }
    scroller round each table — his season table and the card tabs' B-Ref tables (.sbscroll / .brscroll), the Pitching+ board, Fantasy, the Claude
    rankings and the planner (.fscroll / .pbscroll), home's tables, the older card tables (.stuffscroll / .rawscroll), Rankings / the Draft board
    (.board-scroll) — gets #bscroll's firmer 1px edge (ink at 45%), the surface behind it and the same soft shadow. */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #board) :is(.sbscroll, .brscroll, .fscroll, .pbscroll, .stuffscroll, .rawscroll, .board-scroll) {
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom, #board) :is(.sbscroll, .brscroll, .fscroll, .pbscroll, .stuffscroll, .rawscroll, .board-scroll) {
   border: 1px solid color-mix(in srgb, var(--ink) 45%, var(--surface)) !important; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08) !important; background: var(--surface) !important; }
 /* A phone's ☰ Menu in the desktop header's dress (Sean, 12 Oct 2026: "Could we change how these buttons on the menu looks"): the pages open as a
    two-column grid of square buttons — a 1px white edge, white condensed words centred, 42px tall, 8px apart — the current page filled white with
@@ -4847,8 +4847,8 @@ header.top .wordmark { display: none; }
    over 12px on a phone's season table). A <th> now takes its table's own size — the size its cells read — on every table; the over-header's
    group names keep theirs. The card tabs' B-Ref tables (Fantasy's By season and log, the build-ups) had their cells at 12.5px
    over a 13px / 12px table; they read the table's size too. The Leaderboard's column names match its 13px values. */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, body) table tr:not(.over) > th { font-size: inherit !important; }
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) .sbt.brt tbody td { font-size: inherit !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom, body) table tr:not(.over) > th { font-size: inherit !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) .sbt.brt tbody td { font-size: inherit !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #colhead .h { font-size: 13px !important; }
 /* Baseball-Reference's table type, back (Sean, 14 Oct 2026: "go back to the baseball reference style of the table again, save what this current
    format is though I might want to switch back"): the 9 Oct block (11px Verdana, ~23px rows) put back after its trial removal on 13 Oct, now
@@ -4861,12 +4861,12 @@ header.top .wordmark { display: none; }
    B-Ref's stats_table is 11px Verdana (.785714286em of its 14px body), line-height 1.25, cells 4px over / under and 3px each side, so a row is
    ~23px; column names the same 11px in bold. Every B-Ref-dressed table on the site — his season table, the card's tabs, the Pitching+ board,
    home — and the Leaderboard's rows. Gap strips keep their own height, the In Split row grows to its two lines. */
-:root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) table.sbt :is(td, th) { font-family: var(--body, "Source Sans 3", sans-serif) !important; font-size: 12px !important; line-height: 1.25 !important; padding: 0 3px !important; letter-spacing: 0 !important; }
-:root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) table.sbt tr:not(.gap) > :is(td, th) { height: 23px !important; }
-:root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) table.sbt th { font-weight: 700 !important; }
-:root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) table.sbt tr.insplit td { height: auto !important; padding: 4px 3px !important; }
-:root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) table.sbt .sbsplit small { font-size: 9.5px !important; }
-:root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard) table.sbt :is(td, th) :is(a, button, .pbname, .sortbtn, .sblab, .sbyr) { font-family: inherit !important; font-size: inherit !important; }
+:root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) table.sbt :is(td, th) { font-family: var(--body, "Source Sans 3", sans-serif) !important; font-size: 12px !important; line-height: 1.25 !important; padding: 0 3px !important; letter-spacing: 0 !important; }
+:root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) table.sbt tr:not(.gap) > :is(td, th) { height: 23px !important; }
+:root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) table.sbt th { font-weight: 700 !important; }
+:root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) table.sbt tr.insplit td { height: auto !important; padding: 4px 3px !important; }
+:root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) table.sbt .sbsplit small { font-size: 9.5px !important; }
+:root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal, #pitchboard, #hub, #fboard, #mkroom) table.sbt :is(td, th) :is(a, button, .pbname, .sortbtn, .sblab, .sbyr) { font-family: inherit !important; font-size: inherit !important; }
 :root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) table.sbt td.awd, :root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#xboard, #modal) table.sbt th.awd { text-align: left; white-space: nowrap; }
 :root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main, :root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main > *, :root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main .pcts > * { height: 23px !important; }
 :root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main > *, :root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main .pcts > *, :root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main .who .name, :root:not(.tsans):root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #rows .row-main > .score { font-family: var(--body, "Source Sans 3", sans-serif) !important; font-size: 12px !important; letter-spacing: 0 !important; }
@@ -5530,17 +5530,17 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #pagertop > .tbtns { flex: 0 1 auto !important; min-width: 0 !important; max-width: 100% !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.brlb #pagertop > .tbtns .sbviews.lbviews { display: flex; flex: 0 1 auto; min-width: 0; max-width: 100%; align-self: auto; }
 /* the board's and Movers' row and line, mirroring #pagertop and #lbtitle */
-:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgrow { display: flex; align-items: center; gap: 12px; margin: 6px 0 0; padding: 0 0 4px; }
-:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgrow .sbviews.lbviews { margin: 0; max-width: 100%; }
-:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgline { display: flex; align-items: baseline; gap: 12px; margin: 5px 0 8px; padding-bottom: 5px; border-bottom: 2px solid var(--stripe-line, #c8102e); }
-:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgline .pcount { font: 600 14px var(--body) !important; color: var(--ink) !important; }
-:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgline .pgby { font: 400 13px var(--body); color: var(--muted); }
-:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgline .pgby:empty, :root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgline .pcount:empty { display: none; }
-:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgline .fxmore { margin-left: auto; align-self: center; font-size: 12.5px; white-space: nowrap; }
-:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#pitchboard, #fboard) .pgrow { justify-content: center; margin: 0; padding: 4px 8px 4px; }
-:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#pitchboard, #fboard) .pgrow .sbviews.lbviews { display: flex; flex: 0 1 auto; min-width: 0; max-width: 100%; align-self: auto; margin: 0; }
-:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#pitchboard, #fboard) .pgline { margin: 2px 12px 8px; padding-bottom: 4px; flex-wrap: wrap; row-gap: 2px; width: auto; min-width: calc(100% - 24px); }
-:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#pitchboard, #fboard) .pgline .pcount { font-size: 13px !important; }
+:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard, #mkroom) .pgrow { display: flex; align-items: center; gap: 12px; margin: 6px 0 0; padding: 0 0 4px; }
+:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard, #mkroom) .pgrow .sbviews.lbviews { margin: 0; max-width: 100%; }
+:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard, #mkroom) .pgline { display: flex; align-items: baseline; gap: 12px; margin: 5px 0 8px; padding-bottom: 5px; border-bottom: 2px solid var(--stripe-line, #c8102e); }
+:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard, #mkroom) .pgline .pcount { font: 600 14px var(--body) !important; color: var(--ink) !important; }
+:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard, #mkroom) .pgline .pgby { font: 400 13px var(--body); color: var(--muted); }
+:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard, #mkroom) .pgline .pgby:empty, :root:root:root:root:root:root:root:root :is(#pitchboard, #fboard, #mkroom) .pgline .pcount:empty { display: none; }
+:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard, #mkroom) .pgline .fxmore { margin-left: auto; align-self: center; font-size: 12.5px; white-space: nowrap; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#pitchboard, #fboard, #mkroom) .pgrow { justify-content: center; margin: 0; padding: 4px 8px 4px; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#pitchboard, #fboard, #mkroom) .pgrow .sbviews.lbviews { display: flex; flex: 0 1 auto; min-width: 0; max-width: 100%; align-self: auto; margin: 0; }
+:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#pitchboard, #fboard, #mkroom) .pgline { margin: 2px 12px 8px; padding-bottom: 4px; flex-wrap: wrap; row-gap: 2px; width: auto; min-width: calc(100% - 24px); }
+:root:root:root:root:root:root:root:root[data-view="mobile"] :is(#pitchboard, #fboard, #mkroom) .pgline .pcount { font-size: 13px !important; }
 /* the board's page in Movers' frame: the table 12px in from each side on a phone, as the Leaderboard's is */
 :root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="pitches"],[data-mode="flaws"],[data-mode="bullpens"],[data-mode="mock"]) #pitchboard .flawpage > .pbscroll.brscroll { width: auto !important; margin: 0 12px; max-width: calc(100% - 24px); }
 :root:root:root:root:root:root:root:root[data-view="mobile"] body:is([data-mode="pitches"],[data-mode="flaws"],[data-mode="bullpens"],[data-mode="mock"]) .flawpage > .fxnote { margin-left: 12px !important; margin-right: 12px !important; width: auto; min-width: 0; }
@@ -5599,7 +5599,7 @@ body.boardon #rows.boardlist.edit > li.tier.add { flex-basis: 110px; }
    leaderboard, Scoring settings) draw the card at the column's width. The phone bar's Leaders / Fantasy sheets are gone (app.js). */
 :root { --lbcol: 1020px; }
 /* the bar left-aligned in its row, both layouts */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #pagertop, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.boardon #pagertop, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard) .pgrow { justify-content: flex-start !important; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.brlb #pagertop, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root body.boardon #pagertop, :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root :is(#pitchboard, #fboard, #mkroom) .pgrow { justify-content: flex-start !important; }
 /* the page picker: the names stacked in one cell, the shown one on top */
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .sbviews.lbviews .sbview.pgpick .pgname { display: inline-grid; text-align: left; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .sbviews.lbviews .sbview.pgpick .pgname > span { grid-area: 1 / 1; white-space: nowrap; justify-self: start; }
@@ -6394,3 +6394,20 @@ canvas.seasonfx { opacity: .7; }
 /* The phone header's 16px spacer over the status area off (Sean, 25 Nov 2026, from his iPhone: "a bit of space between the final thru bar and the
    iPhone black camera bar"): the bar starts right at the safe-area line; nothing else in the header changes */
 :root:root:root:root[data-view="mobile"] body:not(.psearchon):not(#t1):not(#t2):not(#t3):not(#t4):not(#t5):not(#t6):not(#t7):not(#t8):not(#t9) header.top { padding-top: env(safe-area-inset-top, 0px) !important; }
+
+/* a player's card over the Mock draft room (27 Nov 2026): the card sits above the room (#mkroom z 71) */
+:root:root:root:root:root:root:root:root:root body.mkroomon #modal { z-index: 75; }
+
+/* the draft room's top row and Settings window (27 Nov 2026) */
+#mkroom .mktop .mkrow1 { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; }
+#mkroom .mktop .mkrow1 .mkwhat { flex: 1 1 auto !important; min-width: 0; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom .mktop .mkrow1 { flex: 1 1 auto; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] #mkroom .mkbtns { flex: 0 0 auto !important; }
+#mkroom .mksetbg { position: fixed; inset: 0; z-index: 80; background: rgba(0, 0, 0, .3); }
+#mkroom .mktimer.mksetwin { position: fixed; z-index: 81; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(360px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; background: var(--surface); color: var(--ink); border: 1px solid var(--rule); box-shadow: 0 12px 40px rgba(0, 0, 0, .3); }
+#mkroom .mksetwin .mksethd { display: flex; align-items: center; justify-content: space-between; font-size: 16px; }
+#mkroom .mksetwin .mkrcell { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+#mkroom .mksetwin .mksetacts { display: flex; gap: 8px; margin-top: 4px; }
+#mkroom .mksetwin .mksetacts .btn { flex: 1 1 0; }
+#mkroom .mktop .mkrow1 .mkclock { flex: 0 0 auto; white-space: nowrap; }
+#mkroom .mksetwin .mkrcell .mknum { width: 90px; flex: 0 0 auto; }
