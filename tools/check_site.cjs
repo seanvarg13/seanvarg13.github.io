@@ -187,6 +187,12 @@ function minorsId() {
       await step("mock draft", async () => { await hash("#mock"); await until(() => document.querySelector("#pitchboard .pgrow .lbviews .pgpick .pgcur")?.textContent.trim() === "Mock draft" && !!document.querySelector("#pitchboard .mkset .mkgo"), 90000);
         await pg.evaluate(() => document.querySelector("#pitchboard .mkset .mkgo").click());
         await until(() => { const r = document.querySelector("#mkroom"); return r && !r.hidden && !!r.querySelector(".mktop") && !!r.querySelector(".mklist") && !!r.querySelector(".mkx"); });
+        // a name opens his card over the room and holds the clock; closing the card resumes it (27 Nov 2026)
+        await pg.evaluate(() => document.querySelector("#mkroom .mklist .pbname").click());
+        await until(() => { const m = document.querySelector("#modal"); return m && !m.hidden && +getComputedStyle(m).zIndex > 71 && /Paused/.test(document.querySelector("#mkclock").textContent); });
+        await pg.keyboard.press("Escape"); await until(() => document.querySelector("#modal").hidden && !document.querySelector("#mkroom").hidden && !/Paused/.test(document.querySelector("#mkclock").textContent));
+        await pg.evaluate(() => document.querySelector("#mkroom .mkgear").click()); await until(() => !!document.querySelector("#mkroom .mksetwin") && /Paused/.test(document.querySelector("#mkclock").textContent));
+        await pg.evaluate(() => document.querySelector("#mkroom .mksetwin .pop-close").click()); await until(() => !document.querySelector("#mkroom .mksetwin") && !/Paused/.test(document.querySelector("#mkclock").textContent));
         await pg.evaluate(() => document.querySelector("#mkroom .mkx").click());
         await until(() => document.querySelector("#mkroom").hidden && !!document.querySelector("#pitchboard .sbview.mkenter") && !!document.querySelector("#pitchboard .mkcard") && /paused/.test(document.querySelector("#pitchboard .mkcard").textContent));
         await pg.evaluate(() => document.querySelector("#pitchboard .sbview.mkenter").click()); await until(() => !document.querySelector("#mkroom").hidden && !!document.querySelector("#mkroom .mklist"));
