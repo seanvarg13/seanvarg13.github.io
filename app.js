@@ -14215,7 +14215,9 @@
   // set the intensity too and make it be more exaggerated for the top few players on that team"): a multiplier on the computer teams' price
   // (or a head start up the board in a snake draft), 1 + intensity x w, w 1 for a club's top three by ADP falling to .3 past its tenth
   function mkBiasMul(x) {
-    const b = (mk && mk.set && mk.set.bias) || mkSet.bias; if (!b || !b.teams || !b.teams.length || !x) return 1;
+    const b = (mk && mk.set && mk.set.bias) || mkSet.bias; if (!b || !x) return 1;
+    if (b.players && b.players.includes(x.k)) return 1 + (b.amt || 0) / 100;   // a picked player always takes the full push
+    if (!b.teams || !b.teams.length) return 1;
     const tm = teamCode(x.team || ""); if (!b.teams.includes(tm)) return 1;
     const mates = mkPool().filter((y) => teamCode(y.team || "") === tm).sort((p, q) => p.adp - q.adp), r = mates.findIndex((y) => y.k === x.k);
     const w = r < 0 ? 0.3 : r < 3 ? 1 : r < 10 ? 1 - 0.1 * (r - 2) : 0.3;
@@ -14228,7 +14230,16 @@
       c.addEventListener("click", () => { const i = b.teams.indexOf(t); if (i < 0) b.teams.push(t); else b.teams.splice(i, 1); c.classList.toggle("on", i < 0); onCh(); }); grid.append(c); }
     const r = el("label", "mkbamt"), i = el("input"); i.type = "range"; i.min = 0; i.max = 100; i.step = 5; i.value = b.amt; const v = el("span", null, `+${b.amt}%`);
     i.addEventListener("input", () => { b.amt = +i.value; v.textContent = `+${b.amt}%`; onCh(); }); r.append(el("span", null, "Intensity"), i, v);
-    w.append(grid, r, el("p", "muted mkbnote", "Computer teams pay (or pick) up to this much more for the picked clubs' top three players, about a third of it past their tenth."));
+    b.players = b.players || [];
+    const pw = el("div", "mkbpl"), chips = el("div", "mkbchips"), q = el("input"), res = el("div", "mkbres");
+    q.type = "search"; q.placeholder = "Add a player the computer teams overrate"; q.autocomplete = "off";
+    const nameOf = (k) => { const y = mkPool().find((z) => z.k === k); return y ? y.name : k; };
+    const drawChips = () => { chips.innerHTML = ""; for (const k of b.players) { const c = el("button", "btn btn-quiet mkbt on", nameOf(k) + " ×"); c.type = "button"; c.addEventListener("click", () => { b.players.splice(b.players.indexOf(k), 1); drawChips(); onCh(); }); chips.append(c); } };
+    q.addEventListener("input", () => { res.innerHTML = ""; const t = q.value.trim().toLowerCase(); if (t.length < 2) return;
+      for (const y of mkPool().filter((z) => !b.players.includes(z.k) && (z.name || "").toLowerCase().includes(t)).slice(0, 6)) { const c = el("button", "btn btn-quiet mkbt", `${y.name} (${teamCode(y.team || "")})`); c.type = "button";
+        c.addEventListener("click", () => { b.players.push(y.k); q.value = ""; res.innerHTML = ""; drawChips(); onCh(); }); res.append(c); } });
+    drawChips(); pw.append(chips, q, res);
+    w.append(grid, pw, r, el("p", "muted mkbnote", "Computer teams pay (or pick) up to this much more for the picked clubs' top three players, about a third of it past their tenth, and the full amount for any player you add."));
     return w;
   }
   function mkAiChoice(ti, noise = true) {
@@ -14508,7 +14519,7 @@
       row("Seconds per bid", num(mkSet.bidSecs, 3, 60, (v) => { mkSet.bidSecs = v; }), "The clock goes back to this after every bid.");
     }
     row("Computer teams", seg([["fast", "Fast"], ["normal", "Normal"], ["slow", "Slow"]], mkSet.ai, (v) => { mkSet.ai = v; }), "How long they take to pick or nominate.");
-    row("Team bias", mkBiasEdit(() => mkSaveSet()), "Pick one or more clubs the computer teams overrate.");
+    row("Team and player bias", mkBiasEdit(() => mkSaveSet()), "Pick clubs and/or specific players the computer teams overrate.");
     const rs = el("div", "mkroster"); rs.append(el("h4", "pwh", `Roster spots · ${mkSlotList(mkSet.roster).length} per team`));
     const grid = el("div", "mkrgrid");
     for (const [s, l] of MK_SLOTS) { const c = el("label", "mkrcell"); c.append(el("span", null, l), num(mkSet.roster[s] || 0, 0, s === "BN" ? 15 : s === "SP" || s === "RP" || s === "P" || s === "OF" ? 10 : 3, (v) => { mkSet.roster[s] = v; mkDrawSetup(box); })); grid.append(c); }
@@ -14602,7 +14613,7 @@
       else { f("Seconds per nomination", "nomSecs", 10, 300); f("Seconds per bid", "bidSecs", 3, 60); }
       const ai = el("label", "mkrcell"); const sel = el("select", "mksel"); for (const [v, l] of [["fast", "Fast"], ["normal", "Normal"], ["slow", "Slow"]]) { const o = el("option", null, l); o.value = v; o.selected = mk.set.ai === v; sel.append(o); }
       sel.addEventListener("change", () => { mk.set.ai = sel.value; mkSet.ai = sel.value; mkSaveSet(); mkSave(); }); ai.append(el("span", null, "Computer teams"), sel); tp.append(ai);
-      const bl = el("div", "mkrcell mkbiasrow"); bl.append(el("span", null, "Team bias"), mkBiasEdit(() => { mk.set.bias = JSON.parse(JSON.stringify(mkSet.bias)); mkSaveSet(); mkSave(); })); tp.append(bl);
+      const bl = el("div", "mkrcell mkbiasrow"); bl.append(el("span", null, "Team and player bias"), mkBiasEdit(() => { mk.set.bias = JSON.parse(JSON.stringify(mkSet.bias)); mkSaveSet(); mkSave(); })); tp.append(bl);
       const sc = el("label", "mkrcell"); const ss = el("select", "mksel"); for (const p of fpresets()) { const o = el("option", null, p.name); o.value = p.id; o.selected = p.id === mkScoring().id; ss.append(o); }
       ss.addEventListener("change", () => { mk.set.scoring = ss.value; mkSet.scoring = ss.value; mkSaveSet(); mkSave(); mkDraw(); }); sc.append(el("span", null, "Scoring"), ss); tp.append(sc);
       const sl = el("label", "mkrcell"); const sb = el("button", "btn btn-quiet mksnd", mkSet.sound === false ? "Off" : "On"); sb.type = "button";
