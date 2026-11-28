@@ -6483,3 +6483,15 @@ canvas.seasonfx { opacity: .7; }
 :root:root:root:root:root:root:root:root:root:root:root:root body.mkroomon:not(#k1) #xboard.xpop { inset: 64px 0 !important; width: min(980px, calc(100vw - 128px)) !important; margin: 0 auto !important; border: 1px solid color-mix(in srgb, var(--ink) 45%, transparent) !important; box-shadow: 0 18px 50px rgba(0, 0, 0, .35) !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.mkroomon:not(#k1) #xboard.xpop { top: calc(env(safe-area-inset-top, 0px) + 64px) !important; bottom: calc(env(safe-area-inset-bottom, 0px) + 62px) !important; left: 8px !important; right: 8px !important; width: auto !important; }
 :root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] body.mkroomon:not(#k1) #xboard.xpop .pbelow2 { padding-bottom: 28px !important; }
+/* mock draft team bias (27 Nov 2026) */
+.mkbias { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.mkbteams { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 4px; }
+:root:root:root:root .mkbteams .mkbt { padding: 4px 0 !important; font-size: 12px !important; min-height: 0 !important; }
+:root:root:root:root .mkbteams .mkbt.on { background: var(--band2) !important; color: #fff !important; }
+.mkbamt { display: flex; align-items: center; gap: 8px; } .mkbamt input { flex: 1; } .mkbnote { font-size: 12px; margin: 0; }
+.mkbiasrow { grid-column: 1 / -1; }
+/* the draft room's popup: fantasy boxes in the band (27 Nov 2026) */
+.pbfant { padding: 8px 0 10px; min-width: 0; }
+.pbfanthd { font-size: 12px; color: var(--band2-ink, #fff); opacity: .85; margin-bottom: 6px; }
+:root:root:root:root .pbfant .fanttiles { display: flex !important; flex-wrap: nowrap !important; overflow-x: auto; gap: 8px; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; scrollbar-width: none; }
+:root:root:root:root .pbfant .fanttile { flex: 0 0 auto; min-width: 118px; background: var(--surface, #fff); color: var(--ink); border-radius: 0; padding: 8px 10px; }
