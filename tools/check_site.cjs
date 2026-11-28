@@ -88,8 +88,14 @@ function minorsId() {
       await step("a player popup", async () => { await pg.reload({ waitUntil: "load" }); await hash("#leaderboard"); await count("#rows > li.row", 20);
         await pg.evaluate(() => document.querySelector("#rows > li.row .name, #rows > li.row .who").click()); await count("#xboard.xpop table.sbt tbody tr", 1, 60000);
         await simTap(); await pg.keyboard.press("Escape"); await until(() => !document.querySelector("#xboard.xpop")); });
-      await step("rankings", async () => { await hash("#rankings"); await count("#rows li", 5); });
-      await step("draft mode", async () => { await hash("#draft"); await count("#rows li", 5); });
+      // Rankings is a room (27 Nov 2026): the landing offers presets; a new one is named and entered, the room has Rankings | Draft mode, search and position pills, and × saves and leaves
+      await step("rankings", async () => { await hash("#rankings"); await count(".rlpage .rlnew", 1, 60000);
+        await pg.evaluate(() => document.querySelector(".rlnew").click()); await count("#modal input", 1);
+        await pg.evaluate(() => { document.querySelector("#modal input").value = "Check board"; [...document.querySelectorAll("#modal button")].find((x) => /Create and enter/.test(x.textContent)).click(); });
+        await count("body.rankroom #rows li", 5, 60000); await count("#rankroomtop .rrpill", 8); await count("#rankroomtop .rrfind input", 1); });
+      await step("draft mode", async () => { await pg.evaluate(() => document.querySelector("#rankroomtop .rrsave").click()); await count(".rrwin", 1); await pg.evaluate(() => [...document.querySelectorAll(".rrwin .btn")].find((x) => /Draft mode/.test(x.textContent)).click()); await count("body.rankroom #rows li", 5, 60000);
+        await pg.evaluate(() => document.querySelector("#rankroomtop .rrx").click()); await count(".rlpage .rlitem.on", 1);
+        await pg.evaluate(() => { const o = JSON.parse(localStorage.getItem("draft2027.rankSets") || "{}"); delete o["Check board"]; localStorage.setItem("draft2027.rankSets", JSON.stringify(o)); localStorage.removeItem("draft2027.ranks"); localStorage.removeItem("draft2027.tiers"); }); });
     }
     // the Leaders bar (29 Oct 2026): the board draws the Leaderboard's bar with the page picker first; a pick (Role → SP) marks its button and
     // narrows the rows; the picker's list moves between the three pages
@@ -172,13 +178,13 @@ function minorsId() {
       // within a group, and the Leaderboard's, the board's and Movers' table frames share their four edges
       await step("the bar in one spot", async () => {
         const G = {};
-        for (const [h, ready, fr] of [["#leaderboard", () => document.querySelectorAll("#rows > li.row").length > 20, "#bscroll"],                                        ["#movers", () => document.querySelectorAll("#pitchboard .flawpage table tbody tr").length > 0, "#pitchboard .flawpage > .pbscroll"], ["#rankings", () => document.querySelectorAll("#rows li").length > 5], ["#draft", () => document.querySelectorAll("#rows li").length > 5],
+        for (const [h, ready, fr] of [["#leaderboard", () => document.querySelectorAll("#rows > li.row").length > 20, "#bscroll"],                                        ["#movers", () => document.querySelectorAll("#pitchboard .flawpage table tbody tr").length > 0, "#pitchboard .flawpage > .pbscroll"], 
                                        ["#fantasy/leaders", () => document.querySelectorAll("#fboard table tbody tr").length > 5], ["#bullpens", () => document.querySelectorAll(".bppage table tbody tr").length > 20], ["#mock", () => !!document.querySelector("#pitchboard .mkset")], ["#fantasy/settings", () => !!document.querySelector("#fboard .fpresets")]]) {
           await hash(h); await until(ready, undefined, 120000); await pg.waitForTimeout(300);
           const g = await pg.evaluate((sel) => { const vis = (q) => [...document.querySelectorAll(q)].find((e) => e.getClientRects().length), R = (e) => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom].map(Math.round); };
             const b = vis(".sbviews.lbviews"), p = b && b.querySelector(".pgpick"), f = sel ? vis(sel) : null; return { bar: b ? R(b) : null, pick: p ? R(p) : null, frame: f ? R(f) : null }; }, fr || null);
           if (!g.bar || !g.pick) throw new Error(h + ": no bar"); if (fr && !g.frame) throw new Error(h + ": no frame"); G[h] = g; }
-        const near = (a, b, n = 1, foot = n) => a.every((v, i) => Math.abs(v - b[i]) <= (i === 3 ? foot : n))   /* the foot may differ: the Leaderboard's 25-row page hugs its rows on a tall screen (14 Nov 2026) */, ref = G["#leaderboard"], grp = (h) => (/^#(leaderboard|pitches|movers)$/.test(h) ? "#leaderboard" : "#rankings");
+        const near = (a, b, n = 1, foot = n) => a.every((v, i) => Math.abs(v - b[i]) <= (i === 3 ? foot : n))   /* the foot may differ: the Leaderboard's 25-row page hugs its rows on a tall screen (14 Nov 2026) */, ref = G["#leaderboard"], grp = (h) => (/^#(leaderboard|pitches|movers)$/.test(h) ? "#leaderboard" : "#bullpens");
         for (const h in G) { if (!near(G[h].bar.slice(0, 2), ref.bar.slice(0, 2))) throw new Error(`the bar moves: ${h} at ${G[h].bar.slice(0, 2)} vs ${ref.bar.slice(0, 2)}`);
           const q = G[grp(h)].pick; if (!near(G[h].pick.slice(0, 2), q.slice(0, 2)) || Math.abs(G[h].pick[2] - G[h].pick[0] - (q[2] - q[0])) > 1) throw new Error(`the picker moves: ${h} ${G[h].pick} vs ${q}`);
           if (G[h].frame && !near(G[h].frame, ref.frame, 1, 12)) throw new Error(`the frame differs: ${h} ${G[h].frame} vs ${ref.frame}`); } });
