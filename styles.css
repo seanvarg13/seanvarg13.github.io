@@ -6569,3 +6569,6 @@ body.rankroom #setbar, body.rankroom #setrow { display: none !important; }
 :root:root:root:root:root:root:root body.rankroom:not(#k1) #board #rows.boardlist { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: transparent !important; }
 :root:root:root:root:root:root:root:root body.rankroom:not(#k1) #board { padding: 0 1px 2px !important; box-sizing: border-box !important; }
 :root:root:root:root:root:root:root:root body.rankroom:not(#k1) #board #bscroll { border-radius: 0 !important; box-shadow: 0 4px 14px rgba(0,0,0,.28) !important; }
+/* a tier's name bar stays at the top of the rankings until its tier has scrolled past, then the next one takes over (27 Nov 2026) */
+:root:root:root:root:root:root:root body.boardon:not(#k1) #rows.boardlist > li.tier { overflow: visible !important; }
+:root:root:root:root:root:root:root body.boardon:not(#k1) #rows.boardlist > li.tier > .th { position: sticky !important; top: 0 !important; z-index: 4 !important; }
