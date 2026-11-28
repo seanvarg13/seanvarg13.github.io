@@ -5496,6 +5496,92 @@
     n.append(el("b", null, "Your rankings are saved only in this browser."), " Removing the home-screen app or clearing the site's data erases them. ", go,
       " keeps a copy on your GitHub, or ", ex, " one. ", nn);
   }
+  // Rankings as a room of its own (Sean, 27 Nov 2026: "an area that is its own window that I have to enter like the mock draft ... select the
+  // rankings preset either saved or a new one ... the up top box will say the rankings preset I am using/updating and have the x button to
+  // leave and save ... I also do want a draft mode"): #rankings / #draft show a landing until a preset is entered; the room is the same board
+  // as a window over the page, its top box naming the preset, with Rankings | Draft mode, Save and ×.
+  let rankRoom = false, rankPick = null;
+  function rankLoadSet(name, then) {
+    const s = state.rankSets[name]; if (!s) return;
+    const go = () => { state.ranks = deep(s.ranks || {}); state.tiers = deep(s.tiers || {}); state.tierNames = deep(s.tierNames || {}); state.stars = deep(s.stars || {});
+      save(LS.ranks, state.ranks); save(LS.tiers, state.tiers); save(LS.tierNames, state.tierNames); save(LS.stars, state.stars); state.currentSet = name; savePrefs(); then(); };
+    const cur = currentSetName();
+    if (cur === name) return then();
+    if (!(cur ? setDirty() : hasWorking())) return go();
+    ask(`Open “${name}”?`, cur ? `Unsaved changes to “${cur}” will be lost.` : "Your working rankings aren't saved under a name and will be replaced.", go);
+  }
+  function rankEnter(draft) {
+    rankRoom = true; state.editRanks = !draft; if (draft) { state.draftOrder = "mine"; savePrefs(); }
+    const h = draft ? "#draft" : "#rankings"; if (location.hash === h) render(); else location.hash = h;
+  }
+  function rankLeave() {
+    const done = () => { rankRoom = false; state.editRanks = false; state.selKeys = []; if (location.hash !== "#rankings") location.hash = "#rankings"; else render(); };
+    if (currentSetName()) { if (setDirty()) { const c = currentSetName(); state.rankSets[c] = snapshot(); save(LS.sets, state.rankSets); } done(); }
+    else if (hasWorking()) ask("Save these rankings", "Give them a name so you can open them again.", (name) => { state.rankSets[name] = snapshot(); save(LS.sets, state.rankSets); state.currentSet = name; savePrefs(); done(); }, { value: `Rankings ${new Date().toISOString().slice(0, 10)}`, placeholder: "Preset name", button: "Save and leave" });
+    else done();
+  }
+  function renderRankLanding() {
+    const box = pitchBoardEl(); box.innerHTML = "";
+    const page = el("div", "flawpage rlpage"); box.append(page);
+    { const C = leadersChrome("rankings", [], FANTASY_PAGES); C.row.classList.add("rlbar"); page.append(C.row); }   // the page picker, as the Mock draft page has
+    const names = Object.keys(state.rankSets).sort((a, b) => ((state.rankSets[b] || {}).saved || "").localeCompare((state.rankSets[a] || {}).saved || ""));
+    const cur = currentSetName(), working = !cur && hasWorking();
+    if (rankPick == null || (rankPick !== "__work" && !state.rankSets[rankPick])) rankPick = cur || (working ? "__work" : names[0] || null);
+    page.append(el("h2", "rltitle", "Rankings"), el("p", "muted rlnote", "Pick the preset you'll rank and tier, or start a new one. Everything you change is saved to it when you leave."));
+    const list = el("div", "rllist");
+    const item = (key, label, sub) => { const b = el("button", "rlitem" + (rankPick === key ? " on" : "")); b.type = "button"; b.append(el("b", null, label), el("span", null, sub)); b.addEventListener("click", () => { rankPick = key; renderRankLanding(); }); list.append(b); };
+    if (working) item("__work", "Working rankings", "not saved under a name yet");
+    for (const n of names) { const st = state.rankSets[n], tn = Object.values(st.tiers || {}).reduce((a, l) => a + (l || []).length, 0), rn = Object.values(st.ranks || {}).reduce((a, l) => a + (l || []).length, 0);
+      item(n, n, `${rn ? rn + " ranked" : "model order"}${tn ? " · " + tn + " tiered" : ""}${n === cur ? " · open now" : ""}`); }
+    const nw = el("button", "rlitem rlnew"); nw.type = "button"; nw.append(el("b", null, "+ New rankings"), el("span", null, "start from the model's order"));
+    nw.addEventListener("click", () => ask("New rankings", "Name this preset. Its order, tiers and tier names are saved under it.", (name) => {
+      if (!name) return; if (state.rankSets[name]) { flash(`“${name}” already exists`); return; }
+      state.ranks = {}; state.tiers = {}; state.tierNames = {}; state.stars = {}; save(LS.ranks, state.ranks); save(LS.tiers, state.tiers); save(LS.tierNames, state.tierNames); save(LS.stars, state.stars);
+      state.rankSets[name] = snapshot(); save(LS.sets, state.rankSets); state.currentSet = name; rankPick = name; savePrefs(); rankEnter(false);
+    }, { value: `Rankings ${new Date().toISOString().slice(0, 10)}`, placeholder: "Preset name", button: "Create and enter" }));
+    list.append(nw); page.append(list);
+    const acts = el("div", "rlacts"), can = rankPick != null;
+    const go = (draft) => { if (rankPick === "__work" || rankPick == null) return rankEnter(draft); rankLoadSet(rankPick, () => rankEnter(draft)); };
+    const e1 = el("button", "btn rlenter", "Enter rankings"), e2 = el("button", "btn btn-quiet rldraft", "Draft mode");
+    for (const b of [e1, e2]) { b.type = "button"; b.disabled = !can; }
+    e1.addEventListener("click", () => go(false)); e2.addEventListener("click", () => go(true)); acts.append(e1, e2); page.append(acts);
+  }
+  // the room's Settings window (the Mock draft's has the clocks and End draft): Draft mode / back to Rankings, Save, Save as, Reset this tab
+  function rankSettings() {
+    document.querySelectorAll(".rrwinbg, .rrwin").forEach((e) => e.remove());
+    const close = () => document.querySelectorAll(".rrwinbg, .rrwin").forEach((e) => e.remove());
+    const bg = el("div", "rrwinbg"); bg.addEventListener("click", close);
+    const w = el("div", "rrwin"); w.setAttribute("role", "dialog"); w.setAttribute("aria-label", "Rankings settings");
+    const hd = el("div", "rrwinhd"), xb = el("button", "pop-close", "\u00d7"); xb.type = "button"; xb.addEventListener("click", close); hd.append(el("b", null, "Settings"), xb);
+    const inDraft = state.mode === "draft", btn = (label, fn, quiet) => { const b = el("button", "btn" + (quiet ? " btn-quiet" : ""), label); b.type = "button"; b.addEventListener("click", () => { close(); fn(); }); return b; };
+    const col = el("div", "rrwinbtns");
+    col.append(btn(inDraft ? "Back to Rankings" : "Draft mode", () => { if (inDraft) { state.editRanks = true; location.hash = "#rankings"; } else { state.draftOrder = "mine"; state.editRanks = false; savePrefs(); location.hash = "#draft"; } }));
+    col.append(el("p", "muted", inDraft ? "Rank and tier players again." : "Tick players off as they go, from these rankings."));
+    col.append(btn("Save", saveCurrent, true), btn("Save a copy as…", saveAs, true), btn("Leave and save", rankLeave, true));
+    w.append(hd, col); document.body.append(bg, w);
+  }
+  function rankRoomSync() {
+    let bg = document.getElementById("rankbg"), top = document.getElementById("rankroomtop");
+    const on = document.body.classList.contains("rankroom");
+    if (!on) { if (bg) bg.remove(); if (top) top.remove(); return; }
+    if (!top) { top = el("div", "rrtop"); top.id = "rankroomtop"; const wrap = document.querySelector("main.wrap"); wrap.prepend(top); }
+    top.innerHTML = "";
+    const cur = currentSetName(), dirty = cur && setDirty();
+    const nm = el("div", "rrname"); nm.append(el("small", null, state.mode === "draft" ? "Drafting from" : "Ranking"), el("b", null, cur || "Working rankings" ), dirty ? el("i", null, " · unsaved") : "");
+    const sv = el("button", "btn btn-quiet rrsave", "Settings"); sv.type = "button"; sv.addEventListener("click", rankSettings);
+    const x = el("button", "rrx", "×"); x.type = "button"; x.title = "Save and leave"; x.setAttribute("aria-label", "Save and leave"); x.addEventListener("click", rankLeave);
+    const r1 = el("div", "rrrow1"); r1.append(nm, sv, x);
+    // the room's own search and position pills, as the Mock draft's player list has them (Sean, 27 Nov 2026)
+    const bar = el("div", "rrfind"), q = el("input"); q.type = "search"; q.placeholder = "Find a player"; q.value = state.q || ""; q.setAttribute("aria-label", "Find a player");
+    q.addEventListener("input", () => { state.q = q.value; state.keepPop = true; renderRows(); renderToolSummary(); });
+    const pills = el("div", "rrpills");
+    for (const pos of [...HIT_TABS, ...PIT_TABS]) {
+      const b = el("button", "rrpill" + (state.pos === pos ? " on" : ""), pos === "ALL" ? "All" : pos === "ALLP" ? "All P" : pos); b.type = "button";
+      b.addEventListener("click", () => { if (state.pos === pos) return; state.pos = pos; state.expanded = null; state.selKeys = []; ensureSortValid(); savePrefs(); render(); }); pills.append(b);
+    }
+    bar.append(q, pills);
+    top.append(r1, bar);
+  }
   function renderRankTools() {
     const on = state.mode === "rankings";
     renderSyncNudge();
@@ -6838,7 +6924,10 @@
     if (state.mode !== "draft" && $("aucsheet")) { aucPick = null; $("aucsheet").remove(); }   // the auction sheet is Draft mode's
     if (state.mode !== "mock") { mkRoom = false; mkRoomSync(); } else mkCardSync();   // the draft room is the Mock draft page's (29 Oct 2026)
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
-    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", league = state.mode === "league", hub = home || league, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws" || state.mode === "bullpens", other = pitches || player || compare || elig || hub || appear || fant;
+    const rankGate = (state.mode === "rankings" || state.mode === "draft"); if (!rankGate) rankRoom = false;
+    const rankLand = rankGate && !rankRoom;
+    document.body.classList.toggle("rankroom", rankGate && rankRoom); rankRoomSync();
+    const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", league = state.mode === "league", hub = home || league, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = rankLand || state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws" || state.mode === "bullpens", other = pitches || player || compare || elig || hub || appear || fant;
     if (xPop && !POP_MODES.includes(state.mode)) xPop = false;   // another page: the popup goes with the list it came from
     if (xPop) state.expanded = null;   // never an old-style card under the popup, where it can't be seen (Sean's recording, 21 Oct 2026)
     $("xboard").hidden = !player && !xPop; $("xboard").classList.toggle("xpop", xPop); document.body.classList.toggle("xpopon", xPop); xPopBg().hidden = !xPop; $("hub").hidden = !hub; $("pboard").hidden = !appear; $("fboard").hidden = !fant;
@@ -6866,6 +6955,7 @@
     if (state.mode === "trends") { renderTrends(); return; }
     if (state.mode === "callups") { renderCallups(); renderModal(); return; }
     if (state.mode === "planner") { renderPlanner(); renderModal(); if (xPop) renderExplore(); return; }
+    if (rankLand) { renderRankLanding(); renderModal(); if (xPop) renderExplore(); return; }
     if (state.mode === "mock") { renderMock(); renderModal(); if (xPop) renderExplore(); return; }   // his page over the draft room (27 Nov 2026)
     if (state.mode === "claude") { renderClaude(); renderModal(); if (xPop) renderExplore(); return; }
     if (state.mode === "bullpens") { renderBullpens(); renderModal(); if (xPop) renderExplore(); return; }   // Bullpens (28 Oct 2026)
@@ -15490,6 +15580,7 @@
     if (e.key === "/" && !typing) { e.preventDefault(); $("search").focus(); }
     if (e.key === "Escape" && (state.expanded || state.textModal || state.tierPick || state.colPick || state.panel)) closeModal();
     else if (e.key === "Escape" && xPop && !document.querySelector(".phmodal") && !ddOpen) closeXPop();
+    else if (e.key === "Escape" && document.body.classList.contains("rankroom") && !ddOpen && !state.textModal && !document.querySelector(".phmodal")) rankLeave();
     else if (e.key === "Escape" && mkRoom && !ddOpen && !document.querySelector(".phmodal")) mkEscape();   // the draft room (29 Oct 2026): its Settings or leave window first, else the leave window
     else if (e.key === "Escape" && aucPick && $("aucsheet")) { aucPick = null; aucSheetSync(); }   // the auction's sale sheet
   });
