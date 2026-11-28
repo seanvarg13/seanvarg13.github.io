@@ -6544,3 +6544,28 @@ body.rankroom #pagertop, body.rankroom #syncnudge, body.rankroom #rankdraft, bod
 .rrwinhd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; } .rrwinhd b { font-size: 18px; }
 .rrwinbtns { display: flex; flex-direction: column; gap: 8px; } .rrwinbtns p { margin: 0 0 6px; font-size: 13px; }
 .rlbar { margin-bottom: 10px; }
+
+/* the editing buttons in the top box; search + pills inside the framed board; the board to the page's foot (27 Nov 2026) */
+body.rankroom #setbar, body.rankroom #setrow { display: none !important; }
+.rrtop .drafttools { display: flex !important; flex-wrap: wrap; gap: 6px; padding: 0 !important; margin: 0 !important; border: 0 !important; background: none !important; }
+.rrtop .drafttools[hidden] { display: none !important; }
+:root:root:root:root:root:root:root body.rankroom:not(#k1) #board { flex: 1 1 auto !important; min-height: 0 !important; display: flex !important; flex-direction: column !important; margin: 0 0 calc(8px + env(safe-area-inset-bottom, 0px)) !important; width: auto !important; max-width: none !important; border: 0 !important; box-shadow: none !important; background: transparent !important; overflow: hidden !important; transform: none !important; }
+:root:root:root:root:root:root:root body.rankroom:not(#k1) #board #bscroll { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; max-height: none !important; overflow: auto !important; margin: 0 !important; }
+.rrfind { padding: 8px; border-bottom: 1px solid var(--outline, #111); flex: 0 0 auto; background: var(--surface); }
+.rrtop .rrfind { display: none; }
+.rrtop .rrrow1 { order: -1; }
+
+/* four boxes: name / editing buttons / search and positions / the rankings (27 Nov 2026) */
+:root:root:root:root:root:root:root body.rankroom:not(#k1) main.wrap { gap: 8px !important; padding: calc(env(safe-area-inset-top, 0px) + 8px) 8px 0 !important; background: var(--ground, var(--surface)) !important; }
+.rrtop, .rrbox { border: 1px solid var(--outline, #111) !important; background: var(--surface) !important; box-shadow: 0 2px 8px rgba(0,0,0,.18); border-radius: 0 !important; padding: 8px !important; flex: 0 0 auto; }
+.rrtop { order: 1; border-bottom-width: 1px !important; } #rrtools { order: 2; display: flex; flex-wrap: wrap; gap: 6px; } #rrfind { order: 3; display: flex; flex-direction: column; gap: 6px; } #board { order: 4; }
+#rrtools:empty { display: none; }
+:root:root:root:root:root:root:root body.rankroom:not(#k1) #board { margin: 0 0 calc(8px + env(safe-area-inset-bottom, 0px)) !important; }
+#rrtools .drafttools { display: contents !important; }
+#rrtools .drafttools[hidden] { display: none !important; }
+.rrfind { border-bottom: 1px solid var(--outline, #111) !important; }
+/* the rankings' frame belongs to the scroll box, so its bottom edge is always visible (27 Nov 2026) */
+:root:root:root:root:root:root:root body.rankroom:not(#k1) #board #bscroll { border: 1px solid var(--outline, #111) !important; border-radius: 16px !important; background: var(--surface) !important; box-shadow: 0 6px 18px rgba(0,0,0,.22) !important; }
+:root:root:root:root:root:root:root body.rankroom:not(#k1) #board #rows.boardlist { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: transparent !important; }
+:root:root:root:root:root:root:root:root body.rankroom:not(#k1) #board { padding: 0 1px 2px !important; box-sizing: border-box !important; }
+:root:root:root:root:root:root:root:root body.rankroom:not(#k1) #board #bscroll { border-radius: 0 !important; box-shadow: 0 4px 14px rgba(0,0,0,.28) !important; }

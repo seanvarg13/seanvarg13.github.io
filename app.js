@@ -5563,16 +5563,18 @@
   function rankRoomSync() {
     let bg = document.getElementById("rankbg"), top = document.getElementById("rankroomtop");
     const on = document.body.classList.contains("rankroom");
-    if (!on) { if (bg) bg.remove(); if (top) top.remove(); return; }
+    if (!on) { const tb = document.querySelector(".toolbar:not(.xtoolbar)"), dt = $("drafttools"), box = document.getElementById("rrtools"); if (box && dt && box.contains(dt) && tb) tb.append(dt); { const rt = $("ranktools"), tr = $("toolrow") || tb; if (box && rt && box.contains(rt) && tr) tr.append(rt); }
+      const bar0 = document.getElementById("rrfind"); if (bar0) bar0.remove(); if (box) box.remove(); if (bg) bg.remove(); if (top) top.remove(); return; }
     if (!top) { top = el("div", "rrtop"); top.id = "rankroomtop"; const wrap = document.querySelector("main.wrap"); wrap.prepend(top); }
-    top.innerHTML = "";
+    const old1 = top.querySelector(".rrrow1"); if (old1) old1.remove();
+    let tools = document.getElementById("rrtools"); if (!tools) { tools = el("div", "rrbox"); tools.id = "rrtools"; top.after(tools); }   // the editing buttons' box, under the name box
     const cur = currentSetName(), dirty = cur && setDirty();
     const nm = el("div", "rrname"); nm.append(el("small", null, state.mode === "draft" ? "Drafting from" : "Ranking"), el("b", null, cur || "Working rankings" ), dirty ? el("i", null, " · unsaved") : "");
     const sv = el("button", "btn btn-quiet rrsave", "Settings"); sv.type = "button"; sv.addEventListener("click", rankSettings);
     const x = el("button", "rrx", "×"); x.type = "button"; x.title = "Save and leave"; x.setAttribute("aria-label", "Save and leave"); x.addEventListener("click", rankLeave);
     const r1 = el("div", "rrrow1"); r1.append(nm, sv, x);
-    // the room's own search and position pills, as the Mock draft's player list has them (Sean, 27 Nov 2026)
-    const bar = el("div", "rrfind"), q = el("input"); q.type = "search"; q.placeholder = "Find a player"; q.value = state.q || ""; q.setAttribute("aria-label", "Find a player");
+    // the Mock draft's search and position pills, right above the board inside its frame (Sean, 27 Nov 2026)
+    const bar = el("div", "rrfind"), q = el("input"); bar.id = "rrfind"; q.type = "search"; q.placeholder = "Find a player"; q.value = state.q || ""; q.setAttribute("aria-label", "Find a player");
     q.addEventListener("input", () => { state.q = q.value; state.keepPop = true; renderRows(); renderToolSummary(); });
     const pills = el("div", "rrpills");
     for (const pos of [...HIT_TABS, ...PIT_TABS]) {
@@ -5580,7 +5582,9 @@
       b.addEventListener("click", () => { if (state.pos === pos) return; state.pos = pos; state.expanded = null; state.selKeys = []; ensureSortValid(); savePrefs(); render(); }); pills.append(b);
     }
     bar.append(q, pills);
-    top.append(r1, bar);
+    top.prepend(r1);
+    const board = $("board"), prev = document.getElementById("rrfind"); if (prev) prev.remove(); bar.classList.add("rrbox"); tools.after(bar);   // search and positions: a box of their own above the board
+    { const dt = $("drafttools"); if (state.mode === "draft" && dt && !tools.contains(dt)) tools.append(dt); } void board;
   }
   function renderRankTools() {
     const on = state.mode === "rankings";
@@ -5718,7 +5722,7 @@
     // fantasy is selected" — in the toolbar above the board it had pushed Rankings' bar a row down); back in the toolbar off the page
     { const row = $("setrow"), pt = $("pagertop"), tb = document.querySelector(".toolbar:not(.xtoolbar)");
       if (!bar.hidden) { if (pt && row.previousElementSibling !== pt) pt.after(row); } else if (tb && row.parentNode !== tb) tb.prepend(row); }
-    const tools = $("ranktools"), toolHome = bar.hidden ? $("toolrow") : bar;     // editing belongs on the bar that stays
+    const tools = $("ranktools"), roomTop = document.body.classList.contains("rankroom") && document.getElementById("rrtools"), toolHome = roomTop || (bar.hidden ? $("toolrow") : bar);     // editing belongs on the bar that stays
     if (!toolHome) return;
     if (tools.parentNode !== toolHome) toolHome.append(tools);
     bar.classList.toggle("editing", !!state.editRanks);     // editing needs a second line; reading it doesn't
