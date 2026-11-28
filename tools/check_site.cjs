@@ -92,7 +92,7 @@ function minorsId() {
       await step("rankings", async () => { await hash("#rankings"); await count(".rlpage .rlnew", 1, 60000);
         await pg.evaluate(() => document.querySelector(".rlnew").click()); await count("#modal input", 1);
         await pg.evaluate(() => { document.querySelector("#modal input").value = "Check board"; [...document.querySelectorAll("#modal button")].find((x) => /Create and enter/.test(x.textContent)).click(); });
-        await count("body.rankroom #rows li", 5, 60000); await count("#rankroomtop .rrpill", 8); await count("#rankroomtop .rrfind input", 1); });
+        await count("body.rankroom #rows li", 5, 60000); await count("#rrfind .rrpill", 8); await count("#rrfind input", 1); });
       await step("draft mode", async () => { await pg.evaluate(() => document.querySelector("#rankroomtop .rrsave").click()); await count(".rrwin", 1); await pg.evaluate(() => [...document.querySelectorAll(".rrwin .btn")].find((x) => /Draft mode/.test(x.textContent)).click()); await count("body.rankroom #rows li", 5, 60000);
         await pg.evaluate(() => document.querySelector("#rankroomtop .rrx").click()); await count(".rlpage .rlitem.on", 1);
         await pg.evaluate(() => { const o = JSON.parse(localStorage.getItem("draft2027.rankSets") || "{}"); delete o["Check board"]; localStorage.setItem("draft2027.rankSets", JSON.stringify(o)); localStorage.removeItem("draft2027.ranks"); localStorage.removeItem("draft2027.tiers"); }); });
