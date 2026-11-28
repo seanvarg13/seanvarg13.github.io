@@ -8010,9 +8010,13 @@
     const tiles = el("div", "fanttiles");
     const tile = (big, small, sub) => { const t = el("div", "fanttile"); t.append(el("b", null, big), el("span", null, small)); if (sub) t.append(el("i", null, sub)); tiles.append(t); };
     const ppg = tot / o.G;
-    tile(f1(tot), vw ? "points" : "season points", rows ? rank(rows.map((r) => r.pts), tot) : "");
+    // and where he ranks at each of his positions (Sean, 27 Nov 2026)
+    const posOf = (q) => (grp === "H" ? eligiblePositions(q) : pitcherRoles(q)) || [];
+    const posRank = (list, get, v) => posOf(p).map((ps) => { const a = list.filter((r) => posOf(r.p).includes(ps)).map(get); return a.length ? `${ordinal(rankOf(a, v))} at ${ps}` : ""; }).filter(Boolean).join(" · ");
+    const two = (a, b) => (a && b ? `${a} · ${b}` : a || b);
+    tile(f1(tot), vw ? "points" : "season points", rows ? two(rank(rows.map((r) => r.pts), tot), posRank(rows, (r) => r.pts, tot)) : "");
     const qual = rows ? rows.filter(fMinOK) : [];
-    tile(f2(ppg), "points per game", rows && qual.some((r) => r.p.id === p.id) ? rank(qual.map((r) => r.pts / r.o.G), ppg) : "");
+    tile(f2(ppg), "points per game", rows && qual.some((r) => r.p.id === p.id) ? two(rank(qual.map((r) => r.pts / r.o.G), ppg), posRank(qual, (r) => r.pts / r.o.G, ppg)) : "");
     // points per PA beside per game, heat-coloured by where it sits among the fantasy page's qualified hitters (Sean, 29 Sep 2026)
     // coloured against this season's qualified hitters, whichever season the tab is showing
     const cq = fromLine || vw ? (fRows(String(DATA.meta.season), grp) || []).filter(fMinOK) : qual;
@@ -8020,6 +8024,7 @@
     const ppaPct = (v) => (ppaVals.length && v != null ? Math.round(100 * ppaVals.filter((x) => x < v).length / ppaVals.length) : null);
     if (grp === "H" && o.PA) { tile((tot / o.PA).toFixed(3), "points per PA", qual.some((r) => r.p.id === p.id) ? rank(ppaVals, tot / o.PA) : "");
       const b = tiles.lastChild.querySelector("b"), pc = ppaPct(tot / o.PA); if (b && pc != null) { paint(b, pc); b.classList.add("ppachip"); } }
+    if (grp === "H" && o.PA) tile((o.PA / o.G).toFixed(2), "PA per game", rows && qual.some((r) => r.p.id === p.id) ? rank(qual.filter((r) => r.o.PA).map((r) => r.o.PA / r.o.G), o.PA / o.G) : "");
     tile(String(o.G), grp === "H" ? "games" : `games · ${o.GS} GS`, grp === "H" ? `${o.PA} PA` : `${outsIP(o.OUTS)} IP`);
     if (grp === "P" && o.games) {                        // per start and per relief outing, when he has had both
       const st = o.games.filter((g) => g.GS), rl = o.games.filter((g) => !g.GS);
@@ -11881,7 +11886,10 @@
     plate.classList.add("pbone");
     const row1 = el("div", "pbrow1"); row1.append(bioStrip(p, b)); if (backAt || hasChips) row1.append(ctl);   /* Back and the chips at the bio line's right */
     txt.append(row1);   /* the bio rides in the sticky bar under his name (Sean, 9 Oct 2026: "make the bio stuff scroll with it too") */
-    if (st && st.pct) plate.append(summaryBlock(p, st));
+    // in the draft room the band carries his fantasy boxes in the Summary's place, sliding sideways (Sean, 27 Nov 2026)
+    if (state.mode === "mock" && xPop) { const fb = renderFantasyTab(p), t = fb.querySelector(".fanttiles"), w = el("div", "pbfant");
+      if (t) { const hd = fb.querySelector(".rollsub"); if (hd) w.append(el("div", "pbfanthd", hd.textContent)); w.append(t); plate.append(w); } else if (st && st.pct) plate.append(summaryBlock(p, st)); }
+    else if (st && st.pct) plate.append(summaryBlock(p, st));
     if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay, inWin); if (!state.cardTools && sum.childNodes.length) plate.append(sum); }
     top.append(plate);
     return top;
@@ -14072,6 +14080,26 @@
     mk.log.push({ n: mk.log.length + 1, t: ti, k, cost: cost || 0 }); mk.queue = mk.queue.filter((q) => q !== k);
   }
   // a computer team's snake pick: the best few available by the consensus, with some noise, leaning to what its lineup still needs
+  // team bias (Sean, 27 Nov 2026: "if I select say the Yankees, then the cpu drafters end up inflating the price of certain Yankees and I can
+  // set the intensity too and make it be more exaggerated for the top few players on that team"): a multiplier on the computer teams' price
+  // (or a head start up the board in a snake draft), 1 + intensity x w, w 1 for a club's top three by ADP falling to .3 past its tenth
+  function mkBiasMul(x) {
+    const b = (mk && mk.set && mk.set.bias) || mkSet.bias; if (!b || !b.teams || !b.teams.length || !x) return 1;
+    const tm = teamCode(x.team || ""); if (!b.teams.includes(tm)) return 1;
+    const mates = mkPool().filter((y) => teamCode(y.team || "") === tm).sort((p, q) => p.adp - q.adp), r = mates.findIndex((y) => y.k === x.k);
+    const w = r < 0 ? 0.3 : r < 3 ? 1 : r < 10 ? 1 - 0.1 * (r - 2) : 0.3;
+    return 1 + (b.amt || 0) / 100 * w;
+  }
+  const MK_TEAMS = ["ATH","ATL","AZ","BAL","BOS","CHC","CIN","CLE","COL","CWS","DET","HOU","KC","LAA","LAD","MIA","MIL","MIN","NYM","NYY","PHI","PIT","SD","SEA","SF","STL","TB","TEX","TOR","WSH"];
+  function mkBiasEdit(onCh) {
+    const b = mkSet.bias = mkSet.bias || { teams: [], amt: 25 }, w = el("div", "mkbias"), grid = el("div", "mkbteams");
+    for (const t of MK_TEAMS) { const c = el("button", "btn btn-quiet mkbt" + (b.teams.includes(t) ? " on" : ""), t); c.type = "button";
+      c.addEventListener("click", () => { const i = b.teams.indexOf(t); if (i < 0) b.teams.push(t); else b.teams.splice(i, 1); c.classList.toggle("on", i < 0); onCh(); }); grid.append(c); }
+    const r = el("label", "mkbamt"), i = el("input"); i.type = "range"; i.min = 0; i.max = 100; i.step = 5; i.value = b.amt; const v = el("span", null, `+${b.amt}%`);
+    i.addEventListener("input", () => { b.amt = +i.value; v.textContent = `+${b.amt}%`; onCh(); }); r.append(el("span", null, "Intensity"), i, v);
+    w.append(grid, r, el("p", "muted mkbnote", "Computer teams pay (or pick) up to this much more for the picked clubs' top three players, about a third of it past their tenth."));
+    return w;
+  }
   function mkAiChoice(ti, noise = true) {
     const t = mk.teams[ti], taken = mkTaken(), R = mk.set.roster, pool = mkPool();
     const asg = mkAssign(t.picks.map((q) => mkP(q.k)), R), startersLeft = asg.slots.filter((s, i) => s !== "BN" && asg.own[i] < 0).length;
@@ -14082,7 +14110,7 @@
       if (!mkCanAdd(t, x, R)) continue;
       const starter = mkFillsStarter(t, x, R);
       if (mustFill && !starter) continue;
-      const s = x.adp + (noise ? gauss() * (1.5 + 0.06 * x.adp) : 0) + (starter ? 0 : 6 + 0.12 * x.adp);
+      const s = x.adp / mkBiasMul(x) + (noise ? gauss() * (1.5 + 0.06 * x.adp) : 0) + (starter ? 0 : 6 + 0.12 * x.adp);
       if (s < bs) { bs = s; best = x; }
       if (++seen > 14) break;
     }
@@ -14106,7 +14134,7 @@
     // full size: uncapped it once sold De La Cruz for $122, and at full size on Ohtani it sold him for $166
     const x = mkP(k), tier = 0.4 + 0.6 * Math.min(1, (x.adp - 1) / (2 * mk.set.teams));
     const mood = Math.max(1 - 0.3 * tier, Math.min(1 + 0.35 * tier, Math.exp(0.22 * tier * gauss())));
-    const base = mkMarket(x) * mood, infl = mkInflation();
+    const base = mkMarket(x) * mood * mkBiasMul(x), infl = mkInflation();
     const per = mk.teams.reduce((s, t) => s + t.budget, 0) / Math.max(1, mk.teams.reduce((s, t) => s + mkOpen(t), 0));
     A.vals = mk.teams.map((t, i) => {
       if (t.me) return 0;
@@ -14330,6 +14358,7 @@
       row("Seconds per bid", num(mkSet.bidSecs, 3, 60, (v) => { mkSet.bidSecs = v; }), "The clock goes back to this after every bid.");
     }
     row("Computer teams", seg([["fast", "Fast"], ["normal", "Normal"], ["slow", "Slow"]], mkSet.ai, (v) => { mkSet.ai = v; }), "How long they take to pick or nominate.");
+    row("Team bias", mkBiasEdit(() => mkSaveSet()), "Pick one or more clubs the computer teams overrate.");
     const rs = el("div", "mkroster"); rs.append(el("h4", "pwh", `Roster spots · ${mkSlotList(mkSet.roster).length} per team`));
     const grid = el("div", "mkrgrid");
     for (const [s, l] of MK_SLOTS) { const c = el("label", "mkrcell"); c.append(el("span", null, l), num(mkSet.roster[s] || 0, 0, s === "BN" ? 15 : s === "SP" || s === "RP" || s === "P" || s === "OF" ? 10 : 3, (v) => { mkSet.roster[s] = v; mkDrawSetup(box); })); grid.append(c); }
@@ -14422,6 +14451,7 @@
       else { f("Seconds per nomination", "nomSecs", 10, 300); f("Seconds per bid", "bidSecs", 3, 60); }
       const ai = el("label", "mkrcell"); const sel = el("select", "mksel"); for (const [v, l] of [["fast", "Fast"], ["normal", "Normal"], ["slow", "Slow"]]) { const o = el("option", null, l); o.value = v; o.selected = mk.set.ai === v; sel.append(o); }
       sel.addEventListener("change", () => { mk.set.ai = sel.value; mkSet.ai = sel.value; mkSaveSet(); mkSave(); }); ai.append(el("span", null, "Computer teams"), sel); tp.append(ai);
+      const bl = el("div", "mkrcell mkbiasrow"); bl.append(el("span", null, "Team bias"), mkBiasEdit(() => { mk.set.bias = JSON.parse(JSON.stringify(mkSet.bias)); mkSaveSet(); mkSave(); })); tp.append(bl);
       const sc = el("label", "mkrcell"); const ss = el("select", "mksel"); for (const p of fpresets()) { const o = el("option", null, p.name); o.value = p.id; o.selected = p.id === mkScoring().id; ss.append(o); }
       ss.addEventListener("change", () => { mk.set.scoring = ss.value; mkSet.scoring = ss.value; mkSaveSet(); mkSave(); mkDraw(); }); sc.append(el("span", null, "Scoring"), ss); tp.append(sc);
       const sl = el("label", "mkrcell"); const sb = el("button", "btn btn-quiet mksnd", mkSet.sound === false ? "Off" : "On"); sb.type = "button";
