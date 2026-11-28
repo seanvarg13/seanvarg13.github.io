@@ -6571,4 +6571,4 @@ body.rankroom #setbar, body.rankroom #setrow { display: none !important; }
 :root:root:root:root:root:root:root:root body.rankroom:not(#k1) #board #bscroll { border-radius: 0 !important; box-shadow: 0 4px 14px rgba(0,0,0,.28) !important; }
 /* a tier's name bar stays at the top of the rankings until its tier has scrolled past, then the next one takes over (27 Nov 2026) */
 :root:root:root:root:root:root:root body.boardon:not(#k1) #rows.boardlist > li.tier { overflow: visible !important; }
-:root:root:root:root:root:root:root body.boardon:not(#k1) #rows.boardlist > li.tier > .th { position: sticky !important; top: 0 !important; z-index: 4 !important; }
+:root:root:root:root:root:root:root body.boardon:not(#k1) #rows.boardlist > li.tier > .th { position: sticky !important; top: 8px !important; box-shadow: 0 -8px 0 var(--surface) !important; z-index: 4 !important; }
