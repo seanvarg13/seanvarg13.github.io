@@ -5686,7 +5686,7 @@ canvas.seasonfx { position: fixed; inset: 0; width: 100vw; height: 100vh; pointe
   border: 1px solid color-mix(in srgb, var(--ink) 45%, var(--surface)); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08); padding: 12px 14px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root .hub.home .hprepsec .hpreplink:hover { background: color-mix(in srgb, var(--accent-2) 14%, var(--surface)); }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-flat] .hub.home .hprepsec .hpreplink { border-color: transparent; }   /* the Jets look: the shadow, no edge */
-:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hprepsec .hprep { grid-template-columns: 1fr 1fr; gap: 10px; }
+:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hprepsec .hprep { grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 :root:root:root:root:root:root:root:root:root:root:root:root:root:root:root:root[data-view="mobile"] .hub.home .hprepsec .hpreplink { padding: 10px 11px; }
 
 /* The top bar's logo in the scheme's colour (Sean, 1 Nov 2026: "make it so the logo up top the light blue changes based on the color theme"):
@@ -6495,3 +6495,15 @@ canvas.seasonfx { opacity: .7; }
 .pbfanthd { font-size: 12px; color: var(--band2-ink, #fff); opacity: .85; margin-bottom: 6px; }
 :root:root:root:root .pbfant .fanttiles { display: flex !important; flex-wrap: nowrap !important; overflow-x: auto; gap: 8px; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; scrollbar-width: none; }
 :root:root:root:root .pbfant .fanttile { flex: 0 0 auto; min-width: 118px; background: var(--surface, #fff); color: var(--ink); border-radius: 0; padding: 8px 10px; }
+/* Notes (27 Nov 2026) */
+.notepage .noteadd { display: flex; gap: 8px; margin: 10px 0 14px; align-items: stretch; }
+.notepage .noteadd textarea { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 8px; border: 1px solid var(--outline, #111); border-radius: 0; resize: vertical; background: var(--surface); color: var(--ink); }
+.notewall { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; padding-bottom: 20px; }
+.notecard { color: #222; padding: 12px 12px 8px; min-height: 120px; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,.18); transform: rotate(-.6deg); }
+.notecard:nth-child(even) { transform: rotate(.7deg); }
+.notetext { flex: 1; white-space: pre-wrap; font-size: 15px; line-height: 1.35; outline: none; word-break: break-word; }
+.notefoot { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #555; margin-top: 8px; }
+.notefoot span { flex: 1; }
+.notefoot button { background: none; border: 0; cursor: pointer; font-size: 16px; color: #555; padding: 2px 4px; }
+.mkoff .mkoffrow { display: flex; gap: 10px; flex-wrap: wrap; }
+.mkoff .mkoffrow input { width: 90px; font-size: 16px; }
