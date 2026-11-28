@@ -14276,7 +14276,13 @@
     // full size: uncapped it once sold De La Cruz for $122, and at full size on Ohtani it sold him for $166
     const x = mkP(k), tier = 0.4 + 0.6 * Math.min(1, (x.adp - 1) / (2 * mk.set.teams));
     const mood = Math.max(1 - 0.3 * tier, Math.min(1 + 0.35 * tier, Math.exp(0.22 * tier * gauss())));
-    const base = mkMarket(x) * mood * mkBiasMul(x), infl = mkInflation();
+    // now and then a lot breaks the pattern (Sean, 28 Nov 2026: "at random points an earlier ish player will go for less ... and a later player may
+    // go for more and even have a decent ish bidding war"): ~8% of the earlier players slip to 70-85% of their price, ~12% of the later ones draw a
+    // war, two or three teams each valuing him 1.3-1.8x. Never the very top, and never more than a nudge on most lots.
+    const early = x.adp <= mk.set.teams * 6, late = x.adp > mk.set.teams * 6 && x.adp <= mk.set.teams * 16, rr = Math.random();
+    const slip = early && x.adp > 6 && rr < 0.08 ? 0.7 + 0.15 * Math.random() : 1, war = late && rr < 0.12;
+    const warTeams = war ? new Set(mk.teams.map((t, i) => i).filter((i) => !mk.teams[i].me).sort(() => Math.random() - 0.5).slice(0, 2 + (Math.random() < 0.4 ? 1 : 0))) : null;
+    const base = mkMarket(x) * mood * mkBiasMul(x) * slip, infl = mkInflation();
     const per = mk.teams.reduce((s, t) => s + t.budget, 0) / Math.max(1, mk.teams.reduce((s, t) => s + mkOpen(t), 0));
     A.vals = mk.teams.map((t, i) => {
       if (t.me) return 0;
@@ -14284,6 +14290,7 @@
       // overpaid the second tier of stars — $85 / $84 / $79 against Sean's $74 / $70 / $60)
       let v = base * 0.8 * infl * mkStyleMul(t, x) * Math.exp(0.2 * gauss()) * Math.sqrt(Math.max(0.5, Math.min(2, (t.budget / Math.max(1, mkOpen(t))) / per)));
       if (!mkFillsStarter(t, x, mk.set.roster)) v *= 0.5;
+      if (warTeams && warTeams.has(i)) v *= 1.3 + 0.5 * Math.random();
       return Math.max(1, Math.min(mkMaxBid(t), Math.round(v)));
     });
     mk.clock = mk.set.bidSecs * 1000; mkSave(); mkDraw();
