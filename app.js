@@ -7,7 +7,7 @@
 
   const HIT_TABS = ["ALL", "C", "1B", "2B", "3B", "SS", "OF", "DH"];
   const PIT_TABS = ["ALLP", "SP", "RP"];
-  const TAB_LABEL = { ALL: "All hitters", ALLP: "All pitchers" };
+  const TAB_LABEL = { EVERY: "All players", ALL: "All hitters", ALLP: "All pitchers" };
   // a column's label, with the % a rate's cells no longer carry (Sean, 29 Sep 2026)
   const LB_SLIM = { H: ["woba", "ev", "brl", "hh", "osw", "whf", "k", "bb"], P: ["k", "bb", "whf", "strk", "gb", "era", "uera", "suera"] };
   // the Leaderboard's column-set tabs (Sean, 3 Oct 2026, from the redesign prototype); renderLbTabs draws them
@@ -2448,10 +2448,24 @@
     savePrefs(); ensureSortValid(); render();
   }
   function inPos(p, pos) {
-    if (pos === "ALL" || pos === "ALLP" || PIT_TABS.includes(pos)) return true;   // group already narrowed
+    if (pos === "EVERY" || pos === "ALL" || pos === "ALLP" || PIT_TABS.includes(pos)) return true;   // group already narrowed
     return eligiblePositions(p).includes(pos);
   }
+  // "All" in the Rankings room is every player, hitters and pitchers on one board (Sean, 27 Nov 2026: "tier all hitters, and all players ... All be
+  // truly all players, and then a position for hitters where that is all hitters"): the two sides are listed as they always were, then merged by
+  // their projected points and ordered by this tab's own saved order. Only the board shows it; anywhere else it reads as all hitters.
   function visiblePlayers(opts = {}) {
+    if (state.pos !== "EVERY") return visibleCore(opts);
+    if (!boardOn()) { state.pos = "ALL"; return visibleCore(opts); }
+    const keep = state.pos; let A, B;
+    try { state.pos = "ALL"; A = visibleCore(Object.assign({}, opts, { noOrder: true })); state.pos = "ALLP"; B = visibleCore(Object.assign({}, opts, { noOrder: true })); } finally { state.pos = keep; }
+    const pts = (q) => { const v = projPts(q); return v == null ? -1e9 : v; };
+    let out = A.list.concat(B.list).map((q, i) => [q, i]).sort((x, y) => pts(y[0]) - pts(x[0]) || x[1] - y[1]).map((x) => x[0]);
+    const src = orderSource(), order = src ? src.ranks.EVERY : null;
+    if (order && order.length) { const idx = new Map(order.map((k, i) => [k, i])); out = out.map((q, i) => [q, idx.has(q.type + q.id) ? idx.get(q.type + q.id) : order.length + i]).sort((x, y) => x[1] - y[1]).map((x) => x[0]); }
+    return { list: out, stats: new Map([...A.stats, ...B.stats]), g: A.g, ref: A.ref, manual: !!(order && order.length) };
+  }
+  function visibleCore(opts = {}) {
     const g = groupFor(state.pos);
     const { list } = pool(g);
     const ref = refFor(g);
@@ -2513,7 +2527,7 @@
     });
     out = out.concat(tail);
     // manual rankings: the saved order for this tab first, then anyone not yet ranked in big-board order
-    const order = src ? src.ranks[state.pos] : null;
+    const order = src && !opts.noOrder ? src.ranks[state.pos] : null;
     if (order && order.length) {
       const idx = new Map(order.map((k, i) => [k, i]));
       if (!opts.all && statSorted()) {
@@ -3593,7 +3607,7 @@
         if (state.q) bits.push(`“${state.q}”`);
       }
       const who = onePage() ? ` ${pit ? "pitchers" : "hitters"} · ${od ? (mobileView() ? fmtDate(od) : gameDayName(od)) : DS.season}${state.mode === "leaderboard" ? (od ? (mobileView() ? "" : " · everyone who played") : ` · ${listMin(g) || 0}+ ${pit ? "IP" : "PA"}${needsDays() ? " in the window" : ""}`) : ""}${bits.map((b) => " · " + b).join("")}` : "";   /* its own line since 25 Oct 2026, so a phone reads it too */
-      const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${pit ? "pitchers" : "hitters"}${winIdx() ? ` · ${state.win.days ? `last ${state.win.days} days` : winLabel(pit ? "P" : "H")}` : ""}${state.mode === "draft" ? (auc.on ? " · tap a name to record his sale, tap again to undo" : " · tap to draft, tap again to undo") : ""}`; })() : null;   // the board: tiers · tiered · listed (Draft mode has no buttons)
+      const bc = boardOn() ? (() => { const s = orderSource(), tl = s ? tierLists(state.pos, s) : [], tn = tl.length, tc = tl.reduce((a, l) => a + l.length, 0); return `${tn ? `${tn} tier${tn === 1 ? "" : "s"} · ${tc} tiered · ` : ""}${total} ${state.pos === "EVERY" ? "players" : pit ? "pitchers" : "hitters"}${winIdx() ? ` · ${state.win.days ? `last ${state.win.days} days` : winLabel(pit ? "P" : "H")}` : ""}${state.mode === "draft" ? (auc.on ? " · tap a name to record his sale, tap again to undo" : " · tap to draft, tap again to undo") : ""}`; })() : null;   // the board: tiers · tiered · listed (Draft mode has no buttons)
       const ct = bc != null ? bc : pg.size && phonePages() ? `${pg.start + 1}–${pg.end} of ${total}${who}` : pg.size ? `${pg.start + 1}–${pg.end} of ${total}` : onePage() ? `${total}${who}` : `${total} players`;
       const pc = el("span", "pcount", ct);
       if (onePage() && state.daysLoading) pc.append(" · ", daysNote("loading game-by-game data…"));   // the download's progress, in place (28 Oct 2026)
@@ -5515,7 +5529,7 @@
     const h = draft ? "#draft" : "#rankings"; if (location.hash === h) render(); else location.hash = h;
   }
   function rankLeave() {
-    const done = () => { rankRoom = false; state.editRanks = false; state.selKeys = []; if (location.hash !== "#rankings") location.hash = "#rankings"; else render(); };
+    const done = () => { rankRoom = false; if (state.pos === "EVERY") state.pos = "ALL"; state.editRanks = false; state.selKeys = []; if (location.hash !== "#rankings") location.hash = "#rankings"; else render(); };
     if (currentSetName()) { if (setDirty()) { const c = currentSetName(); state.rankSets[c] = snapshot(); save(LS.sets, state.rankSets); } done(); }
     else if (hasWorking()) ask("Save these rankings", "Give them a name so you can open them again.", (name) => { state.rankSets[name] = snapshot(); save(LS.sets, state.rankSets); state.currentSet = name; savePrefs(); done(); }, { value: `Rankings ${new Date().toISOString().slice(0, 10)}`, placeholder: "Preset name", button: "Save and leave" });
     else done();
@@ -5577,8 +5591,8 @@
     const bar = el("div", "rrfind"), q = el("input"); bar.id = "rrfind"; q.type = "search"; q.placeholder = "Find a player"; q.value = state.q || ""; q.setAttribute("aria-label", "Find a player");
     q.addEventListener("input", () => { state.q = q.value; state.keepPop = true; renderRows(); renderToolSummary(); });
     const pills = el("div", "rrpills");
-    for (const pos of [...HIT_TABS, ...PIT_TABS]) {
-      const b = el("button", "rrpill" + (state.pos === pos ? " on" : ""), pos === "ALL" ? "All" : pos === "ALLP" ? "All P" : pos); b.type = "button";
+    for (const pos of ["EVERY", ...HIT_TABS, ...PIT_TABS]) {
+      const b = el("button", "rrpill" + (state.pos === pos ? " on" : ""), pos === "EVERY" ? "All" : pos === "ALL" ? "Hitters" : pos === "ALLP" ? "Pitchers" : pos); b.type = "button";
       b.addEventListener("click", () => { if (state.pos === pos) return; state.pos = pos; state.expanded = null; state.selKeys = []; ensureSortValid(); savePrefs(); render(); }); pills.append(b);
     }
     bar.append(q, pills);
@@ -6928,7 +6942,7 @@
     if (state.mode !== "draft" && $("aucsheet")) { aucPick = null; $("aucsheet").remove(); }   // the auction sheet is Draft mode's
     if (state.mode !== "mock") { mkRoom = false; mkRoomSync(); } else mkCardSync();   // the draft room is the Mock draft page's (29 Oct 2026)
     $("modal").classList.remove("pcard", "pagecard", "pagebg"); document.body.classList.remove("cardpop");   // set again below if a player card is up
-    const rankGate = (state.mode === "rankings" || state.mode === "draft"); if (!rankGate) rankRoom = false;
+    const rankGate = (state.mode === "rankings" || state.mode === "draft"); if (!rankGate) { rankRoom = false; if (state.pos === "EVERY") state.pos = "ALL"; }
     const rankLand = rankGate && !rankRoom;
     document.body.classList.toggle("rankroom", rankGate && rankRoom); rankRoomSync();
     const player = state.mode === "player", compare = state.mode === "compare", elig = state.mode === "eligibility", home = state.mode === "home", league = state.mode === "league", hub = home || league, appear = state.mode === "settings", fant = state.mode === "fantasy", pitches = rankLand || state.mode === "pitches" || state.mode === "trends" || state.mode === "callups" || state.mode === "planner" || state.mode === "mock" || state.mode === "claude" || state.mode === "flaws" || state.mode === "bullpens", other = pitches || player || compare || elig || hub || appear || fant;
