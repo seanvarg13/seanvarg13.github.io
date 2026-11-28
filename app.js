@@ -64,7 +64,7 @@
   // against what was last synced: a key changed on one side takes that side; changed on both, the fantasy presets and
   // the keyed lists (stars, ranks …) are merged, anything else keeps this device's. A pull that changes anything here
   // reloads the page once, so every screen reads the new copy.
-  const SYNC_KEYS = [LS.drafted, LS.extra, LS.roles, LS.ranks, LS.tiers, LS.tierNames, LS.sets, LS.extraPos, LS.stars, "draft2027.fantasy", "draft2027.watch", "draft2027.auction", "draft2027.league"];   // the League tab's connections (11 Nov 2026)
+  const SYNC_KEYS = [LS.drafted, LS.extra, LS.roles, LS.ranks, LS.tiers, LS.tierNames, LS.sets, LS.extraPos, LS.stars, "draft2027.fantasy", "draft2027.watch", "draft2027.auction", "draft2027.league", "draft2027.notes"];   // the League tab's connections (11 Nov 2026)
   const SYNC_LS = "draft2027.sync", GIST_FILE = "sean-site-sync.json", GIST_DESC = "Sean's Site: saved settings (synced by the site)";
   const sync = Object.assign({ token: "", gist: "", base: null, at: "", err: "" }, load(SYNC_LS, {}));
   const syncSave = () => { try { localStorage.setItem(SYNC_LS, JSON.stringify(sync)); } catch {} };
@@ -6155,7 +6155,31 @@
     }
     return { rows: out, lo, thr, win };
   }
+  // Notes (Sean, 27 Nov 2026: "a notes and reminders tab where I can log notes and they just show up as like sticky notes"): drawn in the
+  // Bullpens page's frame at #notes; kept in draft2027.notes and synced like the rankings
+  const NOTE_COLS = ["#fff3a8", "#ffd1dc", "#c9f0d6", "#cfe3ff", "#ffe0b8"];
+  function renderNotes() {
+    const box = pitchBoardEl(); box.innerHTML = "";
+    const page = el("div", "flawpage notepage"); box.append(page);
+    let N = []; try { N = JSON.parse(localStorage.getItem("draft2027.notes") || "[]"); } catch {}
+    const save = () => { try { localStorage.setItem("draft2027.notes", JSON.stringify(N)); } catch {} };
+    const C = leadersChrome("notes", [], FANTASY_PAGES); page.append(C.row, C.line); C.count.textContent = `${N.length} note${N.length === 1 ? "" : "s"}`;
+    const add = el("form", "noteadd"), ta = el("textarea"); ta.placeholder = "Write a note or a reminder…"; ta.rows = 2;
+    const go = el("button", "btn", "Add note"); go.type = "submit"; add.append(ta, go);
+    add.addEventListener("submit", (e) => { e.preventDefault(); const t = ta.value.trim(); if (!t) return; N.unshift({ t, d: Date.now(), c: N.length % NOTE_COLS.length }); save(); renderNotes(); });
+    page.append(add);
+    const wall = el("div", "notewall");
+    N.forEach((n, i) => { const c = el("div", "notecard"); c.style.background = NOTE_COLS[n.c || 0];
+      const tx = el("div", "notetext", n.t); tx.contentEditable = "true"; tx.addEventListener("blur", () => { const v = tx.textContent.trim(); if (v && v !== n.t) { n.t = v; save(); } });
+      const ft = el("div", "notefoot"); ft.append(el("span", null, new Date(n.d).toLocaleDateString("en-US", { month: "short", day: "numeric" })));
+      const cl = el("button", "notec", "●"); cl.type = "button"; cl.title = "Colour"; cl.addEventListener("click", () => { n.c = ((n.c || 0) + 1) % NOTE_COLS.length; save(); renderNotes(); });
+      const x = el("button", "notex", "×"); x.type = "button"; x.title = "Delete"; x.addEventListener("click", () => { N.splice(i, 1); save(); renderNotes(); });
+      ft.append(cl, x); c.append(tx, ft); wall.append(c); });
+    if (!N.length) wall.append(el("p", "muted", "No notes yet."));
+    page.append(wall);
+  }
   function renderBullpens() {
+    if (/^#notes/.test(location.hash)) return renderNotes();
     const box = pitchBoardEl(); box.innerHTML = "";
     const page = el("div", "flawpage bppage"), PH = mobileView(); box.append(page);
     const save = () => { try { localStorage.setItem("draft2027.bullpens", JSON.stringify(bpSet)); } catch {} render(); };
@@ -6293,7 +6317,7 @@
       // like 2026 leaders below it has"): a red-ruled section header, the two links square boxes with the tables' shadow
       const ds = el("section", "hsec hprepsec"), dh = el("div", "hsech"); dh.append(el("h2", null, `${m.season + 1} draft prep`), el("span", null, "off-season"));
       const row = el("div", "hprep");
-      for (const [h, l, sub] of [["#rankings", "Rankings", "your order for next year"], ["#draft", "Draft mode", "tick players off as they go"]]) {
+      for (const [h, l, sub] of [["#rankings", "Rankings", "your order for next year"], ["#draft", "Draft mode", "tick players off as they go"], ["#bullpens", "Bullpens", "closers, setup men, who is next up"]]) {
         const a = el("a", "hpreplink"); a.href = h; a.append(el("b", null, l), el("span", null, sub)); row.append(a);
       }
       ds.append(dh, row); box.insertBefore(ds, grid);
@@ -8008,15 +8032,14 @@
     const rows = fromLine || vw ? null : fRows(y, grp);
     const rank = (vals, v) => (vals.length ? `${ordinal(rankOf(vals, v))} of ${vals.length}` : "");
     const tiles = el("div", "fanttiles");
-    const tile = (big, small, sub) => { const t = el("div", "fanttile"); t.append(el("b", null, big), el("span", null, small)); if (sub) t.append(el("i", null, sub)); tiles.append(t); };
+    const tile = (big, small, sub, sub2) => { const t = el("div", "fanttile"); t.append(el("b", null, big), el("span", null, small)); if (sub) t.append(el("i", null, sub)); if (sub2) t.append(el("i", "fpos", sub2)); tiles.append(t); };
     const ppg = tot / o.G;
     // and where he ranks at each of his positions (Sean, 27 Nov 2026)
     const posOf = (q) => (grp === "H" ? eligiblePositions(q) : pitcherRoles(q)) || [];
     const posRank = (list, get, v) => posOf(p).map((ps) => { const a = list.filter((r) => posOf(r.p).includes(ps)).map(get); return a.length ? `${ordinal(rankOf(a, v))} at ${ps}` : ""; }).filter(Boolean).join(" · ");
-    const two = (a, b) => (a && b ? `${a} · ${b}` : a || b);
-    tile(f1(tot), vw ? "points" : "season points", rows ? two(rank(rows.map((r) => r.pts), tot), posRank(rows, (r) => r.pts, tot)) : "");
+    tile(f1(tot), vw ? "points" : "season points", rows ? rank(rows.map((r) => r.pts), tot) : "", rows ? posRank(rows, (r) => r.pts, tot) : "");
     const qual = rows ? rows.filter(fMinOK) : [];
-    tile(f2(ppg), "points per game", rows && qual.some((r) => r.p.id === p.id) ? two(rank(qual.map((r) => r.pts / r.o.G), ppg), posRank(qual, (r) => r.pts / r.o.G, ppg)) : "");
+    tile(f2(ppg), "points per game", rows && qual.some((r) => r.p.id === p.id) ? rank(qual.map((r) => r.pts / r.o.G), ppg) : "", rows && qual.some((r) => r.p.id === p.id) ? posRank(qual, (r) => r.pts / r.o.G, ppg) : "");
     // points per PA beside per game, heat-coloured by where it sits among the fantasy page's qualified hitters (Sean, 29 Sep 2026)
     // coloured against this season's qualified hitters, whichever season the tab is showing
     const cq = fromLine || vw ? (fRows(String(DATA.meta.season), grp) || []).filter(fMinOK) : qual;
@@ -11888,7 +11911,7 @@
     txt.append(row1);   /* the bio rides in the sticky bar under his name (Sean, 9 Oct 2026: "make the bio stuff scroll with it too") */
     // in the draft room the band carries his fantasy boxes in the Summary's place, sliding sideways (Sean, 27 Nov 2026)
     if (state.mode === "mock" && xPop) { const fb = renderFantasyTab(p), t = fb.querySelector(".fanttiles"), w = el("div", "pbfant");
-      if (t) { const hd = fb.querySelector(".rollsub"); if (hd) w.append(el("div", "pbfanthd", hd.textContent)); w.append(t); plate.append(w); } else if (st && st.pct) plate.append(summaryBlock(p, st)); }
+      if (t) { if (st && st.pct) plate.append(summaryBlock(p, st)); const hd = fb.querySelector(".rollsub"); if (hd) w.append(el("div", "pbfanthd", hd.textContent)); w.append(t); plate.append(w); } else if (st && st.pct) plate.append(summaryBlock(p, st)); }
     else if (st && st.pct) plate.append(summaryBlock(p, st));
     if (o.entry && !isMulti(o.key)) { const sum = filtersWindow(p, twoWay, inWin); if (!state.cardTools && sum.childNodes.length) plate.append(sum); }
     top.append(plate);
@@ -13863,7 +13886,7 @@
   }
   function mkStay() { mkUI.leave = false; mkResumeHold("leaveHold"); mkDraw(); }
   function mkCloseSettings() { mkUI.timer = false; mkResumeHold("setHold"); mkDraw(); }
-  function mkEscape() { if (mkUI.rewind) mkRewindCancel(); else if (mkUI.leave) mkStay(); else if (mkUI.timer) mkCloseSettings(); else mkAskLeave(); }
+  function mkEscape() { if (mkUI.off) { mkUI.off = null; mkDraw(); } else if (mkUI.rewind) mkRewindCancel(); else if (mkUI.leave) mkStay(); else if (mkUI.timer) mkCloseSettings(); else mkAskLeave(); }
   function mkLeaveWin() {
     const bg = el("div", "mksetbg"); bg.addEventListener("click", mkStay);
     const w = el("div", "mktimer mksetwin mkleave"); w.setAttribute("role", "dialog"); w.setAttribute("aria-label", "Leave the draft room");
@@ -14066,7 +14089,7 @@
     const set = JSON.parse(JSON.stringify(mkSet)), T = set.teams;
     const me = set.slot === "random" ? Math.floor(Math.random() * T) : Math.min(T, Math.max(1, +set.slot)) - 1;
     mkAudio();                                            // the tap that starts the draft unlocks the sound
-    mk = { set, me, status: "pre", pre: 60000, paused: false, log: [], queue: [], pick: 0, clock: (set.type === "snake" ? set.pickSecs : set.nomSecs) * 1000, wait: 0,
+    mk = { set, me, status: set.offline ? "live" : "pre", pre: 60000, paused: false, log: [], queue: [], pick: 0, clock: (set.type === "snake" ? set.pickSecs : set.nomSecs) * 1000, wait: 0,
            teams: Array.from({ length: T }, (_, i) => ({ name: i === me ? "Your team" : `Team ${i + 1}`, me: i === me, picks: [], budget: set.budget, style: MK_STYLES[Math.floor(Math.random() * MK_STYLES.length)] })),
            auc: set.type === "auction" ? { phase: "nom", nom: 0, k: null, bid: 0, high: -1, vals: null, hist: [] } : null, started: Date.now() };
     mk.wait = mkAiDelay();
@@ -14202,6 +14225,24 @@
   }
   function mkAskRewind(n) { if (!mk) return; if (!mk.paused && (mk.status === "live" || mk.status === "pre")) { mk.paused = true; mkUI.rwHold = true; mkSave(); } mkUI.rewind = n; mkDraw(); }
   function mkRewindCancel() { mkUI.rewind = null; mkResumeHold("rwHold"); mkDraw(); }
+  // offline draft (Sean, 27 Nov 2026: "select the players who go off at what pick, price, and to what team at no timed pace")
+  function mkOffWin(k) {
+    const x = mkP(k), snake = mk.set.type === "snake", close = () => { mkUI.off = null; mkDraw(); };
+    const bg = el("div", "mksetbg"); bg.addEventListener("click", close);
+    const w = el("div", "mktimer mksetwin mkleave mkoff"); w.setAttribute("role", "dialog");
+    const hd = el("div", "mksethd"), xb = el("button", "pop-close", "\u00d7"); xb.type = "button"; xb.addEventListener("click", close); hd.append(el("b", null, x ? x.name : "Player"), xb);
+    const def = snake ? mkOnClock() : mk.me, sel = el("select", "mksel");
+    mk.teams.forEach((t, i) => { if (mkOpen(t) <= 0) return; const o = el("option", null, t.name + (snake ? "" : ` \u00b7 $${t.budget}`)); o.value = i; o.selected = i === def; sel.append(o); });
+    const f = el("div", "mksetacts mkoffrow"), tl = el("label", "mkrcell"); tl.append(el("span", null, "Team"), sel); f.append(tl);
+    const pr = el("input"); pr.type = "number"; pr.min = 1; pr.inputMode = "numeric"; pr.value = Math.max(1, mkVal(k) || 1);
+    if (!snake) { const pl = el("label", "mkrcell"); pl.append(el("span", null, "Price $"), pr); f.append(pl); }
+    const acts = el("div", "mksetacts"), ok = el("button", "btn mkpause", snake ? "Draft" : "Sold"); ok.type = "button";
+    ok.addEventListener("click", () => { const ti = +sel.value, t = mk.teams[ti], c = snake ? 0 : Math.max(1, Math.round(+pr.value || 1));
+      if (!snake && c > t.budget) { pr.focus(); return; }
+      mkRecord(ti, k, c); mk.pick++; mkUI.off = null; if (mk.teams.every((q) => mkOpen(q) <= 0)) mkFinish(); mkSave(); mkDraw(); });
+    const no = el("button", "btn btn-quiet", "Cancel"); no.type = "button"; no.addEventListener("click", close); acts.append(ok, no);
+    w.append(hd, f, acts); return [bg, w];
+  }
   function mkRewindWin(n) {
     const l = mk.log[n - 1]; if (!l) return [];
     const x = mkP(l.k), T = mk.set.teams, snake = mk.set.type === "snake", after = mk.log.length - n;
@@ -14244,7 +14285,7 @@
     const now = Date.now(), dt = now - mkLast; mkLast = now;
     const on = mk && (mk.status === "live" || mk.status === "pre");
     if (state.mode !== "mock" || !mkRoom || !on) { if (on && !mk.paused && (state.mode !== "mock" || !mkRoom)) { mk.paused = true; mkSave(); } clearInterval(mkTimer); mkTimer = null; return; }   // off the page or out of the room: the draft pauses
-    if (mk.paused || !mkReady()) return;
+    if (mk.paused || !mkReady() || mk.set.offline) return;   // an offline draft runs at no pace (27 Nov 2026)
     // a minute in the room before the first pick (Sean, 2 Oct 2026): look the list over, queue players; Start now skips it
     if (mk.status === "pre") { mk.pre -= dt; mkTicks(mk.pre, true); if (mk.pre <= 0) mkGo(); else mkClock(); return; }
     mk.clock -= dt;
@@ -14345,6 +14386,7 @@
     const row = (label, ctrl, note) => { const r = el("div", "aset"); const l = el("div", "asetl"); l.append(el("div", "asetn", label)); if (note) l.append(el("div", "asetd", note)); r.append(l, ctrl); w.append(r); };
     const seg = (opts, val, on) => { const s = el("div", "seg"); for (const [v, l] of opts) { const b = el("button", "segbtn small", l); b.type = "button"; b.setAttribute("aria-pressed", String(String(val) === String(v))); b.addEventListener("click", () => { on(v); mkSaveSet(); mkDrawSetup(box); }); s.append(b); } return s; };
     const num = (val, min, max, on, step = 1) => { const i = el("input", "mknum"); i.type = "number"; i.min = min; i.max = max; i.step = step; i.value = val; i.addEventListener("change", () => { const v = Math.max(min, Math.min(max, Math.round(+i.value || min))); i.value = v; on(v); mkSaveSet(); }); return i; };
+    row("Mode", seg([["mock", "Mock"], ["offline", "Offline"]], mkSet.offline ? "offline" : "mock", (v) => { mkSet.offline = v === "offline"; }), "Offline: you enter every pick, the team and the price, at no pace.");
     row("Draft type", seg([["snake", "Snake"], ["auction", "Auction"]], mkSet.type, (v) => { mkSet.type = v; }));
     row("Teams", num(mkSet.teams, 4, 16, (v) => { mkSet.teams = v; if (mkSet.slot !== "random" && +mkSet.slot > v) mkSet.slot = "random"; mkDrawSetup(box); }));
     // the slot as a row of buttons, every one in sight (Sean, 2 Oct 2026: "let me select my draft slot")
@@ -14406,6 +14448,7 @@
     }
     if (mkUI.leave) box.append(...mkLeaveWin());
     if (mkUI.rewind) box.append(...mkRewindWin(mkUI.rewind));
+    if (mkUI.off) box.append(...mkOffWin(mkUI.off));
     const l = box.querySelector(".mklist"); if (l) l.scrollTop = keep.list;
     const s = box.querySelector(".mkside"); if (s) s.scrollTop = keep.side;
     if (keep.inner && keep.tab === tabNow) { const n = box.querySelector(".mkside .mkscroll, .mkside .mkboardw"); if (n) { n.scrollTop = keep.inner[0]; n.scrollLeft = keep.inner[1]; } }
@@ -14537,7 +14580,7 @@
   function mkDrawList() { const l = document.querySelector(".mklist"); if (l) l.replaceChildren(mkTable()); }
   function mkTable() {
     const taken = mkTaken(), me = mk.teams[mk.me], auc = mk.set.type === "auction", A = mk.auc;
-    const myTurn = !mk.paused && mk.status === "live" && (auc ? A.phase === "nom" && mk.teams[A.nom].me : mk.teams[mkOnClock()].me);
+    const off = mk.set.offline, myTurn = off ? mk.status === "live" : !mk.paused && mk.status === "live" && (auc ? A.phase === "nom" && mk.teams[A.nom].me : mk.teams[mkOnClock()].me);
     const nq = norm(mkUI.q || "");
     let rows = mkPool().filter((x) => (!mkUI.hide || !taken.has(x.k)) && (mkUI.pos === "ALL" || (mkUI.pos === "DH" ? x.type === "H" : x.elig.includes(mkUI.pos))) && (!nq || norm(x.name).includes(nq)));
     if (mkUI.sort === "proj") rows.sort((a, b) => b.mine - a.mine); else if (mkUI.sort === "val") rows.sort((a, b) => mkVal(b.k) - mkVal(a.k) || a.adp - b.adp);
@@ -14556,7 +14599,8 @@
       const act = el("td", "mkact");
       if (gone) { const l = mk.log.find((l) => l.k === x.k); act.append(el("small", null, `${mk.teams[l.t].me ? "You" : mk.teams[l.t].name}${l.cost ? " $" + l.cost : ""}`)); }
       else {
-        if (myTurn && mkCanAdd(me, x, mk.set.roster)) { const b = el("button", "btn mkdraft", auc ? "Nominate" : "Draft"); b.type = "button"; b.addEventListener("click", () => { if (auc) mkNominate(mk.me, x.k, Math.min(mkMaxBid(me), A.open || 1)); else mkDraftPick(x.k); }); act.append(b); }
+        if (off && myTurn && !gone) { const b = el("button", "btn mkdraft", "Draft"); b.type = "button"; b.addEventListener("click", () => { mkUI.off = x.k; mkDraw(); }); act.append(b); }
+        else if (myTurn && mkCanAdd(me, x, mk.set.roster)) { const b = el("button", "btn mkdraft", auc ? "Nominate" : "Draft"); b.type = "button"; b.addEventListener("click", () => { if (auc) mkNominate(mk.me, x.k, Math.min(mkMaxBid(me), A.open || 1)); else mkDraftPick(x.k); }); act.append(b); }
         const qd = mk.queue.includes(x.k), s = el("button", "linkbtn mkstar", qd ? "★" : "☆"); s.type = "button"; s.title = qd ? "Take out of your queue" : "Add to your queue";
         s.addEventListener("click", () => { mk.queue = qd ? mk.queue.filter((k) => k !== x.k) : [...mk.queue, x.k]; mkSave(); mkDraw(); }); act.append(s);
       }
